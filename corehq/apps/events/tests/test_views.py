@@ -2,9 +2,11 @@ from django.test import TestCase
 from django.urls import reverse
 from datetime import datetime
 from unittest.mock import patch
+import json
 
 from corehq.apps.events.models import Event, Attendee
 from corehq.apps.domain.shortcuts import create_domain
+from corehq.apps.es.fake.users_fake import UserESFake
 from corehq.apps.events.views import EventsView, EventCreateView
 from corehq.apps.users.models import WebUser, HqPermissions, CommCareUser
 from corehq.util.test_utils import flag_enabled
@@ -202,3 +204,27 @@ class TestEventsCreateView(BaseEventViewTestClass):
             created_by=None,
             created_via=None,
         )
+
+
+class TestPaginatePossibleAttendees(BaseEventViewTestClass):
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+
+        def make_mobile_worker(username):
+            worker = CommCareUser.create(cls.domain, username, '123', None, None)
+            UserESFake.save_doc(worker._doc)
+            return worker
+
+        cls.mobile_worker = make_mobile_worker('mobile_username')
+
+    def test_return_mobile_workers(self):
+        url = reverse('paginate_possible_attendees', args=[self.domain])
+        self.client.login(username=self.admin_webuser.username, password=self.password)
+
+        response = self.client.get(url, content_type="application/json;charset=utf-8")
+
+        self.assertEqual(response.status_code, 200)
+        users = json.loads(response.content)['users']
+        self.assertEqual(len(users), 1)
+        self.assertEqual(users[0]['username'], 'mobile_username')

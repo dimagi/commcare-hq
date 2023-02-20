@@ -106,7 +106,7 @@ from corehq.tabs.utils import (
     dropdown_dict,
     sidebar_to_dropdown,
 )
-from corehq.apps.events.views import EventsView
+from corehq.apps.events.views import EventsView, AttendeesAddView
 
 
 class ProjectReportsTab(UITab):
@@ -2449,18 +2449,29 @@ class AttendanceTrackingTab(UITab):
     url_prefix_formats = (
         '/a/{domain}/settings/events/',
         '/a/{domain}/settings/events/new',
+        '/a/{domain}/settings/attendees',
     )
 
     @property
     def dropdown_items(self):
         items = [
-            dropdown_dict(_("Events"), url=reverse(EventsView.urlname, args=(self.domain,)))
+            dropdown_dict(_("Events"), url=reverse(EventsView.urlname, args=(self.domain,))),
+            dropdown_dict(_("Attendees"), url=reverse(AttendeesAddView.urlname, args=(self.domain,))),
+            self.divider,
+            dropdown_dict(_("View All"), url=reverse(EventsView.urlname, args=[self.domain])),
+
         ]
         return items
 
     @property
     def sidebar_items(self):
         items = [
+            (_("Attendees"), [
+                {
+                    'title': _("Add Attendees"),
+                    'url': reverse(AttendeesAddView.urlname, args=(self.domain,)),
+                },
+            ]),
             (_("Events"), [
                 {
                     'title': _("View All Events"),

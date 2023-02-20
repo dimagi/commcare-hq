@@ -10,7 +10,16 @@ from corehq.apps.events.forms import CreateEventForm
 from corehq.apps.hqwebapp.decorators import use_jquery_ui, use_multiselect
 from corehq.apps.events.exceptions import EventDoesNotExist
 from corehq import toggles
-
+from corehq.apps.users.views import BaseUserSettingsView
+from corehq.util.jqueryrmi import JSONResponseMixin
+from corehq.apps.users.decorators import require_can_edit_or_view_commcare_users
+from django.utils.decorators import method_decorator
+from corehq.apps.locations.permissions import location_safe
+from django.views.decorators.http import require_GET
+from corehq.apps.users.analytics import get_search_users_in_domain_es_query
+import json
+from corehq.apps.locations.models import SQLLocation
+from django.http import JsonResponse
 
 class BaseEventView(BaseDomainView):
     urlname = "events_page"
@@ -208,3 +217,66 @@ class EventEditView(EventCreateView):
         event.save(expected_attendees=event_update_data['expected_attendees'])
 
         return HttpResponseRedirect(reverse(EventsView.urlname, args=(self.domain,)))
+
+
+@location_safe
+class AttendeesAddView(JSONResponseMixin, BaseUserSettingsView):
+    urlname = "add_attendees"
+    template_name = 'add_attendees.html'
+    page_title = _("Add Attendees")
+    limit_text = _("Attendees per page")
+    empty_notification = _("You have no attendees")
+    loading_message = _("Loading attendees")
+
+    @use_jquery_ui
+    @method_decorator(require_can_edit_or_view_commcare_users)
+    def dispatch(self, *args, **kwargs):
+        return super(AttendeesAddView, self).dispatch(*args, **kwargs)
+
+
+@require_can_edit_or_view_commcare_users
+@require_GET
+@location_safe
+def paginate_possible_attendees(request, domain):
+    """
+    Returns the possible attendees (mobile workers).
+    """
+    # TODO: We should filter for those that does not have an associated `commcare-attendee` case
+    limit = int(request.GET.get('limit', 10))
+    page = int(request.GET.get('page', 1))
+    query = request.GET.get('query')
+    deactivated_only = json.loads(request.GET.get('showDeactivatedUsers', "false"))
+
+    def _user_query(search_string, page, limit):
+        user_es = get_search_users_in_domain_es_query(
+            domain=domain, search_string=search_string,
+            offset=page * limit, limit=limit)
+        if not request.couch_user.has_permission(domain, 'access_all_locations'):
+            loc_ids = (SQLLocation.objects.accessible_to_user(domain, request.couch_user)
+                                          .location_ids())
+            user_es = user_es.location(list(loc_ids))
+        return user_es.mobile_users()
+
+    # backend pages start at 0
+    users_query = _user_query(query, page - 1, limit)
+    # run with a blank query to fetch total records with same scope as in search
+    if deactivated_only:
+        users_query = users_query.show_only_inactive()
+    users_data = users_query.source([
+        '_id',
+        'first_name',
+        'last_name',
+        'base_username',
+    ]).run()
+    users = users_data.hits
+
+    for user in users:
+        user.update({
+            'username': user.pop('base_username', ''),
+            'user_id': user.pop('_id'),
+        })
+
+    return JsonResponse({
+        'users': users,
+        'total': users_data.total,
+    })
