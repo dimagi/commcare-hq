@@ -321,7 +321,7 @@ openpyxl==3.0.9
     # via
     #   -r base-requirements.in
     #   commcaretranslationchecker
-packaging==21.3
+packaging==23.0
     # via build
 pep517==0.10.0
     # via build
@@ -387,9 +387,7 @@ pynacl==1.5.0
 pyopenssl==23.0.0
     # via -r sso-requirements.in
 pyparsing==3.0.7
-    # via
-    #   httplib2
-    #   packaging
+    # via httplib2
 pyphonetics==0.5.3
     # via -r base-requirements.in
 pypng==0.20220715.0
@@ -602,9 +600,9 @@ zope-interface==5.4.0
     # via gevent
 
 # The following packages are considered to be unsafe in a requirements file:
-pip==21.3.1
+pip==23.0.1
     # via pip-tools
-setuptools==65.5.1
+setuptools==67.3.2
     # via
     #   django-websocket-redis
     #   gevent
