@@ -257,6 +257,7 @@ class CaseSearchConfig(models.Model):
     )
     enabled = models.BooleanField(blank=False, null=False, default=False)
     synchronous_web_apps = models.BooleanField(blank=False, null=False, default=False)
+    sync_cases_on_form_entry = models.BooleanField(blank=False, null=False, default=False)
     fuzzy_properties = models.ManyToManyField(FuzzyProperties)
     ignore_patterns = models.ManyToManyField(IgnorePatterns)
 
@@ -287,6 +288,7 @@ class CaseSearchConfig(models.Model):
             return None
 
         config.synchronous_web_apps = json_def['synchronous_web_apps']
+        config.sync_cases_on_form_entry = json_def['sync_cases_on_form_entry']
         config.ignore_patterns.all().delete()
         config.fuzzy_properties.all().delete()
         config.save()
@@ -328,6 +330,17 @@ def case_search_synchronous_web_apps_for_domain(domain):
     config = CaseSearchConfig.objects.get_or_none(pk=domain)
     if config:
         return config.synchronous_web_apps
+    return False
+
+
+@quickcache(['domain'], timeout=24 * 60 * 60, memoize_timeout=60)
+def case_search_sync_cases_on_form_entry_enabled_for_domain(domain):
+    if not case_search_enabled_for_domain(domain):
+        return False
+
+    config = CaseSearchConfig.objects.get_or_none(pk=domain)
+    if config:
+        return config.sync_cases_on_form_entry
     return False
 
 
