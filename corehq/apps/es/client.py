@@ -659,7 +659,7 @@ class ElasticDocumentAdapter(BaseAdapter):
             if scroll_id:
                 self._es.clear_scroll(body={"scroll_id": [scroll_id]}, ignore=(404,))
 
-    def index(self, doc, refresh=False, **kw):
+    def index(self, doc, refresh=False):
         """Index (send) a new document in (to) Elasticsearch
 
         Equivalent to the legacy
@@ -668,19 +668,16 @@ class ElasticDocumentAdapter(BaseAdapter):
         :param doc: the (Python model) document to index
         :param refresh: ``bool`` refresh the effected shards to make this
                         operation visible to search
-        :param **kw: extra parameters passed directly to the underlying
-                     ``elasticsearch.Elasticsearch.index()`` method.
         """
-        # TODO: remove **kw and standardize which arguments HQ uses
         doc_id, source = self.from_python(doc)
         self._verify_doc_id(doc_id)
         self._verify_doc_source(source)
-        self._index(doc_id, source, refresh, **kw)
+        self._index(doc_id, source, refresh)
 
-    def _index(self, doc_id, source, refresh, **kw):
+    def _index(self, doc_id, source, refresh):
         """Perform the low-level (3rd party library) index operation."""
         self._es.index(self.index_name, self.type, source, doc_id,
-                       refresh=self._refresh_value(refresh), **kw)
+                       refresh=self._refresh_value(refresh))
 
     def update(self, doc_id, fields, return_doc=False, refresh=False,
                _upsert=False, retry_on_conflict=None):
@@ -1211,7 +1208,7 @@ class ElasticMultiplexAdapter(BaseAdapter):
             resp = list(exc.errors[0].values())[0]
             raise NotFoundError(resp.pop("status"), str(resp), resp) from exc
 
-    def index(self, doc, refresh=False, **kw):
+    def index(self, doc, refresh=False):
         """Index into both primary and secondary via the ``bulk()`` method in
         order to perform both actions in a single HTTP request.
         """
