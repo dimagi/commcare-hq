@@ -66,7 +66,8 @@ specific to JavaScript or more frequently arise in it:
   data. Push the author to leave the code better than they found it. Don't allow the same identifier to be used
   with different capitalizations.
 - JavaScript should be enclosed in modules and those modules should explicitly declare dependencies, as in the
-  first code block here. Exceptions are app manager, reports, and web apps.
+  first code block `here
+  <https://commcare-hq.readthedocs.io/js-guide/dependencies.html#how-do-i-know-whether-or-not-im-working-with-requirejs>`__. Exceptions are app manager, reports, and web apps.
 - Avoid long lists of params. Prefer kwargs-style objects and use ``assert_properties`` to verify they contain the
   expected options.
 - Make sure any js access of `initial page data <https://commcare-hq.readthedocs.io/js-guide/integration-patterns.html#javascript-in-django-templates>`__ is guaranteed not to happen until the page is fully loaded.
