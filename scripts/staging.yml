@@ -74,7 +74,6 @@ branches:
     - pkv/accessibility-pagination-widget-on-incomplete-forms # Pawan Feb 1
     # - ce/enable-case-rate-limits # Cal Feb 1
     # - ml/enforce-metadata-ff # Minha Feb 2
-    - akj/tabular-radio-btn-reader # Akash Feb 6
     - jt/ush_2575_case_search_pull_related_cases # Jonathan T. Feb 6
     - sk/webapps-sessionid  # Simon Feb 9
     - jls/nodeset-filter-ui # Jenny Feb 13
