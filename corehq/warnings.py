@@ -33,6 +33,7 @@ WHITELIST = [
     ("logentry_admin.admin", "ugettext_lazy() is deprecated"),
     ("nose.importer", "the imp module is deprecated"),
     ("nose.util", "inspect.getargspec() is deprecated"),
+    ("pkg_resources", "pkg_resources.declare_namespace"),
     ("tastypie", "django.conf.urls.url() is deprecated"),
     ("tastypie", "request.is_ajax() is deprecated"),
     ("nose.suite", "'collections.abc'"),
