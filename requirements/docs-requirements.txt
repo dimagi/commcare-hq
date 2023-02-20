@@ -299,6 +299,7 @@ markupsafe==2.1.2
     # via
     #   jinja2
     #   mako
+    #   werkzeug
 mdit-py-plugins==0.2.8
     # via myst-parser
 myst-parser==0.15.2
@@ -567,7 +568,7 @@ vine==5.0.0
     #   kombu
 wcwidth==0.2.5
     # via prompt-toolkit
-werkzeug==1.0.1
+werkzeug==2.2.3
     # via -r base-requirements.in
 wrapt==1.12.1
     # via deprecated
