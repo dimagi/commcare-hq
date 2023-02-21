@@ -1,3 +1,3 @@
 
-class EventNotPersistedError(Exception):
+class EventDoesNotExist(Exception):
     pass
