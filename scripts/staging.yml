@@ -81,7 +81,7 @@ branches:
     - ad/tableau-user-syncing-bulk # Addison Feb 15
     - es/date-widget  # Ethan Feb 15
     - em/app-summary-conditional-case-update-status # Evan Feb 15
-    - rc/media-upload-spinner-fix # Robert Feb 16
+    # - rc/media-upload-spinner-fix # Robert Feb 16
     - smh/print-button # Steph Feb 17
     - ze/remove_deprecated_from_case_export # Zandre Feb 20
     - gh/handle-deleted-upstream-model # Graham Feb 20
