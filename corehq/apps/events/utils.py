@@ -36,3 +36,7 @@ def create_case_with_case_type(case_type, case_args, index=None):
 
 def case_index_event_identifier(event_id):
     return f'event-{event_id}'
+
+
+def find_difference(a, b):
+    return set(b).difference(set(a)), set(a).difference(set(b))

@@ -65,23 +65,27 @@ class Event(models.Model):
     def status(self):
         return self.attendee_list_status
 
-    def update_attendees(self, attendees_case_ids):
+    def _update_attendees(self, attendees_case_ids):
         current_attendees_ids = Attendee.get_by_event_id(
             self.event_id,
             self.domain,
             only_ids=True
         )
 
-        attendees_ids_to_assign = set(attendees_case_ids).difference(set(current_attendees_ids))
-        attendees_ids_to_unassign = set(current_attendees_ids).difference(set(attendees_case_ids))
+        attendees_to_assign, attendees_to_unassign = find_difference(
+            current_attendees_ids,
+            attendees_case_ids
+        )
 
-        self._assign_attendees(attendees_ids_to_assign)
-        self._unassign_attendees(attendees_ids_to_unassign)
+        self._assign_attendees(attendees_to_assign)
+        self._unassign_attendees(attendees_to_unassign)
+
+        self.expected_attendees = Attendee.get_by_event_id(self.event_id, self.domain)
 
     def _assign_attendees(self, attendees_case_ids):
-        """
-        - Is there a better way of doing what this method tries to achieve?
-        """
+        if not attendees_case_ids:
+            return
+
         domain = self.domain
         event_id = self.event_id
 
@@ -94,7 +98,6 @@ class Event(models.Model):
                 'parent_case_id': parent_case_id,
                 'identifier': case_index_event_identifier(event_id),
             }
-
             create_case_with_case_type(
                 case_type=Attendee.EVENT_ATTENDEE_CASE_TYPE,
                 case_args=case_args,
@@ -102,27 +105,25 @@ class Event(models.Model):
             )
 
     def _unassign_attendees(self, attendees_case_ids):
-        """
-        - Is there a better way of doing what this method tries to achieve?
-        - Should we close the case or delete it?
-        """
-        def _case_is_related_to_event(case_: CommCareCase):
-            return case_.get_case_property('event_id') == self.event_id
+        # Todo: maybe refactor to use 'tag_cases_as_deleted_and_remove_indices'
+
+        if not attendees_case_ids:
+            return
 
         extension_case_ids = CommCareCaseIndex.objects.get_extension_case_ids(
             domain=self.domain,
-            case_ids=attendees_case_ids,
+            case_ids=list(attendees_case_ids),
         )
 
-        cases_to_delete = []
-        for extension_case in CommCareCase.objects.get_cases(extension_case_ids, self.domain):
-            if _case_is_related_to_event(extension_case):
-                cases_to_delete.append(extension_case)
-
-        CommCareCase.objects.soft_delete_cases(self.domain, cases_to_delete)  # should we hard delete?
+        CommCareCase.objects.soft_delete_cases(
+            domain=self.domain,
+            case_ids=extension_case_ids,
+        )
 
         for db in get_db_aliases_for_partitioned_query():
-            CommCareCaseIndex.objects.using(db).filter(domain=self.domain, case_id__in=extension_case_ids).delete()
+            CommCareCaseIndex.objects.using(db)\
+                .filter(referenced_id__in=attendees_case_ids)\
+                .delete()
 
 
 def get_domain_attendee_cases(domain):
