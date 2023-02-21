@@ -1,6 +1,7 @@
 import requests
 from unittest import mock
 from django.test import TestCase
+from corehq.apps.reports.const import HQ_TABLEAU_GROUP_NAME
 from corehq.apps.reports.exceptions import TableauAPIError
 from corehq.apps.reports.models import TableauAPISession, TableauConnectedApp, TableauServer
 
@@ -9,8 +10,8 @@ class FakeTableauInstance(mock.MagicMock):
 
     def __init__(self):
         super(FakeTableauInstance, self).__init__()
-        self.groups = {'group1': '1a2b3', 'group2': 'c4d5e', 'group3': 'zx39n'}
-        self.users = {'angie@dimagi.com': 'zx8cv', 'jeff@company.com': 'uip12', 'steve@company.com': 'ty78ui'}
+        self.groups = {'group1': '1a2b3', 'group2': 'c4d5e', 'group3': 'zx39n', HQ_TABLEAU_GROUP_NAME: 'bn12m'}
+        self.users = {'edith@wharton.com': 'zx8cv', 'jeff@company.com': 'uip12', 'george@eliot.com': 'ty78ui'}
         self.group_names = list(self.groups.keys())
         self.group_ids = list(self.groups.values())
         self.users_names = list(self.users.keys())
@@ -52,9 +53,8 @@ class FakeTableauInstance(mock.MagicMock):
         }
         """)
 
-    def query_groups_response(self, group_name=None):
-        if group_name:
-            return self._create_response("""
+    def get_group_response(self, group_name):
+        return self._create_response("""
                 {
                     "groups": {
                         "group": [
@@ -68,44 +68,44 @@ class FakeTableauInstance(mock.MagicMock):
                         ]
                     }
                 }
-                """ % (self.groups[group_name], group_name)
-            )
-        else:
-            return self._create_response("""
-                {
-                    "pagination": {
-                        "pageNumber": "1",
-                        "pageSize": "1000",
-                        "totalAvailable": "2"
-                    },
-                    "groups": {
-                        "group": [
-                            {
-                                "domain": {
-                                    "name": "local"
-                                },
-                                "id": "%s",
-                                "name": "%s"
+                """ % (self.groups[group_name], group_name))
+
+    def query_groups_response(self):
+        return self._create_response("""
+            {
+                "pagination": {
+                    "pageNumber": "1",
+                    "pageSize": "1000",
+                    "totalAvailable": "2"
+                },
+                "groups": {
+                    "group": [
+                        {
+                            "domain": {
+                                "name": "local"
                             },
-                            {
-                                "domain": {
-                                    "name": "local"
-                                },
-                                "id": "%s",
-                                "name": "%s"
+                            "id": "%s",
+                            "name": "%s"
+                        },
+                        {
+                            "domain": {
+                                "name": "local"
                             },
-                            {
-                                "domain": {
-                                    "name": "local"
-                                },
-                                "id": "%s",
-                                "name": "%s"
-                            }
-                        ]
-                    }
+                            "id": "%s",
+                            "name": "%s"
+                        },
+                        {
+                            "domain": {
+                                "name": "local"
+                            },
+                            "id": "%s",
+                            "name": "%s"
+                        }
+                    ]
                 }
-                """ % (self.group_ids[0], self.group_names[0], self.group_ids[1], self.group_names[1],
-                       self.group_ids[2], self.group_names[2]))
+            }
+            """ % (self.group_ids[0], self.group_names[0], self.group_ids[1], self.group_names[1],
+                   self.group_ids[2], self.group_names[2]))
 
     def get_users_in_group_response(self):
         return self._create_response("""
@@ -120,7 +120,7 @@ class FakeTableauInstance(mock.MagicMock):
                         {
                             "externalAuthUserId": "",
                             "id": "%s",
-                            "name": "%s",
+                            "name": "HQ/%s",
                             "siteRole": "Viewer",
                             "locale": "local",
                             "language": "en"
@@ -128,7 +128,7 @@ class FakeTableauInstance(mock.MagicMock):
                         {
                             "externalAuthUserId": "",
                             "id": "%s",
-                            "name": "%s",
+                            "name": "HQ/%s",
                             "siteRole": "Explorer",
                             "locale": "local",
                             "language": "en"
@@ -220,25 +220,29 @@ class FakeTableauInstance(mock.MagicMock):
         return mock_response
 
 
+def _setup_test_tableau_server(test_case, domain):
+    test_case.test_server = TableauServer(
+        domain=domain,
+        server_type='server',
+        server_name='test_server',
+        validate_hostname='host name',
+        target_site='target site'
+    )
+    test_case.test_server.save()
+    test_case.connected_app = TableauConnectedApp(
+        app_client_id='asdf1234',
+        secret_id='zxcv5678',
+        server=test_case.test_server
+    )
+    test_case.connected_app.save()
+    test_case.tableau_instance = FakeTableauInstance()
+
+
 class TestTableauAPISession(TestCase):
 
     def setUp(self):
         self.domain = 'test-domain-name'
-        self.test_server = TableauServer(
-            domain=self.domain,
-            server_type='server',
-            server_name='test_server',
-            validate_hostname='host name',
-            target_site='target site'
-        )
-        self.test_server.save()
-        self.connected_app = TableauConnectedApp(
-            app_client_id='asdf1234',
-            secret_id='zxcv5678',
-            server=self.test_server
-        )
-        self.connected_app.save()
-        self.tableau_instance = FakeTableauInstance()
+        _setup_test_tableau_server(self, self.domain)
         super(TestTableauAPISession, self).setUp()
 
     def test_connected_app_encryption(self):
@@ -277,13 +281,18 @@ class TestTableauAPISession(TestCase):
         self._assert_subset({'Content-Type': 'application/json'}, api_session.headers)
 
     @mock.patch('corehq.apps.reports.models.requests.request')
-    def test_query_groups(self, mock_request):
+    def test_get_group(self, mock_request):
         api_session = self._create_session()
         api_session = self._sign_in(api_session=api_session)
         group_1_name = 'group1'
-        mock_request.return_value = self.tableau_instance.query_groups_response(group_1_name)
-        group1 = api_session.query_groups(group_1_name)
+        mock_request.return_value = self.tableau_instance.get_group_response(group_1_name)
+        group1 = api_session.get_group(group_1_name)
         self.assertEqual(group1['id'], '1a2b3')
+
+    @mock.patch('corehq.apps.reports.models.requests.request')
+    def test_query_groups(self, mock_request):
+        api_session = self._create_session()
+        api_session = self._sign_in(api_session=api_session)
         mock_request.return_value = self.tableau_instance.query_groups_response()
         groups = api_session.query_groups()
         self.assertEqual(len(groups), 3)
