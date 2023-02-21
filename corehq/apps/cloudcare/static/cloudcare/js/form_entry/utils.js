@@ -92,7 +92,7 @@ hqDefine("cloudcare/js/form_entry/utils", function () {
         inputEl.on('keydown', _.debounce((e) => {
             inputOnKeyDown(e);
 
-            if (e.keyCode === 38 || e.keyCode === 40) {
+            if (e.key === "ArrowUp" || e.key === "ArrowDown") {
                 $("#geocoder-option-sr").html("<p>" + $("ul.suggestions li.active").text() + "</p>");
             }
         }, 200));
