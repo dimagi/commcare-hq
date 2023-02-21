@@ -698,6 +698,14 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
         events: {
             'click': 'onChangeLang',
         },
+        initialize: function (options) {
+            this.languageOptionsEnabled = options.languageOptionsEnabled;
+        },
+        templateContext: function () {
+            return {
+                languageOptionsEnabled: this.languageOptionsEnabled
+            };
+        },
         onChangeLang: function (e) {
             var lang = e.target.id;
             $.publish('formplayer.change_lang', lang);
@@ -709,6 +717,11 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
         tagName: 'li',
         childView: LanguageOptionView,
         childViewContainer: 'ul',
+        childViewOptions: function () {
+            return {
+                languageOptionsEnabled: Boolean(this.options.collection),
+            };
+        },
         templateContext: function () {
             var languageOptionsEnabled = Boolean(this.options.collection);
             var printOptionsEnabled = this.options.printEnabled;
