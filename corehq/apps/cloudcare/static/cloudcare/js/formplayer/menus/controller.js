@@ -92,7 +92,7 @@ hqDefine("cloudcare/js/formplayer/menus/controller", function () {
         var menuListView = menusUtils.getMenuView(menuResponse);
         var appPreview = FormplayerFrontend.currentUser.displayOptions.singleAppMode;
         var changeFormLanguage = FormplayerFrontend.currentUser.changeFormLanguage;
-        var enablePrintOption = FormplayerFrontend.currentUser.enablePrintOption;
+        var enablePrintOption = FormplayerFrontend.currentUser.enablePrintOption && !menuResponse.queryKey;
 
         if (menuListView) {
             FormplayerFrontend.regions.getRegion('main').show(menuListView);
@@ -106,9 +106,9 @@ hqDefine("cloudcare/js/formplayer/menus/controller", function () {
         if (menuResponse.breadcrumbs) {
             menusUtils.showBreadcrumbs(menuResponse.breadcrumbs);
             if (menuResponse.langs && menuResponse.langs.length > 1 && !appPreview && changeFormLanguage) {
-                menusUtils.showLanguageMenu(menuResponse.langs);
+                menusUtils.showLanguageMenu(menuResponse.langs, enablePrintOption);
             }
-            else if (enablePrintOption && !menuResponse.queryKey) {
+            else if (enablePrintOption) {
                 menusUtils.showPrintOption();
             }
         } else {

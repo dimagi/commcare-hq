@@ -709,11 +709,14 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
         tagName: 'li',
         childView: LanguageOptionView,
         childViewContainer: 'ul',
-    });
-
-    var PrintMenuView = Marionette.CollectionView.extend({
-        template: _.template($("#print-menu-template").html() || ""),
-        tagName: 'li',
+        templateContext: function () {
+            var languageOptionsEnabled = Boolean(this.options.collection);
+            var printOptionsEnabled = this.options.printEnabled;
+            return {
+                languageOptionsEnabled: languageOptionsEnabled,
+                printOptionsEnabled: printOptionsEnabled,
+            };
+        },
         attributes: function () {
             return {
                 "tabindex": "0",
@@ -724,7 +727,9 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
         },
         printKeyAction: function (e) {
             if (e.keyCode === 13) {
-                window.print();
+                if (this.options.printEnabled) {
+                    window.print();
+                }
             }
         },
     });
@@ -823,9 +828,6 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
         },
         FormMenuView: function (options) {
             return new FormMenuView(options);
-        },
-        PrintMenuView: function (options) {
-            return new PrintMenuView(options);
         },
         CaseDetailFooterView: function (options) {
             return new CaseDetailFooterView(options);

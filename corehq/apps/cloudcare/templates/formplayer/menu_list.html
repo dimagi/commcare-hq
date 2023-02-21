@@ -128,21 +128,19 @@
 </script>
 
 <script type="text/template" id="form-menu-template">
-   <i class="fa fa-bars dropdown-toggle" data-toggle="dropdown"></i>
+   <i class="fa fa-bars dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"></i>
    <ul class="dropdown-menu dropdown-menu-right">
-     <li class="dropdown-header">{% trans "Languages" %}</li>
+     <% if (printOptionsEnabled) { %>
+     <li class="dropdown-header" id="print-header" tabindex="0" onclick="window.print()">{% trans "Print" %}</li>
+     <% } %>
+     <% if (languageOptionsEnabled) { %>
+     <li class="dropdown-header" tabindex="0">{% trans "Languages" %}</li>
+     <% } %>
    </ul>
 </script>
 
 <script type="text/template" id="language-option-template">
+  <% if (languageOptionsEnabled) { %>
   <a class="lang" id="<%- lang %>"><%- lang %></a>
-</script>
-
-<script type="text/template" id="print-menu-template">
-   <i class="fa fa-bars dropdown-toggle" data-toggle="dropdown">
-     <span class="sr-only">{% trans "Print" %}</span>
-   </i>
-   <ul class="dropdown-menu dropdown-menu-right">
-     <li class="dropdown-header" onclick="window.print()">{% trans "Print" %}</li>
-   </ul>
+  <% } %>
 </script>
