@@ -42,6 +42,11 @@ from corehq.apps.linked_domain.view_helpers import (
     get_upstream_and_downstream_keywords,
     get_upstream_and_downstream_reports,
     get_upstream_and_downstream_ucr_expressions,
+    pop_app,
+    pop_fixture,
+    pop_keyword,
+    pop_report,
+    pop_ucr_expression,
 )
 from corehq.apps.sms.models import Keyword, KeywordAction
 from corehq.apps.userreports.const import UCR_NAMED_EXPRESSION
@@ -885,3 +890,21 @@ class TestBuildPullableViewModels(BaseLinkedDomainTest):
             link=self.domain_link, date=datetime.utcnow(), model=model_type, model_detail=model_detail
         )
         sync_event.save()
+
+
+class PopDataModelsTests(TestCase):
+
+    def test_pop_app_returns_none_if_does_not_exist(self):
+        self.assertIsNone(pop_app('unknown', {}))
+
+    def test_pop_fixture_returns_none_if_does_not_exist(self):
+        self.assertIsNone(pop_fixture('unknown', {}, 'pop-test'))
+
+    def test_pop_report_returns_none_if_does_not_exist(self):
+        self.assertIsNone(pop_report('unknown', {}))
+
+    def test_pop_keyword_returns_none_if_does_not_exist(self):
+        self.assertIsNone(pop_keyword(0, {}))
+
+    def test_pop_ucr_expression_returns_none_if_does_not_exist(self):
+        self.assertIsNone(pop_ucr_expression(0, {}))
