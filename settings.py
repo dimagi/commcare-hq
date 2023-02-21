@@ -1231,6 +1231,7 @@ TEMPLATES = [
                 'corehq.util.context_processors.emails',
                 'corehq.util.context_processors.status_page',
                 'corehq.util.context_processors.sentry',
+                'corehq.util.context_processors.bootstrap5',
             ],
             'debug': DEBUG,
             'loaders': [
