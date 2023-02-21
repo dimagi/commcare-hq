@@ -33,9 +33,20 @@ ALLOWED_CASE_IDENTIFIER_TYPES = [
 ]
 
 
-def submit_case_blocks(case_blocks, domain, username="system", user_id=None,
-                       xmlns=None, attachments=None, form_id=None,
-                       submission_extras=None, case_db=None, device_id=None, form_name=None, max_wait=...):
+def submit_case_blocks(
+    case_blocks,
+    domain,
+    username="system",
+    user_id=None,
+    xmlns=None,
+    attachments=None,
+    form_id=None,
+    submission_extras=None,
+    case_db=None,
+    device_id=None,
+    form_name=None,
+    max_wait=...,
+):
     """
     Submits casexml in a manner similar to how they would be submitted from a phone.
 
@@ -104,8 +115,14 @@ def get_case_by_identifier(domain, identifier):
     return None
 
 
-def submit_case_block_from_template(domain, template, context, xmlns=None,
-        user_id=None, device_id=None):
+def submit_case_block_from_template(
+    domain,
+    template,
+    context,
+    xmlns=None,
+    user_id=None,
+    device_id=None,
+):
     case_block = render_to_string(template, context)
     # Ensure the XML is formatted properly
     # An exception is raised if not
@@ -120,7 +137,13 @@ def submit_case_block_from_template(domain, template, context, xmlns=None,
     )
 
 
-def _get_update_or_close_case_block(case_id, case_properties=None, close=False, owner_id=None, domain=None):
+def _get_update_or_close_case_block(
+    case_id,
+    case_properties=None,
+    close=False,
+    owner_id=None,
+    domain=None,
+):
     kwargs = {
         'create': False,
         'user_id': SYSTEM_USER_ID,
@@ -136,8 +159,17 @@ def _get_update_or_close_case_block(case_id, case_properties=None, close=False, 
     return CaseBlock.deprecated_init(case_id, **kwargs)
 
 
-def update_case(domain, case_id, case_properties=None, close=False,
-                xmlns=None, device_id=None, form_name=None, owner_id=None, max_wait=...):
+def update_case(
+    domain,
+    case_id,
+    case_properties=None,
+    close=False,
+    xmlns=None,
+    device_id=None,
+    form_name=None,
+    owner_id=None,
+    max_wait=...,
+):
     """
     Updates or closes a case (or both) by submitting a form.
     domain - the case's domain

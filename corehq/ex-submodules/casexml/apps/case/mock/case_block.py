@@ -23,10 +23,24 @@ class CaseBlock(object):
     undefined = object()
     _built_ins = {'case_type', 'case_name', 'owner_id'}
 
-    def __init__(self, case_id, date_modified=None, user_id=undefined,
-                 owner_id=undefined, external_id=undefined, case_type=undefined,
-                 case_name=undefined, create=False, date_opened=undefined, update=None,
-                 close=False, index=None, strict=True, date_opened_deprecated_behavior=False, domain=None):
+    def __init__(
+        self,
+        case_id,
+        date_modified=None,
+        user_id=undefined,
+        owner_id=undefined,
+        external_id=undefined,
+        case_type=undefined,
+        case_name=undefined,
+        create=False,
+        date_opened=undefined,
+        update=None,
+        close=False,
+        index=None,
+        strict=True,
+        date_opened_deprecated_behavior=False,
+        domain=None,
+    ):
         """
         When `date_opened_deprecated_behavior`, a date_opened YYYY-MM-DD value is inserted on new cases.
         This is deprecated behavior, because it prevents the superior default behavior from kicking in.
