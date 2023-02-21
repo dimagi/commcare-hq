@@ -367,6 +367,7 @@ class CaseSearchConfigView(BaseAdminProjectSettingsView):
         config, _ = CaseSearchConfig.objects.update_or_create(domain=self.domain, defaults={
             'enabled': request_json.get('enable'),
             'synchronous_web_apps': request_json.get('synchronous_web_apps'),
+            'sync_cases_on_form_entry': request_json.get('sync_cases_on_form_entry'),
         })
         case_search_synchronous_web_apps_for_domain.clear(self.domain)
         config.ignore_patterns.set(updated_ignore_patterns)
@@ -384,6 +385,7 @@ class CaseSearchConfigView(BaseAdminProjectSettingsView):
             'values': {
                 'enabled': config.enabled,
                 'synchronous_web_apps': config.synchronous_web_apps,
+                'sync_cases_on_form_entry': config.sync_cases_on_form_entry,
                 'fuzzy_properties': {
                     fp.case_type: fp.properties for fp in config.fuzzy_properties.all()
                 },
