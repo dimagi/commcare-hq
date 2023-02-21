@@ -318,6 +318,34 @@ hqDefine('cloudcare/js/utils', [
         }
     };
 
+    var dateTimePickerTooltips = {     // use default text, but enable translations
+        today: gettext('Go to today'),
+        clear: gettext('Clear selection'),
+        close: gettext('Close the picker'),
+        selectMonth: gettext('Select Month'),
+        prevMonth: gettext('Previous Month'),
+        nextMonth: gettext('Next Month'),
+        selectYear: gettext('Select Year'),
+        prevYear: gettext('Previous Year'),
+        nextYear: gettext('Next Year'),
+        selectDecade: gettext('Select Decade'),
+        prevDecade: gettext('Previous Decade'),
+        nextDecade: gettext('Next Decade'),
+        prevCentury: gettext('Previous Century'),
+        nextCentury: gettext('Next Century'),
+        pickHour: gettext('Pick Hour'),
+        incrementHour: gettext('Increment Hour'),
+        decrementHour: gettext('Decrement Hour'),
+        pickMinute: gettext('Pick Minute'),
+        incrementMinute: gettext('Increment Minute'),
+        decrementMinute: gettext('Decrement Minute'),
+        pickSecond: gettext('Pick Second'),
+        incrementSecond: gettext('Increment Second'),
+        decrementSecond: gettext('Decrement Second'),
+        togglePeriod: gettext('Toggle Period'),
+        selectTime: gettext('Select Time'),
+    }
+
     /**
      *  Convert two-digit year to four-digit year.
      *  Differs from JavaScript's two-year parsing to better match CommCare,
@@ -343,71 +371,63 @@ hqDefine('cloudcare/js/utils', [
         return inputDate;
     };
 
-    var initDateTimePicker = function ($el, extraOptions) {
+    var initDatePicker = function ($el, selectedDate, dateFormat) {
         if (!$el.length) {
             return;
         }
 
-        extraOptions = extraOptions || {};
-        $el.datetimepicker(_.extend({
+        dateFormat = dateFormat || "MM/DD/YYYY";
+        $el.datetimepicker({
+            date: selectedDate,
             useCurrent: false,
             showClear: true,
             showClose: true,
             showTodayButton: true,
             debug: true,
-            extraFormats: ["MM/DD/YYYY", "MM/DD/YY"],
+            format: dateFormat,
+            extraFormats: ["MM/DD/YYYY", "MM/DD/YY", "YYYY-MM-DD"],
+            useStrict: true,
             icons: {
                 today: 'glyphicon glyphicon-calendar',
             },
-            tooltips: {     // use default text, but enable translations
-                today: gettext('Go to today'),
-                clear: gettext('Clear selection'),
-                close: gettext('Close the picker'),
-                selectMonth: gettext('Select Month'),
-                prevMonth: gettext('Previous Month'),
-                nextMonth: gettext('Next Month'),
-                selectYear: gettext('Select Year'),
-                prevYear: gettext('Previous Year'),
-                nextYear: gettext('Next Year'),
-                selectDecade: gettext('Select Decade'),
-                prevDecade: gettext('Previous Decade'),
-                nextDecade: gettext('Next Decade'),
-                prevCentury: gettext('Previous Century'),
-                nextCentury: gettext('Next Century'),
-                pickHour: gettext('Pick Hour'),
-                incrementHour: gettext('Increment Hour'),
-                decrementHour: gettext('Decrement Hour'),
-                pickMinute: gettext('Pick Minute'),
-                incrementMinute: gettext('Increment Minute'),
-                decrementMinute: gettext('Decrement Minute'),
-                pickSecond: gettext('Pick Second'),
-                incrementSecond: gettext('Increment Second'),
-                decrementSecond: gettext('Decrement Second'),
-                togglePeriod: gettext('Toggle Period'),
-                selectTime: gettext('Select Time'),
+            tooltips: dateTimePickerTooltips,
+            parseInputDate: function (dateString) {
+                if (!moment.isMoment(dateString) || dateString instanceof Date) {
+                    dateString = convertTwoDigitYear(dateString);
+                }
+                let dateObj = moment(dateString, dateFormat);
+                return dateObj.isValid() ? dateObj : null;
             },
-        }, extraOptions));
-
-        var picker = $el.data("DateTimePicker");
-        picker.parseInputDate(function (dateString) {
-            if (!moment.isMoment(dateString) || dateString instanceof Date) {
-                dateString = convertTwoDigitYear(dateString);
-            }
-            if (extraOptions.parseInputDate) {
-                return extraOptions.parseInputDate(dateString);
-            }
-            let dateObj = picker.getMoment(dateString);     // undocumented/private datetimepicker function
-            return dateObj.isValid() ? dateObj : "";
         });
 
-        $el.on("focusout", function () {
-            picker.hide();
+        $el.on("focusout", $el.data("DateTimePicker").hide);
+        $el.attr("placeholder", dateFormat);
+        $el.attr("pattern", "[0-9-/]+");
+    };
+
+    var initTimePicker = function ($el, selectedTime, dateFormat) {
+        if (!$el.length) {
+            return;
+        }
+
+        $el.datetimepicker({
+            date: selectedTime,
+            format: dateFormat,
+            useStrict: true,
+            useCurrent: false,
+            showClear: true,
+            showClose: true,
+            debug: true,
+            tooltips: dateTimePickerTooltips,
         });
+
+        $el.on("focusout", $el.data("DateTimePicker").hide);
     };
 
     return {
         convertTwoDigitYear: convertTwoDigitYear,
-        initDateTimePicker: initDateTimePicker,
+        initDatePicker: initDatePicker,
+        initTimePicker: initTimePicker,
         getFormUrl: getFormUrl,
         getSubmitUrl: getSubmitUrl,
         showError: showError,
