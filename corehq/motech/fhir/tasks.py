@@ -207,6 +207,16 @@ def claim_service_request(requests, service_request, case_id, attempt=0):
 
 
 def build_case_block(resource_type, resource, suggested_case_id):
+    """
+    Returns a `CaseBlock` to create or update a case corresponding to a
+    FHIR resource.
+
+    :param resource_type: A FHIRResourceType
+    :param resource: A dict
+    :param suggested_case_id: Used if `resource` doesn't correspond to a
+        case already.
+    :return: A CaseBlock
+    """
     domain = resource_type.domain
     case_type = resource_type.case_type.name
     owner_id = resource_type.import_config.owner_id
