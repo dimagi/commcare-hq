@@ -73,7 +73,7 @@ hqDefine("cloudcare/js/form_entry/utils", function () {
      * @param {Object} clearCallBack - function to call back after clearing the input
      * @param {Object} initialPageData - initial_page_data object
      */
-    module.renderMapboxInput = function (divId, itemCallback, clearCallBack, initialPageData) {
+    module.renderMapboxInput = function (divId, itemCallback, clearCallBack, initialPageData, inputOnKeyDown) {
         var defaultGeocoderLocation = initialPageData.get('default_geocoder_location') || {};
         var geocoder = new MapboxGeocoder({
             accessToken: initialPageData.get("mapbox_access_token"),
@@ -90,6 +90,8 @@ hqDefine("cloudcare/js/form_entry/utils", function () {
         var inputEl = $('input.mapboxgl-ctrl-geocoder--input');
         inputEl.addClass('form-control');
         inputEl.on('keydown', _.debounce((e) => {
+            inputOnKeyDown(e);
+
             if (e.keyCode === 38 || e.keyCode === 40) {
                 $("#geocoder-option-sr").html("<p>" + $("ul.suggestions li.active").text() + "</p>");
             }
