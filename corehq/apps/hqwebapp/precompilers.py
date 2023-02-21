@@ -31,7 +31,8 @@ class SassFilter(CompilerFilter):
 
     def __init__(self, content, attrs, **kwargs):
         super(SassFilter, self).__init__(content,
-                                         command='sass {infile} {outfile}',
+                                         command='sass {infile} {outfile} '
+                                                 '--load-path=node_modules/bootstrap5/scss',
                                          **kwargs)
 
     def input(self, **kwargs):
