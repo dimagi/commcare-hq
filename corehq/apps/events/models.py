@@ -92,10 +92,8 @@ class Event(models.Model):
             only_ids=True
         )
 
-        attendees_to_assign, attendees_to_unassign = find_difference(
-            current_attendees_ids,
-            attendees_case_ids
-        )
+        attendees_ids_to_assign = set(attendees_case_ids).difference(set(current_attendees_ids))
+        attendees_ids_to_unassign = set(current_attendees_ids).difference(set(attendees_case_ids))
 
         self._assign_attendees(list(attendees_to_assign))
         self._unassign_attendees(list(attendees_to_unassign))
@@ -117,6 +115,7 @@ class Event(models.Model):
                 'parent_case_id': parent_case_id,
                 'identifier': case_index_event_identifier(event_id),
             }
+
             create_case_with_case_type(
                 case_type=Attendee.EVENT_ATTENDEE_CASE_TYPE,
                 case_args=case_args,
