@@ -6,6 +6,8 @@ from django.http import Http404
 from django.utils.safestring import mark_safe
 from django.utils.translation import gettext_lazy as _
 
+from couchdbkit import ResourceNotFound
+
 from corehq.apps.app_manager.app_schemas.app_case_metadata import (
     FormQuestionResponse,
 )
@@ -48,7 +50,12 @@ def get_questions(domain, app_id, xmlns):
             _("Remote apps are not supported")
         )
 
-    xform = app.get_xform_by_xmlns(xmlns)
+    try:
+        xform = app.get_xform_by_xmlns(xmlns)
+    except ResourceNotFound:
+        raise QuestionListNotFound(_(
+            "We could not find the form source XML document"
+        ))
     if not xform:
         if xmlns == 'http://code.javarosa.org/devicereport':
             raise QuestionListNotFound(
