@@ -47,7 +47,7 @@ hqDefine('custom_data_fields/js/custom_data_fields', [
             return self.label() || self.slug();
         });
 
-        if (!toggles.toggleEnabled('REGEX_FIELD_VALIDATION')) {
+        if (!initialPageData.get('can_view_regex_field_validation')) {
             // if toggle isn't enabled - always show "choice" option
             self.validationMode('choice');
         }

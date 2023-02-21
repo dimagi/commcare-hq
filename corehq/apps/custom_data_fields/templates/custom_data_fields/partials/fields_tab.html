@@ -47,7 +47,7 @@
         </span>
       </th>
       <th class="col-sm-3">
-        {% if request|toggle_enabled:"REGEX_FIELD_VALIDATION" %}
+        {% if can_view_regex_field_validation %}
           {% trans "Validation" %}
           <span class="hq-help-template"
                 data-title="{% trans "Validation" %}"
@@ -89,7 +89,7 @@
       </td>
       <td>
 
-        {% if request|toggle_enabled:"REGEX_FIELD_VALIDATION" %}
+        {% if can_view_regex_field_validation %}
           <div class="btn-group btn-group-separated validation-options">
             <div data-bind="css: {active: !validationMode()},
                             click: function () {validationMode(undefined)}"
@@ -131,7 +131,7 @@
           </ul>
         </div>
 
-        {% if request|toggle_enabled:"REGEX_FIELD_VALIDATION" %}
+        {% if can_view_regex_field_validation %}
           <ul data-bind="visible: validationMode() === 'regex'"
               class="list-unstyled validation-list">
             <li><input data-bind="value: regex" class="form-control" type="text"

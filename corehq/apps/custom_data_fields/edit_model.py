@@ -17,7 +17,6 @@ from corehq.apps.callcenter.tasks import bulk_sync_usercases_if_applicable
 
 from corehq.apps.hqwebapp.decorators import use_jquery_ui
 from corehq.apps.app_manager.helpers.validators import load_case_reserved_words
-from corehq.toggles import REGEX_FIELD_VALIDATION
 
 from .models import (
     CustomDataFieldsDefinition,
@@ -311,7 +310,7 @@ class CustomDataModelMixin(object):
         return errors
 
     def get_field(self, field):
-        if REGEX_FIELD_VALIDATION.enabled(self.domain) and field.get('regex'):
+        if domain_has_privilege(self.domain, privileges.REGEX_FIELD_VALIDATION) and field.get('regex'):
             choices = []
             regex = field.get('regex')
             regex_msg = field.get('regex_msg')
@@ -336,6 +335,10 @@ class CustomDataModelMixin(object):
             "disable_save": self.request.method == "GET" or self.form.is_valid(),
             "show_purge_existing": self.show_purge_existing,
             "profiles_active": self.show_profiles and self.request.POST.get("profiles_active", "false") == "true",
+            "can_view_regex_field_validation": (
+                domain_has_privilege(self.domain, privileges.REGEX_FIELD_VALIDATION)
+                or self.request.user.is_superuser
+            )
         }
         if self.show_profiles:
             profiles = json.loads(self.form.data['profiles'])
