@@ -24,6 +24,9 @@ hqDefine('cloudcare/js/sentry', [
                         dom: false,
                         console: false,
                     }),
+                    new Sentry.Integrations.CaptureConsole({
+                        levels: ["error"]
+                    }),
                 ],
                 tunnel: initialPageData.reverse('report_sentry_error'),
                 autoSessionTracking: false

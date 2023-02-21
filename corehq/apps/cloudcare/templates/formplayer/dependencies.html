@@ -5,6 +5,7 @@
   <link href='https://api.mapbox.com/mapbox.js/v3.3.1/mapbox.css' rel='stylesheet' />
   {# serve sentry directly to prevent over zealous ad blockers from blocking it #}
   <script src="{% static 'sentry/js/sentry.browser.7.28.0.min.js' %}" crossorigin="anonymous"></script>
+  <script src="{% static 'sentry/js/sentry.captureconsole.7.28.0.min.js' %}" crossorigin="anonymous"></script>
 {% compress js %}
   <script src="{% static 'backbone/backbone.js' %}"></script>
   <script src="{% static 'backbone.radio/build/backbone.radio.min.js' %}"></script>
