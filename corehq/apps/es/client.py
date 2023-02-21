@@ -1099,7 +1099,7 @@ class ElasticMultiplexAdapter(BaseAdapter):
                         secondary_del_fails[doc_id] = error
                     else:
                         deduped_errs.setdefault(doc_id, error)
-            tombstone_ids = set(secondary_del_fails) - primary_del_fail_ids
+            tombstone_ids = secondary_del_fails.keys() - primary_del_fail_ids
             if tombstone_ids:
                 # add tombstones on secondary
                 try:
@@ -1148,7 +1148,7 @@ class ElasticMultiplexAdapter(BaseAdapter):
         - Any ``index`` action supersedes all prior actions for the same
           document ``_id``.
         - Any ``delete`` action supersedes previous ``delete`` actions for the
-          same document ``_id``, but does not superseded ``index`` actions.
+          same document ``_id``, but does not supersede ``index`` actions.
 
         For any unique document ``_id`` present in the original actions, there
         are only three possible action permutations yielded by this method:
@@ -1179,7 +1179,7 @@ class ElasticMultiplexAdapter(BaseAdapter):
 
         def flatten(by_id):
             """Iterate pruned actions, yielding ``(seq, action)`` tuples to
-            support sorting the actions in in their original order.
+            support sorting the actions in their original order.
             This could also be converted into a nested generator expression
             (instead of a this inline function definition), but the function
             implementation is easier to read.
