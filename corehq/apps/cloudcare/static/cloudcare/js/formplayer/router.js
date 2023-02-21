@@ -122,7 +122,7 @@ hqDefine("cloudcare/js/formplayer/router", function () {
     FormplayerFrontend.on("apps:currentApp", function () {
         var urlObject = utils.currentUrlToObject();
         urlObject.clearExceptApp();
-        utils.setUrlToObject(urlObject);
+        utils.setUrlToObject(urlObject, true);
         API.selectApp(urlObject.appId);
     });
 
