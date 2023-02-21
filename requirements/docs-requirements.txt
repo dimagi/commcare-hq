@@ -163,7 +163,7 @@ django-redis==4.12.1
     # via -r base-requirements.in
 django-redis-sessions==0.6.2
     # via -r base-requirements.in
-django-statici18n==1.9.0
+django-statici18n==2.3.1
     # via -r base-requirements.in
 django-tastypie==0.14.4
     # via -r base-requirements.in
@@ -467,7 +467,6 @@ six==1.16.0
     #   click-repl
     #   django-braces
     #   django-oauth-toolkit
-    #   django-statici18n
     #   django-transfer
     #   django-websocket-redis
     #   dropbox
