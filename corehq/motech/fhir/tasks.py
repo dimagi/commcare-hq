@@ -238,7 +238,6 @@ def build_case_block(resource_type, resource, suggested_case_id):
         case_id=case.case_id if case else suggested_case_id,
         owner_id=owner_id,
         case_type=case_type,
-        date_opened=CaseBlock.undefined,
         external_id=external_id,
         **caseblock_kwargs,
     )
