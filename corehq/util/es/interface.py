@@ -35,7 +35,7 @@ class ElasticsearchInterface:
         doc_adapter = self._get_doc_adapter(index_alias, doc_type)
         return doc_adapter.get_docs(doc_ids)
 
-    def index_doc(self, index_alias, doc_type, doc_id, doc, params=None):
+    def index_doc(self, index_alias, doc_type, doc_id, doc):
         doc_adapter = self._get_doc_adapter(index_alias, doc_type)
         if doc.get("_id", object()) != doc_id:
             # TODO: raise an exception
@@ -43,8 +43,7 @@ class ElasticsearchInterface:
             # scenario if it happens.  Raising an exception here could cause a
             # regression in production code so this is left "as built" for now.
             doc["_id"] = doc_id
-        kw = {} if params is None else params
-        doc_adapter.index(doc, **kw)
+        doc_adapter.index(doc)
 
     def update_doc_fields(self, index_alias, doc_type, doc_id, fields, params=None):
         doc_adapter = self._get_doc_adapter(index_alias, doc_type)
