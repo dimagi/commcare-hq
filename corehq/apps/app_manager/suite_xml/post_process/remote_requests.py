@@ -149,7 +149,8 @@ class RemoteRequestFactory(object):
         if self.module.is_multi_select():
             data.ref = "."
             data.nodeset = self._get_multi_select_nodeset()
-            data.exclude = self._get_multi_select_exclude()
+            if not case_search_sync_cases_on_form_entry_enabled_for_domain(self.domain):
+                data.exclude = self._get_multi_select_exclude()
         else:
             data.ref = QuerySessionXPath(self.case_session_var).instance()
         return data
