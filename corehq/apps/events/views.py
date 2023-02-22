@@ -126,11 +126,11 @@ class EventCreateView(BaseEventView):
         context.update({'form': self.form})
         return context
 
-    def post(self, *args, **kwargs):
+    def post(self, request, *args, **kwargs):
         form = self.form
 
         if not form.is_valid():
-            return HttpResponseBadRequest()
+            return self.get(request, *args, **kwargs)
 
         event_data = form.cleaned_data
 

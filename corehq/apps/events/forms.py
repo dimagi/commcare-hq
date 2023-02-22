@@ -1,4 +1,5 @@
 from django import forms
+from django.core.exceptions import ValidationError
 from django.utils.translation import gettext_lazy as _
 
 from crispy_forms import layout as crispy
@@ -51,6 +52,13 @@ class CreateEventForm(forms.Form):
 
     def __init__(self, *args, **kwargs):
         self.domain = kwargs.pop('domain', None)
+        event = kwargs.pop('event', None)
+
+        if event:
+            kwargs['initial'] = self.compute_initial(event)
+        else:
+            kwargs['initial'] = None
+
         super(CreateEventForm, self).__init__(*args, **kwargs)
 
         self.fields['expected_attendees'].choices = self.get_attendee_choices()
@@ -81,6 +89,31 @@ class CreateEventForm(forms.Form):
             )
         )
 
+    @property
+    def current_values(self):
+        return {
+            'name': self['name'].value(),
+            'start_date': self['start_date'].value(),
+            'end_date': self['end_date'].value(),
+            'attendance_target': self['attendance_target'].value(),
+            'sameday_reg': self['sameday_reg'].value(),
+            'tracking_option': self['tracking_option'].value(),
+            'expected_attendees': self['expected_attendees'].value(),
+        }
+
+    def compute_initial(self, event):
+        return {
+            'name': event.name,
+            'start_date': event.start_date,
+            'end_date': event.end_date,
+            'attendance_target': event.attendance_target,
+            'sameday_reg': event.sameday_reg,
+            'tracking_option': TRACK_BY_DAY if event.track_each_day else TRACK_BY_EVENT,
+            'expected_attendees': [
+                attendee.case_id for attendee in event.get_expected_attendees()
+            ],
+        }
+
     def get_new_event_form(self):
         return CreateEventForm.create(self.cleaned_data)
 
@@ -88,6 +121,13 @@ class CreateEventForm(forms.Form):
         tracking_option = self.cleaned_data.get('tracking_option', TRACK_BY_DAY)
         self.cleaned_data['track_each_day'] = tracking_option == TRACK_BY_DAY
         return self.cleaned_data
+
+    def clean(self):
+        cleaned_data = self.cleaned_data
+        if cleaned_data['end_date'] < cleaned_data['start_date']:
+            raise ValidationError(_("End Date cannot be before Start Date"))
+
+        return cleaned_data
 
     def get_attendee_choices(self):
         return [
