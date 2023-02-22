@@ -2480,8 +2480,8 @@ REGEX_FIELD_VALIDATION = FrozenPrivilegeToggle(
     label='Regular Expression Validation for Custom Data Fields',
     tag=TAG_SOLUTIONS_OPEN,
     namespaces=[NAMESPACE_DOMAIN],
-    # description="This flag adds the option to specify a regular expression "
-    #             "(regex) to validate custom user data, custom location data, "
-    #             "and/or custom product data fields.",
+    description="This flag adds the option to specify a regular expression "
+                "(regex) to validate custom user data, custom location data, "
+                "and/or custom product data fields.",
     help_link='https://confluence.dimagi.com/display/saas/Regular+Expression+Validation+for+Custom+Data+Fields',
 )
