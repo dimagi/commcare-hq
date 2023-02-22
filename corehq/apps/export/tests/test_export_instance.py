@@ -201,6 +201,10 @@ class TestFormExportInstanceGeneration(SimpleTestCase):
     'corehq.apps.export.models.new.Domain.get_by_name',
     return_value=Domain(commtrack_enabled=False),
 )
+@mock.patch(
+    'corehq.apps.data_dictionary.util.get_deprecated_fields',
+    return_value={}
+)
 class TestCaseExportInstanceGeneration(SimpleTestCase):
 
     @classmethod
@@ -251,7 +255,7 @@ class TestCaseExportInstanceGeneration(SimpleTestCase):
 
             return CaseExportInstance.generate_instance_from_schema(schema, saved_export=saved_export)
 
-    def test_generate_instance_from_schema(self, _):
+    def test_generate_instance_from_schema(self, _, __):
         instance = self._generate_instance({self.app_id: 3}, self.schema)
 
         self.assertEqual(len(instance.tables), 1)
