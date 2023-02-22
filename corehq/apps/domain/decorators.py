@@ -385,12 +385,8 @@ def two_factor_exempt(view_func):
     return wraps(view_func)(wrapped_view)
 
 
-# Use api_auth or api_auth_with_scope decorators to allow -
-# any auth type basic, digest, session, apikey, or oauth
-api_auth = get_multi_auth_decorator(default=DIGEST)
-
-
-def api_auth_with_scope(oauth_scopes):
+def api_auth(*, allow_querystring_auth=True, oauth_scopes=None):
+    """Allow any auth type basic, digest, session, apikey, or oauth"""
     return get_multi_auth_decorator(default=DIGEST, oauth_scopes=oauth_scopes)
 
 

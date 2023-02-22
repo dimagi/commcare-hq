@@ -305,7 +305,7 @@ def excel_commit(request, domain):
 @waf_allow('XSS_BODY')
 @csrf_exempt
 @require_POST
-@api_auth
+@api_auth()
 @require_can_edit_data
 def bulk_case_upload_api(request, domain, **kwargs):
     try:
