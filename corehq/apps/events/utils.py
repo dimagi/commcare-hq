@@ -1,7 +1,10 @@
 import uuid
 from corehq.apps.hqcase.utils import submit_case_blocks
 from casexml.apps.case.mock import CaseBlock
-from corehq.form_processor.models import CommCareCaseIndex
+from corehq.form_processor.models import (
+    CommCareCaseIndex,
+    XFormInstance,
+)
 
 
 def create_case_with_case_type(case_type, case_args, index=None):
@@ -40,3 +43,10 @@ def case_index_event_identifier(event_id):
 
 def find_difference(a, b):
     return set(b).difference(set(a)), set(a).difference(set(b))
+
+
+def find_case_create_form(commcare_case, domain):
+    form_id = next(
+        (t.form_id for t in commcare_case.transactions if t.is_case_create)
+    )
+    return XFormInstance.objects.get_form(form_id, domain)
