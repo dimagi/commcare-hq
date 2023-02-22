@@ -85,7 +85,7 @@ class ElasticDomain(ElasticDocumentAdapter):
 
         doc_ret = copy(domain)
         sub = Subscription.visible_objects.filter(subscriber__domain=doc_ret['name'], is_active=True)
-        doc_ret['deployment'] = doc_ret.get('deployment', None) or {}
+        doc_ret['deployment'] = doc_ret.get('deployment') or {}
         countries = doc_ret['deployment'].get('countries', [])
         doc_ret['deployment']['countries'] = []
         if sub:
