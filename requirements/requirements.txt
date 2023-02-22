@@ -309,7 +309,7 @@ polib==1.1.1
     # via -r base-requirements.in
 prometheus-client==0.14.1
     # via -r base-requirements.in
-prompt-toolkit==3.0.29
+prompt-toolkit==3.0.36
     # via click-repl
 protobuf==3.18.3
     # via
