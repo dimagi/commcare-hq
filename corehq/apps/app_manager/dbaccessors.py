@@ -13,6 +13,7 @@ from corehq.apps.es import AppES
 from corehq.apps.es.aggregations import NestedAggregation, TermsAggregation
 from corehq.util.quickcache import quickcache
 from quickcache.django_quickcache import tiered_django_cache
+from corehq.toggles import VELLUM_SAVE_TO_CASE
 
 
 AppBuildVersion = namedtuple('AppBuildVersion', ['app_id', 'build_id', 'version', 'comment'])
@@ -504,10 +505,11 @@ def get_case_types_from_apps(domain):
     :returns: A set of case_types
     """
     save_to_case_updates = set()
-    for app in get_apps_in_domain(domain):
-        for form in app.get_forms():
-            for update in form.get_save_to_case_updates():
-                save_to_case_updates.add(update)
+    if VELLUM_SAVE_TO_CASE.enabled(domain):
+        for app in get_apps_in_domain(domain):
+            for form in app.get_forms():
+                for update in form.get_save_to_case_updates():
+                    save_to_case_updates.add(update)
 
     case_types_agg = NestedAggregation('modules', 'modules').aggregation(
         TermsAggregation('case_types', 'modules.case_type.exact'))
