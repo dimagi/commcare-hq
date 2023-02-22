@@ -501,7 +501,7 @@ def get_version_build_id(domain, app_id, version):
 def get_case_types_from_apps(domain):
     """
     Get the case types of modules in applications in the domain.
-    Also returns case types for SaveToCase properties in the domain.
+    Also returns case types for SaveToCase properties in the domain, if the toggle is enabled.
     :returns: A set of case_types
     """
     save_to_case_updates = set()
