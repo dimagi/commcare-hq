@@ -2,11 +2,15 @@
 AppES
 -----
 """
+from datetime import datetime
+
+from dimagi.utils.parsing import json_format_datetime
+
 from . import filters, queries
 from .client import ElasticDocumentAdapter, create_document_adapter
 from .es_query import HQESQuery
 from .index.settings import IndexSettingsKey
-from .transient_util import get_adapter_mapping, from_dict_with_possible_id
+from .transient_util import get_adapter_mapping
 
 
 class AppES(HQESQuery):
@@ -32,9 +36,29 @@ class ElasticApp(ElasticDocumentAdapter):
     def mapping(self):
         return get_adapter_mapping(self)
 
-    @classmethod
-    def from_python(cls, doc):
-        return from_dict_with_possible_id(doc)
+    def from_python(self, app):
+        """
+        Takes in an ``Application`` object or an app dict
+        and applies required transformation to make it suitable for ES.
+        The function is replica of ``transform_app_for_es`` with added support for user objects.
+        In future all references to  ``transform_app_for_es`` will be replaced by `from_python`
+
+        :param app: an instance of ``Application`` or ``dict`` which is ``Application.to_json()``
+
+        :raises TypeError: if object passes in not instance of ``ApplicationBase``
+        """
+        from corehq.apps.app_manager.models import ApplicationBase
+        from corehq.apps.app_manager.util import get_correct_app_class
+
+        if isinstance(app, dict):
+            app_obj = get_correct_app_class(app).wrap(app)
+        elif isinstance(app, ApplicationBase):
+            app_obj = app
+        else:
+            raise TypeError(f"Unknown type {type(app)}")
+        app_obj['@indexed_on'] = json_format_datetime(datetime.utcnow())
+        app_dict = app_obj.to_json()
+        return app_dict.pop('_id', None), app_dict
 
 
 app_adapter = create_document_adapter(
