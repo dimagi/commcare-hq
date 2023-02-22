@@ -138,10 +138,9 @@ class RemoteRequestFactory(object):
                 self.build_case_id_query_data(),
             ],
         }
-        if not case_search_sync_cases_on_form_entry_enabled_for_domain(self.domain):
-            relevant = self.get_post_relevant()
-            if relevant:
-                kwargs["relevant"] = relevant
+        relevant = self.get_post_relevant()
+        if relevant:
+            kwargs["relevant"] = relevant
         return RemoteRequestPost(**kwargs)
 
     def build_case_id_query_data(self):
@@ -167,8 +166,10 @@ class RemoteRequestFactory(object):
         if module_uses_smart_links(self.module):
             case_in_project = self._get_smart_link_rewind_xpath()
             return XPath.and_(case_not_claimed, case_in_project)
-        else:
+        if not case_search_sync_cases_on_form_entry_enabled_for_domain(self.domain):
             return case_not_claimed
+        else:
+            return None
 
     def build_command(self):
         return Command(
