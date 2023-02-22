@@ -125,7 +125,7 @@ class CreateEventForm(forms.Form):
     def clean(self):
         cleaned_data = self.cleaned_data
         if cleaned_data['end_date'] < cleaned_data['start_date']:
-            raise ValidationError(_("End Date must be after Start Date"))
+            raise ValidationError(_("End Date cannot be before Start Date"))
 
         return cleaned_data
 
