@@ -47,7 +47,7 @@ def get_couch_repeat_record_count(domain, repeater_id=None, state=None, datespan
         descending=True,
     )
     kwargs.update(_get_startkey_endkey_all_records(domain, repeater_id, state, datespan=datespan))
-    result = RepeatRecord.get_db().view('repeaters/repeat_records', **kwargs).one()
+    result = RepeatRecord.get_db().view('repeaters/repeat_records_by_last_checked', **kwargs).one()
     return result['value'] if result else 0
 
 
@@ -122,7 +122,7 @@ def get_paged_couch_repeat_records(domain, skip, limit, repeater_id=None, state=
     }
     kwargs.update(_get_startkey_endkey_all_records(domain, repeater_id, state, datespan=datespan))
 
-    results = RepeatRecord.get_db().view('repeaters/repeat_records', **kwargs).all()
+    results = RepeatRecord.get_db().view('repeaters/repeat_records_by_last_checked', **kwargs).all()
 
     return [RepeatRecord.wrap(result['doc']) for result in results]
 
@@ -155,7 +155,7 @@ def iter_repeat_records_by_domain(domain, repeater_id=None, state=None, chunk_si
 
     for doc in paginate_view(
             RepeatRecord.get_db(),
-            'repeaters/repeat_records',
+            'repeaters/repeat_records_by_last_checked',
             chunk_size,
             **kwargs):
         yield RepeatRecord.wrap(doc['doc'])
@@ -182,7 +182,7 @@ def _iter_repeat_records_by_repeater(domain, repeater_id, chunk_size,
     kwargs.update(_get_startkey_endkey_all_records(domain, repeater_id))
     for doc in paginate_view(
             RepeatRecord.get_db(),
-            'repeaters/repeat_records',
+            'repeaters/repeat_records_by_last_checked',
             chunk_size,
             **kwargs):
         if include_docs:
@@ -263,14 +263,14 @@ def get_domains_that_have_repeat_records():
     from .models import RepeatRecord
     return [
         row['key'][0]
-        for row in RepeatRecord.view('repeaters/repeat_records', group_level=1).all()
+        for row in RepeatRecord.view('repeaters/repeat_records_by_last_checked', group_level=1).all()
     ]
 
 
 @unit_testing_only
 def delete_all_repeat_records():
     from .models import RepeatRecord
-    results = RepeatRecord.get_db().view('repeaters/repeat_records', reduce=False).all()
+    results = RepeatRecord.get_db().view('repeaters/repeat_records_by_last_checked', reduce=False).all()
     for result in results:
         try:
             repeat_record = RepeatRecord.get(result['id'])

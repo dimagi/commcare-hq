@@ -17,7 +17,7 @@ class Command(BaseCommand):
         self.stdout.write("\n")
         self.stdout.write('fetching repeat record data...')
         repeat_records_summary = RepeatRecord.get_db().view(
-            'repeaters/repeat_records',
+            'repeaters/repeat_records_by_last_checked',
             group_level=1,
             reduce=True
         ).all()
