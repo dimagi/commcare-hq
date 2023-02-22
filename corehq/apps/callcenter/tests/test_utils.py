@@ -462,7 +462,7 @@ class DomainTimezoneTests(SimpleTestCase):
 
 
 @es_test(requires=[domain_adapter])
-class CallCenterDomainTest(SimpleTestCase):
+class CallCenterDomainTest(TestCase):
 
     def test_get_call_center_domains(self):
         _create_domain('cc-dom1', True, True, 'flw', 'user1', False)
