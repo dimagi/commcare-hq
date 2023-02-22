@@ -83,7 +83,6 @@ branches:
     - em/app-summary-conditional-case-update-status # Evan Feb 15
     # - rc/media-upload-spinner-fix # Robert Feb 16
     - smh/print-button # Steph Feb 17
-    - gh/handle-deleted-upstream-model # Graham Feb 20
     - jm/multiplex-tombstones  # Joel Feb 21
     - mjr/erm-overwrite # Matt Feb 21
     - dependabot/pip/requirements/django-phonenumber-field-6.4.0 # Graham Feb 22
