@@ -86,4 +86,5 @@ branches:
     - gh/handle-deleted-upstream-model # Graham Feb 20
     - jm/multiplex-tombstones  # Joel Feb 21
     - mjr/erm-overwrite # Matt Feb 21
+    - dependabot/pip/requirements/django-phonenumber-field-6.4.0 # Graham Feb 22
 submodules: { }
