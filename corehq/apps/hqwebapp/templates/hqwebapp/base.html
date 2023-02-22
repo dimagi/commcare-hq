@@ -40,7 +40,11 @@
 
     <link href="https://fonts.googleapis.com/css?family=Nunito+Sans:100,300,400,500,700,800" rel="stylesheet">
 
-    {% include 'hqwebapp/includes/less.html' %}
+    {% if request.use_bootstrap5 %}
+      {% include 'hqwebapp/includes/bootstrap5/core_stylesheets.html' %}
+    {% else %}
+      {% include 'hqwebapp/includes/bootstrap3/core_stylesheets.html' %}
+    {% endif %}
 
     {% if CUSTOM_LOGO_URL %}
       <link rel="apple-touch-icon" href="{{ CUSTOM_LOGO_URL }}"/>
