@@ -77,8 +77,8 @@ class Event(models.Model):
             attendees_case_ids
         )
 
-        self._assign_attendees(attendees_to_assign)
-        self._unassign_attendees(attendees_to_unassign)
+        self._assign_attendees(list(attendees_to_assign))
+        self._unassign_attendees(list(attendees_to_unassign))
 
         self.expected_attendees = Attendee.get_by_event_id(self.event_id, self.domain)
 
@@ -105,25 +105,22 @@ class Event(models.Model):
             )
 
     def _unassign_attendees(self, attendees_case_ids):
-        # Todo: maybe refactor to use 'tag_cases_as_deleted_and_remove_indices'
-
+        """
+        This method deletes the indices and cases linking the domain attendees to the event
+        """
         if not attendees_case_ids:
             return
 
-        extension_case_ids = CommCareCaseIndex.objects.get_extension_case_ids(
-            domain=self.domain,
-            case_ids=list(attendees_case_ids),
+        extension_cases_ids = CommCareCaseIndex.objects.get_extension_case_ids(
+            self.domain,
+            attendees_case_ids
         )
 
-        CommCareCase.objects.soft_delete_cases(
-            domain=self.domain,
-            case_ids=extension_case_ids,
-        )
+        for extension_case in CommCareCase.objects.get_cases(extension_cases_ids):
+            form = find_case_create_form(extension_case, self.domain)
+            form.archive()
 
-        for db in get_db_aliases_for_partitioned_query():
-            CommCareCaseIndex.objects.using(db)\
-                .filter(referenced_id__in=attendees_case_ids)\
-                .delete()
+        remove_indices_from_deleted_cases(self.domain, extension_cases_ids)
 
 
 def get_domain_attendee_cases(domain):
