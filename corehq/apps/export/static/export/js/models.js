@@ -301,7 +301,7 @@ hqDefine('export/js/models', [
         });
     };
 
-    ExportInstance.prototype.onLoadAllProperties = function (exportInstance, e) {
+    ExportInstance.prototype.onLoadAllProperties = function () {
         var pageUrl = new URL(window.location.href);
         pageUrl.searchParams.append('load_deprecated', 'True');
         window.location.href = pageUrl;
@@ -566,7 +566,7 @@ hqDefine('export/js/models', [
 
         const queryString = window.location.search;
         const urlParams = new URLSearchParams(queryString);
-        if (urlParams.get('load_deprecated') != 'True' && table.showDeprecated()) {
+        if (urlParams.get('load_deprecated') !== 'True' && table.showDeprecated()) {
             $('#export-process-deprecated-properties').modal('show');
         }
     };
