@@ -497,7 +497,7 @@ sphinx==4.1.2
     #   -r docs-requirements.in
     #   myst-parser
     #   sphinx-rtd-theme
-sphinx-rtd-theme==0.5.2
+sphinx-rtd-theme==1.2.0
     # via -r docs-requirements.in
 sphinxcontrib-applehelp==1.0.2
     # via sphinx
@@ -507,6 +507,8 @@ sphinxcontrib-django==0.5.1
     # via -r docs-requirements.in
 sphinxcontrib-htmlhelp==2.0.0
     # via sphinx
+sphinxcontrib-jquery==2.0.0
+    # via sphinx-rtd-theme
 sphinxcontrib-jsmath==1.0.1
     # via sphinx
 sphinxcontrib-qthelp==1.0.3
@@ -590,5 +592,6 @@ setuptools==67.3.2
     #   gevent
     #   gunicorn
     #   sphinx
+    #   sphinxcontrib-jquery
     #   zope-event
     #   zope-interface
