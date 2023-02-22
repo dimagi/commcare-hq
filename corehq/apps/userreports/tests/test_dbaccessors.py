@@ -4,12 +4,13 @@ from datetime import datetime
 from django.test import TestCase
 
 from corehq.apps.domain.models import Domain
-from corehq.apps.domain.shortcuts import create_user
+from corehq.apps.domain.shortcuts import create_domain, create_user
 from corehq.apps.registry.tests.utils import (
     Invitation,
     create_registry_for_test,
 )
 from corehq.apps.userreports.dbaccessors import (
+    delete_all_ucr_tables_for_domain,
     get_all_registry_data_source_ids,
     get_all_report_configs,
     get_number_of_report_configs_by_data_source,
@@ -19,6 +20,9 @@ from corehq.apps.userreports.dbaccessors import (
 from corehq.apps.userreports.models import (
     RegistryDataSourceConfiguration,
     ReportConfiguration,
+)
+from corehq.apps.userreports.tests.test_manage_orphaned_ucrs import (
+    BaseOrphanedUCRTest,
 )
 
 
@@ -153,3 +157,35 @@ class RegistryUcrDbAccessorsTest(TestCase):
         config.save()
         self.addCleanup(config.delete)
         return config
+
+
+class TestDeleteAllUCRTablesForDomain(BaseOrphanedUCRTest):
+
+    def test_active_domain_raises_exception(self):
+        with self.assertRaises(ValueError):
+            delete_all_ucr_tables_for_domain(self.active_domain.name)
+
+    def test_non_orphaned_ucr_is_deleted_for_specified_domain(self):
+        test_adapter = self.create_ucr(self.deleted_domain, 'non-orphan',
+                                       is_orphan=False)
+        test2_adapter = self.create_ucr(self.deleted_domain2, 'non-orphan',
+                                        is_orphan=False)
+        delete_all_ucr_tables_for_domain(self.deleted_domain.name)
+        self.assertFalse(test_adapter.table_exists)
+        self.assertTrue(test2_adapter.table_exists)
+
+    def test_orphaned_ucr_is_deleted_for_specified_domain(self):
+        test_adapter = self.create_ucr(self.deleted_domain, 'non-orphan',
+                                       is_orphan=True)
+        test2_adapter = self.create_ucr(self.deleted_domain2, 'non-orphan',
+                                        is_orphan=True)
+        delete_all_ucr_tables_for_domain(self.deleted_domain.name)
+        self.assertFalse(test_adapter.table_exists)
+        self.assertTrue(test2_adapter.table_exists)
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.deleted_domain2 = create_domain('deleted-domain-2')
+        cls.deleted_domain2.delete(leave_tombstone=True)
+        cls.addClassCleanup(cls.deleted_domain2.delete)
