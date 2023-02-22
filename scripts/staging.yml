@@ -83,7 +83,6 @@ branches:
     - em/app-summary-conditional-case-update-status # Evan Feb 15
     # - rc/media-upload-spinner-fix # Robert Feb 16
     - smh/print-button # Steph Feb 17
-    - ze/remove_deprecated_from_case_export # Zandre Feb 20
     - gh/handle-deleted-upstream-model # Graham Feb 20
     - jm/multiplex-tombstones  # Joel Feb 21
     - mjr/erm-overwrite # Matt Feb 21
