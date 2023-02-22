@@ -127,7 +127,7 @@ class CaseBlock(object):
             result['close'] = {}
 
         if all(val is ... for val in result['update'].values()):
-                result['update'] = ...
+            result['update'] = ...
 
         if self.index:
             result['index'] = {}
