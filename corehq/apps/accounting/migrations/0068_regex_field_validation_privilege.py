@@ -27,7 +27,7 @@ def _grandfather_regex_field_validation_priv(apps, schema_editor):
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('custom_data_fields', '0006_auto_20200924_1753'),
+        ('accounting', '0067_add_view_app_diff_priv'),
     ]
 
     operations = [

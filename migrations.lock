@@ -87,6 +87,7 @@ accounting
  0065_phone_apk_heartbeat_privs
  0066_data_file_download_priv
  0067_add_view_app_diff_priv
+ 0068_regex_field_validation_privilege
 admin
  0001_initial
  0002_logentry_remove_auto_add
@@ -243,7 +244,6 @@ custom_data_fields
  0004_rename_tables
  0005_customdatafieldsprofile
  0006_auto_20200924_1753
- 0007_regex_field_validation_privilege
 data_analytics
  0001_squashed_0004_auto_20150810_1710
  0002_maltrow_threshold
