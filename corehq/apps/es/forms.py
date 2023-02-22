@@ -2,7 +2,19 @@
 FormES
 --------
 """
+from copy import deepcopy
+from datetime import datetime
+
 from django.conf import settings
+
+from jsonobject.exceptions import BadValueError
+
+from casexml.apps.case.exceptions import PhoneDateValueError
+from casexml.apps.case.xml.parser import (
+    CaseGenerationException,
+    case_update_from_block,
+)
+from couchforms.geopoint import GeoPoint
 
 from corehq.pillows.mappings.const import NULL_VALUE
 
@@ -10,7 +22,7 @@ from . import filters
 from .client import ElasticDocumentAdapter, create_document_adapter
 from .es_query import HQESQuery
 from .index.settings import IndexSettingsKey
-from .transient_util import get_adapter_mapping, from_dict_with_possible_id
+from .transient_util import get_adapter_mapping
 
 
 class FormES(HQESQuery):
@@ -57,9 +69,92 @@ class ElasticForm(ElasticDocumentAdapter):
     def mapping(self):
         return get_adapter_mapping(self)
 
-    @classmethod
-    def from_python(cls, doc):
-        return from_dict_with_possible_id(doc)
+    def from_python(self, xform):
+        from corehq.form_processor.models.forms import XFormInstance
+        if isinstance(xform, dict):
+            xform_dict = deepcopy(xform)
+        elif isinstance(xform, XFormInstance):
+            xform_dict = xform.to_json()
+        else:
+            raise TypeError(f"Unknown type {type(xform)}")
+        return self.from_dict(xform_dict)
+
+    def from_dict(cls, xform):
+        """
+        Takes in a xform dict and applies required transformation to make it suitable for ES.
+        The function is replica of ``transform_form_for_elasticsearch``
+        and will be replaced by `from_python` in future
+
+        :param xform: an instance of ``dict`` which is ``XFormInstance.to_json()``
+        """
+        from casexml.apps.case.xform import extract_case_blocks
+
+        from corehq.apps.receiverwrapper.util import get_app_version_info
+        from corehq.pillows.utils import format_form_meta_for_es, get_user_type
+        from corehq.pillows.xform import is_valid_date
+
+        doc_ret = deepcopy(xform)
+
+        if 'meta' in doc_ret['form']:
+            if not is_valid_date(doc_ret['form']['meta'].get('timeEnd', None)):
+                doc_ret['form']['meta']['timeEnd'] = None
+            if not is_valid_date(doc_ret['form']['meta'].get('timeStart', None)):
+                doc_ret['form']['meta']['timeStart'] = None
+
+            # Some docs have their @xmlns and #text here
+            if isinstance(doc_ret['form']['meta'].get('appVersion'), dict):
+                doc_ret['form']['meta'] = format_form_meta_for_es(doc_ret['form']['meta'])
+
+            app_version_info = get_app_version_info(
+                doc_ret['domain'],
+                doc_ret.get('build_id'),
+                doc_ret.get('version'),
+                doc_ret['form']['meta'],
+            )
+            doc_ret['form']['meta']['commcare_version'] = app_version_info.commcare_version
+            doc_ret['form']['meta']['app_build_version'] = app_version_info.build_version
+
+            try:
+                geo_point = GeoPoint.from_string(doc_ret['form']['meta']['location'])
+                doc_ret['form']['meta']['geo_point'] = geo_point.lat_lon
+            except (KeyError, BadValueError):
+                doc_ret['form']['meta']['geo_point'] = None
+                pass
+
+        try:
+            user_id = doc_ret['form']['meta']['userID']
+        except KeyError:
+            user_id = None
+        doc_ret['user_type'] = get_user_type(user_id)
+        doc_ret['inserted_at'] = datetime.utcnow().isoformat()
+
+        try:
+            case_blocks = extract_case_blocks(doc_ret)
+        except PhoneDateValueError:
+            pass
+        else:
+            for case_dict in case_blocks:
+                for date_modified_key in ['date_modified', '@date_modified']:
+                    if not is_valid_date(case_dict.get(date_modified_key, None)):
+                        if case_dict.get(date_modified_key) == '':
+                            case_dict[date_modified_key] = None
+                        else:
+                            case_dict.pop(date_modified_key, None)
+
+                # convert all mapped dict properties to nulls if they are empty strings
+                for object_key in ['index', 'attachment', 'create', 'update']:
+                    if object_key in case_dict and not isinstance(case_dict[object_key], dict):
+                        case_dict[object_key] = None
+
+            try:
+                doc_ret["__retrieved_case_ids"] = list(set(case_update_from_block(cb).id for cb in case_blocks))
+            except CaseGenerationException:
+                doc_ret["__retrieved_case_ids"] = []
+
+        if 'backend_id' not in doc_ret:
+            doc_ret['backend_id'] = 'sql'
+
+        return doc_ret.pop('_id'), doc_ret
 
 
 form_adapter = create_document_adapter(
