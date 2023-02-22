@@ -202,7 +202,7 @@ class TestFormExportInstanceGeneration(SimpleTestCase):
     return_value=Domain(commtrack_enabled=False),
 )
 @mock.patch(
-    'corehq.apps.data_dictionary.util.get_deprecated_fields',
+    'corehq.apps.export.models.new.get_deprecated_fields',
     return_value={}
 )
 class TestCaseExportInstanceGeneration(SimpleTestCase):
