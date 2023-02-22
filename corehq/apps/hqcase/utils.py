@@ -120,7 +120,9 @@ def submit_case_block_from_template(domain, template, context, xmlns=None,
     )
 
 
-def _get_update_or_close_case_block(case_id, case_properties=None, close=False, owner_id=None, domain=None):
+def _get_update_or_close_case_block(
+    case_id, case_properties=None, close=False, owner_id=None, domain=None, case_name=None
+):
     kwargs = {
         'create': False,
         'user_id': SYSTEM_USER_ID,
@@ -132,12 +134,14 @@ def _get_update_or_close_case_block(case_id, case_properties=None, close=False, 
         kwargs['owner_id'] = owner_id
     if domain:
         kwargs['domain'] = domain
+    if case_name:
+        kwargs['case_name'] = case_name
 
     return CaseBlock.deprecated_init(case_id, **kwargs)
 
 
 def update_case(domain, case_id, case_properties=None, close=False,
-                xmlns=None, device_id=None, form_name=None, owner_id=None, max_wait=...):
+                xmlns=None, device_id=None, form_name=None, owner_id=None, max_wait=..., case_name=None):
     """
     Updates or closes a case (or both) by submitting a form.
     domain - the case's domain
@@ -152,7 +156,9 @@ def update_case(domain, case_id, case_properties=None, close=False,
                the project is over its submission rate limit.
                See the docstring for submit_form_locally for meaning of values
     """
-    caseblock = _get_update_or_close_case_block(case_id, case_properties, close, owner_id, domain=domain)
+    caseblock = _get_update_or_close_case_block(
+        case_id, case_properties, close, owner_id, domain=domain, case_name=case_name,
+    )
     return submit_case_blocks(
         ElementTree.tostring(caseblock.as_xml(), encoding='utf-8').decode('utf-8'),
         domain,
@@ -160,7 +166,7 @@ def update_case(domain, case_id, case_properties=None, close=False,
         xmlns=xmlns,
         device_id=device_id,
         form_name=form_name,
-        max_wait=max_wait
+        max_wait=max_wait,
     )
 
 
