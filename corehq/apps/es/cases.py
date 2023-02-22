@@ -15,11 +15,14 @@ closed after May 1st.
          .OR(case_es.is_closed(False),
              case_es.closed_range(gte=datetime.date(2015, 05, 01))))
 """
+from copy import copy
+from datetime import datetime
+
 from . import aggregations, filters
 from .client import ElasticDocumentAdapter, create_document_adapter
 from .es_query import HQESQuery
 from .index.settings import IndexSettingsKey
-from .transient_util import get_adapter_mapping, from_dict_with_possible_id
+from .transient_util import get_adapter_mapping
 
 
 class CaseES(HQESQuery):
@@ -53,9 +56,38 @@ class ElasticCase(ElasticDocumentAdapter):
     def mapping(self):
         return get_adapter_mapping(self)
 
-    @classmethod
-    def from_python(cls, doc):
-        return from_dict_with_possible_id(doc)
+    def from_python(self, case):
+        from corehq.form_processor.models.cases import CommCareCase
+        if isinstance(case, dict):
+            case_dict = case
+        elif isinstance(case, CommCareCase):
+            case_dict = case.to_json()
+        else:
+            raise TypeError(f"Unknown type {type(case)}")
+        return self.from_dict(case_dict)
+
+    def from_dict(self, case):
+        """
+        Takes in case dict and applies required transformation to make it suitable for ES.
+        The function is replica of ``transform_case_for_elasticsearch``
+        In future all references to  ``transform_case_for_elasticsearch`` will be replaced by `from_python`
+
+        :param case: an instance of ``dict`` which is ``CommcareCase.to_json()``
+        """
+        from corehq.pillows.utils import get_user_type
+
+        doc_ret = copy(case)
+        if not doc_ret.get("owner_id"):
+            if doc_ret.get("user_id"):
+                doc_ret["owner_id"] = doc_ret["user_id"]
+
+        doc_ret['owner_type'] = get_user_type(doc_ret.get("owner_id", None))
+        doc_ret['inserted_at'] = datetime.utcnow().isoformat()
+
+        if 'backend_id' not in doc_ret:
+            doc_ret['backend_id'] = 'sql'
+
+        return doc_ret.pop('_id'), doc_ret
 
 
 case_adapter = create_document_adapter(
