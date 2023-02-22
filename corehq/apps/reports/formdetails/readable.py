@@ -17,6 +17,7 @@ from corehq.apps.app_manager.models import Application
 from corehq.apps.reports.formdetails.exceptions import QuestionListNotFound
 from corehq.form_processor.exceptions import XFormQuestionValueNotFound
 from corehq.form_processor.utils.xform import get_node
+from corehq.util.soft_assert import soft_assert
 
 SYSTEM_FIELD_NAMES = (
     "drugs_prescribed", "case", "meta", "clinic_ids", "drug_drill_down", "tmp",
@@ -53,6 +54,11 @@ def get_questions(domain, app_id, xmlns):
     try:
         xform = app.get_xform_by_xmlns(xmlns)
     except ResourceNotFound:
+        _soft_assert = soft_assert('@'.join(('devops+soltech', 'dimagi.com')))
+        _soft_assert(
+            False,
+            f'XForm XML missing for XMLNS {xmlns!r} on domain {domain!r}',
+        )
         raise QuestionListNotFound(_(
             "We could not find the form source XML document"
         ))
