@@ -6055,6 +6055,7 @@ msgstr "Valor"
 #: corehq/apps/app_manager/templates/app_manager/form_summary_base.html
 #: corehq/apps/builds/templates/builds/edit_menu.html
 #: corehq/apps/custom_data_fields/templates/custom_data_fields/partials/fields_tab.html
+#: corehq/apps/data_dictionary/views.py
 #: corehq/apps/reports/templates/reports/filters/explorer_columns.html
 #: corehq/apps/userreports/templates/userreports/partials/property_list_configuration.html
 msgid "Label"
@@ -6509,9 +6510,9 @@ msgstr ""
 #: corehq/apps/app_manager/templates/app_manager/partials/build_errors.html
 msgid ""
 "\n"
-"                Please check that end of form navigation is correct. It "
-"appears to involve\n"
-"                a multi-select form, which is not supported.\n"
+"                Linking for a form in a multi-select case list is restricted "
+"to multi-select forms only.\n"
+"                Please ensure your form is multi-select.\n"
 "              "
 msgstr ""
 
@@ -6519,19 +6520,9 @@ msgstr ""
 msgid ""
 "\n"
 "                Please check that end of form navigation is correct. It "
-"appears to involve\n"
-"                a parent menu that uses multi-select, which is not "
+"appears to involve both\n"
+"                a multi-select form and a single select-form, which is not "
 "supported.\n"
-"              "
-msgstr ""
-
-#: corehq/apps/app_manager/templates/app_manager/partials/build_errors.html
-msgid ""
-"\n"
-"                Please check that end of form navigation is correct. It "
-"appears to involve\n"
-"                a multi-select case list and the \"Previous Screen\" "
-"workflow, which are not compatible.\n"
 "              "
 msgstr ""
 
@@ -9634,10 +9625,8 @@ msgstr ""
 "a los detalles del caso."
 
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/module_view_settings.html
-#, fuzzy
-#| msgid "Empty Case"
 msgid "Empty Case List Text"
-msgstr "Caso Vacío"
+msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/report_context_tile.html
 msgid "Last UCR Update"
@@ -12501,7 +12490,11 @@ msgid "Linking directly into Web Apps has been disabled."
 msgstr ""
 
 #: corehq/apps/cloudcare/views.py
-msgid "Could not find application."
+msgid "Multiple corresponding applications found. Could not follow link."
+msgstr ""
+
+#: corehq/apps/cloudcare/views.py
+msgid "No corresponding application found in this project."
 msgstr ""
 
 #: corehq/apps/cloudcare/views.py
@@ -37003,10 +36996,8 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/users/templates/users/filter_and_download.html
-#, fuzzy
-#| msgid "Calculations"
 msgid "Calculating download size..."
-msgstr "Cálculos"
+msgstr ""
 
 #: corehq/apps/users/templates/users/mobile/partials/user_upload_status.html
 #, python-format
@@ -40522,7 +40513,21 @@ msgstr ""
 
 #: corehq/motech/dhis2/entities_helpers.py
 #, python-brace-format
+msgid ""
+"Error(s) while updating DHIS2 tracked entity. Errors from DHIS2 can be found "
+"in Remote API Logs: {url}"
+msgstr ""
+
+#: corehq/motech/dhis2/entities_helpers.py
+#, python-brace-format
 msgid "{n} tracked entity instances were registered from case {case}."
+msgstr ""
+
+#: corehq/motech/dhis2/entities_helpers.py
+#, python-brace-format
+msgid ""
+"Error(s) while registering DHIS2 tracked entity. Errors from DHIS2 can be "
+"found in Remote API Logs: {url}"
 msgstr ""
 
 #: corehq/motech/dhis2/entities_helpers.py
@@ -41501,16 +41506,7 @@ msgid "Delete Configuration"
 msgstr ""
 
 #: corehq/motech/repeaters/templates/repeaters/partials/repeater_row.html
-#, fuzzy, python-format
-#| msgid ""
-#| "\n"
-#| "                                              This controls which parent "
-#| "this organization level\n"
-#| "                                              must have. You can use this "
-#| "to setup a organization\n"
-#| "                                              level that can have "
-#| "different types of children.\n"
-#| "                                          "
+#, python-format
 msgid ""
 "\n"
 "                                    Are you sure you want to delete the "
@@ -41522,10 +41518,6 @@ msgid ""
 "no longer appear on this page.\n"
 "                                "
 msgstr ""
-"\n"
-"Esto controla qué padre debe tener este nivel de organización. Usted puede "
-"utilizar esto para establecer un nivel de organización que puede tener "
-"diferentes tipos de hijos."
 
 #: corehq/motech/repeaters/templates/repeaters/repeat_record_report.html
 msgid "Resend selected"
@@ -41932,10 +41924,14 @@ msgid "Link to other forms in End of Form Navigation"
 msgstr ""
 
 #: corehq/privileges.py
-#, fuzzy
-#| msgid "Phone Settings"
 msgid "Phone heartbeat"
-msgstr "Configuraciones del Teléfono"
+msgstr ""
+
+#: corehq/privileges.py
+#, fuzzy
+#| msgid "File Type"
+msgid "File Dropzone"
+msgstr "Tipo de Archivo"
 
 #: corehq/reports.py
 msgid "Report Builder Reports"

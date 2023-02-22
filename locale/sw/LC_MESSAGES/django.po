@@ -5596,6 +5596,7 @@ msgstr ""
 #: corehq/apps/app_manager/templates/app_manager/form_summary_base.html
 #: corehq/apps/builds/templates/builds/edit_menu.html
 #: corehq/apps/custom_data_fields/templates/custom_data_fields/partials/fields_tab.html
+#: corehq/apps/data_dictionary/views.py
 #: corehq/apps/reports/templates/reports/filters/explorer_columns.html
 #: corehq/apps/userreports/templates/userreports/partials/property_list_configuration.html
 msgid "Label"
@@ -6036,9 +6037,9 @@ msgstr ""
 #: corehq/apps/app_manager/templates/app_manager/partials/build_errors.html
 msgid ""
 "\n"
-"                Please check that end of form navigation is correct. It "
-"appears to involve\n"
-"                a multi-select form, which is not supported.\n"
+"                Linking for a form in a multi-select case list is restricted "
+"to multi-select forms only.\n"
+"                Please ensure your form is multi-select.\n"
 "              "
 msgstr ""
 
@@ -6046,19 +6047,9 @@ msgstr ""
 msgid ""
 "\n"
 "                Please check that end of form navigation is correct. It "
-"appears to involve\n"
-"                a parent menu that uses multi-select, which is not "
+"appears to involve both\n"
+"                a multi-select form and a single select-form, which is not "
 "supported.\n"
-"              "
-msgstr ""
-
-#: corehq/apps/app_manager/templates/app_manager/partials/build_errors.html
-msgid ""
-"\n"
-"                Please check that end of form navigation is correct. It "
-"appears to involve\n"
-"                a multi-select case list and the \"Previous Screen\" "
-"workflow, which are not compatible.\n"
 "              "
 msgstr ""
 
@@ -11843,7 +11834,11 @@ msgid "Linking directly into Web Apps has been disabled."
 msgstr ""
 
 #: corehq/apps/cloudcare/views.py
-msgid "Could not find application."
+msgid "Multiple corresponding applications found. Could not follow link."
+msgstr ""
+
+#: corehq/apps/cloudcare/views.py
+msgid "No corresponding application found in this project."
 msgstr ""
 
 #: corehq/apps/cloudcare/views.py
@@ -38999,7 +38994,21 @@ msgstr ""
 
 #: corehq/motech/dhis2/entities_helpers.py
 #, python-brace-format
+msgid ""
+"Error(s) while updating DHIS2 tracked entity. Errors from DHIS2 can be found "
+"in Remote API Logs: {url}"
+msgstr ""
+
+#: corehq/motech/dhis2/entities_helpers.py
+#, python-brace-format
 msgid "{n} tracked entity instances were registered from case {case}."
+msgstr ""
+
+#: corehq/motech/dhis2/entities_helpers.py
+#, python-brace-format
+msgid ""
+"Error(s) while registering DHIS2 tracked entity. Errors from DHIS2 can be "
+"found in Remote API Logs: {url}"
 msgstr ""
 
 #: corehq/motech/dhis2/entities_helpers.py
@@ -40389,6 +40398,10 @@ msgstr ""
 
 #: corehq/privileges.py
 msgid "Phone heartbeat"
+msgstr ""
+
+#: corehq/privileges.py
+msgid "File Dropzone"
 msgstr ""
 
 #: corehq/reports.py

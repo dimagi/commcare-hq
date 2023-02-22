@@ -91,7 +91,7 @@ diff-match-patch==20200713
     # via -r base-requirements.in
 dimagi-memoized==1.1.3
     # via -r base-requirements.in
-django==3.2.17
+django==3.2.18
     # via
     #   -r base-requirements.in
     #   django-appconf
@@ -225,7 +225,7 @@ httplib2==0.20.4
     #   google-auth-httplib2
 idna==2.10
     # via requests
-importlib-metadata==4.12.0
+importlib-metadata==6.0.0
     # via markdown
 intervaltree==3.1.0
     # via ddtrace
@@ -233,7 +233,7 @@ iso8601==1.1.0
     # via -r base-requirements.in
 isodate==0.6.1
     # via python3-saml
-jinja2==2.11.3
+jinja2==3.1.2
     # via -r base-requirements.in
 jmespath==0.10.0
     # via
@@ -275,12 +275,13 @@ mako==1.2.2
     # via
     #   alembic
     #   oic
-markdown==3.3.6
+markdown==3.4.1
     # via -r base-requirements.in
-markupsafe==1.1.1
+markupsafe==2.1.2
     # via
     #   jinja2
     #   mako
+    #   werkzeug
 oauthlib==3.1.0
     # via
     #   django-oauth-toolkit
@@ -519,7 +520,7 @@ vine==5.0.0
     #   kombu
 wcwidth==0.2.5
     # via prompt-toolkit
-werkzeug==1.0.1
+werkzeug==2.2.3
     # via -r base-requirements.in
 wrapt==1.12.1
     # via deprecated
@@ -537,7 +538,7 @@ zope-interface==5.4.0
     # via gevent
 
 # The following packages are considered to be unsafe in a requirements file:
-setuptools==65.5.1
+setuptools==67.3.2
     # via
     #   django-websocket-redis
     #   gevent
