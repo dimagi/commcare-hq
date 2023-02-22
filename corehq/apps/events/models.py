@@ -123,9 +123,8 @@ class Event(models.Model):
             )
 
     def _unassign_attendees(self, attendees_case_ids):
-        """
-        This method deletes the indices and cases linking the domain attendees to the event
-        """
+        # Todo: maybe refactor to use 'tag_cases_as_deleted_and_remove_indices'
+
         if not attendees_case_ids:
             return
 
