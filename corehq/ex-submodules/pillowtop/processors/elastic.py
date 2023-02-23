@@ -175,8 +175,8 @@ class BulkElasticProcessor(ElasticProcessor, BulkPillowProcessor):
         return retry_changes, error_changes
 
 
-def send_to_elasticsearch(index_info, doc_type, doc_id, es_getter, name, data=None,
-                          delete=False, es_merge_update=False):
+def send_to_elasticsearch(index_info=None, doc_type=None, doc_id=None, es_getter=None, name=None, adapter=None,
+                        data=None, delete=False, es_merge_update=False):
     """
     More fault tolerant es.put method
     kwargs:
@@ -184,33 +184,31 @@ def send_to_elasticsearch(index_info, doc_type, doc_id, es_getter, name, data=No
             which merges existing ES doc and current update. If this is set to False, the doc will be replaced
 
     """
-    alias = index_info.alias
+    if not adapter:
+        adapter = doc_adapter_from_alias(index_info.alias)
     data = data if data is not None else {}
     current_tries = 0
-    es_interface = _get_es_interface(es_getter)
     retries = _retries()
     propagate_failure = _propagate_failure()
     while current_tries < retries:
         try:
             if delete:
-                es_interface.delete_doc(alias, doc_type, doc_id)
+                adapter.delete(doc_id)
             else:
                 if es_merge_update:
                     # The `retry_on_conflict` param is only valid on `update`
                     # requests. ES <5.x was lenient of its presence on `index`
                     # requests, ES >=5.x is not.
-                    params = {'retry_on_conflict': 2}
-                    es_interface.update_doc_fields(alias, doc_type, doc_id,
-                                                   fields=data, params=params)
+                    adapter.update(doc_id, fields=data, retry_on_conflict=2)
                 else:
                     # use the same index API to create or update doc
-                    es_interface.index_doc(alias, doc_type, doc_id, doc=data)
+                    adapter.index(data)
             break
         except ConnectionError:
             current_tries += 1
             if current_tries == retries:
                 message = "[%s] Max retry error on %s/%s/%s"
-                args = (name, alias, doc_type, doc_id)
+                args = (name, adapter.index_name, adapter.type, doc_id)
                 if propagate_failure:
                     raise PillowtopIndexingError(message % args)
                 else:
@@ -221,7 +219,7 @@ def send_to_elasticsearch(index_info, doc_type, doc_id, es_getter, name, data=No
             _sleep_between_retries(current_tries)
         except RequestError:
             message = "[%s] put_robust error: %s/%s/%s"
-            args = (name, alias, doc_type, doc_id)
+            args = (name, adapter.index_name, adapter.type, doc_id)
             if propagate_failure:
                 raise PillowtopIndexingError(message % args)
             else:
