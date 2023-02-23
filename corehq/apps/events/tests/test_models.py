@@ -11,12 +11,10 @@ from corehq.apps.events.models import (
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.users.models import WebUser, CommCareUser
 from corehq.form_processor.models import CommCareCase
-from corehq.apps.es.tests.utils import es_test, ElasticTestMixin
 from corehq.apps.events.exceptions import InvalidAttendee
 
 
-@es_test
-class TestAttendee(ElasticTestMixin, TestCase):
+class TestAttendee(TestCase):
 
     domain = 'test-domain'
 
