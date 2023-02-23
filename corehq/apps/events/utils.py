@@ -50,11 +50,3 @@ def find_case_create_form(commcare_case, domain):
         (t.form_id for t in commcare_case.transactions if t.is_case_create)
     )
     return XFormInstance.objects.get_form(form_id, domain)
-
-
-def parse_value(value):
-    if value == 'False':
-        return False
-    if value == 'True':
-        return True
-    return value
