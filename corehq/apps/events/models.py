@@ -38,8 +38,18 @@ EVENT_CASE_TYPE = 'commcare-event'
 ATTENDEE_USER_ID_CASE_PROPERTY = 'commcare_user_id'
 
 
+class EventObjectManager(models.Manager):
+
+    def by_domain(self, domain, most_recent_first=False):
+        if most_recent_first:
+            return super().get_queryset().filter(domain=domain).order_by('start_date')
+        return super().get_queryset().filter(domain=domain)
+
+
 class Event(models.Model):
     """Attendance Tracking Event"""
+    objects = EventObjectManager()
+
     name = models.CharField(max_length=100)
     domain = models.CharField(max_length=255)
     event_id = models.CharField(max_length=255, unique=True)
@@ -65,12 +75,6 @@ class Event(models.Model):
             models.Index(fields=("domain",)),
             models.Index(fields=("manager_id",)),
         )
-
-    @classmethod
-    def by_domain(cls, domain, most_recent_first=False):
-        if most_recent_first:
-            return cls.objects.filter(domain=domain).order_by('start_date')
-        return cls.objects.filter(domain=domain)
 
     @quickcache(['self.event_id'])
     def get_expected_attendees(self):

@@ -182,7 +182,7 @@ class TestEventsCreateView(BaseEventViewTestClass):
 
             self.client.post(self.endpoint, data)
 
-            event = Event.by_domain(self.domain).first()
+            event = Event.objects.by_domain(self.domain).first()
 
             self.assertEqual(event.name, data['name'])
             self.assertEqual(event.domain, self.domain)
