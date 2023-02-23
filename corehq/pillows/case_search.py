@@ -34,7 +34,6 @@ from corehq.toggles import (
     USH_CASE_CLAIM_UPDATES,
 )
 from corehq.util.doc_processor.sql import SqlDocumentProvider
-from corehq.util.es.interface import ElasticsearchInterface
 from corehq.util.log import get_traceback_string
 from corehq.util.quickcache import quickcache
 from corehq.util.soft_assert import soft_assert
@@ -153,9 +152,7 @@ def get_case_search_processor():
       - Case Search ES index
     """
     return CaseSearchPillowProcessor(
-        elasticsearch=get_es_new(),
-        index_info=CASE_SEARCH_INDEX_INFO,
-        doc_prep_fn=transform_case_for_elasticsearch,
+        adapter=case_search_adapter,
         change_filter_fn=is_couch_change_for_sql_domain
     )
 

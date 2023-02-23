@@ -4,6 +4,7 @@ from corehq.apps.change_feed.consumer.feed import KafkaChangeFeed, KafkaCheckpoi
 from corehq.apps.change_feed import topics
 from corehq.apps.domain.models import Domain
 from corehq.elastic import get_es_new
+from corehq.apps.es.domains import domain_adapter
 from corehq.pillows.mappings.domain_mapping import DOMAIN_INDEX_INFO
 from corehq.util.doc_processor.couch import CouchDocumentProvider
 from django_countries.data import COUNTRIES
@@ -35,11 +36,7 @@ def get_domain_kafka_to_elasticsearch_pillow(pillow_id='KafkaDomainPillow', num_
     """
     assert pillow_id == 'KafkaDomainPillow', 'Pillow ID is not allowed to change'
     checkpoint = get_checkpoint_for_elasticsearch_pillow(pillow_id, DOMAIN_INDEX_INFO, [topics.DOMAIN])
-    domain_processor = ElasticProcessor(
-        elasticsearch=get_es_new(),
-        index_info=DOMAIN_INDEX_INFO,
-        doc_prep_fn=transform_domain_for_elasticsearch,
-    )
+    domain_processor = ElasticProcessor(domain_adapter)
     change_feed = KafkaChangeFeed(
         topics=[topics.DOMAIN], client_id='domains-to-es', num_processes=num_processes, process_num=process_num
     )
