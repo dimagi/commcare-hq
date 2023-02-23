@@ -83,7 +83,7 @@ contextlib2==21.6.0
     # via
     #   git-build-branch
     #   schema
-coverage==5.5
+coverage==7.1.0
     # via -r test-requirements.in
 cryptography==39.0.1
     # via
