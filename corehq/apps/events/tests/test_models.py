@@ -28,7 +28,7 @@ class TestAttendee(ElasticTestMixin, TestCase):
     @classmethod
     def tearDownClass(cls):
         cls.domain_obj.delete()
-        for attendee in Attendee.by_domain(cls.domain):
+        for attendee in Attendee.objects.by_domain(cls.domain):
             attendee.delete()
         super().tearDownClass()
 
@@ -40,14 +40,14 @@ class TestAttendee(ElasticTestMixin, TestCase):
             self.assertTrue(True)
 
     def test_case_created_on_attendee_save(self):
-        mobile_worker = self.create_mobile_worker('iworkmobiles', self.domain)
-        domain_attendees = Attendee.by_domain(self.domain)
+        mobile_worker = create_mobile_worker('iworkmobiles', self.domain)
+        domain_attendees = Attendee.objects.by_domain(self.domain)
         self.assertEqual(list(domain_attendees), [])
 
         attendee = Attendee(domain=self.domain)
         attendee.save(mobile_worker.user_id)
 
-        domain_attendees = Attendee.by_domain(self.domain)
+        domain_attendees = Attendee.objects.by_domain(self.domain)
         self.assertTrue(len(domain_attendees) == 1)
         self.assertTrue(domain_attendees[0].case_id is not None)
 
@@ -56,21 +56,21 @@ class TestAttendee(ElasticTestMixin, TestCase):
         self.assertEqual(attendee_case.get_case_property('commcare_user_id'), mobile_worker.user_id)
 
     def test_case_deleted_on_attendee_delete(self):
-        mobile_worker = self.create_mobile_worker('delete_me', self.domain)
-        domain_attendees = Attendee.by_domain(self.domain)
+        mobile_worker = create_mobile_worker('delete_me', self.domain)
+        domain_attendees = Attendee.objects.by_domain(self.domain)
         self.assertEqual(list(domain_attendees), [])
 
         attendee = Attendee(domain=self.domain)
         attendee.save(mobile_worker.user_id)
 
-        domain_attendees = Attendee.by_domain(self.domain)
+        domain_attendees = Attendee.objects.by_domain(self.domain)
         case_id = domain_attendees[0].case_id
         attendee_case = CommCareCase.objects.get_case(case_id, self.domain)
         self.assertTrue(attendee_case is not None)
         self.assertTrue(attendee_case.deleted is False)
 
         attendee.delete()
-        self.assertEqual(list(Attendee.by_domain(self.domain)), [])
+        self.assertEqual(list(Attendee.objects.by_domain(self.domain)), [])
         attendee_case = CommCareCase.objects.get_case(case_id, self.domain)
         self.assertTrue(attendee_case.deleted is True)
 
@@ -96,7 +96,7 @@ class TestEventModel(TestCase):
     def tearDownClass(cls):
         cls.webuser.delete(None, None)
         cls.domain_obj.delete()
-        for attendee in Attendee.by_domain(cls.domain):
+        for attendee in Attendee.objects.by_domain(cls.domain):
             attendee.delete()
         super().tearDownClass()
 
