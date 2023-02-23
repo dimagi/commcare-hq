@@ -29,8 +29,18 @@ ATTENDEE_LIST_STATUS_CHOICES = [
 ]
 
 
+class EventObjectManager(models.Manager):
+
+    def by_domain(self, domain, most_recent_first=False):
+        if most_recent_first:
+            return super(EventObjectManager, self).get_queryset().filter(domain=domain).order_by('start_date')
+        return super(EventObjectManager, self).get_queryset().filter(domain=domain)
+
+
 class Event(models.Model):
     """Attendance Tracking Event"""
+    objects = EventObjectManager()
+
     name = models.CharField(max_length=100)
     domain = models.CharField(max_length=255)
     event_id = models.CharField(max_length=255, unique=True)
@@ -57,12 +67,6 @@ class Event(models.Model):
             models.Index(fields=("manager_id",)),
         )
 
-    @classmethod
-    def by_domain(cls, domain, most_recent_first=False):
-        if most_recent_first:
-            return cls.objects.filter(domain=domain).order_by('start_date')
-        return cls.objects.filter(domain=domain)
-
     def save(self, expected_attendees=None):
         if not self.event_id:
             self.event_id = uuid.uuid4().hex
@@ -79,10 +83,10 @@ class Event(models.Model):
 
     @property
     def attendees(self):
-        return Attendee.get_by_event_id(self.event_id, self.domain)
+        return Attendee.objects.get_by_event_id(self.event_id, self.domain)
 
     def _update_attendees(self, attendees_case_ids):
-        current_attendees_ids = Attendee.get_by_event_id(
+        current_attendees_ids = Attendee.objects.get_by_event_id(
             self.event_id,
             self.domain,
             only_ids=True
@@ -100,6 +104,7 @@ class Event(models.Model):
         if not attendees_case_ids:
             return
 
+        # How to make this idempotent?
         domain = self.domain
         event_id = self.event_id
 
@@ -129,6 +134,8 @@ class Event(models.Model):
             self.domain,
             attendees_case_ids
         )
+        if not extension_cases_ids:
+            return
 
         for extension_case in CommCareCase.objects.get_cases(extension_cases_ids):
             form = find_case_create_form(extension_case, self.domain)
@@ -137,28 +144,15 @@ class Event(models.Model):
         remove_indices_from_deleted_cases(self.domain, extension_cases_ids)
 
 
-class Attendee(models.Model):
+class AttendeeObjectManager(models.Manager):
 
-    ATTENDEE_CASE_TYPE = 'commcare-attendee'
-    EVENT_ATTENDEE_CASE_TYPE = 'commcare-potential-attendee'
+    def by_domain(self, domain):
+        return super(AttendeeObjectManager, self).get_queryset().filter(domain=domain)
 
-    domain = models.CharField(max_length=255)
-    case_id = models.CharField(max_length=126)
+    def get_by_ids(self, case_ids, domain):
+        return super(AttendeeObjectManager, self).get_queryset().filter(domain=domain, case_id__in=case_ids)
 
-    class Meta:
-        db_table = "commcare_attendee"
-        indexes = (models.Index(fields=("domain",)),)
-
-    @classmethod
-    def by_domain(cls, domain):
-        return cls.objects.filter(domain=domain)
-
-    @classmethod
-    def get_by_ids(cls, case_ids, domain):
-        return cls.objects.filter(domain=domain, case_id__in=case_ids)
-
-    @classmethod
-    def get_by_event_id(cls, event_id, domain, only_ids=False):
+    def get_by_event_id(self, event_id, domain, only_ids=False):
         indices = CommCareCaseIndex.objects.get_by_identifier(
             domain=domain,
             identifier=case_index_event_identifier(event_id),
@@ -168,7 +162,21 @@ class Attendee(models.Model):
         if only_ids:
             return referenced_case_ids
 
-        return cls.get_by_ids(referenced_case_ids, domain)
+        return self.get_by_ids(referenced_case_ids, domain)
+
+
+class Attendee(models.Model):
+
+    ATTENDEE_CASE_TYPE = 'commcare-attendee'
+    EVENT_ATTENDEE_CASE_TYPE = 'commcare-potential-attendee'
+
+    domain = models.CharField(max_length=255)
+    case_id = models.CharField(max_length=126)
+    objects = AttendeeObjectManager()
+
+    class Meta:
+        db_table = "commcare_attendee"
+        indexes = (models.Index(fields=("domain",)),)
 
     def save(self, user_id):
         if not user_id:

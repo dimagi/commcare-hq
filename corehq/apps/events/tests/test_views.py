@@ -69,7 +69,7 @@ class BaseEventViewTestClass(TestCase):
         if user_roles:
             user_roles[0].delete()
 
-        for attendee in Attendee.by_domain(cls.domain):
+        for attendee in Attendee.objects.by_domain(cls.domain):
             attendee.delete()
 
         super().tearDownClass()
@@ -163,7 +163,7 @@ class TestEventsCreateView(BaseEventViewTestClass):
 
         self.client.post(self.endpoint, data)
 
-        event = Event.by_domain(self.domain).first()
+        event = Event.objects.by_domain(self.domain).first()
 
         self.assertEqual(event.name, data['name'])
         self.assertEqual(event.domain, self.domain)

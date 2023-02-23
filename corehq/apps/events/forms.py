@@ -92,7 +92,7 @@ class CreateEventForm(forms.Form):
         return self.cleaned_data
 
     def _get_possible_attendees_case_ids(self):
-        case_ids = [attendee.case_id for attendee in Attendee.by_domain(self.domain)]
+        case_ids = [attendee.case_id for attendee in Attendee.objects.by_domain(self.domain)]
         return [
             (case_.case_id, case_.name) for case_ in CommCareCase.objects.get_cases(case_ids, self.domain)
         ]
