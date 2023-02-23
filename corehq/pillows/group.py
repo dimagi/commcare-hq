@@ -4,6 +4,7 @@ from corehq.apps.groups.models import Group
 from corehq.elastic import get_es_new
 from corehq.util.doc_processor.couch import CouchDocumentProvider
 
+from corehq.apps.es.groups import group_adapter
 from .mappings.group_mapping import GROUP_INDEX_INFO
 from pillowtop.checkpoints.manager import get_checkpoint_for_elasticsearch_pillow
 from pillowtop.pillow.interface import ConstructedPillow
@@ -21,10 +22,7 @@ def get_group_to_elasticsearch_processor():
     Writes to:
       - GroupES index
     """
-    return ElasticProcessor(
-        elasticsearch=get_es_new(),
-        index_info=GROUP_INDEX_INFO,
-    )
+    return ElasticProcessor(group_adapter)
 
 
 def get_group_pillow_old(pillow_id='GroupPillow', num_processes=1, process_num=0, **kwargs):
