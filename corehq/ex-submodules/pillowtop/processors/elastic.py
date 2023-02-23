@@ -159,9 +159,7 @@ class BulkElasticProcessor(ElasticProcessor, BulkPillowProcessor):
 
         try:
             with self._datadog_timing('bulk_load'):
-                _, errors = self.es_interface.bulk_ops(
-                    self.index_info.alias,
-                    self.index_info.type,
+                _, errors = self.adapter.bulk(
                     es_actions,
                     raise_on_error=False,
                     raise_on_exception=False,
