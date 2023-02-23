@@ -54,16 +54,10 @@ class ElasticProcessor(PillowProcessor):
       - ES
     """
 
-    def __init__(self, elasticsearch, index_info, doc_prep_fn=None, doc_filter_fn=None, change_filter_fn=None):
+    def __init__(self, adapter, doc_filter_fn=None, change_filter_fn=None):
+        self.adapter = adapter
         self.change_filter_fn = change_filter_fn or noop_filter
         self.doc_filter_fn = doc_filter_fn or noop_filter
-        self.elasticsearch = elasticsearch
-        self.es_interface = ElasticsearchInterface(self.elasticsearch)
-        self.index_info = index_info
-        self.doc_transform_fn = doc_prep_fn or identity
-
-    def es_getter(self):
-        return self.elasticsearch
 
     def process_change(self, change):
         from corehq.apps.change_feed.document_types import get_doc_meta_object_from_document
@@ -97,26 +91,19 @@ class ElasticProcessor(PillowProcessor):
                 self._delete_doc_if_exists(change.id)
                 return
 
-            # prepare doc for es
-            doc_ready_to_save = self.doc_transform_fn(doc)
-
         # send it across
         with self._datadog_timing('load'):
             send_to_elasticsearch(
-                index_info=self.index_info,
-                doc_type=self.index_info.type,
                 doc_id=change.id,
-                es_getter=self.es_getter,
+                adapter=self.adapter,
                 name='ElasticProcessor',
-                data=doc_ready_to_save,
+                data=doc,
             )
 
     def _delete_doc_if_exists(self, doc_id):
         send_to_elasticsearch(
-            index_info=self.index_info,
-            doc_type=self.index_info.type,
             doc_id=doc_id,
-            es_getter=self.es_getter,
+            adapter=self.adapter,
             name='ElasticProcessor',
             delete=True
         )
@@ -127,7 +114,7 @@ class ElasticProcessor(PillowProcessor):
             timing_buckets=(.03, .1, .3, 1, 3, 10),
             tags={
                 'action': step,
-                'index': self.index_info.alias,
+                'index': self.adapter.index_name,  # TODO: try to add index cname
             })
 
 
