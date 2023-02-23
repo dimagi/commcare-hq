@@ -89,6 +89,8 @@ class EventsView(BaseEventView, CRUDPaginatedViewMixin):
             'target_attendance': event.attendance_target,
             'status': event.status,
             'total_attendance': event.total_attendance or '-',
+            'edit_url': reverse(EventEditView.urlname, args=(self.domain, event.event_id)),
+            'delete_url': reverse('remove_event', args=(self.domain, event.event_id)),
         }
 
 
@@ -153,3 +155,42 @@ class EventCreateView(BaseEventView):
             return CreateEventForm(self.request.POST, domain=self.domain)
         else:
             return CreateEventForm(initial={}, domain=self.domain)
+            return CreateEventForm(event=self.event, domain=self.domain)
+
+    @property
+    def event(self):
+        return None
+
+
+class EventEditView(EventCreateView):
+    urlname = 'edit_attendance_tracking_event'
+    template_name = "new_event.html"
+    http_method_names = ['get', 'post']
+
+    page_title = _("Edit Attendance Tracking Event")
+    event_obj = None
+
+    @use_multiselect
+    @use_jquery_ui
+    def dispatch(self, request, *args, **kwargs):
+        self.event_obj = Event.get_event_by_id(kwargs['event_id'])
+        return super(EventCreateView, self).dispatch(request, *args, **kwargs)
+
+    @property
+    def page_name(self):
+        return _("Edit Event")
+
+    @property
+    def page_url(self):
+        return reverse(self.urlname, args=(self.domain, self.event.event_id))
+
+    @property
+    def event(self):
+        if not self.event_obj:
+            raise NoEventError
+        return self.event_obj
+
+
+def remove_event(request, *args, **kwargs):
+    Event.delete_event(kwargs['event_id'], kwargs['domain'])
+    return HttpResponseRedirect(reverse(EventsView.urlname, args=(kwargs['domain'],)))

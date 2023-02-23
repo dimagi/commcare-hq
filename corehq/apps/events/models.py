@@ -92,8 +92,8 @@ class Event(models.Model):
             only_ids=True
         )
 
-        attendees_ids_to_assign = set(attendees_case_ids).difference(set(current_attendees_ids))
-        attendees_ids_to_unassign = set(current_attendees_ids).difference(set(attendees_case_ids))
+        attendees_to_assign = set(attendees_case_ids).difference(set(current_attendees_ids))
+        attendees_to_unassign = set(current_attendees_ids).difference(set(attendees_case_ids))
 
         self._assign_attendees(list(attendees_to_assign))
         self._unassign_attendees(list(attendees_to_unassign))
@@ -123,8 +123,6 @@ class Event(models.Model):
             )
 
     def _unassign_attendees(self, attendees_case_ids):
-        # Todo: maybe refactor to use 'tag_cases_as_deleted_and_remove_indices'
-
         if not attendees_case_ids:
             return
 
