@@ -85,7 +85,7 @@ hqDefine("cloudcare/js/formplayer/menus/utils", function () {
         FormplayerFrontend.regions.getRegion('breadcrumb').show(breadcrumbView);
     };
 
-    var showLanguageMenu = function (langs) {
+    var showLanguageMenu = function (langs, printEnabled) {
         var langModels,
             langCollection;
 
@@ -101,10 +101,21 @@ hqDefine("cloudcare/js/formplayer/menus/utils", function () {
         langCollection = new Backbone.Collection(langModels);
         var formMenuView = views.FormMenuView({
             collection: langCollection,
+            printEnabled: printEnabled,
         });
         FormplayerFrontend.regions.getRegion('formMenu').show(formMenuView);
     };
 
+    var showPrintOption = function () {
+        FormplayerFrontend.regions.addRegions({
+            formMenu: "#form-menu",
+        });
+        var formMenuView = views.FormMenuView({
+            collection: null,
+            printEnabled: true,
+        });
+        FormplayerFrontend.regions.getRegion('formMenu').show(formMenuView);
+    };
 
     var getMenuView = function (menuResponse) {
         var menuData = {                    // TODO: make this more concise
@@ -189,6 +200,7 @@ hqDefine("cloudcare/js/formplayer/menus/utils", function () {
         handleLocationRequest: handleLocationRequest,
         showBreadcrumbs: showBreadcrumbs,
         showLanguageMenu: showLanguageMenu,
+        showPrintOption: showPrintOption,
         startOrStopLocationWatching: startOrStopLocationWatching,
     };
 });
