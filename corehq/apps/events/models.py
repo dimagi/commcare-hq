@@ -2,10 +2,17 @@ import uuid
 
 from django.utils.translation import gettext_lazy as _
 from django.db import models
-from corehq.form_processor.models import CommCareCase, CommCareCaseIndex
-from corehq.sql_db.util import get_db_aliases_for_partitioned_query
-from corehq.apps.events.utils import case_index_event_identifier
 
+from corehq.apps.users.tasks import remove_indices_from_deleted_cases
+from corehq.form_processor.models import CommCareCase, CommCareCaseIndex
+from corehq.apps.users.models import CouchUser
+from corehq.apps.events.utils import (
+    create_case_with_case_type,
+    case_index_event_identifier,
+    find_difference,
+    find_case_create_form,
+)
+from corehq.apps.events.exceptions import InvalidAttendee
 
 NOT_STARTED = 'Not started'
 IN_PROGRESS = 'In progress'
@@ -56,14 +63,23 @@ class Event(models.Model):
             return cls.objects.filter(domain=domain).order_by('start_date')
         return cls.objects.filter(domain=domain)
 
-    def save(self):
+    def save(self, expected_attendees=None):
         if not self.event_id:
             self.event_id = uuid.uuid4().hex
-        super(Event, self).save()
+        event = super(Event, self).save()
+
+        if expected_attendees is not None:
+            self._update_attendees(expected_attendees)
+
+        return event
 
     @property
     def status(self):
         return self.attendee_list_status
+
+    @property
+    def attendees(self):
+        return Attendee.get_by_event_id(self.event_id, self.domain)
 
     def _update_attendees(self, attendees_case_ids):
         current_attendees_ids = Attendee.get_by_event_id(
@@ -79,8 +95,6 @@ class Event(models.Model):
 
         self._assign_attendees(list(attendees_to_assign))
         self._unassign_attendees(list(attendees_to_unassign))
-
-        self.expected_attendees = Attendee.get_by_event_id(self.event_id, self.domain)
 
     def _assign_attendees(self, attendees_case_ids):
         if not attendees_case_ids:
@@ -123,37 +137,28 @@ class Event(models.Model):
         remove_indices_from_deleted_cases(self.domain, extension_cases_ids)
 
 
-def get_domain_attendee_cases(domain):
-    return []
-
-
-class Attendee:
-    domain: str
-    case: CommCareCase
+class Attendee(models.Model):
 
     ATTENDEE_CASE_TYPE = 'commcare-attendee'
     EVENT_ATTENDEE_CASE_TYPE = 'commcare-potential-attendee'
 
-    def __init__(self, *args, **kwargs):
-        self.domain = kwargs['domain']
-        self.case = kwargs['case']
+    domain = models.CharField(max_length=255)
+    case_id = models.CharField(max_length=126)
+
+    class Meta:
+        db_table = "commcare_attendee"
+        indexes = (models.Index(fields=("domain",)),)
 
     @classmethod
-    def get_domain_cases(cls, domain):
-        return [
-            wrap_case_search_hit(case_)
-            for case_ in CaseSearchES().domain(domain).case_type(cls.ATTENDEE_CASE_TYPE).run().hits
-        ]
+    def by_domain(cls, domain):
+        return cls.objects.filter(domain=domain)
 
     @classmethod
-    def get_by_ids(cls, case_ids, domain) -> set[Attendee]:
-        return [
-            cls(domain=domain, case=case_)
-            for case_ in CommCareCase.objects.get_cases(case_ids, domain)
-        ]
+    def get_by_ids(cls, case_ids, domain):
+        return cls.objects.filter(domain=domain, case_id__in=case_ids)
 
     @classmethod
-    def get_by_event_id(cls, event_id, domain, only_ids=False) -> set[Attendee]:
+    def get_by_event_id(cls, event_id, domain, only_ids=False):
         indices = CommCareCaseIndex.objects.get_by_identifier(
             domain=domain,
             identifier=case_index_event_identifier(event_id),
@@ -164,3 +169,33 @@ class Attendee:
             return referenced_case_ids
 
         return cls.get_by_ids(referenced_case_ids, domain)
+
+    def save(self, user_id):
+        if not user_id:
+            raise InvalidAttendee('Attendee must have user_id specified')
+
+        if not self.domain:
+            raise InvalidAttendee('Attendee must have domain specified')
+
+        if not self.case_id:
+            case_ = create_case_with_case_type(
+                case_type=Attendee.ATTENDEE_CASE_TYPE,
+                case_args={
+                    'domain': self.domain,
+                    'name': CouchUser.get_by_user_id(user_id).username,
+                    'properties': {
+                        'commcare_user_id': user_id,
+                    }
+                },
+            )
+            self.case_id = case_.case_id
+
+        return super(Attendee, self).save()
+
+    def delete(self):
+        form = find_case_create_form(
+            CommCareCase.objects.get_case(self.case_id, self.domain),
+            self.domain,
+        )
+        form.archive()
+        super(Attendee, self).delete()

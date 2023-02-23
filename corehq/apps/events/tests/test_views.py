@@ -6,12 +6,10 @@ from unittest.mock import patch
 from corehq.apps.events.models import Event, Attendee
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.events.views import EventsView, EventCreateView
-from corehq.apps.users.models import WebUser, HqPermissions
+from corehq.apps.users.models import WebUser, HqPermissions, CommCareUser
 from corehq.util.test_utils import flag_enabled
 from corehq.apps.users.models import UserRole
 from corehq.apps.users.role_utils import UserRolePresets
-from corehq.form_processor.models import CommCareCase
-from corehq.apps.es.tests.utils import es_test, populate_case_search_index
 
 
 class BaseEventViewTestClass(TestCase):
@@ -71,6 +69,9 @@ class BaseEventViewTestClass(TestCase):
         if user_roles:
             user_roles[0].delete()
 
+        for attendee in Attendee.by_domain(cls.domain):
+            attendee.delete()
+
         super().tearDownClass()
 
     @classmethod
@@ -118,7 +119,6 @@ class TestEventsListView(BaseEventViewTestClass):
         self.assertEqual(response.status_code, 200)
 
 
-@es_test
 class TestEventsCreateView(BaseEventViewTestClass):
 
     urlname = EventCreateView.urlname
@@ -155,10 +155,11 @@ class TestEventsCreateView(BaseEventViewTestClass):
         self.log_user_in(self.admin_webuser)
         data = self._event_data()
 
-        attendee_case = create_commcare_attendee_case(self.domain)
-        populate_case_search_index([attendee_case])
+        mobile_worker = self._create_mobile_worker('mobileworker1')
+        attendee = Attendee(domain=self.domain)
+        attendee.save(user_id=mobile_worker.user_id)
 
-        data['expected_attendees'] = [attendee_case.case_id]
+        data['expected_attendees'] = [attendee.case_id]
 
         self.client.post(self.endpoint, data)
 
@@ -168,8 +169,8 @@ class TestEventsCreateView(BaseEventViewTestClass):
         self.assertEqual(event.domain, self.domain)
         self.assertEqual(event.manager_id, self.admin_webuser.user_id)
 
-        self.assertEqual(len(event.expected_attendees), 1)
-        self.assertEqual(event.expected_attendees[0].case.case_id, attendee_case.case_id)
+        self.assertEqual(len(event.attendees), 1)
+        self.assertEqual(event.attendees[0].case_id, attendee.case_id)
 
     @flag_enabled('ATTENDANCE_TRACKING')
     def test_event_create_fails_with_faulty_data(self):
@@ -193,15 +194,11 @@ class TestEventsCreateView(BaseEventViewTestClass):
             'track_each_day': False,
         }
 
-
-def create_commcare_attendee_case(domain):
-    from corehq.apps.events.utils import create_case_with_case_type
-    return create_case_with_case_type(
-        case_type=Attendee.ATTENDEE_CASE_TYPE,
-        case_args={
-            'domain': domain,
-            'properties': {
-                'username': f'attendee_mctest@{uuid.uuid4().hex}'
-            }
-        },
-    )
+    def _create_mobile_worker(self, username):
+        return CommCareUser.create(
+            domain=self.domain,
+            username=username,
+            password="*****",
+            created_by=None,
+            created_via=None,
+        )
