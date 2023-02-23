@@ -5,13 +5,14 @@ from datetime import datetime
 
 from corehq.apps.events.models import (
     Event,
+    NOT_STARTED,
     Attendee,
 )
-from corehq.form_processor.tests.utils import create_case
 from corehq.apps.domain.shortcuts import create_domain
-from corehq.apps.users.models import WebUser
+from corehq.apps.users.models import WebUser, CommCareUser
 from corehq.form_processor.models import CommCareCase
-from corehq.apps.es.tests.utils import es_test, ElasticTestMixin, populate_case_search_index
+from corehq.apps.es.tests.utils import es_test, ElasticTestMixin
+from corehq.apps.events.exceptions import InvalidAttendee
 
 
 @es_test
@@ -23,86 +24,58 @@ class TestAttendee(ElasticTestMixin, TestCase):
     def setUpClass(cls):
         super().setUpClass()
         cls.domain_obj = create_domain(cls.domain)
-        cls.domain_attendee_cases = []
 
     @classmethod
     def tearDownClass(cls):
-        CommCareCase.objects.hard_delete_cases(
-            cls.domain,
-            [case.case_id for case in cls.domain_attendee_cases]
-        )
         cls.domain_obj.delete()
+        for attendee in Attendee.by_domain(cls.domain):
+            attendee.delete()
         super().tearDownClass()
 
-    def test_get_domain_cases(self):
-        self._create_attendees_for_domain(2)
-        cases = Attendee.get_domain_cases(self.domain)
+    def test_save_fails_without_user_id(self):
+        try:
+            Attendee(domain='bogus').save(user_id=None)
+            self.assertTrue(False)
+        except InvalidAttendee:
+            self.assertTrue(True)
 
-        self.assertEqual(
-            [c_.case_id for c_ in self.domain_attendee_cases].sort(),
-            [c_.case_id for c_ in cases].sort()
-        )
+    def test_case_created_on_attendee_save(self):
+        mobile_worker = self.create_mobile_worker('iworkmobiles', self.domain)
+        domain_attendees = Attendee.by_domain(self.domain)
+        self.assertEqual(list(domain_attendees), [])
 
-    def test_get_by_ids(self):
-        self._create_attendees_for_domain(2)
+        attendee = Attendee(domain=self.domain)
+        attendee.save(mobile_worker.user_id)
 
-        attendees_case_ids = [c_.case_id for c_ in self.domain_attendee_cases]
-        attendees = Attendee.get_by_ids(attendees_case_ids, self.domain)
+        domain_attendees = Attendee.by_domain(self.domain)
+        self.assertTrue(len(domain_attendees) == 1)
+        self.assertTrue(domain_attendees[0].case_id is not None)
 
-        self.assertTrue(len(attendees) == 2)
-        self.assertTrue(isinstance(attendees[0], Attendee))
-        self.assertTrue(attendees[0].domain == self.domain)
-        self.assertTrue(isinstance(attendees[0].case, CommCareCase))
+        attendee_case = CommCareCase.objects.get_case(domain_attendees[0].case_id, self.domain)
+        self.assertEqual(attendee_case.name, mobile_worker.username)
+        self.assertEqual(attendee_case.get_case_property('commcare_user_id'), mobile_worker.user_id)
 
-    def test_get_by_ids_empty(self):
-        self.assertEqual(Attendee.get_by_ids([], self.domain), [])
+    def test_case_deleted_on_attendee_delete(self):
+        mobile_worker = self.create_mobile_worker('delete_me', self.domain)
+        domain_attendees = Attendee.by_domain(self.domain)
+        self.assertEqual(list(domain_attendees), [])
 
-    def test_get_by_event_id(self):
-        event_id = 1
+        attendee = Attendee(domain=self.domain)
+        attendee.save(mobile_worker.user_id)
 
-        self._create_attendees_for_domain(2)
-        self._create_event_attendee([self.domain_attendee_cases[0]], event_id)
+        domain_attendees = Attendee.by_domain(self.domain)
+        case_id = domain_attendees[0].case_id
+        attendee_case = CommCareCase.objects.get_case(case_id, self.domain)
+        self.assertTrue(attendee_case is not None)
+        self.assertTrue(attendee_case.deleted is False)
 
-        event_attendees = Attendee.get_by_event_id(event_id, self.domain)
-
-        self.assertEqual(len(event_attendees), 1)
-        self.assertTrue(isinstance(event_attendees[0], Attendee))
-        self.assertEqual(
-            event_attendees[0].case.case_id,
-            self.domain_attendee_cases[0].case_id
-        )
-
-    def test_get_by_event_id__only_ids(self):
-        event_id = 1
-
-        self._create_attendees_for_domain(2)
-        self._create_event_attendee([self.domain_attendee_cases[0]], event_id)
-
-        event_attendees = Attendee.get_by_event_id(event_id, self.domain, only_ids=True)
-
-        self.assertEqual(len(event_attendees), 1)
-        self.assertEqual(
-            event_attendees[0],
-            self.domain_attendee_cases[0].case_id
-        )
-
-    def _create_attendees_for_domain(self, count):
-        for i in range(count):
-            case_ = create_commcare_attendee_case(self.domain)
-            self.domain_attendee_cases.append(case_)
-
-        populate_case_search_index(self.domain_attendee_cases)
-
-    def _create_event_attendee(self, attendees_cases, event_id):
-        for attendee_case in attendees_cases:
-            create_event_attendee_case(
-                self.domain,
-                event_id,
-                attendee_case.case_id,
-            )
+        attendee.delete()
+        self.assertEqual(list(Attendee.by_domain(self.domain)), [])
+        attendee_case = CommCareCase.objects.get_case(case_id, self.domain)
+        self.assertTrue(attendee_case.deleted is True)
 
 
-class TestEvent(TestCase):
+class TestEventModel(TestCase):
 
     domain = 'test-domain'
 
@@ -123,9 +96,11 @@ class TestEvent(TestCase):
     def tearDownClass(cls):
         cls.webuser.delete(None, None)
         cls.domain_obj.delete()
+        for attendee in Attendee.by_domain(cls.domain):
+            attendee.delete()
         super().tearDownClass()
 
-    def test_get_obj_from_data(self):
+    def test_create_event(self):
         now = datetime.utcnow().date()
 
         event_data = {
@@ -136,82 +111,19 @@ class TestEvent(TestCase):
             'attendance_target': 10,
             'sameday_reg': True,
             'track_each_day': False,
-            'manager': None,
+            'manager_id': self.webuser.user_id,
         }
-        event = Event._get_obj_from_data(event_data)
-
-        self.assertTrue(isinstance(event, Event))
-
-        self.assertTrue(event.domain == self.domain)
-        self.assertTrue(event.name == 'test-event')
-        self.assertTrue(event.start_date == now)
-        self.assertTrue(event.end_date == now)
-        self.assertTrue(event.attendance_target == 10)
-        self.assertTrue(event.sameday_reg is True)
-        self.assertFalse(event.track_each_day)
-        self.assertFalse(hasattr(event, 'case'))
-        self.assertTrue(event.manager is None)
-        self.assertTrue(event.is_open == Event.is_open)
-        self.assertTrue(event.attendee_list_status == Event.attendee_list_status)
-
-    def test_get_obj_from_case(self):
-        now = datetime.utcnow().date()
-        case_args = {
-            'name': 'test-event',
-            'case_json': {
-                'start_date': now,
-                'end_date': now,
-                'attendance_target': 10,
-                'sameday_reg': True,
-                'track_each_day': False,
-                'is_open': False,
-                'attendee_list_status': 'Accepted'
-            }
-        }
-        case_ = create_case(
-            self.domain,
-            case_type=Event.EVENT_CASE_TYPE,
-            user_id=self.webuser.user_id,
-            **case_args,
-        )
-        event = Event.get_obj_from_case(case_)
-
-        self.assertTrue(isinstance(event, Event))
-        self.assertTrue(event.case == case_)
-        self.assertFalse(event.is_open)
-        self.assertTrue(event.attendee_list_status == 'Accepted')
-        self.assertEqual(event.expected_attendees, [])
-
-    def test_event_save_creates_case(self):
-        now = datetime.utcnow().date()
-
-        event_data = {
-            'domain': self.domain,
-            'name': 'test-event',
-            'start_date': now,
-            'end_date': now,
-            'attendance_target': 10,
-            'sameday_reg': True,
-            'track_each_day': False,
-            'manager': self.webuser,
-        }
-        event = Event._get_obj_from_data(event_data)
-        self.assertFalse(hasattr(event, 'case'))
-        # A case will be created if the event does not have a case associated with it
-
+        event = Event(**event_data)
         event.save()
-        self.assertTrue(hasattr(event, 'case'))
 
-        case_ = event.case
-        self.assertTrue(isinstance(case_, CommCareCase))
-        self.assertTrue(case_.case_id == event.event_id)
-        self.assertTrue(case_.type == Event.EVENT_CASE_TYPE)
-        self.assertEqual(event.expected_attendees, [])
-        self.assertEqual(event.attendance_takers, [])
+        self.assertEqual(event.status, NOT_STARTED)
+        self.assertEqual(event.is_open, True)
+        self.assertTrue(event.event_id is not None)
 
     def test_create_event_with_attendees(self):
         now = datetime.utcnow().date()
-        attendee_case = create_commcare_attendee_case(self.domain)
+
+        attendee = self._create_attendee_on_domain('signmeup')
 
         event_data = {
             'domain': self.domain,
@@ -221,25 +133,25 @@ class TestEvent(TestCase):
             'attendance_target': 10,
             'sameday_reg': True,
             'track_each_day': False,
-            'manager': self.webuser,
-            'expected_attendees': [attendee_case.case_id]
+            'manager_id': self.webuser.user_id,
         }
+        event = Event(**event_data)
+        event.save(expected_attendees=[attendee.case_id])
 
-        event = Event.create(event_data)
+        self.assertEqual(len(event.attendees), 1)
+        self.assertTrue(isinstance(event.attendees[0], Attendee))
 
-        self.assertEqual(len(event.expected_attendees), 1)
-        self.assertTrue(isinstance(event.expected_attendees[0], Attendee))
-        self.assertTrue(isinstance(event.expected_attendees[0].case, CommCareCase))
-        self.assertEqual(event.expected_attendees[0].case.type, Attendee.ATTENDEE_CASE_TYPE)
+        attendee_case = CommCareCase.objects.get_case(event.attendees[0].case_id)
+        self.assertEqual(attendee_case.type, Attendee.ATTENDEE_CASE_TYPE)
 
-        subcases = event.expected_attendees[0].case.get_subcases(f"event-{event.event_id}")
+        subcases = attendee_case.get_subcases(f"event-{event.event_id}")
         self.assertEqual(len(subcases), 1)
         self.assertEqual(subcases[0].type, Attendee.EVENT_ATTENDEE_CASE_TYPE)
 
     def test_update_event_attendees(self):
         now = datetime.utcnow().date()
-        attendee_case1 = create_commcare_attendee_case(self.domain)
-        attendee_case2 = create_commcare_attendee_case(self.domain)
+        attendee1 = self._create_attendee_on_domain('at1')
+        attendee2 = self._create_attendee_on_domain('at2')
 
         event_data = {
             'domain': self.domain,
@@ -249,61 +161,46 @@ class TestEvent(TestCase):
             'attendance_target': 10,
             'sameday_reg': True,
             'track_each_day': False,
-            'manager': self.webuser,
-            'expected_attendees': [
-                attendee_case1.case_id,
-                attendee_case2.case_id,
-            ]
+            'manager_id': self.webuser.user_id,
         }
+        event = Event(**event_data)
+        expected_attendees = [
+            attendee1.case_id,
+            attendee2.case_id,
+        ]
+        event.save(expected_attendees=expected_attendees)
 
-        event = Event.create(event_data)
-        first_round_attendees = event.expected_attendees
-        expected_case_ids = [c_.case.case_id for c_ in first_round_attendees]
+        expected_case_ids = [a.case_id for a in event.attendees]
 
-        self.assertTrue(attendee_case1.case_id in expected_case_ids)
-        self.assertTrue(attendee_case2.case_id in expected_case_ids)
+        self.assertTrue(attendee1.case_id in expected_case_ids)
+        self.assertTrue(attendee2.case_id in expected_case_ids)
 
-        attendee_case3 = create_commcare_attendee_case(self.domain)
+        attendee3 = self._create_attendee_on_domain('at3')
 
         event.save(
-            attendees=[
-                attendee_case1.case_id,
-                attendee_case3.case_id,
+            expected_attendees=[
+                attendee1.case_id,
+                attendee3.case_id,
             ]
         )
-        second_round_attendees = event.expected_attendees
-        expected_case_ids = [c_.case.case_id for c_ in second_round_attendees]
+        expected_case_ids = [a.case_id for a in event.attendees]
 
-        self.assertTrue(attendee_case1.case_id in expected_case_ids)
-        self.assertTrue(attendee_case2.case_id not in expected_case_ids)
-        self.assertTrue(attendee_case3.case_id in expected_case_ids)
+        self.assertTrue(attendee1.case_id in expected_case_ids)
+        self.assertTrue(attendee2.case_id not in expected_case_ids)
+        self.assertTrue(attendee3.case_id in expected_case_ids)
 
-
-def create_commcare_attendee_case(domain):
-    from corehq.apps.events.utils import create_case_with_case_type
-    return create_case_with_case_type(
-        case_type=Attendee.ATTENDEE_CASE_TYPE,
-        case_args={
-            'domain': domain,
-            'properties': {
-                'username': f'attendee_mctest@{uuid.uuid4().hex}'
-            }
-        },
-    )
+    def _create_attendee_on_domain(self, username):
+        user = create_mobile_worker(username, self.domain)
+        attendee = Attendee(domain=self.domain)
+        attendee.save(user_id=user.user_id)
+        return attendee
 
 
-def create_event_attendee_case(domain, event_id, parent_case_id):
-    from corehq.apps.events.utils import create_case_with_case_type, case_index_event_identifier
-    return create_case_with_case_type(
-        case_type=Attendee.EVENT_ATTENDEE_CASE_TYPE,
-        case_args={
-            'domain': domain,
-            'properties': {
-                'event_id': event_id
-            }
-        },
-        index={
-            'parent_case_id': parent_case_id,
-            'identifier': case_index_event_identifier(event_id),
-        }
+def create_mobile_worker(username, domain):
+    return CommCareUser.create(
+        domain=domain,
+        username=username,
+        password="*****",
+        created_by=None,
+        created_via=None,
     )
