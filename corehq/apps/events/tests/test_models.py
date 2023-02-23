@@ -8,7 +8,7 @@ from corehq.apps.events.models import (
 )
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.users.models import WebUser, CommCareUser
-from corehq.form_processor.models import CommCareCase
+from corehq.form_processor.models import CommCareCase, CommCareCaseIndex
 from corehq.apps.events.exceptions import InvalidAttendee
 
 
@@ -184,6 +184,37 @@ class TestEventModel(TestCase):
         self.assertTrue(attendee1.case_id in expected_case_ids)
         self.assertTrue(attendee2.case_id not in expected_case_ids)
         self.assertTrue(attendee3.case_id in expected_case_ids)
+
+    def test_delete_event_removes_attendees_cases(self):
+        now = datetime.utcnow().date()
+
+        attendee = self._create_attendee_on_domain('attendee_to_remove')
+
+        event_data = {
+            'domain': self.domain,
+            'name': 'test-event',
+            'start_date': now,
+            'end_date': now,
+            'attendance_target': 10,
+            'sameday_reg': True,
+            'track_each_day': False,
+            'manager_id': self.webuser.user_id,
+        }
+        event = Event(**event_data)
+        event.save(expected_attendees=[attendee.case_id])
+
+        extension_cases_ids = CommCareCaseIndex.objects.get_extension_case_ids(
+            self.domain,
+            [attendee.case_id]
+        )
+        self.assertEqual(len(extension_cases_ids), 1)
+
+        event.delete()
+        extension_cases_ids = CommCareCaseIndex.objects.get_extension_case_ids(
+            self.domain,
+            [attendee.case_id]
+        )
+        self.assertEqual(len(extension_cases_ids), 0)
 
     def _create_attendee_on_domain(self, username):
         user = create_mobile_worker(username, self.domain)

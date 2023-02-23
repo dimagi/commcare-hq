@@ -36,6 +36,9 @@ class EventObjectManager(models.Manager):
             return super(EventObjectManager, self).get_queryset().filter(domain=domain).order_by('start_date')
         return super(EventObjectManager, self).get_queryset().filter(domain=domain)
 
+    def get_event(self, event_id):
+        return super(EventObjectManager, self).get_queryset().get(event_id=event_id)
+
 
 class Event(models.Model):
     """Attendance Tracking Event"""
@@ -77,6 +80,13 @@ class Event(models.Model):
 
         return event
 
+    def delete(self):
+        attendees_to_unassign = Attendee.objects.get_by_event_id(self.event_id, domain=self.domain)
+        self._unassign_attendees(
+            [attendee.case_id for attendee in attendees_to_unassign]
+        )
+        return super(Event, self).delete()
+
     @property
     def status(self):
         return self.attendee_list_status
@@ -91,11 +101,7 @@ class Event(models.Model):
             self.domain,
             only_ids=True
         )
-
-        attendees_to_assign, attendees_to_unassign = find_difference(
-            current_attendees_ids,
-            attendees_case_ids
-        )
+        attendees_to_assign, attendees_to_unassign = find_difference(current_attendees_ids, attendees_case_ids)
 
         self._assign_attendees(list(attendees_to_assign))
         self._unassign_attendees(list(attendees_to_unassign))
@@ -117,6 +123,7 @@ class Event(models.Model):
                 'parent_case_id': parent_case_id,
                 'identifier': case_index_event_identifier(event_id),
             }
+
             create_case_with_case_type(
                 case_type=Attendee.EVENT_ATTENDEE_CASE_TYPE,
                 case_args=case_args,
@@ -124,9 +131,6 @@ class Event(models.Model):
             )
 
     def _unassign_attendees(self, attendees_case_ids):
-        """
-        This method deletes the indices and cases linking the domain attendees to the event
-        """
         if not attendees_case_ids:
             return
 
@@ -206,4 +210,4 @@ class Attendee(models.Model):
             self.domain,
         )
         form.archive()
-        super(Attendee, self).delete()
+        return super(Attendee, self).delete()
