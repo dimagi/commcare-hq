@@ -4,15 +4,6 @@ import time
 
 from django.conf import settings
 
-from corehq.util.es.elasticsearch import (
-    ConflictError,
-    ConnectionError,
-    NotFoundError,
-    RequestError,
-)
-from corehq.util.es.interface import ElasticsearchInterface
-from corehq.util.metrics import metrics_histogram_timer
-
 from pillowtop.exceptions import BulkDocException, PillowtopIndexingError
 from pillowtop.logger import pillow_logging
 from pillowtop.utils import (
@@ -23,6 +14,15 @@ from pillowtop.utils import (
     ensure_matched_revisions,
     get_errors_with_ids,
 )
+
+from corehq.apps.es.transient_util import doc_adapter_from_alias
+from corehq.util.es.elasticsearch import (
+    ConflictError,
+    ConnectionError,
+    NotFoundError,
+    RequestError,
+)
+from corehq.util.metrics import metrics_histogram_timer
 
 from .interface import BulkPillowProcessor, PillowProcessor
 
@@ -60,7 +60,9 @@ class ElasticProcessor(PillowProcessor):
         self.doc_filter_fn = doc_filter_fn or noop_filter
 
     def process_change(self, change):
-        from corehq.apps.change_feed.document_types import get_doc_meta_object_from_document
+        from corehq.apps.change_feed.document_types import (
+            get_doc_meta_object_from_document,
+        )
 
         if self.change_filter_fn and self.change_filter_fn(change):
             return
@@ -241,7 +243,3 @@ def _retries():
 
 def _sleep_between_retries(current_tries):
     time.sleep(math.pow(RETRY_INTERVAL, current_tries))
-
-
-def _get_es_interface(es_getter):
-    return ElasticsearchInterface(es_getter())
