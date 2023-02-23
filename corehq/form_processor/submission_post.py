@@ -477,10 +477,9 @@ class SubmissionPost(object):
         if not case_search_synchronous_web_apps_for_domain(instance.domain):
             return
 
-        from corehq.pillows.case_search import transform_case_for_elasticsearch
         from corehq.apps.es.case_search import case_search_adapter
         actions = [
-            BulkActionItem.index(transform_case_for_elasticsearch(case_model.to_json()))
+            BulkActionItem.index(case_model)
             for case_model in case_models
         ]
         try:
