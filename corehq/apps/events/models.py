@@ -80,6 +80,13 @@ class Event(models.Model):
 
         return event
 
+    def delete(self):
+        attendees_to_unassign = Attendee.objects.get_by_event_id(self.event_id, domain=self.domain)
+        self._unassign_attendees(
+            [attendee.case_id for attendee in attendees_to_unassign]
+        )
+        return super(Event, self).delete()
+
     @property
     def status(self):
         return self.attendee_list_status
