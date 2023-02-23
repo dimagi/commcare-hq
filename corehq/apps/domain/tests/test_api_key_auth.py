@@ -8,27 +8,31 @@ USERNAME = "joel@lastofus.com"
 API_KEY = "123abc"
 
 
-def has_credentials(request):
-    actual = HQApiKeyAuthentication().extract_credentials(request)
+def has_credentials(request, allow_creds_in_data=True):
+    actual = HQApiKeyAuthentication(allow_creds_in_data=allow_creds_in_data).extract_credentials(request)
     return actual == (USERNAME, API_KEY)
 
 
 def test_no_auth():
     request = RequestFactory().get('/myapi/')
     assert not has_credentials(request)
+    assert not has_credentials(request, allow_creds_in_data=False)
 
 
 def test_credentials_in_META():
     request = RequestFactory().get('/myapi/')
     request.META['HTTP_AUTHORIZATION'] = f"ApiKey {USERNAME}:{API_KEY}"
     assert has_credentials(request)
+    assert has_credentials(request, allow_creds_in_data=False)
 
 
 def test_credentials_in_GET():
     request = RequestFactory().get(f'/myapi/?username={USERNAME}&api_key={API_KEY}')
     assert has_credentials(request)
+    assert not has_credentials(request, allow_creds_in_data=False)
 
 
 def test_credentials_in_POST():
     request = RequestFactory().post('/myapi/', {'username': USERNAME, 'api_key': API_KEY})
     assert has_credentials(request)
+    assert not has_credentials(request, allow_creds_in_data=False)

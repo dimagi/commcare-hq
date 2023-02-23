@@ -253,6 +253,10 @@ def get_active_users_by_email(email):
 
 
 class HQApiKeyAuthentication(ApiKeyAuthentication):
+    def __init__(self, *args, allow_creds_in_data=True, **kwargs):
+        self._allow_creds_in_data = allow_creds_in_data
+        super().__init__(*args, **kwargs)
+
     def is_authenticated(self, request):
         """Follows what tastypie does, then tests for IP whitelisting
         """
@@ -302,3 +306,19 @@ class HQApiKeyAuthentication(ApiKeyAuthentication):
         username = self.extract_credentials(request)[0]
         domain = getattr(request, 'domain', '')
         return ApiIdentifier(username=username, domain=domain)
+
+    def extract_credentials(self, request):
+        """Extract username and key from request"""
+        # This overrides an existing tastypie method
+        try:
+            data = self.get_authorization_data(request)
+        except ValueError:
+            if self._allow_creds_in_data:
+                username = request.GET.get('username') or request.POST.get('username')
+                api_key = request.GET.get('api_key') or request.POST.get('api_key')
+            else:
+                username, api_key = None, None
+        else:
+            username, api_key = data.split(':', 1)
+
+        return username, api_key
