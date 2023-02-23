@@ -128,6 +128,7 @@ class AddNormalKeywordView(AddStructuredKeywordView):
 class EditStructuredKeywordView(AddStructuredKeywordView):
     urlname = 'edit_structured_keyword'
     page_title = gettext_noop("Edit Structured Keyword")
+    readonly = False
 
     @property
     def page_url(self):
@@ -164,6 +165,7 @@ class EditStructuredKeywordView(AddStructuredKeywordView):
                 initial=initial,
                 keyword_id=self.keyword_id,
                 process_structured=self.process_structured_message,
+                readonly=self.readonly,
             )
             form._sk_id = self.keyword_id
             return form
@@ -171,6 +173,7 @@ class EditStructuredKeywordView(AddStructuredKeywordView):
             domain=self.domain,
             initial=initial,
             process_structured=self.process_structured_message,
+            readonly=self.readonly,
         )
 
     def get_initial_values(self):
@@ -201,7 +204,7 @@ class EditStructuredKeywordView(AddStructuredKeywordView):
                         'use_named_args_separator': action.named_args_separator is not None,
                         'use_named_args': action.use_named_args,
                         'named_args_separator': action.named_args_separator,
-                        'named_args': [{"name" : k, "xpath" : v} for k, v in action.named_args.items()],
+                        'named_args': [{"name": k, "xpath": v} for k, v in action.named_args.items()],
                     })
             elif action.recipient == KeywordAction.RECIPIENT_SENDER:
                 initial.update({
@@ -235,6 +238,16 @@ class EditNormalKeywordView(EditStructuredKeywordView):
             raise Http404()
 
         return k
+
+
+class ViewStructuredKeywordView(EditStructuredKeywordView):
+    urlname = 'view_structured_keyword'
+    readonly = True
+
+
+class ViewNormalKeywordView(EditNormalKeywordView):
+    urlname = 'view_normal_keyword'
+    readonly = True
 
 
 class KeywordsListView(BaseMessagingSectionView, CRUDPaginatedViewMixin):
