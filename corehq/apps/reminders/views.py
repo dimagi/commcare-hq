@@ -275,15 +275,24 @@ class KeywordsListView(BaseMessagingSectionView, CRUDPaginatedViewMixin):
 
     @property
     def column_names(self):
-        return [
+        columns = [
             _("Keyword"),
             _("Description"),
             _("Action"),
         ]
 
+        if self.has_linked_data():
+            columns.append("")  # Upstream ID column has no header
+
+        return columns
+
+    def has_linked_data(self):
+        return any((keyword.upstream_id for keyword in self._all_keywords()))
+
     @property
     def page_context(self):
         context = self.pagination_context
+        context['has_linked_data'] = self.has_linked_data
         return context
 
     @memoized
@@ -303,6 +312,7 @@ class KeywordsListView(BaseMessagingSectionView, CRUDPaginatedViewMixin):
             'id': keyword.couch_id,
             'keyword': keyword.keyword,
             'description': keyword.description,
+            'upstream_id': keyword.upstream_id,
             'editUrl': reverse(
                 EditStructuredKeywordView.urlname,
                 args=[self.domain, keyword.couch_id]
