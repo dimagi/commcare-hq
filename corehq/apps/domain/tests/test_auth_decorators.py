@@ -200,7 +200,6 @@ class ApiAuthTest(SimpleTestCase, AuthTestMixin):
     def test_api_auth_no_auth(self):
         decorated_view = api_auth()(sample_view)
         request = _get_request()
-        # result = decorated_view(request, self.domain_name)
         self.assertForbidden(decorated_view(request, self.domain_name))
 
     def _do_auth_test(self, auth_header, decorator_to_mock):
