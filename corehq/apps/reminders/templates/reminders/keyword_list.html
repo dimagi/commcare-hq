@@ -64,6 +64,13 @@
         </div>
       </div>
     </td>
+    {% if has_linked_data %}
+    <td>
+      <span data-bind="if: upstream_id">
+        <i class="fa fa-link"></i>
+      </span>
+    </td>
+    {% endif %}
   </script>
   <script type="text/html" id="keyword-deleted-template">
     <td class="col-md-5">
