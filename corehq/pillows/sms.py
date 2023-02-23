@@ -15,6 +15,7 @@ from corehq.apps.change_feed.consumer.feed import (
     KafkaCheckpointEventHandler,
 )
 from corehq.apps.sms.models import SMS
+from corehq.apps.es.sms import sms_adapter
 from corehq.elastic import get_es_new
 from corehq.form_processor.backends.sql.dbaccessors import ReindexAccessor
 from corehq.pillows.mappings.sms_mapping import SMS_INDEX_INFO
@@ -30,11 +31,7 @@ def get_sql_sms_pillow(pillow_id='SqlSMSPillow', num_processes=1, process_num=0,
     """
     assert pillow_id == 'SqlSMSPillow', 'Pillow ID is not allowed to change'
     checkpoint = get_checkpoint_for_elasticsearch_pillow(pillow_id, SMS_INDEX_INFO, [topics.SMS])
-    processor = BulkElasticProcessor(
-        elasticsearch=get_es_new(),
-        index_info=SMS_INDEX_INFO,
-        doc_prep_fn=lambda x: x
-    )
+    processor = BulkElasticProcessor(adapter=sms_adapter)
     change_feed = KafkaChangeFeed(
         topics=[topics.SMS], client_id='sql-sms-to-es',
         num_processes=num_processes, process_num=process_num
