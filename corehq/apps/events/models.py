@@ -1,144 +1,63 @@
-from __future__ import annotations
-from datetime import date
-from typing import Literal
+import uuid
+
 from django.utils.translation import gettext_lazy as _
-
-from corehq.form_processor.models import CommCareCase
-from corehq.apps.users.models import WebUser
-from corehq.apps.events.utils import create_case_with_case_type
-from corehq.sql_db.util import get_db_aliases_for_partitioned_query
-from corehq.apps.events.exceptions import EventNotPersistedError
+from django.db import models
 
 
-EVENT_CASE_TYPE = 'commcare-event'
+NOT_STARTED = 'Not started'
+IN_PROGRESS = 'In progress'
+UNDER_REVIEW = 'Under review'
+REJECTED = 'Rejected'
+ACCEPTED = 'Accepted'
 
-AttendeeListStatus = Literal[
-    'Not started',
-    'In progress',
-    'Under review',
-    'Rejected',
-    'Accepted',
-]
 ATTENDEE_LIST_STATUS_CHOICES = [
-    ('Not started', _('Not started')),
-    ('In progress', _('In progress')),
-    ('Under review', _('Under review')),
-    ('Rejected', _('Rejected')),
-    ('Accepted', _('Accepted')),
-]
-
-EVENT_CASE_PROPERTIES = [
-    'start_date',
-    'end_date',
-    'attendance_target',
-    'sameday_reg',
-    'track_each_day',
-    'is_open',
-    'attendee_list_status',
+    (NOT_STARTED, _('Not started')),
+    (IN_PROGRESS, _('In progress')),
+    (UNDER_REVIEW, _('Under review')),
+    (REJECTED, _('Rejected')),
+    (ACCEPTED, _('Accepted')),
 ]
 
 
-class Event:
+class Event(models.Model):
     """Attendance Tracking Event"""
-    domain: str
-    name: str
-    start_date: date
-    end_date: date
-    attendance_target: int
-    sameday_reg: bool
-    track_each_day: bool
-    case: CommCareCase
-    manager: WebUser
-    is_open: bool = True
+    name = models.CharField(max_length=100)
+    domain = models.CharField(max_length=255)
+    event_id = models.CharField(max_length=255, unique=True)
+    start_date = models.DateField(null=False)
+    end_date = models.DateField(null=False)
+    attendance_target = models.IntegerField(null=False)
+    total_attendance = models.IntegerField(null=False, default=0)
+    sameday_reg = models.BooleanField(default=False)
+    track_each_day = models.BooleanField(default=False)
+    is_open = models.BooleanField(default=True)
+    manager_id = models.CharField(max_length=255, null=False)
+    attendee_list_status = models.CharField(
+        max_length=255,
+        null=False,
+        choices=ATTENDEE_LIST_STATUS_CHOICES,
+        default=NOT_STARTED,
+    )
 
-    attendee_list_status: AttendeeListStatus = 'Not started'
-
-    # Todo: implement the following
-    # attendance_takers: set[CommCareUser]
-    # possible_attendees: set[Attendee]
-
-    @classmethod
-    def get_obj_from_data(cls, data) -> Event:
-        event_obj = cls()
-
-        event_obj.domain = data['domain']
-        event_obj.name = data['name']
-        event_obj.start_date = data['start_date']
-        event_obj.end_date = data['end_date']
-        event_obj.attendance_target = data['attendance_target']
-        event_obj.sameday_reg = data['sameday_reg']
-        event_obj.track_each_day = data['track_each_day']
-        event_obj.manager = data['manager']
-        event_obj.is_open = data.get('is_open', Event.is_open)
-        event_obj.attendee_list_status = data.get('attendee_list_status', Event.attendee_list_status)
-
-        if 'case' in data:
-            event_obj.case = data['case']
-
-        # Todo: implement the following
-        # event_obj.attendance_takers = []
-        # event_obj.possible_attendees = []
-
-        return event_obj
+    class Meta:
+        db_table = "commcare_event"
+        indexes = (
+            models.Index(fields=("event_id",)),
+            models.Index(fields=("domain",)),
+            models.Index(fields=("manager_id",)),
+        )
 
     @classmethod
-    def get_obj_from_case(cls, case: CommCareCase) -> Event:
-        data = {
-            'domain': case.domain,
-            'name': case.name,
-            'manager': WebUser.get_by_user_id(case.owner_id),
-            'case': case,
-            **{key: case.get_case_property(key) for key in EVENT_CASE_PROPERTIES}
-        }
-        return cls.get_obj_from_data(data)
+    def by_domain(cls, domain, most_recent_first=False):
+        if most_recent_first:
+            return cls.objects.filter(domain=domain).order_by('start_date')
+        return cls.objects.filter(domain=domain)
+
+    def save(self):
+        if not self.event_id:
+            self.event_id = uuid.uuid4().hex
+        super(Event, self).save()
 
     @property
     def status(self):
-        return next(
-            (value for key, value in ATTENDEE_LIST_STATUS_CHOICES if key == self.attendee_list_status)
-        )
-
-    @property
-    def total_attendance(self):
-        return self.case.get_case_property('total_attendance')
-
-    @property
-    def event_id(self):
-        if not self._is_persisted_event():
-            raise EventNotPersistedError('No case associated with event')
-        return self.case.case_id
-
-    def save(self):
-        if self._is_persisted_event():
-            # Todo: update existing case
-            pass
-        else:
-            self._persist_event()
-
-    def _is_persisted_event(self):
-        return hasattr(self, 'case') and isinstance(self.case, CommCareCase)
-
-    def _persist_event(self):
-        # The Event class attributes map 1:1 with the case properties through EVENT_CASE_PROPERTIES
-        case_json = {
-            key: self.__dict__[key] for key in EVENT_CASE_PROPERTIES
-        }
-        case_args = {
-            'domain': self.domain,
-            'name': self.name,
-            'owner_id': self.manager.user_id,
-            'properties': case_json,
-        }
-        case_ = create_case_with_case_type(EVENT_CASE_TYPE, case_args)
-        self.case = case_
-
-
-def get_domain_events(domain):
-    events = []
-
-    for db in get_db_aliases_for_partitioned_query():
-        for case_ in CommCareCase.objects.using(db).filter(domain=domain, type=EVENT_CASE_TYPE):
-            event = Event.get_obj_from_case(case_)
-            events.append(event)
-
-    return events
+        return self.attendee_list_status

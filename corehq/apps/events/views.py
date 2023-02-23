@@ -5,10 +5,7 @@ from django.http import Http404
 
 from corehq.apps.hqwebapp.views import CRUDPaginatedViewMixin
 from corehq.apps.domain.views.base import BaseDomainView
-from corehq.apps.events.models import (
-    Event,
-    get_domain_events,
-)
+from corehq.apps.events.models import Event
 from corehq.apps.events.forms import CreateEventForm
 from corehq.apps.hqwebapp.decorators import use_jquery_ui
 from corehq import toggles
@@ -50,7 +47,7 @@ class EventsView(BaseEventView, CRUDPaginatedViewMixin):
 
     @property
     def total(self):
-        return len(self.domain_events)
+        return self.domain_events.count()
 
     @property
     def column_names(self):
@@ -59,8 +56,8 @@ class EventsView(BaseEventView, CRUDPaginatedViewMixin):
             _("Start date"),
             _("End date"),
             _("Attendance Target"),
-            _("Total attendees"),
             _("Status"),
+            _("Total attendees"),
         ]
 
     @property
@@ -69,7 +66,7 @@ class EventsView(BaseEventView, CRUDPaginatedViewMixin):
 
     @property
     def domain_events(self):
-        return get_domain_events(self.domain)
+        return Event.by_domain(self.domain, most_recent_first=True)
 
     @property
     def paginated_list(self):
@@ -87,11 +84,11 @@ class EventsView(BaseEventView, CRUDPaginatedViewMixin):
         return {
             'id': event.event_id,
             'name': event.name,
-            'start_date': str(event.start_date),
-            'end_date': str(event.end_date),
+            'start_date': str(event.start_date.date()),
+            'end_date': str(event.end_date.date()),
             'target_attendance': event.attendance_target,
-            'total_attendance': event.total_attendance,
             'status': event.status,
+            'total_attendance': event.total_attendance or '-',
         }
 
 
@@ -134,10 +131,17 @@ class EventCreateView(BaseEventView):
             return HttpResponseBadRequest()
 
         event_data = form.cleaned_data
-        event_data['domain'] = self.domain
-        event_data['manager'] = self.request.couch_user
 
-        event = Event.get_obj_from_data(event_data)
+        event = Event(
+            name=event_data['name'],
+            domain=self.domain,
+            start_date=event_data['start_date'],
+            end_date=event_data['end_date'],
+            attendance_target=event_data['attendance_target'],
+            sameday_reg=event_data['sameday_reg'],
+            track_each_day=event_data['track_each_day'],
+            manager_id=self.request.couch_user.user_id,
+        )
         event.save()
 
         return HttpResponseRedirect(reverse(EventsView.urlname, args=(self.domain,)))

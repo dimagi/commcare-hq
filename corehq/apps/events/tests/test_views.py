@@ -3,14 +3,13 @@ from django.urls import reverse
 from datetime import datetime
 from unittest.mock import patch
 
-from corehq.apps.events.models import Event, get_domain_events
+from corehq.apps.events.models import Event
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.events.views import EventsView, EventCreateView
 from corehq.apps.users.models import WebUser, HqPermissions
 from corehq.util.test_utils import flag_enabled
 from corehq.apps.users.models import UserRole
 from corehq.apps.users.role_utils import UserRolePresets
-from corehq.form_processor.models import CommCareCase
 
 
 class BaseEventViewTestClass(TestCase):
@@ -149,34 +148,20 @@ class TestEventsCreateView(BaseEventViewTestClass):
         self.assertTrue(event_save_method.called)
 
     @flag_enabled('ATTENDANCE_TRACKING')
-    def test_event_case_is_created(self):
+    def test_event_is_created(self):
         self.log_user_in(self.admin_webuser)
 
         data = self._event_data()
         self.client.post(self.endpoint, data)
 
-        events = get_domain_events(self.domain)
-        case_id = events[0].event_id
-        case_ = CommCareCase.objects.get_case(case_id, self.domain)
+        event = Event.by_domain(self.domain).first()
 
-        self.assertEqual(case_.name, data['name'])
-        self.assertEqual(case_.domain, self.domain)
-        self.assertEqual(case_.owner_id, self.admin_webuser.user_id)
-        self.assertEqual(
-            case_.get_case_property('attendance_target'),
-            str(data['attendance_target'])
-        )
-        self.assertEqual(
-            case_.get_case_property('is_open'),
-            str(Event.is_open),
-        )
-        self.assertEqual(
-            case_.get_case_property('attendee_list_status'),
-            str(Event.attendee_list_status),
-        )
+        self.assertEqual(event.name, data['name'])
+        self.assertEqual(event.domain, self.domain)
+        self.assertEqual(event.manager_id, self.admin_webuser.user_id)
 
     @flag_enabled('ATTENDANCE_TRACKING')
-    def test_event_case_create_fails_with_faulty_data(self):
+    def test_event_create_fails_with_faulty_data(self):
         self.log_user_in(self.admin_webuser)
 
         faulty_data = self._event_data()
