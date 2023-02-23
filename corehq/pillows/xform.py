@@ -15,6 +15,7 @@ from corehq.apps.data_interfaces.pillow import CaseDeduplicationProcessor
 from corehq.apps.receiverwrapper.util import get_app_version_info
 from corehq.apps.userreports.data_source_providers import DynamicDataSourceProvider, StaticDataSourceProvider
 from corehq.apps.userreports.pillow import get_ucr_processor
+from corehq.apps.es.forms import form_adapter
 from corehq.elastic import get_es_new
 from corehq.form_processor.backends.sql.dbaccessors import FormReindexAccessor
 from corehq.pillows.base import is_couch_change_for_sql_domain
@@ -159,9 +160,7 @@ def get_xform_to_elasticsearch_pillow(pillow_id='XFormToElasticsearchPillow', nu
 
     checkpoint = get_checkpoint_for_elasticsearch_pillow(pillow_id, index_info, FORM_TOPICS)
     form_processor = ElasticProcessor(
-        elasticsearch=get_es_new(),
-        index_info=index_info,
-        doc_prep_fn=transform_xform_for_elasticsearch,
+        form_adapter,
         doc_filter_fn=xform_pillow_filter,
         change_filter_fn=is_couch_change_for_sql_domain
     )
@@ -216,9 +215,7 @@ def get_xform_pillow(pillow_id='xform-pillow', ucr_division=None,
     )
 
     xform_to_es_processor = BulkElasticProcessor(
-        elasticsearch=get_es_new(),
-        index_info=XFORM_INDEX_INFO,
-        doc_prep_fn=transform_xform_for_elasticsearch,
+        form_adapter,
         doc_filter_fn=xform_pillow_filter,
         change_filter_fn=is_couch_change_for_sql_domain
     )
