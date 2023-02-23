@@ -36,6 +36,9 @@ class EventObjectManager(models.Manager):
             return super(EventObjectManager, self).get_queryset().filter(domain=domain).order_by('start_date')
         return super(EventObjectManager, self).get_queryset().filter(domain=domain)
 
+    def get_event(self, event_id):
+        return super(EventObjectManager, self).get_queryset().get(event_id=event_id)
+
 
 class Event(models.Model):
     """Attendance Tracking Event"""
@@ -91,9 +94,7 @@ class Event(models.Model):
             self.domain,
             only_ids=True
         )
-
-        attendees_to_assign = set(attendees_case_ids).difference(set(current_attendees_ids))
-        attendees_to_unassign = set(current_attendees_ids).difference(set(attendees_case_ids))
+        attendees_to_assign, attendees_to_unassign = find_difference(current_attendees_ids, attendees_case_ids)
 
         self._assign_attendees(list(attendees_to_assign))
         self._unassign_attendees(list(attendees_to_unassign))
@@ -202,4 +203,4 @@ class Attendee(models.Model):
             self.domain,
         )
         form.archive()
-        super(Attendee, self).delete()
+        return super(Attendee, self).delete()

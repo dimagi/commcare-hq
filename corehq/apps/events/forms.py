@@ -5,7 +5,7 @@ from django.utils.translation import gettext_lazy as _
 from django.core.exceptions import ValidationError
 
 from corehq.apps.hqwebapp import crispy as hqcrispy
-from corehq.apps.events.models import Attendee
+from corehq.apps.events.models import Event, Attendee
 from corehq.form_processor.models.cases import CommCareCase
 
 TRACK_BY_DAY = "by_day"
@@ -49,7 +49,7 @@ class CreateEventForm(forms.Form):
     expected_attendees = forms.MultipleChoiceField(
         label=_("Attendees"),
         validators=[MinLengthValidator(1)],
-        required=True,
+        required=False,
     )
 
     def __init__(self, *args, **kwargs):
@@ -111,7 +111,7 @@ class CreateEventForm(forms.Form):
             'attendance_target': event.attendance_target,
             'sameday_reg': event.sameday_reg,
             'tracking_option': TRACK_BY_DAY if event.track_each_day else TRACK_BY_EVENT,
-            'expected_attendees': [at.case.case_id for at in event.expected_attendees]
+            'expected_attendees': [attendee.case_id for attendee in event.attendees]
         }
 
     def get_new_event_form(self):

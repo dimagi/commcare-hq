@@ -3,7 +3,7 @@ from django.urls import reverse
 from datetime import datetime
 from unittest.mock import patch
 
-from corehq.apps.events.models import Event
+from corehq.apps.events.models import Event, Attendee
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.events.views import EventsView, EventCreateView
 from corehq.apps.users.models import WebUser, HqPermissions, CommCareUser
@@ -171,9 +171,6 @@ class TestEventsCreateView(BaseEventViewTestClass):
 
         self.assertEqual(len(event.attendees), 1)
         self.assertEqual(event.attendees[0].case_id, attendee.case_id)
-
-        self.assertEqual(len(event.expected_attendees), 1)
-        self.assertEqual(event.expected_attendees[0].case.case_id, attendee_case.case_id)
 
     @flag_enabled('ATTENDANCE_TRACKING')
     def test_event_create_fails_with_faulty_data(self):

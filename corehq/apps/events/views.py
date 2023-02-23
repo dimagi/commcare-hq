@@ -8,6 +8,7 @@ from corehq.apps.domain.views.base import BaseDomainView
 from corehq.apps.events.models import Event
 from corehq.apps.events.forms import CreateEventForm
 from corehq.apps.hqwebapp.decorators import use_jquery_ui, use_multiselect
+from corehq.apps.events.exceptions import EventDoesNotExist
 from corehq import toggles
 
 
@@ -154,7 +155,6 @@ class EventCreateView(BaseEventView):
         if self.request.method == 'POST':
             return CreateEventForm(self.request.POST, domain=self.domain)
         else:
-            return CreateEventForm(initial={}, domain=self.domain)
             return CreateEventForm(event=self.event, domain=self.domain)
 
     @property
@@ -173,7 +173,7 @@ class EventEditView(EventCreateView):
     @use_multiselect
     @use_jquery_ui
     def dispatch(self, request, *args, **kwargs):
-        self.event_obj = Event.get_event_by_id(kwargs['event_id'])
+        self.event_obj = Event.objects.get_event(kwargs['event_id'])
         return super(EventCreateView, self).dispatch(request, *args, **kwargs)
 
     @property
@@ -186,11 +186,31 @@ class EventEditView(EventCreateView):
 
     @property
     def event(self):
-        if not self.event_obj:
-            raise NoEventError
+        if self.event_obj is None:
+            raise EventDoesNotExist
         return self.event_obj
 
+    def post(self, request, *args, **kwargs):
+        form = self.form
 
-def remove_event(request, *args, **kwargs):
-    Event.delete_event(kwargs['event_id'], kwargs['domain'])
+        if not form.is_valid():
+            return self.get(request, *args, **kwargs)
+
+        event_update_data = form.cleaned_data
+
+        event = self.event
+        event.name = event_update_data['name']
+        event.start_date = event_update_data['start_date']
+        event.end_date = event_update_data['end_date']
+        event.attendance_target = event_update_data['attendance_target']
+        event.sameday_reg = event_update_data['sameday_reg']
+        event.track_each_day = event_update_data['track_each_day']
+
+        event.save(expected_attendees=event_update_data['expected_attendees'])
+
+        return HttpResponseRedirect(reverse(EventsView.urlname, args=(self.domain,)))
+
+
+def remove_event(*args, **kwargs):
+    Event.objects.get_event(kwargs['event_id']).delete()
     return HttpResponseRedirect(reverse(EventsView.urlname, args=(kwargs['domain'],)))
