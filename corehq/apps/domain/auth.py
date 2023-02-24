@@ -1,15 +1,17 @@
 import base64
+import binascii
 import logging
 import re
 from functools import wraps
 
-import binascii
 from django.contrib.auth import authenticate, get_user_model
 from django.contrib.auth.models import User
 from django.db.models import Q
 from django.http import HttpResponse
 from django.views.decorators.debug import sensitive_variables
 
+from no_exceptions.exceptions import Http400
+from python_digest import parse_digest_credentials
 from tastypie.authentication import ApiKeyAuthentication
 
 from dimagi.utils.django.request import mutable_querydict
@@ -19,9 +21,7 @@ from corehq.apps.receiverwrapper.util import DEMO_SUBMIT_MODE
 from corehq.apps.users.models import CouchUser, HQApiKey
 from corehq.toggles import API_THROTTLE_WHITELIST, TWO_STAGE_USER_PROVISIONING
 from corehq.util.hmac_request import validate_request_hmac
-from no_exceptions.exceptions import Http400
-from python_digest import parse_digest_credentials
-
+from corehq.util.metrics import metrics_counter
 
 auth_logger = logging.getLogger("commcare_auth")
 
@@ -316,6 +316,10 @@ class HQApiKeyAuthentication(ApiKeyAuthentication):
             if self._allow_creds_in_data:
                 username = request.GET.get('username') or request.POST.get('username')
                 api_key = request.GET.get('api_key') or request.POST.get('api_key')
+                if username and api_key:
+                    metrics_counter('commcare.auth.credentials_in_data', tags={
+                        'domain': getattr(request, 'domain', None),
+                    })
             else:
                 username, api_key = None, None
         else:
