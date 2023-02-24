@@ -106,11 +106,8 @@ hqDefine("cloudcare/js/formplayer/menus/controller", function () {
 
         if (menuResponse.breadcrumbs) {
             menusUtils.showBreadcrumbs(menuResponse.breadcrumbs);
-            if (menuResponse.langs && menuResponse.langs.length > 1 && !appPreview && changeFormLanguage) {
-                menusUtils.showLanguageMenu(menuResponse.langs, enablePrintOption);
-            }
-            else if (enablePrintOption) {
-                menusUtils.showPrintOption();
+            if ((menuResponse.langs && menuResponse.langs.length > 1 && !appPreview && changeFormLanguage) || enablePrintOption) {
+                menusUtils.showFormMenu(menuResponse.langs, changeFormLanguage, enablePrintOption);
             }
         } else {
             FormplayerFrontend.regions.getRegion('breadcrumb').empty();

@@ -85,37 +85,29 @@ hqDefine("cloudcare/js/formplayer/menus/utils", function () {
         FormplayerFrontend.regions.getRegion('breadcrumb').show(breadcrumbView);
     };
 
-    var showLanguageMenu = function (langs, printEnabled) {
+    var showFormMenu = function(langs, enableLanguageMenu, showPrintOption) {
         var langModels,
             langCollection;
 
         FormplayerFrontend.regions.addRegions({
             formMenu: "#form-menu",
         });
-        langModels = _.map(langs, function (lang) {
-            return {
-                lang: lang,
-            };
-        });
-
-        langCollection = new Backbone.Collection(langModels);
+        if (langs && enableLanguageMenu) {
+            langModels = _.map(langs, function (lang) {
+                return {
+                    lang: lang,
+                };
+            });
+            langCollection = new Backbone.Collection(langModels);
+        } else {
+            langCollection = null;
+        }
         var formMenuView = views.FormMenuView({
             collection: langCollection,
-            printEnabled: printEnabled,
+            printEnabled: showPrintOption,
         });
         FormplayerFrontend.regions.getRegion('formMenu').show(formMenuView);
-    };
-
-    var showPrintOption = function () {
-        FormplayerFrontend.regions.addRegions({
-            formMenu: "#form-menu",
-        });
-        var formMenuView = views.FormMenuView({
-            collection: null,
-            printEnabled: true,
-        });
-        FormplayerFrontend.regions.getRegion('formMenu').show(formMenuView);
-    };
+    }
 
     var getMenuView = function (menuResponse) {
         var menuData = {                    // TODO: make this more concise
@@ -199,8 +191,7 @@ hqDefine("cloudcare/js/formplayer/menus/utils", function () {
         getMenuView: getMenuView,
         handleLocationRequest: handleLocationRequest,
         showBreadcrumbs: showBreadcrumbs,
-        showLanguageMenu: showLanguageMenu,
-        showPrintOption: showPrintOption,
+        showFormMenu: showFormMenu,
         startOrStopLocationWatching: startOrStopLocationWatching,
     };
 });
