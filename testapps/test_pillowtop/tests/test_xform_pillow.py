@@ -239,6 +239,7 @@ class XFormPillowTest(TestCase):
 class TransformXformForESTest(SimpleTestCase):
     def test_transform_xform_for_elasticsearch_app_versions(self):
         doc_dict = {
+            '_id': 1,
             'domain': 'demo',
             'received_on': '2013-10-12T11:59:41Z',
             'form': {
@@ -247,12 +248,13 @@ class TransformXformForESTest(SimpleTestCase):
                 }
             }
         }
-        doc_ret = transform_xform_for_elasticsearch(doc_dict)
+        doc_ret = form_adapter.to_json(doc_dict)
         self.assertEqual(doc_ret['form']['meta']['commcare_version'], '2.27.2')
         self.assertEqual(doc_ret['form']['meta']['app_build_version'], 56)
 
     def test_transform_xform_for_elasticsearch_app_versions_none(self):
         doc_dict = {
+            '_id': 1,
             'domain': 'demo',
             'received_on': '2013-10-12T11:59:41Z',
             'form': {
@@ -261,12 +263,13 @@ class TransformXformForESTest(SimpleTestCase):
                 }
             }
         }
-        doc_ret = transform_xform_for_elasticsearch(doc_dict)
+        doc_ret = form_adapter.to_json(doc_dict)
         self.assertEqual(doc_ret['form']['meta']['commcare_version'], None)
         self.assertEqual(doc_ret['form']['meta']['app_build_version'], None)
 
     def test_transform_xform_for_elasticsearch_location(self):
         doc_dict = {
+            '_id': 1,
             'domain': 'demo',
             'received_on': '2013-10-12T11:59:41Z',
             'form': {
@@ -275,11 +278,12 @@ class TransformXformForESTest(SimpleTestCase):
                 }
             }
         }
-        doc_ret = transform_xform_for_elasticsearch(doc_dict)
+        doc_ret = form_adapter.to_json(doc_dict)
         self.assertEqual(doc_ret['form']['meta']['geo_point'], {'lat': 42.7, 'lon': -21})
 
     def test_transform_xform_for_elasticsearch_location_missing(self):
         doc_dict = {
+            '_id': 1,
             'domain': 'demo',
             'received_on': '2013-10-12T11:59:41Z',
             'form': {
@@ -287,11 +291,12 @@ class TransformXformForESTest(SimpleTestCase):
                 }
             }
         }
-        doc_ret = transform_xform_for_elasticsearch(doc_dict)
+        doc_ret = form_adapter.to_json(doc_dict)
         self.assertEqual(doc_ret['form']['meta']['geo_point'], None)
 
     def test_transform_xform_for_elasticsearch_location_bad(self):
         doc_dict = {
+            '_id': 1,
             'domain': 'demo',
             'received_on': '2013-10-12T11:59:41Z',
             'form': {
@@ -300,11 +305,12 @@ class TransformXformForESTest(SimpleTestCase):
                 }
             }
         }
-        doc_ret = transform_xform_for_elasticsearch(doc_dict)
+        doc_ret = form_adapter.to_json(doc_dict)
         self.assertEqual(doc_ret['form']['meta']['geo_point'], None)
 
     def test_transform_xform_base_case_dates(self):
         doc_dict = {
+            '_id': 1,
             'domain': 'demo',
             'received_on': '2013-10-12T11:59:41Z',
             'form': {
@@ -315,11 +321,12 @@ class TransformXformForESTest(SimpleTestCase):
             }
         }
         # previously raised an error
-        doc_ret = transform_xform_for_elasticsearch(doc_dict)
+        doc_ret = form_adapter.to_json(doc_dict)
         self.assertIsNotNone(doc_ret)
 
     def test_transform_xform_base_case_xmlns(self):
         doc_dict = {
+            '_id': 1,
             'domain': 'demo',
             'received_on': '2013-10-12T11:59:41Z',
             'form': {
@@ -330,5 +337,5 @@ class TransformXformForESTest(SimpleTestCase):
             }
         }
         # previously raised an error
-        doc_ret = transform_xform_for_elasticsearch(doc_dict)
+        doc_ret = form_adapter.to_json(doc_dict)
         self.assertIsNotNone(doc_ret)
