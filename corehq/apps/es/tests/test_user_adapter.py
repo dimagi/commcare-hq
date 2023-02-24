@@ -24,7 +24,8 @@ class TestFromPythonInElasticUser(TestCase):
             username='webman', domain=cls.domain, password="***********",
             created_by=None, created_via=None
         )
-        cls.addClassCleanup(delete_all_users)
+        cls.addClassCleanup(cls.user.delete, None, None)
+        cls.addClassCleanup(cls.web_user.delete, None, None)
 
     def test_from_python_works_with_user_objects(self):
         user_adapter.from_python(self.user)
