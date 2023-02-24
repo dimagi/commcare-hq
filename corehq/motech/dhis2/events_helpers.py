@@ -14,6 +14,8 @@ def send_dhis2_event(request, form_config, payload):
     if event:
         validate_event_schema(event)
         return request.post('/api/events', json=event, raise_for_status=True)
+    # TODO: If no payload was sent, return RepeaterResponse(204, "No content")
+    #       See https://dimagi-dev.atlassian.net/browse/SC-2430
 
 
 def get_event(domain, config, form_json=None, info=None):
