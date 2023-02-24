@@ -53,8 +53,10 @@ hqDefine("users/js/roles_and_permissions",[
         var url = initialPageData.reverse;
 
         var $userRolesTable = $('#user-roles-table');
+        let $linkedRolesModal = $('#modal_linked_roles');
+        const $infoBar = $('#infobar');
 
-        userRoles.initUserRoles($userRolesTable, {
+        userRoles.initUserRoles($userRolesTable, $linkedRolesModal, $infoBar, {
             userRoles: initialPageData.get("user_roles"),
             nonAdminRoles: initialPageData.get("non_admin_roles"),
             defaultRole: initialPageData.get("default_role"),
@@ -68,9 +70,11 @@ hqDefine("users/js/roles_and_permissions",[
             webAppsPrivilege: initialPageData.get("web_apps_privilege"),
             ermPrivilege: initialPageData.get("erm_privilege"),
             mrmPrivilege: initialPageData.get("mrm_privilege"),
+            attendanceTrackingPrivilege: initialPageData.get("attendance_tracking_privilege"),
             DataFileDownloadEnabled: initialPageData.get("data_file_download_enabled"),
             ExportOwnershipEnabled: initialPageData.get("export_ownership_enabled"),
             dataRegistryChoices: initialPageData.get("data_registry_choices"),
+            canEditLinkedData: initialPageData.get("can_edit_linked_data"),
         });
     });
 });
