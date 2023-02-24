@@ -301,8 +301,6 @@ hqDefine("cloudcare/js/formplayer/app", function () {
         user.formplayer_url = options.formplayer_url;
         user.debuggerEnabled = options.debuggerEnabled;
         user.environment = options.environment;
-        user.changeFormLanguage = options.changeFormLanguage;
-        user.enablePrintOption = options.enablePrintOption;
         user.restoreAs = FormplayerFrontend.getChannel().request('restoreAsUser', user.domain, user.username);
 
         hqRequire(["cloudcare/js/formplayer/apps/api"], function (AppsAPI) {

@@ -6,6 +6,7 @@ hqDefine("cloudcare/js/formplayer/menus/controller", function () {
         formplayerUtils = hqImport("cloudcare/js/formplayer/utils/utils"),
         menusUtils = hqImport("cloudcare/js/formplayer/menus/utils"),
         views = hqImport("cloudcare/js/formplayer/menus/views"),
+        toggles = hqImport("hqwebapp/js/toggles"),
         md = window.markdownit();
     var selectMenu = function (options) {
 
@@ -91,8 +92,8 @@ hqDefine("cloudcare/js/formplayer/menus/controller", function () {
     var showMenu = function (menuResponse) {
         var menuListView = menusUtils.getMenuView(menuResponse);
         var appPreview = FormplayerFrontend.currentUser.displayOptions.singleAppMode;
-        var changeFormLanguage = FormplayerFrontend.currentUser.changeFormLanguage;
-        var enablePrintOption = FormplayerFrontend.currentUser.enablePrintOption && !menuResponse.queryKey;
+        var changeFormLanguage = toggles.toggleEnabled('CHANGE_FORM_LANGUAGE');
+        var enablePrintOption = toggles.toggleEnabled('PRINT_BUTTON_WITHIN_FORMS') && !menuResponse.queryKey;
 
         if (menuListView) {
             FormplayerFrontend.regions.getRegion('main').show(menuListView);
