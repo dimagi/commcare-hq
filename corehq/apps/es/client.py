@@ -439,7 +439,7 @@ class ElasticDocumentAdapter(BaseAdapter):
         :returns: ``tuple`` of ``(doc_id, source_dict)`` suitable for being
                   indexed/updated/deleted in Elasticsearch
         """
-        raise NotImplementedError(f"{self.__name__} is abstract")
+        raise NotImplementedError(f"{type(self).__name__} is abstract")
 
     def to_json(self, doc):
         """Convenience method that returns the full "from python" document
