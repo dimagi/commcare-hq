@@ -59,6 +59,33 @@ def send_dhis2_entities(requests, repeater, case_trigger_infos):
     Send request to register / update tracked entities
     """
     errors = []
+    info_config_entities = _update_or_register_teis(
+        requests,
+        repeater,
+        case_trigger_infos,
+        errors,
+    )
+    _create_all_relationships(
+        requests,
+        repeater,
+        info_config_entities,
+        errors,
+    )
+    if errors:
+        errors_str = f"Errors sending to {repeater}: " + pformat_json([str(e) for e in errors])
+        requests.notify_error(errors_str)
+        return RepeaterResponse(400, 'Bad Request', errors_str)
+    # TODO: If no payloads were sent, return RepeaterResponse(204, "No content")
+    #       See https://dimagi-dev.atlassian.net/browse/SC-2430
+    return RepeaterResponse(200, "OK")
+
+
+def _update_or_register_teis(requests, repeater, case_trigger_infos, errors):
+    """
+    Updates or registers tracked entity instances.
+
+    Errors are returned by reference in ``errors``
+    """
     info_config_pairs = _get_info_config_pairs(repeater, case_trigger_infos)
     info_config_entities = []
     for info, case_config in info_config_pairs:
@@ -85,9 +112,19 @@ def send_dhis2_entities(requests, repeater, case_trigger_infos):
             info_config_entities.append((info, case_config, tracked_entity))
         except (Dhis2Exception, HTTPError) as err:
             errors.append(str(err))
+    return info_config_entities
 
-    # Create relationships after handling tracked entity instances, to
-    # ensure that both the instances in the relationship have been created.
+
+def _create_all_relationships(
+    requests,
+    repeater,
+    info_config_entities,
+    errors,
+):
+    """
+    Create relationships after handling tracked entity instances, to
+    ensure that both the instances in the relationship have been created.
+    """
     for info, case_config, tracked_entity in info_config_entities:
         if not case_config['relationships_to_export']:
             continue
@@ -103,14 +140,6 @@ def send_dhis2_entities(requests, repeater, case_trigger_infos):
             )
         except (Dhis2Exception, HTTPError) as err:
             errors.append(str(err))
-
-    if errors:
-        errors_str = f"Errors sending to {repeater}: " + pformat_json([str(e) for e in errors])
-        requests.notify_error(errors_str)
-        return RepeaterResponse(400, 'Bad Request', errors_str)
-    # TODO: If no payloads were sent, return RepeaterResponse(204, "No content")
-    #       See https://dimagi-dev.atlassian.net/browse/SC-2430
-    return RepeaterResponse(200, "OK")
 
 
 def _get_tracked_entity_relationship_specs(tracked_entity):
