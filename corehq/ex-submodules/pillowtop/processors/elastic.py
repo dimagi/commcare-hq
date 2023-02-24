@@ -154,7 +154,6 @@ class BulkElasticProcessor(ElasticProcessor, BulkPillowProcessor):
             error_collector = ErrorCollector()
             es_actions = build_bulk_payload(
                 list(changes_to_process.values()),
-                self.doc_transform_fn,
                 error_collector,
             )
             error_changes = error_collector.errors
