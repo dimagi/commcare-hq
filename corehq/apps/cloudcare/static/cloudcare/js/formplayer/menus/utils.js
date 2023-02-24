@@ -85,7 +85,7 @@ hqDefine("cloudcare/js/formplayer/menus/utils", function () {
         FormplayerFrontend.regions.getRegion('breadcrumb').show(breadcrumbView);
     };
 
-    var showFormMenu = function(langs, enableLanguageMenu, showPrintOption) {
+    var showFormMenu = function (langs, enableLanguageMenu, showPrintOption) {
         var langModels,
             langCollection;
 
@@ -107,7 +107,7 @@ hqDefine("cloudcare/js/formplayer/menus/utils", function () {
             printEnabled: showPrintOption,
         });
         FormplayerFrontend.regions.getRegion('formMenu').show(formMenuView);
-    }
+    };
 
     var getMenuView = function (menuResponse) {
         var menuData = {                    // TODO: make this more concise

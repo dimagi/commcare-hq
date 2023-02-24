@@ -703,7 +703,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
         },
         templateContext: function () {
             return {
-                languageOptionsEnabled: this.languageOptionsEnabled
+                languageOptionsEnabled: this.languageOptionsEnabled,
             };
         },
         onChangeLang: function (e) {
