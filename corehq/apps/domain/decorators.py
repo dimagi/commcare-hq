@@ -408,7 +408,13 @@ api_key_auth = login_or_api_key_ex(allow_sessions=False)
 basic_auth_or_try_api_key_auth = login_or_basic_or_api_key_ex(allow_sessions=False)
 
 
-def get_auth_decorator_map(allow_cc_users=False, require_domain=True, allow_sessions=True, oauth_scopes=None, allow_creds_in_data=True):
+def get_auth_decorator_map(
+        allow_cc_users=False,
+        require_domain=True,
+        allow_sessions=True,
+        oauth_scopes=None,
+        allow_creds_in_data=True,
+):
     # get a mapped set of decorators for different auth types with the specified parameters
     oauth_scopes = oauth_scopes or ['access_apis']
     decorator_function_kwargs = {
