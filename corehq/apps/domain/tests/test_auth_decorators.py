@@ -176,7 +176,8 @@ class LoginOrChallengeDBTest(TestCase, AuthTestMixin):
 
 
 def _get_auth_mock(succeed=True):
-    def mock_auth_decorator(allow_cc_users=False, allow_sessions=True, require_domain=True, oauth_scopes=None):
+    def mock_auth_decorator(allow_cc_users=False, allow_sessions=True, require_domain=True,
+                            oauth_scopes=None, allow_creds_in_data=True):
         def _outer(fn):
             @wraps(fn)
             def inner(request, *args, **kwargs):
