@@ -106,7 +106,7 @@ from corehq.tabs.utils import (
     dropdown_dict,
     sidebar_to_dropdown,
 )
-from corehq.apps.events.views import EventsView, AttendeesAddView
+from corehq.apps.events.views import EventsView, AttendeesListView
 
 
 class ProjectReportsTab(UITab):
@@ -2456,7 +2456,7 @@ class AttendanceTrackingTab(UITab):
     def dropdown_items(self):
         items = [
             dropdown_dict(_("Events"), url=reverse(EventsView.urlname, args=(self.domain,))),
-            dropdown_dict(_("Attendees"), url=reverse(AttendeesAddView.urlname, args=(self.domain,))),
+            dropdown_dict(_("Attendees"), url=reverse(AttendeesListView.urlname, args=(self.domain,))),
             self.divider,
             dropdown_dict(_("View All"), url=reverse(EventsView.urlname, args=[self.domain])),
 
@@ -2469,7 +2469,7 @@ class AttendanceTrackingTab(UITab):
             (_("Attendees"), [
                 {
                     'title': _("Add Attendees"),
-                    'url': reverse(AttendeesAddView.urlname, args=(self.domain,)),
+                    'url': reverse(AttendeesListView.urlname, args=(self.domain,)),
                 },
             ]),
             (_("Events"), [

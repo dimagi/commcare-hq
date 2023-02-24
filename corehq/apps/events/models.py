@@ -13,6 +13,8 @@ from corehq.apps.events.utils import (
     find_case_create_form,
 )
 from corehq.apps.events.exceptions import InvalidAttendee
+from corehq.apps.es.case_search import CaseSearchES
+
 
 NOT_STARTED = 'Not started'
 IN_PROGRESS = 'In progress'
@@ -27,6 +29,7 @@ ATTENDEE_LIST_STATUS_CHOICES = [
     (REJECTED, _('Rejected')),
     (ACCEPTED, _('Accepted')),
 ]
+ATTENDEE_USER_ID_CASE_PROPERTY = 'commcare_user_id'
 
 
 class EventObjectManager(models.Manager):
@@ -110,7 +113,6 @@ class Event(models.Model):
         if not attendees_case_ids:
             return
 
-        # How to make this idempotent?
         domain = self.domain
         event_id = self.event_id
 
@@ -153,6 +155,9 @@ class AttendeeObjectManager(models.Manager):
     def by_domain(self, domain):
         return super(AttendeeObjectManager, self).get_queryset().filter(domain=domain)
 
+    def get_by_id(self, case_id, domain):
+        return super(AttendeeObjectManager, self).get_queryset().get(domain=domain, case_id=case_id)
+
     def get_by_ids(self, case_ids, domain):
         return super(AttendeeObjectManager, self).get_queryset().filter(domain=domain, case_id__in=case_ids)
 
@@ -167,6 +172,17 @@ class AttendeeObjectManager(models.Manager):
             return referenced_case_ids
 
         return self.get_by_ids(referenced_case_ids, domain)
+
+    def by_user_id(self, user_id, domain):
+        es_query = CaseSearchES().domain(domain).case_property_query(
+            ATTENDEE_USER_ID_CASE_PROPERTY,
+            user_id,
+        )
+        result = es_query.run().hits
+        if not result:
+            return None
+
+        return self.get_by_id(case_id=result[0]['_id'], domain=domain)
 
 
 class Attendee(models.Model):
@@ -190,17 +206,21 @@ class Attendee(models.Model):
             raise InvalidAttendee('Attendee must have domain specified')
 
         if not self.case_id:
-            case_ = create_case_with_case_type(
-                case_type=Attendee.ATTENDEE_CASE_TYPE,
-                case_args={
-                    'domain': self.domain,
-                    'name': CouchUser.get_by_user_id(user_id).username,
-                    'properties': {
-                        'commcare_user_id': user_id,
-                    }
-                },
-            )
-            self.case_id = case_.case_id
+            existing_attendee = Attendee.objects.by_user_id(user_id, self.domain)
+
+            # This needs to be tested still
+            if not existing_attendee:
+                case_ = create_case_with_case_type(
+                    case_type=Attendee.ATTENDEE_CASE_TYPE,
+                    case_args={
+                        'domain': self.domain,
+                        'name': CouchUser.get_by_user_id(user_id).username,
+                        'properties': {
+                            ATTENDEE_USER_ID_CASE_PROPERTY: user_id,
+                        }
+                    },
+                )
+                self.case_id = case_.case_id
 
         return super(Attendee, self).save()
 
@@ -211,3 +231,12 @@ class Attendee(models.Model):
         )
         form.archive()
         return super(Attendee, self).delete()
+
+    @classmethod
+    def get_attendee_users_on_domain(cls, domain):
+        case_ids = [attendee.case_id for attendee in cls.objects.by_domain(domain)]
+
+        return [
+            case_.get_case_property(ATTENDEE_USER_ID_CASE_PROPERTY)
+            for case_ in CommCareCase.objects.get_cases(case_ids, domain)
+        ]

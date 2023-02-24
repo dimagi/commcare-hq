@@ -219,7 +219,7 @@ class TestPaginatePossibleAttendees(BaseEventViewTestClass):
         cls.mobile_worker = make_mobile_worker('mobile_username')
 
     def test_return_mobile_workers(self):
-        url = reverse('paginate_possible_attendees', args=[self.domain])
+        url = reverse('paginate_commcare_users', args=[self.domain])
         self.client.login(username=self.admin_webuser.username, password=self.password)
 
         response = self.client.get(url, content_type="application/json;charset=utf-8")

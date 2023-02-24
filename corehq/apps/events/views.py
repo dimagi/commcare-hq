@@ -1,25 +1,30 @@
-from django.utils.translation import gettext_lazy as _
+import json
+
 from django.urls import reverse
-from django.http import HttpResponseRedirect, HttpResponseBadRequest
 from django.http import Http404
+from django.http import JsonResponse
+from django.utils.translation import gettext_lazy as _
+from django.http import HttpResponseRedirect
+from django.utils.decorators import method_decorator
+from django.views.decorators.http import require_GET, require_POST
 
 from corehq.apps.hqwebapp.views import CRUDPaginatedViewMixin
 from corehq.apps.domain.views.base import BaseDomainView
-from corehq.apps.events.models import Event
+from corehq.apps.events.models import Event, Attendee
 from corehq.apps.events.forms import CreateEventForm
 from corehq.apps.hqwebapp.decorators import use_jquery_ui, use_multiselect
 from corehq.apps.events.exceptions import EventDoesNotExist
-from corehq import toggles
 from corehq.apps.users.views import BaseUserSettingsView
 from corehq.util.jqueryrmi import JSONResponseMixin
-from corehq.apps.users.decorators import require_can_edit_or_view_commcare_users
-from django.utils.decorators import method_decorator
+from corehq.apps.users.decorators import (
+    require_can_edit_or_view_commcare_users,
+    require_can_coordinate_events,
+)
 from corehq.apps.locations.permissions import location_safe
-from django.views.decorators.http import require_GET
 from corehq.apps.users.analytics import get_search_users_in_domain_es_query
-import json
 from corehq.apps.locations.models import SQLLocation
-from django.http import JsonResponse
+from corehq import toggles
+
 
 class BaseEventView(BaseDomainView):
     urlname = "events_page"
@@ -220,9 +225,9 @@ class EventEditView(EventCreateView):
 
 
 @location_safe
-class AttendeesAddView(JSONResponseMixin, BaseUserSettingsView):
-    urlname = "add_attendees"
-    template_name = 'add_attendees.html'
+class AttendeesListView(JSONResponseMixin, BaseUserSettingsView):
+    urlname = "event_attendees"
+    template_name = 'event_attendees.html'
     page_title = _("Add Attendees")
     limit_text = _("Attendees per page")
     empty_notification = _("You have no attendees")
@@ -231,13 +236,18 @@ class AttendeesAddView(JSONResponseMixin, BaseUserSettingsView):
     @use_jquery_ui
     @method_decorator(require_can_edit_or_view_commcare_users)
     def dispatch(self, *args, **kwargs):
-        return super(AttendeesAddView, self).dispatch(*args, **kwargs)
+        return super(AttendeesListView, self).dispatch(*args, **kwargs)
+
+    def post(self, *args, **kwargs):
+        breakpoint()
+
+        return super(AttendeesListView, self).post(*args, **kwargs)
 
 
 @require_can_edit_or_view_commcare_users
 @require_GET
 @location_safe
-def paginate_possible_attendees(request, domain):
+def paginate_commcare_users(request, domain):
     """
     Returns the possible attendees (mobile workers).
     """
@@ -270,13 +280,32 @@ def paginate_possible_attendees(request, domain):
     ]).run()
     users = users_data.hits
 
+    attendee_user_ids_on_domain = Attendee.get_attendee_users_on_domain(domain)
+
+    total_users = 0
     for user in users:
-        user.update({
-            'username': user.pop('base_username', ''),
-            'user_id': user.pop('_id'),
-        })
+        user_id = user.pop('_id')
+
+        if user_id not in attendee_user_ids_on_domain:
+            user.update({
+                'username': user.pop('base_username', ''),
+                'user_id': user_id,
+            })
+            total_users += 1
 
     return JsonResponse({
         'users': users,
-        'total': users_data.total,
+        'total': total_users,
     })
+
+
+@require_POST
+@require_can_edit_or_view_commcare_users
+@require_can_coordinate_events
+def make_attendee(request, domain):
+    user_id = request.POST.get('user_id')
+
+    attendee = Attendee(domain=domain)
+    attendee.save(user_id=user_id)
+
+    return JsonResponse({'attendee_id': attendee.case_id})

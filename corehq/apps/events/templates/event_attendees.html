@@ -4,10 +4,11 @@
 {% load hq_shared_tags %}
 {% load crispy_forms_tags %}
 
-{% requirejs_main 'events/js/add_attendees' %}
+{% requirejs_main 'events/js/event_attendees' %}
 
 {% block page_content %}
-{% registerurl 'paginate_possible_attendees' domain %}
+{% registerurl 'paginate_commcare_users' domain %}
+{% registerurl 'make_attendee' domain %}
 
   <div id="users-list" class="ko-template">
     <div class="panel panel-default">
@@ -45,8 +46,8 @@
             <td data-bind="text: last_name"></td>
             <td>
               <div data-bind="visible: true">
-                <button type="button" class="btn btn-default" data-toggle="modal"
-                        data-bind="attr: {'data-target': user_id}">
+                <button type="button" class="btn btn-default"
+                        data-bind="click: function() { $root.createAsAttendee(user_id); }">
                   {% trans "Make attendee" %}
                 </button>
               </div>
