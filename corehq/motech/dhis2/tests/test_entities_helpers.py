@@ -429,7 +429,11 @@ class TestCreateRelationships(TestCase):
         ]
 
         create_relationships(
-            requests, case_trigger_info, subcase_config, dhis2_entity_config, tracked_entity_relationship_specs
+            requests,
+            case_trigger_info,
+            subcase_config,
+            dhis2_entity_config,
+            tracked_entity_relationship_specs,
         )
 
         # Only once of the two relationships should trigger a call to create, since the other already exists
