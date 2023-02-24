@@ -568,7 +568,7 @@ def _update_user_remote(session, user, groups=[]):
 
 @periodic_task(run_every=crontab(minute=0, hour='*/1'), queue='background_queue')
 def sync_all_tableau_users():
-    def _sync_tableau_users_with_hq(domain):
+    def _sync_tableau_users_with_hq(session, domain):
         tableau_user_names = [tableau_user.username for tableau_user in TableauUser.objects.filter(
             server=TableauServer.objects.get(domain=domain)
         )]
@@ -576,14 +576,13 @@ def sync_all_tableau_users():
         # If there's a web user that isn't in the TableauUser model, create a new Tableau user
         for web_user_name in web_users_names:
             if web_user_name not in tableau_user_names:
-                _add_tableau_user_local(domain, web_user_name)
+                _add_tableau_user_local(session, web_user_name)
         # If there's a TableauUser with no corresponding WebUser, delete the Tableau user
         for tableau_user_name in tableau_user_names:
             if tableau_user_name not in web_users_names:
-                _delete_user_local(domain, tableau_user_name)
+                _delete_user_local(session, tableau_user_name)
 
-    def _sync_tableau_users_with_remote(domain):
-        session = TableauAPISession.create_session_for_domain(domain)
+    def _sync_tableau_users_with_remote(session):
 
         # Setup - parse/get remote group ID and users in group
         remote_HQ_group_id = _get_hq_group_id(session)
@@ -619,10 +618,11 @@ def sync_all_tableau_users():
                 _delete_user_remote(session, remote_user['id'])
 
     for domain in TABLEAU_USER_SYNCING.get_enabled_domains():
+        session = TableauAPISession.create_session_for_domain(domain)
         # Sync the web users on HQ with the TableauUser model
-        _sync_tableau_users_with_hq(domain)
+        _sync_tableau_users_with_hq(session, domain)
         # Sync the TableauUser model with Tableau users on the remote Tableau instance
-        _sync_tableau_users_with_remote(domain)
+        _sync_tableau_users_with_remote(session)
 
 
 def is_hq_user(tableau_username):
