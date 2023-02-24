@@ -2,7 +2,7 @@
 FormES
 --------
 """
-from copy import deepcopy
+from copy import copy
 from datetime import datetime
 
 from django.conf import settings
@@ -72,7 +72,7 @@ class ElasticForm(ElasticDocumentAdapter):
     def from_python(self, xform):
         from corehq.form_processor.models.forms import XFormInstance
         if isinstance(xform, dict):
-            xform_dict = deepcopy(xform)
+            xform_dict = xform
         elif isinstance(xform, XFormInstance):
             xform_dict = xform.to_json()
         else:
@@ -92,41 +92,45 @@ class ElasticForm(ElasticDocumentAdapter):
         from corehq.apps.receiverwrapper.util import get_app_version_info
         from corehq.pillows.utils import format_form_meta_for_es, get_user_type
         from corehq.pillows.xform import is_valid_date
+        doc_ret = copy(xform)
+        form = copy(doc_ret['form'])
+        form_meta = copy(form.get('meta', None))
 
-        doc_ret = deepcopy(xform)
-
-        if 'meta' in doc_ret['form']:
-            if not is_valid_date(doc_ret['form']['meta'].get('timeEnd', None)):
-                doc_ret['form']['meta']['timeEnd'] = None
-            if not is_valid_date(doc_ret['form']['meta'].get('timeStart', None)):
-                doc_ret['form']['meta']['timeStart'] = None
+        if form_meta:
+            if not is_valid_date(form_meta.get('timeEnd', None)):
+                form_meta['timeEnd'] = None
+            if not is_valid_date(form_meta.get('timeStart', None)):
+                form_meta['timeStart'] = None
 
             # Some docs have their @xmlns and #text here
-            if isinstance(doc_ret['form']['meta'].get('appVersion'), dict):
-                doc_ret['form']['meta'] = format_form_meta_for_es(doc_ret['form']['meta'])
+            if isinstance(form_meta.get('appVersion'), dict):
+                form_meta = format_form_meta_for_es(form_meta)
 
             app_version_info = get_app_version_info(
                 doc_ret['domain'],
                 doc_ret.get('build_id'),
                 doc_ret.get('version'),
-                doc_ret['form']['meta'],
+                form_meta,
             )
-            doc_ret['form']['meta']['commcare_version'] = app_version_info.commcare_version
-            doc_ret['form']['meta']['app_build_version'] = app_version_info.build_version
+            form_meta['commcare_version'] = app_version_info.commcare_version
+            form_meta['app_build_version'] = app_version_info.build_version
 
             try:
                 geo_point = GeoPoint.from_string(doc_ret['form']['meta']['location'])
-                doc_ret['form']['meta']['geo_point'] = geo_point.lat_lon
+                form_meta['geo_point'] = geo_point.lat_lon
             except (KeyError, BadValueError):
-                doc_ret['form']['meta']['geo_point'] = None
+                form_meta['geo_point'] = None
                 pass
 
         try:
-            user_id = doc_ret['form']['meta']['userID']
+            user_id = form_meta['userID']
         except KeyError:
             user_id = None
         doc_ret['user_type'] = get_user_type(user_id)
         doc_ret['inserted_at'] = datetime.utcnow().isoformat()
+
+        form['meta'] = form_meta
+        doc_ret['form'] = form
 
         try:
             case_blocks = extract_case_blocks(doc_ret)
