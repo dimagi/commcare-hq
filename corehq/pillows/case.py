@@ -51,7 +51,7 @@ def get_case_to_elasticsearch_pillow(pillow_id='CaseToElasticsearchPillow', num_
     """
     # todo; To remove after full rollout of https://github.com/dimagi/commcare-hq/pull/21329/
     assert pillow_id == 'CaseToElasticsearchPillow', 'Pillow ID is not allowed to change'
-    checkpoint = get_checkpoint_for_elasticsearch_pillow(pillow_id, CASE_INDEX_INFO, CASE_TOPICS)
+    checkpoint = get_checkpoint_for_elasticsearch_pillow(pillow_id, case_adapter.index_name, CASE_TOPICS)
     case_processor = ElasticProcessor(
         case_adapter,
         change_filter_fn=is_couch_change_for_sql_domain

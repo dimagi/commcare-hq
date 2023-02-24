@@ -35,7 +35,7 @@ def get_domain_kafka_to_elasticsearch_pillow(pillow_id='KafkaDomainPillow', num_
       - :py:class:`pillowtop.processors.elastic.ElasticProcessor`
     """
     assert pillow_id == 'KafkaDomainPillow', 'Pillow ID is not allowed to change'
-    checkpoint = get_checkpoint_for_elasticsearch_pillow(pillow_id, DOMAIN_INDEX_INFO, [topics.DOMAIN])
+    checkpoint = get_checkpoint_for_elasticsearch_pillow(pillow_id, domain_adapter.index_name, [topics.DOMAIN])
     domain_processor = ElasticProcessor(domain_adapter)
     change_feed = KafkaChangeFeed(
         topics=[topics.DOMAIN], client_id='domains-to-es', num_processes=num_processes, process_num=process_num

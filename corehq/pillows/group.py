@@ -33,7 +33,7 @@ def get_group_pillow_old(pillow_id='GroupPillow', num_processes=1, process_num=0
     """
     # todo; To remove after full rollout of https://github.com/dimagi/commcare-hq/pull/21329/
     assert pillow_id == 'GroupPillow', 'Pillow ID is not allowed to change'
-    checkpoint = get_checkpoint_for_elasticsearch_pillow(pillow_id, GROUP_INDEX_INFO, [topics.GROUP])
+    checkpoint = get_checkpoint_for_elasticsearch_pillow(pillow_id, group_adapter.index_name, [topics.GROUP])
     processor = get_group_to_elasticsearch_processor()
     change_feed = KafkaChangeFeed(
         topics=[topics.GROUP], client_id='groups-to-es', num_processes=num_processes, process_num=process_num

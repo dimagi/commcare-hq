@@ -29,7 +29,7 @@ def get_app_to_elasticsearch_pillow(pillow_id='ApplicationToElasticsearchPillow'
       - :py:class:`pillowtop.processors.elastic.BulkElasticProcessor`
     """
     assert pillow_id == 'ApplicationToElasticsearchPillow', 'Pillow ID is not allowed to change'
-    checkpoint = get_checkpoint_for_elasticsearch_pillow(pillow_id, APP_INDEX_INFO, [topics.APP])
+    checkpoint = get_checkpoint_for_elasticsearch_pillow(pillow_id, app_adapter.index_name, [topics.APP])
     app_processor = ElasticProcessor(app_adapter)
     change_feed = KafkaChangeFeed(
         topics=[topics.APP], client_id='apps-to-es', num_processes=num_processes, process_num=process_num

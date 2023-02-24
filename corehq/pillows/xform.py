@@ -158,7 +158,7 @@ def get_xform_to_elasticsearch_pillow(pillow_id='XFormToElasticsearchPillow', nu
             "XFormBackfill", index_info.index, index_info.type, index_info.mapping, index_info.alias
         )
 
-    checkpoint = get_checkpoint_for_elasticsearch_pillow(pillow_id, index_info, FORM_TOPICS)
+    checkpoint = get_checkpoint_for_elasticsearch_pillow(pillow_id, form_adapter.index_name, FORM_TOPICS)
     form_processor = ElasticProcessor(
         form_adapter,
         doc_filter_fn=xform_pillow_filter,

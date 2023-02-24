@@ -30,7 +30,7 @@ def get_sql_sms_pillow(pillow_id='SqlSMSPillow', num_processes=1, process_num=0,
       - :py:class:`pillowtop.processors.elastic.BulkElasticProcessor`
     """
     assert pillow_id == 'SqlSMSPillow', 'Pillow ID is not allowed to change'
-    checkpoint = get_checkpoint_for_elasticsearch_pillow(pillow_id, SMS_INDEX_INFO, [topics.SMS])
+    checkpoint = get_checkpoint_for_elasticsearch_pillow(pillow_id, sms_adapter.index_name, [topics.SMS])
     processor = BulkElasticProcessor(adapter=sms_adapter)
     change_feed = KafkaChangeFeed(
         topics=[topics.SMS], client_id='sql-sms-to-es',

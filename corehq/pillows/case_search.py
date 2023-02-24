@@ -232,7 +232,9 @@ def get_case_search_to_elasticsearch_pillow(pillow_id='CaseSearchToElasticsearch
         index_info.index = kwargs['index_name']
         index_info.alias = kwargs['index_alias']
 
-    checkpoint = get_checkpoint_for_elasticsearch_pillow(pillow_id, index_info, topics.CASE_TOPICS)
+    checkpoint = get_checkpoint_for_elasticsearch_pillow(
+        pillow_id, case_search_adapter.index_name, topics.CASE_TOPICS
+    )
     case_processor = CaseSearchPillowProcessor(adapter=case_search_adapter)
     change_feed = KafkaChangeFeed(
         topics=topics.CASE_TOPICS, client_id='cases-to-es', num_processes=num_processes, process_num=process_num
