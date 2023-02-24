@@ -176,8 +176,7 @@ class BulkElasticProcessor(ElasticProcessor, BulkPillowProcessor):
                     self.index_info.alias,
                     self.index_info.type,
                     es_actions,
-                    raise_on_error=False,
-                    raise_on_exception=False,
+                    raise_errors=False,
                 )
         except Exception as e:
             pillow_logging.exception("Elastic bulk error: %s", e)

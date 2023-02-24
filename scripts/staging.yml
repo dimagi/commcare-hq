@@ -63,7 +63,6 @@ branches:
     - dmr/add-support-for-ses-django-email-backend  # Danny Aug 26
     - do/migrate-apps # Dominic Sep 2
     - smh/remove-setSelectedValue-import # Steph Sept 20
-    - akj/release-mode-toggle # Akash 7 Oct
     - akj/migrations-fix # Akash Oct 11
     - mk/support-expanded-cols-in-mobile-ucr-2 # MK Oct 31
     # - akj/abdm-api-for-mobile-app # Akash Sep 28
@@ -71,19 +70,21 @@ branches:
     #- jls/web-apps-requirejs  # Jenny Jan 17
     - gh/remove-duplicate-kafka-seq-code # Graham Dec 26
     - jls/new-instance-connectors # Steph Dec 27
-    #- ad/user-syncing-task # Addison Jan 13  # conflicts with 'ad/user-syncing-UI' disabled by Joel Jan 23
-    - pkv/sync-complete-action-indicator-sr # Pawan Jan 27
-    - jls/remove-a-lot-of-wrapping # Jenny Jan 30
     - pkv/accessibility-pagination-widget-on-incomplete-forms # Pawan Feb 1
     # - ce/enable-case-rate-limits # Cal Feb 1
     # - ml/enforce-metadata-ff # Minha Feb 2
-    - akj/tabular-radio-btn-reader # Akash Feb 6
     - jt/ush_2575_case_search_pull_related_cases # Jonathan T. Feb 6
     - sk/webapps-sessionid  # Simon Feb 9
     - jls/nodeset-filter-ui # Jenny Feb 13
     - smh/force-incremental-sync # Steph Feb 14
-    # - jm/django-3.2.18  # Joel Feb 14
-    - ze/remove_deprecated_from_export # Zandre Feb 15
-    - ad/tableau-user-syncing-bulk # Addison Feb 15
-    - gh/large-daily-exports # Graham Feb 15
+    - es/date-widget  # Ethan Feb 15
+    - em/app-summary-conditional-case-update-status # Evan Feb 15
+    # - rc/media-upload-spinner-fix # Robert Feb 16
+    - smh/print-button # Steph Feb 17
+    - mjr/erm-overwrite+cs/at/add_coordinator_role # Chris Feb 24
+    - mjr/erm-overwrite # Matt Feb 21
+    - dependabot/pip/requirements/django-phonenumber-field-6.4.0 # Graham Feb 22
+    # - gh/remove-silly-param # Graham Feb 22
+    - cs/at/add_coordinator_role # Chris Feb 24
+    - ad/tableau-user-syncing-various-2 # Addison Feb 24
 submodules: { }
