@@ -114,6 +114,7 @@ class TestUserRoleSubscriptionChanges(BaseAccountingTest):
         self.account = BillingAccount.get_or_create_account_by_domain(
             self.domain.name, created_by=self.admin_username)[0]
         self.advanced_plan = DefaultProductPlan.get_default_plan_version(edition=SoftwarePlanEdition.ADVANCED)
+        self.community_plan = DefaultProductPlan.get_default_plan_version(edition=SoftwarePlanEdition.COMMUNITY)
 
     def test_cancellation(self):
         subscription = Subscription.new_domain_subscription(
@@ -144,6 +145,46 @@ class TestUserRoleSubscriptionChanges(BaseAccountingTest):
 
         self._assertInitialRoles()
         self._assertStdUsers()
+
+    @patch('corehq.apps.toggle_ui.views.ATTENDANCE_TRACKING.enabled')
+    def test_add_attendance_coordinator_role_for_domain(self, attendance_tracking_enabled):
+        attendance_tracking_enabled.return_value = True
+        subscription = Subscription.new_domain_subscription(
+            self.account, self.domain.name, self.community_plan,
+            web_user=self.admin_username
+        )
+
+        assert not UserRole.objects.filter(
+            name=UserRolePresets.ATTENDANCE_COORDINATOR,
+            domain=self.domain.name
+        ).exists()
+
+        subscription.change_plan(self.advanced_plan, web_user=self.admin_username)
+        pm_role_created = UserRole.objects.filter(
+            name=UserRolePresets.ATTENDANCE_COORDINATOR, domain=self.domain.name
+        ).exists()
+        self.assertTrue(pm_role_created)
+
+    @patch('corehq.apps.toggle_ui.views.ATTENDANCE_TRACKING.enabled')
+    def test_archive_attendance_coordinator_role_when_downgrading(self, attendance_tracking_enabled):
+        attendance_tracking_enabled.return_value = True
+        subscription = Subscription.new_domain_subscription(
+            self.account, self.domain.name, self.advanced_plan,
+            web_user=self.admin_username
+        )
+
+        role = UserRole.objects.filter(
+            name=UserRolePresets.ATTENDANCE_COORDINATOR,
+            domain=self.domain.name
+        ).first()
+        self.assertFalse(role.is_archived)
+
+        subscription.change_plan(self.community_plan, web_user=self.admin_username)
+        role = UserRole.objects.filter(
+            name=UserRolePresets.ATTENDANCE_COORDINATOR,
+            domain=self.domain.name
+        ).first()
+        self.assertTrue(role.is_archived)
 
     def _change_std_roles(self):
         for u in self.user_roles:
