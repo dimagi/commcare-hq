@@ -159,9 +159,9 @@ class ElasticCaseSearch(ElasticDocumentAdapter):
             case_dict = case
         else:
             raise TypeError(f"Unknown type {type(case)}")
-        return self.from_dict(case_dict)
+        return self._from_dict(case_dict)
 
-    def from_dict(self, case):
+    def _from_dict(self, case):
         """
         Takes in a dict which is result of ``CommCareCase.to_json``
         and applies required transformation to make it suitable for ES.

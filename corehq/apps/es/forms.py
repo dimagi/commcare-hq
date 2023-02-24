@@ -77,9 +77,9 @@ class ElasticForm(ElasticDocumentAdapter):
             xform_dict = xform.to_json()
         else:
             raise TypeError(f"Unknown type {type(xform)}")
-        return self.from_dict(xform_dict)
+        return self._from_dict(xform_dict)
 
-    def from_dict(cls, xform):
+    def _from_dict(cls, xform):
         """
         Takes in a xform dict and applies required transformation to make it suitable for ES.
         The function is replica of ``transform_form_for_elasticsearch``

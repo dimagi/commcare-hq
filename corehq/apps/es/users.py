@@ -87,9 +87,9 @@ class ElasticUser(ElasticDocumentAdapter):
             user_dict = user
         else:
             raise TypeError(f"Unkown type {type(user)}")
-        return self.from_dict(user_dict)
+        return self._from_dict(user_dict)
 
-    def from_dict(self, user):
+    def _from_dict(self, user):
         """
         Takes a user dict and applies required transfomation to make it suitable for ES.
         The function is replica of ``transform_user_for_elasticsearch``.

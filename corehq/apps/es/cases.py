@@ -64,9 +64,9 @@ class ElasticCase(ElasticDocumentAdapter):
             case_dict = case.to_json()
         else:
             raise TypeError(f"Unknown type {type(case)}")
-        return self.from_dict(case_dict)
+        return self._from_dict(case_dict)
 
-    def from_dict(self, case):
+    def _from_dict(self, case):
         """
         Takes in case dict and applies required transformation to make it suitable for ES.
         The function is replica of ``transform_case_for_elasticsearch``
