@@ -78,7 +78,6 @@ branches:
     - jls/nodeset-filter-ui # Jenny Feb 13
     - smh/force-incremental-sync # Steph Feb 14
     - es/date-widget  # Ethan Feb 15
-    - em/app-summary-conditional-case-update-status # Evan Feb 15
     # - rc/media-upload-spinner-fix # Robert Feb 16
     - smh/print-button # Steph Feb 17
     - mjr/erm-overwrite+cs/at/add_coordinator_role # Chris Feb 24
