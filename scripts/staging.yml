@@ -82,7 +82,9 @@ branches:
     - em/app-summary-conditional-case-update-status # Evan Feb 15
     # - rc/media-upload-spinner-fix # Robert Feb 16
     - smh/print-button # Steph Feb 17
+    - mjr/erm-overwrite+cs/at/add_coordinator_role # Chris Feb 24
     - mjr/erm-overwrite # Matt Feb 21
     - dependabot/pip/requirements/django-phonenumber-field-6.4.0 # Graham Feb 22
     # - gh/remove-silly-param # Graham Feb 22
+    - cs/at/add_coordinator_role # Chris Feb 24
 submodules: { }
