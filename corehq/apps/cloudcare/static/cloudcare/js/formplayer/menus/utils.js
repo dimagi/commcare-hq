@@ -85,26 +85,29 @@ hqDefine("cloudcare/js/formplayer/menus/utils", function () {
         FormplayerFrontend.regions.getRegion('breadcrumb').show(breadcrumbView);
     };
 
-    var showLanguageMenu = function (langs) {
+    var showFormMenu = function(langs, enableLanguageMenu, showPrintOption) {
         var langModels,
             langCollection;
 
         FormplayerFrontend.regions.addRegions({
             formMenu: "#form-menu",
         });
-        langModels = _.map(langs, function (lang) {
-            return {
-                lang: lang,
-            };
-        });
-
-        langCollection = new Backbone.Collection(langModels);
+        if (langs && enableLanguageMenu) {
+            langModels = _.map(langs, function (lang) {
+                return {
+                    lang: lang,
+                };
+            });
+            langCollection = new Backbone.Collection(langModels);
+        } else {
+            langCollection = null;
+        }
         var formMenuView = views.FormMenuView({
             collection: langCollection,
+            printEnabled: showPrintOption,
         });
         FormplayerFrontend.regions.getRegion('formMenu').show(formMenuView);
-    };
-
+    }
 
     var getMenuView = function (menuResponse) {
         var menuData = {                    // TODO: make this more concise
@@ -188,7 +191,7 @@ hqDefine("cloudcare/js/formplayer/menus/utils", function () {
         getMenuView: getMenuView,
         handleLocationRequest: handleLocationRequest,
         showBreadcrumbs: showBreadcrumbs,
-        showLanguageMenu: showLanguageMenu,
+        showFormMenu: showFormMenu,
         startOrStopLocationWatching: startOrStopLocationWatching,
     };
 });
