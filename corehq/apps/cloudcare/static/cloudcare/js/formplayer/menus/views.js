@@ -730,11 +730,6 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
                 printOptionsEnabled: printOptionsEnabled,
             };
         },
-        attributes: function () {
-            return {
-                "tabindex": "0",
-            };
-        },
         events: {
             "keydown": "printKeyAction",
         },
