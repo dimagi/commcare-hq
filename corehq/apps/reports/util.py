@@ -594,16 +594,13 @@ def sync_all_tableau_users():
         local_users = TableauUser.objects.filter(server=session.tableau_connected_app.server)
 
         # Add/delete/update remote users to match with local reality
-        def _add_new_user_to_HQ_group(session, local_user):
-            new_user_id = _add_tableau_user_remote(session, local_user, local_user.role)
-            session.add_user_to_group(new_user_id, remote_HQ_group_id)
         for local_user in local_users:
             remote_user = session.get_user_on_site(tableau_username(local_user.username))
             if not remote_user:
-                _add_new_user_to_HQ_group(session, local_user)
+                _add_tableau_user_remote(session, local_user, local_user.role)
             elif local_user.tableau_user_id != remote_user['id']:
                 _delete_user_remote(session, remote_user['id'])
-                _add_new_user_to_HQ_group(session, local_user)
+                _add_tableau_user_remote(session, local_user)
             elif local_user.role != remote_user['siteRole']:
                 _update_user_remote(
                     session,
