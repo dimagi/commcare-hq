@@ -2,7 +2,7 @@
 Metrics
 =======
 
-.. automodule:: corehq.util.metrics
+.. :noindex: automodule:: corehq.util.metrics
 
 
 CommCare Infrastructure Metrics
