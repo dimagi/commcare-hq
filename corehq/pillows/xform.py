@@ -16,7 +16,6 @@ from corehq.apps.receiverwrapper.util import get_app_version_info
 from corehq.apps.userreports.data_source_providers import DynamicDataSourceProvider, StaticDataSourceProvider
 from corehq.apps.userreports.pillow import get_ucr_processor
 from corehq.apps.es.forms import form_adapter
-from corehq.elastic import get_es_new
 from corehq.form_processor.backends.sql.dbaccessors import FormReindexAccessor
 from corehq.pillows.base import is_couch_change_for_sql_domain
 from corehq.pillows.mappings.xform_mapping import XFORM_INDEX_INFO
@@ -272,9 +271,7 @@ class SqlFormReindexerFactory(ReindexerFactory):
         doc_provider = SqlDocumentProvider(iteration_key, reindex_accessor)
         return ResumableBulkElasticPillowReindexer(
             doc_provider,
-            elasticsearch=get_es_new(),
-            index_info=XFORM_INDEX_INFO,
+            form_adapter,
             doc_filter=xform_pillow_filter,
-            doc_transform=transform_xform_for_elasticsearch,
             **self.options
         )

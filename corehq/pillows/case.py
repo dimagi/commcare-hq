@@ -8,7 +8,6 @@ from corehq.apps.change_feed.topics import CASE_TOPICS
 from corehq.apps.change_feed.consumer.feed import KafkaChangeFeed, KafkaCheckpointEventHandler
 from corehq.apps.userreports.data_source_providers import DynamicDataSourceProvider, StaticDataSourceProvider
 from corehq.apps.userreports.pillow import get_ucr_processor, get_data_registry_ucr_processor
-from corehq.elastic import get_es_new
 from corehq.apps.es.cases import case_adapter
 from corehq.form_processor.backends.sql.dbaccessors import CaseReindexAccessor
 from corehq.messaging.pillow import CaseMessagingSyncProcessor
@@ -166,8 +165,6 @@ class SqlCaseReindexerFactory(ReindexerFactory):
         doc_provider = SqlDocumentProvider(iteration_key, reindex_accessor)
         return ResumableBulkElasticPillowReindexer(
             doc_provider,
-            elasticsearch=get_es_new(),
-            index_info=CASE_INDEX_INFO,
-            doc_transform=transform_case_for_elasticsearch,
+            adapter=case_adapter,
             **self.options
         )

@@ -3,7 +3,6 @@ from corehq.apps.accounting.models import Subscription
 from corehq.apps.change_feed.consumer.feed import KafkaChangeFeed, KafkaCheckpointEventHandler
 from corehq.apps.change_feed import topics
 from corehq.apps.domain.models import Domain
-from corehq.elastic import get_es_new
 from corehq.apps.es.domains import domain_adapter
 from corehq.pillows.mappings.domain_mapping import DOMAIN_INDEX_INFO
 from corehq.util.doc_processor.couch import CouchDocumentProvider
@@ -67,9 +66,7 @@ class DomainReindexerFactory(ReindexerFactory):
         options.update(self.options)
         return ResumableBulkElasticPillowReindexer(
             doc_provider,
-            elasticsearch=get_es_new(),
-            index_info=DOMAIN_INDEX_INFO,
-            doc_transform=transform_domain_for_elasticsearch,
+            domain_adapter,
             pillow=get_domain_kafka_to_elasticsearch_pillow(),
             **options
         )

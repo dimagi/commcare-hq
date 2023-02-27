@@ -285,9 +285,7 @@ class ResumableCaseSearchReindexerFactory(ReindexerFactory):
         doc_provider = SqlDocumentProvider(iteration_key, accessor)
         return ResumableBulkElasticPillowReindexer(
             doc_provider,
-            elasticsearch=get_es_new(),
-            index_info=CASE_SEARCH_INDEX_INFO,
-            doc_transform=transform_case_for_elasticsearch,
+            adapter=case_search_adapter,
             **self.options
         )
 

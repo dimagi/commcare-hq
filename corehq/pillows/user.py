@@ -1,14 +1,13 @@
 import copy
 from corehq.apps.change_feed.consumer.feed import KafkaChangeFeed, KafkaCheckpointEventHandler
 from corehq.apps.change_feed import topics
-from corehq.apps.es.client import get_client
 from corehq.apps.es.users import user_adapter
 from corehq.apps.groups.dbaccessors import get_group_id_name_map_by_user
 from corehq.apps.users.models import CommCareUser, CouchUser, WebUser
 from corehq.apps.users.util import WEIRD_USER_IDS
 from corehq.apps.userreports.data_source_providers import DynamicDataSourceProvider, StaticDataSourceProvider
 from corehq.apps.userreports.pillow import get_ucr_processor
-from corehq.pillows.mappings.user_mapping import USER_INDEX, USER_INDEX_INFO
+from corehq.pillows.mappings.user_mapping import USER_INDEX
 from corehq.util.quickcache import quickcache
 from corehq.util.doc_processor.couch import CouchDocumentProvider
 from pillowtop.checkpoints.manager import get_checkpoint_for_elasticsearch_pillow
@@ -206,9 +205,7 @@ class UserReindexerFactory(ReindexerFactory):
         options.update(self.options)
         return ResumableBulkElasticPillowReindexer(
             doc_provider,
-            elasticsearch=get_client(),
-            index_info=USER_INDEX_INFO,
-            doc_transform=transform_user_for_elasticsearch,
+            user_adapter,
             pillow=get_user_pillow_old(),
             **options
         )

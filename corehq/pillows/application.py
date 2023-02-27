@@ -61,9 +61,7 @@ class AppReindexerFactory(ReindexerFactory):
         options.update(self.options)
         return ResumableBulkElasticPillowReindexer(
             doc_provider,
-            elasticsearch=get_es_new(),
-            index_info=APP_INDEX_INFO,
-            doc_transform=transform_app_for_es,
+            adapter=app_adapter,
             pillow=get_app_to_elasticsearch_pillow(),
             **options
         )

@@ -1,7 +1,6 @@
 from corehq.apps.change_feed.consumer.feed import KafkaChangeFeed, KafkaCheckpointEventHandler
 from corehq.apps.change_feed import topics
 from corehq.apps.groups.models import Group
-from corehq.elastic import get_es_new
 from corehq.util.doc_processor.couch import CouchDocumentProvider
 
 from corehq.apps.es.groups import group_adapter
@@ -65,9 +64,7 @@ class GroupReindexerFactory(ReindexerFactory):
         options.update(self.options)
         return ResumableBulkElasticPillowReindexer(
             doc_provider,
-            elasticsearch=get_es_new(),
-            index_info=GROUP_INDEX_INFO,
-            doc_transform=lambda x: x,
+            group_adapter,
             pillow=get_group_pillow_old(),
             **options
         )
