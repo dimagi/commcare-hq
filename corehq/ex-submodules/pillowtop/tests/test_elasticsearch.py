@@ -17,7 +17,6 @@ from pillowtop.es_utils import (
     mapping_exists,
 )
 from corehq.util.es.interface import ElasticsearchInterface
-from pillowtop.exceptions import PillowtopIndexingError
 from pillowtop.processors.elastic import send_to_elasticsearch
 from .utils import (
     TEST_INDEX_INFO,
@@ -234,11 +233,9 @@ class TestSendToElasticsearch(SimpleTestCase):
         with mock.patch("pillowtop.processors.elastic._propagate_failure", return_value=False), \
              mock.patch("pillowtop.processors.elastic._retries", return_value=retries), \
              mock.patch("pillowtop.processors.elastic._sleep_between_retries"), \
-             mock.patch("pillowtop.processors.elastic._get_es_interface") as _get_es_interface, \
+             mock.patch("pillowtop.processors.elastic.doc_adapter_from_alias") as doc_adapter, \
              capture_log_output("pillowtop") as log:
-            es_interface = mock.Mock()
-            es_interface.index_doc.side_effect = exception
-            _get_es_interface.return_value = es_interface
+            doc_adapter.return_value.index.side_effect = exception
             send_to_elasticsearch(
                 TEST_INDEX_INFO,
                 doc_type=TEST_INDEX_INFO.type,
