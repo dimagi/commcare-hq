@@ -12,7 +12,7 @@ VERIFY_MOBILE_OTP_URL = REG_API_URL + "verifyMobileOTP"
 CREATE_HEALTH_ID_URL = REG_API_URL + "createHealthIdWithPreVerified"
 
 
-def generate_aadhar_otp(aadhaar_number):
+def generate_aadhaar_otp(aadhaar_number):
     payload = {"aadhaar": str(aadhaar_number)}
     return get_response_http_post(GENERATE_AADHAAR_OTP_URL, payload)
 

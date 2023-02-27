@@ -15,6 +15,18 @@ class TestABHACreation(APITestCase):
         self.client.credentials(HTTP_AUTHORIZATION='Token ' + token)
         self.invalid_req_msg = "Unable to process the current request due to incorrect data entered."
 
+    @staticmethod
+    def _mock_abdm_http_post(url, payload):
+        abdm_txn_id_mock = {"txnId": "1234"}
+        return {
+            "v1/registration/aadhaar/generateOtp": abdm_txn_id_mock,
+            "v1/registration/aadhaar/verifyMobileOTP": abdm_txn_id_mock,
+            "v1/registration/aadhaar/verifyOTP": abdm_txn_id_mock,
+            "v1/registration/aadhaar/generateMobileOTP": abdm_txn_id_mock,
+            "v1/registration/aadhaar/createHealthIdWithPreVerified": {"token": "1122", "refreshToken": "1133",
+                                                                      "health_id": "123-456", "txnId": "1234"},
+        }.get(url)
+
     def test_aadhaar_otp_generation_success(self):
         abdm_txn_id_mock = {"txnId": "1234"}
         with patch('custom.abdm.milestone_one.views.abha_creation_views.abdm_util.get_response_http_post',
@@ -68,18 +80,6 @@ class TestABHACreation(APITestCase):
         response = self.client.post(reverse("verify_mobile_otp"), {"pan": "123456"})
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertEqual(self.invalid_req_msg, response.json().get("message"))
-
-    @staticmethod
-    def _mock_abdm_http_post(url, payload):
-        abdm_txn_id_mock = {"txnId": "1234"}
-        return {
-            "v1/registration/aadhaar/generateOtp": abdm_txn_id_mock,
-            "v1/registration/aadhaar/verifyMobileOTP": abdm_txn_id_mock,
-            "v1/registration/aadhaar/verifyOTP": abdm_txn_id_mock,
-            "v1/registration/aadhaar/generateMobileOTP": abdm_txn_id_mock,
-            "v1/registration/aadhaar/createHealthIdWithPreVerified": {"token": "1122", "refreshToken": "1133",
-                                                                      "health_id": "123-456", "txnId": "1234"},
-        }.get(url)
 
     def tearDown(self) -> None:
         ABDMUser.objects.all().delete()
