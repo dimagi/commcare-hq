@@ -14,8 +14,7 @@ class ABDMUser(models.Model):
         return super().save(*args, **kwargs)
 
     def generate_token(self):
-        token = Token.generate_key()
-        self.access_token = token
+        self.access_token = Token.generate_key()
 
     @property
     def is_token_valid(self):
