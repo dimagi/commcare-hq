@@ -135,12 +135,10 @@ def get_registration_element_data(restore_user):
 
 
 def get_user_data_for_restore(restore_user):
-    user_data = dict()
+    user_data = restore_user.user_session_data
     for custom_user_data in get_custom_user_data_for_restore(restore_user):
         user_data.update(custom_user_data)
-    user_data.update(restore_user.user_session_data)
     return user_data
-
 
 @extension_point
 def get_custom_user_data_for_restore(restore_user):
