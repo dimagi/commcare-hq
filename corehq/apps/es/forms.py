@@ -79,7 +79,7 @@ class ElasticForm(ElasticDocumentAdapter):
             raise TypeError(f"Unknown type {type(xform)}")
         return self._from_dict(xform_dict)
 
-    def _from_dict(cls, xform):
+    def _from_dict(cls, xform_dict):
         """
         Takes in a xform dict and applies required transformation to make it suitable for ES.
         The function is replica of ``transform_form_for_elasticsearch``
@@ -92,11 +92,13 @@ class ElasticForm(ElasticDocumentAdapter):
         from corehq.apps.receiverwrapper.util import get_app_version_info
         from corehq.pillows.utils import format_form_meta_for_es, get_user_type
         from corehq.pillows.xform import is_valid_date
-        doc_ret = copy(xform)
-        form = doc_ret['form'] = copy(doc_ret['form'])
-        form_meta = form['meta'] = copy(form.get('meta', None))
 
-        if form_meta:
+        doc_ret = copy(xform_dict)
+        form = doc_ret['form'] = copy(doc_ret['form'])
+        user_id = None
+
+        if 'meta' in form:
+            form_meta = form['meta'] = copy(form['meta'])
             if not is_valid_date(form_meta.get('timeEnd', None)):
                 form_meta['timeEnd'] = None
             if not is_valid_date(form_meta.get('timeStart', None)):
@@ -114,6 +116,7 @@ class ElasticForm(ElasticDocumentAdapter):
             )
             form_meta['commcare_version'] = app_version_info.commcare_version
             form_meta['app_build_version'] = app_version_info.build_version
+            user_id = form_meta.get('userID', None)
 
             try:
                 geo_point = GeoPoint.from_string(doc_ret['form']['meta']['location'])
@@ -122,10 +125,6 @@ class ElasticForm(ElasticDocumentAdapter):
                 form_meta['geo_point'] = None
                 pass
 
-        try:
-            user_id = form_meta['userID']
-        except KeyError:
-            user_id = None
         doc_ret['user_type'] = get_user_type(user_id)
         doc_ret['inserted_at'] = datetime.utcnow().isoformat()
 
