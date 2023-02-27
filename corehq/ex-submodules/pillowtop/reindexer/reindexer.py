@@ -2,7 +2,6 @@ from abc import ABCMeta, abstractmethod
 from corehq.apps.es.transient_util import index_info_from_adapter
 
 from corehq.util.es.elasticsearch import BulkIndexError, TransportError
-from corehq.util.es.interface import ElasticsearchInterface
 
 from pillowtop.es_utils import (
     initialize_index_and_mapping,
@@ -194,12 +193,10 @@ class ElasticPillowReindexer(PillowChangeProviderReindexer):
 
 
 class BulkPillowReindexProcessor(BaseDocProcessor):
-    def __init__(self, es_client, index_info, doc_filter=None, doc_transform=None, process_deletes=False):
-        self.doc_transform = doc_transform
+    def __init__(self, adapter, doc_filter=None, process_deletes=False):
         self.doc_filter = doc_filter
-        self.es = es_client
-        self.index_info = index_info
         self.process_deletes = process_deletes
+        self.adapter = adapter
 
     def should_process(self, doc):
         if self.doc_filter:
@@ -224,10 +221,8 @@ class BulkPillowReindexProcessor(BaseDocProcessor):
             pillow_logging.error("Error processing doc %s: %s (%s)", change.id,
                                  type(exception), exception)
 
-        es_interface = ElasticsearchInterface(self.es)
         try:
-            es_interface.bulk_ops(self.index_info.alias, self.index_info.type,
-                                  bulk_changes)
+            self.adapter.bulk(bulk_changes)
         except BulkIndexError as e:
             pillow_logging.error("Bulk index errors\n%s", e.errors)
         except Exception as exc:
@@ -246,17 +241,16 @@ class ResumableBulkElasticPillowReindexer(Reindexer):
     reset = False
     in_place = False
 
-    def __init__(self, doc_provider, elasticsearch, index_info,
-                 doc_filter=None, doc_transform=None, chunk_size=1000, pillow=None,
+    def __init__(self, doc_provider, adapter,
+                 doc_filter=None, chunk_size=1000, pillow=None,
                  reset=False, in_place=False):
         self.reset = reset
         self.in_place = in_place
         self.doc_provider = doc_provider
-        self.es = elasticsearch
-        self.index_info = index_info
+        self.adapter = adapter
         self.chunk_size = chunk_size
         self.doc_processor = BulkPillowReindexProcessor(
-            self.es, self.index_info, doc_filter, doc_transform, process_deletes=self.in_place
+            self.adapter, doc_filter, process_deletes=self.in_place
         )
         self.pillow = pillow
 
@@ -264,7 +258,7 @@ class ResumableBulkElasticPillowReindexer(Reindexer):
         clean_index(self.adapter.index_name)
 
     def reindex(self):
-        if not self.es.indices.exists(self.index_info.index):
+        if not manager.index_exists(self.adapter.index_name):
             self.reset = True  # if the index doesn't exist always reset the processing
 
         processor = BulkDocProcessor(
