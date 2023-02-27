@@ -90,7 +90,9 @@ hqDefine("cloudcare/js/form_entry/utils", function () {
         var inputEl = $('input.mapboxgl-ctrl-geocoder--input');
         inputEl.addClass('form-control');
         inputEl.on('keydown', _.debounce((e) => {
-            inputOnKeyDown(e);
+            if (inputOnKeyDown) {
+                inputOnKeyDown(e);
+            }
 
             if (e.key === "ArrowUp" || e.key === "ArrowDown") {
                 $("#geocoder-option-sr").html("<p>" + $("ul.suggestions li.active").text() + "</p>");
