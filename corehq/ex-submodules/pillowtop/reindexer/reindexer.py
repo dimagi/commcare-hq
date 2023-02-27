@@ -261,7 +261,7 @@ class ResumableBulkElasticPillowReindexer(Reindexer):
         self.pillow = pillow
 
     def clean(self):
-        clean_index(self.es, self.index_info)
+        clean_index(self.adapter.index_name)
 
     def reindex(self):
         if not self.es.indices.exists(self.index_info.index):
@@ -275,14 +275,14 @@ class ResumableBulkElasticPillowReindexer(Reindexer):
         )
 
         if not self.in_place and (self.reset or not processor.has_started()):
-            prepare_index_for_reindex(self.es, self.index_info)
+            prepare_index_for_reindex(self.adapter)
             if self.pillow:
                 _set_checkpoint(self.pillow)
 
         processor.run()
 
         try:
-            prepare_index_for_usage(self.es, self.index_info)
+            prepare_index_for_usage(self.adapter.index_name)
         except TransportError:
             raise Exception(
                 'The Elasticsearch index was missing after reindex! If the index was manually deleted '
