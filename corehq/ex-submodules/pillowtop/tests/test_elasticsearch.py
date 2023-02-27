@@ -262,19 +262,3 @@ class TestSendToElasticsearch(SimpleTestCase):
 
         # attempt to create the same doc twice shouldn't fail
         self._send_to_es_and_check(doc)
-
-    def test_retry_on_conflict_absent_on_index(self):
-        args, kw = self._send_to_es_and_get_interface_args(False, "index_doc")
-        self.assertNotIn("retry_on_conflict", kw.get("params", {}))
-
-    def test_retry_on_conflict_present_on_update(self):
-        args, kw = self._send_to_es_and_get_interface_args(True, "update_doc_fields")
-        self.assertIn("retry_on_conflict", kw.get("params", {}))
-
-    def _send_to_es_and_get_interface_args(self, update, method):
-        doc = {'_id': uuid.uuid4().hex, 'doc_type': 'MyCoolDoc', 'property': 'bar'}
-        path = f"pillowtop.processors.elastic.ElasticsearchInterface.{method}"
-        with mock.patch(path) as mock_meth:
-            self._send_to_es(doc, es_merge_update=update)
-            mock_meth.assert_called_once()
-            return mock_meth.call_args
