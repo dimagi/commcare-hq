@@ -664,6 +664,7 @@ class ApiKeyView(BaseMyAccountView, CRUDPaginatedViewMixin):
             _("Project"),
             _("IP Allowlist"),
             _("Created"),
+            _("Last Used"),
             _("Status"),
             _("Actions"),
         ]
@@ -702,6 +703,7 @@ class ApiKeyView(BaseMyAccountView, CRUDPaginatedViewMixin):
                 if api_key.ip_allowlist else _("All IP Addresses")
             ),
             "created": self._to_user_time(api_key.created),
+            "last_used": self._to_user_time(api_key.last_used),
             "deactivated_on": self._to_user_time(api_key.deactivated_on),
             "is_active": api_key.is_active,
         }
