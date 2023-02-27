@@ -96,11 +96,3 @@ def assume_alias(es, index, alias):
     es.indices.put_alias(index, alias)
 
 
-def get_index_info_from_pillow(pillow):
-    return ElasticsearchIndexInfo(
-        index=pillow.es_index,
-        alias=pillow.es_alias,
-        type=pillow.es_type,
-        meta=pillow.es_meta,
-        mapping=pillow.default_mapping,
-    )
