@@ -1,12 +1,9 @@
-import logging
 from functools import wraps
 from typing import List
 
 from custom.abdm.milestone_one.utils.response_util import (
     generate_invalid_req_response,
 )
-
-logger = logging.getLogger(__name__)
 
 
 def required_request_params(required_request_data):
@@ -19,7 +16,6 @@ def required_request_params(required_request_data):
         if not (required_request_data and isinstance(required_request_data, List)):
             error_msg = "Request could not be validated as a valid input not provided. \
                 Required: List of parameters."
-            logger.warning(error_msg)
             return generate_invalid_req_response(error_msg)
 
         @wraps(fn)
