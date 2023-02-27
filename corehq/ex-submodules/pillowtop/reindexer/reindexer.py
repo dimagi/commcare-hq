@@ -155,7 +155,7 @@ def prepare_index_for_reindex(es, index_info):
 
 
 def prepare_index_for_usage(es, index_info):
-    set_index_normal_settings(es, index_info.index)
+    set_index_normal_settings(index_name)
     es.indices.refresh(index_info.index)
 
 
