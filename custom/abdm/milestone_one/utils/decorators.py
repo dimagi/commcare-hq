@@ -9,14 +9,14 @@ from custom.abdm.milestone_one.utils.response_util import (
 logger = logging.getLogger(__name__)
 
 
-def required_request_params(params):
+def required_request_params(required_request_data):
     """
     Checks if the parameters provided in the decorator(a list of strings) are present in the DRF request.
     If not, raises 400 Bad Request error.
     """
 
     def decorate(fn):
-        if not (params and isinstance(params, List)):
+        if not (required_request_data and isinstance(required_request_data, List)):
             error_msg = "Request could not be validated as a valid input not provided. \
                 Required: List of parameters."
             logger.warning(error_msg)
@@ -25,7 +25,7 @@ def required_request_params(params):
         @wraps(fn)
         def wrapped(request, *args, **kwargs):
             invalid_params = []
-            for param in params:
+            for param in required_request_data:
                 if not request.data.get(param):
                     invalid_params.append(param)
             if invalid_params:
