@@ -72,7 +72,7 @@ class ElasticPillowTest(SimpleTestCase):
         self.assertFalse(self.es.indices.exists(self.index))
 
         # create and check
-        initialize_index(self.es, TEST_INDEX_INFO)
+        initialize_index(TEST_INDEX_INFO)
         self.assertTrue(self.es.indices.exists(self.index))
 
     def test_assume_alias(self):
