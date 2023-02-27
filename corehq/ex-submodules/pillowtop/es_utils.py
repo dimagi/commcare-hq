@@ -6,8 +6,8 @@ from corehq.apps.es.index.settings import (
 )
 from corehq.apps.es.migration_operations import CreateIndex
 from corehq.apps.es.transient_util import doc_adapter_from_info
+from corehq.apps.es.client import manager
 from corehq.util.es.elasticsearch import TransportError
-from corehq.util.es.interface import ElasticsearchInterface
 from dimagi.ext import jsonobject
 from pillowtop.logger import pillow_logging
 
@@ -44,28 +44,29 @@ class ElasticsearchIndexInfo(jsonobject.JsonObject):
         return json
 
 
-def set_index_reindex_settings(es, index):
+def set_index_reindex_settings(index):
     """
     Set a more optimized setting setup for fast reindexing
     """
-    return ElasticsearchInterface(es).update_index_settings_reindex(index)
+    return manager.index_configure_for_reindex(index)
 
 
-def set_index_normal_settings(es, index):
+def set_index_normal_settings(index):
     """
     Normal indexing configuration
     """
-    return ElasticsearchInterface(es).update_index_settings_standard(index)
+    return manager.index_configure_for_standard_ops(index)
 
 
 def initialize_index_and_mapping(es, index_info):
-    index_exists = es.indices.exists(index_info.index)
+    # TODO: Remove es param as it is unused
+    index_exists = manager.index_exists(index_info.index)
     if not index_exists:
-        initialize_index(es, index_info)
-    assume_alias(es, index_info.index, index_info.alias)
+        initialize_index(index_info)
+    assume_alias(index_info.index, index_info.alias)
 
 
-def initialize_index(es, index_info):
+def initialize_index(index_info):
     pillow_logging.info("Initializing elasticsearch index for [%s]" % index_info.type)
     CreateIndex(
         index_info.index,
@@ -76,23 +77,16 @@ def initialize_index(es, index_info):
     ).run()
 
 
-def mapping_exists(es, index_info):
+def mapping_exists(index_info):
     try:
-        return es.indices.get_mapping(index_info.index, index_info.type)
+        return manager.index_get_mapping(index_info.index, index_info.type)
     except TransportError:
         return {}
 
 
-def assume_alias(es, index, alias):
+def assume_alias(index, alias):
     """
     This operation assigns the alias to the index and removes the alias
     from any other indices it might be assigned to.
     """
-    if es.indices.exists_alias(name=alias):
-        # this part removes the conflicting aliases
-        alias_indices = list(es.indices.get_alias(alias))
-        for aliased_index in alias_indices:
-            es.indices.delete_alias(aliased_index, alias)
-    es.indices.put_alias(index, alias)
-
-
+    manager.index_put_alias(index, alias)
