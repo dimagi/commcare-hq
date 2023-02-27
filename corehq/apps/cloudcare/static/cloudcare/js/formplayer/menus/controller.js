@@ -6,6 +6,7 @@ hqDefine("cloudcare/js/formplayer/menus/controller", function () {
         formplayerUtils = hqImport("cloudcare/js/formplayer/utils/utils"),
         menusUtils = hqImport("cloudcare/js/formplayer/menus/utils"),
         views = hqImport("cloudcare/js/formplayer/menus/views"),
+        toggles = hqImport("hqwebapp/js/toggles"),
         md = window.markdownit();
     var selectMenu = function (options) {
 
@@ -103,7 +104,8 @@ hqDefine("cloudcare/js/formplayer/menus/controller", function () {
     var showMenu = function (menuResponse) {
         var menuListView = menusUtils.getMenuView(menuResponse);
         var appPreview = FormplayerFrontend.currentUser.displayOptions.singleAppMode;
-        var changeFormLanguage = FormplayerFrontend.currentUser.changeFormLanguage;
+        var changeFormLanguage = toggles.toggleEnabled('CHANGE_FORM_LANGUAGE');
+        var enablePrintOption = !menuResponse.queryKey;
 
         if (menuListView) {
             FormplayerFrontend.regions.getRegion('main').show(menuListView);
@@ -116,8 +118,8 @@ hqDefine("cloudcare/js/formplayer/menus/controller", function () {
 
         if (menuResponse.breadcrumbs) {
             menusUtils.showBreadcrumbs(menuResponse.breadcrumbs);
-            if (menuResponse.langs && menuResponse.langs.length > 1 && !appPreview && changeFormLanguage) {
-                menusUtils.showLanguageMenu(menuResponse.langs);
+            if ((menuResponse.langs && menuResponse.langs.length > 1 && !appPreview && changeFormLanguage) || enablePrintOption) {
+                menusUtils.showFormMenu(menuResponse.langs, changeFormLanguage);
             }
         } else {
             FormplayerFrontend.regions.getRegion('breadcrumb').empty();
