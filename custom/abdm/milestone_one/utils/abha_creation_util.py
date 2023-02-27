@@ -1,8 +1,5 @@
-import logging
-
 from custom.abdm.milestone_one.utils.request_util import get_response_http_post
 
-logger = logging.getLogger(__name__)
 
 REG_API_URL = "v1/registration/aadhaar/"
 GENERATE_AADHAAR_OTP_URL = REG_API_URL + "generateOtp"
