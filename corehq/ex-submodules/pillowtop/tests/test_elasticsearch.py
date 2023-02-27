@@ -86,7 +86,7 @@ class ElasticPillowTest(SimpleTestCase):
             {'doc_type': 'CommCareCase', 'type': 'mother'},
         )
         self.assertEqual(1, get_doc_count(self.es, self.index))
-        assume_alias(self.es, self.index, TEST_INDEX_INFO.alias)
+        assume_alias(self.index, TEST_INDEX_INFO.alias)
         es_doc = self.es_interface.get_doc(TEST_INDEX_INFO.alias, TEST_INDEX_INFO.type, doc_id)
         for prop in doc:
             self.assertEqual(doc[prop], es_doc[prop])
@@ -110,7 +110,7 @@ class ElasticPillowTest(SimpleTestCase):
         self.assertIn(new_index, aliases[TEST_INDEX_INFO.alias])
 
         # assume alias and make sure it's removed (and added to the right index)
-        assume_alias(self.es, self.index, TEST_INDEX_INFO.alias)
+        assume_alias(self.index, TEST_INDEX_INFO.alias)
         aliases = self.es_interface.get_aliases()
 
         self.assertEqual([self.index], aliases[TEST_INDEX_INFO.alias])
