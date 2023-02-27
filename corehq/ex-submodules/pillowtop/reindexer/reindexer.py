@@ -1,4 +1,5 @@
 from abc import ABCMeta, abstractmethod
+from corehq.apps.es.transient_util import index_info_from_adapter
 
 from corehq.util.es.elasticsearch import BulkIndexError, TransportError
 from corehq.util.es.interface import ElasticsearchInterface
@@ -19,6 +20,7 @@ from corehq.util.doc_processor.interface import (
     BaseDocProcessor,
     BulkDocProcessor,
 )
+from corehq.apps.es.client import get_client, manager
 
 MAX_TRIES = 3
 RETRY_TIME_DELAY_FACTOR = 15
@@ -144,19 +146,21 @@ class PillowChangeProviderReindexer(Reindexer):
         pillow_logging.info("Processed %s docs", total_docs)
 
 
-def clean_index(es, index_info):
-    if es.indices.exists(index_info.index):
-        es.indices.delete(index=index_info.index)
+def clean_index(index_name):
+    if manager.index_exists(index_name):
+        manager.index_delete(index=index_name)
 
 
-def prepare_index_for_reindex(es, index_info):
+def prepare_index_for_reindex(adapter):
+    es = get_client()
+    index_info = index_info_from_adapter(adapter)
     initialize_index_and_mapping(es, index_info)
     set_index_reindex_settings(adapter.index_name)
 
 
-def prepare_index_for_usage(es, index_info):
+def prepare_index_for_usage(index_name):
     set_index_normal_settings(index_name)
-    es.indices.refresh(index_info.index)
+    manager.index_refresh(index_name)
 
 
 def _set_checkpoint(pillow):
@@ -168,24 +172,25 @@ def _set_checkpoint(pillow):
 class ElasticPillowReindexer(PillowChangeProviderReindexer):
     in_place = False
 
-    def __init__(self, pillow_or_processor, change_provider, elasticsearch, index_info, in_place=False):
+    def __init__(
+            self, pillow_or_processor, change_provider, adapter, in_place=False
+    ):
         super(ElasticPillowReindexer, self).__init__(pillow_or_processor, change_provider)
-        self.es = elasticsearch
-        self.index_info = index_info
         self.in_place = in_place
+        self.adapter = adapter
 
     def clean(self):
-        clean_index(self.es, self.index_info)
+        clean_index(self.adapter.index_name)
 
     def reindex(self):
         if not self.in_place and not self.start_from:
-            prepare_index_for_reindex(self.es, self.index_info)
+            prepare_index_for_reindex(self.adapter)
             if isinstance(self.pillow_or_processor, ConstructedPillow):
                 _set_checkpoint(self.pillow_or_processor)
 
         super(ElasticPillowReindexer, self).reindex()
 
-        prepare_index_for_usage(self.es, self.index_info)
+        prepare_index_for_usage(self.adapter.index_name)
 
 
 class BulkPillowReindexProcessor(BaseDocProcessor):
