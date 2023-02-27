@@ -93,8 +93,8 @@ class ElasticForm(ElasticDocumentAdapter):
         from corehq.pillows.utils import format_form_meta_for_es, get_user_type
         from corehq.pillows.xform import is_valid_date
         doc_ret = copy(xform)
-        form = copy(doc_ret['form'])
-        form_meta = copy(form.get('meta', None))
+        form = doc_ret['form'] = copy(doc_ret['form'])
+        form_meta = form['meta'] = copy(form.get('meta', None))
 
         if form_meta:
             if not is_valid_date(form_meta.get('timeEnd', None)):
@@ -128,9 +128,6 @@ class ElasticForm(ElasticDocumentAdapter):
             user_id = None
         doc_ret['user_type'] = get_user_type(user_id)
         doc_ret['inserted_at'] = datetime.utcnow().isoformat()
-
-        form['meta'] = form_meta
-        doc_ret['form'] = form
 
         try:
             case_blocks = extract_case_blocks(doc_ret)
