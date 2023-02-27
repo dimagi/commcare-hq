@@ -79,7 +79,7 @@ hqDefine("events/js/event_attendees",[
             self.showPaginationSpinner(true);
             $.ajax({
                 method: 'GET',
-                url: initialPageData.reverse('paginate_commcare_users'),
+                url: initialPageData.reverse('paginate_attendee_users'),
                 data: {
                     page: page || 1,
                     query: self.query(),
@@ -103,21 +103,6 @@ hqDefine("events/js/event_attendees",[
                     self.showLoadingSpinner(false);
                     self.showPaginationSpinner(false);
                     self.hasError(true);
-                },
-            });
-        };
-
-        self.createAsAttendee = function (user_id) {
-            $.ajax({
-                method: 'POST',
-                url: initialPageData.reverse('make_attendee'),
-                data: {'user_id': user_id},
-                success: function (data) {
-                    // Move the user to the other "all attendees" list.
-                    console.log(data)
-                },
-                error: function () {
-                    console.log('Error occurred')
                 },
             });
         };

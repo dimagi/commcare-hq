@@ -5,8 +5,7 @@ from django.http import Http404
 from django.http import JsonResponse
 from django.utils.translation import gettext_lazy as _
 from django.http import HttpResponseRedirect
-from django.utils.decorators import method_decorator
-from django.views.decorators.http import require_GET, require_POST
+from django.views.decorators.http import require_GET
 
 from corehq.apps.hqwebapp.views import CRUDPaginatedViewMixin
 from corehq.apps.domain.views.base import BaseDomainView
@@ -16,13 +15,9 @@ from corehq.apps.hqwebapp.decorators import use_jquery_ui, use_multiselect
 from corehq.apps.events.exceptions import EventDoesNotExist
 from corehq.apps.users.views import BaseUserSettingsView
 from corehq.util.jqueryrmi import JSONResponseMixin
-from corehq.apps.users.decorators import (
-    require_can_edit_or_view_commcare_users,
-    require_can_coordinate_events,
-)
-from corehq.apps.locations.permissions import location_safe
-from corehq.apps.users.analytics import get_search_users_in_domain_es_query
-from corehq.apps.locations.models import SQLLocation
+from corehq.apps.domain.decorators import login_and_domain_required
+from corehq.apps.users.decorators import require_permission
+from corehq.apps.users.models import HqPermissions
 from corehq import toggles
 
 
@@ -224,88 +219,45 @@ class EventEditView(EventCreateView):
         return HttpResponseRedirect(reverse(EventsView.urlname, args=(self.domain,)))
 
 
-@location_safe
 class AttendeesListView(JSONResponseMixin, BaseUserSettingsView):
     urlname = "event_attendees"
     template_name = 'event_attendees.html'
-    page_title = _("Add Attendees")
-    limit_text = _("Attendees per page")
-    empty_notification = _("You have no attendees")
-    loading_message = _("Loading attendees")
+    page_title = _("Attendee Users")
+    limit_text = _("Users per page")
+    empty_notification = _("You have no attendee users")
+    loading_message = _("Loading users")
 
     @use_jquery_ui
-    @method_decorator(require_can_edit_or_view_commcare_users)
     def dispatch(self, *args, **kwargs):
+        # The FF check is temporary till the full feature is released
+        toggle_enabled = toggles.ATTENDANCE_TRACKING.enabled(self.domain)
+        if not (self.request.couch_user.can_manage_events(self.domain) and toggle_enabled):
+            raise Http404
         return super(AttendeesListView, self).dispatch(*args, **kwargs)
 
     def post(self, *args, **kwargs):
-        breakpoint()
-
         return super(AttendeesListView, self).post(*args, **kwargs)
 
 
-@require_can_edit_or_view_commcare_users
 @require_GET
-@location_safe
-def paginate_commcare_users(request, domain):
+@login_and_domain_required
+@require_permission(HqPermissions.manage_attendance_tracking)
+def paginate_attendee_users(request, domain):
     """
-    Returns the possible attendees (mobile workers).
+    Returns the possible attendees.
     """
-    # TODO: We should filter for those that does not have an associated `commcare-attendee` case
     limit = int(request.GET.get('limit', 10))
     page = int(request.GET.get('page', 1))
     query = request.GET.get('query')
-    deactivated_only = json.loads(request.GET.get('showDeactivatedUsers', "false"))
 
-    def _user_query(search_string, page, limit):
-        user_es = get_search_users_in_domain_es_query(
-            domain=domain, search_string=search_string,
-            offset=page * limit, limit=limit)
-        if not request.couch_user.has_permission(domain, 'access_all_locations'):
-            loc_ids = (SQLLocation.objects.accessible_to_user(domain, request.couch_user)
-                                          .location_ids())
-            user_es = user_es.location(list(loc_ids))
-        return user_es.mobile_users()
-
-    # backend pages start at 0
-    users_query = _user_query(query, page - 1, limit)
-    # run with a blank query to fetch total records with same scope as in search
-    if deactivated_only:
-        users_query = users_query.show_only_inactive()
-    users_data = users_query.source([
-        '_id',
-        'first_name',
-        'last_name',
-        'base_username',
-    ]).run()
-    users = users_data.hits
-
-    attendee_user_ids_on_domain = Attendee.get_attendee_users_on_domain(domain)
-
-    total_users = 0
-    for user in users:
-        user_id = user.pop('_id')
-
-        if user_id not in attendee_user_ids_on_domain:
-            user.update({
-                'username': user.pop('base_username', ''),
-                'user_id': user_id,
-            })
-            total_users += 1
+    users = Attendee.get_paginated_users_on_domain(
+        domain=domain,
+        limit=limit,
+        page=page,
+        query=query
+    )
 
     return JsonResponse({
         'users': users,
-        'total': total_users,
+        'total': len(users),
     })
-
-
-@require_POST
-@require_can_edit_or_view_commcare_users
-@require_can_coordinate_events
-def make_attendee(request, domain):
-    user_id = request.POST.get('user_id')
-
-    attendee = Attendee(domain=domain)
-    attendee.save(user_id=user_id)
-
-    return JsonResponse({'attendee_id': attendee.case_id})

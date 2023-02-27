@@ -233,10 +233,13 @@ class Attendee(models.Model):
         return super(Attendee, self).delete()
 
     @classmethod
-    def get_attendee_users_on_domain(cls, domain):
-        case_ids = [attendee.case_id for attendee in cls.objects.by_domain(domain)]
-
-        return [
-            case_.get_case_property(ATTENDEE_USER_ID_CASE_PROPERTY)
-            for case_ in CommCareCase.objects.get_cases(case_ids, domain)
-        ]
+    def get_paginated_users_on_domain(cls, domain, limit, page, query):
+        # Need to query for all attendee users on domain
+        return [{
+            '_id': 'id',
+            'first_name': 'Harry',
+            'last_name': 'Potter',
+            'base_username': 'hpotter@hogwards.wz',
+            'user_id': 'user_id',
+            'username': 'hpotter'
+        }]
