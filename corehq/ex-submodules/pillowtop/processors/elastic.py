@@ -162,8 +162,7 @@ class BulkElasticProcessor(ElasticProcessor, BulkPillowProcessor):
             with self._datadog_timing('bulk_load'):
                 _, errors = self.adapter.bulk(
                     es_actions,
-                    raise_on_error=False,
-                    raise_on_exception=False,
+                    raise_errors=False,
                 )
         except Exception as e:
             pillow_logging.exception("Elastic bulk error: %s", e)
