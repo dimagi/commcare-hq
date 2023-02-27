@@ -55,7 +55,7 @@ class ElasticPillowTest(SimpleTestCase):
 
     def test_mapping_initialization(self):
         initialize_index_and_mapping(self.es, TEST_INDEX_INFO)
-        self.assertTrue(mapping_exists(self.es, TEST_INDEX_INFO))
+        self.assertTrue(mapping_exists(TEST_INDEX_INFO))
         mapping = get_index_mapping(self.es, self.index, TEST_INDEX_INFO.type)
         # we can't compare the whole dicts because ES adds a bunch of stuff to them
         self.assertEqual(
