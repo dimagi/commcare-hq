@@ -98,17 +98,24 @@ Configure an Identity Provider
 
 1. Navigate to *Accounting --> Identity Providers (SSO)*.
 2. (Click) **+ Add New Identity Provider**
+
     - Billing Account Owner: `Sparrow Inc`
     - Public Name: `Azure AD for Sparrow Inc`
     - Slug for SP Endpoints: `sparrow`
     - (Click) **Create Identity Provider**
+
 3. Navigate to *Authenticated Email Domains* tab.
+
     - @: `example.edu`
     - (Click) **Add Email Domain**
+
 3. Navigate to *SSO Exempt Users* tab.
+
     - `admin@example.edu`
     - (Click) **Add User**
+
 4. Navigate to *Identity Provider* tab.
+
     - [x] Allow Enterprise Admins to edit SSO Enterprise Settings
     - (Click) **Update Configuration**
     - (Click) *Edit Enterprise Settings* (below "Allow..." checkbox)
