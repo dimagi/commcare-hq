@@ -20,7 +20,7 @@ from custom.abdm.milestone_one.utils.response_util import (
 def get_auth_methods(request):
     health_id = request.query_params.get("health_id")
     if not health_id:
-        error_msg = "Missing required parameter in the request param: health_id"
+        error_msg = "Missing required parameter: health_id"
         return generate_invalid_req_response(error_msg)
     resp = abdm_util.search_by_health_id(health_id)
     auth_methods = resp.get("auth_methods")
