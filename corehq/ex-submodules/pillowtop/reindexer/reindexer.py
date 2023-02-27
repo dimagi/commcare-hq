@@ -151,7 +151,7 @@ def clean_index(es, index_info):
 
 def prepare_index_for_reindex(es, index_info):
     initialize_index_and_mapping(es, index_info)
-    set_index_reindex_settings(es, index_info.index)
+    set_index_reindex_settings(adapter.index_name)
 
 
 def prepare_index_for_usage(es, index_info):
