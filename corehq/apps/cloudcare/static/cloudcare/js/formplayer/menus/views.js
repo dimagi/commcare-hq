@@ -724,10 +724,8 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
         },
         templateContext: function () {
             var languageOptionsEnabled = Boolean(this.options.collection);
-            var printOptionsEnabled = this.options.printEnabled;
             return {
                 languageOptionsEnabled: languageOptionsEnabled,
-                printOptionsEnabled: printOptionsEnabled,
             };
         },
         events: {
@@ -735,9 +733,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
         },
         printKeyAction: function (e) {
             if (e.keyCode === 13) {
-                if (this.options.printEnabled) {
-                    window.print();
-                }
+                window.print();
             }
         },
     });

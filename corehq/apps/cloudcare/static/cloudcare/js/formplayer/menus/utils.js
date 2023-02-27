@@ -85,7 +85,7 @@ hqDefine("cloudcare/js/formplayer/menus/utils", function () {
         FormplayerFrontend.regions.getRegion('breadcrumb').show(breadcrumbView);
     };
 
-    var showFormMenu = function (langs, enableLanguageMenu, showPrintOption) {
+    var showFormMenu = function (langs, enableLanguageMenu) {
         var langModels,
             langCollection;
 
@@ -104,7 +104,6 @@ hqDefine("cloudcare/js/formplayer/menus/utils", function () {
         }
         var formMenuView = views.FormMenuView({
             collection: langCollection,
-            printEnabled: showPrintOption,
         });
         FormplayerFrontend.regions.getRegion('formMenu').show(formMenuView);
     };

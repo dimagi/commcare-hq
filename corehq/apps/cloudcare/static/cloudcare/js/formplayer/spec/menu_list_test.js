@@ -10,7 +10,6 @@ describe('Render a case list', function () {
             {
                 APP_ANALYTICS: true,
                 CHANGE_FORM_LANGUAGE: false,
-                PRINT_BUTTON_WITHIN_FORMS: false,
             }
         );
         sinon.stub(Utils, 'getCurrentQueryInputs').callsFake(function () { return {}; });

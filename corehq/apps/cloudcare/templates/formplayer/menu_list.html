@@ -131,9 +131,7 @@
   <li tabindex="0" id="form-menu-dropdown">
      <i class="fa fa-bars dropdown-toggle" data-toggle="dropdown"></i>
      <ul class="dropdown-menu dropdown-menu-right">
-       <% if (printOptionsEnabled) { %>
        <li class="dropdown-header" id="print-header" onclick="window.print()">{% trans "Print" %}</li>
-       <% } %>
        <% if (languageOptionsEnabled) { %>
        <li class="dropdown-header">{% trans "Languages" %}</li>
        <% } %>
