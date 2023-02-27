@@ -9,7 +9,7 @@ from custom.abdm.models import ABDMUser
 
 class TestABHACreation(APITestCase):
 
-    def setUp(self):
+    def setUpClass(self):
         self.user, _ = ABDMUser.objects.get_or_create(username="abdm_test", domain="abdm_test")
         token = self.user.access_token
         self.client.credentials(HTTP_AUTHORIZATION='Token ' + token)
@@ -81,5 +81,5 @@ class TestABHACreation(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertEqual(self.invalid_req_msg, response.json().get("message"))
 
-    def tearDown(self) -> None:
+    def tearDownClass(self) -> None:
         ABDMUser.objects.all().delete()
