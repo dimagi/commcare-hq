@@ -163,13 +163,11 @@ class RemoteRequestFactory(object):
     def get_post_relevant(self):
         case_not_claimed = self.module.search_config.get_relevant(
             self.case_session_var, self.module.is_multi_select())
-        if module_uses_smart_links(self.module):
-            case_in_project = self._get_smart_link_rewind_xpath()
-            return XPath.and_(case_not_claimed, case_in_project)
+        case_in_project = self._get_smart_link_rewind_xpath()
+        uses_smart_links = module_uses_smart_links(self.module)
         if not case_search_sync_cases_on_form_entry_enabled_for_domain(self.domain):
-            return case_not_claimed
-        else:
-            return None
+            return case_in_project if uses_smart_links else None
+        return XPath.and_(case_not_claimed, case_in_project) if uses_smart_links else case_not_claimed
 
     def build_command(self):
         return Command(
