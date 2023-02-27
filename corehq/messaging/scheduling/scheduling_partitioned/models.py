@@ -673,6 +673,12 @@ class CaseTimedScheduleInstance(CaseScheduleInstanceMixin, AbstractTimedSchedule
     # See corehq.apps.data_interfaces.models.CreateScheduleInstanceActionDefinition.reset_case_property_name
     last_reset_case_property_value = models.TextField(null=True)
 
+    def additional_deactivation_condition_reached(self):
+        from corehq.apps.data_interfaces.models import AutomaticUpdateRule
+
+        rule = AutomaticUpdateRule.objects.get(pk=self.rule_id)
+        return rule.criteria_match(self.case_id, datetime.utcnow())
+
     class Meta(AbstractTimedScheduleInstance.Meta):
         db_table = 'scheduling_casetimedscheduleinstance'
         index_together = AbstractTimedScheduleInstance.Meta.index_together
