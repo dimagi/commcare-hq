@@ -53,6 +53,7 @@ from corehq.apps.app_manager.decorators import (
 from corehq.apps.app_manager.exceptions import (
     FormNotFoundException,
     XFormValidationFailed,
+    ModuleNotFoundException,
 )
 from corehq.apps.app_manager.helpers.validators import load_case_reserved_words
 from corehq.apps.app_manager.models import (
@@ -71,7 +72,6 @@ from corehq.apps.app_manager.models import (
     FormDatum,
     FormLink,
     IncompatibleFormTypeException,
-    ModuleNotFoundException,
     OpenCaseAction,
     UpdateCaseAction,
 )
@@ -122,6 +122,7 @@ from corehq.apps.programs.models import Program
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import HqPermissions
 from corehq.util.view_utils import set_file_download
+from no_exceptions.exceptions import Http400
 
 
 @no_conflict_require_POST
@@ -997,9 +998,16 @@ def _get_form_datums(domain, app_id, form_id):
     from corehq.apps.app_manager.suite_xml.sections.entries import EntriesHelper
     app = get_app(domain, app_id)
 
-    module_id, form_id = form_id.split('.')
-    module = app.get_module_by_unique_id(module_id)
-    form = app.get_form(form_id)
+    try:
+        module_id, form_id = form_id.split('.')
+    except ValueError:
+        raise Http400
+
+    try:
+        module = app.get_module_by_unique_id(module_id)
+        form = app.get_form(form_id)
+    except (ModuleNotFoundException, FormNotFoundException) as e:
+        raise Http404(str(e))
 
     def make_datum(datum):
         return {'name': datum.id, 'case_type': datum.case_type}

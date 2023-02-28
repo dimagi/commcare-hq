@@ -1,4 +1,7 @@
+from django.http import Http404
 from django.test import TestCase
+
+from no_exceptions.exceptions import Http400
 
 from corehq.apps.app_manager.tests.app_factory import AppFactory
 from corehq.apps.app_manager.tests.util import get_simple_form
@@ -31,3 +34,23 @@ class TestReleaseBuild(TestCase):
     def test_get_form_datums(self):
         datums = _get_form_datums(self.domain_name, self.app._id, self.disambiguated_form_id)
         self.assertEqual(datums, [{'name': 'case_id', 'case_type': 'cheeto'}])
+
+    def test_get_form_datums_wrong_domain(self):
+        with self.assertRaises(Http404):
+            _get_form_datums('other', self.app._id, self.disambiguated_form_id)
+
+    def test_get_form_datums_missing_app_id(self):
+        with self.assertRaises(Http404):
+            _get_form_datums(self.domain_name, 'missing', self.disambiguated_form_id)
+
+    def test_get_form_datums_missing_module_id(self):
+        with self.assertRaises(Http404):
+            _get_form_datums(self.domain_name, self.app._id, f'missing.{self.form_id}')
+
+    def test_get_form_datums_missing_form_id(self):
+        with self.assertRaises(Http404):
+            _get_form_datums(self.domain_name, self.app._id, f'{self.module_id}.missing')
+
+    def test_get_form_datums_missing_bad_form_id(self):
+        with self.assertRaises(Http400):
+            _get_form_datums(self.domain_name, self.app._id, 'missing')
