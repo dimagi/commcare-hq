@@ -68,18 +68,18 @@ class RepeaterTestCase(TestCase):
         super().setUp()
         url = 'https://www.example.com/api/'
         self.conn = ConnectionSettings.objects.create(domain=DOMAIN, name=url, url=url)
-        self.sql_repeater = FormRepeater(
+        self.repeater = FormRepeater(
             domain=DOMAIN,
             repeater_id=uuid.uuid4().hex,
             connection_settings=self.conn,
         )
-        self.sql_repeater.save()
+        self.repeater.save()
 
 
 class TestSoftDeleteRepeaters(RepeaterTestCase):
     def setUp(self) -> None:
         super().setUp()
-        self.all_sql_repeaters = [self.sql_repeater]
+        self.all_repeaters = [self.repeater]
         for i in range(5):
             r = FormRepeater(
                 domain=DOMAIN,
@@ -87,25 +87,25 @@ class TestSoftDeleteRepeaters(RepeaterTestCase):
                 repeater_id=uuid4().hex
             )
             r.save()
-            self.all_sql_repeaters.append(r)
+            self.all_repeaters.append(r)
 
     def test_soft_deletion(self):
         self.assertEqual(FormRepeater.objects.all().count(), 6)
-        self.all_sql_repeaters[1].is_deleted = True
-        self.all_sql_repeaters[1].save()
-        self.all_sql_repeaters[0].is_deleted = True
-        self.all_sql_repeaters[0].save()
+        self.all_repeaters[1].is_deleted = True
+        self.all_repeaters[1].save()
+        self.all_repeaters[0].is_deleted = True
+        self.all_repeaters[0].save()
         self.assertEqual(FormRepeater.objects.all().count(), 4)
         self.assertEqual(
             set(FormRepeater.objects.all().values_list('repeater_id', flat=True)),
-            set([r.repeater_id for r in self.all_sql_repeaters if not r.is_deleted])
+            set([r.repeater_id for r in self.all_repeaters if not r.is_deleted])
         )
 
     def test_repeatrs_retired_from_sql(self):
-        self.all_sql_repeaters[0].retire()
-        self.all_sql_repeaters[4].retire()
-        sql_repeater_count = Repeater.objects.all().count()
-        self.assertEqual(sql_repeater_count, 4)
+        self.all_repeaters[0].retire()
+        self.all_repeaters[4].retire()
+        repeater_count = Repeater.objects.all().count()
+        self.assertEqual(repeater_count, 4)
 
     def tearDown(self):
         Repeater.all_objects.all().delete()
@@ -115,22 +115,22 @@ class TestSoftDeleteRepeaters(RepeaterTestCase):
 class TestRepeaterName(RepeaterTestCase):
 
     def test_repeater_name(self):
-        self.assertEqual(self.sql_repeater.name, self.conn.name)
+        self.assertEqual(self.repeater.name, self.conn.name)
 
 
 class TestSQLRepeatRecordOrdering(RepeaterTestCase):
 
     def setUp(self):
         super().setUp()
-        self.sql_repeater.repeat_records.create(
+        self.repeater.repeat_records.create(
             domain=DOMAIN,
             payload_id='eve',
             registered_at='1970-02-01',
         )
 
     def test_earlier_record_created_later(self):
-        self.sql_repeater.repeat_records.create(
-            domain=self.sql_repeater.domain,
+        self.repeater.repeat_records.create(
+            domain=self.repeater.domain,
             payload_id='lilith',
             # If Unix time starts on 1970-01-01, then I guess 1970-01-06
             # is Unix Rosh Hashanah, the sixth day of Creation, the day
@@ -138,17 +138,17 @@ class TestSQLRepeatRecordOrdering(RepeaterTestCase):
             # [1] https://en.wikipedia.org/wiki/Lilith
             registered_at='1970-01-06',
         )
-        repeat_records = self.sql_repeater.repeat_records.all()
+        repeat_records = self.repeater.repeat_records.all()
         self.assertEqual(repeat_records[0].payload_id, 'lilith')
         self.assertEqual(repeat_records[1].payload_id, 'eve')
 
     def test_later_record_created_later(self):
-        self.sql_repeater.repeat_records.create(
-            domain=self.sql_repeater.domain,
+        self.repeater.repeat_records.create(
+            domain=self.repeater.domain,
             payload_id='cain',
             registered_at='1995-01-06',
         )
-        repeat_records = self.sql_repeater.repeat_records.all()
+        repeat_records = self.repeater.repeat_records.all()
         self.assertEqual(repeat_records[0].payload_id, 'eve')
         self.assertEqual(repeat_records[1].payload_id, 'cain')
 
@@ -169,57 +169,57 @@ class TestConnectionSettingsSoftDelete(TestCase):
 class RepeaterManagerTests(RepeaterTestCase):
 
     def test_all_ready_no_repeat_records(self):
-        sql_repeaters = Repeater.objects.all_ready()
-        self.assertEqual(len(sql_repeaters), 0)
+        repeaters = Repeater.objects.all_ready()
+        self.assertEqual(len(repeaters), 0)
 
     def test_all_ready_pending_repeat_record(self):
-        with make_repeat_record(self.sql_repeater, RECORD_PENDING_STATE):
-            sql_repeaters = Repeater.objects.all_ready()
-            self.assertEqual(len(sql_repeaters), 1)
-            self.assertEqual(sql_repeaters[0].id, self.sql_repeater.id)
+        with make_repeat_record(self.repeater, RECORD_PENDING_STATE):
+            repeaters = Repeater.objects.all_ready()
+            self.assertEqual(len(repeaters), 1)
+            self.assertEqual(repeaters[0].id, self.repeater.id)
 
     def test_all_ready_failed_repeat_record(self):
-        with make_repeat_record(self.sql_repeater, RECORD_FAILURE_STATE):
-            sql_repeaters = Repeater.objects.all_ready()
-            self.assertEqual(len(sql_repeaters), 1)
-            self.assertEqual(sql_repeaters[0].id, self.sql_repeater.id)
+        with make_repeat_record(self.repeater, RECORD_FAILURE_STATE):
+            repeaters = Repeater.objects.all_ready()
+            self.assertEqual(len(repeaters), 1)
+            self.assertEqual(repeaters[0].id, self.repeater.id)
 
     def test_all_ready_succeeded_repeat_record(self):
-        with make_repeat_record(self.sql_repeater, RECORD_SUCCESS_STATE):
-            sql_repeaters = Repeater.objects.all_ready()
-            self.assertEqual(len(sql_repeaters), 0)
+        with make_repeat_record(self.repeater, RECORD_SUCCESS_STATE):
+            repeaters = Repeater.objects.all_ready()
+            self.assertEqual(len(repeaters), 0)
 
     def test_all_ready_cancelled_repeat_record(self):
-        with make_repeat_record(self.sql_repeater, RECORD_CANCELLED_STATE):
-            sql_repeaters = Repeater.objects.all_ready()
-            self.assertEqual(len(sql_repeaters), 0)
+        with make_repeat_record(self.repeater, RECORD_CANCELLED_STATE):
+            repeaters = Repeater.objects.all_ready()
+            self.assertEqual(len(repeaters), 0)
 
     def test_all_ready_paused(self):
-        with make_repeat_record(self.sql_repeater, RECORD_PENDING_STATE), \
-                pause(self.sql_repeater):
-            sql_repeaters = Repeater.objects.all_ready()
-            self.assertEqual(len(sql_repeaters), 0)
+        with make_repeat_record(self.repeater, RECORD_PENDING_STATE), \
+                pause(self.repeater):
+            repeaters = Repeater.objects.all_ready()
+            self.assertEqual(len(repeaters), 0)
 
     def test_all_ready_next_future(self):
         in_five_mins = timezone.now() + timedelta(minutes=5)
-        with make_repeat_record(self.sql_repeater, RECORD_PENDING_STATE), \
-                set_next_attempt_at(self.sql_repeater, in_five_mins):
-            sql_repeaters = Repeater.objects.all_ready()
-            self.assertEqual(len(sql_repeaters), 0)
+        with make_repeat_record(self.repeater, RECORD_PENDING_STATE), \
+                set_next_attempt_at(self.repeater, in_five_mins):
+            repeaters = Repeater.objects.all_ready()
+            self.assertEqual(len(repeaters), 0)
 
     def test_all_ready_next_past(self):
         five_mins_ago = timezone.now() - timedelta(minutes=5)
-        with make_repeat_record(self.sql_repeater, RECORD_PENDING_STATE), \
-                set_next_attempt_at(self.sql_repeater, five_mins_ago):
-            sql_repeaters = Repeater.objects.all_ready()
-            self.assertEqual(len(sql_repeaters), 1)
-            self.assertEqual(sql_repeaters[0].id, self.sql_repeater.id)
+        with make_repeat_record(self.repeater, RECORD_PENDING_STATE), \
+                set_next_attempt_at(self.repeater, five_mins_ago):
+            repeaters = Repeater.objects.all_ready()
+            self.assertEqual(len(repeaters), 1)
+            self.assertEqual(repeaters[0].id, self.repeater.id)
 
 
 @contextmanager
-def make_repeat_record(sql_repeater, state):
-    repeat_record = sql_repeater.repeat_records.create(
-        domain=sql_repeater.domain,
+def make_repeat_record(repeater, state):
+    repeat_record = repeater.repeat_records.create(
+        domain=repeater.domain,
         payload_id=str(uuid4()),
         state=state,
         registered_at=timezone.now()
@@ -231,25 +231,25 @@ def make_repeat_record(sql_repeater, state):
 
 
 @contextmanager
-def pause(sql_repeater):
-    sql_repeater.is_paused = True
-    sql_repeater.save()
+def pause(repeater):
+    repeater.is_paused = True
+    repeater.save()
     try:
         yield
     finally:
-        sql_repeater.is_paused = False
-        sql_repeater.save()
+        repeater.is_paused = False
+        repeater.save()
 
 
 @contextmanager
-def set_next_attempt_at(sql_repeater, when):
-    sql_repeater.next_attempt_at = when
-    sql_repeater.save()
+def set_next_attempt_at(repeater, when):
+    repeater.next_attempt_at = when
+    repeater.save()
     try:
         yield
     finally:
-        sql_repeater.next_attempt_at = None
-        sql_repeater.save()
+        repeater.next_attempt_at = None
+        repeater.save()
 
 
 class ResponseMock:
@@ -306,9 +306,9 @@ class AddAttemptsTests(RepeaterTestCase):
     def setUp(self):
         super().setUp()
         self.just_now = timezone.now()
-        self.sql_repeater.next_attempt_at = self.just_now
-        self.sql_repeater.save()
-        self.repeat_record = self.sql_repeater.repeat_records.create(
+        self.repeater.next_attempt_at = self.just_now
+        self.repeater.save()
+        self.repeat_record = self.repeater.repeat_records.create(
             domain=DOMAIN,
             payload_id='eggs',
             registered_at=timezone.now(),
@@ -317,7 +317,7 @@ class AddAttemptsTests(RepeaterTestCase):
     def test_add_success_attempt_true(self):
         self.repeat_record.add_success_attempt(response=True)
         self.assertEqual(self.repeat_record.state, RECORD_SUCCESS_STATE)
-        self.assertIsNone(self.sql_repeater.next_attempt_at)
+        self.assertIsNone(self.repeater.next_attempt_at)
         self.assertEqual(self.repeat_record.num_attempts, 1)
         self.assertEqual(self.repeat_record.attempts[0].state,
                          RECORD_SUCCESS_STATE)
@@ -330,7 +330,7 @@ class AddAttemptsTests(RepeaterTestCase):
         resp.text = '<h1>Hello World</h1>'
         self.repeat_record.add_success_attempt(response=resp)
         self.assertEqual(self.repeat_record.state, RECORD_SUCCESS_STATE)
-        self.assertIsNone(self.sql_repeater.next_attempt_at)
+        self.assertIsNone(self.repeater.next_attempt_at)
         self.assertEqual(self.repeat_record.num_attempts, 1)
         self.assertEqual(self.repeat_record.attempts[0].state,
                          RECORD_SUCCESS_STATE)
@@ -341,9 +341,9 @@ class AddAttemptsTests(RepeaterTestCase):
         message = '504: Gateway Timeout'
         self.repeat_record.add_server_failure_attempt(message=message)
         self.assertEqual(self.repeat_record.state, RECORD_FAILURE_STATE)
-        self.assertGreater(self.sql_repeater.last_attempt_at, self.just_now)
-        self.assertEqual(self.sql_repeater.next_attempt_at,
-                         self.sql_repeater.last_attempt_at + MIN_RETRY_WAIT)
+        self.assertGreater(self.repeater.last_attempt_at, self.just_now)
+        self.assertEqual(self.repeater.next_attempt_at,
+                         self.repeater.last_attempt_at + MIN_RETRY_WAIT)
         self.assertEqual(self.repeat_record.num_attempts, 1)
         self.assertEqual(self.repeat_record.attempts[0].state,
                          RECORD_FAILURE_STATE)
@@ -355,10 +355,10 @@ class AddAttemptsTests(RepeaterTestCase):
         while self.repeat_record.state != RECORD_CANCELLED_STATE:
             self.repeat_record.add_server_failure_attempt(message=message)
 
-        self.assertGreater(self.sql_repeater.last_attempt_at, self.just_now)
+        self.assertGreater(self.repeater.last_attempt_at, self.just_now)
         # Interval is MIN_RETRY_WAIT because attempts were very close together
-        self.assertEqual(self.sql_repeater.next_attempt_at,
-                         self.sql_repeater.last_attempt_at + MIN_RETRY_WAIT)
+        self.assertEqual(self.repeater.next_attempt_at,
+                         self.repeater.last_attempt_at + MIN_RETRY_WAIT)
         self.assertEqual(self.repeat_record.num_attempts,
                          MAX_BACKOFF_ATTEMPTS + 1)
         attempts = list(self.repeat_record.attempts)
@@ -372,8 +372,8 @@ class AddAttemptsTests(RepeaterTestCase):
         message = '409: Conflict'
         self.repeat_record.add_client_failure_attempt(message=message)
         self.assertEqual(self.repeat_record.state, RECORD_FAILURE_STATE)
-        self.assertIsNone(self.sql_repeater.last_attempt_at)
-        self.assertIsNone(self.sql_repeater.next_attempt_at)
+        self.assertIsNone(self.repeater.last_attempt_at)
+        self.assertIsNone(self.repeater.next_attempt_at)
         self.assertEqual(self.repeat_record.num_attempts, 1)
         self.assertEqual(self.repeat_record.attempts[0].state,
                          RECORD_FAILURE_STATE)
@@ -384,8 +384,8 @@ class AddAttemptsTests(RepeaterTestCase):
         message = '409: Conflict'
         while self.repeat_record.state != RECORD_CANCELLED_STATE:
             self.repeat_record.add_client_failure_attempt(message=message)
-        self.assertIsNone(self.sql_repeater.last_attempt_at)
-        self.assertIsNone(self.sql_repeater.next_attempt_at)
+        self.assertIsNone(self.repeater.last_attempt_at)
+        self.assertIsNone(self.repeater.next_attempt_at)
         self.assertEqual(self.repeat_record.num_attempts,
                          MAX_ATTEMPTS + 1)
         attempts = list(self.repeat_record.attempts)
@@ -399,8 +399,8 @@ class AddAttemptsTests(RepeaterTestCase):
         message = '422: Unprocessable Entity'
         while self.repeat_record.state != RECORD_CANCELLED_STATE:
             self.repeat_record.add_client_failure_attempt(message=message, retry=False)
-        self.assertIsNone(self.sql_repeater.last_attempt_at)
-        self.assertIsNone(self.sql_repeater.next_attempt_at)
+        self.assertIsNone(self.repeater.last_attempt_at)
+        self.assertIsNone(self.repeater.next_attempt_at)
         self.assertEqual(self.repeat_record.num_attempts, 1)
         self.assertEqual(self.repeat_record.attempts[0].state, RECORD_CANCELLED_STATE)
         self.assertEqual(self.repeat_record.attempts[0].message, message)
@@ -414,7 +414,7 @@ class AddAttemptsTests(RepeaterTestCase):
         self.assertEqual(self.repeat_record.state, RECORD_CANCELLED_STATE)
         # Note: Our payload issues do not affect how we deal with their
         #       server issues:
-        self.assertEqual(self.sql_repeater.next_attempt_at, self.just_now)
+        self.assertEqual(self.repeater.next_attempt_at, self.just_now)
         self.assertEqual(self.repeat_record.num_attempts, 1)
         self.assertEqual(self.repeat_record.attempts[0].state,
                          RECORD_CANCELLED_STATE)
@@ -433,7 +433,7 @@ class TestAreRepeatRecordsMigrated(RepeaterTestCase):
         self.assertFalse(is_migrated)
 
     def test_yes(self):
-        with make_repeat_record(self.sql_repeater, RECORD_PENDING_STATE):
+        with make_repeat_record(self.repeater, RECORD_PENDING_STATE):
             is_migrated = are_repeat_records_migrated(DOMAIN)
         self.assertTrue(is_migrated)
 
@@ -468,11 +468,11 @@ class TestConnectionSettingsUsedBy(TestCase):
 class TestRepeaterConnectionSettings(RepeaterTestCase):
 
     def test_connection_settings_are_accessible(self):
-        self.assertEqual(self.sql_repeater.connection_settings.url, 'https://www.example.com/api/')
+        self.assertEqual(self.repeater.connection_settings.url, 'https://www.example.com/api/')
 
     def test_used_connection_setting_cannot_be_deleted(self):
         with self.assertRaises(ProtectedError):
-            self.sql_repeater.connection_settings.delete()
+            self.repeater.connection_settings.delete()
 
 
 def test_attempt_forward_now_kwargs():
@@ -488,7 +488,7 @@ class TestRepeaterModelMethods(RepeaterTestCase):
         payload, cases = _create_case(
             domain=DOMAIN, case_id=case_id, case_type='some_case', owner_id='abcd'
         )
-        repeat_record = self.sql_repeater.register(payload, fire_synchronously=True)
+        repeat_record = self.repeater.register(payload, fire_synchronously=True)
         self.addCleanup(repeat_record.delete)
         self.assertEqual(repeat_record.payload_id, payload.get_id)
         all_records = list(iter_repeat_records_by_domain(DOMAIN))
@@ -500,13 +500,13 @@ class TestRepeaterModelMethods(RepeaterTestCase):
         payload, cases = _create_case(
             domain=DOMAIN, case_id=case_id, case_type='some_case', owner_id='abcd'
         )
-        repeat_record = self.sql_repeater.register(payload, fire_synchronously=True)
+        repeat_record = self.repeater.register(payload, fire_synchronously=True)
         self.addCleanup(repeat_record.delete)
         from corehq.motech.repeaters.tests.test_models_slow import ResponseMock
         resp = ResponseMock(status_code=200, reason='OK')
         # Basic test checks if send_request is called
         with patch('corehq.motech.repeaters.models.simple_request') as simple_request:
             simple_request.return_value = resp
-            self.sql_repeater.send_request(repeat_record, payload)
+            self.repeater.send_request(repeat_record, payload)
 
         self.assertTrue(simple_request.called)

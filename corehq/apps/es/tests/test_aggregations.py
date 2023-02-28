@@ -4,19 +4,17 @@ from datetime import datetime
 from django.test.testcases import SimpleTestCase
 
 from corehq.apps.es import FormES, filters
+from corehq.apps.es.forms import form_adapter
 from corehq.apps.es.aggregations import (
     AggregationRange,
-    AggregationTerm,
     DateHistogram,
     ExtendedStatsAggregation,
     FilterAggregation,
     FiltersAggregation,
     MissingAggregation,
     NestedAggregation,
-    NestedTermAggregationsHelper,
     RangeAggregation,
     StatsAggregation,
-    SumAggregation,
     TermsAggregation,
     TopHitsAggregation,
 )
@@ -27,8 +25,6 @@ from corehq.apps.es.tests.utils import (
     es_test,
     populate_es_index,
 )
-from corehq.pillows.mappings.xform_mapping import XFORM_INDEX_INFO
-from corehq.util.elastic import ensure_index_deleted
 
 
 @es_test
@@ -466,7 +462,7 @@ class TestAggregations(ElasticTestMixin, SimpleTestCase):
         self.checkQuery(query, json_output)
 
 
-@es_test
+@es_test(requires=[form_adapter], setup_class=True)
 class TestDateHistogram(SimpleTestCase):
     domain = str(uuid.uuid4())
 
@@ -500,7 +496,6 @@ class TestDateHistogram(SimpleTestCase):
 
     @classmethod
     def tearDownClass(cls):
-        ensure_index_deleted(XFORM_INDEX_INFO.index)
         super().tearDownClass()
 
     def _run_aggregation(self, aggregation):

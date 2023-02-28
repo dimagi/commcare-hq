@@ -163,9 +163,10 @@ class TableauServer(models.Model):
     target_site = models.CharField(max_length=64, default='Default')
 
     def __str__(self):
-        return '{server} {server_type} {site}'.format(server=self.server_name,
-                                                      server_type=self.server_type,
-                                                      site=self.target_site)
+        return '{domain} {server} {server_type} {site}'.format(domain=self.domain,
+                                                               server=self.server_name,
+                                                               server_type=self.server_type,
+                                                               site=self.target_site)
 
 
 class TableauVisualization(models.Model):
@@ -302,7 +303,11 @@ class TableauAPISession(object):
                 body = json.loads(response.text)
                 return body
         else:
-            error_code = json.loads(response.text)['error']['code']
+            error_code = None
+            if 400 <= response.status_code < 500:
+                error_code = json.loads(response.text)['error']['code']
+            else:
+                error_code = response.status_code
             raise TableauAPIError(
                 f"Tableau API request '{request_name}' failed. Response body: {response.text}",
                 error_code
@@ -332,50 +337,67 @@ class TableauAPISession(object):
         if not self.signed_in:
             raise TableauAPIError("You must be signed in to the API to call that method.")
 
-    def sign_out(self):
-        # Signing out after authenticating with a JWT currently doesn't work and is an open bug with Tableau
-        # Support. Sessions are instead ended by an expiration time or when another session is started.
-        self._make_request(
-            self.POST,
-            'Sign Out',
-            self.base_url + '/auth/signout',
-            {}
-        )
-        self.signed_in = False
-        del self.headers['X-Tableau-Auth']
-        self.site_id = None
-
-    def query_groups(self, name=None):
+    def get_group(self, name):
         '''
-        Include `name` arg to get information for a specific group (like the group ID). Case sensitive.
-        Exclude the `name` arg to get a list of all groups on the site, sorted by name.
-
-        Each group dict returned has this format, at a minumum:
+        Case sensitive. Return format:
         {
             "domain": {
                 "name": ...
             },
             "id": ...,
-            "name": ...
+            "name": ...,
+            ...
         }
         '''
-        url = self.base_url + f'/sites/{self.site_id}/groups?pageSize=1000'
-        if name:
-            url += f'&filter=name:eq:{name}'
-        else:
-            url += '&sort=name:asc'
+        url = self.base_url + f'/sites/{self.site_id}/groups?filter=name:eq:{name}'
+        response_body = self._make_request(
+            self.GET,
+            'Get Group',
+            url,
+            {}
+        )
+        if not response_body.get('groups'):
+            return {}
+        return response_body['groups']['group'][0]
+
+    def query_groups(self):
+        '''
+        Get a list of all groups on the site, sorted by name. Group dicts have the same format as get_group.
+        '''
+        url = self.base_url + f'/sites/{self.site_id}/groups?pageSize=1000&sort=name:asc'
         response_body = self._make_request(
             self.GET,
             'Query Groups',
             url,
             {}
         )
-        if name:
-            return response_body['groups']['group'][0]
+        if 1000 < int(response_body['pagination']['totalAvailable']):
+            raise TableauAPIError("Error: API does not work with more than 1000 groups on a single site.")
+        return response_body['groups']['group']
+
+    def get_user_on_site(self, username):
+        '''
+        Returns a dict for the Tableau user with the given username, None if user can't be found:
+        {
+            'email': '',
+            'fullName': ...,
+            'id': ...,
+            'name': ...,
+            'siteRole': ...,
+            ...
+        }
+        '''
+        url = self.base_url + f'/sites/{self.site_id}/users?filter=name:eq:{username}'
+        response_body = self._make_request(
+            self.GET,
+            'Get User on Site',
+            url,
+            {}
+        )
+        if response_body['users']:
+            return response_body['users']['user'][0]
         else:
-            if 1000 < int(response_body['pagination']['totalAvailable']):
-                raise TableauAPIError("Error: API does not work with more than 1000 groups on a single site.")
-            return response_body['groups']['group']
+            return None
 
     def get_users_in_group(self, group_id):
         '''
@@ -404,9 +426,12 @@ class TableauAPISession(object):
                 + f'/sites/{self.site_id}/groups/{group_id}/users?pageSize={page_size}&pageNumber={page_number}'),
                 {}
             )
-            tableau_users += response_body['users']['user']
+            # If it's the first page, grab the total user count.
             if page_number == 1:
                 total_users = int(response_body['pagination']['totalAvailable'])
+                if total_users == 0:
+                    return []
+            tableau_users += response_body['users']['user']
             page_number += 1
         return tableau_users
 

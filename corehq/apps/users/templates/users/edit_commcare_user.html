@@ -139,7 +139,7 @@
               </div>
             </fieldset>
           </div>
-          {% if request|toggle_enabled:"MOBILE_USER_DEMO_MODE" or couch_user.is_demo_user %}
+          {% if request|request_has_privilege:"PRACTICE_MOBILE_WORKERS" or couch_user.is_demo_user %}
           {% if not couch_user.is_loadtest_user %}
             <div class="alert alert-info">
               <p>

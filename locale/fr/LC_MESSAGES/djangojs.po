@@ -2663,10 +2663,6 @@ msgid "Upload video file"
 msgstr ""
 
 #: corehq/apps/cloudcare/static/cloudcare/js/form_entry/entries.js
-msgid "Upload signature file"
-msgstr ""
-
-#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/entries.js
 msgid "Map layer not configured."
 msgstr ""
 
@@ -2788,7 +2784,7 @@ msgid "Hide Full Menu"
 msgstr ""
 
 #: corehq/apps/cloudcare/static/cloudcare/js/formplayer/menus/api.js
-msgid "Permission Denied"
+msgid "The application could not be found"
 msgstr ""
 
 #: corehq/apps/cloudcare/static/cloudcare/js/formplayer/menus/api.js
@@ -4216,11 +4212,19 @@ msgid "Show Deactivated Mobile Workers"
 msgstr ""
 
 #: corehq/apps/users/static/users/js/filtered_download.js
-msgid "Download <%- count %> user"
+msgid "<%- user_count %> user"
 msgstr ""
 
 #: corehq/apps/users/static/users/js/filtered_download.js
-msgid "Download <%- count %> users"
+msgid "<%- user_count %> users"
+msgstr ""
+
+#: corehq/apps/users/static/users/js/filtered_download.js
+msgid " and <%- group_count %> group"
+msgstr ""
+
+#: corehq/apps/users/static/users/js/filtered_download.js
+msgid " and <%- group_count %> groups"
 msgstr ""
 
 #: corehq/apps/users/static/users/js/filtered_download.js

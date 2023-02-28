@@ -12,11 +12,13 @@ from corehq.apps.case_search.const import (
     CASE_COMPUTED_METADATA,
     SPECIAL_CASE_PROPERTIES,
 )
+from corehq.apps.data_dictionary.util import get_case_property_label_dict
 from corehq.apps.data_interfaces.models import AutomaticUpdateRule
 from corehq.apps.reports.filters.base import (
     BaseSimpleFilter,
     BaseSingleOptionFilter,
 )
+from corehq import toggles
 
 # TODO: Replace with library method
 mark_safe_lazy = lazy(mark_safe, str)
@@ -139,9 +141,23 @@ def get_flattened_case_properties(domain, include_parent_properties=False):
         include_parent_properties=include_parent_properties
     )
     property_counts = Counter(item for sublist in all_properties_by_type.values() for item in sublist)
-    all_properties = [
-        {'name': value, 'case_type': case_type, 'count': property_counts[value]}
-        for case_type, values in all_properties_by_type.items()
-        for value in values
-    ]
+
+    if toggles.DATA_DICTIONARY.enabled(domain):
+        prop_labels = get_case_property_label_dict(domain)
+        all_properties = [
+            {
+                'name': value,
+                'case_type': case_type,
+                'count': property_counts[value],
+                'label': prop_labels.get(case_type, {}).get(value, value)
+            }
+            for case_type, values in all_properties_by_type.items()
+            for value in values
+        ]
+    else:
+        all_properties = [
+            {'name': value, 'case_type': case_type, 'count': property_counts[value]}
+            for case_type, values in all_properties_by_type.items()
+            for value in values
+        ]
     return all_properties

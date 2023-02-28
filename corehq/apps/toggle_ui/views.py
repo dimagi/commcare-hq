@@ -1,6 +1,6 @@
 import decimal
 import json
-from collections import Counter
+from collections import Counter, defaultdict
 
 from couchdbkit.exceptions import ResourceNotFound
 from django.conf import settings
@@ -10,18 +10,18 @@ from django.http.response import Http404, HttpResponse
 from django.utils.decorators import method_decorator
 from django.utils.functional import cached_property
 from django.views.decorators.http import require_POST
-
 from corehq.apps.accounting.models import Subscription
 from corehq.apps.domain.decorators import require_superuser_or_contractor
 from corehq.apps.hqwebapp.decorators import use_datatables
 from corehq.apps.hqwebapp.views import BasePageView
 from corehq.apps.toggle_ui.models import ToggleAudit
 from corehq.apps.toggle_ui.tasks import generate_toggle_csv_download
-from corehq.apps.toggle_ui.utils import find_static_toggle
+from corehq.apps.toggle_ui.utils import find_static_toggle, get_subscription_info
 from corehq.apps.users.models import CouchUser
 from corehq.toggles import (
     ALL_NAMESPACES,
     ALL_TAG_GROUPS,
+    ATTENDANCE_TRACKING,
     NAMESPACE_DOMAIN,
     NAMESPACE_USER,
     TAG_CUSTOM,
@@ -41,6 +41,10 @@ from corehq.util import reverse
 from corehq.util.soft_assert import soft_assert
 from couchforms.analytics import get_last_form_submission_received
 from soil import DownloadBase
+from corehq.apps.users.role_utils import (archive_attendance_coordinator_role_for_domain,
+                                          enable_attendance_coordinator_role_for_domain)
+from corehq.apps.accounting.utils import domain_has_privilege
+from corehq import privileges
 
 NOT_FOUND = "Not Found"
 
@@ -176,7 +180,7 @@ class ToggleEditView(BasePageView):
             context['last_used'] = _get_usage_info(toggle)
 
         if self.show_service_type:
-            context['service_type'] = _get_service_type(toggle)
+            context['service_type'], context['by_service'] = _get_service_type(toggle)
 
         return context
 
@@ -213,7 +217,7 @@ class ToggleEditView(BasePageView):
         if self.usage_info:
             data['last_used'] = _get_usage_info(toggle)
         if self.show_service_type:
-            data['service_type'] = _get_service_type(toggle)
+            data['service_type'], data['by_service'] = _get_service_type(toggle)
         return HttpResponse(json.dumps(data), content_type="application/json")
 
     def _save_randomness(self, toggle, randomness):
@@ -263,6 +267,16 @@ def _enable_dependencies(request_username, static_toggle, item, namespace, is_en
             _set_toggle(request_username, dependency, item, namespace, is_enabled)
 
 
+def _handle_attendance_tracking_role(domain, is_enabled):
+    if not domain_has_privilege(domain, privileges.ATTENDANCE_TRACKING):
+        return
+
+    if is_enabled:
+        enable_attendance_coordinator_role_for_domain(domain)
+    else:
+        archive_attendance_coordinator_role_for_domain(domain)
+
+
 def _set_toggle(request_username, static_toggle, item, namespace, is_enabled):
     if static_toggle.set(item=item, enabled=is_enabled, namespace=namespace):
         action = ToggleAudit.ACTION_ADD if is_enabled else ToggleAudit.ACTION_REMOVE
@@ -275,6 +289,9 @@ def _set_toggle(request_username, static_toggle, item, namespace, is_enabled):
 
         _clear_cache_for_toggle(namespace, item)
         _enable_dependencies(request_username, static_toggle, item, namespace, is_enabled)
+
+    if static_toggle == ATTENDANCE_TRACKING:
+        _handle_attendance_tracking_role(domain=item, is_enabled=is_enabled)
 
 
 def _call_save_fn_for_toggle(static_toggle, namespace, entry, enabled):
@@ -332,10 +349,14 @@ def _get_service_type(toggle):
     for enabled in toggle.enabled_users:
         name = _enabled_item_name(enabled)
         if _namespace_domain(enabled):
-            subscription = Subscription.get_active_subscription_by_domain(name)
-            if subscription:
-                service_type[name] = subscription.service_type
-    return service_type
+            plan_type, plan = get_subscription_info(name)
+            service_type[name] = f"{plan_type} : {plan}"
+
+    by_service = defaultdict(list)
+    for domain, _type in sorted(service_type.items()):
+        by_service[_type].append(domain)
+
+    return service_type, dict(by_service)
 
 
 def _namespace_domain(enabled_item):

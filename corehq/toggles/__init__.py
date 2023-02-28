@@ -120,10 +120,21 @@ ALL_TAGS = [
 
 class StaticToggle(object):
 
-    def __init__(self, slug, label, tag, namespaces=None, help_link=None,
-                 description=None, save_fn=None, enabled_for_new_domains_after=None,
-                 enabled_for_new_users_after=None, relevant_environments=None,
-                 notification_emails=None, parent_toggles=None):
+    def __init__(
+        self,
+        slug,
+        label,
+        tag,
+        namespaces=None,
+        help_link=None,
+        description=None,
+        save_fn=None,
+        enabled_for_new_domains_after=None,
+        enabled_for_new_users_after=None,
+        relevant_environments=None,
+        notification_emails=None,
+        parent_toggles=None,
+    ):
         self.slug = slug
         self.label = label
         self.tag = tag
@@ -740,14 +751,6 @@ COPY_FORM_TO_APP = StaticToggle(
     'Allow copying a form from one app to another',
     TAG_INTERNAL,
     [NAMESPACE_DOMAIN, NAMESPACE_USER],
-)
-
-DATA_FILE_DOWNLOAD = StaticToggle(
-    'data_file_download',
-    'Offer hosting and sharing data files for downloading from a secure dropzone',
-    TAG_SOLUTIONS_OPEN,
-    help_link='https://confluence.dimagi.com/display/saas/Offer+hosting+and+sharing+data+files+for+downloading+from+a+secure+dropzone',
-    namespaces=[NAMESPACE_DOMAIN],
 )
 
 DETAIL_LIST_TAB_NODESETS = StaticToggle(
@@ -1441,13 +1444,6 @@ SHOW_IDS_IN_REPORT_BUILDER = StaticToggle(
     [NAMESPACE_DOMAIN],
 )
 
-MOBILE_USER_DEMO_MODE = StaticToggle(
-    'mobile_user_demo_mode',
-    'Ability to make a mobile worker into Demo only mobile worker',
-    TAG_SOLUTIONS_OPEN,
-    help_link='https://confluence.dimagi.com/display/GS/Demo+Mobile+Workers+and+Practice+Mode',
-    namespaces=[NAMESPACE_DOMAIN]
-)
 
 ALLOW_USER_DEFINED_EXPORT_COLUMNS = StaticToggle(
     'allow_user_defined_export_columns',
@@ -1551,14 +1547,6 @@ SORT_CALCULATION_IN_CASE_LIST = StaticToggle(
     [NAMESPACE_DOMAIN]
 )
 
-VIEW_APP_CHANGES = StaticToggle(
-    'app-changes-with-improved-diff',
-    'Improved app changes view',
-    TAG_SOLUTIONS_OPEN,
-    [NAMESPACE_DOMAIN, NAMESPACE_USER],
-    help_link="https://confluence.dimagi.com/display/saas/Viewing+App+Changes+between+versions",
-)
-
 PAGINATED_EXPORTS = StaticToggle(
     'paginated_exports',
     'Allows for pagination of exports for very large exports',
@@ -1572,13 +1560,6 @@ INCREMENTAL_EXPORTS = StaticToggle(
     TAG_CUSTOM,
     [NAMESPACE_DOMAIN],
     help_link="https://confluence.dimagi.com/display/saas/Incremental+Data+Exports"
-)
-
-DISPLAY_CONDITION_ON_TABS = StaticToggle(
-    'display_condition_on_nodeset',
-    'Show Display Condition on Case Detail Tabs',
-    TAG_SOLUTIONS_OPEN,
-    [NAMESPACE_DOMAIN]
 )
 
 SKIP_REMOVE_INDICES = StaticToggle(
@@ -2384,6 +2365,7 @@ EMBED_TABLEAU_REPORT_BY_USER = StaticToggle(
     description='By default, a Tableau username "HQ/{role name}" is sent to Tableau to get the embedded report. '
                 'Turn on this flag to instead send "HQ/{the user\'s HQ username}", i.e. "HQ/jdoe@dimagi.com", '
                 'to Tableau to get the embedded report.',
+    parent_toggles=[EMBEDDED_TABLEAU]
 )
 
 APPLICATION_RELEASE_LOGS = StaticToggle(
@@ -2403,9 +2385,18 @@ TABLEAU_USER_SYNCING = StaticToggle(
     Each time a user is added/deleted/updated on HQ, an equivalent Tableau user with the username "HQ/{username}"
     will be added/deleted/updated on the linked Tableau server.
     """,
-    parent_toggles=[EMBEDDED_TABLEAU]
+    parent_toggles=[EMBEDDED_TABLEAU, EMBED_TABLEAU_REPORT_BY_USER]
 )
 
+ATTENDANCE_TRACKING = StaticToggle(
+    'attendance_tracking',
+    'Allows access to the attendance tracking page',
+    TAG_SOLUTIONS_LIMITED,
+    namespaces=[NAMESPACE_DOMAIN],
+    description="""
+    Additional views will be added to simplify the process of using CommCareHQ for attendance tracking.
+    """
+)
 
 class FrozenPrivilegeToggle(StaticToggle):
     """
@@ -2471,4 +2462,35 @@ PHONE_HEARTBEAT = FrozenPrivilegeToggle(
     "Ability to configure a mobile feature to prompt users to update to latest CommCare app and apk",
     TAG_SOLUTIONS_CONDITIONAL,
     [NAMESPACE_DOMAIN]
+)
+
+
+MOBILE_USER_DEMO_MODE = FrozenPrivilegeToggle(
+    privileges.PRACTICE_MOBILE_WORKERS,
+    'mobile_user_demo_mode',
+    'Ability to make a mobile worker into Demo only mobile worker',
+    TAG_SOLUTIONS_OPEN,
+    help_link='https://confluence.dimagi.com/display/GS/Demo+Mobile+Workers+and+Practice+Mode',
+    namespaces=[NAMESPACE_DOMAIN]
+)
+
+
+VIEW_APP_CHANGES = FrozenPrivilegeToggle(
+    privileges.VIEW_APP_DIFF,
+    'app-changes-with-improved-diff',
+    'Improved app changes view',
+    TAG_SOLUTIONS_OPEN,
+    [NAMESPACE_DOMAIN, NAMESPACE_USER],
+    help_link="https://confluence.dimagi.com/display/saas/Viewing+App+Changes+between+versions",
+)
+
+DATA_FILE_DOWNLOAD = FrozenPrivilegeToggle(
+    privileges.DATA_FILE_DOWNLOAD,
+    'data_file_download',
+    label='Offer hosting and sharing data files for downloading from a secure '
+          'dropzone',
+    tag=TAG_SOLUTIONS_OPEN,
+    namespaces=[NAMESPACE_DOMAIN],
+    help_link='https://confluence.dimagi.com/display/saas/Offer+hosting+and+'
+              'sharing+data+files+for+downloading+from+a+secure+dropzone',
 )

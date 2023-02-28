@@ -15,7 +15,13 @@
           {% if log.payload_id %}
           <tr>
             <th>{% trans "Payload ID" %}:</th>
-            <td>{{ log.payload_id }}</td>
+            <td>
+              {{ log.payload_id }} {% if doc_link %}
+                <a href="{{ doc_link }}" title="Search">
+                  <i class="fa fa-search"></i>
+                </a>
+              {% endif %}
+            </td>
           </tr>
           {% endif %}
           <tr>

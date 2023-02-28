@@ -86,7 +86,7 @@ class TestProcessRepeater(TestCase):
         )
 
     def setUp(self):
-        self.sql_repeater = FormRepeater.objects.create(
+        self.repeater = FormRepeater.objects.create(
             domain=DOMAIN,
             repeater_id=uuid.uuid4().hex,
             format='form_xml',
@@ -94,15 +94,15 @@ class TestProcessRepeater(TestCase):
         )
         just_now = timezone.now() - timedelta(seconds=10)
         for payload_id in PAYLOAD_IDS:
-            self.sql_repeater.repeat_records.create(
-                domain=self.sql_repeater.domain,
+            self.repeater.repeat_records.create(
+                domain=self.repeater.domain,
                 payload_id=payload_id,
                 registered_at=just_now,
             )
             just_now += timedelta(seconds=1)
 
     def tearDown(self):
-        self.sql_repeater.delete()
+        self.repeater.delete()
 
     @classmethod
     def tearDownClass(cls):
@@ -116,10 +116,10 @@ class TestProcessRepeater(TestCase):
         # payload
         with patch('corehq.motech.repeaters.models.log_repeater_error_in_datadog'), \
                 patch('corehq.motech.repeaters.tasks.metrics_counter'):
-            process_repeater(self.sql_repeater.id)
+            process_repeater(self.repeater.id)
 
         # All records were tried and cancelled
-        records = list(self.sql_repeater.repeat_records.all())
+        records = list(self.repeater.repeat_records.all())
         self.assertEqual(len(records), 10)
         self.assertTrue(all(r.state == RECORD_CANCELLED_STATE for r in records))
         # All records have a cancelled Attempt
@@ -134,10 +134,10 @@ class TestProcessRepeater(TestCase):
                 patch('corehq.motech.repeaters.tasks.metrics_counter'), \
                 form_context(PAYLOAD_IDS):
             post_mock.return_value = Mock(status_code=400, reason='Bad request', text='')
-            process_repeater(self.sql_repeater.id)
+            process_repeater(self.repeater.id)
 
         # Only the first record was attempted, the rest are still pending
-        states = [r.state for r in self.sql_repeater.repeat_records.all()]
+        states = [r.state for r in self.repeater.repeat_records.all()]
         self.assertListEqual(states, ([RECORD_FAILURE_STATE]
                                       + [RECORD_PENDING_STATE] * 9))
 

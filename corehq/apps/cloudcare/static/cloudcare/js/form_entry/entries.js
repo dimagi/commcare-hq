@@ -933,7 +933,7 @@ hqDefine("cloudcare/js/form_entry/entries", function () {
     function ImageEntry(question, options) {
         var self = this;
         FileEntry.call(this, question, options);
-        self.accept = "image/*";
+        self.accept = "image/*,.pdf";
 
         self.helpText = function () {
             return gettext("Upload image");
@@ -975,21 +975,6 @@ hqDefine("cloudcare/js/form_entry/entries", function () {
     VideoEntry.prototype = Object.create(FileEntry.prototype);
     VideoEntry.prototype.constructor = FileEntry;
 
-    /**
-     * Represents a signature, which requires the user to upload a signature file.
-     */
-    function SignatureEntry(question, options) {
-        var self = this;
-        FileEntry.call(this, question, options);
-        self.accept = "image/*,.pdf,.doc,.docx";
-
-        self.helpText = function () {
-            return gettext("Upload signature file");
-        };
-
-    }
-    SignatureEntry.prototype = Object.create(FileEntry.prototype);
-    SignatureEntry.prototype.constructor = FileEntry;
 
     function GeoPointEntry(question, options) {
         var self = this;
@@ -1247,9 +1232,6 @@ hqDefine("cloudcare/js/form_entry/entries", function () {
             case constants.BINARY:
                 if (!toggles.toggleEnabled('WEB_APPS_UPLOAD_QUESTIONS')) {
                     // do nothing, fall through to unsupported
-                } else if (style === constants.SIGNATURE) {
-                    entry = new SignatureEntry(question, {});
-                    break;
                 } else {
                     switch (question.control()) {
                         case constants.CONTROL_IMAGE_CHOOSE:
@@ -1335,7 +1317,6 @@ hqDefine("cloudcare/js/form_entry/entries", function () {
         MultiDropdownEntry: MultiDropdownEntry,
         PhoneEntry: PhoneEntry,
         SingleSelectEntry: SingleSelectEntry,
-        SignatureEntry: SignatureEntry,
         TimeEntry: TimeEntry,
         UnsupportedEntry: UnsupportedEntry,
         VideoEntry: VideoEntry,
