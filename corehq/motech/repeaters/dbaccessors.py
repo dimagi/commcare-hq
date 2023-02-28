@@ -12,6 +12,7 @@ from .const import (
     RECORD_FAILURE_STATE,
     RECORD_PENDING_STATE,
     RECORD_SUCCESS_STATE,
+    RECORD_EMPTY_STATE,
 )
 
 
@@ -24,7 +25,10 @@ def get_failure_repeat_record_count(domain, repeater_id):
 
 
 def get_success_repeat_record_count(domain, repeater_id):
-    return get_repeat_record_count(domain, repeater_id, RECORD_SUCCESS_STATE)
+    return (
+        get_repeat_record_count(domain, repeater_id, RECORD_SUCCESS_STATE)
+        + get_repeat_record_count(domain, repeater_id, RECORD_EMPTY_STATE)
+    )
 
 
 def get_cancelled_repeat_record_count(domain, repeater_id):
