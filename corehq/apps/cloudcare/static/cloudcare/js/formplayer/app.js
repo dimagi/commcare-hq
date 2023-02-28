@@ -174,10 +174,12 @@ hqDefine("cloudcare/js/formplayer/app", function () {
     });
 
     FormplayerFrontend.on('startForm', function (data) {
+        console.log(data);
         FormplayerFrontend.getChannel().request("clearMenu");
         hqRequire(["cloudcare/js/formplayer/menus/utils"], function (MenusUtils) {
             MenusUtils.showBreadcrumbs(data.breadcrumbs);
         });
+        throw "error";
 
         data.onLoading = CloudcareUtils.formplayerLoading;
         data.onLoadingComplete = CloudcareUtils.formplayerLoadingComplete;

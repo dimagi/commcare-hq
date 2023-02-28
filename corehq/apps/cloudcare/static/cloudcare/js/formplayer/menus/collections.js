@@ -69,6 +69,7 @@ hqDefine("cloudcare/js/formplayer/menus/collections", function () {
         ],
 
         parse: function (response) {
+            console.log(response);
             _.extend(this, _.pick(response, this.commonProperties));
 
             var urlObject = Utils.currentUrlToObject(),

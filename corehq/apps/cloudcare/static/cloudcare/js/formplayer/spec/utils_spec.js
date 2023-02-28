@@ -107,6 +107,16 @@ describe('Utils', function () {
             assert.deepEqual(lastCall.returnValue.breadcrumbs, ["My App", "Survey Menu", "Survey Form"]);
         });
 
+        it("should submit form", function () {
+            FormplayerFrontend.trigger("menu:select", 0);
+            FormplayerFrontend.trigger("menu:select", 0);
+            url = Utils.currentUrlToObject();
+            assert.equal(url.sessionId, '123456789abcdefg');
+            lastCall = stubs.queryFormplayer.lastCall;
+            assert.deepEqual(lastCall.returnValue.breadcrumbs, ["My App", "Survey Menu", "Survey Form"]);
+            FormplayerFrontend.trigger()
+        });
+
         it("should select a case", function () {
             FormplayerFrontend.trigger("menu:select", 1);
             assert.isTrue(stubs.queryFormplayer.calledTwice);

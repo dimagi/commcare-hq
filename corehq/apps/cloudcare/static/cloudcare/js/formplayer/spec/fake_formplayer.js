@@ -13,6 +13,7 @@
  */
 hqDefine("cloudcare/js/formplayer/spec/fake_formplayer", function () {
     let AssertProperties = hqImport("hqwebapp/js/assert_properties"),
+        fixtures = hqImport("cloudcare/js/form_entry/spec/fixtures"),
         module = {},
         apps = {
             'abc123': {
@@ -135,6 +136,7 @@ hqDefine("cloudcare/js/formplayer/spec/fake_formplayer", function () {
     let makeResponse = function (options) {
         if (!options.commands) {
             options.session_id = "123456789abcdefg";
+            options.tree = fixtures.textJSON({ix: "0"});
         }
         AssertProperties.assertRequired(options, ["title", "breadcrumbs"]);
         return _.defaults(options, {
