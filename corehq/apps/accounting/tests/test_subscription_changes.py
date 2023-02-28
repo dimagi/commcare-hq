@@ -4,6 +4,7 @@ from unittest.mock import Mock, call, patch
 
 from django.test import SimpleTestCase, TransactionTestCase
 
+from corehq.util.test_utils import flag_enabled
 from dimagi.utils.parsing import json_format_date
 
 from corehq.apps.accounting.exceptions import SubscriptionAdjustmentError
@@ -146,9 +147,8 @@ class TestUserRoleSubscriptionChanges(BaseAccountingTest):
         self._assertInitialRoles()
         self._assertStdUsers()
 
-    @patch('corehq.apps.toggle_ui.views.ATTENDANCE_TRACKING.enabled')
-    def test_add_attendance_coordinator_role_for_domain(self, attendance_tracking_enabled):
-        attendance_tracking_enabled.return_value = True
+    @flag_enabled('ATTENDANCE_TRACKING')
+    def test_add_attendance_coordinator_role_for_domain(self):
         subscription = Subscription.new_domain_subscription(
             self.account, self.domain.name, self.community_plan,
             web_user=self.admin_username
@@ -165,9 +165,8 @@ class TestUserRoleSubscriptionChanges(BaseAccountingTest):
         ).exists()
         self.assertTrue(pm_role_created)
 
-    @patch('corehq.apps.toggle_ui.views.ATTENDANCE_TRACKING.enabled')
-    def test_archive_attendance_coordinator_role_when_downgrading(self, attendance_tracking_enabled):
-        attendance_tracking_enabled.return_value = True
+    @flag_enabled('ATTENDANCE_TRACKING')
+    def test_archive_attendance_coordinator_role_when_downgrading(self):
         subscription = Subscription.new_domain_subscription(
             self.account, self.domain.name, self.advanced_plan,
             web_user=self.admin_username
