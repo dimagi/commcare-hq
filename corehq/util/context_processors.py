@@ -11,6 +11,7 @@ from corehq.apps.accounting.models import BillingAccount, SubscriptionType
 from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.analytics.utils.hubspot import is_hubspot_js_allowed_for_request
 from corehq.apps.hqwebapp.utils import get_environment_friendly_name
+from corehq.apps.hqwebapp.utils import bootstrap
 
 COMMCARE = 'commcare'
 COMMTRACK = 'commtrack'
@@ -283,4 +284,10 @@ def sentry(request):
             "environment": settings.SERVER_ENVIRONMENT,
             "release": settings.COMMCARE_RELEASE
         }
+    }
+
+
+def bootstrap5(request):
+    return {
+        "use_bootstrap5": bootstrap.get_bootstrap_version() == bootstrap.BOOTSTRAP_5,
     }

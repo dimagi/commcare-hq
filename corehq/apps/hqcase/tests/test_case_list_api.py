@@ -10,9 +10,10 @@ from casexml.apps.case.mock import CaseBlock, IndexAttrs
 from corehq import privileges
 from corehq.apps.es.tests.utils import (
     case_search_es_setup,
-    case_search_es_teardown,
     es_test,
 )
+from corehq.apps.es.case_search import case_search_adapter
+from corehq.form_processor.tests.utils import FormProcessorTestUtils
 from corehq.util.test_utils import generate_cases, privilege_enabled
 
 from ..api.core import UserError
@@ -22,7 +23,7 @@ GOOD_GUYS_ID = str(uuid.uuid4())
 BAD_GUYS_ID = str(uuid.uuid4())
 
 
-@es_test
+@es_test(requires=[case_search_adapter], setup_class=True)
 @privilege_enabled(privileges.API_ACCESS)
 class TestCaseListAPI(TestCase):
     domain = 'test-case-list-api'
@@ -71,7 +72,7 @@ class TestCaseListAPI(TestCase):
 
     @classmethod
     def tearDownClass(cls):
-        case_search_es_teardown()
+        FormProcessorTestUtils.delete_all_cases()
         super().tearDownClass()
 
     def test_pagination(self):

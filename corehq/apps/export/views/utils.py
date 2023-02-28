@@ -11,7 +11,6 @@ from django.views.generic import View
 import pytz
 from memoized import memoized
 
-from couchexport.models import Format
 from dimagi.utils.web import get_url_base, json_response
 from soil import DownloadBase
 from soil.progress import get_task_status
@@ -384,9 +383,8 @@ class DataFileDownloadDetail(BaseProjectDataView):
         except (DataFile.DoesNotExist, NotFound):
             raise Http404
 
-        format = Format('', data_file.content_type, '', True)
         return get_download_response(
-            blob, data_file.content_length, format, data_file.filename, request
+            blob, data_file.content_length, data_file.content_type, True, data_file.filename, request
         )
 
     def delete(self, request, *args, **kwargs):

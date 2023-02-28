@@ -213,6 +213,7 @@ class HqPermissions(DocumentSchema):
     manage_data_registry_list = StringListProperty(default=[])
     view_data_registry_contents = BooleanProperty(default=False)
     view_data_registry_contents_list = StringListProperty(default=[])
+    manage_attendance_tracking = BooleanProperty(default=False)
 
     @classmethod
     def from_permission_list(cls, permission_list):
