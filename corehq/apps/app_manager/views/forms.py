@@ -990,7 +990,13 @@ def _get_linkable_forms_context(module, langs):
 @require_can_edit_apps
 def get_form_datums(request, domain, app_id):
     form_id = request.GET.get('form_id')
-    datums = _get_form_datums(domain, app_id, form_id)
+    try:
+        datums = _get_form_datums(domain, app_id, form_id)
+    except Exception:
+        notify_exception(request, "Error fetching form datums", details={
+            "domain": domain, "app_id": app_id, "form_id": form_id
+        })
+        raise
     return JsonResponse(datums, safe=False)
 
 
