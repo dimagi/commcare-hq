@@ -938,13 +938,7 @@ ignore:the imp module is deprecated::celery.utils.imports,
 ignore:unclosed:ResourceWarning'
 ```
 
-Personal whitelist items may also be added in localsettings.py. For example:
-
-```py
-from warnings import filterwarnings  # noqa: E402
-filterwarnings("ignore", "unclosed", ResourceWarning)
-del filterwarnings
-```
+Personal whitelist items may also be added in localsettings.py.
 
 
 ### Running tests by tag
