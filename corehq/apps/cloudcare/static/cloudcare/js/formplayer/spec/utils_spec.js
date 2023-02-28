@@ -87,6 +87,7 @@ describe('Utils', function () {
             assert.equal(url.queryData, null);
             assert.equal(url.search, null);
             assert.equal(url.appId, 'abc123');
+            assert.isNotOk(url.sessionId);
             assert.isTrue(stubs.queryFormplayer.calledTwice);
             let lastCall = stubs.queryFormplayer.lastCall;
             assert.equal(lastCall.args[1], "navigate_menu");
@@ -98,6 +99,7 @@ describe('Utils', function () {
             assert.equal(url.queryData, null);
             assert.equal(url.search, null);
             assert.equal(url.appId, 'abc123');
+            assert.equal(url.sessionId, '123456789abcdefg');
             assert.isTrue(stubs.queryFormplayer.calledThrice);
             lastCall = stubs.queryFormplayer.lastCall;
             assert.equal(lastCall.args[1], "navigate_menu");
