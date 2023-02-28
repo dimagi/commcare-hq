@@ -996,6 +996,9 @@ def get_form_datums(request, domain, app_id):
 def _get_form_datums(domain, app_id, form_id):
     from corehq.apps.app_manager.suite_xml.sections.entries import EntriesHelper
     app = get_app(domain, app_id)
+
+    module_id, form_id = form_id.split('.')
+    module = app.get_module_by_unique_id(module_id)
     form = app.get_form(form_id)
 
     def make_datum(datum):
@@ -1003,7 +1006,7 @@ def _get_form_datums(domain, app_id, form_id):
 
     helper = EntriesHelper(app)
     datums = [
-        make_datum(datum) for datum in helper.get_datums_meta_for_form_generic(form)
+        make_datum(datum) for datum in helper.get_datums_meta_for_form_generic(form, module)
         if datum.requires_selection
     ]
     return datums
