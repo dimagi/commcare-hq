@@ -14,8 +14,9 @@ def required_request_params(required_request_data):
 
     def decorate(fn):
         if not (required_request_data and isinstance(required_request_data, List)):
-            error_msg = "Request could not be validated as a valid input not provided. \
-                Required: List of parameters."
+            error_msg = "Parameter names not provided in the correct format. These parameters are defined" \
+                        "in the decorator argument of api and used for validating the request." \
+                        "Required: List of parameters."
             return generate_invalid_req_response(error_msg)
 
         @wraps(fn)
