@@ -31,7 +31,7 @@ class Command(BaseCommand):
         )
 
     def handle(self, **options):
-        self.api_key = settings.ANALYTICS_IDS.get('HUBSPOT_API_KEY', None)
+        self.api_key = settings.ANALYTICS_IDS.get('HUBSPOT_ACCESS_TOKEN', None)
 
         if not self.api_key:
             self.stdout.write("No HubSpot API key found.")
