@@ -73,8 +73,6 @@ branches:
     # - ce/enable-case-rate-limits # Cal Feb 1
     # - ml/enforce-metadata-ff # Minha Feb 2
     - jt/ush_2575_case_search_pull_related_cases # Jonathan T. Feb 6
-    - sk/webapps-sessionid  # Simon Feb 9
-    - jls/nodeset-filter-ui # Jenny Feb 13
     - smh/force-incremental-sync # Steph Feb 14
     - es/date-widget  # Ethan Feb 15
     # - rc/media-upload-spinner-fix # Robert Feb 16
