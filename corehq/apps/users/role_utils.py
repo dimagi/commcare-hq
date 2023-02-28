@@ -28,6 +28,8 @@ class UserRolePresets:
     }
 
     PRIVILEGED_ROLES = {
+        # ATTENDANCE_COORDINATOR is not a custom role. It is only
+        # available to domains on higher subscription plans.
         ATTENDANCE_COORDINATOR: lambda: HqPermissions(
             manage_attendance_tracking=True,
             edit_groups=True,
