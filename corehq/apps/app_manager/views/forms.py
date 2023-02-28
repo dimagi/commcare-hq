@@ -988,8 +988,13 @@ def _get_linkable_forms_context(module, langs):
 
 @require_can_edit_apps
 def get_form_datums(request, domain, app_id):
-    from corehq.apps.app_manager.suite_xml.sections.entries import EntriesHelper
     form_id = request.GET.get('form_id')
+    datums = _get_form_datums(domain, app_id, form_id)
+    return JsonResponse(datums, safe=False)
+
+
+def _get_form_datums(domain, app_id, form_id):
+    from corehq.apps.app_manager.suite_xml.sections.entries import EntriesHelper
     app = get_app(domain, app_id)
     form = app.get_form(form_id)
 
@@ -1001,7 +1006,7 @@ def get_form_datums(request, domain, app_id):
         make_datum(datum) for datum in helper.get_datums_meta_for_form_generic(form)
         if datum.requires_selection
     ]
-    return JsonResponse(datums, safe=False)
+    return datums
 
 
 @require_GET
