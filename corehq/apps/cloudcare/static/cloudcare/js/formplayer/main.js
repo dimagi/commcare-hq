@@ -2,7 +2,6 @@ hqDefine("cloudcare/js/formplayer/main", function () {
 
     $(function () {
         var initialPageData = hqImport("hqwebapp/js/initial_page_data").get,
-            toggles = hqImport("hqwebapp/js/toggles"),
             FormplayerFrontEnd = hqImport("cloudcare/js/formplayer/app"),
             utils = hqImport("cloudcare/js/utils"),
             sentry = hqImport("cloudcare/js/sentry");
@@ -20,7 +19,6 @@ hqDefine("cloudcare/js/formplayer/main", function () {
             debuggerEnabled: initialPageData('debugger_enabled'),
             singleAppMode: initialPageData('single_app_mode'),
             environment: initialPageData('environment'),
-            changeFormLanguage: toggles.toggleEnabled('CHANGE_FORM_LANGUAGE'),
         };
         FormplayerFrontEnd.start(options);
 
