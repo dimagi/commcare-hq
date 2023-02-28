@@ -6,15 +6,13 @@ from custom.abdm.models import ABDMUser
 
 class ABDMUserAuthentication(TokenAuthentication):
 
-    def authenticate(self, request):
-        access_token = request.META.get('HTTP_AUTHORIZATION', "")
-        token = access_token.split(" ")[-1]
+    def authenticate_credentials(self, token):
         if not token:
-            return None
+            return None, None
         try:
             user = ABDMUser.objects.get(access_token=token)
         except ABDMUser.DoesNotExist:
             raise AuthenticationFailed('Unauthorized')
         if not user.is_token_valid:
             raise AuthenticationFailed('Invalid Token')
-        return (user, None)
+        return user, None

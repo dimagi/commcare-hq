@@ -140,6 +140,7 @@ def get_user_data_for_restore(restore_user):
         user_data.update(custom_user_data)
     return user_data
 
+
 @extension_point
 def get_custom_user_data_for_restore(restore_user):
     """
