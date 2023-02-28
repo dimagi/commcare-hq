@@ -717,6 +717,10 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
         tagName: 'li',
         childView: LanguageOptionView,
         childViewContainer: 'ul',
+        ui: {
+            dropdownMenu: ".dropdown-menu.dropdown-menu-right",
+            selectPrint: "#print-header.dropdown-header",
+        },
         childViewOptions: function () {
             return {
                 languageOptionsEnabled: Boolean(this.options.collection),
@@ -730,11 +734,16 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
         },
         events: {
             "keydown": "printKeyAction",
+            "click @ui.selectPrint": "hideDropdownOnPrint"
         },
         printKeyAction: function (e) {
             if (e.keyCode === 13) {
-                window.print();
+                this.hideDropdownOnPrint();
             }
+        },
+        hideDropdownOnPrint: function (e) {
+            this.ui.dropdownMenu.hide();
+            window.print();
         },
     });
 
