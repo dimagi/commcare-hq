@@ -75,8 +75,9 @@ def send_dhis2_entities(requests, repeater, case_trigger_infos):
         errors_str = f"Errors sending to {repeater}: " + pformat_json([str(e) for e in errors])
         requests.notify_error(errors_str)
         return RepeaterResponse(400, 'Bad Request', errors_str)
-    # TODO: If no payloads were sent, return RepeaterResponse(204, "No content")
-    #       See https://dimagi-dev.atlassian.net/browse/SC-2430
+    elif not len(info_config_entities):
+        return RepeaterResponse(204, "No content")
+
     return RepeaterResponse(200, "OK")
 
 
