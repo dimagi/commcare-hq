@@ -31,7 +31,7 @@ hqDefine("events/js/new_event", [
             self.sameDayRegistration = ko.observable();
             self.trackingOption = ko.observable("by_day");
 
-            self.showTrackingOptions = ko.computed(function() {
+            self.showTrackingOptions = ko.computed(function () {
                 var startDateValue = self.startDate();
                 var endDateValue = self.endDate();
 
