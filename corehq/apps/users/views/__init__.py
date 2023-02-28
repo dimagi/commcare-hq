@@ -756,6 +756,10 @@ class ListRolesView(BaseRoleAccessView):
             'web_apps_privilege': self.web_apps_privilege,
             'erm_privilege': self.release_management_privilege,
             'mrm_privilege': self.lite_release_management_privilege,
+            'attendance_tracking_privilege': (
+                toggles.ATTENDANCE_TRACKING.enabled(self.domain)
+                and domain_has_privilege(self.domain, privileges.ATTENDANCE_TRACKING)
+            ),
             'has_report_builder_access': has_report_builder_access(self.request),
             'data_file_download_enabled':
                 domain_has_privilege(self.domain, privileges.DATA_FILE_DOWNLOAD),
