@@ -26,7 +26,7 @@ def required_request_params(required_request_data):
                 if not request.data.get(param):
                     invalid_params.append(param)
             if invalid_params:
-                error_msg = f"Missing required parameter(s) in the request: {','.join(invalid_params)}"
+                error_msg = f"Missing required data in the request: {','.join(invalid_params)}"
                 return generate_invalid_req_response(error_msg)
             return fn(request, *args, **kwargs)
 
