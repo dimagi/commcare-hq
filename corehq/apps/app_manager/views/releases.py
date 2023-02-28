@@ -135,7 +135,7 @@ def paginate_releases(request, domain, app_id):
             limit=limit,
             skip=skip,
             wrapper=lambda x: (
-                SavedAppBuild.wrap(x['value'], scrap_old_conventions=False)
+                SavedAppBuild.wrap(x['value'])
                 .releases_list_json(timezone)
             ),
         ).all()
@@ -170,7 +170,7 @@ def paginate_releases(request, domain, app_id):
         apps = get_docs(Application.get_db(), app_ids)
 
         saved_apps = [
-            SavedAppBuild.wrap(app, scrap_old_conventions=False).releases_list_json(timezone)
+            SavedAppBuild.wrap(app).releases_list_json(timezone)
             for app in apps
         ]
 
@@ -216,6 +216,8 @@ def get_releases_context(request, domain, app_id):
         'prompt_settings_form': prompt_settings_form,
         'full_name': request.couch_user.full_name,
         'can_edit_apps': request.couch_user.can_edit_apps(),
+        'can_view_app_diff': (domain_has_privilege(domain, privileges.VIEW_APP_DIFF)
+                              or request.user.is_superuser)
     }
     if not app.is_remote_app():
         context.update({

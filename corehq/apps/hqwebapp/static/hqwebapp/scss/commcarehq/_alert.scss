@@ -1,0 +1,72 @@
+.alert-margin-top {
+  margin-top: 10px;
+}
+
+.alert-small {
+  padding: 2px 10px;
+}
+
+.alert-neutral {
+  background-color: #ffffff;
+  border: 1px solid $cc-neutral-hi;
+}
+
+.alert-maintenance,
+.alert-trial {
+  z-index: $zindex-navbar;
+  position: relative;
+  text-align: center;
+  margin-bottom: 0;
+}
+
+.alert-setting {
+  background-color: $color-purple-dark;
+  color: #ffffff;
+  border: none;
+
+  a,
+  a:active,
+  a:hover,
+  a:link {
+    color: $color-purple-dark-inverse;
+  }
+
+  .btn-confirm {
+    @include button-variant(#ffffff, $color-purple-dark, darken($color-purple-dark, 5));
+    border: 1px solid #ffffff;
+
+    &:active,
+    &:hover {
+      border: 1px solid #ffffff;
+    }
+  }
+}
+
+.alert-ui-notify.helpbubble {
+  padding-bottom: 20px;
+}
+
+.alert-trial {
+  background-color: $color-purple-dark;
+  color: $color-purple-dark-inverse;
+  border: none;
+  border-radius: 0;
+  font-size: 1.1em;
+  font-weight: bold;
+
+  a, a:link, a:visited {
+    color: white;
+  }
+
+  .btn-purple,
+  .btn-purple:focus {
+    background-color: $color-purple-dark;
+    color: $component-active-color;
+    border: 1px solid $color-purple-dark-inverse;
+
+    &:hover {
+      border: 1px solid $color-purple-dark-inverse;
+      background-color: lighten($color-purple-dark, 5);
+    }
+  }
+}

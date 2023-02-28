@@ -259,7 +259,9 @@
               }
             },
             "open_case": {
-              "name_path": "/data/name_of_series",
+              "name_update": {
+                "question_path": "/data/name_of_series"
+              },
               "doc_type": "OpenCaseAction",
               "external_id": null,
               "condition": {
@@ -611,7 +613,7 @@
               "followup_date": null
             },
             "open_case": {
-              "name_path": null,
+              "name_update": null,
               "doc_type": "OpenCaseAction",
               "external_id": null,
               "condition": {
@@ -945,7 +947,9 @@
                 "case_type": "point",
                 "reference_id": null,
                 "repeat_context": null,
-                "case_name": "/data/x",
+                "name_update": {
+                  "question_path": "/data/x"
+                },
                 "condition": {
                   "answer": null,
                   "question": null,
@@ -1011,7 +1015,7 @@
               }
             },
             "open_case": {
-              "name_path": null,
+              "name_update": null,
               "doc_type": "OpenCaseAction",
               "external_id": null,
               "condition": {
@@ -1538,7 +1542,7 @@
               }
             },
             "open_case": {
-              "name_path": null,
+              "name_update": null,
               "doc_type": "OpenCaseAction",
               "external_id": null,
               "condition": {

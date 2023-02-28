@@ -133,7 +133,7 @@
                         "followup_date": null
                     },
                     "open_case": {
-                        "name_path": null,
+                        "name_update": null,
                         "doc_type": "OpenCaseAction",
                         "external_id": null,
                         "condition": {

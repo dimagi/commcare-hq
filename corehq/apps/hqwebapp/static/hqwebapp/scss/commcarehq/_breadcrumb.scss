@@ -1,0 +1,25 @@
+.breadcrumb-hq-section {
+  font-size: 14px;
+  font-weight: normal;
+  background-color: #ffffff;
+  padding: 6px 20px 6px;
+  border-bottom: 1px solid #dbdbdb;
+  margin-bottom: 0px;
+  vertical-align: top;
+
+  > li {
+    + li:before {
+      font-size: 13px;
+      line-height: 15px;
+      vertical-align: top;
+    }
+  }
+}
+
+.breadcrumb-mobile {
+  padding-left: 8px;
+
+  li:first-child {
+    font-weight: bold;
+  }
+}
