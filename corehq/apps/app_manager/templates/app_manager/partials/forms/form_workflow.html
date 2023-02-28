@@ -114,6 +114,9 @@
           <div class="help-block" data-bind="visible: formLink.datumsFetched() && formLink.datums().length === 0 && !formLink.autoLink()">
             {% trans "No additional linking required." %}
           </div>
+          <div class="text-danger" data-bind="visible: formLink.datumsError()">
+            {% trans "Error fetching link data." %}
+          </div>
         </div>
       </div>
       <div data-bind="foreach: formLink.datums, visible: formLink.datumsFetched() && formLink.datums().length">
