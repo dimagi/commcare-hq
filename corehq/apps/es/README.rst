@@ -402,12 +402,6 @@ Client adapters are split into two usage patterns, the "Management Adapter" and
 to perform index verification when Django starts.  Downstream code needing an
 adapter import and use the adapter instance.
 
-.. toctree::
-
-    Management Adapter
-    Document Adapters
-    Code Documentation
-
 
 Management Adapter
 ''''''''''''''''''
@@ -571,7 +565,7 @@ provides the following functionality:
 
 
 Tombstone
-'''''''''
+---------
 
 The concept of Tombstone in the ES mulitplexer is there to be placeholder for
 the docs that get deleted on the primary index prior to that document being
@@ -596,7 +590,7 @@ Put another way:
 - Reindexer: writes deleted (now stale) document into secondary index.
 - Result: secondary index contains a document that has been deleted.
 
-With tombstsones: this will not happen because the reindexer uses a "ignore
+With tombstones: this will not happen because the reindexer uses a "ignore
 existing documents" copy mode, so it will never overwrite a tombstone with a
 stale (deleted) document.
 
@@ -616,7 +610,7 @@ A sample tombstone document would look like
 
 
 Code Documentation
-''''''''''''''''''
+------------------
 
 .. automodule:: corehq.apps.es.client
    :members:

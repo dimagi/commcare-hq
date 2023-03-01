@@ -115,7 +115,7 @@ See `ccz.sh <https://github.com/dimagi/commcare-hq/tree/master/scripts/ccz.sh>`_
 cleaner than doing it an in OS, which may add additional hidden files.
 
 Adding CommCare (J2ME) Builds to CommCare HQ
-=====================================
+============================================
 
 Using a management command
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -126,7 +126,7 @@ Using a management command
 
 
 In the web UI
-^^^^^^^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^
 
 - Go to `http://HQ_ADDRESS/builds/edit_menu/`
 - In the second section `Import a new build from the build server`

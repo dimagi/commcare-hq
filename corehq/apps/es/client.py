@@ -78,7 +78,7 @@ class ElasticManageAdapter(BaseAdapter):
         """Check if ``index`` refers to a valid index identifier (index name or
         alias).
 
-        :param name: ``str`` index name or alias
+        :param index: ``str`` index name or alias
         :returns: ``bool``
         """
         self._validate_single_index(index)
@@ -530,7 +530,7 @@ class ElasticDocumentAdapter(BaseAdapter):
     def iter_docs(self, doc_ids, chunk_size=100):
         """Return a generator which fetches documents in chunks.
 
-        :param doc_ids: iterable of document IDs (``str``s)
+        :param doc_ids: iterable of document IDs (``str`` s)
         :param chunk_size: ``int`` number of documents to fetch per query
         :yields: ``dict`` documents
         """
@@ -549,7 +549,7 @@ class ElasticDocumentAdapter(BaseAdapter):
         """Perform a query (search) and return the result.
 
         :param query: ``dict`` search query to execute
-        :param **kw: extra parameters passed directly to the
+        :param kw: extra parameters passed directly to the
                      underlying ``elasticsearch.Elasticsearch.search()`` method.
         :returns: ``dict``
         """
@@ -791,7 +791,7 @@ class ElasticDocumentAdapter(BaseAdapter):
         BulkActionItem boilerplate.
 
         :param docs: iterable of (Python model) documents to be indexed
-        :param **bulk_kw: extra parameters passed verbatim to the
+        :param bulk_kw: extra parameters passed verbatim to the
             ``ElasticDocumentAdapter.bulk()`` method.
         """
         action_gen = (BulkActionItem.index(doc) for doc in docs)
@@ -802,7 +802,7 @@ class ElasticDocumentAdapter(BaseAdapter):
         BulkActionItem boilerplate.
 
         :param doc_ids: iterable of document IDs to be deleted
-        :param **bulk_kw: extra parameters passed verbatim to the
+        :param bulk_kw: extra parameters passed verbatim to the
             ``ElasticDocumentAdapter.bulk()`` method.
         """
         action_gen = (BulkActionItem.delete_id(doc_id) for doc_id in doc_ids)
