@@ -31,7 +31,7 @@ class Command(BaseCommand):
         if not options['ignore_domain_in_use'] and is_domain_in_use(domain):
             print(f'WARNING: Domain {domain} is currently in use. If your intention is to delete the domain, you '
                   f'should use the `delete_domain` command instead. If you are sure you want to delete forms and'
-                  f'cases for this domain, use the "--ignore_domain_in_use" argument.')
+                  f'cases for this domain, use the "--ignore-domain-in-use-check" argument.')
             return
 
         if not options['noinput']:
