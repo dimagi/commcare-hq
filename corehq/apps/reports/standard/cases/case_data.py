@@ -90,7 +90,7 @@ from corehq.util.timezones.utils import get_timezone_for_user
 from corehq.util.view_utils import absolute_reverse, get_case_or_404, reverse
 
 from .basic import CaseListReport
-from .utils import get_submitter_type
+from .utils import get_user_type
 
 # Number of columns in case property history popup
 DYNAMIC_CASE_PROPERTIES_COLUMNS = 4
@@ -334,7 +334,7 @@ def form_to_json(domain, form, timezone):
             "username": form.metadata.username if form.metadata else '',
         },
         'readable_name': form_name,
-        'submitter_type': get_submitter_type(form.metadata, domain) if form.metadata else 'Unknown',
+        'user_type': get_user_type(form.metadata, domain) if form.metadata else 'Unknown',
     }
 
 

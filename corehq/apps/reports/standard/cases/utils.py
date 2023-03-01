@@ -179,13 +179,13 @@ def query_location_restricted_forms(query, request):
     return query.filter(form_es.user_id(accessible_ids))
 
 
-def get_submitter_type(form_metadata, domain=None):
-    submitter_type = 'Unknown'
+def get_user_type(form_metadata, domain=None):
+    user_type = 'Unknown'
     if getattr(form_metadata, 'userID', None):
         doc_info = get_doc_info_by_id(domain, form_metadata.userID)
         if doc_info:
-            submitter_type = doc_info.type_display
+            user_type = doc_info.type_display
     elif form_metadata.username == 'system':
-        submitter_type = 'System'
+        user_type = 'System'
 
-    return submitter_type
+    return user_type

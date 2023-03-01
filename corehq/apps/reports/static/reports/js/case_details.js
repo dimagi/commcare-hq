@@ -49,7 +49,7 @@ hqDefine("reports/js/case_details", [
         self.userID = ko.observable(data.user.id);
         self.username = ko.observable(self.format_user(data.user.username));
         self.readable_name = ko.observable(data.readable_name);
-        self.submitter_type = ko.observable(data.submitter_type);
+        self.user_type = ko.observable(data.user_type);
 
         return self;
     };
