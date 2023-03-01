@@ -2807,6 +2807,7 @@ msgid "Fetching your location..."
 msgstr ""
 
 #: corehq/apps/cloudcare/static/cloudcare/js/formplayer/menus/views.js
+#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/sessions/views.js
 msgid "Page <%-num%>"
 msgstr ""
 
@@ -4437,6 +4438,16 @@ msgstr ""
 msgid ""
 "<strong>Multi-Environment Release Management</strong> &mdash; access the "
 "Linked Project Spaces feature"
+msgstr ""
+
+#: corehq/apps/users/static/users/js/roles.js
+msgid ""
+"<strong>Attendance Tracking</strong> &mdash; Coordinate attendance tracking "
+"events and users"
+msgstr ""
+
+#: corehq/apps/users/static/users/js/roles.js
+msgid "Edit Attendance Tracking Events"
 msgstr ""
 
 #: corehq/apps/users/static/users/js/roles.js

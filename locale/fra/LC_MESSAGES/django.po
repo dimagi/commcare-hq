@@ -5679,10 +5679,8 @@ msgid "Releases"
 msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/app_view_release_manager.html
-#, fuzzy
-#| msgid "Released"
 msgid "Release Mode"
-msgstr "Lancé"
+msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/app_view_settings.html
 #: corehq/apps/app_manager/templates/app_manager/form_view.html
@@ -5951,6 +5949,10 @@ msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/form_summary_base.html
 msgid "Save property"
+msgstr ""
+
+#: corehq/apps/app_manager/templates/app_manager/form_summary_base.html
+msgid "save only on edit"
 msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/form_summary_diff.html
@@ -11748,22 +11750,6 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/case_search/filter_dsl.py
-#: corehq/apps/case_search/xpath_functions/subcase_functions.py
-msgid ""
-"The related case lookup you are trying to perform would return too many cases"
-msgstr ""
-
-#: corehq/apps/case_search/filter_dsl.py
-msgid "We didn't understand what you were trying to do with {}"
-msgstr ""
-
-#: corehq/apps/case_search/filter_dsl.py
-msgid ""
-"The right hand side of a comparison must be a number or date. Dates must be "
-"surrounded in quotation marks"
-msgstr ""
-
-#: corehq/apps/case_search/filter_dsl.py
 #, python-brace-format
 msgid "'{name}' is not a valid standalone function"
 msgstr ""
@@ -11950,6 +11936,22 @@ msgstr "Données"
 #: corehq/tabs/tabclasses.py
 msgid "Case Search"
 msgstr "Recherche de dossier"
+
+#: corehq/apps/case_search/xpath_functions/ancestor_functions.py
+#: corehq/apps/case_search/xpath_functions/subcase_functions.py
+msgid ""
+"The related case lookup you are trying to perform would return too many cases"
+msgstr ""
+
+#: corehq/apps/case_search/xpath_functions/comparison.py
+msgid "We didn't understand what you were trying to do with {}"
+msgstr ""
+
+#: corehq/apps/case_search/xpath_functions/comparison.py
+msgid ""
+"The right hand side of a comparison must be a number or date. Dates must be "
+"surrounded in quotation marks"
+msgstr ""
 
 #: corehq/apps/case_search/xpath_functions/query_functions.py
 #, python-brace-format
@@ -14664,10 +14666,8 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/domain/forms.py
-#, fuzzy
-#| msgid "Enable Case Search"
 msgid "Enable Release Mode"
-msgstr "Activer la recherche de dossiers"
+msgstr ""
 
 #: corehq/apps/domain/forms.py
 msgid ""
@@ -41906,10 +41906,8 @@ msgid "File Dropzone"
 msgstr ""
 
 #: corehq/privileges.py
-#, fuzzy
-#| msgid "Enable Tracking"
 msgid "Attendance Tracking"
-msgstr "Activer le suivi"
+msgstr ""
 
 #: corehq/reports.py
 msgid "Report Builder Reports"
