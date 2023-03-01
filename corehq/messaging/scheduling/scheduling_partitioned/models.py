@@ -673,8 +673,15 @@ class CaseTimedScheduleInstance(CaseScheduleInstanceMixin, AbstractTimedSchedule
     # See corehq.apps.data_interfaces.models.CreateScheduleInstanceActionDefinition.reset_case_property_name
     last_reset_case_property_value = models.TextField(null=True)
 
+    class Meta(AbstractTimedScheduleInstance.Meta):
+        db_table = 'scheduling_casetimedscheduleinstance'
+        index_together = AbstractTimedScheduleInstance.Meta.index_together
+        unique_together = (
+            ('case_id', 'timed_schedule_id', 'recipient_type', 'recipient_id'),
+        )
+
     def additional_deactivation_condition_reached(self):
-        return_condition = super().additional_deactivation_condition_reached(self)
+        return_condition = super().additional_deactivation_condition_reached()
 
         from corehq.apps.data_interfaces.models import AutomaticUpdateRule
 
@@ -682,10 +689,3 @@ class CaseTimedScheduleInstance(CaseScheduleInstanceMixin, AbstractTimedSchedule
         criteria_match = rule.criteria_match(self.case, datetime.utcnow())
 
         return return_condition and criteria_match
-
-    class Meta(AbstractTimedScheduleInstance.Meta):
-        db_table = 'scheduling_casetimedscheduleinstance'
-        index_together = AbstractTimedScheduleInstance.Meta.index_together
-        unique_together = (
-            ('case_id', 'timed_schedule_id', 'recipient_type', 'recipient_id'),
-        )
