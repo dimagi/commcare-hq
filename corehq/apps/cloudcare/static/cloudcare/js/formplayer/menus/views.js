@@ -742,8 +742,9 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             }
         },
         hideDropdownOnPrint: function (e) {
-            this.ui.dropdownMenu.hide();
+            this.ui.dropdownMenu.toggle();
             window.print();
+            this.ui.dropdownMenu.toggle();
         },
     });
 
