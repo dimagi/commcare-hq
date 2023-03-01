@@ -1,0 +1,62 @@
+--- 
++++ 
+@@ -24,14 +24,14 @@
+   border-color: transparent;
+   border-style: solid;
+   border-width: 5px 0 5px 5px;
+-  border-left-color: darken(@dropdown-bg, 20%);
++  border-left-color: darken($dropdown-bg, 20%);
+   margin-right: -10px;
+   margin-top: 3px;
+-  color: @dropdown-link-color;
+-  line-height: @line-height-base;
++  color: $dropdown-link-color;
++  line-height: $line-height-base;
+ }
+ .dropdown-submenu:hover > a:after {
+-  color: @dropdown-link-active-color !important;
++  color: $dropdown-link-active-color !important;
+ }
+ 
+ // Left aligned submenus
+@@ -49,8 +49,8 @@
+ 
+ .dropdown-submenu:hover > a {
+   text-decoration: none;
+-  color: @dropdown-link-hover-color;
+-  background-color: @dropdown-link-hover-bg;
++  color: $dropdown-link-hover-color;
++  background-color: $dropdown-link-hover-bg;
+ }
+ 
+ .dropdown-menu {
+@@ -61,13 +61,13 @@
+     border: none;
+     padding: 3px 20px;
+     text-align: left;
+-    line-height: @line-height-base;
++    line-height: $line-height-base;
+     white-space: nowrap;
+ 
+     &:hover,
+     &:focus {
+-      color: @dropdown-link-active-color;
+-      background-color: @dropdown-link-active-bg;
++      color: $dropdown-link-active-color;
++      background-color: $dropdown-link-active-bg;
+     }
+ 
+   }
+@@ -75,10 +75,10 @@
+     &,
+     &:hover,
+     &:focus {
+-      color: @dropdown-link-active-color;
++      color: $dropdown-link-active-color;
+       text-decoration: none;
+       outline: 0;
+-      background-color: @dropdown-link-active-bg;
++      background-color: $dropdown-link-active-bg;
+     }
+   }
+ }

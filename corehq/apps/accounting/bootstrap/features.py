@@ -103,6 +103,7 @@ pro_v1 = standard_v1 + [
     privileges.LITE_RELEASE_MANAGEMENT,
     privileges.LOADTEST_USERS,
     privileges.DATA_FILE_DOWNLOAD,
+    privileges.ATTENDANCE_TRACKING,
 ]
 
 
@@ -124,6 +125,7 @@ advanced_v0 = pro_v1 + [
     privileges.ADVANCED_DOMAIN_SECURITY,
     privileges.ODATA_FEED,
     privileges.APP_USER_PROFILES,
+    privileges.VIEW_APP_DIFF,
 ]
 
 enterprise_v0 = advanced_v0 + [

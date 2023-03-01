@@ -19,6 +19,7 @@ from couchdbkit import ResourceNotFound
 from memoized import memoized
 
 from corehq.apps.accounting.decorators import requires_privilege_with_fallback
+from corehq.apps.export.exceptions import ExportTooLargeException
 from corehq.apps.export.views.download import DownloadDETSchemaView
 from couchexport.models import Format, IntegrationFormat
 from couchexport.writers import XlsLengthException
@@ -35,8 +36,11 @@ from corehq.apps.domain.decorators import api_auth, login_and_domain_required
 from corehq.apps.domain.models import Domain
 from corehq.apps.export.const import (
     CASE_EXPORT,
+    EXPORT_FAILURE_TOO_LARGE,
+    EXPORT_FAILURE_UNKNOWN,
     FORM_EXPORT,
-    MAX_EXPORTABLE_ROWS,
+    MAX_DAILY_EXPORT_SIZE,
+    MAX_NORMAL_EXPORT_SIZE,
     UNKNOWN_EXPORT_OWNER,
     SharingOption,
 )
@@ -524,7 +528,8 @@ class BaseExportListView(BaseProjectDataView):
             'shared_export_type': _('Exports Shared with Me'),
             "model_type": self.form_or_case,
             "static_model_type": True,
-            'max_exportable_rows': MAX_EXPORTABLE_ROWS,
+            'max_normal_export_size': MAX_NORMAL_EXPORT_SIZE,
+            'max_daily_export_size': MAX_DAILY_EXPORT_SIZE,
             'lead_text': self.lead_text,
             "export_filter_form": (
                 DashboardFeedFilterForm(
@@ -538,11 +543,17 @@ class BaseExportListView(BaseProjectDataView):
 
 def _get_task_status_json(export_instance_id):
     status = get_saved_export_task_status(export_instance_id)
+    failure_reason = None
+    if status.failed():
+        failure_reason = EXPORT_FAILURE_TOO_LARGE if \
+            isinstance(status.exception, ExportTooLargeException) else \
+            EXPORT_FAILURE_UNKNOWN
+
     return {
         'percentComplete': status.progress.percent or 0,
         'started': status.started(),
         'success': status.success(),
-        'failed': status.failed(),
+        'failed': failure_reason,
         'justFinished': False,
     }
 
@@ -824,7 +835,8 @@ def download_daily_saved_export(req, domain, export_instance_id):
 
     payload = export_instance.get_payload(stream=True)
     format = Format.from_format(export_instance.export_format)
-    return get_download_response(payload, export_instance.file_size, format, export_instance.filename, req)
+    return get_download_response(payload, export_instance.file_size, format.mimetype,
+                                 format.download, export_instance.filename, req)
 
 
 @require_GET

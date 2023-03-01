@@ -1,7 +1,7 @@
 import json
 import math
 import warnings
-from collections import namedtuple
+from collections import defaultdict, namedtuple
 from datetime import datetime
 
 from django.conf import settings
@@ -21,11 +21,13 @@ from corehq.apps.celery import periodic_task
 from corehq.apps.domain.models import Domain
 from corehq.apps.groups.models import Group
 from corehq.apps.reports.const import USER_QUERY_LIMIT
+from corehq.apps.reports.const import HQ_TABLEAU_GROUP_NAME
 from corehq.apps.reports.exceptions import TableauAPIError
 from corehq.apps.reports.models import TableauServer, TableauAPISession, TableauUser
-from corehq.apps.users.models import CommCareUser, WebUser
+from corehq.apps.users.models import CommCareUser, WebUser, CouchUser
 from corehq.apps.users.permissions import get_extra_permissions
 from corehq.apps.users.util import user_id_to_username
+from corehq.apps.user_importer.helpers import spec_value_to_boolean_or_none
 from corehq.form_processor.exceptions import XFormNotFound
 from corehq.form_processor.models import XFormInstance
 from corehq.toggles import TABLEAU_USER_SYNCING
@@ -427,20 +429,20 @@ def tableau_username(HQ_username):
 
 def _group_json_to_tuples(group_json):
     group_tuples = [TableauGroupTuple(group_dict['name'], group_dict['id']) for group_dict in group_json]
-    # Remove default Tableau group:
+    # Remove default Tableau group and HQ group:
+    group_tuples_without_defaults = []
     for group in group_tuples:
-        if group.name == 'All Users':
-            group_tuples.remove(group)
-            break
-    return group_tuples
+        if not (group.name == 'All Users' or group.name == HQ_TABLEAU_GROUP_NAME):
+            group_tuples_without_defaults.append(group)
+    return group_tuples_without_defaults
 
 
 @quickcache(['domain'], timeout=30 * 60)
-def get_all_tableau_groups(domain):
+def get_all_tableau_groups(domain, session=None):
     '''
     Returns a list of all Tableau groups on the site as list of TableauGroupTuples.
     '''
-    session = TableauAPISession.create_session_for_domain(domain)
+    session = session or TableauAPISession.create_session_for_domain(domain)
     group_json = session.query_groups()
     return _group_json_to_tuples(group_json)
 
@@ -457,6 +459,12 @@ def get_tableau_groups_for_user(domain, username):
     return _group_json_to_tuples(group_json)
 
 
+def _notify_tableau_exception(e, domain):
+    notify_exception(None, str(e), details={
+        'domain': domain
+    })
+
+
 @atomic
 def add_tableau_user(domain, username):
     '''
@@ -470,9 +478,7 @@ def add_tableau_user(domain, username):
             return
         _add_tableau_user_remote(session, user)
     except (TableauAPIError, TableauUser.DoesNotExist) as e:
-        notify_exception(None, str(e), details={
-            'domain': domain
-        })
+        _notify_tableau_exception(e, domain)
 
 
 def _add_tableau_user_local(session, username, role=DEFAULT_TABLEAU_ROLE):
@@ -487,22 +493,21 @@ def _add_tableau_user_remote(session, user, role=DEFAULT_TABLEAU_ROLE):
     new_id = session.create_user(tableau_username(user.username), role)
     user.tableau_user_id = new_id
     user.save()
+    _add_user_to_HQ_group(session, user)
     return new_id
 
 
 @atomic
-def delete_tableau_user(domain, username):
+def delete_tableau_user(domain, username, session=None):
     '''
     Deletes the TableauUser object with the given username and removes it from the Tableau instance.
     '''
     try:
-        session = TableauAPISession.create_session_for_domain(domain)
+        session = session or TableauAPISession.create_session_for_domain(domain)
         deleted_user_id = _delete_user_local(session, username)
         _delete_user_remote(session, deleted_user_id)
     except (TableauAPIError, TableauUser.DoesNotExist) as e:
-        notify_exception(None, str(e), details={
-            'domain': domain
-        })
+        _notify_tableau_exception(e, domain)
 
 
 def _delete_user_local(session, username):
@@ -519,25 +524,44 @@ def _delete_user_remote(session, deleted_user_id):
 
 
 @atomic
-def update_tableau_user(domain, username, role=None, groups=[]):
+def update_tableau_user(domain, username, role=None, groups=[], session=None):
     '''
     Update the TableauUser object to have the given role and new group details. The `groups` arg should be a list
     of TableauGroupTuples.
     '''
-    session = TableauAPISession.create_session_for_domain(domain)
-    user = TableauUser.objects.filter(
-        server=session.tableau_connected_app.server
-    ).get(username=username)
-    if role:
-        user.role = role
-    user.save()
-    _update_user_remote(session, user, groups)
+    try:
+        session = session or TableauAPISession.create_session_for_domain(domain)
+        user = TableauUser.objects.filter(
+            server=session.tableau_connected_app.server
+        ).get(username=username)
+        if role:
+            user.role = role
+        user.save()
+        _update_user_remote(session, user, groups)
+    except (TableauAPIError, TableauUser.DoesNotExist) as e:
+        _notify_tableau_exception(e, domain)
+
+
+def _add_user_to_HQ_group(session, user):
+    remote_HQ_group_id = _get_hq_group_id(session)
+    if remote_HQ_group_id:
+        session.add_user_to_group(user.tableau_user_id, remote_HQ_group_id)
+    else:
+        _notify_tableau_exception(
+            f'HQ Group did not exist when trying to add user to it. Username: {user.username}.',
+            user.server.domain)
+
+
+def _get_hq_group_id(session):
+    return session.get_group(HQ_TABLEAU_GROUP_NAME).get('id')
 
 
 def _update_user_remote(session, user, groups=[]):
     new_id = session.update_user(user.tableau_user_id, role=user.role, username=tableau_username(user.username))
     user.tableau_user_id = new_id
     user.save()
+    # Add default group
+    _add_user_to_HQ_group(session, user)
     for group in groups:
         session.add_user_to_group(user.tableau_user_id, group.id)
 
@@ -559,17 +583,14 @@ def sync_all_tableau_users():
                 _delete_user_local(domain, tableau_user_name)
 
     def _sync_tableau_users_with_remote(domain):
-
-        # Setup
-        remote_HQ_group_id = [group.id for group in get_all_tableau_groups(domain) if group.name == 'HQ']
         session = TableauAPISession.create_session_for_domain(domain)
 
-        # More setup - parse/get remote group ID and users in group
+        # Setup - parse/get remote group ID and users in group
+        remote_HQ_group_id = _get_hq_group_id(session)
         if remote_HQ_group_id:
-            remote_HQ_group_id = remote_HQ_group_id[0]
             remote_HQ_group_users = session.get_users_in_group(remote_HQ_group_id)
         else:
-            remote_HQ_group_id = session.create_group('HQ', DEFAULT_TABLEAU_ROLE)
+            remote_HQ_group_id = session.create_group(HQ_TABLEAU_GROUP_NAME, "Viewer")
             remote_HQ_group_users = []
         local_users = TableauUser.objects.filter(server=session.tableau_connected_app.server)
 
@@ -602,3 +623,105 @@ def sync_all_tableau_users():
         _sync_tableau_users_with_hq(domain)
         # Sync the TableauUser model with Tableau users on the remote Tableau instance
         _sync_tableau_users_with_remote(domain)
+
+
+def is_hq_user(tableau_username):
+    return tableau_username and tableau_username.startswith('HQ/')
+
+
+def tableau_username_to_hq(tableau_username):
+    if is_hq_user(tableau_username):
+        return tableau_username[3:]
+
+
+# Attaches to the parse_web_users method
+def add_on_tableau_details(domain, web_user_dicts):
+
+    session = TableauAPISession.create_session_for_domain(domain)
+
+    def _get_roles_by_user(domain, usernames):
+        return {
+            user['username']: user['role'] for user in TableauUser.objects.filter(
+                server=TableauServer.objects.get(domain=domain)
+            ).filter(username__in=usernames).values('username', 'role')
+        }
+
+    def _get_groups_by_username(session, domain):
+        try:
+            groups_by_username = defaultdict(list)
+            all_groups = get_all_tableau_groups(domain, session=session)
+            for group in all_groups:
+                for user_dict in session.get_users_in_group(group.id):
+                    hq_username = tableau_username_to_hq(user_dict.get('name'))
+                    if hq_username:
+                        groups_by_username[hq_username].append(group.name)
+            return groups_by_username
+        except TableauAPIError:
+            return None
+
+    users_to_edit = []
+    for web_user_dict in web_user_dicts:
+        user = CouchUser.get_by_username(web_user_dict['username'], strict=True)
+        # Make sure user already exists on domain (i.e. not an invited user)
+        if user and user.get_domain_membership(domain):
+            users_to_edit.append(user.username)
+
+    roles_by_user = _get_roles_by_user(domain, users_to_edit)
+    groups_by_username = _get_groups_by_username(session, domain)
+
+    for web_user_dict in web_user_dicts:
+        username = web_user_dict['username']
+        if username not in users_to_edit:
+            web_user_dict['tableau_role'] = 'N/A'
+            web_user_dict['tableau_groups'] = 'N/A'
+        else:
+            web_user_dict['tableau_role'] = roles_by_user.get(username, 'ERROR')
+            if groups_by_username is None:
+                web_user_dict['tableau_groups'] = 'ERROR'
+            else:
+                web_user_dict['tableau_groups'] = ','.join(groups_by_username.get(username, ''))
+    return web_user_dicts
+
+
+# Attaches to the import_users method
+def import_tableau_users(domain, web_user_specs):
+    try:
+        session = TableauAPISession.create_session_for_domain(domain)
+    except TableauAPIError as e:
+        _notify_tableau_exception(e, domain)
+    known_groups = {}
+    for row in web_user_specs:
+        username = row.get('username')
+        remove = spec_value_to_boolean_or_none(row, 'remove')
+        user = CouchUser.get_by_username(username, strict=True)
+        if user:
+            if remove:
+                delete_tableau_user(domain, username, session=session)
+            elif user.get_domain_membership(domain):
+                tableau_role = row.get('tableau_role')
+                tableau_groups_txt = row.get('tableau_groups')
+                if tableau_role in ('ERROR', 'N/A') or tableau_groups_txt in ('ERROR', 'N/A'):
+                    continue
+
+                def _get_tableau_group_tuples_from_names(names, known_groups):
+                    groups = []
+                    for group_name in names:
+                        if group_name in known_groups:
+                            groups.append(known_groups[group_name])
+                        else:
+                            try:
+                                new_group = TableauGroupTuple(group_name,
+                                    session.get_group(group_name)['id'])
+                            except (TableauAPIError, KeyError) as e:
+                                _notify_tableau_exception(e, domain)
+                            else:
+                                groups.append(new_group)
+                                known_groups[group_name] = new_group
+                    return groups, known_groups
+
+                tableau_group_names = tableau_groups_txt.split(',')
+                tableau_group_names = tableau_group_names if tableau_group_names[0] else []
+                tableau_groups, known_groups = _get_tableau_group_tuples_from_names(tableau_group_names,
+                                                                                    known_groups)
+
+                update_tableau_user(domain, username, role=tableau_role, groups=tableau_groups, session=session)

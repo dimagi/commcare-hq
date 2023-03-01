@@ -1,5 +1,7 @@
 from collections import namedtuple
 
+from corehq.apps.es import filters
+
 # Case properties nested documents
 CASE_PROPERTIES_PATH = 'case_properties'
 VALUE = 'value'
@@ -65,3 +67,19 @@ CASE_COMPUTED_METADATA = [
     'opened_by_user_id',
     'server_last_modified_date',
 ]
+
+MAX_RELATED_CASES = 500000  # Limit each related case lookup to return 500,000 cases to prevent timeouts
+OPERATOR_MAPPING = {
+    'and': filters.AND,
+    'or': filters.OR,
+}
+RANGE_OP_MAPPING = {
+    '>': 'gt',
+    '>=': 'gte',
+    '<': 'lt',
+    '<=': 'lte',
+}
+EQ = "="
+NEQ = "!="
+COMPARISON_OPERATORS = [EQ, NEQ] + list(RANGE_OP_MAPPING.keys())
+ALL_OPERATORS = COMPARISON_OPERATORS + list(OPERATOR_MAPPING.keys())
