@@ -1,10 +1,10 @@
-name: Test commcare-hq docs
+name: commcare-hq docs
 on:
   pull_request:
     branches:
       - master
 jobs:
-  tests:
+  test:
     runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@v3
