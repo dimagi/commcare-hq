@@ -63,6 +63,12 @@ describe('Utils', function () {
                         empty: function () { return; },
                     };
                 },
+                addRegions: function () {
+                    return {
+                        show: function () { return; },
+                        empty: function () { return; },
+                    };
+                },
             };
 
             // Note this calls queryFormplayer
