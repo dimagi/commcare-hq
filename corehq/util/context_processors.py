@@ -114,7 +114,7 @@ def js_api_keys(request):
         # set to an empty string rather than delete. otherwise a strange race
         # happens in redis, throwing an error
         api_keys['ANALYTICS_IDS']['HUBSPOT_API_ID'] = ''
-        api_keys['ANALYTICS_IDS']['HUBSPOT_API_KEY'] = ''
+        api_keys['ANALYTICS_IDS']['HUBSPOT_ACCESS_TOKEN'] = ''
 
     return api_keys
 
