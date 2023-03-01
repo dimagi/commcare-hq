@@ -82,6 +82,5 @@ branches:
     - cs/at/add_coordinator_role # Chris Feb 24
     - ad/tableau-user-syncing-various-2 # Addison Feb 24
     - pkv/accessibility-mapbox-geocoder-widget # Pawan Feb 27
-    - mp/hubspot_new-token # Marco Feb 28
     - gh/improve-pillow-logging-take-2 # Graham Mar 1
 submodules: { }
