@@ -2447,9 +2447,7 @@ class AttendanceTrackingTab(UITab):
     view = EventsView.urlname
 
     url_prefix_formats = (
-        '/a/{domain}/settings/attendees',
-        '/a/{domain}/settings/events/',
-        '/a/{domain}/settings/events/new',
+        '/a/{domain}/settings/events',
     )
 
     @property
