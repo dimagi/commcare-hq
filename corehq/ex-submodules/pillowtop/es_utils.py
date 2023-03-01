@@ -58,35 +58,34 @@ def set_index_normal_settings(index):
     return manager.index_configure_for_standard_ops(index)
 
 
-def initialize_index_and_mapping(es, index_info):
+def initialize_index_and_mapping(es, index_info_or_adapter):
     # TODO: Remove es param as it is unused
-    index_exists = manager.index_exists(index_info.index)
-    if not index_exists:
-        initialize_index(index_info)
-    assume_alias(index_info.index, index_info.alias)
+    adapter = _get_adapter(index_info_or_adapter)
+    if not manager.index_exists(adapter.index_name):
+        initialize_index(adapter)
 
 
-def initialize_index(index_info):
-    pillow_logging.info("Initializing elasticsearch index for [%s]" % index_info.type)
+def initialize_index(index_info_or_adapter):
+    adapter = _get_adapter(index_info_or_adapter)
+    pillow_logging.info(f"Initializing elasticsearch index for [{adapter.type}]")
     CreateIndex(
-        index_info.index,
-        index_info.type,
-        index_info.mapping,
-        index_info.meta["settings"]["analysis"],
-        index_info.hq_index_name,
+        adapter.index_name,
+        adapter.type,
+        adapter.mapping,
+        adapter.analysis,
+        adapter.settings_key,
     ).run()
 
 
-def mapping_exists(index_info):
+def mapping_exists(index_info_or_adapter):
+    adapter = _get_adapter(index_info_or_adapter)
     try:
-        return manager.index_get_mapping(index_info.index, index_info.type)
+        return manager.index_get_mapping(adapter.index_name, adapter.type)
     except TransportError:
         return {}
 
 
-def assume_alias(index, alias):
-    """
-    This operation assigns the alias to the index and removes the alias
-    from any other indices it might be assigned to.
-    """
-    manager.index_put_alias(index, alias)
+def _get_adapter(index_info_or_adapter):
+    if isinstance(index_info_or_adapter, ElasticsearchIndexInfo):
+        return doc_adapter_from_info(index_info_or_adapter)
+    return index_info_or_adapter

@@ -1,10 +1,8 @@
 from django.core.management.base import BaseCommand
-import simplejson
 from corehq.util.es.elasticsearch import NotFoundError
 
 from corehq.elastic import get_es_new
 from corehq.pillows.utils import get_all_expected_es_indices
-from pillowtop.es_utils import assume_alias
 
 
 class Command(BaseCommand):
@@ -60,6 +58,7 @@ class Command(BaseCommand):
             return
 
         if flip_all:
-            for index_info in es_indices:
-                assume_alias(index_info.index, index_info.alias)
-            print(simplejson.dumps(es.indices.get_alias(), indent=4))
+            print(
+                "The --flip_all_aliases option is no longer necessary and will "
+                "will be removed in the future."
+            )
