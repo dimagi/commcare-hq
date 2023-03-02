@@ -258,9 +258,7 @@ def temporary_index(index, type_=None, mapping=None, *, purge=True):
 def populate_es_index(models, index_cname, doc_prep_fn=lambda doc: doc):
     adapter = doc_adapter_from_cname(index_cname)
     for model in models:
-        adapter.index(
-            doc_prep_fn(model.to_json() if hasattr(model, 'to_json') else model)
-        )
+        adapter.index(model)
     manager.index_refresh(adapter.index_name)
 
 
