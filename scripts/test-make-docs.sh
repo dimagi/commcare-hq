@@ -5,18 +5,20 @@
 #
 # You have two options:
 #
-# Download the log file that triggered the failure from the
+# Download the make-docs-errors.log file that triggered the failure from the
 # github actions artifacts to view newly introduced warnings/errors.
 # --- OR ---
-# Build docs locally to see what warnings/errors
-# you have introduced with your changes. To do so, follow these instructions:
+# Build docs locally on your branch to see what warnings/errors
+# you have introduced. To do so, follow these instructions:
 #
 # 1) Install requirements/docs-requirements.txt ideally using pip-sync:
 #   `pip-sync requirements/docs-requirements.txt`
-# 2) Using bash, run this script:
+# 2) Ensure a fresh docs build by deleting any previously generated build
+#    `rm -rf docs/_build`
+# 3) Using bash, run this script:
 #    `bash test-make-docs.sh`
-# 3) Inspect the make-docs-errors.log to understand new warnings/errors:
-#    `cat ./artifacts/make-docs-errors.log`
+# 4) Inspect the terminal output or make-docs-errors.log (they are the same) to understand new warnings/errors:
+#    `cat make-docs-errors.log`
 
 WHITELIST_PATTERNS=(
     '^\s*$'  # ignore lines containing only whitespace
