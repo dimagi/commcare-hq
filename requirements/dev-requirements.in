@@ -1,4 +1,5 @@
 -r test-requirements.in
+-r docs-requirements.in
 
 django-extensions
 fixture
@@ -8,13 +9,6 @@ ipython  # for nicer django shell experience
 psutil>5.1.3  # for memory profiling
 sniffer
 wheel
-
-# documentation
-docutils
-myst-parser
-Sphinx
-sphinx-rtd-theme
-sphinxcontrib-django
 
 # linting/formatting
 flake8

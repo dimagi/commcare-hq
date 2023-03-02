@@ -155,7 +155,9 @@ django-crispy-forms==1.10.0
 django-cte==1.2.0
     # via -r base-requirements.in
 django-extensions==3.1.3
-    # via -r dev-requirements.in
+    # via
+    #   -r dev-requirements.in
+    #   -r docs-requirements.in
 django-field-audit==1.2.4
     # via -r base-requirements.in
 django-formtools==2.3
@@ -200,7 +202,6 @@ djangorestframework==3.13.1
     # via -r base-requirements.in
 docutils==0.18.1
     # via
-    #   -r dev-requirements.in
     #   myst-parser
     #   sphinx
     #   sphinx-rtd-theme
@@ -366,7 +367,7 @@ mdit-py-plugins==0.3.5
 mdurl==0.1.2
     # via markdown-it-py
 myst-parser==0.19.1
-    # via -r dev-requirements.in
+    # via -r docs-requirements.in
 nose==1.3.7
     # via
     #   -r test-requirements.in
@@ -619,17 +620,17 @@ soupsieve==2.0.1
     # via beautifulsoup4
 sphinx==5.3.0
     # via
-    #   -r dev-requirements.in
+    #   -r docs-requirements.in
     #   myst-parser
     #   sphinx-rtd-theme
 sphinx-rtd-theme==1.2.0
-    # via -r dev-requirements.in
+    # via -r docs-requirements.in
 sphinxcontrib-applehelp==1.0.2
     # via sphinx
 sphinxcontrib-devhelp==1.0.2
     # via sphinx
 sphinxcontrib-django==0.5.1
-    # via -r dev-requirements.in
+    # via -r docs-requirements.in
 sphinxcontrib-htmlhelp==2.0.0
     # via sphinx
 sphinxcontrib-jquery==2.0.0
