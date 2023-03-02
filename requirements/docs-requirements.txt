@@ -178,7 +178,6 @@ djangorestframework==3.13.1
     # via -r base-requirements.in
 docutils==0.18.1
     # via
-    #   -r docs-requirements.in
     #   myst-parser
     #   sphinx
     #   sphinx-rtd-theme
