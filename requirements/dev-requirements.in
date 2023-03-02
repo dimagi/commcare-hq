@@ -10,6 +10,7 @@ gnureadline
 git-build-branch
 
 # documentation
+myst-parser
 Sphinx
 sphinx-rtd-theme
 docutils

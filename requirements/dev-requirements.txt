@@ -201,6 +201,7 @@ djangorestframework==3.13.1
 docutils==0.18.1
     # via
     #   -r dev-requirements.in
+    #   myst-parser
     #   sphinx
     #   sphinx-rtd-theme
 dropbox==11.36.0
@@ -300,6 +301,7 @@ jedi==0.18.1
 jinja2==3.1.2
     # via
     #   -r base-requirements.in
+    #   myst-parser
     #   sphinx
 jmespath==0.10.0
     # via
@@ -346,6 +348,10 @@ mando==0.6.4
     # via radon
 markdown==3.4.1
     # via -r base-requirements.in
+markdown-it-py==2.2.0
+    # via
+    #   mdit-py-plugins
+    #   myst-parser
 markupsafe==2.1.2
     # via
     #   jinja2
@@ -355,6 +361,12 @@ matplotlib-inline==0.1.3
     # via ipython
 mccabe==0.6.1
     # via flake8
+mdit-py-plugins==0.3.5
+    # via myst-parser
+mdurl==0.1.2
+    # via markdown-it-py
+myst-parser==0.19.1
+    # via -r dev-requirements.in
 nose==1.3.7
     # via
     #   -r test-requirements.in
@@ -498,6 +510,7 @@ pyyaml==6.0
     # via
     #   -r base-requirements.in
     #   git-build-branch
+    #   myst-parser
 pyzxcvbn==0.8.0
     # via -r base-requirements.in
 qrcode==7.4.2
@@ -607,6 +620,7 @@ soupsieve==2.0.1
 sphinx==5.3.0
     # via
     #   -r dev-requirements.in
+    #   myst-parser
     #   sphinx-rtd-theme
 sphinx-rtd-theme==1.2.0
     # via -r dev-requirements.in
