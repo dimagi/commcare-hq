@@ -358,6 +358,8 @@ enterprise
 es
  0001_bootstrap_es_indexes
  0002_add_tombstones
+events
+ 0001_add_events_model
 export
  0001_initial
  0002_datafile
