@@ -31,16 +31,21 @@ function main {
     # sed -E 's/\|$//' - remove a single trailing pipe character (|) from any lines on STDIN
     local whitelist=$(printf '%s|' "${WHITELIST_PATTERNS[@]}" | sed -E 's/\|$//')
 
-    mkdir -p ./artifacts
-
     # make docs 2>&1 1>/dev/null - redirect STDERR to STDOUT, and then STDOUT to /dev/null
     # grep -Ev "(${whitelist})" - only match lines that do not match regex patterns of whitelisted items
-    make docs 2>&1 1>/dev/null | grep -Ev "(${whitelist})" | tee ./artifacts/make-docs-errors.log
+    local log_file='./make-docs-errors.log'
+    make docs 2>&1 1>/dev/null | grep -Ev "(${whitelist})" | tee $log_file
 
-    cp -r ./docs/_build/html ./artifacts/
+    # move docs build and log file to artifacts if running inside github action
+    if [ -n "$GITHUB_ACTIONS" ]; then
+        mkdir -p ./artifacts
+        mv ./docs/_build/html ./artifacts/
+        mv make-docs-errors.log ./artifacts/
+        log_file='./artifacts/make-docs-errors.log'
+    fi
 
-    # fail if error log file is not empty
-    if [ -s "./artifacts/make-docs-errors.log" ]; then
+    # fail if log file is not empty
+    if [ -s $log_file ]; then
         return 1
     fi
 }
