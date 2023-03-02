@@ -75,24 +75,20 @@ class ElasticProcessor(PillowProcessor):
             doc = change.get_document()
             if doc and doc.get('doc_type'):
                 logger.info(
-                    f"Deleting {doc.get('doc_type')} doc {doc.get('_id')} for "
-                    f"change {change.id}")
+                    f'[process_change] Attempting to delete doc {change.id}')
                 current_meta = get_doc_meta_object_from_document(doc)
                 if current_meta.is_deletion:
                     self._delete_doc_if_exists(change.id)
                     logger.info(
-                        f"Deleted doc {doc.get('_id')} for change {change.id}")
+                        f"[process_change] Deleted doc {change.id}")
                 else:
                     logger.info(
-                        f"Not deleting {doc.get('_id')} because "
-                        "current_meta.is_deletion is false")
+                        f"[process_change] Not deleting doc {change.id} "
+                        "because current_meta.is_deletion is false")
             else:
-                logger.info(
-                    "Could not get document. Attempting to delete document "
-                    f"for change {change.id}")
                 self._delete_doc_if_exists(change.id)
                 logger.info(
-                    f"Deleted doc for change {change.id}")
+                    f"[process_change] Deleted doc {change.id}")
             return
 
         with self._datadog_timing('extract'):
