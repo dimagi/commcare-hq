@@ -29,6 +29,14 @@ ATTENDEE_LIST_STATUS_CHOICES = [
     (REJECTED, _('Rejected')),
     (ACCEPTED, _('Accepted')),
 ]
+
+# Attendees are CommCareCase instances with this case type:
+ATTENDEE_CASE_TYPE = 'commcare-attendee'
+
+# An extension case with this case type links an attendee to an Event:
+EVENT_ATTENDEE_CASE_TYPE = 'commcare-potential-attendee'
+
+# For attendees who are also mobile workers:
 ATTENDEE_USER_ID_CASE_PROPERTY = 'commcare_user_id'
 
 
@@ -148,6 +156,31 @@ class Event(models.Model):
             form.archive()
 
         remove_indices_from_deleted_cases(self.domain, extension_cases_ids)
+
+
+class AttendeeCaseManager:
+    """
+    Offers an HQ-style Django-model-manager-like interface.
+    """
+    def by_domain(self, domain):
+        """
+        Returns a list of open attendee cases
+        """
+        case_ids = CommCareCase.objects.get_open_case_ids_in_domain_by_type(
+            domain,
+            ATTENDEE_CASE_TYPE,
+        )
+        return CommCareCase.objects.get_cases(case_ids, domain)
+
+
+class AttendeeCase:
+    """
+    Allows code to interact with attendee CommCareCase instances as if
+    they were Django models.
+    """
+    objects = AttendeeCaseManager()
+
+
 
 
 class AttendeeObjectManager(models.Manager):

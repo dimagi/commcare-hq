@@ -5,8 +5,7 @@ from django.utils.translation import gettext_lazy as _
 from django.core.exceptions import ValidationError
 
 from corehq.apps.hqwebapp import crispy as hqcrispy
-from corehq.apps.events.models import Event, Attendee
-from corehq.form_processor.models.cases import CommCareCase
+from corehq.apps.events.models import Event, AttendeeCase
 
 TRACK_BY_DAY = "by_day"
 TRACK_BY_EVENT = "by_event"
@@ -63,7 +62,7 @@ class CreateEventForm(forms.Form):
 
         super(CreateEventForm, self).__init__(*args, **kwargs)
 
-        self.fields['expected_attendees'].choices = self._get_possible_attendees_case_ids()
+        self.fields['expected_attendees'].choices = self.get_attendee_choices()
 
         self.helper = hqcrispy.HQFormHelper()
         self.helper.add_layout(
@@ -129,8 +128,8 @@ class CreateEventForm(forms.Form):
 
         return cleaned_data
 
-    def _get_possible_attendees_case_ids(self):
-        case_ids = [attendee.case_id for attendee in Attendee.objects.by_domain(self.domain)]
+    def get_attendee_choices(self):
         return [
-            (case_.case_id, case_.name) for case_ in CommCareCase.objects.get_cases(case_ids, self.domain)
+            (attendee.case_id, attendee.name)
+            for attendee in AttendeeCase.objects.by_domain(self.domain)
         ]
