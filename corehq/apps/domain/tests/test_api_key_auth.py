@@ -48,14 +48,10 @@ class AuthenticationTestBase(TestCase):
     def setUpClass(cls):
         super().setUpClass()
         cls.factory = RequestFactory()
-        cls.domain_obj = create_domain(name=cls.domain)
+        domain_obj = create_domain(name=cls.domain)
+        cls.addClassCleanup(domain_obj.delete)
         cls.user = WebUser.create(cls.domain, USERNAME, 'password', None, None)
         cls.api_key = HQApiKey.objects.create(user=cls.user.get_django_user()).key
-
-    @classmethod
-    def tearDownClass(cls):
-        cls.domain_obj.delete()
-        super().tearDownClass()
 
     def call_api(self, request, allow_creds_in_data):
 
