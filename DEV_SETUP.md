@@ -504,10 +504,10 @@ If you have trouble with your first run of `./manage.py sync_couch_views`:
 To set up elasticsearch indexes run the following:
 
 ```sh
-./manage.py ptop_preindex
+./manage.py ptop_preindex [--reset]
 ```
 
-This will create all of the elasticsearch indexes (that don't already exist) and
+This will create all the elasticsearch indexes (that don't already exist) and
 populate them with any data that's in the database.
 
 Next, set the aliases of the elastic indices. These can be set by a management
@@ -738,6 +738,11 @@ They can each be run in separate terminals:
 ### Running Pillowtop
 
 Pillowtop is used to keep elasticsearch indices and configurable reports in sync.
+
+> **Note**
+> Typically, you won't need to run these in a dev environment unless you are testing them.
+> It is simpler to run the 'reindex' command to update ES with local changes when needed.
+> See [Populate Elasticsearch](#step-6--populate-elasticsearch)
 
 **Mac OS:**  `run_ptop` Will likely not work for you.
 See the [Supplementary Guide](https://github.com/dimagi/commcare-hq/blob/master/DEV_SETUP_MAC.md) for help.
