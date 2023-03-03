@@ -9,19 +9,19 @@ from django.conf import settings
 from django.contrib import messages
 from django.http import Http404
 from django.urls import reverse
-from django.utils.safestring import mark_safe
 from django.utils.html import format_html
+from django.utils.safestring import mark_safe
 
 from attr import attrib, attrs
 from couchdbkit import ResourceNotFound
 from memoized import memoized
 
-from corehq.extensions import extension_point, ResultFormat
 from corehq import privileges
+from corehq.extensions import ResultFormat, extension_point
+from corehq.util.quickcache import quickcache
+
 from .models import Toggle
 from .shortcuts import set_toggle, toggle_enabled
-
-from corehq.util.quickcache import quickcache
 
 
 @attrs(frozen=True)
@@ -2354,6 +2354,7 @@ EMBED_TABLEAU_REPORT_BY_USER = StaticToggle(
     description='By default, a Tableau username "HQ/{role name}" is sent to Tableau to get the embedded report. '
                 'Turn on this flag to instead send "HQ/{the user\'s HQ username}", i.e. "HQ/jdoe@dimagi.com", '
                 'to Tableau to get the embedded report.',
+    parent_toggles=[EMBEDDED_TABLEAU]
 )
 
 APPLICATION_RELEASE_LOGS = StaticToggle(
@@ -2373,9 +2374,34 @@ TABLEAU_USER_SYNCING = StaticToggle(
     Each time a user is added/deleted/updated on HQ, an equivalent Tableau user with the username "HQ/{username}"
     will be added/deleted/updated on the linked Tableau server.
     """,
-    parent_toggles=[EMBEDDED_TABLEAU]
+    parent_toggles=[EMBEDDED_TABLEAU, EMBED_TABLEAU_REPORT_BY_USER]
 )
 
+
+def _handle_attendance_tracking_role(domain, is_enabled):
+    from corehq.apps.accounting.utils import domain_has_privilege
+    from corehq.apps.users.role_utils import (
+        archive_attendance_coordinator_role_for_domain,
+        enable_attendance_coordinator_role_for_domain,
+    )
+
+    if not domain_has_privilege(domain, privileges.ATTENDANCE_TRACKING):
+        return
+
+    if is_enabled:
+        enable_attendance_coordinator_role_for_domain(domain)
+    else:
+        archive_attendance_coordinator_role_for_domain(domain)
+
+ATTENDANCE_TRACKING = StaticToggle(
+    'attendance_tracking',
+    'Allows access to the attendance tracking page',
+    TAG_SOLUTIONS_LIMITED,
+    namespaces=[NAMESPACE_DOMAIN],
+    description='Additional views will be added to simplify the process of '
+                'using CommCare HQ for attendance tracking.',
+    save_fn=_handle_attendance_tracking_role,
+)
 
 class FrozenPrivilegeToggle(StaticToggle):
     """

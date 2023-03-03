@@ -70,19 +70,16 @@ branches:
     #- jls/web-apps-requirejs  # Jenny Jan 17
     - gh/remove-duplicate-kafka-seq-code # Graham Dec 26
     - jls/new-instance-connectors # Steph Dec 27
-    #- ad/user-syncing-task # Addison Jan 13  # conflicts with 'ad/user-syncing-UI' disabled by Joel Jan 23
-    - pkv/accessibility-pagination-widget-on-incomplete-forms # Pawan Feb 1
     # - ce/enable-case-rate-limits # Cal Feb 1
     # - ml/enforce-metadata-ff # Minha Feb 2
     - jt/ush_2575_case_search_pull_related_cases # Jonathan T. Feb 6
-    - sk/webapps-sessionid  # Simon Feb 9
-    - jls/nodeset-filter-ui # Jenny Feb 13
     - smh/force-incremental-sync # Steph Feb 14
-    - ad/tableau-user-syncing-bulk # Addison Feb 15
     - es/date-widget  # Ethan Feb 15
-    - em/app-summary-conditional-case-update-status # Evan Feb 15
-    - rc/media-upload-spinner-fix # Robert Feb 16
+    # - rc/media-upload-spinner-fix # Robert Feb 16
     - smh/print-button # Steph Feb 17
-    - ze/remove_deprecated_from_case_export # Zandre Feb 20
-    - gh/handle-deleted-upstream-model # Graham Feb 20
+    - mjr/erm-overwrite # Matt Feb 21
+    - ad/tableau-user-syncing-various-2 # Addison Feb 24
+    - pkv/accessibility-mapbox-geocoder-widget # Pawan Feb 27
+    - gh/improve-pillow-logging-take-2 # Graham Mar 1
+    - cs/SC-2485-create-ATE-page # Charl Mar 2
 submodules: { }

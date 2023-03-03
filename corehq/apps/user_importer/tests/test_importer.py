@@ -24,6 +24,11 @@ from corehq.apps.custom_data_fields.models import (
     Field,
 )
 from corehq.apps.domain.models import Domain
+from corehq.apps.groups.models import Group
+from corehq.apps.reports.models import TableauUser, TableauServer
+from corehq.apps.reports.const import HQ_TABLEAU_GROUP_NAME
+from corehq.apps.reports.tests.test_tableau_api_session import _setup_test_tableau_server
+from corehq.apps.reports.tests.test_tableau_api_util import _mock_create_session_responses
 from corehq.apps.user_importer.exceptions import UserUploadError
 from corehq.apps.user_importer.helpers import UserChangeLogger
 from corehq.apps.user_importer.importer import (
@@ -47,8 +52,8 @@ from corehq.apps.users.model_log import UserModelAction
 from corehq.apps.users.views.mobile.custom_data_fields import UserFieldsView
 from corehq.const import USER_CHANGE_VIA_BULK_IMPORTER
 from corehq.extensions.interface import disable_extensions
+from corehq.util.test_utils import flag_enabled
 
-from corehq.apps.groups.models import Group
 from dimagi.utils.dates import add_months_to_date
 
 
@@ -1942,6 +1947,91 @@ class TestWebUserBulkUpload(TestCase, DomainSubscriptionMixin):
     def setup_locations(self):
         self.loc1 = make_loc('loc1', type='state', domain=self.domain_name)
         self.loc2 = make_loc('loc2', type='state', domain=self.domain_name)
+
+    def _setup_tableau_users(self):
+        self.setup_users()
+        WebUser.create(
+            self.domain.name,
+            'edith@wharton.com',
+            'badpassword',
+            None,
+            None,
+        )
+        WebUser.create(
+            self.domain.name,
+            'george@eliot.com',
+            'badpassword',
+            None,
+            None,
+        )
+
+    def _mock_create_user_mock_responses(self, username):
+        return _mock_create_session_responses(self) + [
+            self.tableau_instance.create_user_response(username, None),
+            self.tableau_instance.get_group_response(HQ_TABLEAU_GROUP_NAME),
+            self.tableau_instance.add_user_to_group_response()]
+
+    def _mock_update_user_responses(self, username):
+        return [
+            self.tableau_instance.delete_user_response(),
+            self.tableau_instance.create_user_response(username, None),
+            self.tableau_instance.get_group_response(HQ_TABLEAU_GROUP_NAME),
+            self.tableau_instance.add_user_to_group_response(),
+            self.tableau_instance.add_user_to_group_response(),
+            self.tableau_instance.add_user_to_group_response()
+        ]
+
+    @flag_enabled('TABLEAU_USER_SYNCING')
+    @patch('corehq.apps.reports.models.requests.request')
+    def test_tableau_users(self, mock_request):
+        _setup_test_tableau_server(self, self.domain_name)
+        mock_request.side_effect = (self._mock_create_user_mock_responses('hello@world.com')
+            + self._mock_create_user_mock_responses('upload@user.com')
+            + self._mock_create_user_mock_responses('edith@wharton.com')
+            + self._mock_create_user_mock_responses('george@eliot.com')
+            + _mock_create_session_responses(self)
+            + [self.tableau_instance.get_group_response('group1'),
+               self.tableau_instance.get_group_response('group2')]
+            + self._mock_update_user_responses('edith@wharton.com')
+            + [self.tableau_instance.delete_user_response()]
+        )
+        self._setup_tableau_users()
+        local_tableau_users = TableauUser.objects.filter(
+            server=TableauServer.objects.get(domain=self.domain_name))
+        self.assertEqual(local_tableau_users.get(username='edith@wharton.com').role,
+            TableauUser.Roles.UNLICENSED.value)
+        local_tableau_users.get(username='george@eliot.com')
+        import_users_and_groups(
+            self.domain.name,
+            [
+                self._get_spec(
+                    username='edith@wharton.com',
+                    tableau_role=TableauUser.Roles.EXPLORER.value,
+                    tableau_groups="""group1,group2"""
+                ),
+                self._get_spec(
+                    username='hello@world.com',
+                    tableau_role=TableauUser.Roles.EXPLORER.value,
+                    tableau_groups='ERROR'
+                ),
+                self._get_spec(
+                    username='george@eliot.com',
+                    remove='1',
+                    tableau_groups='[]'
+                ),
+            ],
+            [],
+            self.uploading_user.get_id,
+            self.upload_record.pk,
+            True
+        )
+        self.assertEqual(local_tableau_users.get(username='edith@wharton.com').role,
+            TableauUser.Roles.EXPLORER.value)
+        # Role shouldn't have changed since there was an ERROR in the tableau_groups column
+        self.assertEqual(local_tableau_users.get(username='hello@world.com').role,
+            TableauUser.Roles.UNLICENSED.value)
+        with self.assertRaises(TableauUser.DoesNotExist):
+            local_tableau_users.get(username='george@eliot.com')
 
 
 class TestUserChangeLogger(SimpleTestCase):

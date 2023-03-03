@@ -83,7 +83,7 @@ contextlib2==21.6.0
     # via
     #   git-build-branch
     #   schema
-coverage==5.5
+coverage==7.1.0
     # via -r test-requirements.in
 cryptography==39.0.1
     # via
@@ -172,7 +172,7 @@ django-otp==1.1.3
     # via
     #   -r base-requirements.in
     #   django-two-factor-auth
-django-phonenumber-field==5.2.0
+django-phonenumber-field==6.4.0
     # via
     #   -r base-requirements.in
     #   django-two-factor-auth
@@ -198,7 +198,7 @@ django-websocket-redis @ https://raw.githubusercontent.com/dimagi/django-websock
     # via -r base-requirements.in
 djangorestframework==3.13.1
     # via -r base-requirements.in
-docutils==0.16
+docutils==0.18.1
     # via
     #   -r dev-requirements.in
     #   sphinx
@@ -279,10 +279,12 @@ httplib2==0.20.4
     #   google-auth-httplib2
 idna==2.10
     # via requests
-imagesize==1.2.0
+imagesize==1.4.1
     # via sphinx
-importlib-metadata==4.12.0
-    # via markdown
+importlib-metadata==6.0.0
+    # via
+    #   markdown
+    #   sphinx
 intervaltree==3.1.0
     # via ddtrace
 ipython==8.10.0
@@ -342,7 +344,7 @@ mako==1.2.2
     #   oic
 mando==0.6.4
     # via radon
-markdown==3.3.6
+markdown==3.4.1
     # via -r base-requirements.in
 markupsafe==2.1.2
     # via
@@ -445,7 +447,7 @@ pyflakes==2.3.1
     # via flake8
 pygithub==1.55
     # via -r base-requirements.in
-pygments==2.11.2
+pygments==2.14.0
     # via
     #   ipython
     #   sphinx
@@ -602,11 +604,11 @@ sortedcontainers==2.3.0
     # via intervaltree
 soupsieve==2.0.1
     # via beautifulsoup4
-sphinx==4.1.2
+sphinx==5.3.0
     # via
     #   -r dev-requirements.in
     #   sphinx-rtd-theme
-sphinx-rtd-theme==0.5.2
+sphinx-rtd-theme==1.2.0
     # via -r dev-requirements.in
 sphinxcontrib-applehelp==1.0.2
     # via sphinx
@@ -616,6 +618,8 @@ sphinxcontrib-django==0.5.1
     # via -r dev-requirements.in
 sphinxcontrib-htmlhelp==2.0.0
     # via sphinx
+sphinxcontrib-jquery==2.0.0
+    # via sphinx-rtd-theme
 sphinxcontrib-jsmath==1.0.1
     # via sphinx
 sphinxcontrib-qthelp==1.0.3
@@ -727,6 +731,6 @@ setuptools==67.3.2
     #   gunicorn
     #   pip-tools
     #   python-termstyle
-    #   sphinx
+    #   sphinxcontrib-jquery
     #   zope-event
     #   zope-interface

@@ -1,0 +1,11 @@
+{% extends "hqwebapp/base_section.html" %}
+{% load hq_shared_tags %}
+{% load crispy_forms_tags %}
+
+{% requirejs_main 'events/js/new_event' %}
+
+{% block page_content %}
+  <form id="tracking-event-form" class="form form-horizontal" method="post">
+    {% crispy form %}
+  </form>
+{% endblock %}

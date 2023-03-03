@@ -407,7 +407,24 @@ hqDefine('users/js/roles',[
                         allowCheckboxText: null,
                         allowCheckboxId: null,
                         allowCheckboxPermission: null,
-                    }];
+                    },
+                    {
+                        showOption: root.attendanceTrackingPrivilege,
+                        editPermission: self.permissions.manage_attendance_tracking,
+                        viewPermission: null,
+                        text: gettext("<strong>Attendance Tracking</strong> &mdash; Coordinate attendance tracking events and users"),
+                        showEditCheckbox: true,
+                        editCheckboxLabel: "edit-attenance-tracking-checkbox",
+                        showViewCheckbox: false,
+                        viewCheckboxLabel: "view-attenance-tracking-checkbox",
+                        screenReaderEditAndViewText: gettext("Edit Attendance Tracking Events"),
+                        screenReaderViewOnlyText: gettext("Edit Attendance Tracking Events"),
+                        showAllowCheckbox: false,
+                        allowCheckboxText: null,
+                        allowCheckboxId: null,
+                        allowCheckboxPermission: null,
+                    },
+                ];
 
                 var hasEmbeddedTableau = toggles.toggleEnabled("EMBEDDED_TABLEAU");
                 self.reports = [
@@ -535,6 +552,7 @@ hqDefine('users/js/roles',[
         self.webAppsPrivilege = o.webAppsPrivilege;
         self.ermPrivilege = o.ermPrivilege;
         self.mrmPrivilege = o.mrmPrivilege;
+        self.attendanceTrackingPrivilege = o.attendanceTrackingPrivilege;
 
         self.userRoles = ko.observableArray(ko.utils.arrayMap(o.userRoles, function (userRole) {
             return UserRole.wrap(userRole);

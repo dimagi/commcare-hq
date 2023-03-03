@@ -484,7 +484,7 @@ class SubmissionPost(object):
             for case_model in case_models
         ]
         try:
-            _, errors = case_search_adapter.bulk(actions, raise_on_error=False, raise_on_exception=False)
+            _, errors = case_search_adapter.bulk(actions, raise_errors=False)
         except Exception as e:
             errors = [str(e)]
 

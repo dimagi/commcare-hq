@@ -1,0 +1,9 @@
+--- 
++++ 
+@@ -8,5 +8,5 @@
+ }
+ 
+ .pagination > .active > a {
+-    .button-variant(#ffffff; @cc-brand-low; @cc-brand-low);
++    @include button-variant($white, $cc-brand-low, $cc-brand-low);
+ }

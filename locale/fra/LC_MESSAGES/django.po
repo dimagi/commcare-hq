@@ -5678,6 +5678,10 @@ msgstr "Entrez la description de l'application ici"
 msgid "Releases"
 msgstr ""
 
+#: corehq/apps/app_manager/templates/app_manager/app_view_release_manager.html
+msgid "Release Mode"
+msgstr ""
+
 #: corehq/apps/app_manager/templates/app_manager/app_view_settings.html
 #: corehq/apps/app_manager/templates/app_manager/form_view.html
 #: corehq/apps/app_manager/templates/app_manager/module_view.html
@@ -5945,6 +5949,10 @@ msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/form_summary_base.html
 msgid "Save property"
+msgstr ""
+
+#: corehq/apps/app_manager/templates/app_manager/form_summary_base.html
+msgid "save only on edit"
 msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/form_summary_diff.html
@@ -11742,22 +11750,6 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/case_search/filter_dsl.py
-#: corehq/apps/case_search/xpath_functions/subcase_functions.py
-msgid ""
-"The related case lookup you are trying to perform would return too many cases"
-msgstr ""
-
-#: corehq/apps/case_search/filter_dsl.py
-msgid "We didn't understand what you were trying to do with {}"
-msgstr ""
-
-#: corehq/apps/case_search/filter_dsl.py
-msgid ""
-"The right hand side of a comparison must be a number or date. Dates must be "
-"surrounded in quotation marks"
-msgstr ""
-
-#: corehq/apps/case_search/filter_dsl.py
 #, python-brace-format
 msgid "'{name}' is not a valid standalone function"
 msgstr ""
@@ -11944,6 +11936,22 @@ msgstr "Données"
 #: corehq/tabs/tabclasses.py
 msgid "Case Search"
 msgstr "Recherche de dossier"
+
+#: corehq/apps/case_search/xpath_functions/ancestor_functions.py
+#: corehq/apps/case_search/xpath_functions/subcase_functions.py
+msgid ""
+"The related case lookup you are trying to perform would return too many cases"
+msgstr ""
+
+#: corehq/apps/case_search/xpath_functions/comparison.py
+msgid "We didn't understand what you were trying to do with {}"
+msgstr ""
+
+#: corehq/apps/case_search/xpath_functions/comparison.py
+msgid ""
+"The right hand side of a comparison must be a number or date. Dates must be "
+"surrounded in quotation marks"
+msgstr ""
 
 #: corehq/apps/case_search/xpath_functions/query_functions.py
 #, python-brace-format
@@ -14658,6 +14666,23 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/domain/forms.py
+msgid "Enable Release Mode"
+msgstr ""
+
+#: corehq/apps/domain/forms.py
+msgid ""
+"\n"
+"            Check this box to enable release mode setting on the app release "
+"page.\n"
+"            Enabled setting restricts user to directly mark a version "
+"'released'\n"
+"            and allows users to do so only when they are in 'Release Mode' "
+"on the\n"
+"            release page of applications.\n"
+"            "
+msgstr ""
+
+#: corehq/apps/domain/forms.py
 msgid "Edit Basic Information"
 msgstr "Modifier les informations de base"
 
@@ -14668,6 +14693,10 @@ msgstr "Mettre à jour les infos de base"
 #: corehq/apps/domain/forms.py
 msgid "Default timezone"
 msgstr "Fuseau horaire par défaut"
+
+#: corehq/apps/domain/forms.py
+msgid "Release Mode Visibility should be a boolean."
+msgstr ""
 
 #: corehq/apps/domain/forms.py
 msgid "{} should be an integer."
@@ -19639,6 +19668,17 @@ msgid ""
 "                the last 35 days. To renew daily updates, click the 'Update "
 "Data'\n"
 "                button and download the file.\n"
+"              "
+msgstr ""
+
+#: corehq/apps/export/templates/export/partials/table.html
+#, python-format
+msgid ""
+"\n"
+"                Your export exceeds the limit of %(max_rows)s rows. Please "
+"see <a href=\"https://confluence.dimagi.com/display/commcarepublic/"
+"Selecting+Tools+for+CommCare+Data+Processing+and+Analysis\" data-"
+"toggle=\"modal\">documentation</a> for more information.\n"
 "              "
 msgstr ""
 
@@ -41858,10 +41898,16 @@ msgid "Phone heartbeat"
 msgstr ""
 
 #: corehq/privileges.py
-#, fuzzy
-#| msgid "File Type"
+msgid "Improved app changes view"
+msgstr ""
+
+#: corehq/privileges.py
 msgid "File Dropzone"
-msgstr "Type de fichier"
+msgstr ""
+
+#: corehq/privileges.py
+msgid "Attendance Tracking"
+msgstr ""
 
 #: corehq/reports.py
 msgid "Report Builder Reports"

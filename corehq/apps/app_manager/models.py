@@ -332,7 +332,7 @@ class FormAction(DocumentSchema):
         action_properties = action.properties()
         if 'name_path' in action_properties and action.name_path:
             yield 'name', action.name_path
-        if getattr(action_properties, 'name_update', None) and action.name_update.question_path:
+        if action_properties.get('name_update') and action.name_update.question_path:
             yield 'name', action.name_update.question_path
         if 'external_id' in action_properties and action.external_id:
             yield 'external_id', action.external_id

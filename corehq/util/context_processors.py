@@ -11,6 +11,7 @@ from corehq.apps.accounting.models import BillingAccount, SubscriptionType
 from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.analytics.utils.hubspot import is_hubspot_js_allowed_for_request
 from corehq.apps.hqwebapp.utils import get_environment_friendly_name
+from corehq.apps.hqwebapp.utils import bootstrap
 
 COMMCARE = 'commcare'
 COMMTRACK = 'commtrack'
@@ -113,7 +114,7 @@ def js_api_keys(request):
         # set to an empty string rather than delete. otherwise a strange race
         # happens in redis, throwing an error
         api_keys['ANALYTICS_IDS']['HUBSPOT_API_ID'] = ''
-        api_keys['ANALYTICS_IDS']['HUBSPOT_API_KEY'] = ''
+        api_keys['ANALYTICS_IDS']['HUBSPOT_ACCESS_TOKEN'] = ''
 
     return api_keys
 
@@ -283,4 +284,10 @@ def sentry(request):
             "environment": settings.SERVER_ENVIRONMENT,
             "release": settings.COMMCARE_RELEASE
         }
+    }
+
+
+def bootstrap5(request):
+    return {
+        "use_bootstrap5": bootstrap.get_bootstrap_version() == bootstrap.BOOTSTRAP_5,
     }

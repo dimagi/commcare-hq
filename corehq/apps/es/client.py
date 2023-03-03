@@ -14,14 +14,15 @@ from corehq.apps.es.filters import term
 from dimagi.utils.chunked import chunked
 
 from corehq.util.es.elasticsearch import (
+    BulkIndexError,
     Elasticsearch,
     ElasticsearchException,
     NotFoundError,
+    TransportError,
     bulk,
 )
 from corehq.util.metrics import metrics_counter
 
-from .app_config import register_document_adapter
 from .const import (
     INDEX_CONF_REINDEX,
     INDEX_CONF_STANDARD,
@@ -77,7 +78,7 @@ class ElasticManageAdapter(BaseAdapter):
         """Check if ``index`` refers to a valid index identifier (index name or
         alias).
 
-        :param name: ``str`` index name or alias
+        :param index: ``str`` index name or alias
         :returns: ``bool``
         """
         self._validate_single_index(index)
@@ -529,7 +530,7 @@ class ElasticDocumentAdapter(BaseAdapter):
     def iter_docs(self, doc_ids, chunk_size=100):
         """Return a generator which fetches documents in chunks.
 
-        :param doc_ids: iterable of document IDs (``str``s)
+        :param doc_ids: iterable of document IDs (``str`` s)
         :param chunk_size: ``int`` number of documents to fetch per query
         :yields: ``dict`` documents
         """
@@ -548,7 +549,7 @@ class ElasticDocumentAdapter(BaseAdapter):
         """Perform a query (search) and return the result.
 
         :param query: ``dict`` search query to execute
-        :param **kw: extra parameters passed directly to the
+        :param kw: extra parameters passed directly to the
                      underlying ``elasticsearch.Elasticsearch.search()`` method.
         :returns: ``dict``
         """
@@ -658,7 +659,7 @@ class ElasticDocumentAdapter(BaseAdapter):
             if scroll_id:
                 self._es.clear_scroll(body={"scroll_id": [scroll_id]}, ignore=(404,))
 
-    def index(self, doc, refresh=False, **kw):
+    def index(self, doc, refresh=False):
         """Index (send) a new document in (to) Elasticsearch
 
         Equivalent to the legacy
@@ -667,19 +668,16 @@ class ElasticDocumentAdapter(BaseAdapter):
         :param doc: the (Python model) document to index
         :param refresh: ``bool`` refresh the effected shards to make this
                         operation visible to search
-        :param **kw: extra parameters passed directly to the underlying
-                     ``elasticsearch.Elasticsearch.index()`` method.
         """
-        # TODO: remove **kw and standardize which arguments HQ uses
         doc_id, source = self.from_python(doc)
         self._verify_doc_id(doc_id)
         self._verify_doc_source(source)
-        self._index(doc_id, source, refresh, **kw)
+        self._index(doc_id, source, refresh)
 
-    def _index(self, doc_id, source, refresh, **kw):
+    def _index(self, doc_id, source, refresh):
         """Perform the low-level (3rd party library) index operation."""
         self._es.index(self.index_name, self.type, source, doc_id,
-                       refresh=self._refresh_value(refresh), **kw)
+                       refresh=self._refresh_value(refresh))
 
     def update(self, doc_id, fields, return_doc=False, refresh=False,
                _upsert=False, retry_on_conflict=None):
@@ -761,7 +759,7 @@ class ElasticDocumentAdapter(BaseAdapter):
             raise ValueError(f"Invalid 'refresh' value, expected bool, got {refresh!r}")
         return "true" if refresh else "false"
 
-    def bulk(self, actions, refresh=False, **kw):
+    def bulk(self, actions, refresh=False, raise_errors=True):
         """Use the Elasticsearch library's ``bulk()`` helper function to process
         documents en masse.
 
@@ -771,46 +769,52 @@ class ElasticDocumentAdapter(BaseAdapter):
         :param actions: iterable of ``BulkActionItem`` instances
         :param refresh: ``bool`` refresh the effected shards to make this
                         operation visible to search
-        :param **kw: extra parameters passed directly to the underlying
-                     ``elasticsearch.helpers.bulk()`` function.
+        :param raise_errors: whether or not exceptions should be raised if bulk
+            actions fail. The default (``True``) matches that of the
+            elasticsearch-py library's ``bulk()`` helper function (i.e. raise).
         """
-        # TODO: remove **kw and standardize which arguments HQ uses
         payload = [self._render_bulk_action(action) for action in actions]
-        return bulk(self._es, payload, refresh=self._refresh_value(refresh), **kw)
+        return self._bulk(payload, refresh, raise_errors)
 
-    def bulk_index(self, docs, refresh=False, **kw):
+    def _bulk(self, payload, refresh, raise_errors):
+        """Perform the bulk operation with the low-level payload object."""
+        return bulk(
+            self._es,
+            payload,
+            refresh=self._refresh_value(refresh),
+            raise_on_exception=raise_errors,
+            raise_on_error=raise_errors,
+        )
+
+    def bulk_index(self, docs, **bulk_kw):
         """Convenience method for bulk indexing many documents without the
         BulkActionItem boilerplate.
 
         :param docs: iterable of (Python model) documents to be indexed
-        :param refresh: ``bool`` refresh the effected shards to make this
-                        operation visible to search
-        :param **kw: extra parameters passed directly to the underlying
-                     ``elasticsearch.helpers.bulk()`` function.
+        :param bulk_kw: extra parameters passed verbatim to the
+            ``ElasticDocumentAdapter.bulk()`` method.
         """
-        # TODO: remove **kw and standardize which arguments HQ uses
         action_gen = (BulkActionItem.index(doc) for doc in docs)
-        return self.bulk(action_gen, refresh, **kw)
+        return self.bulk(action_gen, **bulk_kw)
 
-    def bulk_delete(self, doc_ids, refresh=False, **kw):
+    def bulk_delete(self, doc_ids, **bulk_kw):
         """Convenience method for bulk deleting many documents by ID without the
         BulkActionItem boilerplate.
 
         :param doc_ids: iterable of document IDs to be deleted
-        :param refresh: ``bool`` refresh the effected shards to make this
-                        operation visible to search
-        :param **kw: extra parameters passed directly to the underlying
-                     ``elasticsearch.helpers.bulk()`` function.
+        :param bulk_kw: extra parameters passed verbatim to the
+            ``ElasticDocumentAdapter.bulk()`` method.
         """
-        # TODO: remove **kw and standardize which arguments HQ uses
         action_gen = (BulkActionItem.delete_id(doc_id) for doc_id in doc_ids)
-        return self.bulk(action_gen, refresh, **kw)
+        return self.bulk(action_gen, **bulk_kw)
 
-    def _render_bulk_action(self, action):
+    def _render_bulk_action(self, action, *, forbid_tombstones=True):
         """Return a "raw" action object in the format required by the
         Elasticsearch ``bulk()`` helper function.
 
         :param action: a ``BulkActionItem`` instance
+        :param forbid_tombstones: Optional (default ``True``) passed verbatim to
+            the ``_verify_doc_source()`` method.
         :returns: ``dict``
         """
         for_elastic = {
@@ -826,7 +830,7 @@ class ElasticDocumentAdapter(BaseAdapter):
         elif action.is_index:
             for_elastic["_op_type"] = "index"
             doc_id, source = self.from_python(action.doc)
-            self._verify_doc_source(source)
+            self._verify_doc_source(source, forbid_tombstones=forbid_tombstones)
             for_elastic["_source"] = source
         else:
             raise ValueError(f"unsupported action type: {action!r}")
@@ -846,16 +850,18 @@ class ElasticDocumentAdapter(BaseAdapter):
             raise ValueError(f"invalid Elastic _id value: {doc_id!r}")
 
     @staticmethod
-    def _verify_doc_source(source):
+    def _verify_doc_source(source, *, forbid_tombstones=True):
         """Check whether or the not the provided ``source`` is valid for
         passing to Elasticseach (does not contain any illegal meta properties).
 
         :param source: ``dict`` of document properties to check
+        :param forbid_tombstones: Optional. If ``True`` (the default), raise if
+            ``source`` contains any properties reserved for tombstones.
         :raises: ``ValueError``
         """
         if not isinstance(source, dict) or "_id" in source:
             raise ValueError(f"invalid Elastic _source value: {source}")
-        if source.get(Tombstone.PROPERTY_NAME, False):
+        if forbid_tombstones and source.get(Tombstone.PROPERTY_NAME, False):
             raise ValueError(f"property {Tombstone.PROPERTY_NAME} is reserved")
 
     @staticmethod
@@ -1054,37 +1060,163 @@ class ElasticMultiplexAdapter(BaseAdapter):
         return self.primary.search(*args, **kw)
 
     # Elastic index write methods (multiplexed between both adapters)
-    def bulk(self, actions, refresh=False, **kw):
-        """Pass actions verbatim to primary. Convert delete actions to
-        'index tombstone' actions and send to secondary."""
-        primary_actions = []
-        secondary_actions = []
-        for action in actions:
-            primary_actions.append(action)
-            if action.is_delete:
-                # This logic belongs in the BulkActionItem class, but that class
-                # has no concept of 'to_python(doc)'
-                if action.doc_id is None:
-                    doc_id = self.from_python(action.doc)[0]
+    def bulk(self, actions, refresh=False, raise_errors=True):
+        """Apply bulk actions on the primary and secondary.
+
+        Bulk actions are applied against the primary and secondary in chunks of
+        500 actions at a time (replicates the behavior of the the ``bulk()``
+        helper function). Chunks are applied against the primary and secondary
+        simultaneously by chunking the original ``actions`` in blocks of (up to)
+        250 and performing a single block of (up to) 500 actions against both
+        indexes in parallel. Tombstone documents are indexed on the secondary
+        for any ``delete`` actions which succeed on the primary but fail on the
+        secondary.
+        """
+        success_count = 0
+        errors = []
+        for chunk in chunked(self._iter_pruned_actions(actions), 250):
+            payload = []
+            for action in chunk:
+                # apply the chunk to both indexes in parallel
+                payload.append(self.primary._render_bulk_action(action))
+                payload.append(self.secondary._render_bulk_action(action))
+            _, chunk_errs = bulk(self._es, payload, chunk_size=len(payload),
+                                 refresh=refresh, raise_on_error=False,
+                                 raise_on_exception=raise_errors)
+            deduped_errs = {}
+            primary_del_fail_ids = set()
+            secondary_del_fails = {}
+            for error in chunk_errs:
+                doc_id, index_name = self._parse_bulk_error(error)
+                if index_name == self.primary.index_name:
+                    deduped_errs[doc_id] = error
+                    if self._is_delete_not_found(error):
+                        # don't add tombstones for deletes that failed on the
+                        # primary index
+                        primary_del_fail_ids.add(doc_id)
                 else:
-                    doc_id = action.doc_id
-                action = BulkActionItem.index(Tombstone(doc_id))
-            secondary_actions.append(action)
-        self.primary.bulk(primary_actions, refresh, **kw)
-        # don't refresh the secondary because we never read from it
-        self.secondary.bulk(secondary_actions, **kw)
+                    if self._is_delete_not_found(error):
+                        secondary_del_fails[doc_id] = error
+                    else:
+                        deduped_errs.setdefault(doc_id, error)
+            tombstone_ids = secondary_del_fails.keys() - primary_del_fail_ids
+            if tombstone_ids:
+                # add tombstones on secondary
+                try:
+                    _, make_tstone_errs = self.secondary._bulk(
+                        self._iter_tombstone_bulk_payload(tombstone_ids),
+                        refresh=False,
+                        raise_errors=raise_errors,
+                    )
+                except BulkIndexError as exc:
+                    make_tstone_errs = exc.errors
+                for error in make_tstone_errs:
+                    doc_id, _ = self._parse_bulk_error(error)
+                    deduped_errs.setdefault(doc_id, secondary_del_fails[doc_id])
+
+            errors.extend(deduped_errs.values())
+            if raise_errors and errors:
+                # raise the same as elasticsearch-py does
+                raise BulkIndexError(f"{len(errors)} document(s) failed to index.", errors)
+            success_count += (len(chunk) - len(deduped_errs))
+        return success_count, errors
+
+    def _iter_tombstone_bulk_payload(self, doc_ids):
+        for doc_id in doc_ids:
+            yield self.secondary._render_bulk_action(
+                BulkActionItem.index(Tombstone(doc_id)),
+                forbid_tombstones=False,
+            )
+
+    @staticmethod
+    def _parse_bulk_error(error):
+        """Returns tuple ``(doc_id, index_name)`` for the provided bulk action
+        error.
+        """
+        op_type, = error.keys()
+        return error[op_type]["_id"], error[op_type]["_index"]
+
+    @staticmethod
+    def _is_delete_not_found(error):
+        return error.get("delete", {}).get("status") == 404
+
+    def _iter_pruned_actions(self, actions):
+        """Iterates over ``actions``, yielding a subset of actions in the
+        same order. Actions are pruned (not yielded) if they are superseded by a
+        later action. Pruning logic uses the following algorithm:
+
+        - Any ``index`` action supersedes all prior actions for the same
+          document ``_id``.
+        - Any ``delete`` action supersedes previous ``delete`` actions for the
+          same document ``_id``, but does not supersede ``index`` actions.
+
+        For any unique document ``_id`` present in the original actions, there
+        are only three possible action permutations yielded by this method:
+
+        1. ``delete_action`` only: This is the last of one or more
+           delete actions for this document. There were no index actions.
+        2. ``index_action`` only: This is the last of one or more actions of any
+           type for this document, and this action came after all others.
+        3. ``index_action`` *and* ``delete_action`` (index action will always be
+           yielded first): These are the last of each index and delete actions
+           (respectively), and the delete action came *after* the index action.
+
+        :param actions: an iterable of ``BulkActionItem`` instances.
+        """
+        by_id = {}
+        for seq, action in enumerate(actions):
+            # Render the action to get the document id and bulk action 'op_type'
+            # value. The adpater used to acquire this info is not important
+            # (either the primary or secondary will suffice).
+            serializable_action = self.primary._render_bulk_action(action)
+            doc_id = serializable_action["_id"]
+            op_type = serializable_action["_op_type"]
+            if action.is_delete:
+                by_id.setdefault(doc_id, {})[op_type] = (seq, action)
+            else:
+                assert action.is_index, action
+                by_id[doc_id] = {op_type: (seq, action)}
+
+        def flatten(by_id):
+            """Iterate pruned actions, yielding ``(seq, action)`` tuples to
+            support sorting the actions in their original order.
+            This could also be converted into a nested generator expression
+            (instead of a this inline function definition), but the function
+            implementation is easier to read.
+            """
+            for doc_id, actions in by_id.items():
+                for op_type, (seq, action) in actions.items():
+                    yield seq, action
+
+        for seq, action in sorted(flatten(by_id)):
+            yield action
+
+    def bulk_index(self, docs, **bulk_kw):
+        return ElasticDocumentAdapter.bulk_index(self, docs, **bulk_kw)
+
+    def bulk_delete(self, doc_ids, **bulk_kw):
+        return ElasticDocumentAdapter.bulk_delete(self, doc_ids, **bulk_kw)
 
     def delete(self, doc_id, refresh=False):
-        """Delete on primary, index tombstone on secondary."""
-        self.primary.delete(doc_id, refresh)
-        # don't refresh the secondary because we never read from it
-        self.secondary._index(doc_id, Tombstone.create_document())
+        """Delete from both primary and secondary via the ``bulk()`` method in
+        order to perform both actions in a single HTTP request (two, if a
+        tombstone is required).
+        """
+        try:
+            self.bulk_delete([doc_id], refresh=refresh)
+        except BulkIndexError as exc:
+            resp = list(exc.errors[0].values())[0]
+            raise NotFoundError(resp.pop("status"), str(resp), resp) from exc
 
-    def index(self, doc, refresh=False, **kw):
-        """Index on both adapters"""
-        self.primary.index(doc, refresh, **kw)
-        # don't refresh the secondary because we never read from it
-        self.secondary.index(doc, **kw)
+    def index(self, doc, refresh=False):
+        """Index into both primary and secondary via the ``bulk()`` method in
+        order to perform both actions in a single HTTP request.
+        """
+        try:
+            self.bulk_index([doc], refresh=refresh)
+        except BulkIndexError as exc:
+            resp = list(exc.errors[0].values())[0]
+            raise TransportError(resp.pop("status"), str(resp), resp) from exc
 
     def update(self, doc_id, fields, return_doc=False, refresh=False,
                _upsert=False, **kw):
@@ -1175,8 +1307,8 @@ def _elastic_hosts():
 
 
 def create_document_adapter(cls, index_name, type_, *, secondary=None):
-    """Creates, registers and returns a document adapter instance for the
-    parameters provided.
+    """Creates and returns a document adapter instance for the parameters
+    provided.
 
     :param cls: an ``ElasticDocumentAdapter`` subclass
     :param index_name: the name of the index that the adapter interacts with
@@ -1196,7 +1328,6 @@ def create_document_adapter(cls, index_name, type_, *, secondary=None):
         secondary_adapter = cls(runtime_name(secondary), type_)
         doc_adapter = ElasticMultiplexAdapter(doc_adapter, secondary_adapter)
 
-    register_document_adapter(doc_adapter)
     return doc_adapter
 
 
