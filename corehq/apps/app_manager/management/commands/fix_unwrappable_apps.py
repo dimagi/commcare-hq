@@ -22,19 +22,20 @@ class Command(AppMigrationCommandBase):
     def migrate_app(self, app_doc):
         changed = False
         for i, module in enumerate(app_doc['modules']):
-            for prop in module['search_config']['properties']:
-                required = prop.get('required')
-                if required and isinstance(required, str):
-                    prop['required'] = {'test': required}
-                    changed = True
+            if 'search_config' in module:
+                for prop in module['search_config']['properties']:
+                    required = prop.get('required')
+                    if required and isinstance(required, str):
+                        prop['required'] = {'test': required}
+                        changed = True
 
-                old_validations = prop.pop('validation', None)  # it was changed to plural
-                if old_validations:
-                    prop['validations'] = [{
-                        'test': old['xpath'],
-                        'text': old['message'],
-                    } for old in old_validations if old.get('xpath')]
-                    changed = True
+                    old_validations = prop.pop('validation', None)  # it was changed to plural
+                    if old_validations:
+                        prop['validations'] = [{
+                            'test': old['xpath'],
+                            'text': old['message'],
+                        } for old in old_validations if old.get('xpath')]
+                        changed = True
 
         wrap_app(app_doc)  # this will be logged if it raises an exception
 
@@ -42,4 +43,5 @@ class Command(AppMigrationCommandBase):
             return app_doc
 
     def get_app_ids(self, domain=None):
-        return list(get_deleted_app_ids(domain)) + list(get_all_app_ids())
+        return (list(get_deleted_app_ids(domain)) +
+                list(get_all_app_ids(domain=domain, include_builds=True)))
