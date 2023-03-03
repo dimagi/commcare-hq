@@ -30,19 +30,18 @@ class TestAttendee(TestCase):
         super().tearDownClass()
 
     def test_save_fails_without_user_id(self):
-        try:
-            Attendee(domain='bogus').save(user_id=None)
-            self.assertTrue(False)
-        except InvalidAttendee:
-            self.assertTrue(True)
+        attendee = Attendee(domain='bogus')
+        attendee.save()
+
+        self.assertTrue(attendee.case_id is not None)
 
     def test_case_created_on_attendee_save(self):
         mobile_worker = create_mobile_worker('iworkmobiles', self.domain)
         domain_attendees = Attendee.objects.by_domain(self.domain)
         self.assertEqual(list(domain_attendees), [])
 
-        attendee = Attendee(domain=self.domain)
-        attendee.save(mobile_worker.user_id)
+        attendee = Attendee(domain=self.domain, user_id=mobile_worker.user_id)
+        attendee.save()
 
         domain_attendees = Attendee.objects.by_domain(self.domain)
         self.assertTrue(len(domain_attendees) == 1)
@@ -57,8 +56,8 @@ class TestAttendee(TestCase):
         domain_attendees = Attendee.objects.by_domain(self.domain)
         self.assertEqual(list(domain_attendees), [])
 
-        attendee = Attendee(domain=self.domain)
-        attendee.save(mobile_worker.user_id)
+        attendee = Attendee(domain=self.domain, user_id=mobile_worker.user_id)
+        attendee.save()
 
         domain_attendees = Attendee.objects.by_domain(self.domain)
         case_id = domain_attendees[0].case_id
@@ -131,9 +130,10 @@ class TestEventModel(TestCase):
             'sameday_reg': True,
             'track_each_day': False,
             'manager_id': self.webuser.user_id,
+            'expected_attendees_ids': [attendee.case_id],
         }
         event = Event(**event_data)
-        event.save(expected_attendees=[attendee.case_id])
+        event.save()
 
         self.assertEqual(len(event.attendees), 1)
         self.assertTrue(isinstance(event.attendees[0], Attendee))
@@ -150,6 +150,11 @@ class TestEventModel(TestCase):
         attendee1 = self._create_attendee_on_domain('at1')
         attendee2 = self._create_attendee_on_domain('at2')
 
+        expected_attendees = [
+            attendee1.case_id,
+            attendee2.case_id,
+        ]
+
         event_data = {
             'domain': self.domain,
             'name': 'test-event',
@@ -159,13 +164,10 @@ class TestEventModel(TestCase):
             'sameday_reg': True,
             'track_each_day': False,
             'manager_id': self.webuser.user_id,
+            'expected_attendees_ids': expected_attendees,
         }
         event = Event(**event_data)
-        expected_attendees = [
-            attendee1.case_id,
-            attendee2.case_id,
-        ]
-        event.save(expected_attendees=expected_attendees)
+        event.save()
 
         expected_case_ids = [a.case_id for a in event.attendees]
 
@@ -173,13 +175,11 @@ class TestEventModel(TestCase):
         self.assertTrue(attendee2.case_id in expected_case_ids)
 
         attendee3 = self._create_attendee_on_domain('at3')
-
-        event.save(
-            expected_attendees=[
-                attendee1.case_id,
-                attendee3.case_id,
-            ]
-        )
+        event.expected_attendees_ids = [
+            attendee1.case_id,
+            attendee3.case_id,
+        ]
+        event.save()
         expected_case_ids = [a.case_id for a in event.attendees]
 
         self.assertTrue(attendee1.case_id in expected_case_ids)
@@ -188,8 +188,8 @@ class TestEventModel(TestCase):
 
     def _create_attendee_on_domain(self, username):
         user = create_mobile_worker(username, self.domain)
-        attendee = Attendee(domain=self.domain)
-        attendee.save(user_id=user.user_id)
+        attendee = Attendee(domain=self.domain, user_id=user.user_id)
+        attendee.save()
         return attendee
 
 

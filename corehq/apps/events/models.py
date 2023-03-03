@@ -65,13 +65,25 @@ class Event(models.Model):
             models.Index(fields=("manager_id",)),
         )
 
-    def save(self, expected_attendees=None):
+    def __init__(self, *args, **kwargs):
+        expected_attendees_ids = kwargs.pop('expected_attendees_ids', None)
+        super(Event, self).__init__(*args, **kwargs)
+
+        if expected_attendees_ids is None:
+            # When we load from db
+            self.expected_attendees_ids = Attendee.objects.get_by_event_id(
+                self.event_id,
+                self.domain,
+                only_ids=True
+            )
+        else:
+            self.expected_attendees_ids = expected_attendees_ids
+
+    def save(self):
         if not self.event_id:
             self.event_id = uuid.uuid4().hex
         event = super(Event, self).save()
-
-        if expected_attendees is not None:
-            self._update_attendees(expected_attendees)
+        self._update_attendees()
 
         return event
 
@@ -83,7 +95,10 @@ class Event(models.Model):
     def attendees(self):
         return Attendee.objects.get_by_event_id(self.event_id, self.domain)
 
-    def _update_attendees(self, attendees_case_ids):
+    def _update_attendees(self):
+        if not self.expected_attendees_ids:
+            return
+
         current_attendees_ids = Attendee.objects.get_by_event_id(
             self.event_id,
             self.domain,
@@ -92,7 +107,7 @@ class Event(models.Model):
 
         attendees_to_assign, attendees_to_unassign = find_difference(
             current_attendees_ids,
-            attendees_case_ids
+            self.expected_attendees_ids,
         )
 
         self._assign_attendees(list(attendees_to_assign))
@@ -176,23 +191,26 @@ class Attendee(models.Model):
         db_table = "commcare_attendee"
         indexes = (models.Index(fields=("domain",)),)
 
-    def save(self, user_id):
-        if not user_id:
-            raise InvalidAttendee('Attendee must have user_id specified')
+    def __init__(self, *args, **kwargs):
+        self.user_id = kwargs.pop('user_id', None)
+        super(Attendee, self).__init__(*args, **kwargs)
 
+    def save(self):
         if not self.domain:
             raise InvalidAttendee('Attendee must have domain specified')
 
         if not self.case_id:
+            case_args = {'domain': self.domain}
+
+            if self.user_id:
+                case_args['name'] = CouchUser.get_by_user_id(self.user_id).username
+                case_args['properties'] = {
+                    'commcare_user_id': self.user_id,
+                }
+
             case_ = create_case_with_case_type(
                 case_type=Attendee.ATTENDEE_CASE_TYPE,
-                case_args={
-                    'domain': self.domain,
-                    'name': CouchUser.get_by_user_id(user_id).username,
-                    'properties': {
-                        'commcare_user_id': user_id,
-                    }
-                },
+                case_args=case_args,
             )
             self.case_id = case_.case_id
 
@@ -214,7 +232,7 @@ def create_case_with_case_type(case_type, case_args, index=None):
         case_name=case_args.get('name', None),
         domain=case_args['domain'],
         owner_id=case_args.get('owner_id', ''),
-        update=case_args['properties'],
+        update=case_args.get('properties', {}),
         create=True,
     )
     _, cases = submit_case_blocks(
