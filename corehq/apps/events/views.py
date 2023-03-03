@@ -15,7 +15,7 @@ from corehq.util.jqueryrmi import JSONResponseMixin
 
 from .exceptions import EventDoesNotExist
 from .forms import CreateEventForm
-from .models import Attendee, Event
+from .models import Event, get_paginated_attendees
 
 
 class BaseEventView(BaseDomainView):
@@ -219,10 +219,10 @@ class EventEditView(EventCreateView):
 class AttendeesListView(JSONResponseMixin, BaseUserSettingsView):
     urlname = "event_attendees"
     template_name = 'event_attendees.html'
-    page_title = _("Attendee Users")
-    limit_text = _("Users per page")
-    empty_notification = _("You have no attendee users")
-    loading_message = _("Loading users")
+    page_title = _("Attendees")
+    limit_text = _("Attendees per page")
+    empty_notification = _("You have no attendees")
+    loading_message = _("Loading attendees")
 
     @use_jquery_ui
     def dispatch(self, *args, **kwargs):
@@ -247,7 +247,7 @@ def paginated_attendees(request, domain):
     page = int(request.GET.get('page', 1))
     query = request.GET.get('query')
 
-    users = Attendee.get_paginated_users_on_domain(
+    attendees, total = get_paginated_attendees(
         domain=domain,
         limit=limit,
         page=page,
@@ -255,6 +255,7 @@ def paginated_attendees(request, domain):
     )
 
     return JsonResponse({
-        'users': users,
-        'total': len(users),
+        # TODO: Rename "users" key to "attendees"
+        'users': attendees,
+        'total': total,
     })

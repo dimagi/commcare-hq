@@ -1,20 +1,20 @@
 import uuid
 
-from django.utils.translation import gettext_lazy as _
 from django.db import models
+from django.utils.translation import gettext_lazy as _
 
+from corehq.apps.es.case_search import CaseSearchES
+from corehq.apps.users.models import CommCareUser, CouchUser
 from corehq.apps.users.tasks import remove_indices_from_deleted_cases
 from corehq.form_processor.models import CommCareCase, CommCareCaseIndex
-from corehq.apps.users.models import CouchUser
-from corehq.apps.events.utils import (
-    create_case_with_case_type,
-    case_index_event_identifier,
-    find_difference,
-    find_case_create_form,
-)
-from corehq.apps.events.exceptions import InvalidAttendee
-from corehq.apps.es.case_search import CaseSearchES
 
+from .exceptions import InvalidAttendee
+from .utils import (
+    case_index_event_identifier,
+    create_case_with_case_type,
+    find_case_create_form,
+    find_difference,
+)
 
 NOT_STARTED = 'Not started'
 IN_PROGRESS = 'In progress'
@@ -181,6 +181,64 @@ class AttendeeCase:
     objects = AttendeeCaseManager()
 
 
+def get_paginated_attendees(domain, limit, page, query=None):
+
+    def attendee_as_user_dict(case: CommCareCase):
+        # TODO: Don't use these properties
+        user_id = case.get_case_property(ATTENDEE_USER_ID_CASE_PROPERTY)
+        if user_id:
+            user = CommCareUser.get_by_user_id(user_id, domain=domain)
+            return {
+                '_id': case.case_id,
+                'first_name': user.first_name,
+                'last_name': user.last_name,
+                'base_username': user.username,
+                'user_id': user_id,
+                'username': user.raw_username,
+            }
+        else:
+            try:
+                first_name, last_name = case.name.split(' ', maxsplit=1)
+            except ValueError:
+                first_name, last_name = case.name, ''
+            return {
+                '_id': case.case_id,
+                'first_name': first_name,
+                'last_name': last_name,
+                'base_username': '',
+                'user_id': '',
+                'username': '',
+            }
+
+    case_ids = CommCareCase.objects.get_open_case_ids_in_domain_by_type(
+        domain,
+        ATTENDEE_CASE_TYPE,
+    )
+    total = len(case_ids)
+    if page:
+        start, end = page_to_slice(limit, page)
+        cases = CommCareCase.objects.get_cases(case_ids[start:end], domain)
+    else:
+        cases = CommCareCase.objects.get_cases(case_ids[:limit], domain)
+    return [attendee_as_user_dict(c) for c in cases], total
+
+
+def page_to_slice(limit, page):
+    """
+    Converts ``limit``, ``page`` to start and end indices.
+
+    Assumes page numbering starts at 1.
+
+    >>> names = ['Harry', 'Hermione', 'Ron']
+    >>> start, end = page_to_slice(limit=1, page=2)
+    >>> names[start:end]
+    ['Hermione']
+    """
+    assert page > 0, 'Page numbering starts at 1'
+
+    start = (page - 1) * limit
+    end = start + limit
+    return start, end
 
 
 class AttendeeObjectManager(models.Manager):
@@ -264,15 +322,3 @@ class Attendee(models.Model):
         )
         form.archive()
         return super(Attendee, self).delete()
-
-    @classmethod
-    def get_paginated_users_on_domain(cls, domain, limit, page, query):
-        # Need to query for all attendee users on domain
-        return [{
-            '_id': 'id',
-            'first_name': 'Harry',
-            'last_name': 'Potter',
-            'base_username': 'hpotter@hogwards.wz',
-            'user_id': 'user_id',
-            'username': 'hpotter'
-        }]

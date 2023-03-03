@@ -1,3 +1,4 @@
+import doctest
 from contextlib import contextmanager
 from datetime import datetime
 
@@ -262,3 +263,9 @@ def create_mobile_worker(username, domain):
         created_by=None,
         created_via=None,
     )
+
+
+def test_doctests():
+    import corehq.apps.events.models as module
+    results = doctest.testmod(module, optionflags=doctest.ELLIPSIS)
+    assert results.failed == 0

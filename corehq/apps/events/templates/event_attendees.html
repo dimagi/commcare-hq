@@ -15,19 +15,19 @@
 
 <p>
   {% blocktrans %}
-    This page list all the project's users that can be invited to participate in Attendance Tracking Events. These
-    users are known as "attendee users".
+    This page list all the project's potential attendees who can be invited to
+    participate in Attendance Tracking Events.
   {% endblocktrans %}
 </p>
  <div class="btn-toolbar" style="margin-bottom: 20px;">
     <button type="button" class="btn btn-primary">
-      <i class="fa fa-plus"></i> {% trans "Create Attendee User" %}
+      <i class="fa fa-plus"></i> {% trans "Create Potential Attendee" %}
     </button>
   </div>
   <div id="users-list" class="ko-template">
     <div class="panel panel-default">
       <div class="panel-heading">
-        <h3 class="panel-title">{% trans 'Event Attendee Users' %}</h3>
+        <h3 class="panel-title">{% trans 'Potential Attendees for this Event' %}</h3>
       </div>
       <div class="panel-body">
         <div class="row">
@@ -68,7 +68,7 @@
         </div>
         <div class="alert alert-info" data-bind="visible: showProjectHasNoUsers">
           {% blocktrans %}
-            You currently have no attendee users.
+            You currently have no potential attendees.
           {% endblocktrans %}
         </div>
         <pagination data-apply-bindings="false"
