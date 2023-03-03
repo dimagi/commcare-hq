@@ -204,7 +204,7 @@ Examples
 Some basic examples adapted from 2 Scoops of Django:
 
 Section Header
-^^^^^^^^^^^^^^
+..............
 
 Sections are explained well `here <http://docutils.sourceforge.net/docs/user/rst/quickstart.html#sections>`_ 
 

@@ -1502,6 +1502,9 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, EulaMixin):
             or self.has_permission(domain, 'limited_login_as')
         )
 
+    def can_manage_events(self, domain):
+        return self.has_permission(domain, 'manage_attendance_tracking')
+
     def is_current_web_user(self, request):
         return self.user_id == request.couch_user.user_id
 
