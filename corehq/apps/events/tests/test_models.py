@@ -9,7 +9,6 @@ from corehq.apps.events.models import (
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.users.models import WebUser, CommCareUser
 from corehq.form_processor.models import CommCareCase
-from corehq.apps.events.exceptions import InvalidAttendee
 from corehq.apps.events.models import create_case_with_case_type
 
 
