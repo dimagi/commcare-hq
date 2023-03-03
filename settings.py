@@ -778,7 +778,7 @@ AUDIT_ADMIN_VIEWS = False
 ANALYTICS_IDS = {
     'GOOGLE_ANALYTICS_API_ID': '',
     'KISSMETRICS_KEY': '',
-    'HUBSPOT_API_KEY': '',
+    'HUBSPOT_ACCESS_TOKEN': '',
     'HUBSPOT_API_ID': '',
     'GTM_ID': '',
     'DRIFT_ID': '',

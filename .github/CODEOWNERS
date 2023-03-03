@@ -75,6 +75,7 @@
 /package.json @dimagi/dependency-watchers
 
 /scripts/docker @millerdev @joxl
+/scripts/test-make-docs.sh @dimagi/dependency-watchers
 /scripts/vellum-to-hq @millerdev
 
 /requirements/ @dimagi/dependency-watchers

@@ -2,7 +2,6 @@ import decimal
 import json
 from collections import Counter, defaultdict
 
-from couchdbkit.exceptions import ResourceNotFound
 from django.conf import settings
 from django.contrib import messages
 from django.http import JsonResponse
@@ -10,41 +9,43 @@ from django.http.response import Http404, HttpResponse
 from django.utils.decorators import method_decorator
 from django.utils.functional import cached_property
 from django.views.decorators.http import require_POST
-from corehq.apps.accounting.models import Subscription
+
+from couchdbkit.exceptions import ResourceNotFound
+
+from couchforms.analytics import get_last_form_submission_received
+from soil import DownloadBase
+
 from corehq.apps.domain.decorators import require_superuser_or_contractor
 from corehq.apps.hqwebapp.decorators import use_datatables
 from corehq.apps.hqwebapp.views import BasePageView
 from corehq.apps.toggle_ui.models import ToggleAudit
 from corehq.apps.toggle_ui.tasks import generate_toggle_csv_download
-from corehq.apps.toggle_ui.utils import find_static_toggle, get_subscription_info
+from corehq.apps.toggle_ui.utils import (
+    find_static_toggle,
+    get_subscription_info,
+)
 from corehq.apps.users.models import CouchUser
 from corehq.toggles import (
     ALL_NAMESPACES,
     ALL_TAG_GROUPS,
-    ATTENDANCE_TRACKING,
     NAMESPACE_DOMAIN,
+    NAMESPACE_EMAIL_DOMAIN,
     NAMESPACE_USER,
     TAG_CUSTOM,
     TAG_DEPRECATED,
     TAG_INTERNAL,
     DynamicallyPredictablyRandomToggle,
+    FeatureRelease,
     PredictablyRandomToggle,
     all_toggles,
-    NAMESPACE_EMAIL_DOMAIN,
     toggles_enabled_for_domain,
     toggles_enabled_for_email_domain,
-    toggles_enabled_for_user, FeatureRelease,
+    toggles_enabled_for_user,
 )
 from corehq.toggles.models import Toggle
-from corehq.toggles.shortcuts import parse_toggle, namespaced_item
+from corehq.toggles.shortcuts import namespaced_item, parse_toggle
 from corehq.util import reverse
 from corehq.util.soft_assert import soft_assert
-from couchforms.analytics import get_last_form_submission_received
-from soil import DownloadBase
-from corehq.apps.users.role_utils import (archive_attendance_coordinator_role_for_domain,
-                                          enable_attendance_coordinator_role_for_domain)
-from corehq.apps.accounting.utils import domain_has_privilege
-from corehq import privileges
 
 NOT_FOUND = "Not Found"
 
@@ -267,16 +268,6 @@ def _enable_dependencies(request_username, static_toggle, item, namespace, is_en
             _set_toggle(request_username, dependency, item, namespace, is_enabled)
 
 
-def _handle_attendance_tracking_role(domain, is_enabled):
-    if not domain_has_privilege(domain, privileges.ATTENDANCE_TRACKING):
-        return
-
-    if is_enabled:
-        enable_attendance_coordinator_role_for_domain(domain)
-    else:
-        archive_attendance_coordinator_role_for_domain(domain)
-
-
 def _set_toggle(request_username, static_toggle, item, namespace, is_enabled):
     if static_toggle.set(item=item, enabled=is_enabled, namespace=namespace):
         action = ToggleAudit.ACTION_ADD if is_enabled else ToggleAudit.ACTION_REMOVE
@@ -289,9 +280,6 @@ def _set_toggle(request_username, static_toggle, item, namespace, is_enabled):
 
         _clear_cache_for_toggle(namespace, item)
         _enable_dependencies(request_username, static_toggle, item, namespace, is_enabled)
-
-    if static_toggle == ATTENDANCE_TRACKING:
-        _handle_attendance_tracking_role(domain=item, is_enabled=is_enabled)
 
 
 def _call_save_fn_for_toggle(static_toggle, namespace, entry, enabled):
