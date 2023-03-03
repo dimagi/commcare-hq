@@ -1,4 +1,3 @@
-import glob
 import os
 
 from memoized import memoized
@@ -68,8 +67,8 @@ def update_fhir_resource_property(case_property, fhir_resource_type, fhir_resour
 @memoized
 def load_fhir_resource_types(fhir_version=FHIR_VERSION_4_0_1, exclude_resource_types=('fhir',)):
     schemas_base_path = get_schema_dir(fhir_version)
-    all_file_names = glob.glob(os.path.join(schemas_base_path, '*.schema.json'))
-    resource_types = [os.path.basename(f).removesuffix('.schema.json') for f in all_file_names]
+    all_file_names = os.listdir(schemas_base_path)
+    resource_types = [f.removesuffix('.schema.json') for f in all_file_names if f.endswith('.schema.json')]
     for schema in exclude_resource_types:
         if schema in resource_types:
             resource_types.remove(schema)
