@@ -43,5 +43,5 @@ class Command(AppMigrationCommandBase):
             return app_doc
 
     def get_app_ids(self, domain=None):
-        return (list(get_deleted_app_ids(domain)) +
-                list(get_all_app_ids(domain=domain, include_builds=True)))
+        return (list(get_deleted_app_ids(domain))
+                + list(get_all_app_ids(domain=domain, include_builds=True)))
