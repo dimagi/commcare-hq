@@ -11,11 +11,11 @@ class UserRolePresets:
     ATTENDANCE_COORDINATOR = "Attendance Coordinator"
 
     INITIAL_ROLES = {
-        READ_ONLY: lambda: HqPermissions(view_reports=True, download_report=True),
+        READ_ONLY: lambda: HqPermissions(view_reports=True, download_reports=True),
         APP_EDITOR: lambda: HqPermissions(edit_apps=True,
                                           view_apps=True,
                                           view_reports=True,
-                                          download_report=True),
+                                          download_reports=True),
         FIELD_IMPLEMENTER: lambda: HqPermissions(edit_commcare_users=True,
                                                  view_commcare_users=True,
                                                  edit_groups=True,
@@ -24,7 +24,7 @@ class UserRolePresets:
                                                  view_locations=True,
                                                  edit_shared_exports=True,
                                                  view_reports=True,
-                                                 download_report=True),
+                                                 download_reports=True),
         BILLING_ADMIN: lambda: HqPermissions(edit_billing=True),
         MOBILE_WORKER: lambda: HqPermissions(access_mobile_endpoints=True,
                                              report_an_issue=True,
