@@ -681,10 +681,11 @@ class CaseTimedScheduleInstance(CaseScheduleInstanceMixin, AbstractTimedSchedule
         )
 
     def additional_deactivation_condition_reached(self):
-        from corehq.apps.data_interfaces.models import AutomaticUpdateRule
-
+        from corehq.messaging.tasks import get_cached_rule
         additional_deactivation_condition_reached = super().additional_deactivation_condition_reached()
-        rule = AutomaticUpdateRule.objects.get(pk=self.rule_id)
-        criteria_match = rule.criteria_match(self.case, datetime.utcnow())
+        rule = get_cached_rule(self.case.domain, self.rule_id)
+        if not rule:
+            return additional_deactivation_condition_reached
 
+        criteria_match = rule.criteria_match(self.case, datetime.utcnow())
         return additional_deactivation_condition_reached and criteria_match

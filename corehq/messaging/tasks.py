@@ -101,6 +101,10 @@ def _get_cached_rule(domain, rule_id):
         return rules[0]
 
 
+def get_cached_rule(domain, rule_id):
+    return _get_cached_rule(domain, rule_id)
+
+
 def _sync_case_for_messaging_rule(domain, case_id, rule_id):
     case_load_counter("messaging_rule_sync", domain)()
     try:
