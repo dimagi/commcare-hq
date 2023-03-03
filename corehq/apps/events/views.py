@@ -1,24 +1,21 @@
-import json
-
+from django.http import Http404, HttpResponseRedirect, JsonResponse
 from django.urls import reverse
-from django.http import Http404
-from django.http import JsonResponse
 from django.utils.translation import gettext_lazy as _
-from django.http import HttpResponseRedirect
 from django.views.decorators.http import require_GET
 
-from corehq.apps.hqwebapp.views import CRUDPaginatedViewMixin
-from corehq.apps.domain.views.base import BaseDomainView
-from corehq.apps.events.models import Event, Attendee
-from corehq.apps.events.forms import CreateEventForm
-from corehq.apps.hqwebapp.decorators import use_jquery_ui, use_multiselect
-from corehq.apps.events.exceptions import EventDoesNotExist
-from corehq.apps.users.views import BaseUserSettingsView
-from corehq.util.jqueryrmi import JSONResponseMixin
+from corehq import toggles
 from corehq.apps.domain.decorators import login_and_domain_required
+from corehq.apps.domain.views.base import BaseDomainView
+from corehq.apps.hqwebapp.decorators import use_jquery_ui, use_multiselect
+from corehq.apps.hqwebapp.views import CRUDPaginatedViewMixin
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import HqPermissions
-from corehq import toggles
+from corehq.apps.users.views import BaseUserSettingsView
+from corehq.util.jqueryrmi import JSONResponseMixin
+
+from .exceptions import EventDoesNotExist
+from .forms import CreateEventForm
+from .models import Attendee, Event
 
 
 class BaseEventView(BaseDomainView):
