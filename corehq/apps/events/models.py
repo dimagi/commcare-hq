@@ -4,15 +4,13 @@ from django.utils.translation import gettext_lazy as _
 from django.db import models
 
 from corehq.apps.users.tasks import remove_indices_from_deleted_cases
-from corehq.form_processor.models import CommCareCase, CommCareCaseIndex
+from corehq.form_processor.models import CommCareCase, CommCareCaseIndex, XFormInstance
 from corehq.apps.users.models import CouchUser
-from corehq.apps.events.utils import (
-    create_case_with_case_type,
-    case_index_event_identifier,
-    find_difference,
-    find_case_create_form,
-)
+from corehq.apps.events.utils import find_difference
 from corehq.apps.events.exceptions import InvalidAttendee
+from corehq.apps.hqcase.utils import submit_case_blocks
+from casexml.apps.case.mock import CaseBlock
+
 
 NOT_STARTED = 'Not started'
 IN_PROGRESS = 'In progress'
@@ -207,3 +205,44 @@ class Attendee(models.Model):
         )
         form.archive()
         super(Attendee, self).delete()
+
+
+def create_case_with_case_type(case_type, case_args, index=None):
+    case_block = CaseBlock(
+        case_id=uuid.uuid4().hex,
+        case_type=case_type,
+        case_name=case_args.get('name', None),
+        domain=case_args['domain'],
+        owner_id=case_args.get('owner_id', ''),
+        update=case_args['properties'],
+        create=True,
+    )
+    _, cases = submit_case_blocks(
+        [case_block.as_text()],
+        domain=case_args['domain'],
+    )
+    case_ = cases[0]
+
+    if index is not None:
+        case_.track_create(CommCareCaseIndex(
+            case=case_,
+            domain=case_.domain,
+            referenced_id=index.get('parent_case_id'),
+            relationship_id=CommCareCaseIndex.EXTENSION,
+            referenced_type=case_.type,
+            identifier=index.get('identifier', 'host'),
+        ))
+        case_.save(with_tracked_models=True)
+
+    return case_
+
+
+def case_index_event_identifier(event_id):
+    return f'event-{event_id}'
+
+
+def find_case_create_form(commcare_case, domain):
+    form_id = next(
+        (t.form_id for t in commcare_case.transactions if t.is_case_create)
+    )
+    return XFormInstance.objects.get_form(form_id, domain)
