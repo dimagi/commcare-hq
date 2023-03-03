@@ -96,7 +96,6 @@ hqDefine('users/js/roles',[
                         };
                     }),
                 };
-                data.permissions.download_reports = true;  // the user must explicitly disable this when visible
 
                 data.tableauPermissions = {
                     all: data.permissions.view_tableau,
