@@ -166,6 +166,7 @@ hqDefine("data_dictionary/js/data_dictionary", [
                     },
                     success: function () {
                         var activeCaseType = self.getActiveCaseType();
+                        activeCaseType.fhirResourceType(self.fhirResourceType());
                         activeCaseType.properties(self.casePropertyList());
                     },
                     // Error handling is managed by SaveButton logic in main.js
