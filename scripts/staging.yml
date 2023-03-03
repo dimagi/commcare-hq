@@ -83,4 +83,5 @@ branches:
     - gh/improve-pillow-logging-take-2 # Graham Mar 1
     - cs/SC-2485-create-ATE-page # Charl Mar 2
     - dmr/grapevine-url  # Danny Mar 3
+    - gh/django-field-audit/1.2.6 # Graham Mar 3
 submodules: { }
