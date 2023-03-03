@@ -43,7 +43,7 @@ class CaseWithDomainAndRole(BaseEventSetupCase):
         super().setUpClass()
         cls.domain_name = "pets"
         cls.role_name = "test-role"
-        cls.domain = Domain(name=cls.domain_name)
+        cls.domain = Domain.get_or_create_with_name(name=cls.domain_name, is_active=True)
         cls.domain.save()
         cls.addClassCleanup(cls.domain.delete)
 
