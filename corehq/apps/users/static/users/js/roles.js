@@ -443,6 +443,13 @@ hqDefine('users/js/roles',[
                             ? gettext("Allow role to view all CommCare reports. Excludes embedded Tableau reports")
                             : gettext("Allow role to access all reports."),
                     },
+                    {
+                        visibilityRestraint: self.canSeeAnyReports,
+                        text: gettext("Download and Email Reports"),
+                        checkboxLabel: "download-and-email-reports-checkbox",
+                        checkboxPermission: self.permissions.download_reports,
+                        checkboxText: gettext("Allow role to download and email report data."),
+                    },
                 ];
                 if (toggles.toggleEnabled('EMBEDDED_TABLEAU')) {
                     self.reports.push({
