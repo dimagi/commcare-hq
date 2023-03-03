@@ -22,6 +22,7 @@ of all unknown users, web users, and demo users on a domain.
 
     owner_ids = query.get_ids()
 """
+
 from copy import copy
 
 from . import filters, queries
