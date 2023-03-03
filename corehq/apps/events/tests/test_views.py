@@ -221,7 +221,7 @@ class TestEventsCreateView(BaseEventViewTestClass):
 #         super().tearDownClass()
 #
 #     def test_return_domain_attendees(self):
-#         url = reverse('paginate_attendee_users', args=[self.domain])
+#         url = reverse('paginated_attendees', args=[self.domain])
 #         self.client.login(username=self.admin_webuser.username, password=self.password)
 #
 #         response = self.client.get(url, content_type="application/json;charset=utf-8")

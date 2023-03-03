@@ -4,13 +4,13 @@ from corehq.apps.events.views import (
     EventCreateView,
     EventEditView,
     AttendeesListView,
-    paginate_attendee_users,
+    paginated_attendees,
 )
 
 urlpatterns = [
     url(r'^list/$', EventsView.as_view(), name=EventsView.urlname),
     url(r'^new/$', EventCreateView.as_view(), name=EventCreateView.urlname),
-    url(r'^users/$', paginate_attendee_users, name='paginate_attendee_users'),
+    url(r'^attendees/json/$', paginated_attendees, name='paginated_attendees'),
     url(r'^attendees/$', AttendeesListView.as_view(), name=AttendeesListView.urlname),
     url(r'^(?P<event_id>[\w-]+)/$', EventEditView.as_view(), name=EventEditView.urlname),
 ]

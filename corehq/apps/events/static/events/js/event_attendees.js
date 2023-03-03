@@ -79,7 +79,7 @@ hqDefine("events/js/event_attendees",[
             self.showPaginationSpinner(true);
             $.ajax({
                 method: 'GET',
-                url: initialPageData.reverse('paginate_attendee_users'),
+                url: initialPageData.reverse('paginated_attendees'),
                 data: {
                     page: page || 1,
                     query: self.query(),

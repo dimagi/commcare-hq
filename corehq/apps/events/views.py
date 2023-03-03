@@ -239,7 +239,7 @@ class AttendeesListView(JSONResponseMixin, BaseUserSettingsView):
 @require_GET
 @login_and_domain_required
 @require_permission(HqPermissions.manage_attendance_tracking)
-def paginate_attendee_users(request, domain):
+def paginated_attendees(request, domain):
     """
     Returns the possible attendees.
     """
