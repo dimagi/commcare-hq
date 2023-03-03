@@ -6,7 +6,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('events', '0001_initial'),
+        ('events', '0001_add_events_model'),
     ]
 
     operations = [
@@ -20,16 +20,6 @@ class Migration(migrations.Migration):
             options={
                 'db_table': 'commcare_attendee',
             },
-        ),
-        migrations.AlterField(
-            model_name='event',
-            name='end_date',
-            field=models.DateField(),
-        ),
-        migrations.AlterField(
-            model_name='event',
-            name='start_date',
-            field=models.DateField(),
         ),
         migrations.AddIndex(
             model_name='attendee',
