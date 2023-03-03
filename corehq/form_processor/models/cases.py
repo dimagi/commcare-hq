@@ -1048,11 +1048,13 @@ class CommCareCaseIndexManager(RequireDBManager):
         return all_extension_ids
 
     def get_by_identifier(self, domain, identifier):
+        indices = set()
         for db_name in get_db_aliases_for_partitioned_query():
             query = self.using(db_name).filter(
                 domain=domain,
                 identifier=identifier,
             )
+            indices.update(query.all())
         return list(query)
 
 
