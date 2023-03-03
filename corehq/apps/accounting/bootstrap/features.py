@@ -104,6 +104,7 @@ pro_v1 = standard_v1 + [
     privileges.LOADTEST_USERS,
     privileges.DATA_FILE_DOWNLOAD,
     privileges.ATTENDANCE_TRACKING,
+    privileges.REGEX_FIELD_VALIDATION,
 ]
 
 
