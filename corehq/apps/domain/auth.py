@@ -319,6 +319,7 @@ class HQApiKeyAuthentication(ApiKeyAuthentication):
                 if username and api_key:
                     metrics_counter('commcare.auth.credentials_in_data', tags={
                         'domain': getattr(request, 'domain', None),
+                        'request_method': request.method,
                     })
             else:
                 username, api_key = None, None
