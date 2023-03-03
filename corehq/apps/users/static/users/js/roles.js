@@ -522,11 +522,6 @@ hqDefine('users/js/roles',[
                 data.permissions.view_tableau = data.tableauPermissions.all;
                 data.permissions.view_tableau_list = unwrapItemList(data.tableauPermissions.specific);
 
-                // Set download_reports to true only if the user can see reports
-                data.permissions.download_reports = data.permissions.download_reports && (
-                    data.permissions.view_reports || data.permissions.view_report_list.length !== 0
-                );
-
                 data.permissions.manage_data_registry = data.manageRegistryPermission.all;
                 data.permissions.manage_data_registry_list = unwrapItemList(data.manageRegistryPermission.specific);
 
