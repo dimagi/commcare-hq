@@ -340,3 +340,29 @@ class HqPermissionsTest(SimpleTestCase):
         self.hq_permissions.normalize()
         for view_permission_name in edit_view_permission_dict.values():
             self.assertTrue(getattr(self.hq_permissions, view_permission_name))
+
+    def test_download_reports_removed_when_view_reports_false(self):
+        self.hq_permissions.view_reports = False
+        self._check_normalized_permission("download_reports", expect_changed=True)
+
+    def test_download_reports_not_removed_when_view_reports_true(self):
+        self.hq_permissions.view_reports = True
+        self._check_normalized_permission("download_reports", expect_changed=False)
+
+    def test_download_reports_not_removed_when_view_reports_list(self):
+        self.hq_permissions.view_reports = False
+        self.hq_permissions.view_report_list = ["a"]
+        self._check_normalized_permission("download_reports", expect_changed=False)
+
+    def _check_normalized_permission(self, permission, initial_value=True, expect_changed=True):
+        setattr(self.hq_permissions, permission, initial_value)
+        self.hq_permissions.normalize()
+        if expect_changed:
+            self.assertNotEqual(getattr(self.hq_permissions, permission), initial_value)
+        else:
+            self.assertEqual(getattr(self.hq_permissions, permission), initial_value)
+
+        # Test that the inverse value isn't affected
+        setattr(self.hq_permissions, permission, not initial_value)
+        self.hq_permissions.normalize()
+        self.assertEqual(getattr(self.hq_permissions, permission), not initial_value)
