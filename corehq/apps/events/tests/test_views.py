@@ -156,8 +156,8 @@ class TestEventsCreateView(BaseEventViewTestClass):
         data = self._event_data()
 
         mobile_worker = self._create_mobile_worker('mobileworker1')
-        attendee = Attendee(domain=self.domain)
-        attendee.save(user_id=mobile_worker.user_id)
+        attendee = Attendee(domain=self.domain, user_id=mobile_worker.user_id)
+        attendee.save()
 
         data['expected_attendees'] = [attendee.case_id]
 
