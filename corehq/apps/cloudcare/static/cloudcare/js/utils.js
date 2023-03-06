@@ -372,6 +372,7 @@ hqDefine('cloudcare/js/utils', [
         }
 
         dateFormat = dateFormat || "MM/DD/YYYY";
+        let formats = _.union([dateFormat], ["MM/DD/YYYY", "MM/DD/YY", "YYYY-MM-DD"]);
         $el.datetimepicker({
             date: selectedDate,
             useCurrent: false,
@@ -380,7 +381,7 @@ hqDefine('cloudcare/js/utils', [
             showTodayButton: true,
             debug: true,
             format: dateFormat,
-            extraFormats: ["MM/DD/YYYY", "MM/DD/YY", "YYYY-MM-DD"],
+            extraFormats: formats,
             useStrict: true,
             icons: {
                 today: 'glyphicon glyphicon-calendar',
@@ -390,7 +391,7 @@ hqDefine('cloudcare/js/utils', [
                 if (!moment.isMoment(dateString) || dateString instanceof Date) {
                     dateString = convertTwoDigitYear(dateString);
                 }
-                let dateObj = moment(dateString, dateFormat);
+                let dateObj = moment(dateString, formats, true);
                 return dateObj.isValid() ? dateObj : null;
             },
         });
