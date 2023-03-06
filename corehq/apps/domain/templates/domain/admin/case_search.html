@@ -85,6 +85,23 @@
         </div>
 
         <div data-bind="visible: toggleEnabled">
+          <h2>{% trans "Sync Cases On Form Entry" %}</h2>
+          <p>
+            <input id="sync-case-on-form-entry" type="checkbox" data-bind="checked: syncCaseOnFormEntry"/>
+            <label for="sync-case-on-form-entry">
+              {% blocktrans %}
+                Update local case data immediately before entering a web apps form.
+              {% endblocktrans %}
+            </label>
+          </p>
+          <p class="help-block">
+            {% blocktrans %}
+              This will slow down form entry, but will prevent stale case data from populating the form.
+            {% endblocktrans %}
+          </p>
+        </div>
+
+        <div data-bind="visible: toggleEnabled">
           <h2>{% trans "Remove Special Characters" %}</h2>
           <p>
             {% blocktrans %}
