@@ -47,8 +47,7 @@ class CreateEventForm(forms.Form):
     )
     expected_attendees = forms.MultipleChoiceField(
         label=_("Attendees"),
-        validators=[MinLengthValidator(1)],
-        required=True,
+        required=False,
     )
 
     def __init__(self, *args, **kwargs):

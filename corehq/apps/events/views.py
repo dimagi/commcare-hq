@@ -142,7 +142,7 @@ class EventCreateView(BaseEventView):
             sameday_reg=event_data['sameday_reg'],
             track_each_day=event_data['track_each_day'],
             manager_id=self.request.couch_user.user_id,
-            expected_attendees_ids=event_data['expected_attendees'],
+            expected_attendees_ids=event_data.get('expected_attendees', None),
         )
         event.save()
 

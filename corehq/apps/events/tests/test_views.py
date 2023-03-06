@@ -192,6 +192,7 @@ class TestEventsCreateView(BaseEventViewTestClass):
             'attendance_target': 10,
             'sameday_reg': True,
             'track_each_day': False,
+            'expected_attendees': [],
         }
 
     def _create_mobile_worker(self, username):
