@@ -3,6 +3,8 @@ from datetime import datetime
 
 from django.core.management.base import BaseCommand
 
+from dimagi.utils.chunked import chunked
+
 from corehq.apps.app_manager.models import Application
 from corehq.apps.app_manager.management.commands.helpers import get_all_app_ids
 from corehq.toggles import SYNC_SEARCH_CASE_CLAIM
@@ -52,21 +54,22 @@ class Command(BaseCommand):
             domains = sorted(SYNC_SEARCH_CASE_CLAIM.get_enabled_domains())
 
         results = []
-        for domain in with_progress_bar(domains, length=len(domains)):
-            app_ids = get_all_app_ids(domain, include_builds=include_builds)
-            for app_id in app_ids:
-                doc = Application.get_db().get(app_id)
-                for index, module in enumerate(doc.get("modules", [])):
-                    if module.get("search_config", {}):
-                        if options['prop_attr']:
-                            for info in self._handle_property_attribute(domain, app_id, doc, module, attr):
-                                results.append(info)
-                        elif module.get("search_config").get(attr, None):
-                            results.append(PropertyInfo(domain,
-                                                        doc.get("copy_of") or app_id,
-                                                        doc.get("version"),
-                                                        module.get("unique_id"),
-                                                        attr))
+        for chunk in chunked(with_progress_bar(domains, length=len(domains)), 50):
+            for domain in chunk:
+                app_ids = get_all_app_ids(domain, include_builds=include_builds)
+                for app_id in app_ids:
+                    doc = Application.get_db().get(app_id)
+                    for index, module in enumerate(doc.get("modules", [])):
+                        if module.get("search_config", {}):
+                            if options['prop_attr']:
+                                for info in self._handle_property_attribute(domain, app_id, doc, module, attr):
+                                    results.append(info)
+                            elif module.get("search_config").get(attr, None):
+                                results.append(PropertyInfo(domain,
+                                                            doc.get("copy_of") or app_id,
+                                                            doc.get("version"),
+                                                            module.get("unique_id"),
+                                                            attr))
 
         result_domains = {b.domain for b in results}
         result_apps = {b.app_id for b in results}
