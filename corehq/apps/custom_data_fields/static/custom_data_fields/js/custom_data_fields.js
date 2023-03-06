@@ -12,7 +12,6 @@ hqDefine('custom_data_fields/js/custom_data_fields', [
     _,
     assertProperties,
     initialPageData,
-    toggles,
     uiElementKeyValueList
 ) {
     function Choice(choice) {
