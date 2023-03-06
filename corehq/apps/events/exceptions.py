@@ -1,3 +1,0 @@
-
-class EventDoesNotExist(Exception):
-    pass

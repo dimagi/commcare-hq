@@ -15,7 +15,6 @@ from corehq.apps.users.models import HqPermissions
 from corehq.apps.users.views import BaseUserSettingsView
 from corehq.util.jqueryrmi import JSONResponseMixin
 
-from .exceptions import EventDoesNotExist
 from .forms import CreateEventForm
 from .models import Event, get_paginated_attendees
 
@@ -198,7 +197,7 @@ class EventEditView(EventCreateView):
     @property
     def event(self):
         if self.event_obj is None:
-            raise EventDoesNotExist
+            raise Event.DoesNotExist
         return self.event_obj
 
     def post(self, request, *args, **kwargs):
