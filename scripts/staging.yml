@@ -81,7 +81,6 @@ branches:
     - ad/tableau-user-syncing-various-2 # Addison Feb 24
     - pkv/accessibility-mapbox-geocoder-widget # Pawan Feb 27
     - gh/improve-pillow-logging-take-2 # Graham Mar 1
-    - cs/SC-2485-create-ATE-page # Charl Mar 2
     - dmr/grapevine-url  # Danny Mar 3
     - gh/django-field-audit/1.2.6 # Graham Mar 3
 submodules: { }
