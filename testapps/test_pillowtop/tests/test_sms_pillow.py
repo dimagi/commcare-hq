@@ -30,7 +30,7 @@ class SqlSMSPillowTest(TestCase):
     def tearDown(self):
         ensure_index_deleted(SMS_INDEX_INFO.index)
         SMS.objects.filter(domain=self.domain).delete()
-        MessagingSubEvent.objects.filter(parent__domain=self.domain).delete()
+        MessagingSubEvent.objects.filter(domain=self.domain).delete()
         MessagingEvent.objects.filter(domain=self.domain).delete()
         super(SqlSMSPillowTest, self).tearDown()
 

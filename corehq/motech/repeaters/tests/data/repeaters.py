@@ -1,3 +1,292 @@
+# flake8: noqa: E501
+openmrs_repeater = {
+    "include_app_id_param": False,
+    "location_id": "581fe9d38a2c4eaf8e1fee1420800118",
+    "openmrs_config":
+    {
+        "openmrs_provider": "35711912-13A6-47F9-8D54-655FCAD75895",
+        "case_config":
+        {
+            "patient_identifiers":
+            {
+                "uuid":
+                {
+                    "case_property": "external_id"
+                }
+            },
+            "match_on_ids":
+            [
+                "uuid"
+            ],
+            "person_properties":
+            {},
+            "person_preferred_name":
+            {},
+            "person_preferred_address":
+            {},
+            "person_attributes":
+            {},
+            "doc_type": "OpenmrsCaseConfig",
+            "import_creates_cases": False
+        },
+        "form_configs":
+        [
+            {
+                "__form_name__": "prenatal",
+                "doc_type": "OpenmrsFormConfig",
+                "xmlns": "http://openrosa.org/formdesigner/00822D7D-D6B9-4F02-9067-02AAEA49436F",
+                "openmrs_visit_type": "90973824-1AE9-4E22-B2BB-9CBD56FB3238",
+                "openmrs_observations":
+                [
+                    {
+                        "doc_type": "ObservationMapping",
+                        "concept": "3ce934fa-26fe-102b-80cb-0017a47871b2",
+                        "value":
+                        {
+                            "form_question": "/data/signes_vitaux_de_la_mre/TA_Systolique"
+                        },
+                        "case_property": None
+                    },
+                    {
+                        "doc_type": "ObservationMapping",
+                        "concept": "3cd95a58-26fe-102b-80cb-0017a47871b2",
+                        "value":
+                        {
+                            "form_question": "/data/signes_durgence_de_la_mre/douleur_abdominale_contractions",
+                            "value_map":
+                            {
+                                "oui": "3ccdf8d4-26fe-102b-80cb-0017a47871b2"
+                            }
+                        },
+                        "case_property": None
+                    },
+                    {
+                        "doc_type": "ObservationMapping",
+                        "concept": "3cdd2188-26fe-102b-80cb-0017a47871b2",
+                        "value":
+                        {
+                            "form_question": "/data/signes_durgence_de_la_mre/douleur_abdominale_contractions",
+                            "value_map":
+                            {
+                                "non": "3ccdf8d4-26fe-102b-80cb-0017a47871b2"
+                            }
+                        },
+                        "case_property": None
+                    },
+                    {
+                        "doc_type": "ObservationMapping",
+                        "concept": "3cd95a58-26fe-102b-80cb-0017a47871b2",
+                        "value":
+                        {
+                            "form_question": "/data/signes_durgence_de_la_mre/infection_vaginale",
+                            "value_map":
+                            {
+                                "oui": "117010AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
+                            }
+                        },
+                        "case_property": None
+                    },
+                    {
+                        "doc_type": "ObservationMapping",
+                        "concept": "3cdd2188-26fe-102b-80cb-0017a47871b2",
+                        "value":
+                        {
+                            "form_question": "/data/signes_durgence_de_la_mre/infection_vaginale",
+                            "value_map":
+                            {
+                                "non": "117010AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
+                            }
+                        },
+                        "case_property": None
+                    },
+                    {
+                        "doc_type": "ObservationMapping",
+                        "concept": "3cd95a58-26fe-102b-80cb-0017a47871b2",
+                        "value":
+                        {
+                            "form_question": "/data/signes_durgence_de_la_mre/saignement",
+                            "value_map":
+                            {
+                                "oui": "150802AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
+                            }
+                        },
+                        "case_property": None
+                    },
+                    {
+                        "doc_type": "ObservationMapping",
+                        "concept": "3cdd2188-26fe-102b-80cb-0017a47871b2",
+                        "value":
+                        {
+                            "form_question": "/data/signes_durgence_de_la_mre/saignement",
+                            "value_map":
+                            {
+                                "non": "150802AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
+                            }
+                        },
+                        "case_property": None
+                    },
+                    {
+                        "doc_type": "ObservationMapping",
+                        "concept": "1912AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+                        "value":
+                        {
+                            "form_question": "/data/education/education_effectue_3",
+                            "value_map":
+                            {
+                                "nutrition_diete": "161073AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
+                            }
+                        },
+                        "case_property": None
+                    },
+                    {
+                        "doc_type": "ObservationMapping",
+                        "concept": "164141AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+                        "value":
+                        {
+                            "form_question": "/metadata/username"
+                        },
+                        "case_property": None
+                    }
+                ],
+                "openmrs_start_datetime":
+                {
+                    "form_question": "/data/maternel/date_visite_domicile",
+                    "external_data_type": "omrs_date"
+                },
+                "openmrs_encounter_type": "91DDF969-A2D4-4603-B979-F2D6F777F4AF",
+                "openmrs_form": None,
+                "bahmni_diagnoses":
+                []
+            },
+            {
+                "__form_name__": "post partum",
+                "doc_type": "OpenmrsFormConfig",
+                "xmlns": "http://openrosa.org/formdesigner/A9613D9D-4D86-4775-A984-3B199CF68000",
+                "openmrs_visit_type": "90973824-1AE9-4E22-B2BB-9CBD56FB3238",
+                "openmrs_observations":
+                [
+                    {
+                        "doc_type": "ObservationMapping",
+                        "concept": "3ce934fa-26fe-102b-80cb-0017a47871b2",
+                        "value":
+                        {
+                            "form_question": "/data/maternel/signes_vitaux_de_la_mre/ta_systolic"
+                        },
+                        "case_property": None
+                    },
+                    {
+                        "doc_type": "ObservationMapping",
+                        "concept": "3cd9d956-26fe-102b-80cb-0017a47871b2",
+                        "value":
+                        {
+                            "form_question": "/data/autres_commentaires/commentaires"
+                        },
+                        "case_property": None
+                    },
+                    {
+                        "doc_type": "ObservationMapping",
+                        "concept": "164141AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+                        "value":
+                        {
+                            "form_question": "/metadata/username"
+                        },
+                        "case_property": None
+                    }
+                ],
+                "openmrs_start_datetime":
+                {
+                    "form_question": "/data/Suivi_Maternal/date_visite_domicile",
+                    "external_data_type": "omrs_date"
+                },
+                "openmrs_encounter_type": "690670E2-A0CC-452B-854D-B95E2EAB75C9",
+                "openmrs_form": None,
+                "bahmni_diagnoses":
+                []
+            },
+            {
+                "__form_name__": "pediatric",
+                "doc_type": "OpenmrsFormConfig",
+                "xmlns": "http://openrosa.org/formdesigner/D5FAB5A6-97CE-45C1-9F38-00CEFE3A0C0A",
+                "openmrs_visit_type": "90973824-1AE9-4E22-B2BB-9CBD56FB3238",
+                "openmrs_observations":
+                [
+                    {
+                        "doc_type": "ObservationMapping",
+                        "concept": "3ce939d2-26fe-102b-80cb-0017a47871b2",
+                        "value":
+                        {
+                            "form_question": "/data/signes_vitaux_du_bb/temp-BB"
+                        },
+                        "case_property": None
+                    },
+                    {
+                        "doc_type": "ObservationMapping",
+                        "concept": "3ce93824-26fe-102b-80cb-0017a47871b2",
+                        "value":
+                        {
+                            "form_question": "/data/signes_vitaux_du_bb/fc_bb"
+                        },
+                        "case_property": None
+                    },
+                    {
+                        "doc_type": "ObservationMapping",
+                        "concept": "160908AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+                        "value":
+                        {
+                            "form_question": "/data/signes_vitaux_du_bb/muac",
+                            "value_map":
+                            {
+                                "rouge": "127778AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+                                "jaune": "160910AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+                                "verte": "160909AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
+                            }
+                        },
+                        "case_property": None
+                    },
+                    {
+                        "doc_type": "ObservationMapping",
+                        "concept": "164141AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+                        "value":
+                        {
+                            "form_question": "/metadata/username"
+                        },
+                        "case_property": None
+                    }
+                ],
+                "openmrs_encounter_type": "0CF4717A-479F-4349-AE6F-8602E2AA41D3",
+                "openmrs_form": None,
+                "bahmni_diagnoses":
+                [],
+                "openmrs_start_datetime":
+                {
+                    "form_question": "/data/enfant/date_of_home_visit",
+                    "external_data_type": "omrs_date"
+                }
+            }
+        ],
+        "doc_type": "OpenmrsConfig"
+    },
+    "atom_feed_enabled": True,
+    "atom_feed_status": {
+        'patient': {
+            'last_polled_at': '2022-06-01T00:00:00.000000Z',
+            'last_page': None,
+            'doc_type': 'AtomFeedStatus'
+        }
+    },
+    "version": "2.0",
+    "white_listed_case_types":
+    [
+        "patient"
+    ],
+    "black_listed_users":
+    [],
+    "domain": "test_openmrs",
+    "format": "form_json",
+    "is_paused": False,
+    "connection_settings_id": 1,
+}
+
 repeater_test_data = [
     {
         "doc_type": "FormRepeater",
@@ -1820,7 +2109,7 @@ repeater_test_data = [
             ],
             "doc_type": "OpenmrsConfig"
         },
-        "atom_feed_enabled": False,
+        "atom_feed_enabled": True,
         "atom_feed_status": {
             'patient': {
                 'last_polled_at': '2022-06-01T00:00:00.000000Z',
@@ -7412,3 +7701,79 @@ repeater_test_data = [
         "dhis2_version_last_modified": "2021-12-14T09:32:20.240151Z"
     }
 ]
+
+ENCOUNTER_FEED_XML = """<?xml version="1.0" encoding="UTF-8"?>
+    <feed xmlns="http://www.w3.org/2005/Atom">
+      <title>Patient AOP</title>
+      <link rel="self" type="application/atom+xml" href="https://13.232.58.186/openmrs/ws/atomfeed/encounter/recent" />
+      <link rel="via" type="application/atom+xml" href="https://13.232.58.186/openmrs/ws/atomfeed/encounter/335" />
+      <link rel="prev-archive" type="application/atom+xml" href="https://13.232.58.186/openmrs/ws/atomfeed/encounter/334" />
+      <author>
+        <name>OpenMRS</name>
+      </author>
+      <id>bec795b1-3d17-451d-b43e-a094019f6984+335</id>
+      <generator uri="https://github.com/ICT4H/atomfeed">OpenMRS Feed Publisher</generator>
+      <updated>2018-06-13T08:32:57Z</updated>
+      <entry>
+        <title>Encounter</title>
+        <category term="Encounter" />
+        <id>tag:atomfeed.ict4h.org:af713a2e-b961-4cb0-be59-d74e8b054415</id>
+        <updated>2022-06-02T05:08:57Z</updated>
+        <published>2022-06-02T05:08:57Z</published>
+        <content type="application/vnd.atomfeed+xml"><![CDATA[/openmrs/ws/rest/v1/bahmnicore/bahmniencounter/0f54fe40-89af-4412-8dd4-5eaebe8684dc?includeAll=true]]></content>
+      </entry>
+      <entry>
+        <title>Encounter</title>
+        <category term="Encounter" />
+        <id>tag:atomfeed.ict4h.org:320834be-e9c8-4b09-a99e-691dff18b3e4</id>
+        <updated>2018-06-13T05:08:57Z</updated>
+        <published>2018-06-13T05:08:57Z</published>
+        <content type="application/vnd.atomfeed+xml"><![CDATA[/openmrs/ws/rest/v1/bahmnicore/bahmniencounter/0f54fe40-89af-4412-8dd4-5eaebe8684dc?includeAll=true]]></content>
+      </entry>
+      <entry>
+        <title>Encounter</title>
+        <category term="Encounter" />
+        <id>tag:atomfeed.ict4h.org:fca253aa-b917-4166-946e-9da9baa901da</id>
+        <updated>2018-06-13T05:09:12Z</updated>
+        <published>2018-06-13T05:09:12Z</published>
+        <content type="application/vnd.atomfeed+xml"><![CDATA[/openmrs/ws/rest/v1/bahmnicore/bahmniencounter/c6d6c248-8cd4-4e96-a110-93668e48e4db?includeAll=true]]></content>
+      </entry>
+    </feed>"""
+
+PATIENT_FEED_XML = """<?xml version="1.0" encoding="UTF-8"?>
+    <feed xmlns="http://www.w3.org/2005/Atom">
+      <title>Patient AOP</title>
+      <link rel="self" type="application/atom+xml" href="http://www.example.com/openmrs/ws/atomfeed/patient/recent" />
+      <link rel="via" type="application/atom+xml" href="http://www.example.com/openmrs/ws/atomfeed/patient/32" />
+      <link rel="prev-archive" type="application/atom+xml" href="http://www.example.com/openmrs/ws/atomfeed/patient/31" />
+      <author>
+        <name>OpenMRS</name>
+      </author>
+      <id>bec795b1-3d17-451d-b43e-a094019f6984+32</id>
+      <generator uri="https://github.com/ICT4H/atomfeed">OpenMRS Feed Publisher</generator>
+      <updated>2022-07-26T10:56:10Z</updated>
+      <entry>
+        <title>Patient</title>
+        <category term="patient" />
+        <id>tag:atomfeed.ict4h.org:6fdab6f5-2cd2-4207-b8bb-c2884d6179f6</id>
+        <updated>2025-01-17T19:44:40Z</updated>
+        <published>2025-01-17T19:44:40Z</published>
+        <content type="application/vnd.atomfeed+xml"><![CDATA[/openmrs/ws/rest/v1/patient/e8aa08f6-86cd-42f9-8924-1b3ea021aeb4?v=full]]></content>
+      </entry>
+      <entry>
+        <title>Patient</title>
+        <category term="patient" />
+        <id>tag:atomfeed.ict4h.org:5c6b6913-94a0-4f08-96a2-6b84dbced26e</id>
+        <updated>2025-01-17T19:46:14Z</updated>
+        <published>2025-01-17T19:46:14Z</published>
+        <content type="application/vnd.atomfeed+xml"><![CDATA[/openmrs/ws/rest/v1/patient/e8aa08f6-86cd-42f9-8924-1b3ea021aeb4?v=full]]></content>
+      </entry>
+      <entry>
+        <title>Patient</title>
+        <category term="patient" />
+        <id>tag:atomfeed.ict4h.org:299c435d-b3b4-4e89-8188-6d972169c13d</id>
+        <updated>2025-01-17T19:57:09Z</updated>
+        <published>2025-01-17T19:57:09Z</published>
+        <content type="application/vnd.atomfeed+xml"><![CDATA[/openmrs/ws/rest/v1/patient/e8aa08f6-86cd-42f9-8924-1b3ea021aeb4?v=full]]></content>
+      </entry>
+    </feed>"""

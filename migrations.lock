@@ -83,6 +83,11 @@ accounting
  0061_remove_enterprise_v1
  0062_add_release_management_to_enterprise
  0063_replace_linked_projects_ff_with_erm
+ 0064_add_form_link_workflow_priv
+ 0065_phone_apk_heartbeat_privs
+ 0066_data_file_download_priv
+ 0067_add_view_app_diff_priv
+ 0068_regex_field_validation_privilege
 admin
  0001_initial
  0002_logentry_remove_auto_add
@@ -125,6 +130,9 @@ app_manager
  0020_exchangeapplication_allow_blank_privilege
  0021_migrate_case_search_itemset_ids
  0022_migrate_to_conditional_case_update
+ 0023_applicationreleaselog
+ 0024_applicationreleaselog_info
+ 0025_migrate_to_search_filter_flag
 auditcare
  0001_sqlmodels
  0002_uniques
@@ -132,6 +140,7 @@ auditcare
  0004_add_couch_id
  0005_auditcaremigrationmeta
  0006_auto_20210811_1215
+ 0007_delete_auditcaremigrationmeta
 auth
  0001_initial
  0002_alter_permission_name_max_length
@@ -255,6 +264,7 @@ data_dictionary
  0006_caseproperty_group
  0007_property_type_choices
  0008_casepropertyallowedvalue
+ 0009_caseproperty_label
 data_interfaces
  0001_initial
  0002_remove_exists_option
@@ -285,6 +295,9 @@ data_interfaces
  0027_auto_20220511_2017
  0028_auto_20220420_1301
  0029_locationfilterdefinition_include_child_locations
+ 0030_add_workflow_choices
+ 0031_add_domaincaserulerun_status_choices
+ 0032_bootstrap_audit_events_for_update_rules
 dhis2
  0001_initial
  0002_auto_20170322_1323
@@ -328,6 +341,7 @@ domain
  0011_alloweducrexpressionsettings
  0012_operatorcalllimitsettings
  0013_accountconfirmationsettings_squashed_0016_alter_smsaccountconfirmationsettings_project_name (4 squashed migrations)
+ 0014_appreleasemodesetting
 domain_migration_flags
  0001_initial
  0002_migrate_data_from_tzmigration
@@ -339,6 +353,11 @@ enterprise
  0002_enterprisepermissions_account_unique
  0003_enterprisepermissions_modify_account
  0004_enterprisemobileworkersettings
+es
+ 0001_bootstrap_es_indexes
+ 0002_add_tombstones
+events
+ 0001_add_events_model
 export
  0001_initial
  0002_datafile
@@ -372,7 +391,9 @@ fixtures
  0002_rm_blobdb_domain_fixtures
  0003_rm_blobdb_domain_fixtures
  0004_userlookuptablestatus
- 0005_lookuptablemodels
+ 0005_sqllookuptablemodels (3 squashed migrations)
+ 0008_sqllookuptables
+ 0009_remove_lookuptablerowowner_couch_id
 form_processor
  0001_initial
  0002_xformattachmentsql
@@ -474,6 +495,10 @@ formplayer_api
  0001_drop_old_tables
 generic_inbound
  0001_initial
+ 0002_configurableapivalidation
+ 0003_add_logging_models
+ 0004_add_filter_expression
+ 0005_remove_requestlog_unused_fields
 hqadmin
  0001_initial
  0002_vcmmigrationaudit
@@ -505,6 +530,7 @@ hqwebapp
  0007_user_access_agent
  0008_hqoauthapplication
  0009_truncate_authtoken_table
+ 0010_maintenancealert_scheduling
 integration
  0001_initial
  0002_dialersettings
@@ -654,6 +680,8 @@ pillowtop
  0005_kafkacheckpoint_doc_modification_time
  0006_add_geopoint_to_case_search_index
  0007_copy_xforms_checkpoint
+preindex
+ 0001_initial
 products
  0001_initial
 project_limits
@@ -683,6 +711,12 @@ repeaters
  0005_rename_repeaterstub_to_sql_repeater
  0006_add_proxy_models
  0007_migrate_to_sql
+ 0008_add_related_name_in_connection_settings
+ 0009_add_create_update_info
+ 00010_add_repeater_name
+ 0011_alter_sqlrepeater_name
+ 00012_create_default_names_for_repeaters
+ 0013_rename_sqlrepeaters_to_repeaters
 reports
  0001_initial
  0002_auto_20171121_1803
@@ -694,6 +728,9 @@ reports
  0008_tableauvisualization_title
  0009_remove_tableauserver_domain_username
  0010_delete_reportssidebarordering
+ 0011_tableauconnectedapp
+ 0012_tableaugroup_tableauuser
+ 0013_tableau_various_20221205
 saved_reports
  0001_initial
  0002_scheduledreportlog
@@ -788,6 +825,11 @@ sms
  0049_auto_enable_turnio_ff
  0050_sms_email_date_modified
  0051_reset_modified_on
+ 0052_messagingsubevent_date_last_activity
+ 0053_alter_messagingsubevent_date_last_activity
+ 0054_messagingsubevent_domain
+ 0055_messagingsubevent_index_domain_date_id
+ 0056_backfill_sms_event_date
 smsbillables
  0001_initial
  0002_bootstrap
@@ -888,6 +930,7 @@ sql_accessors
  0065_get_ledger_values_for_cases_3
  0066_drop_unused_function
  0067_livequery_sql
+ 0067_livequery_sql_include_deleted_indices
 sql_proxy_accessors
  0001_initial
  0002_add_sync_functions
@@ -952,6 +995,7 @@ stock
  0001_squashed_0002_stockreport_server_date
  0002_delete_stocktransaction
  0003_delete_stock_models
+ 0004_drop_unused_stock_tables
 tastypie
  0001_initial
  0002_api_access_url_length
@@ -1054,6 +1098,10 @@ users
  0045_add_view_tableau_permission
  0046_add_default_mobile_worker_role
  0047_rename_sqlpermission_permission
+ 0048_expiring_keys
+ 0049_add_data_dict_permissions
+ 0050_add_manage_attendance_tracking_permission
+ 0051_add_attendance_tracking_privilege
 util
  0001_initial
  0002_complaintbouncemeta_permanentbouncemeta_transientbounceemail

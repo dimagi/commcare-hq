@@ -404,16 +404,23 @@ hqDefine('hqwebapp/js/main', [
         });
 
         // Maintenance alerts
-        var $maintenance = $(".alert-maintenance");
+        var $maintenance = $('.alert-maintenance');
         if ($maintenance.length) {
-            var id = $maintenance.data("id"),
-                alertCookie = "alert_maintenance";
-            if ($.cookie(alertCookie) != id) {  // eslint-disable-line eqeqeq
-                $maintenance.removeClass('hide');
-                $maintenance.on('click', '.close', function () {
-                    $.cookie(alertCookie, id, { expires: 7, path: '/', secure: initialPageData.get('secure_cookies') });
-                });
-            }
+            var alertCookie = 'alerts_maintenance';
+            var closedAlerts = $.cookie(alertCookie) ? JSON.parse($.cookie(alertCookie)) : [];
+
+            _.each($maintenance,
+                function (alert) {
+                    var id = $(alert).data('id');
+                    if (!closedAlerts.includes(id)) {
+                        $(alert).removeClass('hide');
+                        $(alert).on('click', '.close', function () {
+                            closedAlerts.push(id);
+                            $.cookie(alertCookie, JSON.stringify(closedAlerts), { expires: 7, path: '/', secure: initialPageData.get('secure_cookies') });
+                        });
+                    }
+                }
+            );
         }
 
         function unsupportedBrowser() {

@@ -1144,3 +1144,14 @@ class SMSAccountConfirmationSettings(models.Model):
     def get_settings(domain):
         domain_obj, _ = SMSAccountConfirmationSettings.objects.get_or_create(domain=domain)
         return domain_obj
+
+
+class AppReleaseModeSetting(models.Model):
+
+    domain = models.CharField(max_length=256, db_index=True, unique=True)
+    is_visible = models.BooleanField(default=False)
+
+    @staticmethod
+    def get_settings(domain):
+        domain_obj, created = AppReleaseModeSetting.objects.get_or_create(domain=domain)
+        return domain_obj

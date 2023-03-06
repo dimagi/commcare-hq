@@ -1,6 +1,5 @@
 from collections import defaultdict
 from datetime import datetime, timedelta
-from itertools import chain
 from operator import attrgetter
 
 from attrs import define, field
@@ -8,18 +7,16 @@ from attrs import define, field
 from django.core.exceptions import ValidationError
 from django.db.models import Q
 from django.db.models.functions import Lower
+from django.db.transaction import atomic
 from django.utils.translation import gettext as _
 
-from dimagi.utils.couch.bulk import CouchTransaction
-from dimagi.utils.couch.database import retry_on_couch_error as retry
+from dimagi.utils.chunked import chunked
 from soil import DownloadBase
 
 from corehq.apps.fixtures.models import (
-    FixtureDataItem,
-    FixtureDataType,
-    FixtureOwnership,
     LookupTable,
     LookupTableRow,
+    LookupTableRowOwner,
 )
 from corehq.apps.fixtures.upload.definitions import FixtureUploadResult
 from corehq.apps.fixtures.upload.const import INVALID, MULTIPLE
@@ -41,7 +38,7 @@ def upload_fixture_file(domain, filename, replace, task=None, skip_orm=False):
 def _run_upload(domain, workbook, replace=False, task=None, skip_orm=False):
     """Run lookup table upload
 
-    Performs only deletes and/or inserts on table row and ownership
+    Performs only deletes and/or inserts on table, row, and ownership
     records to optimize database interactions.
 
     Upload with `skip_orm=True` is faster than the default with the
@@ -53,27 +50,23 @@ def _run_upload(domain, workbook, replace=False, task=None, skip_orm=False):
             update_progress(table)
             if skip_orm:
                 return  # fast upload does not do ownership
-            if row is not new_row and row._id not in sql_row_ids:
-                rows.to_sync.append(row)
             owners.process(
                 workbook,
-                old_owners.get(row._id, []),
-                workbook.iter_ownerships(new_row, row._id, owner_ids, result.errors),
+                old_owners.get(row.id, []),
+                workbook.iter_ownerships(new_row, row.id, owner_ids, result.errors),
                 owner_key,
+                deleted_key=attrgetter("id"),
             )
 
-        old_rows = retry(FixtureDataItem.get_item_list)(domain, table.tag, bypass_cache=True)
-        sort_keys = {r._id: r.sort_key for r in old_rows}
+        old_rows = list(LookupTableRow.objects.iter_rows(domain, tag=table.tag))
+        sort_keys = {r.id.hex: r.sort_key for r in old_rows}
         if not skip_orm:
-            sql_row_ids = {id.hex for id in LookupTableRow.objects
-                .filter(id__in=list(sort_keys))
-                .values_list("id", flat=True)}
             old_owners = defaultdict(list)
-            for owner in retry(FixtureOwnership.for_all_item_ids)(list(sort_keys), domain):
-                old_owners[owner.data_item_id].append(owner)
-
-        if table is not new_table and table._id not in sql_table_ids:
-            tables.to_sync.append(table)
+            for owner in LookupTableRowOwner.objects.filter(
+                domain=domain,
+                row_id__in=list(sort_keys),
+            ):
+                old_owners[owner.row_id].append(owner)
 
         rows.process(
             workbook,
@@ -96,10 +89,7 @@ def _run_upload(domain, workbook, replace=False, task=None, skip_orm=False):
     else:
         owner_ids = load_owner_ids(workbook.get_owners(), domain)
     result.number_of_fixtures, update_progress = setup_progress(task, workbook)
-    old_tables = FixtureDataType.by_domain(domain, bypass_cache=True)
-    sql_table_ids = {id.hex for id in LookupTable.objects
-        .filter(id__in=[t._id for t in old_tables])
-        .values_list("id", flat=True)}
+    old_tables = list(LookupTable.objects.by_domain(domain))
     tables = Mutation()
     rows = Mutation()
     owners = Mutation()
@@ -117,7 +107,6 @@ def _run_upload(domain, workbook, replace=False, task=None, skip_orm=False):
         update_progress(None)
         flush(tables, rows, owners)
     finally:
-        clear_fixture_quickcache(domain, old_tables)
         clear_fixture_cache(domain)
     return result
 
@@ -126,7 +115,6 @@ def _run_upload(domain, workbook, replace=False, task=None, skip_orm=False):
 class Mutation:
     to_delete = field(factory=list)
     to_create = field(factory=list)
-    to_sync = field(factory=list)
 
     def process(
         self,
@@ -136,7 +124,7 @@ class Mutation:
         key,
         process_item=lambda item, new_item: None,
         delete_missing=True,
-        deleted_key=attrgetter("_id"),
+        deleted_key=lambda obj: obj.id.hex,
     ):
         old_map = {key(old): old for old in old_items}
         get_deleted_item = {deleted_key(x): x for x in old_items}.get
@@ -166,22 +154,24 @@ class Mutation:
 
 
 def flush(tables, rows, owners):
-    def sync_docs_to_sql():
-        if tables.to_sync:
-            FixtureDataType._migration_bulk_sync_to_sql(tables.to_sync, ignore_conflicts=True)
-        if rows.to_sync:
-            FixtureDataItem._migration_bulk_sync_to_sql(rows.to_sync, ignore_conflicts=True)
-        assert not owners.to_sync, owners.to_sync
+    def bulk_create(model_class, to_create):
+        for chunk in chunked(to_create, 1000, list):
+            model_class.objects.bulk_create(chunk)
 
-    with CouchTransaction() as couch:
-        for table in tables.to_delete:
-            table.recursive_delete(couch)
-        deleted_ids = {d._id for dx in couch.docs_to_delete.values() for d in dx}
-        to_delete = chain(rows.to_delete, owners.to_delete)
-        couch.delete_all(d for d in to_delete if d._id not in deleted_ids)
-        for doc in chain(tables.to_create, rows.to_create, owners.to_create):
-            couch.save(doc)
-        couch.add_post_commit_action(sync_docs_to_sql)
+    def bulk_delete(model_class, to_delete):
+        ids = (obj.id for obj in to_delete)
+        for chunk in chunked(ids, 1000, list):
+            model_class.objects.filter(id__in=chunk).delete()
+
+    with atomic():
+        bulk_delete(LookupTable, tables.to_delete)
+        bulk_delete(LookupTableRow, rows.to_delete)
+        bulk_delete(LookupTableRowOwner, owners.to_delete)
+
+        bulk_create(LookupTable, tables.to_create)
+        bulk_create(LookupTableRow, rows.to_create)
+        bulk_create(LookupTableRowOwner, owners.to_create)
+
     tables.clear()
     rows.clear()
     owners.clear()
@@ -234,7 +224,7 @@ def table_key(table):
 
 def row_key(row):
     return (
-        tuple(sorted(row.fields.items())),
+        tuple(sorted((k, tuple(v)) for k, v in row.fields.items())),
         tuple(sorted(row.item_attributes.items())),
         row.sort_key,
     )
@@ -292,28 +282,3 @@ def _load_location_ids_by_name(location_names, domain_name):
         by_name[name] = MULTIPLE if name in by_name else location_id
         by_code[site_code] = location_id
     return by_name | by_code
-
-
-def clear_fixture_quickcache(domain, data_types):
-    """
-    Clears quickcache for fixtures.dbaccessors
-
-    Args:
-        :domain: The domain that has been updated
-        :data_types: List of FixtureDataType objects with stale cache
-    """
-    from corehq.apps.fixtures.dbaccessors import (
-        get_fixture_data_types,
-        get_fixture_items_for_data_type
-    )
-    if not data_types:
-        get_fixture_data_types.clear(domain)
-        return
-
-    type_ids = set()
-    for data_type in data_types:
-        type_ids.add(data_type.get_id)
-        data_type.clear_caches()
-
-    for type_id in type_ids:
-        get_fixture_items_for_data_type.clear(domain, type_id)

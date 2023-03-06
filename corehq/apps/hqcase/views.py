@@ -17,7 +17,7 @@ from corehq.apps.domain.decorators import (
     require_superuser_or_contractor,
 )
 from corehq.apps.domain.views.settings import BaseProjectSettingsView
-from corehq.apps.es.case_search import ElasticCaseSearch
+from corehq.apps.es.case_search import case_search_adapter
 from corehq.apps.hqwebapp.decorators import waf_allow
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import HqPermissions
@@ -130,7 +130,7 @@ def _get_bulk_cases(request, case_ids=None, external_ids=None):
 
 def _get_single_case(request, case_id):
     try:
-        case = ElasticCaseSearch().get(case_id)
+        case = case_search_adapter.get(case_id)
         if case['domain'] != request.domain:
             raise NotFoundError()
     except NotFoundError:
@@ -154,7 +154,7 @@ def _handle_bulk_fetch(request):
 
 def _handle_list_view(request):
     try:
-        res = get_list(request.domain, request.GET.dict())
+        res = get_list(request.domain, request.GET)
     except UserError as e:
         return JsonResponse({'error': str(e)}, status=400)
 

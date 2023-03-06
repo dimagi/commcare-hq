@@ -32,18 +32,30 @@ hqDefine("reports/js/filters/case_list_explorer", ['jquery', 'underscore', 'knoc
         });
     };
 
-    var Property = function ($parent, name) {
+    var Property = function ($parent, name, label) {
         var self = {};
         self.name = ko.observable(name).trimmed();
+        self.label = ko.observable(label).trimmed();
 
-        self.meta_type = ko.computed(function () {
-            var value = _.find($parent.allSuggestions, function (prop) {
+        self._value = function () {
+            return _.find($parent.allSuggestions, function (prop) {
                 return prop.name === self.name();
             });
+        };
+
+        self.meta_type = ko.computed(() => {
+            var value = self._value();
             if (value) {
                 return value.meta_type;
             }
             return null;
+        });
+
+        self.name.subscribe(() => {
+            var value = self._value();
+            if (value) {
+                self.label(value.label || self.name());
+            }
         });
 
         return self;
@@ -58,7 +70,7 @@ hqDefine("reports/js/filters/case_list_explorer", ['jquery', 'underscore', 'knoc
         self.properties = ko.observableArray();
         for (var i = 0; i < initialColumns.length; i++) {
             var initialColumn = initialColumns[i];
-            self.properties.push(Property(self, initialColumn));
+            self.properties.push(Property(self, initialColumn.name, initialColumn.label));
         }
         self.properties.subscribe(function () {
             // When reordering properties, trigger a change to enable the "Apply" button
@@ -66,7 +78,7 @@ hqDefine("reports/js/filters/case_list_explorer", ['jquery', 'underscore', 'knoc
         });
 
         self.addProperty = function () {
-            self.properties.push(Property(self, ''));
+            self.properties.push(Property(self, '', ''));
         };
 
         self.removeProperty = function (property) {
@@ -78,7 +90,10 @@ hqDefine("reports/js/filters/case_list_explorer", ['jquery', 'underscore', 'knoc
 
             return JSON.stringify(
                 _.map(self.properties(), function (property) {
-                    return property.name();
+                    return {
+                        name: property.name(),
+                        label: property.label(),
+                    };
                 })
             );
         });

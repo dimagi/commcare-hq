@@ -4,6 +4,19 @@
 {% load i18n %}
 
 {% block page_content %}
+  {% if data_source.meta.build.is_rebuild_in_progress %}
+        <div id="built-warning" class="alert alert-warning">
+          <h4><i class="fa fa-exclamation-triangle"></i>
+          {% if data_source.meta.build.is_rebuilding %}
+            {% trans "Please note that this datasource is being rebuilt." %}
+          {% endif %}
+          {% if data_source.meta.build.is_rebuilding_in_place %}
+            {% trans "Please note that this datasource is being rebuilt in place." %}
+          {% endif %}
+          </h4>
+          {% trans "If rebuilt again next rebuild will only start when the previous rebuild(s) finishes." %}
+        </div>
+  {% endif %}
   {% if data_source.get_id %}
     <div class="btn-toolbar pull-right">
         <div class="btn-group">
@@ -18,7 +31,7 @@
         <div class="btn-group">
           <form method='post' action="{% url 'rebuild_configurable_data_source' domain data_source.get_id %}" >
             {% csrf_token %}
-            <div {% if is_rebuilding or data_source.disable_destructive_rebuild %}style="margin-right: 15px;"{% endif %}>
+            <div {% if data_source.disable_destructive_rebuild %}style="margin-right: 15px;"{% endif %}>
               {% if use_updated_ucr_naming %}
               <button type="submit"
                 class="btn btn-default disable-on-submit"
@@ -42,17 +55,11 @@
                 {% trans 'Rebuild Data Source'%}
               </button>
               {% endif %}
-              {# janky: can't use a tooltip on a disabled button, so instead add a help icon and force extra space (above) so it's clear which button this is for #}
+              {# janky: can't use a tooltip on a disabled button, so instead add a help icon and force extra space (above) so it's clear which button this is for. Todo: After bootstrap 4 upgrade there is a fix https://getbootstrap.com/docs/4.4/components/tooltips/#disabled-elements #}
               {% if data_source.disable_destructive_rebuild %}
                 <span class="hq-help-template"
                   data-title="{% trans_html_attr "Rebuild Unavailable" %}"
                   data-content="{% trans_html_attr "Fully rebuilding has been disabled for this data source. Please use the in place rebuild if necessary." %}"
-                  data-placement="left"></span>
-              {% endif %}
-              {% if is_rebuilding %}
-                <span class="hq-help-template"
-                  data-title="{% trans_html_attr "Rebuilding Data Source" %}"
-                  data-content="{% trans_html_attr "Currently a rebuild is already in progress for this data source. The next rebuild will start when the previous rebuild(s) finishes." %}"
                   data-placement="left"></span>
               {% endif %}
             </div>
@@ -88,13 +95,6 @@
             <li>
               <a class="submit-dropdown-form"
                  href=""
-                {% if is_rebuilding_inplace %}
-                  data-toggle="popover"
-                  title="Warning"
-                  data-container="body"
-                  data-content="{% trans_html_attr "Currently an in-place rebuild is already in progress for this data source. The next rebuild will start when the previous rebuild(s) finishes." %}"
-                  data-trigger="hover"
-                {% endif %}
                  data-action="{% url 'build_in_place' domain data_source.get_id %}">
                 {% trans 'Rebuild Table in Place' %}
               </a>

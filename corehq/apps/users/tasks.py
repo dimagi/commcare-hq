@@ -231,7 +231,8 @@ def _rebuild_case_with_retries(self, domain, case_id, detail):
             self.retry(exc=exc)
         except MaxRetriesExceededError:
             notify_exception(
-                "Maximum Retries Exceeded while rebuilding case {} during deletion.".format(case_id)
+                None,
+                f"Maximum Retries Exceeded while rebuilding case {case_id} during deletion.",
             )
 
 
@@ -329,7 +330,7 @@ def process_reporting_metadata_staging():
     lock_key = "PROCESS_REPORTING_METADATA_STAGING_TASK"
     process_reporting_metadata_lock = get_redis_lock(
         lock_key,
-        timeout=60 * 60, # one hour
+        timeout=60 * 60,  # one hour
         name=lock_key,
     )
     if not process_reporting_metadata_lock.acquire(blocking=False):
@@ -339,11 +340,11 @@ def process_reporting_metadata_staging():
     try:
         start = datetime.utcnow()
 
-        for i in range(20):
+        for i in range(100):
             with transaction.atomic():
                 records = (
                     UserReportingMetadataStaging.objects.select_for_update(skip_locked=True).order_by('pk')
-                )[:5]
+                )[:1]
                 for record in records:
                     user = CouchUser.get_by_user_id(record.user_id, record.domain)
                     try:

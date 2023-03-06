@@ -1,0 +1,60 @@
+# syntax=docker/dockerfile:1
+
+# Dockerfile_incl is built as the `commcarehq_incl` image, and is used
+# for running a simple but complete CommCare HQ environment that
+# includes Pillowtop and Celery containers.
+
+FROM python:3.9
+MAINTAINER Dimagi <devops@dimagi.com>
+
+ENV PYTHONUNBUFFERED=1 \
+    PYTHONUSERBASE=/vendor \
+    PATH=/vendor/bin:$PATH \
+    NODE_VERSION=14.19.1
+
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
+        default-jdk \
+        wget \
+        libxml2-dev \
+        libxmlsec1-dev \
+        libxmlsec1-openssl \
+        gettext
+
+# Deletes all package sources, so don't apt-get install anything after this:
+RUN rm -rf /var/lib/apt/lists/* /src/*.deb
+
+# Install Node
+RUN curl -SLO "https://nodejs.org/dist/v$NODE_VERSION/node-v$NODE_VERSION-linux-x64.tar.gz" && \
+    tar -xzf "node-v$NODE_VERSION-linux-x64.tar.gz" -C /usr/local --strip-components=1 && \
+    rm "node-v$NODE_VERSION-linux-x64.tar.gz"
+
+RUN npm -g install \
+    yarn \
+    bower \
+    grunt-cli \
+    uglify-js
+
+# prefer https for git checkouts made by pip
+RUN git config --global url."https://".insteadOf git://
+
+WORKDIR /vendor
+RUN mkdir /sharedfiles
+RUN groupadd -r cchq && \
+    useradd -r -m -g cchq cchq && \
+    chown cchq:cchq /vendor /sharedfiles
+USER cchq:cchq
+
+COPY --chown=cchq:cchq requirements/prod-requirements.txt /vendor/requirements.txt
+RUN pip install --upgrade pip && \
+    pip install -r requirements.txt --user --upgrade && \
+    pip cache purge
+
+COPY --chown=cchq:cchq package.json /vendor/
+RUN npm shrinkwrap && \
+    yarn global add phantomjs-prebuilt
+
+COPY --chown=cchq:cchq . /vendor/
+COPY --chown=cchq:cchq docker/min_settings.py /vendor/localsettings.py
+RUN mkdir /vendor/log
+RUN python manage.py collectstatic --noinput

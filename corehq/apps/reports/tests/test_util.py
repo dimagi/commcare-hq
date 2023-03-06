@@ -1,33 +1,21 @@
 import os
-from unittest.mock import patch
+from unittest.mock import patch, Mock
 
 from django.core.cache import cache
 from django.test import SimpleTestCase
 
 from testil import eq
 
-from corehq.apps.app_manager.xform import XForm
-from corehq.apps.reports.exceptions import EditFormValidationError
 from corehq.apps.reports.tasks import summarize_user_counts
-from corehq.apps.reports.util import get_user_id_from_form, validate_xform_for_edit
+from corehq.apps.reports.util import get_user_id_from_form
 from corehq.form_processor.exceptions import XFormNotFound
 from corehq.form_processor.models import XFormInstance
 from corehq.form_processor.utils import TestFormMetadata
 from corehq.util.test_utils import TestFileMixin, get_form_ready_to_save
+from corehq.apps.reports.standard.cases.utils import get_user_type
 
 DOMAIN = 'test_domain'
 USER_ID = "5bc1315c-da6f-466d-a7c4-4580bc84a7b9"
-
-
-class TestValidateXFormForEdit(SimpleTestCase, TestFileMixin):
-    file_path = ('edit_forms',)
-    root = os.path.dirname(__file__)
-
-    def test_bad_calculate(self):
-        source = self.get_xml('bad_calculate')
-        xform = XForm(source)
-        with self.assertRaises(EditFormValidationError):
-            validate_xform_for_edit(xform)
 
 
 class TestSummarizeUserCounts(SimpleTestCase):
@@ -52,6 +40,26 @@ class TestSummarizeUserCounts(SimpleTestCase):
             summarize_user_counts({'a': 1, 'b': 10, 'c': 2}, n=4),
             {'a': 1, 'b': 10, 'c': 2, (): 0},
         )
+
+
+class TestGetUserType(SimpleTestCase):
+    def setUp(self):
+        self.form_metadata = Mock(userID=None, username='foobar')
+
+    def test_unknown_user(self):
+        self.assertEqual(get_user_type(self.form_metadata), 'Unknown')
+
+    def test_system_user(self):
+        self.form_metadata.username = 'system'
+        self.assertEqual(get_user_type(self.form_metadata), 'System')
+
+    @patch(
+        'corehq.apps.reports.standard.cases.utils.get_doc_info_by_id',
+        return_value=Mock(type_display='Foobar')
+    )
+    def test_display_user(self, _):
+        self.form_metadata.userID = '1234'
+        self.assertEqual(get_user_type(self.form_metadata), 'Foobar')
 
 
 def test_get_user_id():

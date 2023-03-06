@@ -19,11 +19,8 @@ from corehq.motech.repeaters.const import (
     RECORD_FAILURE_STATE,
     RECORD_SUCCESS_STATE,
 )
-from corehq.motech.repeaters.models import (
-    FormRepeater,
-    SQLFormRepeater,
-    send_request,
-)
+from corehq.motech.repeaters.models import FormRepeater, send_request
+from corehq.util.test_utils import timelimit
 
 DOMAIN = ''.join([random.choice(string.ascii_lowercase) for __ in range(20)])
 
@@ -45,21 +42,14 @@ class ServerErrorTests(TestCase, DomainSubscriptionMixin):
             domain=DOMAIN,
             connection_settings_id=conn.id,
             include_app_id_param=False,
+            repeater_id=uuid4().hex
         )
-        cls.repeater.save(sync_to_sql=False)
-        cls.sql_repeater = SQLFormRepeater(
-            domain=DOMAIN,
-            repeater_id=cls.repeater.get_id,
-            connection_settings=conn,
-            format='form_xml',
-        )
-        cls.sql_repeater.save(sync_to_couch=False)
+        cls.repeater.save()
         cls.instance_id = str(uuid4())
         post_xform(cls.instance_id)
 
     @classmethod
     def tearDownClass(cls):
-        cls.sql_repeater.delete()
         cls.repeater.delete()
         cls.teardown_subscriptions()
         cls.domain_obj.delete()
@@ -68,7 +58,7 @@ class ServerErrorTests(TestCase, DomainSubscriptionMixin):
 
     def setUp(self):
         super().setUp()
-        self.repeat_record = self.sql_repeater.repeat_records.create(
+        self.repeat_record = self.repeater.repeat_records.create(
             domain=DOMAIN,
             payload_id=self.instance_id,
             registered_at=timezone.now(),
@@ -78,8 +68,8 @@ class ServerErrorTests(TestCase, DomainSubscriptionMixin):
         self.repeat_record.delete()
         super().tearDown()
 
-    def reget_sql_repeater(self):
-        return SQLFormRepeater.objects.get(pk=self.sql_repeater.pk)
+    def reget_repeater(self):
+        return FormRepeater.objects.get(pk=self.repeater.pk)
 
     def test_success_on_200(self):
         resp = ResponseMock(status_code=200, reason='OK')
@@ -91,8 +81,8 @@ class ServerErrorTests(TestCase, DomainSubscriptionMixin):
 
             self.assertEqual(self.repeat_record.attempts.last().state,
                              RECORD_SUCCESS_STATE)
-            sql_repeater = self.reget_sql_repeater()
-            self.assertIsNone(sql_repeater.next_attempt_at)
+            repeater = self.reget_repeater()
+            self.assertIsNone(repeater.next_attempt_at)
 
     def test_no_backoff_on_409(self):
         resp = ResponseMock(status_code=409, reason='Conflict')
@@ -104,9 +94,9 @@ class ServerErrorTests(TestCase, DomainSubscriptionMixin):
 
             self.assertEqual(self.repeat_record.attempts.last().state,
                              RECORD_FAILURE_STATE)
-            sql_repeater = self.reget_sql_repeater()
+            repeater = self.reget_repeater()
             # Trying tomorrow is just as likely to work as in 5 minutes
-            self.assertIsNone(sql_repeater.next_attempt_at)
+            self.assertIsNone(repeater.next_attempt_at)
 
     def test_no_backoff_on_500(self):
         resp = ResponseMock(status_code=500, reason='Internal Server Error')
@@ -118,10 +108,33 @@ class ServerErrorTests(TestCase, DomainSubscriptionMixin):
 
             self.assertEqual(self.repeat_record.attempts.last().state,
                              RECORD_FAILURE_STATE)
-            sql_repeater = self.reget_sql_repeater()
-            self.assertIsNone(sql_repeater.next_attempt_at)
+            repeater = self.reget_repeater()
+            self.assertIsNone(repeater.next_attempt_at)
 
+    @timelimit(65)
     def test_backoff_on_503(self):
+        """Configured with a custom timelimit to prevent intermittent test
+        failures in GitHub actions. Example:
+
+        ```
+        setup,corehq.motech.repeaters.tests.test_models_slow:ServerErrorTests.test_backoff_on_503,60.48151421546936,1673364559.7436702
+        ERROR
+
+        ======================================================================
+        ERROR: corehq.motech.repeaters.tests.test_models_slow:ServerErrorTests.test_backoff_on_503
+        ----------------------------------------------------------------------
+        Traceback (most recent call last):
+        File "/vendor/lib/python3.9/site-packages/nose/case.py", line 134, in run
+            self.runTest(result)
+        File "/vendor/lib/python3.9/site-packages/nose/case.py", line 152, in runTest
+            test(result)
+        File "/vendor/lib/python3.9/site-packages/django/test/testcases.py", line 245, in __call__
+            self._setup_and_call(result)
+        File "/vendor/lib/python3.9/site-packages/django/test/testcases.py", line 281, in _setup_and_call
+            super().__call__(result)
+        AssertionError: setup time limit (29.0) exceeded: 60.48151421546936
+        ```
+        """
         resp = ResponseMock(status_code=503, reason='Service Unavailable')
         with patch('corehq.motech.repeaters.models.simple_request') as simple_request:
             simple_request.return_value = resp
@@ -131,8 +144,8 @@ class ServerErrorTests(TestCase, DomainSubscriptionMixin):
 
             self.assertEqual(self.repeat_record.attempts.last().state,
                              RECORD_FAILURE_STATE)
-            sql_repeater = self.reget_sql_repeater()
-            self.assertIsNotNone(sql_repeater.next_attempt_at)
+            repeater = self.reget_repeater()
+            self.assertIsNotNone(repeater.next_attempt_at)
 
     def test_backoff_on_connection_error(self):
         with patch('corehq.motech.repeaters.models.simple_request') as simple_request:
@@ -143,8 +156,8 @@ class ServerErrorTests(TestCase, DomainSubscriptionMixin):
 
             self.assertEqual(self.repeat_record.attempts.last().state,
                              RECORD_FAILURE_STATE)
-            sql_repeater = self.reget_sql_repeater()
-            self.assertIsNotNone(sql_repeater.next_attempt_at)
+            repeater = self.reget_repeater()
+            self.assertIsNotNone(repeater.next_attempt_at)
 
 
 def post_xform(instance_id):

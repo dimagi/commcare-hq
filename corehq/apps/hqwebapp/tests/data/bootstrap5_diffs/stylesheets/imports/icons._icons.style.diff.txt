@@ -1,0 +1,28 @@
+--- 
++++ 
+@@ -11,11 +11,11 @@
+     }
+     &:hover i,
+     &.on i {
+-        color: @cc-att-pos-mid;
++        color: $cc-att-pos-mid;
+     }
+     .popover {
+         width: 300px;
+-        color: @text-color;
++        color: $text-color;
+     }
+ }
+ 
+@@ -23,9 +23,9 @@
+   width: 100%;
+   line-height: 30px;
+   text-align: center;
+-  color: @cc-brand-mid;
++  color: $cc-brand-mid;
+   &:hover {
+-    color: @cc-brand-low;
++    color: $cc-brand-low;
+   }
+ }
+ 

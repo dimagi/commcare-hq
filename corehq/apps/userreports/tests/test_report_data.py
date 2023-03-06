@@ -20,7 +20,7 @@ ReportDataTestRow = namedtuple('ReportDataTestRow', ['name', 'number', 'sort_key
 class ReportDataTest(TestCase):
 
     def setUp(self):
-        super(ReportDataTest, self).setUp()
+        super().setUp()
         # Create report
         self.domain = 'test-ucr-report-data'
         self.data_source = DataSourceConfiguration(
@@ -73,9 +73,10 @@ class ReportDataTest(TestCase):
         )
         self.data_source.validate()
         self.data_source.save()
+        self.addCleanup(self.data_source.delete)
         self.adapter = get_indicator_adapter(self.data_source)
         self.adapter.rebuild_table()
-        self.addCleanup(self.data_source.delete)
+        self.addCleanup(self.adapter.drop_table)
 
         # initialize a report on the data
         self.report_config = ReportConfiguration(

@@ -4,7 +4,7 @@ import shutil
 import tempfile
 import uuid
 from datetime import datetime, timedelta
-from distutils.version import LooseVersion
+from looseversion import LooseVersion
 from io import BytesIO
 from typing import Optional
 from uuid import uuid4

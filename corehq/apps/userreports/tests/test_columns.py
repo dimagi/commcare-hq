@@ -111,6 +111,7 @@ class ChoiceListColumnDbTest(TestCase):
         )
         adapter = get_indicator_adapter(data_source_config)
         adapter.rebuild_table()
+        self.addCleanup(adapter.drop_table)
         # ensure we can save data to the table.
         adapter.save({
             '_id': uuid.uuid4().hex,
@@ -195,6 +196,8 @@ class TestExpandedColumn(TestCase):
 
         if build_data_source:
             tasks.rebuild_indicators(self.data_source_config._id)
+            adapter = get_indicator_adapter(self.data_source_config)
+            self.addCleanup(adapter.drop_table)
 
         report_config = ReportConfiguration(
             domain=self.domain,
@@ -218,7 +221,7 @@ class TestExpandedColumn(TestCase):
 
     @classmethod
     def setUpClass(cls):
-        super(TestExpandedColumn, cls).setUpClass()
+        super().setUpClass()
         cls.data_source_config = DataSourceConfiguration(
             domain=cls.domain,
             display_name='foo',
@@ -245,17 +248,11 @@ class TestExpandedColumn(TestCase):
             } for field in ['my_field', 'field_name_with_CAPITAL_letters']],
         )
         cls.data_source_config.save()
-
-    @classmethod
-    def tearDownClass(cls):
-        cls.data_source_config.delete()
-        super(TestExpandedColumn, cls).tearDownClass()
+        cls.addClassCleanup(cls.data_source_config.delete)
 
     def tearDown(self):
-        adapter = get_indicator_adapter(self.data_source_config)
-        adapter.drop_table()
         connection_manager.dispose_engine(UCR_ENGINE_ID)
-        super(TestExpandedColumn, self).tearDown()
+        super().tearDown()
 
     def test_getting_distinct_values(self):
         data_source, column = self._build_report([

@@ -3,6 +3,9 @@ from contextlib import contextmanager
 from copy import deepcopy
 from datetime import datetime
 
+from django.core.exceptions import ValidationError
+from django.core.validators import validate_email
+
 from corehq import toggles
 from corehq.apps.accounting.utils import domain_is_on_trial
 from corehq.apps.app_manager.dbaccessors import get_app, get_latest_released_app
@@ -13,6 +16,7 @@ from corehq.apps.smsforms.app import start_session
 from corehq.apps.smsforms.tasks import send_first_message
 from corehq.apps.smsforms.util import form_requires_input, critical_section_for_smsforms_sessions
 from corehq.form_processor.utils import is_commcarecase
+from corehq.messaging.scheduling.exceptions import EmailValidationException
 from corehq.messaging.scheduling.models.abstract import Content
 from corehq.apps.reminders.models import EmailUsage
 from corehq.apps.sms.models import MessagingEvent, PhoneNumber, PhoneBlacklist, Email
@@ -133,9 +137,10 @@ class EmailContent(Content):
             logged_subevent.error(MessagingEvent.ERROR_NO_MESSAGE)
             return
 
-        email_address = recipient.get_email()
-        if not email_address:
-            logged_subevent.error(MessagingEvent.ERROR_NO_EMAIL_ADDRESS)
+        try:
+            email_address = self.get_recipient_email(recipient)
+        except EmailValidationException as e:
+            logged_subevent.error(e.error_type, additional_error_text=e.additional_text)
             return
 
         if is_trial and EmailUsage.get_total_count(logged_event.domain) >= self.TRIAL_MAX_EMAILS:
@@ -149,7 +154,7 @@ class EmailContent(Content):
 
         email = Email(
             domain=logged_event.domain,
-            date=datetime.utcnow(),
+            date=logged_subevent.date_last_activity,  # use date from subevent for consistency
             couch_recipient_doc_type=logged_subevent.recipient_type,
             couch_recipient=logged_subevent.recipient_id,
             messaging_subevent_id=logged_subevent.pk,
@@ -160,6 +165,18 @@ class EmailContent(Content):
         email.save()
 
         email_usage.update_count()
+
+    def get_recipient_email(self, recipient):
+        email_address = recipient.get_email()
+        if not email_address:
+            raise EmailValidationException(MessagingEvent.ERROR_NO_EMAIL_ADDRESS)
+
+        try:
+            validate_email(email_address)
+        except ValidationError as exc:
+            raise EmailValidationException(MessagingEvent.ERROR_INVALID_EMAIL_ADDRESS, str(exc))
+
+        return email_address
 
 
 class SMSSurveyContent(Content):

@@ -52,7 +52,7 @@ class BulkTest(SimpleTestCase):
 
 
 @sharded
-@es_test(index=TEST_INDEX_INFO)
+@es_test
 class TestBulkDocOperations(TestCase):
     @classmethod
     def setUpClass(cls):
@@ -141,7 +141,7 @@ class TestBulkDocOperations(TestCase):
         )
 
 
-@es_test(index=TEST_INDEX_INFO)
+@es_test
 class TestBulkOperationsCaseToSQL(TestCase):
 
     @classmethod

@@ -245,11 +245,9 @@ class DocumentClassLookupTest(SimpleTestCase):
 
     def test_a_few_important_ones(self):
         from corehq.apps.users.models import CommCareUser, WebUser
-        from corehq.apps.fixtures.models import FixtureDataType
         test_cases = [
             ('CommCareUser', CommCareUser),
             ('WebUser', WebUser),
-            ('FixtureDataType', FixtureDataType),
         ]
         for model_name, model_class in test_cases:
             self.assertEqual(model_class, get_document_class_by_doc_type(model_name))

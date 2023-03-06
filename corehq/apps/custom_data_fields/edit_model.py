@@ -7,6 +7,8 @@ from django.core.exceptions import ValidationError
 from django.core.validators import RegexValidator, validate_slug
 from django.utils.translation import gettext as _
 from django.utils.translation import gettext_lazy
+from django.utils.safestring import mark_safe
+from django.utils.html import format_html_join
 from corehq.apps.accounting.utils import domain_has_privilege
 from corehq import privileges
 
@@ -15,7 +17,6 @@ from corehq.apps.callcenter.tasks import bulk_sync_usercases_if_applicable
 
 from corehq.apps.hqwebapp.decorators import use_jquery_ui
 from corehq.apps.app_manager.helpers.validators import load_case_reserved_words
-from corehq.toggles import REGEX_FIELD_VALIDATION
 
 from .models import (
     CustomDataFieldsDefinition,
@@ -151,7 +152,9 @@ class CustomDataFieldsForm(forms.Form):
         errors.update(self.verify_profiles_validate(data_fields, profiles))
 
         if errors:
-            raise ValidationError('<br/>'.join(sorted(errors)))
+            separator = mark_safe('<br/>')  # nosec: no user input
+            error_html = format_html_join(separator, '{}', ((error,) for error in sorted(errors)))
+            raise ValidationError(error_html)
 
         return cleaned_data
 
@@ -307,7 +310,7 @@ class CustomDataModelMixin(object):
         return errors
 
     def get_field(self, field):
-        if REGEX_FIELD_VALIDATION.enabled(self.domain) and field.get('regex'):
+        if domain_has_privilege(self.domain, privileges.REGEX_FIELD_VALIDATION) and field.get('regex'):
             choices = []
             regex = field.get('regex')
             regex_msg = field.get('regex_msg')
@@ -332,6 +335,10 @@ class CustomDataModelMixin(object):
             "disable_save": self.request.method == "GET" or self.form.is_valid(),
             "show_purge_existing": self.show_purge_existing,
             "profiles_active": self.show_profiles and self.request.POST.get("profiles_active", "false") == "true",
+            "can_view_regex_field_validation": (
+                domain_has_privilege(self.domain, privileges.REGEX_FIELD_VALIDATION)
+                or self.request.user.is_superuser
+            )
         }
         if self.show_profiles:
             profiles = json.loads(self.form.data['profiles'])

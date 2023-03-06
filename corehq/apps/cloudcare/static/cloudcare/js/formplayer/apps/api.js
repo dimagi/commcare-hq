@@ -3,7 +3,9 @@
  */
 
 hqDefine("cloudcare/js/formplayer/apps/api", function () {
-    var FormplayerFrontend = hqImport("cloudcare/js/formplayer/app");
+    var Collections = hqImport("cloudcare/js/formplayer/apps/collections"),
+        FormplayerFrontend = hqImport("cloudcare/js/formplayer/app");
+
     var appsPromiseByRestoreAs = {};
     var appsByRestoreAs = {};
     var predefinedAppsPromise;
@@ -40,7 +42,7 @@ hqDefine("cloudcare/js/formplayer/apps/api", function () {
             }
             return appsPromise.pipe(function (apps) {
                 appsByRestoreAs[restoreAs] = apps;
-                return hqImport("cloudcare/js/formplayer/apps/collections")(apps);
+                return Collections(apps);
             });
         },
         getAppEntity: function (id) {
@@ -51,7 +53,7 @@ hqDefine("cloudcare/js/formplayer/apps/api", function () {
                              "it may have been called before getAppEntities populated it asynchronously.");
                 return null;
             }
-            var appCollection = hqImport("cloudcare/js/formplayer/apps/collections")(apps);
+            var appCollection = Collections(apps);
             return appCollection.get(id);
         },
     };

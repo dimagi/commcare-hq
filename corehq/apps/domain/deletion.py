@@ -298,7 +298,7 @@ DOMAIN_DELETE_OPERATIONS = [
     ModelDeletion('ivr', 'Call', 'domain'),
     ModelDeletion('sms', 'Keyword', 'domain', ['KeywordAction']),
     ModelDeletion('sms', 'PhoneNumber', 'domain'),
-    ModelDeletion('sms', 'MessagingSubEvent', 'parent__domain'),
+    ModelDeletion('sms', 'MessagingSubEvent', 'domain'),
     ModelDeletion('sms', 'MessagingEvent', 'domain'),
     ModelDeletion('sms', 'QueuedSMS', 'domain'),
     ModelDeletion('sms', 'PhoneBlacklist', 'domain'),
@@ -316,6 +316,7 @@ DOMAIN_DELETE_OPERATIONS = [
     ModelDeletion('app_manager', 'LatestEnabledBuildProfiles', 'domain'),
     ModelDeletion('app_manager', 'ResourceOverride', 'domain'),
     ModelDeletion('app_manager', 'GlobalAppConfig', 'domain'),
+    ModelDeletion('app_manager', 'ApplicationReleaseLog', 'domain'),
     ModelDeletion('case_importer', 'CaseUploadRecord', 'domain', [
         'CaseUploadFileMeta', 'CaseUploadFormRecord'
     ]),
@@ -351,7 +352,7 @@ DOMAIN_DELETE_OPERATIONS = [
     ModelDeletion('data_interfaces', 'CaseRuleCriteria', 'rule__domain'),
     ModelDeletion('data_interfaces', 'CaseRuleSubmission', 'rule__domain'),
     ModelDeletion('data_interfaces', 'CaseRuleSubmission', 'domain'),  # TODO
-    ModelDeletion('data_interfaces', 'AutomaticUpdateRule', 'domain'),
+    ModelDeletion('data_interfaces', 'AutomaticUpdateRule', 'domain', audit_action=AuditAction.AUDIT),
     ModelDeletion('data_interfaces', 'DomainCaseRuleRun', 'domain'),
     ModelDeletion('integration', 'DialerSettings', 'domain'),
     ModelDeletion('integration', 'GaenOtpServerSettings', 'domain'),
@@ -397,12 +398,18 @@ DOMAIN_DELETE_OPERATIONS = [
     ModelDeletion('registry', 'RegistryInvitation', 'domain'),
     ModelDeletion('reports', 'TableauServer', 'domain'),
     ModelDeletion('reports', 'TableauVisualization', 'domain'),
+    ModelDeletion('reports', 'TableauConnectedApp', 'server__domain'),
+    ModelDeletion('reports', 'TableauUser', 'server__domain'),
     ModelDeletion('smsforms', 'SQLXFormsSession', 'domain'),
     ModelDeletion('translations', 'TransifexOrganization', 'transifexproject__domain'),
     ModelDeletion('translations', 'SMSTranslations', 'domain'),
     ModelDeletion('translations', 'TransifexBlacklist', 'domain'),
     ModelDeletion('translations', 'TransifexProject', 'domain'),
-    ModelDeletion('generic_inbound', 'ConfigurableAPI', 'domain', audit_action=AuditAction.AUDIT),
+    ModelDeletion(
+        'generic_inbound', 'ConfigurableAPI', 'domain',
+        extra_models=["ConfigurableApiValidation", "RequestLog", "ProcessingAttempt"],
+        audit_action=AuditAction.AUDIT
+    ),
     ModelDeletion('userreports', 'AsyncIndicator', 'domain'),
     ModelDeletion('userreports', 'DataSourceActionLog', 'domain'),
     ModelDeletion('userreports', 'InvalidUCRData', 'domain'),
@@ -426,7 +433,7 @@ DOMAIN_DELETE_OPERATIONS = [
         'FHIRImportResourceType', 'ResourceTypeRelationship',
         'FHIRImportResourceProperty',
     ]),
-    ModelDeletion('repeaters', 'SQLRepeater', 'domain'),
+    ModelDeletion('repeaters', 'Repeater', 'domain'),
     ModelDeletion('motech', 'ConnectionSettings', 'domain'),
     ModelDeletion('repeaters', 'SQLRepeatRecord', 'domain'),
     ModelDeletion('repeaters', 'SQLRepeatRecordAttempt', 'repeat_record__domain'),
@@ -436,6 +443,8 @@ DOMAIN_DELETE_OPERATIONS = [
     CustomDeletion('ucr', delete_all_ucr_tables_for_domain, []),
     ModelDeletion('domain', 'OperatorCallLimitSettings', 'domain'),
     ModelDeletion('domain', 'SMSAccountConfirmationSettings', 'domain'),
+    ModelDeletion('domain', 'AppReleaseModeSetting', 'domain'),
+    ModelDeletion('events', 'Event', 'domain'),
 ]
 
 

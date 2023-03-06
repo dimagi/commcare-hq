@@ -96,7 +96,7 @@ hqDefine('hqwebapp/js/components/pagination', [
                 return _.template(
                     params.itemsTextTemplate || gettext('Showing <%- firstItem %> to <%- lastItem %> of <%- maxItems %> entries')
                 )({
-                    firstItem: ((self.currentPage() - 1) * self.perPage()) + 1,
+                    firstItem: self.totalItems() > 0 ? ((self.currentPage() - 1) * self.perPage()) + 1 : 0,
                     lastItem: isNaN(lastItem) ? 1 : lastItem,
                     maxItems: self.totalItems(),
                 });

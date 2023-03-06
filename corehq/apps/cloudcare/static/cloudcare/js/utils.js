@@ -136,15 +136,20 @@ hqDefine('cloudcare/js/utils', [
         }
     };
 
+    var updateScreenReaderNotification = function (notificationText) {
+        $('#sr-notification-region').html("<p>" + notificationText + "</p>");
+    };
+
     var formplayerSyncComplete = function (isError) {
         hideLoading();
         if (isError) {
-            showError(
-                gettext('Could not sync user data. Please report an issue if this persists.'),
-                $('#cloudcare-notifications')
-            );
+            const notificationText = gettext('Could not sync user data. Please report an issue if this persists.');
+            showError(notificationText, $('#cloudcare-notifications'));
+            updateScreenReaderNotification(notificationText);
         } else {
-            showSuccess(gettext('User Data successfully synced.'), $('#cloudcare-notifications'), 5000);
+            const notificationText = gettext('User Data successfully synced.');
+            showSuccess(notificationText, $('#cloudcare-notifications'), 5000);
+            updateScreenReaderNotification(notificationText);
         }
     };
 
@@ -176,6 +181,17 @@ hqDefine('cloudcare/js/utils', [
         NProgress.done();
     };
 
+    function getSentryMessage(data) {
+        // replace IDs with a placeholder
+        let message = data.message;
+        if (message) {
+            message = message.replace("/[a-f0-9-]{7,}/gi", "[...]");
+        } else {
+            message = "Unknown Error";
+        }
+        return "[WebApps] " + message;
+    }
+
     var reportFormplayerErrorToHQ = function (data) {
         hqRequire(["cloudcare/js/formplayer/app"], function (FormplayerFrontend) {
             try {
@@ -183,6 +199,16 @@ hqDefine('cloudcare/js/utils', [
                 if (!data.cloudcareEnv) {
                     data.cloudcareEnv = cloudcareEnv || 'unknown';
                 }
+
+                const sentryData = _.omit(data, "type", "htmlMessage");
+                Sentry.captureMessage(getSentryMessage(data), {
+                    tags: {
+                        errorType: data.type,
+                    },
+                    extra: sentryData,
+                    level: "error"
+                });
+
                 $.ajax({
                     type: 'POST',
                     url: initialPageData.reverse('report_formplayer_error'),

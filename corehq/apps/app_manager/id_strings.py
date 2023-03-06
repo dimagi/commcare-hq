@@ -436,12 +436,22 @@ def case_search_title_translation(module):
     return "case_search.m{module.id}.inputs".format(module=module)
 
 
+@pattern('case_search.m%d.description')
+def case_search_description_locale(module):
+    return "case_search.m{module.id}.description".format(module=module)
+
+
 def detail(module, detail_type):
     return "m{module.id}_{detail_type}".format(module=module, detail_type=detail_type)
 
 
 def persistent_case_context_detail(module):
     return detail(module, 'persistent_case_context')
+
+
+@pattern('m%d_no_items_text')
+def no_items_text_detail(module):
+    return detail(module, 'no_items_text')
 
 
 def fixture_detail(module):

@@ -26,9 +26,7 @@ class SQLSMSGHBackend(SQLSMSBackend):
             'client_secret',
         ]
 
-    @classmethod
-    def get_url(cls):
-        return 'https://api.hubtel.com/v1/messages/send'
+    url = 'https://api.hubtel.com/v1/messages/send'
 
     @classmethod
     def get_api_id(cls):
@@ -93,7 +91,7 @@ class SQLSMSGHBackend(SQLSMSBackend):
             'ClientId': config.client_id,
             'ClientSecret': config.client_secret,
         }
-        response = requests.get(self.get_url(), params=params, timeout=settings.SMS_GATEWAY_TIMEOUT)
+        response = requests.get(self.url, params=params, timeout=settings.SMS_GATEWAY_TIMEOUT)
 
         if self.response_is_error(response):
             self.handle_error(response, msg)

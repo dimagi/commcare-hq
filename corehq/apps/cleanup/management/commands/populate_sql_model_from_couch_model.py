@@ -5,6 +5,7 @@ import sys
 import traceback
 from contextlib import nullcontext
 from functools import partial
+from time import sleep
 
 from attrs import define, field
 
@@ -137,10 +138,54 @@ class PopulateSQLCommand(BaseCommand):
                     diffs.append(cls.diff_value(name, couch_field, sql_field))
         return diffs
 
+    def handle_override_is_completed(self, override_is_completed):
+        if override_is_completed == "yes":
+            self._set_migration_completed()
+        elif override_is_completed == "no":
+            self._override_migration_status(is_completed=False)
+        else:
+            self._avg_items_to_be_migrated()
+        print(f"status={self.get_migration_status()}")
+        print("Items to be migrated:", self.count_items_to_be_migrated())
+
+    def _set_migration_completed(self):
+        print(f"Prior status={self.get_migration_status()}")
+        if self._avg_items_to_be_migrated() > 10:
+            print("WARNING Some items may not have been migrated.")
+            if input("Override anyway? [yN] ").lower() != "y":
+                print("Aborted.")
+                return
+        self._override_migration_status(is_completed=True)
+
+    def _override_migration_status(self, is_completed):
+        status = self.get_migration_status()
+        if is_completed == bool(status.get("is_completed")):
+            return
+        if "ignored_count" not in status:
+            print("WARNING The command may not have run to completion.")
+            if input("Override anyway? [yN] ").lower() != "y":
+                print("Aborted.")
+                return
+        extra = {"is_completed": True} if is_completed else {}
+        self.ignored_count = status.get("ignored_count", 0)
+        self.save_migration_status(**extra)
+
+    def _avg_items_to_be_migrated(self):
+        def get_count():
+            sleep(1)
+            return self.count_items_to_be_migrated()
+        print("Sampling items to be migrated...")
+        counts = [get_count() for x in range(10)]
+        print(f"counts={counts} avg={sum(counts) / len(counts)}")
+        return sum(counts) / len(counts)
+
     @classmethod
     def count_items_to_be_migrated(cls):
+        status = cls.get_migration_status()
+        if status.get("is_completed"):
+            return 0
         couch_count = get_doc_count_by_type(cls.couch_db(), cls.couch_doc_type())
-        ignored_count = cls.get_migration_status().get("ignored_count", 0)
+        ignored_count = status.get("ignored_count", 0)
         sql_count = cls.sql_class().objects.count()
         return couch_count - ignored_count - sql_count
 
@@ -148,11 +193,12 @@ class PopulateSQLCommand(BaseCommand):
     def _migration_status_slug(cls):
         return f"{cls.couch_doc_type()}-sql-migration-status"
 
-    def save_migration_status(self):
+    def save_migration_status(self, **extra):
         self.couch_db().save_doc({
             "_id": self._migration_status_slug,
             "doc_type": "PopulateSQLCommandStatus",
             "ignored_count": self.ignored_count,
+            **extra
         }, force_update=True)
 
     @classmethod
@@ -268,8 +314,25 @@ Run the following commands to run the migration and get up to date:
             default="-" if settings.UNIT_TESTING else None,
             help="File or directory path to write logs to. If not provided a default will be used."
         )
+        parser.add_argument(
+            '--override-is-migration-completed',
+            choices=["check", "yes", "no"],
+            dest="override_is_completed",
+            help="""
+                Check or set migration completion status. Use to override
+                the check performed by `migrate_from_migration` when the number
+                of items to be migrated is volatile. Note that the override will
+                be removed if the command is run again without this option after
+                the override is set. Accepted values: check: check and print
+                status, yes: override `count_items_to_be_migrated` to zero, no:
+                remove override.
+            """
+        )
 
-    def handle(self, chunk_size, fixup_diffs, **options):
+    def handle(self, chunk_size, fixup_diffs, override_is_completed, **options):
+        if override_is_completed:
+            return self.handle_override_is_completed(override_is_completed)
+
         log_path = options.get("log_path")
         verify_only = options.get("verify_only", False)
         skip_verify = options.get("skip_verify", False)

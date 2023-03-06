@@ -1,4 +1,4 @@
-from distutils.version import LooseVersion
+from looseversion import LooseVersion
 from getpass import getpass
 from importlib import import_module
 from pkg_resources import DistributionNotFound, get_distribution

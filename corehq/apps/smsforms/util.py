@@ -30,7 +30,6 @@ def process_sms_form_complete(session_id, form):
     )
     session.submission_id = result.xform.form_id
     session.mark_completed(True)
-    session.save()
 
 
 def get_sms_form_incoming_media_files(session):

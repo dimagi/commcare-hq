@@ -13,6 +13,8 @@ from lxml import etree
 
 class IvoryCoastMTNBackend(SQLSMSBackend):
 
+    url = 'https://smspro.mtn.ci/bms/Soap/Messenger.asmx/HTTP_SendSms'
+
     class Meta(object):
         app_label = 'sms'
         proxy = True
@@ -74,7 +76,7 @@ class IvoryCoastMTNBackend(SQLSMSBackend):
             return
 
         response = requests.get(
-            'https://smspro.mtn.ci/bms/Soap/Messenger.asmx/HTTP_SendSms',
+            self.url,
             params=self.get_params(msg_obj),
             timeout=settings.SMS_GATEWAY_TIMEOUT,
         )

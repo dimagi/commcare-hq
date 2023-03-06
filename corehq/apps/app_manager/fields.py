@@ -6,6 +6,7 @@ from copy import copy
 from django import forms
 from django.http import Http404
 from django.urls import reverse
+from django.utils.safestring import mark_safe
 from django.utils.translation import gettext as _
 
 from memoized import memoized
@@ -98,7 +99,8 @@ class ApplicationDataSourceUIHelper(object):
                                                    widget=forms.Select(choices=source_choices))
 
         self.source_field = forms.ChoiceField(label=_('Data Source'), widget=forms.Select())
-        self.source_field.label = '<span data-bind="text: labelMap[sourceType()]"></span>'
+        self.source_field.label = mark_safe(  # nosec: no user input
+            '<span data-bind=\'text: labelMap[sourceType()]\'></span>')
 
         self.registry_slug_field = forms.ChoiceField(label=_('Data Registry'), widget=forms.HiddenInput,
                                                      required=False)

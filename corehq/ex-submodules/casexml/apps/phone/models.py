@@ -206,9 +206,9 @@ class OTARestoreCommCareUser(OTARestoreUser):
         return self._couch_user.locations
 
     def get_fixture_data_items(self):
-        from corehq.apps.fixtures.models import FixtureDataItem
+        from corehq.apps.fixtures.models import LookupTableRow
 
-        return FixtureDataItem.by_user(self._couch_user)
+        return LookupTableRow.objects.iter_by_user(self._couch_user)
 
     def get_commtrack_location_id(self):
         from corehq.apps.commtrack.util import get_commtrack_location_id

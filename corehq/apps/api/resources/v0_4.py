@@ -33,6 +33,7 @@ from corehq.apps.api.resources import (
 from corehq.apps.api.resources.auth import (
     LoginAndDomainAuthentication,
     RequirePermissionAuthentication,
+    SSOAuthentication,
 )
 from corehq.apps.api.resources.meta import CustomResourceMeta
 from corehq.apps.api.resources.v0_1 import _safe_bool
@@ -301,7 +302,7 @@ class SingleSignOnResource(HqBaseResource, DomainSpecificResourceMixin):
         return HttpResponseForbidden()
 
     class Meta(CustomResourceMeta):
-        authentication = Authentication()
+        authentication = SSOAuthentication()
         resource_name = 'sso'
         detail_allowed_methods = []
         list_allowed_methods = ['post']

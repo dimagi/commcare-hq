@@ -15,7 +15,7 @@ def create_app_structure_repeat_records(sender, application, **kwargs):
     from corehq.motech.repeaters.models import AppStructureRepeater
     domain = application.domain
     if domain:
-        repeaters = AppStructureRepeater.by_domain(domain)
+        repeaters = AppStructureRepeater.objects.by_domain(domain)
         for repeater in repeaters:
             repeater.register(application)
 

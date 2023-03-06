@@ -27,6 +27,7 @@ REPORT_BUILDER_ADD_ON_PRIVS = {
     REPORT_BUILDER_30,
 }
 
+ATTENDANCE_TRACKING = 'attendance_tracking'
 ROLE_BASED_ACCESS = 'role_based_access'
 RESTRICT_ACCESS_BY_LOCATION = 'restrict_access_by_location'
 
@@ -87,6 +88,17 @@ LITE_RELEASE_MANAGEMENT = 'lite_release_management'
 
 LOADTEST_USERS = 'loadtest_users'
 
+FORM_LINK_WORKFLOW = 'form_link_workflow'
+
+PHONE_APK_HEARTBEAT = 'phone_apk_heartbeat'
+
+VIEW_APP_DIFF = 'view_app_diff'
+
+# a.k.a. "File Dropzone", "Secure File Transfer"
+DATA_FILE_DOWNLOAD = 'data_file_download'
+
+REGEX_FIELD_VALIDATION = 'regex_field_validation'
+
 MAX_PRIVILEGES = [
     LOOKUP_TABLES,
     API_ACCESS,
@@ -134,6 +146,12 @@ MAX_PRIVILEGES = [
     RELEASE_MANAGEMENT,
     LITE_RELEASE_MANAGEMENT,
     LOADTEST_USERS,
+    FORM_LINK_WORKFLOW,
+    PHONE_APK_HEARTBEAT,
+    VIEW_APP_DIFF,
+    DATA_FILE_DOWNLOAD,
+    ATTENDANCE_TRACKING,
+    REGEX_FIELD_VALIDATION,
 ]
 
 # These are special privileges related to their own rates in a SoftwarePlanVersion
@@ -183,7 +201,7 @@ class Titles(object):
             EXCEL_DASHBOARD: _('Excel Dashboard'),
             DAILY_SAVED_EXPORT: _('Daily saved export'),
             ZAPIER_INTEGRATION: _('Zapier Integration'),
-            LOGIN_AS: _('Login As for App Preview'),
+            LOGIN_AS: _('Log In As for App Preview'),
             PRACTICE_MOBILE_WORKERS: _('Practice mode for mobile workers'),
             CASE_SHARING_GROUPS: _('Case Sharing via Groups'),
             CHILD_CASES: _('Child Cases'),
@@ -196,4 +214,10 @@ class Titles(object):
             RELEASE_MANAGEMENT: _("Enterprise Release Management"),
             LITE_RELEASE_MANAGEMENT: _("Multi-Environment Release Management"),
             LOADTEST_USERS: _('Loadtest Users'),
+            FORM_LINK_WORKFLOW: _("Link to other forms in End of Form Navigation"),
+            PHONE_APK_HEARTBEAT: _("Phone heartbeat"),
+            VIEW_APP_DIFF: _("Improved app changes view"),
+            DATA_FILE_DOWNLOAD: _('File Dropzone'),
+            ATTENDANCE_TRACKING: _("Attendance Tracking"),
+            REGEX_FIELD_VALIDATION: _("Regular Expression Validation for Custom Data Fields"),
         }.get(privilege, privilege)

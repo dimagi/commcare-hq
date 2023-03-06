@@ -1,9 +1,11 @@
-from corehq.apps.es.groups import ElasticGroup
+from pillowtop.es_utils import GROUP_HQ_INDEX_NAME, ElasticsearchIndexInfo
+
+from corehq.apps.es.client import Tombstone
+from corehq.apps.es.groups import group_adapter
 from corehq.pillows.core import DATE_FORMATS_ARR
 from corehq.util.elastic import prefix_for_tests
-from pillowtop.es_utils import ElasticsearchIndexInfo, GROUP_HQ_INDEX_NAME
 
-GROUP_INDEX = ElasticGroup.index_name
+GROUP_INDEX = group_adapter.index_name
 GROUP_ES_ALIAS = prefix_for_tests('hqgroups')
 GROUP_MAPPING = {
     "_meta": {
@@ -58,6 +60,9 @@ GROUP_MAPPING = {
         },
         "users": {
             "type": "string"
+        },
+        Tombstone.PROPERTY_NAME: {
+            "type": "boolean"
         }
     }
 }
@@ -66,7 +71,7 @@ GROUP_MAPPING = {
 GROUP_INDEX_INFO = ElasticsearchIndexInfo(
     index=GROUP_INDEX,
     alias=GROUP_ES_ALIAS,
-    type=ElasticGroup.type,
+    type=group_adapter.type,
     mapping=GROUP_MAPPING,
     hq_index_name=GROUP_HQ_INDEX_NAME
 )

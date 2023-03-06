@@ -125,18 +125,18 @@ class RemoteRequestSuiteTest(SimpleTestCase, SuiteMixin):
             DetailColumn.wrap(dict(
                 header={"en": "report_name"},
                 model="case",
-                format="calculate",
-                field="whatever",
-                calc_xpath="instance('reports')/report[1]/name",
+                format="plain",
+                field="instance('reports')/report[1]/name",
+                useXpathExpression=True,
             ))
         )
         self.module.case_details.short.columns.append(
             DetailColumn.wrap(dict(
                 header={"en": "moon"},
                 model="case",
-                format="calculate",
-                field="whatever",
-                calc_xpath="instance('item-list:moons')/moons_list/moons[favorite='yes']/name",
+                format="plain",
+                field="instance('item-list:moons')/moons_list/moons[favorite='yes']/name",
+                useXpathExpression=True,
             ))
         )
         self.module.case_details.short.columns.append(
@@ -145,15 +145,16 @@ class RemoteRequestSuiteTest(SimpleTestCase, SuiteMixin):
                 model="case",
                 format="plain",
                 field="parent/whatever",
+                useXpathExpression=False,
             ))
         )
         self.module.case_details.long.columns.append(
             DetailColumn.wrap(dict(
                 header={"en": "ledger_name"},
                 model="case",
-                format="calculate",
-                field="whatever",
-                calc_xpath="instance('ledgerdb')/ledgers/name/name",
+                format="plain",
+                field="instance('ledgerdb')/ledgers/name/name",
+                useXpathExpression=True,
             ))
         )
         self.module.search_config = CaseSearch(
@@ -164,7 +165,8 @@ class RemoteRequestSuiteTest(SimpleTestCase, SuiteMixin):
             ),
             properties=[
                 CaseSearchProperty(name='name', label={'en': 'Name'}),
-                CaseSearchProperty(name='dob', label={'en': 'Date of birth'}, input_="date")
+                CaseSearchProperty(name='dob', label={'en': 'Date of birth'}, input_="date"),
+                CaseSearchProperty(name='consent', label={'en': 'Consent to search'}, input_="checkbox")
             ],
             additional_relevant="instance('groups')/groups/group",
             search_filter="name = instance('item-list:trees')/trees_list/trees[favorite='yes']/name",
@@ -210,6 +212,7 @@ class RemoteRequestSuiteTest(SimpleTestCase, SuiteMixin):
                          "($case_id != '') and (double(now()) mod 2 = 0)")
 
     @flag_enabled("USH_CASE_CLAIM_UPDATES")
+    @flag_enabled('USH_SEARCH_FILTER')
     def test_remote_request(self, *args):
         """
         Suite should include remote-request if searching is configured
@@ -222,6 +225,7 @@ class RemoteRequestSuiteTest(SimpleTestCase, SuiteMixin):
         )
 
     @flag_enabled("USH_CASE_CLAIM_UPDATES")
+    @flag_enabled('USH_SEARCH_FILTER')
     def test_remote_request_custom_detail(self, *args):
         """Remote requests for modules with custom details point to the custom detail
         """
@@ -230,6 +234,7 @@ class RemoteRequestSuiteTest(SimpleTestCase, SuiteMixin):
         self.assertXmlPartialEqual(self.get_xml('remote_request_custom_detail'), suite, "./remote-request[1]")
 
     @flag_enabled('USH_CASE_CLAIM_UPDATES')
+    @flag_enabled('USH_SEARCH_FILTER')
     @patch('corehq.apps.app_manager.suite_xml.post_process.resources.ResourceOverrideHelper.update_suite')
     def test_duplicate_remote_request(self, *args):
         """
@@ -285,6 +290,7 @@ class RemoteRequestSuiteTest(SimpleTestCase, SuiteMixin):
         self.assertXmlPartialEqual(self.get_xml('search_command_detail'), suite, "./detail")
 
     @flag_enabled('USH_CASE_CLAIM_UPDATES')
+    @flag_enabled('USH_SEARCH_FILTER')
     def test_case_search_filter(self, *args):
         search_filter = "rating > 3"
         self.module.search_config.search_filter = search_filter
@@ -303,6 +309,7 @@ class RemoteRequestSuiteTest(SimpleTestCase, SuiteMixin):
         )
 
     @flag_enabled('USH_CASE_CLAIM_UPDATES')
+    @flag_enabled('USH_SEARCH_FILTER')
     def test_additional_types(self, *args):
         another_case_type = "another_case_type"
         self.module.search_config.additional_case_types = [another_case_type]

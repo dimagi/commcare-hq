@@ -1,4 +1,5 @@
 hqDefine('cloudcare/js/preview_app/preview_app', function () {
+    var FormplayerFrontend = hqImport("cloudcare/js/formplayer/app");
 
     var start = function (options) {
 
@@ -7,7 +8,7 @@ hqDefine('cloudcare/js/preview_app/preview_app', function () {
             $(this).attr('target', '_parent');
         });
 
-        hqImport("cloudcare/js/formplayer/app").start(options);
+        FormplayerFrontend.start(options);
     };
 
     return {

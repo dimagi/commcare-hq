@@ -201,7 +201,6 @@ def get_live_case_ids_and_indices(domain, owned_ids, timing_context):
             return IGNORE  # unexpected, don't process duplicate index twice
         seen_ix[sub_id].add(ix_key)
         seen_ix[ref_id].add(ix_key)
-        indices[sub_id].append(index)
         debug("%s --%s--> %s", sub_id, relationship, ref_id)
         if sub_id in live_ids:
             # ref has a live child or extension
@@ -262,6 +261,15 @@ def get_live_case_ids_and_indices(domain, owned_ids, timing_context):
                 case_ids.remove(case_id)
         open_ids.update(case_ids)
 
+    def filter_deleted_indices(related):
+        live_related = []
+        for index in related:
+            # add all indices to `indices` so that they are included in the restore
+            indices[index.case_id].append(index)
+            if index.referenced_id:
+                live_related.append(index)
+        return live_related
+
     IGNORE = object()
     debug = logging.getLogger(__name__).debug
 
@@ -271,7 +279,7 @@ def get_live_case_ids_and_indices(domain, owned_ids, timing_context):
     extensions_by_host = defaultdict(set)  # host_id -> (open) extension_ids
     hosts_by_extension = defaultdict(set)  # (open) extension_id -> host_ids
     parents_by_child = defaultdict(set)    # child_id -> parent_ids
-    indices = defaultdict(list)  # case_id -> list of CommCareCaseIndex-like
+    indices = defaultdict(list)  # case_id -> list of CommCareCaseIndex-like, used as a cache for later
     seen_ix = defaultdict(set)   # case_id -> set of '<index.case_id> <index.identifier>'
 
     next_ids = all_ids = set(owned_ids)
@@ -282,11 +290,13 @@ def get_live_case_ids_and_indices(domain, owned_ids, timing_context):
         exclude = set(chain.from_iterable(seen_ix[id] for id in next_ids))
         with timing_context("get_related_indices({} cases, {} seen)".format(len(next_ids), len(exclude))):
             related = get_related_indices(list(next_ids), exclude)
+            related_not_deleted = filter_deleted_indices(related)
             if not related:
                 break
-            update_open_and_deleted_ids(related)
+
+            update_open_and_deleted_ids(related_not_deleted)
             next_ids = {classify(index, next_ids)
-                        for index in related
+                        for index in related_not_deleted
                         if index.referenced_id not in deleted_ids
                         and index.case_id not in deleted_ids}
             next_ids.discard(IGNORE)

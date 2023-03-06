@@ -16,7 +16,7 @@ class Command(BaseCommand):
     help = textwrap.dedent("""
         Adds a commcare build, labeled with the version (x.y.z) Usage:
         "./manage.py add_commcare_build --latest" or
-        "./manage.py add_commcare_build --version=2.53.0" see also
+        "./manage.py add_commcare_build --build_version 2.53.0" see also
         https://github.com/dimagi/commcare-hq/blob/master/corehq/apps/builds/README.rst
     """)
 

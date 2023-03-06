@@ -14,7 +14,7 @@ from corehq.util.test_utils import flag_enabled
 from python_digest import build_authorization_request, calculate_nonce
 
 
-def mock_require_permission(_):
+def mock_require_permission(*args, **kwargs):
     return lambda fn: fn
 
 

@@ -19,6 +19,7 @@ def main():
         GeventCommand('run_blob_migration'),
         GeventCommand('check_blob_logs'),
         GeventCommand('preindex_everything'),
+        GeventCommand('migrate'),
         GeventCommand('migrate_multi'),
         GeventCommand('prime_views'),
         GeventCommand('ptop_preindex'),
@@ -29,7 +30,8 @@ def main():
         GeventCommand('run_aggregation_query'),
         GeventCommand('send_pillow_retry_queue_through_pillows'),
         GeventCommand('run_all_management_command'),
-        GeventCommand('copy_events_to_sql', http_adapter_pool_size=32)
+        GeventCommand('copy_events_to_sql', http_adapter_pool_size=32),
+        GeventCommand('verify_ssl_connections'),
     )
     _patch_gevent_if_required(sys.argv, GEVENT_COMMANDS)
 

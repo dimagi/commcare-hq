@@ -2,8 +2,7 @@ from django.core.management import BaseCommand, CommandError
 
 from corehq.apps.domain.models import Domain
 from corehq.apps.es import AppES, CaseES, CaseSearchES, FormES, GroupES, UserES
-from corehq.apps.es.registry import registry_entry
-from corehq.apps.es.transient_util import doc_adapter_from_info
+from corehq.apps.es.transient_util import doc_adapter_from_cname
 
 
 class Command(BaseCommand):
@@ -26,6 +25,6 @@ class Command(BaseCommand):
             doc_ids = [doc['_id'] for doc in doc_ids]
             if not doc_ids:
                 continue
-            adapter = doc_adapter_from_info(registry_entry(hqESQuery.index))
+            adapter = doc_adapter_from_cname(hqESQuery.index)
             adapter.bulk_delete(doc_ids)
             print(f"Deleted {len(doc_ids)} documents in the {hqESQuery.index} index for {domain}")

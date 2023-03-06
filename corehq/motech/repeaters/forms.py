@@ -14,7 +14,6 @@ from corehq.apps.reports.analytics.esaccessors import get_case_types_for_domain
 from corehq.apps.users.util import raw_username
 from corehq.motech.const import REQUEST_METHODS, REQUEST_POST
 from corehq.motech.models import ConnectionSettings
-from corehq.motech.repeaters.models import Repeater
 from corehq.motech.repeaters.repeater_generators import RegisterGenerator
 from corehq.motech.views import ConnectionSettingsListView
 
@@ -22,10 +21,10 @@ from corehq.motech.views import ConnectionSettingsListView
 class GenericRepeaterForm(forms.Form):
 
     def __init__(self, *args, **kwargs):
-        if kwargs.get('data'):
-            repeater = Repeater.wrap(kwargs['data'])
-            if not repeater.connection_settings_id:
-                repeater.create_connection_settings()
+        self.repeater_name = ""
+        data = kwargs.get('data')
+        if data:
+            self.repeater_name = data.get("name")
 
         self.domain = kwargs.pop('domain')
         self.repeater_class = kwargs.pop('repeater_class')
@@ -51,6 +50,12 @@ class GenericRepeaterForm(forms.Form):
             choices=self.connection_settings_choices,
             required=True,
             help_text=_(f'<a href="{url}">Add/Edit Connections Settings</a>')
+        )
+        self.fields['name'] = forms.CharField(
+            label=_('Name'),
+            help_text='The name of this forwarder',
+            initial=self.repeater_name,
+            required=False
         )
         self.fields['request_method'] = forms.ChoiceField(
             label=_("HTTP Request Method"),
@@ -90,7 +95,7 @@ class GenericRepeaterForm(forms.Form):
         """
         Override this to change the order of the crispy form fields and add extra crispy fields
         """
-        form_fields = ["connection_settings_id", "request_method"]
+        form_fields = ["connection_settings_id", "name", "request_method"]
         if self.formats and len(self.formats) > 1:
             form_fields.append('format')
         return form_fields

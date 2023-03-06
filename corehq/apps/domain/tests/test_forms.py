@@ -191,3 +191,26 @@ class TestDomainGlobalSettingsForm(TestCase):
         OperatorCallLimitSettings.objects.all().delete()
         SMSAccountConfirmationSettings.objects.all().delete()
         super().tearDown()
+
+
+class TestAppReleaseModeSettingForm(TestCase):
+
+    def setUp(self) -> None:
+        domain = Domain.generate_name('test_domain')
+        self.domain_obj = Domain(name=domain)
+        self.domain_obj.save()
+
+    def test_release_mode_settings_visible_and_saved_without_error(self):
+        # Create form
+        data = {
+            "hr_name": "foo",
+            "project_description": "sample",
+            "default_timezone": "UTC",
+        }
+        form = DomainGlobalSettingsForm(data, domain=self.domain_obj)
+
+        self.assertTrue('release_mode_visibility' in form.fields)
+
+        form.full_clean()
+        saved = form.save(Mock(), self.domain_obj)
+        self.assertEqual(True, saved)  # No error during form save

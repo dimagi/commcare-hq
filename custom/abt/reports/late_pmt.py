@@ -170,7 +170,7 @@ class LatePmtReport(GenericTabularReport, CustomProjectReport, DatespanMixin):
     @cached_property
     def valid_smss_received(self):
         data = MessagingSubEvent.objects.filter(
-            parent__domain=self.domain,
+            domain=self.domain,
             parent__recipient_type=MessagingEvent.RECIPIENT_MOBILE_WORKER,
             parent__source=MessagingEvent.SOURCE_KEYWORD,
             xforms_session__isnull=False,

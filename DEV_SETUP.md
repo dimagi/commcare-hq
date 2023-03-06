@@ -324,7 +324,7 @@ needs of most developers.
     systemctl is-active docker || sudo systemctl start docker
     # add your user to the `docker` group
     sudo adduser $USER docker
-    # login as yourself again to activate membership of the "docker" group
+    # log in as yourself again to activate membership of the "docker" group
     su - $USER
 
     # re-activate your virtualenv (with your venv tool of choice)
@@ -413,6 +413,16 @@ that to the new install. If not, proceed to Step 5B.
     ```
 
   - Fire up Fauxton to check that the dbs are there: http://localhost:5984/_utils/
+    - As of CouchDB 3.x, Fauxton is no longer shipped in the container and must
+      be installed separately:
+
+      ```sh
+      npm install -g fauxton
+      fauxton
+      ```
+
+      Open http://localhost:8000 in a browser. Run fauxton with ``-p PORT`` to
+      use a port other than 8000.
 
 - Shared Directory
   - If you are following the default instructions, move/merge the `sharedfiles`
@@ -494,10 +504,10 @@ If you have trouble with your first run of `./manage.py sync_couch_views`:
 To set up elasticsearch indexes run the following:
 
 ```sh
-./manage.py ptop_preindex
+./manage.py ptop_preindex [--reset]
 ```
 
-This will create all of the elasticsearch indexes (that don't already exist) and
+This will create all the elasticsearch indexes (that don't already exist) and
 populate them with any data that's in the database.
 
 Next, set the aliases of the elastic indices. These can be set by a management
@@ -507,7 +517,20 @@ command that sets the stored index names to the aliases.
 ./manage.py ptop_es_manage --flip_all_aliases
 ```
 
-### Step 7: Installing JavaScript Requirements
+### Step 7: Installing JavaScript and Front-End Requirements
+
+#### Install Dart Sass
+
+We are transitioning to using `sass`/`scss` for our stylesheets. In order to compile `*.scss`,
+Dart Sass is required.
+
+We recommend using `npm` to install this globally with:
+```
+npm install -g sass
+```
+
+You can also [follow the instructions here](https://sass-lang.com/install) if you encounter issues with this method.
+
 
 #### Installing Yarn
 
@@ -612,6 +635,8 @@ To be able to use CommCare, you'll want to create a superuser, which you can do 
 
 This can also be used to promote a user created by signing up to a superuser.
 
+Note that promoting a user to superuser status using this command will also give them the
+ability to assign other users as superuser in the in-app Superuser Management page.
 
 ### Step 11: Running CommCare HQ
 
@@ -713,6 +738,11 @@ They can each be run in separate terminals:
 ### Running Pillowtop
 
 Pillowtop is used to keep elasticsearch indices and configurable reports in sync.
+
+> **Note**
+> Typically, you won't need to run these in a dev environment unless you are testing them.
+> It is simpler to run the 'reindex' command to update ES with local changes when needed.
+> See [Populate Elasticsearch](#step-6--populate-elasticsearch)
 
 **Mac OS:**  `run_ptop` Will likely not work for you.
 See the [Supplementary Guide](https://github.com/dimagi/commcare-hq/blob/master/DEV_SETUP_MAC.md) for help.
@@ -913,13 +943,7 @@ ignore:the imp module is deprecated::celery.utils.imports,
 ignore:unclosed:ResourceWarning'
 ```
 
-Personal whitelist items may also be added in localsettings.py. For example:
-
-```py
-from warnings import filterwarnings  # noqa: E402
-filterwarnings("ignore", "unclosed", ResourceWarning)
-del filterwarnings
-```
+Personal whitelist items may also be added in localsettings.py.
 
 
 ### Running tests by tag

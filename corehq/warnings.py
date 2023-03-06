@@ -30,10 +30,10 @@ WHITELIST = [
         "two_factor",
     ]) + ")' defines default_app_config"), RemovedInDjango41Warning),
     ("django_celery_results", "ugettext_lazy() is deprecated"),
-    ("django_otp.plugins", "django.conf.urls.url() is deprecated"),
     ("logentry_admin.admin", "ugettext_lazy() is deprecated"),
     ("nose.importer", "the imp module is deprecated"),
     ("nose.util", "inspect.getargspec() is deprecated"),
+    ("pkg_resources", "pkg_resources.declare_namespace"),
     ("tastypie", "django.conf.urls.url() is deprecated"),
     ("tastypie", "request.is_ajax() is deprecated"),
     ("nose.suite", "'collections.abc'"),
@@ -44,9 +44,18 @@ WHITELIST = [
     ("", "property_match are deprecated. Use boolean_expression instead."),
     ("corehq.util.validation", "metaschema specified by $schema was not found"),
     ("corehq.apps.userreports.util", "'collections.abc'"),
+    (
+        # TODO: Removed this prior to the Elasticsearch upgrade. It is currently
+        # needed due to the heavy use of 'pillowtop.es_utils.initialize_index[_and_mapping]'
+        # in testing code, which is pending a future cleanup effort.
+        "corehq.apps.es.index.settings",
+        re.compile(r"Invalid index settings key .+, expected one of \["),
+        UserWarning,
+    ),
 
     # other, resolution not obvious
     ("IPython.core.interactiveshell", "install IPython inside the virtualenv.", UserWarning),
+    ("redis.connection", "distutils Version classes are deprecated. Use packaging.version instead."),
     ("sqlalchemy.", re.compile(r"^Predicate of partial index .* ignored during reflection"), SAWarning),
     ("sqlalchemy.",
         "Skipped unsupported reflection of expression-based index form_processor_xformattachmentsql_blobmeta_key",

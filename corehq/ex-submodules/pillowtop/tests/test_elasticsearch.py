@@ -7,7 +7,6 @@ from django.test import SimpleTestCase
 from corehq.util.es.elasticsearch import ConnectionError, RequestError
 
 from corehq.apps.es.tests.utils import es_test
-from corehq.apps.hqadmin.views.data import lookup_doc_in_es
 from corehq.elastic import get_es_new
 from corehq.util.elastic import ensure_index_deleted
 from corehq.util.test_utils import trap_extra_setup, capture_log_output
@@ -27,7 +26,7 @@ from .utils import (
 )
 
 
-@es_test(index=TEST_INDEX_INFO)
+@es_test
 class ElasticPillowTest(SimpleTestCase):
 
     def setUp(self):
@@ -117,7 +116,7 @@ class ElasticPillowTest(SimpleTestCase):
         self.assertEqual([self.index], aliases[TEST_INDEX_INFO.alias])
 
 
-@es_test(index=TEST_INDEX_INFO)
+@es_test
 class TestSendToElasticsearch(SimpleTestCase):
 
     def setUp(self):
@@ -136,7 +135,7 @@ class TestSendToElasticsearch(SimpleTestCase):
     def test_create_doc(self):
         doc = {'_id': uuid.uuid4().hex, 'doc_type': 'MyCoolDoc', 'property': 'foo'}
         self._send_to_es_and_check(doc)
-        res = lookup_doc_in_es(doc['_id'], self.es_alias)
+        res = self.es_interface.get_doc(self.es_alias, TEST_INDEX_INFO.type, doc['_id'])
         self.assertEqual(res, doc)
 
     def _send_to_es_and_check(self, doc, update=False, es_merge_update=False,

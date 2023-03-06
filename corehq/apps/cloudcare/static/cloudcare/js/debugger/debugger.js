@@ -1,5 +1,7 @@
 /* globals ace, Clipboard */
 hqDefine('cloudcare/js/debugger/debugger', function () {
+    var kissmetrics = hqImport("analytix/js/kissmetrix"),
+        readableForm = hqImport("reports/js/readable_form");
 
     /**
      * These define tabs that are availabe in the debugger.
@@ -83,7 +85,7 @@ hqDefine('cloudcare/js/debugger/debugger', function () {
                 self.updating(true);
                 self.onUpdate();
             }
-            hqImport('analytix/js/kissmetrix').track.event('[app-preview] User toggled CloudCare debugger');
+            kissmetrics.track.event('[app-preview] User toggled CloudCare debugger');
         };
 
 
@@ -153,7 +155,7 @@ hqDefine('cloudcare/js/debugger/debugger', function () {
             }
         ).done(function (response) {
             this.formattedQuestionsHtml(response.formattedQuestions);
-            hqImport("reports/js/readable_form").init();
+            readableForm.init();
             this.instanceXml(response.instanceXml);
             this.evalXPath.autocomplete(response.questionList);
             this.evalXPath.setRecentXPathQueries(response.recentXPathQueries || []);
@@ -372,7 +374,7 @@ hqDefine('cloudcare/js/debugger/debugger', function () {
                     self.recentXPathQueries.slice(0, 6)
                 );
             });
-            hqImport('analytix/js/kissmetrix').track.event('[app-preview] User evaluated XPath');
+            kissmetrics.track.event('[app-preview] User evaluated XPath');
         };
 
         self.onMouseUp = function () {

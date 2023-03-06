@@ -1,3 +1,4 @@
+/* global moment */
 hqDefine("up_nrhm/js/main", function () {
     function hideFilters(sf) {
         if (sf === "" || sf === 'sf2') {
@@ -27,6 +28,10 @@ hqDefine("up_nrhm/js/main", function () {
         }
     }
 
+    function getDate(value) {
+        return value ? value.toISOString().split("T")[0] : undefined;
+    }
+
     $(document).on("ajaxComplete", function (e, xhr, options) {
         var fragment = "async/",
             pageUrl = window.location.href.split('?')[0],
@@ -36,41 +41,41 @@ hqDefine("up_nrhm/js/main", function () {
         }
         if (hqImport("hqwebapp/js/initial_page_data").get("rendered_as") === "print") {
             if (!$('#report_filter_sf').val()) {
-                document.body.style.zoom="80%";
+                document.body.style.zoom = "80%";
                 $('.hq-loading').hide();
             }
         }
 
-        $('#report_filter_sf').on('change', function() {
+        $('#report_filter_sf').on('change', function () {
             sf = $(this).val();
             hideFilters(sf);
         });
-        $('#hq-report-filters').on('change', function() {
+        $('#hq-report-filters').on('change', function () {
             hideFilters(sf);
         });
-        sf = $('#report_filter_sf').val();
+        var sf = $('#report_filter_sf').val();
         hideFilters(sf);
 
         // Datespan handling
         var $datespan = $('#filter_range');
         var separator = $datespan.data("separator");
-        var report_labels = $datespan.data("report-labels");
+        var reportLabels = $datespan.data("report-labels");
         var standardHQReport = hqImport("reports/js/standard_hq_report").getStandardHQReport();
 
         $('#filter_range').createDateRangePicker(
-            report_labels,
+            reportLabels,
             separator,
-            $datespan.data("start-date").toISOString().split("T")[0],
-            $datespan.data("end-date").toISOString().split("T")[0]
+            getDate($datespan.data("start-date")),
+            getDate($datespan.data("end-date"))
         );
-        $('#filter_range').on('change apply', function() {
-            picker = $(this).data('daterangepicker');
+        $('#filter_range').on('change apply', function () {
+            var picker = $(this).data('daterangepicker');
             var diffDays = moment.duration(picker.endDate.diff(picker.startDate)).asDays();
             if (diffDays > 31) {
                 var startDate = picker.endDate.clone();
                 picker.setStartDate(startDate.subtract('days', 31));
                 var inputVal = picker.startDate.format('YYYY-MM-DD') + separator + picker.endDate.format('YYYY-MM-DD');
-                $(this).val(inputVal)
+                $(this).val(inputVal);
             }
 
             var dates = $(this).val().split(separator);

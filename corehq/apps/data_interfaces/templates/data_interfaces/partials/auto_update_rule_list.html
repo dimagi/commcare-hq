@@ -1,0 +1,95 @@
+{% load hq_shared_tags %}
+{% load i18n %}
+
+<div id="ko-tabs-update-rules" class="ko-template">
+  <div class="spacer"></div>
+  <a href="{% url "add_case_rule" domain %}">
+    <button type="button" class="btn btn-primary" id="add-new">
+      <i class="fa fa-plus"></i> {% trans "Add Automatic Case Update Rule" %}
+    </button>
+  </a>
+
+  <div class="spacer"></div>
+
+  <div class="panel panel-default">
+    <div class="panel-body">
+      <table class="table table-striped table-hover" id="rules-table">
+        <thead>
+        <tr>
+          <th>{% trans "Name" %}</th>
+          <th>{% trans "Case Type" %}</th>
+          <th>{% trans "Status" %}</th>
+          <th>{% trans "Last Run" %}</th>
+          <th>{% trans "Action" %}</th>
+        </tr>
+        </thead>
+        <tbody data-bind="foreach: paginatedRules">
+          <tr>
+            <td>
+              <a data-bind="attr: {href: edit_url}">
+                <strong data-bind="text: name"></strong>
+              </a>
+            </td>
+            <td data-bind="text: case_type"></td>
+            <td>
+              <span class="label label-success" data-bind="visible: active()">{% trans "Active" %}</span>
+              <span class="label label-danger" data-bind="visible: !active()">{% trans "Inactive" %}</span>
+            </td>
+            <td data-bind="text: last_run"></td>
+            <td>
+              <button type="button" class="btn btn-default" data-bind="click: $root.updateRule.bind($data, 'activate'), visible: !active()">
+                {% trans "Activate" %}
+              </button>
+              <button type="button" class="btn btn-default" data-bind="click: $root.updateRule.bind($data, 'deactivate'), visible: active()">
+                {% trans "Deactivate" %}
+              </button>
+              <button type="button" data-toggle="modal" class="btn btn-danger"
+                      data-bind="attr: { 'data-target': '#delete-rule-' + id() }">
+                <i class="fa fa-remove"></i>
+                {% trans "Delete" %}
+              </button>
+              <div class="modal fade" data-bind="attr: { id: 'delete-rule-' + id() }">
+                <div class="modal-dialog">
+                  <div class="modal-content">
+                    <div class="modal-header">
+                      <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                      <h3>{% trans "Delete this rule?" %}</h3>
+                    </div>
+                    <div class="modal-body">
+                      <p class="lead">
+                        {% blocktrans %}
+                          Are you sure you want to <strong>delete</strong> this rule?
+                        {% endblocktrans %}
+                      </p>
+                      <p class="lead"><strong data-bind="text: name"></strong></p>
+                    </div>
+                    <div class="modal-footer">
+                      <button type="button" class="btn btn-default" data-dismiss="modal">
+                        {% trans "Cancel" %}
+                      </button>
+                      <button type="button" class="btn btn-danger" data-bind="click: $root.deleteRule.bind($data)"
+                              data-loading-text="Deleting Rule..." data-dismiss="modal">
+                        <i class="fa fa-remove"></i>
+                        {% trans "Delete Rule" %}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <p class="help-block" data-bind="visible: action_error">
+                <i class="fa fa-exclamation-triangle"></i>
+                <span data-bind="text: action_error"></span>
+              </p>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+      <pagination data-apply-bindings="false"
+        params="goToPage: goToPage,
+                perPage: itemsPerPage,
+                totalItems: totalItems,
+                onLoad: onPaginationLoad,
+                slug: 'update-rule-list'"></pagination>
+    </div>
+  </div>
+</div>

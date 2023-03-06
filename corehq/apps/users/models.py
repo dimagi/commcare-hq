@@ -17,6 +17,7 @@ from django.core.serializers.json import DjangoJSONEncoder
 from django.db import connection, models, router
 from django.template.loader import render_to_string
 from django.utils import timezone
+from django.utils.html import format_html
 from django.utils.translation import override as override_language
 from django.utils.translation import gettext as _
 
@@ -86,6 +87,7 @@ from corehq.apps.users.util import (
 from corehq.form_processor.exceptions import CaseNotFound
 from corehq.form_processor.interfaces.supply import SupplyInterface
 from corehq.form_processor.models import CommCareCase
+from corehq.toggles import TABLEAU_USER_SYNCING
 from corehq.util.dates import get_timestamp
 from corehq.util.models import BouncedEmail
 from corehq.util.quickcache import quickcache
@@ -173,6 +175,9 @@ class HqPermissions(DocumentSchema):
     view_locations = BooleanProperty(default=False)
     edit_users_in_locations = BooleanProperty(default=False)
 
+    view_data_dict = BooleanProperty(default=False)
+    edit_data_dict = BooleanProperty(default=False)
+
     edit_motech = BooleanProperty(default=False)
     edit_data = BooleanProperty(default=False)
     edit_apps = BooleanProperty(default=False)
@@ -208,6 +213,7 @@ class HqPermissions(DocumentSchema):
     manage_data_registry_list = StringListProperty(default=[])
     view_data_registry_contents = BooleanProperty(default=False)
     view_data_registry_contents_list = StringListProperty(default=[])
+    manage_attendance_tracking = BooleanProperty(default=False)
 
     @classmethod
     def from_permission_list(cls, permission_list):
@@ -231,6 +237,8 @@ class HqPermissions(DocumentSchema):
             self.view_roles = False
             self.edit_reports = False
             self.edit_billing = False
+            self.edit_data_dict = False
+            self.view_data_dict = False
 
         if self.edit_web_users:
             self.view_web_users = True
@@ -248,8 +256,14 @@ class HqPermissions(DocumentSchema):
         else:
             self.edit_users_in_locations = False
 
+        if self.edit_data_dict:
+            self.view_data_dict = True
+
         if self.edit_apps:
             self.view_apps = True
+
+        if not (self.view_reports or self.view_report_list):
+            self.download_reports = False
 
     @classmethod
     @memoized
@@ -750,19 +764,15 @@ class DeviceAppMeta(DocumentSchema):
         if other.last_request <= self.last_request:
             return
 
-        for key, prop in self.properties().items():
+        for key, prop in other.properties().items():
             new_val = getattr(other, key)
-            if new_val:
+            if new_val is not None:
                 old_val = getattr(self, key)
-                if not old_val:
-                    setattr(self, key, new_val)
-                    continue
 
                 prop_is_date = isinstance(prop, DateTimeProperty)
-                if prop_is_date and new_val > old_val:
-                    setattr(self, key, new_val)
-                elif not prop_is_date and old_val != new_val:
-                    setattr(self, key, new_val)
+                if prop_is_date and (old_val and new_val <= old_val):
+                    continue  # do not overwrite dates with older ones
+                setattr(self, key, new_val)
 
         self._update_latest_request()
 
@@ -878,6 +888,8 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, EulaMixin):
 
     _user = None
 
+    can_assign_superuser = BooleanProperty(default=False)
+
     @classmethod
     def wrap(cls, data, should_save=False):
         if "organizations" in data:
@@ -967,12 +979,15 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, EulaMixin):
         return user_display_string(self.username, self.first_name, self.last_name)
 
     def html_username(self):
-        username = self.raw_username
-        if '@' in username:
-            html = "<span class='user_username'>%s</span><span class='user_domainname'>@%s</span>" % \
-                   tuple(username.split('@'))
+        username, *remaining = self.raw_username.split('@')
+        if remaining:
+            domain_name = remaining[0]
+            html = format_html(
+                '<span class="user_username">{}</span><span class="user_domainname">@{}</span>',
+                username,
+                domain_name)
         else:
-            html = "<span class='user_username'>%s</span>" % username
+            html = format_html("<span class='user_username'>{}</span>", username)
         return html
 
     @property
@@ -1490,6 +1505,9 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, EulaMixin):
             or self.has_permission(domain, 'limited_login_as')
         )
 
+    def can_manage_events(self, domain):
+        return self.has_permission(domain, 'manage_attendance_tracking')
+
     def is_current_web_user(self, request):
         return self.user_id == request.couch_user.user_id
 
@@ -1664,7 +1682,8 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
             results = commcare_user_post_save.send_robust(sender='couch_user', couch_user=self,
                                                           is_new_user=is_new_user)
             log_signal_errors(results, "Error occurred while syncing user (%s)", {'username': self.username})
-            sync_usercases_if_applicable(self, spawn_task)
+            if not self.to_be_deleted():
+                sync_usercases_if_applicable(self, spawn_task)
 
     def delete(self, deleted_by_domain, deleted_by, deleted_via=None):
         from corehq.apps.ota.utils import delete_demo_restore_for_user
@@ -2346,6 +2365,18 @@ class WebUser(CouchUser, MultiMembershipMixin, CommCareMobileContactMixin):
                                  by_domain_required_for_log=by_domain_required_for_log)
         return web_user
 
+    def add_domain_membership(self, domain, timezone=None, **kwargs):
+        if TABLEAU_USER_SYNCING.enabled(domain):
+            from corehq.apps.reports.util import add_tableau_user
+            add_tableau_user(domain, self.username)
+        super().add_domain_membership(domain, timezone, **kwargs)
+
+    def delete_domain_membership(self, domain, create_record=False):
+        if TABLEAU_USER_SYNCING.enabled(domain):
+            from corehq.apps.reports.util import delete_tableau_user
+            delete_tableau_user(domain, self.username)
+        return super().delete_domain_membership(domain, create_record=create_record)
+
     def is_commcare_user(self):
         return False
 
@@ -2395,6 +2426,14 @@ class WebUser(CouchUser, MultiMembershipMixin, CommCareMobileContactMixin):
             web_user = cls.wrap(user_doc)
             if web_user.is_domain_admin(domain):
                 yield web_user
+
+    @classmethod
+    def get_billing_admins_by_domain(cls, domain):
+        from corehq.apps.users.role_utils import UserRolePresets
+        users = cls.by_domain(domain)
+        for user in users:
+            if user.role_label(domain) == UserRolePresets.BILLING_ADMIN:
+                yield user
 
     @classmethod
     def get_dimagi_emails_by_domain(cls, domain):
@@ -2713,6 +2752,9 @@ class DomainRemovalRecord(DeleteRecord):
         user.domain_memberships.append(self.domain_membership)
         user.domains.append(self.domain)
         user.save()
+        if TABLEAU_USER_SYNCING.enabled(self.domain):
+            from corehq.apps.reports.util import add_tableau_user
+            add_tableau_user(self.domain, user.username)
 
 
 class UserReportingMetadataStaging(models.Model):
@@ -2894,6 +2936,11 @@ class UserReportingMetadataStaging(models.Model):
         unique_together = ('domain', 'user_id', 'app_id')
 
 
+class ApiKeyManager(models.Manager):
+    def get_queryset(self):
+        return super().get_queryset().filter(is_active=True)
+
+
 class HQApiKey(models.Model):
     user = models.ForeignKey(User, related_name='api_keys', on_delete=models.CASCADE)
     key = models.CharField(max_length=128, blank=True, default='', db_index=True)
@@ -2902,6 +2949,12 @@ class HQApiKey(models.Model):
     ip_allowlist = ArrayField(models.GenericIPAddressField(), default=list)
     domain = models.CharField(max_length=255, blank=True, default='')
     role_id = models.CharField(max_length=40, blank=True, default='')
+    is_active = models.BooleanField(default=True)
+    deactivated_on = models.DateTimeField(blank=True, null=True)
+    expiration_date = models.DateTimeField(blank=True, null=True)  # Not yet used
+
+    objects = ApiKeyManager()
+    all_objects = models.Manager()
 
     class Meta(object):
         unique_together = ('user', 'name')
@@ -3048,3 +3101,38 @@ class DeactivateMobileWorkerTrigger(models.Model):
         if not existing_trigger.exists():
             return None
         return existing_trigger.first().deactivate_after
+
+
+def check_and_send_limit_email(domain, plan_limit, user_count, prev_count):
+    ADDITIONAL_USERS_PRICING = ("https://confluence.dimagi.com/display/commcarepublic"
+                                "/CommCare+Pricing+FAQs#CommCarePricingFAQs-Feesforadditionalusers")
+    ENTERPRISE_LIMIT = -1
+    if plan_limit == ENTERPRISE_LIMIT:
+        return
+
+    WARNING_PERCENT = 0.9
+    if user_count >= plan_limit > prev_count:
+        at_capacity = True
+    elif plan_limit > user_count >= (WARNING_PERCENT * plan_limit) > prev_count:
+        at_capacity = False
+    else:
+        return
+
+    billing_admins = [admin.username for admin in WebUser.get_billing_admins_by_domain(domain)]
+    admins = [admin.username for admin in WebUser.get_admins_by_domain(domain)]
+
+    if at_capacity:
+        subject = _("User count has reached the Plan limit for {}").format(domain)
+    else:
+        subject = _("User count has reached 90% of the Plan limit for {}").format(domain)
+    send_html_email_async(
+        subject,
+        set(admins + billing_admins),
+        render_to_string('users/email/user_limit_notice.html', context={
+            'at_capacity': at_capacity,
+            'url': ADDITIONAL_USERS_PRICING,
+            'user_count': user_count,
+            'plan_limit': plan_limit,
+        }),
+    )
+    return

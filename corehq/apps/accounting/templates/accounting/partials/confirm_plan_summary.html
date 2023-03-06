@@ -113,7 +113,7 @@
       {{ message.message }}
       <ul>
         {% for detail in message.details %}
-          <li>{{ detail|safe }}</li>
+          <li>{{ detail }}</li>
         {% endfor %}
       </ul>
     </div>

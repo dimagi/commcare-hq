@@ -35,6 +35,7 @@ from corehq.apps.accounting.models import (
     BillingAccount,
     BillingAccountType,
     EntryPoint,
+    Subscription,
 )
 from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.analytics.tasks import track_workflow
@@ -71,7 +72,7 @@ from corehq.apps.users.account_confirmation import (
 )
 from corehq.apps.users.analytics import get_search_users_in_domain_es_query
 from corehq.apps.users.audit.change_messages import UserChangeMessage
-from corehq.apps.users.bulk_download import get_domains_from_user_filters
+from corehq.apps.users.bulk_download import get_domains_from_user_filters, load_memoizer
 from corehq.apps.users.dbaccessors import get_user_docs_by_username
 from corehq.apps.users.decorators import (
     require_can_edit_commcare_users,
@@ -94,6 +95,7 @@ from corehq.apps.users.models import (
     CommCareUser,
     CouchUser,
     DeactivateMobileWorkerTrigger,
+    check_and_send_limit_email
 )
 from corehq.apps.users.models_role import UserRole
 from corehq.apps.users.tasks import (
@@ -756,6 +758,9 @@ class MobileWorkerListView(JSONResponseMixin, BaseUserSettingsView):
             phone_number = self.new_mobile_worker_form.cleaned_data['phone_number']
             couch_user.set_default_phone_number(phone_number)
             send_account_confirmation_sms_if_necessary(couch_user)
+
+        plan_limit, user_count = Subscription.get_plan_and_user_count_by_domain(self.domain)
+        check_and_send_limit_email(self.domain, plan_limit, user_count, user_count - 1)
         return {
             'success': True,
             'user_id': couch_user.userID,
@@ -1376,16 +1381,19 @@ def _count_users(request, domain, user_type):
         return HttpResponseBadRequest("Invalid Request")
 
     user_count = 0
+    group_count = 0
     (is_cross_domain, domains_list) = get_domains_from_user_filters(domain, user_filters)
     for current_domain in domains_list:
         if user_type == MOBILE_USER_TYPE:
             user_count += count_mobile_users_by_filters(current_domain, user_filters)
+            group_count += len(load_memoizer(current_domain).groups)
         else:
             user_count += count_web_users_by_filters(current_domain, user_filters)
             user_count += count_invitations_by_filters(current_domain, user_filters)
 
     return JsonResponse({
-        'count': user_count
+        'user_count': user_count,
+        'group_count': group_count,
     })
 
 

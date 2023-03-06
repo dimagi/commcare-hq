@@ -121,7 +121,6 @@ def handle_due_survey_action(domain, contact_id, session_id):
             # be dealt with. In terms of the current session itself, we just close it out
             # to allow new sessions to start.
             session.mark_completed(False)
-            session.save()
             return
 
         if session.current_action_is_a_reminder:
@@ -162,9 +161,7 @@ def close_session(self, contact_id, session_id):
             finally:
                 # Eventually the session needs to get closed
                 session.mark_completed(False)
-                session.save()
                 return
-        session.save()
 
 
 def session_is_stale(session):

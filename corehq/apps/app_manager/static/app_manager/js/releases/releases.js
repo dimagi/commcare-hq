@@ -249,10 +249,13 @@ hqDefine('app_manager/js/releases/releases', function () {
         self.buildComment = ko.observable();
         self.upstreamBriefsById = _.indexBy(self.options.upstreamBriefs, '_id');
         self.upstreamUrl = self.options.upstreamUrl;
+        self.showReleaseOperations = ko.observable(true);
 
         self.download_modal = $(self.options.download_modal_id);
         self.async_downloader = asyncDownloader(self.download_modal);
-
+        self.savedApps.subscribe(() => {
+            self.options.appReleaseLogs && self.options.appReleaseLogs.goToPage(1);
+        });
         // Spinner behavior
         self.showLoadingSpinner = ko.observable(true);
         self.showPaginationSpinner = ko.observable(false);
@@ -369,6 +372,9 @@ hqDefine('app_manager/js/releases/releases', function () {
                     );
                     self.totalItems(data.pagination.total);
                     self.fetchState('');
+                    if (data.pagination.total > 0) {
+                        $("#release-control").removeClass("hidden");
+                    }
                 },
                 error: function () {
                     self.fetchState('error');
@@ -401,6 +407,7 @@ hqDefine('app_manager/js/releases/releases', function () {
                             savedApp.is_released(data.is_released);
                             self.latestReleasedVersion(data.latest_released_version);
                             $(event.currentTarget).parent().prev('.js-release-waiting').addClass('hide');
+                            self.options.appReleaseLogs && self.options.appReleaseLogs.goToPage(1);
                         }
                     },
                     error: function () {
@@ -481,6 +488,7 @@ hqDefine('app_manager/js/releases/releases', function () {
                     if (data.saved_app) {
                         var app = savedAppModel(data.saved_app, self);
                         self.savedApps.unshift(app);
+                        $("#release-control").removeClass("hidden");
                     }
                     self.buildState('');
                     self.buildErrorCode('');

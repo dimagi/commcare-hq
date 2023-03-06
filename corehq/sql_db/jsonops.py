@@ -28,7 +28,7 @@ SomeModel.objects.filter(...).update(json_data=transformed_data)
 """
 import json
 
-from django.db.models.expressions import Expression, Func, RawSQL, Value
+from django.db.models.expressions import Expression, Func, Value
 from django.db.models import JSONField
 
 
@@ -37,21 +37,22 @@ class JsonDelete(Func):
 
     A Django expression for the `-` operator as it pertains to JSONB values.
 
-    :param expression: JSONB field name or value expression.
-    :param *items: Names of items to delete.
-    """
-    function = "-"
-    template = "%(expressions)s::jsonb %(function)s '{%(items)s}'::text[]"
-    arity = 1
+    Example: '{"a": "b", "c": "d"}'::jsonb - '{a,c}'::text[]
 
-    def __init__(self, expression, *items):
+    :param expression: JSONB field name or value expression.
+    :param *keys: Names of items to delete.
+    """
+    arg_joiner = " - "
+    template = "%(expressions)s"
+    arity = 2
+
+    def __init__(self, expression, *keys):
+        _validate(keys, [str])
+        keys = list(keys)
         if isinstance(expression, JsonDelete):
-            items = (expression.extra["items"],) + items
-            expression, = expression.source_expressions
-        items = ",".join(items)
-        if "'" in items:
-            raise ValueError(f"invalid items: {items!r}")
-        super().__init__(expression, output_field=JSONField(), items=items)
+            expression, keys_value = expression.source_expressions
+            keys = keys_value.value + keys
+        super().__init__(expression, Value(keys), output_field=JSONField())
 
 
 class JsonGet(Func):
@@ -61,16 +62,14 @@ class JsonGet(Func):
     JSONB values.
 
     :param expression: JSON/JSONB field name or value expression.
-    :param field: Name of item to get.
+    :param field: Name or index of item to get.
     """
-    function = "->"
-    template = "%(expressions)s%(function)s'%(field_name)s'"
-    arity = 1
+    arg_joiner = "->"
+    template = "%(expressions)s"
+    arity = 2
 
     def __init__(self, expression, field):
-        if not isinstance(field, str) or "'" in field:
-            raise ValueError(f"invalid field: {field!r}")
-        super().__init__(expression, output_field=JSONField(), field_name=field)
+        super().__init__(expression, Value(field), output_field=JSONField())
 
 
 class JsonSet(Func):
@@ -89,18 +88,25 @@ class JsonSet(Func):
     arity = 3
 
     def __init__(self, expression, path, new_value, create_missing=True):
-        path_items = ",".join(_int_str(p) for p in path)
-        if "'" in path_items:
-            raise ValueError(f"invalid path: {path_items!r}")
+        _validate(path, (int, str))
+        path_items = [_int_str(p) for p in path]
         if not isinstance(new_value, Expression):
             new_value = Value(json.dumps(new_value))
         super().__init__(
             expression,
-            RawSQL("'{%s}'" % path_items, ()),
+            Value(path_items),
             new_value,
             output_field=JSONField(),
             create_missing="true" if create_missing else "false",
         )
+
+
+def _validate(values, types):
+    types = tuple(types)
+    if not all(isinstance(i, types) for i in values):
+        expect = "|".join(t.__name__ for t in types)
+        got = ", ".join(type(v).__name__ for v in values)
+        raise ValueError(f"expected {expect} value(s), got ({got})")
 
 
 def _int_str(arg):

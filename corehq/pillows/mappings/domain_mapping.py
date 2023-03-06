@@ -1,9 +1,11 @@
-from corehq.apps.es.domains import ElasticDomain
+from pillowtop.es_utils import DOMAIN_HQ_INDEX_NAME, ElasticsearchIndexInfo
+
+from corehq.apps.es.client import Tombstone
+from corehq.apps.es.domains import domain_adapter
 from corehq.pillows.core import DATE_FORMATS_ARR, DATE_FORMATS_STRING
 from corehq.util.elastic import prefix_for_tests
-from pillowtop.es_utils import ElasticsearchIndexInfo, DOMAIN_HQ_INDEX_NAME
 
-DOMAIN_INDEX = ElasticDomain.index_name
+DOMAIN_INDEX = domain_adapter.index_name
 DOMAIN_ES_ALIAS = prefix_for_tests('hqdomains')
 
 DOMAIN_MAPPING = {
@@ -618,6 +620,9 @@ DOMAIN_MAPPING = {
         },
         "yt_id": {
             "type": "string"
+        },
+        Tombstone.PROPERTY_NAME: {
+            "type": "boolean"
         }
     }
 }
@@ -626,7 +631,7 @@ DOMAIN_MAPPING = {
 DOMAIN_INDEX_INFO = ElasticsearchIndexInfo(
     index=DOMAIN_INDEX,
     alias=DOMAIN_ES_ALIAS,
-    type=ElasticDomain.type,
+    type=domain_adapter.type,
     mapping=DOMAIN_MAPPING,
     hq_index_name=DOMAIN_HQ_INDEX_NAME
 )

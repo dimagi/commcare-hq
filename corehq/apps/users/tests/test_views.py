@@ -6,7 +6,8 @@ from django.test import TestCase
 from django.urls import reverse
 
 from corehq.apps.domain.shortcuts import create_domain
-from corehq.apps.es.tests.utils import populate_user_index
+from corehq.apps.es.tests.utils import es_test, populate_user_index
+from corehq.apps.es.users import user_adapter
 from corehq.apps.locations.models import LocationType
 from corehq.apps.locations.tests.util import delete_all_locations, make_loc
 from corehq.apps.users.audit.change_messages import UserChangeMessage
@@ -23,10 +24,8 @@ from corehq.apps.users.models import (
 from corehq.apps.users.views import _delete_user_role, _update_role_from_view
 from corehq.apps.users.views.mobile.users import MobileWorkerListView
 from corehq.const import USER_CHANGE_VIA_WEB
-from corehq.pillows.mappings.user_mapping import USER_INDEX
 from corehq.toggles import FILTERED_BULK_USER_DOWNLOAD, NAMESPACE_DOMAIN
 from corehq.toggles.shortcuts import set_toggle
-from corehq.util.elastic import ensure_index_deleted
 from corehq.util.test_utils import generate_cases
 
 
@@ -253,6 +252,7 @@ class TestDeletePhoneNumberView(TestCase):
         self.assertEqual(user_history_log.changed_via, USER_CHANGE_VIA_WEB)
 
 
+@es_test(requires=[user_adapter], setup_class=True)
 class TestCountWebUsers(TestCase):
 
     view = 'count_web_users'
@@ -303,7 +303,6 @@ class TestCountWebUsers(TestCase):
 
     @classmethod
     def tearDownClass(cls):
-        ensure_index_deleted(USER_INDEX)
         delete_all_locations()
 
         cls.admin_user_with_location.delete(cls.domain_obj.name, deleted_by=None)
@@ -318,7 +317,7 @@ class TestCountWebUsers(TestCase):
             password='badpassword',
         )
         result = self.client.get(reverse(self.view, kwargs={'domain': self.domain}))
-        self.assertEqual(json.loads(result.content)['count'], 2)
+        self.assertEqual(json.loads(result.content)['user_count'], 2)
 
     def test_admin_location_user_sees_all_web_users(self):
         self.client.login(
@@ -326,4 +325,4 @@ class TestCountWebUsers(TestCase):
             password='badpassword',
         )
         result = self.client.get(reverse(self.view, kwargs={'domain': self.domain}))
-        self.assertEqual(json.loads(result.content)['count'], 2)
+        self.assertEqual(json.loads(result.content)['user_count'], 2)

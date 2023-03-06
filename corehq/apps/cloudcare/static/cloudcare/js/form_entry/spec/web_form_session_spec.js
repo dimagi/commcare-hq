@@ -1,8 +1,8 @@
 /* eslint-env mocha */
 
 describe('WebForm', function () {
-    var Const = hqImport("cloudcare/js/form_entry/const"),
-        UI = hqImport("cloudcare/js/form_entry/form_ui");
+    var constants = hqImport("cloudcare/js/form_entry/const"),
+        formUI = hqImport("cloudcare/js/form_entry/form_ui");
 
     describe('TaskQueue', function () {
         var callCount,
@@ -111,7 +111,7 @@ describe('WebForm', function () {
             // Setup stubs
             $.cookie = sinon.stub();
             sinon.stub(Utils, 'initialRender');
-            sinon.stub(UI, 'getIx').callsFake(function () { return 3; });
+            sinon.stub(formUI, 'getIx').callsFake(function () { return 3; });
         });
 
         afterEach(function () {
@@ -124,7 +124,7 @@ describe('WebForm', function () {
                 // the browser.
             }
             Utils.initialRender.restore();
-            UI.getIx.restore();
+            formUI.getIx.restore();
             $.unsubscribe();
         });
 
@@ -150,7 +150,7 @@ describe('WebForm', function () {
             sinon.stub(sess, 'newRepeat').callsFake(spy);
             sinon.stub(sess2, 'newRepeat').callsFake(spy2);
 
-            $.publish('formplayer.' + Const.NEW_REPEAT, {});
+            $.publish('formplayer.' + constants.NEW_REPEAT, {});
             assert.isFalse(spy.calledOnce);
             assert.isTrue(spy2.calledOnce);
         });
@@ -159,16 +159,16 @@ describe('WebForm', function () {
             var sess = WebFormSession(params);
 
             // First blocking request
-            $.publish('formplayer.' + Const.NEW_REPEAT, {});
+            $.publish('formplayer.' + constants.NEW_REPEAT, {});
 
-            assert.equal(sess.blockingStatus, Const.BLOCK_ALL);
+            assert.equal(sess.blockingStatus, constants.BLOCK_ALL);
 
             // Attempt another request
-            $.publish('formplayer.' + Const.NEW_REPEAT, {});
+            $.publish('formplayer.' + constants.NEW_REPEAT, {});
 
             server.respond();
 
-            assert.equal(sess.blockingStatus, Const.BLOCK_NONE);
+            assert.equal(sess.blockingStatus, constants.BLOCK_NONE);
             // One call to new-repeat
             assert.equal(server.requests.length, 1);
         });
@@ -186,22 +186,22 @@ describe('WebForm', function () {
                     };
                 },
                 entry: {
-                    xformAction: Const.ANSWER,
+                    xformAction: constants.ANSWER,
                     xformParams: function () { return {}; },
                 },
             };
 
             // First blocking request
-            $.publish('formplayer.' + Const.ANSWER, question);
+            $.publish('formplayer.' + constants.ANSWER, question);
 
-            assert.equal(sess.blockingStatus, Const.BLOCK_SUBMIT);
+            assert.equal(sess.blockingStatus, constants.BLOCK_SUBMIT);
 
             // Attempt another request
-            $.publish('formplayer.' + Const.ANSWER, question);
+            $.publish('formplayer.' + constants.ANSWER, question);
 
             server.respond();
 
-            assert.equal(sess.blockingStatus, Const.BLOCK_NONE);
+            assert.equal(sess.blockingStatus, constants.BLOCK_NONE);
             // two calls to answer
             assert.equal(server.requests.length, 2);
 
@@ -304,13 +304,13 @@ describe('WebForm', function () {
             /**
              * Helper function to make requests and mock responses. Also
              * checks for errors.
-             * @param action: One of the xform actions listed in `Const`
+             * @param action: One of the xform actions listed in `constants`
              * @param args: Arguments to publish with the action
              * @param responseBody: The mock request response
              */
             this.makeRequest = function (action, args, responseBody) {
                 $.publish('formplayer.' + action, args);
-                if (action === Const.SUBMIT) {
+                if (action === constants.SUBMIT) {
                     this.clock.tick(250);
                 }
                 if (typeof responseBody !== "string") {
@@ -337,9 +337,9 @@ describe('WebForm', function () {
 
         it('Question validation updated after answer', function () {
             let sess = WebFormSession(formJSON),
-                form = UI.Form(formJSON);
+                form = formUI.Form(formJSON);
 
-            this.makeRequest(Const.ANSWER, form.children()[0], {
+            this.makeRequest(constants.ANSWER, form.children()[0], {
                 "status": "validation-error",
                 "type": "constraint",
             });
@@ -349,9 +349,9 @@ describe('WebForm', function () {
 
         it('Question validation updated on submit', function () {
             let sess = WebFormSession(formJSON),
-                form = UI.Form(formJSON);
+                form = formUI.Form(formJSON);
 
-            this.makeRequest(Const.SUBMIT, form, {
+            this.makeRequest(constants.SUBMIT, form, {
                     "status": "validation-error",
                     "errors":{"0":{"status":"validation-error","type":"constraint"}}
             });
@@ -362,9 +362,9 @@ describe('WebForm', function () {
         it('Label validation updated on submit', function () {
             formJSON.tree.push(Fixtures.labelJSON({ix: "1"}))
             let sess = WebFormSession(formJSON),
-                form = UI.Form(formJSON);
+                form = formUI.Form(formJSON);
 
-            this.makeRequest(Const.SUBMIT, form, {
+            this.makeRequest(constants.SUBMIT, form, {
                 "status": "validation-error",
                 "errors":{"1":{"status":"validation-error","type":"constraint"}}
             });
@@ -375,16 +375,16 @@ describe('WebForm', function () {
         it('Label validation cleared on answer', function () {
             formJSON.tree.push(Fixtures.labelJSON({ix: "1"}))
             let sess = WebFormSession(formJSON),
-                form = UI.Form(formJSON);
+                form = formUI.Form(formJSON);
 
-            this.makeRequest(Const.SUBMIT, form, {
+            this.makeRequest(constants.SUBMIT, form, {
                 "status": "validation-error",
                 "errors":{"1":{"status":"validation-error","type":"constraint"}}
             });
             assert.isFalse(form.children()[1].isValid(), "Expected question to be invalid");
             assert.deepEqual(form.erroredLabels(), {"1": "OK"});
 
-            this.makeRequest(Const.ANSWER, form.children()[0], {
+            this.makeRequest(constants.ANSWER, form.children()[0], {
                 "status": "accepted",
                 "errors": {},
                 "tree": [
@@ -401,16 +401,16 @@ describe('WebForm', function () {
         it('Label validation handle missing label', function () {
             formJSON.tree.push(Fixtures.labelJSON({ix: "1"}))
             let sess = WebFormSession(formJSON),
-                form = UI.Form(formJSON);
+                form = formUI.Form(formJSON);
 
-            this.makeRequest(Const.SUBMIT, form, {
+            this.makeRequest(constants.SUBMIT, form, {
                 "status": "validation-error",
                 "errors":{"1":{"status":"validation-error","type":"constraint"}}
             });
             assert.isFalse(form.children()[1].isValid(), "Expected question to be invalid");
             assert.deepEqual(form.erroredLabels(), {"1": "OK"});
 
-            this.makeRequest(Const.ANSWER, form.children()[0], {
+            this.makeRequest(constants.ANSWER, form.children()[0], {
                 "status": "accepted",
                 "errors": {},
                 "tree": [

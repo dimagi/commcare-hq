@@ -9,7 +9,8 @@
 # to check if your branch causes any conflicts before rebuilding
 #     $ scripts/rebuildstaging --no-push
 # to rebuild from your new spec and deploy
-#     $ scripts/rebuildstaging
+#     $ scripts/rebuildstaging (--deploy)
+#     OR run deploy separately
 #     $ commcare-cloud --control staging deploy
 # Above commands commands can be run without the flag as well.
 
@@ -58,27 +59,29 @@ branches:
     # - sr/memoized-toggle # Sravan July 26
     # - dependabot/pip/requirements/certifi-2021.10.8   # SK / Joel Oct 12
     # - mk/support-expanded-cols-in-mobile-ucr # MK Feb 2
-    - mjr/all_safe_fixes  # Matt May 11
     - bmb/sso/api/test-001  # Biyeun June 15
-    # - rp/fix-case-properties-modal-styling # Rynhard 20 July
-    - mjr/report-logging-verification # Matt July 20
-    - dm/sql-lookup-tables-pr1  # Daniel July 21
-    - cs/SC-2079-form-view-ff # Charl July 25
-    - ml/limit-superuser-changes # Minha July 25
-    - cs/missing-location-filter-definition # Charl Aug 5
-    - dependabot/npm_and_yarn/leaflet-1.8.0  # Biyeun Aug 17 (impacts maps)
-    - bmb/pyopenssl-upgrade-22.0.0  # Biyeun Aug 22 (impacts SSO)
-    # - ad/remove-entered-wrap-functions # Addison Aug 22
-    - ce/api-rate-limits # Cal Aug 23
     - dmr/add-support-for-ses-django-email-backend  # Danny Aug 26
-    - cs/SC-2135-hourly-reports-not-respecting-timezones # Charl 1 Sept
     - do/migrate-apps # Dominic Sep 2
-    - akj/abdm-api # Akash Sep 5
-    - ad/embed-tab-report-by-user # Addison Sep 7
-    - dependabot/pip/requirements/django-otp-1.1.3 # Graham Sep 12
-    - sk/webapps-update-url # Simon Sep 13
-    - ap/sql-repeater/phase-2 # Amit Sep 16
-    - es/dd-case-data  # Ethan Sep 19
     - smh/remove-setSelectedValue-import # Steph Sept 20
-    - rc/update-case-search-settings-mapping # Robert Sept 20
+    - akj/migrations-fix # Akash Oct 11
+    - mk/support-expanded-cols-in-mobile-ucr-2 # MK Oct 31
+    # - akj/abdm-api-for-mobile-app # Akash Sep 28
+    - es/redirect-domain  # Ethan Nov 21
+    #- jls/web-apps-requirejs  # Jenny Jan 17
+    - gh/remove-duplicate-kafka-seq-code # Graham Dec 26
+    - jls/new-instance-connectors # Steph Dec 27
+    # - ce/enable-case-rate-limits # Cal Feb 1
+    # - ml/enforce-metadata-ff # Minha Feb 2
+    - jt/ush_2575_case_search_pull_related_cases # Jonathan T. Feb 6
+    - smh/force-incremental-sync # Steph Feb 14
+    - es/date-widget  # Ethan Feb 15
+    # - rc/media-upload-spinner-fix # Robert Feb 16
+    - smh/print-button # Steph Feb 17
+    # - mjr/erm-overwrite # Matt Feb 21
+    - ad/tableau-user-syncing-various-2 # Addison Feb 24
+    - pkv/accessibility-mapbox-geocoder-widget # Pawan Feb 27
+    - gh/improve-pillow-logging-take-2 # Graham Mar 1
+    - dmr/grapevine-url  # Danny Mar 3
+    - gh/django-field-audit/1.2.6 # Graham Mar 3
+    - riese/api_key_last_used  # Martin Mar 6
 submodules: { }

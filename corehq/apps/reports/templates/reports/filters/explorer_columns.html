@@ -27,6 +27,7 @@
             <thead>
             <th>&nbsp;</th>
             <th>{% trans "Property" %}</th>
+            <th>{% trans "Label" %}</th>
             <th>&nbsp;</th>
             </thead>
             <tbody data-bind="foreach: properties, sortableList: properties">
@@ -43,6 +44,11 @@
                   <span class="form-control-feedback" data-bind="visible: meta_type">
                     <span class="label label-primary" data-bind="text: meta_type"></span>
                   </span>
+                </div>
+              </td>
+              <td>
+                <div class="has-feedback">
+                  <input type="text" class="form-control" data-bind="value: label"/>
                 </div>
               </td>
               <td>

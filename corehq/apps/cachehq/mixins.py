@@ -53,6 +53,8 @@ class _InvalidateCacheMixin(object):
 
 
 def dont_cache_docs(*args, **kwargs):
+    if kwargs.get(dont_cache_docs.__name__):
+        return True
     if settings.UNIT_TESTING:
         return False
     return not getattr(settings, 'COUCH_CACHE_DOCS', True)
@@ -67,7 +69,7 @@ class QuickCachedDocumentMixin(_InvalidateCacheMixin):
 
     @classmethod
     @quickcache(['cls.__name__', 'doc_id'], skip_arg=dont_cache_docs)
-    def get(cls, doc_id, *args, **kwargs):
+    def get(cls, doc_id, *args, dont_cache_docs=False, **kwargs):
         return super(QuickCachedDocumentMixin, cls).get(doc_id, *args, **kwargs)
 
 

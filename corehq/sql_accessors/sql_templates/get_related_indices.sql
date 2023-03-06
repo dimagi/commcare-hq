@@ -19,7 +19,6 @@ BEGIN
     FROM form_processor_commcarecaseindexsql
     JOIN case_ids ON cid = case_id -- case_id points to child/extension
     WHERE domain = domain_name
-        AND referenced_id != '' -- ignore deleted indices
         AND case_id || ' ' || identifier NOT IN (SELECT xid FROM exclude_indices)
 
     UNION

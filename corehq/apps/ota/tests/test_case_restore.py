@@ -9,9 +9,9 @@ from casexml.apps.case.mock import CaseFactory, CaseIndex, CaseStructure
 
 from corehq.apps.app_manager.tests.util import TestXmlMixin
 from corehq.apps.domain.shortcuts import create_domain
+from corehq.apps.fixtures.utils import clear_fixture_cache
 from corehq.apps.locations.models import LocationType, SQLLocation
 from corehq.apps.ota.case_restore import get_case_hierarchy_for_restore
-from corehq.apps.users.dbaccessors import delete_all_users
 from corehq.form_processor.models import CommCareCase
 from corehq.util.hmac_request import get_hmac_digest
 from corehq.util.test_utils import flag_enabled
@@ -77,6 +77,7 @@ class TestRelatedCases(TestCase, TestXmlMixin):
         domain_obj = create_domain(self.domain)
 
         self.addCleanup(domain_obj.delete)
+        self.addCleanup(clear_fixture_cache, self.domain)
 
         location_type = LocationType.objects.create(domain=self.domain, name="Top", code="top")
         location = SQLLocation.objects.create(domain=self.domain, name="Top Location", location_type=location_type)
@@ -108,6 +109,7 @@ class TestRelatedCases(TestCase, TestXmlMixin):
         domain_obj = create_domain(self.domain)
 
         self.addCleanup(domain_obj.delete)
+        self.addCleanup(clear_fixture_cache, self.domain)
 
         table_tag = "atable"
 

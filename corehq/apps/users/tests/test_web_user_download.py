@@ -1,16 +1,20 @@
 from datetime import datetime
+from unittest import mock
 
 from django.test import TestCase
 
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.es.tests.utils import es_test, populate_user_index
+from corehq.apps.es.users import user_adapter
 from corehq.apps.users.bulk_download import parse_web_users
 from corehq.apps.users.models import Invitation, UserRole, WebUser
-from corehq.pillows.mappings.user_mapping import USER_INDEX
-from corehq.util.elastic import ensure_index_deleted
+from corehq.apps.reports.models import TableauUser
+from corehq.apps.reports.tests.test_tableau_api_session import _setup_test_tableau_server
+from corehq.apps.reports.tests.test_tableau_api_util import _mock_create_session_responses
+from corehq.util.test_utils import disable_quickcache, flag_enabled
 
 
-@es_test
+@es_test(requires=[user_adapter], setup_class=True)
 class TestDownloadWebUsers(TestCase):
 
     @classmethod
@@ -96,7 +100,6 @@ class TestDownloadWebUsers(TestCase):
 
     @classmethod
     def tearDownClass(cls):
-        ensure_index_deleted(USER_INDEX)
         cls.user1.delete(cls.domain_obj.name, deleted_by=None)
         cls.user2.delete(cls.domain_obj.name, deleted_by=None)
         cls.user10.delete(cls.other_domain_obj.name, deleted_by=None)
@@ -155,3 +158,46 @@ class TestDownloadWebUsers(TestCase):
             ("susan@choi.com", self.other_domain),
             ("invited_to_other_domain@user.com", self.other_domain),
         })
+
+    def _setup_tableau_users(self):
+        _setup_test_tableau_server(self, self.domain)
+        TableauUser.objects.create(
+            server=self.connected_app.server,
+            username='edith@wharton.com',
+            role=TableauUser.Roles.VIEWER.value)
+        TableauUser.objects.create(
+            server=self.connected_app.server,
+            username='george@eliot.com',
+            role=TableauUser.Roles.EXPLORER.value)
+
+    @flag_enabled('TABLEAU_USER_SYNCING')
+    @disable_quickcache
+    @mock.patch('corehq.apps.reports.models.requests.request')
+    def test_tableau_user_download(self, mock_request):
+        self._setup_tableau_users()
+        mock_request.side_effect = _mock_create_session_responses(self) + [
+            self.tableau_instance.query_groups_response(),
+            self.tableau_instance.get_users_in_group_response(),
+            self.tableau_instance.get_users_in_group_response(),
+            self.tableau_instance.get_users_in_group_response()
+        ] + _mock_create_session_responses(self) + [
+            self.tableau_instance.query_groups_response(),
+            self.tableau_instance.failure_response()
+        ]
+        (headers, rows) = parse_web_users(self.domain_obj.name, {})
+
+        rows = list(rows)
+        self.assertEqual(3, len(rows))
+
+        spec = dict(zip(headers, rows[0]))
+        self.assertEqual(TableauUser.Roles.VIEWER.value, spec['tableau_role'])
+        self.assertEqual("group1,group2,group3",
+            spec['tableau_groups'])
+
+        spec = dict(zip(headers, rows[1]))
+        self.assertEqual(TableauUser.Roles.EXPLORER.value, spec['tableau_role'])
+
+        (headers, rows) = parse_web_users(self.domain_obj.name, {})
+        spec = dict(zip(headers, list(rows)[0]))
+        # Should be ERROR since the second get_groups_for_user_id response fails
+        self.assertEqual('ERROR', spec['tableau_groups'])

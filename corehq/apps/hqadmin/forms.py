@@ -23,6 +23,7 @@ class EmailForm(forms.Form):
     email_body_text = forms.CharField()
     real_email = forms.BooleanField(required=False)
 
+
 class ReprocessMessagingCaseUpdatesForm(forms.Form):
     case_ids = forms.CharField(widget=forms.Textarea(attrs={"class": "vertical-resize"}))
 
@@ -65,7 +66,15 @@ class SuperuserManagementForm(forms.Form):
     )
     privileges = forms.MultipleChoiceField(
         choices=[
-            ('is_superuser', 'Mark as superuser'),
+            ('is_staff', 'Mark as developer'),
+            ('is_superuser', 'Mark as superuser')
+        ],
+        widget=forms.CheckboxSelectMultiple(),
+        required=False,
+    )
+    can_assign_superuser = forms.MultipleChoiceField(
+        choices=[
+            ('can_assign_superuser', 'Grant permission to change superuser and staff status')
         ],
         widget=forms.CheckboxSelectMultiple(),
         required=False,
@@ -74,13 +83,8 @@ class SuperuserManagementForm(forms.Form):
     def clean(self):
         return clean_data(self.cleaned_data)
 
-    def __init__(self, can_toggle_is_staff, *args, **kwargs):
+    def __init__(self, *args, **kwargs):
         super(SuperuserManagementForm, self).__init__(*args, **kwargs)
-
-        if can_toggle_is_staff:
-            self.fields['privileges'].choices.append(
-                ('is_staff', 'Mark as developer')
-            )
 
         self.helper = FormHelper()
         self.helper.form_class = "form-horizontal"
@@ -89,6 +93,7 @@ class SuperuserManagementForm(forms.Form):
         self.helper.layout = crispy.Layout(
             'csv_email_list',
             'privileges',
+            'can_assign_superuser',
             FormActions(
                 crispy.Submit(
                     'superuser_management',
@@ -118,7 +123,7 @@ class OffboardingUserListForm(forms.Form):
             'csv_email_list',
             FormActions(
                 crispy.Submit(
-                    'superuser_management',
+                    'get_offboarding_list',
                     'Get Users Not in List'
                 )
             )
@@ -138,41 +143,46 @@ def clean_data(cleaned_data, offboarding_list=False):
     csv_email_list = [parseaddr(email)[EMAIL_INDEX] for email in csv_email_list]
 
     MAX_ALLOWED_EMAIL_USERS = 10
-    if not offboarding_list and len(csv_email_list) > MAX_ALLOWED_EMAIL_USERS:
-        raise forms.ValidationError(
-            f"This command allows superusers to modify up to {MAX_ALLOWED_EMAIL_USERS} users at a time. "
-        )
-
     users = []
     validation_errors = []
+
+    # Superuser management
     non_dimagi_email = []
-    for username in csv_email_list:
-        if not offboarding_list:
+    if not offboarding_list:
+        if len(csv_email_list) > MAX_ALLOWED_EMAIL_USERS:
+            raise forms.ValidationError(
+                f"This command allows superusers to modify up to {MAX_ALLOWED_EMAIL_USERS} users at a time. "
+            )
+        for username in csv_email_list:
             if settings.IS_DIMAGI_ENVIRONMENT and not is_dimagi_email(username):
                 non_dimagi_email.append(ValidationError(username))
                 continue
-        try:
-            users.append(User.objects.get(username=username))
-        except User.DoesNotExist:
-            if not offboarding_list:
+            try:
+                users.append(User.objects.get(username=username))
+            except User.DoesNotExist:
                 validation_errors.append(ValidationError(username))
-            else:
-                validation_errors.append(ValidationError(username))
-    if not offboarding_list and (validation_errors or non_dimagi_email):
-        if non_dimagi_email:
-            non_dimagi_email.insert(0, ValidationError(
-                _("The following email addresses are not dimagi email addresses:")))
-        if validation_errors:
-            validation_errors.insert(0, ValidationError(
-                _("The following users do not exist on this site, please have the user registered first:")))
+        if validation_errors or non_dimagi_email:
             if non_dimagi_email:
-                validation_errors.append('+')
-        raise ValidationError(validation_errors + non_dimagi_email)
-    if offboarding_list and validation_errors:
-        cleaned_data['validation_errors'] = validation_errors
+                non_dimagi_email.insert(0, ValidationError(
+                    _("The following email addresses are not dimagi email addresses:")))
+            if validation_errors:
+                validation_errors.insert(0, ValidationError(
+                    _("The following users do not exist on this site, please have the user registered first:")))
+                if non_dimagi_email:
+                    validation_errors.append('+')
+            raise ValidationError(validation_errors + non_dimagi_email)
 
+    # Offboarding list
     if offboarding_list:
-        #inverts the given list by default
+        for username in csv_email_list:
+            try:
+                users.append(User.objects.get(username=username))
+            except User.DoesNotExist:
+                validation_errors.append(username)
+        if validation_errors:
+            cleaned_data['validation_errors'] = validation_errors
+
+        # inverts the given list by default
         email_names = [username.split("@")[0] + "+" for username in csv_email_list]
         users = [user for user in all_users if user not in users
                  and not list(filter(user.username.startswith, email_names))]

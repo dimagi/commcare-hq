@@ -75,7 +75,7 @@ class TestDomainViews(TestCase, DomainSubscriptionMixin):
             )
             self.assertEqual(response.status_code, 200)
 
-            app_structure_repeaters = AppStructureRepeater.by_domain(self.domain.name)
+            app_structure_repeaters = AppStructureRepeater.objects.by_domain(self.domain.name)
             self.assertEqual(len(app_structure_repeaters), 1)
 
             for app_structure_repeater in app_structure_repeaters:

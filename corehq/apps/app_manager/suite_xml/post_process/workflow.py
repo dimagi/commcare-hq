@@ -397,7 +397,15 @@ class EndOfFormNavigationWorkflow(object):
         source_form_datums = self.helper.get_form_datums(form)
         if link.form_id:
             target_form = self.helper.app.get_form(link.form_id)
-            target_module = target_form.get_module()
+            if link.form_module_id:
+                target_module = self.helper.app.get_module_by_unique_id(link.form_module_id)
+            else:
+                target_module = target_form.get_module()
+            if module.module_type == "shadow" and module.source_module_id == target_module.unique_id:
+                # If this is a shadow module and we're navigating to a form from the source module,
+                # presume we should navigate to the version of the form in the current (shadow) module.
+                # This only affects breadcrumbs.
+                target_module = module
             target_frame_children = self.helper.get_frame_children(target_module, target_form)
         elif link.module_unique_id:
             target_module = self.helper.app.get_module_by_unique_id(link.module_unique_id)

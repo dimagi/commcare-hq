@@ -145,7 +145,8 @@ def run_case_update_rules_for_domain(domain, now=None):
             domain=domain,
             started_on=datetime.utcnow(),
             status=DomainCaseRuleRun.STATUS_RUNNING,
-            case_type=case_type
+            case_type=case_type,
+            workflow=AutomaticUpdateRule.WORKFLOW_CASE_UPDATE,
         )
 
         for db in get_db_aliases_for_partitioned_query():
@@ -169,7 +170,8 @@ def run_case_update_rules_for_domain_and_db(domain, now, run_id, case_type, db=N
 
     if run.status == DomainCaseRuleRun.STATUS_FINISHED:
         for rule in rules:
-            AutomaticUpdateRule.objects.filter(pk=rule.pk).update(last_run=now)
+            rule.last_run = now
+            rule.save(update_fields=['last_run'])
 
 
 @task(serializer='pickle', queue='background_queue', acks_late=True, ignore_result=True)

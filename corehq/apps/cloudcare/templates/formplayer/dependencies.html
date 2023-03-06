@@ -3,6 +3,9 @@
 
   <script src='https://api.mapbox.com/mapbox.js/v3.3.1/mapbox.js' async></script>
   <link href='https://api.mapbox.com/mapbox.js/v3.3.1/mapbox.css' rel='stylesheet' />
+  {# serve sentry directly to prevent over zealous ad blockers from blocking it #}
+  <script src="{% static 'sentry/js/sentry.browser.7.28.0.min.js' %}" crossorigin="anonymous"></script>
+  <script src="{% static 'sentry/js/sentry.captureconsole.7.28.0.min.js' %}" crossorigin="anonymous"></script>
 {% compress js %}
   <script src="{% static 'backbone/backbone.js' %}"></script>
   <script src="{% static 'backbone.radio/build/backbone.radio.min.js' %}"></script>
@@ -30,6 +33,7 @@
   <script src="{% static 'integration/js/hmac_callout.js' %}"></script>
   <script src="{% static 'cloudcare/js/formplayer/constants.js' %}"></script>
   <script src="{% static 'cloudcare/js/utils.js' %}"></script>
+  <script src="{% static 'cloudcare/js/sentry.js' %}"></script>
   <script src="{% static 'Caret.js/dist/jquery.caret.js' %}"></script>
   <script src="{% static 'At.js/dist/js/jquery.atwho.js' %}"></script>
   <script src="{% static 'fast-levenshtein/levenshtein.js' %}"></script>
@@ -54,39 +58,40 @@
 
 {% compress js %}
   <!-- The ordering of the cloudcare/js/* files matters, as many of them depend on each other. -->
+  <script src="{% static 'cloudcare/js/formplayer/layout/views/progress_bar.js' %}"></script>
+
   <script src="{% static 'cloudcare/js/formplayer/utils/utils.js' %}"></script>
   <script src="{% static 'cloudcare/js/formplayer/utils/calendar-picker-translations.js' %}"></script>
+  <script src="{% static 'cloudcare/js/formplayer/users/models.js' %}"></script>
   <script src="{% static 'cloudcare/js/formplayer/app.js' %}"></script>
   <script src="{% static 'cloudcare/js/formplayer/hq_events.js' %}"></script>
   <script src="{% static 'cloudcare/js/formplayer/middleware.js' %}"></script>
 
   <script src="{% static 'cloudcare/js/debugger/debugger.js' %}"></script>
 
-  <script src="{% static 'cloudcare/js/formplayer/layout/views/progress_bar.js' %}"></script>
   <script src="{% static 'cloudcare/js/formplayer/layout/views/settings.js' %}"></script>
 
-  <script src="{% static 'cloudcare/js/formplayer/users/models.js' %}"></script>
   <script src="{% static 'cloudcare/js/formplayer/users/collections.js' %}"></script>
-  <script src="{% static 'cloudcare/js/formplayer/users/controller.js' %}"></script>
   <script src="{% static 'cloudcare/js/formplayer/users/utils.js' %}"></script>
   <script src="{% static 'cloudcare/js/formplayer/users/views.js' %}"></script>
+  <script src="{% static 'cloudcare/js/formplayer/users/controller.js' %}"></script>
 
-  <script src="{% static 'cloudcare/js/formplayer/apps/api.js' %}"></script>
   <script src="{% static 'cloudcare/js/formplayer/apps/models.js' %}"></script>
   <script src="{% static 'cloudcare/js/formplayer/apps/collections.js' %}"></script>
+  <script src="{% static 'cloudcare/js/formplayer/apps/api.js' %}"></script>
   <script src="{% static 'cloudcare/js/formplayer/apps/views.js' %}"></script>
   <script src="{% static 'cloudcare/js/formplayer/apps/controller.js' %}"></script>
 
+  <script src="{% static 'cloudcare/js/formplayer/menus/collections.js' %}"></script>
   <script src="{% static 'cloudcare/js/formplayer/menus/api.js' %}"></script>
   <script src="{% static 'cloudcare/js/formplayer/menus/views.js' %}"></script>
   <script src="{% static 'cloudcare/js/formplayer/menus/views/query.js' %}"></script>
   <script src="{% static 'cloudcare/js/formplayer/menus/utils.js' %}"></script>
   <script src="{% static 'cloudcare/js/formplayer/menus/controller.js' %}"></script>
-  <script src="{% static 'cloudcare/js/formplayer/menus/collections.js' %}"></script>
 
-  <script src="{% static 'cloudcare/js/formplayer/sessions/api.js' %}"></script>
   <script src="{% static 'cloudcare/js/formplayer/sessions/models.js' %}"></script>
   <script src="{% static 'cloudcare/js/formplayer/sessions/collections.js' %}"></script>
+  <script src="{% static 'cloudcare/js/formplayer/sessions/api.js' %}"></script>
   <script src="{% static 'cloudcare/js/formplayer/sessions/views.js' %}"></script>
   <script src="{% static 'cloudcare/js/formplayer/sessions/controller.js' %}"></script>
 

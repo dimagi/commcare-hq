@@ -1,5 +1,5 @@
 import functools
-from distutils.version import LooseVersion
+from looseversion import LooseVersion
 
 from django.utils.translation import gettext
 
@@ -124,6 +124,12 @@ def _create_custom_app_strings(app, lang, for_default=False, build_profile_id=No
 
 
 def _create_module_details_app_strings(module, langs):
+    if module.get_app().supports_empty_case_list_text and hasattr(module, 'case_details'):
+        yield (
+            id_strings.no_items_text_detail(module),
+            clean_trans(module.case_details.short.no_items_text, langs)
+        )
+
     for detail_type, detail, _ in module.get_details():
         for column in detail.get_columns():
             yield (
@@ -347,6 +353,11 @@ def _create_case_search_app_strings(
             if app.enable_case_search_title_translation:
                 yield id_strings.case_search_title_translation(module), title_label
 
+            yield (
+                id_strings.case_search_description_locale(module),
+                clean_trans(module.search_config.description, langs)
+            )
+
             # search again label
             yield (
                 id_strings.case_search_again_locale(module),
@@ -370,6 +381,10 @@ def _create_case_search_app_strings(
             yield(
                 id_strings.case_search_title_translation(module),
                 clean_trans(CaseSearch.title_label.default(), langs)
+            )
+            yield (
+                id_strings.case_search_description_locale(module),
+                clean_trans(CaseSearch.description.default(), langs)
             )
             yield (
                 id_strings.case_search_locale(module),

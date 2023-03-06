@@ -290,7 +290,9 @@
                            }
                        },
                        "open_case": {
-                           "name_path": "/data/question1",
+                           "name_update": {
+                            "question_path": "/data/question1"
+                           },
                            "doc_type": "OpenCaseAction",
                            "external_id": null,
                            "condition": {

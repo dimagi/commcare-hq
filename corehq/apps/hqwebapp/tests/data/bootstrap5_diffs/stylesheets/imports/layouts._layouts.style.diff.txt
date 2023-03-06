@@ -1,0 +1,39 @@
+--- 
++++ 
+@@ -1,24 +1,12 @@
+-body, html {
+-    height: 100%;
+-}
+-
+-.hq-container {
+-    min-height: 100%;
+-    height: auto !important;
+-    margin-bottom: -@navbar-footer-height;
+-    padding-bottom: @navbar-footer-height;
+-}
+-
+-
+-.container.ui-widget,
+-.container.ui-widget.ui-widget-content {
+-  border: none;
+-}
++// todo find out if this is actually needed
++//body, html {
++//    height: 100%;
++//}
+ 
+ .footer-mobile {
+   font-size: 10px;
+   text-align: center;
+-  border-top: 1px solid @cc-neutral-hi;
++  border-top: 1px solid $cc-neutral-hi;
+   padding-top: 8px;
+   margin-top:10px;
+ 
+@@ -28,5 +16,5 @@
+ }
+ 
+ .ui-widget-content a.btn-primary {
+-  color: white;
++  color: $white;
+ }

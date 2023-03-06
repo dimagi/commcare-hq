@@ -60,6 +60,7 @@ class CaseProperty(models.Model):
         related_query_name='property'
     )
     name = models.CharField(max_length=255, default=None)
+    label = models.CharField(max_length=255, default='', blank=True)
     description = models.TextField(default='', blank=True)
     deprecated = models.BooleanField(default=False)
     data_type = models.CharField(
@@ -95,7 +96,10 @@ class CaseProperty(models.Model):
 
     @classmethod
     def clear_caches(cls, domain, case_type):
-        from .util import get_data_dict_props_by_case_type, get_gps_properties
+        from .util import (
+            get_data_dict_props_by_case_type,
+            get_gps_properties,
+        )
         get_data_dict_props_by_case_type.clear(domain)
         get_gps_properties.clear(domain, case_type)
 

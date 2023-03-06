@@ -4,6 +4,10 @@
 
 {% requirejs_main "case_importer/js/main" %}
 
+{% block page_title %}
+  {{ current_page.title }}
+{% endblock %}
+
 {% block page_content %}
   {% registerurl 'case_importer_uploads' domain %}
   {% registerurl 'case_importer_upload_file_download' domain '---' %}

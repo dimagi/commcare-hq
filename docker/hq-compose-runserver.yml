@@ -1,34 +1,55 @@
 version: '2.3'
 
+volumes:
+  shared_files: {}
+
+# x-anchors are ignored by Docker, are used for DRYness here
+x-commcarehq_base: &commcarehq_base
+  image: commcarehq_incl:latest
+  environment: &environment_base
+    COMMCAREHQ_BOOTSTRAP: "yes"
+  privileged: true  # allows mount inside container
+  depends_on:
+    postgres:
+      condition: service_healthy
+    couch:
+      condition: service_healthy
+    redis:
+      condition: service_healthy
+    elasticsearch2:
+      condition: service_healthy
+    kafka:
+      condition: service_healthy
+    zookeeper:
+      condition: service_started
+    minio:
+      condition: service_healthy
+  volumes:
+    - shared_files:/sharedfiles
+
 services:
+  config:
+    <<: *commcarehq_base
+    command: 'docker/init-hq.sh'
+
   web:
-    build:
-      context: .
-      dockerfile: "${DOCKERFILE}"
-    environment:
-      COMMCAREHQ_BOOTSTRAP: "yes"
-      DEPENDENT_SERVICES: "couch:5984 postgres:5432 redis:6379 elasticsearch2:9200 minio:9980 kafka:9092"
-      DOCKER_HQ_OVERLAY: "${DOCKER_HQ_OVERLAY}"
-      DOCKER_HQ_OVERLAYFS_CHMOD: "${DOCKER_HQ_OVERLAYFS_CHMOD}"
-      DOCKER_HQ_OVERLAYFS_METACOPY: "${DOCKER_HQ_OVERLAYFS_METACOPY}"
-    privileged: true  # allows mount inside container
-    command: [runserver]
-    depends_on:
-      - postgres
-      - couch
-      - redis
-      - elasticsearch2
-      - elasticsearch5
-      - kafka
-      - zookeeper
-      - minio
+    <<: *commcarehq_base
+    command: './manage.py runserver 0.0.0.0:8000'
     expose:
       - 8000
     ports:
       - "8000:8000"
-    volumes:
-      - ..:/mnt/commcare-hq-ro:ro
-      - ${VOLUME_PREFIX}lib:/mnt/lib
+
+  celery:
+    <<: *commcarehq_base
+    command: 'celery -A corehq worker -l info'
+
+  pillowtop:
+    <<: *commcarehq_base
+    environment:
+      <<: *environment_base
+      KAFKA_ADVERTISED_HOST_NAME: kafka
+    command: './manage.py run_ptop --pillow-key=core --processor-chunk-size=1'
 
   formplayer:
     extends:
@@ -37,8 +58,10 @@ services:
     environment:
         COMMCARE_HOST: "http://web:8000"
     depends_on:
-      - postgres
-      - redis
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
     ports:
       - "8080:8080"
       - "8081:8081"
@@ -77,6 +100,9 @@ services:
     extends:
       file: hq-compose-services.yml
       service: kafka
+    depends_on:
+      zookeeper:
+        condition: service_started
 
   minio:
     extends:

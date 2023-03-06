@@ -70,6 +70,7 @@ from corehq.apps.userreports.reports.view import (
     CustomConfigurableReportDispatcher,
 )
 from corehq.apps.userreports.const import TEMP_REPORT_PREFIX
+from corehq.motech.generic_inbound.reports import ApiRequestLogReport
 from corehq.motech.repeaters.views import (
     DomainForwardingRepeatRecords,
     SQLRepeatRecordReport,
@@ -329,6 +330,7 @@ DOMAIN_REPORTS = (
         SQLRepeatRecordReport,
         DomainLinkHistoryReport,
         IncrementalExportLogView,
+        ApiRequestLogReport,
     )),
 )
 
