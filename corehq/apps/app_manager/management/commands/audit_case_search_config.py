@@ -14,7 +14,7 @@ PropertyInfo = namedtuple("PropertyInfo", "domain app_id version module_unique_i
 
 
 class Command(BaseCommand):
-    help = ("Pull all case search properties that allow blank values from all case search apps")
+    help = ("Pull all case search options of a given type from all case search apps")
 
     def add_arguments(self, parser):
         parser.add_argument(
@@ -23,6 +23,13 @@ class Command(BaseCommand):
             action='store_true',
             dest='include_builds',
             help='Include saved builds, not just current apps',
+        )
+        parser.add_argument(
+            '-p',
+            '--prop-attr',
+            action='store_true',
+            dest='prop_attr',
+            help='Look into property attributes, not just search_config',
         )
         parser.add_argument(
             '-d',
@@ -51,13 +58,15 @@ class Command(BaseCommand):
                 doc = Application.get_db().get(app_id)
                 for index, module in enumerate(doc.get("modules", [])):
                     if module.get("search_config", {}):
-                        for prop in module.get("search_config", {}).get("properties", []):
-                            if prop.get(attr, False):
-                                results.append(PropertyInfo(domain,
-                                                            doc.get("copy_of") or app_id,
-                                                            doc.get("version"),
-                                                            module.get("unique_id"),
-                                                            prop.get("name")))
+                        if options['prop_attr']:
+                            for info in self._handle_property_attribute(domain, app_id, doc, module, attr):
+                                results.append(info)
+                        elif module.get("search_config").get(attr, None):
+                            results.append(PropertyInfo(domain,
+                                                        doc.get("copy_of") or app_id,
+                                                        doc.get("version"),
+                                                        module.get("unique_id"),
+                                                        attr))
 
         result_domains = {b.domain for b in results}
         result_apps = {b.app_id for b in results}
@@ -65,13 +74,21 @@ class Command(BaseCommand):
                    f"Found {len(results)} '{attr}' properties"
                    f" in {len(result_apps)} apps"
                    f" in {len(result_domains)} domains\n")
-        print(summary)
 
         with open(CASE_SEARCH_AUDIT_LOG, 'a') as f:
-            f.write(str(datetime.now()))
             f.write(summary)
         for result in results:
             self.log(result)
+        print(summary)
+
+    def _handle_property_attribute(self, domain, app_id, doc, module, attr):
+        for prop in module.get("search_config", {}).get("properties", []):
+            if prop.get(attr, False):
+                yield PropertyInfo(domain,
+                                   doc.get("copy_of") or app_id,
+                                   doc.get("version"),
+                                   module.get("unique_id"),
+                                   prop.get("name"))
 
     def log(self, result):
         with open(CASE_SEARCH_AUDIT_LOG, 'a') as f:
