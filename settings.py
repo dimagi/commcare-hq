@@ -313,6 +313,7 @@ HQ_APPS = (
     'corehq.apps.groups',
     'corehq.apps.mobile_auth',
     'corehq.apps.sms',
+    'corehq.apps.events',
     'corehq.apps.smsforms',
     'corehq.apps.sso',
     'corehq.apps.ivr',
@@ -777,7 +778,7 @@ AUDIT_ADMIN_VIEWS = False
 ANALYTICS_IDS = {
     'GOOGLE_ANALYTICS_API_ID': '',
     'KISSMETRICS_KEY': '',
-    'HUBSPOT_API_KEY': '',
+    'HUBSPOT_ACCESS_TOKEN': '',
     'HUBSPOT_API_ID': '',
     'GTM_ID': '',
     'DRIFT_ID': '',

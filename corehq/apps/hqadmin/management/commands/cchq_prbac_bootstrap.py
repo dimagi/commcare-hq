@@ -197,6 +197,9 @@ class Command(BaseCommand):
         Role(slug=privileges.ATTENDANCE_TRACKING,
              name='Attendance Tracking',
              description='Supports using CommCareHQ for attendance tracking'),
+        Role(slug=privileges.REGEX_FIELD_VALIDATION,
+             name='Regular Field Validation',
+             description='Regular field validation for custom data fields'),
     ]
 
     BOOTSTRAP_PLANS = [

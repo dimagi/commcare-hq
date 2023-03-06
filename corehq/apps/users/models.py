@@ -262,6 +262,9 @@ class HqPermissions(DocumentSchema):
         if self.edit_apps:
             self.view_apps = True
 
+        if not (self.view_reports or self.view_report_list):
+            self.download_reports = False
+
     @classmethod
     @memoized
     def permission_names(cls):
@@ -1501,6 +1504,9 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, EulaMixin):
             self.has_permission(domain, 'login_as_all_users')
             or self.has_permission(domain, 'limited_login_as')
         )
+
+    def can_manage_events(self, domain):
+        return self.has_permission(domain, 'manage_attendance_tracking')
 
     def is_current_web_user(self, request):
         return self.user_id == request.couch_user.user_id
