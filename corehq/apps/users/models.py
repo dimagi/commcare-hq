@@ -2987,6 +2987,8 @@ class HQApiKey(models.Model):
     is_active = models.BooleanField(default=True)
     deactivated_on = models.DateTimeField(blank=True, null=True)
     expiration_date = models.DateTimeField(blank=True, null=True)  # Not yet used
+    # Not update with every request. Can be a couple of seconds out of date
+    last_used = models.DateTimeField(blank=True, null=True)
 
     objects = ApiKeyManager()
     all_objects = models.Manager()
