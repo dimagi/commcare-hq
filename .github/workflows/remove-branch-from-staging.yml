@@ -1,0 +1,20 @@
+on:
+  pull_request:
+    types:
+      - closed
+
+jobs:
+  update-staging-yml:
+    if: ${{ github.event.pull_request.merged == true }}
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          submodules: recursive
+      - uses: actions/setup-python@v3
+        with:
+          python-version: '3.9'
+      - name: Install dev requirements
+        run: pip install -r requirements/dev-requirements.txt
+      - name: Update staging.yml
+        run: bash scripts/remove-branch-from-staging.sh ${{ github.event.pull_request.head }}
