@@ -9,6 +9,7 @@ hqDefine("data_interfaces/js/case_management",[
         'use strict';
         var self = {};
 
+        self.total_cases = initialPageData.get('bulk_reassign_url');
         self.receiverUrl = o.receiverUrl;
         self.updatedCase = null;
         self.webUserID = o.webUserID;
@@ -19,12 +20,17 @@ hqDefine("data_interfaces/js/case_management",[
         self.selectedCases = ko.observableArray();
         self.selectedOwners = ko.observableArray();
         self.selectedOwnerTypes = ko.observableArray();
+        self.selectAllMatches = ko.observable(false);
 
         // What we're assigning to
         self.newOwner = ko.observable();
 
         self.isSubmitEnabled = ko.computed(function () {
             return !!self.newOwner();
+        }, self);
+
+        self.selectedCount = ko.computed(function () {
+            return self.selectedCases().length;
         }, self);
 
         self.shouldShowOwners = ko.observable(true);
@@ -99,6 +105,16 @@ hqDefine("data_interfaces/js/case_management",[
             self.selectedCases.removeAll();
         };
 
+        self.updateAllMatches = function () {
+            {{bulk_reassign_url}};
+            var rp = hqImport("reports/js/standard_hq_report").getStandardHQReport();
+            var pms = new URLSearchParams(rp.getReportParams())
+            $.postGo(
+                initialPageData.get('bulk_reassign_url'),
+                Object.fromEntries(pms.entries())
+            );
+        }
+
         self.updateCaseOwners = function (form) {
             var newOwner = $(form).find('#reassign_owner_select').val(),
                 $modal = $('#caseManagementStatusModal'),
@@ -114,6 +130,10 @@ hqDefine("data_interfaces/js/case_management",[
                 $modal.find('.modal-body').text("Please select an owner");
                 $modal.modal('show');
             } else {
+                if (self.selectAllMatches) {
+                    self.updateAllMatches();
+                    return;
+                }
                 $(form).find("[type='submit']").disableButton();
                 for (var i = 0; i < self.selectedCases().length; i++) {
                     var caseId = self.selectedCases()[i],
@@ -167,6 +187,13 @@ hqDefine("data_interfaces/js/case_management",[
                     webUserName: initialPageData.get("web_username"),
                     formName: gettext("Case Reassignment (via HQ)"),
                 });
+                caseManagementModel.selectAllMatches.subscribe(function (selectAllMatches) {
+                    if (selectAllMatches) {
+                        selectAll();
+                    } else {
+                        selectNone();
+                    }
+                });
                 $(interfaceSelector).koApplyBindings(caseManagementModel);
             }
 
@@ -208,15 +235,21 @@ hqDefine("data_interfaces/js/case_management",[
         // Event handlers for selecting & de-selecting cases
         // Similar to archive_forms.js, would be good to combine the two
         $(document).on("click", interfaceSelector + " a.select-all", function () {
-            $(interfaceSelector).find('input.selected-commcare-case').prop('checked', true).change();
+            caseManagementModel.selectAllMatches(false);
+            selectAll();
             return false;
         });
+
+        function selectAll() {
+            $(interfaceSelector).find('input.selected-commcare-case').prop('checked', true).change();
+        }
 
         function selectNone() {
             $(interfaceSelector).find('input.selected-commcare-case:checked').prop('checked', false).change();
         }
 
         $(document).on("click", interfaceSelector + " a.select-none", function () {
+            caseManagementModel.selectAllMatches(false);
             selectNone();
             return false;
         });

@@ -1,6 +1,9 @@
 from django.conf.urls import include, re_path as url
 
-from corehq.apps.data_interfaces.dispatcher import EditDataInterfaceDispatcher
+from corehq.apps.data_interfaces.dispatcher import (
+    EditDataInterfaceDispatcher,
+    BulkEditDataInterfaceDispatcher,
+)
 from corehq.apps.data_interfaces.views import (
     AddCaseRuleView,
     AutomaticUpdateRuleListView,
@@ -47,6 +50,7 @@ edit_data_urls = [
     url(r'^deduplication_rules/edit/(?P<rule_id>\d+)/$', DeduplicationRuleEditView.as_view(),
         name=DeduplicationRuleEditView.urlname),
     EditDataInterfaceDispatcher.url_pattern(),
+    BulkEditDataInterfaceDispatcher.url_pattern(),
 ]
 
 urlpatterns = [

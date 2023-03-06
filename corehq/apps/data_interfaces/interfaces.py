@@ -1,4 +1,5 @@
 from django.contrib.humanize.templatetags.humanize import naturaltime
+from django.http import HttpResponseBadRequest
 from django.urls import reverse
 from django.utils.html import format_html
 from django.utils.safestring import mark_safe
@@ -19,7 +20,7 @@ from corehq.apps.reports.standard.cases.basic import CaseListMixin
 from corehq.apps.reports.standard.cases.data_sources import CaseDisplayES
 from corehq.apps.reports.standard.inspect import SubmitHistoryMixin
 from corehq.util.timezones.utils import parse_date
-from .dispatcher import EditDataInterfaceDispatcher
+from .dispatcher import EditDataInterfaceDispatcher, BulkEditDataInterfaceDispatcher
 
 
 class DataInterface(GenericReportView):
@@ -35,8 +36,12 @@ class DataInterface(GenericReportView):
         return reverse('data_interfaces_default', args=[self.request.project.name])
 
 
+class BulkDataInterface(DataInterface):
+    dispatcher = BulkEditDataInterfaceDispatcher
+
+
 @location_safe
-class CaseReassignmentInterface(CaseListMixin, DataInterface):
+class CaseReassignmentInterface(CaseListMixin, BulkDataInterface):
     name = gettext_noop("Reassign Cases")
     slug = "reassign_cases"
     report_template_path = 'data_interfaces/interfaces/case_management.html'
@@ -48,6 +53,23 @@ class CaseReassignmentInterface(CaseListMixin, DataInterface):
         # FB 183468: Don't allow user cases to be reassigned
         query = query.NOT(case_es.case_type(USERCASE_TYPE))
         return query.run().raw
+
+    @property
+    def template_context(self):
+        context = super(CaseReassignmentInterface, self).template_context
+        context.update({
+            "total_cases": self.total_records,
+            "bulk_reassign_url": self.get_url(domain=self.domain, render_as="bulk", relative=True),
+        })
+        return context
+
+    @property
+    def report_context(self):
+        context = super(CaseReassignmentInterface, self).report_context
+        context.update({
+            "bulk_reassign_url": self.get_url(domain=self.domain, render_as="bulk", relative=True),
+        })
+        return context
 
     @property
     @memoized
@@ -90,6 +112,12 @@ class CaseReassignmentInterface(CaseListMixin, DataInterface):
                 display.owner_display,
                 naturaltime(parse_date(es_case['modified_on'])),
             ]
+
+    @property
+    def bulk_response(self):
+        if self.request.method != 'POST':
+            return HttpResponseBadRequest()
+        return self.json_response
 
 
 class FormManagementMode(object):
