@@ -13,8 +13,9 @@ from corehq.apps.sso.certificates import get_certificate_response
 from corehq.apps.sso.forms import (
     SsoSamlEnterpriseSettingsForm,
     SsoOidcEnterpriseSettingsForm,
+    SsoPowerBiEnterpriseSettingsForm,
 )
-from corehq.apps.sso.models import IdentityProvider, IdentityProviderProtocol
+from corehq.apps.sso.models import IdentityProvider, IdentityProviderProtocol, IdentityProviderType
 
 
 class ManageSSOEnterpriseView(BaseEnterpriseAdminView):
@@ -105,6 +106,9 @@ class EditIdentityProviderEnterpriseView(BaseEnterpriseAdminView, AsyncHandlerMi
             SsoSamlEnterpriseSettingsForm if self.identity_provider.protocol == IdentityProviderProtocol.SAML
             else SsoOidcEnterpriseSettingsForm
         )
+        if (self.identity_provider.protocol == IdentityProviderProtocol.OIDC
+                and self.identity_provider.idp_type == IdentityProviderType.AZURE_AD):
+            form_class = SsoPowerBiEnterpriseSettingsForm
         if self.request.method == 'POST':
             return form_class(
                 self.identity_provider, self.request.POST, self.request.FILES
