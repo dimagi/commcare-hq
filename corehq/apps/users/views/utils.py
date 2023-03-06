@@ -11,6 +11,7 @@ from corehq.apps.users.models import (
 )
 from corehq.apps.users.util import log_user_change
 from corehq.const import USER_CHANGE_VIA_WEB
+from corehq.apps.es.cases import CaseES
 
 
 def get_editable_role_choices(domain, couch_user, allow_admin_role):
@@ -109,3 +110,23 @@ def log_commcare_user_locations_changes(request, user, old_location_id, old_assi
             fields_changed=fields_changed,
             change_messages=change_messages
         )
+
+
+def get_locations_with_cases(domain, location_ids):
+    """
+    Takes a list of location IDs and returns how many cases are assigned to each location
+    :param domain: The domain to search in
+    :param location_ids: A list of location IDs to get case counts on
+    :returns A dict with location names as the key, and the number of cases assigned to it as the value
+    """
+    locations_with_cases = dict()
+    for location_id in location_ids:
+        query = (CaseES()
+                .domain(domain)
+                .owner(location_id))
+        results = query.run().hits
+        if results:
+            location = SQLLocation.objects.get(location_id=location_id)
+            locations_with_cases[location.name] = len(results)
+
+    return locations_with_cases
