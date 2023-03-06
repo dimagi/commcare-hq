@@ -1,4 +1,5 @@
 from collections import namedtuple
+from datetime import datetime
 
 from django.core.management.base import BaseCommand
 
@@ -6,6 +7,8 @@ from corehq.apps.app_manager.models import Application
 from corehq.apps.app_manager.management.commands.helpers import get_all_app_ids
 from corehq.toggles import SYNC_SEARCH_CASE_CLAIM
 from corehq.util.log import with_progress_bar
+
+CASE_SEARCH_AUDIT_LOG = "case_search_audit_log.txt"
 
 PropertyInfo = namedtuple("PropertyInfo", "domain app_id version module_unique_id name")
 
@@ -58,9 +61,18 @@ class Command(BaseCommand):
 
         result_domains = {b.domain for b in results}
         result_apps = {b.app_id for b in results}
-        print(f"Found {len(results)} {attr} properties"
-              f" in {len(result_apps)} apps"
-              f" in {len(result_domains)} domains\n")
+        summary = (f"\n{datetime.now()}\n"
+                   f"Found {len(results)} '{attr}' properties"
+                   f" in {len(result_apps)} apps"
+                   f" in {len(result_domains)} domains\n")
+        print(summary)
 
+        with open(CASE_SEARCH_AUDIT_LOG, 'a') as f:
+            f.write(str(datetime.now()))
+            f.write(summary)
         for result in results:
-            print(result)
+            self.log(result)
+
+    def log(self, result):
+        with open(CASE_SEARCH_AUDIT_LOG, 'a') as f:
+            f.write(f"{str(result)}\n")
