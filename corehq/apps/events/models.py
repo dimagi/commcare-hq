@@ -211,6 +211,9 @@ class Event(models.Model):
 
     @property
     def status(self):
+        # TODO: I'm not sure about this. Event.status == REJECTED could
+        #       be misleading: It's not the Event that's rejected, it's
+        #       just that the list of attendees needs to be corrected.
         return self.attendee_list_status
 
 

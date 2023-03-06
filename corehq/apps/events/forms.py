@@ -47,7 +47,7 @@ class CreateEventForm(forms.Form):
     )
     expected_attendees = forms.MultipleChoiceField(
         label=_("Attendees"),
-        validators=[MinLengthValidator(1)],
+        validators=[MinLengthValidator(1)],  # TODO: What if all attendees are sameday_reg?
         required=False,
     )
 
