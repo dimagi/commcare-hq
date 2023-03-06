@@ -27,9 +27,15 @@ class Command(BaseCommand):
             action='store',
             help='Audit a single domain',
         )
+        parser.add_argument(
+            'attr',
+            type=str,
+            help='Which config option or attribute to find',
+        )
 
     def handle(self, **options):
         include_builds = options['include_builds']
+        attr = options['attr']
         if options['domain']:
             domains = [options['domain']]
         else:
@@ -43,7 +49,7 @@ class Command(BaseCommand):
                 for index, module in enumerate(doc.get("modules", [])):
                     if module.get("search_config", {}):
                         for prop in module.get("search_config", {}).get("properties", []):
-                            if prop.get("allow_blank_value", False):
+                            if prop.get(attr, False):
                                 results.append(PropertyInfo(domain,
                                                             doc.get("copy_of") or app_id,
                                                             doc.get("version"),
@@ -52,6 +58,9 @@ class Command(BaseCommand):
 
         result_domains = {b.domain for b in results}
         result_apps = {b.app_id for b in results}
-        print(f"Found {len(results)} properties in {len(result_apps)} apps in {len(result_domains)} domains")
+        print(f"Found {len(results)} {attr} properties"
+              f" in {len(result_apps)} apps"
+              f" in {len(result_domains)} domains\n")
+
         for result in results:
             print(result)
