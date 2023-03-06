@@ -110,7 +110,9 @@ class CreateEventForm(forms.Form):
             'attendance_target': event.attendance_target,
             'sameday_reg': event.sameday_reg,
             'tracking_option': TRACK_BY_DAY if event.track_each_day else TRACK_BY_EVENT,
-            'expected_attendees': [attendee.case_id for attendee in event.attendees]
+            'expected_attendees': [
+                attendee.case_id for attendee in event.get_expected_attendees()
+            ],
         }
 
     def get_new_event_form(self):

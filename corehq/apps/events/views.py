@@ -1,3 +1,5 @@
+from dataclasses import dataclass
+
 from django.http import Http404, HttpResponseRedirect, JsonResponse
 from django.urls import reverse
 from django.utils.translation import gettext_lazy as _
@@ -16,6 +18,11 @@ from corehq.util.jqueryrmi import JSONResponseMixin
 from .exceptions import EventDoesNotExist
 from .forms import CreateEventForm
 from .models import Event, get_paginated_attendees
+
+
+@dataclass
+class CaseDuck:
+    case_id: str
 
 
 class BaseEventView(BaseDomainView):
@@ -129,12 +136,15 @@ class EventCreateView(BaseEventView):
         ]
 
     def get_context_data(self, **kwargs):
-        context = super(EventCreateView, self).get_context_data(**kwargs)
-        context.update({'form': self.form})
+        context = super().get_context_data(**kwargs)
+        if self.request.method == 'POST':
+            context['form'] = CreateEventForm(self.request.POST, domain=self.domain)
+        else:
+            context['form'] = CreateEventForm(event=self.event, domain=self.domain)
         return context
 
     def post(self, request, *args, **kwargs):
-        form = self.form
+        form = CreateEventForm(self.request.POST, domain=self.domain)
 
         if not form.is_valid():
             return self.get(request, *args, **kwargs)
@@ -151,16 +161,12 @@ class EventCreateView(BaseEventView):
             track_each_day=event_data['track_each_day'],
             manager_id=self.request.couch_user.user_id,
         )
-        event.save(expected_attendees=event_data['expected_attendees'])
+        event.save()
+        event.set_expected_attendees([
+            CaseDuck(case_id) for case_id in event_data['expected_attendees']
+        ])
 
         return HttpResponseRedirect(reverse(EventsView.urlname, args=(self.domain,)))
-
-    @property
-    def form(self):
-        if self.request.method == 'POST':
-            return CreateEventForm(self.request.POST, domain=self.domain)
-        else:
-            return CreateEventForm(event=self.event, domain=self.domain)
 
     @property
     def event(self):
@@ -196,7 +202,7 @@ class EventEditView(EventCreateView):
         return self.event_obj
 
     def post(self, request, *args, **kwargs):
-        form = self.form
+        form = CreateEventForm(self.request.POST, domain=self.domain)
 
         if not form.is_valid():
             return self.get(request, *args, **kwargs)
@@ -210,8 +216,11 @@ class EventEditView(EventCreateView):
         event.attendance_target = event_update_data['attendance_target']
         event.sameday_reg = event_update_data['sameday_reg']
         event.track_each_day = event_update_data['track_each_day']
-
-        event.save(expected_attendees=event_update_data['expected_attendees'])
+        event.save()
+        event.set_expected_attendees([
+            CaseDuck(case_id) for case_id
+            in event_update_data['expected_attendees']
+        ])
 
         return HttpResponseRedirect(reverse(EventsView.urlname, args=(self.domain,)))
 

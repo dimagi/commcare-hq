@@ -1047,14 +1047,6 @@ class CommCareCaseIndexManager(RequireDBManager):
             all_extension_ids = all_extension_ids | new_extensions
         return all_extension_ids
 
-    def get_by_identifier(self, domain, identifier):
-        for db_name in get_db_aliases_for_partitioned_query():
-            query = self.using(db_name).filter(
-                domain=domain,
-                identifier=identifier,
-            )
-        return list(query)
-
 
 CaseIndexInfo = namedtuple(
     'CaseIndexInfo', ['case_id', 'identifier', 'referenced_id', 'referenced_type', 'relationship']

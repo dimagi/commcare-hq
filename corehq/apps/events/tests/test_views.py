@@ -1,17 +1,23 @@
-from django.test import TestCase
-from django.urls import reverse
 from datetime import datetime
 from unittest.mock import patch
-import json
 
-from corehq.apps.events.models import Event, Attendee
+from django.test import TestCase
+from django.urls import reverse
+
+from casexml.apps.case.mock import CaseFactory, CaseStructure
+
 from corehq.apps.domain.shortcuts import create_domain
-from corehq.apps.es.fake.users_fake import UserESFake
-from corehq.apps.events.views import EventsView, EventCreateView
-from corehq.apps.users.models import WebUser, HqPermissions, CommCareUser
-from corehq.util.test_utils import flag_enabled
-from corehq.apps.users.models import UserRole
+from corehq.apps.users.models import (
+    CommCareUser,
+    HqPermissions,
+    UserRole,
+    WebUser,
+)
 from corehq.apps.users.role_utils import UserRolePresets
+from corehq.util.test_utils import flag_enabled
+
+from ..models import ATTENDEE_CASE_TYPE, Event
+from ..views import EventCreateView, EventsView
 
 
 class BaseEventViewTestClass(TestCase):
@@ -25,6 +31,7 @@ class BaseEventViewTestClass(TestCase):
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
+        cls.factory = CaseFactory(cls.domain)
         cls.domain_obj = create_domain(cls.domain)
         cls.admin_webuser = WebUser.create(
             cls.domain,
@@ -70,9 +77,6 @@ class BaseEventViewTestClass(TestCase):
         )
         if user_roles:
             user_roles[0].delete()
-
-        for attendee in Attendee.objects.by_domain(cls.domain):
-            attendee.delete()
 
         super().tearDownClass()
 
@@ -158,21 +162,26 @@ class TestEventsCreateView(BaseEventViewTestClass):
         data = self._event_data()
 
         mobile_worker = self._create_mobile_worker('mobileworker1')
-        attendee = Attendee(domain=self.domain)
-        attendee.save(user_id=mobile_worker.user_id)
-
+        (attendee,) = self.factory.create_or_update_cases([CaseStructure(
+            attrs={
+                'owner_id': mobile_worker.user_id,
+                'case_type': ATTENDEE_CASE_TYPE,
+                'create': True,
+            },
+        )])
         data['expected_attendees'] = [attendee.case_id]
 
         self.client.post(self.endpoint, data)
 
         event = Event.objects.by_domain(self.domain).first()
-
+        self.assertIsNotNone(event)
         self.assertEqual(event.name, data['name'])
         self.assertEqual(event.domain, self.domain)
         self.assertEqual(event.manager_id, self.admin_webuser.user_id)
 
-        self.assertEqual(len(event.attendees), 1)
-        self.assertEqual(event.attendees[0].case_id, attendee.case_id)
+        event_attendees = event.get_expected_attendees()
+        self.assertEqual(len(event_attendees), 1)
+        self.assertEqual(event_attendees[0].case_id, attendee.case_id)
 
     @flag_enabled('ATTENDANCE_TRACKING')
     def test_event_create_fails_with_faulty_data(self):
