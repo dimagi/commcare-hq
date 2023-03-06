@@ -165,7 +165,7 @@ class RemoteRequestFactory(object):
             self.case_session_var, self.module.is_multi_select())
         case_in_project = self._get_smart_link_rewind_xpath()
         uses_smart_links = module_uses_smart_links(self.module)
-        if not case_search_sync_cases_on_form_entry_enabled_for_domain(self.domain):
+        if case_search_sync_cases_on_form_entry_enabled_for_domain(self.domain):
             return case_in_project if uses_smart_links else None
         return XPath.and_(case_not_claimed, case_in_project) if uses_smart_links else case_not_claimed
 
