@@ -12,6 +12,7 @@ from django.views.decorators.debug import sensitive_variables
 
 from tastypie.authentication import ApiKeyAuthentication
 
+from django.utils import timezone
 from dimagi.utils.django.request import mutable_querydict
 from dimagi.utils.web import get_ip
 
@@ -280,6 +281,11 @@ class HQApiKeyAuthentication(ApiKeyAuthentication):
             key = user.api_keys.get(key=api_key)
         except HQApiKey.DoesNotExist:
             return self._unauthorized()
+
+        # update api_key.last used every 30 seconds
+        if key.last_used is None or (timezone.now() - key.last_used).total_seconds() > 30:
+            key.last_used = timezone.now()
+            key.save()
 
         # ensure the IP address is in the allowlist, if that exists
         if key.ip_allowlist and (get_ip(request) not in key.ip_allowlist):
