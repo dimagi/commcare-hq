@@ -191,7 +191,13 @@ class TestEventsCreateView(BaseEventViewTestClass):
         faulty_data.pop('name')
 
         response = self.client.post(self.endpoint, faulty_data)
-        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.status_code, 200)
+        error_html = (
+            '<span id="error_1_id_name" class="help-block">'
+            '<strong>This field is required.</strong>'
+            '</span>'
+        )
+        self.assertIn(error_html, response.content.decode('utf-8'))
 
     def _event_data(self):
         timestamp = datetime.utcnow().date()
