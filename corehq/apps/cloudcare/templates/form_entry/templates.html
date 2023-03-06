@@ -535,10 +535,8 @@
 </script>
 <script type="text/html" id="date-entry-ko-template">
   <div class="input-group">
-    <input type="text" class="form-control" pattern="[0-9-/]+" data-bind="attr: {
-      id: entryId,
-      'aria-required': $parent.required() ? 'true' : 'false',
-      placeholder: clientFormat }"/>
+    <input type="text" class="form-control"
+      data-bind="attr: {id: entryId, 'aria-required': $parent.required() ? 'true' : 'false'}"/>
     <span class="input-group-addon"><i class="fa fa-calendar"></i></span>
   </div>
 </script>
