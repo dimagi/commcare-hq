@@ -697,7 +697,8 @@ def import_tableau_users(domain, web_user_specs):
             elif user.get_domain_membership(domain):
                 tableau_role = row.get('tableau_role')
                 tableau_groups_txt = row.get('tableau_groups')
-                if tableau_role in ('ERROR', 'N/A') or tableau_groups_txt in ('ERROR', 'N/A'):
+                BAD_VALUES = ['ERROR', 'N/A', None]
+                if tableau_role in BAD_VALUES or tableau_groups_txt in BAD_VALUES:
                     continue
 
                 def _get_tableau_group_tuples_from_names(names, known_groups):
