@@ -262,6 +262,9 @@ class HqPermissions(DocumentSchema):
         if self.edit_apps:
             self.view_apps = True
 
+        if not (self.view_reports or self.view_report_list):
+            self.download_reports = False
+
     @classmethod
     @memoized
     def permission_names(cls):
