@@ -123,10 +123,10 @@ def get_locations_with_cases(domain, location_ids):
     for location_id in location_ids:
         query = (CaseES()
                 .domain(domain)
-                .owner(location_id))
-        results = query.run().hits
-        if results:
+                .owner(location_id)
+                .count())
+        if query:
             location = SQLLocation.objects.get(location_id=location_id)
-            locations_with_cases[location.name] = len(results)
+            locations_with_cases[location.name] = query
 
     return locations_with_cases
