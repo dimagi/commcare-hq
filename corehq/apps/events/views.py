@@ -1,14 +1,14 @@
-from django.utils.translation import gettext_lazy as _
+from django.http import Http404, HttpResponseBadRequest, HttpResponseRedirect
 from django.urls import reverse
-from django.http import HttpResponseRedirect, HttpResponseBadRequest
-from django.http import Http404
+from django.utils.translation import gettext_lazy as _
 
-from corehq.apps.hqwebapp.views import CRUDPaginatedViewMixin
-from corehq.apps.domain.views.base import BaseDomainView
-from corehq.apps.events.models import Event
-from corehq.apps.events.forms import CreateEventForm
-from corehq.apps.hqwebapp.decorators import use_jquery_ui
 from corehq import toggles
+from corehq.apps.domain.views.base import BaseDomainView
+from corehq.apps.hqwebapp.decorators import use_jquery_ui
+from corehq.apps.hqwebapp.views import CRUDPaginatedViewMixin
+
+from .forms import CreateEventForm
+from .models import Event
 
 
 class BaseEventView(BaseDomainView):

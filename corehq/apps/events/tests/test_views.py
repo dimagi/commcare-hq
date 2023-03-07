@@ -1,15 +1,16 @@
-from django.test import TestCase
-from django.urls import reverse
 from datetime import datetime
 from unittest.mock import patch
 
-from corehq.apps.events.models import Event
+from django.test import TestCase
+from django.urls import reverse
+
 from corehq.apps.domain.shortcuts import create_domain
-from corehq.apps.events.views import EventsView, EventCreateView
-from corehq.apps.users.models import WebUser, HqPermissions
-from corehq.util.test_utils import flag_enabled
-from corehq.apps.users.models import UserRole
+from corehq.apps.users.models import HqPermissions, UserRole, WebUser
 from corehq.apps.users.role_utils import UserRolePresets
+from corehq.util.test_utils import flag_enabled
+
+from ..models import Event
+from ..views import EventCreateView, EventsView
 
 
 class BaseEventViewTestClass(TestCase):
