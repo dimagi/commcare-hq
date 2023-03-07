@@ -734,14 +734,14 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
         },
         events: {
             "keydown": "printKeyAction",
-            "click @ui.selectPrint": "hideDropdownOnPrint"
+            "click @ui.selectPrint": "hideDropdownOnPrint",
         },
         printKeyAction: function (e) {
             if (e.keyCode === 13) {
                 this.hideDropdownOnPrint();
             }
         },
-        hideDropdownOnPrint: function (e) {
+        hideDropdownOnPrint: function () {
             this.ui.dropdownMenu.toggle();
             window.print();
             this.ui.dropdownMenu.toggle();
