@@ -67,10 +67,10 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
                     // or default value ("2023-02-14 to 2023-02-17")
                     // coerce to "02/14/2023 to 02/17/2023", as used by the widget
                     value = (value.replace("__range__", "")
-                             .replace(separator, serverSeparator)  // only used for default values
-                             .split(serverSeparator)
-                             .map(toUiDate)
-                             .join(separator));
+                        .replace(separator, serverSeparator)  // only used for default values
+                        .split(serverSeparator)
+                        .map(toUiDate)
+                        .join(separator));
                 }
             } else {
                 value = undefined;

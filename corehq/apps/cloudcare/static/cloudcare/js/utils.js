@@ -339,7 +339,7 @@ hqDefine('cloudcare/js/utils', [
         decrementSecond: gettext('Decrement Second'),
         togglePeriod: gettext('Toggle Period'),
         selectTime: gettext('Select Time'),
-    }
+    };
 
     /**
      *  Convert two-digit year to four-digit year.
