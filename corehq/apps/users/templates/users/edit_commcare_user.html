@@ -30,19 +30,6 @@
       be ignored and not appear in reports or data exports.
       {% endblocktrans %}
     </p>
-  {% elif locations_with_cases %}
-    <div class="alert alert-warning">
-      <p>
-        {% blocktrans %}
-          There are cases in the following assigned locations which may need to be migrated:
-        {% endblocktrans %}
-      </p>
-      {% for location, case_count in locations_with_cases.items %}
-        <ul>
-          <li>{{ location }}: {{ case_count }}</li>
-        </ul>
-      {% endfor %}
-    </div>
   {% endif %}
   <ul class="nav nav-tabs sticky-tabs" id="user-settings-tabs" style="margin-bottom: 10px;">
     <li><a href="#basic-info" data-toggle="tab">{% trans "Basic" %}</a></li>
