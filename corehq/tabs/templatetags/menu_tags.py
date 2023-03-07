@@ -103,7 +103,9 @@ class MainMenuNode(template.Node):
             'tabs': visible_tabs,
             'role_version': role_version
         })
-        return render_to_string('tabs/menu_main.html', flat)
+
+        from corehq.apps.hqwebapp.utils.bootstrap import get_bootstrap_version
+        return render_to_string(f"tabs/{get_bootstrap_version()}/menu_main.html", flat)
 
 
 @register.tag(name="format_main_menu")
