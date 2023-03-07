@@ -127,8 +127,12 @@ def get_locations_with_cases(domain, location_ids):
             .size(0)))
     counts = query.run().aggregations.by_location.counts_by_bucket()
     locations_with_cases = dict()
-    for location_id, count in counts.items():
-        location = SQLLocation.objects.get(location_id=location_id)
-        locations_with_cases[location.name] = count
+    if counts:
+        locations = SQLLocation.objects.filter(location_id__in=location_ids)
+        for location in locations:
+            if location.location_id in counts:
+                locations_with_cases[location.name] = counts[location.location_id]
+            else:
+                locations_with_cases[location.name] = 0
 
     return locations_with_cases
