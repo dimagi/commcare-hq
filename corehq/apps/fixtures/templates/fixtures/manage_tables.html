@@ -42,13 +42,13 @@
         <!-- ko if: hasLinkedModels -->
           <!-- ko if: allowEdit -->
             <!-- ko ifnot: unlockLinkedData -->
-              <button class="btn btn-primary" data-toggle="modal" data-target="#edit-warning-modal">
+              <button class="btn btn-default" data-toggle="modal" data-target="#edit-warning-modal">
                 <i class="fa fa-link"></i>
                 {% trans 'Unlock Linked Tables For Me' %}
               </button>
             <!-- /ko -->
             <!-- ko if: unlockLinkedData -->
-              <button class="btn btn-primary" data-bind="click: toggleLinkedLock">
+              <button class="btn btn-default" data-bind="click: toggleLinkedLock">
                 <i class="fa fa-link"></i>
                 {% trans "Lock Linked Tables For Me" %}
               </button>
