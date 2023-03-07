@@ -916,7 +916,7 @@ hqDefine("cloudcare/js/form_entry/entries", function () {
     FileEntry.prototype.constructor = EntrySingleAnswer;
     FileEntry.prototype.onAnswerChange = function (newValue) {
         var self = this;
-        if (self.answer() && self.answer().match(/([a-z0-9]{8}-)([a-z0-9]{4}-){3}([a-z0-9]{12}).[a-z]{3}/)) {
+        if (self.answer() && self.answer().match(/([a-z0-9]{8}-)([a-z0-9]{4}-){3}([a-z0-9]{12}).[a-z0-9]{3}/)) {
             return
         }
         if (newValue !== constants.NO_ANSWER && newValue !== "") {
