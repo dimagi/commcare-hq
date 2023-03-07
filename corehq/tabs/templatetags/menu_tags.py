@@ -144,7 +144,8 @@ def format_sidebar(context):
                             nav['subpage'] = subpage
                             break
 
+    from corehq.apps.hqwebapp.utils.bootstrap import get_bootstrap_version
     return render_to_string(
-        'hqwebapp/partials/navigation_left_sidebar.html',
+        f"hqwebapp/partials/{get_bootstrap_version()}/navigation_left_sidebar.html",
         {'sections': sections}
     )
