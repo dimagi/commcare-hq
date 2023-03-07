@@ -4,7 +4,7 @@ from django.utils.translation import gettext_lazy as _
 
 from corehq import toggles
 from corehq.apps.domain.views.base import BaseDomainView
-from corehq.apps.hqwebapp.decorators import use_jquery_ui
+from corehq.apps.hqwebapp.decorators import use_jquery_ui, use_multiselect
 from corehq.apps.hqwebapp.views import CRUDPaginatedViewMixin
 
 from .forms import CreateEventForm
@@ -98,6 +98,7 @@ class EventCreateView(BaseEventView):
 
     page_title = _("Add Attendance Tracking Event")
 
+    @use_multiselect
     @use_jquery_ui
     def dispatch(self, request, *args, **kwargs):
         return super(EventCreateView, self).dispatch(request, *args, **kwargs)
@@ -114,7 +115,7 @@ class EventCreateView(BaseEventView):
     def parent_pages(self):
         return [
             {
-                'title': EventsView.page_title,
+                'title': _("Events"),
                 'url': reverse(EventsView.urlname, args=[self.domain])
             },
         ]

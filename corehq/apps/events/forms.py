@@ -1,10 +1,10 @@
 from django import forms
-from corehq.apps.hqwebapp.crispy import HQFormHelper
-from crispy_forms import layout as crispy
-from crispy_forms.bootstrap import StrictButton
-from django.utils.html import format_html
-
 from django.utils.translation import gettext_lazy as _
+
+from crispy_forms import layout as crispy
+
+from corehq.apps.events.models import AttendeeCase
+from corehq.apps.hqwebapp import crispy as hqcrispy
 
 TRACK_BY_DAY = "by_day"
 TRACK_BY_EVENT = "by_event"
@@ -44,11 +44,18 @@ class CreateEventForm(forms.Form):
         widget=forms.RadioSelect,
         required=False,
     )
+    expected_attendees = forms.MultipleChoiceField(
+        label=_("Attendees"),
+        required=False,
+    )
 
     def __init__(self, *args, **kwargs):
+        self.domain = kwargs.pop('domain', None)
         super(CreateEventForm, self).__init__(*args, **kwargs)
 
-        self.helper = HQFormHelper()
+        self.fields['expected_attendees'].choices = self.get_attendee_choices()
+
+        self.helper = hqcrispy.HQFormHelper()
         self.helper.add_layout(
             crispy.Layout(
                 crispy.Fieldset(
@@ -66,11 +73,10 @@ class CreateEventForm(forms.Form):
                         crispy.Field('tracking_option', data_bind="checked: trackingOption"),
                         data_bind="visible: showTrackingOptions",
                     ),
-                    StrictButton(
-                        format_html("Save"),
-                        css_class='btn-primary',
-                        type='submit'
-                    )
+                    'expected_attendees',
+                    hqcrispy.FormActions(
+                        crispy.Submit('submit_btn', 'Save')
+                    ),
                 )
             )
         )
@@ -82,3 +88,9 @@ class CreateEventForm(forms.Form):
         tracking_option = self.cleaned_data.get('tracking_option', TRACK_BY_DAY)
         self.cleaned_data['track_each_day'] = tracking_option == TRACK_BY_DAY
         return self.cleaned_data
+
+    def get_attendee_choices(self):
+        return [
+            (attendee.case_id, attendee.name)
+            for attendee in AttendeeCase.objects.by_domain(self.domain)
+        ]

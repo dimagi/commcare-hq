@@ -1,8 +1,9 @@
 import uuid
 
-from django.utils.translation import gettext_lazy as _
 from django.db import models
+from django.utils.translation import gettext_lazy as _
 
+from corehq.form_processor.models import CommCareCase
 
 NOT_STARTED = 'Not started'
 IN_PROGRESS = 'In progress'
@@ -17,6 +18,9 @@ ATTENDEE_LIST_STATUS_CHOICES = [
     (REJECTED, _('Rejected')),
     (ACCEPTED, _('Accepted')),
 ]
+
+# Attendees are CommCareCase instances with this case type:
+ATTENDEE_CASE_TYPE = 'commcare-attendee'
 
 
 class Event(models.Model):
@@ -72,3 +76,21 @@ class Event(models.Model):
     @property
     def status(self):
         return self.attendee_list_status
+
+
+class AttendeeCaseManager:
+
+    def by_domain(self, domain):
+        case_ids = CommCareCase.objects.get_open_case_ids_in_domain_by_type(
+            domain,
+            ATTENDEE_CASE_TYPE,
+        )
+        return CommCareCase.objects.get_cases(case_ids, domain)
+
+
+class AttendeeCase:
+    """
+    Allows code to interact with attendee CommCareCase instances as if
+    they were Django models.
+    """
+    objects = AttendeeCaseManager()
