@@ -583,25 +583,29 @@ def sync_all_tableau_users():
                 _delete_user_local(session, tableau_user_name)
 
     def _sync_tableau_users_with_remote(session):
+        # Setup
+        def _get_HQ_group_users(session):
+            remote_HQ_group_id = _get_hq_group_id(session)
+            if remote_HQ_group_id:
+                remote_HQ_group_users = session.get_users_in_group(remote_HQ_group_id)
+            else:
+                session.create_group(HQ_TABLEAU_GROUP_NAME, "Viewer")
+                remote_HQ_group_users = []
+            return remote_HQ_group_users
 
-        # Setup - parse/get remote group ID and users in group
-        remote_HQ_group_id = _get_hq_group_id(session)
-        if remote_HQ_group_id:
-            remote_HQ_group_users = session.get_users_in_group(remote_HQ_group_id)
-        else:
-            remote_HQ_group_id = session.create_group(HQ_TABLEAU_GROUP_NAME, "Viewer")
-            remote_HQ_group_users = []
+        all_remote_users = session.get_users_on_site()
         local_users = TableauUser.objects.filter(server=session.tableau_connected_app.server)
+        remote_HQ_group_users = _get_HQ_group_users(session)
 
         # Add/delete/update remote users to match with local reality
         for local_user in local_users:
-            remote_user = session.get_user_on_site(tableau_username(local_user.username))
-            if not remote_user:
+            local_tableau_username = tableau_username(local_user.username)
+            if local_tableau_username not in all_remote_users.keys():
                 _add_tableau_user_remote(session, local_user, local_user.role)
-            elif local_user.tableau_user_id != remote_user['id']:
-                _delete_user_remote(session, remote_user['id'])
+            elif local_user.tableau_user_id != all_remote_users[local_tableau_username]['id']:
+                _delete_user_remote(session, all_remote_users[local_tableau_username]['id'])
                 _add_tableau_user_remote(session, local_user)
-            elif local_user.role != remote_user['siteRole']:
+            elif local_user.role != all_remote_users[local_tableau_username]['siteRole']:
                 _update_user_remote(
                     session,
                     local_user,
