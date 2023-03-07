@@ -40,7 +40,7 @@
 
     <link href="https://fonts.googleapis.com/css?family=Nunito+Sans:100,300,400,500,700,800" rel="stylesheet">
 
-    {% if request.use_bootstrap5 %}
+    {% if use_bootstrap5 %}
       {% include 'hqwebapp/includes/bootstrap5/core_stylesheets.html' %}
     {% else %}
       {% include 'hqwebapp/includes/bootstrap3/core_stylesheets.html' %}
@@ -79,7 +79,7 @@
       {% endcompress %}
     {% endif %}
 
-    {% if request.use_daterangepicker %}
+    {% if request.use_daterangepicker and not use_bootstrap5 %}
       {% compress css %}
         <link type="text/css"
               rel="stylesheet"
@@ -88,7 +88,7 @@
       {% endcompress %}
     {% endif %}
 
-    {% if request.use_timepicker %}
+    {% if request.use_timepicker and not use_bootstrap5 %}
       {% compress css %}
         <link type="text/less"
               rel="stylesheet"
@@ -106,7 +106,7 @@
       {% endcompress %}
     {% endif %}
 
-    {% if request.use_datatables %}
+    {% if request.use_datatables and not use_bootstrap5 %}
       {% compress css %}
         <link type="text/css"
               rel="stylesheet"
@@ -142,7 +142,7 @@
 
     {# Up here because if daterangepicker is called from within a form widget, #}
     {# the javascript requiring the config file is run before js-inline #}
-    {% if request.use_daterangepicker and not requirejs_main %}
+    {% if request.use_daterangepicker and not requirejs_main and not use_bootstrap5 %}
       {% compress js %}
         <script src="{% static 'moment/moment.js' %}"></script>
         <script src="{% static 'bootstrap-daterangepicker/daterangepicker.js' %}"></script>
@@ -275,7 +275,11 @@
 
     {# javascript below this line #}
 
-    {% include "hqwebapp/partials/requirejs.html" with BASE_MAIN=True %}
+    {% if use_bootstrap5 %}
+      <script src="{% static "bootstrap5/dist/js/bootstrap.bundle.min.js" %}"></script>
+    {% else %}
+      {% include "hqwebapp/partials/requirejs.html" with BASE_MAIN=True %}
+    {% endif %}
 
     <script src="{% statici18n LANGUAGE_CODE %}"></script> {# DO NOT COMPRESS #}
 
@@ -322,7 +326,7 @@
       {% endcompress %}
     {% endif %}
 
-    {% if request.use_datatables and not requirejs_main %}
+    {% if request.use_datatables and not requirejs_main and not use_bootstrap5 %}
       {% compress js %}
         <script src="{% static 'datatables.net/js/jquery.dataTables.min.js' %}"></script>
         <script src="{% static 'datatables-fixedcolumns/js/dataTables.fixedColumns.js' %}"></script>
@@ -330,14 +334,14 @@
       {% endcompress %}
     {% endif %}
 
-    {% if request.use_typeahead and not requirejs_main %}
+    {% if request.use_typeahead and not requirejs_main and not use_bootstrap5 %}
       {% compress js %}
         <script src="{% static 'bootstrap3-typeahead/bootstrap3-typeahead.min.js' %}"></script>
         <script src="{% static 'hqwebapp/js/bootstrap-multi-typeahead.js' %}"></script>
       {% endcompress %}
     {% endif %}
 
-    {% if request.use_timepicker and not requirejs_main %}
+    {% if request.use_timepicker and not requirejs_main and not use_bootstrap5 %}
       {% compress js %}
         <script src="{% static 'bootstrap-timepicker/js/bootstrap-timepicker.js' %}"></script>
       {% endcompress %}
