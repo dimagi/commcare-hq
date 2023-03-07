@@ -26,7 +26,6 @@ hqDefine("linked_domain/js/domain_links", [
         self.detail = data.detail;
         self.showUpdate = ko.observable(data.can_update);
         self.update_url = null;
-        self.overwritable = data.overwritable;
 
         if (self.type === 'app' && self.detail && self.detail.app_id) {
             self.update_url = initialPageData.reverse('app_settings', self.detail.app_id);
