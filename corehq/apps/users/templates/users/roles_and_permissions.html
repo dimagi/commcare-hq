@@ -304,8 +304,8 @@
                                 </span>
             </button>
             <button class="btn btn-danger"
-              data-bind="visible: $data._id && !$data.preventRoleDelete && $root.allowEdit,
-                click: $data._id ? $root.setRoleBeingDeleted : null, enable: isEditable">
+              data-bind="visible: $data._id && !$data.preventRoleDelete && $root.allowEdit && isEditable,
+                click: $data._id ? $root.setRoleBeingDeleted : null">
               <i class="fa fa-trash"></i>
               {% trans "Delete" %}
             </button>
