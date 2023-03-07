@@ -542,6 +542,16 @@ def update_tableau_user(domain, username, role=None, groups=[], session=None):
         _notify_tableau_exception(e, domain)
 
 
+def _update_user_remote(session, user, groups=[]):
+    new_id = session.update_user(user.tableau_user_id, role=user.role, username=tableau_username(user.username))
+    user.tableau_user_id = new_id
+    user.save()
+    # Add default group
+    _add_user_to_HQ_group(session, user)
+    for group in groups:
+        session.add_user_to_group(user.tableau_user_id, group.id)
+
+
 def _add_user_to_HQ_group(session, user):
     remote_HQ_group_id = _get_hq_group_id(session)
     if remote_HQ_group_id:
@@ -554,16 +564,6 @@ def _add_user_to_HQ_group(session, user):
 
 def _get_hq_group_id(session):
     return session.get_group(HQ_TABLEAU_GROUP_NAME).get('id')
-
-
-def _update_user_remote(session, user, groups=[]):
-    new_id = session.update_user(user.tableau_user_id, role=user.role, username=tableau_username(user.username))
-    user.tableau_user_id = new_id
-    user.save()
-    # Add default group
-    _add_user_to_HQ_group(session, user)
-    for group in groups:
-        session.add_user_to_group(user.tableau_user_id, group.id)
 
 
 @periodic_task(run_every=crontab(minute=0, hour='*/1'), queue='background_queue')
