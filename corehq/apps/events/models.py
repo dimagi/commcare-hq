@@ -53,10 +53,21 @@ class Event(models.Model):
             return cls.objects.filter(domain=domain).order_by('start_date')
         return cls.objects.filter(domain=domain)
 
-    def save(self):
+    def save(
+        self,
+        force_insert=False,
+        force_update=False,
+        using=None,
+        update_fields=None,
+    ):
         if not self.event_id:
             self.event_id = uuid.uuid4().hex
-        super(Event, self).save()
+        super().save(
+            force_insert=force_insert,
+            force_update=force_update,
+            using=using,
+            update_fields=update_fields,
+        )
 
     @property
     def status(self):
