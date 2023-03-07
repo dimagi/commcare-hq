@@ -9,7 +9,7 @@ MAINTAINER Dimagi <devops@dimagi.com>
 ENV PYTHONUNBUFFERED=1 \
     PYTHONUSERBASE=/vendor \
     PATH=/vendor/bin:$PATH \
-    NODE_VERSION=14.19.1
+    NODE_VERSION=18.14.2
 
 RUN mkdir /vendor
 
