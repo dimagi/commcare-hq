@@ -703,7 +703,8 @@ def breadcrumbs(page, section, parents=None):
     :return:
     """
 
-    return render_to_string('hqwebapp/partials/breadcrumbs.html', {
+    from corehq.apps.hqwebapp.utils.bootstrap import get_bootstrap_version
+    return render_to_string(f"hqwebapp/partials/{get_bootstrap_version()}/breadcrumbs.html", {
         'page': page,
         'section': section,
         'parents': parents or [],
