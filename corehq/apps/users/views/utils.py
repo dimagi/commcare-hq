@@ -12,6 +12,7 @@ from corehq.apps.users.models import (
 from corehq.apps.users.util import log_user_change
 from corehq.const import USER_CHANGE_VIA_WEB
 from corehq.apps.es.cases import CaseES
+from corehq.apps.es.aggregations import TermsAggregation
 
 
 def get_editable_role_choices(domain, couch_user, allow_admin_role):
@@ -119,14 +120,15 @@ def get_locations_with_cases(domain, location_ids):
     :param location_ids: A list of location IDs to get case counts on
     :returns A dict with location names as the key, and the number of cases assigned to it as the value
     """
+    query = (CaseES()
+            .domain(domain)
+            .owner(location_ids)
+            .aggregation(TermsAggregation('by_location', 'owner_id')
+            .size(0)))
+    counts = query.run().aggregations.by_location.counts_by_bucket()
     locations_with_cases = dict()
-    for location_id in location_ids:
-        query = (CaseES()
-                .domain(domain)
-                .owner(location_id)
-                .count())
-        if query:
-            location = SQLLocation.objects.get(location_id=location_id)
-            locations_with_cases[location.name] = query
+    for location_id, count in counts.items():
+        location = SQLLocation.objects.get(location_id=location_id)
+        locations_with_cases[location.name] = count
 
     return locations_with_cases
