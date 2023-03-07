@@ -471,14 +471,11 @@ def add_tableau_user(domain, username):
     Creates a TableauUser object with the given username and a default role of Viewer, and adds a new user with
     these details to the Tableau instance.
     '''
-    try:
-        session = TableauAPISession.create_session_for_domain(domain)
-        user, created = _add_tableau_user_local(session, username)
-        if not created:
-            return
-        _add_tableau_user_remote(session, user)
-    except (TableauAPIError, TableauUser.DoesNotExist) as e:
-        _notify_tableau_exception(e, domain)
+    session = TableauAPISession.create_session_for_domain(domain)
+    user, created = _add_tableau_user_local(session, username)
+    if not created:
+        return
+    _add_tableau_user_remote(session, user)
 
 
 def _add_tableau_user_local(session, username, role=DEFAULT_TABLEAU_ROLE):
@@ -502,12 +499,9 @@ def delete_tableau_user(domain, username, session=None):
     '''
     Deletes the TableauUser object with the given username and removes it from the Tableau instance.
     '''
-    try:
-        session = session or TableauAPISession.create_session_for_domain(domain)
-        deleted_user_id = _delete_user_local(session, username)
-        _delete_user_remote(session, deleted_user_id)
-    except (TableauAPIError, TableauUser.DoesNotExist) as e:
-        _notify_tableau_exception(e, domain)
+    session = session or TableauAPISession.create_session_for_domain(domain)
+    deleted_user_id = _delete_user_local(session, username)
+    _delete_user_remote(session, deleted_user_id)
 
 
 def _delete_user_local(session, username):
@@ -529,17 +523,14 @@ def update_tableau_user(domain, username, role=None, groups=[], session=None):
     Update the TableauUser object to have the given role and new group details. The `groups` arg should be a list
     of TableauGroupTuples.
     '''
-    try:
-        session = session or TableauAPISession.create_session_for_domain(domain)
-        user = TableauUser.objects.filter(
-            server=session.tableau_connected_app.server
-        ).get(username=username)
-        if role:
-            user.role = role
-        user.save()
-        _update_user_remote(session, user, groups)
-    except (TableauAPIError, TableauUser.DoesNotExist) as e:
-        _notify_tableau_exception(e, domain)
+    session = session or TableauAPISession.create_session_for_domain(domain)
+    user = TableauUser.objects.filter(
+        server=session.tableau_connected_app.server
+    ).get(username=username)
+    if role:
+        user.role = role
+    user.save()
+    _update_user_remote(session, user, groups)
 
 
 def _update_user_remote(session, user, groups=[]):
@@ -690,6 +681,7 @@ def import_tableau_users(domain, web_user_specs):
         session = TableauAPISession.create_session_for_domain(domain)
     except TableauAPIError as e:
         _notify_tableau_exception(e, domain)
+        return
     known_groups = {}
     for row in web_user_specs:
         username = row.get('username')
