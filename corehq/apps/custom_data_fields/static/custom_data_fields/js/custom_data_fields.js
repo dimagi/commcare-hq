@@ -4,7 +4,6 @@ hqDefine('custom_data_fields/js/custom_data_fields', [
     'underscore',
     'hqwebapp/js/assert_properties',
     'hqwebapp/js/initial_page_data',
-    'hqwebapp/js/toggles',
     'hqwebapp/js/ui_elements/ui-element-key-val-list',
     'hqwebapp/js/knockout_bindings.ko',     // needed for sortable and jqueryElement bindings
 ], function (
@@ -13,7 +12,6 @@ hqDefine('custom_data_fields/js/custom_data_fields', [
     _,
     assertProperties,
     initialPageData,
-    toggles,
     uiElementKeyValueList
 ) {
     function Choice(choice) {
@@ -47,7 +45,7 @@ hqDefine('custom_data_fields/js/custom_data_fields', [
             return self.label() || self.slug();
         });
 
-        if (!toggles.toggleEnabled('REGEX_FIELD_VALIDATION')) {
+        if (!initialPageData.get('can_view_regex_field_validation')) {
             // if toggle isn't enabled - always show "choice" option
             self.validationMode('choice');
         }
