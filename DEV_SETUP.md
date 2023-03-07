@@ -568,9 +568,9 @@ for these packages.
 
 ```sh
 $ npm --version
-7.24.2
+9.5.0
 $ node --version
-v14.19.1
+v18.14.2
 ```
 
 On a clean Ubuntu 18.04 LTS install, the packaged nodejs version is v8. The
