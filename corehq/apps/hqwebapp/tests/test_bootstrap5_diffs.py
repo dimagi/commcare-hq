@@ -46,8 +46,8 @@ def test_that_diffs_of_migrated_files_match_expected_outputs():
             expected_diff = df.readlines()
             if current_diff != expected_diff:
                 unexpected_diffs.append([
-                    bootstrap3_filepath.replace(COREHQ_BASE_DIR, ''),
-                    bootstrap5_filepath.replace(COREHQ_BASE_DIR, '')
+                    str(bootstrap3_filepath).replace(str(COREHQ_BASE_DIR), ''),
+                    str(bootstrap5_filepath).replace(str(COREHQ_BASE_DIR), '')
                 ])
 
     failed_file_list = [f"{f[0]} > {f[1]}" for f in unexpected_diffs]
