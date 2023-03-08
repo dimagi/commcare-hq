@@ -69,7 +69,6 @@ branches:
     - es/redirect-domain  # Ethan Nov 21
     #- jls/web-apps-requirejs  # Jenny Jan 17
     - gh/remove-duplicate-kafka-seq-code # Graham Dec 26
-    - jls/new-instance-connectors # Steph Dec 27
     # - ce/enable-case-rate-limits # Cal Feb 1
     # - ml/enforce-metadata-ff # Minha Feb 2
     - jt/ush_2575_case_search_pull_related_cases # Jonathan T. Feb 6
