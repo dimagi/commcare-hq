@@ -9,6 +9,7 @@ from corehq.apps.app_manager.models import (
     DetailColumn,
     Module,
 )
+from corehq.apps.case_search.const import IS_RELATED_CASE
 from corehq.apps.case_search.utils import (
     _QueryHelper,
     get_search_detail_relationship_paths,
@@ -84,7 +85,7 @@ class TestGetRelatedCases(BaseCaseSearchTest):
         self._assert_related_case_ids(cases, {"host", "parent"}, {"c2", "c4"})
         self._assert_related_case_ids(cases, {"host", "parent/parent"}, {"c4", "c1"})
 
-    def test_get_related_cases_duplicates(self):
+    def test_get_related_cases_duplicates_and_tags(self):
         """Test that `get_related_cases` does not include any cases that are in the initial
         set or are duplicates of others already found."""
 
@@ -140,10 +141,12 @@ class TestGetRelatedCases(BaseCaseSearchTest):
         EXPECTED_PARTIAL_RELATED_CASES = (source_cases_related["PATH_RELATED_CASE_ID"]
             | source_cases_related["CHILD_CASE_ID"])
         self._assert_case_ids(EXPECTED_PARTIAL_RELATED_CASES, partial_related_cases)
+        self._assert_is_related_case_tag(partial_related_cases)
 
         all_related_cases = get_related_cases_helper(include_all_related_cases=True)
         EXPECTED_ALL_RELATED_CASES = set().union(*source_cases_related.values())
         self._assert_case_ids(EXPECTED_ALL_RELATED_CASES, all_related_cases)
+        self._assert_is_related_case_tag(all_related_cases)
 
     def test_get_related_cases_expanded_results(self):
         """Test that `get_related_cases` includes related cases for cases loaded
@@ -329,3 +332,7 @@ class TestGetRelatedCases(BaseCaseSearchTest):
         self.assertEqual(expected_case_ids, set(result_ids))
         if result_ids:
             self.assertEqual(1, max(result_ids.values()), result_ids)  # no duplicates
+
+    def _assert_is_related_case_tag(self, related_cases):
+        for case in related_cases:
+            self.assertEqual(case.case_json[IS_RELATED_CASE], 'true')

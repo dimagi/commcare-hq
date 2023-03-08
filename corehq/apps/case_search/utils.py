@@ -13,6 +13,7 @@ from corehq.apps.app_manager.util import (
 from corehq.apps.case_search.const import (
     CASE_SEARCH_MAX_RESULTS,
     COMMCARE_PROJECT,
+    IS_RELATED_CASE,
 )
 from corehq.apps.case_search.exceptions import CaseSearchUserError, CaseFilterError, TooManyRelatedCasesError
 from corehq.apps.case_search.filter_dsl import (
@@ -108,8 +109,8 @@ class _QueryHelper:
     def get_base_queryset(self):
         return CaseSearchES().domain(self.query_domains)
 
-    def wrap_case(self, es_hit, include_score=False, is_related_case=False):
-        return wrap_case_search_hit(es_hit, include_score=include_score, is_related_case=is_related_case)
+    def wrap_case(self, es_hit, include_score=False):
+        return wrap_case_search_hit(es_hit, include_score=include_score)
 
     def get_all_related_live_cases(self, cases):
         from casexml.apps.phone.data_providers.case.livequery import get_all_related_live_cases
@@ -127,8 +128,8 @@ class _RegistryQueryHelper:
     def get_base_queryset(self):
         return CaseSearchES().domain(self.query_domains)
 
-    def wrap_case(self, es_hit, include_score=False, is_related_case=False):
-        case = wrap_case_search_hit(es_hit, include_score=include_score, is_related_case=is_related_case)
+    def wrap_case(self, es_hit, include_score=False):
+        case = wrap_case_search_hit(es_hit, include_score=include_score)
         case.case_json[COMMCARE_PROJECT] = case.domain
         return case
 
@@ -285,6 +286,8 @@ def get_related_cases(helper, app_id, case_types, cases, custom_related_case_pro
     related_cases = get_related_cases_result(helper, app, case_types, top_level_cases, include_all_related_cases)
     if related_cases:
         results.extend(related_cases)
+    for case in related_cases:
+        _tag_is_related_case(case)
 
     initial_case_ids = {case.case_id for case in cases}
     return list({
@@ -409,7 +412,7 @@ def get_child_case_results(helper, parent_case_ids, child_case_types=None):
         filter = filter.case_type(child_case_types)
 
     results = filter.run().hits
-    return [helper.wrap_case(result, is_related_case=True) for result in results]
+    return [helper.wrap_case(result) for result in results]
 
 
 def get_expanded_case_results(helper, custom_related_case_property, cases):
@@ -422,4 +425,8 @@ def get_expanded_case_results(helper, custom_related_case_property, cases):
 
 def _get_case_search_cases(helper, case_ids):
     results = helper.get_base_queryset().case_ids(case_ids).run().hits
-    return [helper.wrap_case(result, is_related_case=True) for result in results]
+    return [helper.wrap_case(result) for result in results]
+
+
+def _tag_is_related_case(case):
+    case.case_json[IS_RELATED_CASE] = "true"
