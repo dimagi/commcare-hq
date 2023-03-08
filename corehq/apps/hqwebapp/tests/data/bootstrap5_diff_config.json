@@ -76,5 +76,13 @@
         ["utils.less", "_utils.scss"]
       ]
     }
+  ],
+  "apps/notifications/templates/notifications": [
+    {
+      "directories": ["partials/bootstrap3/", "partials/bootstrap5/"],
+      "file_type": "template",
+      "label": "notifications/partials",
+      "compare_all_files": true
+    }
   ]
 }
