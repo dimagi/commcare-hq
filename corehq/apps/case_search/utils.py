@@ -84,7 +84,7 @@ def get_case_search_results(domain, case_types, criteria,
 
     cases = [helper.wrap_case(hit, include_score=True) for hit in hits]
     if app_id:
-        cases.extend(get_related_cases(helper, app_id, case_types, cases,
+        cases.extend(get_and_tag_related_cases(helper, app_id, case_types, cases,
             custom_related_case_property, include_all_related_cases))
     return cases
 
@@ -264,7 +264,8 @@ class CaseSearchQueryBuilder:
         ]
 
 
-def get_related_cases(helper, app_id, case_types, cases, custom_related_case_property, include_all_related_cases):
+def get_and_tag_related_cases(helper, app_id, case_types, cases,
+                            custom_related_case_property, include_all_related_cases):
     """
     Fetch related cases that are necessary to display any related-case
     properties in the app requesting this case search.

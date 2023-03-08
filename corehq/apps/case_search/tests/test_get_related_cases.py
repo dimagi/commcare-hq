@@ -14,7 +14,7 @@ from corehq.apps.case_search.utils import (
     _QueryHelper,
     get_search_detail_relationship_paths,
     get_path_related_cases_results,
-    get_related_cases,
+    get_and_tag_related_cases,
     _get_all_related_cases,
     get_child_case_results,
     get_related_cases_result,
@@ -86,7 +86,7 @@ class TestGetRelatedCases(BaseCaseSearchTest):
         self._assert_related_case_ids(cases, {"host", "parent/parent"}, {"c4", "c1"})
 
     def test_get_related_cases_duplicates_and_tags(self):
-        """Test that `get_related_cases` does not include any cases that are in the initial
+        """Test that `get_and_tag_related_cases` does not include any cases that are in the initial
         set or are duplicates of others already found."""
 
         # d1 :> c2 > c1 > a1
@@ -134,7 +134,7 @@ class TestGetRelatedCases(BaseCaseSearchTest):
                     patch("corehq.apps.case_search.utils.get_child_case_types", return_value={"c", "d"}), \
                     patch("corehq.apps.case_search.utils.get_app_cached"):
 
-                return get_related_cases(_QueryHelper(self.domain), None, {"c"}, source_cases, None,
+                return get_and_tag_related_cases(_QueryHelper(self.domain), None, {"c"}, source_cases, None,
                     include_all_related_cases)
 
         partial_related_cases = get_related_cases_helper(include_all_related_cases=False)
@@ -149,7 +149,7 @@ class TestGetRelatedCases(BaseCaseSearchTest):
         self._assert_is_related_case_tag(all_related_cases)
 
     def test_get_related_cases_expanded_results(self):
-        """Test that `get_related_cases` includes related cases for cases loaded
+        """Test that `get_and_tag_related_cases` includes related cases for cases loaded
         via the 'custom_related_case_property'."""
 
         # Search for case type 'a'
@@ -187,7 +187,7 @@ class TestGetRelatedCases(BaseCaseSearchTest):
                 patch("corehq.apps.case_search.utils.get_child_case_types", return_value={'c'}), \
                 patch("corehq.apps.case_search.utils.get_app_cached"):
             include_all_related_cases = False
-            partial_related_cases = get_related_cases(_QueryHelper(self.domain), None, {"a"}, source_cases,
+            partial_related_cases = get_and_tag_related_cases(_QueryHelper(self.domain), None, {"a"}, source_cases,
                 'custom_related_case_id', include_all_related_cases)
 
         EXPECTED_PARTIAL_RELATED_CASES = (source_cases_related["EXPANDED_CASE_ID"]
