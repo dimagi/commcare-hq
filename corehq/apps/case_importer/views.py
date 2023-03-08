@@ -68,7 +68,7 @@ def validate_column_names(column_names, invalid_column_names):
 
 
 # Cobble together the context needed to render breadcrumbs that class-based views get from BasePageView
-# For use by function-based views that extend hqwebapp/base_section.html
+# For use by function-based views that extend hqwebapp/bootstrap3/base_section.html
 def _case_importer_breadcrumb_context(page_name, domain):
     return {
         'current_page': {
