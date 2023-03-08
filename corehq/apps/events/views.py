@@ -90,6 +90,7 @@ class EventsView(BaseEventView, CRUDPaginatedViewMixin):
             'status': event.status,
             'total_attendance': event.total_attendance or '-',
             'edit_url': reverse(EventEditView.urlname, args=(self.domain, event.event_id)),
+            'delete_url': reverse('remove_event', args=(self.domain, event.event_id)),
         }
 
 
@@ -211,3 +212,11 @@ class EventEditView(EventCreateView):
         event.set_expected_attendees(event_update_data['expected_attendees'])
 
         return HttpResponseRedirect(reverse(EventsView.urlname, args=(self.domain,)))
+
+def remove_event(request, *args, **kwargs):
+    event = Event.objects.get(
+        domain=kwargs['domain'],
+        event_id=kwargs['event_id'],
+    )
+    event.delete()
+    return HttpResponseRedirect(reverse(EventsView.urlname, args=(kwargs['domain'],)))
