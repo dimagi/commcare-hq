@@ -1,14 +1,24 @@
-from django.http import Http404, HttpResponseBadRequest, HttpResponseRedirect
+from django.http import (
+    Http404,
+    HttpResponseRedirect,
+    JsonResponse,
+)
 from django.urls import reverse
 from django.utils.translation import gettext_lazy as _
+from django.views.decorators.http import require_GET
 
 from corehq import toggles
+from corehq.apps.domain.decorators import login_and_domain_required
 from corehq.apps.domain.views.base import BaseDomainView
 from corehq.apps.hqwebapp.decorators import use_jquery_ui, use_multiselect
 from corehq.apps.hqwebapp.views import CRUDPaginatedViewMixin
+from corehq.apps.users.decorators import require_permission
+from corehq.apps.users.models import HqPermissions
+from corehq.apps.users.views import BaseUserSettingsView
+from corehq.util.jqueryrmi import JSONResponseMixin
 
 from .forms import CreateEventForm
-from .models import Event
+from .models import Event, get_paginated_attendees
 
 
 class BaseEventView(BaseDomainView):
@@ -211,3 +221,48 @@ class EventEditView(EventCreateView):
         event.set_expected_attendees(event_update_data['expected_attendees'])
 
         return HttpResponseRedirect(reverse(EventsView.urlname, args=(self.domain,)))
+
+
+class AttendeesListView(JSONResponseMixin, BaseUserSettingsView):
+    urlname = "event_attendees"
+    template_name = 'event_attendees.html'
+    page_title = _("Attendees")
+    limit_text = _("Attendees per page")
+    empty_notification = _("You have no attendees")
+    loading_message = _("Loading attendees")
+
+    @use_jquery_ui
+    def dispatch(self, *args, **kwargs):
+        # The FF check is temporary till the full feature is released
+        toggle_enabled = toggles.ATTENDANCE_TRACKING.enabled(self.domain)
+        if not (self.request.couch_user.can_manage_events(self.domain) and toggle_enabled):
+            raise Http404
+        return super(AttendeesListView, self).dispatch(*args, **kwargs)
+
+    def post(self, *args, **kwargs):
+        return super(AttendeesListView, self).post(*args, **kwargs)
+
+
+@require_GET
+@login_and_domain_required
+@require_permission(HqPermissions.manage_attendance_tracking)
+def paginated_attendees(request, domain):
+    """
+    Returns the possible attendees.
+    """
+    limit = int(request.GET.get('limit', 10))
+    page = int(request.GET.get('page', 1))
+    query = request.GET.get('query')
+
+    attendees, total = get_paginated_attendees(
+        domain=domain,
+        limit=limit,
+        page=page,
+        query=query
+    )
+
+    return JsonResponse({
+        # TODO: Rename "users" key to "attendees"
+        'users': attendees,
+        'total': total,
+    })

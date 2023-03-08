@@ -7,6 +7,7 @@ from memoized import memoized
 
 from casexml.apps.case.mock import CaseFactory, CaseIndex, CaseStructure
 
+from corehq.apps.users.models import CommCareUser
 from corehq.form_processor.exceptions import CaseNotFound
 from corehq.form_processor.models import CommCareCase, CommCareCaseIndex
 from corehq.util.quickcache import quickcache
@@ -230,3 +231,63 @@ class AttendeeCase:
     they were Django models.
     """
     objects = AttendeeCaseManager()
+
+
+def get_paginated_attendees(domain, limit, page, query=None):
+
+    def attendee_as_user_dict(case):
+        # TODO: Don't use these properties
+        user_id = case.get_case_property(ATTENDEE_USER_ID_CASE_PROPERTY)
+        if user_id:
+            user = CommCareUser.get_by_user_id(user_id, domain=domain)
+            return {
+                '_id': case.case_id,
+                'first_name': user.first_name,
+                'last_name': user.last_name,
+                'base_username': user.username,
+                'user_id': user_id,
+                'username': user.raw_username,
+            }
+        else:
+            try:
+                first_name, last_name = case.name.split(' ', maxsplit=1)
+            except ValueError:
+                first_name, last_name = case.name, ''
+            return {
+                '_id': case.case_id,
+                'first_name': first_name,
+                'last_name': last_name,
+                'base_username': '',
+                'user_id': '',
+                'username': '',
+            }
+
+    case_ids = CommCareCase.objects.get_open_case_ids_in_domain_by_type(
+        domain,
+        ATTENDEE_CASE_TYPE,
+    )
+    total = len(case_ids)
+    if page:
+        start, end = page_to_slice(limit, page)
+        cases = CommCareCase.objects.get_cases(case_ids[start:end], domain)
+    else:
+        cases = CommCareCase.objects.get_cases(case_ids[:limit], domain)
+    return [attendee_as_user_dict(c) for c in cases], total
+
+
+def page_to_slice(limit, page):
+    """
+    Converts ``limit``, ``page`` to start and end indices.
+
+    Assumes page numbering starts at 1.
+
+    >>> names = ['Harry', 'Hermione', 'Ron']
+    >>> start, end = page_to_slice(limit=1, page=2)
+    >>> names[start:end]
+    ['Hermione']
+    """
+    assert page > 0, 'Page numbering starts at 1'
+
+    start = (page - 1) * limit
+    end = start + limit
+    return start, end
