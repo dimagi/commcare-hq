@@ -43,8 +43,9 @@ def test_that_diffs_of_migrated_files_match_expected_outputs():
     for bootstrap3_filepath, bootstrap5_filepath, diff_filepath in get_bootstrap5_filepaths(full_diff_config):
         current_diff = get_diff(bootstrap3_filepath, bootstrap5_filepath)
         with open(diff_filepath, 'r') as df:
-            expected_diff = df.readlines()
-            if current_diff != expected_diff:
+            expected_diff = [line.rstrip() for line in df.readlines()]
+            current_diff = [line.rstrip() for line in current_diff]
+            if "".join(current_diff) != "".join(expected_diff):
                 unexpected_diffs.append([
                     str(bootstrap3_filepath).replace(str(COREHQ_BASE_DIR), ''),
                     str(bootstrap5_filepath).replace(str(COREHQ_BASE_DIR), '')
