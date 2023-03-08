@@ -1,15 +1,19 @@
+from contextlib import contextmanager
 from datetime import datetime
 from unittest.mock import patch
 
 from django.test import TestCase
 from django.urls import reverse
 
+from casexml.apps.case.mock import CaseFactory, CaseStructure
+
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.users.models import HqPermissions, UserRole, WebUser
 from corehq.apps.users.role_utils import UserRolePresets
+from corehq.form_processor.models import CommCareCase
 from corehq.util.test_utils import flag_enabled
 
-from ..models import Event
+from ..models import ATTENDEE_CASE_TYPE, Event
 from ..views import EventCreateView, EventsView
 
 
@@ -121,6 +125,27 @@ class TestEventsCreateView(BaseEventViewTestClass):
 
     urlname = EventCreateView.urlname
 
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.factory = CaseFactory(cls.domain)
+
+    @contextmanager
+    def _get_attendee(self):
+        (attendee,) = self.factory.create_or_update_cases([
+            CaseStructure(attrs={
+                'case_type': ATTENDEE_CASE_TYPE,
+                'create': True,
+            })
+        ])
+        try:
+            yield attendee
+        finally:
+            CommCareCase.objects.hard_delete_cases(
+                self.domain,
+                [attendee.case_id],
+            )
+
     @flag_enabled('ATTENDANCE_TRACKING')
     @patch.object(Event, 'save')
     def test_user_does_not_have_permission(self, event_save_method):
@@ -151,15 +176,24 @@ class TestEventsCreateView(BaseEventViewTestClass):
     @flag_enabled('ATTENDANCE_TRACKING')
     def test_event_is_created(self):
         self.log_user_in(self.admin_webuser)
+        with self._get_attendee() as attendee_case:
+            data = self._event_data()
+            data['expected_attendees'] = [attendee_case.case_id]
 
-        data = self._event_data()
-        self.client.post(self.endpoint, data)
+            self.client.post(self.endpoint, data)
 
-        event = Event.by_domain(self.domain).first()
+            event = Event.by_domain(self.domain).first()
 
-        self.assertEqual(event.name, data['name'])
-        self.assertEqual(event.domain, self.domain)
-        self.assertEqual(event.manager_id, self.admin_webuser.user_id)
+            self.assertEqual(event.name, data['name'])
+            self.assertEqual(event.domain, self.domain)
+            self.assertEqual(event.manager_id, self.admin_webuser.user_id)
+
+            expected_attendees = event.get_expected_attendees()
+            self.assertEqual(len(expected_attendees), 1)
+            self.assertEqual(
+                expected_attendees[0].case_id,
+                attendee_case.case_id,
+            )
 
     @flag_enabled('ATTENDANCE_TRACKING')
     def test_event_create_fails_with_faulty_data(self):
