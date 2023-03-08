@@ -4459,6 +4459,22 @@ msgid "Allow role to create and edit reports in report builder."
 msgstr ""
 
 #: corehq/apps/users/static/users/js/roles.js
+msgid "Create and Edit Custom Web Reports"
+msgstr ""
+
+#: corehq/apps/users/static/users/js/roles.js
+msgid "Allow role to create and edit custom web reports."
+msgstr ""
+
+#: corehq/apps/users/static/users/js/roles.js
+msgid "Create and Edit Configurable Reports"
+msgstr ""
+
+#: corehq/apps/users/static/users/js/roles.js
+msgid "Allow role to create and edit configurable reports."
+msgstr ""
+
+#: corehq/apps/users/static/users/js/roles.js
 msgid "Access All CommCare Reports"
 msgstr ""
 
@@ -4476,27 +4492,19 @@ msgid "Allow role to access all reports."
 msgstr ""
 
 #: corehq/apps/users/static/users/js/roles.js
+msgid "Download and Email Reports"
+msgstr ""
+
+#: corehq/apps/users/static/users/js/roles.js
+msgid "Allow role to download and email report data."
+msgstr ""
+
+#: corehq/apps/users/static/users/js/roles.js
 msgid "Access All Tableau Reports"
 msgstr ""
 
 #: corehq/apps/users/static/users/js/roles.js
 msgid "Allow role to access all embedded Tableau reports."
-msgstr ""
-
-#: corehq/apps/users/static/users/js/roles.js
-msgid "Create and Edit Custom Web Reports"
-msgstr ""
-
-#: corehq/apps/users/static/users/js/roles.js
-msgid "Allow role to create and edit custom web reports."
-msgstr ""
-
-#: corehq/apps/users/static/users/js/roles.js
-msgid "Create and Edit Configurable Reports"
-msgstr ""
-
-#: corehq/apps/users/static/users/js/roles.js
-msgid "Allow role to create and edit configurable reports."
 msgstr ""
 
 #: corehq/apps/users/static/users/js/roles.js
