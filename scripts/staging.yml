@@ -74,7 +74,6 @@ branches:
     - jt/ush_2575_case_search_pull_related_cases # Jonathan T. Feb 6
     - smh/force-incremental-sync # Steph Feb 14
     - rc/media-upload-spinner-fix # Robert Feb 16
-    - smh/print-button # Steph Feb 17
     - mjr/erm-overwrite # Matt Feb 21
     - ad/tableau-user-syncing-various-2 # Addison Feb 24
     - pkv/accessibility-mapbox-geocoder-widget # Pawan Feb 27
