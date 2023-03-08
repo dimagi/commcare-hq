@@ -68,8 +68,8 @@ class Command(BaseCommand):
                                                         module.get("unique_id"),
                                                         attr))
 
-        result_domains = {b.domain for b in results}
-        result_apps = {b.app_id for b in results}
+        result_domains = {r.domain for r in results}
+        result_apps = {r.app_id for r in results}
         summary = (f"\n{datetime.now()}\n"
                    f"Found {len(results)} '{attr}' properties"
                    f" in {len(result_apps)} apps"
