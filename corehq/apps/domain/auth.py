@@ -1,15 +1,17 @@
 import base64
+import binascii
 import logging
 import re
 from functools import wraps
 
-import binascii
 from django.contrib.auth import authenticate, get_user_model
 from django.contrib.auth.models import User
 from django.db.models import Q
 from django.http import HttpResponse
 from django.views.decorators.debug import sensitive_variables
 
+from no_exceptions.exceptions import Http400
+from python_digest import parse_digest_credentials
 from tastypie.authentication import ApiKeyAuthentication
 
 from django.utils import timezone
@@ -20,9 +22,7 @@ from corehq.apps.receiverwrapper.util import DEMO_SUBMIT_MODE
 from corehq.apps.users.models import CouchUser, HQApiKey
 from corehq.toggles import API_THROTTLE_WHITELIST, TWO_STAGE_USER_PROVISIONING
 from corehq.util.hmac_request import validate_request_hmac
-from no_exceptions.exceptions import Http400
-from python_digest import parse_digest_credentials
-
+from corehq.util.metrics import metrics_counter
 
 auth_logger = logging.getLogger("commcare_auth")
 
@@ -254,6 +254,10 @@ def get_active_users_by_email(email):
 
 
 class HQApiKeyAuthentication(ApiKeyAuthentication):
+    def __init__(self, *args, allow_creds_in_data=True, **kwargs):
+        self._allow_creds_in_data = allow_creds_in_data
+        super().__init__(*args, **kwargs)
+
     def is_authenticated(self, request):
         """Follows what tastypie does, then tests for IP whitelisting
         """
@@ -308,3 +312,24 @@ class HQApiKeyAuthentication(ApiKeyAuthentication):
         username = self.extract_credentials(request)[0]
         domain = getattr(request, 'domain', '')
         return ApiIdentifier(username=username, domain=domain)
+
+    def extract_credentials(self, request):
+        """Extract username and key from request"""
+        # This overrides an existing tastypie method
+        try:
+            data = self.get_authorization_data(request)
+        except ValueError:
+            if self._allow_creds_in_data:
+                username = request.GET.get('username') or request.POST.get('username')
+                api_key = request.GET.get('api_key') or request.POST.get('api_key')
+                if username and api_key:
+                    metrics_counter('commcare.auth.credentials_in_data', tags={
+                        'domain': getattr(request, 'domain', None),
+                        'request_method': request.method,
+                    })
+            else:
+                username, api_key = None, None
+        else:
+            username, api_key = data.split(':', 1)
+
+        return username, api_key
