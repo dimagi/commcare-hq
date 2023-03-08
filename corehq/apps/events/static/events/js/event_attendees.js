@@ -10,7 +10,7 @@ hqDefine("events/js/event_attendees",[
     $,
     ko,
     _,
-    initialPageData,
+    initialPageData
 ) {
     'use strict';
     // These are used as css classes, so the values of success/warning/error need to be what they are.
