@@ -132,12 +132,15 @@ class EventCreateView(BaseEventView):
         ]
 
     def get_context_data(self, **kwargs):
-        context = super(EventCreateView, self).get_context_data(**kwargs)
-        context.update({'form': self.form})
+        context = super().get_context_data(**kwargs)
+        if self.request.method == 'POST':
+            context['form'] = CreateEventForm(self.request.POST, domain=self.domain)
+        else:
+            context['form'] = CreateEventForm(event=self.event, domain=self.domain)
         return context
 
     def post(self, request, *args, **kwargs):
-        form = self.form
+        form = CreateEventForm(self.request.POST, domain=self.domain)
 
         if not form.is_valid():
             return self.get(request, *args, **kwargs)
@@ -158,13 +161,6 @@ class EventCreateView(BaseEventView):
         event.set_expected_attendees(event_data['expected_attendees'])
 
         return HttpResponseRedirect(reverse(EventsView.urlname, args=(self.domain,)))
-
-    @property
-    def form(self):
-        if self.request.method == 'POST':
-            return CreateEventForm(self.request.POST, domain=self.domain)
-        else:
-            return CreateEventForm(event=self.event, domain=self.domain)
 
     @property
     def event(self):
@@ -203,7 +199,7 @@ class EventEditView(EventCreateView):
         return self.event_obj
 
     def post(self, request, *args, **kwargs):
-        form = self.form
+        form = CreateEventForm(self.request.POST, domain=self.domain)
 
         if not form.is_valid():
             return self.get(request, *args, **kwargs)
