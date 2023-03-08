@@ -87,7 +87,6 @@ class ValidateXFormTests(SimpleTestCase):
         with self.assertRaises(XFormValidationError):
             validate_xform(xml)
 
-    @patch('corehq.apps.hqadmin.service_checks.check_formplayer')
     def test_successful(self, mock_validate_form, _):
         xml = '''
         <html>
