@@ -422,6 +422,13 @@ def module_uses_inline_search(module):
     )
 
 
+def module_uses_include_all_related_cases(module):
+    return (
+        module_offers_search(module)
+        and module.search_config.include_all_related_cases
+    )
+
+
 def get_cloudcare_session_data(domain_name, form, couch_user):
     from corehq.apps.app_manager.suite_xml.sections.entries import EntriesHelper
 
