@@ -3,7 +3,13 @@ import uuid
 from django.db import models
 from django.utils.translation import gettext_lazy as _
 
-from corehq.form_processor.models import CommCareCase
+from memoized import memoized
+
+from casexml.apps.case.mock import CaseFactory, CaseIndex, CaseStructure
+
+from corehq.form_processor.exceptions import CaseNotFound
+from corehq.form_processor.models import CommCareCase, CommCareCaseIndex
+from corehq.util.quickcache import quickcache
 
 NOT_STARTED = 'Not started'
 IN_PROGRESS = 'In progress'
@@ -21,6 +27,15 @@ ATTENDEE_LIST_STATUS_CHOICES = [
 
 # Attendees are CommCareCase instances with this case type:
 ATTENDEE_CASE_TYPE = 'commcare-attendee'
+
+# An extension case with this case type links an attendee to an Event:
+EVENT_ATTENDEE_CASE_TYPE = 'commcare-potential-attendee'
+
+# Used internally as a host case for EVENT_ATTENDEE_CASE_TYPE
+EVENT_CASE_TYPE = 'commcare-event'
+
+# For attendees who are also mobile workers:
+ATTENDEE_USER_ID_CASE_PROPERTY = 'commcare_user_id'
 
 
 class Event(models.Model):
@@ -57,6 +72,118 @@ class Event(models.Model):
             return cls.objects.filter(domain=domain).order_by('start_date')
         return cls.objects.filter(domain=domain)
 
+    @quickcache(['self.event_id'])
+    def get_expected_attendees(self):
+        """
+        Returns CommCareCase instances for the attendees for this Event.
+        """
+        # Attendee cases are associated with one or more Events using
+        # extension cases. The extension cases have case type
+        # EVENT_ATTENDEE_CASE_TYPE ('commcare-potential-attendee').
+        #
+        # The extension cases are owned by the Event's case-sharing
+        # group so that all mobile workers in the group get the attendee
+        # cases for the Event.
+        event_attendee_cases = self._get_ext_cases()
+
+        attendee_cases = []
+        for case in event_attendee_cases:
+            for index in case.indices:
+                if index.referenced_type == ATTENDEE_CASE_TYPE:
+                    attendee_cases.append(index.referenced_case)
+        return attendee_cases
+
+    def set_expected_attendees(self, attendee_cases):
+        """
+        Drops existing expected attendees, and creates extension cases
+        linking ``attendee_cases`` to this Event.
+
+        ``attendee_cases`` is a list of CommCareCase instances or case
+        IDs.
+        """
+        self.get_expected_attendees.clear(self)
+
+        self._close_ext_cases()
+
+        attendee_case_ids = (c if isinstance(c, str) else c.case_id
+                             for c in attendee_cases)
+        case_structures = []
+        for case_id in attendee_case_ids:
+            event_host = CaseStructure(case_id=self.event_id)
+            attendee_host = CaseStructure(case_id=case_id)
+            case_structures.append(CaseStructure(
+                indices=[
+                    CaseIndex(
+                        relationship='extension',
+                        identifier='event-host',
+                        related_structure=event_host,
+                        related_type=EVENT_CASE_TYPE,
+                    ),
+                    CaseIndex(
+                        relationship='extension',
+                        identifier='attendee-host',
+                        related_structure=attendee_host,
+                        related_type=ATTENDEE_CASE_TYPE,
+                    ),
+                ],
+                attrs={
+                    'case_type': EVENT_ATTENDEE_CASE_TYPE,
+                    'create': True,
+                },
+            ))
+        self._case_factory.create_or_update_cases(case_structures)
+
+    def _get_ext_cases(self):
+        """
+        Returns this Event's open 'commcare-potential-attendee'
+        extension cases.
+        """
+        ext_case_ids = CommCareCaseIndex.objects.get_extension_case_ids(
+            self.domain,
+            [self.event_id],
+            include_closed=False,
+        )
+        return CommCareCase.objects.get_cases(ext_case_ids, self.domain)
+
+    def _close_ext_cases(self):
+        ext_case_ids = CommCareCaseIndex.objects.get_extension_case_ids(
+            self.domain,
+            [self.event_id],
+            include_closed=False,
+        )
+        self._case_factory.create_or_update_cases([
+            CaseStructure(case_id=case_id, attrs={'close': True})
+            for case_id in ext_case_ids
+        ])
+
+    @property
+    def case(self):
+        # In order to get 'commcare-potential-attendee' extension cases
+        # efficiently, we use CommCareCaseIndexManager.get_reverse_indices()
+        # ... and for that to work, the Event has a host case.
+        #
+        # This is the only thing we use the Event's case for. It does not
+        # store any Event data other than its name.
+        try:
+            case = CommCareCase.objects.get_case(self.event_id, self.domain)
+        except CaseNotFound:
+            struct = CaseStructure(
+                case_id=self.event_id,
+                attrs={
+                    'owner_id': self.manager_id,
+                    'case_type': EVENT_CASE_TYPE,
+                    'case_name': self.name,
+                    'create': True,
+                },
+            )
+            (case,) = self._case_factory.create_or_update_cases([struct])
+        return case
+
+    @property
+    @memoized
+    def _case_factory(self):
+        return CaseFactory(domain=self.domain)
+
     def save(
         self,
         force_insert=False,
@@ -72,6 +199,11 @@ class Event(models.Model):
             using=using,
             update_fields=update_fields,
         )
+
+    def delete(self, using=None, keep_parents=False):
+        self._close_ext_cases()
+        self._case_factory.close_case(self.event_id)
+        return super().delete(using, keep_parents)
 
     @property
     def status(self):
