@@ -89,6 +89,7 @@ class EventsView(BaseEventView, CRUDPaginatedViewMixin):
             'target_attendance': event.attendance_target,
             'status': event.status,
             'total_attendance': event.total_attendance or '-',
+            'edit_url': reverse(EventEditView.urlname, args=(self.domain, event.event_id)),
         }
 
 
@@ -153,4 +154,60 @@ class EventCreateView(BaseEventView):
         if self.request.method == 'POST':
             return CreateEventForm(self.request.POST, domain=self.domain)
         else:
-            return CreateEventForm(initial={}, domain=self.domain)
+            return CreateEventForm(event=self.event, domain=self.domain)
+
+    @property
+    def event(self):
+        return None
+
+
+class EventEditView(EventCreateView):
+    urlname = 'edit_attendance_tracking_event'
+    template_name = "new_event.html"
+    http_method_names = ['get', 'post']
+
+    page_title = _("Edit Attendance Tracking Event")
+    event_obj = None
+
+    @use_multiselect
+    @use_jquery_ui
+    def dispatch(self, request, *args, **kwargs):
+        self.event_obj = Event.objects.get(
+            domain=self.domain,
+            event_id=kwargs['event_id'],
+        )
+        return super().dispatch(request, *args, **kwargs)
+
+    @property
+    def page_name(self):
+        return _("Edit Event")
+
+    @property
+    def page_url(self):
+        return reverse(self.urlname, args=(self.domain, self.event.event_id))
+
+    @property
+    def event(self):
+        if self.event_obj is None:
+            raise Event.DoesNotExist
+        return self.event_obj
+
+    def post(self, request, *args, **kwargs):
+        form = self.form
+
+        if not form.is_valid():
+            return self.get(request, *args, **kwargs)
+
+        event_update_data = form.cleaned_data
+
+        event = self.event
+        event.name = event_update_data['name']
+        event.start_date = event_update_data['start_date']
+        event.end_date = event_update_data['end_date']
+        event.attendance_target = event_update_data['attendance_target']
+        event.sameday_reg = event_update_data['sameday_reg']
+        event.track_each_day = event_update_data['track_each_day']
+        event.save()
+        event.set_expected_attendees(event_update_data['expected_attendees'])
+
+        return HttpResponseRedirect(reverse(EventsView.urlname, args=(self.domain,)))

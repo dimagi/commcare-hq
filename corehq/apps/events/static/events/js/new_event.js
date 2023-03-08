@@ -2,12 +2,14 @@ hqDefine("events/js/new_event", [
     "jquery",
     "knockout",
     "hqwebapp/js/multiselect_utils",
+    "hqwebapp/js/initial_page_data",
     "hqwebapp/js/widgets",
     "jquery-ui/ui/widgets/datepicker",
 ], function (
     $,
     ko,
-    multiselectUtils
+    multiselectUtils,
+    initialPageData
 ) {
     $(function () {
         $("#id_start_date").datepicker({
@@ -20,22 +22,23 @@ hqDefine("events/js/new_event", [
             minDate: 0,
         });
 
+        // needs pre-population
         multiselectUtils.createFullMultiselectWidget('id_expected_attendees', {
             selectableHeaderTitle: gettext('Possible Attendees'),
             selectedHeaderTitle: gettext('Expected Attendees'),
             searchItemTitle: gettext('Search Attendees'),
         });
 
-        function eventViewModel() {
+        function eventViewModel(initialData) {
             'use strict';
             var self = {};
 
-            self.name = ko.observable();
-            self.startDate = ko.observable();
-            self.endDate = ko.observable();
-            self.attendanceTarget = ko.observable(1);
-            self.sameDayRegistration = ko.observable();
-            self.trackingOption = ko.observable("by_day");
+            self.name = ko.observable(initialData.name);
+            self.startDate = ko.observable(initialData.start_date);
+            self.endDate = ko.observable(initialData.end_date);
+            self.attendanceTarget = ko.observable(initialData.attendance_target || 1);
+            self.sameDayRegistration = ko.observable(initialData.sameday_reg);
+            self.trackingOption = ko.observable(initialData.tracking_option || "by_day");
 
             self.showTrackingOptions = ko.computed(function () {
                 var startDateValue = self.startDate();
@@ -50,7 +53,7 @@ hqDefine("events/js/new_event", [
             return self;
         }
 
-        var eventModel = eventViewModel();
+        var eventModel = eventViewModel(initialPageData.get('current_values'));
         $('#tracking-event-form').koApplyBindings(eventModel);
     });
 });
