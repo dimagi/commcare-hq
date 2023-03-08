@@ -631,6 +631,10 @@ def autoset_owner_id_for_advanced_action(action):
 
 
 def validate_xform(source):
+    from corehq.apps.hqadmin.service_checks import check_formplayer
+    if not check_formplayer().success:
+        raise XFormValidationFailed("Unable to connect to Formplayer")
+
     if isinstance(source, str):
         source = source.encode("utf-8")
     # normalize and strip comments
