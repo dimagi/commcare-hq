@@ -87,7 +87,7 @@ class ValidateXFormTests(SimpleTestCase):
         with self.assertRaises(XFormValidationError):
             validate_xform(xml)
 
-    def test_successful(self, mock_validate_form, _):
+    def test_successful(self, mock_validate_form):
         xml = '''
         <html>
             <head>
