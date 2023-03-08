@@ -174,6 +174,10 @@ class FixtureLinkDetail(jsonobject.JsonObject):
     tag = jsonobject.StringProperty()
 
 
+class UpdateRuleLinkDetail(jsonobject.JsonObject):
+    id = jsonobject.IntegerProperty()
+
+
 class ReportLinkDetail(jsonobject.JsonObject):
     report_id = jsonobject.StringProperty()
 
@@ -193,4 +197,5 @@ def wrap_detail(model, detail_json):
         'report': ReportLinkDetail,
         'keyword': KeywordLinkDetail,
         'ucr_expression': UCRExpressionLinkDetail,
+        'auto_update_rule': UpdateRuleLinkDetail,
     }[model].wrap(detail_json)
