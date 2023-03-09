@@ -96,29 +96,39 @@ class TestUpdateCustomDataFields(BaseLinkedDomainTest):
 
 class TestUpdateFields(TestCase):
     def test_can_update_user_fields(self):
-        self._set_fields([Field(slug='a', label='label1', is_synced=True)], UserFieldsView.field_type)
+        self._set_fields([Field(slug='a', label='label1', upstream_id='1')], UserFieldsView.field_type)
 
-        updated_field = Field(slug='a', label='label2')
+        updated_field = Field(id='1', slug='a', label='label2')
         update_definition = self._generate_update_definition_for_fields([updated_field], UserFieldsView.field_type)
         update_custom_data_models_impl(update_definition, self.domain)
 
         fields = self._get_fields(UserFieldsView.field_type)
-        expected_field = Field(slug='a', label='label2', is_synced=True)
+        expected_field = Field(slug='a', label='label2', upstream_id='1')
         self.assertEqual(len(fields), 1)
         self.assertEqual(fields[0].to_dict(), expected_field.to_dict())
 
     def test_can_update_location_fields(self):
-        self._set_fields([Field(slug='a', label='label1', is_synced=True)], LocationFieldsView.field_type)
+        self._set_fields([Field(slug='a', label='label1', upstream_id='1')], LocationFieldsView.field_type)
 
-        updated_field = Field(slug='a', label='label2')
+        updated_field = Field(id='1', slug='a', label='label2')
         update_definition = self._generate_update_definition_for_fields([updated_field],
             LocationFieldsView.field_type)
         update_custom_data_models_impl(update_definition, self.domain)
 
         fields = self._get_fields(LocationFieldsView.field_type)
-        expected_field = Field(slug='a', label='label2', is_synced=True)
+        expected_field = Field(slug='a', label='label2', upstream_id='1')
         self.assertEqual(len(fields), 1)
         self.assertEqual(fields[0].to_dict(), expected_field.to_dict())
+
+    def test_cannot_update_fields_with_the_same_slug(self):
+        self._set_fields([Field(slug='a', label='label1')], UserFieldsView.field_type)
+
+        updated_field = Field(id='1', slug='a', label='label2')
+        update_definition = self._generate_update_definition_for_fields([updated_field], UserFieldsView.field_type)
+
+        with self.assertRaisesMessage(DomainLinkError,
+                                      "Cannot update custom fields due to the following field conflicts: a"):
+            update_custom_data_models_impl(update_definition, self.domain)
 
     def setUp(self):
         self.domain = 'test-domain'
@@ -134,10 +144,15 @@ class TestUpdateFields(TestCase):
 
     def _generate_update_definition_for_fields(self, fields, field_type):
         fields_definition = {
-            'fields': [field.to_dict() for field in fields]
+            'fields': [self._get_field_dict(field) for field in fields]
         }
 
         return dict([(field_type, fields_definition)])
+
+    def _get_field_dict(self, field):
+        field_dict = field.to_dict()
+        field_dict['id'] = field.id
+        return field_dict
 
 
 class TestUpdateProfiles(TestCase):
@@ -145,7 +160,7 @@ class TestUpdateProfiles(TestCase):
         fields = [Field(slug='a'), Field(slug='b'), Field(slug='c')]
         user_fields_definition = {
             'fields': [field_to_json(field) for field in fields],
-            'profiles': [make_profile()],
+            'profiles': [make_profile(id='1')],
         }
         update_json = {'UserFields': user_fields_definition}
 
@@ -158,19 +173,20 @@ class TestUpdateProfiles(TestCase):
         profile = profiles[0]
         self.assertEqual(profile.name, 'SyncedProfile1')
         self.assertEqual(profile.fields, "{'a': 'one'}")
-        self.assertTrue(profile.is_synced)
+        self.assertEqual(profile.upstream_id, '1')
 
     def test_previously_synced_profile_is_updated(self):
-        fields = [Field(slug='a', is_synced=True)]
+        downstream_fields = [Field(slug='a', upstream_id='1')]
+        upstream_fields = [Field(id='1', slug='a')]
         existing_definition = CustomDataFieldsDefinition.objects.create(
             domain='test-domain', field_type='UserFields')
-        existing_definition.set_fields(fields)
+        existing_definition.set_fields(downstream_fields)
         existing_definition.save()
-        make_existing_profile(existing_definition, is_synced=True)
+        make_existing_profile(existing_definition, upstream_id='1')
 
         user_fields_definition = {
-            'fields': [field_to_json(field) for field in fields],
-            'profiles': [make_profile()]
+            'fields': [field_to_json(field) for field in upstream_fields],
+            'profiles': [make_profile(id='1')]
         }
         update_json = {'UserFields': user_fields_definition}
 
@@ -182,20 +198,21 @@ class TestUpdateProfiles(TestCase):
 
         profile = profiles[0]
         self.assertEqual(profile.fields, "{'a': 'one'}")
-        self.assertTrue(profile.is_synced)
+        self.assertEqual(profile.upstream_id, '1')
 
     def test_existing_profile_raises_error(self):
-        fields = [Field(slug='a', is_synced=True)]
+        downstream_fields = [Field(slug='a', upstream_id='1')]
+        upstream_fields = [Field(id='1', slug='a')]
         existing_definition = CustomDataFieldsDefinition.objects.create(
             domain='test-domain', field_type='UserFields'
         )
-        existing_definition.set_fields(fields)
+        existing_definition.set_fields(downstream_fields)
         existing_definition.save()
-        make_existing_profile(existing_definition, is_synced=False)
+        make_existing_profile(existing_definition, upstream_id=None)
 
         user_fields_definition = {
-            'fields': [field_to_json(field) for field in fields],
-            'profiles': [make_profile()]
+            'fields': [field_to_json(field) for field in upstream_fields],
+            'profiles': [make_profile(id='1')]
         }
         update_json = {'UserFields': user_fields_definition}
 
@@ -204,16 +221,17 @@ class TestUpdateProfiles(TestCase):
             update_custom_data_models_impl(update_json, 'test-domain')
 
     def test_can_remove_profile(self):
-        fields = [Field(slug='a', is_synced=True)]
+        downstream_fields = [Field(slug='a', upstream_id='1')]
+        upstream_fields = [Field(id='1', slug='a')]
         existing_definition = CustomDataFieldsDefinition.objects.create(
             domain='test-domain', field_type='UserFields'
         )
-        existing_definition.set_fields(fields)
+        existing_definition.set_fields(downstream_fields)
         existing_definition.save()
-        make_existing_profile(existing_definition, is_synced=True)
+        make_existing_profile(existing_definition, upstream_id='1')
 
         user_fields_definition = {
-            'fields': [field_to_json(field) for field in fields],
+            'fields': [field_to_json(field) for field in upstream_fields],
             # No Profiles
         }
         update_json = {'UserFields': user_fields_definition}
@@ -232,17 +250,18 @@ class TestUpdateProfiles(TestCase):
         # Due to this, I'm just faking out 'has_users_assigned' to always believe that the profile is in use.
 
         # create a profile
-        fields = [Field(slug='a', is_synced=True), ]
+        downstream_fields = [Field(slug='a', upstream_id='1')]
+        upstream_fields = [Field(id='1', slug='a')]
         existing_definition = CustomDataFieldsDefinition.objects.create(
             domain='test-domain', field_type='UserFields')
         existing_definition.save()
-        existing_definition.set_fields(fields)
+        existing_definition.set_fields(downstream_fields)
         existing_definition.save()
-        make_existing_profile(existing_definition, is_synced=True)
+        make_existing_profile(existing_definition, upstream_id='1')
 
         # the new definition should try to delete the used profile
         user_fields_definition = {
-            'fields': [field_to_json(field) for field in fields],
+            'fields': [field_to_json(field) for field in upstream_fields],
             # No Profiles
         }
         update_json = {'UserFields': user_fields_definition}
@@ -260,6 +279,7 @@ class TestUpdateProfiles(TestCase):
 
 def field_to_json(field):
     return {
+        'id': field.id,
         'slug': field.slug,
         'is_required': field.is_required,
         'label': field.label,
@@ -269,13 +289,14 @@ def field_to_json(field):
     }
 
 
-def make_profile():
+def make_profile(id):
     return {
+        'id': id,
         'name': 'SyncedProfile1',
         'fields': "{'a': 'one'}",
     }
 
 
-def make_existing_profile(definition, is_synced):
+def make_existing_profile(definition, upstream_id=None):
     return CustomDataFieldsProfile.objects.create(
-        name='SyncedProfile1', fields={'a': 'two'}, is_synced=is_synced, definition=definition)
+        name='SyncedProfile1', fields={'a': 'two'}, upstream_id=upstream_id, definition=definition)
