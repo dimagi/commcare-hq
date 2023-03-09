@@ -411,8 +411,9 @@ hqDefine('cloudcare/js/utils', [
             return;
         }
 
+        let date = moment(selectedTime, dateFormat);
         $el.datetimepicker({
-            date: selectedTime,
+            date: date.isValid() ? date : null,
             format: dateFormat,
             useStrict: true,
             useCurrent: false,
