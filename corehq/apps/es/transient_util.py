@@ -74,6 +74,7 @@ def index_info_from_cname(cname):
 
 
 def index_info_from_adapter(adapter):
+    # TODO: Get rid of this fn when IndexInfo objects are no longer required
     """Get the index info object for a adapter
 
     :param adapter: an instance of ElasticDocumentAdapter
