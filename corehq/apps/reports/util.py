@@ -580,7 +580,7 @@ def sync_all_tableau_users():
             if remote_HQ_group_id:
                 remote_HQ_group_users = session.get_users_in_group(remote_HQ_group_id)
             else:
-                session.create_group(HQ_TABLEAU_GROUP_NAME, "Viewer")
+                session.create_group(HQ_TABLEAU_GROUP_NAME)
                 remote_HQ_group_users = []
             return remote_HQ_group_users
 
