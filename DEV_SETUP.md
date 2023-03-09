@@ -779,6 +779,8 @@ This can be done using:
 celery -A corehq worker -l info
 ```
 
+This will run a worker that will listen to default queue which is named celery.
+
 You may need to add a `-Q` argument based on the queue you want to listen to.
 
 For example, to use case importer with celery locally you need to run:
@@ -787,6 +789,17 @@ For example, to use case importer with celery locally you need to run:
 celery -A corehq worker -l info -Q case_import_queue
 ```
 
+You can also run multiple queues on a single worker by passing multiple queue names separated by `,`
+
+```sh
+celery -A corehq worker -l info -Q case_import_queue,background_queue
+```
+
+If you want to run periodic tasks you would need to start `beat` service along with celery by running
+
+```sh
+celery -A corehq beat
+```
 
 ## Running Formdesigner (Vellum) in Development mode
 
