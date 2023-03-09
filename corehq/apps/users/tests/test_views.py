@@ -177,8 +177,7 @@ class TestUpdateRoleFromView(TestCase):
 class TestDeleteRole(TestCase):
     domain = 'test-role-delete'
 
-    @patch("corehq.apps.users.views.get_role_user_count", return_value=0)
-    def test_delete_role(self, _):
+    def test_delete_role(self):
         role = UserRole.create(self.domain, 'test-role')
         _delete_user_role(self.domain, {"_id": role.get_id})
         self.assertFalse(UserRole.objects.filter(pk=role.id).exists())
@@ -187,8 +186,8 @@ class TestDeleteRole(TestCase):
         with self.assertRaises(Http404):
             _delete_user_role(self.domain, {"_id": "mising"})
 
-    @patch("corehq.apps.users.views.get_role_user_count", return_value=1)
-    def test_delete_role_with_users(self, _):
+    def test_delete_role_with_users(self):
+        self.user_count_mock.return_value = 1
         role = UserRole.create(self.domain, 'test-role')
         with self.assertRaisesRegex(InvalidRequestException, "It has one user"):
             _delete_user_role(self.domain, {"_id": role.get_id, 'name': role.name})
@@ -202,6 +201,11 @@ class TestDeleteRole(TestCase):
         role = UserRole.create("other-domain", 'test-role')
         with self.assertRaises(Http404):
             _delete_user_role(self.domain, {"_id": role.get_id})
+
+    def setUp(self):
+        user_count_patcher = patch('corehq.apps.users.views.get_role_user_count', return_value=0)
+        self.user_count_mock = user_count_patcher.start()
+        self.addCleanup(user_count_patcher.stop)
 
 
 class TestDeletePhoneNumberView(TestCase):
