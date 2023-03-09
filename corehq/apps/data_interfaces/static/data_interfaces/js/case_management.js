@@ -3,13 +3,12 @@ hqDefine("data_interfaces/js/case_management",[
     'underscore',
     'knockout',
     'case/js/casexml',
-    'hqwebapp/js/initial_page_data',
-], function ($, _, ko, casexmlModule, initialPageData) {
+    'hqwebapp/js/initial_page_data',standardHqReport
+], function ($, _, ko, casexmlModule, initialPageData, standardHqReport) {
     var caseManagement = function (o) {
         'use strict';
         var self = {};
 
-        self.total_cases = initialPageData.get('bulk_reassign_url');
         self.receiverUrl = o.receiverUrl;
         self.updatedCase = null;
         self.webUserID = o.webUserID;
@@ -106,8 +105,7 @@ hqDefine("data_interfaces/js/case_management",[
         };
 
         self.updateAllMatches = function (ownerId) {
-            {{bulk_reassign_url}};
-            var report = hqImport("reports/js/standard_hq_report").getStandardHQReport();
+            var report = standardHqReport.getStandardHQReport();
             var params = new URLSearchParams(report.getReportParams());
             var paramsObject = Object.fromEntries(params.entries());
             paramsObject['new_owner_id'] = ownerId;

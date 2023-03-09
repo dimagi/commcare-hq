@@ -60,15 +60,6 @@ class CaseReassignmentInterface(CaseListMixin, BulkDataInterface):
         context = super(CaseReassignmentInterface, self).template_context
         context.update({
             "total_cases": self.total_records,
-            "bulk_reassign_url": self.get_url(domain=self.domain, render_as="bulk", relative=True),
-        })
-        return context
-
-    @property
-    def report_context(self):
-        context = super(CaseReassignmentInterface, self).report_context
-        context.update({
-            "bulk_reassign_url": self.get_url(domain=self.domain, render_as="bulk", relative=True),
         })
         return context
 
