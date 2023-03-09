@@ -194,7 +194,7 @@ class InlineSearchSuiteTest(SimpleTestCase, SuiteMixin):
               </text>
             </command>
             <instance id="casedb" src="jr://instance/casedb"/>
-            <instance id="selected_cases" src="jr://instance/selected-entities/selected_cases"/>
+            <instance id="selected_cases" src="jr://instance/selected-entities"/>
             <session>
                 <query url="http://localhost:8000/a/test_domain/phone/search/123/"
                     storage-instance="{RESULTS_INSTANCE_INLINE}"
