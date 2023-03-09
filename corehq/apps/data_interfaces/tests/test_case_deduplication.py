@@ -837,7 +837,7 @@ class TestDeduplicationRuleRuns(TestCase):
             case_search_adapter.index(case, refresh=True)
 
     def _send_user_to_es(self, user):
-        with patch('corehq.pillows.user.get_group_id_name_map_by_user', return_value=[]):
+        with patch('corehq.apps.groups.dbaccessors.get_group_id_name_map_by_user', return_value=[]):
             user_adapter.index(user, refresh=True)
         return user
 
