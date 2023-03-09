@@ -103,7 +103,7 @@ class DeactivatedMobileWorkersTest(BaseCaseRuleTest):
         )
         for case in [patient_case, other_patient_case, other_case]:
             case_search_adapter.index(
-                case.to_json(),
+                case,
                 refresh=True
             )
 

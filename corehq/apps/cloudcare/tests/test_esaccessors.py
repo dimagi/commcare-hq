@@ -7,7 +7,6 @@ from corehq.apps.cloudcare.esaccessors import login_as_user_query
 from corehq.apps.es.tests.utils import es_test
 from corehq.apps.es.users import user_adapter
 from corehq.apps.users.models import CommCareUser
-from corehq.pillows.user import transform_user_for_elasticsearch
 
 
 @es_test(requires=[user_adapter])
