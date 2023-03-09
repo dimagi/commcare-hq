@@ -85,12 +85,12 @@ class ElasticUser(ElasticDocumentAdapter):
         if isinstance(user, CouchUser):
             user_dict = user.to_json()
         elif isinstance(user, dict):
-            user_dict = user
+            user_dict = copy(user)
         else:
             raise TypeError(f"Unkown type {type(user)}")
         return self._from_dict(user_dict)
 
-    def _from_dict(self, user):
+    def _from_dict(self, user_dict):
         """
         Takes a user dict and applies required transfomation to make it suitable for ES.
         The function is replica of ``transform_user_for_elasticsearch``.
@@ -103,7 +103,6 @@ class ElasticUser(ElasticDocumentAdapter):
         )
         from corehq.apps.users.models import CouchUser
 
-        user_dict = copy(user)
         if user_dict['doc_type'] == 'CommCareUser' and '@' in user_dict['username']:
             user_dict['base_username'] = user_dict['username'].split("@")[0]
         else:

@@ -69,12 +69,12 @@ class ElasticDomain(ElasticDocumentAdapter):
         if isinstance(domain, Domain):
             domain_dict = domain.to_json()
         elif isinstance(domain, dict):
-            domain_dict = domain
+            domain_dict = copy(domain)
         else:
             raise TypeError(f"Unkown type {type(domain)}")
         return self.from_dict(domain_dict)
 
-    def from_dict(self, domain):
+    def from_dict(self, domain_dict):
         """
         Takes a domain dict and applies required transformation to make it suitable for ES.
         The function is replica of ``transform_domain_for_elasticsearch``.
@@ -83,16 +83,15 @@ class ElasticDomain(ElasticDocumentAdapter):
         """
         from corehq.apps.accounting.models import Subscription
 
-        doc_ret = copy(domain)
-        sub = Subscription.visible_objects.filter(subscriber__domain=doc_ret['name'], is_active=True)
-        doc_ret['deployment'] = doc_ret.get('deployment') or {}
-        countries = doc_ret['deployment'].get('countries', [])
-        doc_ret['deployment']['countries'] = []
+        sub = Subscription.visible_objects.filter(subscriber__domain=domain_dict['name'], is_active=True)
+        domain_dict['deployment'] = domain_dict.get('deployment') or {}
+        countries = domain_dict['deployment'].get('countries', [])
+        domain_dict['deployment']['countries'] = []
         if sub:
-            doc_ret['subscription'] = sub[0].plan_version.plan.edition
+            domain_dict['subscription'] = sub[0].plan_version.plan.edition
         for country in countries:
-            doc_ret['deployment']['countries'].append(Countries[country].upper())
-        return doc_ret.pop('_id'), doc_ret
+            domain_dict['deployment']['countries'].append(Countries[country].upper())
+        return domain_dict.pop('_id'), domain_dict
 
 
 domain_adapter = create_document_adapter(

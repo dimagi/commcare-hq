@@ -72,7 +72,7 @@ class ElasticForm(ElasticDocumentAdapter):
     def from_python(self, xform):
         from corehq.form_processor.models.forms import XFormInstance
         if isinstance(xform, dict):
-            xform_dict = xform
+            xform_dict = copy(xform)
         elif isinstance(xform, XFormInstance):
             xform_dict = xform.to_json()
         else:
@@ -93,8 +93,16 @@ class ElasticForm(ElasticDocumentAdapter):
         from corehq.pillows.utils import format_form_meta_for_es, get_user_type
         from corehq.pillows.xform import is_valid_date
 
-        doc_ret = copy(xform_dict)
-        form = doc_ret['form'] = copy(doc_ret['form'])
+        # create shallow copy of form object and case objects
+        # that will be modified in tranformation
+        form = xform_dict['form'] = copy(xform_dict['form'])
+
+        if 'case' in form:
+            if isinstance(form['case'], dict):
+                form['case'] = copy(form['case'])
+            elif isinstance(form['case'], list):
+                form['case'] = [copy(case) for case in form['case']]
+
         user_id = None
 
         if 'meta' in form:
@@ -109,9 +117,9 @@ class ElasticForm(ElasticDocumentAdapter):
                 form_meta = format_form_meta_for_es(form_meta)
 
             app_version_info = get_app_version_info(
-                doc_ret['domain'],
-                doc_ret.get('build_id'),
-                doc_ret.get('version'),
+                xform_dict['domain'],
+                xform_dict.get('build_id'),
+                xform_dict.get('version'),
                 form_meta,
             )
             form_meta['commcare_version'] = app_version_info.commcare_version
@@ -119,17 +127,17 @@ class ElasticForm(ElasticDocumentAdapter):
             user_id = form_meta.get('userID', None)
 
             try:
-                geo_point = GeoPoint.from_string(doc_ret['form']['meta']['location'])
+                geo_point = GeoPoint.from_string(xform_dict['form']['meta']['location'])
                 form_meta['geo_point'] = geo_point.lat_lon
             except (KeyError, BadValueError):
                 form_meta['geo_point'] = None
                 pass
 
-        doc_ret['user_type'] = get_user_type(user_id)
-        doc_ret['inserted_at'] = datetime.utcnow().isoformat()
+        xform_dict['user_type'] = get_user_type(user_id)
+        xform_dict['inserted_at'] = datetime.utcnow().isoformat()
 
         try:
-            case_blocks = extract_case_blocks(doc_ret)
+            case_blocks = extract_case_blocks(xform_dict)
         except PhoneDateValueError:
             pass
         else:
@@ -147,14 +155,14 @@ class ElasticForm(ElasticDocumentAdapter):
                         case_dict[object_key] = None
 
             try:
-                doc_ret["__retrieved_case_ids"] = list(set(case_update_from_block(cb).id for cb in case_blocks))
+                xform_dict["__retrieved_case_ids"] = list(set(case_update_from_block(cb).id for cb in case_blocks))
             except CaseGenerationException:
-                doc_ret["__retrieved_case_ids"] = []
+                xform_dict["__retrieved_case_ids"] = []
 
-        if 'backend_id' not in doc_ret:
-            doc_ret['backend_id'] = 'sql'
+        if 'backend_id' not in xform_dict:
+            xform_dict['backend_id'] = 'sql'
 
-        return doc_ret.pop('_id'), doc_ret
+        return xform_dict.pop('_id'), xform_dict
 
 
 form_adapter = create_document_adapter(

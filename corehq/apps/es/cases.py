@@ -59,7 +59,7 @@ class ElasticCase(ElasticDocumentAdapter):
     def from_python(self, case):
         from corehq.form_processor.models.cases import CommCareCase
         if isinstance(case, dict):
-            case_dict = case
+            case_dict = copy(case)
         elif isinstance(case, CommCareCase):
             case_dict = case.to_json()
         else:
@@ -76,18 +76,17 @@ class ElasticCase(ElasticDocumentAdapter):
         """
         from corehq.pillows.utils import get_user_type
 
-        doc_ret = copy(case)
-        if not doc_ret.get("owner_id"):
-            if doc_ret.get("user_id"):
-                doc_ret["owner_id"] = doc_ret["user_id"]
+        if not case.get("owner_id"):
+            if case.get("user_id"):
+                case["owner_id"] = case["user_id"]
 
-        doc_ret['owner_type'] = get_user_type(doc_ret.get("owner_id", None))
-        doc_ret['inserted_at'] = datetime.utcnow().isoformat()
+        case['owner_type'] = get_user_type(case.get("owner_id", None))
+        case['inserted_at'] = datetime.utcnow().isoformat()
 
-        if 'backend_id' not in doc_ret:
-            doc_ret['backend_id'] = 'sql'
+        if 'backend_id' not in case:
+            case['backend_id'] = 'sql'
 
-        return doc_ret.pop('_id'), doc_ret
+        return case.pop('_id'), case
 
 
 case_adapter = create_document_adapter(
