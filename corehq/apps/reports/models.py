@@ -441,10 +441,9 @@ class TableauAPISession(object):
             page_number += 1
         return tableau_users
 
-    def create_group(self, group_name, min_site_role):
+    def create_group(self, group_name):
         '''
-        Creates a Tableau group with the given name, and assigns the given role to the group.
-        Returns the group ID.
+        Creates a Tableau group with the given name. Returns the group ID.
         '''
         response_body = self._make_request(
             self.POST,
@@ -452,8 +451,7 @@ class TableauAPISession(object):
             self.base_url + f'/sites/{self.site_id}/groups',
             {
                 "group": {
-                    "name": f"{group_name}",
-                    "minimumSiteRole": f"{min_site_role}"
+                    "name": f"{group_name}"
                 }
             }
         )
