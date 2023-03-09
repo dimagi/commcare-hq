@@ -54,7 +54,7 @@ def validate_form(form_xml):
         )
     except RequestException as e:
         notify_exception(None, "Error calling Formplayer form validation endpoint")
-        raise FormplayerAPIException(e)
+        raise FormplayerAPIException(e) from e
 
     try:
         response.raise_for_status()
