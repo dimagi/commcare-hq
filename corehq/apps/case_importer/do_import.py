@@ -88,7 +88,6 @@ class _Importer(object):
             domain, self.results, self.config.case_type, self.user, record_form_callback, throttle=False
         )
         self.owner_accessor = _OwnerAccessor(domain, self.user)
-        self.uncreated_external_ids = self.submission_handler.uncreated_external_ids
         self._unsubmitted_caseblocks = []
         self.multi_domain = multi_domain
         if CASE_IMPORT_DATA_DICTIONARY_VALIDATION.enabled(self.domain):
@@ -140,7 +139,7 @@ class _Importer(object):
             user_id=self.user.user_id,
             owner_accessor=self.owner_accessor,
         )
-        if row.relies_on_uncreated_case(self.uncreated_external_ids):
+        if row.relies_on_uncreated_case(self.submission_handler.uncreated_external_ids):
             self.submission_handler.commit_caseblocks()
         if row.is_new_case and not self.config.create_new_cases:
             return
@@ -148,7 +147,7 @@ class _Importer(object):
         try:
             if row.is_new_case:
                 if row.external_id:
-                    self.uncreated_external_ids.add(row.external_id)
+                    self.submission_handler.uncreated_external_ids.add(row.external_id)
                 caseblock = row.get_create_caseblock()
                 self.results.add_created(row_num)
             else:
