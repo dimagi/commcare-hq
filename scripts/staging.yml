@@ -81,4 +81,5 @@ branches:
     - ml/remove-advanced-mobile-worker-search # Minha Mar 6
     - ap/upgrade-node # Amit Mar 7
     - pkv/conditional-alerts-off-on-false # Pawan Mar 9
+    - rc/disallow-signature-entry-webapps # Robert March 9
 submodules: { }
