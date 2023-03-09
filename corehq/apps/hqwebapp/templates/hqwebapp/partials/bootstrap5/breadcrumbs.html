@@ -1,0 +1,30 @@
+<nav style="--bs-breadcrumb-divider: '>';" aria-label="breadcrumb">
+  <ol id="hq-breadcrumbs"
+      class="breadcrumb breadcrumb-hq-section">
+    <li class="breadcrumb-item">
+      <a href="{{ section.url }}">
+        <strong>
+          {% if section.page_name %}
+            {{ section.page_name }}
+          {% else %}
+            {{ section.title }}
+          {% endif %}
+        </strong>
+      </a>
+    </li>
+    {% for parent in parents %}
+      <li class="breadcrumb-item">
+        <a href="{{ parent.url }}">
+          {{ parent.title }}
+        </a>
+      </li>
+    {% endfor %}
+    <li class="breadcrumb-item active" aria-current="page">
+      {% if page.page_name %}
+        {{ page.page_name }}
+      {% else %}
+        {{ page.title }}
+      {% endif %}
+    </li>
+  </ol>
+</nav>
