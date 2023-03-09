@@ -120,7 +120,7 @@ class ElasticUser(ElasticDocumentAdapter):
                     'key': key,
                     'value': value,
                 })
-        return user_dict.pop('_id', None), user_dict
+        return user_dict.pop('_id'), user_dict
 
 
 user_adapter = create_document_adapter(

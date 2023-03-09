@@ -58,7 +58,7 @@ class ElasticApp(ElasticDocumentAdapter):
             raise TypeError(f"Unknown type {type(app)}")
         app_obj['@indexed_on'] = json_format_datetime(datetime.utcnow())
         app_dict = app_obj.to_json()
-        return app_dict.pop('_id', None), app_dict
+        return app_dict.pop('_id'), app_dict
 
 
 app_adapter = create_document_adapter(

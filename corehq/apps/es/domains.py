@@ -92,7 +92,7 @@ class ElasticDomain(ElasticDocumentAdapter):
             doc_ret['subscription'] = sub[0].plan_version.plan.edition
         for country in countries:
             doc_ret['deployment']['countries'].append(Countries[country].upper())
-        return doc_ret.pop('_id', None), doc_ret
+        return doc_ret.pop('_id'), doc_ret
 
 
 domain_adapter = create_document_adapter(
