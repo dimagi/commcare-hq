@@ -9,17 +9,21 @@ from celery.schedules import crontab
 from celery.utils.log import get_task_logger
 
 from dimagi.utils.couch import CriticalSection
+from soil import DownloadBase
 
+from casexml.apps.case.mock import CaseBlock
 from corehq.apps.celery import periodic_task, task
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain_migration_flags.api import any_migrations_in_progress
 from corehq.apps.hqcase.utils import AUTO_UPDATE_XMLNS
+from corehq.apps.users.models import CouchUser
 from corehq.form_processor.models import XFormInstance
 from corehq.motech.repeaters.dbaccessors import (
     get_couch_repeat_record_ids_by_payload_id,
     get_sql_repeat_records_by_payload_id,
     iter_repeat_record_ids_by_repeater,
 )
+from corehq.apps.case_importer.do_import import SubmitCaseBlockHandler, RowAndCase
 from corehq.motech.repeaters.models import SQLRepeatRecord
 from corehq.sql_db.util import get_db_aliases_for_partitioned_query
 from corehq.toggles import CASE_DEDUPE, DISABLE_CASE_UPDATE_RULE_SCHEDULED_TASK
@@ -244,3 +248,25 @@ def _get_repeat_record_ids(
             return [r['id'] for r in queryset.values('id')]
         else:
             return list(iter_repeat_record_ids_by_repeater(domain, repeater_id))
+
+
+@task
+def bulk_case_reassign_async(domain, user_id, owner_id, download_id):
+    task = bulk_case_reassign_async
+    case_ids = DownloadBase.get(download_id).get_content()
+    DownloadBase.set_progress(task, 0, len(case_ids))
+    user = CouchUser.get_by_user_id(user_id)
+    submission_handler = SubmitCaseBlockHandler(
+        domain, None, None, user, None, throttle=True
+    )
+    for idx, case_id in enumerate(case_ids):
+        submission_handler.add_caseblock(
+            RowAndCase(idx, CaseBlock(case_id, owner_id=owner_id))
+        )
+        DownloadBase.set_progress(task, idx, len(case_ids))
+    submission_handler.commit_caseblocks()
+    DownloadBase.set_progress(task, len(case_ids), len(case_ids))
+    result = submission_handler.results.to_json()
+    result['success'] = True
+    result['case_count'] = len(case_ids)
+    return {"messages": result}
