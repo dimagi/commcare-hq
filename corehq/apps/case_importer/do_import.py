@@ -319,7 +319,7 @@ class SubmitCaseBlockHandler(object):
     def __init__(self, domain, import_results, case_type, user, record_form_callback=None, throttle=False):
         self.domain = domain
         self._unsubmitted_caseblocks = []
-        self.results = import_results
+        self.results = import_results or _ImportResults()
         self.uncreated_external_ids = set()
         self.record_form_callback = record_form_callback
         self._last_submission_duration = 1  # duration in seconds; start with a value of 1s

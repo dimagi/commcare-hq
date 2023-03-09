@@ -1,11 +1,12 @@
 from django.contrib.humanize.templatetags.humanize import naturaltime
-from django.http import HttpResponseBadRequest
+from django.http import HttpResponseBadRequest, HttpResponseRedirect
 from django.urls import reverse
 from django.utils.html import format_html
 from django.utils.safestring import mark_safe
 from django.utils.translation import gettext as _
 from django.utils.translation import gettext_lazy, gettext_noop
 from memoized import memoized
+from soil.util import expose_cached_download
 
 from corehq.apps.app_manager.const import USERCASE_TYPE
 from corehq.apps.es import cases as case_es
@@ -115,9 +116,37 @@ class CaseReassignmentInterface(CaseListMixin, BulkDataInterface):
 
     @property
     def bulk_response(self):
+        from .views import BulkCaseReassignSatusView
+        from .tasks import bulk_case_reassign_async
+        owner_id = self.request_params.get('new_owner_id', None)
+        if not owner_id:
+            return HttpResponseBadRequest(
+                _("An owner_id needs to be specified to bulk reassign cases")
+            )
+
+        case_ids = [
+            self.get_case(row)['_id']
+            for row in self.es_results['hits'].get('hits', [])
+        ]
+
+        task_ref = expose_cached_download(
+            payload=case_ids, expiry=60 * 60, file_extension=None
+        )
+        task = bulk_case_reassign_async.delay(
+            self.domain,
+            self.request.couch_user.get_id,
+            owner_id,
+            task_ref.download_id
+        )
+        task_ref.set_task(task)
         if self.request.method != 'POST':
             return HttpResponseBadRequest()
-        return self.json_response
+        return HttpResponseRedirect(
+            reverse(
+                BulkCaseReassignSatusView.urlname,
+                args=[self.domain, task_ref.download_id]
+            )
+        )
 
 
 class FormManagementMode(object):

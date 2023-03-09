@@ -1,0 +1,25 @@
+{% extends "hqwebapp/partials/download_status.html" %}
+{% load i18n %}
+{% block results %}
+  {% if result.success %}
+    <div class="alert alert-success">
+      <h3>{% trans "All cases were reassigned" %}</h3>
+      <p>{% blocktrans with count=result.case_count %}Successfully updated {{ count }} cases.{% endblocktrans %}</p>
+    </div>
+    {% if result.errors %}
+      <div class="alert alert-danger">
+        <h3>{% trans "However, we ran into the following problems:" %}</h3>
+        {% for e in result.errors %}
+          <p>{{ e }}</p>
+        {% endfor %}
+      </div>
+    {% endif %}
+  {% else %}
+    <div class="alert alert-danger">
+      <h3>{% trans "Case Reassignment Failed! Details:" %}</h3>
+      {% for e in result.errors %}
+        <p>{{ e }}</p>
+      {% endfor %}
+    </div>
+  {% endif %}
+{% endblock results %}

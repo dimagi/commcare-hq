@@ -105,13 +105,16 @@ hqDefine("data_interfaces/js/case_management",[
             self.selectedCases.removeAll();
         };
 
-        self.updateAllMatches = function () {
+        self.updateAllMatches = function (ownerId) {
             {{bulk_reassign_url}};
-            var rp = hqImport("reports/js/standard_hq_report").getStandardHQReport();
-            var pms = new URLSearchParams(rp.getReportParams())
+            var report = hqImport("reports/js/standard_hq_report").getStandardHQReport();
+            var params = new URLSearchParams(report.getReportParams());
+            var paramsObject = Object.fromEntries(params.entries());
+            paramsObject['new_owner_id'] = ownerId;
+            var bulk_reassign_url = window.location.href.replace("data/edit", "data/edit/bulk");
             $.postGo(
-                initialPageData.get('bulk_reassign_url'),
-                Object.fromEntries(pms.entries())
+                bulk_reassign_url,
+                paramsObject
             );
         }
 
@@ -131,7 +134,7 @@ hqDefine("data_interfaces/js/case_management",[
                 $modal.modal('show');
             } else {
                 if (self.selectAllMatches) {
-                    self.updateAllMatches();
+                    self.updateAllMatches(newOwner);
                     return;
                 }
                 $(form).find("[type='submit']").disableButton();
