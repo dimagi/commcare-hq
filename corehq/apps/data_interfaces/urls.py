@@ -37,10 +37,8 @@ edit_data_urls = [
         XFormManagementStatusView.as_view(),
         name=XFormManagementStatusView.urlname
     ),
-    url(r'^xform_management/status/(?P<download_id>(?:dl-)?[0-9a-fA-Z]{25,32})/$',
+    url(r'^case_reassign/status/(?P<download_id>(?:dl-)?[0-9a-fA-Z]{25,32})/$',
         BulkCaseReassignSatusView.as_view(), name=BulkCaseReassignSatusView.urlname),
-    url(r'^case_reassign/status/poll/(?P<download_id>(?:dl-)?[0-9a-fA-Z]{25,32})/$',
-        case_reassign_job_poll, name='case_reassign_job_poll'),
     url(r'^case_reassign/status/poll/(?P<download_id>(?:dl-)?[0-9a-fA-Z]{25,32})/$',
         case_reassign_job_poll, name='case_reassign_job_poll'),
     url(r'^case_groups/$', CaseGroupListView.as_view(), name=CaseGroupListView.urlname),

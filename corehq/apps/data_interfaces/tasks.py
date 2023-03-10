@@ -3,6 +3,7 @@ from typing import List, Literal, Optional
 
 from django.conf import settings
 from django.core.cache import cache
+from django.template.loader import render_to_string
 from django.utils.translation import gettext as _
 
 from celery.schedules import crontab
@@ -29,6 +30,7 @@ from corehq.sql_db.util import get_db_aliases_for_partitioned_query
 from corehq.toggles import CASE_DEDUPE, DISABLE_CASE_UPDATE_RULE_SCHEDULED_TASK
 from corehq.util.celery_utils import no_result_task
 from corehq.util.decorators import serial_task
+from corehq.util.log import send_HTML_email
 
 from .deduplication import backfill_deduplicate_rule, reset_deduplicate_rule
 from .interfaces import FormManagementMode
@@ -251,7 +253,7 @@ def _get_repeat_record_ids(
 
 
 @task
-def bulk_case_reassign_async(domain, user_id, owner_id, download_id):
+def bulk_case_reassign_async(domain, user_id, owner_id, download_id, report_url):
     task = bulk_case_reassign_async
     case_ids = DownloadBase.get(download_id).get_content()
     DownloadBase.set_progress(task, 0, len(case_ids))
@@ -269,4 +271,26 @@ def bulk_case_reassign_async(domain, user_id, owner_id, download_id):
     result = submission_handler.results.to_json()
     result['success'] = True
     result['case_count'] = len(case_ids)
+    result['report_url'] = report_url
+
+    def _send_email():
+        context = {
+            'case_count': len(case_ids),
+            'report_url': report_url,
+        }
+        text_content = """
+        {case_count} cases were reassigned. The list of cases that
+        were reassigned are <a href='{report_url}'>here</a>.
+        It's possible that in the report the owner_id is not yet
+        updated, you can open individual cases and confirm
+        the right case owner, the report gets updated with a slight delay.
+        """.format(**context)
+        send_HTML_email(
+            "Reassign Cases Complete on {domain}- CommCare HQ",
+            user.get_email(),
+            render_to_string("data_interfaces/partials/case_reassign_complete_email.html", context),
+            text_content=text_content,
+        )
+
+    _send_email()
     return {"messages": result}

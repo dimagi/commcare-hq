@@ -628,18 +628,15 @@ class BulkCaseReassignSatusView(DataInterfaceSection):
         return reverse(self.urlname, args=self.args, kwargs=self.kwargs)
 
 
-def case_reassign_job_poll(request, domain, download_id,
-        template="data_interfaces/partials/case_reassign_status.html"):
+def case_reassign_job_poll(request, domain, download_id):
     try:
         context = get_download_context(download_id, require_result=True)
     except TaskFailedError as e:
         notify_exception(request, message=str(e))
         return HttpResponseServerError()
-
-    context.update({
-        "case_reassign_url": CaseReassignmentInterface.get_url(domain),
-    })
+    template = "data_interfaces/partials/case_reassign_status.html"
     return render(request, template, context)
+
 
 @login_and_domain_required
 @require_GET

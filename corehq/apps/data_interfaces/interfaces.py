@@ -127,7 +127,8 @@ class CaseReassignmentInterface(CaseListMixin, BulkDataInterface):
             self.domain,
             self.request.couch_user.get_id,
             owner_id,
-            task_ref.download_id
+            task_ref.download_id,
+            self.request.META['HTTP_REFERER']
         )
         task_ref.set_task(task)
         if self.request.method != 'POST':
