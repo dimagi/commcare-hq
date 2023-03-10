@@ -1,4 +1,13 @@
-from corehq.motech.fhir.models import FHIRResourceProperty, FHIRResourceType
+import os
+
+from memoized import memoized
+
+from corehq.motech.fhir.const import FHIR_VERSION_4_0_1
+from corehq.motech.fhir.models import (
+    FHIRResourceProperty,
+    FHIRResourceType,
+    get_schema_dir,
+)
 from corehq.util.view_utils import absolute_reverse
 
 
@@ -53,3 +62,16 @@ def update_fhir_resource_property(case_property, fhir_resource_type, fhir_resour
                                                       resource_type=fhir_resource_type)
         fhir_resource_prop.jsonpath = fhir_resource_prop_path
         fhir_resource_prop.save()
+
+
+@memoized
+def load_fhir_resource_types(fhir_version=FHIR_VERSION_4_0_1, exclude_resource_types=('fhir',)):
+    schemas_base_path = get_schema_dir(fhir_version)
+    all_file_names = os.listdir(schemas_base_path)
+    resource_types = [file_name.removesuffix('.schema.json') for file_name in all_file_names
+                      if file_name.endswith('.schema.json')]
+    for schema in exclude_resource_types:
+        if schema in resource_types:
+            resource_types.remove(schema)
+    resource_types.sort()
+    return resource_types

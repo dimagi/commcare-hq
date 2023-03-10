@@ -1612,17 +1612,6 @@ BULK_UPLOAD_DATE_OPENED = StaticToggle(
     [NAMESPACE_DOMAIN],
 )
 
-REGEX_FIELD_VALIDATION = StaticToggle(
-    'regex_field_validation',
-    'Regular Expression Validation for Custom Data Fields',
-    TAG_SOLUTIONS_OPEN,
-    namespaces=[NAMESPACE_DOMAIN],
-    description="This flag adds the option to specify a regular expression "
-                "(regex) to validate custom user data, custom location data, "
-                "and/or custom product data fields.",
-    help_link='https://confluence.dimagi.com/display/saas/Regular+Expression+Validation+for+Custom+Data+Fields',
-)
-
 TWO_FACTOR_SUPERUSER_ROLLOUT = StaticToggle(
     'two_factor_superuser_rollout',
     'Users in this list will be forced to have Two-Factor Auth enabled',
@@ -2207,7 +2196,6 @@ TURN_IO_BACKEND = StaticToggle(
     namespaces=[NAMESPACE_DOMAIN],
 )
 
-
 FOLLOWUP_FORMS_AS_CASE_LIST_FORM = StaticToggle(
     'followup_forms_as_case_list_form',
     'Option to configure follow up forms on parent case for Case List Form menu setting of '
@@ -2509,4 +2497,16 @@ DATA_FILE_DOWNLOAD = FrozenPrivilegeToggle(
     namespaces=[NAMESPACE_DOMAIN],
     help_link='https://confluence.dimagi.com/display/saas/Offer+hosting+and+'
               'sharing+data+files+for+downloading+from+a+secure+dropzone',
+)
+
+REGEX_FIELD_VALIDATION = FrozenPrivilegeToggle(
+    privileges.REGEX_FIELD_VALIDATION,
+    'regex_field_validation',
+    label='Regular Expression Validation for Custom Data Fields',
+    tag=TAG_SOLUTIONS_OPEN,
+    namespaces=[NAMESPACE_DOMAIN],
+    description="This flag adds the option to specify a regular expression "
+                "(regex) to validate custom user data, custom location data, "
+                "and/or custom product data fields.",
+    help_link='https://confluence.dimagi.com/display/saas/Regular+Expression+Validation+for+Custom+Data+Fields',
 )

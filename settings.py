@@ -313,6 +313,7 @@ HQ_APPS = (
     'corehq.apps.groups',
     'corehq.apps.mobile_auth',
     'corehq.apps.sms',
+    'corehq.apps.events',
     'corehq.apps.smsforms',
     'corehq.apps.sso',
     'corehq.apps.ivr',
@@ -448,7 +449,7 @@ SOIL_HEARTBEAT_CACHE_KEY = "django-soil-heartbeat"
 ####### Shared/Global/UI Settings #######
 
 # restyle some templates
-BASE_TEMPLATE = "hqwebapp/base_navigation.html"
+BASE_TEMPLATE = "hqwebapp/bootstrap3/base_navigation.html"
 BASE_ASYNC_TEMPLATE = "reports/async/basic.html"
 LOGIN_TEMPLATE = "login_and_password/login.html"
 LOGGEDOUT_TEMPLATE = LOGIN_TEMPLATE

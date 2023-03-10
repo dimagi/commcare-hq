@@ -252,7 +252,7 @@ class ODataFeedMixin(object):
         from corehq.apps.export.views.list import ODataFeedListView
         return ODataFeedListView
 
-    def get_export_instance(self, schema, original_export_instance):
+    def get_export_instance(self, schema, original_export_instance, load_deprecated=False):
         export_instance = super().get_export_instance(schema, original_export_instance)
         clean_odata_columns(export_instance)
         export_instance.is_odata_config = True
@@ -366,7 +366,7 @@ class DataFileDownloadList(BaseProjectDataView):
         return HttpResponseRedirect(reverse(self.urlname, kwargs={'domain': self.domain}))
 
 
-@method_decorator(api_auth, name='dispatch')
+@method_decorator(api_auth(), name='dispatch')
 class DataFileDownloadDetail(BaseProjectDataView):
     urlname = 'download_data_file'
 

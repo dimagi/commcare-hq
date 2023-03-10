@@ -916,7 +916,7 @@ class BasePageView(TemplateView):
 
 class BaseSectionPageView(BasePageView):
     section_name = ""
-    template_name = "hqwebapp/base_section.html"
+    template_name = "hqwebapp/bootstrap3/base_section.html"
 
     @property
     def section_url(self):

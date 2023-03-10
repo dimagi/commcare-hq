@@ -193,13 +193,15 @@ msgstr "Dado criado"
 
 #: corehq/apps/accounting/filters.py corehq/apps/accounting/forms.py
 #: corehq/apps/accounting/templates/accounting/partials/subscriptions_tab.html
-#: corehq/apps/domain/forms.py corehq/messaging/scheduling/forms.py
+#: corehq/apps/domain/forms.py corehq/apps/events/forms.py
+#: corehq/messaging/scheduling/forms.py
 msgid "Start Date"
 msgstr "Data de início"
 
 #: corehq/apps/accounting/filters.py corehq/apps/accounting/forms.py
 #: corehq/apps/accounting/templates/accounting/partials/subscriptions_tab.html
-#: corehq/apps/domain/forms.py corehq/apps/export/forms.py
+#: corehq/apps/domain/forms.py corehq/apps/events/forms.py
+#: corehq/apps/export/forms.py
 #: corehq/apps/reports/templates/reports/partials/save_reports_modal.html
 #: corehq/apps/userreports/templates/userreports/partials/filter_panel.html
 msgid "End Date"
@@ -445,7 +447,8 @@ msgstr ""
 #: corehq/apps/data_interfaces/templates/data_interfaces/partials/auto_update_rule_list.html
 #: corehq/apps/data_interfaces/views.py
 #: corehq/apps/domain/templates/domain/admin/commtrack_action_table.html
-#: corehq/apps/enterprise/enterprise.py
+#: corehq/apps/enterprise/enterprise.py corehq/apps/events/forms.py
+#: corehq/apps/events/views.py
 #: corehq/apps/export/templates/export/partials/table.html
 #: corehq/apps/export/views/incremental.py
 #: corehq/apps/fixtures/templates/fixtures/partials/edit_table_modal.html
@@ -1446,7 +1449,8 @@ msgstr "# de Extracto"
 #: corehq/apps/data_interfaces/templates/data_interfaces/partials/auto_update_rule_run_history.html
 #: corehq/apps/data_interfaces/views.py corehq/apps/domain/forms.py
 #: corehq/apps/domain/templates/domain/manage_releases_by_app_profile.html
-#: corehq/apps/enterprise/enterprise.py corehq/apps/export/views/incremental.py
+#: corehq/apps/enterprise/enterprise.py corehq/apps/events/views.py
+#: corehq/apps/export/views/incremental.py
 #: corehq/apps/registry/templates/registry/registry_edit.html
 #: corehq/apps/reports/standard/cases/basic.py
 #: corehq/apps/reports/standard/sms.py
@@ -6022,6 +6026,7 @@ msgstr ""
 #: corehq/apps/domain/templates/domain/select_plan.html
 #: corehq/apps/domain/templates/domain/stripe_cards.html
 #: corehq/apps/export/templates/export/dialogs/process_deleted_questions.html
+#: corehq/apps/export/templates/export/dialogs/process_deprecated_properties.html
 #: corehq/apps/export/templates/export/partials/export_list_create_export_modal.html
 #: corehq/apps/export/templates/export/partials/feed_filter_modal.html
 #: corehq/apps/export/templates/export/partials/odata_feed_limit_reached_modal.html
@@ -7681,6 +7686,7 @@ msgid "Disable manual linking"
 msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/forms/form_workflow.html
+#: corehq/apps/export/templates/export/dialogs/process_deprecated_properties.html
 msgid "Refresh"
 msgstr ""
 
@@ -12580,10 +12586,13 @@ msgid "Import from Excel"
 msgstr ""
 
 #: corehq/apps/data_dictionary/templates/data_dictionary/base.html
+#: corehq/apps/export/templates/export/dialogs/process_deprecated_properties.html
+#: corehq/apps/export/templates/export/partials/new_customize_export_templates.html
 msgid "Show Deprecated Properties"
 msgstr ""
 
 #: corehq/apps/data_dictionary/templates/data_dictionary/base.html
+#: corehq/apps/export/templates/export/partials/new_customize_export_templates.html
 msgid "Hide Deprecated Properties"
 msgstr ""
 
@@ -17624,6 +17633,122 @@ msgstr ""
 msgid "Controlling domain set to {}."
 msgstr ""
 
+#: corehq/apps/events/forms.py
+msgid "Per event day"
+msgstr ""
+
+#: corehq/apps/events/forms.py
+msgid "Per entire event"
+msgstr ""
+
+#: corehq/apps/events/forms.py
+msgid "Attendance target"
+msgstr ""
+
+#: corehq/apps/events/forms.py
+msgid "The expected amount of attendees."
+msgstr ""
+
+#: corehq/apps/events/forms.py
+msgid "Allow same day registration"
+msgstr ""
+
+#: corehq/apps/events/forms.py
+msgid "Attendance recording options"
+msgstr ""
+
+#: corehq/apps/events/forms.py corehq/apps/events/views.py
+msgid "Add Attendance Tracking Event"
+msgstr ""
+
+#: corehq/apps/events/models.py
+#, fuzzy
+#| msgid "Next step"
+msgid "Not started"
+msgstr "Próximo passo"
+
+#: corehq/apps/events/models.py
+msgid "In progress"
+msgstr ""
+
+#: corehq/apps/events/models.py
+msgid "Under review"
+msgstr ""
+
+#: corehq/apps/events/models.py corehq/apps/registry/models.py
+msgid "Rejected"
+msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
+
+#: corehq/apps/events/models.py corehq/apps/registry/models.py
+msgid "Accepted"
+msgstr ""
+
+#: corehq/apps/events/templates/events_list.html
+msgid ""
+"\n"
+"          Attendance tracking events can be used to track attendance of all "
+"the selected attendees.\n"
+"        "
+msgstr ""
+
+#: corehq/apps/events/templates/events_list.html
+msgid "Add new event"
+msgstr ""
+
+#: corehq/apps/events/views.py corehq/privileges.py corehq/tabs/tabclasses.py
+msgid "Attendance Tracking"
+msgstr ""
+
+#: corehq/apps/events/views.py
+msgid "Attendance Tracking Events"
+msgstr ""
+
+#: corehq/apps/events/views.py
+#, fuzzy
+#| msgid "Admins per page"
+msgid "events per page"
+msgstr "Administradores por página"
+
+#: corehq/apps/events/views.py
+#, fuzzy
+#| msgid "You have no case rules."
+msgid "You have no events"
+msgstr "Você não possui nenhuma regra de casos."
+
+#: corehq/apps/events/views.py
+#, fuzzy
+#| msgid "Loading Report"
+msgid "Loading events"
+msgstr "A carregar Relatório"
+
+#: corehq/apps/events/views.py corehq/tabs/tabclasses.py
+msgid "Events"
+msgstr ""
+
+#: corehq/apps/events/views.py
+#, fuzzy
+#| msgid "Start Date"
+msgid "Start date"
+msgstr "Data de início"
+
+#: corehq/apps/events/views.py
+#, fuzzy
+#| msgid "End Date"
+msgid "End date"
+msgstr "Data de termino"
+
+#: corehq/apps/events/views.py
+msgid "Attendance Target"
+msgstr ""
+
+#: corehq/apps/events/views.py
+msgid "Total attendees"
+msgstr ""
+
+#: corehq/apps/events/views.py
+msgid "Add New Event"
+msgstr ""
+
 #: corehq/apps/export/det/schema_generator.py
 #, python-brace-format
 msgid "Export instance type {name} not supported!"
@@ -18386,6 +18511,16 @@ msgstr ""
 
 #: corehq/apps/export/templates/export/dialogs/process_deleted_questions.html
 msgid "Process"
+msgstr ""
+
+#: corehq/apps/export/templates/export/dialogs/process_deprecated_properties.html
+msgid ""
+"\n"
+"            In order to show you your deprecated properties, we need to "
+"refresh the page and\n"
+"            load in all the properties. This operation can sometimes take a "
+"few minutes.\n"
+"          "
 msgstr ""
 
 #: corehq/apps/export/templates/export/download_data_files.html
@@ -25938,14 +26073,6 @@ msgid "Pending"
 msgstr ""
 
 #: corehq/apps/registry/models.py
-msgid "Accepted"
-msgstr ""
-
-#: corehq/apps/registry/models.py
-msgid "Rejected"
-msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
-
-#: corehq/apps/registry/models.py
 msgid "Invitation Accepted"
 msgstr ""
 
@@ -27202,6 +27329,7 @@ msgid "View by Users or Groups"
 msgstr "Ver por Usuários ou Grupos"
 
 #: corehq/apps/reports/filters/users.py
+#: corehq/apps/reports/templates/reports/reportdata/case_data.html
 msgid "User Type"
 msgstr ""
 
@@ -30045,6 +30173,12 @@ msgstr ""
 #: corehq/apps/settings/views.py
 msgid "IP Allowlist"
 msgstr ""
+
+#: corehq/apps/settings/views.py
+#, fuzzy
+#| msgid "Last Name"
+msgid "Last Used"
+msgstr "Nome da família / Sobrenome"
 
 #: corehq/apps/settings/views.py
 msgid "Copy this in a secure place. It will not be shown again."
@@ -36224,6 +36358,31 @@ msgstr ""
 msgid "Organization Settings"
 msgstr ""
 
+#: corehq/apps/users/templates/users/partials/edit_commtrack_user_settings.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "            Mobile Workers can log into applications in this project "
+#| "space and submit data.\n"
+#| "          "
+msgid ""
+"\n"
+"            There are cases in the following assigned locations which may "
+"need to be migrated:\n"
+"          "
+msgstr ""
+"\n"
+"Trabalhadores Móveis podem entrar nas aplicações nesta área de projeto e "
+"enviar dados."
+
+#: corehq/apps/users/templates/users/partials/edit_commtrack_user_settings.html
+msgid ""
+"\n"
+"            There are no cases in any of the user's assigned locations that "
+"need to be migrated.\n"
+"          "
+msgstr ""
+
 #: corehq/apps/users/templates/users/partials/edit_role_modal.html
 msgid "Role Name"
 msgstr ""
@@ -36246,14 +36405,6 @@ msgstr ""
 
 #: corehq/apps/users/templates/users/partials/edit_role_modal.html
 msgid "Select which reports the role can access:"
-msgstr ""
-
-#: corehq/apps/users/templates/users/partials/edit_role_modal.html
-msgid "Download and Email Reports"
-msgstr ""
-
-#: corehq/apps/users/templates/users/partials/edit_role_modal.html
-msgid "Allow role to download and email report data."
 msgstr ""
 
 #: corehq/apps/users/templates/users/partials/edit_role_modal.html
@@ -40694,7 +40845,7 @@ msgid "File Dropzone"
 msgstr ""
 
 #: corehq/privileges.py
-msgid "Attendance Tracking"
+msgid "Regular Expression Validation for Custom Data Fields"
 msgstr ""
 
 #: corehq/reports.py
@@ -40959,6 +41110,12 @@ msgstr ""
 #: corehq/tabs/tabclasses.py
 msgid "CommCare Reports"
 msgstr ""
+
+#: corehq/tabs/tabclasses.py
+#, fuzzy
+#| msgid "View All"
+msgid "View All Events"
+msgstr "Ver tudo"
 
 #: corehq/trans_override.py
 msgid "Token generator"

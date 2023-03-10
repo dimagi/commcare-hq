@@ -3,6 +3,7 @@ import re
 from base64 import b64encode
 from io import BytesIO
 
+import pytz
 from django.conf import settings
 from django.contrib import messages
 from django.core.exceptions import ValidationError
@@ -664,13 +665,14 @@ class ApiKeyView(BaseMyAccountView, CRUDPaginatedViewMixin):
             _("Project"),
             _("IP Allowlist"),
             _("Created"),
+            _("Last Used"),
             _("Status"),
             _("Actions"),
         ]
 
     def _to_user_time(self, value):
         return (ServerTime(value)
-                .user_time(self.request.couch_user.get_time_zone())
+                .user_time(pytz.timezone(self.request.couch_user.get_time_zone()))
                 .done()
                 .strftime(USER_DATETIME_FORMAT)) if value else '-'
 
@@ -702,6 +704,7 @@ class ApiKeyView(BaseMyAccountView, CRUDPaginatedViewMixin):
                 if api_key.ip_allowlist else _("All IP Addresses")
             ),
             "created": self._to_user_time(api_key.created),
+            "last_used": self._to_user_time(api_key.last_used),
             "deactivated_on": self._to_user_time(api_key.deactivated_on),
             "is_active": api_key.is_active,
         }

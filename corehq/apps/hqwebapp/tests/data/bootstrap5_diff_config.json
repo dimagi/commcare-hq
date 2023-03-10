@@ -1,4 +1,24 @@
 {
+  "apps/hqwebapp/templates/hqwebapp": [
+    {
+      "directories": ["bootstrap3/", "bootstrap5/"],
+      "file_type": "template",
+      "label": "hqwebapp",
+      "compare_all_files": true
+    },
+    {
+      "directories": ["includes/bootstrap3/", "includes/bootstrap5/"],
+      "file_type": "template",
+      "label": "hqwebapp/includes",
+      "compare_all_files": true
+    },
+    {
+      "directories": ["partials/bootstrap3/", "partials/bootstrap5/"],
+      "file_type": "template",
+      "label": "hqwebapp/partials",
+      "compare_all_files": true
+    }
+  ],
   "apps/hqwebapp/static/hqwebapp": [
     {
       "directories": ["less/", "scss/"],
@@ -55,6 +75,14 @@
         ["typography.less", "_type.scss"],
         ["utils.less", "_utils.scss"]
       ]
+    }
+  ],
+  "apps/notifications/templates/notifications": [
+    {
+      "directories": ["partials/bootstrap3/", "partials/bootstrap5/"],
+      "file_type": "template",
+      "label": "notifications/partials",
+      "compare_all_files": true
     }
   ]
 }

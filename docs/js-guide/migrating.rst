@@ -1,3 +1,4 @@
+
 RequireJS Migration Guide
 =========================
 
@@ -144,8 +145,8 @@ To declare dependencies:
          possible, make the parent check before including script tags:
          ``{% if requirejs_main %}<script ...></script>{% endif %}``
        - Also check the parent’s parent template, etc. Stop once you get to
-         ``hqwebapp/base.html``, ``hqwebapp/two_column.html``, or
-         ``hqwebapp/base_section.html``, which already support requirejs.
+         ``hqwebapp/base.html``, ``hqwebapp/bootstrap3/two_column.html``, or
+         ``hqwebapp/bootstrap3/base_section.html``, which already support requirejs.
 -  Check the view for any `hqwebapp
    decorators <https://github.com/dimagi/commcare-hq/blob/master/corehq/apps/hqwebapp/decorators.py>`__
    like ``use_jquery_ui`` which are used to include many common yet not
