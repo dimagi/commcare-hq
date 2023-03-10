@@ -79,9 +79,8 @@ branches:
     - pkv/accessibility-mapbox-geocoder-widget # Pawan Feb 27
     - gh/improve-pillow-logging-take-2 # Graham Mar 1
     - ml/remove-advanced-mobile-worker-search # Minha Mar 6
-    - ap/upgrade-node # Amit Mar 7
     - pkv/conditional-alerts-off-on-false # Pawan Mar 9
     - rc/disallow-signature-entry-webapps # Robert March 9
-    - ap/es/update-to-python # Amit Mar 10
+    # - ap/es/update-to-python # Amit Mar 10
     - cs+nh/attendees # Charl March 10
 submodules: { }
