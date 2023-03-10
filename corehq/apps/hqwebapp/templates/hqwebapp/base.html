@@ -189,7 +189,11 @@
 
     {# Report Issue #}
     {% if enterprise_mode and allow_report_an_issue and not 500traceback or not enterprise_mode %}
-      {% include 'hqwebapp/includes/bootstrap3/modal_report_issue.html' %}
+      {% if use_bootstrap5 %}
+        {% include 'hqwebapp/includes/bootstrap5/modal_report_issue.html' %}
+      {% else %}
+        {% include 'hqwebapp/includes/bootstrap3/modal_report_issue.html' %}
+      {% endif %}
     {% else %}
       <style>
         a[href='#modalReportIssue'] {
