@@ -22,7 +22,7 @@ hqDefine("events/js/event_attendees",[
         ERROR: 'danger',
         DISABLED: 'disabled',
     };
-    var userModel = function (options) {
+    var attendeeModel = function (options) {
         options = options || {};
         options = _.defaults(options, {
             creation_status: STATUS.NONE,
@@ -45,9 +45,9 @@ hqDefine("events/js/event_attendees",[
         return options;
     };
 
-    var usersListModel = function () {
+    var attendeesListModel = function () {
         var self = {};
-        self.users = ko.observableArray([]);
+        self.attendees = ko.observableArray([]);
 
         self.query = ko.observable('');
         self.deactivatedOnly = ko.observable(false);
@@ -55,26 +55,26 @@ hqDefine("events/js/event_attendees",[
         self.itemsPerPage = ko.observable(5);
         self.totalItems = ko.observable();
 
-        // Visibility of spinners, messages, and user table
+        // Visibility of spinners, messages, and attendees table
         self.hasError = ko.observable(false);
         self.showLoadingSpinner = ko.observable(true);
         self.showPaginationSpinner = ko.observable(false);
-        self.projectHasUsers = ko.observable(true);
+        self.projectHasAttendees = ko.observable(true);
 
-        self.showProjectHasNoUsers = ko.computed(function () {
-            return !self.showLoadingSpinner() && !self.hasError() && !self.projectHasUsers();
+        self.showProjectHasNoAttendees = ko.computed(function () {
+            return !self.showLoadingSpinner() && !self.hasError() && !self.projectHasAttendees();
         });
 
-        self.showNoUsers = ko.computed(function () {
-            return !self.showLoadingSpinner() && !self.hasError() && !self.totalItems() && !self.showProjectHasNoUsers();
+        self.showNoAttendees = ko.computed(function () {
+            return !self.showLoadingSpinner() && !self.hasError() && !self.totalItems() && !self.showProjectHasNoAttendees();
         });
 
         self.showTable = ko.computed(function () {
-            return !self.showLoadingSpinner() && !self.hasError() && !self.showNoUsers() && !self.showProjectHasNoUsers();
+            return !self.showLoadingSpinner() && !self.hasError() && !self.showNoAttendees() && !self.showProjectHasNoAttendees();
         });
 
         self.goToPage = function (page) {
-            self.users.removeAll();
+            self.attendees.removeAll();
             self.hasError(false);
             self.showPaginationSpinner(true);
             $.ajax({
@@ -84,16 +84,15 @@ hqDefine("events/js/event_attendees",[
                     page: page || 1,
                     query: self.query(),
                     limit: self.itemsPerPage(),
-                    showDeactivatedUsers: self.deactivatedOnly(),
                 },
                 success: function (data) {
                     self.totalItems(data.total);
-                    self.users(_.map(data.users, function (user) {
-                        return userModel(user);
+                    self.attendees(_.map(data.attendees, function (attendee) {
+                        return attendeeModel(attendee);
                     }));
 
                     if (!self.query()) {
-                        self.projectHasUsers(!!data.users.length);
+                        self.projectHasAttendees(!!data.attendees.length);
                     }
                     self.showLoadingSpinner(false);
                     self.showPaginationSpinner(false);
@@ -114,6 +113,6 @@ hqDefine("events/js/event_attendees",[
     };
 
     $(function () {
-        $("#users-list").koApplyBindings(usersListModel());
+        $("#attendees-list").koApplyBindings(attendeesListModel());
     });
 });

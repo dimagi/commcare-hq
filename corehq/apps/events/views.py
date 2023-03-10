@@ -259,6 +259,6 @@ def paginated_attendees(request, domain):
 
     return JsonResponse({
         # TODO: Rename "users" key to "attendees"
-        'users': attendees,
+        'attendees': attendees,
         'total': total,
     })

@@ -24,7 +24,7 @@
       <i class="fa fa-plus"></i> {% trans "Create Potential Attendee" %}
     </button>
   </div>
-  <div id="users-list" class="ko-template">
+  <div id="attendees-list" class="ko-template">
     <div class="panel panel-default">
       <div class="panel-heading">
         <h3 class="panel-title">{% trans 'Potential Attendees for this Event' %}</h3>
@@ -35,7 +35,7 @@
             <search-box data-apply-bindings="false"
                         params="value: query,
                                             action: function() { goToPage(1); },
-                                            placeholder: '{% trans_html_attr "Search users..." %}'"></search-box>
+                                            placeholder: '{% trans_html_attr "Search attendees..." %}'"></search-box>
           </div>
         </div>
         <table class="table table-striped table-responsive" style="margin-bottom: 0;" data-bind="visible: showTable">
@@ -45,7 +45,7 @@
             <th class="col-xs-2">{% trans "Last Name" %}</th>
           </tr>
           </thead>
-          <tbody data-bind="foreach: users">
+          <tbody data-bind="foreach: attendees">
           <tr>
             <td data-bind="text: first_name"></td>
             <td data-bind="text: last_name"></td>
@@ -64,7 +64,7 @@
             <a href="#modalReportIssue" data-toggle="modal">report an issue</a>.
           {% endblocktrans %}
         </div>
-        <div class="alert alert-info" data-bind="visible: showProjectHasNoUsers">
+        <div class="alert alert-info" data-bind="visible: showProjectHasNoAttendees">
           {% blocktrans %}
             You currently have no potential attendees.
           {% endblocktrans %}
