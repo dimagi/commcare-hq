@@ -552,7 +552,11 @@ def update_auto_update_rule(domain_link, id):
 
 def get_or_create_downstream_rule(domain, upstream_definition):
     try:
-        downstream_rule = AutomaticUpdateRule.objects.get(upstream_id=upstream_definition['rule']['id'])
+        downstream_rule = AutomaticUpdateRule.objects.get(
+            upstream_id=upstream_definition['rule']['id'],
+            domain=domain,
+            deleted=False
+        )
     except AutomaticUpdateRule.DoesNotExist:
         downstream_rule = AutomaticUpdateRule(
             domain=domain,
