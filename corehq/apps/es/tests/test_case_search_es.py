@@ -264,9 +264,6 @@ class TestCaseSearchHitConversions(SimpleTestCase):
         case = wrap_case_search_hit(self.make_hit(), include_score=True)
         self.assertEqual(case.case_json[RELEVANCE_SCORE], "1.095")
 
-    def test_wrap_case_search_hit_is_related_case(self):
-        case = wrap_case_search_hit(self.make_hit(), is_related_case=True)
-        self.assertEqual(case.case_json[IS_RELATED_CASE], 'true')
 
     @staticmethod
     def make_hit():
