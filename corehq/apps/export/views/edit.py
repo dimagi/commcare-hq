@@ -31,7 +31,8 @@ class BaseEditNewCustomExportView(BaseExportView):
     def new_export_instance(self):
         return self.export_instance_cls.get(self.export_id)
 
-    def get_export_instance(self, schema, original_export_instance, load_deprecated=False):
+    def get_export_instance(self, schema, original_export_instance):
+        load_deprecated = self.request.GET.get('load_deprecated') == 'True'
         return self.export_instance_cls.generate_instance_from_schema(
             schema,
             saved_export=original_export_instance,
@@ -50,14 +51,13 @@ class BaseEditNewCustomExportView(BaseExportView):
         except ResourceNotFound:
             raise Http404()
 
-        load_deprecated = request.GET.get('load_deprecated') == 'True'
 
         schema = self.get_export_schema(
             self.domain,
             self.request.GET.get('app_id') or getattr(export_instance, 'app_id'),
             export_instance.identifier
         )
-        self.export_instance = self.get_export_instance(schema, export_instance, load_deprecated)
+        self.export_instance = self.get_export_instance(schema, export_instance)
         for message in self.export_instance.error_messages():
             messages.error(request, message)
         return super(BaseEditNewCustomExportView, self).get(request, *args, **kwargs)
