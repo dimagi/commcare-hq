@@ -8,7 +8,6 @@ from memoized import memoized
 from casexml.apps.case.mock import CaseFactory, CaseIndex, CaseStructure
 from corehq.apps.es import CaseES
 
-from corehq.apps.users.models import CommCareUser
 from corehq.form_processor.exceptions import CaseNotFound
 from corehq.form_processor.models import CommCareCase, CommCareCaseIndex
 from corehq.util.quickcache import quickcache
