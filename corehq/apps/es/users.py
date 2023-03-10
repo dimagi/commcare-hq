@@ -79,7 +79,7 @@ class ElasticUser(ElasticDocumentAdapter):
     def from_python(self, user):
         """
         :param user: an instance of ``CouchUser`` or a user dict
-        :raises ``TypeError`` user is none of the above types
+        :raises: ``TypeError`` user is none of the above types
         """
         from corehq.apps.users.models import CouchUser
         if isinstance(user, CouchUser):

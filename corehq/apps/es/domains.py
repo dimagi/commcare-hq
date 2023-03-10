@@ -63,7 +63,7 @@ class ElasticDomain(ElasticDocumentAdapter):
     def from_python(self, domain):
         """
         :param user: an instance of ``CouchUser`` or a user dict
-        :raises ``TypeError`` user is none of the above types
+        :raises: ``TypeError`` user is none of the above types
         """
         from corehq.apps.domain.models import Domain
         if isinstance(domain, Domain):
