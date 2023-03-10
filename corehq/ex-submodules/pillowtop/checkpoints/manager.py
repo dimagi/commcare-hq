@@ -216,6 +216,6 @@ class WrappedCheckpoint(object):
         return self.kafka_seq
 
 
-def get_checkpoint_for_elasticsearch_pillow(pillow_id, index_info, topics):
-    checkpoint_id = '{}-{}'.format(pillow_id, index_info.index)
+def get_checkpoint_for_elasticsearch_pillow(pillow_id, index_name, topics):
+    checkpoint_id = f'{pillow_id}-{index_name}'
     return KafkaPillowCheckpoint(checkpoint_id, topics)

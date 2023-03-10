@@ -5,6 +5,7 @@ from corehq.apps.app_manager.util import get_correct_app_class
 from corehq.apps.change_feed import topics
 from corehq.apps.change_feed.consumer.feed import KafkaChangeFeed, KafkaCheckpointEventHandler
 from corehq.elastic import get_es_new
+from corehq.apps.es.apps import app_adapter
 from corehq.pillows.mappings.app_mapping import APP_INDEX_INFO
 from corehq.util.doc_processor.couch import CouchDocumentProvider
 from pillowtop.checkpoints.manager import get_checkpoint_for_elasticsearch_pillow
@@ -28,12 +29,8 @@ def get_app_to_elasticsearch_pillow(pillow_id='ApplicationToElasticsearchPillow'
       - :py:class:`pillowtop.processors.elastic.BulkElasticProcessor`
     """
     assert pillow_id == 'ApplicationToElasticsearchPillow', 'Pillow ID is not allowed to change'
-    checkpoint = get_checkpoint_for_elasticsearch_pillow(pillow_id, APP_INDEX_INFO, [topics.APP])
-    app_processor = ElasticProcessor(
-        elasticsearch=get_es_new(),
-        index_info=APP_INDEX_INFO,
-        doc_prep_fn=transform_app_for_es
-    )
+    checkpoint = get_checkpoint_for_elasticsearch_pillow(pillow_id, app_adapter.index_name, [topics.APP])
+    app_processor = ElasticProcessor(app_adapter)
     change_feed = KafkaChangeFeed(
         topics=[topics.APP], client_id='apps-to-es', num_processes=num_processes, process_num=process_num
     )
@@ -64,9 +61,7 @@ class AppReindexerFactory(ReindexerFactory):
         options.update(self.options)
         return ResumableBulkElasticPillowReindexer(
             doc_provider,
-            elasticsearch=get_es_new(),
-            index_info=APP_INDEX_INFO,
-            doc_transform=transform_app_for_es,
+            adapter=app_adapter,
             pillow=get_app_to_elasticsearch_pillow(),
             **options
         )

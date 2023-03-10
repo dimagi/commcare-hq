@@ -14,7 +14,6 @@ from corehq.apps.users.models import (
     WebUser,
 )
 from corehq.form_processor.models import CommCareCase
-from corehq.pillows.user import transform_user_for_elasticsearch
 
 
 @es_test(requires=[case_adapter, group_adapter, user_adapter], setup_class=True)
@@ -65,7 +64,7 @@ class TestCaseListReport(TestCase):
     @classmethod
     def _send_users_to_es(cls):
         for user_obj in cls.user_list:
-            user_adapter.index(transform_user_for_elasticsearch(user_obj.to_json()), refresh=True)
+            user_adapter.index(user_obj, refresh=True)
 
     @classmethod
     def _send_cases_to_es(cls):

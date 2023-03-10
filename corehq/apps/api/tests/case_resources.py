@@ -14,7 +14,6 @@ from corehq.apps.es.tests.utils import ElasticTestMixin, es_test
 from corehq.apps.hqcase.utils import submit_case_blocks
 from corehq.apps.users.models import WebUser
 from corehq.form_processor.models import CommCareCase
-from corehq.pillows.case import transform_case_for_elasticsearch
 
 from .utils import APIResourceTest, FakeFormESView
 
@@ -42,8 +41,7 @@ class TestCommCareCaseResource(APIResourceTest):
             )
             backend_case.save()
 
-            translated_doc = transform_case_for_elasticsearch(backend_case.to_json())
-            case_adapter.index(translated_doc, refresh=True)
+            case_adapter.index(backend_case, refresh=True)
         return backend_case
 
     def test_get_list(self):
@@ -127,11 +125,11 @@ class TestCommCareCaseResource(APIResourceTest):
         self.addCleanup(child_case.delete)
         self.addCleanup(parent_case.delete)
         case_adapter.index(
-            transform_case_for_elasticsearch(parent_case.to_json()),
+            parent_case,
             refresh=True
         )
         case_adapter.index(
-            transform_case_for_elasticsearch(child_case.to_json()),
+            child_case,
             refresh=True
         )
 
