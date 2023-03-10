@@ -1222,6 +1222,9 @@ hqDefine("cloudcare/js/form_entry/entries", function () {
                 } else {
                     switch (question.control()) {
                         case constants.CONTROL_IMAGE_CHOOSE:
+                            if (question.stylesContains(constants.SIGNATURE)) {
+                                break;
+                            }
                             entry = new ImageEntry(question, {});
                             break;
                         case constants.CONTROL_AUDIO_CAPTURE:
