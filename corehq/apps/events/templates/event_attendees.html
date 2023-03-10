@@ -67,6 +67,11 @@
             You currently have no potential attendees.
           {% endblocktrans %}
         </div>
+        <div class="alert alert-info" data-bind="visible: showNoAttendees">
+          {% blocktrans %}
+            No matching potential attendees found.
+          {% endblocktrans %}
+        </div>
         <pagination data-apply-bindings="false"
                     data-bind="visible: showTable"
                     params="goToPage: goToPage,

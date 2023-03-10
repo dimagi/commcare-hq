@@ -59,6 +59,8 @@ hqDefine("events/js/event_attendees",[
 
                     if (!self.query()) {
                         self.projectHasAttendees(!!data.attendees.length);
+                    } else {
+                        self.projectHasAttendees(true);
                     }
                     self.showLoadingSpinner(false);
                     self.showPaginationSpinner(false);

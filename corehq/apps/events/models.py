@@ -6,6 +6,7 @@ from django.utils.translation import gettext_lazy as _
 from memoized import memoized
 
 from casexml.apps.case.mock import CaseFactory, CaseIndex, CaseStructure
+from corehq.apps.es import CaseES
 
 from corehq.apps.users.models import CommCareUser
 from corehq.form_processor.exceptions import CaseNotFound
@@ -234,11 +235,22 @@ class AttendeeCase:
 
 
 def get_paginated_attendees(domain, limit, page, query=None):
-    case_ids = CommCareCase.objects.get_open_case_ids_in_domain_by_type(
-        domain,
-        ATTENDEE_CASE_TYPE,
-    )
-    total = len(case_ids)
+    if query:
+        es_query = (
+            CaseES()
+            .domain(domain)
+            .case_type(ATTENDEE_CASE_TYPE)
+            .is_closed(False)
+            .term('name', query)
+        )
+        total = es_query.count()
+        case_ids = es_query.get_ids()
+    else:
+        case_ids = CommCareCase.objects.get_open_case_ids_in_domain_by_type(
+            domain,
+            ATTENDEE_CASE_TYPE,
+        )
+        total = len(case_ids)
     if page:
         start, end = page_to_slice(limit, page)
         cases = CommCareCase.objects.get_cases(case_ids[start:end], domain)
