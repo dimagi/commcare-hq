@@ -83,4 +83,5 @@ branches:
     - ap/es/update-to-python+gh/remove-duplicate-kafka-seq-code # Amit Mar 10
     - ap/es/update-to-python # Amit Mar 10
     - cs+nh/attendees # Charl March 10
+    - revert-32713-revert-32202-jls/new-instance-connectors # Steph March 10
 submodules: { }
