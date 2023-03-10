@@ -73,7 +73,7 @@ hqDefine("cloudcare/js/form_entry/utils", function () {
      * @param {Object} clearCallBack - function to call back after clearing the input
      * @param {Object} initialPageData - initial_page_data object
      */
-    module.renderMapboxInput = function (divId, itemCallback, clearCallBack, initialPageData) {
+    module.renderMapboxInput = function (divId, itemCallback, clearCallBack, initialPageData, inputOnKeyDown) {
         var defaultGeocoderLocation = initialPageData.get('default_geocoder_location') || {};
         var geocoder = new MapboxGeocoder({
             accessToken: initialPageData.get("mapbox_access_token"),
@@ -89,7 +89,15 @@ hqDefine("cloudcare/js/form_entry/utils", function () {
         // Must add the form-control class to the input created by mapbox in order to edit.
         var inputEl = $('input.mapboxgl-ctrl-geocoder--input');
         inputEl.addClass('form-control');
-        inputEl.on('keydown', _.debounce(self._inputOnKeyDown, 200));
+        inputEl.on('keydown', _.debounce((e) => {
+            if (inputOnKeyDown) {
+                inputOnKeyDown(e);
+            }
+
+            if (e.key === "ArrowUp" || e.key === "ArrowDown") {
+                $("#geocoder-option-sr").html("<p>" + $("ul.suggestions li.active").text() + "</p>");
+            }
+        }, 200));
     };
 
     /**
