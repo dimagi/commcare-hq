@@ -46,7 +46,7 @@
         "jquery-memoized-ajax": "0.5.0",
         "jquery-migrate": "1.2.1",
         "jquery-textchange": "jmalonzo/bower-jquery-textchange#0.2.3",
-        "jquery-timeago": "rmm5t/jquery-timeago#1.2.0",
+        "jquery-timeago": "rmm5t/jquery-timeago#v1.6.7",
         "jquery-tiny-pubsub": "cowboy/jquery-tiny-pubsub#~0.7.0",
         "jquery-treetable": "ludo/jquery-treetable#3.2.0",
         "jquery-ui": "1.13.2",

@@ -2812,9 +2812,12 @@ jquery-textchange@jmalonzo/bower-jquery-textchange#0.2.3:
   version "0.0.0"
   resolved "https://codeload.github.com/jmalonzo/bower-jquery-textchange/tar.gz/fd7d7c0ac5116861759cd467135307dc9aab7cdc"
 
-jquery-timeago@rmm5t/jquery-timeago#1.2.0:
-  version "0.0.0"
-  resolved "https://codeload.github.com/rmm5t/jquery-timeago/tar.gz/f2afbeaf787a93f01822d062fc80a571f4ebda48"
+jquery-timeago@rmm5t/jquery-timeago#v1.6.7:
+  version "1.6.7"
+  uid "48fdda3ca724dcd655e8e990f6d7fbd203718905"
+  resolved "https://codeload.github.com/rmm5t/jquery-timeago/tar.gz/48fdda3ca724dcd655e8e990f6d7fbd203718905"
+  dependencies:
+    jquery ">=1.5.0 <4.0"
 
 jquery-tiny-pubsub@cowboy/jquery-tiny-pubsub#~0.7.0:
   version "0.0.0-ignored"
@@ -2849,10 +2852,10 @@ jquery@3.5.1:
   resolved "https://registry.yarnpkg.com/jquery/-/jquery-3.5.1.tgz#d7b4d08e1bfdb86ad2f1a3d039ea17304717abb5"
   integrity sha512-XwIBPqcMn57FxfT+Go5pzySnm4KWkT1Tv7gjrpT1srtf8Weynl6R273VJ5GjkRb51IzMp5nbaPjJXMWeju2MKg==
 
-"jquery@>= 1.7.1", jquery@>=1.10, jquery@>=1.7, jquery@>=1.7.2, jquery@>=1.8, "jquery@>=1.8.0 <4.0.0", jquery@>=1.9.0, jquery@^3.5.1:
-  version "3.6.0"
-  resolved "https://registry.yarnpkg.com/jquery/-/jquery-3.6.0.tgz#c72a09f15c1bdce142f49dbf1170bdf8adac2470"
-  integrity sha512-JVzAR/AjBvVt2BmYhxRCSYysDsPcssdmTFnzyLEts9qNwmjmu4JTAMYubEfwVOSwpQ1I1sKKFcxhZCI2buerfw==
+"jquery@>= 1.7.1", jquery@>=1.10, "jquery@>=1.5.0 <4.0", jquery@>=1.7, jquery@>=1.7.2, jquery@>=1.8, "jquery@>=1.8.0 <4.0.0", jquery@>=1.9.0, jquery@^3.5.1:
+  version "3.6.4"
+  resolved "https://registry.yarnpkg.com/jquery/-/jquery-3.6.4.tgz#ba065c188142100be4833699852bf7c24dc0252f"
+  integrity sha512-v28EW9DWDFpzcD9O5iyJXg3R3+q+mET5JhnjJzQUZMHOv67bpSIHq81GEYpPNZHG+XXHsfSme3nxp/hndKEcsQ==
 
 js-tokens@^4.0.0:
   version "4.0.0"
