@@ -34,13 +34,13 @@ hqDefine("linked_domain/js/domain_links", [
         self.hasSuccess = ko.observable(false);
         self.showSpinner = ko.observable(false);
 
-        self.update = function () {
+        var updateFn = function (overwrite) {
             self.showSpinner(true);
             self.showUpdate(false);
             _private.RMI("update_linked_model", {"model": {
                 'type': self.type,
                 'detail': self.detail,
-            }}).done(function (data) {
+            }, 'overwrite': overwrite}).done(function (data) {
                 if (data.error) {
                     self.error(data.error);
                 } else {
@@ -53,6 +53,9 @@ hqDefine("linked_domain/js/domain_links", [
                 self.showSpinner(false);
             });
         };
+
+        self.update = () => updateFn(false);
+        self.forceUpdate = () => updateFn(true);
 
         return self;
     };
@@ -367,12 +370,13 @@ hqDefine("linked_domain/js/domain_links", [
             return self.localDownstreamDomains().length > 0;
         });
 
-        self.pushContent = function () {
+        self.pushContentFn = function (overwrite) {
             self.pushInProgress(true);
             _private.RMI("create_release", {
                 models: _.map(self.modelsToPush(), JSON.parse),
                 linked_domains: self.domainsToPush(),
                 build_apps: self.buildAppsOnPush(),
+                overwrite: overwrite,
             }).done(function (data) {
                 alertUser.alert_user(data.message, data.success ? 'success' : 'danger');
                 self.pushInProgress(false);
@@ -381,6 +385,9 @@ hqDefine("linked_domain/js/domain_links", [
                 self.pushInProgress(false);
             });
         };
+
+        self.pushContent = () => self.pushContentFn(false);
+        self.pushAndOverwrite = () => self.pushContentFn(true);
 
         return self;
     };
