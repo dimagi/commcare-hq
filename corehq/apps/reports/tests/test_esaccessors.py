@@ -71,10 +71,7 @@ from corehq.apps.users.views.mobile.custom_data_fields import UserFieldsView
 from corehq.blobs.mixin import BlobMetaRef
 from corehq.form_processor.models import CaseTransaction, CommCareCase
 from corehq.form_processor.utils import TestFormMetadata
-from corehq.pillows.case import transform_case_for_elasticsearch
-from corehq.pillows.user import transform_user_for_elasticsearch
 from corehq.pillows.utils import MOBILE_USER_TYPE, WEB_USER_TYPE
-from corehq.pillows.xform import transform_xform_for_elasticsearch
 from corehq.util.test_utils import make_es_ready_form
 
 
@@ -124,7 +121,7 @@ class TestFormESAccessors(TestCase):
                 for name, meta in attachment_dict.items()}
             form_pair.json_form['external_blobs'] = attachment_dict
 
-        es_form = transform_xform_for_elasticsearch(form_pair.json_form)
+        es_form = form_pair.json_form
         form_adapter.index(es_form, refresh=True)
         return form_pair
 
@@ -320,7 +317,7 @@ class TestFormESAccessors(TestCase):
         app_id = '1234'
         user_id = 'abc'
 
-        with patch('corehq.pillows.xform.get_user_type', lambda _: MOBILE_USER_TYPE):
+        with patch('corehq.pillows.utils.get_user_type', return_value=MOBILE_USER_TYPE):
             self._send_form_to_es(
                 app_id=app_id,
                 xmlns=xmlns,
@@ -331,7 +328,7 @@ class TestFormESAccessors(TestCase):
                 }
             )
 
-        with patch('corehq.pillows.xform.get_user_type', lambda _: WEB_USER_TYPE):
+        with patch('corehq.pillows.utils.get_user_type', lambda _: WEB_USER_TYPE):
             self._send_form_to_es(
                 app_id=app_id,
                 xmlns=xmlns,
@@ -1004,7 +1001,7 @@ class TestUserESAccessors(TestCase):
 
     def _send_user_to_es(self, is_active=True):
         self.user.is_active = is_active
-        user_adapter.index(transform_user_for_elasticsearch(self.user.to_json()), refresh=True)
+        user_adapter.index(self.user, refresh=True)
 
     def test_active_user_query(self):
         self._send_user_to_es()
@@ -1151,8 +1148,7 @@ class TestCaseESAccessors(TestCase):
             server_date=opened_on,
         ))
 
-        es_case = transform_case_for_elasticsearch(case.to_json())
-        case_adapter.index(es_case, refresh=True)
+        case_adapter.index(case, refresh=True)
         return case
 
     def test_scroll_case_names(self):
@@ -1358,8 +1354,7 @@ class TestCaseESAccessors(TestCase):
         case = CommCareCase.objects.get_case(case.case_id, self.domain)
         case_json = case.to_json()
         case_json['contact_phone_number'] = '234'
-        es_case = transform_case_for_elasticsearch(case_json)
-        case_adapter.index(es_case, refresh=True)
+        case_adapter.index(case_json, refresh=True)
         self.assertEqual(
             get_case_by_identifier(self.domain, case.case_id).case_id,
             case.case_id

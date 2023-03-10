@@ -18,7 +18,6 @@ from corehq.apps.es.tests.utils import ElasticTestMixin, es_test
 from corehq.apps.hqcase.utils import submit_case_blocks
 from corehq.apps.users.models import WebUser
 from corehq.form_processor.tests.utils import create_form_for_test
-from corehq.pillows.xform import transform_xform_for_elasticsearch
 from corehq.util.test_utils import flag_enabled
 
 from .utils import APIResourceTest, FakeFormESView
@@ -47,7 +46,7 @@ class TestXFormInstanceResource(APIResourceTest):
             self.domain.name
         )[0]
         form_adapter.index(
-            transform_xform_for_elasticsearch(form.to_json()),
+            form,
             refresh=True
         )
         return form, case_id
@@ -95,7 +94,7 @@ class TestXFormInstanceResource(APIResourceTest):
 
             to_ret.append(backend_form)
             form_adapter.index(
-                transform_xform_for_elasticsearch(backend_form.to_json()),
+                backend_form,
                 refresh=True
             )
         return to_ret
@@ -208,7 +207,7 @@ class TestXFormInstanceResource(APIResourceTest):
         update = forms[0].to_json()
         update['doc_type'] = 'xformarchived'
         form_adapter.index(
-            transform_xform_for_elasticsearch(update),
+            update,
             refresh=True
         )
 
@@ -374,7 +373,7 @@ class TestXFormPillow(TestCase):
                 }
             }
         }
-        cleaned = transform_xform_for_elasticsearch(bad_appVersion)
+        cleaned = form_adapter.to_json(bad_appVersion)
         self.assertFalse(isinstance(cleaned['form']['meta']['appVersion'], dict))
         self.assertTrue(isinstance(cleaned['form']['meta']['appVersion'], str))
         self.assertTrue(cleaned['form']['meta']['appVersion'], "CCODK:\"2.5.1\"(11126). v236 CC2.5b[11126] on April-15-2013")
