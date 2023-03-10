@@ -32,7 +32,7 @@ class BaseEditNewCustomExportView(BaseExportView):
         return self.export_instance_cls.get(self.export_id)
 
     def get_export_instance(self, schema, original_export_instance):
-        load_deprecated = self.request.GET.get('load_deprecated') == 'True'
+        load_deprecated = self.request.GET.get('load_deprecated', 'False') == 'True'
         return self.export_instance_cls.generate_instance_from_schema(
             schema,
             saved_export=original_export_instance,
