@@ -90,6 +90,20 @@ class TestUpdateRoles(TestCase):
                 ' Please remove or rename these roles before syncing again'):
             update_user_roles(self.domain_link)
 
+    def test_can_overwrite_matching_names(self):
+        upstream_permissions = HqPermissions(view_reports=True)
+        downstream_permissions = HqPermissions(view_reports=False)
+
+        self._create_user_role(self.upstream_domain, name='test', permissions=upstream_permissions)
+        self._create_user_role(self.downstream_domain, name='test',
+                               permissions=downstream_permissions, upstream_id=None)
+
+        update_user_roles(self.domain_link, overwrite=True)
+
+        downstream_roles = UserRole.objects.by_domain_and_name(self.downstream_domain, 'test')
+        self.assertEqual(len(downstream_roles), 1)
+        self.assertEqual(downstream_roles[0].permissions, upstream_permissions)
+
     # TODO: Determine whether this should be turned into a parameterized test for all built-in roles
     def test_syncing_built_in_roles_turns_them_into_linked_roles(self):
         role_name = UserRolePresets.APP_EDITOR
