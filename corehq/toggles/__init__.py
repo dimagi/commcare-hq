@@ -1767,13 +1767,6 @@ MANAGE_RELEASES_PER_LOCATION = StaticToggle(
     help_link='https://confluence.dimagi.com/display/saas/Manage+Releases+per+Location',
 )
 
-LOCATION_SAFE_CASE_IMPORTS = StaticToggle(
-    'location_safe_case_imports',
-    'Allow location-restricted users to import cases owned at their location or below',
-    TAG_SOLUTIONS_OPEN,
-    namespaces=[NAMESPACE_DOMAIN],
-)
-
 FORM_CASE_IDS_CASE_IMPORTER = StaticToggle(
     'form_case_ids_case_importer',
     'Show the form and case ids download button on the case importer',
@@ -2509,4 +2502,13 @@ REGEX_FIELD_VALIDATION = FrozenPrivilegeToggle(
                 "(regex) to validate custom user data, custom location data, "
                 "and/or custom product data fields.",
     help_link='https://confluence.dimagi.com/display/saas/Regular+Expression+Validation+for+Custom+Data+Fields',
+)
+
+LOCATION_SAFE_CASE_IMPORTS = FrozenPrivilegeToggle(
+    privileges.LOCATION_SAFE_CASE_IMPORTS,
+    'location_safe_case_imports',
+    label='Location-restricted users can import cases at their location or below',
+    tag=TAG_SOLUTIONS_OPEN,
+    namespaces=[NAMESPACE_DOMAIN],
+    description='Allow location-restricted users to import cases owned at their location or below',
 )

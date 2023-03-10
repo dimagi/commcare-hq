@@ -127,6 +127,7 @@ advanced_v0 = pro_v1 + [
     privileges.ODATA_FEED,
     privileges.APP_USER_PROFILES,
     privileges.VIEW_APP_DIFF,
+    privileges.LOCATION_SAFE_CASE_IMPORTS,
 ]
 
 enterprise_v0 = advanced_v0 + [
