@@ -34,13 +34,13 @@ hqDefine("linked_domain/js/domain_links", [
         self.hasSuccess = ko.observable(false);
         self.showSpinner = ko.observable(false);
 
-        self.update = function () {
+        var updateFn = function (overwrite) {
             self.showSpinner(true);
             self.showUpdate(false);
             _private.RMI("update_linked_model", {"model": {
                 'type': self.type,
                 'detail': self.detail,
-            }}).done(function (data) {
+            }, 'overwrite': overwrite}).done(function (data) {
                 if (data.error) {
                     self.error(data.error);
                 } else {
@@ -53,6 +53,9 @@ hqDefine("linked_domain/js/domain_links", [
                 self.showSpinner(false);
             });
         };
+
+        self.update = () => updateFn(false);
+        self.forceUpdate = () => updateFn(true);
 
         return self;
     };

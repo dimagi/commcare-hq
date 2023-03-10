@@ -110,13 +110,12 @@ from corehq.apps.users.models import UserRole, HqPermissions
 from corehq.apps.users.views.mobile import UserFieldsView
 from corehq.toggles import NAMESPACE_DOMAIN, EMBEDDED_TABLEAU
 from corehq.apps.users.views.mobile.custom_data_fields import CUSTOM_USER_DATA_FIELD_TYPE
-from corehq.toggles import NAMESPACE_DOMAIN
 from corehq.toggles.shortcuts import set_toggle
 
 from corehq.apps.users.role_utils import UserRolePresets
 
 
-def update_model_type(domain_link, model_type, model_detail=None):
+def update_model_type(domain_link, model_type, model_detail=None, overwrite=False):
     update_fn = {
         MODEL_AUTO_UPDATE_RULE: update_auto_update_rule,
         MODEL_AUTO_UPDATE_RULES: update_auto_update_rules,
@@ -139,10 +138,11 @@ def update_model_type(domain_link, model_type, model_detail=None):
     }.get(model_type)
 
     kwargs = model_detail or {}
+    kwargs['overwrite'] = overwrite
     update_fn(domain_link, **kwargs)
 
 
-def update_toggles(domain_link):
+def update_toggles(domain_link, overwrite=False):
     if domain_link.is_remote:
         upstream_results = remote_toggles_previews(domain_link)
         upstream_toggles = set(upstream_results['toggles'])
@@ -159,7 +159,7 @@ def update_toggles(domain_link):
     _set_toggles(upstream_toggles - downstream_toggles, True)
 
 
-def update_previews(domain_link):
+def update_previews(domain_link, overwrite=False):
     if domain_link.is_remote:
         upstream_results = remote_toggles_previews(domain_link)
         upstream_previews = set(upstream_results['previews'])
@@ -176,55 +176,72 @@ def update_previews(domain_link):
     _set_toggles(upstream_previews - downstream_previews, True)
 
 
-def update_custom_data_models(domain_link, limit_types=None):
+def update_custom_data_models(domain_link, limit_types=None, overwrite=False):
     if domain_link.is_remote:
         upstream_results = remote_custom_data_models(domain_link, limit_types)
     else:
         upstream_results = local_custom_data_models(domain_link.master_domain, limit_types)
 
-    update_custom_data_models_impl(upstream_results, domain_link.linked_domain)
+    update_custom_data_models_impl(upstream_results, domain_link.linked_domain, overwrite)
 
 
-def update_custom_data_models_impl(upstream_results, downstream_domain):
+def update_custom_data_models_impl(upstream_results, downstream_domain, overwrite=False):
     for field_type, data in upstream_results.items():
         upstream_field_definitions = data.get('fields', [])
         model = CustomDataFieldsDefinition.get_or_create(downstream_domain, field_type)
-        merged_fields = merge_fields(model.get_fields(), upstream_field_definitions)
+        merged_fields = merge_fields(model.get_fields(), upstream_field_definitions, overwrite)
         model.set_fields(merged_fields)
         model.save()
 
         if field_type == CUSTOM_USER_DATA_FIELD_TYPE:
             # Profiles are only currently used by custom user data
-            update_profiles(model, data.get('profiles', []))
+            update_profiles(model, data.get('profiles', []), overwrite)
 
 
-def merge_fields(downstream_fields, upstream_fields):
+def merge_fields(downstream_fields, upstream_fields, overwrite=False):
     managed_fields = [create_local_field(field_def) for field_def in upstream_fields]
     local_fields = [field for field in downstream_fields if not field.upstream_id]
 
     local_slugs = [field.slug for field in local_fields]
     conflicting_slugs = [field.slug for field in managed_fields if field.slug in local_slugs]
-    if conflicting_slugs:
+    if conflicting_slugs and not overwrite:
         raise DomainLinkError(
             f'Cannot update custom fields due to the following field conflicts: '
             f'{", ".join(conflicting_slugs)}'
         )
 
-    return managed_fields + local_fields
+    unique_local_fields = [field for field in local_fields if field.slug not in conflicting_slugs]
+
+    return managed_fields + unique_local_fields
 
 
 # TODO: Make this whole thing a transaction
-def update_profiles(definition, upstream_profiles):
+def update_profiles(definition, upstream_profiles, overwrite=False):
     downstream_profiles = definition.get_profiles()
     unsynced_profile_names = [profile.name for profile in downstream_profiles if not profile.upstream_id]
     conflicting_profile_names = [
         profile['name'] for profile in upstream_profiles if profile['name'] in unsynced_profile_names
     ]
     if conflicting_profile_names:
-        raise DomainLinkError(
-            'Cannot update custom fields due to the following profile conflicts: '
-            f'{", ".join(conflicting_profile_names)}'
-        )
+        if not overwrite:
+            raise DomainLinkError(
+                'Cannot update custom fields due to the following profile conflicts: '
+                f'{", ".join(conflicting_profile_names)}'
+            )
+        else:
+            # If none of these conflicting profiles have assigned users, then delete them
+            # so that the upstream profiles can overwrite them
+            # TODO: Raise an error message if the profiles have assigned users
+            conflicting_profiles = [
+                profile for profile in downstream_profiles if profile.name in conflicting_profile_names]
+            profiles_in_use = [profile.name for profile in conflicting_profiles if profile.has_users_assigned]
+            if profiles_in_use:
+                raise DomainLinkError(
+                    'Cannot overwrite profiles, as the following profiles are still in use: '
+                    f'{", ".join(profiles_in_use)}'
+                )
+            for profile in conflicting_profiles:
+                profile.delete()
 
     existing_managed_profiles = {profile.name: profile for profile in downstream_profiles if profile.upstream_id}
 
@@ -272,7 +289,7 @@ def create_synced_profile(upstream_profile, definition):
     )
 
 
-def update_fixture(domain_link, tag):
+def update_fixture(domain_link, tag, overwrite=False):
     if domain_link.is_remote:
         # FIXME Gets a requests.request(...) response object, which does
         # not support the operations below. It has never worked.
@@ -289,7 +306,7 @@ def update_fixture(domain_link, tag):
         linked_data_type = LookupTable.objects.by_domain_tag(
             domain_link.linked_domain, master_data_type.tag)
 
-        if not linked_data_type.is_synced:
+        if not linked_data_type.is_synced and not overwrite:
             # if local data exists, but it was not created through syncing, reject the sync request
             raise UnsupportedActionError(_("Existing lookup table found for '{}'. "
                 "Please remove this table before trying to sync again").format(
@@ -327,7 +344,7 @@ def update_fixture(domain_link, tag):
     clear_fixture_cache(domain_link.linked_domain)
 
 
-def update_user_roles(domain_link):
+def update_user_roles(domain_link, overwrite=False):
     if domain_link.is_remote:
         upstream_roles = remote_get_user_roles(domain_link)
     else:
@@ -350,8 +367,8 @@ def update_user_roles(domain_link):
 
     # Update downstream roles based on upstream roles
     for upstream_role_def in upstream_roles:
-        role, conflicting_role = _get_matching_downstream_role(upstream_role_def, downstream_roles)
-
+        role, conflicting_role = _get_matching_downstream_role(upstream_role_def, downstream_roles,
+                                                               ignore_conflicts=overwrite)
         if conflicting_role:
             failed_updates.append(upstream_role_def)
             continue
@@ -389,7 +406,7 @@ def update_user_roles(domain_link):
         raise UnsupportedActionError(error_msg)
 
 
-def _get_matching_downstream_role(upstream_role_json, downstream_roles):
+def _get_matching_downstream_role(upstream_role_json, downstream_roles, ignore_conflicts=False):
     matching_role = None
     conflicting_role = None
 
@@ -397,10 +414,10 @@ def _get_matching_downstream_role(upstream_role_json, downstream_roles):
         if upstream_role_json['_id'] == downstream_role.upstream_id:
             matching_role = downstream_role
         elif upstream_role_json['name'] == downstream_role.name:
-            if _is_default_built_in_role(upstream_role_json, downstream_role):
-                matching_role = downstream_role
-            else:
+            if not _is_default_built_in_role(upstream_role_json, downstream_role) and not ignore_conflicts:
                 conflicting_role = downstream_role
+            else:
+                matching_role = downstream_role
 
     return (matching_role, conflicting_role)
 
@@ -425,7 +442,7 @@ def _copy_role_attributes(source_role_json, dest_role):
     dest_role.upstream_id = source_role_json['_id']
 
 
-def update_case_search_config(domain_link):
+def update_case_search_config(domain_link, overwrite=False):
     if domain_link.is_remote:
         remote_properties = remote_get_case_search_config(domain_link)
         case_search_config = remote_properties['config']
@@ -440,7 +457,7 @@ def update_case_search_config(domain_link):
     CaseSearchConfig.create_model_and_index_from_json(domain_link.linked_domain, case_search_config)
 
 
-def update_data_dictionary(domain_link):
+def update_data_dictionary(domain_link, overwrite=False):
     if domain_link.is_remote:
         master_results = remote_get_data_dictionary(domain_link)
     else:
@@ -467,7 +484,7 @@ def update_data_dictionary(domain_link):
             case_property_obj.save()
 
 
-def update_tableau_server_and_visualizations(domain_link):
+def update_tableau_server_and_visualizations(domain_link, overwrite=False):
     if domain_link.is_remote:
         master_results = remote_get_tableau_server_and_visualizations(domain_link)
     else:
@@ -505,7 +522,7 @@ def update_tableau_server_and_visualizations(domain_link):
         vis.save()
 
 
-def update_dialer_settings(domain_link):
+def update_dialer_settings(domain_link, overwrite=False):
     if domain_link.is_remote:
         master_results = remote_get_dialer_settings(domain_link)
     else:
@@ -521,7 +538,7 @@ def update_dialer_settings(domain_link):
     model.save()
 
 
-def update_otp_settings(domain_link):
+def update_otp_settings(domain_link, overwrite=False):
     if domain_link.is_remote:
         master_results = remote_get_otp_settings(domain_link)
     else:
@@ -536,7 +553,7 @@ def update_otp_settings(domain_link):
     model.save()
 
 
-def update_hmac_callout_settings(domain_link):
+def update_hmac_callout_settings(domain_link, overwrite=False):
     if domain_link.is_remote:
         master_results = remote_get_hmac_callout_settings(domain_link)
     else:
@@ -552,7 +569,7 @@ def update_hmac_callout_settings(domain_link):
     model.save()
 
 
-def update_auto_update_rule(domain_link, id):
+def update_auto_update_rule(domain_link, id, overwrite=False):
     upstream_rule_definition = local_get_auto_update_rule(domain_link.master_domain, id)
     downstream_rule = get_or_create_downstream_rule(domain_link.linked_domain, upstream_rule_definition)
     _update_rule(downstream_rule, upstream_rule_definition)
@@ -652,7 +669,7 @@ def _create_rule_actions(rule, action_definition):
         action.save()
 
 
-def update_auto_update_rules(domain_link):
+def update_auto_update_rules(domain_link, overwrite=False):
     if domain_link.is_remote:
         upstream_rules = remote_get_auto_update_rules(domain_link)
     else:
