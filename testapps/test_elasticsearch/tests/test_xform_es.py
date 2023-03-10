@@ -1,4 +1,5 @@
 import datetime
+from unittest.mock import patch
 import uuid
 from collections import namedtuple
 
@@ -27,11 +28,12 @@ class XFormESTestCase(SimpleTestCase):
 
     @classmethod
     def _ship_forms_to_es(cls, metadatas):
-        for form_metadata in metadatas:
-            form_metadata = form_metadata or TestFormMetadata()
-            form_pair = make_es_ready_form(form_metadata)
-            cls.forms.append(form_pair)
-            form_adapter.index(form_pair.json_form)
+        with patch('corehq.pillows.utils.get_user_type', return_value='CommCareUser'):
+            for form_metadata in metadatas:
+                form_metadata = form_metadata or TestFormMetadata()
+                form_pair = make_es_ready_form(form_metadata)
+                cls.forms.append(form_pair)
+                form_adapter.index(form_pair.json_form)
         # have to refresh the index to make sure changes show up
         manager.index_refresh(form_adapter.index_name)
 

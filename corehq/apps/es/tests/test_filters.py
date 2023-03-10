@@ -200,9 +200,9 @@ class TestSourceFiltering(ElasticTestMixin, SimpleTestCase):
 class TestFiltersRun(SimpleTestCase):
 
     def _setup_data(self):
-        doc1 = {'_id': 'doc1', 'domain': 'd', 'app_id': 'a'}
-        doc2 = {'_id': 'doc2', 'domain': 'd', 'app_id': 'not_a'}
-        doc3 = {'_id': 'doc3', 'domain': 'not_d', 'app_id': 'not_a'}
+        doc1 = {'_id': 'doc1', 'domain': 'd', 'app_id': 'a', 'form': {}}
+        doc2 = {'_id': 'doc2', 'domain': 'd', 'app_id': 'not_a', 'form': {}}
+        doc3 = {'_id': 'doc3', 'domain': 'not_d', 'app_id': 'not_a', 'form': {}}
         for doc in [doc1, doc2, doc3]:
             form_adapter.index(doc, refresh=True)
 

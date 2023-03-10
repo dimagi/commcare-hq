@@ -10,6 +10,8 @@ from corehq.apps.es import case_search as case_search_es
          .domain('testproject')
 """
 
+from copy import deepcopy
+from datetime import datetime
 from warnings import warn
 
 from django.conf import settings
@@ -31,6 +33,7 @@ from corehq.apps.case_search.const import (
 )
 from corehq.apps.es.cases import CaseES, owner
 from corehq.util.dates import iso_string_to_datetime
+from dimagi.utils.parsing import json_format_datetime
 
 from . import filters, queries
 from .cases import case_adapter
@@ -148,9 +151,37 @@ class ElasticCaseSearch(ElasticDocumentAdapter):
     def mapping(self):
         return get_adapter_mapping(self)
 
-    @classmethod
-    def from_python(cls, doc):
-        return from_dict_with_possible_id(doc)
+    def from_python(self, case):
+        from corehq.form_processor.models.cases import CommCareCase
+        if isinstance(case, CommCareCase):
+            case_dict = case.to_json()
+        elif isinstance(case, dict):
+            case_dict = case
+        else:
+            raise TypeError(f"Unknown type {type(case)}")
+        return self._from_dict(case_dict)
+
+    def _from_dict(self, case):
+        """
+        Takes in a dict which is result of ``CommCareCase.to_json``
+        and applies required transformation to make it suitable for ES.
+        The function is replica of ``transform_case_for_elasticsearch``
+        In future all references to  ``transform_case_for_elasticsearch`` will be replaced by `from_python`
+
+        :param case: an instance of ``CommCareCase`` or ``dict`` which is ``case.to_json()``
+        """
+        from corehq.pillows.case_search import _get_case_properties
+        from corehq.pillows.mappings.case_search_mapping import CASE_SEARCH_MAPPING
+
+        case_dict = deepcopy(case)
+        doc = {
+            desired_property: case_dict.get(desired_property)
+            for desired_property in CASE_SEARCH_MAPPING['properties'].keys()
+            if desired_property not in SYSTEM_PROPERTIES
+        }
+        doc[INDEXED_ON] = json_format_datetime(datetime.utcnow())
+        doc['case_properties'] = _get_case_properties(case_dict)
+        return case_dict.get('_id'), doc
 
 
 case_search_adapter = create_document_adapter(

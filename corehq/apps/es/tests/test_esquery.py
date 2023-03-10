@@ -328,9 +328,17 @@ class TestESQuery(ElasticTestMixin, SimpleTestCase):
         return scroll_query_tester
 
     def test_scroll_ids_to_disk_and_iter_docs(self):
-        doc = {"_id": "test"}
-        users.user_adapter.index(doc, refresh=True)
+        doc = {"_id": "test", "doc_type": "SomeUser", "username": "u1"}
+        with patch('corehq.apps.groups.dbaccessors.get_group_id_name_map_by_user', return_value=[]):
+            users.user_adapter.index(doc, refresh=True)
         query = users.UserES().remove_default_filters()
+        # add extra keys added in transformation
+        doc.update({
+            'base_username': 'u1',
+            'user_data_es': [],
+            '__group_ids': [],
+            '__group_names': []
+        })
         self.assertEqual([doc], list(query.scroll_ids_to_disk_and_iter_docs()))
 
     def test_scroll_ids_to_disk_and_iter_docs_does_not_raise_for_deleted_doc(self):
@@ -340,11 +348,19 @@ class TestESQuery(ElasticTestMixin, SimpleTestCase):
             users.user_adapter.delete(doc2["_id"], refresh=True)
             return results
 
-        doc1 = {"_id": "test"}
-        doc2 = {"_id": "vanishes"}
+        doc1 = {"_id": "test", "doc_type": "SomeUser", "username": "u1"}
+        doc2 = {"_id": "vanishes", "doc_type": "SomeUser", "username": "u2"}
         for doc in [doc1, doc2]:
-            users.user_adapter.index(doc, refresh=True)
+            with patch('corehq.apps.groups.dbaccessors.get_group_id_name_map_by_user', return_value=[]):
+                users.user_adapter.index(doc, refresh=True)
         query = users.UserES().remove_default_filters()
+        # add extra keys added in transformation
+        doc1.update({
+            'base_username': 'u1',
+            'user_data_es': [],
+            '__group_ids': [],
+            '__group_names': []
+        })
         real_scroll = query.scroll
         with patch.object(query, "scroll", scroll_then_delete_one):
             self.assertEqual([doc1], list(query.scroll_ids_to_disk_and_iter_docs()))

@@ -34,7 +34,6 @@ from corehq.toggles import (
     USH_CASE_CLAIM_UPDATES,
 )
 from corehq.util.doc_processor.sql import SqlDocumentProvider
-from corehq.util.es.interface import ElasticsearchInterface
 from corehq.util.log import get_traceback_string
 from corehq.util.quickcache import quickcache
 from corehq.util.soft_assert import soft_assert
@@ -153,9 +152,7 @@ def get_case_search_processor():
       - Case Search ES index
     """
     return CaseSearchPillowProcessor(
-        elasticsearch=get_es_new(),
-        index_info=CASE_SEARCH_INDEX_INFO,
-        doc_prep_fn=transform_case_for_elasticsearch,
+        adapter=case_search_adapter,
         change_filter_fn=is_couch_change_for_sql_domain
     )
 
@@ -235,12 +232,10 @@ def get_case_search_to_elasticsearch_pillow(pillow_id='CaseSearchToElasticsearch
         index_info.index = kwargs['index_name']
         index_info.alias = kwargs['index_alias']
 
-    checkpoint = get_checkpoint_for_elasticsearch_pillow(pillow_id, index_info, topics.CASE_TOPICS)
-    case_processor = CaseSearchPillowProcessor(
-        elasticsearch=get_es_new(),
-        index_info=index_info,
-        doc_prep_fn=transform_case_for_elasticsearch
+    checkpoint = get_checkpoint_for_elasticsearch_pillow(
+        pillow_id, case_search_adapter.index_name, topics.CASE_TOPICS
     )
+    case_processor = CaseSearchPillowProcessor(adapter=case_search_adapter)
     change_feed = KafkaChangeFeed(
         topics=topics.CASE_TOPICS, client_id='cases-to-es', num_processes=num_processes, process_num=process_num
     )
@@ -290,9 +285,7 @@ class ResumableCaseSearchReindexerFactory(ReindexerFactory):
         doc_provider = SqlDocumentProvider(iteration_key, accessor)
         return ResumableBulkElasticPillowReindexer(
             doc_provider,
-            elasticsearch=get_es_new(),
-            index_info=CASE_SEARCH_INDEX_INFO,
-            doc_transform=transform_case_for_elasticsearch,
+            adapter=case_search_adapter,
             **self.options
         )
 
