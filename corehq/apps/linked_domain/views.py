@@ -360,6 +360,7 @@ class DomainLinkRMIView(JSONResponseMixin, View, DomainViewMixin):
         detail_obj = wrap_detail(type_, detail) if detail else None
         timezone = get_timezone_for_request()
         domain_link = get_upstream_domain_link(self.domain)
+        overwrite = in_data['overwrite'] or False
 
         try:
             validate_pull(self.request.couch_user, domain_link)
@@ -375,7 +376,7 @@ class DomainLinkRMIView(JSONResponseMixin, View, DomainViewMixin):
 
         error = ""
         try:
-            update_model_type(domain_link, type_, detail_obj)
+            update_model_type(domain_link, type_, detail_obj, overwrite)
             model_detail = detail_obj.to_json() if detail_obj else None
             domain_link.update_last_pull(type_, self.request.couch_user._id, model_detail=model_detail)
         except (DomainLinkError, UnsupportedActionError) as e:
