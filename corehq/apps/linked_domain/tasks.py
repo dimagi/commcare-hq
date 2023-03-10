@@ -56,8 +56,8 @@ def pull_missing_multimedia_for_app_and_notify_task(domain, app_id, email=None, 
 
 
 @task(queue='linked_domain_queue')
-def push_models(upstream_domain, models, downstream_domains, build_apps, username):
-    ReleaseManager(upstream_domain, username).release(models, downstream_domains, build_apps)
+def push_models(upstream_domain, models, downstream_domains, build_apps, username, overwrite=False):
+    ReleaseManager(upstream_domain, username).release(models, downstream_domains, build_apps, overwrite=overwrite)
 
 
 class ReleaseManager:
@@ -106,10 +106,11 @@ class ReleaseManager:
     def _get_successes(self, domain, html=True):
         return self.successes_by_domain['html' if html else 'text'][domain]
 
-    def release(self, models, downstream_domains, build_apps=False):
+    def release(self, models, downstream_domains, build_apps=False, overwrite=False):
         self._reset()
         header = [
-            release_domain.si(self.upstream_domain, downstream_domain, self.user.username, models, build_apps)
+            release_domain.si(self.upstream_domain, downstream_domain, self.user.username, models,
+                              build_apps, overwrite)
             for downstream_domain in downstream_domains
         ]
         callback = send_linked_domain_release_email.s(self.upstream_domain, self.user.username,
@@ -159,7 +160,7 @@ The following linked project spaces received content:
             build.is_released = True
             build.save(increment_version=False)
 
-    def _release_report(self, domain_link, model, user_id):
+    def _release_report(self, domain_link, model, user_id, overwrite=False):
         report_id = model['detail']['report_id']
         linked_report = get_downstream_report(domain_link.linked_domain, report_id)
 
@@ -171,20 +172,20 @@ The following linked project spaces received content:
                 return self._error_tuple(str(e))
 
         # have no hit an error case, so update the ucr
-        update_linked_ucr(domain_link, linked_report.get_id)
+        update_linked_ucr(domain_link, linked_report.get_id, overwrite=overwrite)
         domain_link.update_last_pull(
             MODEL_REPORT,
             user_id,
             model_detail=ReportLinkDetail(report_id=linked_report.get_id).to_json(),
         )
 
-    def _release_flag_dependent_model(self, domain_link, model, user, feature_flag):
+    def _release_flag_dependent_model(self, domain_link, model, user, feature_flag, overwrite=False):
         if not feature_flag.enabled(domain_link.linked_domain):
             return self._error_tuple(_("Feature flag for {} is not enabled").format(model['name']))
 
-        return self._release_model(domain_link, model, user)
+        return self._release_model(domain_link, model, user, overwrite=overwrite)
 
-    def _release_keyword(self, domain_link, model, user_id):
+    def _release_keyword(self, domain_link, model, user_id, overwrite=False):
         upstream_id = model['detail']['keyword_id']
         try:
             linked_keyword_id = (Keyword.objects.values_list('id', flat=True)
@@ -192,14 +193,14 @@ The following linked project spaces received content:
         except Keyword.DoesNotExist:
             linked_keyword_id = create_linked_keyword(domain_link, upstream_id)
 
-        update_keyword(domain_link, linked_keyword_id)
+        update_keyword(domain_link, linked_keyword_id, overwrite)
         domain_link.update_last_pull(
             MODEL_KEYWORD,
             user_id,
             model_detail=KeywordLinkDetail(keyword_id=str(linked_keyword_id)).to_json(),
         )
 
-    def _release_ucr_expression(self, domain_link, model, user_id):
+    def _release_ucr_expression(self, domain_link, model, user_id, overwrite=False):
         upstream_id = model['detail']['ucr_expression_id']
         try:
             linked_ucr_expression_id = UCRExpression.objects.values_list(
@@ -210,7 +211,7 @@ The following linked project spaces received content:
         except UCRExpression.DoesNotExist:
             linked_ucr_expression_id = create_linked_ucr_expression(domain_link, upstream_id)
         else:
-            update_linked_ucr_expression(domain_link, linked_ucr_expression_id)
+            update_linked_ucr_expression(domain_link, linked_ucr_expression_id, overwrite=overwrite)
 
         domain_link.update_last_pull(
             MODEL_UCR_EXPRESSION,
@@ -218,9 +219,9 @@ The following linked project spaces received content:
             model_detail=UCRExpressionLinkDetail(ucr_expression_id=str(linked_ucr_expression_id)).to_json(),
         )
 
-    def _release_model(self, domain_link, model, user):
+    def _release_model(self, domain_link, model, user, overwrite=False):
         try:
-            update_model_type(domain_link, model['type'], model_detail=model['detail'])
+            update_model_type(domain_link, model['type'], model_detail=model['detail'], overwrite=overwrite)
         except UnsupportedActionError as e:
             return self._error_tuple(str(e))
 
@@ -232,7 +233,7 @@ The following linked project spaces received content:
 
 
 @task(queue='linked_domain_queue')
-def release_domain(upstream_domain, downstream_domain, username, models, build_apps=False):
+def release_domain(upstream_domain, downstream_domain, username, models, build_apps=False, overwrite=False):
     manager = ReleaseManager(upstream_domain, username)
 
     domain_link = get_upstream_domain_link(downstream_domain)
@@ -247,16 +248,17 @@ def release_domain(upstream_domain, downstream_domain, username, models, build_a
             if model['type'] == MODEL_APP:
                 errors = manager._release_app(domain_link, model, manager.user, build_apps)
             elif model['type'] == MODEL_REPORT:
-                errors = manager._release_report(domain_link, model, manager.user._id)
+                errors = manager._release_report(domain_link, model, manager.user._id, overwrite)
             elif model['type'] in FEATURE_FLAG_DATA_MODEL_TOGGLES:
                 errors = manager._release_flag_dependent_model(domain_link, model, manager.user,
-                                                               FEATURE_FLAG_DATA_MODEL_TOGGLES[model['type']])
+                                                               FEATURE_FLAG_DATA_MODEL_TOGGLES[model['type']],
+                                                               overwrite=overwrite)
             elif model['type'] == MODEL_KEYWORD:
-                errors = manager._release_keyword(domain_link, model, manager.user._id)
+                errors = manager._release_keyword(domain_link, model, manager.user._id, overwrite)
             elif model['type'] == MODEL_UCR_EXPRESSION:
-                errors = manager._release_ucr_expression(domain_link, model, manager.user._id)
+                errors = manager._release_ucr_expression(domain_link, model, manager.user._id, overwrite)
             else:
-                errors = manager._release_model(domain_link, model, manager.user)
+                errors = manager._release_model(domain_link, model, manager.user, overwrite)
         except Exception as e:   # intentionally broad
             errors = [str(e), str(e)]
             notify_exception(None, "Exception pushing linked domains: {}".format(e))

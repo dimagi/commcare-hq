@@ -417,8 +417,10 @@ class DomainLinkRMIView(JSONResponseMixin, View, DomainViewMixin):
                 'message': e.message,
             }
 
+        overwrite = in_data.get('overwrite', False)
+
         push_models.delay(self.domain, in_data['models'], in_data['linked_domains'],
-                          in_data['build_apps'], self.request.couch_user.username)
+                          in_data['build_apps'], self.request.couch_user.username, overwrite)
 
         track_workflow(
             self.request.couch_user.username,
