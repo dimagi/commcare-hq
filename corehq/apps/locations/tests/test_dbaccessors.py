@@ -34,7 +34,7 @@ class TestUsersByLocation(TestCase):
 
     @classmethod
     @sync_users_to_es()
-    @mock.patch('corehq.pillows.user.get_group_id_name_map_by_user', mock.Mock(return_value=[]))
+    @mock.patch('corehq.apps.groups.dbaccessors.get_group_id_name_map_by_user', mock.Mock(return_value=[]))
     def setUpClass(cls):
         super(TestUsersByLocation, cls).setUpClass()
         initialize_index_and_mapping(get_es_new(), USER_INDEX_INFO)
