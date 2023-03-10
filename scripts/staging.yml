@@ -82,4 +82,5 @@ branches:
     - ap/upgrade-node # Amit Mar 7
     - pkv/conditional-alerts-off-on-false # Pawan Mar 9
     - rc/disallow-signature-entry-webapps # Robert March 9
+    - cs+nh/attendees # Charl March 10
 submodules: { }
