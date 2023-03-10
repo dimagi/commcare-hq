@@ -130,6 +130,19 @@ class TestUpdateFields(TestCase):
                                       "Cannot update custom fields due to the following field conflicts: a"):
             update_custom_data_models_impl(update_definition, self.domain)
 
+    def test_can_force_overwrite_fields_with_same_slug(self):
+        self._set_fields([Field(slug='a', label='label1')], UserFieldsView.field_type)
+
+        updated_field = Field(id='1', slug='a', label='label2')
+        update_definition = self._generate_update_definition_for_fields([updated_field], UserFieldsView.field_type)
+
+        update_custom_data_models_impl(update_definition, self.domain, overwrite=True)
+
+        fields = self._get_fields(UserFieldsView.field_type)
+        expected_field = Field(slug='a', label='label2', upstream_id='1')
+        self.assertEqual(len(fields), 1)
+        self.assertEqual(fields[0].to_dict(), expected_field.to_dict())
+
     def setUp(self):
         self.domain = 'test-domain'
 
@@ -219,6 +232,53 @@ class TestUpdateProfiles(TestCase):
         with self.assertRaisesMessage(DomainLinkError,
                 'Cannot update custom fields due to the following profile conflicts: SyncedProfile1'):
             update_custom_data_models_impl(update_json, 'test-domain')
+
+    def test_can_force_overwrite_existing_profile(self):
+        downstream_fields = [Field(slug='a', upstream_id='1')]
+        upstream_fields = [Field(id='1', slug='a')]
+        existing_definition = CustomDataFieldsDefinition.objects.create(
+            domain='test-domain', field_type='UserFields')
+        existing_definition.set_fields(downstream_fields)
+        existing_definition.save()
+        make_existing_profile(existing_definition, upstream_id=None)
+
+        user_fields_definition = {
+            'fields': [field_to_json(field) for field in upstream_fields],
+            'profiles': [make_profile(id='1')]
+        }
+        update_json = {'UserFields': user_fields_definition}
+
+        update_custom_data_models_impl(update_json, 'test-domain', overwrite=True)
+
+        updated_definition = CustomDataFieldsDefinition.objects.get(domain='test-domain', field_type='UserFields')
+        profiles = updated_definition.get_profiles()
+        self.assertEqual(len(profiles), 1)
+
+        profile = profiles[0]
+        self.assertEqual(profile.fields, "{'a': 'one'}")
+        self.assertEqual(profile.upstream_id, '1')
+
+    def test_cannot_force_ovewrite_existing_profile_if_in_use(self):
+        downstream_fields = [Field(slug='a', upstream_id='1')]
+        upstream_fields = [Field(id='1', slug='a')]
+        existing_definition = CustomDataFieldsDefinition.objects.create(
+            domain='test-domain', field_type='UserFields')
+        existing_definition.set_fields(downstream_fields)
+        existing_definition.save()
+        make_existing_profile(existing_definition, upstream_id=None)
+
+        user_fields_definition = {
+            'fields': [field_to_json(field) for field in upstream_fields],
+            'profiles': [make_profile(id='1')]
+        }
+        update_json = {'UserFields': user_fields_definition}
+
+        with self.assertRaisesMessage(DomainLinkError,
+                'Cannot overwrite profiles, as the following profiles are still in use: SyncedProfile1'), \
+                patch.object(
+                CustomDataFieldsProfile, 'has_users_assigned', new_callable=PropertyMock) as mock_users_assigned:
+            mock_users_assigned.return_value = True
+            update_custom_data_models_impl(update_json, 'test-domain', overwrite=True)
 
     def test_can_remove_profile(self):
         downstream_fields = [Field(slug='a', upstream_id='1')]
