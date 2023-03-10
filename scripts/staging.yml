@@ -80,7 +80,6 @@ branches:
     - gh/improve-pillow-logging-take-2 # Graham Mar 1
     - ml/remove-advanced-mobile-worker-search # Minha Mar 6
     - pkv/conditional-alerts-off-on-false # Pawan Mar 9
-    - rc/disallow-signature-entry-webapps # Robert March 9
     - ap/es/update-to-python+gh/remove-duplicate-kafka-seq-code # Amit Mar 10
     - ap/es/update-to-python # Amit Mar 10
     - cs+nh/attendees # Charl March 10
