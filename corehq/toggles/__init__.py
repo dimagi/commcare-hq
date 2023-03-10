@@ -919,7 +919,7 @@ WEB_APPS_DOMAIN_BANNER = StaticToggle(
 
 WEB_APPS_UPLOAD_QUESTIONS = FeatureRelease(
     'web_apps_upload_questions',
-    'USH: Support signature, image, audio, and video questions in Web Apps',
+    'USH: Support image, audio, and video questions in Web Apps',
     TAG_RELEASE,
     namespaces=[NAMESPACE_DOMAIN],
     owner='Jenny Schweers',
