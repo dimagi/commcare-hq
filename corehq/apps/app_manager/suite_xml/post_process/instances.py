@@ -86,6 +86,11 @@ class EntryInstances(PostProcessor):
 
     See docs/apps/instances.rst"""
 
+    IGNORED_INSTANCES = {
+        'jr://instance/remote',
+        'jr://instance/search-input',
+    }
+
     @time_method()
     def update_suite(self):
         for entry in self.suite.entries:
@@ -230,7 +235,7 @@ class EntryInstances(PostProcessor):
         used = {(instance.id, instance.src) for instance in entry.instances}
         instance_order_updated = EntryInstances.update_instance_order(entry)
         for instance in instances:
-            if EntryInstances._should_ignore_instance(instance):
+            if instance.src in EntryInstances.IGNORED_INSTANCES:  # ignore legacy instances
                 continue
             if (instance.id, instance.src) not in used:
                 entry.instances.append(
@@ -252,15 +257,6 @@ class EntryInstances(PostProcessor):
         sorted_instances = sorted(entry.instances, key=lambda instance: instance.id)
         if sorted_instances != entry.instances:
             entry.instances = sorted_instances
-
-    @staticmethod
-    def _should_ignore_instance(instance):
-        for prefix in {
-            'jr://instance/remote/',
-        }:
-            if instance.src.startswith(prefix):
-                return True
-        return False
 
     @staticmethod
     def update_instance_order(entry):
