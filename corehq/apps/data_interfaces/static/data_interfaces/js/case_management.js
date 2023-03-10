@@ -132,7 +132,7 @@ hqDefine("data_interfaces/js/case_management",[
                 $modal.find('.modal-body').text("Please select an owner");
                 $modal.modal('show');
             } else {
-                if (self.selectAllMatches) {
+                if (self.selectAllMatches()) {
                     self.updateAllMatches(newOwner);
                     return;
                 }
