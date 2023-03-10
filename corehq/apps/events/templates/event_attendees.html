@@ -15,7 +15,7 @@
 
 <p>
   {% blocktrans %}
-    This page list all the project's potential attendees who can be invited to
+    This page lists all the project's potential attendees who can be invited to
     participate in Attendance Tracking Events.
   {% endblocktrans %}
 </p>
@@ -41,20 +41,18 @@
         <table class="table table-striped table-responsive" style="margin-bottom: 0;" data-bind="visible: showTable">
           <thead>
           <tr>
-            <th class="col-xs-3">{% trans "First Name" %}</th>
-            <th class="col-xs-2">{% trans "Last Name" %}</th>
+            <th class="col-xs-3">{% trans "Name" %}</th>
           </tr>
           </thead>
           <tbody data-bind="foreach: attendees">
           <tr>
-            <td data-bind="text: first_name"></td>
-            <td data-bind="text: last_name"></td>
+            <td data-bind="text: name"></td>
           </tr>
           </tbody>
         </table>
         <div class="alert alert-info" data-bind="visible: showLoadingSpinner() && !hasError()">
           <i class="fa fa-spin fa-spinner"></i>
-          {% trans "Loading Workers..." %}
+          {% trans "Loading potential attendees ..." %}
         </div>
         <div class="alert alert-danger" data-bind="visible: hasError">
           {% blocktrans %}

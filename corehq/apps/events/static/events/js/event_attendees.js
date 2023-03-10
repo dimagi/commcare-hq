@@ -13,38 +13,6 @@ hqDefine("events/js/event_attendees",[
     initialPageData
 ) {
     'use strict';
-    // These are used as css classes, so the values of success/warning/error need to be what they are.
-    var STATUS = {
-        NONE: '',
-        PENDING: 'pending',
-        SUCCESS: 'success',
-        WARNING: 'warning',
-        ERROR: 'danger',
-        DISABLED: 'disabled',
-    };
-    var attendeeModel = function (options) {
-        options = options || {};
-        options = _.defaults(options, {
-            creation_status: STATUS.NONE,
-            creation_error: "",
-            username: '',
-            first_name: '',
-            last_name: '',
-            location_id: '',
-            password: '',
-            user_id: '',
-            force_account_confirmation: false,
-            email: '',
-            send_account_confirmation_email: false,
-            force_account_confirmation_by_sms: false,
-            phone_number: '',
-            is_active: true,
-            is_account_confirmed: true,
-            deactivate_after_date: '',
-        });
-        return options;
-    };
-
     var attendeesListModel = function () {
         var self = {};
         self.attendees = ko.observableArray([]);
@@ -87,9 +55,7 @@ hqDefine("events/js/event_attendees",[
                 },
                 success: function (data) {
                     self.totalItems(data.total);
-                    self.attendees(_.map(data.attendees, function (attendee) {
-                        return attendeeModel(attendee);
-                    }));
+                    self.attendees(data.attendees);
 
                     if (!self.query()) {
                         self.projectHasAttendees(!!data.attendees.length);

@@ -250,7 +250,7 @@ def paginated_attendees(request, domain):
     page = int(request.GET.get('page', 1))
     query = request.GET.get('query')
 
-    attendees, total = get_paginated_attendees(
+    cases, total = get_paginated_attendees(
         domain=domain,
         limit=limit,
         page=page,
@@ -258,7 +258,6 @@ def paginated_attendees(request, domain):
     )
 
     return JsonResponse({
-        # TODO: Rename "users" key to "attendees"
-        'attendees': attendees,
+        'attendees': [{'_id': c.case_id, 'name': c.name} for c in cases],
         'total': total,
     })
