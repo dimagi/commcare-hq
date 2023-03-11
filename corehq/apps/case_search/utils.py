@@ -7,9 +7,7 @@ from django.utils.translation import gettext as _
 from dimagi.utils.logging import notify_exception
 
 from corehq.apps.app_manager.dbaccessors import get_app_cached
-from corehq.apps.app_manager.util import (
-    module_offers_search,
-)
+from corehq.apps.app_manager.util import module_offers_search
 from corehq.apps.case_search.const import (
     CASE_SEARCH_MAX_RESULTS,
     COMMCARE_PROJECT,
@@ -408,7 +406,7 @@ def get_child_case_types(app, case_type):
 
 
 def get_child_case_results(helper, parent_case_ids, child_case_types=None):
-    filter = (helper.get_base_queryset().get_child_cases(parent_case_ids, "parent"))
+    filter = helper.get_base_queryset().get_child_cases(parent_case_ids, "parent")
     if child_case_types:
         filter = filter.case_type(child_case_types)
 
