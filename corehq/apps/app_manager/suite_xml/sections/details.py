@@ -163,7 +163,7 @@ class DetailContributor(SectionContributor):
             for tab in tabs:
                 # relevant should be set to None even in case its ''
                 tab_relevant = None
-                if tab.relevant and toggles.DISPLAY_CONDITION_ON_TABS.enabled(module.get_app().domain):
+                if tab.relevant:
                     tab_relevant = tab.relevant
 
                 sub_detail = self.build_detail(

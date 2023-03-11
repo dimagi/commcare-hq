@@ -9,7 +9,6 @@ from soil import DownloadBase
 from soil.util import expose_download, get_download_file_path
 
 from corehq import privileges
-from corehq import toggles
 from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.custom_data_fields.models import (
     PROFILE_SLUG,
@@ -29,6 +28,8 @@ from corehq.apps.users.dbaccessors import (
     get_web_users_by_filters,
 )
 from corehq.apps.users.models import UserRole, DeactivateMobileWorkerTrigger
+from corehq.apps.reports.util import add_on_tableau_details
+from corehq.toggles import TABLEAU_USER_SYNCING
 from corehq.util.workbook_json.excel import (
     alphanumeric_sort_key,
     flatten_json,
@@ -307,6 +308,9 @@ def parse_web_users(domain, user_filters, task=None, total_count=None):
         ))
     if is_cross_domain:
         user_headers += ['domain']
+    if TABLEAU_USER_SYNCING.enabled(domain):
+        user_headers += ['tableau_role', 'tableau_groups']
+        user_dicts = add_on_tableau_details(domain, user_dicts)
     return user_headers, get_user_rows(user_dicts, user_headers)
 
 

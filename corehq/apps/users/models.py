@@ -213,6 +213,7 @@ class HqPermissions(DocumentSchema):
     manage_data_registry_list = StringListProperty(default=[])
     view_data_registry_contents = BooleanProperty(default=False)
     view_data_registry_contents_list = StringListProperty(default=[])
+    manage_attendance_tracking = BooleanProperty(default=False)
 
     @classmethod
     def from_permission_list(cls, permission_list):
@@ -260,6 +261,9 @@ class HqPermissions(DocumentSchema):
 
         if self.edit_apps:
             self.view_apps = True
+
+        if not (self.view_reports or self.view_report_list):
+            self.download_reports = False
 
     @classmethod
     @memoized
@@ -1500,6 +1504,9 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, EulaMixin):
             self.has_permission(domain, 'login_as_all_users')
             or self.has_permission(domain, 'limited_login_as')
         )
+
+    def can_manage_events(self, domain):
+        return self.has_permission(domain, 'manage_attendance_tracking')
 
     def is_current_web_user(self, request):
         return self.user_id == request.couch_user.user_id
@@ -2945,6 +2952,8 @@ class HQApiKey(models.Model):
     is_active = models.BooleanField(default=True)
     deactivated_on = models.DateTimeField(blank=True, null=True)
     expiration_date = models.DateTimeField(blank=True, null=True)  # Not yet used
+    # Not update with every request. Can be a couple of seconds out of date
+    last_used = models.DateTimeField(blank=True, null=True)
 
     objects = ApiKeyManager()
     all_objects = models.Manager()

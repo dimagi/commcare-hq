@@ -72,7 +72,7 @@ from corehq.apps.users.account_confirmation import (
 )
 from corehq.apps.users.analytics import get_search_users_in_domain_es_query
 from corehq.apps.users.audit.change_messages import UserChangeMessage
-from corehq.apps.users.bulk_download import get_domains_from_user_filters
+from corehq.apps.users.bulk_download import get_domains_from_user_filters, load_memoizer
 from corehq.apps.users.dbaccessors import get_user_docs_by_username
 from corehq.apps.users.decorators import (
     require_can_edit_commcare_users,
@@ -143,6 +143,7 @@ from soil.exceptions import TaskFailedError
 from soil.util import get_download_context
 from .custom_data_fields import UserFieldsView
 from ..utils import log_user_groups_change
+from corehq.apps.users.views.utils import get_locations_with_cases
 
 BULK_MOBILE_HELP_SITE = ("https://confluence.dimagi.com/display/commcarepublic"
                          "/Create+and+Manage+CommCare+Mobile+Workers#Createand"
@@ -297,6 +298,7 @@ class EditCommCareUserView(BaseEditUserView):
             ),
             'demo_restore_date': naturaltime(demo_restore_date_created(self.editable_user)),
             'group_names': [g.name for g in self.groups],
+            "locations_with_cases": get_locations_with_cases(self.domain, self.editable_user.assigned_location_ids)
         }
         if self.commtrack_form.errors:
             messages.error(self.request, _(
@@ -1381,16 +1383,19 @@ def _count_users(request, domain, user_type):
         return HttpResponseBadRequest("Invalid Request")
 
     user_count = 0
+    group_count = 0
     (is_cross_domain, domains_list) = get_domains_from_user_filters(domain, user_filters)
     for current_domain in domains_list:
         if user_type == MOBILE_USER_TYPE:
             user_count += count_mobile_users_by_filters(current_domain, user_filters)
+            group_count += len(load_memoizer(current_domain).groups)
         else:
             user_count += count_web_users_by_filters(current_domain, user_filters)
             user_count += count_invitations_by_filters(current_domain, user_filters)
 
     return JsonResponse({
-        'count': user_count
+        'user_count': user_count,
+        'group_count': group_count,
     })
 
 

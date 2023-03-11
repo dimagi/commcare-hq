@@ -12,6 +12,9 @@ rules:
   - labels: ['reindex/migration']
     patterns: ['migrations.lock|**/migrations/**|corehq/pillows/mappings/**|**/_design/**|corehq/couchapps/**']
 
+  - labels: [ 'Core Compatibility' ]
+    patterns: ['corehq/apps/app_manager/suite_xml/xml_models.py']
+
   - labels: ['dependencies']
     patterns: ['requirements/**|package.json|yarn.lock']
 

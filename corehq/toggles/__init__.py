@@ -9,19 +9,19 @@ from django.conf import settings
 from django.contrib import messages
 from django.http import Http404
 from django.urls import reverse
-from django.utils.safestring import mark_safe
 from django.utils.html import format_html
+from django.utils.safestring import mark_safe
 
 from attr import attrib, attrs
 from couchdbkit import ResourceNotFound
 from memoized import memoized
 
-from corehq.extensions import extension_point, ResultFormat
 from corehq import privileges
+from corehq.extensions import ResultFormat, extension_point
+from corehq.util.quickcache import quickcache
+
 from .models import Toggle
 from .shortcuts import set_toggle, toggle_enabled
-
-from corehq.util.quickcache import quickcache
 
 
 @attrs(frozen=True)
@@ -120,10 +120,21 @@ ALL_TAGS = [
 
 class StaticToggle(object):
 
-    def __init__(self, slug, label, tag, namespaces=None, help_link=None,
-                 description=None, save_fn=None, enabled_for_new_domains_after=None,
-                 enabled_for_new_users_after=None, relevant_environments=None,
-                 notification_emails=None, parent_toggles=None):
+    def __init__(
+        self,
+        slug,
+        label,
+        tag,
+        namespaces=None,
+        help_link=None,
+        description=None,
+        save_fn=None,
+        enabled_for_new_domains_after=None,
+        enabled_for_new_users_after=None,
+        relevant_environments=None,
+        notification_emails=None,
+        parent_toggles=None,
+    ):
         self.slug = slug
         self.label = label
         self.tag = tag
@@ -740,14 +751,6 @@ COPY_FORM_TO_APP = StaticToggle(
     'Allow copying a form from one app to another',
     TAG_INTERNAL,
     [NAMESPACE_DOMAIN, NAMESPACE_USER],
-)
-
-DATA_FILE_DOWNLOAD = StaticToggle(
-    'data_file_download',
-    'Offer hosting and sharing data files for downloading from a secure dropzone',
-    TAG_SOLUTIONS_OPEN,
-    help_link='https://confluence.dimagi.com/display/saas/Offer+hosting+and+sharing+data+files+for+downloading+from+a+secure+dropzone',
-    namespaces=[NAMESPACE_DOMAIN],
 )
 
 DETAIL_LIST_TAB_NODESETS = StaticToggle(
@@ -1441,13 +1444,6 @@ SHOW_IDS_IN_REPORT_BUILDER = StaticToggle(
     [NAMESPACE_DOMAIN],
 )
 
-MOBILE_USER_DEMO_MODE = StaticToggle(
-    'mobile_user_demo_mode',
-    'Ability to make a mobile worker into Demo only mobile worker',
-    TAG_SOLUTIONS_OPEN,
-    help_link='https://confluence.dimagi.com/display/GS/Demo+Mobile+Workers+and+Practice+Mode',
-    namespaces=[NAMESPACE_DOMAIN]
-)
 
 ALLOW_USER_DEFINED_EXPORT_COLUMNS = StaticToggle(
     'allow_user_defined_export_columns',
@@ -1551,14 +1547,6 @@ SORT_CALCULATION_IN_CASE_LIST = StaticToggle(
     [NAMESPACE_DOMAIN]
 )
 
-VIEW_APP_CHANGES = StaticToggle(
-    'app-changes-with-improved-diff',
-    'Improved app changes view',
-    TAG_SOLUTIONS_OPEN,
-    [NAMESPACE_DOMAIN, NAMESPACE_USER],
-    help_link="https://confluence.dimagi.com/display/saas/Viewing+App+Changes+between+versions",
-)
-
 PAGINATED_EXPORTS = StaticToggle(
     'paginated_exports',
     'Allows for pagination of exports for very large exports',
@@ -1572,13 +1560,6 @@ INCREMENTAL_EXPORTS = StaticToggle(
     TAG_CUSTOM,
     [NAMESPACE_DOMAIN],
     help_link="https://confluence.dimagi.com/display/saas/Incremental+Data+Exports"
-)
-
-DISPLAY_CONDITION_ON_TABS = StaticToggle(
-    'display_condition_on_nodeset',
-    'Show Display Condition on Case Detail Tabs',
-    TAG_SOLUTIONS_OPEN,
-    [NAMESPACE_DOMAIN]
 )
 
 SKIP_REMOVE_INDICES = StaticToggle(
@@ -1629,17 +1610,6 @@ BULK_UPLOAD_DATE_OPENED = StaticToggle(
     "Allow updating of the date_opened field with the bulk uploader",
     TAG_INTERNAL,
     [NAMESPACE_DOMAIN],
-)
-
-REGEX_FIELD_VALIDATION = StaticToggle(
-    'regex_field_validation',
-    'Regular Expression Validation for Custom Data Fields',
-    TAG_SOLUTIONS_OPEN,
-    namespaces=[NAMESPACE_DOMAIN],
-    description="This flag adds the option to specify a regular expression "
-                "(regex) to validate custom user data, custom location data, "
-                "and/or custom product data fields.",
-    help_link='https://confluence.dimagi.com/display/saas/Regular+Expression+Validation+for+Custom+Data+Fields',
 )
 
 TWO_FACTOR_SUPERUSER_ROLLOUT = StaticToggle(
@@ -1795,13 +1765,6 @@ MANAGE_RELEASES_PER_LOCATION = StaticToggle(
     TAG_SOLUTIONS_LIMITED,
     namespaces=[NAMESPACE_DOMAIN],
     help_link='https://confluence.dimagi.com/display/saas/Manage+Releases+per+Location',
-)
-
-LOCATION_SAFE_CASE_IMPORTS = StaticToggle(
-    'location_safe_case_imports',
-    'Allow location-restricted users to import cases owned at their location or below',
-    TAG_SOLUTIONS_OPEN,
-    namespaces=[NAMESPACE_DOMAIN],
 )
 
 FORM_CASE_IDS_CASE_IMPORTER = StaticToggle(
@@ -2226,7 +2189,6 @@ TURN_IO_BACKEND = StaticToggle(
     namespaces=[NAMESPACE_DOMAIN],
 )
 
-
 FOLLOWUP_FORMS_AS_CASE_LIST_FORM = StaticToggle(
     'followup_forms_as_case_list_form',
     'Option to configure follow up forms on parent case for Case List Form menu setting of '
@@ -2384,6 +2346,7 @@ EMBED_TABLEAU_REPORT_BY_USER = StaticToggle(
     description='By default, a Tableau username "HQ/{role name}" is sent to Tableau to get the embedded report. '
                 'Turn on this flag to instead send "HQ/{the user\'s HQ username}", i.e. "HQ/jdoe@dimagi.com", '
                 'to Tableau to get the embedded report.',
+    parent_toggles=[EMBEDDED_TABLEAU]
 )
 
 APPLICATION_RELEASE_LOGS = StaticToggle(
@@ -2403,9 +2366,34 @@ TABLEAU_USER_SYNCING = StaticToggle(
     Each time a user is added/deleted/updated on HQ, an equivalent Tableau user with the username "HQ/{username}"
     will be added/deleted/updated on the linked Tableau server.
     """,
-    parent_toggles=[EMBEDDED_TABLEAU]
+    parent_toggles=[EMBEDDED_TABLEAU, EMBED_TABLEAU_REPORT_BY_USER]
 )
 
+
+def _handle_attendance_tracking_role(domain, is_enabled):
+    from corehq.apps.accounting.utils import domain_has_privilege
+    from corehq.apps.users.role_utils import (
+        archive_attendance_coordinator_role_for_domain,
+        enable_attendance_coordinator_role_for_domain,
+    )
+
+    if not domain_has_privilege(domain, privileges.ATTENDANCE_TRACKING):
+        return
+
+    if is_enabled:
+        enable_attendance_coordinator_role_for_domain(domain)
+    else:
+        archive_attendance_coordinator_role_for_domain(domain)
+
+ATTENDANCE_TRACKING = StaticToggle(
+    'attendance_tracking',
+    'Allows access to the attendance tracking page',
+    TAG_SOLUTIONS_LIMITED,
+    namespaces=[NAMESPACE_DOMAIN],
+    description='Additional views will be added to simplify the process of '
+                'using CommCare HQ for attendance tracking.',
+    save_fn=_handle_attendance_tracking_role,
+)
 
 class FrozenPrivilegeToggle(StaticToggle):
     """
@@ -2471,4 +2459,56 @@ PHONE_HEARTBEAT = FrozenPrivilegeToggle(
     "Ability to configure a mobile feature to prompt users to update to latest CommCare app and apk",
     TAG_SOLUTIONS_CONDITIONAL,
     [NAMESPACE_DOMAIN]
+)
+
+
+MOBILE_USER_DEMO_MODE = FrozenPrivilegeToggle(
+    privileges.PRACTICE_MOBILE_WORKERS,
+    'mobile_user_demo_mode',
+    'Ability to make a mobile worker into Demo only mobile worker',
+    TAG_SOLUTIONS_OPEN,
+    help_link='https://confluence.dimagi.com/display/GS/Demo+Mobile+Workers+and+Practice+Mode',
+    namespaces=[NAMESPACE_DOMAIN]
+)
+
+
+VIEW_APP_CHANGES = FrozenPrivilegeToggle(
+    privileges.VIEW_APP_DIFF,
+    'app-changes-with-improved-diff',
+    'Improved app changes view',
+    TAG_SOLUTIONS_OPEN,
+    [NAMESPACE_DOMAIN, NAMESPACE_USER],
+    help_link="https://confluence.dimagi.com/display/saas/Viewing+App+Changes+between+versions",
+)
+
+DATA_FILE_DOWNLOAD = FrozenPrivilegeToggle(
+    privileges.DATA_FILE_DOWNLOAD,
+    'data_file_download',
+    label='Offer hosting and sharing data files for downloading from a secure '
+          'dropzone',
+    tag=TAG_SOLUTIONS_OPEN,
+    namespaces=[NAMESPACE_DOMAIN],
+    help_link='https://confluence.dimagi.com/display/saas/Offer+hosting+and+'
+              'sharing+data+files+for+downloading+from+a+secure+dropzone',
+)
+
+REGEX_FIELD_VALIDATION = FrozenPrivilegeToggle(
+    privileges.REGEX_FIELD_VALIDATION,
+    'regex_field_validation',
+    label='Regular Expression Validation for Custom Data Fields',
+    tag=TAG_SOLUTIONS_OPEN,
+    namespaces=[NAMESPACE_DOMAIN],
+    description="This flag adds the option to specify a regular expression "
+                "(regex) to validate custom user data, custom location data, "
+                "and/or custom product data fields.",
+    help_link='https://confluence.dimagi.com/display/saas/Regular+Expression+Validation+for+Custom+Data+Fields',
+)
+
+LOCATION_SAFE_CASE_IMPORTS = FrozenPrivilegeToggle(
+    privileges.LOCATION_SAFE_CASE_IMPORTS,
+    'location_safe_case_imports',
+    label='Location-restricted users can import cases at their location or below',
+    tag=TAG_SOLUTIONS_OPEN,
+    namespaces=[NAMESPACE_DOMAIN],
+    description='Allow location-restricted users to import cases owned at their location or below',
 )

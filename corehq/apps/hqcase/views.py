@@ -82,7 +82,7 @@ class ExplodeCasesView(BaseProjectSettingsView, TemplateView):
 @waf_allow('XSS_BODY')
 @csrf_exempt
 @allow_cors(['OPTIONS', 'GET', 'POST', 'PUT'])
-@api_auth
+@api_auth(allow_creds_in_data=False)
 @require_permission(HqPermissions.edit_data)
 @require_permission(HqPermissions.access_api)
 @CASE_API_V0_6.required_decorator()
@@ -103,7 +103,7 @@ def case_api(request, domain, case_id=None):
 @waf_allow('XSS_BODY')
 @csrf_exempt
 @allow_cors(['OPTIONS', 'GET', 'POST'])
-@api_auth
+@api_auth(allow_creds_in_data=False)
 @require_permission(HqPermissions.edit_data)
 @require_permission(HqPermissions.access_api)
 @CASE_API_V0_6.required_decorator()
@@ -154,7 +154,7 @@ def _handle_bulk_fetch(request):
 
 def _handle_list_view(request):
     try:
-        res = get_list(request.domain, request.GET.dict())
+        res = get_list(request.domain, request.GET)
     except UserError as e:
         return JsonResponse({'error': str(e)}, status=400)
 

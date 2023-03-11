@@ -36,6 +36,8 @@ of that value should be removed from the CommCare HQ codebase entirely in order
 to decouple it from application logic.
 
 
+.. _creating-elasticsearch-index-migrations:
+
 Creating Elasticsearch Index Migrations
 '''''''''''''''''''''''''''''''''''''''
 
@@ -277,22 +279,31 @@ Design Details
 Reindex Procedure Details
 '''''''''''''''''''''''''
 
-1. Configure multiplexing on an index by passing in `secondary` index name to `create_document_adapter`.
+1. Configure multiplexing on an index by passing in ``secondary`` index name to
+   ``create_document_adapter``.
 
-   - Ensure that there is a migration in place for creating the index.
-   **Note** Tooling around this is a WIP
+   - Ensure that there is a migration in place for creating the index (see
+     `Creating Elasticsearch Index Migrations <creating-elasticsearch-index-migrations_>`__
+     above).
    - *(Optional)* If the reindex involves other meta-index changes (shards,
      mappings, etc), also update those configurations at this time.
-    **Note** Currently the Adapter will not support reindexing on specific environments but it would be compatible to accommodate it in future. This support will be added once we get to V5 of ES.
-   - Configure `create_document_adapter` to return an instance of `ElasticMultiplexAdapter` by passing in `secondary` index name.
-    ```python
-    case_adapter = create_document_adapter(
-      ElasticCase,
-      "hqcases_2016-03-04",
-      "case",
-      secondary="hqcase_2022-10-20"
-    )
-    ```
+
+     **Note** Currently the Adapter will not support reindexing on specific
+     environments but it would be compatible to accommodate it in future. This
+     support will be added once we get to V5 of ES.
+
+   - Configure ``create_document_adapter`` to return an instance of
+     ``ElasticMultiplexAdapter`` by passing in ``secondary`` index name.
+
+     .. code-block:: python
+
+         case_adapter = create_document_adapter(
+             ElasticCase,
+             "hqcases_2016-03-04",
+             "case",
+             secondary="hqcase_2022-10-20"
+         )
+
    - Add a migration which performs all cluster-level operations required for
      the new (secondary) index. For example:
 
@@ -391,12 +402,6 @@ Client adapters are split into two usage patterns, the "Management Adapter" and
 to perform index verification when Django starts.  Downstream code needing an
 adapter import and use the adapter instance.
 
-.. toctree::
-
-    Management Adapter
-    Document Adapters
-    Code Documentation
-
 
 Management Adapter
 ''''''''''''''''''
@@ -432,7 +437,7 @@ reasons:
 Document Adapters
 '''''''''''''''''
 
-Document adapters are created on a per-index basis and include specific
+Document adapter classes are defined on a per-index basis and include specific
 properties and functionality necessary for maintaining a single type of "model"
 document in a single index.  Each index in Elasticsearch needs to have a
 cooresponding ``ElasticDocumentAdapter`` subclass which defines how the Python
@@ -441,8 +446,8 @@ subclass must define the following:
 
 - A ``mapping`` which defines the structure and properties for documents managed
   by the adapter.
-- A ``from_python()`` classmethod which can convert a Python model object into the
-  JSON-serializable format for writing into the adapter's index.
+- A ``from_python()`` classmethod which can convert a Python model object into
+  the JSON-serializable format for writing into the adapter's index.
 
 The combination of ``(index_name, type)`` constrains the document adapter to
 a specific HQ document mapping.  Comparing an Elastic cluster to a Postgres
@@ -452,7 +457,15 @@ analogous to a Postgres **table** object. The combination of both index name
 *and* ``_type`` fully constrains the properties that make up a specific Elastic
 document.
 
-A simple example of a document model and its cooresponding adapter:
+Document adapters are instantiated once at runtime, via the
+``create_document_adapter()`` function. The purpose of this function is to act
+as a shim, returning an ``ElasticDocumentAdapter`` instance *or* an
+``ElasticMultiplexAdapter`` instance (see
+`Multiplexing Document Adapters <multiplexing-document-adapters_>`__ below);
+depending on whether or not a secondary index is defined by the ``secondary``
+keyword argument.
+
+A simple example of a document model and its corresponding adapter:
 
 .. code-block:: python
 
@@ -482,7 +495,12 @@ A simple example of a document model and its cooresponding adapter:
             }
             return book.isbn, source
 
-    books_adapter = ElasticBook(index_name="books", type_="book")
+
+    books_adapter = create_document_adapter(
+        ElasticBook,
+        index_name="books",
+        type_="book",
+    )
 
 
 Using this adapter in practice might look as follows:
@@ -498,39 +516,101 @@ Using this adapter in practice might look as follows:
     )
     books_adapter.index(new_book)
     # fetch existing
-    classic_book = books_adapter.fetch("978-0345391803")
+    classic_book = books_adapter.get("978-0345391803")
+
+
+.. _multiplexing-document-adapters:
+
+Multiplexing Document Adapters
+''''''''''''''''''''''''''''''
+
+The ``ElasticMultiplexAdapter`` is a wrapper around two
+``ElasticDocumentAdapter`` instances: a primary and a secondary. The
+multiplexing adapter provides the same public methods as a standard document
+adapter, but it performs Elasticsearch write operations against both indexes in
+order to keep them in step with document changes. The multiplexing adapter
+provides the following functionality:
+
+- All read operations (``exists()``, ``get()``, ``search()``, etc) are always
+  performed against the *primary* adapter only. Read requests are never
+  performed against the secondary adapter.
+- The ``update()`` write method always results in two sequential requests
+  against the underlying indexes:
+
+  1. An update request against the primary adapter that simultaneously fetches
+     the full, post-update document body.
+  2. An upsert update request against the secondary adapter with the document
+     returned in the primary update response.
+
+- All other write operations (``index()``, ``delete()``, ``bulk()``, etc)
+  leverage the Elasticsearch `Bulk API`_ to perform the required operations
+  against both indexes simultaneously in as few requests against the backend as
+  possible (a single request in some cases).
+
+  - The ``index()`` method always achieves the index into both indexes with a
+    single request.
+  - The ``delete()`` method attempts to perform the delete against both
+    indexes in a single request, and will only perform a second request in order
+    to index a tombstone on the secondary (if the primary delete succeeded and
+    the secondary delete failed with a 404 status).
+  - The ``bulk()`` method (the underlying method for all bulk operations)
+    performs actions against both indexes simultaneously by chunking the actions
+    prior to calling ``elasticsearch.helpers.bulk()`` (as opposed to relying on
+    that function to perform the chunking). This allows all bulk actions to be
+    applied against both the primary and secondary indexes in parallel, thereby
+    keeping both indexes synchronized throughout the duration of potentially
+    large (multi-request) bulk operations.
+
+.. _Bulk API: https://www.elastic.co/guide/en/elasticsearch/reference/2.4/docs-bulk.html
 
 
 Tombstone
-'''''''''
+---------
 
-The concept of Tombstone in the ES mulitplexer is there to be placeholder for the docs that are deleted in the primary index. It means that whenever an adapter is multiplexed and a document is deleted from the primary index, then the secondary index will create tombstone entry for that document. The python class defined to represent these tombstones is  `corehq.apps.es.client.Tombstone`
+The concept of Tombstone in the ES mulitplexer is there to be placeholder for
+the docs that get deleted on the primary index prior to that document being
+indexed on the secondary index. It means that whenever an adapter is multiplexed
+and a document is deleted, then the secondary index will receive a tombstone
+entry for that document *if and only if* the primary index delete succeeds and
+the secondary index delete fails due to a not found condition (404). The python
+class defined to represent these tombstones is
+``corehq.apps.es.client.Tombstone``.
 
-Scenario without tomstones: If a multiplexing adapter deletes a document in the secondary index (which turns out to be a no-op because the document does not exist there yet), and then that same document is copied to the secondary index by the reindexer, then it will exist indefinitely in the secondary even though it has been deleted in the primary.
+Scenario without tombstones: If a multiplexing adapter deletes a document in the
+secondary index (which turns out to be a no-op because the document does not
+exist there yet), and then that same document is copied to the secondary index
+by the reindexer, then it will exist indefinitely in the secondary even though
+it has been deleted in the primary.
 
 Put another way:
 
 - Reindexer: gets batch of objects from primary index to copy to secondary.
-- Multiplexer: deletes a document in that batch (in both primary and secondary indexes).
+- Multiplexer: deletes a document in that batch (in both primary and secondary
+  indexes).
 - Reindexer: writes deleted (now stale) document into secondary index.
 - Result: secondary index contains a document that has been deleted.
 
-With tombstsones: this will not happen because the reindexer uses a "ignore existing documents" copy mode, so it will never overwrite a tombstone with a stale (deleted) document.
+With tombstones: this will not happen because the reindexer uses a "ignore
+existing documents" copy mode, so it will never overwrite a tombstone with a
+stale (deleted) document.
 
-The tombstones would **only exist** in the secondary index and would be deleted when we are switching from primary to secondary.
+Tombstones will only exist in the secondary index and will be deleted as a final
+step following a successful sync (reindex) operation. Since tombstones can only
+be created while the primary and secondary indexes are out of sync (secondary
+index does not yet contain all primary documents), then once the sync is
+complete, the multiplexer will no longer create new tombstones.
 
 A sample tombstone document would look like
 
-```
-{
-  "__is_tombstone__" : True
-}
-```
+.. code-block:: python
 
-Current mapping does not index `__is_tombstone__` property but it would be added to mappings before we start reindexing. This would help us in ensuring that we can ignore them in the ES queries.
+    {
+      "__is_tombstone__" : True
+    }
+
 
 Code Documentation
-''''''''''''''''''
+------------------
 
 .. automodule:: corehq.apps.es.client
    :members:

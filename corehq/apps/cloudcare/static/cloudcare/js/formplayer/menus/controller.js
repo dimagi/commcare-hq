@@ -6,6 +6,7 @@ hqDefine("cloudcare/js/formplayer/menus/controller", function () {
         formplayerUtils = hqImport("cloudcare/js/formplayer/utils/utils"),
         menusUtils = hqImport("cloudcare/js/formplayer/menus/utils"),
         views = hqImport("cloudcare/js/formplayer/menus/views"),
+        toggles = hqImport("hqwebapp/js/toggles"),
         md = window.markdownit();
     var selectMenu = function (options) {
 
@@ -40,11 +41,23 @@ hqDefine("cloudcare/js/formplayer/menus/controller", function () {
             }
 
             var urlObject = formplayerUtils.currentUrlToObject();
-
             if (urlObject.endpointId) {
                 urlObject.replaceEndpoint(menuResponse.selections);
                 formplayerUtils.setUrlToObject(urlObject);
             }
+
+            formplayerUtils.doUrlAction((urlObject) => {
+                let updated = false;
+                if (menuResponse.session_id) {
+                    urlObject.sessionId = menuResponse.session_id;
+                    updated = true;
+                } else if (urlObject.sessionId) {
+                    urlObject.sessionId = null;
+                    updated = true;
+                }
+                return updated;
+            }, true);
+
 
             // If we don't have an appId in the URL (usually due to form preview)
             // then parse the appId from the response.
@@ -91,7 +104,8 @@ hqDefine("cloudcare/js/formplayer/menus/controller", function () {
     var showMenu = function (menuResponse) {
         var menuListView = menusUtils.getMenuView(menuResponse);
         var appPreview = FormplayerFrontend.currentUser.displayOptions.singleAppMode;
-        var changeFormLanguage = FormplayerFrontend.currentUser.changeFormLanguage;
+        var changeFormLanguage = toggles.toggleEnabled('CHANGE_FORM_LANGUAGE');
+        var enablePrintOption = !menuResponse.queryKey;
 
         if (menuListView) {
             FormplayerFrontend.regions.getRegion('main').show(menuListView);
@@ -104,8 +118,8 @@ hqDefine("cloudcare/js/formplayer/menus/controller", function () {
 
         if (menuResponse.breadcrumbs) {
             menusUtils.showBreadcrumbs(menuResponse.breadcrumbs);
-            if (menuResponse.langs && menuResponse.langs.length > 1 && !appPreview && changeFormLanguage) {
-                menusUtils.showLanguageMenu(menuResponse.langs);
+            if (!appPreview && ((menuResponse.langs && menuResponse.langs.length > 1 && changeFormLanguage) || enablePrintOption)) {
+                menusUtils.showFormMenu(menuResponse.langs, changeFormLanguage);
             }
         } else {
             FormplayerFrontend.regions.getRegion('breadcrumb').empty();

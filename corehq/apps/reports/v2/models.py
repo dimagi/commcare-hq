@@ -107,7 +107,7 @@ class BaseReport(object):
 class ReportBreadcrumbsContext(object):
     """
     Generates the template context necessary to render the
-    reports/v2/partials/breadcrumbs.html template.
+    reports/v2/partials/<bootstrap_version>/breadcrumbs.html template.
     """
 
     def __init__(self, report, section_title=None, section_url=None):

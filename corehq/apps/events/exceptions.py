@@ -1,0 +1,3 @@
+
+class EventNotPersistedError(Exception):
+    pass

@@ -138,7 +138,7 @@ class SearchCriteria:
         for v in values:
             match = pattern.match(v)
             if not match:
-                raise CaseFilterError(_('Invalid date range format, {}'), self.key)
+                raise CaseFilterError(_('Invalid date range format, {}').format(v), self.key)
 
 
 def criteria_dict_to_criteria_list(criteria_dict):

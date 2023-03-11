@@ -71,11 +71,13 @@ COMPOUND_FILTERS = {
 def get_list(domain, params):
     if 'cursor' in params:
         params_string = b64decode(params['cursor']).decode('utf-8')
-        params = QueryDict(params_string).dict()
-        last_date = params.pop(INDEXED_AFTER, None)
-        last_id = params.pop(LAST_CASE_ID, None)
+        params = QueryDict(params_string, mutable=True)
+        # QueryDict.pop() returns a list
+        last_date = params.pop(INDEXED_AFTER, [None])[0]
+        last_id = params.pop(LAST_CASE_ID, [None])[0]
         query = _get_cursor_query(domain, params, last_date, last_id)
     else:
+        params = params.copy()  # Makes params mutable for pagination below
         query = _get_query(domain, params)
 
     es_result = query.run()
@@ -87,10 +89,11 @@ def get_list(domain, params):
 
     cases_in_result = len(hits)
     if cases_in_result and es_result.total > cases_in_result:
-        cursor = urlencode({**params, **{
+        params.update({
             INDEXED_AFTER: hits[-1]["@indexed_on"],
             LAST_CASE_ID: hits[-1]["_id"],
-        }})
+        })
+        cursor = params.urlencode()
         ret['next'] = {'cursor': b64encode(cursor.encode('utf-8'))}
 
     return ret
@@ -118,8 +121,13 @@ def _get_query(domain, params):
              .size(page_size)
              .sort("@indexed_on")
              .sort("_id", reset_sort=False))
-    for key, val in params.items():
-        query = query.filter(_get_filter(domain, key, val))
+    for key, val in params.lists():
+        if len(val) == 1:
+            query = query.filter(_get_filter(domain, key, val[0]))
+        else:
+            # e.g. key='owner_id', val=['abc123', 'def456']
+            filter_list = [_get_filter(domain, key, v) for v in val]
+            query = query.filter(filters.OR(*filter_list))
     return query
 
 

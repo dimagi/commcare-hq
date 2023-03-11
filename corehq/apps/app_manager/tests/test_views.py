@@ -283,7 +283,6 @@ class TestViews(TestCase):
     def test_form_linking_context(self, _):
         factory = AppFactory(build_version='2.9.0')
         m0, m0f0 = factory.new_basic_module('m0', 'frog')
-        # multiselect module (can't be linked to)
         m1, m2f0 = factory.new_basic_module('m1', 'frog')
         m1.case_details.short.multi_select = True
         # shadow module
@@ -304,6 +303,18 @@ class TestViews(TestCase):
                 'auto_link': True,
                 'name': 'm0 module > m0 form 0',
                 'unique_id': 'm0_module.m0_form_0'
+            },
+            {
+                'allow_manual_linking': False,
+                'auto_link': True,
+                'name': 'm1 module',
+                'unique_id': 'm1_module'
+            },
+            {
+                'allow_manual_linking': True,
+                'auto_link': True,
+                'name': 'm1 module > m1 form 0',
+                'unique_id': 'm1_module.m1_form_0'
             },
             {
                 'allow_manual_linking': False,
@@ -335,7 +346,6 @@ class TestViews(TestCase):
         factory = AppFactory(build_version='2.9.0')
         factory.new_basic_module('m0', 'frog')
 
-        # multiselect module (can't be linked to)
         m1, m2f0 = factory.new_basic_module('m1', 'frog')
         m1.case_details.short.multi_select = True
 
@@ -354,7 +364,19 @@ class TestViews(TestCase):
                 'auto_link': False,
                 'name': 'm0 module > m0 form 0',
                 'unique_id': 'm0_module.m0_form_0'
-            }
+            },
+            {
+                'allow_manual_linking': False,
+                'auto_link': True,
+                'name': 'm1 module',
+                'unique_id': 'm1_module'
+            },
+            {
+                'allow_manual_linking': True,
+                'auto_link': False,
+                'name': 'm1 module > m1 form 0',
+                'unique_id': 'm1_module.m1_form_0'
+            },
         ])
 
     def test_form_links_context(self, _):

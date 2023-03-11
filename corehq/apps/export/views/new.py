@@ -303,7 +303,12 @@ class CreateNewCustomCaseExportView(BaseExportView):
 
     def create_new_export_instance(self, schema, username, export_settings=None):
 
-        export = self.export_instance_cls.generate_instance_from_schema(schema, export_settings=export_settings)
+        load_deprecated = self.request.GET.get('load_deprecated') == 'True'
+        export = self.export_instance_cls.generate_instance_from_schema(
+            schema,
+            export_settings=export_settings,
+            load_deprecated=load_deprecated
+        )
 
         track_workflow(username, f'{self.metric_name} - Clicked Add Export Popup', properties={
             'domain': self.domain
@@ -319,7 +324,8 @@ class CreateNewCustomCaseExportView(BaseExportView):
         self.export_instance = self.create_new_export_instance(
             schema,
             request.user.username,
-            export_settings=export_settings)
+            export_settings=export_settings
+        )
 
         return super(CreateNewCustomCaseExportView, self).get(request, *args, **kwargs)
 

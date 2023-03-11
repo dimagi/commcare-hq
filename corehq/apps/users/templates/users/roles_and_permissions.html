@@ -1,4 +1,4 @@
-{% extends 'hqwebapp/base_section.html' %}
+{% extends 'hqwebapp/bootstrap3/base_section.html' %}
 {% load crispy_forms_tags %}
 {% load i18n %}
 {% load hq_shared_tags %}
@@ -19,6 +19,7 @@
   {% initial_page_data "web_apps_privilege" web_apps_privilege %}
   {% initial_page_data "erm_privilege" erm_privilege %}
   {% initial_page_data "mrm_privilege" mrm_privilege %}
+  {% initial_page_data "attendance_tracking_privilege" attendance_tracking_privilege %}
   {% initial_page_data "has_report_builder_access" has_report_builder_access %}
   {% initial_page_data "data_file_download_enabled" data_file_download_enabled %}
   {% initial_page_data "export_ownership_enabled" export_ownership_enabled %}
@@ -88,9 +89,9 @@
             {% trans "Locations" %}
           </th>
           {% if request|toggle_enabled:"DATA_DICTIONARY" %}
-          <th class="text-center">
-            {% trans "Data Dictionary" %}
-          </th>
+            <th class="text-center">
+              {% trans "Data Dictionary" %}
+            </th>
           {% endif %}
           <th class="text-center">
             {% trans "Data" %}
@@ -161,13 +162,15 @@
                                               view: permissions.view_locations
                                             }"></div>
           </td>
-          <td class="text-center">
-            <div data-bind="visible: permissions.access_all_locations,
-                                            permissionIcon: {
-                                              edit: permissions.edit_data_dict,
-                                              view: permissions.view_data_dict
-                                            }"></div>
-          </td>
+          {% if request|toggle_enabled:"DATA_DICTIONARY" %}
+            <td class="text-center">
+              <div data-bind="visible: permissions.access_all_locations,
+                                              permissionIcon: {
+                                                edit: permissions.edit_data_dict,
+                                                view: permissions.view_data_dict
+                                              }"></div>
+            </td>
+          {% endif %}
           <td class="text-center">
             <div data-bind="permissionIcon: {
                                               edit: permissions.edit_data
