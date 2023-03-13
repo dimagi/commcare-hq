@@ -824,7 +824,7 @@ hqDefine('export/js/models', [
             return true;
         }
 
-        if (!this.is_advanced() && !this.is_deleted() && !this.is_deprecated) {
+        if (!this.is_advanced() && !this.is_deleted() && !this.is_deprecated()) {
             return true;
         }
 
