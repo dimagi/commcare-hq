@@ -1,2 +1,6 @@
-# The CommCare HQ staging workflow has been updated, and the staging.yml file
-# can now be found at https://github.com/dimagi/staging-branches/blob/main/commcare-hq-staging.yml
+##### THE COMMCARE HQ STAGING WORKFLOW HAS BEEN UPDATED #####
+# The staging.yml file that used to live in this repository has been moved to
+# https://github.com/dimagi/staging-branches/blob/main/commcare-hq-staging.yml
+#
+# All edits should be made to the commcare-hq-staging.yml file directly in the
+# staging-branches repository.
