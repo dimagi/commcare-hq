@@ -433,7 +433,7 @@ DOMAIN_DELETE_OPERATIONS = [
         'FHIRImportResourceType', 'ResourceTypeRelationship',
         'FHIRImportResourceProperty',
     ]),
-    ModelDeletion('repeaters', 'SQLRepeater', 'domain'),
+    ModelDeletion('repeaters', 'Repeater', 'domain'),
     ModelDeletion('motech', 'ConnectionSettings', 'domain'),
     ModelDeletion('repeaters', 'SQLRepeatRecord', 'domain'),
     ModelDeletion('repeaters', 'SQLRepeatRecordAttempt', 'repeat_record__domain'),
@@ -443,6 +443,8 @@ DOMAIN_DELETE_OPERATIONS = [
     CustomDeletion('ucr', delete_all_ucr_tables_for_domain, []),
     ModelDeletion('domain', 'OperatorCallLimitSettings', 'domain'),
     ModelDeletion('domain', 'SMSAccountConfirmationSettings', 'domain'),
+    ModelDeletion('domain', 'AppReleaseModeSetting', 'domain'),
+    ModelDeletion('events', 'Event', 'domain'),
 ]
 
 

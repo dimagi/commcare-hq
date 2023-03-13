@@ -177,6 +177,23 @@
                   {% endif %}
                 </span>
               </button>
+
+              <!-- Deprecated Button -->
+              {% if export_instance.type == 'case' %}
+                <button type="button"
+                        class="btn btn-default btn-xs"
+                        data-bind="click: table.toggleShowDeprecated,
+                                  css: {
+                                    active: table.showDeprecated
+                                  }">
+                  <span data-bind="visible: !table.showDeprecated()">
+                    {% trans "Show Deprecated Properties" %}
+                  </span>
+                  <span data-bind="visible: table.showDeprecated">
+                    {% trans "Hide Deprecated Properties" %}
+                  </span>
+                </button>
+              {% endif %}
             </th>
             <th data-bind="attr: { 'class': $root.displayColumnClass }">
               {% trans "Display" %}<br />

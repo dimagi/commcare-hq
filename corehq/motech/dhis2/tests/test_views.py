@@ -6,7 +6,7 @@ from django.urls import reverse
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.users.models import WebUser
 from corehq.motech.dhis2.models import SQLDataSetMap, SQLDataValueMap
-from corehq.motech.dhis2.repeaters import SQLDhis2EntityRepeater, SQLDhis2Repeater
+from corehq.motech.dhis2.repeaters import Dhis2EntityRepeater, Dhis2Repeater
 from corehq.motech.models import ConnectionSettings
 from ...repeaters.dbaccessors import delete_all_repeaters
 from corehq.util.test_utils import flag_enabled
@@ -201,7 +201,7 @@ class TestConfigDhis2RepeaterView(BaseViewTest):
         )
         conn.save()
         cls.connection_setting = conn
-        cls.dhis2_repeater = SQLDhis2Repeater(**deepcopy(dhis2_repeater_data))
+        cls.dhis2_repeater = Dhis2Repeater(**deepcopy(dhis2_repeater_data))
         cls.dhis2_repeater.domain = DOMAIN
         cls.dhis2_repeater.connection_settings = conn
         cls.dhis2_repeater.save()
@@ -225,7 +225,7 @@ class TestConfigDhis2RepeaterView(BaseViewTest):
         response = self.client.post(reverse('config_dhis2_repeater', kwargs=self.url_kwargs), data)
         self.assertEqual(response.status_code, 200)
 
-        updated_repeater = SQLDhis2Repeater.objects.get(id=self.dhis2_repeater.id)
+        updated_repeater = Dhis2Repeater.objects.get(id=self.dhis2_repeater.id)
 
         self.assertEqual(updated_repeater.dhis2_config['form_configs'], form_configs)
 
@@ -248,7 +248,7 @@ class TestConfigDhis2RepeaterView(BaseViewTest):
         self.assertEqual(response.status_code, 400)
 
         # No changes in repeater doc when request fails
-        unchanged_repeater = SQLDhis2Repeater.objects.get(id=self.dhis2_repeater.id)
+        unchanged_repeater = Dhis2Repeater.objects.get(id=self.dhis2_repeater.id)
 
         self.assertEqual(unchanged_repeater.dhis2_config, self.dhis2_repeater.dhis2_config)
 
@@ -264,7 +264,7 @@ class TestConfigDhis2EntityRepeaterView(BaseViewTest):
         )
         conn.save()
         cls.connection_setting = conn
-        cls.dhis2_repeater = SQLDhis2EntityRepeater(**deepcopy(dhis2_entity_repeater_data))
+        cls.dhis2_repeater = Dhis2EntityRepeater(**deepcopy(dhis2_entity_repeater_data))
         cls.dhis2_repeater.domain = DOMAIN
         cls.dhis2_repeater.connection_settings = conn
         cls.dhis2_repeater.save()
@@ -288,7 +288,7 @@ class TestConfigDhis2EntityRepeaterView(BaseViewTest):
         response = self.client.post(reverse('config_dhis2_entity_repeater', kwargs=self.url_kwargs), data)
         self.assertEqual(response.status_code, 200)
 
-        updated_repeater = SQLDhis2EntityRepeater.objects.get(id=self.dhis2_repeater.id)
+        updated_repeater = Dhis2EntityRepeater.objects.get(id=self.dhis2_repeater.id)
 
         self.assertEqual(updated_repeater.dhis2_entity_config['case_configs'], case_configs)
 

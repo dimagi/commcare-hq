@@ -68,7 +68,7 @@ def validate_column_names(column_names, invalid_column_names):
 
 
 # Cobble together the context needed to render breadcrumbs that class-based views get from BasePageView
-# For use by function-based views that extend hqwebapp/base_section.html
+# For use by function-based views that extend hqwebapp/bootstrap3/base_section.html
 def _case_importer_breadcrumb_context(page_name, domain):
     return {
         'current_page': {
@@ -305,7 +305,7 @@ def excel_commit(request, domain):
 @waf_allow('XSS_BODY')
 @csrf_exempt
 @require_POST
-@api_auth
+@api_auth()
 @require_can_edit_data
 def bulk_case_upload_api(request, domain, **kwargs):
     try:

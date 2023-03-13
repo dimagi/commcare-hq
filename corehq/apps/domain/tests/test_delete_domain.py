@@ -129,8 +129,8 @@ from corehq.form_processor.tests.utils import (
 from corehq.motech.models import ConnectionSettings, RequestLog
 from corehq.motech.repeaters.const import RECORD_SUCCESS_STATE
 from corehq.motech.repeaters.models import (
-    SQLCaseRepeater,
-    SQLRepeater,
+    CaseRepeater,
+    Repeater,
     SQLRepeatRecord,
     SQLRepeatRecordAttempt,
 )
@@ -891,9 +891,14 @@ class TestDeleteDomain(TestCase):
         self.assertEqual(user_history.changes, {})
 
     def _assert_role_counts(self, domain_name, roles, permissions, assignments):
-        self.assertEqual(UserRole.objects.filter(domain=domain_name).count(), roles)
-        self.assertEqual(RolePermission.objects.filter(role__domain=domain_name).count(), permissions)
-        self.assertEqual(RoleAssignableBy.objects.filter(role__domain=domain_name).count(), assignments)
+        self.assertEqual(UserRole.objects.filter(domain=domain_name
+                                                 ).exclude(name='Attendance Coordinator').count(), roles)
+        self.assertEqual(RolePermission.objects.filter(
+            role__domain=domain_name
+        ).exclude(role__name='Attendance Coordinator').count(), permissions)
+        self.assertEqual(RoleAssignableBy.objects.filter(
+            role__domain=domain_name
+        ).exclude(role__name='Attendance Coordinator').count(), assignments)
 
     def test_roles_delete(self):
         for domain_name in [self.domain.name, self.domain2.name]:
@@ -909,7 +914,7 @@ class TestDeleteDomain(TestCase):
                 PermissionInfo(HqPermissions.view_reports.name, allow=PermissionInfo.ALLOW_ALL)
             ])
             role.set_assignable_by([role1.id])
-            self._assert_role_counts(domain_name, 2, 1, 1)
+            self._assert_role_counts(self.domain.name, 2, 1, 1)
 
         self.domain.delete()
 
@@ -954,7 +959,7 @@ class TestDeleteDomain(TestCase):
 
     def _assert_repeaters_count(self, domain_name, count):
         self._assert_queryset_count([
-            SQLRepeater.objects.filter(domain=domain_name),
+            Repeater.objects.filter(domain=domain_name),
             SQLRepeatRecord.objects.filter(domain=domain_name),
             SQLRepeatRecordAttempt.objects.filter(repeat_record__domain=domain_name),
         ], count)
@@ -966,7 +971,7 @@ class TestDeleteDomain(TestCase):
                 name='To Be Deleted',
                 url="http://localhost/api/"
             )
-            repeater = SQLCaseRepeater.objects.create(
+            repeater = CaseRepeater.objects.create(
                 domain=domain_name,
                 connection_settings=conn
             )

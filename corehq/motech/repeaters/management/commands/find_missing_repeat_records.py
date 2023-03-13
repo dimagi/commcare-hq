@@ -11,13 +11,13 @@ from corehq.apps.es import CaseES, FormES, UserES, AppES
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.users.models import CommCareUser
 from corehq.form_processor.models import CommCareCase, XFormInstance
-from corehq.motech.dhis2.repeaters import SQLDhis2EntityRepeater
-from corehq.motech.openmrs.repeaters import SQLOpenmrsRepeater
+from corehq.motech.dhis2.repeaters import Dhis2EntityRepeater
+from corehq.motech.openmrs.repeaters import OpenmrsRepeater
 from corehq.motech.repeaters.dbaccessors import (
     get_domains_that_have_repeat_records,
     get_repeat_records_by_payload_id
 )
-from corehq.motech.repeaters.models import SQLCreateCaseRepeater, SQLRepeater, SQLUpdateCaseRepeater, RepeatRecord
+from corehq.motech.repeaters.models import CreateCaseRepeater, Repeater, UpdateCaseRepeater, RepeatRecord
 from corehq.util.argparse_types import date_type
 
 from dimagi.utils.parsing import string_to_utc_datetime
@@ -208,7 +208,7 @@ def find_missing_case_repeat_records_for_case(case, domain, repeaters, startdate
         fired_repeater_ids_and_counts_after_enddate[record.repeater_id] += 1
 
     for repeater in repeaters:
-        repeaters_to_ignore = (SQLDhis2EntityRepeater, SQLOpenmrsRepeater)
+        repeaters_to_ignore = (Dhis2EntityRepeater, OpenmrsRepeater)
         if isinstance(repeater, repeaters_to_ignore):
             # not dealing with these right now because their expected payload appears to be a form?
             continue
@@ -235,7 +235,7 @@ def find_missing_case_repeat_records_for_case(case, domain, repeaters, startdate
 
         if missing_count > 0:
             if should_create:
-                if isinstance(repeater, SQLCreateCaseRepeater) and len(case.transactions) > 1:
+                if isinstance(repeater, CreateCaseRepeater) and len(case.transactions) > 1:
                     create_case_repeater_register(repeater, domain, case)
                     logger.info(f"Registering case {case.get_id} for create case repeater {repeater.repeater_id}")
                 else:
@@ -245,9 +245,9 @@ def find_missing_case_repeat_records_for_case(case, domain, repeaters, startdate
                 logger.info(f"Missing case {case.get_id} for repeater {repeater.repeater_id}")
 
         missing_all_count += missing_count
-        if isinstance(repeater, SQLCreateCaseRepeater):
+        if isinstance(repeater, CreateCaseRepeater):
             missing_create_count += missing_count
-        elif isinstance(repeater, SQLUpdateCaseRepeater):
+        elif isinstance(repeater, UpdateCaseRepeater):
             missing_update_count += missing_count
 
         successful_count += actual_record_count
@@ -266,11 +266,11 @@ def expected_number_of_repeat_records_fired_for_case(case, repeater, startdate, 
     Based on a case's transactions, and the number of repeat records
     """
     filtered_transactions = []
-    if isinstance(repeater, SQLCreateCaseRepeater):
+    if isinstance(repeater, CreateCaseRepeater):
         # to avoid modifying CreateCaseRepeater's allowed_to_forward method
         if create_case_repeater_allowed_to_forward(repeater, case):
             filtered_transactions = case.transactions[0:1]
-    elif isinstance(repeater, SQLUpdateCaseRepeater):
+    elif isinstance(repeater, UpdateCaseRepeater):
         if repeater.allowed_to_forward(case):
             filtered_transactions = case.transactions[1:]
     else:
@@ -486,7 +486,7 @@ def get_repeaters_for_type_in_domain(domain, repeater_types):
     :param domain: domain to search in
     :param repeater_types: a tuple of repeater class types
     """
-    repeaters = SQLRepeater.objects.filter(
+    repeaters = Repeater.objects.filter(
         domain=domain,
         repeater_type__in=repeater_types
     )
@@ -506,7 +506,7 @@ def create_case_repeater_register(repeater, domain, payload):
     If a CreateCaseRepeater has a missing repeat record, but the case now contains update transactions
     This can be used to properly trigger the missing repeat record.
     """
-    if not isinstance(repeater, SQLCreateCaseRepeater):
+    if not isinstance(repeater, CreateCaseRepeater):
         logger.error(f"Error - cannot call create_case_repeater_register on repeater type f{type(repeater)}")
         return
 

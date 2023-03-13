@@ -63,32 +63,25 @@ branches:
     - dmr/add-support-for-ses-django-email-backend  # Danny Aug 26
     - do/migrate-apps # Dominic Sep 2
     - smh/remove-setSelectedValue-import # Steph Sept 20
-    - akj/release-mode-toggle # Akash 7 Oct
     - akj/migrations-fix # Akash Oct 11
     - mk/support-expanded-cols-in-mobile-ucr-2 # MK Oct 31
     # - akj/abdm-api-for-mobile-app # Akash Sep 28
     - es/redirect-domain  # Ethan Nov 21
     #- jls/web-apps-requirejs  # Jenny Jan 17
     - gh/remove-duplicate-kafka-seq-code # Graham Dec 26
-    - gh/refactor-orphaned-ucr-code # Graham Dec 26
-    - jls/new-instance-connectors # Steph Dec 27
-    - smh/allow-eof-form-lining-multi-select # Steph Jan 4
-    - jm/refactor-api-es  # [QA] Joel Jan 10
-    - jm/refactor-user-pillow  # [QA] Joel Jan 10
-    - pkv/data-dictionary-labels-cle-integration # Pawan Jan 11
-    #- ad/user-syncing-task # Addison Jan 13  # conflicts with 'ad/user-syncing-UI' disabled by Joel Jan 23
-    - em/case-search-filter-feature-flag # Evan Jan 18
-    - akj/ush-2613-commcare-user-case # Akash Jan 19
-    - rp/mobile-worker-bulk-download-ui-change # Rynhard Jan 20
-    - akj/case-detail-close-accessibility # Akash Jan 21
-    - jm/refactor-user-signals  # [QA] Joel Jan 23
-    - em/switching-project-spaces-bugfix # Evan Jan 25
-    - ap/rename-sql-repeaters # Amit Jan 26
-    - ad/remove-entered-wrap-functions # Addison Jan 26
-    - revert-32492-ad/incomplete-forms-hotfix # Jonathan T. Jan 26
-    - pkv/accessibility-tree-change-1932 # Pawan Jan 27
-    - pkv/sync-complete-action-indicator-sr # Pawan Jan 27
-    - revert-32548-revert-32435-sk/sentry-js  # Simon Jan 27
-    - akj/ush-1508-checkbox-accessibility # Akash Jan 29
-    - jls/remove-a-lot-of-wrapping # Jenny Jan 30
+    # - ce/enable-case-rate-limits # Cal Feb 1
+    # - ml/enforce-metadata-ff # Minha Feb 2
+    - jt/ush_2575_case_search_pull_related_cases # Jonathan T. Feb 6
+    - smh/force-incremental-sync # Steph Feb 14
+    - rc/media-upload-spinner-fix # Robert Feb 16
+    - mjr/erm-overwrite # Matt Feb 21
+    - ad/tableau-user-syncing-various-2 # Addison Feb 24
+    - pkv/accessibility-mapbox-geocoder-widget # Pawan Feb 27
+    - gh/improve-pillow-logging-take-2 # Graham Mar 1
+    - ml/remove-advanced-mobile-worker-search # Minha Mar 6
+    - pkv/conditional-alerts-off-on-false # Pawan Mar 9
+    - ap/es/update-to-python+gh/remove-duplicate-kafka-seq-code # Amit Mar 10
+    - ap/es/update-to-python # Amit Mar 10
+    - cs+nh/attendees # Charl March 10
+    - revert-32713-revert-32202-jls/new-instance-connectors # Steph March 10
 submodules: { }

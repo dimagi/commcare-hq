@@ -12,17 +12,14 @@ from pillowtop.tests.utils import TEST_INDEX_INFO
 
 from corehq.apps.es.client import ElasticMultiplexAdapter
 from corehq.apps.es.migration_operations import CreateIndex
-from corehq.elastic import get_es_new, send_to_elasticsearch
-from corehq.form_processor.tests.utils import FormProcessorTestUtils
+from corehq.elastic import get_es_new
 from corehq.pillows.case_search import transform_case_for_elasticsearch
-from corehq.pillows.mappings.case_search_mapping import CASE_SEARCH_INDEX_INFO
 from corehq.tests.util.warnings import filter_warnings
 from corehq.util.elastic import ensure_index_deleted
 from corehq.util.es.elasticsearch import NotFoundError
-from corehq.util.test_utils import trap_extra_setup
 
 from ..client import ElasticDocumentAdapter, manager
-from ..transient_util import index_info_from_cname
+from ..transient_util import doc_adapter_from_cname
 
 TEST_ES_MAPPING = {
     '_meta': {
@@ -259,16 +256,12 @@ def temporary_index(index, type_=None, mapping=None, *, purge=True):
 
 
 def populate_es_index(models, index_cname, doc_prep_fn=lambda doc: doc):
-    index_info = index_info_from_cname(index_cname)
-    es = get_es_new()
-    with trap_extra_setup(ConnectionError):
-        initialize_index_and_mapping(es, index_info)
+    adapter = doc_adapter_from_cname(index_cname)
     for model in models:
-        send_to_elasticsearch(
-            index_cname,
+        adapter.index(
             doc_prep_fn(model.to_json() if hasattr(model, 'to_json') else model)
         )
-    es.indices.refresh(index_info.index)
+    manager.index_refresh(adapter.index_name)
 
 
 def populate_user_index(users):
@@ -289,11 +282,6 @@ def case_search_es_setup(domain, case_blocks):
 
 def populate_case_search_index(cases):
     populate_es_index(cases, 'case_search', transform_case_for_elasticsearch)
-
-
-def case_search_es_teardown():
-    FormProcessorTestUtils.delete_all_cases()
-    ensure_index_deleted(CASE_SEARCH_INDEX_INFO.index)
 
 
 def docs_from_result(result):

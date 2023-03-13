@@ -58,7 +58,7 @@ from corehq.apps.change_feed.data_sources import (
     get_document_store_for_doc_type,
 )
 from corehq.apps.domain.decorators import (
-    api_auth_with_scope,
+    api_auth,
     login_and_domain_required,
 )
 from corehq.apps.domain.models import AllowedUCRExpressionSettings, Domain
@@ -1469,7 +1469,7 @@ def process_url_params(params, columns):
     return ExportParameters(format_, keyword_filters, sql_filters)
 
 
-@api_auth_with_scope(['reports:view'])
+@api_auth(oauth_scopes=['reports:view'])
 @require_permission(HqPermissions.view_reports)
 @swallow_programming_errors
 @api_throttle

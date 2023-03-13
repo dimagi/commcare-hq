@@ -449,6 +449,11 @@ def persistent_case_context_detail(module):
     return detail(module, 'persistent_case_context')
 
 
+@pattern('m%d_no_items_text')
+def no_items_text_detail(module):
+    return detail(module, 'no_items_text')
+
+
 def fixture_detail(module):
     return detail(module, 'fixture_select')
 

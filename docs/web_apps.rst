@@ -104,7 +104,7 @@ Not all features have all of these pieces:
 * Some features, like case search, have additional HQ work because they interact with HQ in ways beyond what's described above.
 
 Example: Registration from Case List
-------------------------------------
+====================================
 
 As an example, consider `registration from the case list <https://confluence.dimagi.com/display/commcarepublic/Minimize+Duplicates+Method+1%3A+Registration+From+the+Case+List>`_:
 
@@ -161,7 +161,7 @@ Tight coupling with formplayer means web apps tends to use formplayer/mobile/Com
 The major CommCare/HQ concepts FormplayerFrontend deals with are apps, users, menus, and sessions. "Apps" and "users" are the same concepts they are in the rest of HQ, while a "menu" is a UI concept that covers the main web apps screens, and "sessions" means incomplete forms.
 
 Apps
-----
+====
 
 These are HQ apps. Most of the logic around apps has to do with displaying the home screen of web apps, where you see a tiled list of apps along with buttons for sync, settings, etc.
 
@@ -170,7 +170,7 @@ This home screen has access to a subset of data from each app's couch document, 
 Once you enter an app, web apps no longer has access to this app document. All app functionality in web apps is designed as it is in mobile, with the feature's configuration encoded in the form XML or suite.xml. That config is then used to generate the web apps UI and to formulate requests to formplayer.
 
 Users
------
+=====
 
 These are HQ users, although the model has very few of the many attributes of CouchUser.
 
@@ -179,14 +179,14 @@ Most of the time you're only concerned with the current user, who is accessible 
 The users code also deals with the Log In As workflow. Log In As is often described as "restore as" in the code: the user has a ``restoreAs`` attribute with the username of the current Log In As user, the ``RestoreAsBanner`` is the yellow banner up top that shows who you're logged in as, and the ``RestoreAsView`` is the Log In As screen. The current Log In As user is stored in a cookie so that users do not need to repeat the workflow often.
 
 Menus
------
+=====
 
 This is where the bulk of new web apps development happens. This contains the actual "menu" screen that lists forms & sub-menus, but it also contains case lists, case details, and case search screens.
 
 `menus/views.js <https://github.com/dimagi/commcare-hq/blob/master/corehq/apps/cloudcare/static/cloudcare/js/formplayer/menus/views.js>`_ contains the views for case list and case detail, while `views/query.js <https://github.com/dimagi/commcare-hq/blob/master/corehq/apps/cloudcare/static/cloudcare/js/formplayer/menus/views/query.js>`_ contains the case search view.
 
 Sessions
---------
+========
 
 These are incomplete forms - the same incomplete forms workflow that happens on mobile, but on web apps, incomplete forms are created automatically instead of at the user's request. When a user is in form entry, web apps creates an incomplete form in the background and stores the current answers frequently so they can be accessed if the user closes their browser window, etc. These expire after a few days, maybe a week, exact lifespan might be configurable by a project setting. They're accessible from the web apps home screen.
 

@@ -53,6 +53,7 @@ from corehq.apps.app_manager.decorators import (
 from corehq.apps.app_manager.exceptions import (
     FormNotFoundException,
     XFormValidationFailed,
+    ModuleNotFoundException,
 )
 from corehq.apps.app_manager.helpers.validators import load_case_reserved_words
 from corehq.apps.app_manager.models import (
@@ -71,7 +72,6 @@ from corehq.apps.app_manager.models import (
     FormDatum,
     FormLink,
     IncompatibleFormTypeException,
-    ModuleNotFoundException,
     OpenCaseAction,
     UpdateCaseAction,
 )
@@ -122,6 +122,7 @@ from corehq.apps.programs.models import Program
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import HqPermissions
 from corehq.util.view_utils import set_file_download
+from no_exceptions.exceptions import Http400
 
 
 @no_conflict_require_POST
@@ -379,7 +380,7 @@ def _edit_form_attr(request, domain, app_id, form_unique_id, attr):
             )
     if (should_edit("form_links_xpath_expressions")
             and should_edit("form_links_form_ids")
-            and toggles.FORM_LINK_WORKFLOW.enabled(domain)):
+            and domain_has_privilege(domain, privileges.FORM_LINK_WORKFLOW)):
         form_link_data = zip(
             request.POST.getlist('form_links_xpath_expressions'),
             request.POST.getlist('form_links_form_ids'),
@@ -808,7 +809,7 @@ def get_form_view_context_and_template(request, domain, form, langs, current_lan
     if module.root_module_id and not module.root_module.put_in_root:
         if not module.root_module.is_multi_select():
             form_workflows[WORKFLOW_PARENT_MODULE] = _("Parent Menu: ") + trans(module.root_module.name, langs)
-    allow_form_workflow = toggles.FORM_LINK_WORKFLOW.enabled(domain)
+    allow_form_workflow = domain_has_privilege(domain, privileges.FORM_LINK_WORKFLOW)
     if allow_form_workflow or form.post_form_workflow == WORKFLOW_FORM:
         form_workflows[WORKFLOW_FORM] = _("Link to other form or menu")
 
@@ -955,10 +956,7 @@ def _get_linkable_forms_context(module, langs):
         # Menus can be linked automatically if they're a top-level menu (no parent)
         # or their parent menu's case type matches the current menu's parent's case type.
         # Menus that use display-only forms can't be linked at all, since they don't have a
-        # dedicated screen to navigate to. Multi-select menus can't be linked to at all.
-        # All other menus can be linked manually.
-        if candidate_module.is_multi_select():
-            continue
+        # dedicated screen to navigate to. All other menus can be linked manually.
         if not candidate_module.put_in_root:
             is_top_level = candidate_module.root_module_id is None
             is_child_match = (
@@ -991,20 +989,41 @@ def _get_linkable_forms_context(module, langs):
 
 @require_can_edit_apps
 def get_form_datums(request, domain, app_id):
-    from corehq.apps.app_manager.suite_xml.sections.entries import EntriesHelper
     form_id = request.GET.get('form_id')
+    try:
+        datums = _get_form_datums(domain, app_id, form_id)
+    except Exception:
+        notify_exception(request, "Error fetching form datums", details={
+            "domain": domain, "app_id": app_id, "form_id": form_id
+        })
+        raise
+    return JsonResponse(datums, safe=False)
+
+
+def _get_form_datums(domain, app_id, form_id):
+    from corehq.apps.app_manager.suite_xml.sections.entries import EntriesHelper
     app = get_app(domain, app_id)
-    form = app.get_form(form_id)
+
+    try:
+        module_id, form_id = form_id.split('.')
+    except ValueError:
+        raise Http400
+
+    try:
+        module = app.get_module_by_unique_id(module_id)
+        form = app.get_form(form_id)
+    except (ModuleNotFoundException, FormNotFoundException) as e:
+        raise Http404(str(e))
 
     def make_datum(datum):
         return {'name': datum.id, 'case_type': datum.case_type}
 
     helper = EntriesHelper(app)
     datums = [
-        make_datum(datum) for datum in helper.get_datums_meta_for_form_generic(form)
+        make_datum(datum) for datum in helper.get_datums_meta_for_form_generic(form, module)
         if datum.requires_selection
     ]
-    return JsonResponse(datums, safe=False)
+    return datums
 
 
 @require_GET

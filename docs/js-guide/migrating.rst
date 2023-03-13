@@ -1,3 +1,4 @@
+
 RequireJS Migration Guide
 =========================
 
@@ -135,19 +136,17 @@ To declare dependencies:
   parameter list, and replace calls to ``hqImport(...)`` with the new parameter name.
 - If you removed any ``<script>`` tags from the template
   and haven’t yet added them to the dependency list, do that.
-- Check the template’s parent template:
-
-- If the parent has a ``requirejs_main`` module, the template you’re migrating should include a dependency on that module.
-   - If the parent still has ``<script>`` tags, the template
-   you’re migrating should include those as dependencies. It’s usually
-   convenient to migrate the parent and any “sibling” templates at the same
-   time so you can remove the ``<script>`` tags altogether. If that isn’t
-   possible, make the parent check before including script tags:
-   ``{% if requirejs_main %}<script ...></script>{% endif %}``
-   - Also check the parent’s parent template, etc. Stop once you get to
-   ``hqwebapp/base.html``, ``hqwebapp/two_column.html``, or
-   ``hqwebapp/base_section.html``, which already support requirejs.
-
+- Check the template’s parent template
+    - If the parent has a ``requirejs_main`` module, the template you’re migrating should include a dependency on that module.
+       - If the parent still has ``<script>`` tags, the template
+         you’re migrating should include those as dependencies. It’s usually
+         convenient to migrate the parent and any “sibling” templates at the same
+         time so you can remove the ``<script>`` tags altogether. If that isn’t
+         possible, make the parent check before including script tags:
+         ``{% if requirejs_main %}<script ...></script>{% endif %}``
+       - Also check the parent’s parent template, etc. Stop once you get to
+         ``hqwebapp/base.html``, ``hqwebapp/bootstrap3/two_column.html``, or
+         ``hqwebapp/bootstrap3/base_section.html``, which already support requirejs.
 -  Check the view for any `hqwebapp
    decorators <https://github.com/dimagi/commcare-hq/blob/master/corehq/apps/hqwebapp/decorators.py>`__
    like ``use_jquery_ui`` which are used to include many common yet not

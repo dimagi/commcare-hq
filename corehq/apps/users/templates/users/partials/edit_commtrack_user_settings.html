@@ -10,6 +10,28 @@
     {% crispy commtrack.update_form %}
   </fieldset>
   {% if not request.is_view_only %}
+    {% if locations_with_cases %}
+      <div class="alert alert-warning">
+        <p>
+          {% blocktrans %}
+            There are cases in the following assigned locations which may need to be migrated:
+          {% endblocktrans %}
+        </p>
+        {% for location, case_count in locations_with_cases.items %}
+          <ul>
+            <li>{{ location }}: {{ case_count }}</li>
+          </ul>
+        {% endfor %}
+      </div>
+    {% else %}
+      <div class="alert alert-info">
+        <p>
+          {% blocktrans %}
+            There are no cases in any of the user's assigned locations that need to be migrated.
+          {% endblocktrans %}
+        </p>
+      </div>
+    {% endif %}
     <div class="form-actions">
       <div class="col-sm-offset-3 col-md-offset-2 col-sm-9 col-md-8 col-lg-6">
         <button type="submit" class="btn btn-primary disable-on-submit">

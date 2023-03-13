@@ -12,3 +12,5 @@ TABLEAU_ROLES = (
     (_('Read Only'), 'ReadOnly'),
     (_('Viewer'), 'Viewer')
 )
+
+HQ_TABLEAU_GROUP_NAME = 'HQ'

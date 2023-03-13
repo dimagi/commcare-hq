@@ -1,13 +1,16 @@
 import os
 import sys
+from contextlib import contextmanager
 from datetime import datetime
 from functools import wraps
 
+from django.apps import apps
 from django.conf import settings
 from django.db import migrations
 from django.db.backends.postgresql.schema import DatabaseSchemaEditor
 from django.db.migrations import RunPython
 
+from django.db.migrations.autodetector import MigrationAutodetector
 from django.db.migrations.recorder import MigrationRecorder
 
 
@@ -179,3 +182,68 @@ def prompt_for_historical_migration(app_name, migration_name, required_commit):
 
 def get_migration_name(file_path):
     return os.path.splitext(os.path.basename(file_path))[0]
+
+
+@contextmanager
+def patch_migration_autodetector(makemigrations_command):
+    """Allow app configs to participate in migration auto-detection
+
+    AppConfig migration contributions are made after other Django
+    migration operations have been detected.
+
+    AppConfigs that implement ``autodetect_migrations(add_operation)``
+    may contribute to migration autodetection. The ``add_operation``
+    callable argument accepts the same arguments as
+    ``MigrationAutodetector.add_operation``. ``autodetect_migrations``
+    may return a function, which will be called during the
+    ``write_migration_files`` phase of migration generation.
+
+    This patch is intended to be applied when calling the ``handle`` method
+    of ``django.core.management.commands.makemigrations.Command``.
+    """
+    def _detect_changes(self, convert_apps=None, graph=None):
+        def _sort_migrations(self):
+            if convert_apps:
+                configs = [apps.get_app_config(label) for label in convert_apps]
+            else:
+                configs = apps.get_app_configs()
+            for app in configs:
+                try:
+                    detect_changes = app.autodetect_migrations
+                except AttributeError:
+                    continue
+                write_files = detect_changes(self.add_operation)
+                if write_files is not None:
+                    write_ops.append(write_files)
+            return real_sort_migrations(self)
+
+        with _patch(MigrationAutodetector, "_sort_migrations", _sort_migrations):
+            return real_detect_changes(self, convert_apps=convert_apps, graph=graph)
+
+    def write_files(changes):
+        result = real_write_files(changes)
+        if not makemigrations_command.dry_run:
+            for write_op in write_ops:
+                write_op()
+        write_ops.clear()
+        return result
+
+    write_ops = []
+    real_detect_changes = MigrationAutodetector._detect_changes
+    real_sort_migrations = MigrationAutodetector._sort_migrations
+    real_write_files = makemigrations_command.write_migration_files
+    with (
+        _patch(MigrationAutodetector, "_detect_changes", _detect_changes),
+        _patch(makemigrations_command, "write_migration_files", write_files),
+    ):
+        yield
+
+
+@contextmanager
+def _patch(obj, attribute, value):
+    original = getattr(obj, attribute)
+    setattr(obj, attribute, value)
+    try:
+        yield
+    finally:
+        setattr(obj, attribute, original)

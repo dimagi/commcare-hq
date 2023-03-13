@@ -12,7 +12,7 @@ from corehq.apps.app_manager.models import Application
 from corehq.apps.domain.models import Domain
 from corehq.motech.models import ConnectionSettings
 from corehq.motech.repeaters.dbaccessors import delete_all_repeat_records
-from corehq.motech.repeaters.models import RepeatRecord, SQLAppStructureRepeater
+from corehq.motech.repeaters.models import RepeatRecord, AppStructureRepeater
 
 
 class TestAppStructureRepeater(TestCase, DomainSubscriptionMixin):
@@ -58,7 +58,7 @@ class TestAppStructureRepeater(TestCase, DomainSubscriptionMixin):
         """
         When an application with a repeater is saved, then a repeat record should be created
         """
-        self.app_structure_repeater = SQLAppStructureRepeater(domain=self.domain, connection_settings=self.conn)
+        self.app_structure_repeater = AppStructureRepeater(domain=self.domain, connection_settings=self.conn)
         self.app_structure_repeater.save()
         self.addCleanup(self.app_structure_repeater.delete)
 
@@ -74,7 +74,7 @@ class TestAppStructureRepeater(TestCase, DomainSubscriptionMixin):
         """
         When an application with a repeater is saved, then HQ should try to forward the repeat record
         """
-        self.app_structure_repeater = SQLAppStructureRepeater(domain=self.domain, connection_settings=self.conn)
+        self.app_structure_repeater = AppStructureRepeater(domain=self.domain, connection_settings=self.conn)
         self.app_structure_repeater.save()
         self.addCleanup(self.app_structure_repeater.delete)
 

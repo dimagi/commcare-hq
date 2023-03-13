@@ -213,6 +213,7 @@ class HqPermissions(DocumentSchema):
     manage_data_registry_list = StringListProperty(default=[])
     view_data_registry_contents = BooleanProperty(default=False)
     view_data_registry_contents_list = StringListProperty(default=[])
+    manage_attendance_tracking = BooleanProperty(default=False)
 
     @classmethod
     def from_permission_list(cls, permission_list):
@@ -260,6 +261,9 @@ class HqPermissions(DocumentSchema):
 
         if self.edit_apps:
             self.view_apps = True
+
+        if not (self.view_reports or self.view_report_list):
+            self.download_reports = False
 
     @classmethod
     @memoized
@@ -1501,6 +1505,9 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, EulaMixin):
             or self.has_permission(domain, 'limited_login_as')
         )
 
+    def can_manage_events(self, domain):
+        return self.has_permission(domain, 'manage_attendance_tracking')
+
     def is_current_web_user(self, request):
         return self.user_id == request.couch_user.user_id
 
@@ -1675,7 +1682,8 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
             results = commcare_user_post_save.send_robust(sender='couch_user', couch_user=self,
                                                           is_new_user=is_new_user)
             log_signal_errors(results, "Error occurred while syncing user (%s)", {'username': self.username})
-            sync_usercases_if_applicable(self, spawn_task)
+            if not self.to_be_deleted():
+                sync_usercases_if_applicable(self, spawn_task)
 
     def delete(self, deleted_by_domain, deleted_by, deleted_via=None):
         from corehq.apps.ota.utils import delete_demo_restore_for_user
@@ -2944,6 +2952,8 @@ class HQApiKey(models.Model):
     is_active = models.BooleanField(default=True)
     deactivated_on = models.DateTimeField(blank=True, null=True)
     expiration_date = models.DateTimeField(blank=True, null=True)  # Not yet used
+    # Not update with every request. Can be a couple of seconds out of date
+    last_used = models.DateTimeField(blank=True, null=True)
 
     objects = ApiKeyManager()
     all_objects = models.Manager()

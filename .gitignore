@@ -71,6 +71,7 @@ node_modules/
 /sharedfiles/
 docker/data
 *.lock
+!couchviews.lock
 !migrations.lock
 !serializer-pickle-files.lock
 !yarn.lock
@@ -79,3 +80,7 @@ extensions/
 
 # third-party js libraries
 corehq/apps/hqwebapp/static/hqwebapp/js/lib/modernizr.js
+
+# direnv
+.envrc
+.direnv

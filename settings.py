@@ -313,6 +313,7 @@ HQ_APPS = (
     'corehq.apps.groups',
     'corehq.apps.mobile_auth',
     'corehq.apps.sms',
+    'corehq.apps.events',
     'corehq.apps.smsforms',
     'corehq.apps.sso',
     'corehq.apps.ivr',
@@ -448,7 +449,7 @@ SOIL_HEARTBEAT_CACHE_KEY = "django-soil-heartbeat"
 ####### Shared/Global/UI Settings #######
 
 # restyle some templates
-BASE_TEMPLATE = "hqwebapp/base_navigation.html"
+BASE_TEMPLATE = "hqwebapp/bootstrap3/base_navigation.html"
 BASE_ASYNC_TEMPLATE = "reports/async/basic.html"
 LOGIN_TEMPLATE = "login_and_password/login.html"
 LOGGEDOUT_TEMPLATE = LOGIN_TEMPLATE
@@ -777,7 +778,7 @@ AUDIT_ADMIN_VIEWS = False
 ANALYTICS_IDS = {
     'GOOGLE_ANALYTICS_API_ID': '',
     'KISSMETRICS_KEY': '',
-    'HUBSPOT_API_KEY': '',
+    'HUBSPOT_ACCESS_TOKEN': '',
     'HUBSPOT_API_ID': '',
     'GTM_ID': '',
     'DRIFT_ID': '',
@@ -1088,6 +1089,8 @@ OTP_STATIC_THROTTLE_FACTOR = 0
 ALLOW_PHONE_AS_DEFAULT_TWO_FACTOR_DEVICE = False
 RATE_LIMIT_SUBMISSIONS = False
 
+DATA_UPLOAD_MAX_NUMBER_FILES = None
+
 # If set to a positive number, exports requested more than this many seconds ago
 # without the email option will be quickly rejected.
 # This is useful for load-shedding in times of crisis.
@@ -1230,6 +1233,8 @@ TEMPLATES = [
                 'corehq.util.context_processors.commcare_hq_names',
                 'corehq.util.context_processors.emails',
                 'corehq.util.context_processors.status_page',
+                'corehq.util.context_processors.sentry',
+                'corehq.util.context_processors.bootstrap5',
             ],
             'debug': DEBUG,
             'loaders': [
@@ -2024,10 +2029,11 @@ if not SENTRY_DSN:
             SENTRY_QUERY_URL is not longer needed.
             """), DeprecationWarning)
 
+COMMCARE_RELEASE = helper.get_release_name(BASE_DIR, SERVER_ENVIRONMENT)
 if SENTRY_DSN:
     if 'SENTRY_QUERY_URL' not in globals():
         SENTRY_QUERY_URL = f'https://sentry.io/{SENTRY_ORGANIZATION_SLUG}/{SENTRY_PROJECT_SLUG}/?query='
-    helper.configure_sentry(BASE_DIR, SERVER_ENVIRONMENT, SENTRY_DSN)
+    helper.configure_sentry(SERVER_ENVIRONMENT, SENTRY_DSN, COMMCARE_RELEASE)
     SENTRY_CONFIGURED = True
 else:
     SENTRY_CONFIGURED = False

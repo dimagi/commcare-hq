@@ -179,6 +179,30 @@ class Command(BaseCommand):
         Role(slug=privileges.LOADTEST_USERS,
              name='Loadtest Users',
              description='Allows creating loadtest users'),
+        Role(slug=privileges.FORM_LINK_WORKFLOW,
+             name='Link to other forms',
+             description='Link to other forms in End of Form Navigation'),
+        Role(slug=privileges.PHONE_APK_HEARTBEAT,
+             name='Phone Heartbeat',
+             description='Ability to configure a mobile feature to prompt users to update to latest CommCare '
+                         'app and apk'),
+        Role(slug=privileges.VIEW_APP_DIFF,
+             name='Improved app changes view',
+             description='Ability to see changes that have been made between different versions of '
+                         'your application'),
+        Role(slug=privileges.DATA_FILE_DOWNLOAD,
+             name='File Dropzone',
+             description='Offer hosting and sharing data files for downloading '
+                         'from a secure dropzone'),
+        Role(slug=privileges.ATTENDANCE_TRACKING,
+             name='Attendance Tracking',
+             description='Supports using CommCareHQ for attendance tracking'),
+        Role(slug=privileges.REGEX_FIELD_VALIDATION,
+             name='Regular Field Validation',
+             description='Regular field validation for custom data fields'),
+        Role(slug=privileges.LOCATION_SAFE_CASE_IMPORTS,
+             name='Location Safe Case Imports',
+             description='Location-restricted users can import cases at their location or below')
     ]
 
     BOOTSTRAP_PLANS = [

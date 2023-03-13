@@ -14,7 +14,7 @@ from nose.tools import assert_equal, assert_true
 
 from corehq.motech.dhis2.const import DHIS2_MAX_KNOWN_GOOD_VERSION as KNOWN_GOOD
 from corehq.motech.dhis2.exceptions import Dhis2Exception
-from corehq.motech.dhis2.repeaters import SQLDhis2Repeater
+from corehq.motech.dhis2.repeaters import Dhis2Repeater
 from corehq.motech.models import ConnectionSettings
 from corehq.motech.requests import Requests
 
@@ -174,21 +174,21 @@ class ApiVersionTests(SimpleTestCase):
         self.just_now = datetime.now().isoformat() + 'Z'
 
     def test_major_minor_patch(self):
-        repeater = SQLDhis2Repeater(**{
+        repeater = Dhis2Repeater(**{
             "dhis2_version": "2.31.6",
             "dhis2_version_last_modified": self.just_now,
         })
         self.assertEqual(repeater.get_api_version(), 31)
 
     def test_major_minor(self):
-        repeater = SQLDhis2Repeater(**{
+        repeater = Dhis2Repeater(**{
             "dhis2_version": "2.31",
             "dhis2_version_last_modified": self.just_now,
         })
         self.assertEqual(repeater.get_api_version(), 31)
 
     def test_major_raises_exception(self):
-        repeater = SQLDhis2Repeater(**{
+        repeater = Dhis2Repeater(**{
             "dhis2_version": "2",
             "dhis2_version_last_modified": self.just_now,
         })
@@ -196,7 +196,7 @@ class ApiVersionTests(SimpleTestCase):
             repeater.get_api_version()
 
     def test_blank_raises_exception(self):
-        repeater = SQLDhis2Repeater(**{
+        repeater = Dhis2Repeater(**{
             "dhis2_version": "",
             "dhis2_version_last_modified": self.just_now,
         })
@@ -214,7 +214,7 @@ class SlowApiVersionTest(TestCase):
             domain="test-domain"
         )
         self.conn.save()
-        self.repeater = SQLDhis2Repeater(
+        self.repeater = Dhis2Repeater(
             domain="test-domain",
             connection_settings=self.conn,
             repeater_id=uuid.uuid4().hex

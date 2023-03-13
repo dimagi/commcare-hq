@@ -44,7 +44,11 @@
         <tbody>
         <tr>
           <td class="module-case-list-column module-case-list-column-empty" colspan="<%-headers.length%>">
-            <div class="alert alert-info">{% trans "List is empty." %}</div>
+            <% if (noItemsText === null) {%>
+              <div class="alert alert-info">{% trans "List is empty." %}</div>
+            <% } else { %>
+              <div class="alert alert-info"><%- noItemsText %></div>
+            <% } %>
           </td>
         </tr>
         </tbody>

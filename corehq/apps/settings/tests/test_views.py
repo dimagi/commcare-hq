@@ -1,3 +1,5 @@
+import os
+from io import BytesIO
 from unittest.mock import Mock, patch
 
 from django.http.response import Http404, HttpResponse
@@ -11,6 +13,8 @@ from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.users.audit.change_messages import UserChangeMessage
 from corehq.apps.users.models import UserHistory, WebUser
 from corehq.const import USER_CHANGE_VIA_WEB
+from corehq.tests.util.artifact import artifact
+from corehq.util.tests.test_utils import disable_quickcache
 
 from .. import views
 from ..views import (
@@ -18,6 +22,7 @@ from ..views import (
     TwoFactorPhoneSetupView,
     TwoFactorProfileView,
     TwoFactorSetupView,
+    get_qrcode,
 )
 
 
@@ -220,3 +225,34 @@ class TestMyAccountSettingsView(TestCase):
         self.assertIsNone(user_history_log.by_domain)
         self.assertIsNone(user_history_log.for_domain)
         self.assertEqual(user_history_log.changed_via, USER_CHANGE_VIA_WEB)
+
+
+@disable_quickcache
+class TestQrCode(SimpleTestCase):
+    """Generates a URL QR code PNG file and ensures it matches the reference
+    file that exists in version control.
+
+    This tests against updates to the ``qrcode`` dependency to ensure library
+    updates don't break rendered QR code images.
+
+    It is possible that new versions of ``qrcode`` could result in different PNG
+    content (causing this test to fail), but the resulting PNG still being a
+    valid QR code. If this happens, use the ``create_test_qr_codes``
+    management command to generate a new reference PNG and verify that it works
+    as expected.
+    """
+    TEST_QR_CODE_FILE = os.path.join(os.path.dirname(__file__), "data", "qrcode_url.png")
+    TEST_QR_CODE_TEXT = "https://www.commcarehq.org/"
+
+    def test_get_qrcode(self):
+        reference_fpath = self.TEST_QR_CODE_FILE  # use a local var to improve readability
+        rendered_bytes = get_qrcode(self.TEST_QR_CODE_TEXT)
+        with (
+            open(reference_fpath, "rb") as reference_png,
+            artifact(os.path.basename(reference_fpath), BytesIO(rendered_bytes)),
+        ):
+            self.assertEqual(
+                reference_png.read(),
+                rendered_bytes,
+                f"Rendered PNG differs from expected reference: {reference_fpath}",
+            )

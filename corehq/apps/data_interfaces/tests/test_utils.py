@@ -16,7 +16,7 @@ from corehq.apps.data_interfaces.utils import (
 )
 from corehq.motech.models import ConnectionSettings
 from corehq.motech.repeaters.models import (
-    SQLFormRepeater,
+    FormRepeater,
     RepeatRecord,
     SQLRepeatRecord,
 )
@@ -512,7 +512,7 @@ class TestGetRepeatRecordIDs(TestCase):
         cls.instance_id = str(uuid4())
         url = 'https://www.example.com/api/'
         conn = ConnectionSettings.objects.create(domain=DOMAIN, name=url, url=url)
-        cls.repeater = SQLFormRepeater(
+        cls.repeater = FormRepeater(
             domain=DOMAIN,
             connection_settings_id=conn.id,
             include_app_id_param=False,

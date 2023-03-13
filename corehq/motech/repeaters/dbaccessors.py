@@ -268,5 +268,5 @@ def delete_all_repeat_records():
 
 @unit_testing_only
 def delete_all_repeaters():
-    from .models import SQLRepeater
-    SQLRepeater.objects.all().delete()
+    from .models import Repeater
+    Repeater.objects.all().delete()

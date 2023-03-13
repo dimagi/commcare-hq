@@ -11,7 +11,6 @@ from django.views.generic import View
 import pytz
 from memoized import memoized
 
-from couchexport.models import Format
 from dimagi.utils.web import get_url_base, json_response
 from soil import DownloadBase
 from soil.progress import get_task_status
@@ -253,7 +252,7 @@ class ODataFeedMixin(object):
         from corehq.apps.export.views.list import ODataFeedListView
         return ODataFeedListView
 
-    def get_export_instance(self, schema, original_export_instance):
+    def get_export_instance(self, schema, original_export_instance, load_deprecated=False):
         export_instance = super().get_export_instance(schema, original_export_instance)
         clean_odata_columns(export_instance)
         export_instance.is_odata_config = True
@@ -367,7 +366,7 @@ class DataFileDownloadList(BaseProjectDataView):
         return HttpResponseRedirect(reverse(self.urlname, kwargs={'domain': self.domain}))
 
 
-@method_decorator(api_auth, name='dispatch')
+@method_decorator(api_auth(), name='dispatch')
 class DataFileDownloadDetail(BaseProjectDataView):
     urlname = 'download_data_file'
 
@@ -384,9 +383,8 @@ class DataFileDownloadDetail(BaseProjectDataView):
         except (DataFile.DoesNotExist, NotFound):
             raise Http404
 
-        format = Format('', data_file.content_type, '', True)
         return get_download_response(
-            blob, data_file.content_length, format, data_file.filename, request
+            blob, data_file.content_length, data_file.content_type, True, data_file.filename, request
         )
 
     def delete(self, request, *args, **kwargs):

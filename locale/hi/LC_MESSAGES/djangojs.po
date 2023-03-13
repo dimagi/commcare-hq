@@ -2663,10 +2663,6 @@ msgid "Upload video file"
 msgstr ""
 
 #: corehq/apps/cloudcare/static/cloudcare/js/form_entry/entries.js
-msgid "Upload signature file"
-msgstr ""
-
-#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/entries.js
 msgid "Map layer not configured."
 msgstr ""
 
@@ -2788,7 +2784,7 @@ msgid "Hide Full Menu"
 msgstr ""
 
 #: corehq/apps/cloudcare/static/cloudcare/js/formplayer/menus/api.js
-msgid "Permission Denied"
+msgid "The application could not be found"
 msgstr ""
 
 #: corehq/apps/cloudcare/static/cloudcare/js/formplayer/menus/api.js
@@ -2812,6 +2808,7 @@ msgid "Fetching your location..."
 msgstr ""
 
 #: corehq/apps/cloudcare/static/cloudcare/js/formplayer/menus/views.js
+#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/sessions/views.js
 msgid "Page <%-num%>"
 msgstr ""
 
@@ -4216,11 +4213,19 @@ msgid "Show Deactivated Mobile Workers"
 msgstr ""
 
 #: corehq/apps/users/static/users/js/filtered_download.js
-msgid "Download <%- count %> user"
+msgid "<%- user_count %> user"
 msgstr ""
 
 #: corehq/apps/users/static/users/js/filtered_download.js
-msgid "Download <%- count %> users"
+msgid "<%- user_count %> users"
+msgstr ""
+
+#: corehq/apps/users/static/users/js/filtered_download.js
+msgid " and <%- group_count %> group"
+msgstr ""
+
+#: corehq/apps/users/static/users/js/filtered_download.js
+msgid " and <%- group_count %> groups"
 msgstr ""
 
 #: corehq/apps/users/static/users/js/filtered_download.js
@@ -4437,11 +4442,37 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/users/static/users/js/roles.js
+msgid ""
+"<strong>Attendance Tracking</strong> &mdash; Coordinate attendance tracking "
+"events and users"
+msgstr ""
+
+#: corehq/apps/users/static/users/js/roles.js
+msgid "Edit Attendance Tracking Events"
+msgstr ""
+
+#: corehq/apps/users/static/users/js/roles.js
 msgid "Create and Edit Reports"
 msgstr ""
 
 #: corehq/apps/users/static/users/js/roles.js
 msgid "Allow role to create and edit reports in report builder."
+msgstr ""
+
+#: corehq/apps/users/static/users/js/roles.js
+msgid "Create and Edit Custom Web Reports"
+msgstr ""
+
+#: corehq/apps/users/static/users/js/roles.js
+msgid "Allow role to create and edit custom web reports."
+msgstr ""
+
+#: corehq/apps/users/static/users/js/roles.js
+msgid "Create and Edit Configurable Reports"
+msgstr ""
+
+#: corehq/apps/users/static/users/js/roles.js
+msgid "Allow role to create and edit configurable reports."
 msgstr ""
 
 #: corehq/apps/users/static/users/js/roles.js
@@ -4462,27 +4493,19 @@ msgid "Allow role to access all reports."
 msgstr ""
 
 #: corehq/apps/users/static/users/js/roles.js
+msgid "Download and Email Reports"
+msgstr ""
+
+#: corehq/apps/users/static/users/js/roles.js
+msgid "Allow role to download and email report data."
+msgstr ""
+
+#: corehq/apps/users/static/users/js/roles.js
 msgid "Access All Tableau Reports"
 msgstr ""
 
 #: corehq/apps/users/static/users/js/roles.js
 msgid "Allow role to access all embedded Tableau reports."
-msgstr ""
-
-#: corehq/apps/users/static/users/js/roles.js
-msgid "Create and Edit Custom Web Reports"
-msgstr ""
-
-#: corehq/apps/users/static/users/js/roles.js
-msgid "Allow role to create and edit custom web reports."
-msgstr ""
-
-#: corehq/apps/users/static/users/js/roles.js
-msgid "Create and Edit Configurable Reports"
-msgstr ""
-
-#: corehq/apps/users/static/users/js/roles.js
-msgid "Allow role to create and edit configurable reports."
 msgstr ""
 
 #: corehq/apps/users/static/users/js/roles.js

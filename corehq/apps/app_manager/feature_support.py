@@ -208,3 +208,10 @@ class CommCareFeatureSupportMixin(object):
             toggles.USH_CASE_CLAIM_UPDATES.enabled(self.domain)
             and self._require_minimum_version('2.53')
         )
+
+    @property
+    def supports_empty_case_list_text(self):
+        return (
+            toggles.USH_EMPTY_CASE_LIST_TEXT.enabled(self.domain)
+            and self._require_minimum_version('2.54')
+        )

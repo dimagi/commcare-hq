@@ -475,6 +475,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
                 useGrid: this.options.numEntitiesPerRow > 1,
                 useTiles: false,
                 hasNoItems: this.hasNoItems,
+                noItemsText: this.options.collection.noItemsText,
                 sortIndices: this.options.sortIndices,
                 selectedCaseIds: this.selectedCaseIds,
                 isMultiSelect: false,
@@ -697,6 +698,14 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
         events: {
             'click': 'onChangeLang',
         },
+        initialize: function (options) {
+            this.languageOptionsEnabled = options.languageOptionsEnabled;
+        },
+        templateContext: function () {
+            return {
+                languageOptionsEnabled: this.languageOptionsEnabled,
+            };
+        },
         onChangeLang: function (e) {
             var lang = e.target.id;
             $.publish('formplayer.change_lang', lang);
@@ -708,6 +717,35 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
         tagName: 'li',
         childView: LanguageOptionView,
         childViewContainer: 'ul',
+        ui: {
+            dropdownMenu: ".dropdown-menu.dropdown-menu-right",
+            selectPrint: "#print-header.dropdown-header",
+        },
+        childViewOptions: function () {
+            return {
+                languageOptionsEnabled: Boolean(this.options.collection),
+            };
+        },
+        templateContext: function () {
+            var languageOptionsEnabled = Boolean(this.options.collection);
+            return {
+                languageOptionsEnabled: languageOptionsEnabled,
+            };
+        },
+        events: {
+            "keydown": "printKeyAction",
+            "click @ui.selectPrint": "hideDropdownOnPrint",
+        },
+        printKeyAction: function (e) {
+            if (e.keyCode === 13) {
+                this.hideDropdownOnPrint();
+            }
+        },
+        hideDropdownOnPrint: function () {
+            this.ui.dropdownMenu.toggle();
+            window.print();
+            this.ui.dropdownMenu.toggle();
+        },
     });
 
     var DetailView = Marionette.View.extend({

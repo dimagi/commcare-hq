@@ -4,10 +4,6 @@ from django.test import TestCase
 from django.urls import reverse
 
 from corehq.apps.api.odata.tests.utils import (
-    ensure_es_case_index_deleted,
-    ensure_es_form_index_deleted,
-    setup_es_case_index,
-    setup_es_form_index,
     CaseOdataTestMixin,
     FormOdataTestMixin,
 )
@@ -17,27 +13,25 @@ from corehq.apps.export.models import (
     FormExportInstance,
     TableConfiguration,
 )
+from corehq.apps.es.cases import case_adapter
+from corehq.apps.es.forms import form_adapter
 from corehq.apps.es.tests.utils import es_test
-from corehq.pillows.mappings.user_mapping import USER_INDEX_INFO
-from corehq.util.elastic import reset_es_index
+from corehq.apps.es.users import user_adapter
 from corehq.util.test_utils import flag_enabled
 
 
-@es_test
+@es_test(requires=[case_adapter, user_adapter], setup_class=True)
 @flag_enabled('API_THROTTLE_WHITELIST')
 class TestODataCaseFeed(TestCase, CaseOdataTestMixin):
 
     @classmethod
     def setUpClass(cls):
-        setup_es_case_index()
-        reset_es_index(USER_INDEX_INFO)
         super(TestODataCaseFeed, cls).setUpClass()
         cls._set_up_class()
         cls._setup_accounting()
 
     @classmethod
     def tearDownClass(cls):
-        ensure_es_case_index_deleted()
         cls._teardownclass()
         cls._teardown_accounting()
         super(TestODataCaseFeed, cls).tearDownClass()
@@ -111,21 +105,18 @@ class TestODataCaseFeed(TestCase, CaseOdataTestMixin):
         )
 
 
-@es_test
+@es_test(requires=[form_adapter, user_adapter], setup_class=True)
 @flag_enabled('API_THROTTLE_WHITELIST')
 class TestODataFormFeed(TestCase, FormOdataTestMixin):
 
     @classmethod
     def setUpClass(cls):
-        setup_es_form_index()
-        reset_es_index(USER_INDEX_INFO)
         super(TestODataFormFeed, cls).setUpClass()
         cls._set_up_class()
         cls._setup_accounting()
 
     @classmethod
     def tearDownClass(cls):
-        ensure_es_form_index_deleted()
         cls._teardownclass()
         cls._teardown_accounting()
         super(TestODataFormFeed, cls).tearDownClass()

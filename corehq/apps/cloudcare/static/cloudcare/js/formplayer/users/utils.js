@@ -14,6 +14,7 @@ hqDefine("cloudcare/js/formplayer/users/utils", function () {
         logInAsUser: function (restoreAsUsername) {
             var currentUser = FormplayerFrontend.getChannel().request('currentUser');
             currentUser.restoreAs = restoreAsUsername;
+            Sentry.setTag("loginAsUser", restoreAsUsername);
 
             $.cookie(
                 self.Users.restoreAsKey(
@@ -48,6 +49,7 @@ hqDefine("cloudcare/js/formplayer/users/utils", function () {
          * Clears the restore as user from the cookies
          */
         clearRestoreAsUser: function (domain, username) {
+            Sentry.setTag("loginAsUser", null);
             return $.removeCookie(self.Users.restoreAsKey(domain, username));
         },
     };
