@@ -18,7 +18,10 @@ from corehq.apps.users.views import BaseUserSettingsView
 from corehq.util.jqueryrmi import JSONResponseMixin
 
 from .forms import CreateEventForm
-from .models import Event, get_paginated_attendees
+from .models import (
+    Event, get_paginated_attendees,
+    ATTENDED_DATE_CASE_PROPERTY
+)
 
 
 class BaseEventView(BaseDomainView):
@@ -91,6 +94,21 @@ class EventsView(BaseEventView, CRUDPaginatedViewMixin):
         return self.paginate_crud_response
 
     def _format_paginated_event(self, event: Event):
+        attendees = event.get_attended_attendees()
+        attendees = sorted(
+            attendees,
+            key=lambda attendee: (
+                attendee.get_case_property(ATTENDED_DATE_CASE_PROPERTY),
+                attendee.name
+            )
+        )
+        attendees = [
+            {
+                'date': attendee.get_case_property(ATTENDED_DATE_CASE_PROPERTY),
+                'name': attendee.name
+            }
+            for attendee in attendees
+        ]
         return {
             'id': event.event_id,
             'name': event.name,
@@ -99,6 +117,7 @@ class EventsView(BaseEventView, CRUDPaginatedViewMixin):
             'target_attendance': event.attendance_target,
             'status': event.status,
             'total_attendance': event.total_attendance or '-',
+            'attendees': attendees,
             'edit_url': reverse(EventEditView.urlname, args=(self.domain, event.event_id)),
         }
 
