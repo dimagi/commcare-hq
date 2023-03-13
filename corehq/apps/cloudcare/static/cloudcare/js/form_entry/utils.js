@@ -86,8 +86,9 @@ hqDefine("cloudcare/js/form_entry/utils", function () {
         }
         geocoder.on('clear', clearCallBack);
         geocoder.addTo('#' + divId);
+        const divEl = $("#" + divId);
         // Must add the form-control class to the input created by mapbox in order to edit.
-        var inputEl = $('input.mapboxgl-ctrl-geocoder--input');
+        var inputEl = divEl.find('input.mapboxgl-ctrl-geocoder--input');
         inputEl.addClass('form-control');
         inputEl.on('keydown', _.debounce((e) => {
             if (inputOnKeyDown) {
@@ -95,7 +96,8 @@ hqDefine("cloudcare/js/form_entry/utils", function () {
             }
 
             if (e.key === "ArrowUp" || e.key === "ArrowDown") {
-                $("#geocoder-option-sr").html("<p>" + $("ul.suggestions li.active").text() + "</p>");
+                const currentOption = divEl.find("ul.suggestions li.active").text();
+                $("#" + divId + "-sr").html("<p>" + currentOption + "</p>");
             }
         }, 200));
     };
