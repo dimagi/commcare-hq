@@ -10,6 +10,7 @@ hqDefine("data_dictionary/js/data_dictionary", [
     "hqwebapp/js/toggles",
     "hqwebapp/js/knockout_bindings.ko",
     "data_interfaces/js/make_read_only",
+    'hqwebapp/js/select2_knockout_bindings.ko',
 ], function (
     $,
     ko,
@@ -168,6 +169,7 @@ hqDefine("data_dictionary/js/data_dictionary", [
                     },
                     success: function () {
                         var activeCaseType = self.getActiveCaseType();
+                        activeCaseType.fhirResourceType(self.fhirResourceType());
                         activeCaseType.properties(self.casePropertyList());
                     },
                     // Error handling is managed by SaveButton logic in main.js
@@ -346,5 +348,6 @@ hqDefine("data_dictionary/js/data_dictionary", [
         $('#download-dict').click(function () {
             googleAnalytics.track.event('Data Dictionary', 'downloaded data dictionary');
         });
+
     });
 });

@@ -63,23 +63,25 @@ branches:
     - dmr/add-support-for-ses-django-email-backend  # Danny Aug 26
     - do/migrate-apps # Dominic Sep 2
     - smh/remove-setSelectedValue-import # Steph Sept 20
-    - akj/release-mode-toggle # Akash 7 Oct
     - akj/migrations-fix # Akash Oct 11
     - mk/support-expanded-cols-in-mobile-ucr-2 # MK Oct 31
     # - akj/abdm-api-for-mobile-app # Akash Sep 28
     - es/redirect-domain  # Ethan Nov 21
     #- jls/web-apps-requirejs  # Jenny Jan 17
     - gh/remove-duplicate-kafka-seq-code # Graham Dec 26
-    - jls/new-instance-connectors # Steph Dec 27
-    #- ad/user-syncing-task # Addison Jan 13  # conflicts with 'ad/user-syncing-UI' disabled by Joel Jan 23
-    - ad/remove-entered-wrap-functions # Addison Jan 26
-    - pkv/sync-complete-action-indicator-sr # Pawan Jan 27
-    - jls/remove-a-lot-of-wrapping # Jenny Jan 30
-    - pkv/accessibility-pagination-widget-on-incomplete-forms # Pawan Feb 1
-#    - ce/enable-case-rate-limits # Cal Feb 1
-    - ap/refactor_send_to_elasticsearch_usage # Amit Feb 2
-    - ml/enforce-metadata-ff # Minha Feb 2
-    - akj/tabular-radio-btn-reader # Akash Feb 6
+    # - ce/enable-case-rate-limits # Cal Feb 1
+    # - ml/enforce-metadata-ff # Minha Feb 2
     - jt/ush_2575_case_search_pull_related_cases # Jonathan T. Feb 6
-    - sk/webapps-sessionid  # Simon Feb 9
+    - smh/force-incremental-sync # Steph Feb 14
+    - rc/media-upload-spinner-fix # Robert Feb 16
+    - mjr/erm-overwrite # Matt Feb 21
+    - ad/tableau-user-syncing-various-2 # Addison Feb 24
+    - pkv/accessibility-mapbox-geocoder-widget # Pawan Feb 27
+    - gh/improve-pillow-logging-take-2 # Graham Mar 1
+    - ml/remove-advanced-mobile-worker-search # Minha Mar 6
+    - pkv/conditional-alerts-off-on-false # Pawan Mar 9
+    - ap/es/update-to-python+gh/remove-duplicate-kafka-seq-code # Amit Mar 10
+    - ap/es/update-to-python # Amit Mar 10
+    - cs+nh/attendees # Charl March 10
+    - revert-32713-revert-32202-jls/new-instance-connectors # Steph March 10
 submodules: { }

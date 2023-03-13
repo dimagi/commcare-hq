@@ -4,6 +4,7 @@ from unittest.mock import Mock, call, patch
 
 from django.test import SimpleTestCase, TransactionTestCase
 
+from corehq.util.test_utils import flag_enabled
 from dimagi.utils.parsing import json_format_date
 
 from corehq.apps.accounting.exceptions import SubscriptionAdjustmentError
@@ -114,6 +115,7 @@ class TestUserRoleSubscriptionChanges(BaseAccountingTest):
         self.account = BillingAccount.get_or_create_account_by_domain(
             self.domain.name, created_by=self.admin_username)[0]
         self.advanced_plan = DefaultProductPlan.get_default_plan_version(edition=SoftwarePlanEdition.ADVANCED)
+        self.community_plan = DefaultProductPlan.get_default_plan_version(edition=SoftwarePlanEdition.COMMUNITY)
 
     def test_cancellation(self):
         subscription = Subscription.new_domain_subscription(
@@ -144,6 +146,44 @@ class TestUserRoleSubscriptionChanges(BaseAccountingTest):
 
         self._assertInitialRoles()
         self._assertStdUsers()
+
+    @flag_enabled('ATTENDANCE_TRACKING')
+    def test_add_attendance_coordinator_role_for_domain(self):
+        subscription = Subscription.new_domain_subscription(
+            self.account, self.domain.name, self.community_plan,
+            web_user=self.admin_username
+        )
+
+        assert not UserRole.objects.filter(
+            name=UserRolePresets.ATTENDANCE_COORDINATOR,
+            domain=self.domain.name
+        ).exists()
+
+        subscription.change_plan(self.advanced_plan, web_user=self.admin_username)
+        pm_role_created = UserRole.objects.filter(
+            name=UserRolePresets.ATTENDANCE_COORDINATOR, domain=self.domain.name
+        ).exists()
+        self.assertTrue(pm_role_created)
+
+    @flag_enabled('ATTENDANCE_TRACKING')
+    def test_archive_attendance_coordinator_role_when_downgrading(self):
+        subscription = Subscription.new_domain_subscription(
+            self.account, self.domain.name, self.advanced_plan,
+            web_user=self.admin_username
+        )
+
+        role = UserRole.objects.filter(
+            name=UserRolePresets.ATTENDANCE_COORDINATOR,
+            domain=self.domain.name
+        ).first()
+        self.assertFalse(role.is_archived)
+
+        subscription.change_plan(self.community_plan, web_user=self.admin_username)
+        role = UserRole.objects.filter(
+            name=UserRolePresets.ATTENDANCE_COORDINATOR,
+            domain=self.domain.name
+        ).first()
+        self.assertTrue(role.is_archived)
 
     def _change_std_roles(self):
         for u in self.user_roles:

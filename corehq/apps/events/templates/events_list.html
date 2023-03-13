@@ -1,0 +1,43 @@
+{% extends 'hqwebapp/base_paginated_crud.html' %}
+{% load i18n %}
+{% load hq_shared_tags %}
+
+{% requirejs_main "hqwebapp/js/crud_paginated_list_init" %}
+
+{% block page_title %}
+  {{ current_page.title }}
+{% endblock %}
+
+{% block pagination_header %}
+  <div class="row">
+    <div class="col-sm-8">
+      <p>
+        {% blocktrans %}
+          Attendance tracking events can be used to track attendance of all the selected attendees.
+        {% endblocktrans %}
+      </p>
+    </div>
+  </div>
+  <div class="btn-toolbar">
+    <a href="{% url 'add_attendance_tracking_event' domain %}">
+      <button type="button" class="btn btn-primary" id="add-new">
+        <i class="fa fa-plus"></i> {% trans "Add new event" %}
+      </button>
+    </a>
+  </div>
+{% endblock pagination_header %}
+
+{% block pagination_templates %}
+  <script type="text/html" id="base-event-template">
+    <td>
+      <a data-bind="attr: {href: edit_url}">
+        <strong data-bind="text: name"></strong>
+      </a>
+    </td>
+    <td data-bind="text: start_date"></td>
+    <td data-bind="text: end_date"></td>
+    <td data-bind="text: target_attendance"></td>
+    <td data-bind="text: status"></td>
+    <td data-bind="text: total_attendance"></td>
+  </script>
+{% endblock %}

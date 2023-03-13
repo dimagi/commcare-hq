@@ -24,6 +24,8 @@ from corehq.motech.dhis2.entities_helpers import (
     get_supercase,
     send_dhis2_entities,
     validate_tracked_entity,
+    register_tracked_entity_instance,
+    update_tracked_entity_instance,
 )
 from corehq.motech.dhis2.forms import Dhis2ConfigForm
 from corehq.motech.dhis2.repeaters import Dhis2Repeater
@@ -35,6 +37,7 @@ from corehq.motech.value_source import (
     get_case_trigger_info_for_case,
     get_form_question_values,
 )
+from corehq.motech.dhis2.exceptions import Dhis2Exception
 
 DOMAIN = 'test-domain'
 
@@ -435,6 +438,122 @@ class TestCreateRelationships(TestCase):
         _requests, relationship_created = self.create_relationship_func.call_args[0]
         existing_relationship = tracked_entity_relationship_specs[0]
         assert relationship_created.relationship_type_id != existing_relationship.relationship_type_id
+
+
+class TestRegisterTrackedEntityInstance(TestCase):
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.domain_obj = create_domain(DOMAIN)
+        cls.factory = CaseFactory(domain=DOMAIN)
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.domain_obj.delete()
+        super().tearDownClass()
+
+    def setUp(self):
+        build_patch = patch('corehq.motech.dhis2.entities_helpers._build_tracked_entity')
+        self.build_func = build_patch.start()
+        self.addCleanup(build_patch.stop)
+        self.build_func.return_value = [{'trackedEntityInstance': 'foobar'}, None]
+
+        post_patch = patch('corehq.motech.requests.Requests.post')
+        self.post_func = post_patch.start()
+        self.addCleanup(post_patch.stop)
+        self.post_func.return_value = Mock(
+            status_code=200,
+            json=lambda: {
+                'response': {
+                    'importSummaries': ['foobar'],
+                    'enrollments': {
+                        'importSummaries': [
+                            {
+                                'events': {
+                                    'importSummaries': [
+                                        {
+                                            'status': 'ERROR',
+                                            'description': 'foobar error'
+                                        }
+                                    ]
+                                }
+                            }
+                        ]
+                    }
+                }
+            },
+        )
+
+    def test_register_tracked_entity_instance_errors(self):
+        requests = Requests(
+            DOMAIN,
+            'https://dhis2.example.com/',
+            auth_manager=AuthManager(),
+        )
+        case_trigger_info = CaseTriggerInfo(domain=DOMAIN, case_id=None)
+        case_config = {
+            'te_type_id': 'foobar',
+            'org_unit_id': {
+                'doc_type': 'CaseOwnerAncestorLocationField',
+                'location_field': 'dhis_id'
+            },
+            'tei_id': 'foobar'
+        }
+
+        with self.assertRaises(Dhis2Exception):
+            register_tracked_entity_instance(requests, case_trigger_info, case_config)
+
+
+class TestUpdateTrackedEntityInstance(TestCase):
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.domain_obj = create_domain(DOMAIN)
+        cls.factory = CaseFactory(domain=DOMAIN)
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.domain_obj.delete()
+        super().tearDownClass()
+
+    def setUp(self):
+        build_patch = patch('corehq.motech.dhis2.entities_helpers._build_tracked_entity')
+        self.build_func = build_patch.start()
+        self.addCleanup(build_patch.stop)
+        self.build_func.return_value = [{"trackedEntityInstance": "foobar"}, None]
+
+        put_patch = patch('corehq.motech.requests.Requests.put')
+        self.put_func = put_patch.start()
+        self.addCleanup(put_patch.stop)
+        self.put_func.return_value = Mock(
+            status_code=200,
+            json=lambda: {
+                "enrollments": {
+                    "importSummaries": [
+                        {
+                            "events": {
+                                "importSummaries": [
+                                    {
+                                        "status": "ERROR",
+                                        "description": "Foobar"
+                                    }
+                                ]
+                            }
+                        }
+                    ]
+                }
+            },
+        )
+
+    def test_update_tracked_entity_instance_errors(self):
+        requests = Requests(
+            DOMAIN,
+            'https://dhis2.example.com/',
+            auth_manager=AuthManager(),
+        )
+
+        with self.assertRaises(Dhis2Exception):
+            update_tracked_entity_instance(requests, None, None, None, None)
 
 
 class TestRequests(TestCase):

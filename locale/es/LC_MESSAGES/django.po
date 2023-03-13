@@ -170,13 +170,15 @@ msgstr "Fecha de Creación"
 
 #: corehq/apps/accounting/filters.py corehq/apps/accounting/forms.py
 #: corehq/apps/accounting/templates/accounting/partials/subscriptions_tab.html
-#: corehq/apps/domain/forms.py corehq/messaging/scheduling/forms.py
+#: corehq/apps/domain/forms.py corehq/apps/events/forms.py
+#: corehq/messaging/scheduling/forms.py
 msgid "Start Date"
 msgstr "Fecha de Inicio"
 
 #: corehq/apps/accounting/filters.py corehq/apps/accounting/forms.py
 #: corehq/apps/accounting/templates/accounting/partials/subscriptions_tab.html
-#: corehq/apps/domain/forms.py corehq/apps/export/forms.py
+#: corehq/apps/domain/forms.py corehq/apps/events/forms.py
+#: corehq/apps/export/forms.py
 #: corehq/apps/reports/templates/reports/partials/save_reports_modal.html
 #: corehq/apps/userreports/templates/userreports/partials/filter_panel.html
 msgid "End Date"
@@ -430,7 +432,8 @@ msgstr "Se requiere un nombre para este nuevo rol."
 #: corehq/apps/data_interfaces/templates/data_interfaces/partials/auto_update_rule_list.html
 #: corehq/apps/data_interfaces/views.py
 #: corehq/apps/domain/templates/domain/admin/commtrack_action_table.html
-#: corehq/apps/enterprise/enterprise.py
+#: corehq/apps/enterprise/enterprise.py corehq/apps/events/forms.py
+#: corehq/apps/events/views.py
 #: corehq/apps/export/templates/export/partials/table.html
 #: corehq/apps/export/views/incremental.py
 #: corehq/apps/fixtures/templates/fixtures/partials/edit_table_modal.html
@@ -1536,7 +1539,8 @@ msgstr "Número de Estado"
 #: corehq/apps/data_interfaces/templates/data_interfaces/partials/auto_update_rule_run_history.html
 #: corehq/apps/data_interfaces/views.py corehq/apps/domain/forms.py
 #: corehq/apps/domain/templates/domain/manage_releases_by_app_profile.html
-#: corehq/apps/enterprise/enterprise.py corehq/apps/export/views/incremental.py
+#: corehq/apps/enterprise/enterprise.py corehq/apps/events/views.py
+#: corehq/apps/export/views/incremental.py
 #: corehq/apps/registry/templates/registry/registry_edit.html
 #: corehq/apps/reports/standard/cases/basic.py
 #: corehq/apps/reports/standard/sms.py
@@ -5800,6 +5804,10 @@ msgstr "Ingrese aquí la descripción de la aplicación"
 msgid "Releases"
 msgstr "Publicaciones"
 
+#: corehq/apps/app_manager/templates/app_manager/app_view_release_manager.html
+msgid "Release Mode"
+msgstr ""
+
 #: corehq/apps/app_manager/templates/app_manager/app_view_settings.html
 #: corehq/apps/app_manager/templates/app_manager/form_view.html
 #: corehq/apps/app_manager/templates/app_manager/module_view.html
@@ -6055,6 +6063,7 @@ msgstr "Valor"
 #: corehq/apps/app_manager/templates/app_manager/form_summary_base.html
 #: corehq/apps/builds/templates/builds/edit_menu.html
 #: corehq/apps/custom_data_fields/templates/custom_data_fields/partials/fields_tab.html
+#: corehq/apps/data_dictionary/views.py
 #: corehq/apps/reports/templates/reports/filters/explorer_columns.html
 #: corehq/apps/userreports/templates/userreports/partials/property_list_configuration.html
 msgid "Label"
@@ -6066,6 +6075,10 @@ msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/form_summary_base.html
 msgid "Save property"
+msgstr ""
+
+#: corehq/apps/app_manager/templates/app_manager/form_summary_base.html
+msgid "save only on edit"
 msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/form_summary_diff.html
@@ -6421,6 +6434,7 @@ msgstr "Instale CommCare"
 #: corehq/apps/domain/templates/domain/select_plan.html
 #: corehq/apps/domain/templates/domain/stripe_cards.html
 #: corehq/apps/export/templates/export/dialogs/process_deleted_questions.html
+#: corehq/apps/export/templates/export/dialogs/process_deprecated_properties.html
 #: corehq/apps/export/templates/export/partials/export_list_create_export_modal.html
 #: corehq/apps/export/templates/export/partials/feed_filter_modal.html
 #: corehq/apps/export/templates/export/partials/odata_feed_limit_reached_modal.html
@@ -6509,9 +6523,9 @@ msgstr ""
 #: corehq/apps/app_manager/templates/app_manager/partials/build_errors.html
 msgid ""
 "\n"
-"                Please check that end of form navigation is correct. It "
-"appears to involve\n"
-"                a multi-select form, which is not supported.\n"
+"                Linking for a form in a multi-select case list is restricted "
+"to multi-select forms only.\n"
+"                Please ensure your form is multi-select.\n"
 "              "
 msgstr ""
 
@@ -6519,19 +6533,9 @@ msgstr ""
 msgid ""
 "\n"
 "                Please check that end of form navigation is correct. It "
-"appears to involve\n"
-"                a parent menu that uses multi-select, which is not "
+"appears to involve both\n"
+"                a multi-select form and a single select-form, which is not "
 "supported.\n"
-"              "
-msgstr ""
-
-#: corehq/apps/app_manager/templates/app_manager/partials/build_errors.html
-msgid ""
-"\n"
-"                Please check that end of form navigation is correct. It "
-"appears to involve\n"
-"                a multi-select case list and the \"Previous Screen\" "
-"workflow, which are not compatible.\n"
 "              "
 msgstr ""
 
@@ -8112,6 +8116,7 @@ msgid "Disable manual linking"
 msgstr "Deshabilitar enlace manual "
 
 #: corehq/apps/app_manager/templates/app_manager/partials/forms/form_workflow.html
+#: corehq/apps/export/templates/export/dialogs/process_deprecated_properties.html
 msgid "Refresh"
 msgstr "Actualizar"
 
@@ -9634,10 +9639,8 @@ msgstr ""
 "a los detalles del caso."
 
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/module_view_settings.html
-#, fuzzy
-#| msgid "Empty Case"
 msgid "Empty Case List Text"
-msgstr "Caso Vacío"
+msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/report_context_tile.html
 msgid "Last UCR Update"
@@ -11877,22 +11880,6 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/case_search/filter_dsl.py
-#: corehq/apps/case_search/xpath_functions/subcase_functions.py
-msgid ""
-"The related case lookup you are trying to perform would return too many cases"
-msgstr ""
-
-#: corehq/apps/case_search/filter_dsl.py
-msgid "We didn't understand what you were trying to do with {}"
-msgstr ""
-
-#: corehq/apps/case_search/filter_dsl.py
-msgid ""
-"The right hand side of a comparison must be a number or date. Dates must be "
-"surrounded in quotation marks"
-msgstr ""
-
-#: corehq/apps/case_search/filter_dsl.py
 #, python-brace-format
 msgid "'{name}' is not a valid standalone function"
 msgstr ""
@@ -12079,6 +12066,22 @@ msgstr "Datos"
 #: corehq/tabs/tabclasses.py
 msgid "Case Search"
 msgstr "Búsqueda de Caso"
+
+#: corehq/apps/case_search/xpath_functions/ancestor_functions.py
+#: corehq/apps/case_search/xpath_functions/subcase_functions.py
+msgid ""
+"The related case lookup you are trying to perform would return too many cases"
+msgstr ""
+
+#: corehq/apps/case_search/xpath_functions/comparison.py
+msgid "We didn't understand what you were trying to do with {}"
+msgstr ""
+
+#: corehq/apps/case_search/xpath_functions/comparison.py
+msgid ""
+"The right hand side of a comparison must be a number or date. Dates must be "
+"surrounded in quotation marks"
+msgstr ""
 
 #: corehq/apps/case_search/xpath_functions/query_functions.py
 #, python-brace-format
@@ -12501,7 +12504,11 @@ msgid "Linking directly into Web Apps has been disabled."
 msgstr ""
 
 #: corehq/apps/cloudcare/views.py
-msgid "Could not find application."
+msgid "Multiple corresponding applications found. Could not follow link."
+msgstr ""
+
+#: corehq/apps/cloudcare/views.py
+msgid "No corresponding application found in this project."
 msgstr ""
 
 #: corehq/apps/cloudcare/views.py
@@ -13152,10 +13159,13 @@ msgid "Import from Excel"
 msgstr "Importar desde Excel"
 
 #: corehq/apps/data_dictionary/templates/data_dictionary/base.html
+#: corehq/apps/export/templates/export/dialogs/process_deprecated_properties.html
+#: corehq/apps/export/templates/export/partials/new_customize_export_templates.html
 msgid "Show Deprecated Properties"
 msgstr "Mostrar Propiedades Obsoletas"
 
 #: corehq/apps/data_dictionary/templates/data_dictionary/base.html
+#: corehq/apps/export/templates/export/partials/new_customize_export_templates.html
 msgid "Hide Deprecated Properties"
 msgstr "Ocultar Propiedades Obsoletas"
 
@@ -14786,6 +14796,23 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/domain/forms.py
+msgid "Enable Release Mode"
+msgstr ""
+
+#: corehq/apps/domain/forms.py
+msgid ""
+"\n"
+"            Check this box to enable release mode setting on the app release "
+"page.\n"
+"            Enabled setting restricts user to directly mark a version "
+"'released'\n"
+"            and allows users to do so only when they are in 'Release Mode' "
+"on the\n"
+"            release page of applications.\n"
+"            "
+msgstr ""
+
+#: corehq/apps/domain/forms.py
 msgid "Edit Basic Information"
 msgstr "Editar Información Básica"
 
@@ -14796,6 +14823,10 @@ msgstr "Actualice la Información Básica"
 #: corehq/apps/domain/forms.py
 msgid "Default timezone"
 msgstr "Zona horaria por defecto"
+
+#: corehq/apps/domain/forms.py
+msgid "Release Mode Visibility should be a boolean."
+msgstr ""
 
 #: corehq/apps/domain/forms.py
 msgid "{} should be an integer."
@@ -18322,6 +18353,138 @@ msgstr ""
 msgid "Controlling domain set to {}."
 msgstr ""
 
+#: corehq/apps/events/forms.py
+#, fuzzy
+#| msgid "Parent Tag"
+msgid "Per event day"
+msgstr "Etiquetas Padre"
+
+#: corehq/apps/events/forms.py
+msgid "Per entire event"
+msgstr ""
+
+#: corehq/apps/events/forms.py
+msgid "Attendance target"
+msgstr ""
+
+#: corehq/apps/events/forms.py
+msgid "The expected amount of attendees."
+msgstr ""
+
+#: corehq/apps/events/forms.py
+#, fuzzy
+#| msgid "Issue with registration"
+msgid "Allow same day registration"
+msgstr "Problema con el registro"
+
+#: corehq/apps/events/forms.py
+#, fuzzy
+#| msgid "Advanced Options"
+msgid "Attendance recording options"
+msgstr "Opciones Avanzadas"
+
+#: corehq/apps/events/forms.py corehq/apps/events/views.py
+msgid "Add Attendance Tracking Event"
+msgstr ""
+
+#: corehq/apps/events/models.py
+#, fuzzy
+#| msgid "Date Started"
+msgid "Not started"
+msgstr "Fecha de Inicio"
+
+#: corehq/apps/events/models.py
+#, fuzzy
+#| msgid "In Progress"
+msgid "In progress"
+msgstr "En Progreso"
+
+#: corehq/apps/events/models.py
+#, fuzzy
+#| msgid "Update previews"
+msgid "Under review"
+msgstr "Actualizar vistas previas"
+
+#: corehq/apps/events/models.py corehq/apps/registry/models.py
+msgid "Rejected"
+msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
+
+#: corehq/apps/events/models.py corehq/apps/registry/models.py
+msgid "Accepted"
+msgstr ""
+
+#: corehq/apps/events/templates/events_list.html
+msgid ""
+"\n"
+"          Attendance tracking events can be used to track attendance of all "
+"the selected attendees.\n"
+"        "
+msgstr ""
+
+#: corehq/apps/events/templates/events_list.html
+msgid "Add new event"
+msgstr ""
+
+#: corehq/apps/events/views.py corehq/privileges.py corehq/tabs/tabclasses.py
+msgid "Attendance Tracking"
+msgstr ""
+
+#: corehq/apps/events/views.py
+msgid "Attendance Tracking Events"
+msgstr ""
+
+#: corehq/apps/events/views.py
+#, fuzzy
+#| msgid "statements per page"
+msgid "events per page"
+msgstr "estados por página"
+
+#: corehq/apps/events/views.py
+#, fuzzy
+#| msgid "You have no items."
+msgid "You have no events"
+msgstr "No tiene ningún ítem."
+
+#: corehq/apps/events/views.py
+#, fuzzy
+#| msgid "Loading statements..."
+msgid "Loading events"
+msgstr "Cargando estados..."
+
+#: corehq/apps/events/views.py corehq/tabs/tabclasses.py
+#, fuzzy
+#| msgid "Event"
+msgid "Events"
+msgstr "Evento"
+
+#: corehq/apps/events/views.py
+#, fuzzy
+#| msgid "Start Date"
+msgid "Start date"
+msgstr "Fecha de Inicio"
+
+#: corehq/apps/events/views.py
+#, fuzzy
+#| msgid "End Date"
+msgid "End date"
+msgstr "Fecha de Finalización"
+
+#: corehq/apps/events/views.py
+msgid "Attendance Target"
+msgstr ""
+
+#: corehq/apps/events/views.py
+#, fuzzy
+#| msgid "Total Balance"
+msgid "Total attendees"
+msgstr "Saldo Total"
+
+#: corehq/apps/events/views.py
+#, fuzzy
+#| msgid "Add New Credit Card"
+msgid "Add New Event"
+msgstr "Agregar una Nueva Tarjeta de Crédito"
+
 #: corehq/apps/export/det/schema_generator.py
 #, python-brace-format
 msgid "Export instance type {name} not supported!"
@@ -19106,6 +19269,16 @@ msgstr ""
 msgid "Process"
 msgstr "Proceso"
 
+#: corehq/apps/export/templates/export/dialogs/process_deprecated_properties.html
+msgid ""
+"\n"
+"            In order to show you your deprecated properties, we need to "
+"refresh the page and\n"
+"            load in all the properties. This operation can sometimes take a "
+"few minutes.\n"
+"          "
+msgstr ""
+
 #: corehq/apps/export/templates/export/download_data_files.html
 msgid "Download Files"
 msgstr ""
@@ -19760,6 +19933,17 @@ msgid ""
 "                the last 35 days. To renew daily updates, click the 'Update "
 "Data'\n"
 "                button and download the file.\n"
+"              "
+msgstr ""
+
+#: corehq/apps/export/templates/export/partials/table.html
+#, python-format
+msgid ""
+"\n"
+"                Your export exceeds the limit of %(max_rows)s rows. Please "
+"see <a href=\"https://confluence.dimagi.com/display/commcarepublic/"
+"Selecting+Tools+for+CommCare+Data+Processing+and+Analysis\" data-"
+"toggle=\"modal\">documentation</a> for more information.\n"
 "              "
 msgstr ""
 
@@ -26834,14 +27018,6 @@ msgid "Pending"
 msgstr "Pendientes"
 
 #: corehq/apps/registry/models.py
-msgid "Accepted"
-msgstr ""
-
-#: corehq/apps/registry/models.py
-msgid "Rejected"
-msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
-
-#: corehq/apps/registry/models.py
 msgid "Invitation Accepted"
 msgstr ""
 
@@ -28133,6 +28309,7 @@ msgid "View by Users or Groups"
 msgstr "Vista por Usuarios o Grupos"
 
 #: corehq/apps/reports/filters/users.py
+#: corehq/apps/reports/templates/reports/reportdata/case_data.html
 msgid "User Type"
 msgstr "Tipo de Usuario"
 
@@ -31045,6 +31222,12 @@ msgstr ""
 #: corehq/apps/settings/views.py
 msgid "IP Allowlist"
 msgstr ""
+
+#: corehq/apps/settings/views.py
+#, fuzzy
+#| msgid "Last Usage"
+msgid "Last Used"
+msgstr "ÚItimo uso"
 
 #: corehq/apps/settings/views.py
 msgid "Copy this in a secure place. It will not be shown again."
@@ -37003,10 +37186,8 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/users/templates/users/filter_and_download.html
-#, fuzzy
-#| msgid "Calculations"
 msgid "Calculating download size..."
-msgstr "Cálculos"
+msgstr ""
 
 #: corehq/apps/users/templates/users/mobile/partials/user_upload_status.html
 #, python-format
@@ -37412,6 +37593,22 @@ msgstr ""
 msgid "Organization Settings"
 msgstr "Configuraciones de la Organización"
 
+#: corehq/apps/users/templates/users/partials/edit_commtrack_user_settings.html
+msgid ""
+"\n"
+"            There are cases in the following assigned locations which may "
+"need to be migrated:\n"
+"          "
+msgstr ""
+
+#: corehq/apps/users/templates/users/partials/edit_commtrack_user_settings.html
+msgid ""
+"\n"
+"            There are no cases in any of the user's assigned locations that "
+"need to be migrated.\n"
+"          "
+msgstr ""
+
 #: corehq/apps/users/templates/users/partials/edit_role_modal.html
 msgid "Role Name"
 msgstr "Nombre de Rol"
@@ -37434,14 +37631,6 @@ msgstr ""
 
 #: corehq/apps/users/templates/users/partials/edit_role_modal.html
 msgid "Select which reports the role can access:"
-msgstr ""
-
-#: corehq/apps/users/templates/users/partials/edit_role_modal.html
-msgid "Download and Email Reports"
-msgstr ""
-
-#: corehq/apps/users/templates/users/partials/edit_role_modal.html
-msgid "Allow role to download and email report data."
 msgstr ""
 
 #: corehq/apps/users/templates/users/partials/edit_role_modal.html
@@ -40522,7 +40711,21 @@ msgstr ""
 
 #: corehq/motech/dhis2/entities_helpers.py
 #, python-brace-format
+msgid ""
+"Error(s) while updating DHIS2 tracked entity. Errors from DHIS2 can be found "
+"in Remote API Logs: {url}"
+msgstr ""
+
+#: corehq/motech/dhis2/entities_helpers.py
+#, python-brace-format
 msgid "{n} tracked entity instances were registered from case {case}."
+msgstr ""
+
+#: corehq/motech/dhis2/entities_helpers.py
+#, python-brace-format
+msgid ""
+"Error(s) while registering DHIS2 tracked entity. Errors from DHIS2 can be "
+"found in Remote API Logs: {url}"
 msgstr ""
 
 #: corehq/motech/dhis2/entities_helpers.py
@@ -41501,16 +41704,7 @@ msgid "Delete Configuration"
 msgstr ""
 
 #: corehq/motech/repeaters/templates/repeaters/partials/repeater_row.html
-#, fuzzy, python-format
-#| msgid ""
-#| "\n"
-#| "                                              This controls which parent "
-#| "this organization level\n"
-#| "                                              must have. You can use this "
-#| "to setup a organization\n"
-#| "                                              level that can have "
-#| "different types of children.\n"
-#| "                                          "
+#, python-format
 msgid ""
 "\n"
 "                                    Are you sure you want to delete the "
@@ -41522,10 +41716,6 @@ msgid ""
 "no longer appear on this page.\n"
 "                                "
 msgstr ""
-"\n"
-"Esto controla qué padre debe tener este nivel de organización. Usted puede "
-"utilizar esto para establecer un nivel de organización que puede tener "
-"diferentes tipos de hijos."
 
 #: corehq/motech/repeaters/templates/repeaters/repeat_record_report.html
 msgid "Resend selected"
@@ -41932,10 +42122,20 @@ msgid "Link to other forms in End of Form Navigation"
 msgstr ""
 
 #: corehq/privileges.py
-#, fuzzy
-#| msgid "Phone Settings"
 msgid "Phone heartbeat"
-msgstr "Configuraciones del Teléfono"
+msgstr ""
+
+#: corehq/privileges.py
+msgid "Improved app changes view"
+msgstr ""
+
+#: corehq/privileges.py
+msgid "File Dropzone"
+msgstr ""
+
+#: corehq/privileges.py
+msgid "Regular Expression Validation for Custom Data Fields"
+msgstr ""
 
 #: corehq/reports.py
 msgid "Report Builder Reports"
@@ -42199,6 +42399,12 @@ msgstr "Operaciones Administrativas"
 #: corehq/tabs/tabclasses.py
 msgid "CommCare Reports"
 msgstr "Reportes CommCare"
+
+#: corehq/tabs/tabclasses.py
+#, fuzzy
+#| msgid "View All"
+msgid "View All Events"
+msgstr "Ver Todos"
 
 #: corehq/trans_override.py
 msgid "Token generator"

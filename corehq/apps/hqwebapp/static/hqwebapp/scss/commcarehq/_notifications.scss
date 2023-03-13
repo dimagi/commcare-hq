@@ -1,0 +1,93 @@
+$notifications-icon-size: 38px;
+
+.notifications-active-icon {
+  color: $cc-att-neg-mid;
+}
+
+ul.notifications-dropdown {
+  width: 400px;
+
+  > li a {
+    white-space: normal;
+    padding-top: 10px;
+    padding-bottom: 10px;
+    border-left: 4px solid transparent;
+    &:hover {
+      border-color: $cc-brand-mid;
+    }
+  }
+}
+
+.notifications-icon {
+  float: left;
+  width: $notifications-icon-size;
+  display: block;
+  height: $notifications-icon-size;
+  text-align: center;
+  border-radius: 2px;
+  position: relative;
+
+  > .notifications-type {
+    line-height: $notifications-icon-size;
+    font-size: $notifications-icon-size - 20;
+  }
+}
+
+.notifications-info {
+  .notifications-icon {
+    background-color: $cc-brand-hi;
+    > .notifications-type {
+      padding-left: 1px;
+      padding-top: 1px;
+      color: $cc-brand-mid;
+    }
+  }
+}
+
+.notifications-alert {
+  .notifications-icon {
+    background-color: $cc-dark-warm-accent-hi;
+    > .notifications-type {
+      color: $cc-dark-warm-accent-mid;
+    }
+  }
+}
+
+.notifications-error {
+  .notifications-icon {
+    background-color: $cc-att-neg-hi;
+    > .notifications-type {
+      color: $cc-att-neg-mid;
+      font-size: 14px;
+    }
+  }
+}
+
+.notifications-text,
+.notifications-date {
+  margin-left: $notifications-icon-size + 10;
+  display: block;
+}
+
+.notifications-date {
+  color: lighten($cc-text, 40%);
+  padding: 2px 0;
+}
+
+.notifications-dropdown > li > a:hover > .notifications-date {
+  color: #ffffff;
+}
+
+.notifications-dropdown > li.notifications-unread {
+  background-color: $cc-bg;
+  > a {
+    border-color: $cc-brand-mid;
+  }
+  .notifications-text,
+  .notifications-date {
+    font-weight: bold;
+  }
+  .notifications-date {
+    color: lighten($cc-text, 30%);
+  }
+}

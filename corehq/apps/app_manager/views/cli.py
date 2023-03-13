@@ -25,7 +25,7 @@ from ..dbaccessors import (
 
 
 @json_error
-@api_auth
+@api_auth()
 @api_throttle
 def list_apps(request, domain):
     def app_to_json(app):

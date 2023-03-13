@@ -1,7 +1,3 @@
-
-
-
-
 class ExportAppException(Exception):
     pass
 
@@ -28,3 +24,7 @@ class RejectedStaleExport(Exception):
 
 class InvalidLoginException(Exception):
     pass
+
+
+class ExportTooLargeException(Exception):
+    """Export exceeds size limit"""
