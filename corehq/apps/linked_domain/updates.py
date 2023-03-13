@@ -138,8 +138,11 @@ def update_model_type(domain_link, model_type, model_detail=None, overwrite=Fals
         MODEL_UCR_EXPRESSION: update_linked_ucr_expression,
     }.get(model_type)
 
-    kwargs = model_detail or {}
+    kwargs = {}
+    if model_detail:
+        kwargs.update(model_detail)
     kwargs['overwrite'] = overwrite
+
     update_fn(domain_link, **kwargs)
 
 
