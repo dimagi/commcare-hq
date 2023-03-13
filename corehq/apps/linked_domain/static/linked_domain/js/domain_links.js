@@ -34,6 +34,12 @@ hqDefine("linked_domain/js/domain_links", [
         self.hasSuccess = ko.observable(false);
         self.showSpinner = ko.observable(false);
 
+        self.resetStatus = function () {
+            self.error("");
+            self.hasSuccess(false);
+            self.showUpdate(true);
+        };
+
         var updateFn = function (overwrite) {
             self.showSpinner(true);
             self.showUpdate(false);
