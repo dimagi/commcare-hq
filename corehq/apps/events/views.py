@@ -84,8 +84,8 @@ class EventsView(BaseEventView, CRUDPaginatedViewMixin):
         return {
             'id': event.event_id,
             'name': event.name,
-            'start_date': str(event.start_date.date()),
-            'end_date': str(event.end_date.date()),
+            'start_date': str(event.start_date),
+            'end_date': str(event.end_date),
             'target_attendance': event.attendance_target,
             'status': event.status,
             'total_attendance': event.total_attendance or '-',
