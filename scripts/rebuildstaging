@@ -4,7 +4,7 @@ function usage() {
     cat << EOF
 usage: $0 [-h|--help] [-v|--verbose] [--deploy|--no-push] [--skip-fetch]
 
-rebuild staging from yaml configuration (scripts/staging.yml)
+rebuild staging from yaml configuration (downloaded from https://github.com/dimagi/staging-branches/blob/main/commcare-hq-staging.yml)
 
     -h --help       print this help text
     -v --verbose    display debugging output
@@ -47,6 +47,7 @@ done
 
 function rebuildstaging() {
     echo "rebuilding staging branch, this might take a while..."
+    curl --silent https://raw.githubusercontent.com/dimagi/staging-branches/main/commcare-hq-staging.yml > scripts/staging.yml
     git-build-branch scripts/staging.yml "$@"
 }
 

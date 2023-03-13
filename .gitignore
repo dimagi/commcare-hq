@@ -84,3 +84,5 @@ corehq/apps/hqwebapp/static/hqwebapp/js/lib/modernizr.js
 # direnv
 .envrc
 .direnv
+
+scripts/staging.yml
