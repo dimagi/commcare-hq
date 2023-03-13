@@ -252,7 +252,7 @@ class ODataFeedMixin(object):
         from corehq.apps.export.views.list import ODataFeedListView
         return ODataFeedListView
 
-    def get_export_instance(self, schema, original_export_instance, load_deprecated=False):
+    def get_export_instance(self, schema, original_export_instance):
         export_instance = super().get_export_instance(schema, original_export_instance)
         clean_odata_columns(export_instance)
         export_instance.is_odata_config = True
