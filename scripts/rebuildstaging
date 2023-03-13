@@ -47,8 +47,9 @@ done
 
 function rebuildstaging() {
     echo "rebuilding staging branch, this might take a while..."
-    curl --silent https://raw.githubusercontent.com/dimagi/staging-branches/main/commcare-hq-staging.yml > scripts/staging.yml
-    git-build-branch scripts/staging.yml "$@"
+    curl --silent https://raw.githubusercontent.com/dimagi/staging-branches/main/commcare-hq-staging.yml > scripts/tmp-staging.yml
+    git-build-branch scripts/tmp-staging.yml "$@"
+    rm scripts/tmp-staging.yml
 }
 
 args=''
@@ -57,15 +58,6 @@ args=''
 [[ -z "$no_push" || $no_push != 'y' ]] && args="$args --push"
 
 [[ $skip_fetch = 'y' ]] && args="$args sync rebuild"
-
-# if staging.yml isn't up-to-date, warn and quit
-git fetch origin master
-if [[ -n $(git diff origin/master -- scripts/staging.yml) && $no_push != 'y' ]]
-then
-    echo "scripts/staging.yml on this branch different from the one on master"
-    echo "Aborting."
-    exit 1
-fi
 
 if [[ $deploy = 'y' && $no_push != 'y' ]]
 then
