@@ -41,11 +41,17 @@ do
 done
 
 function rebuildstaging() {
-    mkdir -p ./artifacts
-    echo "saving commcare-hq-staging.yml from staging-branches in artifacts/staging.yml"
-    curl --silent https://raw.githubusercontent.com/dimagi/staging-branches/main/commcare-hq-staging.yml > artifacts/staging.yml
+    REPO_ROOT='artifacts/staging-branches'
+    if [[ ! -d "$REPO_ROOT/.git" ]]
+    then
+        git clone https://github.com/dimagi/staging-branches.git "$REPO_ROOT"
+    else
+        git --git-dir "$REPO_ROOT/.git" pull origin main
+    fi
+
+    git --git-dir "$REPO_ROOT/.git" show
     echo "rebuilding staging branch..."
-    git-build-branch artifacts/staging.yml "$@"
+    git-build-branch "$REPO_ROOT/commcare-hq-staging.yml" "$@"
 }
 
 args=''
