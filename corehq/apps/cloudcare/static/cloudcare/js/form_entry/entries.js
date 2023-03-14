@@ -899,15 +899,19 @@ hqDefine("cloudcare/js/form_entry/entries", function () {
     FileEntry.prototype.constructor = EntrySingleAnswer;
     FileEntry.prototype.onAnswerChange = function (newValue) {
         var self = this;
-        if (newValue !== constants.NO_ANSWER) {
+        // file has already been assigned a unique id and another request should not be sent to formplayer
+        if (self.answer() && self.answer().match(/([a-z0-9]{8}-)([a-z0-9]{4}-){3}([a-z0-9]{12}).[A-Za-z0-9]{3}/)) {
+            return
+        }
+        if (newValue !== constants.NO_ANSWER && newValue !== "") {
             var $input = $('#' + self.entryId);
             self.answer(newValue.replace(constants.FILE_PREFIX, ""));
             self.file($input[0].files[0]);
+            this.question.onchange();
         } else {
-            self.answer(newValue);
             self.file(null);
+            self.answer(constants.NO_ANSWER);
         }
-        this.question.onchange();
     };
 
     /**
