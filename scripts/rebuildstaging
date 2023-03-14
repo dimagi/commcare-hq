@@ -41,10 +41,11 @@ do
 done
 
 function rebuildstaging() {
-    echo "rebuilding staging branch, this might take a while..."
-    curl --silent https://raw.githubusercontent.com/dimagi/staging-branches/main/commcare-hq-staging.yml > scripts/tmp-staging.yml
-    git-build-branch scripts/tmp-staging.yml "$@"
-    rm scripts/tmp-staging.yml
+    mkdir -p ./artifacts
+    echo "fetching commcare-hq-staging.yml from staging-branches"
+    curl --silent https://raw.githubusercontent.com/dimagi/staging-branches/main/commcare-hq-staging.yml > artifacts/staging.yml
+    echo "rebuilding staging branch..."
+    git-build-branch artifacts/staging.yml "$@"
 }
 
 args=''
