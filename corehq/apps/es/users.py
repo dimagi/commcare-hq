@@ -22,11 +22,14 @@ of all unknown users, web users, and demo users on a domain.
 
     owner_ids = query.get_ids()
 """
+
+from copy import copy
+
 from . import filters, queries
 from .client import ElasticDocumentAdapter, create_document_adapter
 from .es_query import HQESQuery
 from .index.settings import IndexSettingsKey
-from .transient_util import get_adapter_mapping, from_dict_with_possible_id
+from .transient_util import get_adapter_mapping
 
 
 class UserES(HQESQuery):
@@ -73,9 +76,50 @@ class ElasticUser(ElasticDocumentAdapter):
     def mapping(self):
         return get_adapter_mapping(self)
 
-    @classmethod
-    def from_python(cls, doc):
-        return from_dict_with_possible_id(doc)
+    def from_python(self, user):
+        """
+        :param user: an instance of ``CouchUser`` or a user dict
+        :raises: ``TypeError`` user is none of the above types
+        """
+        from corehq.apps.users.models import CouchUser
+        if isinstance(user, CouchUser):
+            user_dict = user.to_json()
+        elif isinstance(user, dict):
+            user_dict = copy(user)
+        else:
+            raise TypeError(f"Unkown type {type(user)}")
+        return self._from_dict(user_dict)
+
+    def _from_dict(self, user_dict):
+        """
+        Takes a user dict and applies required transfomation to make it suitable for ES.
+        The function is replica of ``transform_user_for_elasticsearch``.
+        In future all references to  ``transform_user_for_elasticsearch`` will be replaced by `from_python`
+
+        :param user: an instance ``dict`` which is result of ``CouchUser.to_json()``
+        """
+        from corehq.apps.groups.dbaccessors import (
+            get_group_id_name_map_by_user,
+        )
+        from corehq.apps.users.models import CouchUser
+
+        if user_dict['doc_type'] == 'CommCareUser' and '@' in user_dict['username']:
+            user_dict['base_username'] = user_dict['username'].split("@")[0]
+        else:
+            user_dict['base_username'] = user_dict['username']
+
+        results = get_group_id_name_map_by_user(user_dict['_id'])
+        user_dict['__group_ids'] = [res.id for res in results]
+        user_dict['__group_names'] = [res.name for res in results]
+        user_dict['user_data_es'] = []
+        if 'user_data' in user_dict:
+            user_obj = CouchUser.wrap_correctly(user_dict)
+            for key, value in user_obj.metadata.items():
+                user_dict['user_data_es'].append({
+                    'key': key,
+                    'value': value,
+                })
+        return user_dict.pop('_id'), user_dict
 
 
 user_adapter = create_document_adapter(

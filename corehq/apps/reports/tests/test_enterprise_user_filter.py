@@ -11,7 +11,6 @@ from corehq.apps.reports.filters.controllers import (
 )
 from corehq.apps.reports.filters.users import EnterpriseUserFilter
 from corehq.apps.users.models import CommCareUser, WebUser
-from corehq.pillows.user import transform_user_for_elasticsearch
 
 
 @es_test(requires=[user_adapter], setup_class=True)
@@ -45,7 +44,7 @@ class BaseEnterpriseUserFilterTest(TestCase):
 
         for user_obj in cls.mobile_users:
             user_adapter.index(
-                transform_user_for_elasticsearch(user_obj.to_json()),
+                user_obj,
                 refresh=True
             )
 
