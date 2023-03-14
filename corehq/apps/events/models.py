@@ -251,12 +251,18 @@ class Event(models.Model):
 
 class AttendeeCaseManager:
 
-    def by_domain(self, domain):
+    # TODO: Test
+    def by_domain(
+        self,
+        domain: str,
+        include_closed: bool = False,
+    ) -> list[CommCareCase]:
+        if include_closed:
+            get_case_ids = CommCareCase.objects.get_case_ids_in_domain
+        else:
+            get_case_ids = CommCareCase.objects.get_open_case_ids_in_domain_by_type
         case_type = get_attendee_case_type(domain)
-        case_ids = CommCareCase.objects.get_open_case_ids_in_domain_by_type(
-            domain,
-            case_type,
-        )
+        case_ids = get_case_ids(domain, case_type)
         return CommCareCase.objects.get_cases(case_ids, domain)
 
 
