@@ -72,6 +72,7 @@ hqDefine("cloudcare/js/form_entry/utils", function () {
      * @param {Object} itemCallback - function to call back after new search
      * @param {Object} clearCallBack - function to call back after clearing the input
      * @param {Object} initialPageData - initial_page_data object
+     * @param {function|undefined} inputOnKeyDown - inputOnKeyDown function (optional)
      */
     module.renderMapboxInput = function (divId, itemCallback, clearCallBack, initialPageData, inputOnKeyDown) {
         var defaultGeocoderLocation = initialPageData.get('default_geocoder_location') || {};
@@ -95,6 +96,8 @@ hqDefine("cloudcare/js/form_entry/utils", function () {
                 inputOnKeyDown(e);
             }
 
+            // This captures arrow up/down events on geocoder input box and updates the
+            // screen reader live region with the current highlighted value.
             if (e.key === "ArrowUp" || e.key === "ArrowDown") {
                 const currentOption = divEl.find("ul.suggestions li.active").text();
                 $("#" + divId + "-sr").html("<p>" + currentOption + "</p>");

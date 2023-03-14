@@ -88,6 +88,7 @@
     </fieldset>
 
     <% } else if (input == "address") { %>
+    <!-- ARIA live region for highlighted geocoder values, populated via javascript -->
     <div role="region" aria-live="polite" class="sr-only" id="<%- id %>_mapbox-sr"></div>
     <div class="query-field" value="<%- value %>" id="<%- id %>_mapbox" data-address="<%- id %>">
     </div>
