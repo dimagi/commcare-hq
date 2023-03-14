@@ -103,6 +103,12 @@ hqDefine("cloudcare/js/form_entry/utils", function () {
                 $("#" + divId + "-sr").html("<p>" + currentOption + "</p>");
             }
         }, 200));
+
+        geocoder.on('results', (items) => {
+            if (items && items.features) {
+                $("#" + divId + "-sr").html("<p>" + items.features[0].place_name + "</p>");
+            }
+        });
     };
 
     /**
