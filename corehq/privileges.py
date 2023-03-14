@@ -99,6 +99,8 @@ DATA_FILE_DOWNLOAD = 'data_file_download'
 
 REGEX_FIELD_VALIDATION = 'regex_field_validation'
 
+LOCATION_SAFE_CASE_IMPORTS = 'location_safe_case_imports'
+
 MAX_PRIVILEGES = [
     LOOKUP_TABLES,
     API_ACCESS,
@@ -152,6 +154,7 @@ MAX_PRIVILEGES = [
     DATA_FILE_DOWNLOAD,
     ATTENDANCE_TRACKING,
     REGEX_FIELD_VALIDATION,
+    LOCATION_SAFE_CASE_IMPORTS,
 ]
 
 # These are special privileges related to their own rates in a SoftwarePlanVersion
@@ -220,4 +223,5 @@ class Titles(object):
             DATA_FILE_DOWNLOAD: _('File Dropzone'),
             ATTENDANCE_TRACKING: _("Attendance Tracking"),
             REGEX_FIELD_VALIDATION: _("Regular Expression Validation for Custom Data Fields"),
+            LOCATION_SAFE_CASE_IMPORTS: _("Location Safe Case Imports"),
         }.get(privilege, privilege)

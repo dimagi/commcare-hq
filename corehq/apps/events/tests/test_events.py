@@ -1,9 +1,11 @@
-from django.test import TestCase
 from datetime import datetime
 
-from corehq.apps.events.models import Event, NOT_STARTED
+from django.test import TestCase
+
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.users.models import WebUser
+
+from ..models import NOT_STARTED, Event
 
 
 class TestEventModel(TestCase):

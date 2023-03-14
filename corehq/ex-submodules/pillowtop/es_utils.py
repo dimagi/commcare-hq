@@ -1,5 +1,8 @@
 from copy import deepcopy
 
+from dimagi.ext import jsonobject
+from pillowtop.logger import pillow_logging
+
 from corehq.apps.es.index.settings import (
     IndexSettingsKey,
     render_index_tuning_settings,
@@ -8,8 +11,6 @@ from corehq.apps.es.migration_operations import CreateIndex
 from corehq.apps.es.transient_util import doc_adapter_from_info
 from corehq.apps.es.client import manager
 from corehq.util.es.elasticsearch import TransportError
-from dimagi.ext import jsonobject
-from pillowtop.logger import pillow_logging
 
 XFORM_HQ_INDEX_NAME = IndexSettingsKey.FORMS
 CASE_HQ_INDEX_NAME = IndexSettingsKey.CASES

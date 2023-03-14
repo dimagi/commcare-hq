@@ -200,6 +200,9 @@ class Command(BaseCommand):
         Role(slug=privileges.REGEX_FIELD_VALIDATION,
              name='Regular Field Validation',
              description='Regular field validation for custom data fields'),
+        Role(slug=privileges.LOCATION_SAFE_CASE_IMPORTS,
+             name='Location Safe Case Imports',
+             description='Location-restricted users can import cases at their location or below')
     ]
 
     BOOTSTRAP_PLANS = [

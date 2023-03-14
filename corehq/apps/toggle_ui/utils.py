@@ -21,4 +21,5 @@ def get_subscription_info(domain):
 
 @quickcache(['domain'], timeout=60 * 10)
 def has_dimagi_user(domain):
-    return UserES().web_users().domain(domain).search_string_query('@dimagi.com').count()
+    search_fields = ["base_username", "username"]
+    return UserES().web_users().domain(domain).search_string_query('@dimagi.com', search_fields).count()
