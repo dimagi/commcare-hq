@@ -2172,7 +2172,8 @@ GENERIC_INBOUND_API = StaticToggle(
     TAG_SOLUTIONS_LIMITED,
     namespaces=[NAMESPACE_DOMAIN],
     description="Create inbound APIs that use UCR expressions to process data into case updates",
-    help_link="TODO",
+    help_link="https://docs.google.com/document/d/1y9CZwpzGYtitxbh-Y7nS5-WoMUg-LbRlZHd-eD5i78U/edit",
+    parent_toggles=[UCR_EXPRESSION_REGISTRY]
 )
 
 CASE_UPDATES_UCR_FILTERS = StaticToggle(
