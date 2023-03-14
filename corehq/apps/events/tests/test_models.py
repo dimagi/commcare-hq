@@ -12,13 +12,14 @@ from corehq.form_processor.models import CommCareCase, CommCareCaseIndex
 from corehq.util.test_utils import create_test_case
 
 from ..models import (
-    ATTENDEE_CASE_TYPE,
     ATTENDEE_USER_ID_CASE_PROPERTY,
+    DEFAULT_ATTENDEE_CASE_TYPE,
     EVENT_ATTENDEE_CASE_TYPE,
     NOT_STARTED,
+    AttendanceTrackingConfig,
     AttendeeCase,
     Event,
-    get_attendee_case_type, AttendanceTrackingConfig,
+    get_attendee_case_type,
 )
 
 DOMAIN = 'test-domain'
@@ -33,13 +34,14 @@ class TestAttendeeCaseManager(TestCase):
 
     @contextmanager
     def get_attendee_cases(self):
+        case_type = get_attendee_case_type(DOMAIN)
         with create_test_case(
             DOMAIN,
-            ATTENDEE_CASE_TYPE,
+            case_type,
             'Oliver Opencase',
         ) as open_case, create_test_case(
             DOMAIN,
-            ATTENDEE_CASE_TYPE,
+            case_type,
             'Clarence Closedcase',
         ) as closed_case:
             self.factory.close_case(closed_case.case_id)
@@ -75,10 +77,11 @@ class TestEventModel(TestCase):
 
     @contextmanager
     def _get_attendee(self, username):
+        case_type = get_attendee_case_type(DOMAIN)
         with self._get_mobile_worker(username) as user:
             (attendee,) = self.factory.create_or_update_cases([CaseStructure(
                 attrs={
-                    'case_type': ATTENDEE_CASE_TYPE,
+                    'case_type': case_type,
                     'update': {
                         ATTENDEE_USER_ID_CASE_PROPERTY: user.user_id,
                     },
@@ -141,10 +144,11 @@ class TestEventModel(TestCase):
             event.save()
             event.set_expected_attendees([attendee])
 
+            attendee_case_type = get_attendee_case_type(DOMAIN)
             event_attendees = event.get_expected_attendees()
 
             self.assertEqual(len(event_attendees), 1)
-            self.assertEqual(event_attendees[0].type, ATTENDEE_CASE_TYPE)
+            self.assertEqual(event_attendees[0].type, attendee_case_type)
             self.assertEqual(event_attendees[0].case_id, attendee.case_id)
 
             attendee_subcases = event_attendees[0].get_subcases('attendee-host')
@@ -222,7 +226,7 @@ class GetAttendeeCaseTypeTest(TestCase):
 
     def test_config_does_not_exist(self):
         case_type = get_attendee_case_type('some-other-domain')
-        self.assertEqual(case_type, ATTENDEE_CASE_TYPE)
+        self.assertEqual(case_type, DEFAULT_ATTENDEE_CASE_TYPE)
 
     def test_config(self):
         with self.example_config():

@@ -26,8 +26,12 @@ ATTENDEE_LIST_STATUS_CHOICES = [
     (ACCEPTED, _('Accepted')),
 ]
 
-# Attendees are CommCareCase instances with this case type:
-ATTENDEE_CASE_TYPE = 'commcare-attendee'
+# DO NOT USE. Use `get_attendee_case_type()` instead.
+#
+# The default case type of attendees, unless the domain already has
+# attendees.
+DEFAULT_ATTENDEE_CASE_TYPE = 'commcare-attendee'
+
 
 # An extension case with this case type links an attendee to an Event:
 EVENT_ATTENDEE_CASE_TYPE = 'commcare-potential-attendee'
@@ -48,16 +52,22 @@ class AttendanceTrackingConfig(models.Model):
     # For projects with existing attendee cases
     attendee_case_type = models.CharField(
         max_length=255,
-        default=ATTENDEE_CASE_TYPE,
+        default=DEFAULT_ATTENDEE_CASE_TYPE,
     )
 
 
 @quickcache(['domain'])
 def get_attendee_case_type(domain):
+    """
+    Returns the case type for Attendee cases.
+
+    AttendanceTrackingConfig will be configured for domains that already
+    have attendee cases. Defaults to ``DEFAULT_ATTENDEE_CASE_TYPE``.
+    """
     try:
         config = AttendanceTrackingConfig.objects.get(pk=domain)
     except AttendanceTrackingConfig.DoesNotExist:
-        return ATTENDEE_CASE_TYPE
+        return DEFAULT_ATTENDEE_CASE_TYPE
     return config.attendee_case_type
 
 
@@ -113,10 +123,11 @@ class Event(models.Model):
         # cases for the Event.
         event_attendee_cases = self._get_ext_cases()
 
+        attendee_case_type = get_attendee_case_type(self.domain)
         attendee_cases = []
         for case in event_attendee_cases:
             for index in case.indices:
-                if index.referenced_type == ATTENDEE_CASE_TYPE:
+                if index.referenced_type == attendee_case_type:
                     attendee_cases.append(index.referenced_case)
         return attendee_cases
 
@@ -132,6 +143,7 @@ class Event(models.Model):
 
         self._close_ext_cases()
 
+        attendee_case_type = get_attendee_case_type(self.domain)
         attendee_case_ids = (c if isinstance(c, str) else c.case_id
                              for c in attendee_cases)
         case_structures = []
@@ -150,7 +162,7 @@ class Event(models.Model):
                         relationship='extension',
                         identifier='attendee-host',
                         related_structure=attendee_host,
-                        related_type=ATTENDEE_CASE_TYPE,
+                        related_type=attendee_case_type,
                     ),
                 ],
                 attrs={
@@ -240,9 +252,10 @@ class Event(models.Model):
 class AttendeeCaseManager:
 
     def by_domain(self, domain):
+        case_type = get_attendee_case_type(domain)
         case_ids = CommCareCase.objects.get_open_case_ids_in_domain_by_type(
             domain,
-            ATTENDEE_CASE_TYPE,
+            case_type,
         )
         return CommCareCase.objects.get_cases(case_ids, domain)
 
@@ -256,11 +269,12 @@ class AttendeeCase:
 
 
 def get_paginated_attendees(domain, limit, page, query=None):
+    case_type = get_attendee_case_type(domain)
     if query:
         es_query = (
             CaseES()
             .domain(domain)
-            .case_type(ATTENDEE_CASE_TYPE)
+            .case_type(case_type)
             .is_closed(False)
             .term('name', query)
         )
@@ -269,7 +283,7 @@ def get_paginated_attendees(domain, limit, page, query=None):
     else:
         case_ids = CommCareCase.objects.get_open_case_ids_in_domain_by_type(
             domain,
-            ATTENDEE_CASE_TYPE,
+            case_type,
         )
         total = len(case_ids)
     if page:
