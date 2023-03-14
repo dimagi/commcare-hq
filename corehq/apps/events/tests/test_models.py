@@ -18,6 +18,7 @@ from ..models import (
     NOT_STARTED,
     AttendeeCase,
     Event,
+    get_attendee_case_type, AttendanceTrackingConfig,
 )
 
 DOMAIN = 'test-domain'
@@ -215,6 +216,30 @@ class TestEventModel(TestCase):
                 include_closed=False,
             )
             self.assertEqual(len(ext_case_ids), 0)
+
+
+class GetAttendeeCaseTypeTest(TestCase):
+
+    def test_config_does_not_exist(self):
+        case_type = get_attendee_case_type('some-other-domain')
+        self.assertEqual(case_type, ATTENDEE_CASE_TYPE)
+
+    def test_config(self):
+        with self.example_config():
+            case_type = get_attendee_case_type(DOMAIN)
+            self.assertEqual(case_type, 'travailleur')
+
+    @contextmanager
+    def example_config(self):
+        config = AttendanceTrackingConfig.objects.create(
+            domain=DOMAIN,
+            mobile_worker_attendees=False,
+            attendee_case_type='travailleur',
+        )
+        try:
+            yield
+        finally:
+            config.delete()
 
 
 def test_doctests():

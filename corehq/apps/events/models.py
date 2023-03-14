@@ -52,6 +52,15 @@ class AttendanceTrackingConfig(models.Model):
     )
 
 
+@quickcache(['domain'])
+def get_attendee_case_type(domain):
+    try:
+        config = AttendanceTrackingConfig.objects.get(pk=domain)
+    except AttendanceTrackingConfig.DoesNotExist:
+        return ATTENDEE_CASE_TYPE
+    return config.attendee_case_type
+
+
 class EventObjectManager(models.Manager):
 
     def by_domain(self, domain, most_recent_first=False):
