@@ -1,3 +1,4 @@
+// Todo: This is to be deleted, use 'repeat_records_by_last_checked/view' in couchapps instead of this
 function (doc) {
     var state = 'PENDING';
     if (doc.doc_type === 'RepeatRecord' || doc.doc_type === 'RepeatRecord-Failed') {

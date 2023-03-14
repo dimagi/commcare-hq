@@ -1513,6 +1513,7 @@ USERS_GROUPS_DB = 'users'
 DOMAINS_DB = 'domains'
 APPS_DB = 'apps'
 META_DB = 'meta'
+RECEIVERWRAPPER_DB = 'receiverwrapper'
 
 COUCHDB_APPS = [
     'api',
@@ -1562,7 +1563,7 @@ COUCHDB_APPS = [
 
     # custom reports
     'accounting',
-    ('repeaters', 'receiverwrapper'),
+    ('repeaters', RECEIVERWRAPPER_DB),
     ('userreports', META_DB),
     ('custom_data_fields', META_DB),
     ('export', META_DB),
