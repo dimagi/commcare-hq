@@ -13,7 +13,8 @@ from corehq.apps.users.util import log_user_change
 from corehq.const import USER_CHANGE_VIA_WEB
 from corehq.apps.es.cases import CaseES
 from corehq.apps.es.aggregations import TermsAggregation
-from corehq.apps.users.dbaccessors import get_all_commcare_users_by_domain
+from corehq.apps.es.users import UserES
+from corehq.apps.es import filters
 
 
 def get_editable_role_choices(domain, couch_user, allow_admin_role):
@@ -115,17 +116,37 @@ def log_commcare_user_locations_changes(request, user, old_location_id, old_assi
 
 
 def _get_location_ids_with_single_user(domain, location_ids, user_id):
-    other_commcare_user_ids = [user.user_id for user in get_all_commcare_users_by_domain(domain)]
     # Remove the user's ID, as we want to see which other CommCare users share any of the given location_ids
-    other_commcare_user_ids.remove(user_id)
+    user_query = (
+        UserES()
+        .domain(domain)
+        .mobile_users()
+        .location(location_ids)
+    )
+    user_query.filter(filters.NOT(filters.doc_id(user_id)))
+    other_commcare_user_ids = user_query.get_ids()
+
+    case_query = (
+        CaseES()
+        .domain(domain)
+        .owner(location_ids)
+        .user(other_commcare_user_ids)
+        .aggregation(TermsAggregation('by_location', 'owner_id')
+        .size(0))
+    ).run()
+    return list(set(location_ids) - set(case_query.aggregations.by_location.keys))
+
+
+def _get_location_case_counts_with_single_user(domain, location_ids):
     query = (CaseES()
             .domain(domain)
             .owner(location_ids)
-            .user(other_commcare_user_ids)
             .aggregation(TermsAggregation('by_location', 'owner_id')
             .size(0))
     ).run()
-    return list(set(location_ids) - set(query.aggregations.by_location.keys))
+    locations = SQLLocation.objects.filter(location_id__in=location_ids)
+    counts = query.aggregations.by_location.counts_by_bucket()
+    return locations, counts
 
 
 def get_locations_with_single_user(domain, location_ids, user_id):
@@ -141,15 +162,7 @@ def get_locations_with_single_user(domain, location_ids, user_id):
     location_ids_with_single_user = _get_location_ids_with_single_user(domain, location_ids, user_id)
     locations_with_single_user = dict()
     if location_ids_with_single_user:
-        query = (CaseES()
-                .domain(domain)
-                .owner(location_ids_with_single_user)
-                .aggregation(TermsAggregation('by_location', 'owner_id')
-                .size(0))
-        ).run()
-
-        locations = SQLLocation.objects.filter(location_id__in=location_ids_with_single_user)
-        counts = query.aggregations.by_location.counts_by_bucket()
+        locations, counts = _get_location_case_counts_with_single_user(domain, location_ids_with_single_user)
         for location in locations:
             if location.location_id in counts:
                 locations_with_single_user[location.name] = counts[location.location_id]
