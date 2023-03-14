@@ -14,7 +14,7 @@ from django.http import (
 from django.template.loader import render_to_string
 from django.urls import reverse
 from django.utils.safestring import mark_safe
-from django.utils.html import format_html, strip_tags
+from django.utils.html import format_html
 from django.utils.translation import gettext_lazy
 from django.utils.translation import gettext as _
 from django.views import View
@@ -1155,7 +1155,7 @@ def edit_module_detail_screens(request, domain, app_id, module_unique_id):
         try:
             detail = getattr(module, '{0}_details'.format(detail_type))
         except AttributeError:
-            return HttpResponseBadRequest("Unknown detail type '%s'" % strip_tags(detail_type))
+            return HttpResponseBadRequest(format_html("Unknown detail type '{}'", detail_type))
 
     lang = request.COOKIES.get('lang', app.langs[0])
     if short is not None:
