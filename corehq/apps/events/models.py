@@ -39,6 +39,19 @@ EVENT_CASE_TYPE = 'commcare-event'
 ATTENDEE_USER_ID_CASE_PROPERTY = 'commcare_user_id'
 
 
+class AttendanceTrackingConfig(models.Model):
+    domain = models.CharField(max_length=255, primary_key=True)
+
+    # Automatically create attendees for mobile workers
+    mobile_worker_attendees = models.BooleanField(default=False)
+
+    # For projects with existing attendee cases
+    attendee_case_type = models.CharField(
+        max_length=255,
+        default=ATTENDEE_CASE_TYPE,
+    )
+
+
 class EventObjectManager(models.Manager):
 
     def by_domain(self, domain, most_recent_first=False):
