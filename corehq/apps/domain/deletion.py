@@ -445,6 +445,7 @@ DOMAIN_DELETE_OPERATIONS = [
     ModelDeletion('domain', 'SMSAccountConfirmationSettings', 'domain'),
     ModelDeletion('domain', 'AppReleaseModeSetting', 'domain'),
     ModelDeletion('events', 'Event', 'domain'),
+    ModelDeletion('events', 'AttendanceTrackingConfig', 'domain'),
 ]
 
 
