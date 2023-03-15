@@ -175,7 +175,7 @@ def get_deprecated_fields(domain, case_type_name):
 
 
 def save_case_property(name, case_type, domain=None, data_type=None,
-                       description=None, label=None, group=None, deprecated=None,
+                       description=None, label=None, index=None, group=None, deprecated=None,
                        fhir_resource_prop_path=None, fhir_resource_type=None, remove_path=False,
                        allowed_values=None):
     """
@@ -197,6 +197,8 @@ def save_case_property(name, case_type, domain=None, data_type=None,
         prop.deprecated = deprecated
     if label is not None:
         prop.label = label
+    if index is not None:
+        prop.index = index
     try:
         prop.full_clean()
     except ValidationError as e:

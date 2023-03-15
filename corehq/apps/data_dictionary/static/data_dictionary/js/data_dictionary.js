@@ -132,7 +132,7 @@ hqDefine("data_dictionary/js/data_dictionary", [
             save: function () {
                 var postProperties = [];
                 var currentGroup = '';
-                _.each(self.casePropertyList(), function (element) {
+                _.each(self.casePropertyList(), function (element, index) {
                     if (!element.isGroup) {
                         const allowedValues = element.allowedValues.val();
                         let pureAllowedValues = {};
@@ -143,6 +143,7 @@ hqDefine("data_dictionary/js/data_dictionary", [
                             'caseType': element.caseType,
                             'name': element.name,
                             'label': element.label() || element.name,
+                            'index': index,
                             'data_type': element.dataType(),
                             'group': currentGroup,
                             'description': element.description(),
