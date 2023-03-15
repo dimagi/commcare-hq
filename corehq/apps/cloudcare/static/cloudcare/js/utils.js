@@ -376,7 +376,7 @@ hqDefine('cloudcare/js/utils', [
 
     /** Coerce an input date string to a moment object */
     var parseInputDate = function (dateString) {
-        if (!moment.isMoment(dateString) || dateString instanceof Date) {
+        if (!moment.isMoment(dateString)) {
             dateString = convertTwoDigitYear(dateString);
         }
         let dateObj = moment(dateString, dateFormats, true);
