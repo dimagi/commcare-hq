@@ -3821,7 +3821,7 @@ class CreditAdjustment(ValidateModelMixin, models.Model):
 class DomainUserHistory(models.Model):
     """
     A record of the number of users in a domain at the record_date.
-    Created by task calculate_users_and_sms_in_all_domains on the first of every month.
+    Created by task calculate_web_users_in_all_billing_accounts on the first of every month.
     Used to bill clients for the appropriate number of users
     """
     domain = models.CharField(max_length=256)
