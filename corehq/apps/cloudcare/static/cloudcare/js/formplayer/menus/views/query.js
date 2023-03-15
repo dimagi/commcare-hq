@@ -17,7 +17,7 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
         serverPrefix = "__range__",
         dateFormat = "MM/DD/YYYY",
         // A list of acceptable date formats, in order of preference
-        dateFormats = ['YYYY-MM-DD', 'MM/DD/YYYY', 'MM-DD-YYYY', 'MM/DD/YY', 'MM-DD-YY', moment.defaultFormat],
+        dateFormats = ['MM/DD/YYYY', 'YYYY-MM-DD', 'MM-DD-YYYY', 'MM/DD/YY', 'MM-DD-YY', moment.defaultFormat],
         selectDelimiter = "#,#"; // Formplayer also uses this
 
     var toIsoDate = function (dateString) {
@@ -383,7 +383,7 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
                 // Validate free-text input. Accept anything moment can recognize as a date, reformatting for ES.
                 var $input = $(this),
                     oldValue = $input.val(),
-                    parts = _.map(oldValue.split(separator), function (v) { return moment(v, dateFormats); }),
+                    parts = _.map(oldValue.split(separator), function (v) { return moment(v, dateFormats, true); }),
                     newValue = '';
 
                 if (_.every(parts, function (part) { return part.isValid(); }))  {
