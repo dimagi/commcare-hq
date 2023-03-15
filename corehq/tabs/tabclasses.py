@@ -2465,7 +2465,7 @@ class AttendanceTrackingTab(UITab):
         items = [
             (_("Attendees"), [
                 {
-                    'title': _("Attendee Users"),
+                    'title': _("View All Attendees"),
                     'url': reverse(AttendeesListView.urlname, args=(self.domain,)),
                 },
             ]),
