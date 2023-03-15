@@ -104,6 +104,7 @@ hqDefine("cloudcare/js/form_entry/utils", function () {
             }
         }, 200));
 
+        // This fixes the geocoder first value not getting read by screen-reader.
         geocoder.on('results', (items) => {
             if (items && items.features) {
                 $("#" + divId + "-sr").html("<p>" + items.features[0].place_name + "</p>");
