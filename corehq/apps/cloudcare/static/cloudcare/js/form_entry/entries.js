@@ -302,7 +302,8 @@ hqDefine("cloudcare/js/form_entry/entries", function () {
                 self.entryId,
                 self.geocoderItemCallback,
                 self.geocoderOnClearCallback,
-                initialPageData
+                initialPageData,
+                self._inputOnKeyDown
             );
         };
 
