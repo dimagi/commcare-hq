@@ -370,6 +370,9 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
                 autoUpdateInput: false,
                 "autoApply": true,
             });
+            this.ui.dateRange.attr("placeholder", dateFormat + separator + dateFormat);
+            let separatorChars = _.unique(separator).join("");
+            this.ui.dateRange.attr("pattern", "^[\\d\\/\\-" + separatorChars + "]*$");
             this.ui.dateRange.on('cancel.daterangepicker', function () {
                 $(this).val('').trigger('change');
             });
