@@ -95,8 +95,8 @@ def _initialize_target(es, target_index_info):
     print("\tEnabling cluster routing")
     es.cluster.put_settings({"transient": {"cluster.routing.allocation.enable": "all"}})
 
-    initialize_index(es, target_index_info)
-    set_index_reindex_settings(es, target_index_info.index)
+    initialize_index(target_index_info)
+    set_index_reindex_settings(target_index_info.index)
 
     print("\tSetting number of replicas to 0")
     es.indices.put_settings({

@@ -124,6 +124,7 @@ class TestElasticProcessorPillows(TestCase):
             'type': 'mother',
             'domain': 'rev-domain',
             '_rev': '3-me',
+            '_id': 'a_cool_identifier',
         }
         broken_metadata = ChangeMeta(
             document_id='test-id',
