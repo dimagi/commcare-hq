@@ -359,13 +359,13 @@ hqDefine('cloudcare/js/utils', [
     var convertTwoDigitYear = function (inputDate) {
         var parts = inputDate.split(/\D/);
         if (parts.length === 3 && parts.join("").length <= 6) {
-            let [day, month, year] = parts;
+            let [month, day, year] = parts;
             if (year.length === 2) {
                 year = Math.floor(new Date().getFullYear() / 100) + year;
                 if (year > new Date().getFullYear() + 10) {
                     year -= 100;
                 }
-                inputDate = [day, month, year].join("/");
+                inputDate = [month, day, year].join("/");
             }
         }
         return inputDate;
