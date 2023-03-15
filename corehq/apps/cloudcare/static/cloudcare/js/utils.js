@@ -372,7 +372,10 @@ hqDefine('cloudcare/js/utils', [
     };
 
     var dateFormat = 'MM/DD/YYYY';
-    var dateFormats = ['MM/DD/YYYY', 'YYYY-MM-DD', 'MM-DD-YYYY', 'MM/DD/YY', 'MM-DD-YY', moment.defaultFormat];
+    var dateFormats = ['MM/DD/YYYY', 'YYYY-MM-DD',  // strict formats first
+                       'M/D/YYYY', 'M/D/YY',
+                       'M-D-YYYY', 'M-D-YY',
+                       moment.defaultFormat];
 
     /** Coerce an input date string to a moment object */
     var parseInputDate = function (dateString) {

@@ -350,6 +350,7 @@ describe('Entries', function () {
         };
 
         assertParsesAs("03/04/20", "2020-03-04");
+        assertParsesAs("3/4/20", "2020-03-04");
         assertParsesAs("2020-03-04", "2020-03-04");
     });
 
@@ -359,7 +360,8 @@ describe('Entries', function () {
         };
 
         assertInvalid("23/01/2022");
-        assertInvalid("3/4/20");  // TODO
+        assertInvalid("23/1/22");
+        assertInvalid("23-1-22");
     });
 
     it('Should return TimeEntry', function () {
