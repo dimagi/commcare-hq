@@ -18312,10 +18312,8 @@ msgid "Add Attendance Tracking Event"
 msgstr ""
 
 #: corehq/apps/events/forms.py
-#, fuzzy
-#| msgid "End Date cannot be a past date."
 msgid "End Date cannot be before Start Date"
-msgstr "La date de fin ne peut pas être une date dépassée. "
+msgstr ""
 
 #: corehq/apps/events/models.py
 msgid "Not started"
@@ -18355,10 +18353,8 @@ msgid "Potential Attendees for this Event"
 msgstr ""
 
 #: corehq/apps/events/templates/event_attendees.html
-#, fuzzy
-#| msgid "Loading statements..."
 msgid "Loading potential attendees ..."
-msgstr "Chargement des relevés..."
+msgstr ""
 
 #: corehq/apps/events/templates/event_attendees.html
 #: corehq/apps/users/templates/users/mobile_workers.html
@@ -18447,28 +18443,20 @@ msgid "Edit Attendance Tracking Event"
 msgstr ""
 
 #: corehq/apps/events/views.py
-#, fuzzy
-#| msgid "Event"
 msgid "Edit Event"
-msgstr "Événement"
+msgstr ""
 
 #: corehq/apps/events/views.py
-#, fuzzy
-#| msgid "statements per page"
 msgid "Attendees per page"
-msgstr "Relevés par page"
+msgstr ""
 
 #: corehq/apps/events/views.py
-#, fuzzy
-#| msgid "You have no items."
 msgid "You have no attendees"
-msgstr "Vous n'avez aucun élément."
+msgstr ""
 
 #: corehq/apps/events/views.py
-#, fuzzy
-#| msgid "Loading statements..."
 msgid "Loading attendees"
-msgstr "Chargement des relevés..."
+msgstr ""
 
 #: corehq/apps/export/det/schema_generator.py
 #, python-brace-format
@@ -23151,97 +23139,51 @@ msgid "Success! Back to CommCare HQ"
 msgstr "Succès! Retour à CommCare HQ"
 
 #: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap5/global_navigation_bar.html
-#, fuzzy, python-format
-#| msgid ""
-#| "\n"
-#| "                            Snapshot of %(snap_name)s\n"
-#| "                        "
+#, python-format
 msgid ""
 "\n"
 "                %(cc_name)s Help\n"
 "              "
 msgstr ""
-"\n"
-"                            Instantané de %(snap_name)s"
 
 #: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap5/global_navigation_bar.html
-#, fuzzy, python-format
-#| msgid ""
-#| "\n"
-#| "                            Snapshot of %(snap_name)s\n"
-#| "                        "
+#, python-format
 msgid ""
 "\n"
 "                Snapshot of %(snap_name)s\n"
 "              "
 msgstr ""
-"\n"
-"                            Instantané de %(snap_name)s"
 
 #: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap5/modal_report_issue.html
-#, fuzzy
-#| msgid ""
-#| "\n"
-#| "                                        Please enter your email here so "
-#| "that we can follow up with you regarding this issue\n"
-#| "                                    "
 msgid ""
 "\n"
 "                                Please enter your email here so that we can "
 "follow up with you regarding this issue\n"
 "                            "
 msgstr ""
-"\n"
-"Veuillez saisir votre adresse e-mail ici afin que nous puissions vous suivre "
-"sur ce problème"
 
 #: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap5/modal_report_issue.html
-#, fuzzy
-#| msgid ""
-#| "\n"
-#| "                                        Comma-separated email addresses "
-#| "of others you want to notify about this issue.\n"
-#| "                                    "
 msgid ""
 "\n"
 "                          Comma-separated email addresses of others you want "
 "to notify about this issue.\n"
 "                      "
 msgstr ""
-"\n"
-"Adresses e-mail séparées par des virgules des autres personnes que vous "
-"souhaitez informer de ce problème."
 
 #: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap5/modal_report_issue.html
-#, fuzzy
-#| msgid ""
-#| "\n"
-#| "                                    Please upload any files relevant to "
-#| "your issue.\n"
-#| "                                    "
 msgid ""
 "\n"
 "                          Please upload any files relevant to your issue.\n"
 "                          "
 msgstr ""
-"\n"
-"Veuillez charger tout document en relation avec ce problème."
 
 #: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap5/modal_report_issue.html
-#, fuzzy
-#| msgid ""
-#| "\n"
-#| "                                        Do not upload a file containing "
-#| "individually identifiable data.\n"
-#| "                                    "
 msgid ""
 "\n"
 "                              Do not upload a file containing individually "
 "identifiable data.\n"
 "                          "
 msgstr ""
-"\n"
-"Ne pas envoyer de Fichier contenant des données personnelles identifiables"
 
 #: corehq/apps/hqwebapp/templates/hqwebapp/includes/inactivity_modal.html
 msgid "Session expiring soon"
@@ -23890,191 +23832,99 @@ msgid "Change Password for"
 msgstr ""
 
 #: corehq/apps/hqwebapp/tests/data/bootstrap5_diffs/hqwebapp/includes/global_navigation_bar.html.diff.txt
-#, fuzzy, python-format
-#| msgid ""
-#| "\n"
-#| "                            Snapshot of %(snap_name)s\n"
-#| "                        "
+#, python-format
 msgid ""
 "\n"
 "-                        %(cc_name)s Help\n"
 "-                    "
 msgstr ""
-"\n"
-"                            Instantané de %(snap_name)s"
 
 #: corehq/apps/hqwebapp/tests/data/bootstrap5_diffs/hqwebapp/includes/global_navigation_bar.html.diff.txt
-#, fuzzy, python-format
-#| msgid ""
-#| "\n"
-#| "                            Snapshot of %(snap_name)s\n"
-#| "                        "
+#, python-format
 msgid ""
 "\n"
 "+                %(cc_name)s Help\n"
 "+              "
 msgstr ""
-"\n"
-"                            Instantané de %(snap_name)s"
 
 #: corehq/apps/hqwebapp/tests/data/bootstrap5_diffs/hqwebapp/includes/global_navigation_bar.html.diff.txt
-#, fuzzy, python-format
-#| msgid ""
-#| "\n"
-#| "                            Snapshot of %(snap_name)s\n"
-#| "                        "
+#, python-format
 msgid ""
 "\n"
 "-                            Snapshot of %(snap_name)s\n"
 "-                        "
 msgstr ""
-"\n"
-"                            Instantané de %(snap_name)s"
 
 #: corehq/apps/hqwebapp/tests/data/bootstrap5_diffs/hqwebapp/includes/global_navigation_bar.html.diff.txt
-#, fuzzy, python-format
-#| msgid ""
-#| "\n"
-#| "                            Snapshot of %(snap_name)s\n"
-#| "                        "
+#, python-format
 msgid ""
 "\n"
 "+                Snapshot of %(snap_name)s\n"
 "+              "
 msgstr ""
-"\n"
-"                            Instantané de %(snap_name)s"
 
 #: corehq/apps/hqwebapp/tests/data/bootstrap5_diffs/hqwebapp/includes/modal_report_issue.html.diff.txt
-#, fuzzy
-#| msgid ""
-#| "\n"
-#| "                                        Please enter your email here so "
-#| "that we can follow up with you regarding this issue\n"
-#| "                                    "
 msgid ""
 "\n"
 "-                                        Please enter your email here so "
 "that we can follow up with you regarding this issue\n"
 "-                                    "
 msgstr ""
-"\n"
-"Veuillez saisir votre adresse e-mail ici afin que nous puissions vous suivre "
-"sur ce problème"
 
 #: corehq/apps/hqwebapp/tests/data/bootstrap5_diffs/hqwebapp/includes/modal_report_issue.html.diff.txt
-#, fuzzy
-#| msgid ""
-#| "\n"
-#| "                                        Comma-separated email addresses "
-#| "of others you want to notify about this issue.\n"
-#| "                                    "
 msgid ""
 "\n"
 "-                                        Comma-separated email addresses of "
 "others you want to notify about this issue.\n"
 "-                                    "
 msgstr ""
-"\n"
-"Adresses e-mail séparées par des virgules des autres personnes que vous "
-"souhaitez informer de ce problème."
 
 #: corehq/apps/hqwebapp/tests/data/bootstrap5_diffs/hqwebapp/includes/modal_report_issue.html.diff.txt
-#, fuzzy
-#| msgid ""
-#| "\n"
-#| "                                    Please upload any files relevant to "
-#| "your issue.\n"
-#| "                                    "
 msgid ""
 "\n"
 "-                                    Please upload any files relevant to "
 "your issue.\n"
 "-                                    "
 msgstr ""
-"\n"
-"Veuillez charger tout document en relation avec ce problème."
 
 #: corehq/apps/hqwebapp/tests/data/bootstrap5_diffs/hqwebapp/includes/modal_report_issue.html.diff.txt
-#, fuzzy
-#| msgid ""
-#| "\n"
-#| "                                        Do not upload a file containing "
-#| "individually identifiable data.\n"
-#| "                                    "
 msgid ""
 "\n"
 "-                                        Do not upload a file containing "
 "individually identifiable data.\n"
 "-                                    "
 msgstr ""
-"\n"
-"Ne pas envoyer de Fichier contenant des données personnelles identifiables"
 
 #: corehq/apps/hqwebapp/tests/data/bootstrap5_diffs/hqwebapp/includes/modal_report_issue.html.diff.txt
-#, fuzzy
-#| msgid ""
-#| "\n"
-#| "                                        Please enter your email here so "
-#| "that we can follow up with you regarding this issue\n"
-#| "                                    "
 msgid ""
 "\n"
 "+                                Please enter your email here so that we can "
 "follow up with you regarding this issue\n"
 "+                            "
 msgstr ""
-"\n"
-"Veuillez saisir votre adresse e-mail ici afin que nous puissions vous suivre "
-"sur ce problème"
 
 #: corehq/apps/hqwebapp/tests/data/bootstrap5_diffs/hqwebapp/includes/modal_report_issue.html.diff.txt
-#, fuzzy
-#| msgid ""
-#| "\n"
-#| "                                        Comma-separated email addresses "
-#| "of others you want to notify about this issue.\n"
-#| "                                    "
 msgid ""
 "\n"
 "+                          Comma-separated email addresses of others you "
 "want to notify about this issue.\n"
 "+                      "
 msgstr ""
-"\n"
-"Adresses e-mail séparées par des virgules des autres personnes que vous "
-"souhaitez informer de ce problème."
 
 #: corehq/apps/hqwebapp/tests/data/bootstrap5_diffs/hqwebapp/includes/modal_report_issue.html.diff.txt
-#, fuzzy
-#| msgid ""
-#| "\n"
-#| "                                    Please upload any files relevant to "
-#| "your issue.\n"
-#| "                                    "
 msgid ""
 "\n"
 "+                          Please upload any files relevant to your issue.\n"
 "+                          "
 msgstr ""
-"\n"
-"Veuillez charger tout document en relation avec ce problème."
 
 #: corehq/apps/hqwebapp/tests/data/bootstrap5_diffs/hqwebapp/includes/modal_report_issue.html.diff.txt
-#, fuzzy
-#| msgid ""
-#| "\n"
-#| "                                        Do not upload a file containing "
-#| "individually identifiable data.\n"
-#| "                                    "
 msgid ""
 "\n"
 "+                              Do not upload a file containing individually "
 "identifiable data.\n"
 "+                          "
 msgstr ""
-"\n"
-"Ne pas envoyer de Fichier contenant des données personnelles identifiables"
 
 #: corehq/apps/hqwebapp/tests/data/bootstrap5_diffs/hqwebapp/partials/footer.html.diff.txt
 msgid ""
@@ -42571,10 +42421,8 @@ msgid "Regular Expression Validation for Custom Data Fields"
 msgstr ""
 
 #: corehq/privileges.py
-#, fuzzy
-#| msgid "Location User"
 msgid "Location Safe Case Imports"
-msgstr "Utilisateur du site"
+msgstr ""
 
 #: corehq/reports.py
 msgid "Report Builder Reports"
@@ -42840,10 +42688,8 @@ msgid "CommCare Reports"
 msgstr "Rapports CommCare"
 
 #: corehq/tabs/tabclasses.py
-#, fuzzy
-#| msgid "Added Users:"
 msgid "Attendee Users"
-msgstr "Ajouter les utilisateurs:"
+msgstr ""
 
 #: corehq/tabs/tabclasses.py
 msgid "View All Events"
