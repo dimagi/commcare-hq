@@ -3832,6 +3832,20 @@ class DomainUserHistory(models.Model):
         unique_together = ('domain', 'record_date')
 
 
+class BillingAccountWebUserHistory(models.Model):
+    """
+    A record of the number of users for a billing account at the record_date.
+    Created by task calculate_web_users_in_all_billing_accounts on the first of every month.
+    It will be used to bill clients for the appropriate number of web users
+    """
+    billing_account = models.ForeignKey(BillingAccount, on_delete=models.CASCADE)
+    record_date = models.DateField()
+    num_users = models.IntegerField(default=0)
+
+    class Meta:
+        unique_together = ('billing_account', 'record_date')
+
+
 class CommunicationHistoryBase(models.Model):
     """
     A record of any serious correspondence we initiate with admins / billing
