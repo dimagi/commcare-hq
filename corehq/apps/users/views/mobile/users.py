@@ -1024,6 +1024,8 @@ class CreateCommCareUserModal(JsonRequestResponseMixin, DomainViewMixin, View):
                 device_id="Generated from HQ",
                 metadata=self.custom_data.get_data_to_save(),
             )
+            # TODO. If AttendanceTrackingConfig has mobile workers as attendees enabled,
+            # create a case for this mobile worker
 
             if 'location_id' in request.GET:
                 try:
