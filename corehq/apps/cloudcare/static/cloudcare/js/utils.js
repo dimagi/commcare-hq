@@ -365,7 +365,7 @@ hqDefine('cloudcare/js/utils', [
                 if (inputYear > new Date().getFullYear() + 10) {
                     inputYear -= 100;
                 }
-                inputDate = [parts[0], parts[1], inputYear].join("-");
+                inputDate = [parts[0], parts[1], inputYear].join("/");
             }
         }
         return inputDate;
