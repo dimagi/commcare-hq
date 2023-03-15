@@ -1,4 +1,5 @@
 import uuid
+from datetime import datetime
 
 from django.db import models
 from django.utils.translation import gettext_lazy as _
@@ -6,8 +7,8 @@ from django.utils.translation import gettext_lazy as _
 from memoized import memoized
 
 from casexml.apps.case.mock import CaseFactory, CaseIndex, CaseStructure
-from corehq.apps.es import CaseES
 
+from corehq.apps.es import CaseES
 from corehq.form_processor.exceptions import CaseNotFound
 from corehq.form_processor.models import CommCareCase, CommCareCaseIndex
 from corehq.util.quickcache import quickcache
@@ -109,6 +110,31 @@ class Event(models.Model):
             models.Index(fields=("manager_id",)),
         )
 
+    def get_case_sharing_group(self, user_id):
+        """
+        Returns a fake group object that cannot be saved.
+
+        This is used for giving users access via case sharing groups,
+        without having a real group for every event that we have to
+        manage.
+        """
+        from corehq.apps.groups.models import UnsavableGroup
+
+        # TODO: NOTE: Extension cases (expected attendees, attendance dates)
+        #    need to be owned by Event.event_id
+
+        return UnsavableGroup(
+            _id=self.event_id,  # Does not clash with self.case_id
+            domain=self.domain,
+            users=[user_id],
+            last_modified=datetime.utcnow(),
+            name=self.name + ' Event',
+            case_sharing=True,
+            reporting=False,
+            metadata={},
+        )
+
+
     @quickcache(['self.event_id'])
     def get_expected_attendees(self):
         """
@@ -167,6 +193,7 @@ class Event(models.Model):
                 ],
                 attrs={
                     'case_type': EVENT_ATTENDEE_CASE_TYPE,
+                    'owner_id': self.event_id,  # ID of case sharing group
                     'create': True,
                 },
             ))
@@ -202,12 +229,13 @@ class Event(models.Model):
         # ... and for that to work, the Event has a host case.
         #
         # This is the only thing we use the Event's case for. It does not
-        # store any Event data other than its name.
+        # store any Event data other than its name, and is not used for
+        # anything other than looking up extension cases..
         try:
-            case = CommCareCase.objects.get_case(self.event_id, self.domain)
+            case = CommCareCase.objects.get_case(self.case_id, self.domain)
         except CaseNotFound:
             struct = CaseStructure(
-                case_id=self.event_id,
+                case_id=self.case_id,
                 attrs={
                     'owner_id': self.manager_id,
                     'case_type': EVENT_CASE_TYPE,
@@ -217,6 +245,14 @@ class Event(models.Model):
             )
             (case,) = self._case_factory.create_or_update_cases([struct])
         return case
+
+    @property
+    def case_id(self):
+        """
+        A fake case ID, to prevent the Event's case ID clashing with the
+        Event's case sharing group's ID
+        """
+        return self.event_id + '-0'
 
     @property
     @memoized
@@ -247,6 +283,18 @@ class Event(models.Model):
     @property
     def status(self):
         return self.attendee_list_status
+
+
+def get_case_sharing_groups_for_events(domain, user_id):
+    for event in Event.objects.by_domain(domain):
+        if user_id in Event.attendance_takers:
+            yield event.get_case_sharing_group(user_id)
+
+
+def user_has_events(commcare_user):
+    # TODO: Does commcare_user.domain have events?
+    # TODO: Is commcare_user an Attendance Taker for any events?
+    pass
 
 
 class AttendeeCaseManager:
