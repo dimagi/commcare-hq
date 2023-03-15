@@ -379,17 +379,19 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
             });
             this.ui.dateRange.on('change', function () {
                 // Validate free-text input
-                var $input = $(this),
+                var start, end,
+                    $input = $(this),
                     oldValue = $input.val(),
                     parts = _.map(oldValue.split(separator), cloudcareUtils.parseInputDate),
                     newValue = '';
 
                 if (_.every(parts, part => part !== null))  {
                     if (parts.length === 1) { // condition where only one valid date is typed in rather than a range
-                        newValue = oldValue + separator + oldValue;
+                        start = end = parts[0];
                     } else if (parts.length === 2) {
-                        newValue = parts[0].format(dateFormat) + separator + parts[1].format(dateFormat);
+                        [start, end] = parts;
                     }
+                    newValue = start.format(dateFormat) + separator + end.format(dateFormat);
                 }
                 if (oldValue !== newValue) {
                     $input.val(newValue).trigger('change');
