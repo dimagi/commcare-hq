@@ -339,6 +339,29 @@ describe('Entries', function () {
         assert.equal(utils.convertTwoDigitYear("not-a-date"), "not-a-date");
     });
 
+    it('Should coerce user input dates to moment objects', function () {
+        let assertParsesAs = function (userInput, expected) {
+            let res = utils.parseInputDate(userInput);
+            assert.isTrue(moment.isMoment(res));
+            assert.equal(
+                res.toISOString(),
+                moment(expected, "YYYY-MM-DD").toISOString()
+            );
+        };
+
+        assertParsesAs("03/04/20", "2020-03-04");
+        assertParsesAs("2020-03-04", "2020-03-04");
+    });
+
+    it('Should fail to interpret invalid date inputs', function () {
+        let assertInvalid = function (userInput, expected) {
+            assert.isNull(utils.parseInputDate(userInput));
+        };
+
+        assertInvalid("23/01/2022");
+        assertInvalid("3/4/20");  // TODO
+    });
+
     it('Should return TimeEntry', function () {
         questionJSON.datatype = constants.TIME;
         questionJSON.answer = '12:30';
