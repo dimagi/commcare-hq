@@ -155,7 +155,7 @@ def arbitrary_domain_and_subscriber():
 
 
 @unit_testing_only
-def arbitrary_commcare_user(domain, is_active=True, is_webuser=False):
+def arbitrary_user(domain, is_active=True, is_webuser=False):
     username = unique_name()
     if is_webuser:
         username = create_arbitrary_web_user_name()
@@ -171,7 +171,7 @@ def arbitrary_commcare_user(domain, is_active=True, is_webuser=False):
 @unit_testing_only
 def arbitrary_commcare_users_for_domain(domain, num_users, is_active=True):
     CommCareUser.bulk_save([
-        arbitrary_commcare_user(domain, is_active=is_active)
+        arbitrary_user(domain, is_active=is_active)
         for _ in range(0, num_users)
     ])
     return num_users
@@ -180,7 +180,7 @@ def arbitrary_commcare_users_for_domain(domain, num_users, is_active=True):
 @unit_testing_only
 def arbitrary_webusers_for_domain(domain, num_users, is_active=True):
     WebUser.bulk_save([
-        arbitrary_commcare_user(domain, is_active=is_active, is_webuser=True)
+        arbitrary_user(domain, is_active=is_active, is_webuser=True)
         for _ in range(0, num_users)
     ])
     return num_users
