@@ -9,7 +9,7 @@ from corehq.apps.events.models import (
     ATTENDEE_USER_ID_CASE_PROPERTY,
     AttendeeCase,
 )
-from corehq.apps.hqcase.utils import submit_case_blocks
+from corehq.apps.hqcase.utils import submit_case_blocks, bulk_update_cases
 from corehq.apps.users.models import CommCareUser
 
 
@@ -39,6 +39,17 @@ def sync_mobile_worker_attendees(domain_name, user_id):
         )
         reopen_cases(closed_cases)
 
+
+@task(queue='background_queue', ignore_result=True)
+def close_mobile_worker_attendee_cases(domain_name):
+    """
+    Close attendee cases associated with mobile workers
+    """
+    cases_to_close = []
+    for case in AttendeeCase.objects.by_domain(domain_name):
+        cases_to_close.append((case.case_id, {}, True))
+
+    bulk_update_cases(domain_name, cases_to_close, device_id='corehq.apps.events.views')
 
 def get_existing_cases_by_user_ids(domain):
     cases = AttendeeCase.objects.by_domain(domain, include_closed=True)

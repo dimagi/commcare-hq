@@ -1,6 +1,7 @@
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.events.models import AttendeeCase
-from corehq.apps.events.tasks import sync_mobile_worker_attendees, get_existing_cases_by_user_ids
+from corehq.apps.events.tasks import get_existing_cases_by_user_ids
+from corehq.apps.events import tasks
 from corehq.apps.users.models import HqPermissions, UserRole, WebUser
 from corehq.apps.users.models import CommCareUser
 from corehq.apps.users.role_utils import UserRolePresets
@@ -65,7 +66,7 @@ class TestTasks(TestCase):
         """
         user_id_case_mapping = get_existing_cases_by_user_ids(self.domain)
         user_ids = list(user_id_case_mapping.keys())
-        sync_mobile_worker_attendees(domain_name=self.domain, user_id=self.webuser.user_id)
+        tasks.sync_mobile_worker_attendees(domain_name=self.domain, user_id=self.webuser.user_id)
         user_id_case_mapping = get_existing_cases_by_user_ids(self.domain)
         user_ids = list(user_id_case_mapping.keys())
 
@@ -73,14 +74,14 @@ class TestTasks(TestCase):
 
     def test_duplicate_cases_not_created(self):
         # Let's call this to create initial cases
-        sync_mobile_worker_attendees(domain_name=self.domain, user_id=self.webuser.user_id)
+        tasks.sync_mobile_worker_attendees(domain_name=self.domain, user_id=self.webuser.user_id)
 
         # Get the case count
         cases = AttendeeCase.objects.by_domain(self.domain, include_closed=True)
         case_count_before = len(cases)
 
         # Now call the task again, which should not create new cases
-        sync_mobile_worker_attendees(domain_name=self.domain, user_id=self.webuser.user_id)
+        tasks.sync_mobile_worker_attendees(domain_name=self.domain, user_id=self.webuser.user_id)
 
         # Check total case count again
         cases = AttendeeCase.objects.by_domain(self.domain, include_closed=True)
@@ -91,7 +92,7 @@ class TestTasks(TestCase):
         """Test that the `sync_mobile_worker_attendees` task reopens closed attendee cases associated with
         mobile workers
         """
-        sync_mobile_worker_attendees(domain_name=self.domain, user_id=self.webuser.user_id)
+        tasks.sync_mobile_worker_attendees(domain_name=self.domain, user_id=self.webuser.user_id)
 
         # Close the current attendee cases for mobile workers
         self._assert_cases_state(closed=False)
@@ -102,9 +103,23 @@ class TestTasks(TestCase):
         self._assert_cases_state(closed=True)
 
         # Now call the task again, which should reopen the cases
-        sync_mobile_worker_attendees(domain_name=self.domain, user_id=self.webuser.user_id)
+        tasks.sync_mobile_worker_attendees(domain_name=self.domain, user_id=self.webuser.user_id)
 
         self._assert_cases_state(closed=False)
+
+    def test_mobile_worker_attendee_cases_closed(self):
+        user_id_case_mapping = get_existing_cases_by_user_ids(self.domain)
+
+        # Let's make sure they're open
+        for case in user_id_case_mapping.values():
+            self.assertFalse(case.closed)
+
+        tasks.close_mobile_worker_attendee_cases(domain_name=self.domain)
+        user_id_case_mapping = get_existing_cases_by_user_ids(self.domain)
+
+        # Let's make sure they're closed now
+        for case in user_id_case_mapping.values():
+            self.assertTrue(case.closed)
 
     def _close_mobile_worker_attendee_cases(self):
         from corehq.apps.hqcase.api.updates import JsonCaseUpdate, CaseIDLookerUpper

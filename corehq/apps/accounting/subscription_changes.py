@@ -12,6 +12,7 @@ from dimagi.utils.parsing import json_format_date
 from field_audit.models import AuditAction
 
 from corehq import privileges
+import corehq.apps.events.tasks as attendance_tracking_tasks
 from corehq.apps.accounting.utils import get_privileges, log_accounting_error
 from corehq.apps.cloudcare.dbaccessors import get_cloudcare_apps
 from corehq.apps.data_interfaces.models import AutomaticUpdateRule
@@ -198,7 +199,7 @@ class DomainDowngradeActionHandler(BaseModifySubscriptionActionHandler):
             privileges.COMMCARE_LOGO_UPLOADER: cls.response_commcare_logo_uploader,
             privileges.ADVANCED_DOMAIN_SECURITY: cls.response_domain_security,
             privileges.PRACTICE_MOBILE_WORKERS: cls.response_practice_mobile_workers,
-            privileges.ATTENDANCE_TRACKING: cls.response_archive_attendance_coordinator_role,
+            privileges.ATTENDANCE_TRACKING: cls.response_attendance_tracking,
         }
         privs_to_responses.update({
             p: cls.response_report_builder
@@ -259,8 +260,9 @@ class DomainDowngradeActionHandler(BaseModifySubscriptionActionHandler):
         return True
 
     @staticmethod
-    def response_archive_attendance_coordinator_role(domain, new_plan_version):
+    def response_attendance_tracking(domain, _new_plan_version):
         archive_attendance_coordinator_role_for_domain(domain=domain.name)
+        attendance_tracking_tasks.close_mobile_worker_attendee_cases(domain.name)
 
     @staticmethod
     def response_data_cleanup(domain, new_plan_version):

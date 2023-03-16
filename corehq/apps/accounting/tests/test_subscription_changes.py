@@ -185,6 +185,17 @@ class TestUserRoleSubscriptionChanges(BaseAccountingTest):
         ).first()
         self.assertTrue(role.is_archived)
 
+    @flag_enabled('ATTENDANCE_TRACKING')
+    @patch('corehq.apps.events.tasks.close_mobile_worker_attendee_cases')
+    def test_close_mobile_worker_attendee_cases_when_downgrading(self, close_mobile_worker_attendee_cases_mock):
+        subscription = Subscription.new_domain_subscription(
+            self.account, self.domain.name, self.advanced_plan,
+            web_user=self.admin_username
+        )
+
+        subscription.change_plan(self.community_plan, web_user=self.admin_username)
+        close_mobile_worker_attendee_cases_mock.assert_called_once()
+
     def _change_std_roles(self):
         for u in self.user_roles:
             user_role = UserRole.objects.by_couch_id(u.get_id)

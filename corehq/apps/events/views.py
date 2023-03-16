@@ -17,7 +17,7 @@ from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import HqPermissions
 from corehq.apps.users.views import BaseUserSettingsView
 from corehq.util.jqueryrmi import JSONResponseMixin, allow_remote_invocation
-from corehq.apps.events.tasks import sync_mobile_worker_attendees
+from corehq.apps.events import tasks
 from .forms import CreateEventForm
 from .models import Event, get_paginated_attendees
 
@@ -255,10 +255,10 @@ class AttendeesConfigView(JSONResponseMixin, BaseUserSettingsView, BaseEventView
         attendees_enabled = json_data['mobile_worker_attendee_enabled']
         AttendanceTrackingConfig.toggle_mobile_worker_attendees(self.domain, value=attendees_enabled)
         if attendees_enabled:
-            sync_mobile_worker_attendees.delay(domain_name=self.domain, user_id=self.couch_user.user_id)
+            tasks.sync_mobile_worker_attendees.delay(self.domain, user_id=self.couch_user.user_id)
         else:
-            # TODO: Close the commcare-attendee case assosiated with each mobile worker
-            pass
+            tasks.close_mobile_worker_attendee_cases.delay(self.domain)
+
         return self.json_response({
             "mobile_worker_attendee_enabled": attendees_enabled
         })
