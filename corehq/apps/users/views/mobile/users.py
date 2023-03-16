@@ -797,7 +797,7 @@ class MobileWorkerListView(JSONResponseMixin, BaseUserSettingsView):
                     [new_case_block.as_text()],
                     domain=self.domain,
                     user_id=created_by_user_id,
-                    device_id='UserCreated',
+                    device_id='corehq.apps.users.views.mobile.users.create_commcare_attendee_case_for_user',
                 )
 
     def _build_commcare_user(self):
