@@ -21,6 +21,7 @@ from django.views.decorators.http import require_GET
 from couchdbkit import ResourceNotFound
 from memoized import memoized
 from no_exceptions.exceptions import Http403
+from dimagi.utils.logging import notify_exception
 
 from soil.exceptions import TaskFailedError
 from soil.util import expose_cached_download, get_download_context
@@ -90,7 +91,7 @@ from corehq.util.view_utils import reverse as reverse_with_params
 from corehq.util.workbook_json.excel import WorkbookJSONError, get_workbook
 
 from .dispatcher import require_form_management_privilege
-from .interfaces import BulkFormManagementInterface, FormManagementMode
+from .interfaces import BulkFormManagementInterface, FormManagementMode, CaseReassignmentInterface
 from ..users.decorators import require_permission
 from ..users.models import HqPermissions
 
@@ -600,6 +601,40 @@ def xform_management_job_poll(request, domain, download_id,
         'form_management_url': reverse(EditDataInterfaceDispatcher.name(),
                                        args=[domain, BulkFormManagementInterface.slug])
     })
+    return render(request, template, context)
+
+
+class BulkCaseReassignSatusView(DataInterfaceSection):
+    urlname = "bulk_case_reassign_status"
+    page_title = gettext_noop("Bulk Case Reassignment Status")
+
+    @property
+    def section_url(self):
+        return CaseReassignmentInterface.get_url(self.domain)
+
+    def get(self, request, *args, **kwargs):
+        context = super(BulkCaseReassignSatusView, self).main_context
+        context.update({
+            'domain': self.domain,
+            'download_id': kwargs['download_id'],
+            'poll_url': reverse('case_reassign_job_poll', args=[self.domain, kwargs['download_id']]),
+            'title': _(self.page_title),
+            'progress_text': _("Reassigning Cases. This may take some time..."),
+            'error_text': _("Bulk Case Reassignment failed for some reason and we have noted this failure."),
+        })
+        return render(request, 'hqwebapp/soil_status_full.html', context)
+
+    def page_url(self):
+        return reverse(self.urlname, args=self.args, kwargs=self.kwargs)
+
+
+def case_reassign_job_poll(request, domain, download_id):
+    try:
+        context = get_download_context(download_id, require_result=True)
+    except TaskFailedError as e:
+        notify_exception(request, message=str(e))
+        return HttpResponseServerError()
+    template = "data_interfaces/partials/case_reassign_status.html"
     return render(request, template, context)
 
 
