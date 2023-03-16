@@ -12,6 +12,8 @@ from corehq.form_processor.exceptions import CaseNotFound
 from corehq.form_processor.models import CommCareCase, CommCareCaseIndex
 from corehq.util.quickcache import quickcache
 from django.contrib.postgres.fields import ArrayField
+from corehq.apps.groups.models import UnsavableGroup
+from datetime import datetime
 
 NOT_STARTED = 'Not started'
 IN_PROGRESS = 'In progress'
@@ -114,6 +116,24 @@ class Event(models.Model):
             models.Index(fields=("event_id",)),
             models.Index(fields=("domain",)),
             models.Index(fields=("manager_id",)),
+        )
+
+    def get_case_sharing_group(self, user_id):
+        """
+        Returns a fake group object that cannot be saved.
+        This is used for giving users access via case sharing groups,
+        without having a real group for every event that we have to
+        manage.
+        """
+        return UnsavableGroup(
+            _id=self.event_id,  # Does not clash with self.case_id
+            domain=self.domain,
+            users=[user_id],
+            last_modified=datetime.utcnow(),
+            name=self.name + ' Event',
+            case_sharing=True,
+            reporting=False,
+            metadata={},
         )
 
     @quickcache(['self.event_id'])
@@ -268,6 +288,17 @@ class Event(models.Model):
         Event's case sharing group's ID
         """
         return self.event_id + '-0'
+
+
+def get_user_case_sharing_groups_for_events(commcare_user):
+    """
+    Creates a case sharing group for every `Event` that the `commcare_user`
+    is an attendance taker for in their domain.
+    """
+    for event in Event.objects.by_domain(commcare_user.domain):
+        if commcare_user.user_id in event.attendance_taker_ids:
+            yield event.get_case_sharing_group(commcare_user.user_id)
+
 class AttendeeCaseManager:
 
     def by_domain(self, domain):
