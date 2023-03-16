@@ -109,6 +109,8 @@ class CaseReassignmentInterface(CaseListMixin, BulkDataInterface):
     def bulk_response(self):
         from .views import BulkCaseReassignSatusView
         from .tasks import bulk_case_reassign_async
+        if self.request.method != 'POST':
+            return HttpResponseBadRequest()
         owner_id = self.request_params.get('new_owner_id', None)
         if not owner_id:
             return HttpResponseBadRequest(
@@ -131,8 +133,6 @@ class CaseReassignmentInterface(CaseListMixin, BulkDataInterface):
             self.request.META['HTTP_REFERER']
         )
         task_ref.set_task(task)
-        if self.request.method != 'POST':
-            return HttpResponseBadRequest()
         return HttpResponseRedirect(
             reverse(
                 BulkCaseReassignSatusView.urlname,
