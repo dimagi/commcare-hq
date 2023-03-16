@@ -36,7 +36,7 @@ def sync_mobile_worker_attendees(domain_name, user_id):
             [cb.as_text() for cb in new_case_blocks],
             domain=domain_name,
             user_id=user_id,
-            device_id=__name__,
+            device_id='corehq.apps.events.tasks.sync_mobile_worker_attendees',
         )
         reopen_cases(closed_cases)
 
