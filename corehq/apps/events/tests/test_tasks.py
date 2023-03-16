@@ -88,12 +88,12 @@ class TestTasks(TestCase):
         self.assertEqual(case_count, case_count_before)
 
     def test_closed_cases_reopened_for_mobile_workers(self):
-        """Test that the `sync_mobile_worker_attendees` task reopens closed cases of type `commcare-attendee`
-        associated with mobile workers
+        """Test that the `sync_mobile_worker_attendees` task reopens closed attendee cases associated with
+        mobile workers
         """
         sync_mobile_worker_attendees(domain_name=self.domain, user_id=self.webuser.user_id)
 
-        # Close the current commcare-attendee cases for mobile workers
+        # Close the current attendee cases for mobile workers
         self._assert_cases_state(closed=False)
 
         self._close_mobile_worker_attendee_cases()
@@ -125,7 +125,7 @@ class TestTasks(TestCase):
         submit_case_blocks(case_blocks, domain=self.domain, user_id=self.webuser.user_id)
 
     def _assert_cases_state(self, closed=False):
-        """Loop through commcare-attendee cases associated with mobile workers and asserts if the cases are open
+        """Loop through attendee cases associated with mobile workers and asserts if the cases are open
         or closed
         """
         cases = AttendeeCase.objects.by_domain(self.domain, include_closed=True)
