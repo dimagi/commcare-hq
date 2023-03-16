@@ -366,3 +366,27 @@ def case_search_enabled_domains():
     """Returns a list of all domains that have case search enabled
     """
     return CaseSearchConfig.objects.filter(enabled=True).values_list('domain', flat=True)
+
+
+class DomainsNotInCaseSearchIndex(models.Model):
+    """
+    NOTE: This is a temporary "migration" model.
+    This model is to be confused with the Case Search feature itself.
+    This is a temporary object used to track domains that have not yet
+    had their case data moved over to the Case Search Elasticsearch Index.
+
+    Moving forward, the case data from all domains will be indexed by the
+    CaseSearchIndex as well as the CaseIndex in elasticsearch.
+    This is due to the efforts from SaaS to GA the Case List Explorer.
+    This model exists to ensure that data from older domains is migrated in
+    small controllable chunks so as not to overload pillows.
+    Eventually, this model will be removed once the indexing of older
+    data is complete.
+    """
+    domain = models.CharField(
+        max_length=256,
+        null=False,
+        blank=False,
+        db_index=True,
+    )
+    estimated_size = models.IntegerField()
