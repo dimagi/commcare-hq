@@ -22,11 +22,16 @@ hqDefine("events/js/new_event", [
             minDate: 0,
         });
 
-        // needs pre-population
         multiselectUtils.createFullMultiselectWidget('id_expected_attendees', {
             selectableHeaderTitle: gettext('Possible Attendees'),
             selectedHeaderTitle: gettext('Expected Attendees'),
             searchItemTitle: gettext('Search Attendees'),
+        });
+
+        multiselectUtils.createFullMultiselectWidget('id_attendance_takers', {
+            selectableHeaderTitle: gettext('Possible Attendance Takers'),
+            selectedHeaderTitle: gettext('Selected Attendance Takers'),
+            searchItemTitle: gettext('Search Attendance Takers'),
         });
 
         function eventViewModel(initialData) {
