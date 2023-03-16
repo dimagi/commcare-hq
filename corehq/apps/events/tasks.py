@@ -11,7 +11,6 @@ from corehq.apps.events.models import (
 )
 from corehq.apps.hqcase.utils import submit_case_blocks
 from corehq.apps.users.models import CommCareUser
-from corehq.form_processor.models import CommCareCase
 
 
 @task(queue='background_queue', ignore_result=True)
@@ -40,11 +39,13 @@ def sync_mobile_worker_attendees(domain_name, user_id):
         )
         reopen_cases(closed_cases)
 
-def get_existing_cases_by_user_ids(domain: str) -> dict[str, CommCareCase]:
+
+def get_existing_cases_by_user_ids(domain):
     cases = AttendeeCase.objects.by_domain(domain, include_closed=True)
     return {c.get_case_property(ATTENDEE_USER_ID_CASE_PROPERTY): c for c in cases}
 
-def get_case_block_for_user(user: CommCareUser, owner_id: str, attendee_case_type) -> CaseBlock:
+
+def get_case_block_for_user(user, owner_id, attendee_case_type):
     case_name = ' '.join((user.first_name, user.last_name))
     fields = {
         ATTENDEE_USER_ID_CASE_PROPERTY: user.user_id,
