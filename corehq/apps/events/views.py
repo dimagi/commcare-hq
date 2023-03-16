@@ -240,7 +240,7 @@ class AttendeesListView(JSONResponseMixin, BaseUserSettingsView):
         return super(AttendeesListView, self).post(*args, **kwargs)
 
 
-class AttendeesConfigView(JSONResponseMixin, BaseUserSettingsView):
+class AttendeesConfigView(JSONResponseMixin, BaseUserSettingsView, BaseEventView):
     urlname = "attendees_config"
 
     @allow_remote_invocation
