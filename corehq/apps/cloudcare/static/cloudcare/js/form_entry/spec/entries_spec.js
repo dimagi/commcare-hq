@@ -1,4 +1,5 @@
 /* eslint-env mocha */
+/* globals moment */
 
 describe('Entries', function () {
     var constants = hqImport("cloudcare/js/form_entry/const"),
@@ -355,7 +356,7 @@ describe('Entries', function () {
     });
 
     it('Should fail to interpret invalid date inputs', function () {
-        let assertInvalid = function (userInput, expected) {
+        let assertInvalid = function (userInput) {
             assert.isNull(utils.parseInputDate(userInput));
         };
 
