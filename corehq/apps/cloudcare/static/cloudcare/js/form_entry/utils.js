@@ -72,8 +72,9 @@ hqDefine("cloudcare/js/form_entry/utils", function () {
      * @param {Object} itemCallback - function to call back after new search
      * @param {Object} clearCallBack - function to call back after clearing the input
      * @param {Object} initialPageData - initial_page_data object
+     * @param {function|undefined} inputOnKeyDown - inputOnKeyDown function (optional)
      */
-    module.renderMapboxInput = function (divId, itemCallback, clearCallBack, initialPageData) {
+    module.renderMapboxInput = function (divId, itemCallback, clearCallBack, initialPageData, inputOnKeyDown) {
         var defaultGeocoderLocation = initialPageData.get('default_geocoder_location') || {};
         var geocoder = new MapboxGeocoder({
             accessToken: initialPageData.get("mapbox_access_token"),
@@ -86,10 +87,31 @@ hqDefine("cloudcare/js/form_entry/utils", function () {
         }
         geocoder.on('clear', clearCallBack);
         geocoder.addTo('#' + divId);
+        const divEl = $("#" + divId);
+        const liveRegionEl = $("#" + divId + "-sr[role='region']");
         // Must add the form-control class to the input created by mapbox in order to edit.
-        var inputEl = $('input.mapboxgl-ctrl-geocoder--input');
+        var inputEl = divEl.find('input.mapboxgl-ctrl-geocoder--input');
         inputEl.addClass('form-control');
-        inputEl.on('keydown', _.debounce(self._inputOnKeyDown, 200));
+        inputEl.on('keydown', _.debounce((e) => {
+            if (inputOnKeyDown) {
+                inputOnKeyDown(e);
+            }
+
+            // This captures arrow up/down events on geocoder input box and updates the
+            // screen reader live region with the current highlighted value.
+            if (e.key === "ArrowUp" || e.key === "ArrowDown") {
+                const currentOption = divEl.find("ul.suggestions li.active").text();
+                liveRegionEl.html("<p>" + currentOption + "</p>");
+            }
+        }, 200));
+
+        // This populates the "region" html node with the first option, so that it is read by
+        // screen readers on focus.
+        geocoder.on('results', (items) => {
+            if (items && items.features) {
+                liveRegionEl.html("<p>" + items.features[0].place_name + "</p>");
+            }
+        });
     };
 
     /**
