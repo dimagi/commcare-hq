@@ -3,9 +3,12 @@
   font-size: 13px;
   background: linear-gradient(#fdfdfd, #f4f4f4);
   margin-bottom: 0px;
+  min-height: $navbar-height;
 
   .navbar-brand {
-    padding: 11px;
+    line-height: 17px;
+    height: $navbar-height - 4px;
+    display: inline-block;
 
     // Standard HQ logo
     // Custom domain logos use an actual image
@@ -22,8 +25,17 @@
     }
   }
 
-  .nav > li.nav-item > a:focus:not(.active) ,
-  .nav > li.nav-item > a:hover:not(.active) {
+  .dropdown-item {
+    color: #333333;
+  }
+
+  &.navbar-expand-lg .navbar-nav .nav-link {
+    padding: 21px 15px;
+    line-height: 19.5px;
+  }
+
+  &.navbar-expand-lg .navbar-nav li:not(.active) > .nav-link:focus,
+  &.navbar-expand-lg .navbar-nav li:not(.active) > .nav-link:hover {
     transition: color .2s ease-in-out, background .2s ease-in-out;
     box-shadow: inset 0 3px 8px $navbar-default-bg;
     background-color: #edeff2;
@@ -31,23 +43,68 @@
     text-decoration: none;
   }
 
-  .nav > li.nav-item > a:hover,
-  .nav > li.nav-item > a.hovered {
+  &.navbar-expand-lg .navbar-nav li > .nav-link:hover,
+  &.navbar-expand-lg .navbar-nav li > .nav-link.hovered {
     text-decoration: none;
     background-color: $gray-lighter;
   }
 
-  .nav > li.nav-item > a.active {
+  &.navbar-expand-lg .navbar-nav li.active > a {
     box-shadow: inset 0 3px 8px rgba(0, 0, 0, 0.125);
+  }
+  .navbar-toggler,
+  .navbar-toggler:focus {
+    border: none;
+    outline: none;
+    border-radius: 0;
+    box-shadow: none;
   }
 }
 
-.navbar.navbar-hq-footer {
+.nav-settings-bar {
+  margin-left: auto;
+  order: 2;
+}
+
+@media(max-width: 1057px) {
+  .navbar-hq-main-menu.navbar-expand-lg .navbar-nav .nav-link {
+    padding: 21px 10px;
+  }
+}
+
+@media (max-width: map-get($grid-breakpoints, "lg")) {
+  .navbar-hq-main-menu {
+    &.navbar-expand-lg .navbar-nav .nav-link {
+      padding: 10px 15px;
+      line-height: 19.5px;
+    }
+
+    .navbar-collapse.collapsing,
+    .navbar-collapse.show {
+      border-top: 1px solid $gray-300;
+      margin-left: -13px !important;
+      margin-right: -13px !important;
+    }
+    .dropdown-menu {
+      border: none;
+      padding: 2px;
+    }
+    .dropdown-header {
+      font-size: $dropdown-font-size;
+    }
+    .dropdown-item {
+      padding-left: 20px;
+      color: #777;
+    }
+  }
+}
+
+.navbar-hq-footer {
   margin-bottom: 0px;
   border-radius: 0px;
   height: $navbar-footer-height;
   min-height: $navbar-footer-height;
-  color: $white;
+  color: #ffffff;
   text-align: center;
   line-height: $navbar-footer-height - 1px;
 
@@ -58,12 +115,12 @@
 
   a, a:link, a:visited {
     color: $navbar-footer-link-color;
-    &.btn { color: $white; }
+    &.btn { color: #ffffff; }
   }
 
   a:hover {
     color: $navbar-footer-link-color-hover;
-    &.btn { color: $white; }
+    &.btn { color: #ffffff; }
   }
   a.footer-link-img {
     &:hover {
@@ -74,266 +131,23 @@
   .dimagi-logo svg {
     height: 22px;
     width: 50px;
-    top: 10px;
+    top: 3px;
     position: relative;
     display: inline-block;
   }
 
-  @media (max-width: map-get($container-max-widths, "md")) {
+  @media (max-width: map-get($grid-breakpoints, "sm")) {
     height: $navbar-footer-height * 2;
     min-height: $navbar-footer-height * 2;
   }
 
-  @media (max-width: map-get($container-max-widths, "sm")) {
+  @media (max-width: map-get($grid-breakpoints, "xs")) {
     height: $navbar-footer-height * 3;
     min-height: $navbar-footer-height * 3;
   }
 
   @media (max-width: 340px) {
     height: $navbar-footer-height * 4;
-    min-height: $navbar-footer-height * 4;
+    min-height: $navbar-footer-height* 4;
   }
-}
-
-.nav-settings-bar {
-  > .navbar-nav {
-    padding-right: 10px;
-  }
-
-  > .navbar-btn {
-    margin-right: 10px;
-  }
-}
-
-.navbar-mobile.navbar {
-  min-height: $navbar-mobile-height;
-  height: $navbar-mobile-height;
-
-  .navbar-brand {
-    padding: 3px 10px;
-    height: $navbar-mobile-height - 6;
-  }
-  .navbar-one {
-    float: right;
-  }
-  a, a:link, a:visited {
-    color: $cc-neutral-mid;
-  }
-}
-
-.mobile-nav {
-  padding: 3px 10px;
-}
-
-.navbar-hq-main-menu {
-  .btn-toolbar {
-    margin-top: 15px;
-    &.pull-right {
-      margin-right: 15px;
-    }
-
-    a.btn {
-      font-size: 13px;
-      padding: 4px 12px;
-      .caret {
-        margin-left: 5px;
-      }
-    }
-  }
-
-  .dropdown-header {
-    text-transform: uppercase;
-    font-weight: bold;
-    margin-top: 5px;
-  }
-
-  .dropdown-menu > li > a:hover,
-  .dropdown-menu > li > a:focus {
-    background-color: $brand-primary;
-    color: #ffffff;
-  }
-}
-
-.navbar {
-  min-height: $navbar-height;
-}
-
-.navbar-brand {
-  height: $navbar-height;
-}
-
-@mixin navbar-vertical-align($element-height) {
-  margin-top: calc(($navbar-height - $element-height) / 2);
-  margin-bottom: calc(($navbar-height - $element-height) / 2);
-}
-
-.navbar-toggle {
-  @include navbar-vertical-align(34px);
-}
-
-.navbar-btn {
-  @include navbar-vertical-align($input-height);
-
-  &.btn-sm {
-    @include navbar-vertical-align($input-height-sm);
-  }
-  &.btn-xs {
-    @include navbar-vertical-align(22px);
-  }
-}
-
-.navbar-text {
-  @include navbar-vertical-align($line-height-computed);
-
-  @media (min-width: $grid-float-breakpoint) {
-    margin-left: $navbar-padding-x;
-    margin-right: $navbar-padding-x;
-  }
-}
-
-.navbar-nav {
-  // Uncollapse the nav
-  @media (min-width: $grid-float-breakpoint) {
-    > li > a {
-        padding-top:    $navbar-padding-y;
-        padding-bottom: $navbar-padding-y;
-    }
-  }
-}
-
-.navbar-form {
-  margin-left: -$navbar-padding-x;
-  margin-right: -$navbar-padding-x;
-  padding: 10px $navbar-padding-x;
-}
-
-@media (min-width: $grid-float-breakpoint) {
-  .navbar-right {
-    margin-right: -$navbar-padding-x;
-  }
-}
-
-.navbar-toggle {
-  margin-right: $navbar-padding-x;
-}
-
-.navbar-default {
-  background-color: #F4F4F4;
-}
-
-.collapse-mainmenu-toggle,
-.collapse-fullmenu-toggle {
-  display: none;
-  float: left;
-  line-height: $navbar-height;
-}
-.responsive-label {
-  display: none;
-}
-
-
-@media(max-width: 959px) {
-  .mainmenu-tabs.collapsing,
-  .mainmenu-tabs.collapse {
-    border-top: 1px solid darken($navbar-default-bg, 5);
-    width: 100%;
-    box-sizing: content-box;
-    margin-left: -10px;
-    padding-right: 20px;
-  }
-
-  .mainmenu-tabs.collapse {
-    display: none;
-    height: 0;
-    transition: height 1s;
-  }
-
-  .mainmenu-tabs.collapse.in {
-    display: block;
-    height: auto;
-  }
-  .collapse-mainmenu-toggle {
-    display: block;
-  }
-}
-
-@media (max-width: 767px) {
-  .collapse-mainmenu-toggle {
-    display: none;
-  }
-  .collapse-fullmenu-toggle {
-    display: block;
-    float: right;
-    > a {
-      line-height: $navbar-height;
-    }
-  }
-  .mainmenu-tabs.collapsing,
-  .mainmenu-tabs.collapse {
-    box-sizing: border-box;
-    width: auto;
-    padding: 0;
-   }
-  .mainmenu-tabs.collapse {
-    display: block;
-    height: auto !important;
-  }
-  .mainmenu-tabs {
-    clear: both;
-  }
-  .nav-settings-bar {
-    float: none !important;
-    clear: both;
-  }
-  .fullmenu .navbar-nav {
-    padding-right: 0;
-    margin-top: 0 !important;
-    margin-bottom: 0 !important;
-    border-top: 1px solid darken($navbar-default-bg, 5) !important;
-  }
-  .responsive-label {
-    display: inline;
-  }
-  .navbar-nav > li > a.dropdown-toggle-with-icon {
-    padding-bottom: 10px !important;
-  }
-  .nav-main-icon {
-    font-size: 1em !important;
-  }
-  .fullmenu .dropdown-menu {
-    background-color: lighten($navbar-default-bg, 5) !important;
-  }
-  .fullmenu .navbar-nav .open .dropdown-menu > li > a {
-    transition: background-color .5s;
-    &:hover {
-      background-color: $navbar-default-bg !important;
-    }
-  }
-  .fullmenu .navbar-nav .dropdown > .dropdown-menu {
-    height: 0;
-    transition: height 1s;
-  }
-  .fullmenu .navbar-nav .dropdown.open > .dropdown-menu {
-    height: auto;
-  }
-  .fullmenu .navbar-nav .open .dropdown-menu .dropdown-header.nav-header {
-    padding: 5px 19px;
-  }
-}
-
-@media (min-width: 767px) {
-  .fullmenu.collapse {
-    display: block;
-  }
-}
-
-@media (min-width: 960px) {
-  .mainmenu-tabs.collapse {
-    display: block;
-  }
-}
-
-.navbar-signin {
-  float: right;
-  text-align: right;
 }

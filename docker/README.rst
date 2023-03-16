@@ -71,8 +71,8 @@ typically want more direct access to the Django process.
 1. Clone commcare-hq, if you have not done so already::
 
        $ git clone https://github.com/dimagi/commcare-hq.git
-       $ git submodule update --init --recursive
        $ cd commcare-hq
+       $ git submodule update --init --recursive
 
 2. Build a Docker image using ``Dockerfile_incl``, and tag it
    "commcare_incl"::
