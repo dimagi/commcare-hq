@@ -420,8 +420,8 @@ class IndicatorNamedExpressionTest(SimpleTestCase):
                     'test': {
                         'type': 'boolean_expression',
                         'expression': {
-                            'type': 'property_name',
-                            'property_name': 'is_evil',
+                            'type': 'named',
+                            'name': 'is_evil',
                         },
                         'operator': 'eq',
                         'property_value': True,
