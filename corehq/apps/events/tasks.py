@@ -18,36 +18,32 @@ from corehq.form_processor.models import CommCareCase
 def sync_mobile_worker_attendees(domain_name, user_id):
     """
     Create attendees from mobile workers
-
-    ``user_id`` is the user ID of ``request.couch_user``.
     """
     with CriticalSection(['sync_attendees_' + domain_name]):
-        case_blocks = []
+        new_case_blocks = []
         closed_cases = []
-        existing = get_existing_cases_by_user_ids(domain_name)
+        user_id_case_mapping = get_existing_cases_by_user_ids(domain_name)
         attendee_case_type = get_attendee_case_type(domain_name)
 
         for user in CommCareUser.by_domain(domain_name):
-            if user.user_id not in existing:
-                case_blocks.append(get_case_block_for_user(user, user_id, attendee_case_type))
-            elif existing[user.user_id].closed:
-                closed_cases.append(existing[user.user_id])
+            if user.user_id not in user_id_case_mapping:
+                new_case_block = get_case_block_for_user(user, user_id, attendee_case_type)
+                new_case_blocks.append(new_case_block)
+            elif user_id_case_mapping[user.user_id].closed:
+                closed_cases.append(user_id_case_mapping[user.user_id])
 
         submit_case_blocks(
-            [cb.as_text() for cb in case_blocks],
+            [cb.as_text() for cb in new_case_blocks],
             domain=domain_name,
             user_id=user_id,
             device_id=__name__,
         )
         reopen_cases(closed_cases)
 
-
 def get_existing_cases_by_user_ids(domain: str) -> dict[str, CommCareCase]:
     cases = AttendeeCase.objects.by_domain(domain, include_closed=True)
     return {c.get_case_property(ATTENDEE_USER_ID_CASE_PROPERTY): c for c in cases}
 
-
-# TODO: Test
 def get_case_block_for_user(user: CommCareUser, owner_id: str, attendee_case_type) -> CaseBlock:
     case_name = ' '.join((user.first_name, user.last_name))
     fields = {
@@ -62,8 +58,6 @@ def get_case_block_for_user(user: CommCareUser, owner_id: str, attendee_case_typ
         update=fields,
     )
 
-
-# TODO: Test
 def reopen_cases(cases):
     for case in cases:
         transactions = case.get_closing_transactions()

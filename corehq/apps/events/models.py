@@ -259,8 +259,6 @@ class Event(models.Model):
 
 
 class AttendeeCaseManager:
-
-    # TODO: Test
     def by_domain(
         self,
         domain: str,
