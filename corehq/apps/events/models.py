@@ -11,6 +11,7 @@ from corehq.apps.es import CaseES
 from corehq.form_processor.exceptions import CaseNotFound
 from corehq.form_processor.models import CommCareCase, CommCareCaseIndex
 from corehq.util.quickcache import quickcache
+from django.contrib.postgres.fields import ArrayField
 
 NOT_STARTED = 'Not started'
 IN_PROGRESS = 'In progress'
@@ -99,6 +100,12 @@ class Event(models.Model):
         null=False,
         choices=ATTENDEE_LIST_STATUS_CHOICES,
         default=NOT_STARTED,
+    )
+    attendance_taker_ids = ArrayField(
+        models.CharField(max_length=255),
+        blank=True,
+        null=True,
+        default=list
     )
 
     class Meta:
@@ -248,6 +255,9 @@ class Event(models.Model):
     def status(self):
         return self.attendee_list_status
 
+    @property
+    def get_total_attendance_takers(self):
+        return len(self.attendance_taker_ids)
 
 class AttendeeCaseManager:
 
