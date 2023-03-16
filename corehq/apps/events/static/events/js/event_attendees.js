@@ -80,7 +80,36 @@ hqDefine("events/js/event_attendees",[
         return self;
     };
 
+    var mobileWorkerAttendees = function() {
+        self.mobileWorkerAttendeesEnabled = ko.observable(false);
+
+        self.toggleMobileWorkerAttendees = function() {
+            $.ajax({
+                method: 'POST',
+                url: initialPageData.reverse('attendees_config'),
+                contentType: 'application/json',
+                data: JSON.stringify({'mobile_worker_attendee_enabled': !self.mobileWorkerAttendeesEnabled()}),
+                success: function (data) {
+                    self.mobileWorkerAttendeesEnabled(data.mobile_worker_attendee_enabled);
+                },
+            });
+        };
+
+        self.loadMobileWorkerAttendeeConfig = function() {
+            $.ajax({
+                method: 'GET',
+                url: initialPageData.reverse('attendees_config'),
+                success: function (data) {
+                    self.mobileWorkerAttendeesEnabled(data.mobile_worker_attendee_enabled);
+                },
+            });
+        };
+        self.loadMobileWorkerAttendeeConfig();
+        return self;
+    };
+
     $(function () {
         $("#attendees-list").koApplyBindings(attendeesListModel());
+        $("#mobile-worker-attendees").koApplyBindings(mobileWorkerAttendees());
     });
 });
