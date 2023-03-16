@@ -155,7 +155,7 @@ class Event(models.Model):
                              for c in attendee_cases)
         case_structures = []
         for case_id in attendee_case_ids:
-            event_host = CaseStructure(case_id=self.event_id)
+            event_host = CaseStructure(case_id=self.case_id)
             attendee_host = CaseStructure(case_id=case_id)
             case_structures.append(CaseStructure(
                 indices=[
@@ -174,6 +174,7 @@ class Event(models.Model):
                 ],
                 attrs={
                     'case_type': EVENT_ATTENDEE_CASE_TYPE,
+                    'owner_id': self.event_id,
                     'create': True,
                 },
             ))
@@ -186,7 +187,7 @@ class Event(models.Model):
         """
         ext_case_ids = CommCareCaseIndex.objects.get_extension_case_ids(
             self.domain,
-            [self.event_id],
+            [self.case_id],
             include_closed=False,
         )
         return CommCareCase.objects.get_cases(ext_case_ids, self.domain)
@@ -194,7 +195,7 @@ class Event(models.Model):
     def _close_ext_cases(self):
         ext_case_ids = CommCareCaseIndex.objects.get_extension_case_ids(
             self.domain,
-            [self.event_id],
+            [self.case_id],
             include_closed=False,
         )
         self._case_factory.create_or_update_cases([
@@ -209,12 +210,13 @@ class Event(models.Model):
         # ... and for that to work, the Event has a host case.
         #
         # This is the only thing we use the Event's case for. It does not
-        # store any Event data other than its name.
+        # store any Event data other than its name, and is not used for anything
+        # other than looking up extension cases.
         try:
-            case = CommCareCase.objects.get_case(self.event_id, self.domain)
+            case = CommCareCase.objects.get_case(self.case_id, self.domain)
         except CaseNotFound:
             struct = CaseStructure(
-                case_id=self.event_id,
+                case_id=self.case_id,
                 attrs={
                     'owner_id': self.manager_id,
                     'case_type': EVENT_CASE_TYPE,
@@ -259,6 +261,13 @@ class Event(models.Model):
     def get_total_attendance_takers(self):
         return len(self.attendance_taker_ids)
 
+    @property
+    def case_id(self):
+        """
+        A fake case ID, to prevent the Event's case ID clashing with the
+        Event's case sharing group's ID
+        """
+        return self.event_id + '-0'
 class AttendeeCaseManager:
 
     def by_domain(self, domain):
