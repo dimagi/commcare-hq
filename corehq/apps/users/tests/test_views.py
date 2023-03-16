@@ -88,22 +88,22 @@ class TestMobileWorkerListView(TestCase):
         """An attendance tracking case should be created for a mobile worker on creation"""
         # To ensure the config exists
         AttendanceTrackingConfig.toggle_mobile_worker_attendees(self.domain, True)
-        self.assert_case_on_mobile_worker_creation(expect_case=True)
+        self.assert_case_created_on_mobile_worker_creation(expect_case=True)
 
     @flag_enabled('ATTENDANCE_TRACKING')
     def test_commcare_attendee_case_not_created_due_to_privilege(self):
         """This tests the case where a domain was on a higher plan and used the attendance tracking, but have
         downgraded ever since and now creates a new mobile worker"""
         AttendanceTrackingConfig.toggle_mobile_worker_attendees(self.domain, True)
-        self.assert_case_on_mobile_worker_creation(expect_case=False)
+        self.assert_case_created_on_mobile_worker_creation(expect_case=False)
 
     @flag_enabled('ATTENDANCE_TRACKING')
     @privilege_enabled(privileges.ATTENDANCE_TRACKING)
     def test_commcare_attendee_case_not_created_due_to_config(self):
         # AttendanceTrackingConfig does not exist for this domain yet
-        self.assert_case_on_mobile_worker_creation(expect_case=False)
+        self.assert_case_created_on_mobile_worker_creation(expect_case=False)
 
-    def assert_case_on_mobile_worker_creation(self, expect_case=True):
+    def assert_case_created_on_mobile_worker_creation(self, expect_case=True):
         username = 'test.test'
         self._remote_invoke('create_mobile_worker', {
             "user": {
