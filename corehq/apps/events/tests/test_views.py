@@ -1,6 +1,7 @@
 from contextlib import contextmanager
 from datetime import datetime
 from unittest.mock import patch
+import json
 
 from django.test import TestCase
 from django.urls import reverse
@@ -12,9 +13,10 @@ from corehq.apps.users.models import HqPermissions, UserRole, WebUser
 from corehq.apps.users.role_utils import UserRolePresets
 from corehq.form_processor.models import CommCareCase
 from corehq.util.test_utils import flag_enabled
+from corehq.apps.events.models import AttendanceTrackingConfig
 
 from ..models import Event, get_attendee_case_type
-from ..views import EventCreateView, EventsView
+from ..views import EventCreateView, EventsView, AttendeesConfigView
 
 
 class BaseEventViewTestClass(TestCase):
@@ -223,3 +225,33 @@ class TestEventsCreateView(BaseEventViewTestClass):
             'sameday_reg': True,
             'track_each_day': False,
         }
+
+
+class TestAttendeesConfigView(BaseEventViewTestClass):
+    urlname = AttendeesConfigView.urlname
+
+    @flag_enabled('ATTENDANCE_TRACKING')
+    def test_get_for_non_existent_attendance_tracking_config(self):
+        self.log_user_in(self.role_webuser)
+        response = self.client.get(self.endpoint)
+        self.assertEqual(response.status_code, 200)
+        json_data = response.json()
+        self.assertEqual(json_data['mobile_worker_attendee_enabled'], False)
+
+    @flag_enabled('ATTENDANCE_TRACKING')
+    @patch('corehq.apps.events.views.sync_mobile_worker_attendees')
+    def test_post_updates_attendance_tracking_config(self, sync_mobile_worker_attendees_mock):
+        config, _created = AttendanceTrackingConfig.objects.get_or_create(domain=self.domain)
+        update_value = not config.mobile_worker_attendees
+        self.log_user_in(self.role_webuser)
+
+        # Make sure we respond with the correct value
+        json_payload = json.dumps({'mobile_worker_attendee_enabled': update_value})
+        response = self.client.post(self.endpoint, json_payload, content_type='application/json')
+        self.assertEqual(response.status_code, 200)
+        json_data = response.json()
+        self.assertEqual(json_data['mobile_worker_attendee_enabled'], update_value)
+
+        # Make sure it updated
+        config, _created = AttendanceTrackingConfig.objects.get_or_create(domain=self.domain)
+        self.assertEqual(config.mobile_worker_attendees, update_value)
