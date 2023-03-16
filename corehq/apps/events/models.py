@@ -126,7 +126,7 @@ class Event(models.Model):
         manage.
         """
         return UnsavableGroup(
-            _id=self.event_id,  # Does not clash with self.case_id
+            _id=self.event_id,  # Does not clash with self.fake_case_id
             domain=self.domain,
             users=[user_id],
             last_modified=datetime.utcnow(),
@@ -175,7 +175,7 @@ class Event(models.Model):
                              for c in attendee_cases)
         case_structures = []
         for case_id in attendee_case_ids:
-            event_host = CaseStructure(case_id=self.case_id)
+            event_host = CaseStructure(case_id=self.fake_case_id)
             attendee_host = CaseStructure(case_id=case_id)
             case_structures.append(CaseStructure(
                 indices=[
@@ -207,7 +207,7 @@ class Event(models.Model):
         """
         ext_case_ids = CommCareCaseIndex.objects.get_extension_case_ids(
             self.domain,
-            [self.case_id],
+            [self.fake_case_id],
             include_closed=False,
         )
         return CommCareCase.objects.get_cases(ext_case_ids, self.domain)
@@ -215,7 +215,7 @@ class Event(models.Model):
     def _close_ext_cases(self):
         ext_case_ids = CommCareCaseIndex.objects.get_extension_case_ids(
             self.domain,
-            [self.case_id],
+            [self.fake_case_id],
             include_closed=False,
         )
         self._case_factory.create_or_update_cases([
@@ -233,10 +233,10 @@ class Event(models.Model):
         # store any Event data other than its name, and is not used for anything
         # other than looking up extension cases.
         try:
-            case = CommCareCase.objects.get_case(self.case_id, self.domain)
+            case = CommCareCase.objects.get_case(self.fake_case_id, self.domain)
         except CaseNotFound:
             struct = CaseStructure(
-                case_id=self.case_id,
+                case_id=self.fake_case_id,
                 attrs={
                     'owner_id': self.manager_id,
                     'case_type': EVENT_CASE_TYPE,
@@ -281,7 +281,7 @@ class Event(models.Model):
         return len(self.attendance_taker_ids)
 
     @property
-    def case_id(self):
+    def fake_case_id(self):
         """
         A fake case ID, to prevent the Event's case ID clashing with the
         Event's case sharing group's ID
