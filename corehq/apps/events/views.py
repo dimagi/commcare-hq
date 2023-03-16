@@ -101,7 +101,7 @@ class EventsView(BaseEventView, CRUDPaginatedViewMixin):
             'status': event.status,
             'total_attendance': event.total_attendance or '-',
             'edit_url': reverse(EventEditView.urlname, args=(self.domain, event.event_id)),
-            'total_attendance_takers': event.get_total_attendance_takers or '-'
+            'total_attendance_takers': event.get_total_attendance_takers() or '-'
         }
 
 

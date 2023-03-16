@@ -277,7 +277,6 @@ class Event(models.Model):
     def status(self):
         return self.attendee_list_status
 
-    @property
     def get_total_attendance_takers(self):
         return len(self.attendance_taker_ids)
 
