@@ -355,9 +355,7 @@ class BaseCaseSearchTest(TestCase):
         for case in input_cases:
             index = case.pop('index', None)
             self._make_case(domain, case, index=index)
-        with patch('corehq.pillows.case_search.domains_needing_search_index',
-                   MagicMock(return_value=[domain])):
-            CaseSearchReindexerFactory(domain=domain).build().reindex()
+        CaseSearchReindexerFactory(domain=domain).build().reindex()
         self.elasticsearch.indices.refresh(CASE_SEARCH_INDEX)
 
     def _assert_query_runs_correctly(self, domain, input_cases, query, xpath_query, output):

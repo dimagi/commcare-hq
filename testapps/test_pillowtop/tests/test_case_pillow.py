@@ -12,7 +12,6 @@ from corehq.apps.es.tests.utils import es_test
 from corehq.elastic import get_es_new
 from corehq.form_processor.models import CommCareCase
 from corehq.form_processor.tests.utils import FormProcessorTestUtils, create_case
-from corehq.pillows.case_search import domains_needing_search_index
 from corehq.pillows.mappings.case_mapping import CASE_INDEX_INFO
 from corehq.pillows.mappings.case_search_mapping import CASE_SEARCH_INDEX_INFO
 from corehq.util.elastic import ensure_index_deleted
@@ -32,7 +31,6 @@ class CasePillowTest(TestCase):
         ensure_index_deleted(CASE_SEARCH_INDEX_INFO.index)
         # enable case search for this domain
         CaseSearchConfig.objects.create(domain=cls.domain, enabled=True)
-        domains_needing_search_index.clear()
 
     def setUp(self):
         super(CasePillowTest, self).setUp()
@@ -64,8 +62,7 @@ class CasePillowTest(TestCase):
 
     def test_case_pillow_error_in_case_es(self):
         self.assertEqual(0, PillowError.objects.filter(pillow='case-pillow').count())
-        with patch('corehq.pillows.case_search.domain_needs_search_index', return_value=True), \
-            patch('corehq.pillows.case.transform_case_for_elasticsearch') as case_transform, \
+        with patch('corehq.pillows.case.transform_case_for_elasticsearch') as case_transform, \
             patch('corehq.pillows.case_search.transform_case_for_elasticsearch') as case_search_transform:
                 case_transform.side_effect = Exception('case_transform error')
                 case_search_transform.side_effect = Exception('case_search_transform error')

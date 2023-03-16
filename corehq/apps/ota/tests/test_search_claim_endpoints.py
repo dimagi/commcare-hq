@@ -25,7 +25,6 @@ from corehq.elastic import get_es_new
 from corehq.form_processor.models import CommCareCase
 from corehq.pillows.case_search import (
     CaseSearchReindexerFactory,
-    domains_needing_search_index,
 )
 from corehq.pillows.mappings.case_search_mapping import (
     CASE_SEARCH_INDEX,
@@ -82,7 +81,6 @@ class CaseClaimEndpointTests(TestCase):
             update={'opened_by': OWNER_ID},
         ).as_text(), domain=DOMAIN)
         self.case_ids = set([self.case_id, self.additional_case_id])
-        domains_needing_search_index.clear()
         CaseSearchReindexerFactory(domain=DOMAIN).build().reindex()
         es = get_es_new()
         es.indices.refresh(CASE_SEARCH_INDEX)

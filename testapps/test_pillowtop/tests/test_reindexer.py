@@ -19,7 +19,6 @@ from corehq.elastic import get_es_new
 from corehq.form_processor.tests.utils import FormProcessorTestUtils
 from corehq.pillows.application import AppReindexerFactory
 from corehq.pillows.case import SqlCaseReindexerFactory
-from corehq.pillows.case_search import domains_needing_search_index
 from corehq.pillows.domain import DomainReindexerFactory
 from corehq.pillows.group import GroupReindexerFactory
 from corehq.pillows.groups_to_user import GroupToUserReindexerFactory
@@ -88,15 +87,11 @@ class PillowtopReindexerTest(TestCase):
 
         # With case search not enabled, case should not make it to ES
         CaseSearchConfig.objects.all().delete()
-        domains_needing_search_index.clear()
         reindex_and_clean('case-search')
         es.indices.refresh(CASE_SEARCH_INDEX)  # as well as refresh the index
         self._assert_es_empty(esquery=CaseSearchES())
 
-        # With case search enabled, it should get indexed
-        with mock.patch('corehq.pillows.case_search.domains_needing_search_index',
-                        mock.MagicMock(return_value=[self.domain])):
-            reindex_and_clean('case-search')
+        reindex_and_clean('case-search')
 
         es.indices.refresh(CASE_SEARCH_INDEX)  # as well as refresh the index
         self._assert_case_is_in_es(case, esquery=CaseSearchES())

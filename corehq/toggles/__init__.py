@@ -1012,15 +1012,18 @@ WEBAPPS_STICKY_SEARCH = StaticToggle(
 )
 
 
-def _enable_search_index(domain, enabled):
+def _ensure_search_index_is_enabled(domain, enabled):
     from corehq.apps.case_search.tasks import reindex_case_search_for_domain
     from corehq.apps.es import CaseSearchES
-    from corehq.pillows.case_search import domains_needing_search_index
-    domains_needing_search_index.clear()
+    from corehq.pillows.case_search import domain_needs_search_index
+    from corehq.apps.case_search.models import DomainsNotInCaseSearchIndex
+
+    if enabled and DomainsNotInCaseSearchIndex.objects.filter(domain=domain).exists():
+        DomainsNotInCaseSearchIndex.objects.filter(domain=domain).delete()
+        domain_needs_search_index.clear(domain)
 
     has_case_search_cases = CaseSearchES().domain(domain).count() > 0
     if enabled and not has_case_search_cases:
-        # action is not reversible, we want all projects here eventually
         reindex_case_search_for_domain.delay(domain)
 
 
@@ -1029,7 +1032,7 @@ CASE_LIST_EXPLORER = StaticToggle(
     'Show the case list explorer report',
     TAG_SOLUTIONS_OPEN,
     namespaces=[NAMESPACE_DOMAIN],
-    save_fn=_enable_search_index,
+    save_fn=_ensure_search_index_is_enabled,
 )
 
 EXPLORE_CASE_DATA = StaticToggle(
@@ -1077,7 +1080,7 @@ CASE_API_V0_6 = StaticToggle(
     'Enable the v0.6 Case API',
     TAG_SOLUTIONS_LIMITED,
     namespaces=[NAMESPACE_DOMAIN],
-    save_fn=_enable_search_index,
+    save_fn=_ensure_search_index_is_enabled,
 )
 
 HIPAA_COMPLIANCE_CHECKBOX = StaticToggle(

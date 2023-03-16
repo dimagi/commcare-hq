@@ -23,7 +23,6 @@ from corehq.pillows.case import get_case_pillow
 from corehq.pillows.case_search import (
     CaseSearchReindexerFactory,
     delete_case_search_cases,
-    domains_needing_search_index,
 )
 from corehq.pillows.mappings.case_search_mapping import (
     CASE_SEARCH_INDEX,
@@ -60,7 +59,6 @@ class CaseSearchPillowTest(TestCase):
         """
         other_domain = "yunkai"
         CaseSearchConfig.objects.get_or_create(pk=other_domain, enabled=True)
-        domains_needing_search_index.clear()
 
         desired_case = self._make_case(domain=other_domain)
         undesired_case = self._make_case(domain=self.domain)  # noqa
@@ -123,7 +121,6 @@ class CaseSearchPillowTest(TestCase):
     @flag_enabled('USH_CASE_CLAIM_UPDATES')
     def test_geopoint_property(self):
         CaseSearchConfig.objects.get_or_create(pk=self.domain, enabled=True)
-        domains_needing_search_index.clear()
         self._make_data_dictionary(gps_properties=['coords', 'short_coords', 'other_coords'])
         case = self._make_case(case_properties={
             'coords': '-33.8561 151.2152 0 0',
@@ -209,7 +206,5 @@ class CaseSearchPillowTest(TestCase):
 
     def _bootstrap_cases_in_es_for_domain(self, domain):
         case = self._make_case(domain)
-        with patch('corehq.pillows.case_search.domains_needing_search_index',
-                   MagicMock(return_value=[domain])):
-            CaseSearchReindexerFactory(domain=domain).build().reindex()
+        CaseSearchReindexerFactory(domain=domain).build().reindex()
         return case
