@@ -1089,6 +1089,8 @@ OTP_STATIC_THROTTLE_FACTOR = 0
 ALLOW_PHONE_AS_DEFAULT_TWO_FACTOR_DEVICE = False
 RATE_LIMIT_SUBMISSIONS = False
 
+DATA_UPLOAD_MAX_NUMBER_FILES = None
+
 # If set to a positive number, exports requested more than this many seconds ago
 # without the email option will be quickly rejected.
 # This is useful for load-shedding in times of crisis.

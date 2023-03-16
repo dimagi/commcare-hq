@@ -919,7 +919,7 @@ WEB_APPS_DOMAIN_BANNER = StaticToggle(
 
 WEB_APPS_UPLOAD_QUESTIONS = FeatureRelease(
     'web_apps_upload_questions',
-    'USH: Support signature, image, audio, and video questions in Web Apps',
+    'USH: Support image, audio, and video questions in Web Apps',
     TAG_RELEASE,
     namespaces=[NAMESPACE_DOMAIN],
     owner='Jenny Schweers',
@@ -1767,13 +1767,6 @@ MANAGE_RELEASES_PER_LOCATION = StaticToggle(
     help_link='https://confluence.dimagi.com/display/saas/Manage+Releases+per+Location',
 )
 
-LOCATION_SAFE_CASE_IMPORTS = StaticToggle(
-    'location_safe_case_imports',
-    'Allow location-restricted users to import cases owned at their location or below',
-    TAG_SOLUTIONS_OPEN,
-    namespaces=[NAMESPACE_DOMAIN],
-)
-
 FORM_CASE_IDS_CASE_IMPORTER = StaticToggle(
     'form_case_ids_case_importer',
     'Show the form and case ids download button on the case importer',
@@ -2179,7 +2172,8 @@ GENERIC_INBOUND_API = StaticToggle(
     TAG_SOLUTIONS_LIMITED,
     namespaces=[NAMESPACE_DOMAIN],
     description="Create inbound APIs that use UCR expressions to process data into case updates",
-    help_link="TODO",
+    help_link="https://docs.google.com/document/d/1y9CZwpzGYtitxbh-Y7nS5-WoMUg-LbRlZHd-eD5i78U/edit",
+    parent_toggles=[UCR_EXPRESSION_REGISTRY]
 )
 
 CASE_UPDATES_UCR_FILTERS = StaticToggle(
@@ -2509,4 +2503,13 @@ REGEX_FIELD_VALIDATION = FrozenPrivilegeToggle(
                 "(regex) to validate custom user data, custom location data, "
                 "and/or custom product data fields.",
     help_link='https://confluence.dimagi.com/display/saas/Regular+Expression+Validation+for+Custom+Data+Fields',
+)
+
+LOCATION_SAFE_CASE_IMPORTS = FrozenPrivilegeToggle(
+    privileges.LOCATION_SAFE_CASE_IMPORTS,
+    'location_safe_case_imports',
+    label='Location-restricted users can import cases at their location or below',
+    tag=TAG_SOLUTIONS_OPEN,
+    namespaces=[NAMESPACE_DOMAIN],
+    description='Allow location-restricted users to import cases owned at their location or below',
 )

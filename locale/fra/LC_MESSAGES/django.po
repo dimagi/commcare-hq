@@ -457,6 +457,7 @@ msgstr "Un nom est requis pour ce nouveau rôle."
 #: corehq/apps/data_interfaces/views.py
 #: corehq/apps/domain/templates/domain/admin/commtrack_action_table.html
 #: corehq/apps/enterprise/enterprise.py corehq/apps/events/forms.py
+#: corehq/apps/events/templates/event_attendees.html
 #: corehq/apps/events/views.py
 #: corehq/apps/export/templates/export/partials/table.html
 #: corehq/apps/export/views/incremental.py
@@ -1064,7 +1065,9 @@ msgstr ""
 #: corehq/apps/export/templates/export/partials/feed_filter_modal.html
 #: corehq/apps/export/templates/export/partials/table.html
 #: corehq/apps/groups/templates/groups/group_members.html
-#: corehq/apps/hqwebapp/templates/hqwebapp/includes/modal_report_issue.html
+#: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap3/modal_report_issue.html
+#: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap5/modal_report_issue.html
+#: corehq/apps/hqwebapp/tests/data/bootstrap5_diffs/hqwebapp/includes/modal_report_issue.html.diff.txt
 #: corehq/apps/linked_domain/templates/linked_domain/domain_links.html
 #: corehq/apps/linked_domain/templates/linked_domain/partials/manage_downstream_domains.html
 #: corehq/apps/linked_domain/templates/linked_domain/partials/pull_content.html
@@ -3792,7 +3795,9 @@ msgstr ""
 
 #: corehq/apps/app_manager/fields.py
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/module_view_settings.html
-#: corehq/apps/hqwebapp/templates/hqwebapp/base_navigation.html
+#: corehq/apps/hqwebapp/templates/hqwebapp/bootstrap3/base_navigation.html
+#: corehq/apps/hqwebapp/templates/hqwebapp/bootstrap5/base_navigation.html
+#: corehq/apps/hqwebapp/tests/data/bootstrap5_diffs/hqwebapp/base_navigation.html.diff.txt
 #: corehq/apps/reports/filters/forms.py
 msgid "Menu"
 msgstr "Menu"
@@ -6326,10 +6331,11 @@ msgstr "Installer CommCare"
 #: corehq/apps/export/templates/export/partials/table.html
 #: corehq/apps/hqadmin/templates/hqadmin/partials/pillow-operation-modal.html
 #: corehq/apps/hqmedia/templates/hqmedia/partials/multimedia_uploader.html
+#: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap3/modal_report_issue.html
 #: corehq/apps/hqwebapp/templates/hqwebapp/includes/modal_30_day_trial.html
-#: corehq/apps/hqwebapp/templates/hqwebapp/includes/modal_report_issue.html
 #: corehq/apps/hqwebapp/templates/hqwebapp/partials/get_demo_modals.html
 #: corehq/apps/hqwebapp/templates/hqwebapp/partials/ko_feedback.html
+#: corehq/apps/hqwebapp/tests/data/bootstrap5_diffs/hqwebapp/includes/modal_report_issue.html.diff.txt
 #: corehq/apps/integration/templates/integration/base_cloudcare_template.html
 #: corehq/apps/registration/templates/registration/partials/start_trial_modal.html
 #: corehq/apps/registry/templates/registry/registry_edit.html
@@ -8022,6 +8028,10 @@ msgid "No additional linking required."
 msgstr "Aucune liaison additionnelle exigée. "
 
 #: corehq/apps/app_manager/templates/app_manager/partials/forms/form_workflow.html
+msgid "Error fetching link data."
+msgstr ""
+
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/form_workflow.html
 msgid "Remove this link"
 msgstr ""
 
@@ -8840,7 +8850,9 @@ msgid "Search First"
 msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/case_search_properties.html
-#: corehq/apps/notifications/templates/notifications/partials/global_notifications.html
+#: corehq/apps/hqwebapp/tests/data/bootstrap5_diffs/notifications/partials/global_notifications.html.diff.txt
+#: corehq/apps/notifications/templates/notifications/partials/bootstrap3/global_notifications.html
+#: corehq/apps/notifications/templates/notifications/partials/bootstrap5/global_notifications.html
 msgid "See More"
 msgstr "Voir plus"
 
@@ -12316,6 +12328,12 @@ msgstr ""
 msgid "Start"
 msgstr "Démarrer"
 
+#: corehq/apps/cloudcare/templates/formplayer/menu_list.html
+#: corehq/apps/hqadmin/templates/hqadmin/hqadmin_base_report.html
+#: corehq/apps/reports/templates/reports/standard/partials/filter_panel.html
+msgid "Print"
+msgstr "Imprimer"
+
 #: corehq/apps/cloudcare/templates/formplayer/pagination.html
 #, python-format
 msgid "<%%- rowRange[i] %%> per page"
@@ -14519,7 +14537,9 @@ msgstr ""
 "Changer ce nom ne changera pas l'URL du projet. "
 
 #: corehq/apps/domain/forms.py
-#: corehq/apps/hqwebapp/templates/hqwebapp/includes/modal_report_issue.html
+#: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap3/modal_report_issue.html
+#: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap5/modal_report_issue.html
+#: corehq/apps/hqwebapp/tests/data/bootstrap5_diffs/hqwebapp/includes/modal_report_issue.html.diff.txt
 msgid "Project Description"
 msgstr "Description du projet"
 
@@ -14904,7 +14924,9 @@ msgid "Please specify a limit for OData feeds."
 msgstr ""
 
 #: corehq/apps/domain/forms.py
-#: corehq/apps/hqwebapp/templates/hqwebapp/includes/modal_report_issue.html
+#: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap3/modal_report_issue.html
+#: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap5/modal_report_issue.html
+#: corehq/apps/hqwebapp/tests/data/bootstrap5_diffs/hqwebapp/includes/modal_report_issue.html.diff.txt
 #: corehq/apps/registration/templates/registration/confirmation_resend.html
 #: corehq/apps/reports/standard/sms.py corehq/apps/sms/filters.py
 #: corehq/apps/sms/models.py
@@ -15856,7 +15878,9 @@ msgstr ""
 
 #: corehq/apps/domain/templates/domain/current_subscription.html
 #: corehq/apps/domain/views/accounting.py
-#: corehq/apps/hqwebapp/templates/hqwebapp/includes/global_navigation_bar.html
+#: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap3/global_navigation_bar.html
+#: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap5/global_navigation_bar.html
+#: corehq/apps/hqwebapp/tests/data/bootstrap5_diffs/hqwebapp/includes/global_navigation_bar.html.diff.txt
 msgid "Current Subscription"
 msgstr "Abonnement actuel "
 
@@ -16866,7 +16890,9 @@ msgstr "Votre mot de passe a été modifié avec succès."
 #: corehq/apps/domain/templates/login_and_password/password_change_done.html
 #: corehq/apps/domain/templates/login_and_password/password_reset_complete.html
 #: corehq/apps/domain/templates/login_and_password/two_factor/_wizard_actions.html
-#: corehq/apps/hqwebapp/templates/hqwebapp/base_navigation.html
+#: corehq/apps/hqwebapp/templates/hqwebapp/bootstrap3/base_navigation.html
+#: corehq/apps/hqwebapp/templates/hqwebapp/bootstrap5/base_navigation.html
+#: corehq/apps/hqwebapp/tests/data/bootstrap5_diffs/hqwebapp/base_navigation.html.diff.txt
 msgid "Sign In"
 msgstr "Connexion"
 
@@ -17605,6 +17631,10 @@ msgstr "Elément de site"
 msgid "Location configuration updated successfully"
 msgstr "Configuration de site mise à jour avec succès"
 
+#: corehq/apps/domain/views/internal.py
+msgid "Test Bootstrap 5 Changes"
+msgstr ""
+
 #: corehq/apps/domain/views/internal.py corehq/tabs/tabclasses.py
 msgid "Project Information"
 msgstr "Informations sur le projet"
@@ -17660,7 +17690,9 @@ msgid "Manage Releases By App Profile"
 msgstr ""
 
 #: corehq/apps/domain/views/settings.py
-#: corehq/apps/hqwebapp/templates/hqwebapp/includes/global_navigation_bar.html
+#: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap3/global_navigation_bar.html
+#: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap5/global_navigation_bar.html
+#: corehq/apps/hqwebapp/tests/data/bootstrap5_diffs/hqwebapp/includes/global_navigation_bar.html.diff.txt
 #: corehq/apps/locations/views.py corehq/apps/registry/views.py
 #: corehq/motech/generic_inbound/reports.py corehq/reports.py
 #: corehq/tabs/tabclasses.py
@@ -18211,7 +18243,9 @@ msgid "Enterprise Settings"
 msgstr ""
 
 #: corehq/apps/enterprise/views.py
-#: corehq/apps/hqwebapp/templates/hqwebapp/includes/global_navigation_bar.html
+#: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap3/global_navigation_bar.html
+#: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap5/global_navigation_bar.html
+#: corehq/apps/hqwebapp/tests/data/bootstrap5_diffs/hqwebapp/includes/global_navigation_bar.html.diff.txt
 #: corehq/apps/sso/forms.py
 msgid "Enterprise Console"
 msgstr ""
@@ -18245,10 +18279,8 @@ msgid "Controlling domain set to {}."
 msgstr ""
 
 #: corehq/apps/events/forms.py
-#, fuzzy
-#| msgid "Parent Tag"
 msgid "Per event day"
-msgstr "Etiquette parente"
+msgstr ""
 
 #: corehq/apps/events/forms.py
 msgid "Per entire event"
@@ -18263,38 +18295,39 @@ msgid "The expected amount of attendees."
 msgstr ""
 
 #: corehq/apps/events/forms.py
-#, fuzzy
-#| msgid "Issue with registration"
 msgid "Allow same day registration"
-msgstr "Problème avec l'inscription"
+msgstr ""
 
 #: corehq/apps/events/forms.py
-#, fuzzy
-#| msgid "Advanced Options"
 msgid "Attendance recording options"
-msgstr "Options avancées"
+msgstr ""
+
+#: corehq/apps/events/forms.py corehq/apps/events/views.py
+#: corehq/tabs/tabclasses.py
+msgid "Attendees"
+msgstr ""
 
 #: corehq/apps/events/forms.py corehq/apps/events/views.py
 msgid "Add Attendance Tracking Event"
 msgstr ""
 
-#: corehq/apps/events/models.py
+#: corehq/apps/events/forms.py
 #, fuzzy
-#| msgid "Date Started"
+#| msgid "End Date cannot be a past date."
+msgid "End Date cannot be before Start Date"
+msgstr "La date de fin ne peut pas être une date dépassée. "
+
+#: corehq/apps/events/models.py
 msgid "Not started"
-msgstr "Date de Début"
+msgstr ""
 
 #: corehq/apps/events/models.py
-#, fuzzy
-#| msgid "In Progress"
 msgid "In progress"
-msgstr "En cours"
+msgstr ""
 
 #: corehq/apps/events/models.py
-#, fuzzy
-#| msgid "Update previews"
 msgid "Under review"
-msgstr "Prévisualisation des Mises à jours"
+msgstr ""
 
 #: corehq/apps/events/models.py corehq/apps/registry/models.py
 msgid "Rejected"
@@ -18302,6 +18335,55 @@ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
 
 #: corehq/apps/events/models.py corehq/apps/registry/models.py
 msgid "Accepted"
+msgstr ""
+
+#: corehq/apps/events/templates/event_attendees.html
+msgid ""
+"\n"
+"    This page lists all the project's potential attendees who can be invited "
+"to\n"
+"    participate in Attendance Tracking Events.\n"
+"  "
+msgstr ""
+
+#: corehq/apps/events/templates/event_attendees.html
+msgid "Create Potential Attendee"
+msgstr ""
+
+#: corehq/apps/events/templates/event_attendees.html
+msgid "Potential Attendees for this Event"
+msgstr ""
+
+#: corehq/apps/events/templates/event_attendees.html
+#, fuzzy
+#| msgid "Loading statements..."
+msgid "Loading potential attendees ..."
+msgstr "Chargement des relevés..."
+
+#: corehq/apps/events/templates/event_attendees.html
+#: corehq/apps/users/templates/users/mobile_workers.html
+msgid ""
+"\n"
+"            <strong>There was an issue contacting the server.</strong>\n"
+"            Please check your internet connection.\n"
+"            If this issue continues, please\n"
+"            <a href=\"#modalReportIssue\" data-toggle=\"modal\">report an "
+"issue</a>.\n"
+"          "
+msgstr ""
+
+#: corehq/apps/events/templates/event_attendees.html
+msgid ""
+"\n"
+"            You currently have no potential attendees.\n"
+"          "
+msgstr ""
+
+#: corehq/apps/events/templates/event_attendees.html
+msgid ""
+"\n"
+"            No matching potential attendees found.\n"
+"          "
 msgstr ""
 
 #: corehq/apps/events/templates/events_list.html
@@ -18325,56 +18407,68 @@ msgid "Attendance Tracking Events"
 msgstr ""
 
 #: corehq/apps/events/views.py
-#, fuzzy
-#| msgid "statements per page"
 msgid "events per page"
-msgstr "Relevés par page"
+msgstr ""
 
 #: corehq/apps/events/views.py
-#, fuzzy
-#| msgid "You have no items."
 msgid "You have no events"
-msgstr "Vous n'avez aucun élément."
+msgstr ""
 
 #: corehq/apps/events/views.py
-#, fuzzy
-#| msgid "Loading statements..."
 msgid "Loading events"
-msgstr "Chargement des relevés..."
+msgstr ""
 
 #: corehq/apps/events/views.py corehq/tabs/tabclasses.py
-#, fuzzy
-#| msgid "Event"
 msgid "Events"
-msgstr "Événement"
+msgstr ""
 
 #: corehq/apps/events/views.py
-#, fuzzy
-#| msgid "Start Date"
 msgid "Start date"
-msgstr "Date de début"
+msgstr ""
 
 #: corehq/apps/events/views.py
-#, fuzzy
-#| msgid "End Date"
 msgid "End date"
-msgstr "Date de fin"
+msgstr ""
 
 #: corehq/apps/events/views.py
 msgid "Attendance Target"
 msgstr ""
 
 #: corehq/apps/events/views.py
-#, fuzzy
-#| msgid "Total Balance"
 msgid "Total attendees"
-msgstr "Solde restant"
+msgstr ""
+
+#: corehq/apps/events/views.py
+msgid "Add New Event"
+msgstr ""
+
+#: corehq/apps/events/views.py
+msgid "Edit Attendance Tracking Event"
+msgstr ""
 
 #: corehq/apps/events/views.py
 #, fuzzy
-#| msgid "Add New Credit Card"
-msgid "Add New Event"
-msgstr "Ajoutez nouvelle carte bancaire"
+#| msgid "Event"
+msgid "Edit Event"
+msgstr "Événement"
+
+#: corehq/apps/events/views.py
+#, fuzzy
+#| msgid "statements per page"
+msgid "Attendees per page"
+msgstr "Relevés par page"
+
+#: corehq/apps/events/views.py
+#, fuzzy
+#| msgid "You have no items."
+msgid "You have no attendees"
+msgstr "Vous n'avez aucun élément."
+
+#: corehq/apps/events/views.py
+#, fuzzy
+#| msgid "Loading statements..."
+msgid "Loading attendees"
+msgstr "Chargement des relevés..."
 
 #: corehq/apps/export/det/schema_generator.py
 #, python-brace-format
@@ -21586,11 +21680,6 @@ msgstr "Rapports administratifs"
 msgid "Email report"
 msgstr "Envoyer le rapport par courrier électronique"
 
-#: corehq/apps/hqadmin/templates/hqadmin/hqadmin_base_report.html
-#: corehq/apps/reports/templates/reports/standard/partials/filter_panel.html
-msgid "Print"
-msgstr "Imprimer"
-
 #: corehq/apps/hqadmin/templates/hqadmin/malt_downloader.html
 msgid "Enter a month to download all MALT data as csv for that month"
 msgstr ""
@@ -22633,17 +22722,23 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/hqwebapp/templates/500.html
-#: corehq/apps/hqwebapp/templates/hqwebapp/includes/modal_report_issue.html
+#: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap3/modal_report_issue.html
+#: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap5/modal_report_issue.html
+#: corehq/apps/hqwebapp/tests/data/bootstrap5_diffs/hqwebapp/includes/modal_report_issue.html.diff.txt
 msgid "Short Description"
 msgstr "Description brève"
 
 #: corehq/apps/hqwebapp/templates/500.html
-#: corehq/apps/hqwebapp/templates/hqwebapp/includes/modal_report_issue.html
+#: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap3/modal_report_issue.html
+#: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap5/modal_report_issue.html
+#: corehq/apps/hqwebapp/tests/data/bootstrap5_diffs/hqwebapp/includes/modal_report_issue.html.diff.txt
 msgid "Full Description"
 msgstr "Description complète"
 
 #: corehq/apps/hqwebapp/templates/500.html
-#: corehq/apps/hqwebapp/templates/hqwebapp/includes/modal_report_issue.html
+#: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap3/modal_report_issue.html
+#: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap5/modal_report_issue.html
+#: corehq/apps/hqwebapp/tests/data/bootstrap5_diffs/hqwebapp/includes/modal_report_issue.html.diff.txt
 msgid "Submit Report"
 msgstr "Soumettre le rapport."
 
@@ -22692,12 +22787,15 @@ msgstr "CommCare HQ Mobile est sous droit d'auteur"
 msgid "Logout"
 msgstr "Déconnexion"
 
-#: corehq/apps/hqwebapp/templates/hqwebapp/base_navigation.html
+#: corehq/apps/hqwebapp/templates/hqwebapp/bootstrap3/base_navigation.html
+#: corehq/apps/hqwebapp/templates/hqwebapp/bootstrap5/base_navigation.html
 #: corehq/apps/registration/templates/registration/register_new_user.html
 msgid "Schedule a Demo"
 msgstr ""
 
-#: corehq/apps/hqwebapp/templates/hqwebapp/base_navigation.html
+#: corehq/apps/hqwebapp/templates/hqwebapp/bootstrap3/base_navigation.html
+#: corehq/apps/hqwebapp/templates/hqwebapp/bootstrap5/base_navigation.html
+#: corehq/apps/hqwebapp/tests/data/bootstrap5_diffs/hqwebapp/base_navigation.html.diff.txt
 msgid "This is a snapshot of "
 msgstr "Voici un instantané de "
 
@@ -22778,61 +22876,85 @@ msgid ""
 "        "
 msgstr ""
 
-#: corehq/apps/hqwebapp/templates/hqwebapp/includes/domain_list_dropdown.html
+#: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap3/domain_list_dropdown.html
+#: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap5/domain_list_dropdown.html
+#: corehq/apps/hqwebapp/tests/data/bootstrap5_diffs/hqwebapp/includes/domain_list_dropdown.html.diff.txt
 msgid "Change Project"
 msgstr "Changer de projet"
 
-#: corehq/apps/hqwebapp/templates/hqwebapp/includes/domain_list_dropdown.html
+#: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap3/domain_list_dropdown.html
+#: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap5/domain_list_dropdown.html
+#: corehq/apps/hqwebapp/tests/data/bootstrap5_diffs/hqwebapp/includes/domain_list_dropdown.html.diff.txt
 #: corehq/apps/settings/forms.py corehq/apps/settings/views.py
 msgid "All Projects"
 msgstr ""
 
-#: corehq/apps/hqwebapp/templates/hqwebapp/includes/domain_list_dropdown.html
+#: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap3/domain_list_dropdown.html
+#: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap5/domain_list_dropdown.html
+#: corehq/apps/hqwebapp/tests/data/bootstrap5_diffs/hqwebapp/includes/domain_list_dropdown.html.diff.txt
 msgid "Add Project"
 msgstr "Ajouter un projet"
 
-#: corehq/apps/hqwebapp/templates/hqwebapp/includes/global_navigation_bar.html
+#: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap3/global_navigation_bar.html
+#: corehq/apps/hqwebapp/tests/data/bootstrap5_diffs/hqwebapp/includes/global_navigation_bar.html.diff.txt
 msgid "Manage Settings"
 msgstr ""
 
-#: corehq/apps/hqwebapp/templates/hqwebapp/includes/global_navigation_bar.html
+#: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap3/global_navigation_bar.html
+#: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap5/global_navigation_bar.html
+#: corehq/apps/hqwebapp/tests/data/bootstrap5_diffs/hqwebapp/includes/global_navigation_bar.html.diff.txt
 msgid "Logged in As"
 msgstr "Connecté en tant que"
 
-#: corehq/apps/hqwebapp/templates/hqwebapp/includes/global_navigation_bar.html
+#: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap3/global_navigation_bar.html
+#: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap5/global_navigation_bar.html
+#: corehq/apps/hqwebapp/tests/data/bootstrap5_diffs/hqwebapp/includes/global_navigation_bar.html.diff.txt
 #: corehq/tabs/tabclasses.py
 msgid "Manage Enterprise"
 msgstr ""
 
-#: corehq/apps/hqwebapp/templates/hqwebapp/includes/global_navigation_bar.html
+#: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap3/global_navigation_bar.html
+#: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap5/global_navigation_bar.html
+#: corehq/apps/hqwebapp/tests/data/bootstrap5_diffs/hqwebapp/includes/global_navigation_bar.html.diff.txt
 msgid "Manage Project"
 msgstr "Gérer le Projet"
 
-#: corehq/apps/hqwebapp/templates/hqwebapp/includes/global_navigation_bar.html
+#: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap3/global_navigation_bar.html
+#: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap5/global_navigation_bar.html
+#: corehq/apps/hqwebapp/tests/data/bootstrap5_diffs/hqwebapp/includes/global_navigation_bar.html.diff.txt
 msgid "Support Options"
 msgstr "Options d'appui"
 
-#: corehq/apps/hqwebapp/templates/hqwebapp/includes/global_navigation_bar.html
+#: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap3/global_navigation_bar.html
+#: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap5/global_navigation_bar.html
+#: corehq/apps/hqwebapp/tests/data/bootstrap5_diffs/hqwebapp/includes/global_navigation_bar.html.diff.txt
 msgid "View Domain Doc"
 msgstr "Afficher document du domaine"
 
-#: corehq/apps/hqwebapp/templates/hqwebapp/includes/global_navigation_bar.html
+#: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap3/global_navigation_bar.html
+#: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap5/global_navigation_bar.html
+#: corehq/apps/hqwebapp/tests/data/bootstrap5_diffs/hqwebapp/includes/global_navigation_bar.html.diff.txt
 msgid "Manage Account"
 msgstr "Gérer le compte"
 
-#: corehq/apps/hqwebapp/templates/hqwebapp/includes/global_navigation_bar.html
+#: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap3/global_navigation_bar.html
+#: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap5/global_navigation_bar.html
+#: corehq/apps/hqwebapp/tests/data/bootstrap5_diffs/hqwebapp/includes/global_navigation_bar.html.diff.txt
 msgid "My Account Settings"
 msgstr "Mes paramètres de compte"
 
-#: corehq/apps/hqwebapp/templates/hqwebapp/includes/global_navigation_bar.html
+#: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap3/global_navigation_bar.html
+#: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap5/global_navigation_bar.html
+#: corehq/apps/hqwebapp/tests/data/bootstrap5_diffs/hqwebapp/includes/global_navigation_bar.html.diff.txt
 msgid "Sign Out"
 msgstr "Déconnexion"
 
-#: corehq/apps/hqwebapp/templates/hqwebapp/includes/global_navigation_bar.html
+#: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap3/global_navigation_bar.html
+#: corehq/apps/hqwebapp/tests/data/bootstrap5_diffs/hqwebapp/includes/global_navigation_bar.html.diff.txt
 msgid "Help &amp; Resources"
 msgstr "Aide &amp; Ressources"
 
-#: corehq/apps/hqwebapp/templates/hqwebapp/includes/global_navigation_bar.html
+#: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap3/global_navigation_bar.html
 #, python-format
 msgid ""
 "\n"
@@ -22840,41 +22962,56 @@ msgid ""
 "                    "
 msgstr ""
 
-#: corehq/apps/hqwebapp/templates/hqwebapp/includes/global_navigation_bar.html
+#: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap3/global_navigation_bar.html
+#: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap5/global_navigation_bar.html
+#: corehq/apps/hqwebapp/tests/data/bootstrap5_diffs/hqwebapp/includes/global_navigation_bar.html.diff.txt
 msgid "https://wiki.commcarehq.org/display/commcarepublic/Home"
 msgstr "https://wiki.commcarehq.org/display/commcarepublic/Home"
 
-#: corehq/apps/hqwebapp/templates/hqwebapp/includes/global_navigation_bar.html
+#: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap3/global_navigation_bar.html
+#: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap5/global_navigation_bar.html
+#: corehq/apps/hqwebapp/tests/data/bootstrap5_diffs/hqwebapp/includes/global_navigation_bar.html.diff.txt
 msgid "Visit the Help Site"
 msgstr "Visiter le site d'aide"
 
-#: corehq/apps/hqwebapp/templates/hqwebapp/includes/global_navigation_bar.html
+#: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap3/global_navigation_bar.html
+#: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap5/global_navigation_bar.html
+#: corehq/apps/hqwebapp/tests/data/bootstrap5_diffs/hqwebapp/includes/global_navigation_bar.html.diff.txt
 msgid "https://forum.dimagi.com/"
 msgstr ""
 
-#: corehq/apps/hqwebapp/templates/hqwebapp/includes/global_navigation_bar.html
+#: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap3/global_navigation_bar.html
+#: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap5/global_navigation_bar.html
+#: corehq/apps/hqwebapp/tests/data/bootstrap5_diffs/hqwebapp/includes/global_navigation_bar.html.diff.txt
 msgid "User Forum"
 msgstr "Forum d’utilisateurs "
 
-#: corehq/apps/hqwebapp/templates/hqwebapp/includes/global_navigation_bar.html
+#: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap3/global_navigation_bar.html
+#: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap5/global_navigation_bar.html
+#: corehq/apps/hqwebapp/tests/data/bootstrap5_diffs/hqwebapp/includes/global_navigation_bar.html.diff.txt
 msgid "Report an Issue"
 msgstr "Signaler un problème"
 
-#: corehq/apps/hqwebapp/templates/hqwebapp/includes/global_navigation_bar.html
+#: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap3/global_navigation_bar.html
+#: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap5/global_navigation_bar.html
+#: corehq/apps/hqwebapp/tests/data/bootstrap5_diffs/hqwebapp/includes/global_navigation_bar.html.diff.txt
 msgid "Status Page"
 msgstr ""
 
-#: corehq/apps/hqwebapp/templates/hqwebapp/includes/global_navigation_bar.html
+#: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap3/global_navigation_bar.html
+#: corehq/apps/hqwebapp/tests/data/bootstrap5_diffs/hqwebapp/includes/global_navigation_bar.html.diff.txt
 #: corehq/apps/settings/templates/settings/my_projects.html
 #: corehq/apps/settings/views.py corehq/apps/users/views/web.py
 msgid "Project"
 msgstr "Projet"
 
-#: corehq/apps/hqwebapp/templates/hqwebapp/includes/global_navigation_bar.html
+#: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap3/global_navigation_bar.html
+#: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap5/global_navigation_bar.html
+#: corehq/apps/hqwebapp/tests/data/bootstrap5_diffs/hqwebapp/includes/global_navigation_bar.html.diff.txt
 msgid "CommCare HQ Demo Project"
 msgstr "Projet démo de CommCare HQ"
 
-#: corehq/apps/hqwebapp/templates/hqwebapp/includes/global_navigation_bar.html
+#: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap3/global_navigation_bar.html
 #, python-format
 msgid ""
 "\n"
@@ -22884,9 +23021,227 @@ msgstr ""
 "\n"
 "                            Instantané de %(snap_name)s"
 
-#: corehq/apps/hqwebapp/templates/hqwebapp/includes/global_navigation_bar.html
+#: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap3/global_navigation_bar.html
+#: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap5/global_navigation_bar.html
+#: corehq/apps/hqwebapp/tests/data/bootstrap5_diffs/hqwebapp/includes/global_navigation_bar.html.diff.txt
 msgid "Select Project..."
 msgstr "Sélectionner un projet..."
+
+#: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap3/modal_report_issue.html
+#: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap5/modal_report_issue.html
+#: corehq/apps/hqwebapp/tests/data/bootstrap5_diffs/hqwebapp/includes/modal_report_issue.html.diff.txt
+msgid "Report an Issue with CommCare HQ"
+msgstr "Signaler un problème avec CommCare HQ"
+
+#: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap3/modal_report_issue.html
+#: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap5/modal_report_issue.html
+#: corehq/apps/hqwebapp/tests/data/bootstrap5_diffs/hqwebapp/includes/modal_report_issue.html.diff.txt
+msgid "Please submit this report from page where issue is occurring"
+msgstr ""
+"Veuillez soumettre ce rapport à partir de la page où le problème se produit"
+
+#: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap3/modal_report_issue.html
+#: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap5/modal_report_issue.html
+#: corehq/apps/hqwebapp/tests/data/bootstrap5_diffs/hqwebapp/includes/modal_report_issue.html.diff.txt
+msgid "One Sentence Description of Issue"
+msgstr "Description du problème en une phrase"
+
+#: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap3/modal_report_issue.html
+#: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap5/modal_report_issue.html
+#: corehq/apps/hqwebapp/tests/data/bootstrap5_diffs/hqwebapp/includes/modal_report_issue.html.diff.txt
+msgid "Please give us some information about the issue"
+msgstr "Veuillez nous fournir d'information par rapport au problème"
+
+#: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap3/modal_report_issue.html
+#: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap5/modal_report_issue.html
+#: corehq/apps/hqwebapp/tests/data/bootstrap5_diffs/hqwebapp/includes/modal_report_issue.html.diff.txt
+msgid ""
+"Please describe the issue and list any steps you took to see this issue."
+msgstr ""
+"Veuillez décrire le problème et énumérer les étapes que vous avez suivies "
+"pour voir ce problème."
+
+#: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap3/modal_report_issue.html
+msgid ""
+"\n"
+"                                        Please enter your email here so that "
+"we can follow up with you regarding this issue\n"
+"                                    "
+msgstr ""
+"\n"
+"Veuillez saisir votre adresse e-mail ici afin que nous puissions vous suivre "
+"sur ce problème"
+
+#: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap3/modal_report_issue.html
+#: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap5/modal_report_issue.html
+#: corehq/apps/hqwebapp/tests/data/bootstrap5_diffs/hqwebapp/includes/modal_report_issue.html.diff.txt
+msgid "Incorrect Format"
+msgstr "Format incorrect"
+
+#: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap3/modal_report_issue.html
+#: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap5/modal_report_issue.html
+#: corehq/apps/hqwebapp/tests/data/bootstrap5_diffs/hqwebapp/includes/modal_report_issue.html.diff.txt
+msgid ""
+"Please provide a short description of your organization and the work it is "
+"doing."
+msgstr ""
+"Veuillez fournir une brève description de votre organisation et de votre "
+"travail. "
+
+#: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap3/modal_report_issue.html
+#: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap5/modal_report_issue.html
+#: corehq/apps/hqwebapp/tests/data/bootstrap5_diffs/hqwebapp/includes/modal_report_issue.html.diff.txt
+#: corehq/apps/reports/forms.py
+msgid "Other recipients"
+msgstr "Autres destinataires "
+
+#: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap3/modal_report_issue.html
+msgid ""
+"\n"
+"                                        Comma-separated email addresses of "
+"others you want to notify about this issue.\n"
+"                                    "
+msgstr ""
+"\n"
+"Adresses e-mail séparées par des virgules des autres personnes que vous "
+"souhaitez informer de ce problème."
+
+#: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap3/modal_report_issue.html
+#: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap5/modal_report_issue.html
+#: corehq/apps/hqwebapp/tests/data/bootstrap5_diffs/hqwebapp/includes/modal_report_issue.html.diff.txt
+msgid "Upload file"
+msgstr "Uploader un fichier"
+
+#: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap3/modal_report_issue.html
+msgid ""
+"\n"
+"                                    Please upload any files relevant to your "
+"issue.\n"
+"                                    "
+msgstr ""
+"\n"
+"Veuillez charger tout document en relation avec ce problème."
+
+#: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap3/modal_report_issue.html
+msgid ""
+"\n"
+"                                        Do not upload a file containing "
+"individually identifiable data.\n"
+"                                    "
+msgstr ""
+"\n"
+"Ne pas envoyer de Fichier contenant des données personnelles identifiables"
+
+#: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap3/modal_report_issue.html
+#: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap5/modal_report_issue.html
+#: corehq/apps/hqwebapp/tests/data/bootstrap5_diffs/hqwebapp/includes/modal_report_issue.html.diff.txt
+msgid "Submitting Report..."
+msgstr "Soumission de rapport en cours..."
+
+#: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap3/modal_report_issue.html
+#: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap5/modal_report_issue.html
+#: corehq/apps/hqwebapp/tests/data/bootstrap5_diffs/hqwebapp/includes/modal_report_issue.html.diff.txt
+msgid "Failed. Retry Issue Submission"
+msgstr "Échec. Réessayez de soumettre le problème"
+
+#: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap3/modal_report_issue.html
+#: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap5/modal_report_issue.html
+#: corehq/apps/hqwebapp/tests/data/bootstrap5_diffs/hqwebapp/includes/modal_report_issue.html.diff.txt
+msgid "Success! Back to CommCare HQ"
+msgstr "Succès! Retour à CommCare HQ"
+
+#: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap5/global_navigation_bar.html
+#, fuzzy, python-format
+#| msgid ""
+#| "\n"
+#| "                            Snapshot of %(snap_name)s\n"
+#| "                        "
+msgid ""
+"\n"
+"                %(cc_name)s Help\n"
+"              "
+msgstr ""
+"\n"
+"                            Instantané de %(snap_name)s"
+
+#: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap5/global_navigation_bar.html
+#, fuzzy, python-format
+#| msgid ""
+#| "\n"
+#| "                            Snapshot of %(snap_name)s\n"
+#| "                        "
+msgid ""
+"\n"
+"                Snapshot of %(snap_name)s\n"
+"              "
+msgstr ""
+"\n"
+"                            Instantané de %(snap_name)s"
+
+#: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap5/modal_report_issue.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "                                        Please enter your email here so "
+#| "that we can follow up with you regarding this issue\n"
+#| "                                    "
+msgid ""
+"\n"
+"                                Please enter your email here so that we can "
+"follow up with you regarding this issue\n"
+"                            "
+msgstr ""
+"\n"
+"Veuillez saisir votre adresse e-mail ici afin que nous puissions vous suivre "
+"sur ce problème"
+
+#: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap5/modal_report_issue.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "                                        Comma-separated email addresses "
+#| "of others you want to notify about this issue.\n"
+#| "                                    "
+msgid ""
+"\n"
+"                          Comma-separated email addresses of others you want "
+"to notify about this issue.\n"
+"                      "
+msgstr ""
+"\n"
+"Adresses e-mail séparées par des virgules des autres personnes que vous "
+"souhaitez informer de ce problème."
+
+#: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap5/modal_report_issue.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "                                    Please upload any files relevant to "
+#| "your issue.\n"
+#| "                                    "
+msgid ""
+"\n"
+"                          Please upload any files relevant to your issue.\n"
+"                          "
+msgstr ""
+"\n"
+"Veuillez charger tout document en relation avec ce problème."
+
+#: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap5/modal_report_issue.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "                                        Do not upload a file containing "
+#| "individually identifiable data.\n"
+#| "                                    "
+msgid ""
+"\n"
+"                              Do not upload a file containing individually "
+"identifiable data.\n"
+"                          "
+msgstr ""
+"\n"
+"Ne pas envoyer de Fichier contenant des données personnelles identifiables"
 
 #: corehq/apps/hqwebapp/templates/hqwebapp/includes/inactivity_modal.html
 msgid "Session expiring soon"
@@ -23016,105 +23371,6 @@ msgstr ""
 msgid "I Agree"
 msgstr ""
 
-#: corehq/apps/hqwebapp/templates/hqwebapp/includes/modal_report_issue.html
-msgid "Report an Issue with CommCare HQ"
-msgstr "Signaler un problème avec CommCare HQ"
-
-#: corehq/apps/hqwebapp/templates/hqwebapp/includes/modal_report_issue.html
-msgid "Please submit this report from page where issue is occurring"
-msgstr ""
-"Veuillez soumettre ce rapport à partir de la page où le problème se produit"
-
-#: corehq/apps/hqwebapp/templates/hqwebapp/includes/modal_report_issue.html
-msgid "One Sentence Description of Issue"
-msgstr "Description du problème en une phrase"
-
-#: corehq/apps/hqwebapp/templates/hqwebapp/includes/modal_report_issue.html
-msgid "Please give us some information about the issue"
-msgstr "Veuillez nous fournir d'information par rapport au problème"
-
-#: corehq/apps/hqwebapp/templates/hqwebapp/includes/modal_report_issue.html
-msgid ""
-"Please describe the issue and list any steps you took to see this issue."
-msgstr ""
-"Veuillez décrire le problème et énumérer les étapes que vous avez suivies "
-"pour voir ce problème."
-
-#: corehq/apps/hqwebapp/templates/hqwebapp/includes/modal_report_issue.html
-msgid ""
-"\n"
-"                                        Please enter your email here so that "
-"we can follow up with you regarding this issue\n"
-"                                    "
-msgstr ""
-"\n"
-"Veuillez saisir votre adresse e-mail ici afin que nous puissions vous suivre "
-"sur ce problème"
-
-#: corehq/apps/hqwebapp/templates/hqwebapp/includes/modal_report_issue.html
-msgid "Incorrect Format"
-msgstr "Format incorrect"
-
-#: corehq/apps/hqwebapp/templates/hqwebapp/includes/modal_report_issue.html
-msgid ""
-"Please provide a short description of your organization and the work it is "
-"doing."
-msgstr ""
-"Veuillez fournir une brève description de votre organisation et de votre "
-"travail. "
-
-#: corehq/apps/hqwebapp/templates/hqwebapp/includes/modal_report_issue.html
-#: corehq/apps/reports/forms.py
-msgid "Other recipients"
-msgstr "Autres destinataires "
-
-#: corehq/apps/hqwebapp/templates/hqwebapp/includes/modal_report_issue.html
-msgid ""
-"\n"
-"                                        Comma-separated email addresses of "
-"others you want to notify about this issue.\n"
-"                                    "
-msgstr ""
-"\n"
-"Adresses e-mail séparées par des virgules des autres personnes que vous "
-"souhaitez informer de ce problème."
-
-#: corehq/apps/hqwebapp/templates/hqwebapp/includes/modal_report_issue.html
-msgid "Upload file"
-msgstr "Uploader un fichier"
-
-#: corehq/apps/hqwebapp/templates/hqwebapp/includes/modal_report_issue.html
-msgid ""
-"\n"
-"                                    Please upload any files relevant to your "
-"issue.\n"
-"                                    "
-msgstr ""
-"\n"
-"Veuillez charger tout document en relation avec ce problème."
-
-#: corehq/apps/hqwebapp/templates/hqwebapp/includes/modal_report_issue.html
-msgid ""
-"\n"
-"                                        Do not upload a file containing "
-"individually identifiable data.\n"
-"                                    "
-msgstr ""
-"\n"
-"Ne pas envoyer de Fichier contenant des données personnelles identifiables"
-
-#: corehq/apps/hqwebapp/templates/hqwebapp/includes/modal_report_issue.html
-msgid "Submitting Report..."
-msgstr "Soumission de rapport en cours..."
-
-#: corehq/apps/hqwebapp/templates/hqwebapp/includes/modal_report_issue.html
-msgid "Failed. Retry Issue Submission"
-msgstr "Échec. Réessayez de soumettre le problème"
-
-#: corehq/apps/hqwebapp/templates/hqwebapp/includes/modal_report_issue.html
-msgid "Success! Back to CommCare HQ"
-msgstr "Succès! Retour à CommCare HQ"
-
 #: corehq/apps/hqwebapp/templates/hqwebapp/maintenance_alerts.html
 msgid "Create Alert"
 msgstr ""
@@ -23196,6 +23452,76 @@ msgstr ""
 msgid "Go Back"
 msgstr ""
 
+#: corehq/apps/hqwebapp/templates/hqwebapp/partials/bootstrap3/footer.html
+msgid ""
+"\n"
+"            <a href=\"https://dimagi.com/commcare/\">CommCare</a>\n"
+"            is copyright &copy;\n"
+"          "
+msgstr ""
+
+#: corehq/apps/hqwebapp/templates/hqwebapp/partials/bootstrap3/footer.html
+#: corehq/apps/hqwebapp/templates/hqwebapp/partials/bootstrap5/footer.html
+#: corehq/apps/hqwebapp/tests/data/bootstrap5_diffs/hqwebapp/partials/footer.html.diff.txt
+msgid "Learn more about CommCare HQ"
+msgstr "En savoir davantage sur CommCare HQ"
+
+#: corehq/apps/hqwebapp/templates/hqwebapp/partials/bootstrap3/footer.html
+#: corehq/apps/hqwebapp/templates/hqwebapp/partials/bootstrap5/footer.html
+#: corehq/apps/hqwebapp/tests/data/bootstrap5_diffs/hqwebapp/partials/footer.html.diff.txt
+msgid "Privacy"
+msgstr "Confidentialité"
+
+#: corehq/apps/hqwebapp/templates/hqwebapp/partials/bootstrap3/footer.html
+#: corehq/apps/hqwebapp/templates/hqwebapp/partials/bootstrap5/footer.html
+#: corehq/apps/hqwebapp/tests/data/bootstrap5_diffs/hqwebapp/partials/footer.html.diff.txt
+msgid "Terms of Service"
+msgstr ""
+
+#: corehq/apps/hqwebapp/templates/hqwebapp/partials/bootstrap3/footer.html
+#: corehq/apps/hqwebapp/templates/hqwebapp/partials/bootstrap5/footer.html
+#: corehq/apps/hqwebapp/tests/data/bootstrap5_diffs/hqwebapp/partials/footer.html.diff.txt
+msgid "Business Agreement"
+msgstr ""
+
+#: corehq/apps/hqwebapp/templates/hqwebapp/partials/bootstrap3/unsupported_browser.html
+#: corehq/apps/hqwebapp/tests/data/bootstrap5_diffs/hqwebapp/partials/unsupported_browser.html.diff.txt
+msgid "Your browser is unsupported, please consider another option"
+msgstr ""
+
+#: corehq/apps/hqwebapp/templates/hqwebapp/partials/bootstrap3/unsupported_browser.html
+msgid ""
+"\n"
+"        We recommend\n"
+"        <a href=\"https://www.google.com/chrome\">Chrome</a>\n"
+"        or <a href=\"http://www.mozilla.org/\">Firefox</a>.\n"
+"    "
+msgstr ""
+
+#: corehq/apps/hqwebapp/templates/hqwebapp/partials/bootstrap5/footer.html
+msgid ""
+"\n"
+"          <a href=\"https://dimagi.com/commcare/\">CommCare</a>\n"
+"          is copyright &copy;\n"
+"        "
+msgstr ""
+
+#: corehq/apps/hqwebapp/templates/hqwebapp/partials/bootstrap5/unsupported_browser.html
+#: corehq/apps/hqwebapp/tests/data/bootstrap5_diffs/hqwebapp/partials/unsupported_browser.html.diff.txt
+msgid "Your browser is unsupported, please consider another option."
+msgstr ""
+
+#: corehq/apps/hqwebapp/templates/hqwebapp/partials/bootstrap5/unsupported_browser.html
+msgid ""
+"\n"
+"    We recommend\n"
+"    <a href=\"https://www.google.com/chrome\" class=\"alert-link\">Chrome</"
+"a>\n"
+"    or <a href=\"http://www.mozilla.org/\" class=\"alert-link\">Firefox</"
+"a>.\n"
+"  "
+msgstr ""
+
 #: corehq/apps/hqwebapp/templates/hqwebapp/partials/bulk_upload.html
 #, python-format
 msgid ""
@@ -23261,30 +23587,6 @@ msgid ""
 "    <a href=\"%(url_sub)s\" id=\"cta-community-sub\">Subscribe to a "
 "professional plan</a>.\n"
 "  "
-msgstr ""
-
-#: corehq/apps/hqwebapp/templates/hqwebapp/partials/footer.html
-msgid ""
-"\n"
-"            <a href=\"https://dimagi.com/commcare/\">CommCare</a>\n"
-"            is copyright &copy;\n"
-"          "
-msgstr ""
-
-#: corehq/apps/hqwebapp/templates/hqwebapp/partials/footer.html
-msgid "Learn more about CommCare HQ"
-msgstr "En savoir davantage sur CommCare HQ"
-
-#: corehq/apps/hqwebapp/templates/hqwebapp/partials/footer.html
-msgid "Privacy"
-msgstr "Confidentialité"
-
-#: corehq/apps/hqwebapp/templates/hqwebapp/partials/footer.html
-msgid "Terms of Service"
-msgstr ""
-
-#: corehq/apps/hqwebapp/templates/hqwebapp/partials/footer.html
-msgid "Business Agreement"
 msgstr ""
 
 #: corehq/apps/hqwebapp/templates/hqwebapp/partials/form_list_form.html
@@ -23478,19 +23780,6 @@ msgid ""
 "    "
 msgstr ""
 
-#: corehq/apps/hqwebapp/templates/hqwebapp/partials/unsupported_browser.html
-msgid "Your browser is unsupported, please consider another option"
-msgstr ""
-
-#: corehq/apps/hqwebapp/templates/hqwebapp/partials/unsupported_browser.html
-msgid ""
-"\n"
-"        We recommend\n"
-"        <a href=\"https://www.google.com/chrome\">Chrome</a>\n"
-"        or <a href=\"http://www.mozilla.org/\">Firefox</a>.\n"
-"    "
-msgstr ""
-
 #: corehq/apps/hqwebapp/templates/hqwebapp/prepaid_modal.html
 #, python-format
 msgid ""
@@ -23599,6 +23888,235 @@ msgstr ""
 #: corehq/apps/hqwebapp/templates/password_change.html
 msgid "Change Password for"
 msgstr ""
+
+#: corehq/apps/hqwebapp/tests/data/bootstrap5_diffs/hqwebapp/includes/global_navigation_bar.html.diff.txt
+#, fuzzy, python-format
+#| msgid ""
+#| "\n"
+#| "                            Snapshot of %(snap_name)s\n"
+#| "                        "
+msgid ""
+"\n"
+"-                        %(cc_name)s Help\n"
+"-                    "
+msgstr ""
+"\n"
+"                            Instantané de %(snap_name)s"
+
+#: corehq/apps/hqwebapp/tests/data/bootstrap5_diffs/hqwebapp/includes/global_navigation_bar.html.diff.txt
+#, fuzzy, python-format
+#| msgid ""
+#| "\n"
+#| "                            Snapshot of %(snap_name)s\n"
+#| "                        "
+msgid ""
+"\n"
+"+                %(cc_name)s Help\n"
+"+              "
+msgstr ""
+"\n"
+"                            Instantané de %(snap_name)s"
+
+#: corehq/apps/hqwebapp/tests/data/bootstrap5_diffs/hqwebapp/includes/global_navigation_bar.html.diff.txt
+#, fuzzy, python-format
+#| msgid ""
+#| "\n"
+#| "                            Snapshot of %(snap_name)s\n"
+#| "                        "
+msgid ""
+"\n"
+"-                            Snapshot of %(snap_name)s\n"
+"-                        "
+msgstr ""
+"\n"
+"                            Instantané de %(snap_name)s"
+
+#: corehq/apps/hqwebapp/tests/data/bootstrap5_diffs/hqwebapp/includes/global_navigation_bar.html.diff.txt
+#, fuzzy, python-format
+#| msgid ""
+#| "\n"
+#| "                            Snapshot of %(snap_name)s\n"
+#| "                        "
+msgid ""
+"\n"
+"+                Snapshot of %(snap_name)s\n"
+"+              "
+msgstr ""
+"\n"
+"                            Instantané de %(snap_name)s"
+
+#: corehq/apps/hqwebapp/tests/data/bootstrap5_diffs/hqwebapp/includes/modal_report_issue.html.diff.txt
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "                                        Please enter your email here so "
+#| "that we can follow up with you regarding this issue\n"
+#| "                                    "
+msgid ""
+"\n"
+"-                                        Please enter your email here so "
+"that we can follow up with you regarding this issue\n"
+"-                                    "
+msgstr ""
+"\n"
+"Veuillez saisir votre adresse e-mail ici afin que nous puissions vous suivre "
+"sur ce problème"
+
+#: corehq/apps/hqwebapp/tests/data/bootstrap5_diffs/hqwebapp/includes/modal_report_issue.html.diff.txt
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "                                        Comma-separated email addresses "
+#| "of others you want to notify about this issue.\n"
+#| "                                    "
+msgid ""
+"\n"
+"-                                        Comma-separated email addresses of "
+"others you want to notify about this issue.\n"
+"-                                    "
+msgstr ""
+"\n"
+"Adresses e-mail séparées par des virgules des autres personnes que vous "
+"souhaitez informer de ce problème."
+
+#: corehq/apps/hqwebapp/tests/data/bootstrap5_diffs/hqwebapp/includes/modal_report_issue.html.diff.txt
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "                                    Please upload any files relevant to "
+#| "your issue.\n"
+#| "                                    "
+msgid ""
+"\n"
+"-                                    Please upload any files relevant to "
+"your issue.\n"
+"-                                    "
+msgstr ""
+"\n"
+"Veuillez charger tout document en relation avec ce problème."
+
+#: corehq/apps/hqwebapp/tests/data/bootstrap5_diffs/hqwebapp/includes/modal_report_issue.html.diff.txt
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "                                        Do not upload a file containing "
+#| "individually identifiable data.\n"
+#| "                                    "
+msgid ""
+"\n"
+"-                                        Do not upload a file containing "
+"individually identifiable data.\n"
+"-                                    "
+msgstr ""
+"\n"
+"Ne pas envoyer de Fichier contenant des données personnelles identifiables"
+
+#: corehq/apps/hqwebapp/tests/data/bootstrap5_diffs/hqwebapp/includes/modal_report_issue.html.diff.txt
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "                                        Please enter your email here so "
+#| "that we can follow up with you regarding this issue\n"
+#| "                                    "
+msgid ""
+"\n"
+"+                                Please enter your email here so that we can "
+"follow up with you regarding this issue\n"
+"+                            "
+msgstr ""
+"\n"
+"Veuillez saisir votre adresse e-mail ici afin que nous puissions vous suivre "
+"sur ce problème"
+
+#: corehq/apps/hqwebapp/tests/data/bootstrap5_diffs/hqwebapp/includes/modal_report_issue.html.diff.txt
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "                                        Comma-separated email addresses "
+#| "of others you want to notify about this issue.\n"
+#| "                                    "
+msgid ""
+"\n"
+"+                          Comma-separated email addresses of others you "
+"want to notify about this issue.\n"
+"+                      "
+msgstr ""
+"\n"
+"Adresses e-mail séparées par des virgules des autres personnes que vous "
+"souhaitez informer de ce problème."
+
+#: corehq/apps/hqwebapp/tests/data/bootstrap5_diffs/hqwebapp/includes/modal_report_issue.html.diff.txt
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "                                    Please upload any files relevant to "
+#| "your issue.\n"
+#| "                                    "
+msgid ""
+"\n"
+"+                          Please upload any files relevant to your issue.\n"
+"+                          "
+msgstr ""
+"\n"
+"Veuillez charger tout document en relation avec ce problème."
+
+#: corehq/apps/hqwebapp/tests/data/bootstrap5_diffs/hqwebapp/includes/modal_report_issue.html.diff.txt
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "                                        Do not upload a file containing "
+#| "individually identifiable data.\n"
+#| "                                    "
+msgid ""
+"\n"
+"+                              Do not upload a file containing individually "
+"identifiable data.\n"
+"+                          "
+msgstr ""
+"\n"
+"Ne pas envoyer de Fichier contenant des données personnelles identifiables"
+
+#: corehq/apps/hqwebapp/tests/data/bootstrap5_diffs/hqwebapp/partials/footer.html.diff.txt
+msgid ""
+"\n"
+"-            <a href=\"https://dimagi.com/commcare/\">CommCare</a>\n"
+"-            is copyright &copy;\n"
+"-          "
+msgstr ""
+
+#: corehq/apps/hqwebapp/tests/data/bootstrap5_diffs/hqwebapp/partials/footer.html.diff.txt
+msgid ""
+"\n"
+"+          <a href=\"https://dimagi.com/commcare/\">CommCare</a>\n"
+"+          is copyright &copy;\n"
+"+        "
+msgstr ""
+
+#: corehq/apps/hqwebapp/tests/data/bootstrap5_diffs/hqwebapp/partials/unsupported_browser.html.diff.txt
+msgid ""
+"\n"
+"-        We recommend\n"
+"-        <a href=\"https://www.google.com/chrome\">Chrome</a>\n"
+"-        or <a href=\"http://www.mozilla.org/\">Firefox</a>.\n"
+"-    "
+msgstr ""
+
+#: corehq/apps/hqwebapp/tests/data/bootstrap5_diffs/hqwebapp/partials/unsupported_browser.html.diff.txt
+msgid ""
+"\n"
+"+    We recommend\n"
+"+    <a href=\"https://www.google.com/chrome\" class=\"alert-link\">Chrome</"
+"a>\n"
+"+    or <a href=\"http://www.mozilla.org/\" class=\"alert-link\">Firefox</"
+"a>.\n"
+"+  "
+msgstr ""
+
+#: corehq/apps/hqwebapp/tests/data/bootstrap5_diffs/notifications/partials/global_notifications.html.diff.txt
+#: corehq/apps/notifications/templates/notifications/partials/bootstrap3/global_notifications.html
+#: corehq/apps/notifications/templates/notifications/partials/bootstrap5/global_notifications.html
+msgid "Notifications"
+msgstr "Notifications"
 
 #: corehq/apps/hqwebapp/tests/utils/test_translation.py
 msgid "Hello World"
@@ -25574,15 +26092,13 @@ msgstr ""
 msgid "Submit Information"
 msgstr "Soumettre l'information"
 
-#: corehq/apps/notifications/templates/notifications/partials/global_notifications.html
-msgid "Notifications"
-msgstr "Notifications"
-
-#: corehq/apps/notifications/templates/notifications/partials/global_notifications.html
+#: corehq/apps/notifications/templates/notifications/partials/bootstrap3/global_notifications.html
+#: corehq/apps/notifications/templates/notifications/partials/bootstrap5/global_notifications.html
 msgid "Notifications could not be fetched at this time."
 msgstr "Les notifications n'ont pas pu être récupérées pour le moment."
 
-#: corehq/apps/notifications/templates/notifications/partials/global_notifications.html
+#: corehq/apps/notifications/templates/notifications/partials/bootstrap3/global_notifications.html
+#: corehq/apps/notifications/templates/notifications/partials/bootstrap5/global_notifications.html
 msgid "Please see our blog for service updates."
 msgstr "Veuillez voir notre blog pour les mises à jour de service."
 
@@ -31157,10 +31673,8 @@ msgid "IP Allowlist"
 msgstr ""
 
 #: corehq/apps/settings/views.py
-#, fuzzy
-#| msgid "Last Usage"
 msgid "Last Used"
-msgstr "Dernière utilisation"
+msgstr ""
 
 #: corehq/apps/settings/views.py
 msgid "Copy this in a secure place. It will not be shown again."
@@ -37399,17 +37913,6 @@ msgstr ""
 msgid "Loading Workers..."
 msgstr "Chargement des utilisateurs..."
 
-#: corehq/apps/users/templates/users/mobile_workers.html
-msgid ""
-"\n"
-"            <strong>There was an issue contacting the server.</strong>\n"
-"            Please check your internet connection.\n"
-"            If this issue continues, please\n"
-"            <a href=\"#modalReportIssue\" data-toggle=\"modal\">report an "
-"issue</a>.\n"
-"          "
-msgstr ""
-
 #: corehq/apps/users/templates/users/partials/basic_info_form.html
 msgid "Update Information"
 msgstr "Mettre à jour les informations"
@@ -37523,16 +38026,16 @@ msgstr "Paramètres d'organisation"
 #: corehq/apps/users/templates/users/partials/edit_commtrack_user_settings.html
 msgid ""
 "\n"
-"            There are cases in the following assigned locations which may "
-"need to be migrated:\n"
+"            The user is the only one that is assigned to the following "
+"locations with cases:\n"
 "          "
 msgstr ""
 
 #: corehq/apps/users/templates/users/partials/edit_commtrack_user_settings.html
 msgid ""
 "\n"
-"            There are no cases in any of the user's assigned locations that "
-"need to be migrated.\n"
+"            The user shares all assigned locations with one or more other "
+"users.\n"
 "          "
 msgstr ""
 
@@ -42067,6 +42570,12 @@ msgstr ""
 msgid "Regular Expression Validation for Custom Data Fields"
 msgstr ""
 
+#: corehq/privileges.py
+#, fuzzy
+#| msgid "Location User"
+msgid "Location Safe Case Imports"
+msgstr "Utilisateur du site"
+
 #: corehq/reports.py
 msgid "Report Builder Reports"
 msgstr "Rapports de l'Éditeur de Rapports"
@@ -42332,9 +42841,13 @@ msgstr "Rapports CommCare"
 
 #: corehq/tabs/tabclasses.py
 #, fuzzy
-#| msgid "View All"
+#| msgid "Added Users:"
+msgid "Attendee Users"
+msgstr "Ajouter les utilisateurs:"
+
+#: corehq/tabs/tabclasses.py
 msgid "View All Events"
-msgstr "Tout Afficher"
+msgstr ""
 
 #: corehq/trans_override.py
 msgid "Token generator"
