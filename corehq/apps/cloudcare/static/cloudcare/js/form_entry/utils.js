@@ -88,6 +88,7 @@ hqDefine("cloudcare/js/form_entry/utils", function () {
         geocoder.on('clear', clearCallBack);
         geocoder.addTo('#' + divId);
         const divEl = $("#" + divId);
+        const liveRegionEl = $("#" + divId + "-sr[role='region']");
         // Must add the form-control class to the input created by mapbox in order to edit.
         var inputEl = divEl.find('input.mapboxgl-ctrl-geocoder--input');
         inputEl.addClass('form-control');
@@ -100,14 +101,14 @@ hqDefine("cloudcare/js/form_entry/utils", function () {
             // screen reader live region with the current highlighted value.
             if (e.key === "ArrowUp" || e.key === "ArrowDown") {
                 const currentOption = divEl.find("ul.suggestions li.active").text();
-                $("#" + divId + "-sr").html("<p>" + currentOption + "</p>");
+                liveRegionEl.html("<p>" + currentOption + "</p>");
             }
         }, 200));
 
         // This fixes the geocoder first value not getting read by screen-reader.
         geocoder.on('results', (items) => {
             if (items && items.features) {
-                $("#" + divId + "-sr").html("<p>" + items.features[0].place_name + "</p>");
+                liveRegionEl.html("<p>" + items.features[0].place_name + "</p>");
             }
         });
     };
