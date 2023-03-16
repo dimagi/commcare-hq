@@ -61,8 +61,10 @@ class CreateEventForm(forms.Form):
 
         if event:
             kwargs['initial'] = self.compute_initial(event)
+            self.title_prefix = "Edit"
         else:
             kwargs['initial'] = None
+            self.title_prefix = "Add"
 
         super(CreateEventForm, self).__init__(*args, **kwargs)
 
@@ -70,7 +72,7 @@ class CreateEventForm(forms.Form):
         self.helper.add_layout(
             crispy.Layout(
                 crispy.Fieldset(
-                    _("Add Attendance Tracking Event"),
+                    _(f"{self.title_prefix} Attendance Tracking Event"),
                     crispy.Field('name', data_bind="value: name"),
                     crispy.Field(
                         'start_date',
