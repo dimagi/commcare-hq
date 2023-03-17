@@ -166,7 +166,6 @@ class TestTasks(TestCase):
         for case in cases:
             assert_method(case.closed)
 
-    @classmethod
     def _create_non_mobile_worker_attendee_case(self):
         case_id = uuid.uuid4().hex
         caseblock = CaseBlock(
