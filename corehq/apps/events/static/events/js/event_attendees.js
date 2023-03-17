@@ -149,13 +149,7 @@ hqDefine("events/js/event_attendees",[
         self.newAttendees = ko.observableArray();
 
         self.allowSubmit = ko.computed(function () {
-            if (!self.stagedAttendee()) {
-                return false;
-            }
-            if (!self.stagedAttendee().name()) {
-                return false;
-            }
-            return true;
+            return !!(self.stagedAttendee() && self.stagedAttendee().name());
         });
 
         self.initializeAttendee = function () {
