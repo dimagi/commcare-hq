@@ -130,8 +130,12 @@ def domains_for_user(context, request, selected_domain=None):
         'domain_links': domain_links,
         'show_all_projects_link': show_all_projects_link,
     }
+    from corehq.apps.hqwebapp.utils.bootstrap import get_bootstrap_version
     return mark_safe(  # nosec: render_to_string should have already handled escaping
-        render_to_string('hqwebapp/includes/domain_list_dropdown.html', context, request)
+        render_to_string(
+            f"hqwebapp/includes/{get_bootstrap_version()}/domain_list_dropdown.html",
+            context, request
+        )
     )
 
 
@@ -703,7 +707,8 @@ def breadcrumbs(page, section, parents=None):
     :return:
     """
 
-    return render_to_string('hqwebapp/partials/breadcrumbs.html', {
+    from corehq.apps.hqwebapp.utils.bootstrap import get_bootstrap_version
+    return render_to_string(f"hqwebapp/partials/{get_bootstrap_version()}/breadcrumbs.html", {
         'page': page,
         'section': section,
         'parents': parents or [],

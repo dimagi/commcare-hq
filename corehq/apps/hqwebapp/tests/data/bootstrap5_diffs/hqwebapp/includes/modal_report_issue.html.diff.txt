@@ -1,0 +1,303 @@
+--- 
++++ 
+@@ -1,150 +1,161 @@
+ {% load i18n %}
+ {% load hq_shared_tags %}
+ {% if request.user.is_authenticated %}
+-    <div class="modal fade" id="modalReportIssue">
+-        <div class="modal-dialog">
+-            <form id="hqwebapp-bugReportForm"
+-                  action="{% url "bug_report" %}"
+-                  method="post"
+-                  enctype="multipart/form-data"
+-                  role="form">
+-                {% csrf_token %}
+-                <input type="hidden" id="bug-report-url" name="url"/>
+-                <input type="hidden" id="bug-report-username" name="username" value="{{ user.username }}"/>
+-                <input type="hidden" id="bug-report-domain" name="domain" value="{{ domain }}"/>
+-                <input type="hidden" id="bug-report-app_id" name="app_id" value="{{ app.id }}"/>
+-            <div class="modal-content">
+-                <div class="modal-header">
+-                    <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">{% trans 'Close' %}</span></button>
+-                    <h4 class="modal-title">{% trans "Report an Issue with CommCare HQ" %}</h4>
+-                    <br/>
+-                    <p>
+-                        <b>{% trans "Please submit this report from page where issue is occurring" %}</b>
+-                    </p>
+-
++  <div class="modal fade"
++       tabindex="-1"
++       aria-labelledby="reportAnIssueModalLabel"
++       aria-hidden="true"
++       id="modalReportIssue">
++    <div class="modal-dialog modal-lg">
++      <form id="hqwebapp-bugReportForm"
++            action="{% url "bug_report" %}"
++            method="post"
++            enctype="multipart/form-data"
++            role="form">
++        {% csrf_token %}
++        <input type="hidden" id="bug-report-url" name="url"/>
++        <input type="hidden" id="bug-report-username" name="username" value="{{ user.username }}"/>
++        <input type="hidden" id="bug-report-domain" name="domain" value="{{ domain }}"/>
++        <input type="hidden" id="bug-report-app_id" name="app_id" value="{{ app.id }}"/>
++        <div class="modal-content">
++          <div class="modal-header">
++            <h1 class="modal-title fs-5" id="reportAnIssueModalLabel">{% trans "Report an Issue with CommCare HQ" %}</h1>
++            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
++          </div>
++          <div class="modal-body">
++            <p>
++              <strong>{% trans "Please submit this report from page where issue is occurring" %}</strong>
++            </p>
++            <div class="form-horizontal">
++              <div class="row mb-3">
++                <label for="bug-report-subject"
++                       class="col-sm-2 col-form-label">{% trans "Short Description" %} *</label>
++                <div class="col-sm-10">
++                  <input type="text"
++                         class="form-control"
++                         name="subject"
++                         id="bug-report-subject"
++                         placeholder="{% trans 'One Sentence Description of Issue' %}">
++                  <span class="badge badge-danger d-none">
++                    <i class="fa fa-warning"></i> {% trans 'Please give us some information about the issue' %}
++                  </span>
+                 </div>
+-                <div class="modal-body">
+-                    <div class="form-horizontal">
+-                        <div class="form-group" id="bug-report-subject-form-group">
+-                            <label for="bug-report-subject"
+-                                   class="col-sm-3 control-label">{% trans "Short Description" %} *</label>
+-                            <div class="col-sm-9">
+-                                <input type="text"
+-                                       class="form-control"
+-                                       name="subject"
+-                                       id="bug-report-subject"
+-                                       placeholder="{% trans 'One Sentence Description of Issue' %}">
+-                                <span class="label label-danger hide">
+-                                        <i class="fa fa-warning"></i> {% trans 'Please give us some information about the issue' %}
+-                                </span>
+-                            </div>
+-                        </div>
+-                        <div class="form-group">
+-                            <label for="bug-report-message"
+-                                   class="col-sm-3 control-label">{% trans "Full Description" %}</label>
+-                            <div class="col-sm-9">
+-                                <textarea name="message"
+-                                          class="form-control vertical-resize"
+-                                          id="bug-report-message"
+-                                          rows="3"
+-                                          placeholder="{% trans "Please describe the issue and list any steps you took to see this issue." %}"></textarea>
+-                            </div>
+-                        </div>
+-
+-                        {% if request.couch_user.is_commcare_user %}
+-                        <div class="form-group" id="bug-report-email-form-group">
+-                            <label class="col-sm-3 control-label" for="bug-report-email">{% trans "Email" %}
+-                            </label>
+-                            <div class="col-sm-9">
+-                                <input type="text"
+-                                       name="email"
+-                                       class="form-control"
+-                                       id="bug-report-email">
+-                                <p class="help-block">
+-                                    {% blocktrans %}
+-                                        Please enter your email here so that we can follow up with you regarding this issue
+-                                    {% endblocktrans %}
+-                                    <span class="label label-danger hide">
+-                                        <i class="fa fa-warning"></i> {% trans 'Incorrect Format' %}
+-                                    </span>
+-                                </p>
+-                            </div>
+-                        </div>
+-                        {% endif %}
+-
+-                        {% if request.couch_user.is_domain_admin %}
+-                        <div class="form-group">
+-                            <label for="bug-report-project-description"
+-                                   class="col-sm-3 control-label">{% trans "Project Description" %}</label>
+-                            <div class="col-sm-9">
+-                                <textarea name="project_description"
+-                                          class="form-control vertical-resize"
+-                                          id="bug-report-project-description"
+-                                          rows="3"
+-                                          placeholder="{% trans 'Please provide a short description of your organization and the work it is doing.' %}">{% spaceless %}
+-                                          {% if request.project.project_description %}
+-                                          {{ request.project.project_description }}
+-                                          {% endif %}
+-                                {% endspaceless %}</textarea>
+-                            </div>
+-                        </div>
+-                        {% endif %}
+-
+-                        <div class="form-group" id="bug-report-cc-form-group">
+-                            <label for="bug-report-cc"
+-                                   class="col-sm-3 control-label">{% trans "Other recipients" %}</label>
+-                            <div class="col-sm-9">
+-                                <input type="text"
+-                                       name="cc"
+-                                       class="form-control"
+-                                       id="bug-report-cc"
+-                                       placeholder="ex: admin@commcarehq.org, test@commcarehq.org" />
+-                                <p class="help-block">
+-                                    {% blocktrans %}
+-                                        Comma-separated email addresses of others you want to notify about this issue.
+-                                    {% endblocktrans %}
+-                                    <span class="label label-danger hide">
+-                                        <i class="fa fa-warning"></i> {% trans 'Incorrect Format' %}
+-                                    </span>
+-                                </p>
+-                            </div>
+-                        </div>
+-                        <div class="form-group">
+-                            <label for="bug-report-file"
+-                                   class="col-sm-3 control-label">{% trans 'Upload file' %}</label>
+-                            <div class="col-sm-9">
+-                                <input type="file" id="bug-report-file" name="report_issue"/>
+-                                <p class="help-block">
+-                                    {% blocktrans %}
+-                                    Please upload any files relevant to your issue.
+-                                    {% endblocktrans %}
+-                                </p>
+-                                <p class="help-block">
+-                                    <i class="fa fa-warning"></i>
+-                                    {% blocktrans %}
+-                                        Do not upload a file containing individually identifiable data.
+-                                    {% endblocktrans %}
+-                                </p>
+-                            </div>
+-                        </div>
++              </div>
++              <div class="row mb-3">
++                <label for="bug-report-message"
++                       class="col-sm-2 col-form-label">
++                  {% trans "Full Description" %}
++                </label>
++                <div class="col-sm-10">
++                  <textarea name="message"
++                            class="form-control vertical-resize"
++                            id="bug-report-message"
++                            rows="3"
++                            placeholder="{% trans "Please describe the issue and list any steps you took to see this issue." %}"></textarea>
++                </div>
++              </div>
++              {% if request.couch_user.is_commcare_user %}
++                <div class="row mb-3"
++                     id="bug-report-email-form-group">
++                    <label for="bug-report-email"
++                           class="col-sm-2 col-form-label" >
++                      {% trans "Email" %}
++                    </label>
++                    <div class="col-sm-10">
++                        <input type="text"
++                               name="email"
++                               class="form-control"
++                               id="bug-report-email">
++                        <p class="help-block">
++                            {% blocktrans %}
++                                Please enter your email here so that we can follow up with you regarding this issue
++                            {% endblocktrans %}
++                            <span class="badge badge-danger hide">
++                                <i class="fa fa-warning"></i> {% trans 'Incorrect Format' %}
++                            </span>
++                        </p>
+                     </div>
+                 </div>
+-                <div class="modal-footer">
+-                    <button type="button"
+-                            id="bug-report-cancel"
+-                            class="btn btn-default"
+-                            data-dismiss="modal">{% trans 'Cancel' %}</button>
+-                    <button type="submit"
+-                            class="btn btn-primary"
+-                            id="bug-report-submit"
+-                            data-loading-text="{% trans "Submitting Report..." %}"
+-                            data-error-text="{% trans "Failed. Retry Issue Submission" %}"
+-                            data-success-text="{% trans "Success! Back to CommCare HQ" %}">
+-                        {% trans "Submit Report" %}
+-                    </button>
++              {% endif %}
++              {% if request.couch_user.is_domain_admin %}
++                <div class="row mb-3">
++                    <label for="bug-report-project-description"
++                           class="col-sm-2 col-form-label">
++                      {% trans "Project Description" %}
++                    </label>
++                    <div class="col-sm-10">
++                        <textarea name="project_description"
++                                  class="form-control vertical-resize"
++                                  id="bug-report-project-description"
++                                  rows="3"
++                                  placeholder="{% trans 'Please provide a short description of your organization and the work it is doing.' %}">{% spaceless %}
++                                  {% if request.project.project_description %}
++                                  {{ request.project.project_description }}
++                                  {% endif %}
++                        {% endspaceless %}</textarea>
++                    </div>
+                 </div>
++              {% endif %}
++              <div class="row mb-3"
++                   id="bug-report-cc-form-group">
++                <label for="bug-report-cc"
++                       class="col-sm-2 col-form-label">
++                  {% trans "Other recipients" %}
++                </label>
++                <div class="col-sm-10">
++                  <input type="text"
++                         name="cc"
++                         class="form-control"
++                         id="bug-report-cc"
++                         placeholder="ex: admin@commcarehq.org, test@commcarehq.org" />
++                  <p class="help-block">
++                      {% blocktrans %}
++                          Comma-separated email addresses of others you want to notify about this issue.
++                      {% endblocktrans %}
++                      <span class="badge bade-danger hide">
++                          <i class="fa fa-warning"></i> {% trans 'Incorrect Format' %}
++                      </span>
++                  </p>
++                </div>
++              </div>
++              <div class="row mb-3">
++                  <label for="bug-report-file"
++                         class="col-sm-2 col-form-label">
++                    {% trans 'Upload file' %}
++                  </label>
++                  <div class="col-sm-10">
++                      <input type="file" id="bug-report-file" name="report_issue"/>
++                      <p class="help-block">
++                          {% blocktrans %}
++                          Please upload any files relevant to your issue.
++                          {% endblocktrans %}
++                      </p>
++                      <p class="help-block">
++                          <i class="fa fa-warning"></i>
++                          {% blocktrans %}
++                              Do not upload a file containing individually identifiable data.
++                          {% endblocktrans %}
++                      </p>
++                  </div>
++              </div>
+             </div>
+-            </form>
++          </div>
++          <div class="modal-footer">
++              <button type="button"
++                      id="bug-report-cancel"
++                      class="btn btn-default"
++                      data-bs-dismiss="modal">{% trans 'Cancel' %}</button>
++              <button type="submit"
++                      class="btn btn-primary"
++                      id="bug-report-submit"
++                      data-loading-text="{% trans "Submitting Report..." %}"
++                      data-error-text="{% trans "Failed. Retry Issue Submission" %}"
++                      data-success-text="{% trans "Success! Back to CommCare HQ" %}">
++                  {% trans "Submit Report" %}
++              </button>
++          </div>
+         </div>
++      </form>
+     </div>
++  </div>
+ {% endif %}

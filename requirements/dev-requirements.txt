@@ -83,7 +83,7 @@ contextlib2==21.6.0
     # via
     #   git-build-branch
     #   schema
-coverage==5.5
+coverage==7.1.0
     # via -r test-requirements.in
 cryptography==39.0.1
     # via
@@ -155,8 +155,10 @@ django-crispy-forms==1.10.0
 django-cte==1.2.0
     # via -r base-requirements.in
 django-extensions==3.1.3
-    # via -r dev-requirements.in
-django-field-audit==1.2.4
+    # via
+    #   -r dev-requirements.in
+    #   -r docs-requirements.in
+django-field-audit==1.2.6
     # via -r base-requirements.in
 django-formtools==2.3
     # via
@@ -172,7 +174,7 @@ django-otp==1.1.3
     # via
     #   -r base-requirements.in
     #   django-two-factor-auth
-django-phonenumber-field==5.2.0
+django-phonenumber-field==6.4.0
     # via
     #   -r base-requirements.in
     #   django-two-factor-auth
@@ -198,9 +200,9 @@ django-websocket-redis @ https://raw.githubusercontent.com/dimagi/django-websock
     # via -r base-requirements.in
 djangorestframework==3.13.1
     # via -r base-requirements.in
-docutils==0.16
+docutils==0.18.1
     # via
-    #   -r dev-requirements.in
+    #   myst-parser
     #   sphinx
     #   sphinx-rtd-theme
 dropbox==11.36.0
@@ -279,10 +281,12 @@ httplib2==0.20.4
     #   google-auth-httplib2
 idna==2.10
     # via requests
-imagesize==1.2.0
+imagesize==1.4.1
     # via sphinx
-importlib-metadata==4.12.0
-    # via markdown
+importlib-metadata==6.0.0
+    # via
+    #   markdown
+    #   sphinx
 intervaltree==3.1.0
     # via ddtrace
 ipython==8.10.0
@@ -295,9 +299,10 @@ isort==5.10.1
     # via -r dev-requirements.in
 jedi==0.18.1
     # via ipython
-jinja2==2.11.3
+jinja2==3.1.2
     # via
     #   -r base-requirements.in
+    #   myst-parser
     #   sphinx
 jmespath==0.10.0
     # via
@@ -342,16 +347,27 @@ mako==1.2.2
     #   oic
 mando==0.6.4
     # via radon
-markdown==3.3.6
+markdown==3.4.1
     # via -r base-requirements.in
-markupsafe==1.1.1
+markdown-it-py==2.2.0
+    # via
+    #   mdit-py-plugins
+    #   myst-parser
+markupsafe==2.1.2
     # via
     #   jinja2
     #   mako
+    #   werkzeug
 matplotlib-inline==0.1.3
     # via ipython
 mccabe==0.6.1
     # via flake8
+mdit-py-plugins==0.3.5
+    # via myst-parser
+mdurl==0.1.2
+    # via markdown-it-py
+myst-parser==0.19.1
+    # via -r docs-requirements.in
 nose==1.3.7
     # via
     #   -r test-requirements.in
@@ -370,8 +386,9 @@ openpyxl==3.0.9
     # via
     #   -r base-requirements.in
     #   commcaretranslationchecker
-packaging==20.4
+packaging==23.0
     # via
+    #   -r base-requirements.in
     #   build
     #   sphinx
 parso==0.8.3
@@ -444,7 +461,7 @@ pyflakes==2.3.1
     # via flake8
 pygithub==1.55
     # via -r base-requirements.in
-pygments==2.11.2
+pygments==2.14.0
     # via
     #   ipython
     #   sphinx
@@ -460,9 +477,7 @@ pynacl==1.5.0
 pyopenssl==23.0.0
     # via -r sso-requirements.in
 pyparsing==2.4.7
-    # via
-    #   httplib2
-    #   packaging
+    # via httplib2
 pyphonetics==0.5.3
     # via -r base-requirements.in
 pypng==0.20220715.0
@@ -497,6 +512,7 @@ pyyaml==6.0
     # via
     #   -r base-requirements.in
     #   git-build-branch
+    #   myst-parser
 pyzxcvbn==0.8.0
     # via -r base-requirements.in
 qrcode==7.4.2
@@ -585,7 +601,6 @@ six==1.16.0
     #   jsonobject-couchdbkit
     #   jsonpath-ng
     #   mando
-    #   packaging
     #   pyjwkest
     #   python-dateutil
     #   pyzxcvbn
@@ -604,20 +619,24 @@ sortedcontainers==2.3.0
     # via intervaltree
 soupsieve==2.0.1
     # via beautifulsoup4
-sphinx==4.1.2
+sphinx==6.1.3
     # via
-    #   -r dev-requirements.in
+    #   -r docs-requirements.in
+    #   myst-parser
     #   sphinx-rtd-theme
-sphinx-rtd-theme==0.5.2
-    # via -r dev-requirements.in
+    #   sphinxcontrib-jquery
+sphinx-rtd-theme==1.2.0
+    # via -r docs-requirements.in
 sphinxcontrib-applehelp==1.0.2
     # via sphinx
 sphinxcontrib-devhelp==1.0.2
     # via sphinx
 sphinxcontrib-django==0.5.1
-    # via -r dev-requirements.in
+    # via -r docs-requirements.in
 sphinxcontrib-htmlhelp==2.0.0
     # via sphinx
+sphinxcontrib-jquery==4.1
+    # via sphinx-rtd-theme
 sphinxcontrib-jsmath==1.0.1
     # via sphinx
 sphinxcontrib-qthelp==1.0.3
@@ -696,7 +715,7 @@ vine==5.0.0
     #   kombu
 wcwidth==0.2.5
     # via prompt-toolkit
-werkzeug==1.0.1
+werkzeug==2.2.3
     # via -r base-requirements.in
 wheel==0.38.1
     # via
@@ -720,15 +739,14 @@ zope-interface==5.4.0
     # via gevent
 
 # The following packages are considered to be unsafe in a requirements file:
-pip==21.3.1
+pip==23.0.1
     # via pip-tools
-setuptools==65.5.1
+setuptools==67.3.2
     # via
     #   django-websocket-redis
     #   gevent
     #   gunicorn
     #   pip-tools
     #   python-termstyle
-    #   sphinx
     #   zope-event
     #   zope-interface

@@ -10,6 +10,30 @@
     {% crispy commtrack.update_form %}
   </fieldset>
   {% if not request.is_view_only %}
+    {% if locations_with_single_user %}
+      <div class="alert alert-warning">
+        <p>
+          {% blocktrans %}
+            The user is the only one that is assigned to the following locations with cases:
+          {% endblocktrans %}
+        </p>
+        {% for location, case_count in locations_with_single_user.items %}
+          <ul>
+            <li>{{ location }}: {{ case_count }}</li>
+          </ul>
+        {% endfor %}
+        Moving the user's location may result in no user having jurisdiction in one or more
+        of these locations.
+      </div>
+    {% else %}
+      <div class="alert alert-info">
+        <p>
+          {% blocktrans %}
+            The user shares all assigned locations with one or more other users.
+          {% endblocktrans %}
+        </p>
+      </div>
+    {% endif %}
     <div class="form-actions">
       <div class="col-sm-offset-3 col-md-offset-2 col-sm-9 col-md-8 col-lg-6">
         <button type="submit" class="btn btn-primary disable-on-submit">

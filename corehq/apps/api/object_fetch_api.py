@@ -32,7 +32,7 @@ from corehq.form_processor.models import CaseAttachment, CommCareCase
 
 class CaseAttachmentAPI(View):
 
-    @method_decorator(api_auth)
+    @method_decorator(api_auth())
     def get(self, request, domain, case_id=None, attachment_id=None):
         """
         https://github.com/dimagi/commcare/wiki/CaseAttachmentAPI

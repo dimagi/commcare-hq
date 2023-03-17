@@ -86,7 +86,7 @@ HUBSPOT_COOKIE = 'hubspotutk'
 HUBSPOT_THRESHOLD = 300
 
 
-HUBSPOT_ENABLED = settings.ANALYTICS_IDS.get('HUBSPOT_API_KEY', False)
+HUBSPOT_ENABLED = settings.ANALYTICS_IDS.get('HUBSPOT_ACCESS_TOKEN', False)
 KISSMETRICS_ENABLED = settings.ANALYTICS_IDS.get('KISSMETRICS_KEY', False)
 
 
@@ -173,24 +173,24 @@ def batch_track_on_hubspot(users_json):
 
 def _hubspot_post(url, data):
     """
-    Lightweight wrapper to add hubspot api key and post data if the HUBSPOT_API_KEY is defined
+    Lightweight wrapper to add hubspot api key and post data if the HUBSPOT_ACCESS_TOKEN is defined
     :param url: url to post to
     :param data: json data payload
     :return:
     """
-    api_key = settings.ANALYTICS_IDS.get('HUBSPOT_API_KEY', None)
-    if api_key:
+    access_token = settings.ANALYTICS_IDS.get('HUBSPOT_ACCESS_TOKEN', None)
+    if access_token:
         headers = {
-            'content-type': 'application/json'
+            'content-type': 'application/json',
+            'authorization': 'Bearer %s' % access_token
         }
-        params = {'hapikey': api_key}
-        response = _send_post_data(url, params, data, headers)
+        response = _send_post_data(url, data, headers)
         log_response('HS', data, response)
         response.raise_for_status()
 
 
-def _send_post_data(url, params, data, headers):
-    response = requests.post(url, params=params, data=data, headers=headers)
+def _send_post_data(url, data, headers):
+    response = requests.post(url, data=data, headers=headers)
     metrics_counter('commcare.hubspot.track_data_post', tags={'status_code': response.status_code})
     return response
 
@@ -206,14 +206,14 @@ def _get_user_hubspot_id(web_user, retry_num=0):
     if retry_num > 0:
         time.sleep(10)  # wait 10 seconds if this is another retry attempt
 
-    api_key = settings.ANALYTICS_IDS.get('HUBSPOT_API_KEY', None)
-    if api_key and hubspot_enabled_for_user(web_user):
+    access_token = settings.ANALYTICS_IDS.get('HUBSPOT_ACCESS_TOKEN', None)
+    if access_token and hubspot_enabled_for_user(web_user):
         try:
             req = requests.get(
                 "https://api.hubapi.com/contacts/v1/contact/email/{}/profile".format(
                     six.moves.urllib.parse.quote(web_user.username)
                 ),
-                params={'hapikey': api_key},
+                headers={'authorization': 'Bearer %s' % access_token},
             )
             if req.status_code == 404:
                 return None
@@ -232,7 +232,7 @@ def _get_user_hubspot_id(web_user, retry_num=0):
                 'commcare.hubspot.get_user_hubspot_id.success'
             )
             return req.json().get("vid", None)
-    elif api_key and retry_num == 0:
+    elif access_token and retry_num == 0:
         metrics_counter(
             'commcare.hubspot.get_user_hubspot_id.rejected'
         )

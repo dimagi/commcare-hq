@@ -27,7 +27,7 @@ class Command(BaseCommand):
         )
         parser.add_argument(
             '--ignore-active-domains',
-            action='store_true',
+            action='store',
             default=True,
             help='If True, only includes orphaned UCRs from deleted domains.'
         )

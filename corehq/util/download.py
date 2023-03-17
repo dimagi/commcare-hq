@@ -59,7 +59,7 @@ def get_download_response(payload, content_length, content_type, download, filen
     ranges = None
     if request and "HTTP_RANGE" in request.META:
         try:
-            ranges = parse_range_header(request.META['HTTP_RANGE'], content_length)
+            ranges = parse_range_header(request.META['HTTP_RANGE'])
         except ValueError:
             pass
 

@@ -33,7 +33,7 @@
         </span>
   </p>
   <p>
-    {% if request|toggle_enabled:"VIEW_APP_CHANGES" %}
+    {% if can_view_app_diff %}
       <a class="btn btn-default" data-bind="
                 attr: {href: compareUnbuiltChangesUrl},
                 visible: savedApps().length,
@@ -196,7 +196,7 @@
         </div>
       </div><!-- .panel-body -->
       <div class="panel-footer clearfix">
-        {% if request|toggle_enabled:"VIEW_APP_CHANGES" %}
+        {% if can_view_app_diff %}
           <a class="btn btn-default" data-bind="
                     attr: {href: $parent.reverse(
                             'app_form_summary_diff',

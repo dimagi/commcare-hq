@@ -3,6 +3,8 @@ from functools import wraps
 
 from django.urls import get_resolver
 
+from corehq.apps.hqwebapp.utils.bootstrap import set_bootstrap_version5
+
 
 def use_daterangepicker(view_func):
     """Use this decorator on the dispatch method of a TemplateView subclass
@@ -211,6 +213,27 @@ def use_ko_validation(view_func):
         request.use_ko_validation = True
         return view_func(class_based_view, request, *args, **kwargs)
     return _wrapped
+
+
+def use_bootstrap5(view_func):
+    """Use this decorator on the dispatch method of a TemplateView subclass
+    to enable Boostrap 5 features for the included template.
+
+    Example:
+        @use_bootstrap5
+        def dispatch(self, request, *args, **kwargs):
+            return super().dispatch(request, *args, **kwargs)
+
+    Or alternatively:
+        @method_decorator(use_bootstrap5, name='dispatch')
+        class MyViewClass(MyViewSubclass):
+            ...
+    """
+    @wraps(view_func)
+    def _inner(request, *args, **kwargs):
+        set_bootstrap_version5()
+        return view_func(request, *args, **kwargs)
+    return _inner
 
 
 def waf_allow(kind, hard_code_pattern=None):

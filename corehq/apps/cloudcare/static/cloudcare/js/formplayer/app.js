@@ -262,6 +262,11 @@ hqDefine("cloudcare/js/formplayer/app", function () {
                 FormplayerUtils.setUrlToObject(urlObject);
 
                 if (resp.nextScreen !== null && resp.nextScreen !== undefined) {
+                    if (resp.nextScreen.session_id) {
+                        FormplayerUtils.doUrlAction((urlObject) => {
+                            urlObject.sessionId = resp.nextScreen.session_id;
+                        }, true);
+                    }
                     FormplayerFrontend.trigger("renderResponse", resp.nextScreen);
                 } else if (urlObject.appId !== null && urlObject.appId !== undefined) {
                     FormplayerFrontend.trigger("apps:currentApp");
@@ -301,7 +306,6 @@ hqDefine("cloudcare/js/formplayer/app", function () {
         user.formplayer_url = options.formplayer_url;
         user.debuggerEnabled = options.debuggerEnabled;
         user.environment = options.environment;
-        user.changeFormLanguage = options.changeFormLanguage;
         user.restoreAs = FormplayerFrontend.getChannel().request('restoreAsUser', user.domain, user.username);
 
         hqRequire(["cloudcare/js/formplayer/apps/api"], function (AppsAPI) {
