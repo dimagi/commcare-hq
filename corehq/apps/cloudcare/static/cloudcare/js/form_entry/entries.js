@@ -918,7 +918,7 @@ hqDefine("cloudcare/js/form_entry/entries", function () {
         var self = this;
         // file has already been assigned a unique id and another request should not be sent to formplayer
         if (self.answer() && self.answer().match(/^(\w{8}-)(\w{4}-){3}(\w{12})\.\w{3,4}$/)) {
-            return
+            return;
         }
         if (newValue !== constants.NO_ANSWER && newValue !== "") {
             var $input = $('#' + self.entryId);
