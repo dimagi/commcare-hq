@@ -94,6 +94,9 @@ from corehq.util.quickcache import quickcache
 from corehq.util.view_utils import absolute_reverse
 
 from .models_role import (  # noqa
+    RoleAssignableBy,
+    RolePermission,
+    Permission,
     StaticRole,
     UserRole,
 )
@@ -1889,6 +1892,7 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
         from corehq.apps.events.models import (
             get_user_case_sharing_groups_for_events,
         )
+
         # get faked location group objects
         groups = list(get_case_sharing_groups_for_locations(
             self.get_sql_locations(self.domain),
