@@ -44,7 +44,7 @@ function rebuildstaging() {
     REPO_ROOT='artifacts/staging-branches'
     if [[ ! -d "$REPO_ROOT/.git" ]]
     then
-        git clone https://github.com/dimagi/staging-branches.git "$REPO_ROOT"
+        git clone https://github.com/dimagi/staging-branches.git $REPO_ROOT
     else
         git -C $REPO_ROOT pull origin main
     fi
