@@ -677,11 +677,11 @@ def add_on_tableau_details(domain, web_user_dicts):
 
 # Attaches to the import_users method
 def import_tableau_users(domain, web_user_specs):
-    try:
-        session = TableauAPISession.create_session_for_domain(domain)
-    except TableauAPIError as e:
-        _notify_tableau_exception(e, domain)
+    # Skip the Tableau users part of the import if one of the columns is missing
+    if (not web_user_specs or web_user_specs[0].get('tableau_role') is None
+    or web_user_specs[0].get('tableau_groups') is None):
         return
+    session = TableauAPISession.create_session_for_domain(domain)
     known_groups = {}
     for row in web_user_specs:
         username = row.get('username')
@@ -693,7 +693,7 @@ def import_tableau_users(domain, web_user_specs):
             elif user.get_domain_membership(domain):
                 tableau_role = row.get('tableau_role')
                 tableau_groups_txt = row.get('tableau_groups')
-                BAD_VALUES = ['ERROR', 'N/A', None]
+                BAD_VALUES = ['ERROR', 'N/A']
                 if tableau_role in BAD_VALUES or tableau_groups_txt in BAD_VALUES:
                     continue
 
