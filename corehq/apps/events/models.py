@@ -291,7 +291,7 @@ class Event(models.Model):
 
 def get_user_case_sharing_groups_for_events(commcare_user):
     """
-    Creates a case sharing group for every `Event` that the `commcare_user`
+    Creates a fake case sharing group for every `Event` that the `commcare_user`
     is an attendance taker for in their domain.
     """
     for event in Event.objects.by_domain(commcare_user.domain):
