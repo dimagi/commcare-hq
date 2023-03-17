@@ -94,6 +94,7 @@ def submit_case_blocks(
         max_wait=max_wait,
         **submission_extras
     )
+
     return result.xform, result.cases
 
 

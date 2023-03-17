@@ -1,11 +1,15 @@
 from corehq.apps.domain.shortcuts import create_domain
-from corehq.apps.events.models import AttendeeCase
+from corehq.apps.events.models import AttendeeCase, ATTENDEE_USER_ID_CASE_PROPERTY
 from corehq.apps.events.tasks import get_existing_cases_by_user_ids
 from corehq.apps.events import tasks
 from corehq.apps.users.models import HqPermissions, UserRole, WebUser
 from corehq.apps.users.models import CommCareUser
 from corehq.apps.users.role_utils import UserRolePresets
 from django.test import TestCase
+import uuid
+from corehq.apps.hqcase.utils import submit_case_blocks
+from casexml.apps.case.mock import CaseBlock
+from corehq.apps.events.models import get_attendee_case_type
 
 
 class TestTasks(TestCase):
@@ -108,18 +112,30 @@ class TestTasks(TestCase):
         self._assert_cases_state(closed=False)
 
     def test_mobile_worker_attendee_cases_closed(self):
-        user_id_case_mapping = get_existing_cases_by_user_ids(self.domain)
+        """Only mobile worker attendee cases should be closed, not all attendee cases"""
+        # Create some mobile worker attendee cases
+        tasks.sync_mobile_worker_attendees(domain_name=self.domain, user_id=self.webuser.user_id)
 
-        # Let's make sure they're open
+        # Let's add another attendee case, not associated with any mobile worker
+        self._create_non_mobile_worker_attendee_case()
+
+        # Let's make sure they're all open
+        user_id_case_mapping = get_existing_cases_by_user_ids(self.domain)
+        self.assertEqual(len(user_id_case_mapping), 3)
+
         for case in user_id_case_mapping.values():
             self.assertFalse(case.closed)
 
+        # Now close mobile worker cases
         tasks.close_mobile_worker_attendee_cases(domain_name=self.domain)
-        user_id_case_mapping = get_existing_cases_by_user_ids(self.domain)
 
-        # Let's make sure they're closed now
+        # Only those with the `ATTENDEE_USER_ID_CASE_PROPERTY` property should be closed
+        user_id_case_mapping = get_existing_cases_by_user_ids(self.domain)
         for case in user_id_case_mapping.values():
-            self.assertTrue(case.closed)
+            if case.get_case_property(ATTENDEE_USER_ID_CASE_PROPERTY):
+                self.assertTrue(case.closed)
+            else:
+                self.assertFalse(case.closed)
 
     def _close_mobile_worker_attendee_cases(self):
         from corehq.apps.hqcase.api.updates import JsonCaseUpdate, CaseIDLookerUpper
@@ -149,3 +165,13 @@ class TestTasks(TestCase):
             assert_method = self.assertFalse
         for case in cases:
             assert_method(case.closed)
+
+    @classmethod
+    def _create_non_mobile_worker_attendee_case(self):
+        case_id = uuid.uuid4().hex
+        caseblock = CaseBlock(
+            case_id=case_id,
+            case_type=get_attendee_case_type(self.domain),
+            case_name="Court Case",
+        )
+        submit_case_blocks(caseblock.as_text(), domain=self.domain)

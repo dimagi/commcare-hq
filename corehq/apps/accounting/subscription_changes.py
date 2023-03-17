@@ -262,7 +262,7 @@ class DomainDowngradeActionHandler(BaseModifySubscriptionActionHandler):
     @staticmethod
     def response_attendance_tracking(domain, _new_plan_version):
         archive_attendance_coordinator_role_for_domain(domain=domain.name)
-        attendance_tracking_tasks.close_mobile_worker_attendee_cases(domain.name)
+        attendance_tracking_tasks.close_mobile_worker_attendee_cases.delay(domain.name)
 
     @staticmethod
     def response_data_cleanup(domain, new_plan_version):

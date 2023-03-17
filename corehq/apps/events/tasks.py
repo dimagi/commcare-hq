@@ -45,13 +45,25 @@ def close_mobile_worker_attendee_cases(domain_name):
     """
     Close attendee cases associated with mobile workers
     """
-    cases_to_close = []
-    for case in AttendeeCase.objects.by_domain(domain_name):
-        cases_to_close.append((case.case_id, {}, True))
+    case_changes = []
+    user_id_case_mapping = get_existing_cases_by_user_ids(domain_name)
+    mobile_worker_user_ids = {user.user_id for user in CommCareUser.by_domain(domain_name)}
 
-    bulk_update_cases(domain_name, cases_to_close, device_id='corehq.apps.events.views')
+    for commcare_user_id, case in user_id_case_mapping.items():
+        if commcare_user_id in mobile_worker_user_ids:
+            case_changes.append((case.case_id, {}, True))
+
+    if case_changes:
+        bulk_update_cases(
+            domain_name,
+            case_changes,
+            device_id='corehq.apps.events.tasks.close_mobile_worker_attendee_cases'
+        )
 
 def get_existing_cases_by_user_ids(domain):
+    """Returns a mapping like `{user_id1: case1, user_id2: case2}`. The user_ids's are fetched from the case's
+    `ATTENDEE_USER_ID_CASE_PROPERTY` property, which is a commcare user id
+    """
     cases = AttendeeCase.objects.by_domain(domain, include_closed=True)
     return {c.get_case_property(ATTENDEE_USER_ID_CASE_PROPERTY): c for c in cases}
 
