@@ -33,11 +33,11 @@ from corehq.apps.settings.views import BaseProjectDataView
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import HqPermissions
 
-from corehq.motech.fhir.const import SUPPORTED_FHIR_RESOURCE_TYPES
 from corehq.motech.fhir.utils import (
     load_fhir_resource_mappings,
     remove_fhir_resource_type,
     update_fhir_resource_type,
+    load_fhir_resource_types,
 )
 from corehq.project_limits.rate_limiter import (
     RateDefinition,
@@ -359,7 +359,7 @@ class DataDictionaryView(BaseProjectDataView):
         fhir_integration_enabled = toggles.FHIR_INTEGRATION.enabled(self.domain)
         if fhir_integration_enabled:
             main_context.update({
-                'fhir_resource_types': SUPPORTED_FHIR_RESOURCE_TYPES,
+                'fhir_resource_types': load_fhir_resource_types(),
             })
         main_context.update({
             'question_types': [{'value': t.value, 'display': t.label}

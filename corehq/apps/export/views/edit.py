@@ -32,11 +32,13 @@ class BaseEditNewCustomExportView(BaseExportView):
         return self.export_instance_cls.get(self.export_id)
 
     def get_export_instance(self, schema, original_export_instance):
+        load_deprecated = self.request.GET.get('load_deprecated', 'False') == 'True'
         return self.export_instance_cls.generate_instance_from_schema(
             schema,
             saved_export=original_export_instance,
             # The export exists - we don't want to automatically select new columns
             auto_select=False,
+            load_deprecated=load_deprecated
         )
 
     @property
@@ -48,6 +50,7 @@ class BaseEditNewCustomExportView(BaseExportView):
             export_instance = self.new_export_instance
         except ResourceNotFound:
             raise Http404()
+
 
         schema = self.get_export_schema(
             self.domain,

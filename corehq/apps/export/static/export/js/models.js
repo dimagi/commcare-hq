@@ -301,6 +301,12 @@ hqDefine('export/js/models', [
         });
     };
 
+    ExportInstance.prototype.onLoadAllProperties = function () {
+        var pageUrl = new URL(window.location.href);
+        pageUrl.searchParams.append('load_deprecated', 'True');
+        window.location.href = pageUrl;
+    };
+
     ExportInstance.prototype.getFormatOptionValues = function () {
         return _.filter(constants.EXPORT_FORMATS, function (format) {
             return this.formatOptions.indexOf(format) !== -1;
@@ -489,6 +495,7 @@ hqDefine('export/js/models', [
                     },
                     selected: true,
                     is_advanced: false,
+                    is_deprecated: false,
                     label: 'number',
                     deid_transform: null,
                     repeat: null,
@@ -541,6 +548,7 @@ hqDefine('export/js/models', [
         // Whether or not to show advanced columns in the UI
         self.showAdvanced = ko.observable(false);
         self.showDeleted = ko.observable(false);
+        self.showDeprecated = ko.observable(false);
         ko.mapping.fromJS(tableJSON, TableConfiguration.mapping, self);
     };
 
@@ -551,6 +559,16 @@ hqDefine('export/js/models', [
 
     TableConfiguration.prototype.toggleShowAdvanced = function (table) {
         table.showAdvanced(!table.showAdvanced());
+    };
+
+    TableConfiguration.prototype.toggleShowDeprecated = function (table) {
+        table.showDeprecated(!table.showDeprecated());
+
+        const queryString = window.location.search;
+        const urlParams = new URLSearchParams(queryString);
+        if (urlParams.get('load_deprecated') !== 'True' && table.showDeprecated()) {
+            $('#export-process-deprecated-properties').modal('show');
+        }
     };
 
     TableConfiguration.prototype._select = function (select) {
@@ -678,6 +696,7 @@ hqDefine('export/js/models', [
 
         self.showAdvanced = ko.observable(false);
         self.showDeleted = ko.observable(false);
+        self.showDeprecated = ko.observable(false);
         self.customPathString.subscribe(self.onCustomPathChange.bind(self));
     };
     UserDefinedTableConfiguration.prototype = Object.create(TableConfiguration.prototype);
@@ -805,7 +824,7 @@ hqDefine('export/js/models', [
             return true;
         }
 
-        if (!this.is_advanced() && !this.is_deleted()) {
+        if (!this.is_advanced() && !this.is_deleted() && !this.is_deprecated()) {
             return true;
         }
 
@@ -814,6 +833,10 @@ hqDefine('export/js/models', [
         }
 
         if (table.showDeleted() && this.is_deleted()) {
+            return true;
+        }
+
+        if (table.showDeprecated() && this.is_deprecated()) {
             return true;
         }
 
@@ -855,6 +878,7 @@ hqDefine('export/js/models', [
             'label',
             'is_advanced',
             'is_deleted',
+            'is_deprecated',
             'selected',
             'tags',
             'deid_transform',

@@ -2,8 +2,8 @@ import threading
 
 _thread_local = threading.local()
 
-BOOTSTRAP_3 = 'bootstrap_3'
-BOOTSTRAP_5 = 'bootstrap_5'
+BOOTSTRAP_3 = 'bootstrap3'
+BOOTSTRAP_5 = 'bootstrap5'
 
 
 def get_bootstrap_version():

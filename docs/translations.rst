@@ -270,7 +270,7 @@ which is available via the `base RequireJS setup
 <https://github.com/dimagi/commcare-hq/blob/f922211689b39240fcf16efe36d9dc13382977b8/corehq/apps/hqwebapp/templates/hqwebapp/partials/requirejs.html#L28>`__,
 so it doesn't need to be added as a dependency to modules that use it.
 
-For translations with interpolated variables, use Underscore's `_.template <https://underscorejs.org/#template>``__
+For translations with interpolated variables, use Underscore's `_.template <https://underscorejs.org/#template>`__
 function similarly to python's string formatting, calling ``gettext`` on the template and __then__ interpolating
 variables:
 

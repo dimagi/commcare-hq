@@ -333,8 +333,8 @@ describe('Entries', function () {
     });
 
     it('Should convert two-digit dates to four-digit dates', function () {
-        assert.equal(utils.convertTwoDigitYear("03-04-50"), "03-04-1950");
-        assert.equal(utils.convertTwoDigitYear("03-04-28"), "03-04-2028");
+        assert.equal(utils.convertTwoDigitYear("03-04-50"), "03/04/1950");
+        assert.equal(utils.convertTwoDigitYear("03-04-28"), "03/04/2028");
         assert.equal(utils.convertTwoDigitYear("3/4/1928"), "3/4/1928");
         assert.equal(utils.convertTwoDigitYear("not-a-date"), "not-a-date");
     });

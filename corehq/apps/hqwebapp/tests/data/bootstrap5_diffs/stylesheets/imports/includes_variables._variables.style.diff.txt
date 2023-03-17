@@ -1,6 +1,6 @@
 --- 
 +++ 
-@@ -1,119 +1,81 @@
+@@ -1,119 +1,111 @@
 -@import "@{b3-import-variables}";
 +// Typography Overrides
 +$font-family-sans-serif: "Nunito Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
@@ -8,11 +8,39 @@
  
 -// Nunito Sans is used on dimagi.com and embedded in hqwebapp/base.html
 -@font-family-sans-serif: "Nunito Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
-+// Form Overrides
-+$input-border-radius-lg: 5px;
++// Links
++$link-decoration:   none;
  
 -@font-size-base:  12px;
 -@icon-font-path:  "../../bootstrap/fonts/";
++// Form Overrides
++$input-border-radius-lg: 5px;
++
++// Navbar
++//$nav-link-height: 38px;
++$navbar-brand-font-size: 15px;
++$navbar-brand-height: 40px;
++$navbar-brand-padding-y: 12px;
++$navbar-brand-margin-end: 0;
++
++$navbar-padding-y: 0;
++$navbar-padding-x: 0;
++
++$caret-width: 4px;
++$caret-vertical-align: $caret-width * .87;
++
++// Dropdowns
++$dropdown-border-radius: 3px;
++$dropdown-inner-border-radius: 0;
++$dropdown-padding-y: 5px;
++$dropdown-spacer: -1px;
++$dropdown-box-shadow: 0 6px 12px rgb(0 0 0 / 18%);
++$dropdown-font-size: 12px;
++
++// Badges
++$badge-border-radius: .25em;
++
++
 +// Custom colors we created (in Bootstrap 3 stylesheets)
  
  // Main background & text
@@ -166,13 +194,15 @@
 -@input-border-radius-large:       5px;
 -@cursor-disabled:                 'not-allowed';
 +////// Bootstrap 5 Color Overrides
-+$primary:   $cc-brand-mid;
++$primary:   #5c6ac5;
 +$success:   $cc-att-pos-mid;
 +$info:      $cc-light-cool-accent-mid;
 +$warning:   $cc-dark-warm-accent-mid;
 +$danger:    $cc-att-neg-mid;
 +
 +$body-color: $cc-text;
++
++$link-color: $cc-brand-mid;
 +$link-hover-color: $cc-brand-low;
 +
 +$link-hover-color: $cc-brand-low;

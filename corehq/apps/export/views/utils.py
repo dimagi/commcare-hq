@@ -366,7 +366,7 @@ class DataFileDownloadList(BaseProjectDataView):
         return HttpResponseRedirect(reverse(self.urlname, kwargs={'domain': self.domain}))
 
 
-@method_decorator(api_auth, name='dispatch')
+@method_decorator(api_auth(), name='dispatch')
 class DataFileDownloadDetail(BaseProjectDataView):
     urlname = 'download_data_file'
 
