@@ -303,7 +303,7 @@ class CreateNewCustomCaseExportView(BaseExportView):
 
     def create_new_export_instance(self, schema, username, export_settings=None):
 
-        load_deprecated = self.request.GET.get('load_deprecated') == 'True'
+        load_deprecated = self.request.GET.get('load_deprecated', 'False') == 'True'
         export = self.export_instance_cls.generate_instance_from_schema(
             schema,
             export_settings=export_settings,

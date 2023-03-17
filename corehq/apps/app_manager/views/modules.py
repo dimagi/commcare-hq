@@ -1156,7 +1156,7 @@ def edit_module_detail_screens(request, domain, app_id, module_unique_id):
         try:
             detail = getattr(module, '{0}_details'.format(detail_type))
         except AttributeError:
-            return HttpResponseBadRequest("Unknown detail type '%s'" % detail_type)
+            return HttpResponseBadRequest(format_html("Unknown detail type '{}'", detail_type))
 
     lang = request.COOKIES.get('lang', app.langs[0])
     if short is not None:

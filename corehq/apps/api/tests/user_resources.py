@@ -375,6 +375,12 @@ class TestWebUserResource(APIResourceTest):
         api_users = json.loads(response.content)['objects']
         self.assertEqual(len(api_users), 2)
 
+        response = self._assert_auth_get_resource('%s?limit=1' % (self.list_endpoint))
+        self.assertEqual(response.status_code, 200)
+        response_json = json.loads(response.content)
+        self.assertEqual(len(response_json['objects']), 1)
+        self.assertEqual(response_json['meta']['next'], "?limit=1&offset=1")
+
         # username filter
         response = self._assert_auth_get_resource('%s?web_username=%s' % (self.list_endpoint, 'anotherguy'))
         self.assertEqual(response.status_code, 200)

@@ -20,15 +20,15 @@
              {% if tab.is_active_tab %}aria-current="page"{% endif %}
              {% if items %}role="button" data-bs-toggle="dropdown" aria-expanded="false"{% endif %}
              href="{% if items %}#{% else %}{{ tab.url }}{% endif %}">
-            {% trans tab.title %}{% if items %} <b class="caret"></b>{% endif %}
+            {% trans tab.title %}
           </a>
           {% if items %}
             <ul class="dropdown-menu">
               {% for sub in items %}
                 {% if sub.is_second_level %}
-                  <li class="dropdown-submenu"> {# dropdown-submenu is old class #}
+                  <li class="dropdown-submenu">
                     <a href="{{ sub.url }}"
-                       class="dropdown-toggle"
+                       class="dropdown-toggle dropdown-item"
                        role="button"
                        data-bs-toggle="dropdown"
                        aria-expanded="false">{{ sub.title }}</a>

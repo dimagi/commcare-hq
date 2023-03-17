@@ -1395,15 +1395,13 @@ class TestCaseESAccessors(TestCase):
         middlesex_user.add_to_assigned_locations(locations['Middlesex'])
         restrict_user_by_location(self.domain, middlesex_user)
 
-        fake_request = MagicMock()
-        fake_request.domain = self.domain
-        fake_request.couch_user = middlesex_user
-
         self._send_case_to_es(owner_id=locations['Boston'].get_id)
         middlesex_case = self._send_case_to_es(owner_id=locations['Middlesex'].get_id)
         cambridge_case = self._send_case_to_es(owner_id=locations['Cambridge'].get_id)
 
         returned_case_ids = query_location_restricted_cases(
             CaseES().domain(self.domain),
-            fake_request).get_ids()
+            self.domain,
+            middlesex_user,
+        ).get_ids()
         self.assertItemsEqual(returned_case_ids, [middlesex_case.case_id, cambridge_case.case_id])
