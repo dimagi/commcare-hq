@@ -1919,14 +1919,26 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
 
     def get_case_sharing_groups(self):
         from corehq.apps.groups.models import Group
-        from corehq.apps.locations.models import get_case_sharing_groups_for_locations
+        from corehq.apps.locations.models import (
+            get_case_sharing_groups_for_locations,
+        )
+        from corehq.apps.events.models import (
+            get_user_case_sharing_groups_for_events,
+        )
+        from corehq import toggles, privileges
+        from corehq.apps.accounting.utils import domain_has_privilege
         # get faked location group objects
         groups = list(get_case_sharing_groups_for_locations(
             self.get_sql_locations(self.domain),
             self._id
         ))
-
         groups += [group for group in Group.by_user_id(self._id) if group.case_sharing]
+
+        has_at_privilege = domain_has_privilege(self.domain, privileges.ATTENDANCE_TRACKING)
+        # Temporary toggle that will be removed once the feature is released
+        has_at_toggle_enabled = toggles.ATTENDANCE_TRACKING.enabled(self.domain)
+        if has_at_privilege and has_at_toggle_enabled:
+            groups += get_user_case_sharing_groups_for_events(self)
         return groups
 
     def get_reporting_groups(self):
