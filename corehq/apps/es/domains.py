@@ -72,9 +72,9 @@ class ElasticDomain(ElasticDocumentAdapter):
             domain_dict = copy(domain)
         else:
             raise TypeError(f"Unkown type {type(domain)}")
-        return self.from_dict(domain_dict)
+        return self._from_dict(domain_dict)
 
-    def from_dict(self, domain_dict):
+    def _from_dict(self, domain_dict):
         """
         Takes a domain dict and applies required transformation to make it suitable for ES.
         The function is replica of ``transform_domain_for_elasticsearch``.
