@@ -1,4 +1,5 @@
 import uuid
+from unittest.mock import patch
 
 from django.test import SimpleTestCase, TestCase
 
@@ -30,12 +31,16 @@ class GroupToUserPillowTest(SimpleTestCase):
     def setUp(self):
         super(GroupToUserPillowTest, self).setUp()
         self.user_id = 'user1'
-        _create_es_user(self.user_id, self.domain)
+        self._create_es_user_without_db_calls(self.user_id, self.domain)
 
     def _check_es_user(self, group_ids=None, group_names=None):
         _assert_es_user_and_groups(
             self, self.user_id, group_ids, group_names
         )
+
+    def _create_es_user_without_db_calls(self, *args):
+        with patch('corehq.apps.groups.dbaccessors.get_group_id_name_map_by_user', return_value=[]):
+            _create_es_user(*args)
 
     def test_update_es_user_with_groups(self):
         group_doc = {

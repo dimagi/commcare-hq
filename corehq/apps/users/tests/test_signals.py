@@ -128,9 +128,10 @@ class TestElasticSyncPatch(SimpleTestCase):
     @sync_users_to_es()
     def test_user_sync_is_enabled_with_decorator(self):
         def simple_doc(user):
-            return user.to_json()
+            user_json = user.to_json()
+            return (user_json.pop('_id'), user_json)
         user = self.MockUser()
         self.assertFalse(user_adapter.exists(user.user_id))
-        with patch("corehq.apps.users.signals._transform_for_es", simple_doc):
+        with patch.object(user_adapter, 'from_python', simple_doc):
             update_user_in_es(None, user)
         self.assertTrue(user_adapter.exists(user.user_id))
