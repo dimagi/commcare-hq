@@ -10,6 +10,9 @@ from corehq.apps.case_search.filter_dsl import (
 from corehq.apps.case_search.exceptions import CaseFilterError
 from corehq.apps.es import case_search, filters
 from corehq.apps.es import cases as case_es
+from corehq.apps.reports.standard.cases.utils import (
+    query_location_restricted_cases,
+)
 from dimagi.utils.parsing import FALSE_STRINGS
 from .core import UserError, serialize_es_case
 
@@ -68,7 +71,7 @@ COMPOUND_FILTERS = {
 }
 
 
-def get_list(domain, params):
+def get_list(domain, couch_user, params):
     if 'cursor' in params:
         params_string = b64decode(params['cursor']).decode('utf-8')
         params = QueryDict(params_string, mutable=True)
@@ -79,6 +82,9 @@ def get_list(domain, params):
     else:
         params = params.copy()  # Makes params mutable for pagination below
         query = _get_query(domain, params)
+
+    if not couch_user.has_permission(domain, 'access_all_locations'):
+        query = query_location_restricted_cases(query, domain, couch_user)
 
     es_result = query.run()
     hits = es_result.hits

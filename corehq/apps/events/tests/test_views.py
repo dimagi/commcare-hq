@@ -13,7 +13,7 @@ from corehq.apps.users.role_utils import UserRolePresets
 from corehq.form_processor.models import CommCareCase
 from corehq.util.test_utils import flag_enabled
 
-from ..models import ATTENDEE_CASE_TYPE, Event
+from ..models import Event, get_attendee_case_type
 from ..views import EventCreateView, EventsView
 
 
@@ -132,9 +132,10 @@ class TestEventsCreateView(BaseEventViewTestClass):
 
     @contextmanager
     def _get_attendee(self):
+        case_type = get_attendee_case_type(self.domain)
         (attendee,) = self.factory.create_or_update_cases([
             CaseStructure(attrs={
-                'case_type': ATTENDEE_CASE_TYPE,
+                'case_type': case_type,
                 'create': True,
             })
         ])

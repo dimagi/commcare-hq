@@ -275,16 +275,14 @@ class CommCareUserResource(v0_1.CommCareUserResource):
 class WebUserResource(v0_1.WebUserResource):
 
     def get_resource_uri(self, bundle_or_obj=None, url_name='api_dispatch_detail'):
-        if isinstance(bundle_or_obj, Bundle):
-            domain = bundle_or_obj.request.domain
-            obj = bundle_or_obj.obj
-        elif bundle_or_obj is None:
-            return None
-
-        return reverse('api_dispatch_detail', kwargs=dict(resource_name=self._meta.resource_name,
-                                                          domain=domain,
-                                                          api_name=self._meta.api_name,
-                                                          pk=obj._id))
+        if bundle_or_obj is None:
+            return super().get_resource_uri(None, url_name)
+        return reverse('api_dispatch_detail', kwargs={
+            'resource_name': self._meta.resource_name,
+            'domain': bundle_or_obj.request.domain,
+            'api_name': self._meta.api_name,
+            'pk': bundle_or_obj.obj._id,
+        })
 
 
 class AdminWebUserResource(v0_1.UserResource):
@@ -982,7 +980,11 @@ class ODataCaseResource(BaseODataResource):
         if not bundle.request.couch_user.has_permission(
             domain, 'access_all_locations'
         ):
-            query = query_location_restricted_cases(query, bundle.request)
+            query = query_location_restricted_cases(
+                query,
+                bundle.request.domain,
+                bundle.request.couch_user,
+            )
 
         return query
 
@@ -1019,7 +1021,11 @@ class ODataFormResource(BaseODataResource):
         if not bundle.request.couch_user.has_permission(
             domain, 'access_all_locations'
         ):
-            query = query_location_restricted_forms(query, bundle.request)
+            query = query_location_restricted_forms(
+                query,
+                bundle.request.domain,
+                bundle.request.couch_user,
+            )
 
         return query
 
