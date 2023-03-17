@@ -100,6 +100,11 @@ from .models_role import (  # noqa
     StaticRole,
     UserRole,
 )
+from corehq import toggles, privileges
+from corehq.apps.accounting.utils import domain_has_privilege
+from corehq.apps.locations.models import (
+    get_case_sharing_groups_for_locations,
+)
 
 WEB_USER = 'web'
 COMMCARE_USER = 'commcare'
@@ -1919,14 +1924,10 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
 
     def get_case_sharing_groups(self):
         from corehq.apps.groups.models import Group
-        from corehq.apps.locations.models import (
-            get_case_sharing_groups_for_locations,
-        )
         from corehq.apps.events.models import (
             get_user_case_sharing_groups_for_events,
         )
-        from corehq import toggles, privileges
-        from corehq.apps.accounting.utils import domain_has_privilege
+
         # get faked location group objects
         groups = list(get_case_sharing_groups_for_locations(
             self.get_sql_locations(self.domain),
