@@ -194,7 +194,7 @@ class TestUserRoleSubscriptionChanges(BaseAccountingTest):
         )
 
         subscription.change_plan(self.community_plan, web_user=self.admin_username)
-        close_mobile_worker_attendee_cases_mock.assert_called_once()
+        close_mobile_worker_attendee_cases_mock.delay.assert_called_once()
 
     def _change_std_roles(self):
         for u in self.user_roles:
