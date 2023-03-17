@@ -371,13 +371,23 @@ hqDefine('cloudcare/js/utils', [
         return inputDate;
     };
 
-    var initDatePicker = function ($el, selectedDate, dateFormat) {
+    var dateFormat = 'MM/DD/YYYY';
+    var dateFormats = ['MM/DD/YYYY', 'YYYY-MM-DD', 'M/D/YYYY', 'M/D/YY', 'M-D-YYYY', 'M-D-YY', moment.defaultFormat];
+
+    /** Coerce an input date string to a moment object */
+    var parseInputDate = function (dateString) {
+        if (!moment.isMoment(dateString)) {
+            dateString = convertTwoDigitYear(dateString);
+        }
+        let dateObj = moment(dateString, dateFormats, true);
+        return dateObj.isValid() ? dateObj : null;
+    };
+
+    var initDatePicker = function ($el, selectedDate) {
         if (!$el.length) {
             return;
         }
 
-        dateFormat = dateFormat || "MM/DD/YYYY";
-        let formats = _.union([dateFormat], ["MM/DD/YYYY", "MM/DD/YY", "YYYY-MM-DD"]);
         $el.datetimepicker({
             date: selectedDate,
             useCurrent: false,
@@ -386,19 +396,13 @@ hqDefine('cloudcare/js/utils', [
             showTodayButton: true,
             debug: true,
             format: dateFormat,
-            extraFormats: formats,
+            extraFormats: dateFormats,
             useStrict: true,
             icons: {
                 today: 'glyphicon glyphicon-calendar',
             },
             tooltips: dateTimePickerTooltips,
-            parseInputDate: function (dateString) {
-                if (!moment.isMoment(dateString) || dateString instanceof Date) {
-                    dateString = convertTwoDigitYear(dateString);
-                }
-                let dateObj = moment(dateString, formats, true);
-                return dateObj.isValid() ? dateObj : null;
-            },
+            parseInputDate: parseInputDate,
         });
 
         $el.on("focusout", $el.data("DateTimePicker").hide);
@@ -406,15 +410,15 @@ hqDefine('cloudcare/js/utils', [
         $el.attr("pattern", "[0-9-/]+");
     };
 
-    var initTimePicker = function ($el, selectedTime, dateFormat) {
+    var initTimePicker = function ($el, selectedTime, timeFormat) {
         if (!$el.length) {
             return;
         }
 
-        let date = moment(selectedTime, dateFormat);
+        let date = moment(selectedTime, timeFormat);
         $el.datetimepicker({
             date: date.isValid() ? date : null,
-            format: dateFormat,
+            format: timeFormat,
             useStrict: true,
             useCurrent: false,
             showClear: true,
@@ -427,7 +431,9 @@ hqDefine('cloudcare/js/utils', [
     };
 
     return {
+        dateFormat: dateFormat,
         convertTwoDigitYear: convertTwoDigitYear,
+        parseInputDate: parseInputDate,
         initDatePicker: initDatePicker,
         initTimePicker: initTimePicker,
         getFormUrl: getFormUrl,

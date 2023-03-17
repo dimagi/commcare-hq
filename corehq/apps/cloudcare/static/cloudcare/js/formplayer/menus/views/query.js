@@ -15,16 +15,14 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
     var separator = " to ",
         serverSeparator = "__",
         serverPrefix = "__range__",
-        dateFormat = "MM/DD/YYYY",
-        // A list of acceptable date formats, in order of preference
-        dateFormats = ['YYYY-MM-DD', 'MM/DD/YYYY', 'MM-DD-YYYY', 'MM/DD/YY', 'MM-DD-YY', moment.defaultFormat],
+        dateFormat = cloudcareUtils.dateFormat,
         selectDelimiter = "#,#"; // Formplayer also uses this
 
     var toIsoDate = function (dateString) {
-        return moment(dateString, dateFormats, true).format('YYYY-MM-DD');
+        return cloudcareUtils.parseInputDate(dateString).format('YYYY-MM-DD');
     };
     var toUiDate = function (dateString) {
-        return moment(dateString, dateFormats, true).format(dateFormat);
+        return cloudcareUtils.parseInputDate(dateString).format(dateFormat);
     };
 
     var encodeValue = function (model, searchForBlank) {
@@ -361,7 +359,7 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
                 escapeMarkup: function (m) { return DOMPurify.sanitize(m); },
             });
             this.ui.hqHelp.hqHelp();
-            cloudcareUtils.initDatePicker(this.ui.date, this.model.get('value'), dateFormat);
+            cloudcareUtils.initDatePicker(this.ui.date, this.model.get('value'));
             this.ui.dateRange.daterangepicker({
                 locale: {
                     format: dateFormat,
@@ -370,6 +368,9 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
                 autoUpdateInput: false,
                 "autoApply": true,
             });
+            this.ui.dateRange.attr("placeholder", dateFormat + separator + dateFormat);
+            let separatorChars = _.unique(separator).join("");
+            this.ui.dateRange.attr("pattern", "^[\\d\\/\\-" + separatorChars + "]*$");
             this.ui.dateRange.on('cancel.daterangepicker', function () {
                 $(this).val('').trigger('change');
             });
@@ -377,18 +378,20 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
                 $(this).val(picker.startDate.format(dateFormat) + separator + picker.endDate.format(dateFormat)).trigger('change');
             });
             this.ui.dateRange.on('change', function () {
-                // Validate free-text input. Accept anything moment can recognize as a date, reformatting for ES.
-                var $input = $(this),
+                // Validate free-text input
+                var start, end,
+                    $input = $(this),
                     oldValue = $input.val(),
-                    parts = _.map(oldValue.split(separator), function (v) { return moment(v, dateFormats); }),
+                    parts = _.map(oldValue.split(separator), cloudcareUtils.parseInputDate),
                     newValue = '';
 
-                if (_.every(parts, function (part) { return part.isValid(); }))  {
+                if (_.every(parts, part => part !== null))  {
                     if (parts.length === 1) { // condition where only one valid date is typed in rather than a range
-                        newValue = oldValue + separator + oldValue;
+                        start = end = parts[0];
                     } else if (parts.length === 2) {
-                        newValue = parts[0].format(dateFormat) + separator + parts[1].format(dateFormat);
+                        [start, end] = parts;
                     }
+                    newValue = start.format(dateFormat) + separator + end.format(dateFormat);
                 }
                 if (oldValue !== newValue) {
                     $input.val(newValue).trigger('change');
