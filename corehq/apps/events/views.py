@@ -16,8 +16,6 @@ from casexml.apps.case.mock import CaseBlock
 from corehq import toggles
 from corehq.apps.domain.decorators import login_and_domain_required
 from corehq.apps.domain.views.base import BaseDomainView
-from corehq.apps.events import tasks
-from corehq.apps.events.models import AttendanceTrackingConfig
 from corehq.apps.hqcase.utils import submit_case_blocks
 from corehq.apps.hqwebapp.decorators import use_jquery_ui, use_multiselect
 from corehq.apps.hqwebapp.views import CRUDPaginatedViewMixin
@@ -27,7 +25,16 @@ from corehq.apps.users.views import BaseUserSettingsView
 from corehq.util.jqueryrmi import JSONResponseMixin, allow_remote_invocation
 
 from .forms import CreateEventForm, NewAttendeeForm
-from .models import Event, get_attendee_case_type, get_paginated_attendees
+from .models import (
+    AttendanceTrackingConfig,
+    Event,
+    get_attendee_case_type,
+    get_paginated_attendees,
+)
+from .tasks import (
+    close_mobile_worker_attendee_cases,
+    sync_mobile_worker_attendees,
+)
 
 
 class BaseEventView(BaseDomainView):
@@ -342,9 +349,9 @@ class AttendeesConfigView(JSONResponseMixin, BaseUserSettingsView, BaseEventView
         attendees_enabled = json_data['mobile_worker_attendee_enabled']
         AttendanceTrackingConfig.toggle_mobile_worker_attendees(self.domain, value=attendees_enabled)
         if attendees_enabled:
-            tasks.sync_mobile_worker_attendees.delay(self.domain, user_id=self.couch_user.user_id)
+            sync_mobile_worker_attendees.delay(self.domain, user_id=self.couch_user.user_id)
         else:
-            tasks.close_mobile_worker_attendee_cases.delay(self.domain)
+            close_mobile_worker_attendee_cases.delay(self.domain)
 
         return self.json_response({
             "mobile_worker_attendee_enabled": attendees_enabled
