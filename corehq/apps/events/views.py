@@ -3,20 +3,21 @@ from django.http import (
     HttpResponseRedirect,
     JsonResponse,
 )
+import json
 from django.urls import reverse
 from django.utils.translation import gettext_lazy as _
 from django.views.decorators.http import require_GET
-
 from corehq import toggles
 from corehq.apps.domain.decorators import login_and_domain_required
 from corehq.apps.domain.views.base import BaseDomainView
+from corehq.apps.events.models import AttendanceTrackingConfig
 from corehq.apps.hqwebapp.decorators import use_jquery_ui, use_multiselect
 from corehq.apps.hqwebapp.views import CRUDPaginatedViewMixin
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import HqPermissions
 from corehq.apps.users.views import BaseUserSettingsView
-from corehq.util.jqueryrmi import JSONResponseMixin
-
+from corehq.util.jqueryrmi import JSONResponseMixin, allow_remote_invocation
+from corehq.apps.events.tasks import sync_mobile_worker_attendees
 from .forms import CreateEventForm
 from .models import Event, get_paginated_attendees
 
@@ -237,6 +238,30 @@ class AttendeesListView(JSONResponseMixin, BaseUserSettingsView):
 
     def post(self, *args, **kwargs):
         return super(AttendeesListView, self).post(*args, **kwargs)
+
+
+class AttendeesConfigView(JSONResponseMixin, BaseUserSettingsView, BaseEventView):
+    urlname = "attendees_config"
+
+    @allow_remote_invocation
+    def get(self, request, *args, **kwargs):
+        return self.json_response({
+            "mobile_worker_attendee_enabled": AttendanceTrackingConfig.mobile_workers_can_be_attendees(self.domain)
+        })
+
+    @allow_remote_invocation
+    def post(self, request, *args, **kwargs):
+        json_data = json.loads(request.body)
+        attendees_enabled = json_data['mobile_worker_attendee_enabled']
+        AttendanceTrackingConfig.toggle_mobile_worker_attendees(self.domain, value=attendees_enabled)
+        if attendees_enabled:
+            sync_mobile_worker_attendees.delay(domain_name=self.domain, user_id=self.couch_user.user_id)
+        else:
+            # TODO: Close the commcare-attendee case assosiated with each mobile worker
+            pass
+        return self.json_response({
+            "mobile_worker_attendee_enabled": attendees_enabled
+        })
 
 
 @require_GET
