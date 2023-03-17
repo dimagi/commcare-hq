@@ -118,7 +118,7 @@ class Event(models.Model):
             models.Index(fields=("manager_id",)),
         )
 
-    def get_case_sharing_group(self, user_id):
+    def get_fake_case_sharing_group(self, user_id):
         """
         Returns a fake group object that cannot be saved.
         This is used for giving users access via case sharing groups,
@@ -296,7 +296,7 @@ def get_user_case_sharing_groups_for_events(commcare_user):
     """
     for event in Event.objects.by_domain(commcare_user.domain):
         if commcare_user.user_id in event.attendance_taker_ids:
-            yield event.get_case_sharing_group(commcare_user.user_id)
+            yield event.get_fake_case_sharing_group(commcare_user.user_id)
 
 class AttendeeCaseManager:
 
