@@ -18,7 +18,7 @@ def sync_mobile_worker_attendees(domain_name, user_id):
     """
     Create attendees from mobile workers
     """
-    with CriticalSection(['sync_attendees_' + domain_name]):
+    with CriticalSection(['sync_mobile_worker_attendees_' + domain_name]):
         new_case_blocks = []
         closed_cases = []
         user_id_case_mapping = get_existing_cases_by_user_ids(domain_name)
@@ -45,20 +45,21 @@ def close_mobile_worker_attendee_cases(domain_name):
     """
     Close attendee cases associated with mobile workers
     """
-    case_changes = []
-    user_id_case_mapping = get_existing_cases_by_user_ids(domain_name)
-    mobile_worker_user_ids = {user.user_id for user in CommCareUser.by_domain(domain_name)}
+    with CriticalSection(['close_mobile_worker_attendees_' + domain_name]):
+        case_changes = []
+        user_id_case_mapping = get_existing_cases_by_user_ids(domain_name)
+        mobile_worker_user_ids = {user.user_id for user in CommCareUser.by_domain(domain_name)}
 
-    for commcare_user_id, case in user_id_case_mapping.items():
-        if commcare_user_id in mobile_worker_user_ids:
-            case_changes.append((case.case_id, {}, True))
+        for commcare_user_id, case in user_id_case_mapping.items():
+            if commcare_user_id in mobile_worker_user_ids:
+                case_changes.append((case.case_id, {}, True))
 
-    if case_changes:
-        bulk_update_cases(
-            domain_name,
-            case_changes,
-            device_id='corehq.apps.events.tasks.close_mobile_worker_attendee_cases'
-        )
+        if case_changes:
+            bulk_update_cases(
+                domain_name,
+                case_changes,
+                device_id='corehq.apps.events.tasks.close_mobile_worker_attendee_cases'
+            )
 
 def get_existing_cases_by_user_ids(domain):
     """Returns a mapping like `{user_id1: case1, user_id2: case2}`. The user_ids's are fetched from the case's
