@@ -591,7 +591,7 @@ def sync_all_tableau_users():
         # Add/delete/update remote users to match with local reality
         for local_user in local_users:
             local_tableau_username = tableau_username(local_user.username)
-            if local_tableau_username not in all_remote_users.keys():
+            if local_tableau_username not in all_remote_users:
                 _add_tableau_user_remote(session, local_user, local_user.role)
             elif local_user.tableau_user_id != all_remote_users[local_tableau_username]['id']:
                 _delete_user_remote(session, all_remote_users[local_tableau_username]['id'])
