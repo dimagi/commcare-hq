@@ -1,6 +1,6 @@
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.events.models import AttendeeCase, ATTENDEE_USER_ID_CASE_PROPERTY
-from corehq.apps.events.tasks import get_existing_cases_by_user_ids
+from corehq.apps.events.tasks import get_user_attendee_cases_on_domain
 from corehq.apps.events import tasks
 from corehq.apps.users.models import HqPermissions, UserRole, WebUser
 from corehq.apps.users.models import CommCareUser
@@ -68,10 +68,10 @@ class TestTasks(TestCase):
         """Test that the `sync_mobile_worker_attendees` task creates `commcare-attendee` cases for mobile
         workers
         """
-        user_id_case_mapping = get_existing_cases_by_user_ids(self.domain)
+        user_id_case_mapping = get_user_attendee_cases_on_domain(self.domain)
         user_ids = list(user_id_case_mapping.keys())
         tasks.sync_mobile_worker_attendees(domain_name=self.domain, user_id=self.webuser.user_id)
-        user_id_case_mapping = get_existing_cases_by_user_ids(self.domain)
+        user_id_case_mapping = get_user_attendee_cases_on_domain(self.domain)
         user_ids = list(user_id_case_mapping.keys())
 
         self.assertEqual(len(user_ids), 2)
@@ -120,7 +120,7 @@ class TestTasks(TestCase):
         self._create_non_mobile_worker_attendee_case()
 
         # Let's make sure they're all open
-        user_id_case_mapping = get_existing_cases_by_user_ids(self.domain)
+        user_id_case_mapping = get_user_attendee_cases_on_domain(self.domain)
         self.assertEqual(len(user_id_case_mapping), 3)
 
         for case in user_id_case_mapping.values():
@@ -130,7 +130,7 @@ class TestTasks(TestCase):
         tasks.close_mobile_worker_attendee_cases(domain_name=self.domain)
 
         # Only those with the `ATTENDEE_USER_ID_CASE_PROPERTY` property should be closed
-        user_id_case_mapping = get_existing_cases_by_user_ids(self.domain)
+        user_id_case_mapping = get_user_attendee_cases_on_domain(self.domain)
         for case in user_id_case_mapping.values():
             if case.get_case_property(ATTENDEE_USER_ID_CASE_PROPERTY):
                 self.assertTrue(case.closed)

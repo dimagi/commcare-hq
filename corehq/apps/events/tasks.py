@@ -21,7 +21,7 @@ def sync_mobile_worker_attendees(domain_name, user_id):
     with CriticalSection(['sync_mobile_worker_attendees_' + domain_name]):
         new_case_blocks = []
         closed_cases = []
-        user_id_case_mapping = get_existing_cases_by_user_ids(domain_name)
+        user_id_case_mapping = get_user_attendee_cases_on_domain(domain_name)
         attendee_case_type = get_attendee_case_type(domain_name)
 
         for user in CommCareUser.by_domain(domain_name):
@@ -47,7 +47,7 @@ def close_mobile_worker_attendee_cases(domain_name):
     """
     with CriticalSection(['close_mobile_worker_attendees_' + domain_name]):
         case_changes = []
-        user_id_case_mapping = get_existing_cases_by_user_ids(domain_name)
+        user_id_case_mapping = get_user_attendee_cases_on_domain(domain_name)
         mobile_worker_user_ids = {user.user_id for user in CommCareUser.by_domain(domain_name)}
 
         for commcare_user_id, case in user_id_case_mapping.items():
@@ -61,7 +61,8 @@ def close_mobile_worker_attendee_cases(domain_name):
                 device_id='corehq.apps.events.tasks.close_mobile_worker_attendee_cases'
             )
 
-def get_existing_cases_by_user_ids(domain):
+
+def get_user_attendee_cases_on_domain(domain):
     """Returns a mapping like `{user_id1: case1, user_id2: case2}`. The user_ids's are fetched from the case's
     `ATTENDEE_USER_ID_CASE_PROPERTY` property, which is a commcare user id
     """
