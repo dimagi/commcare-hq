@@ -44,12 +44,12 @@ function rebuildstaging() {
     REPO_ROOT='artifacts/staging-branches'
     if [[ ! -d "$REPO_ROOT/.git" ]]
     then
-        git clone https://github.com/dimagi/staging-branches.git $REPO_ROOT
+        git clone https://github.com/dimagi/staging-branches.git "$REPO_ROOT"
     else
-        git -C $REPO_ROOT pull origin main
+        git -C "$REPO_ROOT" pull origin main
     fi
 
-    git -C $REPO_ROOT show -n 1 -- commcare-hq-staging.yml
+    git -C "$REPO_ROOT" show -n 1 -- commcare-hq-staging.yml
     echo "rebuilding staging branch..."
     git-build-branch "$REPO_ROOT/commcare-hq-staging.yml" "$@"
 }
