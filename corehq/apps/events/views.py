@@ -1,24 +1,40 @@
-from django.http import (
-    Http404,
-    HttpResponseRedirect,
-    JsonResponse,
-)
+import json
+from uuid import uuid4
+
+from django.core.exceptions import ValidationError
+from django.http import Http404, HttpResponseRedirect, JsonResponse
 from django.urls import reverse
 from django.utils.translation import gettext_lazy as _
 from django.views.decorators.http import require_GET
 
+from jsonschema import ValidationError as SchemaValidationError
+from jsonschema import validate
+from memoized import memoized
+
+from casexml.apps.case.mock import CaseBlock
+
 from corehq import toggles
 from corehq.apps.domain.decorators import login_and_domain_required
 from corehq.apps.domain.views.base import BaseDomainView
+from corehq.apps.hqcase.utils import submit_case_blocks
 from corehq.apps.hqwebapp.decorators import use_jquery_ui, use_multiselect
 from corehq.apps.hqwebapp.views import CRUDPaginatedViewMixin
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import HqPermissions
 from corehq.apps.users.views import BaseUserSettingsView
-from corehq.util.jqueryrmi import JSONResponseMixin
+from corehq.util.jqueryrmi import JSONResponseMixin, allow_remote_invocation
 
-from .forms import CreateEventForm
-from .models import Event, get_paginated_attendees
+from .forms import CreateEventForm, NewAttendeeForm
+from .models import (
+    AttendanceTrackingConfig,
+    Event,
+    get_attendee_case_type,
+    get_paginated_attendees,
+)
+from .tasks import (
+    close_mobile_worker_attendee_cases,
+    sync_mobile_worker_attendees,
+)
 
 
 class BaseEventView(BaseDomainView):
@@ -68,6 +84,7 @@ class EventsView(BaseEventView, CRUDPaginatedViewMixin):
             _("Attendance Target"),
             _("Status"),
             _("Total attendees"),
+            _("Total attendance takers"),
         ]
 
     @property
@@ -100,6 +117,7 @@ class EventsView(BaseEventView, CRUDPaginatedViewMixin):
             'status': event.status,
             'total_attendance': event.total_attendance or '-',
             'edit_url': reverse(EventEditView.urlname, args=(self.domain, event.event_id)),
+            'total_attendance_takers': event.get_total_attendance_takers() or '-'
         }
 
 
@@ -156,6 +174,7 @@ class EventCreateView(BaseEventView):
             sameday_reg=event_data['sameday_reg'],
             track_each_day=event_data['track_each_day'],
             manager_id=self.request.couch_user.user_id,
+            attendance_taker_ids=event_data.get('attendance_takers', None),
         )
         event.save()
         event.set_expected_attendees(event_data['expected_attendees'])
@@ -213,6 +232,7 @@ class EventEditView(EventCreateView):
         event.attendance_target = event_update_data['attendance_target']
         event.sameday_reg = event_update_data['sameday_reg']
         event.track_each_day = event_update_data['track_each_day']
+        event.attendance_taker_ids = event_update_data['attendance_takers']
         event.save()
         event.set_expected_attendees(event_update_data['expected_attendees'])
 
@@ -223,6 +243,7 @@ class AttendeesListView(JSONResponseMixin, BaseUserSettingsView):
     urlname = "event_attendees"
     template_name = 'event_attendees.html'
     page_title = _("Attendees")
+
     limit_text = _("Attendees per page")
     empty_notification = _("You have no attendees")
     loading_message = _("Loading attendees")
@@ -235,8 +256,110 @@ class AttendeesListView(JSONResponseMixin, BaseUserSettingsView):
             raise Http404
         return super(AttendeesListView, self).dispatch(*args, **kwargs)
 
-    def post(self, *args, **kwargs):
-        return super(AttendeesListView, self).post(*args, **kwargs)
+    @property
+    @memoized
+    def new_attendee_form(self):
+        if self.request.method == "POST":
+            return NewAttendeeForm(self.request.POST)
+        return NewAttendeeForm()
+
+    @property
+    def page_context(self):
+        return {
+            'new_attendee_form': self.new_attendee_form,
+        }
+
+    @allow_remote_invocation
+    def create_attendee(self, data):
+        try:
+            self._validate_attendee_data(data)
+        except SchemaValidationError as err:
+            return {'error': str(err)}
+
+        try:
+            self._validate_attendee_form(data)
+        except ValidationError as err:
+            return {'error': _("Form validation failed: {}").format(err)}
+
+        case = self._create_attendee_case()
+        return {
+            'success': True,
+            'case_id': case.case_id,
+        }
+
+    def _validate_attendee_data(self, data):
+        """
+        Validates that ``attendee_data`` looks like ::
+
+            {
+                "attendee": {
+                    "name": "Alex Example"
+                }
+            }
+
+        """
+        schema = {
+            'type': 'object',
+            'properties': {
+                'attendee': {
+                    'type': 'object',
+                    'properties': {
+                        'name': {'type': 'string'},
+                    }
+                }
+            }
+        }
+        validate(instance=data, schema=schema)
+
+    def _validate_attendee_form(self, data):
+        self.request.POST = {
+            'domain': self.domain,
+            'name': data['attendee']['name']
+        }
+        if not self.new_attendee_form.is_valid():
+            errors = [e for errors in self.new_attendee_form.errors.values()
+                      for e in errors]
+            raise ValidationError(', '.join(errors))
+
+    def _create_attendee_case(self):
+        case_type = get_attendee_case_type(self.domain)
+        case_block = CaseBlock(
+            case_id=uuid4().hex,
+            owner_id=self.request.couch_user.user_id,
+            case_type=case_type,
+            case_name=self.new_attendee_form.cleaned_data['name'],
+            create=True,
+        )
+        __, cases = submit_case_blocks(
+            [case_block.as_text()],
+            self.domain,
+            device_id='AttendeesListView._create_attendee_case',
+        )
+        return cases[0]
+
+
+class AttendeesConfigView(JSONResponseMixin, BaseUserSettingsView, BaseEventView):
+    urlname = "attendees_config"
+
+    @allow_remote_invocation
+    def get(self, request, *args, **kwargs):
+        return self.json_response({
+            "mobile_worker_attendee_enabled": AttendanceTrackingConfig.mobile_workers_can_be_attendees(self.domain)
+        })
+
+    @allow_remote_invocation
+    def post(self, request, *args, **kwargs):
+        json_data = json.loads(request.body)
+        attendees_enabled = json_data['mobile_worker_attendee_enabled']
+        AttendanceTrackingConfig.toggle_mobile_worker_attendees(self.domain, value=attendees_enabled)
+        if attendees_enabled:
+            sync_mobile_worker_attendees.delay(self.domain, user_id=self.couch_user.user_id)
+        else:
+            close_mobile_worker_attendee_cases.delay(self.domain)
+
+        return self.json_response({
+            "mobile_worker_attendee_enabled": attendees_enabled
+        })
 
 
 @require_GET
