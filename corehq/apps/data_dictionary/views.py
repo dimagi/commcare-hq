@@ -168,9 +168,9 @@ def update_case_property(request, domain):
                 remove_path = property.get('removeFHIRResourcePropertyPath', False)
             else:
                 fhir_resource_prop_path, remove_path = None, None
-            error = save_case_property(name, case_type, domain, data_type, description, label, index, group,
-                                       deprecated, fhir_resource_prop_path, fhir_resource_type_obj, remove_path,
-                                       allowed_values)
+            error = save_case_property(name, case_type, domain, data_type, description, label, group, deprecated,
+                                       fhir_resource_prop_path, fhir_resource_type_obj, remove_path,
+                                       allowed_values, index)
             if error:
                 errors.append(error)
 
