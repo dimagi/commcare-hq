@@ -388,6 +388,7 @@ openpyxl==3.0.9
     #   commcaretranslationchecker
 packaging==23.0
     # via
+    #   -r base-requirements.in
     #   build
     #   sphinx
 parso==0.8.3
