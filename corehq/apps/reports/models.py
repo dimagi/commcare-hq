@@ -375,6 +375,30 @@ class TableauAPISession(object):
             raise TableauAPIError("Error: API does not work with more than 1000 groups on a single site.")
         return response_body['groups']['group']
 
+    def _make_paginated_request_for_users(self, method_name, additional_url_path):
+        page_size = 100
+        page_number = 1
+        total_users = sys.maxsize
+        tableau_users = []
+        print(additional_url_path)
+        while (page_size * (page_number - 1) < total_users):
+            print(page_number)
+            response_body = self._make_request(
+                self.GET,
+                method_name,
+                (self.base_url
+                + f'{additional_url_path}?pageSize={page_size}&pageNumber={page_number}'),
+                {}
+            )
+            # If it's the first page, grab the total user count.
+            if page_number == 1:
+                total_users = int(response_body['pagination']['totalAvailable'])
+                if total_users == 0:
+                    return []
+            tableau_users += response_body['users']['user']
+            page_number += 1
+        return tableau_users
+
     def get_users_on_site(self):
         '''
         Returns dict of the form:
@@ -390,20 +414,13 @@ class TableauAPISession(object):
             ...
         }
         '''
-        url = self.base_url + f'/sites/{self.site_id}/users'
-        response_body = self._make_request(
-            self.GET,
-            'Get Users on Site',
-            url,
-            {}
-        )
-        if response_body['users']:
-            return {user['name']: {
-                "id": user['id'],
-                "siteRole": user['siteRole']
-            } for user in response_body['users']['user']}
-        else:
-            return None
+        additional_url_path = f'/sites/{self.site_id}/users'
+        method_name = 'Get Users on Site'
+        tableau_users = self._make_paginated_request_for_users(method_name, additional_url_path)
+        return {user['name']: {
+            "id": user['id'],
+            "siteRole": user['siteRole']
+        } for user in tableau_users}
 
     def get_users_in_group(self, group_id):
         '''
@@ -420,26 +437,9 @@ class TableauAPISession(object):
             ...
         ]
         '''
-        page_size = 100
-        page_number = 1
-        total_users = sys.maxsize
-        tableau_users = []
-        while (page_size * (page_number - 1) < total_users):
-            response_body = self._make_request(
-                self.GET,
-                'Get Users in Group',
-                (self.base_url
-                + f'/sites/{self.site_id}/groups/{group_id}/users?pageSize={page_size}&pageNumber={page_number}'),
-                {}
-            )
-            # If it's the first page, grab the total user count.
-            if page_number == 1:
-                total_users = int(response_body['pagination']['totalAvailable'])
-                if total_users == 0:
-                    return []
-            tableau_users += response_body['users']['user']
-            page_number += 1
-        return tableau_users
+        method_name = 'Get Users in Group'
+        additional_url_path = f'/sites/{self.site_id}/groups/{group_id}/users'
+        return self._make_paginated_request_for_users(method_name, additional_url_path)
 
     def create_group(self, group_name):
         '''
