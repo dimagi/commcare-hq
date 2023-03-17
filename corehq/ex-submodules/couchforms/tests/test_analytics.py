@@ -26,7 +26,6 @@ from corehq.form_processor.tests.utils import (
     create_form_for_test,
 )
 from corehq.form_processor.utils import TestFormMetadata
-from corehq.pillows.xform import transform_xform_for_elasticsearch
 from corehq.util.test_utils import (
     DocTestMixin,
     disable_quickcache,
@@ -68,8 +67,7 @@ class ExportsFormsAnalyticsTest(TestCase, DocTestMixin):
         cls.error_forms = [create_form_for_test(domain=cls.domain, state=XFormInstance.ERROR, save=False)]
         cls.all_forms = cls.forms + cls.error_forms
         for form in cls.all_forms:
-            elastic_form = transform_xform_for_elasticsearch(form.to_json())
-            form_adapter.index(elastic_form, refresh=True)
+            form_adapter.index(form, refresh=True)
 
     @classmethod
     def tearDownClass(cls):

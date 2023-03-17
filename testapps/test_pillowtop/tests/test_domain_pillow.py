@@ -1,37 +1,27 @@
 from unittest.mock import patch
 
 from django.test import TestCase
+
 from corehq.apps.change_feed import topics
 from corehq.apps.change_feed.topics import get_topic_offset
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.shortcuts import create_domain, publish_domain_saved
-
 from corehq.apps.domain.signals import commcare_domain_post_save
 from corehq.apps.domain.tests.test_utils import delete_all_domains
 from corehq.apps.es import DomainES
+from corehq.apps.es.client import manager
+from corehq.apps.es.domains import domain_adapter
 from corehq.apps.es.tests.utils import es_test
-from corehq.elastic import get_es_new
 from corehq.pillows.domain import get_domain_kafka_to_elasticsearch_pillow
-from corehq.pillows.mappings.domain_mapping import DOMAIN_INDEX_INFO
 from corehq.util.context_managers import drop_connected_signals
-from corehq.util.elastic import ensure_index_deleted
-from pillowtop.es_utils import initialize_index_and_mapping
 
 
-@es_test
+@es_test(requires=[domain_adapter])
 class DomainPillowTest(TestCase):
 
     def setUp(self):
         super(DomainPillowTest, self).setUp()
-        self.index_info = DOMAIN_INDEX_INFO
-        self.elasticsearch = get_es_new()
         delete_all_domains()
-        ensure_index_deleted(self.index_info.index)
-        initialize_index_and_mapping(self.elasticsearch, self.index_info)
-
-    def tearDown(self):
-        ensure_index_deleted(self.index_info.index)
-        super(DomainPillowTest, self).tearDown()
 
     def test_kafka_domain_pillow(self):
         # make a domain
@@ -46,7 +36,7 @@ class DomainPillowTest(TestCase):
         # send to elasticsearch
         pillow = get_domain_kafka_to_elasticsearch_pillow()
         pillow.process_changes(since=since, forever=False)
-        self.elasticsearch.indices.refresh(self.index_info.index)
+        manager.index_refresh(domain_adapter.index_name)
 
         # verify there
         self._verify_domain_in_es(domain_name)
@@ -65,7 +55,7 @@ class DomainPillowTest(TestCase):
         # send to elasticsearch
         pillow = get_domain_kafka_to_elasticsearch_pillow()
         pillow.process_changes(since=since, forever=False)
-        self.elasticsearch.indices.refresh(self.index_info.index)
+        manager.index_refresh(domain_adapter.index_name)
 
         # ensure removed from ES
         self.assertEqual(0, DomainES().run().total)
@@ -82,7 +72,7 @@ class DomainPillowTest(TestCase):
         # send to elasticsearch
         pillow = get_domain_kafka_to_elasticsearch_pillow()
         pillow.process_changes(since=since, forever=False)
-        self.elasticsearch.indices.refresh(self.index_info.index)
+        manager.index_refresh(domain_adapter.index_name)
 
         # verify there
         self._verify_domain_in_es(domain_name)
@@ -103,7 +93,7 @@ class DomainPillowTest(TestCase):
         # process pillow changes
         pillow = get_domain_kafka_to_elasticsearch_pillow()
         pillow.process_changes(since=since, forever=False)
-        self.elasticsearch.indices.refresh(self.index_info.index)
+        manager.index_refresh(domain_adapter.index_name)
 
         # confirm domain still exists
         self._verify_domain_in_es(domain_name)

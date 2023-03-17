@@ -16,9 +16,14 @@ class TestESView(SimpleTestCase):
             "domain": "some-domain",
             "doc_type": CaseESView.doc_type,
             "location_id": "NYC",
+            "backend_id": 'sql'
         }
         case_adapter.index(doc_ny, refresh=True)
-        self.assertEqual(doc_ny, case_adapter.get(doc_id))
+
+        case_info = case_adapter.get(doc_id)
+        case_info.pop('inserted_at')
+        case_info.pop('owner_type')
+        self.assertEqual(doc_ny, case_info)
         view = CaseESView(doc_ny["domain"])
         # test that the view fetches the doc by its ID as we'd expect
-        self.assertEqual(doc_ny, dict(view.get_document(doc_id)._data))
+        self.assertEqual(case_adapter.get(doc_id), dict(view.get_document(doc_id)._data))
