@@ -12,6 +12,7 @@
 
 {% block page_content %}
 {% registerurl 'paginated_attendees' domain %}
+{% registerurl 'attendees_config' domain %}
 
 <p>
   {% blocktrans %}
@@ -23,6 +24,24 @@
     <button type="button" class="btn btn-primary">
       <i class="fa fa-plus"></i> {% trans "Create Potential Attendee" %}
     </button>
+
+  <div id="mobile-worker-attendees" class="ko-template">
+    <div class="btn-toolbar" style="margin-bottom: 20px;">
+      <button
+        type="button"
+        class="btn btn-default"
+        data-bind="visible: !mobileWorkerAttendeesEnabled()"
+        onClick="toggleMobileWorkerAttendees()">
+        <i class="fa"></i> {% trans "Enable Mobile Worker Attendees" %}
+      </button>
+      <button
+        type="button"
+        class="btn btn-danger"
+        data-bind="visible: mobileWorkerAttendeesEnabled()"
+        onClick="toggleMobileWorkerAttendees()">
+        <i class="fa"></i> {% trans "Disable Mobile Worker Attendees" %}
+      </button>
+    </div>
   </div>
   <div id="attendees-list" class="ko-template">
     <div class="panel panel-default">

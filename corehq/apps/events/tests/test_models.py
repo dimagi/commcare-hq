@@ -52,6 +52,11 @@ class TestAttendeeCaseManager(TestCase):
             cases = AttendeeCase.objects.by_domain(DOMAIN)
             self.assertEqual(cases, [open_case])
 
+    def test_manager_returns_closed_cases_as_well(self):
+        with self.get_attendee_cases() as (open_case, closed_case):
+            cases = AttendeeCase.objects.by_domain(DOMAIN, include_closed=True)
+            self.assertEqual(cases, [open_case, closed_case])
+
 
 class TestEventModel(TestCase):
 
