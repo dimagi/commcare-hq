@@ -49,7 +49,7 @@ function rebuildstaging() {
         git -C $REPO_ROOT pull origin main
     fi
 
-    git --git-dir "$REPO_ROOT/.git" show -n 1 -- commcare-hq-staging.yml
+    git -C $REPO_ROOT show -n 1 -- commcare-hq-staging.yml
     echo "rebuilding staging branch..."
     git-build-branch "$REPO_ROOT/commcare-hq-staging.yml" "$@"
 }
