@@ -914,6 +914,11 @@ hqDefine("cloudcare/js/form_entry/entries", function () {
     }
     FileEntry.prototype = Object.create(EntrySingleAnswer.prototype);
     FileEntry.prototype.constructor = EntrySingleAnswer;
+    FileEntry.prototype.onPreProcess = function (newValue) {
+        if (newValue !== constants.NO_ANSWER && newValue !== "") {
+            this.answer(newValue.replace(constants.FILE_PREFIX, ""));
+        }
+    }
     FileEntry.prototype.onAnswerChange = function (newValue) {
         var self = this;
         // file has already been assigned a unique id and another request should not be sent to formplayer
@@ -922,8 +927,13 @@ hqDefine("cloudcare/js/form_entry/entries", function () {
         }
         if (newValue !== constants.NO_ANSWER && newValue !== "") {
             var $input = $('#' + self.entryId);
-            self.answer(newValue.replace(constants.FILE_PREFIX, ""));
             self.file($input[0].files[0]);
+            if (self.file().size > 3000000) {
+                self.answer(constants.NO_ANSWER);
+                self.question.error(gettext("The file you selected exceeds the size limit of 3MB. Please select a file that is smaller than 3MB."));
+                return;
+            }
+            self.question.error(null);
             this.question.onchange();
         } else {
             self.file(null);
