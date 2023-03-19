@@ -918,7 +918,7 @@ hqDefine("cloudcare/js/form_entry/entries", function () {
         if (newValue !== constants.NO_ANSWER && newValue !== "") {
             this.answer(newValue.replace(constants.FILE_PREFIX, ""));
         }
-    }
+    };
     FileEntry.prototype.onAnswerChange = function (newValue) {
         var self = this;
         // file has already been assigned a unique id and another request should not be sent to formplayer
