@@ -82,3 +82,15 @@ def search_health_id(request):
 def get_health_card_png(request):
     user_token = request.data.get("user_token")
     return parse_response(abdm_util.get_health_card_png(user_token))
+
+
+@api_view(["POST"])
+@permission_classes((IsAuthenticated,))
+@authentication_classes((ABDMUserAuthentication,))
+@required_request_params(["health_id"])
+def get_existence_by_health_id(request):
+    health_id = request.data.get("health_id")
+    resp = abdm_util.exists_by_health_id(health_id)
+    if "status" in resp:
+        resp = {"health_id": health_id, "exists": resp.get("status")}
+    return parse_response(resp)
