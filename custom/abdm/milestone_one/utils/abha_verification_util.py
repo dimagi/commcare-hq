@@ -15,6 +15,7 @@ CONFIRM_WITH_AADHAAR_OTP_URL = "v1/auth/confirmWithAadhaarOtp"
 ACCOUNT_INFORMATION_URL = "v1/account/profile"
 SEARCH_BY_HEALTH_ID_URL = "v1/search/searchByHealthId"
 HEALTH_CARD_PNG_FORMAT = "v2/account/getPngCard"
+EXISTS_BY_HEALTH_ID = "v1/search/existsByHealthId"
 
 
 def generate_auth_otp(health_id, auth_method):
@@ -53,3 +54,8 @@ def get_health_card_png(user_token):
     if resp.status_code == 200:
         return {"health_card": base64.b64encode(resp.content)}
     return {"error": "Image could not be downloaded"}
+
+
+def exists_by_health_id(health_id):
+    payload = {"healthId": health_id}
+    return get_response_http_post(EXISTS_BY_HEALTH_ID, payload)
