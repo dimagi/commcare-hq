@@ -73,3 +73,12 @@ def search_health_id(request):
     health_id = request.data.get("health_id")
     resp = abdm_util.search_by_health_id(health_id)
     return parse_response(resp)
+
+
+@api_view(["POST"])
+@permission_classes((IsAuthenticated,))
+@authentication_classes((ABDMUserAuthentication,))
+@required_request_params(["user_token"])
+def get_health_card_png(request):
+    user_token = request.data.get("user_token")
+    return parse_response(abdm_util.get_health_card_png(user_token))

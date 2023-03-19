@@ -1,4 +1,5 @@
 import requests
+import base64
 
 from django.conf import settings
 
@@ -13,6 +14,7 @@ CONFIRM_WITH_MOBILE_OTP_URL = "v1/auth/confirmWithMobileOTP"
 CONFIRM_WITH_AADHAAR_OTP_URL = "v1/auth/confirmWithAadhaarOtp"
 ACCOUNT_INFORMATION_URL = "v1/account/profile"
 SEARCH_BY_HEALTH_ID_URL = "v1/search/searchByHealthId"
+HEALTH_CARD_PNG_FORMAT = "v2/account/getPngCard"
 
 
 def generate_auth_otp(health_id, auth_method):
@@ -41,3 +43,13 @@ def get_account_information(x_token):
 def search_by_health_id(health_id):
     payload = {"healthId": health_id}
     return get_response_http_post(SEARCH_BY_HEALTH_ID_URL, payload)
+
+
+def get_health_card_png(user_token):
+    headers = {"Content-Type": "application/json; charset=UTF-8"}
+    token = get_access_token()
+    headers.update({"Authorization": "Bearer {}".format(token), "X-Token": f"Bearer {user_token}"})
+    resp = requests.get(url=settings.ABDM_BASE_URL + HEALTH_CARD_PNG_FORMAT, headers=headers, stream=True)
+    if resp.status_code == 200:
+        return {"health_card": base64.b64encode(resp.content)}
+    return {"error": "Image could not be downloaded"}
