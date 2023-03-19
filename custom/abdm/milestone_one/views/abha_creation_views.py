@@ -53,6 +53,6 @@ def verify_mobile_otp(request):
     resp = abdm_util.verify_mobile_otp(otp, txn_id)
     if resp and "txnId" in resp:
         resp = abdm_util.create_health_id(txn_id)
-        resp.pop("token")
+        resp["user_token"] = resp.pop("token")
         resp.pop("refreshToken")
     return parse_response(resp)
