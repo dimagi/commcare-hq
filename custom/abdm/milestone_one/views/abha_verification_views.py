@@ -48,7 +48,7 @@ def confirm_with_mobile_otp(request):
     otp = request.data.get("otp")
     resp = abdm_util.confirm_with_mobile_otp(otp, txn_id)
     if "token" in resp:
-        resp = {"status": "success", "txnId": txn_id}
+        resp = {"status": "success", "txnId": txn_id, "user_token": resp.get("token")}
     return parse_response(resp)
 
 
@@ -61,7 +61,7 @@ def confirm_with_aadhaar_otp(request):
     otp = request.data.get("otp")
     resp = abdm_util.confirm_with_aadhaar_otp(otp, txn_id)
     if "token" in resp:
-        resp = {"status": "success", "txnId": txn_id}
+        resp = {"status": "success", "txnId": txn_id, "user_token": resp.get("token")}
     return parse_response(resp)
 
 
