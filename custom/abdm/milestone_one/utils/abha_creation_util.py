@@ -29,7 +29,7 @@ def verify_mobile_otp(otp, txnid):
     return get_response_http_post(VERIFY_MOBILE_OTP_URL, payload)
 
 
-def create_health_id(txnid):
+def create_health_id(txnid, health_id=None):
     """
     Created ABHA Health ID of the user.
     Info about what things are already authenticated in the ABHA creation
@@ -40,4 +40,6 @@ def create_health_id(txnid):
     payload = {
         "txnId": txnid
     }
+    if health_id:
+        payload.update({"healthId": health_id})
     return get_response_http_post(CREATE_HEALTH_ID_URL, payload)
