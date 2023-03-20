@@ -1,3 +1,4 @@
+from itertools import chain
 from django.utils.translation import gettext as _
 from collections import defaultdict
 
@@ -115,58 +116,67 @@ def log_commcare_user_locations_changes(request, user, old_location_id, old_assi
         )
 
 
-def _get_location_ids_with_single_user(domain, location_ids, user_id):
-    # Remove the user's ID, as we want to see which other CommCare users share any of the given location_ids
-    user_query = (
+def _get_location_ids_with_other_users(domain, location_ids, user_id):
+    """
+    Gets all the location ids where a `CommCareUser` is assigned to one of the `location_ids`.
+    This list excludes the given `user_id`.
+    """
+    other_user_loc_ids = (
         UserES()
         .domain(domain)
         .mobile_users()
+        .NOT(filters.doc_id(user_id))
         .location(location_ids)
+        .values_list('assigned_location_ids', flat=True)
     )
-    user_query.filter(filters.NOT(filters.doc_id(user_id)))
-    other_commcare_user_ids = user_query.get_ids()
+    return set(other_user_loc_ids)
 
-    case_query = (
+
+def _get_location_case_counts(domain, location_ids):
+    """
+    Get the case count for all locations in `location_ids`
+    :returns A dict with location_id as the key and the case count as the value
+    """
+    query = (
         CaseES()
         .domain(domain)
         .owner(location_ids)
-        .user(other_commcare_user_ids)
-        .aggregation(TermsAggregation('by_location', 'owner_id')
-        .size(0))
+        .aggregation(TermsAggregation('by_location', 'owner_id').size(0))
     ).run()
-    return list(set(location_ids) - set(case_query.aggregations.by_location.keys))
-
-
-def _get_location_case_counts_with_single_user(domain, location_ids):
-    query = (CaseES()
-            .domain(domain)
-            .owner(location_ids)
-            .aggregation(TermsAggregation('by_location', 'owner_id')
-            .size(0))
-    ).run()
-    locations = SQLLocation.objects.filter(location_id__in=location_ids)
     counts = query.aggregations.by_location.counts_by_bucket()
-    return locations, counts
+    for location_id in location_ids:
+        if location_id not in counts:
+            counts[location_id] = 0
+
+    return counts
 
 
-def get_locations_with_single_user(domain, location_ids, user_id):
+def get_locations_with_orphaned_cases(domain, location_ids, user_id):
     """
     Takes a list of location IDs and returns all the given location IDs
-    where the user ID is the only one that has cases there.
+    where the user ID is the only one that has cases there. Also searched through descendant locations
+    if a location has `view_descendants` enabled.
     :param domain: The domain to search in.
     :param location_ids: A list of location IDs to get case counts on.
-    :param user_id: The user ID to check given location_ids with as the only assigned user with cases.
+    :param user_id: The user ID to check given `location_ids` with as the only assigned user with cases.
     :returns A dict with location names as the key, and the number of cases assigned to them as the value.
     """
-    # Get locations where only given user_id has cases in list of locations
-    location_ids_with_single_user = _get_location_ids_with_single_user(domain, location_ids, user_id)
-    locations_with_single_user = dict()
-    if location_ids_with_single_user:
-        locations, counts = _get_location_case_counts_with_single_user(domain, location_ids_with_single_user)
-        for location in locations:
-            if location.location_id in counts:
-                locations_with_single_user[location.name] = counts[location.location_id]
-            else:
-                locations_with_single_user[location.name] = 0
+    loc_ids_with_other_users = _get_location_ids_with_other_users(domain, location_ids, user_id)
 
-    return locations_with_single_user
+    # Get the location ids that are in all_loc_ids but not in loc_ids_with_other_users
+    loc_ids_with_orphaned_cases = list(set(location_ids) - loc_ids_with_other_users)
+    if loc_ids_with_orphaned_cases:
+        # Add all child cases for locations that have view_descendants enabled
+        assigned_locs = SQLLocation.objects.filter(location_id__in=loc_ids_with_orphaned_cases)
+        descendant_locs = SQLLocation.objects.get_queryset_descendants(
+            assigned_locs.filter(location_type__view_descendants=True)
+        )
+        all_locs = set(chain(assigned_locs, descendant_locs))
+        all_loc_ids = [loc.location_id for loc in all_locs]
+        case_count_per_loc = _get_location_case_counts(domain, all_loc_ids)
+
+        return {
+            loc.get_path_display(): case_count_per_loc[loc.location_id] for loc in all_locs
+        }
+    else:
+        return {}
