@@ -412,6 +412,9 @@ class ElasticDocumentAdapter(BaseAdapter):
 
     analysis = DEFAULT_ANALYSIS
     settings_key = None
+
+    # Model class whose objects are to be saved in ES.
+    # This variable be used in data transformation logic
     model_cls = None
 
     def __init__(self, index_name, type_):
