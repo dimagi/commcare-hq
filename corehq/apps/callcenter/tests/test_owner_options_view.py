@@ -45,8 +45,8 @@ class CallCenterLocationOwnerOptionsViewTest(TestCase):
         for i in range(2):
             group = Group(domain=TEST_DOMAIN, name="group{}".format(i), case_sharing=True)
             group.save()
-            group_adapter.index(group.to_json(), refresh=True)
             cls.groups.append(group)
+        group_adapter.bulk_index(cls.groups, refresh=True)
         cls.group_ids = {g._id for g in cls.groups}
 
         # Create locations
@@ -62,8 +62,7 @@ class CallCenterLocationOwnerOptionsViewTest(TestCase):
 
         # Create users
         cls.users = [CommCareUser.create(TEST_DOMAIN, 'user{}'.format(i), '***', None, None) for i in range(3)]
-        for user in cls.users:
-            user_adapter.index(user.to_json(), refresh=True)
+        user_adapter.bulk_index(cls.users, refresh=True)
         cls.user_ids = {u._id for u in cls.users}
 
     @classmethod

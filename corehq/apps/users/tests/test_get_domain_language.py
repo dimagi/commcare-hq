@@ -17,11 +17,11 @@ class TestDomainLanguages(TestCase):
         cls.app1 = Application.new_app(cls.domain, 'My Application 1')
         cls.app1.langs = ['en', 'es']
         cls.app1.save()
-        app_adapter.index(cls.app1.to_json(), refresh=True)
+
         cls.app2 = Application.new_app(cls.domain, 'My Application 2')
         cls.app2.langs = ['fr']
         cls.app2.save()
-        app_adapter.index(cls.app2.to_json(), refresh=True)
+        app_adapter.bulk_index([cls.app2, cls.app1], refresh=True)
 
     @classmethod
     def tearDownClass(cls):

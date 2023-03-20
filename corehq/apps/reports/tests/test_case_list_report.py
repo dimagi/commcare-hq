@@ -68,8 +68,7 @@ class TestCaseListReport(TestCase):
 
     @classmethod
     def _send_cases_to_es(cls):
-        for case in cls.case_list:
-            case_adapter.index(case.to_json(), refresh=True)
+        case_adapter.bulk_index(cls.case_list, refresh=True)
 
     def test_with_project_data_slug(self):
         report_slugs = ['project_data']

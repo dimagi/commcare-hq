@@ -40,7 +40,7 @@ class ElasticApp(ElasticDocumentAdapter):
         """
         Takes in an ``Application`` object or an app dict
         and applies required transformation to make it suitable for ES.
-        The function is replica of ``transform_app_for_es`` with added support for user objects.
+        The function is replica of ``transform_app_for_es`` with added support for Application objects.
         In future all references to  ``transform_app_for_es`` will be replaced by `from_python`
 
         :param app: an instance of ``Application`` or ``dict`` which is ``Application.to_json()``
@@ -56,9 +56,9 @@ class ElasticApp(ElasticDocumentAdapter):
             app_obj = app
         else:
             raise TypeError(f"Unknown type {type(app)}")
-        app_obj['@indexed_on'] = json_format_datetime(datetime.utcnow())
         app_dict = app_obj.to_json()
-        return app_dict.pop('_id'), app_dict
+        app_dict['@indexed_on'] = json_format_datetime(datetime.utcnow())
+        return super()._from_dict(app_dict)
 
 
 app_adapter = create_document_adapter(

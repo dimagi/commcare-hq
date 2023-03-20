@@ -42,16 +42,10 @@ class ElasticSMS(ElasticDocumentAdapter):
     def mapping(self):
         return get_adapter_mapping(self)
 
-    @classmethod
-    def from_python(cls, sms):
+    @property
+    def model_cls(self):
         from corehq.apps.sms.models import SMS
-        if isinstance(sms, SMS):
-            sms_dict = sms.to_json()
-        elif isinstance(sms, dict):
-            sms_dict = copy(sms)
-        else:
-            raise TypeError(f"Unknown type {type(sms)}")
-        return sms_dict.pop('_id'), sms_dict
+        return SMS
 
 
 sms_adapter = create_document_adapter(
