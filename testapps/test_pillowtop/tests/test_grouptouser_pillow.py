@@ -133,7 +133,7 @@ def _create_es_user(user_id, domain):
         last_name='Casual',
         is_active=True,
     )
-    user_adapter.index(user.to_json(), refresh=True)
+    user_adapter.index(user, refresh=True)
     return user
 
 

@@ -53,35 +53,30 @@ class ExportFilterResultTest(SimpleTestCase):
     def setUpClass(cls):
         super().setUpClass()
         with patch('corehq.pillows.utils.get_user_type', return_value='CommCareUser'):
-            case = new_case(closed=True)
-            case_adapter.index(case.to_json(), refresh=True)
-
-            case = new_case(closed=False)
-            case_adapter.index(case.to_json(), refresh=True)
-
-            case = new_case(closed=True, owner_id="foo")
-            case_adapter.index(case.to_json(), refresh=True)
-
-            case = new_case(closed=False, owner_id="bar")
-            case_adapter.index(case.to_json(), refresh=True)
+            cases = [
+                new_case(closed=True),
+                new_case(closed=False),
+                new_case(closed=True, owner_id="foo"),
+                new_case(closed=False, owner_id="bar"),
+            ]
+            case_adapter.bulk_index(cases, refresh=True)
 
             group = Group(_id=uuid.uuid4().hex, users=["foo", "bar"])
             cls.group_id = group._id
-            group_adapter.index(group.to_json(), refresh=True)
+            group_adapter.index(group, refresh=True)
 
             form_json = new_form({"meta": "", "#type": "data"}).to_json()
             # fabricate null userID because convert_form_to_xml will not accept it
             form_json["form"] = {"meta": {"userID": None}}
-            form_adapter.index(form_json, refresh=True)
 
-            form = new_form({"meta": {"userID": ""}, "#type": "data"})
-            form_adapter.index(form.to_json(), refresh=True)
+            forms = [
+                form_json,
+                new_form({"meta": {"userID": ""}, "#type": "data"}),
+                new_form({"meta": {"deviceID": "abc"}, "#type": "data"}),
+                new_form({"meta": {"userID": uuid.uuid4().hex}, "#type": "data"})
+            ]
 
-            form = new_form({"meta": {"deviceID": "abc"}, "#type": "data"})
-            form_adapter.index(form.to_json(), refresh=True)
-
-            form = new_form({"meta": {"userID": uuid.uuid4().hex}, "#type": "data"})
-            form_adapter.index(form.to_json(), refresh=True)
+            form_adapter.bulk_index(forms, refresh=True)
 
     def test_filter_combination(self):
         owner_filter = OwnerFilter(DEFAULT_USER)
