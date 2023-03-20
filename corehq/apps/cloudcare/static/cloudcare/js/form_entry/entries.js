@@ -910,6 +910,7 @@ hqDefine("cloudcare/js/form_entry/entries", function () {
         };
 
         self.file = ko.observable();
+        // corresponds to SUPPORTED_FILE_EXTS var in Formplayer, a list of valid file extensions
         self.extensionsMap = {
             "image/*,.pdf": ["jpg", "jpeg", "png", "pdf"],
             "audio/*": ["3ga","mp3", "wav", "amr", "qcp","ogg"],
@@ -939,13 +940,14 @@ hqDefine("cloudcare/js/form_entry/entries", function () {
         if (newValue !== constants.NO_ANSWER && newValue !== "") {
             var $input = $('#' + self.entryId);
             self.file($input[0].files[0]);
+            // corresponds to MAX_BYTES_PER_ATTACHMENT var in Formplayer and limits file uploads to 3MB
             if (self.file().size > 3000000) {
                 self.answer(constants.NO_ANSWER);
                 self.question.error(gettext("The file you selected exceeds the size limit of 3MB. Please select a file that is smaller than 3MB."));
                 return;
             }
             self.question.error(null);
-            this.question.onchange();
+            self.question.onchange();
         } else {
             self.file(null);
             self.answer(constants.NO_ANSWER);
