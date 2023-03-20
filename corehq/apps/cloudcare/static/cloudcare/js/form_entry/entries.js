@@ -910,12 +910,23 @@ hqDefine("cloudcare/js/form_entry/entries", function () {
         };
 
         self.file = ko.observable();
-
+        self.extensionsMap = {
+            "image/*,.pdf": ["jpg", "jpeg", "png", "pdf"],
+            "audio/*": ["3ga","mp3", "wav", "amr", "qcp","ogg"],
+            "video/*": ["3gpp", "3gp", "3gp2", "3g2", "mp4","mpg4", "mpeg4", "m4v", "mpg", "mpeg"]
+        }
     }
     FileEntry.prototype = Object.create(EntrySingleAnswer.prototype);
     FileEntry.prototype.constructor = EntrySingleAnswer;
     FileEntry.prototype.onPreProcess = function (newValue) {
+        var self = this;
         if (newValue !== constants.NO_ANSWER && newValue !== "") {
+            const ext = newValue.slice(newValue.lastIndexOf(".")+1);
+            const acceptedExts = self.extensionsMap[self.accept];
+            if (!self.extensionsMap[self.accept].includes(ext.toLowerCase())) {
+                self.question.error(gettext("Invalid file type chosen. Please select a valid multimedia file."));
+                return;
+            }
             this.answer(newValue.replace(constants.FILE_PREFIX, ""));
         }
     };
