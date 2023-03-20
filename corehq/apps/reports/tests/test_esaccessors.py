@@ -134,7 +134,7 @@ class TestFormESAccessors(TestCase):
             reporting=False,
             _id=_id or uuid.uuid4().hex,
         )
-        group_adapter.index(group.to_json(), refresh=True)
+        group_adapter.index(group, refresh=True)
         return group
 
     def test_media_export_is_too_big(self):
@@ -1070,7 +1070,7 @@ class TestGroupESAccessors(SimpleTestCase):
             reporting=self.reporting,
             _id=_id or uuid.uuid4().hex,
         )
-        group_adapter.index(group.to_json(), refresh=True)
+        group_adapter.index(group, refresh=True)
         return group
 
     def test_group_query(self):
