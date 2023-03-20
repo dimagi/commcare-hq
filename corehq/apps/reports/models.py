@@ -380,7 +380,6 @@ class TableauAPISession(object):
         page_number = 1
         total_users = sys.maxsize
         tableau_users = []
-        print(additional_url_path)
         while (page_size * (page_number - 1) < total_users):
             print(page_number)
             response_body = self._make_request(
