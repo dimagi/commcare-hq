@@ -419,22 +419,21 @@ def _get_matching_downstream_role(upstream_role_json, downstream_roles, ignore_c
         if upstream_role_json['_id'] == downstream_role.upstream_id:
             matching_role = downstream_role
         elif upstream_role_json['name'] == downstream_role.name:
-            if not _is_default_built_in_role(upstream_role_json, downstream_role) and not ignore_conflicts:
-                conflicting_role = downstream_role
-            else:
+            if _is_matching_built_in_role(upstream_role_json, downstream_role) or ignore_conflicts:
                 matching_role = downstream_role
+            else:
+                conflicting_role = downstream_role
 
     return (matching_role, conflicting_role)
 
 
-def _is_default_built_in_role(upstream_role_json, downstream_role):
+def _is_matching_built_in_role(upstream_role_json, downstream_role):
     initial_role_names = UserRolePresets.INITIAL_ROLES.keys()
     if downstream_role.name not in initial_role_names:
         return False
 
-    default_permissions = UserRolePresets.INITIAL_ROLES[downstream_role.name]()
     upstream_permissions = HqPermissions.wrap(upstream_role_json['permissions'])
-    if (upstream_permissions == downstream_role.permissions == default_permissions):
+    if upstream_permissions == downstream_role.permissions:
         return True
 
     return False
