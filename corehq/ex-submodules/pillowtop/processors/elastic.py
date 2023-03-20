@@ -116,7 +116,7 @@ class ElasticProcessor(PillowProcessor):
             timing_buckets=(.03, .1, .3, 1, 3, 10),
             tags={
                 'action': step,
-                'index': self.adapter.index_name,  # TODO: try to add index cname
+                'index': self.adapter.index_name,
             })
 
 
