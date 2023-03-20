@@ -12,6 +12,7 @@
     <td data-bind="text: ip_allowlist"></td>
     <td data-bind="text: created"></td>
     <td data-bind="text: last_used"></td>
+    <td data-bind="text: expiration_date"></td>
     <td>
       <span class="label label-success" data-bind="visible: is_active">{% trans "Active" %}</span>
       <span class="label label-danger" data-bind="hidden: is_active">{% trans "Inactive" %}</span>
@@ -78,6 +79,7 @@
     <td data-bind="text: ip_allowlist"></td>
     <td data-bind="text: created"></td>
     <td data-bind="text: last_used"></td>
+    <td data-bind="text: expiration_date"></td>
     <td>
       <span class="label label-success">{% trans "Active" %}</span>
     </td>
