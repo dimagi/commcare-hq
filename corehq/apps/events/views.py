@@ -6,6 +6,7 @@ from django.http import (
 from django.urls import reverse
 from django.utils.translation import gettext_lazy as _
 from django.views.decorators.http import require_GET
+from datetime import datetime
 
 from corehq import toggles
 from corehq.apps.domain.decorators import login_and_domain_required
@@ -109,14 +110,18 @@ class EventsView(BaseEventView, CRUDPaginatedViewMixin):
             }
             for attendee in attendees
         ]
+        today = datetime.now().date()
         return {
             'id': event.event_id,
             'name': event.name,
+            # dates are not serializable for django templates
             'start_date': str(event.start_date),
             'end_date': str(event.end_date),
+            'is_editable': event.end_date < today,
+            'show_attendance': event.start_date < today,
             'target_attendance': event.attendance_target,
             'status': event.status,
-            'total_attendance': event.total_attendance or '-',
+            'total_attendance': event.total_attendance,
             'attendees': attendees,
             'edit_url': reverse(EventEditView.urlname, args=(self.domain, event.event_id)),
         }

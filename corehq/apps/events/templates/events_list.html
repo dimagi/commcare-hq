@@ -30,18 +30,30 @@
 {% block pagination_templates %}
   <script type="text/html" id="base-event-template">
     <td>
+      <!-- ko if: is_editable -->
       <a data-bind="attr: {href: edit_url}">
         <strong data-bind="text: name"></strong>
       </a>
+      <!-- /ko -->
+      <!-- ko ifnot: is_editable -->
+      <strong data-bind="text: name"></strong>
+      <!-- /ko -->
     </td>
     <td data-bind="text: start_date"></td>
     <td data-bind="text: end_date"></td>
     <td data-bind="text: target_attendance"></td>
     <td data-bind="text: status"></td>
     <td>
-      <a data-toggle="modal" data-target="#attendee-details">
-        {% trans 'View Attendents' %}
-      </a>
+      <!-- ko if: show_attendance -->
+        <!-- ko if: total_attendance -->
+        <a data-toggle="modal" data-target="#attendee-details">
+          {% trans 'View Attendees' %}
+          (<span data-bind="text: total_attendance"> </span>)
+        </a>
+        <!-- /ko -->
+        <!-- ko ifnot: total_attendance -->
+          {% trans 'No Attendees Yet' %}
+        <!-- /ko -->
       <div class="modal fade" id="attendee-details">
         <div class="modal-dialog">
           <div class="modal-content">
@@ -74,6 +86,10 @@
           </div>
         </div>
       </div>
+      <!-- /ko -->
+      <!-- ko ifnot: show_attendance -->
+      <span>{% trans "Event has not yet started" %}</span>
+      <!-- /ko -->
     </td>
   </script>
 {% endblock %}
