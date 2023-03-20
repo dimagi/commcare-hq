@@ -464,7 +464,8 @@ class DomainTimezoneTests(SimpleTestCase):
 @es_test(requires=[domain_adapter])
 class CallCenterDomainTest(SimpleTestCase):
 
-    def test_get_call_center_domains(self):
+    @mock.patch('corehq.apps.accounting.models.Subscription.visible_objects.filter', return_value=[])
+    def test_get_call_center_domains(self, _):
         _create_domain('cc-dom1', True, True, 'flw', 'user1', False)
         _create_domain('cc-dom2', True, False, 'aww', None, True)
         _create_domain('cc-dom3', False, False, '', 'user2', False)  # case type missing
