@@ -116,6 +116,19 @@ def log_commcare_user_locations_changes(request, user, old_location_id, old_assi
         )
 
 
+def _flatten_list(list_2d):
+    flat_list = []
+    # Iterate through the outer list
+    for element in list_2d:
+        if type(element) is list:
+            # If the element is of type list, iterate through the sublist
+            for item in element:
+                flat_list.append(item)
+        else:
+            flat_list.append(element)
+    return flat_list
+
+
 def _get_location_ids_with_other_users(domain, location_ids, user_id):
     """
     Gets all the location ids where a `CommCareUser` is assigned to one of the `location_ids`.
@@ -129,7 +142,9 @@ def _get_location_ids_with_other_users(domain, location_ids, user_id):
         .location(location_ids)
         .values_list('assigned_location_ids', flat=True)
     )
-    return set(other_user_loc_ids)
+    # If more than one user shares a location, it will give a list of lists
+    # So need to make sure to flatten these
+    return set(_flatten_list(other_user_loc_ids))
 
 
 def _get_location_case_counts(domain, location_ids):
