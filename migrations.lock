@@ -361,6 +361,7 @@ es
 events
  0001_add_events_model
  0002_attendancetrackingconfig
+ 0003_event_attendance_taker_ids
 export
  0001_initial
  0002_datafile
