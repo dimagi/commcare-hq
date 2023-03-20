@@ -99,9 +99,9 @@ def get_ledger_to_elasticsearch_pillow(pillow_id='LedgerToElasticsearchPillow', 
       - :py:class:`corehq.pillows.ledger.LedgerProcessor`
     """
     assert pillow_id == 'LedgerToElasticsearchPillow', 'Pillow ID is not allowed to change'
-    IndexInfo = namedtuple('IndexInfo', ['index'])
+    index_name = "ledgers_2016-03-15"
     checkpoint = get_checkpoint_for_elasticsearch_pillow(
-        pillow_id, IndexInfo("ledgers_2016-03-15"), [topics.LEDGER]
+        pillow_id, index_name, [topics.LEDGER]
     )
     change_feed = KafkaChangeFeed(
         topics=[topics.LEDGER], client_id='ledgers-to-es', num_processes=num_processes, process_num=process_num

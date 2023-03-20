@@ -432,8 +432,7 @@ class ElasticDocumentAdapter(BaseAdapter):
         adapter._es = get_client(for_export=True)
         return adapter
 
-    @classmethod
-    def from_python(cls, doc):
+    def from_python(self, doc):
         """Transform a Python model object into the json-serializable (``dict``)
         format suitable for indexing in Elasticsearch.
 
@@ -441,10 +440,9 @@ class ElasticDocumentAdapter(BaseAdapter):
         :returns: ``tuple`` of ``(doc_id, source_dict)`` suitable for being
                   indexed/updated/deleted in Elasticsearch
         """
-        raise NotImplementedError(f"{cls.__name__} is abstract")
+        raise NotImplementedError(f"{type(self).__name__} is abstract")
 
-    @classmethod
-    def to_json(cls, doc):
+    def to_json(self, doc):
         """Convenience method that returns the full "from python" document
         (including the ``_id`` key, if present) as it would be returned by an
         adapter ``search`` result.
@@ -454,7 +452,7 @@ class ElasticDocumentAdapter(BaseAdapter):
 
         :param doc: document (instance of a Python model)
         """
-        _id, source = cls.from_python(doc)
+        _id, source = self.from_python(doc)
         if _id is not None:
             source["_id"] = _id
         return source
@@ -1017,8 +1015,6 @@ class ElasticMultiplexAdapter(BaseAdapter):
         return adapter
 
     def from_python(self, doc):
-        # TODO: this is a classmethod on the the document adapter, but should
-        # be converted to an instance method
         if isinstance(doc, Tombstone):
             return doc.id, Tombstone.create_document()
         return self.primary.from_python(doc)

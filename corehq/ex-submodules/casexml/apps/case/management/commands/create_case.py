@@ -6,10 +6,7 @@ from casexml.apps.case.mock import CaseFactory, CaseStructure
 
 from corehq.apps.es.case_search import case_search_adapter
 from corehq.apps.es.cases import case_adapter
-from corehq.pillows.case import transform_case_for_elasticsearch as es_case_hq
 from corehq.pillows.case_search import domain_needs_search_index
-from corehq.pillows.case_search import \
-    transform_case_for_elasticsearch as es_case_search
 
 
 class Command(BaseCommand):
@@ -39,15 +36,14 @@ class Command(BaseCommand):
             },
         )
         [case] = CaseFactory(domain).create_or_update_cases([case_structure], user_id=owner_id)
-        case_json = case.to_json()
 
         case_adapter.index(
-            es_case_hq(case_json),
+            case,
             refresh=True
         )
         if domain_needs_search_index(domain):
             case_search_adapter.index(
-                es_case_search(case_json),
+                case,
                 refresh=True
             )
         print(f"Created case with ID: {case.case_id}")
