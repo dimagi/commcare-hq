@@ -379,10 +379,7 @@ class TableauAPISession(object):
         page_size = 100
         page_number = 1
         total_users = sys.maxsize
-        tableau_users = []
-        print(additional_url_path)
         while (page_size * (page_number - 1) < total_users):
-            print(page_number)
             response_body = self._make_request(
                 self.GET,
                 method_name,
@@ -395,9 +392,8 @@ class TableauAPISession(object):
                 total_users = int(response_body['pagination']['totalAvailable'])
                 if total_users == 0:
                     return []
-            tableau_users += response_body['users']['user']
+            yield from response_body['users']['user']
             page_number += 1
-        return tableau_users
 
     def get_users_on_site(self):
         '''
@@ -439,7 +435,7 @@ class TableauAPISession(object):
         '''
         method_name = 'Get Users in Group'
         additional_url_path = f'/sites/{self.site_id}/groups/{group_id}/users'
-        return self._make_paginated_request_for_users(method_name, additional_url_path)
+        return list(self._make_paginated_request_for_users(method_name, additional_url_path))
 
     def create_group(self, group_name):
         '''
