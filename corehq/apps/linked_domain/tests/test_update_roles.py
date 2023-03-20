@@ -145,18 +145,22 @@ class TestUpdateRoles(TestCase):
         with self.assertRaises(UnsupportedActionError):
             update_user_roles(self.domain_link)
 
-    def test_built_in_roles_raise_conflict_if_not_default(self):
+    def test_built_in_roles_are_linked_if_they_match(self):
         role_name = UserRolePresets.APP_EDITOR
         built_in_permissions = UserRolePresets.INITIAL_ROLES[role_name]()
 
+        # Permissions can differ from the built-in permissions, provided they still match
         modified_permissions = self._copy_permissions(built_in_permissions)
         modified_permissions.edit_web_users = not built_in_permissions.edit_web_users
 
-        self._create_user_role(self.upstream_domain, name=role_name, permissions=modified_permissions)
+        upstream_role = self._create_user_role(
+            self.upstream_domain, name=role_name, permissions=modified_permissions)
         self._create_user_role(self.downstream_domain, name=role_name, permissions=modified_permissions)
 
-        with self.assertRaises(UnsupportedActionError):
-            update_user_roles(self.domain_link)
+        update_user_roles(self.domain_link)
+
+        roles = {r.name: r for r in UserRole.objects.get_by_domain(self.downstream_domain)}
+        self.assertEqual(roles[role_name].upstream_id, upstream_role.get_id)
 
     def test_conflicts_are_reported_in_bulk(self):
         self._create_user_role(self.upstream_domain, name='Role1')
