@@ -88,7 +88,8 @@ class Event(models.Model):
 
     name = models.CharField(max_length=100)
     domain = models.CharField(max_length=255)
-    event_id = models.CharField(max_length=255, unique=True)
+    event_id = models.UUIDField(primary_key=True, default=uuid.uuid4)
+    _case_id = models.UUIDField(null=False, default=uuid.uuid4)
     start_date = models.DateField(null=False)
     end_date = models.DateField(null=False)
     attendance_target = models.IntegerField(null=False)
@@ -113,20 +114,34 @@ class Event(models.Model):
     class Meta:
         db_table = "commcare_event"
         indexes = (
-            models.Index(fields=("event_id",)),
             models.Index(fields=("domain",)),
             models.Index(fields=("manager_id",)),
         )
 
+    @property
+    def case_id(self):
+        try:
+            return self._case_id.hex
+        except AttributeError:
+            return self._case_id
+
+    @property
+    def group_id(self):
+        try:
+            return self.event_id.hex
+        except AttributeError:
+            return self.event_id
+
     def get_fake_case_sharing_group(self, user_id):
         """
-        Returns a fake group object that cannot be saved.
+        Returns a group object that cannot be saved.
+
         This is used for giving users access via case sharing groups,
         without having a real group for every event that we have to
         manage.
         """
         return UnsavableGroup(
-            _id=self.event_id,  # Does not clash with self.fake_case_id
+            _id=self.group_id,
             domain=self.domain,
             users=[user_id],
             last_modified=datetime.utcnow(),
@@ -175,7 +190,7 @@ class Event(models.Model):
                              for c in attendee_cases)
         case_structures = []
         for case_id in attendee_case_ids:
-            event_host = CaseStructure(case_id=self.fake_case_id)
+            event_host = CaseStructure(case_id=self.case_id)
             attendee_host = CaseStructure(case_id=case_id)
             case_structures.append(CaseStructure(
                 indices=[
@@ -194,7 +209,7 @@ class Event(models.Model):
                 ],
                 attrs={
                     'case_type': EVENT_ATTENDEE_CASE_TYPE,
-                    'owner_id': self.event_id,
+                    'owner_id': self.group_id,
                     'create': True,
                 },
             ))
@@ -207,7 +222,7 @@ class Event(models.Model):
         """
         ext_case_ids = CommCareCaseIndex.objects.get_extension_case_ids(
             self.domain,
-            [self.fake_case_id],
+            [self.case_id],
             include_closed=False,
         )
         return CommCareCase.objects.get_cases(ext_case_ids, self.domain)
@@ -215,7 +230,7 @@ class Event(models.Model):
     def _close_ext_cases(self):
         ext_case_ids = CommCareCaseIndex.objects.get_extension_case_ids(
             self.domain,
-            [self.fake_case_id],
+            [self.case_id],
             include_closed=False,
         )
         self._case_factory.create_or_update_cases([
@@ -233,10 +248,10 @@ class Event(models.Model):
         # store any Event data other than its name, and is not used for anything
         # other than looking up extension cases.
         try:
-            case = CommCareCase.objects.get_case(self.fake_case_id, self.domain)
+            case = CommCareCase.objects.get_case(self.case_id, self.domain)
         except CaseNotFound:
             struct = CaseStructure(
-                case_id=self.fake_case_id,
+                case_id=self.case_id,
                 attrs={
                     'owner_id': self.manager_id,
                     'case_type': EVENT_CASE_TYPE,
@@ -252,25 +267,9 @@ class Event(models.Model):
     def _case_factory(self):
         return CaseFactory(domain=self.domain)
 
-    def save(
-        self,
-        force_insert=False,
-        force_update=False,
-        using=None,
-        update_fields=None,
-    ):
-        if not self.event_id:
-            self.event_id = uuid.uuid4().hex
-        super().save(
-            force_insert=force_insert,
-            force_update=force_update,
-            using=using,
-            update_fields=update_fields,
-        )
-
     def delete(self, using=None, keep_parents=False):
         self._close_ext_cases()
-        self._case_factory.close_case(self.event_id)
+        self._case_factory.close_case(self.case_id)
         return super().delete(using, keep_parents)
 
     @property
@@ -280,19 +279,11 @@ class Event(models.Model):
     def get_total_attendance_takers(self):
         return len(self.attendance_taker_ids)
 
-    @property
-    def fake_case_id(self):
-        """
-        A fake case ID, to prevent the Event's case ID clashing with the
-        Event's case sharing group's ID
-        """
-        return self.event_id + '-0'
-
 
 def get_user_case_sharing_groups_for_events(commcare_user):
     """
-    Creates a fake case sharing group for every `Event` that the `commcare_user`
-    is an attendance taker for in their domain.
+    Creates a case sharing group for every ``Event`` that the
+    ``commcare_user`` is an attendance taker for in their domain.
     """
     for event in Event.objects.by_domain(commcare_user.domain):
         if commcare_user.user_id in event.attendance_taker_ids:
