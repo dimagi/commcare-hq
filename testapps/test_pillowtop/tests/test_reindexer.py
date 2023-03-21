@@ -49,7 +49,7 @@ class PillowtopReindexerTest(TestCase):
     def setUpClass(cls):
         super(PillowtopReindexerTest, cls).setUpClass()
         with trap_extra_setup(ConnectionError):
-            initialize_index_and_mapping(get_es_new(), CASE_INDEX_INFO)
+            initialize_index_and_mapping(CASE_INDEX_INFO)
 
     @classmethod
     def tearDownClass(cls):

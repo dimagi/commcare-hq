@@ -56,7 +56,7 @@ class ElasticTestMixin(object):
         cls._es_instance = get_es_new()
         # TODO: make individual test[ case]s warning-safe and remove this
         with ignore_index_settings_key_warning:
-            initialize_index_and_mapping(cls._es_instance, TEST_INDEX_INFO)
+            initialize_index_and_mapping(TEST_INDEX_INFO)
 
     @classmethod
     def tearDownClass(cls):
@@ -68,6 +68,7 @@ class ElasticTestMixin(object):
             return
         # only query portion can be validated using ES validate API
         query = {'query': query.pop('query', {})}
+        # TODO: expose validate_query in document adapter
         validation = self._es_instance.indices.validate_query(
             body=query,
             index=TEST_INDEX_INFO.index,

@@ -19,7 +19,6 @@ from corehq.apps.change_feed.consumer.feed import (
 from corehq.apps.data_dictionary.util import get_gps_properties
 from corehq.apps.es.case_search import CaseSearchES, case_search_adapter
 from corehq.apps.es.client import manager
-from corehq.elastic import get_es_new
 from corehq.form_processor.backends.sql.dbaccessors import CaseReindexAccessor
 from corehq.pillows.base import is_couch_change_for_sql_domain
 from corehq.pillows.mappings.case_search_mapping import (
@@ -194,7 +193,7 @@ class CaseSearchReindexerFactory(ReindexerFactory):
         domain = self.options.pop('domain', None)
 
         limit_db_aliases = [limit_to_db] if limit_to_db else None
-        initialize_index_and_mapping(get_es_new(), CASE_SEARCH_INDEX_INFO)
+        initialize_index_and_mapping(CASE_SEARCH_INDEX_INFO)
         try:
             if domain is not None:
                 if not domain_needs_search_index(domain):

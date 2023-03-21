@@ -22,9 +22,6 @@ from corehq.apps.export.models import (
     ExportColumn, TableConfiguration)
 from corehq.apps.es.tests.utils import es_test
 from corehq.apps.users.models import HQApiKey, WebUser
-from corehq.pillows.mappings.case_mapping import CASE_INDEX_INFO
-from corehq.pillows.mappings.xform_mapping import XFORM_INDEX_INFO
-from corehq.util.elastic import ensure_index_deleted, reset_es_index
 
 
 class OdataTestMixin(object):

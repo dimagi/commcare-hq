@@ -19,7 +19,7 @@ from corehq.util.doc_processor.interface import (
     BaseDocProcessor,
     BulkDocProcessor,
 )
-from corehq.apps.es.client import get_client, manager
+from corehq.apps.es.client import manager
 
 MAX_TRIES = 3
 RETRY_TIME_DELAY_FACTOR = 15
@@ -151,9 +151,8 @@ def clean_index(index_name):
 
 
 def prepare_index_for_reindex(adapter):
-    es = get_client()
     index_info = index_info_from_adapter(adapter)
-    initialize_index_and_mapping(es, index_info)
+    initialize_index_and_mapping(index_info)
     set_index_reindex_settings(adapter.index_name)
 
 
