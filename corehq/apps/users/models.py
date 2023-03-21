@@ -2951,7 +2951,9 @@ class UserReportingMetadataStaging(models.Model):
 
 class ApiKeyManager(models.Manager):
     def get_queryset(self):
-        return super().get_queryset().filter(is_active=True)
+        return super().get_queryset()\
+            .filter(is_active=True)\
+            .exclude(expiration_date__lt=datetime.now())
 
 
 class HQApiKey(models.Model):
