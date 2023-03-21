@@ -44,6 +44,7 @@ from corehq.apps.domain.extension_points import has_custom_clean_password
 from corehq.apps.domain.forms import clean_password
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.views.base import BaseDomainView
+from corehq.apps.hqwebapp.decorators import use_jquery_ui
 from corehq.apps.hqwebapp.utils import sign
 from corehq.apps.hqwebapp.views import (
     BaseSectionPageView,
@@ -622,6 +623,10 @@ class ApiKeyView(BaseMyAccountView, CRUDPaginatedViewMixin):
     urlname = "user_api_keys"
 
     template_name = "settings/user_api_keys.html"
+
+    @use_jquery_ui  # for datepicker
+    def dispatch(self, request, *args, **kwargs):
+        return super(ApiKeyView, self).dispatch(request, *args, **kwargs)
 
     @property
     def allowed_actions(self):
