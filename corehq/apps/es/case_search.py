@@ -356,7 +356,7 @@ def indexed_on(gt=None, gte=None, lt=None, lte=None):
     return filters.date_range(INDEXED_ON, gt, gte, lt, lte)
 
 
-def wrap_case_search_hit(hit, include_score=False, is_related_case=False):
+def wrap_case_search_hit(hit, include_score=False):
     """Convert case search index hit to CommCareCase
 
     Nearly the opposite of
@@ -400,8 +400,6 @@ def wrap_case_search_hit(hit, include_score=False, is_related_case=False):
             _setattr(case, key, value)
     if include_score:
         case.case_json[RELEVANCE_SCORE] = hit['_score']
-    if is_related_case:
-        case.case_json[IS_RELATED_CASE] = "true"
     return case
 
 

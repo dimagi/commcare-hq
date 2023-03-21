@@ -70,6 +70,7 @@ class CaseProperty(models.Model):
         blank=True,
     )
     group = models.TextField(default='', blank=True)
+    index = models.IntegerField(default=0, blank=True)
 
     class Meta(object):
         unique_together = ('case_type', 'name')

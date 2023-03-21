@@ -267,6 +267,7 @@ data_dictionary
  0007_property_type_choices
  0008_casepropertyallowedvalue
  0009_caseproperty_label
+ 0010_caseproperty_index
 data_interfaces
  0001_initial
  0002_remove_exists_option
@@ -361,6 +362,7 @@ es
 events
  0001_add_events_model
  0002_attendancetrackingconfig
+ 0003_event_attendance_taker_ids
 export
  0001_initial
  0002_datafile
