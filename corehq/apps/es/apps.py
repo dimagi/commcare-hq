@@ -36,27 +36,12 @@ class ElasticApp(ElasticDocumentAdapter):
     def mapping(self):
         return get_adapter_mapping(self)
 
-    def from_python(self, app):
-        """
-        Takes in an ``Application`` object or an app dict
-        and applies required transformation to make it suitable for ES.
-        The function is replica of ``transform_app_for_es`` with added support for Application objects.
-        In future all references to  ``transform_app_for_es`` will be replaced by `from_python`
-
-        :param app: an instance of ``Application`` or ``dict`` which is ``Application.to_json()``
-
-        :raises TypeError: if object passes in not instance of ``ApplicationBase``
-        """
+    @property
+    def model_cls(self):
         from corehq.apps.app_manager.models import ApplicationBase
-        from corehq.apps.app_manager.util import get_correct_app_class
+        return ApplicationBase
 
-        if isinstance(app, dict):
-            app_obj = get_correct_app_class(app).wrap(app)
-        elif isinstance(app, ApplicationBase):
-            app_obj = app
-        else:
-            raise TypeError(f"Unknown type {type(app)}")
-        app_dict = app_obj.to_json()
+    def _from_dict(self, app_dict):
         app_dict['@indexed_on'] = json_format_datetime(datetime.utcnow())
         return super()._from_dict(app_dict)
 
