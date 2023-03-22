@@ -1,6 +1,7 @@
 import doctest
 from contextlib import contextmanager
 from datetime import datetime
+from uuid import UUID, uuid4
 
 from django.test import TestCase
 
@@ -334,8 +335,8 @@ class EventCaseTests(TestCase):
     def tearDown(self):
         try:
             self.event.delete()
-        except:
-            pass
+        except AssertionError:
+            pass  # self.event is already deleted
 
     def test_case(self):
         with self.assertRaises(CaseNotFound):
@@ -353,6 +354,32 @@ class EventCaseTests(TestCase):
 
     def test_delete_without_case(self):
         self.event.delete()  # Does not raise error
+
+    def test_default_uuids(self):
+        today = datetime.utcnow().date()
+        unsaved_event = Event(
+            name='Test Event Too',
+            domain=DOMAIN,
+            start_date=today,
+            end_date=today,
+            attendance_target=0,
+        )
+        self.assertIsInstance(unsaved_event.event_id, UUID)
+        self.assertIsInstance(unsaved_event._case_id, UUID)
+
+    def test_uuid_hex_string(self):
+        today = datetime.utcnow().date()
+        case_id_hex_string = uuid4().hex
+        unsaved_event = Event(
+            name='Test Event 33.3',
+            _case_id=case_id_hex_string,
+            domain=DOMAIN,
+            start_date=today,
+            end_date=today,
+            attendance_target=0,
+        )
+        self.assertIsInstance(unsaved_event._case_id, str)
+        self.assertEqual(unsaved_event.case_id, case_id_hex_string)
 
 
 def test_doctests():
