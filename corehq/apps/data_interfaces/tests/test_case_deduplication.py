@@ -46,8 +46,7 @@ class FindingDuplicatesQueryTest(TestCase):
         self.factory = CaseFactory(self.domain)
 
     def _prime_es_index(self, cases):
-        for case in cases:
-            case_search_adapter.index(case, refresh=True)
+        case_search_adapter.bulk_index(cases, refresh=True)
 
     def test_without_filters(self):
         cases = [
@@ -248,8 +247,7 @@ class FindingDuplicatesTest(TestCase):
         self.factory = CaseFactory(self.domain)
 
     def _prime_es_index(self, cases):
-        for case in cases:
-            case_search_adapter.index(case, refresh=True)
+        case_search_adapter.bulk_index(cases, refresh=True)
 
     def test_find_simple_duplicates(self):
         cases = [
@@ -655,8 +653,7 @@ class CaseDeduplicationActionTest(TestCase):
         """
         duplicates, uniques = self._create_cases()
 
-        for case in chain(duplicates, uniques):
-            case_search_adapter.index(case, refresh=True)
+        case_search_adapter.bulk_index(chain(duplicates, uniques), refresh=True)
         self.rule.run_actions_when_case_matches(duplicates[0])
 
         self._assert_potential_duplicates(duplicates[0].case_id, duplicates)
@@ -669,8 +666,7 @@ class CaseDeduplicationActionTest(TestCase):
         num_duplicates = 6
         duplicates, uniques = self._create_cases(num_duplicates)
 
-        for case in chain(duplicates, uniques):
-            case_search_adapter.index(case, refresh=True)
+        case_search_adapter.bulk_index(chain(duplicates, uniques), refresh=True)
 
         self.rule.run_actions_when_case_matches(duplicates[0])
         duplicate_case_ids = CaseDuplicate.objects.all().values_list("case_id", flat=True)
@@ -697,8 +693,7 @@ class CaseDeduplicationActionTest(TestCase):
         ])
         self.action.save()
 
-        for case in chain(duplicates, uniques):
-            case_search_adapter.index(case, refresh=True)
+        case_search_adapter.bulk_index(chain(duplicates, uniques), refresh=True)
 
         self.rule = AutomaticUpdateRule.objects.get(id=self.rule.id)
         self.rule.run_actions_when_case_matches(child)
@@ -833,8 +828,7 @@ class TestDeduplicationRuleRuns(TestCase):
         )
 
     def _prime_es_index(self, cases):
-        for case in cases:
-            case_search_adapter.index(case, refresh=True)
+        case_search_adapter.bulk_index(cases, refresh=True)
 
     def _send_user_to_es(self, user):
         with patch('corehq.apps.groups.dbaccessors.get_group_id_name_map_by_user', return_value=[]):
@@ -1107,8 +1101,7 @@ class DeduplicationBackfillTest(TestCase):
         cls.case2 = cls.factory.create_case(case_name="foo", case_type=cls.case_type, update={"age": 2})
         cls.case3 = cls.factory.create_case(case_name="foo", case_type=cls.case_type, update={"age": 2})
 
-        for case in [cls.case1, cls.case2, cls.case3]:
-            case_search_adapter.index(case, refresh=True)
+        case_search_adapter.bulk_index([cls.case1, cls.case2, cls.case3], refresh=True)
 
     @classmethod
     def tearDownClass(cls):

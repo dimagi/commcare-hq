@@ -60,21 +60,12 @@ class ElasticDomain(ElasticDocumentAdapter):
     def mapping(self):
         return get_adapter_mapping(self)
 
-    def from_python(self, domain):
-        """
-        :param user: an instance of ``CouchUser`` or a user dict
-        :raises: ``TypeError`` user is none of the above types
-        """
+    @property
+    def model_cls(self):
         from corehq.apps.domain.models import Domain
-        if isinstance(domain, Domain):
-            domain_dict = domain.to_json()
-        elif isinstance(domain, dict):
-            domain_dict = copy(domain)
-        else:
-            raise TypeError(f"Unkown type {type(domain)}")
-        return self.from_dict(domain_dict)
+        return Domain
 
-    def from_dict(self, domain_dict):
+    def _from_dict(self, domain_dict):
         """
         Takes a domain dict and applies required transformation to make it suitable for ES.
         The function is replica of ``transform_domain_for_elasticsearch``.
@@ -91,7 +82,7 @@ class ElasticDomain(ElasticDocumentAdapter):
             domain_dict['subscription'] = sub[0].plan_version.plan.edition
         for country in countries:
             domain_dict['deployment']['countries'].append(Countries[country].upper())
-        return domain_dict.pop('_id'), domain_dict
+        return super()._from_dict(domain_dict)
 
 
 domain_adapter = create_document_adapter(

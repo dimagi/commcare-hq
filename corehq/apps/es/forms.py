@@ -17,6 +17,7 @@ from casexml.apps.case.xml.parser import (
 from couchforms.geopoint import GeoPoint
 
 from corehq.pillows.mappings.const import NULL_VALUE
+from dimagi.utils.parsing import json_format_datetime
 
 from . import filters
 from .client import ElasticDocumentAdapter, create_document_adapter
@@ -69,15 +70,10 @@ class ElasticForm(ElasticDocumentAdapter):
     def mapping(self):
         return get_adapter_mapping(self)
 
-    def from_python(self, xform):
+    @property
+    def model_cls(self):
         from corehq.form_processor.models.forms import XFormInstance
-        if isinstance(xform, dict):
-            xform_dict = copy(xform)
-        elif isinstance(xform, XFormInstance):
-            xform_dict = xform.to_json()
-        else:
-            raise TypeError(f"Unknown type {type(xform)}")
-        return self._from_dict(xform_dict)
+        return XFormInstance
 
     def _from_dict(cls, xform_dict):
         """
@@ -134,7 +130,7 @@ class ElasticForm(ElasticDocumentAdapter):
                 pass
 
         xform_dict['user_type'] = get_user_type(user_id)
-        xform_dict['inserted_at'] = datetime.utcnow().isoformat()
+        xform_dict['inserted_at'] = json_format_datetime(datetime.utcnow())
 
         try:
             case_blocks = extract_case_blocks(xform_dict)
@@ -162,7 +158,7 @@ class ElasticForm(ElasticDocumentAdapter):
         if 'backend_id' not in xform_dict:
             xform_dict['backend_id'] = 'sql'
 
-        return xform_dict.pop('_id'), xform_dict
+        return super()._from_dict(xform_dict)
 
 
 form_adapter = create_document_adapter(

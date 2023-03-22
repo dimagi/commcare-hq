@@ -23,8 +23,6 @@ of all unknown users, web users, and demo users on a domain.
     owner_ids = query.get_ids()
 """
 
-from copy import copy
-
 from . import filters, queries
 from .client import ElasticDocumentAdapter, create_document_adapter
 from .es_query import HQESQuery
@@ -73,22 +71,13 @@ class ElasticUser(ElasticDocumentAdapter):
     settings_key = IndexSettingsKey.USERS
 
     @property
+    def model_cls(self):
+        from corehq.apps.users.models import CouchUser
+        return CouchUser
+
+    @property
     def mapping(self):
         return get_adapter_mapping(self)
-
-    def from_python(self, user):
-        """
-        :param user: an instance of ``CouchUser`` or a user dict
-        :raises: ``TypeError`` user is none of the above types
-        """
-        from corehq.apps.users.models import CouchUser
-        if isinstance(user, CouchUser):
-            user_dict = user.to_json()
-        elif isinstance(user, dict):
-            user_dict = copy(user)
-        else:
-            raise TypeError(f"Unkown type {type(user)}")
-        return self._from_dict(user_dict)
 
     def _from_dict(self, user_dict):
         """
@@ -101,7 +90,6 @@ class ElasticUser(ElasticDocumentAdapter):
         from corehq.apps.groups.dbaccessors import (
             get_group_id_name_map_by_user,
         )
-        from corehq.apps.users.models import CouchUser
 
         if user_dict['doc_type'] == 'CommCareUser' and '@' in user_dict['username']:
             user_dict['base_username'] = user_dict['username'].split("@")[0]
@@ -113,13 +101,13 @@ class ElasticUser(ElasticDocumentAdapter):
         user_dict['__group_names'] = [res.name for res in results]
         user_dict['user_data_es'] = []
         if 'user_data' in user_dict:
-            user_obj = CouchUser.wrap_correctly(user_dict)
+            user_obj = self.model_cls.wrap_correctly(user_dict)
             for key, value in user_obj.metadata.items():
                 user_dict['user_data_es'].append({
                     'key': key,
                     'value': value,
                 })
-        return user_dict.pop('_id'), user_dict
+        return super()._from_dict(user_dict)
 
 
 user_adapter = create_document_adapter(

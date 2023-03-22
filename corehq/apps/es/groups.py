@@ -45,16 +45,10 @@ class ElasticGroup(ElasticDocumentAdapter):
     def mapping(self):
         return get_adapter_mapping(self)
 
-    @classmethod
-    def from_python(cls, group):
+    @property
+    def model_cls(self):
         from corehq.apps.groups.models import Group
-        if isinstance(group, Group):
-            group_dict = group.to_json()
-        elif isinstance(group, dict):
-            group_dict = copy(group)
-        else:
-            raise TypeError(f"Unknown type {type(group)}")
-        return group_dict.pop('_id'), group_dict
+        return Group
 
 
 group_adapter = create_document_adapter(
