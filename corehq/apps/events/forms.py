@@ -1,11 +1,14 @@
 from django import forms
 from django.core.exceptions import ValidationError
 from django.utils.translation import gettext_lazy as _
+from django.utils.translation import gettext_noop
 
 from crispy_forms import layout as crispy
+from crispy_forms.layout import Layout
 
 from corehq.apps.events.models import AttendeeCase
 from corehq.apps.hqwebapp import crispy as hqcrispy
+from corehq.apps.hqwebapp.crispy import HQModalFormHelper
 from corehq.apps.users.dbaccessors import get_all_commcare_users_by_domain
 
 TRACK_BY_DAY = "by_day"
@@ -148,5 +151,37 @@ class CreateEventForm(forms.Form):
 
     def _get_possible_attendance_takers_ids(self):
         return [
-            (user.user_id, user.username) for user in get_all_commcare_users_by_domain(self.domain)
+            (user.user_id, user.username) for user in
+            get_all_commcare_users_by_domain(self.domain)
         ]
+
+
+class NewAttendeeForm(forms.Form):
+    name = forms.CharField(
+        max_length=255,
+        required=True,
+        label=gettext_noop('Name'),
+    )
+
+    # TODO: Offer external_id?
+    #       Support uniqueness validation like NewMobileWorkerForm.username
+    # external_id = forms.CharField(
+    #     max_length=255,
+    #     required=False,
+    #     label=gettext_noop('Unique ID'),
+    # )
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # TODO: Append other case properties to `self.fields`?
+        #       Practicality: What if there are _many_ case properties?
+        #       Map case property types to field types
+
+        self.helper = HQModalFormHelper()
+        self.helper.form_tag = False
+        self.helper.layout = Layout(
+            crispy.Field(
+                'name',
+                data_bind="value: name, valueUpdate: 'keyup'",
+            )
+        )
