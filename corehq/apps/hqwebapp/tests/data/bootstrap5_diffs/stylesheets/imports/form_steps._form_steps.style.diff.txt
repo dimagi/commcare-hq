@@ -1,0 +1,62 @@
+--- 
++++ 
+@@ -16,8 +16,7 @@
+   text-align: center;
+   padding: 40px 0 10px;
+   margin-top: 20px;
+-  .border-top-radius(5px);
+-  .border-bottom-radius(5px);
++  border-radius: 5px;
+ 
+   li {
+     list-style-type: none;
+@@ -26,7 +25,7 @@
+     font-size: 9px;
+     float: left;
+     position: relative;
+-    .transition(background 500ms ease-out);
++    transition: background 500ms ease-out;
+ 
+     &:after {
+       content: counter(step);
+@@ -35,17 +34,16 @@
+       line-height: 20px;
+       display: block;
+       font-size: 10px;
+-      color: @cc-text;
++      color: $cc-text;
+       background: white;
+-      .border-top-radius(5px);
+-      .border-bottom-radius(5px);
++      border-radius: 5px;
+       margin: 0 auto 5px auto;
+       top: -25px;
+       left: 50%;
+       margin-left: -10px;
+       font-weight: bold;
+       position: absolute;
+-      .transition(background 500ms ease-out);
++      transition: background 500ms ease-out;
+     }
+     &:before {
+       content: '';
+@@ -54,7 +52,7 @@
+       position: absolute;
+       left: -40%;
+       top: -15px;
+-      .transition(background 500ms ease-out);
++      transition: background 500ms ease-out;
+     }
+   }
+   li:first-child:before {
+@@ -63,8 +61,8 @@
+   li.active {
+     &:before,
+     &:after {
+-      background-color: @color-purple-dark;
+-      color: @color-purple-dark-inverse;
++      background-color: $color-purple-dark;
++      color: $color-purple-dark-inverse;
+     }
+   }
+ }

@@ -1,0 +1,47 @@
+--- 
++++ 
+@@ -3,7 +3,7 @@
+ }
+ 
+ .col-hq-sidebar {
+-  background-color: darken(@cc-bg, 2);
++  background-color: darken($cc-bg, 2);
+   padding: 0;
+   padding-bottom: 20px;
+ }
+@@ -16,7 +16,7 @@
+   &.nav > li {
+     a {
+       padding: 3px 20px;
+-      .transition(background 1s);
++      transition: background 1s;
+     }
+     > a:hover {
+       background-color: #dbdbdb;
+@@ -24,7 +24,7 @@
+   }
+   &.nav li.active {
+     > a, > a:link, > a:visited, > a:hover {
+-      background-color: @brand-primary;
++      background-color: $brand-primary;
+       color: #ffffff;
+     }
+   }
+@@ -36,7 +36,7 @@
+     margin: 8px 10px;
+     overflow: hidden;
+     background-color: white;
+-    border-top: 1px solid @cc-neutral-hi;
++    border-top: 1px solid $cc-neutral-hi;
+   }
+   .nav-input {
+     padding: 3px 20px;
+@@ -68,7 +68,7 @@
+ }
+ 
+ .nav > li > a {
+-  color: @cc-brand-low;
++  color: $cc-brand-low;
+ }
+ 
+ .report-nav{

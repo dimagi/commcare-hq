@@ -97,6 +97,10 @@ VIEW_APP_DIFF = 'view_app_diff'
 # a.k.a. "File Dropzone", "Secure File Transfer"
 DATA_FILE_DOWNLOAD = 'data_file_download'
 
+REGEX_FIELD_VALIDATION = 'regex_field_validation'
+
+LOCATION_SAFE_CASE_IMPORTS = 'location_safe_case_imports'
+
 MAX_PRIVILEGES = [
     LOOKUP_TABLES,
     API_ACCESS,
@@ -149,6 +153,8 @@ MAX_PRIVILEGES = [
     VIEW_APP_DIFF,
     DATA_FILE_DOWNLOAD,
     ATTENDANCE_TRACKING,
+    REGEX_FIELD_VALIDATION,
+    LOCATION_SAFE_CASE_IMPORTS,
 ]
 
 # These are special privileges related to their own rates in a SoftwarePlanVersion
@@ -216,4 +222,6 @@ class Titles(object):
             VIEW_APP_DIFF: _("Improved app changes view"),
             DATA_FILE_DOWNLOAD: _('File Dropzone'),
             ATTENDANCE_TRACKING: _("Attendance Tracking"),
+            REGEX_FIELD_VALIDATION: _("Regular Expression Validation for Custom Data Fields"),
+            LOCATION_SAFE_CASE_IMPORTS: _("Location Safe Case Imports"),
         }.get(privilege, privilege)

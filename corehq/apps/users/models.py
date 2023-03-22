@@ -100,6 +100,11 @@ from .models_role import (  # noqa
     StaticRole,
     UserRole,
 )
+from corehq import toggles, privileges
+from corehq.apps.accounting.utils import domain_has_privilege
+from corehq.apps.locations.models import (
+    get_case_sharing_groups_for_locations,
+)
 
 WEB_USER = 'web'
 COMMCARE_USER = 'commcare'
@@ -261,6 +266,9 @@ class HqPermissions(DocumentSchema):
 
         if self.edit_apps:
             self.view_apps = True
+
+        if not (self.view_reports or self.view_report_list):
+            self.download_reports = False
 
     @classmethod
     @memoized
@@ -1502,6 +1510,9 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, EulaMixin):
             or self.has_permission(domain, 'limited_login_as')
         )
 
+    def can_manage_events(self, domain):
+        return self.has_permission(domain, 'manage_attendance_tracking')
+
     def is_current_web_user(self, request):
         return self.user_id == request.couch_user.user_id
 
@@ -1878,14 +1889,22 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
 
     def get_case_sharing_groups(self):
         from corehq.apps.groups.models import Group
-        from corehq.apps.locations.models import get_case_sharing_groups_for_locations
+        from corehq.apps.events.models import (
+            get_user_case_sharing_groups_for_events,
+        )
+
         # get faked location group objects
         groups = list(get_case_sharing_groups_for_locations(
             self.get_sql_locations(self.domain),
             self._id
         ))
-
         groups += [group for group in Group.by_user_id(self._id) if group.case_sharing]
+
+        has_at_privilege = domain_has_privilege(self.domain, privileges.ATTENDANCE_TRACKING)
+        # Temporary toggle that will be removed once the feature is released
+        has_at_toggle_enabled = toggles.ATTENDANCE_TRACKING.enabled(self.domain)
+        if has_at_privilege and has_at_toggle_enabled:
+            groups += get_user_case_sharing_groups_for_events(self)
         return groups
 
     def get_reporting_groups(self):
@@ -2946,6 +2965,8 @@ class HQApiKey(models.Model):
     is_active = models.BooleanField(default=True)
     deactivated_on = models.DateTimeField(blank=True, null=True)
     expiration_date = models.DateTimeField(blank=True, null=True)  # Not yet used
+    # Not update with every request. Can be a couple of seconds out of date
+    last_used = models.DateTimeField(blank=True, null=True)
 
     objects = ApiKeyManager()
     all_objects = models.Manager()

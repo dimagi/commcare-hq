@@ -1,0 +1,40 @@
+<nav>
+  {% for section_title, navs in sections %}
+    <h2 class="text-hq-nav-header">{{ section_title }}</h2>
+    <ul class="nav flex-column nav-hq-sidebar">
+      {% for nav in navs %}
+        <li class="nav-item {% if nav.description %} has-description{% endif %}"
+          {% if nav.id %}id="{{ nav.id }}"{% endif %}>
+          <a href="{{ nav.url }}"
+            class="nav-link{% if nav.is_active and not nav.subpage %} active{% endif %}{% if nav.description %} report-description-popover popover-report{% endif %}{% if section_title == "Reports" %} report-nav{% endif %}"
+            {% if nav.is_active and not nav.subpage %}
+              aria-current="page"
+            {% endif %}
+            {% if nav.description %}
+              data-title="{{ nav.title }}"
+              data-content="{{ nav.description }}"
+            {% endif %}
+            {% if section_title == "Reports" %}title="{{ nav.title }}"{%endif%}>
+            {% if nav.warning %}
+              <span class="badge badge-warning float-right">
+                <i class="fa fa-warning"></i> {{ nav.warning }}
+              </span>
+            {% endif %}
+            {% if nav.icon %}<i class="{{ nav.icon }}"></i>{% endif %}
+            {{ nav.title }}
+          </a>
+          {% if nav.subpage and nav.subpage.title %}
+            <ul class="nav">
+              <li class="nav-item"><a href="#" class="nav-link active">{{ nav.subpage.title }}</a></li>
+            </ul>
+          {% endif %}
+        </li>
+        {% if nav.warning %}
+          <li>
+
+          </li>
+        {% endif %}
+      {% endfor %}
+    </ul>
+  {% endfor %}
+</nav>

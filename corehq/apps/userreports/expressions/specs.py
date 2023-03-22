@@ -202,8 +202,8 @@ class NamedExpressionSpec(JsonObject):
        }
 
     This is just a simple example - the value that ``"my_expression"`` takes
-    on can be as complicated as you want *as long as it doesn't reference
-    any other named expressions*.
+    on can be as complicated as you want and it can also reference other named
+    expressions as long as it doesn't reference itself of create a recursive cycle.
     """
     type = TypeProperty('named')
     name = StringProperty(required=True)

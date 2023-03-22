@@ -417,7 +417,7 @@ class AsyncUploadFixtureAPIResponse(UploadFixtureAPIResponse):
 @waf_allow('XSS_BODY')
 @csrf_exempt
 @require_POST
-@api_auth
+@api_auth()
 @require_can_edit_fixtures
 @api_throttle
 def upload_fixture_api(request, domain, **kwargs):
@@ -433,7 +433,7 @@ def upload_fixture_api(request, domain, **kwargs):
 
 
 @csrf_exempt
-@api_auth
+@api_auth()
 @require_can_edit_fixtures
 def fixture_api_upload_status(request, domain, download_id, **kwargs):
     """

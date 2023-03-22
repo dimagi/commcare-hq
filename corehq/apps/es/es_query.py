@@ -314,7 +314,7 @@ class ESQuery(object):
     def get_query(self):
         return self.es_query['query']['bool']['must']
 
-    def search_string_query(self, search_string, default_fields=None):
+    def search_string_query(self, search_string, default_fields):
         """Accepts a user-defined search string"""
         return self.set_query(
             queries.search_string_query(search_string, default_fields)
@@ -491,14 +491,14 @@ class ESQuery(object):
 
         Caveats:
         - There is no guarantee that the returned ScanResult's ``count``
-          property will match the number of yielded docs.
+        property will match the number of yielded docs.
         - Documents that are present when ``scroll_ids()`` is called, but are
-          deleted prior to being fetched in full will be missing from the
-          results, and this scenario will *not* raise an exception.
+        deleted prior to being fetched in full will be missing from the
+        results, and this scenario will *not* raise an exception.
         - If Elastic document ID values are ever reused (i.e. new documents
-          are created with the same ID of a previously-deleted document) then
-          this method would become unsafe because it could yield documents that
-          were not matched by the query.
+        are created with the same ID of a previously-deleted document) then
+        this method would become unsafe because it could yield documents that
+        were not matched by the query.
         """
         def iter_export_docs():
             with TransientTempfile() as temp_path:

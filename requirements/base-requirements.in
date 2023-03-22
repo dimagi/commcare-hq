@@ -68,6 +68,7 @@ lxml
 markdown
 oic
 openpyxl
+packaging
 phonenumberslite
 pickle5  # For Pythons pre 3.8.3. Can be removed when no environment will ever revert to < 3.8
 Pillow

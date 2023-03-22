@@ -1,4 +1,5 @@
 /* eslint-env mocha */
+/* globals moment */
 
 describe('Entries', function () {
     var constants = hqImport("cloudcare/js/form_entry/const"),
@@ -333,10 +334,35 @@ describe('Entries', function () {
     });
 
     it('Should convert two-digit dates to four-digit dates', function () {
-        assert.equal(utils.convertTwoDigitYear("03-04-50"), "03-04-1950");
-        assert.equal(utils.convertTwoDigitYear("03-04-28"), "03-04-2028");
+        assert.equal(utils.convertTwoDigitYear("03-04-50"), "03/04/1950");
+        assert.equal(utils.convertTwoDigitYear("03-04-28"), "03/04/2028");
         assert.equal(utils.convertTwoDigitYear("3/4/1928"), "3/4/1928");
         assert.equal(utils.convertTwoDigitYear("not-a-date"), "not-a-date");
+    });
+
+    it('Should coerce user input dates to moment objects', function () {
+        let assertParsesAs = function (userInput, expected) {
+            let res = utils.parseInputDate(userInput);
+            assert.isTrue(moment.isMoment(res));
+            assert.equal(
+                res.toISOString(),
+                moment(expected, "YYYY-MM-DD").toISOString()
+            );
+        };
+
+        assertParsesAs("03/04/20", "2020-03-04");
+        assertParsesAs("3/4/20", "2020-03-04");
+        assertParsesAs("2020-03-04", "2020-03-04");
+    });
+
+    it('Should fail to interpret invalid date inputs', function () {
+        let assertInvalid = function (userInput) {
+            assert.isNull(utils.parseInputDate(userInput));
+        };
+
+        assertInvalid("23/01/2022");
+        assertInvalid("23/1/22");
+        assertInvalid("23-1-22");
     });
 
     it('Should return TimeEntry', function () {

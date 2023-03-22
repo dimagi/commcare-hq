@@ -1,0 +1,32 @@
+--- 
++++ 
+@@ -3,14 +3,14 @@
+   {% if domain_links %}
+     <li class="dropdown-header nav-header">{% trans 'Change Project' %}</li>
+     {% for d in domain_links %}
+-      <li><a href="{{ d.url }}">{{ d.display_name }}</a></li>
++      <li><a href="{{ d.url }}" class="dropdown-item">{{ d.display_name }}</a></li>
+     {% endfor %}
+   {% endif %}
+ 
+   {% if show_all_projects_link %}
+-    <li class="divider" />
++    <li><hr class="dropdown-divider"></li>
+     <li>
+-      <a href="{% url 'domain_select_redirect' %}">
++      <a href="{% url 'domain_select_redirect' %}" class="dropdown-item">
+         <i class='fa fa-cubes'></i>
+         {% trans 'All Projects' %}
+       </a>
+@@ -18,9 +18,9 @@
+   {% endif %}
+ 
+   {% if not restrict_domain_creation or request.user.is_superuser %}
+-    <li class="divider" />
++    <li><hr class="dropdown-divider"></li>
+     <li>
+-      <a href="{% url 'registration_domain' %}">
++      <a href="{% url 'registration_domain' %}" class="dropdown-item">
+         <i class="fa fa-plus icon-plus dropdown-icon"></i> {% trans 'Add Project' %}
+       </a>
+     </li>
