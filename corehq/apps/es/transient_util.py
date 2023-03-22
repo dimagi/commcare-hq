@@ -73,6 +73,20 @@ def index_info_from_cname(cname):
     return CANONICAL_NAME_INFO_MAP[cname]
 
 
+def index_info_from_adapter(adapter):
+    # TODO: Get rid of this fn when IndexInfo objects are no longer required
+    """Get the index info object for a adapter
+
+    :param adapter: an instance of ElasticDocumentAdapter
+    :returns: index info object
+    """
+    from corehq.pillows.mappings import CANONICAL_NAME_INFO_MAP
+    for index_info in CANONICAL_NAME_INFO_MAP.values():
+        if index_info.index == adapter.index_name:
+            return index_info
+    raise NotImplementedError(f"No index info for {adapter.index_name}")
+
+
 def iter_index_infos():
     from corehq.pillows.mappings import CANONICAL_NAME_INFO_MAP
     yield from CANONICAL_NAME_INFO_MAP.values()
