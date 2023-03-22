@@ -19,7 +19,6 @@ from corehq.apps.es.case_search import (
 )
 from corehq.apps.es.tests.utils import ElasticTestMixin, es_test
 from corehq.form_processor.tests.utils import FormProcessorTestUtils
-from corehq.pillows.case_search import transform_case_for_elasticsearch
 
 
 @es_test
@@ -748,9 +747,7 @@ class TestFilterDslLookups(ElasticTestMixin, TestCase):
             walk_related=False,
         )
         for case in factory.create_or_update_cases([child_case1, child_case2]):
-            case_search_adapter.index(
-                transform_case_for_elasticsearch(case.to_json()), refresh=True
-            )
+            case_search_adapter.index(case, refresh=True)
 
     @classmethod
     def tearDownClass(self):

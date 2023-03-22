@@ -2,11 +2,13 @@
 SMSES
 --------
 """
+from copy import copy
+
 from . import filters
 from .client import ElasticDocumentAdapter, create_document_adapter
 from .es_query import HQESQuery
 from .index.settings import IndexSettingsKey
-from .transient_util import get_adapter_mapping, from_dict_with_possible_id
+from .transient_util import get_adapter_mapping
 
 
 class SMSES(HQESQuery):
@@ -41,8 +43,15 @@ class ElasticSMS(ElasticDocumentAdapter):
         return get_adapter_mapping(self)
 
     @classmethod
-    def from_python(cls, doc):
-        return from_dict_with_possible_id(doc)
+    def from_python(cls, sms):
+        from corehq.apps.sms.models import SMS
+        if isinstance(sms, SMS):
+            sms_dict = sms.to_json()
+        elif isinstance(sms, dict):
+            sms_dict = copy(sms)
+        else:
+            raise TypeError(f"Unknown type {type(sms)}")
+        return sms_dict.pop('_id'), sms_dict
 
 
 sms_adapter = create_document_adapter(
