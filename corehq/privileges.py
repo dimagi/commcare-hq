@@ -101,6 +101,8 @@ REGEX_FIELD_VALIDATION = 'regex_field_validation'
 
 LOCATION_SAFE_CASE_IMPORTS = 'location_safe_case_imports'
 
+FORM_CASE_IDS_CASE_IMPORTER = 'form_case_ids_case_importer'
+
 MAX_PRIVILEGES = [
     LOOKUP_TABLES,
     API_ACCESS,
@@ -155,6 +157,7 @@ MAX_PRIVILEGES = [
     ATTENDANCE_TRACKING,
     REGEX_FIELD_VALIDATION,
     LOCATION_SAFE_CASE_IMPORTS,
+    FORM_CASE_IDS_CASE_IMPORTER
 ]
 
 # These are special privileges related to their own rates in a SoftwarePlanVersion
@@ -224,4 +227,5 @@ class Titles(object):
             ATTENDANCE_TRACKING: _("Attendance Tracking"),
             REGEX_FIELD_VALIDATION: _("Regular Expression Validation for Custom Data Fields"),
             LOCATION_SAFE_CASE_IMPORTS: _("Location Safe Case Imports"),
+            FORM_CASE_IDS_CASE_IMPORTER: _("Download buttons for Form- and Case IDs on Case Importer")
         }.get(privilege, privilege)

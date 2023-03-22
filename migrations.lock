@@ -89,6 +89,7 @@ accounting
  0067_add_view_app_diff_priv
  0068_regex_field_validation_privilege
  0069_location_safe_case_imports_priv
+ 0070_auto_20230322_0718
 admin
  0001_initial
  0002_logentry_remove_auto_add
