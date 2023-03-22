@@ -495,7 +495,7 @@ def _create_domain(name, cc_enabled, cc_use_fixtures, cc_case_type, cc_case_owne
         domain.call_center_config.case_owner_id = cc_case_owner_id
         domain.call_center_config.use_user_location_as_owner = use_location_as_owner
 
-        domain_adapter.index(domain.to_json(), refresh=True)
+        domain_adapter.index(domain, refresh=True)
 
 
 class CallCenterDomainMockTest(TestCase):

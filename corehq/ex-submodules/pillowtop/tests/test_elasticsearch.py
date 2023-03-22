@@ -95,14 +95,7 @@ class TestSendToElasticsearch(SimpleTestCase):
 
     def test_missing_merge(self):
         doc = {'_id': uuid.uuid4().hex, 'doc_type': 'MyCoolDoc', 'property': 'bar'}
-        send_to_elasticsearch(
-            TEST_INDEX_INFO,
-            doc_type=TEST_INDEX_INFO.type,
-            doc_id=doc['_id'],
-            name='test',
-            data=doc,
-            es_merge_update=True,
-        )
+        send_to_elasticsearch(self.adapter, doc['_id'], 'test', data=doc, es_merge_update=True)
         self.assertEqual(0, self.adapter.count({}))
 
     def test_connection_failure_no_error(self):
@@ -123,14 +116,7 @@ class TestSendToElasticsearch(SimpleTestCase):
              mock.patch.object(self.adapter, 'index') as doc_adapter, \
              capture_log_output("pillowtop") as log:
             doc_adapter.side_effect = exception
-            send_to_elasticsearch(
-                adapter=self.adapter,
-                doc_id=doc['_id'],
-                name='test',
-                data=doc,
-                es_merge_update=False,
-                delete=False
-            )
+            send_to_elasticsearch(self.adapter, doc['_id'], name='test', data=doc)
         return log.get_output()
 
     def test_not_found(self):

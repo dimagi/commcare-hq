@@ -124,7 +124,7 @@ class ElasticProcessor(PillowProcessor):
             timing_buckets=(.03, .1, .3, 1, 3, 10),
             tags={
                 'action': step,
-                'index': self.adapter.index_name,  # TODO: try to add index cname
+                'index': self.adapter.index_name,
             })
 
 
@@ -183,7 +183,7 @@ class BulkElasticProcessor(ElasticProcessor, BulkPillowProcessor):
         return retry_changes, error_changes
 
 
-def send_to_elasticsearch(index_info=None, doc_type=None, doc_id=None, es_getter=None, name=None, adapter=None,
+def send_to_elasticsearch(adapter, doc_id, name,
                         data=None, delete=False, es_merge_update=False):
     """
     More fault tolerant es.put method
@@ -192,8 +192,6 @@ def send_to_elasticsearch(index_info=None, doc_type=None, doc_id=None, es_getter
             which merges existing ES doc and current update. If this is set to False, the doc will be replaced
 
     """
-    if not adapter:
-        adapter = doc_adapter_from_alias(index_info.alias)
     data = data if data is not None else {}
     current_tries = 0
     retries = _retries()

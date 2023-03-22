@@ -413,6 +413,10 @@ class ElasticDocumentAdapter(BaseAdapter):
     analysis = DEFAULT_ANALYSIS
     settings_key = None
 
+    # Model class whose objects are to be saved in ES.
+    # This variable be used in data transformation logic
+    model_cls = None
+
     def __init__(self, index_name, type_):
         """A document adapter for a single index.
 
@@ -433,14 +437,26 @@ class ElasticDocumentAdapter(BaseAdapter):
         return adapter
 
     def from_python(self, doc):
-        """Transform a Python model object into the json-serializable (``dict``)
+        """Transform a Python model object or model dict into the json-serializable (``dict``)
         format suitable for indexing in Elasticsearch.
 
-        :param doc: document (instance of a Python model)
+        :param doc: document (instance of a Python model) or a dict representation of that model
         :returns: ``tuple`` of ``(doc_id, source_dict)`` suitable for being
                   indexed/updated/deleted in Elasticsearch
         """
-        raise NotImplementedError(f"{type(self).__name__} is abstract")
+        if isinstance(doc, self.model_cls):
+            doc_dict = doc.to_json()
+        elif isinstance(doc, dict):
+            doc_dict = copy.copy(doc)
+        else:
+            raise TypeError(f"Unkown type {type(doc)}")
+        return self._from_dict(doc_dict)
+
+    def _from_dict(self, model_dict):
+        """
+        Transforms a model dict to a JSON serializable dict suitable for indexing in elasticsearch.
+        """
+        return model_dict.pop('_id'), model_dict
 
     def to_json(self, doc):
         """Convenience method that returns the full "from python" document

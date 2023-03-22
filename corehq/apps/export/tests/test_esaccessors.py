@@ -21,7 +21,7 @@ class TestGroupUserIds(SimpleTestCase):
             reporting=True,
             _id=_id or uuid.uuid4().hex,
         )
-        group_adapter.index(group.to_json(), refresh=True)
+        group_adapter.index(group, refresh=True)
         return group
 
     def test_one_group_to_users(self):

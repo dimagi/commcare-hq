@@ -11,7 +11,6 @@ from casexml.apps.case.tests.util import delete_all_cases
 from casexml.apps.phone.models import SyncLogSQL
 from corehq.apps.hqcase.utils import submit_case_blocks
 from dimagi.utils.couch.cache.cache_core import get_redis_default_cache
-from pillowtop.es_utils import initialize_index_and_mapping
 
 from corehq.apps.case_search.models import (
     CASE_SEARCH_XPATH_QUERY_KEY,
@@ -20,18 +19,15 @@ from corehq.apps.case_search.models import (
 )
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.es.tests.utils import es_test
+from corehq.apps.es.case_search import case_search_adapter
+from corehq.apps.es.client import manager
+
 from corehq.apps.users.models import CommCareUser
-from corehq.elastic import get_es_new
 from corehq.form_processor.models import CommCareCase
 from corehq.pillows.case_search import (
     CaseSearchReindexerFactory,
     domains_needing_search_index,
 )
-from corehq.pillows.mappings.case_search_mapping import (
-    CASE_SEARCH_INDEX,
-    CASE_SEARCH_INDEX_INFO,
-)
-from corehq.util.elastic import ensure_index_deleted
 from corehq.util.test_utils import flag_enabled
 
 from unittest.mock import patch
@@ -50,13 +46,12 @@ DATE_PATTERN = r'\d{4}-\d{2}-\d{2}'
 # cf. http://www.theguardian.com/environment/2016/apr/17/boaty-mcboatface-wins-poll-to-name-polar-research-vessel
 
 
-@es_test
+@es_test(requires=[case_search_adapter])
 @flag_enabled("SYNC_SEARCH_CASE_CLAIM")
 class CaseClaimEndpointTests(TestCase):
     def setUp(self):
         self.domain = create_domain(DOMAIN)
         self.user = CommCareUser.create(DOMAIN, USERNAME, PASSWORD, None, None)
-        initialize_index_and_mapping(get_es_new(), CASE_SEARCH_INDEX_INFO)
         CaseSearchConfig.objects.get_or_create(pk=DOMAIN, enabled=True)
         delete_all_cases()
         self.case_id = uuid4().hex
@@ -84,8 +79,7 @@ class CaseClaimEndpointTests(TestCase):
         self.case_ids = set([self.case_id, self.additional_case_id])
         domains_needing_search_index.clear()
         CaseSearchReindexerFactory(domain=DOMAIN).build().reindex()
-        es = get_es_new()
-        es.indices.refresh(CASE_SEARCH_INDEX)
+        manager.index_refresh(case_search_adapter.index_name)
         self.client = Client()
         self.client.login(username=USERNAME, password=PASSWORD)
         self.url = reverse('claim_case', kwargs={'domain': DOMAIN})
@@ -104,7 +98,6 @@ class CaseClaimEndpointTests(TestCase):
         )
 
     def tearDown(self):
-        ensure_index_deleted(CASE_SEARCH_INDEX)
         self.user.delete(self.domain.name, deleted_by=None)
         self.domain.delete()
         cache = get_redis_default_cache()

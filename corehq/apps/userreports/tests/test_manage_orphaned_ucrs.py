@@ -3,10 +3,11 @@ from unittest.mock import ANY, patch
 from django.core.management import call_command
 from django.test import TestCase
 
-from pillowtop.es_utils import initialize_index_and_mapping
 
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.es.tests.utils import es_test
+from corehq.apps.es.domains import domain_adapter
+
 from corehq.apps.userreports.app_manager.helpers import clean_table_name
 from corehq.apps.userreports.dbaccessors import (
     drop_orphaned_ucrs,
@@ -14,11 +15,9 @@ from corehq.apps.userreports.dbaccessors import (
 )
 from corehq.apps.userreports.models import DataSourceConfiguration
 from corehq.apps.userreports.util import get_indicator_adapter
-from corehq.elastic import get_es_new
-from corehq.pillows.mappings.domain_mapping import DOMAIN_INDEX_INFO
-from corehq.util.elastic import ensure_index_deleted, reset_es_index
 
 
+@es_test(requires=[domain_adapter])
 class BaseOrphanedUCRTest(TestCase):
 
     @classmethod
@@ -34,10 +33,6 @@ class BaseOrphanedUCRTest(TestCase):
         mock_input = input_patcher.start()
         mock_input.return_value = 'y'
         cls.addClassCleanup(input_patcher.stop)
-
-    def setUp(self):
-        super().setUp()
-        self._setup_es()
 
     def create_ucr(self, domain, tablename, is_orphan=False):
         config = self._create_data_source_config(domain.name, tablename)
@@ -69,12 +64,6 @@ class BaseOrphanedUCRTest(TestCase):
                 "datatype": "string"
             }],
         )
-
-    def _setup_es(self):
-        self.es = get_es_new()
-        reset_es_index(DOMAIN_INDEX_INFO)
-        initialize_index_and_mapping(self.es, DOMAIN_INDEX_INFO)
-        self.addCleanup(ensure_index_deleted, DOMAIN_INDEX_INFO.index)
 
 
 @es_test

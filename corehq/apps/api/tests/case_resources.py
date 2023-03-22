@@ -28,6 +28,7 @@ class TestCommCareCaseResource(APIResourceTest):
         modify_date = datetime.utcnow()
 
         cases = cases or [(None, None)]
+        backend_cases = []
         for owner_id, case_id in cases:
             kwargs = {}
             if owner_id:
@@ -40,8 +41,9 @@ class TestCommCareCaseResource(APIResourceTest):
                 **kwargs
             )
             backend_case.save()
+            backend_cases.append(backend_case)
 
-            case_adapter.index(backend_case, refresh=True)
+        case_adapter.bulk_index(backend_cases, refresh=True)
         return backend_case
 
     def test_get_list(self):
@@ -124,14 +126,7 @@ class TestCommCareCaseResource(APIResourceTest):
 
         self.addCleanup(child_case.delete)
         self.addCleanup(parent_case.delete)
-        case_adapter.index(
-            parent_case,
-            refresh=True
-        )
-        case_adapter.index(
-            child_case,
-            refresh=True
-        )
+        case_adapter.bulk_index([parent_case, child_case], refresh=True)
 
         # Fetch the child case through the API
 

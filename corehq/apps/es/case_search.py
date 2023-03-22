@@ -26,7 +26,6 @@ from corehq.apps.case_search.const import (
     IS_RELATED_CASE,
     REFERENCED_ID,
     RELEVANCE_SCORE,
-    SPECIAL_CASE_PROPERTIES,
     SPECIAL_CASE_PROPERTIES_MAP,
     SYSTEM_PROPERTIES,
     VALUE,
@@ -40,7 +39,7 @@ from .cases import case_adapter
 from .client import ElasticDocumentAdapter, create_document_adapter
 from .index.analysis import PHONETIC_ANALYSIS
 from .index.settings import IndexSettingsKey
-from .transient_util import get_adapter_mapping, from_dict_with_possible_id
+from .transient_util import get_adapter_mapping
 
 PROPERTY_KEY = "{}.key.exact".format(CASE_PROPERTIES_PATH)
 PROPERTY_VALUE = '{}.{}'.format(CASE_PROPERTIES_PATH, VALUE)
@@ -151,15 +150,10 @@ class ElasticCaseSearch(ElasticDocumentAdapter):
     def mapping(self):
         return get_adapter_mapping(self)
 
-    def from_python(self, case):
+    @property
+    def model_cls(self):
         from corehq.form_processor.models.cases import CommCareCase
-        if isinstance(case, CommCareCase):
-            case_dict = case.to_json()
-        elif isinstance(case, dict):
-            case_dict = case
-        else:
-            raise TypeError(f"Unknown type {type(case)}")
-        return self._from_dict(case_dict)
+        return CommCareCase
 
     def _from_dict(self, case):
         """
@@ -168,7 +162,7 @@ class ElasticCaseSearch(ElasticDocumentAdapter):
         The function is replica of ``transform_case_for_elasticsearch``
         In future all references to  ``transform_case_for_elasticsearch`` will be replaced by `from_python`
 
-        :param case: an instance of ``CommCareCase`` or ``dict`` which is ``case.to_json()``
+        :param case: an instance of ``dict`` which is ``case.to_json()``
         """
         from corehq.pillows.case_search import _get_case_properties
         from corehq.pillows.mappings.case_search_mapping import CASE_SEARCH_MAPPING
@@ -181,7 +175,8 @@ class ElasticCaseSearch(ElasticDocumentAdapter):
         }
         doc[INDEXED_ON] = json_format_datetime(datetime.utcnow())
         doc['case_properties'] = _get_case_properties(case_dict)
-        return case_dict.get('_id'), doc
+        doc['_id'] = case_dict['_id']
+        return super()._from_dict(doc)
 
 
 case_search_adapter = create_document_adapter(
@@ -266,6 +261,7 @@ def sounds_like_text_query(case_property_name, value):
         case_property_name,
         queries.match(value, '{}.{}.phonetic'.format(CASE_PROPERTIES_PATH, VALUE))
     )
+
 
 def case_property_starts_with(case_property_name, value):
     """Filter by case_properties.key and do a text search in case_properties.value that

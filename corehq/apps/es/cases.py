@@ -15,7 +15,6 @@ closed after May 1st.
          .OR(case_es.is_closed(False),
              case_es.closed_range(gte=datetime.date(2015, 05, 01))))
 """
-from copy import copy
 from datetime import datetime
 
 from . import aggregations, filters
@@ -56,15 +55,10 @@ class ElasticCase(ElasticDocumentAdapter):
     def mapping(self):
         return get_adapter_mapping(self)
 
-    def from_python(self, case):
+    @property
+    def model_cls(self):
         from corehq.form_processor.models.cases import CommCareCase
-        if isinstance(case, dict):
-            case_dict = copy(case)
-        elif isinstance(case, CommCareCase):
-            case_dict = case.to_json()
-        else:
-            raise TypeError(f"Unknown type {type(case)}")
-        return self._from_dict(case_dict)
+        return CommCareCase
 
     def _from_dict(self, case):
         """
@@ -86,7 +80,7 @@ class ElasticCase(ElasticDocumentAdapter):
         if 'backend_id' not in case:
             case['backend_id'] = 'sql'
 
-        return case.pop('_id'), case
+        return super()._from_dict(case)
 
 
 case_adapter = create_document_adapter(

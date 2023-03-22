@@ -59,8 +59,7 @@ def set_index_normal_settings(index):
     return manager.index_configure_for_standard_ops(index)
 
 
-def initialize_index_and_mapping(es, index_info):
-    # TODO: Remove es param as it is unused
+def initialize_index_and_mapping(index_info):
     index_exists = manager.index_exists(index_info.index)
     if not index_exists:
         initialize_index(index_info)
