@@ -120,7 +120,7 @@ def _flatten_list(list_2d):
     flat_list = []
     # Iterate through the outer list
     for element in list_2d:
-        if type(element) is list:
+        if isinstance(element, list):
             # If the element is of type list, iterate through the sublist
             for item in element:
                 flat_list.append(item)
