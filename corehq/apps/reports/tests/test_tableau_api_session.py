@@ -313,7 +313,7 @@ class TestTableauAPISession(TestCase):
         api_session = self._sign_in(api_session=api_session)
         name = 'group3'
         mock_request.return_value = self.tableau_instance.create_group_response(name)
-        group_id = api_session.create_group(name, 'Viewer')
+        group_id = api_session.create_group(name)
         self.assertEqual(group_id, 'nm12zx')
 
     @mock.patch('corehq.apps.reports.models.requests.request')
