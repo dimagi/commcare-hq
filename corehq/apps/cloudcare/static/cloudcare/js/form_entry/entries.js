@@ -923,12 +923,6 @@ hqDefine("cloudcare/js/form_entry/entries", function () {
     FileEntry.prototype.onPreProcess = function (newValue) {
         var self = this;
         if (newValue !== constants.NO_ANSWER && newValue !== "") {
-            const ext = newValue.slice(newValue.lastIndexOf(".") + 1);
-            const acceptedExts = self.extensionsMap[self.accept];
-            if (!acceptedExts.includes(ext.toLowerCase())) {
-                self.question.error(gettext("Invalid file type chosen. Please select a valid multimedia file."));
-                return;
-            }
             this.answer(newValue.replace(constants.FILE_PREFIX, ""));
         }
     };
@@ -946,6 +940,27 @@ hqDefine("cloudcare/js/form_entry/entries", function () {
             if (self.file().size > 3000000) {
                 self.answer(constants.NO_ANSWER);
                 self.question.error(gettext("The file you selected exceeds the size limit of 3MB. Please select a file that is smaller than 3MB."));
+                return;
+            }
+            let badExtension = false;
+            let badMime = true;
+            const ext = newValue.slice(newValue.lastIndexOf(".") + 1);
+            const acceptedExts = self.extensionsMap[self.accept];
+            badExtension = !acceptedExts.includes(ext.toLowerCase());
+
+            for (acc of self.accept.split(",")) {
+                if (self.file().type.match(acc)) {
+                    badMime = false;
+                    break;
+                }
+            }
+            // corresponds to validateFile check in Formplayer
+            // any changes made here should also be made in Formplayer
+            if (badExtension && badMime) {
+                self.file(null);
+                self.answer(constants.NO_ANSWER);
+                self.rawAnswer(constants.NO_ANSWER);
+                self.question.error(gettext("Invalid file type chosen. Please select a valid multimedia file."));
                 return;
             }
             self.question.error(null);
