@@ -19,7 +19,6 @@ from corehq.apps.users.models import CommCareUser
 from corehq.apps.users.util import normalize_username
 from corehq.form_processor.models import CommCareCase
 from corehq.form_processor.tests.utils import FormProcessorTestUtils, sharded
-from corehq.pillows.case_search import transform_case_for_elasticsearch
 from custom.covid.rules.custom_actions import (
     close_cases_assigned_to_checkin,
     set_all_activity_complete_date_to_today,
@@ -54,10 +53,7 @@ class DeactivatedMobileWorkersTest(BaseCaseRuleTest):
             update=properties,
         )
 
-        case_search_adapter.index(
-            transform_case_for_elasticsearch(checkin_case.to_json()),
-            refresh=True
-        )
+        case_search_adapter.index(checkin_case, refresh=True)
         return checkin_case
 
     def close_all_usercases(self):
@@ -67,7 +63,7 @@ class DeactivatedMobileWorkersTest(BaseCaseRuleTest):
             usercase = CommCareCase.objects.get_case(usercase_id, self.domain)
 
             case_search_adapter.index(
-                transform_case_for_elasticsearch(usercase.to_json()),
+                usercase,
                 refresh=True
             )
 
@@ -107,7 +103,7 @@ class DeactivatedMobileWorkersTest(BaseCaseRuleTest):
         )
         for case in [patient_case, other_patient_case, other_case]:
             case_search_adapter.index(
-                transform_case_for_elasticsearch(case.to_json()),
+                case,
                 refresh=True
             )
 

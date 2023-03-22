@@ -473,6 +473,7 @@ class TestDateHistogram(SimpleTestCase):
             '_id': str(uuid.uuid4()),
             'domain': cls.domain,
             'received_on': datetime.fromisoformat(d),
+            'form': {},
         } for d in [
             '2021-12-09',
             '2022-01-01',

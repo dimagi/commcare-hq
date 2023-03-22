@@ -1,34 +1,26 @@
 import uuid
+
 from django.test import TestCase
+
 from corehq.apps.change_feed import data_sources, topics
 from corehq.apps.change_feed.document_types import change_meta_from_doc
 from corehq.apps.change_feed.producer import producer
 from corehq.apps.change_feed.topics import get_topic_offset
 from corehq.apps.es import GroupES
+from corehq.apps.es.client import manager
+from corehq.apps.es.groups import group_adapter
 from corehq.apps.es.tests.utils import es_test
+from corehq.apps.es.users import user_adapter
 from corehq.apps.groups.models import Group
 from corehq.apps.groups.tests.test_utils import delete_all_groups
-from corehq.elastic import get_es_new
 from corehq.pillows.groups_to_user import get_group_pillow
-from corehq.pillows.mappings.group_mapping import GROUP_INDEX_INFO
-from corehq.pillows.mappings.user_mapping import USER_INDEX_INFO
-from corehq.util.elastic import ensure_index_deleted
-from pillowtop.es_utils import initialize_index_and_mapping
 
 
-@es_test
+@es_test(requires=[user_adapter, group_adapter])
 class GroupPillowTest(TestCase):
 
     def setUp(self):
-        self.elasticsearch = get_es_new()
-        for index in [GROUP_INDEX_INFO, USER_INDEX_INFO]:
-            ensure_index_deleted(index.index)
-            initialize_index_and_mapping(self.elasticsearch, index)
         delete_all_groups()
-
-    def tearDown(self):
-        ensure_index_deleted(GROUP_INDEX_INFO.index)
-        ensure_index_deleted(USER_INDEX_INFO.index)
 
     def test_kafka_group_pillow(self):
         domain = uuid.uuid4().hex
@@ -50,8 +42,7 @@ class GroupPillowTest(TestCase):
         # send to elasticsearch
         pillow = get_group_pillow()
         pillow.process_changes(since=since, forever=False)
-        self.elasticsearch.indices.refresh(GROUP_INDEX_INFO.index)
-
+        manager.index_refresh(group_adapter.index_name)
         # verify there
         self._verify_group_in_es(group)
 

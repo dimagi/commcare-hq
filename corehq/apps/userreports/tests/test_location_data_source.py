@@ -2,22 +2,19 @@ import uuid
 
 from django.test import TestCase
 
-from pillowtop.es_utils import initialize_index_and_mapping
-
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.es.tests.utils import es_test
+from corehq.apps.es.users import user_adapter
+
 from corehq.apps.locations.models import LocationType, SQLLocation
 from corehq.apps.userreports.app_manager.helpers import clean_table_name
 from corehq.apps.userreports.models import DataSourceConfiguration
 from corehq.apps.userreports.pillow import get_location_pillow
 from corehq.apps.userreports.tasks import rebuild_indicators
 from corehq.apps.userreports.util import get_indicator_adapter
-from corehq.elastic import get_es_new
-from corehq.pillows.mappings.user_mapping import USER_INDEX_INFO
-from corehq.util.elastic import ensure_index_deleted
 
 
-@es_test
+@es_test(requires=[user_adapter])
 class TestLocationDataSource(TestCase):
     domain = "delos_corp"
 
@@ -29,9 +26,6 @@ class TestLocationDataSource(TestCase):
 
     def setUp(self):
         super().setUp()
-        es = get_es_new()
-        initialize_index_and_mapping(es, USER_INDEX_INFO)
-        self.addCleanup(ensure_index_deleted, USER_INDEX_INFO.index)
         self.region = LocationType.objects.create(domain=self.domain, name="region")
         self.town = LocationType.objects.create(domain=self.domain, name="town", parent_type=self.region)
 
