@@ -1767,13 +1767,6 @@ MANAGE_RELEASES_PER_LOCATION = StaticToggle(
     help_link='https://confluence.dimagi.com/display/saas/Manage+Releases+per+Location',
 )
 
-FORM_CASE_IDS_CASE_IMPORTER = StaticToggle(
-    'form_case_ids_case_importer',
-    'Show the form and case ids download button on the case importer',
-    TAG_SOLUTIONS_OPEN,
-    namespaces=[NAMESPACE_DOMAIN],
-)
-
 HIDE_HQ_ON_MOBILE_EXPERIENCE = StaticToggle(
     'hide_hq_on_mobile_experience',
     'Do not show modal on mobile that mobile hq experience is bad',
@@ -2512,4 +2505,16 @@ LOCATION_SAFE_CASE_IMPORTS = FrozenPrivilegeToggle(
     tag=TAG_SOLUTIONS_OPEN,
     namespaces=[NAMESPACE_DOMAIN],
     description='Allow location-restricted users to import cases owned at their location or below',
+)
+
+FORM_CASE_IDS_CASE_IMPORTER = FrozenPrivilegeToggle(
+    privileges.FORM_CASE_IDS_CASE_IMPORTER,
+    'form_case_ids_case_importer',
+    label='Download buttons for Form- and Case IDs on Case Importer',
+    tag=TAG_SOLUTIONS_OPEN,
+    namespaces=[NAMESPACE_DOMAIN],
+    description='Display the "Form IDs" and "Case IDs" download buttons on Case Importer',
+    # TODO: Move to public wiki
+    help_link=('https://confluence.dimagi.com/display/saas/Show+the+form+and+case+ids+download+button+on+the+'
+        'case+importer')
 )
