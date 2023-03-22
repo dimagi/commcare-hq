@@ -104,8 +104,8 @@ class Event(models.Model):
         choices=ATTENDEE_LIST_STATUS_CHOICES,
         default=NOT_STARTED,
     )
-    attendance_taker_ids = ArrayField(
-        models.CharField(max_length=255),
+    _attendance_taker_ids = ArrayField(
+        models.UUIDField(),
         blank=True,
         null=True,
         default=list
@@ -131,6 +131,14 @@ class Event(models.Model):
             return self.event_id.hex
         except AttributeError:
             return self.event_id
+
+    @property
+    def attendance_taker_ids(self):
+        return [uuid.hex for uuid in self._attendance_taker_ids]
+
+    @attendance_taker_ids.setter
+    def attendance_taker_ids(self, value):
+        self._attendance_taker_ids = [uuid.UUID(hex=v) for v in value]
 
     def get_fake_case_sharing_group(self, user_id):
         """
