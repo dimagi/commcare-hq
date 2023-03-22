@@ -54,7 +54,7 @@ def get_questions(domain, app_id, xmlns):
     try:
         xform = app.get_xform_by_xmlns(xmlns)
     except ResourceNotFound:
-        _soft_assert = soft_assert('@'.join(('devops+soltech', 'dimagi.com')))
+        _soft_assert = soft_assert(notify_admins=True)
         _soft_assert(
             False,
             f'XForm XML missing for XMLNS {xmlns!r} on domain {domain!r}',
