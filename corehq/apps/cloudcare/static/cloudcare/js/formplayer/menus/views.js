@@ -734,14 +734,14 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
         },
         events: {
             "keydown": "printKeyAction",
-            "click @ui.selectPrint": "print"
+            "click @ui.selectPrint": "print",
         },
         printKeyAction: function (e) {
             if (e.keyCode === 13) {
                 this.print();
             }
         },
-        print:  function () {
+        print: function () {
             window.print();
         },
     });
