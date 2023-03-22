@@ -17,6 +17,8 @@ closed after May 1st.
 """
 from datetime import datetime
 
+from dimagi.utils.parsing import json_format_datetime
+
 from . import aggregations, filters
 from .client import ElasticDocumentAdapter, create_document_adapter
 from .es_query import HQESQuery
@@ -75,7 +77,7 @@ class ElasticCase(ElasticDocumentAdapter):
                 case["owner_id"] = case["user_id"]
 
         case['owner_type'] = get_user_type(case.get("owner_id", None))
-        case['inserted_at'] = datetime.utcnow().isoformat()
+        case['inserted_at'] = json_format_datetime(datetime.utcnow())
 
         if 'backend_id' not in case:
             case['backend_id'] = 'sql'

@@ -17,6 +17,7 @@ from casexml.apps.case.xml.parser import (
 from couchforms.geopoint import GeoPoint
 
 from corehq.pillows.mappings.const import NULL_VALUE
+from dimagi.utils.parsing import json_format_datetime
 
 from . import filters
 from .client import ElasticDocumentAdapter, create_document_adapter
@@ -129,7 +130,7 @@ class ElasticForm(ElasticDocumentAdapter):
                 pass
 
         xform_dict['user_type'] = get_user_type(user_id)
-        xform_dict['inserted_at'] = datetime.utcnow().isoformat()
+        xform_dict['inserted_at'] = json_format_datetime(datetime.utcnow())
 
         try:
             case_blocks = extract_case_blocks(xform_dict)
