@@ -58,6 +58,20 @@ class AttendanceTrackingConfig(models.Model):
         default=DEFAULT_ATTENDEE_CASE_TYPE,
     )
 
+    @staticmethod
+    def toggle_mobile_worker_attendees(domain, value):
+        config, _created = AttendanceTrackingConfig.objects.get_or_create(domain=domain)
+        config.mobile_worker_attendees = value
+        config.save()
+
+    @staticmethod
+    def mobile_workers_can_be_attendees(domain):
+        try:
+            config = AttendanceTrackingConfig.objects.get(pk=domain)
+            return config.mobile_worker_attendees
+        except AttendanceTrackingConfig.DoesNotExist:
+            return False
+
 
 @quickcache(['domain'])
 def get_attendee_case_type(domain):
@@ -298,13 +312,17 @@ def get_user_case_sharing_groups_for_events(commcare_user):
             yield event.get_fake_case_sharing_group(commcare_user.user_id)
 
 class AttendeeCaseManager:
-
-    def by_domain(self, domain):
+    def by_domain(
+        self,
+        domain: str,
+        include_closed: bool = False,
+    ) -> list[CommCareCase]:
+        if include_closed:
+            get_case_ids = CommCareCase.objects.get_case_ids_in_domain
+        else:
+            get_case_ids = CommCareCase.objects.get_open_case_ids_in_domain_by_type
         case_type = get_attendee_case_type(domain)
-        case_ids = CommCareCase.objects.get_open_case_ids_in_domain_by_type(
-            domain,
-            case_type,
-        )
+        case_ids = get_case_ids(domain, case_type)
         return CommCareCase.objects.get_cases(case_ids, domain)
 
 
