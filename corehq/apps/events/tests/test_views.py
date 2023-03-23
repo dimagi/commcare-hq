@@ -270,7 +270,7 @@ class TestAttendeesConfigView(BaseEventViewTestClass):
         sync_mobile_worker_attendees_mock.delay.assert_called_once()
 
     @flag_enabled('ATTENDANCE_TRACKING')
-    @patch('corehq.apps.events.views.tasks.close_mobile_worker_attendee_cases')
+    @patch('corehq.apps.events.views.close_mobile_worker_attendee_cases')
     def test_disable_mobile_worker_attendee_triggers_task(self, close_mobile_worker_attendee_cases_mock):
         config, _created = AttendanceTrackingConfig.objects.get_or_create(domain=self.domain)
         self.log_user_in(self.role_webuser)
