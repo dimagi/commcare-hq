@@ -739,12 +739,12 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
         },
         expandDropdown: function (e) {
             if (e.keyCode === 32) {
-                e.preventDefault()
-                $(this.ui.dropdownMenu).toggleClass("open")
+                e.preventDefault();
+                $(this.ui.dropdownMenu).toggleClass("open");
             }
         },
         printKeyAction: function (e) {
-            if (e.keyCode == 13) {
+            if (e.keyCode === 13) {
                 this.print();
             }
         },
