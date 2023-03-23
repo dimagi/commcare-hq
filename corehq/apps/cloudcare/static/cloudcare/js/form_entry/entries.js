@@ -935,13 +935,6 @@ hqDefine("cloudcare/js/form_entry/entries", function () {
         if (newValue !== constants.NO_ANSWER && newValue !== "") {
             var $input = $('#' + self.entryId);
             self.file($input[0].files[0]);
-            // corresponds to MAX_BYTES_PER_ATTACHMENT var in Formplayer and limits file uploads to 3MB
-            // any changes made here should also be made in Formplayer
-            if (self.file().size > 3000000) {
-                self.answer(constants.NO_ANSWER);
-                self.question.error(gettext("The file you selected exceeds the size limit of 3MB. Please select a file that is smaller than 3MB."));
-                return;
-            }
             let badExtension = false;
             let badMime = true;
             const ext = newValue.slice(newValue.lastIndexOf(".") + 1);
@@ -961,6 +954,13 @@ hqDefine("cloudcare/js/form_entry/entries", function () {
                 self.answer(constants.NO_ANSWER);
                 self.rawAnswer(constants.NO_ANSWER);
                 self.question.error(gettext("Invalid file type chosen. Please select a valid multimedia file."));
+                return;
+            }
+            // corresponds to MAX_BYTES_PER_ATTACHMENT var in Formplayer and limits file uploads to 3MB
+            // any changes made here should also be made in Formplayer
+            if (self.file().size > 3000000) {
+                self.answer(constants.NO_ANSWER);
+                self.question.error(gettext("The file you selected exceeds the size limit of 3MB. Please select a file that is smaller than 3MB."));
                 return;
             }
             self.question.error(null);
