@@ -8968,6 +8968,10 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/case_search_properties.html
+msgid "Include all related cases in search results"
+msgstr ""
+
+#: corehq/apps/app_manager/templates/app_manager/partials/modules/case_search_properties.html
 msgid ""
 "\n"
 "              This is not a valid xpath expression. Check to make sure your "
@@ -13360,6 +13364,10 @@ msgid "Last Modified"
 msgstr "Dernière mise à jour"
 
 #: corehq/apps/data_interfaces/interfaces.py
+msgid "An owner_id needs to be specified to bulk reassign cases"
+msgstr ""
+
+#: corehq/apps/data_interfaces/interfaces.py
 msgid "Normal Forms"
 msgstr "Formulaires normaux"
 
@@ -13766,8 +13774,24 @@ msgid "(<span class=\"selectedCount \">0</span> forms selected)"
 msgstr "(<span class=\"selectedCount \">0</span> forms selected)"
 
 #: corehq/apps/data_interfaces/templates/data_interfaces/interfaces/case_management.html
-msgid "Reassign selected cases to"
-msgstr "Transférer les dossiers sélectionnés à"
+#, python-format
+msgid ""
+"\n"
+"          <!-- ko if: selectAllMatches -->\n"
+"            Reassign %(total_cases)s selected cases to\n"
+"          <!-- /ko -->\n"
+"          <!-- ko ifnot: selectAllMatches -->\n"
+"            Reassign <span data-bind=\"text: selectedCount\"></span> "
+"selected cases to\n"
+"          <!-- /ko -->\n"
+"          "
+msgstr ""
+
+#: corehq/apps/data_interfaces/templates/data_interfaces/interfaces/case_management.html
+#, fuzzy
+#| msgid "Select All"
+msgid "Select all"
+msgstr "Tout sélectionner"
 
 #: corehq/apps/data_interfaces/templates/data_interfaces/interfaces/case_management.html
 msgid "Select New Owner..."
@@ -13971,6 +13995,60 @@ msgstr ""
 msgid "# of Cases Closed"
 msgstr ""
 
+#: corehq/apps/data_interfaces/templates/data_interfaces/partials/case_reassign_complete_email.html
+msgid "The bulk case reassignment has completed successfully."
+msgstr ""
+
+#: corehq/apps/data_interfaces/templates/data_interfaces/partials/case_reassign_complete_email.html
+#, python-format
+msgid ""
+"\n"
+"  Succesfully reassigned %(case_count)s cases.\n"
+"  <p>The list of cases that were reassigned can be viewed at <a "
+"href='%(report_url)s'>%(report_url)s</a>.</p>\n"
+"  <p>\n"
+"  It's possible that in the report the owner_id is not yet updated, you can "
+"open individual cases and confirm\n"
+"  the right case owner, the report gets updated with a slight delay.\n"
+"  </p>\n"
+"  "
+msgstr ""
+
+#: corehq/apps/data_interfaces/templates/data_interfaces/partials/case_reassign_status.html
+#, fuzzy
+#| msgid "All dates are in"
+msgid "All cases were reassigned"
+msgstr "Toutes les dates sont incluses"
+
+#: corehq/apps/data_interfaces/templates/data_interfaces/partials/case_reassign_status.html
+#, python-format
+msgid ""
+"\n"
+"        Succesfully reassigned %(case_count)s cases.\n"
+"        <p>The list of cases that were reassigned can be viewed at <a "
+"href='%(report_url)s'>%(report_url)s</a>.</p>\n"
+"        <p>\n"
+"        It's possible that in the report the owner_id is not yet updated, "
+"you can open individual cases and confirm\n"
+"        the right case owner, the report gets updated with a slight delay.\n"
+"        </p>\n"
+"        "
+msgstr ""
+
+#: corehq/apps/data_interfaces/templates/data_interfaces/partials/case_reassign_status.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/partials/xform_management_status.html
+#: corehq/apps/fixtures/templates/fixtures/partials/fixture_upload_status.html
+#: corehq/apps/fixtures/templates/fixtures/partials/fixture_upload_status_api.txt
+#: corehq/apps/locations/templates/locations/manage/partials/locations_upload_status.html
+msgid "However, we ran into the following problems:"
+msgstr "Néanmoins, nous sommes tombés sur les problèmes suivants:"
+
+#: corehq/apps/data_interfaces/templates/data_interfaces/partials/case_reassign_status.html
+#, fuzzy
+#| msgid "Restore Failed. Details:"
+msgid "Case Reassignment Failed! Details:"
+msgstr "Échec de la restauration. Détails:"
+
 #: corehq/apps/data_interfaces/templates/data_interfaces/partials/case_rule_actions.html
 #: corehq/apps/data_interfaces/templates/data_interfaces/partials/case_rule_criteria.html
 msgid "Error:"
@@ -14127,13 +14205,6 @@ msgstr ""
 #: corehq/apps/data_interfaces/templates/data_interfaces/partials/find_by_id_form.html
 msgid "Find"
 msgstr ""
-
-#: corehq/apps/data_interfaces/templates/data_interfaces/partials/xform_management_status.html
-#: corehq/apps/fixtures/templates/fixtures/partials/fixture_upload_status.html
-#: corehq/apps/fixtures/templates/fixtures/partials/fixture_upload_status_api.txt
-#: corehq/apps/locations/templates/locations/manage/partials/locations_upload_status.html
-msgid "However, we ran into the following problems:"
-msgstr "Néanmoins, nous sommes tombés sur les problèmes suivants:"
 
 #: corehq/apps/data_interfaces/templates/data_interfaces/partials/xform_management_status.html
 #, python-format
@@ -14331,6 +14402,23 @@ msgstr "Gestion de formulaire"
 #: corehq/apps/data_interfaces/views.py
 msgid "Form Status"
 msgstr "Statut de formulaire"
+
+#: corehq/apps/data_interfaces/views.py
+#, fuzzy
+#| msgid "Case Reassignment"
+msgid "Bulk Case Reassignment Status"
+msgstr "Transfert de dossier"
+
+#: corehq/apps/data_interfaces/views.py
+#, fuzzy
+#| msgid "Restoring your forms, this may take some time..."
+msgid "Reassigning Cases. This may take some time..."
+msgstr "Restauration des formulaires, ceci peut prendre un peu de temps..."
+
+#: corehq/apps/data_interfaces/views.py
+msgid ""
+"Bulk Case Reassignment failed for some reason and we have noted this failure."
+msgstr ""
 
 #: corehq/apps/data_interfaces/views.py corehq/tabs/tabclasses.py
 msgid "Find Data by ID"
@@ -18307,15 +18395,20 @@ msgstr ""
 msgid "Attendees"
 msgstr ""
 
-#: corehq/apps/events/forms.py corehq/apps/events/views.py
-msgid "Add Attendance Tracking Event"
+#: corehq/apps/events/forms.py
+#, fuzzy
+#| msgid "Maintenance Alerts"
+msgid "Attendance Takers"
+msgstr "Alertes maintenance"
+
+#: corehq/apps/events/forms.py
+#, python-brace-format
+msgid "{self.title_prefix} Attendance Tracking Event"
 msgstr ""
 
 #: corehq/apps/events/forms.py
-#, fuzzy
-#| msgid "End Date cannot be a past date."
 msgid "End Date cannot be before Start Date"
-msgstr "La date de fin ne peut pas être une date dépassée. "
+msgstr ""
 
 #: corehq/apps/events/models.py
 msgid "Not started"
@@ -18355,10 +18448,8 @@ msgid "Potential Attendees for this Event"
 msgstr ""
 
 #: corehq/apps/events/templates/event_attendees.html
-#, fuzzy
-#| msgid "Loading statements..."
 msgid "Loading potential attendees ..."
-msgstr "Chargement des relevés..."
+msgstr ""
 
 #: corehq/apps/events/templates/event_attendees.html
 #: corehq/apps/users/templates/users/mobile_workers.html
@@ -18439,6 +18530,16 @@ msgid "Total attendees"
 msgstr ""
 
 #: corehq/apps/events/views.py
+#, fuzzy
+#| msgid "Total Balance"
+msgid "Total attendance takers"
+msgstr "Solde restant"
+
+#: corehq/apps/events/views.py
+msgid "Add Attendance Tracking Event"
+msgstr ""
+
+#: corehq/apps/events/views.py
 msgid "Add New Event"
 msgstr ""
 
@@ -18447,28 +18548,20 @@ msgid "Edit Attendance Tracking Event"
 msgstr ""
 
 #: corehq/apps/events/views.py
-#, fuzzy
-#| msgid "Event"
 msgid "Edit Event"
-msgstr "Événement"
+msgstr ""
 
 #: corehq/apps/events/views.py
-#, fuzzy
-#| msgid "statements per page"
 msgid "Attendees per page"
-msgstr "Relevés par page"
+msgstr ""
 
 #: corehq/apps/events/views.py
-#, fuzzy
-#| msgid "You have no items."
 msgid "You have no attendees"
-msgstr "Vous n'avez aucun élément."
+msgstr ""
 
 #: corehq/apps/events/views.py
-#, fuzzy
-#| msgid "Loading statements..."
 msgid "Loading attendees"
-msgstr "Chargement des relevés..."
+msgstr ""
 
 #: corehq/apps/export/det/schema_generator.py
 #, python-brace-format
@@ -18993,7 +19086,7 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/export/templates/export/customize_export_new.html
-msgid "Generate a Data Export Tool config file?"
+msgid "Generate a Data Export Tool config file"
 msgstr ""
 
 #: corehq/apps/export/templates/export/customize_export_new.html
@@ -23151,97 +23244,51 @@ msgid "Success! Back to CommCare HQ"
 msgstr "Succès! Retour à CommCare HQ"
 
 #: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap5/global_navigation_bar.html
-#, fuzzy, python-format
-#| msgid ""
-#| "\n"
-#| "                            Snapshot of %(snap_name)s\n"
-#| "                        "
+#, python-format
 msgid ""
 "\n"
 "                %(cc_name)s Help\n"
 "              "
 msgstr ""
-"\n"
-"                            Instantané de %(snap_name)s"
 
 #: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap5/global_navigation_bar.html
-#, fuzzy, python-format
-#| msgid ""
-#| "\n"
-#| "                            Snapshot of %(snap_name)s\n"
-#| "                        "
+#, python-format
 msgid ""
 "\n"
 "                Snapshot of %(snap_name)s\n"
 "              "
 msgstr ""
-"\n"
-"                            Instantané de %(snap_name)s"
 
 #: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap5/modal_report_issue.html
-#, fuzzy
-#| msgid ""
-#| "\n"
-#| "                                        Please enter your email here so "
-#| "that we can follow up with you regarding this issue\n"
-#| "                                    "
 msgid ""
 "\n"
 "                                Please enter your email here so that we can "
 "follow up with you regarding this issue\n"
 "                            "
 msgstr ""
-"\n"
-"Veuillez saisir votre adresse e-mail ici afin que nous puissions vous suivre "
-"sur ce problème"
 
 #: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap5/modal_report_issue.html
-#, fuzzy
-#| msgid ""
-#| "\n"
-#| "                                        Comma-separated email addresses "
-#| "of others you want to notify about this issue.\n"
-#| "                                    "
 msgid ""
 "\n"
 "                          Comma-separated email addresses of others you want "
 "to notify about this issue.\n"
 "                      "
 msgstr ""
-"\n"
-"Adresses e-mail séparées par des virgules des autres personnes que vous "
-"souhaitez informer de ce problème."
 
 #: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap5/modal_report_issue.html
-#, fuzzy
-#| msgid ""
-#| "\n"
-#| "                                    Please upload any files relevant to "
-#| "your issue.\n"
-#| "                                    "
 msgid ""
 "\n"
 "                          Please upload any files relevant to your issue.\n"
 "                          "
 msgstr ""
-"\n"
-"Veuillez charger tout document en relation avec ce problème."
 
 #: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap5/modal_report_issue.html
-#, fuzzy
-#| msgid ""
-#| "\n"
-#| "                                        Do not upload a file containing "
-#| "individually identifiable data.\n"
-#| "                                    "
 msgid ""
 "\n"
 "                              Do not upload a file containing individually "
 "identifiable data.\n"
 "                          "
 msgstr ""
-"\n"
-"Ne pas envoyer de Fichier contenant des données personnelles identifiables"
 
 #: corehq/apps/hqwebapp/templates/hqwebapp/includes/inactivity_modal.html
 msgid "Session expiring soon"
@@ -23890,191 +23937,99 @@ msgid "Change Password for"
 msgstr ""
 
 #: corehq/apps/hqwebapp/tests/data/bootstrap5_diffs/hqwebapp/includes/global_navigation_bar.html.diff.txt
-#, fuzzy, python-format
-#| msgid ""
-#| "\n"
-#| "                            Snapshot of %(snap_name)s\n"
-#| "                        "
+#, python-format
 msgid ""
 "\n"
 "-                        %(cc_name)s Help\n"
 "-                    "
 msgstr ""
-"\n"
-"                            Instantané de %(snap_name)s"
 
 #: corehq/apps/hqwebapp/tests/data/bootstrap5_diffs/hqwebapp/includes/global_navigation_bar.html.diff.txt
-#, fuzzy, python-format
-#| msgid ""
-#| "\n"
-#| "                            Snapshot of %(snap_name)s\n"
-#| "                        "
+#, python-format
 msgid ""
 "\n"
 "+                %(cc_name)s Help\n"
 "+              "
 msgstr ""
-"\n"
-"                            Instantané de %(snap_name)s"
 
 #: corehq/apps/hqwebapp/tests/data/bootstrap5_diffs/hqwebapp/includes/global_navigation_bar.html.diff.txt
-#, fuzzy, python-format
-#| msgid ""
-#| "\n"
-#| "                            Snapshot of %(snap_name)s\n"
-#| "                        "
+#, python-format
 msgid ""
 "\n"
 "-                            Snapshot of %(snap_name)s\n"
 "-                        "
 msgstr ""
-"\n"
-"                            Instantané de %(snap_name)s"
 
 #: corehq/apps/hqwebapp/tests/data/bootstrap5_diffs/hqwebapp/includes/global_navigation_bar.html.diff.txt
-#, fuzzy, python-format
-#| msgid ""
-#| "\n"
-#| "                            Snapshot of %(snap_name)s\n"
-#| "                        "
+#, python-format
 msgid ""
 "\n"
 "+                Snapshot of %(snap_name)s\n"
 "+              "
 msgstr ""
-"\n"
-"                            Instantané de %(snap_name)s"
 
 #: corehq/apps/hqwebapp/tests/data/bootstrap5_diffs/hqwebapp/includes/modal_report_issue.html.diff.txt
-#, fuzzy
-#| msgid ""
-#| "\n"
-#| "                                        Please enter your email here so "
-#| "that we can follow up with you regarding this issue\n"
-#| "                                    "
 msgid ""
 "\n"
 "-                                        Please enter your email here so "
 "that we can follow up with you regarding this issue\n"
 "-                                    "
 msgstr ""
-"\n"
-"Veuillez saisir votre adresse e-mail ici afin que nous puissions vous suivre "
-"sur ce problème"
 
 #: corehq/apps/hqwebapp/tests/data/bootstrap5_diffs/hqwebapp/includes/modal_report_issue.html.diff.txt
-#, fuzzy
-#| msgid ""
-#| "\n"
-#| "                                        Comma-separated email addresses "
-#| "of others you want to notify about this issue.\n"
-#| "                                    "
 msgid ""
 "\n"
 "-                                        Comma-separated email addresses of "
 "others you want to notify about this issue.\n"
 "-                                    "
 msgstr ""
-"\n"
-"Adresses e-mail séparées par des virgules des autres personnes que vous "
-"souhaitez informer de ce problème."
 
 #: corehq/apps/hqwebapp/tests/data/bootstrap5_diffs/hqwebapp/includes/modal_report_issue.html.diff.txt
-#, fuzzy
-#| msgid ""
-#| "\n"
-#| "                                    Please upload any files relevant to "
-#| "your issue.\n"
-#| "                                    "
 msgid ""
 "\n"
 "-                                    Please upload any files relevant to "
 "your issue.\n"
 "-                                    "
 msgstr ""
-"\n"
-"Veuillez charger tout document en relation avec ce problème."
 
 #: corehq/apps/hqwebapp/tests/data/bootstrap5_diffs/hqwebapp/includes/modal_report_issue.html.diff.txt
-#, fuzzy
-#| msgid ""
-#| "\n"
-#| "                                        Do not upload a file containing "
-#| "individually identifiable data.\n"
-#| "                                    "
 msgid ""
 "\n"
 "-                                        Do not upload a file containing "
 "individually identifiable data.\n"
 "-                                    "
 msgstr ""
-"\n"
-"Ne pas envoyer de Fichier contenant des données personnelles identifiables"
 
 #: corehq/apps/hqwebapp/tests/data/bootstrap5_diffs/hqwebapp/includes/modal_report_issue.html.diff.txt
-#, fuzzy
-#| msgid ""
-#| "\n"
-#| "                                        Please enter your email here so "
-#| "that we can follow up with you regarding this issue\n"
-#| "                                    "
 msgid ""
 "\n"
 "+                                Please enter your email here so that we can "
 "follow up with you regarding this issue\n"
 "+                            "
 msgstr ""
-"\n"
-"Veuillez saisir votre adresse e-mail ici afin que nous puissions vous suivre "
-"sur ce problème"
 
 #: corehq/apps/hqwebapp/tests/data/bootstrap5_diffs/hqwebapp/includes/modal_report_issue.html.diff.txt
-#, fuzzy
-#| msgid ""
-#| "\n"
-#| "                                        Comma-separated email addresses "
-#| "of others you want to notify about this issue.\n"
-#| "                                    "
 msgid ""
 "\n"
 "+                          Comma-separated email addresses of others you "
 "want to notify about this issue.\n"
 "+                      "
 msgstr ""
-"\n"
-"Adresses e-mail séparées par des virgules des autres personnes que vous "
-"souhaitez informer de ce problème."
 
 #: corehq/apps/hqwebapp/tests/data/bootstrap5_diffs/hqwebapp/includes/modal_report_issue.html.diff.txt
-#, fuzzy
-#| msgid ""
-#| "\n"
-#| "                                    Please upload any files relevant to "
-#| "your issue.\n"
-#| "                                    "
 msgid ""
 "\n"
 "+                          Please upload any files relevant to your issue.\n"
 "+                          "
 msgstr ""
-"\n"
-"Veuillez charger tout document en relation avec ce problème."
 
 #: corehq/apps/hqwebapp/tests/data/bootstrap5_diffs/hqwebapp/includes/modal_report_issue.html.diff.txt
-#, fuzzy
-#| msgid ""
-#| "\n"
-#| "                                        Do not upload a file containing "
-#| "individually identifiable data.\n"
-#| "                                    "
 msgid ""
 "\n"
 "+                              Do not upload a file containing individually "
 "identifiable data.\n"
 "+                          "
 msgstr ""
-"\n"
-"Ne pas envoyer de Fichier contenant des données personnelles identifiables"
 
 #: corehq/apps/hqwebapp/tests/data/bootstrap5_diffs/hqwebapp/partials/footer.html.diff.txt
 msgid ""
@@ -42571,10 +42526,8 @@ msgid "Regular Expression Validation for Custom Data Fields"
 msgstr ""
 
 #: corehq/privileges.py
-#, fuzzy
-#| msgid "Location User"
 msgid "Location Safe Case Imports"
-msgstr "Utilisateur du site"
+msgstr ""
 
 #: corehq/reports.py
 msgid "Report Builder Reports"
@@ -42840,10 +42793,8 @@ msgid "CommCare Reports"
 msgstr "Rapports CommCare"
 
 #: corehq/tabs/tabclasses.py
-#, fuzzy
-#| msgid "Added Users:"
 msgid "Attendee Users"
-msgstr "Ajouter les utilisateurs:"
+msgstr ""
 
 #: corehq/tabs/tabclasses.py
 msgid "View All Events"
@@ -43769,3 +43720,6 @@ msgstr "Le Score à la Fonctionnalité"
 #: manage.py
 msgid "Enter valid JSON"
 msgstr "Saisir un JSON valide"
+
+#~ msgid "Reassign selected cases to"
+#~ msgstr "Transférer les dossiers sélectionnés à"

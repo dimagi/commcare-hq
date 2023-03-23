@@ -21,11 +21,13 @@ CASE_SEARCH_INDEX_KEY_PREFIX = "indices."
 # This is a purely aesthetic distinction and not functional
 CASE_SEARCH_REGISTRY_ID_KEY = 'x_commcare_data_registry'
 CASE_SEARCH_CUSTOM_RELATED_CASE_PROPERTY_KEY = 'x_commcare_custom_related_case_property'
+CASE_SEARCH_INCLUDE_ALL_RELATED_CASES_KEY = 'x_commcare_include_all_related_cases'
 
 CONFIG_KEYS_MAPPING = {
     CASE_SEARCH_CASE_TYPE_KEY: "case_types",
     CASE_SEARCH_REGISTRY_ID_KEY: "data_registry",
-    CASE_SEARCH_CUSTOM_RELATED_CASE_PROPERTY_KEY: "custom_related_case_property"
+    CASE_SEARCH_CUSTOM_RELATED_CASE_PROPERTY_KEY: "custom_related_case_property",
+    CASE_SEARCH_INCLUDE_ALL_RELATED_CASES_KEY: "include_all_related_cases",
 }
 UNSEARCHABLE_KEYS = (
     CASE_SEARCH_BLACKLISTED_OWNER_ID_KEY,
@@ -152,6 +154,7 @@ class CaseSearchRequestConfig:
     case_types = attr.ib(kw_only=True, default=None)
     data_registry = attr.ib(kw_only=True, default=None, converter=_flatten_singleton_list)
     custom_related_case_property = attr.ib(kw_only=True, default=None, converter=_flatten_singleton_list)
+    include_all_related_cases = attr.ib(kw_only=True, default=None, converter=_flatten_singleton_list)
 
     @case_types.validator
     def _require_case_type(self, attribute, value):

@@ -2,8 +2,6 @@ import uuid
 
 from django.test import TestCase
 
-from pillowtop.es_utils import initialize_index_and_mapping
-
 from corehq.apps.app_manager.models import Application
 from corehq.apps.app_manager.tests.app_factory import AppFactory
 from corehq.apps.change_feed import topics
@@ -12,17 +10,16 @@ from corehq.apps.change_feed.consumer.feed import (
 )
 from corehq.apps.change_feed.tests.utils import get_test_kafka_consumer
 from corehq.apps.change_feed.topics import get_topic_offset
+from corehq.apps.es.forms import form_adapter
 from corehq.apps.es.tests.utils import es_test
+from corehq.apps.es.users import user_adapter
 from corehq.apps.receiverwrapper.util import submit_form_locally
-from corehq.elastic import get_es_new
 from corehq.form_processor.tests.utils import FormProcessorTestUtils
 from corehq.form_processor.utils import TestFormMetadata, get_simple_form_xml
-from corehq.pillows.mappings.user_mapping import USER_INDEX, USER_INDEX_INFO
 from corehq.pillows.xform import get_xform_pillow
-from corehq.util.elastic import ensure_index_deleted
 
 
-@es_test
+@es_test(requires=[form_adapter, user_adapter], setup_class=True)
 class FormPillowTest(TestCase):
     domain = 'test-form-pillow-domain'
 
@@ -34,20 +31,9 @@ class FormPillowTest(TestCase):
         self.app = factory.app
         self.app.save()
 
-    @classmethod
-    def setUpClass(cls):
-        super().setUpClass()
-        cls.es = get_es_new()
-        initialize_index_and_mapping(cls.es, USER_INDEX_INFO)
-
     def tearDown(self):
         self.app.delete()
         super(FormPillowTest, self).tearDown()
-
-    @classmethod
-    def tearDownClass(cls):
-        ensure_index_deleted(USER_INDEX)
-        super().tearDownClass()
 
     def test_form_pillow_sql(self):
         consumer = get_test_kafka_consumer(topics.FORM_SQL)
