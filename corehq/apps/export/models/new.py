@@ -532,11 +532,17 @@ class TableConfiguration(DocumentSchema, ReadablePathMixin):
             col_index = 0
             skip_excel_formatting = []
             for col in self.selected_columns:
+                # When doing a bulk case export, each column will have a reference to the ALL_CASE_TYPE_EXPORT
+                # case type in its path. This needs to be temporarily removed when getting the value.
+                base_path = self.path
+                if ALL_CASE_TYPE_TABLE in base_path:
+                    base_path = []
+
                 val = col.get_value(
                     domain,
                     document_id,
                     doc,
-                    self.path,
+                    base_path,
                     row_index=row_index,
                     split_column=split_columns,
                     transform_dates=transform_dates,
@@ -669,7 +675,7 @@ class TableConfiguration(DocumentSchema, ReadablePathMixin):
         :param docs: A list of dicts representing form submissions
         :return:
         """
-        if len(path) == 0:
+        if len(path) == 0 or ALL_CASE_TYPE_TABLE in path:
             return row_docs
 
         new_docs = []
@@ -1220,7 +1226,13 @@ class CaseExportInstance(ExportInstance):
         )
 
     def get_query(self, include_filters=True):
-        query = get_case_export_base_query(self.domain, self.case_type)
+        # Add all case types if doing a bulk export
+        # These case types will be the first element in the table path
+        case_types = self.case_type
+        if case_types == ALL_CASE_TYPE_EXPORT:
+            case_types = [table.path[0].name for table in self.tables]
+
+        query = get_case_export_base_query(self.domain, case_types)
         if include_filters:
             for filter in self.get_filters():
                 query = query.filter(filter.to_es_filter())
