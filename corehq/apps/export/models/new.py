@@ -82,6 +82,7 @@ from corehq.apps.export.const import (
     UNKNOWN_INFERRED_FROM,
     USER_DEFINED_SPLIT_TYPES,
     SharingOption,
+    ALL_CASE_TYPE_EXPORT,
 )
 from corehq.apps.export.dbaccessors import (
     get_case_inferred_schema,
@@ -115,6 +116,7 @@ from corehq.util.timezones.utils import get_timezone_for_domain
 from corehq.util.view_utils import absolute_reverse
 from corehq.util.html_utils import strip_tags
 from corehq.apps.data_dictionary.util import get_deprecated_fields
+from corehq.apps.app_manager.dbaccessors import get_case_types_from_apps
 
 
 DAILY_SAVED_EXPORT_ATTACHMENT_NAME = "payload"
@@ -360,6 +362,7 @@ class ExportColumn(DocumentSchema):
         is_label_question = isinstance(item, LabelItem)
 
         is_main_table = table_path == MAIN_TABLE
+        is_bulk_export = (ALL_CASE_TYPE_TABLE in table_path)
         constructor_args = {
             "item": item,
             "label": item.readable_path if not is_case_history_update else item.label,
@@ -390,7 +393,7 @@ class ExportColumn(DocumentSchema):
             and not column._is_deleted(app_ids_and_versions)
             and not is_case_update
             and not is_label_question
-            and is_main_table
+            and (is_main_table or is_bulk_export)
             and not is_deprecated
         )
         return column
@@ -994,7 +997,7 @@ class ExportInstance(BlobMixin, Document):
             else:
                 self.__insert_system_properties(table, [ROW_NUMBER_COLUMN], **column_initialization_data)
         elif export_type == CASE_EXPORT:
-            if table.path == MAIN_TABLE:
+            if table.path == MAIN_TABLE or ALL_CASE_TYPE_TABLE in table.path:
                 if Domain.get_by_name(domain).commtrack_enabled:
                     top_properties = TOP_MAIN_CASE_TABLE_PROPERTIES + [STOCK_COLUMN]
                 else:
@@ -1366,7 +1369,7 @@ class ExportInstanceDefaults(object):
         """
         Based on the path, determines whether the table should be selected by default
         """
-        return path == MAIN_TABLE
+        return path == MAIN_TABLE or ALL_CASE_TYPE_TABLE in path
 
 
 class FormExportInstanceDefaults(ExportInstanceDefaults):
@@ -1403,6 +1406,8 @@ class CaseExportInstanceDefaults(ExportInstanceDefaults):
             return _('Case History')
         elif table_path == PARENT_CASE_TABLE:
             return _('Parent Cases')
+        elif ALL_CASE_TYPE_TABLE in table_path:
+            return _(table_path[0].name)
         else:
             return _('Unknown')
 
@@ -2948,3 +2953,6 @@ def get_ledger_section_entry_combinations(domain):
 MAIN_TABLE = []
 CASE_HISTORY_TABLE = [PathNode(name='actions', is_repeat=True)]
 PARENT_CASE_TABLE = [PathNode(name='indices', is_repeat=True)]
+
+# Used to identify tables in a bulk case export
+ALL_CASE_TYPE_TABLE = PathNode(name=ALL_CASE_TYPE_EXPORT)
