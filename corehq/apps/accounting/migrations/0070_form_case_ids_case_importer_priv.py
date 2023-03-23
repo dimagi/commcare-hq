@@ -13,11 +13,10 @@ from corehq.util.django_migrations import skip_on_fresh_install
 def _grandfather_form_case_ids_case_importer_priv(apps, schema_editor):
     call_command('cchq_prbac_bootstrap')
 
-    # Form and Case ID downloads are Pro Plan and higher
+    # Form and Case ID downloads are Standard Plan and higher
     skip_editions = ','.join((
         SoftwarePlanEdition.PAUSED,
         SoftwarePlanEdition.COMMUNITY,
-        SoftwarePlanEdition.STANDARD,
     ))
     call_command(
         'cchq_prbac_grandfather_privs',
