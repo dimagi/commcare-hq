@@ -40,6 +40,7 @@ from corehq.apps.app_manager.util import (
     actions_use_usercase,
     module_loads_registry_case,
     module_uses_inline_search,
+    module_offers_search,
 )
 from corehq.apps.app_manager.xform import (
     autoset_owner_id_for_advanced_action,
@@ -227,13 +228,14 @@ class EntriesHelper(object):
                 from corehq.apps.app_manager.suite_xml.features.mobile_ucr import get_report_context_tile_datum
                 e.datums.append(get_report_context_tile_datum())
 
-            if form.requires_case() and using_inline_search:
-                from corehq.apps.app_manager.suite_xml.post_process.remote_requests import (
-                    RemoteRequestFactory, RESULTS_INSTANCE_INLINE
-                )
+            if form.requires_case() and module_offers_search(module):
                 case_session_var = self.get_case_session_var_for_form(form)
+                from corehq.apps.app_manager.suite_xml.post_process.remote_requests import (
+                    RemoteRequestFactory, RESULTS_INSTANCE_INLINE, RESULTS_INSTANCE
+                )
+                storage_instance = RESULTS_INSTANCE_INLINE if using_inline_search else RESULTS_INSTANCE
                 remote_request_factory = RemoteRequestFactory(
-                    None, module, [], case_session_var=case_session_var, storage_instance=RESULTS_INSTANCE_INLINE)
+                    None, module, [], case_session_var=case_session_var, storage_instance=storage_instance)
                 e.post = remote_request_factory.build_remote_request_post()
 
             # Ideally all of this version check should happen in Command/Display class
