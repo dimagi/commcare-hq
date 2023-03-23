@@ -76,10 +76,10 @@ class TestTasks(TestCase):
 
         self.assertEqual(len(user_ids), 2)
         # The case_name for mobile workers should be their username
-        mobile_worker_case = AttendeeCase.objects.by_domain(self.domain)[0]
-        commcare_user_id = mobile_worker_case.case_json['commcare_user_id']
-        commcare_user = CommCareUser.get_by_user_id(commcare_user_id)
-        self.assertEqual(mobile_worker_case.name, commcare_user.username)
+        for mobile_worker_case in AttendeeCase.objects.by_domain(self.domain):
+            commcare_user_id = mobile_worker_case.case_json['commcare_user_id']
+            commcare_user = CommCareUser.get_by_user_id(commcare_user_id)
+            self.assertEqual(mobile_worker_case.name, commcare_user.username.split('@')[0])
 
     def test_duplicate_cases_not_created(self):
         # Let's call this to create initial cases
