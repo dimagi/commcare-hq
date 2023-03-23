@@ -40,6 +40,18 @@ class CaseType(models.Model):
         return super(CaseType, self).save(*args, **kwargs)
 
 
+class CasePropertyGroup(models.Model):
+    case_type = models.ForeignKey(
+        CaseType,
+        on_delete=models.CASCADE,
+        related_name='groups',
+        related_query_name='group'
+    )
+    name = models.CharField(max_length=255, default=None)
+    description = models.TextField(default='', blank=True)
+    index = models.IntegerField(default=0, blank=True)
+
+
 class CaseProperty(models.Model):
 
     class DataType(models.TextChoices):
