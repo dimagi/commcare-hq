@@ -180,7 +180,7 @@ class RemoteRequestSuiteTest(SimpleTestCase, SuiteMixin):
         self.assertXmlPartialEqual(expected_entry_query, suite, "./entry[1]/session/query[2]")
 
         self.assertXmlHasXpath(suite, "./entry[1]/instance[@id='commcaresession']")
-        self.assertXmlDoesNotHaveXpath(suite, "./entry[1]/instance[@id='registry']")
+        self.assertXmlHasXpath(suite, "./entry[1]/instance[@id='registry']")
 
     def test_form_linking_from_registry_module(self, *args):
         self.form.post_form_workflow = WORKFLOW_FORM
