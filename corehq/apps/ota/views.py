@@ -174,7 +174,7 @@ def claim(request, domain):
             synclog = get_properly_wrapped_sync_log(request.last_sync_token)
         except MissingSyncLog:
             return False
-        return bool(CommCareCase.objects.get_modified_case_ids(domain, list(case_ids_to_claim), synclog))
+        return bool(CommCareCase.objects.get_modified_case_ids(domain, case_ids, synclog))
 
     if not cases_to_claim_modified_since_last_synclog_date() and phone_holds_all_cases(request):
         return HttpResponse(status=204)
