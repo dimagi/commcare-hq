@@ -40,7 +40,7 @@ class SubmissionErrorReport(DeploymentsReport):
     @memoized
     def headers(self):
         headers = DataTablesHeader(DataTablesColumn(_("View Form"), sortable=False),
-                                   DataTablesColumn(_("Username"), prop_name="username"),
+                                   DataTablesColumn(_("Username"), prop_name="form.meta.username"),
                                    DataTablesColumn(_("Submit Time"), prop_name="received_on"),
                                    DataTablesColumn(_("Form Type"), sortable=False),
                                    DataTablesColumn(_("Error Type"), sortable=False),
@@ -67,7 +67,6 @@ class SubmissionErrorReport(DeploymentsReport):
         return sort_prop, desc
 
     @property
-    @memoized
     def paged_result(self):
         doc_types = [filter_.doc_type for filter_ in [filter_ for filter_ in self.submitfilter if filter_.show]]
         sort_col, desc = self.sort_params
