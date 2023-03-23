@@ -104,6 +104,12 @@
                 {% trans "Edit User Fields" %}
               </a>
             {% endif %}
+            {% if request|toggle_enabled:"CLEAR_MOBILE_WORKER_DATA" %}
+              <a id="clear-data" class="btn btn-default" href="#">
+                <i class="fa fa-eraser"></i>
+                {% trans "Bulk Clear Cases" %}
+              </a>
+            {% endif %}
             {% if request|toggle_enabled:"FILTERED_BULK_USER_DOWNLOAD" %}
               <a class="btn btn-danger" href="{% url "delete_commcare_users" domain %}">
                 <i class="fa fa-trash"></i>
@@ -311,6 +317,7 @@
         <table class="table table-striped table-responsive" style="margin-bottom: 0;" data-bind="visible: showTable">
           <thead>
           <tr>
+            <th class="col-xs-1" data-bind="visible: showBulkClearSelection()">{% trans "Include" %}</th>
             <th class="col-xs-3">{% trans "Username" %}</th>
             <th class="col-xs-3">{% trans "First Name" %}</th>
             <th class="col-xs-2">{% trans "Last Name" %}</th>
@@ -323,6 +330,13 @@
           </thead>
           <tbody data-bind="foreach: users">
           <tr>
+            <td data-bind="visible: $root.showBulkClearSelection()">
+              <input
+                type="checkbox"
+                class="field-include export-table-checkbox"
+                data-bind="checked: selectedToClear"
+              >
+            </td>
             <td>
               <a data-bind="attr: {href: edit_url}">
                 <i class="fa fa-user"></i>
