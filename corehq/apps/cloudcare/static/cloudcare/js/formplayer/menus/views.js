@@ -744,7 +744,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             "click @ui.selectPrint": "print",
         },
         expandDropdown: function (e) {
-            if (e.keyCode === 32) {
+            if (e.keyCode === 13 || e.keyCode === 32) {
                 e.preventDefault();
                 $(this.ui.dropdownMenu).toggleClass("open");
             }
