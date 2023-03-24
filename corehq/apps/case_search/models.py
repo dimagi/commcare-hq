@@ -332,13 +332,8 @@ def case_search_synchronous_web_apps_for_domain(domain):
 
 @quickcache(['domain'], timeout=24 * 60 * 60, memoize_timeout=60)
 def case_search_sync_cases_on_form_entry_enabled_for_domain(domain):
-    if not case_search_enabled_for_domain(domain):
-        return False
-
-    config = CaseSearchConfig.objects.get_or_none(pk=domain)
-    if config:
-        return config.sync_cases_on_form_entry
-    return False
+    config = CaseSearchConfig.objects.get_or_none(pk=domain, enabled=True)
+    return config.sync_cases_on_form_entry if config else False
 
 
 def enable_case_search(domain):
