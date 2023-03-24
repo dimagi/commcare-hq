@@ -697,6 +697,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
         template: _.template($("#language-option-template").html() || ""),
         events: {
             'click': 'onChangeLang',
+            'keydown .lang': 'onKeyActionChangeLang',
         },
         initialize: function (options) {
             this.languageOptionsEnabled = options.languageOptionsEnabled;
@@ -705,6 +706,11 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             return {
                 languageOptionsEnabled: this.languageOptionsEnabled,
             };
+        },
+        onKeyActionChangeLang: function (e) {
+            if (e.keyCode === 13) {
+                this.onChangeLang(e);
+            }
         },
         onChangeLang: function (e) {
             var lang = e.target.id;
