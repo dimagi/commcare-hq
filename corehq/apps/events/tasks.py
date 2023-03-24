@@ -71,7 +71,7 @@ def get_user_attendee_cases_on_domain(domain):
 
 
 def get_case_block_for_user(user, owner_id, attendee_case_type):
-    case_name = ' '.join((user.first_name, user.last_name))
+    case_name = user.username.split('@')[0]
     fields = {
         ATTENDEE_USER_ID_CASE_PROPERTY: user.user_id,
     }
