@@ -8,7 +8,7 @@ from unittest.mock import patch
 from corehq.apps.api.cors import ACCESS_CONTROL_ALLOW_ORIGIN, ACCESS_CONTROL_ALLOW, ACCESS_CONTROL_ALLOW_HEADERS, \
     ACCESS_CONTROL_ALLOW_METHODS
 from corehq.apps.api.decorators import allow_cors
-from corehq.apps.domain.decorators import _login_or_challenge, api_auth, api_auth_with_scope
+from corehq.apps.domain.decorators import _login_or_challenge, api_auth
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.users.models import WebUser, CommCareUser
 
@@ -176,7 +176,8 @@ class LoginOrChallengeDBTest(TestCase, AuthTestMixin):
 
 
 def _get_auth_mock(succeed=True):
-    def mock_auth_decorator(allow_cc_users=False, allow_sessions=True, require_domain=True, oauth_scopes=None):
+    def mock_auth_decorator(allow_cc_users=False, allow_sessions=True, require_domain=True,
+                            oauth_scopes=None, allow_creds_in_data=True):
         def _outer(fn):
             @wraps(fn)
             def inner(request, *args, **kwargs):
@@ -198,13 +199,12 @@ class ApiAuthTest(SimpleTestCase, AuthTestMixin):
     domain_name = 'api-auth-test'
 
     def test_api_auth_no_auth(self):
-        decorated_view = api_auth(sample_view)
+        decorated_view = api_auth()(sample_view)
         request = _get_request()
-        # result = decorated_view(request, self.domain_name)
         self.assertForbidden(decorated_view(request, self.domain_name))
 
     def _do_auth_test(self, auth_header, decorator_to_mock):
-        decorated_view = api_auth(sample_view)
+        decorated_view = api_auth()(sample_view)
         request = _get_request()
         request.META['HTTP_AUTHORIZATION'] = auth_header
         with patch(decorator_to_mock, mock_successful_auth):
@@ -226,7 +226,7 @@ class ApiAuthTest(SimpleTestCase, AuthTestMixin):
 
     def test_api_auth_oauth_with_scope(self):
         decorator_to_mock = 'corehq.apps.domain.decorators.login_or_oauth2_ex'
-        decorated_view = api_auth_with_scope(['my_scope'])(sample_view)
+        decorated_view = api_auth(oauth_scopes=['my_scope'])(sample_view)
         request = _get_request()
         request.META['HTTP_AUTHORIZATION'] = 'bearer myToken'
         with patch(decorator_to_mock, mock_successful_auth):
@@ -237,7 +237,7 @@ class ApiAuthTest(SimpleTestCase, AuthTestMixin):
     def test_api_auth_formplayer(self):
         # formplayer auth is governed under different rules so can't use the shared function
         decorator_to_mock = 'corehq.apps.domain.decorators.login_or_formplayer_ex'
-        decorated_view = api_auth(sample_view)
+        decorated_view = api_auth()(sample_view)
         request = _get_request()
         request.META['HTTP_X_MAC_DIGEST'] = 'fomplayerAuth'
         with patch(decorator_to_mock, mock_successful_auth):

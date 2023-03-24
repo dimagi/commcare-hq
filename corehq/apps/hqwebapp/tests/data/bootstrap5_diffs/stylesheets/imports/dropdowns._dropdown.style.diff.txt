@@ -1,25 +1,37 @@
 --- 
 +++ 
-@@ -24,14 +24,14 @@
+@@ -24,92 +24,64 @@
    border-color: transparent;
    border-style: solid;
    border-width: 5px 0 5px 5px;
 -  border-left-color: darken(@dropdown-bg, 20%);
-+  border-left-color: darken($dropdown-bg, 20%);
-   margin-right: -10px;
-   margin-top: 3px;
+-  margin-right: -10px;
+-  margin-top: 3px;
 -  color: @dropdown-link-color;
 -  line-height: @line-height-base;
++  border-left-color: darken($dropdown-bg, 20%);
++  margin-right: -5px;
++  margin-top: 3.3px;
 +  color: $dropdown-link-color;
 +  line-height: $line-height-base;
  }
  .dropdown-submenu:hover > a:after {
 -  color: @dropdown-link-active-color !important;
+-}
+-
+-// Left aligned submenus
+-.dropdown-submenu.pull-left {
+-  // Undo the float
+-  // Yes, this is awkward since .pull-left adds a float, but it sticks to our conventions elsewhere.
+-  float: none;
+-
+-  // Positioning the submenu
+-  > .dropdown-menu {
+-    left: -100%;
+-    margin-left: 10px;
+-  }
 +  color: $dropdown-link-active-color !important;
  }
- 
- // Left aligned submenus
-@@ -49,8 +49,8 @@
  
  .dropdown-submenu:hover > a {
    text-decoration: none;
@@ -29,34 +41,100 @@
 +  background-color: $dropdown-link-hover-bg;
  }
  
- .dropdown-menu {
-@@ -61,13 +61,13 @@
-     border: none;
-     padding: 3px 20px;
-     text-align: left;
+-.dropdown-menu {
+-  button {
+-    display: block;
+-    width: 100%;
+-    background-color: transparent;
+-    border: none;
+-    padding: 3px 20px;
+-    text-align: left;
 -    line-height: @line-height-base;
-+    line-height: $line-height-base;
-     white-space: nowrap;
+-    white-space: nowrap;
++// Additional dropdown features
  
-     &:hover,
-     &:focus {
+-    &:hover,
+-    &:focus {
 -      color: @dropdown-link-active-color;
 -      background-color: @dropdown-link-active-bg;
-+      color: $dropdown-link-active-color;
-+      background-color: $dropdown-link-active-bg;
-     }
+-    }
++.navbar-hq-main-menu {
++  .dropdown-menu {
++    box-shadow: 0 6px 12px rgb(0 0 0 / 18%);
++  }
  
++  .dropdown-menu > li > a:hover,
++  .dropdown-menu > li > a:focus {
++    background-color: $brand-primary;
++    color: #ffffff;
    }
-@@ -75,10 +75,10 @@
-     &,
-     &:hover,
-     &:focus {
+-  .active button {
+-    &,
+-    &:hover,
+-    &:focus {
 -      color: @dropdown-link-active-color;
-+      color: $dropdown-link-active-color;
-       text-decoration: none;
-       outline: 0;
+-      text-decoration: none;
+-      outline: 0;
 -      background-color: @dropdown-link-active-bg;
-+      background-color: $dropdown-link-active-bg;
-     }
+-    }
++
++  .dropdown-menu .login-container {
++    padding: 2px 20px 5px;
++  }
++
++  .dropdown-menu .dropdown-icon {
++    margin-right: 4px;
++  }
++
++  .dropdown-menu[data-bs-popper].dropdown-menu-right {
++    left: auto;
++    right: 0;
++  }
++
++  .dropdown-header {
++    text-transform: uppercase;
++    font-weight: bold;
++    margin-top: 5px;
++  }
++
++  .nav-settings-bar .dropdown-toggle-with-icon.nav-link::after {
++    display: none;
    }
  }
+ 
+-.dropdown-menu .login-container {
+-  padding: 2px 20px 5px;
+-}
++@media (max-width: map-get($grid-breakpoints, "lg")) {
++  .navbar-hq-main-menu {
+ 
+-.dropdown-menu .dropdown-icon {
+-  margin-right: 4px;
+-}
+-
+-.navbar-nav > li > a.dropdown-toggle-with-icon {
+-  padding-bottom: 19px;
+-}
+-
+-.dropdown-menu.right-align,
+-.dropdown-menu-right {
+-  left: auto;
+-  right: 0;
+-}
+-
+-.checklist {
+-  i.fa-check {
+-    display: none;
+-    width: auto;
++    .dropdown-menu {
++      box-shadow: none;
++    }
+   }
+-
+-  .selected i.fa-check {
+-    display: inline-block;
+-    margin-left: -14px;
+-    margin-right: 2px;
+-  }
+-}
++}

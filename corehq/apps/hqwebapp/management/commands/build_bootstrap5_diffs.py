@@ -44,12 +44,17 @@ def get_bootstrap5_filepaths(full_diff_config):
     for parent_path, directory_diff_config in full_diff_config.items():
         for diff_config in directory_diff_config:
             directory_bootstrap3, directory_bootstrap5 = diff_config['directories']
-            migrated_files = diff_config['files']
+            migrated_files = diff_config.get('files')
+            compare_all_files = diff_config.get('compare_all_files', False)
             file_type = diff_config["file_type"]
             label = diff_config["label"]
 
             path_bootstrap3 = COREHQ_BASE_DIR / parent_path / directory_bootstrap3
             path_bootstrap5 = COREHQ_BASE_DIR / parent_path / directory_bootstrap5
+
+            if compare_all_files:
+                migrated_files = [[x.name, x.name] for x in path_bootstrap3.glob('**/*') if x.is_file()]
+
             for filename_bootstrap3, filename_bootstrap5 in migrated_files:
                 diff_filename = get_diff_filename(filename_bootstrap3, filename_bootstrap5, file_type)
                 diff_filepath = COREHQ_BASE_DIR / DIFF_STORAGE_FOLDER / label / diff_filename

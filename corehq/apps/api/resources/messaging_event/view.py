@@ -18,7 +18,7 @@ from corehq.apps.sms.models import MessagingSubEvent, SMS, Email
 
 @csrf_exempt
 @allow_cors(['OPTIONS', 'GET'])
-@api_auth
+@api_auth()
 @require_can_edit_data
 @requires_privilege_with_fallback(privileges.API_ACCESS)
 @api_throttle

@@ -18,6 +18,9 @@ from corehq.apps.users.util import (
     username_to_user_id,
 )
 from corehq.const import USER_CHANGE_VIA_AUTO_DEACTIVATE
+from unittest.mock import patch
+from corehq.apps.locations.models import SQLLocation
+from corehq.apps.users.views.utils import get_locations_with_single_user
 
 
 class TestUsernameToUserID(TestCase):
@@ -260,3 +263,46 @@ class TestGetCompleteMobileUsername(SimpleTestCase):
     def test_returns_complete_username_if_incomplete(self):
         username = get_complete_mobile_username('test', 'test-domain')
         self.assertEqual(username, 'test@test-domain.commcarehq.org')
+
+
+class TestGetLocationsWithSingleUser(TestCase):
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.domain = 'test-domain'
+        cls.user_id = 'test-user-id'
+        cls.location_ids = ['123']
+        locations = [
+            SQLLocation(
+                name='Brazil',
+                location_id='123'
+            ),
+            SQLLocation(
+                name='Asia',
+                location_id='456'
+            )
+        ]
+
+        get_locations_patch = patch('corehq.apps.users.views.utils._get_location_case_counts_with_single_user')
+        cls.get_locations_func = get_locations_patch.start()
+        cls.addClassCleanup(get_locations_patch.stop)
+        cls.get_locations_func.return_value = [locations, {'123': 1}]
+
+    @patch(
+        'corehq.apps.users.views.utils._get_location_ids_with_single_user',
+        return_value=[]
+    )
+    def test_no_locations(self, _):
+        locations_with_single_user = get_locations_with_single_user(self.domain, self.location_ids, self.user_id)
+        self.assertEqual(len(locations_with_single_user), 0)
+
+    @patch(
+        'corehq.apps.users.views.utils._get_location_ids_with_single_user',
+        return_value=['123']
+    )
+    def test_with_locations(self, _):
+        locations = get_locations_with_single_user(self.domain, self.location_ids, self.user_id)
+        self.assertEqual(len(locations), 2)
+        self.assertEqual(locations['Brazil'], 1)
+        self.assertEqual(locations['Asia'], 0)

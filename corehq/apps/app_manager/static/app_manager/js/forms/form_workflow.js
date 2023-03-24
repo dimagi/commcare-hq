@@ -147,6 +147,7 @@ hqDefine('app_manager/js/forms/form_workflow', function () {
         self.datums = ko.observableArray();
         self.manualDatums = ko.observable(false);
         self.datumsFetched = ko.observable(false);
+        self.datumsError = ko.observable(false);
         self.serializedDatums = ko.observable('');
 
         self.get_form_by_id = function (form_id) {
@@ -208,7 +209,10 @@ hqDefine('app_manager/js/forms/form_workflow', function () {
                     self.datums(self.wrap_datums(data));
                 },
                 "json"
-            );
+            ).fail(function () {
+                self.datumsFetched(false);
+                self.datumsError(true);
+            });
         };
 
         self.errors = ko.computed(function () {

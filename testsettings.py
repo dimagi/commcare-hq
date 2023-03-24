@@ -1,4 +1,5 @@
 import os
+from warnings import filterwarnings
 
 import settingshelper as helper
 from settings import *  # noqa: F403
@@ -74,6 +75,8 @@ ENABLE_PRELOGIN_SITE = True
 # override dev_settings
 CACHE_REPORTS = True
 
+# Hide couchdb 'unclosed socket' warnings
+filterwarnings("ignore", r"unclosed.*socket.*raddr=\([^) ]* 5984\)", ResourceWarning)
 
 def _set_logging_levels(levels):
     import logging

@@ -255,29 +255,6 @@ class AutomaticUpdateRule(models.Model):
                 CommCareCase, q_expression, load_source='auto_update_rule'
             )
 
-    @classmethod
-    def _iter_cases_from_es(cls, domain, case_type, boundary_date=None):
-        case_ids = list(cls._get_case_ids_from_es(domain, case_type, boundary_date))
-        return CommCareCase.objects.iter_cases(case_ids, domain)
-
-    @classmethod
-    def _get_case_ids_from_es(cls, domain, case_type, boundary_date=None):
-        query = (CaseES()
-                 .domain(domain)
-                 .case_type(case_type)
-                 .is_closed(closed=False)
-                 .exclude_source()
-                 .size(100))
-
-        if boundary_date:
-            query = query.server_modified_range(lte=boundary_date)
-
-        for case_id in query.scroll():
-            if not isinstance(case_id, str):
-                raise ValueError("Something is wrong with the query, expected ids only")
-
-            yield case_id
-
     def activate(self, active=True):
         previous_active = self.active
         self.active = active

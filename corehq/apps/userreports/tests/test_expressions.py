@@ -310,6 +310,8 @@ class JsonpathExpressionTest(SimpleTestCase):
         ({"a": "1"}, "a", "integer", 1),
         ({"a": [{"b": "1"}, {"b": "2"}, {"b": "x"}]}, "a..b", "integer", [1, 2, None]),
         ({"a": {"b": 1}}, "a..b", "array", [1]),
+        ({"a": "foo5+3bar"}, "a.`sub(/(foo\\\\d+)\\\\+(\\\\d+bar)/, \\\\2-\\\\1)`", "string", "3bar-foo5"),
+        ({"a": "foo", "b": "bar"}, "$.a + '_' + $.b", "string", "foo_bar"),
     ])
     def test_datatype(self, item, jsonpath, datatype, expected):
         expr = ExpressionFactory.from_spec({

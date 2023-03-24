@@ -10,6 +10,7 @@ hqDefine("data_dictionary/js/data_dictionary", [
     "hqwebapp/js/toggles",
     "hqwebapp/js/knockout_bindings.ko",
     "data_interfaces/js/make_read_only",
+    'hqwebapp/js/select2_knockout_bindings.ko',
 ], function (
     $,
     ko,
@@ -32,6 +33,7 @@ hqDefine("data_dictionary/js/data_dictionary", [
             _.each(groupDict, function (properties, group) {
                 var groupObj = propertyListItem(group, '', true, group, self.name);
                 self.properties.push(groupObj);
+                properties.sort((a, b) => a.index - b.index);
                 _.each(properties, function (prop) {
                     var propObj = propertyListItem(prop.name, prop.label, false, prop.group, self.name, prop.data_type,
                         prop.description, prop.allowed_values, prop.fhir_resource_prop_path, prop.deprecated,
@@ -131,7 +133,7 @@ hqDefine("data_dictionary/js/data_dictionary", [
             save: function () {
                 var postProperties = [];
                 var currentGroup = '';
-                _.each(self.casePropertyList(), function (element) {
+                _.each(self.casePropertyList(), function (element, index) {
                     if (!element.isGroup) {
                         const allowedValues = element.allowedValues.val();
                         let pureAllowedValues = {};
@@ -142,6 +144,7 @@ hqDefine("data_dictionary/js/data_dictionary", [
                             'caseType': element.caseType,
                             'name': element.name,
                             'label': element.label() || element.name,
+                            'index': index,
                             'data_type': element.dataType(),
                             'group': currentGroup,
                             'description': element.description(),
@@ -168,6 +171,7 @@ hqDefine("data_dictionary/js/data_dictionary", [
                     },
                     success: function () {
                         var activeCaseType = self.getActiveCaseType();
+                        activeCaseType.fhirResourceType(self.fhirResourceType());
                         activeCaseType.properties(self.casePropertyList());
                     },
                     // Error handling is managed by SaveButton logic in main.js
@@ -346,5 +350,6 @@ hqDefine("data_dictionary/js/data_dictionary", [
         $('#download-dict').click(function () {
             googleAnalytics.track.event('Data Dictionary', 'downloaded data dictionary');
         });
+
     });
 });

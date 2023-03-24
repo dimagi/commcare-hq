@@ -9,19 +9,19 @@ from django.conf import settings
 from django.contrib import messages
 from django.http import Http404
 from django.urls import reverse
-from django.utils.safestring import mark_safe
 from django.utils.html import format_html
+from django.utils.safestring import mark_safe
 
 from attr import attrib, attrs
 from couchdbkit import ResourceNotFound
 from memoized import memoized
 
-from corehq.extensions import extension_point, ResultFormat
 from corehq import privileges
+from corehq.extensions import ResultFormat, extension_point
+from corehq.util.quickcache import quickcache
+
 from .models import Toggle
 from .shortcuts import set_toggle, toggle_enabled
-
-from corehq.util.quickcache import quickcache
 
 
 @attrs(frozen=True)
@@ -919,7 +919,7 @@ WEB_APPS_DOMAIN_BANNER = StaticToggle(
 
 WEB_APPS_UPLOAD_QUESTIONS = FeatureRelease(
     'web_apps_upload_questions',
-    'USH: Support signature, image, audio, and video questions in Web Apps',
+    'USH: Support image, audio, and video questions in Web Apps',
     TAG_RELEASE,
     namespaces=[NAMESPACE_DOMAIN],
     owner='Jenny Schweers',
@@ -1612,17 +1612,6 @@ BULK_UPLOAD_DATE_OPENED = StaticToggle(
     [NAMESPACE_DOMAIN],
 )
 
-REGEX_FIELD_VALIDATION = StaticToggle(
-    'regex_field_validation',
-    'Regular Expression Validation for Custom Data Fields',
-    TAG_SOLUTIONS_OPEN,
-    namespaces=[NAMESPACE_DOMAIN],
-    description="This flag adds the option to specify a regular expression "
-                "(regex) to validate custom user data, custom location data, "
-                "and/or custom product data fields.",
-    help_link='https://confluence.dimagi.com/display/saas/Regular+Expression+Validation+for+Custom+Data+Fields',
-)
-
 TWO_FACTOR_SUPERUSER_ROLLOUT = StaticToggle(
     'two_factor_superuser_rollout',
     'Users in this list will be forced to have Two-Factor Auth enabled',
@@ -1776,13 +1765,6 @@ MANAGE_RELEASES_PER_LOCATION = StaticToggle(
     TAG_SOLUTIONS_LIMITED,
     namespaces=[NAMESPACE_DOMAIN],
     help_link='https://confluence.dimagi.com/display/saas/Manage+Releases+per+Location',
-)
-
-LOCATION_SAFE_CASE_IMPORTS = StaticToggle(
-    'location_safe_case_imports',
-    'Allow location-restricted users to import cases owned at their location or below',
-    TAG_SOLUTIONS_OPEN,
-    namespaces=[NAMESPACE_DOMAIN],
 )
 
 FORM_CASE_IDS_CASE_IMPORTER = StaticToggle(
@@ -2190,7 +2172,8 @@ GENERIC_INBOUND_API = StaticToggle(
     TAG_SOLUTIONS_LIMITED,
     namespaces=[NAMESPACE_DOMAIN],
     description="Create inbound APIs that use UCR expressions to process data into case updates",
-    help_link="TODO",
+    help_link="https://docs.google.com/document/d/1y9CZwpzGYtitxbh-Y7nS5-WoMUg-LbRlZHd-eD5i78U/edit",
+    parent_toggles=[UCR_EXPRESSION_REGISTRY]
 )
 
 CASE_UPDATES_UCR_FILTERS = StaticToggle(
@@ -2206,7 +2189,6 @@ TURN_IO_BACKEND = StaticToggle(
     TAG_SOLUTIONS_LIMITED,
     namespaces=[NAMESPACE_DOMAIN],
 )
-
 
 FOLLOWUP_FORMS_AS_CASE_LIST_FORM = StaticToggle(
     'followup_forms_as_case_list_form',
@@ -2399,6 +2381,31 @@ TABLEAU_USER_SYNCING = StaticToggle(
 )
 
 
+def _handle_attendance_tracking_role(domain, is_enabled):
+    from corehq.apps.accounting.utils import domain_has_privilege
+    from corehq.apps.users.role_utils import (
+        archive_attendance_coordinator_role_for_domain,
+        enable_attendance_coordinator_role_for_domain,
+    )
+
+    if not domain_has_privilege(domain, privileges.ATTENDANCE_TRACKING):
+        return
+
+    if is_enabled:
+        enable_attendance_coordinator_role_for_domain(domain)
+    else:
+        archive_attendance_coordinator_role_for_domain(domain)
+
+ATTENDANCE_TRACKING = StaticToggle(
+    'attendance_tracking',
+    'Allows access to the attendance tracking page',
+    TAG_SOLUTIONS_LIMITED,
+    namespaces=[NAMESPACE_DOMAIN],
+    description='Additional views will be added to simplify the process of '
+                'using CommCare HQ for attendance tracking.',
+    save_fn=_handle_attendance_tracking_role,
+)
+
 class FrozenPrivilegeToggle(StaticToggle):
     """
     A special toggle to represent a legacy toggle that should't be
@@ -2494,4 +2501,25 @@ DATA_FILE_DOWNLOAD = FrozenPrivilegeToggle(
     namespaces=[NAMESPACE_DOMAIN],
     help_link='https://confluence.dimagi.com/display/saas/Offer+hosting+and+'
               'sharing+data+files+for+downloading+from+a+secure+dropzone',
+)
+
+REGEX_FIELD_VALIDATION = FrozenPrivilegeToggle(
+    privileges.REGEX_FIELD_VALIDATION,
+    'regex_field_validation',
+    label='Regular Expression Validation for Custom Data Fields',
+    tag=TAG_SOLUTIONS_OPEN,
+    namespaces=[NAMESPACE_DOMAIN],
+    description="This flag adds the option to specify a regular expression "
+                "(regex) to validate custom user data, custom location data, "
+                "and/or custom product data fields.",
+    help_link='https://confluence.dimagi.com/display/saas/Regular+Expression+Validation+for+Custom+Data+Fields',
+)
+
+LOCATION_SAFE_CASE_IMPORTS = FrozenPrivilegeToggle(
+    privileges.LOCATION_SAFE_CASE_IMPORTS,
+    'location_safe_case_imports',
+    label='Location-restricted users can import cases at their location or below',
+    tag=TAG_SOLUTIONS_OPEN,
+    namespaces=[NAMESPACE_DOMAIN],
+    description='Allow location-restricted users to import cases owned at their location or below',
 )

@@ -1,15 +1,16 @@
 from copy import deepcopy
 
+from dimagi.ext import jsonobject
+from pillowtop.logger import pillow_logging
+
 from corehq.apps.es.index.settings import (
     IndexSettingsKey,
     render_index_tuning_settings,
 )
 from corehq.apps.es.migration_operations import CreateIndex
 from corehq.apps.es.transient_util import doc_adapter_from_info
-from corehq.util.es.elasticsearch import TransportError
+from corehq.util.es.elasticsearch import NotFoundError, TransportError
 from corehq.util.es.interface import ElasticsearchInterface
-from dimagi.ext import jsonobject
-from pillowtop.logger import pillow_logging
 
 XFORM_HQ_INDEX_NAME = IndexSettingsKey.FORMS
 CASE_HQ_INDEX_NAME = IndexSettingsKey.CASES
@@ -93,7 +94,10 @@ def assume_alias(es, index, alias):
         alias_indices = list(es.indices.get_alias(alias))
         for aliased_index in alias_indices:
             es.indices.delete_alias(aliased_index, alias)
-    es.indices.put_alias(index, alias)
+    try:
+        es.indices.put_alias(index, alias)
+    except NotFoundError as err:
+        raise ValueError(f'index: {index!r}, alias: {alias!r}') from err
 
 
 def get_index_info_from_pillow(pillow):

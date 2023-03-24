@@ -172,7 +172,7 @@ def _can_view_form_attachment():
                 response = HttpResponseForbidden()
             return response
 
-        return api_auth(_inner)
+        return api_auth()(_inner)
     return decorator
 
 

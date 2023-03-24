@@ -130,7 +130,7 @@ django-crispy-forms==1.10.0
     # via -r base-requirements.in
 django-cte==1.2.0
     # via -r base-requirements.in
-django-field-audit==1.2.4
+django-field-audit==1.2.6
     # via -r base-requirements.in
 django-formtools==2.3
     # via
@@ -292,6 +292,8 @@ openpyxl==3.0.9
     # via
     #   -r base-requirements.in
     #   commcaretranslationchecker
+packaging==23.0
+    # via -r base-requirements.in
 phonenumberslite==8.12.48
     # via -r base-requirements.in
 pickle5==0.0.11
