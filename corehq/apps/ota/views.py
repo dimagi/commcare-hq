@@ -175,7 +175,7 @@ def claim(request, domain):
             missing_case_ids_on_phone = set(case_ids) - synclog.case_ids_on_phone
             return not missing_case_ids_on_phone
 
-    def cases_to_claim_modified_since_last_synclog_date():
+    def cases_have_been_modified_since_last_synclog_date():
         if get_synclog(request.last_sync_token):
             synclog = get_synclog(request.last_sync_token)
             return bool(CommCareCase.objects.get_modified_case_ids(domain, case_ids, synclog))
@@ -186,7 +186,7 @@ def claim(request, domain):
     if not phone_holds_all_cases(request):
         return HttpResponse(status=201)
 
-    if cases_to_claim_modified_since_last_synclog_date():
+    if cases_have_been_modified_since_last_synclog_date():
         return HttpResponse(status=201)
 
     return HttpResponse(status=201)
