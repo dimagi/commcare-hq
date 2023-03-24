@@ -103,6 +103,7 @@ from corehq.apps.users.tasks import (
     bulk_download_users_async,
     reset_demo_user_restore_task,
     turn_on_demo_mode_task,
+    clean_domain_users_data,
 )
 from corehq.apps.users.util import (
     can_add_extra_mobile_workers,
@@ -1311,6 +1312,41 @@ class DeleteCommCareUsers(BaseManageCommCareUserView, UsernameUploadMixin):
                 deleted_count += 1
         if deleted_count:
             messages.success(request, f"{deleted_count} user(s) deleted.")
+
+
+@method_decorator([toggles.CLEAR_MOBILE_WORKER_DATA.required_decorator()], name='dispatch')
+class ClearCommCareUsers(DeleteCommCareUsers):
+    urlname = 'clear_commcare_users'
+    page_title = gettext_noop('Bulk Clear')
+    template_name = 'users/bulk_clear.html'
+
+    def get(self, request, *args, **kwargs):
+        return super().get(request, *args, **kwargs)
+
+    def post(self, request, *args, **kwargs):
+        usernames = self._get_usernames(request)
+        if not usernames:
+            return self.get(request, *args, **kwargs)
+
+        user_docs_by_id = {doc['_id']: doc for doc in get_user_docs_by_username(usernames)}
+        usernames_not_found = self._get_usernames_not_found(request, user_docs_by_id, usernames)
+
+        if usernames_not_found:
+            messages.error(request, _("""
+                No users cleared. Please address the above issue(s) and re-upload your updated file.
+            """))
+        else:
+            self._clear_users_data(request, user_docs_by_id)
+
+        return self.get(request, *args, **kwargs)
+
+    def _clear_users_data(self, request, user_docs_by_id):
+        user_ids = [user_id for user_id, _ in user_docs_by_id.items()]
+        clean_domain_users_data.delay(
+            domain=request.couch_user.domain,
+            user_ids=user_ids,
+            cleared_by=request.couch_user,
+        )
 
 
 class CommCareUsersLookup(BaseManageCommCareUserView, UsernameUploadMixin):

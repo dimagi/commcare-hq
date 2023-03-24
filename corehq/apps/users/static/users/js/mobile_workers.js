@@ -100,8 +100,6 @@ hqDefine("users/js/mobile_workers",[
             return initialPageData.reverse('edit_commcare_user', self.user_id());
         });
 
-        self.selectedToClear = ko.observable(true);
-
         self.is_active.subscribe(function (newValue) {
             var urlName = newValue ? 'activate_commcare_user' : 'deactivate_commcare_user',
                 $modal = $('#' + (newValue ? 'activate_' : 'deactivate_') + self.user_id());
@@ -204,17 +202,6 @@ hqDefine("users/js/mobile_workers",[
 
         self.showTable = ko.computed(function () {
             return !self.showLoadingSpinner() && !self.hasError() && !self.showNoUsers() && !self.showProjectHasNoUsers();
-        });
-
-        self.bulkClearSelected = ko.observable(false);
-
-        // Mixing jQuery, huh?
-        $('#clear-data').click(function() {
-            self.bulkClearSelected(!self.bulkClearSelected());
-        });
-
-        self.showBulkClearSelection = ko.computed(function () {
-            return self.bulkClearSelected;
         });
 
         self.deactivatedOnly.subscribe(function () {
