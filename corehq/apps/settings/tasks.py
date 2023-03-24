@@ -13,7 +13,7 @@ from django.template.loader import render_to_string
 @periodic_task(
     run_every=crontab(minute='*/15'),
     # run_every=crontab(hour=23, minute=55),
-    queue='settings_background_queue',
+    queue='background_queue',
 )
 def notify_about_to_expire_api_keys():
 
