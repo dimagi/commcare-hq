@@ -180,6 +180,7 @@ class privilege_enabled:
     imports = (
         'corehq.apps.users.landing_pages.domain_has_privilege',
         'corehq.apps.users.permissions.domain_has_privilege',
+        'corehq.apps.users.views.mobile.users.domain_has_privilege',
         'django_prbac.decorators.has_privilege',
     )
 
