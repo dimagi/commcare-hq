@@ -908,7 +908,7 @@ hqDefine("cloudcare/js/form_entry/entries", function () {
         self.xformParams = function () {
             return { file: self.file() };
         };
-
+        self.formplayerProcessed = false;
         self.file = ko.observable();
         // corresponds to SUPPORTED_FILE_EXTS var in Formplayer, a list of valid file extensions
         // any changes made here should also be made in Formplayer
@@ -923,7 +923,11 @@ hqDefine("cloudcare/js/form_entry/entries", function () {
     FileEntry.prototype.onPreProcess = function (newValue) {
         var self = this;
         if (newValue !== constants.NO_ANSWER && newValue !== "") {
-            this.answer(newValue.replace(constants.FILE_PREFIX, ""));
+            // input has changed and validation will be checked
+            if (newValue !== self.answer()) {
+                self.question.formplayerProcessed = false;
+            }
+            self.answer(newValue.replace(constants.FILE_PREFIX, ""));
         } else {
             self.file(null);
             self.answer(constants.NO_ANSWER);
@@ -933,8 +937,8 @@ hqDefine("cloudcare/js/form_entry/entries", function () {
     };
     FileEntry.prototype.onAnswerChange = function (newValue) {
         var self = this;
-        // file has already been assigned a unique id and another request should not be sent to formplayer
-        if (self.answer() && self.answer().match(/^(\w{8}-)(\w{4}-){3}(\w{12})\.\w{3,4}$/)) {
+        // file has already been validated and assigned a unique id. another request should not be sent to formplayer
+        if (self.question.formplayerProcessed) {
             return;
         }
         if (newValue !== constants.NO_ANSWER && newValue !== "") {
