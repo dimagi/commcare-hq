@@ -67,6 +67,7 @@ class SubmissionErrorReport(DeploymentsReport):
         return sort_prop, desc
 
     @property
+    @memoized
     def paged_result(self):
         doc_types = [filter_.doc_type for filter_ in [filter_ for filter_ in self.submitfilter if filter_.show]]
         sort_col, desc = self.sort_params
