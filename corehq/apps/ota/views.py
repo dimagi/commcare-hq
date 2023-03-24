@@ -180,8 +180,14 @@ def claim(request, domain):
             synclog = get_synclog(request.last_sync_token)
             return bool(CommCareCase.objects.get_modified_case_ids(domain, case_ids, synclog))
 
-    if not cases_to_claim_modified_since_last_synclog_date() and phone_holds_all_cases(request):
-        return HttpResponse(status=204)
+    if case_ids_to_claim:
+        return HttpResponse(status=201)
+
+    if not phone_holds_all_cases(request):
+        return HttpResponse(status=201)
+
+    if cases_to_claim_modified_since_last_synclog_date():
+        return HttpResponse(status=201)
 
     return HttpResponse(status=201)
 
