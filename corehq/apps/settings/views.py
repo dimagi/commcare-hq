@@ -2,6 +2,7 @@ import json
 import re
 from base64 import b64encode
 from io import BytesIO
+from datetime import datetime
 
 import pytz
 from django.conf import settings
@@ -700,6 +701,13 @@ class ApiKeyView(BaseMyAccountView, CRUDPaginatedViewMixin):
         else:
             copy_msg = _("Copy this in a secure place. It will not be shown again.")
             key = f"{api_key.key} ({copy_msg})",
+
+        if api_key.expiration_date and api_key.expiration_date < datetime.now():
+            status = "expired"
+        elif api_key.is_active:
+            status = "active"
+        else:
+            status = "inactive"
         return {
             "id": api_key.id,
             "name": api_key.name,
@@ -712,6 +720,7 @@ class ApiKeyView(BaseMyAccountView, CRUDPaginatedViewMixin):
             "created": self._to_user_time(api_key.created),
             "last_used": self._to_user_time(api_key.last_used),
             "expiration_date": self._to_user_time(api_key.expiration_date),
+            "status": status,
             "deactivated_on": self._to_user_time(api_key.deactivated_on),
             "is_active": api_key.is_active,
         }
