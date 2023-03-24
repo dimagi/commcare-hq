@@ -9,11 +9,12 @@ from custom.abdm.models import ABDMUser
 
 class TestABHACreation(APITestCase):
 
-    def setUpClass(self):
-        self.user, _ = ABDMUser.objects.get_or_create(username="abdm_test", domain="abdm_test")
-        token = self.user.access_token
-        self.client.credentials(HTTP_AUTHORIZATION='Token ' + token)
-        self.invalid_req_msg = "Unable to process the current request due to incorrect data entered."
+    @classmethod
+    def setUpClass(cls):
+        cls.user, _ = ABDMUser.objects.get_or_create(username="abdm_test", domain="abdm_test")
+        token = cls.user.access_token
+        cls.client.credentials(HTTP_AUTHORIZATION='Token ' + token)
+        cls.invalid_req_msg = "Unable to process the current request due to incorrect data entered."
 
     @staticmethod
     def _mock_abdm_http_post(url, payload):
@@ -81,5 +82,6 @@ class TestABHACreation(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertEqual(self.invalid_req_msg, response.json().get("message"))
 
-    def tearDownClass(self) -> None:
+    @classmethod
+    def tearDownClass(cls) -> None:
         ABDMUser.objects.all().delete()
