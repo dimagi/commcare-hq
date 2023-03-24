@@ -12,9 +12,12 @@ class TestABHACreation(APITestCase):
     @classmethod
     def setUpClass(cls):
         cls.user, _ = ABDMUser.objects.get_or_create(username="abdm_test", domain="abdm_test")
-        token = cls.user.access_token
-        cls.client.credentials(HTTP_AUTHORIZATION='Token ' + token)
+        cls.token = cls.user.access_token
+        # cls.client.credentials(HTTP_AUTHORIZATION='Token ' + token)
         cls.invalid_req_msg = "Unable to process the current request due to incorrect data entered."
+
+    def setUp(self) -> None:
+        self.client.credentials(HTTP_AUTHORIZATION='Token ' + TestABHACreation.token)
 
     @staticmethod
     def _mock_abdm_http_post(url, payload):
@@ -39,7 +42,7 @@ class TestABHACreation(APITestCase):
     def test_aadhaar_otp_generation_failure(self):
         response = self.client.post(reverse("generate_aadhaar_otp"), {"pan": "123456"})
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-        self.assertEqual(self.invalid_req_msg, response.json().get("message"))
+        self.assertEqual(TestABHACreation.invalid_req_msg, response.json().get("message"))
 
     def test_mobile_otp_generation_success(self):
         abdm_txn_id_mock = {"txnId": "1234"}
@@ -53,7 +56,7 @@ class TestABHACreation(APITestCase):
     def test_mobile_otp_generation_failure(self):
         response = self.client.post(reverse("generate_mobile_otp"), {"pan": "123456"})
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-        self.assertEqual(self.invalid_req_msg, response.json().get("message"))
+        self.assertEqual(TestABHACreation.invalid_req_msg, response.json().get("message"))
 
     def test_aadhaar_otp_verification_success(self):
         abdm_txn_id_mock = {"txnId": "1234"}
@@ -67,7 +70,7 @@ class TestABHACreation(APITestCase):
     def test_aadhaar_otp_verification_failure(self):
         response = self.client.post(reverse("verify_aadhaar_otp"), {"pan": "123456"})
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-        self.assertEqual(self.invalid_req_msg, response.json().get("message"))
+        self.assertEqual(TestABHACreation.invalid_req_msg, response.json().get("message"))
 
     def test_mobile_otp_verification_success(self):
         with patch('custom.abdm.milestone_one.views.abha_creation_views.abdm_util.get_response_http_post',
@@ -80,7 +83,7 @@ class TestABHACreation(APITestCase):
     def test_mobile_otp_verification_failure(self):
         response = self.client.post(reverse("verify_mobile_otp"), {"pan": "123456"})
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-        self.assertEqual(self.invalid_req_msg, response.json().get("message"))
+        self.assertEqual(TestABHACreation.invalid_req_msg, response.json().get("message"))
 
     @classmethod
     def tearDownClass(cls) -> None:
