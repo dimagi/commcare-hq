@@ -148,7 +148,7 @@ class TestViews(TestCase):
         return json.loads(response.content)
 
     def _send_to_es(self, app):
-        app_adapter.index(app.to_json(), refresh=True)
+        app_adapter.index(app, refresh=True)
 
     @timelimit(90)
     @patch('corehq.apps.app_manager.views.formdesigner.form_has_submissions', return_value=True)

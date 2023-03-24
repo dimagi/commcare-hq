@@ -45,15 +45,17 @@ class FormExportInstanceTests(TestCase):
             'app_id': 'test-app',
             'xmlns': 'http://openrosa.org/formdesigner/9337A937-4002-434E-9C66-835BFB117EBE',
             '_id': id,
-            'user_type': 'mobile'
+            'user_type': 'mobile',
+            'form': {}
         }
 
     @patch('corehq.apps.export.models.new.get_timezone_for_domain', return_value=pytz.UTC)
     def test_get_count_returns_total_row_count(self, mock_get_timezone):
         doc1 = self._make_doc(id='1')
         doc2 = self._make_doc(id='2')
-        self.forms.index(doc1)
-        self.forms.index(doc2)
+        with patch('corehq.pillows.utils.get_user_type', return_value='mobile'):
+            self.forms.index(doc1)
+            self.forms.index(doc2)
         manager.index_refresh(self.forms.index_name)
 
         export = FormExportInstance(domain='test-domain', app_id='test-app',

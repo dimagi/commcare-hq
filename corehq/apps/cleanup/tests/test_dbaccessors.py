@@ -19,7 +19,6 @@ from corehq.apps.userreports.app_manager.helpers import clean_table_name
 from corehq.apps.userreports.models import DataSourceConfiguration
 from corehq.apps.userreports.util import get_indicator_adapter
 from corehq.form_processor.tests.utils import create_case, create_form_for_test
-from corehq.pillows.xform import transform_xform_for_elasticsearch
 
 
 class TestFindSQLFormsForDeletedDomains(TestCase):
@@ -87,10 +86,7 @@ class TestFindESDocsForDeletedDomains(TestCase):
 
     def test_deleted_domain_with_es_data_is_flagged(self):
         form = create_form_for_test(self.deleted_domain.name)
-        form_adapter.index(
-            transform_xform_for_elasticsearch(form.to_json()),
-            refresh=True
-        )
+        form_adapter.index(form, refresh=True)
         self.addCleanup(form_adapter.delete, form.form_id)
         counts_by_domain = find_es_docs_for_deleted_domains()
 
@@ -99,10 +95,7 @@ class TestFindESDocsForDeletedDomains(TestCase):
 
     def test_missing_domain_with_es_data_is_not_flagged(self):
         form = create_form_for_test('missing-domain')
-        form_adapter.index(
-            transform_xform_for_elasticsearch(form.to_json()),
-            refresh=True
-        )
+        form_adapter.index(form, refresh=True)
         self.addCleanup(form_adapter.delete, form.form_id)
 
         counts_by_domain = find_es_docs_for_deleted_domains()
@@ -110,10 +103,7 @@ class TestFindESDocsForDeletedDomains(TestCase):
 
     def test_active_domain_with_es_data_is_not_flagged(self):
         form = create_form_for_test(self.active_domain.name)
-        form_adapter.index(
-            transform_xform_for_elasticsearch(form.to_json()),
-            refresh=True
-        )
+        form_adapter.index(form, refresh=True)
         self.addCleanup(form_adapter.delete, form.form_id)
 
         counts_by_domain = find_es_docs_for_deleted_domains()

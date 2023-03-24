@@ -29,13 +29,7 @@ def _update_user_in_es(couch_user):
     if couch_user.to_be_deleted():
         user_adapter.delete(couch_user.user_id)
     else:
-        user_adapter.index(_transform_for_es(couch_user))
-
-
-def _transform_for_es(couch_user):
-    """Implemented separately for test patching."""
-    from corehq.pillows.user import transform_user_for_elasticsearch
-    return transform_user_for_elasticsearch(couch_user.to_json())
+        user_adapter.index(couch_user)
 
 
 def apply_correct_demo_mode(sender, couch_user, **kwargs):
