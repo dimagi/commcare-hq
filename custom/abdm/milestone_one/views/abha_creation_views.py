@@ -17,7 +17,7 @@ from custom.abdm.milestone_one.utils.response_util import parse_response
 @required_request_params(["aadhaar"])
 def generate_aadhaar_otp(request):
     aadhaar_number = request.data.get("aadhaar")
-    raw_response = abdm_util.generate_aadhar_otp(aadhaar_number)
+    raw_response = abdm_util.generate_aadhaar_otp(aadhaar_number)
     return parse_response(raw_response)
 
 
