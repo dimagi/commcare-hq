@@ -79,10 +79,14 @@ class PillowtopReindexerTest(TestCase):
         self._assert_case_is_in_es(case)
 
     def test_case_search_reindexer(self):
+        es = get_es_new()
         FormProcessorTestUtils.delete_all_cases()
         case = _create_and_save_a_case()
+        create_domain(case.domain)
 
         reindex_and_clean('case-search')
+        es.indices.refresh(CASE_SEARCH_INDEX)
+
         self._assert_case_is_in_es(case, esquery=CaseSearchES())
 
     def test_xform_reindexer_v2(self):
