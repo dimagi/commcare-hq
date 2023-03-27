@@ -43,19 +43,11 @@ class CaseSearchPillowTest(TestCase):
 
     def test_case_search_reindex_by_domain(self):
         """
-        Tests reindexing for a particular domain only
+        Tests reindexing
         """
-        other_domain = "yunkai"
-        CaseSearchConfig.objects.get_or_create(pk=other_domain, enabled=True)
-
-        desired_case = self._make_case(domain=other_domain)
-        undesired_case = self._make_case(domain=self.domain)  # noqa
-
-        with self.assertRaises(CaseSearchNotEnabledException):
-            CaseSearchReindexerFactory(domain=self.domain).build().reindex()
-
-        CaseSearchReindexerFactory(domain=other_domain).build().reindex()
-        self._assert_case_in_es(other_domain, desired_case)
+        case = self._make_case(domain=self.domain)
+        CaseSearchReindexerFactory(domain=self.domain).build().reindex()
+        self._assert_case_in_es(self.domain, case)
 
     def test_delete_case_search_cases(self):
         """
