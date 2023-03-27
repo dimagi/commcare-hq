@@ -1732,48 +1732,7 @@ class ExportDataSchema(Document):
                 current_schema.last_app_versions,
             )
         app_build_ids.extend(app_ids_for_domain)
-
-        case_types_to_use = [identifier]
-        if identifier == ALL_CASE_TYPE_EXPORT:
-            case_types_to_use = get_case_types_from_apps(domain)
-
-        for case_type in case_types_to_use:
-            case_type_schema = cls()
-            for app_doc in iter_docs(Application.get_db(), app_build_ids, chunksize=10):
-                doc_type = app_doc.get('doc_type', '')
-                if doc_type not in ('Application', 'LinkedApplication', 'Application-Deleted'):
-                    continue
-                if (not app_doc.get('has_submissions', False)
-                        and app_doc.get('copy_of')):
-                    continue
-
-                app = Application.wrap(app_doc)
-                try:
-                    case_type_schema = cls._process_app_build(
-                        case_type_schema,
-                        app,
-                        case_type,
-                    )
-                except Exception as e:
-                    logging.exception('Failed to process app {}. {}'.format(app._id, e))
-                    continue
-
-            # If doing a bulk case export, we need to update the path of the group schemas to reflect
-            # which case type they are linked to.
-            if identifier == ALL_CASE_TYPE_EXPORT:
-                for group_schema in case_type_schema.group_schemas:
-                    if group_schema.path == MAIN_TABLE:
-                        group_schema.path = [PathNode(name=case_type), PathNode(name=ALL_CASE_TYPE_EXPORT)]
-            current_schema.group_schemas += case_type_schema.group_schemas
-
-            # Only record the version of builds on the schema. We don't care about
-            # whether or not the schema has seen the current build because that always
-            # gets processed.
-            if app.copy_of:
-                current_schema.record_update(app.copy_of, app.version)
-
-            apps_processed += 1
-            set_task_progress(task, apps_processed, len(app_build_ids) * len(case_types_to_use))
+        current_schema = cls._process_apps_for_export(domain, current_schema, identifier, app_build_ids, task)
 
         inferred_schema = cls._get_inferred_schema(domain, app_id, identifier)
         if inferred_schema:
@@ -1917,6 +1876,35 @@ class ExportDataSchema(Document):
 
         return current_schema
 
+    @classmethod
+    def _process_apps_for_export(cls, domain, schema, identifier, app_build_ids, task):
+        apps_processed = 0
+        for app_doc in iter_docs(Application.get_db(), app_build_ids, chunksize=10):
+            doc_type = app_doc.get('doc_type', '')
+            if doc_type not in ('Application', 'LinkedApplication', 'Application-Deleted'):
+                continue
+            if (not app_doc.get('has_submissions', False)
+                    and app_doc.get('copy_of')):
+                continue
+
+            app = Application.wrap(app_doc)
+            try:
+                schema = cls._process_app_build(
+                    schema,
+                    app,
+                    identifier,
+                )
+            except Exception as e:
+                logging.exception('Failed to process app {}. {}'.format(app._id, e))
+                continue
+
+            if app.copy_of:
+                schema.record_update(app.copy_of, app.version)
+
+            apps_processed += 1
+            set_task_progress(task, apps_processed, len(app_build_ids))
+
+        return schema
 
 class FormExportDataSchema(ExportDataSchema):
 
@@ -2235,6 +2223,15 @@ class FormExportDataSchema(ExportDataSchema):
 
         return items
 
+    @classmethod
+    def _process_apps_for_export(cls, domain, schema, identifier, app_build_ids, task):
+        return super(FormExportDataSchema, cls)._process_apps_for_export(
+            domain,
+            schema,
+            identifier,
+            app_build_ids,
+            task
+        )
 
 class CaseExportDataSchema(ExportDataSchema):
 
@@ -2387,6 +2384,62 @@ class CaseExportDataSchema(ExportDataSchema):
         schema.group_schemas.append(group_schema)
         return schema
 
+    @classmethod
+    def _process_apps_for_export(cls, domain, schema, identifier, app_build_ids, task):
+        if identifier == ALL_CASE_TYPE_EXPORT:
+            return cls._process_apps_for_bulk_export(domain, schema, app_build_ids, task)
+        else:
+            return super(CaseExportDataSchema, cls)._process_apps_for_export(
+                domain,
+                schema,
+                identifier,
+                app_build_ids,
+                task
+            )
+
+    @classmethod
+    def _process_apps_for_bulk_export(cls, domain, schema, app_build_ids, task):
+        schema.group_schemas = []
+        apps_processed = 0
+        case_types_to_use = get_case_types_from_apps(domain)
+        for case_type in case_types_to_use:
+            case_type_schema = cls()
+            for app_doc in iter_docs(Application.get_db(), app_build_ids, chunksize=10):
+                doc_type = app_doc.get('doc_type', '')
+                if doc_type not in ('Application', 'LinkedApplication', 'Application-Deleted'):
+                    continue
+                if (not app_doc.get('has_submissions', False)
+                        and app_doc.get('copy_of')):
+                    continue
+
+                app = Application.wrap(app_doc)
+                try:
+                    case_type_schema = cls._process_app_build(
+                        case_type_schema,
+                        app,
+                        case_type,
+                    )
+                except Exception as e:
+                    logging.exception('Failed to process app {}. {}'.format(app._id, e))
+                    continue
+
+            # If doing a bulk case export, we need to update the path of the group schemas to reflect
+            # which case type they are linked to.
+            for group_schema in case_type_schema.group_schemas:
+                if group_schema.path == MAIN_TABLE:
+                    group_schema.path = [PathNode(name=case_type), PathNode(name=ALL_CASE_TYPE_EXPORT)]
+            schema.group_schemas += case_type_schema.group_schemas
+
+            # Only record the version of builds on the schema. We don't care about
+            # whether or not the schema has seen the current build because that always
+            # gets processed.
+            if app.copy_of:
+                schema.record_update(app.copy_of, app.version)
+
+            apps_processed += 1
+            set_task_progress(task, apps_processed, len(app_build_ids) * len(case_types_to_use))
+
+        return schema
 
 class SMSExportDataSchema(ExportDataSchema):
     include_metadata = BooleanProperty(default=False)
@@ -2407,6 +2460,15 @@ class SMSExportDataSchema(ExportDataSchema):
     @staticmethod
     def get_latest_export_schema(domain, include_metadata, identifier=None):
         return SMSExportDataSchema(domain=domain, include_metadata=include_metadata)
+
+    def _process_apps_for_export(cls, domain, schema, identifier, app_build_ids, task):
+        return super(FormExportDataSchema, cls)._process_apps_for_export(
+            domain,
+            schema,
+            identifier,
+            app_build_ids,
+            task
+        )
 
 
 def _string_path_to_list(path):
