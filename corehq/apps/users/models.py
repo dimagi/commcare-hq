@@ -1875,14 +1875,30 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
         if not deleted_by and not settings.UNIT_TESTING:
             raise ValueError("Missing deleted_by")
 
+        deletion_id, deletion_date = self.clear_user_data()
         suffix = DELETED_SUFFIX
-        deletion_id = uuid4().hex
-        deletion_date = datetime.utcnow()
+
         # doc_type remains the same, since the views use base_doc instead
         if not self.base_doc.endswith(suffix):
             self.base_doc += suffix
             self['-deletion_id'] = deletion_id
             self['-deletion_date'] = deletion_date
+
+        try:
+            django_user = self.get_django_user()
+        except User.DoesNotExist:
+            pass
+        else:
+            django_user.delete()
+        if deleted_by:
+            log_user_change(by_domain=retired_by_domain, for_domain=self.domain,
+                            couch_user=self, changed_by_user=deleted_by,
+                            changed_via=deleted_via, action=UserModelAction.DELETE)
+        self.save()
+
+    def clear_user_data(self):
+        deletion_id = uuid4().hex
+        deletion_date = datetime.utcnow()
 
         deleted_cases = set()
         for case_id_list in chunked(self._get_case_ids(), 50):
@@ -1901,17 +1917,7 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
         from corehq.apps.app_manager.views.utils import unset_practice_mode_configured_apps
         unset_practice_mode_configured_apps(self.domain, self.get_id)
 
-        try:
-            django_user = self.get_django_user()
-        except User.DoesNotExist:
-            pass
-        else:
-            django_user.delete()
-        if deleted_by:
-            log_user_change(by_domain=retired_by_domain, for_domain=self.domain,
-                            couch_user=self, changed_by_user=deleted_by,
-                            changed_via=deleted_via, action=UserModelAction.DELETE)
-        self.save()
+        return deletion_id, deletion_date
 
     def confirm_account(self, password):
         if self.is_account_confirmed:
@@ -3042,6 +3048,7 @@ class UserHistory(models.Model):
     CREATE = 1
     UPDATE = 2
     DELETE = 3
+    CLEAR = 4  # currently only for logging purposes
 
     ACTION_CHOICES = (
         (CREATE, _('Create')),
