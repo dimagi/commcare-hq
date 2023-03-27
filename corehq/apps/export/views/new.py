@@ -29,6 +29,7 @@ from corehq.apps.export.const import (
     FORM_EXPORT,
     SharingOption,
     PROPERTY_TAG_INFO,
+    ALL_CASE_TYPE_EXPORT,
 )
 from corehq.apps.export.dbaccessors import get_properly_wrapped_export_instance
 from corehq.apps.export.exceptions import (
@@ -121,6 +122,10 @@ class BaseExportView(BaseProjectDataView):
 
         allow_deid = has_privilege(self.request, privileges.DEIDENTIFIED_DATA)
 
+        is_all_case_types_export = False
+        if isinstance(schema, CaseExportDataSchema):
+            is_all_case_types_export = (schema.case_type == ALL_CASE_TYPE_EXPORT)
+
         return {
             'export_instance': self.export_instance,
             'export_home_url': self.export_home_url,
@@ -135,6 +140,7 @@ class BaseExportView(BaseProjectDataView):
             'number_of_apps_to_process': schema.get_number_of_apps_to_process(),
             'sharing_options': sharing_options,
             'terminology': self.terminology,
+            'is_all_case_types_export': is_all_case_types_export
         }
 
     @property
