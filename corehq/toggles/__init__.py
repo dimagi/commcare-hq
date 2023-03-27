@@ -1564,7 +1564,7 @@ INCREMENTAL_EXPORTS = StaticToggle(
 
 CLEAR_MOBILE_WORKER_DATA = StaticToggle(
     'clear_mobile_worker_data',
-    "Allows a web user to clear one or more mobile workers' data",
+    "Allows a web user to clear mobile workers' data",
     TAG_CUSTOM,
     [NAMESPACE_DOMAIN],
 )
