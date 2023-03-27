@@ -1,4 +1,3 @@
-from collections import namedtuple
 from datetime import datetime
 
 from django.db import models
