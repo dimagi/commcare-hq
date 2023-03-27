@@ -1360,6 +1360,8 @@ class ClearCommCareUsers(DeleteCommCareUsers):
     @property
     def clearing_percent(self):
         progress_helper = SimpleProgressHelper(self.progress_id)
+        if progress_helper.percentage_complete is None:
+            return None
         return round(progress_helper.percentage_complete, 1)
 
     @property

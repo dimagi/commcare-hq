@@ -545,7 +545,7 @@ class SimpleProgressHelper(object):
         if self.total and self.current:
             if self.total == 0:
                 return None
-            if self.total > self.current:
+            if self.total < self.current:
                 return 100
             return (self.current * 100) / self.total
         return None
