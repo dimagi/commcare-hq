@@ -2,6 +2,7 @@ import json
 import re
 from base64 import b64encode
 from io import BytesIO
+from datetime import datetime
 
 import pytz
 from django.conf import settings
@@ -44,6 +45,7 @@ from corehq.apps.domain.extension_points import has_custom_clean_password
 from corehq.apps.domain.forms import clean_password
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.views.base import BaseDomainView
+from corehq.apps.hqwebapp.decorators import use_jquery_ui
 from corehq.apps.hqwebapp.utils import sign
 from corehq.apps.hqwebapp.views import (
     BaseSectionPageView,
@@ -623,6 +625,10 @@ class ApiKeyView(BaseMyAccountView, CRUDPaginatedViewMixin):
 
     template_name = "settings/user_api_keys.html"
 
+    @use_jquery_ui  # for datepicker
+    def dispatch(self, request, *args, **kwargs):
+        return super(ApiKeyView, self).dispatch(request, *args, **kwargs)
+
     @property
     def allowed_actions(self):
         return [
@@ -666,6 +672,7 @@ class ApiKeyView(BaseMyAccountView, CRUDPaginatedViewMixin):
             _("IP Allowlist"),
             _("Created"),
             _("Last Used"),
+            _("Expiration Date"),
             _("Status"),
             _("Actions"),
         ]
@@ -694,6 +701,13 @@ class ApiKeyView(BaseMyAccountView, CRUDPaginatedViewMixin):
         else:
             copy_msg = _("Copy this in a secure place. It will not be shown again.")
             key = f"{api_key.key} ({copy_msg})",
+
+        if api_key.expiration_date and api_key.expiration_date < datetime.now():
+            status = "expired"
+        elif api_key.is_active:
+            status = "active"
+        else:
+            status = "inactive"
         return {
             "id": api_key.id,
             "name": api_key.name,
@@ -705,6 +719,8 @@ class ApiKeyView(BaseMyAccountView, CRUDPaginatedViewMixin):
             ),
             "created": self._to_user_time(api_key.created),
             "last_used": self._to_user_time(api_key.last_used),
+            "expiration_date": self._to_user_time(api_key.expiration_date),
+            "status": status,
             "deactivated_on": self._to_user_time(api_key.deactivated_on),
             "is_active": api_key.is_active,
         }
