@@ -414,10 +414,12 @@ def clean_domain_users_data(domain, user_ids, cleared_by_username, progress_id=N
 
     if track_progress:
         progress_helper = SimpleProgressHelper(progress_id)
-        progress_helper.set_total(len(user_ids))
+        progress_helper.set_initial(
+            total=len(user_ids),
+        )
 
     try:
-        for i, user_id in enumerate(user_ids):
+        for user_id in user_ids:
             user = CommCareUser.get_by_user_id(user_id)
             user.clear_user_data()
 
@@ -430,7 +432,7 @@ def clean_domain_users_data(domain, user_ids, cleared_by_username, progress_id=N
                 action=UserModelAction.CLEAR
             )
             if track_progress:
-                progress_helper.set_current(i + 1)
+                progress_helper.increment()
 
     except Exception as e:
         mail_admins_async.delay(
@@ -439,7 +441,7 @@ def clean_domain_users_data(domain, user_ids, cleared_by_username, progress_id=N
         )
     else:
         if track_progress:
-            progress_helper.mark_as_complete()
+            progress_helper.expire()
 
         mail_admins_async.delay(
             subject=f"Mobile Worker Clearing Complete - {domain}",

@@ -526,8 +526,17 @@ class SimpleProgressHelper(object):
     def current_key(self):
         return f'progress-current:{self.identifier}'
 
-    def set_total(self, total):
+    def set_initial(self, total, current=0):
         cache.set(self.total_key, total)
+        cache.set(
+            self.current_key,
+            current,
+        )
+        self._set_expiry(self.total_key)
+        self._set_expiry(self.current_key)
+
+    def increment(self, increment_value=1):
+        self.set_current(self.current + increment_value)
 
     def set_current(self, val):
         cache.set(self.current_key, val)
@@ -550,6 +559,9 @@ class SimpleProgressHelper(object):
             return (self.current * 100) / self.total
         return None
 
-    def mark_as_complete(self):
-        cache.set(self.total_key, None)
-        cache.set(self.current_key, None)
+    def expire(self):
+        cache.expire(self.total_key, 0)
+        cache.expire(self.current_key, 0)
+
+    def _set_expiry(self, key):
+        cache.expire(key, self.key_expiry)
