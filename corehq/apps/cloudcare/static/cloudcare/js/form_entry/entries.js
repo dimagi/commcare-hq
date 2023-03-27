@@ -950,7 +950,7 @@ hqDefine("cloudcare/js/form_entry/entries", function () {
             const acceptedExts = self.extensionsMap[self.accept];
             badExtension = !acceptedExts.includes(ext.toLowerCase());
 
-            for (acc of self.accept.split(",")) {
+            for (const acc of self.accept.split(",")) {
                 if (self.file().type.match(acc)) {
                     badMime = false;
                     break;
