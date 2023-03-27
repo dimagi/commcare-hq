@@ -176,7 +176,7 @@ hqDefine("users/js/mobile_workers",[
         return self;
     };
 
-    var usersListModel = function (listActions) {
+    var usersListModel = function () {
         var self = {};
         self.users = ko.observableArray([]);
 
@@ -620,7 +620,6 @@ hqDefine("users/js/mobile_workers",[
         rmi = function (remoteMethod, data) {
             return rmiInvoker("", data, {headers: {"DjNg-Remote-Method": remoteMethod}});
         };
-
         $("#users-list").koApplyBindings(usersListModel());
 
         var newUserCreation = newUserCreationModel({
