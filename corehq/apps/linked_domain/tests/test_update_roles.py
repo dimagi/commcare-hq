@@ -226,6 +226,46 @@ class TestUpdateRoles(TestCase):
         self.assertListEqual([str(downstream_viz_1.id), str(downstream_viz_3.id)],
                              roles['tableau_test'].permissions.view_tableau_list)
 
+    def test_when_synced_role_with_name_change_conflicts_with_local_role_conflict_is_raised(self):
+        renamed_role = self._create_user_role(self.upstream_domain, name='LocalRoleName')
+        # The previously synced role
+        self._create_user_role(self.downstream_domain, name='SyncedRole', upstream_id=renamed_role.get_id)
+        # A local role with a conflicting name
+        self._create_user_role(self.downstream_domain, name='LocalRoleName')
+
+        with self.assertRaises(UnsupportedActionError):
+            update_user_roles(self.domain_link)
+
+    def test_force_pushing_a_name_change_conflict_appends_an_identifier_to_synced_role(self):
+        renamed_role = self._create_user_role(self.upstream_domain, name='LocalRoleName')
+        # The previously synced role
+        self._create_user_role(self.downstream_domain, name='SyncedRole', upstream_id=renamed_role.get_id)
+        # A local role with a conflicting name
+        self._create_user_role(self.downstream_domain, name='LocalRoleName')
+
+        update_user_roles(self.domain_link, overwrite=True)
+
+        roles = {r.name: r for r in UserRole.objects.get_by_domain(self.downstream_domain)}
+        # Verify that the local role was not linked
+        self.assertIsNone(roles['LocalRoleName'].upstream_id)
+        # Verify that the synced role was renamed
+        self.assertFalse('SyncedRole' in roles.keys())
+        updated_role = roles['LocalRoleName(1)']
+        self.assertEqual(updated_role.upstream_id, renamed_role.get_id)
+
+    def test_renaming_continues_until_an_avaialable_integer_is_found(self):
+        renamed_role = self._create_user_role(self.upstream_domain, name='LocalRoleName')
+        self._create_user_role(self.downstream_domain, name='SyncedRole', upstream_id=renamed_role.get_id)
+        self._create_user_role(self.downstream_domain, 'LocalRoleName')
+        self._create_user_role(self.downstream_domain, 'LocalRoleName(1)')
+        self._create_user_role(self.downstream_domain, 'LocalRoleName(2)')
+
+        update_user_roles(self.domain_link, overwrite=True)
+
+        roles = {r.name: r for r in UserRole.objects.get_by_domain(self.downstream_domain)}
+        update_role = roles['LocalRoleName(3)']
+        self.assertEqual(update_role.upstream_id, renamed_role.get_id)
+
     def _create_user_role(self, domain, name='test', permissions=None, assignable_by_ids=None, **kwargs):
         if not permissions:
             permissions = HqPermissions(edit_web_users=True, view_locations=True)

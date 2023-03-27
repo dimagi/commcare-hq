@@ -357,8 +357,11 @@ def update_user_roles(domain_link, overwrite=False):
     _convert_reports_permissions(domain_link, master_results)
 
     downstream_roles = UserRole.objects.get_by_domain(domain_link.linked_domain, include_archived=True)
+
+    downstream_roles_by_name = {}
     downstream_roles_by_upstream_id = {}
     for role in downstream_roles:
+        downstream_roles_by_name[role.name] = role
         if role.upstream_id:
             downstream_roles_by_upstream_id[role.upstream_id] = role
 
@@ -375,8 +378,20 @@ def update_user_roles(domain_link, overwrite=False):
                                                                ignore_conflicts=overwrite)
 
         if conflicting_role:
-            failed_updates.append(upstream_role_def)
-            continue
+            if role and conflicting_role and overwrite:
+                # An edge case where a valid sync was found that conflicted with an existing role's name
+                # We want to rename the synced role
+                next_index = 0
+                while True:
+                    next_index += 1
+                    role_name = f'{conflicting_role.name}({next_index})'
+                    if role_name not in downstream_roles_by_name:
+                        break
+
+                upstream_role_def['name'] = role_name
+            else:
+                failed_updates.append(upstream_role_def)
+                continue
 
         if not role:
             role = UserRole(domain=domain_link.linked_domain)
@@ -415,14 +430,22 @@ def _get_matching_downstream_role(upstream_role_json, downstream_roles, ignore_c
     matching_role = None
     conflicting_role = None
 
+    sync_match = None
+    name_match = None
+
     for downstream_role in downstream_roles:
         if upstream_role_json['_id'] == downstream_role.upstream_id:
-            matching_role = downstream_role
+            sync_match = downstream_role
         elif upstream_role_json['name'] == downstream_role.name:
-            if _is_matching_built_in_role(upstream_role_json, downstream_role) or ignore_conflicts:
-                matching_role = downstream_role
-            else:
-                conflicting_role = downstream_role
+            name_match = downstream_role
+
+    if sync_match:
+        matching_role, conflicting_role = sync_match, name_match
+    elif name_match:
+        if _is_matching_built_in_role(upstream_role_json, name_match) or ignore_conflicts:
+            matching_role, conflicting_role = name_match, None
+        else:
+            matching_role, conflicting_role = None, name_match
 
     return (matching_role, conflicting_role)
 
