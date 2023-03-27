@@ -392,7 +392,7 @@ def apply_correct_demo_mode_to_loadtest_user(commcare_user_id):
 
 
 @task(queue='background_queue')
-def clean_domain_users_data(domain, user_ids, cleared_by=None, changed_via=None):
+def clean_domain_users_data(domain, user_ids, cleared_by, changed_via=None):
     """
     This task follows the same workflow as user.retire(), but without actually
     removing the user from the database.
@@ -404,6 +404,8 @@ def clean_domain_users_data(domain, user_ids, cleared_by=None, changed_via=None)
     from corehq.apps.users.model_log import UserModelAction
     from corehq.apps.users.models import CommCareUser
     from corehq.apps.hqwebapp.tasks import mail_admins_async
+
+    assert cleared_by is not None
 
     try:
         for user_id in user_ids:
