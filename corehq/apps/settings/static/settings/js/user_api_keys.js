@@ -4,13 +4,14 @@ hqDefine("settings/js/user_api_keys", [
     'underscore',
     "hqwebapp/js/initial_page_data",
     "hqwebapp/js/crud_paginated_list",
-    "jquery-ui/ui/widgets/datepicker",
+    'hqwebapp/js/widgets',
 ], function (
     $,
     ko,
     _,
     initialPageData,
-    CRUDPaginatedList
+    CRUDPaginatedList,
+    widgets,
 ) {
 
     var ApiKeyListModel = function () {
@@ -57,8 +58,7 @@ hqDefine("settings/js/user_api_keys", [
         var paginatedListModel = ApiKeyListModel();
         ko.applyBindings(paginatedListModel, $('#editable-paginated-list').get(0));
         paginatedListModel.init();
-
-        $('.date-picker').datepicker({ dateFormat: "yy-mm-dd" });
+        widgets.init();
     });
 
     return 1;
