@@ -124,7 +124,7 @@ class ConfigurableAPIEditView(BaseProjectSettingsView):
     @memoized
     def api(self):
         try:
-            return ConfigurableAPI.objects.get(id=self.api_id)
+            return ConfigurableAPI.objects.get(domain=self.domain, id=self.api_id)
         except ConfigurableAPI.DoesNotExist:
             raise Http404
 
