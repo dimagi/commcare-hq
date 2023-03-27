@@ -14,6 +14,8 @@ architect==0.6.0
     # via -r base-requirements.in
 asgiref==3.5.0
     # via django
+async-timeout==4.0.2
+    # via redis
 attrs==21.4.0
     # via
     #   -r base-requirements.in
@@ -417,7 +419,7 @@ quickcache==0.5.4
     # via -r base-requirements.in
 rcssmin==1.1.0
     # via django-compressor
-redis==3.5.3
+redis==4.5.3
     # via
     #   -r base-requirements.in
     #   django-redis
