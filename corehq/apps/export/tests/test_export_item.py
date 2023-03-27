@@ -62,7 +62,10 @@ class TestExportItemGeneration(SimpleTestCase):
         self.assertEqual(column.selected, False)
 
     def test_create_default_from_export_item_not_main_table(self, _):
-        column = ExportColumn.create_default_from_export_item(['other_table'], self.item, {self.app_id: 3})
+        column = ExportColumn.create_default_from_export_item(
+            [PathNode(name='other_table')],
+            self.item, {self.app_id: 3}
+        )
 
         self.assertEqual(column.is_advanced, False)
         self.assertEqual(column.is_deleted, False)
