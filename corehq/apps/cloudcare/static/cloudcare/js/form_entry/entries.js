@@ -892,23 +892,69 @@ hqDefine("cloudcare/js/form_entry/entries", function () {
         self.xformParams = function () {
             return { file: self.file() };
         };
-
+        self.formplayerProcessed = false;
         self.file = ko.observable();
-
+        // corresponds to SUPPORTED_FILE_EXTS var in Formplayer, a list of valid file extensions
+        // any changes made here should also be made in Formplayer
+        self.extensionsMap = {
+            "image/*,.pdf": ["jpg", "jpeg", "png", "pdf"],
+            "audio/*": ["3ga","mp3", "wav", "amr", "qcp","ogg"],
+            "video/*": ["3gpp", "3gp", "3gp2", "3g2", "mp4","mpg4", "mpeg4", "m4v", "mpg", "mpeg"],
+        };
     }
     FileEntry.prototype = Object.create(EntrySingleAnswer.prototype);
     FileEntry.prototype.constructor = EntrySingleAnswer;
+    FileEntry.prototype.onPreProcess = function (newValue) {
+        var self = this;
+        if (newValue !== constants.NO_ANSWER && newValue !== "") {
+            // input has changed and validation will be checked
+            if (newValue !== self.answer()) {
+                self.question.formplayerProcessed = false;
+            }
+            self.answer(newValue.replace(constants.FILE_PREFIX, ""));
+        } else {
+            self.file(null);
+            self.answer(constants.NO_ANSWER);
+            self.rawAnswer(constants.NO_ANSWER);
+            self.question.error(null);
+        }
+    };
     FileEntry.prototype.onAnswerChange = function (newValue) {
         var self = this;
-        if (newValue !== constants.NO_ANSWER) {
-            var $input = $('#' + self.entryId);
-            self.answer(newValue.replace(constants.FILE_PREFIX, ""));
-            self.file($input[0].files[0]);
-        } else {
-            self.answer(newValue);
-            self.file(null);
+        // file has already been validated and assigned a unique id. another request should not be sent to formplayer
+        if (self.question.formplayerProcessed) {
+            return;
         }
-        this.question.onchange();
+        if (newValue !== constants.NO_ANSWER && newValue !== "") {
+            var $input = $('#' + self.entryId);
+            self.file($input[0].files[0]);
+            let badExtension = false;
+            let badMime = true;
+            const ext = newValue.slice(newValue.lastIndexOf(".") + 1);
+            const acceptedExts = self.extensionsMap[self.accept];
+            badExtension = !acceptedExts.includes(ext.toLowerCase());
+
+            for (const acc of self.accept.split(",")) {
+                if (self.file().type.match(acc)) {
+                    badMime = false;
+                    break;
+                }
+            }
+            // corresponds to validateFile check in Formplayer
+            // any changes made here should also be made in Formplayer
+            if (badExtension && badMime) {
+                self.question.error(gettext("Invalid file type chosen. Please select a valid multimedia file."));
+                return;
+            }
+            // corresponds to MAX_BYTES_PER_ATTACHMENT var in Formplayer and limits file uploads to 3MB
+            // any changes made here should also be made in Formplayer
+            if (self.file().size > 3000000) {
+                self.question.error(gettext("The file you selected exceeds the size limit of 3MB. Please select a file that is smaller than 3MB."));
+                return;
+            }
+            self.question.error(null);
+            self.question.onchange();
+        }
     };
 
     /**
