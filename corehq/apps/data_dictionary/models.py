@@ -51,6 +51,21 @@ class CasePropertyGroup(models.Model):
     description = models.TextField(default='', blank=True)
     index = models.IntegerField(default=0, blank=True)
 
+    @classmethod
+    def get_or_create(cls, name, domain, case_type):
+        key = 'data-dict-group-{domain}-{type}-{name}'.format(
+            domain=domain, type=case_type, name=name
+        )
+        with CriticalSection([key]):
+            try:
+                group_obj = CasePropertyGroup.objects.get(
+                    name=name, case_type__name=case_type, case_type__domain=domain
+                )
+            except CasePropertyGroup.DoesNotExist:
+                case_type_obj = CaseType.get_or_create(domain, case_type)
+                group_obj = CasePropertyGroup.objects.create(case_type=case_type_obj, name=name)
+            return group_obj
+
 
 class CaseProperty(models.Model):
 
