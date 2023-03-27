@@ -160,7 +160,7 @@ class TestCleanDomainUserData(TestCase):
         clean_domain_users_data(
             domain=self.domain_obj.name,
             user_ids=[self.user_1.user_id, self.user_2.user_id],
-            cleared_by=self.webuser,
+            cleared_by_username=self.webuser.username,
         )
 
         self.assertTrue(len(self.user_1._get_form_ids()) == 0)

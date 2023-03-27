@@ -18,7 +18,7 @@ from couchforms.exceptions import UnexpectedDeletedXForm
 from dimagi.utils.couch import get_redis_lock
 from dimagi.utils.couch.bulk import BulkFetchException
 from dimagi.utils.logging import notify_exception
-from soil import DownloadBase
+from soil import DownloadBase, ProgressHelper
 
 from corehq import toggles
 from corehq.apps.celery import periodic_task, task
@@ -392,23 +392,32 @@ def apply_correct_demo_mode_to_loadtest_user(commcare_user_id):
 
 
 @task(queue='background_queue')
-def clean_domain_users_data(domain, user_ids, cleared_by, changed_via=None):
+def clean_domain_users_data(domain, user_ids, cleared_by_username, progress_id=None, changed_via=None):
     """
     This task follows the same workflow as user.retire(), but without actually
     removing the user from the database.
 
-    :param cleared_by: couch_user object of the user who initiated the clearing process
+    :param cleared_by_username: username of couch_user who initiated the clearing process
     :param changed_via: see log_user_change 'changed_via'
+    :param progress_id: unique identifier for progress logging in cache
     """
     from corehq.apps.users.util import log_user_change
     from corehq.apps.users.model_log import UserModelAction
-    from corehq.apps.users.models import CommCareUser
+    from corehq.apps.users.models import CommCareUser, WebUser
     from corehq.apps.hqwebapp.tasks import mail_admins_async
+    from corehq.apps.users.util import SimpleProgressHelper
 
-    assert cleared_by is not None
+    assert cleared_by_username is not None
+    cleared_by_user = WebUser.get_by_username(cleared_by_username)
+
+    track_progress = True if progress_id else False
+
+    if track_progress:
+        progress_helper = SimpleProgressHelper(progress_id)
+        progress_helper.set_total(len(user_ids))
 
     try:
-        for user_id in user_ids:
+        for i, user_id in enumerate(user_ids):
             user = CommCareUser.get_by_user_id(user_id)
             user.clear_user_data()
 
@@ -416,10 +425,12 @@ def clean_domain_users_data(domain, user_ids, cleared_by, changed_via=None):
                 by_domain=domain,
                 for_domain=domain,
                 couch_user=user,
-                changed_by_user=cleared_by,
+                changed_by_user=cleared_by_user,
                 changed_via="web" if changed_via is None else changed_via,
                 action=UserModelAction.CLEAR
             )
+            if track_progress:
+                progress_helper.set_current(i + 1)
 
     except Exception as e:
         mail_admins_async.delay(
@@ -427,6 +438,9 @@ def clean_domain_users_data(domain, user_ids, cleared_by, changed_via=None):
             message=f"The mobile workers clearing failed to complete on {domain} with error: {e}",
         )
     else:
+        if track_progress:
+            progress_helper.mark_as_complete()
+
         mail_admins_async.delay(
             subject=f"Mobile Worker Clearing Complete - {domain}",
             message=f"The mobile workers on {domain} has been cleared successfully.",

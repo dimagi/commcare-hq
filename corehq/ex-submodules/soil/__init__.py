@@ -321,3 +321,11 @@ class BlobDownload(DownloadBase):
     @classmethod
     def create(cls, payload, **kwargs):
         raise NotImplementedError
+
+
+class ProgressHelper(DownloadBase):
+    new_id_prefix = ''
+
+    def __init__(self, progress_id=None, *args, **kwargs):
+        kwargs['download_id'] = progress_id
+        super().__init__(*args, **kwargs)

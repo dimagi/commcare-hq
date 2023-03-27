@@ -145,6 +145,8 @@ from soil.util import get_download_context
 from .custom_data_fields import UserFieldsView
 from ..utils import log_user_groups_change
 from corehq.apps.users.views.utils import get_locations_with_single_user
+from corehq.apps.users.util import SimpleProgressHelper
+
 
 BULK_MOBILE_HELP_SITE = ("https://confluence.dimagi.com/display/commcarepublic"
                          "/Create+and+Manage+CommCare+Mobile+Workers#Createand"
@@ -1321,9 +1323,20 @@ class ClearCommCareUsers(DeleteCommCareUsers):
     template_name = 'users/bulk_clear.html'
 
     def get(self, request, *args, **kwargs):
+        if self.clearing_process_busy:
+            messages.info(request, _("""
+                Mobile Worker data clearing in progress ( {progress_percent} % completed ).
+            """).format(progress_percent=self.clearing_percent))
+
         return super().get(request, *args, **kwargs)
 
     def post(self, request, *args, **kwargs):
+        if self.clearing_process_busy:
+            messages.error(request, _("""
+                User clearing process already in progress! Please try again later.
+            """))
+            return self.get(request, *args, **kwargs)
+
         usernames = self._get_usernames(request)
         if not usernames:
             return self.get(request, *args, **kwargs)
@@ -1340,12 +1353,26 @@ class ClearCommCareUsers(DeleteCommCareUsers):
 
         return self.get(request, *args, **kwargs)
 
+    @property
+    def clearing_process_busy(self):
+        return self.clearing_percent < 100 if (self.clearing_percent is not None) else False
+
+    @property
+    def clearing_percent(self):
+        progress_helper = SimpleProgressHelper(self.progress_id)
+        return round(progress_helper.percentage_complete, 1)
+
+    @property
+    def progress_id(self):
+        return f"{self.domain}-user-clearing"
+
     def _clear_users_data(self, request, user_docs_by_id):
         user_ids = [user_id for user_id, _ in user_docs_by_id.items()]
-        clean_domain_users_data.delay(
-            domain=request.couch_user.domain,
+        clean_domain_users_data(
+            domain=request.domain,
             user_ids=user_ids,
-            cleared_by=request.couch_user,
+            cleared_by_username=request.couch_user.username,
+            progress_id=self.progress_id,
         )
 
 

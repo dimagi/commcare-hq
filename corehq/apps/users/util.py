@@ -507,3 +507,49 @@ def is_username_available(username):
 
     exists = user_exists(username)
     return not exists.exists
+
+
+class SimpleProgressHelper(object):
+
+    def __init__(self, identifier):
+        self.identifier = identifier
+
+    @property
+    def key_expiry(self):
+        return 60 * 60 * 24
+
+    @property
+    def total_key(self):
+        return f'progress-total:{self.identifier}'
+
+    @property
+    def current_key(self):
+        return f'progress-current:{self.identifier}'
+
+    def set_total(self, total):
+        cache.set(self.total_key, total)
+
+    def set_current(self, val):
+        cache.set(self.current_key, val)
+
+    @property
+    def total(self):
+        return cache.get(self.total_key)
+
+    @property
+    def current(self):
+        return cache.get(self.current_key)
+
+    @property
+    def percentage_complete(self):
+        if self.total and self.current:
+            if self.total == 0:
+                return None
+            if self.total > self.current:
+                return 100
+            return (self.current * 100) / self.total
+        return None
+
+    def mark_as_complete(self):
+        cache.set(self.total_key, None)
+        cache.set(self.current_key, None)
