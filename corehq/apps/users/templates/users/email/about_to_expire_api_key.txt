@@ -1,0 +1,7 @@
+{% load i18n %}
+{% blocktrans %}
+Your api key is about to expired.
+
+Thanks,
+CommCare HQ
+{% endblocktrans %}
