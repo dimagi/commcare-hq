@@ -81,8 +81,10 @@ class CreateEventForm(forms.Form):
                     crispy.Field('attendance_target', data_bind="value: attendanceTarget"),
                     crispy.Field('sameday_reg', data_bind="checked: sameDayRegistration"),
                     crispy.Div(
-                        crispy.Field('tracking_option', data_bind="checked: trackingOption"),
-                        data_bind="visible: showTrackingOptions",
+                        crispy.Field(
+                            'tracking_option',
+                            data_bind="checked: trackingOption, attr: {disabled: !showTrackingOptions()}",
+                        )
                     ),
                     'expected_attendees',
                     hqcrispy.FormActions(
