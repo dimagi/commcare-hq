@@ -518,12 +518,13 @@
                 checkedValue: $index() + 1,
                 attr: {
                     id: 'group-' + $parent.entryId + '-choice-' + $index(),
+                    'aria-labelledby': $parent.entryId + '-choice-' + $index() + '-sr',
                     name: $parent.entryId,
                     class: 'group-' + $parent.entryId,
                 }
             "/>
         <!-- /ko -->
-        <span data-bind="renderMarkdown: $data, class: $parent.hideLabel ? 'sr-only' : ''"></span>
+        <span data-bind="renderMarkdown: $data, class: $parent.hideLabel ? 'sr-only' : '', attr: { id: $parent.entryId + '-choice-' + $index() + '-sr' }"></span>
       </div>
     <!-- /ko -->
     <!-- ko if: hideLabel -->
