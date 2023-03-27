@@ -1714,7 +1714,6 @@ class ExportDataSchema(Document):
         """
 
         original_id, original_rev = None, None
-        apps_processed = 0
         current_schema = cls.get_latest_export_schema(domain, app_id, identifier)
         if (current_schema
                 and not force_rebuild
