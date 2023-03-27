@@ -18,7 +18,7 @@ from couchforms.exceptions import UnexpectedDeletedXForm
 from dimagi.utils.couch import get_redis_lock
 from dimagi.utils.couch.bulk import BulkFetchException
 from dimagi.utils.logging import notify_exception
-from soil import DownloadBase
+from soil import DownloadBase, ProgressHelper
 
 from corehq import toggles
 from corehq.apps.celery import periodic_task, task
