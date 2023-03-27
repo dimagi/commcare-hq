@@ -908,7 +908,6 @@ hqDefine("cloudcare/js/form_entry/entries", function () {
         self.xformParams = function () {
             return { file: self.file() };
         };
-        self.formplayerProcessed = false;
         self.file = ko.observable();
         // corresponds to SUPPORTED_FILE_EXTS var in Formplayer, a list of valid file extensions
         // any changes made here should also be made in Formplayer
