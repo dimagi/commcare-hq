@@ -44,6 +44,7 @@ from corehq.apps.userreports.util import (
 
 LinkedUCRInfo = namedtuple("LinkedUCRInfo", "datasource report")
 
+
 def create_linked_ucr(domain_link, report_config_id):
     if domain_link.is_remote:
         remote_configs = remote_get_ucr_config(domain_link, report_config_id)
