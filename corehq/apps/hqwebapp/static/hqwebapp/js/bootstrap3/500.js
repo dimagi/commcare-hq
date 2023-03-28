@@ -1,4 +1,4 @@
-hqDefine("hqwebapp/js/500",[
+hqDefine("hqwebapp/js/bootstrap3/500",[
     'jquery',
     'bootstrap',
 ], function ($) {
