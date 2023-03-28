@@ -20,7 +20,7 @@ def create_linked_ucr_expression(domain_link, ucr_expression_id):
         domain=domain_link.linked_domain,
     ).exists():
         raise DomainLinkError(
-            _("Expression {expression_name} already exists in the downstream domain {domain}").format(
+            _("Expression {name} already exists in the downstream domain {domain}").format(
                 name=ucr_expression.name, domain=domain_link.linked_domain
             )
         )
