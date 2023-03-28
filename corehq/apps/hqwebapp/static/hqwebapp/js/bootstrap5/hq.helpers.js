@@ -1,4 +1,4 @@
-hqDefine("hqwebapp/js/bootstrap3/hq.helpers", [
+hqDefine("hqwebapp/js/bootstrap5/hq.helpers", [
     'jquery',
     'knockout',
     'underscore',
@@ -59,18 +59,19 @@ hqDefine("hqwebapp/js/bootstrap3/hq.helpers", [
         return false; // let default handler run
     };
 
-    var oldHide = $.fn.popover.Constructor.prototype.hide;
-
-    $.fn.popover.Constructor.prototype.hide = function () {
-        if (this.options.trigger === "hover" && this.tip().is(":hover")) {
-            var that = this;
-            setTimeout(function () {
-                return that.hide.apply(that, arguments);
-            }, that.options.delay.hide);
-            return;
-        }
-        oldHide.apply(this, arguments);
-    };
+    // todo fix for bootstrap5
+    // var oldHide = $.fn.popover.Constructor.prototype.hide;
+    //
+    // $.fn.popover.Constructor.prototype.hide = function () {
+    //     if (this.options.trigger === "hover" && this.tip().is(":hover")) {
+    //         var that = this;
+    //         setTimeout(function () {
+    //             return that.hide.apply(that, arguments);
+    //         }, that.options.delay.hide);
+    //         return;
+    //     }
+    //     oldHide.apply(this, arguments);
+    // };
 
     $.fn.hqHelp = function () {
         var self = this;
