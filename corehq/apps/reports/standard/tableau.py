@@ -10,7 +10,7 @@ import requests
 
 from corehq import toggles
 from corehq.apps.reports.models import TableauVisualization
-from corehq.apps.domain.decorators import login_required
+from corehq.apps.domain.decorators import login_and_domain_required
 from corehq.apps.domain.views.base import BaseDomainView
 
 
@@ -69,14 +69,14 @@ class TableauView(BaseDomainView):
         return super().get(request, *args, **kwargs)
 
 
-@login_required
+@login_and_domain_required
 @require_POST
 def tableau_visualization_ajax(request, domain):
     from requests_toolbelt.adapters import host_header_ssl
-    visualiation_data = {data: value[0] for data, value in dict(request.POST).items()}
-    server_name = visualiation_data.pop('server_name')
-    validate_hostname = visualiation_data.pop('validate_hostname')
-    target_site = visualiation_data.pop('target_site')
+    visualization_data = {data: value[0] for data, value in dict(request.POST).items()}
+    server_name = visualization_data.pop('server_name')
+    validate_hostname = visualization_data.pop('validate_hostname')
+    target_site = visualization_data.pop('target_site')
 
     if toggles.EMBED_TABLEAU_REPORT_BY_USER.enabled(domain):
         # An equivalent Tableau user with the username "HQ/{username}" must exist.
