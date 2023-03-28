@@ -21,12 +21,12 @@ from django.views.decorators.http import require_GET
 from couchdbkit import ResourceNotFound
 from memoized import memoized
 from no_exceptions.exceptions import Http403
-from dimagi.utils.logging import notify_exception
 
+from dimagi.utils.logging import notify_exception
 from soil.exceptions import TaskFailedError
 from soil.util import expose_cached_download, get_download_context
 
-from corehq import privileges
+from corehq import privileges, toggles
 from corehq.apps.accounting.decorators import requires_privilege_with_fallback
 from corehq.apps.case_search.const import SPECIAL_CASE_PROPERTIES
 from corehq.apps.casegroups.dbaccessors import (
@@ -48,8 +48,8 @@ from corehq.apps.data_interfaces.forms import (
     CaseRuleActionsForm,
     CaseRuleCriteriaForm,
     CaseUpdateRuleForm,
-    UpdateCaseGroupForm,
     DedupeCaseFilterForm,
+    UpdateCaseGroupForm,
 )
 from corehq.apps.data_interfaces.models import (
     AutomaticUpdateRule,
@@ -90,10 +90,14 @@ from corehq.util.timezones.utils import get_timezone_for_user
 from corehq.util.view_utils import reverse as reverse_with_params
 from corehq.util.workbook_json.excel import WorkbookJSONError, get_workbook
 
-from .dispatcher import require_form_management_privilege
-from .interfaces import BulkFormManagementInterface, FormManagementMode, CaseReassignmentInterface
 from ..users.decorators import require_permission
 from ..users.models import HqPermissions
+from .dispatcher import require_form_management_privilege
+from .interfaces import (
+    BulkFormManagementInterface,
+    CaseReassignmentInterface,
+    FormManagementMode,
+)
 
 
 @login_and_domain_required
@@ -915,6 +919,7 @@ class EditCaseRuleView(AddCaseRuleView):
         return rule
 
 
+@method_decorator(toggles.CASE_DEDUPE.required_decorator(), name='dispatch')
 class DeduplicationRuleListView(DataInterfaceSection, CRUDPaginatedViewMixin):
     template_name = 'data_interfaces/list_deduplication_rules.html'
     urlname = 'deduplication_rules'
@@ -1070,6 +1075,7 @@ class DeduplicationRuleListView(DataInterfaceSection, CRUDPaginatedViewMixin):
         return CaseDuplicate.objects.filter(action=action).count()
 
 
+@method_decorator(toggles.CASE_DEDUPE.required_decorator(), name='dispatch')
 class DeduplicationRuleCreateView(DataInterfaceSection):
     template_name = "data_interfaces/edit_deduplication_rule.html"
     urlname = 'add_deduplication_rule'
@@ -1222,6 +1228,7 @@ class DeduplicationRuleCreateView(DataInterfaceSection):
         )
 
 
+@method_decorator(toggles.CASE_DEDUPE.required_decorator(), name='dispatch')
 class DeduplicationRuleEditView(DeduplicationRuleCreateView):
     urlname = 'edit_deduplication_rule'
     page_title = gettext_lazy("Edit Deduplication Rule")

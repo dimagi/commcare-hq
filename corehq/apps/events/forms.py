@@ -122,9 +122,7 @@ class CreateEventForm(forms.Form):
             'expected_attendees': [
                 attendee.case_id for attendee in event.get_expected_attendees()
             ],
-            'attendance_takers': [
-                str(attendance_taker_id) for attendance_taker_id in event.attendance_taker_ids
-            ],
+            'attendance_takers': event.attendance_taker_ids,
         }
 
     def get_new_event_form(self):

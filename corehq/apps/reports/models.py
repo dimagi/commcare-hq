@@ -375,29 +375,48 @@ class TableauAPISession(object):
             raise TableauAPIError("Error: API does not work with more than 1000 groups on a single site.")
         return response_body['groups']['group']
 
-    def get_user_on_site(self, username):
+    def _make_paginated_request_for_users(self, method_name, additional_url_path):
+        page_size = 100
+        page_number = 1
+        total_users = sys.maxsize
+        while (page_size * (page_number - 1) < total_users):
+            response_body = self._make_request(
+                self.GET,
+                method_name,
+                (self.base_url
+                + f'{additional_url_path}?pageSize={page_size}&pageNumber={page_number}'),
+                {}
+            )
+            # If it's the first page, grab the total user count.
+            if page_number == 1:
+                total_users = int(response_body['pagination']['totalAvailable'])
+                if total_users == 0:
+                    return []
+            yield from response_body['users']['user']
+            page_number += 1
+
+    def get_users_on_site(self):
         '''
-        Returns a dict for the Tableau user with the given username, None if user can't be found:
+        Returns dict of the form:
         {
-            'email': '',
-            'fullName': ...,
-            'id': ...,
-            'name': ...,
-            'siteRole': ...,
+            "username1": {
+                "id": id,
+                "siteRole": role
+            },
+            "username2": {
+                "id": id,
+                "siteRole": role
+            },
             ...
         }
         '''
-        url = self.base_url + f'/sites/{self.site_id}/users?filter=name:eq:{username}'
-        response_body = self._make_request(
-            self.GET,
-            'Get User on Site',
-            url,
-            {}
-        )
-        if response_body['users']:
-            return response_body['users']['user'][0]
-        else:
-            return None
+        additional_url_path = f'/sites/{self.site_id}/users'
+        method_name = 'Get Users on Site'
+        tableau_users = self._make_paginated_request_for_users(method_name, additional_url_path)
+        return {user['name']: {
+            "id": user['id'],
+            "siteRole": user['siteRole']
+        } for user in tableau_users}
 
     def get_users_in_group(self, group_id):
         '''
@@ -414,31 +433,13 @@ class TableauAPISession(object):
             ...
         ]
         '''
-        page_size = 100
-        page_number = 1
-        total_users = sys.maxsize
-        tableau_users = []
-        while (page_size * (page_number - 1) < total_users):
-            response_body = self._make_request(
-                self.GET,
-                'Get Users in Group',
-                (self.base_url
-                + f'/sites/{self.site_id}/groups/{group_id}/users?pageSize={page_size}&pageNumber={page_number}'),
-                {}
-            )
-            # If it's the first page, grab the total user count.
-            if page_number == 1:
-                total_users = int(response_body['pagination']['totalAvailable'])
-                if total_users == 0:
-                    return []
-            tableau_users += response_body['users']['user']
-            page_number += 1
-        return tableau_users
+        method_name = 'Get Users in Group'
+        additional_url_path = f'/sites/{self.site_id}/groups/{group_id}/users'
+        return list(self._make_paginated_request_for_users(method_name, additional_url_path))
 
-    def create_group(self, group_name, min_site_role):
+    def create_group(self, group_name):
         '''
-        Creates a Tableau group with the given name, and assigns the given role to the group.
-        Returns the group ID.
+        Creates a Tableau group with the given name. Returns the group ID.
         '''
         response_body = self._make_request(
             self.POST,
@@ -446,8 +447,7 @@ class TableauAPISession(object):
             self.base_url + f'/sites/{self.site_id}/groups',
             {
                 "group": {
-                    "name": f"{group_name}",
-                    "minimumSiteRole": f"{min_site_role}"
+                    "name": f"{group_name}"
                 }
             }
         )

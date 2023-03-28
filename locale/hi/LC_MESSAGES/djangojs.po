@@ -3208,6 +3208,18 @@ msgstr ""
 msgid "Search Attendees"
 msgstr ""
 
+#: corehq/apps/events/static/events/js/new_event.js
+msgid "Possible Attendance Takers"
+msgstr ""
+
+#: corehq/apps/events/static/events/js/new_event.js
+msgid "Selected Attendance Takers"
+msgstr ""
+
+#: corehq/apps/events/static/events/js/new_event.js
+msgid "Search Attendance Takers"
+msgstr ""
+
 #: corehq/apps/export/static/export/js/create_export.js
 msgid "<%- count %> form submission available."
 msgstr ""

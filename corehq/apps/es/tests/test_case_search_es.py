@@ -6,13 +6,14 @@ from django.test import TestCase
 from django.test.testcases import SimpleTestCase
 
 from couchforms.geopoint import GeoPoint
-from pillowtop.es_utils import initialize_index_and_mapping
 
 from corehq.apps.case_search.const import IS_RELATED_CASE, RELEVANCE_SCORE
 from corehq.apps.case_search.models import CaseSearchConfig
 from corehq.apps.es import queries
+from corehq.apps.es.client import manager
 from corehq.apps.es.case_search import (
     CaseSearchES,
+    case_search_adapter,
     case_property_starts_with,
     case_property_geo_distance,
     case_property_missing,
@@ -23,15 +24,9 @@ from corehq.apps.es.case_search import (
 )
 from corehq.apps.es.const import SIZE_LIMIT
 from corehq.apps.es.tests.utils import ElasticTestMixin, es_test
-from corehq.elastic import get_es_new
 from corehq.form_processor.models import CommCareCaseIndex
 from corehq.form_processor.tests.utils import FormProcessorTestUtils
 from corehq.pillows.case_search import CaseSearchReindexerFactory
-from corehq.pillows.mappings.case_search_mapping import (
-    CASE_SEARCH_INDEX,
-    CASE_SEARCH_INDEX_INFO,
-)
-from corehq.util.elastic import ensure_index_deleted
 from corehq.util.test_utils import create_and_save_a_case, flag_enabled
 
 
@@ -318,7 +313,7 @@ class TestCaseSearchHitConversions(SimpleTestCase):
         }
 
 
-@es_test
+@es_test(requires=[case_search_adapter])
 class BaseCaseSearchTest(TestCase):
 
     def setUp(self):
@@ -326,15 +321,6 @@ class BaseCaseSearchTest(TestCase):
         self.case_type = 'person'
         super(BaseCaseSearchTest, self).setUp()
         FormProcessorTestUtils.delete_all_cases()
-        self.elasticsearch = get_es_new()
-        ensure_index_deleted(CASE_SEARCH_INDEX)
-
-        # Bootstrap ES
-        initialize_index_and_mapping(get_es_new(), CASE_SEARCH_INDEX_INFO)
-
-    def tearDown(self):
-        ensure_index_deleted(CASE_SEARCH_INDEX)
-        super(BaseCaseSearchTest, self).tearDown()
 
     def _make_case(self, domain, case_properties, index=None):
         # make a case
@@ -355,7 +341,7 @@ class BaseCaseSearchTest(TestCase):
         with patch('corehq.pillows.case_search.domains_needing_search_index',
                    MagicMock(return_value=[domain])):
             CaseSearchReindexerFactory(domain=domain).build().reindex()
-        self.elasticsearch.indices.refresh(CASE_SEARCH_INDEX)
+        manager.index_refresh(case_search_adapter.index_name)
 
     def _assert_query_runs_correctly(self, domain, input_cases, query, xpath_query, output):
         self._bootstrap_cases_in_es_for_domain(domain, input_cases)
