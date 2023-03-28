@@ -1,9 +1,9 @@
-hqDefine("hqwebapp/js/bootstrap3/common", [
+hqDefine("hqwebapp/js/bootstrap5/common", [
     'jquery',
     'knockout',
     'ko.mapping',
     'underscore',
-    'bootstrap',
+    'bootstrap5',
 ], function () {
     // nothing to do, this is just to define the major common dependencies for HQ
 });

@@ -1,6 +1,6 @@
-hqDefine("hqwebapp/js/bootstrap3/500",[
+hqDefine("hqwebapp/js/bootstrap5/500",[
     'jquery',
-    'bootstrap',
+    'bootstrap5',
 ], function ($) {
     $(function () {
         $('#sad-danny').popover({
