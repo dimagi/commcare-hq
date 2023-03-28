@@ -159,9 +159,6 @@ def _get_location_case_counts(domain, location_ids):
         .aggregation(TermsAggregation('by_location', 'owner_id').size(0))
     ).run()
     counts = query.aggregations.by_location.counts_by_bucket()
-    for location_id in location_ids:
-        if location_id not in counts:
-            counts[location_id] = 0
 
     return counts
 
