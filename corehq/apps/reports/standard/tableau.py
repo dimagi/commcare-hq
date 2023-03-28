@@ -43,9 +43,6 @@ class TableauView(BaseDomainView):
     def dispatch(self, request, *args, **kwargs):
         if self.visualization is None:
             raise Http404()
-        if hasattr(self.request, 'couch_user'):
-            if not self.request.couch_user.can_view_tableau_viz(self.domain, f"{self.kwargs.get('viz_id')}"):
-                raise Http403
         return super().dispatch(request, *args, **kwargs)
 
     @property
@@ -61,6 +58,7 @@ class TableauView(BaseDomainView):
             "validate_hostname": hostname,
             "target_site": self.visualization.server.target_site,
             "view_url": self.visualization.view_url,
+            "viz_id": self.visualization.id,
         }
 
     def get(self, request, *args, **kwargs):
@@ -77,6 +75,10 @@ def tableau_visualization_ajax(request, domain):
     server_name = visualization_data.pop('server_name')
     validate_hostname = visualization_data.pop('validate_hostname')
     target_site = visualization_data.pop('target_site')
+
+    # Authenticate
+    if not request.couch_user.can_view_tableau_viz(domain, visualization_data.pop('viz_id')):
+        raise Http403
 
     if toggles.EMBED_TABLEAU_REPORT_BY_USER.enabled(domain):
         # An equivalent Tableau user with the username "HQ/{username}" must exist.
