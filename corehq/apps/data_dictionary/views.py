@@ -33,11 +33,11 @@ from corehq.apps.settings.views import BaseProjectDataView
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import HqPermissions
 
-from corehq.motech.fhir.const import SUPPORTED_FHIR_RESOURCE_TYPES
 from corehq.motech.fhir.utils import (
     load_fhir_resource_mappings,
     remove_fhir_resource_type,
     update_fhir_resource_type,
+    load_fhir_resource_types,
 )
 from corehq.project_limits.rate_limiter import (
     RateDefinition,
@@ -108,6 +108,7 @@ def data_dictionary_json(request, domain, case_type_name=None):
             p['properties'].append({
                 "description": prop.description,
                 "label": prop.label,
+                "index": prop.index,
                 "fhir_resource_prop_path": fhir_resource_prop_by_case_prop.get(prop),
                 "name": prop.name,
                 "data_type": prop.data_type,
@@ -156,6 +157,7 @@ def update_case_property(request, domain):
             case_type = property.get('caseType')
             name = property.get('name')
             label = property.get('label')
+            index = property.get('index')
             description = property.get('description')
             data_type = property.get('data_type')
             group = property.get('group')
@@ -168,7 +170,7 @@ def update_case_property(request, domain):
                 fhir_resource_prop_path, remove_path = None, None
             error = save_case_property(name, case_type, domain, data_type, description, label, group, deprecated,
                                        fhir_resource_prop_path, fhir_resource_type_obj, remove_path,
-                                       allowed_values)
+                                       allowed_values, index)
             if error:
                 errors.append(error)
 
@@ -359,7 +361,7 @@ class DataDictionaryView(BaseProjectDataView):
         fhir_integration_enabled = toggles.FHIR_INTEGRATION.enabled(self.domain)
         if fhir_integration_enabled:
             main_context.update({
-                'fhir_resource_types': SUPPORTED_FHIR_RESOURCE_TYPES,
+                'fhir_resource_types': load_fhir_resource_types(),
             })
         main_context.update({
             'question_types': [{'value': t.value, 'display': t.label}

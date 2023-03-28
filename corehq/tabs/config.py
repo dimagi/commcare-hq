@@ -15,6 +15,7 @@ from corehq.tabs.tabclasses import (
     SetupTab,
     SMSAdminTab,
     TranslationsTab,
+    AttendanceTrackingTab,
 )
 
 MENU_TABS = (
@@ -26,6 +27,7 @@ MENU_TABS = (
     ApplicationsTab,
     CloudcareTab,
     MessagingTab,
+    AttendanceTrackingTab,
     # invisible
     ProjectSettingsTab,
     EnterpriseSettingsTab,

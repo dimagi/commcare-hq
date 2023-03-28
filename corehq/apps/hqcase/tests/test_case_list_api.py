@@ -1,6 +1,7 @@
 import datetime
 import uuid
 from base64 import b64decode
+from unittest.mock import Mock
 
 from django.http import QueryDict
 from django.test import TestCase
@@ -27,6 +28,7 @@ BAD_GUYS_ID = str(uuid.uuid4())
 @privilege_enabled(privileges.API_ACCESS)
 class TestCaseListAPI(TestCase):
     domain = 'test-case-list-api'
+    couch_user = Mock(has_permission=lambda domain, permission: True)
 
     @classmethod
     def setUpClass(cls):
@@ -77,7 +79,7 @@ class TestCaseListAPI(TestCase):
 
     def test_pagination(self):
         query_dict = QueryDict('limit=3&case_type=person&case_type=household')
-        res = get_list(self.domain, query_dict)
+        res = get_list(self.domain, self.couch_user, query_dict)
         self.assertItemsEqual(res.keys(), ['next', 'cases', 'matching_records'])
         self.assertEqual(res['matching_records'], 5)
         self.assertEqual(
@@ -92,7 +94,7 @@ class TestCaseListAPI(TestCase):
         self.assertIn('indexed_on.gte', cursor)
         self.assertIn('last_case_id', cursor)
 
-        res = get_list(self.domain, res['next'])
+        res = get_list(self.domain, self.couch_user, res['next'])
         self.assertEqual(res['matching_records'], 2)
         self.assertEqual(
             ['chaney', 'ned'],
@@ -131,7 +133,8 @@ class TestCaseListAPI(TestCase):
 ], TestCaseListAPI)
 def test_case_list_queries(self, querystring, expected):
     params = QueryDict(querystring)
-    actual = [c['external_id'] for c in get_list(self.domain, params)['cases']]
+    case_list = get_list(self.domain, self.couch_user, params)
+    actual = [c['external_id'] for c in case_list['cases']]
     # order matters, so this doesn't use assertItemsEqual
     self.assertEqual(actual, expected)
 
@@ -152,5 +155,5 @@ def test_case_list_queries(self, querystring, expected):
 def test_bad_requests(self, querystring, error_msg):
     with self.assertRaises(UserError) as e:
         params = QueryDict(querystring)
-        get_list(self.domain, params)
+        get_list(self.domain, self.couch_user, params)
     self.assertEqual(str(e.exception), error_msg)

@@ -10,7 +10,6 @@ from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.es.case_search import CaseSearchES, case_search_adapter
 from corehq.apps.es.tests.utils import es_test
 from corehq.form_processor.models import CommCareCase
-from corehq.pillows.case_search import transform_case_for_elasticsearch
 
 from ..api.core import serialize_case, serialize_es_case
 from ..utils import submit_case_blocks
@@ -69,7 +68,7 @@ class TestAPISerialization(TestCase):
 
         for case in [cls.case, cls.parent_case]:
             case_search_adapter.index(
-                transform_case_for_elasticsearch(cls.case.to_json()),
+                cls.case,
                 refresh=True
             )
 

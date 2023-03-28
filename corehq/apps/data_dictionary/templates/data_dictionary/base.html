@@ -1,4 +1,4 @@
-{% extends "hqwebapp/base_section.html" %}
+{% extends "hqwebapp/bootstrap3/base_section.html" %}
 {% load compress %}
 {% load hq_shared_tags %}
 {% load i18n %}
@@ -119,10 +119,11 @@
     <div class="col-md-12">
       <h3 data-bind="text: $root.activeCaseType()"></h3>
       {% if fhir_integration_enabled %}
-        <div class="form-inline" data-bind="visible: fhirResourceTypes().length">
+        <div id="fhir-resource-type-form" class="form-inline" data-bind="visible: fhirResourceTypes().length">
           {% trans "FHIR Resource Type" %}
-          <select class="form-control"
-                  data-bind="options: fhirResourceTypes,
+          <select id="fhir-resource-types"
+                  class="form-control"
+                  data-bind="select2: fhirResourceTypes,
                              optionsCaption: '{% trans_html_attr 'Select a resource type' %}',
                              value: fhirResourceType,
                              disable: removefhirResourceType,

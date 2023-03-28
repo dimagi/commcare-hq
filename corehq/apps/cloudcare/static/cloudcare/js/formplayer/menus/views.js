@@ -697,6 +697,20 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
         template: _.template($("#language-option-template").html() || ""),
         events: {
             'click': 'onChangeLang',
+            'keydown .lang': 'onKeyActionChangeLang',
+        },
+        initialize: function (options) {
+            this.languageOptionsEnabled = options.languageOptionsEnabled;
+        },
+        templateContext: function () {
+            return {
+                languageOptionsEnabled: this.languageOptionsEnabled,
+            };
+        },
+        onKeyActionChangeLang: function (e) {
+            if (e.keyCode === 13) {
+                this.onChangeLang(e);
+            }
         },
         onChangeLang: function (e) {
             var lang = e.target.id;
@@ -709,6 +723,40 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
         tagName: 'li',
         childView: LanguageOptionView,
         childViewContainer: 'ul',
+        ui: {
+            dropdownMenu: "#form-menu-dropdown",
+            selectPrint: "#print-header.dropdown-header",
+        },
+        childViewOptions: function () {
+            return {
+                languageOptionsEnabled: Boolean(this.options.collection),
+            };
+        },
+        templateContext: function () {
+            var languageOptionsEnabled = Boolean(this.options.collection);
+            return {
+                languageOptionsEnabled: languageOptionsEnabled,
+            };
+        },
+        events: {
+            "keydown": "expandDropdown",
+            "keydown @ui.selectPrint": "printKeyAction",
+            "click @ui.selectPrint": "print",
+        },
+        expandDropdown: function (e) {
+            if (e.keyCode === 13 || e.keyCode === 32) {
+                e.preventDefault();
+                $(this.ui.dropdownMenu).toggleClass("open");
+            }
+        },
+        printKeyAction: function (e) {
+            if (e.keyCode === 13) {
+                this.print();
+            }
+        },
+        print: function () {
+            window.print();
+        },
     });
 
     var DetailView = Marionette.View.extend({

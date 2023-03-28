@@ -1,4 +1,4 @@
-{% extends "hqwebapp/base_section.html" %}
+{% extends "hqwebapp/bootstrap3/base_section.html" %}
 {% load hq_shared_tags %}
 {% load i18n %}
 
@@ -167,7 +167,7 @@
                        id="det-config-checkbox"
                        data-bind="checked: show_det_config_download,
                                   attr: { disabled: !{{ has_api_access|JSON }}}" />
-                {% trans "Generate a Data Export Tool config file?" %}
+                {% trans "Generate a Data Export Tool config file" %}
               </label>
               {% trans "Download a Data Export Tool configuration file for this export" as det_help %}
               <span class="hq-help-template"
@@ -345,6 +345,7 @@
           </div>
         </div>
         {% include "export/dialogs/process_deleted_questions.html" %}
+        {% include "export/dialogs/process_deprecated_properties.html" %}
       </div>
     </form>
   </div>

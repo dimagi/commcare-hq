@@ -919,7 +919,7 @@ WEB_APPS_DOMAIN_BANNER = StaticToggle(
 
 WEB_APPS_UPLOAD_QUESTIONS = FeatureRelease(
     'web_apps_upload_questions',
-    'USH: Support signature, image, audio, and video questions in Web Apps',
+    'USH: Support image, audio, and video questions in Web Apps',
     TAG_RELEASE,
     namespaces=[NAMESPACE_DOMAIN],
     owner='Jenny Schweers',
@@ -1012,15 +1012,18 @@ WEBAPPS_STICKY_SEARCH = StaticToggle(
 )
 
 
-def _enable_search_index(domain, enabled):
+def _ensure_search_index_is_enabled(domain, enabled):
     from corehq.apps.case_search.tasks import reindex_case_search_for_domain
     from corehq.apps.es import CaseSearchES
-    from corehq.pillows.case_search import domains_needing_search_index
-    domains_needing_search_index.clear()
+    from corehq.pillows.case_search import domain_needs_search_index
+    from corehq.apps.case_search.models import DomainsNotInCaseSearchIndex
+
+    if enabled and DomainsNotInCaseSearchIndex.objects.filter(domain=domain).exists():
+        DomainsNotInCaseSearchIndex.objects.filter(domain=domain).delete()
+        domain_needs_search_index.clear(domain)
 
     has_case_search_cases = CaseSearchES().domain(domain).count() > 0
     if enabled and not has_case_search_cases:
-        # action is not reversible, we want all projects here eventually
         reindex_case_search_for_domain.delay(domain)
 
 
@@ -1029,7 +1032,7 @@ CASE_LIST_EXPLORER = StaticToggle(
     'Show the case list explorer report',
     TAG_SOLUTIONS_OPEN,
     namespaces=[NAMESPACE_DOMAIN],
-    save_fn=_enable_search_index,
+    save_fn=_ensure_search_index_is_enabled,
 )
 
 EXPLORE_CASE_DATA = StaticToggle(
@@ -1077,7 +1080,7 @@ CASE_API_V0_6 = StaticToggle(
     'Enable the v0.6 Case API',
     TAG_SOLUTIONS_LIMITED,
     namespaces=[NAMESPACE_DOMAIN],
-    save_fn=_enable_search_index,
+    save_fn=_ensure_search_index_is_enabled,
 )
 
 HIPAA_COMPLIANCE_CHECKBOX = StaticToggle(
@@ -1612,17 +1615,6 @@ BULK_UPLOAD_DATE_OPENED = StaticToggle(
     [NAMESPACE_DOMAIN],
 )
 
-REGEX_FIELD_VALIDATION = StaticToggle(
-    'regex_field_validation',
-    'Regular Expression Validation for Custom Data Fields',
-    TAG_SOLUTIONS_OPEN,
-    namespaces=[NAMESPACE_DOMAIN],
-    description="This flag adds the option to specify a regular expression "
-                "(regex) to validate custom user data, custom location data, "
-                "and/or custom product data fields.",
-    help_link='https://confluence.dimagi.com/display/saas/Regular+Expression+Validation+for+Custom+Data+Fields',
-)
-
 TWO_FACTOR_SUPERUSER_ROLLOUT = StaticToggle(
     'two_factor_superuser_rollout',
     'Users in this list will be forced to have Two-Factor Auth enabled',
@@ -1776,20 +1768,6 @@ MANAGE_RELEASES_PER_LOCATION = StaticToggle(
     TAG_SOLUTIONS_LIMITED,
     namespaces=[NAMESPACE_DOMAIN],
     help_link='https://confluence.dimagi.com/display/saas/Manage+Releases+per+Location',
-)
-
-LOCATION_SAFE_CASE_IMPORTS = StaticToggle(
-    'location_safe_case_imports',
-    'Allow location-restricted users to import cases owned at their location or below',
-    TAG_SOLUTIONS_OPEN,
-    namespaces=[NAMESPACE_DOMAIN],
-)
-
-FORM_CASE_IDS_CASE_IMPORTER = StaticToggle(
-    'form_case_ids_case_importer',
-    'Show the form and case ids download button on the case importer',
-    TAG_SOLUTIONS_OPEN,
-    namespaces=[NAMESPACE_DOMAIN],
 )
 
 HIDE_HQ_ON_MOBILE_EXPERIENCE = StaticToggle(
@@ -2190,7 +2168,8 @@ GENERIC_INBOUND_API = StaticToggle(
     TAG_SOLUTIONS_LIMITED,
     namespaces=[NAMESPACE_DOMAIN],
     description="Create inbound APIs that use UCR expressions to process data into case updates",
-    help_link="TODO",
+    help_link="https://docs.google.com/document/d/1y9CZwpzGYtitxbh-Y7nS5-WoMUg-LbRlZHd-eD5i78U/edit",
+    parent_toggles=[UCR_EXPRESSION_REGISTRY]
 )
 
 CASE_UPDATES_UCR_FILTERS = StaticToggle(
@@ -2206,7 +2185,6 @@ TURN_IO_BACKEND = StaticToggle(
     TAG_SOLUTIONS_LIMITED,
     namespaces=[NAMESPACE_DOMAIN],
 )
-
 
 FOLLOWUP_FORMS_AS_CASE_LIST_FORM = StaticToggle(
     'followup_forms_as_case_list_form',
@@ -2509,4 +2487,37 @@ DATA_FILE_DOWNLOAD = FrozenPrivilegeToggle(
     namespaces=[NAMESPACE_DOMAIN],
     help_link='https://confluence.dimagi.com/display/saas/Offer+hosting+and+'
               'sharing+data+files+for+downloading+from+a+secure+dropzone',
+)
+
+REGEX_FIELD_VALIDATION = FrozenPrivilegeToggle(
+    privileges.REGEX_FIELD_VALIDATION,
+    'regex_field_validation',
+    label='Regular Expression Validation for Custom Data Fields',
+    tag=TAG_SOLUTIONS_OPEN,
+    namespaces=[NAMESPACE_DOMAIN],
+    description="This flag adds the option to specify a regular expression "
+                "(regex) to validate custom user data, custom location data, "
+                "and/or custom product data fields.",
+    help_link='https://confluence.dimagi.com/display/saas/Regular+Expression+Validation+for+Custom+Data+Fields',
+)
+
+LOCATION_SAFE_CASE_IMPORTS = FrozenPrivilegeToggle(
+    privileges.LOCATION_SAFE_CASE_IMPORTS,
+    'location_safe_case_imports',
+    label='Location-restricted users can import cases at their location or below',
+    tag=TAG_SOLUTIONS_OPEN,
+    namespaces=[NAMESPACE_DOMAIN],
+    description='Allow location-restricted users to import cases owned at their location or below',
+)
+
+FORM_CASE_IDS_CASE_IMPORTER = FrozenPrivilegeToggle(
+    privileges.FORM_CASE_IDS_CASE_IMPORTER,
+    'form_case_ids_case_importer',
+    label='Download buttons for Form- and Case IDs on Case Importer',
+    tag=TAG_SOLUTIONS_OPEN,
+    namespaces=[NAMESPACE_DOMAIN],
+    description='Display the "Form IDs" and "Case IDs" download buttons on Case Importer',
+    # TODO: Move to public wiki
+    help_link=('https://confluence.dimagi.com/display/saas/Show+the+form+and+case+ids+download+button+on+the+'
+        'case+importer')
 )

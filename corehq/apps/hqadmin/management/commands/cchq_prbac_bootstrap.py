@@ -197,6 +197,15 @@ class Command(BaseCommand):
         Role(slug=privileges.ATTENDANCE_TRACKING,
              name='Attendance Tracking',
              description='Supports using CommCareHQ for attendance tracking'),
+        Role(slug=privileges.REGEX_FIELD_VALIDATION,
+             name='Regular Field Validation',
+             description='Regular field validation for custom data fields'),
+        Role(slug=privileges.LOCATION_SAFE_CASE_IMPORTS,
+             name='Location Safe Case Imports',
+             description='Location-restricted users can import cases at their location or below'),
+        Role(slug=privileges.FORM_CASE_IDS_CASE_IMPORTER,
+             name='Download buttons for Form- and Case IDs on Case Importer',
+             description='Display the "Form IDs" and "Case IDs" download buttons on Case Importer')
     ]
 
     BOOTSTRAP_PLANS = [

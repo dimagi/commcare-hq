@@ -11,12 +11,17 @@ DomainES
              .created(gte=datespan.startdate, lte=datespan.enddate)
              .size(0))
 """
+
+from copy import copy
+
+from django_countries import Countries
+
 from . import filters
 from .client import ElasticDocumentAdapter, create_document_adapter
 from .es_query import HQESQuery
 from .index.analysis import COMMA_ANALYSIS
 from .index.settings import IndexSettingsKey
-from .transient_util import get_adapter_mapping, from_dict_with_possible_id
+from .transient_util import get_adapter_mapping
 
 
 class DomainES(HQESQuery):
@@ -55,9 +60,29 @@ class ElasticDomain(ElasticDocumentAdapter):
     def mapping(self):
         return get_adapter_mapping(self)
 
-    @classmethod
-    def from_python(cls, doc):
-        return from_dict_with_possible_id(doc)
+    @property
+    def model_cls(self):
+        from corehq.apps.domain.models import Domain
+        return Domain
+
+    def _from_dict(self, domain_dict):
+        """
+        Takes a domain dict and applies required transformation to make it suitable for ES.
+        The function is replica of ``transform_domain_for_elasticsearch``.
+        In future all references to  ``transform_domain_for_elasticsearch`` will be replaced by `from_python`
+        :param domain: an instance of ``dict`` which is result of ``Domain.to_json()``
+        """
+        from corehq.apps.accounting.models import Subscription
+
+        sub = Subscription.visible_objects.filter(subscriber__domain=domain_dict['name'], is_active=True)
+        domain_dict['deployment'] = domain_dict.get('deployment') or {}
+        countries = domain_dict['deployment'].get('countries', [])
+        domain_dict['deployment']['countries'] = []
+        if sub:
+            domain_dict['subscription'] = sub[0].plan_version.plan.edition
+        for country in countries:
+            domain_dict['deployment']['countries'].append(Countries[country].upper())
+        return super()._from_dict(domain_dict)
 
 
 domain_adapter = create_document_adapter(

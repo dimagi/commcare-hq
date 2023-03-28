@@ -1,0 +1,105 @@
+--- 
++++ 
+@@ -19,24 +19,13 @@
+ 
+ 
+ {% block navigation %}
+-  <div id="hq-navigation"
+-       class="navbar navbar-default navbar-static-top navbar-hq-main-menu">
++  <nav id="hq-navigation"
++       class="navbar navbar-expand-lg bg-light border-bottom-1 navbar-hq-main-menu">
+     <div class="container-fluid">
+-
+-      {% if not request|toggle_enabled:"USER_TESTING_SIMPLIFY" and request.user.is_authenticated  %}
+-        <ul class="nav navbar-nav collapse-fullmenu-toggle" id="hq-fullmenu-responsive" role="menu">
+-          <li>
+-            <a href="#hq-full-menu" data-toggle="collapse">
+-              <i class="fa fa-bars"></i>
+-              {% trans "Menu" %}
+-            </a>
+-          </li>
+-        </ul>
+-      {% endif %}
+ 
+       {% if not request.user.is_authenticated %}
+         <nav class="navbar-menus navbar-signin" role="navigation">
+-          <div class="nav-settings-bar pull-right">
++          <div class="nav-settings-bar p-2">
+             <a href="{% url "login" %}" class="btn btn-primary navbar-btn">{% trans 'Sign In' %}</a>
+             {% if is_saas_environment and ANALYTICS_IDS.HUBSPOT_API_ID %}
+               <a href="#cta-form-get-demo"
+@@ -55,44 +44,49 @@
+           {% if CUSTOM_LOGO_URL %}
+             <img src="{{ CUSTOM_LOGO_URL }}" alt="CommCare HQ Logo" />
+           {% else %}
+-            <!-- navbar.less supplies the default logo -->
++            <!-- _navbar.scss supplies the default logo -->
+             <div></div>
+           {% endif %}
+         </a>
+       </div>
+ 
++      {% if not request|toggle_enabled:"USER_TESTING_SIMPLIFY" and request.user.is_authenticated  %}
++        <button class="navbar-toggler"
++                type="button"
++                data-bs-toggle="collapse"
++                data-bs-target="#hq-full-menu"
++                aria-controls="hq-full-menu"
++                aria-expanded="false"
++                aria-label="toggle menu">
++          <i class="fa fa-bars"></i>
++          {% trans "Menu" %}
++        </button>
++      {% endif %}
++
+       {% if not request|toggle_enabled:"USER_TESTING_SIMPLIFY" and request.user.is_authenticated %}
+-        <ul class="nav navbar-nav collapse-mainmenu-toggle" id="hq-mainmenu-responsive" role="menu">
+-          <li>
+-            <a href="#hq-main-tabs" data-toggle="collapse">
+-              <i class="fa fa-bars"></i>
+-              {% trans "Menu" %}
+-            </a>
+-          </li>
+-        </ul>
+ 
+-        <nav class="navbar-menus fullmenu collapse" id="hq-full-menu" role="navigation">
+-          <div class="nav-settings-bar pull-right">
+-            {% include 'hqwebapp/includes/bootstrap3/global_navigation_bar.html' %}
++        <div class="collapse navbar-collapse ms-2" id="hq-full-menu">
++          <div class="nav-settings-bar">
++            {% include 'hqwebapp/includes/bootstrap5/global_navigation_bar.html' %}
+           </div>
+           {% block tabs %}
+             {% format_main_menu %}
+           {% endblock %}
+-        </nav>
++        </div>
+       {% endif %}
+ 
+     </div>
+-  </div>
++  </nav>
+ {% endblock navigation %}
+ 
+ 
+ {% block post_navigation_content %}
+   {% if request.project.is_snapshot %}
+-    <div class="alert alert-info">
++    <div class="alert alert-info rounded-0" role="alert">
+       {% trans "This is a snapshot of " %}{{ request.project.copied_from.display_name }}
+     </div>
+   {% endif %}
+-  {% include "hqwebapp/partials/bootstrap3/unsupported_browser.html" %}
++  {% include "hqwebapp/partials/bootstrap5/unsupported_browser.html" %}
+ {% endblock post_navigation_content %}
+ 
+ 
+@@ -126,7 +120,7 @@
+ 
+ {% block footer %}
+   {% if not enterprise_mode %}
+-    {% include 'hqwebapp/partials/bootstrap3/footer.html' %}
++    {% include 'hqwebapp/partials/bootstrap5/footer.html' %}
+   {% endif %}
+ {% endblock footer %}
+ 

@@ -1,6 +1,6 @@
 --- 
 +++ 
-@@ -1,42 +1,91 @@
+@@ -1,42 +1,92 @@
 -@import "_hq/includes/variables.less";
 -@import "_hq/includes/mixins.less";
  
@@ -65,6 +65,7 @@
 +@import "tables";
 +@import "commcarehq/tables";
 +@import "forms";
++@import "commcarehq/forms";
 +@import "buttons";
 +@import "commcarehq/buttons";
 +@import "transitions";

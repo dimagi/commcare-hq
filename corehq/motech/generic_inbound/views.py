@@ -124,7 +124,7 @@ class ConfigurableAPIEditView(BaseProjectSettingsView):
     @memoized
     def api(self):
         try:
-            return ConfigurableAPI.objects.get(id=self.api_id)
+            return ConfigurableAPI.objects.get(domain=self.domain, id=self.api_id)
         except ConfigurableAPI.DoesNotExist:
             raise Http404
 
@@ -175,7 +175,7 @@ class ConfigurableAPIEditView(BaseProjectSettingsView):
 @csrf_exempt
 @allow_cors(list(RequestLog.RequestMethod))
 @require_http_methods(list(RequestLog.RequestMethod))
-@api_auth
+@api_auth(allow_creds_in_data=False)
 @requires_privilege_with_fallback(privileges.API_ACCESS)
 @require_permission(HqPermissions.edit_data)
 @require_permission(HqPermissions.access_api)
