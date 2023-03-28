@@ -16,7 +16,6 @@ from corehq.form_processor.tests.utils import (
     FormProcessorTestUtils,
     create_case,
 )
-from corehq.pillows.case_search import domains_needing_search_index
 from testapps.test_pillowtop.utils import process_pillow_changes
 
 
@@ -29,7 +28,6 @@ class CasePillowTest(TestCase):
         super(CasePillowTest, cls).setUpClass()
         # enable case search for this domain
         CaseSearchConfig.objects.create(domain=cls.domain, enabled=True)
-        domains_needing_search_index.clear()
 
     def setUp(self):
         super(CasePillowTest, self).setUp()
@@ -56,7 +54,6 @@ class CasePillowTest(TestCase):
     def test_case_pillow_error_in_case_es(self):
         self.assertEqual(0, PillowError.objects.filter(pillow='case-pillow').count())
         with (
-            patch('corehq.pillows.case_search.domain_needs_search_index', return_value=True),
             patch.object(case_adapter, 'from_python') as case_transform,
             patch.object(case_search_adapter, 'from_python') as case_search_transform,
         ):

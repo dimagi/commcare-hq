@@ -22,7 +22,6 @@ from corehq.pillows.case import get_case_pillow
 from corehq.pillows.case_search import (
     CaseSearchReindexerFactory,
     delete_case_search_cases,
-    domains_needing_search_index,
 )
 from corehq.util.test_utils import create_and_save_a_case, flag_enabled
 
@@ -44,20 +43,11 @@ class CaseSearchPillowTest(TestCase):
 
     def test_case_search_reindex_by_domain(self):
         """
-        Tests reindexing for a particular domain only
+        Tests reindexing
         """
-        other_domain = "yunkai"
-        CaseSearchConfig.objects.get_or_create(pk=other_domain, enabled=True)
-        domains_needing_search_index.clear()
-
-        desired_case = self._make_case(domain=other_domain)
-        undesired_case = self._make_case(domain=self.domain)  # noqa
-
-        with self.assertRaises(CaseSearchNotEnabledException):
-            CaseSearchReindexerFactory(domain=self.domain).build().reindex()
-
-        CaseSearchReindexerFactory(domain=other_domain).build().reindex()
-        self._assert_case_in_es(other_domain, desired_case)
+        case = self._make_case(domain=self.domain)
+        CaseSearchReindexerFactory(domain=self.domain).build().reindex()
+        self._assert_case_in_es(self.domain, case)
 
     def test_delete_case_search_cases(self):
         """
@@ -111,7 +101,6 @@ class CaseSearchPillowTest(TestCase):
     @flag_enabled('USH_CASE_CLAIM_UPDATES')
     def test_geopoint_property(self):
         CaseSearchConfig.objects.get_or_create(pk=self.domain, enabled=True)
-        domains_needing_search_index.clear()
         self._make_data_dictionary(gps_properties=['coords', 'short_coords', 'other_coords'])
         case = self._make_case(case_properties={
             'coords': '-33.8561 151.2152 0 0',
@@ -196,7 +185,5 @@ class CaseSearchPillowTest(TestCase):
 
     def _bootstrap_cases_in_es_for_domain(self, domain):
         case = self._make_case(domain)
-        with patch('corehq.pillows.case_search.domains_needing_search_index',
-                   MagicMock(return_value=[domain])):
-            CaseSearchReindexerFactory(domain=domain).build().reindex()
+        CaseSearchReindexerFactory(domain=domain).build().reindex()
         return case

@@ -10,7 +10,7 @@ from corehq.apps.case_search.const import (
     VALUE,
 )
 from corehq.apps.case_search.exceptions import CaseSearchNotEnabledException
-from corehq.apps.case_search.models import case_search_enabled_domains
+from corehq.apps.case_search.models import DomainsNotInCaseSearchIndex
 from corehq.apps.change_feed import topics
 from corehq.apps.change_feed.consumer.feed import (
     KafkaChangeFeed,
@@ -26,10 +26,6 @@ from corehq.pillows.mappings.case_search_mapping import (
     CASE_SEARCH_MAPPING,
 )
 from corehq.toggles import (
-    CASE_API_V0_6,
-    CASE_LIST_EXPLORER,
-    ECD_MIGRATED_DOMAINS,
-    EXPLORE_CASE_DATA,
     USH_CASE_CLAIM_UPDATES,
 )
 from corehq.util.doc_processor.sql import SqlDocumentProvider
@@ -58,17 +54,19 @@ from pillowtop.reindexer.reindexer import (
 _assert_string_property = soft_assert(to='{}@{}.com'.format('cellowitz', 'dimagi'), notify_admins=True)
 
 
-@quickcache([], timeout=24 * 60 * 60, memoize_timeout=60)
-def domains_needing_search_index():
-    return set(list(case_search_enabled_domains())
-               + CASE_LIST_EXPLORER.get_enabled_domains()
-               + EXPLORE_CASE_DATA.get_enabled_domains()
-               + ECD_MIGRATED_DOMAINS.get_enabled_domains()
-               + CASE_API_V0_6.get_enabled_domains())
+def _domains_needing_search_index():
+    # This is only used by the reindexer now, so we don't need to cache it for performance.
+    # We especially don't want to cache it because newer domains need to be added to this list as they are created
+    from corehq.apps.domain.models import Domain
+    all_domains = set(domain["key"] for domain in Domain.get_all(include_docs=False))
+    return all_domains.difference(
+        DomainsNotInCaseSearchIndex.objects.values_list("domain", flat=True).all()
+    )
 
 
+@quickcache(["domain"], timeout=24 * 60 * 60, memoize_timeout=60)
 def domain_needs_search_index(domain):
-    return domain in domains_needing_search_index()
+    return not DomainsNotInCaseSearchIndex.objects.filter(domain=domain).exists()
 
 
 def transform_case_for_elasticsearch(doc_dict):
@@ -201,7 +199,7 @@ class CaseSearchReindexerFactory(ReindexerFactory):
                 domains = [domain]
             else:
                 # return changes for all enabled domains
-                domains = domains_needing_search_index()
+                domains = _domains_needing_search_index()
 
             change_provider = get_domain_case_change_provider(domains=domains, limit_db_aliases=limit_db_aliases)
         except ProgrammingError:

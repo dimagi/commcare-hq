@@ -320,6 +320,7 @@ DOMAIN_DELETE_OPERATIONS = [
     ModelDeletion('case_importer', 'CaseUploadRecord', 'domain', [
         'CaseUploadFileMeta', 'CaseUploadFormRecord'
     ]),
+    ModelDeletion('case_search', 'DomainsNotInCaseSearchIndex', 'domain'),
     ModelDeletion('case_search', 'CaseSearchConfig', 'domain'),
     ModelDeletion('case_search', 'FuzzyProperties', 'domain'),
     ModelDeletion('case_search', 'IgnorePatterns', 'domain'),
