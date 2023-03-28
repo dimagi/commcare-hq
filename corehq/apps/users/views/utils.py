@@ -176,9 +176,9 @@ def get_locations_with_orphaned_cases(domain, location_ids, user_id):
     loc_ids_with_other_users = _get_location_ids_with_other_users(domain, location_ids, user_id)
 
     # Get the assigned location ids that are in all_loc_ids but not in loc_ids_with_other_users
-    loc_ids_with_orphaned_cases = list(set(location_ids) - loc_ids_with_other_users)
-    if loc_ids_with_orphaned_cases:
-        assigned_locs = SQLLocation.objects.filter(location_id__in=loc_ids_with_orphaned_cases)
+    orphaned_loc_ids = list(set(location_ids) - loc_ids_with_other_users)
+    if orphaned_loc_ids:
+        assigned_locs = SQLLocation.objects.filter(location_id__in=orphaned_loc_ids)
         # We need to find all descendant locations for orphaned assigned locations that don't have a user
         # assigned to them
         desc_locs = SQLLocation.objects.get_queryset_descendants(
@@ -186,14 +186,14 @@ def get_locations_with_orphaned_cases(domain, location_ids, user_id):
         )
         desc_loc_ids = [loc.location_id for loc in desc_locs]
         desc_loc_ids_with_other_users = _get_location_ids_with_other_users(domain, desc_loc_ids, user_id)
-        desc_loc_ids_with_orphaned_cases = list(set(desc_loc_ids) - desc_loc_ids_with_other_users)
+        orphaned_desc_loc_ids = list(set(desc_loc_ids) - desc_loc_ids_with_other_users)
 
-        all_orphaned_loc_ids = set(loc_ids_with_orphaned_cases + desc_loc_ids_with_orphaned_cases)
+        all_orphaned_loc_ids = set(orphaned_loc_ids + orphaned_desc_loc_ids)
         all_locs = set(chain(assigned_locs, desc_locs))
         case_count_per_loc = _get_location_case_counts(domain, all_orphaned_loc_ids)
         return {
             loc.get_path_display(): case_count_per_loc[loc.location_id] for loc in all_locs
-            if loc.location_id in all_orphaned_loc_ids
+            if loc.location_id in case_count_per_loc
         }
     else:
         return {}
