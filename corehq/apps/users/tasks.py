@@ -404,7 +404,7 @@ def clean_domain_users_data(domain, user_ids, cleared_by_username, progress_id=N
     from corehq.apps.users.util import log_user_change
     from corehq.apps.users.model_log import UserModelAction
     from corehq.apps.users.models import CommCareUser, WebUser
-    from corehq.apps.hqwebapp.tasks import mail_admins_async
+    from corehq.apps.hqwebapp.tasks import send_mail_async
     from corehq.apps.users.util import SimpleProgressHelper
 
     assert cleared_by_username is not None
@@ -435,15 +435,19 @@ def clean_domain_users_data(domain, user_ids, cleared_by_username, progress_id=N
                 progress_helper.increment()
 
     except Exception as e:
-        mail_admins_async.delay(
+        send_mail_async.delay(
             subject=f"Mobile Worker Clearing Failed - {domain}",
             message=f"The mobile workers clearing failed to complete on {domain} with error: {e}",
+            from_email=settings.DEFAULT_FROM_EMAIL,
+            recipient_list=[cleared_by_user.get_email()],
         )
     else:
         if track_progress:
             progress_helper.expire()
 
-        mail_admins_async.delay(
+        send_mail_async.delay(
             subject=f"Mobile Worker Clearing Complete - {domain}",
             message=f"The mobile workers on {domain} has been cleared successfully.",
+            from_email=settings.DEFAULT_FROM_EMAIL,
+            recipient_list=[cleared_by_user.get_email()],
         )
