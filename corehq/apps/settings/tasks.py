@@ -24,7 +24,7 @@ def _to_utc(value):
 
 
 @periodic_task(
-    run_every=crontab(hour=23, minute=0),
+    run_every=crontab(hour=13, minute=0),
     queue='background_queue',
 )
 def notify_about_to_expire_api_keys():
