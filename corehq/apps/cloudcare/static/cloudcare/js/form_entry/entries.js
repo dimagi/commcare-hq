@@ -955,8 +955,8 @@ hqDefine("cloudcare/js/form_entry/entries", function () {
                     break;
                 }
             }
-            // similar to validateFile check in Formplayer
-            // though this check is more strict than the one in Formplayer
+            // corresponds to validateFile check in Formplayer
+            // any changes made here should also be made in Formplayer
             if (badExtension || badMime) {
                 self.question.error(gettext("Invalid file type chosen. Please select a valid multimedia file."));
                 return;
