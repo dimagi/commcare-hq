@@ -143,7 +143,12 @@ def _r_js(local=False, verbose=False):
     for directory, mains in dirs_to_js_modules.items():
         config['modules'].append({
             'name': os.path.join(directory, "bundle"),
-            'exclude': ['hqwebapp/js/bootstrap3/common', 'hqwebapp/js/bootstrap3/base_main'],
+            'exclude': [
+                'hqwebapp/js/bootstrap3/common',
+                'hqwebapp/js/bootstrap5/common',
+                'hqwebapp/js/bootstrap3/base_main',
+                'hqwebapp/js/bootstrap5/base_main',
+            ],
             'include': sorted(mains),
             'create': True,
         })
