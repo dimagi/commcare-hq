@@ -71,13 +71,6 @@ class BaseInternalDomainSettingsView(BaseProjectSettingsView):
         return format_html("{} <small>Internal</small>", self.page_title)
 
 
-@method_decorator(use_bootstrap5, name='dispatch')
-class TestBootstrap5DomainView(BaseInternalDomainSettingsView):
-    urlname = 'test_bootstrap5_domain_view'
-    page_title = gettext_lazy("Test Bootstrap 5 Changes")
-    template_name = 'domain/test_bootstrap5.html'
-
-
 class EditInternalDomainInfoView(BaseInternalDomainSettingsView):
     urlname = 'domain_internal_settings'
     page_title = gettext_lazy("Project Information")
@@ -220,6 +213,13 @@ class EditInternalDomainInfoView(BaseInternalDomainSettingsView):
             messages.error(request, _(
                 "Your settings are not valid, see below for errors. Correct them and try again!"))
             return self.get(request, *args, **kwargs)
+
+
+@method_decorator(use_bootstrap5, name='dispatch')
+class TestBootstrap5DomainView(EditInternalDomainInfoView):
+    urlname = 'test_bootstrap5_domain_view'
+    page_title = gettext_lazy("Test Bootstrap 5 Changes")
+    template_name = 'domain/test_bootstrap5.html'
 
 
 class EditInternalCalculationsView(BaseInternalDomainSettingsView):
