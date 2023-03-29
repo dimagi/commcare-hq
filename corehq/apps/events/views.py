@@ -98,6 +98,11 @@ class EventsView(BaseEventView, CRUDPaginatedViewMixin):
     @property
     def paginated_list(self):
         start, end = self.skip, self.skip + self.limit
+        events = self.domain_events[start:end]
+        for event in events:
+            event.set_status()
+            event.save(update_fields=['attendee_list_status'])
+
         for event in self.domain_events[start:end]:
             yield {
                 'itemData': self._format_paginated_event(event),
