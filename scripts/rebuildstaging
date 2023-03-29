@@ -46,10 +46,10 @@ function rebuildstaging() {
     then
         git clone https://github.com/dimagi/staging-branches.git "$REPO_ROOT"
     else
-        git --git-dir "$REPO_ROOT/.git" pull origin main
+        git -C "$REPO_ROOT" pull origin main
     fi
 
-    git --git-dir "$REPO_ROOT/.git" show
+    git -C "$REPO_ROOT" show -n 1 -- commcare-hq-staging.yml
     echo "rebuilding staging branch..."
     git-build-branch "$REPO_ROOT/commcare-hq-staging.yml" "$@"
 }

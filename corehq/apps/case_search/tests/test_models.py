@@ -10,6 +10,7 @@ from corehq.apps.case_search.filter_dsl import CaseFilterError
 from corehq.apps.case_search.models import (
     CASE_SEARCH_CUSTOM_RELATED_CASE_PROPERTY_KEY,
     CASE_SEARCH_REGISTRY_ID_KEY,
+    CASE_SEARCH_INCLUDE_ALL_RELATED_CASES_KEY,
     CaseSearchRequestConfig,
     disable_case_search,
     enable_case_search,
@@ -45,20 +46,22 @@ class TestCaseSearch(TestCase):
 
 
 @generate_cases([
-    ("jelly", None, None, False),
-    (["jelly", "tots"], None, None, False),
-    (None, None, None, True),  # required case type
-    ("jelly", "reg1", "dupe_id", False),
+    ("jelly", None, None, True, False),
+    (["jelly", "tots"], None, None, True, False),
+    (None, None, None, True, True),  # required case type
+    ("jelly", "reg1", "dupe_id", False, False),
     # disallow lists
-    ("jelly", None, ["dupe_id1", "dupe_id2"], True),
-    ("jelly", ["reg1", "reg2"], None, True),
+    ("jelly", None, ["dupe_id1", "dupe_id2"], False, True),
+    ("jelly", ["reg1", "reg2"], None, False, True),
 ])
-def test_extract_criteria_config(self, case_type, data_registry, custom_related_case_property, expect_exception):
+def test_extract_criteria_config(self, case_type, data_registry, custom_related_case_property,
+                            include_all_related_cases, expect_exception):
     with assert_raises(None if not expect_exception else CaseSearchUserError):
         request_dict = _make_request_dict({
             CASE_SEARCH_CASE_TYPE_KEY: case_type,
             CASE_SEARCH_REGISTRY_ID_KEY: data_registry,
             CASE_SEARCH_CUSTOM_RELATED_CASE_PROPERTY_KEY: custom_related_case_property,
+            CASE_SEARCH_INCLUDE_ALL_RELATED_CASES_KEY: include_all_related_cases,
             "other_key": "jim",
         })
         config = extract_search_request_config(request_dict)
@@ -67,7 +70,9 @@ def test_extract_criteria_config(self, case_type, data_registry, custom_related_
         expected_case_types = case_type if isinstance(case_type, list) else [case_type]
         eq(config, CaseSearchRequestConfig(
             criteria=[SearchCriteria("other_key", "jim")],
-            case_types=expected_case_types, data_registry=data_registry, custom_related_case_property=custom_related_case_property
+            case_types=expected_case_types, data_registry=data_registry,
+            custom_related_case_property=custom_related_case_property,
+            include_all_related_cases=include_all_related_cases,
         ))
 
 
