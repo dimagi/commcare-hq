@@ -121,7 +121,11 @@ def fetch_remote_media(local_domain, missing_media, remote_app_details):
         media_class = CommCareMultimedia.get_doc_class(item['media_type'])
         content = _fetch_remote_media_content(item, remote_app_details)
         media_item = media_class.get_by_data(content)
-        media_item._id = item['multimedia_id']
+        if getattr(media_item, '_id', None) and not getattr(item, 'upstream_media_id', None):
+            # media already exists locally; update the multimedia_map
+            item['multimedia_id'], item['upstream_media_id'] = media_item._id, item['multimedia_id']
+        else:
+            media_item._id = item['multimedia_id']
         media_item.attach_data(content, original_filename=filename)
         media_item.add_domain(local_domain, owner=True)
 
