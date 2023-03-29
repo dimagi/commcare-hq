@@ -97,6 +97,14 @@ class CaseProperty(models.Model):
     )
     group = models.TextField(default='', blank=True)
     index = models.IntegerField(default=0, blank=True)
+    group_id = models.ForeignKey(
+        CasePropertyGroup,
+        on_delete=models.CASCADE,
+        related_name='properties',
+        related_query_name='property',
+        db_column="group_id",
+        null=True
+    )
 
     class Meta(object):
         unique_together = ('case_type', 'name')
