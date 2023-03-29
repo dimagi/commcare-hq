@@ -2986,7 +2986,9 @@ class UserReportingMetadataStaging(models.Model):
 
 class ApiKeyManager(models.Manager):
     def get_queryset(self):
-        return super().get_queryset().filter(is_active=True)
+        return super().get_queryset()\
+            .filter(is_active=True)\
+            .exclude(expiration_date__lt=datetime.now())
 
 
 class HQApiKey(models.Model):
@@ -2999,7 +3001,7 @@ class HQApiKey(models.Model):
     role_id = models.CharField(max_length=40, blank=True, default='')
     is_active = models.BooleanField(default=True)
     deactivated_on = models.DateTimeField(blank=True, null=True)
-    expiration_date = models.DateTimeField(blank=True, null=True)  # Not yet used
+    expiration_date = models.DateTimeField(blank=True, null=True)
     # Not update with every request. Can be a couple of seconds out of date
     last_used = models.DateTimeField(blank=True, null=True)
 
