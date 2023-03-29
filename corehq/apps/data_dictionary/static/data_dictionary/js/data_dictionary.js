@@ -33,6 +33,7 @@ hqDefine("data_dictionary/js/data_dictionary", [
             _.each(groupDict, function (properties, group) {
                 var groupObj = propertyListItem(group, '', true, group, self.name);
                 self.properties.push(groupObj);
+                properties.sort((a, b) => a.index - b.index);
                 _.each(properties, function (prop) {
                     var propObj = propertyListItem(prop.name, prop.label, false, prop.group, self.name, prop.data_type,
                         prop.description, prop.allowed_values, prop.fhir_resource_prop_path, prop.deprecated,
@@ -132,7 +133,7 @@ hqDefine("data_dictionary/js/data_dictionary", [
             save: function () {
                 var postProperties = [];
                 var currentGroup = '';
-                _.each(self.casePropertyList(), function (element) {
+                _.each(self.casePropertyList(), function (element, index) {
                     if (!element.isGroup) {
                         const allowedValues = element.allowedValues.val();
                         let pureAllowedValues = {};
@@ -143,6 +144,7 @@ hqDefine("data_dictionary/js/data_dictionary", [
                             'caseType': element.caseType,
                             'name': element.name,
                             'label': element.label() || element.name,
+                            'index': index,
                             'data_type': element.dataType(),
                             'group': currentGroup,
                             'description': element.description(),

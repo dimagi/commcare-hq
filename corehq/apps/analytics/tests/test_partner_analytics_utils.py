@@ -34,8 +34,6 @@ from corehq.apps.es.tests.utils import es_test
 from corehq.apps.es.users import user_adapter
 from corehq.apps.users.models import Invitation, WebUser
 from corehq.form_processor.tests.utils import create_form_for_test
-from corehq.pillows.user import transform_user_for_elasticsearch
-from corehq.pillows.xform import transform_xform_for_elasticsearch
 
 
 def _get_fake_number_of_mobile_workers(domain, _year, _month):
@@ -117,8 +115,7 @@ class TestPartnerAnalyticsDataUtils(TestCase):
             except ResourceNotFound:
                 pass
         for user in cls.users:
-            elastic_user = transform_user_for_elasticsearch(user.to_json())
-            user_adapter.index(elastic_user, refresh=True)
+            user_adapter.index(user, refresh=True)
             cls.addClassCleanup(delete_user, user)
 
         invitations = [
@@ -165,8 +162,7 @@ class TestPartnerAnalyticsDataUtils(TestCase):
             ),
         ]
         for form in forms:
-            elastic_form = transform_xform_for_elasticsearch(form.to_json())
-            form_adapter.index(elastic_form, refresh=True)
+            form_adapter.index(form, refresh=True)
 
     def test_get_number_of_mobile_workers(self):
         self.assertEqual(

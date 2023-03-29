@@ -6,6 +6,7 @@ from crispy_forms import layout as crispy
 
 from corehq.apps.events.models import AttendeeCase
 from corehq.apps.hqwebapp import crispy as hqcrispy
+from corehq.apps.users.dbaccessors import get_all_commcare_users_by_domain
 
 TRACK_BY_DAY = "by_day"
 TRACK_BY_EVENT = "by_event"
@@ -49,6 +50,10 @@ class CreateEventForm(forms.Form):
         label=_("Attendees"),
         required=False,
     )
+    attendance_takers = forms.MultipleChoiceField(
+        label=_("Attendance Takers"),
+        required=False,
+    )
 
     def __init__(self, *args, **kwargs):
         self.domain = kwargs.pop('domain', None)
@@ -56,18 +61,18 @@ class CreateEventForm(forms.Form):
 
         if event:
             kwargs['initial'] = self.compute_initial(event)
+            self.title_prefix = "Edit"
         else:
             kwargs['initial'] = None
+            self.title_prefix = "Add"
 
         super(CreateEventForm, self).__init__(*args, **kwargs)
-
-        self.fields['expected_attendees'].choices = self.get_attendee_choices()
 
         self.helper = hqcrispy.HQFormHelper()
         self.helper.add_layout(
             crispy.Layout(
                 crispy.Fieldset(
-                    _("Add Attendance Tracking Event"),
+                    _(f"{self.title_prefix} Attendance Tracking Event"),
                     crispy.Field('name', data_bind="value: name"),
                     crispy.Field(
                         'start_date',
@@ -82,12 +87,16 @@ class CreateEventForm(forms.Form):
                         data_bind="visible: showTrackingOptions",
                     ),
                     'expected_attendees',
+                    'attendance_takers',
                     hqcrispy.FormActions(
                         crispy.Submit('submit_btn', 'Save')
                     ),
                 )
             )
         )
+
+        self.fields['expected_attendees'].choices = self.get_attendee_choices()
+        self.fields['attendance_takers'].choices = self._get_possible_attendance_takers_ids()
 
     @property
     def current_values(self):
@@ -99,6 +108,7 @@ class CreateEventForm(forms.Form):
             'sameday_reg': self['sameday_reg'].value(),
             'tracking_option': self['tracking_option'].value(),
             'expected_attendees': self['expected_attendees'].value(),
+            'attendance_takers': self['attendance_takers'].value(),
         }
 
     def compute_initial(self, event):
@@ -112,6 +122,7 @@ class CreateEventForm(forms.Form):
             'expected_attendees': [
                 attendee.case_id for attendee in event.get_expected_attendees()
             ],
+            'attendance_takers': event.attendance_taker_ids,
         }
 
     def get_new_event_form(self):
@@ -133,4 +144,9 @@ class CreateEventForm(forms.Form):
         return [
             (attendee.case_id, attendee.name)
             for attendee in AttendeeCase.objects.by_domain(self.domain)
+        ]
+
+    def _get_possible_attendance_takers_ids(self):
+        return [
+            (user.user_id, user.username) for user in get_all_commcare_users_by_domain(self.domain)
         ]

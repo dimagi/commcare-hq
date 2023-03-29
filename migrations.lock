@@ -89,6 +89,7 @@ accounting
  0067_add_view_app_diff_priv
  0068_regex_field_validation_privilege
  0069_location_safe_case_imports_priv
+ 0070_form_case_ids_case_importer_priv
 admin
  0001_initial
  0002_logentry_remove_auto_add
@@ -267,6 +268,7 @@ data_dictionary
  0007_property_type_choices
  0008_casepropertyallowedvalue
  0009_caseproperty_label
+ 0010_caseproperty_index
 data_interfaces
  0001_initial
  0002_remove_exists_option
@@ -361,6 +363,9 @@ es
 events
  0001_add_events_model
  0002_attendancetrackingconfig
+ 0003_event_attendance_taker_ids
+ 0004_event_id_case_id
+ 0005_rename_alter_event__attendance_taker_ids
 export
  0001_initial
  0002_datafile
