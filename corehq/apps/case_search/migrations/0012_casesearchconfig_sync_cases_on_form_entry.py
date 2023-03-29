@@ -6,7 +6,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('case_search', '0010_casesearchconfig_synchronous_web_apps'),
+        ('case_search', '0011_domainsnotincasesearchindex'),
     ]
 
     operations = [
