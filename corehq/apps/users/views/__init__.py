@@ -344,6 +344,7 @@ class BaseEditUserView(BaseUserSettingsView):
     @memoized
     def tableau_form(self):
         try:
+            print("self.editable_user.username", self.editable_user.username)
             if self.request.method == "POST" and self.request.POST['form_type'] == "tableau":
                 return TableauUserForm(self.request.POST,
                                     request=self.request,
