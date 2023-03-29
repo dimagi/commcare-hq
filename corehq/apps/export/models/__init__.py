@@ -2,6 +2,7 @@ from .new import (
     CASE_HISTORY_TABLE,
     MAIN_TABLE,
     PARENT_CASE_TABLE,
+    ALL_CASE_TYPE_TABLE,
     CaseExportDataSchema,
     CaseExportInstance,
     CaseExportInstanceDefaults,
