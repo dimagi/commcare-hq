@@ -323,7 +323,9 @@ openpyxl==3.0.9
     #   -r base-requirements.in
     #   commcaretranslationchecker
 packaging==23.0
-    # via build
+    # via
+    #   -r base-requirements.in
+    #   build
 pep517==0.10.0
     # via build
 phonenumberslite==8.12.48

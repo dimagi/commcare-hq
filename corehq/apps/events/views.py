@@ -68,6 +68,7 @@ class EventsView(BaseEventView, CRUDPaginatedViewMixin):
             _("Attendance Target"),
             _("Status"),
             _("Total attendees"),
+            _("Total attendance takers"),
         ]
 
     @property
@@ -91,15 +92,20 @@ class EventsView(BaseEventView, CRUDPaginatedViewMixin):
         return self.paginate_crud_response
 
     def _format_paginated_event(self, event: Event):
+        edit_url = reverse(EventEditView.urlname, args=(
+            self.domain,
+            event.event_id.hex,
+        ))
         return {
-            'id': event.event_id,
+            'id': event.event_id.hex,
             'name': event.name,
             'start_date': str(event.start_date),
             'end_date': str(event.end_date),
             'target_attendance': event.attendance_target,
             'status': event.status,
             'total_attendance': event.total_attendance or '-',
-            'edit_url': reverse(EventEditView.urlname, args=(self.domain, event.event_id)),
+            'edit_url': edit_url,
+            'total_attendance_takers': event.get_total_attendance_takers() or '-'
         }
 
 
@@ -156,6 +162,7 @@ class EventCreateView(BaseEventView):
             sameday_reg=event_data['sameday_reg'],
             track_each_day=event_data['track_each_day'],
             manager_id=self.request.couch_user.user_id,
+            attendance_taker_ids=event_data.get('attendance_takers', None),
         )
         event.save()
         event.set_expected_attendees(event_data['expected_attendees'])
@@ -190,7 +197,7 @@ class EventEditView(EventCreateView):
 
     @property
     def page_url(self):
-        return reverse(self.urlname, args=(self.domain, self.event.event_id))
+        return reverse(self.urlname, args=(self.domain, self.event.event_id.hex))
 
     @property
     def event(self):
@@ -213,6 +220,7 @@ class EventEditView(EventCreateView):
         event.attendance_target = event_update_data['attendance_target']
         event.sameday_reg = event_update_data['sameday_reg']
         event.track_each_day = event_update_data['track_each_day']
+        event.attendance_taker_ids = event_update_data['attendance_takers']
         event.save()
         event.set_expected_attendees(event_update_data['expected_attendees'])
 

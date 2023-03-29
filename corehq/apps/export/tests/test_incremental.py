@@ -53,8 +53,7 @@ class TestIncrementalExport(TestCase):
                      server_modified_on=cls.now - timedelta(hours=2)),
         ]
 
-        for case in cases:
-            case_adapter.index(case.to_json(), refresh=True)
+        case_adapter.bulk_index(cases, refresh=True)
 
     def setUp(self):
         super().setUp()
@@ -136,7 +135,7 @@ class TestIncrementalExport(TestCase):
             case_json={"foo": "peach", "bar": "plumb"},
             server_modified_on=datetime.utcnow(),
         )
-        case_adapter.index(case.to_json(), refresh=True)
+        case_adapter.index(case, refresh=True)
         self.addCleanup(self._cleanup_case(case.case_id))
 
         checkpoint = _generate_incremental_export(self.incremental_export, last_doc_date=checkpoint.last_doc_date)
@@ -193,7 +192,7 @@ class TestIncrementalExport(TestCase):
         self.addCleanup(delete_all_locations)
 
         user = CommCareUser.create(self.domain, 'm2', 'abc', None, None, location=team1)
-        user_adapter.index(user.to_json(), refresh=True)
+        user_adapter.index(user, refresh=True)
         self.addCleanup(delete_all_users)
 
         cases = [
@@ -215,9 +214,8 @@ class TestIncrementalExport(TestCase):
                 server_modified_on=datetime.utcnow(),
             ),
         ]
-        for case in cases:
-            case_adapter.index(case.to_json(), refresh=True)
-            self.addCleanup(self._cleanup_case(case.case_id))
+        case_adapter.bulk_index(cases, refresh=True)
+        self.addCleanup(case_adapter.bulk_delete, [case.case_id for case in cases], refresh=True)
 
         self.export_instance.filters.show_project_data = False
         self.export_instance.filters.locations = [health_department.location_id]

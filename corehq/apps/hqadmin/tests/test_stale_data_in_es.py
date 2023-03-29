@@ -23,8 +23,6 @@ from corehq.form_processor.utils.xform import (
     FormSubmissionBuilder,
     TestFormMetadata,
 )
-from corehq.pillows.case import transform_case_for_elasticsearch
-from corehq.pillows.xform import transform_xform_for_elasticsearch
 
 
 class ExitEarlyException(Exception):
@@ -243,24 +241,22 @@ class TestStaleDataInESSQL(TestCase):
         return result.xform, result.cases
 
     def _send_forms_to_es(self, forms):
-        for form in forms:
-
-            es_form = transform_xform_for_elasticsearch(
-                FormDocumentStore(form.domain, form.xmlns).get_document(form.form_id)
-            )
-            form_adapter.index(es_form, refresh=True)
+        form_adapter.bulk_index(
+            [FormDocumentStore(form.domain, form.xmlns).get_document(form.form_id) for form in forms],
+            refresh=True
+        )
 
         self.forms_to_delete_from_es.update(form.form_id for form in forms)
 
     def _send_cases_to_es(self, cases, refetch_doc=True):
+        es_cases = []
         for case in cases:
             if refetch_doc:
-                es_case = transform_case_for_elasticsearch(
-                    CaseDocumentStore(case.domain, case.type).get_document(case.case_id)
-                )
+                es_cases.append(CaseDocumentStore(case.domain, case.type).get_document(case.case_id))
             else:
-                es_case = transform_case_for_elasticsearch(case.to_json())
-            case_adapter.index(es_case, refresh=True)
+                es_cases.append(case)
+        case_adapter.bulk_index(es_cases, refresh=True)
+        case_search_adapter.bulk_index(cases, refresh=True)
 
         self.cases_to_delete_from_es.update(case.case_id for case in cases)
 

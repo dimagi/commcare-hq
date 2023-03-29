@@ -42,8 +42,7 @@ class TestPaginateReleases(TestCase):
         cls.app_build.save()
 
         # publish app and build to ES
-        app_adapter.index(cls.app.to_json(), refresh=True)
-        app_adapter.index(cls.app_build.to_json(), refresh=True)
+        app_adapter.bulk_index([cls.app, cls.app_build], refresh=True)
 
     @classmethod
     def tearDownClass(cls):

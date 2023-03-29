@@ -13,7 +13,6 @@ from pillowtop.tests.utils import TEST_INDEX_INFO
 from corehq.apps.es.client import ElasticMultiplexAdapter
 from corehq.apps.es.migration_operations import CreateIndex
 from corehq.elastic import get_es_new
-from corehq.pillows.case_search import transform_case_for_elasticsearch
 from corehq.tests.util.warnings import filter_warnings
 from corehq.util.elastic import ensure_index_deleted
 from corehq.util.es.elasticsearch import NotFoundError
@@ -57,7 +56,7 @@ class ElasticTestMixin(object):
         cls._es_instance = get_es_new()
         # TODO: make individual test[ case]s warning-safe and remove this
         with ignore_index_settings_key_warning:
-            initialize_index_and_mapping(cls._es_instance, TEST_INDEX_INFO)
+            initialize_index_and_mapping(TEST_INDEX_INFO)
 
     @classmethod
     def tearDownClass(cls):
@@ -69,6 +68,7 @@ class ElasticTestMixin(object):
             return
         # only query portion can be validated using ES validate API
         query = {'query': query.pop('query', {})}
+        # TODO: expose validate_query in document adapter
         validation = self._es_instance.indices.validate_query(
             body=query,
             index=TEST_INDEX_INFO.index,
@@ -255,12 +255,10 @@ def temporary_index(index, type_=None, mapping=None, *, purge=True):
         manager.index_delete(index)
 
 
-def populate_es_index(models, index_cname, doc_prep_fn=lambda doc: doc):
+def populate_es_index(models, index_cname):
     adapter = doc_adapter_from_cname(index_cname)
     for model in models:
-        adapter.index(
-            doc_prep_fn(model.to_json() if hasattr(model, 'to_json') else model)
-        )
+        adapter.index(model)
     manager.index_refresh(adapter.index_name)
 
 
@@ -281,7 +279,7 @@ def case_search_es_setup(domain, case_blocks):
 
 
 def populate_case_search_index(cases):
-    populate_es_index(cases, 'case_search', transform_case_for_elasticsearch)
+    populate_es_index(cases, 'case_search')
 
 
 def docs_from_result(result):
