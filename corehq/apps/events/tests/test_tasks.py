@@ -66,7 +66,7 @@ class TestTasks(TestCase):
 
     def test_cases_created_for_mobile_workers(self):
         """Test that the `sync_mobile_worker_attendees` task creates `commcare-attendee` cases for mobile
-        workers
+        workers.
         """
         user_id_case_mapping = get_user_attendee_cases_on_domain(self.domain)
         user_ids = list(user_id_case_mapping.keys())
@@ -75,6 +75,11 @@ class TestTasks(TestCase):
         user_ids = list(user_id_case_mapping.keys())
 
         self.assertEqual(len(user_ids), 2)
+        # The case_name for mobile workers should be their username
+        for mobile_worker_case in AttendeeCase.objects.by_domain(self.domain):
+            commcare_user_id = mobile_worker_case.case_json['commcare_user_id']
+            commcare_user = CommCareUser.get_by_user_id(commcare_user_id)
+            self.assertEqual(mobile_worker_case.name, commcare_user.username.split('@')[0])
 
     def test_duplicate_cases_not_created(self):
         # Let's call this to create initial cases
