@@ -7,7 +7,7 @@ import django.db.models.deletion
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('accounting', '0069_location_safe_case_imports_priv'),
+        ('accounting', '0070_form_case_ids_case_importer_priv'),
     ]
 
     operations = [
