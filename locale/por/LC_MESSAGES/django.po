@@ -13325,10 +13325,8 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/data_interfaces/templates/data_interfaces/interfaces/case_management.html
-#, fuzzy
-#| msgid "Select All"
 msgid "Select all"
-msgstr "Selecionar tudo"
+msgstr ""
 
 #: corehq/apps/data_interfaces/templates/data_interfaces/interfaces/case_management.html
 msgid "Select New Owner..."
@@ -13935,10 +13933,8 @@ msgid "Form Status"
 msgstr ""
 
 #: corehq/apps/data_interfaces/views.py
-#, fuzzy
-#| msgid "Bulk Case Management"
 msgid "Bulk Case Reassignment Status"
-msgstr "Gestão de Casos em massa"
+msgstr ""
 
 #: corehq/apps/data_interfaces/views.py
 msgid "Reassigning Cases. This may take some time..."
@@ -27897,6 +27893,10 @@ msgid "Remote apps are not supported"
 msgstr ""
 
 #: corehq/apps/reports/formdetails/readable.py
+msgid "We could not find the form source XML document"
+msgstr ""
+
+#: corehq/apps/reports/formdetails/readable.py
 msgid "This is a Device Report"
 msgstr ""
 
@@ -41305,6 +41305,10 @@ msgstr ""
 
 #: corehq/privileges.py
 msgid "Location Safe Case Imports"
+msgstr ""
+
+#: corehq/privileges.py
+msgid "Download buttons for Form- and Case IDs on Case Importer"
 msgstr ""
 
 #: corehq/reports.py
