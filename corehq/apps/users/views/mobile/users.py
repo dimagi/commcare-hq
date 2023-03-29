@@ -107,6 +107,7 @@ from corehq.apps.users.tasks import (
     bulk_download_users_async,
     reset_demo_user_restore_task,
     turn_on_demo_mode_task,
+    clean_domain_users_data,
 )
 from corehq.apps.users.util import (
     can_add_extra_mobile_workers,
@@ -148,6 +149,8 @@ from soil.util import get_download_context
 from .custom_data_fields import UserFieldsView
 from ..utils import log_user_groups_change
 from corehq.apps.users.views.utils import get_locations_with_single_user
+from corehq.apps.users.util import SimpleProgressHelper
+
 
 BULK_MOBILE_HELP_SITE = ("https://confluence.dimagi.com/display/commcarepublic"
                          "/Create+and+Manage+CommCare+Mobile+Workers#Createand"
@@ -1339,6 +1342,68 @@ class DeleteCommCareUsers(BaseManageCommCareUserView, UsernameUploadMixin):
                 deleted_count += 1
         if deleted_count:
             messages.success(request, f"{deleted_count} user(s) deleted.")
+
+
+@method_decorator([toggles.CLEAR_MOBILE_WORKER_DATA.required_decorator()], name='dispatch')
+class ClearCommCareUsers(DeleteCommCareUsers):
+    urlname = 'clear_commcare_users'
+    page_title = gettext_noop('Bulk Clear')
+    template_name = 'users/bulk_clear.html'
+
+    def get(self, request, *args, **kwargs):
+        if self.clearing_process_busy:
+            messages.info(request, _("""
+                Mobile Worker data clearing in progress ( {progress_percent} % completed ).
+            """).format(progress_percent=self.clearing_percent))
+
+        return super().get(request, *args, **kwargs)
+
+    def post(self, request, *args, **kwargs):
+        if self.clearing_process_busy:
+            messages.error(request, _("""
+                User clearing process already in progress! Please try again later.
+            """))
+            return self.get(request, *args, **kwargs)
+
+        usernames = self._get_usernames(request)
+        if not usernames:
+            return self.get(request, *args, **kwargs)
+
+        user_docs_by_id = {doc['_id']: doc for doc in get_user_docs_by_username(usernames)}
+        usernames_not_found = self._get_usernames_not_found(request, user_docs_by_id, usernames)
+
+        if usernames_not_found:
+            messages.error(request, _("""
+                No users cleared. Please address the above issue(s) and re-upload your updated file.
+            """))
+        else:
+            self._clear_users_data(request, user_docs_by_id)
+
+        return self.get(request, *args, **kwargs)
+
+    @property
+    def clearing_process_busy(self):
+        return self.clearing_percent < 100 if (self.clearing_percent is not None) else False
+
+    @property
+    def clearing_percent(self):
+        progress_helper = SimpleProgressHelper(self.progress_id)
+        if progress_helper.percentage_complete is None:
+            return None
+        return round(progress_helper.percentage_complete, 1)
+
+    @property
+    def progress_id(self):
+        return f"{self.domain}-user-clearing"
+
+    def _clear_users_data(self, request, user_docs_by_id):
+        user_ids = [user_id for user_id, _ in user_docs_by_id.items()]
+        clean_domain_users_data(
+            domain=request.domain,
+            user_ids=user_ids,
+            cleared_by_username=request.couch_user.username,
+            progress_id=self.progress_id,
+        )
 
 
 class CommCareUsersLookup(BaseManageCommCareUserView, UsernameUploadMixin):
