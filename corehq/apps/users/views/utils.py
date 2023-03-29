@@ -129,7 +129,7 @@ def _flatten_list(list_2d):
     return flat_list
 
 
-def _get_location_ids_with_other_users(domain, location_ids, user_id):
+def _get_location_ids_with_other_users(domain, location_ids, user_id_to_exclude):
     """
     Gets all the location ids where a `CommCareUser` is assigned to one of the `location_ids`.
     This list excludes the given `user_id`.
@@ -138,7 +138,7 @@ def _get_location_ids_with_other_users(domain, location_ids, user_id):
         UserES()
         .domain(domain)
         .mobile_users()
-        .NOT(filters.doc_id(user_id))
+        .NOT(filters.doc_id(user_id_to_exclude))
         .location(location_ids)
         .values_list('assigned_location_ids', flat=True)
     )
