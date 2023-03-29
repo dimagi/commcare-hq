@@ -239,7 +239,7 @@ class TestAttendeesConfigView(BaseEventViewTestClass):
         self.assertEqual(json_data['mobile_worker_attendee_enabled'], False)
 
     @flag_enabled('ATTENDANCE_TRACKING')
-    @patch('corehq.apps.events.views.tasks.sync_mobile_worker_attendees')
+    @patch('corehq.apps.events.views.sync_mobile_worker_attendees')
     def test_post_updates_attendance_tracking_config(self, sync_mobile_worker_attendees_mock):
         config, _created = AttendanceTrackingConfig.objects.get_or_create(domain=self.domain)
         update_value = not config.mobile_worker_attendees
@@ -257,7 +257,7 @@ class TestAttendeesConfigView(BaseEventViewTestClass):
         self.assertEqual(config.mobile_worker_attendees, update_value)
 
     @flag_enabled('ATTENDANCE_TRACKING')
-    @patch('corehq.apps.events.views.tasks.sync_mobile_worker_attendees')
+    @patch('corehq.apps.events.views.sync_mobile_worker_attendees')
     def test_enable_mobile_worker_attendee_triggers_task(self, sync_mobile_worker_attendees_mock):
         config, _created = AttendanceTrackingConfig.objects.get_or_create(domain=self.domain)
         self.log_user_in(self.role_webuser)
@@ -270,7 +270,7 @@ class TestAttendeesConfigView(BaseEventViewTestClass):
         sync_mobile_worker_attendees_mock.delay.assert_called_once()
 
     @flag_enabled('ATTENDANCE_TRACKING')
-    @patch('corehq.apps.events.views.tasks.close_mobile_worker_attendee_cases')
+    @patch('corehq.apps.events.views.close_mobile_worker_attendee_cases')
     def test_disable_mobile_worker_attendee_triggers_task(self, close_mobile_worker_attendee_cases_mock):
         config, _created = AttendanceTrackingConfig.objects.get_or_create(domain=self.domain)
         self.log_user_in(self.role_webuser)
