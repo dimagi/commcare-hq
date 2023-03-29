@@ -83,7 +83,7 @@ class EventsView(BaseEventView, CRUDPaginatedViewMixin):
             _("End date"),
             _("Attendance Target"),
             _("Status"),
-            _("Total attendees"),
+            _("Total attendance"),
             _("Total attendance takers"),
         ]
 
@@ -243,7 +243,7 @@ class EventEditView(EventCreateView):
         return HttpResponseRedirect(reverse(EventsView.urlname, args=(self.domain,)))
 
 
-class AttendeesListView(JSONResponseMixin, BaseUserSettingsView):
+class AttendeesListView(JSONResponseMixin, BaseEventView):
     urlname = "event_attendees"
     template_name = 'event_attendees.html'
     page_title = _("Attendees")

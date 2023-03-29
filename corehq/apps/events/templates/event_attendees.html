@@ -14,7 +14,7 @@
   {% registerurl 'paginated_attendees' domain %}
   {% registerurl 'attendees_config' domain %}
   {% registerurl 'event_attendees' domain %}
-
+<p class="lead">
   <p>
     {% blocktrans %}
     Known potential attendees who can be invited to participate in Attendance
@@ -22,19 +22,15 @@
     {% endblocktrans %}
   </p>
 
-  <div class="btn-toolbar" style="margin-bottom: 20px;">
-    <button type="button"
-            class="btn btn-primary ko-template"
-            id="new-attendee-modal-trigger"
-            data-toggle="modal"
-            data-target="#new-attendee-modal"
-            data-bind="click: initializeAttendee">
-      <i class="fa fa-plus"></i> {% trans "Create Potential Attendee" %}
-    </button>
-  </div>
+  <div class="btn-toolbar" id="attendee-actions" class="ko-template">
+      <button type="button"
+              class="btn btn-primary"
+              data-toggle="modal"
+              data-target="#new-attendee-modal"
+              data-bind="click: initializeAttendee">
+        <i class="fa fa-plus"></i> {% trans "Create Potential Attendee" %}
+      </button>
 
-  <div id="mobile-worker-attendees" class="ko-template">
-    <div class="btn-toolbar" style="margin-bottom: 20px;">
       <button
         type="button"
         class="btn btn-default"
@@ -49,8 +45,9 @@
         onClick="toggleMobileWorkerAttendees()">
         <i class="fa"></i> {% trans "Disable Mobile Worker Attendees" %}
       </button>
-    </div>
   </div>
+</p>
+
 
   <div class="modal fade" id="new-attendee-modal">
     <div class="modal-dialog">

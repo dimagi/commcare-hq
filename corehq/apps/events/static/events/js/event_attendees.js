@@ -195,10 +195,9 @@ hqDefine("events/js/event_attendees",[
         };
 
         $("#attendees-list").koApplyBindings(attendeesListModel());
-        $("#mobile-worker-attendees").koApplyBindings(mobileWorkerAttendees());
 
         var newAttendeeCreation = newAttendeeCreationModel();
-        $("#new-attendee-modal-trigger").koApplyBindings(newAttendeeCreation);
+        $("#attendee-actions").koApplyBindings(newAttendeeCreation, mobileWorkerAttendees());
         $("#new-attendee-modal").koApplyBindings(newAttendeeCreation);
         $("#new-attendees-list").koApplyBindings(newAttendeeCreation);
     });
