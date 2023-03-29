@@ -131,7 +131,8 @@ def fetch_remote_media(local_domain, missing_media, remote_app_details):
 
 
 def _fetch_remote_media_content(media_item, remote_app_details):
-    url = reverse('hqmedia_download', args=[media_item['media_type'], media_item['multimedia_id']])
+    remote_media_id = media_item['upstream_media_id'] or media_item['multimedia_id']
+    url = reverse('hqmedia_download', args=[media_item['media_type'], remote_media_id])
     response = _do_request_to_remote_hq(url, remote_app_details, None)
     return response.content
 
