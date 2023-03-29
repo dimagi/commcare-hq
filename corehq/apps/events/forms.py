@@ -1,3 +1,4 @@
+from datetime import date
 from django import forms
 from django.core.exceptions import ValidationError
 from django.utils.translation import gettext_lazy as _
@@ -135,7 +136,14 @@ class CreateEventForm(forms.Form):
         if 'end_date' not in cleaned_data:
             raise ValidationError(_("Invalid End Date"))
 
-        if cleaned_data['end_date'] < cleaned_data['start_date']:
+        start_date = cleaned_data['start_date']
+        end_date = cleaned_data['end_date']
+        today = date.today()
+
+        if today > start_date or today > end_date:
+            raise ValidationError(_("You cannot specify start- and end dates in the past"))
+
+        if end_date < start_date:
             raise ValidationError(_("End Date cannot be before Start Date"))
 
         return cleaned_data
