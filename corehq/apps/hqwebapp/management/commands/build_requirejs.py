@@ -145,7 +145,9 @@ def _r_js(local=False, verbose=False):
             'name': os.path.join(directory, "bundle"),
             'exclude': [
                 'hqwebapp/js/common',
+                'hqwebapp/js/bootstrap5/common',
                 'hqwebapp/js/base_main',
+                'hqwebapp/js/bootstrap5/base_main',
             ],
             'include': sorted(mains),
             'create': True,
