@@ -78,15 +78,15 @@ services:
       - ${VOLUME_PREFIX}${BLANK_IF_TESTS-postgresql:}/var/lib/postgresql/data
 
   couch:
-    image: apache/couchdb:3.3.1
+    build:
+      context: ./files
+      dockerfile: Dockerfile.couch
     command: ["--with-haproxy"]
     expose:
       - "5984"
     environment:
       COUCHDB_USER: admin
       COUCHDB_PASSWORD: commcarehq
-      NODENAME: commcouch
-      COUCHDB_SECRET: commrand
     healthcheck:
       test: bash -c 'exec 6<>/dev/tcp/couch/5984'
       interval: 10s
