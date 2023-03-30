@@ -62,8 +62,8 @@ class CaseUpload(object):
             raise ImporterFileNotFound('file not found in cache')
         open_spreadsheet_download_ref(tempfile)
 
-    def get_spreadsheet(self):
-        return get_spreadsheet(self.get_tempfile())
+    def get_spreadsheet(self, worksheet_index=0):
+        return get_spreadsheet(self.get_tempfile(), worksheet_index)
 
     def trigger_upload(self, domain, config, comment=None):
         """

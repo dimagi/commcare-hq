@@ -94,7 +94,7 @@ class WorksheetWrapper(object):
         self._worksheet = worksheet
 
     @classmethod
-    def from_workbook(cls, workbook):
+    def from_workbook(cls, workbook, worksheet_index=0):
         if not isinstance(workbook, Workbook):
             raise AssertionError(
                 "WorksheetWrapper.from_workbook called without Workbook object")
@@ -102,7 +102,7 @@ class WorksheetWrapper(object):
             raise SpreadsheetFileInvalidError(
                 _("It seems as though your spreadsheet contains no sheets. Please resave it and try again."))
         else:
-            return cls(workbook.worksheets[0])
+            return cls(workbook.worksheets[worksheet_index])
 
     @cached_property
     def _headers_by_index(self):
@@ -170,10 +170,10 @@ def open_spreadsheet_download_ref(filename):
 
 
 @contextmanager
-def get_spreadsheet(filename):
+def get_spreadsheet(filename, worksheet_index=0):
     try:
         with open_any_workbook(filename) as workbook:
-            yield WorksheetWrapper.from_workbook(workbook)
+            yield WorksheetWrapper.from_workbook(workbook, worksheet_index)
     except SpreadsheetFileEncrypted as e:
         raise ImporterExcelFileEncrypted(str(e))
     except SpreadsheetFileNotFound as e:
