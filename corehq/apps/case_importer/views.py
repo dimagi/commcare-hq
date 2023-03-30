@@ -217,6 +217,26 @@ def _process_file_and_get_upload(uploaded_file_handle, request, domain, max_colu
     return case_upload, context
 
 
+def _process_excel_mapping(domain, spreadsheet, search_column):
+    columns = spreadsheet.get_header_columns()
+    excel_fields = columns
+
+    # hide search column and matching case fields from the update list
+    if search_column in excel_fields:
+        excel_fields.remove(search_column)
+
+    # 'domain' case property cannot be created if domain mirror flag is enabled,
+    # as this enables a multi-domain case import.
+    # see: https://dimagi-dev.atlassian.net/browse/USH-81
+    if 'domain' in excel_fields and DOMAIN_PERMISSIONS_MIRROR.enabled(domain):
+        excel_fields.remove('domain')
+        mirroring_enabled = True
+    else:
+        mirroring_enabled = False
+
+    return columns, excel_fields, mirroring_enabled
+
+
 @require_POST
 @require_can_edit_data
 @conditionally_location_safe(location_safe_case_imports_enabled)
@@ -269,21 +289,7 @@ def excel_fields(request, domain):
         return render_error(request, domain, get_importer_error_message(e))
 
     with case_upload.get_spreadsheet() as spreadsheet:
-        columns = spreadsheet.get_header_columns()
-        excel_fields = columns
-
-    # hide search column and matching case fields from the update list
-    if search_column in excel_fields:
-        excel_fields.remove(search_column)
-
-    # 'domain' case property cannot be created if domain mirror flag is enabled,
-    # as this enables a multi-domain case import.
-    # see: https://dimagi-dev.atlassian.net/browse/USH-81
-    if 'domain' in excel_fields and DOMAIN_PERMISSIONS_MIRROR.enabled(domain):
-        excel_fields.remove('domain')
-        mirroring_enabled = True
-    else:
-        mirroring_enabled = False
+        columns, excel_fields, mirroring_enabled = _process_excel_mapping(domain, spreadsheet, search_column)
 
     field_specs = get_suggested_case_fields(
         domain, case_type, exclude=[search_field])
@@ -300,6 +306,7 @@ def excel_fields(request, domain):
         'case_field_specs': case_field_specs,
         'domain': domain,
         'mirroring_enabled': mirroring_enabled,
+        'is_bulk_import': request.POST.get('is_bulk_import', 'False') == 'True',
     }
     context.update(_case_importer_breadcrumb_context(_('Match Excel Columns to Case Properties'), domain))
     return render(request, "case_importer/excel_fields.html", context)
