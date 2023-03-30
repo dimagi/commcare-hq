@@ -14,6 +14,7 @@ from corehq.util.quickcache import quickcache
 from django.contrib.postgres.fields import ArrayField
 from corehq.apps.groups.models import UnsavableGroup
 from datetime import datetime
+from datetime import date
 
 NOT_STARTED = 'Not started'
 IN_PROGRESS = 'In progress'
@@ -57,6 +58,20 @@ class AttendanceTrackingConfig(models.Model):
         max_length=255,
         default=DEFAULT_ATTENDEE_CASE_TYPE,
     )
+
+    @staticmethod
+    def toggle_mobile_worker_attendees(domain, value):
+        config, _created = AttendanceTrackingConfig.objects.get_or_create(domain=domain)
+        config.mobile_worker_attendees = value
+        config.save()
+
+    @staticmethod
+    def mobile_workers_can_be_attendees(domain):
+        try:
+            config = AttendanceTrackingConfig.objects.get(pk=domain)
+            return config.mobile_worker_attendees
+        except AttendanceTrackingConfig.DoesNotExist:
+            return False
 
 
 @quickcache(['domain'])
@@ -275,10 +290,37 @@ class Event(models.Model):
     def _case_factory(self):
         return CaseFactory(domain=self.domain)
 
+    def save(
+        self,
+        force_insert=False,
+        force_update=False,
+        using=None,
+        update_fields=None,
+    ):
+        if not self.event_id:
+            self.event_id = uuid.uuid4().hex
+        self.set_status()
+        super().save(
+            force_insert=force_insert,
+            force_update=force_update,
+            using=using,
+            update_fields=update_fields,
+        )
+
     def delete(self, using=None, keep_parents=False):
         self._close_ext_cases()
         self._case_factory.close_case(self.case_id)
         return super().delete(using, keep_parents)
+
+    def set_status(self):
+        """Checks what `attendee_list_status` should be and update it accordingly, but does not call `save()` on
+        the instance"""
+        today = date.today()
+
+        if today >= self.start_date:
+            self.attendee_list_status = IN_PROGRESS
+        if self.end_date and today > self.end_date:
+            self.attendee_list_status = UNDER_REVIEW
 
     @property
     def status(self):
@@ -298,13 +340,17 @@ def get_user_case_sharing_groups_for_events(commcare_user):
             yield event.get_fake_case_sharing_group(commcare_user.user_id)
 
 class AttendeeCaseManager:
-
-    def by_domain(self, domain):
+    def by_domain(
+        self,
+        domain: str,
+        include_closed: bool = False,
+    ) -> list[CommCareCase]:
+        if include_closed:
+            get_case_ids = CommCareCase.objects.get_case_ids_in_domain
+        else:
+            get_case_ids = CommCareCase.objects.get_open_case_ids_in_domain_by_type
         case_type = get_attendee_case_type(domain)
-        case_ids = CommCareCase.objects.get_open_case_ids_in_domain_by_type(
-            domain,
-            case_type,
-        )
+        case_ids = get_case_ids(domain, case_type)
         return CommCareCase.objects.get_cases(case_ids, domain)
 
 
