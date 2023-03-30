@@ -13788,10 +13788,8 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/data_interfaces/templates/data_interfaces/interfaces/case_management.html
-#, fuzzy
-#| msgid "Select All"
 msgid "Select all"
-msgstr "Tout sélectionner"
+msgstr ""
 
 #: corehq/apps/data_interfaces/templates/data_interfaces/interfaces/case_management.html
 msgid "Select New Owner..."
@@ -14015,10 +14013,8 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/data_interfaces/templates/data_interfaces/partials/case_reassign_status.html
-#, fuzzy
-#| msgid "All dates are in"
 msgid "All cases were reassigned"
-msgstr "Toutes les dates sont incluses"
+msgstr ""
 
 #: corehq/apps/data_interfaces/templates/data_interfaces/partials/case_reassign_status.html
 #, python-format
@@ -14044,10 +14040,8 @@ msgid "However, we ran into the following problems:"
 msgstr "Néanmoins, nous sommes tombés sur les problèmes suivants:"
 
 #: corehq/apps/data_interfaces/templates/data_interfaces/partials/case_reassign_status.html
-#, fuzzy
-#| msgid "Restore Failed. Details:"
 msgid "Case Reassignment Failed! Details:"
-msgstr "Échec de la restauration. Détails:"
+msgstr ""
 
 #: corehq/apps/data_interfaces/templates/data_interfaces/partials/case_rule_actions.html
 #: corehq/apps/data_interfaces/templates/data_interfaces/partials/case_rule_criteria.html
@@ -14404,16 +14398,12 @@ msgid "Form Status"
 msgstr "Statut de formulaire"
 
 #: corehq/apps/data_interfaces/views.py
-#, fuzzy
-#| msgid "Case Reassignment"
 msgid "Bulk Case Reassignment Status"
-msgstr "Transfert de dossier"
+msgstr ""
 
 #: corehq/apps/data_interfaces/views.py
-#, fuzzy
-#| msgid "Restoring your forms, this may take some time..."
 msgid "Reassigning Cases. This may take some time..."
-msgstr "Restauration des formulaires, ceci peut prendre un peu de temps..."
+msgstr ""
 
 #: corehq/apps/data_interfaces/views.py
 msgid ""
@@ -18396,10 +18386,8 @@ msgid "Attendees"
 msgstr ""
 
 #: corehq/apps/events/forms.py
-#, fuzzy
-#| msgid "Maintenance Alerts"
 msgid "Attendance Takers"
-msgstr "Alertes maintenance"
+msgstr ""
 
 #: corehq/apps/events/forms.py
 #, python-brace-format
@@ -18530,10 +18518,8 @@ msgid "Total attendees"
 msgstr ""
 
 #: corehq/apps/events/views.py
-#, fuzzy
-#| msgid "Total Balance"
 msgid "Total attendance takers"
-msgstr "Solde restant"
+msgstr ""
 
 #: corehq/apps/events/views.py
 msgid "Add Attendance Tracking Event"
@@ -28796,6 +28782,12 @@ msgstr "Aucune application trouvée"
 #: corehq/apps/reports/formdetails/readable.py
 msgid "Remote apps are not supported"
 msgstr "Les applications à distance ne sont pas supportées"
+
+#: corehq/apps/reports/formdetails/readable.py
+#, fuzzy
+#| msgid "Could not find the survey being requested."
+msgid "We could not find the form source XML document"
+msgstr "Impossible de trouver l'enquête demandée."
 
 #: corehq/apps/reports/formdetails/readable.py
 msgid "This is a Device Report"
@@ -42529,6 +42521,10 @@ msgstr ""
 msgid "Location Safe Case Imports"
 msgstr ""
 
+#: corehq/privileges.py
+msgid "Download buttons for Form- and Case IDs on Case Importer"
+msgstr ""
+
 #: corehq/reports.py
 msgid "Report Builder Reports"
 msgstr "Rapports de l'Éditeur de Rapports"
@@ -43720,6 +43716,3 @@ msgstr "Le Score à la Fonctionnalité"
 #: manage.py
 msgid "Enter valid JSON"
 msgstr "Saisir un JSON valide"
-
-#~ msgid "Reassign selected cases to"
-#~ msgstr "Transférer les dossiers sélectionnés à"

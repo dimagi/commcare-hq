@@ -7,6 +7,7 @@ from corehq.apps.dump_reload.util import get_model_label
 
 IGNORE_MODELS = {
     "accounting.BillingAccount",
+    "accounting.BillingAccountWebUserHistory",
     "accounting.BillingContactInfo",
     "accounting.BillingRecord",
     "accounting.CreditAdjustment",
