@@ -25,13 +25,13 @@
       }
     });
     requirejs([
-      {% if use_bootstrap5 %}'hqwebapp/js/bootstrap5/common',{% else %}'hqwebapp/js/bootstrap3/common',{% endif %}
+      'hqwebapp/js/common',
     ], function() {
       {% if BASE_MAIN %}
         {# This code is relevant for running HQ, but not for tests #}
         requirejs(['hqwebapp/js/django'], function () {
           requirejs([
-            {% if use_bootstrap5 %}'hqwebapp/js/bootstrap5/base_main',{% else %}'hqwebapp/js/bootstrap3/base_main',{% endif %}
+            'hqwebapp/js/base_main',
           ], function () {
       {% endif %}
             requirejs(['{{ requirejs_main }}'], function () {
