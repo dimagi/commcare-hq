@@ -3,6 +3,23 @@
 {% load crispy_forms_tags %}
 {% load i18n %}
 
+{% requirejs_main 'domain/js/internal_settings' %}
+
+{% block stylesheets %}
+  {{ block.super }}
+
+  <style>
+    #hq-sidebar {
+      min-height: 1470px;
+    }
+  </style>
+{% endblock %}
+
 {% block page_content %}
-{{ use_bootstrap5 }}
+  {{ use_bootstrap5 }}
+  {% initial_page_data 'areas' areas %}
+  {% initial_page_data 'current_values' form.current_values %}
+  <form id="update-project-info" class="form-horizontal disable-on-submit" method="post">
+    {% crispy form %}
+  </form>
 {% endblock %}
