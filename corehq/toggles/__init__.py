@@ -2355,7 +2355,8 @@ TABLEAU_USER_SYNCING = StaticToggle(
     Each time a user is added/deleted/updated on HQ, an equivalent Tableau user with the username "HQ/{username}"
     will be added/deleted/updated on the linked Tableau server.
     """,
-    parent_toggles=[EMBEDDED_TABLEAU, EMBED_TABLEAU_REPORT_BY_USER]
+    parent_toggles=[EMBED_TABLEAU_REPORT_BY_USER],
+    help_link='https://confluence.dimagi.com/display/USH/Tableau+User+Syncing',
 )
 
 
