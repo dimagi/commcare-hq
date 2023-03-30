@@ -11,23 +11,114 @@
 {% endblock %}
 
 {% block page_content %}
-{% registerurl 'paginated_attendees' domain %}
+  {% registerurl 'paginated_attendees' domain %}
+  {% registerurl 'attendees_config' domain %}
+  {% registerurl 'event_attendees' domain %}
+<p class="lead">
+  <p>
+    {% blocktrans %}
+    Known potential attendees who can be invited to participate in Attendance
+    Tracking Events.
+    {% endblocktrans %}
+  </p>
 
-<p>
-  {% blocktrans %}
-    This page lists all the project's potential attendees who can be invited to
-    participate in Attendance Tracking Events.
-  {% endblocktrans %}
-</p>
-  <div class="btn-toolbar" style="margin-bottom: 20px;">
-    <button type="button" class="btn btn-primary">
-      <i class="fa fa-plus"></i> {% trans "Create Potential Attendee" %}
-    </button>
+  <div class="btn-toolbar" id="attendee-actions" class="ko-template">
+      <button type="button"
+              class="btn btn-primary"
+              data-toggle="modal"
+              data-target="#new-attendee-modal"
+              data-bind="click: initializeAttendee">
+        <i class="fa fa-plus"></i> {% trans "Create Potential Attendee" %}
+      </button>
+
+      <button
+        id="mobileWorkerAttendeeButton"
+        type="button"
+        class="btn btn-default"
+        onClick="toggleMobileWorkerAttendees()">
+        <i class="fa"></i>{% trans "Enable Mobile Worker Attendees" %}
+      </button>
   </div>
+</p>
+
+  <div class="modal fade" id="new-attendee-modal">
+    <div class="modal-dialog">
+      <form novalidate data-bind="submit: submitNewAttendee">
+        <div class="modal-content">
+          <div class="modal-header">
+            <button type="button" class="close" data-dismiss="modal">
+              <span aria-hidden="true">&times;</span>
+              <span class="sr-only">{% trans 'Close' %}</span>
+            </button>
+            <h3 class="modal-title">{% trans "Create Potential Attendee" %}</h3>
+          </div>
+          <div class="modal-body" data-bind="if: stagedAttendee">
+            <div class="form-horizontal" data-bind="with: stagedAttendee">
+              {% crispy new_attendee_form %}
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button"
+                    class="btn btn-default"
+                    data-dismiss="modal">{% trans 'Cancel' %}</button>
+            <button type="submit"
+                    class="btn btn-primary"
+                    data-bind="enable: allowSubmit">{% trans "Create" %}</button>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div class="panel panel-info ko-template"
+       id="new-attendees-list"
+       data-bind="visible: newAttendees().length">
+    <div class="panel-heading">
+      <h3 class="panel-title">
+        {% trans 'New Potential Attendees' %}
+      </h3>
+    </div>
+    <div class="panel-body">
+      <table class="table table-striped">
+        <thead>
+        <tr>
+            <th class="col-xs-9">{% trans "Name" %}</th>
+            <th class="col-xs-3">{% trans "Status" %}</th>
+        </tr>
+        </thead>
+        <tbody data-bind="foreach: newAttendees">
+        <tr>
+          <td data-bind="attr: {class: creationStatus}">
+            <i class="fa fa-user"></i> <strong data-bind="text: name"></strong>
+          </td>
+          <td data-bind="attr: {class: creationStatus}">
+            <div data-bind="visible: creationStatus() === $root.STATUS_CSS.PENDING">
+              <i class="fa fa-circle-o-notch fa-spin"></i>
+              {% trans 'Pending...' %}
+            </div>
+            <div data-bind="visible: creationStatus() === $root.STATUS_CSS.SUCCESS">
+              <span class="text-success">
+                <i class="fa fa-check"></i> {% trans 'NEW' %}
+              </span>
+            </div>
+            <div data-bind="visible: creationStatus() === $root.STATUS_CSS.ERROR">
+              <span class="text-danger">
+                <i class="fa fa-exclamation-triangle"></i>
+                {% trans "ERROR" %}
+                <!-- ko text: creationError --><!--/ko-->
+              </span>
+            </div>
+          </td>
+        </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
   <div id="attendees-list" class="ko-template">
     <div class="panel panel-default">
       <div class="panel-heading">
-        <h3 class="panel-title">{% trans 'Potential Attendees for this Event' %}</h3>
+        <h3 class="panel-title">{% trans 'Potential Attendees' %}</h3>
       </div>
       <div class="panel-body">
         <div class="row">
@@ -43,7 +134,7 @@
                data-bind="visible: showTable">
           <thead>
           <tr>
-            <th class="col-xs-3">{% trans "Name" %}</th>
+            <th class="col-xs-12">{% trans "Name" %}</th>
           </tr>
           </thead>
           <tbody data-bind="foreach: attendees">
