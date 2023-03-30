@@ -218,3 +218,23 @@ def get_interned_exception(message):
     In tests, it's important that the error message is exactly the same object.
     """
     return Exception(message)
+
+
+def merge_dicts(dict_list, keys_to_exclude):
+    """
+    Merges the values from two or more dicts together into a single dict.
+
+    :param keys_to_exclude: Dict keys to not merge into the final result.
+    """
+
+    result = {}
+    for d in dict_list:
+        for key, value in d.items():
+            if key in keys_to_exclude:
+                continue
+
+            if key in result:
+                result[key] += value
+            else:
+                result[key] = value
+    return result
