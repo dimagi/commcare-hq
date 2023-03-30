@@ -464,7 +464,8 @@ class DomainTimezoneTests(SimpleTestCase):
 @es_test(requires=[domain_adapter])
 class CallCenterDomainTest(SimpleTestCase):
 
-    def test_get_call_center_domains(self):
+    @mock.patch('corehq.apps.accounting.models.Subscription.visible_objects.filter', return_value=[])
+    def test_get_call_center_domains(self, _):
         _create_domain('cc-dom1', True, True, 'flw', 'user1', False)
         _create_domain('cc-dom2', True, False, 'aww', None, True)
         _create_domain('cc-dom3', False, False, '', 'user2', False)  # case type missing
@@ -494,7 +495,7 @@ def _create_domain(name, cc_enabled, cc_use_fixtures, cc_case_type, cc_case_owne
         domain.call_center_config.case_owner_id = cc_case_owner_id
         domain.call_center_config.use_user_location_as_owner = use_location_as_owner
 
-        domain_adapter.index(domain.to_json(), refresh=True)
+        domain_adapter.index(domain, refresh=True)
 
 
 class CallCenterDomainMockTest(TestCase):

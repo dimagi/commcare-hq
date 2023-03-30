@@ -51,7 +51,6 @@ class BaseEditNewCustomExportView(BaseExportView):
         except ResourceNotFound:
             raise Http404()
 
-
         schema = self.get_export_schema(
             self.domain,
             self.request.GET.get('app_id') or getattr(export_instance, 'app_id'),

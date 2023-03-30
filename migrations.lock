@@ -89,6 +89,8 @@ accounting
  0067_add_view_app_diff_priv
  0068_regex_field_validation_privilege
  0069_location_safe_case_imports_priv
+ 0070_form_case_ids_case_importer_priv
+ 0071_add_billingaccountwebuserhistory
 admin
  0001_initial
  0002_logentry_remove_auto_add
@@ -195,6 +197,7 @@ case_search
  0008_auto_20180119_1716
  0009_delete_casesearchqueryaddition
  0010_casesearchconfig_synchronous_web_apps
+ 0011_domainsnotincasesearchindex
 cleanup
  0001_convert_change_feed_checkpoint_to_sql
  0002_convert_mc_checkpoint_to_sql
@@ -363,6 +366,8 @@ events
  0001_add_events_model
  0002_attendancetrackingconfig
  0003_event_attendance_taker_ids
+ 0004_event_id_case_id
+ 0005_rename_alter_event__attendance_taker_ids
 export
  0001_initial
  0002_datafile
@@ -606,6 +611,7 @@ motech
  0009_auto_20211122_2011
  0010_auto_20211124_1931
  0011_connectionsettings_is_deleted
+ 0012_alter_connectionsettings_auth_type
 notifications
  0001_squashed_0003_auto_20160504_2049 (3 squashed migrations)
  0002_auto_20160505_2058

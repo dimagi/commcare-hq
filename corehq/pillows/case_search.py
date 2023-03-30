@@ -10,7 +10,7 @@ from corehq.apps.case_search.const import (
     VALUE,
 )
 from corehq.apps.case_search.exceptions import CaseSearchNotEnabledException
-from corehq.apps.case_search.models import case_search_enabled_domains
+from corehq.apps.case_search.models import DomainsNotInCaseSearchIndex
 from corehq.apps.change_feed import topics
 from corehq.apps.change_feed.consumer.feed import (
     KafkaChangeFeed,
@@ -19,7 +19,6 @@ from corehq.apps.change_feed.consumer.feed import (
 from corehq.apps.data_dictionary.util import get_gps_properties
 from corehq.apps.es.case_search import CaseSearchES, case_search_adapter
 from corehq.apps.es.client import manager
-from corehq.elastic import get_es_new
 from corehq.form_processor.backends.sql.dbaccessors import CaseReindexAccessor
 from corehq.pillows.base import is_couch_change_for_sql_domain
 from corehq.pillows.mappings.case_search_mapping import (
@@ -27,14 +26,9 @@ from corehq.pillows.mappings.case_search_mapping import (
     CASE_SEARCH_MAPPING,
 )
 from corehq.toggles import (
-    CASE_API_V0_6,
-    CASE_LIST_EXPLORER,
-    ECD_MIGRATED_DOMAINS,
-    EXPLORE_CASE_DATA,
     USH_CASE_CLAIM_UPDATES,
 )
 from corehq.util.doc_processor.sql import SqlDocumentProvider
-from corehq.util.es.interface import ElasticsearchInterface
 from corehq.util.log import get_traceback_string
 from corehq.util.quickcache import quickcache
 from corehq.util.soft_assert import soft_assert
@@ -60,17 +54,19 @@ from pillowtop.reindexer.reindexer import (
 _assert_string_property = soft_assert(to='{}@{}.com'.format('cellowitz', 'dimagi'), notify_admins=True)
 
 
-@quickcache([], timeout=24 * 60 * 60, memoize_timeout=60)
-def domains_needing_search_index():
-    return set(list(case_search_enabled_domains())
-               + CASE_LIST_EXPLORER.get_enabled_domains()
-               + EXPLORE_CASE_DATA.get_enabled_domains()
-               + ECD_MIGRATED_DOMAINS.get_enabled_domains()
-               + CASE_API_V0_6.get_enabled_domains())
+def _domains_needing_search_index():
+    # This is only used by the reindexer now, so we don't need to cache it for performance.
+    # We especially don't want to cache it because newer domains need to be added to this list as they are created
+    from corehq.apps.domain.models import Domain
+    all_domains = set(domain["key"] for domain in Domain.get_all(include_docs=False))
+    return all_domains.difference(
+        DomainsNotInCaseSearchIndex.objects.values_list("domain", flat=True).all()
+    )
 
 
+@quickcache(["domain"], timeout=24 * 60 * 60, memoize_timeout=60)
 def domain_needs_search_index(domain):
-    return domain in domains_needing_search_index()
+    return not DomainsNotInCaseSearchIndex.objects.filter(domain=domain).exists()
 
 
 def transform_case_for_elasticsearch(doc_dict):
@@ -153,9 +149,7 @@ def get_case_search_processor():
       - Case Search ES index
     """
     return CaseSearchPillowProcessor(
-        elasticsearch=get_es_new(),
-        index_info=CASE_SEARCH_INDEX_INFO,
-        doc_prep_fn=transform_case_for_elasticsearch,
+        adapter=case_search_adapter,
         change_filter_fn=is_couch_change_for_sql_domain
     )
 
@@ -197,7 +191,7 @@ class CaseSearchReindexerFactory(ReindexerFactory):
         domain = self.options.pop('domain', None)
 
         limit_db_aliases = [limit_to_db] if limit_to_db else None
-        initialize_index_and_mapping(get_es_new(), CASE_SEARCH_INDEX_INFO)
+        initialize_index_and_mapping(CASE_SEARCH_INDEX_INFO)
         try:
             if domain is not None:
                 if not domain_needs_search_index(domain):
@@ -205,7 +199,7 @@ class CaseSearchReindexerFactory(ReindexerFactory):
                 domains = [domain]
             else:
                 # return changes for all enabled domains
-                domains = domains_needing_search_index()
+                domains = _domains_needing_search_index()
 
             change_provider = get_domain_case_change_provider(domains=domains, limit_db_aliases=limit_db_aliases)
         except ProgrammingError:
@@ -235,12 +229,10 @@ def get_case_search_to_elasticsearch_pillow(pillow_id='CaseSearchToElasticsearch
         index_info.index = kwargs['index_name']
         index_info.alias = kwargs['index_alias']
 
-    checkpoint = get_checkpoint_for_elasticsearch_pillow(pillow_id, index_info, topics.CASE_TOPICS)
-    case_processor = CaseSearchPillowProcessor(
-        elasticsearch=get_es_new(),
-        index_info=index_info,
-        doc_prep_fn=transform_case_for_elasticsearch
+    checkpoint = get_checkpoint_for_elasticsearch_pillow(
+        pillow_id, case_search_adapter.index_name, topics.CASE_TOPICS
     )
+    case_processor = CaseSearchPillowProcessor(adapter=case_search_adapter)
     change_feed = KafkaChangeFeed(
         topics=topics.CASE_TOPICS, client_id='cases-to-es', num_processes=num_processes, process_num=process_num
     )
@@ -290,9 +282,7 @@ class ResumableCaseSearchReindexerFactory(ReindexerFactory):
         doc_provider = SqlDocumentProvider(iteration_key, accessor)
         return ResumableBulkElasticPillowReindexer(
             doc_provider,
-            elasticsearch=get_es_new(),
-            index_info=CASE_SEARCH_INDEX_INFO,
-            doc_transform=transform_case_for_elasticsearch,
+            adapter=case_search_adapter,
             **self.options
         )
 

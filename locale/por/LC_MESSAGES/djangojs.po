@@ -2659,6 +2659,16 @@ msgid "24-hour clock"
 msgstr ""
 
 #: corehq/apps/cloudcare/static/cloudcare/js/form_entry/entries.js
+msgid "Invalid file type chosen. Please select a valid multimedia file."
+msgstr ""
+
+#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/entries.js
+msgid ""
+"The file you selected exceeds the size limit of 3MB. Please select a file "
+"that is smaller than 3MB."
+msgstr ""
+
+#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/entries.js
 msgid "Upload image"
 msgstr ""
 
@@ -3214,6 +3224,18 @@ msgstr ""
 
 #: corehq/apps/events/static/events/js/new_event.js
 msgid "Search Attendees"
+msgstr ""
+
+#: corehq/apps/events/static/events/js/new_event.js
+msgid "Possible Attendance Takers"
+msgstr ""
+
+#: corehq/apps/events/static/events/js/new_event.js
+msgid "Selected Attendance Takers"
+msgstr ""
+
+#: corehq/apps/events/static/events/js/new_event.js
+msgid "Search Attendance Takers"
 msgstr ""
 
 #: corehq/apps/export/static/export/js/create_export.js
