@@ -237,6 +237,30 @@ def _process_excel_mapping(domain, spreadsheet, search_column):
     return columns, excel_fields, mirroring_enabled
 
 
+def _create_bulk_configs(domain, request, case_upload):
+    all_configs = []
+    worksheet_titles = _get_workbook_sheet_names(case_upload)
+    for index, title in enumerate(worksheet_titles):
+        with case_upload.get_spreadsheet(index) as spreadsheet:
+            columns, excel_fields, mirroring_enabled = _process_excel_mapping(
+                domain,
+                spreadsheet,
+                request.POST['search_field']
+            )
+            config = importer_util.ImporterConfig.from_dict({
+                'couch_user_id': request.couch_user._id,
+                'excel_fields': excel_fields,
+                'case_fields': excel_fields,
+                'custom_fields': [''] * len(excel_fields),
+                'search_column': request.POST['search_column'],
+                'case_type': title,
+                'search_field': request.POST['search_field'],
+                'create_new_cases': request.POST['create_new_cases'] == 'True',
+            })
+            all_configs.append(config)
+    return all_configs
+
+
 @require_POST
 @require_can_edit_data
 @conditionally_location_safe(location_safe_case_imports_enabled)
@@ -327,8 +351,6 @@ def excel_commit(request, domain):
     addition of all the field data. See that class for
     more information.
     """
-    config = importer_util.ImporterConfig.from_request(request)
-
     excel_id = request.session.get(EXCEL_SESSION_ID)
 
     case_upload = CaseUpload.get(excel_id)
@@ -337,8 +359,15 @@ def excel_commit(request, domain):
     except ImporterError as e:
         return render_error(request, domain, get_importer_error_message(e))
 
-    case_upload.trigger_upload(domain, config)
+    case_type = request.POST['case_type']
+    all_configs = []
+    if case_type == ALL_CASE_TYPE_IMPORT:
+        all_configs = _create_bulk_configs(domain, request, case_upload)
+    else:
+        config = importer_util.ImporterConfig.from_request(request)
+        all_configs = [config]
 
+    case_upload.trigger_upload(domain, all_configs)
     request.session.pop(EXCEL_SESSION_ID, None)
 
     return HttpResponseRedirect(base.ImportCases.get_url(domain))
