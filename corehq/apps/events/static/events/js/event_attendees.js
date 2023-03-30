@@ -110,7 +110,7 @@ hqDefine("events/js/event_attendees",[
 
     var mobileWorkerAttendees = function() {
         self.mobileWorkerAttendeesEnabled = ko.observable(false);
-
+        self.buttonText = ko.observable("");
         self.toggleMobileWorkerAttendees = function() {
             $.ajax({
                 method: 'POST',
@@ -119,8 +119,22 @@ hqDefine("events/js/event_attendees",[
                 data: JSON.stringify({'mobile_worker_attendee_enabled': !self.mobileWorkerAttendeesEnabled()}),
                 success: function (data) {
                     self.mobileWorkerAttendeesEnabled(data.mobile_worker_attendee_enabled);
+                    self.toggleButtonText();
                 },
             });
+        };
+
+        self.toggleButtonText = function() {
+            var button = document.getElementById("mobileWorkerAttendeeButton");
+            if(self.mobileWorkerAttendeesEnabled()) {
+                button.innerHTML = gettext("Disable Mobile Worker Attendees");
+                // Appending btn-danger will override btn-default
+                button.classList.add("btn-danger")
+            }else{
+                button.innerHTML = gettext("Enable Mobile Worker Attendees");
+                // Simply removing btn-danger will effectively enable btn-default
+                button.classList.remove("btn-danger")
+            };
         };
 
         self.loadMobileWorkerAttendeeConfig = function() {
@@ -129,6 +143,7 @@ hqDefine("events/js/event_attendees",[
                 url: initialPageData.reverse('attendees_config'),
                 success: function (data) {
                     self.mobileWorkerAttendeesEnabled(data.mobile_worker_attendee_enabled);
+                    self.toggleButtonText();
                 },
             });
         };

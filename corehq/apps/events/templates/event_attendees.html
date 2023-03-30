@@ -32,22 +32,14 @@
       </button>
 
       <button
+        id="mobileWorkerAttendeeButton"
         type="button"
         class="btn btn-default"
-        data-bind="visible: !mobileWorkerAttendeesEnabled()"
         onClick="toggleMobileWorkerAttendees()">
-        <i class="fa"></i> {% trans "Enable Mobile Worker Attendees" %}
-      </button>
-      <button
-        type="button"
-        class="btn btn-danger"
-        data-bind="visible: mobileWorkerAttendeesEnabled()"
-        onClick="toggleMobileWorkerAttendees()">
-        <i class="fa"></i> {% trans "Disable Mobile Worker Attendees" %}
+        <i class="fa"></i>{% trans "Enable Mobile Worker Attendees" %}
       </button>
   </div>
 </p>
-
 
   <div class="modal fade" id="new-attendee-modal">
     <div class="modal-dialog">
