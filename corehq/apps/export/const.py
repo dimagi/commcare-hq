@@ -139,3 +139,6 @@ UNKNOWN_EXPORT_OWNER = 'unknown'
 
 EXPORT_FAILURE_TOO_LARGE = 'too_large'
 EXPORT_FAILURE_UNKNOWN = 'unknown'
+
+# For bulk case exports
+ALL_CASE_TYPE_EXPORT = 'commcare-all-case-types'
