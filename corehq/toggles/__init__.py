@@ -2032,14 +2032,6 @@ CHANGE_FORM_LANGUAGE = StaticToggle(
     help_link="https://confluence.dimagi.com/display/saas/Change+Form+Language"
 )
 
-APP_ANALYTICS = StaticToggle(
-    'app_analytics',
-    'Allow user to use app analytics in web apps',
-    TAG_CUSTOM,
-    namespaces=[NAMESPACE_DOMAIN],
-    help_link="https://confluence.dimagi.com/display/saas/App+Analytics",
-)
-
 BLOCKED_EMAIL_DOMAIN_RECIPIENTS = StaticToggle(
     'blocked_email_domain_recipients',
     'Block any outgoing email addresses that have an email domain which '
