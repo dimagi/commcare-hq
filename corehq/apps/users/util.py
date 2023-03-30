@@ -550,14 +550,26 @@ class SimpleProgressHelper(object):
         return cache.get(self.current_key)
 
     @property
-    def percentage_complete(self):
-        if self.total and self.current:
-            if self.total == 0:
-                return None
-            if self.total < self.current:
-                return 100
-            return (self.current * 100) / self.total
-        return None
+    def percentage_complete(self, decimal_places=1):
+        if not (self.total and self.current):
+            raise ValueError("Both total and current value expected to calculate percentage.")
+
+        if self.total == 0:
+            raise ValueError("Zero denominator. Cannot calculate percentage.")
+        if self.total < self.current:
+            return 100
+
+        return round(
+            (self.current * 100) / self.total,
+            decimal_places
+        )
+
+    @property
+    def is_busy(self):
+        try:
+            return self.percentage_complete < 100
+        except ValueError:
+            return False
 
     def expire(self):
         cache.expire(self.total_key, 0)

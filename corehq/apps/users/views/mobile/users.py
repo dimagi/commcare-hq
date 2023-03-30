@@ -1355,14 +1355,14 @@ class ClearCommCareUsers(DeleteCommCareUsers):
 
     @property
     def clearing_process_busy(self):
-        return self.clearing_percent < 100 if (self.clearing_percent is not None) else False
+        return SimpleProgressHelper(self.progress_id).is_busy
 
     @property
     def clearing_percent(self):
-        progress_helper = SimpleProgressHelper(self.progress_id)
-        if progress_helper.percentage_complete is None:
+        try:
+            return SimpleProgressHelper(self.progress_id).percentage_complete
+        except ValueError:
             return None
-        return round(progress_helper.percentage_complete, 1)
 
     @property
     def progress_id(self):
