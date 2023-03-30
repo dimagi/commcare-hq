@@ -276,7 +276,9 @@ def excel_fields(request, domain):
         this is the type they will be created as. When updating
         existing cases, this is the type that we will search for.
         If the wrong case type is used when looking up existing cases,
-        we will not update them.
+        we will not update them. For a bulk import, this will be displayed
+        as the special value for bulk case import/export, and the fetching of
+        the case types will be handled in the next step.
 
     create_new_cases:
         A boolean that controls whether or not the user wanted
@@ -287,11 +289,13 @@ def excel_fields(request, domain):
         Which column of the Excel file we are using to specify either
         case ids or external ids. This is, strangely, required. If
         creating new cases only you would expect these to be blank with
-        the create_new_cases flag set.
+        the create_new_cases flag set. This will default to case ids only
+        when doing a bulk import.
 
     search_field:
         Either case id or external id, determines which type of
-        identification we are using to match to cases.
+        identification we are using to match to cases. If doing a bulk import,
+        we will default to using case id only.
 
     """
     case_type = request.POST['case_type']
@@ -344,7 +348,8 @@ def excel_commit(request, domain):
     Step three of three.
 
     This page is submitted with the list of column to
-    case property mappings for this upload.
+    case property mappings for this upload. If it is a bulk case import however,
+    this is where we will generate the configs for each case type in the import file.
 
     The config variable is an ImporterConfig object that
     has everything gathered from previous steps, with the
