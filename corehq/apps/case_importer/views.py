@@ -17,7 +17,7 @@ from corehq.apps.app_manager.helpers.validators import validate_property
 from corehq.apps.case_importer import base
 from corehq.apps.case_importer import util as importer_util
 from corehq.apps.case_importer.base import location_safe_case_imports_enabled
-from corehq.apps.case_importer.const import MAX_CASE_IMPORTER_COLUMNS
+from corehq.apps.case_importer.const import MAX_CASE_IMPORTER_COLUMNS, ALL_CASE_TYPE_IMPORT
 from corehq.apps.case_importer.exceptions import (
     CustomImporterError,
     ImporterError,
@@ -47,6 +47,7 @@ from corehq.util.workbook_reading import (
     SpreadsheetFileInvalidError,
     valid_extensions,
 )
+from corehq.util.workbook_reading import open_any_workbook
 
 require_can_edit_data = require_permission(HqPermissions.edit_data)
 
@@ -113,6 +114,37 @@ def excel_config(request, domain):
     return render(request, "case_importer/excel_config.html", context)
 
 
+def _get_workbook_sheet_names(case_upload):
+    with open_any_workbook(case_upload.get_tempfile()) as workbook:
+        return [worksheet.title for worksheet in workbook.worksheets]
+
+
+def _process_spreadsheet_columns(spreadsheet, max_columns=None):
+    invalid_column_names = set()
+    columns = spreadsheet.get_header_columns()
+    validate_column_names(columns, invalid_column_names)
+    row_count = spreadsheet.max_row
+
+    if invalid_column_names:
+        error_message = format_html(
+            _("Column names must be <a target='_blank' href='https://www.w3schools.com/xml/xml_elements.asp'>"
+              "valid XML elements</a> and cannot start with a number or contain spaces or most special characters."
+              " Please update the following: {}.").format(
+                ', '.join(invalid_column_names)))
+        raise ImporterRawError(error_message)
+
+    if row_count == 0:
+        raise ImporterError(_('Your spreadsheet is empty. Please try again with a different spreadsheet.'))
+
+    if max_columns is not None and len(columns) > max_columns:
+        raise ImporterError(_(
+            'Your spreadsheet has too many columns. '
+            'A maximum of %(max_columns)s is supported.'
+        ) % {'max_columns': MAX_CASE_IMPORTER_COLUMNS})
+
+    return columns
+
+
 def _process_file_and_get_upload(uploaded_file_handle, request, domain, max_columns=None):
     extension = os.path.splitext(uploaded_file_handle.name)[1][1:].strip().lower()
 
@@ -135,30 +167,31 @@ def _process_file_and_get_upload(uploaded_file_handle, request, domain, max_colu
     request.session[EXCEL_SESSION_ID] = case_upload.upload_id
 
     case_upload.check_file()
-    invalid_column_names = set()
-    with case_upload.get_spreadsheet() as spreadsheet:
-        columns = spreadsheet.get_header_columns()
-        validate_column_names(columns, invalid_column_names)
-        row_count = spreadsheet.max_row
 
-    if invalid_column_names:
-        error_message = format_html(
-            _("Column names must be <a target='_blank' href='https://www.w3schools.com/xml/xml_elements.asp'>"
-              "valid XML elements</a> and cannot start with a number or contain spaces or most special characters."
-              " Please update the following: {}.").format(
-                ', '.join(invalid_column_names)))
-        raise ImporterRawError(error_message)
-
-    if row_count == 0:
-        raise ImporterError(_('Your spreadsheet is empty. Please try again with a different spreadsheet.'))
-
-    if max_columns is not None and len(columns) > max_columns:
-        raise ImporterError(_(
-            'Your spreadsheet has too many columns. '
-            'A maximum of %(max_columns)s is supported.'
-        ) % {'max_columns': MAX_CASE_IMPORTER_COLUMNS})
-
+    worksheet_titles = _get_workbook_sheet_names(case_upload)
     case_types_from_apps = sorted(get_case_types_from_apps(domain))
+
+    # It is a bulk import if every sheet name is a case type in the project space.
+    # This does introduce the limitation that new cases for new case types cannot be bulk imported
+    is_bulk_import = len(set(worksheet_titles) - set(case_types_from_apps)) == 0
+    columns = []
+    try:
+        if is_bulk_import:
+            for index in range(len(worksheet_titles)):
+                with case_upload.get_spreadsheet(index) as spreadsheet:
+                    _process_spreadsheet_columns(spreadsheet, max_columns)
+
+            # Set columns to only be caseid, as this is the only option a user should have when
+            # doing a bulk case import.
+            columns = ['caseid']
+        else:
+            with case_upload.get_spreadsheet() as spreadsheet:
+                columns = _process_spreadsheet_columns(spreadsheet, max_columns)
+    except ImporterRawError as e:
+        raise ImporterRawError(e) from e
+    except ImporterError as e:
+        raise ImporterError(e) from e
+
     unrecognized_case_types = sorted([t for t in get_case_types_for_domain_es(domain)
                                       if t not in case_types_from_apps])
 
@@ -178,6 +211,8 @@ def _process_file_and_get_upload(uploaded_file_handle, request, domain, max_colu
         'case_types_from_apps': case_types_from_apps,
         'domain': domain,
         'slug': base.ImportCases.slug,
+        'is_bulk_import': is_bulk_import,
+        'bulk_import_case_type': ALL_CASE_TYPE_IMPORT
     }
     return case_upload, context
 
