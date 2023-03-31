@@ -141,9 +141,18 @@ def _r_js(local=False, verbose=False):
     # dependencies
     dirs_to_js_modules = _get_main_js_modules_by_dir(html_files)
     for directory, mains in dirs_to_js_modules.items():
+        exclude = [
+            'hqwebapp/js/bootstrap3/common',
+            'hqwebapp/js/bootstrap3/base_main',
+        ]
+        if 'bootstrap5' in directory:
+            exclude = [
+                'hqwebapp/js/bootstrap5/common',
+                'hqwebapp/js/bootstrap5/base_main',
+            ]
         config['modules'].append({
             'name': os.path.join(directory, "bundle"),
-            'exclude': ['hqwebapp/js/common', 'hqwebapp/js/base_main'],
+            'exclude': exclude,
             'include': sorted(mains),
             'create': True,
         })
