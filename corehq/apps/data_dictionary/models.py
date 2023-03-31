@@ -103,7 +103,8 @@ class CaseProperty(models.Model):
         related_name='properties',
         related_query_name='property',
         db_column="group_id",
-        null=True
+        null=True,
+        blank=True
     )
 
     class Meta(object):
