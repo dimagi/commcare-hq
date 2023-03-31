@@ -62,7 +62,6 @@ from corehq.apps.app_manager.models import (
     AppEditingError,
     ArbitraryDatum,
     CaseReferences,
-    CustomAssertion,
     CustomIcon,
     CustomInstance,
     DeleteFormRecord,
@@ -100,6 +99,7 @@ from corehq.apps.app_manager.views.utils import (
     form_has_submissions,
     get_langs,
     handle_custom_icon_edits,
+    handle_custom_assertions,
     InvalidSessionEndpoint,
     set_session_endpoint,
 )
@@ -438,35 +438,13 @@ def _edit_form_attr(request, domain, app_id, form_unique_id, attr):
             ) for instance in instances
         ]
 
-    if should_edit('custom_assertions'):
-        assertions = json.loads(request.POST.get('custom_assertions'))
-        try:  # validate that custom assertions can be added into the XML
-            for assertion in assertions:
-                etree.fromstring(
-                    '<assertion test="{test}"><text><locale id="abc.def"/>{text}</text></assertion>'.format(
-                        **assertion
-                    )
-                )
-        except etree.XMLSyntaxError as error:
+    if should_edit("custom_assertions"):
+        error_message = handle_custom_assertions(request, form, lang)
+        if error_message:
             return json_response(
-                {'message': _("There was an issue with your custom assertions: {}").format(error)},
+                {'message': error_message},
                 status_code=400
             )
-
-        existing_assertions = {assertion.test: assertion for assertion in form.custom_assertions}
-        new_assertions = []
-        for assertion in assertions:
-            try:
-                new_assertion = existing_assertions[assertion.get('test')]
-                new_assertion.text[lang] = assertion.get('text')
-            except KeyError:
-                new_assertion = CustomAssertion(
-                    test=assertion.get('test'),
-                    text={lang: assertion.get('text')}
-                )
-            new_assertions.append(new_assertion)
-
-        form.custom_assertions = new_assertions
 
     if should_edit("shadow_parent"):
         form.shadow_parent_form_id = request.POST['shadow_parent']

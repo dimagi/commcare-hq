@@ -4,6 +4,7 @@ from collections import defaultdict
 from contextlib import contextmanager
 from copy import deepcopy
 from functools import partial
+from lxml import etree
 
 from django.contrib import messages
 from django.http import Http404, HttpResponseRedirect
@@ -30,6 +31,7 @@ from corehq.apps.app_manager.exceptions import (
 )
 from corehq.apps.app_manager.models import (
     Application,
+    CustomAssertion,
     CustomIcon,
     ShadowModule,
     enable_usercase_if_necessary,
@@ -641,3 +643,32 @@ def report_build_time(domain, app_id, build_type):
             "app_id": app_id,
             "build_type": build_type,
         })
+
+
+# TODO factor this out better - accept only what we need from request, and don't modify form here
+def handle_custom_assertions(request, form, lang):
+    assertions = json.loads(request.POST.get('custom_assertions'))
+    try:  # validate that custom assertions can be added into the XML
+        for assertion in assertions:
+            etree.fromstring(
+                '<assertion test="{test}"><text><locale id="abc.def"/>{text}</text></assertion>'.format(
+                    **assertion
+                )
+            )
+    except etree.XMLSyntaxError as error:
+        return _("There was an issue with your custom assertions: {}").format(error)
+
+    existing_assertions = {assertion.test: assertion for assertion in form.custom_assertions}
+    new_assertions = []
+    for assertion in assertions:
+        try:
+            new_assertion = existing_assertions[assertion.get('test')]
+            new_assertion.text[lang] = assertion.get('text')
+        except KeyError:
+            new_assertion = CustomAssertion(
+                test=assertion.get('test'),
+                text={lang: assertion.get('text')}
+            )
+        new_assertions.append(new_assertion)
+
+    form.custom_assertions = new_assertions
