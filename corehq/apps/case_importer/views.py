@@ -228,11 +228,10 @@ def _process_excel_mapping(domain, spreadsheet, search_column):
     # 'domain' case property cannot be created if domain mirror flag is enabled,
     # as this enables a multi-domain case import.
     # see: https://dimagi-dev.atlassian.net/browse/USH-81
+    mirroring_enabled = False
     if 'domain' in excel_fields and DOMAIN_PERMISSIONS_MIRROR.enabled(domain):
         excel_fields.remove('domain')
         mirroring_enabled = True
-    else:
-        mirroring_enabled = False
 
     return columns, excel_fields, mirroring_enabled
 
