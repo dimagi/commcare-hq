@@ -679,7 +679,7 @@ class ApplicationDataRMIHelper(object):
                 0,
                 RMIDataChoice(
                     id=ALL_CASE_TYPE_EXPORT,
-                    text=_('Select All'),
+                    text=_('All Case Types'),
                     data={
                         'unknown': True
                     }
