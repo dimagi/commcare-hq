@@ -648,21 +648,28 @@ class TestRemoteLinkedApps(BaseLinkedAppsTest):
         )
         data = b'this is a test: \255'
 
+        # local copy of multimedia
         local_media = CommCareMultimedia.get_by_data(data)
         local_media.attach_data(data, original_filename='test.jpg')
         self.addCleanup(local_media.delete)
 
+        # multimedia map item of a just-pulled app
         media_map_item = list(self.master_app_with_report_modules.multimedia_map.values())[0]
         media_map_item.multimedia_id = uuid.uuid4().hex
         media_map_item.media_type = 'CommCareMultimedia'
+        # save the id to compare because it will get updated
         upstream_media_id = str(media_map_item.multimedia_id)
+
+        # fetch remote multimedia with the same data as local multimedia
         with patch('corehq.apps.linked_domain.remote_accessors._fetch_remote_media_content') as mock:
             mock.return_value = data
             fetch_remote_media('domain', [('case_list_image.jpg', media_map_item)], remote_details)
 
+        # upstream_id matches original upstream id for future pulls
         self.assertEqual(media_map_item.upstream_media_id, upstream_media_id)
+        # multimedia_id matches local multimedia for local app references
         self.assertEqual(media_map_item.multimedia_id, local_media._id)
-        self.assertNotEqual(upstream_media_id, local_media._id)
+        self.assertNotEqual(media_map_item.upstream_media_id, media_map_item.multimedia_id)
 
 def _mock_pull_remote_master(master_app, linked_app, report_map=None):
     master_source = convert_app_for_remote_linking(master_app)
