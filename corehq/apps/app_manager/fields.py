@@ -511,7 +511,8 @@ class ApplicationDataRMIHelper(object):
 
         # A placeholder choice for selecting a case type from any application
         if include_any_app:
-            apps_by_type[self.APP_TYPE_ALL].append(
+            apps_by_type[self.APP_TYPE_ALL].insert(
+                0,
                 RMIDataChoice(
                     self.ALL_SOURCES,
                     _("Any Application"),
@@ -674,13 +675,16 @@ class ApplicationDataRMIHelper(object):
                     'unknown': True
                 }
             ) for c in used_case_types]
-            all_case_types.append(RMIDataChoice(
-                id=ALL_CASE_TYPE_EXPORT,
-                text=_('Select All'),
-                data={
-                    'unknown': True
-                }
-            ))
+            all_case_types.insert(
+                0,
+                RMIDataChoice(
+                    id=ALL_CASE_TYPE_EXPORT,
+                    text=_('Select All'),
+                    data={
+                        'unknown': True
+                    }
+                )
+            )
 
         if as_dict:
             unknown_case_types = [c._asdict() for c in unknown_case_types]
