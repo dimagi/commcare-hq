@@ -855,7 +855,7 @@ def get_app_data_drilldown_values(request, domain):
     if model_type == 'form':
         response = rmi_helper.get_form_rmi_response()
     elif model_type == 'case':
-        response = rmi_helper.get_case_rmi_response()
+        response = rmi_helper.get_case_rmi_response(include_any_app=True)
     else:
         response = rmi_helper.get_dual_model_rmi_response()
 
@@ -924,7 +924,7 @@ def submit_app_data_drilldown_form(request, domain):
 
     url_params = '?export_tag="{}"'.format(export_tag)
     app_id = create_form.cleaned_data['application']
-    if app_id != ApplicationDataRMIHelper.UNKNOWN_SOURCE:
+    if app_id not in [ApplicationDataRMIHelper.UNKNOWN_SOURCE, ApplicationDataRMIHelper.ALL_SOURCES]:
         url_params += '&app_id={}'.format(app_id)
 
     return json_response({
