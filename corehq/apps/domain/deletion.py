@@ -336,7 +336,11 @@ DOMAIN_DELETE_OPERATIONS = [
     ModelDeletion('data_analytics', 'GIRRow', 'domain_name'),
     ModelDeletion('data_analytics', 'MALTRow', 'domain_name'),
     ModelDeletion('data_dictionary', 'CaseType', 'domain', [
-        'CaseProperty', 'CasePropertyAllowedValue', 'fhir.FHIRResourceType', 'fhir.FHIRResourceProperty',
+        'CaseProperty',
+        'CasePropertyGroup',
+        'CasePropertyAllowedValue',
+        'fhir.FHIRResourceType',
+        'fhir.FHIRResourceProperty',
     ]),
     ModelDeletion('scheduling', 'MigratedReminder', 'rule__domain'),
     ModelDeletion('data_interfaces', 'ClosedParentDefinition', 'caserulecriteria__rule__domain'),
