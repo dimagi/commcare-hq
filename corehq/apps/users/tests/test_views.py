@@ -5,6 +5,8 @@ from django.http import Http404
 from django.test import TestCase
 from django.urls import reverse
 
+from corehq import privileges
+from corehq.apps.events.models import AttendeeCase, AttendanceTrackingConfig, ATTENDEE_USER_ID_CASE_PROPERTY
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.es.tests.utils import es_test, populate_user_index
 from corehq.apps.es.users import user_adapter
@@ -26,7 +28,7 @@ from corehq.apps.users.views.mobile.users import MobileWorkerListView
 from corehq.const import USER_CHANGE_VIA_WEB
 from corehq.toggles import FILTERED_BULK_USER_DOWNLOAD, NAMESPACE_DOMAIN
 from corehq.toggles.shortcuts import set_toggle
-from corehq.util.test_utils import generate_cases
+from corehq.util.test_utils import flag_enabled, generate_cases, privilege_enabled
 
 
 class TestMobileWorkerListView(TestCase):
@@ -79,6 +81,47 @@ class TestMobileWorkerListView(TestCase):
         )
         self.assertIsNotNone(user)
         self.assertEqual(user.get_role(self.domain).id, self.role.id)
+
+    @flag_enabled('ATTENDANCE_TRACKING')
+    @privilege_enabled(privileges.ATTENDANCE_TRACKING)
+    def test_commcare_attendee_case_created(self):
+        """An attendance tracking case should be created for a mobile worker on creation"""
+        # To ensure the config exists
+        AttendanceTrackingConfig.toggle_mobile_worker_attendees(self.domain, True)
+        self.assert_case_created_on_mobile_worker_creation(expect_case=True)
+
+    @flag_enabled('ATTENDANCE_TRACKING')
+    def test_commcare_attendee_case_not_created_due_to_privilege(self):
+        """This tests the case where a domain was on a higher plan and used the attendance tracking, but have
+        downgraded ever since and now creates a new mobile worker"""
+        AttendanceTrackingConfig.toggle_mobile_worker_attendees(self.domain, True)
+        self.assert_case_created_on_mobile_worker_creation(expect_case=False)
+
+    @flag_enabled('ATTENDANCE_TRACKING')
+    @privilege_enabled(privileges.ATTENDANCE_TRACKING)
+    def test_commcare_attendee_case_not_created_due_to_config(self):
+        # AttendanceTrackingConfig does not exist for this domain yet
+        self.assert_case_created_on_mobile_worker_creation(expect_case=False)
+
+    def assert_case_created_on_mobile_worker_creation(self, expect_case=True):
+        username = 'test.test'
+        self._remote_invoke('create_mobile_worker', {
+            "user": {
+                "first_name": "Test",
+                "last_name": "Test",
+                "username": username,
+                "password": "123"
+            }
+        })
+        user = CouchUser.get_by_username(f'{username}@{self.domain}.commcarehq.org')
+        cases = AttendeeCase.objects.by_domain(self.domain)
+        if expect_case:
+            self.assertTrue(len(cases) > 0)
+            created_case = cases[0]
+            user_id_case_property = created_case.get_case_property(ATTENDEE_USER_ID_CASE_PROPERTY)
+            self.assertEqual(user.user_id, user_id_case_property)
+        else:
+            self.assertTrue(len(cases) == 0)
 
 
 @generate_cases((
