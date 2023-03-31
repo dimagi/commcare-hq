@@ -7,7 +7,7 @@ import django.db.models.deletion
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('data_dictionary', '0009_caseproperty_label'),
+        ('data_dictionary', '0010_caseproperty_index'),
     ]
 
     operations = [
