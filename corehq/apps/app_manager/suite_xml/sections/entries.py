@@ -220,7 +220,6 @@ class EntriesHelper(object):
         from corehq.apps.app_manager.models import Module, AdvancedModule
         results = []
         loads_registry_case = module_loads_registry_case(module)
-        using_inline_search = module_uses_inline_search(module) and not loads_registry_case
         for form in module.get_suite_forms():
             e = Entry()
             e.form = form.xmlns
@@ -234,7 +233,8 @@ class EntriesHelper(object):
                 from corehq.apps.app_manager.suite_xml.post_process.remote_requests import (
                     RemoteRequestFactory, RESULTS_INSTANCE_INLINE, RESULTS_INSTANCE
                 )
-                storage_instance = RESULTS_INSTANCE_INLINE if using_inline_search else RESULTS_INSTANCE
+                storage_instance = RESULTS_INSTANCE_INLINE if module_uses_inline_search(module) \
+                    else RESULTS_INSTANCE
                 remote_request_factory = RemoteRequestFactory(
                     None, module, [], case_session_var=case_session_var, storage_instance=storage_instance)
                 e.post = remote_request_factory.build_remote_request_post()
