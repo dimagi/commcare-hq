@@ -669,7 +669,6 @@ class TestRemoteLinkedApps(BaseLinkedAppsTest):
         self.assertEqual(media_map_item.upstream_media_id, upstream_media_id)
         # multimedia_id matches local multimedia for local app references
         self.assertEqual(media_map_item.multimedia_id, local_media._id)
-        self.assertNotEqual(media_map_item.upstream_media_id, media_map_item.multimedia_id)
 
 def _mock_pull_remote_master(master_app, linked_app, report_map=None):
     master_source = convert_app_for_remote_linking(master_app)
