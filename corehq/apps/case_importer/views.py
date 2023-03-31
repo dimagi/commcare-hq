@@ -145,6 +145,21 @@ def _process_spreadsheet_columns(spreadsheet, max_columns=None):
     return columns
 
 
+def _process_bulk_sheets(case_upload, worksheet_titles):
+    for index in range(len(worksheet_titles)):
+        with case_upload.get_spreadsheet(index) as spreadsheet:
+            _process_spreadsheet_columns(spreadsheet, MAX_CASE_IMPORTER_COLUMNS)
+
+    # Set columns to only be caseid, as this is the only option a user should have when
+    # doing a bulk case import.
+    return ['caseid']
+
+
+def _process_single_sheet(case_upload):
+    with case_upload.get_spreadsheet() as spreadsheet:
+        return _process_spreadsheet_columns(spreadsheet, MAX_CASE_IMPORTER_COLUMNS)
+
+
 def _process_file_and_get_upload(uploaded_file_handle, request, domain, max_columns=None):
     extension = os.path.splitext(uploaded_file_handle.name)[1][1:].strip().lower()
 
@@ -177,16 +192,9 @@ def _process_file_and_get_upload(uploaded_file_handle, request, domain, max_colu
     columns = []
     try:
         if is_bulk_import:
-            for index in range(len(worksheet_titles)):
-                with case_upload.get_spreadsheet(index) as spreadsheet:
-                    _process_spreadsheet_columns(spreadsheet, max_columns)
-
-            # Set columns to only be caseid, as this is the only option a user should have when
-            # doing a bulk case import.
-            columns = ['caseid']
+            columns = _process_bulk_sheets(case_upload, worksheet_titles)
         else:
-            with case_upload.get_spreadsheet() as spreadsheet:
-                columns = _process_spreadsheet_columns(spreadsheet, max_columns)
+            columns = _process_single_sheet(case_upload)
     except ImporterRawError as e:
         raise ImporterRawError(e) from e
     except ImporterError as e:
