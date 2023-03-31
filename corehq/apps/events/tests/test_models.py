@@ -1,6 +1,6 @@
 import doctest
 from contextlib import contextmanager
-from datetime import datetime
+from datetime import datetime, timedelta
 from uuid import UUID, uuid4
 
 from django.test import TestCase
@@ -119,12 +119,12 @@ class TestEventModel(TestCase):
             mobile_worker.delete(None, None)
 
     def test_create_event(self):
-        today = datetime.utcnow().date()
+        tomorrow = (datetime.utcnow() + timedelta(days=1)).date()
         event = Event(
             domain=DOMAIN,
             name='test-event',
-            start_date=today,
-            end_date=today,
+            start_date=tomorrow,
+            end_date=tomorrow,
             attendance_target=10,
             sameday_reg=True,
             track_each_day=False,
