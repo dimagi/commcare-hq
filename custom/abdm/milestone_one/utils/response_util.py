@@ -5,7 +5,8 @@ from rest_framework.status import (
     HTTP_500_INTERNAL_SERVER_ERROR,
 )
 
-success_response_keys = ["txnId", "healthIdNumber", "auth_methods", "token", "health_card", "health_id"]
+success_response_keys = ["txnId", "healthIdNumber", "auth_methods", "token",
+                         "health_card", "health_id", "authMethods"]
 
 
 def parse_response(response_data):
