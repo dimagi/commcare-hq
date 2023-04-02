@@ -19,7 +19,7 @@ class TestABHAVerification(APITestCase):
     def _mock_abdm_http_post(url, payload):
         abdm_txn_id_mock = {"txnId": "1234"}
         return {
-            "v1/search/searchByHealthId": {"auth_methods": ["MOBILE_OTP"]},
+            "v1/search/searchByHealthId": {"authMethods": ["MOBILE_OTP"]},
             "v2/auth/init": abdm_txn_id_mock,
             "v1/auth/confirmWithMobileOTP": abdm_txn_id_mock,
             "v1/auth/confirmWithAadhaarOtp": abdm_txn_id_mock,
@@ -89,7 +89,7 @@ class TestABHAVerification(APITestCase):
                    side_effect=TestABHAVerification._mock_abdm_http_post):
             response = self.client.post(reverse("search_health_id"), {"health_id": "11113333"})
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(response.json(), {"auth_methods": ["MOBILE_OTP"]})
+        self.assertEqual(response.json(), {"authMethods": ["MOBILE_OTP"]})
 
     def test_search_health_id_failure(self):
         response = self.client.post(reverse("search_health_id"))
