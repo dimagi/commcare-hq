@@ -189,7 +189,7 @@ def claim(request, domain):
     if cases_have_been_modified_since_last_synclog_date():
         return HttpResponse(status=201)
 
-    return HttpResponse(status=201)
+    return HttpResponse(status=204)
 
 
 def get_restore_params(request, domain):
