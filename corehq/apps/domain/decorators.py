@@ -550,7 +550,6 @@ def login_required(view_func):
         if not (user.is_authenticated and user.is_active):
             return redirect_for_login_or_domain(request)
 
-        # User's login and domain have been validated - it's safe to call the view function
         return view_func(request, *args, **kwargs)
     return _inner
 
