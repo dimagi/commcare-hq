@@ -121,7 +121,7 @@ class EventsView(BaseEventView, CRUDPaginatedViewMixin):
             'id': event.event_id.hex,
             'name': event.name,
             'start_date': str(event.start_date),
-            'end_date': str(event.end_date),
+            'end_date': str(event.end_date) if event.end_date else '-',
             'target_attendance': event.attendance_target,
             'status': event.status,
             'total_attendance': event.total_attendance or '-',
@@ -233,7 +233,6 @@ class EventEditView(EventCreateView):
             return self.get(request, *args, **kwargs)
 
         event_update_data = form.cleaned_data
-
         event = self.event
         event.name = event_update_data['name']
         event.start_date = event_update_data['start_date']

@@ -136,6 +136,25 @@ class TestEventModel(TestCase):
         self.assertEqual(event.is_open, True)
         self.assertTrue(event.event_id is not None)
 
+    def test_create_event_with_no_end_date(self):
+        tomorrow = (datetime.utcnow() + timedelta(days=1)).date()
+        event = Event(
+            domain=DOMAIN,
+            name='test-event',
+            start_date=tomorrow,
+            end_date=None,
+            attendance_target=10,
+            sameday_reg=True,
+            track_each_day=False,
+            manager_id=self.webuser.user_id,
+        )
+        event.save()
+
+        self.assertEqual(event.status, NOT_STARTED)
+        self.assertEqual(event.is_open, True)
+        self.assertTrue(event.event_id is not None)
+        self.assertTrue(event.end_date is None)
+
     def test_create_event_with_attendees(self):
         with self._get_attendee('signmeup') as attendee:
             today = datetime.utcnow().date()

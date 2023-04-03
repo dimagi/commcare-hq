@@ -106,7 +106,7 @@ class Event(models.Model):
     event_id = models.UUIDField(primary_key=True, default=uuid.uuid4)
     _case_id = models.UUIDField(null=False, default=uuid.uuid4)
     start_date = models.DateField(null=False)
-    end_date = models.DateField(null=False)
+    end_date = models.DateField(null=True)
     attendance_target = models.IntegerField(null=False)
     total_attendance = models.IntegerField(null=False, default=0)
     sameday_reg = models.BooleanField(default=False)
