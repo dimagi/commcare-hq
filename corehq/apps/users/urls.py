@@ -76,7 +76,9 @@ from .views.mobile.users import (
     CommCareUserConfirmAccountView,
     send_confirmation_email,
     send_confirmation_sms,
-    CommcareUserUploadJobPollView)
+    CommcareUserUploadJobPollView,
+    ClearCommCareUsers,
+)
 from ..hqwebapp.decorators import waf_allow
 
 
@@ -170,6 +172,7 @@ urlpatterns = [
         name=ConfirmTurnOffDemoModeView.urlname
     ),
     url(r'^commcare/delete/$', DeleteCommCareUsers.as_view(), name=DeleteCommCareUsers.urlname),
+    url(r'^commcare/clear/$', ClearCommCareUsers.as_view(), name=ClearCommCareUsers.urlname),
     url(r'^commcare/lookup/$', CommCareUsersLookup.as_view(), name=CommCareUsersLookup.urlname),
     url(
         r'^commcare/reset_demo_user_restore/(?P<user_id>[ \w-]+)/$',
