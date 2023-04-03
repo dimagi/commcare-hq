@@ -32,7 +32,7 @@ class CreateEventForm(forms.Form):
     )
     end_date = forms.DateField(
         label=_('End Date'),
-        required=True
+        required=False
     )
     attendance_target = forms.IntegerField(
         label=_("Attendance target"),
@@ -144,18 +144,19 @@ class CreateEventForm(forms.Form):
         if 'start_date' not in cleaned_data:
             raise ValidationError(_("Invalid Start Date"))
 
-        if 'end_date' not in cleaned_data:
-            raise ValidationError(_("Invalid End Date"))
-
         start_date = cleaned_data['start_date']
-        end_date = cleaned_data['end_date']
+        end_date = cleaned_data.get('end_date')
         today = date.today()
 
-        if today > start_date or today > end_date:
-            raise ValidationError(_("You cannot specify start- and end dates in the past"))
+        if today > start_date:
+            raise ValidationError(_("You cannot specify the start date in the past"))
 
-        if end_date < start_date:
-            raise ValidationError(_("End Date cannot be before Start Date"))
+        if end_date:
+            if end_date < start_date:
+                raise ValidationError(_("End Date cannot be before Start Date"))
+
+            if today > end_date:
+                raise ValidationError(_("You cannot specify the end date in the past"))
 
         return cleaned_data
 
