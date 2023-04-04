@@ -41,6 +41,19 @@ class Command(BaseCommand):
             help="Pass in the task ID of an existing reindex to monitor it's progress. This will not kick off"
                  "a new reindex."
         )
+        parser.add_argument(
+            "--batch-size",
+            default=1000,
+            help="Set batch size of reindex process. This can be used if the default size results in timeouts"
+                 "due to large doc sizes, but will slow down the process."
+        )
+        parser.add_argument(
+            "--purge-ids",
+            action="store_true",
+            default=False,
+            help="Add reindex script to remove ids from doc source. This slows down the reindex substantially,"
+                 "but is necessary if existings docs contain _ids in the source, as it is now a reserved property."
+        )
 
     def handle(self, source_index, target_index_name, **options):
         es = get_es_export()
@@ -65,7 +78,9 @@ class Command(BaseCommand):
 
         if not options["monitor_task_id"]:
             print(f"Starting reindex for index from '{source_index}' to '{target_index}'")
-            task_id = start_reindex(es, source_index, target_index)
+            batch_size = options['batch_size']
+            purge_ids = options['purge_ids']
+            task_id = start_reindex(es, source_index, target_index, batch_size, purge_ids)
         else:
             task_id = options["monitor_task_id"]
         check_task_progress(task_id)
@@ -116,8 +131,9 @@ def _initialize_target(es, target_index_info):
     es.cluster.put_settings({"transient": {"cluster.routing.allocation.enable": "none"}})
 
 
-def start_reindex(es, source_index, target_index):
-    return manager.reindex(source_index, target_index, wait_for_completion=False)
+def start_reindex(es, source_index, target_index, batch_size, purge_ids):
+    return manager.reindex(source_index, target_index, wait_for_completion=False,
+                           batch_size=batch_size, purge_ids=purge_ids)
 
 
 def _get_doc_count(es, index):
