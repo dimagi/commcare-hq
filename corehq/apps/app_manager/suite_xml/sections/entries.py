@@ -19,6 +19,7 @@ from itertools import zip_longest
 
 import attr
 from django.utils.translation import gettext as _
+from memoized import memoized
 
 from corehq.apps.app_manager import id_strings
 from corehq.apps.app_manager.const import USERCASE_ID, USERCASE_TYPE
@@ -57,7 +58,8 @@ from corehq.apps.app_manager.xpath import (
     session_var,
 )
 from corehq.apps.case_search.const import EXCLUDE_RELATED_CASES_FILTER
-from corehq.apps.case_search.models import CASE_SEARCH_REGISTRY_ID_KEY
+from corehq.apps.case_search.models import CASE_SEARCH_REGISTRY_ID_KEY, \
+    case_search_sync_cases_on_form_entry_enabled_for_domain
 from corehq.toggles import USH_SEARCH_FILTER
 from corehq.util.timer import time_method
 from corehq.util.view_utils import absolute_reverse
@@ -215,11 +217,21 @@ class EntriesHelper(object):
         ]
         return datum, assertions
 
+    @memoized
+    def include_post_in_entry(self, module_id):
+        module = self.app.get_module_by_unique_id(module_id)
+        loads_registry_case = module_loads_registry_case(module)
+        using_inline_search = module_uses_inline_search(module)
+        sync_on_form_entry = (
+            module_offers_search(module)
+            and case_search_sync_cases_on_form_entry_enabled_for_domain(self.app.domain)
+        )
+        return (using_inline_search or sync_on_form_entry) and not loads_registry_case
+
     def entry_for_module(self, module):
         # avoid circular dependency
         from corehq.apps.app_manager.models import Module, AdvancedModule
         results = []
-        loads_registry_case = module_loads_registry_case(module)
         for form in module.get_suite_forms():
             e = Entry()
             e.form = form.xmlns
@@ -227,8 +239,7 @@ class EntriesHelper(object):
             if module.report_context_tile:
                 from corehq.apps.app_manager.suite_xml.features.mobile_ucr import get_report_context_tile_datum
                 e.datums.append(get_report_context_tile_datum())
-
-            if form.requires_case() and module_offers_search(module) and not loads_registry_case:
+            if form.requires_case() and self.include_post_in_entry(module.get_or_create_unique_id()):
                 case_session_var = self.get_case_session_var_for_form(form)
                 from corehq.apps.app_manager.suite_xml.post_process.remote_requests import (
                     RemoteRequestFactory, RESULTS_INSTANCE_INLINE, RESULTS_INSTANCE
