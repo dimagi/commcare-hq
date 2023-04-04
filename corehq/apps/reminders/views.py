@@ -1,4 +1,5 @@
 from django.db import transaction
+from django.core.exceptions import PermissionDenied
 from django.http import Http404, HttpResponseRedirect
 from django.urls import reverse
 from django.utils.decorators import method_decorator
@@ -176,6 +177,25 @@ class EditStructuredKeywordView(AddStructuredKeywordView):
             readonly=self.readonly,
         )
 
+    def can_view_data(self, request):
+        if self.readonly:
+            return True
+
+        if self.keyword.upstream_id:
+            return request.couch_user.can_edit_linked_data(self.domain)
+
+        return True
+
+    def get(self, request, *args, **kwargs):
+        if not self.can_view_data(request):
+            raise PermissionDenied
+        return super().get(request, *args, **kwargs)
+
+    def post(self, request, *args, **kwargs):
+        if not self.can_view_data(request):
+            raise PermissionDenied
+        return super().post(request, *args, **kwargs)
+
     def get_initial_values(self):
         initial = {
             'keyword': self.keyword.keyword,
@@ -289,10 +309,14 @@ class KeywordsListView(BaseMessagingSectionView, CRUDPaginatedViewMixin):
     def has_linked_data(self):
         return any((keyword.upstream_id for keyword in self._all_keywords()))
 
+    def can_edit_linked_data(self):
+        return self.request.couch_user.can_edit_linked_data(self.domain)
+
     @property
     def page_context(self):
         context = self.pagination_context
-        context['has_linked_data'] = self.has_linked_data
+        context['has_linked_data'] = self.has_linked_data()
+        context['can_edit_linked_data'] = self.can_edit_linked_data()
         return context
 
     @memoized
@@ -313,6 +337,13 @@ class KeywordsListView(BaseMessagingSectionView, CRUDPaginatedViewMixin):
             'keyword': keyword.keyword,
             'description': keyword.description,
             'upstream_id': keyword.upstream_id,
+            'viewUrl': reverse(
+                ViewStructuredKeywordView.urlname,
+                args=[self.domain, keyword.couch_id]
+            ) if keyword.is_structured_sms() else reverse(
+                ViewNormalKeywordView.urlname,
+                args=[self.domain, keyword.couch_id]
+            ),
             'editUrl': reverse(
                 EditStructuredKeywordView.urlname,
                 args=[self.domain, keyword.couch_id]
