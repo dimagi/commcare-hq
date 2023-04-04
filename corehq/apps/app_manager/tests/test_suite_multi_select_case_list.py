@@ -392,7 +392,6 @@ class MultiSelectChildModuleDatumIDTests(SimpleTestCase, SuiteMixin):
     def assert_module_datums(self, module_id, datums):
         """Check the datum IDs used in the suite XML"""
         suite = self._render_suite()
-        print(suite.decode())
         super().assert_module_datums(suite, module_id, datums)
 
     @memoized
@@ -518,7 +517,10 @@ class MultiSelectChildModuleDatumIDTests(SimpleTestCase, SuiteMixin):
 
     @patch("corehq.apps.app_manager.suite_xml.post_process.remote_requests."
            "case_search_sync_cases_on_form_entry_enabled_for_domain")
-    def test_multi_select_as_child_with_parent_select_case_search(self, _):
+    @patch(
+        "corehq.apps.app_manager.suite_xml.sections.entries."
+        "case_search_sync_cases_on_form_entry_enabled_for_domain")
+    def test_multi_select_as_child_with_parent_select_case_search(self, mock1, mock2):
         # parent select from parent module to child (seems weird)
         self.set_parent_select(self.m2, self.m4)
 
