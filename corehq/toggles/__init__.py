@@ -1557,14 +1557,6 @@ PAGINATED_EXPORTS = StaticToggle(
     [NAMESPACE_DOMAIN]
 )
 
-INCREMENTAL_EXPORTS = StaticToggle(
-    'incremental_exports',
-    'Allows sending of incremental CSV exports to a particular endpoint',
-    TAG_CUSTOM,
-    [NAMESPACE_DOMAIN],
-    help_link="https://confluence.dimagi.com/display/saas/Incremental+Data+Exports"
-)
-
 SKIP_REMOVE_INDICES = StaticToggle(
     'skip_remove_indices',
     'Make _remove_indices_from_deleted_cases_task into a no-op.',

@@ -37,7 +37,6 @@ from corehq.apps.domain.views.internal import ProjectLimitsView
 from corehq.apps.domain.views.releases import (
     ManageReleasesByLocation,
 )
-from corehq.apps.export.views.incremental import IncrementalExportView
 from corehq.apps.hqadmin.reports import (
     DeployHistoryReport,
     DeviceLogSoftAssertReport,
@@ -767,7 +766,7 @@ class ProjectDataTab(UITab):
                     }
                 )
             if self.can_view_case_exports:
-                export_data_views.extend([
+                export_data_views.append(
                     {
                         'title': _(CaseExportListView.page_title),
                         'url': reverse(CaseExportListView.urlname,
@@ -788,19 +787,7 @@ class ProjectDataTab(UITab):
                                 'urlname': EditNewCustomCaseExportView.urlname,
                             } if self.can_edit_commcare_data else None,
                         ] if _f]
-                    },
-                ])
-            if toggles.INCREMENTAL_EXPORTS.enabled(self.domain):
-                export_data_views.append(
-                    {
-                        'title': _(IncrementalExportView.page_title),
-                        'url': reverse(IncrementalExportView.urlname,
-                                       args=(self.domain,)),
-                        'show_in_dropdown': True,
-                        'icon': 'icon icon-share fa fa-share-square-o',
-                        'subpages': []
-                    }
-                )
+                    })
 
             if self.can_view_sms_exports:
                 export_data_views.append(
@@ -1976,17 +1963,12 @@ def _get_integration_section(domain, couch_user):
 
     integration = []
 
-    if (
-        toggles.INCREMENTAL_EXPORTS.enabled(domain)
-        or domain_has_privilege(domain, privileges.DATA_FORWARDING)
-    ):
-        integration.append({
-            'title': _(ConnectionSettingsListView.page_title),
-            'url': reverse(ConnectionSettingsListView.urlname, args=[domain])
-        })
-
     if domain_has_privilege(domain, privileges.DATA_FORWARDING):
         integration.extend([
+            {
+                'title': _(ConnectionSettingsListView.page_title),
+                'url': reverse(ConnectionSettingsListView.urlname, args=[domain])
+            },
             {
                 'title': _('Data Forwarding'),
                 'url': reverse('domain_forwarding', args=[domain]),
@@ -2023,13 +2005,6 @@ def _get_integration_section(domain, couch_user):
         integration.append({
             'title': _(DataSetMapListView.page_title),
             'url': reverse(DataSetMapListView.urlname, args=[domain])
-        })
-
-    if toggles.INCREMENTAL_EXPORTS.enabled(domain):
-        from corehq.apps.export.views.incremental import IncrementalExportLogView
-        integration.append({
-            'title': _(IncrementalExportLogView.name),
-            'url': reverse('domain_report_dispatcher', args=[domain, 'incremental_export_logs']),
         })
 
     if toggles.OPENMRS_INTEGRATION.enabled(domain):
