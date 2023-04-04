@@ -3199,6 +3199,30 @@ msgid ""
 "href='mailto:<%- email %>'><%- email %></a> to change the list of domains."
 msgstr ""
 
+#: corehq/apps/events/static/events/js/new_event.js
+msgid "Possible Attendees"
+msgstr ""
+
+#: corehq/apps/events/static/events/js/new_event.js
+msgid "Expected Attendees"
+msgstr ""
+
+#: corehq/apps/events/static/events/js/new_event.js
+msgid "Search Attendees"
+msgstr ""
+
+#: corehq/apps/events/static/events/js/new_event.js
+msgid "Possible Attendance Takers"
+msgstr ""
+
+#: corehq/apps/events/static/events/js/new_event.js
+msgid "Selected Attendance Takers"
+msgstr ""
+
+#: corehq/apps/events/static/events/js/new_event.js
+msgid "Search Attendance Takers"
+msgstr ""
+
 #: corehq/apps/export/static/export/js/create_export.js
 msgid "<%- count %> form submission available."
 msgstr ""

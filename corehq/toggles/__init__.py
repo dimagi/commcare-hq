@@ -919,7 +919,7 @@ WEB_APPS_DOMAIN_BANNER = StaticToggle(
 
 WEB_APPS_UPLOAD_QUESTIONS = FeatureRelease(
     'web_apps_upload_questions',
-    'USH: Support signature, image, audio, and video questions in Web Apps',
+    'USH: Support image, audio, and video questions in Web Apps',
     TAG_RELEASE,
     namespaces=[NAMESPACE_DOMAIN],
     owner='Jenny Schweers',
@@ -1012,15 +1012,18 @@ WEBAPPS_STICKY_SEARCH = StaticToggle(
 )
 
 
-def _enable_search_index(domain, enabled):
+def _ensure_search_index_is_enabled(domain, enabled):
     from corehq.apps.case_search.tasks import reindex_case_search_for_domain
     from corehq.apps.es import CaseSearchES
-    from corehq.pillows.case_search import domains_needing_search_index
-    domains_needing_search_index.clear()
+    from corehq.pillows.case_search import domain_needs_search_index
+    from corehq.apps.case_search.models import DomainsNotInCaseSearchIndex
+
+    if enabled and DomainsNotInCaseSearchIndex.objects.filter(domain=domain).exists():
+        DomainsNotInCaseSearchIndex.objects.filter(domain=domain).delete()
+        domain_needs_search_index.clear(domain)
 
     has_case_search_cases = CaseSearchES().domain(domain).count() > 0
     if enabled and not has_case_search_cases:
-        # action is not reversible, we want all projects here eventually
         reindex_case_search_for_domain.delay(domain)
 
 
@@ -1029,7 +1032,7 @@ CASE_LIST_EXPLORER = StaticToggle(
     'Show the case list explorer report',
     TAG_SOLUTIONS_OPEN,
     namespaces=[NAMESPACE_DOMAIN],
-    save_fn=_enable_search_index,
+    save_fn=_ensure_search_index_is_enabled,
 )
 
 EXPLORE_CASE_DATA = StaticToggle(
@@ -1077,7 +1080,7 @@ CASE_API_V0_6 = StaticToggle(
     'Enable the v0.6 Case API',
     TAG_SOLUTIONS_LIMITED,
     namespaces=[NAMESPACE_DOMAIN],
-    save_fn=_enable_search_index,
+    save_fn=_ensure_search_index_is_enabled,
 )
 
 HIPAA_COMPLIANCE_CHECKBOX = StaticToggle(
@@ -1767,13 +1770,6 @@ MANAGE_RELEASES_PER_LOCATION = StaticToggle(
     help_link='https://confluence.dimagi.com/display/saas/Manage+Releases+per+Location',
 )
 
-FORM_CASE_IDS_CASE_IMPORTER = StaticToggle(
-    'form_case_ids_case_importer',
-    'Show the form and case ids download button on the case importer',
-    TAG_SOLUTIONS_OPEN,
-    namespaces=[NAMESPACE_DOMAIN],
-)
-
 HIDE_HQ_ON_MOBILE_EXPERIENCE = StaticToggle(
     'hide_hq_on_mobile_experience',
     'Do not show modal on mobile that mobile hq experience is bad',
@@ -2172,7 +2168,8 @@ GENERIC_INBOUND_API = StaticToggle(
     TAG_SOLUTIONS_LIMITED,
     namespaces=[NAMESPACE_DOMAIN],
     description="Create inbound APIs that use UCR expressions to process data into case updates",
-    help_link="TODO",
+    help_link="https://docs.google.com/document/d/1y9CZwpzGYtitxbh-Y7nS5-WoMUg-LbRlZHd-eD5i78U/edit",
+    parent_toggles=[UCR_EXPRESSION_REGISTRY]
 )
 
 CASE_UPDATES_UCR_FILTERS = StaticToggle(
@@ -2511,4 +2508,16 @@ LOCATION_SAFE_CASE_IMPORTS = FrozenPrivilegeToggle(
     tag=TAG_SOLUTIONS_OPEN,
     namespaces=[NAMESPACE_DOMAIN],
     description='Allow location-restricted users to import cases owned at their location or below',
+)
+
+FORM_CASE_IDS_CASE_IMPORTER = FrozenPrivilegeToggle(
+    privileges.FORM_CASE_IDS_CASE_IMPORTER,
+    'form_case_ids_case_importer',
+    label='Download buttons for Form- and Case IDs on Case Importer',
+    tag=TAG_SOLUTIONS_OPEN,
+    namespaces=[NAMESPACE_DOMAIN],
+    description='Display the "Form IDs" and "Case IDs" download buttons on Case Importer',
+    # TODO: Move to public wiki
+    help_link=('https://confluence.dimagi.com/display/saas/Show+the+form+and+case+ids+download+button+on+the+'
+        'case+importer')
 )

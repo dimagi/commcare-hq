@@ -283,6 +283,9 @@ def get_instance_factory(instance_name):
         scheme, _ = instance_name.split(':', 1)
     except ValueError:
         scheme = instance_name
+        # hack for selected cases
+        if instance_name.endswith("selected_cases"):
+            scheme = "selected_cases"
 
     return _factory_map.get(scheme, null_factory)
 
@@ -309,9 +312,6 @@ INSTANCE_KWARGS_BY_ID = {
     'casedb': dict(id='casedb', src='jr://instance/casedb'),
     'commcaresession': dict(id='commcaresession', src='jr://instance/session'),
     'registry': dict(id='registry', src='jr://instance/remote/registry'),
-    'selected_cases': dict(id='selected_cases', src='jr://instance/selected-entities/selected_cases'),
-    'search_selected_cases': dict(id='search_selected_cases',
-                                  src='jr://instance/selected-entities/search_selected_cases'),
 }
 
 
@@ -334,6 +334,11 @@ def search_input_instances(app, instance_name):
     except ValueError:
         query_datum_id = instance_name
     return Instance(id=instance_name, src=f'jr://instance/search-input/{query_datum_id}')
+
+
+@register_factory('selected_cases')
+def selected_cases_instances(app, instance_name):
+    return Instance(id=instance_name, src='jr://instance/selected-entities')
 
 
 @register_factory('results')

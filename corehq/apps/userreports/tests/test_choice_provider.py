@@ -5,12 +5,11 @@ from unittest import mock
 from django.test import SimpleTestCase, TestCase
 from django.utils.translation import gettext
 
-from pillowtop.es_utils import initialize_index_and_mapping
-
 from corehq.apps.domain.shortcuts import create_domain, create_user
-from corehq.apps.domain.tests.test_utils import delete_all_domains
 from corehq.apps.es.fake.groups_fake import GroupESFake
 from corehq.apps.es.fake.users_fake import UserESFake
+from corehq.apps.es.client import manager
+from corehq.apps.es.users import user_adapter
 from corehq.apps.es.tests.utils import es_test
 from corehq.apps.groups.models import Group
 from corehq.apps.locations.tests.util import LocationHierarchyTestCase
@@ -45,9 +44,6 @@ from corehq.apps.users.models import (
 )
 from corehq.apps.users.models_role import UserRole
 from corehq.apps.users.util import normalize_username
-from corehq.elastic import get_es_new
-from corehq.pillows.mappings.user_mapping import USER_INDEX, USER_INDEX_INFO
-from corehq.util.elastic import ensure_index_deleted
 from corehq.util.es.testing import sync_users_to_es
 from corehq.util.test_utils import flag_disabled, flag_enabled
 
@@ -290,7 +286,7 @@ class UserChoiceProviderTest(SimpleTestCase, ChoiceProviderTestMixin):
         return user
 
     @classmethod
-    @mock.patch('corehq.pillows.user.get_group_id_name_map_by_user', mock.Mock(return_value=[]))
+    @mock.patch('corehq.apps.groups.dbaccessors.get_group_id_name_map_by_user', mock.Mock(return_value=[]))
     def setUpClass(cls):
         super(UserChoiceProviderTest, cls).setUpClass()
         report = ReportConfiguration(domain=cls.domain)
@@ -342,7 +338,7 @@ class GroupChoiceProviderTest(SimpleTestCase, ChoiceProviderTestMixin):
         return group
 
     @classmethod
-    @mock.patch('corehq.pillows.user.get_group_id_name_map_by_user', mock.Mock(return_value=[]))
+    @mock.patch('corehq.apps.groups.dbaccessors.get_group_id_name_map_by_user', mock.Mock(return_value=[]))
     def setUpClass(cls):
         super(GroupChoiceProviderTest, cls).setUpClass()
         report = ReportConfiguration(domain=cls.domain)
@@ -429,7 +425,7 @@ class OwnerChoiceProviderTest(LocationHierarchyTestCase, ChoiceProviderTestMixin
         )
 
 
-@es_test
+@es_test(requires=[user_adapter], setup_class=True)
 class UserMetadataChoiceProviderTest(TestCase, ChoiceProviderTestMixin):
     domain = 'user-meta-choice-provider'
 
@@ -449,8 +445,6 @@ class UserMetadataChoiceProviderTest(TestCase, ChoiceProviderTestMixin):
     @classmethod
     def setUpClass(cls):
         super(UserMetadataChoiceProviderTest, cls).setUpClass()
-        cls.elasticsearch = get_es_new()
-        initialize_index_and_mapping(cls.elasticsearch, USER_INDEX_INFO)
         report = ReportConfiguration(domain=cls.domain)
         cls.domain_obj = create_domain(cls.domain)
 
@@ -466,7 +460,7 @@ class UserMetadataChoiceProviderTest(TestCase, ChoiceProviderTestMixin):
                 cls.make_mobile_worker('Sauron', metadata={'sigil': 'eye',
                                        'seat': 'Mordor'}, domain='some-other-domain-lotr'),
             ]
-        cls.elasticsearch.indices.refresh(USER_INDEX)
+        manager.index_refresh(user_adapter.index_name)
 
         choices = [
             SearchableChoice(
@@ -495,7 +489,6 @@ class UserMetadataChoiceProviderTest(TestCase, ChoiceProviderTestMixin):
     def tearDownClass(cls):
         delete_all_users()
         cls.domain_obj.delete()
-        ensure_index_deleted(USER_INDEX)
         super().tearDownClass()
 
     @flag_enabled('RESTRICT_LOGIN_AS')

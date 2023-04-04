@@ -676,27 +676,23 @@ class ExportTest(SimpleTestCase):
     @classmethod
     def setUpClass(cls):
         super(ExportTest, cls).setUpClass()
+        with patch('corehq.pillows.utils.get_user_type', return_value='CommCareUser'):
+            cases = [
+                new_case(
+                    case_id='robin',
+                    name='batman',
+                    case_json={"foo": "apple", "bar": "banana", "date": '2016-4-24'},
+                ),
+                new_case(
+                    owner_id="some_other_owner",
+                    case_json={"foo": "apple", "bar": "banana", "date": '2016-4-04'},
+                ),
+                new_case(type="some_other_type", case_json={"foo": "apple", "bar": "banana"}),
+                new_case(closed=True, case_json={"foo": "apple", "bar": "banana"})
+            ]
+            case_adapter.bulk_index(cases, refresh=True)
 
-        case = new_case(
-            case_id='robin',
-            name='batman',
-            case_json={"foo": "apple", "bar": "banana", "date": '2016-4-24'},
-        )
-        case_adapter.index(case.to_json(), refresh=True)
-
-        case = new_case(
-            owner_id="some_other_owner",
-            case_json={"foo": "apple", "bar": "banana", "date": '2016-4-04'},
-        )
-        case_adapter.index(case.to_json(), refresh=True)
-
-        case = new_case(type="some_other_type", case_json={"foo": "apple", "bar": "banana"})
-        case_adapter.index(case.to_json(), refresh=True)
-
-        case = new_case(closed=True, case_json={"foo": "apple", "bar": "banana"})
-        case_adapter.index(case.to_json(), refresh=True)
-
-        cache.clear()
+            cache.clear()
 
     @classmethod
     def tearDownClass(cls):

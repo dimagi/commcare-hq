@@ -36,6 +36,7 @@ APP_LABELS_WITH_FILTER_KWARGS_TO_DUMP = defaultdict(list)
     FilteredModelIteratorBuilder('form_processor.LedgerValue', SimpleFilter('domain')),
     FilteredModelIteratorBuilder('form_processor.LedgerTransaction', SimpleFilter('case__domain')),
 
+    FilteredModelIteratorBuilder('case_search.DomainsNotInCaseSearchIndex', SimpleFilter('domain')),
     FilteredModelIteratorBuilder('case_search.CaseSearchConfig', SimpleFilter('domain')),
     FilteredModelIteratorBuilder('case_search.FuzzyProperties', SimpleFilter('domain')),
     FilteredModelIteratorBuilder('case_search.IgnorePatterns', SimpleFilter('domain')),
@@ -203,6 +204,7 @@ APP_LABELS_WITH_FILTER_KWARGS_TO_DUMP = defaultdict(list)
     FilteredModelIteratorBuilder('generic_inbound.ProcessingAttempt', SimpleFilter('log__domain')),
     FilteredModelIteratorBuilder('domain.AppReleaseModeSetting', SimpleFilter('domain')),
     FilteredModelIteratorBuilder('events.Event', SimpleFilter('domain')),
+    FilteredModelIteratorBuilder('events.AttendanceTrackingConfig', SimpleFilter('domain')),
 ]]
 
 
