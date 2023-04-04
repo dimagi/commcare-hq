@@ -80,12 +80,14 @@ from corehq.motech.repeaters.views import (
     cancel_repeat_record,
     requeue_repeat_record,
 )
+from corehq.apps.domain.tokens import custom_password_reset_token_generator
 
 PASSWORD_RESET_KWARGS = {
     'template_name': 'login_and_password/password_reset_form.html',
     'form_class': ConfidentialPasswordResetForm,
     'from_email': settings.DEFAULT_FROM_EMAIL,
-    'extra_context': {'current_page': {'page_name': _('Password Reset')}}
+    'extra_context': {'current_page': {'page_name': _('Password Reset')}},
+    'token_generator': custom_password_reset_token_generator
 }
 
 PASSWORD_RESET_DONE_KWARGS = {
@@ -121,6 +123,7 @@ urlpatterns = [
             template_name='login_and_password/password_reset_confirm.html',
             form_class=HQSetPasswordForm,
             extra_context={'current_page': {'page_name': _('Password Reset Confirmation')}},
+            token_generator=custom_password_reset_token_generator
         ),
         name=CustomPasswordResetView.urlname),
     url(r'^accounts/password_reset_confirm/done/$', PasswordResetCompleteView.as_view(
