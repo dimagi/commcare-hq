@@ -12,7 +12,6 @@ from django.views.decorators.http import require_POST
 from dimagi.utils.logging import notify_error
 from dimagi.utils.web import json_response
 
-from corehq.apps.app_manager.dbaccessors import get_case_types_from_apps
 from corehq.apps.app_manager.helpers.validators import validate_property
 from corehq.apps.case_importer import base
 from corehq.apps.case_importer import util as importer_util
@@ -185,10 +184,11 @@ def _process_file_and_get_upload(uploaded_file_handle, request, domain, max_colu
     case_upload.check_file()
 
     worksheet_titles = _get_workbook_sheet_names(case_upload)
-    case_types_from_apps = sorted(get_case_types_from_apps(domain))
+    case_types_from_apps = sorted(get_case_types_for_domain_es(domain))
 
     # It is a bulk import if every sheet name is a case type in the project space.
     # This does introduce the limitation that new cases for new case types cannot be bulk imported
+    # unless they are first added to an application or the Data Dictionary
     is_bulk_import = len(set(worksheet_titles) - set(case_types_from_apps)) == 0
     columns = []
     try:
