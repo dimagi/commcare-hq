@@ -412,7 +412,7 @@ class IndicatorXpath(InstanceXpath):
 
 
 class SearchSelectedCasesInstanceXpath(InstanceXpath):
-    default_id = "search_selected_cases"
+    default_id = "selected_cases:search"
     path = "results/value"
 
     @property

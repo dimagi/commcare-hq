@@ -33,7 +33,7 @@ def get_select_chain_with_sessions(app, module, include_self=True):
         )
 
         if current_module.is_multi_select():
-            session_var = ('parent_' * i) + 'selected_cases'
+            session_var = 'selected_cases' + (':parent' * i)
         elif is_other_relation and case_type == current_module.case_type:
             session_var = 'case_id_' + case_type
         else:
