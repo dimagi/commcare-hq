@@ -359,6 +359,7 @@ class MultiSelectChildModuleDatumIDTests(SimpleTestCase, SuiteMixin):
         # m1 is a child of m0 and uses the same case type, this is where the tests focus
         # m2 is a standalone module of the same case type
         # m3 is a standalone module of another case type
+        # m4 is a child of m2 and uses multi-select
 
         self.factory = AppFactory(domain="multiple-referrals-child-test")
 
@@ -376,6 +377,11 @@ class MultiSelectChildModuleDatumIDTests(SimpleTestCase, SuiteMixin):
         self.m3, m3f0 = self.factory.new_basic_module('m3', self.OTHER_CASE_TYPE)
         m3f0.requires = 'case'
 
+        self.m4, self.m4f0 = self.factory.new_basic_module(
+            'child-multi', self.MAIN_CASE_TYPE, parent_module=self.m2)
+        self.m4f0.requires = 'case'
+        self.m4.case_details.short.multi_select = True
+
         self._render_suite.reset_cache(self)
 
     def set_parent_select(self, module, parent_module):
@@ -386,6 +392,7 @@ class MultiSelectChildModuleDatumIDTests(SimpleTestCase, SuiteMixin):
     def assert_module_datums(self, module_id, datums):
         """Check the datum IDs used in the suite XML"""
         suite = self._render_suite()
+        print(suite.decode())
         super().assert_module_datums(suite, module_id, datums)
 
     @memoized
@@ -495,6 +502,19 @@ class MultiSelectChildModuleDatumIDTests(SimpleTestCase, SuiteMixin):
             ('datum', 'case_id')
         ])
         self.assert_form_datums(self.m1f0, 'case_id')
+
+    def test_multi_select_as_child_with_parent_select(self):
+        # parent select from parent module to child (seems weird)
+        self.set_parent_select(self.m2, self.m4)
+
+        self.assert_module_datums(self.m2.id, [
+            ('instance-datum', 'parent_selected_cases'),
+            ('datum', 'case_id'),
+        ])
+
+        self.assert_module_datums(self.m4.id, [
+            ('instance-datum', 'parent_selected_cases'),
+        ])
 
 
 @patch('corehq.apps.app_manager.helpers.validators.domain_has_privilege', return_value=True)
