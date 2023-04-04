@@ -126,11 +126,12 @@ def _process_spreadsheet_columns(spreadsheet, max_columns=None):
     row_count = spreadsheet.max_row
 
     if invalid_column_names:
-        error_message = format_html(
-            _("Column names must be <a target='_blank' href='https://www.w3schools.com/xml/xml_elements.asp'>"
-              "valid XML elements</a> and cannot start with a number or contain spaces or most special characters."
-              " Please update the following: {}.").format(
-                ', '.join(invalid_column_names)))
+        error_message = format_html(_(
+            'Column names correspond to <a target="_blank" href="https://confl'
+            'uence.dimagi.com/display/commcarepublic/Case+Configuration">case '
+            'property names</a>. They must start with a letter, and can only '
+            'contain letters, numbers and underscores. Please update the '
+            'following: {}.').format(', '.join(invalid_column_names)))
         raise ImporterRawError(error_message)
 
     if row_count == 0:
