@@ -235,7 +235,7 @@ class EntryInstances(PostProcessor):
         used = {(instance.id, instance.src) for instance in entry.instances}
         instance_order_updated = EntryInstances.update_instance_order(entry)
         for instance in instances:
-            if instance.src in EntryInstances.IGNORED_INSTANCES:
+            if instance.src in EntryInstances.IGNORED_INSTANCES:  # ignore legacy instances
                 continue
             if (instance.id, instance.src) not in used:
                 entry.instances.append(
@@ -283,6 +283,9 @@ def get_instance_factory(instance_name):
         scheme, _ = instance_name.split(':', 1)
     except ValueError:
         scheme = instance_name
+        # hack for selected cases
+        if instance_name.endswith("selected_cases"):
+            scheme = "selected_cases"
 
     return _factory_map.get(scheme, null_factory)
 
@@ -308,9 +311,7 @@ INSTANCE_KWARGS_BY_ID = {
     'ledgerdb': dict(id='ledgerdb', src='jr://instance/ledgerdb'),
     'casedb': dict(id='casedb', src='jr://instance/casedb'),
     'commcaresession': dict(id='commcaresession', src='jr://instance/session'),
-    'registry': dict(id='registry', src='jr://instance/remote'),
-    'selected_cases': dict(id='selected_cases', src='jr://instance/selected-entities'),
-    'search_selected_cases': dict(id='search_selected_cases', src='jr://instance/selected-entities'),
+    'registry': dict(id='registry', src='jr://instance/remote/registry'),
 }
 
 
@@ -328,12 +329,21 @@ def generic_fixture_instances(app, instance_name):
 
 @register_factory('search-input')
 def search_input_instances(app, instance_name):
-    return Instance(id=instance_name, src='jr://instance/search-input')
+    try:
+        _, query_datum_id = instance_name.split(':', 1)
+    except ValueError:
+        query_datum_id = instance_name
+    return Instance(id=instance_name, src=f'jr://instance/search-input/{query_datum_id}')
+
+
+@register_factory('selected_cases')
+def selected_cases_instances(app, instance_name):
+    return Instance(id=instance_name, src='jr://instance/selected-entities')
 
 
 @register_factory('results')
 def remote_instances(app, instance_name):
-    return Instance(id=instance_name, src='jr://instance/remote')
+    return Instance(id=instance_name, src=f'jr://instance/remote/{instance_name}')
 
 
 @register_factory('commcare')
