@@ -32,7 +32,8 @@ from .models import (
     get_attendee_case_type,
     get_paginated_attendees,
     ATTENDED_DATE_CASE_PROPERTY,
-    NOT_STARTED
+    NOT_STARTED,
+    IN_PROGRESS
 )
 
 from .tasks import (
@@ -140,7 +141,7 @@ class EventsView(BaseEventView, CRUDPaginatedViewMixin):
             # dates are not serializable for django templates
             'start_date': str(event.start_date),
             'end_date': str(event.end_date) if event.end_date else '-',
-            'is_editable': event.end_date > today if event.end_date else True,
+            'is_editable': event.status in [NOT_STARTED, IN_PROGRESS],
             'show_attendance': event.status != NOT_STARTED,
             'target_attendance': event.attendance_target,
             'status': event.status,
@@ -248,7 +249,7 @@ class EventEditView(EventCreateView):
         return self.event_obj
 
     def post(self, request, *args, **kwargs):
-        form = CreateEventForm(self.request.POST, domain=self.domain)
+        form = CreateEventForm(self.request.POST, domain=self.domain, event=self.event)
 
         if not form.is_valid():
             return self.get(request, *args, **kwargs)
