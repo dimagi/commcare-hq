@@ -516,6 +516,25 @@ class MultiSelectChildModuleDatumIDTests(SimpleTestCase, SuiteMixin):
             ('instance-datum', 'parent_selected_cases'),
         ])
 
+    @patch("corehq.apps.app_manager.suite_xml.post_process.remote_requests."
+           "case_search_sync_cases_on_form_entry_enabled_for_domain")
+    def test_multi_select_as_child_with_parent_select_case_search(self, _):
+        # parent select from parent module to child (seems weird)
+        self.set_parent_select(self.m2, self.m4)
+
+        self.m4.search_config.properties = [CaseSearchProperty(
+            name='name',
+            label={'en': 'Name'}
+        )]
+        self.assert_module_datums(self.m2.id, [
+            ('instance-datum', 'parent_selected_cases'),
+            ('datum', 'case_id'),
+        ])
+
+        self.assert_module_datums(self.m4.id, [
+            ('instance-datum', 'parent_selected_cases'),
+        ])
+
 
 @patch('corehq.apps.app_manager.helpers.validators.domain_has_privilege', return_value=True)
 @patch('corehq.apps.builds.models.BuildSpec.supports_j2me', return_value=False)
