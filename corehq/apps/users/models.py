@@ -891,6 +891,8 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, EulaMixin):
 
     reporting_metadata = SchemaProperty(ReportingMetadata)
 
+    last_password_reset_request_token_ts = IntegerProperty(default=0)
+
     _user = None
 
     can_assign_superuser = BooleanProperty(default=False)
