@@ -1,7 +1,7 @@
 import uuid
 from contextlib import contextmanager
 from datetime import timedelta
-from unittest.mock import patch
+from unittest.mock import patch, Mock
 from uuid import uuid4
 
 from django.conf import settings
@@ -25,9 +25,9 @@ from ..const import (
     RECORD_SUCCESS_STATE,
 )
 from ..models import (
-    RepeatRecord,
     FormRepeater,
     Repeater,
+    RepeatRecord,
     are_repeat_records_migrated,
     format_response,
     get_all_repeater_types,
@@ -510,3 +510,25 @@ class TestRepeaterModelMethods(RepeaterTestCase):
             self.repeater.send_request(repeat_record, payload)
 
         self.assertTrue(simple_request.called)
+
+
+class TestFormRepeaterAllowedToForward(RepeaterTestCase):
+
+    def test_white_list_empty(self):
+        self.repeater.white_listed_form_xmlns = []
+        payload = Mock(xmlns='http://openrosa.org/formdesigner/abc123')
+        self.assertTrue(self.repeater.allowed_to_forward(payload))
+
+    def test_payload_white_listed(self):
+        self.repeater.white_listed_form_xmlns = [
+            'http://openrosa.org/formdesigner/abc123'
+        ]
+        payload = Mock(xmlns='http://openrosa.org/formdesigner/abc123')
+        self.assertTrue(self.repeater.allowed_to_forward(payload))
+
+    def test_payload_not_white_listed(self):
+        self.repeater.white_listed_form_xmlns = [
+            'http://openrosa.org/formdesigner/abc123'
+        ]
+        payload = Mock(xmlns='http://openrosa.org/formdesigner/def456')
+        self.assertFalse(self.repeater.allowed_to_forward(payload))
