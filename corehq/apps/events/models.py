@@ -40,6 +40,24 @@ DEFAULT_ATTENDEE_CASE_TYPE = 'commcare-attendee'
 # An extension case with this case type links an attendee to an Event:
 EVENT_ATTENDEE_CASE_TYPE = 'commcare-potential-attendee'
 
+# An extension case that captures the attendace the attended date
+#   will be stored on 'attendance_date' case property.
+ATTENDEE_DATE_CASE_TYPE = 'commcare-attendance-date'
+
+ATTENDED_DATE_CASE_PROPERTY = 'attendance_date'
+
+"""
+The case-structure:
+
+commcare-event      commcare-attendee
+   |                 |
+   commcare-potential-attendee
+
+commcare-event      commcare-attendee
+   |                   |
+   commcare-attendance-date
+"""
+
 # Used internally as a host case for EVENT_ATTENDEE_CASE_TYPE
 EVENT_CASE_TYPE = 'commcare-event'
 
@@ -179,14 +197,32 @@ class Event(models.Model):
         """
         Returns CommCareCase instances for the attendees for this Event.
         """
+        return self._get_attendee_cases_related_to(
+            EVENT_ATTENDEE_CASE_TYPE
+        )
+
+    @quickcache(['self.event_id'])
+    def get_attended_attendees(self):
+        return self._get_attendee_cases_related_to(
+            ATTENDEE_DATE_CASE_TYPE
+        )
+
+    def _get_attendee_cases_related_to(self, case_type):
         # Attendee cases are associated with one or more Events using
-        # extension cases. The extension cases have case type
+        # extension cases. The extension cases have case types
         # EVENT_ATTENDEE_CASE_TYPE ('commcare-potential-attendee').
+        # ATTENDEE_DATE_CASE_TYPE ('commcare-attendance-date')
         #
         # The extension cases are owned by the Event's case-sharing
         # group so that all mobile workers in the group get the attendee
         # cases for the Event.
-        event_attendee_cases = self._get_ext_cases()
+
+        # CommCareCaseIndex.objects.get_extension_case_ids only supports
+        #   fetching by exclude_for_case_type, so fetch by exclusion
+        extension_types = {ATTENDEE_DATE_CASE_TYPE, EVENT_ATTENDEE_CASE_TYPE}
+        assert case_type in extension_types, f"This method only supports {extension_types}"
+        exclude_case_type = (extension_types - {case_type}).pop()
+        event_attendee_cases = self._get_ext_cases(exclude_case_type)
 
         attendee_case_type = get_attendee_case_type(self.domain)
         attendee_cases = []
@@ -208,7 +244,6 @@ class Event(models.Model):
 
         self._close_ext_cases()
 
-        attendee_case_type = get_attendee_case_type(self.domain)
         attendee_case_ids = (c if isinstance(c, str) else c.case_id
                              for c in attendee_cases)
         case_structures = []
@@ -216,20 +251,7 @@ class Event(models.Model):
             event_host = CaseStructure(case_id=self.case_id)
             attendee_host = CaseStructure(case_id=case_id)
             case_structures.append(CaseStructure(
-                indices=[
-                    CaseIndex(
-                        relationship='extension',
-                        identifier='event-host',
-                        related_structure=event_host,
-                        related_type=EVENT_CASE_TYPE,
-                    ),
-                    CaseIndex(
-                        relationship='extension',
-                        identifier='attendee-host',
-                        related_structure=attendee_host,
-                        related_type=attendee_case_type,
-                    ),
-                ],
+                indices=self._get_host_indices(event_host, attendee_host),
                 attrs={
                     'case_type': EVENT_ATTENDEE_CASE_TYPE,
                     'owner_id': self.group_id,
@@ -238,7 +260,46 @@ class Event(models.Model):
             ))
         self._case_factory.create_or_update_cases(case_structures)
 
-    def _get_ext_cases(self):
+    def mark_attendance(self, attendee_cases, attended_datetime):
+        # Creates ATTENDEE_DATE_CASE_TYPE extension cases for this event
+        #   and the given attendee_cases. Also sets the
+        #   ATTENDED_DATE_CASE_PROPERTY property to given attended_datetime
+        attendee_case_ids = (c if isinstance(c, str) else c.case_id
+                             for c in attendee_cases)
+        case_structures = []
+        for case_id in attendee_case_ids:
+            event_host = CaseStructure(case_id=self.case_id)
+            attendee_host = CaseStructure(case_id=case_id)
+            case_structures.append(CaseStructure(
+                indices=self._get_host_indices(event_host, attendee_host),
+                attrs={
+                    'case_type': EVENT_ATTENDEE_CASE_TYPE,
+                    'owner_id': self.group_id,
+                    'create': True,
+                    'update': {
+                        ATTENDED_DATE_CASE_PROPERTY: attended_datetime
+                    }
+                },
+            ))
+        self._case_factory.create_or_update_cases(case_structures)
+
+    def _get_host_indices(self, event_host, attendee_host):
+        return [
+            CaseIndex(
+                relationship='extension',
+                identifier='event-host',
+                related_structure=event_host,
+                related_type=EVENT_CASE_TYPE,
+            ),
+            CaseIndex(
+                relationship='extension',
+                identifier='attendee-host',
+                related_structure=attendee_host,
+                related_type=get_attendee_case_type(self.domain),
+            ),
+        ]
+
+    def _get_ext_cases(self, exclude_case_type):
         """
         Returns this Event's open 'commcare-potential-attendee'
         extension cases.
@@ -247,6 +308,7 @@ class Event(models.Model):
             self.domain,
             [self.case_id],
             include_closed=False,
+            exclude_for_case_type=exclude_case_type,
         )
         return CommCareCase.objects.get_cases(ext_case_ids, self.domain)
 

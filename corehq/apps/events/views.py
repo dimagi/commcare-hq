@@ -6,6 +6,7 @@ from django.http import Http404, HttpResponseRedirect, JsonResponse
 from django.urls import reverse
 from django.utils.translation import gettext_lazy as _
 from django.views.decorators.http import require_GET
+from datetime import datetime
 
 from jsonschema import ValidationError as SchemaValidationError
 from jsonschema import validate
@@ -30,7 +31,10 @@ from .models import (
     Event,
     get_attendee_case_type,
     get_paginated_attendees,
+    ATTENDED_DATE_CASE_PROPERTY,
+    NOT_STARTED
 )
+
 from .tasks import (
     close_mobile_worker_attendee_cases,
     sync_mobile_worker_attendees,
@@ -113,19 +117,36 @@ class EventsView(BaseEventView, CRUDPaginatedViewMixin):
         return self.paginate_crud_response
 
     def _format_paginated_event(self, event: Event):
-        edit_url = reverse(EventEditView.urlname, args=(
-            self.domain,
-            event.event_id.hex,
-        ))
+        attendees = event.get_attended_attendees()
+        attendees = sorted(
+            attendees,
+            key=lambda attendee: (
+                attendee.get_case_property(ATTENDED_DATE_CASE_PROPERTY),
+                attendee.name
+            )
+        )
+        attendees = [
+            {
+                'date': attendee.get_case_property(ATTENDED_DATE_CASE_PROPERTY),
+                'name': attendee.name
+            }
+            for attendee in attendees
+        ]
+        today = datetime.now().date()
+
         return {
             'id': event.event_id.hex,
             'name': event.name,
+            # dates are not serializable for django templates
             'start_date': str(event.start_date),
             'end_date': str(event.end_date) if event.end_date else '-',
+            'is_editable': event.end_date > today if event.end_date else True,
+            'show_attendance': event.status != NOT_STARTED,
             'target_attendance': event.attendance_target,
             'status': event.status,
             'total_attendance': event.total_attendance or '-',
-            'edit_url': edit_url,
+            'attendees': attendees,
+            'edit_url': reverse(EventEditView.urlname, args=(self.domain, event.event_id)),
             'total_attendance_takers': event.get_total_attendance_takers() or '-'
         }
 
