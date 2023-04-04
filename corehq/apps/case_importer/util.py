@@ -225,6 +225,17 @@ def merge_dicts(dict_list, keys_to_exclude):
     Merges the values from two or more dicts together into a single dict.
 
     :param keys_to_exclude: Dict keys to not merge into the final result.
+
+    Below is a given example. When calling the function with the following params:
+    merge_dicts([
+        {'one': 1, 'two': 'two'},
+        {'one': 1, 'two': 'two', 'three': [3]},
+        {'three': [3]},
+        {'four': 'four'}],
+        keys_to_exclude='four')
+
+    This will output a result as follows:
+    {'one': 2, 'two': 'twotwo', 'three': [3, 3]}
     """
 
     result = {}
