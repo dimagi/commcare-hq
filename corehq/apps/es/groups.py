@@ -15,11 +15,13 @@ For example,
 
 will give you JSON for the first 10 groups in `domain` with names matching `q`.
 """
+from copy import copy
+
 from . import filters
 from .client import ElasticDocumentAdapter, create_document_adapter
 from .es_query import HQESQuery
 from .index.settings import IndexSettingsKey
-from .transient_util import get_adapter_mapping, from_dict_with_possible_id
+from .transient_util import get_adapter_mapping
 
 
 class GroupES(HQESQuery):
@@ -43,9 +45,10 @@ class ElasticGroup(ElasticDocumentAdapter):
     def mapping(self):
         return get_adapter_mapping(self)
 
-    @classmethod
-    def from_python(cls, doc):
-        return from_dict_with_possible_id(doc)
+    @property
+    def model_cls(self):
+        from corehq.apps.groups.models import Group
+        return Group
 
 
 group_adapter = create_document_adapter(

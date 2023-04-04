@@ -13,7 +13,6 @@ from corehq.apps.es.tests.utils import es_test
 from corehq.apps.es.users import user_adapter
 from corehq.form_processor.models import XFormInstance
 from corehq.form_processor.tests.utils import create_form_for_test
-from corehq.pillows.xform import transform_xform_for_elasticsearch
 
 
 @es_test(
@@ -38,10 +37,7 @@ class TestDeleteESDocsForDomain(TestCase):
         domain_name = self.deleted_domain_with_tombstone.name
         # create an  and sync with ES
         form = create_form_for_test(domain_name)
-        form_adapter.index(
-            transform_xform_for_elasticsearch(form.to_json()),
-            refresh=True
-        )
+        form_adapter.index(form, refresh=True)
         self.assertEqual(1, FormES().domain(domain_name).count())
 
         # run command
@@ -56,7 +52,7 @@ class TestDeleteESDocsForDomain(TestCase):
         # create an  and sync with ES
         form = create_form_for_test('obliterated-domain')
         form_adapter.index(
-            transform_xform_for_elasticsearch(form.to_json()),
+            form,
             refresh=True
         )
         self.assertEqual(1, FormES().domain('obliterated-domain').count())
@@ -74,7 +70,7 @@ class TestDeleteESDocsForDomain(TestCase):
         # create an  and sync with ES
         form = create_form_for_test(domain_name)
         form_adapter.index(
-            transform_xform_for_elasticsearch(form.to_json()),
+            form,
             refresh=True
         )
         self.assertEqual(1, FormES().domain(domain_name).count())

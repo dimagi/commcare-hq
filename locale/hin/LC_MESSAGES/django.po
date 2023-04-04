@@ -8554,6 +8554,10 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/case_search_properties.html
+msgid "Include all related cases in search results"
+msgstr ""
+
+#: corehq/apps/app_manager/templates/app_manager/partials/modules/case_search_properties.html
 msgid ""
 "\n"
 "              This is not a valid xpath expression. Check to make sure your "
@@ -12822,6 +12826,10 @@ msgid "Last Modified"
 msgstr ""
 
 #: corehq/apps/data_interfaces/interfaces.py
+msgid "An owner_id needs to be specified to bulk reassign cases"
+msgstr ""
+
+#: corehq/apps/data_interfaces/interfaces.py
 msgid "Normal Forms"
 msgstr ""
 
@@ -13219,7 +13227,21 @@ msgid "(<span class=\"selectedCount \">0</span> forms selected)"
 msgstr ""
 
 #: corehq/apps/data_interfaces/templates/data_interfaces/interfaces/case_management.html
-msgid "Reassign selected cases to"
+#, python-format
+msgid ""
+"\n"
+"          <!-- ko if: selectAllMatches -->\n"
+"            Reassign %(total_cases)s selected cases to\n"
+"          <!-- /ko -->\n"
+"          <!-- ko ifnot: selectAllMatches -->\n"
+"            Reassign <span data-bind=\"text: selectedCount\"></span> "
+"selected cases to\n"
+"          <!-- /ko -->\n"
+"          "
+msgstr ""
+
+#: corehq/apps/data_interfaces/templates/data_interfaces/interfaces/case_management.html
+msgid "Select all"
 msgstr ""
 
 #: corehq/apps/data_interfaces/templates/data_interfaces/interfaces/case_management.html
@@ -13424,6 +13446,56 @@ msgstr ""
 msgid "# of Cases Closed"
 msgstr ""
 
+#: corehq/apps/data_interfaces/templates/data_interfaces/partials/case_reassign_complete_email.html
+msgid "The bulk case reassignment has completed successfully."
+msgstr ""
+
+#: corehq/apps/data_interfaces/templates/data_interfaces/partials/case_reassign_complete_email.html
+#, python-format
+msgid ""
+"\n"
+"  Succesfully reassigned %(case_count)s cases.\n"
+"  <p>The list of cases that were reassigned can be viewed at <a "
+"href='%(report_url)s'>%(report_url)s</a>.</p>\n"
+"  <p>\n"
+"  It's possible that in the report the owner_id is not yet updated, you can "
+"open individual cases and confirm\n"
+"  the right case owner, the report gets updated with a slight delay.\n"
+"  </p>\n"
+"  "
+msgstr ""
+
+#: corehq/apps/data_interfaces/templates/data_interfaces/partials/case_reassign_status.html
+msgid "All cases were reassigned"
+msgstr ""
+
+#: corehq/apps/data_interfaces/templates/data_interfaces/partials/case_reassign_status.html
+#, python-format
+msgid ""
+"\n"
+"        Succesfully reassigned %(case_count)s cases.\n"
+"        <p>The list of cases that were reassigned can be viewed at <a "
+"href='%(report_url)s'>%(report_url)s</a>.</p>\n"
+"        <p>\n"
+"        It's possible that in the report the owner_id is not yet updated, "
+"you can open individual cases and confirm\n"
+"        the right case owner, the report gets updated with a slight delay.\n"
+"        </p>\n"
+"        "
+msgstr ""
+
+#: corehq/apps/data_interfaces/templates/data_interfaces/partials/case_reassign_status.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/partials/xform_management_status.html
+#: corehq/apps/fixtures/templates/fixtures/partials/fixture_upload_status.html
+#: corehq/apps/fixtures/templates/fixtures/partials/fixture_upload_status_api.txt
+#: corehq/apps/locations/templates/locations/manage/partials/locations_upload_status.html
+msgid "However, we ran into the following problems:"
+msgstr ""
+
+#: corehq/apps/data_interfaces/templates/data_interfaces/partials/case_reassign_status.html
+msgid "Case Reassignment Failed! Details:"
+msgstr ""
+
 #: corehq/apps/data_interfaces/templates/data_interfaces/partials/case_rule_actions.html
 #: corehq/apps/data_interfaces/templates/data_interfaces/partials/case_rule_criteria.html
 msgid "Error:"
@@ -13579,13 +13651,6 @@ msgstr ""
 
 #: corehq/apps/data_interfaces/templates/data_interfaces/partials/find_by_id_form.html
 msgid "Find"
-msgstr ""
-
-#: corehq/apps/data_interfaces/templates/data_interfaces/partials/xform_management_status.html
-#: corehq/apps/fixtures/templates/fixtures/partials/fixture_upload_status.html
-#: corehq/apps/fixtures/templates/fixtures/partials/fixture_upload_status_api.txt
-#: corehq/apps/locations/templates/locations/manage/partials/locations_upload_status.html
-msgid "However, we ran into the following problems:"
 msgstr ""
 
 #: corehq/apps/data_interfaces/templates/data_interfaces/partials/xform_management_status.html
@@ -13781,6 +13846,19 @@ msgstr ""
 
 #: corehq/apps/data_interfaces/views.py
 msgid "Form Status"
+msgstr ""
+
+#: corehq/apps/data_interfaces/views.py
+msgid "Bulk Case Reassignment Status"
+msgstr ""
+
+#: corehq/apps/data_interfaces/views.py
+msgid "Reassigning Cases. This may take some time..."
+msgstr ""
+
+#: corehq/apps/data_interfaces/views.py
+msgid ""
+"Bulk Case Reassignment failed for some reason and we have noted this failure."
 msgstr ""
 
 #: corehq/apps/data_interfaces/views.py corehq/tabs/tabclasses.py
@@ -17611,8 +17689,13 @@ msgstr ""
 msgid "Attendees"
 msgstr ""
 
-#: corehq/apps/events/forms.py corehq/apps/events/views.py
-msgid "Add Attendance Tracking Event"
+#: corehq/apps/events/forms.py
+msgid "Attendance Takers"
+msgstr ""
+
+#: corehq/apps/events/forms.py
+#, python-brace-format
+msgid "{self.title_prefix} Attendance Tracking Event"
 msgstr ""
 
 #: corehq/apps/events/forms.py
@@ -17736,6 +17819,14 @@ msgstr ""
 
 #: corehq/apps/events/views.py
 msgid "Total attendees"
+msgstr ""
+
+#: corehq/apps/events/views.py
+msgid "Total attendance takers"
+msgstr ""
+
+#: corehq/apps/events/views.py
+msgid "Add Attendance Tracking Event"
 msgstr ""
 
 #: corehq/apps/events/views.py
@@ -18276,7 +18367,7 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/export/templates/export/customize_export_new.html
-msgid "Generate a Data Export Tool config file?"
+msgid "Generate a Data Export Tool config file"
 msgstr ""
 
 #: corehq/apps/export/templates/export/customize_export_new.html
@@ -27633,6 +27724,10 @@ msgstr ""
 
 #: corehq/apps/reports/formdetails/readable.py
 msgid "Remote apps are not supported"
+msgstr ""
+
+#: corehq/apps/reports/formdetails/readable.py
+msgid "We could not find the form source XML document"
 msgstr ""
 
 #: corehq/apps/reports/formdetails/readable.py
@@ -40975,6 +41070,10 @@ msgstr ""
 
 #: corehq/privileges.py
 msgid "Location Safe Case Imports"
+msgstr ""
+
+#: corehq/privileges.py
+msgid "Download buttons for Form- and Case IDs on Case Importer"
 msgstr ""
 
 #: corehq/reports.py

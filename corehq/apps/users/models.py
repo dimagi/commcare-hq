@@ -100,6 +100,11 @@ from .models_role import (  # noqa
     StaticRole,
     UserRole,
 )
+from corehq import toggles, privileges
+from corehq.apps.accounting.utils import domain_has_privilege
+from corehq.apps.locations.models import (
+    get_case_sharing_groups_for_locations,
+)
 
 WEB_USER = 'web'
 COMMCARE_USER = 'commcare'
@@ -1884,14 +1889,22 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
 
     def get_case_sharing_groups(self):
         from corehq.apps.groups.models import Group
-        from corehq.apps.locations.models import get_case_sharing_groups_for_locations
+        from corehq.apps.events.models import (
+            get_user_case_sharing_groups_for_events,
+        )
+
         # get faked location group objects
         groups = list(get_case_sharing_groups_for_locations(
             self.get_sql_locations(self.domain),
             self._id
         ))
-
         groups += [group for group in Group.by_user_id(self._id) if group.case_sharing]
+
+        has_at_privilege = domain_has_privilege(self.domain, privileges.ATTENDANCE_TRACKING)
+        # Temporary toggle that will be removed once the feature is released
+        has_at_toggle_enabled = toggles.ATTENDANCE_TRACKING.enabled(self.domain)
+        if has_at_privilege and has_at_toggle_enabled:
+            groups += get_user_case_sharing_groups_for_events(self)
         return groups
 
     def get_reporting_groups(self):
@@ -2938,7 +2951,9 @@ class UserReportingMetadataStaging(models.Model):
 
 class ApiKeyManager(models.Manager):
     def get_queryset(self):
-        return super().get_queryset().filter(is_active=True)
+        return super().get_queryset()\
+            .filter(is_active=True)\
+            .exclude(expiration_date__lt=datetime.now())
 
 
 class HQApiKey(models.Model):
@@ -2951,7 +2966,7 @@ class HQApiKey(models.Model):
     role_id = models.CharField(max_length=40, blank=True, default='')
     is_active = models.BooleanField(default=True)
     deactivated_on = models.DateTimeField(blank=True, null=True)
-    expiration_date = models.DateTimeField(blank=True, null=True)  # Not yet used
+    expiration_date = models.DateTimeField(blank=True, null=True)
     # Not update with every request. Can be a couple of seconds out of date
     last_used = models.DateTimeField(blank=True, null=True)
 

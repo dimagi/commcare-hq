@@ -487,7 +487,8 @@ MODULE_BASE_PROPERTIES_TO_COPY = [
 
 
 def handle_shadow_child_modules(app, shadow_parent):
-    """Creates or deletes shadow child modules if the parent module requires
+    """If we have a shadow module whose source module is a parent, this
+    function will automatically create shadows of the source module's child modules.
 
     Used primarily when changing the "source module id" of a shadow module
     """

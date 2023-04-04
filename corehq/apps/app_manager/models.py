@@ -2122,6 +2122,8 @@ class CaseSearch(DocumentSchema):
     additional_registry_cases = StringListProperty()               # list of xpath expressions
     title_label = LabelProperty(default={})
     description = LabelProperty(default={})
+    include_all_related_cases = BooleanProperty(default=False)
+
 
     # case property referencing another case's ID
     custom_related_case_property = StringProperty(exclude_if_none=True)
@@ -2224,6 +2226,7 @@ class ModuleBase(IndexedSchema, ModuleMediaMixin, NavMenuItemMediaMixin, Comment
     auto_select_case = BooleanProperty(default=False)
     is_training_module = BooleanProperty(default=False)
     session_endpoint_id = StringProperty(exclude_if_none=True)  # See toggles.SESSION_ENDPOINTS
+    custom_assertions = SchemaListProperty(CustomAssertion)
 
     def __init__(self, *args, **kwargs):
         super(ModuleBase, self).__init__(*args, **kwargs)
@@ -4577,6 +4580,7 @@ class Application(ApplicationBase, ApplicationMediaMixin, ApplicationIntegration
                                      choices=['none', 'all', 'some'])
     add_ons = DictProperty()
     smart_lang_display = BooleanProperty()  # null means none set so don't default to false/true
+    custom_assertions = SchemaListProperty(CustomAssertion)
 
     family_id = StringProperty()  # ID of earliest parent app across copies and linked apps
 

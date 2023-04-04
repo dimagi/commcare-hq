@@ -106,7 +106,7 @@ class TestUserRoleSubscriptionChanges(BaseAccountingTest):
             web_user.save()
             self.web_users.append(web_user)
 
-            commcare_user = generator.arbitrary_commcare_user(
+            commcare_user = generator.arbitrary_user(
                 domain=self.domain.name)
             commcare_user.set_role(self.domain.name, role.get_qualified_id())
             commcare_user.save()
@@ -184,6 +184,17 @@ class TestUserRoleSubscriptionChanges(BaseAccountingTest):
             domain=self.domain.name
         ).first()
         self.assertTrue(role.is_archived)
+
+    @flag_enabled('ATTENDANCE_TRACKING')
+    @patch('corehq.apps.events.tasks.close_mobile_worker_attendee_cases')
+    def test_close_mobile_worker_attendee_cases_when_downgrading(self, close_mobile_worker_attendee_cases_mock):
+        subscription = Subscription.new_domain_subscription(
+            self.account, self.domain.name, self.advanced_plan,
+            web_user=self.admin_username
+        )
+
+        subscription.change_plan(self.community_plan, web_user=self.admin_username)
+        close_mobile_worker_attendee_cases_mock.delay.assert_called_once()
 
     def _change_std_roles(self):
         for u in self.user_roles:

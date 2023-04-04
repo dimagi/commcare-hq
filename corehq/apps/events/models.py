@@ -11,6 +11,10 @@ from corehq.apps.es import CaseES
 from corehq.form_processor.exceptions import CaseNotFound
 from corehq.form_processor.models import CommCareCase, CommCareCaseIndex
 from corehq.util.quickcache import quickcache
+from django.contrib.postgres.fields import ArrayField
+from corehq.apps.groups.models import UnsavableGroup
+from datetime import datetime
+from datetime import date
 
 NOT_STARTED = 'Not started'
 IN_PROGRESS = 'In progress'
@@ -73,6 +77,20 @@ class AttendanceTrackingConfig(models.Model):
         default=DEFAULT_ATTENDEE_CASE_TYPE,
     )
 
+    @staticmethod
+    def toggle_mobile_worker_attendees(domain, value):
+        config, _created = AttendanceTrackingConfig.objects.get_or_create(domain=domain)
+        config.mobile_worker_attendees = value
+        config.save()
+
+    @staticmethod
+    def mobile_workers_can_be_attendees(domain):
+        try:
+            config = AttendanceTrackingConfig.objects.get(pk=domain)
+            return config.mobile_worker_attendees
+        except AttendanceTrackingConfig.DoesNotExist:
+            return False
+
 
 @quickcache(['domain'])
 def get_attendee_case_type(domain):
@@ -103,9 +121,10 @@ class Event(models.Model):
 
     name = models.CharField(max_length=100)
     domain = models.CharField(max_length=255)
-    event_id = models.CharField(max_length=255, unique=True)
+    event_id = models.UUIDField(primary_key=True, default=uuid.uuid4)
+    _case_id = models.UUIDField(null=False, default=uuid.uuid4)
     start_date = models.DateField(null=False)
-    end_date = models.DateField(null=False)
+    end_date = models.DateField(null=True)
     attendance_target = models.IntegerField(null=False)
     total_attendance = models.IntegerField(null=False, default=0)
     sameday_reg = models.BooleanField(default=False)
@@ -118,13 +137,59 @@ class Event(models.Model):
         choices=ATTENDEE_LIST_STATUS_CHOICES,
         default=NOT_STARTED,
     )
+    _attendance_taker_ids = ArrayField(
+        models.UUIDField(),
+        blank=True,
+        null=True,
+        default=list
+    )
 
     class Meta:
         db_table = "commcare_event"
         indexes = (
-            models.Index(fields=("event_id",)),
             models.Index(fields=("domain",)),
             models.Index(fields=("manager_id",)),
+        )
+
+    @property
+    def case_id(self):
+        try:
+            return self._case_id.hex
+        except AttributeError:
+            return self._case_id
+
+    @property
+    def group_id(self):
+        try:
+            return self.event_id.hex
+        except AttributeError:
+            return self.event_id
+
+    @property
+    def attendance_taker_ids(self):
+        return [uuid.hex for uuid in self._attendance_taker_ids]
+
+    @attendance_taker_ids.setter
+    def attendance_taker_ids(self, value):
+        self._attendance_taker_ids = [uuid.UUID(hex=v) for v in value]
+
+    def get_fake_case_sharing_group(self, user_id):
+        """
+        Returns a group object that cannot be saved.
+
+        This is used for giving users access via case sharing groups,
+        without having a real group for every event that we have to
+        manage.
+        """
+        return UnsavableGroup(
+            _id=self.group_id,
+            domain=self.domain,
+            users=[user_id],
+            last_modified=datetime.utcnow(),
+            name=self.name + ' Event',
+            case_sharing=True,
+            reporting=False,
+            metadata={},
         )
 
     @quickcache(['self.event_id'])
@@ -183,12 +248,13 @@ class Event(models.Model):
                              for c in attendee_cases)
         case_structures = []
         for case_id in attendee_case_ids:
-            event_host = CaseStructure(case_id=self.event_id)
+            event_host = CaseStructure(case_id=self.case_id)
             attendee_host = CaseStructure(case_id=case_id)
             case_structures.append(CaseStructure(
                 indices=self._get_host_indices(event_host, attendee_host),
                 attrs={
                     'case_type': EVENT_ATTENDEE_CASE_TYPE,
+                    'owner_id': self.group_id,
                     'create': True,
                 },
             ))
@@ -239,7 +305,7 @@ class Event(models.Model):
         """
         ext_case_ids = CommCareCaseIndex.objects.get_extension_case_ids(
             self.domain,
-            [self.event_id],
+            [self.case_id],
             include_closed=False,
             exclude_for_case_type=exclude_case_type,
         )
@@ -248,7 +314,7 @@ class Event(models.Model):
     def _close_ext_cases(self):
         ext_case_ids = CommCareCaseIndex.objects.get_extension_case_ids(
             self.domain,
-            [self.event_id],
+            [self.case_id],
             include_closed=False,
         )
         self._case_factory.create_or_update_cases([
@@ -263,12 +329,13 @@ class Event(models.Model):
         # ... and for that to work, the Event has a host case.
         #
         # This is the only thing we use the Event's case for. It does not
-        # store any Event data other than its name.
+        # store any Event data other than its name, and is not used for anything
+        # other than looking up extension cases.
         try:
-            case = CommCareCase.objects.get_case(self.event_id, self.domain)
+            case = CommCareCase.objects.get_case(self.case_id, self.domain)
         except CaseNotFound:
             struct = CaseStructure(
-                case_id=self.event_id,
+                case_id=self.case_id,
                 attrs={
                     'owner_id': self.manager_id,
                     'case_type': EVENT_CASE_TYPE,
@@ -293,6 +360,7 @@ class Event(models.Model):
     ):
         if not self.event_id:
             self.event_id = uuid.uuid4().hex
+        self.set_status()
         super().save(
             force_insert=force_insert,
             force_update=force_update,
@@ -302,22 +370,48 @@ class Event(models.Model):
 
     def delete(self, using=None, keep_parents=False):
         self._close_ext_cases()
-        self._case_factory.close_case(self.event_id)
+        self._case_factory.close_case(self.case_id)
         return super().delete(using, keep_parents)
+
+    def set_status(self):
+        """Checks what `attendee_list_status` should be and update it accordingly, but does not call `save()` on
+        the instance"""
+        today = date.today()
+
+        if today >= self.start_date:
+            self.attendee_list_status = IN_PROGRESS
+        if self.end_date and today > self.end_date:
+            self.attendee_list_status = UNDER_REVIEW
 
     @property
     def status(self):
         return self.attendee_list_status
 
+    def get_total_attendance_takers(self):
+        return len(self.attendance_taker_ids)
+
+
+def get_user_case_sharing_groups_for_events(commcare_user):
+    """
+    Creates a case sharing group for every ``Event`` that the
+    ``commcare_user`` is an attendance taker for in their domain.
+    """
+    for event in Event.objects.by_domain(commcare_user.domain):
+        if commcare_user.user_id in event.attendance_taker_ids:
+            yield event.get_fake_case_sharing_group(commcare_user.user_id)
 
 class AttendeeCaseManager:
-
-    def by_domain(self, domain):
+    def by_domain(
+        self,
+        domain: str,
+        include_closed: bool = False,
+    ) -> list[CommCareCase]:
+        if include_closed:
+            get_case_ids = CommCareCase.objects.get_case_ids_in_domain
+        else:
+            get_case_ids = CommCareCase.objects.get_open_case_ids_in_domain_by_type
         case_type = get_attendee_case_type(domain)
-        case_ids = CommCareCase.objects.get_open_case_ids_in_domain_by_type(
-            domain,
-            case_type,
-        )
+        case_ids = get_case_ids(domain, case_type)
         return CommCareCase.objects.get_cases(case_ids, domain)
 
 

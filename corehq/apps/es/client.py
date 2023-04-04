@@ -413,6 +413,10 @@ class ElasticDocumentAdapter(BaseAdapter):
     analysis = DEFAULT_ANALYSIS
     settings_key = None
 
+    # Model class whose objects are to be saved in ES.
+    # This variable be used in data transformation logic
+    model_cls = None
+
     def __init__(self, index_name, type_):
         """A document adapter for a single index.
 
@@ -432,19 +436,29 @@ class ElasticDocumentAdapter(BaseAdapter):
         adapter._es = get_client(for_export=True)
         return adapter
 
-    @classmethod
-    def from_python(cls, doc):
-        """Transform a Python model object into the json-serializable (``dict``)
+    def from_python(self, doc):
+        """Transform a Python model object or model dict into the json-serializable (``dict``)
         format suitable for indexing in Elasticsearch.
 
-        :param doc: document (instance of a Python model)
+        :param doc: document (instance of a Python model) or a dict representation of that model
         :returns: ``tuple`` of ``(doc_id, source_dict)`` suitable for being
                   indexed/updated/deleted in Elasticsearch
         """
-        raise NotImplementedError(f"{cls.__name__} is abstract")
+        if isinstance(doc, self.model_cls):
+            doc_dict = doc.to_json()
+        elif isinstance(doc, dict):
+            doc_dict = copy.copy(doc)
+        else:
+            raise TypeError(f"Unkown type {type(doc)}")
+        return self._from_dict(doc_dict)
 
-    @classmethod
-    def to_json(cls, doc):
+    def _from_dict(self, model_dict):
+        """
+        Transforms a model dict to a JSON serializable dict suitable for indexing in elasticsearch.
+        """
+        return model_dict.pop('_id'), model_dict
+
+    def to_json(self, doc):
         """Convenience method that returns the full "from python" document
         (including the ``_id`` key, if present) as it would be returned by an
         adapter ``search`` result.
@@ -454,7 +468,7 @@ class ElasticDocumentAdapter(BaseAdapter):
 
         :param doc: document (instance of a Python model)
         """
-        _id, source = cls.from_python(doc)
+        _id, source = self.from_python(doc)
         if _id is not None:
             source["_id"] = _id
         return source
@@ -1017,8 +1031,6 @@ class ElasticMultiplexAdapter(BaseAdapter):
         return adapter
 
     def from_python(self, doc):
-        # TODO: this is a classmethod on the the document adapter, but should
-        # be converted to an instance method
         if isinstance(doc, Tombstone):
             return doc.id, Tombstone.create_document()
         return self.primary.from_python(doc)

@@ -22,11 +22,12 @@ of all unknown users, web users, and demo users on a domain.
 
     owner_ids = query.get_ids()
 """
+
 from . import filters, queries
 from .client import ElasticDocumentAdapter, create_document_adapter
 from .es_query import HQESQuery
 from .index.settings import IndexSettingsKey
-from .transient_util import get_adapter_mapping, from_dict_with_possible_id
+from .transient_util import get_adapter_mapping
 
 
 class UserES(HQESQuery):
@@ -70,12 +71,43 @@ class ElasticUser(ElasticDocumentAdapter):
     settings_key = IndexSettingsKey.USERS
 
     @property
+    def model_cls(self):
+        from corehq.apps.users.models import CouchUser
+        return CouchUser
+
+    @property
     def mapping(self):
         return get_adapter_mapping(self)
 
-    @classmethod
-    def from_python(cls, doc):
-        return from_dict_with_possible_id(doc)
+    def _from_dict(self, user_dict):
+        """
+        Takes a user dict and applies required transfomation to make it suitable for ES.
+        The function is replica of ``transform_user_for_elasticsearch``.
+        In future all references to  ``transform_user_for_elasticsearch`` will be replaced by `from_python`
+
+        :param user: an instance ``dict`` which is result of ``CouchUser.to_json()``
+        """
+        from corehq.apps.groups.dbaccessors import (
+            get_group_id_name_map_by_user,
+        )
+
+        if user_dict['doc_type'] == 'CommCareUser' and '@' in user_dict['username']:
+            user_dict['base_username'] = user_dict['username'].split("@")[0]
+        else:
+            user_dict['base_username'] = user_dict['username']
+
+        results = get_group_id_name_map_by_user(user_dict['_id'])
+        user_dict['__group_ids'] = [res.id for res in results]
+        user_dict['__group_names'] = [res.name for res in results]
+        user_dict['user_data_es'] = []
+        if 'user_data' in user_dict:
+            user_obj = self.model_cls.wrap_correctly(user_dict)
+            for key, value in user_obj.metadata.items():
+                user_dict['user_data_es'].append({
+                    'key': key,
+                    'value': value,
+                })
+        return super()._from_dict(user_dict)
 
 
 user_adapter = create_document_adapter(
