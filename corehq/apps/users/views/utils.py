@@ -16,6 +16,7 @@ from corehq.apps.es.cases import CaseES
 from corehq.apps.es.aggregations import TermsAggregation
 from corehq.apps.es.users import UserES
 from corehq.apps.es import filters
+from corehq.apps.api.es import flatten_list
 
 
 def get_editable_role_choices(domain, couch_user, allow_admin_role):
@@ -116,19 +117,6 @@ def log_commcare_user_locations_changes(request, user, old_location_id, old_assi
         )
 
 
-def _flatten_list(list_2d):
-    flat_list = []
-    # Iterate through the outer list
-    for element in list_2d:
-        if isinstance(element, list):
-            # If the element is of type list, iterate through the sublist
-            for item in element:
-                flat_list.append(item)
-        else:
-            flat_list.append(element)
-    return flat_list
-
-
 def _get_location_ids_with_other_users(domain, location_ids, user_id_to_exclude):
     """
     Gets all the location ids where a `CommCareUser` is assigned to one of the `location_ids`.
@@ -144,7 +132,7 @@ def _get_location_ids_with_other_users(domain, location_ids, user_id_to_exclude)
     )
     # If more than one user shares a location, it will give a list of lists
     # So need to make sure to flatten these
-    return set(_flatten_list(other_user_loc_ids))
+    return set(flatten_list(other_user_loc_ids))
 
 
 def _get_location_case_counts(domain, location_ids):
