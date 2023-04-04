@@ -268,12 +268,13 @@ class Event(models.Model):
                              for c in attendee_cases)
         case_structures = []
         for case_id in attendee_case_ids:
-            event_host = CaseStructure(case_id=self.event_id)
+            event_host = CaseStructure(case_id=self.case_id)
             attendee_host = CaseStructure(case_id=case_id)
             case_structures.append(CaseStructure(
                 indices=self._get_host_indices(event_host, attendee_host),
                 attrs={
-                    'case_type': ATTENDEE_DATE_CASE_TYPE,
+                    'case_type': EVENT_ATTENDEE_CASE_TYPE,
+                    'owner_id': self.group_id,
                     'create': True,
                     'update': {
                         ATTENDED_DATE_CASE_PROPERTY: attended_datetime
