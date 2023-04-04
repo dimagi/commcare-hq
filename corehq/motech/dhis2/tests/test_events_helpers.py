@@ -1,5 +1,7 @@
 import doctest
 import json
+from datetime import datetime
+from unittest.mock import Mock
 
 from django.test.testcases import TestCase
 
@@ -129,6 +131,48 @@ class TestDhis2EventsHelpers(TestCase):
             },
             event
         )
+
+
+class TestNothingToSend(TestCase):
+
+    def setUp(self):
+        self.conn = ConnectionSettings.objects.create(
+            domain=DOMAIN,
+            name='Example DHIS2 server',
+            url='https://dhis2.example.com/',
+        )
+
+    def tearDown(self):
+        self.conn.delete()
+
+    def test_204_response(self):
+        form_xmlns = 'http://example.com/test-xmlns'
+        dhis2_config = {
+            'form_configs': [{
+                'xmlns': form_xmlns,
+                'program_id': 'abc123',
+                'program_stage_id': '',
+                'org_unit_id': '',
+                'event_date': {'form_question': '/data/event_date'},
+                'event_status': {'form_question': '/data/event_status'},
+                'completed_date': '',
+                'datavalue_maps': [],
+                'event_location': '',
+            }]
+        }
+        repeater = Dhis2Repeater(
+            domain=DOMAIN,
+            connection_settings_id=self.conn.id,
+            dhis2_config=dhis2_config,
+            dhis2_version='2.39.1.1',
+            dhis2_version_last_modified=datetime.utcnow(),
+        )
+        repeat_record = Mock(payload_id='abc123')
+        payload = {'form': {'@xmlns': form_xmlns}}
+
+        result = repeater.send_request(repeat_record, payload)
+        self.assertEqual(result.status_code, 204)
+        self.assertEqual(result.reason, 'No content')
 
 
 def test_doctests():
