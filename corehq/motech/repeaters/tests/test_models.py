@@ -36,24 +36,6 @@ from ..models import (
 
 DOMAIN = 'test-domain'
 
-ALL_REPEATERS = [
-    'FormRepeater',
-    'CaseRepeater',
-    'CreateCaseRepeater',
-    'UpdateCaseRepeater',
-    'ReferCaseRepeater',
-    'DataRegistryCaseUpdateRepeater',
-    'ShortFormRepeater',
-    'AppStructureRepeater',
-    'UserRepeater',
-    'LocationRepeater',
-    'FHIRRepeater',
-    'OpenmrsRepeater',
-    'Dhis2Repeater',
-    'Dhis2EntityRepeater',
-    'CaseExpressionRepeater'
-]
-
 
 def test_get_all_repeater_types():
     types = get_all_repeater_types()
