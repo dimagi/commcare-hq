@@ -10,6 +10,8 @@ XFORM_INDEX = form_adapter.index_name
 XFORM_ES_TYPE = form_adapter.type
 XFORM_ALIAS = prefix_for_tests("xforms")
 
+XFORM_DATE_FORMATS_STRING = "epoch_millis||" + DATE_FORMATS_STRING
+
 XFORM_MAPPING = {
     "_meta": {
         "created": "2013-08-13"
@@ -95,7 +97,7 @@ XFORM_MAPPING = {
                             "type": "string"
                         },
                         "@date_modified": {
-                            "format": DATE_FORMATS_STRING,
+                            "format": XFORM_DATE_FORMATS_STRING,
                             "type": "date"
                         },
                         "@user_id": {
@@ -111,7 +113,7 @@ XFORM_MAPPING = {
                             "type": "string"
                         },
                         "date_modified": {
-                            "format": DATE_FORMATS_STRING,
+                            "format": XFORM_DATE_FORMATS_STRING,
                             "type": "date"
                         },
                         "user_id": {
@@ -155,11 +157,11 @@ XFORM_MAPPING = {
                             "type": "string"
                         },
                         "timeEnd": {
-                            "format": DATE_FORMATS_STRING,
+                            "format": XFORM_DATE_FORMATS_STRING,
                             "type": "date"
                         },
                         "timeStart": {
-                            "format": DATE_FORMATS_STRING,
+                            "format": XFORM_DATE_FORMATS_STRING,
                             "type": "date"
                         },
                         "userID": {
@@ -179,7 +181,7 @@ XFORM_MAPPING = {
             "type": "boolean"
         },
         "inserted_at": {
-            "format": DATE_FORMATS_STRING,
+            "format": XFORM_DATE_FORMATS_STRING,
             "type": "date"
         },
         "partial_submission": {
@@ -190,11 +192,11 @@ XFORM_MAPPING = {
             "type": "string"
         },
         "received_on": {
-            "format": DATE_FORMATS_STRING,
+            "format": XFORM_DATE_FORMATS_STRING,
             "type": "date"
         },
         "server_modified_on": {
-            "format": DATE_FORMATS_STRING,
+            "format": XFORM_DATE_FORMATS_STRING,
             "type": "date"
         },
         "submit_ip": {
