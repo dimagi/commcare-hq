@@ -1698,6 +1698,27 @@ class ExportDataSchema(Document):
         ))
 
     @classmethod
+    def generate_empty_schema(cls, domain, identifier):
+        """
+        Builds a schema, without processing any Application builds.
+        This is primarily used for bulk case exports, as the processing of Application
+        builds will happen later in an async task when saving the export instance.
+        """
+        current_schema = cls()
+
+        current_schema.domain = domain
+        current_schema.app_id = None
+        current_schema.version = cls.schema_version()
+        current_schema._set_identifier(identifier)
+
+        current_schema = cls._save_export_schema(
+            current_schema,
+            original_id=None,
+            original_rev=None
+        )
+        return current_schema
+
+    @classmethod
     def generate_schema_from_builds(cls, domain, app_id, identifier, force_rebuild=False,
             only_process_current_builds=False, task=None):
         """Builds a schema from Application builds for a given identifier
