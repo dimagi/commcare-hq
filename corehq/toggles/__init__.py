@@ -1557,12 +1557,11 @@ PAGINATED_EXPORTS = StaticToggle(
     [NAMESPACE_DOMAIN]
 )
 
-INCREMENTAL_EXPORTS = StaticToggle(
-    'incremental_exports',
-    'Allows sending of incremental CSV exports to a particular endpoint',
+CLEAR_MOBILE_WORKER_DATA = StaticToggle(
+    'clear_mobile_worker_data',
+    "Allows a web user to clear mobile workers' data",
     TAG_CUSTOM,
     [NAMESPACE_DOMAIN],
-    help_link="https://confluence.dimagi.com/display/saas/Incremental+Data+Exports"
 )
 
 SKIP_REMOVE_INDICES = StaticToggle(

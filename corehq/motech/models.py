@@ -234,8 +234,6 @@ class ConnectionSettings(models.Model):
         """
 
         kinds = set()
-        if self.incrementalexport_set.exists():
-            kinds.add(_('Incremental Exports'))
         if self.sqldatasetmap_set.exists():
             kinds.add(_('DHIS2 DataSet Maps'))
         if self.repeaters.exists():
