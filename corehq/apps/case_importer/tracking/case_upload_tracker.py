@@ -87,7 +87,7 @@ class CaseUpload(object):
             task_id=task.task_id,
             couch_user_id=config_list[0].couch_user_id,  # Will be the same for all configs in a bulk import,
                                                          # so we can use the first one in the list.
-            case_type=ALL_CASE_TYPE_IMPORT,
+            case_type=config_list[0].case_type,
             upload_file_meta=case_upload_file_meta,
         ).save()
 
