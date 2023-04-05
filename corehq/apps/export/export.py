@@ -19,6 +19,7 @@ from corehq.apps.export.models.new import (
     CaseExportInstance,
     FormExportInstance,
     SMSExportInstance,
+    ALL_CASE_TYPE_TABLE
 )
 from corehq.toggles import PAGINATED_EXPORTS
 from corehq.util.metrics.load_counters import load_counter
@@ -365,6 +366,11 @@ def write_export_instance(writer, export_instance, documents,
         for row_number, doc in enumerate(documents):
             total_bytes += sys.getsizeof(doc)
             for table in export_instance.selected_tables:
+                # This is for bulk exports on all case types.
+                # Skip over the tables that this doc shouldn't go into.
+                if ALL_CASE_TYPE_TABLE in table.path and doc['type'] != table.path[0].name:
+                    continue
+
                 try:
                     rows = table.get_rows(
                         doc,
