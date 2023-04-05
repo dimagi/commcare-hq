@@ -279,19 +279,21 @@ def get_and_tag_related_cases(helper, app_id, case_types, cases,
     if custom_related_case_property:
         expanded_case_results.extend(get_expanded_case_results(helper, custom_related_case_property, cases))
 
-    results = expanded_case_results
+    unfiltered_results = expanded_case_results
     top_level_cases = cases + expanded_case_results
 
     related_cases = get_related_cases_result(helper, app, case_types, top_level_cases, include_all_related_cases)
     if related_cases:
-        results.extend(related_cases)
-    for case in related_cases:
-        _tag_is_related_case(case)
+        unfiltered_results.extend(related_cases)
 
     initial_case_ids = {case.case_id for case in cases}
-    return list({
-        case.case_id: case for case in results if case.case_id not in initial_case_ids
+    results = list({
+        case.case_id: case for case in unfiltered_results if case.case_id not in initial_case_ids
     }.values())
+    for case in results:
+        _tag_is_related_case(case)
+    return results
+
 
 
 def get_related_cases_result(helper, app, case_types, source_cases, include_all_related_cases):
