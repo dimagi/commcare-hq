@@ -29,7 +29,6 @@ from .dbaccessors import (
     get_properly_wrapped_export_instance,
 )
 from .export import get_export_file, rebuild_export
-from .models.incremental import IncrementalExport
 from .models.new import (
     EmailExportWhenDoneRequest,
     CaseExportInstance,
