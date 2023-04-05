@@ -119,7 +119,7 @@ class CreateEventForm(forms.Form):
     def determine_field_availability(self, event):
         event_not_started = True
         event_in_progress = False
-        attendees_not_registered = False
+        attendees_not_registered = True
 
         if event:
             event_not_started = event.attendee_list_status == NOT_STARTED
