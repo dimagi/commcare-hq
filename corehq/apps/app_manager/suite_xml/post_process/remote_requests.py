@@ -81,6 +81,7 @@ from corehq.apps.app_manager.xpath import (
 from corehq.apps.case_search.const import COMMCARE_PROJECT, EXCLUDE_RELATED_CASES_FILTER
 from corehq.apps.case_search.models import (
     CASE_SEARCH_BLACKLISTED_OWNER_ID_KEY,
+    case_search_sync_cases_on_form_entry_enabled_for_domain,
     CASE_SEARCH_CUSTOM_RELATED_CASE_PROPERTY_KEY,
     CASE_SEARCH_REGISTRY_ID_KEY,
     CASE_SEARCH_INCLUDE_ALL_RELATED_CASES_KEY
@@ -140,9 +141,7 @@ class RemoteRequestFactory(object):
                 self.build_case_id_query_data(),
             ],
         }
-        relevant = self.get_post_relevant()
-        if relevant:
-            kwargs["relevant"] = relevant
+        kwargs["relevant"] = self.get_post_relevant()
         return RemoteRequestPost(**kwargs)
 
     def build_case_id_query_data(self):
@@ -150,7 +149,8 @@ class RemoteRequestFactory(object):
         if self.module.is_multi_select():
             data.ref = "."
             data.nodeset = self._get_multi_select_nodeset()
-            data.exclude = self._get_multi_select_exclude()
+            if not case_search_sync_cases_on_form_entry_enabled_for_domain(self.domain):
+                data.exclude = self._get_multi_select_exclude()
         else:
             data.ref = QuerySessionXPath(self.case_session_var).instance()
         return data
@@ -164,11 +164,9 @@ class RemoteRequestFactory(object):
     def get_post_relevant(self):
         case_not_claimed = self.module.search_config.get_relevant(
             self.case_session_var, self.module.is_multi_select())
-        if module_uses_smart_links(self.module):
-            case_in_project = self._get_smart_link_rewind_xpath()
-            return XPath.and_(case_not_claimed, case_in_project)
-        else:
-            return case_not_claimed
+        case_in_project = self._get_smart_link_rewind_xpath()
+        uses_smart_links = module_uses_smart_links(self.module)
+        return XPath.and_(case_not_claimed, case_in_project) if uses_smart_links else case_not_claimed
 
     def build_command(self):
         return Command(

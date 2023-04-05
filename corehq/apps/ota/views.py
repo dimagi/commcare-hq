@@ -18,6 +18,7 @@ from django.views.decorators.http import require_GET, require_POST
 
 from couchdbkit import ResourceConflict
 from iso8601 import iso8601
+from memoized import memoized
 from tastypie.http import HttpTooManyRequests
 
 from casexml.apps.case.cleanup import claim_case, get_first_claims
@@ -161,18 +162,34 @@ def claim(request, domain):
                    host_name=unquote(request.POST.get('case_name', '')),
                    device_id=__name__ + ".claim")
 
-    def phone_holds_all_cases(request):
+    @memoized
+    def get_synclog(sync_token):
         try:
-            synclog = get_properly_wrapped_sync_log(request.last_sync_token)
-            missing_case_ids_on_phone = set(case_ids) - synclog.case_ids_on_phone
-            return not missing_case_ids_on_phone
+            return get_properly_wrapped_sync_log(sync_token)
         except MissingSyncLog:
             return False
 
-    if not case_ids_to_claim and phone_holds_all_cases(request):
-        return HttpResponse(status=204)
+    def phone_holds_all_cases(request):
+        if get_synclog(request.last_sync_token):
+            synclog = get_synclog(request.last_sync_token)
+            missing_case_ids_on_phone = set(case_ids) - synclog.case_ids_on_phone
+            return not missing_case_ids_on_phone
 
-    return HttpResponse(status=201)
+    def cases_have_been_modified_since_last_synclog_date():
+        if get_synclog(request.last_sync_token):
+            synclog = get_synclog(request.last_sync_token)
+            return bool(CommCareCase.objects.get_modified_case_ids(domain, case_ids, synclog))
+
+    if case_ids_to_claim:
+        return HttpResponse(status=201)
+
+    if not phone_holds_all_cases(request):
+        return HttpResponse(status=201)
+
+    if cases_have_been_modified_since_last_synclog_date():
+        return HttpResponse(status=201)
+
+    return HttpResponse(status=204)
 
 
 def get_restore_params(request, domain):
