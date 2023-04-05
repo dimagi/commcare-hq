@@ -18,7 +18,6 @@ from corehq.apps.case_importer.util import (
     get_spreadsheet,
     open_spreadsheet_download_ref,
 )
-from corehq.apps.case_importer.const import ALL_CASE_TYPE_IMPORT
 
 
 class CaseUpload(object):
