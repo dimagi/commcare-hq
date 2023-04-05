@@ -3206,6 +3206,14 @@ msgid ""
 "href='mailto:<%- email %>'><%- email %></a> to change the list of domains."
 msgstr ""
 
+#: corehq/apps/events/static/events/js/event_attendees.js
+msgid "Disable Mobile Worker Attendees"
+msgstr ""
+
+#: corehq/apps/events/static/events/js/event_attendees.js
+msgid "Enable Mobile Worker Attendees"
+msgstr ""
+
 #: corehq/apps/events/static/events/js/new_event.js
 msgid "Possible Attendees"
 msgstr ""

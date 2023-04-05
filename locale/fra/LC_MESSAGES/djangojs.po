@@ -23,7 +23,7 @@ msgstr ""
 "Report-Msgid-Bugs-To: \n"
 "PO-Revision-Date: 2017-07-19 15:34+0000\n"
 "Last-Translator: Tyler Wymer <twymer@dimagi.com>, 2022\n"
-"Language-Team: French (https://www.transifex.com/dimagi/teams/9388/fr/)\n"
+"Language-Team: French (https://app.transifex.com/dimagi/teams/9388/fr/)\n"
 "Language: fr\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
@@ -3241,6 +3241,16 @@ msgid ""
 "hour to take effect. <br>This will affect users with email addresses from "
 "the following domains: <strong><%- domains %></strong><br>Contact <a "
 "href='mailto:<%- email %>'><%- email %></a> to change the list of domains."
+msgstr ""
+
+#: corehq/apps/events/static/events/js/event_attendees.js
+#, fuzzy
+#| msgid "Show Deactivated Mobile Workers"
+msgid "Disable Mobile Worker Attendees"
+msgstr "Montrer Utilisateurs Mobiles Désactivés"
+
+#: corehq/apps/events/static/events/js/event_attendees.js
+msgid "Enable Mobile Worker Attendees"
 msgstr ""
 
 #: corehq/apps/events/static/events/js/new_event.js
