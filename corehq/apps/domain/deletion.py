@@ -380,7 +380,6 @@ DOMAIN_DELETE_OPERATIONS = [
     ModelDeletion('domain', 'TransferDomainRequest', 'domain'),
     ModelDeletion('export', 'EmailExportWhenDoneRequest', 'domain'),
     ModelDeletion('export', 'LedgerSectionEntry', 'domain'),
-    ModelDeletion('export', 'IncrementalExport', 'domain', ['IncrementalExportCheckpoint']),
     CustomDeletion('export', _delete_data_files, []),
     ModelDeletion('locations', 'LocationFixtureConfiguration', 'domain'),
     ModelDeletion('ota', 'MobileRecoveryMeasure', 'domain'),

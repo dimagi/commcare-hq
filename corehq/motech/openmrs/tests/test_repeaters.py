@@ -391,10 +391,9 @@ class CaseLocationTests(LocationHierarchyTestCase):
     @classmethod
     def setUpClass(cls):
         cls.openmrs_capetown_uuid = '50017a7f-296d-4ab9-8d3a-b9498bcbf385'
-        cls.conn = ConnectionSettings.objects.create(domain=cls.domain, url="http://url.com")
         with mock.patch('corehq.apps.locations.document_store.publish_location_saved', mock.Mock()):
             super(CaseLocationTests, cls).setUpClass()
-
+            cls.conn = ConnectionSettings.objects.create(domain=cls.domain, url="http://url.com")
             cape_town = cls.locations['Cape Town']
             cape_town.metadata[LOCATION_OPENMRS_UUID] = cls.openmrs_capetown_uuid
             cape_town.save()

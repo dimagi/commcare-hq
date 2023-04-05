@@ -123,8 +123,6 @@ UNKNOWN_MODELS = {
     "data_interfaces.CaseDuplicate",
     "dhis2.SQLDataSetMap",
     "dhis2.SQLDataValueMap",
-    "export.IncrementalExport",
-    "export.IncrementalExportCheckpoint",
     "fhir.FHIRImportConfig",
     "fhir.FHIRImportResourceProperty",
     "fhir.FHIRImportResourceType",

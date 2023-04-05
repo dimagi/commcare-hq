@@ -56,7 +56,7 @@ class TestDeleteOldRequestLogs(TestCase):
         log.timestamp = datetime.utcnow() - timedelta(days=91)
         log.save()
 
-        with self.assertNumQueries(5):
+        with self.assertNumQueries(3):
             delete_old_request_logs.apply()
 
     def test_num_queries_chunked(self):
@@ -66,7 +66,7 @@ class TestDeleteOldRequestLogs(TestCase):
             log.save()
 
         with patch('corehq.motech.repeaters.tasks.DELETE_CHUNK_SIZE', 2):
-            with self.assertNumQueries(21):
+            with self.assertNumQueries(11):
                 delete_old_request_logs.apply()
 
         count = RequestLog.objects.filter(domain=DOMAIN).count()
