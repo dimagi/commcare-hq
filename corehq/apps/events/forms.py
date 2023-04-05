@@ -96,7 +96,7 @@ class CreateEventForm(forms.Form):
                     crispy.Div(
                         crispy.Field(
                             'tracking_option',
-                            data_bind="checked: trackingOption, attr: {disabled: !showTrackingOptions()}",
+                            data_bind=tracking_option_data_bind,
                         )
                     ),
                     'expected_attendees',
@@ -115,33 +115,26 @@ class CreateEventForm(forms.Form):
         self.fields['start_date'].disabled = not fields_should_be_available['start_date']
         self.fields['attendance_target'].disabled = not fields_should_be_available['attendance_target']
         self.fields['expected_attendees'].disabled = not fields_should_be_available['expected_attendees']
-        self.fields['attendance_takers'].disabled = not fields_should_be_available['attendance_takers']
 
     def determine_field_availability(self, event):
-        availability = {
-            'name': int(True),
-            'start_date': int(True),
-            'end_date': int(True),
-            'attendance_target': int(True),
-            'sameday_reg': int(True),
-            'tracking_option': int(True),
-            'expected_attendees': int(True),
-            'attendance_takers': int(True),
-        }
+        event_not_started = True
+        event_in_progress = False
+        attendees_not_registered = False
 
         if event:
             event_not_started = event.attendee_list_status == NOT_STARTED
             event_in_progress = event.attendee_list_status == IN_PROGRESS
-            availability['name'] = int(event_not_started)
-            availability['start_date'] = int(event_not_started)
-            availability['end_date'] = int(event_not_started or event_in_progress)
-            availability['attendance_target'] = int(event_not_started)
-            availability['sameday_reg'] = int(event_not_started or event_in_progress)
-            availability['tracking_option'] = int(event_not_started)
-            availability['expected_attendees'] = int(event_not_started)
-            availability['attendance_takers'] = int(event_not_started)
+            attendees_not_registered = event.total_attendance == 0
 
-        return availability
+        return {
+            'name': int(event_not_started),
+            'start_date': int(event_not_started),
+            'end_date': int(event_not_started or event_in_progress),
+            'attendance_target': int(event_not_started or (event_in_progress and attendees_not_registered)),
+            'sameday_reg': int(event_not_started or event_in_progress),
+            'tracking_option': int(event_not_started or (event_in_progress and attendees_not_registered)),
+            'expected_attendees': int(event_not_started or (event_in_progress and attendees_not_registered))
+        }
 
     @property
     def current_values(self):
