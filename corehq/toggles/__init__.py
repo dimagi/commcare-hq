@@ -2508,8 +2508,8 @@ FORM_CASE_IDS_CASE_IMPORTER = FrozenPrivilegeToggle(
 EXPORT_MULTISORT = FrozenPrivilegeToggle(
     privileges.EXPORT_MULTISORT,
     'export_multisort',
-    label='Sort multiple rows in exports at once',
+    label='Sort multiple rows in exports simultaneously',
     tag=TAG_SOLUTIONS_OPEN,
     namespaces=[NAMESPACE_DOMAIN],
-    description='Sort multiple rows in exports at once',
+    description='Sort multiple rows in exports simultaneously',
 )

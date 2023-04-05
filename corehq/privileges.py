@@ -231,5 +231,5 @@ class Titles(object):
             REGEX_FIELD_VALIDATION: _("Regular Expression Validation for Custom Data Fields"),
             LOCATION_SAFE_CASE_IMPORTS: _("Location Safe Case Imports"),
             FORM_CASE_IDS_CASE_IMPORTER: _("Download buttons for Form- and Case IDs on Case Importer"),
-            EXPORT_MULTISORT: _("Sort multiple rows in exports at once")
+            EXPORT_MULTISORT: _("Sort multiple rows in exports simultaneously")
         }.get(privilege, privilege)
