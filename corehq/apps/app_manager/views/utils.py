@@ -352,7 +352,10 @@ def update_linked_app(app, master_app_id_or_build, user_id):
         or master_build.version > previous.upstream_version
         or toggles.MULTI_MASTER_LINKED_DOMAINS.enabled(app.domain)
     ):
-        old_multimedia_ids = set([media_info.multimedia_id for path, media_info in app.multimedia_map.items()])
+        old_multimedia_ids = set(
+            [getattr(media_info, 'upstream_media_id', None) or media_info.multimedia_id
+             for path, media_info in app.multimedia_map.items()]
+        )
         report_map = get_static_report_mapping(master_build.domain, app['domain'])
         report_map.update({
             c.report_meta.master_id: c._id

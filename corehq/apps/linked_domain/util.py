@@ -102,6 +102,8 @@ def pull_missing_multimedia_for_app(app, old_multimedia_ids=None, force=False):
         media_to_pull = _get_missing_multimedia(app, old_multimedia_ids)
     remote_details = app.domain_link.remote_details
     fetch_remote_media(app.domain, media_to_pull, remote_details)
+    if force:
+        app.save()
     if toggles.CAUTIOUS_MULTIMEDIA.enabled(app.domain):
         still_missing_media = _get_missing_multimedia(app, old_multimedia_ids)
         if still_missing_media:
