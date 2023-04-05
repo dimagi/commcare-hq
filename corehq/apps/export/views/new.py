@@ -112,21 +112,25 @@ class BaseExportView(BaseProjectDataView):
     @property
     def page_context(self):
         owner_id = self.export_instance.owner_id
-        schema = self.get_export_schema(
-            self.domain,
-            self.request.GET.get('app_id') or getattr(self.export_instance, 'app_id'),
-            self.export_instance.identifier,
+        number_of_apps_to_process = 0
+        is_all_case_types_export = (
+            isinstance(self.export_instance, CaseExportInstance)
+            and self.export_instance.case_type == ALL_CASE_TYPE_EXPORT
         )
+        if not is_all_case_types_export:
+            schema = self.get_export_schema(
+                self.domain,
+                self.request.GET.get('app_id') or getattr(self.export_instance, 'app_id'),
+                self.export_instance.identifier,
+            )
+            number_of_apps_to_process = schema.get_number_of_apps_to_process()
+
         if self.export_instance.owner_id or not self.export_instance._id:
             sharing_options = SharingOption.CHOICES
         else:
             sharing_options = [SharingOption.EDIT_AND_EXPORT]
 
         allow_deid = has_privilege(self.request, privileges.DEIDENTIFIED_DATA)
-
-        is_all_case_types_export = False
-        if isinstance(schema, CaseExportDataSchema):
-            is_all_case_types_export = (schema.case_type == ALL_CASE_TYPE_EXPORT)
 
         return {
             'export_instance': self.export_instance,
@@ -139,7 +143,7 @@ class BaseExportView(BaseProjectDataView):
             'has_other_owner': owner_id and owner_id != self.request.couch_user.user_id,
             'owner_name': WebUser.get_by_user_id(owner_id).username if owner_id else None,
             'format_options': ["xls", "xlsx", "csv"],
-            'number_of_apps_to_process': schema.get_number_of_apps_to_process(),
+            'number_of_apps_to_process': number_of_apps_to_process,
             'sharing_options': sharing_options,
             'terminology': self.terminology,
             'is_all_case_types_export': is_all_case_types_export
