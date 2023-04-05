@@ -103,6 +103,8 @@ LOCATION_SAFE_CASE_IMPORTS = 'location_safe_case_imports'
 
 FORM_CASE_IDS_CASE_IMPORTER = 'form_case_ids_case_importer'
 
+EXPORT_MULTISORT = 'export_multisort'
+
 MAX_PRIVILEGES = [
     LOOKUP_TABLES,
     API_ACCESS,
@@ -157,7 +159,8 @@ MAX_PRIVILEGES = [
     ATTENDANCE_TRACKING,
     REGEX_FIELD_VALIDATION,
     LOCATION_SAFE_CASE_IMPORTS,
-    FORM_CASE_IDS_CASE_IMPORTER
+    FORM_CASE_IDS_CASE_IMPORTER,
+    EXPORT_MULTISORT
 ]
 
 # These are special privileges related to their own rates in a SoftwarePlanVersion
@@ -227,5 +230,6 @@ class Titles(object):
             ATTENDANCE_TRACKING: _("Attendance Tracking"),
             REGEX_FIELD_VALIDATION: _("Regular Expression Validation for Custom Data Fields"),
             LOCATION_SAFE_CASE_IMPORTS: _("Location Safe Case Imports"),
-            FORM_CASE_IDS_CASE_IMPORTER: _("Download buttons for Form- and Case IDs on Case Importer")
+            FORM_CASE_IDS_CASE_IMPORTER: _("Download buttons for Form- and Case IDs on Case Importer"),
+            EXPORT_MULTISORT: _("Sort multiple rows in exports at once")
         }.get(privilege, privilege)
