@@ -507,3 +507,73 @@ def is_username_available(username):
 
     exists = user_exists(username)
     return not exists.exists
+
+
+class SimpleProgressHelper(object):
+
+    def __init__(self, identifier):
+        self.identifier = identifier
+
+    @property
+    def key_expiry(self):
+        return 60 * 60 * 24
+
+    @property
+    def total_key(self):
+        return f'progress-total:{self.identifier}'
+
+    @property
+    def current_key(self):
+        return f'progress-current:{self.identifier}'
+
+    def set_initial(self, total, current=0):
+        cache.set(self.total_key, total)
+        cache.set(
+            self.current_key,
+            current,
+        )
+        self._set_expiry(self.total_key)
+        self._set_expiry(self.current_key)
+
+    def increment(self, increment_value=1):
+        self.set_current(self.current + increment_value)
+
+    def set_current(self, val):
+        cache.set(self.current_key, val)
+
+    @property
+    def total(self):
+        return cache.get(self.total_key)
+
+    @property
+    def current(self):
+        return cache.get(self.current_key)
+
+    @property
+    def percentage_complete(self, decimal_places=1):
+        if not (self.total and self.current):
+            raise ValueError("Both total and current value expected to calculate percentage.")
+
+        if self.total == 0:
+            raise ValueError("Zero denominator. Cannot calculate percentage.")
+        if self.total < self.current:
+            return 100
+
+        return round(
+            (self.current * 100) / self.total,
+            decimal_places
+        )
+
+    @property
+    def is_busy(self):
+        try:
+            return self.percentage_complete < 100
+        except ValueError:
+            return False
+
+    def expire(self):
+        cache.expire(self.total_key, 0)
+        cache.expire(self.current_key, 0)
+
+    def _set_expiry(self, key):
+        cache.expire(key, self.key_expiry)
