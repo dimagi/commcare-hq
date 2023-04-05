@@ -47,6 +47,8 @@ from corehq.util.workbook_reading import (
     valid_extensions,
 )
 from corehq.util.workbook_reading import open_any_workbook
+from corehq.apps.app_manager.dbaccessors import get_case_types_from_apps
+from corehq.apps.data_dictionary.util import get_data_dict_case_types
 
 require_can_edit_data = require_permission(HqPermissions.edit_data)
 
@@ -184,12 +186,16 @@ def _process_file_and_get_upload(uploaded_file_handle, request, domain, max_colu
     case_upload.check_file()
 
     worksheet_titles = _get_workbook_sheet_names(case_upload)
-    case_types_from_apps = sorted(get_case_types_for_domain_es(domain))
+    case_types_from_apps = sorted(get_case_types_from_apps(domain))
+    unrecognized_case_types = sorted([t for t in get_case_types_for_domain_es(domain)
+                                      if t not in case_types_from_apps])
 
     # It is a bulk import if every sheet name is a case type in the project space.
     # This does introduce the limitation that new cases for new case types cannot be bulk imported
     # unless they are first added to an application or the Data Dictionary
-    is_bulk_import = len(set(worksheet_titles) - set(case_types_from_apps)) == 0
+    data_dict_case_types = get_data_dict_case_types(domain)
+    all_case_types = set(case_types_from_apps + unrecognized_case_types) | data_dict_case_types
+    is_bulk_import = len(set(worksheet_titles) - all_case_types) == 0
     columns = []
     try:
         if is_bulk_import:
@@ -200,9 +206,6 @@ def _process_file_and_get_upload(uploaded_file_handle, request, domain, max_colu
         raise ImporterRawError(e) from e
     except ImporterError as e:
         raise ImporterError(e) from e
-
-    unrecognized_case_types = sorted([t for t in get_case_types_for_domain_es(domain)
-                                      if t not in case_types_from_apps])
 
     if len(case_types_from_apps) == 0 and len(unrecognized_case_types) == 0:
         raise ImporterError(_(
