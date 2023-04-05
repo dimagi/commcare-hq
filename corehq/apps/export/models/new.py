@@ -890,12 +890,14 @@ class ExportInstance(BlobMixin, Document):
         instance.app_id = schema.app_id
         instance.schema_id = schema._id
 
+        group_schemas = schema.group_schemas
+        if not group_schemas:
+            return instance
+
         latest_app_ids_and_versions = get_latest_app_ids_and_versions(
             schema.domain,
             getattr(schema, 'app_id', None),
         )
-        group_schemas = schema.group_schemas
-
         for group_schema in group_schemas:
             table = instance.get_table(group_schema.path) or TableConfiguration(
                 path=group_schema.path,
