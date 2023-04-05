@@ -1881,7 +1881,7 @@ class ExportDataSchema(Document):
     def _save_export_schema(current_schema, original_id, original_rev):
         """
         Given a schema object, this function saves the object and ensures that the
-        ID remains the save as the previous save if there existed a previous version.
+        ID remains the same as the previous save if there existed a previous version.
         """
         if original_id and original_rev:
             current_schema._id = original_id
