@@ -1,3 +1,4 @@
+import re
 from functools import wraps
 
 from corehq.apps.userreports.exceptions import BadSpecError
@@ -47,6 +48,10 @@ def in_(input, reference):
     return input in reference
 
 
+def regex_search(input, reference):
+    return bool(re.search(reference, input))
+
+
 OPERATORS = {
     'eq': equal,
     'not_eq': not_equal,
@@ -57,6 +62,7 @@ OPERATORS = {
     'lte': less_than_equal,
     'gt': greater_than,
     'gte': greater_than_equal,
+    'regex': regex_search,
 }
 
 
@@ -70,6 +76,7 @@ OPERATOR_DISPLAY = {
     'less_than_equal': '<=',
     'greater_than': '>',
     'greater_than_equal': '>=',
+    'regex_search': 'regex_search',
 }
 
 
