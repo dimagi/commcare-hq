@@ -43,6 +43,7 @@ hqDefine('data_interfaces/js/case_property_input', [
 
             self.caseTypeObservable = params.caseTypeObservable;
             self.valueObservable = params.valueObservable;
+            self.disabled = initialPageData.get('read_only_mode') || false;
 
             self.allCaseProperties = initialPageData.get("all_case_properties");
             self.casePropertyNames = ko.computed(function () {
@@ -65,7 +66,8 @@ hqDefine('data_interfaces/js/case_property_input', [
           <input type="text"\
                  required\
                  class="textinput form-control"\
-                 data-bind="visible: !showDropdown, value: valueObservable, attr: { placeholder: placeholder }"\
+                 data-bind="visible: !showDropdown, value: valueObservable, disable: disabled,\
+                 attr: { placeholder: placeholder }"\
           />\
         </div>',
     };
