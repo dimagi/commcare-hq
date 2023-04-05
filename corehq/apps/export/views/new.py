@@ -29,6 +29,8 @@ from corehq.apps.export.const import (
     FORM_EXPORT,
     SharingOption,
     PROPERTY_TAG_INFO,
+    ALL_CASE_TYPE_EXPORT,
+    BULK_CASE_EXPORT_CACHE
 )
 from corehq.apps.export.dbaccessors import get_properly_wrapped_export_instance
 from corehq.apps.export.exceptions import (
@@ -48,6 +50,7 @@ from corehq.apps.export.views.utils import (
     DashboardFeedMixin,
     ODataFeedMixin,
     clean_odata_columns,
+    trigger_update_case_instance_tables_task
 )
 from corehq.apps.locations.permissions import location_safe
 from corehq.apps.settings.views import BaseProjectDataView
@@ -121,6 +124,10 @@ class BaseExportView(BaseProjectDataView):
 
         allow_deid = has_privilege(self.request, privileges.DEIDENTIFIED_DATA)
 
+        is_all_case_types_export = False
+        if isinstance(schema, CaseExportDataSchema):
+            is_all_case_types_export = (schema.case_type == ALL_CASE_TYPE_EXPORT)
+
         return {
             'export_instance': self.export_instance,
             'export_home_url': self.export_home_url,
@@ -135,6 +142,7 @@ class BaseExportView(BaseProjectDataView):
             'number_of_apps_to_process': schema.get_number_of_apps_to_process(),
             'sharing_options': sharing_options,
             'terminology': self.terminology,
+            'is_all_case_types_export': is_all_case_types_export
         }
 
     @property
@@ -207,11 +215,14 @@ class BaseExportView(BaseProjectDataView):
             request,
             format_html(_("Export <strong>{}</strong> saved."), export.name)
         )
-        return export._id
+        return export
 
     def post(self, request, *args, **kwargs):
         try:
-            export_id = self.commit(request)
+            export = self.commit(request)
+            if isinstance(export, CaseExportInstance) and export.case_type == ALL_CASE_TYPE_EXPORT:
+                progress_id = f'{BULK_CASE_EXPORT_CACHE}:{request.domain}'
+                trigger_update_case_instance_tables_task(export._id, progress_id)
         except Exception as e:
             if self.is_async:
                 return JsonResponse(data={
@@ -250,6 +261,10 @@ class BaseExportView(BaseProjectDataView):
             identifier,
             only_process_current_builds=True,
         )
+
+    @memoized
+    def get_empty_export_schema(self, domain, identifier):
+        return self.export_schema_cls.generate_empty_schema(domain, identifier)
 
 
 @location_safe
@@ -319,8 +334,15 @@ class CreateNewCustomCaseExportView(BaseExportView):
     def get(self, request, *args, **kwargs):
         case_type = request.GET.get('export_tag').strip('"')
 
+        # Don't add group schemas if doing a bulk case export. There may be a lot of case
+        # types, so rather handle creating the instance tables in an async task on the instance save.
+        schema = None
+        if case_type == ALL_CASE_TYPE_EXPORT:
+            schema = self.get_empty_export_schema(self.domain, case_type)
+        else:
+            schema = self.get_export_schema(self.domain, None, case_type)
+
         export_settings = get_default_export_settings_if_available(self.domain)
-        schema = self.get_export_schema(self.domain, None, case_type)
         self.export_instance = self.create_new_export_instance(
             schema,
             request.user.username,
