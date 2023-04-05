@@ -88,7 +88,9 @@ class EntryInstances(PostProcessor):
 
     IGNORED_INSTANCES = {
         'jr://instance/remote',
+        'jr://instance/remote/remote',
         'jr://instance/search-input',
+        'jr://instance/search-input/search-input',
     }
 
     @time_method()
