@@ -7,7 +7,7 @@ from django.utils.translation import gettext_noop
 from crispy_forms import layout as crispy
 from crispy_forms.layout import Layout
 
-from corehq.apps.events.models import AttendeeCase
+from corehq.apps.events.models import AttendeeCase, IN_PROGRESS, NOT_STARTED
 from corehq.apps.hqwebapp import crispy as hqcrispy
 from corehq.apps.hqwebapp.crispy import HQModalFormHelper
 from corehq.apps.users.dbaccessors import get_all_commcare_users_by_domain
@@ -61,16 +61,23 @@ class CreateEventForm(forms.Form):
 
     def __init__(self, *args, **kwargs):
         self.domain = kwargs.pop('domain', None)
-        event = kwargs.pop('event', None)
+        self.event = kwargs.pop('event', None)
 
-        if event:
-            kwargs['initial'] = self.compute_initial(event)
+        if self.event:
+            kwargs['initial'] = self.compute_initial(self.event)
             self.title_prefix = "Edit"
         else:
             kwargs['initial'] = None
             self.title_prefix = "Add"
 
         super(CreateEventForm, self).__init__(*args, **kwargs)
+
+        fields_should_be_available = self.determine_field_availability(self.event)
+        tracking_option_data_bind = "checked: trackingOption"
+        if fields_should_be_available['tracking_option']:
+            tracking_option_data_bind += ", attr: {disabled: !showTrackingOptions()}"
+        else:
+            tracking_option_data_bind += ", attr: {disabled: true}"
 
         self.helper = hqcrispy.HQFormHelper()
         self.helper.add_layout(
@@ -89,7 +96,7 @@ class CreateEventForm(forms.Form):
                     crispy.Div(
                         crispy.Field(
                             'tracking_option',
-                            data_bind="checked: trackingOption, attr: {disabled: !showTrackingOptions()}",
+                            data_bind=tracking_option_data_bind,
                         )
                     ),
                     'expected_attendees',
@@ -103,6 +110,31 @@ class CreateEventForm(forms.Form):
 
         self.fields['expected_attendees'].choices = self.get_attendee_choices()
         self.fields['attendance_takers'].choices = self._get_possible_attendance_takers_ids()
+
+        self.fields['name'].disabled = not fields_should_be_available['name']
+        self.fields['start_date'].disabled = not fields_should_be_available['start_date']
+        self.fields['attendance_target'].disabled = not fields_should_be_available['attendance_target']
+        self.fields['expected_attendees'].disabled = not fields_should_be_available['expected_attendees']
+
+    def determine_field_availability(self, event):
+        event_not_started = True
+        event_in_progress = False
+        attendees_not_registered = True
+
+        if event:
+            event_not_started = event.attendee_list_status == NOT_STARTED
+            event_in_progress = event.attendee_list_status == IN_PROGRESS
+            attendees_not_registered = event.total_attendance == 0
+
+        return {
+            'name': int(event_not_started),
+            'start_date': int(event_not_started),
+            'end_date': int(event_not_started or event_in_progress),
+            'attendance_target': int(event_not_started or (event_in_progress and attendees_not_registered)),
+            'sameday_reg': int(event_not_started or event_in_progress),
+            'tracking_option': int(event_not_started or (event_in_progress and attendees_not_registered)),
+            'expected_attendees': int(event_not_started or (event_in_progress and attendees_not_registered))
+        }
 
     @property
     def current_values(self):
@@ -148,7 +180,7 @@ class CreateEventForm(forms.Form):
         end_date = cleaned_data.get('end_date')
         today = date.today()
 
-        if today > start_date:
+        if (not self.fields['start_date'].disabled) and today > start_date:
             raise ValidationError(_("You cannot specify the start date in the past"))
 
         if end_date:
