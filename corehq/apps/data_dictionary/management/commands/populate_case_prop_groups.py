@@ -21,7 +21,7 @@ class Command(BaseCommand):
 
 
 def populate_case_prop_groups(domain):
-    filter_kwargs = {"case_type__domain": domain}
+    filter_kwargs = {"case_type__domain": domain, "group_id__isnull": True}
     case_props = CaseProperty.objects.exclude(group__exact="").filter(**filter_kwargs)
 
     for case_prop in case_props:
