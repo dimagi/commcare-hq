@@ -347,6 +347,8 @@ def update_fixture(domain_link, tag, overwrite=False):
     clear_fixture_cache(domain_link.linked_domain)
 
 
+#TODO: Limit the scope of this atomicity. Ideally, we fetch and prep the data prior to entering the atomic block
+@transaction.atomic
 def update_user_roles(domain_link, overwrite=False):
     if domain_link.is_remote:
         upstream_roles = remote_get_user_roles(domain_link)
@@ -373,38 +375,28 @@ def update_user_roles(domain_link, overwrite=False):
 
     # Update downstream roles based on upstream roles
     for upstream_role_def in upstream_roles:
-        role, conflicting_role = _get_matching_downstream_role(upstream_role_def, downstream_roles,
-                                                               ignore_conflicts=overwrite)
-        if conflicting_role:
-            if role and conflicting_role and overwrite:
-                # An edge case where a valid sync was found that conflicted with an existing role's name
-                # We want to rename the synced role
-                next_index = 0
-                while True:
-                    next_index += 1
-                    role_name = f'{conflicting_role.name}({next_index})'
-                    if role_name not in downstream_roles_by_name:
-                        break
+        role, conflicting_role_name = _get_synced_role(
+            upstream_role_def, domain_link.linked_domain, downstream_roles,
+            downstream_roles_by_name, ignore_conflicts=overwrite)
 
-                upstream_role_def['name'] = role_name
-            else:
-                failed_updates.append(upstream_role_def)
-                continue
+        if conflicting_role_name:
+            failed_updates.append(conflicting_role_name)
+            continue
 
-        if not role:
-            role = UserRole(domain=domain_link.linked_domain)
-
-        downstream_roles_by_upstream_id[upstream_role_def['_id']] = role
-
-        _copy_role_attributes(upstream_role_def, role)
         permissions = HqPermissions.wrap(upstream_role_def["permissions"])
         if is_embedded_tableau_enabled:
             permissions.view_tableau_list = _get_new_tableau_report_permissions(
                 visualizations_for_linked_domain, permissions, role.permissions)
         role.save()
         role.set_permissions(permissions.to_list())
-
         successful_updates.append(upstream_role_def)
+        downstream_roles_by_upstream_id[upstream_role_def['_id']] = role
+
+    if failed_updates:
+        conflicting_role_names = ', '.join(['"{}"'.format(name) for name in failed_updates])
+        error_msg = _('Failed to sync the following roles due to a conflict: {}.'
+            ' Please remove or rename these roles before syncing again').format(conflicting_role_names)
+        raise UnsupportedActionError(error_msg)
 
     # Update assignable_by ids - must be done after main update to guarantee all local roles have ids
     for upstream_role_def in successful_updates:
@@ -417,11 +409,35 @@ def update_user_roles(domain_link, overwrite=False):
             ]
         downstream_role.set_assignable_by(assignable_by)
 
-    if failed_updates:
-        conflicting_role_names = ', '.join(['"{}"'.format(role['name']) for role in failed_updates])
-        error_msg = _('Failed to sync the following roles due to a conflict: {}.'
-            ' Please remove or rename these roles before syncing again').format(conflicting_role_names)
-        raise UnsupportedActionError(error_msg)
+
+def _get_synced_role(upstream_role_def, downstream_domain, downstream_roles,
+                     downstream_roles_by_name, ignore_conflicts):
+    role, conflicting_role = _get_matching_downstream_role(upstream_role_def,
+                                                           downstream_roles,
+                                                           ignore_conflicts=ignore_conflicts)
+
+    if conflicting_role and not ignore_conflicts:
+        return (None, upstream_role_def['name'])
+
+    if not role:
+        role = UserRole(domain=downstream_domain)
+
+    _copy_role_attributes(upstream_role_def, role)
+
+    if conflicting_role:
+        role.name = _get_next_free_name(role.name, downstream_roles_by_name)
+
+    return (role, None)
+
+
+def _get_next_free_name(initial_name, existing_names):
+    next_index = 0
+    name = initial_name
+    while name in existing_names:
+        next_index += 1
+        name = f'{initial_name}({next_index})'
+
+    return name
 
 
 def _get_matching_downstream_role(upstream_role_json, downstream_roles, ignore_conflicts=False):
