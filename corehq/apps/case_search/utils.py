@@ -138,10 +138,8 @@ class _RegistryQueryHelper:
     def get_all_related_live_cases(self, initial_cases):
         all_cases = self.registry_helper.get_multi_domain_case_hierarchy(self.couch_user, initial_cases)
         initial_case_ids = {case.case_id for case in initial_cases}
-        result = list({
-            case.case_id: case for case in all_cases if case.case_id not in initial_case_ids
-        }.values())
-        return result
+        return list(case for case in all_cases if case.case_id not in initial_case_ids)
+
 
 class CaseSearchQueryBuilder:
     """Compiles the case search object for the view"""
