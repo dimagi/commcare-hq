@@ -49,7 +49,12 @@ def in_(input, reference):
 
 
 def regex_search(input, reference):
-    return bool(re.search(reference, input))
+    try:
+        regex = re.compile(reference)
+    except re.error:
+        raise BadSpecError(f"Invalid regular expression: {reference}")
+    else:
+        return bool(re.search(regex, input))
 
 
 OPERATORS = {
