@@ -110,9 +110,9 @@ class _QueryHelper:
     def wrap_case(self, es_hit, include_score=False):
         return wrap_case_search_hit(es_hit, include_score=include_score)
 
-    def get_all_related_live_cases(self, cases):
+    def get_all_related_live_cases(self, initial_cases):
         from casexml.apps.phone.data_providers.case.livequery import get_all_related_live_cases
-        case_ids = {case.case_id for case in cases}
+        case_ids = {case.case_id for case in initial_cases}
         return get_all_related_live_cases(self.domain, case_ids)
 
 
@@ -131,8 +131,13 @@ class _RegistryQueryHelper:
         case.case_json[COMMCARE_PROJECT] = case.domain
         return case
 
-    def get_all_related_live_cases(self, cases):
-        return self.registry_helper.get_multi_domain_case_hierarchy(self.couch_user, cases)
+    def get_all_related_live_cases(self, initial_cases):
+        all_cases = self.registry_helper.get_multi_domain_case_hierarchy(self.couch_user, initial_cases)
+        initial_case_ids = {case.case_id for case in initial_cases}
+        result = list({
+            case.case_id: case for case in all_cases if case.case_id not in initial_case_ids
+        }.values())
+        return result
 
 class CaseSearchQueryBuilder:
     """Compiles the case search object for the view"""
@@ -281,11 +286,9 @@ def get_and_tag_related_cases(helper, app_id, case_types, cases,
 
     unfiltered_results = expanded_case_results
     top_level_cases = cases + expanded_case_results
-
     related_cases = get_related_cases_result(helper, app, case_types, top_level_cases, include_all_related_cases)
     if related_cases:
         unfiltered_results.extend(related_cases)
-
     initial_case_ids = {case.case_id for case in cases}
     results = list({
         case.case_id: case for case in unfiltered_results if case.case_id not in initial_case_ids
