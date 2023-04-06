@@ -336,6 +336,7 @@ hqDefine("cloudcare/js/form_entry/web_form_session", function () {
                     'oneQuestionPerScreen': oneQuestionPerScreen,
                 }, q.entry.xformParams()),
                 function (resp) {
+                    q.formplayerProcessed = true;
                     $.publish('session.reconcile', [resp, q]);
                     if (self.answerCallback !== undefined) {
                         self.answerCallback(self.session_id);
@@ -346,6 +347,7 @@ hqDefine("cloudcare/js/form_entry/web_form_session", function () {
                 },
                 constants.BLOCK_SUBMIT,
                 function () {
+                    q.formplayerProcessed = false;
                     q.serverError(
                         gettext("We were unable to save this answer. Please try again later."));
                     q.pendingAnswer(constants.NO_PENDING_ANSWER);

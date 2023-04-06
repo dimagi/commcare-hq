@@ -28,6 +28,10 @@ from django_prbac.utils import has_privilege
 from memoized import memoized
 
 from casexml.apps.phone.models import SyncLogSQL
+from corehq.apps.events.models import AttendanceTrackingConfig
+from corehq.apps.events.tasks import get_case_block_for_user
+from corehq.apps.hqcase.utils import submit_case_blocks
+from corehq.apps.events.models import get_attendee_case_type
 from corehq import privileges
 from corehq.apps.accounting.async_handlers import Select2BillingInfoHandler
 from corehq.apps.accounting.decorators import requires_privilege_with_fallback
@@ -761,6 +765,8 @@ class MobileWorkerListView(JSONResponseMixin, BaseUserSettingsView):
                 errors=', '.join(all_errors)
             )}
         couch_user = self._build_commcare_user()
+        self.create_commcare_attendee_case_for_user(mobile_worker_couch_user=couch_user)
+
         if self.new_mobile_worker_form.cleaned_data['send_account_confirmation_email']:
             send_account_confirmation_if_necessary(couch_user)
         if self.new_mobile_worker_form.cleaned_data['force_account_confirmation_by_sms']:
@@ -774,6 +780,28 @@ class MobileWorkerListView(JSONResponseMixin, BaseUserSettingsView):
             'success': True,
             'user_id': couch_user.userID,
         }
+
+    def create_commcare_attendee_case_for_user(self, mobile_worker_couch_user):
+        """Creates a case for the this user to be used for attendance tracking"""
+        has_privilege = domain_has_privilege(self.domain, privileges.ATTENDANCE_TRACKING)
+        # This toggle is temporary and will be removed once the feature is released
+        toggle_enabled = toggles.ATTENDANCE_TRACKING.enabled(self.domain)
+
+        if has_privilege and toggle_enabled:
+            if AttendanceTrackingConfig.mobile_workers_can_be_attendees(domain=self.domain):
+                attendee_case_type = get_attendee_case_type(self.domain)
+                created_by_user_id = self.couch_user.user_id
+                new_case_block = get_case_block_for_user(
+                    mobile_worker_couch_user,
+                    created_by_user_id,
+                    attendee_case_type
+                )
+                return submit_case_blocks(
+                    [new_case_block.as_text()],
+                    domain=self.domain,
+                    user_id=created_by_user_id,
+                    device_id='corehq.apps.users.views.mobile.users.create_commcare_attendee_case_for_user',
+                )
 
     def _build_commcare_user(self):
         username = self.new_mobile_worker_form.cleaned_data['username']

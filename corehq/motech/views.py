@@ -15,7 +15,7 @@ from django_prbac.utils import has_privilege
 from memoized import memoized
 from requests import RequestException
 
-from corehq import privileges, toggles
+from corehq import privileges
 from corehq.apps.domain.decorators import login_or_api_key
 from corehq.apps.domain.views.settings import BaseProjectSettingsView
 from corehq.apps.hqwebapp.doc_info import get_doc_info
@@ -179,10 +179,7 @@ class ConnectionSettingsListView(BaseProjectSettingsView, CRUDPaginatedViewMixin
 
     @method_decorator(require_permission(HqPermissions.edit_motech))
     def dispatch(self, request, *args, **kwargs):
-        if (
-            toggles.INCREMENTAL_EXPORTS.enabled_for_request(request)
-            or has_privilege(request, privileges.DATA_FORWARDING)
-        ):
+        if has_privilege(request, privileges.DATA_FORWARDING):
             return super().dispatch(request, *args, **kwargs)
         raise Http404()
 
@@ -260,10 +257,7 @@ class ConnectionSettingsDetailView(BaseProjectSettingsView, ModelFormMixin, Proc
 
     @method_decorator(require_permission(HqPermissions.edit_motech))
     def dispatch(self, request, *args, **kwargs):
-        if (
-            toggles.INCREMENTAL_EXPORTS.enabled_for_request(request)
-            or has_privilege(request, privileges.DATA_FORWARDING)
-        ):
+        if has_privilege(request, privileges.DATA_FORWARDING):
             return super().dispatch(request, *args, **kwargs)
         raise Http404()
 
@@ -298,10 +292,7 @@ class ConnectionSettingsDetailView(BaseProjectSettingsView, ModelFormMixin, Proc
 @require_POST
 @require_permission(HqPermissions.edit_motech)
 def test_connection_settings(request, domain):
-    if not (
-        toggles.INCREMENTAL_EXPORTS.enabled_for_request(request)
-        or has_privilege(request, privileges.DATA_FORWARDING)
-    ):
+    if not has_privilege(request, privileges.DATA_FORWARDING):
         raise Http404
 
     # If auth_type is set to None, we ignore this check

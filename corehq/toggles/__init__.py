@@ -1012,15 +1012,18 @@ WEBAPPS_STICKY_SEARCH = StaticToggle(
 )
 
 
-def _enable_search_index(domain, enabled):
+def _ensure_search_index_is_enabled(domain, enabled):
     from corehq.apps.case_search.tasks import reindex_case_search_for_domain
     from corehq.apps.es import CaseSearchES
-    from corehq.pillows.case_search import domains_needing_search_index
-    domains_needing_search_index.clear()
+    from corehq.pillows.case_search import domain_needs_search_index
+    from corehq.apps.case_search.models import DomainsNotInCaseSearchIndex
+
+    if enabled and DomainsNotInCaseSearchIndex.objects.filter(domain=domain).exists():
+        DomainsNotInCaseSearchIndex.objects.filter(domain=domain).delete()
+        domain_needs_search_index.clear(domain)
 
     has_case_search_cases = CaseSearchES().domain(domain).count() > 0
     if enabled and not has_case_search_cases:
-        # action is not reversible, we want all projects here eventually
         reindex_case_search_for_domain.delay(domain)
 
 
@@ -1029,7 +1032,7 @@ CASE_LIST_EXPLORER = StaticToggle(
     'Show the case list explorer report',
     TAG_SOLUTIONS_OPEN,
     namespaces=[NAMESPACE_DOMAIN],
-    save_fn=_enable_search_index,
+    save_fn=_ensure_search_index_is_enabled,
 )
 
 EXPLORE_CASE_DATA = StaticToggle(
@@ -1077,7 +1080,7 @@ CASE_API_V0_6 = StaticToggle(
     'Enable the v0.6 Case API',
     TAG_SOLUTIONS_LIMITED,
     namespaces=[NAMESPACE_DOMAIN],
-    save_fn=_enable_search_index,
+    save_fn=_ensure_search_index_is_enabled,
 )
 
 HIPAA_COMPLIANCE_CHECKBOX = StaticToggle(
@@ -1554,14 +1557,6 @@ PAGINATED_EXPORTS = StaticToggle(
     [NAMESPACE_DOMAIN]
 )
 
-INCREMENTAL_EXPORTS = StaticToggle(
-    'incremental_exports',
-    'Allows sending of incremental CSV exports to a particular endpoint',
-    TAG_CUSTOM,
-    [NAMESPACE_DOMAIN],
-    help_link="https://confluence.dimagi.com/display/saas/Incremental+Data+Exports"
-)
-
 CLEAR_MOBILE_WORKER_DATA = StaticToggle(
     'clear_mobile_worker_data',
     "Allows a web user to clear mobile workers' data",
@@ -2036,14 +2031,6 @@ CHANGE_FORM_LANGUAGE = StaticToggle(
     help_link="https://confluence.dimagi.com/display/saas/Change+Form+Language"
 )
 
-APP_ANALYTICS = StaticToggle(
-    'app_analytics',
-    'Allow user to use app analytics in web apps',
-    TAG_CUSTOM,
-    namespaces=[NAMESPACE_DOMAIN],
-    help_link="https://confluence.dimagi.com/display/saas/App+Analytics",
-)
-
 BLOCKED_EMAIL_DOMAIN_RECIPIENTS = StaticToggle(
     'blocked_email_domain_recipients',
     'Block any outgoing email addresses that have an email domain which '
@@ -2367,7 +2354,8 @@ TABLEAU_USER_SYNCING = StaticToggle(
     Each time a user is added/deleted/updated on HQ, an equivalent Tableau user with the username "HQ/{username}"
     will be added/deleted/updated on the linked Tableau server.
     """,
-    parent_toggles=[EMBEDDED_TABLEAU, EMBED_TABLEAU_REPORT_BY_USER]
+    parent_toggles=[EMBED_TABLEAU_REPORT_BY_USER],
+    help_link='https://confluence.dimagi.com/display/USH/Tableau+User+Syncing',
 )
 
 

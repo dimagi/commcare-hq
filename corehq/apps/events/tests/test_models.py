@@ -1,6 +1,6 @@
 import doctest
 from contextlib import contextmanager
-from datetime import datetime
+from datetime import datetime, timedelta
 from uuid import UUID, uuid4
 
 from django.test import TestCase
@@ -54,6 +54,11 @@ class TestAttendeeCaseManager(TestCase):
         with self.get_attendee_cases() as (open_case, closed_case):
             cases = AttendeeCase.objects.by_domain(DOMAIN)
             self.assertEqual(cases, [open_case])
+
+    def test_manager_returns_closed_cases_as_well(self):
+        with self.get_attendee_cases() as (open_case, closed_case):
+            cases = AttendeeCase.objects.by_domain(DOMAIN, include_closed=True)
+            self.assertEqual(cases, [open_case, closed_case])
 
 
 class TestEventModel(TestCase):
@@ -114,12 +119,12 @@ class TestEventModel(TestCase):
             mobile_worker.delete(None, None)
 
     def test_create_event(self):
-        today = datetime.utcnow().date()
+        tomorrow = (datetime.utcnow() + timedelta(days=1)).date()
         event = Event(
             domain=DOMAIN,
             name='test-event',
-            start_date=today,
-            end_date=today,
+            start_date=tomorrow,
+            end_date=tomorrow,
             attendance_target=10,
             sameday_reg=True,
             track_each_day=False,
@@ -130,6 +135,25 @@ class TestEventModel(TestCase):
         self.assertEqual(event.status, NOT_STARTED)
         self.assertEqual(event.is_open, True)
         self.assertTrue(event.event_id is not None)
+
+    def test_create_event_with_no_end_date(self):
+        tomorrow = (datetime.utcnow() + timedelta(days=1)).date()
+        event = Event(
+            domain=DOMAIN,
+            name='test-event',
+            start_date=tomorrow,
+            end_date=None,
+            attendance_target=10,
+            sameday_reg=True,
+            track_each_day=False,
+            manager_id=self.webuser.user_id,
+        )
+        event.save()
+
+        self.assertEqual(event.status, NOT_STARTED)
+        self.assertEqual(event.is_open, True)
+        self.assertTrue(event.event_id is not None)
+        self.assertTrue(event.end_date is None)
 
     def test_create_event_with_attendees(self):
         with self._get_attendee('signmeup') as attendee:
@@ -192,6 +216,31 @@ class TestEventModel(TestCase):
                 {a.case_id for a in event.get_expected_attendees()},
                 {attendee1.case_id, attendee3.case_id}
             )
+
+    def test_mark_attendance(self):
+        def test_update_event_attendees(self):
+            with self._get_attendee('att1') as attendee1, \
+                    self._get_attendee('att2') as attendee2, \
+                    self._get_attendee('att3') as attendee3:
+
+                today = datetime.utcnow().date()
+                event = Event(
+                    domain=DOMAIN,
+                    name='test-event',
+                    start_date=today,
+                    end_date=today,
+                    attendance_target=10,
+                    sameday_reg=True,
+                    track_each_day=False,
+                    manager_id=self.webuser.user_id,
+                )
+                event.save()
+                event.set_expected_attendees([attendee1, attendee2, attendee3])
+                event.mark_attendance([attendee1, attendee2], datetime.utcnow())
+                self.assertEqual(
+                    set(event.get_attended_attendees()),
+                    {attendee1, attendee2}
+                )
 
     def test_delete_event_removes_attendees_cases(self):
         with self._get_attendee('attendee_to_remove') as attendee:

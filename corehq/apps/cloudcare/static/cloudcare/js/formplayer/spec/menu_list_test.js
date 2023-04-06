@@ -8,7 +8,6 @@ describe('Render a case list', function () {
         hqImport("hqwebapp/js/initial_page_data").register(
             "toggles_dict",
             {
-                APP_ANALYTICS: true,
                 CHANGE_FORM_LANGUAGE: false,
             }
         );

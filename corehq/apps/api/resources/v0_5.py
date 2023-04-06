@@ -778,7 +778,8 @@ class UserDomainsResource(CorsResourceMixin, Resource):
             if isinstance(immediate_http_response.response, HttpUnauthorized):
                 raise ImmediateHttpResponse(
                     response=HttpUnauthorized(
-                        content='Username or API Key is incorrect', content_type='text/plain'
+                        content='Username or API Key is incorrect, expired or deactivated',
+                        content_type='text/plain'
                     )
                 )
             else:

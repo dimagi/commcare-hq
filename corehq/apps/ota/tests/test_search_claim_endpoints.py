@@ -26,7 +26,6 @@ from corehq.apps.users.models import CommCareUser
 from corehq.form_processor.models import CommCareCase
 from corehq.pillows.case_search import (
     CaseSearchReindexerFactory,
-    domains_needing_search_index,
 )
 from corehq.util.test_utils import flag_enabled
 
@@ -77,7 +76,6 @@ class CaseClaimEndpointTests(TestCase):
             update={'opened_by': OWNER_ID},
         ).as_text(), domain=DOMAIN)
         self.case_ids = set([self.case_id, self.additional_case_id])
-        domains_needing_search_index.clear()
         CaseSearchReindexerFactory(domain=DOMAIN).build().reindex()
         manager.index_refresh(case_search_adapter.index_name)
         self.client = Client()
