@@ -1,16 +1,40 @@
-import inspect
-import json
-
 from corehq.motech.generic_inbound.middleware.hl7 import hl7_str_to_dict
 
 # https://confluence.hl7.org/display/OO/v2+Sample+Messages
-test_message = inspect.cleandoc("""
-    MSH|^~\&|ADT1|GOOD HEALTH HOSPITAL|GHH LAB, INC.|GOOD HEALTH HOSPITAL|198808181126|SECURITY|ADT^A01^ADT_A01|MSG00001|P|2.8||
-    EVN|A01|200708181123||
-    PID|1||PATID1234^5^M11^ADT1^MR^GOOD HEALTH HOSPITAL~123456789^^^USSSA^SS||EVERYMAN^ADAM^A^III||19610615|M||C|2222 HOME STREET^^GREENSBORO^NC^27401-1020|GL|(555) 555-2004|(555)555-2004||S||PATID12345001^2^M10^ADT1^AN^A|444333333|987654^NC|
-    NK1|1|NUCLEAR^NELDA^W|SPO^SPOUSE||||NK^NEXT OF KIN
-    PV1|1|I|2000^2012^01||||004777^ATTEND^AARON^A|||SUR||||ADM|A0|""")
+msh = "MSH|^~\\&|ADT1|GOOD HEALTH HOSPITAL|GHH LAB, INC.|GOOD HEALTH HOSPITAL|198808181126|SECURITY|" \
+      "ADT^A01^ADT_A01|MSG00001|P|2.8||"
 
-
-hl7_dict = hl7_str_to_dict(test_message, False)
-print(json.dumps(hl7_dict, indent=2))
+# I'm not 100% sure this will always match the XML
+hl7_dict = hl7_str_to_dict(msh, False)
+assert hl7_dict == {
+    "MSH": {
+        "MSH.1": "|",
+        "MSH.2": "^~\\&",
+        "MSH.3": {
+            "HD.1": "ADT1"
+        },
+        "MSH.4": {
+            "HD.1": "GOOD HEALTH HOSPITAL"
+        },
+        "MSH.5": {
+            "HD.1": "GHH LAB, INC."
+        },
+        "MSH.6": {
+            "HD.1": "GOOD HEALTH HOSPITAL"
+        },
+        "MSH.7": "198808181126",
+        "MSH.8": "SECURITY",
+        "MSH.9": {
+            "MSG.1": "ADT",
+            "MSG.2": "A01",
+            "MSG.3": "ADT_A01"
+        },
+        "MSH.10": "MSG00001",
+        "MSH.11": {
+            "PT.1": "P"
+        },
+        "MSH.12": {
+            "VID.1": "2.8"
+        }
+    }
+}
