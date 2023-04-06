@@ -273,7 +273,7 @@ class Event(models.Model):
             case_structures.append(CaseStructure(
                 indices=self._get_host_indices(event_host, attendee_host),
                 attrs={
-                    'case_type': EVENT_ATTENDEE_CASE_TYPE,
+                    'case_type': ATTENDEE_DATE_CASE_TYPE,
                     'owner_id': self.group_id,
                     'create': True,
                     'update': {

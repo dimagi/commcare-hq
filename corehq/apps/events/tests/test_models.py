@@ -218,29 +218,28 @@ class TestEventModel(TestCase):
             )
 
     def test_mark_attendance(self):
-        def test_update_event_attendees(self):
-            with self._get_attendee('att1') as attendee1, \
-                    self._get_attendee('att2') as attendee2, \
-                    self._get_attendee('att3') as attendee3:
+        with self._get_attendee('att1') as attendee1, \
+                self._get_attendee('att2') as attendee2, \
+                self._get_attendee('att3') as attendee3:
 
-                today = datetime.utcnow().date()
-                event = Event(
-                    domain=DOMAIN,
-                    name='test-event',
-                    start_date=today,
-                    end_date=today,
-                    attendance_target=10,
-                    sameday_reg=True,
-                    track_each_day=False,
-                    manager_id=self.webuser.user_id,
-                )
-                event.save()
-                event.set_expected_attendees([attendee1, attendee2, attendee3])
-                event.mark_attendance([attendee1, attendee2], datetime.utcnow())
-                self.assertEqual(
-                    set(event.get_attended_attendees()),
-                    {attendee1, attendee2}
-                )
+            today = datetime.utcnow().date()
+            event = Event(
+                domain=DOMAIN,
+                name='test-event',
+                start_date=today,
+                end_date=today,
+                attendance_target=10,
+                sameday_reg=True,
+                track_each_day=False,
+                manager_id=self.webuser.user_id,
+            )
+            event.save()
+            event.set_expected_attendees([attendee1, attendee2, attendee3])
+            event.mark_attendance([attendee1, attendee2], datetime.utcnow())
+            self.assertEqual(
+                set(event.get_attended_attendees()),
+                {attendee1, attendee2}
+            )
 
     def test_delete_event_removes_attendees_cases(self):
         with self._get_attendee('attendee_to_remove') as attendee:
