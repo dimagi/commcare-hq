@@ -210,8 +210,8 @@ class Event(models.Model):
     def _get_attendee_cases_related_to(self, case_type):
         # Attendee cases are associated with one or more Events using
         # extension cases. The extension cases have case types
-        # EVENT_ATTENDEE_CASE_TYPE ('commcare-potential-attendee').
-        # ATTENDEE_DATE_CASE_TYPE ('commcare-attendance-date')
+        # EVENT_ATTENDEE_CASE_TYPE ('commcare-potential-attendee') or
+        # ATTENDEE_DATE_CASE_TYPE ('commcare-attendance-date').
         #
         # The extension cases are owned by the Event's case-sharing
         # group so that all mobile workers in the group get the attendee
@@ -241,8 +241,7 @@ class Event(models.Model):
         IDs.
         """
         self.get_expected_attendees.clear(self)
-
-        self._close_ext_cases()
+        self._close_ext_cases(case_type=EVENT_ATTENDEE_CASE_TYPE)
 
         attendee_case_ids = (c if isinstance(c, str) else c.case_id
                              for c in attendee_cases)
@@ -264,6 +263,7 @@ class Event(models.Model):
         # Creates ATTENDEE_DATE_CASE_TYPE extension cases for this event
         #   and the given attendee_cases. Also sets the
         #   ATTENDED_DATE_CASE_PROPERTY property to given attended_datetime
+        self.get_attended_attendees.clear(self)
         attendee_case_ids = (c if isinstance(c, str) else c.case_id
                              for c in attendee_cases)
         case_structures = []
@@ -312,11 +312,18 @@ class Event(models.Model):
         )
         return CommCareCase.objects.get_cases(ext_case_ids, self.domain)
 
-    def _close_ext_cases(self):
+    def _close_ext_cases(self, case_type=None):
+        if case_type:
+            case_types = {ATTENDEE_DATE_CASE_TYPE, EVENT_ATTENDEE_CASE_TYPE}
+            case_types.remove(case_type)
+            excl_case_type = case_types.pop()
+        else:
+            excl_case_type = None
         ext_case_ids = CommCareCaseIndex.objects.get_extension_case_ids(
             self.domain,
             [self.case_id],
             include_closed=False,
+            exclude_for_case_type=excl_case_type,
         )
         self._case_factory.create_or_update_cases([
             CaseStructure(case_id=case_id, attrs={'close': True})
