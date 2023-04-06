@@ -85,6 +85,7 @@ pyphonetics
 python-magic
 pyjwt
 PyYAML
+hl7apy
 pyzxcvbn
 qrcode
 quickcache
