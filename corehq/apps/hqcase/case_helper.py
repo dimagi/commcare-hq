@@ -1,18 +1,8 @@
-from couchdbkit import ResourceNotFound
-from jsonschema import validate
-
-from casexml.apps.case.mock import CaseBlock, IndexAttrs
+from dataclasses import dataclass
 
 from corehq.apps.users.models import CouchUser
 
-from .utils import SYSTEM_FORM_XMLNS, submit_case_blocks
-
-case_block_args_case_properties = {
-    'owner_id',
-    'external_id',
-    'case_type',
-    'case_name',
-}
+from .api.updates import handle_case_update
 
 
 class CaseHelper:
@@ -20,274 +10,179 @@ class CaseHelper:
     CaseHelper aims to offer a simple interface for simple operations on
     cases.
 
-    Initialize ``CaseHelper`` with an existing case::
+    Initialize ``CaseHelper`` with an existing case ... ::
 
-        helper = CaseHelper(case)
+        domain = 'hawaiian-mythology'
+        helper = CaseHelper(case=case, domain=domain)
 
-    Or create a case using data in the format returned by
-    ``CommCareCase.to_api_json(lite=True)``::
+    ... or with a case ID::
 
-        helper = CaseHelper()
+        helper = CaseHelper(case_id=case_id, domain=domain)
+
+    Or create a case using data in the format returned by the Case API
+    v0.6 ``serialize_case()`` function::
+
+        helper = CaseHelper(domain=domain)
         helper.create_case({
-            'case_id': uuid4().hex,
             'domain': 'hawaiian-mythology',
-            'properties': {
-                'case_name': 'Namaka',
-                'case_type': 'child',
-            },
+            'case_type': 'child',
+            'case_name': 'Namaka',
         })
 
-    Update the case::
+    Update case properties::
 
-        helper.update(properties={'description': 'Goddess of the sea'})
+        helper.update({'properties': {
+            'description': 'Goddess of the sea',
+        }})
 
     Add an index::
 
-        helper.update(indices={'mother': {
+        helper.update({'indices': {'mother': {
             'case_id': mother.case_id,
             'case_type': mother.type,
             'relationship': 'child',
-        }})
+        }}})
 
     Close the case::
 
         helper.close()
 
     ``create_case()``, ``update()``, and ``close()`` methods all accept
-    ``user_id``, ``device_id`` and ``xmlns`` parameters to identify
-    who/what called the operation. Under the hood, all operations use
-    ``submit_case_blocks()`` to submit forms.
+    ``user_id`` and ``device_id`` parameters to identify who/what called
+    the operation. Under the hood, all operations use the Case API v0.6
+    ``handle_case_update()`` function.
 
     """
 
-    def __init__(self, case=None):
-        self.case = case
+    def __init__(self, *, domain, case=None, case_id=None):
+
+        @dataclass
+        class BriefCase:
+            """Like a CommCareCase, but briefer."""
+            case_id: str
+            domain: str
+
+        if case:
+            assert not case_id or case.case_id == case_id, (
+                '`case.case_id` does not match `case_id`')
+            assert case.domain == domain, (
+                f'`case.domain` {case.domain!r} does not match `domain` '
+                f'{domain!r}')
+
+            self.case = case
+        elif case_id:
+            self.case = BriefCase(case_id=case_id, domain=domain)
+        else:
+            self.case = None
+        self.domain = domain
 
     def create_case(
         self,
-        case_api_json,
+        case_data,
         *,
         user_id=None,
         device_id='corehq.apps.hqcase.case_helper.CaseHelper',
-        xmlns=SYSTEM_FORM_XMLNS,
     ):
-        assert self.case is None, 'CaseHelper.case already exists'
-        validate_case_api_json(case_api_json)
+        assert self.case is None, '`self.case` already exists'
 
-        case_block = self._get_create_case_block(case_api_json)
-        kwargs = self._get_submit_kwargs(user_id)
-        xform, cases = submit_case_blocks(
-            [case_block],
-            case_api_json['domain'],
+        case_data = self._copy_case_data(case_data)
+        user = self._get_user_duck(user_id, self.domain)
+        case_data.setdefault('user_id', user.user_id)
+        case_data.setdefault('owner_id', '')
+        __, self.case = handle_case_update(
+            self.domain,
+            case_data,
+            user=user,
             device_id=device_id,
-            xmlns=xmlns,
-            **kwargs,
+            is_creation=True,
         )
-        (self.case,) = cases
-
-    def _get_create_case_block(self, case_api_json):
-        kwargs = {
-            arg: case_api_json['properties'][arg]
-            for arg in case_block_args_case_properties
-            if arg in case_api_json['properties']
-        }
-        update = {
-            k: v for k, v in case_api_json['properties'].items()
-            if k not in case_block_args_case_properties
-        }
-        if case_api_json.get('indices'):
-            index = {
-                index_id: IndexAttrs(
-                    case_type=attrs['case_type'],
-                    case_id=attrs['case_id'],
-                    relationship=attrs['relationship'],
-                )
-                for index_id, attrs in case_api_json['indices'].items()
-            }
-            kwargs['index'] = index
-        if case_api_json.get('user_id'):
-            kwargs['user_id'] = case_api_json['user_id']
-        if 'closed' in case_api_json:
-            kwargs['close'] = case_api_json['closed']
-
-        case_block = CaseBlock(
-            case_api_json['case_id'],
-            create=True,
-            update=update,
-            domain=case_api_json['domain'],
-            **kwargs,
-        )
-        return case_block.as_text()
 
     def update(
         self,
+        case_data,
         *,
-        properties=None,
-        indices=None,
         user_id=None,
         device_id='corehq.apps.hqcase.case_helper.CaseHelper',
-        xmlns=SYSTEM_FORM_XMLNS,
     ):
-        assert self.case, 'CaseHelper.case is not defined'
+        if not case_data:
+            return
 
-        case_block = self._get_update_case_block(properties, indices, user_id)
-        kwargs = self._get_submit_kwargs(user_id)
-        xform, cases = submit_case_blocks(
-            [case_block],
-            self.case.domain,
+        assert self.case, '`self.case` is not defined'
+
+        case_data = self._copy_case_data(case_data)
+        case_data['case_id'] = self.case.case_id
+        user = self._get_user_duck(user_id, self.domain)
+        case_data.setdefault('user_id', user.user_id)
+        __, self.case = handle_case_update(
+            self.domain,
+            case_data,
+            user=user,
             device_id=device_id,
-            xmlns=xmlns,
-            **kwargs,
+            is_creation=False,
         )
-        (self.case,) = cases
-
-    def _get_update_case_block(self, properties, indices, user_id):
-        if properties:
-            kwargs = {
-                arg: properties[arg]
-                for arg in case_block_args_case_properties
-                if arg in properties
-            }
-            update = {
-                k: v for k, v in properties.items()
-                if k not in case_block_args_case_properties
-            }
-            kwargs['update'] = update
-        else:
-            kwargs = {}
-        if indices:
-            index = {
-                index_id: IndexAttrs(
-                    case_type=attrs['case_type'],
-                    case_id=attrs['case_id'],
-                    relationship=attrs['relationship'],
-                )
-                for index_id, attrs in indices.items()
-            }
-            kwargs['index'] = index
-        if user_id:
-            kwargs['user_id'] = user_id
-
-        case_block = CaseBlock(
-            self.case.case_id,
-            domain=self.case.domain,
-            **kwargs,
-        )
-        return case_block.as_text()
 
     def close(
         self,
         *,
         user_id=None,
         device_id='corehq.apps.hqcase.case_helper.CaseHelper',
-        xmlns=SYSTEM_FORM_XMLNS,
     ):
-        assert self.case, 'CaseHelper.case is not defined'
+        assert self.case, '`self.case` is not defined'
 
-        case_block = CaseBlock(
-            self.case.case_id,
-            close=True,
-        ).as_text()
-        kwargs = self._get_submit_kwargs(user_id)
-        xform, cases = submit_case_blocks(
-            [case_block],
-            self.case.domain,
+        user = self._get_user_duck(user_id, self.domain)
+        case_data = {
+            'case_id': self.case.case_id,
+            'user_id': self.case.user_id or user.user_id,
+            'close': True,
+        }
+        __, self.case = handle_case_update(
+            self.domain,
+            case_data,
+            user=self._get_user_duck(user_id, self.domain),
             device_id=device_id,
-            xmlns=xmlns,
-            **kwargs,
+            is_creation=False,
         )
-        (self.case,) = cases
 
-    def _get_submit_kwargs(self, user_id):
-        kwargs = {}
-        if user_id:
-            kwargs['user_id'] = user_id
-            try:
-                user = CouchUser.get(user_id)
-                kwargs['username'] = user.username
-            except ResourceNotFound:
-                pass
-        return kwargs
+    @staticmethod
+    def _copy_case_data(case_data):
+        """
+        Given the output of Case API v0.6's ``serialize_case()``,
+        returns a new dictionary with invalid fields omitted.
 
+        >>> case_data = {'case_id': 'abc123', 'domain': 'test', 'foo': 'bar'}
+        >>> CaseHelper._copy_case_data(case_data)
+        {'foo': 'bar'}
 
-def validate_case_api_json(case_api_json):
-    """
-    Checks whether ``case_api_json`` looks like the output of
-    ``CommCareCase.to_api_json(lite=True)``.
-
-    Raises ``jsonschema.ValidationError`` on failure.
-
-    >>> case_api_json = {
-    ...     'case_id': 'a96b328be74e4cbbbc67b087e2a21bf1',
-    ...     'closed': False,
-    ...     'domain': 'test-domain',
-    ...     'indices': {
-    ...         'mother': {
-    ...             'case_id': '1581a5deeff74ce2910d98e472e6d206',
-    ...             'case_type': 'mother',
-    ...             'relationship': 'child',
-    ...         },
-    ...     },
-    ...     'properties': {
-    ...         'case_name': 'Namaka',
-    ...         'case_type': 'child',
-    ...         'external_id': None,
-    ...     },
-    ...     'user_id': '',
-    ... }
-    >>> validate_case_api_json(case_api_json)
-
-    """
-    schema = {
-        'type': 'object',
-        'properties': {
-            'attachments': {'type': 'object'},
-            'case_id': {'type': 'string'},
-            'closed': {'type': 'boolean'},
-            'date_closed': {'type': ['string', 'null']},
-            'date_modified': {'type': 'string'},
-            'domain': {'type': 'string'},
-            'indices': {
-                'type': 'object',
-                'additionalProperties': {
-                    'type': 'object',
-                    'properties': {
-                        'case_id': {'type': 'string'},
-                        'case_type': {'type': 'string'},
-                        'relationship': {'type': 'string'},
-                    },
-                    'required': [
-                        'case_id',
-                        'case_type',
-                        'relationship',
-                    ],
-                }
-            },
-            'properties': {
-                'type': 'object',
-                'properties': {
-                    'case_name': {'type': 'string'},
-                    'case_type': {'type': 'string'},
-                    'date_opened': {},  # `datetime.datetime`
-                    'external_id': {'type': ['string', 'null']},
-                    'owner_id': {'type': 'string'},
-                },
-                'required': [
-                    'case_name',
-                    'case_type',
-                ],
-            },
-            'server_date_modified': {'type': 'string'},
-            'user_id': {'type': 'string'},
-            'xform_ids': {
-                'type': 'array',
-                'items': {'type': 'string'},
-            },
-        },
-        'required': [
+        """
+        invalid_fields = {
             'case_id',
             'domain',
-            'properties',
-        ],
-    }
-    validate(instance=case_api_json, schema=schema)
+            'closed',
+            'date_closed',
+            'date_opened',
+            'last_modified',
+            'modified_by',
+            'server_last_modified',
+            'indexed_on',
+        }
+        return {k: v for k, v in case_data.items() if k not in invalid_fields}
+
+    @staticmethod
+    def _get_user_duck(user_id, domain):
+
+        @dataclass
+        class UserDuck:
+            """Quacks like a User"""
+            user_id: str
+            username: str
+
+        user_duck = UserDuck(user_id='', username='')
+        if user_id:
+            user_duck.user_id = user_id
+            try:
+                user = CouchUser.get_by_user_id(user_id, domain)
+                if user:
+                    user_duck.username = user.username
+            except CouchUser.AccountTypeError:
+                pass
+        return user_duck
