@@ -292,7 +292,8 @@ class RestoreParams(object):
             include_item_count=False,
             device_id=None,
             app=None,
-            openrosa_version=None):
+            openrosa_version=None,
+            fail_hard=False):
         self.sync_log_id = sync_log_id
         self.version = version
         self.state_hash = state_hash
@@ -301,6 +302,7 @@ class RestoreParams(object):
         self.device_id = device_id
         self.openrosa_version = (LooseVersion(openrosa_version)
             if isinstance(openrosa_version, str) else openrosa_version)
+        self.fail_hard = fail_hard
 
     @property
     def app_id(self):
