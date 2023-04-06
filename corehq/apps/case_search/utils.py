@@ -431,6 +431,6 @@ def _get_case_search_cases(helper, case_ids):
     results = helper.get_base_queryset().case_ids(case_ids).run().hits
     return [helper.wrap_case(result) for result in results]
 
-
+# Warning: '_tag_is_related_case' may cause the relevant user-defined properties to be overwritten.
 def _tag_is_related_case(case):
     case.case_json[IS_RELATED_CASE] = "true"
