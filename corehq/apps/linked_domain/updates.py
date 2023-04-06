@@ -266,12 +266,10 @@ def update_user_roles(domain_link):
         if role.upstream_id:
             local_roles_by_upstream_id[role.upstream_id] = role
 
-    if EMBEDDED_TABLEAU.enabled(domain_link.linked_domain):
+    is_embedded_tableau_enabled = EMBEDDED_TABLEAU.enabled(domain_link.linked_domain)
+    if is_embedded_tableau_enabled:
         visualizations_for_linked_domain = TableauVisualization.objects.filter(
             domain=domain_link.linked_domain)
-        EMBEDDED_TABLEAU_enabled = True
-    else:
-        EMBEDDED_TABLEAU_enabled = False
 
     # Update downstream roles based on upstream roles
     for role_def in master_results:
@@ -287,7 +285,7 @@ def update_user_roles(domain_link):
         role.save()
 
         permissions = HqPermissions.wrap(role_def["permissions"])
-        if EMBEDDED_TABLEAU_enabled:
+        if is_embedded_tableau_enabled:
             permissions.view_tableau_list = _get_new_tableau_report_permissions(
                 visualizations_for_linked_domain, permissions, role.permissions)
         role.set_permissions(permissions.to_list())
