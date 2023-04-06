@@ -334,9 +334,7 @@ class TestGetRelatedCases(BaseCaseSearchTest):
             self.assertEqual(1, max(result_ids.values()), result_ids)  # no duplicates
 
     def _assert_is_only_related_case_tag(self, primary_cases, related_cases):
-        related_case_ids = {case.case_id for case in related_cases}
         for case in primary_cases:
-            if case.case_id in related_case_ids:
-                self.assertEqual(case.case_json[IS_RELATED_CASE], 'true')
-            else:
-                self.assertEqual(hasattr(case.case_json, IS_RELATED_CASE), False)
+            self.assertEqual(hasattr(case.case_json, IS_RELATED_CASE), False)
+        for case in related_cases:
+            self.assertEqual(case.case_json[IS_RELATED_CASE], 'true')
