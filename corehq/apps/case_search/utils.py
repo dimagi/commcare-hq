@@ -57,9 +57,16 @@ def get_case_search_results_from_request(domain, app_id, couch_user, request_dic
 def get_case_search_results(domain, case_types, criteria,
                             app_id=None, couch_user=None, registry_slug=None,
                             custom_related_case_property=None, include_all_related_cases=None):
-
     helper = _get_helper(couch_user, domain, case_types, registry_slug)
 
+    cases = get_primary_case_search_results(helper, domain, case_types, criteria)
+    if app_id:
+        cases.extend(get_and_tag_related_cases(helper, app_id, case_types, cases,
+            custom_related_case_property, include_all_related_cases))
+    return cases
+
+
+def get_primary_case_search_results(helper, domain, case_types, criteria):
     builder = CaseSearchQueryBuilder(domain, case_types, helper.query_domains)
     try:
         search_es = builder.build_query(criteria)
@@ -81,9 +88,6 @@ def get_case_search_results(domain, case_types, criteria,
         raise
 
     cases = [helper.wrap_case(hit, include_score=True) for hit in hits]
-    if app_id:
-        cases.extend(get_and_tag_related_cases(helper, app_id, case_types, cases,
-            custom_related_case_property, include_all_related_cases))
     return cases
 
 
