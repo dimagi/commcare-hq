@@ -219,15 +219,12 @@ class Event(models.Model):
 
         # CommCareCaseIndex.objects.get_extension_case_ids only supports
         #   fetching by exclude_for_case_type, so fetch by exclusion
-        ext_cases = self._get_ext_cases()
-
         attendee_case_type = get_attendee_case_type(self.domain)
         attendee_cases = []
-        for case in ext_cases:
-            if case.type == case_type:
-                for index in case.indices:
-                    if index.referenced_type == attendee_case_type:
-                        attendee_cases.append(index.referenced_case)
+        for case in self._get_ext_cases(case_type):
+            for index in case.indices:
+                if index.referenced_type == attendee_case_type:
+                    attendee_cases.append(index.referenced_case)
         return attendee_cases
 
     def set_expected_attendees(self, attendee_cases):
@@ -297,7 +294,7 @@ class Event(models.Model):
             ),
         ]
 
-    def _get_ext_cases(self):
+    def _get_ext_cases(self, case_type=None):
         """
         Returns this Event's open extension cases.
         """
@@ -305,19 +302,17 @@ class Event(models.Model):
             self.domain,
             [self.case_id],
             include_closed=False,
+            case_type=case_type,
         )
         return CommCareCase.objects.get_cases(ext_case_ids, self.domain)
 
     def _close_ext_cases(self, case_type=None):
-        if case_type:
-            ext_cases = self._get_ext_cases()
-            ext_case_ids = [c.case_id for c in ext_cases if c.type == case_type]
-        else:
-            ext_case_ids = CommCareCaseIndex.objects.get_extension_case_ids(
-                self.domain,
-                [self.case_id],
-                include_closed=False,
-            )
+        ext_case_ids = CommCareCaseIndex.objects.get_extension_case_ids(
+            self.domain,
+            [self.case_id],
+            include_closed=False,
+            case_type=case_type,
+        )
         self._case_factory.create_or_update_cases([
             CaseStructure(case_id=case_id, attrs={'close': True})
             for case_id in ext_case_ids
