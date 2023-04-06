@@ -92,7 +92,7 @@ redis
 reportlab
 requests_oauthlib
 requests_toolbelt
-requests
+requests>=2.26.0
 schema
 sentry-sdk
 sh
