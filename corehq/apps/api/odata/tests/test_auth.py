@@ -4,18 +4,19 @@ from django.urls import reverse
 from unittest import mock
 
 from corehq.apps.domain.models import Domain
+from corehq.apps.es.tests.utils import es_test
+from corehq.apps.es.cases import case_adapter
 from corehq.apps.export.models import CaseExportInstance, TableConfiguration
-from corehq.util.test_utils import flag_disabled, flag_enabled
+from corehq.util.test_utils import flag_enabled
 
 from ..views import ODataCaseMetadataView
 from .utils import (
     CaseOdataTestMixin,
-    ensure_es_case_index_deleted,
     generate_api_key_from_web_user,
-    setup_es_case_index,
 )
 
 
+@es_test(requires=[case_adapter], setup_class=True)
 @mock.patch('corehq.apps.api.odata.views.get_document_or_404', new=mock.MagicMock)
 class TestOdataAuth(TestCase, CaseOdataTestMixin):
 
@@ -26,11 +27,9 @@ class TestOdataAuth(TestCase, CaseOdataTestMixin):
         super(TestOdataAuth, cls).setUpClass()
         cls._set_up_class()
         cls._setup_accounting()
-        setup_es_case_index()
 
     @classmethod
     def tearDownClass(cls):
-        ensure_es_case_index_deleted()
         cls._teardownclass()
         cls._teardown_accounting()
         super(TestOdataAuth, cls).tearDownClass()

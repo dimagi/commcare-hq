@@ -1,6 +1,7 @@
 import doctest
 from contextlib import contextmanager
-from datetime import datetime
+from datetime import datetime, timedelta
+from uuid import UUID, uuid4
 
 from django.test import TestCase
 
@@ -8,6 +9,7 @@ from casexml.apps.case.mock import CaseFactory, CaseStructure
 
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.users.models import CommCareUser, WebUser
+from corehq.form_processor.exceptions import CaseNotFound
 from corehq.form_processor.models import CommCareCase, CommCareCaseIndex
 from corehq.util.test_utils import create_test_case
 
@@ -52,6 +54,11 @@ class TestAttendeeCaseManager(TestCase):
         with self.get_attendee_cases() as (open_case, closed_case):
             cases = AttendeeCase.objects.by_domain(DOMAIN)
             self.assertEqual(cases, [open_case])
+
+    def test_manager_returns_closed_cases_as_well(self):
+        with self.get_attendee_cases() as (open_case, closed_case):
+            cases = AttendeeCase.objects.by_domain(DOMAIN, include_closed=True)
+            self.assertEqual(cases, [open_case, closed_case])
 
 
 class TestEventModel(TestCase):
@@ -112,12 +119,12 @@ class TestEventModel(TestCase):
             mobile_worker.delete(None, None)
 
     def test_create_event(self):
-        today = datetime.utcnow().date()
+        tomorrow = (datetime.utcnow() + timedelta(days=1)).date()
         event = Event(
             domain=DOMAIN,
             name='test-event',
-            start_date=today,
-            end_date=today,
+            start_date=tomorrow,
+            end_date=tomorrow,
             attendance_target=10,
             sameday_reg=True,
             track_each_day=False,
@@ -128,6 +135,25 @@ class TestEventModel(TestCase):
         self.assertEqual(event.status, NOT_STARTED)
         self.assertEqual(event.is_open, True)
         self.assertTrue(event.event_id is not None)
+
+    def test_create_event_with_no_end_date(self):
+        tomorrow = (datetime.utcnow() + timedelta(days=1)).date()
+        event = Event(
+            domain=DOMAIN,
+            name='test-event',
+            start_date=tomorrow,
+            end_date=None,
+            attendance_target=10,
+            sameday_reg=True,
+            track_each_day=False,
+            manager_id=self.webuser.user_id,
+        )
+        event.save()
+
+        self.assertEqual(event.status, NOT_STARTED)
+        self.assertEqual(event.is_open, True)
+        self.assertTrue(event.event_id is not None)
+        self.assertTrue(event.end_date is None)
 
     def test_create_event_with_attendees(self):
         with self._get_attendee('signmeup') as attendee:
@@ -190,6 +216,31 @@ class TestEventModel(TestCase):
                 {a.case_id for a in event.get_expected_attendees()},
                 {attendee1.case_id, attendee3.case_id}
             )
+
+    def test_mark_attendance(self):
+        def test_update_event_attendees(self):
+            with self._get_attendee('att1') as attendee1, \
+                    self._get_attendee('att2') as attendee2, \
+                    self._get_attendee('att3') as attendee3:
+
+                today = datetime.utcnow().date()
+                event = Event(
+                    domain=DOMAIN,
+                    name='test-event',
+                    start_date=today,
+                    end_date=today,
+                    attendance_target=10,
+                    sameday_reg=True,
+                    track_each_day=False,
+                    manager_id=self.webuser.user_id,
+                )
+                event.save()
+                event.set_expected_attendees([attendee1, attendee2, attendee3])
+                event.mark_attendance([attendee1, attendee2], datetime.utcnow())
+                self.assertEqual(
+                    set(event.get_attended_attendees()),
+                    {attendee1, attendee2}
+                )
 
     def test_delete_event_removes_attendees_cases(self):
         with self._get_attendee('attendee_to_remove') as attendee:
@@ -284,7 +335,7 @@ class TestCaseSharingGroup(TestCase):
         with self._get_event([self.commcare_user.user_id]) as event:
             groups = list(get_user_case_sharing_groups_for_events(self.commcare_user))
             self.assertEqual(len(groups), 1)
-            self.assertEqual(groups[0]._id, event.event_id)
+            self.assertEqual(groups[0]._id, event.group_id)
             self.assertEqual(groups[0].name, f"{event.name} Event")
 
     def test_no_user_case_sharing_groups_for_events(self):
@@ -315,6 +366,69 @@ class GetAttendeeCaseTypeTest(TestCase):
             yield
         finally:
             config.delete()
+
+
+class EventCaseTests(TestCase):
+
+    def setUp(self):
+        today = datetime.utcnow().date()
+        self.event = Event(
+            name='Test Event',
+            domain=DOMAIN,
+            start_date=today,
+            end_date=today,
+            attendance_target=0,
+        )
+        self.event.save()
+
+    def tearDown(self):
+        try:
+            self.event.delete()
+        except AssertionError:
+            pass  # self.event is already deleted
+
+    def test_case(self):
+        with self.assertRaises(CaseNotFound):
+            CommCareCase.objects.get_case(self.event.case_id, DOMAIN)
+
+        event_case = self.event.case  # Creates case
+        case = CommCareCase.objects.get_case(self.event.case_id, DOMAIN)
+        self.assertEqual(event_case, case)
+
+    def test_delete_with_case(self):
+        __ = self.event.case
+        self.event.delete()
+        case = CommCareCase.objects.get_case(self.event.case_id, DOMAIN)
+        self.assertTrue(case.closed)
+
+    def test_delete_without_case(self):
+        self.event.delete()  # Does not raise error
+
+    def test_default_uuids(self):
+        today = datetime.utcnow().date()
+        unsaved_event = Event(
+            name='Test Event Too',
+            domain=DOMAIN,
+            start_date=today,
+            end_date=today,
+            attendance_target=0,
+        )
+        self.assertIsInstance(unsaved_event.event_id, UUID)
+        self.assertIsInstance(unsaved_event._case_id, UUID)
+
+    def test_uuid_hex_string(self):
+        today = datetime.utcnow().date()
+        case_id_hex_string = uuid4().hex
+        unsaved_event = Event(
+            name='Test Event 33.3',
+            _case_id=case_id_hex_string,
+            domain=DOMAIN,
+            start_date=today,
+            end_date=today,
+            attendance_target=0,
+        )
+        self.assertIsInstance(unsaved_event._case_id, str)
+        self.assertEqual(unsaved_event.case_id, case_id_hex_string)
 
 
 def test_doctests():

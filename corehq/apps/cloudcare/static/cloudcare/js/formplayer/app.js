@@ -199,12 +199,10 @@ hqDefine("cloudcare/js/formplayer/app", function () {
                 CloudcareUtils.showError(message, $("#cloudcare-notifications"), resp.reportToHq);
             }
         };
-        if (Toggles.toggleEnabled('APP_ANALYTICS')) {
-            Kissmetrics.track.event('Viewed Form', {
-                domain: data.domain,
-                name: data.title,
-            });
-        }
+        Kissmetrics.track.event('Viewed Form', {
+            domain: data.domain,
+            name: data.title,
+        });
         data.onsubmit = function (resp) {
             if (resp.status === "success") {
                 var $alert;

@@ -13,9 +13,6 @@ from soil.util import expose_blob_download, process_email_request
 from corehq.apps.celery import periodic_task, task
 from corehq.apps.data_dictionary.util import add_properties_to_data_dictionary
 from corehq.apps.export.exceptions import RejectedStaleExport
-from corehq.apps.export.models.incremental import (
-    generate_and_send_incremental_export,
-)
 from corehq.apps.export.utils import get_export, get_default_export_settings_if_available
 from corehq.apps.users.models import CouchUser
 from corehq.blobs import CODES, get_blob_db
@@ -32,7 +29,6 @@ from .dbaccessors import (
     get_properly_wrapped_export_instance,
 )
 from .export import get_export_file, rebuild_export
-from .models.incremental import IncrementalExport
 from .models.new import (
     EmailExportWhenDoneRequest,
     CaseExportInstance,
@@ -226,22 +222,6 @@ def generate_schema_for_all_builds(self, export_type, domain, app_id, identifier
         only_process_current_builds=False,
         task=self,
     )
-
-
-@periodic_task(run_every=crontab(hour="*", minute="30", day_of_week="*"),
-               queue=getattr(settings, 'CELERY_PERIODIC_QUEUE', 'celery'))
-def generate_incremental_exports():
-    incremental_exports = IncrementalExport.objects.filter(active=True)
-    for incremental_export in incremental_exports:
-        process_incremental_export.delay(incremental_export.id)
-
-
-@task
-def process_incremental_export(incremental_export_id):
-    incremental_export = IncrementalExport.objects.get(id=incremental_export_id)
-    last_valid_checkpoint = incremental_export.last_valid_checkpoint
-    last_doc_date = last_valid_checkpoint.last_doc_date if last_valid_checkpoint else None
-    generate_and_send_incremental_export(incremental_export, last_doc_date)
 
 
 @task(queue='background_queue')

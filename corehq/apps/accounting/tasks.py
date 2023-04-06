@@ -39,6 +39,7 @@ from corehq.apps.accounting.invoicing import (
 )
 from corehq.apps.accounting.models import (
     BillingAccount,
+    BillingAccountWebUserHistory,
     CreditLine,
     Currency,
     DomainUserHistory,
@@ -68,6 +69,7 @@ from corehq.apps.accounting.utils.downgrade import downgrade_eligible_domains
 from corehq.apps.accounting.utils.subscription import (
     assign_explicit_unpaid_subscription,
 )
+from corehq.apps.users.models import WebUser
 from corehq.apps.app_manager.dbaccessors import get_all_apps
 from corehq.apps.celery import periodic_task, task
 from corehq.apps.domain.models import Domain
@@ -824,3 +826,26 @@ def calculate_users_in_all_domains(today=None):
     # to get around our billing system.
     from corehq.apps.enterprise.tasks import auto_deactivate_mobile_workers
     auto_deactivate_mobile_workers.delay()
+
+
+@periodic_task(run_every=crontab(hour=1, minute=0, day_of_month='1'), acks_late=True)
+def calculate_web_users_in_all_billing_accounts(today=None):
+    today = today or datetime.date.today()
+    for account in BillingAccount.objects.all():
+        record_date = today - relativedelta(days=1)
+        domains = account.get_domains()
+        web_user_in_account = set()
+        for domain in domains:
+            [web_user_in_account.add(id) for id in WebUser.ids_by_domain(domain)]
+        num_users = len(web_user_in_account)
+        try:
+            BillingAccountWebUserHistory.objects.create(
+                billing_account=account,
+                num_users=num_users,
+                record_date=record_date
+            )
+        except Exception as e:
+            log_accounting_error(
+                f"Unable to create BillingAccountWebUserHistory for account {account.name}: {e}",
+                show_stack_trace=True,
+            )

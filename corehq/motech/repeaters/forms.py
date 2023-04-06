@@ -120,6 +120,24 @@ class FormRepeaterForm(GenericRepeaterForm):
         widget=forms.SelectMultiple(attrs={'class': 'hqwebapp-select2'}),
         help_text=_('Forms submitted by these users will not be forwarded')
     )
+    white_listed_form_xmlns = forms.CharField(
+        required=False,
+        label=_('XMLNSes of forms to include'),
+        widget=forms.Textarea(),
+        help_text=_(
+            'Separate with commas, spaces or newlines. Leave empty to forward '
+            'all forms.'
+        ),
+    )
+
+    def __init__(self, *args, **kwargs):
+        if kwargs.get('data', {}).get('white_listed_form_xmlns'):
+            # `FormRepeater.white_listed_form_xmlns` is a list, but
+            # `FormRepeaterForm.white_listed_form_xmlns` takes a string.
+            kwargs['data']['white_listed_form_xmlns'] = ', \n'.join(
+                kwargs['data']['white_listed_form_xmlns']
+            )
+        super().__init__(*args, **kwargs)
 
     @property
     @memoized
@@ -133,8 +151,11 @@ class FormRepeaterForm(GenericRepeaterForm):
 
     def get_ordered_crispy_form_fields(self):
         fields = super(FormRepeaterForm, self).get_ordered_crispy_form_fields()
-        fields.append(twbscrispy.PrependedText('include_app_id_param', ''))
-        return fields + ['user_blocklist']
+        return fields + [
+            twbscrispy.PrependedText('include_app_id_param', ''),
+            'user_blocklist',
+            'white_listed_form_xmlns',
+        ]
 
 
 class CaseRepeaterForm(GenericRepeaterForm):
