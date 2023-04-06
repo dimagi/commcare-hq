@@ -557,9 +557,9 @@ def _get_new_tableau_report_permissions(downstream_domain_visualizations, upstre
                                         original_downstream_permissions):
     new_downstream_view_tableau_list = []
     for viz in downstream_domain_visualizations:
-        # Enable permissions for visualization if the viz is enabled in the linked upstream viz
-        # OR if the viz is enabled in the downstream project and doesn't have an upstream linked viz.
-        if ((viz.upstream_id and viz.upstream_id in upstream_permissions.view_tableau_list)
-        or (not viz.upstream_id and str(viz.id) in original_downstream_permissions.view_tableau_list)):
+        upstream_viz_enabled = viz.upstream_id and viz.upstream_id in upstream_permissions.view_tableau_list
+        no_upstream_viz_and_viz_enabled_downstream = (not viz.upstream_id
+            and str(viz.id) in original_downstream_permissions.view_tableau_list)
+        if upstream_viz_enabled or no_upstream_viz_and_viz_enabled_downstream:
             new_downstream_view_tableau_list.append(str(viz.id))
     return new_downstream_view_tableau_list
