@@ -210,8 +210,8 @@ class Event(models.Model):
     def _get_attendee_cases_related_to(self, case_type):
         # Attendee cases are associated with one or more Events using
         # extension cases. The extension cases have case types
-        # EVENT_ATTENDEE_CASE_TYPE ('commcare-potential-attendee').
-        # ATTENDEE_DATE_CASE_TYPE ('commcare-attendance-date')
+        # EVENT_ATTENDEE_CASE_TYPE ('commcare-potential-attendee') or
+        # ATTENDEE_DATE_CASE_TYPE ('commcare-attendance-date').
         #
         # The extension cases are owned by the Event's case-sharing
         # group so that all mobile workers in the group get the attendee
@@ -219,14 +219,9 @@ class Event(models.Model):
 
         # CommCareCaseIndex.objects.get_extension_case_ids only supports
         #   fetching by exclude_for_case_type, so fetch by exclusion
-        extension_types = {ATTENDEE_DATE_CASE_TYPE, EVENT_ATTENDEE_CASE_TYPE}
-        assert case_type in extension_types, f"This method only supports {extension_types}"
-        exclude_case_type = (extension_types - {case_type}).pop()
-        event_attendee_cases = self._get_ext_cases(exclude_case_type)
-
         attendee_case_type = get_attendee_case_type(self.domain)
         attendee_cases = []
-        for case in event_attendee_cases:
+        for case in self._get_ext_cases(case_type):
             for index in case.indices:
                 if index.referenced_type == attendee_case_type:
                     attendee_cases.append(index.referenced_case)
@@ -241,13 +236,10 @@ class Event(models.Model):
         IDs.
         """
         self.get_expected_attendees.clear(self)
+        self._close_ext_cases(case_type=EVENT_ATTENDEE_CASE_TYPE)
 
-        self._close_ext_cases()
-
-        attendee_case_ids = (c if isinstance(c, str) else c.case_id
-                             for c in attendee_cases)
         case_structures = []
-        for case_id in attendee_case_ids:
+        for case_id in iter_case_ids(attendee_cases):
             event_host = CaseStructure(case_id=self.case_id)
             attendee_host = CaseStructure(case_id=case_id)
             case_structures.append(CaseStructure(
@@ -261,19 +253,21 @@ class Event(models.Model):
         self._case_factory.create_or_update_cases(case_structures)
 
     def mark_attendance(self, attendee_cases, attended_datetime):
-        # Creates ATTENDEE_DATE_CASE_TYPE extension cases for this event
-        #   and the given attendee_cases. Also sets the
-        #   ATTENDED_DATE_CASE_PROPERTY property to given attended_datetime
-        attendee_case_ids = (c if isinstance(c, str) else c.case_id
-                             for c in attendee_cases)
+        """
+        Creates ``ATTENDEE_DATE_CASE_TYPE`` extension cases for this event
+        and ``attendee_cases``. Also sets the ``ATTENDED_DATE_CASE_PROPERTY``
+        property to ``attended_datetime``.
+        """
+        self.get_attended_attendees.clear(self)
+
         case_structures = []
-        for case_id in attendee_case_ids:
+        for case_id in iter_case_ids(attendee_cases):
             event_host = CaseStructure(case_id=self.case_id)
             attendee_host = CaseStructure(case_id=case_id)
             case_structures.append(CaseStructure(
                 indices=self._get_host_indices(event_host, attendee_host),
                 attrs={
-                    'case_type': EVENT_ATTENDEE_CASE_TYPE,
+                    'case_type': ATTENDEE_DATE_CASE_TYPE,
                     'owner_id': self.group_id,
                     'create': True,
                     'update': {
@@ -299,24 +293,24 @@ class Event(models.Model):
             ),
         ]
 
-    def _get_ext_cases(self, exclude_case_type):
+    def _get_ext_cases(self, case_type=None):
         """
-        Returns this Event's open 'commcare-potential-attendee'
-        extension cases.
+        Returns this Event's open extension cases.
         """
         ext_case_ids = CommCareCaseIndex.objects.get_extension_case_ids(
             self.domain,
             [self.case_id],
             include_closed=False,
-            exclude_for_case_type=exclude_case_type,
+            case_type=case_type,
         )
         return CommCareCase.objects.get_cases(ext_case_ids, self.domain)
 
-    def _close_ext_cases(self):
+    def _close_ext_cases(self, case_type=None):
         ext_case_ids = CommCareCaseIndex.objects.get_extension_case_ids(
             self.domain,
             [self.case_id],
             include_closed=False,
+            case_type=case_type,
         )
         self._case_factory.create_or_update_cases([
             CaseStructure(case_id=case_id, attrs={'close': True})
@@ -466,3 +460,8 @@ def page_to_slice(limit, page):
     start = (page - 1) * limit
     end = start + limit
     return start, end
+
+
+def iter_case_ids(cases_or_case_ids):
+    for c in cases_or_case_ids:
+        yield c if isinstance(c, str) else c.case_id
