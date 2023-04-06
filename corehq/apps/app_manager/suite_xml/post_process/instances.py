@@ -88,9 +88,7 @@ class EntryInstances(PostProcessor):
 
     IGNORED_INSTANCES = {
         'jr://instance/remote',
-        'jr://instance/remote/remote',
         'jr://instance/search-input',
-        'jr://instance/search-input/search-input',
     }
 
     @time_method()
@@ -333,9 +331,10 @@ def generic_fixture_instances(app, instance_name):
 def search_input_instances(app, instance_name):
     try:
         _, query_datum_id = instance_name.split(':', 1)
+        src = f'jr://instance/search-input/{query_datum_id}'
     except ValueError:
-        query_datum_id = instance_name
-    return Instance(id=instance_name, src=f'jr://instance/search-input/{query_datum_id}')
+        src = 'jr://instance/search-input'  # legacy instance
+    return Instance(id=instance_name, src=src)
 
 
 @register_factory('results')
