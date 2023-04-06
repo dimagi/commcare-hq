@@ -124,13 +124,14 @@ class TestUpdateRoles(BaseLinkedDomainTest):
             server=server,
         )
 
-        # Set upstream role's permission list
-        self.role.set_permissions(HqPermissions(view_tableau_list=[str(upstream_viz_1.id)]).to_list())
-        # Set downstream role's permission list
+        self.upstream_tableau_role = UserRole.create(self.domain,
+                                   'tableau_test',
+                                   HqPermissions(view_tableau_list=[str(upstream_viz_1.id)]))
+        # Downstream role
         UserRole.create(
-            self.linked_domain, 'test', HqPermissions(
+            self.linked_domain, 'tableau_test', HqPermissions(
                 view_tableau_list=[str(downstream_viz_1.id), str(downstream_viz_2.id), str(downstream_viz_3.id)]),
-            upstream_id=self.role.get_id
+            upstream_id=self.upstream_tableau_role.get_id
         )
 
         update_user_roles(self.domain_link)
@@ -138,7 +139,7 @@ class TestUpdateRoles(BaseLinkedDomainTest):
         # viz_1 should be included because it's linked upstream viz was in upstream role's permission list, and
         # viz_3 should be included because it's in the downstream role's permission list and isn't linked upstream
         self.assertListEqual([str(downstream_viz_1.id), str(downstream_viz_3.id)],
-                             roles['test'].permissions.view_tableau_list)
+                             roles['tableau_test'].permissions.view_tableau_list)
 
 
 class TestUpdateRolesRemote(TestCase):
