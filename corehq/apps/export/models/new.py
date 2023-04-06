@@ -1232,7 +1232,10 @@ class CaseExportInstance(ExportInstance):
         # These case types will be the first element in the table path
         case_types = self.case_type
         if case_types == ALL_CASE_TYPE_EXPORT:
-            case_types = [table.path[0].name for table in self.tables]
+            case_types = []
+            for table in self.selected_tables:
+                path_names = [path.name for path in table.path if path.name != ALL_CASE_TYPE_EXPORT]
+                case_types += path_names
 
         query = get_case_export_base_query(self.domain, case_types)
         if include_filters:
