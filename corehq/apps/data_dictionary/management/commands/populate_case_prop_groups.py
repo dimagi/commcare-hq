@@ -25,6 +25,9 @@ def populate_case_prop_groups(domain):
     case_props = CaseProperty.objects.exclude(group__exact="").filter(**filter_kwargs)
 
     for case_prop in case_props:
-        group = CasePropertyGroup.get_or_create(case_prop.group, domain, case_prop.case_type)
+        group, created = CasePropertyGroup.objects.get_or_create(
+            name=case_prop.group,
+            case_type=case_prop.case_type
+        )
         case_prop.group_id = group
         case_prop.save()
