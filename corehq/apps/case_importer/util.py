@@ -94,7 +94,7 @@ class WorksheetWrapper(object):
         self._worksheet = worksheet
 
     @classmethod
-    def from_workbook(cls, workbook):
+    def from_workbook(cls, workbook, worksheet_index=0):
         if not isinstance(workbook, Workbook):
             raise AssertionError(
                 "WorksheetWrapper.from_workbook called without Workbook object")
@@ -102,7 +102,7 @@ class WorksheetWrapper(object):
             raise SpreadsheetFileInvalidError(
                 _("It seems as though your spreadsheet contains no sheets. Please resave it and try again."))
         else:
-            return cls(workbook.worksheets[0])
+            return cls(workbook.worksheets[worksheet_index])
 
     @cached_property
     def _headers_by_index(self):
@@ -170,10 +170,10 @@ def open_spreadsheet_download_ref(filename):
 
 
 @contextmanager
-def get_spreadsheet(filename):
+def get_spreadsheet(filename, worksheet_index=0):
     try:
         with open_any_workbook(filename) as workbook:
-            yield WorksheetWrapper.from_workbook(workbook)
+            yield WorksheetWrapper.from_workbook(workbook, worksheet_index)
     except SpreadsheetFileEncrypted as e:
         raise ImporterExcelFileEncrypted(str(e))
     except SpreadsheetFileNotFound as e:
@@ -218,3 +218,34 @@ def get_interned_exception(message):
     In tests, it's important that the error message is exactly the same object.
     """
     return Exception(message)
+
+
+def merge_dicts(dict_list, keys_to_exclude):
+    """
+    Merges the values from two or more dicts together into a single dict.
+
+    :param keys_to_exclude: Dict keys to not merge into the final result.
+
+    Below is a given example. When calling the function with the following params:
+    merge_dicts([
+        {'one': 1, 'two': 'two'},
+        {'one': 1, 'two': 'two', 'three': [3]},
+        {'three': [3]},
+        {'four': 'four'}],
+        keys_to_exclude='four')
+
+    This will output a result as follows:
+    {'one': 2, 'two': 'twotwo', 'three': [3, 3]}
+    """
+
+    result = {}
+    for d in dict_list:
+        for key, value in d.items():
+            if key in keys_to_exclude:
+                continue
+
+            if key in result:
+                result[key] += value
+            else:
+                result[key] = value
+    return result
