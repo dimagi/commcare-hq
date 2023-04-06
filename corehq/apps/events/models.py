@@ -219,17 +219,15 @@ class Event(models.Model):
 
         # CommCareCaseIndex.objects.get_extension_case_ids only supports
         #   fetching by exclude_for_case_type, so fetch by exclusion
-        extension_types = {ATTENDEE_DATE_CASE_TYPE, EVENT_ATTENDEE_CASE_TYPE}
-        assert case_type in extension_types, f"This method only supports {extension_types}"
-        exclude_case_type = (extension_types - {case_type}).pop()
-        event_attendee_cases = self._get_ext_cases(exclude_case_type)
+        ext_cases = self._get_ext_cases()
 
         attendee_case_type = get_attendee_case_type(self.domain)
         attendee_cases = []
-        for case in event_attendee_cases:
-            for index in case.indices:
-                if index.referenced_type == attendee_case_type:
-                    attendee_cases.append(index.referenced_case)
+        for case in ext_cases:
+            if case.type == case_type:
+                for index in case.indices:
+                    if index.referenced_type == attendee_case_type:
+                        attendee_cases.append(index.referenced_case)
         return attendee_cases
 
     def set_expected_attendees(self, attendee_cases):
@@ -299,32 +297,27 @@ class Event(models.Model):
             ),
         ]
 
-    def _get_ext_cases(self, exclude_case_type):
+    def _get_ext_cases(self):
         """
-        Returns this Event's open 'commcare-potential-attendee'
-        extension cases.
+        Returns this Event's open extension cases.
         """
         ext_case_ids = CommCareCaseIndex.objects.get_extension_case_ids(
             self.domain,
             [self.case_id],
             include_closed=False,
-            exclude_for_case_type=exclude_case_type,
         )
         return CommCareCase.objects.get_cases(ext_case_ids, self.domain)
 
     def _close_ext_cases(self, case_type=None):
         if case_type:
-            case_types = {ATTENDEE_DATE_CASE_TYPE, EVENT_ATTENDEE_CASE_TYPE}
-            case_types.remove(case_type)
-            excl_case_type = case_types.pop()
+            ext_cases = self._get_ext_cases()
+            ext_case_ids = [c.case_id for c in ext_cases if c.type == case_type]
         else:
-            excl_case_type = None
-        ext_case_ids = CommCareCaseIndex.objects.get_extension_case_ids(
-            self.domain,
-            [self.case_id],
-            include_closed=False,
-            exclude_for_case_type=excl_case_type,
-        )
+            ext_case_ids = CommCareCaseIndex.objects.get_extension_case_ids(
+                self.domain,
+                [self.case_id],
+                include_closed=False,
+            )
         self._case_factory.create_or_update_cases([
             CaseStructure(case_id=case_id, attrs={'close': True})
             for case_id in ext_case_ids
