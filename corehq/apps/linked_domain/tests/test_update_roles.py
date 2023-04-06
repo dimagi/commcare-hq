@@ -266,6 +266,19 @@ class TestUpdateRoles(TestCase):
         update_role = roles['LocalRoleName(3)']
         self.assertEqual(update_role.upstream_id, renamed_role.get_id)
 
+    def test_errors_prevent_any_successful_updates(self):
+        self._create_user_role(self.upstream_domain, name='SuccessRole')
+        self._create_user_role(self.upstream_domain, name='ConflictRole')
+
+        self._create_user_role(self.downstream_domain, name='ConflictRole')
+
+        with self.assertRaises(UnsupportedActionError):
+            update_user_roles(self.domain_link)
+
+        roles = {r.name: r for r in UserRole.objects.get_by_domain(self.downstream_domain)}
+        self.assertFalse('SuccessRole' in roles.keys())
+        self.assertIsNone(roles['ConflictRole'].upstream_id)
+
     def _create_user_role(self, domain, name='test', permissions=None, assignable_by_ids=None, **kwargs):
         if not permissions:
             permissions = HqPermissions(edit_web_users=True, view_locations=True)
