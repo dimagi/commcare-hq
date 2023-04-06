@@ -238,10 +238,8 @@ class Event(models.Model):
         self.get_expected_attendees.clear(self)
         self._close_ext_cases(case_type=EVENT_ATTENDEE_CASE_TYPE)
 
-        attendee_case_ids = (c if isinstance(c, str) else c.case_id
-                             for c in attendee_cases)
         case_structures = []
-        for case_id in attendee_case_ids:
+        for case_id in iter_case_ids(attendee_cases):
             event_host = CaseStructure(case_id=self.case_id)
             attendee_host = CaseStructure(case_id=case_id)
             case_structures.append(CaseStructure(
@@ -255,14 +253,15 @@ class Event(models.Model):
         self._case_factory.create_or_update_cases(case_structures)
 
     def mark_attendance(self, attendee_cases, attended_datetime):
-        # Creates ATTENDEE_DATE_CASE_TYPE extension cases for this event
-        #   and the given attendee_cases. Also sets the
-        #   ATTENDED_DATE_CASE_PROPERTY property to given attended_datetime
+        """
+        Creates ``ATTENDEE_DATE_CASE_TYPE`` extension cases for this event
+        and ``attendee_cases``. Also sets the ``ATTENDED_DATE_CASE_PROPERTY``
+        property to ``attended_datetime``.
+        """
         self.get_attended_attendees.clear(self)
-        attendee_case_ids = (c if isinstance(c, str) else c.case_id
-                             for c in attendee_cases)
+
         case_structures = []
-        for case_id in attendee_case_ids:
+        for case_id in iter_case_ids(attendee_cases):
             event_host = CaseStructure(case_id=self.case_id)
             attendee_host = CaseStructure(case_id=case_id)
             case_structures.append(CaseStructure(
@@ -461,3 +460,8 @@ def page_to_slice(limit, page):
     start = (page - 1) * limit
     end = start + limit
     return start, end
+
+
+def iter_case_ids(cases_or_case_ids):
+    for c in cases_or_case_ids:
+        yield c if isinstance(c, str) else c.case_id
