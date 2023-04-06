@@ -6,7 +6,6 @@ from django.db import migrations
 from corehq.apps.accounting.models import SoftwarePlanEdition
 from corehq.privileges import EXPORT_MULTISORT
 from corehq.util.django_migrations import skip_on_fresh_install
-from django_prbac.models import Grant, Role
 
 
 @skip_on_fresh_install
@@ -26,15 +25,6 @@ def _grandfather_export_multisort_priv(apps, schema_editor):
     )
 
 
-@skip_on_fresh_install
-def _remove_export_multisort_role_and_grants(apps, schema_editor):
-    role = Role.objects.get(slug=EXPORT_MULTISORT)
-    grants = Grant.objects.filter(to_role_id=role.id)
-
-    grants.delete()
-    role.delete()
-
-
 class Migration(migrations.Migration):
 
     dependencies = [
@@ -44,6 +34,6 @@ class Migration(migrations.Migration):
     operations = [
         migrations.RunPython(
             _grandfather_export_multisort_priv,
-            reverse_code=_remove_export_multisort_role_and_grants,
+            reverse_code=migrations.RunPython.noop,
         ),
     ]
