@@ -6,7 +6,6 @@ from django.test import TestCase
 from contextlib import contextmanager
 
 from jsonschema import ValidationError
-from nose.tools import assert_raises_regexp
 
 from casexml.apps.case.mock import CaseFactory, CaseStructure, CaseIndex
 from corehq.form_processor.models import CommCareCase
@@ -33,8 +32,8 @@ class CaseHelperTests(TestCase):
         with get_child_case() as case:
             case_api_json = case.to_api_json(lite=True)
             del case_api_json['properties']['case_name']
-            with assert_raises_regexp(ValidationError,
-                                      "^'case_name' is a required property"):
+            with self.assertRaisesRegex(ValidationError,
+                                        "^'case_name' is a required property"):
                 validate_case_api_json(case_api_json)
 
     def test_create_case(self):
