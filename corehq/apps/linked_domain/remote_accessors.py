@@ -126,7 +126,8 @@ def fetch_remote_media(local_domain, missing_media, remote_app_details):
             item['multimedia_id'], item['upstream_media_id'] = media_item._id, item['multimedia_id']
         else:
             media_item._id = item['multimedia_id']
-        media_item.attach_data(content, original_filename=filename)
+        if not any(a in media_item.aux_media for a in media_item.aux_media if a.uploaded_filename == filename):
+            media_item.attach_data(content, original_filename=filename)
         media_item.add_domain(local_domain, owner=True)
 
 
