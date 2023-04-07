@@ -3,7 +3,6 @@ import csv
 import io
 from collections import defaultdict
 from datetime import datetime
-from functools import partial
 
 from django.contrib import messages
 from django.http import (
