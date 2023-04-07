@@ -36,6 +36,7 @@ from .models.new import (
 )
 from .system_properties import MAIN_CASE_TABLE_PROPERTIES
 from django.core.cache import cache
+from corehq.apps.export.export import ExportFile
 
 logger = logging.getLogger('export_migration')
 
@@ -71,6 +72,10 @@ def populate_export_download_task(domain, export_ids, exports_type, username,
                 # We don't have a great way to calculate progress if it's a bulk download,
                 # so only track the progress for single instance exports.
                 progress_tracker=populate_export_download_task if len(export_instances) == 1 else None
+            )
+            logging.info(
+                f"populate_export_download_task - export_file isinstance ExportFile: \
+                {isinstance(export_file, ExportFile)}"
             )
 
             file_format = Format.from_format(export_file.format)
