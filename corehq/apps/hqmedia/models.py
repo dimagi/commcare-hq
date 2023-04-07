@@ -445,6 +445,7 @@ class HQMediaMapItem(DocumentSchema):
     media_type = StringProperty()
     version = IntegerProperty()
     unique_id = StringProperty()
+    upstream_media_id = StringProperty()
 
     @property
     def url(self):
