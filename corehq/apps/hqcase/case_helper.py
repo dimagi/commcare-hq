@@ -61,6 +61,7 @@ class CaseHelper:
             """Like a CommCareCase, but briefer."""
             case_id: str
             domain: str
+            user_id: str = ''
 
         if case:
             assert not case_id or case.case_id == case_id, (

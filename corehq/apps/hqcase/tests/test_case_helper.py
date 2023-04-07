@@ -197,7 +197,7 @@ class CaseHelperTests(TestCase):
                 'corehq.apps.hqcase.case_helper.CaseHelper',
             )
 
-    def test_close(self):
+    def test_close_with_user_id(self):
         case_dict = {
             'case_name': 'Ku-waha-ilo',
             'case_type': 'father',
@@ -209,6 +209,18 @@ class CaseHelperTests(TestCase):
         self.assertEqual(len(helper.case.xform_ids), 2)
         self.assertTrue(helper.case.closed)
         self.assertEqual(helper.case.closed_by, 'c0ffee')
+
+    def test_close(self):
+        case_dict = {
+            'case_name': 'Ku-waha-ilo',
+            'case_type': 'father',
+        }
+        helper = CaseHelper(domain=DOMAIN)
+        helper.create_case(case_dict)
+        helper.close()
+
+        self.assertTrue(helper.case.closed)
+        self.assertEqual(helper.case.closed_by, '')
 
     def test_recreating_case(self):
         with get_child_case() as case:
