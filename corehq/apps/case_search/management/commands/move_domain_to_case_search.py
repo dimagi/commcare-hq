@@ -31,8 +31,8 @@ class Command(BaseCommand):
     def migrate_domain(self, domain):
         time_started = datetime.utcnow()
         self.stdout.write(f"Migrating {domain}...\n")
-        CaseSearchReindexerFactory(domain=domain).build().reindex()
         DomainsNotInCaseSearchIndex.objects.filter(domain=domain).delete()
+        CaseSearchReindexerFactory(domain=domain).build().reindex()
         task_time = datetime.utcnow() - time_started
         self.stdout.write(f'\nDone...\ntook {task_time.seconds} seconds\n\n\n\n')
 
