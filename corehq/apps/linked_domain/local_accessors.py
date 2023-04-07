@@ -110,7 +110,7 @@ def get_data_dictionary(domain):
                 'description': property.description,
                 'deprecated': property.deprecated,
                 'data_type': property.data_type,
-                'group': property.group
+                'group': property.group_name
             }
             for property in CaseProperty.objects.filter(case_type=case_type)}
 
