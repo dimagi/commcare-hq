@@ -63,6 +63,7 @@ data_dictionary_rebuild_rate_limiter = RateLimiter(
     ).get_rate_limits(scope),
 )
 
+
 @login_and_domain_required
 @toggles.DATA_DICTIONARY.required_decorator()
 @require_permission(HqPermissions.edit_data_dict)
