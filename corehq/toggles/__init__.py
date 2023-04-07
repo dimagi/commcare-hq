@@ -1557,6 +1557,13 @@ PAGINATED_EXPORTS = StaticToggle(
     [NAMESPACE_DOMAIN]
 )
 
+CLEAR_MOBILE_WORKER_DATA = StaticToggle(
+    'clear_mobile_worker_data',
+    "Allows a web user to clear mobile workers' data",
+    TAG_CUSTOM,
+    [NAMESPACE_DOMAIN],
+)
+
 SKIP_REMOVE_INDICES = StaticToggle(
     'skip_remove_indices',
     'Make _remove_indices_from_deleted_cases_task into a no-op.',
