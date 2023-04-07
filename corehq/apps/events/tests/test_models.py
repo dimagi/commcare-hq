@@ -386,13 +386,17 @@ class EventCaseTests(TestCase):
         except AssertionError:
             pass  # self.event is already deleted
 
-    def test_case(self):
-        with self.assertRaises(CaseNotFound):
-            CommCareCase.objects.get_case(self.event.case_id, DOMAIN)
-
+    def test_case_creates_case(self):
+        self.assertIsNone(self.event._case_id)
         event_case = self.event.case  # Creates case
         case = CommCareCase.objects.get_case(self.event.case_id, DOMAIN)
         self.assertEqual(event_case, case)
+
+    def test_case_id_creates_case(self):
+        self.assertIsNone(self.event._case_id)
+        case_id = self.event.case_id  # Creates case
+        self.assertIsInstance(case_id, str)
+        self.assertIsInstance(self.event._case_id, UUID)
 
     def test_delete_with_case(self):
         __ = self.event.case
@@ -413,7 +417,7 @@ class EventCaseTests(TestCase):
             attendance_target=0,
         )
         self.assertIsInstance(unsaved_event.event_id, UUID)
-        self.assertIsInstance(unsaved_event._case_id, UUID)
+        self.assertIsNone(unsaved_event._case_id)
 
     def test_uuid_hex_string(self):
         today = datetime.utcnow().date()

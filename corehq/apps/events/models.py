@@ -1,20 +1,16 @@
 import uuid
+from datetime import date, datetime
 
+from django.contrib.postgres.fields import ArrayField
 from django.db import models
 from django.utils.translation import gettext_lazy as _
 
-from memoized import memoized
-
-from casexml.apps.case.mock import CaseFactory, CaseIndex, CaseStructure
+from casexml.apps.case.const import CASE_INDEX_EXTENSION
 from corehq.apps.es import CaseES
-
-from corehq.form_processor.exceptions import CaseNotFound
+from corehq.apps.groups.models import UnsavableGroup
+from corehq.apps.hqcase.case_helper import CaseHelper
 from corehq.form_processor.models import CommCareCase, CommCareCaseIndex
 from corehq.util.quickcache import quickcache
-from django.contrib.postgres.fields import ArrayField
-from corehq.apps.groups.models import UnsavableGroup
-from datetime import datetime
-from datetime import date
 
 
 # Attendee list status is set by the Attendance Coordinator after the
@@ -131,7 +127,7 @@ class Event(models.Model):
     name = models.CharField(max_length=100)
     domain = models.CharField(max_length=255)
     event_id = models.UUIDField(primary_key=True, default=uuid.uuid4)
-    _case_id = models.UUIDField(null=False, default=uuid.uuid4)
+    _case_id = models.UUIDField(null=True, default=None)
     start_date = models.DateField(null=False)
     end_date = models.DateField(null=True)
     attendance_target = models.IntegerField(null=False)
@@ -165,17 +161,13 @@ class Event(models.Model):
 
     @property
     def case_id(self):
-        try:
-            return self._case_id.hex
-        except AttributeError:
-            return self._case_id
+        if self._case_id is None:
+            self._create_case()
+        return str(self._case_id)
 
     @property
     def group_id(self):
-        try:
-            return self.event_id.hex
-        except AttributeError:
-            return self.event_id
+        return str(self.event_id)
 
     @property
     def attendance_taker_ids(self):
@@ -250,19 +242,14 @@ class Event(models.Model):
         self.get_expected_attendees.clear(self)
         self._close_ext_cases(case_type=EVENT_ATTENDEE_CASE_TYPE)
 
-        case_structures = []
         for case_id in iter_case_ids(attendee_cases):
-            event_host = CaseStructure(case_id=self.case_id)
-            attendee_host = CaseStructure(case_id=case_id)
-            case_structures.append(CaseStructure(
-                indices=self._get_host_indices(event_host, attendee_host),
-                attrs={
-                    'case_type': EVENT_ATTENDEE_CASE_TYPE,
-                    'owner_id': self.group_id,
-                    'create': True,
-                },
-            ))
-        self._case_factory.create_or_update_cases(case_structures)
+            expected_attendee_ext_case = self._get_ext_case_data(
+                case_type=EVENT_ATTENDEE_CASE_TYPE,
+                properties={},
+                attendee_case_id=case_id
+            )
+            helper = CaseHelper(domain=self.domain)
+            helper.create_case(expected_attendee_ext_case)
 
     def mark_attendance(self, attendee_cases, attended_datetime):
         """
@@ -272,38 +259,37 @@ class Event(models.Model):
         """
         self.get_attended_attendees.clear(self)
 
-        case_structures = []
-        for case_id in iter_case_ids(attendee_cases):
-            event_host = CaseStructure(case_id=self.case_id)
-            attendee_host = CaseStructure(case_id=case_id)
-            case_structures.append(CaseStructure(
-                indices=self._get_host_indices(event_host, attendee_host),
-                attrs={
-                    'case_type': ATTENDEE_DATE_CASE_TYPE,
-                    'owner_id': self.group_id,
-                    'create': True,
-                    'update': {
-                        ATTENDED_DATE_CASE_PROPERTY: attended_datetime
-                    }
-                },
-            ))
-        self._case_factory.create_or_update_cases(case_structures)
+        if isinstance(attended_datetime, datetime):
+            attended_datetime = attended_datetime.isoformat(' ', 'seconds')
 
-    def _get_host_indices(self, event_host, attendee_host):
-        return [
-            CaseIndex(
-                relationship='extension',
-                identifier='event-host',
-                related_structure=event_host,
-                related_type=EVENT_CASE_TYPE,
-            ),
-            CaseIndex(
-                relationship='extension',
-                identifier='attendee-host',
-                related_structure=attendee_host,
-                related_type=get_attendee_case_type(self.domain),
-            ),
-        ]
+        for case_id in iter_case_ids(attendee_cases):
+            attended_date_ext_case = self._get_ext_case_data(
+                case_type=ATTENDEE_DATE_CASE_TYPE,
+                properties={ATTENDED_DATE_CASE_PROPERTY: attended_datetime},
+                attendee_case_id=case_id
+            )
+            helper = CaseHelper(domain=self.domain)
+            helper.create_case(attended_date_ext_case)
+
+    def _get_ext_case_data(self, case_type, properties, attendee_case_id):
+        return {
+            'case_name': f"Event '{self.name}' | Attendee '{attendee_case_id}'",
+            'case_type': case_type,
+            'owner_id': self.group_id,
+            'properties': properties,
+            'indices': {
+                'event-host': {
+                    'case_type': EVENT_CASE_TYPE,
+                    'case_id': self.case_id,
+                    'relationship': CASE_INDEX_EXTENSION,
+                },
+                'attendee-host': {
+                    'case_type': get_attendee_case_type(self.domain),
+                    'case_id': attendee_case_id,
+                    'relationship': CASE_INDEX_EXTENSION,
+                }
+            }
+        }
 
     def _get_ext_cases(self, case_type=None):
         """
@@ -324,10 +310,9 @@ class Event(models.Model):
             include_closed=False,
             case_type=case_type,
         )
-        self._case_factory.create_or_update_cases([
-            CaseStructure(case_id=case_id, attrs={'close': True})
-            for case_id in ext_case_ids
-        ])
+        for case_id in ext_case_ids:
+            helper = CaseHelper(case_id=case_id, domain=self.domain)
+            helper.close()
 
     @property
     def case(self):
@@ -338,30 +323,38 @@ class Event(models.Model):
         # This is the only thing we use the Event's case for. It does not
         # store any Event data other than its name, and is not used for anything
         # other than looking up extension cases.
-        try:
-            case = CommCareCase.objects.get_case(self.case_id, self.domain)
-        except CaseNotFound:
-            struct = CaseStructure(
-                case_id=self.case_id,
-                attrs={
-                    'owner_id': self.manager_id,
-                    'case_type': EVENT_CASE_TYPE,
-                    'case_name': self.name,
-                    'create': True,
-                },
-            )
-            (case,) = self._case_factory.create_or_update_cases([struct])
-        return case
+        return CommCareCase.objects.get_case(self.case_id, self.domain)
 
-    @property
-    @memoized
-    def _case_factory(self):
-        return CaseFactory(domain=self.domain)
+    def _create_case(self):
+        assert self._case_id is None, 'Case already exists'
 
-    def delete(self, using=None, keep_parents=False):
+        helper = CaseHelper(domain=self.domain)
+        helper.create_case({
+            'case_type': EVENT_CASE_TYPE,
+            'case_name': self.name,
+            'owner_id': self.manager_id,
+        })
+        # `handle_case_update()` does not allow us to set `case_id`
+        # when creating a case, so we set `self._case_id` after the
+        # case is created.
+        self._case_id = uuid.UUID(helper.case.case_id)
+        if self._state.adding is False:
+            # Save the instance if it already exists in the database
+            # otherwise wait until it is saved normally.
+            # https://docs.djangoproject.com/en/3.2/ref/models/instances/#django.db.models.Model._state
+            self.save()
+        return helper.case
+
+    def save(self, *args, **kwargs):
+        if self._case_id is None:
+            self._create_case()
+        super().save(*args, **kwargs)
+
+    def delete(self, *args, **kwargs):
         self._close_ext_cases()
-        self._case_factory.close_case(self.case_id)
-        return super().delete(using, keep_parents)
+        helper = CaseHelper(case_id=self.case_id, domain=self.domain)
+        helper.close()
+        return super().delete(*args, **kwargs)
 
     @property
     def status(self):
