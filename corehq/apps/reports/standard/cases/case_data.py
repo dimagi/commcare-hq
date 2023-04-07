@@ -292,7 +292,7 @@ def _get_dd_props_by_group(domain, case_type):
             case_type__name=case_type,
             deprecated=False,
     ):
-        ret[prop.group].append(prop)
+        ret[prop.group_name].append(prop)
 
     uncategorized = ret.pop('', None)
     for group, props in sorted(ret.items()):
