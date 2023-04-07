@@ -313,7 +313,7 @@ def get_export_file(export_instances, es_filters, temp_path,
     with writer.open(export_instances):
         for export_instance in export_instances:
             try:
-                docs = get_export_documents(export_instance, es_filters, are_filters_es_formatted=True)
+                docs = get_export_documents(export_instance, es_filters)
             except Exception:
                 raise Exception("get_export_documents failed")
             try:
