@@ -62,6 +62,7 @@ def populate_export_download_task(domain, export_ids, exports_type, username,
     export_instances = [get_export(exports_type, domain, export_id, username)
                         for export_id in export_ids]
     with TransientTempfile() as temp_path, metrics_track_errors('populate_export_download_task'):
+        export_file = None
         try:
             export_file = get_export_file(
                 export_instances,
