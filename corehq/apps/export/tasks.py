@@ -62,14 +62,17 @@ def populate_export_download_task(domain, export_ids, exports_type, username,
     export_instances = [get_export(exports_type, domain, export_id, username)
                         for export_id in export_ids]
     with TransientTempfile() as temp_path, metrics_track_errors('populate_export_download_task'):
-        export_file = get_export_file(
-            export_instances,
-            es_filters,
-            temp_path,
-            # We don't have a great way to calculate progress if it's a bulk download,
-            # so only track the progress for single instance exports.
-            progress_tracker=populate_export_download_task if len(export_instances) == 1 else None
-        )
+        try:
+            export_file = get_export_file(
+                export_instances,
+                es_filters,
+                temp_path,
+                # We don't have a great way to calculate progress if it's a bulk download,
+                # so only track the progress for single instance exports.
+                progress_tracker=populate_export_download_task if len(export_instances) == 1 else None
+            )
+        except Exception as e:
+            logging.error(f"Error raised in get_export_file: {repr(e)}")
 
         file_format = Format.from_format(export_file.format)
         filename = filename or export_instances[0].name
