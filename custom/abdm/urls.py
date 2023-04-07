@@ -20,6 +20,8 @@ abha_verification_urls = [
     path('api/confirm_with_aadhaar_otp', abha_verification_views.confirm_with_aadhaar_otp,
          name='confirm_with_aadhaar_otp'),
     path('api/search_health_id', abha_verification_views.search_health_id, name='search_health_id'),
+    path('api/get_health_card_png', abha_verification_views.get_health_card_png, name='get_health_card_png'),
+    path('api/exists_by_health_id', abha_verification_views.get_existence_by_health_id, name='exists_by_health_id'),
 ]
 
 urlpatterns = abha_creation_urls + abha_verification_urls

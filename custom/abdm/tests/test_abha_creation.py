@@ -78,7 +78,7 @@ class TestABHACreation(APITestCase):
             response = self.client.post(reverse("verify_mobile_otp"),
                                         {"txn_id": "1234", "otp": "1111"})
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(response.json(), {"health_id": "123-456", "txnId": "1234"})
+        self.assertEqual(response.json(), {"health_id": "123-456", "txnId": "1234", "user_token": "1122"})
 
     def test_mobile_otp_verification_failure(self):
         response = self.client.post(reverse("verify_mobile_otp"), {"pan": "123456"})

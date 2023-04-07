@@ -23,7 +23,7 @@ def get_auth_methods(request):
         error_msg = "Missing required parameter: health_id"
         return generate_invalid_req_response(error_msg)
     resp = abdm_util.search_by_health_id(health_id)
-    auth_methods = resp.get("auth_methods")
+    auth_methods = resp.get("authMethods")
     resp = {"auth_methods": auth_methods}
     return parse_response(resp)
 
@@ -48,7 +48,7 @@ def confirm_with_mobile_otp(request):
     otp = request.data.get("otp")
     resp = abdm_util.confirm_with_mobile_otp(otp, txn_id)
     if "token" in resp:
-        resp = {"status": "success", "txnId": txn_id}
+        resp = {"status": "success", "txnId": txn_id, "user_token": resp.get("token")}
     return parse_response(resp)
 
 
@@ -61,7 +61,7 @@ def confirm_with_aadhaar_otp(request):
     otp = request.data.get("otp")
     resp = abdm_util.confirm_with_aadhaar_otp(otp, txn_id)
     if "token" in resp:
-        resp = {"status": "success", "txnId": txn_id}
+        resp = {"status": "success", "txnId": txn_id, "user_token": resp.get("token")}
     return parse_response(resp)
 
 
@@ -72,4 +72,25 @@ def confirm_with_aadhaar_otp(request):
 def search_health_id(request):
     health_id = request.data.get("health_id")
     resp = abdm_util.search_by_health_id(health_id)
+    return parse_response(resp)
+
+
+@api_view(["POST"])
+@permission_classes((IsAuthenticated,))
+@authentication_classes((ABDMUserAuthentication,))
+@required_request_params(["user_token"])
+def get_health_card_png(request):
+    user_token = request.data.get("user_token")
+    return parse_response(abdm_util.get_health_card_png(user_token))
+
+
+@api_view(["POST"])
+@permission_classes((IsAuthenticated,))
+@authentication_classes((ABDMUserAuthentication,))
+@required_request_params(["health_id"])
+def get_existence_by_health_id(request):
+    health_id = request.data.get("health_id")
+    resp = abdm_util.exists_by_health_id(health_id)
+    if "status" in resp:
+        resp = {"health_id": health_id, "exists": resp.get("status")}
     return parse_response(resp)

@@ -50,9 +50,10 @@ def verify_aadhaar_otp(request):
 def verify_mobile_otp(request):
     txn_id = request.data.get("txn_id")
     otp = request.data.get("otp")
+    health_id = request.data.get("health_id")
     resp = abdm_util.verify_mobile_otp(otp, txn_id)
     if resp and "txnId" in resp:
-        resp = abdm_util.create_health_id(txn_id)
-        resp.pop("token")
+        resp = abdm_util.create_health_id(txn_id, health_id)
+        resp["user_token"] = resp.pop("token")
         resp.pop("refreshToken")
     return parse_response(resp)
