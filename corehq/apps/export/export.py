@@ -7,6 +7,7 @@ from collections import Counter
 from couchdbkit import ResourceConflict
 
 from corehq.apps.export.exceptions import ExportTooLargeException
+from corehq.apps.export.filters import ExportFilter
 from corehq.util.metrics import metrics_counter, metrics_track_errors
 from couchexport.export import FormattedRow, get_writer
 from couchexport.models import Format
@@ -303,7 +304,8 @@ def get_export_download(domain, export_ids, exports_type, username, es_filters, 
     return download
 
 
-def get_export_file(export_instances, es_filters, temp_path, progress_tracker=None, include_hyperlinks=True):
+def get_export_file(export_instances, es_filters, temp_path,
+                    progress_tracker=None, include_hyperlinks=True):
     """
     Return an export file for the given ExportInstance and list of filters
     """
@@ -311,7 +313,7 @@ def get_export_file(export_instances, es_filters, temp_path, progress_tracker=No
     with writer.open(export_instances):
         for export_instance in export_instances:
             try:
-                docs = get_export_documents(export_instance, es_filters, are_filters_es_formatted=True)
+                docs = get_export_documents(export_instance, es_filters)
             except Exception as e:
                 logging.error(f"Exception raised for get_export_documents: {repr(e)}")
                 raise
@@ -326,21 +328,21 @@ def get_export_file(export_instances, es_filters, temp_path, progress_tracker=No
     return ExportFile(writer.path, writer.format)
 
 
-def get_export_documents(export_instance, filters, are_filters_es_formatted=False):
+def get_export_documents(export_instance, filters):
     # Pull doc ids from elasticsearch and stream to disk
-    query = get_export_query(export_instance, filters, are_filters_es_formatted)
+    query = get_export_query(export_instance, filters)
     return query.scroll_ids_to_disk_and_iter_docs()
 
 
-def get_export_query(export_instance, filters, are_filters_es_formatted=False):
+def get_export_query(export_instance, filters):
     """
-    :param filters: either a list of ExportFilter objects, or a list of json serializable dicts
-    :param are_filters_es_formatted: used to determine if filters are already json serializable dicts
-    :return:
+    :param export_instance: ExportInstance
+    :param filters: either list of ExportFilters or elasticsearch filters
+    :return: ESQuery object with filters applied
     """
     query = _get_base_query(export_instance)
     for f in filters:
-        es_filter = f if are_filters_es_formatted else f.to_es_filter()
+        es_filter = f.to_es_filter() if isinstance(f, ExportFilter) else f
         query = query.filter(es_filter)
     return query
 
