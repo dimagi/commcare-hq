@@ -313,17 +313,15 @@ def get_export_file(export_instances, es_filters, temp_path,
     with writer.open(export_instances):
         for export_instance in export_instances:
             try:
-                docs = get_export_documents(export_instance, es_filters)
-            except Exception as e:
-                logging.error(f"Exception raised for get_export_documents: {repr(e)}")
-                raise
+                docs = get_export_documents(export_instance, es_filters, are_filters_es_formatted=True)
+            except Exception:
+                raise Exception("get_export_documents failed")
             try:
                 write_export_instance(writer, export_instance, docs,
                                     progress_tracker,
                                     include_hyperlinks=include_hyperlinks)
-            except Exception as e:
-                logging.error(f"Exception raised for write_export_instance: {repr(e)}")
-                raise
+            except Exception:
+                raise Exception("write_export_instance failed")
 
     return ExportFile(writer.path, writer.format)
 

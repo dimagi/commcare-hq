@@ -47,7 +47,7 @@ def populate_export_download_task(domain, export_ids, exports_type, username,
     """
     :param expiry:  Time period for the export to be available for download in minutes
     """
-
+    logging.info(f"populate_export_download_task - export_ids: {export_ids}")
     email_requests = EmailExportWhenDoneRequest.objects.filter(
         domain=domain,
         download_id=download_id
@@ -63,6 +63,7 @@ def populate_export_download_task(domain, export_ids, exports_type, username,
                         for export_id in export_ids]
     with TransientTempfile() as temp_path, metrics_track_errors('populate_export_download_task'):
         try:
+            logging.info(f"populate_export_download_task - export_instances count: {len(export_instances)}")
             export_file = get_export_file(
                 export_instances,
                 es_filters,
@@ -71,31 +72,31 @@ def populate_export_download_task(domain, export_ids, exports_type, username,
                 # so only track the progress for single instance exports.
                 progress_tracker=populate_export_download_task if len(export_instances) == 1 else None
             )
+
+            file_format = Format.from_format(export_file.format)
+            filename = filename or export_instances[0].name
+
+            with export_file as file_:
+                db = get_blob_db()
+                db.put(
+                    file_,
+                    domain=domain,
+                    parent_id=domain,
+                    type_code=CODES.data_export,
+                    key=download_id,
+                    timeout=expiry,
+                )
+
+                expose_blob_download(
+                    download_id,
+                    expiry=expiry * 60,
+                    mimetype=file_format.mimetype,
+                    content_disposition=safe_filename_header(filename, file_format.extension),
+                    download_id=download_id,
+                    owner_ids=[owner_id],
+                )
         except Exception as e:
             logging.error(f"Error raised in get_export_file: {repr(e)}")
-
-        file_format = Format.from_format(export_file.format)
-        filename = filename or export_instances[0].name
-
-        with export_file as file_:
-            db = get_blob_db()
-            db.put(
-                file_,
-                domain=domain,
-                parent_id=domain,
-                type_code=CODES.data_export,
-                key=download_id,
-                timeout=expiry,
-            )
-
-            expose_blob_download(
-                download_id,
-                expiry=expiry * 60,
-                mimetype=file_format.mimetype,
-                content_disposition=safe_filename_header(filename, file_format.extension),
-                download_id=download_id,
-                owner_ids=[owner_id],
-            )
 
     for email_request in email_requests:
         try:
