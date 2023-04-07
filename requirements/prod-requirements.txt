@@ -48,9 +48,9 @@ cffi==1.14.3
     #   csiphash
     #   pynacl
 chardet==3.0.4
-    # via
-    #   ghdiff
-    #   requests
+    # via ghdiff
+charset-normalizer==3.1.0
+    # via requests
 click==8.1.3
     # via
     #   celery
@@ -444,7 +444,7 @@ redis==3.5.3
     #   django-websocket-redis
 reportlab==3.6.9
     # via -r base-requirements.in
-requests==2.25.1
+requests==2.28.2
     # via
     #   -r base-requirements.in
     #   cloudant
