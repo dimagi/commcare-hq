@@ -34,7 +34,7 @@ from corehq.apps.export.models import (
     FormExportDataSchema,
 )
 from corehq.apps.export.models.new import DataFile, DatePeriod
-from corehq.apps.export.tasks import generate_schema_for_all_builds
+from corehq.apps.export.tasks import generate_schema_for_all_builds, process_populate_export_tables
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.locations.permissions import location_safe
 from corehq.apps.reports.util import datespan_from_beginning
@@ -415,3 +415,7 @@ def clean_odata_columns(export_instance):
                 column.label = column.label[:255]
             if column.label in ['formid'] and column.is_deleted:
                 column.label = f"{column.label}_deleted"
+
+
+def trigger_update_case_instance_tables_task(export_id, progress_id=None):
+    process_populate_export_tables.delay(export_id, progress_id)

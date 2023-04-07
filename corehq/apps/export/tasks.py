@@ -13,7 +13,7 @@ from soil.util import expose_blob_download, process_email_request
 from corehq.apps.celery import periodic_task, task
 from corehq.apps.data_dictionary.util import add_properties_to_data_dictionary
 from corehq.apps.export.exceptions import RejectedStaleExport
-from corehq.apps.export.utils import get_export
+from corehq.apps.export.utils import get_export, get_default_export_settings_if_available
 from corehq.apps.users.models import CouchUser
 from corehq.blobs import CODES, get_blob_db
 from corehq.celery_monitoring.signals import get_task_time_to_start
@@ -29,8 +29,13 @@ from .dbaccessors import (
     get_properly_wrapped_export_instance,
 )
 from .export import get_export_file, rebuild_export
-from .models.new import EmailExportWhenDoneRequest
+from .models.new import (
+    EmailExportWhenDoneRequest,
+    CaseExportInstance,
+    CaseExportDataSchema
+)
 from .system_properties import MAIN_CASE_TABLE_PROPERTIES
+from django.core.cache import cache
 
 logger = logging.getLogger('export_migration')
 
@@ -57,14 +62,17 @@ def populate_export_download_task(domain, export_ids, exports_type, username,
     export_instances = [get_export(exports_type, domain, export_id, username)
                         for export_id in export_ids]
     with TransientTempfile() as temp_path, metrics_track_errors('populate_export_download_task'):
-        export_file = get_export_file(
-            export_instances,
-            es_filters,
-            temp_path,
-            # We don't have a great way to calculate progress if it's a bulk download,
-            # so only track the progress for single instance exports.
-            progress_tracker=populate_export_download_task if len(export_instances) == 1 else None
-        )
+        try:
+            export_file = get_export_file(
+                export_instances,
+                es_filters,
+                temp_path,
+                # We don't have a great way to calculate progress if it's a bulk download,
+                # so only track the progress for single instance exports.
+                progress_tracker=populate_export_download_task if len(export_instances) == 1 else None
+            )
+        except Exception as e:
+            logging.error(f"Error raised in get_export_file: {repr(e)}")
 
         file_format = Format.from_format(export_file.format)
         filename = filename or export_instances[0].name
@@ -217,3 +225,29 @@ def generate_schema_for_all_builds(self, export_type, domain, app_id, identifier
         only_process_current_builds=False,
         task=self,
     )
+
+
+@task(queue='background_queue')
+def process_populate_export_tables(export_id, progress_id=None):
+    """
+    When creating a bulk case export instance, it will be created without any tables. This is because
+    there may be a lot of case types on the project which can cause performance issues. The tables for
+    the export instance are instead added async in this task after the instance has been saved.
+    """
+    export = CaseExportInstance.get(export_id)
+
+    if progress_id:
+        cache.set(progress_id, {'table_name': export.name, 'status': 'in progress'})
+
+    schema = CaseExportDataSchema.generate_schema_from_builds(export.domain, None, export.case_type)
+    export_settings = get_default_export_settings_if_available(export.domain)
+    export_instance = CaseExportInstance.generate_instance_from_schema(
+        schema,
+        export_settings=export_settings,
+        load_deprecated=False
+    )
+    export.tables = export_instance.tables
+    export.save()
+
+    if progress_id:
+        cache.expire(progress_id, 0)
