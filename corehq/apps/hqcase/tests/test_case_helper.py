@@ -1,4 +1,5 @@
 import doctest
+import uuid
 from contextlib import contextmanager
 
 from django.test import TestCase
@@ -9,7 +10,7 @@ from casexml.apps.case.mock import CaseFactory, CaseIndex, CaseStructure
 from corehq.apps.users.models import CommCareUser
 from corehq.form_processor.models import CommCareCase
 
-from ..api.core import serialize_case
+from ..api.core import serialize_case, UserError
 from ..case_helper import CaseHelper
 
 DOMAIN = 'test-domain'
@@ -26,11 +27,19 @@ class CaseHelperTests(TestCase):
     def test_create_case_format(self):
         with get_child_case() as case:
             case_data = serialize_case(case)
-            original_case_id = case_data['case_id']
             helper = CaseHelper(domain=DOMAIN)
-            helper.create_case(case_data)
-            self.assertIsInstance(helper.case, CommCareCase)
-            self.assertNotEqual(helper.case.case_id, original_case_id)
+            helper.create_case(case_data, is_serialized=True)
+
+            self.assertNotEqual(helper.case.case_id, case.case_id)
+            self.assertEqual(helper.case.name, case.name)
+            self.assertEqual(helper.case.type, case.type)
+
+    def test_validation_error(self):
+        with get_child_case() as case:
+            case_data = serialize_case(case)
+            helper = CaseHelper(domain=DOMAIN)
+            with self.assertRaises(UserError):
+                helper.create_case(case_data)
 
     def test_create_child_case(self):
         with get_mother_case() as mother:
@@ -149,11 +158,17 @@ class CaseHelperTests(TestCase):
     def test_update_user_id(self):
         with get_child_case() as case:
             helper = CaseHelper(case=case, domain=DOMAIN)
+            helper.update({'user_id': 'deadbeef'})  # ignored
+            self.assertEqual(helper.case.user_id, '')
+            form_data = helper.case.transactions[-1].form.form_data
+            self.assertEqual(form_data['meta']['userID'], '')
+            self.assertEqual(form_data['meta']['username'], '')
+
+    def test_update_user_id_with_user_id(self):
+        with get_child_case() as case:
+            helper = CaseHelper(case=case, domain=DOMAIN)
             helper.update(
-                {
-                    'user_id': 'deadbeef',  # ignored
-                    'modified_by': 'deadbeef',  # dropped by _copy_case_data()
-                },
+                {'user_id': 'deadbeef'},
                 user_id='c0ffee',
             )
             self.assertEqual(helper.case.user_id, 'c0ffee')
@@ -237,46 +252,29 @@ class CaseHelperTests(TestCase):
         with self.assertRaises(AssertionError):
             helper.close()
 
-    def test_copy_case_data(self):
-        case_data = {
-            'case_id': '38fd8d42168f496d8bf0d69eef4ae9e6',
-            'case_name': 'Namaka',
-            'case_type': 'child',
-            'closed': False,
-            'date_closed': None,
-            'date_opened': '2023-04-06T17:11:12.101045Z',
-            'domain': 'test-domain',
-            'external_id': None,
-            'indexed_on': '2023-04-06T17:11:12.162655Z',
-            'indices': {
-                'mother': {
-                    'case_id': '27268dca9c2a45e1b55a290d67b5cb15',
-                    'case_type': 'mother',
-                    'relationship': 'child',
-                }
-            },
-            'last_modified': '2023-04-06T17:11:12.101045Z',
-            'owner_id': '',
-            'properties': {},
-            'server_last_modified': '2023-04-06T17:11:12.103245Z'
-        }
-        valid_data = CaseHelper._copy_case_data(case_data)
+    def test_clean_serialized_case(self):
+        with get_child_case() as case:
+            case_data = serialize_case(case)
+            known_case_id = uuid.uuid4().hex
+            case_data['indices']['mother']['case_id'] = known_case_id
 
-        self.assertNotEqual(id(valid_data), id(case_data))
-        self.assertEqual(valid_data, {
-            'case_name': 'Namaka',
-            'case_type': 'child',
-            'external_id': None,
-            'indices': {
-                'mother': {
-                    'case_id': '27268dca9c2a45e1b55a290d67b5cb15',
-                    'case_type': 'mother',
-                    'relationship': 'child',
-                }
-            },
-            'owner_id': '',
-            'properties': {},
-        })
+            clean_data = CaseHelper._clean_serialized_case(case_data)
+
+            self.assertNotEqual(id(clean_data), id(case_data))
+            self.assertEqual(clean_data, {
+                'case_name': 'Namaka',
+                'case_type': 'child',
+                'external_id': None,
+                'indices': {
+                    'mother': {
+                        'case_id': known_case_id,
+                        'case_type': 'mother',
+                        'relationship': 'child',
+                    }
+                },
+                'owner_id': '',
+                'properties': {},
+            })
 
     def test_get_user_duck_user_id(self):
         user = CaseHelper._get_user_duck('c0ffee', DOMAIN)

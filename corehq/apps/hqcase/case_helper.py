@@ -15,19 +15,30 @@ class CaseHelper:
         domain = 'hawaiian-mythology'
         helper = CaseHelper(case=case, domain=domain)
 
-    ... or with a case ID::
+    ... or with a case ID ... ::
 
         helper = CaseHelper(case_id=case_id, domain=domain)
 
-    Or create a case using data in the format returned by the Case API
-    v0.6 ``serialize_case()`` function::
+    ... or create a new case::
 
         helper = CaseHelper(domain=domain)
         helper.create_case({
-            'domain': 'hawaiian-mythology',
             'case_type': 'child',
             'case_name': 'Namaka',
         })
+
+    The helper's case is accessible at ``helper.case``.
+
+    You can also create a new case using serialized case data returned
+    by the Case API v0.6 ``serialize_case()`` function. Pass
+    ``is_serialized=True`` for the CaseHelper to drop attributes from
+    the data that are invalid for creating a new case. The new case will
+    have a new case_id. The original case will be unaffected. ::
+
+        case_data = serialize_case(helper.case)
+
+        helper = CaseHelper(domain=domain)  # New helper for new case
+        helper.create_case(case_data, is_serialized=True)
 
     Update case properties::
 
@@ -83,10 +94,14 @@ class CaseHelper:
         *,
         user_id=None,
         device_id='corehq.apps.hqcase.case_helper.CaseHelper',
+        is_serialized=False,
     ):
         assert self.case is None, '`self.case` already exists'
 
-        case_data = self._copy_case_data(case_data)
+        if is_serialized:
+            case_data = self._clean_serialized_case(case_data)
+        else:
+            case_data = case_data.copy()
         user = self._get_user_duck(user_id, self.domain)
         case_data.setdefault('user_id', user.user_id)
         case_data.setdefault('owner_id', '')
@@ -104,13 +119,17 @@ class CaseHelper:
         *,
         user_id=None,
         device_id='corehq.apps.hqcase.case_helper.CaseHelper',
+        is_serialized=False,
     ):
         if not case_data:
             return
 
         assert self.case, '`self.case` is not defined'
 
-        case_data = self._copy_case_data(case_data)
+        if is_serialized:
+            case_data = self._clean_serialized_case(case_data)
+        else:
+            case_data = case_data.copy()
         case_data['case_id'] = self.case.case_id
         user = self._get_user_duck(user_id, self.domain)
         case_data.setdefault('user_id', user.user_id)
@@ -145,13 +164,13 @@ class CaseHelper:
         )
 
     @staticmethod
-    def _copy_case_data(case_data):
+    def _clean_serialized_case(case_data):
         """
         Given the output of Case API v0.6's ``serialize_case()``,
         returns a new dictionary with invalid fields omitted.
 
         >>> case_data = {'case_id': 'abc123', 'domain': 'test', 'foo': 'bar'}
-        >>> CaseHelper._copy_case_data(case_data)
+        >>> CaseHelper._clean_serialized_case(case_data)
         {'foo': 'bar'}
 
         """
