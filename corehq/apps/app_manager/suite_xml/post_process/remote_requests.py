@@ -110,13 +110,14 @@ class QuerySessionXPath(InstanceXpath):
 
 class RemoteRequestFactory(object):
     def __init__(self, suite, module, detail_section_elements,
-                 case_session_var=None, storage_instance=RESULTS_INSTANCE):
+                 case_session_var=None, storage_instance=RESULTS_INSTANCE, exclude_relevant=False):
         self.suite = suite
         self.app = module.get_app()
         self.domain = self.app.domain
         self.module = module
         self.detail_section_elements = detail_section_elements
         self.storage_instance = storage_instance
+        self.exclude_relevant = exclude_relevant
         if case_session_var:
             self.case_session_var = case_session_var
         else:
@@ -141,7 +142,9 @@ class RemoteRequestFactory(object):
                 self.build_case_id_query_data(),
             ],
         }
-        kwargs["relevant"] = self.get_post_relevant()
+        relevant = self.get_post_relevant()
+        if relevant:
+            kwargs["relevant"] = relevant
         return RemoteRequestPost(**kwargs)
 
     def build_case_id_query_data(self):
@@ -166,6 +169,8 @@ class RemoteRequestFactory(object):
             self.case_session_var, self.module.is_multi_select())
         case_in_project = self._get_smart_link_rewind_xpath()
         uses_smart_links = module_uses_smart_links(self.module)
+        if self.exclude_relevant:
+            return case_in_project if uses_smart_links else None
         return XPath.and_(case_not_claimed, case_in_project) if uses_smart_links else case_not_claimed
 
     def build_command(self):

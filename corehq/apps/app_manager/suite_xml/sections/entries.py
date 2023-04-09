@@ -247,7 +247,8 @@ class EntriesHelper(object):
                 storage_instance = RESULTS_INSTANCE_INLINE if module_uses_inline_search(module) \
                     else RESULTS_INSTANCE
                 remote_request_factory = RemoteRequestFactory(
-                    None, module, [], case_session_var=case_session_var, storage_instance=storage_instance)
+                    None, module, [], case_session_var=case_session_var, storage_instance=storage_instance,
+                    exclude_relevant=case_search_sync_cases_on_form_entry_enabled_for_domain(self.domain))
                 e.post = remote_request_factory.build_remote_request_post()
 
             # Ideally all of this version check should happen in Command/Display class
