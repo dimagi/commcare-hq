@@ -353,8 +353,6 @@ class Event(models.Model):
         using=None,
         update_fields=None,
     ):
-        if not self.event_id:
-            self.event_id = uuid.uuid4().hex
         self.set_status()
         super().save(
             force_insert=force_insert,
