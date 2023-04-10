@@ -486,6 +486,12 @@ The following operators are currently supported:
 | ``gte``         | is greater than   | number          | ``doc["age |
 |                 | or equal          |                 | "] >= 21`` |
 +-----------------+-------------------+-----------------+------------+
+| ``regex``       | matches regular   | string          | ``re.searc |
+|                 | expression        |                 | h("^([Rr]e |
+|                 |                   |                 | d|[Bb]lue) |
+|                 |                   |                 | $", doc["c |
+|                 |                   |                 | olor"])``  |
++-----------------+-------------------+-----------------+------------+
 
 Compound filters
 ~~~~~~~~~~~~~~~~
