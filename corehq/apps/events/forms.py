@@ -206,6 +206,7 @@ class EventForm(forms.Form):
             (user.user_id, user.username) for user in get_all_commcare_users_by_domain(self.domain)
         ]
 
+
 class NewAttendeeForm(forms.Form):
     name = forms.CharField(
         max_length=255,
@@ -213,20 +214,8 @@ class NewAttendeeForm(forms.Form):
         label=gettext_noop('Name'),
     )
 
-    # TODO: Offer external_id?
-    #       Support uniqueness validation like NewMobileWorkerForm.username
-    # external_id = forms.CharField(
-    #     max_length=255,
-    #     required=False,
-    #     label=gettext_noop('Unique ID'),
-    # )
-
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        # TODO: Append other case properties to `self.fields`?
-        #       Practicality: What if there are _many_ case properties?
-        #       Map case property types to field types
-
         self.helper = HQModalFormHelper()
         self.helper.form_tag = False
         self.helper.layout = Layout(
