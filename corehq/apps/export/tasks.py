@@ -101,6 +101,7 @@ def populate_export_download_task(domain, export_ids, exports_type, username,
                 f"populate_export_download_task - \
                 Error raised getting export file: {repr(e)}"
             )
+            raise Exception("Error in task populate_export_download_task")
 
     for email_request in email_requests:
         try:
