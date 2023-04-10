@@ -32,7 +32,7 @@ class Command(BaseCommand):
             self.stdout.write("Migrating...\n")
             time_started = datetime.utcnow()
             pool = Pool(processes=cpu_count())
-            pool.map(self.migrate_domain, domains)
+            pool.map(self.migrate_domain, list(domains.values_list('domain', flat=True)))
             task_time = datetime.utcnow() - time_started
             self.stdout.write(f'\nDone...\ntook {task_time.seconds} seconds\n\n\n\n')
 
