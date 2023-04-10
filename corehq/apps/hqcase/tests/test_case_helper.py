@@ -12,7 +12,7 @@ from corehq.form_processor.models import CommCareCase
 from corehq.util.test_utils import generate_cases
 
 from ..api.core import UserError, serialize_case
-from ..case_helper import CaseHelper, invalid_fields
+from ..case_helper import CaseHelper
 
 DOMAIN = 'test-domain'
 
@@ -293,32 +293,25 @@ class CaseHelperTests(TestCase):
             self.assertEqual(user.user_id, commcare_user.user_id)
             self.assertEqual(user.username, commcare_user.username)
 
-
-class TestInvalidFields(TestCase):
-    pass
-
-
-@generate_cases(
-    [(f.name,) for f in CommCareCase._meta.fields],
-    cls=TestInvalidFields,
-)
-def test_invalid_fields(self, field_name):
-    if field_name in invalid_fields:
-        with self.assertRaises(UserError):
+    @generate_cases([(f.name,) for f in CommCareCase._meta.fields])
+    def test_valid_fields(self, field_name):
+        valid_fields = CaseHelper._get_valid_fields()
+        if field_name in valid_fields:
             helper = CaseHelper(domain=DOMAIN)
             helper.create_case({
                 'case_type': 'child',
                 'case_name': 'Namaka',
                 field_name: '2005-06-30 12:00:00',
             })
-    else:
-        helper = CaseHelper(domain=DOMAIN)
-        helper.create_case({
-            'case_type': 'child',
-            'case_name': 'Namaka',
-            field_name: '2005-06-30 12:00:00',
-        })
-        helper.close()
+            helper.close()
+        else:
+            with self.assertRaises(UserError):
+                helper = CaseHelper(domain=DOMAIN)
+                helper.create_case({
+                    'case_type': 'child',
+                    'case_name': 'Namaka',
+                    field_name: '2005-06-30 12:00:00',
+                })
 
 
 @contextmanager

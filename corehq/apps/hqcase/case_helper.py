@@ -2,44 +2,7 @@ from dataclasses import dataclass
 
 from corehq.apps.users.models import CouchUser
 
-from .api.updates import handle_case_update
-
-# Invalid CommCareCase fields when creating a case:
-invalid_fields = {
-    'case_id',
-    'case_json',
-    'closed',
-    'closed_by',
-    'closed_on',
-    'date_closed',
-    'date_opened',
-    'deleted',
-    'deleted_on',
-    'deletion_id',
-    'domain',
-    'id',
-    'indexed_on',
-    'last_modified',
-    'location_id',
-    'modified_by',
-    'modified_on',
-    'name',
-    'opened_by',
-    'opened_on',
-    'server_last_modified',
-    'server_modified_on',
-    'type',
-}
-# Valid fields when creating a case are:
-# * case_name
-# * case_type
-# * external_id
-# * owner_id
-#
-# Custom case properties are set using the "properties" dictionary.
-#
-# The XForm user ID and device ID are set by passing the `user_id` and
-# `device_id` parameters respectively to `CaseHelper.create_case()`
+from .api.updates import BaseJsonCaseChange, handle_case_update
 
 
 class CaseHelper:
@@ -206,12 +169,24 @@ class CaseHelper:
         Given the output of Case API v0.6's ``serialize_case()``,
         returns a new dictionary with invalid fields omitted.
 
-        >>> case_data = {'case_id': 'abc123', 'domain': 'test', 'foo': 'bar'}
+        >>> case_data = {
+        ...     'case_id': 'abc123',
+        ...     'domain': 'test',
+        ...     'external_id': '(136108) 2003 EL61 II',
+        ... }
         >>> CaseHelper._clean_serialized_case(case_data)
-        {'foo': 'bar'}
+        {'external_id': '(136108) 2003 EL61 II'}
 
         """
-        return {k: v for k, v in case_data.items() if k not in invalid_fields}
+        valid_fields = CaseHelper._get_valid_fields()
+        return {k: v for k, v in case_data.items() if k in valid_fields}
+
+    @staticmethod
+    def _get_valid_fields():
+        # Use `BaseJsonCaseChange` instead of `JsonCaseCreation`,
+        # because `JsonCaseCreation` adds a `temporary_id` property for
+        # bulk updates, which `CaseHelper` does not support.
+        return set(BaseJsonCaseChange._properties_by_key) - {'case_id'}
 
     @staticmethod
     def _get_user_duck(user_id, domain):
