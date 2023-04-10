@@ -80,7 +80,7 @@ def _merge_import_results(result_list):
     # errors together for the final result
     result['errors'] = {}
     for r in result_list:
-        new_errors = set(result['errors']) - set(r['errors'])
+        new_errors = set(r['errors']) - set(result['errors'])
         for new_error in new_errors:
             result['errors'][new_error] = r['errors'][new_error]
 
