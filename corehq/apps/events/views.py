@@ -24,7 +24,7 @@ from corehq.apps.users.models import HqPermissions
 from corehq.apps.users.views import BaseUserSettingsView
 from corehq.util.jqueryrmi import JSONResponseMixin, allow_remote_invocation
 
-from .forms import CreateEventForm, NewAttendeeForm
+from .forms import EventForm, NewAttendeeForm
 from .models import (
     ATTENDED_DATE_CASE_PROPERTY,
     EVENT_IN_PROGRESS,
@@ -179,13 +179,13 @@ class EventCreateView(BaseEventView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         if self.request.method == 'POST':
-            context['form'] = CreateEventForm(self.request.POST, domain=self.domain)
+            context['form'] = EventForm(self.request.POST, domain=self.domain)
         else:
-            context['form'] = CreateEventForm(event=self.event, domain=self.domain)
+            context['form'] = EventForm(event=self.event, domain=self.domain)
         return context
 
     def post(self, request, *args, **kwargs):
-        form = CreateEventForm(self.request.POST, domain=self.domain)
+        form = EventForm(self.request.POST, domain=self.domain)
 
         if not form.is_valid():
             return self.get(request, *args, **kwargs)
@@ -245,7 +245,7 @@ class EventEditView(EventCreateView):
         return self.event_obj
 
     def post(self, request, *args, **kwargs):
-        form = CreateEventForm(self.request.POST, domain=self.domain, event=self.event)
+        form = EventForm(self.request.POST, domain=self.domain, event=self.event)
 
         if not form.is_valid():
             return self.get(request, *args, **kwargs)

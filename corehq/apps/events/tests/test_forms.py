@@ -2,14 +2,14 @@ from datetime import timedelta, date
 
 from nose.tools import assert_equal
 
-from ..forms import CreateEventForm
+from ..forms import EventForm
 from ..models import Event
 
 DOMAIN = 'test-domain'
 
 
 def test_field_availability_no_event():
-    avail = CreateEventForm.determine_field_availability(None)
+    avail = EventForm.determine_field_availability(None)
     assert_equal(avail, {
         'attendance_target': 1,
         'end_date': 1,
@@ -24,7 +24,7 @@ def test_field_availability_no_event():
 def test_field_availability_event_not_started():
     tomorrow = date.today() + timedelta(days=1)
     event = get_event(tomorrow)
-    avail = CreateEventForm.determine_field_availability(event)
+    avail = EventForm.determine_field_availability(event)
     assert_equal(avail, {
         'attendance_target': 1,
         'end_date': 1,
@@ -38,7 +38,7 @@ def test_field_availability_event_not_started():
 
 def test_field_availability_event_in_progress_no_attendance():
     event = get_event(date.today())
-    avail = CreateEventForm.determine_field_availability(event)
+    avail = EventForm.determine_field_availability(event)
     assert_equal(avail, {
         'attendance_target': 1,
         'end_date': 1,
@@ -52,7 +52,7 @@ def test_field_availability_event_in_progress_no_attendance():
 
 def test_field_availability_event_in_progress_with_attendance():
     event = get_event(date.today(), attendance=5)
-    avail = CreateEventForm.determine_field_availability(event)
+    avail = EventForm.determine_field_availability(event)
     assert_equal(avail, {
         'attendance_target': 0,
         'end_date': 1,
@@ -67,7 +67,7 @@ def test_field_availability_event_in_progress_with_attendance():
 def test_field_availability_event_completed():
     yesterday = date.today() - timedelta(days=1)
     event = get_event(yesterday, attendance=5)
-    avail = CreateEventForm.determine_field_availability(event)
+    avail = EventForm.determine_field_availability(event)
     assert_equal(avail, {
         'attendance_target': 0,
         'end_date': 0,

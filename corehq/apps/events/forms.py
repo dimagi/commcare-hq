@@ -23,7 +23,7 @@ TRACKING_OPTIONS = [
 ]
 
 
-class CreateEventForm(forms.Form):
+class EventForm(forms.Form):
     name = forms.CharField(
         label=_("Name"),
         required=True
@@ -72,7 +72,7 @@ class CreateEventForm(forms.Form):
             kwargs['initial'] = None
             self.title_prefix = "Add"
 
-        super(CreateEventForm, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
 
         fields_should_be_available = self.determine_field_availability(self.event)
         tracking_option_data_bind = "checked: trackingOption"
@@ -167,7 +167,7 @@ class CreateEventForm(forms.Form):
         }
 
     def get_new_event_form(self):
-        return CreateEventForm.create(self.cleaned_data)
+        return EventForm.create(self.cleaned_data)
 
     def clean_tracking_option(self):
         tracking_option = self.cleaned_data.get('tracking_option', TRACK_BY_DAY)
