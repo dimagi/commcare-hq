@@ -294,7 +294,14 @@ class CaseHelperTests(TestCase):
             self.assertEqual(user.username, commcare_user.username)
 
 
-@generate_cases([(f.name,) for f in CommCareCase._meta.fields], cls=TestCase)
+class TestInvalidFields(TestCase):
+    pass
+
+
+@generate_cases(
+    [(f.name,) for f in CommCareCase._meta.fields],
+    cls=TestInvalidFields,
+)
 def test_invalid_fields(self, field_name):
     if field_name in invalid_fields:
         with self.assertRaises(UserError):
