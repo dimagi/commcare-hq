@@ -314,12 +314,18 @@ def get_export_file(export_instances, es_filters, temp_path,
         for export_instance in export_instances:
             try:
                 docs = get_export_documents(export_instance, es_filters)
+                logging.info(f"get_export_file - Got {len(docs)} docs")
+            except Exception as e:
+                logging.error(f"get_export_documents failed: {repr(e)}")
+                raise Exception("get_export_documents failed")
+
+            try:
                 write_export_instance(writer, export_instance, docs,
                                     progress_tracker,
                                     include_hyperlinks=include_hyperlinks)
             except Exception as e:
-                logging.error(f"get_export_file failed: {repr(e)}")
-                raise Exception("get_export_file failed")
+                logging.error(f"write_export_instance failed: {repr(e)}")
+                raise Exception("write_export_instance failed")
 
     return ExportFile(writer.path, writer.format)
 

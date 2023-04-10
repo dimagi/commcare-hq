@@ -73,10 +73,6 @@ def populate_export_download_task(domain, export_ids, exports_type, username,
                 # so only track the progress for single instance exports.
                 progress_tracker=populate_export_download_task if len(export_instances) == 1 else None
             )
-            logging.info(
-                f"populate_export_download_task - export_file isinstance ExportFile: \
-                {isinstance(export_file, ExportFile)}"
-            )
 
             file_format = Format.from_format(export_file.format)
             filename = filename or export_instances[0].name
