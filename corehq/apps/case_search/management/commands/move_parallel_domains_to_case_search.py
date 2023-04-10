@@ -16,14 +16,13 @@ class Command(BaseCommand):
         parser.add_argument('lowest_size')
         parser.add_argument('highest_size')
         parser.add_argument('max_domains')
-        parser.add_argument('max_threads')
 
-    def handle(self, lowest_size, highest_size, max_domains, max_threads, **options):
+    def handle(self, lowest_size, highest_size, max_domains, **options):
         domains = DomainsNotInCaseSearchIndex.objects.filter(
-            estimated_size__gte=lowest_size
+            estimated_size__gte=int(lowest_size)
         ).filter(
-            estimated_size__lte=highest_size
-        ).all()[:max_domains]
+            estimated_size__lte=int(highest_size)
+        ).all()[:int(max_domains)]
 
         num_domains = domains.count()
         num_cases = domains.aggregate(Sum('estimated_size'))['estimated_size__sum']
