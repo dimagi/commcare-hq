@@ -248,7 +248,7 @@ class EntriesHelper(object):
                     else RESULTS_INSTANCE
                 remote_request_factory = RemoteRequestFactory(
                     None, module, [], case_session_var=case_session_var, storage_instance=storage_instance,
-                    exclude_relevant=case_search_sync_cases_on_form_entry_enabled_for_domain(self.domain))
+                    exclude_relevant=case_search_sync_cases_on_form_entry_enabled_for_domain(self.app.domain))
                 e.post = remote_request_factory.build_remote_request_post()
 
             # Ideally all of this version check should happen in Command/Display class
