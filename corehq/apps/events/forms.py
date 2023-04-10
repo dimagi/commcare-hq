@@ -1,4 +1,5 @@
 from datetime import date
+
 from django import forms
 from django.core.exceptions import ValidationError
 from django.utils.translation import gettext_lazy as _
@@ -7,10 +8,11 @@ from django.utils.translation import gettext_noop
 from crispy_forms import layout as crispy
 from crispy_forms.layout import Layout
 
-from corehq.apps.events.models import AttendeeCase, IN_PROGRESS, NOT_STARTED
 from corehq.apps.hqwebapp import crispy as hqcrispy
 from corehq.apps.hqwebapp.crispy import HQModalFormHelper
 from corehq.apps.users.dbaccessors import get_all_commcare_users_by_domain
+
+from .models import EVENT_IN_PROGRESS, EVENT_NOT_STARTED, AttendeeCase
 
 TRACK_BY_DAY = "by_day"
 TRACK_BY_EVENT = "by_event"
@@ -118,23 +120,23 @@ class CreateEventForm(forms.Form):
 
     @staticmethod
     def determine_field_availability(event):
-        event_not_started = True
-        event_in_progress = False
-        attendees_not_registered = True
-
-        if event:
-            event_not_started = event.attendee_list_status == NOT_STARTED
-            event_in_progress = event.attendee_list_status == IN_PROGRESS
-            attendees_not_registered = event.total_attendance == 0
+        not_started = event is None or event.status == EVENT_NOT_STARTED
+        in_progress = event and event.status == EVENT_IN_PROGRESS
+        no_attendance = (
+            not_started
+            or in_progress
+            and event.total_attendance == 0
+        )
+        not_completed = not_started or in_progress
 
         return {
-            'name': int(event_not_started),
-            'start_date': int(event_not_started),
-            'end_date': int(event_not_started or event_in_progress),
-            'attendance_target': int(event_not_started or (event_in_progress and attendees_not_registered)),
-            'sameday_reg': int(event_not_started or event_in_progress),
-            'tracking_option': int(event_not_started or (event_in_progress and attendees_not_registered)),
-            'expected_attendees': int(event_not_started or (event_in_progress and attendees_not_registered))
+            'name': not_started,
+            'start_date': not_started,
+            'end_date': not_completed,
+            'attendance_target': no_attendance,
+            'sameday_reg': not_completed,
+            'tracking_option': no_attendance,
+            'expected_attendees': no_attendance,
         }
 
     @property

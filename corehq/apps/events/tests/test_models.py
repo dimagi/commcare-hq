@@ -17,7 +17,7 @@ from ..models import (
     ATTENDEE_USER_ID_CASE_PROPERTY,
     DEFAULT_ATTENDEE_CASE_TYPE,
     EVENT_ATTENDEE_CASE_TYPE,
-    NOT_STARTED,
+    EVENT_NOT_STARTED,
     AttendanceTrackingConfig,
     AttendeeCase,
     Event,
@@ -132,7 +132,7 @@ class TestEventModel(TestCase):
         )
         event.save()
 
-        self.assertEqual(event.status, NOT_STARTED)
+        self.assertEqual(event.status, EVENT_NOT_STARTED)
         self.assertEqual(event.is_open, True)
         self.assertTrue(event.event_id is not None)
 
@@ -150,7 +150,7 @@ class TestEventModel(TestCase):
         )
         event.save()
 
-        self.assertEqual(event.status, NOT_STARTED)
+        self.assertEqual(event.status, EVENT_NOT_STARTED)
         self.assertEqual(event.is_open, True)
         self.assertTrue(event.event_id is not None)
         self.assertTrue(event.end_date is None)

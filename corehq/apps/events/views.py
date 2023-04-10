@@ -6,7 +6,6 @@ from django.http import Http404, HttpResponseRedirect, JsonResponse
 from django.urls import reverse
 from django.utils.translation import gettext_lazy as _
 from django.views.decorators.http import require_GET
-from datetime import datetime
 
 from jsonschema import ValidationError as SchemaValidationError
 from jsonschema import validate
@@ -27,15 +26,15 @@ from corehq.util.jqueryrmi import JSONResponseMixin, allow_remote_invocation
 
 from .forms import CreateEventForm, NewAttendeeForm
 from .models import (
+    ATTENDED_DATE_CASE_PROPERTY,
+    EVENT_IN_PROGRESS,
+    EVENT_NOT_STARTED,
+    EVENT_STATUS_TRANS,
     AttendanceTrackingConfig,
     Event,
     get_attendee_case_type,
     get_paginated_attendees,
-    ATTENDED_DATE_CASE_PROPERTY,
-    NOT_STARTED,
-    IN_PROGRESS
 )
-
 from .tasks import (
     close_mobile_worker_attendee_cases,
     sync_mobile_worker_attendees,
@@ -105,7 +104,6 @@ class EventsView(BaseEventView, CRUDPaginatedViewMixin):
         start, end = self.skip, self.skip + self.limit
         events = self.domain_events[start:end]
         for event in events:
-            event.set_status()
             event.save(update_fields=['attendee_list_status'])
 
         for event in self.domain_events[start:end]:
@@ -133,18 +131,16 @@ class EventsView(BaseEventView, CRUDPaginatedViewMixin):
             }
             for attendee in attendees
         ]
-        today = datetime.now().date()
-
         return {
             'id': event.event_id.hex,
             'name': event.name,
             # dates are not serializable for django templates
             'start_date': str(event.start_date),
             'end_date': str(event.end_date) if event.end_date else '-',
-            'is_editable': event.status in [NOT_STARTED, IN_PROGRESS],
-            'show_attendance': event.status != NOT_STARTED,
+            'is_editable': event.status in (EVENT_NOT_STARTED, EVENT_IN_PROGRESS),
+            'show_attendance': event.status != EVENT_NOT_STARTED,
             'target_attendance': event.attendance_target,
-            'status': event.status,
+            'status': EVENT_STATUS_TRANS[event.status],
             'total_attendance': event.total_attendance or '-',
             'attendees': attendees,
             'edit_url': reverse(EventEditView.urlname, args=(self.domain, event.event_id)),

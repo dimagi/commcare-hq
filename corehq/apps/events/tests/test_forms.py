@@ -89,5 +89,4 @@ def get_event(on_date, attendance=0):
         total_attendance=attendance,
         manager_id='c0ffee'
     )
-    event.set_status()
     return event

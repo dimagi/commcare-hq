@@ -16,19 +16,28 @@ from corehq.apps.groups.models import UnsavableGroup
 from datetime import datetime
 from datetime import date
 
-NOT_STARTED = 'Not started'
-IN_PROGRESS = 'In progress'
-UNDER_REVIEW = 'Under review'
-REJECTED = 'Rejected'
-ACCEPTED = 'Accepted'
 
+# Attendee list status is set by the Attendance Coordinator after the
+# event is over
+ATTENDEE_LIST_UNDER_REVIEW = 'Under review'
+ATTENDEE_LIST_REJECTED = 'Rejected'
+ATTENDEE_LIST_ACCEPTED = 'Accepted'
 ATTENDEE_LIST_STATUS_CHOICES = [
-    (NOT_STARTED, _('Not started')),
-    (IN_PROGRESS, _('In progress')),
-    (UNDER_REVIEW, _('Under review')),
-    (REJECTED, _('Rejected')),
-    (ACCEPTED, _('Accepted')),
+    (ATTENDEE_LIST_UNDER_REVIEW, _('Attendee list under review')),
+    (ATTENDEE_LIST_REJECTED, _('Attendee list rejected')),
+    (ATTENDEE_LIST_ACCEPTED, _('Attendee list accepted')),
 ]
+
+# Event status is determined by the event's start and end dates
+EVENT_NOT_STARTED = 'Not started'
+EVENT_IN_PROGRESS = 'In progress'
+EVENT_STATUS_TRANS = {
+    EVENT_NOT_STARTED: _('Event not started'),
+    EVENT_IN_PROGRESS: _('Event in progress'),
+    ATTENDEE_LIST_UNDER_REVIEW: _('Attendee list under review'),
+    ATTENDEE_LIST_REJECTED: _('Attendee list rejected'),
+    ATTENDEE_LIST_ACCEPTED: _('Attendee list accepted'),
+}
 
 # DO NOT USE. Use `get_attendee_case_type()` instead.
 #
@@ -131,17 +140,20 @@ class Event(models.Model):
     track_each_day = models.BooleanField(default=False)
     is_open = models.BooleanField(default=True)
     manager_id = models.CharField(max_length=255, null=False)
-    attendee_list_status = models.CharField(
-        max_length=255,
-        null=False,
-        choices=ATTENDEE_LIST_STATUS_CHOICES,
-        default=NOT_STARTED,
-    )
     _attendance_taker_ids = ArrayField(
         models.UUIDField(),
         blank=True,
         null=True,
         default=list
+    )
+    # attendee_list_status is only applicable after end_date has passed
+    # and the Attendance Coordinator can review the list of attendees.
+    # If end_date is null, attendee_list_status is not used.
+    attendee_list_status = models.CharField(
+        max_length=255,
+        null=False,
+        choices=ATTENDEE_LIST_STATUS_CHOICES,
+        default=ATTENDEE_LIST_UNDER_REVIEW,
     )
 
     class Meta:
@@ -346,39 +358,23 @@ class Event(models.Model):
     def _case_factory(self):
         return CaseFactory(domain=self.domain)
 
-    def save(
-        self,
-        force_insert=False,
-        force_update=False,
-        using=None,
-        update_fields=None,
-    ):
-        self.set_status()
-        super().save(
-            force_insert=force_insert,
-            force_update=force_update,
-            using=using,
-            update_fields=update_fields,
-        )
-
     def delete(self, using=None, keep_parents=False):
         self._close_ext_cases()
         self._case_factory.close_case(self.case_id)
         return super().delete(using, keep_parents)
 
-    def set_status(self):
-        """Checks what `attendee_list_status` should be and update it accordingly, but does not call `save()` on
-        the instance"""
-        today = date.today()
-
-        if today >= self.start_date:
-            self.attendee_list_status = IN_PROGRESS
-        if self.end_date and today > self.end_date:
-            self.attendee_list_status = UNDER_REVIEW
-
     @property
     def status(self):
-        return self.attendee_list_status
+        # Note: The return value is not translated. Use
+        # EVENT_STATUS_TRANS for translations
+        today = date.today()
+
+        if today < self.start_date:
+            return EVENT_NOT_STARTED
+        elif self.start_date <= today <= self.end_date:
+            return EVENT_IN_PROGRESS
+        else:
+            return self.attendee_list_status
 
     def get_total_attendance_takers(self):
         return len(self.attendance_taker_ids)
