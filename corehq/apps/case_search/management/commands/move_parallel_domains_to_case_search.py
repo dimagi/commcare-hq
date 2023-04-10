@@ -1,5 +1,5 @@
 from datetime import datetime
-from multiprocessing import cpu_count, Pool
+import gevent
 
 from django.core.management import BaseCommand
 from django.db.models import Sum
@@ -27,16 +27,17 @@ class Command(BaseCommand):
         num_domains = domains.count()
         num_cases = domains.aggregate(Sum('estimated_size'))['estimated_size__sum']
 
+        domains = DomainsNotInCaseSearchIndex.objects.all()
         confirm = input(f'\nMigrate {num_domains} domains with {num_cases} cases to Case Search Index [y/n] ')
         if confirm:
             self.stdout.write("Migrating...\n")
             time_started = datetime.utcnow()
-            pool = Pool(processes=cpu_count())
-            pool.map(self.migrate_domain, list(domains.values_list('domain', flat=True)))
+            gevent.spawn(migrate_domain, list(domains.values_list('domain', flat=True)))
             task_time = datetime.utcnow() - time_started
             self.stdout.write(f'\nDone...\ntook {task_time.seconds} seconds\n\n\n\n')
 
-    def migrate_domain(self, domain):
-        domain_needs_search_index.clear(domain)
-        DomainsNotInCaseSearchIndex.objects.filter(domain=domain).delete()
-        CaseSearchReindexerFactory(domain=domain).build().reindex()
+
+def migrate_domain(domain):
+    domain_needs_search_index.clear(domain)
+    DomainsNotInCaseSearchIndex.objects.filter(domain=domain).delete()
+    CaseSearchReindexerFactory(domain=domain).build().reindex()
