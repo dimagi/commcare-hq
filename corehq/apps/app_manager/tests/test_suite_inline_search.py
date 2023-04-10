@@ -1,5 +1,4 @@
 from django.test import SimpleTestCase
-from unittest.mock import patch
 
 from corehq.apps.app_manager.const import WORKFLOW_FORM, WORKFLOW_PREVIOUS
 from corehq.apps.app_manager.models import (
@@ -82,11 +81,8 @@ class InlineSearchSuiteTest(SimpleTestCase, SuiteMixin):
         self.module = self.app.modules[0]
         self.form = self.module.forms[0]
 
-    @patch(
-        "corehq.apps.app_manager.suite_xml.sections.entries."
-        "case_search_sync_cases_on_form_entry_enabled_for_domain", return_value=False)
     @flag_enabled('USH_SEARCH_FILTER')
-    def test_inline_search(self, mock1):
+    def test_inline_search(self):
         suite = self.app.create_suite()
 
         expected_entry_query = f"""
@@ -133,11 +129,8 @@ class InlineSearchSuiteTest(SimpleTestCase, SuiteMixin):
         self.assertXmlDoesNotHaveXpath(suite, "./detail[@id='m0_search_short']")
         self.assertXmlDoesNotHaveXpath(suite, "./detail[@id='m0_search_long']")
 
-    @patch(
-        "corehq.apps.app_manager.suite_xml.sections.entries."
-        "case_search_sync_cases_on_form_entry_enabled_for_domain", return_value=False)
     @flag_enabled('USH_SEARCH_FILTER')
-    def test_inline_search_case_list_item(self, mock1):
+    def test_inline_search_case_list_item(self):
         self.module.case_list.show = True
         suite = self.app.create_suite()
 
@@ -173,13 +166,8 @@ class InlineSearchSuiteTest(SimpleTestCase, SuiteMixin):
         </partial>"""  # noqa: E501
         self.assertXmlPartialEqual(expected_entry_query, suite, "./entry[2]")
 
-    @patch("corehq.apps.app_manager.suite_xml.post_process.remote_requests."
-           "case_search_sync_cases_on_form_entry_enabled_for_domain", return_value=False)
-    @patch(
-        "corehq.apps.app_manager.suite_xml.sections.entries."
-        "case_search_sync_cases_on_form_entry_enabled_for_domain", return_value=False)
     @flag_enabled('USH_SEARCH_FILTER')
-    def test_inline_search_multi_select(self, mock1, mock2):
+    def test_inline_search_multi_select(self):
         self.module.case_details.short.multi_select = True
         self.module.case_details.short.columns.append(
             DetailColumn.wrap(dict(
@@ -240,10 +228,7 @@ class InlineSearchSuiteTest(SimpleTestCase, SuiteMixin):
         self.assertXmlPartialEqual(
             expected_detail_columns, suite, "./detail[@id='m0_case_short']/field/template/text/xpath")
 
-    @patch(
-        "corehq.apps.app_manager.suite_xml.sections.entries."
-        "case_search_sync_cases_on_form_entry_enabled_for_domain", return_value=False)
-    def test_case_detail_tabs_with_inline_search(self, mock1):
+    def test_case_detail_tabs_with_inline_search(self):
         """Test that the detail nodeset uses the correct instance (results:inline not casedb)"""
         self.app.get_module(0).case_details.long.tabs = [
             DetailTab(starting_index=0),
@@ -255,10 +240,7 @@ class InlineSearchSuiteTest(SimpleTestCase, SuiteMixin):
             self.app.create_suite(),
             './detail[@id="m0_case_long"]')
 
-    @patch(
-        "corehq.apps.app_manager.suite_xml.sections.entries."
-        "case_search_sync_cases_on_form_entry_enabled_for_domain", return_value=False)
-    def test_form_linking_to_inline_search_module_from_registration_form(self, mock1):
+    def test_form_linking_to_inline_search_module_from_registration_form(self):
         self.module.search_config.additional_case_types = ["other_case"]
         suite = self.app.create_suite()
         expected = f"""
@@ -280,10 +262,7 @@ class InlineSearchSuiteTest(SimpleTestCase, SuiteMixin):
             "./entry[2]/stack/create"
         )
 
-    @patch(
-        "corehq.apps.app_manager.suite_xml.sections.entries."
-        "case_search_sync_cases_on_form_entry_enabled_for_domain", return_value=False)
-    def test_workflow_inline_search_previous_screen_after_case_list_form(self, mock1):
+    def test_workflow_inline_search_previous_screen_after_case_list_form(self):
         factory = AppFactory(DOMAIN, "App with DR", build_version='2.53.0')
         m0, f0 = factory.new_basic_module("new case", "case")
         factory.form_opens_case(f0, "case")
@@ -332,11 +311,8 @@ class InlineSearchSuiteTest(SimpleTestCase, SuiteMixin):
             "./entry[2]/stack/create"
         )
 
-    @patch(
-        "corehq.apps.app_manager.suite_xml.sections.entries."
-        "case_search_sync_cases_on_form_entry_enabled_for_domain", return_value=False)
     @flag_enabled('MOBILE_UCR')
-    def test_prompt_itemset_mobile_report(self, mock1):
+    def test_prompt_itemset_mobile_report(self):
         self.module.search_config.properties[0].input_ = 'select1'
         instance_id = "123abc"
         self.module.search_config.properties[0].itemset = Itemset(
@@ -377,11 +353,8 @@ class InlineSearchSuiteTest(SimpleTestCase, SuiteMixin):
             f"./entry[1]/instance[@id='{instance_id}']",
         )
 
-    @patch(
-        "corehq.apps.app_manager.suite_xml.sections.entries."
-        "case_search_sync_cases_on_form_entry_enabled_for_domain", return_value=False)
     @flag_enabled('USH_SEARCH_FILTER')
-    def test_inline_search_with_parent_select(self, mock1):
+    def test_inline_search_with_parent_select(self):
         """Inline search module can have 'parent select' as long as the
         relationship is 'other' (None).
         Inline search modules can never be the parent select module.
@@ -497,11 +470,8 @@ class InlineSearchShadowModuleTest(SimpleTestCase, SuiteMixin):
         self.module = self.app.modules[0]
         self.shadow_module = self.app.modules[1]
 
-    @patch(
-        "corehq.apps.app_manager.suite_xml.sections.entries."
-        "case_search_sync_cases_on_form_entry_enabled_for_domain", return_value=False)
     @flag_enabled('USH_CASE_CLAIM_UPDATES')
-    def test_suite(self, mock1):
+    def test_suite(self):
         suite = self.app.create_suite()
         self.assertXmlPartialEqual(
             self.get_xml('shadow_module_entry'),
@@ -509,11 +479,8 @@ class InlineSearchShadowModuleTest(SimpleTestCase, SuiteMixin):
             "./entry[2]"
         )
 
-    @patch(
-        "corehq.apps.app_manager.suite_xml.sections.entries."
-        "case_search_sync_cases_on_form_entry_enabled_for_domain", return_value=False)
     @flag_enabled('USH_CASE_CLAIM_UPDATES')
-    def test_additional_types(self, mock1):
+    def test_additional_types(self):
         another_case_type = "another_case_type"
         self.module.search_config.additional_case_types = [another_case_type]
         suite_xml = self.app.create_suite()
@@ -566,10 +533,7 @@ class InlineSearchChildModuleTest(SimpleTestCase, SuiteMixin):
         # wrap to have assign_references called
         self.app = Application.wrap(factory.app.to_json())
 
-    @patch(
-        "corehq.apps.app_manager.suite_xml.sections.entries."
-        "case_search_sync_cases_on_form_entry_enabled_for_domain", return_value=False)
-    def test_child_module_with_inline_search_entry(self, mock1):
+    def test_child_module_with_inline_search_entry(self):
         """An inline search module can be a child module
             * as long as there is no parent selection or parent_select.relationship = None
 
@@ -620,10 +584,7 @@ class InlineSearchChildModuleTest(SimpleTestCase, SuiteMixin):
         """  # noqa: E501
         self.assertXmlPartialEqual(expected_entry, suite, "./entry[2]")
 
-    @patch(
-        "corehq.apps.app_manager.suite_xml.sections.entries."
-        "case_search_sync_cases_on_form_entry_enabled_for_domain", return_value=False)
-    def test_form_link_in_child_module_with_inline_search(self, mock1):
+    def test_form_link_in_child_module_with_inline_search(self):
         module = self.app.get_module(1)
         form1 = module.get_form(0)
         form2 = module.get_form(1)
