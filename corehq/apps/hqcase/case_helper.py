@@ -4,6 +4,43 @@ from corehq.apps.users.models import CouchUser
 
 from .api.updates import handle_case_update
 
+# Invalid CommCareCase fields when creating a case:
+invalid_fields = {
+    'case_id',
+    'case_json',
+    'closed',
+    'closed_by',
+    'closed_on',
+    'date_closed',
+    'date_opened',
+    'deleted',
+    'deleted_on',
+    'deletion_id',
+    'domain',
+    'id',
+    'indexed_on',
+    'last_modified',
+    'location_id',
+    'modified_by',
+    'modified_on',
+    'name',
+    'opened_by',
+    'opened_on',
+    'server_last_modified',
+    'server_modified_on',
+    'type',
+}
+# Valid fields when creating a case are:
+# * case_name
+# * case_type
+# * external_id
+# * owner_id
+#
+# Custom case properties are set using the "properties" dictionary.
+#
+# The XForm user ID and device ID are set by passing the `user_id` and
+# `device_id` parameters respectively to `CaseHelper.create_case()`
+
 
 class CaseHelper:
     """
@@ -174,17 +211,6 @@ class CaseHelper:
         {'foo': 'bar'}
 
         """
-        invalid_fields = {
-            'case_id',
-            'domain',
-            'closed',
-            'date_closed',
-            'date_opened',
-            'last_modified',
-            'modified_by',
-            'server_last_modified',
-            'indexed_on',
-        }
         return {k: v for k, v in case_data.items() if k not in invalid_fields}
 
     @staticmethod

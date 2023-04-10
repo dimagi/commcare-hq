@@ -9,9 +9,10 @@ from casexml.apps.case.mock import CaseFactory, CaseIndex, CaseStructure
 
 from corehq.apps.users.models import CommCareUser
 from corehq.form_processor.models import CommCareCase
+from corehq.util.test_utils import generate_cases
 
-from ..api.core import serialize_case, UserError
-from ..case_helper import CaseHelper
+from ..api.core import UserError, serialize_case
+from ..case_helper import CaseHelper, invalid_fields
 
 DOMAIN = 'test-domain'
 
@@ -291,6 +292,26 @@ class CaseHelperTests(TestCase):
             user = CaseHelper._get_user_duck(commcare_user.user_id, DOMAIN)
             self.assertEqual(user.user_id, commcare_user.user_id)
             self.assertEqual(user.username, commcare_user.username)
+
+
+@generate_cases([(f.name,) for f in CommCareCase._meta.fields], cls=TestCase)
+def test_invalid_fields(self, field_name):
+    if field_name in invalid_fields:
+        with self.assertRaises(UserError):
+            helper = CaseHelper(domain=DOMAIN)
+            helper.create_case({
+                'case_type': 'child',
+                'case_name': 'Namaka',
+                field_name: '2005-06-30 12:00:00',
+            })
+    else:
+        helper = CaseHelper(domain=DOMAIN)
+        helper.create_case({
+            'case_type': 'child',
+            'case_name': 'Namaka',
+            field_name: '2005-06-30 12:00:00',
+        })
+        helper.close()
 
 
 @contextmanager
