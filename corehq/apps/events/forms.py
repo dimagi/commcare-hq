@@ -116,7 +116,8 @@ class CreateEventForm(forms.Form):
         self.fields['attendance_target'].disabled = not fields_should_be_available['attendance_target']
         self.fields['expected_attendees'].disabled = not fields_should_be_available['expected_attendees']
 
-    def determine_field_availability(self, event):
+    @staticmethod
+    def determine_field_availability(event):
         event_not_started = True
         event_in_progress = False
         attendees_not_registered = True
