@@ -96,6 +96,7 @@ from corehq.apps.app_manager.views.utils import (
     bail,
     clear_xmlns_app_id_cache,
     get_langs,
+    handle_custom_assertions,
     handle_custom_icon_edits,
     handle_shadow_child_modules,
     InvalidSessionEndpoint,
@@ -150,6 +151,10 @@ def get_module_view_context(request, app, module, lang=None):
             and has_privilege(request, privileges.CLOUDCARE)
             and toggles.USH_CASE_CLAIM_UPDATES.enabled(app.domain)
         ),
+        'custom_assertions': [
+            {'test': assertion.test, 'text': assertion.text.get(lang)}
+            for assertion in module.custom_assertions
+        ],
     }
     module_brief = {
         'id': module.id,
@@ -618,6 +623,7 @@ def edit_module_attr(request, domain, app_id, module_unique_id, attr):
         "use_default_image_for_all": None,
         "use_default_audio_for_all": None,
         "session_endpoint_id": None,
+        'custom_assertions': None,
     }
 
     if attr not in attributes:
@@ -769,6 +775,9 @@ def edit_module_attr(request, domain, app_id, module_unique_id, attr):
             set_session_endpoint(module, raw_endpoint_id, app)
         except InvalidSessionEndpoint as e:
             return HttpResponseBadRequest(str(e))
+
+    if should_edit('custom_assertions'):
+        handle_custom_assertions(request, module, lang)
 
     handle_media_edits(request, module, should_edit, resp, lang)
     handle_media_edits(request, module.case_list_form, should_edit, resp, lang, prefix='case_list_form_')
