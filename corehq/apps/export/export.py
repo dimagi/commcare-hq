@@ -312,7 +312,6 @@ def get_export_file(export_instances, es_filters, temp_path, progress_tracker=No
         for export_instance in export_instances:
             try:
                 docs = get_export_documents(export_instance, es_filters)
-                logging.info(f"get_export_file - Got {len(docs)} docs")
             except Exception as e:
                 logging.error(f"get_export_documents failed: {repr(e)}")
                 raise Exception("get_export_documents failed")
@@ -398,6 +397,7 @@ def write_export_instance(writer, export_instance, documents,
                         'export_table': table.label,
                         'doc_id': doc.get('_id'),
                     })
+                    logging.error(f"write_export_instance - failed on {table.label} table")
                     e.sentry_capture = False
                     raise
 
@@ -412,6 +412,7 @@ def write_export_instance(writer, export_instance, documents,
             if progress_tracker:
                 progress_manager.set_progress(row_number + 1, documents.count)
 
+    logging.info(f"write_export_instance - total rows: {total_rows}")
     end = _time_in_milliseconds()
     tags = {'format': writer.format}
     _record_datadog_export_duration(end - start, total_bytes, total_rows, tags)
