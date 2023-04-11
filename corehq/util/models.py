@@ -360,7 +360,7 @@ class ForeignValue:
         return cls._ForeignValue_names
 
 
-def foreign_value_init(cls):
+def foreign_init(cls):
     """Class decorator that adds a ForeignValue-compatible __init__ method
 
     Use this on classes with `ForeignValue` attributes that want to
