@@ -7,6 +7,7 @@ from collections import Counter
 from couchdbkit import ResourceConflict
 
 from corehq.apps.export.exceptions import ExportTooLargeException
+from corehq.apps.export.filters import ExportFilter
 from corehq.util.metrics import metrics_counter, metrics_track_errors
 from couchexport.export import FormattedRow, get_writer
 from couchexport.models import Format
@@ -19,11 +20,13 @@ from corehq.apps.export.models.new import (
     CaseExportInstance,
     FormExportInstance,
     SMSExportInstance,
+    ALL_CASE_TYPE_TABLE
 )
 from corehq.toggles import PAGINATED_EXPORTS
 from corehq.util.metrics.load_counters import load_counter
 from corehq.util.files import TransientTempfile, safe_filename
 from soil.progress import TaskProgressManager
+import logging
 
 
 class ExportFile(object):
@@ -301,36 +304,49 @@ def get_export_download(domain, export_ids, exports_type, username, es_filters, 
     return download
 
 
-def get_export_file(export_instances, es_filters, temp_path, progress_tracker=None, include_hyperlinks=True):
+def get_export_file(export_instances, es_filters, temp_path,
+                    progress_tracker=None, include_hyperlinks=True):
     """
     Return an export file for the given ExportInstance and list of filters
     """
     writer = get_export_writer(export_instances, temp_path)
     with writer.open(export_instances):
         for export_instance in export_instances:
-            docs = get_export_documents(export_instance, es_filters, are_filters_es_formatted=True)
-            write_export_instance(writer, export_instance, docs,
-                                  progress_tracker,
-                                  include_hyperlinks=include_hyperlinks)
+            table_count = len(export_instance.selected_tables)
+            logging.info(f"get_export_file - writing to instance with {table_count} tables")
+            try:
+                docs = get_export_documents(export_instance, es_filters)
+                logging.info(f"get_export_file - doc count {docs.count if docs else 'N/A'}")
+            except Exception as e:
+                logging.error(f"get_export_documents failed: {repr(e)}")
+                raise Exception("get_export_documents failed")
+
+            try:
+                write_export_instance(writer, export_instance, docs,
+                                    progress_tracker,
+                                    include_hyperlinks=include_hyperlinks)
+            except Exception as e:
+                logging.error(f"write_export_instance failed: {repr(e)}")
+                raise Exception("write_export_instance failed")
 
     return ExportFile(writer.path, writer.format)
 
 
-def get_export_documents(export_instance, filters, are_filters_es_formatted=False):
+def get_export_documents(export_instance, filters):
     # Pull doc ids from elasticsearch and stream to disk
-    query = get_export_query(export_instance, filters, are_filters_es_formatted)
+    query = get_export_query(export_instance, filters)
     return query.scroll_ids_to_disk_and_iter_docs()
 
 
-def get_export_query(export_instance, filters, are_filters_es_formatted=False):
+def get_export_query(export_instance, filters):
     """
-    :param filters: either a list of ExportFilter objects, or a list of json serializable dicts
-    :param are_filters_es_formatted: used to determine if filters are already json serializable dicts
-    :return:
+    :param export_instance: ExportInstance
+    :param filters: either list of ExportFilters or elasticsearch filters
+    :return: ESQuery object with filters applied
     """
     query = _get_base_query(export_instance)
     for f in filters:
-        es_filter = f if are_filters_es_formatted else f.to_es_filter()
+        es_filter = f.to_es_filter() if isinstance(f, ExportFilter) else f
         query = query.filter(es_filter)
     return query
 
@@ -362,9 +378,18 @@ def write_export_instance(writer, export_instance, documents,
         total_rows = 0
         track_load = load_counter(export_instance.type, "export", export_instance.domain)
 
+        skipped_rows = 0
         for row_number, doc in enumerate(documents):
             total_bytes += sys.getsizeof(doc)
+            all_skipped = True
             for table in export_instance.selected_tables:
+                # This is for bulk exports on all case types.
+                # Skip over the tables that this doc shouldn't go into.
+                path_names = [path.name for path in table.path]
+                if ALL_CASE_TYPE_TABLE in table.path and doc['type'] not in path_names:
+                    continue
+
+                all_skipped = False
                 try:
                     rows = table.get_rows(
                         doc,
@@ -380,6 +405,7 @@ def write_export_instance(writer, export_instance, documents,
                         'export_table': table.label,
                         'doc_id': doc.get('_id'),
                     })
+                    logging.error(f"write_export_instance - failed on {table.label} table")
                     e.sentry_capture = False
                     raise
 
@@ -390,10 +416,15 @@ def write_export_instance(writer, export_instance, documents,
 
                 total_rows += len(rows)
 
+            if all_skipped:
+                skipped_rows += 1
+
             track_load()
             if progress_tracker:
                 progress_manager.set_progress(row_number + 1, documents.count)
 
+    logging.info(f"write_export_instance - All tables skipped for {skipped_rows} rows")
+    logging.info(f"write_export_instance - total rows: {total_rows}, total bytes: {total_bytes}")
     end = _time_in_milliseconds()
     tags = {'format': writer.format}
     _record_datadog_export_duration(end - start, total_bytes, total_rows, tags)
