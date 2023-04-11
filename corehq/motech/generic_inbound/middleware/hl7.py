@@ -29,9 +29,6 @@ def _hl7_message_to_dict(message_part, base_datatypes, use_long_name: bool = Tru
             name = str(child.name)
             if use_long_name:
                 name = str(child.long_name).lower() if child.long_name else name
-            else:
-                # use '.' names to match XML
-                name = name.replace("_", ".")
 
             try:
                 data_type = getattr(child, "datatype")

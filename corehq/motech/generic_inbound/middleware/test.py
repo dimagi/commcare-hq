@@ -1,3 +1,5 @@
+import json
+
 from corehq.motech.generic_inbound.middleware.hl7 import hl7_str_to_dict
 
 # https://confluence.hl7.org/display/OO/v2+Sample+Messages
@@ -6,35 +8,36 @@ msh = "MSH|^~\\&|ADT1|GOOD HEALTH HOSPITAL|GHH LAB, INC.|GOOD HEALTH HOSPITAL|19
 
 # I'm not 100% sure this will always match the XML
 hl7_dict = hl7_str_to_dict(msh, False)
+# print(json.dumps(hl7_dict, indent=2))
 assert hl7_dict == {
     "MSH": {
-        "MSH.1": "|",
-        "MSH.2": "^~\\&",
-        "MSH.3": {
-            "HD.1": "ADT1"
+        "MSH_1": "|",
+        "MSH_2": "^~\\&",
+        "MSH_3": {
+            "HD_1": "ADT1"
         },
-        "MSH.4": {
-            "HD.1": "GOOD HEALTH HOSPITAL"
+        "MSH_4": {
+            "HD_1": "GOOD HEALTH HOSPITAL"
         },
-        "MSH.5": {
-            "HD.1": "GHH LAB, INC."
+        "MSH_5": {
+            "HD_1": "GHH LAB, INC."
         },
-        "MSH.6": {
-            "HD.1": "GOOD HEALTH HOSPITAL"
+        "MSH_6": {
+            "HD_1": "GOOD HEALTH HOSPITAL"
         },
-        "MSH.7": "198808181126",
-        "MSH.8": "SECURITY",
-        "MSH.9": {
-            "MSG.1": "ADT",
-            "MSG.2": "A01",
-            "MSG.3": "ADT_A01"
+        "MSH_7": "198808181126",
+        "MSH_8": "SECURITY",
+        "MSH_9": {
+            "MSG_1": "ADT",
+            "MSG_2": "A01",
+            "MSG_3": "ADT_A01"
         },
-        "MSH.10": "MSG00001",
-        "MSH.11": {
-            "PT.1": "P"
+        "MSH_10": "MSG00001",
+        "MSH_11": {
+            "PT_1": "P"
         },
-        "MSH.12": {
-            "VID.1": "2.8"
+        "MSH_12": {
+            "VID_1": "2.8"
         }
     }
 }
