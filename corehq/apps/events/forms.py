@@ -6,13 +6,24 @@ from django.utils.translation import gettext_lazy as _
 from django.utils.translation import gettext_noop
 
 from crispy_forms import layout as crispy
+from crispy_forms.helper import FormHelper
 from crispy_forms.layout import Layout
 
 from corehq.apps.hqwebapp import crispy as hqcrispy
 from corehq.apps.hqwebapp.crispy import HQModalFormHelper
+from corehq.apps.locations.forms import LocationSelectWidget
+from corehq.apps.locations.models import SQLLocation
+from corehq.apps.locations.util import get_locations_from_ids
+from corehq.apps.reports.filters.users import ExpandedMobileWorkerFilter
 from corehq.apps.users.dbaccessors import get_all_commcare_users_by_domain
+from corehq.apps.users.forms import PrimaryLocationWidget
 
-from .models import EVENT_IN_PROGRESS, EVENT_NOT_STARTED, AttendeeCase
+from .models import (
+    EVENT_IN_PROGRESS,
+    EVENT_NOT_STARTED,
+    AttendeeCase,
+    AttendeeModel,
+)
 
 TRACK_BY_DAY = "by_day"
 TRACK_BY_EVENT = "by_event"
@@ -224,3 +235,63 @@ class NewAttendeeForm(forms.Form):
                 data_bind="value: name, valueUpdate: 'keyup'",
             )
         )
+
+
+class EditAttendeeForm(forms.ModelForm):
+
+    class Meta:
+        model = AttendeeModel
+        fields = ('name', 'locations', 'primary_location')
+        help_texts = {
+            'locations': ExpandedMobileWorkerFilter.location_search_help,
+        }
+        widgets = {
+            'primary_location': PrimaryLocationWidget(
+                css_id='id_primary_location',
+                source_css_id='id_locations',
+            ),
+        }
+
+    def __init__(self, *args, domain, **kwargs):
+        self.domain = domain
+        self.base_fields['locations'].widget = LocationSelectWidget(
+            self.domain, multiselect=True, id='id_locations',
+        )
+
+        self.helper = FormHelper()
+        self.helper.form_method = 'POST'
+        self.helper.form_class = 'form-horizontal'
+        self.helper.form_tag = False
+        self.helper.label_class = 'col-sm-3 col-md-2'
+        self.helper.field_class = 'col-sm-9 col-md-8 col-lg-6'
+
+        super().__init__(*args, **kwargs)
+
+    def clean_locations(self):
+        location_ids = self.data.getlist('locations')
+        try:
+            locations = get_locations_from_ids(location_ids, self.domain)
+        except SQLLocation.DoesNotExist:
+            raise ValidationError(
+                _('One or more of the locations was not found.')
+            )
+
+        return [location.location_id for location in locations]
+
+    def clean(self):
+        cleaned_data = super().clean()
+
+        primary_location_id = cleaned_data['primary_location']
+        location_ids = cleaned_data['locations']
+        if primary_location_id:
+            if primary_location_id not in location_ids:
+                self.add_error(
+                    'primary_location',
+                    _("Primary location must be one of the user's locations")
+                )
+        if location_ids and not primary_location_id:
+            self.add_error(
+                'primary_location',
+                _("Primary location can't be empty if the user has any "
+                  "locations set")
+            )
