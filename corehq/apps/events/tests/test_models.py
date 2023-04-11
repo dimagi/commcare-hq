@@ -9,17 +9,20 @@ from casexml.apps.case.mock import CaseFactory, CaseStructure
 
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.users.models import CommCareUser, WebUser
-from corehq.form_processor.exceptions import CaseNotFound
 from corehq.form_processor.models import CommCareCase, CommCareCaseIndex
 from corehq.util.test_utils import create_test_case
 
+from ...hqcase.case_helper import CaseHelper
 from ..models import (
     ATTENDEE_USER_ID_CASE_PROPERTY,
     DEFAULT_ATTENDEE_CASE_TYPE,
     EVENT_ATTENDEE_CASE_TYPE,
     EVENT_NOT_STARTED,
+    LOCATION_IDS_CASE_PROPERTY,
+    PRIMARY_LOCATION_ID_CASE_PROPERTY,
     AttendanceTrackingConfig,
     AttendeeCase,
+    AttendeeModel,
     Event,
     get_attendee_case_type,
     get_user_case_sharing_groups_for_events,
@@ -435,6 +438,56 @@ class EventCaseTests(TestCase):
         )
         self.assertIsInstance(unsaved_event._case_id, str)
         self.assertEqual(unsaved_event.case_id, case_id_hex_string)
+
+
+class TestAttendeeModel(TestCase):
+
+    @staticmethod
+    @contextmanager
+    def get_case():
+        helper = CaseHelper(domain=DOMAIN)
+        helper.create_case({
+            'case_name': 'Cho Chang',
+            'case_type': get_attendee_case_type(DOMAIN),
+            'properties': {
+                LOCATION_IDS_CASE_PROPERTY: 'abc123 def456',
+                PRIMARY_LOCATION_ID_CASE_PROPERTY: 'abc123',
+            }
+        })
+        try:
+            yield helper.case
+        finally:
+            helper.close()
+
+    def test_model_init(self):
+        with self.get_case() as case:
+            model = AttendeeModel(case=case, domain=DOMAIN)
+            self.assertEqual(str(model.case_id), case.case_id)
+            self.assertEqual(model.name, case.name)
+            self.assertEqual(model.domain, case.domain)
+            loc_ids_str = case.get_case_property(LOCATION_IDS_CASE_PROPERTY)
+            self.assertEqual(model.locations, loc_ids_str.split())
+            self.assertEqual(
+                model.primary_location,
+                case.get_case_property(PRIMARY_LOCATION_ID_CASE_PROPERTY)
+            )
+
+    def test_model_save(self):
+        with self.get_case() as case:
+            model = AttendeeModel(case=case, domain=DOMAIN)
+            model.locations = ['def456']
+            model.primary_location = 'def456'
+            model.save()
+
+            reloaded = CommCareCase.objects.get_case(case.case_id, DOMAIN)
+            self.assertEqual(
+                reloaded.get_case_property(LOCATION_IDS_CASE_PROPERTY),
+                'def456'
+            )
+            self.assertEqual(
+                reloaded.get_case_property(PRIMARY_LOCATION_ID_CASE_PROPERTY),
+                'def456'
+            )
 
 
 def test_doctests():
