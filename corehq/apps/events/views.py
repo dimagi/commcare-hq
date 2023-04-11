@@ -24,13 +24,14 @@ from corehq.apps.users.models import HqPermissions
 from corehq.apps.users.views import BaseUserSettingsView
 from corehq.util.jqueryrmi import JSONResponseMixin, allow_remote_invocation
 
-from .forms import EventForm, NewAttendeeForm
+from .forms import EditAttendeeForm, EventForm, NewAttendeeForm
 from .models import (
     ATTENDED_DATE_CASE_PROPERTY,
     EVENT_IN_PROGRESS,
     EVENT_NOT_STARTED,
     EVENT_STATUS_TRANS,
     AttendanceTrackingConfig,
+    AttendeeModel,
     Event,
     get_attendee_case_type,
     get_paginated_attendees,
@@ -364,6 +365,68 @@ class AttendeesListView(JSONResponseMixin, BaseEventView):
         return cases[0]
 
 
+class AttendeeEditView(BaseEventView):
+    urlname = 'edit_attendee'
+    template_name = "edit_attendee.html"
+
+    page_title = _("Edit Attendee")
+
+    @property
+    def page_url(self):
+        return reverse(self.urlname, args=(self.domain, self.attendee_id))
+
+    @use_multiselect
+    @use_jquery_ui
+    def dispatch(self, request, *args, **kwargs):
+        self.attendee_id = kwargs['attendee_id']
+        return super().dispatch(request, *args, **kwargs)
+
+    @property
+    def parent_pages(self):
+        return [{
+            'title': AttendeesListView.page_title,
+            'url': reverse(AttendeesListView.urlname, args=(self.domain,))
+        }]
+
+    @property
+    def page_context(self):
+        context = super().page_context
+        instance = AttendeeModel.objects.get(
+            case_id=self.attendee_id,
+            domain=self.domain,
+        )
+        if self.request.method == 'POST':
+            form = EditAttendeeForm(
+                self.request.POST,
+                domain=self.domain,
+                instance=instance,
+            )
+        else:
+            form = EditAttendeeForm(domain=self.domain, instance=instance)
+        context.update({
+            'attendee_id': self.attendee_id,
+            'form': form,
+        })
+        return context
+
+    def post(self, request, *args, **kwargs):
+        instance = AttendeeModel.objects.get(
+            case_id=kwargs['attendee_id'],
+            domain=self.domain,
+        )
+        form = EditAttendeeForm(
+            self.request.POST,
+            domain=self.domain,
+            instance=instance,
+        )
+        if form.is_valid():
+            form.save()
+            return HttpResponseRedirect(
+                reverse(AttendeesListView.urlname, args=(self.domain,))
+            )
+        return self.get(request, *args, **kwargs)
+
+
 class AttendeesConfigView(JSONResponseMixin, BaseUserSettingsView, BaseEventView):
     urlname = "attendees_config"
 
@@ -407,6 +470,6 @@ def paginated_attendees(request, domain):
     )
 
     return JsonResponse({
-        'attendees': [{'_id': c.case_id, 'name': c.name} for c in cases],
+        'attendees': [{'case_id': c.case_id, 'name': c.name} for c in cases],
         'total': total,
     })
