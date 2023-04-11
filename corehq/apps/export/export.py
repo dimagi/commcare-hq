@@ -314,6 +314,7 @@ def get_export_file(export_instances, es_filters, temp_path, progress_tracker=No
             logging.info(f"get_export_file - writing to instance with {table_count} tables")
             try:
                 docs = get_export_documents(export_instance, es_filters)
+                logging.info(f"get_export_file - doc count {docs.count if docs else 0}")
             except Exception as e:
                 logging.error(f"get_export_documents failed: {repr(e)}")
                 raise Exception("get_export_documents failed")
