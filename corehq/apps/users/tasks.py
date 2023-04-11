@@ -437,14 +437,14 @@ def clean_domain_users_data(domain, user_ids, cleared_by_username, progress_id=N
     except Exception as e:
         send_mail_async.delay(
             subject=f"Mobile Worker Clearing Failed - {domain}",
-            message=f"The mobile workers clearing failed to complete on {domain} with error: {e}",
+            message=f"The mobile workers clearing failed to complete for project '{domain}' with error: {e}",
             from_email=settings.DEFAULT_FROM_EMAIL,
             recipient_list=[cleared_by_user.get_email()],
         )
     else:
         send_mail_async.delay(
             subject=f"Mobile Worker Clearing Complete - {domain}",
-            message=f"The mobile workers on {domain} has been cleared successfully.",
+            message=f"The mobile workers have been cleared successfully for the project '{domain}'.",
             from_email=settings.DEFAULT_FROM_EMAIL,
             recipient_list=[cleared_by_user.get_email()],
         )
