@@ -148,7 +148,6 @@ from soil.exceptions import TaskFailedError
 from soil.util import get_download_context
 from .custom_data_fields import UserFieldsView
 from ..utils import log_user_groups_change
-from corehq.apps.users.views.utils import get_locations_with_single_user
 from corehq.apps.users.util import SimpleProgressHelper
 from corehq.apps.users.views.utils import get_locations_with_orphaned_cases
 
