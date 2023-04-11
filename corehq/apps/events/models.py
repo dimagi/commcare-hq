@@ -225,7 +225,7 @@ class Event(models.Model):
         #   fetching by exclude_for_case_type, so fetch by exclusion
         attendee_case_type = get_attendee_case_type(self.domain)
         attendee_cases = []
-        for case in self._get_ext_cases(case_type):
+        for case in self._get_extension_cases(case_type):
             for index in case.indices:
                 if index.referenced_type == attendee_case_type:
                     attendee_cases.append(index.referenced_case)
@@ -233,29 +233,31 @@ class Event(models.Model):
 
     def set_expected_attendees(self, attendee_cases):
         """
-        Drops existing expected attendees, and creates extension cases
-        linking ``attendee_cases`` to this Event.
+        Drops existing expected attendees, and creates
+        ``EVENT_ATTENDEE_CASE_TYPE`` extension cases linking
+        ``attendee_cases`` to this Event.
 
         ``attendee_cases`` is a list of CommCareCase instances or case
         IDs.
         """
         self.get_expected_attendees.clear(self)
-        self._close_ext_cases(case_type=EVENT_ATTENDEE_CASE_TYPE)
+        self._close_extension_cases(case_type=EVENT_ATTENDEE_CASE_TYPE)
 
         for case_id in iter_case_ids(attendee_cases):
-            expected_attendee_ext_case = self._get_ext_case_data(
+            case_data = self._get_extension_case_data(
                 case_type=EVENT_ATTENDEE_CASE_TYPE,
-                properties={},
-                attendee_case_id=case_id
+                attendee_case_id=case_id,
             )
             helper = CaseHelper(domain=self.domain)
-            helper.create_case(expected_attendee_ext_case)
+            helper.create_case(case_data)
 
     def mark_attendance(self, attendee_cases, attended_datetime):
         """
-        Creates ``ATTENDEE_DATE_CASE_TYPE`` extension cases for this event
-        and ``attendee_cases``. Also sets the ``ATTENDED_DATE_CASE_PROPERTY``
-        property to ``attended_datetime``.
+        Creates ``ATTENDEE_DATE_CASE_TYPE`` extension cases linking
+        ``attendee_cases`` to this Event at ``attended_datetime``.
+
+        ``attendee_cases`` is a list of CommCareCase instances or case
+        IDs. ``attended_datetime`` is a datetime instance or a string.
         """
         self.get_attended_attendees.clear(self)
 
@@ -263,20 +265,27 @@ class Event(models.Model):
             attended_datetime = attended_datetime.isoformat(' ', 'seconds')
 
         for case_id in iter_case_ids(attendee_cases):
-            attended_date_ext_case = self._get_ext_case_data(
+            case_data = self._get_extension_case_data(
                 case_type=ATTENDEE_DATE_CASE_TYPE,
-                properties={ATTENDED_DATE_CASE_PROPERTY: attended_datetime},
-                attendee_case_id=case_id
+                attendee_case_id=case_id,
+                case_properties={
+                    ATTENDED_DATE_CASE_PROPERTY: attended_datetime,
+                },
             )
             helper = CaseHelper(domain=self.domain)
-            helper.create_case(attended_date_ext_case)
+            helper.create_case(case_data)
 
-    def _get_ext_case_data(self, case_type, properties, attendee_case_id):
+    def _get_extension_case_data(
+        self,
+        case_type,
+        attendee_case_id,
+        case_properties=None,
+    ):
         return {
             'case_name': f"Event '{self.name}' | Attendee '{attendee_case_id}'",
             'case_type': case_type,
             'owner_id': self.group_id,
-            'properties': properties,
+            'properties': case_properties or {},
             'indices': {
                 'event-host': {
                     'case_type': EVENT_CASE_TYPE,
@@ -291,10 +300,7 @@ class Event(models.Model):
             }
         }
 
-    def _get_ext_cases(self, case_type=None):
-        """
-        Returns this Event's open extension cases.
-        """
+    def _get_extension_cases(self, case_type=None):
         ext_case_ids = CommCareCaseIndex.objects.get_extension_case_ids(
             self.domain,
             [self.case_id],
@@ -303,7 +309,7 @@ class Event(models.Model):
         )
         return CommCareCase.objects.get_cases(ext_case_ids, self.domain)
 
-    def _close_ext_cases(self, case_type=None):
+    def _close_extension_cases(self, case_type=None):
         ext_case_ids = CommCareCaseIndex.objects.get_extension_case_ids(
             self.domain,
             [self.case_id],
@@ -351,7 +357,7 @@ class Event(models.Model):
         super().save(*args, **kwargs)
 
     def delete(self, *args, **kwargs):
-        self._close_ext_cases()
+        self._close_extension_cases()
         helper = CaseHelper(case_id=self.case_id, domain=self.domain)
         helper.close()
         return super().delete(*args, **kwargs)
