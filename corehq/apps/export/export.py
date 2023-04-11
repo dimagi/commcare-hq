@@ -375,8 +375,10 @@ def write_export_instance(writer, export_instance, documents,
         total_rows = 0
         track_load = load_counter(export_instance.type, "export", export_instance.domain)
 
+        skipped_rows = 0
         for row_number, doc in enumerate(documents):
             total_bytes += sys.getsizeof(doc)
+            all_skipped = True
             for table in export_instance.selected_tables:
                 # This is for bulk exports on all case types.
                 # Skip over the tables that this doc shouldn't go into.
@@ -384,6 +386,7 @@ def write_export_instance(writer, export_instance, documents,
                 if ALL_CASE_TYPE_TABLE in table.path and doc['type'] not in path_names:
                     continue
 
+                all_skipped = False
                 try:
                     rows = table.get_rows(
                         doc,
@@ -410,11 +413,15 @@ def write_export_instance(writer, export_instance, documents,
 
                 total_rows += len(rows)
 
+            if all_skipped:
+                skipped_rows += 1
+
             track_load()
             if progress_tracker:
                 progress_manager.set_progress(row_number + 1, documents.count)
 
-    logging.info(f"write_export_instance - total rows: {total_rows}")
+    logging.info(f"write_export_instance - All tables skipped for {skipped_rows} rows")
+    logging.info(f"write_export_instance - total rows: {total_rows}, total bytes: {total_bytes}")
     end = _time_in_milliseconds()
     tags = {'format': writer.format}
     _record_datadog_export_duration(end - start, total_bytes, total_rows, tags)

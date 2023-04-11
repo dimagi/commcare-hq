@@ -97,10 +97,7 @@ def populate_export_download_task(domain, export_ids, exports_type, username,
                     owner_ids=[owner_id],
                 )
         except Exception as e:
-            logging.error(
-                f"populate_export_download_task - \
-                Error raised getting export file: {repr(e)}"
-            )
+            logging.error(f"populate_export_download_task - Failed: {repr(e)}")
             raise Exception("Error in task populate_export_download_task")
 
     for email_request in email_requests:
