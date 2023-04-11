@@ -7,10 +7,31 @@
 {% block page_content %}
   {% include 'case_importer/partials/help_message.html' %}
 
+  {% initial_page_data 'is_bulk_import' is_bulk_import %}
+  {% if is_bulk_import %}
+    <div class="alert alert-warning">
+      {% blocktrans %}
+      <p>
+        <i class="fa fa-warning"></i>
+        A bulk case import for multiple case types has been detected. For bulk case imports:
+      </p>
+      <ul>
+        <li>Excel mapping is disabled.</li>
+        <li>New cases for new case types cannot be created.</li>
+      </ul>
+      <p>
+        If this is incorrect, then please rename the Excel sheets so that they do not share the same
+        name as the case types in the project.
+      </p>
+      {% endblocktrans %}
+    </div>
+  {% endif %}
+
   <form class="form-horizontal form-report"
         action="{% url "excel_fields" domain %}"
         method="post">
     {% csrf_token %}
+    <input type="hidden" name="is_bulk_import" value="{{is_bulk_import}}" />
 
     <fieldset>
       <legend>{% trans "Case Type to Update/Create" %}</legend>
@@ -20,15 +41,19 @@
         </label>
         <div class="col-sm-6">
           <select class="form-control hqwebapp-select2" name="case_type" id="case_type">
-            <option disabled>{% trans "Used in existing applications:" %}</option>
-            {% for case_type in case_types_from_apps %}
-              <option value="{{case_type|escape}}">{{case_type|escape}}</option>
-            {% endfor %}
+            {% if is_bulk_import %}
+              <option value="{{ bulk_import_case_type }}">{{ bulk_import_case_type }}</option>
+            {% else %}
+              <option disabled>{% trans "Used in existing applications:" %}</option>
+              {% for case_type in case_types_from_apps %}
+                <option value="{{case_type|escape}}">{{case_type|escape}}</option>
+              {% endfor %}
 
-            <option disabled>{% trans "From unknown or deleted applications:" %}</option>
-            {% for case_type in unrecognized_case_types %}
-              <option value="{{case_type|escape}}">{{case_type|escape}}</option>
-            {% endfor %}
+              <option disabled>{% trans "From unknown or deleted applications:" %}</option>
+              {% for case_type in unrecognized_case_types %}
+                <option value="{{case_type|escape}}">{{case_type|escape}}</option>
+              {% endfor %}
+            {% endif %}
           </select>
         </div>
       </div>
@@ -64,7 +89,8 @@
                                            }, {
                                                id: 'external_id',
                                                text: '{% trans_html_attr 'External ID' %}',
-                                           }]"></select-toggle>
+                                           }],
+                                           disabled: {{ is_bulk_import|JSON }}"></select-toggle>
         </div>
       </div>
 
