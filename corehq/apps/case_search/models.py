@@ -1,6 +1,7 @@
 import re
 
 import attr
+from django.conf import settings
 from django.contrib.postgres.fields import ArrayField
 from django.db import models
 from django.forms import model_to_dict
@@ -335,6 +336,8 @@ def case_search_synchronous_web_apps_for_domain(domain):
 
 @quickcache(['domain'], timeout=24 * 60 * 60, memoize_timeout=60)
 def case_search_sync_cases_on_form_entry_enabled_for_domain(domain):
+    if settings.UNIT_TESTING:
+        return False  # override with .tests.util.commtrack_enabled
     config = CaseSearchConfig.objects.get_or_none(pk=domain, enabled=True)
     return config.sync_cases_on_form_entry if config else False
 
