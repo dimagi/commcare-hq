@@ -1674,13 +1674,6 @@ TRAINING_MODULE = StaticToggle(
     [NAMESPACE_DOMAIN],
 )
 
-EXPORT_MULTISORT = StaticToggle(
-    'export_multisort',
-    'Sort multiple rows in exports at once.',
-    TAG_SOLUTIONS_OPEN,
-    [NAMESPACE_DOMAIN],
-)
-
 EXPORT_OWNERSHIP = StaticToggle(
     'export_ownership',
     'Allow exports to have ownership.',
@@ -2509,7 +2502,13 @@ FORM_CASE_IDS_CASE_IMPORTER = FrozenPrivilegeToggle(
     tag=TAG_SOLUTIONS_OPEN,
     namespaces=[NAMESPACE_DOMAIN],
     description='Display the "Form IDs" and "Case IDs" download buttons on Case Importer',
-    # TODO: Move to public wiki
-    help_link=('https://confluence.dimagi.com/display/saas/Show+the+form+and+case+ids+download+button+on+the+'
-        'case+importer')
+)
+
+EXPORT_MULTISORT = FrozenPrivilegeToggle(
+    privileges.EXPORT_MULTISORT,
+    'export_multisort',
+    label='Sort multiple rows in exports simultaneously',
+    tag=TAG_SOLUTIONS_OPEN,
+    namespaces=[NAMESPACE_DOMAIN],
+    description='Sort multiple rows in exports simultaneously',
 )

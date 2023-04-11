@@ -509,3 +509,16 @@ def es_query_from_get_params(search_params, domain, doc_type='form'):
         query = query.filter(filters.term(param, value))
 
     return query.raw_query
+
+
+def flatten_list(list_2d):
+    flat_list = []
+    # Iterate through the outer list
+    for element in list_2d:
+        if isinstance(element, list):
+            # If the element is of type list, iterate through the sublist
+            for item in element:
+                flat_list.append(item)
+        else:
+            flat_list.append(element)
+    return flat_list

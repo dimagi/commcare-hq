@@ -150,7 +150,7 @@ from .custom_data_fields import UserFieldsView
 from ..utils import log_user_groups_change
 from corehq.apps.users.views.utils import get_locations_with_single_user
 from corehq.apps.users.util import SimpleProgressHelper
-
+from corehq.apps.users.views.utils import get_locations_with_orphaned_cases
 
 BULK_MOBILE_HELP_SITE = ("https://confluence.dimagi.com/display/commcarepublic"
                          "/Create+and+Manage+CommCare+Mobile+Workers#Createand"
@@ -305,7 +305,7 @@ class EditCommCareUserView(BaseEditUserView):
             ),
             'demo_restore_date': naturaltime(demo_restore_date_created(self.editable_user)),
             'group_names': [g.name for g in self.groups],
-            'locations_with_single_user': get_locations_with_single_user(
+            'locations_with_single_user': get_locations_with_orphaned_cases(
                 self.domain,
                 self.editable_user.assigned_location_ids,
                 self.editable_user.user_id
