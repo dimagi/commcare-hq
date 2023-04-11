@@ -312,6 +312,8 @@ def get_export_file(export_instances, es_filters, temp_path,
     writer = get_export_writer(export_instances, temp_path)
     with writer.open(export_instances):
         for export_instance in export_instances:
+            table_count = len(export_instance.selected_tables)
+            logging.info(f"get_export_file - writing to instance with {table_count} tables")
             try:
                 docs = get_export_documents(export_instance, es_filters)
             except Exception as e:
