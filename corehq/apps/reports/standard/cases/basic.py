@@ -113,6 +113,7 @@ class CaseListMixin(ElasticProjectInspectionReport, ProjectReportParametersMixin
             if isinstance(original_exception, TransportError):
                 if hasattr(original_exception.info, "get"):
                     if original_exception.info.get('status') == 400:
+                        print("or raising this?")
                         raise BadRequestError()
             raise e
 

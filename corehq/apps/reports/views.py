@@ -87,6 +87,7 @@ from corehq.apps.reports.formdetails.readable import (
     get_data_cleaning_data,
     get_readable_data_for_submission,
 )
+from corehq.apps.reports.models import QueryStringHash
 from corehq.apps.saved_reports.models import ReportConfig, ReportNotification
 from corehq.apps.saved_reports.tasks import (
     send_delayed_report,
@@ -1937,3 +1938,32 @@ class TableauVisualizationDetailView(BaseProjectReportSectionView, ModelFormMixi
     def form_valid(self, form):
         form.save()
         return super().form_valid(form)
+
+
+def get_or_create_filter_hash(request, domain):
+    query_hash = request.GET.get('hash')
+    query_string = request.GET.get('params')
+    user_input = request.GET.get('userInput')
+    not_found = False
+    MAX_FILTER_INPUT_LENGTH = 5000
+
+    if user_input and len(user_input) > MAX_FILTER_INPUT_LENGTH:
+        return JsonResponse({'max_input_error': True})
+    if query_string:
+        query, created = QueryStringHash.objects.get_or_create(query_string=query_string)
+        query_hash = query.query_hash
+        query.save()  # Updates the 'last_accessed' field
+    elif query_hash:
+        query = QueryStringHash.objects.filter(query_hash=query_hash)
+        if not query:
+            not_found = True
+        else:
+            query = query[0]
+            query_string = query.query_string
+            query.save()  # Updates the 'last_accessed' field
+
+    return JsonResponse({
+        'query_string': query_string,
+        'query_hash': query_hash,
+        'not_found': not_found,
+    })
