@@ -378,7 +378,7 @@ class EventCaseTests(TestCase):
             end_date=today,
             attendance_target=0,
         )
-        self.event.save()
+        self.event.save()  # Creates case
 
     def tearDown(self):
         try:
@@ -386,34 +386,41 @@ class EventCaseTests(TestCase):
         except AssertionError:
             pass  # self.event is already deleted
 
-    def test_case(self):
-        with self.assertRaises(CaseNotFound):
-            CommCareCase.objects.get_case(self.event.case_id, DOMAIN)
-
-        event_case = self.event.case  # Creates case
+    def test_delete_closes_case(self):
         case = CommCareCase.objects.get_case(self.event.case_id, DOMAIN)
-        self.assertEqual(event_case, case)
+        self.assertFalse(case.closed)
 
-    def test_delete_with_case(self):
-        __ = self.event.case
         self.event.delete()
         case = CommCareCase.objects.get_case(self.event.case_id, DOMAIN)
         self.assertTrue(case.closed)
 
-    def test_delete_without_case(self):
-        self.event.delete()  # Does not raise error
-
     def test_default_uuids(self):
         today = datetime.utcnow().date()
-        unsaved_event = Event(
+        event = Event(
             name='Test Event Too',
             domain=DOMAIN,
             start_date=today,
             end_date=today,
             attendance_target=0,
         )
-        self.assertIsInstance(unsaved_event.event_id, UUID)
-        self.assertIsInstance(unsaved_event._case_id, UUID)
+        self.assertIsInstance(event.event_id, UUID)
+        self.assertIsNone(event._case_id)
+
+    def test_save_creates_case(self):
+        today = datetime.utcnow().date()
+        event = Event(
+            name='Test Event Too',
+            domain=DOMAIN,
+            start_date=today,
+            end_date=today,
+            attendance_target=0,
+        )
+        self.assertIsNone(event._case_id)
+
+        event.save()
+        self.assertIsInstance(event._case_id, UUID)
+
+        event.delete()
 
     def test_uuid_hex_string(self):
         today = datetime.utcnow().date()
