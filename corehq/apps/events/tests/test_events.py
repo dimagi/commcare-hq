@@ -5,7 +5,12 @@ from django.test import TestCase
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.users.models import WebUser
 
-from ..models import Event, IN_PROGRESS, NOT_STARTED, UNDER_REVIEW
+from ..models import (
+    ATTENDEE_LIST_UNDER_REVIEW,
+    EVENT_IN_PROGRESS,
+    EVENT_NOT_STARTED,
+    Event,
+)
 
 
 class TestEventModel(TestCase):
@@ -36,7 +41,7 @@ class TestEventModel(TestCase):
 
         event = self._create_event(start_date=now, end_date=now)
 
-        self.assertEqual(event.status, IN_PROGRESS)
+        self.assertEqual(event.status, EVENT_IN_PROGRESS)
         self.assertEqual(event.is_open, True)
         self.assertTrue(event.event_id is not None)
 
@@ -53,10 +58,11 @@ class TestEventModel(TestCase):
         in_progress_event2 = self._create_event(start_date=today, end_date=tomorrow)
         under_review_event = self._create_event(start_date=yesterday, end_date=yesterday)
 
-        self.assertTrue(not_started_event.attendee_list_status, NOT_STARTED)
-        self.assertTrue(in_progress_event1.attendee_list_status, IN_PROGRESS)
-        self.assertTrue(in_progress_event2.attendee_list_status, IN_PROGRESS)
-        self.assertTrue(under_review_event.attendee_list_status, UNDER_REVIEW)
+        self.assertTrue(not_started_event.status, EVENT_NOT_STARTED)
+        self.assertTrue(in_progress_event1.status, EVENT_IN_PROGRESS)
+        self.assertTrue(in_progress_event2.status, EVENT_IN_PROGRESS)
+        self.assertTrue(under_review_event.status, ATTENDEE_LIST_UNDER_REVIEW)
+        self.assertTrue(under_review_event.attendee_list_status, ATTENDEE_LIST_UNDER_REVIEW)
 
     def _create_event(self, start_date, end_date):
         event_data = {
