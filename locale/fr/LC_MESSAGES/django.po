@@ -416,7 +416,6 @@ msgstr ""
 #: corehq/apps/events/templates/event_attendees.html
 #: corehq/apps/events/views.py
 #: corehq/apps/export/templates/export/partials/table.html
-#: corehq/apps/export/views/incremental.py
 #: corehq/apps/fixtures/templates/fixtures/partials/edit_table_modal.html
 #: corehq/apps/locations/forms.py
 #: corehq/apps/registry/templates/registry/registry_list.html
@@ -943,7 +942,6 @@ msgstr ""
 #: corehq/apps/export/templates/export/customize_export_new.html
 #: corehq/apps/export/templates/export/dialogs/bulk_delete_custom_export_dialog.html
 #: corehq/apps/export/templates/export/dialogs/delete_custom_export_dialog.html
-#: corehq/apps/export/templates/export/incremental_export.html
 #: corehq/apps/export/templates/export/partials/export_list_create_export_modal.html
 #: corehq/apps/export/templates/export/partials/feed_filter_modal.html
 #: corehq/apps/export/templates/export/partials/table.html
@@ -1395,7 +1393,7 @@ msgstr ""
 #: corehq/apps/domain/templates/domain/manage_releases_by_app_profile.html
 #: corehq/apps/enterprise/enterprise.py
 #: corehq/apps/events/templates/event_attendees.html
-#: corehq/apps/events/views.py corehq/apps/export/views/incremental.py
+#: corehq/apps/events/views.py
 #: corehq/apps/registry/templates/registry/registry_edit.html
 #: corehq/apps/reports/standard/cases/basic.py
 #: corehq/apps/reports/standard/sms.py
@@ -2447,8 +2445,7 @@ msgstr ""
 #: corehq/apps/accounting/templates/accounting/invoice.html
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/case_list.html
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/case_search_property.html
-#: corehq/apps/data_dictionary/models.py
-#: corehq/apps/export/views/incremental.py corehq/apps/hqadmin/reports.py
+#: corehq/apps/data_dictionary/models.py corehq/apps/hqadmin/reports.py
 #: corehq/apps/registry/templates/registry/partials/audit_logs.html
 #: corehq/apps/reports/filters/dates.py
 #: corehq/apps/reports/standard/deployments.py
@@ -2740,7 +2737,6 @@ msgstr ""
 #: corehq/apps/custom_data_fields/templates/custom_data_fields/custom_data_fields.html
 #: corehq/apps/data_interfaces/templates/data_interfaces/case_rule.html
 #: corehq/apps/data_interfaces/templates/data_interfaces/edit_deduplication_rule.html
-#: corehq/apps/export/forms.py
 #: corehq/apps/fixtures/templates/fixtures/partials/edit_table_modal.html
 #: corehq/apps/groups/templates/groups/group_members.html
 #: corehq/apps/hqwebapp/templates/hqwebapp/oauth_application_registration_form.html
@@ -2835,9 +2831,7 @@ msgid "\"Do Not Invoice\" Reason"
 msgstr ""
 
 #: corehq/apps/accounting/templates/accounting/partials/subscriptions_tab.html
-#: corehq/apps/export/templates/export/incremental_export.html
 #: corehq/apps/export/templates/export/partials/table.html
-#: corehq/apps/export/views/incremental.py
 #: corehq/apps/fixtures/templates/fixtures/manage_tables.html
 #: corehq/apps/locations/templates/locations/manage/location_template.html
 #: corehq/apps/reports/templates/reports/partials/saved_exports.html
@@ -3893,7 +3887,7 @@ msgid "A numeric expression"
 msgstr ""
 
 #: corehq/apps/app_manager/models.py
-msgid "The user's case sharing group"
+msgid "The user's case sharing group (filter must be of choice_provider type)"
 msgstr ""
 
 #: corehq/apps/app_manager/models.py
@@ -4007,9 +4001,7 @@ msgstr ""
 msgid "Reverted"
 msgstr ""
 
-#: corehq/apps/app_manager/models.py
-#: corehq/apps/export/templates/export/incremental_export.html
-#: corehq/apps/reports/standard/sms.py
+#: corehq/apps/app_manager/models.py corehq/apps/reports/standard/sms.py
 #: corehq/apps/reports/standard/users/reports.py
 #: corehq/apps/reports/templates/reports/tableau_visualization.html
 #: corehq/motech/dhis2/templates/dhis2/dataset_map_list.html
@@ -6760,9 +6752,7 @@ msgstr ""
 #: corehq/apps/data_interfaces/templates/data_interfaces/partials/auto_update_rule_list.html
 #: corehq/apps/domain/templates/domain/stripe_cards.html
 #: corehq/apps/export/templates/export/dialogs/delete_custom_export_dialog.html
-#: corehq/apps/export/templates/export/incremental_export.html
 #: corehq/apps/export/templates/export/partials/table.html
-#: corehq/apps/export/views/incremental.py
 #: corehq/apps/fixtures/templates/fixtures/manage_tables.html
 #: corehq/apps/groups/templates/groups/group_members.html
 #: corehq/apps/locations/templates/locations/manage/location_template.html
@@ -9751,8 +9741,6 @@ msgstr ""
 #: corehq/apps/data_interfaces/templates/data_interfaces/explore_case_data.html
 #: corehq/apps/domain/forms.py
 #: corehq/apps/enterprise/templates/enterprise/enterprise_permissions.html
-#: corehq/apps/export/forms.py
-#: corehq/apps/export/templates/export/incremental_export.html
 #: corehq/apps/integration/forms.py
 #: corehq/apps/locations/templates/locations/manage/location.html
 #: corehq/apps/reports/filters/users.py corehq/apps/reports/forms.py
@@ -11079,7 +11067,6 @@ msgid "Case IDs"
 msgstr ""
 
 #: corehq/apps/case_importer/templates/case_importer/partials/ko_import_history.html
-#: corehq/apps/export/views/incremental.py
 #: corehq/apps/linked_domain/templates/linked_domain/partials/pull_content.html
 #: corehq/messaging/scheduling/views.py corehq/motech/generic_inbound/models.py
 #: corehq/motech/repeaters/templates/repeaters/partials/attempt_history.html
@@ -13297,8 +13284,6 @@ msgstr ""
 #: corehq/apps/data_interfaces/templates/data_interfaces/list_deduplication_rules.html
 #: corehq/apps/data_interfaces/templates/data_interfaces/partials/auto_update_rule_list.html
 #: corehq/apps/domain/forms.py
-#: corehq/apps/export/templates/export/incremental_export.html
-#: corehq/apps/export/views/incremental.py
 #: corehq/apps/hqadmin/templates/hqadmin/offboarding_list.html
 #: corehq/apps/registry/templates/registry/registry_edit.html
 #: corehq/apps/settings/templates/settings/user_api_keys.html
@@ -13312,7 +13297,6 @@ msgstr ""
 #: corehq/apps/data_interfaces/templates/data_interfaces/list_deduplication_rules.html
 #: corehq/apps/data_interfaces/templates/data_interfaces/partials/auto_update_rule_list.html
 #: corehq/apps/domain/forms.py
-#: corehq/apps/export/templates/export/incremental_export.html
 #: corehq/apps/registry/templates/registry/registry_edit.html
 #: corehq/messaging/scheduling/forms.py
 #: corehq/messaging/scheduling/templates/scheduling/broadcasts_list.html
@@ -17706,23 +17690,23 @@ msgid "You cannot specify the end date in the past"
 msgstr ""
 
 #: corehq/apps/events/models.py
-msgid "Not started"
+msgid "Attendee list under review"
 msgstr ""
 
 #: corehq/apps/events/models.py
-msgid "In progress"
+msgid "Attendee list rejected"
 msgstr ""
 
 #: corehq/apps/events/models.py
-msgid "Under review"
+msgid "Attendee list accepted"
 msgstr ""
 
-#: corehq/apps/events/models.py corehq/apps/registry/models.py
-msgid "Rejected"
+#: corehq/apps/events/models.py
+msgid "Event not started"
 msgstr ""
 
-#: corehq/apps/events/models.py corehq/apps/registry/models.py
-msgid "Accepted"
+#: corehq/apps/events/models.py
+msgid "Event in progress"
 msgstr ""
 
 #: corehq/apps/events/templates/event_attendees.html
@@ -18066,19 +18050,6 @@ msgstr ""
 
 #: corehq/apps/export/forms.py
 msgid "Export messages sent in this date range"
-msgstr ""
-
-#: corehq/apps/export/forms.py corehq/apps/export/views/incremental.py
-msgid "Case Data Export"
-msgstr ""
-
-#: corehq/apps/export/forms.py corehq/apps/export/views/incremental.py
-#: corehq/apps/reports/filters/select.py
-msgid "Incremental Export"
-msgstr ""
-
-#: corehq/apps/export/forms.py
-msgid "Daily Saved Export"
 msgstr ""
 
 #: corehq/apps/export/models/export_settings.py
@@ -18760,23 +18731,6 @@ msgstr ""
 msgid ""
 "Now access forms and cases directly from your exports. Check out the new "
 "\"form_link\" and \"case_link\" fields in your export settings!"
-msgstr ""
-
-#: corehq/apps/export/templates/export/incremental_export.html
-msgid "Delete Incremental Export"
-msgstr ""
-
-#: corehq/apps/export/templates/export/incremental_export.html
-msgid "Deleting Incremental Export"
-msgstr ""
-
-#: corehq/apps/export/templates/export/incremental_export.html
-#: corehq/apps/export/views/incremental.py
-msgid "Resend all cases"
-msgstr ""
-
-#: corehq/apps/export/templates/export/incremental_export.html
-msgid "Resend all cases for "
 msgstr ""
 
 #: corehq/apps/export/templates/export/partials/customize_export_header.html
@@ -19620,55 +19574,6 @@ msgstr ""
 
 #: corehq/apps/export/views/edit.py
 msgid "Copy OData Feed"
-msgstr ""
-
-#: corehq/apps/export/views/incremental.py corehq/motech/dhis2/forms.py
-#: corehq/motech/dhis2/views.py corehq/motech/repeaters/forms.py
-#: corehq/motech/templates/motech/connection_settings.html
-#: corehq/motech/views.py
-msgid "Connection Settings"
-msgstr ""
-
-#: corehq/apps/export/views/incremental.py
-msgid "Incremenal Export Name"
-msgstr ""
-
-#: corehq/apps/export/views/incremental.py
-msgid "Cases in export"
-msgstr ""
-
-#: corehq/apps/export/views/incremental.py
-msgid "Download File"
-msgstr ""
-
-#: corehq/apps/export/views/incremental.py
-#: corehq/motech/generic_inbound/templates/generic_inbound/request_log_detail.html
-msgid "Request Details"
-msgstr ""
-
-#: corehq/apps/export/views/incremental.py
-#: corehq/motech/repeaters/templates/repeaters/repeaters.html
-msgid "Failure"
-msgstr ""
-
-#: corehq/apps/export/views/incremental.py
-msgid "File Expired"
-msgstr ""
-
-#: corehq/apps/export/views/incremental.py
-msgid "Resend all cases after this checkpoint"
-msgstr ""
-
-#: corehq/apps/export/views/incremental.py
-msgid ""
-"{doc_count} cases modified after {date.strftime('%Y-%m-%d %H:%M:%S')} have "
-"been resent"
-msgstr ""
-
-#: corehq/apps/export/views/incremental.py
-#, python-brace-format
-msgid ""
-"{doc_count} cases have been resent for export '{incremental_export.name}'"
 msgstr ""
 
 #: corehq/apps/export/views/list.py
@@ -26435,6 +26340,14 @@ msgid "Pending"
 msgstr ""
 
 #: corehq/apps/registry/models.py
+msgid "Accepted"
+msgstr ""
+
+#: corehq/apps/registry/models.py
+msgid "Rejected"
+msgstr ""
+
+#: corehq/apps/registry/models.py
 msgid "Invitation Accepted"
 msgstr ""
 
@@ -27666,10 +27579,6 @@ msgstr ""
 #: corehq/motech/repeaters/templates/repeaters/repeaters.html
 #: corehq/motech/repeaters/views/repeat_record_display.py
 msgid "Cancelled"
-msgstr ""
-
-#: corehq/apps/reports/filters/select.py
-msgid "All Incremental Exports"
 msgstr ""
 
 #: corehq/apps/reports/filters/simple.py
@@ -36693,8 +36602,8 @@ msgstr ""
 #: corehq/apps/users/templates/users/partials/edit_commtrack_user_settings.html
 msgid ""
 "\n"
-"            The user is the only one that is assigned to the following "
-"locations with cases:\n"
+"            The user is the only assigned user who can view cases in the "
+"following locations:\n"
 "          "
 msgstr ""
 
@@ -39858,6 +39767,13 @@ msgid ""
 "valid column."
 msgstr ""
 
+#: corehq/motech/dhis2/forms.py corehq/motech/dhis2/views.py
+#: corehq/motech/repeaters/forms.py
+#: corehq/motech/templates/motech/connection_settings.html
+#: corehq/motech/views.py
+msgid "Connection Settings"
+msgstr ""
+
 #: corehq/motech/dhis2/forms.py corehq/motech/repeaters/forms.py
 #, python-brace-format
 msgid "<a href=\"{url}\">Add/Edit Connections Settings</a>"
@@ -40255,6 +40171,10 @@ msgid "Metadata"
 msgstr ""
 
 #: corehq/motech/generic_inbound/templates/generic_inbound/request_log_detail.html
+msgid "Request Details"
+msgstr ""
+
+#: corehq/motech/generic_inbound/templates/generic_inbound/request_log_detail.html
 msgid "Response Details"
 msgstr ""
 
@@ -40307,10 +40227,6 @@ msgstr ""
 msgid ""
 "Unable to resolve API endpoints {self.api_auth_settings!r}. Please select "
 "the applicable API auth settings for the "
-msgstr ""
-
-#: corehq/motech/models.py
-msgid "Incremental Exports"
 msgstr ""
 
 #: corehq/motech/openmrs/atom_feed.py
@@ -40802,6 +40718,10 @@ msgid ""
 msgstr ""
 
 #: corehq/motech/repeaters/templates/repeaters/repeaters.html
+msgid "Failure"
+msgstr ""
+
+#: corehq/motech/repeaters/templates/repeaters/repeaters.html
 msgid "You haven't configured any services to forward to yet."
 msgstr ""
 
@@ -41163,6 +41083,10 @@ msgstr ""
 
 #: corehq/privileges.py
 msgid "Download buttons for Form- and Case IDs on Case Importer"
+msgstr ""
+
+#: corehq/privileges.py
+msgid "Sort multiple rows in exports simultaneously"
 msgstr ""
 
 #: corehq/reports.py

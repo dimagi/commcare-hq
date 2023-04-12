@@ -3215,10 +3215,8 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/events/static/events/js/event_attendees.js
-#, fuzzy
-#| msgid "Show Deactivated Mobile Workers"
 msgid "Disable Mobile Worker Attendees"
-msgstr "Mostrar os Trabalhadores Móveis Desativados"
+msgstr ""
 
 #: corehq/apps/events/static/events/js/event_attendees.js
 msgid "Enable Mobile Worker Attendees"
