@@ -445,6 +445,7 @@ class AttendeeModel(models.Model):
     name = models.CharField(max_length=255)
     locations = models.TextField(blank=True, default='')
     primary_location = models.TextField(null=True, blank=True, default=None)
+    user_id = models.TextField(max_length=36, blank=True, null=True)
 
     objects = AttendeeModelManager()
 
@@ -458,13 +459,19 @@ class AttendeeModel(models.Model):
         elif case_id:
             case = CommCareCase.objects.get_case(case_id, domain)
 
-        loc_ids_str = case.get_case_property(LOCATION_IDS_CASE_PROPERTY) or ''
-        pri_loc_id = case.get_case_property(PRIMARY_LOCATION_ID_CASE_PROPERTY)
         kwargs.setdefault('name', case.name)
         # `locations` is a TextField (or a CharField) because the form widget
         # renders it correctly. Django is OK with us assigning a list to it:
+        loc_ids_str = case.get_case_property(LOCATION_IDS_CASE_PROPERTY) or ''
         kwargs.setdefault('locations', loc_ids_str.split())
-        kwargs.setdefault('primary_location', pri_loc_id)
+        kwargs.setdefault(
+            'primary_location',
+            case.get_case_property(PRIMARY_LOCATION_ID_CASE_PROPERTY)
+        )
+        kwargs.setdefault(
+            'user_id',
+            case.get_case_property(ATTENDEE_USER_ID_CASE_PROPERTY)
+        )
         super().__init__(*args, case_id=case_id, domain=domain, **kwargs)
 
     def save(self, *args, **kwargs):
@@ -473,7 +480,8 @@ class AttendeeModel(models.Model):
             'case_name': self.name,
             'properties': {
                 LOCATION_IDS_CASE_PROPERTY: ' '.join(self.locations),
-                PRIMARY_LOCATION_ID_CASE_PROPERTY: self.primary_location,
+                PRIMARY_LOCATION_ID_CASE_PROPERTY: self.primary_location or '',
+                ATTENDEE_USER_ID_CASE_PROPERTY: self.user_id or '',
             },
         }
         helper.update(case_data)

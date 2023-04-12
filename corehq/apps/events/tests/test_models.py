@@ -444,15 +444,20 @@ class TestAttendeeModel(TestCase):
 
     @staticmethod
     @contextmanager
-    def get_case():
+    def get_case(with_properties=True):
         helper = CaseHelper(domain=DOMAIN)
+        if with_properties:
+            properties = {
+                LOCATION_IDS_CASE_PROPERTY: 'abc123 def456',
+                PRIMARY_LOCATION_ID_CASE_PROPERTY: 'abc123',
+                ATTENDEE_USER_ID_CASE_PROPERTY: 'c0ffee',
+            }
+        else:
+            properties = {}
         helper.create_case({
             'case_name': 'Cho Chang',
             'case_type': get_attendee_case_type(DOMAIN),
-            'properties': {
-                LOCATION_IDS_CASE_PROPERTY: 'abc123 def456',
-                PRIMARY_LOCATION_ID_CASE_PROPERTY: 'abc123',
-            }
+            'properties': properties,
         })
         try:
             yield helper.case
@@ -471,12 +476,27 @@ class TestAttendeeModel(TestCase):
                 model.primary_location,
                 case.get_case_property(PRIMARY_LOCATION_ID_CASE_PROPERTY)
             )
+            self.assertEqual(
+                model.user_id,
+                case.get_case_property(ATTENDEE_USER_ID_CASE_PROPERTY)
+            )
+
+    def test_model_init_defaults(self):
+        with self.get_case(with_properties=False) as case:
+            model = AttendeeModel(case=case, domain=DOMAIN)
+            self.assertEqual(str(model.case_id), case.case_id)
+            self.assertEqual(model.name, case.name)
+            self.assertEqual(model.domain, case.domain)
+            self.assertEqual(model.locations, [])
+            self.assertIsNone(model.primary_location)
+            self.assertIsNone(model.user_id)
 
     def test_model_save(self):
         with self.get_case() as case:
             model = AttendeeModel(case=case, domain=DOMAIN)
             model.locations = ['def456']
             model.primary_location = 'def456'
+            model.user_id = 'deadbeef'
             model.save()
 
             reloaded = CommCareCase.objects.get_case(case.case_id, DOMAIN)
@@ -487,6 +507,29 @@ class TestAttendeeModel(TestCase):
             self.assertEqual(
                 reloaded.get_case_property(PRIMARY_LOCATION_ID_CASE_PROPERTY),
                 'def456'
+            )
+            self.assertEqual(
+                reloaded.get_case_property(ATTENDEE_USER_ID_CASE_PROPERTY),
+                'deadbeef'
+            )
+
+    def test_model_save_defaults(self):
+        with self.get_case(with_properties=False) as case:
+            model = AttendeeModel(case=case, domain=DOMAIN)
+            model.save()
+
+            reloaded = CommCareCase.objects.get_case(case.case_id, DOMAIN)
+            self.assertEqual(
+                reloaded.get_case_property(LOCATION_IDS_CASE_PROPERTY),
+                ''
+            )
+            self.assertEqual(
+                reloaded.get_case_property(PRIMARY_LOCATION_ID_CASE_PROPERTY),
+                ''
+            )
+            self.assertEqual(
+                reloaded.get_case_property(ATTENDEE_USER_ID_CASE_PROPERTY),
+                ''
             )
 
 
