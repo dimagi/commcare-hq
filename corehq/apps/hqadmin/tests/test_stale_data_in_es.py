@@ -256,6 +256,7 @@ class TestStaleDataInESSQL(TestCase):
             else:
                 es_cases.append(case)
         case_adapter.bulk_index(es_cases, refresh=True)
+        case_search_adapter.bulk_index(cases, refresh=True)
 
         self.cases_to_delete_from_es.update(case.case_id for case in cases)
 

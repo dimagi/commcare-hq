@@ -78,3 +78,4 @@ services:
       service: minio
     ports:
       - "9980:9980"
+      - "9981:9981"

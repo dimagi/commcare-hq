@@ -1,4 +1,5 @@
 import base64
+from datetime import datetime, timedelta
 
 from django.contrib.auth.models import AnonymousUser
 from django.http import HttpResponse
@@ -103,6 +104,32 @@ class LoginAuthenticationTest(AuthenticationTestBase):
         self.assertAuthenticationFail(LoginAuthentication(), self._get_request_with_api_key())
         self.api_key.refresh_from_db()
         self.assertIsNone(self.api_key.last_used)
+
+    def test_login_with_expired_api_key(self):
+        def reactivate_key():
+            self.api_key.expiration_date = None
+            self.api_key.save()
+
+        self.api_key.expiration_date = datetime.today() - timedelta(days=2)
+        self.api_key.last_used = None
+        self.api_key.save()
+        self.addCleanup(reactivate_key)
+        self.assertAuthenticationFail(LoginAuthentication(), self._get_request_with_api_key())
+        self.api_key.refresh_from_db()
+        self.assertIsNone(self.api_key.last_used)
+
+    def test_login_with_not_yet_expired_api_key(self):
+        def reactivate_key():
+            self.api_key.expiration_date = None
+            self.api_key.save()
+
+        self.api_key.expiration_date = datetime.today() + timedelta(days=2)
+        self.api_key.last_used = None
+        self.api_key.save()
+        self.addCleanup(reactivate_key)
+        self.assertAuthenticationSuccess(LoginAuthentication(), self._get_request_with_api_key())
+        self.api_key.refresh_from_db()
+        self.assertIsNotNone(self.api_key.last_used)
 
 
 class LoginAndDomainAuthenticationTest(AuthenticationTestBase):

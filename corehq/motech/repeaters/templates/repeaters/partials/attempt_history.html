@@ -5,6 +5,8 @@
     <li><strong>Attempt #{{ attempt_number }}</strong>
     {% if attempt.state == 'SUCCESS' %}
         <br/><i class="fa fa-check"></i> {% trans "Success" %}
+    {% elif attempt.state == 'EMPTY' %}
+        <br/><i class="fa fa-check"></i> {% trans "Empty" %}
     {% elif attempt.state == 'FAIL' or attempt.state == 'CANCELLED' %}
         <br/><i class="fa fa-exclamation-triangle"></i> {% trans "Failed" %}
     {% elif attempt.state == 'PENDING' %}

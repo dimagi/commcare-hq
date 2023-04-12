@@ -13,7 +13,7 @@ msgstr ""
 "Report-Msgid-Bugs-To: \n"
 "PO-Revision-Date: 2017-07-19 15:34+0000\n"
 "Last-Translator: Dimagi Dev <devops@dimagi.com>, 2021\n"
-"Language-Team: Hindi (https://www.transifex.com/dimagi/teams/9388/hi/)\n"
+"Language-Team: Hindi (https://app.transifex.com/dimagi/teams/9388/hi/)\n"
 "Language: hi\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
@@ -2654,6 +2654,16 @@ msgid "24-hour clock"
 msgstr ""
 
 #: corehq/apps/cloudcare/static/cloudcare/js/form_entry/entries.js
+msgid "Invalid file type chosen. Please select a valid multimedia file."
+msgstr ""
+
+#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/entries.js
+msgid ""
+"The file you selected exceeds the size limit of 3MB. Please select a file "
+"that is smaller than 3MB."
+msgstr ""
+
+#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/entries.js
 msgid "Upload image"
 msgstr ""
 
@@ -3197,6 +3207,14 @@ msgid ""
 "hour to take effect. <br>This will affect users with email addresses from "
 "the following domains: <strong><%- domains %></strong><br>Contact <a "
 "href='mailto:<%- email %>'><%- email %></a> to change the list of domains."
+msgstr ""
+
+#: corehq/apps/events/static/events/js/event_attendees.js
+msgid "Disable Mobile Worker Attendees"
+msgstr ""
+
+#: corehq/apps/events/static/events/js/event_attendees.js
+msgid "Enable Mobile Worker Attendees"
 msgstr ""
 
 #: corehq/apps/events/static/events/js/new_event.js
