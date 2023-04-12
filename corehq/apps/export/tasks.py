@@ -252,7 +252,10 @@ def process_populate_export_tables(export_id, progress_id=None):
             load_deprecated=False
         )
         logging.info(f"process_populate_export_tables - Instance has {len(export_instance.tables)} tables")
+        selected_count = len(export_instance.selected_tables)
+        logging.info(f"process_populate_export_tables - Instance has {selected_count} selected tables")
         export.tables = export_instance.tables
+        export.selected_tables = export_instance.selected_tables
         export.save()
 
         if progress_id:
