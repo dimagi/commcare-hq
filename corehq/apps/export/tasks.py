@@ -238,19 +238,24 @@ def process_populate_export_tables(export_id, progress_id=None):
     the export instance are instead added async in this task after the instance has been saved.
     """
     export = CaseExportInstance.get(export_id)
+    try:
+        logging.info(f"process_populate_export_tables - Export found: {export.name}")
+        if progress_id:
+            cache.set(progress_id, {'table_name': export.name, 'status': 'in progress'})
 
-    if progress_id:
-        cache.set(progress_id, {'table_name': export.name, 'status': 'in progress'})
+        schema = CaseExportDataSchema.generate_schema_from_builds(export.domain, None, export.case_type)
+        logging.info(f"process_populate_export_tables - Schema has {len(schema.group_schemas)} group schemas")
+        export_settings = get_default_export_settings_if_available(export.domain)
+        export_instance = CaseExportInstance.generate_instance_from_schema(
+            schema,
+            export_settings=export_settings,
+            load_deprecated=False
+        )
+        logging.info(f"process_populate_export_tables - Instance has {len(export_instance.tables)} tables")
+        export.tables = export_instance.tables
+        export.save()
 
-    schema = CaseExportDataSchema.generate_schema_from_builds(export.domain, None, export.case_type)
-    export_settings = get_default_export_settings_if_available(export.domain)
-    export_instance = CaseExportInstance.generate_instance_from_schema(
-        schema,
-        export_settings=export_settings,
-        load_deprecated=False
-    )
-    export.tables = export_instance.tables
-    export.save()
-
-    if progress_id:
-        cache.expire(progress_id, 0)
+        if progress_id:
+            cache.expire(progress_id, 0)
+    except Exception as e:
+        logging.error(f"process_populate_export_tables - {repr(e)}")
