@@ -10,6 +10,7 @@ hqDefine("reports/js/reports.async", function () {
         self.standardReport = o.standardReport;
         self.filterRequest = null;
         self.reportRequest = null;
+        self.hashRequest = null;
         self.loaderClass = '.report-loading';
 
         self.humanReadableErrors = {
@@ -41,22 +42,79 @@ hqDefine("reports/js/reports.async", function () {
         };
 
         self.init = function () {
+            console.log("init")
             self.reportContent.attr('style', 'position: relative;');
-
-            self.updateReport(true, window.location.search.substr(1), self.standardReport.filterSet);
+            var init_params = window.location.search.substr(1)
+            console.log(init_params)
+            if (init_params) {
+                console.log("init filter detected")
+                self.getQueryHash(init_params, true, self.standardReport.filterSet)
+            }
+            else {
+                console.log("plain url")
+                self.updateReport(true, init_params, self.standardReport.filterSet);
+            }
 
             // only update the report if there are actually filters set
             if (!self.standardReport.needsFilters) {
                 self.standardReport.filterSubmitButton.addClass('disabled');
             }
             self.filterForm.submit(function () {
-                var params = hqImport('reports/js/reports.util').urlSerialize(this);
-                history.pushState(null,window.location.title, window.location.pathname + '?' + params);
-                self.updateFilters(params);
-                self.updateReport(false, params, true);
+                console.log("IMMEDIATELY AFTER SUBMITTING")
+                self.getQueryHash(hqImport('reports/js/reports.util').urlSerialize(this), false, true);
                 return false;
             });
         };
+
+        self.getQueryHash = function (params, initial_load, setFilters) {
+            var hash;
+            var pathName = window.location.pathname;
+            if (params.includes('hash') && (pathName.includes('case_list_explorer') || pathName.includes('case_list'))) {
+                // expectation is that this is only when a hash url is initially entered
+                console.log("hash given")
+                hash = params.replace('hash=', '') // not this..
+                params = ''
+                console.log(hash)
+            }
+            else if (pathName.includes('case_list_explorer') || pathName.includes('case_list')) {
+                console.log("no hash - create new")
+                console.log(params)
+                hash = ''
+            }
+            self.hashRequest = $.ajax({
+                    url: pathName.replace(self.standardReport.urlRoot,
+                        self.standardReport.urlRoot + 'get_or_create_hash/'),
+                    dataType: 'json',
+                    data: {'hash': hash, 'params': params},
+                    success: function (data) {
+                        console.log("hash success")
+                        self.hashRequest = null;
+                        console.log(data.hash)
+                        console.log(data.query_string)
+                        console.log(data.not_found)
+                        if (!initial_load) {
+                            self.updateFilters(data.query_string);
+                        }
+                        // hmm I mean not_found = true and !data.query_string kinda go together tho..
+                        if (!data.query_string) {
+                            setFilters = false
+                        }
+                        self.updateReport(initial_load, data.query_string, setFilters);
+                        if (data.not_found) {
+                            console.log("no matches found for given hash")
+                            // error banner maybe?
+                            history.pushState(null, window.location.title, pathName);
+                        }
+                        else {
+                            history.pushState(null, window.location.title, pathName + '?hash=' + data.hash);
+                        }
+                    },
+                    error: function (data) {
+                        // could be any number of couch errors - borrow from the error list above?
+                        console.log("Some sort of error... be more concise with it")
+                    },
+                });
+        }
 
         self.updateFilters = function (form_params) {
             self.standardReport.saveDatespanToCookie();
