@@ -136,7 +136,7 @@ class Migration(migrations.Migration):
                 ('is_paused', models.BooleanField(default=False)),
                 ('next_attempt_at', models.DateTimeField(blank=True, null=True)),
                 ('last_attempt_at', models.DateTimeField(blank=True, null=True)),
-                ('connection_settings', models.ForeignKey(on_delete=django.db.models.deletion.PROTECT, to='motech.connectionsettings')),
+                ('connection_settings_id', models.IntegerField(db_index=True)),
             ],
             options={
                 'db_table': 'repeaters_repeater',
@@ -423,11 +423,6 @@ class Migration(migrations.Migration):
                 'constraints': [],
             },
             bases=('repeaters.sqlcreatecaserepeater',),
-        ),
-        migrations.AlterField(
-            model_name='sqlrepeater',
-            name='connection_settings',
-            field=models.ForeignKey(on_delete=django.db.models.deletion.PROTECT, related_name='repeaters', to='motech.connectionsettings'),
         ),
         migrations.AddField(
             model_name='sqlrepeater',
@@ -740,18 +735,5 @@ class Migration(migrations.Migration):
                 ('CANCELLED', 'Cancelled'),
                 ('EMPTY', 'Empty')
             ]),
-        ),
-        migrations.RunSQL(
-            sql='\n            ALTER TABLE "repeaters_repeater"\n            DROP CONSTRAINT "repeaters_repeater_connection_settings__fb1a9503_fk_motech_co"\n        ',
-            reverse_sql='\n            ALTER TABLE "repeaters_repeater"\n            ADD CONSTRAINT "repeaters_repeater_connection_settings__fb1a9503_fk_motech_co"\n            FOREIGN KEY ("connection_settings_id") REFERENCES "motech_connectionsettings" ("id")\n            DEFERRABLE INITIALLY DEFERRED\n        ',
-            state_operations=[migrations.AlterField(
-                model_name='repeater',
-                name='connection_settings',
-                field=models.IntegerField(db_index=True),
-            ), migrations.RenameField(
-                model_name='repeater',
-                old_name='connection_settings',
-                new_name='connection_settings_id',
-            )],
         ),
     ]
