@@ -3,8 +3,6 @@ import json
 import re
 import time
 
-from braces.views import JsonRequestResponseMixin
-from couchdbkit import ResourceNotFound
 from django.contrib import messages
 from django.contrib.humanize.templatetags.humanize import naturaltime
 from django.core.exceptions import ValidationError
@@ -23,16 +21,21 @@ from django.utils.translation import gettext as _
 from django.utils.translation import gettext_noop, override
 from django.views.decorators.http import require_GET, require_POST
 from django.views.generic import TemplateView, View
+
+from braces.views import JsonRequestResponseMixin
+from couchdbkit import ResourceNotFound
 from django_prbac.exceptions import PermissionDenied
 from django_prbac.utils import has_privilege
 from memoized import memoized
 
 from casexml.apps.phone.models import SyncLogSQL
-from corehq.apps.events.models import AttendanceTrackingConfig
-from corehq.apps.events.tasks import get_case_block_for_user
-from corehq.apps.hqcase.utils import submit_case_blocks
-from corehq.apps.events.models import get_attendee_case_type
-from corehq import privileges
+from couchexport.models import Format
+from couchexport.writers import Excel2007ExportWriter
+from soil import DownloadBase
+from soil.exceptions import TaskFailedError
+from soil.util import get_download_context
+
+from corehq import privileges, toggles
 from corehq.apps.accounting.async_handlers import Select2BillingInfoHandler
 from corehq.apps.accounting.decorators import requires_privilege_with_fallback
 from corehq.apps.accounting.models import (
@@ -48,14 +51,22 @@ from corehq.apps.custom_data_fields.models import (
     CUSTOM_DATA_FIELD_PREFIX,
     PROFILE_SLUG,
 )
-from corehq.apps.domain.models import SMSAccountConfirmationSettings
-from corehq.apps.sms.api import send_sms
-from corehq.apps.domain.utils import guess_domain_language_for_sms
-from corehq.apps.domain.decorators import domain_admin_required, login_and_domain_required
+from corehq.apps.domain.decorators import (
+    domain_admin_required,
+    login_and_domain_required,
+)
 from corehq.apps.domain.extension_points import has_custom_clean_password
+from corehq.apps.domain.models import SMSAccountConfirmationSettings
+from corehq.apps.domain.utils import guess_domain_language_for_sms
 from corehq.apps.domain.views.base import DomainViewMixin
 from corehq.apps.es import FormES
+from corehq.apps.events.models import (
+    AttendanceTrackingConfig,
+    get_attendee_case_type,
+)
+from corehq.apps.events.tasks import get_case_block_for_user
 from corehq.apps.groups.models import Group
+from corehq.apps.hqcase.utils import submit_case_blocks
 from corehq.apps.hqwebapp.async_handler import AsyncHandlerMixin
 from corehq.apps.hqwebapp.crispy import make_form_readonly
 from corehq.apps.hqwebapp.decorators import use_multiselect
@@ -68,15 +79,21 @@ from corehq.apps.locations.permissions import (
 )
 from corehq.apps.ota.utils import demo_restore_date_created, turn_off_demo_mode
 from corehq.apps.registration.forms import (
-    MobileWorkerAccountConfirmationBySMSForm, MobileWorkerAccountConfirmationForm
+    MobileWorkerAccountConfirmationBySMSForm,
+    MobileWorkerAccountConfirmationForm,
 )
+from corehq.apps.sms.api import send_sms
 from corehq.apps.sms.verify import initiate_sms_verification_workflow
 from corehq.apps.users.account_confirmation import (
-    send_account_confirmation_if_necessary, send_account_confirmation_sms_if_necessary,
+    send_account_confirmation_if_necessary,
+    send_account_confirmation_sms_if_necessary,
 )
 from corehq.apps.users.analytics import get_search_users_in_domain_es_query
 from corehq.apps.users.audit.change_messages import UserChangeMessage
-from corehq.apps.users.bulk_download import get_domains_from_user_filters, load_memoizer
+from corehq.apps.users.bulk_download import (
+    get_domains_from_user_filters,
+    load_memoizer,
+)
 from corehq.apps.users.dbaccessors import get_user_docs_by_username
 from corehq.apps.users.decorators import (
     require_can_edit_commcare_users,
@@ -99,7 +116,7 @@ from corehq.apps.users.models import (
     CommCareUser,
     CouchUser,
     DeactivateMobileWorkerTrigger,
-    check_and_send_limit_email
+    check_and_send_limit_email,
 )
 from corehq.apps.users.models_role import UserRole
 from corehq.apps.users.tasks import (
@@ -119,16 +136,16 @@ from corehq.apps.users.views import (
     BaseEditUserView,
     BaseManageWebUserView,
     BaseUploadUser,
-    UserUploadJobPollView,
     BaseUserSettingsView,
+    UserUploadJobPollView,
     get_domain_languages,
 )
+from corehq.apps.users.views.utils import get_locations_with_orphaned_cases
 from corehq.const import (
     USER_CHANGE_VIA_BULK_IMPORTER,
     USER_CHANGE_VIA_WEB,
     USER_DATE_FORMAT,
 )
-from corehq import toggles
 from corehq.motech.utils import b64_aes_decrypt
 from corehq.pillows.utils import MOBILE_USER_TYPE, WEB_USER_TYPE
 from corehq.util import get_document_or_404
@@ -140,14 +157,9 @@ from corehq.util.workbook_json.excel import (
     WorksheetNotFound,
     get_workbook,
 )
-from couchexport.models import Format
-from couchexport.writers import Excel2007ExportWriter
-from soil import DownloadBase
-from soil.exceptions import TaskFailedError
-from soil.util import get_download_context
-from .custom_data_fields import UserFieldsView
+
 from ..utils import log_user_groups_change
-from corehq.apps.users.views.utils import get_locations_with_orphaned_cases
+from .custom_data_fields import UserFieldsView
 
 BULK_MOBILE_HELP_SITE = ("https://confluence.dimagi.com/display/commcarepublic"
                          "/Create+and+Manage+CommCare+Mobile+Workers#Createand"
@@ -521,8 +533,11 @@ def toggle_demo_mode(request, domain, user_id):
             )
         )
     else:
-        from corehq.apps.app_manager.views.utils import unset_practice_mode_configured_apps, \
-            get_practice_mode_configured_apps
+        from corehq.apps.app_manager.views.utils import (
+            get_practice_mode_configured_apps,
+            unset_practice_mode_configured_apps,
+        )
+
         # if the user is being used as practice user on any apps, check/ask for confirmation
         apps = get_practice_mode_configured_apps(domain)
         confirm_turn_off = True if (request.POST.get('confirm_turn_off', 'no')) == 'yes' else False
@@ -556,7 +571,9 @@ class ConfirmTurnOffDemoModeView(BaseManageCommCareUserView):
 
     @property
     def page_context(self):
-        from corehq.apps.app_manager.views.utils import get_practice_mode_configured_apps
+        from corehq.apps.app_manager.views.utils import (
+            get_practice_mode_configured_apps,
+        )
         user_id = self.kwargs.pop('couch_user_id')
         user = CommCareUser.get_by_user_id(user_id, self.domain)
         practice_apps = get_practice_mode_configured_apps(self.domain, user_id)
@@ -1403,9 +1420,9 @@ def _count_users(request, domain, user_type):
         raise AssertionError(f"Invalid user type for _count_users: {user_type}")
 
     from corehq.apps.users.dbaccessors import (
+        count_invitations_by_filters,
         count_mobile_users_by_filters,
         count_web_users_by_filters,
-        count_invitations_by_filters,
     )
     form = UserFilterForm(request.GET, domain=domain, couch_user=request.couch_user, user_type=user_type)
 
