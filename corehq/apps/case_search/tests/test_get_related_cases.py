@@ -141,12 +141,12 @@ class TestGetRelatedCases(BaseCaseSearchTest):
         EXPECTED_PARTIAL_RELATED_CASES = (source_cases_related["PATH_RELATED_CASE_ID"]
             | source_cases_related["CHILD_CASE_ID"])
         self._assert_case_ids(EXPECTED_PARTIAL_RELATED_CASES, partial_related_cases)
-        self._assert_is_related_case_tag(partial_related_cases)
+        self._assert_is_only_related_case_tag(source_cases, partial_related_cases)
 
         all_related_cases = get_related_cases_helper(include_all_related_cases=True)
         EXPECTED_ALL_RELATED_CASES = set().union(*source_cases_related.values())
         self._assert_case_ids(EXPECTED_ALL_RELATED_CASES, all_related_cases)
-        self._assert_is_related_case_tag(all_related_cases)
+        self._assert_is_only_related_case_tag(source_cases, all_related_cases)
 
     def test_get_related_cases_expanded_results(self):
         """Test that `get_and_tag_related_cases` includes related cases for cases loaded
@@ -333,6 +333,8 @@ class TestGetRelatedCases(BaseCaseSearchTest):
         if result_ids:
             self.assertEqual(1, max(result_ids.values()), result_ids)  # no duplicates
 
-    def _assert_is_related_case_tag(self, related_cases):
+    def _assert_is_only_related_case_tag(self, primary_cases, related_cases):
+        for case in primary_cases:
+            self.assertEqual(hasattr(case.case_json, IS_RELATED_CASE), False)
         for case in related_cases:
             self.assertEqual(case.case_json[IS_RELATED_CASE], 'true')
