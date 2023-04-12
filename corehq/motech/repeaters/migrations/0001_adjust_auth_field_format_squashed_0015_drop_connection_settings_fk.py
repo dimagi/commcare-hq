@@ -35,17 +35,6 @@ class Migration(migrations.Migration):
 
     operations = [
         migrations.CreateModel(
-            name='RepeaterStub',
-            fields=[
-                ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('domain', models.CharField(max_length=126)),
-                ('repeater_id', models.CharField(max_length=36)),
-                ('is_paused', models.BooleanField(default=False)),
-                ('next_attempt_at', models.DateTimeField(blank=True, null=True)),
-                ('last_attempt_at', models.DateTimeField(blank=True, null=True)),
-            ],
-        ),
-        migrations.CreateModel(
             name='SQLRepeatRecord',
             fields=[
                 ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
@@ -56,13 +45,14 @@ class Migration(migrations.Migration):
                     ('PENDING', 'Pending'),
                     ('SUCCESS', 'Succeeded'),
                     ('FAIL', 'Failed'),
-                    ('CANCELLED', 'Cancelled')
+                    ('CANCELLED', 'Cancelled'),
+                    ('EMPTY', 'Empty')
                 ], default='PENDING')),
                 ('registered_at', models.DateTimeField()),
-                ('repeater_stub', models.ForeignKey(
+                ('repeater', models.ForeignKey(
                     on_delete=django.db.models.deletion.CASCADE,
                     related_name='repeat_records',
-                    to='repeaters.repeaterstub',
+                    to='repeaters.repeater',
                 )),
             ],
             options={
@@ -78,10 +68,11 @@ class Migration(migrations.Migration):
                     ('PENDING', 'Pending'),
                     ('SUCCESS', 'Succeeded'),
                     ('FAIL', 'Failed'),
-                    ('CANCELLED', 'Cancelled')
+                    ('CANCELLED', 'Cancelled'),
+                    ('EMPTY', 'Empty')
                 ])),
-                ('message', models.TextField(blank=True, null=True)),
-                ('traceback', models.TextField(blank=True, null=True)),
+                ('message', models.TextField(blank=True, default='')),
+                ('traceback', models.TextField(blank=True, default='')),
                 ('created_at', models.DateTimeField(default=django.utils.timezone.now)),
                 ('repeat_record', models.ForeignKey(
                     on_delete=django.db.models.deletion.CASCADE,
@@ -92,14 +83,6 @@ class Migration(migrations.Migration):
                 'db_table': 'repeaters_repeatrecordattempt',
                 'ordering': ['created_at'],
             },
-        ),
-        migrations.AddIndex(
-            model_name='repeaterstub',
-            index=models.Index(fields=['domain'], name='repeaters_r_domain_23d304_idx'),
-        ),
-        migrations.AddIndex(
-            model_name='repeaterstub',
-            index=models.Index(fields=['repeater_id'], name='repeaters_r_repeate_4c833b_idx'),
         ),
         migrations.AddIndex(
             model_name='sqlrepeatrecord',
@@ -117,393 +100,32 @@ class Migration(migrations.Migration):
             model_name='sqlrepeatrecord',
             index=models.Index(fields=['registered_at'], name='repeaters_r_registe_b48c68_idx'),
         ),
-        migrations.AlterField(
-            model_name='sqlrepeatrecordattempt',
-            name='message',
-            field=models.TextField(blank=True, default=''),
-        ),
-        migrations.AlterField(
-            model_name='sqlrepeatrecordattempt',
-            name='traceback',
-            field=models.TextField(blank=True, default=''),
-        ),
         migrations.CreateModel(
-            name='SQLRepeater',
+            name='Repeater',
             fields=[
                 ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('domain', models.CharField(max_length=126)),
-                ('repeater_id', models.CharField(max_length=36)),
+                ('domain', models.CharField(db_index=True, max_length=126)),
+                ('repeater_id', models.CharField(max_length=36, unique=True)),
                 ('is_paused', models.BooleanField(default=False)),
                 ('next_attempt_at', models.DateTimeField(blank=True, null=True)),
                 ('last_attempt_at', models.DateTimeField(blank=True, null=True)),
                 ('connection_settings_id', models.IntegerField(db_index=True)),
+                ('format', models.CharField(max_length=64, null=True)),
+                ('is_deleted', models.BooleanField(db_index=True, default=False)),
+                ('options', jsonfield.fields.JSONField(default=dict)),
+                ('repeater_type', models.CharField(blank=True, max_length=64)),
+                ('request_method', models.CharField(choices=[
+                    ('DELETE', 'DELETE'),
+                    ('POST', 'POST'),
+                    ('PUT', 'PUT')
+                ], default='POST', max_length=16)),
+                ('date_created', models.DateTimeField(auto_now_add=True)),
+                ('last_modified', models.DateTimeField(auto_now=True)),
+                ('name', models.CharField(max_length=255, null=True)),
             ],
             options={
                 'db_table': 'repeaters_repeater',
             },
-        ),
-        migrations.RemoveField(
-            model_name='sqlrepeatrecord',
-            name='repeater_stub',
-        ),
-        migrations.DeleteModel(
-            name='RepeaterStub',
-        ),
-        migrations.AddField(
-            model_name='sqlrepeatrecord',
-            name='repeater',
-            field=models.ForeignKey(
-                default=None,
-                on_delete=django.db.models.deletion.CASCADE,
-                related_name='repeat_records',
-                to='repeaters.sqlrepeater',
-            ),
-            preserve_default=False,
-        ),
-        migrations.AddIndex(
-            model_name='sqlrepeater',
-            index=models.Index(fields=['domain'], name='repeaters_r_domain_6fd257_idx'),
-        ),
-        migrations.AddIndex(
-            model_name='sqlrepeater',
-            index=models.Index(fields=['repeater_id'], name='repeaters_r_repeate_a7db73_idx'),
-        ),
-        migrations.CreateModel(
-            name='SQLAppStructureRepeater',
-            fields=[
-            ],
-            options={
-                'proxy': True,
-                'indexes': [],
-                'constraints': [],
-            },
-            bases=('repeaters.sqlrepeater',),
-        ),
-        migrations.CreateModel(
-            name='SQLBaseExpressionRepeater',
-            fields=[
-            ],
-            options={
-                'proxy': True,
-                'indexes': [],
-                'constraints': [],
-            },
-            bases=('repeaters.sqlrepeater',),
-        ),
-        migrations.CreateModel(
-            name='SQLCaseRepeater',
-            fields=[
-            ],
-            options={
-                'proxy': True,
-                'indexes': [],
-                'constraints': [],
-            },
-            bases=('repeaters.sqlrepeater',),
-        ),
-        migrations.CreateModel(
-            name='SQLFormRepeater',
-            fields=[
-            ],
-            options={
-                'proxy': True,
-                'indexes': [],
-                'constraints': [],
-            },
-            bases=('repeaters.sqlrepeater',),
-        ),
-        migrations.CreateModel(
-            name='SQLLocationRepeater',
-            fields=[
-            ],
-            options={
-                'proxy': True,
-                'indexes': [],
-                'constraints': [],
-            },
-            bases=('repeaters.sqlrepeater',),
-        ),
-        migrations.CreateModel(
-            name='SQLShortFormRepeater',
-            fields=[
-            ],
-            options={
-                'proxy': True,
-                'indexes': [],
-                'constraints': [],
-            },
-            bases=('repeaters.sqlrepeater',),
-        ),
-        migrations.CreateModel(
-            name='SQLUserRepeater',
-            fields=[
-            ],
-            options={
-                'proxy': True,
-                'indexes': [],
-                'constraints': [],
-            },
-            bases=('repeaters.sqlrepeater',),
-        ),
-        migrations.RemoveIndex(
-            model_name='sqlrepeater',
-            name='repeaters_r_domain_6fd257_idx',
-        ),
-        migrations.RemoveIndex(
-            model_name='sqlrepeater',
-            name='repeaters_r_repeate_a7db73_idx',
-        ),
-        migrations.AddField(
-            model_name='sqlrepeater',
-            name='format',
-            field=models.CharField(max_length=64, null=True),
-        ),
-        migrations.AddField(
-            model_name='sqlrepeater',
-            name='is_deleted',
-            field=models.BooleanField(db_index=True, default=False),
-        ),
-        migrations.AddField(
-            model_name='sqlrepeater',
-            name='options',
-            field=jsonfield.fields.JSONField(default=dict),
-        ),
-        migrations.AddField(
-            model_name='sqlrepeater',
-            name='repeater_type',
-            field=models.CharField(blank=True, max_length=64),
-        ),
-        migrations.AddField(
-            model_name='sqlrepeater',
-            name='request_method',
-            field=models.CharField(choices=[
-                ('DELETE', 'DELETE'),
-                ('POST', 'POST'),
-                ('PUT', 'PUT')
-            ], default='POST', max_length=16),
-        ),
-        migrations.AlterField(
-            model_name='sqlrepeater',
-            name='domain',
-            field=models.CharField(db_index=True, max_length=126),
-        ),
-        migrations.AlterField(
-            model_name='sqlrepeater',
-            name='repeater_id',
-            field=models.CharField(max_length=36, unique=True),
-        ),
-        migrations.CreateModel(
-            name='SQLBaseCOWINRepeater',
-            fields=[
-            ],
-            options={
-                'proxy': True,
-                'indexes': [],
-                'constraints': [],
-            },
-            bases=('repeaters.sqlcaserepeater',),
-        ),
-        migrations.CreateModel(
-            name='SQLCaseExpressionRepeater',
-            fields=[
-            ],
-            options={
-                'proxy': True,
-                'indexes': [],
-                'constraints': [],
-            },
-            bases=('repeaters.sqlbaseexpressionrepeater',),
-        ),
-        migrations.CreateModel(
-            name='SQLCreateCaseRepeater',
-            fields=[
-            ],
-            options={
-                'proxy': True,
-                'indexes': [],
-                'constraints': [],
-            },
-            bases=('repeaters.sqlcaserepeater',),
-        ),
-        migrations.CreateModel(
-            name='SQLDhis2EntityRepeater',
-            fields=[
-            ],
-            options={
-                'proxy': True,
-                'indexes': [],
-                'constraints': [],
-            },
-            bases=('repeaters.sqlcaserepeater', corehq.motech.dhis2.repeaters.Dhis2Instance),
-        ),
-        migrations.CreateModel(
-            name='SQLDhis2Repeater',
-            fields=[
-            ],
-            options={
-                'proxy': True,
-                'indexes': [],
-                'constraints': [],
-            },
-            bases=('repeaters.sqlformrepeater', corehq.motech.dhis2.repeaters.Dhis2Instance),
-        ),
-        migrations.CreateModel(
-            name='SQLFHIRRepeater',
-            fields=[
-            ],
-            options={
-                'proxy': True,
-                'indexes': [],
-                'constraints': [],
-            },
-            bases=('repeaters.sqlcaserepeater',),
-        ),
-        migrations.CreateModel(
-            name='SQLOpenmrsRepeater',
-            fields=[
-            ],
-            options={
-                'proxy': True,
-                'indexes': [],
-                'constraints': [],
-            },
-            bases=('repeaters.sqlcaserepeater',),
-        ),
-        migrations.CreateModel(
-            name='SQLUpdateCaseRepeater',
-            fields=[
-            ],
-            options={
-                'proxy': True,
-                'indexes': [],
-                'constraints': [],
-            },
-            bases=('repeaters.sqlcaserepeater',),
-        ),
-        migrations.CreateModel(
-            name='SQLBeneficiaryRegistrationRepeater',
-            fields=[
-            ],
-            options={
-                'proxy': True,
-                'indexes': [],
-                'constraints': [],
-            },
-            bases=('repeaters.sqlbasecowinrepeater',),
-        ),
-        migrations.CreateModel(
-            name='SQLBeneficiaryVaccinationRepeater',
-            fields=[
-            ],
-            options={
-                'proxy': True,
-                'indexes': [],
-                'constraints': [],
-            },
-            bases=('repeaters.sqlbasecowinrepeater',),
-        ),
-        migrations.CreateModel(
-            name='SQLDataRegistryCaseUpdateRepeater',
-            fields=[
-            ],
-            options={
-                'proxy': True,
-                'indexes': [],
-                'constraints': [],
-            },
-            bases=('repeaters.sqlcreatecaserepeater',),
-        ),
-        migrations.CreateModel(
-            name='SQLReferCaseRepeater',
-            fields=[
-            ],
-            options={
-                'proxy': True,
-                'indexes': [],
-                'constraints': [],
-            },
-            bases=('repeaters.sqlcreatecaserepeater',),
-        ),
-        migrations.AddField(
-            model_name='sqlrepeater',
-            name='date_created',
-            field=models.DateTimeField(auto_now_add=True, default=django.utils.timezone.now),
-            preserve_default=False,
-        ),
-        migrations.AddField(
-            model_name='sqlrepeater',
-            name='last_modified',
-            field=models.DateTimeField(auto_now=True),
-        ),
-        migrations.AddField(
-            model_name='sqlrepeater',
-            name='name',
-            field=models.CharField(max_length=255, null=True),
-        ),
-        migrations.SeparateDatabaseAndState(
-            state_operations=[
-                migrations.RenameModel(
-                    old_name='SQLRepeater',
-                    new_name='Repeater',
-                ),
-            ],
-        ),
-        migrations.DeleteModel(
-            name='SQLAppStructureRepeater',
-        ),
-        migrations.DeleteModel(
-            name='SQLBaseCOWINRepeater',
-        ),
-        migrations.DeleteModel(
-            name='SQLBaseExpressionRepeater',
-        ),
-        migrations.DeleteModel(
-            name='SQLBeneficiaryRegistrationRepeater',
-        ),
-        migrations.DeleteModel(
-            name='SQLBeneficiaryVaccinationRepeater',
-        ),
-        migrations.DeleteModel(
-            name='SQLCaseExpressionRepeater',
-        ),
-        migrations.DeleteModel(
-            name='SQLCaseRepeater',
-        ),
-        migrations.DeleteModel(
-            name='SQLCreateCaseRepeater',
-        ),
-        migrations.DeleteModel(
-            name='SQLDataRegistryCaseUpdateRepeater',
-        ),
-        migrations.DeleteModel(
-            name='SQLDhis2EntityRepeater',
-        ),
-        migrations.DeleteModel(
-            name='SQLDhis2Repeater',
-        ),
-        migrations.DeleteModel(
-            name='SQLFHIRRepeater',
-        ),
-        migrations.DeleteModel(
-            name='SQLFormRepeater',
-        ),
-        migrations.DeleteModel(
-            name='SQLLocationRepeater',
-        ),
-        migrations.DeleteModel(
-            name='SQLOpenmrsRepeater',
-        ),
-        migrations.DeleteModel(
-            name='SQLReferCaseRepeater',
-        ),
-        migrations.DeleteModel(
-            name='SQLShortFormRepeater',
-        ),
-        migrations.DeleteModel(
-            name='SQLUpdateCaseRepeater',
-        ),
-        migrations.DeleteModel(
-            name='SQLUserRepeater',
         ),
         migrations.CreateModel(
             name='AppStructureRepeater',
@@ -713,27 +335,5 @@ class Migration(migrations.Migration):
                 'constraints': [],
             },
             bases=('repeaters.createcaserepeater',),
-        ),
-        migrations.AlterField(
-            model_name='sqlrepeatrecord',
-            name='state',
-            field=models.TextField(choices=[
-                ('PENDING', 'Pending'),
-                ('SUCCESS', 'Succeeded'),
-                ('FAIL', 'Failed'),
-                ('CANCELLED', 'Cancelled'),
-                ('EMPTY', 'Empty')
-            ], default='PENDING'),
-        ),
-        migrations.AlterField(
-            model_name='sqlrepeatrecordattempt',
-            name='state',
-            field=models.TextField(choices=[
-                ('PENDING', 'Pending'),
-                ('SUCCESS', 'Succeeded'),
-                ('FAIL', 'Failed'),
-                ('CANCELLED', 'Cancelled'),
-                ('EMPTY', 'Empty')
-            ]),
         ),
     ]
