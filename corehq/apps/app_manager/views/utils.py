@@ -167,7 +167,7 @@ def overwrite_app(app, master_build, report_map=None):
     excluded_fields = set(Application._meta_fields).union([
         'date_created', 'build_profiles', 'copy_history', 'copy_of',
         'name', 'comment', 'doc_type', '_LAZY_ATTACHMENTS', 'practice_mobile_worker_id',
-        'custom_base_url', 'family_id',
+        'custom_base_url', 'family_id', 'multimedia_map',
     ])
     master_json = master_build.to_json()
     app_json = app.to_json()
@@ -178,6 +178,7 @@ def overwrite_app(app, master_build, report_map=None):
     app_json['version'] = app_json.get('version', 1)
     app_json['upstream_version'] = master_json['version']
     app_json['upstream_app_id'] = master_json['copy_of']
+    app_json['multimedia_map'] = _update_multimedia_map(app_json['multimedia_map'], master_json['multimedia_map'])
     wrapped_app = wrap_app(app_json)
     for module in wrapped_app.get_report_modules():
         if report_map is None:
@@ -203,6 +204,13 @@ def overwrite_app(app, master_build, report_map=None):
 
     enable_usercase_if_necessary(wrapped_app)
     return wrapped_app
+
+
+def _update_multimedia_map(old_map, new_map):
+    for path in new_map:
+        if path in old_map and old_map[path].get('upstream_media_id') == new_map[path]['multimedia_id']:
+            new_map[path] = old_map[path]
+    return new_map
 
 
 def _update_forms(app, master_app, ids_map):
