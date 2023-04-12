@@ -198,8 +198,6 @@ def overwrite_app(app, master_build, report_map=None):
     wrapped_app = _update_forms(wrapped_app, master_build, ids_map)
 
     # Multimedia versions should be set based on the linked app's versions, not those of the master app.
-    for path in wrapped_app.multimedia_map.keys():
-        wrapped_app.multimedia_map[path].version = None
     wrapped_app.set_media_versions()
 
     enable_usercase_if_necessary(wrapped_app)
@@ -210,6 +208,7 @@ def _update_multimedia_map(old_map, new_map):
     for path in new_map:
         if path in old_map and old_map[path].get('upstream_media_id') == new_map[path]['multimedia_id']:
             new_map[path] = old_map[path]
+        new_map[path]['version'] = None
     return new_map
 
 
