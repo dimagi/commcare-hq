@@ -18,12 +18,7 @@ from corehq.apps.reports.filters.users import ExpandedMobileWorkerFilter
 from corehq.apps.users.dbaccessors import get_all_commcare_users_by_domain
 from corehq.apps.users.forms import PrimaryLocationWidget
 
-from .models import (
-    EVENT_IN_PROGRESS,
-    EVENT_NOT_STARTED,
-    AttendeeCase,
-    AttendeeModel,
-)
+from .models import EVENT_IN_PROGRESS, EVENT_NOT_STARTED, AttendeeModel
 
 TRACK_BY_DAY = "by_day"
 TRACK_BY_EVENT = "by_event"
@@ -208,8 +203,8 @@ class EventForm(forms.Form):
 
     def get_attendee_choices(self):
         return [
-            (attendee.case_id, attendee.name)
-            for attendee in AttendeeCase.objects.by_domain(self.domain)
+            (model.case_id, model.name)
+            for model in AttendeeModel.objects.by_domain(self.domain)
         ]
 
     def _get_possible_attendance_takers_ids(self):

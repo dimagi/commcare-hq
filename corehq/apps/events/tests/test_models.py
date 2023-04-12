@@ -21,7 +21,6 @@ from ..models import (
     LOCATION_IDS_CASE_PROPERTY,
     PRIMARY_LOCATION_ID_CASE_PROPERTY,
     AttendanceTrackingConfig,
-    AttendeeCase,
     AttendeeModel,
     Event,
     get_attendee_case_type,
@@ -55,12 +54,15 @@ class TestAttendeeCaseManager(TestCase):
 
     def test_manager_returns_open_cases(self):
         with self.get_attendee_cases() as (open_case, closed_case):
-            cases = AttendeeCase.objects.by_domain(DOMAIN)
+            cases = [m.case for m in AttendeeModel.objects.by_domain(DOMAIN)]
             self.assertEqual(cases, [open_case])
 
     def test_manager_returns_closed_cases_as_well(self):
         with self.get_attendee_cases() as (open_case, closed_case):
-            cases = AttendeeCase.objects.by_domain(DOMAIN, include_closed=True)
+            cases = [m.case for m in AttendeeModel.objects.by_domain(
+                DOMAIN,
+                include_closed=True,
+            )]
             self.assertEqual(cases, [open_case, closed_case])
 
 

@@ -6,10 +6,14 @@ from django.test import TestCase
 from django.urls import reverse
 
 from corehq import privileges
-from corehq.apps.events.models import AttendeeCase, AttendanceTrackingConfig, ATTENDEE_USER_ID_CASE_PROPERTY
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.es.tests.utils import es_test, populate_user_index
 from corehq.apps.es.users import user_adapter
+from corehq.apps.events.models import (
+    ATTENDEE_USER_ID_CASE_PROPERTY,
+    AttendanceTrackingConfig,
+    AttendeeModel,
+)
 from corehq.apps.locations.models import LocationType
 from corehq.apps.locations.tests.util import delete_all_locations, make_loc
 from corehq.apps.users.audit.change_messages import UserChangeMessage
@@ -28,7 +32,11 @@ from corehq.apps.users.views.mobile.users import MobileWorkerListView
 from corehq.const import USER_CHANGE_VIA_WEB
 from corehq.toggles import FILTERED_BULK_USER_DOWNLOAD, NAMESPACE_DOMAIN
 from corehq.toggles.shortcuts import set_toggle
-from corehq.util.test_utils import flag_enabled, generate_cases, privilege_enabled
+from corehq.util.test_utils import (
+    flag_enabled,
+    generate_cases,
+    privilege_enabled,
+)
 
 
 class TestMobileWorkerListView(TestCase):
@@ -114,7 +122,7 @@ class TestMobileWorkerListView(TestCase):
             }
         })
         user = CouchUser.get_by_username(f'{username}@{self.domain}.commcarehq.org')
-        cases = AttendeeCase.objects.by_domain(self.domain)
+        cases = [m.case for m in AttendeeModel.objects.by_domain(self.domain)]
         if expect_case:
             self.assertTrue(len(cases) > 0)
             created_case = cases[0]

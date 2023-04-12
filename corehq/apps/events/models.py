@@ -94,13 +94,14 @@ class AttendanceTrackingConfig(models.Model):
         config.mobile_worker_attendees = value
         config.save()
 
-    @staticmethod
-    def mobile_workers_can_be_attendees(domain):
-        try:
-            config = AttendanceTrackingConfig.objects.get(pk=domain)
-            return config.mobile_worker_attendees
-        except AttendanceTrackingConfig.DoesNotExist:
-            return False
+
+@quickcache(['domain'])
+def mobile_workers_can_be_attendees(domain):
+    try:
+        config = AttendanceTrackingConfig.objects.get(pk=domain)
+        return config.mobile_worker_attendees
+    except AttendanceTrackingConfig.DoesNotExist:
+        return False
 
 
 @quickcache(['domain'])
@@ -395,34 +396,26 @@ def get_user_case_sharing_groups_for_events(commcare_user):
             yield event.get_fake_case_sharing_group(commcare_user.user_id)
 
 
-class AttendeeCaseManager:
+class AttendeeModelManager(models.Manager):
+
+    def get(self, *, case_id: str, domain: str) -> AttendeeModel:
+        return AttendeeModel(case_id=case_id, domain=domain)
 
     def by_domain(
         self,
         domain: str,
         include_closed: bool = False,
-    ) -> list[CommCareCase]:
+    ) -> list[AttendeeModel]:
         if include_closed:
             get_case_ids = CommCareCase.objects.get_case_ids_in_domain
         else:
             get_case_ids = CommCareCase.objects.get_open_case_ids_in_domain_by_type
         case_type = get_attendee_case_type(domain)
         case_ids = get_case_ids(domain, case_type)
-        return CommCareCase.objects.get_cases(case_ids, domain)
-
-
-class AttendeeCase:
-    """
-    Allows code to interact with attendee CommCareCase instances as if
-    they were Django models.
-    """
-    objects = AttendeeCaseManager()
-
-
-class AttendeeModelManager(models.Manager):
-
-    def get(self, *, case_id: str, domain: str) -> AttendeeModel:
-        return AttendeeModel(case_id=case_id, domain=domain)
+        return [
+            AttendeeModel(case=case, domain=domain)
+            for case in CommCareCase.objects.get_cases(case_ids, domain)
+        ]
 
 
 class AttendeeModel(models.Model):
@@ -458,6 +451,7 @@ class AttendeeModel(models.Model):
             case_id = case.case_id
         elif case_id:
             case = CommCareCase.objects.get_case(case_id, domain)
+        self.case = case
 
         kwargs.setdefault('name', case.name)
         # `locations` is a TextField (or a CharField) because the form widget

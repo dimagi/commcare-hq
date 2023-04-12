@@ -61,12 +61,11 @@ from corehq.apps.domain.utils import guess_domain_language_for_sms
 from corehq.apps.domain.views.base import DomainViewMixin
 from corehq.apps.es import FormES
 from corehq.apps.events.models import (
-    AttendanceTrackingConfig,
     get_attendee_case_type,
+    mobile_workers_can_be_attendees,
 )
-from corehq.apps.events.tasks import get_case_block_for_user
+from corehq.apps.events.tasks import create_attendee_for_user
 from corehq.apps.groups.models import Group
-from corehq.apps.hqcase.utils import submit_case_blocks
 from corehq.apps.hqwebapp.async_handler import AsyncHandlerMixin
 from corehq.apps.hqwebapp.crispy import make_form_readonly
 from corehq.apps.hqwebapp.decorators import use_multiselect
@@ -779,7 +778,12 @@ class MobileWorkerListView(JSONResponseMixin, BaseUserSettingsView):
                 errors=', '.join(all_errors)
             )}
         couch_user = self._build_commcare_user()
-        self.create_commcare_attendee_case_for_user(mobile_worker_couch_user=couch_user)
+        if (
+            domain_has_privilege(self.domain, privileges.ATTENDANCE_TRACKING)
+            and toggles.ATTENDANCE_TRACKING.enabled(self.domain)
+            and mobile_workers_can_be_attendees(self.domain)
+        ):
+            self.create_attendee_for_user(couch_user)
 
         if self.new_mobile_worker_form.cleaned_data['send_account_confirmation_email']:
             send_account_confirmation_if_necessary(couch_user)
@@ -795,27 +799,16 @@ class MobileWorkerListView(JSONResponseMixin, BaseUserSettingsView):
             'user_id': couch_user.userID,
         }
 
-    def create_commcare_attendee_case_for_user(self, mobile_worker_couch_user):
-        """Creates a case for the this user to be used for attendance tracking"""
-        has_privilege = domain_has_privilege(self.domain, privileges.ATTENDANCE_TRACKING)
-        # This toggle is temporary and will be removed once the feature is released
-        toggle_enabled = toggles.ATTENDANCE_TRACKING.enabled(self.domain)
-
-        if has_privilege and toggle_enabled:
-            if AttendanceTrackingConfig.mobile_workers_can_be_attendees(domain=self.domain):
-                attendee_case_type = get_attendee_case_type(self.domain)
-                created_by_user_id = self.couch_user.user_id
-                new_case_block = get_case_block_for_user(
-                    mobile_worker_couch_user,
-                    created_by_user_id,
-                    attendee_case_type
-                )
-                return submit_case_blocks(
-                    [new_case_block.as_text()],
-                    domain=self.domain,
-                    user_id=created_by_user_id,
-                    device_id='corehq.apps.users.views.mobile.users.create_commcare_attendee_case_for_user',
-                )
+    def create_attendee_for_user(self, commcare_user):
+        """Creates a case for commcare_user to be used for attendance tracking"""
+        create_attendee_for_user(
+            commcare_user,
+            case_type=get_attendee_case_type(self.domain),
+            domain=self.domain,
+            xform_user_id=self.couch_user.user_id,
+            xform_device_id='MobileWorkerListView.'
+                            'create_attendee_for_commcare_user',
+        )
 
     def _build_commcare_user(self):
         username = self.new_mobile_worker_form.cleaned_data['username']

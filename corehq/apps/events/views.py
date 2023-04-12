@@ -35,6 +35,7 @@ from .models import (
     Event,
     get_attendee_case_type,
     get_paginated_attendees,
+    mobile_workers_can_be_attendees,
 )
 from .tasks import (
     close_mobile_worker_attendee_cases,
@@ -433,7 +434,7 @@ class AttendeesConfigView(JSONResponseMixin, BaseUserSettingsView, BaseEventView
     @allow_remote_invocation
     def get(self, request, *args, **kwargs):
         return self.json_response({
-            "mobile_worker_attendee_enabled": AttendanceTrackingConfig.mobile_workers_can_be_attendees(self.domain)
+            "mobile_worker_attendee_enabled": mobile_workers_can_be_attendees(self.domain)
         })
 
     @allow_remote_invocation
