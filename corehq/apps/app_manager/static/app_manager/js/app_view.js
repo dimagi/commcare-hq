@@ -107,5 +107,28 @@ hqDefine("app_manager/js/app_view", function () {
                 initializeMultimediaTab();
             });
         }
+
+        // Custom Assertions
+        (function () {
+            var $form = $("#custom-assertions-form");
+            var $saveContainer = $form.find("#custom-assertions-save-btn");
+            var saveButton = hqImport("hqwebapp/js/main").initSaveButton({
+                save: function () {
+                    saveButton.ajax({
+                        url: $form.attr('action'),
+                        data: {
+                            custom_assertions: $form.find('input[name="custom_assertions"]').val(),
+                        },
+                        type: 'POST',
+                    });
+                },
+            });
+            $form.on('change', function () {
+                saveButton.fire('change');
+            });
+            saveButton.ui.appendTo($saveContainer);
+            hqImport("app_manager/js/section_changer").attachToForm($saveContainer);
+        })();
+
     });
 });

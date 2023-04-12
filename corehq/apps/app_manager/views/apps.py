@@ -79,6 +79,7 @@ from corehq.apps.app_manager.views.utils import (
     back_to_main,
     clear_xmlns_app_id_cache,
     get_langs,
+    handle_custom_assertions,
     update_linked_app,
     validate_langs,
 )
@@ -180,6 +181,7 @@ def get_app_view_context(request, app):
     commcare-setting defined in commcare-app-settings.yml or commcare-profile-settings.yml
     """
     context = {}
+    lang = request.COOKIES.get('lang', app.langs[0])
 
     settings_layout = copy.deepcopy(
         get_commcare_settings_layout(app)
@@ -309,6 +311,12 @@ def get_app_view_context(request, app):
         'is_linked_app': is_linked_app(app),
         'is_remote_app': is_remote_app(app),
     })
+    if isinstance(app, Application):
+        context.update({'custom_assertions': [
+            {'test': assertion.test, 'text': assertion.text.get(lang)}
+            for assertion in app.custom_assertions
+        ]})
+
     if is_linked_app(app):
         try:
             upstream_versions_by_id = app.get_latest_master_releases_versions()
@@ -810,6 +818,7 @@ def edit_app_attr(request, domain, app_id, attr):
 
     """
     app = get_app(domain, app_id)
+    lang = request.COOKIES.get('lang', app.langs[0])
 
     try:
         hq_settings = json.loads(request.body.decode('utf-8'))['hq']
@@ -835,6 +844,7 @@ def edit_app_attr(request, domain, app_id, attr):
         'profile_url',
         'manage_urls',
         'mobile_ucr_restore_version',
+        'custom_assertions',
     ]
     if attr not in attributes:
         return HttpResponseBadRequest()
@@ -918,6 +928,9 @@ def edit_app_attr(request, domain, app_id, attr):
             raise Exception("App type %s does not support Web Apps" % app.get_doc_type())
         if not has_privilege(request, privileges.CLOUDCARE):
             app.cloudcare_enabled = False
+
+    if should_edit('custom_assertions'):
+        handle_custom_assertions(hq_settings[attr], app, lang)
 
     def require_remote_app():
         if not is_remote_app(app):

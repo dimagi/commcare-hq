@@ -439,7 +439,7 @@ def _edit_form_attr(request, domain, app_id, form_unique_id, attr):
         ]
 
     if should_edit("custom_assertions"):
-        error_message = handle_custom_assertions(request, form, lang)
+        error_message = handle_custom_assertions(request.POST.get('custom_assertions'), form, lang)
         if error_message:
             return json_response(
                 {'message': error_message},

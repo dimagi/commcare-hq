@@ -646,8 +646,8 @@ def report_build_time(domain, app_id, build_type):
 
 
 # TODO factor this out better - accept only what we need from request, and don't modify form here
-def handle_custom_assertions(request, form, lang):
-    assertions = json.loads(request.POST.get('custom_assertions'))
+def handle_custom_assertions(custom_assertions_string, form, lang):
+    assertions = json.loads(custom_assertions_string)
     try:  # validate that custom assertions can be added into the XML
         for assertion in assertions:
             etree.fromstring(

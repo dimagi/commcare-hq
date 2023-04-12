@@ -777,7 +777,7 @@ def edit_module_attr(request, domain, app_id, module_unique_id, attr):
             return HttpResponseBadRequest(str(e))
 
     if should_edit('custom_assertions'):
-        handle_custom_assertions(request, module, lang)
+        handle_custom_assertions(request.POST.get('custom_assertions'), module, lang)
 
     handle_media_edits(request, module, should_edit, resp, lang)
     handle_media_edits(request, module.case_list_form, should_edit, resp, lang, prefix='case_list_form_')
