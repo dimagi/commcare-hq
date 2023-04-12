@@ -242,9 +242,12 @@ def process_populate_export_tables(export_id, progress_id=None):
         cache.set(progress_id, {'table_name': export.name, 'status': 'in progress'})
     try:
         logging.info(f"process_populate_export_tables - Export found: {export.name}")
-
-
-        schema = CaseExportDataSchema.generate_schema_from_builds(export.domain, None, export.case_type)
+        schema = CaseExportDataSchema.generate_schema_from_builds(
+            export.domain,
+            None,
+            export.case_type,
+            only_process_current_builds=True
+        )
         logging.info(f"process_populate_export_tables - Schema has {len(schema.group_schemas)} group schemas")
         export_settings = get_default_export_settings_if_available(export.domain)
         export_instance = CaseExportInstance.generate_instance_from_schema(
