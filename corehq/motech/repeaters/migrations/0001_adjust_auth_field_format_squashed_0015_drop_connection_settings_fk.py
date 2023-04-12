@@ -35,6 +35,33 @@ class Migration(migrations.Migration):
 
     operations = [
         migrations.CreateModel(
+            name='Repeater',
+            fields=[
+                ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
+                ('domain', models.CharField(db_index=True, max_length=126)),
+                ('repeater_id', models.CharField(max_length=36, unique=True)),
+                ('is_paused', models.BooleanField(default=False)),
+                ('next_attempt_at', models.DateTimeField(blank=True, null=True)),
+                ('last_attempt_at', models.DateTimeField(blank=True, null=True)),
+                ('connection_settings_id', models.IntegerField(db_index=True)),
+                ('format', models.CharField(max_length=64, null=True)),
+                ('is_deleted', models.BooleanField(db_index=True, default=False)),
+                ('options', jsonfield.fields.JSONField(default=dict)),
+                ('repeater_type', models.CharField(blank=True, max_length=64)),
+                ('request_method', models.CharField(choices=[
+                    ('DELETE', 'DELETE'),
+                    ('POST', 'POST'),
+                    ('PUT', 'PUT')
+                ], default='POST', max_length=16)),
+                ('date_created', models.DateTimeField(auto_now_add=True)),
+                ('last_modified', models.DateTimeField(auto_now=True)),
+                ('name', models.CharField(max_length=255, null=True)),
+            ],
+            options={
+                'db_table': 'repeaters_repeater',
+            },
+        ),
+        migrations.CreateModel(
             name='SQLRepeatRecord',
             fields=[
                 ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
@@ -99,33 +126,6 @@ class Migration(migrations.Migration):
         migrations.AddIndex(
             model_name='sqlrepeatrecord',
             index=models.Index(fields=['registered_at'], name='repeaters_r_registe_b48c68_idx'),
-        ),
-        migrations.CreateModel(
-            name='Repeater',
-            fields=[
-                ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('domain', models.CharField(db_index=True, max_length=126)),
-                ('repeater_id', models.CharField(max_length=36, unique=True)),
-                ('is_paused', models.BooleanField(default=False)),
-                ('next_attempt_at', models.DateTimeField(blank=True, null=True)),
-                ('last_attempt_at', models.DateTimeField(blank=True, null=True)),
-                ('connection_settings_id', models.IntegerField(db_index=True)),
-                ('format', models.CharField(max_length=64, null=True)),
-                ('is_deleted', models.BooleanField(db_index=True, default=False)),
-                ('options', jsonfield.fields.JSONField(default=dict)),
-                ('repeater_type', models.CharField(blank=True, max_length=64)),
-                ('request_method', models.CharField(choices=[
-                    ('DELETE', 'DELETE'),
-                    ('POST', 'POST'),
-                    ('PUT', 'PUT')
-                ], default='POST', max_length=16)),
-                ('date_created', models.DateTimeField(auto_now_add=True)),
-                ('last_modified', models.DateTimeField(auto_now=True)),
-                ('name', models.CharField(max_length=255, null=True)),
-            ],
-            options={
-                'db_table': 'repeaters_repeater',
-            },
         ),
         migrations.CreateModel(
             name='AppStructureRepeater',
