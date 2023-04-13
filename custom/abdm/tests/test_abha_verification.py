@@ -20,7 +20,7 @@ class TestABHAVerification(APITestCase):
         abdm_txn_id_mock = {"txnId": "1234"}
         return {
             "v1/search/searchByHealthId": {"authMethods": ["MOBILE_OTP"]},
-            "v2/auth/init": abdm_txn_id_mock,
+            "v1/auth/init": abdm_txn_id_mock,
             "v1/auth/confirmWithMobileOTP": abdm_txn_id_mock,
             "v1/auth/confirmWithAadhaarOtp": abdm_txn_id_mock,
             "v1/search/existsByHealthId": {"status": True}
