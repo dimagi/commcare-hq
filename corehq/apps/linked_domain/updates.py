@@ -333,10 +333,12 @@ def update_data_dictionary(domain_link):
             case_property_obj.description = case_property_desc['description']
             case_property_obj.deprecated = case_property_desc['deprecated']
             case_property_obj.data_type = case_property_desc['data_type']
-            case_property_obj.group = case_property_desc['group']
+            case_property_obj.group = case_property_desc['group']['name']
             case_property_obj.group_obj, created = CasePropertyGroup.objects.get_or_create(
-                name=case_property_desc['group'],
+                name=case_property_obj.group,
                 case_type=case_type_obj,
+                description=case_property_desc['group']['description'],
+                index=case_property_desc['group']['index']
             )
             case_property_obj.save()
 
