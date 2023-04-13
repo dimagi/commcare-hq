@@ -24,9 +24,9 @@ beaker==1.11.0
     # via oic
 billiard==3.6.4.0
     # via celery
-boto3==1.24.28
+boto3==1.24.96
     # via -r base-requirements.in
-botocore==1.27.28
+botocore==1.27.96
     # via
     #   boto3
     #   s3transfer
