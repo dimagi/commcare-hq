@@ -50,6 +50,15 @@ class CustomSuiteAssertionsTest(SimpleTestCase, TestXmlMixin):
             </partial>
         """
 
+    def _assert_translations(self, app, entity_code):
+        en_app_strings = commcare_translations.loads(app.create_app_strings('en'))
+        self.assertEqual(en_app_strings[f'custom_assertion.{entity_code}.0'], "en-0")
+        self.assertEqual(en_app_strings[f'custom_assertion.{entity_code}.1'], "en-1")
+        fr_app_strings = commcare_translations.loads(app.create_app_strings('fr'))
+        self.assertEqual(fr_app_strings[f'custom_assertion.{entity_code}.0'], "fr-0")
+        self.assertEqual(fr_app_strings[f'custom_assertion.{entity_code}.1'], "fr-1")
+
+
     def test_custom_form_assertions(self, *args):
         factory = AppFactory()
         module, form = factory.new_basic_module('m0', 'case1')
@@ -59,13 +68,7 @@ class CustomSuiteAssertionsTest(SimpleTestCase, TestXmlMixin):
             factory.app.create_suite(),
             "entry/assertions"
         )
-
-        en_app_strings = commcare_translations.loads(module.get_app().create_app_strings('en'))
-        self.assertEqual(en_app_strings['custom_assertion.m0.f0.0'], "en-0")
-        self.assertEqual(en_app_strings['custom_assertion.m0.f0.1'], "en-1")
-        fr_app_strings = commcare_translations.loads(module.get_app().create_app_strings('fr'))
-        self.assertEqual(fr_app_strings['custom_assertion.m0.f0.0'], "fr-0")
-        self.assertEqual(fr_app_strings['custom_assertion.m0.f0.1'], "fr-1")
+        self._assert_translations(factory.app, 'm0.f0')
 
     def test_custom_module_assertions(self, *args):
         factory = AppFactory()
@@ -76,3 +79,4 @@ class CustomSuiteAssertionsTest(SimpleTestCase, TestXmlMixin):
             factory.app.create_suite(),
             "menu[@id='m0']/assertions"
         )
+        self._assert_translations(factory.app, 'm0')

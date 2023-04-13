@@ -74,6 +74,12 @@ def _create_custom_app_strings(app, lang, for_default=False, build_profile_id=No
             _maybe_add_index(clean_trans(module.name, langs), app)
         )
 
+        for id, custom_assertion in enumerate(module.custom_assertions):
+            yield (
+                id_strings.module_custom_assertion_locale(module, id),
+                clean_trans(custom_assertion.text, langs)
+            )
+
         yield from _create_icon_audio_app_strings(
             module,
             lang,
