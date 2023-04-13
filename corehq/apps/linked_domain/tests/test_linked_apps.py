@@ -610,7 +610,8 @@ class TestRemoteLinkedApps(BaseLinkedAppsTest):
         old_multimedia_ids = set([local_media_id])
 
         # media is not yet saved to app based on old ids
-        missing_media = _get_missing_multimedia(self.master_app_with_report_modules, old_multimedia_ids)
+        with patch('corehq.apps.hqmedia.models.CommCareMultimedia.get', side_effect=ResourceNotFound):
+            missing_media = _get_missing_multimedia(self.master_app_with_report_modules, old_multimedia_ids)
         self.assertEqual(missing_media, [('case_list_image.jpg', media_item)])
 
         # update multimedia map as in fetch_remote_media
