@@ -107,7 +107,6 @@ from corehq.apps.users.tasks import (
     bulk_download_users_async,
     reset_demo_user_restore_task,
     turn_on_demo_mode_task,
-    clean_domain_users_data,
 )
 from corehq.apps.users.util import (
     can_add_extra_mobile_workers,
@@ -148,7 +147,6 @@ from soil.exceptions import TaskFailedError
 from soil.util import get_download_context
 from .custom_data_fields import UserFieldsView
 from ..utils import log_user_groups_change
-from corehq.apps.users.util import SimpleProgressHelper
 from corehq.apps.users.views.utils import get_locations_with_orphaned_cases
 
 BULK_MOBILE_HELP_SITE = ("https://confluence.dimagi.com/display/commcarepublic"
@@ -1349,26 +1347,7 @@ class ClearCommCareUsers(DeleteCommCareUsers):
     page_title = gettext_noop('Bulk Clear')
     template_name = 'users/bulk_clear.html'
 
-    def get(self, request, *args, **kwargs):
-        if self.clearing_process_busy:
-            messages.info(request, _("""
-                Mobile Worker data clearing in progress ( {progress_percent} % completed ).
-            """).format(progress_percent=self.clearing_percent))
-        else:
-            users_cleared = self.progress_helper.total
-            if users_cleared:
-                messages.success(request, f"{users_cleared} user(s) cleared.")
-                self.progress_helper.expire()
-
-        return super().get(request, *args, **kwargs)
-
     def post(self, request, *args, **kwargs):
-        if self.clearing_process_busy:
-            messages.error(request, _("""
-                User clearing process already in progress! Please try again later.
-            """))
-            return self.get(request, *args, **kwargs)
-
         usernames = self._get_usernames(request)
         if not usernames:
             return self.get(request, *args, **kwargs)
@@ -1385,32 +1364,34 @@ class ClearCommCareUsers(DeleteCommCareUsers):
 
         return self.get(request, *args, **kwargs)
 
-    @property
-    def clearing_process_busy(self):
-        return self.progress_helper.is_busy
-
-    @property
-    def clearing_percent(self):
-        try:
-            return self.progress_helper.percentage_complete
-        except ValueError:
-            return None
-
-    @property
-    def progress_id(self):
-        return f"{self.domain}-user-clearing"
-
-    @property
-    def progress_helper(self):
-        return SimpleProgressHelper(self.progress_id)
-
     def _clear_users_data(self, request, user_docs_by_id):
-        user_ids = [user_id for user_id, _ in user_docs_by_id.items()]
-        clean_domain_users_data.delay(
-            domain=request.domain,
-            user_ids=user_ids,
-            cleared_by_username=request.couch_user.username,
-            progress_id=self.progress_id,
+        from corehq.apps.users.model_log import UserModelAction
+        from corehq.apps.hqwebapp.tasks import send_mail_async
+        from django.conf import settings
+
+        cleared_count = 0
+        for user_id, doc in user_docs_by_id.items():
+            user = CommCareUser.wrap(doc)
+            user.clear_user_data()
+
+            log_user_change(
+                by_domain=self.domain,
+                for_domain=self.domain,
+                couch_user=user,
+                changed_by_user=request.couch_user,
+                changed_via="web",
+                action=UserModelAction.CLEAR
+            )
+
+            cleared_count += 1
+        if cleared_count:
+            messages.success(request, f"{cleared_count} user(s) cleared.")
+
+        send_mail_async.delay(
+            subject=f"Mobile Worker Clearing Complete - {self.domain}",
+            message=f"The mobile workers have been cleared successfully for the project '{self.domain}'.",
+            from_email=settings.DEFAULT_FROM_EMAIL,
+            recipient_list=[self.request.couch_user.get_email()],
         )
 
 

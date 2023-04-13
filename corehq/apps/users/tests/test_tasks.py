@@ -11,7 +11,6 @@ from corehq.apps.users.models import CommCareUser, WebUser, UserHistory
 from corehq.apps.users.tasks import (
     apply_correct_demo_mode_to_loadtest_user,
     update_domain_date,
-    clean_domain_users_data,
 )
 from corehq.apps.hqcase.utils import submit_case_blocks
 from casexml.apps.case.mock import CaseBlock
@@ -125,83 +124,3 @@ def _get_user(loadtest_factor, is_demo_user):
     finally:
         user.delete(domain_name, None)
         domain_obj.delete()
-
-
-class TestCleanDomainUserData(TestCase):
-
-    USERNAME_1 = 'user_1'
-    USERNAME_2 = 'user_2'
-    DOMAIN = 'test-domain'
-
-    @classmethod
-    def setUpClass(cls):
-        super().setUpClass()
-        cls.domain_obj = create_domain(cls.DOMAIN)
-        cls.webuser = WebUser.create(cls.DOMAIN, 'test', '****', None, None)
-        cls.webuser.save()
-
-        cls.user_1 = CommCareUser.create(
-            cls.DOMAIN, cls.USERNAME_1, "****", None, None)
-        cls.user_2 = CommCareUser.create(
-            cls.DOMAIN, cls.USERNAME_2, "****", None, None)
-
-    @classmethod
-    def tearDownClass(cls):
-        cls.domain_obj.delete()
-        super().tearDownClass()
-
-    def test_users_data_is_cleared(self):
-        self._populate_user_data(self.user_1)
-        self._populate_user_data(self.user_2)
-
-        self.assertTrue(len(self.user_1._get_form_ids()) == 1)
-        self.assertTrue(len(self.user_1._get_case_ids()) == 1)
-
-        clean_domain_users_data(
-            domain=self.domain_obj.name,
-            user_ids=[self.user_1.user_id, self.user_2.user_id],
-            cleared_by_username=self.webuser.username,
-        )
-
-        self.assertTrue(len(self.user_1._get_form_ids()) == 0)
-        self.assertTrue(len(self.user_1._get_case_ids()) == 0)
-        self.assertTrue(len(self.user_2._get_form_ids()) == 0)
-        self.assertTrue(len(self.user_2._get_case_ids()) == 0)
-
-        user_1_history = UserHistory.objects.filter(
-            by_domain=self.DOMAIN,
-            user_id=self.user_1.user_id,
-        )
-        self.assertTrue(len(user_1_history) == 1)
-        self.assertTrue(user_1_history[0].action == UserHistory.CLEAR)
-
-    def _populate_user_data(self, user):
-        self._create_case(user.user_id)
-        self._create_form(user.user_id)
-
-    def _create_case(self, user_id):
-        submit_case_blocks(
-            [
-                CaseBlock(
-                    create=True,
-                    case_id=uuid.uuid4().hex,
-                    user_id=user_id
-                ).as_text()
-            ], domain=self.DOMAIN
-        )
-
-    def _create_form(self, user_id):
-        from corehq.apps.receiverwrapper.util import submit_form_locally
-
-        form = """
-        <data xmlns="http://openrosa.org/formdesigner/blah">
-            <meta>
-                <userID>{user_id}</userID>
-                <deviceID>{device_id}</deviceID>
-            </meta>
-        </data>
-        """
-        submit_form_locally(
-            form.format(user_id=user_id, device_id=uuid.uuid4()),
-            self.DOMAIN,
-        )
