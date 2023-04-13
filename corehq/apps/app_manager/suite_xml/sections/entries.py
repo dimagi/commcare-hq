@@ -370,7 +370,7 @@ class EntriesHelper(object):
     @staticmethod
     def add_custom_assertions(entry, form):
         for id, assertion in enumerate(form.custom_assertions):
-            locale_id = id_strings.custom_assertion_locale(form.get_module(), form, id)
+            locale_id = id_strings.form_custom_assertion_locale(form.get_module(), form, id)
             entry.assertions.append(EntriesHelper.get_assertion(assertion.test, locale_id))
 
     @staticmethod

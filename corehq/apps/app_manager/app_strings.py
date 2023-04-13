@@ -463,7 +463,7 @@ def _create_forms_app_strings(
 
         for id, custom_assertion in enumerate(form.custom_assertions):
             yield (
-                id_strings.custom_assertion_locale(module, form, id),
+                id_strings.form_custom_assertion_locale(module, form, id),
                 clean_trans(custom_assertion.text, langs)
             )
 

@@ -285,8 +285,13 @@ def search_property_validation_text(module, search_prop, index):
 
 
 @pattern('custom_assertion.m%d.f%d.%d')
-def custom_assertion_locale(module, form, id):
+def form_custom_assertion_locale(module, form, id):
     return 'custom_assertion.m{module.id}.f{form.id}.{id}'.format(module=module, form=form, id=id)
+
+
+@pattern('custom_assertion.m%d.%d')
+def module_custom_assertion_locale(module, id):
+    return 'custom_assertion.m{module.id}.{id}'.format(module=module, id=id)
 
 
 @pattern('referral_lists.m%d')
