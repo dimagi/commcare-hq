@@ -1406,7 +1406,7 @@ class ClearCommCareUsers(DeleteCommCareUsers):
 
     def _clear_users_data(self, request, user_docs_by_id):
         user_ids = [user_id for user_id, _ in user_docs_by_id.items()]
-        clean_domain_users_data(
+        clean_domain_users_data.delay(
             domain=request.domain,
             user_ids=user_ids,
             cleared_by_username=request.couch_user.username,
