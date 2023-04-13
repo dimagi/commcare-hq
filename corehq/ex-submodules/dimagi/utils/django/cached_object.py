@@ -344,7 +344,7 @@ class CachedImage(CachedObject):
             else:
                 source_image_obj = self.fetch_image(source_key)
 
-                target_image_obj = ImageOps.fit(source_image_obj, target_size, method=Image.BICUBIC)
+                target_image_obj = ImageOps.fit(source_image_obj, target_size, method=Image.Resampling.BICUBIC)
                 mime_ext = CachedImageMeta.get_extension(source_meta.content_type)
 
                 #output to buffer

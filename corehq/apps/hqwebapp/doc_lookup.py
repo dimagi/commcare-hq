@@ -1,4 +1,5 @@
 from collections import OrderedDict, defaultdict, namedtuple
+from uuid import UUID
 
 import attr
 from couchdbkit import ResourceNotFound
@@ -118,12 +119,12 @@ def get_databases():
         ),
         _SQLDb(
             LookupTable._meta.db_table,
-            lambda id_: LookupTable.objects.get(id=id_),
+            make_uuid_getter(LookupTable),
             'LookupTable',
         ),
         _SQLDb(
             LookupTableRow._meta.db_table,
-            lambda id_: LookupTableRow.objects.get(id=id_),
+            make_uuid_getter(LookupTableRow),
             'LookupTableRow',
         ),
     ]
@@ -205,3 +206,13 @@ class _SQLDb(_DbWrapper):
             return self._getter(record_id)
         except (XFormNotFound, CaseNotFound, ObjectDoesNotExist):
             raise ResourceNotFound("missing")
+
+
+def make_uuid_getter(model, id_field="id"):
+    def getter(id_):
+        try:
+            id_value = UUID(id_)
+        except ValueError:
+            raise model.DoesNotExist
+        return model.objects.get(**{id_field: id_value})
+    return getter

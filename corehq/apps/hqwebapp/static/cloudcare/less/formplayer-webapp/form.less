@@ -31,6 +31,9 @@
   .form-group {
     padding-left: 25px;
     padding-right: 20px;
+    .caption.control-label {
+      display: block;
+    }
   }
 
   .panel-body {
@@ -123,5 +126,36 @@
     .panel-body {
       padding-top: 6px;
     }
+  }
+}
+
+
+@media print {
+  .form-container.print-container {
+    margin: 0px;
+    .page-header {
+      padding-top: 0px;
+    }
+  }
+
+  .q.form-group {
+    break-inside: avoid;
+  }
+
+  .panel.panel-default.last,
+  .panel.panel-default.last *,
+  .q.form-group.last,
+  .q.form-group.last * {
+    margin-bottom: 0px;
+    padding-bottom: 0px;
+    .widget-container {
+      margin-bottom: 0px;
+      padding-bottom: 0px;
+    }
+  }
+
+  .help-block {
+    color: #52616f !important;
+    font-size: 14px;
   }
 }

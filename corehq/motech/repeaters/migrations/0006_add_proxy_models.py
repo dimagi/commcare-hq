@@ -174,7 +174,7 @@ class Migration(migrations.Migration):
                 'indexes': [],
                 'constraints': [],
             },
-            bases=('repeaters.sqlcaserepeater', corehq.motech.dhis2.repeaters.SQLDhis2Instance),
+            bases=('repeaters.sqlcaserepeater', corehq.motech.dhis2.repeaters.Dhis2Instance),
         ),
         migrations.CreateModel(
             name='SQLDhis2Repeater',
@@ -185,7 +185,7 @@ class Migration(migrations.Migration):
                 'indexes': [],
                 'constraints': [],
             },
-            bases=('repeaters.sqlformrepeater', corehq.motech.dhis2.repeaters.SQLDhis2Instance),
+            bases=('repeaters.sqlformrepeater', corehq.motech.dhis2.repeaters.Dhis2Instance),
         ),
         migrations.CreateModel(
             name='SQLFHIRRepeater',

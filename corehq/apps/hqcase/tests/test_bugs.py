@@ -52,7 +52,7 @@ class OtaRestoreBugTest(TestCase):
 
         restore_config = RestoreConfig(
             project=domain,
-            restore_user=user.to_ota_restore_user(),
+            restore_user=user.to_ota_restore_user(good_domain),
             params=RestoreParams(version=V2),
         )
         payload = restore_config.get_payload().as_string().decode('utf-8')

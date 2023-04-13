@@ -52,13 +52,28 @@ The extension point function is called if there are no registered extensions or 
 Registering an extension point implementation
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+Registering an extension point implementation is as simple as creating a function with the
+same signature as the extension point and adding a decorator to the function.
+
+To guarantee that the extension point implementation is registered during startup you should
+also add the module path to the `COMMCARE_EXTENSIONS` list in settings.
+
+The convention is to name your module `commcare_extensions` and place it in the root package
+of your Django app.
+
 ::
+
+    # in path/to/myapp/commcare_extensions.py
 
     from xyz import get_things
 
     @get_things.extend()
     def some_things(arg1, domain, keyword=False):
         return ["thing2", "thing1"]
+
+
+    # in localsettings.py
+    COMMCARE_EXTENSIONS = ["custom.myapp.commcare_extensions"]
 
 
 Extensions may also be limited to specific domains by passing the list

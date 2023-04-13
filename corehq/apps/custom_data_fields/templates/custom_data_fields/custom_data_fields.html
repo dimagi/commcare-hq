@@ -1,4 +1,4 @@
-{% extends "hqwebapp/base_section.html" %}
+{% extends "hqwebapp/bootstrap3/base_section.html" %}
 {% load crispy_forms_tags %}
 {% load hq_shared_tags %}
 {% load i18n %}
@@ -20,6 +20,7 @@
 {% block page_content %}
   {% initial_page_data 'custom_fields' custom_fields %}
   {% initial_page_data 'custom_fields_profiles' custom_fields_profiles %}
+  {% initial_page_data 'can_view_regex_field_validation' can_view_regex_field_validation %}
   <form id="custom-fields-form"
         action="."
         method="POST"
@@ -33,7 +34,7 @@
       {% for field, errors in custom_fields_form.errors.items %}
         {% for error in errors %}
           <div class="alert alert-danger">
-            {{ error|safe }}
+            {{ error }}
             <button type="button" class="close" data-dismiss="alert">&times;</button>
           </div>
         {% endfor %}

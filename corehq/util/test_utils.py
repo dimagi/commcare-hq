@@ -18,17 +18,16 @@ from functools import wraps
 from io import StringIO, open
 from textwrap import indent, wrap
 from time import sleep, time
-from unittest import SkipTest, TestCase
+from unittest import SkipTest, TestCase, mock
 
 from django.apps import apps
 from django.conf import settings
 from django.db import connections
 from django.db.backends import utils
 from django.db.utils import DEFAULT_DB_ALIAS, load_backend
+from django.http import HttpRequest
 from django.test import TransactionTestCase
 from django.test.utils import CaptureQueriesContext
-
-from unittest import mock
 
 from corehq.util.context_managers import drop_connected_signals
 from corehq.util.decorators import ContextDecorator
@@ -170,16 +169,52 @@ class flag_disabled(flag_enabled):
     enabled = False
 
 
-def privilege_enabled(privilege_name):
-    """Enable an individual privilege for tests"""
-    from django_prbac.utils import has_privilege
+class privilege_enabled:
+    """
+    A decorator and context manager to enable a privilege for a domain
+    or a request.
 
-    def patched(request, slug, **assignment):
-        if slug == privilege_name:
-            return True
-        return has_privilege(request, slug, **assignment)
+    If you find that the import you need to be patched is not yet
+    supported, add it to ``self.imports``.
+    """
+    imports = (
+        'corehq.apps.users.landing_pages.domain_has_privilege',
+        'corehq.apps.users.permissions.domain_has_privilege',
+        'corehq.apps.users.views.mobile.users.domain_has_privilege',
+        'django_prbac.decorators.has_privilege',
+    )
 
-    return mock.patch('django_prbac.decorators.has_privilege', new=patched)
+    def __init__(self, privilege_slug):
+
+        def patched(domain_or_request, slug, **assignment):
+            from django_prbac.utils import \
+                has_privilege as request_has_privilege
+
+            from corehq.apps.accounting.utils import domain_has_privilege
+
+            if isinstance(domain_or_request, HttpRequest):
+                has_privilege = request_has_privilege
+            else:
+                has_privilege = domain_has_privilege
+            return (
+                slug == privilege_slug
+                or has_privilege(domain_or_request, slug, **assignment)
+            )
+
+        self.patches = [mock.patch(imp, new=patched) for imp in self.imports]
+
+    def __call__(self, func):
+        for patch in self.patches:
+            func = patch(func)
+        return func
+
+    def __enter__(self):
+        for patch in self.patches:
+            patch.start()
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        for patch in self.patches:
+            patch.stop()
 
 
 class DocTestMixin(object):
@@ -577,10 +612,15 @@ def patch_foreign_value_caches():
 
 
 def get_form_ready_to_save(metadata, is_db_test=False, form_id=None):
-    from corehq.form_processor.parsers.form import process_xform_xml
-    from corehq.form_processor.utils import get_simple_form_xml, convert_xform_to_json
-    from corehq.form_processor.interfaces.processor import FormProcessorInterface
+    from corehq.form_processor.interfaces.processor import (
+        FormProcessorInterface,
+    )
     from corehq.form_processor.models import Attachment
+    from corehq.form_processor.parsers.form import process_xform_xml
+    from corehq.form_processor.utils import (
+        convert_xform_to_json,
+        get_simple_form_xml,
+    )
 
     assert metadata is not None
     metadata.domain = metadata.domain or uuid.uuid4().hex
@@ -615,8 +655,10 @@ def create_and_save_a_form(domain):
     """
     Very basic way to save a form, not caring at all about its contents
     """
+    from corehq.form_processor.interfaces.processor import (
+        FormProcessorInterface,
+    )
     from corehq.form_processor.utils import TestFormMetadata
-    from corehq.form_processor.interfaces.processor import FormProcessorInterface
     metadata = TestFormMetadata(domain=domain)
     form = get_form_ready_to_save(metadata)
     FormProcessorInterface(domain=domain).save_processed_models([form])
@@ -630,6 +672,7 @@ def _create_case(domain, **kwargs):
     creates and saves the case directly, which is faster.
     """
     from casexml.apps.case.mock import CaseBlock
+
     from corehq.apps.hqcase.utils import submit_case_blocks
     return submit_case_blocks(
         [CaseBlock.deprecated_init(**kwargs).as_text()], domain=domain
@@ -682,7 +725,9 @@ def create_test_case(domain, case_type, case_name, case_properties=None, drop_si
     """
     from corehq.apps.sms.tasks import delete_phone_numbers_for_owners
     from corehq.form_processor.models import CommCareCase
-    from corehq.messaging.scheduling.scheduling_partitioned.dbaccessors import delete_schedule_instances_by_case_id
+    from corehq.messaging.scheduling.scheduling_partitioned.dbaccessors import (
+        delete_schedule_instances_by_case_id,
+    )
 
     case = create_and_save_a_case(domain, case_id or uuid.uuid4().hex, case_name,
         case_properties=case_properties, case_type=case_type, drop_signals=drop_signals,
@@ -719,7 +764,7 @@ def set_parent_case(domain, child_case, parent_case, relationship='child', ident
     """
     Creates a parent-child relationship between child_case and parent_case.
     """
-    from casexml.apps.case.mock import CaseFactory, CaseStructure, CaseIndex
+    from casexml.apps.case.mock import CaseFactory, CaseIndex, CaseStructure
 
     parent = CaseStructure(case_id=parent_case.case_id)
     CaseFactory(domain).create_or_update_case(

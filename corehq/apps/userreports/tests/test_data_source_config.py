@@ -1,15 +1,21 @@
 import datetime
-import time
+from unittest.mock import MagicMock, patch
 
 from django.test import SimpleTestCase, TestCase
 
+from freezegun import freeze_time
 from jsonobject.exceptions import BadValueError
-from unittest.mock import MagicMock, patch
-from corehq.apps.domain.models import AllowedUCRExpressionSettings
-from corehq.apps.userreports.const import UCR_NAMED_EXPRESSION, UCR_NAMED_FILTER
 
+from corehq.apps.domain.models import AllowedUCRExpressionSettings
+from corehq.apps.userreports.const import (
+    UCR_NAMED_EXPRESSION,
+    UCR_NAMED_FILTER,
+)
 from corehq.apps.userreports.exceptions import BadSpecError
-from corehq.apps.userreports.models import DataSourceConfiguration, UCRExpression
+from corehq.apps.userreports.models import (
+    DataSourceConfiguration,
+    UCRExpression,
+)
 from corehq.apps.userreports.tests.utils import (
     get_sample_data_source,
     get_sample_doc_and_indicators,
@@ -331,68 +337,63 @@ class DataSourceFilterInterpolationTest(SimpleTestCase):
         )
 
 
-class DataSourceConfigurationDbTest(TestCase):
+class DataSourceConfigurationTests(TestCase):
 
-    @classmethod
-    def setUpClass(cls):
-        super(DataSourceConfigurationDbTest, cls).setUpClass()
-
-        # TODO - handle cleanup appropriately so this isn't needed
-        for data_source_config in DataSourceConfiguration.all():
-            data_source_config.delete()
-
-        DataSourceConfiguration(domain='foo', table_id='foo1', referenced_doc_type='XFormInstance').save()
-        DataSourceConfiguration(domain='foo', table_id='foo2', referenced_doc_type='XFormInstance').save()
-        DataSourceConfiguration(domain='bar', table_id='bar1', referenced_doc_type='XFormInstance').save()
-
-    @classmethod
-    def tearDownClass(cls):
-        for config in DataSourceConfiguration.all():
-            config.delete()
-        super(DataSourceConfigurationDbTest, cls).tearDownClass()
-
-    def test_get_by_domain(self):
+    def test_by_domain_returns_relevant_datasource_configs(self):
         results = DataSourceConfiguration.by_domain('foo')
-        self.assertEqual(2, len(results))
-        for item in results:
-            self.assertTrue(item.table_id in ('foo1', 'foo2'))
+        self.assertEqual(len(results), 2)
+        self.assertEqual({r.table_id for r in results}, {'foo1', 'foo2'})
 
+    def test_by_domain_returns_empty_list(self):
         results = DataSourceConfiguration.by_domain('not-foo')
-        self.assertEqual(0, len(results))
+        self.assertEqual(results, [])
 
-    def test_last_modified_date(self):
-        start = datetime.datetime.utcnow()
-        time.sleep(.01)
-        data_source = DataSourceConfiguration(
-            domain='mod-test', table_id='mod-test', referenced_doc_type='XFormInstance'
-        )
-        data_source.save()
-        self.assertTrue(start < data_source.last_modified)
-        time.sleep(.01)
-        between = datetime.datetime.utcnow()
-        self.assertTrue(between > data_source.last_modified)
-        time.sleep(.01)
-        data_source.save()
-        time.sleep(.01)
-        self.assertTrue(between < data_source.last_modified)
-        self.assertTrue(datetime.datetime.utcnow() > data_source.last_modified)
+    def test_all(self):
+        results = list(DataSourceConfiguration.all())
+        self.assertEqual(len(results), 3)
+        self.assertEqual({r.table_id for r in results},
+                         {'foo1', 'foo2', 'bar1'})
 
-    def test_get_all(self):
-        self.assertEqual(3, len(list(DataSourceConfiguration.all())))
+    def test_last_modified_date_updates_successfully(self):
+        initial_date = datetime.datetime(2020, 1, 1)
+        with freeze_time(initial_date) as frozen_time:
+            datasource = DataSourceConfiguration(
+                domain='mod-test', table_id='mod-test',
+                referenced_doc_type='XFormInstance')
+            datasource.save()
+            self.addCleanup(datasource.delete)
 
-    def test_domain_is_required(self):
+            previous_modified_date = datasource.last_modified
+            frozen_time.tick(delta=datetime.timedelta(hours=1))
+            datasource.save()
+
+        self.assertGreater(datasource.last_modified, previous_modified_date)
+
+    def test_create_requires_domain(self):
         with self.assertRaises(BadValueError):
             DataSourceConfiguration(table_id='table',
                                     referenced_doc_type='XFormInstance').save()
 
-    def test_table_id_is_required(self):
+    def test_create_requires_table_id(self):
         with self.assertRaises(BadValueError):
             DataSourceConfiguration(domain='domain',
                                     referenced_doc_type='XFormInstance').save()
 
-    def test_doc_type_is_required(self):
+    def test_create_requires_doc_type(self):
         with self.assertRaises(BadValueError):
             DataSourceConfiguration(domain='domain', table_id='table').save()
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        for domain, table_id in [('foo', 'foo1'), ('foo', 'foo2'),
+                                 ('bar', 'bar1')]:
+            config = DataSourceConfiguration(
+                domain=domain,
+                table_id=table_id,
+                referenced_doc_type='XFormInstance')
+            config.save()
+            cls.addClassCleanup(config.delete)
 
 
 @patch('corehq.apps.userreports.models.AllowedUCRExpressionSettings.disallowed_ucr_expressions', MagicMock(return_value=[]))
@@ -419,8 +420,8 @@ class IndicatorNamedExpressionTest(SimpleTestCase):
                     'test': {
                         'type': 'boolean_expression',
                         'expression': {
-                            'type': 'property_name',
-                            'property_name': 'is_evil',
+                            'type': 'named',
+                            'name': 'is_evil',
                         },
                         'operator': 'eq',
                         'property_value': True,

@@ -260,7 +260,8 @@ class TestStaticRoles(SimpleTestCase):
         "is_non_admin_editable": False,
         "assignable_by": [],
         "is_archived": False,
-        "upstream_id": None
+        "upstream_id": None,
+        "is_commcare_user_default": False
     }
 
     def test_static_role_default(self):

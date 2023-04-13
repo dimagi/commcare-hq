@@ -1,8 +1,12 @@
 from django.apps import AppConfig
 
 from celery import Celery
+from celery.signals import setup_logging
 
-from corehq.apps.celery.periodic import periodic_task  # noqa F401; Imported to give an idea of where it is defined
+# Imported to give an idea of where decorators are defined and
+# we will be importing these decorators from this file in tasks
+from corehq.apps.celery.periodic import periodic_task  # noqa F401;
+from corehq.apps.celery.shared_task import task  # noqa F401;
 
 
 class Config(AppConfig):
@@ -21,3 +25,11 @@ def _init_celery_app():
     app.config_from_object('django.conf:settings', namespace='CELERY')
     app.autodiscover_tasks()
     app.set_default()
+
+
+@setup_logging.connect()
+def config_loggers(*args, **kwargs):
+    from logging.config import dictConfig
+
+    from django.conf import settings
+    dictConfig(settings.LOGGING)

@@ -1,4 +1,9 @@
-from datetime import date, datetime
+import random
+import string
+from contextlib import contextmanager
+from datetime import date, datetime, time
+from itertools import chain
+from unittest.mock import patch
 
 from django.core.management import call_command
 from django.test import TestCase
@@ -8,32 +13,32 @@ from nose.tools import assert_equal
 from corehq.motech.models import ConnectionSettings
 
 from ..const import (
+    COMPLETE_DATE_COLUMN,
+    COMPLETE_DATE_EMPTY,
+    COMPLETE_DATE_ON_PERIOD_END,
+    COMPLETE_DATE_ON_SEND,
     SEND_FREQUENCY_MONTHLY,
     SEND_FREQUENCY_QUARTERLY,
     SEND_FREQUENCY_WEEKLY,
-    COMPLETE_DATE_EMPTY,
-    COMPLETE_DATE_COLUMN,
-    COMPLETE_DATE_ON_PERIOD_END,
-    COMPLETE_DATE_ON_SEND,
 )
 from ..models import (
     DataSetMap,
     SQLDataSetMap,
     SQLDataValueMap,
+    _group_data_by_keys,
+    get_datavalues,
     get_date_range,
+    get_end_of_period,
+    get_grouped_datavalues_sets,
     get_info_for_columns,
     get_period,
     get_previous_month,
     get_previous_quarter,
     get_previous_week,
     get_quarter_start_month,
-    should_send_on_date,
-    get_grouped_datavalues_sets,
-    _group_data_by_keys,
     parse_dataset_for_request,
-    get_end_of_period,
+    should_send_on_date,
 )
-from unittest.mock import patch
 
 
 def test_should_send_on_date():
@@ -522,11 +527,6 @@ class TestParseDatasetForRequest(TestCase):
         return dsm
 
     def create_datavalues(self, dataset_map, ucr_data):
-        import random
-
-        def generate_id():
-            return ''.join(['%c' % random.randint(97, 122) for x in range(11)])
-
         for key, value in ucr_data[0].items():
             if key != 'visit_date':
                 dvm = SQLDataValueMap(
@@ -729,6 +729,90 @@ class TestParseDatasetForRequest(TestCase):
         self.assertIn('completeDate', result[1])
         self.assertEqual(result[1].get('period'), '202102')
         self.assertEqual(result[1].get('completeDate'), '2021-02-28')
+
+
+class TestGetDataValues(TestCase):
+
+    def test_get_datavalues_serializes_datetimes(self):
+        with get_dataset_map() as dataset_map:
+            ucr_data = [{
+                "org_unit_id": "ghi45678901",
+                "cat_option_combo_1": 123,
+                "cat_option_combo_2": date(2022, 8, 30),
+                "cat_option_combo_3": time(12, 13, 14),
+                "cat_option_combo_4": datetime(2022, 8, 30, 12, 13, 14),
+                "cat_option_combo_5": 'five',
+            }]
+
+            datavalues = (get_datavalues(dataset_map, row) for row in ucr_data)
+            datavalues_list = list(chain.from_iterable(datavalues))
+            self.assertEqual(datavalues_list, [
+                {
+                    'orgUnit': 'ghi45678901',
+                    'dataElement': 'KY01Q5aYTK4',
+                    'categoryOptionCombo': 'uUxNWUei07y',
+                    'value': 123,
+                },
+                {
+                    'orgUnit': 'ghi45678901',
+                    'dataElement': 'KY01Q5aYTK4',
+                    'categoryOptionCombo': 'JbLAVbLm5qV',
+                    'value': '2022-08-30',
+                },
+                {
+                    'orgUnit': 'ghi45678901',
+                    'dataElement': 'KY01Q5aYTK4',
+                    'categoryOptionCombo': 'ya0wVAV7uOq',
+                    'value': '12:13:14',
+                },
+                {
+                    'orgUnit': 'ghi45678901',
+                    'dataElement': 'KY01Q5aYTK4',
+                    'categoryOptionCombo': 'xNuleCJSSt5',
+                    'value': '2022-08-30T12:13:14',
+                },
+                {
+                    'orgUnit': 'ghi45678901',
+                    'dataElement': 'KY01Q5aYTK4',
+                    'categoryOptionCombo': 'z1aLdNb6V0k',
+                    'value': 'five',
+                },
+            ])
+
+
+@contextmanager
+def get_dataset_map():
+    random.seed('not so random')  # Makes generate_id() predictable
+    dataset_map = SQLDataSetMap.objects.create(
+        domain='test-domain',
+        ucr_id='489f29e1-3032-41b5-a8f5-7cdd4a97b7d6',
+        description='',
+        frequency=SEND_FREQUENCY_MONTHLY,
+        day_to_send=8,
+        data_set_id='mxspCgSdVb9',
+        org_unit_column='org_unit_id',
+        complete_date_option=COMPLETE_DATE_EMPTY,
+    )
+    for i in range(5):
+        SQLDataValueMap.objects.create(
+            dataset_map=dataset_map,
+            column=f'cat_option_combo_{i + 1}',
+            data_element_id='KY01Q5aYTK4',
+            category_option_combo_id=generate_id(),
+        )
+    try:
+        yield dataset_map
+    finally:
+        dataset_map.delete()
+        random.seed()
+
+
+def generate_id():
+    alphanumeric = string.ascii_letters + string.digits
+    return ''.join(
+        [random.choice(string.ascii_letters)]
+        + [random.choice(alphanumeric) for _ in range(10)]
+    )
 
 
 def mock_ucr_data_basic():

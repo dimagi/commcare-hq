@@ -440,7 +440,7 @@ class LocationFixturesDataTest(LocationHierarchyTestCase, FixtureHasLocationsMix
 
     def setUp(self):
         # this works around the fact that get_locations_to_sync is memoized on OTARestoreUser
-        self.user = self.user._couch_user.to_ota_restore_user()
+        self.user = self.user._couch_user.to_ota_restore_user(self.domain)
 
     @classmethod
     def tearDownClass(cls):
@@ -668,7 +668,7 @@ class ShouldSyncLocationFixturesTest(TestCase):
         location = SQLLocation.objects.last()
         locations_queryset = SQLLocation.objects.filter(pk=location.pk)
 
-        restore_state = MockRestoreState(self.user.to_ota_restore_user(), RestoreParams())
+        restore_state = MockRestoreState(self.user.to_ota_restore_user(self.domain), RestoreParams())
         self.assertFalse(
             should_sync_locations(SimplifiedSyncLog(date=yesterday), locations_queryset, restore_state)
         )
@@ -696,7 +696,7 @@ class ShouldSyncLocationFixturesTest(TestCase):
         after_save = datetime.utcnow()
         self.assertEqual('winterfell', location.name)
         locations_queryset = SQLLocation.objects.filter(pk=location.pk)
-        restore_state = MockRestoreState(self.user.to_ota_restore_user(), RestoreParams())
+        restore_state = MockRestoreState(self.user.to_ota_restore_user(self.domain), RestoreParams())
         # Should not resync if last sync was after location save
         self.assertFalse(
             should_sync_locations(SimplifiedSyncLog(date=after_save), locations_queryset, restore_state)
@@ -719,14 +719,14 @@ class ShouldSyncLocationFixturesTest(TestCase):
 
     def test_changed_build_id(self):
         app = MockApp('project_default', 'build_1')
-        restore_state = MockRestoreState(self.user.to_ota_restore_user(), RestoreParams(app=app))
+        restore_state = MockRestoreState(self.user.to_ota_restore_user(self.domain), RestoreParams(app=app))
         sync_log_from_old_app = SimplifiedSyncLog(date=datetime.utcnow(), build_id=app.get_id)
         self.assertFalse(
             should_sync_locations(sync_log_from_old_app, SQLLocation.objects.all(), restore_state)
         )
 
         new_build = MockApp('project_default', 'build_2')
-        restore_state = MockRestoreState(self.user.to_ota_restore_user(), RestoreParams(app=new_build))
+        restore_state = MockRestoreState(self.user.to_ota_restore_user(self.domain), RestoreParams(app=new_build))
         self.assertTrue(
             should_sync_locations(sync_log_from_old_app, SQLLocation.objects.all(), restore_state)
         )

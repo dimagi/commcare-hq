@@ -42,11 +42,6 @@ from .new import (
     UserDefinedExportColumn,
 )
 
-from .incremental import (
-    IncrementalExport,
-    IncrementalExportCheckpoint
-)
-
 from .export_settings import (
     DefaultExportSettings,
 )

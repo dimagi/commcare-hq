@@ -122,7 +122,7 @@ class XFormInstanceManager(RequireDBManager):
 
     def get_attachment_content(self, form_id, attachment_name):
         meta = self.get_attachment_by_name(form_id, attachment_name)
-        return AttachmentContent(meta.content_type, meta.open())
+        return AttachmentContent(meta.content_type, meta.open(), meta.content_length)
 
     def get_forms_with_attachments_meta(self, form_ids, ordered=False):
         assert isinstance(form_ids, list)
@@ -798,7 +798,7 @@ class XFormPhoneMetadata(jsonobject.JsonObject):
     @property
     def commcare_version(self):
         from corehq.apps.receiverwrapper.util import get_commcare_version_from_appversion_text
-        from distutils.version import LooseVersion
+        from looseversion import LooseVersion
         version_text = get_commcare_version_from_appversion_text(self.appVersion)
         if version_text:
             return LooseVersion(version_text)

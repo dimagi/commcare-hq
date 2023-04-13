@@ -1,5 +1,5 @@
 import copy
-from datetime import date, timedelta, datetime
+from datetime import date, datetime, time, timedelta
 from itertools import chain
 from typing import Dict, List, Optional, Union
 
@@ -22,22 +22,22 @@ from corehq.apps.userreports.models import ReportConfiguration
 from corehq.apps.userreports.reports.data_source import (
     ConfigurableReportDataSource,
 )
+from corehq.apps.userreports.util import get_report_config_or_not_found
 from corehq.motech.models import ConnectionSettings
 from corehq.util.couch import DocumentNotFound
 from corehq.util.quickcache import quickcache
 
 from .const import (
+    COMPLETE_DATE_CHOICES,
+    COMPLETE_DATE_EMPTY,
+    COMPLETE_DATE_ON_PERIOD_END,
+    COMPLETE_DATE_ON_SEND,
     SEND_FREQUENCIES,
     SEND_FREQUENCY_CHOICES,
     SEND_FREQUENCY_MONTHLY,
     SEND_FREQUENCY_QUARTERLY,
     SEND_FREQUENCY_WEEKLY,
-    COMPLETE_DATE_CHOICES,
-    COMPLETE_DATE_EMPTY,
-    COMPLETE_DATE_ON_PERIOD_END,
-    COMPLETE_DATE_ON_SEND,
 )
-from corehq.apps.userreports.util import get_report_config_or_not_found
 
 
 class DataValueMap(DocumentSchema):
@@ -231,6 +231,8 @@ def get_datavalues(
     # First pass is to collate data element IDs and values
     for key, value in ucr_row.items():
         if key in info_for_columns:
+            if isinstance(value, (date, time, datetime)):
+                value = value.isoformat()
             if info_for_columns[key]['is_org_unit']:
                 org_unit = value
             elif info_for_columns[key]['is_period']:

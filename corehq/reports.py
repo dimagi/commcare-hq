@@ -29,7 +29,6 @@ from corehq.apps.data_interfaces.interfaces import (
     CaseReassignmentInterface,
 )
 from corehq.apps.domain.dbaccessors import get_doc_ids_in_domain_by_class
-from corehq.apps.export.views.incremental import IncrementalExportLogView
 from corehq.apps.fixtures.interface import (
     FixtureEditInterface,
     FixtureViewInterface,
@@ -70,6 +69,7 @@ from corehq.apps.userreports.reports.view import (
     CustomConfigurableReportDispatcher,
 )
 from corehq.apps.userreports.const import TEMP_REPORT_PREFIX
+from corehq.motech.generic_inbound.reports import ApiRequestLogReport
 from corehq.motech.repeaters.views import (
     DomainForwardingRepeatRecords,
     SQLRepeatRecordReport,
@@ -328,7 +328,7 @@ DOMAIN_REPORTS = (
         DomainForwardingRepeatRecords,
         SQLRepeatRecordReport,
         DomainLinkHistoryReport,
-        IncrementalExportLogView,
+        ApiRequestLogReport,
     )),
 )
 

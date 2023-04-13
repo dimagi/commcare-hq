@@ -227,6 +227,12 @@ class AppFactory(object):
         case_module.search_config.search_again_label.label = {
             'en': 'Find Another Mother',
         }
+        case_module.search_config.title_label = {
+            'en': 'Find a Mom',
+        }
+        case_module.search_config.description = {
+            'en': 'More information',
+        }
         case_module.search_config.properties = [CaseSearchProperty(
             name='name',
             label={'en': 'Name of Mother'}

@@ -1,0 +1,27 @@
+{% extends 'hqwebapp/base_paginated_crud.html' %}
+{% load i18n %}
+{% load hq_shared_tags %}
+
+{% requirejs_main "generic_inbound/js/api_list" %}
+
+{% block page_title %}{{ current_page.title }}{% endblock %}
+
+{% block pagination_templates %}
+{% registerurl 'edit_ucr_expression' domain '000' %}
+{% registerurl 'ucr_expressions' domain %}
+<script type="text/html" id="base-api-config-template">
+    <td>
+      <a data-bind="text: name, attr: {href: edit_url}"></a>
+    </td>
+    <td data-bind="text: description"></td>
+    <td><pre data-bind="text: api_url, attr: {id: 'api_url_' + id}"></pre></td>
+    <td> <!-- actions -->
+        <a class="btn btn-default copy_url" data-bind="click: () => copyData('api_url_' + id)">
+          <i class="fa fa-copy"></i> {% trans "Copy URL" %}
+        </a>
+        <a class="btn btn-primary" data-bind="attr: {href: edit_url}">
+            {% trans "Edit" %}
+        </a>
+    </td>
+</script>
+{% endblock %}

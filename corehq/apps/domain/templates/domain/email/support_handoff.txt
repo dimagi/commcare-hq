@@ -4,7 +4,7 @@ Going forward, we have many ways to support you:
 
 * Community Support - We welcome you to sign up at the CommCare users forum [1] to stay up to date about CommCare updates. You may pose questions here to our global community of CommCare users.
 
-* Reporting Technical Issues - Once we've agreed that an issue is a bug, please report them using our Report a Problem button at the bottom of your project space on CommCareHQ. Guidelines for How to Report a Bug can be found here: Bug Report Template [2].
+* Reporting Technical Issues - Once we've agreed that an issue is a bug, please report them using our Report a Problem button at the bottom of your project space on CommCare HQ. Guidelines for How to Report a Bug can be found here: Bug Report Template [2].
 
 * CommCare Helpsite - You will find more resources available at help.commcarehq.org. [3]
 

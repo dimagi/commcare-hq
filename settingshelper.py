@@ -231,7 +231,7 @@ def fix_logger_obfuscation(fix_logger_obfuscation_, logging_config):
                 handler["class"] = "logging.StreamHandler"
 
 
-def configure_sentry(base_dir, server_env, dsn):
+def configure_sentry(server_env, dsn, release):
     import sentry_sdk
     from sentry_sdk.integrations.celery import CeleryIntegration
     from sentry_sdk.integrations.django import DjangoIntegration
@@ -243,8 +243,6 @@ def configure_sentry(base_dir, server_env, dsn):
         # can't import this during load since settings is not fully configured yet
         from corehq.util.sentry import before_sentry_send
         return before_sentry_send(event, hint)
-
-    release = get_release_name(base_dir, server_env)
 
     ignore_logger('quickcache')
     ignore_logger('django.template')

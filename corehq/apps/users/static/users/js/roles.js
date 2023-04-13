@@ -154,10 +154,14 @@ hqDefine('users/js/roles',[
                 self.tableauPermissions.filteredSpecific = filterSpecific(self.tableauPermissions);
                 self.manageRegistryPermission.filteredSpecific = filterSpecific(self.manageRegistryPermission);
                 self.viewRegistryContentsPermission.filteredSpecific = filterSpecific(self.viewRegistryContentsPermission);
+                self.canSeeAnyReports = ko.computed(function () {
+                    return self.reportPermissions.all() || _.any(self.reportPermissions.specific(), (p) => p.value());
+                });
+
                 self.unwrap = function () {
                     return cls.unwrap(self);
                 };
-                self.hasUsersAssigned = data.hasUsersAssigned;
+                self.preventRoleDelete = data.preventRoleDelete;
                 self.hasUnpermittedLocationRestriction = data.has_unpermitted_location_restriction || false;
                 if (self.hasUnpermittedLocationRestriction) {
                     self.permissions.access_all_locations(true);
@@ -226,6 +230,22 @@ hqDefine('users/js/roles',[
                         allowCheckboxText: gettext("Allow changing workers at a location."),
                         allowCheckboxId: "edit-users-locations-checkbox",
                         allowCheckboxPermission: self.permissions.edit_users_in_locations,
+                    },
+                    {
+                        showOption: toggles.toggleEnabled("DATA_DICTIONARY"),
+                        editPermission: self.permissions.edit_data_dict,
+                        viewPermission: self.permissions.view_data_dict,
+                        text: gettext("<strong>Data Dictionary</strong> &mdash; manage case properties within CommCare HQ"),
+                        showEditCheckbox: true,
+                        editCheckboxLabel: "edit-data-dict-checkbox",
+                        showViewCheckbox: true,
+                        viewCheckboxLabel: "view-data-dict-checkbox",
+                        screenReaderEditAndViewText: gettext("Edit & View Data Dictionary"),
+                        screenReaderViewOnlyText: gettext("View-Only Data Dictionary"),
+                        showAllowCheckbox: false,
+                        allowCheckboxText: null,
+                        allowCheckboxId: null,
+                        allowCheckboxPermission: null,
                     },
                     {
                         showOption: true,
@@ -386,7 +406,24 @@ hqDefine('users/js/roles',[
                         allowCheckboxText: null,
                         allowCheckboxId: null,
                         allowCheckboxPermission: null,
-                    }];
+                    },
+                    {
+                        showOption: root.attendanceTrackingPrivilege,
+                        editPermission: self.permissions.manage_attendance_tracking,
+                        viewPermission: null,
+                        text: gettext("<strong>Attendance Tracking</strong> &mdash; Coordinate attendance tracking events and users"),
+                        showEditCheckbox: true,
+                        editCheckboxLabel: "edit-attenance-tracking-checkbox",
+                        showViewCheckbox: false,
+                        viewCheckboxLabel: "view-attenance-tracking-checkbox",
+                        screenReaderEditAndViewText: gettext("Edit Attendance Tracking Events"),
+                        screenReaderViewOnlyText: gettext("Edit Attendance Tracking Events"),
+                        showAllowCheckbox: false,
+                        allowCheckboxText: null,
+                        allowCheckboxId: null,
+                        allowCheckboxPermission: null,
+                    },
+                ];
 
                 var hasEmbeddedTableau = toggles.toggleEnabled("EMBEDDED_TABLEAU");
                 self.reports = [
@@ -397,16 +434,42 @@ hqDefine('users/js/roles',[
                         checkboxPermission: self.permissions.edit_reports,
                         checkboxText: gettext("Allow role to create and edit reports in report builder."),
                     },
-                    {
-                        visibilityRestraint: true,
-                        text: hasEmbeddedTableau ? gettext("Access All CommCare Reports") : gettext("Access All Reports"),
-                        checkboxLabel: "access-all-reports-checkbox",
-                        checkboxPermission: self.reportPermissions.all,
-                        checkboxText: hasEmbeddedTableau
-                            ? gettext("Allow role to view all CommCare reports. Excludes embedded Tableau reports")
-                            : gettext("Allow role to access all reports."),
-                    },
-                ];
+                ]
+                if (toggles.toggleEnabled('USER_CONFIGURABLE_REPORTS')) {
+                    if (toggles.toggleEnabled('UCR_UPDATED_NAMING')) {
+                        self.reports.push({
+                            visibilityRestraint: self.permissions.access_all_locations,
+                            text: gettext("Create and Edit Custom Web Reports"),
+                            checkboxLabel: "create-and-edit-configurable-reports-checkbox",
+                            checkboxPermission: self.permissions.edit_ucrs,
+                            checkboxText: gettext("Allow role to create and edit custom web reports."),
+                        });
+                    } else {
+                        self.reports.push({
+                            visibilityRestraint: self.permissions.access_all_locations,
+                            text: gettext("Create and Edit Configurable Reports"),
+                            checkboxLabel: "create-and-edit-configurable-reports-checkbox",
+                            checkboxPermission: self.permissions.edit_ucrs,
+                            checkboxText: gettext("Allow role to create and edit configurable reports."),
+                        });
+                    }
+                }
+                self.reports.push({
+                    visibilityRestraint: true,
+                    text: hasEmbeddedTableau ? gettext("Access All CommCare Reports") : gettext("Access All Reports"),
+                    checkboxLabel: "access-all-reports-checkbox",
+                    checkboxPermission: self.reportPermissions.all,
+                    checkboxText: hasEmbeddedTableau
+                        ? gettext("Allow role to view all CommCare reports. Excludes embedded Tableau reports")
+                        : gettext("Allow role to access all reports."),
+                });
+                self.reports.push({
+                    visibilityRestraint: self.canSeeAnyReports,
+                    text: gettext("Download and Email Reports"),
+                    checkboxLabel: "download-and-email-reports-checkbox",
+                    checkboxPermission: self.permissions.download_reports,
+                    checkboxText: gettext("Allow role to download and email report data."),
+                });
                 if (toggles.toggleEnabled('EMBEDDED_TABLEAU')) {
                     self.reports.push({
                         visibilityRestraint: true,
@@ -415,23 +478,6 @@ hqDefine('users/js/roles',[
                         checkboxPermission: self.tableauPermissions.all,
                         checkboxText: gettext("Allow role to access all embedded Tableau reports."),
                     });
-                }
-                if (toggles.toggleEnabled('UCR_UPDATED_NAMING')) {
-                    self.ucrs = [{
-                        visibilityRestraint: self.permissions.access_all_locations,
-                        text: gettext("Create and Edit Custom Web Reports"),
-                        checkboxLabel: "create-and-edit-configurable-reports-checkbox",
-                        checkboxPermission: self.permissions.edit_ucrs,
-                        checkboxText: gettext("Allow role to create and edit custom web reports."),
-                    }];
-                } else {
-                    self.ucrs = [{
-                        visibilityRestraint: self.permissions.access_all_locations,
-                        text: gettext("Create and Edit Configurable Reports"),
-                        checkboxLabel: "create-and-edit-configurable-reports-checkbox",
-                        checkboxPermission: self.permissions.edit_ucrs,
-                        checkboxText: gettext("Allow role to create and edit configurable reports."),
-                    }];
                 }
                 self.registryPermissions = [
                     selectPermissionModel(
@@ -509,6 +555,7 @@ hqDefine('users/js/roles',[
         self.webAppsPrivilege = o.webAppsPrivilege;
         self.ermPrivilege = o.ermPrivilege;
         self.mrmPrivilege = o.mrmPrivilege;
+        self.attendanceTrackingPrivilege = o.attendanceTrackingPrivilege;
 
         self.userRoles = ko.observableArray(ko.utils.arrayMap(o.userRoles, function (userRole) {
             return UserRole.wrap(userRole);
@@ -550,7 +597,7 @@ hqDefine('users/js/roles',[
             self.roleBeingEdited(undefined);
         };
         self.setRoleBeingDeleted = function (role) {
-            if (!role._id || !role.hasUsersAssigned) {
+            if (!role._id || !role.preventRoleDelete) {
                 var title = gettext("Delete Role: ") + role.name();
                 var context = {role: role.name()};
                 var modalConfirmation = _.template(gettext(

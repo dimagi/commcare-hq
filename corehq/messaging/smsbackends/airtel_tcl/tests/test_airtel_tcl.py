@@ -105,7 +105,7 @@ class AirtelTCLBackendTest(TestCase):
             host_and_port='localhost:8000',
         )
         self.assertEqual(
-            backend.get_url(),
+            backend.url,
             'https://localhost:8000/BULK_API/InstantJsonPush'
         )
 

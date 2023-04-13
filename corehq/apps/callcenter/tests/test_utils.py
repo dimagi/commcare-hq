@@ -1,15 +1,13 @@
 import uuid
 from datetime import datetime, timedelta
+from unittest import mock
 
 from django.test import SimpleTestCase, TestCase
-
-from unittest import mock
 
 from casexml.apps.case.mock import CaseFactory, CaseStructure
 from casexml.apps.case.tests.util import delete_all_cases
 from casexml.apps.case.xform import get_case_updates
 from dimagi.utils.couch.undo import DELETED_SUFFIX
-from pillowtop.es_utils import initialize_index_and_mapping
 
 from corehq.apps.app_manager.const import USERCASE_TYPE
 from corehq.apps.callcenter.const import CALLCENTER_USER
@@ -23,27 +21,26 @@ from corehq.apps.callcenter.utils import (
     get_call_center_domains,
     is_midnight_for_domain,
 )
+from corehq.apps.custom_data_fields.models import (
+    PROFILE_SLUG,
+    CustomDataFieldsDefinition,
+    CustomDataFieldsProfile,
+    Field,
+)
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.domain.signals import commcare_domain_post_save
+from corehq.apps.es.domains import domain_adapter
+from corehq.apps.es.tests.utils import es_test
 from corehq.apps.user_importer.importer import (
     create_or_update_commcare_users_and_groups,
 )
 from corehq.apps.user_importer.models import UserUploadRecord
 from corehq.apps.users.models import CommCareUser
 from corehq.apps.users.util import format_username
-from corehq.apps.custom_data_fields.models import (
-    CustomDataFieldsDefinition,
-    CustomDataFieldsProfile,
-    Field,
-    PROFILE_SLUG,
-)
 from corehq.apps.users.views.mobile.custom_data_fields import UserFieldsView
-from corehq.elastic import get_es_new, send_to_elasticsearch
 from corehq.form_processor.models import CommCareCase, XFormInstance
-from corehq.pillows.mappings.domain_mapping import DOMAIN_INDEX_INFO
 from corehq.util.context_managers import drop_connected_signals
-from corehq.util.elastic import ensure_index_deleted
 
 TEST_DOMAIN = 'cc-util-test'
 CASE_TYPE = 'cc-flw'
@@ -464,24 +461,15 @@ class DomainTimezoneTests(SimpleTestCase):
             self.assertEqual(is_midnight, expected)
 
 
+@es_test(requires=[domain_adapter])
 class CallCenterDomainTest(SimpleTestCase):
-    def setUp(self):
-        self.index_info = DOMAIN_INDEX_INFO
-        self.elasticsearch = get_es_new()
-        ensure_index_deleted(self.index_info.index)
-        initialize_index_and_mapping(self.elasticsearch, self.index_info)
-        import time
-        time.sleep(1)  # without this we get a 503 response about 30% of the time
 
-    def tearDown(self):
-        ensure_index_deleted(self.index_info.index)
-
-    def test_get_call_center_domains(self):
+    @mock.patch('corehq.apps.accounting.models.Subscription.visible_objects.filter', return_value=[])
+    def test_get_call_center_domains(self, _):
         _create_domain('cc-dom1', True, True, 'flw', 'user1', False)
         _create_domain('cc-dom2', True, False, 'aww', None, True)
         _create_domain('cc-dom3', False, False, '', 'user2', False)  # case type missing
         _create_domain('cc-dom3', False, False, 'flw', None, False)  # owner missing
-        self.elasticsearch.indices.refresh(self.index_info.index)
 
         domains = get_call_center_domains()
         self.assertEqual(2, len(domains))
@@ -507,10 +495,7 @@ def _create_domain(name, cc_enabled, cc_use_fixtures, cc_case_type, cc_case_owne
         domain.call_center_config.case_owner_id = cc_case_owner_id
         domain.call_center_config.use_user_location_as_owner = use_location_as_owner
 
-        send_to_elasticsearch(
-            'domains',
-            doc=domain.to_json(),
-        )
+        domain_adapter.index(domain, refresh=True)
 
 
 class CallCenterDomainMockTest(TestCase):

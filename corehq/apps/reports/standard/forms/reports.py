@@ -40,7 +40,7 @@ class SubmissionErrorReport(DeploymentsReport):
     @memoized
     def headers(self):
         headers = DataTablesHeader(DataTablesColumn(_("View Form"), sortable=False),
-                                   DataTablesColumn(_("Username"), prop_name="username"),
+                                   DataTablesColumn(_("Username"), prop_name="form.meta.username"),
                                    DataTablesColumn(_("Submit Time"), prop_name="received_on"),
                                    DataTablesColumn(_("Form Type"), sortable=False),
                                    DataTablesColumn(_("Error Type"), sortable=False),

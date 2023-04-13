@@ -1,26 +1,14 @@
 {% load hq_shared_tags %}
 {% load i18n %}
 
-<script src="{% static 'bootpag/lib/jquery.bootpag.min.js' %}"></script>
-
-<script type="text/template" id="session-view-list-preview-template">
+<script type="text/template" id="session-view-list-template">
+  <% if(isPreviewEnv) { %>
   <div class="breadcrumb-form-container">
     <ol class="breadcrumb breadcrumb-form">
       <li class="breadcrumb-text">{% trans "Incomplete Forms" %}</li>
     </ol>
   </div>
-  <div class="module-menu-container module-menu-bar-offset">
-    <table class="table module-table">
-      <tbody>
-      </tbody>
-    </table>
-  </div>
-  <div class="pull-right">
-      <ul id="sessions-paginator" class="pagination-sm"></ul>
-  </div>
-</script>
-
-<script type="text/template" id="session-view-list-web-apps-template">
+  <% } else { %>
   <div class="module-banner alert alert-info">
     <span>
         {% blocktrans %}
@@ -29,17 +17,22 @@
         {% endblocktrans %}
     </span>
   </div>
+  <% } %>
   <div class="module-menu-container module-menu-bar-offset">
+    <% if (!isPreviewEnv) { %>
     <div class="page-header menu-header">
       <h1 class="page-title">{% trans "Incomplete Forms" %}</h1>
     </div>
+    <% } %>
     <table class="table module-table">
       <tbody>
       </tbody>
     </table>
-  </div>
-  <div class="pull-right">
-      <ul id="sessions-paginator" class="pagination-lg"></ul>
+    <% if (endPage) { %>
+      {% block pagination_templates %}
+        {% include 'formplayer/pagination.html' %}
+      {% endblock %}
+    <% } %>
   </div>
 </script>
 

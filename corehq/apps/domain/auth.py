@@ -1,17 +1,20 @@
 import base64
+import binascii
 import logging
 import re
 from functools import wraps
 
-import binascii
 from django.contrib.auth import authenticate, get_user_model
 from django.contrib.auth.models import User
 from django.db.models import Q
 from django.http import HttpResponse
 from django.views.decorators.debug import sensitive_variables
 
+from no_exceptions.exceptions import Http400
+from python_digest import parse_digest_credentials
 from tastypie.authentication import ApiKeyAuthentication
 
+from django.utils import timezone
 from dimagi.utils.django.request import mutable_querydict
 from dimagi.utils.web import get_ip
 
@@ -19,9 +22,7 @@ from corehq.apps.receiverwrapper.util import DEMO_SUBMIT_MODE
 from corehq.apps.users.models import CouchUser, HQApiKey
 from corehq.toggles import API_THROTTLE_WHITELIST, TWO_STAGE_USER_PROVISIONING
 from corehq.util.hmac_request import validate_request_hmac
-from no_exceptions.exceptions import Http400
-from python_digest import parse_digest_credentials
-
+from corehq.util.metrics import metrics_counter
 
 auth_logger = logging.getLogger("commcare_auth")
 
@@ -108,7 +109,6 @@ def is_probably_j2me(user_agent):
 def get_username_and_password_from_request(request):
     """Returns tuple of (username, password). Tuple values
     may be null."""
-    from corehq.apps.hqwebapp.utils import decode_password
 
     if 'HTTP_AUTHORIZATION' not in request.META:
         return None, None
@@ -135,8 +135,6 @@ def get_username_and_password_from_request(request):
         except binascii.Error:
             return None, None
         username = username.lower()
-        # decode password submitted from mobile app login
-        password = decode_password(password)
     return username, password
 
 
@@ -256,6 +254,10 @@ def get_active_users_by_email(email):
 
 
 class HQApiKeyAuthentication(ApiKeyAuthentication):
+    def __init__(self, *args, allow_creds_in_data=True, **kwargs):
+        self._allow_creds_in_data = allow_creds_in_data
+        super().__init__(*args, **kwargs)
+
     def is_authenticated(self, request):
         """Follows what tastypie does, then tests for IP whitelisting
         """
@@ -284,6 +286,11 @@ class HQApiKeyAuthentication(ApiKeyAuthentication):
         except HQApiKey.DoesNotExist:
             return self._unauthorized()
 
+        # update api_key.last used every 30 seconds
+        if key.last_used is None or (timezone.now() - key.last_used).total_seconds() > 30:
+            key.last_used = timezone.now()
+            key.save()
+
         # ensure the IP address is in the allowlist, if that exists
         if key.ip_allowlist and (get_ip(request) not in key.ip_allowlist):
             return self._unauthorized()
@@ -299,12 +306,30 @@ class HQApiKeyAuthentication(ApiKeyAuthentication):
         are domain specific.
 
         """
-        username = self.extract_credentials(request)[0]
-        if API_THROTTLE_WHITELIST.enabled(username):
-            return username
+        # inline to avoid circular import
+        from corehq.apps.api.resources.auth import ApiIdentifier
 
+        username = self.extract_credentials(request)[0]
+        domain = getattr(request, 'domain', '')
+        return ApiIdentifier(username=username, domain=domain)
+
+    def extract_credentials(self, request):
+        """Extract username and key from request"""
+        # This overrides an existing tastypie method
         try:
-            api_key = self.extract_credentials(request)[1]
+            data = self.get_authorization_data(request)
         except ValueError:
-            api_key = ''
-        return f"{getattr(request, 'domain', '')}_{api_key}"
+            if self._allow_creds_in_data:
+                username = request.GET.get('username') or request.POST.get('username')
+                api_key = request.GET.get('api_key') or request.POST.get('api_key')
+                if username and api_key:
+                    metrics_counter('commcare.auth.credentials_in_data', tags={
+                        'domain': getattr(request, 'domain', None),
+                        'request_method': request.method,
+                    })
+            else:
+                username, api_key = None, None
+        else:
+            username, api_key = data.split(':', 1)
+
+        return username, api_key

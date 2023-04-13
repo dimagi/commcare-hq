@@ -28,6 +28,10 @@ from django_prbac.utils import has_privilege
 from memoized import memoized
 
 from casexml.apps.phone.models import SyncLogSQL
+from corehq.apps.events.models import AttendanceTrackingConfig
+from corehq.apps.events.tasks import get_case_block_for_user
+from corehq.apps.hqcase.utils import submit_case_blocks
+from corehq.apps.events.models import get_attendee_case_type
 from corehq import privileges
 from corehq.apps.accounting.async_handlers import Select2BillingInfoHandler
 from corehq.apps.accounting.decorators import requires_privilege_with_fallback
@@ -35,6 +39,7 @@ from corehq.apps.accounting.models import (
     BillingAccount,
     BillingAccountType,
     EntryPoint,
+    Subscription,
 )
 from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.analytics.tasks import track_workflow
@@ -71,7 +76,7 @@ from corehq.apps.users.account_confirmation import (
 )
 from corehq.apps.users.analytics import get_search_users_in_domain_es_query
 from corehq.apps.users.audit.change_messages import UserChangeMessage
-from corehq.apps.users.bulk_download import get_domains_from_user_filters
+from corehq.apps.users.bulk_download import get_domains_from_user_filters, load_memoizer
 from corehq.apps.users.dbaccessors import get_user_docs_by_username
 from corehq.apps.users.decorators import (
     require_can_edit_commcare_users,
@@ -79,7 +84,7 @@ from corehq.apps.users.decorators import (
     require_can_edit_web_users,
     require_can_use_filtered_user_download,
 )
-from corehq.apps.users.exceptions import InvalidMobileWorkerRequest
+from corehq.apps.users.exceptions import InvalidRequestException
 from corehq.apps.users.forms import (
     CommCareAccountForm,
     CommCareUserFormSet,
@@ -94,7 +99,9 @@ from corehq.apps.users.models import (
     CommCareUser,
     CouchUser,
     DeactivateMobileWorkerTrigger,
+    check_and_send_limit_email
 )
+from corehq.apps.users.models_role import UserRole
 from corehq.apps.users.tasks import (
     bulk_download_usernames_async,
     bulk_download_users_async,
@@ -140,6 +147,7 @@ from soil.exceptions import TaskFailedError
 from soil.util import get_download_context
 from .custom_data_fields import UserFieldsView
 from ..utils import log_user_groups_change
+from corehq.apps.users.views.utils import get_locations_with_orphaned_cases
 
 BULK_MOBILE_HELP_SITE = ("https://confluence.dimagi.com/display/commcarepublic"
                          "/Create+and+Manage+CommCare+Mobile+Workers#Createand"
@@ -294,6 +302,11 @@ class EditCommCareUserView(BaseEditUserView):
             ),
             'demo_restore_date': naturaltime(demo_restore_date_created(self.editable_user)),
             'group_names': [g.name for g in self.groups],
+            'locations_with_single_user': get_locations_with_orphaned_cases(
+                self.domain,
+                self.editable_user.assigned_location_ids,
+                self.editable_user.user_id
+            )
         }
         if self.commtrack_form.errors:
             messages.error(self.request, _(
@@ -311,7 +324,9 @@ class EditCommCareUserView(BaseEditUserView):
 
     @property
     def user_role_choices(self):
-        return [('none', _('(none)'))] + self.editable_role_choices
+        role_choices = self.editable_role_choices
+        default_role = UserRole.commcare_user_default(self.domain)
+        return [(default_role.get_qualified_id(), default_role.name)] + role_choices
 
     @property
     @memoized
@@ -733,7 +748,7 @@ class MobileWorkerListView(JSONResponseMixin, BaseUserSettingsView):
         try:
             self._ensure_proper_request(in_data)
             form_data = self._construct_form_data(in_data)
-        except InvalidMobileWorkerRequest as e:
+        except InvalidRequestException as e:
             return {
                 'error': str(e)
             }
@@ -747,16 +762,43 @@ class MobileWorkerListView(JSONResponseMixin, BaseUserSettingsView):
                 errors=', '.join(all_errors)
             )}
         couch_user = self._build_commcare_user()
+        self.create_commcare_attendee_case_for_user(mobile_worker_couch_user=couch_user)
+
         if self.new_mobile_worker_form.cleaned_data['send_account_confirmation_email']:
             send_account_confirmation_if_necessary(couch_user)
         if self.new_mobile_worker_form.cleaned_data['force_account_confirmation_by_sms']:
             phone_number = self.new_mobile_worker_form.cleaned_data['phone_number']
             couch_user.set_default_phone_number(phone_number)
             send_account_confirmation_sms_if_necessary(couch_user)
+
+        plan_limit, user_count = Subscription.get_plan_and_user_count_by_domain(self.domain)
+        check_and_send_limit_email(self.domain, plan_limit, user_count, user_count - 1)
         return {
             'success': True,
             'user_id': couch_user.userID,
         }
+
+    def create_commcare_attendee_case_for_user(self, mobile_worker_couch_user):
+        """Creates a case for the this user to be used for attendance tracking"""
+        has_privilege = domain_has_privilege(self.domain, privileges.ATTENDANCE_TRACKING)
+        # This toggle is temporary and will be removed once the feature is released
+        toggle_enabled = toggles.ATTENDANCE_TRACKING.enabled(self.domain)
+
+        if has_privilege and toggle_enabled:
+            if AttendanceTrackingConfig.mobile_workers_can_be_attendees(domain=self.domain):
+                attendee_case_type = get_attendee_case_type(self.domain)
+                created_by_user_id = self.couch_user.user_id
+                new_case_block = get_case_block_for_user(
+                    mobile_worker_couch_user,
+                    created_by_user_id,
+                    attendee_case_type
+                )
+                return submit_case_blocks(
+                    [new_case_block.as_text()],
+                    domain=self.domain,
+                    user_id=created_by_user_id,
+                    device_id='corehq.apps.users.views.mobile.users.create_commcare_attendee_case_for_user',
+                )
 
     def _build_commcare_user(self):
         username = self.new_mobile_worker_form.cleaned_data['username']
@@ -769,6 +811,7 @@ class MobileWorkerListView(JSONResponseMixin, BaseUserSettingsView):
             self.new_mobile_worker_form.cleaned_data['force_account_confirmation']
             or self.new_mobile_worker_form.cleaned_data['force_account_confirmation_by_sms'])
 
+        role_id = UserRole.commcare_user_default(self.domain).get_id
         commcare_user = CommCareUser.create(
             self.domain,
             username,
@@ -782,6 +825,7 @@ class MobileWorkerListView(JSONResponseMixin, BaseUserSettingsView):
             metadata=self.custom_data.get_data_to_save(),
             is_account_confirmed=is_account_confirmed,
             location=SQLLocation.objects.get(location_id=location_id) if location_id else None,
+            role_id=role_id
         )
 
         if self.new_mobile_worker_form.show_deactivate_after_date:
@@ -795,10 +839,10 @@ class MobileWorkerListView(JSONResponseMixin, BaseUserSettingsView):
 
     def _ensure_proper_request(self, in_data):
         if not self.can_add_extra_users:
-            raise InvalidMobileWorkerRequest(_("No Permission."))
+            raise InvalidRequestException(_("No Permission."))
 
         if 'user' not in in_data:
-            raise InvalidMobileWorkerRequest(_("Please provide mobile worker data."))
+            raise InvalidRequestException(_("Please provide mobile worker data."))
 
         return None
 
@@ -823,7 +867,7 @@ class MobileWorkerListView(JSONResponseMixin, BaseUserSettingsView):
                 form_data["{}-{}".format(CUSTOM_DATA_FIELD_PREFIX, k)] = v
             return form_data
         except Exception as e:
-            raise InvalidMobileWorkerRequest(_("Check your request: {}".format(e)))
+            raise InvalidRequestException(_("Check your request: {}").format(e))
 
 
 @require_can_edit_commcare_users
@@ -1371,16 +1415,19 @@ def _count_users(request, domain, user_type):
         return HttpResponseBadRequest("Invalid Request")
 
     user_count = 0
+    group_count = 0
     (is_cross_domain, domains_list) = get_domains_from_user_filters(domain, user_filters)
     for current_domain in domains_list:
         if user_type == MOBILE_USER_TYPE:
             user_count += count_mobile_users_by_filters(current_domain, user_filters)
+            group_count += len(load_memoizer(current_domain).groups)
         else:
             user_count += count_web_users_by_filters(current_domain, user_filters)
             user_count += count_invitations_by_filters(current_domain, user_filters)
 
     return JsonResponse({
-        'count': user_count
+        'user_count': user_count,
+        'group_count': group_count,
     })
 
 

@@ -1,11 +1,10 @@
 import doctest
 import json
+from datetime import datetime
 from unittest.mock import Mock, call, patch
 from uuid import uuid4
 
 from django.test import SimpleTestCase, TestCase
-
-from fakecouch import FakeCouchDb
 
 from casexml.apps.case.mock import CaseFactory, CaseIndex, CaseStructure
 
@@ -13,22 +12,25 @@ from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.locations.models import LocationType, SQLLocation
 from corehq.apps.users.models import WebUser
 from corehq.motech.auth import AuthManager
+from corehq.motech.dhis2 import entities_helpers
 from corehq.motech.dhis2.const import DHIS2_DATA_TYPE_DATE, LOCATION_DHIS_ID
 from corehq.motech.dhis2.dhis2_config import (
     Dhis2CaseConfig,
     Dhis2EntityConfig,
-    Dhis2FormConfig,
     RelationshipConfig,
 )
 from corehq.motech.dhis2.entities_helpers import (
     create_relationships,
     get_programs_by_id,
     get_supercase,
+    register_tracked_entity_instance,
     send_dhis2_entities,
+    update_tracked_entity_instance,
     validate_tracked_entity,
 )
+from corehq.motech.dhis2.exceptions import Dhis2Exception
 from corehq.motech.dhis2.forms import Dhis2ConfigForm
-from corehq.motech.dhis2.repeaters import Dhis2Repeater
+from corehq.motech.dhis2.repeaters import Dhis2EntityRepeater, Dhis2Repeater
 from corehq.motech.exceptions import ConfigurationError
 from corehq.motech.models import ConnectionSettings
 from corehq.motech.requests import Requests
@@ -107,14 +109,6 @@ class TestDhis2EntitiesHelpers(TestCase):
         cls.domain.delete()
         super().tearDownClass()
 
-    def setUp(self):
-        self.db = Dhis2Repeater.get_db()
-        self.fakedb = FakeCouchDb()
-        Dhis2Repeater.set_db(self.fakedb)
-
-    def tearDown(self):
-        Dhis2Repeater.set_db(self.db)
-
     def test_get_programs_by_id(self):
         program_id = 'test program'
 
@@ -170,7 +164,7 @@ class TestDhis2EntitiesHelpers(TestCase):
         repeater = Dhis2Repeater(domain=DOMAIN)
         conn = ConnectionSettings(domain=DOMAIN, url="http://dummy.com")
         conn.save()
-        repeater.dhis2_config.form_configs = [Dhis2FormConfig.wrap(fc) for fc in data['form_configs']]
+        repeater.dhis2_config['form_configs'] = data['form_configs']
         repeater.connection_settings_id = conn.id
         repeater.save()
 
@@ -239,13 +233,14 @@ class TestCreateRelationships(TestCase):
         })
         dhis2_entity_config = Dhis2EntityConfig(
             case_configs=[subcase_config, self.supercase_config]
-        )
+        ).to_json()
 
         create_relationships(
             requests,
             case_trigger_info,
             subcase_config,
             dhis2_entity_config,
+            []
         )
         self.create_relationship_func.assert_not_called()
 
@@ -272,19 +267,22 @@ class TestCreateRelationships(TestCase):
         })
         dhis2_entity_config = Dhis2EntityConfig(
             case_configs=[subcase_config, self.supercase_config]
-        )
+        ).to_json()
 
         create_relationships(
             requests,
             case_trigger_info,
             subcase_config,
             dhis2_entity_config,
+            []
         )
         self.create_relationship_func.assert_called_with(
             requests,
-            'b2a12345678',
-            'johnny12345',
-            'alice123456',
+            entities_helpers.RelationshipSpec(
+                relationship_type_id='b2a12345678',
+                from_tracked_entity_instance_id='johnny12345',
+                to_tracked_entity_instance_id='alice123456'
+            )
         )
 
     def test_index_given_twice(self):
@@ -314,25 +312,30 @@ class TestCreateRelationships(TestCase):
         })
         dhis2_entity_config = Dhis2EntityConfig(
             case_configs=[subcase_config, self.supercase_config]
-        )
+        ).to_json()
 
         create_relationships(
             requests,
             case_trigger_info,
             subcase_config,
             dhis2_entity_config,
+            []
         )
         self.create_relationship_func.assert_any_call(
             requests,
-            'b2a12345678',
-            'johnny12345',
-            'alice123456',
+            entities_helpers.RelationshipSpec(
+                relationship_type_id='b2a12345678',
+                from_tracked_entity_instance_id='johnny12345',
+                to_tracked_entity_instance_id='alice123456'
+            )
         )
         self.create_relationship_func.assert_called_with(
             requests,
-            'a2b12345678',
-            'alice123456',
-            'johnny12345',
+            entities_helpers.RelationshipSpec(
+                relationship_type_id='a2b12345678',
+                from_tracked_entity_instance_id='alice123456',
+                to_tracked_entity_instance_id='johnny12345'
+            )
         )
 
     def test_both_relationships_given(self):
@@ -366,19 +369,224 @@ class TestCreateRelationships(TestCase):
             case_trigger_info,
             subcase_config,
             dhis2_entity_config,
+            []
         )
         self.create_relationship_func.assert_any_call(
             requests,
-            'a2b12345678',
-            'alice123456',
-            'johnny12345',
+            entities_helpers.RelationshipSpec(
+                relationship_type_id='a2b12345678',
+                from_tracked_entity_instance_id='alice123456',
+                to_tracked_entity_instance_id='johnny12345'
+            )
         )
         self.create_relationship_func.assert_called_with(
             requests,
-            'b2a12345678',
-            'johnny12345',
-            'alice123456',
+            entities_helpers.RelationshipSpec(
+                relationship_type_id='b2a12345678',
+                from_tracked_entity_instance_id='johnny12345',
+                to_tracked_entity_instance_id='alice123456'
+            )
         )
+
+    def test_existing_relationship_not_created_again(self):
+        """Test that we don't try to create a relationship that already exists"""
+        requests = object()
+        case_trigger_info = get_case_trigger_info_for_case(
+            self.child_case, [{
+                'case_property': 'external_id'
+            }, {
+                'case_property': 'dhis2_org_unit_id'
+            }]
+        )
+        subcase_config = Dhis2CaseConfig.wrap({
+            'case_type':
+                'child',
+            'te_type_id':
+                'person12345',
+            'tei_id': {
+                'case_property': 'external_id'
+            },
+            'org_unit_id': {
+                'case_property': 'dhis2_org_unit_id'
+            },
+            'attributes': {},
+            'form_configs': [],
+            'finder_config': {},
+            'relationships_to_export': [{
+                'identifier': 'parent',
+                'referenced_type': 'mother',
+                'subcase_to_supercase_dhis2_id': 'b2a12345678',
+                'supercase_to_subcase_dhis2_id': 'a2b12345678',
+            }]
+        })
+        dhis2_entity_config = Dhis2EntityConfig(case_configs=[subcase_config, self.supercase_config])
+        # Set up a pre-existing relationship which we received from DHIS2
+        tracked_entity_relationship_specs = [
+            entities_helpers.RelationshipSpec(
+                relationship_type_id="b2a12345678",
+                from_tracked_entity_instance_id="johnny12345",
+                to_tracked_entity_instance_id="alice123456"
+            )
+        ]
+
+        create_relationships(
+            requests,
+            case_trigger_info,
+            subcase_config,
+            dhis2_entity_config,
+            tracked_entity_relationship_specs
+        )
+
+        # Only once of the two relationships should trigger a call to create, since the other already exists
+        self.create_relationship_func.assert_called_once()
+        # Ensure that the correct relationship triggered a create call
+        _requests, relationship_created = self.create_relationship_func.call_args[0]
+        existing_relationship = tracked_entity_relationship_specs[0]
+        assert relationship_created.relationship_type_id != existing_relationship.relationship_type_id
+
+
+class TestRegisterTrackedEntityInstance(TestCase):
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.domain_obj = create_domain(DOMAIN)
+        cls.factory = CaseFactory(domain=DOMAIN)
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.domain_obj.delete()
+        super().tearDownClass()
+
+    def setUp(self):
+        build_patch = patch('corehq.motech.dhis2.entities_helpers._build_tracked_entity')
+        self.build_func = build_patch.start()
+        self.addCleanup(build_patch.stop)
+        self.build_func.return_value = [{'trackedEntityInstance': 'foobar'}, None]
+
+        post_patch = patch('corehq.motech.requests.Requests.post')
+        self.post_func = post_patch.start()
+        self.addCleanup(post_patch.stop)
+        self.post_func.return_value = Mock(
+            status_code=200,
+            json=lambda: {
+                'response': {
+                    'importSummaries': ['foobar'],
+                    'enrollments': {
+                        'importSummaries': [
+                            {
+                                'events': {
+                                    'importSummaries': [
+                                        {
+                                            'status': 'ERROR',
+                                            'description': 'foobar error'
+                                        }
+                                    ]
+                                }
+                            }
+                        ]
+                    }
+                }
+            },
+        )
+
+    def test_register_tracked_entity_instance_errors(self):
+        requests = Requests(
+            DOMAIN,
+            'https://dhis2.example.com/',
+            auth_manager=AuthManager(),
+        )
+        case_trigger_info = CaseTriggerInfo(domain=DOMAIN, case_id=None)
+        case_config = {
+            'te_type_id': 'foobar',
+            'org_unit_id': {
+                'doc_type': 'CaseOwnerAncestorLocationField',
+                'location_field': 'dhis_id'
+            },
+            'tei_id': 'foobar'
+        }
+
+        with self.assertRaises(Dhis2Exception):
+            register_tracked_entity_instance(requests, case_trigger_info, case_config)
+
+
+class TestUpdateTrackedEntityInstance(TestCase):
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.domain_obj = create_domain(DOMAIN)
+        cls.factory = CaseFactory(domain=DOMAIN)
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.domain_obj.delete()
+        super().tearDownClass()
+
+    def setUp(self):
+        build_patch = patch('corehq.motech.dhis2.entities_helpers._build_tracked_entity')
+        self.build_func = build_patch.start()
+        self.addCleanup(build_patch.stop)
+        self.build_func.return_value = [{"trackedEntityInstance": "foobar"}, None]
+
+        put_patch = patch('corehq.motech.requests.Requests.put')
+        self.put_func = put_patch.start()
+        self.addCleanup(put_patch.stop)
+        self.put_func.return_value = Mock(
+            status_code=200,
+            json=lambda: {
+                "enrollments": {
+                    "importSummaries": [
+                        {
+                            "events": {
+                                "importSummaries": [
+                                    {
+                                        "status": "ERROR",
+                                        "description": "Foobar"
+                                    }
+                                ]
+                            }
+                        }
+                    ]
+                }
+            },
+        )
+
+    def test_update_tracked_entity_instance_errors(self):
+        requests = Requests(
+            DOMAIN,
+            'https://dhis2.example.com/',
+            auth_manager=AuthManager(),
+        )
+
+        with self.assertRaises(Dhis2Exception):
+            update_tracked_entity_instance(requests, None, None, None, None)
+
+
+class TestNothingToSend(TestCase):
+
+    def setUp(self):
+        self.conn = ConnectionSettings.objects.create(
+            domain=DOMAIN,
+            name='Example DHIS2 server',
+            url='https://dhis2.example.com/',
+        )
+
+    def tearDown(self):
+        self.conn.delete()
+
+    def test_204_response(self):
+        repeater = Dhis2EntityRepeater(
+            domain=DOMAIN,
+            connection_settings_id=self.conn.id,
+            dhis2_entity_config={'case_configs': []},
+            dhis2_version='2.39.1.1',
+            dhis2_version_last_modified=datetime.utcnow(),
+        )
+        repeat_record = Mock(payload_id='abc123')
+        payload = {'form': {}}
+
+        result = repeater.send_request(repeat_record, payload)
+        self.assertEqual(result.status_code, 204)
+        self.assertEqual(result.reason, 'No content')
 
 
 class TestRequests(TestCase):
@@ -454,7 +662,7 @@ class TestRequests(TestCase):
         repeater = Mock()
         repeater.dhis2_entity_config = Dhis2EntityConfig(
             case_configs=[self.subcase_config, self.supercase_config]
-        )
+        ).to_json()
         requests = Requests(
             DOMAIN,
             'https://dhis2.example.com/',
@@ -594,8 +802,6 @@ class TestGetSupercase(TestCase):
 
 
 def test_doctests():
-    from corehq.motech.dhis2 import entities_helpers
-
     results = doctest.testmod(entities_helpers)
     assert results.failed == 0
 

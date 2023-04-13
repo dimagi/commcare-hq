@@ -1,6 +1,15 @@
+import uuid
+
+from django.test import TestCase
+
 from nose.tools import assert_equal
 
+from casexml.apps.case.mock import CaseBlock
+from casexml.apps.case.views import CaseDisplayWrapper
+
+from corehq.apps.hqcase.utils import submit_case_blocks
 from corehq.apps.reports.standard.cases.data_sources import CaseDisplayES
+from corehq.form_processor.models import CommCareCase
 
 
 def test_happy_case_display():
@@ -34,3 +43,20 @@ def test_null_owner_id():
     owner_type, meta = CaseDisplayES({'owner_id': None}).owner
     assert_equal(owner_type, 'user')
     assert_equal(meta, {'id': None, 'name': None})
+
+
+class TestCaseDisplayWrapper(TestCase):
+    domain = 'test-case-display-wrapper'
+
+    def test_location_id_case_property(self):
+        case_id = uuid.uuid4().hex
+        location_name = 'location'
+        submit_case_blocks([CaseBlock(
+            case_id=case_id,
+            create=True,
+            update={'location_id': location_name}
+        ).as_text()], domain=self.domain)
+        case = CommCareCase.objects.get_case(case_id, self.domain)
+        case_properties = CaseDisplayWrapper(case).dynamic_properties()
+        self.assertTrue('location_id' in case_properties)
+        self.assertEqual(location_name, case_properties['location_id'])

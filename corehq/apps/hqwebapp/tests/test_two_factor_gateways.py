@@ -17,6 +17,5 @@ def test_gateway_make_call():
         from_="+16145551234",
         url="https://test.com/twilio/inbound/two_factor/70839/?locale=en-us",
         method="GET",
-        if_machine="Hangup",
-        timeout=15,
+        timeout='15',
     )

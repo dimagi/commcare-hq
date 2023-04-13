@@ -11,6 +11,7 @@ from corehq.apps.app_manager.util import module_offers_search
 from corehq.apps.case_search.const import (
     CASE_SEARCH_MAX_RESULTS,
     COMMCARE_PROJECT,
+    IS_RELATED_CASE,
 )
 from corehq.apps.case_search.exceptions import CaseSearchUserError, CaseFilterError, TooManyRelatedCasesError
 from corehq.apps.case_search.filter_dsl import (
@@ -49,19 +50,24 @@ def get_case_search_results_from_request(domain, app_id, couch_user, request_dic
         couch_user=couch_user,
         registry_slug=config.data_registry,
         custom_related_case_property=config.custom_related_case_property,
+        include_all_related_cases=config.include_all_related_cases,
     )
 
 
 def get_case_search_results(domain, case_types, criteria,
-                            app_id=None, couch_user=None, registry_slug=None, custom_related_case_property=None):
-    if registry_slug:
-        query_domains = _get_registry_visible_domains(couch_user, domain, case_types, registry_slug)
-        helper = _RegistryQueryHelper(domain, query_domains)
-    else:
-        query_domains = [domain]
-        helper = _QueryHelper(domain)
+                            app_id=None, couch_user=None, registry_slug=None,
+                            custom_related_case_property=None, include_all_related_cases=None):
+    helper = _get_helper(couch_user, domain, case_types, registry_slug)
 
-    builder = CaseSearchQueryBuilder(domain, case_types, query_domains)
+    cases = get_primary_case_search_results(helper, domain, case_types, criteria)
+    if app_id:
+        cases.extend(get_and_tag_related_cases(helper, app_id, case_types, cases,
+            custom_related_case_property, include_all_related_cases))
+    return cases
+
+
+def get_primary_case_search_results(helper, domain, case_types, criteria):
+    builder = CaseSearchQueryBuilder(domain, case_types, helper.query_domains)
     try:
         search_es = builder.build_query(criteria)
     except TooManyRelatedCasesError:
@@ -82,44 +88,57 @@ def get_case_search_results(domain, case_types, criteria,
         raise
 
     cases = [helper.wrap_case(hit, include_score=True) for hit in hits]
-    if app_id:
-        cases.extend(get_related_cases(helper, app_id, case_types, cases, custom_related_case_property))
     return cases
 
 
-def _get_registry_visible_domains(couch_user, domain, case_types, registry_slug):
-    try:
-        helper = DataRegistryHelper(domain, registry_slug=registry_slug)
-        helper.check_data_access(couch_user, case_types)
-    except (RegistryNotFound, RegistryAccessException):
-        return [domain]
-    else:
-        return helper.visible_domains
-
+def _get_helper(couch_user, domain, case_types, registry_slug):
+    helper = _QueryHelper(domain)
+    if registry_slug:
+        try:
+            registry_helper = DataRegistryHelper(domain, registry_slug=registry_slug)
+            registry_helper.check_data_access(couch_user, case_types)
+        except (RegistryNotFound, RegistryAccessException):
+            pass
+        else:
+            helper = _RegistryQueryHelper(domain, couch_user, registry_helper)
+    return helper
 
 class _QueryHelper:
     def __init__(self, domain):
         self.domain = domain
-
-    def get_base_queryset(self):
-        return CaseSearchES().domain(self.domain)
-
-    def wrap_case(self, es_hit, include_score=False, is_related_case=False):
-        return wrap_case_search_hit(es_hit, include_score=include_score, is_related_case=is_related_case)
-
-
-class _RegistryQueryHelper:
-    def __init__(self, domain, query_domains):
-        self.domain = domain
-        self.query_domains = query_domains
+        self.query_domains = [self.domain]
 
     def get_base_queryset(self):
         return CaseSearchES().domain(self.query_domains)
 
-    def wrap_case(self, es_hit, include_score=False, is_related_case=False):
-        case = wrap_case_search_hit(es_hit, include_score=include_score, is_related_case=is_related_case)
+    def wrap_case(self, es_hit, include_score=False):
+        return wrap_case_search_hit(es_hit, include_score=include_score)
+
+    def get_all_related_live_cases(self, initial_cases):
+        from casexml.apps.phone.data_providers.case.livequery import get_all_related_live_cases
+        case_ids = {case.case_id for case in initial_cases}
+        return get_all_related_live_cases(self.domain, case_ids)
+
+
+class _RegistryQueryHelper:
+    def __init__(self, domain, couch_user, registry_helper):
+        self.domain = domain
+        self.couch_user = couch_user
+        self.registry_helper = registry_helper
+        self.query_domains = self.registry_helper.visible_domains
+
+    def get_base_queryset(self):
+        return CaseSearchES().domain(self.query_domains)
+
+    def wrap_case(self, es_hit, include_score=False):
+        case = wrap_case_search_hit(es_hit, include_score=include_score)
         case.case_json[COMMCARE_PROJECT] = case.domain
         return case
+
+    def get_all_related_live_cases(self, initial_cases):
+        all_cases = self.registry_helper.get_multi_domain_case_hierarchy(self.couch_user, initial_cases)
+        initial_case_ids = {case.case_id for case in initial_cases}
+        return list(case for case in all_cases if case.case_id not in initial_case_ids)
 
 
 class CaseSearchQueryBuilder:
@@ -250,7 +269,8 @@ class CaseSearchQueryBuilder:
         ]
 
 
-def get_related_cases(helper, app_id, case_types, cases, custom_related_case_property):
+def get_and_tag_related_cases(helper, app_id, case_types, cases,
+                            custom_related_case_property, include_all_related_cases):
     """
     Fetch related cases that are necessary to display any related-case
     properties in the app requesting this case search.
@@ -261,34 +281,73 @@ def get_related_cases(helper, app_id, case_types, cases, custom_related_case_pro
         return []
 
     app = get_app_cached(helper.domain, app_id)
-    paths = [
-        rel for rels in [get_related_case_relationships(app, case_type) for case_type in case_types]
-        for rel in rels
-    ]
-    child_case_types = [
-        _type for types in [get_child_case_types(app, case_type) for case_type in case_types]
-        for _type in types
-    ]
 
     expanded_case_results = []
     if custom_related_case_property:
         expanded_case_results.extend(get_expanded_case_results(helper, custom_related_case_property, cases))
 
-    results = expanded_case_results
+    unfiltered_results = expanded_case_results
     top_level_cases = cases + expanded_case_results
-    if paths:
-        results.extend(get_related_case_results(helper, top_level_cases, paths))
-
-    if child_case_types:
-        results.extend(get_child_case_results(helper, top_level_cases, child_case_types))
-
+    related_cases = get_related_cases_result(helper, app, case_types, top_level_cases, include_all_related_cases)
+    if related_cases:
+        unfiltered_results.extend(related_cases)
     initial_case_ids = {case.case_id for case in cases}
-    return list({
-        case.case_id: case for case in results if case.case_id not in initial_case_ids
+    results = list({
+        case.case_id: case for case in unfiltered_results if case.case_id not in initial_case_ids
     }.values())
+    for case in results:
+        _tag_is_related_case(case)
+    return results
 
 
-def get_related_case_relationships(app, case_type):
+
+def get_related_cases_result(helper, app, case_types, source_cases, include_all_related_cases):
+    """
+    Gets parent, child, and extension cases through sync algorithm if configured.
+    Otherwise, gets case property path defined in search details and child case types
+    used by search detail tab nodesets.
+    """
+    if include_all_related_cases:
+        return _get_all_related_cases(helper, source_cases)
+    else:
+        results = []
+        results.extend(_get_search_detail_path_defined_cases(helper, app, case_types, source_cases))
+        source_case_ids = {case.case_id for case in source_cases}
+        results.extend(_get_child_cases_referenced_in_app(helper, app, case_types, source_case_ids))
+        return results
+
+
+def _get_all_related_cases(helper, source_cases):
+    results = []
+    results.extend(helper.get_all_related_live_cases(source_cases))
+    source_case_ids = {case.case_id for case in source_cases}
+    results.extend(get_child_case_results(helper, source_case_ids))
+    return results
+
+
+def _get_search_detail_path_defined_cases(helper, app, case_types, source_cases):
+    paths = [
+        rel for rels in [get_search_detail_relationship_paths(app, case_type) for case_type in case_types]
+        for rel in rels
+    ]
+    result = []
+    if paths:
+        result.extend(get_path_related_cases_results(helper, source_cases, paths))
+    return result
+
+
+def _get_child_cases_referenced_in_app(helper, app, case_types, source_case_ids):
+    child_case_types = [
+        _type for types in [get_child_case_types(app, case_type) for case_type in case_types]
+        for _type in types
+    ]
+    result = []
+    if child_case_types:
+        result.extend(get_child_case_results(helper, source_case_ids, child_case_types))
+    return result
+
+
+def get_search_detail_relationship_paths(app, case_type):
     """
     Get unique case relationships used by search details in any modules that
     match the given case type and are configured for case search.
@@ -307,7 +366,7 @@ def get_related_case_relationships(app, case_type):
     return paths
 
 
-def get_related_case_results(helper, cases, paths):
+def get_path_related_cases_results(helper, cases, paths):
     """
     Given a set of cases and a set of case property paths,
     fetches ES documents for all cases referenced by those paths.
@@ -343,23 +402,23 @@ def get_child_case_types(app, case_type):
 
     Returns a set of case types
     """
-    case_types = set()
+    child_case_types = set()
     for module in app.get_modules():
         if module.case_type == case_type and module_offers_search(module):
             for tab in module.search_detail("long").tabs:
                 if tab.has_nodeset and tab.nodeset_case_type:
-                    case_types.add(tab.nodeset_case_type)
+                    child_case_types.add(tab.nodeset_case_type)
 
-    return case_types
+    return child_case_types
 
 
-def get_child_case_results(helper, parent_cases, case_types):
-    parent_case_ids = {c.case_id for c in parent_cases}
-    results = (helper.get_base_queryset()
-               .case_type(case_types)
-               .get_child_cases(parent_case_ids, "parent")
-               .run().hits)
-    return [helper.wrap_case(result, is_related_case=True) for result in results]
+def get_child_case_results(helper, parent_case_ids, child_case_types=None):
+    filter = helper.get_base_queryset().get_child_cases(parent_case_ids, "parent")
+    if child_case_types:
+        filter = filter.case_type(child_case_types)
+
+    results = filter.run().hits
+    return [helper.wrap_case(result) for result in results]
 
 
 def get_expanded_case_results(helper, custom_related_case_property, cases):
@@ -372,4 +431,8 @@ def get_expanded_case_results(helper, custom_related_case_property, cases):
 
 def _get_case_search_cases(helper, case_ids):
     results = helper.get_base_queryset().case_ids(case_ids).run().hits
-    return [helper.wrap_case(result, is_related_case=True) for result in results]
+    return [helper.wrap_case(result) for result in results]
+
+# Warning: '_tag_is_related_case' may cause the relevant user-defined properties to be overwritten.
+def _tag_is_related_case(case):
+    case.case_json[IS_RELATED_CASE] = "true"

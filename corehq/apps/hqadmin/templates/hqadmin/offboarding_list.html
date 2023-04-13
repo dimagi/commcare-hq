@@ -1,0 +1,46 @@
+{% extends "hqwebapp/bootstrap3/base_section.html" %}
+{% load crispy_forms_tags %}
+{% load i18n %}
+
+{% block page_content %}
+  <div class="row">
+    <div class="col-xs-12">
+      <h2>{{ current_page.title }}</h2>
+      <p class="help-block">
+        {% translate "Please type comma or new-line separated email addresses from the official list of current employees." %}
+      </p>
+      {% crispy form %}
+    </div>
+  </div>
+  <div class="row">
+    <div class="col-xs-12">
+      {% if validation_errors %}
+        <h4> {% translate "The following users do not exist on this site and so do not need to be offboarded." %} </h4>
+          {% for user in validation_errors %}
+            {{ user }} <br>
+          {% endfor %}
+      {% endif %}
+      <h2> {{ table_title }}</h2>
+      <table class="table">
+        <tr>
+          <th>{% translate "Username" %}</th>
+          <th>{% translate "Developer" %}</th>
+          <th>{% translate "Superuser" %}</th>
+          <th>{% translate "Accounting Admin" %}</th>
+          <th>{% translate "Active" %}</th>
+          <th>{% translate "Two Factor Enabled" %}</th>
+        </tr>
+        {% for user in users %}
+          <tr>
+            <td>{{ user.username }}</td>
+            <td>{% if user.is_staff %}<i class="fa fa-check"></i>{% endif %}</td>
+            <td>{% if user.is_superuser %}<i class="fa fa-check"></i>{% endif %}</td>
+            <td>{% if user.is_accounting_admin %}<i class="fa fa-check"></i>{% endif %}</td>
+            <td>{% if user.is_active %}<i class="fa fa-check"></i>{% endif %}</td>
+            <td>{% if user.two_factor_enabled %}<i class="fa fa-check"></i>{% endif %}</td>
+          </tr>
+        {% endfor %}
+      </table>
+    </div>
+  </div>
+{% endblock %}

@@ -8,6 +8,8 @@ from django.conf import settings
 
 class SQLTropoBackend(SQLSMSBackend):
 
+    url = "https://api.tropo.com/1.0/sessions"
+
     class Meta(object):
         app_label = 'sms'
         proxy = True
@@ -52,6 +54,6 @@ class SQLTropoBackend(SQLSMSBackend):
             'msg': text,
             '_send_sms': 'true',
         })
-        url = 'https://api.tropo.com/1.0/sessions?%s' % params
+        url = f'{self.url}?{params}'
         response = urlopen(url, timeout=settings.SMS_GATEWAY_TIMEOUT).read()
         return response

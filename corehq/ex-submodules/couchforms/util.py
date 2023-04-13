@@ -2,10 +2,7 @@ from io import BytesIO
 
 from django.test.client import Client
 
-from corehq.util.soft_assert import soft_assert
 from corehq.util.test_utils import unit_testing_only
-
-legacy_notification_assert = soft_assert(notify_admins=True, exponential_backoff=False)
 
 
 @unit_testing_only

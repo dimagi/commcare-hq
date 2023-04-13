@@ -829,6 +829,7 @@ def validate_property(property, allow_parents=True):
 class FormBaseValidator(object):
     def __init__(self, form):
         self.form = form
+        self.app = form.get_app()
 
     def error_meta(self, module=None):
         if not module:
@@ -922,45 +923,45 @@ class FormBaseValidator(object):
 
         errors = []
         meta = self.error_meta(module)
-
         if self.form.post_form_workflow == WORKFLOW_FORM:
             if not self.form.form_links:
                 errors.append(dict(type="no form links", **meta))
-            if self.form.get_module().is_multi_select():
-                errors.append(dict(type="multi select form links", **meta))
             for form_link in self.form.form_links:
-                linked_module = None
                 if form_link.form_id:
                     try:
-                        linked_form = self.form.get_app().get_form(form_link.form_id)
-                        linked_module = linked_form.get_module()
+                        linked_form = self.app.get_form(form_link.form_id)
                     except FormNotFoundException:
                         errors.append(dict(type='bad form link', **meta))
-                else:
-                    try:
-                        linked_module = self.form.get_app().get_module_by_unique_id(form_link.module_unique_id)
-                    except ModuleNotFoundException:
-                        errors.append(dict(type='bad form link', **meta))
-                if linked_module:
-                    if linked_module.is_multi_select():
-                        errors.append(dict(type="multi select form links", **meta))
-                    if linked_module.root_module and linked_module.root_module.is_multi_select():
-                        errors.append(dict(type='parent multi select form links', **meta))
+                        continue
+                    if form_link.form_module_id:
+                        linked_module = None
+                        try:
+                            linked_module = self.app.get_module_by_unique_id(form_link.form_module_id)
+                        except ModuleNotFoundException:
+                            errors.append(dict(type='bad form link', **meta))
+                            continue
+
+                        # linked_module must belong to the form or be a shadow module of the form's module
+                        # This is purely for safety as it shouldn't be possible to get into this state.
+                        if linked_module.module_type == "shadow":
+                            if linked_module.source_module_id != linked_form.get_module().unique_id:
+                                errors.append(dict(type='bad form link', **meta))
+                        elif linked_module.unique_id != linked_form.get_module().unique_id:
+                            errors.append(dict(type='bad form link', **meta))
+                        if not linked_module.is_multi_select() and self.form.get_module().is_multi_select():
+                            errors.append(dict(type='multi select form links', **meta))
         elif self.form.post_form_workflow == WORKFLOW_MODULE:
             if module.put_in_root:
                 errors.append(dict(type='form link to display only forms', **meta))
-            if module.root_module and module.root_module.is_multi_select():
-                errors.append(dict(type='parent multi select form links', **meta))
         elif self.form.post_form_workflow == WORKFLOW_PARENT_MODULE:
             if not module.root_module:
                 errors.append(dict(type='form link to missing root', **meta))
             elif module.root_module.put_in_root:
                 errors.append(dict(type='form link to display only forms', **meta))
-            elif module.root_module.is_multi_select():
-                errors.append(dict(type='parent multi select form links', **meta))
         elif self.form.post_form_workflow == WORKFLOW_PREVIOUS:
-            if module.is_multi_select() or module.root_module and module.root_module.is_multi_select():
-                errors.append(dict(type='previous multi select form links', **meta))
+            if module.root_module:
+                if module.is_multi_select() ^ module.root_module.is_multi_select():  # means XOR
+                    errors.append(dict(type='mismatch multi select form links', **meta))
             if self.form.requires_case() and module_uses_inline_search(module):
                 errors.append(dict(type='workflow previous inline search', **meta))
 
@@ -970,7 +971,7 @@ class FormBaseValidator(object):
 class IndexedFormBaseValidator(FormBaseValidator):
     @property
     def timing_context(self):
-        return self.form.get_app().timing_context
+        return self.app.timing_context
 
     def check_case_properties(self, all_names=None, subcase_names=None, case_tag=None):
         all_names = all_names or []
@@ -1002,7 +1003,7 @@ class IndexedFormBaseValidator(FormBaseValidator):
         except XFormException as e:
             errors.append({'type': 'invalid xml', 'message': str(e)})
         else:
-            no_multimedia = not self.form.get_app().enable_multimedia_case_property
+            no_multimedia = not self.app.enable_multimedia_case_property
             for path in set(paths):
                 if path not in valid_paths:
                     errors.append({'type': 'path error', 'path': path})

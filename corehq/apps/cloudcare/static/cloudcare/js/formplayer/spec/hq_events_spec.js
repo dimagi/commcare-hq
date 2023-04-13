@@ -1,9 +1,9 @@
 /* eslint-env mocha */
 describe('HQ Events', function () {
-    var FormplayerFrontend = hqImport("cloudcare/js/formplayer/app");
+    let FormplayerFrontend = hqImport("cloudcare/js/formplayer/app");
 
     describe('Receiver', function () {
-        var Receiver = hqImport("cloudcare/js/formplayer/hq_events").Receiver,
+        let Receiver = hqImport("cloudcare/js/formplayer/hq_events").Receiver,
             Actions = hqImport("cloudcare/js/formplayer/hq_events").Actions,
             origin = 'myorigin',
             triggerSpy,
@@ -32,7 +32,7 @@ describe('HQ Events', function () {
         });
 
         it('should allow the back action', function () {
-            var receiver = new Receiver(origin);
+            let receiver = new Receiver(origin);
             dummyEvent.data.action = Actions.BACK;
 
             receiver(dummyEvent);
@@ -41,7 +41,7 @@ describe('HQ Events', function () {
         });
 
         it('should allow the refresh action', function () {
-            var receiver = new Receiver(origin);
+            let receiver = new Receiver(origin);
             dummyEvent.data.action = Actions.REFRESH;
 
             receiver(dummyEvent);
@@ -51,20 +51,20 @@ describe('HQ Events', function () {
         });
 
         it('should not allow the wrong origin', function () {
-            var receiver = new Receiver('wrong-origin');
+            let receiver = new Receiver('wrong-origin');
             dummyEvent.data.action = Actions.BACK;
             receiver(dummyEvent);
             assert.isTrue(warnSpy.called);
         });
 
         it('should not allow no action', function () {
-            var receiver = new Receiver(origin);
+            let receiver = new Receiver(origin);
             receiver(dummyEvent);
             assert.isTrue(warnSpy.called);
         });
 
         it('should not allow unknown action', function () {
-            var receiver = new Receiver(origin);
+            let receiver = new Receiver(origin);
             dummyEvent.data.action = 'unknown';
             receiver(dummyEvent);
             assert.isTrue(warnSpy.called);

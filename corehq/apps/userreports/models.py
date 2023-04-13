@@ -184,6 +184,27 @@ class DataSourceBuildInformation(DocumentSchema):
     initiated_in_place = DateTimeProperty()
     rebuilt_asynchronously = BooleanProperty(default=False)
 
+    @property
+    def is_rebuilding(self):
+        return (
+            self.initiated
+            and (
+                not self.finished
+                and not self.rebuilt_asynchronously
+            )
+        )
+
+    @property
+    def is_rebuilding_in_place(self):
+        return (
+            self.initiated_in_place
+            and not self.finished_in_place
+        )
+
+    @property
+    def is_rebuild_in_progress(self):
+        return self.is_rebuilding or self.is_rebuilding_in_place
+
 
 class DataSourceMeta(DocumentSchema):
     build = SchemaProperty(DataSourceBuildInformation)
@@ -1352,16 +1373,22 @@ class InvalidUCRData(models.Model):
 
 
 class UCRExpressionManager(models.Manager):
-    def get_filters_for_domain(self, domain, factory_context):
+    def get_expressions_for_domain(self, domain):
+        return self.filter(domain=domain, expression_type=UCR_NAMED_EXPRESSION)
+
+    def get_filters_for_domain(self, domain):
+        return self.filter(domain=domain, expression_type=UCR_NAMED_FILTER)
+
+    def get_wrapped_filters_for_domain(self, domain, factory_context):
         return {
             f.name: f.wrapped_definition(factory_context)
             for f in self.filter(domain=domain, expression_type=UCR_NAMED_FILTER)
         }
 
-    def get_expressions_for_domain(self, domain, factory_context):
+    def get_wrapped_expressions_for_domain(self, domain, factory_context):
         return {
             f.name: f.wrapped_definition(factory_context)
-            for f in self.filter(domain=domain, expression_type=UCR_NAMED_EXPRESSION)
+            for f in self.get_expressions_for_domain(domain)
         }
 
 
@@ -1404,6 +1431,12 @@ class UCRExpression(models.Model):
             setattr(self, prop, getattr(upstream_ucr_expression, prop))
         self.save()
 
+    def __str__(self):
+        description = self.description
+        if len(self.description) > 64:
+            description = f"{self.description[:64]}…"
+        description = f": {description}" if description else ""
+        return f"{self.name}{description}"
 
 def get_datasource_config_infer_type(config_id, domain):
     return get_datasource_config(config_id, domain, guess_data_source_type(config_id))
@@ -1484,11 +1517,12 @@ def report_config_id_is_static(config_id):
     )
 
 
-def is_data_registry_report(report_config):
-    return (
-        isinstance(report_config, RegistryReportConfiguration)
-        or report_config.config.meta.build.registry_slug
-    )
+def is_data_registry_report(report_config, datasource=None):
+    """
+    The optional datasource parameter is useful when checking a report config fetched from a remote server
+    """
+    datasource = datasource or report_config.config
+    return isinstance(report_config, RegistryReportConfiguration) or datasource.meta.build.registry_slug
 
 
 def get_report_configs(config_ids, domain):

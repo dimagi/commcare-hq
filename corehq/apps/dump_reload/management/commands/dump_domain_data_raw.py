@@ -41,13 +41,12 @@ class Command(BaseCommand):
             s3_key = settings.S3_ACCESS_KEY
             s3_secret = settings.S3_SECRET_KEY
 
-        if not (s3_key and s3_secret):
-            raise CommandError("S3 credentials not provided.")
-
         self.bucket = options['bucket'] or 'raw-data-{}'.format(domain)
         self.client = boto3.client(
-            's3', region_name=options['region'],
-            aws_access_key_id=s3_key, aws_secret_access_key=s3_secret
+            's3',
+            region_name=options['region'],
+            aws_access_key_id=s3_key,
+            aws_secret_access_key=s3_secret
         )
         self._create_bucket()
 

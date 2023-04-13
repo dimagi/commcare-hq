@@ -7,7 +7,6 @@ from django.utils.translation import gettext_lazy
 
 from corehq.apps.app_manager.dbaccessors import get_brief_apps_in_domain
 from corehq.apps.commtrack.const import USER_LOCATION_OWNER_MAP_TYPE
-from corehq.apps.export.models.incremental import IncrementalExport
 from corehq.apps.groups.models import Group
 from corehq.apps.reports.analytics.esaccessors import (
     get_case_types_for_domain,
@@ -22,7 +21,7 @@ from corehq.motech.repeaters.const import (
     RECORD_PENDING_STATE,
     RECORD_SUCCESS_STATE,
 )
-from corehq.motech.repeaters.dbaccessors import get_repeaters_by_domain
+from corehq.motech.repeaters.models import Repeater
 
 
 class GroupFilterMixin(object):
@@ -130,10 +129,10 @@ class RepeaterFilter(BaseSingleOptionFilter):
 
     @property
     def options(self):
-        return [(r.get_id, str(r)) for r in self._get_repeaters()]
+        return [(r.repeater_id, f"{r.repeater_type}: {r.name}") for r in self._get_repeaters()]
 
     def _get_repeaters(self):
-        return get_repeaters_by_domain(self.domain)
+        return Repeater.objects.by_domain(self.domain)
 
 
 class RepeatRecordStateFilter(BaseSingleOptionFilter):
@@ -149,15 +148,3 @@ class RepeatRecordStateFilter(BaseSingleOptionFilter):
             (RECORD_CANCELLED_STATE, _("Cancelled")),
             (RECORD_FAILURE_STATE, _("Failed")),
         ]
-
-
-class IncrementalExportFilter(BaseSingleOptionFilter):
-    slug = 'incremental_export_id'
-    label = gettext_lazy('Incremental Export')
-    default_text = gettext_lazy("All Incremental Exports")
-
-    @property
-    def options(self):
-        return [(str(i[0]), i[1]) for i in IncrementalExport.objects.filter(
-            domain=self.domain
-        ).values_list('id', 'name').all()]

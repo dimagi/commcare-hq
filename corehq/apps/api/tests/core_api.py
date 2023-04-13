@@ -25,6 +25,7 @@ from corehq.apps.api.fields import (
     UseIfRequested,
 )
 from corehq.apps.api.resources import v0_4, v0_5
+from corehq.apps.api.resources.auth import ApiIdentifier
 from corehq.apps.api.util import get_obj
 from corehq.apps.domain.models import Domain
 from corehq.apps.es.tests.utils import ElasticTestMixin, es_test
@@ -713,8 +714,8 @@ class TestApiThrottle(APIResourceTest):
     def test_throttle_allowlist(self):
         """Test that the allowlist toggle allows all traffic through
         """
-        with patch('corehq.apps.api.resources.meta.CacheDBThrottle.should_be_throttled') as should_be_throttled:
-            should_be_throttled.return_value = True
+        with patch('corehq.apps.api.resources.meta.api_rate_limiter.allow_usage') as allow_access:
+            allow_access.return_value = False
 
             response = self.client.get(self.endpoint)
             self.assertEqual(response.status_code, 429)
@@ -732,11 +733,11 @@ class TestApiThrottle(APIResourceTest):
         with patch('corehq.apps.api.resources.meta.HQThrottle.should_be_throttled') as hq_should_be_throttled:
 
             self.client.get(self.endpoint)
-            hq_should_be_throttled.assert_called_with(f"{self.domain}_{self.user.username}")
+            hq_should_be_throttled.assert_called_with(ApiIdentifier(domain=self.domain.name, username=self.user.username))
 
             with patch('corehq.apps.api.resources.meta.API_THROTTLE_WHITELIST.enabled') as toggle_patch:
                 toggle_patch.return_value = True
 
                 self.client.get(self.endpoint)
 
-                hq_should_be_throttled.assert_called_with(self.user.username)
+                hq_should_be_throttled.assert_called_with(ApiIdentifier(domain=self.domain.name, username=self.user.username))

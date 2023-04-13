@@ -15,7 +15,7 @@ from corehq.apps.data_interfaces.pillow import CaseDeduplicationProcessor
 from corehq.apps.receiverwrapper.util import get_app_version_info
 from corehq.apps.userreports.data_source_providers import DynamicDataSourceProvider, StaticDataSourceProvider
 from corehq.apps.userreports.pillow import get_ucr_processor
-from corehq.elastic import get_es_new
+from corehq.apps.es.forms import form_adapter
 from corehq.form_processor.backends.sql.dbaccessors import FormReindexAccessor
 from corehq.pillows.base import is_couch_change_for_sql_domain
 from corehq.pillows.mappings.xform_mapping import XFORM_INDEX_INFO
@@ -26,6 +26,7 @@ from couchforms.const import RESERVED_WORDS, DEVICE_LOG_XMLNS
 from couchforms.geopoint import GeoPoint
 from pillowtop.checkpoints.manager import KafkaPillowCheckpoint, get_checkpoint_for_elasticsearch_pillow
 from pillowtop.const import DEFAULT_PROCESSOR_CHUNK_SIZE
+from pillowtop.es_utils import ElasticsearchIndexInfo
 from pillowtop.pillow.interface import ConstructedPillow
 from pillowtop.processors.form import FormSubmissionMetadataTrackerProcessor
 from pillowtop.processors.elastic import BulkElasticProcessor, ElasticProcessor
@@ -143,13 +144,22 @@ def get_xform_to_elasticsearch_pillow(pillow_id='XFormToElasticsearchPillow', nu
     Processors:
       - :py:class:`pillowtop.processors.elastic.ElasticProcessor`
     """
+    index_info = XFORM_INDEX_INFO
     # todo; To remove after full rollout of https://github.com/dimagi/commcare-hq/pull/21329/
-    assert pillow_id == 'XFormToElasticsearchPillow', 'Pillow ID is not allowed to change'
-    checkpoint = get_checkpoint_for_elasticsearch_pillow(pillow_id, XFORM_INDEX_INFO, FORM_TOPICS)
+    if 'index_name' in kwargs:
+        raw_info = XFORM_INDEX_INFO.to_json()
+        raw_info.pop("meta")
+        index_info = ElasticsearchIndexInfo.wrap(raw_info)
+        index_info.index = kwargs['index_name']
+        index_info.alias = kwargs['index_alias']
+        from corehq.apps.es.transient_util import add_dynamic_adapter
+        add_dynamic_adapter(
+            "XFormBackfill", index_info.index, index_info.type, index_info.mapping, index_info.alias
+        )
+
+    checkpoint = get_checkpoint_for_elasticsearch_pillow(pillow_id, form_adapter.index_name, FORM_TOPICS)
     form_processor = ElasticProcessor(
-        elasticsearch=get_es_new(),
-        index_info=XFORM_INDEX_INFO,
-        doc_prep_fn=transform_xform_for_elasticsearch,
+        form_adapter,
         doc_filter_fn=xform_pillow_filter,
         change_filter_fn=is_couch_change_for_sql_domain
     )
@@ -204,9 +214,7 @@ def get_xform_pillow(pillow_id='xform-pillow', ucr_division=None,
     )
 
     xform_to_es_processor = BulkElasticProcessor(
-        elasticsearch=get_es_new(),
-        index_info=XFORM_INDEX_INFO,
-        doc_prep_fn=transform_xform_for_elasticsearch,
+        form_adapter,
         doc_filter_fn=xform_pillow_filter,
         change_filter_fn=is_couch_change_for_sql_domain
     )
@@ -263,9 +271,7 @@ class SqlFormReindexerFactory(ReindexerFactory):
         doc_provider = SqlDocumentProvider(iteration_key, reindex_accessor)
         return ResumableBulkElasticPillowReindexer(
             doc_provider,
-            elasticsearch=get_es_new(),
-            index_info=XFORM_INDEX_INFO,
+            form_adapter,
             doc_filter=xform_pillow_filter,
-            doc_transform=transform_xform_for_elasticsearch,
             **self.options
         )

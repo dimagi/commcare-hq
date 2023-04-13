@@ -1,73 +1,52 @@
 from datetime import datetime
 from itertools import chain
+from unittest.mock import patch
 
 from django.test import TestCase, override_settings
 
 from faker import Faker
-from unittest.mock import patch
 
 from casexml.apps.case.mock import CaseFactory
-from pillowtop.es_utils import initialize_index_and_mapping
 
 from corehq.apps.change_feed import topics
 from corehq.apps.change_feed.topics import get_topic_offset
 from corehq.apps.data_interfaces.deduplication import (
+    _get_es_filtered_case_query,
     backfill_deduplicate_rule,
     find_duplicate_case_ids,
-    _get_es_filtered_case_query,
-)
-from corehq.apps.data_interfaces.models import (
-    CaseDeduplicationActionDefinition,
-    CaseDeduplicationMatchTypeChoices,
-    CaseDuplicate,
-)
-from corehq.apps.data_interfaces.pillow import CaseDeduplicationProcessor
-from corehq.apps.es.tests.utils import es_test
-from corehq.apps.users.tasks import tag_cases_as_deleted_and_remove_indices
-from corehq.elastic import get_es_new, send_to_elasticsearch
-from corehq.form_processor.models import CommCareCase
-from corehq.pillows.case_search import transform_case_for_elasticsearch
-from corehq.pillows.mappings.case_search_mapping import CASE_SEARCH_INDEX_INFO
-from corehq.pillows.xform import get_xform_pillow
-from corehq.util.elastic import ensure_index_deleted
-from corehq.util.test_utils import (
-    set_parent_case,
-    flag_enabled,
-    trap_extra_setup,
 )
 from corehq.apps.data_interfaces.models import (
     AutomaticUpdateRule,
+    CaseDeduplicationActionDefinition,
+    CaseDeduplicationMatchTypeChoices,
+    CaseDuplicate,
     CaseRuleCriteria,
     LocationFilterDefinition,
     MatchPropertyDefinition,
 )
+from corehq.apps.data_interfaces.pillow import CaseDeduplicationProcessor
 from corehq.apps.data_interfaces.utils import run_rules_for_case
 from corehq.apps.domain.shortcuts import create_domain
+from corehq.apps.es.case_search import case_search_adapter
+from corehq.apps.es.tests.utils import es_test
+from corehq.apps.es.users import user_adapter
 from corehq.apps.users.models import CommCareUser
-from corehq.pillows.user import transform_user_for_elasticsearch
-from corehq.pillows.mappings.user_mapping import USER_INDEX, USER_INDEX_INFO
+from corehq.apps.users.tasks import tag_cases_as_deleted_and_remove_indices
+from corehq.form_processor.models import CommCareCase, XFormInstance
+from corehq.pillows.xform import get_xform_pillow
+from corehq.util.test_utils import flag_enabled, set_parent_case
 
 
-@es_test
+@es_test(requires=[case_search_adapter])
+@es_test(requires=[user_adapter], setup_class=True)
 class FindingDuplicatesQueryTest(TestCase):
     def setUp(self):
         super().setUp()
-
-        self.es = get_es_new()
-        with trap_extra_setup(ConnectionError):
-            initialize_index_and_mapping(self.es, CASE_SEARCH_INDEX_INFO)
-
         self.domain = 'naboo'
         self.factory = CaseFactory(self.domain)
 
-    def tearDown(self):
-        ensure_index_deleted(CASE_SEARCH_INDEX_INFO.index)
-        super().tearDown()
-
     def _prime_es_index(self, cases):
-        for case in cases:
-            send_to_elasticsearch('case_search', transform_case_for_elasticsearch(case.to_json()))
-        self.es.indices.refresh(CASE_SEARCH_INDEX_INFO.index)
+        case_search_adapter.bulk_index(cases, refresh=True)
 
     def test_without_filters(self):
         cases = [
@@ -85,9 +64,6 @@ class FindingDuplicatesQueryTest(TestCase):
         self.assertEqual(len(retrieved_cases), len(cases))
 
     def test_with_location_filter(self):
-        with trap_extra_setup(ConnectionError):
-            initialize_index_and_mapping(self.es, USER_INDEX_INFO)
-
         cases = [
             self.factory.create_case(case_name=case_name, update={'dob': dob}) for (case_name, dob) in [
                 ("Anakin Skywalker", "1977-03-25"),
@@ -120,8 +96,6 @@ class FindingDuplicatesQueryTest(TestCase):
         self.assertEqual(len(retrieved_cases), 2)
         self.assertTrue(retrieved_cases[0]['owner_id'] == location_id)
         self.assertTrue(retrieved_cases[1]['owner_id'] == location_id)
-
-        ensure_index_deleted(CASE_SEARCH_INDEX_INFO.index)
 
     def test_with_case_properties_filter_match_equal(self):
         match_type = MatchPropertyDefinition.MATCH_EQUAL
@@ -263,27 +237,17 @@ class FindingDuplicatesQueryTest(TestCase):
         )
 
 
-@es_test
+@es_test(requires=[case_search_adapter])
 class FindingDuplicatesTest(TestCase):
 
     def setUp(self):
         super().setUp()
 
-        self.es = get_es_new()
-        with trap_extra_setup(ConnectionError):
-            initialize_index_and_mapping(self.es, CASE_SEARCH_INDEX_INFO)
-
         self.domain = 'naboo'
         self.factory = CaseFactory(self.domain)
 
-    def tearDown(self):
-        ensure_index_deleted(CASE_SEARCH_INDEX_INFO.index)
-        super().tearDown()
-
     def _prime_es_index(self, cases):
-        for case in cases:
-            send_to_elasticsearch('case_search', transform_case_for_elasticsearch(case.to_json()))
-        self.es.indices.refresh(CASE_SEARCH_INDEX_INFO.index)
+        case_search_adapter.bulk_index(cases, refresh=True)
 
     def test_find_simple_duplicates(self):
         cases = [
@@ -683,54 +647,34 @@ class CaseDeduplicationActionTest(TestCase):
         # All CaseDuplicates should be deleted (including the last one)
         self.assertFalse(CaseDuplicate.objects.filter(case_id__in=duplicate_case_ids).count())
 
-    @es_test
+    @es_test(requires=[case_search_adapter])
     def test_integration_test(self):
         """Don't mock the find_duplicate_ids response to make sure it works
         """
-        es = get_es_new()
-        with trap_extra_setup(ConnectionError):
-            initialize_index_and_mapping(es, CASE_SEARCH_INDEX_INFO)
-        self.addCleanup(ensure_index_deleted, CASE_SEARCH_INDEX_INFO.index)
-
         duplicates, uniques = self._create_cases()
 
-        for case in chain(duplicates, uniques):
-            send_to_elasticsearch('case_search', transform_case_for_elasticsearch(case.to_json()))
-        es.indices.refresh(CASE_SEARCH_INDEX_INFO.index)
-
+        case_search_adapter.bulk_index(chain(duplicates, uniques), refresh=True)
         self.rule.run_actions_when_case_matches(duplicates[0])
 
         self._assert_potential_duplicates(duplicates[0].case_id, duplicates)
 
-    @es_test
+    @es_test(requires=[case_search_adapter])
     @patch("corehq.apps.data_interfaces.deduplication.DUPLICATE_LIMIT", 3)
     def test_many_duplicates(self):
         """Test what happens if there are over DUPLICATE_LIMIT matches
         """
-        es = get_es_new()
-        with trap_extra_setup(ConnectionError):
-            initialize_index_and_mapping(es, CASE_SEARCH_INDEX_INFO)
-        self.addCleanup(ensure_index_deleted, CASE_SEARCH_INDEX_INFO.index)
-
         num_duplicates = 6
         duplicates, uniques = self._create_cases(num_duplicates)
 
-        for case in chain(duplicates, uniques):
-            send_to_elasticsearch('case_search', transform_case_for_elasticsearch(case.to_json()))
-        es.indices.refresh(CASE_SEARCH_INDEX_INFO.index)
+        case_search_adapter.bulk_index(chain(duplicates, uniques), refresh=True)
 
         self.rule.run_actions_when_case_matches(duplicates[0])
         duplicate_case_ids = CaseDuplicate.objects.all().values_list("case_id", flat=True)
 
         self.assertTrue(set(case.case_id for case in duplicates[0:3]) & set(duplicate_case_ids))
 
-    @es_test
+    @es_test(requires=[case_search_adapter])
     def test_update_parent(self):
-        es = get_es_new()
-        with trap_extra_setup(ConnectionError):
-            initialize_index_and_mapping(es, CASE_SEARCH_INDEX_INFO)
-        self.addCleanup(ensure_index_deleted, CASE_SEARCH_INDEX_INFO.index)
-
         duplicates, uniques = self._create_cases(num_cases=2)
         parent = uniques[0]
         child = duplicates[0]
@@ -749,9 +693,7 @@ class CaseDeduplicationActionTest(TestCase):
         ])
         self.action.save()
 
-        for case in chain(duplicates, uniques):
-            send_to_elasticsearch('case_search', transform_case_for_elasticsearch(case.to_json()))
-        es.indices.refresh(CASE_SEARCH_INDEX_INFO.index)
+        case_search_adapter.bulk_index(chain(duplicates, uniques), refresh=True)
 
         self.rule = AutomaticUpdateRule.objects.get(id=self.rule.id)
         self.rule.run_actions_when_case_matches(child)
@@ -829,6 +771,17 @@ class DeduplicationPillowTest(TestCase):
             self.pillow.process_changes(since=new_kafka_sec, forever=False)
             p.assert_not_called()
 
+    def test_deleted_form_returns_before_processing(self):
+        case = self.factory.create_case(case_name="test",
+                                        case_type=self.case_type,
+                                        update={"age": 2})
+        kafka_sec = get_topic_offset(topics.FORM_SQL)
+        XFormInstance.objects.hard_delete_forms(self.domain, case.xform_ids)
+
+        with patch.object(CaseDeduplicationProcessor, '_process_case_update') as p:
+            self.pillow.process_changes(since=kafka_sec, forever=False)
+            p.assert_not_called()
+
     def _assert_case_duplicate_pair(self, case_id_to_check, expected_duplicates):
         potential_duplicates = list(
             CaseDuplicate.objects
@@ -838,14 +791,10 @@ class DeduplicationPillowTest(TestCase):
         self.assertItemsEqual(potential_duplicates, expected_duplicates)
 
 
-@es_test
+@es_test(requires=[case_search_adapter, user_adapter])
 class TestDeduplicationRuleRuns(TestCase):
     def setUp(self):
         super().setUp()
-
-        self.es = get_es_new()
-        with trap_extra_setup(ConnectionError):
-            initialize_index_and_mapping(self.es, CASE_SEARCH_INDEX_INFO)
 
         self.case_type = 'duck'
         self.domain = 'naboo'
@@ -853,7 +802,6 @@ class TestDeduplicationRuleRuns(TestCase):
         self.factory = CaseFactory(self.domain)
 
     def tearDown(self):
-        ensure_index_deleted(CASE_SEARCH_INDEX_INFO.index)
         self.domain_obj.delete()
         super().tearDown()
 
@@ -880,14 +828,11 @@ class TestDeduplicationRuleRuns(TestCase):
         )
 
     def _prime_es_index(self, cases):
-        for case in cases:
-            send_to_elasticsearch('case_search', transform_case_for_elasticsearch(case.to_json()))
-        self.es.indices.refresh(CASE_SEARCH_INDEX_INFO.index)
+        case_search_adapter.bulk_index(cases, refresh=True)
 
     def _send_user_to_es(self, user):
-        with patch('corehq.pillows.user.get_group_id_name_map_by_user', return_value=[]):
-            send_to_elasticsearch('users', transform_user_for_elasticsearch(user.to_json()))
-        self.es.indices.refresh(USER_INDEX)
+        with patch('corehq.apps.groups.dbaccessors.get_group_id_name_map_by_user', return_value=[]):
+            user_adapter.index(user, refresh=True)
         return user
 
     def get_case_property_value(self, case, property_value):
@@ -985,8 +930,7 @@ class TestDeduplicationRuleRuns(TestCase):
         for case in cases:
             case.type = self.case_type
 
-        from corehq.apps.locations.models import make_location
-        from corehq.apps.locations.models import LocationType
+        from corehq.apps.locations.models import LocationType, make_location
         loc_type = LocationType.objects.create(
             name='place',
             domain=self.domain,
@@ -1066,8 +1010,7 @@ class TestDeduplicationRuleRuns(TestCase):
         for case in cases:
             case.type = self.case_type
 
-        from corehq.apps.locations.models import make_location
-        from corehq.apps.locations.models import LocationType
+        from corehq.apps.locations.models import LocationType, make_location
         loc_type = LocationType.objects.create(
             name='place',
             domain=self.domain,
@@ -1141,15 +1084,11 @@ class TestDeduplicationRuleRuns(TestCase):
 
 
 @flag_enabled('CASE_DEDUPE')
-@es_test
+@es_test(requires=[case_search_adapter], setup_class=True)
 class DeduplicationBackfillTest(TestCase):
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
-
-        es = get_es_new()
-        with trap_extra_setup(ConnectionError):
-            initialize_index_and_mapping(es, CASE_SEARCH_INDEX_INFO)
 
         cls.domain = 'naboo'
         cls.domain_obj = create_domain(cls.domain)
@@ -1162,13 +1101,10 @@ class DeduplicationBackfillTest(TestCase):
         cls.case2 = cls.factory.create_case(case_name="foo", case_type=cls.case_type, update={"age": 2})
         cls.case3 = cls.factory.create_case(case_name="foo", case_type=cls.case_type, update={"age": 2})
 
-        for case in [cls.case1, cls.case2, cls.case3]:
-            send_to_elasticsearch('case_search', transform_case_for_elasticsearch(case.to_json()))
-        es.indices.refresh(CASE_SEARCH_INDEX_INFO.index)
+        case_search_adapter.bulk_index([cls.case1, cls.case2, cls.case3], refresh=True)
 
     @classmethod
     def tearDownClass(cls):
-        ensure_index_deleted(CASE_SEARCH_INDEX_INFO.index)
         cls.domain_obj.delete()
         return super().tearDownClass()
 

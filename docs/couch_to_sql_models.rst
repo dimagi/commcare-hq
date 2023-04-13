@@ -63,7 +63,7 @@ This should contain:
 
     - The generated code uses `SyncCouchToSQLMixin <https://github.com/dimagi/commcare-hq/blob/c2b93b627c830f3db7365172e9be2de0019c6421/corehq/ex-submodules/dimagi/utils/couch/migration.py#L4>`_ and `SyncSQLToCouchMixin <https://github.com/dimagi/commcare-hq/blob/c2b93b627c830f3db7365172e9be2de0019c6421/corehq/ex-submodules/dimagi/utils/couch/migration.py#L115>`_.  If your model uses submodels, you will need to add overrides for ``_migration_sync_to_sql`` and ``_migration_sync_to_couch``. If you add overrides, definitely add tests for them. Sync bugs are one of the easiest ways for this to go terribly wrong.
 
-      - For an example of overriding the sync code for submodels, see the `CommtrackConfig migration <https://github.com/dimagi/commcare-hq/pull/27597/>`_, or the `CustomDataFields migration <https://github.com/dimagi/commcare-hq/pull/27276/>`_ which is simpler but includes a P1-level bug fixed `here <https://github.com/dimagi/commcare-hq/pull/28001/>`_.
+      - For an example of overriding the sync code for submodels, see the `CommtrackConfig migration <https://github.com/dimagi/commcare-hq/pull/27597/>`_, or the `CustomDataFields migration <https://github.com/dimagi/commcare-hq/pull/27276/>`_ which is simpler but includes a P1-level bug fixed `here <https://github.com/dimagi/commcare-hq/pull/28001/>`__.
 
       - Beware that the sync mixins capture exceptions thrown while syncing in favor of calling ``notify_exception``. If you're overwriting the sync code, this makes bugs easy to miss. The branch ``jls/sync-mixins-hard-fail`` is included on staging to instead make syncing fail hard; you might consider doing the same while testing locally.
 
@@ -83,7 +83,7 @@ This should contain:
 
     - The generated migration does not handle submodels. Support for submodels with non-legacy bulk migrations might just work, but has not been tested. Legacy migrations that implement ``update_or_create_sql_object`` should handle submodels in that method.
 
-    - Legacy mode: each document is saved individually rather than in bulk when ``update_or_create_sql_object`` is implemented. ``update_or_create_sql_object`` populates the sql models based on json alone, not the wrapped document (to avoid introducing another dependency on the couch model). You may need to convert data types that the default ``wrap`` implementation would handle. The generated migration will use ``force_to_datetime`` to cast datetimes but will not perform any other wrapping. Similarly, if the couch class has a ``wrap`` method, the migration needs to manage that logic. As an example, ``CommtrackActionConfig.wrap`` was defined `here <https://github.com/dimagi/commcare-hq/commit/03f1d18fac311e71a19747a035155f9121b7a869>`_ and handled in `this migration <https://github.com/dimagi/commcare-hq/pull/27597/files#diff-10eba0437b0d32b2a455e5836dc4bd93f4297c9c9d89078334f31d9eacda2258R113>`_. **WARNING**: migrations that use ``update_or_create_sql_object`` have a race condition.
+    - Legacy mode: each document is saved individually rather than in bulk when ``update_or_create_sql_object`` is implemented. ``update_or_create_sql_object`` populates the sql models based on json alone, not the wrapped document (to avoid introducing another dependency on the couch model). You may need to convert data types that the default ``wrap`` implementation would handle. The generated migration will use ``force_to_datetime`` to cast datetimes but will not perform any other wrapping. Similarly, if the couch class has a ``wrap`` method, the migration needs to manage that logic. As an example, ``CommtrackActionConfig.wrap`` was defined `here <https://github.com/dimagi/commcare-hq/commit/03f1d18fac311e71a19747a035155f9121b7a869>`__ and handled in `this migration <https://github.com/dimagi/commcare-hq/pull/27597/files#diff-10eba0437b0d32b2a455e5836dc4bd93f4297c9c9d89078334f31d9eacda2258R113>`_. **WARNING**: migrations that use ``update_or_create_sql_object`` have a race condition.
 
       - A normal HQ operation loads a Couch document.
       - A ``PopulateSQLCommand`` migration loads the same document in a batch of 100.
@@ -126,6 +126,8 @@ This should contain:
 
   * This should be trivial, since all the work is done in the populate command from the previous PR.
 
+  * The migration does an automatic completeness check by comparing the number of documents in Couch to the number of rows in SQL. If the counts do not match then the migration is considered incomplete, and the migration will calculate the difference and either migrate the remaining documents automatically or prompt for manual action. **NOTE**: if the automatic migration route is chosen (in the case of a small difference) the migration may still take a long time if the total number of documents in Couch is large since the migration must check every document in Couch (of the relevant doc type) to see if it has been migrated to SQL. A count mismatch is more likely when documents are written (created and/or deleted) frequently. One way to work around this is to use the ``--override-is-migration-completed`` option of ``PopulateSQLCommand`` to force the migration into a completed state. **WARNING**: careless use of that option may result in an incomplete migration. It is recommended to only force a completed state just before the migration is applied (e.g., just before deploying), and after checking the counts with ``--override-is-migration-completed=check``.
+
   * `Sample migration for RegistrationRequest <https://github.com/dimagi/commcare-hq/blob/master/corehq/apps/registration/migrations/0003_populate_sqlregistrationrequest.py>`_.
 
 * Replacements of all code that reads from the couch document to instead read from SQL. This is the hard part: finding **all** usages of the couch model and updating them as needed to work with the sql model. Some patterns are:
@@ -160,7 +162,7 @@ This is the cleanup PR. Wait a few weeks after the previous PR to merge this one
 Current State of Migration
 ##########################
 
-The current state of the migration is available internally `here <https://docs.google.com/spreadsheets/d/1iayf898ktfSRXdjBVutj_AgH4WN9DrheMS6vgteqfFM/edit#gid=677779031>`_,
+The current state of the migration is available internally `here <https://docs.google.com/spreadsheets/d/1iayf898ktfSRXdjBVutj_AgH4WN9DrheMS6vgteqfFM/edit#gid=677779031>`__,
 which outlines approximate LOE, risk level, and notes on the remaining models.
 
 For a definitive account of remaining couch-based models, you can identify all classes that descend from ``Document``:

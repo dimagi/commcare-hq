@@ -1,33 +1,31 @@
 import uuid
-from datetime import datetime
 
 from django.test import TestCase
 
-from pillowtop.es_utils import initialize_index_and_mapping
-
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.es.tests.utils import es_test
+from corehq.apps.es.users import user_adapter
+
 from corehq.apps.locations.models import LocationType, SQLLocation
 from corehq.apps.userreports.app_manager.helpers import clean_table_name
 from corehq.apps.userreports.models import DataSourceConfiguration
 from corehq.apps.userreports.pillow import get_location_pillow
 from corehq.apps.userreports.tasks import rebuild_indicators
 from corehq.apps.userreports.util import get_indicator_adapter
-from corehq.apps.users.models import CommCareUser
-from corehq.elastic import get_es_new
-from corehq.pillows.mappings.user_mapping import USER_INDEX_INFO
-from corehq.util.elastic import ensure_index_deleted
-from corehq.util.test_utils import trap_extra_setup
 
 
-@es_test
+@es_test(requires=[user_adapter])
 class TestLocationDataSource(TestCase):
     domain = "delos_corp"
 
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.domain_obj = create_domain(cls.domain)
+        cls.addClassCleanup(cls.domain_obj.delete)
+
     def setUp(self):
-        self.domain_obj = create_domain(self.domain)
-        es = get_es_new()
-        initialize_index_and_mapping(es, USER_INDEX_INFO)
+        super().setUp()
         self.region = LocationType.objects.create(domain=self.domain, name="region")
         self.town = LocationType.objects.create(domain=self.domain, name="town", parent_type=self.region)
 
@@ -50,14 +48,13 @@ class TestLocationDataSource(TestCase):
         )
         self.data_source_config.validate()
         self.data_source_config.save()
+        self.addCleanup(self.data_source_config.delete)
+
+        adapter = get_indicator_adapter(self.data_source_config)
+        self.addCleanup(adapter.drop_table)
 
         self.pillow = get_location_pillow(ucr_configs=[self.data_source_config])
         self.pillow.get_change_feed().get_latest_offsets()
-
-    def tearDown(self):
-        ensure_index_deleted(USER_INDEX_INFO.index)
-        self.domain_obj.delete()
-        self.data_source_config.delete()
 
     def _make_loc(self, name, location_type):
         return SQLLocation.objects.create(

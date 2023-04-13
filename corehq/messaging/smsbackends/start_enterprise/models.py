@@ -40,6 +40,9 @@ class StartEnterpriseDeliveryReceipt(models.Model):
 
 
 class StartEnterpriseBackend(SQLSMSBackend):
+
+    url = SINGLE_SMS_URL
+
     class Meta(object):
         app_label = 'sms'
         proxy = True
@@ -96,7 +99,7 @@ class StartEnterpriseBackend(SQLSMSBackend):
             return
 
         response = requests.get(
-            SINGLE_SMS_URL,
+            self.url,
             params=self.get_params(msg_obj),
             timeout=settings.SMS_GATEWAY_TIMEOUT,
         )

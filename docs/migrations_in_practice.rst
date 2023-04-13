@@ -234,7 +234,7 @@ PRs as described above and deploy them separately. The steps would be:
    time before the second deploy. This should almost certainly be done on prod.
    Whether or not it needs to be done on the other Dimagi-managed environments
    (india, swiss) depends on how much data those environments have.
-3. **Second PR deployed**: This will run the management command again on prod,
+3. **Second PR deployed**: This will run the management command again,
    but since all logs have already been migrated, it won’t actually make any
    changes and should run fast - see the migrations best practices section
    below. This will also make sure third party environments have the change
@@ -246,16 +246,35 @@ PRs as described above and deploy them separately. The steps would be:
 Single Deploy
 -------------
 
-This has limitations, but can be in the right circumstances, some migrations can
-be done with a single deploy.  You should split your changes into two PRs:
+**While this single-deploy option is tempting compared to waiting weeks to get out
+a multi-deploy migration, it’s really only suitable for specific situations like
+custom work and unreleased features, where we can be confident the drawbacks are
+insignificant.**
+
+The main drawbacks are:
+
+  * This method requires manually running the Django migrations which are normally
+    only run during deploy. Running migrations manually on a production environment
+    is generally a bad idea.
+  * It is possible that there will be a gap in data between the final run of the
+    data migration command and the new going live (due to the sequence of events
+    during a deploy).
+
+If you decide to go down this route you should split your changes into two PRs:
 
 - **PR 1**: Schema migration; data migration management command
 - **PR 2**: Handle new data correctly; Django migration calling the management
   command; actual code relying on the migration
 
-Once the PRs have both been approved, **merge PR 1**, then set up a private release containing that change. Merging the PR first will prevent migration conflicts with anyone else working in the area, and it's a good idea that anything run on prod is on the master branch. Run your schema migration and management command directly:
+Once the PRs have both been approved, **merge PR 1**, then set up a private release
+containing that change. Merging the PR first will prevent migration conflicts with
+anyone else working in the area, and it's a good idea that anything run on a
+production environment is on the master branch.
+
+Run your schema migration and management command directly:
 
     ``cchq <ENV> django-manage --release=<NAME> migrate <APP_NAME>``
+    ``cchq <ENV> django-manage --release=<NAME> my_data_migration_command``
 
 Then merge PR 2. The subsequent deploy will run your management command again,
 though it should be very quick this time around, since nearly all data has been
@@ -289,12 +308,6 @@ run, there will be missing data in the DB and that data will be in-use in the
 UI. Remember also that third party environments will have the management command
 run only once, on the second deploy (unless we announce this as a required
 maintenance operation), which would mean their data would have a gap in it.
-
-While this single-deploy option is tempting compared to waiting weeks to get out
-a multi-deploy migration, it’s really only suitable for specific situations like
-custom work and unreleased features, where we can be confident the drawbacks are
-insignificant.
-
 
 Best practices for data migrations in Python
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

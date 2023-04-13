@@ -18,7 +18,7 @@ class OtaRestoreUserTest(TestCase):
         cls.user = CommCareUser(domain=DOMAIN,
                                 domain_membership=DomainMembership(domain=DOMAIN, location_id='1',
                                                                    assigned_location_ids=['1']))
-        cls.restore_user = cls.user.to_ota_restore_user()
+        cls.restore_user = cls.user.to_ota_restore_user(DOMAIN)
 
     @classmethod
     def tearDownClass(cls):

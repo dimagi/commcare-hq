@@ -1,14 +1,18 @@
 import functools
-from distutils.version import LooseVersion
+from looseversion import LooseVersion
 
 from django.utils.translation import gettext
 
-from memoized import memoized
-
 import commcare_translations
 import langcodes
+from langcodes import langs_by_code
+from memoized import memoized
+
 from corehq import toggles
 from corehq.apps.app_manager import id_strings
+from corehq.apps.app_manager.commcare_settings import (
+    get_commcare_settings_lookup,
+)
 from corehq.apps.app_manager.templatetags.xforms_extras import clean_trans
 from corehq.apps.app_manager.util import (
     create_temp_sort_column,
@@ -16,7 +20,6 @@ from corehq.apps.app_manager.util import (
     module_offers_search,
 )
 from corehq.util.translation import localize
-from langcodes import langs_by_code
 
 
 def non_empty_only(dct):
@@ -117,8 +120,16 @@ def _create_custom_app_strings(app, lang, for_default=False, build_profile_id=No
             build_profile_id,
         )
 
+    yield from _create_dependencies_app_strings(app)
+
 
 def _create_module_details_app_strings(module, langs):
+    if module.get_app().supports_empty_case_list_text and hasattr(module, 'case_details'):
+        yield (
+            id_strings.no_items_text_detail(module),
+            clean_trans(module.case_details.short.no_items_text, langs)
+        )
+
     for detail_type, detail, _ in module.get_details():
         for column in detail.get_columns():
             yield (
@@ -338,6 +349,15 @@ def _create_case_search_app_strings(
             if audio:
                 yield id_strings.case_search_audio_locale(module), audio
 
+            title_label = module.search_config.get_search_title_label(app, lang, for_default=for_default)
+            if app.enable_case_search_title_translation:
+                yield id_strings.case_search_title_translation(module), title_label
+
+            yield (
+                id_strings.case_search_description_locale(module),
+                clean_trans(module.search_config.description, langs)
+            )
+
             # search again label
             yield (
                 id_strings.case_search_again_locale(module),
@@ -358,6 +378,14 @@ def _create_case_search_app_strings(
             if audio:
                 yield id_strings.case_search_again_audio_locale(module), audio
         else:
+            yield(
+                id_strings.case_search_title_translation(module),
+                clean_trans(CaseSearch.title_label.default(), langs)
+            )
+            yield (
+                id_strings.case_search_description_locale(module),
+                clean_trans(CaseSearch.description.default(), langs)
+            )
             yield (
                 id_strings.case_search_locale(module),
                 clean_trans(CaseSearch.search_label.default().label, langs)
@@ -477,6 +505,19 @@ def _create_case_list_form_app_strings(
             yield id_strings.case_list_form_audio_locale(module), audio
 
 
+def _create_dependencies_app_strings(app):
+    dependencies = app.profile.get('features', {}).get('dependencies')
+    if toggles.APP_DEPENDENCIES.enabled(app.domain) and dependencies:
+        settings = get_commcare_settings_lookup()['features']['dependencies']
+        app_id_to_name = {k: v for k, v in zip(
+            settings["values"],
+            settings["value_names"]
+        )}
+        for app_id in dependencies:
+            app_name = app_id_to_name[app_id]
+            yield id_strings.android_package_name(app_id), app_name
+
+
 def _maybe_add_index(text, app):
     if app.build_version and app.build_version >= LooseVersion('2.8'):
         sense_on = app.profile.get('features', {}).get('sense') == 'true'
@@ -553,8 +594,12 @@ class AppStringsBase(object):
                 'Unable to find the selected case after performing a sync. Please try again.'
 
         from corehq.apps.app_manager.models import (
-            AUTO_SELECT_CASE, AUTO_SELECT_FIXTURE, AUTO_SELECT_USER,
-            AUTO_SELECT_LOCATION, AUTO_SELECT_USERCASE, AUTO_SELECT_RAW
+            AUTO_SELECT_CASE,
+            AUTO_SELECT_FIXTURE,
+            AUTO_SELECT_LOCATION,
+            AUTO_SELECT_RAW,
+            AUTO_SELECT_USER,
+            AUTO_SELECT_USERCASE,
         )
 
         mode_text = {

@@ -1,105 +1,83 @@
 import uuid
 from datetime import datetime, timedelta
+from unittest.mock import MagicMock, patch
 
 from django.test import SimpleTestCase, TestCase
 
 import pytz
-from unittest.mock import MagicMock, patch
+
+from dimagi.utils.dates import DateSpan
 
 from corehq.apps.commtrack.tests.util import bootstrap_domain
-from corehq.apps.export.models.new import FormExportInstance
-from dimagi.utils.dates import DateSpan
-from pillowtop.es_utils import initialize_index_and_mapping
-
 from corehq.apps.custom_data_fields.models import (
+    PROFILE_SLUG,
     CustomDataFieldsDefinition,
     CustomDataFieldsProfile,
     Field,
-    PROFILE_SLUG,
 )
-from corehq.apps.domain.calculations import cases_in_last, inactive_cases_in_last
+from corehq.apps.domain.calculations import (
+    cases_in_last,
+    inactive_cases_in_last,
+)
+from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.enterprise.tests.utils import create_enterprise_permissions
 from corehq.apps.es import CaseES, UserES
 from corehq.apps.es.aggregations import MISSING_KEY
+from corehq.apps.es.cases import case_adapter
+from corehq.apps.es.forms import form_adapter
+from corehq.apps.es.groups import group_adapter
 from corehq.apps.es.tests.utils import es_test
+from corehq.apps.es.users import user_adapter
+from corehq.apps.export.models.new import FormExportInstance
 from corehq.apps.groups.models import Group
 from corehq.apps.hqcase.utils import SYSTEM_FORM_XMLNS, get_case_by_identifier
-from corehq.apps.locations.tests.util import setup_locations_and_types, restrict_user_by_location
+from corehq.apps.locations.tests.util import (
+    restrict_user_by_location,
+    setup_locations_and_types,
+)
 from corehq.apps.reports.analytics.esaccessors import (
     get_active_case_counts_by_owner,
     get_all_user_ids_submitted,
     get_attachments_size,
+    get_case_and_action_counts_for_domains,
     get_case_counts_closed_by_user,
     get_case_counts_opened_by_user,
     get_case_types_for_domain_es,
-    get_case_and_action_counts_for_domains,
     get_completed_counts_by_user,
     get_form_counts_by_user_xmlns,
     get_form_duration_stats_by_user,
     get_form_duration_stats_for_users,
     get_form_ids_having_multimedia,
-    get_forms,
-    get_last_submission_time_for_users,
-    get_group_stubs,
     get_form_name_from_last_submission_for_xmlns,
+    get_forms,
+    get_group_stubs,
+    get_groups_by_querystring,
+    get_last_submission_time_for_users,
     get_paged_forms_by_type,
     get_submission_counts_by_date,
     get_submission_counts_by_user,
     get_total_case_counts_by_owner,
     get_user_stubs,
-    get_groups_by_querystring,
     get_username_in_last_form_user_id_submitted,
     guess_form_name_from_submissions_using_xmlns,
     media_export_is_too_big,
     scroll_case_names,
 )
-from corehq.apps.reports.standard.cases.utils import query_location_restricted_cases
+from corehq.apps.reports.standard.cases.utils import (
+    query_location_restricted_cases,
+)
 from corehq.apps.users.models import CommCareUser
 from corehq.apps.users.views.mobile.custom_data_fields import UserFieldsView
 from corehq.blobs.mixin import BlobMetaRef
-from corehq.apps.domain.shortcuts import create_domain
-from corehq.elastic import get_es_new, send_to_elasticsearch
 from corehq.form_processor.models import CaseTransaction, CommCareCase
 from corehq.form_processor.utils import TestFormMetadata
-from corehq.pillows.case import transform_case_for_elasticsearch
-from corehq.pillows.mappings.case_mapping import CASE_INDEX, CASE_INDEX_INFO
-from corehq.pillows.mappings.group_mapping import GROUP_INDEX_INFO
-from corehq.pillows.mappings.user_mapping import USER_INDEX, USER_INDEX_INFO
-from corehq.pillows.mappings.xform_mapping import XFORM_INDEX_INFO
-from corehq.pillows.user import transform_user_for_elasticsearch
 from corehq.pillows.utils import MOBILE_USER_TYPE, WEB_USER_TYPE
-from corehq.pillows.xform import transform_xform_for_elasticsearch
-from corehq.util.elastic import ensure_index_deleted, reset_es_index
-from corehq.util.es.elasticsearch import ConnectionError
-from corehq.util.test_utils import make_es_ready_form, trap_extra_setup
+from corehq.util.test_utils import make_es_ready_form
 
 
-@es_test
-class BaseESAccessorsTest(TestCase):
-
-    es_index_infos = []
-
-    def setUp(self):
-        super(BaseESAccessorsTest, self).setUp()
-        with trap_extra_setup(ConnectionError):
-            self.es = get_es_new()
-            self._delete_es_indices()
-            self.domain = uuid.uuid4().hex
-            for index_info in self.es_index_infos:
-                initialize_index_and_mapping(self.es, index_info)
-
-    def tearDown(self):
-        self._delete_es_indices()
-        super(BaseESAccessorsTest, self).tearDown()
-
-    def _delete_es_indices(self):
-        for index_info in self.es_index_infos:
-            ensure_index_deleted(index_info.index)
-
-
-class TestFormESAccessors(BaseESAccessorsTest):
-
-    es_index_infos = [XFORM_INDEX_INFO, GROUP_INDEX_INFO]
+@es_test(requires=[form_adapter])
+@es_test(requires=[group_adapter], setup_class=True)
+class TestFormESAccessors(TestCase):
 
     @classmethod
     def setUpClass(cls):
@@ -143,9 +121,8 @@ class TestFormESAccessors(BaseESAccessorsTest):
                 for name, meta in attachment_dict.items()}
             form_pair.json_form['external_blobs'] = attachment_dict
 
-        es_form = transform_xform_for_elasticsearch(form_pair.json_form)
-        send_to_elasticsearch('forms', es_form)
-        self.es.indices.refresh(XFORM_INDEX_INFO.index)
+        es_form = form_pair.json_form
+        form_adapter.index(es_form, refresh=True)
         return form_pair
 
     def _send_group_to_es(self, _id=None, users=None):
@@ -157,8 +134,7 @@ class TestFormESAccessors(BaseESAccessorsTest):
             reporting=False,
             _id=_id or uuid.uuid4().hex,
         )
-        send_to_elasticsearch('groups', group.to_json())
-        self.es.indices.refresh(GROUP_INDEX_INFO.index)
+        group_adapter.index(group, refresh=True)
         return group
 
     def test_media_export_is_too_big(self):
@@ -341,7 +317,7 @@ class TestFormESAccessors(BaseESAccessorsTest):
         app_id = '1234'
         user_id = 'abc'
 
-        with patch('corehq.pillows.xform.get_user_type', lambda _: MOBILE_USER_TYPE):
+        with patch('corehq.pillows.utils.get_user_type', return_value=MOBILE_USER_TYPE):
             self._send_form_to_es(
                 app_id=app_id,
                 xmlns=xmlns,
@@ -352,7 +328,7 @@ class TestFormESAccessors(BaseESAccessorsTest):
                 }
             )
 
-        with patch('corehq.pillows.xform.get_user_type', lambda _: WEB_USER_TYPE):
+        with patch('corehq.pillows.utils.get_user_type', lambda _: WEB_USER_TYPE):
             self._send_form_to_es(
                 app_id=app_id,
                 xmlns=xmlns,
@@ -976,7 +952,7 @@ class TestFormESAccessors(BaseESAccessorsTest):
         self.assertEqual(user_ids, 'u2')
 
 
-@es_test
+@es_test(requires=[user_adapter])
 class TestUserESAccessors(TestCase):
 
     @classmethod
@@ -1016,24 +992,16 @@ class TestUserESAccessors(TestCase):
         )
         cls.user.save()
 
-    def setUp(self):
-        super(TestUserESAccessors, self).setUp()
-        self.es = get_es_new()
-        ensure_index_deleted(USER_INDEX)
-        initialize_index_and_mapping(self.es, USER_INDEX_INFO)
-
     @classmethod
     def tearDownClass(cls):
         cls.domain_obj.delete()
         cls.source_domain_obj.delete()
         cls.definition.delete()
-        ensure_index_deleted(USER_INDEX)
         super(TestUserESAccessors, cls).tearDownClass()
 
     def _send_user_to_es(self, is_active=True):
         self.user.is_active = is_active
-        send_to_elasticsearch('users', transform_user_for_elasticsearch(self.user.to_json()))
-        self.es.indices.refresh(USER_INDEX)
+        user_adapter.index(self.user, refresh=True)
 
     def test_active_user_query(self):
         self._send_user_to_es()
@@ -1087,14 +1055,12 @@ class TestUserESAccessors(TestCase):
         )
 
 
-@es_test
+@es_test(requires=[group_adapter])
 class TestGroupESAccessors(SimpleTestCase):
 
     def setUp(self):
         self.domain = 'group-esaccessors-test'
         self.reporting = True
-        self.es = get_es_new()
-        reset_es_index(GROUP_INDEX_INFO)
 
     def _send_group_to_es(self, name, _id=None, case_sharing=False):
         group = Group(
@@ -1104,8 +1070,7 @@ class TestGroupESAccessors(SimpleTestCase):
             reporting=self.reporting,
             _id=_id or uuid.uuid4().hex,
         )
-        send_to_elasticsearch('groups', group.to_json())
-        self.es.indices.refresh(GROUP_INDEX_INFO.index)
+        group_adapter.index(group, refresh=True)
         return group
 
     def test_group_query(self):
@@ -1140,15 +1105,17 @@ class TestGroupESAccessors(SimpleTestCase):
         )
 
 
-class TestCaseESAccessors(BaseESAccessorsTest):
-
-    es_index_infos = [CASE_INDEX_INFO, USER_INDEX_INFO]
+@es_test(requires=[case_adapter])
+@es_test(requires=[user_adapter], setup_class=True)
+class TestCaseESAccessors(TestCase):
 
     def setUp(self):
         super(TestCaseESAccessors, self).setUp()
         self.owner_id = 'batman'
         self.user_id = 'robin'
         self.case_type = 'heroes'
+        self.domain = 'es-test-accessor-test'
+        self.addCleanup(get_case_types_for_domain_es.clear, self.domain)
 
     def _send_case_to_es(self,
             domain=None,
@@ -1181,9 +1148,7 @@ class TestCaseESAccessors(BaseESAccessorsTest):
             server_date=opened_on,
         ))
 
-        es_case = transform_case_for_elasticsearch(case.to_json())
-        send_to_elasticsearch('cases', es_case)
-        self.es.indices.refresh(CASE_INDEX)
+        case_adapter.index(case, refresh=True)
         return case
 
     def test_scroll_case_names(self):
@@ -1389,9 +1354,7 @@ class TestCaseESAccessors(BaseESAccessorsTest):
         case = CommCareCase.objects.get_case(case.case_id, self.domain)
         case_json = case.to_json()
         case_json['contact_phone_number'] = '234'
-        es_case = transform_case_for_elasticsearch(case_json)
-        send_to_elasticsearch('cases', es_case)
-        self.es.indices.refresh(CASE_INDEX)
+        case_adapter.index(case_json, refresh=True)
         self.assertEqual(
             get_case_by_identifier(self.domain, case.case_id).case_id,
             case.case_id
@@ -1427,15 +1390,13 @@ class TestCaseESAccessors(BaseESAccessorsTest):
         middlesex_user.add_to_assigned_locations(locations['Middlesex'])
         restrict_user_by_location(self.domain, middlesex_user)
 
-        fake_request = MagicMock()
-        fake_request.domain = self.domain
-        fake_request.couch_user = middlesex_user
-
         self._send_case_to_es(owner_id=locations['Boston'].get_id)
         middlesex_case = self._send_case_to_es(owner_id=locations['Middlesex'].get_id)
         cambridge_case = self._send_case_to_es(owner_id=locations['Cambridge'].get_id)
 
         returned_case_ids = query_location_restricted_cases(
             CaseES().domain(self.domain),
-            fake_request).get_ids()
+            self.domain,
+            middlesex_user,
+        ).get_ids()
         self.assertItemsEqual(returned_case_ids, [middlesex_case.case_id, cambridge_case.case_id])

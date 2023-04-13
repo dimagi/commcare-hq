@@ -1,10 +1,14 @@
-{%  extends 'hqwebapp/base_section.html' %}
+{%  extends 'hqwebapp/bootstrap3/base_section.html' %}
 {% load crispy_forms_tags %}
 {% load i18n %}
 {% load hq_shared_tags %}
 {% load compress %}
 
 {% requirejs_main 'export/js/export_list_main' %}
+
+{% block page_title %}
+  {{ current_page.title }}
+{% endblock %}
 
 {% block page_content %}
   {% initial_page_data 'bulk_download_url' bulk_download_url %}

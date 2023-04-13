@@ -11,6 +11,8 @@ from django.utils.translation import gettext_lazy
 import jsonfield
 import pytz
 from dateutil.parser import parse
+from field_audit import audit_fields
+from field_audit.models import AuditingManager
 from jsonobject.api import JsonObject
 from jsonobject.properties import (
     BooleanProperty,
@@ -84,15 +86,20 @@ def _try_date_conversion(date_or_string):
     return date_or_string
 
 
+@audit_fields("active", "case_type", "deleted", "domain", "name", "workflow",
+              audit_special_queryset_writes=True)
 class AutomaticUpdateRule(models.Model):
     # Used when the rule performs case update actions
     WORKFLOW_CASE_UPDATE = 'CASE_UPDATE'
-
     # Used when the rule spawns schedule instances in the scheduling framework
     WORKFLOW_SCHEDULING = 'SCHEDULING'
-
     # Used when the rule runs a deduplication workflow to find duplicate cases
     WORKFLOW_DEDUPLICATE = 'DEDUPLICATE'
+    WORKFLOW_CHOICES = (
+        (WORKFLOW_CASE_UPDATE, gettext_lazy('Case Update')),
+        (WORKFLOW_DEDUPLICATE, gettext_lazy('Deduplicate')),
+        (WORKFLOW_SCHEDULING, gettext_lazy('Scheduling')),
+    )
 
     domain = models.CharField(max_length=126, db_index=True)
     name = models.CharField(max_length=126)
@@ -101,6 +108,9 @@ class AutomaticUpdateRule(models.Model):
     deleted = models.BooleanField(default=False)
     last_run = models.DateTimeField(null=True)
     filter_on_server_modified = models.BooleanField(default=True)
+    workflow = models.CharField(max_length=126, choices=WORKFLOW_CHOICES)
+
+    objects = AuditingManager()
 
     class CriteriaOperator(models.TextChoices):
         ALL = 'ALL', gettext_lazy('ALL of the criteria are met')
@@ -117,10 +127,6 @@ class AutomaticUpdateRule(models.Model):
     # number of days old that a case's server_modified_on date must be
     # before we run the rule against it.
     server_modified_boundary = models.IntegerField(null=True)
-
-    # One of the WORKFLOW_* constants on this class describing the workflow
-    # that this rule belongs to.
-    workflow = models.CharField(max_length=126)
 
     upstream_id = models.CharField(max_length=32, null=True)
     locked_for_editing = models.BooleanField(default=False)
@@ -248,29 +254,6 @@ class AutomaticUpdateRule(models.Model):
             return paginate_query_across_partitioned_databases(
                 CommCareCase, q_expression, load_source='auto_update_rule'
             )
-
-    @classmethod
-    def _iter_cases_from_es(cls, domain, case_type, boundary_date=None):
-        case_ids = list(cls._get_case_ids_from_es(domain, case_type, boundary_date))
-        return CommCareCase.objects.iter_cases(case_ids, domain)
-
-    @classmethod
-    def _get_case_ids_from_es(cls, domain, case_type, boundary_date=None):
-        query = (CaseES()
-                 .domain(domain)
-                 .case_type(case_type)
-                 .is_closed(closed=False)
-                 .exclude_source()
-                 .size(100))
-
-        if boundary_date:
-            query = query.server_modified_range(lte=boundary_date)
-
-        for case_id in query.scroll():
-            if not isinstance(case_id, str):
-                raise ValueError("Something is wrong with the query, expected ids only")
-
-            yield case_id
 
     def activate(self, active=True):
         previous_active = self.active
@@ -1594,12 +1577,19 @@ class DomainCaseRuleRun(models.Model):
     STATUS_FINISHED = 'F'
     STATUS_HALTED = 'H'
     STATUS_HAD_ERRORS = 'E'
+    STATUS_CHOICES = (
+        (STATUS_RUNNING, gettext_lazy("Running")),
+        (STATUS_FINISHED, gettext_lazy("Finished")),
+        (STATUS_HALTED, gettext_lazy("Stopped")),
+        (STATUS_HAD_ERRORS, gettext_lazy("Error")),
+    )
 
     domain = models.CharField(max_length=126)
     case_type = models.CharField(max_length=255, null=True)
     started_on = models.DateTimeField(db_index=True)
     finished_on = models.DateTimeField(null=True)
-    status = models.CharField(max_length=1)
+    status = models.CharField(max_length=1, choices=STATUS_CHOICES)
+    workflow = models.CharField(max_length=126, choices=AutomaticUpdateRule.WORKFLOW_CHOICES, null=True)
 
     cases_checked = models.IntegerField(default=0)
     num_updates = models.IntegerField(default=0)

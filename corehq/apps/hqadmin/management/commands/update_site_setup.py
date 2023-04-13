@@ -11,14 +11,14 @@ class Command(BaseCommand):
                  "and domain."
         )
         parser.add_argument(
-            '--skip-checks',
+            '--force',
             action='store_true',
             default=False,
             help="If you are sure of what you are doing and want to skip checks to ensure safe update."
         )
 
     def handle(self, site_address, *args, **options):
-        if not options['skip_checks']:
+        if not options['force']:
             if settings.SITE_ID != 1:
                 raise CommandError("SITE ID under settings expected to have value 1 since only one object is "
                                    "expected")

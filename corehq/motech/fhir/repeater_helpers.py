@@ -103,7 +103,7 @@ def send_resources(
     if not info_resources_list:
         # Either the payload had no data to be forwarded, or resources
         # were all patients to be registered: Nothing left to send.
-        return True
+        return RepeaterResponse(204, "No content")
 
     if len(info_resources_list) == 1:
         info, resource = info_resources_list[0]

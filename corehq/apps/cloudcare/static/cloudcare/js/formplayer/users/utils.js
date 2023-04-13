@@ -1,8 +1,9 @@
 hqDefine("cloudcare/js/formplayer/users/utils", function () {
-    var FormplayerFrontend = hqImport("cloudcare/js/formplayer/app");
-    var initialPageData = hqImport("hqwebapp/js/initial_page_data").get;
-    var Utils = {};
-    Utils.Users = {
+    var FormplayerFrontend = hqImport("cloudcare/js/formplayer/app"),
+        initialPageData = hqImport("hqwebapp/js/initial_page_data");
+
+    var self = {};
+    self.Users = {
         /**
          * logInAsUser
          * :param: {String} restoreAsUsername - The username to restore as. Does not include
@@ -13,14 +14,15 @@ hqDefine("cloudcare/js/formplayer/users/utils", function () {
         logInAsUser: function (restoreAsUsername) {
             var currentUser = FormplayerFrontend.getChannel().request('currentUser');
             currentUser.restoreAs = restoreAsUsername;
+            Sentry.setTag("loginAsUser", restoreAsUsername);
 
             $.cookie(
-                Utils.Users.restoreAsKey(
+                self.Users.restoreAsKey(
                     currentUser.domain,
                     currentUser.username
                 ),
                 currentUser.restoreAs,
-                { secure: initialPageData('secure_cookies') }
+                { secure: initialPageData.get('secure_cookies') }
             );
         },
         restoreAsKey: function (domain, username) {
@@ -35,7 +37,7 @@ hqDefine("cloudcare/js/formplayer/users/utils", function () {
          * Returns the restore as user from the cookies or null if it doesn't exist
          */
         getRestoreAsUser: function (domain, username) {
-            return $.cookie(Utils.Users.restoreAsKey(domain, username)) || null;
+            return $.cookie(self.Users.restoreAsKey(domain, username)) || null;
         },
 
         /**
@@ -47,8 +49,42 @@ hqDefine("cloudcare/js/formplayer/users/utils", function () {
          * Clears the restore as user from the cookies
          */
         clearRestoreAsUser: function (domain, username) {
-            return $.removeCookie(Utils.Users.restoreAsKey(domain, username));
+            Sentry.setTag("loginAsUser", null);
+            return $.removeCookie(self.Users.restoreAsKey(domain, username));
         },
     };
-    return Utils;
+
+    FormplayerFrontend.getChannel().reply('restoreAsUser', function (domain, username) {
+        return self.Users.getRestoreAsUser(
+            domain,
+            username
+        );
+    });
+
+    /**
+     * clearRestoreAsUser
+     *
+     * This will unset the localStorage restore as user as well as
+     * unset the restore as user from the currentUser. It then
+     * navigates you to the main page.
+     */
+    FormplayerFrontend.on('clearRestoreAsUser', function () {
+        var user = FormplayerFrontend.getChannel().request('currentUser');
+        self.Users.clearRestoreAsUser(
+            user.domain,
+            user.username
+        );
+        user.restoreAs = null;
+        hqRequire(["cloudcare/js/formplayer/users/views"], function (UsersViews) {
+            FormplayerFrontend.regions.getRegion('restoreAsBanner').show(
+                UsersViews.RestoreAsBanner({
+                    model: user,
+                })
+            );
+        });
+
+        FormplayerFrontend.trigger('navigateHome');
+    });
+
+    return self;
 });

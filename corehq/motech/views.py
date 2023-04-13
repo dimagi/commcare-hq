@@ -15,9 +15,11 @@ from django_prbac.utils import has_privilege
 from memoized import memoized
 from requests import RequestException
 
-from corehq import privileges, toggles
+from corehq import privileges
 from corehq.apps.domain.decorators import login_or_api_key
 from corehq.apps.domain.views.settings import BaseProjectSettingsView
+from corehq.apps.hqwebapp.doc_info import get_doc_info
+from corehq.apps.hqwebapp.doc_lookup import lookup_doc_id
 from corehq.apps.hqwebapp.views import CRUDPaginatedViewMixin
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import HqPermissions
@@ -53,7 +55,7 @@ class MotechLogListView(BaseProjectSettingsView, ListView):
         )
 
     def get_context_data(self, **kwargs):
-        context = super(MotechLogListView, self).get_context_data(**kwargs)
+        context = super().get_context_data(**kwargs)
         context.update({
             "filter_from_date": self.request.GET.get("filter_from_date",
                                                      _a_week_ago()),
@@ -78,6 +80,23 @@ class MotechLogDetailView(BaseProjectSettingsView, DetailView):
 
     def get_queryset(self):
         return RequestLog.objects.filter(domain=self.domain)
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        result = lookup_doc_id(context['log'].payload_id)
+        doc_link = None
+        if result:
+            doc_info = get_doc_info(result.doc)
+            if doc_info:
+                user = self.request.couch_user
+                has_permission = doc_info.user_has_permissions(context['log'].domain, user, result.doc)
+                if has_permission:
+                    doc_link = doc_info.link
+
+        context.update({
+            "doc_link": doc_link
+        })
+        return context
 
     @property
     def object(self):
@@ -160,10 +179,7 @@ class ConnectionSettingsListView(BaseProjectSettingsView, CRUDPaginatedViewMixin
 
     @method_decorator(require_permission(HqPermissions.edit_motech))
     def dispatch(self, request, *args, **kwargs):
-        if (
-            toggles.INCREMENTAL_EXPORTS.enabled_for_request(request)
-            or has_privilege(request, privileges.DATA_FORWARDING)
-        ):
+        if has_privilege(request, privileges.DATA_FORWARDING):
             return super().dispatch(request, *args, **kwargs)
         raise Http404()
 
@@ -222,7 +238,7 @@ class ConnectionSettingsListView(BaseProjectSettingsView, CRUDPaginatedViewMixin
         if connection_settings.used_by:
             raise Http409
 
-        connection_settings.delete()
+        connection_settings.soft_delete()
         return {
             'itemData': self._get_item_data(connection_settings),
             'template': 'connection-settings-deleted-template',
@@ -241,10 +257,7 @@ class ConnectionSettingsDetailView(BaseProjectSettingsView, ModelFormMixin, Proc
 
     @method_decorator(require_permission(HqPermissions.edit_motech))
     def dispatch(self, request, *args, **kwargs):
-        if (
-            toggles.INCREMENTAL_EXPORTS.enabled_for_request(request)
-            or has_privilege(request, privileges.DATA_FORWARDING)
-        ):
+        if has_privilege(request, privileges.DATA_FORWARDING):
             return super().dispatch(request, *args, **kwargs)
         raise Http404()
 
@@ -279,13 +292,11 @@ class ConnectionSettingsDetailView(BaseProjectSettingsView, ModelFormMixin, Proc
 @require_POST
 @require_permission(HqPermissions.edit_motech)
 def test_connection_settings(request, domain):
-    if not (
-        toggles.INCREMENTAL_EXPORTS.enabled_for_request(request)
-        or has_privilege(request, privileges.DATA_FORWARDING)
-    ):
+    if not has_privilege(request, privileges.DATA_FORWARDING):
         raise Http404
 
-    if request.POST.get('plaintext_password') == PASSWORD_PLACEHOLDER:
+    # If auth_type is set to None, we ignore this check
+    if request.POST.get('plaintext_password') == PASSWORD_PLACEHOLDER and request.POST.get('auth_type'):
         # The user is editing an existing instance, and the form is
         # showing the password placeholder. (We don't tell the user what
         # the API password is.)

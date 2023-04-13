@@ -1,5 +1,4 @@
 import sys
-
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import date, datetime
 from time import sleep
@@ -8,13 +7,13 @@ from urllib.error import HTTPError
 
 import attr
 from celery.schedules import crontab
-from celery.task import periodic_task, task
 from dateutil.relativedelta import relativedelta
 from requests import RequestException
 
 from casexml.apps.case.mock import CaseBlock
 from dimagi.utils.chunked import chunked
 
+from corehq.apps.celery import periodic_task, task
 from corehq.apps.domain.dbaccessors import domain_exists
 from corehq.apps.hqcase.utils import submit_case_blocks
 from corehq.form_processor.models import CommCareCase
@@ -26,7 +25,7 @@ from custom.onse.const import (
     DOMAIN,
     LAST_IMPORTED_PROPERTY,
     MAX_RETRY_ATTEMPTS,
-    TASK_RETRY_FACTOR
+    TASK_RETRY_FACTOR,
 )
 from custom.onse.models import iter_mappings
 

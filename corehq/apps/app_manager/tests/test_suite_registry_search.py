@@ -84,7 +84,7 @@ class RemoteRequestSuiteTest(SimpleTestCase, SuiteMixin):
         self.reg_form.actions.open_case.condition.type = 'always'
         self.reg_form.post_form_workflow = WORKFLOW_FORM
         self.reg_form.form_links = [
-            FormLink(form_id=self.form.get_unique_id())
+            FormLink(form_id=self.form.get_unique_id(), form_module_id=self.module.unique_id)
         ]
 
         # wrap to have assign_references called
@@ -102,6 +102,11 @@ class RemoteRequestSuiteTest(SimpleTestCase, SuiteMixin):
           <session>
             <query url="http://localhost:8000/a/test_domain/phone/search/123/" storage-instance="results"
                 template="case" default_search="false">
+                <title>
+                    <text>
+                        <locale id="case_search.m0.inputs"/>
+                    </text>
+                </title>
               <data key="case_type" ref="'case'"/>
               <data key="{CASE_SEARCH_REGISTRY_ID_KEY}" ref="'myregistry'"/>
               <prompt key="name">
@@ -189,6 +194,7 @@ class RemoteRequestSuiteTest(SimpleTestCase, SuiteMixin):
         )
 
     def test_case_detail_tabs_with_registry_module(self, *args):
+        self.app.build_spec = BuildSpec(version='2.52.0', build_number=1)
         self.app.get_module(0).case_details.long.tabs = [
             DetailTab(starting_index=0),
             DetailTab(starting_index=1, has_nodeset=True, nodeset_case_type="child")
@@ -466,7 +472,7 @@ class RemoteRequestSuiteFormLinkChildModuleTest(SimpleTestCase, SuiteMixin):
 
         # link from f1 to f2 (both in the child module)
         f1.post_form_workflow = WORKFLOW_FORM
-        f1.form_links = [FormLink(form_id=f2.get_unique_id())]
+        f1.form_links = [FormLink(form_id=f2.get_unique_id(), form_module_id=m1.unique_id)]
 
         factory.app._id = "123"
         # wrap to have assign_references called
@@ -543,6 +549,11 @@ class InlineSearchDataRegistryModuleTest(SimpleTestCase, SuiteMixin):
             <session>
                 <query url="http://localhost:8000/a/test_domain/phone/search/123/" storage-instance="{RESULTS_INSTANCE_INLINE}"
                     template="case" default_search="false">
+                  <title>
+                    <text>
+                      <locale id="case_search.m0.inputs"/>
+                    </text>
+                  </title>
                   <data key="case_type" ref="'case'"/>
                   <data key="{CASE_SEARCH_REGISTRY_ID_KEY}" ref="'myregistry'"/>
                   <prompt key="name">

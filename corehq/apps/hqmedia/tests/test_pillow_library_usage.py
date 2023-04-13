@@ -15,7 +15,7 @@ def test_thumbnail_resize_works():
     logo = _get_logo()
     logo.load()
     logo.thumbnail(THUMBNAIL_SIZE)
-    logo.thumbnail(THUMBNAIL_SIZE, Image.ANTIALIAS)
+    logo.thumbnail(THUMBNAIL_SIZE, Image.Resampling.LANCZOS)
 
 
 def test_rgb_conversion():
@@ -38,6 +38,6 @@ def test_image_ops_fit():
     target_logo = ImageOps.fit(
         logo,
         (200, 100),
-        method=Image.BICUBIC
+        method=Image.Resampling.BICUBIC
     )
     eq(target_logo.size, (200, 100))

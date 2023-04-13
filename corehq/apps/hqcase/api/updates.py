@@ -8,6 +8,7 @@ from memoized import memoized
 
 from casexml.apps.case.mock import CaseBlock, IndexAttrs
 
+from corehq.apps.fixtures.utils import is_identifier_invalid
 from corehq.apps.hqcase.utils import CASEBLOCK_CHUNKSIZE, submit_case_blocks
 from corehq.form_processor.models import CommCareCase
 from corehq.sql_db.util import get_db_aliases_for_partitioned_query
@@ -15,9 +16,21 @@ from corehq.sql_db.util import get_db_aliases_for_partitioned_query
 from .core import SubmissionError, UserError
 
 
-def is_simple_dict(d):
-    if not isinstance(d, dict) or not all(isinstance(v, str) for v in d.values()):
-        raise BadValueError("Case properties must be strings")
+def valid_properties_dict(d):
+    for k, v in d.items():
+        if is_identifier_invalid(k):
+            raise BadValueError(f"Error with case property '{k}'. "
+                                "Case property names must be valid XML identifiers.")
+        elif not isinstance(v, str):
+            raise BadValueError(f"Error with case property '{k}'. "
+                                f"Values must be strings, received '{v}'")
+
+
+def valid_indices_dict(d):
+    for k in d.keys():
+        if is_identifier_invalid(k):
+            raise BadValueError(f"Error with index '{k}'. "
+                                "Index names must be valid XML identifiers.")
 
 
 class JsonIndex(jsonobject.JsonObject):
@@ -53,8 +66,8 @@ class BaseJsonCaseChange(jsonobject.JsonObject):
     external_id = jsonobject.StringProperty()
     user_id = jsonobject.StringProperty(required=True)
     owner_id = jsonobject.StringProperty()
-    properties = jsonobject.DictProperty(validators=[is_simple_dict], default={})
-    indices = jsonobject.DictProperty(JsonIndex)
+    properties = jsonobject.DictProperty(validators=[valid_properties_dict], default={})
+    indices = jsonobject.DictProperty(JsonIndex, validators=[valid_indices_dict])
     close = jsonobject.BooleanProperty(default=False)
     _is_case_creation = False
 

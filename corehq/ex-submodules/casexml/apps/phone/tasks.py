@@ -1,16 +1,18 @@
 import logging
 from datetime import datetime, timedelta
-from django.db.models import Min
-from django.db import connections, router
 
-from celery import current_task, current_app
-from celery.schedules import crontab
-from celery.task import periodic_task, task
-from celery.signals import after_task_publish
 from django.conf import settings
+from django.db import connections, router
+from django.db.models import Min
+
+from celery import current_app, current_task
+from celery.schedules import crontab
+from celery.signals import after_task_publish
+
 from casexml.apps.phone.models import SyncLogSQL
 from dimagi.utils.logging import notify_exception
 
+from corehq.apps.celery import periodic_task, task
 from corehq.util.metrics import metrics_gauge
 
 log = logging.getLogger(__name__)

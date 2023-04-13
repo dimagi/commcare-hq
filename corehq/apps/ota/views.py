@@ -1,6 +1,6 @@
 import os
 from datetime import datetime
-from distutils.version import LooseVersion
+from looseversion import LooseVersion
 from urllib.parse import unquote
 
 from django.conf import settings
@@ -206,6 +206,7 @@ def get_restore_params(request, domain):
         'user_id': request.GET.get('user_id'),
         'skip_fixtures': skip_fixtures,
         'auth_type': getattr(request, 'auth_type', None),
+        'fail_hard': request.GET.get('fail_hard') == 'true',
     }
 
 
@@ -215,7 +216,8 @@ def get_restore_response(domain, couch_user, app_id=None, since=None, version='1
                          cache_timeout=None, overwrite_cache=False,
                          as_user=None, device_id=None, user_id=None,
                          openrosa_version=None,
-                         skip_fixtures=False, auth_type=None):
+                         skip_fixtures=False, auth_type=None,
+                         fail_hard=False):
     """
     :param domain: Domain being restored from
     :param couch_user: User performing restore
@@ -234,6 +236,8 @@ def get_restore_response(domain, couch_user, app_id=None, since=None, version='1
     :param skip_fixtures: Do not include fixtures in sync payload
     :param auth_type: The type of auth that was used to authenticate the request.
         Used to determine if the request is coming from an actual user or as part of some automation.
+    :param fail_hard: In case of exceptions, fail hardly by raising exception instead of logging
+        silently.
     :return: Tuple of (http response, timing context or None)
     """
 
@@ -297,6 +301,7 @@ def get_restore_response(domain, couch_user, app_id=None, since=None, version='1
             app=app,
             device_id=device_id,
             openrosa_version=openrosa_version,
+            fail_hard=fail_hard,
         ),
         cache_settings=RestoreCacheSettings(
             force_cache=force_cache or async_restore_enabled,

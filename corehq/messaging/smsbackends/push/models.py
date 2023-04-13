@@ -59,9 +59,7 @@ class PushBackend(SQLSMSBackend):
             'password',
         ]
 
-    @classmethod
-    def get_url(cls):
-        return 'http://41.77.230.124:9080'
+    url = 'http://41.77.230.124:9080'
 
     @classmethod
     def get_api_id(cls):
@@ -116,7 +114,7 @@ class PushBackend(SQLSMSBackend):
         headers = {'Content-Type': 'application/xml'}
         payload = self.get_outbound_payload(msg)
         response = requests.post(
-            self.get_url(),
+            self.url,
             data=payload,
             headers=headers,
             timeout=settings.SMS_GATEWAY_TIMEOUT

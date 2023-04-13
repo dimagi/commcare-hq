@@ -310,6 +310,8 @@ class JsonpathExpressionTest(SimpleTestCase):
         ({"a": "1"}, "a", "integer", 1),
         ({"a": [{"b": "1"}, {"b": "2"}, {"b": "x"}]}, "a..b", "integer", [1, 2, None]),
         ({"a": {"b": 1}}, "a..b", "array", [1]),
+        ({"a": "foo5+3bar"}, "a.`sub(/(foo\\\\d+)\\\\+(\\\\d+bar)/, \\\\2-\\\\1)`", "string", "3bar-foo5"),
+        ({"a": "foo", "b": "bar"}, "$.a + '_' + $.b", "string", "foo_bar"),
     ])
     def test_datatype(self, item, jsonpath, datatype, expected):
         expr = ExpressionFactory.from_spec({
@@ -1099,6 +1101,7 @@ class RelatedDocExpressionDbTest(TestCase):
     ({}, "a + b", {"a": Decimal(2), "b": Decimal(3)}, Decimal(5)),
     ({}, "a + b", {"a": Decimal(2.2), "b": Decimal(3.1)}, Decimal(5.3)),
     ({}, "range(3)", {}, [0, 1, 2]),
+    ({}, "today()", {}, date.today()),
     (
         {'dob': "2022-01-01T14:44:23.001567Z"},
         "f'{d}'[:-6] + '%03d' % round(int(f'{d:%f}')/1000) + 'Z'",
@@ -1161,14 +1164,13 @@ def test_invalid_eval_expression(self, source_doc, statement, context):
     ("int(a)", {"a": 1.23}, 1),
     ("round(a)", {"a": 1.23}, 1),
     ("f'{a:%Y-%m-%d %H:%M}'", {"a": transform_datetime("2022-01-01T14:44:23.123123Z")}, '2022-01-01 14:44'),
+    ("a + b", {"a": 'this is ', "b": 'text'}, 'this is text'),
 ])
 def test_supported_evaluator_statements(self, eq, context, expected_value):
     self.assertEqual(eval_statements(eq, context), expected_value)
 
 
 @generate_cases([
-    # variables can't be strings
-    ("a + b", {"a": 2, "b": 'text'}),
     # missing context, b not defined
     ("a + (a*b)", {"a": 2}),
     # power function not supported

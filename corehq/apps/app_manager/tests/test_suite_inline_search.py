@@ -72,7 +72,7 @@ class InlineSearchSuiteTest(SimpleTestCase, SuiteMixin):
         self.reg_form.actions.open_case.condition.type = 'always'
         self.reg_form.post_form_workflow = WORKFLOW_FORM
         self.reg_form.form_links = [
-            FormLink(form_id=self.form.get_unique_id())
+            FormLink(form_id=self.form.get_unique_id(), form_module_id=self.module.unique_id)
         ]
 
         self.module.assign_references()
@@ -81,7 +81,7 @@ class InlineSearchSuiteTest(SimpleTestCase, SuiteMixin):
         self.module = self.app.modules[0]
         self.form = self.module.forms[0]
 
-    @flag_enabled('USH_CASE_CLAIM_UPDATES')
+    @flag_enabled('USH_SEARCH_FILTER')
     def test_inline_search(self):
         suite = self.app.create_suite()
 
@@ -103,6 +103,11 @@ class InlineSearchSuiteTest(SimpleTestCase, SuiteMixin):
             <session>
                 <query url="http://localhost:8000/a/test_domain/phone/search/123/"
                     storage-instance="{RESULTS_INSTANCE_INLINE}" template="case" default_search="false">
+                  <title>
+                    <text>
+                      <locale id="case_search.m0.inputs"/>
+                    </text>
+                  </title>
                   <data key="case_type" ref="'case'"/>
                   <prompt key="name">
                     <display>
@@ -124,7 +129,7 @@ class InlineSearchSuiteTest(SimpleTestCase, SuiteMixin):
         self.assertXmlDoesNotHaveXpath(suite, "./detail[@id='m0_search_short']")
         self.assertXmlDoesNotHaveXpath(suite, "./detail[@id='m0_search_long']")
 
-    @flag_enabled('USH_CASE_CLAIM_UPDATES')
+    @flag_enabled('USH_SEARCH_FILTER')
     def test_inline_search_case_list_item(self):
         self.module.case_list.show = True
         suite = self.app.create_suite()
@@ -140,6 +145,11 @@ class InlineSearchSuiteTest(SimpleTestCase, SuiteMixin):
             <session>
                 <query url="http://localhost:8000/a/test_domain/phone/search/123/"
                     storage-instance="{RESULTS_INSTANCE_INLINE}" template="case" default_search="false">
+                  <title>
+                    <text>
+                        <locale id="case_search.m0.inputs"/>
+                    </text>
+                  </title>
                   <data key="case_type" ref="'case'"/>
                   <prompt key="name">
                     <display>
@@ -156,6 +166,7 @@ class InlineSearchSuiteTest(SimpleTestCase, SuiteMixin):
         </partial>"""  # noqa: E501
         self.assertXmlPartialEqual(expected_entry_query, suite, "./entry[2]")
 
+    @flag_enabled('USH_SEARCH_FILTER')
     def test_inline_search_multi_select(self):
         self.module.case_details.short.multi_select = True
         self.module.case_details.short.columns.append(
@@ -188,6 +199,11 @@ class InlineSearchSuiteTest(SimpleTestCase, SuiteMixin):
                 <query url="http://localhost:8000/a/test_domain/phone/search/123/"
                     storage-instance="{RESULTS_INSTANCE_INLINE}"
                     template="case" default_search="false">
+                  <title>
+                    <text>
+                        <locale id="case_search.m0.inputs"/>
+                    </text>
+                  </title>
                   <data key="case_type" ref="'case'"/>
                   <prompt key="name">
                     <display>
@@ -198,7 +214,7 @@ class InlineSearchSuiteTest(SimpleTestCase, SuiteMixin):
                   </prompt>
                 </query>
                 <instance-datum id="selected_cases" nodeset="instance('{RESULTS_INSTANCE_INLINE}')/results/case[@case_type='case'][@status='open'][active = 'yes'][not(commcare_is_related_case=true())]"
-                    value="./@case_id" detail-select="m0_case_short" detail-confirm="m0_case_long"/>
+                    value="./@case_id" detail-select="m0_case_short" detail-confirm="m0_case_long" max-select-value="100"/>
             </session>
           </entry>
         </partial>"""  # noqa: E501
@@ -337,6 +353,7 @@ class InlineSearchSuiteTest(SimpleTestCase, SuiteMixin):
             f"./entry[1]/instance[@id='{instance_id}']",
         )
 
+    @flag_enabled('USH_SEARCH_FILTER')
     def test_inline_search_with_parent_select(self):
         """Inline search module can have 'parent select' as long as the
         relationship is 'other' (None).
@@ -376,6 +393,11 @@ class InlineSearchSuiteTest(SimpleTestCase, SuiteMixin):
                 value="./@case_id" detail-select="m2_case_short"/>
               <query url="http://localhost:8000/a/test_domain/phone/search/123/"
                 storage-instance="{RESULTS_INSTANCE_INLINE}" template="case" default_search="false">
+                <title>
+                  <text>
+                      <locale id="case_search.m0.inputs"/>
+                  </text>
+                </title>
                 <data key="case_type" ref="'case'"/>
                 <prompt key="name">
                   <display>
@@ -539,6 +561,11 @@ class InlineSearchChildModuleTest(SimpleTestCase, SuiteMixin):
                 value="./@case_id" detail-select="m0_case_short"/>
               <query url="http://localhost:8000/a/test_domain/phone/search/123/"
                 storage-instance="{RESULTS_INSTANCE_INLINE}" template="case" default_search="false">
+                <title>
+                  <text>
+                      <locale id="case_search.m1.inputs"/>
+                  </text>
+                </title>
                 <data key="case_type" ref="'case'"/>
                 <prompt key="name">
                   <display>
@@ -558,11 +585,12 @@ class InlineSearchChildModuleTest(SimpleTestCase, SuiteMixin):
         self.assertXmlPartialEqual(expected_entry, suite, "./entry[2]")
 
     def test_form_link_in_child_module_with_inline_search(self):
-        form1 = self.app.get_module(1).get_form(0)
-        form2 = self.app.get_module(1).get_form(1)
+        module = self.app.get_module(1)
+        form1 = module.get_form(0)
+        form2 = module.get_form(1)
         # link from f1 to f2 (both in the child module)
         form1.post_form_workflow = WORKFLOW_FORM
-        form1.form_links = [FormLink(form_id=form2.get_unique_id())]
+        form1.form_links = [FormLink(form_id=form2.get_unique_id(), form_module_id=module.unique_id)]
         suite = self.app.create_suite()
         expected = f"""
         <partial>

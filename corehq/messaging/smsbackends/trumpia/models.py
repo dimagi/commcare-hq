@@ -21,8 +21,10 @@ class TrumpiaBackend(SQLSMSBackend):
     def get_available_extra_fields(cls):
         return ['username', 'api_key']
 
-    def get_url(self):
-        return "http://api.trumpia.com/http/v2/sendverificationsms"
+    urls = {
+        "send": "http://api.trumpia.com/http/v2/sendverificationsms",
+        "check": "https://api.trumpia.com/http/v2/checkresponse",
+    }
 
     @classmethod
     def get_api_id(cls):
@@ -45,7 +47,7 @@ class TrumpiaBackend(SQLSMSBackend):
             "concat": "TRUE",
         }
         response = requests.get(
-            self.get_url(),
+            self.urls["send"],
             params=params,
             headers={"Accept": "application/json"},
             timeout=settings.SMS_GATEWAY_TIMEOUT,
@@ -91,7 +93,7 @@ class TrumpiaBackend(SQLSMSBackend):
         :returns: Status dict.
         """
         response = requests.get(
-            "https://api.trumpia.com/http/v2/checkresponse",
+            self.urls["check"],
             params={"request_id": request_id},
             headers={"Accept": "application/json"},
         )

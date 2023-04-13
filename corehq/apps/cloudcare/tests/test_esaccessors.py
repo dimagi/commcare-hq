@@ -1,21 +1,15 @@
 import uuid
+from unittest.mock import MagicMock, patch
 
 from django.test import SimpleTestCase
 
-from unittest.mock import MagicMock, patch
-
-from pillowtop.es_utils import initialize_index_and_mapping
-
 from corehq.apps.cloudcare.esaccessors import login_as_user_query
 from corehq.apps.es.tests.utils import es_test
+from corehq.apps.es.users import user_adapter
 from corehq.apps.users.models import CommCareUser
-from corehq.elastic import get_es_new, send_to_elasticsearch
-from corehq.pillows.mappings.user_mapping import USER_INDEX, USER_INDEX_INFO
-from corehq.pillows.user import transform_user_for_elasticsearch
-from corehq.util.elastic import ensure_index_deleted
 
 
-@es_test
+@es_test(requires=[user_adapter])
 class TestLoginAsUserQuery(SimpleTestCase):
 
     @classmethod
@@ -26,17 +20,6 @@ class TestLoginAsUserQuery(SimpleTestCase):
         cls.last_name = 'kent'
         cls.doc_type = 'CommCareUser'
         cls.domain = 'user-esaccessors-test'
-        cls.es = get_es_new()
-
-    def setUp(self):
-        initialize_index_and_mapping(self.es, USER_INDEX_INFO)
-
-    def tearDown(self):
-        ensure_index_deleted(USER_INDEX)
-
-    @classmethod
-    def tearDownClass(cls):
-        super(TestLoginAsUserQuery, cls).tearDownClass()
 
     def _send_user_to_es(self, _id=None, username=None, user_data=None):
         user = CommCareUser(
@@ -49,9 +32,8 @@ class TestLoginAsUserQuery(SimpleTestCase):
             is_active=True,
         )
 
-        with patch('corehq.pillows.user.get_group_id_name_map_by_user', return_value=[]):
-            send_to_elasticsearch('users', transform_user_for_elasticsearch(user.to_json()))
-        self.es.indices.refresh(USER_INDEX)
+        with patch('corehq.apps.groups.dbaccessors.get_group_id_name_map_by_user', return_value=[]):
+            user_adapter.index(user, refresh=True)
         return user
 
     def test_login_as_user_query_username(self):
@@ -102,8 +84,9 @@ class TestLoginAsUserQuery(SimpleTestCase):
             )
 
     def test_limited_users_case_insensitive(self):
-        self._send_user_to_es(username='superman')
-        self._send_user_to_es(username='robin', user_data={'login_as_user': 'BATMAN'})
+        with patch('corehq.apps.groups.dbaccessors.get_group_id_name_map_by_user', return_value=[]):
+            self._send_user_to_es(username='superman')
+            self._send_user_to_es(username='robin', user_data={'login_as_user': 'BATMAN'})
 
         with patch('corehq.apps.cloudcare.esaccessors._limit_login_as', return_value=True):
             self.assertEqual(

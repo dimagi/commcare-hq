@@ -1,16 +1,16 @@
-{% extends "hqwebapp/base_section.html" %}
+{% extends "hqwebapp/bootstrap3/base_section.html" %}
 {% load hq_shared_tags %}
 {% load i18n %}
 {% load compress %}
 
-{% block title %}{{ report.title|default:"Project Reports"|safe }}{% endblock %}
+{% block title %}{{ report.title|default:"Project Reports" }}{% endblock %}
 
 {% block page_title %}{% endblock %}
 
 {% block page_content %}
   {% block report_alerts %}
     <div id="report-error" class="alert alert-danger">
-      <p>{{ error_message|safe }}</p>
+      <p>{{ error_message }}</p>
       {% if details %}
         <p>{% trans "Technical Details:" %}</p>
         {{ details }}

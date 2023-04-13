@@ -1,6 +1,10 @@
 from django.core.management import BaseCommand
 
-from corehq.apps.es.registry import get_registry, registry_entry
+from corehq.apps.es.transient_util import (
+    doc_adapter_from_info,
+    index_info_from_cname,
+    iter_index_infos,
+)
 from corehq.elastic import get_es_new
 from pillowtop.reindexer.reindexer import (
     prepare_index_for_reindex,
@@ -37,7 +41,6 @@ class Command(BaseCommand):
         )
 
     def handle(self, index=None, reset=False, set_for_usage=False, **kwargs):
-        es = get_es_new()
         if reset and not set_for_usage:
             confirm = input(
                 """
@@ -50,16 +53,17 @@ class Command(BaseCommand):
                 return
 
         if index:
-            indices = [registry_entry(index)]
+            indices = [index_info_from_cname(index)]
         else:
-            indices = get_registry().values()
+            indices = iter_index_infos()
         for index in indices:
+            adapter = doc_adapter_from_info(index)
             if set_for_usage:
-                prepare_index_for_usage(es, index)
+                prepare_index_for_usage(adapter.index_name)
             else:
                 if reset:
-                    clean_index(es, index)
-                prepare_index_for_reindex(es, index)
+                    clean_index(adapter.index_name)
+                prepare_index_for_reindex(adapter)
         if set_for_usage:
             print("index ready for usage")
         else:

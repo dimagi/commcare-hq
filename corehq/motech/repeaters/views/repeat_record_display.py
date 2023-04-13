@@ -7,6 +7,7 @@ from corehq.motech.repeaters.const import (
     RECORD_FAILURE_STATE,
     RECORD_PENDING_STATE,
     RECORD_SUCCESS_STATE,
+    RECORD_EMPTY_STATE,
 )
 from corehq.util.timezones.conversions import ServerTime
 
@@ -63,6 +64,9 @@ def _get_state_tuple(record):
     elif record.state == RECORD_FAILURE_STATE:
         label_cls = 'danger'
         label_text = _('Failed')
+    elif record.state == RECORD_EMPTY_STATE:
+        label_cls = 'success'
+        label_text = _('Empty')
     else:
         label_cls = ''
         label_text = ''

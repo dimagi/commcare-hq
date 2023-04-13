@@ -1,10 +1,14 @@
+import uuid
 from django.test import TestCase
+from corehq.apps.app_manager.models import Application
 
 from corehq.apps.domain.shortcuts import create_user
 from corehq.apps.domain.tests.test_utils import test_domain
 from corehq.apps.registry.models import RegistryAuditLog, RegistryInvitation
 from corehq.apps.registry.tests.utils import Invitation, create_registry_for_test
 from corehq.apps.registry.utils import DataRegistryCrudHelper
+from corehq.motech.models import ConnectionSettings
+from corehq.motech.repeaters.models import FormRepeater
 
 
 class RegistryLoggingTests(TestCase):
@@ -101,6 +105,27 @@ class RegistryLoggingTests(TestCase):
         self.helper.remove_grant(self.domain, grant.id)
         self._assertLogs([
             (self.domain, RegistryAuditLog.ACTION_GRANT_REMOVED),
+        ], ignore_actions=[RegistryAuditLog.ACTION_INVITATION_ADDED])
+
+    def test_log_data_access_with_repeater(self):
+        connx = ConnectionSettings.objects.create(domain=self.domain, url='http://fake.com')
+        repeater = FormRepeater(
+            domain=self.domain,
+            connection_settings=connx,
+            repeater_id=uuid.uuid4().hex
+        )
+        repeater.save()
+        self.registry.logger.data_accessed(self.user, self.domain, repeater)
+        self._assertLogs([
+            (self.domain, RegistryAuditLog.ACTION_DATA_ACCESSED)
+        ], ignore_actions=[RegistryAuditLog.ACTION_INVITATION_ADDED])
+
+    def test_log_data_access_with_application(self):
+        app = Application.new_app(self.domain, 'Test App')
+        app._id = uuid.uuid4().hex
+        self.registry.logger.data_accessed(self.user, self.domain, app)
+        self._assertLogs([
+            (self.domain, RegistryAuditLog.ACTION_DATA_ACCESSED)
         ], ignore_actions=[RegistryAuditLog.ACTION_INVITATION_ADDED])
 
     def _assertLogs(self, expected_actions, ignore_actions=None):

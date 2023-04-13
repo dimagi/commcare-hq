@@ -41,9 +41,11 @@
   {% initial_page_data 'sms_contacts' sms_contacts %}
   {% initial_page_data 'confirm' confirm %}
   {% initial_page_data 'upstream_url' upstream_url_template %}
+  {% initial_page_data 'show_release_mode' show_release_mode %}
   {% registerurl "app_data_json" app.domain '---' %}
   {% registerurl "app_form_summary_diff" domain '---' '---' %}
   {% registerurl "paginate_releases" domain app.id %}
+  {% registerurl "paginate_release_logs" domain app.id %}
   {% registerurl "delete_copy" domain app.id %}
   {% registerurl "odk_install" domain '---' %}
   {% registerurl "odk_media_install" domain '---' %}
@@ -58,6 +60,21 @@
   {% registerurl "formplayer_main" app.domain %}
   {% registerurl "app_form_summary" app.domain '---' %}
   <div class="tab-pane" id="releases">
+    {% if show_release_mode %}
+      {% if not build_profile_access and not enable_update_prompts %}
+        <div id="release-control" class="w-100 text-right hidden">
+      {% else %}
+        <div id="release-control" class="pull-right hidden">
+      {% endif %}
+          {% trans "Release Mode" %}
+            <button id="btn-release-locked" class="btn btn-default">
+              <i class="fa fa-lock fa-fw"></i>
+            </button>
+            <button id="btn-release-unlocked" class="btn btn-default">
+              <i class="fa fa-unlock fa-fw"></i>
+            </button>
+        </div>
+    {% endif %}
     {% include "app_manager/partials/releases/releases.html" %}
   </div>
 {% endblock app_view_tabs %}

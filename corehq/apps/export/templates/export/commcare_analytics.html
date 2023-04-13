@@ -1,0 +1,24 @@
+{%  extends 'hqwebapp/bootstrap3/base_section.html' %}
+{% load crispy_forms_tags %}
+{% load i18n %}
+{% load compress %}
+{% load hq_shared_tags %}
+
+{% block page_title %}
+{% trans "CommCare Analytics" %}
+{% endblock %}
+
+{% block page_content %}
+  {% blocktrans %}
+    CommCare Analytics is a Superset based tool that allows data exploration and data visualization.
+<!-- Add link to public docs here when the docs are ready -->
+<!--    For more information on Superset and how to get started, read the-->
+<!--    <a href="" target="_blank">documentation</a>.-->
+  {% endblocktrans %}
+
+  {% blocktrans %}
+  <a href="{{ analytics_redirect_url }}" target="_blank">
+    Navigate to Superset
+  </a>
+  {% endblocktrans %}
+{% endblock %}

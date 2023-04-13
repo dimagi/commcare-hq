@@ -1,0 +1,6 @@
+python-3.9
+# Specifies the python version that dependabot should use.
+# NOTE: the full "allowed syntax" of this file isn't well documented. If you
+# suspect problems with the contents of this file, try:
+# - removing all comments
+# - using a full version, including patch (e.g. 'python-3.9.14')

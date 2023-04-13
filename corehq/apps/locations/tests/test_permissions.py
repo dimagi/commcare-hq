@@ -219,7 +219,8 @@ class TestAccessRestrictions(LocationHierarchyTestCase):
         ):
             self._assert_url_returns_status(url, status_code)
 
-    def test_can_edit_worker(self):
+    @mock.patch('corehq.apps.users.views.mobile.users.get_locations_with_orphaned_cases', return_value={})
+    def test_can_edit_worker(self, _):
         self._assert_edit_user_gives_status(self.boston_worker, 200)
 
     def test_cant_edit_worker(self):

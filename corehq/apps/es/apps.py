@@ -2,10 +2,15 @@
 AppES
 -----
 """
+from datetime import datetime
+
+from dimagi.utils.parsing import json_format_datetime
+
 from . import filters, queries
-from .client import ElasticDocumentAdapter
+from .client import ElasticDocumentAdapter, create_document_adapter
 from .es_query import HQESQuery
-from .transient_util import get_adapter_mapping, from_dict_with_possible_id
+from .index.settings import IndexSettingsKey
+from .transient_util import get_adapter_mapping
 
 
 class AppES(HQESQuery):
@@ -25,16 +30,27 @@ class AppES(HQESQuery):
 
 class ElasticApp(ElasticDocumentAdapter):
 
-    _index_name = "hqapps_2020-02-26"
-    type = "app"
+    settings_key = IndexSettingsKey.APPS
 
     @property
     def mapping(self):
         return get_adapter_mapping(self)
 
-    @classmethod
-    def from_python(cls, doc):
-        return from_dict_with_possible_id(doc)
+    @property
+    def model_cls(self):
+        from corehq.apps.app_manager.models import ApplicationBase
+        return ApplicationBase
+
+    def _from_dict(self, app_dict):
+        app_dict['@indexed_on'] = json_format_datetime(datetime.utcnow())
+        return super()._from_dict(app_dict)
+
+
+app_adapter = create_document_adapter(
+    ElasticApp,
+    "hqapps_2020-02-26",
+    "app",
+)
 
 
 def build_comment(comment):

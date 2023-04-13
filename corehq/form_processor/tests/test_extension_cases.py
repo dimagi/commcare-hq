@@ -123,6 +123,48 @@ class TestExtensionCaseIds(TestCase):
         returned_cases = CommCareCaseIndex.objects.get_extension_case_ids(self.domain, [host_id])
         self.assertItemsEqual(returned_cases, [extension_id, extension_2_id])
 
+    def test_host_with_multiple_extension_types(self):
+        """ Return all extensions from a single host """
+        host_id = uuid.uuid4().hex
+        extension_id = uuid.uuid4().hex
+        extension_2_id = uuid.uuid4().hex
+
+        host = CaseStructure(case_id=host_id, attrs={'create': True})
+
+        self.factory.create_or_update_cases([
+            CaseStructure(
+                case_id=extension_id,
+                indices=[CaseIndex(
+                    host,
+                    relationship=CASE_INDEX_EXTENSION,
+                    identifier="host",
+                )],
+                attrs={
+                    'case_type': 'extension',
+                    'create': True,
+                }
+            ),
+            CaseStructure(
+                case_id=extension_2_id,
+                indices=[CaseIndex(
+                    host,
+                    relationship=CASE_INDEX_EXTENSION,
+                    identifier="host",
+                )],
+                attrs={
+                    'case_type': 'extension_2',
+                    'create': True,
+                }
+            ),
+        ])
+
+        returned_cases = CommCareCaseIndex.objects.get_extension_case_ids(
+            self.domain,
+            [host_id],
+            case_type='extension_2',
+        )
+        self.assertItemsEqual(returned_cases, [extension_2_id])
+
     def test_extensions_from_list(self):
         """ Given a list of hosts, should return all extensions """
         host_id = uuid.uuid4().hex

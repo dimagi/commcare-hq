@@ -3,44 +3,31 @@ import math
 
 from django.test import TestCase
 
-from corehq.util.es.elasticsearch import ConnectionError
-
-from pillowtop.es_utils import initialize_index_and_mapping
+from django_digest.test import Client
 
 from corehq.apps.callcenter.views import CallCenterOwnerOptionsView
 from corehq.apps.domain.shortcuts import create_domain
+from corehq.apps.es.groups import group_adapter
 from corehq.apps.es.tests.utils import es_test
+from corehq.apps.es.users import user_adapter
 from corehq.apps.groups.models import Group
 from corehq.apps.locations.models import LocationType
 from corehq.apps.locations.tests.util import make_loc
 from corehq.apps.users.models import CommCareUser, WebUser
-from corehq.elastic import get_es_new, send_to_elasticsearch
-from corehq.pillows.mappings.group_mapping import GROUP_INDEX_INFO
-from corehq.pillows.mappings.user_mapping import USER_INDEX_INFO
 from corehq.toggles import CALL_CENTER_LOCATION_OWNERS, NAMESPACE_DOMAIN
 from corehq.util import reverse
-from corehq.util.elastic import ensure_index_deleted
-from corehq.util.test_utils import trap_extra_setup
-from django_digest.test import Client
 
 TEST_DOMAIN = "cc-location-owner-test-domain"
 CASE_TYPE = "cc-case-type"
 LOCATION_TYPE = "my-location"
 
 
-@es_test
+@es_test(requires=[group_adapter, user_adapter], setup_class=True)
 class CallCenterLocationOwnerOptionsViewTest(TestCase):
 
     @classmethod
     def setUpClass(cls):
         super(CallCenterLocationOwnerOptionsViewTest, cls).setUpClass()
-
-        with trap_extra_setup(ConnectionError, msg="cannot connect to elasicsearch"):
-            es = get_es_new()
-            ensure_index_deleted(USER_INDEX_INFO.index)
-            ensure_index_deleted(GROUP_INDEX_INFO.index)
-            initialize_index_and_mapping(es, USER_INDEX_INFO)
-            initialize_index_and_mapping(es, GROUP_INDEX_INFO)
 
         # Create domain
         cls.domain = create_domain(TEST_DOMAIN)
@@ -58,9 +45,8 @@ class CallCenterLocationOwnerOptionsViewTest(TestCase):
         for i in range(2):
             group = Group(domain=TEST_DOMAIN, name="group{}".format(i), case_sharing=True)
             group.save()
-            send_to_elasticsearch('groups', group.to_json())
             cls.groups.append(group)
-        es.indices.refresh(GROUP_INDEX_INFO.index)
+        group_adapter.bulk_index(cls.groups, refresh=True)
         cls.group_ids = {g._id for g in cls.groups}
 
         # Create locations
@@ -76,9 +62,7 @@ class CallCenterLocationOwnerOptionsViewTest(TestCase):
 
         # Create users
         cls.users = [CommCareUser.create(TEST_DOMAIN, 'user{}'.format(i), '***', None, None) for i in range(3)]
-        for user in cls.users:
-            send_to_elasticsearch('users', user.to_json())
-        es.indices.refresh(USER_INDEX_INFO.index)
+        user_adapter.bulk_index(cls.users, refresh=True)
         cls.user_ids = {u._id for u in cls.users}
 
     @classmethod
@@ -88,8 +72,6 @@ class CallCenterLocationOwnerOptionsViewTest(TestCase):
             user.delete(cls.domain.name, deleted_by=None)
         CALL_CENTER_LOCATION_OWNERS.set(cls.domain.name, False, NAMESPACE_DOMAIN)
         cls.domain.delete()
-        ensure_index_deleted(USER_INDEX_INFO.index)
-        ensure_index_deleted(GROUP_INDEX_INFO.index)
 
     def test_pages(self):
         """

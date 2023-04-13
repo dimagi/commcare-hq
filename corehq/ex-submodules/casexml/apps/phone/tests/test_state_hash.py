@@ -79,3 +79,16 @@ class StateHashTest(TestCase):
             self.assertEqual(set(e.case_ids), {"abc123", "123abc"})
         else:
             self.fail("Call to generate a payload with a bad hash should fail!")
+
+    def testMismatchIgnoredForWebApps(self):
+        sync = self.device.last_sync
+        self.assertEqual(CaseStateHash(EMPTY_HASH), sync.log.get_state_hash())
+
+        c1 = CaseBlock(case_id="abc123", create=True, owner_id=self.user.user_id).as_text()
+        c2 = CaseBlock(case_id="123abc", create=True, owner_id=self.user.user_id).as_text()
+        self.device.case_factory.post_case_blocks([c1, c2])
+
+        bad_hash = CaseStateHash("thisisntright")
+        self.device.id = 'WebAppsLogin'
+        self.device.sync(state_hash=str(bad_hash))
+        self.assertEqual(set(self.device.last_sync.cases), {"abc123", "123abc"})

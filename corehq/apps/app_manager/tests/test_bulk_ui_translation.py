@@ -1,4 +1,3 @@
-from distutils.version import StrictVersion
 from io import BytesIO
 
 from django.test import SimpleTestCase

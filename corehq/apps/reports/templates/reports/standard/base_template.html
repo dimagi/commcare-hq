@@ -1,4 +1,4 @@
-{% extends "hqwebapp/two_column.html" %}
+{% extends "hqwebapp/bootstrap3/two_column.html" %}
 {% load compress %}
 {% load hq_shared_tags %}
 {% load i18n %}
@@ -51,7 +51,7 @@
   {% block reports-css %}{% endblock %}
 {% endblock %}
 
-{% block title %}{{ report.title|default:"Project Reports"|safe }}{% endblock %}
+{% block title %}{{ report.title|default:"Project Reports" }}{% endblock %}
 
 {% block page_breadcrumbs %}
   <a href="#" class="btn btn-link btn-invisible visible-xs btn-report-menu" data-toggle="offcanvas"><i class="fa fa-bars"></i> {% trans "Reports Menu" %}</a>
@@ -67,7 +67,7 @@
       {% endfor %}
     {% endif %}
     <li class="active">
-      {% trans report.title|default:"Untitled Report"|safe %}
+      {% trans report.title|default:"Untitled Report" %}
     </li>
   </ol>
 {% endblock %}

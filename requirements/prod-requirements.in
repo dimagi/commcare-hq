@@ -2,7 +2,8 @@
 
 pip
 
-flower
+# Switch back to normal package as soon as flower release a version > 1.2.0
+flower @ git+https://github.com/mher/flower@a4fc7c97d897a3172d1058d5269115eb88d811de
 setproctitle
 uWSGI
 ipython  # for nicer django shell experience

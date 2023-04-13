@@ -1,10 +1,11 @@
-from django.test import TestCase
+from django.test import SimpleTestCase, TestCase
 
 from nose.tools import assert_equal
 
 from corehq.apps.data_dictionary.models import CaseProperty, CaseType
 from corehq.motech.fhir.models import FHIRResourceProperty, FHIRResourceType
 from corehq.motech.fhir.utils import (
+    load_fhir_resource_types,
     resource_url,
     update_fhir_resource_property,
 )
@@ -138,6 +139,14 @@ class TestUpdateFHIRResourceProperty(TestCase):
                 jsonpath=new_fhir_resource_prop_path
             ).count(),
             1)
+
+
+class TestLoadFHIRResourceType(SimpleTestCase):
+
+    def test_load_fhir_resource_types_default(self):
+        resource_types = load_fhir_resource_types()
+        self.assertIsInstance(resource_types, list)
+        self.assertTrue('fhir' not in resource_types)
 
 
 def test_resource_url():

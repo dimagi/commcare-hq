@@ -2,7 +2,7 @@ import random
 import re
 import uuid
 from collections import defaultdict
-from distutils.version import LooseVersion
+from looseversion import LooseVersion
 from functools import wraps
 
 from django.conf import settings

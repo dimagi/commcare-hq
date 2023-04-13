@@ -91,6 +91,7 @@ class DividedWeRunPlugin(Plugin):
 
 
 def name_of(test):
+    """Returns the full name of the test as a string."""
     if not isinstance(test, ContextSuite):
         return str(test)
     context = test.context
@@ -102,10 +103,32 @@ def name_of(test):
 
 
 def get_score(test):
-    name = name_of(test)
-    if isinstance(name, str):
-        name = name.encode('utf-8')
-    return md5(name).hexdigest()[0]
+    """Returns the score for a test, which is derived from the MD5 hex digest
+    of the test's (possibly truncated) name.
+
+    Calls ``name_of(test)`` to acquire the "full name", then truncates that
+    value at the first occurrence of an open-parenthesis character (or the
+    entire name if none exist) before generating the MD5 digest.
+
+    Example:
+
+    .. code-block:: python
+
+        >>> name_of(test_this)
+        'module.test_func(<This at 0xffffaaaaaaaa>)'
+        >>> name_of(test_other)
+        'module.test_func(<Other at 0xffffeeeeeeee>)'
+        >>> md5(name_of(test_this)).hexdigest()
+        '45fd9a647841b1e65633f332ee5f759b'
+        >>> md5(name_of(test_other)).hexdigest()
+        'acf7e690fb7d940bfefec1d06392ee17'
+        >>> get_score(test_this)
+        'c'
+        >>> get_score(test_other)
+        'c'
+    """
+    runtime_safe = name_of(test).split("(", 1)[0]
+    return md5(runtime_safe.encode('utf-8')).hexdigest()[0]
 
 
 def get_descriptor(test):

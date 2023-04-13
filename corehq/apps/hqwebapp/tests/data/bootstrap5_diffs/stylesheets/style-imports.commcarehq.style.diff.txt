@@ -1,0 +1,136 @@
+--- 
++++ 
+@@ -1,42 +1,92 @@
+-@import "_hq/includes/variables.less";
+-@import "_hq/includes/mixins.less";
+ 
+-@import "_hq/alerts.less";
+-@import "_hq/appcues.less";
+-@import "_hq/backgrounds.less";
+-@import "_hq/breadcrumbs.less";
+-@import "_hq/buttons.less";
+-@import "_hq/datatables.less";
+-@import "_hq/datagrid.less";
+-@import "_hq/date_range_picker.less";
+-@import "_hq/dropdowns.less";
+-@import "_hq/datetimepicker.less";
+-@import "_hq/facet.less";
+-@import "_hq/feedback.less";
+-@import "_hq/form_steps.less";
+-@import "_hq/forms.less";
+-@import "_hq/helpbubble.less";
+-@import "_hq/hubspot.less";
+-@import "_hq/icons.less";
+-@import "_hq/inline_edit.less";
+-@import "_hq/label.less";
+-@import "_hq/layouts.less";
+-@import "_hq/list.less";
+-@import "_hq/mapbox.less";
+-@import "_hq/modals.less";
+-@import "_hq/navbar.less";
+-@import "_hq/navs.less";
+-@import "_hq/notifications.less";
+-@import "_hq/pagination.less";
+-@import "_hq/panels.less";
+-@import "_hq/paused.less";
+-@import "_hq/popovers.less";
+-@import "_hq/report.less";
+-@import "_hq/radio_select.less";
+-@import "_hq/readable_forms.less";
+-@import "_hq/select2s.less";
+-@import "_hq/tables.less";
+-@import "_hq/tabs.less";
+-@import "_hq/typography.less";
+-@import "_hq/svg.less";
+-@import "_hq/utils.less";
++// Configuration
++@import "functions";
++@import "commcarehq/variables";  // This comes before Bootstrap 5 variables to override the defaults
++@import "variables";
++@import "commcarehq/variables_bootstrap3";  // Variables specific to B3-era Stylesheet
++@import "maps";
++@import "mixins";
++@import "commcarehq/mixins";
++@import "utilities";
++
++// Layout & components
++@import "root";
++@import "reboot";
++@import "type";
++@import "commcarehq/type";
++@import "images";
++@import "containers";
++@import "commcarehq/containers";
++@import "grid";
++@import "tables";
++@import "commcarehq/tables";
++@import "forms";
++@import "commcarehq/forms";
++@import "buttons";
++@import "commcarehq/buttons";
++@import "transitions";
++@import "dropdown";
++@import "commcarehq/dropdown";
++@import "button-group";
++@import "nav";
++@import "commcarehq/nav";
++@import "navbar";
++@import "commcarehq/navbar";
++@import "card";
++@import "accordion";
++@import "breadcrumb";
++@import "commcarehq/breadcrumb";
++@import "pagination";
++@import "badge";
++@import "alert";
++@import "commcarehq/alert";
++@import "progress";
++@import "list-group";
++@import "close";
++@import "toasts";
++@import "modal";
++@import "commcarehq/modal";
++@import "modal";
++@import "tooltip";
++@import "popover";
++@import "commcarehq/popover";
++@import "carousel";
++@import "spinners";
++@import "offcanvas";
++@import "placeholders";
++
++// Helpers
++@import "helpers";
++
++// Utilities
++@import "utilities/api";
++@import "commcarehq/utils";
++
++// Custom Widgets
++@import "commcarehq/appcues";
++@import "commcarehq/backgrounds";
++@import "commcarehq/datagrid";
++@import "commcarehq/datatables";
++@import "commcarehq/date_range_picker";
++@import "commcarehq/datetimepicker";
++@import "commcarehq/facet";
++@import "commcarehq/feedback";
++@import "commcarehq/form_steps";
++@import "commcarehq/helpbubble";
++@import "commcarehq/hubspot";
++@import "commcarehq/icons";
++@import "commcarehq/inline_edit";
++@import "commcarehq/label";
++@import "commcarehq/layouts";
++@import "commcarehq/list";
++@import "commcarehq/mapbox";
++@import "commcarehq/notifications";
++@import "commcarehq/pagination";
++@import "commcarehq/panels";
++@import "commcarehq/paused";
++@import "commcarehq/radio_select";
++@import "commcarehq/readable_forms";
++@import "commcarehq/report";
++@import "commcarehq/select2";
++@import "commcarehq/svg";
++@import "commcarehq/tabs";

@@ -10,7 +10,6 @@ from Crypto.Signature import PKCS1_PSS
 from memoized import memoized
 
 from corehq.apps.hqwebapp.forms import BulkUploadForm
-from custom.nic_compliance.utils import get_raw_password
 
 logger = logging.getLogger(__name__)
 
@@ -70,13 +69,6 @@ def aliased_language_name(lang_code):
             if code == lang_code:
                 return name
         raise KeyError('Unknown language code %s' % lang_code)
-
-
-def decode_password(obfuscated_password):
-    if settings.OBFUSCATE_PASSWORD_FOR_NIC_COMPLIANCE:
-        return get_raw_password(obfuscated_password)
-    else:
-        return obfuscated_password
 
 
 def get_environment_friendly_name():

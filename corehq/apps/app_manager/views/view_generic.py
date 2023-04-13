@@ -33,7 +33,7 @@ from corehq.apps.app_manager.views.modules import (
 from corehq.apps.app_manager.views.releases import get_releases_context
 from corehq.apps.app_manager.views.utils import bail, set_lang_cookie
 from corehq.apps.cloudcare.utils import should_show_preview_app
-from corehq.apps.domain.models import Domain
+from corehq.apps.domain.models import AppReleaseModeSetting, Domain
 from corehq.apps.hqmedia.controller import (
     MultimediaAudioUploadController,
     MultimediaImageUploadController,
@@ -341,6 +341,7 @@ def view_generic(request, domain, app_id, module_id=None, form_id=None,
 
     confirm = request.session.pop('CONFIRM', False)
     context.update({'confirm': confirm})
+    context.update({'show_release_mode': AppReleaseModeSetting.get_settings(domain).is_visible})
 
     response = render(request, template, context)
 

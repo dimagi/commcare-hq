@@ -11,7 +11,7 @@ from dimagi.utils.logging import notify_exception
 
 @task_failure.connect
 def log_celery_task_exception(task_id, exception, traceback, einfo, *args, **kwargs):
-    notify_exception('Celery task failure', exec_info=einfo.exc_info)
+    notify_exception(None, 'Celery task failure', exec_info=einfo.exc_info)
 
 
 class SignalHandlerContext(object):

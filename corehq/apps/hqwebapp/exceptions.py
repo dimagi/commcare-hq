@@ -4,3 +4,7 @@ class AlreadyRenderedException(Exception):
 
 class ResourceVersionsNotFoundException(Exception):
     pass
+
+
+class TemplateTagJSONException(Exception):
+    pass

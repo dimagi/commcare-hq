@@ -1,0 +1,44 @@
+{% extends "hqwebapp/bootstrap3/base_section.html" %}
+{% load i18n %}
+{% load hq_shared_tags %}
+
+{% requirejs_main 'data_interfaces/js/auto_update_rules' %}
+
+{% block page_content %}
+  {% initial_page_data 'rules' rules %}
+  {% initial_page_data 'rule_runs' rule_runs %}
+
+  <div id="ko-auto-update-rules">
+    <div class="row">
+      <div class="col-sm-8">
+        <p class="lead">
+          {% blocktrans %}
+            Automatically update or close cases from CommCare HQ
+          {% endblocktrans %}
+        </p>
+        <p>
+          {% blocktrans %}
+            Create rules for updating or closing cases from CommCare HQ.
+            All rules run every day at {{ time }} GMT.
+            For more information, see the <a href="https://confluence.dimagi.com/display/commcarepublic/Automatically+Close+Cases">Help Site</a>.
+          {% endblocktrans %}
+        </p>
+      </div>
+    </div>
+    <div class="spacer"></div>
+    <ul class="nav nav-tabs">
+      <li class="active"><a data-toggle="tab" href="#tabs-update-rules">{% trans "Automatic Update Rules" %}</a></li>
+      <li><a data-toggle="tab" href="#tabs-rule-run-history">{% trans "Rule Run History" %}</a></li>
+    </ul>
+
+    <div class="tab-content">
+      <div class="tab-pane fade in active" id="tabs-update-rules">
+        {% include 'data_interfaces/partials/auto_update_rule_list.html' %}
+      </div>
+      <div class="tab-pane" id="tabs-rule-run-history">
+        {% include 'data_interfaces/partials/auto_update_rule_run_history.html' %}
+      </div>
+    </div>
+  </div>
+
+{% endblock %}

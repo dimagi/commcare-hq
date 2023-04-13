@@ -1,4 +1,4 @@
-{% extends "hqwebapp/base_section.html" %}
+{% extends "hqwebapp/bootstrap3/base_section.html" %}
 {% load i18n %}
 {% load hq_shared_tags %}
 
@@ -122,7 +122,7 @@
             <tr>
               <td>{{ feature.label }}</td>
               <td>
-                {{ feature.description|safe }}<br/>
+                {{ feature.description }}<br/>
                 {% if feature.help_link %}
                   <a href="{{ feature.help_link }}" target="_blank">{% trans "More information" %}</a>
                 {% endif %}

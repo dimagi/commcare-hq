@@ -1,4 +1,6 @@
 import calendar
+
+from django.utils.safestring import mark_safe
 from corehq.apps.enterprise.dispatcher import EnterpriseReportDispatcher
 import functools
 import hashlib
@@ -428,8 +430,10 @@ class ReportConfig(CachedCouchDocumentMixin, Document):
                 email_text = email_response.content
             else:
                 email_text = content_json['report']
+
+            email_html = mark_safe(email_text)  # nosec: this is HTML we generate
             excel_attachment = dispatch_func(render_as='excel') if attach_excel else None
-            return ReportContent(email_text, excel_attachment)
+            return ReportContent(email_html, excel_attachment)
         except PermissionDenied:
             return ReportContent(
                 _(

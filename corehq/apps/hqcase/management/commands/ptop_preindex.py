@@ -1,4 +1,3 @@
-# http://www.gevent.org/gevent.monkey.html#module-gevent.monkey
 from datetime import datetime
 
 from django.conf import settings
@@ -6,7 +5,6 @@ from django.core.mail import mail_admins
 from django.core.management.base import BaseCommand
 
 import gevent
-from gevent import monkey
 
 from corehq.apps.hqcase.management.commands.ptop_reindexer_v2 import (
     DomainReindexerFactory,
@@ -34,8 +32,6 @@ from pillowtop.es_utils import (
     CASE_SEARCH_HQ_INDEX_NAME,
 )
 from pillowtop.reindexer.reindexer import ReindexerFactory
-
-monkey.patch_all()
 
 
 def get_reindex_commands(hq_index_name):

@@ -267,6 +267,10 @@ class HQApiKeyForm(forms.Form):
         required=False,
         help_text=gettext_lazy("Limit the key's access to a single project space")
     )
+    expiration_date = forms.DateTimeField(
+        required=False,
+        help_text=gettext_lazy("Date and time the API key should expire on")
+    )
 
     def __init__(self, *args, **kwargs):
         self.couch_user = kwargs.pop('couch_user')
@@ -282,6 +286,7 @@ class HQApiKeyForm(forms.Form):
                 crispy.Field('name'),
                 crispy.Field('domain'),
                 crispy.Field('ip_allowlist'),
+                crispy.Field('expiration_date', css_class='date-picker'),
             ),
             hqcrispy.FormActions(
                 StrictButton(
@@ -294,7 +299,7 @@ class HQApiKeyForm(forms.Form):
 
     def create_key(self, user):
         try:
-            HQApiKey.objects.get(name=self.cleaned_data['name'], user=user)
+            HQApiKey.all_objects.get(name=self.cleaned_data['name'], user=user)
             raise DuplicateApiKeyName
         except HQApiKey.DoesNotExist:
             new_key = HQApiKey.objects.create(
@@ -302,6 +307,7 @@ class HQApiKeyForm(forms.Form):
                 ip_allowlist=self.cleaned_data['ip_allowlist'],
                 user=user,
                 domain=self.cleaned_data['domain'] or '',
+                expiration_date=self.cleaned_data['expiration_date'],
             )
             return new_key
 

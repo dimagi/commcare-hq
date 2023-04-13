@@ -1,0 +1,210 @@
+{% load menu_tags %}
+{% load i18n %}
+{% load hq_shared_tags %}
+
+{% if request.couch_user %}
+<ul class="navbar-nav" role="menu">
+    <li class="nav-item dropdown">
+      <a href="#"
+         id="manageSettingsDropdown"
+         class="nav-link dropdown-toggle dropdown-toggle-with-icon track-usage-link"
+         data-bs-toggle="dropdown"
+         data-category="Nav Bar"
+         data-action="Click Gear Icon">
+          <i class="fa fa-cog nav-main-icon"></i>
+{#          dropdown-toggle-with-icon is custom class#}
+{#            <span class="d-inline-xs d-md-none">{% trans "Manage Settings" %}</span>#}
+      </a>
+      <ul class="dropdown-menu dropdown-menu-right" aria-labelledby="manageSettingsDropdown" role="menu">
+        <li class="dropdown-header nav-header">{% trans 'Logged in As' %}</li>
+        <li class="nav-login-header">
+          <div class="login-container">
+            <div>
+              {% if user.first_name %}
+                {{ user.first_name }} {{ user.last_name }}
+                <br />{{ user.username }}
+              {% else %}
+                {{ user.username }}
+              {% endif %}
+            </div>
+            {% with request.couch_user.role_label.strip as role %}
+              {% if role %}
+              <span class="badge bg-secondary">
+                {{ role }}
+              </span>
+              {% endif %}
+            {% endwith %}
+          </div>
+        </li>
+        {% if request.couch_user.is_web_user and domain and domain != 'public' and not request.project.is_snapshot %}
+            {% if IS_DOMAIN_BILLING_ADMIN %}
+              <li><hr class="dropdown-divider"></li>
+              <li class="dropdown-header nav-header">{% trans 'Manage Enterprise' %}</li>
+              <li>
+                <a href="{% url "enterprise_dashboard" domain %}" class="dropdown-item">
+                  <i class="fa fa-cogs icon-cogs dropdown-icon"></i> {% trans "Enterprise Console" %}
+                </a>
+              </li>
+            {% endif %}
+          <li><hr class="dropdown-divider"></li>
+          <li class="dropdown-header nav-header">{% trans 'Manage Project' %}</li>
+          <li>
+            <a href="{% url "domain_settings_default" domain %}" class="dropdown-item track-usage-link"
+               data-category="Nav Bar" data-action="Gear Icon" data-label="Update Project Settings">
+              <i class="fa fa-cogs icon-cogs dropdown-icon"></i> {% trans "Project Settings" %}
+            </a>
+          </li>
+          {% if not enterprise_mode %}
+          <li>
+            <a href="{% url "domain_subscription_view" domain %}" class="dropdown-item track-usage-link"
+               data-category="Nav Bar" data-action="Gear Icon" data-label="Current Subscription">
+              <i class="fa fa-dashboard icon-dashboard dropdown-icon"></i> {% trans "Current Subscription" %}
+            </a>
+          </li>
+          {% endif %}
+          {% if request|toggle_enabled:"SUPPORT" %}
+            <li><hr class="dropdown-divider"></li>
+            <li class="dropdown-header nav-header">{% trans 'Support Options' %}</li>
+            <li>
+              <a href="{% url "raw_doc" %}?id={{ request.project.get_id }}"
+                 id="menuitem-view-domain-doc"
+                 class="dropdown-item">
+                <i class="fa fa-cogs icon-cogs dropdown-icon"></i> {% trans "View Domain Doc" %}
+              </a>
+            </li>
+          {% endif %}
+        {% endif %}
+        <li><hr class="dropdown-divider"></li>
+        <li class="dropdown-header nav-header">{% trans 'Manage Account' %}</li>
+        <li>
+          <a href="{% url "my_account_settings" %}" class="dropdown-item track-usage-link"
+             data-category="Nav Bar" data-action="Gear Icon" data-label="My Account Settings">
+            <i class="fa fa-user icon-user dropdown-icon"></i> {% trans 'My Account Settings' %}
+          </a>
+        </li>
+        <li>
+          <a href="{% url "logout" %}" class="dropdown-item track-usage-link"
+             data-category="Nav Bar" data-action="Gear Icon" data-label="Sign Out">
+            <i class="icon-signout fa fa-sign-out"></i>
+            {% trans 'Sign Out' %}
+          </a>
+        </li>
+      </ul>
+    </li>
+    {% if enterprise_mode and allow_report_an_issue and not 500traceback or not enterprise_mode %}
+        {# In enterprise mode, the bubble is only shown when the user can report an issue and this isn't from a 500 error #}
+        {# In non-enterprise mode, the bubble is always shown #}
+      <li class="nav-item dropdown">
+        <a href="#"
+           class="nav-link dropdown-toggle dropdown-toggle-with-icon track-usage-link"
+           data-bs-toggle="dropdown"
+           id="helpDropdown"
+           aria-expanded="false"
+           data-category="Nav Bar"
+           data-action="Click Question Mark">
+            <i class="fa fa-question-circle nav-main-icon"></i>
+{#            <span class="d-inline-xs d-md-none">{% trans "Help &amp; Resources" %}</span>#}
+        </a>
+        <ul class="dropdown-menu dropdown-menu-right"
+            aria-labelledby="helpDropdown"
+            role="menu">
+          {% if not enterprise_mode %}
+            <li class="dropdown-header nav-header">
+              {% blocktrans with cc_name=commcare_hq_names.COMMCARE_NAME %}
+                {{ cc_name }} Help
+              {% endblocktrans %}
+            </li>
+            <li>
+              <a href="{% trans 'https://wiki.commcarehq.org/display/commcarepublic/Home' %}"
+                 class="dropdown-item track-usage-link"
+                 target="_blank"
+                 data-category="Nav Bar"
+                 data-action="Question Mark"
+                 data-label="Visit the Help Site">
+                  <i class="fa fa-question-circle icon-question-sign dropdown-icon"></i>
+                  {% trans "Visit the Help Site" %}
+              </a>
+            </li>
+            <li>
+              <a href="{% trans 'https://forum.dimagi.com/' %}"
+                 class="dropdown-item track-usage-link"
+                 target="_blank"
+                 data-category="Nav Bar"
+                 data-action="Question Mark"
+                 data-label="User Forum">
+                  <i class="fa fa-comments icon-comments dropdown-icon"></i>
+                  {% trans "User Forum" %}
+              </a>
+            </li>
+          {% endif %}
+          {% if allow_report_an_issue and not 500traceback %}
+            <li>
+              <a href="#modalReportIssue"
+                 data-bs-toggle="modal"
+                 class="dropdown-item track-usage-link"
+                 data-category="Nav Bar"
+                 data-action="Question Mark"
+                 data-label="Report an Issue">
+                  <i class="fa fa-exclamation-triangle icon-warning-sign dropdown-icon"></i>
+                  {% trans "Report an Issue" %}
+              </a>
+            </li>
+          {% endif %}
+          {% if not enterprise_mode %}
+            <li>
+              <a href="https://status.commcarehq.org/"
+                 data-bs-toggle="modal"
+                 class="dropdown-item track-usage-link"
+                 data-category="Nav Bar"
+                 data-action="Question Mark"
+                 data-label="Status Page">
+                  <i class="fa fa-info-circle dropdown-icon"></i>
+                  {% trans "Status Page" %}
+              </a>
+            </li>
+          {% endif %}
+          </ul>
+        </li>
+    {% endif %}
+    {% if request.couch_user and request.couch_user.is_web_user %}
+    {% include 'notifications/partials/bootstrap5/global_notifications.html' %}
+    <li id="settingsmenu-project"
+        class="nav-item dropdown">
+      <a href="#"
+         class="nav-link dropdown-toggle"
+         data-bs-toggle="dropdown">
+{#            <span class="responsive-label">{% trans "Project" %}:</span>#}
+        {% if domain %}
+          {% if domain == 'public' %}
+            {% trans 'CommCare HQ Demo Project' %}
+          {% else %}
+            {% if request.project.is_snapshot %}
+              {% blocktrans with request.project.copied_from.display_name as snap_name %}
+                Snapshot of {{ snap_name }}
+              {% endblocktrans %}
+            {% else %}
+              {{ request.project.display_name }}
+            {% endif %}
+          {% endif %}
+        {% else %}
+          {%  trans 'Select Project...' %}
+        {% endif %}
+      </a>
+      {% if domain %}
+        {% domains_for_user request domain %}
+      {% else %}
+        {% domains_for_user request %}
+      {% endif %}
+    </li>
+    {% endif %}
+    {% if request.couch_user and request.couch_user.is_commcare_user %}
+    <li id="settingsmenu-project-commcareonly"
+        class="nav-item">
+      <a href="{% url "homepage" %}"
+         class="nav-link">
+        {{ request.couch_user.project.display_name }}
+      </a>
+    </li>
+    {% endif %}
+</ul>
+{% endif %}

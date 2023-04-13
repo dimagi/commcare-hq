@@ -5,9 +5,8 @@ from copy import deepcopy
 
 import pytz
 
-from corehq.apps.es.es_query import ESQuerySet
+from corehq.apps.es.es_query import ESQuerySet, ScanResult
 from corehq.apps.es.utils import values_list
-from corehq.elastic import ScanResult
 
 FILTER_TEMPLATE = """
     def {fn}(self, ...):
