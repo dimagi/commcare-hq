@@ -1,4 +1,3 @@
-import uuid
 from contextlib import contextmanager
 from datetime import datetime, timedelta
 
@@ -7,14 +6,11 @@ from django.test import TestCase
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.enterprise.tests.utils import create_enterprise_permissions
 from corehq.apps.users.dbaccessors import delete_all_users
-from corehq.apps.users.models import CommCareUser, WebUser, UserHistory
+from corehq.apps.users.models import CommCareUser, WebUser
 from corehq.apps.users.tasks import (
     apply_correct_demo_mode_to_loadtest_user,
     update_domain_date,
 )
-from corehq.apps.hqcase.utils import submit_case_blocks
-from casexml.apps.case.mock import CaseBlock
-
 
 class TasksTest(TestCase):
 
