@@ -9,7 +9,7 @@ from custom.abdm.milestone_one.utils.request_util import (
     get_response_http_post,
 )
 
-AUTH_OTP_URL = "v2/auth/init"
+AUTH_OTP_URL = "v1/auth/init"
 CONFIRM_WITH_MOBILE_OTP_URL = "v1/auth/confirmWithMobileOTP"
 CONFIRM_WITH_AADHAAR_OTP_URL = "v1/auth/confirmWithAadhaarOtp"
 ACCOUNT_INFORMATION_URL = "v1/account/profile"
