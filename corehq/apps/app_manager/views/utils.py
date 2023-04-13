@@ -205,6 +205,12 @@ def overwrite_app(app, master_build, report_map=None):
 
 
 def _update_multimedia_map(old_map, new_map):
+    """
+    Compares incoming and current multimedia map items and returns a new map with each:
+    - old map item where it was previously copied from this same incoming item
+    - new map item otherwise
+    - version removed, because it should be set based on the downstream app
+    """
     for path in new_map:
         new_map[path]['upstream_media_id'] = None
         if path in old_map and old_map[path].get('upstream_media_id') == new_map[path]['multimedia_id']:
