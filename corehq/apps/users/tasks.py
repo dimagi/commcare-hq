@@ -448,6 +448,3 @@ def clean_domain_users_data(domain, user_ids, cleared_by_username, progress_id=N
             from_email=settings.DEFAULT_FROM_EMAIL,
             recipient_list=[cleared_by_user.get_email()],
         )
-
-    if track_progress:
-        progress_helper.expire()

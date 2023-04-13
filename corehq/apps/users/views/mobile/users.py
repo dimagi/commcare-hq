@@ -1354,6 +1354,11 @@ class ClearCommCareUsers(DeleteCommCareUsers):
             messages.info(request, _("""
                 Mobile Worker data clearing in progress ( {progress_percent} % completed ).
             """).format(progress_percent=self.clearing_percent))
+        else:
+            users_cleared = self.progress_helper.total
+            if users_cleared:
+                messages.success(request, f"{users_cleared} user(s) cleared.")
+                self.progress_helper.expire()
 
         return super().get(request, *args, **kwargs)
 
@@ -1382,18 +1387,22 @@ class ClearCommCareUsers(DeleteCommCareUsers):
 
     @property
     def clearing_process_busy(self):
-        return SimpleProgressHelper(self.progress_id).is_busy
+        return self.progress_helper.is_busy
 
     @property
     def clearing_percent(self):
         try:
-            return SimpleProgressHelper(self.progress_id).percentage_complete
+            return self.progress_helper.percentage_complete
         except ValueError:
             return None
 
     @property
     def progress_id(self):
         return f"{self.domain}-user-clearing"
+
+    @property
+    def progress_helper(self):
+        return SimpleProgressHelper(self.progress_id)
 
     def _clear_users_data(self, request, user_docs_by_id):
         user_ids = [user_id for user_id, _ in user_docs_by_id.items()]
