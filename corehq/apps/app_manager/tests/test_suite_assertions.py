@@ -24,33 +24,36 @@ class DefaultSuiteAssertionsTest(SimpleTestCase, SuiteMixin):
 
 @patch_get_xform_resource_overrides()
 class CustomSuiteAssertionsTest(SimpleTestCase, TestXmlMixin):
-    def test_custom_assertions(self, *args):
-        factory = AppFactory()
-        module, form = factory.new_basic_module('m0', 'case1')
-
-        tests = ["foo = 'bar' and baz = 'buzz'", "count(instance('casedb')/casedb/case[@case_type='friend']) > 0"]
-
-        form.custom_assertions = [
-            CustomAssertion(test=test, text={'en': "en-{}".format(id), "fr": "fr-{}".format(id)})
-            for id, test in enumerate(tests)
+    def setUp(self):
+        _assertion_0 = "foo = 'bar' and baz = 'buzz'"
+        _assertion_1 = "count(instance('casedb')/casedb/case[@case_type='friend']) > 0"
+        self._custom_assertions = [
+            CustomAssertion(test=_assertion_0, text={'en': "en-0", "fr": "fr-0"}),
+            CustomAssertion(test=_assertion_1, text={'en': "en-1", "fr": "fr-1"}),
         ]
-        assertions_xml = [
-            """
-                <assert test="{test}">
-                    <text>
-                        <locale id="custom_assertion.m0.f0.{id}"/>
-                    </text>
-                </assert>
-            """.format(test=test, id=id) for id, test in enumerate(tests)
-        ]
-        self.assertXmlPartialEqual(
-            """
+        self._assertions_xml = f"""
             <partial>
                 <assertions>
-                    {assertions}
+                    <assert test="{_assertion_0}">
+                        <text>
+                            <locale id="custom_assertion.m0.f0.0"/>
+                        </text>
+                    </assert>
+                    <assert test="{_assertion_1}">
+                        <text>
+                            <locale id="custom_assertion.m0.f0.1"/>
+                        </text>
+                    </assert>
                 </assertions>
             </partial>
-            """.format(assertions="".join(assertions_xml)),
+        """
+
+    def test_custom_form_assertions(self, *args):
+        factory = AppFactory()
+        module, form = factory.new_basic_module('m0', 'case1')
+        form.custom_assertions = self._custom_assertions
+        self.assertXmlPartialEqual(
+            self._assertions_xml,
             factory.app.create_suite(),
             "entry/assertions"
         )
