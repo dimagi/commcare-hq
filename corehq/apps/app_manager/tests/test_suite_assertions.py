@@ -12,7 +12,7 @@ from corehq.apps.app_manager.tests.util import (
 
 
 @patch_get_xform_resource_overrides()
-class SuiteAssertionsTest(SimpleTestCase, SuiteMixin):
+class DefaultSuiteAssertionsTest(SimpleTestCase, SuiteMixin):
     file_path = ('data', 'suite')
 
     def test_case_assertions(self, *args):
@@ -21,6 +21,9 @@ class SuiteAssertionsTest(SimpleTestCase, SuiteMixin):
     def test_no_case_assertions(self, *args):
         self._test_generic_suite('app_no_case_sharing', 'suite-no-case-sharing')
 
+
+@patch_get_xform_resource_overrides()
+class CustomSuiteAssertionsTest(SimpleTestCase, TestXmlMixin):
     def test_custom_assertions(self, *args):
         factory = AppFactory()
         module, form = factory.new_basic_module('m0', 'case1')
