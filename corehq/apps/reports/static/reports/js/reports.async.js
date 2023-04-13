@@ -10,6 +10,7 @@ hqDefine("reports/js/reports.async", function () {
         self.standardReport = o.standardReport;
         self.filterRequest = null;
         self.reportRequest = null;
+        self.hashRequest = null;
         self.loaderClass = '.report-loading';
 
         self.humanReadableErrors = {
@@ -41,22 +42,84 @@ hqDefine("reports/js/reports.async", function () {
         };
 
         self.init = function () {
+            console.log("init")
             self.reportContent.attr('style', 'position: relative;');
-
-            self.updateReport(true, window.location.search.substr(1), self.standardReport.filterSet);
+            var init_params = window.location.search.substr(1);
+            var pathName = window.location.pathname;
+            if (init_params && self.isCaseListRelated(pathName)) {
+                console.log("in case list or case_list_explorer")
+                self.getQueryHash(init_params, true, self.standardReport.filterSet, pathName);
+            }
+            else {
+                console.log("no init params or not CL or CLE")
+                self.updateReport(true, init_params, self.standardReport.filterSet);
+            }
 
             // only update the report if there are actually filters set
             if (!self.standardReport.needsFilters) {
                 self.standardReport.filterSubmitButton.addClass('disabled');
             }
             self.filterForm.submit(function () {
+                console.log("applying filters")
                 var params = hqImport('reports/js/reports.util').urlSerialize(this);
-                history.pushState(null,window.location.title, window.location.pathname + '?' + params);
-                self.updateFilters(params);
-                self.updateReport(false, params, true);
+                if (self.isCaseListRelated(pathName)) {
+                    console.log("in case list or case_list_explorer")
+                    self.getQueryHash(params, false, true, pathName);
+                }
+                else {
+                    console.log("not CL or CLE")
+                    history.pushState(null,window.location.title, window.location.pathname + '?' + params);
+                    self.updateFilters(params);
+                    self.updateReport(false, params, true);
+                }
                 return false;
             });
         };
+
+        self.isCaseListRelated = function(pathName) {
+            return pathName.includes('case_list');
+        }
+
+        self.getQueryHash = function (params, initial_load, setFilters, pathName) {
+            // This only applies to Case List and Case List Explorer filter queries
+            var hash;
+            // not the greatest way to do this i think
+            if (params.includes('query=')) {
+                console.log('hash present')
+                hash = params.replace('query=', '');
+                params = '';
+            }
+            else {
+                console.log("no hash - create new")
+                hash = ''
+            }
+            self.hashRequest = $.ajax({
+                    url: pathName.replace(self.standardReport.urlRoot,
+                        self.standardReport.urlRoot + 'get_or_create_hash/'),
+                    dataType: 'json',
+                    data: {'hash': hash, 'params': params},
+                    success: function (data) {
+                        console.log("hash success")
+                        self.hashRequest = null;
+                        console.log(data.query_hash)
+                        console.log(data.query_string)
+                        console.log(data.not_found)
+                        if (!initial_load) { self.updateFilters(data.query_string); }
+                        if (!data.query_string) { setFilters = false; }
+                        self.updateReport(initial_load, data.query_string, setFilters);
+                        if (data.not_found) {
+                            history.pushState(null, window.location.title, pathName);
+                        }
+                        else {
+                            history.pushState(null, window.location.title, pathName + '?query=' + data.query_hash);
+                        }
+                    },
+                    error: function (data) {
+                        // could be any number of couch errors - borrow from the error list above?
+                        console.log("Some sort of error... be more concise with it")
+                    },
+                });
+        }
 
         self.updateFilters = function (form_params) {
             self.standardReport.saveDatespanToCookie();

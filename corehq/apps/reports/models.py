@@ -1,4 +1,5 @@
 from corehq.apps.reports.exceptions import TableauAPIError
+import hashlib
 import jwt
 import json
 import logging
@@ -561,3 +562,21 @@ class TableauAPISession(object):
             {}
         )
         return True
+
+
+class QueryStringHash(models.Model):
+    date_created = models.DateTimeField(auto_now_add=True)
+    last_accessed = models.DateTimeField(auto_now=True)
+    query_hash = models.CharField(max_length=64, db_index=True)
+    query_string = models.TextField()  # max length for this too?
+
+    @staticmethod
+    def create_hash_from_string(query_string):
+        print("creating hash")
+        return hashlib.sha256(query_string.encode()).hexdigest()
+
+    def save(self, *args, **kwargs):
+        if not self.query_hash:
+            print("auto creating hash when none is provided")
+            self.query_hash = self.create_hash_from_string(self.query_string)
+        super(QueryStringHash, self).save(*args, **kwargs)
