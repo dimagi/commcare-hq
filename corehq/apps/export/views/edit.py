@@ -12,7 +12,6 @@ from corehq.apps.export.const import (
     CASE_EXPORT,
     FORM_EXPORT,
     ALL_CASE_TYPE_EXPORT,
-    BULK_CASE_EXPORT_CACHE
 )
 from corehq.apps.export.models import ExportInstance, CaseExportInstance
 from corehq.apps.export.views.new import BaseExportView
@@ -82,8 +81,7 @@ class BaseEditNewCustomExportView(BaseExportView):
                 isinstance(new_export_instance, CaseExportInstance)
                 and new_export_instance.case_type == ALL_CASE_TYPE_EXPORT
             ):
-                progress_id = f'{BULK_CASE_EXPORT_CACHE}:{request.domain}'
-                trigger_update_case_instance_tables_task(new_export_instance._id, progress_id)
+                trigger_update_case_instance_tables_task(request.domain, new_export_instance._id)
         except ResourceNotFound:
             new_export_instance = None
         if (
