@@ -88,20 +88,17 @@ class AttendanceTrackingConfig(models.Model):
         default=DEFAULT_ATTENDEE_CASE_TYPE,
     )
 
-    @staticmethod
-    def toggle_mobile_worker_attendees(domain, value):
-        config, _created = AttendanceTrackingConfig.objects.get_or_create(domain=domain)
-        config.mobile_worker_attendees = value
-        config.save()
+
+def toggle_mobile_worker_attendees(domain, attendees_enabled):
+    AttendanceTrackingConfig.objects.update_or_create(
+        domain=domain,
+        defaults={'mobile_worker_attendees': attendees_enabled},
+    )
 
 
-@quickcache(['domain'])
-def mobile_workers_can_be_attendees(domain):
-    try:
-        config = AttendanceTrackingConfig.objects.get(pk=domain)
-        return config.mobile_worker_attendees
-    except AttendanceTrackingConfig.DoesNotExist:
-        return False
+def mobile_worker_attendees_enabled(domain):
+    config = AttendanceTrackingConfig.objects.filter(domain=domain).first()
+    return config.mobile_worker_attendees if config else False
 
 
 @quickcache(['domain'])

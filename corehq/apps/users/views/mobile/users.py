@@ -62,7 +62,7 @@ from corehq.apps.domain.views.base import DomainViewMixin
 from corehq.apps.es import FormES
 from corehq.apps.events.models import (
     get_attendee_case_type,
-    mobile_workers_can_be_attendees,
+    mobile_worker_attendees_enabled,
 )
 from corehq.apps.events.tasks import create_attendee_for_user
 from corehq.apps.groups.models import Group
@@ -781,7 +781,7 @@ class MobileWorkerListView(JSONResponseMixin, BaseUserSettingsView):
         if (
             domain_has_privilege(self.domain, privileges.ATTENDANCE_TRACKING)
             and toggles.ATTENDANCE_TRACKING.enabled(self.domain)
-            and mobile_workers_can_be_attendees(self.domain)
+            and mobile_worker_attendees_enabled(self.domain)
         ):
             self.create_attendee_for_user(couch_user)
 

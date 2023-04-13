@@ -30,12 +30,12 @@ from .models import (
     EVENT_IN_PROGRESS,
     EVENT_NOT_STARTED,
     EVENT_STATUS_TRANS,
-    AttendanceTrackingConfig,
     AttendeeModel,
     Event,
     get_attendee_case_type,
     get_paginated_attendees,
-    mobile_workers_can_be_attendees,
+    mobile_worker_attendees_enabled,
+    toggle_mobile_worker_attendees,
 )
 from .tasks import (
     close_mobile_worker_attendee_cases,
@@ -434,14 +434,14 @@ class AttendeesConfigView(JSONResponseMixin, BaseUserSettingsView, BaseEventView
     @allow_remote_invocation
     def get(self, request, *args, **kwargs):
         return self.json_response({
-            "mobile_worker_attendee_enabled": mobile_workers_can_be_attendees(self.domain)
+            "mobile_worker_attendee_enabled": mobile_worker_attendees_enabled(self.domain)
         })
 
     @allow_remote_invocation
     def post(self, request, *args, **kwargs):
         json_data = json.loads(request.body)
         attendees_enabled = json_data['mobile_worker_attendee_enabled']
-        AttendanceTrackingConfig.toggle_mobile_worker_attendees(self.domain, value=attendees_enabled)
+        toggle_mobile_worker_attendees(self.domain, attendees_enabled)
         if attendees_enabled:
             sync_mobile_worker_attendees.delay(self.domain, user_id=self.couch_user.user_id)
         else:
