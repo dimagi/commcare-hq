@@ -599,6 +599,30 @@ class TestRemoteLinkedApps(BaseLinkedAppsTest):
         media_item = list(self.master_app_with_report_modules.multimedia_map.values())[0]
         self.assertEqual(missing_media, [('case_list_image.jpg', media_item)])
 
+        # media exists based on old ids
+        old_multimedia_ids = set([media_item.multimedia_id])
+        with patch('corehq.apps.hqmedia.models.CommCareMultimedia.get', side_effect=ResourceNotFound):
+            missing_media = _get_missing_multimedia(self.master_app_with_report_modules, old_multimedia_ids)
+        self.assertEqual(missing_media, [])
+
+        # mock id for multimedia saved locally
+        local_media_id = uuid.uuid4().hex
+        old_multimedia_ids = set([local_media_id])
+
+        # media is not yet saved to app based on old ids
+        missing_media = _get_missing_multimedia(self.master_app_with_report_modules, old_multimedia_ids)
+        self.assertEqual(missing_media, [('case_list_image.jpg', media_item)])
+
+        # update multimedia map as in fetch_remote_media
+        media_item.upstream_media_id = media_item.multimedia_id
+        media_item.multimedia_id = local_media_id
+
+        # media is no longer missing based on old ids
+        with patch('corehq.apps.hqmedia.models.CommCareMultimedia.get', side_effect=ResourceNotFound):
+            missing_media = _get_missing_multimedia(self.master_app_with_report_modules, old_multimedia_ids)
+        self.assertEqual(missing_media, [])
+
+
     def test_add_domain_to_media(self):
         self.image.valid_domains.remove(self.master_app_with_report_modules.domain)
         self.image.save()
