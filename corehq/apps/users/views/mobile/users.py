@@ -1341,6 +1341,60 @@ class DeleteCommCareUsers(BaseManageCommCareUserView, UsernameUploadMixin):
             messages.success(request, f"{deleted_count} user(s) deleted.")
 
 
+@method_decorator([toggles.CLEAR_MOBILE_WORKER_DATA.required_decorator()], name='dispatch')
+class ClearCommCareUsers(DeleteCommCareUsers):
+    urlname = 'clear_commcare_users'
+    page_title = gettext_noop('Bulk Clear')
+    template_name = 'users/bulk_clear.html'
+
+    def post(self, request, *args, **kwargs):
+        usernames = self._get_usernames(request)
+        if not usernames:
+            return self.get(request, *args, **kwargs)
+
+        user_docs_by_id = {doc['_id']: doc for doc in get_user_docs_by_username(usernames)}
+        usernames_not_found = self._get_usernames_not_found(request, user_docs_by_id, usernames)
+
+        if usernames_not_found:
+            messages.error(request, _("""
+                No users cleared. Please address the above issue(s) and re-upload your updated file.
+            """))
+        else:
+            self._clear_users_data(request, user_docs_by_id)
+
+        return self.get(request, *args, **kwargs)
+
+    def _clear_users_data(self, request, user_docs_by_id):
+        from corehq.apps.users.model_log import UserModelAction
+        from corehq.apps.hqwebapp.tasks import send_mail_async
+        from django.conf import settings
+
+        cleared_count = 0
+        for user_id, doc in user_docs_by_id.items():
+            user = CommCareUser.wrap(doc)
+            user.clear_user_data()
+
+            log_user_change(
+                by_domain=self.domain,
+                for_domain=self.domain,
+                couch_user=user,
+                changed_by_user=request.couch_user,
+                changed_via="web",
+                action=UserModelAction.CLEAR
+            )
+
+            cleared_count += 1
+        if cleared_count:
+            messages.success(request, f"{cleared_count} user(s) cleared.")
+
+        send_mail_async.delay(
+            subject=f"Mobile Worker Clearing Complete - {self.domain}",
+            message=f"The mobile workers have been cleared successfully for the project '{self.domain}'.",
+            from_email=settings.DEFAULT_FROM_EMAIL,
+            recipient_list=[self.request.couch_user.get_email()],
+        )
+
+
 class CommCareUsersLookup(BaseManageCommCareUserView, UsernameUploadMixin):
     urlname = 'commcare_users_lookup'
     page_title = gettext_noop('Mobile Workers Bulk Lookup')
