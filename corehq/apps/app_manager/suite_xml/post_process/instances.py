@@ -393,7 +393,7 @@ def get_all_instances_referenced_in_xpaths(app, xpaths):
     return instances, unknown_instance_ids
 
 
-instance_re = re.compile(r"""instance\(['"]([\w\-:]+)['"]\)""", re.UNICODE)
+instance_re = re.compile(r"""instance\(\s*['"]([\w\-:]+)['"]\s*\)""", re.UNICODE)
 
 
 def get_instance_names(xpath):
