@@ -123,6 +123,11 @@
             {% trans "Data Registries" %}
           </th>
           {% endif %}
+          {% if request|toggle_enabled:"ATTENDANCE_TRACKING" %}
+          <th class="text-center">
+            {% trans "Attendance Tracking" %}
+          </th>
+          {% endif %}
           <th>{% trans "Actions" %}</th>
         </tr>
         </thead>
@@ -238,6 +243,14 @@
               </span>
             </div>
           </td>
+          {% endif %}
+          {% if request|toggle_enabled:"ATTENDANCE_TRACKING" %}
+            <td class="text-center">
+              <div data-bind="visible: permissions.manage_attendance_tracking,
+                                        permissionIcon: {
+                                          manage: permissions.manage_attendance_tracking,
+                                        }"></div>
+            </td>
           {% endif %}
           <td>
             <button class="btn btn-default" data-bind="visible: $data._id, click: $data._id ? $root.setRoleBeingEdited : null">
