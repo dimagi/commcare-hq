@@ -127,3 +127,6 @@ METRICS_PROVIDERS = [
 ]
 
 FORMPLAYER_INTERNAL_AUTH_KEY = "abc123"
+
+# A workaround to test the messaging framework. See: https://stackoverflow.com/a/60218100
+MESSAGE_STORAGE = 'django.contrib.messages.storage.cookie.CookieStorage'
