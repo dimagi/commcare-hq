@@ -1,4 +1,5 @@
 from unittest.mock import patch, Mock
+from django.test import override_settings
 
 from rest_framework import status
 from rest_framework.reverse import reverse
@@ -96,7 +97,13 @@ class TestABHAVerification(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertEqual(self.invalid_req_msg, response.json().get("message"))
 
-    def test_get_health_card_success(self):
+    @override_settings(ABDM_CLIENT_ID='id', ABDM_CLIENT_SECRET='secret', ABDM_GATEWAY_URL='http://url.tld',
+                       ABDM_BASE_URL='http://base.tld')
+    @patch('custom.abdm.milestone_one.utils.abha_verification_util.requests.post')
+    def test_get_health_card_success(self, post_mock):
+        post_mock.return_value = Mock()
+        post_mock.status_code = 200
+        post_mock.content = b'image'
         with patch('custom.abdm.milestone_one.utils.abha_verification_util.requests.get',
                    side_effect=TestABHAVerification._get_health_card_mock_response):
             response = self.client.post(reverse("get_health_card_png"), {"user_token": "fake_token"})
