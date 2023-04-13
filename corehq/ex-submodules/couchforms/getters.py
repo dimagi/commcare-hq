@@ -10,6 +10,7 @@ from couchforms.exceptions import (
     MultipartFilenameError,
     PayloadTooLarge,
     InvalidSubmissionFileExtensionError,
+    AttachmentSizeTooLarge,
 )
 from dimagi.utils.parsing import string_to_utc_datetime
 from dimagi.utils.web import get_ip, get_site_domain
@@ -53,6 +54,8 @@ def get_instance_and_attachment(request):
             instance = instance_file.read()
             for key, item in request.FILES.items():
                 if key != MAGIC_PROPERTY:
+                    if _valid_attachment_size(item) is False:
+                        raise AttachmentSizeTooLarge()
                     attachments[key] = item
         if not instance:
             raise MultipartEmptyPayload()
@@ -71,6 +74,10 @@ def _valid_file_extension(file):
         return False
     file_extension = file.name.rsplit(".", 1)[-1]
     return file_extension == 'xml'
+
+
+def _valid_attachment_size(file):
+    return file.size <= settings.MAX_UPLOAD_SIZE_ATTACHMENT
 
 
 def get_location(request=None):
