@@ -163,6 +163,8 @@ def augment_warning_messages():
         message += f"\nmodule: {module} line {lineno}"
         if category and issubclass(category, DeprecationWarning):
             message += POSSIBLE_RESOLUTIONS
+            if os.environ.get("CCHQ_STRICT_WARNINGS") and os.environ.get('CCHQ_TESTING') != '1':
+                message += STRICT_WARNINGS_WORKAROUND
 
         stacklevel += 1
         return real_warn(message, category, stacklevel, source)
@@ -203,4 +205,9 @@ Possible resolutions:
   path or to add a whitelist item that uniquely matches the deprecation
   warning, use the `corehq.tests.util.warnings.filter_warnings()`
   decorator to filter the specific warning in tests that trigger it.
+"""
+
+STRICT_WARNINGS_WORKAROUND = """
+Workaround: prepend the command with 'env -u CCHQ_STRICT_WARNINGS ' to
+disable strict warnings if none of these resolutions are appropriate.
 """

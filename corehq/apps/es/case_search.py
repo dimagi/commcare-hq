@@ -399,7 +399,7 @@ def wrap_case_search_hit(hit, include_score=False):
     with a matching name. Fields like "doc_type" and "@indexed_on" are
     ignored.
 
-    Warning: `include_score=True` or `is_related_case=True` may cause
+    Warning: `include_score=True` may cause
     the relevant user-defined properties to be overwritten.
 
     :returns: A `CommCareCase` instance.
