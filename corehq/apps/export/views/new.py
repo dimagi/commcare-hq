@@ -30,7 +30,8 @@ from corehq.apps.export.const import (
     SharingOption,
     PROPERTY_TAG_INFO,
     ALL_CASE_TYPE_EXPORT,
-    BULK_CASE_EXPORT_CACHE
+    MAX_CASE_TYPE_COUNT,
+    MAX_APP_COUNT
 )
 from corehq.apps.export.dbaccessors import get_properly_wrapped_export_instance
 from corehq.apps.export.exceptions import (
@@ -50,7 +51,9 @@ from corehq.apps.export.views.utils import (
     DashboardFeedMixin,
     ODataFeedMixin,
     clean_odata_columns,
-    trigger_update_case_instance_tables_task
+    trigger_update_case_instance_tables_task,
+    is_bulk_case_export,
+    case_type_or_app_limit_exceeded
 )
 from corehq.apps.locations.permissions import location_safe
 from corehq.apps.settings.views import BaseProjectDataView
@@ -224,9 +227,8 @@ class BaseExportView(BaseProjectDataView):
     def post(self, request, *args, **kwargs):
         try:
             export = self.commit(request)
-            if isinstance(export, CaseExportInstance) and export.case_type == ALL_CASE_TYPE_EXPORT:
-                progress_id = f'{BULK_CASE_EXPORT_CACHE}:{request.domain}'
-                trigger_update_case_instance_tables_task(export._id, progress_id)
+            if is_bulk_case_export(export):
+                trigger_update_case_instance_tables_task(request.domain, export._id)
         except Exception as e:
             if self.is_async:
                 return JsonResponse(data={
@@ -337,6 +339,21 @@ class CreateNewCustomCaseExportView(BaseExportView):
 
     def get(self, request, *args, **kwargs):
         case_type = request.GET.get('export_tag').strip('"')
+
+        # First check if project is allowed to do a bulk export and redirect if necessary
+        if case_type == ALL_CASE_TYPE_EXPORT and case_type_or_app_limit_exceeded(self.domain):
+            messages.error(
+                request,
+                _(
+                    "Cannot do a bulk case export as the project has more than %(max_case_types)s "
+                    "case types or %(max_apps)s applications."
+                ) % {
+                    'max_case_types': MAX_CASE_TYPE_COUNT,
+                    'max_apps': MAX_APP_COUNT
+                }
+            )
+            url = self.export_home_url
+            return HttpResponseRedirect(url)
 
         # Don't add group schemas if doing a bulk case export. There may be a lot of case
         # types, so rather handle creating the instance tables in an async task on the instance save.
