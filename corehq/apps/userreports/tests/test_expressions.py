@@ -1165,6 +1165,9 @@ def test_invalid_eval_expression(self, source_doc, statement, context):
     ("round(a)", {"a": 1.23}, 1),
     ("f'{a:%Y-%m-%d %H:%M}'", {"a": transform_datetime("2022-01-01T14:44:23.123123Z")}, '2022-01-01 14:44'),
     ("a + b", {"a": 'this is ', "b": 'text'}, 'this is text'),
+    ("""jsonpath("indices[?id='p'].ref")""", {"indices": [{"id": "q", "ref": "2"}, {"id": "p", "ref": "1"}]}, "1"),
+    ("jsonpath('i.j', context=k)", {"k": {"i": {"j": "X"}}}, "X"),
+    ("context()", {"a": 1, "b": 2}, {"a": 1, "b": 2}),
 ])
 def test_supported_evaluator_statements(self, eq, context, expected_value):
     self.assertEqual(eval_statements(eq, context), expected_value)
