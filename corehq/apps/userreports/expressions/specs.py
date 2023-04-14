@@ -36,7 +36,7 @@ from corehq.form_processor.interfaces.processor import FormProcessorInterface
 from corehq.form_processor.models import CommCareCase, XFormInstance
 from corehq.util.couch import get_db_by_doc_type
 
-from .utils import eval_statements
+from .evaluator import eval_statements
 
 
 class IdentityExpressionSpec(JsonObject):

@@ -21,8 +21,8 @@ from corehq.apps.userreports.expressions.getters import transform_datetime
 from corehq.apps.userreports.expressions.specs import (
     PropertyNameGetterSpec,
     PropertyPathGetterSpec,
-    eval_statements,
 )
+from corehq.apps.userreports.expressions.evaluator import eval_statements
 from corehq.apps.userreports.specs import EvaluationContext, FactoryContext
 from corehq.apps.users.models import CommCareUser, WebUser
 from corehq.form_processor.exceptions import CaseNotFound
