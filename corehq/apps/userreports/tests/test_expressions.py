@@ -1241,6 +1241,28 @@ class TestEvaluatorContext(SimpleTestCase):
         }
         self.assertEqual(ExpressionFactory.from_spec(spec)({"a": 1}), 1)
 
+    def test_named_function(self):
+        spec = {
+            "type": "evaluator",
+            "statement": 'named("expr1")',
+        }
+        factory_context = FactoryContext(named_expressions={
+            "expr1": ExpressionFactory.from_spec({
+                "type": "property_name",
+                "property_name": "a"
+            })
+        }, named_filters={})
+        self.assertEqual(ExpressionFactory.from_spec(spec, factory_context)({"a": 1}), 1)
+
+    def test_root_context(self):
+        spec = {
+            "type": "evaluator",
+            "statement": 'jsonpath("a.b", context=root_context())',
+        }
+        expr = ExpressionFactory.from_spec(spec)
+        result = expr({"a": 1}, EvaluationContext({"a": {"b": "from root"}}))
+        self.assertEqual(result, "from root")
+
 
 class TestFormsExpressionSpec(TestCase):
 

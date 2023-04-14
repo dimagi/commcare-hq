@@ -17,7 +17,7 @@ def bind_context(fn):
 
 @bind_context
 def jsonpath_eval(expr, context=None, *, _bound_context):
-    context = context or _bound_context
+    context = context or _bound_context.names
     from jsonpath_ng.ext import parse as jsonpath_parse
     values = [match.value for match in jsonpath_parse(expr).find(context)]
     if not values:
@@ -29,7 +29,20 @@ def jsonpath_eval(expr, context=None, *, _bound_context):
 
 @bind_context
 def context_eval(*, _bound_context):
-    return _bound_context
+    return _bound_context.names
+
+
+@bind_context
+def named_eval(name, context=None, *, _bound_context):
+    context = context or _bound_context.names
+    return _bound_context.eval_spec({
+        "type": "named", "name": name
+    }, context)
+
+
+@bind_context
+def root_context(*, _bound_context):
+    return _bound_context.root_context
 
 
 FUNCTIONS = DEFAULT_FUNCTIONS
@@ -40,5 +53,7 @@ FUNCTIONS.update({
     'days': lambda t: t.days,
     'round': round,
     'context': context_eval,
+    'root_context': root_context,
     'jsonpath': jsonpath_eval,
+    'named': named_eval,
 })

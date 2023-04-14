@@ -36,7 +36,7 @@ from corehq.form_processor.interfaces.processor import FormProcessorInterface
 from corehq.form_processor.models import CommCareCase, XFormInstance
 from corehq.util.couch import get_db_by_doc_type
 
-from .evaluator import eval_statements
+from .evaluator import eval_statements, EvalContext
 
 
 class IdentityExpressionSpec(JsonObject):
@@ -804,13 +804,19 @@ class EvalExpressionSpec(JsonObject):
     context_variables = DictProperty()
     datatype = DataTypeProperty(required=False)
 
-    def configure(self, context_variables):
-        self._context_variables = context_variables
+    def configure(self, factory_context):
+        self._factory_context = factory_context
+        self._context_variables = {
+            slug: factory_context.expression_from_spec(expression)
+            for slug, expression in self.context_variables.items()
+        }
 
     def __call__(self, item, evaluation_context=None):
         var_dict = self.get_variables(item, evaluation_context)
         try:
-            untransformed_value = eval_statements(self.statement, var_dict)
+            untransformed_value = eval_statements(self.statement, var_dict, EvalContext(
+                evaluation_context, self._factory_context
+            ))
             return transform_for_datatype(self.datatype)(untransformed_value)
         except (InvalidExpression, SyntaxError, TypeError, ZeroDivisionError):
             return None
