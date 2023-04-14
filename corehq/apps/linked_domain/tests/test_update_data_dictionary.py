@@ -80,52 +80,51 @@ class TestUpdateDataDictionary(BaseLinkedDomainTest):
         # Linked domain should now have master domain's data dictionary
         linked_data_dictionary = get_data_dictionary(self.linked_domain)
 
-        def expected_property_type(description, data_type, group):
+        def expected_property_type(description, data_type):
             return {
                 'description': description,
                 'deprecated': False,
                 'data_type': data_type,
-                'group': group,
             }
 
-        def expected_group_type(name, description, index):
+        def expected_group_type(description, index, properties):
             return {
-                'name': name,
                 'description': description,
-                'index': index
+                'index': index,
+                'properties': properties
             }
 
-        suspected_group = expected_group_type('Suspected group', 'Group of Suspected case properties', 0)
-        patient_name_suspected = expected_property_type('Name of patient', 'plain', suspected_group)
-        date_opened_suspected = expected_property_type('Date the case was opened', 'date', suspected_group)
+        patient_name_suspected = expected_property_type('Name of patient', 'plain')
+        date_opened_suspected = expected_property_type('Date the case was opened', 'date')
 
-        confirmed_group = expected_group_type('Confirmed group', 'Group of Confirmed case properties', 0)
-        patient_name_confirmed = expected_property_type('Name of patient', 'plain', confirmed_group)
-        date_opened_confirmed = expected_property_type('Date the case was opened', 'date', confirmed_group)
-        test_performed = expected_property_type('Type of test performed', 'plain', confirmed_group)
+        patient_name_confirmed = expected_property_type('Name of patient', 'plain')
+        date_opened_confirmed = expected_property_type('Date the case was opened', 'date')
+        test_performed = expected_property_type('Type of test performed', 'plain')
 
         suspected_properties = {'Patient name': patient_name_suspected,
                                 'Date opened': date_opened_suspected}
+        group_suspected_props = expected_group_type('Group of Suspected case properties', 0, suspected_properties)
 
         confirmed_properties = {'Patient name': patient_name_confirmed,
                                 'Date opened': date_opened_confirmed,
                                 'Test': test_performed}
+        group_confirmed_props = expected_group_type('Group of Confirmed case properties', 0, confirmed_properties)
 
-        def expected_case_type(domain, description, properties):
+        def expected_case_type(domain, description, groups):
             return {
                 'domain': domain,
                 'description': description,
                 'fully_generated': True,
-                'properties': properties
+                'groups': groups
             }
 
         self.assertEqual(linked_data_dictionary, {
             'Suspected': expected_case_type(self.linked_domain,
                                             'A suspected case',
-                                            suspected_properties),
+                                            {"Suspected group": group_suspected_props}),
             'Confirmed': expected_case_type(self.linked_domain,
                                             'A confirmed case',
-                                            confirmed_properties)
+                                            {"Confirmed group": group_confirmed_props})
         })
 
         # Master domain's data dictionary should be untouched
@@ -133,10 +132,10 @@ class TestUpdateDataDictionary(BaseLinkedDomainTest):
         self.assertEqual(original_data_dictionary, {
             'Suspected': expected_case_type(self.domain,
                                             'A suspected case',
-                                            suspected_properties),
+                                            {"Suspected group": group_suspected_props}),
             'Confirmed': expected_case_type(self.domain,
                                             'A confirmed case',
-                                            confirmed_properties)
+                                            {"Confirmed group": group_confirmed_props})
         })
 
         # Change the original domain and update the linked domain.
@@ -173,24 +172,24 @@ class TestUpdateDataDictionary(BaseLinkedDomainTest):
         self.archived_reason.save()
         update_data_dictionary(self.domain_link)
 
-        archived_group = expected_group_type('Archived group', 'Group of Archived case properties', 0)
-        patient_name_archived = expected_property_type('Name of patient', 'plain', archived_group)
-        reason_archived = expected_property_type('Reason for archiving', 'plain', archived_group)
+        patient_name_archived = expected_property_type('Name of patient', 'plain')
+        reason_archived = expected_property_type('Reason for archiving', 'plain')
         archived_properties = {'Patient name': patient_name_archived,
                             'Reason': reason_archived}
+        group_archived_props = expected_group_type('Group of Archived case properties', 0, archived_properties)
 
         # Checked that the linked domain has the new state.
         linked_data_dictionary = get_data_dictionary(self.linked_domain)
         self.assertEqual(linked_data_dictionary, {
             'Suspected': expected_case_type(self.linked_domain,
                                             'A suspected case',
-                                            suspected_properties),
+                                            {"Suspected group": group_suspected_props}),
             'Confirmed': expected_case_type(self.linked_domain,
                                             'A confirmed case',
-                                            confirmed_properties),
+                                            {"Confirmed group": group_confirmed_props}),
             'Archived': expected_case_type(self.linked_domain,
                                            'An archived case',
-                                           archived_properties)
+                                           {"Archived group": group_archived_props})
         })
         self.addCleanup(self.archived_name.delete)
         self.addCleanup(self.archived_reason.delete)
