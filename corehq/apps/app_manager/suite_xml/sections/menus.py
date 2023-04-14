@@ -196,7 +196,7 @@ class MenuContributor(SuiteContributorByModule):
         for id, assertion in enumerate(module.custom_assertions):
             menu.assertions.append(EntriesHelper.get_assertion(
                 assertion.test,
-                id_strings.module_custom_assertion_locale(module, id),
+                id_strings.custom_assertion_locale(id, module),
             ))
 
         return menu

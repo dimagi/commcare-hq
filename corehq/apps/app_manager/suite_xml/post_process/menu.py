@@ -34,5 +34,5 @@ class RootMenuAssertionsHelper(PostProcessor):
         for id, assertion in enumerate(self.app.custom_assertions):
             root_menu.assertions.append(EntriesHelper.get_assertion(
                 assertion.test,
-                id_strings.app_custom_assertion_locale(id),
+                id_strings.custom_assertion_locale(id),
             ))

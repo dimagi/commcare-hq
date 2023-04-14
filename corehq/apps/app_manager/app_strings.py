@@ -69,7 +69,7 @@ def _create_custom_app_strings(app, lang, for_default=False, build_profile_id=No
 
     for id, custom_assertion in enumerate(app.custom_assertions):
         yield (
-            id_strings.app_custom_assertion_locale(id),
+            id_strings.custom_assertion_locale(id),
             clean_trans(custom_assertion.text, langs)
         )
 
@@ -83,7 +83,7 @@ def _create_custom_app_strings(app, lang, for_default=False, build_profile_id=No
 
         for id, custom_assertion in enumerate(module.custom_assertions):
             yield (
-                id_strings.module_custom_assertion_locale(module, id),
+                id_strings.custom_assertion_locale(id, module),
                 clean_trans(custom_assertion.text, langs)
             )
 
@@ -476,7 +476,7 @@ def _create_forms_app_strings(
 
         for id, custom_assertion in enumerate(form.custom_assertions):
             yield (
-                id_strings.form_custom_assertion_locale(module, form, id),
+                id_strings.custom_assertion_locale(id, module, form),
                 clean_trans(custom_assertion.text, langs)
             )
 

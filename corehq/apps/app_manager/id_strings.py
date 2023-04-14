@@ -283,19 +283,12 @@ def search_property_required_text(module, search_prop):
 def search_property_validation_text(module, search_prop, index):
     return f"search_property.m{module.id}.{search_prop}.validation.{index}.text"
 
-
-@pattern('custom_assertion.m%d.f%d.%d')
-def form_custom_assertion_locale(module, form, id):
-    return 'custom_assertion.m{module.id}.f{form.id}.{id}'.format(module=module, form=form, id=id)
-
-
-@pattern('custom_assertion.m%d.%d')
-def module_custom_assertion_locale(module, id):
-    return 'custom_assertion.m{module.id}.{id}'.format(module=module, id=id)
-
-
-@pattern('custom_assertion.root.%d')
-def app_custom_assertion_locale(id):
+@pattern('custom_assertion.%s.%d')
+def custom_assertion_locale(id, module=None, form=None):
+    if module and form:
+        return 'custom_assertion.m{module.id}.f{form.id}.{id}'.format(module=module, form=form, id=id)
+    if module:
+        return 'custom_assertion.m{module.id}.{id}'.format(module=module, id=id)
     return 'custom_assertion.root.{id}'.format(id=id)
 
 
