@@ -383,7 +383,7 @@ def excel_commit(request, domain):
         config = importer_util.ImporterConfig.from_request(request)
         all_configs = [config]
 
-    case_upload.trigger_upload(domain, all_configs)
+    case_upload.trigger_upload(domain, all_configs, is_bulk=(case_type == ALL_CASE_TYPE_IMPORT))
     request.session.pop(EXCEL_SESSION_ID, None)
 
     return HttpResponseRedirect(base.ImportCases.get_url(domain))
