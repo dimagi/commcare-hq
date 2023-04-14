@@ -1,5 +1,4 @@
 import json
-from uuid import uuid4
 
 from django.core.exceptions import ValidationError
 from django.http import Http404, HttpResponseRedirect, JsonResponse
@@ -11,12 +10,10 @@ from jsonschema import ValidationError as SchemaValidationError
 from jsonschema import validate
 from memoized import memoized
 
-from casexml.apps.case.mock import CaseBlock
-
 from corehq import toggles
 from corehq.apps.domain.decorators import login_and_domain_required
 from corehq.apps.domain.views.base import BaseDomainView
-from corehq.apps.hqcase.utils import submit_case_blocks
+from corehq.apps.hqcase.case_helper import CaseHelper
 from corehq.apps.hqwebapp.decorators import use_jquery_ui, use_multiselect
 from corehq.apps.hqwebapp.views import CRUDPaginatedViewMixin
 from corehq.apps.users.decorators import require_permission
@@ -350,20 +347,13 @@ class AttendeesListView(JSONResponseMixin, BaseEventView):
             raise ValidationError(', '.join(errors))
 
     def _create_attendee_case(self):
-        case_type = get_attendee_case_type(self.domain)
-        case_block = CaseBlock(
-            case_id=uuid4().hex,
-            owner_id=self.request.couch_user.user_id,
-            case_type=case_type,
-            case_name=self.new_attendee_form.cleaned_data['name'],
-            create=True,
-        )
-        __, cases = submit_case_blocks(
-            [case_block.as_text()],
-            self.domain,
-            device_id='AttendeesListView._create_attendee_case',
-        )
-        return cases[0]
+        helper = CaseHelper(domain=self.domain)
+        helper.create_case({
+            'case_type': get_attendee_case_type(self.domain),
+            'case_name': self.new_attendee_form.cleaned_data['name'],
+            'owner_id': self.request.couch_user.user_id,
+        })
+        return helper.case
 
 
 class AttendeeEditView(BaseEventView):
