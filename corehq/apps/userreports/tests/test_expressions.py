@@ -1168,6 +1168,8 @@ def test_invalid_eval_expression(self, source_doc, statement, context):
     ("""jsonpath("indices[?id='p'].ref")""", {"indices": [{"id": "q", "ref": "2"}, {"id": "p", "ref": "1"}]}, "1"),
     ("jsonpath('i.j', context=k)", {"k": {"i": {"j": "X"}}}, "X"),
     ("context()", {"a": 1, "b": 2}, {"a": 1, "b": 2}),
+    ("x = b", {"a": 1, "b": 2}, 2),  # assignment is ignored and the 'value' is returned
+    ("'a %s' % a; b", {"a": 1, "b": 2}, "a 1"),  # only the first expression is executed
 ])
 def test_supported_evaluator_statements(self, eq, context, expected_value):
     self.assertEqual(eval_statements(eq, context), expected_value)
