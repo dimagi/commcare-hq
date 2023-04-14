@@ -1,27 +1,21 @@
 import ast
 import copy
 import operator
-from datetime import date, datetime, timedelta
+from datetime import date, datetime
 from decimal import Decimal
 
 from simpleeval import (
-    DEFAULT_FUNCTIONS,
     DEFAULT_OPERATORS,
     FeatureNotAvailable,
     InvalidExpression,
     SimpleEval,
 )
 
+from corehq.apps.userreports.expressions.evaluator.functions import FUNCTIONS
+
 
 def safe_pow_fn(a, b):
     raise InvalidExpression
-
-
-def safe_range(start, *args):
-    ret = list(range(start, *args))
-    if len(ret) < 100:
-        return ret
-    return None
 
 
 SAFE_TYPES = {float, Decimal, date, datetime, type(None), bool, int, str}
@@ -29,15 +23,6 @@ SAFE_TYPES = {float, Decimal, date, datetime, type(None), bool, int, str}
 SAFE_OPERATORS = copy.copy(DEFAULT_OPERATORS)
 SAFE_OPERATORS[ast.Pow] = safe_pow_fn  # don't allow power operations
 SAFE_OPERATORS[ast.Not] = operator.not_
-
-FUNCTIONS = DEFAULT_FUNCTIONS
-FUNCTIONS.update({
-    'timedelta_to_seconds': lambda x: x.total_seconds() if isinstance(x, timedelta) else None,
-    'range': safe_range,
-    'today': date.today,
-    'days': lambda t: t.days,
-    'round': round
-})
 
 
 class EvalNoMethods(SimpleEval):
