@@ -816,6 +816,9 @@ class EvalExpressionSpec(JsonObject):
             return None
 
     def get_variables(self, item, evaluation_context):
+        if not self._context_variables and isinstance(item, dict):
+            return IdentityExpressionSpec(type='identity')(item, evaluation_context)
+
         var_dict = {
             slug: variable_expression(item, evaluation_context)
             for slug, variable_expression in self._context_variables.items()

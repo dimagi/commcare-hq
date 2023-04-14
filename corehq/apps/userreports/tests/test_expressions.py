@@ -1225,6 +1225,16 @@ class TestEvaluatorTypes(SimpleTestCase):
         self.assertEqual(type(ExpressionFactory.from_spec(spec)({})), int)
 
 
+class TestEvaluatorContext(SimpleTestCase):
+
+    def test_no_context(self):
+        spec = {
+            "type": "evaluator",
+            "statement": 'a',
+        }
+        self.assertEqual(ExpressionFactory.from_spec(spec)({"a": 1}), 1)
+
+
 class TestFormsExpressionSpec(TestCase):
 
     @classmethod
