@@ -10,7 +10,7 @@ hqDefine("reports/js/reports.async", function () {
         self.standardReport = o.standardReport;
         self.filterRequest = null;
         self.reportRequest = null;
-        self.hashRequest = null;
+        self.queryIdRequest = null;
         self.loaderClass = '.report-loading';
         self.maxInputLimit = 5000;
 
@@ -28,7 +28,7 @@ hqDefine("reports/js/reports.async", function () {
             503: gettext("CommCare HQ is experiencing server difficulties. We're working quickly to resolve it." +
                 " Thank you for your patience. We are extremely sorry."),
             504: gettext("Gateway Timeout. Please contact CommCare HQ Support."),
-            'maxInputError': gettext("Your search term was too long. Please provide a shorter search filter")
+            'maxInputError': gettext("Your search term was too long. Please provide a shorter search filter"),
         };
 
         var loadFilters = function (data) {
@@ -45,13 +45,12 @@ hqDefine("reports/js/reports.async", function () {
 
         self.init = function () {
             self.reportContent.attr('style', 'position: relative;');
-            var init_params = window.location.search.substr(1);
+            var initParams = window.location.search.substr(1);
             var pathName = window.location.pathname;
-            if (init_params && self.isCaseListRelated(pathName)) {
-                self.getQueryHash(init_params, true, self.standardReport.filterSet, pathName);
-            }
-            else {
-                self.updateReport(true, init_params, self.standardReport.filterSet);
+            if (initParams && self.isCaseListRelated(pathName)) {
+                self.getQueryId(initParams, true, self.standardReport.filterSet, pathName);
+            } else {
+                self.updateReport(true, initParams, self.standardReport.filterSet);
             }
 
             // only update the report if there are actually filters set
@@ -62,19 +61,18 @@ hqDefine("reports/js/reports.async", function () {
                 var params = hqImport('reports/js/reports.util').urlSerialize(this);
                 if (self.isCaseListRelated(pathName)) {
                     var userInput = this.search_xpath ? this.search_xpath.value :
-                                    this.search_query ? this.search_query.value : '';
+                        this.search_query ? this.search_query.value : '';
                     if (userInput.length > self.maxInputLimit) {
                         self.loadingIssueModal.find('.report-error-status').html(self.humanReadableErrors['maxInputError']);
-                        if (self.issueAttempts > 0)
+                        if (self.issueAttempts > 0) {
                             self.loadingIssueModal.find('.btn-primary').button('fail');
+                        }
                         self.issueAttempts += 1;
                         self.loadingIssueModal.modal('show');
+                    } else {
+                        self.getQueryId(params, false, true, pathName);
                     }
-                    else {
-                        self.getQueryHash(params, false, true, pathName);
-                    }
-                }
-                else {
+                } else {
                     self.updateFilters(params);
                     self.updateReport(false, params, true);
                     history.pushState(null,window.location.title, window.location.pathname + '?' + params);
@@ -83,39 +81,40 @@ hqDefine("reports/js/reports.async", function () {
             });
         };
 
-        self.isCaseListRelated = function(pathName) {
+        self.isCaseListRelated = function (pathName) {
             return pathName.includes('case_list');
-        }
+        };
 
-        self.getQueryHash = function (params, initial_load, setFilters, pathName) {
+        self.getQueryId = function (params, initialLoad, setFilters, pathName) {
             // This only applies to Case List and Case List Explorer filter queries
-            var hash;
+            var query_id;
             if (params.includes('query_id=')) {
-                hash = params.replace('query_id=', '');
+                query_id = params.replace('query_id=', '');
                 params = '';
+            } else {
+                query_id = '';
             }
-            else {
-                hash = ''
-            }
-            self.hashRequest = $.ajax({
-                    url: pathName.replace(self.standardReport.urlRoot,
-                        self.standardReport.urlRoot + 'get_or_create_hash/'),
-                    dataType: 'json',
-                    data: {'hash': hash, 'params': params},
-                    success: function (data) {
-                        self.hashRequest = null;
-                        if (!initial_load) { self.updateFilters(data.query_string); }
-                        if (!data.query_string) { setFilters = false; }
-                        self.updateReport(initial_load, data.query_string, setFilters);
-                        if (data.not_found) {
-                            history.pushState(null, window.location.title, pathName);
-                        }
-                        else {
-                            history.pushState(null, window.location.title, pathName + '?query_id=' + data.query_hash);
-                        }
+            self.queryIdRequest = $.ajax({
+                url: pathName.replace(self.standardReport.urlRoot, self.standardReport.urlRoot + 'get_or_create_hash/'),
+                type: 'POST',
+                dataType: 'json',
+                data: {
+                    'query_id': query_id,
+                    'params': params,
+                },
+                success: function (data) {
+                    self.queryIdRequest = null;
+                    if (!initialLoad) { self.updateFilters(data.query_string); }
+                    if (!data.query_string) { setFilters = false; }
+                    self.updateReport(initialLoad, data.query_string, setFilters);
+                    if (data.not_found) {
+                        history.pushState(null, window.location.title, pathName);
+                    } else {
+                        history.pushState(null, window.location.title, pathName + '?query_id=' + data.query_id);
                     }
-                });
-        }
+                },
+            });
+        };
 
         self.updateFilters = function (form_params) {
             self.standardReport.saveDatespanToCookie();
@@ -127,9 +126,9 @@ hqDefine("reports/js/reports.async", function () {
             });
         };
 
-        self.updateReport = function (initial_load, params, setFilters) {
+        self.updateReport = function (initialLoad, params, setFilters) {
             var process_filters = "";
-            if (initial_load) {
+            if (initialLoad) {
                 process_filters = "hq_filters=true&";
                 if (self.standardReport.loadDatespanFromCookie()) {
                     process_filters = process_filters +
@@ -176,7 +175,7 @@ hqDefine("reports/js/reports.async", function () {
                     $('.loading-backdrop').fadeOut();
                     self.hqLoading.fadeOut();
 
-                    if (!initial_load || !self.standardReport.needsFilters) {
+                    if (!initialLoad || !self.standardReport.needsFilters) {
                         self.standardReport.filterSubmitButton
                             .button('reset');
                         setTimeout(function () {
