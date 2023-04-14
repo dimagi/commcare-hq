@@ -294,6 +294,11 @@ def module_custom_assertion_locale(module, id):
     return 'custom_assertion.m{module.id}.{id}'.format(module=module, id=id)
 
 
+@pattern('custom_assertion.root.%d')
+def app_custom_assertion_locale(id):
+    return 'custom_assertion.root.{id}'.format(id=id)
+
+
 @pattern('referral_lists.m%d')
 def referral_list_locale(module):
     """1.0 holdover"""

@@ -66,6 +66,13 @@ def _create_custom_app_strings(app, lang, for_default=False, build_profile_id=No
 
     yield id_strings.current_language(), lang
 
+
+    for id, custom_assertion in enumerate(app.custom_assertions):
+        yield (
+            id_strings.app_custom_assertion_locale(id),
+            clean_trans(custom_assertion.text, langs)
+        )
+
     for module in app.get_modules():
         yield from _create_module_details_app_strings(module, langs)
 

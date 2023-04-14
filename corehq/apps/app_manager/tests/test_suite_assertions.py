@@ -58,7 +58,6 @@ class CustomSuiteAssertionsTest(SimpleTestCase, TestXmlMixin):
         self.assertEqual(fr_app_strings[f'custom_assertion.{entity_code}.0'], "fr-0")
         self.assertEqual(fr_app_strings[f'custom_assertion.{entity_code}.1'], "fr-1")
 
-
     def test_custom_form_assertions(self, *args):
         factory = AppFactory()
         module, form = factory.new_basic_module('m0', 'case1')
@@ -80,3 +79,14 @@ class CustomSuiteAssertionsTest(SimpleTestCase, TestXmlMixin):
             "menu[@id='m0']/assertions"
         )
         self._assert_translations(factory.app, 'm0')
+
+    def test_custom_app_assertions(self, *args):
+        factory = AppFactory()
+        module, form = factory.new_basic_module('m0', 'case1')
+        factory.app.custom_assertions = self._custom_assertions
+        self.assertXmlPartialEqual(
+            self._get_expected_xml('root'),
+            factory.app.create_suite(),
+            "menu[@id='root']/assertions"
+        )
+        self._assert_translations(factory.app, 'root')
