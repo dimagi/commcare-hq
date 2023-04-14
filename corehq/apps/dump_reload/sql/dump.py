@@ -160,6 +160,7 @@ APP_LABELS_WITH_FILTER_KWARGS_TO_DUMP = defaultdict(list)
     FilteredModelIteratorBuilder('consumption.DefaultConsumption', SimpleFilter('domain')),
     FilteredModelIteratorBuilder('data_dictionary.CaseType', SimpleFilter('domain')),
     FilteredModelIteratorBuilder('data_dictionary.CaseProperty', SimpleFilter('case_type__domain')),
+    FilteredModelIteratorBuilder('data_dictionary.CasePropertyGroup', SimpleFilter('case_type__domain')),
     FilteredModelIteratorBuilder('data_dictionary.CasePropertyAllowedValue',
                                  SimpleFilter('case_property__case_type__domain')),
     FilteredModelIteratorBuilder('fhir.FHIRResourceType', SimpleFilter('domain')),
