@@ -283,6 +283,7 @@ def search_property_required_text(module, search_prop):
 def search_property_validation_text(module, search_prop, index):
     return f"search_property.m{module.id}.{search_prop}.validation.{index}.text"
 
+
 @pattern('custom_assertion.%s.%d')
 def custom_assertion_locale(id, module=None, form=None):
     if module and form:
