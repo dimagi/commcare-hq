@@ -100,7 +100,7 @@ from corehq.apps.app_manager.views.utils import (
     capture_user_errors,
     clear_xmlns_app_id_cache,
     get_langs,
-    handle_custom_assertions,
+    validate_custom_assertions,
     handle_custom_icon_edits,
     handle_shadow_child_modules,
     set_session_endpoint,
@@ -773,7 +773,11 @@ def edit_module_attr(request, domain, app_id, module_unique_id, attr):
         set_session_endpoint(module, raw_endpoint_id, app)
 
     if should_edit('custom_assertions'):
-        handle_custom_assertions(request.POST.get('custom_assertions'), module, lang)
+        module.custom_assertions = validate_custom_assertions(
+            request.POST.get('custom_assertions'),
+            module.custom_assertions,
+            lang,
+        )
 
     handle_media_edits(request, module, should_edit, resp, lang)
     handle_media_edits(request, module.case_list_form, should_edit, resp, lang, prefix='case_list_form_')

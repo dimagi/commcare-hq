@@ -439,7 +439,11 @@ def _edit_form_attr(request, domain, app_id, form_unique_id, attr):
         ]
 
     if should_edit("custom_assertions"):
-        handle_custom_assertions(request.POST.get('custom_assertions'), form, lang)
+        form.custom_assertions = validate_custom_assertions(
+            request.POST.get('custom_assertions'),
+            form.custom_assertions,
+            lang,
+        )
 
     if should_edit("shadow_parent"):
         form.shadow_parent_form_id = request.POST['shadow_parent']

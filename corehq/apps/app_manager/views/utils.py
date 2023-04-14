@@ -643,8 +643,7 @@ def report_build_time(domain, app_id, build_type):
         })
 
 
-# TODO factor this out better - accept only what we need from request, and don't modify form here
-def handle_custom_assertions(custom_assertions_string, form, lang):
+def validate_custom_assertions(custom_assertions_string, existing_assertions, lang):
     assertions = json.loads(custom_assertions_string)
     try:  # validate that custom assertions can be added into the XML
         for assertion in assertions:
@@ -656,7 +655,7 @@ def handle_custom_assertions(custom_assertions_string, form, lang):
     except etree.XMLSyntaxError as error:
         raise AppMisconfigurationError(_("There was an issue with your custom assertions: {}").format(error))
 
-    existing_assertions = {assertion.test: assertion for assertion in form.custom_assertions}
+    existing_assertions = {assertion.test: assertion for assertion in existing_assertions}
     new_assertions = []
     for assertion in assertions:
         try:
@@ -669,7 +668,7 @@ def handle_custom_assertions(custom_assertions_string, form, lang):
             )
         new_assertions.append(new_assertion)
 
-    form.custom_assertions = new_assertions
+    return new_assertions
 
 
 def capture_user_errors(view_fn):

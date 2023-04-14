@@ -80,7 +80,7 @@ from corehq.apps.app_manager.views.utils import (
     capture_user_errors,
     clear_xmlns_app_id_cache,
     get_langs,
-    handle_custom_assertions,
+    validate_custom_assertions,
     update_linked_app,
     validate_langs,
 )
@@ -932,7 +932,7 @@ def edit_app_attr(request, domain, app_id, attr):
             app.cloudcare_enabled = False
 
     if should_edit('custom_assertions'):
-        handle_custom_assertions(hq_settings[attr], app, lang)
+        app.custom_assertions = validate_custom_assertions(hq_settings[attr], app.custom_assertions, lang)
 
     def require_remote_app():
         if not is_remote_app(app):
