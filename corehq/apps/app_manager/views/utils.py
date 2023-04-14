@@ -3,7 +3,7 @@ import time
 from collections import defaultdict
 from contextlib import contextmanager
 from copy import deepcopy
-from functools import partial
+from functools import partial, wraps
 from lxml import etree
 
 from django.contrib import messages
@@ -12,6 +12,7 @@ from django.template.loader import render_to_string
 from django.urls import reverse
 from django.utils.text import slugify
 from django.utils.translation import gettext as _
+from dimagi.utils.web import json_response
 
 from corehq import toggles
 from corehq.apps.app_manager.dbaccessors import (
@@ -25,6 +26,7 @@ from corehq.apps.app_manager.decorators import require_deploy_apps
 from corehq.apps.app_manager.exceptions import (
     AppEditingError,
     AppLinkError,
+    AppMisconfigurationError,
     FormNotFoundException,
     ModuleNotFoundException,
     MultimediaMissingError,
@@ -656,7 +658,7 @@ def handle_custom_assertions(custom_assertions_string, form, lang):
                 )
             )
     except etree.XMLSyntaxError as error:
-        return _("There was an issue with your custom assertions: {}").format(error)
+        raise AppMisconfigurationError(_("There was an issue with your custom assertions: {}").format(error))
 
     existing_assertions = {assertion.test: assertion for assertion in form.custom_assertions}
     new_assertions = []
@@ -672,3 +674,14 @@ def handle_custom_assertions(custom_assertions_string, form, lang):
         new_assertions.append(new_assertion)
 
     form.custom_assertions = new_assertions
+
+
+def capture_user_errors(view_fn):
+    """Catches AppMisconfigurationError and returns the message as a 400"""
+    @wraps(view_fn)
+    def inner(request, *args, **kwargs):
+        try:
+            return view_fn(request, *args, **kwargs)
+        except AppMisconfigurationError as e:
+            return json_response({'message': str(e)}, status_code=400)
+    return inner

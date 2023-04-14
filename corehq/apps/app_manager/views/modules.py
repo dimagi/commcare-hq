@@ -94,6 +94,7 @@ from corehq.apps.app_manager.views.media_utils import (
 from corehq.apps.app_manager.views.utils import (
     back_to_main,
     bail,
+    capture_user_errors,
     clear_xmlns_app_id_cache,
     get_langs,
     handle_custom_assertions,
@@ -579,6 +580,7 @@ def _case_list_form_not_allowed_reasons(module):
 @no_conflict_require_POST
 @require_can_edit_apps
 @track_domain_request(calculated_prop='cp_n_saved_app_changes')
+@capture_user_errors
 def edit_module_attr(request, domain, app_id, module_unique_id, attr):
     """
     Called to edit any (supported) module attribute, given by attr

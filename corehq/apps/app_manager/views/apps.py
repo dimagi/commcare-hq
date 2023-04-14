@@ -77,6 +77,7 @@ from corehq.apps.app_manager.util import (
 from corehq.apps.app_manager.util import enable_usercase as enable_usercase_util
 from corehq.apps.app_manager.views.utils import (
     back_to_main,
+    capture_user_errors,
     clear_xmlns_app_id_cache,
     get_langs,
     handle_custom_assertions,
@@ -812,6 +813,7 @@ def get_app_ui_translations(request, domain):
 @no_conflict_require_POST
 @require_can_edit_apps
 @track_domain_request(calculated_prop='cp_n_saved_app_changes')
+@capture_user_errors
 def edit_app_attr(request, domain, app_id, attr):
     """
     Called to edit any (supported) app attribute, given by attr

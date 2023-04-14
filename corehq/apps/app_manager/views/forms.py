@@ -95,6 +95,7 @@ from corehq.apps.app_manager.views.schedules import get_schedule_context
 from corehq.apps.app_manager.views.utils import (
     CASE_TYPE_CONFLICT_MSG,
     back_to_main,
+    capture_user_errors,
     clear_xmlns_app_id_cache,
     form_has_submissions,
     get_langs,
@@ -268,6 +269,7 @@ def edit_form_attr(request, domain, app_id, form_unique_id, attr):
 
 @no_conflict_require_POST
 @require_permission(HqPermissions.edit_apps, login_decorator=None)
+@capture_user_errors
 def _edit_form_attr(request, domain, app_id, form_unique_id, attr):
     """
     Called to edit any (supported) form attribute, given by attr
@@ -439,12 +441,7 @@ def _edit_form_attr(request, domain, app_id, form_unique_id, attr):
         ]
 
     if should_edit("custom_assertions"):
-        error_message = handle_custom_assertions(request.POST.get('custom_assertions'), form, lang)
-        if error_message:
-            return json_response(
-                {'message': error_message},
-                status_code=400
-            )
+        handle_custom_assertions(request.POST.get('custom_assertions'), form, lang)
 
     if should_edit("shadow_parent"):
         form.shadow_parent_form_id = request.POST['shadow_parent']
