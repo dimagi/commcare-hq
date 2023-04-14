@@ -30,7 +30,7 @@ from corehq.apps.case_importer.suggested_fields import (
     get_suggested_case_fields,
 )
 from corehq.apps.case_importer.tracking.case_upload_tracker import CaseUpload
-from corehq.apps.case_importer.util import get_importer_error_message
+from corehq.apps.case_importer.util import get_importer_error_message, RESERVED_FIELDS
 from corehq.apps.domain.decorators import api_auth
 from corehq.apps.hqwebapp.decorators import waf_allow
 from corehq.apps.locations.permissions import conditionally_location_safe
@@ -253,11 +253,12 @@ def _create_bulk_configs(domain, request, case_upload):
     worksheet_titles = _get_workbook_sheet_names(case_upload)
     for index, title in enumerate(worksheet_titles):
         with case_upload.get_spreadsheet(index) as spreadsheet:
-            columns, excel_fields, mirroring_enabled = _process_excel_mapping(
+            _, excel_fields, _ = _process_excel_mapping(
                 domain,
                 spreadsheet,
                 request.POST['search_field']
             )
+            excel_fields = list(set(excel_fields) - set(RESERVED_FIELDS))
             config = importer_util.ImporterConfig.from_dict({
                 'couch_user_id': request.couch_user._id,
                 'excel_fields': excel_fields,
