@@ -279,18 +279,13 @@ class AttendeesListView(JSONResponseMixin, BaseEventView):
         return super(AttendeesListView, self).dispatch(*args, **kwargs)
 
     @property
-    @memoized
-    def new_attendee_form(self):
-        if self.request.method == "POST":
-            return NewAttendeeForm(self.request.POST)
-        return NewAttendeeForm()
-
-    @property
     def page_context(self):
         context = super().page_context
-        return context | {
-            'new_attendee_form': self.new_attendee_form,
-        }
+        if self.request.method == "POST":
+            context['new_attendee_form'] = NewAttendeeForm(self.request.POST)
+        else:
+            context['new_attendee_form'] = NewAttendeeForm()
+        return context
 
     @allow_remote_invocation
     def create_attendee(self, data):
