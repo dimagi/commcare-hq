@@ -1,4 +1,5 @@
 from corehq.apps.reports.exceptions import TableauAPIError
+import hashlib
 import jwt
 import json
 import logging
@@ -561,3 +562,16 @@ class TableauAPISession(object):
             {}
         )
         return True
+
+
+class QueryStringHash(models.Model):
+    date_created = models.DateTimeField(auto_now_add=True)
+    domain = models.CharField(max_length=64)
+    last_accessed = models.DateTimeField(auto_now=True)
+    query_id = models.CharField(max_length=32, db_index=True, unique=True)
+    query_string = models.TextField()
+
+    def save(self, *args, **kwargs):
+        if not self.query_id:
+            self.query_id = uuid.uuid4().hex
+        super(QueryStringHash, self).save(*args, **kwargs)
