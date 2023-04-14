@@ -438,28 +438,27 @@ def _bulk_case_upload_api(request, domain):
 
     case_upload.check_file()
 
-    with case_upload.get_spreadsheet() as spreadsheet:
-        columns = spreadsheet.get_header_columns()
-        excel_fields = columns
+    all_configs = []
+    if context['is_bulk_import']:
+        all_configs = _create_bulk_configs(domain, request, case_upload)
+    else:
+        with case_upload.get_spreadsheet() as spreadsheet:
+            _, excel_fields, _ = _process_excel_mapping(domain, spreadsheet, search_column)
 
-    # hide search column and matching case fields from the update list
-    if search_column in excel_fields:
-        excel_fields.remove(search_column)
+        custom_fields = []
+        case_fields = []
 
-    custom_fields = []
-    case_fields = []
+        #Create the field arrays for the importer in the same format
+        #as the "Step 2" Web UI from the manual process
+        for f in excel_fields:
+            if f == name_column:
+                custom_fields.append("")
+                case_fields.append("name")
+            else:
+                custom_fields.append(f)
+                case_fields.append("")
 
-    #Create the field arrays for the importer in the same format
-    #as the "Step 2" Web UI from the manual process
-    for f in excel_fields:
-        if f == name_column:
-            custom_fields.append("")
-            case_fields.append("name")
-        else:
-            custom_fields.append(f)
-            case_fields.append("")
-
-    config = importer_util.ImporterConfig(
+        all_configs = [importer_util.ImporterConfig(
             couch_user_id=request.couch_user._id,
             excel_fields=excel_fields,
             case_fields=case_fields,
@@ -467,9 +466,9 @@ def _bulk_case_upload_api(request, domain):
             search_column=search_column,
             case_type=case_type,
             search_field=search_field,
-            create_new_cases=create_new_cases)
+            create_new_cases=create_new_cases)]
 
-    case_upload.trigger_upload(domain, config, comment=upload_comment)
+    case_upload.trigger_upload(domain, all_configs, comment=upload_comment, is_bulk=context['is_bulk_import'])
 
     upload_id = case_upload.upload_id
     status_url = absolute_reverse('case_importer_upload_status', args=(domain, upload_id))
