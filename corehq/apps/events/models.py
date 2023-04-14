@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import uuid
 from datetime import date, datetime
 
@@ -6,12 +8,12 @@ from django.db import models
 from django.utils.translation import gettext_lazy as _
 
 from casexml.apps.case.const import CASE_INDEX_EXTENSION
+
 from corehq.apps.es import CaseES
 from corehq.apps.groups.models import UnsavableGroup
 from corehq.apps.hqcase.case_helper import CaseHelper
 from corehq.form_processor.models import CommCareCase, CommCareCaseIndex
 from corehq.util.quickcache import quickcache
-
 
 # Attendee list status is set by the Attendance Coordinator after the
 # event is over
@@ -69,6 +71,10 @@ EVENT_CASE_TYPE = 'commcare-event'
 # For attendees who are also mobile workers:
 ATTENDEE_USER_ID_CASE_PROPERTY = 'commcare_user_id'
 
+# Attendees can have locations the way mobile workers do
+LOCATION_IDS_CASE_PROPERTY = 'commcare_location_ids'
+PRIMARY_LOCATION_ID_CASE_PROPERTY = 'commcare_primary_location_id'
+
 
 class AttendanceTrackingConfig(models.Model):
     domain = models.CharField(max_length=255, primary_key=True)
@@ -82,19 +88,17 @@ class AttendanceTrackingConfig(models.Model):
         default=DEFAULT_ATTENDEE_CASE_TYPE,
     )
 
-    @staticmethod
-    def toggle_mobile_worker_attendees(domain, value):
-        config, _created = AttendanceTrackingConfig.objects.get_or_create(domain=domain)
-        config.mobile_worker_attendees = value
-        config.save()
 
-    @staticmethod
-    def mobile_workers_can_be_attendees(domain):
-        try:
-            config = AttendanceTrackingConfig.objects.get(pk=domain)
-            return config.mobile_worker_attendees
-        except AttendanceTrackingConfig.DoesNotExist:
-            return False
+def toggle_mobile_worker_attendees(domain, attendees_enabled):
+    AttendanceTrackingConfig.objects.update_or_create(
+        domain=domain,
+        defaults={'mobile_worker_attendees': attendees_enabled},
+    )
+
+
+def mobile_worker_attendees_enabled(domain):
+    config = AttendanceTrackingConfig.objects.filter(domain=domain).first()
+    return config.mobile_worker_attendees if config else False
 
 
 @quickcache(['domain'])
@@ -388,27 +392,90 @@ def get_user_case_sharing_groups_for_events(commcare_user):
         if commcare_user.user_id in event.attendance_taker_ids:
             yield event.get_fake_case_sharing_group(commcare_user.user_id)
 
-class AttendeeCaseManager:
+
+class AttendeeModelManager(models.Manager):
+
+    def get(self, *, case_id: str, domain: str) -> AttendeeModel:
+        return AttendeeModel(case_id=case_id, domain=domain)
+
     def by_domain(
         self,
         domain: str,
         include_closed: bool = False,
-    ) -> list[CommCareCase]:
+    ) -> list[AttendeeModel]:
         if include_closed:
             get_case_ids = CommCareCase.objects.get_case_ids_in_domain
         else:
             get_case_ids = CommCareCase.objects.get_open_case_ids_in_domain_by_type
         case_type = get_attendee_case_type(domain)
         case_ids = get_case_ids(domain, case_type)
-        return CommCareCase.objects.get_cases(case_ids, domain)
+        return [
+            AttendeeModel(case=case, domain=domain)
+            for case in CommCareCase.objects.get_cases(case_ids, domain)
+        ]
 
 
-class AttendeeCase:
+class AttendeeModel(models.Model):
     """
-    Allows code to interact with attendee CommCareCase instances as if
-    they were Django models.
+    This class is for managing attendee cases using a ModelForm.
+
+    Normal cases manage locations as supply points. Attendee cases
+    manage locations the way ``CommCareUser`` does:
+
+    * An attendee can have multiple locations, one of which is their
+      primary location.
+
+    * ``AttendeeCase`` locations are stored in special case properties
+      the same way that ``CommCareUser`` locations are stored in special
+      user metadata.
+
     """
-    objects = AttendeeCaseManager()
+    case_id = models.UUIDField(primary_key=True)
+    domain = models.CharField(max_length=255)
+    name = models.CharField(max_length=255)
+    locations = models.TextField(blank=True, default='')
+    primary_location = models.TextField(null=True, blank=True, default=None)
+    user_id = models.TextField(max_length=36, blank=True, null=True)
+
+    objects = AttendeeModelManager()
+
+    class Meta:
+        managed = False  # Allows us to use a ModelForm to edit attendees
+
+    def __init__(self, *args, domain, case=None, case_id=None, **kwargs):
+        assert case or case_id, '`case` or `case_id` is required'
+        if case:
+            case_id = case.case_id
+        elif case_id:
+            case = CommCareCase.objects.get_case(case_id, domain)
+        self.case = case
+
+        kwargs.setdefault('name', case.name)
+        # `locations` is a TextField (or a CharField) because the form widget
+        # renders it correctly. Django is OK with us assigning a list to it:
+        loc_ids_str = case.get_case_property(LOCATION_IDS_CASE_PROPERTY) or ''
+        kwargs.setdefault('locations', loc_ids_str.split())
+        kwargs.setdefault(
+            'primary_location',
+            case.get_case_property(PRIMARY_LOCATION_ID_CASE_PROPERTY)
+        )
+        kwargs.setdefault(
+            'user_id',
+            case.get_case_property(ATTENDEE_USER_ID_CASE_PROPERTY)
+        )
+        super().__init__(*args, case_id=case_id, domain=domain, **kwargs)
+
+    def save(self, *args, **kwargs):
+        helper = CaseHelper(case_id=self.case_id, domain=self.domain)
+        case_data = {
+            'case_name': self.name,
+            'properties': {
+                LOCATION_IDS_CASE_PROPERTY: ' '.join(self.locations),
+                PRIMARY_LOCATION_ID_CASE_PROPERTY: self.primary_location or '',
+                ATTENDEE_USER_ID_CASE_PROPERTY: self.user_id or '',
+            },
+        }
+        helper.update(case_data)
 
 
 def get_paginated_attendees(domain, limit, page, query=None):
