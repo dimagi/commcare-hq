@@ -1940,17 +1940,20 @@ class TableauVisualizationDetailView(BaseProjectReportSectionView, ModelFormMixi
         return super().form_valid(form)
 
 
+@login_and_domain_required
+@location_safe
+@require_POST
 def get_or_create_filter_hash(request, domain):
-    query_hash = request.GET.get('hash')
-    query_string = request.GET.get('params')
+    query_id = request.POST.get('query_id')
+    query_string = request.POST.get('params')
     not_found = False
 
     if query_string:
-        query, created = QueryStringHash.objects.get_or_create(query_string=query_string)
-        query_hash = query.query_hash
+        query, created = QueryStringHash.objects.get_or_create(query_string=query_string, domain=domain)
+        query_id = query.query_id
         query.save()  # Updates the 'last_accessed' field
-    elif query_hash:
-        query = QueryStringHash.objects.filter(query_hash=query_hash)
+    elif query_id:
+        query = QueryStringHash.objects.filter(query_id=query_id, domain=domain)
         if not query:
             not_found = True
         else:
@@ -1960,6 +1963,6 @@ def get_or_create_filter_hash(request, domain):
 
     return JsonResponse({
         'query_string': query_string,
-        'query_hash': query_hash,
+        'query_id': query_id,
         'not_found': not_found,
     })
