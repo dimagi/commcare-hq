@@ -47,7 +47,10 @@ from corehq.apps.app_manager.decorators import (
     require_can_edit_apps,
     require_deploy_apps,
 )
-from corehq.apps.app_manager.exceptions import CaseSearchConfigError
+from corehq.apps.app_manager.exceptions import (
+    AppMisconfigurationError,
+    CaseSearchConfigError,
+)
 from corehq.apps.app_manager.models import (
     Application,
     AdvancedModule,
@@ -100,7 +103,6 @@ from corehq.apps.app_manager.views.utils import (
     handle_custom_assertions,
     handle_custom_icon_edits,
     handle_shadow_child_modules,
-    InvalidSessionEndpoint,
     set_session_endpoint,
 )
 from corehq.apps.app_manager.xform import CaseError
@@ -654,20 +656,15 @@ def edit_module_attr(request, domain, app_id, module_unique_id, attr):
     lang = request.COOKIES.get('lang', app.langs[0])
     resp = {'update': {}, 'corrections': {}}
     if should_edit("custom_icon_form"):
-        error_message = handle_custom_icon_edits(request, module, lang)
-        if error_message:
-            return json_response(
-                {'message': error_message},
-                status_code=400
-            )
+        handle_custom_icon_edits(request, module, lang)
     if should_edit("no_items_text"):
         module.case_details.short.no_items_text[lang] = request.POST.get("no_items_text")
     if should_edit("case_type"):
         case_type = request.POST.get("case_type", None)
         if case_type == USERCASE_TYPE and not isinstance(module, AdvancedModule):
-            return HttpResponseBadRequest('"{}" is a reserved case type'.format(USERCASE_TYPE))
+            raise AppMisconfigurationError('"{}" is a reserved case type'.format(USERCASE_TYPE))
         elif case_type and not is_valid_case_type(case_type, module):
-            return HttpResponseBadRequest("case type is improperly formatted")
+            raise AppMisconfigurationError("case type is improperly formatted")
         else:
             old_case_type = module["case_type"]
             module["case_type"] = case_type
@@ -708,7 +705,7 @@ def edit_module_attr(request, domain, app_id, module_unique_id, attr):
         parent_module = request.POST.get("parent_module")
         module.parent_select.module_id = parent_module
         if module_case_hierarchy_has_circular_reference(module):
-            return HttpResponseBadRequest(_("The case hierarchy contains a circular reference."))
+            raise AppMisconfigurationError(_("The case hierarchy contains a circular reference."))
     if should_edit("auto_select_case"):
         module["auto_select_case"] = request.POST.get("auto_select_case") == 'true'
 
@@ -735,7 +732,7 @@ def edit_module_attr(request, domain, app_id, module_unique_id, attr):
         label = '{SLUG}-label'.format(SLUG=SLUG)
         if request.POST.get(show) == 'true' and (request.POST.get(label) == ''):
             # Show item, but empty label, was just getting ignored
-            return HttpResponseBadRequest("A label is required for {SLUG}".format(SLUG=SLUG))
+            raise AppMisconfigurationError("A label is required for {SLUG}".format(SLUG=SLUG))
         if should_edit(SLUG):
             module[SLUG].show = json.loads(request.POST[show])
             module[SLUG].label[lang] = request.POST[label]
@@ -773,10 +770,7 @@ def edit_module_attr(request, domain, app_id, module_unique_id, attr):
 
     if should_edit('session_endpoint_id'):
         raw_endpoint_id = request.POST['session_endpoint_id']
-        try:
-            set_session_endpoint(module, raw_endpoint_id, app)
-        except InvalidSessionEndpoint as e:
-            return HttpResponseBadRequest(str(e))
+        set_session_endpoint(module, raw_endpoint_id, app)
 
     if should_edit('custom_assertions'):
         handle_custom_assertions(request.POST.get('custom_assertions'), module, lang)

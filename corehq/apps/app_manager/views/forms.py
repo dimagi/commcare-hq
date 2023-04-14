@@ -51,6 +51,7 @@ from corehq.apps.app_manager.decorators import (
     require_deploy_apps,
 )
 from corehq.apps.app_manager.exceptions import (
+    AppMisconfigurationError,
     FormNotFoundException,
     XFormValidationFailed,
     ModuleNotFoundException,
@@ -100,8 +101,7 @@ from corehq.apps.app_manager.views.utils import (
     form_has_submissions,
     get_langs,
     handle_custom_icon_edits,
-    handle_custom_assertions,
-    InvalidSessionEndpoint,
+    validate_custom_assertions,
     set_session_endpoint,
 )
 from corehq.apps.app_manager.xform import (
@@ -375,11 +375,10 @@ def _edit_form_attr(request, domain, app_id, form_unique_id, attr):
     if should_edit('enable_release_notes'):
         form.enable_release_notes = request.POST['enable_release_notes'] == 'true'
         if not form.is_release_notes_form and form.enable_release_notes:
-            return json_response(
-                {'message': _("You can't enable a form as release notes without allowing it as "
-                    "a release notes form <TODO messaging>")},
-                status_code=400
-            )
+            raise AppMisconfigurationError(_(
+                "You can't enable a form as release notes without allowing it as "
+                "a release notes form <TODO messaging>"
+            ))
     if (should_edit("form_links_xpath_expressions")
             and should_edit("form_links_form_ids")
             and domain_has_privilege(domain, privileges.FORM_LINK_WORKFLOW)):
@@ -428,9 +427,8 @@ def _edit_form_attr(request, domain, app_id, form_unique_id, attr):
                     )
                 )
         except etree.XMLSyntaxError as error:
-            return json_response(
-                {'message': _("There was an issue with your custom instances: {}").format(error)},
-                status_code=400
+            raise AppMisconfigurationError(
+                _("There was an issue with your custom instances: {}").format(error)
             )
 
         form.custom_instances = [
@@ -447,19 +445,11 @@ def _edit_form_attr(request, domain, app_id, form_unique_id, attr):
         form.shadow_parent_form_id = request.POST['shadow_parent']
 
     if should_edit("custom_icon_form"):
-        error_message = handle_custom_icon_edits(request, form, lang)
-        if error_message:
-            return json_response(
-                {'message': error_message},
-                status_code=400
-            )
+        handle_custom_icon_edits(request, form, lang)
 
     if should_edit('session_endpoint_id'):
         raw_endpoint_id = request.POST['session_endpoint_id']
-        try:
-            set_session_endpoint(form, raw_endpoint_id, app)
-        except InvalidSessionEndpoint as e:
-            return json_response({'message': str(e)}, status_code=400)
+        set_session_endpoint(form, raw_endpoint_id, app)
 
     if should_edit('function_datum_endpoints'):
         if request.POST['function_datum_endpoints']:

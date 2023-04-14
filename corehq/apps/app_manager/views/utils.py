@@ -300,7 +300,7 @@ def handle_custom_icon_edits(request, form_or_module, lang):
         if icon_form:
             # validate that only of either text or xpath should be present
             if (icon_text_body and icon_xpath) or (not icon_text_body and not icon_xpath):
-                return _("Please enter either text body or xpath for custom icon")
+                raise AppMisconfigurationError(_("Please enter either text body or xpath for custom icon"))
 
             # a form should have just one custom icon for now
             # so this just adds a new one with params or replaces the existing one with new params
@@ -589,21 +589,17 @@ def handle_shadow_child_modules(app, shadow_parent):
     return changes
 
 
-class InvalidSessionEndpoint(Exception):
-    pass
-
-
 def set_session_endpoint(module_or_form, raw_endpoint_id, app):
     raw_endpoint_id = raw_endpoint_id.strip()
     cleaned_id = slugify(raw_endpoint_id)
     if cleaned_id != raw_endpoint_id:
-        raise InvalidSessionEndpoint(_(
+        raise AppMisconfigurationError(_(
             "'{invalid_id}' is not a valid session endpoint ID. It must contain only "
             "lowercase letters, numbers, underscores, and hyphens. Try {valid_id}."
         ).format(invalid_id=raw_endpoint_id, valid_id=cleaned_id))
 
     if _is_duplicate_endpoint_id(cleaned_id, module_or_form.session_endpoint_id, app):
-        raise InvalidSessionEndpoint(_(
+        raise AppMisconfigurationError(_(
             "Session endpoint IDs must be unique. '{endpoint_id}' is already in-use"
         ).format(endpoint_id=cleaned_id))
 
