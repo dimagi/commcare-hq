@@ -287,7 +287,8 @@ class AttendeesListView(JSONResponseMixin, BaseEventView):
 
     @property
     def page_context(self):
-        return {
+        context = super().page_context
+        return context | {
             'new_attendee_form': self.new_attendee_form,
         }
 
