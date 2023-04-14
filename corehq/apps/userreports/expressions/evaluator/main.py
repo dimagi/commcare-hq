@@ -8,9 +8,9 @@ from simpleeval import (
     DEFAULT_OPERATORS,
     FeatureNotAvailable,
     InvalidExpression,
-    SimpleEval,
     DISALLOW_FUNCTIONS,
     FunctionNotDefined,
+    EvalWithCompoundTypes,
 )
 
 from .functions import FUNCTIONS
@@ -27,7 +27,7 @@ SAFE_OPERATORS[ast.Pow] = safe_pow_fn  # don't allow power operations
 SAFE_OPERATORS[ast.Not] = operator.not_
 
 
-class EvalNoMethods(SimpleEval):
+class EvalNoMethods(EvalWithCompoundTypes):
     """Disallow method calls. No real reason for this except that it gives
     users less options to do crazy things that might get them / us into
     hard to back out of situations."""

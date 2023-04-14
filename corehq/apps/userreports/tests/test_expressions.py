@@ -1170,6 +1170,10 @@ def test_invalid_eval_expression(self, source_doc, statement, context):
     ("context()", {"a": 1, "b": 2}, {"a": 1, "b": 2}),
     ("x = b", {"a": 1, "b": 2}, 2),  # assignment is ignored and the 'value' is returned
     ("'a %s' % a; b", {"a": 1, "b": 2}, "a 1"),  # only the first expression is executed
+    ("[i for i in range(3)]", {}, [0, 1, 2]),  # list comprehension
+    ("{'x': a, b: 'y'}", {"a": 1, "b": 2}, {"x": 1, 2: "y"}),  # create dict
+    ("set(x)", {"x": [1, 2, 1]}, {1, 2}),
+    ("[x for x in (a if a % 2 == 0 else 0 for a in range(5)) if x]", {}, [2, 4]),  # generator
 ])
 def test_supported_evaluator_statements(self, eq, context, expected_value):
     self.assertEqual(eval_statements(eq, context), expected_value)
@@ -1187,6 +1191,7 @@ def test_supported_evaluator_statements(self, eq, context, expected_value):
     # method calls not allowed
     ('"WORD".lower()', {"a": 5}),
     ('f"{a.lower()}"', {"a": "b"}),
+    ('{x: x for x in range(3)}"', {}),  # dict comprehension
 ])
 def test_unsupported_evaluator_statements(self, eq, context):
     with self.assertRaises(InvalidExpression):
