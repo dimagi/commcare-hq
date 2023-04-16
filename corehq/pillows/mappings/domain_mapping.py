@@ -32,12 +32,10 @@ DOMAIN_MAPPING = {
         "author": {
             "fields": {
                 "author": {
-                    "index": "analyzed",
                     "type": "string"
                 },
                 "exact": {
-                    "index": "not_analyzed",
-                    "type": "string"
+                    "type": "keyword"
                 }
             },
             "type": "multi_field"
@@ -57,8 +55,7 @@ DOMAIN_MAPPING = {
                     "type": "string"
                 },
                 "doc_type": {
-                    "index": "not_analyzed",
-                    "type": "string"
+                    "type": "keyword"
                 },
                 "enabled": {
                     "type": "boolean"
@@ -77,8 +74,7 @@ DOMAIN_MAPPING = {
                     "type": "object"
                 },
                 "doc_type": {
-                    "index": "not_analyzed",
-                    "type": "string"
+                    "type": "keyword"
                 },
                 "form_details": {
                     "dynamic": False,
@@ -98,15 +94,13 @@ DOMAIN_MAPPING = {
                     "type": "date"
                 },
                 "doc_type": {
-                    "index": "not_analyzed",
-                    "type": "string"
+                    "type": "keyword"
                 },
                 "signed": {
                     "type": "boolean"
                 },
                 "type": {
-                    "index": "not_analyzed",
-                    "type": "string"
+                    "type": "keyword"
                 },
                 "user_id": {
                     "type": "string"
@@ -263,12 +257,10 @@ DOMAIN_MAPPING = {
                 "city": {
                     "fields": {
                         "city": {
-                            "index": "analyzed",
                             "type": "string"
                         },
                         "exact": {
-                            "index": "not_analyzed",
-                            "type": "string"
+                            "type": "keyword"
                         }
                     },
                     "type": "multi_field"
@@ -276,12 +268,10 @@ DOMAIN_MAPPING = {
                 "countries": {
                     "fields": {
                         "countries": {
-                            "index": "not_analyzed",
-                            "type": "string"
+                            "type": "keyword"
                         },
                         "exact": {
-                            "index": "not_analyzed",
-                            "type": "string"
+                            "type": "keyword"
                         }
                     },
                     "type": "multi_field"
@@ -289,19 +279,16 @@ DOMAIN_MAPPING = {
                 "description": {
                     "fields": {
                         "description": {
-                            "index": "analyzed",
                             "type": "string"
                         },
                         "exact": {
-                            "index": "not_analyzed",
-                            "type": "string"
+                            "type": "keyword"
                         }
                     },
                     "type": "multi_field"
                 },
                 "doc_type": {
-                    "index": "not_analyzed",
-                    "type": "string"
+                    "type": "keyword"
                 },
                 "public": {
                     "type": "boolean"
@@ -309,11 +296,9 @@ DOMAIN_MAPPING = {
                 "region": {
                     "fields": {
                         "exact": {
-                            "index": "not_analyzed",
-                            "type": "string"
+                            "type": "keyword"
                         },
                         "region": {
-                            "index": "analyzed",
                             "type": "string"
                         }
                     },
@@ -325,8 +310,7 @@ DOMAIN_MAPPING = {
             "type": "string"
         },
         "doc_type": {
-            "index": "not_analyzed",
-            "type": "string"
+            "type": "keyword"
         },
         "downloads": {
             "type": "long"
@@ -347,12 +331,10 @@ DOMAIN_MAPPING = {
                 "area": {
                     "fields": {
                         "area": {
-                            "index": "analyzed",
                             "type": "string"
                         },
                         "exact": {
-                            "index": "not_analyzed",
-                            "type": "string"
+                            "type": "keyword"
                         }
                     },
                     "type": "multi_field"
@@ -373,8 +355,7 @@ DOMAIN_MAPPING = {
                     "type": "boolean"
                 },
                 "doc_type": {
-                    "index": "not_analyzed",
-                    "type": "string"
+                    "type": "keyword"
                 },
                 "goal_followup_rate": {
                     "type": "double"
@@ -385,11 +366,9 @@ DOMAIN_MAPPING = {
                 "initiative": {
                     "fields": {
                         "exact": {
-                            "index": "not_analyzed",
-                            "type": "string"
+                            "type": "keyword"
                         },
                         "initiative": {
-                            "index": "analyzed",
                             "type": "string"
                         }
                     },
@@ -401,11 +380,9 @@ DOMAIN_MAPPING = {
                 "organization_name": {
                     "fields": {
                         "exact": {
-                            "index": "not_analyzed",
-                            "type": "string"
+                            "type": "keyword"
                         },
                         "organization_name": {
-                            "index": "analyzed",
                             "type": "string"
                         }
                     },
@@ -414,11 +391,9 @@ DOMAIN_MAPPING = {
                 "phone_model": {
                     "fields": {
                         "exact": {
-                            "index": "not_analyzed",
-                            "type": "string"
+                            "type": "keyword"
                         },
                         "phone_model": {
-                            "index": "analyzed",
                             "type": "string"
                         }
                     },
@@ -445,11 +420,9 @@ DOMAIN_MAPPING = {
                 "sub_area": {
                     "fields": {
                         "exact": {
-                            "index": "not_analyzed",
-                            "type": "string"
+                            "type": "keyword"
                         },
                         "sub_area": {
-                            "index": "analyzed",
                             "type": "string"
                         }
                     },
@@ -464,11 +437,9 @@ DOMAIN_MAPPING = {
                 "workshop_region": {
                     "fields": {
                         "exact": {
-                            "index": "not_analyzed",
-                            "type": "string"
+                            "type": "keyword"
                         },
                         "workshop_region": {
-                            "index": "analyzed",
                             "type": "string"
                         }
                     },
@@ -509,8 +480,7 @@ DOMAIN_MAPPING = {
             "type": "object",
             "properties": {
                 "doc_type": {
-                    "index": "not_analyzed",
-                    "type": "string"
+                    "type": "keyword"
                 },
                 "has_migrated_permissions": {
                     "type": "boolean"
@@ -523,11 +493,9 @@ DOMAIN_MAPPING = {
         "name": {
             "fields": {
                 "exact": {
-                    "index": "not_analyzed",
-                    "type": "string"
+                    "type": "keyword"
                 },
                 "name": {
-                    "index": "analyzed",
                     "type": "string"
                 }
             },
@@ -558,11 +526,9 @@ DOMAIN_MAPPING = {
         "short_description": {
             "fields": {
                 "exact": {
-                    "index": "not_analyzed",
-                    "type": "string"
+                    "type": "keyword"
                 },
                 "short_description": {
-                    "index": "analyzed",
                     "type": "string"
                 }
             },
@@ -605,11 +571,9 @@ DOMAIN_MAPPING = {
         "title": {
             "fields": {
                 "exact": {
-                    "index": "not_analyzed",
-                    "type": "string"
+                    "type": "keyword"
                 },
                 "title": {
-                    "index": "analyzed",
                     "type": "string"
                 }
             },
