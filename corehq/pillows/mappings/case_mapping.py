@@ -24,32 +24,30 @@ CASE_MAPPING = {
             "type": "nested",
             "properties": {
                 "action_type": {
-                    "type": "string"
+                    "type": "text"
                 },
                 "date": {
                     "format": DATE_FORMATS_STRING,
                     "type": "date"
                 },
                 "doc_type": {
-                    "index": "not_analyzed",
-                    "type": "string"
+                    "type": "keyword"
                 },
                 "indices": {
                     "dynamic": False,
                     "type": "object",
                     "properties": {
                         "doc_type": {
-                            "index": "not_analyzed",
-                            "type": "string"
+                            "type": "keyword"
                         },
                         "identifier": {
-                            "type": "string"
+                            "type": "text"
                         },
                         "referenced_id": {
-                            "type": "string"
+                            "type": "text"
                         },
                         "referenced_type": {
-                            "type": "string"
+                            "type": "text"
                         }
                     }
                 },
@@ -58,32 +56,30 @@ CASE_MAPPING = {
                     "type": "date"
                 },
                 "sync_log_id": {
-                    "type": "string"
+                    "type": "text"
                 },
                 "user_id": {
-                    "type": "string"
+                    "type": "text"
                 },
                 "xform_id": {
-                    "type": "string"
+                    "type": "text"
                 },
                 "xform_name": {
-                    "type": "string"
+                    "type": "text"
                 },
                 "xform_xmlns": {
-                    "type": "string"
+                    "type": "text"
                 }
             }
         },
         "backend_id": {
-            "index": "not_analyzed",
-            "type": "string"
+            "type": "keyword"
         },
         "closed": {
             "type": "boolean"
         },
         "closed_by": {
-            "index": "not_analyzed",
-            "type": "string"
+            "type": "keyword"
         },
         "closed_on": {
             "format": DATE_FORMATS_STRING,
@@ -98,38 +94,32 @@ CASE_MAPPING = {
             "type": "date"
         },
         "contact_phone_number": {
-            "index": "not_analyzed",
-            "type": "string"
+            "type": "keyword"
         },
         "doc_type": {
-            "index": "not_analyzed",
-            "type": "string"
+            "type": "keyword"
         },
         "domain": {
             "fields": {
                 "domain": {
-                    "index": "analyzed",
-                    "type": "string"
+                    "type": "text"
                 },
                 "exact": {
-                    "index": "not_analyzed",
-                    "type": "string"
+                    "type": "keyword"
                 }
             },
             "type": "multi_field"
         },
         "export_tag": {
-            "type": "string"
+            "type": "text"
         },
         "external_id": {
             "fields": {
                 "exact": {
-                    "index": "not_analyzed",
-                    "type": "string"
+                    "type": "keyword"
                 },
                 "external_id": {
-                    "index": "analyzed",
-                    "type": "string"
+                    "type": "text"
                 }
             },
             "type": "multi_field"
@@ -139,17 +129,16 @@ CASE_MAPPING = {
             "type": "object",
             "properties": {
                 "doc_type": {
-                    "index": "not_analyzed",
-                    "type": "string"
+                    "type": "keyword"
                 },
                 "identifier": {
-                    "type": "string"
+                    "type": "text"
                 },
                 "referenced_id": {
-                    "type": "string"
+                    "type": "text"
                 },
                 "referenced_type": {
-                    "type": "string"
+                    "type": "text"
                 }
             }
         },
@@ -161,7 +150,7 @@ CASE_MAPPING = {
             "type": "date"
         },
         "location_id": {
-            "type": "string"
+            "type": "text"
         },
         "modified_on": {
             "format": DATE_FORMATS_STRING,
@@ -170,32 +159,27 @@ CASE_MAPPING = {
         "name": {
             "fields": {
                 "exact": {
-                    "index": "not_analyzed",
-                    "type": "string"
+                    "type": "keyword"
                 },
                 "name": {
-                    "index": "analyzed",
-                    "type": "string"
+                    "type": "text"
                 }
             },
             "type": "multi_field"
         },
         "opened_by": {
-            "index": "not_analyzed",
-            "type": "string"
+            "type": "keyword"
         },
         "opened_on": {
             "format": DATE_FORMATS_STRING,
             "type": "date"
         },
         "owner_id": {
-            "index": "not_analyzed",
-            "type": "string"
+            "type": "keyword"
         },
         "owner_type": {
-            "index": "not_analyzed",
             "null_value": NULL_VALUE,
-            "type": "string"
+            "type": "keyword"
         },
         "referrals": {
             "enabled": False,
@@ -208,25 +192,22 @@ CASE_MAPPING = {
         "type": {
             "fields": {
                 "exact": {
-                    "index": "not_analyzed",
-                    "type": "string"
+                    "type": "keyword"
                 },
                 "type": {
-                    "index": "analyzed",
-                    "type": "string"
+                    "type": "text"
                 }
             },
             "type": "multi_field"
         },
         "user_id": {
-            "type": "string"
+            "type": "text"
         },
         "version": {
-            "type": "string"
+            "type": "text"
         },
         "xform_ids": {
-            "index": "not_analyzed",
-            "type": "string"
+            "type": "keyword"
         },
         Tombstone.PROPERTY_NAME: {
             "type": "boolean"
