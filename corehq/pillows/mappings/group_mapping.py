@@ -20,18 +20,15 @@ GROUP_MAPPING = {
             "type": "boolean"
         },
         "doc_type": {
-            "index": "not_analyzed",
-            "type": "string"
+            "type": "keyword"
         },
         "domain": {
             "fields": {
                 "domain": {
-                    "index": "analyzed",
-                    "type": "string"
+                    "type": "text"
                 },
                 "exact": {
-                    "index": "not_analyzed",
-                    "type": "string"
+                    "type": "keyword"
                 }
             },
             "type": "multi_field"
@@ -39,27 +36,25 @@ GROUP_MAPPING = {
         "name": {
             "fields": {
                 "exact": {
-                    "index": "not_analyzed",
-                    "type": "string"
+                    "type": "keyword"
                 },
                 "name": {
-                    "index": "analyzed",
-                    "type": "string"
+                    "type": "text"
                 }
             },
             "type": "multi_field"
         },
         "path": {
-            "type": "string"
+            "type": "text"
         },
         "removed_users": {
-            "type": "string"
+            "type": "text"
         },
         "reporting": {
             "type": "boolean"
         },
         "users": {
-            "type": "string"
+            "type": "text"
         },
         Tombstone.PROPERTY_NAME: {
             "type": "boolean"
