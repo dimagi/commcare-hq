@@ -125,10 +125,6 @@ XFORM_MAPPING = {
                             "type": "keyword"
                         },
                         "geo_point": {
-                            "geohash": True,
-                            "geohash_precision": "10m",
-                            "geohash_prefix": True,
-                            "lat_lon": True,
                             "type": "geo_point"
                         },
                         "instanceID": {
