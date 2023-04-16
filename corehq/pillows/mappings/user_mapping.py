@@ -20,20 +20,18 @@ USER_MAPPING = {
     "dynamic": False,
     "properties": {
         "CURRENT_VERSION": {
-            "type": "string"
+            "type": "text"
         },
         "__group_ids": {
-            "type": "string"
+            "type": "text"
         },
         "__group_names": {
             "fields": {
                 "__group_names": {
-                    "index": "analyzed",
-                    "type": "string"
+                    "type": "text"
                 },
                 "exact": {
-                    "index": "not_analyzed",
-                    "type": "string"
+                    "type": "keyword"
                 }
             },
             "type": "multi_field"
@@ -42,20 +40,18 @@ USER_MAPPING = {
             "type": "boolean"
         },
         "assigned_location_ids": {
-            "type": "string"
+            "type": "text"
         },
         "base_doc": {
-            "type": "string"
+            "type": "text"
         },
         "base_username": {
             "fields": {
                 "base_username": {
-                    "index": "analyzed",
-                    "type": "string"
+                    "type": "text"
                 },
                 "exact": {
-                    "index": "not_analyzed",
-                    "type": "string"
+                    "type": "keyword"
                 }
             },
             "type": "multi_field"
@@ -77,12 +73,10 @@ USER_MAPPING = {
                     "type": "nested",
                     "properties": {
                         "app_id": {
-                            "index": "not_analyzed",
-                            "type": "string"
+                            "type": "keyword"
                         },
                         "build_id": {
-                            "index": "not_analyzed",
-                            "type": "string"
+                            "type": "keyword"
                         },
                         "build_version": {
                             "type": "integer"
@@ -112,11 +106,10 @@ USER_MAPPING = {
                     }
                 },
                 "commcare_version": {
-                    "type": "string"
+                    "type": "text"
                 },
                 "device_id": {
-                    "index": "not_analyzed",
-                    "type": "string"
+                    "type": "keyword"
                 },
                 "last_used": {
                     "format": DATE_FORMATS_STRING,
@@ -125,18 +118,15 @@ USER_MAPPING = {
             }
         },
         "doc_type": {
-            "index": "not_analyzed",
-            "type": "string"
+            "type": "keyword"
         },
         "domain": {
             "fields": {
                 "domain": {
-                    "index": "analyzed",
-                    "type": "string"
+                    "type": "text"
                 },
                 "exact": {
-                    "index": "not_analyzed",
-                    "type": "string"
+                    "type": "keyword"
                 }
             },
             "type": "multi_field"
@@ -146,18 +136,15 @@ USER_MAPPING = {
             "type": "object",
             "properties": {
                 "doc_type": {
-                    "index": "not_analyzed",
-                    "type": "string"
+                    "type": "keyword"
                 },
                 "domain": {
                     "fields": {
                         "domain": {
-                            "index": "analyzed",
-                            "type": "string"
+                            "type": "text"
                         },
                         "exact": {
-                            "index": "not_analyzed",
-                            "type": "string"
+                            "type": "keyword"
                         }
                     },
                     "type": "multi_field"
@@ -166,20 +153,19 @@ USER_MAPPING = {
                     "type": "boolean"
                 },
                 "location_id": {
-                    "index": "not_analyzed",
-                    "type": "string"
+                    "type": "keyword"
                 },
                 "override_global_tz": {
                     "type": "boolean"
                 },
                 "role_id": {
-                    "type": "string"
+                    "type": "text"
                 },
                 "timezone": {
-                    "type": "string"
+                    "type": "text"
                 },
                 'assigned_location_ids': {
-                    'type': 'string'
+                    'type': 'text'
                 },
             }
         },
@@ -188,18 +174,15 @@ USER_MAPPING = {
             "type": "object",
             "properties": {
                 "doc_type": {
-                    "index": "not_analyzed",
-                    "type": "string"
+                    "type": "keyword"
                 },
                 "domain": {
                     "fields": {
                         "domain": {
-                            "index": "analyzed",
-                            "type": "string"
+                            "type": "text"
                         },
                         "exact": {
-                            "index": "not_analyzed",
-                            "type": "string"
+                            "type": "keyword"
                         }
                     },
                     "type": "multi_field"
@@ -208,20 +191,19 @@ USER_MAPPING = {
                     "type": "boolean"
                 },
                 "location_id": {
-                    "index": "not_analyzed",
-                    "type": "string"
+                    "type": "keyword"
                 },
                 "override_global_tz": {
                     "type": "boolean"
                 },
                 "role_id": {
-                    "type": "string"
+                    "type": "text"
                 },
                 "timezone": {
-                    "type": "string"
+                    "type": "text"
                 },
                 'assigned_location_ids': {
-                    'type': 'string'
+                    'type': 'text'
                 },
             }
         },
@@ -234,28 +216,27 @@ USER_MAPPING = {
                     "type": "date"
                 },
                 "doc_type": {
-                    "index": "not_analyzed",
-                    "type": "string"
+                    "type": "keyword"
                 },
                 "signed": {
                     "type": "boolean"
                 },
                 "type": {
-                    "type": "string"
+                    "type": "text"
                 },
                 "user_id": {
-                    "type": "string"
+                    "type": "text"
                 },
                 "user_ip": {
-                    "type": "string"
+                    "type": "text"
                 },
                 "version": {
-                    "type": "string"
+                    "type": "text"
                 }
             }
         },
         "first_name": {
-            "type": "string"
+            "type": "text"
         },
         "is_active": {
             "type": "boolean"
@@ -270,7 +251,7 @@ USER_MAPPING = {
             "type": "boolean"
         },
         "language": {
-            "type": "string"
+            "type": "text"
         },
         "last_device": {
             "dynamic": False,
@@ -281,12 +262,10 @@ USER_MAPPING = {
                     "type": "object",
                     "properties": {
                         "app_id": {
-                            "index": "not_analyzed",
-                            "type": "string"
+                            "type": "keyword"
                         },
                         "build_id": {
-                            "index": "not_analyzed",
-                            "type": "string"
+                            "type": "keyword"
                         },
                         "build_version": {
                             "type": "integer"
@@ -316,11 +295,10 @@ USER_MAPPING = {
                     }
                 },
                 "commcare_version": {
-                    "type": "string"
+                    "type": "text"
                 },
                 "device_id": {
-                    "index": "not_analyzed",
-                    "type": "string"
+                    "type": "keyword"
                 },
                 "last_used": {
                     "format": DATE_FORMATS_STRING,
@@ -333,20 +311,19 @@ USER_MAPPING = {
             "type": "date"
         },
         "last_name": {
-            "type": "string"
+            "type": "text"
         },
         "location_id": {
-            "index": "not_analyzed",
-            "type": "string"
+            "type": "keyword"
         },
         "password": {
-            "type": "string"
+            "type": "text"
         },
         "phone_numbers": {
-            "type": "string"
+            "type": "text"
         },
         "registering_device_id": {
-            "type": "string"
+            "type": "text"
         },
         "reporting_metadata": {
             "dynamic": False,
@@ -357,7 +334,7 @@ USER_MAPPING = {
                     "type": "object",
                     "properties": {
                         "app_id": {
-                            "type": "string"
+                            "type": "text"
                         },
                         "build_version": {
                             "type": "integer"
@@ -373,7 +350,7 @@ USER_MAPPING = {
                     "type": "nested",
                     "properties": {
                         "app_id": {
-                            "type": "string"
+                            "type": "text"
                         },
                         "build_version": {
                             "type": "integer"
@@ -389,19 +366,19 @@ USER_MAPPING = {
                     "type": "object",
                     "properties": {
                         "app_id": {
-                            "type": "string"
+                            "type": "text"
                         },
                         "build_id": {
-                            "type": "string"
+                            "type": "text"
                         },
                         "build_version": {
                             "type": "integer"
                         },
                         "commcare_version": {
-                            "type": "string"
+                            "type": "text"
                         },
                         "device_id": {
-                            "type": "string"
+                            "type": "text"
                         },
                         "submission_date": {
                             "format": DATE_FORMATS_STRING,
@@ -414,19 +391,19 @@ USER_MAPPING = {
                     "type": "nested",
                     "properties": {
                         "app_id": {
-                            "type": "string"
+                            "type": "text"
                         },
                         "build_id": {
-                            "type": "string"
+                            "type": "text"
                         },
                         "build_version": {
                             "type": "integer"
                         },
                         "commcare_version": {
-                            "type": "string"
+                            "type": "text"
                         },
                         "device_id": {
-                            "type": "string"
+                            "type": "text"
                         },
                         "submission_date": {
                             "format": DATE_FORMATS_STRING,
@@ -439,7 +416,7 @@ USER_MAPPING = {
                     "type": "object",
                     "properties": {
                         "app_id": {
-                            "type": "string"
+                            "type": "text"
                         },
                         "build_version": {
                             "type": "integer"
@@ -455,7 +432,7 @@ USER_MAPPING = {
                     "type": "nested",
                     "properties": {
                         "app_id": {
-                            "type": "string"
+                            "type": "text"
                         },
                         "build_version": {
                             "type": "integer"
@@ -469,7 +446,7 @@ USER_MAPPING = {
             }
         },
         "status": {
-            "type": "string"
+            "type": "text"
         },
         "user_data": {
             "enabled": False,
@@ -480,30 +457,25 @@ USER_MAPPING = {
             "type": "nested",
             "properties": {
                 "key": {
-                    "index": "not_analyzed",
-                    "type": "string"
+                    "type": "keyword"
                 },
                 "value": {
-                    "index": "analyzed",
-                    "type": "string"
+                    "type": "text"
                 }
             }
         },
         "user_location_id": {
-            "index": "not_analyzed",
-            "type": "string"
+            "type": "keyword"
         },
         "username": {
             "fields": {
                 "exact": {
                     "include_in_all": False,
-                    "index": "not_analyzed",
-                    "type": "string"
+                    "type": "keyword"
                 },
                 "username": {
                     "analyzer": "standard",
-                    "index": "analyzed",
-                    "type": "string"
+                    "type": "text"
                 }
             },
             "type": "multi_field"
