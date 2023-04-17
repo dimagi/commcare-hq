@@ -23,7 +23,7 @@ from corehq.apps.groups.models import Group
 from corehq.apps.reports.const import USER_QUERY_LIMIT
 from corehq.apps.reports.const import HQ_TABLEAU_GROUP_NAME
 from corehq.apps.reports.exceptions import TableauAPIError
-from corehq.apps.reports.models import TableauServer, TableauAPISession, TableauUser
+from corehq.apps.reports.models import TableauServer, TableauAPISession, TableauUser, TableauConnectedApp
 from corehq.apps.users.models import CommCareUser, WebUser, CouchUser
 from corehq.apps.users.permissions import get_extra_permissions
 from corehq.apps.users.util import user_id_to_username
@@ -471,7 +471,11 @@ def add_tableau_user(domain, username):
     Creates a TableauUser object with the given username and a default role of Viewer, and adds a new user with
     these details to the Tableau instance.
     '''
-    session = TableauAPISession.create_session_for_domain(domain)
+    try:
+        session = TableauAPISession.create_session_for_domain(domain)
+    except TableauConnectedApp.DoesNotExist as e:
+        _notify_tableau_exception(e, domain)
+        return
     user, created = _add_tableau_user_local(session, username)
     if not created:
         return

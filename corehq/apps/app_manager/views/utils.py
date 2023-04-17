@@ -167,7 +167,7 @@ def overwrite_app(app, master_build, report_map=None):
     excluded_fields = set(Application._meta_fields).union([
         'date_created', 'build_profiles', 'copy_history', 'copy_of',
         'name', 'comment', 'doc_type', '_LAZY_ATTACHMENTS', 'practice_mobile_worker_id',
-        'custom_base_url', 'family_id',
+        'custom_base_url', 'family_id', 'multimedia_map',
     ])
     master_json = master_build.to_json()
     app_json = app.to_json()
@@ -178,6 +178,7 @@ def overwrite_app(app, master_build, report_map=None):
     app_json['version'] = app_json.get('version', 1)
     app_json['upstream_version'] = master_json['version']
     app_json['upstream_app_id'] = master_json['copy_of']
+    app_json['multimedia_map'] = _update_multimedia_map(app_json['multimedia_map'], master_json['multimedia_map'])
     wrapped_app = wrap_app(app_json)
     for module in wrapped_app.get_report_modules():
         if report_map is None:
@@ -197,12 +198,25 @@ def overwrite_app(app, master_build, report_map=None):
     wrapped_app = _update_forms(wrapped_app, master_build, ids_map)
 
     # Multimedia versions should be set based on the linked app's versions, not those of the master app.
-    for path in wrapped_app.multimedia_map.keys():
-        wrapped_app.multimedia_map[path].version = None
     wrapped_app.set_media_versions()
 
     enable_usercase_if_necessary(wrapped_app)
     return wrapped_app
+
+
+def _update_multimedia_map(old_map, new_map):
+    """
+    Compares incoming and current multimedia map items and returns a new map with each:
+    - old map item where it was previously copied from this same incoming item
+    - new map item otherwise
+    - version removed, because it should be set based on the downstream app
+    """
+    for path in new_map:
+        new_map[path]['upstream_media_id'] = None
+        if path in old_map and old_map[path].get('upstream_media_id') == new_map[path]['multimedia_id']:
+            new_map[path] = old_map[path]
+        new_map[path]['version'] = None
+    return new_map
 
 
 def _update_forms(app, master_app, ids_map):
