@@ -406,6 +406,8 @@ class AttendeeEditView(BaseEventView):
             form = EditAttendeeForm(domain=self.domain, instance=instance)
         context.update({
             'attendee_id': self.attendee_id,
+            'attendee_name': instance.name,
+            'attendee_active_event_count': instance.active_event_count(),
             'form': form,
         })
         return context
