@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 import uuid
 from datetime import date, datetime
 
@@ -466,6 +467,8 @@ class AttendeeModel(models.Model):
         super().__init__(*args, case_id=case_id, domain=domain, **kwargs)
 
     def save(self, *args, **kwargs):
+        if isinstance(self.locations, str):
+            self.locations = _parse_id_list_str(self.locations)
         helper = CaseHelper(case_id=self.case_id, domain=self.domain)
         case_data = {
             'case_name': self.name,
@@ -476,6 +479,25 @@ class AttendeeModel(models.Model):
             },
         }
         helper.update(case_data)
+
+
+def _parse_id_list_str(locations_str):
+    """
+    Given a string representation of a list of IDs, returns a list.
+
+    >>> _parse_id_list_str("['abc123', 'def456']")
+    ['abc123', 'def456']
+    >>> _parse_id_list_str("['abc123', 'This isn\'t an ID!']")
+    Traceback (most recent call last):
+      ...
+    json.decoder.JSONDecodeError: ...
+
+    """
+    # Using ast.literal_eval() is an alternative to the approach taken
+    # here, but it is not safe for user-submitted data.
+    # https://docs.python.org/3/library/ast.html#ast.literal_eval
+    locations_json = locations_str.replace("'", '"')  # '["abc123", "def456"]'
+    return json.loads(locations_json)
 
 
 def get_paginated_attendees(domain, limit, page, query=None):
