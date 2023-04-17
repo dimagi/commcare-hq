@@ -14,6 +14,7 @@ from corehq.apps.groups.models import UnsavableGroup
 from corehq.apps.hqcase.case_helper import CaseHelper
 from corehq.form_processor.models import CommCareCase, CommCareCaseIndex
 from corehq.util.quickcache import quickcache
+from django.db.models import Q
 
 # Attendee list status is set by the Attendance Coordinator after the
 # event is over
@@ -476,6 +477,24 @@ class AttendeeModel(models.Model):
             },
         }
         helper.update(case_data)
+
+    def active_event_count(self, *args, **kwargs):
+        """
+        Returns how many events this attendee is currently being tracked in.
+        Specifically, these are events that have not started yet, or are currently in progress.
+        """
+        # Get events that haven't started yet or are in progress
+        today = date.today()
+        events = Event.objects.by_domain(self.domain).filter(
+            Q(start_date__gt=today) | Q(start_date__lte=today, end_date__gte=today)
+        )
+        active_event_count = 0
+        for event in events:
+            attendee_ids = [attendee.case_id for attendee in event.get_expected_attendees()]
+            if self.case_id in attendee_ids:
+                active_event_count += 1
+
+        return active_event_count
 
 
 def get_paginated_attendees(domain, limit, page, query=None):
