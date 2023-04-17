@@ -105,7 +105,7 @@
               </a>
             {% endif %}
             {% if request|toggle_enabled:"CLEAR_MOBILE_WORKER_DATA" %}
-              <a id="clear-data" class="btn btn-default" href="{% url "clear_commcare_users" domain %}">
+              <a id="clear-data" class="btn btn-danger" href="{% url "clear_commcare_users" domain %}">
                 <i class="fa fa-eraser"></i>
                 {% trans "Bulk Clear Data" %}
               </a>

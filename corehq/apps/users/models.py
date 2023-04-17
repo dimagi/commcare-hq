@@ -1840,7 +1840,7 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
         if not deleted_by and not settings.UNIT_TESTING:
             raise ValueError("Missing deleted_by")
 
-        deletion_id, deletion_date = self.clear_user_data()
+        deletion_id, deletion_date = self.delete_user_data()
         suffix = DELETED_SUFFIX
 
         # doc_type remains the same, since the views use base_doc instead
@@ -1861,7 +1861,7 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
                             changed_via=deleted_via, action=UserModelAction.DELETE)
         self.save()
 
-    def clear_user_data(self):
+    def delete_user_data(self):
         deletion_id = uuid4().hex
         deletion_date = datetime.utcnow()
 

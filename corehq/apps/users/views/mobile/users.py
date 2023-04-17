@@ -1372,7 +1372,7 @@ class ClearCommCareUsers(DeleteCommCareUsers):
         cleared_count = 0
         for user_id, doc in user_docs_by_id.items():
             user = CommCareUser.wrap(doc)
-            user.clear_user_data()
+            user.delete_user_data()
 
             log_user_change(
                 by_domain=self.domain,
