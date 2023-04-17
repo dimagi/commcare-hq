@@ -1,5 +1,4 @@
 from corehq.apps.reports.exceptions import TableauAPIError
-import hashlib
 import jwt
 import json
 import logging
