@@ -60,7 +60,6 @@ CASE_SEARCH_MAPPING = {
                             "type": "text"
                         }
                     },
-                    "null_value": "",
                     "type": "text"
                 },
                 "geopoint_value": {
