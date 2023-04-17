@@ -24,25 +24,19 @@ GROUP_MAPPING = {
         },
         "domain": {
             "fields": {
-                "domain": {
-                    "type": "text"
-                },
                 "exact": {
                     "type": "keyword"
                 }
             },
-            "type": "multi_field"
+            "type": "text"
         },
         "name": {
             "fields": {
                 "exact": {
                     "type": "keyword"
-                },
-                "name": {
-                    "type": "text"
                 }
             },
-            "type": "multi_field"
+            "type": "text"
         },
         "path": {
             "type": "text"

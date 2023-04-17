@@ -48,9 +48,6 @@ XFORM_MAPPING = {
         },
         "domain": {
             "fields": {
-                "domain": {
-                    "type": "text"
-                },
                 "exact": {
                     # exact is full text string match - hyphens get parsed in standard
                     # analyzer
@@ -58,7 +55,7 @@ XFORM_MAPPING = {
                     "type": "keyword"
                 }
             },
-            "type": "multi_field"
+            "type": "text"
         },
         "external_blobs": {
             "dynamic": False,
@@ -181,12 +178,9 @@ XFORM_MAPPING = {
             "fields": {
                 "exact": {
                     "type": "keyword"
-                },
-                "xmlns": {
-                    "type": "text"
                 }
             },
-            "type": "multi_field"
+            "type": "text"
         },
         Tombstone.PROPERTY_NAME: {
             "type": "boolean"

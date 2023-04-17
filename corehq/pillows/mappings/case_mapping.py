@@ -101,14 +101,11 @@ CASE_MAPPING = {
         },
         "domain": {
             "fields": {
-                "domain": {
-                    "type": "text"
-                },
                 "exact": {
                     "type": "keyword"
                 }
             },
-            "type": "multi_field"
+            "type": "text"
         },
         "export_tag": {
             "type": "text"
@@ -117,12 +114,9 @@ CASE_MAPPING = {
             "fields": {
                 "exact": {
                     "type": "keyword"
-                },
-                "external_id": {
-                    "type": "text"
                 }
             },
-            "type": "multi_field"
+            "type": "text"
         },
         "indices": {
             "dynamic": False,
@@ -160,12 +154,9 @@ CASE_MAPPING = {
             "fields": {
                 "exact": {
                     "type": "keyword"
-                },
-                "name": {
-                    "type": "text"
                 }
             },
-            "type": "multi_field"
+            "type": "text"
         },
         "opened_by": {
             "type": "keyword"
@@ -193,12 +184,9 @@ CASE_MAPPING = {
             "fields": {
                 "exact": {
                     "type": "keyword"
-                },
-                "type": {
-                    "type": "text"
                 }
             },
-            "type": "multi_field"
+            "type": "text"
         },
         "user_id": {
             "type": "text"

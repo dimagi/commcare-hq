@@ -51,14 +51,11 @@ SMS_MAPPING = {
         },
         "domain": {
             "fields": {
-                "domain": {
-                    "type": "text"
-                },
                 "exact": {
                     "type": "keyword"
                 }
             },
-            "type": "multi_field"
+            "type": "text"
         },
         "phone_number": {
             "type": "text"

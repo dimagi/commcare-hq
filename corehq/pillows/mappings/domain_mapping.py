@@ -31,14 +31,11 @@ DOMAIN_MAPPING = {
         },
         "author": {
             "fields": {
-                "author": {
-                    "type": "text"
-                },
                 "exact": {
                     "type": "keyword"
                 }
             },
-            "type": "multi_field"
+            "type": "text"
         },
         "cached_properties": {
             "dynamic": False,
@@ -256,25 +253,19 @@ DOMAIN_MAPPING = {
             "properties": {
                 "city": {
                     "fields": {
-                        "city": {
-                            "type": "text"
-                        },
                         "exact": {
                             "type": "keyword"
                         }
                     },
-                    "type": "multi_field"
+                    "type": "text"
                 },
                 "countries": {
                     "fields": {
-                        "countries": {
-                            "type": "keyword"
-                        },
                         "exact": {
                             "type": "keyword"
                         }
                     },
-                    "type": "multi_field"
+                    "type": "text"
                 },
                 "description": {
                     "fields": {
@@ -285,7 +276,7 @@ DOMAIN_MAPPING = {
                             "type": "keyword"
                         }
                     },
-                    "type": "multi_field"
+                    "type": "text"
                 },
                 "doc_type": {
                     "type": "keyword"
@@ -297,12 +288,9 @@ DOMAIN_MAPPING = {
                     "fields": {
                         "exact": {
                             "type": "keyword"
-                        },
-                        "region": {
-                            "type": "text"
                         }
                     },
-                    "type": "multi_field"
+                    "type": "text"
                 }
             }
         },
@@ -330,14 +318,11 @@ DOMAIN_MAPPING = {
             "properties": {
                 "area": {
                     "fields": {
-                        "area": {
-                            "type": "text"
-                        },
                         "exact": {
                             "type": "keyword"
                         }
                     },
-                    "type": "multi_field"
+                    "type": "text"
                 },
                 "can_use_data": {
                     "type": "boolean"
@@ -367,12 +352,9 @@ DOMAIN_MAPPING = {
                     "fields": {
                         "exact": {
                             "type": "keyword"
-                        },
-                        "initiative": {
-                            "type": "text"
                         }
                     },
-                    "type": "multi_field"
+                    "type": "text"
                 },
                 "notes": {
                     "type": "text"
@@ -381,23 +363,17 @@ DOMAIN_MAPPING = {
                     "fields": {
                         "exact": {
                             "type": "keyword"
-                        },
-                        "organization_name": {
-                            "type": "text"
                         }
                     },
-                    "type": "multi_field"
+                    "type": "text"
                 },
                 "phone_model": {
                     "fields": {
                         "exact": {
                             "type": "keyword"
-                        },
-                        "phone_model": {
-                            "type": "text"
                         }
                     },
-                    "type": "multi_field"
+                    "type": "text"
                 },
                 "platform": {
                     "type": "text"
@@ -421,12 +397,9 @@ DOMAIN_MAPPING = {
                     "fields": {
                         "exact": {
                             "type": "keyword"
-                        },
-                        "sub_area": {
-                            "type": "text"
                         }
                     },
-                    "type": "multi_field"
+                    "type": "text"
                 },
                 "using_adm": {
                     "type": "boolean"
@@ -438,12 +411,9 @@ DOMAIN_MAPPING = {
                     "fields": {
                         "exact": {
                             "type": "keyword"
-                        },
-                        "workshop_region": {
-                            "type": "text"
                         }
                     },
-                    "type": "multi_field"
+                    "type": "text"
                 }
             }
         },
@@ -494,12 +464,9 @@ DOMAIN_MAPPING = {
             "fields": {
                 "exact": {
                     "type": "keyword"
-                },
-                "name": {
-                    "type": "text"
                 }
             },
-            "type": "multi_field"
+            "type": "text"
         },
         "organization": {
             "type": "text"
@@ -527,12 +494,9 @@ DOMAIN_MAPPING = {
             "fields": {
                 "exact": {
                     "type": "keyword"
-                },
-                "short_description": {
-                    "type": "text"
                 }
             },
-            "type": "multi_field"
+            "type": "text"
         },
         "sms_case_registration_enabled": {
             "type": "boolean"
@@ -572,12 +536,9 @@ DOMAIN_MAPPING = {
             "fields": {
                 "exact": {
                     "type": "keyword"
-                },
-                "title": {
-                    "type": "text"
                 }
             },
-            "type": "multi_field"
+            "type": "text"
         },
         "use_sql_backend": {
             "type": "boolean"

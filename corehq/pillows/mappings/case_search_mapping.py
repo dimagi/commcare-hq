@@ -87,7 +87,7 @@ CASE_SEARCH_MAPPING = {
                     "type": "keyword"
                 }
             },
-            "type": "multi_field"
+            "type": "text"
         },
         "external_id": {
             "type": "keyword"
@@ -147,11 +147,8 @@ CASE_SEARCH_MAPPING = {
                 "exact": {
                     "type": "keyword"
                 },
-                "type": {
-                    "type": "text"
-                }
             },
-            "type": "multi_field"
+            "type": "text"
         },
         "user_id": {
             "type": "keyword"

@@ -27,14 +27,11 @@ USER_MAPPING = {
         },
         "__group_names": {
             "fields": {
-                "__group_names": {
-                    "type": "text"
-                },
                 "exact": {
                     "type": "keyword"
                 }
             },
-            "type": "multi_field"
+            "type": "text"
         },
         "analytics_enabled": {
             "type": "boolean"
@@ -47,14 +44,11 @@ USER_MAPPING = {
         },
         "base_username": {
             "fields": {
-                "base_username": {
-                    "type": "text"
-                },
                 "exact": {
                     "type": "keyword"
                 }
             },
-            "type": "multi_field"
+            "type": "text"
         },
         "created_on": {
             "format": DATE_FORMATS_STRING,
@@ -122,14 +116,11 @@ USER_MAPPING = {
         },
         "domain": {
             "fields": {
-                "domain": {
-                    "type": "text"
-                },
                 "exact": {
                     "type": "keyword"
                 }
             },
-            "type": "multi_field"
+            "type": "text"
         },
         "domain_membership": {
             "dynamic": False,
@@ -140,14 +131,11 @@ USER_MAPPING = {
                 },
                 "domain": {
                     "fields": {
-                        "domain": {
-                            "type": "text"
-                        },
                         "exact": {
                             "type": "keyword"
                         }
                     },
-                    "type": "multi_field"
+                    "type": "text"
                 },
                 "is_admin": {
                     "type": "boolean"
@@ -178,14 +166,11 @@ USER_MAPPING = {
                 },
                 "domain": {
                     "fields": {
-                        "domain": {
-                            "type": "text"
-                        },
                         "exact": {
                             "type": "keyword"
                         }
                     },
-                    "type": "multi_field"
+                    "type": "text"
                 },
                 "is_admin": {
                     "type": "boolean"
@@ -472,13 +457,10 @@ USER_MAPPING = {
                 "exact": {
                     "include_in_all": False,
                     "type": "keyword"
-                },
-                "username": {
-                    "analyzer": "standard",
-                    "type": "text"
                 }
             },
-            "type": "multi_field"
+            "analyzer": "standard",
+            "type": "text"
         },
         Tombstone.PROPERTY_NAME: {
             "type": "boolean"
