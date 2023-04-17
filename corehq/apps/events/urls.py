@@ -8,6 +8,7 @@ from .views import (
     EventEditView,
     EventsView,
     paginated_attendees,
+    delete_attendee,
 )
 
 urlpatterns = [
@@ -22,4 +23,5 @@ urlpatterns = [
         name=AttendeeEditView.urlname),
     url(r'^(?P<event_id>[\w-]+)/$', EventEditView.as_view(),
         name=EventEditView.urlname),
+    url(r'^attendees/delete/(?P<attendee_id>[\w-]+)/$', delete_attendee, name='delete_attendee'),
 ]

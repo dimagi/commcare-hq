@@ -478,6 +478,10 @@ class AttendeeModel(models.Model):
         }
         helper.update(case_data)
 
+    def delete(self, *args, **kwargs):
+        helper = CaseHelper(case_id=self.case_id, domain=self.domain)
+        helper.close()
+
     def active_event_count(self, *args, **kwargs):
         """
         Returns how many events this attendee is currently being tracked in.
