@@ -80,7 +80,6 @@ class TestEventModel(TestCase):
             None,
             None
         )
-        cls.webuser.save()
 
     @classmethod
     def tearDownClass(cls):
