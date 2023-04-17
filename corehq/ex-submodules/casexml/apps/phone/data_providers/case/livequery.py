@@ -335,6 +335,15 @@ def discard_already_synced_cases(live_ids, restore_state):
         # also sync cases on phone that have been modified since last sync
         sync_ids.update(CommCareCase.objects.get_modified_case_ids(
             restore_state.domain, list(phone_ids), sync_log))
+
+        # Temp code to be deleted
+        valid_case_ids = []
+        cases_ = CommCareCase.objects.get_cases(list(sync_ids))
+        for c in cases_:
+            if not c.is_deleted:
+                valid_case_ids.append(c.case_id)
+        sync_ids = set(valid_case_ids)
+
     else:
         sync_ids = live_ids
     debug('sync_ids: %r', sync_ids)
