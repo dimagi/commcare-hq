@@ -1950,10 +1950,13 @@ def get_or_create_filter_hash(request, domain):
 
     if query_string:
         query, created = QueryStringHash.objects.get_or_create(query_string=query_string, domain=domain)
-        query_id = query.query_id
+        query_id = query.query_id.hex
         query.save()  # Updates the 'last_accessed' field
     elif query_id:
-        query = QueryStringHash.objects.filter(query_id=query_id, domain=domain)
+        try:
+            query = QueryStringHash.objects.filter(query_id=query_id, domain=domain)
+        except ValidationError:
+            query = None
         if not query:
             not_found = True
         else:

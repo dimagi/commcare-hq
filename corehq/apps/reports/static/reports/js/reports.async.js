@@ -87,19 +87,19 @@ hqDefine("reports/js/reports.async", function () {
 
         self.getQueryId = function (params, initialLoad, setFilters, pathName) {
             // This only applies to Case List and Case List Explorer filter queries
-            var query_id;
+            var queryId;
             if (params.includes('query_id=')) {
-                query_id = params.replace('query_id=', '');
+                queryId = params.replace('query_id=', '');
                 params = '';
             } else {
-                query_id = '';
+                queryId = '';
             }
             self.queryIdRequest = $.ajax({
                 url: pathName.replace(self.standardReport.urlRoot, self.standardReport.urlRoot + 'get_or_create_hash/'),
                 type: 'POST',
                 dataType: 'json',
                 data: {
-                    'query_id': query_id,
+                    'query_id': queryId,
                     'params': params,
                 },
                 success: function (data) {
