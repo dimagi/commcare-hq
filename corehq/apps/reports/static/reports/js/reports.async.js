@@ -10,7 +10,7 @@ hqDefine("reports/js/reports.async", function () {
         self.standardReport = o.standardReport;
         self.filterRequest = null;
         self.reportRequest = null;
-        self.queryIdRequest = null
+        self.queryIdRequest = null;
         self.loaderClass = '.report-loading';
         self.maxInputLimit = 5000;
 
@@ -28,7 +28,7 @@ hqDefine("reports/js/reports.async", function () {
             503: gettext("CommCare HQ is experiencing server difficulties. We're working quickly to resolve it." +
                 " Thank you for your patience. We are extremely sorry."),
             504: gettext("Gateway Timeout. Please contact CommCare HQ Support."),
-            'maxInputError': gettext("Your search term was too long. Please provide a shorter search filter")
+            'maxInputError': gettext("Your search term was too long. Please provide a shorter search filter"),
         };
 
         var loadFilters = function (data) {
@@ -87,19 +87,19 @@ hqDefine("reports/js/reports.async", function () {
 
         self.getQueryId = function (params, initialLoad, setFilters, pathName) {
             // This only applies to Case List and Case List Explorer filter queries
-            var query_id;
+            var queryId;
             if (params.includes('query_id=')) {
-                query_id = params.replace('query_id=', '');
+                queryId = params.replace('query_id=', '');
                 params = '';
             } else {
-                query_id = '';
+                queryId = '';
             }
             self.queryIdRequest = $.ajax({
                 url: pathName.replace(self.standardReport.urlRoot, self.standardReport.urlRoot + 'get_or_create_hash/'),
                 type: 'POST',
                 dataType: 'json',
                 data: {
-                    'query_id': query_id,
+                    'query_id': queryId,
                     'params': params,
                 },
                 success: function (data) {
