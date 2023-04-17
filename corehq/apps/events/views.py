@@ -1,22 +1,16 @@
 import json
-from uuid import uuid4
 
-from django.core.exceptions import ValidationError
 from django.http import Http404, HttpResponseRedirect, JsonResponse
 from django.urls import reverse
 from django.utils.translation import gettext_lazy as _
 from django.views.decorators.http import require_GET
 
-from jsonschema import ValidationError as SchemaValidationError
-from jsonschema import validate
 from memoized import memoized
-
-from casexml.apps.case.mock import CaseBlock
 
 from corehq import toggles
 from corehq.apps.domain.decorators import login_and_domain_required
 from corehq.apps.domain.views.base import BaseDomainView
-from corehq.apps.hqcase.utils import submit_case_blocks
+from corehq.apps.hqcase.case_helper import CaseHelper
 from corehq.apps.hqwebapp.decorators import use_jquery_ui, use_multiselect
 from corehq.apps.hqwebapp.views import CRUDPaginatedViewMixin
 from corehq.apps.users.decorators import require_permission
@@ -285,85 +279,34 @@ class AttendeesListView(JSONResponseMixin, BaseEventView):
         return super(AttendeesListView, self).dispatch(*args, **kwargs)
 
     @property
-    @memoized
-    def new_attendee_form(self):
-        if self.request.method == "POST":
-            return NewAttendeeForm(self.request.POST)
-        return NewAttendeeForm()
-
-    @property
     def page_context(self):
-        return {
-            'new_attendee_form': self.new_attendee_form,
-        }
+        context = super().page_context
+        if self.request.method == "POST":
+            context['new_attendee_form'] = NewAttendeeForm(self.request.POST)
+        else:
+            context['new_attendee_form'] = NewAttendeeForm()
+        return context
 
     @allow_remote_invocation
     def create_attendee(self, data):
-        try:
-            self._validate_attendee_data(data)
-        except SchemaValidationError as err:
-            return {'error': str(err)}
-
-        try:
-            self._validate_attendee_form(data)
-        except ValidationError as err:
-            return {'error': _("Form validation failed: {}").format(err)}
-
-        case = self._create_attendee_case()
-        return {
-            'success': True,
-            'case_id': case.case_id,
-        }
-
-    def _validate_attendee_data(self, data):
-        """
-        Validates that ``attendee_data`` looks like ::
-
-            {
-                "attendee": {
-                    "name": "Alex Example"
-                }
-            }
-
-        """
-        schema = {
-            'type': 'object',
-            'properties': {
-                'attendee': {
-                    'type': 'object',
-                    'properties': {
-                        'name': {'type': 'string'},
-                    }
-                }
-            }
-        }
-        validate(instance=data, schema=schema)
-
-    def _validate_attendee_form(self, data):
-        self.request.POST = {
+        form_data = data['attendee'] | {
             'domain': self.domain,
-            'name': data['attendee']['name']
         }
-        if not self.new_attendee_form.is_valid():
-            errors = [e for errors in self.new_attendee_form.errors.values()
-                      for e in errors]
-            raise ValidationError(', '.join(errors))
+        form = NewAttendeeForm(form_data)
+        if form.is_valid():
+            helper = CaseHelper(domain=self.domain)
+            helper.create_case({
+                'case_type': get_attendee_case_type(self.domain),
+                'case_name': form.cleaned_data['name'],
+                'owner_id': self.request.couch_user.user_id,
+            })
+            return {
+                'success': True,
+                'case_id': helper.case.case_id,
+            }
 
-    def _create_attendee_case(self):
-        case_type = get_attendee_case_type(self.domain)
-        case_block = CaseBlock(
-            case_id=uuid4().hex,
-            owner_id=self.request.couch_user.user_id,
-            case_type=case_type,
-            case_name=self.new_attendee_form.cleaned_data['name'],
-            create=True,
-        )
-        __, cases = submit_case_blocks(
-            [case_block.as_text()],
-            self.domain,
-            device_id='AttendeesListView._create_attendee_case',
-        )
-        return cases[0]
+        err = ', '.join([e for errors in form.errors.values() for e in errors])
+        return {'error': _("Form validation failed: {}").format(err)}
 
 
 class AttendeeEditView(BaseEventView):
