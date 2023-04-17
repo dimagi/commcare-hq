@@ -26,9 +26,14 @@ MOVE_TO_SEPARATE_DB = """
     DROP TABLE repeaters_repeatrecord;
     LOCK TABLE repeaters_repeater IN SHARE ROW EXCLUSIVE mode;
     ALTER TABLE repeaters_repeater RENAME TO repeaters_repeater_old;
-    IMPORT FOREIGN SCHEMA public LIMIT TO ("repeaters_repeater", "repeaters_repeatrecord")
+    IMPORT FOREIGN SCHEMA public
+        LIMIT TO ("repeaters_repeater", "repeaters_repeatrecord", "repeaters_repeater_id_seq_view")
         FROM SERVER repeaters_fdw INTO public;
+    CREATE FUNCTION repeaters_repeater_id_seq_nextval() RETURNS bigint AS
+        'SELECT value FROM repeaters_repeater_id_seq_view;' LANGUAGE SQL;
+    ALTER TABLE repeaters_repeater ALTER COLUMN id SET DEFAULT repeaters_repeater_id_seq_nextval();
     INSERT INTO repeaters_repeater SELECT * FROM repeaters_repeater_old;
+    UPDATE repeaters_repeater_id_seq_view SET value = (SELECT MAX(id) + 1 FROM repeaters_repeater);
     DROP TABLE repeaters_repeater_old;
 """
 
@@ -107,6 +112,7 @@ UNDO_MOVE_TO_SEPARATE_DB = """
         FOREIGN KEY (repeat_record_id) REFERENCES repeaters_repeatrecord(id) DEFERRABLE INITIALLY DEFERRED;
 
     DROP SERVER repeaters_fdw CASCADE;
+    DROP FUNCTION repeaters_repeater_id_seq_nextval;
 """
 
 REPEATERS_APP_LABEL = "repeaters"
