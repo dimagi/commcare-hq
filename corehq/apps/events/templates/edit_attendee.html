@@ -14,12 +14,12 @@
       <legend>{% trans 'Attendee' %}</legend>
       {% crispy form %}
     </fieldset>
-    {% if attendee_active_envent_count %}
+    {% if attendee_active_event_count %}
       <div class="alert alert-warning">
         <p>
           {% blocktrans %}
             This attendee cannot be deleted as <strong>{{ attendee_name }}</strong> is currently being tracked
-            in {{ attendee_active_envent_count }} active event(s).
+            in {{ attendee_active_event_count }} active event(s).
           {% endblocktrans %}
         </p>
       </div>
@@ -30,7 +30,7 @@
         <button type="submit" class="btn btn-primary disable-on-submit">
           {% trans 'Update Attendee' %}
         </button>
-        <a class="btn btn-danger {% if attendee_active_envent_count %}disabled{% endif %}"
+        <a class="btn btn-danger {% if attendee_active_event_count %}disabled{% endif %}"
             data-toggle="modal" href="#delete_attendee_{{ attendee_id }}">
           <i class="fa fa-trash"></i>
           {% trans "Delete Attendee" %}
