@@ -54,7 +54,7 @@ def get_instance_and_attachment(request):
             instance = instance_file.read()
             for key, item in request.FILES.items():
                 if key != MAGIC_PROPERTY:
-                    if _valid_attachment_size(item) is False:
+                    if _attachment_exceeds_size_limit(item):
                         raise AttachmentSizeTooLarge()
                     attachments[key] = item
         if not instance:
@@ -76,8 +76,8 @@ def _valid_file_extension(file):
     return file_extension == 'xml'
 
 
-def _valid_attachment_size(file):
-    return file.size <= settings.MAX_UPLOAD_SIZE_ATTACHMENT
+def _attachment_exceeds_size_limit(file):
+    return file.size > settings.MAX_UPLOAD_SIZE_ATTACHMENT
 
 
 def get_location(request=None):
