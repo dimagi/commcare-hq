@@ -35,7 +35,7 @@ class EvalNoMethods(EvalWithCompoundTypes):
     hard to back out of situations."""
 
     def set_context(self, context):
-        self._context = context
+        self._context = context.scope(self)
 
     def _eval_call(self, node):
         if isinstance(node.func, ast.Attribute):
@@ -77,7 +77,7 @@ def eval_statements(statement, variable_context, execution_context=None):
         raise InvalidExpression('Context contains disallowed types')
 
     evaluator = EvalNoMethods(operators=SAFE_OPERATORS, names=variable_context, functions=FUNCTIONS)
-    evaluator.set_context(execution_context.for_eval(evaluator))
+    evaluator.set_context(execution_context)
     return evaluator.eval(statement)
 
 
@@ -91,7 +91,8 @@ class EvalExecutionContext:
     def empty(cls):
         return EvalExecutionContext(EvaluationContext.empty(), FactoryContext.empty())
 
-    def for_eval(self, evaluator):
+    def scope(self, evaluator):
+        """Scope this context to a specific evaluator."""
         return dataclasses.replace(self, evaluator=evaluator)
 
     @property
