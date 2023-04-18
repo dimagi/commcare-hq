@@ -1,6 +1,10 @@
+import inspect
 from datetime import date, timedelta
+from inspect import Parameter
 
 from simpleeval import DEFAULT_FUNCTIONS
+
+CONTEXT_PARAM_NAME = "_bound_context"
 
 
 def safe_range(start, *args):
@@ -11,6 +15,12 @@ def safe_range(start, *args):
 
 
 def bind_context(fn):
+    """Decorator to 'tag' functions as needing the execution context.
+    This also validates that the function has the correct keyword argument.
+    """
+    params = inspect.signature(fn).parameters
+    if CONTEXT_PARAM_NAME not in params or params[CONTEXT_PARAM_NAME].kind != Parameter.KEYWORD_ONLY:
+        raise Exception(f"Function {fn} must have a keyword only argument called {CONTEXT_PARAM_NAME}")
     fn.bind_context = True
     return fn
 

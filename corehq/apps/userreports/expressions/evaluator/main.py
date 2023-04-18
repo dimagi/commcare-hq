@@ -14,7 +14,7 @@ from simpleeval import (
     EvalWithCompoundTypes,
 )
 
-from .functions import FUNCTIONS
+from .functions import FUNCTIONS, CONTEXT_PARAM_NAME
 from ...specs import EvaluationContext, FactoryContext
 
 
@@ -56,7 +56,7 @@ class EvalNoMethods(EvalWithCompoundTypes):
 
         kwargs = dict(self._eval(k) for k in node.keywords)
         if getattr(func, 'bind_context', False):
-            kwargs["_bound_context"] = self._context
+            kwargs[CONTEXT_PARAM_NAME] = self._context
 
         return func(
             *(self._eval(a) for a in node.args),
