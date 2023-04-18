@@ -1,4 +1,5 @@
 import json
+import logging
 import math
 import warnings
 from collections import defaultdict, namedtuple
@@ -421,6 +422,7 @@ class DatatablesParams(object):
 
 TableauGroupTuple = namedtuple('TableauGroupTuple', ['name', 'id'])
 DEFAULT_TABLEAU_ROLE = TableauUser.Roles.UNLICENSED.value
+logger = logging.getLogger('tableau_util')
 
 
 def tableau_username(HQ_username):
@@ -563,6 +565,15 @@ def _get_hq_group_id(session):
 
 @periodic_task(run_every=crontab(minute=0, hour='*/1'), queue='background_queue')
 def sync_all_tableau_users():
+    for domain in TABLEAU_USER_SYNCING.get_enabled_domains():
+        logger.info(f"Syncing Tableau users on domain: {domain}.")
+        try:
+            sync_tableau_users_on_domain(domain)
+        except (TableauAPIError, TableauConnectedApp.DoesNotExist) as e:
+            _notify_tableau_exception(e, domain)
+
+
+def sync_tableau_users_on_domain(domain):
     def _sync_tableau_users_with_hq(session, domain):
         tableau_user_names = [tableau_user.username for tableau_user in TableauUser.objects.filter(
             server=TableauServer.objects.get(domain=domain)
@@ -613,12 +624,11 @@ def sync_all_tableau_users():
             if remote_user['name'] not in local_users_usernames:
                 _delete_user_remote(session, remote_user['id'])
 
-    for domain in TABLEAU_USER_SYNCING.get_enabled_domains():
-        session = TableauAPISession.create_session_for_domain(domain)
-        # Sync the web users on HQ with the TableauUser model
-        _sync_tableau_users_with_hq(session, domain)
-        # Sync the TableauUser model with Tableau users on the remote Tableau instance
-        _sync_tableau_users_with_remote(session)
+    session = TableauAPISession.create_session_for_domain(domain)
+    # Sync the web users on HQ with the TableauUser model
+    _sync_tableau_users_with_hq(session, domain)
+    # Sync the TableauUser model with Tableau users on the remote Tableau instance
+    _sync_tableau_users_with_remote(session)
 
 
 def is_hq_user(tableau_username):
