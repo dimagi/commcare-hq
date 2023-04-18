@@ -6,7 +6,7 @@ from decimal import Decimal
 from django.test import SimpleTestCase, TestCase
 
 from unittest.mock import MagicMock, patch
-from simpleeval import InvalidExpression
+from simpleeval import InvalidExpression, AssignmentAttempted
 from testil import Config
 
 from casexml.apps.case.const import CASE_INDEX_EXTENSION
@@ -27,6 +27,7 @@ from corehq.apps.userreports.specs import EvaluationContext, FactoryContext
 from corehq.apps.users.models import CommCareUser, WebUser
 from corehq.form_processor.exceptions import CaseNotFound
 from corehq.form_processor.models import CommCareCase, XFormInstance
+from corehq.tests.util.warnings import filter_warnings
 from corehq.util.test_utils import (
     create_and_save_a_case,
     create_and_save_a_form,
@@ -1176,7 +1177,8 @@ def test_invalid_eval_expression(self, source_doc, statement, context):
     ("[x for x in (a if a % 2 == 0 else 0 for a in range(5)) if x]", {}, [2, 4]),  # generator
 ])
 def test_supported_evaluator_statements(self, eq, context, expected_value):
-    self.assertEqual(eval_statements(eq, context), expected_value)
+    with filter_warnings("default", category=AssignmentAttempted):
+        self.assertEqual(eval_statements(eq, context), expected_value)
 
 
 @generate_cases([
