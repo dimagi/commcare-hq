@@ -7,12 +7,11 @@ from functools import partial, wraps
 from lxml import etree
 
 from django.contrib import messages
-from django.http import Http404, HttpResponseRedirect
+from django.http import Http404, HttpResponseRedirect, JsonResponse
 from django.template.loader import render_to_string
 from django.urls import reverse
 from django.utils.text import slugify
 from django.utils.translation import gettext as _
-from dimagi.utils.web import json_response
 
 from corehq import toggles
 from corehq.apps.app_manager.dbaccessors import (
@@ -678,5 +677,5 @@ def capture_user_errors(view_fn):
         try:
             return view_fn(request, *args, **kwargs)
         except AppMisconfigurationError as e:
-            return json_response({'message': str(e)}, status_code=400)
+            return JsonResponse({'message': str(e)}, status=400)
     return inner
