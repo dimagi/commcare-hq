@@ -43,7 +43,6 @@
           <th>{% trans "Version" %}</th>
           <th>{% trans "Label" %}</th>
           <th>{% trans "Superuser Only" %}</th>
-          <th>{% trans "J2me Enabled" %}</th>
           <th></th>
         </tr>
         </thead>
@@ -64,9 +63,6 @@
           </td>
           <td>
             <input type="checkbox" value="superuser-only" data-bind="checked: superuser_only"/>
-          </td>
-          <td class='j2me_enabled'>
-            <i class="fa fa-check" data-bind="visible: j2me_enabled"></i>
           </td>
           <td>
             <button type="button" class="btn btn-danger" data-bind="click: $root.removeVersion">
