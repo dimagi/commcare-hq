@@ -40,10 +40,14 @@ def remove_out_of_sync_prop_and_groups():
     properties_out_of_sync = (CaseProperty.objects
                             .filter(group_obj__isnull=False)
                             .filter(~Q(group_obj__name=F('group'))))
-    print("Remove out of sync groups for {} properties".format(len(properties_out_of_sync)))
+    changed_properties = [prop.name for prop in properties_out_of_sync]
+    print("Reset out of sync groups for {} properties".format(len(properties_out_of_sync)))
+    print(changed_properties)
     properties_out_of_sync.update(group_obj=None)
 
     # Remove groups which dont have any properties
     group_without_properties = CasePropertyGroup.objects.filter(property__isnull=True)
+    removed_groups = [group.name for group in group_without_properties]
     print("Removing {} groups without properties".format(len(group_without_properties)))
+    print(removed_groups)
     group_without_properties.delete()
