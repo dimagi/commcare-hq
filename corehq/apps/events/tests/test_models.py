@@ -551,6 +551,27 @@ class TestAttendeeModel(TestCase):
                 ''
             )
 
+    def test_model_save_form_values(self):
+        with self.get_case() as case:
+            model = AttendeeModel(case=case, domain=DOMAIN)
+            model.locations = "['abc123', 'def456']"
+            model.primary_location = 'def456'
+            model.save()
+
+            reloaded = CommCareCase.objects.get_case(case.case_id, DOMAIN)
+            self.assertEqual(
+                reloaded.get_case_property(LOCATION_IDS_CASE_PROPERTY),
+                'abc123 def456'
+            )
+            self.assertEqual(
+                reloaded.get_case_property(PRIMARY_LOCATION_ID_CASE_PROPERTY),
+                'def456'
+            )
+            self.assertEqual(
+                reloaded.get_case_property(ATTENDEE_USER_ID_CASE_PROPERTY),
+                'c0ffee'
+            )
+
     def test_model_delete(self):
         with self.get_case(with_properties=False) as case:
             model = AttendeeModel(case=case, domain=DOMAIN)
