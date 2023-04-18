@@ -269,7 +269,7 @@
             </div>
             {% endif %}
 
-            {% if request|toggle_enabled:'CUSTOM_ASSERTIONS' %}
+            {% if app.supports_module_assertions %}
               {% include "app_manager/partials/forms/custom_assertions.html" %}
             {% endif %}
 

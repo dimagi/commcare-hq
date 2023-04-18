@@ -215,3 +215,11 @@ class CommCareFeatureSupportMixin(object):
             toggles.USH_EMPTY_CASE_LIST_TEXT.enabled(self.domain)
             and self._require_minimum_version('2.54')
         )
+
+    @property
+    def supports_module_assertions(self):
+        # form-level assertions have been supported longer
+        return (
+            toggles.CUSTOM_ASSERTIONS.enabled(self.domain)
+            and self._require_minimum_version('2.54')
+        )

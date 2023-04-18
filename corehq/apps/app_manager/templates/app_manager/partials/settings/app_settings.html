@@ -221,7 +221,7 @@
       <li><a href="#add-ons" data-toggle="tab">{% trans "Add-ons" %}</a></li>
     {% endif %}
     <li><a href="#commcare-settings" data-toggle="tab">{% trans "Advanced Settings" %}</a></li>
-    {% if not is_linked_app and not is_remote_app and request|toggle_enabled:'CUSTOM_ASSERTIONS' %}
+    {% if not is_linked_app and not is_remote_app and app.supports_module_assertions %}
       <li><a href="#custom-assertions-tab" data-toggle="tab">{% trans "Custom Assertions" %}</a></li>
     {% endif %}
   </ul>
@@ -330,7 +330,7 @@
       {% include 'app_manager/partials/settings/commcare_settings.html' %}
     </div>
 
-    {% if not is_linked_app and not is_remote_app and request|toggle_enabled:'CUSTOM_ASSERTIONS' %}
+    {% if not is_linked_app and not is_remote_app and app.supports_module_assertions %}
       <div class="tab-pane" id="custom-assertions-tab">
         <form action="{% url 'edit_app_attr' domain app.id 'custom_assertions' %}"
               id="custom-assertions-form"
