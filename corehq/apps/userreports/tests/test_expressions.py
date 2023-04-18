@@ -1193,7 +1193,7 @@ def test_supported_evaluator_statements(self, eq, context, expected_value):
     # method calls not allowed
     ('"WORD".lower()', {"a": 5}),
     ('f"{a.lower()}"', {"a": "b"}),
-    ('{x: x for x in range(3)}"', {}),  # dict comprehension
+    ('{x: x for x in range(3)}', {}),  # dict comprehension
 ])
 def test_unsupported_evaluator_statements(self, eq, context):
     with self.assertRaises(InvalidExpression):
