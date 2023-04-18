@@ -2,7 +2,10 @@ import inspect
 from datetime import date, timedelta
 from inspect import Parameter
 
+from jsonpath_ng.ext import parse as jsonpath_parse
 from simpleeval import DEFAULT_FUNCTIONS
+
+from corehq.apps.userreports.exceptions import BadSpecError
 
 CONTEXT_PARAM_NAME = "_bound_context"
 NEEDS_CONTEXT_PARAM_NAME = "bind_context"
@@ -27,10 +30,30 @@ def bind_context(fn):
 
 
 @bind_context
-def jsonpath_eval(expr, context=None, *, _bound_context):
+def jsonpath_eval(expr, as_list=False, context=None, *, _bound_context):
+    """
+    Evaluate a jsonpath expression.
+
+    @param expr: The jsonpath expression.
+    @param as_list: When set to True, always return the full list of matches, even if it is emtpy.
+                    If set to False then the return value will be `None` if no matches are found.
+                    If a single match is found the matched value will be returned.
+                    If more than one match is found, they will all be returned as a list.
+    @param context: Optional context for evaluation. If not supplied the full context of the evaluator
+                    will be used.
+    @returns: See `as_list`.
+    """
     context = context or _bound_context.names
-    from jsonpath_ng.ext import parse as jsonpath_parse
-    values = [match.value for match in jsonpath_parse(expr).find(context)]
+    try:
+        parsed_expr = jsonpath_parse(expr)
+    except Exception as e:
+        raise BadSpecError(f'Error parsing jsonpath expression <pre>{expr}</pre>. '
+                           f'Message is {str(e)}')
+
+    values = [match.value for match in parsed_expr.find(context)]
+    if as_list:
+        return values
+
     if not values:
         return None
     if len(values) == 1:
