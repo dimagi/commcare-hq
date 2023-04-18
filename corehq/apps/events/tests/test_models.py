@@ -443,6 +443,24 @@ class EventCaseTests(TestCase):
 
 class TestAttendeeModel(TestCase):
 
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.domain_obj = create_domain(DOMAIN)
+        cls.webuser = WebUser.create(
+            DOMAIN,
+            'test-user',
+            'mockmock',
+            None,
+            None
+        )
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.webuser.delete(None, None)
+        cls.domain_obj.delete()
+        super().tearDownClass()
+
     @staticmethod
     @contextmanager
     def get_case(with_properties=True):
@@ -532,6 +550,43 @@ class TestAttendeeModel(TestCase):
                 reloaded.get_case_property(ATTENDEE_USER_ID_CASE_PROPERTY),
                 ''
             )
+
+    def test_model_delete(self):
+        with self.get_case(with_properties=False) as case:
+            model = AttendeeModel(case=case, domain=DOMAIN)
+            model.save()
+            reloaded = CommCareCase.objects.get_case(case.case_id, DOMAIN)
+            self.assertEqual(reloaded.get_case_property('closed'), False)
+            model.delete()
+            reloaded = CommCareCase.objects.get_case(case.case_id, DOMAIN)
+            self.assertEqual(reloaded.get_case_property('closed'), True)
+
+    def test_active_event_count(self):
+        today = datetime.utcnow().date()
+        event = Event(
+            domain=DOMAIN,
+            name='test-event',
+            start_date=today,
+            end_date=today,
+            attendance_target=10,
+            sameday_reg=True,
+            track_each_day=False,
+            manager_id=self.webuser.user_id
+        )
+        event.save()
+        with self.get_case(with_properties=False) as case:
+            attendee = AttendeeModel(case=case, domain=DOMAIN)
+            attendee.save()
+
+        self.assertEqual(attendee.active_event_count(), 0)
+        event.set_expected_attendees([attendee])
+        self.assertEqual(attendee.active_event_count(), 1)
+
+        yesterday = today - timedelta(days=1)
+        event.start_date = yesterday
+        event.end_date = yesterday
+        event.save()
+        self.assertEqual(attendee.active_event_count(), 0)
 
 
 def test_doctests():
