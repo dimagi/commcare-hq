@@ -19,10 +19,7 @@ from corehq.form_processor.tests.utils import FormProcessorTestUtils, sharded
 from corehq.util.json import CommCareJSONEncoder
 from corehq.util.test_utils import TestFileMixin, softer_assert
 
-from couchforms.exceptions import (
-    InvalidSubmissionFileExtensionError,
-    AttachmentSizeTooLarge,
-)
+from couchforms.exceptions import InvalidSubmissionFileExtensionError
 
 
 class BaseSubmissionTest(TestCase):
@@ -173,14 +170,15 @@ class SubmissionTest(BaseSubmissionTest):
 
     def test_submit_invalid_attachment_size(self):
         file_data = BytesIO(b"a" * (settings.MAX_UPLOAD_SIZE_ATTACHMENT + 1))
-        expected_error = AttachmentSizeTooLarge()
         response = self._submit(
             'simple_form.xml',
             attachments={"file": file_data},
             url=reverse("receiver_secure_post", args=[self.domain]),
         )
-        self.assertEqual(response.status_code, expected_error.status_code)
-        self.assertEqual(response.content.decode('utf-8'), expected_error.message)
+        self.assertEqual(response.status_code, 413)
+        self.assertEqual(response.content.decode('utf-8'),
+                         f"Attachment exceeds {settings.MAX_UPLOAD_SIZE_ATTACHMENT/(1024*1024):,.0f}MB"
+                         f" size limit\n")
 
     def test_submit_valid_attachment_size_multiple(self):
         file_data = BytesIO(b"a" * (settings.MAX_UPLOAD_SIZE_ATTACHMENT - 1))
