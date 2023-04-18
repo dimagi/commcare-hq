@@ -36,7 +36,7 @@ def populate_case_prop_groups(domain):
 
 
 def remove_out_of_sync_prop_and_groups():
-    # Remove properties have different group and group_obj fields
+    # Reset properties that a different value in group column than in group object name.
     properties_out_of_sync = (CaseProperty.objects
                             .filter(group_obj__isnull=False)
                             .filter(~Q(group_obj__name=F('group'))))
