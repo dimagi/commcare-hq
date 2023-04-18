@@ -432,6 +432,25 @@ class AttendeeEditView(BaseEventView):
         return self.get(request, *args, **kwargs)
 
 
+class AttendeeDeleteView(BaseEventView):
+    urlname = 'delete_attendee'
+
+    def post(self, request, domain, attendee_id):
+        instance = AttendeeModel.objects.get(
+            case_id=attendee_id,
+            domain=domain
+        )
+        if instance.active_event_count():
+            messages.error(
+                request,
+                _("Cannot delete an attendee that is being tracked in one or more events.")
+            )
+            return redirect(request.META['HTTP_REFERER'])
+
+        instance.delete()
+        return HttpResponseRedirect(reverse(AttendeesListView.urlname, args=(domain,)))
+
+
 class AttendeesConfigView(JSONResponseMixin, BaseUserSettingsView, BaseEventView):
     urlname = "attendees_config"
 
@@ -478,22 +497,3 @@ def paginated_attendees(request, domain):
         'attendees': [{'case_id': c.case_id, 'name': c.name} for c in cases],
         'total': total,
     })
-
-
-@require_POST
-@login_and_domain_required
-@require_permission(HqPermissions.manage_attendance_tracking)
-def delete_attendee(request, domain, attendee_id):
-    instance = AttendeeModel.objects.get(
-        case_id=attendee_id,
-        domain=domain
-    )
-    if instance.active_event_count():
-        messages.error(
-            request,
-            _("Cannot delete an attendee that is being tracked in one or more events.")
-        )
-        return redirect(request.META['HTTP_REFERER'])
-
-    instance.delete()
-    return HttpResponseRedirect(reverse(AttendeesListView.urlname, args=(domain,)))
