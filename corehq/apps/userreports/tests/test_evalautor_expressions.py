@@ -134,6 +134,9 @@ def test_invalid_eval_expression(self, source_doc, statement, context):
     ("{'x': a, b: 'y'}", {"a": 1, "b": 2}, {"x": 1, 2: "y"}),  # create dict
     ("set(x)", {"x": [1, 2, 1]}, {1, 2}),
     ("[x for x in (a if a % 2 == 0 else 0 for a in range(5)) if x]", {}, [2, 4]),  # generator
+    ("""{"a": 1, "b": set(cases), "c": list(range(4))}""", {
+        "cases": [1, 1, 2]}, {"a": 1, "b": {1, 2}, "c": [0, 1, 2, 3]}
+     ),
 ])
 def test_supported_evaluator_statements(self, eq, context, expected_value):
     with filter_warnings("default", category=AssignmentAttempted):

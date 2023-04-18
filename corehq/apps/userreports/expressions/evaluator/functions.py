@@ -31,18 +31,7 @@ def bind_context(fn):
 
 @bind_context
 def jsonpath_eval(expr, as_list=False, context=None, *, _bound_context):
-    """
-    Evaluate a jsonpath expression.
-
-    @param expr: The jsonpath expression.
-    @param as_list: When set to True, always return the full list of matches, even if it is emtpy.
-                    If set to False then the return value will be `None` if no matches are found.
-                    If a single match is found the matched value will be returned.
-                    If more than one match is found, they will all be returned as a list.
-    @param context: Optional context for evaluation. If not supplied the full context of the evaluator
-                    will be used.
-    @returns: See `as_list`.
-    """
+    """Update docs in ./README.rst"""
     context = context or _bound_context.names
     try:
         parsed_expr = jsonpath_parse(expr)
@@ -63,11 +52,13 @@ def jsonpath_eval(expr, as_list=False, context=None, *, _bound_context):
 
 @bind_context
 def context_eval(*, _bound_context):
+    """Update docs in ./README.rst"""
     return _bound_context.names
 
 
 @bind_context
 def named_eval(name, context=None, *, _bound_context):
+    """Update docs in ./README.rst"""
     context = context or _bound_context.names
     return _bound_context.eval_spec({
         "type": "named", "name": name
@@ -76,6 +67,7 @@ def named_eval(name, context=None, *, _bound_context):
 
 @bind_context
 def root_context(*, _bound_context):
+    """Update docs in ./README.rst"""
     return _bound_context.root_context
 
 

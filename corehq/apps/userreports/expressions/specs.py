@@ -754,6 +754,8 @@ class EvalExpressionSpec(JsonObject):
         -  ``date``
         -  ``datetime``
 
+         If ``context_variables`` is omitted, the current context of the expression will be used.
+
     **Expression limitations**
 
         Only a single expression is permitted.
@@ -766,7 +768,15 @@ class EvalExpressionSpec(JsonObject):
         - `comparison operators`_
         - `logical operators`_
 
-        In addition, expressions can perform index and slice operations as well as simple ``if else`` statements.
+        In addition, expressions can perform the following operations:
+
+        - index: `case['name']`
+        - slice: `cases[0:2]`
+        - if statements: `1 if case.name == 'bob' else 0`
+        - list comprehension: `[i for i in range(3)]`
+        - dict, list, set construction: `{"a": 1, "b": set(cases), "c": list(range(4))}`
+
+    **Available Functions**
 
         Most function calls are disabled except for the following:
 
@@ -788,6 +798,10 @@ class EvalExpressionSpec(JsonObject):
            Note that for performance reasons this is limited to 100 items or
            less.
         -  ``today()``: return the current UTC date
+
+        **Advanced Functions**
+
+        .. include:: ../corehq/apps/userreports/expressions/evaluator/README.rst
 
     .. _math operators: https://en.wikibooks.org/wiki/Python_Programming/Basic_Math#Mathematical_Operators
     .. _modulus: https://en.wikibooks.org/wiki/Python_Programming/Operators#Modulus
