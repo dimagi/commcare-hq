@@ -204,6 +204,8 @@ class NamedExpressionSpec(JsonObject):
     This is just a simple example - the value that ``"my_expression"`` takes
     on can be as complicated as you want and it can also reference other named
     expressions as long as it doesn't reference itself of create a recursive cycle.
+
+    See also the :any:`named` evaluator function.
     """
     type = TypeProperty('named')
     name = StringProperty(required=True)
@@ -493,7 +495,9 @@ class JsonpathExpressionSpec(NoPropertyTypeCoercionMixIn, JsonObject):
         }
 
     This above expression will evaluate to ``["a", "b", "c", "d"]``.
-    Another example is ``form.list[0].case.name`` which will evaluate to ``"c"``
+    Another example is ``form.list[0].case.name`` which will evaluate to ``"c"``.
+
+    See also the :any:`jsonpath` evaluator function.
 
     For more information consult the following resources:
 
@@ -778,7 +782,7 @@ class EvalExpressionSpec(JsonObject):
 
     **Available Functions**
 
-        Most function calls are disabled except for the following:
+        Only the following functions are available in the evaluation context:
 
         .. include:: ../corehq/apps/userreports/expressions/evaluator/FUNCTION_DOCS.rst
 
