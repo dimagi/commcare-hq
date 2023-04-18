@@ -1,7 +1,8 @@
 import inspect
-from datetime import date, timedelta
+from datetime import date, timedelta, datetime
 from inspect import Parameter
 
+import iso8601
 from jsonpath_ng.ext import parse as jsonpath_parse
 from simpleeval import DEFAULT_FUNCTIONS
 
@@ -71,6 +72,23 @@ def root_context(*, _bound_context):
     return _bound_context.root_context
 
 
+def date_eval(value, fmt=None):
+    """Update docs in ./FUNCTION_DOCS.rst"""
+    if isinstance(value, date):
+        return value
+
+    if fmt:
+        try:
+            return datetime.strptime(value, fmt)
+        except ValueError:
+            raise BadSpecError(f"Unable to parse date: {value}")
+
+    try:
+        return iso8601.parse_date(value)
+    except iso8601.ParseError:
+        raise BadSpecError(f"Unable to parse date: {value}")
+
+
 # Update docs in ./FUNCTION_DOCS.rst
 FUNCTIONS = DEFAULT_FUNCTIONS
 FUNCTIONS.update({
@@ -83,4 +101,5 @@ FUNCTIONS.update({
     'root_context': root_context,
     'jsonpath': jsonpath_eval,
     'named': named_eval,
+    'date': date_eval,
 })

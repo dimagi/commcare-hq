@@ -19,6 +19,17 @@
 
     Convert ``value`` to a string.
 
+.. py:function:: date(value, fmt=None)
+
+    Parse a string value as a date or timestamp. If ``fmt`` is not supplied
+    the string is assumed to be in `ISO 8601`_ format.
+
+    :param fmt: If supplied, use this format specification to parse the date.
+                See the Python documentation for `Format Codes`_.
+
+.. _ISO 8601: https://www.cl.cam.ac.uk/~mgk25/iso-time.html
+.. _Format Codes: https://docs.python.org/3/library/datetime.html#strftime-and-strptime-format-codes
+
 .. py:function:: round(value, ndigits=None)
 
     Round a number to the nearest integer or ``ndigits``
