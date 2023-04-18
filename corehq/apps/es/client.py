@@ -1092,7 +1092,7 @@ class ElasticMultiplexAdapter(BaseAdapter):
                 # apply the chunk to both indexes in parallel
                 payload.append(self.primary._render_bulk_action(action))
                 if action.is_delete:
-                    # Always create a tombstone on secondary index when delete delete is issued on primary
+                    # Always create a tombstone on secondary index when delete is issued on primary
                     if action.doc is None:
                         doc_id = action.doc_id
                     else:
