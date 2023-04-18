@@ -34,7 +34,12 @@ from corehq.apps.domain.views.internal import ProjectLimitsView
 from corehq.apps.domain.views.releases import ManageReleasesByLocation
 from corehq.apps.enterprise.dispatcher import EnterpriseReportDispatcher
 from corehq.apps.enterprise.views import ManageEnterpriseMobileWorkersView
-from corehq.apps.events.views import AttendeesListView, EventsView
+from corehq.apps.events.models import AttendeeModel
+from corehq.apps.events.views import (
+    AttendeeEditView,
+    AttendeesListView,
+    EventsView,
+)
 from corehq.apps.hqadmin.reports import (
     DeployHistoryReport,
     DeviceLogSoftAssertReport,
@@ -2463,17 +2468,33 @@ class AttendanceTrackingTab(UITab):
 
     @property
     def sidebar_items(self):
+
+        def _get_attendee_name(domain, attendee_id=None, **kwargs):
+            if attendee_id:
+                model = AttendeeModel.objects.get(
+                    case_id=attendee_id,
+                    domain=domain,
+                )
+                return model.name
+            return None
+
         items = [
             (_("Attendees"), [
                 {
                     'title': _("View All Attendees"),
                     'url': reverse(AttendeesListView.urlname, args=(self.domain,)),
+                    'description': _('Manage attendees for Attendance Tracking Events'),
+                    'subpages': [{
+                        'title': _get_attendee_name,
+                        'urlname': AttendeeEditView.urlname,
+                    }],
                 },
             ]),
             (_("Events"), [
                 {
                     'title': _("View All Events"),
                     'url': reverse(EventsView.urlname, args=(self.domain,)),
+                    'description': _('Manage Attendance Tracking Events'),
                 },
             ]),
         ]
