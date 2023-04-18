@@ -5,6 +5,7 @@ from inspect import Parameter
 from simpleeval import DEFAULT_FUNCTIONS
 
 CONTEXT_PARAM_NAME = "_bound_context"
+NEEDS_CONTEXT_PARAM_NAME = "bind_context"
 
 
 def safe_range(start, *args):
@@ -21,7 +22,7 @@ def bind_context(fn):
     params = inspect.signature(fn).parameters
     if CONTEXT_PARAM_NAME not in params or params[CONTEXT_PARAM_NAME].kind != Parameter.KEYWORD_ONLY:
         raise Exception(f"Function {fn} must have a keyword only argument called {CONTEXT_PARAM_NAME}")
-    fn.bind_context = True
+    setattr(fn, NEEDS_CONTEXT_PARAM_NAME, True)
     return fn
 
 

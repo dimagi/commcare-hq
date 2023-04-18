@@ -14,7 +14,7 @@ from simpleeval import (
     EvalWithCompoundTypes,
 )
 
-from .functions import FUNCTIONS, CONTEXT_PARAM_NAME
+from .functions import FUNCTIONS, CONTEXT_PARAM_NAME, NEEDS_CONTEXT_PARAM_NAME
 from ...specs import EvaluationContext, FactoryContext
 
 
@@ -55,7 +55,7 @@ class EvalNoMethods(EvalWithCompoundTypes):
             raise FeatureNotAvailable("Use of reserved keyword is not allowed")
 
         kwargs = dict(self._eval(k) for k in node.keywords)
-        if getattr(func, 'bind_context', False):
+        if getattr(func, NEEDS_CONTEXT_PARAM_NAME, False):
             kwargs[CONTEXT_PARAM_NAME] = self._context
 
         return func(
