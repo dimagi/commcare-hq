@@ -64,28 +64,32 @@ class EvalNoMethods(EvalWithCompoundTypes):
         )
 
 
-def eval_statements(statement, variable_context, eval_context=None):
+def eval_statements(statement, variable_context, execution_context=None):
     """Evaluates math statements and returns the value
 
     args
         statement: a simple python-like math statement
         variable_context: a dict with variable names as key and assigned values as dict values
     """
-    eval_context = eval_context or EvalContext(EvaluationContext.empty(), FactoryContext.empty())
+    execution_context = execution_context or EvalExecutionContext.empty()
     var_types = set(type(value) for value in variable_context.values())
     if not var_types.issubset(SAFE_TYPES):
         raise InvalidExpression('Context contains disallowed types')
 
     evaluator = EvalNoMethods(operators=SAFE_OPERATORS, names=variable_context, functions=FUNCTIONS)
-    evaluator.set_context(eval_context.for_eval(evaluator))
+    evaluator.set_context(execution_context.for_eval(evaluator))
     return evaluator.eval(statement)
 
 
 @dataclasses.dataclass(frozen=True)
-class EvalContext:
+class EvalExecutionContext:
     evaluation_context: EvaluationContext
     factory_context: FactoryContext
     evaluator: EvalNoMethods = None
+    
+    @classmethod
+    def empty(cls):
+        return EvalExecutionContext(EvaluationContext.empty(), FactoryContext.empty())
 
     def for_eval(self, evaluator):
         return dataclasses.replace(self, evaluator=evaluator)
