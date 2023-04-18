@@ -12,9 +12,9 @@ NEEDS_CONTEXT_PARAM_NAME = "bind_context"
 
 
 def safe_range(start, *args):
-    ret = list(range(start, *args))
+    ret = range(start, *args)
     if len(ret) < 100:
-        return ret
+        return list(ret)
     return None
 
 
