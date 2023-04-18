@@ -31,7 +31,7 @@ def bind_context(fn):
 
 @bind_context
 def jsonpath_eval(expr, as_list=False, context=None, *, _bound_context):
-    """Update docs in ./README.rst"""
+    """Update docs in ./FUNCTION_DOCS.rst"""
     context = context or _bound_context.names
     try:
         parsed_expr = jsonpath_parse(expr)
@@ -52,13 +52,13 @@ def jsonpath_eval(expr, as_list=False, context=None, *, _bound_context):
 
 @bind_context
 def context_eval(*, _bound_context):
-    """Update docs in ./README.rst"""
+    """Update docs in ./FUNCTION_DOCS.rst"""
     return _bound_context.names
 
 
 @bind_context
 def named_eval(name, context=None, *, _bound_context):
-    """Update docs in ./README.rst"""
+    """Update docs in ./FUNCTION_DOCS.rst"""
     context = context or _bound_context.names
     return _bound_context.eval_spec({
         "type": "named", "name": name
@@ -67,10 +67,11 @@ def named_eval(name, context=None, *, _bound_context):
 
 @bind_context
 def root_context(*, _bound_context):
-    """Update docs in ./README.rst"""
+    """Update docs in ./FUNCTION_DOCS.rst"""
     return _bound_context.root_context
 
 
+# Update docs in ./FUNCTION_DOCS.rst
 FUNCTIONS = DEFAULT_FUNCTIONS
 FUNCTIONS.update({
     'timedelta_to_seconds': lambda x: x.total_seconds() if isinstance(x, timedelta) else None,
