@@ -29,7 +29,7 @@ SAFE_OPERATORS[ast.Pow] = safe_pow_fn  # don't allow power operations
 SAFE_OPERATORS[ast.Not] = operator.not_
 
 
-class EvalNoMethods(EvalWithCompoundTypes):
+class CommCareEval(EvalWithCompoundTypes):
     """Disallow method calls. No real reason for this except that it gives
     users less options to do crazy things that might get them / us into
     hard to back out of situations."""
@@ -76,7 +76,7 @@ def eval_statements(statement, variable_context, execution_context=None):
     if not var_types.issubset(SAFE_TYPES):
         raise InvalidExpression('Context contains disallowed types')
 
-    evaluator = EvalNoMethods(operators=SAFE_OPERATORS, names=variable_context, functions=FUNCTIONS)
+    evaluator = CommCareEval(operators=SAFE_OPERATORS, names=variable_context, functions=FUNCTIONS)
     evaluator.set_context(execution_context)
     return evaluator.eval(statement)
 
@@ -85,7 +85,7 @@ def eval_statements(statement, variable_context, execution_context=None):
 class EvalExecutionContext:
     evaluation_context: EvaluationContext
     factory_context: FactoryContext
-    evaluator: EvalNoMethods = None
+    evaluator: CommCareEval = None
     
     @classmethod
     def empty(cls):
