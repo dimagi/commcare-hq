@@ -21,18 +21,20 @@ def update_script():
             print(f"{progress}% complete")
             # --------------
 
-            parent_case = child_case.parent
             child_case_helper = CaseHelper(domain=DOMAIN, case=child_case)
             
             """
                 Step 2 - Make sure that the case properties of both the child and parent cases correspond to te
                 village's hierarchy. The owner_id of both cases is the village id
             """
-            village_id = parent_case.owner_id
-
-            village = SQLLocation.objects.filter(location_id=village_id, domain=DOMAIN).first()
+            try:
+                parent_case = child_case.parent
+                village_id = parent_case.owner_id
+            except Exception:
+                logfile.write(f"Skipped {child_case.case_id}. Reason: No parent case\n")
 
             try:
+                village = SQLLocation.objects.filter(location_id=village_id, domain=DOMAIN).first()
                 formation_sanitaire = village.parent
                 arrondissement = formation_sanitaire.parent
                 commune = arrondissement.parent
