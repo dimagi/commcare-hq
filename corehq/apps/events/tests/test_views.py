@@ -27,6 +27,7 @@ from ..views import (
     AttendeeDeleteView
 )
 from ...hqcase.case_helper import CaseHelper
+from rest_framework import status
 
 
 class BaseEventViewTestClass(TestCase):
@@ -296,13 +297,8 @@ class TestAttendeesConfigView(BaseEventViewTestClass):
 class TestAttendeesDeleteView(BaseEventViewTestClass):
     urlname = AttendeeDeleteView.urlname
 
-    @classmethod
-    def setUpClass(cls):
-        super().setUpClass()
-        cls.factory = CaseFactory(cls.domain)
-
     @contextmanager
-    def _create_attendee(self):
+    def _get_attendee_case(self):
         helper = CaseHelper(domain=self.domain)
         helper.create_case({
             'case_name': 'Foobar',
@@ -310,9 +306,7 @@ class TestAttendeesDeleteView(BaseEventViewTestClass):
             'properties': {},
         })
         try:
-            attendee = AttendeeModel(case=helper.case, domain=self.domain)
-            attendee.save()
-            yield attendee
+            yield helper.case
         finally:
             helper.close()
 
@@ -328,17 +322,52 @@ class TestAttendeesDeleteView(BaseEventViewTestClass):
     @patch.object(AttendeeModel, 'delete')
     def test_user_does_not_have_permission(self, attendee_delete_method):
         self.log_user_in(self.non_admin_webuser)
-        with self._create_attendee() as attendee:
-            response = self._delete_attendee(attendee.case_id)
+        with self._get_attendee_case() as case:
+            attendee = AttendeeModel(case=case, domain=self.domain)
+            attendee.save()
 
-        self.assertEqual(response.status_code, 404)
+        response = self._delete_attendee(attendee.case_id)
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
         self.assertFalse(attendee_delete_method.called)
 
     @flag_enabled('ATTENDANCE_TRACKING')
     def test_attendee_is_deleted(self):
         self.log_user_in(self.admin_webuser)
-        with self._create_attendee() as attendee:
+        with self._get_attendee_case() as case:
+            attendee = AttendeeModel(case=case, domain=self.domain)
+            attendee.save()
+
             response = self._delete_attendee(attendee.case_id)
-            self.assertEqual(response.status_code, 302)
-            attendee_case = CommCareCase.objects.get_case(attendee.case_id, self.domain)
-            self.assertEqual(attendee_case.get_case_property('closed'), True)
+            self.assertEqual(response.status_code, status.HTTP_302_FOUND)
+            attendee_case = CommCareCase.objects.get_case(case.case_id, self.domain)
+            self.assertTrue(attendee_case.get_case_property('closed'))
+
+    @flag_enabled('ATTENDANCE_TRACKING')
+    def test_cannot_delete_tracked_attendee(self):
+        today = datetime.utcnow().date()
+        event = Event(
+            domain=self.domain,
+            name='test-event',
+            start_date=today,
+            end_date=today,
+            attendance_target=10,
+            sameday_reg=True,
+            track_each_day=False,
+            manager_id=self.admin_webuser.user_id
+        )
+        event.save()
+
+        self.log_user_in(self.admin_webuser)
+        with self._get_attendee_case() as case:
+            attendee = AttendeeModel(case=case, domain=self.domain)
+            attendee.save()
+            event.mark_attendance([case], datetime.now())
+
+            response = self._delete_attendee(attendee.case_id)
+            self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+            attendee_case = CommCareCase.objects.get_case(case.case_id, self.domain)
+            self.assertFalse(attendee_case.get_case_property('closed'))
+            self.assertEqual(
+                response.content.decode('utf-8'),
+                '{"failed": "Cannot delete an attendee that has been tracked in one or more events."}'
+            )

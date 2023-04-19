@@ -26,6 +26,7 @@ from ..models import (
     get_attendee_case_type,
     get_user_case_sharing_groups_for_events,
 )
+from ..exceptions import AttendeeTrackedException
 
 DOMAIN = 'test-domain'
 
@@ -577,12 +578,12 @@ class TestAttendeeModel(TestCase):
             model = AttendeeModel(case=case, domain=DOMAIN)
             model.save()
             reloaded = CommCareCase.objects.get_case(case.case_id, DOMAIN)
-            self.assertEqual(reloaded.get_case_property('closed'), False)
+            self.assertFalse(reloaded.get_case_property('closed'))
             model.delete()
             reloaded = CommCareCase.objects.get_case(case.case_id, DOMAIN)
-            self.assertEqual(reloaded.get_case_property('closed'), True)
+            self.assertTrue(reloaded.get_case_property('closed'))
 
-    def test_active_event_count(self):
+    def test_has_attended_events(self):
         today = datetime.utcnow().date()
         event = Event(
             domain=DOMAIN,
@@ -599,15 +600,14 @@ class TestAttendeeModel(TestCase):
             attendee = AttendeeModel(case=case, domain=DOMAIN)
             attendee.save()
 
-        self.assertEqual(attendee.active_event_count(), 0)
-        event.set_expected_attendees([attendee])
-        self.assertEqual(attendee.active_event_count(), 1)
+            self.assertFalse(attendee.has_attended_events())
+            event.mark_attendance([case], datetime.now())
 
-        yesterday = today - timedelta(days=1)
-        event.start_date = yesterday
-        event.end_date = yesterday
-        event.save()
-        self.assertEqual(attendee.active_event_count(), 0)
+        self.assertTrue(attendee.has_attended_events())
+        self.assertRaises(
+            AttendeeTrackedException,
+            attendee.delete
+        )
 
 
 def test_doctests():
