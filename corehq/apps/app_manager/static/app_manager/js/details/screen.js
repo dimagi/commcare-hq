@@ -121,6 +121,11 @@ hqDefine("app_manager/js/details/screen", function () {
                 column.field.observableVal(column.original.field);
                 hqImport('app_manager/js/details/utils').setUpAutocomplete(column.field, self.properties);
             }
+            column.name.on('change', function (e) {
+                if (e.oldValue !== e.newValue) {
+                    self.fire("columnNameChange", e)
+                }
+            })
             return column;
         };
 
