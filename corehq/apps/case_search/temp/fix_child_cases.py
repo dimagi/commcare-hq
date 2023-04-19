@@ -8,9 +8,16 @@ CHILD_CASE_TYPE = 'membre'
 case_ids = CommCareCase.objects.get_case_ids_in_domain(domain=DOMAIN, type=CHILD_CASE_TYPE)
 
 total_cases = len(case_ids)
-cases_checked = 0
+cases_checked = -1
 
 for child_case in CommCareCase.objects.iter_cases(case_ids, domain=DOMAIN):
+    # --- Statistics
+    cases_checked += 1
+    progress = round(cases_checked / total_cases, 3)
+    print(f"{progress}% complete")
+    # --------------
+
+    # parent_case = child_case.parent
     parent_case = child_case.parent
     parent_missing = parent_case is None
     owner_ids_match = parent_case and parent_case.owner_id == child_case.owner_id
@@ -51,7 +58,7 @@ for child_case in CommCareCase.objects.iter_cases(case_ids, domain=DOMAIN):
 
     for case, case_helper in zip(cases, case_helpers):
         updated_properties = {}
-        for property_name, correct_property_value in correct_properties:
+        for property_name, correct_property_value in correct_properties.items():
             curr_case_property_value = case.get_case_property(property_name)
 
             if (not curr_case_property_value) or (curr_case_property_value != correct_property_value):
@@ -59,8 +66,3 @@ for child_case in CommCareCase.objects.iter_cases(case_ids, domain=DOMAIN):
         
         case_helper.update({'properties': updated_properties})
                 
-
-    # Statistics
-    cases_checked += 1
-    progress = round(cases_checked/total_cases, 3)
-    print(f"{progress}% complete")
