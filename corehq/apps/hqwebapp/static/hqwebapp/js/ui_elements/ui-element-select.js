@@ -40,7 +40,16 @@ hqDefine('hqwebapp/js/ui_elements/ui-element-select', [
             if (!_.isString(value)) {
                 return this.value;
             } else {
-                const option = _.find(this.options, o => value === o.value) || {};
+                let option = _.find(this.options, o => value === o.value);
+                if (!option) {
+                    // add a new option
+                    option = {value: value, label: value};
+                    this.options.push(option);
+                    if (!this.$edit_view.find(`option[value='${value}']`).length) {
+                        // this is needed to preserve the option after changing the list of properties
+                        $('<option/>').text(option.label).val(option.value).appendTo(this.$edit_view);
+                    }
+                }
                 this.value = option.value;
                 this.$edit_view.val(String(this.value || ''));
                 this.$noedit_view.text(option.label);
@@ -72,8 +81,10 @@ hqDefine('hqwebapp/js/ui_elements/ui-element-select', [
                 var option = this.options[i];
                 $('<option/>').text(option.label).val(option.value).appendTo(this.$edit_view);
             }
-            // preserve selection if possible
-            this.val(this.value);
+            if (this.value) {
+                // preserve selection if possible
+                this.val(this.value);
+            }
         },
     };
 
