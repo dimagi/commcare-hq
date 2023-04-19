@@ -16,6 +16,7 @@ from corehq.apps.hqcase.case_helper import CaseHelper
 from corehq.form_processor.models import CommCareCase, CommCareCaseIndex
 from corehq.util.quickcache import quickcache
 from django.db.models import Q
+from .exceptions import AttendeeTrackedException
 
 # Attendee list status is set by the Attendance Coordinator after the
 # event is over
@@ -482,6 +483,9 @@ class AttendeeModel(models.Model):
         helper.update(case_data)
 
     def delete(self, *args, **kwargs):
+        if self.has_attended_events():
+            raise AttendeeTrackedException
+
         helper = CaseHelper(case_id=self.case_id, domain=self.domain)
         helper.close()
 

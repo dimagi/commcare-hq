@@ -18,6 +18,7 @@ from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import HqPermissions
 from corehq.apps.users.views import BaseUserSettingsView
 from corehq.util.jqueryrmi import JSONResponseMixin, allow_remote_invocation
+from .exceptions import AttendeeTrackedException
 
 from .forms import EditAttendeeForm, EventForm, NewAttendeeForm
 from .models import (
@@ -36,7 +37,7 @@ from .tasks import (
     close_mobile_worker_attendee_cases,
     sync_mobile_worker_attendees,
 )
-from django.contrib import messages
+from rest_framework import status
 
 
 class BaseEventView(BaseDomainView):
@@ -383,14 +384,13 @@ class AttendeeDeleteView(BaseEventView):
             case_id=attendee_id,
             domain=domain
         )
-        if instance.active_event_count():
-            messages.error(
-                request,
-                _("Cannot delete an attendee that is being tracked in one or more events.")
-            )
-            return redirect(request.META['HTTP_REFERER'])
+        try:
+            instance.delete()
+        except AttendeeTrackedException:
+            return JsonResponse({
+                'failed': 'Cannot delete an attendee that has been tracked in one or more events.'
+            }, status=status.HTTP_400_BAD_REQUEST)
 
-        instance.delete()
         return HttpResponseRedirect(reverse(AttendeesListView.urlname, args=(domain,)))
 
 
