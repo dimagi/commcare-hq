@@ -485,23 +485,18 @@ class AttendeeModel(models.Model):
         helper = CaseHelper(case_id=self.case_id, domain=self.domain)
         helper.close()
 
-    def active_event_count(self, *args, **kwargs):
+    def has_attended_events(self, *args, **kwargs):
         """
-        Returns how many events this attendee is currently being tracked in.
-        Specifically, these are events that have not started yet, or are currently in progress.
+        Returns whether this attendee has been tracked in any events.
+        These are events where the attendee has been marked as having attended.
         """
-        # Get events that haven't started yet or are in progress
-        today = date.today()
-        events = Event.objects.by_domain(self.domain).filter(
-            Q(start_date__gt=today) | Q(start_date__lte=today, end_date__gte=today)
+        ext_case_ids = CommCareCaseIndex.objects.get_extension_case_ids(
+            self.domain,
+            [self.case_id],
+            include_closed=False,
+            case_type=ATTENDEE_DATE_CASE_TYPE
         )
-        active_event_count = 0
-        for event in events:
-            attendee_ids = [attendee.case_id for attendee in event.get_expected_attendees()]
-            if self.case_id in attendee_ids:
-                active_event_count += 1
-
-        return active_event_count
+        return any(ext_case_ids)
 
 
 def _parse_id_list_str(locations_str):

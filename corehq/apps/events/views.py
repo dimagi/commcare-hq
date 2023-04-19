@@ -352,7 +352,7 @@ class AttendeeEditView(BaseEventView):
         context.update({
             'attendee_id': self.attendee_id,
             'attendee_name': instance.name,
-            'attendee_active_event_count': instance.active_event_count(),
+            'attendee_has_attended_events': instance.has_attended_events(),
             'form': form,
         })
         return context
