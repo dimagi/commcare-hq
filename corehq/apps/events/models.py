@@ -508,8 +508,7 @@ def get_paginated_attendees(domain, limit, page, query=None):
             .domain(domain)
             .case_type(case_type)
             .is_closed(False)
-            .term('name', query)
-        )
+        ).search_string_query(query, ['name'])
         total = es_query.count()
         case_ids = es_query.get_ids()
     else:
