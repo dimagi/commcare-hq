@@ -59,21 +59,20 @@ def set_index_normal_settings(index):
     return manager.index_configure_for_standard_ops(index)
 
 
-def initialize_index_and_mapping(index_info):
-    index_exists = manager.index_exists(index_info.index)
+def initialize_index_and_mapping(adapter):
+    index_exists = manager.index_exists(adapter.index_name)
     if not index_exists:
-        initialize_index(index_info)
-    assume_alias(index_info.index, index_info.alias)
+        initialize_index(adapter)
 
 
-def initialize_index(index_info):
-    pillow_logging.info("Initializing elasticsearch index for [%s]" % index_info.type)
+def initialize_index(adapter):
+    pillow_logging.info("Initializing elasticsearch index for [%s]" % adapter.type)
     CreateIndex(
-        index_info.index,
-        index_info.type,
-        index_info.mapping,
-        index_info.meta["settings"]["analysis"],
-        index_info.hq_index_name,
+        adapter.index_name,
+        adapter.type,
+        adapter.mapping,
+        adapter.analysis,
+        adapter.settings_key,
     ).run()
 
 
