@@ -1033,6 +1033,9 @@ DATA_UPLOAD_MAX_MEMORY_SIZE = None
 # consider migrating to `DATA_UPLOAD_MAX_MEMORY_SIZE` which is universally applied
 MAX_UPLOAD_SIZE = 10 * 1024 * 1024
 
+# Size limit on attachment other than the xml form.
+MAX_UPLOAD_SIZE_ATTACHMENT = 15 * 1024 * 1024
+
 # Exports use a lot of fields to define columns. See: https://dimagi-dev.atlassian.net/browse/HI-365
 DATA_UPLOAD_MAX_NUMBER_FIELDS = 5000
 
