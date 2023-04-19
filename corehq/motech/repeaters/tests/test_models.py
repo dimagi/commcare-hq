@@ -451,6 +451,10 @@ class TestRepeaterConnectionSettings(RepeaterTestCase):
     def test_used_connection_setting_cannot_be_deleted(self):
         with self.assertRaises(ProtectedError):
             self.repeater.connection_settings.delete()
+        with self.assertRaises(ProtectedError):
+            ConnectionSettings.objects.filter(id=self.conn.id).delete()
+        with self.assertRaises(ProtectedError):
+            ConnectionSettings.all_objects.filter(id=self.conn.id).delete()
 
 
 def test_attempt_forward_now_kwargs():
