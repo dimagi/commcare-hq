@@ -45,7 +45,7 @@ for child_case in CommCareCase.objects.iter_cases(case_ids, domain=DOMAIN):
 
     correct_properties = {
         "hh_village_name": village.name,
-        "hh_formation_sanitaire_name": formation_sanitaire.parent.name,
+        "hh_formation_sanitaire_name": formation_sanitaire.name,
         "hh_arrondissement_name": arrondissement.name,
         "hh_commune_name": commune.name,
         "hh_zone_sanitaire_name": zone_sanitaire.name,
