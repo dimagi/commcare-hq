@@ -6,7 +6,7 @@
     <thead data-bind="visible: columns().length > 0">
     <tr tabindex="999" data-bind="paste: function (data) { pasteCallback(data, 0); }">
       <th class="col-sm-1"></th>
-      <th class="col-sm-3">{% trans "Property" %}</th>
+      <th class="col-sm-4">{% trans "Property" %}</th>
       <!-- ko if: showCaseTileColumn() -->
       <th class="col-sm-2">{% trans "Display Text" %}</th>
       <th class="col-sm-3">{% trans "Format" %}</th>
@@ -40,17 +40,30 @@
                     "></i>
       </td>
       <!--ko if: !isTab -->
-      <td class="col-sm-3" data-bind="css: {'has-error': showWarning}">
-        <div data-bind="html: hqImport('app_manager/js/details/utils').getFieldHtml(field.val()), visible: !field.edit"></div>
-        <div data-bind="jqueryElement: field.ui, visible: field.edit"></div>
-        <!-- ko if: useXpathExpression -->
-        <div class="label label-default">{% trans "Calculated Property" %}</div>
-        <!-- /ko -->
-        <div data-bind="visible: showWarning">
-          <span class="help-block" data-bind="
-              text: hqImport('app_manager/js/details/utils').fieldFormatWarningMessage
-          ">
-          </span>
+      <td class="col-sm-4" data-bind="css: {'has-error': showWarning}">
+        <div class="row row-no-gutters">
+          <div data-bind="css: {
+                'col-sm-6': useXpathExpression,
+                'col-sm-12': !useXpathExpression,
+            }">
+            <div data-bind="html: hqImport('app_manager/js/details/utils').getFieldHtml(field.val()), visible: !field.edit"></div>
+            <div data-bind="jqueryElement: field.ui, visible: field.edit"></div>
+            <!-- ko if: useXpathExpression -->
+            <div class="label label-default">{% trans "Calculation" %}</div>
+            <!-- /ko -->
+            <div data-bind="visible: showWarning">
+              <span class="help-block" data-bind="
+                  text: hqImport('app_manager/js/details/utils').fieldFormatWarningMessage
+              ">
+              </span>
+            </div>
+          </div>
+          <!-- ko if: useXpathExpression -->
+          <div class="col-sm-6">
+            <div class="app-designer-input"><input type="text" class="form-control"></div>
+            <div class="label label-default">{% trans "Name" %}</div>
+          </div>
+          <!-- /ko -->
         </div>
       </td>
       <td data-bind="jqueryElement: header.ui, css: {
