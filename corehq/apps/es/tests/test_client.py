@@ -582,6 +582,18 @@ class TestElasticManageAdapter(AdapterWithIndexTestCase):
         self.assertIn(alias, aliases)
         self.assertEqual(aliases[alias], [index])
 
+    def test_index_validate_query_returns_true_for_valid_query(self):
+        self.adapter.index_create(self.index)
+        query = {"query": {"term": {"value": 'some val'}}}
+        validation = self.adapter.index_validate_query(index=self.index, query=query)
+        self.assertTrue(validation)
+
+    def test_index_validate_query_returns_false_for_invalid_query(self):
+        self.adapter.index_create(self.index)
+        query = {"query": {"termmz": {"value": 'some val'}}}
+        validation = self.adapter.index_validate_query(index=self.index, query=query)
+        self.assertFalse(validation)
+
     def test_index_set_replicas(self):
         self.adapter.index_create(self.index)
         # initial value is 1

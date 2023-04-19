@@ -344,6 +344,11 @@ class ElasticManageAdapter(BaseAdapter):
             return settings
         return {k: settings[k] for k in values}
 
+    def index_validate_query(self, index, query, params={}):
+        """Returns True if passed `query` is valid else will return false"""
+        validation = self._es.indices.validate_query(body=query, index=index, params=params)
+        return validation['valid']
+
     @staticmethod
     def _validate_single_index(index):
         """Verify that the provided index is a valid, single index
