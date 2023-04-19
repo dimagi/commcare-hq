@@ -102,6 +102,8 @@ hqDefine('app_manager/js/details/screen_config', function () {
                 } else {
                     self.sortProperties.push(newVar);
                 }
+                // update list for new sort rows
+                self.sortRows.properties = self.sortProperties;
                 // update existing sort rows with the new options
                 self.sortRows.sortRows().forEach((row) => {
                     let oldSelection = row.selectField.val();
@@ -123,7 +125,7 @@ hqDefine('app_manager/js/details/screen_config', function () {
             var filterXpath = spec.state.short.filter;
             self.filter = hqImport("app_manager/js/details/filter")(filterXpath ? filterXpath : null, self.shortScreen.saveButton);
             // Set up sortRows
-            self.sortRows = hqImport("app_manager/js/details/sort_rows")([...self.sortProperties], self.shortScreen.saveButton);
+            self.sortRows = hqImport("app_manager/js/details/sort_rows")(self.sortProperties, self.shortScreen.saveButton);
             if (spec.sortRows) {
                 for (var j = 0; j < spec.sortRows.length; j++) {
                     self.sortRows.addSortRow(

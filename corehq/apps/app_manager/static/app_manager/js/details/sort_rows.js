@@ -96,6 +96,7 @@ hqDefine("app_manager/js/details/sort_rows", function () {
     var sortRows = function (properties, saveButton) {
         var self = {};
         self.sortRows = ko.observableArray([]);
+        self.properties = properties;
 
         self.addSortRow = function (field, type, direction, blanks, display, notify, sortCalculation) {
             self.sortRows.push(sortRow({
@@ -104,7 +105,7 @@ hqDefine("app_manager/js/details/sort_rows", function () {
                 direction: direction,
                 blanks: blanks,
                 display: display,
-                properties: properties,
+                properties: [...self.properties],  // clone list here to avoid updates from select2 leaking out
                 sortCalculation: sortCalculation,
             }, saveButton));
             if (notify) {
