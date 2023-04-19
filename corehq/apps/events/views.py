@@ -1,11 +1,10 @@
 import json
 
-from django.http import Http404, HttpResponseRedirect, JsonResponse
+from django.http import Http404, HttpResponseRedirect, JsonResponse, HttpResponseServerError
 from django.urls import reverse
 from django.utils.translation import gettext_lazy as _
 from django.views.decorators.http import require_GET
-
-from memoized import memoized
+from django.shortcuts import render
 
 from corehq import toggles
 from corehq.apps.domain.decorators import login_and_domain_required
@@ -17,6 +16,8 @@ from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import HqPermissions
 from corehq.apps.users.views import BaseUserSettingsView
 from corehq.util.jqueryrmi import JSONResponseMixin, allow_remote_invocation
+from soil.util import expose_cached_download, get_download_context
+from soil.exceptions import TaskFailedError
 
 from .forms import EditAttendeeForm, EventForm, NewAttendeeForm
 from .models import (
@@ -281,6 +282,11 @@ class AttendeesListView(JSONResponseMixin, BaseEventView):
     @property
     def page_context(self):
         context = super().page_context
+        context['mobile_worker_attendees_url'] = reverse(
+            ConvertMobileWorkerAttendeesView.urlname,
+            kwargs={'domain': self.domain},
+        )
+
         if self.request.method == "POST":
             context['new_attendee_form'] = NewAttendeeForm(self.request.POST)
         else:
@@ -377,22 +383,84 @@ class AttendeesConfigView(JSONResponseMixin, BaseUserSettingsView, BaseEventView
     @allow_remote_invocation
     def get(self, request, *args, **kwargs):
         return self.json_response({
-            "mobile_worker_attendee_enabled": mobile_worker_attendees_enabled(self.domain)
+            'mobile_worker_attendee_enabled': mobile_worker_attendees_enabled(self.domain)
         })
+
+
+class ConvertMobileWorkerAttendeesView(BaseUserSettingsView, BaseEventView):
+    urlname = "convert_mobile_workers"
 
     @allow_remote_invocation
-    def post(self, request, *args, **kwargs):
-        json_data = json.loads(request.body)
-        attendees_enabled = json_data['mobile_worker_attendee_enabled']
+    def get(self, request, *args, **kwargs):
+        attendees_enabled = mobile_worker_attendees_enabled(self.domain)
         toggle_mobile_worker_attendees(self.domain, attendees_enabled)
-        if attendees_enabled:
-            sync_mobile_worker_attendees.delay(self.domain, user_id=self.couch_user.user_id)
-        else:
-            close_mobile_worker_attendee_cases.delay(self.domain)
 
-        return self.json_response({
-            "mobile_worker_attendee_enabled": attendees_enabled
+        task_ref = expose_cached_download(
+            payload=None, expiry=60 * 60, file_extension=None
+        )
+
+        if attendees_enabled:
+            task = sync_mobile_worker_attendees.delay(self.domain, user_id=self.couch_user.user_id)
+        else:
+            task = close_mobile_worker_attendee_cases.delay(self.domain)
+
+        task_ref.set_task(task)
+        return HttpResponseRedirect(
+            reverse(
+                MobileWorkerAttendeeSatusView.urlname,
+                args=[self.domain, task_ref.download_id]
+            )
+        )
+
+
+class MobileWorkerAttendeeSatusView(BaseEventView):
+    urlname = "convert_mobile_worker_status"
+
+    @property
+    def page_title(self):
+        if mobile_worker_attendees_enabled(self.domain):
+            return _("Disabling mobile worker attendees status")
+        else:
+            return _("Enabling mobile worker attendees status")
+
+    def get(self, request, *args, **kwargs):
+        context = super(MobileWorkerAttendeeSatusView, self).main_context
+        context.update({
+            'domain': self.domain,
+            'download_id': kwargs['download_id'],
+            'poll_url': reverse('poll_mobile_worker_attendee_progress', args=[self.domain, kwargs['download_id']]),
+            'title': _(self.page_title),
+            'progress_text': _("Converting Users. This may take some time..."),
+            'error_text': _("User conversion failed for some reason and we have noted this failure."),
         })
+        return render(request, 'hqwebapp/soil_status_full.html', context)
+
+    def page_url(self):
+        return reverse(self.urlname, args=self.args, kwargs=self.kwargs)
+
+
+@require_GET
+@login_and_domain_required
+def poll_mobile_worker_attendee_progress(request, domain, download_id):
+    try:
+        context = get_download_context(download_id)
+    except TaskFailedError:
+        return HttpResponseServerError()
+
+    if mobile_worker_attendees_enabled(domain):
+        context['success_message'] = _("Disabling mobile workers complete!")
+        context['failure_message'] = _("Disabling mobile workers failed! Details: ")
+        context['custom_message'] = _("Disabling mobile worker attendees in progress. This may take a while...")
+    else:
+        context['success_message'] = _("Enabling mobile workers complete!")
+        context['failure_message'] = _("Enabling mobile workers failed! Details: ")
+        context['custom_message'] = _("Enabling mobile worker attendees in progress. This may take a while...")
+
+    return render(
+        request,
+        "partials/attendee_conversion_status.html",
+        context
+    )
 
 
 @require_GET
