@@ -120,7 +120,6 @@ class BaseExportView(BaseProjectDataView):
             isinstance(self.export_instance, CaseExportInstance)
             and self.export_instance.case_type == ALL_CASE_TYPE_EXPORT
         )
-        selected_table_count = 0
         if not is_all_case_types_export:
             schema = self.get_export_schema(
                 self.domain,
@@ -128,7 +127,6 @@ class BaseExportView(BaseProjectDataView):
                 self.export_instance.identifier,
             )
             number_of_apps_to_process = schema.get_number_of_apps_to_process()
-            selected_table_count = len(self.export_instance.selected_tables)
 
         if self.export_instance.owner_id or not self.export_instance._id:
             sharing_options = SharingOption.CHOICES
@@ -151,8 +149,7 @@ class BaseExportView(BaseProjectDataView):
             'number_of_apps_to_process': number_of_apps_to_process,
             'sharing_options': sharing_options,
             'terminology': self.terminology,
-            'is_all_case_types_export': is_all_case_types_export,
-            'selected_table_count': selected_table_count
+            'is_all_case_types_export': is_all_case_types_export
         }
 
     @property
