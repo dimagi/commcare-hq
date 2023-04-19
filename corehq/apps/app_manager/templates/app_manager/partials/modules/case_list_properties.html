@@ -60,7 +60,7 @@
           </div>
           <!-- ko if: useXpathExpression -->
           <div class="col-sm-6">
-            <div class="app-designer-input"><input type="text" class="form-control"></div>
+            <div data-bind="jqueryElement: name.ui, visible: name.edit"></div>
             <div class="label label-default">{% trans "Name" %}</div>
           </div>
           <!-- /ko -->

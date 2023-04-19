@@ -28,6 +28,7 @@ hqDefine("app_manager/js/details/column", function () {
             calc_xpath: ".",
             enum: [],
             field: "",
+            name: "",
             filter_xpath: "",
             format: "plain",
             graph_configuration: {},
@@ -84,6 +85,12 @@ hqDefine("app_manager/js/details/column", function () {
         self.field.observableVal = ko.observable(self.field.val());
         self.field.on("change", function () {
             self.field.observableVal(self.field.val());
+        });
+
+        self.name = uiElement.input(self.original.name);
+        self.name.observableVal = ko.observable(self.name.val());
+        self.name.on("change", function () {
+            self.name.observableVal(self.name.val());
         });
 
         (function () {
@@ -256,6 +263,7 @@ hqDefine("app_manager/js/details/column", function () {
         _.each([
             'model',
             'field',
+            'name',
             'header',
             'nodeset_extra',
             'relevant',
@@ -335,6 +343,7 @@ hqDefine("app_manager/js/details/column", function () {
         self.serialize = function () {
             var column = self.original;
             column.field = self.field.val();
+            column.name = self.name.val();
             column.header[self.lang] = self.header.val();
             column.format = self.format.val();
             column.date_format = self.date_extra.val();
