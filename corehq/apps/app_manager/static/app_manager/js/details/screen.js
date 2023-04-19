@@ -93,6 +93,7 @@ hqDefine("app_manager/js/details/screen", function () {
         self.initColumnAsColumn = function (column) {
             column.model.setEdit(false);
             column.field.setEdit(true);
+            column.name.setEdit(true);
             column.header.setEdit(true);
             column.format.setEdit(true);
             column.date_extra.setEdit(true);
