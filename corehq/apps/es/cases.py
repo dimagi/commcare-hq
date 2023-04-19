@@ -23,7 +23,6 @@ from . import aggregations, filters
 from .client import ElasticDocumentAdapter, create_document_adapter
 from .es_query import HQESQuery
 from .index.settings import IndexSettingsKey
-from .transient_util import get_adapter_mapping
 
 HQ_CASES_INDEX_CANONICAL_NAME = 'cases'
 
@@ -58,7 +57,8 @@ class ElasticCase(ElasticDocumentAdapter):
 
     @property
     def mapping(self):
-        return get_adapter_mapping(self)
+        from .mappings.case_mapping import CASE_MAPPING
+        return CASE_MAPPING
 
     @property
     def model_cls(self):

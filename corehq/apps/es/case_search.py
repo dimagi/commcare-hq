@@ -39,7 +39,6 @@ from .cases import case_adapter
 from .client import ElasticDocumentAdapter, create_document_adapter
 from .index.analysis import PHONETIC_ANALYSIS
 from .index.settings import IndexSettingsKey
-from .transient_util import get_adapter_mapping
 
 PROPERTY_KEY = "{}.key.exact".format(CASE_PROPERTIES_PATH)
 PROPERTY_VALUE = '{}.{}'.format(CASE_PROPERTIES_PATH, VALUE)
@@ -151,7 +150,8 @@ class ElasticCaseSearch(ElasticDocumentAdapter):
 
     @property
     def mapping(self):
-        return get_adapter_mapping(self)
+        from .mappings.case_search_mapping import CASE_SEARCH_MAPPING
+        return CASE_SEARCH_MAPPING
 
     @property
     def model_cls(self):

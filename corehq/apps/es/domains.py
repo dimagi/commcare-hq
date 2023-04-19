@@ -19,7 +19,6 @@ from .client import ElasticDocumentAdapter, create_document_adapter
 from .es_query import HQESQuery
 from .index.analysis import COMMA_ANALYSIS
 from .index.settings import IndexSettingsKey
-from .transient_util import get_adapter_mapping
 
 HQ_DOMAINS_INDEX_CANONICAL_NAME = 'domains'
 
@@ -59,7 +58,8 @@ class ElasticDomain(ElasticDocumentAdapter):
 
     @property
     def mapping(self):
-        return get_adapter_mapping(self)
+        from .mappings.domain_mapping import DOMAIN_MAPPING
+        return DOMAIN_MAPPING
 
     @property
     def model_cls(self):

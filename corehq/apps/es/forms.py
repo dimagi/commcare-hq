@@ -23,7 +23,6 @@ from . import filters
 from .client import ElasticDocumentAdapter, create_document_adapter
 from .es_query import HQESQuery
 from .index.settings import IndexSettingsKey
-from .transient_util import get_adapter_mapping
 
 HQ_FORMS_INDEX_CANONICAL_NAME = 'forms'
 
@@ -71,7 +70,8 @@ class ElasticForm(ElasticDocumentAdapter):
 
     @property
     def mapping(self):
-        return get_adapter_mapping(self)
+        from .mappings.xform_mapping import XFORM_MAPPING
+        return XFORM_MAPPING
 
     @property
     def model_cls(self):

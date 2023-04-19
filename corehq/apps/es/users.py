@@ -27,7 +27,6 @@ from . import filters, queries
 from .client import ElasticDocumentAdapter, create_document_adapter
 from .es_query import HQESQuery
 from .index.settings import IndexSettingsKey
-from .transient_util import get_adapter_mapping
 
 HQ_USERS_INDEX_CANONICAL_NAME = 'users'
 
@@ -80,7 +79,8 @@ class ElasticUser(ElasticDocumentAdapter):
 
     @property
     def mapping(self):
-        return get_adapter_mapping(self)
+        from .mappings.user_mapping import USER_MAPPING
+        return USER_MAPPING
 
     def _from_dict(self, user_dict):
         """

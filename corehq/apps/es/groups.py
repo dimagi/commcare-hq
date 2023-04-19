@@ -19,7 +19,6 @@ from . import filters
 from .client import ElasticDocumentAdapter, create_document_adapter
 from .es_query import HQESQuery
 from .index.settings import IndexSettingsKey
-from .transient_util import get_adapter_mapping
 
 HQ_GROUPS_INDEX_CANONICAL_NAME = 'groups'
 
@@ -44,7 +43,8 @@ class ElasticGroup(ElasticDocumentAdapter):
 
     @property
     def mapping(self):
-        return get_adapter_mapping(self)
+        from .mappings.group_mapping import GROUP_MAPPING
+        return GROUP_MAPPING
 
     @property
     def model_cls(self):
