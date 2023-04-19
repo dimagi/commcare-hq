@@ -50,6 +50,16 @@ def doc_adapter_from_cname(index_cname, for_export=False):
     return _get_doc_adapter(CANONICAL_NAME_ADAPTER_MAP[index_cname], for_export)
 
 
+def doc_adapter_from_index_name(index_name, for_export=False):
+    """Return the document adapter for the provided ``index_name``.
+
+    :param index_name: ``str`` name of the index
+    :param for_export: ``bool`` used to instantiate the adapter instance
+    :returns: instance of an ``ElasticDocumentAdapter`` subclass
+    """
+    return _get_doc_adapter(_DOC_ADAPTERS_BY_INDEX[index_name], for_export)
+
+
 def _get_doc_adapter(adapter, for_export):
     """Helper function to keep things DRY. Returns an adapter instance that is
     configured for export (or not).
