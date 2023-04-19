@@ -640,7 +640,7 @@ def tableau_username_to_hq(tableau_username):
         return tableau_username[3:]
 
 
-# Attaches to the parse_web_users method
+# Attaches to the parse_web_users method, used for user export
 def add_on_tableau_details(domain, web_user_dicts):
 
     session = TableauAPISession.create_session_for_domain(domain)
