@@ -1,3 +1,4 @@
+from corehq.apps.es.transient_util import doc_adapter_from_index_name
 from corehq.util.es.elasticsearch import TransportError
 
 from pillowtop.checkpoints.manager import PillowCheckpoint
@@ -27,6 +28,10 @@ TEST_INDEX_INFO = ElasticsearchIndexInfo(
     mapping=TEST_ES_MAPPING,
     hq_index_name='pillowtop_tests'
 )
+
+
+def get_pillow_doc_adapter():
+    return doc_adapter_from_index_name(TEST_ES_INDEX)
 
 
 def get_doc_count(es, index, refresh_first=True):
