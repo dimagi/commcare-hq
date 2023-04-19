@@ -5,6 +5,7 @@ hqDefine('app_manager/js/details/screen_config', function () {
     return function (spec) {
         var self = {};
         self.properties = spec.properties;
+        self.sortProperties = Array.from(spec.properties);
         self.screens = [];
         self.model = spec.model || 'case';
         self.lang = spec.lang;
@@ -73,6 +74,31 @@ hqDefine('app_manager/js/details/screen_config', function () {
 
         if (spec.state.short !== undefined) {
             self.shortScreen = addScreen(spec.state, "short");
+            self.shortScreen.on("columnNameChange", e => {
+               let newVar = {value: e.newValue, label: `${e.newValue} (Calculated)`};
+                let found = false;
+                const newProps = self.sortProperties.map(p => {
+                   if (p.value && p.value === e.oldValue) {
+                       found = true;
+                       return newVar;
+                   } else {
+                       return p;
+                   }
+                });
+                if (found) {
+                    self.sortProperties = newProps;
+                } else {
+                    self.sortProperties.push(newVar);
+                }
+                self.sortRows.sortRows().forEach((row) => {
+                    let oldSelection = row.selectField.val();
+                    row.selectField.setOptions(self.sortProperties);
+                    if (oldSelection === e.oldValue) {
+                        row.selectField.val(e.newValue);
+                        row.selectField.fire("change");
+                    }
+                });
+            });
             // Set up filter
             var filterXpath = spec.state.short.filter;
             self.filter = hqImport("app_manager/js/details/filter")(filterXpath ? filterXpath : null, self.shortScreen.saveButton);
