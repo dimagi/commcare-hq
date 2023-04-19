@@ -392,13 +392,12 @@ class ConvertMobileWorkerAttendeesView(BaseUserSettingsView, BaseEventView):
 
     @allow_remote_invocation
     def get(self, request, *args, **kwargs):
-        attendees_enabled = mobile_worker_attendees_enabled(self.domain)
+        attendees_enabled = not mobile_worker_attendees_enabled(self.domain)
         toggle_mobile_worker_attendees(self.domain, attendees_enabled)
 
         task_ref = expose_cached_download(
             payload=None, expiry=60 * 60, file_extension=None
         )
-
         if attendees_enabled:
             task = sync_mobile_worker_attendees.delay(self.domain, user_id=self.couch_user.user_id)
         else:
@@ -419,9 +418,9 @@ class MobileWorkerAttendeeSatusView(BaseEventView):
     @property
     def page_title(self):
         if mobile_worker_attendees_enabled(self.domain):
-            return _("Disabling mobile worker attendees status")
-        else:
             return _("Enabling mobile worker attendees status")
+        else:
+            return _("Disabling mobile worker attendees status")
 
     def get(self, request, *args, **kwargs):
         context = super(MobileWorkerAttendeeSatusView, self).main_context
@@ -448,13 +447,13 @@ def poll_mobile_worker_attendee_progress(request, domain, download_id):
         return HttpResponseServerError()
 
     if mobile_worker_attendees_enabled(domain):
-        context['success_message'] = _("Disabling mobile workers complete!")
-        context['failure_message'] = _("Disabling mobile workers failed! Details: ")
-        context['custom_message'] = _("Disabling mobile worker attendees in progress. This may take a while...")
-    else:
         context['success_message'] = _("Enabling mobile workers complete!")
         context['failure_message'] = _("Enabling mobile workers failed! Details: ")
         context['custom_message'] = _("Enabling mobile worker attendees in progress. This may take a while...")
+    else:
+        context['success_message'] = _("Disabling mobile workers complete!")
+        context['failure_message'] = _("Disabling mobile workers failed! Details: ")
+        context['custom_message'] = _("Disabling mobile worker attendees in progress. This may take a while...")
 
     return render(
         request,
