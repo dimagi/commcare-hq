@@ -41,7 +41,6 @@ def update_script():
                 zone_sanitaire = commune.parent
                 departement = zone_sanitaire.parent
             except Exception as e:
-                # skippped_cases[child_case.case_id] = f"Location hierarchy issue: {e}"
                 logfile.write(f"Skipped {child_case.case_id}. Reason: Location hierarchy issue. {e}\n")
                 continue
 
