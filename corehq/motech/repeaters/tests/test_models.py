@@ -89,10 +89,6 @@ class TestSoftDeleteRepeaters(RepeaterTestCase):
         repeater_count = Repeater.objects.all().count()
         self.assertEqual(repeater_count, 4)
 
-    def tearDown(self):
-        Repeater.all_objects.all().delete()
-        return super().tearDown()
-
 
 class TestRepeaterName(RepeaterTestCase):
 
