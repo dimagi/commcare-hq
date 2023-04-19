@@ -120,7 +120,9 @@ class BaseExportView(BaseProjectDataView):
             isinstance(self.export_instance, CaseExportInstance)
             and self.export_instance.case_type == ALL_CASE_TYPE_EXPORT
         )
+        table_count = 0
         if not is_all_case_types_export:
+            table_count = self.export_instance.get_default_selected_table_count()
             schema = self.get_export_schema(
                 self.domain,
                 self.request.GET.get('app_id') or getattr(self.export_instance, 'app_id'),
