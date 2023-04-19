@@ -45,9 +45,11 @@ PROPERTY_KEY = "{}.key.exact".format(CASE_PROPERTIES_PATH)
 PROPERTY_VALUE = '{}.{}'.format(CASE_PROPERTIES_PATH, VALUE)
 PROPERTY_VALUE_EXACT = '{}.{}.exact'.format(CASE_PROPERTIES_PATH, VALUE)
 
+HQ_CASE_SEARCH_INDEX_CANONICAL_NAME = "case_search"
+
 
 class CaseSearchES(CaseES):
-    index = "case_search"
+    index = HQ_CASE_SEARCH_INDEX_CANONICAL_NAME
 
     @property
     def builtin_filters(self):
@@ -145,6 +147,7 @@ class ElasticCaseSearch(ElasticDocumentAdapter):
 
     analysis = PHONETIC_ANALYSIS
     settings_key = IndexSettingsKey.CASE_SEARCH
+    canonical_name = HQ_CASE_SEARCH_INDEX_CANONICAL_NAME
 
     @property
     def mapping(self):

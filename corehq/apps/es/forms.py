@@ -25,9 +25,11 @@ from .es_query import HQESQuery
 from .index.settings import IndexSettingsKey
 from .transient_util import get_adapter_mapping
 
+HQ_FORMS_INDEX_CANONICAL_NAME = 'forms'
+
 
 class FormES(HQESQuery):
-    index = 'forms'
+    index = HQ_FORMS_INDEX_CANONICAL_NAME
     default_filters = {
         'is_xform_instance': filters.term("doc_type", "xforminstance"),
         'has_xmlns': filters.exists("xmlns"),
@@ -65,6 +67,7 @@ class FormES(HQESQuery):
 class ElasticForm(ElasticDocumentAdapter):
 
     settings_key = IndexSettingsKey.FORMS
+    canonical_name = HQ_FORMS_INDEX_CANONICAL_NAME
 
     @property
     def mapping(self):

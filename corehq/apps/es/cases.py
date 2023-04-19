@@ -25,9 +25,11 @@ from .es_query import HQESQuery
 from .index.settings import IndexSettingsKey
 from .transient_util import get_adapter_mapping
 
+HQ_CASES_INDEX_CANONICAL_NAME = 'cases'
+
 
 class CaseES(HQESQuery):
-    index = 'cases'
+    index = HQ_CASES_INDEX_CANONICAL_NAME
 
     @property
     def builtin_filters(self):
@@ -52,6 +54,7 @@ class CaseES(HQESQuery):
 class ElasticCase(ElasticDocumentAdapter):
 
     settings_key = IndexSettingsKey.CASES
+    canonical_name = HQ_CASES_INDEX_CANONICAL_NAME
 
     @property
     def mapping(self):

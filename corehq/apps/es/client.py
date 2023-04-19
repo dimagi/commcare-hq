@@ -417,6 +417,9 @@ class ElasticDocumentAdapter(BaseAdapter):
     # This variable be used in data transformation logic
     model_cls = None
 
+    # Name of the index as referred in HQ world
+    canonical_name = None
+
     def __init__(self, index_name, type_):
         """A document adapter for a single index.
 

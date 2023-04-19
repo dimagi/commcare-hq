@@ -12,8 +12,6 @@ DomainES
              .size(0))
 """
 
-from copy import copy
-
 from django_countries import Countries
 
 from . import filters
@@ -23,9 +21,11 @@ from .index.analysis import COMMA_ANALYSIS
 from .index.settings import IndexSettingsKey
 from .transient_util import get_adapter_mapping
 
+HQ_DOMAINS_INDEX_CANONICAL_NAME = 'domains'
+
 
 class DomainES(HQESQuery):
-    index = 'domains'
+    index = HQ_DOMAINS_INDEX_CANONICAL_NAME
     default_filters = {
         'not_snapshot': filters.NOT(filters.term('is_snapshot', True)),
     }
@@ -55,6 +55,7 @@ class ElasticDomain(ElasticDocumentAdapter):
 
     analysis = COMMA_ANALYSIS
     settings_key = IndexSettingsKey.DOMAINS
+    canonical_name = HQ_DOMAINS_INDEX_CANONICAL_NAME
 
     @property
     def mapping(self):

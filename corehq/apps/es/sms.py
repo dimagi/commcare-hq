@@ -2,8 +2,6 @@
 SMSES
 --------
 """
-from copy import copy
-
 from . import filters
 from .client import ElasticDocumentAdapter, create_document_adapter
 from .es_query import HQESQuery
@@ -11,8 +9,11 @@ from .index.settings import IndexSettingsKey
 from .transient_util import get_adapter_mapping
 
 
+HQ_SMS_INDEX_CANONICAL_NAME = "sms"
+
+
 class SMSES(HQESQuery):
-    index = 'sms'
+    index = HQ_SMS_INDEX_CANONICAL_NAME
 
     @property
     def builtin_filters(self):
@@ -37,6 +38,7 @@ class SMSES(HQESQuery):
 class ElasticSMS(ElasticDocumentAdapter):
 
     settings_key = IndexSettingsKey.SMS
+    canonical_name = HQ_SMS_INDEX_CANONICAL_NAME
 
     @property
     def mapping(self):

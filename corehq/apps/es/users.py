@@ -29,9 +29,11 @@ from .es_query import HQESQuery
 from .index.settings import IndexSettingsKey
 from .transient_util import get_adapter_mapping
 
+HQ_USERS_INDEX_CANONICAL_NAME = 'users'
+
 
 class UserES(HQESQuery):
-    index = 'users'
+    index = HQ_USERS_INDEX_CANONICAL_NAME
     default_filters = {
         'not_deleted': filters.term("base_doc", "couchuser"),
         'active': filters.term("is_active", True),
@@ -69,6 +71,7 @@ class UserES(HQESQuery):
 class ElasticUser(ElasticDocumentAdapter):
 
     settings_key = IndexSettingsKey.USERS
+    canonical_name = HQ_USERS_INDEX_CANONICAL_NAME
 
     @property
     def model_cls(self):

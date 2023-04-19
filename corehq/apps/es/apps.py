@@ -13,8 +13,11 @@ from .index.settings import IndexSettingsKey
 from .transient_util import get_adapter_mapping
 
 
+HQ_APPS_INDEX_CANONICAL_NAME = 'apps'
+
+
 class AppES(HQESQuery):
-    index = 'apps'
+    index = HQ_APPS_INDEX_CANONICAL_NAME
 
     @property
     def builtin_filters(self):
@@ -31,6 +34,7 @@ class AppES(HQESQuery):
 class ElasticApp(ElasticDocumentAdapter):
 
     settings_key = IndexSettingsKey.APPS
+    canonical_name = HQ_APPS_INDEX_CANONICAL_NAME
 
     @property
     def mapping(self):
