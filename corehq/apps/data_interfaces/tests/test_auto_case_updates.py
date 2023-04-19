@@ -1,6 +1,5 @@
 from contextlib import contextmanager
 from datetime import datetime
-from unittest import expectedFailure
 from unittest.mock import patch
 
 from django.test import TestCase, override_settings
@@ -743,7 +742,6 @@ class CaseRuleActionsTest(BaseCaseRuleTest):
             self.assertEqual(case.name, 'Ellie')
 
 
-    @expectedFailure  # TODO: Allow setting case.external_id
     def test_update_external_id(self):
         """
         Updating case property "external_id" updates ``case.external_id``

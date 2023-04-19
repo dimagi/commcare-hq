@@ -150,6 +150,10 @@ def _get_update_or_close_case_block(
         'close': close,
     }
     if case_properties:
+        if 'external_id' in case_properties:
+            # `copy()` so as not to modify by reference
+            case_properties = case_properties.copy()
+            kwargs['external_id'] = case_properties.pop('external_id')
         kwargs['update'] = case_properties
     if owner_id:
         kwargs['owner_id'] = owner_id
