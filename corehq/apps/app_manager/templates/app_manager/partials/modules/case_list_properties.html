@@ -43,8 +43,8 @@
       <td class="col-sm-4" data-bind="css: {'has-error': showWarning}">
         <div class="row row-no-gutters">
           <div data-bind="css: {
-                'col-sm-6': useXpathExpression,
-                'col-sm-12': !useXpathExpression,
+                'col-sm-6': showXpathExpressionName,
+                'col-sm-12': !showXpathExpressionName,
             }">
             <div data-bind="html: hqImport('app_manager/js/details/utils').getFieldHtml(field.val()), visible: !field.edit"></div>
             <div data-bind="jqueryElement: field.ui, visible: field.edit"></div>
@@ -58,7 +58,7 @@
               </span>
             </div>
           </div>
-          <!-- ko if: useXpathExpression -->
+          <!-- ko if: showXpathExpressionName -->
           <div class="col-sm-6">
             <div data-bind="jqueryElement: name.ui, visible: name.edit"></div>
             <div class="label label-default">{% trans "Name" %}</div>

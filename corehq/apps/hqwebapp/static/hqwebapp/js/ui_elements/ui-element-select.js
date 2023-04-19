@@ -43,7 +43,7 @@ hqDefine('hqwebapp/js/ui_elements/ui-element-select', [
                 const option = _.find(this.options, o => value === o.value) || {};
                 this.value = option.value;
                 this.$edit_view.val(String(this.value || ''));
-                this.$noedit_view.text(optLabel);
+                this.$noedit_view.text(option.label);
                 return this;
             }
         },

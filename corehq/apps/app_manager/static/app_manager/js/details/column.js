@@ -134,6 +134,7 @@ hqDefine("app_manager/js/details/column", function () {
 
         self.saveAttempted = ko.observable(false);
         self.useXpathExpression = self.original.useXpathExpression;
+        self.showXpathExpressionName = self.useXpathExpression && self.screen.columnKey === 'short';
         self.showWarning = ko.computed(function () {
             if (self.useXpathExpression) {
                 return false;
