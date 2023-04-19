@@ -56,7 +56,11 @@ def sync_mobile_worker_attendees(domain_name, user_id):
                 current=n,
                 total=total_mobile_workers,
             )
-
+        DownloadBase.set_progress(
+            task=task,
+            current=total_mobile_workers,
+            total=total_mobile_workers,
+        )
 
 @task
 def close_mobile_worker_attendee_cases(domain_name):

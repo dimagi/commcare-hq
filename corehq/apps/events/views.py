@@ -442,7 +442,7 @@ class MobileWorkerAttendeeSatusView(BaseEventView):
 @login_and_domain_required
 def poll_mobile_worker_attendee_progress(request, domain, download_id):
     try:
-        context = get_download_context(download_id)
+        context = get_download_context(download_id, require_result=True)
     except TaskFailedError:
         return HttpResponseServerError()
 
