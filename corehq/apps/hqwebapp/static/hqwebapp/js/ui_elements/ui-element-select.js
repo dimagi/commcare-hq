@@ -72,6 +72,8 @@ hqDefine('hqwebapp/js/ui_elements/ui-element-select', [
                 var option = this.options[i];
                 $('<option/>').text(option.label).val(option.value).appendTo(this.$edit_view);
             }
+            // preserve selection if possible
+            this.val(this.value);
         },
     };
 
