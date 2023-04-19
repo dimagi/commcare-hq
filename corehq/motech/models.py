@@ -101,6 +101,11 @@ class ConnectionSettings(models.Model):
         return self.name
 
     @property
+    def repeaters(self):
+        from .repeaters.models import Repeater
+        return Repeater.objects.filter(connection_settings_id=self.id)
+
+    @property
     def plaintext_password(self):
         if self.password.startswith(f'${ALGO_AES}$'):
             ciphertext = self.password.split('$', 2)[2]

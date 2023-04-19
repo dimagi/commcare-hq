@@ -592,13 +592,14 @@ class TestPollOpenmrsAtomFeeds(TestCase, TestFileMixin):
     root = os.path.dirname(__file__)
 
     def setUp(self):
+        from corehq.motech.repeaters.tests.data.repeaters import openmrs_repeater
         super().setUp()
         self.conn = ConnectionSettings.objects.create(
             id=1,
             url="http://abc.com",
-            name="http://abc.com"
+            name="http://abc.com",
+            domain=openmrs_repeater["domain"],
         )
-        from corehq.motech.repeaters.tests.data.repeaters import openmrs_repeater
         self.repeater = OpenmrsRepeater(**openmrs_repeater).save()
 
         self.encounter_feed_xml = inspect.cleandoc(ENCOUNTER_FEED_XML)
