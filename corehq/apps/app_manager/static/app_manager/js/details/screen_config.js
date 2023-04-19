@@ -72,10 +72,22 @@ hqDefine('app_manager/js/details/screen_config', function () {
             return screen;
         }
 
-        if (spec.state.short !== undefined) {
-            self.shortScreen = addScreen(spec.state, "short");
+        function bindCalculatedPropsWithSortCols () {
+            // This links the calculated properties in the case list with the options available for sorting.
+            // Updates to the calculated properties are propagated to the sort rows.
+
+            // update the available sort properties with existing calculated properties
+            let calculatedCols = self.shortScreen.columns()
+                .filter(col => col.useXpathExpression && col.name.val())
+                .map(col => {
+                    let name = col.name.val();
+                    return {value: name, label: `${name} (Calculated)`};
+                })
+            self.sortProperties.push(...calculatedCols);
+
+            // propagate changes in calculated columns to the sort properties
             self.shortScreen.on("columnNameChange", e => {
-               let newVar = {value: e.newValue, label: `${e.newValue} (Calculated)`};
+                let newVar = {value: e.newValue, label: `${e.newValue} (Calculated)`};
                 let found = false;
                 const newProps = self.sortProperties.map(p => {
                    if (p.value && p.value === e.oldValue) {
@@ -84,26 +96,34 @@ hqDefine('app_manager/js/details/screen_config', function () {
                    } else {
                        return p;
                    }
-                });
+                }).filter(p => p.label ? p.value : p);
                 if (found) {
                     self.sortProperties = newProps;
                 } else {
                     self.sortProperties.push(newVar);
                 }
+                // update existing sort rows with the new options
                 self.sortRows.sortRows().forEach((row) => {
                     let oldSelection = row.selectField.val();
                     row.selectField.setOptions(self.sortProperties);
                     if (oldSelection === e.oldValue) {
                         row.selectField.val(e.newValue);
-                        row.selectField.fire("change");
+                    } else {
+                        row.selectField.val(oldSelection);
                     }
+                    row.selectField.fire("change");
                 });
             });
+        }
+
+        if (spec.state.short !== undefined) {
+            self.shortScreen = addScreen(spec.state, "short");
+            bindCalculatedPropsWithSortCols();
             // Set up filter
             var filterXpath = spec.state.short.filter;
             self.filter = hqImport("app_manager/js/details/filter")(filterXpath ? filterXpath : null, self.shortScreen.saveButton);
             // Set up sortRows
-            self.sortRows = hqImport("app_manager/js/details/sort_rows")(self.properties, self.shortScreen.saveButton);
+            self.sortRows = hqImport("app_manager/js/details/sort_rows")([...self.sortProperties], self.shortScreen.saveButton);
             if (spec.sortRows) {
                 for (var j = 0; j < spec.sortRows.length; j++) {
                     self.sortRows.addSortRow(
