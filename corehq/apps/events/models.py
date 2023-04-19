@@ -15,7 +15,6 @@ from corehq.apps.groups.models import UnsavableGroup
 from corehq.apps.hqcase.case_helper import CaseHelper
 from corehq.form_processor.models import CommCareCase, CommCareCaseIndex
 from corehq.util.quickcache import quickcache
-from django.db.models import Q
 from .exceptions import AttendeeTrackedException
 
 # Attendee list status is set by the Attendance Coordinator after the
