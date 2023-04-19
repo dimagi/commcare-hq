@@ -28,9 +28,9 @@ hqDefine('hqwebapp/js/ui_elements/ui-element-select', [
             that.fire('change');
         });
 
-        this.setOptions(options || []);
-
         this.$noedit_view = $('<span class="ui-element-select"/>');
+
+        this.setOptions(options || []);
 
         this.setEdit(this.edit);
     };
@@ -40,11 +40,10 @@ hqDefine('hqwebapp/js/ui_elements/ui-element-select', [
             if (!_.isString(value)) {
                 return this.value;
             } else {
-                this.value = value;
-                var option = _.find(this.options, function (o) { return value === o.value; }) || {},
-                    label = option.label;
+                const option = _.find(this.options, o => value === o.value) || {};
+                this.value = option.value;
                 this.$edit_view.val(String(this.value || ''));
-                this.$noedit_view.text(label);
+                this.$noedit_view.text(optLabel);
                 return this;
             }
         },
@@ -67,13 +66,11 @@ hqDefine('hqwebapp/js/ui_elements/ui-element-select', [
             return this;
         },
         setOptions: function (options) {
-            this.options = options;
+            this.options = options.map(o => _.isString(o) ? {value: o, label: o} : o);
             this.$edit_view.html('');
             for (var i = 0; i < this.options.length; i += 1) {
-                var option = this.options[i],
-                    label = option.label === undefined ? option : option.label,
-                    value = option.value === undefined ? option : option.value;
-                $('<option/>').text(label).val(value).appendTo(this.$edit_view);
+                var option = this.options[i];
+                $('<option/>').text(option.label).val(option.value).appendTo(this.$edit_view);
             }
         },
     };
