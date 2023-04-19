@@ -10,13 +10,6 @@ refactored to use the new "adapters".
 from .client import ElasticDocumentAdapter
 
 
-def get_adapter_mapping(adapter):
-    """Temporary function for fetching the Elastic mapping (still defined in
-    pillowtop module) for an adapter.
-    """
-    return _DOC_MAPPINGS_BY_INDEX[(adapter.index_name, adapter.type)]
-
-
 def from_dict_with_possible_id(doc):
     """Temporary "common" function for adapters who don't yet own their document
     ``from_python()`` logic.
