@@ -46,7 +46,8 @@ def doc_adapter_from_cname(index_cname, for_export=False):
     :param for_export: ``bool`` used to instantiate the adapter instance
     :returns: instance of an ``ElasticDocumentAdapter`` subclass
     """
-    return doc_adapter_from_info(index_info_from_cname(index_cname), for_export)
+    from corehq.apps.es import CANONICAL_NAME_ADAPTER_MAP
+    return _get_doc_adapter(CANONICAL_NAME_ADAPTER_MAP[index_cname], for_export)
 
 
 def _get_doc_adapter(adapter, for_export):
@@ -85,9 +86,14 @@ def iter_index_infos():
     yield from CANONICAL_NAME_INFO_MAP.values()
 
 
+def iter_doc_adapters():
+    from corehq.apps.es import CANONICAL_NAME_ADAPTER_MAP
+    yield from CANONICAL_NAME_ADAPTER_MAP.values()
+
+
 def iter_index_cnames():
-    from corehq.pillows.mappings import CANONICAL_NAME_INFO_MAP
-    yield from CANONICAL_NAME_INFO_MAP
+    from corehq.apps.es import CANONICAL_NAME_ADAPTER_MAP
+    yield from CANONICAL_NAME_ADAPTER_MAP
 
 
 def populate_doc_adapter_map():
