@@ -32,6 +32,7 @@ def update_script():
                 village_id = parent_case.owner_id
             except Exception:
                 logfile.write(f"Skipped {child_case.case_id}. Reason: No parent case\n")
+                continue
 
             try:
                 village = SQLLocation.objects.filter(location_id=village_id, domain=DOMAIN).first()
