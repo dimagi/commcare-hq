@@ -14,12 +14,12 @@
       <legend>{% trans 'Attendee' %}</legend>
       {% crispy form %}
     </fieldset>
-    {% if attendee_active_event_count %}
+    {% if attendee_has_attended_events %}
       <div class="alert alert-warning">
         <p>
           {% blocktrans %}
-            This attendee cannot be deleted as <strong>{{ attendee_name }}</strong> is currently being tracked
-            in {{ attendee_active_event_count }} active event(s).
+            This attendee cannot be deleted as <strong>{{ attendee_name }}</strong> has been tracked as
+            having attended one or more events.
           {% endblocktrans %}
         </p>
       </div>
@@ -30,7 +30,7 @@
         <button type="submit" class="btn btn-primary disable-on-submit">
           {% trans 'Update Attendee' %}
         </button>
-        <a class="btn btn-danger {% if attendee_active_event_count %}disabled{% endif %}"
+        <a class="btn btn-danger {% if attendee_has_attended_events %}disabled{% endif %}"
             data-toggle="modal" href="#delete_attendee_{{ attendee_id }}">
           <i class="fa fa-trash"></i>
           {% trans "Delete Attendee" %}
@@ -65,8 +65,8 @@
             </p>
             <p>
               {% blocktrans %}
-                This action will delete {{ attendee_name }} as a potential attendee and will remove their
-                attendance from all events. It will be as if {{ attendee_name }} never attended any event.
+                This action will delete {{ attendee_name }} as a potential attendee and will remove them from all
+                future events that they are currently enlisted in.
               {% endblocktrans %}
             </p>
             <div class="alert alert-warning">
