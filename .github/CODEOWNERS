@@ -36,6 +36,7 @@
 /corehq/apps/domain/decorators.py @esoergel
 /corehq/apps/domain/auth.py @esoergel
 /corehq/apps/es/ @esoergel
+/corehq/apps/hqcase/ @esoergel
 /corehq/apps/hqwebapp/ @orangejenny
 /corehq/apps/linked_domain/ @gherceg
 /corehq/apps/locations/ @esoergel
