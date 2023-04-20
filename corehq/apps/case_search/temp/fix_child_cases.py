@@ -1,13 +1,23 @@
-def update_script():
+def update_script(case_ids_to_exclude=[]):
     from corehq.form_processor.models import CommCareCase
-    from corehq.apps.hqcase.case_helper import CaseHelper
     from corehq.apps.locations.models import SQLLocation
+    from casexml.apps.case.mock import CaseBlock
+    from corehq.apps.hqcase.utils import submit_case_blocks
     import os
+
+    def submit_cases(case_blocks):
+        submit_case_blocks(
+            [cb.as_text() for cb in case_blocks],
+            domain=DOMAIN,
+            device_id='system',
+        )
 
     DOMAIN = 'develop'
     CHILD_CASE_TYPE = 'membre'
+    BULK_SIZE = 50
 
-    case_ids = CommCareCase.objects.get_case_ids_in_domain(domain=DOMAIN, type=CHILD_CASE_TYPE)
+    total_case_ids = CommCareCase.objects.get_case_ids_in_domain(domain=DOMAIN, type=CHILD_CASE_TYPE)
+    case_ids = [case_id for case_id in total_case_ids if case_id not in case_ids_to_exclude]
 
     total_cases = len(case_ids)
     cases_checked = -1
@@ -16,6 +26,8 @@ def update_script():
     success_log_file_path = os.path.expanduser("~/chris_script_success.log")
     with open(success_log_file_path, "a") as success_logfile:
         with open(error_log_file_path, "a") as logfile:
+
+            case_blocks = []
             for child_case in CommCareCase.objects.iter_cases(case_ids, domain=DOMAIN):
                 # --- Statistics
                 cases_checked += 1
@@ -23,7 +35,7 @@ def update_script():
                 print(f"{progress}% complete")
                 # --------------
 
-                child_case_helper = CaseHelper(domain=DOMAIN, case=child_case)
+                # child_case_helper = CaseHelper(domain=DOMAIN, case=child_case)
                 
                 """
                     Step 2 - Make sure that the case properties of both the child and parent cases correspond to te
@@ -56,12 +68,11 @@ def update_script():
                     "hh_departement_name": departement.name
                 }
 
-                parent_case_helper = CaseHelper(domain=DOMAIN, case=parent_case)
-                case_helpers = (parent_case_helper, child_case_helper)
-                cases = (parent_case, child_case)
+                # parent_case_helper = CaseHelper(domain=DOMAIN, case=parent_case)
+                # case_helpers = (parent_case_helper, child_case_helper)
 
                 try:
-                    for case, case_helper in zip(cases, case_helpers):
+                    for case in (parent_case, child_case):
                         is_dirty = False
                         updated_properties = {}
                         for property_name, correct_property_value in correct_properties.items():
@@ -71,15 +82,38 @@ def update_script():
                                 updated_properties[property_name] = correct_property_value
                                 is_dirty = True
                         
-                        update_dict = {'properties': updated_properties}
-                        if case.case_id == child_case.case_id and case.owner_id != parent_case.owner_id:
+                        # update_dict = {'properties': updated_properties}
+                        is_child_case = case.case_id == child_case.case_id
+                        owner_ids_differ = case.owner_id != parent_case.owner_id
+                        if is_child_case and owner_ids_differ:
                             is_dirty = True
-                            update_dict['owner_id'] = parent_case.owner_id
+                            # update_dict['owner_id'] = parent_case.owner_id
 
                         if is_dirty:
-                            case_helper.update(update_dict)
-                            success_logfile.write(f"{case.case_id}, ")
+                            case_block = CaseBlock(
+                                create=False,
+                                case_id=case.case_id,
+                                owner_id=parent_case.owner_id, # True for both child and parent case
+                                update=updated_properties,
+                            )
+                            case_blocks.append(case_block)
                         
+                        if len(case_blocks) == BULK_SIZE:
+                            submit_cases(case_blocks)
+                            for case_block in case_blocks:
+                                success_logfile.write(f"{case_block.case_id}, ")
+                            # Clear case_blocks
+                            case_blocks = []
+                
                 except Exception as e:
                     logfile.write(f"Skipped {child_case.case_id}. Reason: Cannot update case. {e}\n")
 
+            # We need to submit any remaining case blocks in case BULK_SIZE have not been reached
+            try:
+                submit_cases(case_blocks)
+                for case_block in case_blocks:
+                    success_logfile.write(f"{case_block.case_id}, ")
+                # Clear case_blocks
+                case_blocks = []
+            except Exception as e:
+                    logfile.write(f"Skipped {child_case.case_id}. Reason: Cannot update case. {e}\n")
