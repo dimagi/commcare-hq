@@ -1822,7 +1822,6 @@ class DetailColumn(IndexedSchema):
     header = DictProperty()
     model = StringProperty(exclude_if_none=True)
     field = StringProperty()
-    name = StringProperty()  # typically only used for calculated columns
     useXpathExpression = BooleanProperty(default=False)
     format = StringProperty(exclude_if_none=True)
 

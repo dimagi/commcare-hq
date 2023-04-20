@@ -93,7 +93,6 @@ hqDefine("app_manager/js/details/screen", function () {
         self.initColumnAsColumn = function (column) {
             column.model.setEdit(false);
             column.field.setEdit(true);
-            column.name.setEdit(true);
             column.header.setEdit(true);
             column.format.setEdit(true);
             column.date_extra.setEdit(true);
@@ -121,11 +120,6 @@ hqDefine("app_manager/js/details/screen", function () {
                 column.field.observableVal(column.original.field);
                 hqImport('app_manager/js/details/utils').setUpAutocomplete(column.field, self.properties);
             }
-            column.name.on('change', function (e) {
-                if (e.oldValue !== e.newValue) {
-                    self.fire("columnNameChange", e)
-                }
-            })
             return column;
         };
 
