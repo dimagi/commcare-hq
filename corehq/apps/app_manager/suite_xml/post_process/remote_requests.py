@@ -165,12 +165,12 @@ class RemoteRequestFactory(object):
         return CaseIDXPath(XPath("current()").slash(".")).case().count().eq(1)
 
     def get_post_relevant(self):
+        if self.exclude_relevant:
+            return None
         case_not_claimed = self.module.search_config.get_relevant(
             self.case_session_var, self.module.is_multi_select())
         case_in_project = self._get_smart_link_rewind_xpath()
         uses_smart_links = module_uses_smart_links(self.module)
-        if self.exclude_relevant:
-            return case_in_project if uses_smart_links else None
         return XPath.and_(case_not_claimed, case_in_project) if uses_smart_links else case_not_claimed
 
     def build_command(self):
