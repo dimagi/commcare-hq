@@ -11,6 +11,8 @@
 {% endblock %}
 
 {% block page_content %}
+  {% initial_page_data 'mobile_worker_attendees_url' mobile_worker_attendees_url %}
+
   {% registerurl 'paginated_attendees' domain %}
   {% registerurl 'attendees_config' domain %}
   {% registerurl 'event_attendees' domain %}
@@ -31,13 +33,9 @@
         <i class="fa fa-plus"></i> {% trans "Create Potential Attendee" %}
       </button>
 
-      <button
-        id="mobileWorkerAttendeeButton"
-        type="button"
-        class="btn btn-default"
-        onClick="toggleMobileWorkerAttendees()">
+      <a id="mobileWorkerAttendeeButton" class="btn btn-default" href="{{ mobile_worker_attendees_url }}">
         <i class="fa"></i>{% trans "Enable Mobile Worker Attendees" %}
-      </button>
+      </a>
   </div>
 </p>
 
