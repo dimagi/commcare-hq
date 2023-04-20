@@ -488,7 +488,7 @@ class AttendeeModel(models.Model):
         helper = CaseHelper(case_id=self.case_id, domain=self.domain)
         helper.close()
 
-    def has_attended_events(self, *args, **kwargs):
+    def has_attended_events(self):
         """
         Returns whether this attendee has been tracked in any events.
         These are events where the attendee has been marked as having attended.
