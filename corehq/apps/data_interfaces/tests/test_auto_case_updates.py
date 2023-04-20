@@ -29,6 +29,7 @@ from corehq.form_processor.signals import sql_case_post_save
 from corehq.tests.locks import reentrant_redis_locks
 from corehq.toggles import NAMESPACE_DOMAIN, RUN_AUTO_CASE_UPDATES_ON_SAVE
 from corehq.util.context_managers import drop_connected_signals
+from corehq.util.test_utils import flag_enabled
 from corehq.util.test_utils import set_parent_case as set_actual_parent_case
 
 
@@ -741,11 +742,33 @@ class CaseRuleActionsTest(BaseCaseRuleTest):
             self.assertNotIn('name', case.case_json)
             self.assertEqual(case.name, 'Ellie')
 
-
     def test_update_external_id(self):
         """
         Updating case property "external_id" updates ``case.external_id``
         """
+        rule = _create_empty_rule(self.domain)
+        _, definition = rule.add_action(UpdateCaseDefinition, close_case=False)
+        definition.set_properties_to_update([
+            UpdateCaseDefinition.PropertyDefinition(
+                name='external_id',
+                value_type=UpdateCaseDefinition.VALUE_TYPE_EXACT,
+                value='Bella Ramsay',
+            ),
+        ])
+        definition.save()
+
+        with _with_case(self.domain, 'person', datetime.utcnow()) as case:
+            self.assertActionResult(rule, 0)
+
+            result = rule.run_actions_when_case_matches(case)
+            case = CommCareCase.objects.get_case(case.case_id, self.domain)
+
+            self.assertActionResult(rule, 1, result, CaseRuleActionResult(num_updates=1))
+            self.assertNotIn('external_id', case.case_json)
+            self.assertEqual(case.external_id, 'Bella Ramsay')
+
+    @flag_enabled('USE_CUSTOM_EXTERNAL_ID_CASE_PROPERTY')
+    def test_equivalent_to_feature_flag(self):
         rule = _create_empty_rule(self.domain)
         _, definition = rule.add_action(UpdateCaseDefinition, close_case=False)
         definition.set_properties_to_update([
