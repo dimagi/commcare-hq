@@ -423,6 +423,13 @@ class MobileWorkerAttendeeSatusView(BaseEventView):
         else:
             return _("Disabling mobile worker attendees status")
 
+    @property
+    def parent_pages(self):
+        return [{
+            'title': AttendeesListView.page_title,
+            'url': reverse(AttendeesListView.urlname, args=[self.domain]),
+        }]
+
     def get(self, request, *args, **kwargs):
         context = super(MobileWorkerAttendeeSatusView, self).main_context
         context.update({
@@ -430,7 +437,7 @@ class MobileWorkerAttendeeSatusView(BaseEventView):
             'download_id': kwargs['download_id'],
             'poll_url': reverse('poll_mobile_worker_attendee_progress', args=[self.domain, kwargs['download_id']]),
             'title': _(self.page_title),
-            'progress_text': _("Converting Users. This may take some time..."),
+            'progress_text': _("Processing Mobile Workers. This may take some time..."),
             'error_text': _("User conversion failed for some reason and we have noted this failure."),
             'next_url': reverse(AttendeesListView.urlname, args=[self.domain]),
             'next_url_text': _("Go back to view attendees"),
@@ -445,25 +452,26 @@ class MobileWorkerAttendeeSatusView(BaseEventView):
 @login_and_domain_required
 def poll_mobile_worker_attendee_progress(request, domain, download_id):
     try:
-        context = get_download_context(download_id, require_result=True)
+        context = get_download_context(download_id, require_result=False)
     except TaskFailedError as e:
         notify_exception(request, message=str(e))
         return HttpResponseServerError()
 
     if mobile_worker_attendees_enabled(domain):
-        context['success_message'] = _("Enabling mobile workers complete!")
-        context['failure_message'] = _("Enabling mobile workers failed! Details: ")
-        context['custom_message'] = _("Enabling mobile worker attendees in progress. This may take a while...")
+        context.update({
+            'on_complete_long': _("Mobile workers can now also be selected to attend events."),
+            'on_complete_short': _("Enabling mobile workers complete!"),
+            'custom_message': _("Enabling mobile worker attendees in progress. This may take a while..."),
+        })
     else:
-        context['success_message'] = _("Disabling mobile workers complete!")
-        context['failure_message'] = _("Disabling mobile workers failed! Details: ")
-        context['custom_message'] = _("Disabling mobile worker attendees in progress. This may take a while...")
+        context.update({
+            'on_complete_long': _("Mobile workers are now removed from the possible attendees list."),
+            'on_complete_short': _("Disabling mobile workers complete!"),
+            'custom_message': _("Disabling mobile worker attendees in progress. This may take a while..."),
+        })
 
-    return render(
-        request,
-        "partials/attendee_conversion_status.html",
-        context
-    )
+    template = "partials/attendee_conversion_status.html"
+    return render(request, template, context)
 
 
 @require_GET

@@ -16,17 +16,16 @@ from corehq.apps.users.models import CommCareUser
 from soil import DownloadBase
 
 
-@task
-def sync_mobile_worker_attendees(domain_name, user_id):
+@task(bind=True)
+def sync_mobile_worker_attendees(self, domain_name, user_id):
     """
     Create attendees from mobile workers
     """
     domain_mobile_workers = CommCareUser.by_domain(domain_name)
-    task = sync_mobile_worker_attendees
     total_mobile_workers = len(domain_mobile_workers)
 
     DownloadBase.set_progress(
-        task=task,
+        task=self,
         current=0,
         total=total_mobile_workers,
     )
@@ -52,24 +51,24 @@ def sync_mobile_worker_attendees(domain_name, user_id):
                     transaction.form.archive()
 
             DownloadBase.set_progress(
-                task=task,
+                task=self,
                 current=n,
                 total=total_mobile_workers,
             )
         DownloadBase.set_progress(
-            task=task,
+            task=self,
             current=total_mobile_workers,
             total=total_mobile_workers,
         )
 
-@task
-def close_mobile_worker_attendee_cases(domain_name):
+
+@task(bind=True)
+def close_mobile_worker_attendee_cases(self, domain_name):
     """
     Close attendee cases associated with mobile workers
     """
-    task = close_mobile_worker_attendee_cases
     DownloadBase.set_progress(
-        task=task,
+        task=self,
         current=0,
         total=100,
     )
@@ -84,7 +83,7 @@ def close_mobile_worker_attendee_cases(domain_name):
             if user_id in user_ids
         ]
         DownloadBase.set_progress(
-            task=task,
+            task=self,
             current=50,
             total=100,
         )
@@ -98,7 +97,7 @@ def close_mobile_worker_attendee_cases(domain_name):
             )
 
     DownloadBase.set_progress(
-        task=task,
+        task=self,
         current=100,
         total=100,
     )
