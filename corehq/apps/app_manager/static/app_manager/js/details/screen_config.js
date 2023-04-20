@@ -72,16 +72,20 @@ hqDefine('app_manager/js/details/screen_config', function () {
             return screen;
         }
 
+        const calculatedColName = (index) => `_cc_calculated_${index}`;
+        const calculatedColLabel = (index, col) => `${col.header.val()} (Calculated #${index})`;
+
         function bindCalculatedPropsWithSortCols () {
             // This links the calculated properties in the case list with the options available for sorting.
             // Updates to the calculated properties are propagated to the sort rows.
 
             // update the available sort properties with existing calculated properties
             let calculatedCols = self.shortScreen.columns()
-                .filter(col => col.useXpathExpression && col.name.val())
+                .filter(col => col.useXpathExpression)
                 .map(col => {
-                    let name = col.name.val();
-                    return {value: name, label: `${name} (Calculated)`};
+                    let index = self.shortScreen.columns.indexOf(col),
+                        label = calculatedColLabel(index, col);
+                    return {value: calculatedColName(index), label: label};
                 })
             self.sortProperties.push(...calculatedCols);
 
