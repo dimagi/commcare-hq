@@ -178,8 +178,6 @@ def download_file(request, domain, app_id, path):
 
     content_type_map = {
         'ccpr': 'commcare/profile',
-        'jad': 'text/vnd.sun.j2me.app-descriptor',
-        'jar': 'application/java-archive',
         'xml': 'application/xml',
         'txt': 'text/plain',
     }

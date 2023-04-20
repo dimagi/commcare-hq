@@ -61,7 +61,6 @@ STATICALLY_ANALYZABLE_TRANSLATIONS = [
     gettext_noop('CommCare LTS'),
     gettext_noop('CommCare Sense'),
     gettext_noop('CommCare Version'),
-    gettext_noop('Configure for low-literate users, J2ME only'),
     gettext_noop('Configure form menus display. For per-module option turn on grid view for the form\'s menu in a module under module\'s settings page. Read more on the <a target="_blank" href="https://help.commcarehq.org/display/commcarepublic/Grid+View+for+Form+and+Module+Screens">Help Site</a>.'),
     gettext_noop('Custom Base URL'),
     gettext_noop('Custom Keys'),

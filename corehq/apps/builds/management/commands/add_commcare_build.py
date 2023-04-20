@@ -83,7 +83,7 @@ def _add_build_menu_item(build_config, version):
     build_menu_items = build_config.menu
 
     build = BuildSpec(version=version, latest=True)
-    build_menu_item = BuildMenuItem(build=build, label="CommCare {}".format(version), j2me_enabled=False)
+    build_menu_item = BuildMenuItem(build=build, label="CommCare {}".format(version))
     build_menu_items.append(build_menu_item)
 
 
