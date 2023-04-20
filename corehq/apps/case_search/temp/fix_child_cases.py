@@ -103,10 +103,11 @@ def update_script(case_ids_to_exclude=[]):
 
             # We need to submit any remaining case blocks in case BULK_SIZE have not been reached
             try:
-                submit_cases(case_blocks)
-                for case_block in case_blocks:
-                    success_logfile.write(f"{case_block.case_id}, ")
-                # Clear case_blocks
-                case_blocks = []
+                if len(case_blocks) > 0:
+                    submit_cases(case_blocks)
+                    for case_block in case_blocks:
+                        success_logfile.write(f"{case_block.case_id}, ")
+                    # Clear case_blocks
+                    case_blocks = []
             except Exception as e:
                     logfile.write(f"Skipped {child_case.case_id}. Reason: Cannot update case. {e}\n")
