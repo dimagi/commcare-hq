@@ -330,9 +330,18 @@ class DomainLinkView(BaseProjectSettingsView):
         else:
             remote_linkable_ucr = None
 
+        linked_status = None
+        if upstream_link:
+            linked_status = 'downstream'
+        elif linked_domains:
+            linked_status = 'upstream'
+
+        # active_tab = self.request.GET.get('active_tab' '')
+
         return {
             'domain': self.domain,
             'timezone': timezone.localize(datetime.utcnow()).tzname(),
+            'linked_status': linked_status,
             'view_data': {
                 'is_superuser': is_superuser,
                 'is_downstream_domain': bool(upstream_link),
