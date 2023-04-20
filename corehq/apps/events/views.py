@@ -458,7 +458,7 @@ def poll_mobile_worker_attendee_progress(request, domain, download_id):
         })
     else:
         context.update({
-            'on_complete_long': _("Mobile workers are now removed from the possible attendees list."),
+            'on_complete_long': _("Mobile workers are now removed from the potential attendees list."),
             'on_complete_short': _("Disabling mobile workers complete!"),
             'custom_message': _("Disabling mobile worker attendees in progress. This may take a while..."),
         })
