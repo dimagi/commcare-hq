@@ -16,7 +16,12 @@ from corehq.util.test_utils import flag_enabled
 from corehq.apps.events.models import AttendanceTrackingConfig
 
 from ..models import Event, get_attendee_case_type
-from ..views import EventCreateView, EventsView, AttendeesConfigView
+from ..views import (
+    EventCreateView,
+    EventsView,
+    AttendeesConfigView,
+    ConvertMobileWorkerAttendeesView,
+)
 
 
 class BaseEventViewTestClass(TestCase):
@@ -238,6 +243,10 @@ class TestAttendeesConfigView(BaseEventViewTestClass):
         json_data = response.json()
         self.assertEqual(json_data['mobile_worker_attendee_enabled'], False)
 
+
+class TestConvertMobileWorkerAttendeesView(BaseEventViewTestClass):
+    urlname = ConvertMobileWorkerAttendeesView.urlname
+
     @flag_enabled('ATTENDANCE_TRACKING')
     @patch('corehq.apps.events.views.sync_mobile_worker_attendees')
     def test_post_updates_attendance_tracking_config(self, sync_mobile_worker_attendees_mock):
@@ -249,8 +258,6 @@ class TestAttendeesConfigView(BaseEventViewTestClass):
         json_payload = json.dumps({'mobile_worker_attendee_enabled': update_value})
         response = self.client.post(self.endpoint, json_payload, content_type='application/json')
         self.assertEqual(response.status_code, 200)
-        json_data = response.json()
-        self.assertEqual(json_data['mobile_worker_attendee_enabled'], update_value)
 
         # Make sure it updated
         config, _created = AttendanceTrackingConfig.objects.get_or_create(domain=self.domain)
