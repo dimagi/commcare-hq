@@ -73,7 +73,7 @@ hqDefine('app_manager/js/details/screen_config', function () {
         }
 
         const calculatedColName = (index) => `_cc_calculated_${index}`;
-        const calculatedColLabel = (index, col) => `${col.header.val()} (Calculated #${index})`;
+        const calculatedColLabel = (index, col) => `${col.header.val()} (Calculated #${index + 1})`;
 
         function bindCalculatedPropsWithSortCols () {
             // This links the calculated properties in the case list with the options available for sorting.
