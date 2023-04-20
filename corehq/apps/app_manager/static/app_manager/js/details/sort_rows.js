@@ -20,6 +20,8 @@ hqDefine("app_manager/js/details/sort_rows", function () {
         self.showWarning = ko.observable(false);
         self.hasValidPropertyName = function () {
             let name = self.selectField.val();
+            // changes here should also be made in
+            // corehq.apps.app_manager.helpers.validators.ModuleDetailValidatorMixin._validate_detail_screen_field
             if (new RegExp('^_cc_calculated_(\\d+)$').test(name)) {
                 // special case for calculated properties
                 return true;
