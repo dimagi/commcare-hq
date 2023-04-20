@@ -90,30 +90,51 @@ hqDefine('app_manager/js/details/screen_config', function () {
             self.sortProperties.push(...calculatedCols);
 
             // propagate changes in calculated columns to the sort properties
-            self.shortScreen.on("columnNameChange", e => {
-                let newVar = {value: e.newValue, label: `${e.newValue} (Calculated)`};
-                let found = false;
-                const newProps = self.sortProperties.map(p => {
-                   if (p.value && p.value === e.oldValue) {
-                       found = true;
-                       return newVar;
-                   } else {
-                       return p;
-                   }
-                }).filter(p => p.label ? p.value : p);
-                if (found) {
-                    self.sortProperties = newProps;
-                } else {
-                    self.sortProperties.push(newVar);
-                }
-                // update list for new sort rows
+            self.shortScreen.on("columnChange", changes => {
+                let sortProps = [...self.sortProperties];
+                let valueMapping = {};  // used to handle value changes and deletions
+                changes.forEach(change => {
+                    if (!change.value.useXpathExpression) {
+                        return;
+                    }
+                    const colValue = calculatedColName(change.index);
+                    const colLabel = calculatedColLabel(change.index, change.value);
+                    if (change.status === "edited") {
+                        let prop = sortProps.find(p => {
+                            return p.value === colValue
+                        });
+                        if (prop) {
+                            prop.label = colLabel;
+                        }
+                    } else if (change.status === "added" && change.moved !== undefined) {
+                        // re-order
+                        const oldValue = calculatedColName(change.moved);
+                        let prop = sortProps.find(p => p.value === oldValue);
+                        if (prop) {
+                            prop.value = colValue;
+                            prop.label = colLabel;
+                        }
+                        valueMapping[oldValue] = colValue;
+                    } else if (change.status === "added") {
+                        sortProps.push({value: colValue, label: colLabel});
+                    } else if (change.status === "deleted") {
+                        sortProps = sortProps.filter(p => p.value !== colValue);
+                        valueMapping[colValue] = "";  // set selection to blank
+                    }
+                });
+
+                // update values for next time and for new sort-cols
+                self.sortProperties = sortProps;
                 self.sortRows.properties = self.sortProperties;
+
                 // update existing sort rows with the new options
+                // and re-apply the selected value
                 self.sortRows.sortRows().forEach((row) => {
                     let oldSelection = row.selectField.val();
                     row.selectField.setOptions(self.sortProperties);
-                    if (oldSelection === e.oldValue) {
-                        row.selectField.val(e.newValue);
+                    if (valueMapping[oldSelection] !== undefined) {
+                        // handle changed values and deletions
+                        row.selectField.val(valueMapping[oldSelection]);
                     } else {
                         row.selectField.val(oldSelection);
                     }
