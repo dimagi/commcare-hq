@@ -136,7 +136,6 @@ class BaseExportView(BaseProjectDataView):
             sharing_options = [SharingOption.EDIT_AND_EXPORT]
 
         allow_deid = has_privilege(self.request, privileges.DEIDENTIFIED_DATA)
-        table_count = self.export_instance.get_default_selected_table_count()
         return {
             'export_instance': self.export_instance,
             'export_home_url': self.export_home_url,
