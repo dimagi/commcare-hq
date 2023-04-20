@@ -36,7 +36,6 @@ from .tasks import (
     close_mobile_worker_attendee_cases,
     sync_mobile_worker_attendees,
 )
-from rest_framework import status
 
 
 class BaseEventView(BaseDomainView):
@@ -388,7 +387,7 @@ class AttendeeDeleteView(BaseEventView):
         except AttendeeTrackedException:
             return JsonResponse({
                 'failed': 'Cannot delete an attendee that has been tracked in one or more events.'
-            }, status=status.HTTP_400_BAD_REQUEST)
+            }, 400)
 
         return HttpResponseRedirect(reverse(AttendeesListView.urlname, args=(domain,)))
 
