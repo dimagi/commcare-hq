@@ -432,6 +432,8 @@ class MobileWorkerAttendeeSatusView(BaseEventView):
             'title': _(self.page_title),
             'progress_text': _("Converting Users. This may take some time..."),
             'error_text': _("User conversion failed for some reason and we have noted this failure."),
+            'next_url': reverse(AttendeesListView.urlname, args=[self.domain]),
+            'next_url_text': _("Go back to view attendees"),
         })
         return render(request, 'hqwebapp/soil_status_full.html', context)
 
