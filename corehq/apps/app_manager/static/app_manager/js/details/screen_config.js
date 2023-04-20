@@ -125,21 +125,7 @@ hqDefine('app_manager/js/details/screen_config', function () {
 
                 // update values for next time and for new sort-cols
                 self.sortProperties = sortProps;
-                self.sortRows.properties = self.sortProperties;
-
-                // update existing sort rows with the new options
-                // and re-apply the selected value
-                self.sortRows.sortRows().forEach((row) => {
-                    let oldSelection = row.selectField.val();
-                    row.selectField.setOptions(self.sortProperties);
-                    if (valueMapping[oldSelection] !== undefined) {
-                        // handle changed values and deletions
-                        row.selectField.val(valueMapping[oldSelection]);
-                    } else {
-                        row.selectField.val(oldSelection);
-                    }
-                    row.selectField.fire("change");
-                });
+                self.sortRows.updateSortProperties(self.sortProperties, valueMapping);
             });
         }
 

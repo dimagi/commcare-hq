@@ -131,6 +131,24 @@ hqDefine("app_manager/js/details/sort_rows", function () {
             return self.rowCount() > 0;
         });
 
+        self.updateSortProperties = function (newProperties, changedValues) {
+            self.properties = newProperties;
+
+            // update existing sort rows with the new options
+            // and re-apply the selected value
+            self.sortRows().forEach((row) => {
+                let oldSelection = row.selectField.val();
+                row.selectField.setOptions(newProperties);
+                if (changedValues[oldSelection] !== undefined) {
+                    // handle changed values and deletions
+                    row.selectField.val(changedValues[oldSelection]);
+                } else {
+                    row.selectField.val(oldSelection);
+                }
+                row.selectField.fire("change");
+            });
+        }
+
         return self;
     };
 
