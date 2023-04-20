@@ -283,11 +283,6 @@ class AttendeesListView(JSONResponseMixin, BaseEventView):
     @property
     def page_context(self):
         context = super().page_context
-        context['mobile_worker_attendees_url'] = reverse(
-            ConvertMobileWorkerAttendeesView.urlname,
-            kwargs={'domain': self.domain},
-        )
-
         if self.request.method == "POST":
             context['new_attendee_form'] = NewAttendeeForm(self.request.POST)
         else:

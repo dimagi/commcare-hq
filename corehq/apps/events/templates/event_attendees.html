@@ -11,11 +11,10 @@
 {% endblock %}
 
 {% block page_content %}
-  {% initial_page_data 'mobile_worker_attendees_url' mobile_worker_attendees_url %}
-
   {% registerurl 'paginated_attendees' domain %}
   {% registerurl 'attendees_config' domain %}
   {% registerurl 'event_attendees' domain %}
+  {% registerurl 'convert_mobile_workers' domain %}
 <p class="lead">
   <p>
     {% blocktrans %}
@@ -33,7 +32,7 @@
         <i class="fa fa-plus"></i> {% trans "Create Potential Attendee" %}
       </button>
 
-      <a id="mobileWorkerAttendeeButton" class="btn btn-default" href="{{ mobile_worker_attendees_url }}">
+      <a id="mobileWorkerAttendeeButton" class="btn btn-default" href="{% url 'convert_mobile_workers' domain %}">
         <i class="fa"></i>{% trans "Enable Mobile Worker Attendees" %}
       </a>
   </div>
