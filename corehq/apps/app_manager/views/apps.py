@@ -836,7 +836,6 @@ def edit_app_attr(request, domain, app_id, attr):
         'use_custom_suite', 'custom_suite',
         'admin_password',
         'comment',
-        'use_j2me_endpoint',
         # Application only
         'cloudcare_enabled',
         'case_sharing',
@@ -885,7 +884,6 @@ def edit_app_attr(request, domain, app_id, attr):
         ('target_commcare_flavor', None, _always_allowed),
         ('comment', None, _always_allowed),
         ('custom_base_url', None, _always_allowed),
-        ('use_j2me_endpoint', None, _always_allowed),
         ('mobile_ucr_restore_version', None, _always_allowed),
         ('location_fixture_restore', None, _always_allowed),
     )

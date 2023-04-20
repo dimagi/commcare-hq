@@ -4073,8 +4073,6 @@ class ApplicationBase(LazyBlobDoc, SnapshotMixin,
     build_profiles = SchemaDictProperty(BuildProfile)
     practice_mobile_worker_id = StringProperty()
 
-    use_j2me_endpoint = BooleanProperty(default=False)
-
     # use commcare_flavor to avoid checking for none
     target_commcare_flavor = StringProperty(
         default='none',

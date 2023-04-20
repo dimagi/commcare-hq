@@ -170,7 +170,6 @@ class BuildMenuItem(DocumentSchema):
     build = SchemaProperty(BuildSpec)
     label = StringProperty(required=False)
     superuser_only = BooleanProperty(default=False)
-    j2me_enabled = BooleanProperty(default=True)
 
     def get_build(self):
         return self.build.get_build()
