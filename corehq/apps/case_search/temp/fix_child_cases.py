@@ -12,7 +12,7 @@ def update_script(case_ids_to_exclude=[]):
             device_id='system',
         )
 
-    DOMAIN = 'develop'
+    DOMAIN = 'alafiacomm'
     CHILD_CASE_TYPE = 'membre'
     BULK_SIZE = 50
 
@@ -31,7 +31,7 @@ def update_script(case_ids_to_exclude=[]):
             for child_case in CommCareCase.objects.iter_cases(case_ids, domain=DOMAIN):
                 # --- Statistics
                 cases_checked += 1
-                progress = round(cases_checked / total_cases, 3)
+                progress = round((cases_checked / total_cases) * 100, 3)
                 print(f"{progress}% complete")
                 # --------------
 
@@ -99,7 +99,8 @@ def update_script(case_ids_to_exclude=[]):
                             case_blocks = []
                 
                 except Exception as e:
-                    logfile.write(f"Skipped {child_case.case_id}. Reason: Cannot update case. {e}\n")
+                    case_ids = [cb.case_id for cb in case_blocks]
+                    logfile.write(f"Skipped {case_ids}. Reason: Cannot update cases. {e}\n")
 
             # We need to submit any remaining case blocks in case BULK_SIZE have not been reached
             try:
@@ -110,4 +111,5 @@ def update_script(case_ids_to_exclude=[]):
                     # Clear case_blocks
                     case_blocks = []
             except Exception as e:
-                    logfile.write(f"Skipped {child_case.case_id}. Reason: Cannot update case. {e}\n")
+                    case_ids = [cb.case_id for cb in case_blocks]
+                    logfile.write(f"Skipped {case_ids}. Reason: Cannot update cases. {e}\n")
