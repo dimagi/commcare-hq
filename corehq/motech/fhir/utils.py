@@ -1,14 +1,16 @@
 import os
-
+from functools import wraps
 from memoized import memoized
 
-from corehq.motech.fhir.const import FHIR_VERSION_4_0_1
+from corehq.motech.fhir.const import FHIR_VERSION_4_0_1, HQ_ACCEPTABLE_FHIR_MIME_TYPES
 from corehq.motech.fhir.models import (
     FHIRResourceProperty,
     FHIRResourceType,
     get_schema_dir,
 )
 from corehq.util.view_utils import absolute_reverse
+
+from django.http import JsonResponse
 
 
 def resource_url(domain, fhir_version_name, resource_type, case_id):
@@ -75,3 +77,16 @@ def load_fhir_resource_types(fhir_version=FHIR_VERSION_4_0_1, exclude_resource_t
             resource_types.remove(schema)
     resource_types.sort()
     return resource_types
+
+
+def require_fhir_json_headers(view_func):
+    @wraps(view_func)
+    def _inner(request, *args, **kwargs):
+        if request.content_type not in HQ_ACCEPTABLE_FHIR_MIME_TYPES:
+            return JsonResponse(status=415, data={'message': "Unsupported Media Type"})
+        print(request.META)
+        if request.META['HTTP_ACCEPT'] not in HQ_ACCEPTABLE_FHIR_MIME_TYPES + ['*/*']:
+            return JsonResponse(status=406, data={'message': "Not Acceptable"})
+        return view_func(request, *args, **kwargs)
+
+    return _inner
