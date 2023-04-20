@@ -1,5 +1,3 @@
-import json
-
 from django.http import Http404, HttpResponseRedirect, JsonResponse, HttpResponseServerError
 from django.urls import reverse
 from django.utils.translation import gettext_lazy as _
