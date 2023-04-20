@@ -18,6 +18,7 @@ from corehq.apps.users.views import BaseUserSettingsView
 from corehq.util.jqueryrmi import JSONResponseMixin, allow_remote_invocation
 from soil.util import expose_cached_download, get_download_context
 from soil.exceptions import TaskFailedError
+from dimagi.utils.logging import notify_exception
 
 from .forms import EditAttendeeForm, EventForm, NewAttendeeForm
 from .models import (
@@ -443,7 +444,8 @@ class MobileWorkerAttendeeSatusView(BaseEventView):
 def poll_mobile_worker_attendee_progress(request, domain, download_id):
     try:
         context = get_download_context(download_id, require_result=True)
-    except TaskFailedError:
+    except TaskFailedError as e:
+        notify_exception(request, message=str(e))
         return HttpResponseServerError()
 
     if mobile_worker_attendees_enabled(domain):
