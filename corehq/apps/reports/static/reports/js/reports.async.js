@@ -104,12 +104,12 @@ hqDefine("reports/js/reports.async", function () {
                 },
                 success: function (data) {
                     self.queryIdRequest = null;
-                    if (!initialLoad) { self.updateFilters(data.query_string); }
-                    if (!data.query_string) { setFilters = false; }
-                    self.updateReport(initialLoad, data.query_string, setFilters);
                     if (data.not_found) {
-                        history.pushState(null, window.location.title, pathName);
+                        // no corresponding filter config found - redirect to the landing page
+                        window.location.href = window.location.href.split('?')[0];
                     } else {
+                        if (!initialLoad) { self.updateFilters(data.query_string); }
+                        self.updateReport(initialLoad, data.query_string, setFilters);
                         history.pushState(null, window.location.title, pathName + '?query_id=' + data.query_id);
                     }
                 },
