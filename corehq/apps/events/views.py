@@ -387,7 +387,7 @@ class AttendeeDeleteView(BaseEventView):
         except AttendeeTrackedException:
             return JsonResponse({
                 'failed': 'Cannot delete an attendee that has been tracked in one or more events.'
-            }, 400)
+            }, status=400)
 
         return HttpResponseRedirect(reverse(AttendeesListView.urlname, args=(domain,)))
 

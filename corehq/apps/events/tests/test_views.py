@@ -26,8 +26,6 @@ from ..views import (
     AttendeesConfigView,
     AttendeeDeleteView
 )
-from ...hqcase.case_helper import CaseHelper
-from rest_framework import status
 
 
 class BaseEventViewTestClass(TestCase):
@@ -295,20 +293,30 @@ class TestAttendeesConfigView(BaseEventViewTestClass):
 
 
 class TestAttendeesDeleteView(BaseEventViewTestClass):
+
     urlname = AttendeeDeleteView.urlname
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.factory = CaseFactory(cls.domain)
 
     @contextmanager
     def _get_attendee_case(self):
-        helper = CaseHelper(domain=self.domain)
-        helper.create_case({
-            'case_name': 'Foobar',
-            'case_type': get_attendee_case_type(self.domain),
-            'properties': {},
-        })
+        case_type = get_attendee_case_type(self.domain)
+        (attendee,) = self.factory.create_or_update_cases([
+            CaseStructure(attrs={
+                'case_type': case_type,
+                'create': True,
+            })
+        ])
         try:
-            yield helper.case
+            yield attendee
         finally:
-            helper.close()
+            CommCareCase.objects.hard_delete_cases(
+                self.domain,
+                [attendee.case_id],
+            )
 
     def _delete_attendee(self, attendee_id):
         endpoint = reverse(self.urlname, args=(self.domain, attendee_id))
@@ -327,7 +335,7 @@ class TestAttendeesDeleteView(BaseEventViewTestClass):
             attendee.save()
 
         response = self._delete_attendee(attendee.case_id)
-        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+        self.assertEqual(response.status_code, 404)
         self.assertFalse(attendee_delete_method.called)
 
     @flag_enabled('ATTENDANCE_TRACKING')
@@ -338,7 +346,7 @@ class TestAttendeesDeleteView(BaseEventViewTestClass):
             attendee.save()
 
             response = self._delete_attendee(attendee.case_id)
-            self.assertEqual(response.status_code, status.HTTP_302_FOUND)
+            self.assertEqual(response.status_code, 302)
             attendee_case = CommCareCase.objects.get_case(case.case_id, self.domain)
             self.assertTrue(attendee_case.get_case_property('closed'))
 
@@ -364,7 +372,7 @@ class TestAttendeesDeleteView(BaseEventViewTestClass):
             event.mark_attendance([case], datetime.now())
 
             response = self._delete_attendee(attendee.case_id)
-            self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+            self.assertEqual(response.status_code, 400)
             attendee_case = CommCareCase.objects.get_case(case.case_id, self.domain)
             self.assertFalse(attendee_case.get_case_property('closed'))
             self.assertEqual(
