@@ -29,21 +29,17 @@ hqDefine('analytix/js/appcues', [
     $(function () {
         window.AppcuesSettings = {
             skipAMD: true,
+            enableURLDetection: true,
         };
         var apiId = _get('apiId'),
             scriptUrl = "//fast.appcues.com/" + apiId + '.js';
 
+        const {username, ...userProperties} = getIdentityProperties(
+            initialAnalytics.getNamespacedProperties('appcues'));
+
         _logger = logging.getLoggerForApi('Appcues');
         _ready = utils.initApi(_ready, apiId, scriptUrl, _logger, function () {
-            identify(_get("username"), {
-                firstName: _get("firstName"),
-                lastName: _get("lastName"),
-                email: _get("username"),
-                createdAt: _get("dateCreated"),
-                domain: _get("domain"),
-                isDimagi: _get("userIsDimagi"),
-                instance: _get("instance"),
-            });
+            identify(username, userProperties);
         });
     });
 
@@ -53,6 +49,33 @@ hqDefine('analytix/js/appcues', [
             _logger.debug.log(originalArgs, 'Identify');
             Appcues.identify(email, properties);
         });
+    }
+
+    const PROD_INSTANCE = 'www';
+
+    function getIdentityProperties(rawProperties) {
+        const publicProperties = _.omit(rawProperties, 'apiId')
+
+        const nameMap = {
+            'dateCreated': 'createdAt',
+            'userIsDimagi': 'isDimagi'
+        }
+
+        const result = {}
+        _.each(publicProperties, function (value, key) {
+            const mappedKey = _.get(nameMap, key, key)
+            result[mappedKey] = value;
+        });
+
+        result['email'] = result['username'];
+
+        if ('instance' in result && result['instance'] !== PROD_INSTANCE) {
+            result['instance'] ||= 'UNKNOWN';
+            // ensure non-prod environments do not conflict with prod environments
+            result['username'] = result['username'] + '@' + result['instance']
+        }
+
+        return result;
     }
 
     function trackEvent(label, data) {

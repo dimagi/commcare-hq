@@ -122,7 +122,9 @@ hqDefine("linked_domain/js/domain_links", [
 
         // Tab Header Statuses
         self.manageDownstreamDomainsTabStatus = ko.computed(function () {
-            return self.isUpstreamDomain() ? "active" : "";
+            // A bit of a hack. We need to set an active tab *unless* the URL hash
+            // is already pointing at a valid tab.
+            return self.isUpstreamDomain() && !window.location.hash  ? "active" : "";
         });
 
         self.pullContentTabStatus = ko.computed(function () {
@@ -131,7 +133,7 @@ hqDefine("linked_domain/js/domain_links", [
 
         // Tab Content Statuses
         self.manageTabActiveStatus = ko.computed(function () {
-            return self.isUpstreamDomain() ? "in active" : "";
+            return self.isUpstreamDomain() && !window.location.hash ? "in active" : "";
         });
 
         self.pullTabActiveStatus = ko.computed(function () {
