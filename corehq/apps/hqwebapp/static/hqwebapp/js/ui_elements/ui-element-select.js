@@ -17,6 +17,7 @@ hqDefine('hqwebapp/js/ui_elements/ui-element-select', [
         hqMain.eventize(this);
         this.ui = $('<span/>');
         this.value = "";
+        this.valueLabel = "";
         this.edit = true;
         this.options = [];
 
@@ -51,10 +52,14 @@ hqDefine('hqwebapp/js/ui_elements/ui-element-select', [
                     }
                 }
                 this.value = option.value;
+                this.valueLabel = option.label;
                 this.$edit_view.val(String(this.value || ''));
                 this.$noedit_view.text(option.label);
                 return this;
             }
+        },
+        valLabel : function () {
+            return this.valueLabel;
         },
         setEdit: function (edit) {
             this.edit = edit;

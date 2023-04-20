@@ -19,7 +19,12 @@ hqDefine("app_manager/js/details/sort_rows", function () {
 
         self.showWarning = ko.observable(false);
         self.hasValidPropertyName = function () {
-            return Utils.isValidPropertyName(self.selectField.val());
+            let name = self.selectField.val();
+            if (new RegExp('^_cc_calculated_(\\d+)$').test(name)) {
+                // special case for calculated properties
+                return true;
+            }
+            return Utils.isValidPropertyName(name);
         };
         self.display = ko.observable(typeof params.display !== 'undefined' ? params.display : "");
         self.display.subscribe(function () {
@@ -31,7 +36,8 @@ hqDefine("app_manager/js/details/sort_rows", function () {
                 self.showWarning(true);
             } else {
                 self.showWarning(false);
-                self.display(self.toTitleCase(this.val()));
+                let display = self.toTitleCase(this.valLabel()).split('(')[0].trim();
+                self.display(self.toTitleCase(display));
                 self.notifyButton();
             }
         });
