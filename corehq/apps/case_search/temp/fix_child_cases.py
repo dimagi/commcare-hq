@@ -35,8 +35,6 @@ def update_script(case_ids_to_exclude=[]):
                 print(f"{progress}% complete")
                 # --------------
 
-                # child_case_helper = CaseHelper(domain=DOMAIN, case=child_case)
-                
                 """
                     Step 2 - Make sure that the case properties of both the child and parent cases correspond to te
                     village's hierarchy. The owner_id of both cases is the village id
@@ -68,9 +66,6 @@ def update_script(case_ids_to_exclude=[]):
                     "hh_departement_name": departement.name
                 }
 
-                # parent_case_helper = CaseHelper(domain=DOMAIN, case=parent_case)
-                # case_helpers = (parent_case_helper, child_case_helper)
-
                 try:
                     for case in (parent_case, child_case):
                         is_dirty = False
@@ -82,12 +77,10 @@ def update_script(case_ids_to_exclude=[]):
                                 updated_properties[property_name] = correct_property_value
                                 is_dirty = True
                         
-                        # update_dict = {'properties': updated_properties}
                         is_child_case = case.case_id == child_case.case_id
                         owner_ids_differ = case.owner_id != parent_case.owner_id
                         if is_child_case and owner_ids_differ:
                             is_dirty = True
-                            # update_dict['owner_id'] = parent_case.owner_id
 
                         if is_dirty:
                             case_block = CaseBlock(
