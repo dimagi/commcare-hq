@@ -17,10 +17,10 @@ jobs:
         with:
           python-version: '3.9'
       - uses: tibdex/github-app-token@36464acb844fc53b9b8b2401da68844f6b05ebb0
-          id: generate-token
-          with:
-            app_id: ${{ secrets.APP_ID }}
-            private_key: ${{ secrets.APP_PRIVATE_KEY }}
+        id: generate-token
+        with:
+          app_id: ${{ secrets.APP_ID }}
+          private_key: ${{ secrets.APP_PRIVATE_KEY }}
       - name: Install Python requirements
         run: |
           pip install --upgrade pip
