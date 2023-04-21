@@ -260,7 +260,59 @@ class TruncatingCharField(models.CharField):
         return value
 
 
-class ForeignValue:
+class ForeignObject:
+    """Property descriptor for objects that live in a different database
+
+    This is useful for cases where a related object lives in a separate
+    database where a ForeignKey reference is not possible. The object
+    may be referenced as a simple attribute, just like a ForeignKey.
+    """
+
+    def __init__(self, id_field, get_by_id):
+        self.id_field = id_field
+        self.get_by_id = get_by_id
+
+    def __set_name__(self, owner, name):
+        assert not hasattr(self, "name"), (self.name, owner, name)
+        self.name = name
+        other_names = getattr(owner, "_Foreign_names", [])
+        owner._Foreign_names = other_names + [name]
+
+    def __get__(self, obj, objtype=None):
+        if obj is None:
+            return self
+        fobj_id = getattr(obj, self.id_field.name)
+        try:
+            fobj = getattr(obj, f"_ForeignObject_{self.name}")
+            if fobj_id is None or fobj is not None and fobj.id != fobj_id:
+                raise AttributeError
+        except AttributeError:
+            fobj = self.get_by_id(obj, fobj_id)
+            setattr(obj, f"_ForeignObject_{self.name}", fobj)
+        return fobj
+
+    def __set__(self, obj, value):
+        if value is None:
+            if getattr(obj, self.id_field.name) is not None:
+                self.__delete__(obj)
+            return
+        setattr(obj, self.id_field.name, value.id)
+        setattr(obj, f"_ForeignObject_{self.name}", value)
+
+    def __delete__(self, obj):
+        setattr(obj, self.id_field.name, None)
+        delattr(obj, f"_ForeignObject_{self.name}")
+
+    @staticmethod
+    def get_names(cls):
+        """Get a list of foreign attribute names of the given class
+
+        Raises `AttributeError` if the class has no `ForeignValue` attributes.
+        """
+        return cls._Foreign_names
+
+
+class ForeignValue(ForeignObject):
     """Property descriptor for Django foreign key refs with a primitive value
 
     This is useful for cases where the object referenced by the foreign
@@ -283,10 +335,6 @@ class ForeignValue:
         self.fk = foreign_key
         self.truncate = truncate
         self.cache_size = cache_size
-
-    def __set_name__(self, owner, name):
-        other_names = getattr(owner, "_ForeignValue_names", [])
-        owner._ForeignValue_names = other_names + [name]
 
     def __get__(self, obj, objtype=None):
         if obj is None:
@@ -351,16 +399,8 @@ class ForeignValue:
         meta = self.fk.model._meta
         return f"{meta.app_label}.{meta.object_name}.{self.fk.name}"
 
-    @staticmethod
-    def get_names(cls):
-        """Get a list of ForeignValue attribute names of the given class
 
-        Raises `AttributeError` if the class has no `ForeignValue` attributes.
-        """
-        return cls._ForeignValue_names
-
-
-def foreign_value_init(cls):
+def foreign_init(cls):
     """Class decorator that adds a ForeignValue-compatible __init__ method
 
     Use this on classes with `ForeignValue` attributes that want to
