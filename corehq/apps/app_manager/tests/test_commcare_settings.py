@@ -38,11 +38,9 @@ class CommCareSettingsTest(SimpleTestCase):
         str2 = "{features.sense}=true"
         cond2 = parse_condition_string(str2)
         self.assertEqual(cond2, {"type": "features", "id": "sense", "equals": True})
-        str3 = "{properties.server-tether}='sync'"
-        cond3 = parse_condition_string(str3)
-        self.assertEqual(cond3, {"type": "properties", "id": "server-tether", "equals": "sync"})
 
     def test_check_condition(self):
+        # TODO: replace properties (do they need to be defined?)
         sense_condition = "{features.sense}='true'"
         server_tether_condition = "{properties.server-tether}='sync'"
 

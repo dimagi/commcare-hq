@@ -378,7 +378,6 @@
       "cc-entry-mode": "cc-entry-quick",
       "cc-login-images": "No",
       "cc-resize-images": "none",
-      "cc-send-procedure": "cc-send-http",
       "cc-send-unsent": "cc-su-auto",
       "cc-show-incomplete": "yes",
       "cc-show-saved": "yes",
@@ -388,10 +387,8 @@
       "log_prop_weekly": "log_short",
       "logenabled": "Enabled",
       "loose_media": "no",
-      "password_format": "n",
       "purge-freq": "0",
       "restore-tolerance": "loose",
-      "server-tether": "push-only",
       "unsent-number-limit": "5",
       "user_reg_server": "required"
     }

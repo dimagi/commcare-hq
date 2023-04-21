@@ -120,7 +120,6 @@
     }
   },
   "archived_media": {},
-  "platform": "nokia/s40",
   "custom_base_url": null,
   "mobile_ucr_sync_interval": null,
   "mobile_ucr_restore_version": "1.0",
@@ -4204,8 +4203,6 @@
   "smart_lang_display": null,
   "vellum_case_management": true,
   "is_auto_generated": false,
-  "use_j2me_endpoint": false,
-  "admin_password": null,
   "build_spec": {
     "doc_type": "BuildSpec",
     "version": "2.44.3",
@@ -4231,7 +4228,6 @@
       "cc-fuzzy-search-enabled": "yes",
       "cc-autoup-freq": "freq-never",
       "purge-freq": "0",
-      "server-tether": "push-only",
       "user_reg_server": "required",
       "extra_key_action": "audio",
       "cc-autosync-freq": "freq-never",
@@ -4239,13 +4235,11 @@
       "cc-login-duration-seconds": "86400",
       "cc-resize-images": "none",
       "cc-entry-mode": "cc-entry-quick",
-      "cc-send-procedure": "cc-send-http",
       "cc-login-images": "No",
       "log_prop_weekly": "log_short",
       "cc-show-incomplete": "yes",
       "cc-send-unsent": "cc-su-auto",
       "loose_media": "no",
-      "password_format": "n",
       "unsent-number-limit": "5",
       "cc-content-valid": "no",
       "logenabled": "Enabled"

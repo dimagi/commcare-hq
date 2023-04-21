@@ -248,14 +248,11 @@
   "user_type": null,
   "profile": {
     "properties": {
-      "cc-send-procedure": "cc-send-http",
       "logenabled": "Enabled",
       "cc-entry-mode": "cc-entry-quick",
       "user_reg_server": "required",
       "log_prop_weekly": "log_short",
-      "server-tether": "push-only",
       "extra_key_action": "audio",
-      "password_format": "n",
       "restore-tolerance": "loose",
       "cc-content-valid": "no",
       "cc-user-mode": "cc-u-normal",
