@@ -432,21 +432,15 @@
   "multimedia_map": {},
   "name": "Multi-Sort",
   "phone_model": null,
-  "platform": "nokia/s40",
   "profile": {
     "features": {
       "sense": "false",
       "users": "true"
     },
     "properties": {
-      "ViewStyle": "v_chatterbox",
       "cc-autoup-freq": "freq-never",
       "cc-content-valid": "no",
-      "cc-entry-mode": "cc-entry-quick",
       "cc-review-days": "7",
-      "cc-send-unsent": "cc-su-auto",
-      "cc-user-mode": "cc-u-normal",
-      "extra_key_action": "audio",
       "log_prop_daily": "log_never",
       "log_prop_weekly": "log_short",
       "logenabled": "Enabled",
@@ -460,7 +454,6 @@
   "recipients": "",
   "show_user_registration": false,
   "success_message": {},
-  "text_input": "roman",
   "translations": {},
   "use_custom_suite": false,
   "user_registration": {

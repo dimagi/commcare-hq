@@ -3996,14 +3996,6 @@ class ApplicationBase(LazyBlobDoc, SnapshotMixin,
 
     # this is the supported way of specifying which commcare build to use
     build_spec = SchemaProperty(BuildSpec)
-    platform = StringProperty(
-        choices=["nokia/s40", "nokia/s60", "winmo", "generic"],
-        default="nokia/s40"
-    )
-    text_input = StringProperty(
-        choices=['roman', 'native', 'custom-keys', 'qwerty'],
-        default="roman"
-    )
 
     # The following properties should only appear on saved builds
     # built_with stores a record of CommCare build used in a saved app

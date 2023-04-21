@@ -532,6 +532,7 @@ def _create_dependencies_app_strings(app):
 
 def _maybe_add_index(text, app):
     if app.build_version and app.build_version >= LooseVersion('2.8'):
+        # TODO: I think this is now always true
         sense_on = app.profile.get('features', {}).get('sense') == 'true'
         entry_mode = app.profile.get('properties', {}).get('cc-entry-mode')
         numeric_nav_on = entry_mode == 'cc-entry-review'

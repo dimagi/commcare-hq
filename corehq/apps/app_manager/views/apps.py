@@ -832,7 +832,7 @@ def edit_app_attr(request, domain, app_id, attr):
     attributes = [
         'all',
         'recipients', 'name',
-        'text_input', 'platform', 'build_spec',
+        'build_spec',
         'use_custom_suite', 'custom_suite',
         'admin_password',
         'comment',
@@ -872,9 +872,7 @@ def edit_app_attr(request, domain, app_id, attr):
         ('cloudcare_enabled', None, _always_allowed),
         ('manage_urls', None, _always_allowed),
         ('name', None, _always_allowed),
-        ('platform', None, _always_allowed),
         ('recipients', None, _always_allowed),
-        ('text_input', None, _always_allowed),
         ('use_custom_suite', None, _always_allowed),
         ('secure_submissions', None, _always_allowed),
         ('translation_strategy', None, _always_allowed),

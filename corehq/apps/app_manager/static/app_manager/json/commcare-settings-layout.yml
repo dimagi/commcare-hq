@@ -24,19 +24,6 @@
     - properties.cc-autosync-freq  # Auto-Sync Frequency
     - properties.unsent-time-limit  # Unsynced Time Limit
 
-- title: 'Java Phone User Interface Settings'
-  id: app-settings-j2me-ui
-  collapse: true
-  settings:
-#    - features.sense  # CommCare Sense
-    - properties.extra_key_action  # Extra Key Action
-    - properties.cc-entry-mode  # Item Selection Mode
-    - properties.cc-send-unsent  # Send Forms Mode
-    - hq.text_input  # Text Input
-    - properties.ViewStyle  # Form Entry Style
-    - properties.cc-user-mode  # User Login Mode
-    - properties.cc-login-images # Login Buttons
-
 - title: 'Android Settings'
   id: app-settings-android
   collapse: true
