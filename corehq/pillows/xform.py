@@ -16,9 +16,9 @@ from corehq.apps.receiverwrapper.util import get_app_version_info
 from corehq.apps.userreports.data_source_providers import DynamicDataSourceProvider, StaticDataSourceProvider
 from corehq.apps.userreports.pillow import get_ucr_processor
 from corehq.apps.es.forms import form_adapter
+from corehq.apps.es.users import user_adapter
 from corehq.form_processor.backends.sql.dbaccessors import FormReindexAccessor
 from corehq.pillows.base import is_couch_change_for_sql_domain
-from corehq.pillows.mappings.xform_mapping import XFORM_INDEX_INFO
 from corehq.pillows.user import UnknownUsersProcessor
 from corehq.pillows.utils import get_user_type, format_form_meta_for_es
 from corehq.util.doc_processor.sql import SqlDocumentProvider
@@ -26,7 +26,6 @@ from couchforms.const import RESERVED_WORDS, DEVICE_LOG_XMLNS
 from couchforms.geopoint import GeoPoint
 from pillowtop.checkpoints.manager import KafkaPillowCheckpoint, get_checkpoint_for_elasticsearch_pillow
 from pillowtop.const import DEFAULT_PROCESSOR_CHUNK_SIZE
-from pillowtop.es_utils import ElasticsearchIndexInfo
 from pillowtop.pillow.interface import ConstructedPillow
 from pillowtop.processors.form import FormSubmissionMetadataTrackerProcessor
 from pillowtop.processors.elastic import BulkElasticProcessor, ElasticProcessor
@@ -144,18 +143,6 @@ def get_xform_to_elasticsearch_pillow(pillow_id='XFormToElasticsearchPillow', nu
     Processors:
       - :py:class:`pillowtop.processors.elastic.ElasticProcessor`
     """
-    index_info = XFORM_INDEX_INFO
-    # todo; To remove after full rollout of https://github.com/dimagi/commcare-hq/pull/21329/
-    if 'index_name' in kwargs:
-        raw_info = XFORM_INDEX_INFO.to_json()
-        raw_info.pop("meta")
-        index_info = ElasticsearchIndexInfo.wrap(raw_info)
-        index_info.index = kwargs['index_name']
-        index_info.alias = kwargs['index_alias']
-        from corehq.apps.es.transient_util import add_dynamic_adapter
-        add_dynamic_adapter(
-            "XFormBackfill", index_info.index, index_info.type, index_info.mapping, index_info.alias
-        )
 
     checkpoint = get_checkpoint_for_elasticsearch_pillow(pillow_id, form_adapter.index_name, FORM_TOPICS)
     form_processor = ElasticProcessor(
@@ -185,14 +172,15 @@ def get_xform_pillow(pillow_id='xform-pillow', ucr_division=None,
     """Generic XForm change processor
 
     Processors:
-      - :py:class:`corehq.apps.userreports.pillow.ConfigurableReportPillowProcessor` (disabled when skip_ucr=True)
+      - :py:class:`corehq.apps.userreports.pillow.ConfigurableReportPillowProcessor`
+            - (disabled when skip_ucr=True)
       - :py:class:`pillowtop.processors.elastic.BulkElasticProcessor`
-      - :py:class:`corehq.pillows.user.UnknownUsersProcessor` (disabled when RUN_UNKNOWN_USER_PILLOW=False)
-      - :py:class:`pillowtop.form.FormSubmissionMetadataTrackerProcessor` (disabled when RUN_FORM_META_PILLOW=False)
+      - :py:class:`corehq.pillows.user.UnknownUsersProcessor`
+            - (disabled when RUN_UNKNOWN_USER_PILLOW=False)
+      - :py:class:`pillowtop.form.FormSubmissionMetadataTrackerProcessor`
+            - (disabled when RUN_FORM_META_PILLOW=False)
       - :py:class:`corehq.apps.data_interfaces.pillow.CaseDeduplicationPillow``
     """
-    # avoid circular dependency
-    from corehq.pillows.mappings.user_mapping import USER_INDEX
     if topics:
         assert set(topics).issubset(FORM_TOPICS), "This is a pillow to process cases only"
     topics = topics or FORM_TOPICS
@@ -221,7 +209,7 @@ def get_xform_pillow(pillow_id='xform-pillow', ucr_division=None,
     unknown_user_form_processor = UnknownUsersProcessor()
     form_meta_processor = FormSubmissionMetadataTrackerProcessor()
     checkpoint_id = "{}-{}-{}".format(
-        pillow_id, XFORM_INDEX_INFO.index, USER_INDEX)
+        pillow_id, form_adapter.index_name, user_adapter.index_name)
     checkpoint = KafkaPillowCheckpoint(checkpoint_id, topics)
     event_handler = KafkaCheckpointEventHandler(
         checkpoint=checkpoint, checkpoint_frequency=1000, change_feed=change_feed,
@@ -263,7 +251,7 @@ class SqlFormReindexerFactory(ReindexerFactory):
         domain = self.options.pop('domain', None)
 
         iteration_key = "SqlXFormToElasticsearchPillow_{}_reindexer_{}_{}".format(
-            XFORM_INDEX_INFO.index, limit_to_db or 'all', domain or 'all'
+            form_adapter.index_name, limit_to_db or 'all', domain or 'all'
         )
         limit_db_aliases = [limit_to_db] if limit_to_db else None
 
