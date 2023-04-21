@@ -12,7 +12,6 @@ from corehq.apps.es.cases import case_adapter
 from corehq.form_processor.backends.sql.dbaccessors import CaseReindexAccessor
 from corehq.messaging.pillow import CaseMessagingSyncProcessor
 from corehq.pillows.base import is_couch_change_for_sql_domain
-from corehq.pillows.mappings.case_mapping import CASE_INDEX_INFO
 from corehq.pillows.case_search import get_case_search_processor
 from corehq.pillows.utils import get_user_type
 from corehq.util.doc_processor.sql import SqlDocumentProvider
@@ -153,7 +152,7 @@ class SqlCaseReindexerFactory(ReindexerFactory):
         start_date = self.options.pop('start_date', None)
         end_date = self.options.pop('end_date', None)
         iteration_key = "SqlCaseToElasticsearchPillow_{}_reindexer_{}_{}_from_{}_until_{}".format(
-            CASE_INDEX_INFO.index, limit_to_db or 'all', domain or 'all',
+            case_adapter.index_name, limit_to_db or 'all', domain or 'all',
             start_date or 'beginning', end_date or 'current'
         )
         limit_db_aliases = [limit_to_db] if limit_to_db else None
