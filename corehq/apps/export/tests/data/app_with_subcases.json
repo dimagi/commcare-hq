@@ -14,7 +14,6 @@
         "register_from_case_list": true,
         "subcases": true
     },
-    "admin_password": null,
     "admin_password_charset": "n",
     "amplifies_project": "not_set",
     "amplifies_workers": "not_set",
@@ -1542,7 +1541,6 @@
     "multimedia_map": {},
     "name": "Maternal and Child Health",
     "phone_model": null,
-    "platform": "nokia/s40",
     "practice_mobile_worker_id": "",
     "profile": {
         "features": {
@@ -1561,7 +1559,6 @@
             "cc-login-duration-seconds": "86400",
             "cc-login-images": "No",
             "cc-resize-images": "none",
-            "cc-send-procedure": "cc-send-http",
             "cc-send-unsent": "cc-su-auto",
             "cc-show-incomplete": "no",
             "cc-show-saved": "no",
@@ -1571,10 +1568,8 @@
             "log_prop_weekly": "log_short",
             "logenabled": "Enabled",
             "loose_media": "no",
-            "password_format": "n",
             "purge-freq": "0",
             "restore-tolerance": "loose",
-            "server-tether": "push-only",
             "unsent-number-limit": "5",
             "unsent-time-limit": "5",
             "user_reg_server": "required"
@@ -1590,7 +1585,6 @@
     "translations": {},
     "use_custom_suite": false,
     "use_grid_menus": false,
-    "use_j2me_endpoint": false,
     "user_type": null,
     "vellum_case_management": true,
     "version": 50

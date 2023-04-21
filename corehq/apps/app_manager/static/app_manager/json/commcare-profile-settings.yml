@@ -89,26 +89,6 @@
   group: "log"
   force: true
 
-- name: "Send Data"
-  description: "Whether or not the phone collects, saves, and sends data."
-  id: "cc-send-procedure"
-  default: "cc-send-http"
-  values:
-    - ['cc-send-http', 'Yes']
-    - ['cc-send-none', 'No (NOT RECOMMENDED)']
-  "//values": ["cc-send-file"]
-  "//value_names": ["Save to the File System"]
-  force: true
-
-- name: "Password Format"
-  description: "Determines whether phone keys will type letters or numbers by default when typing in the password field."
-  id: "password_format"
-  values:
-    - ['a', 'Alphanumeric']
-    - ['n', 'Numeric']
-  default: "a"
-  force: true
-
 - name: "CommCare Home Screen Logo"
   description: "Choose an image to replace the default CommCare Home Screen logo"
   id: "logo_android_home"
@@ -150,17 +130,6 @@
     - ['skip', 'Skip']
   values_txt: "Set to skip if your deployment does not require users to register with the server. Note that this will likely result in OTA Restore and other features being unavailable."
   default: "required"
-  force: true
-
-- name: "Sync Mode"
-  description: "Determines if the server automatically attempts to send data to the phone (Two-Way), or only attempt to send data on demand (Push Only); projects using Case Sharing should choose Two-Way. If set to Push Only, the Auto-Sync Frequency and Unsynced Time Limit settings will have no effect."
-  id: "server-tether"
-  values:
-    - ['push-only', 'Push Only']
-    - ['sync', 'Two-Way Sync']
-  default: "push-only"
-  requires: "{hq.case_sharing}=false"
-  contingent_default: [{"condition": "{hq.case_sharing}=true", "value": "sync"}]
   force: true
 
 - name: "Auto-Sync Frequency"

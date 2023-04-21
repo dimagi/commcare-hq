@@ -34,7 +34,6 @@
       "sense": "false"
     },
     "properties": {
-      "cc-send-procedure": "cc-send-http",
       "logenabled": "Enabled",
       "cc-login-images": "No",
       "cc-user-mode": "cc-u-normal",
@@ -46,8 +45,6 @@
       "loose_media": "no",
       "restore-tolerance": "loose",
       "purge-freq": "0",
-      "server-tether": "push-only",
-      "password_format": "n",
       "unsent-number-limit": "5",
       "cc-content-valid": "no",
       "cc-entry-mode": "cc-entry-quick",

@@ -4801,12 +4801,6 @@ class Application(ApplicationBase, ApplicationMediaMixin, ApplicationIntegration
             # assert that it gets explicitly set once per loop
             del setting_value
 
-        if self.case_sharing:
-            app_profile['properties']['server-tether'] = {
-                'force': True,
-                'value': 'sync',
-            }
-
         logo_refs = [logo_name for logo_name in self.logo_refs if logo_name in ANDROID_LOGO_PROPERTY_MAPPING]
         if logo_refs and domain_has_privilege(self.domain, privileges.COMMCARE_LOGO_UPLOADER):
             for logo_name in logo_refs:
