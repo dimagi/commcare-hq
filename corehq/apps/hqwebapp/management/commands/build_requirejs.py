@@ -38,9 +38,11 @@ class Command(ResourceStaticCommand):
                  'Does not allow you to mimic CDN.')
         parser.add_argument('--no_optimize', action='store_true',
             help='Don\'t minify files. Runs much faster. Useful when running on a local environment.')
+        parser.add_argument('--bootstrap_version',
+                            help="Specify bootstrap3 or bootstrap5 (bootstrap3 is default)")
 
     def handle(self, **options):
-        bootstrap_version = 'bootstrap3'
+        bootstrap_version = options.get('bootstrap_version', 'bootstrap3')
         logger.setLevel('DEBUG')
 
         local = options['local']
@@ -56,7 +58,7 @@ class Command(ResourceStaticCommand):
         if (not resource_versions):
             raise ResourceVersionsNotFoundException()
 
-        config, local_js_dirs = _r_js(local=local, verbose=verbose)
+        config, local_js_dirs = _r_js(local=local, verbose=verbose, bootstrap_version=bootstrap_version)
         if optimize:
             _minify(config, verbose=verbose)
 

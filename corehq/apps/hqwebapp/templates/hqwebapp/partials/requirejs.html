@@ -15,7 +15,11 @@
   <script src="{% static 'requirejs/require.js' %}"></script>
   <script src="{% static 'hqwebapp/js/hqModules.js' %}"></script>
   {# Do not compress these, which are re-written during depeloy #}
-  <script src="{% static 'hqwebapp/js/bootstrap3/requirejs_config.js' %}"></script>
+  {% if use_bootstrap5 %}
+    <script src="{% static 'hqwebapp/js/bootstrap5/requirejs_config.js' %}"></script>
+  {% else %}
+    <script src="{% static 'hqwebapp/js/bootstrap3/requirejs_config.js' %}"></script>
+  {% endif %}
   <script src="{% static 'hqwebapp/js/resource_versions.js' %}"></script>
   <script>
     requirejs.config({
