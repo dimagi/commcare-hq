@@ -110,9 +110,12 @@ def get_user_attendee_models_on_domain(domain):
     AttendeeModel.case is the attendee's CommCareCase.
     AttendeeModel.user_id is CommCareUser.user_id for attendees that are
     mobile workers. See AttendeeModel for other useful fields.
+
+    Excludes user attendees that have been tracked. This is an attendee that has
+    been marked as having attended one or more events.
     """
     models = AttendeeModel.objects.by_domain(domain, include_closed=True)
-    return {m.user_id: m for m in models if m.user_id}
+    return {m.user_id: m for m in models if m.user_id and not m.has_attended_events()}
 
 
 def get_case_block_for_user(user, owner_id, attendee_case_type):
