@@ -621,7 +621,7 @@ def get_detail_column_infos(detail_type, detail, include_sort):
 
 def get_detail_column_infos_for_tabs_with_sorting(detail):
     """This serves the same purpose as `get_detail_column_infos` except
-    that it only applies to 'short' details that have tabs with nodesets and sorting
+    that it only applies to 'long' details that have tabs with nodesets and sorting
     configured."""
     sort_elements = get_nodeset_sort_elements(detail)
 
