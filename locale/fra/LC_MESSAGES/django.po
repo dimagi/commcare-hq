@@ -1056,6 +1056,7 @@ msgstr ""
 #: corehq/apps/domain/forms.py
 #: corehq/apps/domain/templates/domain/partials/payment_modal.html
 #: corehq/apps/domain/templates/domain/stripe_cards.html
+#: corehq/apps/events/templates/edit_attendee.html
 #: corehq/apps/events/templates/event_attendees.html
 #: corehq/apps/export/templates/export/customize_export_new.html
 #: corehq/apps/export/templates/export/dialogs/bulk_delete_custom_export_dialog.html
@@ -3845,10 +3846,8 @@ msgid "Unknown Application"
 msgstr "Application inconnue"
 
 #: corehq/apps/app_manager/fields.py
-#, fuzzy
-#| msgid "My Applications"
 msgid "Any Application"
-msgstr "Mes applications"
+msgstr ""
 
 #: corehq/apps/app_manager/fields.py
 msgid "Unknown Module"
@@ -7641,6 +7640,7 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/forms/custom_assertions.html
+#: corehq/apps/app_manager/templates/app_manager/partials/settings/app_settings.html
 msgid "Custom Assertions"
 msgstr ""
 
@@ -10681,10 +10681,6 @@ msgid "There was an issue with your custom instances: {}"
 msgstr "Il y a eu un problème avec vos exemples personnalisées: {}"
 
 #: corehq/apps/app_manager/views/forms.py
-msgid "There was an issue with your custom assertions: {}"
-msgstr ""
-
-#: corehq/apps/app_manager/views/forms.py
 msgid "Unable to validate form due to server error."
 msgstr "Impossible de valider les formulaires dû à une erreur de serveur. "
 
@@ -10989,6 +10985,10 @@ msgstr ""
 #: corehq/apps/app_manager/views/utils.py
 #, python-brace-format
 msgid "Session endpoint IDs must be unique. '{endpoint_id}' is already in-use"
+msgstr ""
+
+#: corehq/apps/app_manager/views/utils.py
+msgid "There was an issue with your custom assertions: {}"
 msgstr ""
 
 #: corehq/apps/app_manager/xform.py
@@ -14125,7 +14125,8 @@ msgstr "Date de la propriété de dossier (avancé)"
 #: corehq/apps/data_interfaces/templates/data_interfaces/partials/case_rule_criteria.html
 #: corehq/apps/domain/forms.py
 #: corehq/apps/domain/templates/domain/manage_releases_by_location.html
-#: corehq/apps/hqwebapp/doc_info.py corehq/apps/locations/forms.py
+#: corehq/apps/events/forms.py corehq/apps/hqwebapp/doc_info.py
+#: corehq/apps/locations/forms.py
 #: corehq/apps/locations/templates/locations/manage/location.html
 #: corehq/apps/locations/templates/locations/manage/locations.html
 #: corehq/apps/locations/views.py corehq/apps/reports/commtrack/standard.py
@@ -18444,18 +18445,12 @@ msgid "One or more of the locations was not found."
 msgstr "Un ou plusieurs sites n'ont pas été trouvé(s)."
 
 #: corehq/apps/events/forms.py corehq/apps/users/forms.py
-#, fuzzy
-#| msgid "Primary location can only be one of user's locations"
 msgid "Primary location must be one of the user's locations"
-msgstr "Le site principal ne peut seulement être un des sites d'utilisateur"
+msgstr ""
 
 #: corehq/apps/events/forms.py corehq/apps/users/forms.py
-#, fuzzy
-#| msgid "Primary location can't be empty if user has any locations set"
 msgid "Primary location can't be empty if the user has any locations set"
 msgstr ""
-"L'organisation principale ne peut être vide si l'utilisateur à des "
-"organisations définies"
 
 #: corehq/apps/events/models.py
 msgid "Attendee list under review"
@@ -18482,10 +18477,57 @@ msgid "Attendee"
 msgstr ""
 
 #: corehq/apps/events/templates/edit_attendee.html
-#, fuzzy
-#| msgid "Update Settings"
+#, python-format
+msgid ""
+"\n"
+"            This attendee cannot be deleted as <strong>%(attendee_name)s</"
+"strong> has been tracked as\n"
+"            having attended one or more events.\n"
+"          "
+msgstr ""
+
+#: corehq/apps/events/templates/edit_attendee.html
 msgid "Update Attendee"
-msgstr "Mettre à jour les paramètres"
+msgstr ""
+
+#: corehq/apps/events/templates/edit_attendee.html
+#, fuzzy
+#| msgid "Delete Series"
+msgid "Delete Attendee"
+msgstr "Supprimer les séries"
+
+#: corehq/apps/events/templates/edit_attendee.html
+#, python-format
+msgid ""
+"\n"
+"                Are you sure you want to permanently delete "
+"<strong>%(attendee_name)s</strong>?\n"
+"              "
+msgstr ""
+
+#: corehq/apps/events/templates/edit_attendee.html
+#, python-format
+msgid ""
+"\n"
+"                This action will delete %(attendee_name)s as a potential "
+"attendee and will remove them from all\n"
+"                future events that they are currently enlisted in.\n"
+"              "
+msgstr ""
+
+#: corehq/apps/events/templates/edit_attendee.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "                            Snapshot of %(snap_name)s\n"
+#| "                        "
+msgid ""
+"\n"
+"                  This action cannot be undone.\n"
+"                "
+msgstr ""
+"\n"
+"                            Instantané de %(snap_name)s"
 
 #: corehq/apps/events/templates/event_attendees.html
 msgid ""
@@ -18677,10 +18719,8 @@ msgid "Form validation failed: {}"
 msgstr ""
 
 #: corehq/apps/events/views.py
-#, fuzzy
-#| msgid "Edit Actions"
 msgid "Edit Attendee"
-msgstr "Modifier les actions"
+msgstr ""
 
 #: corehq/apps/export/det/schema_generator.py
 #, python-brace-format
@@ -20462,10 +20502,8 @@ msgid "Export De-Identified Cases"
 msgstr "Exporter les dossiers anonymisés "
 
 #: corehq/apps/export/views/list.py
-#, fuzzy
-#| msgid "Export <strong>{}</strong> created."
 msgid "Populating tables for <strong>{}</strong> {}."
-msgstr "Exportation <strong>{}</strong> créée."
+msgstr ""
 
 #: corehq/apps/export/views/list.py
 msgid "Excel Dashboard Integration"
@@ -38944,10 +38982,8 @@ msgid "The following users were not found: {}."
 msgstr ""
 
 #: corehq/apps/users/views/mobile/users.py
-#, fuzzy
-#| msgid "Clear"
 msgid "Bulk Clear"
-msgstr "Effacer"
+msgstr ""
 
 #: corehq/apps/users/views/mobile/users.py
 msgid ""
@@ -42933,7 +42969,15 @@ msgid "View All Attendees"
 msgstr ""
 
 #: corehq/tabs/tabclasses.py
+msgid "Manage attendees for Attendance Tracking Events"
+msgstr ""
+
+#: corehq/tabs/tabclasses.py
 msgid "View All Events"
+msgstr ""
+
+#: corehq/tabs/tabclasses.py
+msgid "Manage Attendance Tracking Events"
 msgstr ""
 
 #: corehq/trans_override.py
