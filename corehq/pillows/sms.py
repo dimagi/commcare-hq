@@ -68,7 +68,7 @@ class SmsReindexerFactory(ReindexerFactory):
     ]
 
     def build(self):
-        iteration_key = f"SmsToElasticsearchPillow_{SMS_INDEX_INFO.index}_reindexer"
+        iteration_key = f"SmsToElasticsearchPillow_{sms_adapter.index_name}_reindexer"
         reindex_accessor = SMSReindexAccessor()
         doc_provider = SqlDocumentProvider(iteration_key, reindex_accessor)
         return ResumableBulkElasticPillowReindexer(
