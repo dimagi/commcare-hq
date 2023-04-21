@@ -40,6 +40,7 @@ class Command(ResourceStaticCommand):
             help='Don\'t minify files. Runs much faster. Useful when running on a local environment.')
 
     def handle(self, **options):
+        bootstrap_version = 'bootstrap3'
         logger.setLevel('DEBUG')
 
         local = options['local']
@@ -62,13 +63,14 @@ class Command(ResourceStaticCommand):
         if local:
             _copy_modules_back_into_corehq(config, local_js_dirs)
 
-        filename = os.path.join(ROOT_DIR, 'staticfiles', 'hqwebapp', 'js', 'requirejs_config.js')
-        resource_versions["hqwebapp/js/requirejs_config.js"] = self.get_hash(filename)
+        filename = os.path.join(ROOT_DIR, 'staticfiles', 'hqwebapp', 'js',
+                                bootstrap_version, 'requirejs_config.js')
+        resource_versions[f"hqwebapp/js/{bootstrap_version}/requirejs_config.js"] = self.get_hash(filename)
         if local:
             dest = os.path.join(ROOT_DIR, 'corehq', 'apps', 'hqwebapp', 'static',
-                                'hqwebapp', 'js', 'requirejs_config.js')
+                                'hqwebapp', 'js', bootstrap_version, 'requirejs_config.js')
             copyfile(filename, dest)
-            logger.info("Copied updated requirejs_config.js back into {}".format(_relative(dest)))
+            logger.info(f"Copied updated {bootstrap_version}/requirejs_config.js back into {_relative(dest)}")
 
         # Overwrite each bundle in resource_versions with the sha from the optimized version in staticfiles
         for module in config['modules']:
@@ -122,12 +124,14 @@ def _confirm_or_exit():
         exit()
 
 
-def _r_js(local=False, verbose=False):
+def _r_js(local=False, verbose=False, bootstrap_version=None):
     '''
     Write build.js file to feed to r.js, run r.js, and return filenames of the final build config
     and the bundle config output by the build.
     '''
-    with open(os.path.join(ROOT_DIR, 'staticfiles', 'hqwebapp', 'yaml', 'requirejs.yml'), 'r') as f:
+    bootstrap_version = bootstrap_version or 'bootstrap3'
+    with open(os.path.join(ROOT_DIR, 'staticfiles', 'hqwebapp', 'yaml',
+                           bootstrap_version, 'requirejs.yml'), 'r') as f:
         config = yaml.safe_load(f)
 
     config['logLevel'] = 0 if verbose else 2  # TRACE or WARN
@@ -141,24 +145,19 @@ def _r_js(local=False, verbose=False):
     # dependencies
     dirs_to_js_modules = _get_main_js_modules_by_dir(html_files)
     for directory, mains in dirs_to_js_modules.items():
-        exclude = [
-            'hqwebapp/js/bootstrap3/common',
-            'hqwebapp/js/bootstrap3/base_main',
-        ]
-        if 'bootstrap5' in directory:
-            exclude = [
-                'hqwebapp/js/bootstrap5/common',
-                'hqwebapp/js/bootstrap5/base_main',
-            ]
         config['modules'].append({
             'name': os.path.join(directory, "bundle"),
-            'exclude': exclude,
+            'exclude': [
+                f'hqwebapp/js/{bootstrap_version}/common',
+                f'hqwebapp/js/{bootstrap_version}/base_main',
+            ],
             'include': sorted(mains),
             'create': True,
         })
 
     _save_r_js_config(config)
 
+    # todo this is where we add babel in to preprocess ES6
     ret = call(["node", "node_modules/requirejs/bin/r.js", "-o", BUILD_JS_FILENAME])
     if ret:
         raise CommandError("Failed to build JS bundles")
