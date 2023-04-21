@@ -21,9 +21,6 @@ from corehq.apps.es.case_search import CaseSearchES, case_search_adapter
 from corehq.apps.es.client import manager
 from corehq.form_processor.backends.sql.dbaccessors import CaseReindexAccessor
 from corehq.pillows.base import is_couch_change_for_sql_domain
-from corehq.pillows.mappings.case_search_mapping import (
-    CASE_SEARCH_MAPPING,
-)
 from corehq.toggles import (
     USH_CASE_CLAIM_UPDATES,
 )
@@ -69,6 +66,9 @@ def domain_needs_search_index(domain):
 
 
 def transform_case_for_elasticsearch(doc_dict):
+    # This function will go away in next commits,
+    # Keeping this just for sake of consistency in refactoring
+    from corehq.apps.es.mappings import CASE_SEARCH_MAPPING
     doc = {
         desired_property: doc_dict.get(desired_property)
         for desired_property in CASE_SEARCH_MAPPING['properties'].keys()

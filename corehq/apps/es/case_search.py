@@ -168,12 +168,11 @@ class ElasticCaseSearch(ElasticDocumentAdapter):
         :param case: an instance of ``dict`` which is ``case.to_json()``
         """
         from corehq.pillows.case_search import _get_case_properties
-        from corehq.pillows.mappings.case_search_mapping import CASE_SEARCH_MAPPING
 
         case_dict = deepcopy(case)
         doc = {
             desired_property: case_dict.get(desired_property)
-            for desired_property in CASE_SEARCH_MAPPING['properties'].keys()
+            for desired_property in self.mapping['properties'].keys()
             if desired_property not in SYSTEM_PROPERTIES
         }
         doc[INDEXED_ON] = json_format_datetime(datetime.utcnow())
