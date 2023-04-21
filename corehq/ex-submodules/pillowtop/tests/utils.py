@@ -21,13 +21,6 @@ TEST_ES_MAPPING = {
 TEST_ES_TYPE = 'test_doc'
 TEST_ES_INDEX = 'test_pillowtop_index'
 TEST_ES_ALIAS = 'pillowtop_tests'
-TEST_INDEX_INFO = ElasticsearchIndexInfo(
-    index=TEST_ES_INDEX,
-    alias=TEST_ES_ALIAS,
-    type=TEST_ES_TYPE,
-    mapping=TEST_ES_MAPPING,
-    hq_index_name='pillowtop_tests'
-)
 
 
 def get_pillow_doc_adapter():
