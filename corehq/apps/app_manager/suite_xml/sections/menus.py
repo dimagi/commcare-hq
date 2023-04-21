@@ -29,6 +29,7 @@ from corehq.apps.app_manager.exceptions import (
 from corehq.apps.app_manager.suite_xml.contributors import (
     SuiteContributorByModule,
 )
+from corehq.apps.app_manager.suite_xml.sections.entries import EntriesHelper
 from corehq.apps.app_manager.suite_xml.utils import get_module_locale_id
 from corehq.apps.app_manager.suite_xml.xml_models import (
     Command,
@@ -191,6 +192,13 @@ class MenuContributor(SuiteContributorByModule):
             training_menu.commands.extend(commands)
         else:
             menu.commands.extend(commands)
+
+        for id, assertion in enumerate(module.custom_assertions):
+            menu.assertions.append(EntriesHelper.get_assertion(
+                assertion.test,
+                id_strings.custom_assertion_locale(id, module),
+            ))
+
         return menu
 
     @staticmethod
