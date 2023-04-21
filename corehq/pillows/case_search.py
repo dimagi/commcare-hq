@@ -22,7 +22,6 @@ from corehq.apps.es.client import manager
 from corehq.form_processor.backends.sql.dbaccessors import CaseReindexAccessor
 from corehq.pillows.base import is_couch_change_for_sql_domain
 from corehq.pillows.mappings.case_search_mapping import (
-    CASE_SEARCH_INDEX_INFO,
     CASE_SEARCH_MAPPING,
 )
 from corehq.toggles import (
@@ -219,15 +218,6 @@ def get_case_search_to_elasticsearch_pillow(pillow_id='CaseSearchToElasticsearch
         Processors:
           - :py:class:`corehq.pillows.case_search.CaseSearchPillowProcessor`
     """
-    index_info = CASE_SEARCH_INDEX_INFO
-    if 'index_name' in kwargs and 'index_alias' in kwargs:
-        # Allow overriding index name and alias for the purposes of reindexing.
-        # These can be set in localsettings.LOCAL_PILLOWTOPS
-        raw_info = CASE_SEARCH_INDEX_INFO.to_json()
-        raw_info.pop("meta")
-        index_info = ElasticsearchIndexInfo.wrap(raw_info)
-        index_info.index = kwargs['index_name']
-        index_info.alias = kwargs['index_alias']
 
     checkpoint = get_checkpoint_for_elasticsearch_pillow(
         pillow_id, case_search_adapter.index_name, topics.CASE_TOPICS
@@ -275,7 +265,7 @@ class ResumableCaseSearchReindexerFactory(ReindexerFactory):
             raise CaseSearchNotEnabledException("{} does not have case search enabled".format(domain))
 
         iteration_key = "CaseSearchResumableToElasticsearchPillow_{}_reindexer_{}_{}".format(
-            CASE_SEARCH_INDEX_INFO.index, limit_to_db or 'all', domain or 'all'
+            case_search_adapter.index_name, limit_to_db or 'all', domain or 'all'
         )
         limit_db_aliases = [limit_to_db] if limit_to_db else None
         accessor = CaseReindexAccessor(domain=domain, limit_db_aliases=limit_db_aliases)
