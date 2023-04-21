@@ -10,7 +10,6 @@
     
   },
   "user_type": null,
-  "text_input": "roman",
   "secure_submissions": true,
   "build_comment": null,
   "cloudcare_enabled": true,
@@ -63,7 +62,6 @@
       "sense": "false"
     },
     "properties": {
-      "cc-user-mode": "cc-u-normal",
       "cc-show-saved": "yes",
       "unsent-time-limit": "5",
       "cc-autosync-freq": "freq-never",
@@ -72,15 +70,10 @@
       "cc-autoup-freq": "freq-never",
       "purge-freq": "0",
       "user_reg_server": "required",
-      "extra_key_action": "audio",
       "log_prop_daily": "log_never",
-      "ViewStyle": "v_chatterbox",
       "cc-resize-images": "none",
-      "cc-entry-mode": "cc-entry-quick",
-      "cc-login-images": "No",
       "log_prop_weekly": "log_short",
       "cc-show-incomplete": "yes",
-      "cc-send-unsent": "cc-su-auto",
       "loose_media": "no",
       "unsent-number-limit": "5",
       "cc-content-valid": "no",

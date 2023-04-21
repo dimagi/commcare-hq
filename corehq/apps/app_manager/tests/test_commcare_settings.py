@@ -56,6 +56,7 @@ class CommCareSettingsTest(SimpleTestCase):
         self.assertTrue(check_condition(test_app4, server_tether_condition))
 
     def test_circular_dependencies(self):
+        # TODO: replace properties (do they need to be defined?)
         def generate_lookup(settings):
             lookup = defaultdict(lambda: defaultdict(dict))
             for setting in settings:
