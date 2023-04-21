@@ -7,7 +7,6 @@ from corehq.apps.users.models import CommCareUser, CouchUser, WebUser
 from corehq.apps.users.util import WEIRD_USER_IDS
 from corehq.apps.userreports.data_source_providers import DynamicDataSourceProvider, StaticDataSourceProvider
 from corehq.apps.userreports.pillow import get_ucr_processor
-from corehq.pillows.mappings.user_mapping import USER_INDEX
 from corehq.util.quickcache import quickcache
 from corehq.util.doc_processor.couch import CouchDocumentProvider
 from pillowtop.checkpoints.manager import get_checkpoint_for_elasticsearch_pillow
@@ -197,7 +196,7 @@ class UserReindexerFactory(ReindexerFactory):
     ]
 
     def build(self):
-        iteration_key = "UserToElasticsearchPillow_{}_reindexer".format(USER_INDEX)
+        iteration_key = "UserToElasticsearchPillow_{}_reindexer".format(user_adapter.index_name)
         doc_provider = CouchDocumentProvider(iteration_key, [CommCareUser, WebUser])
         options = {
             'chunk_size': 5
