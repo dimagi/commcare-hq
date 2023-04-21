@@ -17,7 +17,6 @@ from corehq.apps.change_feed.consumer.feed import (
 from corehq.apps.sms.models import SMS
 from corehq.apps.es.sms import sms_adapter
 from corehq.form_processor.backends.sql.dbaccessors import ReindexAccessor
-from corehq.pillows.mappings.sms_mapping import SMS_INDEX_INFO
 from corehq.util.doc_processor.sql import SqlDocumentProvider
 
 
