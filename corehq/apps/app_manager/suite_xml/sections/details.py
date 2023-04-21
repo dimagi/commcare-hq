@@ -592,18 +592,19 @@ DetailColumnInfo = namedtuple('DetailColumnInfo', 'column sort_element order')
 
 
 def get_detail_column_infos(detail_type, detail, include_sort):
+    detail_columns = list(detail.get_columns())
     if not include_sort:
-        return [DetailColumnInfo(column, None, None) for column in detail.get_columns()]
+        return [DetailColumnInfo(column, None, None) for column in detail_columns]
 
     if detail.sort_elements:
         sort_elements = detail.sort_elements
     else:
         sort_elements = get_default_sort_elements(detail)
 
-    sort_only, sort_columns = get_sort_and_sort_only_columns(detail.get_columns(), sort_elements)
+    sort_only, sort_columns = get_sort_and_sort_only_columns(detail_columns, sort_elements)
 
     columns = []
-    for column in detail.get_columns():
+    for column in detail_columns:
         sort_element, order = sort_columns.pop(column.field, (None, None))
         if getattr(sort_element, 'type', None) == 'index' and "search" in detail_type:
             columns.append(DetailColumnInfo(column, None, None))
