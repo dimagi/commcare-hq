@@ -4,12 +4,4 @@
   <div class="alert alert-success">
     <p>{{ on_complete_long }}</p>
   </div>
-  {% if result.errors %}
-    <div class="alert alert-danger">
-      <h3>{% trans "However, we ran into the following problems:" %}</h3>
-      {% for e in result.errors %}
-        <p>{{ e }}</p>
-      {% endfor %}
-    </div>
-  {% endif %}
 {% endblock results %}
