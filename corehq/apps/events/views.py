@@ -17,6 +17,7 @@ from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import HqPermissions
 from corehq.apps.users.views import BaseUserSettingsView
 from corehq.util.jqueryrmi import JSONResponseMixin, allow_remote_invocation
+from .exceptions import AttendeeTrackedException
 
 from .forms import EditAttendeeForm, EventForm, NewAttendeeForm
 from .models import (
@@ -349,6 +350,8 @@ class AttendeeEditView(BaseEventView):
             form = EditAttendeeForm(domain=self.domain, instance=instance)
         context.update({
             'attendee_id': self.attendee_id,
+            'attendee_name': instance.name,
+            'attendee_has_attended_events': instance.has_attended_events(),
             'form': form,
         })
         return context
@@ -369,6 +372,24 @@ class AttendeeEditView(BaseEventView):
                 reverse(AttendeesListView.urlname, args=(self.domain,))
             )
         return self.get(request, *args, **kwargs)
+
+
+class AttendeeDeleteView(BaseEventView):
+    urlname = 'delete_attendee'
+
+    def post(self, request, domain, attendee_id):
+        instance = AttendeeModel.objects.get(
+            case_id=attendee_id,
+            domain=domain
+        )
+        try:
+            instance.delete()
+        except AttendeeTrackedException:
+            return JsonResponse({
+                'failed': 'Cannot delete an attendee that has been tracked in one or more events.'
+            }, status=400)
+
+        return HttpResponseRedirect(reverse(AttendeesListView.urlname, args=(domain,)))
 
 
 class AttendeesConfigView(JSONResponseMixin, BaseUserSettingsView, BaseEventView):

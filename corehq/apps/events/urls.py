@@ -2,6 +2,7 @@ from django.conf.urls import re_path as url
 
 from .views import (
     AttendeeEditView,
+    AttendeeDeleteView,
     AttendeesConfigView,
     AttendeesListView,
     EventCreateView,
@@ -22,4 +23,6 @@ urlpatterns = [
         name=AttendeeEditView.urlname),
     url(r'^(?P<event_id>[\w-]+)/$', EventEditView.as_view(),
         name=EventEditView.urlname),
+    url(r'^attendees/delete/(?P<attendee_id>[\w-]+)/$', AttendeeDeleteView.as_view(),
+        name=AttendeeDeleteView.urlname),
 ]
