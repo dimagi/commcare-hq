@@ -141,18 +141,21 @@ def create_attendee_for_user(
     xform_device_id,
 ):
     helper = CaseHelper(domain=domain)
-    helper.create_case(
-        {
-            'case_name': commcare_user.username.split('@')[0],
-            'case_type': case_type,
-            'properties': {
-                ATTENDEE_USER_ID_CASE_PROPERTY: commcare_user.user_id,
-                LOCATION_IDS_CASE_PROPERTY:
-                    ' '.join(commcare_user.assigned_location_ids),
-                PRIMARY_LOCATION_ID_CASE_PROPERTY:
-                    commcare_user.location_id or '',
-            }
-        },
-        user_id=xform_user_id,
-        device_id=xform_device_id,
-    )
+    try:
+        helper.create_case(
+            {
+                'case_name': commcare_user.username.split('@')[0],
+                'case_type': case_type,
+                'properties': {
+                    ATTENDEE_USER_ID_CASE_PROPERTY: commcare_user.user_id,
+                    LOCATION_IDS_CASE_PROPERTY:
+                        ' '.join(commcare_user.assigned_location_ids),
+                    PRIMARY_LOCATION_ID_CASE_PROPERTY:
+                        commcare_user.location_id or '',
+                }
+            },
+            user_id=xform_user_id,
+            device_id=xform_device_id,
+        )
+    except AssertionError:
+        pass
