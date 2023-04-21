@@ -572,7 +572,12 @@ def get_sort_and_sort_only_columns(detail_columns, sort_elements):
         if match:
             del sort_elements[field]
             column_index = int(match.group(1))
-            column = detail_columns[column_index]
+            try:
+                column = detail_columns[column_index]
+            except IndexError:
+                raise AppManagerException(f"Sort column references an unknown column at index: {column_index}")
+            if not column.useXpathExpression:
+                raise AppManagerException(f"Calculation sort column references an incorrect column: {column.field}")
             sort_columns[column.field] = (element, element_order)
 
     sort_only_elements = [
