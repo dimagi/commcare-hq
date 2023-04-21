@@ -1,5 +1,4 @@
 
-from .app_mapping import APP_INDEX_INFO
 from .case_mapping import CASE_INDEX_INFO
 from .case_search_mapping import CASE_SEARCH_INDEX_INFO
 from .domain_mapping import DOMAIN_INDEX_INFO
@@ -13,7 +12,6 @@ CANONICAL_NAME_INFO_MAP = {
     "cases": CASE_INDEX_INFO,
     "users": USER_INDEX_INFO,
     "domains": DOMAIN_INDEX_INFO,
-    "apps": APP_INDEX_INFO,
     "groups": GROUP_INDEX_INFO,
     "sms": SMS_INDEX_INFO,
     "case_search": CASE_SEARCH_INDEX_INFO,
