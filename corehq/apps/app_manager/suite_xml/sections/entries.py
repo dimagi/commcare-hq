@@ -617,9 +617,9 @@ class EntriesHelper(object):
         The case details is then populated with data from the results of the query.
         """
         from corehq.apps.app_manager.suite_xml.post_process.remote_requests import (
-            RemoteRequestFactory, RESULTS_INSTANCE, RESULTS_INSTANCE_INLINE
+            RemoteRequestFactory, RESULTS_INSTANCE_INLINE
         )
-        storage_instance = RESULTS_INSTANCE_INLINE if uses_inline_search else RESULTS_INSTANCE
+        storage_instance = RESULTS_INSTANCE_INLINE if uses_inline_search else 'casedb'
         factory = RemoteRequestFactory(None, module, [], storage_instance=storage_instance)
         query = factory.build_remote_request_queries()[0]
         return FormDatumMeta(datum=query, case_type=None, requires_selection=False, action=None)
