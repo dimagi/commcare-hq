@@ -510,12 +510,6 @@ To set up elasticsearch indexes run the following:
 This will create all the elasticsearch indexes (that don't already exist) and
 populate them with any data that's in the database.
 
-Next, set the aliases of the elastic indices. These can be set by a management
-command that sets the stored index names to the aliases.
-
-```sh
-./manage.py ptop_es_manage --flip_all_aliases
-```
 
 ### Step 7: Installing JavaScript and Front-End Requirements
 
