@@ -4,7 +4,6 @@ from corehq.apps.change_feed.consumer.feed import KafkaChangeFeed, KafkaCheckpoi
 from corehq.apps.change_feed import topics
 from corehq.apps.domain.models import Domain
 from corehq.apps.es.domains import domain_adapter
-from corehq.pillows.mappings.domain_mapping import DOMAIN_INDEX_INFO
 from corehq.util.doc_processor.couch import CouchDocumentProvider
 from django_countries.data import COUNTRIES
 from pillowtop.checkpoints.manager import get_checkpoint_for_elasticsearch_pillow
@@ -58,7 +57,7 @@ class DomainReindexerFactory(ReindexerFactory):
     ]
 
     def build(self):
-        iteration_key = "DomainToElasticsearchPillow_{}_reindexer".format(DOMAIN_INDEX_INFO.index)
+        iteration_key = "DomainToElasticsearchPillow_{}_reindexer".format(domain_adapter.index_name)
         doc_provider = CouchDocumentProvider(iteration_key, [Domain])
         options = {
             'chunk_size': 5
