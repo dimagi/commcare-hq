@@ -77,4 +77,7 @@
 
 /requirements/ @dimagi/dependency-watchers
 
+/testapps/test_pillowtop/ @amitphulera
+/testapps/test_elasticsearch/ @amitphulera
+
 /yarn.lock @dimagi/dependency-watchers
