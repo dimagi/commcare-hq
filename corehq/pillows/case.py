@@ -1,43 +1,41 @@
-import copy
-import datetime
 import logging
 
 from django.conf import settings
 
+from pillowtop.checkpoints.manager import (
+    KafkaPillowCheckpoint,
+    get_checkpoint_for_elasticsearch_pillow,
+)
+from pillowtop.const import DEFAULT_PROCESSOR_CHUNK_SIZE
+from pillowtop.pillow.interface import ConstructedPillow
+from pillowtop.processors.elastic import BulkElasticProcessor, ElasticProcessor
+from pillowtop.reindexer.reindexer import (
+    ReindexerFactory,
+    ResumableBulkElasticPillowReindexer,
+)
+
+from corehq.apps.change_feed.consumer.feed import (
+    KafkaChangeFeed,
+    KafkaCheckpointEventHandler,
+)
 from corehq.apps.change_feed.topics import CASE_TOPICS
-from corehq.apps.change_feed.consumer.feed import KafkaChangeFeed, KafkaCheckpointEventHandler
-from corehq.apps.userreports.data_source_providers import DynamicDataSourceProvider, StaticDataSourceProvider
-from corehq.apps.userreports.pillow import get_ucr_processor, get_data_registry_ucr_processor
 from corehq.apps.es.cases import case_adapter
+from corehq.apps.userreports.data_source_providers import (
+    DynamicDataSourceProvider,
+    StaticDataSourceProvider,
+)
+from corehq.apps.userreports.pillow import (
+    get_data_registry_ucr_processor,
+    get_ucr_processor,
+)
 from corehq.form_processor.backends.sql.dbaccessors import CaseReindexAccessor
 from corehq.messaging.pillow import CaseMessagingSyncProcessor
 from corehq.pillows.base import is_couch_change_for_sql_domain
 from corehq.pillows.case_search import get_case_search_processor
-from corehq.pillows.utils import get_user_type
 from corehq.util.doc_processor.sql import SqlDocumentProvider
-from pillowtop.checkpoints.manager import get_checkpoint_for_elasticsearch_pillow, KafkaPillowCheckpoint
-from pillowtop.const import DEFAULT_PROCESSOR_CHUNK_SIZE
-from pillowtop.pillow.interface import ConstructedPillow
-from pillowtop.processors.elastic import BulkElasticProcessor, ElasticProcessor
-from pillowtop.reindexer.reindexer import ResumableBulkElasticPillowReindexer, ReindexerFactory
 
 pillow_logging = logging.getLogger("pillowtop")
 pillow_logging.setLevel(logging.INFO)
-
-
-def transform_case_for_elasticsearch(doc_dict):
-    doc_ret = copy.deepcopy(doc_dict)
-    if not doc_ret.get("owner_id"):
-        if doc_ret.get("user_id"):
-            doc_ret["owner_id"] = doc_ret["user_id"]
-
-    doc_ret['owner_type'] = get_user_type(doc_ret.get("owner_id", None))
-    doc_ret['inserted_at'] = datetime.datetime.utcnow().isoformat()
-
-    if 'backend_id' not in doc_ret:
-        doc_ret['backend_id'] = 'couch'
-
-    return doc_ret
 
 
 def get_case_to_elasticsearch_pillow(pillow_id='CaseToElasticsearchPillow', num_processes=1,

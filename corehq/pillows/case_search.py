@@ -1,12 +1,8 @@
-from datetime import datetime
-
 from django.core.mail import mail_admins
 from django.db import ProgrammingError
 
 from corehq.apps.case_search.const import (
-    INDEXED_ON,
     SPECIAL_CASE_PROPERTIES_MAP,
-    SYSTEM_PROPERTIES,
     VALUE,
 )
 from corehq.apps.case_search.exceptions import CaseSearchNotEnabledException
@@ -29,7 +25,6 @@ from corehq.util.log import get_traceback_string
 from corehq.util.quickcache import quickcache
 from corehq.util.soft_assert import soft_assert
 from couchforms.geopoint import GeoPoint
-from dimagi.utils.parsing import json_format_datetime
 from jsonobject.exceptions import BadValueError
 from pillowtop.checkpoints.manager import (
     get_checkpoint_for_elasticsearch_pillow,
@@ -63,21 +58,6 @@ def _domains_needing_search_index():
 @quickcache(["domain"], timeout=24 * 60 * 60, memoize_timeout=60)
 def domain_needs_search_index(domain):
     return not DomainsNotInCaseSearchIndex.objects.filter(domain=domain).exists()
-
-
-def transform_case_for_elasticsearch(doc_dict):
-    # This function will go away in next commits,
-    # Keeping this just for sake of consistency in refactoring
-    from corehq.apps.es.mappings import CASE_SEARCH_MAPPING
-    doc = {
-        desired_property: doc_dict.get(desired_property)
-        for desired_property in CASE_SEARCH_MAPPING['properties'].keys()
-        if desired_property not in SYSTEM_PROPERTIES
-    }
-    doc['_id'] = doc_dict.get('_id')
-    doc[INDEXED_ON] = json_format_datetime(datetime.utcnow())
-    doc['case_properties'] = _get_case_properties(doc_dict)
-    return doc
 
 
 def _format_property(key, value, case_id):

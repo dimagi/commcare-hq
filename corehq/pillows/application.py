@@ -1,22 +1,25 @@
-from datetime import datetime
-from dimagi.utils.parsing import json_format_datetime
-from corehq.apps.app_manager.models import Application, RemoteApp, LinkedApplication
-from corehq.apps.app_manager.util import get_correct_app_class
-from corehq.apps.change_feed import topics
-from corehq.apps.change_feed.consumer.feed import KafkaChangeFeed, KafkaCheckpointEventHandler
-from corehq.apps.es.apps import app_adapter
-from corehq.util.doc_processor.couch import CouchDocumentProvider
-from pillowtop.checkpoints.manager import get_checkpoint_for_elasticsearch_pillow
+from pillowtop.checkpoints.manager import (
+    get_checkpoint_for_elasticsearch_pillow,
+)
 from pillowtop.pillow.interface import ConstructedPillow
 from pillowtop.processors import ElasticProcessor
-from pillowtop.reindexer.reindexer import ResumableBulkElasticPillowReindexer, ReindexerFactory
+from pillowtop.reindexer.reindexer import (
+    ReindexerFactory,
+    ResumableBulkElasticPillowReindexer,
+)
 
-
-def transform_app_for_es(doc_dict):
-    # perform any lazy migrations
-    doc = get_correct_app_class(doc_dict).wrap(doc_dict)
-    doc['@indexed_on'] = json_format_datetime(datetime.utcnow())
-    return doc.to_json()
+from corehq.apps.app_manager.models import (
+    Application,
+    LinkedApplication,
+    RemoteApp,
+)
+from corehq.apps.change_feed import topics
+from corehq.apps.change_feed.consumer.feed import (
+    KafkaChangeFeed,
+    KafkaCheckpointEventHandler,
+)
+from corehq.apps.es.apps import app_adapter
+from corehq.util.doc_processor.couch import CouchDocumentProvider
 
 
 def get_app_to_elasticsearch_pillow(pillow_id='ApplicationToElasticsearchPillow', num_processes=1,

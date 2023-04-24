@@ -43,28 +43,6 @@ def update_unknown_user_from_form_if_necessary(doc_dict):
         user_adapter.index(doc)
 
 
-def transform_user_for_elasticsearch(doc_dict):
-    doc = copy.deepcopy(doc_dict)
-    if doc['doc_type'] == 'CommCareUser' and '@' in doc['username']:
-        doc['base_username'] = doc['username'].split("@")[0]
-    else:
-        doc['base_username'] = doc['username']
-
-    results = get_group_id_name_map_by_user(doc['_id'])
-    doc['__group_ids'] = [res.id for res in results]
-    doc['__group_names'] = [res.name for res in results]
-    doc['user_data_es'] = []
-    if 'user_data' in doc:
-        from corehq.apps.users.models import CouchUser
-        user = CouchUser.wrap_correctly(doc)
-        for key, value in user.metadata.items():
-            doc['user_data_es'].append({
-                'key': key,
-                'value': value,
-            })
-    return doc
-
-
 @quickcache(['user_id'])
 def _user_exists_in_couch(user_id):
     return CouchUser.get_db().doc_exist(user_id)
