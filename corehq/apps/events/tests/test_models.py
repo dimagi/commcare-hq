@@ -8,11 +8,13 @@ from django.test import TestCase
 from casexml.apps.case.mock import CaseFactory, CaseStructure
 
 from corehq.apps.domain.shortcuts import create_domain
+from corehq.apps.hqcase.case_helper import CaseHelper
+from corehq.apps.locations.models import LocationType, SQLLocation
 from corehq.apps.users.models import CommCareUser, WebUser
 from corehq.form_processor.models import CommCareCase, CommCareCaseIndex
 from corehq.util.test_utils import create_test_case
 
-from ...hqcase.case_helper import CaseHelper
+from ..exceptions import AttendeeTrackedException
 from ..models import (
     ATTENDEE_USER_ID_CASE_PROPERTY,
     DEFAULT_ATTENDEE_CASE_TYPE,
@@ -26,7 +28,6 @@ from ..models import (
     get_attendee_case_type,
     get_user_case_sharing_groups_for_events,
 )
-from ..exceptions import AttendeeTrackedException
 
 DOMAIN = 'test-domain'
 
@@ -123,6 +124,24 @@ class TestEventModel(TestCase):
         finally:
             mobile_worker.delete(None, None)
 
+    @contextmanager
+    def _get_location(self):
+        location_type = LocationType.objects.create(
+            domain=DOMAIN,
+            name='Place',
+        )
+        location = SQLLocation.objects.create(
+            domain=DOMAIN,
+            name='Otherworld',
+            location_id=str(uuid4()),
+            location_type=location_type,
+        )
+        try:
+            yield location
+        finally:
+            location.delete()
+            location_type.delete()
+
     def test_create_event(self):
         tomorrow = (datetime.utcnow() + timedelta(days=1)).date()
         event = Event(
@@ -136,6 +155,7 @@ class TestEventModel(TestCase):
             manager_id=self.webuser.user_id,
         )
         event.save()
+        self.addCleanup(event.delete)
 
         self.assertEqual(event.status, EVENT_NOT_STARTED)
         self.assertEqual(event.is_open, True)
@@ -154,6 +174,7 @@ class TestEventModel(TestCase):
             manager_id=self.webuser.user_id,
         )
         event.save()
+        self.addCleanup(event.delete)
 
         self.assertEqual(event.status, EVENT_NOT_STARTED)
         self.assertEqual(event.is_open, True)
@@ -174,6 +195,7 @@ class TestEventModel(TestCase):
                 manager_id=self.webuser.user_id,
             )
             event.save()
+            self.addCleanup(event.delete)
             event.set_expected_attendees([attendee])
 
             attendee_case_type = get_attendee_case_type(DOMAIN)
@@ -209,6 +231,7 @@ class TestEventModel(TestCase):
                 manager_id=self.webuser.user_id,
             )
             event.save()
+            self.addCleanup(event.delete)
 
             event.set_expected_attendees([attendee1, attendee2])
             self.assertEqual(
@@ -239,6 +262,7 @@ class TestEventModel(TestCase):
                 manager_id=self.webuser.user_id,
             )
             event.save()
+            self.addCleanup(event.delete)
             event.set_expected_attendees([attendee1, attendee2, attendee3])
             event.mark_attendance([attendee1, attendee2], datetime.utcnow())
             self.assertEqual(
@@ -292,9 +316,29 @@ class TestEventModel(TestCase):
                 attendance_taker_ids=[commcare_user.user_id]
             )
             event.save()
+            self.addCleanup(event.delete)
 
             self.assertEqual(event.get_total_attendance_takers(), 1)
             self.assertEqual(event.attendance_taker_ids[0], commcare_user.user_id)
+
+    def test_get_events_by_location(self):
+        with self._get_location() as location:
+            today = datetime.utcnow().date()
+            event = Event.objects.create(
+                domain=DOMAIN,
+                name='test-event',
+                start_date=today,
+                end_date=today,
+                location=location,
+                attendance_target=0,
+            )
+            self.addCleanup(event.delete)
+
+            events_by_loc = list(Event.objects.filter(location=location))
+            self.assertEquals(events_by_loc, [event])
+
+            location_events = list(location.event_set.all())
+            self.assertEqual(location_events, [event])
 
 
 class TestCaseSharingGroup(TestCase):

@@ -13,8 +13,10 @@ from casexml.apps.case.const import CASE_INDEX_EXTENSION
 from corehq.apps.es import CaseES
 from corehq.apps.groups.models import UnsavableGroup
 from corehq.apps.hqcase.case_helper import CaseHelper
+from corehq.apps.locations.models import SQLLocation
 from corehq.form_processor.models import CommCareCase, CommCareCaseIndex
 from corehq.util.quickcache import quickcache
+
 from .exceptions import AttendeeTrackedException
 
 # Attendee list status is set by the Attendance Coordinator after the
@@ -136,6 +138,13 @@ class Event(models.Model):
     _case_id = models.UUIDField(null=True, default=None)
     start_date = models.DateField(null=False)
     end_date = models.DateField(null=True)
+    location = models.ForeignKey(
+        SQLLocation,
+        to_field='location_id',
+        on_delete=models.SET_NULL,
+        null=True,
+        default=None,
+    )
     attendance_target = models.IntegerField(null=False)
     total_attendance = models.IntegerField(null=False, default=0)
     sameday_reg = models.BooleanField(default=False)
