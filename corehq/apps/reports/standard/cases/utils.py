@@ -14,6 +14,7 @@ from corehq.apps.reports.models import HQUserType
 from corehq.apps.hqwebapp.doc_info import get_doc_info_by_id
 from corehq.apps.hqcase.utils import SYSTEM_FORM_XMLNS_MAP
 from corehq.apps.data_interfaces.deduplication import DEDUPE_XMLNS
+from corehq.motech.dhis2.const import XMLNS_DHIS2
 from django.utils.translation import gettext_lazy
 
 
@@ -185,6 +186,7 @@ def query_location_restricted_forms(query, domain, couch_user):
 def _get_system_form_types():
     form_types = SYSTEM_FORM_XMLNS_MAP.copy()
     form_types[DEDUPE_XMLNS] = gettext_lazy('Deduplication Rule')
+    form_types[XMLNS_DHIS2] = gettext_lazy('DHIS2 Integration')
     return form_types
 
 
