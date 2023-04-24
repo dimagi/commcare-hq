@@ -184,10 +184,6 @@ hqDefine('app_manager/js/releases/releases', function () {
             return self.short_odk_url();
         };
 
-        self.sms_url = function () {
-            return self.short_url();
-        };
-
         self.download_application_zip = function (multimediaOnly, buildProfile) {
             releasesMain.download_application_zip(
                 self.id(), multimediaOnly, buildProfile, self.download_targeted_version()

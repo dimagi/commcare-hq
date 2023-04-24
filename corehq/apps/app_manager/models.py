@@ -3988,11 +3988,10 @@ class ApplicationBase(LazyBlobDoc, SnapshotMixin,
     # make copies of itself, delete a copy of itself, and revert back to an earlier copy of itself.
     copy_of = StringProperty()
     version = IntegerProperty()
-    short_url = StringProperty()
     short_odk_url = StringProperty()
     short_odk_media_url = StringProperty()
     _meta_fields = ['_id', '_rev', 'domain', 'copy_of', 'version',
-                    'short_url', 'short_odk_url', 'short_odk_media_url']
+                    'short_odk_url', 'short_odk_media_url']
 
     # this is the supported way of specifying which commcare build to use
     build_spec = SchemaProperty(BuildSpec)
@@ -4297,15 +4296,6 @@ class ApplicationBase(LazyBlobDoc, SnapshotMixin,
         else:
             return shortened_url
 
-    def get_short_url(self, build_profile_id=None):
-        if not build_profile_id:
-            if not self.short_url:
-                self.short_url = self.generate_shortened_url('download_jad')
-                self.save()
-            return self.short_url
-        else:
-            return self.generate_shortened_url('download_jad', build_profile_id)
-
     def get_short_odk_url(self, with_media=False, build_profile_id=None):
         if not build_profile_id:
             if with_media:
@@ -4340,7 +4330,7 @@ class ApplicationBase(LazyBlobDoc, SnapshotMixin,
         else:
             copy = deepcopy(self.to_json())
             bad_keys = ('_id', '_rev', '_attachments', 'external_blobs',
-                        'short_url', 'short_odk_url', 'short_odk_media_url', 'recipients')
+                        'short_odk_url', 'short_odk_media_url', 'recipients')
 
             for bad_key in bad_keys:
                 if bad_key in copy:
