@@ -13,9 +13,6 @@ from corehq.apps.reports.filters.case_list import CaseListFilter as EMWF
 from corehq.apps.reports.models import HQUserType
 from corehq.apps.hqwebapp.doc_info import get_doc_info_by_id
 from corehq.apps.hqcase.utils import SYSTEM_FORM_XMLNS_MAP
-from corehq.apps.data_interfaces.deduplication import DEDUPE_XMLNS
-from corehq.motech.dhis2.const import XMLNS_DHIS2
-from django.utils.translation import gettext_lazy
 
 
 def _get_special_owner_ids(domain, admin, unknown, web, demo, commtrack):
@@ -183,19 +180,11 @@ def query_location_restricted_forms(query, domain, couch_user):
     return query.filter(form_es.user_id(accessible_ids))
 
 
-def _get_system_form_types():
-    form_types = SYSTEM_FORM_XMLNS_MAP.copy()
-    form_types[DEDUPE_XMLNS] = gettext_lazy('Deduplication Rule')
-    form_types[XMLNS_DHIS2] = gettext_lazy('DHIS2 Integration')
-    return form_types
-
-
 def get_user_type(form, domain=None):
     user_type = 'Unknown'
     if getattr(form.metadata, 'username', None) == 'system':
-        form_types = _get_system_form_types()
-        if form.xmlns in form_types:
-            user_type = form_types[form.xmlns]
+        if form.xmlns in SYSTEM_FORM_XMLNS_MAP:
+            user_type = SYSTEM_FORM_XMLNS_MAP[form.xmlns]
         else:
             user_type = 'System'
     elif getattr(form.metadata, 'userID', None):
