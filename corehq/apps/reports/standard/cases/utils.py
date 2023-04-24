@@ -198,7 +198,7 @@ def get_user_type(form, domain=None):
             user_type = 'System'
     elif getattr(form.metadata, 'userID', None):
         doc_info = get_doc_info_by_id(domain, form.metadata.userID)
-        if doc_info:
+        if doc_info.type_display:
             user_type = doc_info.type_display
 
     return user_type
