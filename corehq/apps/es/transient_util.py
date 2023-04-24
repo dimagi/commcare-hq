@@ -19,26 +19,6 @@ def from_dict_with_possible_id(doc):
     return None, doc
 
 
-def doc_adapter_from_info(index_info, for_export=False):
-    """Return the document adapter for the provided ``index_info`` object.
-
-    :param index_info: instance of a pillowtop ``ElasticsearchIndexInfo`` object
-    :param for_export: ``bool`` used to instantiate the adapter instance
-    :returns: instance of an ``ElasticDocumentAdapter`` subclass
-    """
-    return _get_doc_adapter(_DOC_ADAPTERS_BY_INDEX[index_info.index], for_export)
-
-
-def doc_adapter_from_alias(index_alias, for_export=False):
-    """Return the document adapter for the provided ``index_alias``.
-
-    :param index_alias: ``str`` name of a valid alias assigned to an index
-    :param for_export: ``bool`` used to instantiate the adapter instance
-    :returns: instance of an ``ElasticDocumentAdapter`` subclass
-    """
-    return _get_doc_adapter(_DOC_ADAPTERS_BY_ALIAS[index_alias], for_export)
-
-
 def doc_adapter_from_cname(index_cname, for_export=False):
     """Return the document adapter for the provided ``index_cname``.
 
@@ -65,35 +45,6 @@ def _get_doc_adapter(adapter, for_export):
     configured for export (or not).
     """
     return adapter.export_adapter() if for_export else adapter
-
-
-def index_info_from_cname(cname):
-    """Get the index info object for a canonical index name.
-
-    :param cname: canonical name of Elastic index
-    :returns: index info object
-    """
-    from corehq.pillows.mappings import CANONICAL_NAME_INFO_MAP
-    return CANONICAL_NAME_INFO_MAP[cname]
-
-
-def index_info_from_adapter(adapter):
-    # TODO: Get rid of this fn when IndexInfo objects are no longer required
-    """Get the index info object for a adapter
-
-    :param adapter: an instance of ElasticDocumentAdapter
-    :returns: index info object
-    """
-    from corehq.pillows.mappings import CANONICAL_NAME_INFO_MAP
-    for index_info in CANONICAL_NAME_INFO_MAP.values():
-        if index_info.index == adapter.index_name:
-            return index_info
-    raise NotImplementedError(f"No index info for {adapter.index_name}")
-
-
-def iter_index_infos():
-    from corehq.pillows.mappings import CANONICAL_NAME_INFO_MAP
-    yield from CANONICAL_NAME_INFO_MAP.values()
 
 
 def iter_doc_adapters():
@@ -158,5 +109,4 @@ def add_dynamic_adapter(descriptor, index_, type_, mapping_):
 
 
 _DOC_ADAPTERS_BY_INDEX = {}
-_DOC_ADAPTERS_BY_ALIAS = {}
 _DOC_MAPPINGS_BY_INDEX = {}
