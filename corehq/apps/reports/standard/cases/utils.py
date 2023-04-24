@@ -183,7 +183,7 @@ def query_location_restricted_forms(query, domain, couch_user):
 
 
 def _get_system_form_types():
-    form_types = SYSTEM_FORM_XMLNS_MAP
+    form_types = SYSTEM_FORM_XMLNS_MAP.copy()
     form_types[DEDUPE_XMLNS] = gettext_lazy('Deduplication Rule')
     return form_types
 
