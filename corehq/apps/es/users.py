@@ -112,7 +112,7 @@ class ElasticUser(ElasticDocumentAdapter):
 
 user_adapter = create_document_adapter(
     ElasticUser,
-    "hqusers_2017-09-07",
+    "hqusers_2023-04-24",
     "user",
 )
 
