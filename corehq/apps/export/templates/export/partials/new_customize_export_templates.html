@@ -7,7 +7,7 @@
     <legend data-bind="visible: table.isVisible(),
                        visible: table.label() !== 'Case History'">
       <span>
-        <input type="checkbox"
+        <input {% if disable_table_checkbox %}disabled="disabled"{% endif %} type="checkbox"
                data-bind="checked: table.selected" />
       </span>
       <span>
