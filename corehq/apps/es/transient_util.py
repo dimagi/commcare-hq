@@ -130,24 +130,19 @@ def populate_doc_adapter_map():
         assert doc_adapter.index_name not in _DOC_ADAPTERS_BY_INDEX, \
             (doc_adapter.index_name, _DOC_ADAPTERS_BY_INDEX)
         _DOC_ADAPTERS_BY_INDEX[doc_adapter.index_name] = doc_adapter
-    # aliases and mappings
-    for index_info in iter_index_infos():
-        _DOC_ADAPTERS_BY_ALIAS[index_info.alias] = _DOC_ADAPTERS_BY_INDEX[index_info.index]
-        mapping_key = (index_info.index, index_info.type)
-        _DOC_MAPPINGS_BY_INDEX[mapping_key] = index_info.mapping
+        mapping_key = (doc_adapter.index_name, doc_adapter.type)
+        _DOC_MAPPINGS_BY_INDEX[mapping_key] = doc_adapter.mapping
 
     if settings.UNIT_TESTING:
-        from pillowtop.tests.utils import TEST_ES_TYPE, TEST_ES_MAPPING, TEST_ES_INDEX, TEST_ES_ALIAS
-        add_dynamic_adapter("PillowTop", TEST_ES_INDEX,
-                        TEST_ES_TYPE, TEST_ES_MAPPING,
-                        TEST_ES_ALIAS)
+        from pillowtop.tests.utils import TEST_ES_TYPE, TEST_ES_MAPPING, TEST_ES_INDEX
+        add_dynamic_adapter("PillowTop", TEST_ES_INDEX, TEST_ES_TYPE, TEST_ES_MAPPING)
 
         from corehq.apps.es.tests.utils import TEST_ES_INFO, TEST_ES_MAPPING
         add_dynamic_adapter("UtilES", TEST_ES_INFO.alias, TEST_ES_INFO.type,
-                        TEST_ES_MAPPING, TEST_ES_INFO.alias)
+                        TEST_ES_MAPPING)
 
 
-def add_dynamic_adapter(descriptor, index_, type_, mapping_, alias):
+def add_dynamic_adapter(descriptor, index_, type_, mapping_):
 
     class Adapter(ElasticDocumentAdapter):
         mapping = mapping_
@@ -159,7 +154,6 @@ def add_dynamic_adapter(descriptor, index_, type_, mapping_, alias):
     Adapter.__name__ = f"{descriptor}Test"
     test_adapter = Adapter(index_, type_)
     _DOC_ADAPTERS_BY_INDEX[index_] = test_adapter
-    _DOC_ADAPTERS_BY_ALIAS[alias] = test_adapter
     _DOC_MAPPINGS_BY_INDEX[index_] = mapping_
 
 
