@@ -619,6 +619,7 @@ class MenuMixin(XmlObject):
     relevant = XPathField('@relevant')
     style = StringField('@style')
     commands = NodeListField('command', Command)
+    assertions = NodeListField('assertions/assert', Assertion)
 
 
 class Menu(MenuMixin, DisplayNode, IdNode):

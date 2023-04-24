@@ -25,6 +25,8 @@ from .models import (
     EVENT_IN_PROGRESS,
     EVENT_NOT_STARTED,
     EVENT_STATUS_TRANS,
+    LOCATION_IDS_CASE_PROPERTY,
+    PRIMARY_LOCATION_ID_CASE_PROPERTY,
     AttendeeModel,
     Event,
     get_attendee_case_type,
@@ -283,23 +285,33 @@ class AttendeesListView(JSONResponseMixin, BaseEventView):
     def page_context(self):
         context = super().page_context
         if self.request.method == "POST":
-            context['new_attendee_form'] = NewAttendeeForm(self.request.POST)
+            form = NewAttendeeForm(self.request.POST, domain=self.domain)
         else:
-            context['new_attendee_form'] = NewAttendeeForm()
-        return context
+            form = NewAttendeeForm(domain=self.domain)
+        return context | {'new_attendee_form': form}
 
     @allow_remote_invocation
     def create_attendee(self, data):
         form_data = data['attendee'] | {
             'domain': self.domain,
         }
-        form = NewAttendeeForm(form_data)
+        form = NewAttendeeForm(form_data, domain=self.domain)
         if form.is_valid():
+            if form.cleaned_data['location_id']:
+                properties = {
+                    LOCATION_IDS_CASE_PROPERTY:
+                        form.cleaned_data['location_id'],
+                    PRIMARY_LOCATION_ID_CASE_PROPERTY:
+                        form.cleaned_data['location_id'],
+                }
+            else:
+                properties = {}
             helper = CaseHelper(domain=self.domain)
             helper.create_case({
                 'case_type': get_attendee_case_type(self.domain),
                 'case_name': form.cleaned_data['name'],
                 'owner_id': self.request.couch_user.user_id,
+                'properties': properties,
             })
             return {
                 'success': True,

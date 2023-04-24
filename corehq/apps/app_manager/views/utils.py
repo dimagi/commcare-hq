@@ -3,10 +3,11 @@ import time
 from collections import defaultdict
 from contextlib import contextmanager
 from copy import deepcopy
-from functools import partial
+from functools import partial, wraps
+from lxml import etree
 
 from django.contrib import messages
-from django.http import Http404, HttpResponseRedirect
+from django.http import Http404, HttpResponseRedirect, JsonResponse
 from django.template.loader import render_to_string
 from django.urls import reverse
 from django.utils.text import slugify
@@ -24,12 +25,14 @@ from corehq.apps.app_manager.decorators import require_deploy_apps
 from corehq.apps.app_manager.exceptions import (
     AppEditingError,
     AppLinkError,
+    AppMisconfigurationError,
     FormNotFoundException,
     ModuleNotFoundException,
     MultimediaMissingError,
 )
 from corehq.apps.app_manager.models import (
     Application,
+    CustomAssertion,
     CustomIcon,
     ShadowModule,
     enable_usercase_if_necessary,
@@ -296,7 +299,7 @@ def handle_custom_icon_edits(request, form_or_module, lang):
         if icon_form:
             # validate that only of either text or xpath should be present
             if (icon_text_body and icon_xpath) or (not icon_text_body and not icon_xpath):
-                return _("Please enter either text body or xpath for custom icon")
+                raise AppMisconfigurationError(_("Please enter either text body or xpath for custom icon"))
 
             # a form should have just one custom icon for now
             # so this just adds a new one with params or replaces the existing one with new params
@@ -585,21 +588,17 @@ def handle_shadow_child_modules(app, shadow_parent):
     return changes
 
 
-class InvalidSessionEndpoint(Exception):
-    pass
-
-
 def set_session_endpoint(module_or_form, raw_endpoint_id, app):
     raw_endpoint_id = raw_endpoint_id.strip()
     cleaned_id = slugify(raw_endpoint_id)
     if cleaned_id != raw_endpoint_id:
-        raise InvalidSessionEndpoint(_(
+        raise AppMisconfigurationError(_(
             "'{invalid_id}' is not a valid session endpoint ID. It must contain only "
             "lowercase letters, numbers, underscores, and hyphens. Try {valid_id}."
         ).format(invalid_id=raw_endpoint_id, valid_id=cleaned_id))
 
     if _is_duplicate_endpoint_id(cleaned_id, module_or_form.session_endpoint_id, app):
-        raise InvalidSessionEndpoint(_(
+        raise AppMisconfigurationError(_(
             "Session endpoint IDs must be unique. '{endpoint_id}' is already in-use"
         ).format(endpoint_id=cleaned_id))
 
@@ -641,3 +640,42 @@ def report_build_time(domain, app_id, build_type):
             "app_id": app_id,
             "build_type": build_type,
         })
+
+
+def validate_custom_assertions(custom_assertions_string, existing_assertions, lang):
+    assertions = json.loads(custom_assertions_string)
+    try:  # validate that custom assertions can be added into the XML
+        for assertion in assertions:
+            etree.fromstring(
+                '<assertion test="{test}"><text><locale id="abc.def"/>{text}</text></assertion>'.format(
+                    **assertion
+                )
+            )
+    except etree.XMLSyntaxError as error:
+        raise AppMisconfigurationError(_("There was an issue with your custom assertions: {}").format(error))
+
+    existing_assertions = {assertion.test: assertion for assertion in existing_assertions}
+    new_assertions = []
+    for assertion in assertions:
+        try:
+            new_assertion = existing_assertions[assertion.get('test')]
+            new_assertion.text[lang] = assertion.get('text')
+        except KeyError:
+            new_assertion = CustomAssertion(
+                test=assertion.get('test'),
+                text={lang: assertion.get('text')}
+            )
+        new_assertions.append(new_assertion)
+
+    return new_assertions
+
+
+def capture_user_errors(view_fn):
+    """Catches AppMisconfigurationError and returns the message as a 400"""
+    @wraps(view_fn)
+    def inner(request, *args, **kwargs):
+        try:
+            return view_fn(request, *args, **kwargs)
+        except AppMisconfigurationError as e:
+            return JsonResponse({'message': str(e)}, status=400)
+    return inner
