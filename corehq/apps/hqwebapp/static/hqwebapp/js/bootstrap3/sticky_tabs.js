@@ -2,7 +2,7 @@
  * Adds URL hash behavior to bootstrap tabs. This enables bookmarking/refreshing and browser back/forward.
  * Lightly modified from https://stackoverflow.com/questions/18999501/bootstrap-3-keep-selected-tab-on-page-refresh
  */
-hqDefine("hqwebapp/js/sticky_tabs", [
+hqDefine("hqwebapp/js/bootstrap3/sticky_tabs", [
     "jquery",
     "bootstrap",    // needed for $.tab
 ], function (
