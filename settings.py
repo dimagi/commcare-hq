@@ -35,7 +35,7 @@ DISABLE_RANDOM_TOGGLES = UNIT_TESTING
 # Setting to declare always_enabled/always_disabled toggle states for domains
 #   declaring toggles here avoids toggle lookups from cache for all requests.
 #   Example format
-#   STATIC_TOGGLES_STATES = {
+#   STATIC_TOGGLE_STATES = {
 #     'toggle_slug': {
 #         'always_enabled': ['domain1', 'domain2],
 #         'always_disabled': ['domain4', 'domain3],
