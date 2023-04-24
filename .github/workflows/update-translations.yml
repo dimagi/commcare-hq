@@ -16,7 +16,7 @@ jobs:
       - uses: actions/setup-python@v4
         with:
           python-version: '3.9'
-      - uses: tibdex/github-app-token@36464acb844fc53b9b8b2401da68844f6b05ebb0
+      - uses: tibdex/github-app-token@b62528385c34dbc9f38e5f4225ac829252d1ea92
         id: generate-token
         with:
           app_id: ${{ secrets.APP_ID }}
@@ -60,7 +60,3 @@ jobs:
           labels: product/invisible
           body: |
             GitHub Actions automatically ran update-translations.sh and used [create-pull-request](https://github.com/peter-evans/create-pull-request) to open this pull request.
-
-            Please **close and reopen** this pull request to have tests run.<sup>†</sup>
-
-            <sup>†</sup> Workaround for [this GitHub Actions constraint](https://docs.github.com/en/actions/security-guides/automatic-token-authentication#using-the-github_token-in-a-workflow)
