@@ -34,7 +34,6 @@ from jsonobject.exceptions import BadValueError
 from pillowtop.checkpoints.manager import (
     get_checkpoint_for_elasticsearch_pillow,
 )
-from pillowtop.es_utils import initialize_index_and_mapping, ElasticsearchIndexInfo
 from pillowtop.feed.interface import Change
 from pillowtop.pillow.interface import ConstructedPillow
 from pillowtop.processors.elastic import ElasticProcessor

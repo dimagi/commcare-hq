@@ -2,7 +2,6 @@ from corehq.apps.es.transient_util import doc_adapter_from_index_name
 from corehq.util.es.elasticsearch import TransportError
 
 from pillowtop.checkpoints.manager import PillowCheckpoint
-from pillowtop.es_utils import ElasticsearchIndexInfo
 from pillowtop.pillow.interface import ConstructedPillow
 
 
