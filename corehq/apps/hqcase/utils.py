@@ -142,7 +142,6 @@ def _get_update_or_close_case_block(
     case_properties=None,
     close=False,
     owner_id=None,
-    domain=None,
 ):
     kwargs = {
         'create': False,
@@ -150,11 +149,13 @@ def _get_update_or_close_case_block(
         'close': close,
     }
     if case_properties:
+        if 'external_id' in case_properties:
+            # `copy()` so as not to modify by reference
+            case_properties = case_properties.copy()
+            kwargs['external_id'] = case_properties.pop('external_id')
         kwargs['update'] = case_properties
     if owner_id:
         kwargs['owner_id'] = owner_id
-    if domain:
-        kwargs['domain'] = domain
 
     return CaseBlock.deprecated_init(case_id, **kwargs)
 
@@ -184,7 +185,7 @@ def update_case(
                the project is over its submission rate limit.
                See the docstring for submit_form_locally for meaning of values
     """
-    caseblock = _get_update_or_close_case_block(case_id, case_properties, close, owner_id, domain=domain)
+    caseblock = _get_update_or_close_case_block(case_id, case_properties, close, owner_id)
     return submit_case_blocks(
         ElementTree.tostring(caseblock.as_xml(), encoding='utf-8').decode('utf-8'),
         domain,

@@ -2,6 +2,7 @@ from datetime import date
 
 from django import forms
 from django.core.exceptions import ValidationError
+from django.urls import reverse
 from django.utils.translation import gettext_lazy as _
 from django.utils.translation import gettext_noop
 
@@ -219,16 +220,27 @@ class NewAttendeeForm(forms.Form):
         required=True,
         label=gettext_noop('Name'),
     )
+    location_id = forms.CharField(
+        label=gettext_noop("Location"),
+        required=False,
+        widget=forms.Select(),
+    )
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, domain, **kwargs):
+        self.domain = domain
         super().__init__(*args, **kwargs)
         self.helper = HQModalFormHelper()
         self.helper.form_tag = False
         self.helper.layout = Layout(
             crispy.Field(
                 'name',
-                data_bind="value: name, valueUpdate: 'keyup'",
-            )
+                data_bind="value: name",
+            ),
+            crispy.Field(
+                'location_id',
+                data_bind='value: location_id',
+                data_query_url=reverse('location_search', args=(self.domain,)),
+            ),
         )
 
 
@@ -249,18 +261,16 @@ class EditAttendeeForm(forms.ModelForm):
 
     def __init__(self, *args, domain, **kwargs):
         self.domain = domain
+        super().__init__(*args, **kwargs)
         self.base_fields['locations'].widget = LocationSelectWidget(
             self.domain, multiselect=True, id='id_locations',
         )
-
         self.helper = FormHelper()
         self.helper.form_method = 'POST'
         self.helper.form_class = 'form-horizontal'
         self.helper.form_tag = False
         self.helper.label_class = 'col-sm-3 col-md-2'
         self.helper.field_class = 'col-sm-9 col-md-8 col-lg-6'
-
-        super().__init__(*args, **kwargs)
 
     def clean_locations(self):
         location_ids = self.data.getlist('locations')

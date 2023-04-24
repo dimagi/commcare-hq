@@ -268,6 +268,11 @@
               </div>
             </div>
             {% endif %}
+
+            {% if app.supports_module_assertions %}
+              {% include "app_manager/partials/forms/custom_assertions.html" %}
+            {% endif %}
+
           </div><!-- end .panel-body -->
         </div><!-- end .panel -->
       {% endif %}
