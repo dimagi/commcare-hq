@@ -69,8 +69,6 @@ class ElasticDomain(ElasticDocumentAdapter):
     def _from_dict(self, domain_dict):
         """
         Takes a domain dict and applies required transformation to make it suitable for ES.
-        The function is replica of ``transform_domain_for_elasticsearch``.
-        In future all references to  ``transform_domain_for_elasticsearch`` will be replaced by `from_python`
         :param domain: an instance of ``dict`` which is result of ``Domain.to_json()``
         """
         from corehq.apps.accounting.models import Subscription

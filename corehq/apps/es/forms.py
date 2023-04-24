@@ -81,8 +81,6 @@ class ElasticForm(ElasticDocumentAdapter):
     def _from_dict(cls, xform_dict):
         """
         Takes in a xform dict and applies required transformation to make it suitable for ES.
-        The function is replica of ``transform_form_for_elasticsearch``
-        and will be replaced by `from_python` in future
 
         :param xform: an instance of ``dict`` which is ``XFormInstance.to_json()``
         """

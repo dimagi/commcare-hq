@@ -68,8 +68,6 @@ class ElasticCase(ElasticDocumentAdapter):
     def _from_dict(self, case):
         """
         Takes in case dict and applies required transformation to make it suitable for ES.
-        The function is replica of ``transform_case_for_elasticsearch``
-        In future all references to  ``transform_case_for_elasticsearch`` will be replaced by `from_python`
 
         :param case: an instance of ``dict`` which is ``CommcareCase.to_json()``
         """

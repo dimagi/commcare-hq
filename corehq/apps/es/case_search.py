@@ -162,8 +162,6 @@ class ElasticCaseSearch(ElasticDocumentAdapter):
         """
         Takes in a dict which is result of ``CommCareCase.to_json``
         and applies required transformation to make it suitable for ES.
-        The function is replica of ``transform_case_for_elasticsearch``
-        In future all references to  ``transform_case_for_elasticsearch`` will be replaced by `from_python`
 
         :param case: an instance of ``dict`` which is ``case.to_json()``
         """
@@ -389,7 +387,7 @@ def wrap_case_search_hit(hit, include_score=False):
     """Convert case search index hit to CommCareCase
 
     Nearly the opposite of
-    `corehq.pillows.case_search.transform_case_for_elasticsearch`.
+    `corehq.apps.es.case_search.ElasticCaseSearch._from_dict`.
 
     The "case_properties" list of key/value pairs is converted to a dict
     and assigned to `case_json`. 'Secial' case properties are excluded

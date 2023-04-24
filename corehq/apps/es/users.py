@@ -85,8 +85,6 @@ class ElasticUser(ElasticDocumentAdapter):
     def _from_dict(self, user_dict):
         """
         Takes a user dict and applies required transfomation to make it suitable for ES.
-        The function is replica of ``transform_user_for_elasticsearch``.
-        In future all references to  ``transform_user_for_elasticsearch`` will be replaced by `from_python`
 
         :param user: an instance ``dict`` which is result of ``CouchUser.to_json()``
         """
