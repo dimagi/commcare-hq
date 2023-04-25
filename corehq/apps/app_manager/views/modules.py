@@ -195,6 +195,7 @@ def get_module_view_context(request, app, module, lang=None):
         show_advanced_settings
         or add_ons.show("register_from_case_list", request, app, module)
         or add_ons.show("case_list_menu_item", request, app, module) and not isinstance(module, ShadowModule)
+        or toggles.CUSTOM_ASSERTIONS.enabled(app.domain)
     )
     context.update({
         'show_advanced_settings': show_advanced_settings,
