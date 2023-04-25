@@ -9,9 +9,6 @@
 </script>
 
 {% if requirejs_main %}
-  {% if use_bootstrap5 %}
-    <script src="{% static "bootstrap5/dist/js/bootstrap.bundle.min.js" %}"></script>
-  {% endif %}
   <script src="{% static 'requirejs/require.js' %}"></script>
   <script src="{% static 'hqwebapp/js/hqModules.js' %}"></script>
   {# Do not compress these, which are re-written during depeloy #}
