@@ -32,11 +32,12 @@ hqDefine("data_dictionary/js/data_dictionary", [
 
         self.init = function (groupData, changeSaveButton) {
             for (let group of groupData) {
-                let groupObj = groupsViewModel(group.name, group.description, group.index, self.name);
-                if (group.name) {
+                let groupObj = groupsViewModel(group.id, group.name, group.description, group.index, self.name);
+                if (group.id) {
                     groupObj.name.subscribe(changeSaveButton);
                     groupObj.description.subscribe(changeSaveButton);
                 }
+                groupObj.properties.subscribe(changeSaveButton);
 
                 for (let prop of group.properties) {
                     var propObj = propertyListItem(prop.name, prop.label, false, prop.group, self.name, prop.data_type,
@@ -64,9 +65,10 @@ hqDefine("data_dictionary/js/data_dictionary", [
         return self;
     };
 
-    var groupsViewModel = function (name, description, caseType) {
+    var groupsViewModel = function (id, name, description, caseType) {
         var self = {};
-        self.name = name ? ko.observable(name) : "";
+        self.id = id;
+        self.name = ko.observable(name);
         self.description = ko.observable(description);
         self.caseType = caseType;
         self.properties = ko.observableArray();
@@ -154,10 +156,21 @@ hqDefine("data_dictionary/js/data_dictionary", [
         self.saveButton = hqMain.initSaveButton({
             unsavedMessage: gettext("You have unsaved changes to your data dictionary."),
             save: function () {
+                let postGroups = [];
                 var postProperties = [];
-                var currentGroup = '';
-                _.each(self.casePropertyList(), function (element, index) {
-                    if (!element.isGroup) {
+                _.each(self.caseGroupList(), function (group, index) {
+                    if (group.name() !== "") {
+                        let groupData = {
+                            'case_type': self.activeCaseType(),
+                            'id': group.id,
+                            'name': group.name(),
+                            'description': group.description(),
+                            'index': index,
+                        };
+                        postGroups.push(groupData);
+                    }
+
+                    _.each(group.properties(), function (element, index) {
                         const allowedValues = element.allowedValues.val();
                         let pureAllowedValues = {};
                         for (const key in allowedValues) {
@@ -169,7 +182,7 @@ hqDefine("data_dictionary/js/data_dictionary", [
                             'label': element.label() || element.name,
                             'index': index,
                             'data_type': element.dataType(),
-                            'group': currentGroup,
+                            'group': group.name(),
                             'description': element.description(),
                             'fhir_resource_prop_path': (
                                 element.fhirResourcePropPath() ? element.fhirResourcePropPath().trim() : element.fhirResourcePropPath()),
@@ -178,15 +191,14 @@ hqDefine("data_dictionary/js/data_dictionary", [
                             'allowed_values': pureAllowedValues,
                         };
                         postProperties.push(data);
-                    } else {
-                        currentGroup = element.name;
-                    }
+                    });
                 });
                 self.saveButton.ajax({
                     url: casePropertyUrl,
                     type: 'POST',
                     dataType: 'JSON',
                     data: {
+                        'groups': JSON.stringify(postGroups),
                         'properties': JSON.stringify(postProperties),
                         'fhir_resource_type': self.fhirResourceType(),
                         'remove_fhir_resource_type': self.removefhirResourceType(),
@@ -195,7 +207,7 @@ hqDefine("data_dictionary/js/data_dictionary", [
                     success: function () {
                         var activeCaseType = self.getActiveCaseType();
                         activeCaseType.fhirResourceType(self.fhirResourceType());
-                        activeCaseType.properties(self.casePropertyList());
+                        activeCaseType.groups(self.caseGroupList());
                     },
                     // Error handling is managed by SaveButton logic in main.js
                 });
