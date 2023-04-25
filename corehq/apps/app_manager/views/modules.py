@@ -169,7 +169,7 @@ def get_module_view_context(request, app, module, lang=None):
         'unique_id': module.unique_id,
     }
     case_property_builder = _setup_case_property_builder(app)
-    show_advanced_settings = False
+    show_advanced_settings = not module.is_surveys
     if toggles.MOBILE_UCR.enabled(app.domain):
         show_advanced_settings = True
         module_brief.update({
