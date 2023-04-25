@@ -247,7 +247,8 @@ class EntriesHelper(object):
                 storage_instance = RESULTS_INSTANCE_INLINE if module_uses_inline_search(module) \
                     else RESULTS_INSTANCE
                 remote_request_factory = RemoteRequestFactory(
-                    None, module, [], case_session_var=case_session_var, storage_instance=storage_instance)
+                    None, module, [], case_session_var=case_session_var, storage_instance=storage_instance,
+                    exclude_relevant=case_search_sync_cases_on_form_entry_enabled_for_domain(self.app.domain))
                 e.post = remote_request_factory.build_remote_request_post()
 
             # Ideally all of this version check should happen in Command/Display class
@@ -616,9 +617,9 @@ class EntriesHelper(object):
         The case details is then populated with data from the results of the query.
         """
         from corehq.apps.app_manager.suite_xml.post_process.remote_requests import (
-            RemoteRequestFactory, RESULTS_INSTANCE, RESULTS_INSTANCE_INLINE
+            RemoteRequestFactory, RESULTS_INSTANCE_INLINE
         )
-        storage_instance = RESULTS_INSTANCE_INLINE if uses_inline_search else RESULTS_INSTANCE
+        storage_instance = RESULTS_INSTANCE_INLINE if uses_inline_search else 'casedb'
         factory = RemoteRequestFactory(None, module, [], storage_instance=storage_instance)
         query = factory.build_remote_request_queries()[0]
         return FormDatumMeta(datum=query, case_type=None, requires_selection=False, action=None)
