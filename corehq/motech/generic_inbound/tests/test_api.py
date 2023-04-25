@@ -21,7 +21,7 @@ from corehq.motech.generic_inbound.models import (
     ConfigurableAPI,
     ConfigurableApiValidation,
     ProcessingAttempt,
-    RequestLog,
+    RequestLog, ApiMiddleware,
 )
 from corehq.motech.generic_inbound.utils import (
     ApiRequest,
@@ -44,11 +44,13 @@ class GenericInboundAPIViewBaseTest(TestCase):
 
         cls.api_key, _ = HQApiKey.objects.get_or_create(user=cls.user.get_django_user())
 
-    def _make_api(self, property_expressions, filter_expression=None, validation_expression=None):
+    def _make_api(self, property_expressions, filter_expression=None, validation_expression=None,
+                  middleware=ApiMiddleware.json):
         api = ConfigurableAPI.objects.create(
             domain=self.domain_name,
             filter_expression=self._make_filter(filter_expression),
-            transform_expression=self._make_expression(property_expressions)
+            transform_expression=self._make_expression(property_expressions),
+            middleware=middleware,
         )
 
         if validation_expression:
@@ -95,8 +97,34 @@ class GenericInboundAPIViewBaseTest(TestCase):
                 }
             }
         }
+
+    def _call_api(
+        self,
+        properties_expression,
+        query_params=None,
+        filter_expression=None,
+        validation_expression=None,
+        middleware=ApiMiddleware.json,
+    ):
+        generic_api = self._make_api(
+            properties_expression, filter_expression, validation_expression, middleware
+        )
+        return self._call_api_advanced(generic_api, query_params)
+
+    def _call_api_advanced(self, api, query_params=None):
+        url = reverse('generic_inbound_api', args=[self.domain_name, api.url_key])
+        if query_params:
+            url = f"{url}?{urlencode(query_params)}"
+        data, content_type = self._get_post_data()
+        response = self.client.post(
+            url, data=data, content_type=content_type,
+            HTTP_AUTHORIZATION=f"apikey {self.user.username}:{self.api_key.key}",
+            HTTP_USER_AGENT="user agent string",
+        )
+        return response
     
     def _get_post_data(self):
+        """Return request POST data as a tuple(data, content_type)"""
         raise NotImplementedError
 
     @classmethod
@@ -110,7 +138,10 @@ class GenericInboundAPIViewBaseTest(TestCase):
 class TestGenericInboundAPIView(GenericInboundAPIViewBaseTest):
 
     def _get_post_data(self):
-        return {'name': 'cricket', 'is_team_sport': True}
+        return (
+            json.dumps({'name': 'cricket', 'is_team_sport': True}),
+            "application/json"
+        )
     
     def test_post_denied(self):
         generic_api = self._make_api({})
@@ -182,28 +213,6 @@ class TestGenericInboundAPIView(GenericInboundAPIViewBaseTest):
         self.assertEqual(response_json['cases'][0]['owner_id'], self.user.get_id)
         return response_json
 
-    def _call_api(
-        self,
-        properties_expression,
-        query_params=None,
-        filter_expression=None,
-        validation_expression=None
-    ):
-        generic_api = self._make_api(properties_expression, filter_expression, validation_expression)
-        return self._call_api_advanced(generic_api, query_params)
-
-    def _call_api_advanced(self, api, query_params=None):
-        url = reverse('generic_inbound_api', args=[self.domain_name, api.url_key])
-        if query_params:
-            url = f"{url}?{urlencode(query_params)}"
-        data = json.dumps(self._get_post_data())
-        response = self.client.post(
-            url, data=data, content_type="application/json",
-            HTTP_AUTHORIZATION=f"apikey {self.user.username}:{self.api_key.key}",
-            HTTP_USER_AGENT="user agent string",
-        )
-        return response
-
     def test_logging(self):
         query_params = {"param": "value"}
         properties_expression = {
@@ -223,7 +232,7 @@ class TestGenericInboundAPIView(GenericInboundAPIViewBaseTest):
         self.assertEqual(log.username, self.user.username)
         self.assertEqual(log.request_method, RequestLog.RequestMethod.POST)
         self.assertEqual(log.request_query, 'param=value')
-        self.assertEqual(log.request_body, json.dumps(self._get_post_data()))
+        self.assertEqual(log.request_body, self._get_post_data()[0])
         self.assertIn('CONTENT_TYPE', log.request_headers)
         self.assertEqual(log.request_headers['HTTP_USER_AGENT'], 'user agent string')
         self.assertEqual(log.request_ip, '127.0.0.1')
