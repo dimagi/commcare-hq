@@ -10,43 +10,40 @@ from corehq.apps.userreports.exceptions import BadSpecError
 from corehq.motech.generic_inbound.exceptions import (
     GenericInboundApiError,
     GenericInboundRequestFiltered,
-    GenericInboundValidationError,
+    GenericInboundValidationError, GenericInboundUserError,
 )
 from corehq.motech.generic_inbound.utils import ApiResponse
 
 
 def execute_generic_api(api_model, request_data):
     try:
+        middleware = api_model.middleware_class
+    except GenericInboundApiError as e:
+        return ApiResponse(status=500, data={'error': str(e)})
+
+    try:
         response_json = _execute_generic_api(
             request_data.domain,
             request_data.couch_user,
             request_data.user_agent,
-            request_data.to_context(),
+            middleware.get_context(request_data),
             api_model,
         )
     except BadSpecError as e:
-        return ApiResponse(status=500, data={'error': str(e)})
+        return middleware.get_error_response(500, str(e))
     except UserError as e:
-        return ApiResponse(status=400, data={'error': str(e)})
+        return middleware.get_error_response(400, str(e))
     except GenericInboundRequestFiltered:
         return ApiResponse(status=204)
+    except GenericInboundUserError as e:
+        return middleware.get_error_response(400, str(e))
     except GenericInboundValidationError as e:
-        return _get_validation_error_response(e.errors)
+        return middleware.get_validation_error(400, 'validation error', e.errors)
     except GenericInboundApiError as e:
-        return ApiResponse(status=500, data={'error': str(e)})
+        return middleware.get_error_response(500, str(e))
     except SubmissionError as e:
-        return ApiResponse(status=400, data={
-            'error': str(e),
-            'form_id': e.form_id,
-        })
-    return ApiResponse(status=200, data=response_json)
-
-
-def _get_validation_error_response(errors):
-    return ApiResponse(status=400, data={
-        'error': 'validation error',
-        'errors': [error['message'] for error in errors],
-    })
+        return middleware.get_submission_error_response(400, e.form_id, str(e))
+    return middleware.get_success_response(response_json)
 
 
 def _execute_generic_api(domain, couch_user, device_id, context, api_model):

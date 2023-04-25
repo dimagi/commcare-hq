@@ -1,6 +1,7 @@
 import json
 import uuid
 from base64 import urlsafe_b64encode
+from functools import cached_property
 
 from django.conf import settings
 from django.db import transaction
@@ -49,7 +50,7 @@ class ApiRequest:
     couch_user: CouchUser
     request_method: str
     user_agent: str
-    data: dict
+    data: str
     query: dict  # querystring key val pairs, vals are lists
     headers: dict
 
@@ -63,39 +64,30 @@ class ApiRequest:
         except UnicodeDecodeError:
             raise GenericInboundUserError(_("Unable to decode request body"))
 
-        try:
-            request_json = json.loads(body)
-        except json.JSONDecodeError:
-            raise GenericInboundUserError(_("Payload must be valid JSON"))
         return cls(
             domain=request.domain,
             couch_user=request.couch_user,
             request_method=request.method,
             user_agent=request.META.get('HTTP_USER_AGENT'),
-            data=request_json,
+            data=body,
             query=dict(request.GET.lists()),
             headers=get_headers_for_api_context(request)
         )
 
     @classmethod
     def from_log(cls, log):
-        try:
-            request_json = json.loads(log.request_body)
-        except (UnicodeDecodeError, json.JSONDecodeError):
-            raise GenericInboundUserError(_("Payload must be valid JSON"))
         return cls(
             domain=log.domain,
             couch_user=CouchUser.get_by_username(log.username),
             request_method=log.request_method,
             user_agent=log.request_headers.get('HTTP_USER_AGENT'),
-            data=request_json,
+            data=log.request_body,
             query=dict(QueryDict(log.request_query).lists()),
             headers=dict(log.request_headers),
         )
 
     def to_context(self):
-        restore_user = self.couch_user.to_ota_restore_user(
-            self.domain, request_user=self.couch_user)
+        restore_user = self.restore_user()
         return get_evaluation_context(
             restore_user,
             self.request_method,
@@ -103,6 +95,11 @@ class ApiRequest:
             self.headers,
             self.data,
         )
+
+    @cached_property
+    def restore_user(self):
+        return self.couch_user.to_ota_restore_user(
+            self.domain, request_user=self.couch_user)
 
 
 @attr.s(kw_only=True, frozen=True, auto_attribs=True)

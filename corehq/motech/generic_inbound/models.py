@@ -1,4 +1,5 @@
 import enum
+from functools import cached_property
 from uuid import uuid4
 
 from django.contrib.postgres.fields import ArrayField
@@ -13,6 +14,7 @@ from memoized import memoized
 
 from corehq.apps.userreports.models import UCRExpression
 from corehq.apps.userreports.specs import FactoryContext
+from corehq.motech.generic_inbound.exceptions import GenericInboundApiError
 from corehq.util import reverse
 
 
@@ -72,6 +74,13 @@ class ConfigurableAPI(models.Model):
         if not self.filter_expression:
             return None
         return self.filter_expression.wrapped_definition(FactoryContext.empty())
+
+    @cached_property
+    def middleware_class(self):
+        from corehq.motech.generic_inbound.middleware.json import JsonMiddleware
+        if self.middleware == ApiMiddleware.json:
+            return JsonMiddleware()
+        raise GenericInboundApiError(f"Unknown middleware type: {self.middleware}")
 
     @property
     @memoized
