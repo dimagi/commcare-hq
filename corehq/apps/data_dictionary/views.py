@@ -23,6 +23,7 @@ from corehq.apps.data_dictionary import util
 from corehq.apps.data_dictionary.models import (
     CaseProperty,
     CasePropertyAllowedValue,
+    CasePropertyGroup,
     CaseType,
 )
 from corehq.apps.data_dictionary.util import save_case_property
@@ -91,7 +92,8 @@ def data_dictionary_json(request, domain, case_type_name=None):
     fhir_resource_type_name_by_case_type = {}
     fhir_resource_prop_by_case_prop = {}
     queryset = CaseType.objects.filter(domain=domain).prefetch_related(
-        Prefetch('properties', queryset=CaseProperty.objects.order_by('name')),
+        Prefetch('groups', queryset=CasePropertyGroup.objects.order_by('index')),
+        Prefetch('properties', queryset=CaseProperty.objects.order_by('index')),
         Prefetch('properties__allowed_values', queryset=CasePropertyAllowedValue.objects.order_by('allowed_value'))
     )
     if toggles.FHIR_INTEGRATION.enabled(domain):
@@ -103,20 +105,45 @@ def data_dictionary_json(request, domain, case_type_name=None):
         p = {
             "name": case_type.name,
             "fhir_resource_type": fhir_resource_type_name_by_case_type.get(case_type),
+            "groups": [],
             "properties": [],
         }
-        for prop in case_type.properties.all():
-            p['properties'].append({
-                "description": prop.description,
-                "label": prop.label,
-                "index": prop.index,
-                "fhir_resource_prop_path": fhir_resource_prop_by_case_prop.get(prop),
-                "name": prop.name,
-                "data_type": prop.data_type,
-                "group": prop.group_name,
-                "deprecated": prop.deprecated,
-                "allowed_values": {av.allowed_value: av.description for av in prop.allowed_values.all()},
-            })
+        for group in case_type.groups.all():
+            group_ret = {
+                "name": group.name,
+                "index": group.index,
+                "description": group.description,
+                "properties": []
+            }
+
+            for prop in group.properties.all():
+                group_ret['properties'].append({
+                    "description": prop.description,
+                    "label": prop.label,
+                    "index": prop.index,
+                    "fhir_resource_prop_path": fhir_resource_prop_by_case_prop.get(prop),
+                    "name": prop.name,
+                    "data_type": prop.data_type,
+                    "deprecated": prop.deprecated,
+                    "allowed_values": {av.allowed_value: av.description for av in prop.allowed_values.all()},
+                })
+
+            p["groups"].append(group_ret)
+
+        # Aggregate properties that dont have a group
+        p["groups"].append({
+            "name": "",
+            "properties": [{
+                    "description": prop.description,
+                    "label": prop.label,
+                    "index": prop.index,
+                    "fhir_resource_prop_path": fhir_resource_prop_by_case_prop.get(prop),
+                    "name": prop.name,
+                    "data_type": prop.data_type,
+                    "deprecated": prop.deprecated,
+                    "allowed_values": {av.allowed_value: av.description for av in prop.allowed_values.all()},
+            } for prop in case_type.properties.all() if not prop.group]
+        })
         props.append(p)
     return JsonResponse({'case_types': props})
 
