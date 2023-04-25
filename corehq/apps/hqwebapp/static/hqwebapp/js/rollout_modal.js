@@ -3,7 +3,7 @@
 */
 hqDefine("hqwebapp/js/rollout_modal", [
     'jquery',
-    'hqwebapp/js/alert_user',
+    'hqwebapp/js/bootstrap3/alert_user',
     'hqwebapp/js/initial_page_data',
     'analytix/js/google',
     'analytix/js/kissmetrix',
