@@ -1,7 +1,7 @@
 hqDefine("enterprise/js/enterprise_dashboard", [
     'jquery',
     'hqwebapp/js/initial_page_data',
-    'hqwebapp/js/alert_user',
+    'hqwebapp/js/bootstrap3/alert_user',
     'analytix/js/kissmetrix',
     'hqwebapp/js/bootstrap3/hq.helpers',
 ], function (

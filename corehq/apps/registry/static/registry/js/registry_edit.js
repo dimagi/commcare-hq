@@ -3,7 +3,7 @@ hqDefine("registry/js/registry_edit", [
     'knockout',
     'underscore',
     'hqwebapp/js/initial_page_data',
-    'hqwebapp/js/alert_user',
+    'hqwebapp/js/bootstrap3/alert_user',
     'registry/js/registry_text',
     'registry/js/registry_actions',
     'registry/js/registry_logs',
