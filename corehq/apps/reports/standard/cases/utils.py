@@ -12,6 +12,7 @@ from corehq.apps.locations.models import SQLLocation
 from corehq.apps.reports.filters.case_list import CaseListFilter as EMWF
 from corehq.apps.reports.models import HQUserType
 from corehq.apps.hqwebapp.doc_info import get_doc_info_by_id
+from corehq.apps.hqcase.utils import SYSTEM_FORM_XMLNS_MAP
 
 
 def _get_special_owner_ids(domain, admin, unknown, web, demo, commtrack):
@@ -179,13 +180,16 @@ def query_location_restricted_forms(query, domain, couch_user):
     return query.filter(form_es.user_id(accessible_ids))
 
 
-def get_user_type(form_metadata, domain=None):
+def get_user_type(form, domain=None):
     user_type = 'Unknown'
-    if getattr(form_metadata, 'userID', None):
-        doc_info = get_doc_info_by_id(domain, form_metadata.userID)
-        if doc_info:
+    if getattr(form.metadata, 'username', None) == 'system':
+        if form.xmlns in SYSTEM_FORM_XMLNS_MAP:
+            user_type = SYSTEM_FORM_XMLNS_MAP[form.xmlns]
+        else:
+            user_type = 'System'
+    elif getattr(form.metadata, 'userID', None):
+        doc_info = get_doc_info_by_id(domain, form.metadata.userID)
+        if doc_info.type_display:
             user_type = doc_info.type_display
-    elif form_metadata.username == 'system':
-        user_type = 'System'
 
     return user_type
