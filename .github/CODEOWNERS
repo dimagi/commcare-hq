@@ -11,7 +11,7 @@
 /corehq/form_processor/ @snopoke
 /corehq/messaging/ @orangejenny @mkangia
 /corehq/motech/ @kaapstorm
-/corehq/pillows/ @calellowitz
+/corehq/pillows/ @calellowitz @amitphulera
 /corehq/sql_accessors/ @snopoke
 /corehq/sql_db/ @snopoke @calellowitz
 /corehq/sql_proxy_accessors/ @snopoke
@@ -35,7 +35,7 @@
 /corehq/apps/data_dictionary/ @esoergel @orangejenny
 /corehq/apps/domain/decorators.py @esoergel
 /corehq/apps/domain/auth.py @esoergel
-/corehq/apps/es/ @esoergel
+/corehq/apps/es/ @esoergel @amitphulera
 /corehq/apps/hqcase/ @esoergel
 /corehq/apps/hqwebapp/ @orangejenny
 /corehq/apps/linked_domain/ @gherceg
@@ -76,5 +76,8 @@
 /scripts/vellum-to-hq @millerdev
 
 /requirements/ @dimagi/dependency-watchers
+
+/testapps/test_pillowtop/ @amitphulera
+/testapps/test_elasticsearch/ @amitphulera
 
 /yarn.lock @dimagi/dependency-watchers
