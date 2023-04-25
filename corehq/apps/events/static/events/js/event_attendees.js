@@ -4,6 +4,7 @@ hqDefine("events/js/event_attendees",[
     'underscore',
     'hqwebapp/js/initial_page_data',
     'jquery.rmi/jquery.rmi',
+    'locations/js/widgets',
     "hqwebapp/js/widgets",
     "hqwebapp/js/components.ko", // for pagination
 ], function (
@@ -11,7 +12,8 @@ hqDefine("events/js/event_attendees",[
     ko,
     _,
     initialPageData,
-    RMI
+    RMI,
+    locationsWidgets
 ) {
     'use strict';
 
@@ -32,6 +34,7 @@ hqDefine("events/js/event_attendees",[
             creationStatus: STATUS_CSS.NONE,
             creationError: '',
             name: '',
+            location_id: '',
             case_id: '',
         });
 
@@ -169,6 +172,12 @@ hqDefine("events/js/event_attendees",[
 
         self.initializeAttendee = function () {
             self.stagedAttendee(attendeeModel({}));
+
+            var $locationSelect = $("#id_location_id");
+            if ($locationSelect.length) {
+                locationsWidgets.initAutocomplete($locationSelect);
+            }
+
         };
 
         self.submitNewAttendee = function () {

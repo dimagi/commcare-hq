@@ -35,7 +35,7 @@ FUNCTIONS = DEFAULT_FUNCTIONS
 FUNCTIONS.update({
     'timedelta_to_seconds': lambda x: x.total_seconds() if isinstance(x, timedelta) else None,
     'range': safe_range,
-    'today': date.today(),
+    'today': date.today,
     'days': lambda t: t.days,
     'round': round
 })

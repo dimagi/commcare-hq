@@ -88,16 +88,16 @@ class BaseJsonCaseChange(jsonobject.JsonObject):
 
     def get_caseblock(self, case_db):
 
-        def _if_specified(value):
-            return value if value is not None else CaseBlock.undefined
+        def get_kwargs(*attribs):
+            return {
+                a: getattr(self, a)
+                for a in attribs
+                if getattr(self, a) is not None
+            }
 
         return CaseBlock(
             case_id=self.get_case_id(case_db),
             user_id=self.user_id,
-            case_type=_if_specified(self.case_type),
-            case_name=_if_specified(self.case_name),
-            external_id=_if_specified(self.external_id),
-            owner_id=_if_specified(self.owner_id),
             create=self._is_case_creation,
             update=dict(self.properties),
             close=self.close,
@@ -108,6 +108,7 @@ class BaseJsonCaseChange(jsonobject.JsonObject):
                     relationship=index.relationship
                 ) for name, index in self.indices.items()
             },
+            **get_kwargs('case_type', 'case_name', 'external_id', 'owner_id'),
         ).as_text()
 
 

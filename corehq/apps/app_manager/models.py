@@ -356,7 +356,6 @@ class ConditionalCaseUpdate(DocumentSchema):
 
 
 class UpdateCaseAction(FormAction):
-    # TODO: migrate from dict(property_name: question_path) to dict(property_name: ConditionalCaseUpdate)
     update = SchemaDictProperty(ConditionalCaseUpdate)
 
 
@@ -3315,7 +3314,7 @@ AutoFilterConfig = namedtuple('AutoFilterConfig', ['slug', 'filter_function', 's
 def get_auto_filter_configurations():
     return [
         AutoFilterConfig('case_sharing_group', _filter_by_case_sharing_group_id,
-                         _("The user's case sharing group")),
+                         _("The user's case sharing group (filter must be of choice_provider type)")),
         AutoFilterConfig('location_id', _filter_by_location_id, _("The user's assigned location")),
         AutoFilterConfig('location_ids', _filter_by_location_ids, _("All of the user's assigned locations")),
         AutoFilterConfig('parent_location_id', _filter_by_parent_location_id,

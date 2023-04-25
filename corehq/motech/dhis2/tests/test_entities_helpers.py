@@ -1,5 +1,6 @@
 import doctest
 import json
+from datetime import datetime
 from unittest.mock import Mock, call, patch
 from uuid import uuid4
 
@@ -22,13 +23,14 @@ from corehq.motech.dhis2.entities_helpers import (
     create_relationships,
     get_programs_by_id,
     get_supercase,
-    send_dhis2_entities,
-    validate_tracked_entity,
     register_tracked_entity_instance,
+    send_dhis2_entities,
     update_tracked_entity_instance,
+    validate_tracked_entity,
 )
+from corehq.motech.dhis2.exceptions import Dhis2Exception
 from corehq.motech.dhis2.forms import Dhis2ConfigForm
-from corehq.motech.dhis2.repeaters import Dhis2Repeater
+from corehq.motech.dhis2.repeaters import Dhis2EntityRepeater, Dhis2Repeater
 from corehq.motech.exceptions import ConfigurationError
 from corehq.motech.models import ConnectionSettings
 from corehq.motech.requests import Requests
@@ -37,7 +39,6 @@ from corehq.motech.value_source import (
     get_case_trigger_info_for_case,
     get_form_question_values,
 )
-from corehq.motech.dhis2.exceptions import Dhis2Exception
 
 DOMAIN = 'test-domain'
 
@@ -429,7 +430,11 @@ class TestCreateRelationships(TestCase):
         ]
 
         create_relationships(
-            requests, case_trigger_info, subcase_config, dhis2_entity_config, tracked_entity_relationship_specs
+            requests,
+            case_trigger_info,
+            subcase_config,
+            dhis2_entity_config,
+            tracked_entity_relationship_specs
         )
 
         # Only once of the two relationships should trigger a call to create, since the other already exists
@@ -554,6 +559,34 @@ class TestUpdateTrackedEntityInstance(TestCase):
 
         with self.assertRaises(Dhis2Exception):
             update_tracked_entity_instance(requests, None, None, None, None)
+
+
+class TestNothingToSend(TestCase):
+
+    def setUp(self):
+        self.conn = ConnectionSettings.objects.create(
+            domain=DOMAIN,
+            name='Example DHIS2 server',
+            url='https://dhis2.example.com/',
+        )
+
+    def tearDown(self):
+        self.conn.delete()
+
+    def test_204_response(self):
+        repeater = Dhis2EntityRepeater(
+            domain=DOMAIN,
+            connection_settings_id=self.conn.id,
+            dhis2_entity_config={'case_configs': []},
+            dhis2_version='2.39.1.1',
+            dhis2_version_last_modified=datetime.utcnow(),
+        )
+        repeat_record = Mock(payload_id='abc123')
+        payload = {'form': {}}
+
+        result = repeater.send_request(repeat_record, payload)
+        self.assertEqual(result.status_code, 204)
+        self.assertEqual(result.reason, 'No content')
 
 
 class TestRequests(TestCase):
