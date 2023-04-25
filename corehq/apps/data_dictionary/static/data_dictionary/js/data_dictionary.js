@@ -284,8 +284,7 @@ hqDefine("data_dictionary/js/data_dictionary", [
 
         self.newGroup = function () {
             if (_.isString(self.newGroupName())) {
-                var group = groupsViewModel(self.newGroupName(), '', self.activeCaseType());
-                group.properties.push();
+                var group = groupsViewModel(null, self.newGroupName(), '', self.activeCaseType());
                 self.caseGroupList.push(group);
                 self.newGroupName(undefined);
             }
