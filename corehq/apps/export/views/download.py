@@ -38,7 +38,8 @@ from corehq.apps.export.const import MAX_NORMAL_EXPORT_SIZE, ALL_CASE_TYPE_EXPOR
 from corehq.apps.export.exceptions import (
     ExportAsyncException,
     ExportFormValidationException,
-    CaseTypeOrAppLimitExceeded
+    CaseTypeOrAppLimitExceeded,
+    NoTablesException
 )
 from corehq.apps.export.export import (
     get_export_download,
@@ -279,6 +280,19 @@ def _check_export_size(domain, export_instances, export_filters):
         )
 
 
+def _validate_case_export_instances(domain, export_instances):
+    limit_exceeded = case_type_or_app_limit_exceeded(domain)
+    for instance in export_instances:
+        if limit_exceeded and instance.case_type == ALL_CASE_TYPE_EXPORT:
+            raise CaseTypeOrAppLimitExceeded()
+        elif not len(instance.tables):
+            raise NoTablesException(
+                _("There are no sheets to export. If this is a bulk case export then "
+                  "the export configuration might still be busy populating its tables. "
+                  "Please try again later.")
+            )
+
+
 def _check_deid_permissions(permissions, export_instances):
     if not permissions.has_deid_view_permissions:
         for instance in export_instances:
@@ -323,11 +337,9 @@ def prepare_custom_export(request, domain):
     try:
         _check_deid_permissions(permissions, export_instances)
         _check_export_size(domain, export_instances, export_filters)
-        if form_or_case == 'case' and case_type_or_app_limit_exceeded(domain):
-            for export_instance in export_instances:
-                if export_instance.case_type == ALL_CASE_TYPE_EXPORT:
-                    raise CaseTypeOrAppLimitExceeded()
-    except (ExportAsyncException, CaseTypeOrAppLimitExceeded) as e:
+        if form_or_case == 'case':
+            _validate_case_export_instances(domain, export_instances)
+    except (ExportAsyncException, CaseTypeOrAppLimitExceeded, NoTablesException) as e:
         return json_response({
             'error': str(e),
         })
