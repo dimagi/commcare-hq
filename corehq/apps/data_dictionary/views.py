@@ -26,7 +26,7 @@ from corehq.apps.data_dictionary.models import (
     CasePropertyGroup,
     CaseType,
 )
-from corehq.apps.data_dictionary.util import save_case_property
+from corehq.apps.data_dictionary.util import save_case_property, save_case_property_group
 from corehq.apps.domain.decorators import login_and_domain_required
 from corehq.apps.hqwebapp.decorators import use_jquery_ui
 from corehq.apps.hqwebapp.utils import get_bulk_upload_form
@@ -110,6 +110,7 @@ def data_dictionary_json(request, domain, case_type_name=None):
         }
         for group in case_type.groups.all():
             group_ret = {
+                "id": group.id,
                 "name": group.name,
                 "index": group.index,
                 "description": group.description,
@@ -177,10 +178,24 @@ def update_case_property(request, domain):
     errors = []
     update_fhir_resources = toggles.FHIR_INTEGRATION.enabled(domain)
     property_list = json.loads(request.POST.get('properties'))
+    group_list = json.loads(request.POST.get('groups'))
 
     if update_fhir_resources:
         errors, fhir_resource_type_obj = _update_fhir_resource_type(request, domain)
     if not errors:
+        for group in group_list:
+            case_type = group.get("case_type")
+            id = group.get("id")
+            name = group.get("name")
+            index = group.get("index")
+            description = group.get("description")
+
+            if name:
+                error = save_case_property_group(id, name, case_type, domain, description, index)
+
+            if error:
+                errors.append(error)
+
         for property in property_list:
             case_type = property.get('caseType')
             name = property.get('name')
