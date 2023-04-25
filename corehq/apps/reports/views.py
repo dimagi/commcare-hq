@@ -1963,6 +1963,8 @@ def get_or_create_filter_hash(request, domain):
             query = query[0]
             query_string = query.query_string
             query.save()  # Updates the 'last_accessed' field
+    else:
+        not_found = True
 
     return JsonResponse({
         'query_string': query_string,
