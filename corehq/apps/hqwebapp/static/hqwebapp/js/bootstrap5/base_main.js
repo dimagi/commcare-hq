@@ -5,7 +5,7 @@ hqDefine("hqwebapp/js/bootstrap5/base_main", [
     'hqwebapp/js/layout',
     'hqwebapp/js/bootstrap5/hq-bug-report',
     'hqwebapp/js/bootstrap5/sticky_tabs',
-    'hqwebapp/js/main',
+    'hqwebapp/js/bootstrap5/main',
     'hqwebapp/js/inactivity',
     'notifications/js/notifications_service_main',
     'analytix/js/appcues',

@@ -1,6 +1,6 @@
 hqDefine('hqwebapp/js/ui_elements/ui-element-checkbox', [
     'jquery',
-    'hqwebapp/js/main',
+    'hqwebapp/js/bootstrap3/main',
 ], function (
     $,
     hqMain

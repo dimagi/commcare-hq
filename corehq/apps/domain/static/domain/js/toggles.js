@@ -6,7 +6,7 @@ hqDefine('domain/js/toggles', [
     'hqwebapp/js/bootstrap3/alert_user',
     'hqwebapp/js/assert_properties',
     'hqwebapp/js/knockout_bindings.ko',  // for slideVisible
-    'hqwebapp/js/main',
+    'hqwebapp/js/bootstrap3/main',
 ], function (
     $,
     ko,
