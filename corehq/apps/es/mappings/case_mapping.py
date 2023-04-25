@@ -1,6 +1,6 @@
 from corehq.apps.es.client import Tombstone
 from corehq.pillows.core import DATE_FORMATS_ARR, DATE_FORMATS_STRING
-from corehq.pillows.mappings.const import NULL_VALUE
+from corehq.apps.es.mappings.const import NULL_VALUE
 
 CASE_MAPPING = {
     "_meta": {

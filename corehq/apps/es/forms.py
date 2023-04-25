@@ -16,7 +16,7 @@ from casexml.apps.case.xml.parser import (
 )
 from couchforms.geopoint import GeoPoint
 
-from corehq.pillows.mappings.const import NULL_VALUE
+from corehq.apps.es.mappings.const import NULL_VALUE
 from dimagi.utils.parsing import json_format_datetime
 
 from . import filters
