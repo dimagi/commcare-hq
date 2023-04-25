@@ -8,7 +8,7 @@ requirejs.config({
         "jquery": "jquery/dist/jquery.min",
         "underscore": "underscore/underscore",
         "bootstrap": "bootstrap/dist/js/bootstrap.min",
-        "bootstrap5": "bootstrap5/dist/js/bootstrap.min",
+        "bootstrap5": "bootstrap5/dist/js/bootstrap.bundle.min",
         "knockout": "knockout/build/output/knockout-latest.debug",
         "ko.mapping": "hqwebapp/js/lib/knockout_plugins/knockout_mapping.ko.min",
         "datatables": "datatables.net/js/jquery.dataTables.min",
@@ -20,7 +20,7 @@ requirejs.config({
     shim: {
         "ace-builds/src-min-noconflict/ace": { exports: "ace" },
         "ko.mapping": { deps: ['knockout'] },
-        "es6!hqwebapp/js/bootstrap5/hq.helpers": { deps: ['jquery', 'knockout', 'bootstrap5', 'underscore'] },
+        "hqwebapp/js/bootstrap5/hq.helpers": { deps: ['jquery', 'knockout', 'bootstrap5', 'underscore'] },
         "datatables.bootstrap": { deps: ['datatables'] },
         "jquery.rmi/jquery.rmi": {
             deps: ['jquery', 'knockout', 'underscore'],
