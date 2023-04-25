@@ -287,10 +287,18 @@
     {% if not requirejs_main %}
       {% compress js %}
         <script src="{% static 'hqwebapp/js/hq_extensions.jquery.js' %}"></script>
-        <script src="{% static 'hqwebapp/js/bootstrap3/hq-bug-report.js' %}"></script>
+        {% if use_bootstrap5 %}
+          <script src="{% static 'hqwebapp/js/bootstrap5/hq-bug-report.js' %}"></script>
+        {% else %}
+          <script src="{% static 'hqwebapp/js/bootstrap3/hq-bug-report.js' %}"></script>
+        {% endif %}
         <script src="{% static 'hqwebapp/js/layout.js' %}"></script>
         <script src="{% static 'hqwebapp/js/toggles.js' %}"></script>
-        <script src="{% static 'hqwebapp/js/alert_user.js' %}"></script>
+        {% if use_bootstrap5 %}
+          <script src="{% static 'hqwebapp/js/bootstrap5/alert_user.js' %}"></script>
+        {% else %}
+          <script src="{% static 'hqwebapp/js/bootstrap3/alert_user.js' %}"></script>
+        {% endif %}
         <script src="{% static 'hqwebapp/js/main.js' %}"></script>
         <script src="{% static 'hqwebapp/js/mobile_experience_warning.js' %}"></script>
       {% endcompress %}
