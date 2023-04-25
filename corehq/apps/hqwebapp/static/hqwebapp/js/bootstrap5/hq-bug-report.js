@@ -1,7 +1,7 @@
 hqDefine('hqwebapp/js/bootstrap5/hq-bug-report', [
     "jquery",
     "jquery-form/dist/jquery.form.min",
-    "hqwebapp/js/bootstrap5/hq.helpers",
+    "es6!hqwebapp/js/bootstrap5/hq.helpers",
 ], function ($) {
     $(function () {
         var $hqwebappBugReportModal = $('#modalReportIssue'),
