@@ -1,3 +1,0 @@
-
-CANONICAL_NAME_INFO_MAP = {
-}
