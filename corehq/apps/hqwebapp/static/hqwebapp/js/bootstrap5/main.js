@@ -115,8 +115,9 @@ hqDefine('hqwebapp/js/bootstrap5/main', [
             $.postGo(action, $.unparam(data));
         });
 
-        $(".button", $elem).button().wrap('<span />');
-        $("input[type='submit']", $elem).button();
+        // todo bootstrap5 fixes
+        //$(".button", $elem).button().wrap('<span />');
+        //$("input[type='submit']", $elem).button();
         $("input[type='text'], input[type='password'], textarea", $elem);
         $('.container', $elem).addClass('ui-widget ui-widget-content');
         $('.config', $elem).wrap('<div />').parent().addClass('container block ui-corner-all');
@@ -383,7 +384,8 @@ hqDefine('hqwebapp/js/bootstrap5/main', [
         $(window).on('beforeunload', beforeUnloadCallback);
         initBlock($("body"));
 
-        $('#modalTrial30Day').modal('show');
+        // todo bootstrap5 js fixes
+        //$('#modalTrial30Day').modal('show');
 
         $(document).on('click', '.track-usage-link', function (e) {
             var $link = $(e.currentTarget),
