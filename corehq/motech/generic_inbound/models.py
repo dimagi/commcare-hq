@@ -1,3 +1,4 @@
+import enum
 from uuid import uuid4
 
 from django.contrib.postgres.fields import ArrayField
@@ -15,8 +16,14 @@ from corehq.apps.userreports.specs import FactoryContext
 from corehq.util import reverse
 
 
+class ApiMiddleware(models.TextChoices):
+    json = "json", _("JSON")
+    hl7 = "hl7", _("HL7 v2")
+
+
 @audit_fields("domain", "url_key", "name", "transform_expression", audit_special_queryset_writes=True)
 class ConfigurableAPI(models.Model):
+
     domain = models.CharField(max_length=255)
     url_key = models.CharField(max_length=32, validators=[validate_slug])
     created_on = models.DateTimeField(auto_now_add=True)
@@ -27,6 +34,7 @@ class ConfigurableAPI(models.Model):
         UCRExpression, on_delete=models.PROTECT, related_name="api_filter", null=True, blank=True)
     transform_expression = models.ForeignKey(
         UCRExpression, on_delete=models.PROTECT, related_name="api_expression")
+    middleware = models.CharField(max_length=100, default=ApiMiddleware.json)
 
     objects = AuditingManager()
 
