@@ -197,6 +197,16 @@ class Command(makemigrations.Command):
 
     @staticmethod
     def get_nested_value(keys_list, data_dict):
+        """
+        :param keys_list: A list of keys specifying the nested path of the value
+        :param data_dict: The dictionary containing the nested value
+
+        :returns: a nested dictionary corresponding to the keys_list
+
+        Example usage:
+            >>> get_nested_value(['person', 'name'], {'person': {'name': 'Sonny', 'surname': 'Corleone'}})
+            {'person': {'name': 'Sonny'}}
+        """
         # Get the nested value
         value = data_dict
         for key in keys_list:
