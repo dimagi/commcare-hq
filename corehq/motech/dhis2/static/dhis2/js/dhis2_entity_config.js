@@ -3,7 +3,7 @@ hqDefine('dhis2/js/dhis2_entity_config', [
     'underscore',
     'knockout',
     'hqwebapp/js/initial_page_data',
-    'hqwebapp/js/alert_user',
+    'hqwebapp/js/bootstrap3/alert_user',
     'hqwebapp/js/base_ace',
     'dhis2/js/json_syntax_parse',
 ], function (
