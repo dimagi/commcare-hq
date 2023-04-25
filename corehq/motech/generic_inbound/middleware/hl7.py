@@ -11,7 +11,7 @@ def hl7_str_to_dict(raw_hl7: str, use_long_name: bool = True) -> dict:
     :returns: A dictionary representation of the HL7 message
     """
     raw_hl7 = raw_hl7.replace("\n", "\r")
-    message = parse_message(raw_hl7)
+    message = parse_message(raw_hl7, find_groups=False)
     lib = load_library(message.version)
     base_datatypes = lib.get_base_datatypes()
     return _hl7_message_to_dict(message, set(base_datatypes), use_long_name=use_long_name)
