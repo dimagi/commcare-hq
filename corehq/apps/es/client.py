@@ -1053,6 +1053,10 @@ class ElasticMultiplexAdapter(BaseAdapter):
     def settings_key(self):
         return self.primary.settings_key
 
+    @property
+    def canonical_name(self):
+        return self.primary.canonical_name
+
     def to_json(self, doc):
         # TODO: this is a classmethod on the the document adapter, but should
         # be converted to an instance method
