@@ -133,6 +133,7 @@ def _r_js(local=False, verbose=False, bootstrap_version=None):
     and the bundle config output by the build.
     '''
     bootstrap_version = bootstrap_version or 'bootstrap3'
+    is_bootstrap5 = bootstrap_version == 'bootstrap5'
     with open(os.path.join(ROOT_DIR, 'staticfiles', 'hqwebapp', 'yaml',
                            bootstrap_version, 'requirejs.yml'), 'r') as f:
         config = yaml.safe_load(f)
@@ -143,11 +144,29 @@ def _r_js(local=False, verbose=False, bootstrap_version=None):
 
     html_files, local_js_dirs = _get_html_files_and_local_js_dirs(local)
 
+    # These applications do not support the setup with Bootstrap 5 requirejs-babel.
+    # As the Bootstrap 5 migration continues, the intent should be to remove the
+    # applications from this list as they are migrated.
+    apps_that_do_not_support_bootstrap5_yet = [
+        "openmrs/js",
+        "dhis2/js",
+        "repeaters/js",
+        "scheduling/js",
+        "hqadmin/js",
+        "userreports/js",
+        "fixtures/js",
+        "app_manager/js",
+        "app_manager/js/summary",
+        "export/js",
+    ]
+
     # For each directory, add an optimized "module" entry including all of the main modules in that dir.
     # For each of these entries, r.js will create an optimized bundle of these main modules and all their
     # dependencies
     dirs_to_js_modules = _get_main_js_modules_by_dir(html_files)
     for directory, mains in dirs_to_js_modules.items():
+        if is_bootstrap5 and directory in apps_that_do_not_support_bootstrap5_yet:
+            continue
         config['modules'].append({
             'name': os.path.join(directory, "bundle"),
             'exclude': [
@@ -160,7 +179,6 @@ def _r_js(local=False, verbose=False, bootstrap_version=None):
 
     _save_r_js_config(config)
 
-    # todo this is where we add babel in to preprocess ES6
     ret = call(["node", "node_modules/requirejs/bin/r.js", "-o", BUILD_JS_FILENAME])
     if ret:
         raise CommandError("Failed to build JS bundles")
