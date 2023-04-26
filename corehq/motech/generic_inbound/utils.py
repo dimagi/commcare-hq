@@ -5,7 +5,7 @@ from functools import cached_property
 
 from django.conf import settings
 from django.db import transaction
-from django.http import QueryDict
+from django.http import QueryDict, HttpResponse, JsonResponse
 from django.utils.translation import gettext as _
 
 import attr
@@ -104,14 +104,24 @@ class ApiRequest:
 
 @attr.s(kw_only=True, frozen=True, auto_attribs=True)
 class ApiResponse:
+    """Data class for managing response data and producing HTTP responses.
+    Override ``_get_http_response`` to return different HTTP response."""
     status: int
-    data: dict = None
+    internal_response: dict = None
+
+    def get_http_response(self):
+        if self.status == 204:
+            return HttpResponse(status=204)  # no body for 204 (RFC 7230)
+        return self._get_http_response()
+
+    def _get_http_response(self):
+        return JsonResponse(self.internal_response, status=self.status)
 
 
 def make_processing_attempt(response, request_log, is_retry=False):
     from corehq.motech.generic_inbound.models import ProcessingAttempt
 
-    response_data = response.data or {}
+    response_data = response.internal_response or {}
     case_ids = [c['case_id'] for c in response_data.get('cases', [])]
     ProcessingAttempt.objects.create(
         is_retry=is_retry,
@@ -142,7 +152,7 @@ def reprocess_api_request(request_log):
     try:
         request_data = ApiRequest.from_log(request_log)
     except GenericInboundUserError as e:
-        response = ApiResponse(status=400, data={'error': str(e)})
+        response = ApiResponse(status=400, internal_response={'error': str(e)})
     else:
         response = execute_generic_api(request_log.api, request_data)
 

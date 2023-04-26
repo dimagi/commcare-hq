@@ -19,7 +19,7 @@ def execute_generic_api(api_model, request_data):
     try:
         middleware = api_model.middleware_class
     except GenericInboundApiError as e:
-        return ApiResponse(status=500, data={'error': str(e)})
+        return ApiResponse(status=500, internal_response={'error': str(e)})
 
     with middleware.handle_errors():
         response_json = _execute_generic_api(

@@ -58,14 +58,14 @@ class BaseApiMiddleware:
         available here."""
         return self.error_response
 
+    def get_success_response(self, response_json):
+        """Given a successful API response JSON, return an ``ApiResponse`` object."""
+        raise NotImplementedError
+
     def _get_body_for_eval_context(self, request_data):
         """Give the RequestData, return a dictionary of data which will be placed into the ``body``
         attribute of the evaluation context.
         """
-        raise NotImplementedError
-
-    def _get_success_response(self, response_json):
-        """Given a successful API response JSON, return an ``ApiResponse`` object."""
         raise NotImplementedError
 
     def _get_generic_error(self, status_code, message):

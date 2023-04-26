@@ -189,14 +189,12 @@ def generic_inbound_api(request, domain, api_id):
     try:
         request_data = ApiRequest.from_request(request)
     except GenericInboundUserError as e:
-        response = ApiResponse(status=400, data={'error': str(e)})
+        response = ApiResponse(status=400, internal_response={'error': str(e)})
     else:
         response = execute_generic_api(api, request_data)
     log_api_request(api, request, response)
 
-    if response.status == 204:
-        return HttpResponse(status=204)  # no body for 204 (RFC 7230)
-    return JsonResponse(response.data, status=response.status)
+    return response.get_http_response()
 
 
 @can_administer_generic_inbound
