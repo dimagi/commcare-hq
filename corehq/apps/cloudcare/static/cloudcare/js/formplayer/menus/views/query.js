@@ -591,7 +591,7 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
             var self = this;
 
             var urlObject = formplayerUtils.currentUrlToObject();
-            urlObject.setQueryData(self.getAnswers(), false);
+            urlObject.setQueryData(self.getAnswers(), false, false, selectValuesByKeys=self.selectValuesByKeys);
             var promise = $.Deferred(),
                 fetchingPrompts = FormplayerFrontend.getChannel().request("app:select:menus", urlObject);
             $.when(fetchingPrompts).done(function (response) {
