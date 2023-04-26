@@ -41,7 +41,7 @@ hqDefine("reports/js/aggregate_user_status", function () {
                 var tooltipFunction = $(this).data('is-aggregate') ? aggregateTooltip : undefined;
                 setupCharts($("#" + $(this).data('chart-data')).data("value"), $(this).data('chart-div'), tooltipFunction);
             });
-            var mainJs = hqImport("hqwebapp/js/main");
+            var mainJs = hqImport("hqwebapp/js/bootstrap3/main");
             $('.hq-help-template').each(function () {
                 mainJs.transformHelpTemplate($(this), true);
             });
