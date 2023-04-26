@@ -1,6 +1,7 @@
 import uuid
 
 from django.utils.functional import cached_property
+from django.core.exceptions import PermissionDenied
 
 import jsonobject
 from jsonobject.exceptions import BadValueError
@@ -12,6 +13,8 @@ from corehq.apps.fixtures.utils import is_identifier_invalid
 from corehq.apps.hqcase.utils import CASEBLOCK_CHUNKSIZE, submit_case_blocks
 from corehq.form_processor.models import CommCareCase
 from corehq.sql_db.util import get_db_aliases_for_partitioned_query
+from corehq.apps.es.case_search import case_search_adapter
+from corehq.apps.users.models import CommCareUser
 
 from .core import SubmissionError, UserError
 
@@ -168,6 +171,30 @@ def handle_case_update(domain, data, user, device_id, is_creation):
         return xform, cases
     else:
         return xform, cases[0]
+
+
+def _validate_update_permission(domain, update, user, is_creation):
+    """
+    Check whether the given `user` has permission to create/update a case.
+    """
+    from corehq.apps.locations.permissions import (
+        user_can_access_case,
+        user_can_access_location_id,
+        user_can_access_other_user
+    )
+
+    if is_creation:
+        # No way of knowing if owner_id is a location or user id, so we need to check both
+        other_user = CommCareUser.get_by_user_id(update.owner_id, domain)
+        if not (
+            user_can_access_location_id(domain, user, update.owner_id)
+            or (other_user and user_can_access_other_user(domain, user, other_user))
+        ):
+            raise PermissionDenied(f"Insufficient permission for Case '{update.temporary_id}'")
+    elif update.case_id:
+        case = case_search_adapter.get(update.case_id)
+        if not user_can_access_case(domain, user, case, es_case=True):
+            raise PermissionDenied(f"Insufficient permission for Case '{update.case_id}'")
 
 
 def _get_individual_update(domain, data, user, is_creation):
