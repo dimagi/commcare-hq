@@ -199,7 +199,7 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
             this.parentView = this.options.parentView;
             this.model = this.options.model;
             this.errorMessage = null;
-            this._setItemSet(this.model.attributes.itemsetChoices, this.model.attributes.itemsetChoiceskey);
+            this._setItemSet(this.model.attributes.itemsetChoices, this.model.attributes.itemsetChoicesKey);
 
             // initialize with default values or with sticky values if either is present
             var value = decodeValue(this.model, this.model.get('value'))[1],
@@ -229,15 +229,15 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
             'click @ui.searchForBlank': 'toggleBlankSearch',
         },
 
-        _setItemSet: function(itemsetChoicesLabels, itemsetChoiceskey) {
+        _setItemSet: function(itemsetChoicesLabels, itemsetChoicesKey) {
             itemsetChoicesLabels = itemsetChoicesLabels || [];
             let itemsetChoicesDict = {};
 
             if (this.parentView.selectValuesByKeys){
-                itemsetChoiceskey = itemsetChoiceskey || [];
-                itemsetChoiceskey.forEach((key,i) => itemsetChoicesDict[key]=itemsetChoicesLabels[i])
+                itemsetChoicesKey = itemsetChoicesKey || [];
+                itemsetChoicesKey.forEach((key,i) => itemsetChoicesDict[key]=itemsetChoicesLabels[i])
                 this.model.set({
-                    itemsetChoiceskey:itemsetChoiceskey,
+                    itemsetChoicesKey:itemsetChoicesKey,
                 })
             }
             else{
@@ -442,7 +442,7 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
             // once web apps fully transition using keys to convey select prompt selection.
             this.selectValuesByKeys = false;
             for (key in this.parentModel) {
-                if ("itemsetChoiceskey" in this.parentModel[key].attributes){
+                if ("itemsetChoicesKey" in this.parentModel[key].attributes){
                     this.selectValuesByKeys = true;
                     break;
                 }
@@ -504,7 +504,7 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
                             value: value,
                         });
 
-                        self.children.findByIndex(i)._setItemSet(choices, response.models[i].get('itemsetChoiceskey'));
+                        self.children.findByIndex(i)._setItemSet(choices, response.models[i].get('itemsetChoicesKey'));
 
                         self.children.findByIndex(i)._render();      // re-render with new choice values
                     }
