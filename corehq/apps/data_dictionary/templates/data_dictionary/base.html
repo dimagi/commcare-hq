@@ -202,8 +202,12 @@
             <div class="row-item"></div>
             {% if not request.is_view_only %}
             <div class="row-item-small">
-              <i class="fa fa-trash"
-                data-bind="click: toggleExpanded"></i>
+              <!-- ko if: name() !== '' && !deprecated() -->
+              <button title="{% trans_html_attr 'Deprecate Group' %}"  data-bind="click: deprecateGroup" class="fa fa-archive"></button>
+              <!-- /ko -->
+              <!-- ko if: name() !== '' && deprecated() -->
+              <button title="{% trans_html_attr 'Restore Group' %}" data-bind="click: restoreGroup" class="fa fa-undo"></button>
+              <!-- /ko -->
             </div>
             {% endif %}
           </div>

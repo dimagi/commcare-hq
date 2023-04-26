@@ -74,6 +74,14 @@ hqDefine("data_dictionary/js/data_dictionary", [
         self.properties = ko.observableArray();
         self.expanded = ko.observable(true);
         self.toggleExpanded = () => self.expanded(!self.expanded());
+        self.deprecated = ko.observable(false);
+        self.deprecateGroup = function () {
+            self.deprecated(true);
+        };
+
+        self.restoreGroup = function () {
+            self.deprecated(false);
+        };
         return self;
     };
 
