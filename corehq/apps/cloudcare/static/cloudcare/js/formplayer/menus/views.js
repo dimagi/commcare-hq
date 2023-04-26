@@ -206,7 +206,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
         if (useUniformUnits) {
             heightPixels = widthPixels;
         } else {
-            heightPixels = widthPixels / 2;
+            heightPixels = "auto";
         }
 
         model = {
