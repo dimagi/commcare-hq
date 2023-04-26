@@ -199,7 +199,7 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
             this.parentView = this.options.parentView;
             this.model = this.options.model;
             this.errorMessage = null;
-            this._setItemSet(this.model.attributes.itemsetChoices, this.model.attributes.itemsetChoicesKey);
+            this._setItemset(this.model.attributes.itemsetChoices, this.model.attributes.itemsetChoicesKey);
 
             // initialize with default values or with sticky values if either is present
             var value = decodeValue(this.model, this.model.get('value'))[1],
@@ -229,7 +229,7 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
             'click @ui.searchForBlank': 'toggleBlankSearch',
         },
 
-        _setItemSet: function(itemsetChoicesLabels, itemsetChoicesKey) {
+        _setItemset: function(itemsetChoicesLabels, itemsetChoicesKey) {
             itemsetChoicesLabels = itemsetChoicesLabels || [];
             let itemsetChoicesDict = {};
 
@@ -504,7 +504,7 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
                             value: value,
                         });
 
-                        self.children.findByIndex(i)._setItemSet(choices, response.models[i].get('itemsetChoicesKey'));
+                        self.children.findByIndex(i)._setItemset(choices, response.models[i].get('itemsetChoicesKey'));
 
                         self.children.findByIndex(i)._render();      // re-render with new choice values
                     }
