@@ -169,7 +169,7 @@
           </div>
           <div data-bind="sortable: { data: caseGroupList, connectClass: 'groups', options: { handle: 'i.sortable-handle' } }">
           <div>
-          <div class="table-row group">
+          <div class="table-row group" data-bind="css: { 'group-deprecated': deprecated() }">
             <div class="row-item-small">
               {% if not request.is_view_only %}
               <i class="sortable-handle fa fa-arrows-v"></i>
