@@ -21,7 +21,7 @@ def execute_generic_api(api_model, request_data):
     except GenericInboundApiError as e:
         return ApiResponse(status=500, data={'error': str(e)})
 
-    try:
+    with middleware.handle_errors():
         response_json = _execute_generic_api(
             request_data.domain,
             request_data.couch_user,
@@ -29,21 +29,10 @@ def execute_generic_api(api_model, request_data):
             middleware.get_context(request_data),
             api_model,
         )
-    except BadSpecError as e:
-        return middleware.get_error_response(500, str(e))
-    except UserError as e:
-        return middleware.get_error_response(400, str(e))
-    except GenericInboundRequestFiltered:
-        return ApiResponse(status=204)
-    except GenericInboundUserError as e:
-        return middleware.get_error_response(400, str(e))
-    except GenericInboundValidationError as e:
-        return middleware.get_validation_error(400, 'validation error', e.errors)
-    except GenericInboundApiError as e:
-        return middleware.get_error_response(500, str(e))
-    except SubmissionError as e:
-        return middleware.get_submission_error_response(400, e.form_id, str(e))
-    return middleware.get_success_response(response_json)
+        return middleware.get_success_response(response_json)
+
+    # this is reached if an error is raised during processing which is handled by the middleware
+    return middleware.get_error_response()
 
 
 def _execute_generic_api(domain, couch_user, device_id, context, api_model):
