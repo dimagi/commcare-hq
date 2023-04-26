@@ -3,6 +3,7 @@ import json
 from django.contrib import messages
 from django.http import HttpResponseForbidden, HttpResponseRedirect
 from django.urls import reverse
+from django.utils.html import strip_tags
 from django.utils.translation import gettext as _
 from django.views.decorators.http import require_POST
 
@@ -136,7 +137,11 @@ def update_group_data(request, domain, group_id):
                 "Unable to update group data. Please check the key-value mappings and try to update again."
             ))
             return HttpResponseRedirect(request.META['HTTP_REFERER'])
-        group.metadata = updated_data
+        sanitized_updated_data = {
+            strip_tags(data_key): strip_tags(data_value)
+            for data_key, data_value in updated_data.items()
+        }
+        group.metadata = sanitized_updated_data
 
         _ensure_case_sharing_privilege(request, group)
 
