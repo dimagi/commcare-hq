@@ -413,6 +413,17 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
 
         initialize: function (options) {
             this.parentModel = options.collection.models;
+
+            // whether the select prompt selection is passed as itemset keys
+            // only here to maintain backward compatibility and can be removed
+            // once web apps fully transition using keys to convey select prompt selection.
+            this.selectValuesByKeys = false;
+            for (key in this.parentModel) {
+                if ("itemsetChoiceskey" in this.parentModel[key].attributes){
+                    this.selectValuesByKeys = true;
+                    break;
+                }
+            }
         },
 
         templateContext: function () {
