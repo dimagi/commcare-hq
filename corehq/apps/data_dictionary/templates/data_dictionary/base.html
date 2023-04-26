@@ -179,17 +179,17 @@
                 style="margin-left: 8px;"></i>
             </div>
             <div class="row-item">
-              <!-- ko if: name == '' -->
+              <!-- ko if: name() == '' -->
               <span>{% trans 'No Group' %}</span>
               <!-- /ko -->
-              <!-- ko if: name !== '' -->
+              <!-- ko if: name() !== '' -->
               <input class="form-control" data-bind="value: name,
                             attr: {'placeholder': name}" id="group-name" />
               <!-- /ko -->
             </div>
             <div class="row-item">{% trans "Case Property Group" %}</div>
             <div class="row-item">
-              <!-- ko if: name !== ''-->
+              <!-- ko if: name() !== ''-->
               <textarea class="form-control vertical-resize" data-bind="
                     value: $data.description,
                     rows: 1"

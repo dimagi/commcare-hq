@@ -278,7 +278,7 @@ hqDefine("data_dictionary/js/data_dictionary", [
                 prop.removeFHIRResourcePropertyPath.subscribe(changeSaveButton);
                 prop.allowedValues.on('change', changeSaveButton);
                 self.newPropertyName(undefined);
-                self.caseGroupList().find(group => group.name === "").properties.push(prop);
+                self.caseGroupList().find(group => group.name() === "").properties.push(prop);
             }
         };
 
