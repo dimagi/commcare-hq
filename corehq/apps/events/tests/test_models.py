@@ -1,6 +1,6 @@
 import doctest
 from contextlib import contextmanager
-from datetime import datetime
+from datetime import datetime, timedelta
 from uuid import UUID, uuid4
 
 from django.test import TestCase
@@ -9,21 +9,24 @@ from casexml.apps.case.mock import CaseFactory, CaseStructure
 
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.users.models import CommCareUser, WebUser
-from corehq.form_processor.exceptions import CaseNotFound
 from corehq.form_processor.models import CommCareCase, CommCareCaseIndex
 from corehq.util.test_utils import create_test_case
 
+from ...hqcase.case_helper import CaseHelper
 from ..models import (
     ATTENDEE_USER_ID_CASE_PROPERTY,
     DEFAULT_ATTENDEE_CASE_TYPE,
     EVENT_ATTENDEE_CASE_TYPE,
-    NOT_STARTED,
+    EVENT_NOT_STARTED,
+    LOCATION_IDS_CASE_PROPERTY,
+    PRIMARY_LOCATION_ID_CASE_PROPERTY,
     AttendanceTrackingConfig,
-    AttendeeCase,
+    AttendeeModel,
     Event,
     get_attendee_case_type,
     get_user_case_sharing_groups_for_events,
 )
+from ..exceptions import AttendeeTrackedException
 
 DOMAIN = 'test-domain'
 
@@ -52,8 +55,16 @@ class TestAttendeeCaseManager(TestCase):
 
     def test_manager_returns_open_cases(self):
         with self.get_attendee_cases() as (open_case, closed_case):
-            cases = AttendeeCase.objects.by_domain(DOMAIN)
+            cases = [m.case for m in AttendeeModel.objects.by_domain(DOMAIN)]
             self.assertEqual(cases, [open_case])
+
+    def test_manager_returns_closed_cases_as_well(self):
+        with self.get_attendee_cases() as (open_case, closed_case):
+            cases = [m.case for m in AttendeeModel.objects.by_domain(
+                DOMAIN,
+                include_closed=True,
+            )]
+            self.assertEqual(cases, [open_case, closed_case])
 
 
 class TestEventModel(TestCase):
@@ -70,7 +81,6 @@ class TestEventModel(TestCase):
             None,
             None
         )
-        cls.webuser.save()
 
     @classmethod
     def tearDownClass(cls):
@@ -114,12 +124,12 @@ class TestEventModel(TestCase):
             mobile_worker.delete(None, None)
 
     def test_create_event(self):
-        today = datetime.utcnow().date()
+        tomorrow = (datetime.utcnow() + timedelta(days=1)).date()
         event = Event(
             domain=DOMAIN,
             name='test-event',
-            start_date=today,
-            end_date=today,
+            start_date=tomorrow,
+            end_date=tomorrow,
             attendance_target=10,
             sameday_reg=True,
             track_each_day=False,
@@ -127,9 +137,28 @@ class TestEventModel(TestCase):
         )
         event.save()
 
-        self.assertEqual(event.status, NOT_STARTED)
+        self.assertEqual(event.status, EVENT_NOT_STARTED)
         self.assertEqual(event.is_open, True)
         self.assertTrue(event.event_id is not None)
+
+    def test_create_event_with_no_end_date(self):
+        tomorrow = (datetime.utcnow() + timedelta(days=1)).date()
+        event = Event(
+            domain=DOMAIN,
+            name='test-event',
+            start_date=tomorrow,
+            end_date=None,
+            attendance_target=10,
+            sameday_reg=True,
+            track_each_day=False,
+            manager_id=self.webuser.user_id,
+        )
+        event.save()
+
+        self.assertEqual(event.status, EVENT_NOT_STARTED)
+        self.assertEqual(event.is_open, True)
+        self.assertTrue(event.event_id is not None)
+        self.assertTrue(event.end_date is None)
 
     def test_create_event_with_attendees(self):
         with self._get_attendee('signmeup') as attendee:
@@ -191,6 +220,30 @@ class TestEventModel(TestCase):
             self.assertEqual(
                 {a.case_id for a in event.get_expected_attendees()},
                 {attendee1.case_id, attendee3.case_id}
+            )
+
+    def test_mark_attendance(self):
+        with self._get_attendee('att1') as attendee1, \
+                self._get_attendee('att2') as attendee2, \
+                self._get_attendee('att3') as attendee3:
+
+            today = datetime.utcnow().date()
+            event = Event(
+                domain=DOMAIN,
+                name='test-event',
+                start_date=today,
+                end_date=today,
+                attendance_target=10,
+                sameday_reg=True,
+                track_each_day=False,
+                manager_id=self.webuser.user_id,
+            )
+            event.save()
+            event.set_expected_attendees([attendee1, attendee2, attendee3])
+            event.mark_attendance([attendee1, attendee2], datetime.utcnow())
+            self.assertEqual(
+                set(event.get_attended_attendees()),
+                {attendee1, attendee2}
             )
 
     def test_delete_event_removes_attendees_cases(self):
@@ -330,7 +383,7 @@ class EventCaseTests(TestCase):
             end_date=today,
             attendance_target=0,
         )
-        self.event.save()
+        self.event.save()  # Creates case
 
     def tearDown(self):
         try:
@@ -338,34 +391,41 @@ class EventCaseTests(TestCase):
         except AssertionError:
             pass  # self.event is already deleted
 
-    def test_case(self):
-        with self.assertRaises(CaseNotFound):
-            CommCareCase.objects.get_case(self.event.case_id, DOMAIN)
-
-        event_case = self.event.case  # Creates case
+    def test_delete_closes_case(self):
         case = CommCareCase.objects.get_case(self.event.case_id, DOMAIN)
-        self.assertEqual(event_case, case)
+        self.assertFalse(case.closed)
 
-    def test_delete_with_case(self):
-        __ = self.event.case
         self.event.delete()
         case = CommCareCase.objects.get_case(self.event.case_id, DOMAIN)
         self.assertTrue(case.closed)
 
-    def test_delete_without_case(self):
-        self.event.delete()  # Does not raise error
-
     def test_default_uuids(self):
         today = datetime.utcnow().date()
-        unsaved_event = Event(
+        event = Event(
             name='Test Event Too',
             domain=DOMAIN,
             start_date=today,
             end_date=today,
             attendance_target=0,
         )
-        self.assertIsInstance(unsaved_event.event_id, UUID)
-        self.assertIsInstance(unsaved_event._case_id, UUID)
+        self.assertIsInstance(event.event_id, UUID)
+        self.assertIsNone(event._case_id)
+
+    def test_save_creates_case(self):
+        today = datetime.utcnow().date()
+        event = Event(
+            name='Test Event Too',
+            domain=DOMAIN,
+            start_date=today,
+            end_date=today,
+            attendance_target=0,
+        )
+        self.assertIsNone(event._case_id)
+
+        event.save()
+        self.assertIsInstance(event._case_id, UUID)
+
+        event.delete()
 
     def test_uuid_hex_string(self):
         today = datetime.utcnow().date()
@@ -380,6 +440,174 @@ class EventCaseTests(TestCase):
         )
         self.assertIsInstance(unsaved_event._case_id, str)
         self.assertEqual(unsaved_event.case_id, case_id_hex_string)
+
+
+class TestAttendeeModel(TestCase):
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.domain_obj = create_domain(DOMAIN)
+        cls.webuser = WebUser.create(
+            DOMAIN,
+            'test-user',
+            'mockmock',
+            None,
+            None
+        )
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.webuser.delete(None, None)
+        cls.domain_obj.delete()
+        super().tearDownClass()
+
+    @staticmethod
+    @contextmanager
+    def get_case(with_properties=True):
+        helper = CaseHelper(domain=DOMAIN)
+        if with_properties:
+            properties = {
+                LOCATION_IDS_CASE_PROPERTY: 'abc123 def456',
+                PRIMARY_LOCATION_ID_CASE_PROPERTY: 'abc123',
+                ATTENDEE_USER_ID_CASE_PROPERTY: 'c0ffee',
+            }
+        else:
+            properties = {}
+        helper.create_case({
+            'case_name': 'Cho Chang',
+            'case_type': get_attendee_case_type(DOMAIN),
+            'properties': properties,
+        })
+        try:
+            yield helper.case
+        finally:
+            helper.close()
+
+    def test_model_init(self):
+        with self.get_case() as case:
+            model = AttendeeModel(case=case, domain=DOMAIN)
+            self.assertEqual(str(model.case_id), case.case_id)
+            self.assertEqual(model.name, case.name)
+            self.assertEqual(model.domain, case.domain)
+            loc_ids_str = case.get_case_property(LOCATION_IDS_CASE_PROPERTY)
+            self.assertEqual(model.locations, loc_ids_str.split())
+            self.assertEqual(
+                model.primary_location,
+                case.get_case_property(PRIMARY_LOCATION_ID_CASE_PROPERTY)
+            )
+            self.assertEqual(
+                model.user_id,
+                case.get_case_property(ATTENDEE_USER_ID_CASE_PROPERTY)
+            )
+
+    def test_model_init_defaults(self):
+        with self.get_case(with_properties=False) as case:
+            model = AttendeeModel(case=case, domain=DOMAIN)
+            self.assertEqual(str(model.case_id), case.case_id)
+            self.assertEqual(model.name, case.name)
+            self.assertEqual(model.domain, case.domain)
+            self.assertEqual(model.locations, [])
+            self.assertIsNone(model.primary_location)
+            self.assertIsNone(model.user_id)
+
+    def test_model_save(self):
+        with self.get_case() as case:
+            model = AttendeeModel(case=case, domain=DOMAIN)
+            model.locations = ['def456']
+            model.primary_location = 'def456'
+            model.user_id = 'deadbeef'
+            model.save()
+
+            reloaded = CommCareCase.objects.get_case(case.case_id, DOMAIN)
+            self.assertEqual(
+                reloaded.get_case_property(LOCATION_IDS_CASE_PROPERTY),
+                'def456'
+            )
+            self.assertEqual(
+                reloaded.get_case_property(PRIMARY_LOCATION_ID_CASE_PROPERTY),
+                'def456'
+            )
+            self.assertEqual(
+                reloaded.get_case_property(ATTENDEE_USER_ID_CASE_PROPERTY),
+                'deadbeef'
+            )
+
+    def test_model_save_defaults(self):
+        with self.get_case(with_properties=False) as case:
+            model = AttendeeModel(case=case, domain=DOMAIN)
+            model.save()
+
+            reloaded = CommCareCase.objects.get_case(case.case_id, DOMAIN)
+            self.assertEqual(
+                reloaded.get_case_property(LOCATION_IDS_CASE_PROPERTY),
+                ''
+            )
+            self.assertEqual(
+                reloaded.get_case_property(PRIMARY_LOCATION_ID_CASE_PROPERTY),
+                ''
+            )
+            self.assertEqual(
+                reloaded.get_case_property(ATTENDEE_USER_ID_CASE_PROPERTY),
+                ''
+            )
+
+    def test_model_save_form_values(self):
+        with self.get_case() as case:
+            model = AttendeeModel(case=case, domain=DOMAIN)
+            model.locations = "['abc123', 'def456']"
+            model.primary_location = 'def456'
+            model.save()
+
+            reloaded = CommCareCase.objects.get_case(case.case_id, DOMAIN)
+            self.assertEqual(
+                reloaded.get_case_property(LOCATION_IDS_CASE_PROPERTY),
+                'abc123 def456'
+            )
+            self.assertEqual(
+                reloaded.get_case_property(PRIMARY_LOCATION_ID_CASE_PROPERTY),
+                'def456'
+            )
+            self.assertEqual(
+                reloaded.get_case_property(ATTENDEE_USER_ID_CASE_PROPERTY),
+                'c0ffee'
+            )
+
+    def test_model_delete(self):
+        with self.get_case(with_properties=False) as case:
+            model = AttendeeModel(case=case, domain=DOMAIN)
+            model.save()
+            reloaded = CommCareCase.objects.get_case(case.case_id, DOMAIN)
+            self.assertFalse(reloaded.get_case_property('closed'))
+            model.delete()
+            reloaded = CommCareCase.objects.get_case(case.case_id, DOMAIN)
+            self.assertTrue(reloaded.get_case_property('closed'))
+
+    def test_has_attended_events(self):
+        today = datetime.utcnow().date()
+        event = Event(
+            domain=DOMAIN,
+            name='test-event',
+            start_date=today,
+            end_date=today,
+            attendance_target=10,
+            sameday_reg=True,
+            track_each_day=False,
+            manager_id=self.webuser.user_id
+        )
+        event.save()
+        with self.get_case(with_properties=False) as case:
+            attendee = AttendeeModel(case=case, domain=DOMAIN)
+            attendee.save()
+
+            self.assertFalse(attendee.has_attended_events())
+            event.mark_attendance([case], datetime.now())
+
+        self.assertTrue(attendee.has_attended_events())
+        self.assertRaises(
+            AttendeeTrackedException,
+            attendee.delete
+        )
 
 
 def test_doctests():

@@ -654,13 +654,6 @@ LAZY_LOAD_MULTIMEDIA = StaticToggle(
     [NAMESPACE_DOMAIN],
 )
 
-USE_CUSTOM_EXTERNAL_ID_CASE_PROPERTY = StaticToggle(
-    'custom-external_id-case-property',
-    'eCHIS: Use the user defined external_id case property when running auto case update rules.',
-    TAG_CUSTOM,
-    [NAMESPACE_DOMAIN],
-)
-
 APP_BUILDER_ADVANCED = StaticToggle(
     'advanced-app-builder',
     'Advanced Module in App-Builder',
@@ -1557,12 +1550,11 @@ PAGINATED_EXPORTS = StaticToggle(
     [NAMESPACE_DOMAIN]
 )
 
-INCREMENTAL_EXPORTS = StaticToggle(
-    'incremental_exports',
-    'Allows sending of incremental CSV exports to a particular endpoint',
+CLEAR_MOBILE_WORKER_DATA = StaticToggle(
+    'clear_mobile_worker_data',
+    "Allows a web user to clear mobile workers' data",
     TAG_CUSTOM,
     [NAMESPACE_DOMAIN],
-    help_link="https://confluence.dimagi.com/display/saas/Incremental+Data+Exports"
 )
 
 SKIP_REMOVE_INDICES = StaticToggle(
@@ -1672,13 +1664,6 @@ TRAINING_MODULE = StaticToggle(
     'training-module',
     'Training Modules',
     TAG_CUSTOM,
-    [NAMESPACE_DOMAIN],
-)
-
-EXPORT_MULTISORT = StaticToggle(
-    'export_multisort',
-    'Sort multiple rows in exports at once.',
-    TAG_SOLUTIONS_OPEN,
     [NAMESPACE_DOMAIN],
 )
 
@@ -2032,14 +2017,6 @@ CHANGE_FORM_LANGUAGE = StaticToggle(
     help_link="https://confluence.dimagi.com/display/saas/Change+Form+Language"
 )
 
-APP_ANALYTICS = StaticToggle(
-    'app_analytics',
-    'Allow user to use app analytics in web apps',
-    TAG_CUSTOM,
-    namespaces=[NAMESPACE_DOMAIN],
-    help_link="https://confluence.dimagi.com/display/saas/App+Analytics",
-)
-
 BLOCKED_EMAIL_DOMAIN_RECIPIENTS = StaticToggle(
     'blocked_email_domain_recipients',
     'Block any outgoing email addresses that have an email domain which '
@@ -2363,7 +2340,8 @@ TABLEAU_USER_SYNCING = StaticToggle(
     Each time a user is added/deleted/updated on HQ, an equivalent Tableau user with the username "HQ/{username}"
     will be added/deleted/updated on the linked Tableau server.
     """,
-    parent_toggles=[EMBEDDED_TABLEAU, EMBED_TABLEAU_REPORT_BY_USER]
+    parent_toggles=[EMBED_TABLEAU_REPORT_BY_USER],
+    help_link='https://confluence.dimagi.com/display/USH/Tableau+User+Syncing',
 )
 
 
@@ -2517,7 +2495,13 @@ FORM_CASE_IDS_CASE_IMPORTER = FrozenPrivilegeToggle(
     tag=TAG_SOLUTIONS_OPEN,
     namespaces=[NAMESPACE_DOMAIN],
     description='Display the "Form IDs" and "Case IDs" download buttons on Case Importer',
-    # TODO: Move to public wiki
-    help_link=('https://confluence.dimagi.com/display/saas/Show+the+form+and+case+ids+download+button+on+the+'
-        'case+importer')
+)
+
+EXPORT_MULTISORT = FrozenPrivilegeToggle(
+    privileges.EXPORT_MULTISORT,
+    'export_multisort',
+    label='Sort multiple rows in exports simultaneously',
+    tag=TAG_SOLUTIONS_OPEN,
+    namespaces=[NAMESPACE_DOMAIN],
+    description='Sort multiple rows in exports simultaneously',
 )

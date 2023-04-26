@@ -1,7 +1,7 @@
 import uuid
 from contextlib import contextmanager
 from datetime import timedelta
-from unittest.mock import patch
+from unittest.mock import patch, Mock
 from uuid import uuid4
 
 from django.conf import settings
@@ -25,9 +25,9 @@ from ..const import (
     RECORD_SUCCESS_STATE,
 )
 from ..models import (
-    RepeatRecord,
     FormRepeater,
     Repeater,
+    RepeatRecord,
     are_repeat_records_migrated,
     format_response,
     get_all_repeater_types,
@@ -35,24 +35,6 @@ from ..models import (
 )
 
 DOMAIN = 'test-domain'
-
-ALL_REPEATERS = [
-    'FormRepeater',
-    'CaseRepeater',
-    'CreateCaseRepeater',
-    'UpdateCaseRepeater',
-    'ReferCaseRepeater',
-    'DataRegistryCaseUpdateRepeater',
-    'ShortFormRepeater',
-    'AppStructureRepeater',
-    'UserRepeater',
-    'LocationRepeater',
-    'FHIRRepeater',
-    'OpenmrsRepeater',
-    'Dhis2Repeater',
-    'Dhis2EntityRepeater',
-    'CaseExpressionRepeater'
-]
 
 
 def test_get_all_repeater_types():
@@ -106,10 +88,6 @@ class TestSoftDeleteRepeaters(RepeaterTestCase):
         self.all_repeaters[4].retire()
         repeater_count = Repeater.objects.all().count()
         self.assertEqual(repeater_count, 4)
-
-    def tearDown(self):
-        Repeater.all_objects.all().delete()
-        return super().tearDown()
 
 
 class TestRepeaterName(RepeaterTestCase):
@@ -473,6 +451,10 @@ class TestRepeaterConnectionSettings(RepeaterTestCase):
     def test_used_connection_setting_cannot_be_deleted(self):
         with self.assertRaises(ProtectedError):
             self.repeater.connection_settings.delete()
+        with self.assertRaises(ProtectedError):
+            ConnectionSettings.objects.filter(id=self.conn.id).delete()
+        with self.assertRaises(ProtectedError):
+            ConnectionSettings.all_objects.filter(id=self.conn.id).delete()
 
 
 def test_attempt_forward_now_kwargs():
@@ -510,3 +492,25 @@ class TestRepeaterModelMethods(RepeaterTestCase):
             self.repeater.send_request(repeat_record, payload)
 
         self.assertTrue(simple_request.called)
+
+
+class TestFormRepeaterAllowedToForward(RepeaterTestCase):
+
+    def test_white_list_empty(self):
+        self.repeater.white_listed_form_xmlns = []
+        payload = Mock(xmlns='http://openrosa.org/formdesigner/abc123')
+        self.assertTrue(self.repeater.allowed_to_forward(payload))
+
+    def test_payload_white_listed(self):
+        self.repeater.white_listed_form_xmlns = [
+            'http://openrosa.org/formdesigner/abc123'
+        ]
+        payload = Mock(xmlns='http://openrosa.org/formdesigner/abc123')
+        self.assertTrue(self.repeater.allowed_to_forward(payload))
+
+    def test_payload_not_white_listed(self):
+        self.repeater.white_listed_form_xmlns = [
+            'http://openrosa.org/formdesigner/abc123'
+        ]
+        payload = Mock(xmlns='http://openrosa.org/formdesigner/def456')
+        self.assertFalse(self.repeater.allowed_to_forward(payload))

@@ -1,4 +1,5 @@
-from django.test import SimpleTestCase, TestCase
+from django.http import HttpResponse
+from django.test import RequestFactory, SimpleTestCase, TestCase
 
 from nose.tools import assert_equal
 
@@ -8,6 +9,8 @@ from corehq.motech.fhir.utils import (
     load_fhir_resource_types,
     resource_url,
     update_fhir_resource_property,
+    require_fhir_json_accept_headers,
+    require_fhir_json_content_type_headers
 )
 
 DOMAIN = "test-domain"
@@ -153,3 +156,45 @@ def test_resource_url():
     url = resource_url(DOMAIN, 'R4', 'Patient', 'abc123')
     drop_hostname = url.split('/', maxsplit=3)[3]
     assert_equal(drop_hostname, f'a/{DOMAIN}/fhir/R4/Patient/abc123/')
+
+
+class TestHeaderDecorators(TestCase):
+
+    def setUp(self):
+        self.factory = RequestFactory()
+
+    def _do_get_request(self, view, headers={}):
+        request = self.factory.get('/foo', **headers)
+        return view(request)
+
+    def test_require_fhir_json_accept_headers(self):
+        @require_fhir_json_accept_headers
+        def test_view(request):
+            return HttpResponse()
+        response = self._do_get_request(test_view)
+        self.assertEqual(response.status_code, 200)
+        response = self._do_get_request(test_view, headers={'HTTP_ACCEPT': 'application/json'})
+        self.assertEqual(response.status_code, 200)
+        response = self._do_get_request(test_view, headers={'HTTP_ACCEPT': 'application/xml'})
+        self.assertEqual(response.status_code, 406)
+        self.assertEqual(
+            response.content.decode("utf-8"),
+            '{"message": "Not Acceptable"}'
+        )
+
+    def _do_post_request(self, view, content_type=None):
+        request = self.factory.post('/foo', content_type=content_type)
+        return view(request)
+
+    def test_require_fhir_json_content_type_headers(self):
+        @require_fhir_json_content_type_headers
+        def test_view(request):
+            return HttpResponse()
+        response = self._do_post_request(test_view, content_type='application/json')
+        self.assertEqual(response.status_code, 200)
+        response = self._do_post_request(test_view, content_type='application/xml')
+        self.assertEqual(response.status_code, 415)
+        self.assertEqual(
+            response.content.decode("utf-8"),
+            '{"message": "Unsupported Media Type"}'
+        )

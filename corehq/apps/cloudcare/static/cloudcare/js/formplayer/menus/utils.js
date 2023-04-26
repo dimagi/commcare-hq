@@ -137,34 +137,30 @@ hqDefine("cloudcare/js/formplayer/menus/utils", function () {
         if (menuResponse.type === "commands") {
             return views.MenuListView(menuData);
         } else if (menuResponse.type === "query") {
-            if (toggles.toggleEnabled('APP_ANALYTICS')) {
-                var props = {
-                    domain: FormplayerFrontend.getChannel().request('currentUser').domain,
-                };
-                if (menuResponse.breadcrumbs && menuResponse.breadcrumbs.length) {
-                    props.name = menuResponse.breadcrumbs[menuResponse.breadcrumbs.length - 1];
-                }
-                kissmetrics.track.event('Case Search', props);
+            var props = {
+                domain: FormplayerFrontend.getChannel().request('currentUser').domain,
+            };
+            if (menuResponse.breadcrumbs && menuResponse.breadcrumbs.length) {
+                props.name = menuResponse.breadcrumbs[menuResponse.breadcrumbs.length - 1];
             }
+            kissmetrics.track.event('Case Search', props);
             urlObject.setQueryData({}, false, false);
             return QueryView(menuData);
         } else if (menuResponse.type === "entities") {
-            if (toggles.toggleEnabled('APP_ANALYTICS')) {
-                var searchText = urlObject.search;
-                var event = "Viewed Case List";
-                if (searchText) {
-                    event = "Searched Case List";
-                }
-                var eventData = {
-                    domain: FormplayerFrontend.getChannel().request("currentUser").domain,
-                    name: menuResponse.title,
-                };
-                var fields = _.pick(utils.getCurrentQueryInputs(), function (v) { return !!v; });
-                if (!_.isEmpty(fields)) {
-                    eventData.searchFields = _.sortBy(_.keys(fields)).join(",");
-                }
-                kissmetrics.track.event(event, eventData);
+            var searchText = urlObject.search;
+            var event = "Viewed Case List";
+            if (searchText) {
+                event = "Searched Case List";
             }
+            var eventData = {
+                domain: FormplayerFrontend.getChannel().request("currentUser").domain,
+                name: menuResponse.title,
+            };
+            var fields = _.pick(utils.getCurrentQueryInputs(), function (v) { return !!v; });
+            if (!_.isEmpty(fields)) {
+                eventData.searchFields = _.sortBy(_.keys(fields)).join(",");
+            }
+            kissmetrics.track.event(event, eventData);
             if (/search_command\.m\d+/.test(menuResponse.queryKey) && menuResponse.currentPage === 0) {
                 kissmetrics.track.event('Started Case Search', {
                     'Split Screen Case Search': toggles.toggleEnabled('SPLIT_SCREEN_CASE_SEARCH'),

@@ -8,14 +8,19 @@ from couchdbkit import ResourceNotFound
 from memoized import memoized
 
 from corehq.apps.domain.decorators import login_and_domain_required
-from corehq.apps.export.const import CASE_EXPORT, FORM_EXPORT
-from corehq.apps.export.models import ExportInstance
+from corehq.apps.export.const import (
+    CASE_EXPORT,
+    FORM_EXPORT,
+    ALL_CASE_TYPE_EXPORT,
+)
+from corehq.apps.export.models import ExportInstance, CaseExportInstance
 from corehq.apps.export.views.new import BaseExportView
 from corehq.apps.export.views.utils import (
     DailySavedExportMixin,
     DashboardFeedMixin,
     ODataFeedMixin,
     clean_odata_columns,
+    trigger_update_case_instance_tables_task
 )
 from corehq.apps.locations.permissions import location_safe
 
@@ -51,11 +56,18 @@ class BaseEditNewCustomExportView(BaseExportView):
         except ResourceNotFound:
             raise Http404()
 
-        schema = self.get_export_schema(
-            self.domain,
-            self.request.GET.get('app_id') or getattr(export_instance, 'app_id'),
-            export_instance.identifier
-        )
+        schema = None
+        if (
+            isinstance(export_instance, CaseExportInstance)
+            and export_instance.case_type == ALL_CASE_TYPE_EXPORT
+        ):
+            schema = self.get_empty_export_schema(self.domain, export_instance.case_type)
+        else:
+            schema = self.get_export_schema(
+                self.domain,
+                self.request.GET.get('app_id') or getattr(export_instance, 'app_id'),
+                export_instance.identifier
+            )
         self.export_instance = self.get_export_instance(schema, export_instance)
         for message in self.export_instance.error_messages():
             messages.error(request, message)
@@ -65,6 +77,11 @@ class BaseEditNewCustomExportView(BaseExportView):
     def post(self, request, *args, **kwargs):
         try:
             new_export_instance = self.new_export_instance
+            if (
+                isinstance(new_export_instance, CaseExportInstance)
+                and new_export_instance.case_type == ALL_CASE_TYPE_EXPORT
+            ):
+                trigger_update_case_instance_tables_task(request.domain, new_export_instance._id)
         except ResourceNotFound:
             new_export_instance = None
         if (

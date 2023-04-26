@@ -1,8 +1,6 @@
-from django.http import (
-    Http404,
-    HttpResponseRedirect,
-    JsonResponse,
-)
+import json
+
+from django.http import Http404, HttpResponseRedirect, JsonResponse
 from django.urls import reverse
 from django.utils.translation import gettext_lazy as _
 from django.views.decorators.http import require_GET
@@ -10,15 +8,34 @@ from django.views.decorators.http import require_GET
 from corehq import toggles
 from corehq.apps.domain.decorators import login_and_domain_required
 from corehq.apps.domain.views.base import BaseDomainView
+from corehq.apps.hqcase.case_helper import CaseHelper
 from corehq.apps.hqwebapp.decorators import use_jquery_ui, use_multiselect
 from corehq.apps.hqwebapp.views import CRUDPaginatedViewMixin
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import HqPermissions
 from corehq.apps.users.views import BaseUserSettingsView
-from corehq.util.jqueryrmi import JSONResponseMixin
+from corehq.util.jqueryrmi import JSONResponseMixin, allow_remote_invocation
+from .exceptions import AttendeeTrackedException
 
-from .forms import CreateEventForm
-from .models import Event, get_paginated_attendees
+from .forms import EditAttendeeForm, EventForm, NewAttendeeForm
+from .models import (
+    ATTENDED_DATE_CASE_PROPERTY,
+    EVENT_IN_PROGRESS,
+    EVENT_NOT_STARTED,
+    EVENT_STATUS_TRANS,
+    LOCATION_IDS_CASE_PROPERTY,
+    PRIMARY_LOCATION_ID_CASE_PROPERTY,
+    AttendeeModel,
+    Event,
+    get_attendee_case_type,
+    get_paginated_attendees,
+    mobile_worker_attendees_enabled,
+    toggle_mobile_worker_attendees,
+)
+from .tasks import (
+    close_mobile_worker_attendee_cases,
+    sync_mobile_worker_attendees,
+)
 
 
 class BaseEventView(BaseDomainView):
@@ -67,7 +84,7 @@ class EventsView(BaseEventView, CRUDPaginatedViewMixin):
             _("End date"),
             _("Attendance Target"),
             _("Status"),
-            _("Total attendees"),
+            _("Total attendance"),
             _("Total attendance takers"),
         ]
 
@@ -82,6 +99,10 @@ class EventsView(BaseEventView, CRUDPaginatedViewMixin):
     @property
     def paginated_list(self):
         start, end = self.skip, self.skip + self.limit
+        events = self.domain_events[start:end]
+        for event in events:
+            event.save(update_fields=['attendee_list_status'])
+
         for event in self.domain_events[start:end]:
             yield {
                 'itemData': self._format_paginated_event(event),
@@ -92,19 +113,34 @@ class EventsView(BaseEventView, CRUDPaginatedViewMixin):
         return self.paginate_crud_response
 
     def _format_paginated_event(self, event: Event):
-        edit_url = reverse(EventEditView.urlname, args=(
-            self.domain,
-            event.event_id.hex,
-        ))
+        attendees = event.get_attended_attendees()
+        attendees = sorted(
+            attendees,
+            key=lambda attendee: (
+                attendee.get_case_property(ATTENDED_DATE_CASE_PROPERTY),
+                attendee.name
+            )
+        )
+        attendees = [
+            {
+                'date': attendee.get_case_property(ATTENDED_DATE_CASE_PROPERTY),
+                'name': attendee.name
+            }
+            for attendee in attendees
+        ]
         return {
             'id': event.event_id.hex,
             'name': event.name,
+            # dates are not serializable for django templates
             'start_date': str(event.start_date),
-            'end_date': str(event.end_date),
+            'end_date': str(event.end_date) if event.end_date else '-',
+            'is_editable': event.status in (EVENT_NOT_STARTED, EVENT_IN_PROGRESS),
+            'show_attendance': event.status != EVENT_NOT_STARTED,
             'target_attendance': event.attendance_target,
-            'status': event.status,
+            'status': EVENT_STATUS_TRANS[event.status],
             'total_attendance': event.total_attendance or '-',
-            'edit_url': edit_url,
+            'attendees': attendees,
+            'edit_url': reverse(EventEditView.urlname, args=(self.domain, event.event_id)),
             'total_attendance_takers': event.get_total_attendance_takers() or '-'
         }
 
@@ -140,13 +176,13 @@ class EventCreateView(BaseEventView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         if self.request.method == 'POST':
-            context['form'] = CreateEventForm(self.request.POST, domain=self.domain)
+            context['form'] = EventForm(self.request.POST, domain=self.domain)
         else:
-            context['form'] = CreateEventForm(event=self.event, domain=self.domain)
+            context['form'] = EventForm(event=self.event, domain=self.domain)
         return context
 
     def post(self, request, *args, **kwargs):
-        form = CreateEventForm(self.request.POST, domain=self.domain)
+        form = EventForm(self.request.POST, domain=self.domain)
 
         if not form.is_valid():
             return self.get(request, *args, **kwargs)
@@ -206,13 +242,12 @@ class EventEditView(EventCreateView):
         return self.event_obj
 
     def post(self, request, *args, **kwargs):
-        form = CreateEventForm(self.request.POST, domain=self.domain)
+        form = EventForm(self.request.POST, domain=self.domain, event=self.event)
 
         if not form.is_valid():
             return self.get(request, *args, **kwargs)
 
         event_update_data = form.cleaned_data
-
         event = self.event
         event.name = event_update_data['name']
         event.start_date = event_update_data['start_date']
@@ -227,10 +262,11 @@ class EventEditView(EventCreateView):
         return HttpResponseRedirect(reverse(EventsView.urlname, args=(self.domain,)))
 
 
-class AttendeesListView(JSONResponseMixin, BaseUserSettingsView):
+class AttendeesListView(JSONResponseMixin, BaseEventView):
     urlname = "event_attendees"
     template_name = 'event_attendees.html'
     page_title = _("Attendees")
+
     limit_text = _("Attendees per page")
     empty_notification = _("You have no attendees")
     loading_message = _("Loading attendees")
@@ -243,8 +279,151 @@ class AttendeesListView(JSONResponseMixin, BaseUserSettingsView):
             raise Http404
         return super(AttendeesListView, self).dispatch(*args, **kwargs)
 
-    def post(self, *args, **kwargs):
-        return super(AttendeesListView, self).post(*args, **kwargs)
+    @property
+    def page_context(self):
+        context = super().page_context
+        if self.request.method == "POST":
+            form = NewAttendeeForm(self.request.POST, domain=self.domain)
+        else:
+            form = NewAttendeeForm(domain=self.domain)
+        return context | {'new_attendee_form': form}
+
+    @allow_remote_invocation
+    def create_attendee(self, data):
+        form_data = data['attendee'] | {
+            'domain': self.domain,
+        }
+        form = NewAttendeeForm(form_data, domain=self.domain)
+        if form.is_valid():
+            if form.cleaned_data['location_id']:
+                properties = {
+                    LOCATION_IDS_CASE_PROPERTY:
+                        form.cleaned_data['location_id'],
+                    PRIMARY_LOCATION_ID_CASE_PROPERTY:
+                        form.cleaned_data['location_id'],
+                }
+            else:
+                properties = {}
+            helper = CaseHelper(domain=self.domain)
+            helper.create_case({
+                'case_type': get_attendee_case_type(self.domain),
+                'case_name': form.cleaned_data['name'],
+                'owner_id': self.request.couch_user.user_id,
+                'properties': properties,
+            })
+            return {
+                'success': True,
+                'case_id': helper.case.case_id,
+            }
+
+        err = ', '.join([e for errors in form.errors.values() for e in errors])
+        return {'error': _("Form validation failed: {}").format(err)}
+
+
+class AttendeeEditView(BaseEventView):
+    urlname = 'edit_attendee'
+    template_name = "edit_attendee.html"
+
+    page_title = _("Edit Attendee")
+
+    @property
+    def page_url(self):
+        return reverse(self.urlname, args=(self.domain, self.attendee_id))
+
+    @use_multiselect
+    @use_jquery_ui
+    def dispatch(self, request, *args, **kwargs):
+        self.attendee_id = kwargs['attendee_id']
+        return super().dispatch(request, *args, **kwargs)
+
+    @property
+    def parent_pages(self):
+        return [{
+            'title': AttendeesListView.page_title,
+            'url': reverse(AttendeesListView.urlname, args=(self.domain,))
+        }]
+
+    @property
+    def page_context(self):
+        context = super().page_context
+        instance = AttendeeModel.objects.get(
+            case_id=self.attendee_id,
+            domain=self.domain,
+        )
+        if self.request.method == 'POST':
+            form = EditAttendeeForm(
+                self.request.POST,
+                domain=self.domain,
+                instance=instance,
+            )
+        else:
+            form = EditAttendeeForm(domain=self.domain, instance=instance)
+        context.update({
+            'attendee_id': self.attendee_id,
+            'attendee_name': instance.name,
+            'attendee_has_attended_events': instance.has_attended_events(),
+            'form': form,
+        })
+        return context
+
+    def post(self, request, *args, **kwargs):
+        instance = AttendeeModel.objects.get(
+            case_id=kwargs['attendee_id'],
+            domain=self.domain,
+        )
+        form = EditAttendeeForm(
+            self.request.POST,
+            domain=self.domain,
+            instance=instance,
+        )
+        if form.is_valid():
+            form.save()
+            return HttpResponseRedirect(
+                reverse(AttendeesListView.urlname, args=(self.domain,))
+            )
+        return self.get(request, *args, **kwargs)
+
+
+class AttendeeDeleteView(BaseEventView):
+    urlname = 'delete_attendee'
+
+    def post(self, request, domain, attendee_id):
+        instance = AttendeeModel.objects.get(
+            case_id=attendee_id,
+            domain=domain
+        )
+        try:
+            instance.delete()
+        except AttendeeTrackedException:
+            return JsonResponse({
+                'failed': 'Cannot delete an attendee that has been tracked in one or more events.'
+            }, status=400)
+
+        return HttpResponseRedirect(reverse(AttendeesListView.urlname, args=(domain,)))
+
+
+class AttendeesConfigView(JSONResponseMixin, BaseUserSettingsView, BaseEventView):
+    urlname = "attendees_config"
+
+    @allow_remote_invocation
+    def get(self, request, *args, **kwargs):
+        return self.json_response({
+            "mobile_worker_attendee_enabled": mobile_worker_attendees_enabled(self.domain)
+        })
+
+    @allow_remote_invocation
+    def post(self, request, *args, **kwargs):
+        json_data = json.loads(request.body)
+        attendees_enabled = json_data['mobile_worker_attendee_enabled']
+        toggle_mobile_worker_attendees(self.domain, attendees_enabled)
+        if attendees_enabled:
+            sync_mobile_worker_attendees.delay(self.domain, user_id=self.couch_user.user_id)
+        else:
+            close_mobile_worker_attendee_cases.delay(self.domain)
+
+        return self.json_response({
+            "mobile_worker_attendee_enabled": attendees_enabled
+        })
 
 
 @require_GET
@@ -266,6 +445,6 @@ def paginated_attendees(request, domain):
     )
 
     return JsonResponse({
-        'attendees': [{'_id': c.case_id, 'name': c.name} for c in cases],
+        'attendees': [{'case_id': c.case_id, 'name': c.name} for c in cases],
         'total': total,
     })
