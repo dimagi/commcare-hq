@@ -202,7 +202,8 @@ def _get_individual_update(domain, data, user, is_creation):
     data['user_id'] = user.user_id
     try:
         update = update_class.wrap(data)
-    except BadValueError as e:
+        _validate_update_permission(domain, update, user, is_creation)
+    except (BadValueError, PermissionDenied) as e:
         raise UserError(str(e))
     return update
 
