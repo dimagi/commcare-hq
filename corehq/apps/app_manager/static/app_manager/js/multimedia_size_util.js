@@ -2,7 +2,7 @@ hqDefine('app_manager/js/multimedia_size_util',[
     'jquery',
     'underscore',
     'knockout',
-    'hqwebapp/js/alert_user',
+    'hqwebapp/js/bootstrap3/alert_user',
     'hqwebapp/js/initial_page_data',
 ], function ($, _, ko, alertUser, initialPageData) {
     var multimediaSize = function (name, size) {

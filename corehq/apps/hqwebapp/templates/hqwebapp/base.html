@@ -279,11 +279,7 @@
 
     {# javascript below this line #}
 
-    {% if use_bootstrap5 %}
-      <script src="{% static "bootstrap5/dist/js/bootstrap.bundle.min.js" %}"></script>
-    {% else %}
-      {% include "hqwebapp/partials/requirejs.html" with BASE_MAIN=True %}
-    {% endif %}
+    {% include "hqwebapp/partials/requirejs.html" with BASE_MAIN=True %}
 
     <script src="{% statici18n LANGUAGE_CODE %}"></script> {# DO NOT COMPRESS #}
 
@@ -291,11 +287,19 @@
     {% if not requirejs_main %}
       {% compress js %}
         <script src="{% static 'hqwebapp/js/hq_extensions.jquery.js' %}"></script>
-        <script src="{% static 'hqwebapp/js/hq-bug-report.js' %}"></script>
+        {% if use_bootstrap5 %}
+          <script src="{% static 'hqwebapp/js/bootstrap5/hq-bug-report.js' %}"></script>
+        {% else %}
+          <script src="{% static 'hqwebapp/js/bootstrap3/hq-bug-report.js' %}"></script>
+        {% endif %}
         <script src="{% static 'hqwebapp/js/layout.js' %}"></script>
         <script src="{% static 'hqwebapp/js/toggles.js' %}"></script>
-        <script src="{% static 'hqwebapp/js/alert_user.js' %}"></script>
-        <script src="{% static 'hqwebapp/js/main.js' %}"></script>
+        {% if use_bootstrap5 %}
+          <script src="{% static 'hqwebapp/js/bootstrap5/alert_user.js' %}"></script>
+        {% else %}
+          <script src="{% static 'hqwebapp/js/bootstrap3/alert_user.js' %}"></script>
+        {% endif %}
+        <script src="{% static 'hqwebapp/js/bootstrap3/main.js' %}"></script>
         <script src="{% static 'hqwebapp/js/mobile_experience_warning.js' %}"></script>
       {% endcompress %}
     {% endif %}
@@ -303,7 +307,7 @@
     {# JavaScript Display Logic Libaries #}
 
     {% if request.couch_user and not requirejs_main %}
-      <script src="{% static 'notifications/js/notifications_service.js' %}"></script>
+      <script src="{% static 'notifications/js/bootstrap3/notifications_service.js' %}"></script>
       <script src="{% static 'notifications/js/notifications_service_main.js' %}"></script>
     {% endif %}
 
