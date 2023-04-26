@@ -499,9 +499,11 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
                             }
                         }
                         self.collection.models[i].set({
-                            itemsetChoices: choices,
                             value: value,
                         });
+
+                        self.children.findByIndex(i)._setItemSet(choices, response.models[i].get('itemsetChoiceskey'));
+
                         self.children.findByIndex(i)._render();      // re-render with new choice values
                     }
                 }
