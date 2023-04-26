@@ -40,7 +40,6 @@ class CommCareSettingsTest(SimpleTestCase):
         self.assertEqual(cond2, {"type": "features", "id": "sense", "equals": True})
 
     def test_check_condition(self):
-        # TODO: replace properties (do they need to be defined?)
         sense_condition = "{features.sense}='true'"
         server_tether_condition = "{properties.server-tether}='sync'"
 
@@ -56,7 +55,6 @@ class CommCareSettingsTest(SimpleTestCase):
         self.assertTrue(check_condition(test_app4, server_tether_condition))
 
     def test_circular_dependencies(self):
-        # TODO: replace properties (do they need to be defined?)
         def generate_lookup(settings):
             lookup = defaultdict(lambda: defaultdict(dict))
             for setting in settings:
