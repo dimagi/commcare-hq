@@ -4287,10 +4287,6 @@ msgid "CommCare Sense"
 msgstr ""
 
 #: corehq/apps/app_manager/static_strings.py
-msgid "Configure for low-literate users, J2ME only"
-msgstr ""
-
-#: corehq/apps/app_manager/static_strings.py
 msgid ""
 "Configure form menus display. For per-module option turn on grid view for "
 "the form's menu in a module under module's settings page. Read more on the "
@@ -10635,10 +10631,6 @@ msgstr ""
 
 #: corehq/apps/builds/templates/builds/edit_menu.html
 msgid "Superuser Only"
-msgstr ""
-
-#: corehq/apps/builds/templates/builds/edit_menu.html
-msgid "J2me Enabled"
 msgstr ""
 
 #: corehq/apps/builds/templates/builds/edit_menu.html
