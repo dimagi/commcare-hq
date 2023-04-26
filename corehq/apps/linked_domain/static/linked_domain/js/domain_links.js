@@ -34,13 +34,19 @@ hqDefine("linked_domain/js/domain_links", [
         self.hasSuccess = ko.observable(false);
         self.showSpinner = ko.observable(false);
 
-        self.update = function () {
+        self.resetStatus = function () {
+            self.error("");
+            self.hasSuccess(false);
+            self.showUpdate(true);
+        };
+
+        var updateFn = function (overwrite) {
             self.showSpinner(true);
             self.showUpdate(false);
             _private.RMI("update_linked_model", {"model": {
                 'type': self.type,
                 'detail': self.detail,
-            }}).done(function (data) {
+            }, 'overwrite': overwrite}).done(function (data) {
                 if (data.error) {
                     self.error(data.error);
                 } else {
@@ -53,6 +59,9 @@ hqDefine("linked_domain/js/domain_links", [
                 self.showSpinner(false);
             });
         };
+
+        self.update = () => updateFn(false);
+        self.forceUpdate = () => updateFn(true);
 
         return self;
     };
@@ -113,7 +122,9 @@ hqDefine("linked_domain/js/domain_links", [
 
         // Tab Header Statuses
         self.manageDownstreamDomainsTabStatus = ko.computed(function () {
-            return self.isUpstreamDomain() ? "active" : "";
+            // A bit of a hack. We need to set an active tab *unless* the URL hash
+            // is already pointing at a valid tab.
+            return self.isUpstreamDomain() && !window.location.hash  ? "active" : "";
         });
 
         self.pullContentTabStatus = ko.computed(function () {
@@ -122,7 +133,7 @@ hqDefine("linked_domain/js/domain_links", [
 
         // Tab Content Statuses
         self.manageTabActiveStatus = ko.computed(function () {
-            return self.isUpstreamDomain() ? "in active" : "";
+            return self.isUpstreamDomain() && !window.location.hash ? "in active" : "";
         });
 
         self.pullTabActiveStatus = ko.computed(function () {
@@ -367,12 +378,13 @@ hqDefine("linked_domain/js/domain_links", [
             return self.localDownstreamDomains().length > 0;
         });
 
-        self.pushContent = function () {
+        self.pushContentFn = function (overwrite) {
             self.pushInProgress(true);
             _private.RMI("create_release", {
                 models: _.map(self.modelsToPush(), JSON.parse),
                 linked_domains: self.domainsToPush(),
                 build_apps: self.buildAppsOnPush(),
+                overwrite: overwrite,
             }).done(function (data) {
                 alertUser.alert_user(data.message, data.success ? 'success' : 'danger');
                 self.pushInProgress(false);
@@ -381,6 +393,9 @@ hqDefine("linked_domain/js/domain_links", [
                 self.pushInProgress(false);
             });
         };
+
+        self.pushContent = () => self.pushContentFn(false);
+        self.pushAndOverwrite = () => self.pushContentFn(true);
 
         return self;
     };
