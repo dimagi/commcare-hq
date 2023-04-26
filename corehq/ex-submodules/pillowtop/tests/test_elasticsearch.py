@@ -7,18 +7,17 @@ from pillowtop.processors.elastic import send_to_elasticsearch
 
 from corehq.apps.es.client import manager
 from corehq.apps.es.tests.utils import es_test
-from corehq.apps.es.transient_util import doc_adapter_from_info
 from corehq.util.es.elasticsearch import ConnectionError, RequestError
 from corehq.util.test_utils import capture_log_output
 
-from .utils import TEST_INDEX_INFO
+from .utils import get_pillow_doc_adapter
 
 
-@es_test(requires=[doc_adapter_from_info(TEST_INDEX_INFO)])
+@es_test(requires=[get_pillow_doc_adapter()])
 class TestSendToElasticsearch(SimpleTestCase):
 
     def setUp(self):
-        self.adapter = doc_adapter_from_info(TEST_INDEX_INFO)
+        self.adapter = get_pillow_doc_adapter()
 
     def test_create_doc(self):
         doc = {'_id': uuid.uuid4().hex, 'doc_type': 'MyCoolDoc', 'property': 'foo'}

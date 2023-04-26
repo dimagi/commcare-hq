@@ -1,74 +1,74 @@
-from pillowtop.es_utils import (
-    CASE_SEARCH_HQ_INDEX_NAME,
-    ElasticsearchIndexInfo,
-)
-
-from corehq.apps.es.case_search import case_search_adapter
 from corehq.apps.es.client import Tombstone
 from corehq.pillows.core import DATE_FORMATS_ARR, DATE_FORMATS_STRING
-from corehq.util.elastic import prefix_for_tests
+from corehq.apps.es.mappings.const import NULL_VALUE
 
-CASE_SEARCH_INDEX = case_search_adapter.index_name
-CASE_SEARCH_ALIAS = prefix_for_tests('case_search')
-
-CASE_SEARCH_MAPPING = {
-    "_all": {
-        "enabled": False
-    },
+CASE_MAPPING = {
     "_meta": {
         "comment": "",
-        "created": "2016-03-29 @frener"
+        "created": "2013-09-19 @dmyung"
     },
     "date_detection": False,
     "date_formats": DATE_FORMATS_ARR,
     "dynamic": False,
     "properties": {
-        "@indexed_on": {
-            "format": DATE_FORMATS_STRING,
-            "type": "date"
-        },
-        "case_properties": {
+        "actions": {
             "dynamic": False,
             "type": "nested",
             "properties": {
-                "key": {
-                    "fields": {
-                        "exact": {
-                            "index": "not_analyzed",
-                            "type": "string"
-                        }
-                    },
+                "action_type": {
                     "type": "string"
                 },
-                "value": {
-                    "fields": {
-                        "date": {
-                            "format": DATE_FORMATS_STRING,
-                            "ignore_malformed": True,
-                            "type": "date"
-                        },
-                        "exact": {
-                            "ignore_above": 8191,
-                            "index": "not_analyzed",
-                            "null_value": "",
-                            "type": "string"
-                        },
-                        "numeric": {
-                            "ignore_malformed": True,
-                            "type": "double"
-                        },
-                        "phonetic": {
-                            "analyzer": "phonetic",
-                            "type": "string"
-                        }
-                    },
-                    "null_value": "",
+                "date": {
+                    "format": DATE_FORMATS_STRING,
+                    "type": "date"
+                },
+                "doc_type": {
+                    "index": "not_analyzed",
                     "type": "string"
                 },
-                "geopoint_value": {
-                    "type": "geo_point"
+                "indices": {
+                    "dynamic": False,
+                    "type": "object",
+                    "properties": {
+                        "doc_type": {
+                            "index": "not_analyzed",
+                            "type": "string"
+                        },
+                        "identifier": {
+                            "type": "string"
+                        },
+                        "referenced_id": {
+                            "type": "string"
+                        },
+                        "referenced_type": {
+                            "type": "string"
+                        }
+                    }
+                },
+                "server_date": {
+                    "format": DATE_FORMATS_STRING,
+                    "type": "date"
+                },
+                "sync_log_id": {
+                    "type": "string"
+                },
+                "user_id": {
+                    "type": "string"
+                },
+                "xform_id": {
+                    "type": "string"
+                },
+                "xform_name": {
+                    "type": "string"
+                },
+                "xform_xmlns": {
+                    "type": "string"
                 }
             }
+        },
+        "backend_id": {
+            "index": "not_analyzed",
+            "type": "string"
         },
         "closed": {
             "type": "boolean"
@@ -81,12 +81,28 @@ CASE_SEARCH_MAPPING = {
             "format": DATE_FORMATS_STRING,
             "type": "date"
         },
+        "computed_": {
+            "enabled": False,
+            "type": "object"
+        },
+        "computed_modified_on_": {
+            "format": DATE_FORMATS_STRING,
+            "type": "date"
+        },
+        "contact_phone_number": {
+            "index": "not_analyzed",
+            "type": "string"
+        },
         "doc_type": {
             "index": "not_analyzed",
             "type": "string"
         },
         "domain": {
             "fields": {
+                "domain": {
+                    "index": "analyzed",
+                    "type": "string"
+                },
                 "exact": {
                     "index": "not_analyzed",
                     "type": "string"
@@ -94,38 +110,49 @@ CASE_SEARCH_MAPPING = {
             },
             "type": "multi_field"
         },
-        "external_id": {
-            "index": "not_analyzed",
+        "export_tag": {
             "type": "string"
+        },
+        "external_id": {
+            "fields": {
+                "exact": {
+                    "index": "not_analyzed",
+                    "type": "string"
+                },
+                "external_id": {
+                    "index": "analyzed",
+                    "type": "string"
+                }
+            },
+            "type": "multi_field"
         },
         "indices": {
             "dynamic": False,
-            "type": "nested",
+            "type": "object",
             "properties": {
                 "doc_type": {
                     "index": "not_analyzed",
                     "type": "string"
                 },
                 "identifier": {
-                    "index": "not_analyzed",
                     "type": "string"
                 },
                 "referenced_id": {
-                    "index": "not_analyzed",
                     "type": "string"
                 },
                 "referenced_type": {
-                    "index": "not_analyzed",
-                    "type": "string"
-                },
-                "relationship": {
-                    "index": "not_analyzed",
                     "type": "string"
                 }
             }
         },
+        "initial_processing_complete": {
+            "type": "boolean"
+        },
+        "inserted_at": {
+            "format": DATE_FORMATS_STRING,
+            "type": "date"
+        },
         "location_id": {
-            "index": "not_analyzed",
             "type": "string"
         },
         "modified_on": {
@@ -137,9 +164,13 @@ CASE_SEARCH_MAPPING = {
                 "exact": {
                     "index": "not_analyzed",
                     "type": "string"
+                },
+                "name": {
+                    "index": "analyzed",
+                    "type": "string"
                 }
             },
-            "type": "string"
+            "type": "multi_field"
         },
         "opened_by": {
             "index": "not_analyzed",
@@ -152,6 +183,15 @@ CASE_SEARCH_MAPPING = {
         "owner_id": {
             "index": "not_analyzed",
             "type": "string"
+        },
+        "owner_type": {
+            "index": "not_analyzed",
+            "null_value": NULL_VALUE,
+            "type": "string"
+        },
+        "referrals": {
+            "enabled": False,
+            "type": "object"
         },
         "server_modified_on": {
             "format": DATE_FORMATS_STRING,
@@ -171,20 +211,17 @@ CASE_SEARCH_MAPPING = {
             "type": "multi_field"
         },
         "user_id": {
+            "type": "string"
+        },
+        "version": {
+            "type": "string"
+        },
+        "xform_ids": {
             "index": "not_analyzed",
             "type": "string"
         },
         Tombstone.PROPERTY_NAME: {
             "type": "boolean"
-        },
+        }
     }
 }
-
-
-CASE_SEARCH_INDEX_INFO = ElasticsearchIndexInfo(
-    index=CASE_SEARCH_INDEX,
-    alias=CASE_SEARCH_ALIAS,
-    type=case_search_adapter.type,
-    mapping=CASE_SEARCH_MAPPING,
-    hq_index_name=CASE_SEARCH_HQ_INDEX_NAME,
-)
