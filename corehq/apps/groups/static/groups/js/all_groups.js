@@ -2,7 +2,7 @@ hqDefine("groups/js/all_groups", [
     'jquery',
     'analytix/js/google',
     // Just importing main.py so the post-link function is accessible, function parameter not needed
-    'hqwebapp/js/main',
+    'hqwebapp/js/bootstrap3/main',
 ], function (
     $,
     googleAnalytics

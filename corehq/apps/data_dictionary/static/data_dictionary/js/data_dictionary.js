@@ -3,7 +3,7 @@ hqDefine("data_dictionary/js/data_dictionary", [
     "knockout",
     "underscore",
     "hqwebapp/js/initial_page_data",
-    "hqwebapp/js/main",
+    "hqwebapp/js/bootstrap3/main",
     "analytix/js/google",
     "hqwebapp/js/ui_elements/ui-element-key-val-list",
     "DOMPurify/dist/purify.min",

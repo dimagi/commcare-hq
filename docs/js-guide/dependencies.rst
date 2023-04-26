@@ -69,7 +69,7 @@ fits this common pattern:
        "knockout",
        "underscore",
        "hqwebapp/js/initial_page_data",                // Dependencies on HQ files always match the file's path
-       "hqwebapp/js/main",
+       "hqwebapp/js/bootstrap3/main",
        "analytix/js/google",
        "hqwebapp/js/knockout_bindings.ko",             // This one doesn't need a named parameter because it only adds
                                                        // knockout bindings and is not referenced in this file

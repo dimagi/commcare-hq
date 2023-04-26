@@ -4,13 +4,13 @@
  *
  */
 
-hqDefine('notifications/js/notifications_service', [
+hqDefine('notifications/js/bootstrap3/notifications_service', [
     'jquery',
     'knockout',
     'underscore',
     'jquery.rmi/jquery.rmi',
     'analytix/js/kissmetrix',
-    'hqwebapp/js/hq.helpers',
+    'hqwebapp/js/bootstrap3/hq.helpers',
 ], function (
     $,
     ko,

@@ -17,7 +17,7 @@ hqDefine("userreports/js/configurable_report", function () {
                 builder_type = initial_page_data("builder_report_type"),
                 report_type = initial_page_data("type");
             $applyFiltersButton.click(function () {
-                var label = hqImport('hqwebapp/js/main').capitalize(builder_type) + '-' + hqImport('hqwebapp/js/main').capitalize(report_type);
+                var label = hqImport('hqwebapp/js/bootstrap3/main').capitalize(builder_type) + '-' + hqImport('hqwebapp/js/bootstrap3/main').capitalize(report_type);
                 hqImport('userreports/js/report_analytix').track.event("View Report Builder Report", label);
             });
             hqImport('userreports/js/report_analytix').track.event("Loaded Report Builder Report");
