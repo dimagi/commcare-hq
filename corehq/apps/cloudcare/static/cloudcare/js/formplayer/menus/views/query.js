@@ -229,22 +229,22 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
             'click @ui.searchForBlank': 'toggleBlankSearch',
         },
 
-        _setItemset: function(itemsetChoicesLabels, itemsetChoicesKey) {
-            itemsetChoicesLabels = itemsetChoicesLabels || [];
+        _setItemset: function(itemsetChoices, itemsetChoicesKey) {
+            itemsetChoices = itemsetChoices || [];
             let itemsetChoicesDict = {};
 
             if (this.parentView.selectValuesByKeys){
                 itemsetChoicesKey = itemsetChoicesKey || [];
-                itemsetChoicesKey.forEach((key,i) => itemsetChoicesDict[key]=itemsetChoicesLabels[i])
+                itemsetChoicesKey.forEach((key,i) => itemsetChoicesDict[key]=itemsetChoices[i])
                 this.model.set({
-                    itemsetChoicesKey:itemsetChoicesKey,
+                    itemsetChoicesKey: itemsetChoicesKey,
                 })
             }
             else{
-                itemsetChoicesLabels.forEach((key,i) => itemsetChoicesDict[i]=itemsetChoicesLabels[i])
+                itemsetChoices.forEach((key,i) => itemsetChoicesDict[i]=itemsetChoices[i])
             }
             this.model.set({
-                itemsetChoicesLabels:itemsetChoicesLabels,
+                itemsetChoices: itemsetChoices,
                 itemsetChoicesDict: itemsetChoicesDict
             })
         },
