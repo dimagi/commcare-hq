@@ -1,13 +1,5 @@
-from pillowtop.es_utils import APP_HQ_INDEX_NAME, ElasticsearchIndexInfo
-
-from corehq.apps.es.apps import app_adapter
 from corehq.apps.es.client import Tombstone
 from corehq.pillows.core import DATE_FORMATS_ARR, DATE_FORMATS_STRING
-from corehq.util.elastic import prefix_for_tests
-
-APP_INDEX = app_adapter.index_name
-APP_ES_TYPE = app_adapter.type
-APP_ES_ALIAS = prefix_for_tests("hqapps")
 
 APP_MAPPING = {
     "_all": {
@@ -831,11 +823,3 @@ APP_MAPPING = {
         }
     }
 }
-
-APP_INDEX_INFO = ElasticsearchIndexInfo(
-    index=APP_INDEX,
-    alias=APP_ES_ALIAS,
-    type=APP_ES_TYPE,
-    mapping=APP_MAPPING,
-    hq_index_name=APP_HQ_INDEX_NAME
-)
