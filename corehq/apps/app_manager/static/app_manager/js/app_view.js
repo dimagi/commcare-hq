@@ -112,7 +112,7 @@ hqDefine("app_manager/js/app_view", function () {
         (function () {
             var $form = $("#custom-assertions-form");
             var $saveContainer = $form.find("#custom-assertions-save-btn");
-            var saveButton = hqImport("hqwebapp/js/main").initSaveButton({
+            var saveButton = hqImport("hqwebapp/js/bootstrap3/main").initSaveButton({
                 save: function () {
                     saveButton.ajax({
                         url: $form.attr('action'),

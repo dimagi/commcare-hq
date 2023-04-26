@@ -226,7 +226,7 @@ hqDefine('app_manager/js/forms/advanced/actions', function () {
 
                     _.defer(function () {
                         $('.hq-help-template').each(function () {
-                            hqImport("hqwebapp/js/main").transformHelpTemplate($(this), true);
+                            hqImport("hqwebapp/js/bootstrap3/main").transformHelpTemplate($(this), true);
                         });
                     });
                 });
