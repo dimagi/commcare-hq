@@ -197,6 +197,7 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
             this.parentView = this.options.parentView;
             this.model = this.options.model;
             this.errorMessage = null;
+            this._setItemSet(this.model.attributes.itemsetChoices, this.model.attributes.itemsetChoiceskey);
 
             // initialize with default values or with sticky values if either is present
             var value = decodeValue(this.model, this.model.get('value'))[1],
@@ -224,6 +225,26 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
             'change @ui.searchForBlank': 'notifyParentOfFieldChange',
             'dp.change @ui.queryField': 'changeDateQueryField',
             'click @ui.searchForBlank': 'toggleBlankSearch',
+        },
+
+        _setItemSet: function(itemsetChoicesLabels, itemsetChoiceskey) {
+            itemsetChoicesLabels = itemsetChoicesLabels || [];
+            let itemsetChoicesDict = {};
+
+            if (this.parentView.selectValuesByKeys){
+                itemsetChoiceskey = itemsetChoiceskey || [];
+                itemsetChoiceskey.forEach((key,i) => itemsetChoicesDict[key]=itemsetChoicesLabels[i])
+                this.model.set({
+                    itemsetChoiceskey:itemsetChoiceskey,
+                })
+            }
+            else{
+                itemsetChoicesLabels.forEach((key,i) => itemsetChoicesDict[i]=itemsetChoicesLabels[i])
+            }
+            this.model.set({
+                itemsetChoicesLabels:itemsetChoicesLabels,
+                itemsetChoicesDict: itemsetChoicesDict
+            })
         },
 
         _render: function () {
