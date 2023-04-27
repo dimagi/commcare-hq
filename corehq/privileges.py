@@ -105,6 +105,8 @@ FORM_CASE_IDS_CASE_IMPORTER = 'form_case_ids_case_importer'
 
 EXPORT_MULTISORT = 'export_multisort'
 
+EXPORT_OWNERSHIP = 'export_ownership'
+
 MAX_PRIVILEGES = [
     LOOKUP_TABLES,
     API_ACCESS,
@@ -160,7 +162,8 @@ MAX_PRIVILEGES = [
     REGEX_FIELD_VALIDATION,
     LOCATION_SAFE_CASE_IMPORTS,
     FORM_CASE_IDS_CASE_IMPORTER,
-    EXPORT_MULTISORT
+    EXPORT_MULTISORT,
+    EXPORT_OWNERSHIP
 ]
 
 # These are special privileges related to their own rates in a SoftwarePlanVersion
@@ -231,5 +234,6 @@ class Titles(object):
             REGEX_FIELD_VALIDATION: _("Regular Expression Validation for Custom Data Fields"),
             LOCATION_SAFE_CASE_IMPORTS: _("Location Safe Case Imports"),
             FORM_CASE_IDS_CASE_IMPORTER: _("Download buttons for Form- and Case IDs on Case Importer"),
-            EXPORT_MULTISORT: _("Sort multiple rows in exports simultaneously")
+            EXPORT_MULTISORT: _("Sort multiple rows in exports simultaneously"),
+            EXPORT_OWNERSHIP: _("Allow exports to have ownership"),
         }.get(privilege, privilege)
