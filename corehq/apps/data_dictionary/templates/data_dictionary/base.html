@@ -169,6 +169,13 @@
           </div>
           <div data-bind="sortable: { data: caseGroupList, connectClass: 'groups', options: { handle: 'i.sortable-handle' } }">
           <div>
+          <!-- ko if: deprecated() && !isDeprecatedOnLoad && properties().length > 0 -->
+          <div class="group-deprecated" style="padding: 8px 4px;">
+            <b data-bind="text: name()"></b>
+            {% trans "group's properties will be moved to" %}
+            <b>"No Group"</b>
+          </div>
+          <!-- /ko -->
           <div class="table-row group" data-bind="css: { 'group-deprecated': deprecated() }, visible: !isDeprecatedOnLoad || $root.showAll()">
             <div class="row-item-small">
               {% if not request.is_view_only %}
