@@ -136,7 +136,8 @@ def _r_js(local=False, verbose=False):
     Write build.js file to feed to r.js, run r.js, and return filenames of the final build config
     and the bundle config output by the build.
     '''
-    with open(os.path.join(ROOT_DIR, 'staticfiles', 'hqwebapp', 'yaml', 'requirejs.yml'), 'r') as f:
+    with open(os.path.join(ROOT_DIR, 'staticfiles', 'hqwebapp', 'yaml',
+                           'bootstrap3', 'requirejs.yml'), 'r') as f:
         config = yaml.safe_load(f)
 
     config['logLevel'] = 0 if verbose else 2  # TRACE or WARN

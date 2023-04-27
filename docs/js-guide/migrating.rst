@@ -278,7 +278,7 @@ locally:
 -  To mimic the entire build process locally:
 
    -  Collect static files: ``manage.py collectstatic --noinput`` This
-      is necessary if you’ve made any changes to ``requirejs.yml`` or
+      is necessary if you’ve made any changes to ``{bootstrap_version}/requirejs.yml`` or
       ``{bootstrap_version}/requirejs_config.js``, since the build script pulls these files
       from ``staticfiles``, not ``corehq``.
    -  Compile translation files: ``manage.py compilejsi18n``
