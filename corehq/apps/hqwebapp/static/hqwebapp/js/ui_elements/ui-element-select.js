@@ -17,6 +17,7 @@ hqDefine('hqwebapp/js/ui_elements/ui-element-select', [
         hqMain.eventize(this);
         this.ui = $('<span/>');
         this.value = "";
+        this.valueLabel = "";
         this.edit = true;
         this.options = [];
 
@@ -28,9 +29,9 @@ hqDefine('hqwebapp/js/ui_elements/ui-element-select', [
             that.fire('change');
         });
 
-        this.setOptions(options || []);
-
         this.$noedit_view = $('<span class="ui-element-select"/>');
+
+        this.setOptions(options || []);
 
         this.setEdit(this.edit);
     };
@@ -40,13 +41,25 @@ hqDefine('hqwebapp/js/ui_elements/ui-element-select', [
             if (!_.isString(value)) {
                 return this.value;
             } else {
-                this.value = value;
-                var option = _.find(this.options, function (o) { return value === o.value; }) || {},
-                    label = option.label;
+                let option = _.find(this.options, o => value === o.value);
+                if (!option) {
+                    // add a new option
+                    option = {value: value, label: value};
+                    this.options.push(option);
+                    if (!this.$edit_view.find(`option[value='${value}']`).length) {
+                        // this is needed to preserve the option after changing the list of properties
+                        $('<option/>').text(option.label).val(option.value).appendTo(this.$edit_view);
+                    }
+                }
+                this.value = option.value;
+                this.valueLabel = option.label;
                 this.$edit_view.val(String(this.value || ''));
-                this.$noedit_view.text(label);
+                this.$noedit_view.text(option.label);
                 return this;
             }
+        },
+        valLabel : function () {
+            return this.valueLabel;
         },
         setEdit: function (edit) {
             this.edit = edit;
@@ -67,13 +80,11 @@ hqDefine('hqwebapp/js/ui_elements/ui-element-select', [
             return this;
         },
         setOptions: function (options) {
-            this.options = options;
+            this.options = options.map(o => _.isString(o) ? {value: o, label: o} : o);
             this.$edit_view.html('');
             for (var i = 0; i < this.options.length; i += 1) {
-                var option = this.options[i],
-                    label = option.label === undefined ? option : option.label,
-                    value = option.value === undefined ? option : option.value;
-                $('<option/>').text(label).val(value).appendTo(this.$edit_view);
+                var option = this.options[i];
+                $('<option/>').text(option.label).val(option.value).appendTo(this.$edit_view);
             }
         },
     };
