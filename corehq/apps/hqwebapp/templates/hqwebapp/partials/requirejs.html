@@ -20,19 +20,24 @@
   <script src="{% static 'hqwebapp/js/resource_versions.js' %}"></script>
   <script>
     requirejs.config({
-      deps: ['knockout', 'ko.mapping'],
-      callback: function (ko, mapping) {
+      deps: [
+          'knockout',
+          'ko.mapping',
+          {% if use_bootstrap5 %}'es6!bootstrap5_loader',{% endif %}
+      ],
+      callback: function (ko, mapping{% if use_bootstrap5 %}, bootstrap5{% endif %}) {
         ko.mapping = mapping;
+        {% if use_bootstrap5 %}window.bootstrap5 = bootstrap5;{% endif %}
       }
     });
     requirejs([
-      {% if use_bootstrap5 %}'es6!hqwebapp/js/bootstrap5/common',{% else %}'hqwebapp/js/bootstrap3/common',{% endif %}
+      {% if use_bootstrap5 %}'hqwebapp/js/bootstrap5/common',{% else %}'hqwebapp/js/bootstrap3/common',{% endif %}
     ], function() {
       {% if BASE_MAIN %}
         {# This code is relevant for running HQ, but not for tests #}
         requirejs(['hqwebapp/js/django'], function () {
           requirejs([
-            {% if use_bootstrap5 %}'es6!hqwebapp/js/bootstrap5/base_main',{% else %}'hqwebapp/js/bootstrap3/base_main',{% endif %}
+            {% if use_bootstrap5 %}'hqwebapp/js/bootstrap5/base_main',{% else %}'hqwebapp/js/bootstrap3/base_main',{% endif %}
           ], function () {
       {% endif %}
             requirejs(['{{ requirejs_main }}'], function () {

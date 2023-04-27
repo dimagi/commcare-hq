@@ -20,7 +20,7 @@ requirejs.config({
     shim: {
         "ace-builds/src-min-noconflict/ace": { exports: "ace" },
         "ko.mapping": { deps: ['knockout'] },
-        "es6!hqwebapp/js/bootstrap5/hq.helpers": { deps: ['jquery', 'knockout', 'bootstrap5', 'underscore'] },
+        "hqwebapp/js/bootstrap5/hq.helpers": { deps: ['jquery', 'knockout', 'underscore'] },
         "datatables.bootstrap": { deps: ['datatables'] },
         "jquery.rmi/jquery.rmi": {
             deps: ['jquery', 'knockout', 'underscore'],

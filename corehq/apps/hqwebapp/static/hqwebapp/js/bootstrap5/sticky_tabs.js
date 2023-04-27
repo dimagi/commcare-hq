@@ -4,10 +4,8 @@
  */
 hqDefine("hqwebapp/js/bootstrap5/sticky_tabs", [
     "jquery",
-    "bootstrap5",    // needed for $.tab
-], function (
-    $
-) {
+    "bootstrap5_loader",
+], function ($) {
     var getHash = function () {
         if (window.location.hash) {
             // .replace handles the #history?form_id=foo style of URL hashes used by
@@ -26,7 +24,8 @@ hqDefine("hqwebapp/js/bootstrap5/sticky_tabs", [
         if ($tabFromUrl && $tabFromUrl.length) {
             $tabFromUrl.tab('show');
         } else {
-            $(navSelector + ' ' + tabSelector).first().tab('show');
+            // todo fix bootstrap5 issue
+            //$(navSelector + ' ' + tabSelector).first().tab('show');
         }
 
         $('body').on('click', tabSelector, function (e) {
@@ -48,7 +47,8 @@ hqDefine("hqwebapp/js/bootstrap5/sticky_tabs", [
 
         $(window).on('popstate', function () {
             var anchor = getHash() || $(navSelector + ' ' + tabSelector).first().attr('href');
-            $("a[href='" + anchor + "']").tab('show');
+            // todo fix bootstrap5 issue
+            //$("a[href='" + anchor + "']").tab('show');
         });
     });
 });
