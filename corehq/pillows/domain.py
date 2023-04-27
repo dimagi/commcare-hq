@@ -1,29 +1,12 @@
-import copy
-from corehq.apps.accounting.models import Subscription
 from corehq.apps.change_feed.consumer.feed import KafkaChangeFeed, KafkaCheckpointEventHandler
 from corehq.apps.change_feed import topics
 from corehq.apps.domain.models import Domain
 from corehq.apps.es.domains import domain_adapter
-from corehq.pillows.mappings.domain_mapping import DOMAIN_INDEX_INFO
 from corehq.util.doc_processor.couch import CouchDocumentProvider
-from django_countries.data import COUNTRIES
 from pillowtop.checkpoints.manager import get_checkpoint_for_elasticsearch_pillow
 from pillowtop.pillow.interface import ConstructedPillow
 from pillowtop.processors import ElasticProcessor
 from pillowtop.reindexer.reindexer import ResumableBulkElasticPillowReindexer, ReindexerFactory
-
-
-def transform_domain_for_elasticsearch(doc_dict):
-    doc_ret = copy.deepcopy(doc_dict)
-    sub = Subscription.visible_objects.filter(subscriber__domain=doc_dict['name'], is_active=True)
-    doc_ret['deployment'] = doc_ret.get('deployment', None) or {}
-    countries = doc_ret['deployment'].get('countries', [])
-    doc_ret['deployment']['countries'] = []
-    if sub:
-        doc_ret['subscription'] = sub[0].plan_version.plan.edition
-    for country in countries:
-        doc_ret['deployment']['countries'].append(COUNTRIES[country].upper())
-    return doc_ret
 
 
 def get_domain_kafka_to_elasticsearch_pillow(pillow_id='KafkaDomainPillow', num_processes=1,
@@ -58,7 +41,7 @@ class DomainReindexerFactory(ReindexerFactory):
     ]
 
     def build(self):
-        iteration_key = "DomainToElasticsearchPillow_{}_reindexer".format(DOMAIN_INDEX_INFO.index)
+        iteration_key = "DomainToElasticsearchPillow_{}_reindexer".format(domain_adapter.index_name)
         doc_provider = CouchDocumentProvider(iteration_key, [Domain])
         options = {
             'chunk_size': 5
