@@ -63,14 +63,25 @@
                   {% if dynamic_properties_table %}
                     {% include "reports/partials/case_property_table.html" with rows=dynamic_properties_table %}
                   {% elif dd_properties_tables %}
-                    {% for table in dd_properties_tables %}
-                      <div class="property-table-row">
-                        <div class="property-table-container">
-                          {% if table.name %}<div class="table-tab">{{ table.name }}</div>{% endif %}
-                          {% include "reports/partials/case_property_table.html" with rows=table.rows %}
+                    <div class="panel-group" id="accordion">
+                      {% for table in dd_properties_tables %}
+                        <div class="panel panel-default">
+                          <div class="panel-heading">
+                            <h4 class="panel-title">
+                              <a data-toggle="collapse" data-parent="#accordion" href="#collapse{{ forloop.counter }}">
+                                <b>{{ table.name }}</b>
+                                <i class="indicator glyphicon glyphicon-chevron-down  pull-right"></i>
+                              </a>
+                            </h4>
+                          </div>
+                          <div id="collapse{{ forloop.counter }}" class="panel-collapse collapse{% if forloop.first %} in{% endif %}">
+                            <div class="panel-body">
+                              {% include "reports/partials/case_property_table.html" with rows=table.rows %}
+                            </div>
+                          </div>
                         </div>
-                      </div>
-                    {% endfor %}
+                      {% endfor %}
+                    </div>
                   {% else %}
                     <div class="well clearfix col-lg-10 col-md-12 col-sm-12">
                       <a target="_blank" class="pull-right"
