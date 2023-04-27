@@ -76,8 +76,9 @@ class TestUpdateRoles(TestCase):
         self._create_user_role(self.downstream_domain, name='test', upstream_id=None)
 
         with self.assertRaisesMessage(UnsupportedActionError,
-                'Failed to sync the following roles due to a conflict: "test".'
-                ' Please remove or rename these roles before syncing again'):
+                'Failed to push the following custom roles due to matching (same name) unlinked roles in this'
+                ' downstream project space: "test". Please edit the roles to resolve the matching or click'
+                ' "Push & Overwrite" to overwrite and link the matching ones.'):
             update_user_roles(self.domain_link)
 
     def test_cannot_sync_name_change_if_name_is_taken(self):
@@ -86,8 +87,9 @@ class TestUpdateRoles(TestCase):
         self._create_user_role(self.downstream_domain, name='new_name', upstream_id=None)
 
         with self.assertRaisesMessage(UnsupportedActionError,
-                'Failed to sync the following roles due to a conflict: "new_name".'
-                ' Please remove or rename these roles before syncing again'):
+                'Failed to push the following custom roles due to matching (same name) unlinked roles in this'
+                ' downstream project space: "new_name". Please edit the roles to resolve the matching or click'
+                ' "Push & Overwrite" to overwrite and link the matching ones.'):
             update_user_roles(self.domain_link)
 
     def test_can_overwrite_matching_names(self):
@@ -129,7 +131,11 @@ class TestUpdateRoles(TestCase):
         self._create_user_role(self.upstream_domain, name=role_name, permissions=modified_permissions)
         self._create_user_role(self.downstream_domain, name=role_name, permissions=built_in_permissions)
 
-        with self.assertRaises(UnsupportedActionError):
+        with self.assertRaisesMessage(UnsupportedActionError,
+                'Failed to push the following default roles due to matching (same name but different permissions)'
+                ' unlinked roles in this downstream project space: "App Editor".'
+                ' Please edit the roles to resolve the matching or click "Push & Overwrite"'
+                ' to overwrite and link the matching ones.'):
             update_user_roles(self.domain_link)
 
     def test_built_in_roles_raise_conflict_if_downstream_changed(self):
@@ -170,9 +176,49 @@ class TestUpdateRoles(TestCase):
         self._create_user_role(self.downstream_domain, name='Role2')
 
         with self.assertRaisesMessage(UnsupportedActionError,
-                'Failed to sync the following roles due to a conflict: "Role1", "Role2".'
-                ' Please remove or rename these roles before syncing again'):
+                'Failed to push the following custom roles due to matching (same name) unlinked roles in this'
+                ' downstream project space: "Role1", "Role2". Please edit the roles to resolve the matching or'
+                ' click "Push & Overwrite" to overwrite and link the matching ones.'):
             update_user_roles(self.domain_link)
+
+    def test_default_and_custom_errors_are_reported_together(self):
+        self._create_user_role(self.upstream_domain, name=UserRolePresets.APP_EDITOR,
+                               permissions=HqPermissions(view_reports=True))
+        self._create_user_role(self.upstream_domain, name='CustomRole')
+
+        self._create_user_role(self.downstream_domain, name=UserRolePresets.APP_EDITOR,
+                               permissions=HqPermissions(view_reports=False))
+        self._create_user_role(self.downstream_domain, name='CustomRole')
+
+        with self.assertRaisesMessage(UnsupportedActionError,
+                'Failed to push the following default roles due to matching (same name but different permissions)'
+                ' unlinked roles in this downstream project space: "App Editor".'
+                ' Please edit the roles to resolve the matching or click "Push & Overwrite"'
+                ' to overwrite and link the matching ones.\n'
+                'Failed to push the following custom roles due to matching (same name) unlinked roles in this'
+                ' downstream project space: "CustomRole". Please edit the roles to resolve the matching or click'
+                ' "Push & Overwrite" to overwrite and link the matching ones.'):
+            update_user_roles(self.domain_link)
+
+    def test_error_message_indicates_push(self):
+        self._create_user_role(self.upstream_domain, name='Test')
+        self._create_user_role(self.downstream_domain, name='Test')
+
+        with self.assertRaisesMessage(UnsupportedActionError,
+                'Failed to push the following custom roles due to matching (same name) unlinked roles in this'
+                ' downstream project space: "Test". Please edit the roles to resolve the matching or click'
+                ' "Push & Overwrite" to overwrite and link the matching ones.'):
+            update_user_roles(self.domain_link, is_pull=False)
+
+    def test_error_message_indicates_pull(self):
+        self._create_user_role(self.upstream_domain, name='Test')
+        self._create_user_role(self.downstream_domain, name='Test')
+
+        with self.assertRaisesMessage(UnsupportedActionError,
+                'Failed to sync the following custom roles due to matching (same name) unlinked roles in this'
+                ' downstream project space: "Test". Please edit the roles to resolve the matching or click'
+                ' "Sync & Overwrite" to overwrite and link the matching ones.'):
+            update_user_roles(self.domain_link, is_pull=True)
 
     @flag_enabled('EMBEDDED_TABLEAU')
     def test_tableau_report_permissions(self):

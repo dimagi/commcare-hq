@@ -41,9 +41,20 @@ class TestUpdateFixturesReal(TestCase):
         self._create_table(self.downstream_domain, 'test-table', ['col_2'], [], is_synced=False)
 
         with self.assertRaisesMessage(UnsupportedActionError,
-                "Existing lookup table found for 'test-table'."
-                " Please remove this table before trying to sync again"):
+                'Failed to push Lookup Table "test-table" due to matching (same Table ID) unlinked Lookup Table'
+                ' in the downstream project space. Please edit the Lookup Table to resolve the matching or click'
+                ' "Push & Overwrite" to overwrite and link them.'):
             update_fixture(self.link, 'test-table')
+
+    def test_produces_pull_message(self):
+        self._create_table(self.upstream_domain, 'test-table', ['col_1'], [])
+        self._create_table(self.downstream_domain, 'test-table', ['col_2'], [], is_synced=False)
+
+        with self.assertRaisesMessage(UnsupportedActionError,
+                'Failed to sync Lookup Table "test-table" due to matching (same Table ID) unlinked Lookup Table'
+                ' in the downstream project space. Please edit the Lookup Table to resolve the matching or click'
+                ' "Sync & Overwrite" to overwrite and link them.'):
+            update_fixture(self.link, 'test-table', is_pull=True)
 
     def test_force_update_overwrites_conflicting_duplicate_name(self):
         upstream_cols = ['col_1']

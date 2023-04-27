@@ -172,7 +172,7 @@ The following linked project spaces received content:
                 return self._error_tuple(str(e))
 
         # have no hit an error case, so update the ucr
-        update_linked_ucr(domain_link, linked_report.get_id, overwrite=overwrite)
+        update_linked_ucr(domain_link, linked_report.get_id, is_pull=False, overwrite=overwrite)
         domain_link.update_last_pull(
             MODEL_REPORT,
             user_id,
@@ -183,7 +183,7 @@ The following linked project spaces received content:
         if not feature_flag.enabled(domain_link.linked_domain):
             return self._error_tuple(_("Feature flag for {} is not enabled").format(model['name']))
 
-        return self._release_model(domain_link, model, user, overwrite=overwrite)
+        return self._release_model(domain_link, model, user, is_pull=False, overwrite=overwrite)
 
     def _release_keyword(self, domain_link, model, user_id, overwrite=False):
         upstream_id = model['detail']['keyword_id']
@@ -193,7 +193,7 @@ The following linked project spaces received content:
         except Keyword.DoesNotExist:
             linked_keyword_id = create_linked_keyword(domain_link, upstream_id)
 
-        update_keyword(domain_link, linked_keyword_id, overwrite)
+        update_keyword(domain_link, linked_keyword_id, is_pull=False, overwrite=overwrite)
         domain_link.update_last_pull(
             MODEL_KEYWORD,
             user_id,
@@ -211,7 +211,8 @@ The following linked project spaces received content:
         except UCRExpression.DoesNotExist:
             linked_ucr_expression_id = create_linked_ucr_expression(domain_link, upstream_id)
         else:
-            update_linked_ucr_expression(domain_link, linked_ucr_expression_id, overwrite=overwrite)
+            update_linked_ucr_expression(domain_link, linked_ucr_expression_id,
+                                         is_pull=False, overwrite=overwrite)
 
         domain_link.update_last_pull(
             MODEL_UCR_EXPRESSION,
@@ -221,7 +222,8 @@ The following linked project spaces received content:
 
     def _release_model(self, domain_link, model, user, overwrite=False):
         try:
-            update_model_type(domain_link, model['type'], model_detail=model['detail'], overwrite=overwrite)
+            update_model_type(domain_link, model['type'], model_detail=model['detail'],
+                              is_pull=False, overwrite=overwrite)
         except UnsupportedActionError as e:
             return self._error_tuple(str(e))
 
