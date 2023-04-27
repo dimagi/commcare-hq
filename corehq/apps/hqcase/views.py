@@ -31,7 +31,7 @@ from corehq.apps.locations.permissions import location_safe
 from .api.core import SubmissionError, UserError, serialize_case, serialize_es_case
 from .api.get_list import get_list
 from .api.get_bulk import get_bulk
-from .api.updates import handle_case_update
+from .api.updates import handle_case_update, validate_update_permission
 from .tasks import delete_exploded_case_task, explode_case_task
 
 
@@ -179,6 +179,15 @@ def _handle_case_update(request, is_creation, case_id=None):
 
     if not is_creation and case_id and 'case_id' not in data:
         data['case_id'] = case_id
+
+    try:
+        if isinstance(data, list):
+            for data_item in data:
+                validate_update_permission(request.domain, data_item, request.couch_user, is_creation)
+        else:
+            validate_update_permission(request.domain, data, request.couch_user, is_creation)
+    except PermissionDenied as e:
+        return JsonResponse({'error': str(e)}, status=403)
 
     try:
         xform, case_or_cases = handle_case_update(

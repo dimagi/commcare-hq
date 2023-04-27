@@ -173,37 +173,12 @@ def handle_case_update(domain, data, user, device_id, is_creation):
         return xform, cases[0]
 
 
-def _validate_update_permission(domain, update, user, is_creation):
-    """
-    Check whether the given `user` has permission to create/update a case.
-    """
-    from corehq.apps.locations.permissions import (
-        user_can_access_case,
-        user_can_access_location_id,
-        user_can_access_other_user
-    )
-
-    if is_creation:
-        # No way of knowing if owner_id is a location or user id, so we need to check both
-        other_user = CommCareUser.get_by_user_id(update.owner_id, domain)
-        if not (
-            user_can_access_location_id(domain, user, update.owner_id)
-            or (other_user and user_can_access_other_user(domain, user, other_user))
-        ):
-            raise PermissionDenied(f"Insufficient permission for Case '{update.temporary_id}'")
-    elif update.case_id:
-        case = case_search_adapter.get(update.case_id)
-        if not user_can_access_case(domain, user, case, es_case=True):
-            raise PermissionDenied(f"Insufficient permission for Case '{update.case_id}'")
-
-
 def _get_individual_update(domain, data, user, is_creation):
     update_class = JsonCaseCreation if is_creation else JsonCaseUpdate
     data['user_id'] = user.user_id
     try:
         update = update_class.wrap(data)
-        _validate_update_permission(domain, update, user, is_creation)
-    except (BadValueError, PermissionDenied) as e:
+    except BadValueError as e:
         raise UserError(str(e))
     return update
 
@@ -303,3 +278,26 @@ def _submit_case_blocks(case_blocks, domain, user, device_id):
         device_id=device_id,
         max_wait=15
     )
+
+
+def validate_update_permission(domain, data, user, is_creation):
+    """
+    Check whether the given `user` has permission to create/update a case.
+    """
+    from corehq.apps.locations.permissions import (
+        user_can_access_case,
+        user_can_access_location_id,
+        user_can_access_other_user
+    )
+    if is_creation:
+        # No way of knowing if owner_id is a location or user id, so we need to check both
+        other_user = CommCareUser.get_by_user_id(data.get('owner_id', None), domain)
+        if not (
+            user_can_access_location_id(domain, user, data.get('owner_id', None))
+            or (other_user and user_can_access_other_user(domain, user, other_user))
+        ):
+            raise PermissionDenied(f"Insufficient permission for Case '{data.get('temporary_id', None)}'")
+    elif 'case_id' in data:
+        case = case_search_adapter.get(data.get('case_id', None))
+        if not user_can_access_case(domain, user, case, es_case=True):
+            raise PermissionDenied(f"Insufficient permission for Case '{data.get('case_id', None)}'")
