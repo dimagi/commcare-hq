@@ -208,7 +208,10 @@ class Command(BaseCommand):
              description='Display the "Form IDs" and "Case IDs" download buttons on Case Importer'),
         Role(slug=privileges.EXPORT_MULTISORT,
              name='Sort multiple rows in exports simultaneously',
-             description='Sort multiple rows in exports simultaneously')
+             description='Sort multiple rows in exports simultaneously'),
+        Role(slug=privileges.EXPORT_OWNERSHIP,
+             name='Allow exports to have ownership',
+             description='Allow exports to have ownership'),
     ]
 
     BOOTSTRAP_PLANS = [
