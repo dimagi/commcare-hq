@@ -123,6 +123,7 @@ class RecordListField(Field):
 
 class KeywordForm(Form):
     domain = None
+    readonly = False
     keyword_id = None
     keyword = CharField(label=gettext_noop("Keyword"))
     description = TrimmedCharField(label=gettext_noop("Description"))
@@ -212,6 +213,9 @@ class KeywordForm(Form):
         if 'domain' in kwargs:
             self.domain = kwargs.pop('domain')
 
+        if 'readonly' in kwargs:
+            self.readonly = kwargs.pop('readonly')
+
         if 'keyword_id' in kwargs:
             self.keyword_id = kwargs.pop('keyword_id')
 
@@ -228,6 +232,10 @@ class KeywordForm(Form):
         self.fields['sender_app_and_form_unique_id'].choices = self.form_choices
         self.fields['other_recipient_app_and_form_unique_id'].choices = self.form_choices
         self.fields['structured_sms_app_and_form_unique_id'].choices = self.form_choices
+        # The other fields are controlled by disabling the parent fieldset,
+        #  but because javascript creates a new select element for this, we have to
+        #  explicitly disable this field
+        self.fields['structured_sms_app_and_form_unique_id'].disabled = self.readonly
 
         from corehq.apps.reminders.views import KeywordsListView
         self.helper = FormHelper()
@@ -248,6 +256,7 @@ class KeywordForm(Form):
                     'description',
                     data_bind="text: description",
                 ),
+                disabled=self.readonly,
             ),
         ]
         if self.process_structured_sms:
@@ -341,6 +350,7 @@ class KeywordForm(Form):
                                     'data-bind="text: exampleStructuredSms">'
                                     '</pre>'),
                     ),
+                    disabled=self.readonly,
                 ),
             )
         layout_fields.extend([
@@ -406,6 +416,7 @@ class KeywordForm(Form):
                         data_bind="visible: notifyOthers",
                     ),
                 ),
+                disabled=self.readonly,
             ),
             crispy.Fieldset(
                 _("Advanced Options"),
@@ -414,12 +425,14 @@ class KeywordForm(Form):
                     data_bind="checked: overrideOpenSessions",
                 ),
                 'allow_keyword_use_by',
+                disabled=self.readonly,
             ),
             hqcrispy.FormActions(
                 twbscrispy.StrictButton(
                     _("Save"),
                     css_class='btn-primary',
                     type='submit',
+                    disabled=self.readonly,
                 ),
                 crispy.HTML('<a href="%s" class="btn btn-default">Cancel</a>'
                             % reverse(KeywordsListView.urlname, args=[self.domain]))
