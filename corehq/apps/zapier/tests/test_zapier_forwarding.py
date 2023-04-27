@@ -31,7 +31,6 @@ class TestZapierCaseForwarding(TestCase):
     def tearDownClass(cls):
         cls.web_user.delete(cls.domain, deleted_by=None)
         cls.domain_object.delete()
-        delete_all_repeaters()
         super(TestZapierCaseForwarding, cls).tearDownClass()
 
     def tearDown(self):

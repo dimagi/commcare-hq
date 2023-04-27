@@ -8,7 +8,6 @@ from corehq.apps.users.models import WebUser
 from corehq.motech.dhis2.models import SQLDataSetMap, SQLDataValueMap
 from corehq.motech.dhis2.repeaters import Dhis2EntityRepeater, Dhis2Repeater
 from corehq.motech.models import ConnectionSettings
-from ...repeaters.dbaccessors import delete_all_repeaters
 from corehq.util.test_utils import flag_enabled
 from corehq.motech.dhis2.tests.data.repeater import dhis2_repeater_data, dhis2_entity_repeater_data
 
@@ -75,8 +74,6 @@ class BaseViewTest(TestCase):
     def tearDownClass(cls):
         cls.user.delete(cls.domain.name, deleted_by=None)
         cls.domain.delete()
-        cls.connection_setting.delete()
-        delete_all_repeaters()
         super().tearDownClass()
 
 

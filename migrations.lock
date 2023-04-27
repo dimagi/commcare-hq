@@ -272,6 +272,7 @@ data_dictionary
  0008_casepropertyallowedvalue
  0009_caseproperty_label
  0010_caseproperty_index
+ 0011_casepropertygroup
 data_interfaces
  0001_initial
  0002_remove_exists_option
@@ -363,6 +364,7 @@ enterprise
 es
  0001_bootstrap_es_indexes
  0002_add_tombstones
+ 0003_add_assigned_location_ids
 events
  0001_add_events_model
  0002_attendancetrackingconfig
@@ -735,6 +737,7 @@ repeaters
  00012_create_default_names_for_repeaters
  0013_rename_sqlrepeaters_to_repeaters
  0014_add_new_state_empty
+ 0015_drop_connection_settings_fk
 reports
  0001_initial
  0002_auto_20171121_1803

@@ -5,8 +5,6 @@ from django.urls import reverse
 from django.utils.translation import gettext_lazy as _
 from django.views.decorators.http import require_GET
 
-from memoized import memoized
-
 from corehq import toggles
 from corehq.apps.domain.decorators import login_and_domain_required
 from corehq.apps.domain.views.base import BaseDomainView
@@ -17,6 +15,7 @@ from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import HqPermissions
 from corehq.apps.users.views import BaseUserSettingsView
 from corehq.util.jqueryrmi import JSONResponseMixin, allow_remote_invocation
+from .exceptions import AttendeeTrackedException
 
 from .forms import EditAttendeeForm, EventForm, NewAttendeeForm
 from .models import (
@@ -24,6 +23,8 @@ from .models import (
     EVENT_IN_PROGRESS,
     EVENT_NOT_STARTED,
     EVENT_STATUS_TRANS,
+    LOCATION_IDS_CASE_PROPERTY,
+    PRIMARY_LOCATION_ID_CASE_PROPERTY,
     AttendeeModel,
     Event,
     get_attendee_case_type,
@@ -282,23 +283,33 @@ class AttendeesListView(JSONResponseMixin, BaseEventView):
     def page_context(self):
         context = super().page_context
         if self.request.method == "POST":
-            context['new_attendee_form'] = NewAttendeeForm(self.request.POST)
+            form = NewAttendeeForm(self.request.POST, domain=self.domain)
         else:
-            context['new_attendee_form'] = NewAttendeeForm()
-        return context
+            form = NewAttendeeForm(domain=self.domain)
+        return context | {'new_attendee_form': form}
 
     @allow_remote_invocation
     def create_attendee(self, data):
         form_data = data['attendee'] | {
             'domain': self.domain,
         }
-        form = NewAttendeeForm(form_data)
+        form = NewAttendeeForm(form_data, domain=self.domain)
         if form.is_valid():
+            if form.cleaned_data['location_id']:
+                properties = {
+                    LOCATION_IDS_CASE_PROPERTY:
+                        form.cleaned_data['location_id'],
+                    PRIMARY_LOCATION_ID_CASE_PROPERTY:
+                        form.cleaned_data['location_id'],
+                }
+            else:
+                properties = {}
             helper = CaseHelper(domain=self.domain)
             helper.create_case({
                 'case_type': get_attendee_case_type(self.domain),
                 'case_name': form.cleaned_data['name'],
                 'owner_id': self.request.couch_user.user_id,
+                'properties': properties,
             })
             return {
                 'success': True,
@@ -349,6 +360,8 @@ class AttendeeEditView(BaseEventView):
             form = EditAttendeeForm(domain=self.domain, instance=instance)
         context.update({
             'attendee_id': self.attendee_id,
+            'attendee_name': instance.name,
+            'attendee_has_attended_events': instance.has_attended_events(),
             'form': form,
         })
         return context
@@ -369,6 +382,24 @@ class AttendeeEditView(BaseEventView):
                 reverse(AttendeesListView.urlname, args=(self.domain,))
             )
         return self.get(request, *args, **kwargs)
+
+
+class AttendeeDeleteView(BaseEventView):
+    urlname = 'delete_attendee'
+
+    def post(self, request, domain, attendee_id):
+        instance = AttendeeModel.objects.get(
+            case_id=attendee_id,
+            domain=domain
+        )
+        try:
+            instance.delete()
+        except AttendeeTrackedException:
+            return JsonResponse({
+                'failed': 'Cannot delete an attendee that has been tracked in one or more events.'
+            }, status=400)
+
+        return HttpResponseRedirect(reverse(AttendeesListView.urlname, args=(domain,)))
 
 
 class AttendeesConfigView(JSONResponseMixin, BaseUserSettingsView, BaseEventView):
