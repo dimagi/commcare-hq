@@ -4,7 +4,7 @@ hqDefine("userreports/js/ucr_expression", [
     'underscore',
     'hqwebapp/js/initial_page_data',
     'hqwebapp/js/base_ace',
-    'hqwebapp/js/alert_user',
+    'hqwebapp/js/bootstrap3/alert_user',
 ], function (
     moment,
     ko,
