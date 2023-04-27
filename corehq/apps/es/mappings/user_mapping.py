@@ -1,12 +1,5 @@
-from pillowtop.es_utils import USER_HQ_INDEX_NAME, ElasticsearchIndexInfo
-
 from corehq.apps.es.client import Tombstone
-from corehq.apps.es.users import user_adapter
 from corehq.pillows.core import DATE_FORMATS_ARR, DATE_FORMATS_STRING
-from corehq.util.elastic import prefix_for_tests
-
-USER_INDEX = user_adapter.index_name
-USER_ES_ALIAS = prefix_for_tests('hqusers')
 
 USER_MAPPING = {
     "_all": {
@@ -513,11 +506,3 @@ USER_MAPPING = {
         }
     }
 }
-
-USER_INDEX_INFO = ElasticsearchIndexInfo(
-    index=USER_INDEX,
-    alias=USER_ES_ALIAS,
-    type=user_adapter.type,
-    mapping=USER_MAPPING,
-    hq_index_name=USER_HQ_INDEX_NAME
-)

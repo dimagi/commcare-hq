@@ -1,5 +1,6 @@
 from django.conf import settings
 from corehq.util.es.elasticsearch import NotFoundError
+from corehq.apps.es.client import manager
 
 from corehq.util.test_utils import unit_testing_only
 from unittest import SkipTest
@@ -23,9 +24,7 @@ def ensure_index_deleted(es_index):
 @unit_testing_only
 def delete_es_index(es_index):
     if es_index.startswith(TEST_ES_PREFIX):
-        from corehq.elastic import get_es_new
-        es = get_es_new()
-        es.indices.delete(index=es_index)
+        manager.index_delete(es_index)
     else:
         raise DeleteProductionESIndex('You cannot delete a production index in tests!!')
 
