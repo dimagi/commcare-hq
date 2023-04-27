@@ -65,11 +65,12 @@ hqDefine("data_dictionary/js/data_dictionary", [
         return self;
     };
 
-    var groupsViewModel = function (id, name, description, caseType) {
+    var groupsViewModel = function (id, name, description, index, caseType) {
         var self = {};
         self.id = id;
         self.name = ko.observable(name);
         self.description = ko.observable(description);
+        self.index = index;
         self.caseType = caseType;
         self.properties = ko.observableArray();
         self.expanded = ko.observable(true);
@@ -292,7 +293,7 @@ hqDefine("data_dictionary/js/data_dictionary", [
 
         self.newGroup = function () {
             if (_.isString(self.newGroupName())) {
-                var group = groupsViewModel(null, self.newGroupName(), '', self.activeCaseType());
+                var group = groupsViewModel(null, self.newGroupName(), '', null, self.activeCaseType());
                 self.caseGroupList.push(group);
                 self.newGroupName(undefined);
             }
