@@ -71,20 +71,22 @@ class TestCaseAPI(TestCase):
         return cases[0]
 
     def _create_case(self, body):
-        return self.client.post(
-            reverse('case_api', args=(self.domain,)),
-            body,
-            content_type="application/json;charset=utf-8",
-            HTTP_USER_AGENT="user agent string",
-        )
+        with patch('corehq.apps.hqcase.views.validate_update_permission'):
+            return self.client.post(
+                reverse('case_api', args=(self.domain,)),
+                body,
+                content_type="application/json;charset=utf-8",
+                HTTP_USER_AGENT="user agent string",
+            )
 
     def _update_case(self, case_id, body):
-        return self.client.put(
-            reverse('case_api', args=(self.domain, case_id,)),
-            body,
-            content_type="application/json;charset=utf-8",
-            HTTP_USER_AGENT="user agent string",
-        )
+        with patch('corehq.apps.hqcase.views.validate_update_permission'):
+            return self.client.put(
+                reverse('case_api', args=(self.domain, case_id,)),
+                body,
+                content_type="application/json;charset=utf-8",
+                HTTP_USER_AGENT="user agent string",
+            )
 
     def _bulk_update_cases(self, body):
         # for the time being, the implementation is the same
@@ -671,18 +673,20 @@ class TestCaseAPI(TestCase):
         case = CommCareCase.objects.get_case(case.case_id, self.domain)
         self.assertEqual(case.external_id, '1')
 
+
     def test_urls_without_trailing_slash(self):
         case_id = self._make_case().case_id
         urls = [
             (self.client.post, reverse('case_api', args=(self.domain,)).rstrip("/")),
             (self.client.put, reverse('case_api', args=(self.domain, case_id)).rstrip("/")),
         ]
-        for request_fn, url in urls:
-            res = request_fn(
-                url,
-                {'body': 'bad case update format'},
-                content_type="application/json;charset=utf-8",
-                HTTP_USER_AGENT="user agent string",
-            )
-            # These requests should return a 400 because of the bad body, not a 301 redirect
-            self.assertEqual(res.status_code, 400)
+        with patch('corehq.apps.hqcase.views.validate_update_permission'):
+            for request_fn, url in urls:
+                res = request_fn(
+                    url,
+                    {'body': 'bad case update format'},
+                    content_type="application/json;charset=utf-8",
+                    HTTP_USER_AGENT="user agent string",
+                )
+                # These requests should return a 400 because of the bad body, not a 301 redirect
+                self.assertEqual(res.status_code, 400)
