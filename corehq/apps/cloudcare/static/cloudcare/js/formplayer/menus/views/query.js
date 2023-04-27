@@ -183,13 +183,15 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
             var imageUri = this.options.model.get('imageUri'),
                 audioUri = this.options.model.get('audioUri'),
                 appId = this.model.collection.appId,
-                value = this.options.model.get('value');
+                value = this.options.model.get('value'),
+                itemsetChoicesDict = this.options.model.get('itemsetChoicesDict');
 
             return {
                 imageUrl: imageUri ? FormplayerFrontend.getChannel().request('resourceMap', imageUri, appId) : "",
                 audioUrl: audioUri ? FormplayerFrontend.getChannel().request('resourceMap', audioUri, appId) : "",
                 value: value,
                 errorMessage: this.errorMessage,
+                itemsetChoicesDict: itemsetChoicesDict,
             };
         },
 
@@ -197,6 +199,7 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
             this.parentView = this.options.parentView;
             this.model = this.options.model;
             this.errorMessage = null;
+            this._setItemset(this.model.attributes.itemsetChoices, this.model.attributes.itemsetChoicesKey);
 
             // initialize with default values or with sticky values if either is present
             var value = decodeValue(this.model, this.model.get('value'))[1],
@@ -224,6 +227,26 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
             'change @ui.searchForBlank': 'notifyParentOfFieldChange',
             'dp.change @ui.queryField': 'changeDateQueryField',
             'click @ui.searchForBlank': 'toggleBlankSearch',
+        },
+
+        _setItemset: function(itemsetChoices, itemsetChoicesKey) {
+            itemsetChoices = itemsetChoices || [];
+            let itemsetChoicesDict = {};
+
+            if (this.parentView.selectValuesByKeys){
+                itemsetChoicesKey = itemsetChoicesKey || [];
+                itemsetChoicesKey.forEach((key,i) => itemsetChoicesDict[key]=itemsetChoices[i])
+                this.model.set({
+                    itemsetChoicesKey: itemsetChoicesKey,
+                })
+            }
+            else{
+                itemsetChoices.forEach((key,i) => itemsetChoicesDict[i]=itemsetChoices[i])
+            }
+            this.model.set({
+                itemsetChoices: itemsetChoices,
+                itemsetChoicesDict: itemsetChoicesDict
+            })
         },
 
         _render: function () {
@@ -413,6 +436,17 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
 
         initialize: function (options) {
             this.parentModel = options.collection.models;
+
+            // whether the select prompt selection is passed as itemset keys
+            // only here to maintain backward compatibility and can be removed
+            // once web apps fully transition using keys to convey select prompt selection.
+            this.selectValuesByKeys = false;
+            for (key in this.parentModel) {
+                if ("itemsetChoicesKey" in this.parentModel[key].attributes){
+                    this.selectValuesByKeys = true;
+                    break;
+                }
+            }
         },
 
         templateContext: function () {
@@ -467,9 +501,11 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
                             }
                         }
                         self.collection.models[i].set({
-                            itemsetChoices: choices,
                             value: value,
                         });
+
+                        self.children.findByIndex(i)._setItemset(choices, response.models[i].get('itemsetChoicesKey'));
+
                         self.children.findByIndex(i)._render();      // re-render with new choice values
                     }
                 }
@@ -555,7 +591,7 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
             var self = this;
 
             var urlObject = formplayerUtils.currentUrlToObject();
-            urlObject.setQueryData(self.getAnswers(), false);
+            urlObject.setQueryData(self.getAnswers(), false, false, selectValuesByKeys=self.selectValuesByKeys);
             var promise = $.Deferred(),
                 fetchingPrompts = FormplayerFrontend.getChannel().request("app:select:menus", urlObject);
             $.when(fetchingPrompts).done(function (response) {
