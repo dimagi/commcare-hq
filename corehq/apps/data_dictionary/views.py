@@ -114,6 +114,7 @@ def data_dictionary_json(request, domain, case_type_name=None):
                 "name": group.name,
                 "index": group.index,
                 "description": group.description,
+                "deprecated": group.deprecated,
                 "properties": []
             }
 
@@ -189,9 +190,10 @@ def update_case_property(request, domain):
             name = group.get("name")
             index = group.get("index")
             description = group.get("description")
+            deprecated = group.get("deprecated")
 
             if name:
-                error = save_case_property_group(id, name, case_type, domain, description, index)
+                error = save_case_property_group(id, name, case_type, domain, description, index, deprecated)
 
             if error:
                 errors.append(error)

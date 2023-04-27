@@ -175,7 +175,7 @@ def get_deprecated_fields(domain, case_type_name):
     return deprecated_fields
 
 
-def save_case_property_group(id, name, case_type, domain, description, index):
+def save_case_property_group(id, name, case_type, domain, description, index, deprecated):
     """
     Takes a case property group to update and returns an error if there was one
     """
@@ -193,6 +193,8 @@ def save_case_property_group(id, name, case_type, domain, description, index):
         group_obj.description = description
     if index is not None:
         group_obj.index = index
+    if deprecated is not None:
+        group_obj.deprecated = deprecated
 
     try:
         group_obj.full_clean()
