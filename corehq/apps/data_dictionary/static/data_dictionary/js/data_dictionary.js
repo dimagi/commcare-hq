@@ -32,10 +32,11 @@ hqDefine("data_dictionary/js/data_dictionary", [
 
         self.init = function (groupData, changeSaveButton) {
             for (let group of groupData) {
-                let groupObj = groupsViewModel(group.id, group.name, group.description, group.index, self.name);
+                let groupObj = groupsViewModel(group.id, group.name, group.description, group.index, self.name, group.deprecated);
                 if (group.id) {
                     groupObj.name.subscribe(changeSaveButton);
                     groupObj.description.subscribe(changeSaveButton);
+                    groupObj.deprecated.subscribe(changeSaveButton);
                 }
                 groupObj.properties.subscribe(changeSaveButton);
 
@@ -65,7 +66,7 @@ hqDefine("data_dictionary/js/data_dictionary", [
         return self;
     };
 
-    var groupsViewModel = function (id, name, description, index, caseType) {
+    var groupsViewModel = function (id, name, description, index, caseType, deprecated) {
         var self = {};
         self.id = id;
         self.name = ko.observable(name);
@@ -75,7 +76,9 @@ hqDefine("data_dictionary/js/data_dictionary", [
         self.properties = ko.observableArray();
         self.expanded = ko.observable(true);
         self.toggleExpanded = () => self.expanded(!self.expanded());
-        self.deprecated = ko.observable(false);
+        self.deprecated = ko.observable(deprecated || false);
+        // Ensures that groups are not directly hidden on clicking the deprecated button
+        self.isDeprecatedOnLoad = deprecated;
         self.deprecateGroup = function () {
             self.deprecated(true);
         };
@@ -175,6 +178,7 @@ hqDefine("data_dictionary/js/data_dictionary", [
                             'name': group.name(),
                             'description': group.description(),
                             'index': index,
+                            'deprecated': group.deprecated(),
                         };
                         postGroups.push(groupData);
                     }
@@ -191,7 +195,7 @@ hqDefine("data_dictionary/js/data_dictionary", [
                             'label': element.label() || element.name,
                             'index': index,
                             'data_type': element.dataType(),
-                            'group': group.name(),
+                            'group': group.deprecated() ? "" : group.name(),
                             'description': element.description(),
                             'fhir_resource_prop_path': (
                                 element.fhirResourcePropPath() ? element.fhirResourcePropPath().trim() : element.fhirResourcePropPath()),
@@ -216,6 +220,12 @@ hqDefine("data_dictionary/js/data_dictionary", [
                     success: function () {
                         var activeCaseType = self.getActiveCaseType();
                         activeCaseType.fhirResourceType(self.fhirResourceType());
+                        const emptyGroup = self.caseGroupList().find(group => group.name() === "");
+                        for (let group of self.caseGroupList()) {
+                            if (group.deprecated()) {
+                                emptyGroup.properties.push(...group.properties.removeAll());
+                            }
+                        }
                         activeCaseType.groups(self.caseGroupList());
                     },
                     // Error handling is managed by SaveButton logic in main.js

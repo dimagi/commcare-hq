@@ -151,8 +151,8 @@
         </a>
       {% endif %}
       <div  data-bind="visible: $root.activeCaseType()">
-        <button data-bind="click: $root.showDeprecated, visible: !showAll()" class="btn btn-default pull-right">{% trans "Show Deprecated Properties" %}</button>
-        <button data-bind="click: $root.hideDeprecated, visible: showAll" class="btn btn-default pull-right">{% trans "Hide Deprecated Properties" %}</button>
+        <button data-bind="click: $root.showDeprecated, visible: !showAll()" class="btn btn-default pull-right">{% trans "Show Deprecated" %}</button>
+        <button data-bind="click: $root.hideDeprecated, visible: showAll" class="btn btn-default pull-right">{% trans "Hide Deprecated" %}</button>
         <div id="data-dictionary-table">
           <div class="table-row table-header">
           <div class="row-item-small"></div>
@@ -169,7 +169,7 @@
           </div>
           <div data-bind="sortable: { data: caseGroupList, connectClass: 'groups', options: { handle: 'i.sortable-handle' } }">
           <div>
-          <div class="table-row group" data-bind="css: { 'group-deprecated': deprecated() }">
+          <div class="table-row group" data-bind="css: { 'group-deprecated': deprecated() }, visible: !isDeprecatedOnLoad || $root.showAll()">
             <div class="row-item-small">
               {% if not request.is_view_only %}
               <i class="sortable-handle fa fa-arrows-v"></i>
