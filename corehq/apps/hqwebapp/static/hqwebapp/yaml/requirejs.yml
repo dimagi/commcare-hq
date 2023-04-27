@@ -1,5 +1,5 @@
-mainConfigFile: ../corehq/apps/hqwebapp/static/hqwebapp/js/requirejs_config.js
-bundlesConfigOutFile: hqwebapp/js/requirejs_config.js
+mainConfigFile: ../corehq/apps/hqwebapp/static/hqwebapp/js/bootstrap3/requirejs_config.js
+bundlesConfigOutFile: hqwebapp/js/bootstrap3/requirejs_config.js
 baseUrl: ./
 dir: ./
 allowSourceOverwrites: true

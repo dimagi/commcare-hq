@@ -70,13 +70,14 @@ class Command(ResourceStaticCommand):
         if local:
             _copy_modules_back_into_corehq(config, local_js_dirs)
 
-        filename = os.path.join(ROOT_DIR, 'staticfiles', 'hqwebapp', 'js', 'requirejs_config.js')
-        resource_versions["hqwebapp/js/requirejs_config.js"] = self.get_hash(filename)
+        filename = os.path.join(ROOT_DIR, 'staticfiles', 'hqwebapp', 'js',
+                                'bootstrap3', 'requirejs_config.js')
+        resource_versions["hqwebapp/js/bootstrap3/requirejs_config.js"] = self.get_hash(filename)
         if local:
             dest = os.path.join(ROOT_DIR, 'corehq', 'apps', 'hqwebapp', 'static',
-                                'hqwebapp', 'js', 'requirejs_config.js')
+                                'hqwebapp', 'js', 'bootstrap3', 'requirejs_config.js')
             copyfile(filename, dest)
-            logger.info("Copied updated requirejs_config.js back into {}".format(_relative(dest)))
+            logger.info("Copied updated bootstrap3/requirejs_config.js back into {}".format(_relative(dest)))
 
         # Overwrite each bundle in resource_versions with the sha from the optimized version in staticfiles
         for module in config['modules']:
