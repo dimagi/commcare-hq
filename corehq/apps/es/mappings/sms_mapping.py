@@ -1,13 +1,6 @@
-from pillowtop.es_utils import SMS_HQ_INDEX_NAME, ElasticsearchIndexInfo
-
 from corehq.apps.es.client import Tombstone
-from corehq.apps.es.sms import sms_adapter
 from corehq.pillows.core import DATE_FORMATS_ARR, DATE_FORMATS_STRING
-from corehq.util.elastic import prefix_for_tests
 
-SMS_INDEX = sms_adapter.index_name
-SMS_TYPE = sms_adapter.type
-SMS_ES_ALIAS = prefix_for_tests("smslogs")
 
 SMS_MAPPING = {
     "_all": {
@@ -87,11 +80,3 @@ SMS_MAPPING = {
         }
     }
 }
-
-SMS_INDEX_INFO = ElasticsearchIndexInfo(
-    index=SMS_INDEX,
-    alias=SMS_ES_ALIAS,
-    type=SMS_TYPE,
-    mapping=SMS_MAPPING,
-    hq_index_name=SMS_HQ_INDEX_NAME
-)
