@@ -26,6 +26,7 @@ from corehq.toggles import CASE_API_V0_6
 from corehq.util.es.elasticsearch import NotFoundError
 from corehq.util.view_utils import reverse
 from corehq.apps.locations.permissions import user_can_access_case
+from corehq.apps.locations.permissions import location_safe
 
 from .api.core import SubmissionError, UserError, serialize_case, serialize_es_case
 from .api.get_list import get_list
@@ -90,14 +91,12 @@ class ExplodeCasesView(BaseProjectSettingsView, TemplateView):
 @CASE_API_V0_6.required_decorator()
 @requires_privilege_with_fallback(privileges.API_ACCESS)
 @api_throttle
+@location_safe
 def case_api(request, domain, case_id=None):
-    # TODO: Make all handle functions location-safe,
-    #       then decorate view @location_safe
-    #       Context: SC-2368
     if request.method == 'GET' and case_id:
         return _handle_get(request, case_id)
     if request.method == 'GET' and not case_id:
-        return _handle_list_view(request)  # is location-safe
+        return _handle_list_view(request)
     if request.method == 'POST' and not case_id:
         return _handle_case_update(request, is_creation=True)
     if request.method == 'PUT':
