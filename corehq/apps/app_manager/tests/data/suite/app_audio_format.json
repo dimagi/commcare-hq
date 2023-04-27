@@ -248,27 +248,18 @@
   "user_type": null,
   "profile": {
     "properties": {
-      "cc-send-procedure": "cc-send-http",
       "logenabled": "Enabled",
-      "cc-entry-mode": "cc-entry-quick",
       "user_reg_server": "required",
       "log_prop_weekly": "log_short",
-      "server-tether": "push-only",
-      "extra_key_action": "audio",
-      "password_format": "n",
       "restore-tolerance": "loose",
       "cc-content-valid": "no",
-      "cc-user-mode": "cc-u-normal",
       "loose_media": "no",
-      "ViewStyle": "v_chatterbox",
       "cc-autoup-freq": "freq-never",
       "log_prop_daily": "log_never",
-      "cc-send-unsent": "cc-su-auto",
       "purge-freq": "0"
     },
     "features": {
-      "users": "true",
-      "sense": "false"
+      "users": "true"
     }
   },
   "attribution_notes": null,
@@ -294,8 +285,6 @@
   "name": "Picture Property Test",
   "use_custom_suite": false,
   "secure_submissions": false,
-  "platform": "nokia/s40",
-  "text_input": "roman",
   "build_broken": false,
   "multimedia_map": {}
 }
