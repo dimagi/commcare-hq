@@ -1,4 +1,4 @@
-hqDefine("es6!hqwebapp/js/bootstrap5/hq.helpers", [
+hqDefine("hqwebapp/js/bootstrap5/hq.helpers", [
     'jquery',
     'knockout',
     'underscore',
