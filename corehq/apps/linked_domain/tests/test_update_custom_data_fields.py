@@ -127,8 +127,24 @@ class TestUpdateFields(TestCase):
         update_definition = self._generate_update_definition_for_fields([updated_field], UserFieldsView.field_type)
 
         with self.assertRaisesMessage(DomainLinkError,
-                                      "Cannot update custom fields due to the following field conflicts: a"):
+                'Failed to push the following Custom User Data Fields due to matching (same User Property)'
+                ' unlinked Custom User Data Fields in this downstream project space: "a". Please edit the'
+                ' Custom User Data Fields to resolve the matching or click "Push & Overwrite"'
+                ' to overwrite and link the matching ones.'):
             update_custom_data_models_impl(update_definition, self.domain)
+
+    def test_pull_error_message(self):
+        self._set_fields([Field(slug='a', label='label1')], UserFieldsView.field_type)
+
+        updated_field = Field(id='1', slug='a', label='label2')
+        update_definition = self._generate_update_definition_for_fields([updated_field], UserFieldsView.field_type)
+
+        with self.assertRaisesMessage(DomainLinkError,
+                'Failed to sync the following Custom User Data Fields due to matching (same User Property)'
+                ' unlinked Custom User Data Fields in this downstream project space: "a". Please edit the'
+                ' Custom User Data Fields to resolve the matching or click "Sync & Overwrite"'
+                ' to overwrite and link the matching ones.'):
+            update_custom_data_models_impl(update_definition, self.domain, is_pull=True)
 
     def test_can_force_overwrite_fields_with_same_slug(self):
         self._set_fields([Field(slug='a', label='label1')], UserFieldsView.field_type)
@@ -230,8 +246,34 @@ class TestUpdateProfiles(TestCase):
         update_json = {'UserFields': user_fields_definition}
 
         with self.assertRaisesMessage(DomainLinkError,
-                'Cannot update custom fields due to the following profile conflicts: SyncedProfile1'):
+                'Failed to push the following Custom User Data Fields Profiles due to matching (same User Profile)'
+                ' unlinked Custom User Data Fields Profiles in this downstream project space: "SyncedProfile1".'
+                ' Please edit the Custom User Data Fields Profiles to resolve the matching or click'
+                ' "Push & Overwrite" to overwrite and link the matching ones.'):
             update_custom_data_models_impl(update_json, 'test-domain')
+
+    def test_pull_error_message(self):
+        downstream_fields = [Field(slug='a', upstream_id='1')]
+        upstream_fields = [Field(id='1', slug='a')]
+        existing_definition = CustomDataFieldsDefinition.objects.create(
+            domain='test-domain', field_type='UserFields'
+        )
+        existing_definition.set_fields(downstream_fields)
+        existing_definition.save()
+        make_existing_profile(existing_definition, upstream_id=None)
+
+        user_fields_definition = {
+            'fields': [field_to_json(field) for field in upstream_fields],
+            'profiles': [make_profile(id='1')]
+        }
+        update_json = {'UserFields': user_fields_definition}
+
+        with self.assertRaisesMessage(DomainLinkError,
+                'Failed to sync the following Custom User Data Fields Profiles due to matching (same User Profile)'
+                ' unlinked Custom User Data Fields Profiles in this downstream project space: "SyncedProfile1".'
+                ' Please edit the Custom User Data Fields Profiles to resolve the matching or click'
+                ' "Sync & Overwrite" to overwrite and link the matching ones.'):
+            update_custom_data_models_impl(update_json, 'test-domain', is_pull=True)
 
     def test_can_force_overwrite_existing_profile(self):
         downstream_fields = [Field(slug='a', upstream_id='1')]
