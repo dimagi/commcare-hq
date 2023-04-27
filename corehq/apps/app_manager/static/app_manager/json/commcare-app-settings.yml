@@ -18,36 +18,6 @@
   # the build_spec widget depends on application_version coming before it in
   # this file
 
-- id: use_j2me_endpoint
-  name: "Send Data Over HTTP"
-  description: "When you select this box, your data will no longer be encrypted.  Because of changes regarding Java phone security certificates, it will be necessary to send data over HTTP to continue sending data to CommCare."
-  default: false
-  widget: "bool"
-  force: true
-
-- id: platform
-  name: "Java Phone Platform"
-  description: "The kind of Java phone you want to run the application on"
-  values:
-    - ['nokia/s40', 'Nokia S40 (default)']
-    - ['nokia/s60', 'Nokia S60']
-    - ['winmo', 'WinMo']
-    - ['generic', 'Generic']
-  default: 'nokia/s40'
-
-- id: text_input
-  name: "Text Input"
-  description: "What characters to allow users to input"
-  widget: text_input
-  values:
-    - ['roman', 'Roman']
-    - ['native', 'Native (International)']
-    - ['custom-keys', 'Custom Keys']
-    - ['qwerty', 'Full Keyboard']
-  default: roman
-  since: {qwerty: '2.6', 'custom-keys': '1.3'}
-  requires: "{hq.platform}='nokia/s40'||{hq.platform}='nokia/s60'"
-
 - id: practice_mobile_worker_id
   name: 'Practice Mobile Worker'
   widget: select
@@ -119,12 +89,6 @@
   widget: textarea
   requires: "{$parent.doc_type}='Application'"
   disabled: true
-
-- id: admin_password
-  name: "Admin Password"
-  description: Must correspond to the password format specified below.
-  widget: password
-  hide_if_not_enabled: true
 
 - id: secure_submissions
   name: "Use Secure Submissions"
