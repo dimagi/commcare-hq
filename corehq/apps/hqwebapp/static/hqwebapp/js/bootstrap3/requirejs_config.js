@@ -52,7 +52,7 @@ requirejs.config({
         },
     },
 
-    // This is really build config, but it's easier to define a js function here than in requirejs.yml
+    // This is really build config, but it's easier to define a js function here than in bootstrap3/requirejs.yml
     // The purpose of this is to replace hqDefine and hqRequire calls, which in a requirejs context are
     // just pass throughs to define and require, with actual calls to define and require. This is needed
     // because r.js's dependency tracing depends on parsing define and require calls.
