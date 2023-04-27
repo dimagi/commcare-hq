@@ -259,8 +259,7 @@
       "purge-freq": "0"
     },
     "features": {
-      "users": "true",
-      "sense": "false"
+      "users": "true"
     }
   },
   "attribution_notes": null,

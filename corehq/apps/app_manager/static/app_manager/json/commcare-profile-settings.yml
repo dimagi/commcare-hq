@@ -46,7 +46,6 @@
     - ['92', 'Three Months']
     - ['365', 'One Year']
     - ['-1', 'Forms are Never Removed']
-  requires: "{features.sense}='false'"
   default: "-1"
   values_txt: "Any positive integer. Represents period of purging in days." 
   since: "2.8"
@@ -229,7 +228,6 @@
     - ['no', 'Disable']
   default: "no"
   commcare_default: "yes"
-  contingent_default: [{"condition": "{features.sense}='true'", "value": "no"}]
   values_txt: "This will show or hide the 'Saved' button on the CommCare ODK home screen. Turning this off will prevent users from saving forms locally."
   since: "2.11"
   force: true
@@ -242,7 +240,6 @@
     - ['no', 'Disable']
   default: "no"
   commcare_default: "yes"
-  contingent_default: [{"condition": "{features.sense}='true'", "value": "no"}]
   values_txt: "This will show or hide the 'Incomplete' button on the CommCare ODK home screen. Turning this off will prevent users from saving incomplete forms."
   since: "2.11"
   force: true

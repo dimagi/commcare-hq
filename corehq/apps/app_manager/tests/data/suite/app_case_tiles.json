@@ -24,8 +24,7 @@
   "success_message": {},
   "profile": {
     "features": {
-      "users": "true",
-      "sense": "false"
+      "users": "true"
     },
     "properties": {
       "cc-show-saved": "yes",

@@ -5,8 +5,7 @@
        "custom_properties": {
        },
        "features": {
-           "users": "true",
-           "sense": "false"
+           "users": "true"
        },
        "properties": {
            "cc-days-form-retain": "-1",

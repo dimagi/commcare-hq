@@ -248,8 +248,7 @@
   "user_type": null,
   "profile": {
     "features": {
-      "users": "true",
-      "sense": "false"
+      "users": "true"
     },
     "properties": {
       "logenabled": "Enabled",

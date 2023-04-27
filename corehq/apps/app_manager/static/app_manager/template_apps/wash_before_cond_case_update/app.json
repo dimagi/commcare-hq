@@ -3301,8 +3301,7 @@
   "linked_whitelist": [],
   "profile": {
     "features": {
-      "users": "true",
-      "sense": "false"
+      "users": "true"
     },
     "properties": {
       "cc-show-saved": "no",

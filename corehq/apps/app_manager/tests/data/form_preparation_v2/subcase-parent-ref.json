@@ -3,8 +3,7 @@
   "_rev": "23-a6dc615d94c7b145f6ea9b031e50eff4",
   "profile": {
     "features": {
-      "users": "true",
-      "sense": "false"
+      "users": "true"
     },
     "properties": {
       "logenabled": "Enabled",

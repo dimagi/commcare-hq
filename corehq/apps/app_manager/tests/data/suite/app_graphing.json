@@ -3,8 +3,7 @@
   "_rev": "9-2af0032272075c9e0adb476aab8cbc14",
   "profile": {
     "features": {
-      "users": "true",
-      "sense": "false"
+      "users": "true"
     },
     "properties": {
       "cc-days-form-retain": "-1",

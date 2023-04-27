@@ -598,7 +598,6 @@
   "phone_model": null,
   "profile": {
     "features": {
-      "sense": "false",
       "users": "true"
     },
     "properties": {

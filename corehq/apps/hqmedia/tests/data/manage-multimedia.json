@@ -2306,8 +2306,7 @@
   "profile": {
     "custom_properties": {},
     "features": {
-      "users": "true",
-      "sense": "false"
+      "users": "true"
     },
     "properties": {
       "cc-show-saved": "no",
