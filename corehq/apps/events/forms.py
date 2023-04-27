@@ -43,6 +43,11 @@ class EventForm(forms.Form):
         label=_('End Date'),
         required=False
     )
+    location_id = forms.CharField(
+        label=_('Location'),
+        required=False,
+        widget=forms.Select(),
+    )
     attendance_target = forms.IntegerField(
         label=_("Attendance target"),
         help_text=_("The expected amount of attendees."),
@@ -89,6 +94,7 @@ class EventForm(forms.Form):
             tracking_option_data_bind += ", attr: {disabled: true}"
 
         self.helper = hqcrispy.HQFormHelper()
+        location_search_url = reverse('location_search', args=(self.domain,))
         self.helper.add_layout(
             crispy.Layout(
                 crispy.Fieldset(
@@ -100,8 +106,19 @@ class EventForm(forms.Form):
                         css_class='col-sm-4',
                     ),
                     crispy.Field('end_date', data_bind="value: endDate"),
-                    crispy.Field('attendance_target', data_bind="value: attendanceTarget"),
-                    crispy.Field('sameday_reg', data_bind="checked: sameDayRegistration"),
+                    crispy.Field(
+                        'location_id',
+                        data_bind='value: location',
+                        data_query_url=location_search_url,
+                    ),
+                    crispy.Field(
+                        'attendance_target',
+                        data_bind="value: attendanceTarget",
+                    ),
+                    crispy.Field(
+                        'sameday_reg',
+                        data_bind="checked: sameDayRegistration",
+                    ),
                     crispy.Div(
                         crispy.Field(
                             'tracking_option',
@@ -152,6 +169,7 @@ class EventForm(forms.Form):
             'name': self['name'].value(),
             'start_date': self['start_date'].value(),
             'end_date': self['end_date'].value(),
+            'location_id': self['location_id'].value(),
             'attendance_target': self['attendance_target'].value(),
             'sameday_reg': self['sameday_reg'].value(),
             'tracking_option': self['tracking_option'].value(),
@@ -164,6 +182,7 @@ class EventForm(forms.Form):
             'name': event.name,
             'start_date': event.start_date,
             'end_date': event.end_date,
+            'location_id': event.location_id,
             'attendance_target': event.attendance_target,
             'sameday_reg': event.sameday_reg,
             'tracking_option': TRACK_BY_DAY if event.track_each_day else TRACK_BY_EVENT,
