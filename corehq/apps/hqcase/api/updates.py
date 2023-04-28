@@ -294,7 +294,7 @@ def validate_update_permission(domain, data, user, is_creation):
     )
     owner_id = data.get('owner_id', None)
     indices = data.get('indices', None)
-    for index_name in data.get('indices', None):
+    for index_name in indices:
         index_case_id = indices[index_name].get('case_id', None)
         if not index_case_id:
             continue
