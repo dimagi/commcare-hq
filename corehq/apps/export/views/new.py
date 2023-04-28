@@ -120,9 +120,7 @@ class BaseExportView(BaseProjectDataView):
             isinstance(self.export_instance, CaseExportInstance)
             and self.export_instance.case_type == ALL_CASE_TYPE_EXPORT
         )
-        table_count = 0
         if not is_all_case_types_export:
-            table_count = self.export_instance.get_default_selected_table_count()
             schema = self.get_export_schema(
                 self.domain,
                 self.request.GET.get('app_id') or getattr(self.export_instance, 'app_id'),
@@ -136,6 +134,7 @@ class BaseExportView(BaseProjectDataView):
             sharing_options = [SharingOption.EDIT_AND_EXPORT]
 
         allow_deid = has_privilege(self.request, privileges.DEIDENTIFIED_DATA)
+
         return {
             'export_instance': self.export_instance,
             'export_home_url': self.export_home_url,
@@ -150,8 +149,7 @@ class BaseExportView(BaseProjectDataView):
             'number_of_apps_to_process': number_of_apps_to_process,
             'sharing_options': sharing_options,
             'terminology': self.terminology,
-            'is_all_case_types_export': is_all_case_types_export,
-            'disable_table_checkbox': (table_count < 2)
+            'is_all_case_types_export': is_all_case_types_export
         }
 
     @property
