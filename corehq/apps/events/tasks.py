@@ -8,6 +8,7 @@ from corehq.apps.events.models import (
     ATTENDEE_USER_ID_CASE_PROPERTY,
     LOCATION_IDS_CASE_PROPERTY,
     AttendeeModel,
+    toggle_mobile_worker_attendees,
     get_attendee_case_type, PRIMARY_LOCATION_ID_CASE_PROPERTY,
 )
 from corehq.apps.hqcase.case_helper import CaseHelper
@@ -21,6 +22,8 @@ def sync_mobile_worker_attendees(self, domain_name, user_id):
     """
     Create attendees from mobile workers
     """
+    toggle_mobile_worker_attendees(domain_name, True)
+
     domain_mobile_workers = CommCareUser.by_domain(domain_name)
     total_mobile_workers = len(domain_mobile_workers)
 
@@ -67,6 +70,8 @@ def close_mobile_worker_attendee_cases(self, domain_name):
     """
     Close attendee cases associated with mobile workers
     """
+    toggle_mobile_worker_attendees(domain_name, False)
+
     DownloadBase.set_progress(
         task=self,
         current=0,

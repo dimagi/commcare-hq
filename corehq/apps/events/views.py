@@ -32,7 +32,6 @@ from .models import (
     get_attendee_case_type,
     get_paginated_attendees,
     mobile_worker_attendees_enabled,
-    toggle_mobile_worker_attendees,
 )
 from .tasks import (
     close_mobile_worker_attendee_cases,
@@ -419,13 +418,10 @@ class ConvertMobileWorkerAttendeesView(BaseUserSettingsView, BaseEventView):
 
     @allow_remote_invocation
     def get(self, request, *args, **kwargs):
-        attendees_enabled = not mobile_worker_attendees_enabled(self.domain)
-        toggle_mobile_worker_attendees(self.domain, attendees_enabled)
-
         task_ref = expose_cached_download(
             payload=None, expiry=60 * 60, file_extension=None
         )
-        if attendees_enabled:
+        if not mobile_worker_attendees_enabled(self.domain):
             task = sync_mobile_worker_attendees.delay(self.domain, user_id=self.couch_user.user_id)
         else:
             task = close_mobile_worker_attendee_cases.delay(self.domain)
