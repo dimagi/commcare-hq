@@ -554,6 +554,19 @@ def login_required(view_func):
     return _inner
 
 
+def active_domains_required(view_func):
+    from corehq.apps.registration.views import registration_default
+
+    @wraps(view_func)
+    def _inner(request, *args, **kwargs):
+        if not Domain.active_for_user(request.user):
+            return registration_default(request)
+
+        return view_func(request, *args, **kwargs)
+
+    return _inner
+
+
 def check_lockout(fn):
     @wraps(fn)
     def _inner(request, *args, **kwargs):
