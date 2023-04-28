@@ -296,8 +296,12 @@ def validate_update_permission(domain, data, user, is_creation):
             user_can_access_location_id(domain, user, data.get('owner_id', None))
             or (other_user and user_can_access_other_user(domain, user, other_user))
         ):
-            raise PermissionDenied(f"Insufficient permission for Case '{data.get('temporary_id', None)}'")
+            raise PermissionDenied(
+                f"You do not have permission to create a case with owner_id '{data.get('owner_id', None)}'"
+            )
     elif 'case_id' in data:
         case = case_search_adapter.get(data.get('case_id', None))
         if not user_can_access_case(domain, user, case, es_case=True):
-            raise PermissionDenied(f"Insufficient permission for Case '{data.get('case_id', None)}'")
+            raise PermissionDenied(
+                f"You do not have permission to update the case with case_id '{data.get('case_id', None)}'"
+            )
