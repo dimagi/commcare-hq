@@ -1,5 +1,5 @@
 import uuid
-from unittest.mock import patch
+from unittest.mock import patch, MagicMock
 
 from django.test import TestCase
 from django.urls import reverse
@@ -25,6 +25,7 @@ from ..utils import submit_case_blocks
 @privilege_enabled(privileges.API_ACCESS)
 @flag_enabled('CASE_API_V0_6')
 @flag_enabled('API_THROTTLE_WHITELIST')
+@patch('corehq.apps.hqcase.views.validate_update_permission', MagicMock())
 class TestCaseAPI(TestCase):
     domain = 'test-update-cases'
     maxDiff = None
@@ -71,22 +72,20 @@ class TestCaseAPI(TestCase):
         return cases[0]
 
     def _create_case(self, body):
-        with patch('corehq.apps.hqcase.views.validate_update_permission'):
-            return self.client.post(
-                reverse('case_api', args=(self.domain,)),
-                body,
-                content_type="application/json;charset=utf-8",
-                HTTP_USER_AGENT="user agent string",
-            )
+        return self.client.post(
+            reverse('case_api', args=(self.domain,)),
+            body,
+            content_type="application/json;charset=utf-8",
+            HTTP_USER_AGENT="user agent string",
+        )
 
     def _update_case(self, case_id, body):
-        with patch('corehq.apps.hqcase.views.validate_update_permission'):
-            return self.client.put(
-                reverse('case_api', args=(self.domain, case_id,)),
-                body,
-                content_type="application/json;charset=utf-8",
-                HTTP_USER_AGENT="user agent string",
-            )
+        return self.client.put(
+            reverse('case_api', args=(self.domain, case_id,)),
+            body,
+            content_type="application/json;charset=utf-8",
+            HTTP_USER_AGENT="user agent string",
+        )
 
     def _bulk_update_cases(self, body):
         # for the time being, the implementation is the same
