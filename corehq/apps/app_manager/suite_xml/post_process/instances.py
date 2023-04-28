@@ -284,7 +284,7 @@ def get_instance_factory(instance_name):
     except ValueError:
         scheme = instance_name
         # hack for selected cases
-        if instance_name.endswith("selected_cases"):
+        if "selected_cases" in instance_name:
             scheme = "selected_cases"
 
     return _factory_map.get(scheme, null_factory)
