@@ -861,9 +861,6 @@ class ExportInstance(BlobMixin, Document):
     def selected_tables(self):
         return [t for t in self.tables if t.selected]
 
-    def get_default_selected_table_count(self):
-        return len([t for t in self.tables if self.defaults.default_is_table_selected(t.path)])
-
     def get_table(self, path):
         for table in self.tables:
             if table.path == path:
