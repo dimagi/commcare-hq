@@ -37,16 +37,7 @@ class Command(BaseCommand):
         elif options['build_version']:
             self._create_build_with_version(options['build_version'])
         else:
-            if len(build_args) == 3:
-                build_path, version, build_number = build_args
-                try:
-                    CommCareBuild.create_from_zip(build_path, version, build_number)
-                except Exception as e:
-                    raise CommandError("%s" % e)
-                self.stdout.write('Build %s #%s created\n' % (version, build_number))
-                self.stdout.write('You can see a list of builds at [your-server]/builds/\n')
-            else:
-                raise CommandError("<build_path>, <version> or <build_number> not specified!")
+            raise CommandError("<latest> or <build_number> not specified!")
 
     def _create_build_with_version(self, version):
         if any(build.version == version for build in CommCareBuild.all_builds()):
@@ -92,7 +83,7 @@ def _add_build_menu_item(build_config, version):
     build_menu_items = build_config.menu
 
     build = BuildSpec(version=version, latest=True)
-    build_menu_item = BuildMenuItem(build=build, label="CommCare {}".format(version), j2me_enabled=False)
+    build_menu_item = BuildMenuItem(build=build, label="CommCare {}".format(version))
     build_menu_items.append(build_menu_item)
 
 
