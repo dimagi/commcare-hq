@@ -104,7 +104,6 @@ def run_reindex():
     # This may take a long time, depending on what is being reindexed.
     call_command("preindex_everything", 8)
     call_command("sync_finish_couchdb_hq")
-    call_command("ptop_es_manage", flip_all_aliases=True)
 
     global should_reindex
     should_reindex = False
