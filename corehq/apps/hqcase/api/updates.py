@@ -15,6 +15,8 @@ from corehq.form_processor.models import CommCareCase
 from corehq.sql_db.util import get_db_aliases_for_partitioned_query
 from corehq.apps.es.case_search import case_search_adapter
 from corehq.apps.users.models import CommCareUser
+from corehq.util.es.elasticsearch import NotFoundError
+from corehq.form_processor.exceptions import CaseNotFound
 
 from .core import SubmissionError, UserError
 
@@ -305,3 +307,15 @@ def validate_update_permission(domain, data, user, is_creation):
             raise PermissionDenied(
                 f"You do not have permission to update the case with case_id '{data.get('case_id', None)}'"
             )
+
+
+def _get_case_safe(case_id, is_index_case=False):
+    try:
+        case = case_search_adapter.get(case_id)
+    except NotFoundError:
+        if is_index_case:
+            raise CaseNotFound(f"Could not find index case with case_id '{case_id}'")
+        else:
+            raise CaseNotFound(f"Could not find case with case_id '{case_id}'")
+
+    return case
