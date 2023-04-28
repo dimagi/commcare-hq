@@ -31,4 +31,4 @@ def get_response_http_post(api_url, payload, additional_headers=None):
         headers.update(additional_headers)
     resp = requests.post(url=req_url, data=json.dumps(payload), headers=headers)
     resp.raise_for_status()
-    return resp.json()
+    return {} if resp.status_code == 202 else resp.json()
