@@ -49,6 +49,7 @@ class CasePropertyGroup(models.Model):
     name = models.CharField(max_length=255, default=None)
     description = models.TextField(default='', blank=True)
     index = models.IntegerField(default=0, blank=True)
+    deprecated = models.BooleanField(default=False)
 
 
 class CaseProperty(models.Model):
