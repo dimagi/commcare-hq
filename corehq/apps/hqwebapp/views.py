@@ -265,6 +265,7 @@ def _two_factor_needed(domain_name, request):
             and not request.user.is_verified()
         )
 
+
 @login_required()
 def password_change(req):
     user_to_edit = User.objects.get(id=req.user.id)
