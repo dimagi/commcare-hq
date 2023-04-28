@@ -63,7 +63,8 @@
                   {% if dynamic_properties_table %}
                     {% include "reports/partials/case_property_table.html" with rows=dynamic_properties_table %}
                   {% elif dd_properties_tables %}
-                    <div class="pull-right btn-grp" role="group">
+                  <div>{{ dd_properties_tables | length }}</div>
+                    <div class="pull-right btn-grp" role="group" data-bind="hidden: {{ dd_properties_tables | length }} == 1 && {{ dd_properties_tables.0.name }} == 'Uncategorized' ">
                       <button class="btn btn-sm btn-default" type="button" id="expand-all-accordion-btn">Expand All</button>
                       <button class="btn btn-sm btn-default" type="button" id="collapse-all-accordion-btn">Collapse All</button>
                     </div>
