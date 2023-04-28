@@ -285,27 +285,42 @@ def _submit_case_blocks(case_blocks, domain, user, device_id):
 def validate_update_permission(domain, data, user, is_creation):
     """
     Check whether the given `user` has permission to create/update a case.
+    Also checks whether `user` has access to all case indices, if there are any.
     """
     from corehq.apps.locations.permissions import (
         user_can_access_case,
         user_can_access_location_id,
         user_can_access_other_user
     )
+    owner_id = data.get('owner_id', None)
+    indices = data.get('indices', None)
+    for index_name in data.get('indices', None):
+        index_case_id = indices[index_name].get('case_id', None)
+        if not index_case_id:
+            continue
+
+        case = _get_case_safe(index_case_id, is_index_case=True)
+        if not user_can_access_case(domain, user, case, es_case=True):
+            raise PermissionDenied(
+                f"You do not have permission to case index with case_id '{index_case_id}'"
+            )
+
     if is_creation:
         # No way of knowing if owner_id is a location or user id, so we need to check both
-        other_user = CommCareUser.get_by_user_id(data.get('owner_id', None), domain)
+        other_user = CommCareUser.get_by_user_id(owner_id, domain)
         if not (
-            user_can_access_location_id(domain, user, data.get('owner_id', None))
+            user_can_access_location_id(domain, user, owner_id)
             or (other_user and user_can_access_other_user(domain, user, other_user))
         ):
             raise PermissionDenied(
-                f"You do not have permission to create a case with owner_id '{data.get('owner_id', None)}'"
+                f"You do not have permission to create a case with owner_id '{owner_id}'"
             )
     elif 'case_id' in data:
-        case = case_search_adapter.get(data.get('case_id', None))
+        case_id = data['case_id']
+        case = _get_case_safe(case_id)
         if not user_can_access_case(domain, user, case, es_case=True):
             raise PermissionDenied(
-                f"You do not have permission to update the case with case_id '{data.get('case_id', None)}'"
+                f"You do not have permission to update the case with case_id '{case_id}'"
             )
 
 

@@ -27,6 +27,7 @@ from corehq.util.es.elasticsearch import NotFoundError
 from corehq.util.view_utils import reverse
 from corehq.apps.locations.permissions import user_can_access_case
 from corehq.apps.locations.permissions import location_safe
+from corehq.form_processor.exceptions import CaseNotFound
 
 from .api.core import SubmissionError, UserError, serialize_case, serialize_es_case
 from .api.get_list import get_list
@@ -188,6 +189,8 @@ def _handle_case_update(request, is_creation, case_id=None):
             validate_update_permission(request.domain, data, request.couch_user, is_creation)
     except PermissionDenied as e:
         return JsonResponse({'error': str(e)}, status=403)
+    except CaseNotFound as e:
+        return JsonResponse({'error': str(e)}, status=404)
 
     try:
         xform, case_or_cases = handle_case_update(
