@@ -311,8 +311,8 @@ def validate_update_permission(domain, data, user, is_creation):
                 f"You do not have permission to update the case with case_id '{case_id}'"
             )
 
-    indices = data.get('indices', None)
-    for index_name in indices:
+    indices = data.get('indices', {})
+    for index_name in indices.items():
         index_case_id = indices[index_name].get('case_id', None)
         if not index_case_id:
             continue
