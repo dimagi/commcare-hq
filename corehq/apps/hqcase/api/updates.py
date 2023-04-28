@@ -293,18 +293,6 @@ def validate_update_permission(domain, data, user, is_creation):
         user_can_access_other_user
     )
     owner_id = data.get('owner_id', None)
-    indices = data.get('indices', None)
-    for index_name in indices:
-        index_case_id = indices[index_name].get('case_id', None)
-        if not index_case_id:
-            continue
-
-        case = _get_case_safe(index_case_id, is_index_case=True)
-        if not user_can_access_case(domain, user, case, es_case=True):
-            raise PermissionDenied(
-                f"You do not have permission to case index with case_id '{index_case_id}'"
-            )
-
     if is_creation:
         # No way of knowing if owner_id is a location or user id, so we need to check both
         other_user = CommCareUser.get_by_user_id(owner_id, domain)
@@ -321,6 +309,18 @@ def validate_update_permission(domain, data, user, is_creation):
         if not user_can_access_case(domain, user, case, es_case=True):
             raise PermissionDenied(
                 f"You do not have permission to update the case with case_id '{case_id}'"
+            )
+
+    indices = data.get('indices', None)
+    for index_name in indices:
+        index_case_id = indices[index_name].get('case_id', None)
+        if not index_case_id:
+            continue
+
+        case = _get_case_safe(index_case_id, is_index_case=True)
+        if not user_can_access_case(domain, user, case, es_case=True):
+            raise PermissionDenied(
+                f"You do not have permission to case index with case_id '{index_case_id}'"
             )
 
 
