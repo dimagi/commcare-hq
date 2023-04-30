@@ -10,13 +10,6 @@ refactored to use the new "adapters".
 from .client import ElasticDocumentAdapter
 
 
-def get_adapter_mapping(adapter):
-    """Temporary function for fetching the Elastic mapping (still defined in
-    pillowtop module) for an adapter.
-    """
-    return _DOC_MAPPINGS_BY_INDEX[(adapter.index_name, adapter.type)]
-
-
 def from_dict_with_possible_id(doc):
     """Temporary "common" function for adapters who don't yet own their document
     ``from_python()`` logic.
@@ -26,26 +19,6 @@ def from_dict_with_possible_id(doc):
     return None, doc
 
 
-def doc_adapter_from_info(index_info, for_export=False):
-    """Return the document adapter for the provided ``index_info`` object.
-
-    :param index_info: instance of a pillowtop ``ElasticsearchIndexInfo`` object
-    :param for_export: ``bool`` used to instantiate the adapter instance
-    :returns: instance of an ``ElasticDocumentAdapter`` subclass
-    """
-    return _get_doc_adapter(_DOC_ADAPTERS_BY_INDEX[index_info.index], for_export)
-
-
-def doc_adapter_from_alias(index_alias, for_export=False):
-    """Return the document adapter for the provided ``index_alias``.
-
-    :param index_alias: ``str`` name of a valid alias assigned to an index
-    :param for_export: ``bool`` used to instantiate the adapter instance
-    :returns: instance of an ``ElasticDocumentAdapter`` subclass
-    """
-    return _get_doc_adapter(_DOC_ADAPTERS_BY_ALIAS[index_alias], for_export)
-
-
 def doc_adapter_from_cname(index_cname, for_export=False):
     """Return the document adapter for the provided ``index_cname``.
 
@@ -53,7 +26,18 @@ def doc_adapter_from_cname(index_cname, for_export=False):
     :param for_export: ``bool`` used to instantiate the adapter instance
     :returns: instance of an ``ElasticDocumentAdapter`` subclass
     """
-    return doc_adapter_from_info(index_info_from_cname(index_cname), for_export)
+    from corehq.apps.es import CANONICAL_NAME_ADAPTER_MAP
+    return _get_doc_adapter(CANONICAL_NAME_ADAPTER_MAP[index_cname], for_export)
+
+
+def doc_adapter_from_index_name(index_name, for_export=False):
+    """Return the document adapter for the provided ``index_name``.
+
+    :param index_name: ``str`` name of the index
+    :param for_export: ``bool`` used to instantiate the adapter instance
+    :returns: instance of an ``ElasticDocumentAdapter`` subclass
+    """
+    return _get_doc_adapter(_DOC_ADAPTERS_BY_INDEX[index_name], for_export)
 
 
 def _get_doc_adapter(adapter, for_export):
@@ -63,38 +47,14 @@ def _get_doc_adapter(adapter, for_export):
     return adapter.export_adapter() if for_export else adapter
 
 
-def index_info_from_cname(cname):
-    """Get the index info object for a canonical index name.
-
-    :param cname: canonical name of Elastic index
-    :returns: index info object
-    """
-    from corehq.pillows.mappings import CANONICAL_NAME_INFO_MAP
-    return CANONICAL_NAME_INFO_MAP[cname]
-
-
-def index_info_from_adapter(adapter):
-    # TODO: Get rid of this fn when IndexInfo objects are no longer required
-    """Get the index info object for a adapter
-
-    :param adapter: an instance of ElasticDocumentAdapter
-    :returns: index info object
-    """
-    from corehq.pillows.mappings import CANONICAL_NAME_INFO_MAP
-    for index_info in CANONICAL_NAME_INFO_MAP.values():
-        if index_info.index == adapter.index_name:
-            return index_info
-    raise NotImplementedError(f"No index info for {adapter.index_name}")
-
-
-def iter_index_infos():
-    from corehq.pillows.mappings import CANONICAL_NAME_INFO_MAP
-    yield from CANONICAL_NAME_INFO_MAP.values()
+def iter_doc_adapters():
+    from corehq.apps.es import CANONICAL_NAME_ADAPTER_MAP
+    yield from CANONICAL_NAME_ADAPTER_MAP.values()
 
 
 def iter_index_cnames():
-    from corehq.pillows.mappings import CANONICAL_NAME_INFO_MAP
-    yield from CANONICAL_NAME_INFO_MAP
+    from corehq.apps.es import CANONICAL_NAME_ADAPTER_MAP
+    yield from CANONICAL_NAME_ADAPTER_MAP
 
 
 def populate_doc_adapter_map():
@@ -121,24 +81,19 @@ def populate_doc_adapter_map():
         assert doc_adapter.index_name not in _DOC_ADAPTERS_BY_INDEX, \
             (doc_adapter.index_name, _DOC_ADAPTERS_BY_INDEX)
         _DOC_ADAPTERS_BY_INDEX[doc_adapter.index_name] = doc_adapter
-    # aliases and mappings
-    for index_info in iter_index_infos():
-        _DOC_ADAPTERS_BY_ALIAS[index_info.alias] = _DOC_ADAPTERS_BY_INDEX[index_info.index]
-        mapping_key = (index_info.index, index_info.type)
-        _DOC_MAPPINGS_BY_INDEX[mapping_key] = index_info.mapping
+        mapping_key = (doc_adapter.index_name, doc_adapter.type)
+        _DOC_MAPPINGS_BY_INDEX[mapping_key] = doc_adapter.mapping
 
     if settings.UNIT_TESTING:
-        from pillowtop.tests.utils import TEST_INDEX_INFO
-        add_dynamic_adapter("PillowTop", TEST_INDEX_INFO.index,
-                        TEST_INDEX_INFO.type, TEST_INDEX_INFO.mapping,
-                        TEST_INDEX_INFO.alias)
+        from pillowtop.tests.utils import TEST_ES_TYPE, TEST_ES_MAPPING, TEST_ES_INDEX
+        add_dynamic_adapter("PillowTop", TEST_ES_INDEX, TEST_ES_TYPE, TEST_ES_MAPPING)
 
         from corehq.apps.es.tests.utils import TEST_ES_INFO, TEST_ES_MAPPING
         add_dynamic_adapter("UtilES", TEST_ES_INFO.alias, TEST_ES_INFO.type,
-                        TEST_ES_MAPPING, TEST_ES_INFO.alias)
+                        TEST_ES_MAPPING)
 
 
-def add_dynamic_adapter(descriptor, index_, type_, mapping_, alias):
+def add_dynamic_adapter(descriptor, index_, type_, mapping_):
 
     class Adapter(ElasticDocumentAdapter):
         mapping = mapping_
@@ -150,10 +105,8 @@ def add_dynamic_adapter(descriptor, index_, type_, mapping_, alias):
     Adapter.__name__ = f"{descriptor}Test"
     test_adapter = Adapter(index_, type_)
     _DOC_ADAPTERS_BY_INDEX[index_] = test_adapter
-    _DOC_ADAPTERS_BY_ALIAS[alias] = test_adapter
     _DOC_MAPPINGS_BY_INDEX[index_] = mapping_
 
 
 _DOC_ADAPTERS_BY_INDEX = {}
-_DOC_ADAPTERS_BY_ALIAS = {}
 _DOC_MAPPINGS_BY_INDEX = {}
