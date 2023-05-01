@@ -264,7 +264,7 @@ hqDefine("cloudcare/js/formplayer/utils/utils", function () {
             this.sortIndex = null;
         };
 
-        this.setQueryData = function (inputs, execute, forceManualSearch, selectValuesByKeys = false) {
+        this.setQueryData = function ({ inputs, execute = false, forceManualSearch = false, selectValuesByKeys = false }) {
             var selections = Utils.currentUrlToObject().selections;
             this.queryData = this.queryData || {};
             this.queryData[sessionStorage.queryKey] = _.defaults({
