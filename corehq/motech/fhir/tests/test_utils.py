@@ -179,8 +179,10 @@ class TestHeaderDecorators(TestCase):
         self.assertEqual(response.status_code, 406)
         self.assertEqual(
             response.content.decode("utf-8"),
-            '{"message": "Requested format not acceptable."}'
+            '{"message": "Requested format in \'_format\' param not acceptable."}'
         )
+        response = test_view(self.factory.post('/foo', {'_format': 'application/xml'}))
+        self.assertEqual(response.status_code, 406)
 
     def test_validate_accept_header(self):
         @validate_accept_header_and_format_param

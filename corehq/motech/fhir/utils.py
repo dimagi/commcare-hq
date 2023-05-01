@@ -91,7 +91,8 @@ def validate_accept_header_and_format_param(view_func):
                 return None
         _format_param = _get_format_param(request)
         if _format_param and _format_param not in HQ_ACCEPTABLE_FHIR_MIME_TYPES + ['json']:
-            return JsonResponse(status=406, data={'message': "Requested format not acceptable."})
+            return JsonResponse(status=406,
+                                data={'message': "Requested format in '_format' param not acceptable."})
         else:
             accept_header = request.META.get('HTTP_ACCEPT')
             if accept_header and accept_header not in HQ_ACCEPTABLE_FHIR_MIME_TYPES + ['*/*']:
