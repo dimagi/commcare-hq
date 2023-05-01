@@ -344,6 +344,11 @@ class ElasticManageAdapter(BaseAdapter):
             return settings
         return {k: settings[k] for k in values}
 
+    def index_validate_query(self, index, query, params={}):
+        """Returns True if passed `query` is valid else will return false"""
+        validation = self._es.indices.validate_query(body=query, index=index, params=params)
+        return validation['valid']
+
     @staticmethod
     def _validate_single_index(index):
         """Verify that the provided index is a valid, single index
@@ -416,6 +421,9 @@ class ElasticDocumentAdapter(BaseAdapter):
     # Model class whose objects are to be saved in ES.
     # This variable be used in data transformation logic
     model_cls = None
+
+    # Name of the index as referred in HQ world
+    canonical_name = None
 
     def __init__(self, index_name, type_):
         """A document adapter for a single index.
@@ -1044,6 +1052,10 @@ class ElasticMultiplexAdapter(BaseAdapter):
     @property
     def settings_key(self):
         return self.primary.settings_key
+
+    @property
+    def canonical_name(self):
+        return self.primary.canonical_name
 
     def to_json(self, doc):
         # TODO: this is a classmethod on the the document adapter, but should

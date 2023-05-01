@@ -15,16 +15,13 @@ from corehq.form_processor.models import CommCareCase
 from corehq.util.test_utils import flag_enabled
 from corehq.apps.events.models import AttendanceTrackingConfig
 
-from ..models import (
-    Event,
-    get_attendee_case_type,
-    AttendeeModel,
-)
+from ..models import Event, get_attendee_case_type, AttendeeModel
 from ..views import (
     EventCreateView,
     EventsView,
     AttendeesConfigView,
-    AttendeeDeleteView
+    ConvertMobileWorkerAttendeesView,
+    AttendeeDeleteView,
 )
 
 
@@ -247,49 +244,51 @@ class TestAttendeesConfigView(BaseEventViewTestClass):
         json_data = response.json()
         self.assertEqual(json_data['mobile_worker_attendee_enabled'], False)
 
+
+class TestConvertMobileWorkerAttendeesView(BaseEventViewTestClass):
+    urlname = ConvertMobileWorkerAttendeesView.urlname
+
     @flag_enabled('ATTENDANCE_TRACKING')
-    @patch('corehq.apps.events.views.sync_mobile_worker_attendees')
-    def test_post_updates_attendance_tracking_config(self, sync_mobile_worker_attendees_mock):
+    @patch('corehq.apps.events.tasks.sync_mobile_worker_attendees')
+    def test_toggle_updates_attendance_tracking_config(self, sync_mobile_worker_attendees_mock):
         config, _created = AttendanceTrackingConfig.objects.get_or_create(domain=self.domain)
         update_value = not config.mobile_worker_attendees
         self.log_user_in(self.role_webuser)
 
-        # Make sure we respond with the correct value
-        json_payload = json.dumps({'mobile_worker_attendee_enabled': update_value})
-        response = self.client.post(self.endpoint, json_payload, content_type='application/json')
-        self.assertEqual(response.status_code, 200)
-        json_data = response.json()
-        self.assertEqual(json_data['mobile_worker_attendee_enabled'], update_value)
+        response = self.client.get(self.endpoint, content_type='application/json')
+        self.assertEqual(response.status_code, 302)
 
         # Make sure it updated
         config, _created = AttendanceTrackingConfig.objects.get_or_create(domain=self.domain)
         self.assertEqual(config.mobile_worker_attendees, update_value)
 
     @flag_enabled('ATTENDANCE_TRACKING')
-    @patch('corehq.apps.events.views.sync_mobile_worker_attendees')
-    def test_enable_mobile_worker_attendee_triggers_task(self, sync_mobile_worker_attendees_mock):
+    @patch('corehq.apps.events.views.sync_mobile_worker_attendees.delay')
+    @patch('soil.CachedDownload.set_task')
+    def test_enable_mobile_worker_attendee_triggers_task(self, sync_mobile_worker_attendees_mock, *args):
         config, _created = AttendanceTrackingConfig.objects.get_or_create(domain=self.domain)
         self.log_user_in(self.role_webuser)
 
         # Make sure we respond with the correct value
         self.assertFalse(config.mobile_worker_attendees)
-        json_payload = json.dumps({'mobile_worker_attendee_enabled': True})
-        response = self.client.post(self.endpoint, json_payload, content_type='application/json')
-        self.assertEqual(response.status_code, 200)
-        sync_mobile_worker_attendees_mock.delay.assert_called_once()
+
+        response = self.client.get(self.endpoint, content_type='application/json')
+        self.assertEqual(response.status_code, 302)
+        sync_mobile_worker_attendees_mock.assert_called_once()
 
     @flag_enabled('ATTENDANCE_TRACKING')
-    @patch('corehq.apps.events.views.close_mobile_worker_attendee_cases')
-    def test_disable_mobile_worker_attendee_triggers_task(self, close_mobile_worker_attendee_cases_mock):
+    @patch('corehq.apps.events.views.close_mobile_worker_attendee_cases.delay')
+    @patch('soil.CachedDownload.set_task')
+    def test_disable_mobile_worker_attendee_triggers_task(self, close_mobile_worker_attendee_cases_mock, *args):
         config, _created = AttendanceTrackingConfig.objects.get_or_create(domain=self.domain)
         self.log_user_in(self.role_webuser)
 
         # Make sure we respond with the correct value
         self.assertFalse(config.mobile_worker_attendees)
-        json_payload = json.dumps({'mobile_worker_attendee_enabled': False})
-        response = self.client.post(self.endpoint, json_payload, content_type='application/json')
-        self.assertEqual(response.status_code, 200)
-        close_mobile_worker_attendee_cases_mock.delay.assert_called_once()
+
+        response = self.client.get(self.endpoint, content_type='application/json')
+        self.assertEqual(response.status_code, 302)
+        close_mobile_worker_attendee_cases_mock.assert_called_once()
 
 
 class TestAttendeesDeleteView(BaseEventViewTestClass):
