@@ -856,6 +856,55 @@ ELASTICSEARCH_MAJOR_VERSION = 2
 # If elasticsearch queries take more than this, they result in timeout errors
 ES_SEARCH_TIMEOUT = 30
 
+# The variables should be used while reindexing an index.
+# When the variables are set to true the data will be written to both primary and secondary indexes.
+# Primary and secondary index names would be taken from corresponding values in ES_MULTIPLEXED_INDEXES
+
+ES_APPS_INDEX_MULTIPLEXED = False
+ES_CASE_SEARCH_INDEX_MULTIPLEXED = False
+ES_CASES_INDEX_MULTIPLEXED = False
+ES_DOMAINS_INDEX_MULTIPLEXED = False
+ES_FORMS_INDEX_MULTIPLEXED = False
+ES_GROUPS_INDEX_MULTIPLEXED = False
+ES_SMS_INDEX_MULTIPLEXED = False
+ES_USERS_INDEX_MULTIPLEXED = False
+
+
+ES_MULTIPLEXED_INDEXES = {
+    'apps': {
+        'primary': None,
+        'secondary': None,
+    },
+    'case_search': {
+        'primary': None,
+        'secondary': None,
+    },
+    'cases': {
+        'primary': None,
+        'secondary': None,
+    },
+    'domains': {
+        'primary': None,
+        'secondary': None,
+    },
+    'forms': {
+        'primary': None,
+        'secondary': None,
+    },
+    'groups': {
+        'primary': None,
+        'secondary': None,
+    },
+    'sms': {
+        'primary': None,
+        'secondary': None,
+    },
+    'users': {
+        'primary': None,
+        'secondary': None,
+    }
+}
+
 BITLY_OAUTH_TOKEN = None
 
 OAUTH2_PROVIDER_ACCESS_TOKEN_MODEL = 'oauth2_provider.AccessToken'
