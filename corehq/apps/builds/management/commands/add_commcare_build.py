@@ -21,7 +21,6 @@ class Command(BaseCommand):
     """)
 
     def add_arguments(self, parser):
-        parser.add_argument('build_args', nargs='*')
         parser.add_argument('--build_version')
         parser.add_argument(
             '-l',
@@ -30,7 +29,7 @@ class Command(BaseCommand):
             help="add the latest CommCare build version from GitHub"
         )
 
-    def handle(self, build_args, **options):
+    def handle(self, **options):
         if options['latest']:
             version = _get_latest_commcare_build_version()
             self._create_build_with_version(version)
