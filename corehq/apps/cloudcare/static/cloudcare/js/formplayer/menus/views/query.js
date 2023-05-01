@@ -241,7 +241,7 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
                 })
             }
             else{
-                itemsetChoices.forEach((key,i) => itemsetChoicesDict[i]=itemsetChoices[i])
+                itemsetChoices.forEach((value,i) => itemsetChoicesDict[i]=value)
             }
             this.model.set({
                 itemsetChoices: itemsetChoices,
@@ -441,8 +441,8 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
             // only here to maintain backward compatibility and can be removed
             // once web apps fully transition using keys to convey select prompt selection.
             this.selectValuesByKeys = false;
-            for (key in this.parentModel) {
-                if ("itemsetChoicesKey" in this.parentModel[key].attributes){
+            for (var i = 0; i < this.parentModel.length; i++) {
+                if ("itemsetChoicesKey" in this.parentModel[i].attributes){
                     this.selectValuesByKeys = true;
                     break;
                 }
