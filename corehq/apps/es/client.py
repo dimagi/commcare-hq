@@ -1335,10 +1335,15 @@ def create_document_adapter(cls, index_name, type_, *, secondary=None):
     provided.
 
     :param cls: an ``ElasticDocumentAdapter`` subclass
-    :param index_name: the name of the index that the adapter interacts with
+    :param index_name:
+        the name of the index that the adapter interacts with.
+        Although it is required but it can be overridden if ES_<INDEX>_INDEX_MULTIPLEXED is set,
+        then values used in ES_MULTIPLEXED_INDEXES
     :param type_: the index ``_type`` for the adapter's mapping.
-    :param secondary: the name of the secondary index in a multiplexing
-        configuration. If an index name is provided, the returned adapter will
+    :param secondary:
+        the name of the secondary index in a multiplexing configuration.
+        The value can be overridden from settings just like `index_name`
+        If an index name is provided, the returned adapter will
         be an instance of ``ElasticMultiplexAdapter``.  If ``None`` (the
         default), the returned adapter will be an instance of ``cls``.
     :returns: a document adapter instance.
@@ -1346,6 +1351,15 @@ def create_document_adapter(cls, index_name, type_, *, secondary=None):
     def runtime_name(name):
         # transform the name if testing
         return f"{TEST_DATABASE_PREFIX}{name}" if settings.UNIT_TESTING else name
+
+    def multiplexer_requested(canonical_name):
+        settings_key = f"ES_{canonical_name.upper()}_INDEX_MULTIPLEXED"
+        return getattr(settings, settings_key, False)
+
+    if multiplexer_requested(cls.canonical_name):
+        index_details = settings.ES_MULTIPLEXED_INDEXES[cls.canonical_name]
+        index_name = index_details['primary']
+        secondary = index_details['secondary']
 
     doc_adapter = cls(runtime_name(index_name), type_)
     if secondary is not None:
