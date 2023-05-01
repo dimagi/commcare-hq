@@ -229,24 +229,24 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
             'click @ui.searchForBlank': 'toggleBlankSearch',
         },
 
-        _setItemset: function(itemsetChoices, itemsetChoicesKey) {
+        _setItemset: function (itemsetChoices, itemsetChoicesKey) {
             itemsetChoices = itemsetChoices || [];
             let itemsetChoicesDict = {};
 
-            if (this.parentView.selectValuesByKeys){
+            if (this.parentView.selectValuesByKeys) {
                 itemsetChoicesKey = itemsetChoicesKey || [];
-                itemsetChoicesKey.forEach((key,i) => itemsetChoicesDict[key]=itemsetChoices[i])
+                itemsetChoicesKey.forEach((key,i) => itemsetChoicesDict[key] = itemsetChoices[i]);
                 this.model.set({
                     itemsetChoicesKey: itemsetChoicesKey,
-                })
+                });
             }
-            else{
-                itemsetChoices.forEach((value,i) => itemsetChoicesDict[i]=value)
+            else {
+                itemsetChoices.forEach((value,i) => itemsetChoicesDict[i] = value);
             }
             this.model.set({
                 itemsetChoices: itemsetChoices,
-                itemsetChoicesDict: itemsetChoicesDict
-            })
+                itemsetChoicesDict: itemsetChoicesDict,
+            });
         },
 
         _render: function () {
@@ -442,7 +442,7 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
             // once web apps fully transition using keys to convey select prompt selection.
             this.selectValuesByKeys = false;
             for (var i = 0; i < this.parentModel.length; i++) {
-                if ("itemsetChoicesKey" in this.parentModel[i].attributes){
+                if ("itemsetChoicesKey" in this.parentModel[i].attributes) {
                     this.selectValuesByKeys = true;
                     break;
                 }
@@ -593,7 +593,7 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
             var urlObject = formplayerUtils.currentUrlToObject();
             urlObject.setQueryData({
                 inputs: self.getAnswers(),
-                selectValuesByKeys: self.selectValuesByKeys
+                selectValuesByKeys: self.selectValuesByKeys,
             });
             var promise = $.Deferred(),
                 fetchingPrompts = FormplayerFrontend.getChannel().request("app:select:menus", urlObject);

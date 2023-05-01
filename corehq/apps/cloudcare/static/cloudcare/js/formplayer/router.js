@@ -152,7 +152,7 @@ hqDefine("cloudcare/js/formplayer/router", function () {
         if (index === undefined) {
             urlObject.setQueryData({
                 inputs: null,
-                forceManualSearch: true
+                forceManualSearch: true,
             });
         } else {
             urlObject.addSelection(index);
@@ -201,7 +201,7 @@ hqDefine("cloudcare/js/formplayer/router", function () {
         var urlObject = utils.currentUrlToObject();
         urlObject.setQueryData({
             inputs: queryDict,
-            execute: true
+            execute: true,
         });
         utils.setUrlToObject(urlObject);
         API.listMenus();
