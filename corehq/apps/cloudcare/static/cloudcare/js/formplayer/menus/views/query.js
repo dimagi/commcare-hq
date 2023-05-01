@@ -239,8 +239,7 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
                 this.model.set({
                     itemsetChoicesKey: itemsetChoicesKey,
                 });
-            }
-            else {
+            } else {
                 itemsetChoices.forEach((value,i) => itemsetChoicesDict[i] = value);
             }
             this.model.set({
