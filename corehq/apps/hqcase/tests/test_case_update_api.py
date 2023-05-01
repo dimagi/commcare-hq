@@ -679,13 +679,12 @@ class TestCaseAPI(TestCase):
             (self.client.post, reverse('case_api', args=(self.domain,)).rstrip("/")),
             (self.client.put, reverse('case_api', args=(self.domain, case_id)).rstrip("/")),
         ]
-        with patch('corehq.apps.hqcase.views.validate_update_permission'):
-            for request_fn, url in urls:
-                res = request_fn(
-                    url,
-                    {'body': 'bad case update format'},
-                    content_type="application/json;charset=utf-8",
-                    HTTP_USER_AGENT="user agent string",
-                )
-                # These requests should return a 400 because of the bad body, not a 301 redirect
-                self.assertEqual(res.status_code, 400)
+        for request_fn, url in urls:
+            res = request_fn(
+                url,
+                {'body': 'bad case update format'},
+                content_type="application/json;charset=utf-8",
+                HTTP_USER_AGENT="user agent string",
+            )
+            # These requests should return a 400 because of the bad body, not a 301 redirect
+            self.assertEqual(res.status_code, 400)
