@@ -441,7 +441,7 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
             // once web apps fully transition using keys to convey select prompt selection.
             this.selectValuesByKeys = false;
 
-            for (model of this.parentModel) {
+            for (let model of this.parentModel) {
                 if ("itemsetChoicesKey" in model.attributes) {
                     this.selectValuesByKeys = true;
                     break;
