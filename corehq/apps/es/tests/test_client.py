@@ -32,6 +32,7 @@ from ..client import (
     BulkActionItem,
     ElasticMultiplexAdapter,
     Tombstone,
+    create_document_adapter,
     get_client,
     manager,
     _elastic_hosts,
@@ -2030,3 +2031,40 @@ class OneshotIterable:
 
 class IterableExhaustedError(Exception):
     pass
+
+
+class TestCreateDocumentAdapter(SimpleTestCase):
+
+    def test_create_document_adapter_returns_doc_adapter(self):
+        test_adapter = create_document_adapter(
+            TestDocumentAdapter,
+            "some-primary",
+            "test_doc",
+        )
+        self.assertEqual(type(test_adapter), TestDocumentAdapter)
+
+    def test_create_document_adapter_returns_multiplexed_doc_adapter(self):
+        test_adapter = create_document_adapter(
+            TestDocumentAdapter,
+            "some-primary",
+            "test_doc",
+            secondary="some-secondary",
+        )
+        self.assertEqual(type(test_adapter), ElasticMultiplexAdapter)
+
+    @override_settings(ES_FOR_TEST_INDEX_MULTIPLEXED=True)
+    @override_settings(ES_MULTIPLEXED_INDEXES={
+        'for_test': {
+            'primary': 'primary_index',
+            'secondary': 'secondary_index'
+        }
+    })
+    def test_create_document_adapter_settings_override_values(self):
+        test_adapter = create_document_adapter(
+            TestDocumentAdapter,
+            "reindex-primary",
+            "test_doc",
+            secondary="reindex-secondary",
+        )
+        self.assertEqual(test_adapter.index_name, 'test_primary_index')
+        self.assertEqual(test_adapter.secondary.index_name, 'test_secondary_index')

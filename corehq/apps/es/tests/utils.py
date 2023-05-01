@@ -335,7 +335,7 @@ class TestDocumentAdapter(ElasticDocumentAdapter):
     """An ``ElasticDocumentAdapter`` implementation for Elasticsearch actions
     involving ``TestDoc`` model objects.
     """
-
+    canonical_name = 'for_test'
     mapping = {
         "properties": {
             "value": {
