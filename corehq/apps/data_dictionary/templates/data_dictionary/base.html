@@ -169,14 +169,14 @@
           </div>
           <div data-bind="sortable: { data: caseGroupList, connectClass: 'groups', options: { handle: 'i.sortable-handle' } }">
           <div>
-          <!-- ko if: deprecated() && !isDeprecatedOnLoad && properties().length > 0 -->
+          <!-- ko if: toBeDeprecated() && !deprecated && properties().length > 0 -->
           <div class="group-deprecated">
             <b data-bind="text: name()"></b>
             {% trans "group's properties will be moved to" %}
             <b>"No Group"</b>
           </div>
           <!-- /ko -->
-          <div class="table-row group" data-bind="css: { 'group-deprecated': deprecated() }, visible: !isDeprecatedOnLoad || $root.showAll()">
+          <div class="table-row group" data-bind="css: { 'group-deprecated': toBeDeprecated() }, visible: !deprecated || $root.showAll()">
             <div class="row-item-small">
               {% if not request.is_view_only %}
               <i class="sortable-handle fa fa-arrows-v"></i>
@@ -208,10 +208,10 @@
             <div class="row-item"></div>
             {% if not request.is_view_only %}
             <div class="row-item-small">
-              <!-- ko if: name() !== '' && !deprecated() -->
+              <!-- ko if: name() !== '' && !toBeDeprecated() -->
               <button title="{% trans_html_attr 'Deprecate Group' %}"  data-bind="click: deprecateGroup" class="fa fa-archive"></button>
               <!-- /ko -->
-              <!-- ko if: name() !== '' && deprecated() -->
+              <!-- ko if: name() !== '' && toBeDeprecated() -->
               <button title="{% trans_html_attr 'Restore Group' %}" data-bind="click: restoreGroup" class="fa fa-undo"></button>
               <!-- /ko -->
             </div>

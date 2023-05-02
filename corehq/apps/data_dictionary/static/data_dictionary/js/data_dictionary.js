@@ -36,7 +36,7 @@ hqDefine("data_dictionary/js/data_dictionary", [
                 if (group.id) {
                     groupObj.name.subscribe(changeSaveButton);
                     groupObj.description.subscribe(changeSaveButton);
-                    groupObj.deprecated.subscribe(changeSaveButton);
+                    groupObj.toBeDeprecated.subscribe(changeSaveButton);
                 }
                 groupObj.properties.subscribe(changeSaveButton);
 
@@ -70,15 +70,15 @@ hqDefine("data_dictionary/js/data_dictionary", [
         self.properties = ko.observableArray();
         self.expanded = ko.observable(true);
         self.toggleExpanded = () => self.expanded(!self.expanded());
-        self.deprecated = ko.observable(deprecated || false);
+        self.deprecated = deprecated;
         // Ensures that groups are not directly hidden on clicking the deprecated button
-        self.isDeprecatedOnLoad = deprecated;
+        self.toBeDeprecated = ko.observable(deprecated || false);
         self.deprecateGroup = function () {
-            self.deprecated(true);
+            self.toBeDeprecated(true);
         };
 
         self.restoreGroup = function () {
-            self.deprecated(false);
+            self.toBeDeprecated(false);
         };
         return self;
     };
