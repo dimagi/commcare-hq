@@ -73,12 +73,18 @@ class CustomSuiteAssertionsTest(SimpleTestCase, TestXmlMixin):
         factory = AppFactory()
         module, form = factory.new_basic_module('m0', 'case1')
         module.custom_assertions = self._custom_assertions
+        suite = factory.app.create_suite()
         self.assertXmlPartialEqual(
             self._get_expected_xml('m0'),
-            factory.app.create_suite(),
+            suite,
             "menu[@id='m0']/assertions"
         )
         self._assert_translations(factory.app, 'm0')
+        self.assertXmlPartialEqual(
+            """<partial><instance id="casedb" src="jr://instance/casedb"/></partial>""",
+            suite,
+            "entry/instance"
+        )
 
     def test_custom_app_assertions(self, *args):
         factory = AppFactory()
