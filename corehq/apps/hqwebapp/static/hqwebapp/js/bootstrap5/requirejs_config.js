@@ -7,6 +7,7 @@ requirejs.config({
         "babel-plugin-transform-modules-requirejs-babel": "babel-plugin-transform-modules-requirejs-babel/index",
         "jquery": "jquery/dist/jquery.min",
         "underscore": "underscore/underscore",
+        "bootstrap": "bootstrap/dist/js/bootstrap.min",
         "bootstrap5": "bootstrap5/dist/js/bootstrap.bundle.min",
         "knockout": "knockout/build/output/knockout-latest.debug",
         "ko.mapping": "hqwebapp/js/lib/knockout_plugins/knockout_mapping.ko.min",
