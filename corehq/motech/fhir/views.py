@@ -84,15 +84,15 @@ def search_view(request, domain, fhir_version_name, resource_type):
     fhir_version = _get_fhir_version(fhir_version_name)
     if not fhir_version:
         return JsonResponse(status=400, data={'message': "Unsupported FHIR version"})
-    patient_case_id = request.GET.get('patient_id')
-    if not patient_case_id:
-        return JsonResponse(status=400, data={'message': "Please pass patient_id"})
+    resource_id = request.GET.get('_id')
+    if not resource_id:
+        return JsonResponse(status=400, data={'message': "Please pass resource ID."})
     try:
-        patient_case = CommCareCase.objects.get_case(patient_case_id, domain)
-        if patient_case.is_deleted:
-            return JsonResponse(status=400, data={'message': f"Patient with ID {patient_case_id} was removed"})
+        found_case = CommCareCase.objects.get_case(resource_id, domain)
+        if found_case.is_deleted:
+            return JsonResponse(status=410, data={'message': "Gone"})
     except CaseNotFound:
-        return JsonResponse(status=400, data={'message': f"Could not find patient with ID {patient_case_id}"})
+        return JsonResponse(status=404, data={'message': "Not Found"})
 
     case_types_for_resource_type = list(
         FHIRResourceType.objects.filter(
@@ -104,9 +104,9 @@ def search_view(request, domain, fhir_version_name, resource_type):
                             data={'message': f"Resource type {resource_type} not available on {domain}"})
 
     cases = CommCareCase.objects.get_reverse_indexed_cases(
-        domain, [patient_case_id], case_types=case_types_for_resource_type, is_closed=False)
-    if patient_case.type in case_types_for_resource_type:
-        cases.append(patient_case)
+        domain, [resource_id], case_types=case_types_for_resource_type, is_closed=False)
+    if found_case.type in case_types_for_resource_type:
+        cases.append(found_case)
     response = {
         'resourceType': "Bundle",
         "type": "searchset",
