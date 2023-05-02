@@ -30,8 +30,15 @@ class Hl7Middleware(BaseApiMiddleware):
     def _get_body_for_eval_context(self):
         try:
             self.hl7_message = parse_hl7(self.request_data.data)
+            msh = self.hl7_message.msh
             return {
-                "parsed": hl7_message_to_dict(self.hl7_message, False)
+                "version": msh.version_id.value,
+                "message_type": {
+                    "code": msh.message_type.message_code.value,
+                    "event": msh.message_type.trigger_event.value,
+                    "structure": msh.message_type.message_structure.value,
+                },
+                "message": hl7_message_to_dict(self.hl7_message, False)
             }
         except HL7apyException as e:
             raise GenericInboundUserError(gettext("Error parsing HL7: {}").format(str(e)))
@@ -59,7 +66,7 @@ class Hl7Middleware(BaseApiMiddleware):
         }, hl7_response=hl7_response)
 
     def _get_ack(self, ack_text, status_code):
-        ack = Message("ACK", version=self.hl7_message.msh.msh_12.value)
+        ack = Message("ACK", version=self.hl7_message.msh.version_id.value)
         ack.msh.msh_5 = self.hl7_message.msh.msh_3  # receiving application
         ack.msh.msh_6 = self.hl7_message.msh.msh_4  # receiving facility
         ack.msh.msh_4 = self.hl7_message.msh.msh_6  # sending facility

@@ -30,7 +30,7 @@ class TestGenericInboundAPIViewHL7(GenericInboundAPIViewBaseTest):
         response_content = self._test_generic_api({
             'facility': {
                 'type': 'jsonpath',
-                'jsonpath': 'body.parsed.MSH.MSH_4.HD_1',
+                'jsonpath': 'body.message.MSH.MSH_4.HD_1',
             }
         }).decode()
         log = RequestLog.objects.last()
