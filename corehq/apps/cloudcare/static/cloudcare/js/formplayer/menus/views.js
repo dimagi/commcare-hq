@@ -1,4 +1,4 @@
-/*globals DomPurify, Marionette */
+/*globals DOMPurify, Marionette */
 
 hqDefine("cloudcare/js/formplayer/menus/views", function () {
     var kissmetrics = hqImport("analytix/js/kissmetrix"),
