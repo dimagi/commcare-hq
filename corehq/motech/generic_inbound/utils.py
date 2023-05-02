@@ -53,9 +53,10 @@ class ApiRequest:
     data: str
     query: dict  # querystring key val pairs, vals are lists
     headers: dict
+    request_id: str
 
     @classmethod
-    def from_request(cls, request):
+    def from_request(cls, request, request_id=None):
         if _request_too_large(request):
             raise GenericInboundUserError(_("Request exceeds the allowed size limit"))
 
@@ -71,7 +72,8 @@ class ApiRequest:
             user_agent=request.META.get('HTTP_USER_AGENT'),
             data=body,
             query=dict(request.GET.lists()),
-            headers=get_headers_for_api_context(request)
+            headers=get_headers_for_api_context(request),
+            request_id=request_id or uuid.uuid4().hex,
         )
 
     @classmethod
@@ -84,6 +86,7 @@ class ApiRequest:
             data=log.request_body,
             query=dict(QueryDict(log.request_query).lists()),
             headers=dict(log.request_headers),
+            request_id=log.id
         )
 
     def to_context(self):
@@ -188,12 +191,13 @@ def revert_api_request_from_form(form_id):
         return
 
 
-def log_api_request(api, request, response):
+def log_api_request(request_id, api, request, response):
     if _request_too_large(request):
         body = '<truncated>'
     else:
         body = as_text(request.body)
     log = RequestLog.objects.create(
+        id=request_id,
         domain=request.domain,
         api=api,
         status=RequestLog.Status.from_status_code(response.status),

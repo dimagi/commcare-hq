@@ -1,3 +1,5 @@
+import uuid
+
 from django.contrib import messages
 from django.http import Http404, HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, redirect
@@ -186,13 +188,14 @@ def generic_inbound_api(request, domain, api_id):
     except ConfigurableAPI.DoesNotExist:
         raise Http404
 
+    request_id = uuid.uuid4().hex
     try:
-        request_data = ApiRequest.from_request(request)
+        request_data = ApiRequest.from_request(request, request_id=request_id)
     except GenericInboundUserError as e:
         response = ApiResponse(status=400, internal_response={'error': str(e)})
     else:
         response = execute_generic_api(api, request_data)
-    log_api_request(api, request, response)
+    log_api_request(request_id, api, request, response)
 
     return response.get_http_response()
 

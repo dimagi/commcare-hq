@@ -309,7 +309,7 @@ class TestGenericInboundAPIView(GenericInboundAPIViewBaseTest):
         request = self._call_api(properties_expression, query_params).wsgi_request
         log = RequestLog.objects.last()
 
-        original_data = ApiRequest.from_request(request)
+        original_data = ApiRequest.from_request(request, request_id=log.id)
         log_data = ApiRequest.from_log(log)
 
         for k, original_value in attrs.asdict(original_data).items():
