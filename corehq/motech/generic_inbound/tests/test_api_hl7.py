@@ -39,6 +39,32 @@ class TestGenericInboundAPIViewHL7(GenericInboundAPIViewBaseTest):
                    'MSA|AA|MSG00001|success'
         self.assertEqual(response_content, expected)
 
+    @freeze_time('2023-05-02 13:01:51')
+    def test_validation_errors(self):
+        api = self._make_api(
+            property_expressions={
+                'facility': {
+                    'type': 'jsonpath',
+                    'jsonpath': 'body.message.MSH.MSH_4.HD_1',
+                }
+            },
+            validation_expression={
+                "type": "boolean_expression",
+                "expression": {"type": "jsonpath", "jsonpath": "body.message_type.code"},
+                "operator": "eq",
+                "property_value": "OBS"
+            },
+            middleware=ApiMiddleware.hl7
+        )
+        response = self._call_api_advanced(api)
+        self.assertEqual(response.status_code, 400, response.content)
+        log = RequestLog.objects.last()
+        expected = 'MSH|^~\\&#||GOOD HEALTH HOSPITAL|ADT1|GOOD HEALTH HOSPITAL|20230502130151|||' \
+                   f'{log.id.hex}|P|2.8\r' \
+                   'MSA|AE|MSG00001|validation error\r' \
+                   'ERR||207|E||||Invalid request|HD'
+        self.assertEqual(response.content.decode(), expected)
+
     def _test_generic_api(self, properties_expression):
         response = self._call_api(properties_expression, middleware=ApiMiddleware.hl7)
         response_content = response.content

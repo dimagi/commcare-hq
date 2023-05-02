@@ -59,13 +59,13 @@ class Hl7Middleware(BaseApiMiddleware):
         }, hl7_response=hl7_response)
 
     def _get_validation_error(self, status_code, message, errors):
-        hl7_response = self._get_ack(message, status_code)
+        hl7_response = self._get_ack(message, status_code, errors)
         return Hl7ApiResponse(status=status_code, internal_response={
             'error': message,
             'errors': errors,
         }, hl7_response=hl7_response)
 
-    def _get_ack(self, ack_text, status_code):
+    def _get_ack(self, ack_text, status_code, errors=None):
         ack = Message("ACK", version=self.hl7_message.msh.version_id.value)
         ack.msh.msh_5 = self.hl7_message.msh.msh_3  # receiving application
         ack.msh.msh_6 = self.hl7_message.msh.msh_4  # receiving facility
@@ -76,6 +76,14 @@ class Hl7Middleware(BaseApiMiddleware):
         ack.msa.msa_1 = self._status_code_to_hl7_status(status_code)
         ack.msa.msa_2 = self.hl7_message.msh.msh_10  # inbound control ID
         ack.msa.msa_3 = ack_text
+
+        if errors:
+            for error in errors:
+                err = ack.add_segment("ERR")
+                err.err_3 = "207"  # application error
+                err.err_4 = "E"  # severity: error
+                err.err_8 = error["message"]
+                err.err_9 = "HD"  # inform help desk
         return ack.to_er7()
 
     def _status_code_to_hl7_status(self, status_code):
