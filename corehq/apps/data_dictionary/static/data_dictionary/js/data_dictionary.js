@@ -32,7 +32,7 @@ hqDefine("data_dictionary/js/data_dictionary", [
 
         self.init = function (groupData, changeSaveButton) {
             for (let group of groupData) {
-                let groupObj = groupsViewModel(group.id, group.name, group.description, group.index, self.name, group.deprecated);
+                let groupObj = groupsViewModel(group.id, group.name, group.description, self.name, group.deprecated);
                 groupObj.name.subscribe(changeSaveButton);
                 groupObj.description.subscribe(changeSaveButton);
                 groupObj.toBeDeprecated.subscribe(changeSaveButton);
@@ -41,7 +41,7 @@ hqDefine("data_dictionary/js/data_dictionary", [
                 for (let prop of group.properties) {
                     var propObj = propertyListItem(prop.name, prop.label, false, prop.group, self.name, prop.data_type,
                         prop.description, prop.allowed_values, prop.fhir_resource_prop_path, prop.deprecated,
-                        prop.removeFHIRResourcePropertyPath, prop.index);
+                        prop.removeFHIRResourcePropertyPath);
                     propObj.description.subscribe(changeSaveButton);
                     propObj.label.subscribe(changeSaveButton);
                     propObj.fhirResourcePropPath.subscribe(changeSaveButton);
@@ -58,12 +58,11 @@ hqDefine("data_dictionary/js/data_dictionary", [
         return self;
     };
 
-    var groupsViewModel = function (id, name, description, index, caseType, deprecated) {
+    var groupsViewModel = function (id, name, description, caseType, deprecated) {
         var self = {};
         self.id = id;
         self.name = ko.observable(name);
         self.description = ko.observable(description);
-        self.index = index;
         self.caseType = caseType;
         self.properties = ko.observableArray();
         self.expanded = ko.observable(true);
@@ -82,11 +81,10 @@ hqDefine("data_dictionary/js/data_dictionary", [
     };
 
     var propertyListItem = function (name, label, isGroup, groupName, caseType, dataType, description, allowedValues,
-        fhirResourcePropPath, deprecated, removeFHIRResourcePropertyPath, index) {
+        fhirResourcePropPath, deprecated, removeFHIRResourcePropertyPath) {
         var self = {};
         self.name = name;
         self.label = ko.observable(label);
-        self.index = index;
         self.expanded = ko.observable(true);
         self.isGroup = isGroup;
         self.group = ko.observable(groupName);
@@ -295,7 +293,7 @@ hqDefine("data_dictionary/js/data_dictionary", [
 
         self.newGroup = function () {
             if (_.isString(self.newGroupName())) {
-                var group = groupsViewModel(null, self.newGroupName(), '', null, self.activeCaseType());
+                var group = groupsViewModel(null, self.newGroupName(), '', self.activeCaseType());
                 self.caseGroupList.push(group);
                 self.newGroupName(undefined);
             }
