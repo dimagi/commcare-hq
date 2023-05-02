@@ -27,7 +27,7 @@
         {# This code is relevant for running HQ, but not for tests #}
         requirejs(['hqwebapp/js/django'], function () {
           requirejs([
-            'hqwebapp/js/base_main',
+            'hqwebapp/js/bootstrap3/base_main',
           ], function () {
       {% endif %}
             requirejs(['{{ requirejs_main }}'], function () {
