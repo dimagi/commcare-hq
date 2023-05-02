@@ -650,7 +650,8 @@ def get_detail_column_infos_for_tabs_with_sorting(detail):
 
 
 class CaseTileHelper(object):
-    tile_fields = ["header", "top_left", "sex", "bottom_left", "date"]
+    tile_fields = ["header", "tile1", "tile2", "tile3", "tile4", "tile5", "tile6", "tile7", "tile8", "tile9",
+                   "tile10", "tile11", "tile12", "tile13", "tile14"]
 
     def __init__(self, app, module, detail, detail_type, build_profile_id):
         self.app = app
