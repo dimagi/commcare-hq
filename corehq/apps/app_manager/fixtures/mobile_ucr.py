@@ -94,8 +94,8 @@ class ReportFixturesProvider(FixtureProvider):
             ReportFixturesProviderV2(report_data_cache)
         ]
 
-        for provider in providers:
-            fixtures.extend(provider(restore_state, restore_user, needed_versions, report_configs))
+        #for provider in providers:
+        #    fixtures.extend(provider(restore_state, restore_user, needed_versions, report_configs))
 
         return fixtures
 
