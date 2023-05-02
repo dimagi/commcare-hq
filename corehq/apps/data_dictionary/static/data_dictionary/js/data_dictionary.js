@@ -32,18 +32,16 @@ hqDefine("data_dictionary/js/data_dictionary", [
 
         self.init = function (groupData, changeSaveButton) {
             for (let group of groupData) {
-                let groupObj = groupsViewModel(group.id, group.name, group.description, group.index, self.name, group.deprecated);
-                if (group.id) {
-                    groupObj.name.subscribe(changeSaveButton);
-                    groupObj.description.subscribe(changeSaveButton);
-                    groupObj.deprecated.subscribe(changeSaveButton);
-                }
+                let groupObj = groupsViewModel(group.id, group.name, group.description, self.name, group.deprecated);
+                groupObj.name.subscribe(changeSaveButton);
+                groupObj.description.subscribe(changeSaveButton);
+                groupObj.toBeDeprecated.subscribe(changeSaveButton);
                 groupObj.properties.subscribe(changeSaveButton);
 
                 for (let prop of group.properties) {
                     var propObj = propertyListItem(prop.name, prop.label, false, prop.group, self.name, prop.data_type,
                         prop.description, prop.allowed_values, prop.fhir_resource_prop_path, prop.deprecated,
-                        prop.removeFHIRResourcePropertyPath, prop.index);
+                        prop.removeFHIRResourcePropertyPath);
                     propObj.description.subscribe(changeSaveButton);
                     propObj.label.subscribe(changeSaveButton);
                     propObj.fhirResourcePropPath.subscribe(changeSaveButton);
@@ -60,35 +58,33 @@ hqDefine("data_dictionary/js/data_dictionary", [
         return self;
     };
 
-    var groupsViewModel = function (id, name, description, index, caseType, deprecated) {
+    var groupsViewModel = function (id, name, description, caseType, deprecated) {
         var self = {};
         self.id = id;
         self.name = ko.observable(name);
         self.description = ko.observable(description);
-        self.index = index;
         self.caseType = caseType;
         self.properties = ko.observableArray();
         self.expanded = ko.observable(true);
         self.toggleExpanded = () => self.expanded(!self.expanded());
-        self.deprecated = ko.observable(deprecated || false);
+        self.deprecated = deprecated;
         // Ensures that groups are not directly hidden on clicking the deprecated button
-        self.isDeprecatedOnLoad = deprecated;
+        self.toBeDeprecated = ko.observable(deprecated || false);
         self.deprecateGroup = function () {
-            self.deprecated(true);
+            self.toBeDeprecated(true);
         };
 
         self.restoreGroup = function () {
-            self.deprecated(false);
+            self.toBeDeprecated(false);
         };
         return self;
     };
 
     var propertyListItem = function (name, label, isGroup, groupName, caseType, dataType, description, allowedValues,
-        fhirResourcePropPath, deprecated, removeFHIRResourcePropertyPath, index) {
+        fhirResourcePropPath, deprecated, removeFHIRResourcePropertyPath) {
         var self = {};
         self.name = name;
         self.label = ko.observable(label);
-        self.index = index;
         self.expanded = ko.observable(true);
         self.isGroup = isGroup;
         self.group = ko.observable(groupName);
@@ -167,12 +163,12 @@ hqDefine("data_dictionary/js/data_dictionary", [
                 _.each(self.caseGroupList(), function (group, index) {
                     if (group.name() !== "") {
                         let groupData = {
-                            'case_type': self.activeCaseType(),
+                            'caseType': self.activeCaseType(),
                             'id': group.id,
                             'name': group.name(),
                             'description': group.description(),
                             'index': index,
-                            'deprecated': group.deprecated(),
+                            'deprecated': group.toBeDeprecated(),
                         };
                         postGroups.push(groupData);
                     }
@@ -189,7 +185,7 @@ hqDefine("data_dictionary/js/data_dictionary", [
                             'label': element.label() || element.name,
                             'index': index,
                             'data_type': element.dataType(),
-                            'group': group.deprecated() ? "" : group.name(),
+                            'group': group.toBeDeprecated() ? "" : group.name(),
                             'description': element.description(),
                             'fhir_resource_prop_path': (
                                 element.fhirResourcePropPath() ? element.fhirResourcePropPath().trim() : element.fhirResourcePropPath()),
@@ -216,7 +212,7 @@ hqDefine("data_dictionary/js/data_dictionary", [
                         activeCaseType.fhirResourceType(self.fhirResourceType());
                         const emptyGroup = self.caseGroupList().find(group => group.name() === "");
                         for (let group of self.caseGroupList()) {
-                            if (group.deprecated()) {
+                            if (group.toBeDeprecated()) {
                                 emptyGroup.properties.push(...group.properties.removeAll());
                             }
                         }
@@ -297,7 +293,7 @@ hqDefine("data_dictionary/js/data_dictionary", [
 
         self.newGroup = function () {
             if (_.isString(self.newGroupName())) {
-                var group = groupsViewModel(null, self.newGroupName(), '', null, self.activeCaseType());
+                var group = groupsViewModel(null, self.newGroupName(), '', self.activeCaseType(), false);
                 self.caseGroupList.push(group);
                 self.newGroupName(undefined);
             }
