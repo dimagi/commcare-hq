@@ -517,6 +517,8 @@ generic_inbound
  0003_add_logging_models
  0004_add_filter_expression
  0005_remove_requestlog_unused_fields
+geospatial
+ (no migrations)
 hqadmin
  0001_initial
  0002_vcmmigrationaudit
