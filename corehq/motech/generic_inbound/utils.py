@@ -89,16 +89,6 @@ class ApiRequest:
             request_id=log.id
         )
 
-    def to_context(self):
-        restore_user = self.restore_user()
-        return get_evaluation_context(
-            restore_user,
-            self.request_method,
-            self.query,
-            self.headers,
-            self.data,
-        )
-
     @cached_property
     def restore_user(self):
         return self.couch_user.to_ota_restore_user(
