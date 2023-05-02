@@ -53,14 +53,8 @@ hqDefine("data_dictionary/js/data_dictionary", [
                     propObj.allowedValues.on('change', changeSaveButton);
                     groupObj.properties.push(propObj);
                 }
-
-                groupObj.properties.sort((a, b) => a.index - b.index);
                 self.groups.push(groupObj);
             }
-
-            self.groups.sort((a, b) => {
-                return a.index && b.index && a.index - b.index;
-            });
         };
 
         return self;

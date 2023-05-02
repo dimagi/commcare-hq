@@ -112,7 +112,6 @@ def data_dictionary_json(request, domain, case_type_name=None):
             group_ret = {
                 "id": group.id,
                 "name": group.name,
-                "index": group.index,
                 "description": group.description,
                 "deprecated": group.deprecated,
                 "properties": []
@@ -122,7 +121,6 @@ def data_dictionary_json(request, domain, case_type_name=None):
                 group_ret['properties'].append({
                     "description": prop.description,
                     "label": prop.label,
-                    "index": prop.index,
                     "fhir_resource_prop_path": fhir_resource_prop_by_case_prop.get(prop),
                     "name": prop.name,
                     "data_type": prop.data_type,
@@ -138,7 +136,6 @@ def data_dictionary_json(request, domain, case_type_name=None):
             "properties": [{
                     "description": prop.description,
                     "label": prop.label,
-                    "index": prop.index,
                     "fhir_resource_prop_path": fhir_resource_prop_by_case_prop.get(prop),
                     "name": prop.name,
                     "data_type": prop.data_type,
