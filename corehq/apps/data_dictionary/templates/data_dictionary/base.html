@@ -170,7 +170,7 @@
           <div data-bind="sortable: { data: caseGroupList, connectClass: 'groups', options: { handle: 'i.sortable-handle' } }">
           <div>
           <!-- ko if: deprecated() && !isDeprecatedOnLoad && properties().length > 0 -->
-          <div class="group-deprecated" style="padding: 8px 4px;">
+          <div class="group-deprecated">
             <b data-bind="text: name()"></b>
             {% trans "group's properties will be moved to" %}
             <b>"No Group"</b>
@@ -181,9 +181,8 @@
               {% if not request.is_view_only %}
               <i class="sortable-handle fa fa-arrows-v"></i>
               {% endif %}
-              <i class="fa"
-                data-bind="css: { 'fa-plus-square': !expanded(), 'fa-minus-square': expanded() }, click: toggleExpanded"
-                style="margin-left: 8px;"></i>
+              <i class="fa ms-2"
+                data-bind="css: { 'fa-plus-square': !expanded(), 'fa-minus-square': expanded() }, click: toggleExpanded"></i>
             </div>
             <div class="row-item">
               <!-- ko if: name() == '' -->
@@ -226,10 +225,10 @@
               {% endif %}
               </div>
               <div class="row-item">
-                <div style="width: 100%">
+                <div class="w-100">
                 <span data-bind="text: name"></span>
-                <div class="row" style="margin-top: 16px;">
-                  <label class="col-xs-2" for="prop-label" style="padding: 8px 0;">Label </label>
+                <div class="row mt-3">
+                  <label class="col-xs-2 py-2" for="prop-label">Label </label>
                   <span class="col-xs-9">
                     <input class="form-control"
                           data-bind="value: $data.label, attr: {'placeholder': 'Click here to add Label'}"
