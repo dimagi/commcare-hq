@@ -19,7 +19,7 @@
                 </data>
             </instance>
             <instance src="jr://instance/session" id="commcaresession"/>
-            <instance src="jr://instance/selected-entities" id="selected_cases"/>
+            <instance src="jr://instance/selected-entities/selected_cases" id="selected_cases"/>
             <bind nodeset="/data/question1" type="xsd:string"/>
             <itext>
                 <translation lang="en" default="">

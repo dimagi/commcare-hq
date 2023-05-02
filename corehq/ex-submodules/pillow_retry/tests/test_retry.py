@@ -8,9 +8,8 @@ from corehq.apps.change_feed import topics
 from corehq.apps.change_feed.consumer.feed import change_meta_from_kafka_message, KafkaChangeFeed
 from corehq.apps.change_feed.data_sources import SOURCE_COUCH
 from corehq.apps.change_feed.pillow import get_change_feed_pillow_for_db
-from corehq.pillows.mappings.case_mapping import CASE_INDEX_INFO
+from corehq.apps.es.cases import case_adapter
 from corehq.util.elastic import ensure_index_deleted
-from corehq.util.test_utils import trap_extra_setup
 from pillow_retry.api import process_pillow_retry
 from pillow_retry.models import PillowError
 from pillowtop.feed.couch import populate_change_metadata
@@ -121,7 +120,7 @@ class KakfaPillowRetryProcessingTest(TestCase, TestMixin):
         self.original_process_change = self.pillow.process_change
 
     def tearDown(self):
-        ensure_index_deleted(CASE_INDEX_INFO.index)
+        ensure_index_deleted(case_adapter.index_name)
 
     def test(self):
         document = {
