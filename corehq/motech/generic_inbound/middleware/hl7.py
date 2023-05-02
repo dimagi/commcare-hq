@@ -94,7 +94,7 @@ class Hl7Middleware(BaseApiMiddleware):
         return 'AR'
 
 
-def hl7_str_to_dict(raw_hl7: str, use_long_name: bool = True) -> dict:
+def hl7_str_to_dict(raw_hl7, use_long_name=True):
     """Convert an HL7 string to a dictionary
     :param raw_hl7: The input HL7 string
     :param use_long_name: Whether to use the long names
@@ -105,7 +105,7 @@ def hl7_str_to_dict(raw_hl7: str, use_long_name: bool = True) -> dict:
     return hl7_message_to_dict(message, use_long_name)
 
 
-def hl7_message_to_dict(message, use_long_name: bool = True) -> dict:
+def hl7_message_to_dict(message, use_long_name=True):
     """Convert an HL7 message to a dictionary
     :param message: An HL7 message
     :param use_long_name: Whether to use the long names
@@ -123,7 +123,7 @@ def parse_hl7(raw_hl7):
     return message
 
 
-def _hl7_message_to_dict(message_part, base_datatypes, use_long_name: bool = True) -> dict:
+def _hl7_message_to_dict(message_part, base_datatypes, use_long_name=True):
     """Convert an HL7 message to a dictionary
     :param message_part: The HL7 message as returned by :func:`hl7apy.parser.parse_message`
     :param use_long_name: Whether to use the long names (e.g. "patient_name" instead of "pid_5")
