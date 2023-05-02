@@ -314,6 +314,7 @@ HQ_APPS = (
     'corehq.apps.mobile_auth',
     'corehq.apps.sms',
     'corehq.apps.events',
+    'corehq.apps.geospatial',
     'corehq.apps.smsforms',
     'corehq.apps.sso',
     'corehq.apps.ivr',
