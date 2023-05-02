@@ -563,6 +563,7 @@ class ModuleDetailValidatorMixin(object):
                         'reason': _('Case tiles may only be used for the case list (not the case details).')
                     })
                 col_by_tile_field = {c.case_tile_field: c for c in detail.columns}
+                '''
                 for field in ["header", "top_left", "sex", "bottom_left", "date"]:
                     if field not in col_by_tile_field:
                         errors.append({
@@ -570,6 +571,7 @@ class ModuleDetailValidatorMixin(object):
                             'module': self.get_module_info(),
                             'reason': _('A case property must be assigned to the "{}" tile field.'.format(field))
                         })
+                '''
             if detail.has_persistent_tile() and self.module.report_context_tile:
                 errors.append({
                     'type': "invalid tile configuration",
