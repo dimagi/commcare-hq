@@ -23,29 +23,60 @@ class Hl7ApiResponse(ApiResponse):
 class Hl7Middleware(BaseApiMiddleware):
     """API middleware for handling HL7 v2 payloads"""
 
-    def _get_body_for_eval_context(self, request_data):
+    def __init__(self, request_data):
+        super().__init__(request_data)
+        self.hl7_message = None
+
+    def _get_body_for_eval_context(self):
         try:
-            return hl7_str_to_dict(self.request_data.data)
+            self.hl7_message = parse_hl7(self.request_data.data)
+            return {
+                "parsed": hl7_message_to_dict(self.hl7_message, False)
+            }
         except HL7apyException as e:
             raise GenericInboundUserError(gettext("Error parsing HL7: {}").format(str(e)))
 
     def get_success_response(self, response_json):
-        return Hl7ApiResponse(status=200, internal_response=response_json, hl7_response="TODO")
+        hl7_response = self._get_ack("success", 200)
+        return Hl7ApiResponse(status=200, internal_response=response_json, hl7_response=hl7_response)
 
     def _get_generic_error(self, status_code, message):
-        return Hl7ApiResponse(status=status_code, internal_response={'error': message}, hl7_response="TODO")
+        hl7_response = self._get_ack(message, status_code)
+        return Hl7ApiResponse(status=status_code, internal_response={'error': message}, hl7_response=hl7_response)
 
     def _get_submission_error_response(self, status_code, form_id, message):
+        hl7_response = self._get_ack(message, status_code)
         return Hl7ApiResponse(status=status_code, internal_response={
             'error': message,
             'form_id': form_id,
-        }, hl7_response="TODO")
+        }, hl7_response=hl7_response)
 
     def _get_validation_error(self, status_code, message, errors):
+        hl7_response = self._get_ack(message, status_code)
         return Hl7ApiResponse(status=status_code, internal_response={
             'error': message,
             'errors': errors,
-        }, hl7_response="TODO")
+        }, hl7_response=hl7_response)
+
+    def _get_ack(self, ack_text, status_code):
+        ack = Message("ACK", version=self.hl7_message.msh.msh_12.value)
+        ack.msh.msh_5 = self.hl7_message.msh.msh_3  # receiving application
+        ack.msh.msh_6 = self.hl7_message.msh.msh_4  # receiving facility
+        ack.msh.msh_4 = self.hl7_message.msh.msh_6  # sending facility
+        ack.msh.msh_11 = self.hl7_message.msh.msh_11  # processing ID
+        ack.msh.msh_10 = self.request_data.request_id  # outbound control ID
+
+        ack.msa.msa_1 = self._status_code_to_hl7_status(status_code)
+        ack.msa.msa_2 = self.hl7_message.msh.msh_10  # inbound control ID
+        ack.msa.msa_3 = ack_text
+        return ack.to_er7()
+
+    def _status_code_to_hl7_status(self, status_code):
+        if 200 <= status_code < 300:
+            return 'AA'
+        if 400 <= status_code < 500:
+            return 'AE'
+        return 'AR'
 
 
 def hl7_str_to_dict(raw_hl7: str, use_long_name: bool = True) -> dict:
@@ -55,11 +86,26 @@ def hl7_str_to_dict(raw_hl7: str, use_long_name: bool = True) -> dict:
                           (e.g. "patient_name" instead of "pid_5")
     :returns: A dictionary representation of the HL7 message
     """
-    raw_hl7 = raw_hl7.replace("\n", "\r")
-    message = parse_message(raw_hl7, find_groups=False)
+    message = parse_hl7(raw_hl7)
+    return hl7_message_to_dict(message, use_long_name)
+
+
+def hl7_message_to_dict(message, use_long_name: bool = True) -> dict:
+    """Convert an HL7 message to a dictionary
+    :param message: An HL7 message
+    :param use_long_name: Whether to use the long names
+                          (e.g. "patient_name" instead of "pid_5")
+    :returns: A dictionary representation of the HL7 message
+    """
     lib = load_library(message.version)
     base_datatypes = lib.get_base_datatypes()
     return _hl7_message_to_dict(message, set(base_datatypes), use_long_name=use_long_name)
+
+
+def parse_hl7(raw_hl7):
+    raw_hl7 = raw_hl7.replace("\n", "\r")
+    message = parse_message(raw_hl7, find_groups=False)
+    return message
 
 
 def _hl7_message_to_dict(message_part, base_datatypes, use_long_name: bool = True) -> dict:

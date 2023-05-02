@@ -1,11 +1,8 @@
-import json
-from urllib.parse import urlencode
-
-from django.urls import reverse
+from freezegun import freeze_time
 
 from corehq import privileges
 from corehq.form_processor.tests.utils import FormProcessorTestUtils
-from corehq.motech.generic_inbound.models import ApiMiddleware
+from corehq.motech.generic_inbound.models import ApiMiddleware, RequestLog
 from corehq.motech.generic_inbound.tests.test_api import GenericInboundAPIViewBaseTest
 from corehq.util.test_utils import flag_enabled, privilege_enabled
 
@@ -28,15 +25,19 @@ class TestGenericInboundAPIViewHL7(GenericInboundAPIViewBaseTest):
         FormProcessorTestUtils.delete_all_cases_forms_ledgers(cls.domain_name)
         super().tearDownClass()
 
+    @freeze_time('2023-05-02 13:01:51')
     def test_post_hl7(self):
         response_content = self._test_generic_api({
             'facility': {
                 'type': 'jsonpath',
                 'jsonpath': 'body.parsed.MSH.MSH_4.HD_1',
             }
-        })
-        # TODO: update response
-        self.assertEqual(response_content, "MSH")
+        }).decode()
+        log = RequestLog.objects.last()
+        expected = 'MSH|^~\\&#||GOOD HEALTH HOSPITAL|ADT1|GOOD HEALTH HOSPITAL|20230502130151|||' \
+                   f'{log.id.hex}|P|2.8\r' \
+                   'MSA|AA|MSG00001|success'
+        self.assertEqual(response_content, expected)
 
     def _test_generic_api(self, properties_expression):
         response = self._call_api(properties_expression, middleware=ApiMiddleware.hl7)
