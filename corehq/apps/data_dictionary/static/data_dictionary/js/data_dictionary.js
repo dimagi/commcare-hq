@@ -33,11 +33,9 @@ hqDefine("data_dictionary/js/data_dictionary", [
         self.init = function (groupData, changeSaveButton) {
             for (let group of groupData) {
                 let groupObj = groupsViewModel(group.id, group.name, group.description, group.index, self.name, group.deprecated);
-                if (group.id) {
-                    groupObj.name.subscribe(changeSaveButton);
-                    groupObj.description.subscribe(changeSaveButton);
-                    groupObj.toBeDeprecated.subscribe(changeSaveButton);
-                }
+                groupObj.name.subscribe(changeSaveButton);
+                groupObj.description.subscribe(changeSaveButton);
+                groupObj.toBeDeprecated.subscribe(changeSaveButton);
                 groupObj.properties.subscribe(changeSaveButton);
 
                 for (let prop of group.properties) {
