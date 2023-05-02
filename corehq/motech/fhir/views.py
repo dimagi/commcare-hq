@@ -11,6 +11,7 @@ from corehq.apps.domain.decorators import (
 from corehq.form_processor.exceptions import CaseNotFound
 from corehq.form_processor.models import CommCareCase
 from corehq.motech.exceptions import ConfigurationError
+from corehq.motech.fhir.utils import validate_accept_header_and_format_param
 from corehq.motech.repeaters.views import AddRepeaterView, EditRepeaterView
 from corehq.util.view_utils import get_case_or_404
 
@@ -51,6 +52,7 @@ class EditFHIRRepeaterView(EditRepeaterView, AddFHIRRepeaterView):
 @login_or_api_key
 @require_superuser
 @toggles.FHIR_INTEGRATION.required_decorator()
+@validate_accept_header_and_format_param
 def get_view(request, domain, fhir_version_name, resource_type, resource_id):
     fhir_version = _get_fhir_version(fhir_version_name)
     if not fhir_version:
@@ -77,6 +79,7 @@ def get_view(request, domain, fhir_version_name, resource_type, resource_id):
 @login_or_api_key
 @require_superuser
 @toggles.FHIR_INTEGRATION.required_decorator()
+@validate_accept_header_and_format_param
 def search_view(request, domain, fhir_version_name, resource_type):
     fhir_version = _get_fhir_version(fhir_version_name)
     if not fhir_version:

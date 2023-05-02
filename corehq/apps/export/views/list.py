@@ -735,9 +735,9 @@ class CaseExportListView(BaseExportListView, CaseExportListHelper):
             messages.info(
                 request,
                 format_html(
-                    _("Populating tables for <strong>{}</strong> {}."),
+                    _("Populating tables for <strong>{}</strong>. ({}%)"),
                     bulk_export_progress['table_name'],
-                    bulk_export_progress['status']
+                    bulk_export_progress['progress']
                 )
             )
 

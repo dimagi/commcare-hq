@@ -232,11 +232,19 @@ def process_populate_export_tables(export_id, progress_id=None):
     the export instance are instead added async in this task after the instance has been saved.
     """
     export = CaseExportInstance.get(export_id)
+    progress_data = {
+        'table_name': export.name,
+        'progress': 0
+    }
 
     if progress_id:
-        cache.set(progress_id, {'table_name': export.name, 'status': 'in progress'})
+        cache.set(progress_id, progress_data)
 
     schema = CaseExportDataSchema.generate_schema_from_builds(export.domain, None, export.case_type)
+    if progress_id:
+        progress_data['progress'] = 50
+        cache.set(progress_id, progress_data)
+
     export_settings = get_default_export_settings_if_available(export.domain)
     export_instance = CaseExportInstance.generate_instance_from_schema(
         schema,

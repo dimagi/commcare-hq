@@ -1,14 +1,6 @@
-from pillowtop.es_utils import XFORM_HQ_INDEX_NAME, ElasticsearchIndexInfo
-
 from corehq.apps.es.client import Tombstone
-from corehq.apps.es.forms import form_adapter
 from corehq.pillows.core import DATE_FORMATS_ARR, DATE_FORMATS_STRING
-from corehq.pillows.mappings.const import NULL_VALUE
-from corehq.util.elastic import prefix_for_tests
-
-XFORM_INDEX = form_adapter.index_name
-XFORM_ES_TYPE = form_adapter.type
-XFORM_ALIAS = prefix_for_tests("xforms")
+from corehq.apps.es.mappings.const import NULL_VALUE
 
 XFORM_MAPPING = {
     "_meta": {
@@ -223,11 +215,3 @@ XFORM_MAPPING = {
         }
     }
 }
-
-XFORM_INDEX_INFO = ElasticsearchIndexInfo(
-    index=XFORM_INDEX,
-    alias=XFORM_ALIAS,
-    type=XFORM_ES_TYPE,
-    mapping=XFORM_MAPPING,
-    hq_index_name=XFORM_HQ_INDEX_NAME,
-)
