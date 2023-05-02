@@ -18,13 +18,16 @@ class BaseApiMiddleware:
     is also translated from JSON to the appropriate data format."""
     error_response = None
 
-    def get_context(self, request_data):
+    def __init__(self, request_data):
+        self.request_data = request_data
+
+    def get_context(self):
         return get_evaluation_context(
-            request_data.restore_user,
-            request_data.request_method,
-            request_data.query,
-            request_data.headers,
-            self._get_body_for_eval_context(request_data)
+            self.request_data.restore_user,
+            self.request_data.request_method,
+            self.request_data.query,
+            self.request_data.headers,
+            self._get_body_for_eval_context()
         )
 
     @contextmanager
@@ -62,7 +65,7 @@ class BaseApiMiddleware:
         """Given a successful API response JSON, return an ``ApiResponse`` object."""
         raise NotImplementedError
 
-    def _get_body_for_eval_context(self, request_data):
+    def _get_body_for_eval_context(self):
         """Give the RequestData, return a dictionary of data which will be placed into the ``body``
         attribute of the evaluation context.
         """

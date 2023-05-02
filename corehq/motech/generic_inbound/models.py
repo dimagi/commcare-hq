@@ -80,9 +80,9 @@ class ConfigurableAPI(models.Model):
         from corehq.motech.generic_inbound.middleware.json import JsonMiddleware
         from corehq.motech.generic_inbound.middleware.hl7 import Hl7Middleware
         if self.middleware == ApiMiddleware.json:
-            return JsonMiddleware()
+            return JsonMiddleware
         elif self.middleware == ApiMiddleware.hl7:
-            return Hl7Middleware()
+            return Hl7Middleware
         raise GenericInboundApiError(f"Unknown middleware type: {self.middleware}")
 
     @property

@@ -1,32 +1,29 @@
 from django.utils.translation import gettext as _
 
 from corehq.apps.hqcase.api.core import (
-    SubmissionError,
-    UserError,
     serialize_case,
 )
 from corehq.apps.hqcase.api.updates import handle_case_update
-from corehq.apps.userreports.exceptions import BadSpecError
 from corehq.motech.generic_inbound.exceptions import (
     GenericInboundApiError,
     GenericInboundRequestFiltered,
-    GenericInboundValidationError, GenericInboundUserError,
-)
+    GenericInboundValidationError, )
 from corehq.motech.generic_inbound.utils import ApiResponse
 
 
 def execute_generic_api(api_model, request_data):
     try:
-        middleware = api_model.middleware_class
+        middleware_cls = api_model.middleware_class
     except GenericInboundApiError as e:
         return ApiResponse(status=500, internal_response={'error': str(e)})
 
+    middleware = middleware_cls(request_data)
     with middleware.handle_errors():
         response_json = _execute_generic_api(
             request_data.domain,
             request_data.couch_user,
             request_data.user_agent,
-            middleware.get_context(request_data),
+            middleware.get_context(),
             api_model,
         )
         return middleware.get_success_response(response_json)

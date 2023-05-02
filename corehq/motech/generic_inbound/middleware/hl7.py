@@ -3,6 +3,7 @@ from gettext import gettext
 import attr
 from django.http import HttpResponse
 from hl7apy import load_library
+from hl7apy.core import Message
 from hl7apy.exceptions import ChildNotFound, HL7apyException
 from hl7apy.parser import parse_message
 
@@ -24,7 +25,7 @@ class Hl7Middleware(BaseApiMiddleware):
 
     def _get_body_for_eval_context(self, request_data):
         try:
-            return hl7_str_to_dict(request_data.data)
+            return hl7_str_to_dict(self.request_data.data)
         except HL7apyException as e:
             raise GenericInboundUserError(gettext("Error parsing HL7: {}").format(str(e)))
 

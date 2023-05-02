@@ -13,9 +13,9 @@ class JsonMiddleware(BaseApiMiddleware):
     def get_success_response(self, response_json):
         return ApiResponse(status=200, internal_response=response_json)
 
-    def _get_body_for_eval_context(self, request_data):
+    def _get_body_for_eval_context(self):
         try:
-            return json.loads(request_data.data)
+            return json.loads(self.request_data.data)
         except json.JSONDecodeError:
             raise GenericInboundUserError(gettext("Payload must be valid JSON"))
 
