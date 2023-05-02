@@ -35,13 +35,25 @@ DISABLE_RANDOM_TOGGLES = UNIT_TESTING
 # Setting to declare always_enabled/always_disabled toggle states for domains
 #   declaring toggles here avoids toggle lookups from cache for all requests.
 #   Example format
-#   STATIC_TOGGLE_STATES = {
-#     'toggle_slug': {
-#         'always_enabled': ['domain1', 'domain2],
-#         'always_disabled': ['domain4', 'domain3],
-#     }
-#   }
-STATIC_TOGGLE_STATES = {}
+STATIC_TOGGLE_STATES = {
+     'case_list_tile': {
+         'always_enabled': ['bosco'],
+         'always_disabled': [],
+     },
+     'search_claim': {
+         'always_enabled': ['bosco'],
+         'always_disabled': [],
+     },
+     'ush_case_list_multi_select': {
+         'always_enabled': ['bosco'],
+         'always_disabled': [],
+     },
+     'case_claim_autolaunch': {
+         'always_enabled': ['bosco'],
+         'always_disabled': [],
+     },
+}
+#STATIC_TOGGLE_STATES = {}
 
 ADMINS = ()
 MANAGERS = ADMINS
