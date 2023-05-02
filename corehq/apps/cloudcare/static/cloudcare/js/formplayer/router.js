@@ -150,7 +150,10 @@ hqDefine("cloudcare/js/formplayer/router", function () {
     FormplayerFrontend.on("menu:select", function (index) {
         var urlObject = utils.currentUrlToObject();
         if (index === undefined) {
-            urlObject.setQueryData(null, false, true);
+            urlObject.setQueryData({
+                inputs: null,
+                forceManualSearch: true,
+            });
         } else {
             urlObject.addSelection(index);
         }
@@ -196,7 +199,10 @@ hqDefine("cloudcare/js/formplayer/router", function () {
 
     FormplayerFrontend.on("menu:query", function (queryDict) {
         var urlObject = utils.currentUrlToObject();
-        urlObject.setQueryData(queryDict, true);
+        urlObject.setQueryData({
+            inputs: queryDict,
+            execute: true,
+        });
         utils.setUrlToObject(urlObject);
         API.listMenus();
     });
