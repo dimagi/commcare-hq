@@ -201,7 +201,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             heightPixels,
             fullWidth;
 
-        fullWidth = 800;
+        fullWidth = $("#menu-region").width() - 20;  //800;
         widthPixels = ((1 / numColumns) / numCasesPerRow) * fullWidth;
         if (useUniformUnits) {
             heightPixels = widthPixels;
