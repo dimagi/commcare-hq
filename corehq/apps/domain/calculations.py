@@ -249,6 +249,7 @@ CALC_ORDER = [
     'last_form_submission', 'has_app', 'web_users', 'active_apps',
     'uses_reminders', 'sms--I', 'sms--O', 'sms_in_last', 'sms_in_last--30',
     'sms_in_last_bool', 'sms_in_last_bool--30', 'sms_in_in_last--30',
+    'sms_out_in_last--30',
 ]
 
 CALCS = {
