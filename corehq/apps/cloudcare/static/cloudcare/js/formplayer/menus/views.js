@@ -280,13 +280,17 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
         },
 
         templateContext: function () {
-            var appId = utils.currentUrlToObject().appId;
+            var appId = utils.currentUrlToObject().appId,
+                md = window.markdownit();
             return {
                 data: this.options.model.get('data'),
                 styles: this.options.styles,
                 isMultiSelect: this.options.isMultiSelect,
                 resolveUri: function (uri) {
                     return FormplayerFrontend.getChannel().request('resourceMap', uri, appId);
+                },
+                renderMarkdown: function (datum) {
+                    return md.render(DOMPurify.sanitize(datum || ""));
                 },
             };
         },
