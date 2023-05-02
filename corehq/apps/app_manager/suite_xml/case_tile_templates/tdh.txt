@@ -4,18 +4,17 @@
         <locale id="{title_text_id}"/>
       </text>
     </title>
-    <action>
-    	<display>
-	      <text>
-	        <locale id="forms.m0f0"/>
-	      </text>
-	      <media image="jr://media/plus.png"/>
+    <action auto_launch="false()" redo_last="false">
+      <display>
+        <text>
+          <locale id="case_search.m2"/>
+        </text>
       </display>
       <stack>
-      	<push>
-      		<command value="'m0-f0'"/>
-      	    <datum id="case_id_new_rec_child_0" value="uuid()"/>
-      	</push>
+        <push>
+          <mark/>
+          <command value="'search_command.m2'"/>
+        </push>
       </stack>
     </action>
     <field>
@@ -38,9 +37,9 @@
       <header><text></text></header>
       <template format="markdown">
         <text>
-          *{header[prefix]}*:
-          <xpath function="{header[xpath_function]}">
-            {header[variables]}
+          *{tile1[prefix]}*: 
+          <xpath function="{tile1[xpath_function]}">
+            {tile1[variables]}
           </xpath>
         </text>
       </template>
@@ -52,9 +51,9 @@
       <header><text></text></header>
       <template format="markdown">
         <text>
-          *{header[prefix]}*:
-          <xpath function="{header[xpath_function]}">
-            {header[variables]}
+          {tile2[prefix]}: 
+          <xpath function="{tile2[xpath_function]}">
+            {tile2[variables]}
           </xpath>
         </text>
       </template>
@@ -66,9 +65,9 @@
       <header><text></text></header>
       <template format="markdown">
         <text>
-          *{header[prefix]}*:
-          <xpath function="{header[xpath_function]}">
-            {header[variables]}
+          {tile3[prefix]}: 
+          <xpath function="{tile3[xpath_function]}">
+            {tile3[variables]}
           </xpath>
         </text>
       </template>
@@ -80,9 +79,9 @@
       <header><text></text></header>
       <template format="markdown">
         <text>
-          *{header[prefix]}*:
-          <xpath function="{header[xpath_function]}">
-            {header[variables]}
+          {tile4[prefix]}: 
+          <xpath function="{tile4[xpath_function]}">
+            {tile4[variables]}
           </xpath>
         </text>
       </template>
@@ -94,9 +93,9 @@
       <header><text></text></header>
       <template format="markdown">
         <text>
-          *{header[prefix]}*:
-          <xpath function="{header[xpath_function]}">
-            {header[variables]}
+          {tile5[prefix]}: 
+          <xpath function="{tile5[xpath_function]}">
+            {tile5[variables]}
           </xpath>
         </text>
       </template>
@@ -108,9 +107,9 @@
       <header><text></text></header>
       <template format="markdown">
         <text>
-          *{header[prefix]}*:
-          <xpath function="{header[xpath_function]}">
-            {header[variables]}
+          {tile6[prefix]}: 
+          <xpath function="{tile6[xpath_function]}">
+            {tile6[variables]}
           </xpath>
         </text>
       </template>
@@ -122,9 +121,9 @@
       <header><text></text></header>
       <template format="markdown">
         <text>
-          *{header[prefix]}*:
-          <xpath function="{header[xpath_function]}">
-            {header[variables]}
+          {tile7[prefix]}: 
+          <xpath function="{tile7[xpath_function]}">
+            {tile7[variables]}
           </xpath>
         </text>
       </template>
@@ -136,9 +135,9 @@
       <header><text></text></header>
       <template format="markdown">
         <text>
-          *{header[prefix]}*:
-          <xpath function="{header[xpath_function]}">
-            {header[variables]}
+          {tile8[prefix]}: 
+          <xpath function="{tile8[xpath_function]}">
+            {tile8[variables]}
           </xpath>
         </text>
       </template>
@@ -150,9 +149,9 @@
       <header><text></text></header>
       <template format="markdown">
         <text>
-          *{header[prefix]}*:
-          <xpath function="{header[xpath_function]}">
-            {header[variables]}
+          {tile9[prefix]}: 
+          <xpath function="{tile9[xpath_function]}">
+            {tile9[variables]}
           </xpath>
         </text>
       </template>
@@ -164,9 +163,9 @@
       <header><text></text></header>
       <template format="markdown">
         <text>
-          *{header[prefix]}*:
-          <xpath function="{header[xpath_function]}">
-            {header[variables]}
+          {tile10[prefix]}: 
+          <xpath function="{tile10[xpath_function]}">
+            {tile10[variables]}
           </xpath>
         </text>
       </template>
@@ -178,9 +177,9 @@
       <header><text></text></header>
       <template format="markdown">
         <text>
-          *{header[prefix]}*:
-          <xpath function="{header[xpath_function]}">
-            {header[variables]}
+          {tile11[prefix]}: 
+          <xpath function="{tile11[xpath_function]}">
+            {tile11[variables]}
           </xpath>
         </text>
       </template>
@@ -192,9 +191,9 @@
       <header><text></text></header>
       <template format="markdown">
         <text>
-          *{header[prefix]}*:
-          <xpath function="{header[xpath_function]}">
-            {header[variables]}
+          {tile12[prefix]}: 
+          <xpath function="{tile12[xpath_function]}">
+            {tile12[variables]}
           </xpath>
         </text>
       </template>
@@ -206,9 +205,9 @@
       <header><text></text></header>
       <template format="markdown">
         <text>
-          *{header[prefix]}*:
-          <xpath function="{header[xpath_function]}">
-            {header[variables]}
+          {tile13[prefix]}: 
+          <xpath function="{tile13[xpath_function]}">
+            {tile13[variables]}
           </xpath>
         </text>
       </template>
@@ -220,9 +219,9 @@
       <header><text></text></header>
       <template format="markdown">
         <text>
-          *{header[prefix]}*:
-          <xpath function="{header[xpath_function]}">
-            {header[variables]}
+          {tile14[prefix]}: 
+          <xpath function="{tile14[xpath_function]}">
+            {tile14[variables]}
           </xpath>
         </text>
       </template>
