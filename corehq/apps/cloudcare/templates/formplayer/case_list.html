@@ -110,7 +110,7 @@
       <% } else if(styles[index].widthHint === 0) { %>
       <div style="display:none;"><%- datum %></div>
       <% } else { %>
-      <div><%- datum %></div>
+      <div><%= renderMarkdown(datum) %></div>
       <% } %>
     </div>
     <% }); %>
