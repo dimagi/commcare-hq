@@ -1,9 +1,8 @@
 from contextlib import contextmanager
 from datetime import datetime
+from unittest.mock import patch
 
 from django.test import TestCase, override_settings
-
-from unittest.mock import patch
 
 from casexml.apps.case.mock import CaseFactory
 
@@ -18,17 +17,17 @@ from corehq.apps.data_interfaces.models import (
     CustomActionDefinition,
     CustomMatchDefinition,
     DomainCaseRuleRun,
+    LocationFilterDefinition,
     MatchPropertyDefinition,
     UCRFilterDefinition,
     UpdateCaseDefinition,
-    LocationFilterDefinition,
 )
 from corehq.apps.data_interfaces.tasks import run_case_update_rules_for_domain
 from corehq.apps.domain.models import Domain
 from corehq.form_processor.models import CommCareCase, XFormInstance
 from corehq.form_processor.signals import sql_case_post_save
-from corehq.toggles import NAMESPACE_DOMAIN, RUN_AUTO_CASE_UPDATES_ON_SAVE
 from corehq.tests.locks import reentrant_redis_locks
+from corehq.toggles import NAMESPACE_DOMAIN, RUN_AUTO_CASE_UPDATES_ON_SAVE
 from corehq.util.context_managers import drop_connected_signals
 from corehq.util.test_utils import set_parent_case as set_actual_parent_case
 
@@ -581,8 +580,8 @@ class CaseRuleCriteriaTest(BaseCaseRuleTest):
             self.assertTrue(rule.criteria_match(case, datetime.utcnow()))
 
     def test_location_filter_criteria_does_include_child_locations(self):
-        from corehq.apps.locations.models import SQLLocation, LocationType
         from corehq.apps.domain.shortcuts import create_domain
+        from corehq.apps.locations.models import LocationType, SQLLocation
 
         create_domain(self.domain)
 
@@ -684,9 +683,112 @@ class CaseRuleActionsTest(BaseCaseRuleTest):
 
             self.assertTrue(isinstance(result, CaseRuleActionResult))
             self.assertActionResult(rule, 1, result, CaseRuleActionResult(num_updates=1))
+            self.assertIn('result1', case.case_json)
+            self.assertIn('result2', case.case_json)
             self.assertEqual(case.get_case_property('result1'), 'abc')
             self.assertEqual(case.get_case_property('result2'), 'def')
             self.assertFalse(case.closed)
+
+    def test_update_case_name(self):
+        """
+        Updating case property "case_name" updates ``case.name``
+        """
+        rule = _create_empty_rule(self.domain)
+        _, definition = rule.add_action(UpdateCaseDefinition, close_case=False)
+        definition.set_properties_to_update([
+            UpdateCaseDefinition.PropertyDefinition(
+                name='case_name',
+                value_type=UpdateCaseDefinition.VALUE_TYPE_EXACT,
+                value='Ellie',
+            ),
+        ])
+        definition.save()
+
+        with _with_case(self.domain, 'person', datetime.utcnow()) as case:
+            self.assertEqual(case.name, '')
+            self.assertActionResult(rule, 0)
+
+            result = rule.run_actions_when_case_matches(case)
+            case = CommCareCase.objects.get_case(case.case_id, self.domain)
+
+            self.assertActionResult(rule, 1, result, CaseRuleActionResult(num_updates=1))
+            self.assertNotIn('case_name', case.case_json)
+            self.assertEqual(case.name, 'Ellie')
+
+    def test_update_name(self):
+        """
+        Updating case property "name" updates ``case.name``
+        """
+        rule = _create_empty_rule(self.domain)
+        _, definition = rule.add_action(UpdateCaseDefinition, close_case=False)
+        definition.set_properties_to_update([
+            UpdateCaseDefinition.PropertyDefinition(
+                name='name',
+                value_type=UpdateCaseDefinition.VALUE_TYPE_EXACT,
+                value='Ellie',
+            ),
+        ])
+        definition.save()
+
+        with _with_case(self.domain, 'person', datetime.utcnow()) as case:
+            self.assertEqual(case.name, '')
+            self.assertActionResult(rule, 0)
+
+            result = rule.run_actions_when_case_matches(case)
+            case = CommCareCase.objects.get_case(case.case_id, self.domain)
+
+            self.assertActionResult(rule, 1, result, CaseRuleActionResult(num_updates=1))
+            self.assertNotIn('name', case.case_json)
+            self.assertEqual(case.name, 'Ellie')
+
+    def test_update_external_id(self):
+        """
+        Updating case property "external_id" updates ``case.external_id``
+        """
+        rule = _create_empty_rule(self.domain)
+        _, definition = rule.add_action(UpdateCaseDefinition, close_case=False)
+        definition.set_properties_to_update([
+            UpdateCaseDefinition.PropertyDefinition(
+                name='external_id',
+                value_type=UpdateCaseDefinition.VALUE_TYPE_EXACT,
+                value='Bella Ramsay',
+            ),
+        ])
+        definition.save()
+
+        with _with_case(self.domain, 'person', datetime.utcnow()) as case:
+            self.assertActionResult(rule, 0)
+
+            result = rule.run_actions_when_case_matches(case)
+            case = CommCareCase.objects.get_case(case.case_id, self.domain)
+
+            self.assertActionResult(rule, 1, result, CaseRuleActionResult(num_updates=1))
+            self.assertNotIn('external_id', case.case_json)
+            self.assertEqual(case.external_id, 'Bella Ramsay')
+
+    def test_update_case_id(self):
+        rule = _create_empty_rule(self.domain)
+        _, definition = rule.add_action(UpdateCaseDefinition, close_case=False)
+        definition.set_properties_to_update([
+            UpdateCaseDefinition.PropertyDefinition(
+                name='case_id',
+                value_type=UpdateCaseDefinition.VALUE_TYPE_EXACT,
+                value='Bella Ramsay',
+            ),
+        ])
+        definition.save()
+
+        with _with_case(self.domain, 'person', datetime.utcnow()) as case:
+            orig_case_id = case.case_id
+            self.assertActionResult(rule, 0)
+
+            result = rule.run_actions_when_case_matches(case)
+            case = CommCareCase.objects.get_case(case.case_id, self.domain)
+
+            self.assertActionResult(rule, 1, result, CaseRuleActionResult(num_updates=1))
+
+            self.assertNotIn('case_id', case.case_json)
+            self.assertEqual(case.case_id, orig_case_id)
 
     def test_close_only(self):
         rule = _create_empty_rule(self.domain)

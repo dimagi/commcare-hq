@@ -104,6 +104,12 @@
                 {% trans "Edit User Fields" %}
               </a>
             {% endif %}
+            {% if request|toggle_enabled:"CLEAR_MOBILE_WORKER_DATA" %}
+              <a id="clear-data" class="btn btn-danger" href="{% url "clear_commcare_users" domain %}">
+                <i class="fa fa-eraser"></i>
+                {% trans "Bulk Clear Data" %}
+              </a>
+            {% endif %}
             {% if request|toggle_enabled:"FILTERED_BULK_USER_DOWNLOAD" %}
               <a class="btn btn-danger" href="{% url "delete_commcare_users" domain %}">
                 <i class="fa fa-trash"></i>
