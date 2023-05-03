@@ -6125,15 +6125,6 @@ msgstr ""
 #: corehq/apps/app_manager/templates/app_manager/partials/build_errors.html
 msgid ""
 "\n"
-"                Linking for a form in a multi-select case list is restricted "
-"to multi-select forms only.\n"
-"                Please ensure your form is multi-select.\n"
-"              "
-msgstr ""
-
-#: corehq/apps/app_manager/templates/app_manager/partials/build_errors.html
-msgid ""
-"\n"
 "                Please check that end of form navigation is correct. It "
 "appears to involve both\n"
 "                a multi-select form and a single select-form, which is not "
@@ -18125,10 +18116,8 @@ msgid "User conversion failed for some reason and we have noted this failure."
 msgstr ""
 
 #: corehq/apps/events/views.py
-#, fuzzy
-#| msgid "Go back to Mobile Workers"
 msgid "Go back to view attendees"
-msgstr "Voltar para Trabalhadores Móveis"
+msgstr ""
 
 #: corehq/apps/events/views.py
 msgid "Mobile workers can now also be selected to attend events."
@@ -21493,10 +21482,8 @@ msgid "Automatic Case Update Rule"
 msgstr ""
 
 #: corehq/apps/hqcase/utils.py
-#, fuzzy
-#| msgid "Application Type"
 msgid "Deduplication Rule"
-msgstr "Tipo de Aplicação"
+msgstr ""
 
 #: corehq/apps/hqcase/utils.py
 msgid "DHIS2 Integration"

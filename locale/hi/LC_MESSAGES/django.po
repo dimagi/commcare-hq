@@ -6056,15 +6056,6 @@ msgstr ""
 #: corehq/apps/app_manager/templates/app_manager/partials/build_errors.html
 msgid ""
 "\n"
-"                Linking for a form in a multi-select case list is restricted "
-"to multi-select forms only.\n"
-"                Please ensure your form is multi-select.\n"
-"              "
-msgstr ""
-
-#: corehq/apps/app_manager/templates/app_manager/partials/build_errors.html
-msgid ""
-"\n"
 "                Please check that end of form navigation is correct. It "
 "appears to involve both\n"
 "                a multi-select form and a single select-form, which is not "

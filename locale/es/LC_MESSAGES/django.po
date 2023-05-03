@@ -6533,15 +6533,6 @@ msgstr ""
 #: corehq/apps/app_manager/templates/app_manager/partials/build_errors.html
 msgid ""
 "\n"
-"                Linking for a form in a multi-select case list is restricted "
-"to multi-select forms only.\n"
-"                Please ensure your form is multi-select.\n"
-"              "
-msgstr ""
-
-#: corehq/apps/app_manager/templates/app_manager/partials/build_errors.html
-msgid ""
-"\n"
 "                Please check that end of form navigation is correct. It "
 "appears to involve both\n"
 "                a multi-select form and a single select-form, which is not "
@@ -14802,17 +14793,12 @@ msgid "Custom Logo"
 msgstr "Logo Personalizado"
 
 #: corehq/apps/domain/forms.py
-#, fuzzy, python-brace-format
-#| msgid ""
-#| "Upload a custom image to display instead of the CommCare HQ logo.  It "
-#| "will be automatically resized to a height of 32 pixels."
+#, python-brace-format
 msgid ""
 "Upload a custom image to display instead of the CommCare HQ logo.  It will "
 "be automatically resized to a height of 32 pixels. Upload size limit is "
 "{size_limit} MB."
 msgstr ""
-"Cargue una imagen personalizada para mostrar en vez del logo de CommCare HQ. "
-"Este será ajustado a una altura de 32 pixeles."
 
 #: corehq/apps/domain/forms.py
 msgid "Delete Logo"
@@ -18832,30 +18818,24 @@ msgid "Edit Attendee"
 msgstr ""
 
 #: corehq/apps/events/views.py
-#, fuzzy
-#| msgid "Mobile Worker Upload Status"
 msgid "Enabling mobile worker attendees status"
-msgstr "Estado de Carga de Usuario Móvil"
+msgstr ""
 
 #: corehq/apps/events/views.py
 msgid "Disabling mobile worker attendees status"
 msgstr ""
 
 #: corehq/apps/events/views.py
-#, fuzzy
-#| msgid "Restoring your forms, this may take some time..."
 msgid "Processing Mobile Workers. This may take some time..."
-msgstr "Restaurando sus formularios; esto puede llevar un tiempo..."
+msgstr ""
 
 #: corehq/apps/events/views.py
 msgid "User conversion failed for some reason and we have noted this failure."
 msgstr ""
 
 #: corehq/apps/events/views.py
-#, fuzzy
-#| msgid "Go back to Mobile Workers"
 msgid "Go back to view attendees"
-msgstr "Regresar a Usuarios Móviles"
+msgstr ""
 
 #: corehq/apps/events/views.py
 msgid "Mobile workers can now also be selected to attend events."
@@ -22254,16 +22234,12 @@ msgid "Automatic Case Update Rule"
 msgstr ""
 
 #: corehq/apps/hqcase/utils.py
-#, fuzzy
-#| msgid "Application Build"
 msgid "Deduplication Rule"
-msgstr "Desarrollo de Aplicación"
+msgstr ""
 
 #: corehq/apps/hqcase/utils.py
-#, fuzzy
-#| msgid "Zapier Integration"
 msgid "DHIS2 Integration"
-msgstr "Integración Zapier"
+msgstr ""
 
 #: corehq/apps/hqmedia/cache.py
 #, python-format
