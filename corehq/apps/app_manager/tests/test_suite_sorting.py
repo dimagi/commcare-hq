@@ -4,8 +4,9 @@ from corehq.apps.app_manager.models import (
     Application,
     CaseSearch,
     CaseSearchProperty,
-    SortElement,
+    SortElement, DetailColumn,
 )
+from corehq.apps.app_manager.tests.app_factory import AppFactory
 from corehq.apps.app_manager.tests.util import (
     SuiteMixin,
     TestXmlMixin,
@@ -91,3 +92,87 @@ class SuiteSortingTest(SimpleTestCase, SuiteMixin):
             app.create_suite(),
             "./detail[@id='m0_case_short']/field/sort"
         )
+
+    def test_calculated_property_as_sort_property(self):
+        factory = AppFactory(build_version='2.3.0')
+        module, form = factory.new_basic_module("my_module", "person")
+        factory.form_requires_case(form)
+
+        module.case_details.short.display = 'short'
+        module.case_details.short.columns = [
+            DetailColumn(
+                header={'en': 'a'},
+                model='case',
+                field='a',
+                format='plain',
+                case_tile_field='header'
+            ),
+            DetailColumn(
+                header={'en': 'is bob'},
+                model='case',
+                field='name = "bob"',
+                useXpathExpression=True,
+                format='plain',
+            ),
+            DetailColumn(
+                header={'en': 'is old'},
+                model='case',
+                field='age > 40',
+                useXpathExpression=True,
+                format='plain',
+            ),
+        ]
+
+        module.case_details.short.sort_elements = [
+            SortElement(
+                field='a',
+                type='index',
+                direction='descending',
+                blanks='first',
+            ),
+            SortElement(
+                field='_cc_calculated_2',
+                type='index',
+                direction='descending',
+                blanks='first',
+            ),
+            SortElement(
+                field='_cc_calculated_1',
+                type='index',
+                direction='descending',
+                blanks='first',
+            )
+        ]
+
+        suite = factory.app.create_suite()
+        self.assertXmlDoesNotHaveXpath(suite, "detail/field/sort/text/xpath[@function='_cc_calculated_2']")
+
+        self.assertXmlPartialEqual("""
+        <partial>
+            <field>
+              <header>
+                <text>
+                  <locale id="m0.case_short.case_calculated_property_3.header"/>
+                </text>
+              </header>
+              <template>
+                <text>
+                  <xpath function="$calculated_property">
+                    <variable name="calculated_property">
+                      <xpath function="age &gt; 40"/>
+                    </variable>
+                  </xpath>
+                </text>
+              </template>
+              <sort type="string" order="-2" direction="descending" blanks="first">
+                <text>
+                  <xpath function="$calculated_property">
+                    <variable name="calculated_property">
+                      <xpath function="age &gt; 40"/>
+                    </variable>
+                  </xpath>
+                </text>
+              </sort>
+            </field>
+        </partial>
+        """, suite, "detail[1]/field[3]")
