@@ -594,7 +594,6 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
             urlObject.setQueryData({
                 inputs: self.getAnswers(),
                 execute: false,
-                forceManualSearch: false,
                 selectValuesByKeys: self.selectValuesByKeys,
             });
             var promise = $.Deferred(),
