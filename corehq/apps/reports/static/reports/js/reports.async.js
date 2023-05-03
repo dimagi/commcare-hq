@@ -10,9 +10,7 @@ hqDefine("reports/js/reports.async", function () {
         self.standardReport = o.standardReport;
         self.filterRequest = null;
         self.reportRequest = null;
-        self.queryIdRequest = null;
         self.loaderClass = '.report-loading';
-        self.maxInputLimit = 5000;
 
         self.humanReadableErrors = {
             400: gettext("Please check your Internet connection!"),
@@ -28,7 +26,6 @@ hqDefine("reports/js/reports.async", function () {
             503: gettext("CommCare HQ is experiencing server difficulties. We're working quickly to resolve it." +
                 " Thank you for your patience. We are extremely sorry."),
             504: gettext("Gateway Timeout. Please contact CommCare HQ Support."),
-            'maxInputError': gettext("Your search term was too long. Please provide a shorter search filter"),
         };
 
         var loadFilters = function (data) {
@@ -45,13 +42,8 @@ hqDefine("reports/js/reports.async", function () {
 
         self.init = function () {
             self.reportContent.attr('style', 'position: relative;');
-            var initParams = window.location.search.substr(1);
-            var pathName = window.location.pathname;
-            if (initParams && self.isCaseListRelated(pathName)) {
-                self.getQueryId(initParams, true, self.standardReport.filterSet, pathName);
-            } else {
-                self.updateReport(true, initParams, self.standardReport.filterSet);
-            }
+
+            self.updateReport(true, window.location.search.substr(1), self.standardReport.filterSet);
 
             // only update the report if there are actually filters set
             if (!self.standardReport.needsFilters) {
@@ -59,60 +51,10 @@ hqDefine("reports/js/reports.async", function () {
             }
             self.filterForm.submit(function () {
                 var params = hqImport('reports/js/reports.util').urlSerialize(this);
-                if (self.isCaseListRelated(pathName)) {
-                    var userInput = this.search_xpath ? this.search_xpath.value :
-                        this.search_query ? this.search_query.value : '';
-                    if (userInput.length > self.maxInputLimit) {
-                        self.loadingIssueModal.find('.report-error-status').html(self.humanReadableErrors['maxInputError']);
-                        if (self.issueAttempts > 0) {
-                            self.loadingIssueModal.find('.btn-primary').button('fail');
-                        }
-                        self.issueAttempts += 1;
-                        self.loadingIssueModal.modal('show');
-                    } else {
-                        self.getQueryId(params, false, true, pathName);
-                    }
-                } else {
-                    self.updateFilters(params);
-                    self.updateReport(false, params, true);
-                    history.pushState(null,window.location.title, window.location.pathname + '?' + params);
-                }
+                history.pushState(null,window.location.title, window.location.pathname + '?' + params);
+                self.updateFilters(params);
+                self.updateReport(false, params, true);
                 return false;
-            });
-        };
-
-        self.isCaseListRelated = function (pathName) {
-            return pathName.includes('case_list');
-        };
-
-        self.getQueryId = function (params, initialLoad, setFilters, pathName) {
-            // This only applies to Case List and Case List Explorer filter queries
-            var queryId;
-            if (params.includes('query_id=')) {
-                queryId = params.replace('query_id=', '');
-                params = '';
-            } else {
-                queryId = '';
-            }
-            self.queryIdRequest = $.ajax({
-                url: pathName.replace(self.standardReport.urlRoot, self.standardReport.urlRoot + 'get_or_create_hash/'),
-                type: 'POST',
-                dataType: 'json',
-                data: {
-                    'query_id': queryId,
-                    'params': params,
-                },
-                success: function (data) {
-                    self.queryIdRequest = null;
-                    if (data.not_found) {
-                        // no corresponding filter config found - redirect to the landing page
-                        window.location.href = window.location.href.split('?')[0];
-                    } else {
-                        if (!initialLoad) { self.updateFilters(data.query_string); }
-                        self.updateReport(initialLoad, data.query_string, setFilters);
-                        history.pushState(null, window.location.title, pathName + '?query_id=' + data.query_id);
-                    }
-                },
             });
         };
 
@@ -126,9 +68,9 @@ hqDefine("reports/js/reports.async", function () {
             });
         };
 
-        self.updateReport = function (initialLoad, params, setFilters) {
+        self.updateReport = function (initial_load, params, setFilters) {
             var process_filters = "";
-            if (initialLoad) {
+            if (initial_load) {
                 process_filters = "hq_filters=true&";
                 if (self.standardReport.loadDatespanFromCookie()) {
                     process_filters = process_filters +
@@ -175,7 +117,7 @@ hqDefine("reports/js/reports.async", function () {
                     $('.loading-backdrop').fadeOut();
                     self.hqLoading.fadeOut();
 
-                    if (!initialLoad || !self.standardReport.needsFilters) {
+                    if (!initial_load || !self.standardReport.needsFilters) {
                         self.standardReport.filterSubmitButton
                             .button('reset');
                         setTimeout(function () {
