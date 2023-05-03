@@ -144,7 +144,9 @@ hqDefine("cloudcare/js/formplayer/menus/utils", function () {
                 props.name = menuResponse.breadcrumbs[menuResponse.breadcrumbs.length - 1];
             }
             kissmetrics.track.event('Case Search', props);
-            urlObject.setQueryData({}, false, false);
+            urlObject.setQueryData({
+                inputs: {},
+            });
             return QueryView(menuData);
         } else if (menuResponse.type === "entities") {
             var searchText = urlObject.search;
