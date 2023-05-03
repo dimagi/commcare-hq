@@ -73,7 +73,6 @@ hqDefine('app_manager/js/releases/releases', function () {
 
         self.onSMSPanelClick = function () {
             self.track_deploy_type('Send to phone via SMS');
-            self.generate_short_url('short_url');
         };
 
         self.build_profile.subscribe(self.changeAppCode);
@@ -85,7 +84,7 @@ hqDefine('app_manager/js/releases/releases', function () {
         };
 
         self.generate_short_url = function (urlType) {
-            //accepted url types = ['short_odk_url', 'short_odk_media_url', 'short_url']
+            //accepted url types = ['short_odk_url', 'short_odk_media_url']
             urlType = urlType || savedAppModel.URL_TYPES.SHORT_ODK_URL;
             var baseUrl = self.base_url(),
                 shouldGenerateUrl = self.shouldGenerateUrl();
@@ -182,10 +181,6 @@ hqDefine('app_manager/js/releases/releases', function () {
                 return self.short_odk_media_url();
             }
             return self.short_odk_url();
-        };
-
-        self.sms_url = function () {
-            return self.short_url();
         };
 
         self.download_application_zip = function (multimediaOnly, buildProfile) {
@@ -510,7 +505,6 @@ hqDefine('app_manager/js/releases/releases', function () {
     savedAppModel.URL_TYPES = {
         SHORT_ODK_URL: 'short_odk_url',
         SHORT_ODK_MEDIA_URL: 'short_odk_media_url',
-        SHORT_URL: 'short_url',
     };
 
     return {
