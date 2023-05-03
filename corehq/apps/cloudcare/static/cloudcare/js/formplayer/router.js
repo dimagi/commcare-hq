@@ -152,6 +152,7 @@ hqDefine("cloudcare/js/formplayer/router", function () {
         if (index === undefined) {
             urlObject.setQueryData({
                 inputs: null,
+                execute: false,
                 forceManualSearch: true,
             });
         } else {

@@ -146,6 +146,8 @@ hqDefine("cloudcare/js/formplayer/menus/utils", function () {
             kissmetrics.track.event('Case Search', props);
             urlObject.setQueryData({
                 inputs: {},
+                execute: false,
+                forceManualSearch: false,
             });
             return QueryView(menuData);
         } else if (menuResponse.type === "entities") {
