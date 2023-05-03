@@ -121,7 +121,7 @@ def build_vellum(path, branch, test=True):
     stderr = byte_stream(sys.stderr)
     sh.make(_cwd=path, _out=stdout, _err=stderr, *make_args)
 
-    return str(git("rev-parse", "HEAD"))
+    return git("rev-parse", "HEAD").strip()
 
 
 def get_old_vellum_rev(path):
