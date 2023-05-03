@@ -1,11 +1,12 @@
 from django.urls import path
 
-from .views import (
+from custom.abdm.poc.views import (
     patient_profile_share,
     care_context_discover,
     care_context_link_init,
     care_context_link_confirm,
     consent_notification,
+    health_info_request,
 )
 
 hip_urls = [
@@ -15,4 +16,5 @@ hip_urls = [
     path('v0.5/links/link/init', care_context_link_init, name='care_context_link_init'),
     path('v0.5/links/link/confirm', care_context_link_confirm, name='care_context_link_confirm'),
     path('v0.5/consents/hip/notify', consent_notification, name='consent_notification'),
+    path('v0.5/health-information/hip/request', health_info_request, name='health_info_request'),
 ]
