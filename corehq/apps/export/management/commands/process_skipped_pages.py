@@ -161,7 +161,7 @@ class Command(BaseCommand):
             else:
                 raise CommandError('Unexpected page filename: {}'.format(page_filename))
 
-            doc_count = int(sh.wc('-l', page_path).split(' ')[0])
+            doc_count = int(sh.wc('-l', page_path).strip().split(' ')[0])
             total_docs += doc_count
             unprocessed_pages.append((page_path, page_number, doc_count))
 
