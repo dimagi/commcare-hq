@@ -1,10 +1,10 @@
-hqDefine("hqwebapp/js/base_main", [
+hqDefine("hqwebapp/js/bootstrap3/base_main", [
     'hqwebapp/js/downgrade_modal',
     'hqwebapp/js/prepaid_modal',
     'hqwebapp/js/hq.helpers',
     'hqwebapp/js/layout',
     'hqwebapp/js/hq-bug-report',
-    'hqwebapp/js/sticky_tabs',
+    'hqwebapp/js/bootstrap3/sticky_tabs',
     'hqwebapp/js/main',
     'hqwebapp/js/inactivity',
     'notifications/js/notifications_service_main',
