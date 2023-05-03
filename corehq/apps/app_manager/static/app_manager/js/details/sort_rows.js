@@ -39,7 +39,7 @@ hqDefine("app_manager/js/details/sort_rows", function () {
             } else {
                 self.showWarning(false);
                 let display = self.toTitleCase(this.valLabel()).split('(')[0].trim();
-                self.display(self.toTitleCase(display));
+                self.display(display);
                 self.notifyButton();
             }
         });
