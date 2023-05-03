@@ -7,7 +7,7 @@ from rest_framework.decorators import (
 from rest_framework.response import Response
 
 from custom.abdm.milestone_one.utils.decorators import required_request_params
-from custom.abdm.poc.gateway_calls import (
+from custom.abdm.poc.hip.gateway_calls import (
     gw_patient_profile_on_share,
     gw_care_context_on_discover,
     gw_care_context_on_init,

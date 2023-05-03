@@ -1,6 +1,6 @@
 from django.urls import path
 
-from custom.abdm.poc.views import (
+from custom.abdm.poc.hip.views import (
     patient_profile_share,
     care_context_discover,
     care_context_link_init,
