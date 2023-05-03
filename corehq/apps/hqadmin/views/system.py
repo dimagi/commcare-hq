@@ -238,10 +238,7 @@ def _get_branches_merged_into_autostaging(cwd=None):
         return _get_branches_merged_into_autostaging(cwd=cwd)
 
     # sh returning string from command git.log(...)
-    branches = pipe.split("\n")
-    if branches[-1] == '':
-        # artifact of git.log(...) output ending with newline
-        branches.pop()
+    branches = pipe.strip().split("\n")
     CommitBranchPair = namedtuple('CommitBranchPair', ['commit', 'branch'])
     return sorted(
         (CommitBranchPair(
@@ -262,10 +259,7 @@ def _get_submodules():
     """
     import sh
     git = sh.git.bake(_tty_out=False)
-    submodules = git.submodule().split("\n")
-    if submodules[-1] == '':
-        # artifact of git.submodule() ending with newline
-        submodules.pop()
+    submodules = git.submodule().strip().split("\n")
     return [
         line.strip()[1:].split()[1]
         for line in submodules
