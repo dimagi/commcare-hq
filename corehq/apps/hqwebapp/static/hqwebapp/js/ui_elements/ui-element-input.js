@@ -27,7 +27,7 @@ hqDefine('hqwebapp/js/ui_elements/ui-element-input', [
         };
 
         this.$edit_view = $elem.on('change textchange', function () {
-            that.fire('change');
+            that.fire('change', {oldValue: that.value, newValue: that.getElemValue()});
         });
         this.$noedit_view = $('<span class="ui-element-input"/>');
 
