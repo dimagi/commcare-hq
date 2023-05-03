@@ -129,13 +129,11 @@
     }
   },
   "archived_media": {},
-  "platform": "nokia/s40",
   "target_commcare_flavor": "none",
   "auto_gps_capture": false,
   "mobile_ucr_restore_version": "1.0",
   "deployment_date": null,
   "user_type": null,
-  "text_input": "roman",
   "secure_submissions": true,
   "location_fixture_restore": "project_default",
   "build_broken": false,
@@ -2271,7 +2269,6 @@
   "smart_lang_display": null,
   "vellum_case_management": true,
   "is_auto_generated": false,
-  "use_j2me_endpoint": false,
   "admin_password": null,
   "build_spec": {
     "doc_type": "BuildSpec",
@@ -2309,11 +2306,9 @@
   "profile": {
     "custom_properties": {},
     "features": {
-      "users": "true",
-      "sense": "false"
+      "users": "true"
     },
     "properties": {
-      "cc-user-mode": "cc-u-normal",
       "cc-show-saved": "no",
       "unsent-time-limit": "5",
       "cc-autosync-freq": "freq-never",
@@ -2323,21 +2318,13 @@
       "cc-fuzzy-search-enabled": "yes",
       "cc-autoup-freq": "freq-never",
       "purge-freq": "0",
-      "server-tether": "push-only",
       "user_reg_server": "required",
-      "extra_key_action": "audio",
       "log_prop_daily": "log_never",
-      "ViewStyle": "v_chatterbox",
       "cc-login-duration-seconds": "86400",
       "cc-resize-images": "none",
-      "cc-entry-mode": "cc-entry-quick",
-      "cc-send-procedure": "cc-send-http",
-      "cc-login-images": "No",
       "log_prop_weekly": "log_short",
       "cc-show-incomplete": "no",
-      "cc-send-unsent": "cc-su-auto",
       "loose_media": "no",
-      "password_format": "a",
       "unsent-number-limit": "5",
       "cc-content-valid": "yes",
       "logenabled": "Enabled"

@@ -26,7 +26,6 @@
 {% block page_content %}
 {% initial_page_data 'doc' doc %}
 {% initial_page_data 'available_versions' all_versions %}
-{% initial_page_data 'j2me_enabled_versions' j2me_enabled_versions %}
 <div class="alert alert-info"><strong>{% trans "Editing" %} {{ doc.ID }}</strong></div>
 
 
@@ -43,7 +42,6 @@
           <th>{% trans "Version" %}</th>
           <th>{% trans "Label" %}</th>
           <th>{% trans "Superuser Only" %}</th>
-          <th>{% trans "J2me Enabled" %}</th>
           <th></th>
         </tr>
         </thead>
@@ -64,9 +62,6 @@
           </td>
           <td>
             <input type="checkbox" value="superuser-only" data-bind="checked: superuser_only"/>
-          </td>
-          <td class='j2me_enabled'>
-            <i class="fa fa-check" data-bind="visible: j2me_enabled"></i>
           </td>
           <td>
             <button type="button" class="btn btn-danger" data-bind="click: $root.removeVersion">
