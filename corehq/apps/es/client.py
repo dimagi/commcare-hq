@@ -344,6 +344,11 @@ class ElasticManageAdapter(BaseAdapter):
             return settings
         return {k: settings[k] for k in values}
 
+    def index_validate_query(self, index, query, params={}):
+        """Returns True if passed `query` is valid else will return false"""
+        validation = self._es.indices.validate_query(body=query, index=index, params=params)
+        return validation['valid']
+
     @staticmethod
     def _validate_single_index(index):
         """Verify that the provided index is a valid, single index
@@ -416,6 +421,9 @@ class ElasticDocumentAdapter(BaseAdapter):
     # Model class whose objects are to be saved in ES.
     # This variable be used in data transformation logic
     model_cls = None
+
+    # Name of the index as referred in HQ world
+    canonical_name = None
 
     def __init__(self, index_name, type_):
         """A document adapter for a single index.
@@ -1045,6 +1053,10 @@ class ElasticMultiplexAdapter(BaseAdapter):
     def settings_key(self):
         return self.primary.settings_key
 
+    @property
+    def canonical_name(self):
+        return self.primary.canonical_name
+
     def to_json(self, doc):
         # TODO: this is a classmethod on the the document adapter, but should
         # be converted to an instance method
@@ -1091,40 +1103,31 @@ class ElasticMultiplexAdapter(BaseAdapter):
             for action in chunk:
                 # apply the chunk to both indexes in parallel
                 payload.append(self.primary._render_bulk_action(action))
-                payload.append(self.secondary._render_bulk_action(action))
+                if action.is_delete:
+                    # Always create a tombstone on secondary index when delete is issued on primary
+                    if action.doc is None:
+                        doc_id = action.doc_id
+                    else:
+                        doc_id = self.from_python(action.doc)[0]
+                    payload.append(
+                        self.secondary._render_bulk_action(
+                            BulkActionItem.index(Tombstone(doc_id)),
+                            forbid_tombstones=False
+                        )
+                    )
+                else:
+                    payload.append(self.secondary._render_bulk_action(action))
             _, chunk_errs = bulk(self._es, payload, chunk_size=len(payload),
                                  refresh=refresh, raise_on_error=False,
                                  raise_on_exception=raise_errors)
             deduped_errs = {}
-            primary_del_fail_ids = set()
-            secondary_del_fails = {}
             for error in chunk_errs:
                 doc_id, index_name = self._parse_bulk_error(error)
-                if index_name == self.primary.index_name:
-                    deduped_errs[doc_id] = error
-                    if self._is_delete_not_found(error):
-                        # don't add tombstones for deletes that failed on the
-                        # primary index
-                        primary_del_fail_ids.add(doc_id)
+                if index_name == self.primary.index_name and self._is_delete_not_found(error):
+                    # Ignore error raised while deleting an non-existent doc on primary
+                    pass
                 else:
-                    if self._is_delete_not_found(error):
-                        secondary_del_fails[doc_id] = error
-                    else:
-                        deduped_errs.setdefault(doc_id, error)
-            tombstone_ids = secondary_del_fails.keys() - primary_del_fail_ids
-            if tombstone_ids:
-                # add tombstones on secondary
-                try:
-                    _, make_tstone_errs = self.secondary._bulk(
-                        self._iter_tombstone_bulk_payload(tombstone_ids),
-                        refresh=False,
-                        raise_errors=raise_errors,
-                    )
-                except BulkIndexError as exc:
-                    make_tstone_errs = exc.errors
-                for error in make_tstone_errs:
-                    doc_id, _ = self._parse_bulk_error(error)
-                    deduped_errs.setdefault(doc_id, secondary_del_fails[doc_id])
+                    deduped_errs.setdefault(doc_id, error)
 
             errors.extend(deduped_errs.values())
             if raise_errors and errors:
@@ -1132,13 +1135,6 @@ class ElasticMultiplexAdapter(BaseAdapter):
                 raise BulkIndexError(f"{len(errors)} document(s) failed to index.", errors)
             success_count += (len(chunk) - len(deduped_errs))
         return success_count, errors
-
-    def _iter_tombstone_bulk_payload(self, doc_ids):
-        for doc_id in doc_ids:
-            yield self.secondary._render_bulk_action(
-                BulkActionItem.index(Tombstone(doc_id)),
-                forbid_tombstones=False,
-            )
 
     @staticmethod
     def _parse_bulk_error(error):

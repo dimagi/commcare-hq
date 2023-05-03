@@ -1056,6 +1056,7 @@ msgstr ""
 #: corehq/apps/domain/forms.py
 #: corehq/apps/domain/templates/domain/partials/payment_modal.html
 #: corehq/apps/domain/templates/domain/stripe_cards.html
+#: corehq/apps/events/templates/edit_attendee.html
 #: corehq/apps/events/templates/event_attendees.html
 #: corehq/apps/export/templates/export/customize_export_new.html
 #: corehq/apps/export/templates/export/dialogs/bulk_delete_custom_export_dialog.html
@@ -3845,8 +3846,16 @@ msgid "Unknown Application"
 msgstr "Application inconnue"
 
 #: corehq/apps/app_manager/fields.py
+msgid "Any Application"
+msgstr ""
+
+#: corehq/apps/app_manager/fields.py
 msgid "Unknown Module"
 msgstr "Utilisateur inconnu"
+
+#: corehq/apps/app_manager/fields.py corehq/apps/reports/filters/select.py
+msgid "All Case Types"
+msgstr "Tous les types de dossier"
 
 #: corehq/apps/app_manager/fixtures/mobile_ucr.py
 #: corehq/apps/reports/standard/monitoring.py
@@ -7631,6 +7640,7 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/forms/custom_assertions.html
+#: corehq/apps/app_manager/templates/app_manager/partials/settings/app_settings.html
 msgid "Custom Assertions"
 msgstr ""
 
@@ -10671,10 +10681,6 @@ msgid "There was an issue with your custom instances: {}"
 msgstr "Il y a eu un problème avec vos exemples personnalisées: {}"
 
 #: corehq/apps/app_manager/views/forms.py
-msgid "There was an issue with your custom assertions: {}"
-msgstr ""
-
-#: corehq/apps/app_manager/views/forms.py
 msgid "Unable to validate form due to server error."
 msgstr "Impossible de valider les formulaires dû à une erreur de serveur. "
 
@@ -10979,6 +10985,10 @@ msgstr ""
 #: corehq/apps/app_manager/views/utils.py
 #, python-brace-format
 msgid "Session endpoint IDs must be unique. '{endpoint_id}' is already in-use"
+msgstr ""
+
+#: corehq/apps/app_manager/views/utils.py
+msgid "There was an issue with your custom assertions: {}"
 msgstr ""
 
 #: corehq/apps/app_manager/xform.py
@@ -11456,6 +11466,26 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/case_importer/templates/case_importer/excel_config.html
+msgid ""
+"\n"
+"      <p>\n"
+"        <i class=\"fa fa-warning\"></i>\n"
+"        A bulk case import for multiple case types has been detected. For "
+"bulk case imports:\n"
+"      </p>\n"
+"      <ul>\n"
+"        <li>Excel mapping is disabled.</li>\n"
+"        <li>New cases for new case types cannot be created.</li>\n"
+"      </ul>\n"
+"      <p>\n"
+"        If this is incorrect, then please rename the Excel sheets so that "
+"they do not share the same\n"
+"        name as the case types in the project.\n"
+"      </p>\n"
+"      "
+msgstr ""
+
+#: corehq/apps/case_importer/templates/case_importer/excel_config.html
 msgid "Case Type to Update/Create"
 msgstr "Type de dossier à mettre à jour / créer"
 
@@ -11506,6 +11536,15 @@ msgstr "Retour"
 #: corehq/apps/case_importer/templates/case_importer/import_cases.html
 msgid "Next step"
 msgstr "Étape suivante"
+
+#: corehq/apps/case_importer/templates/case_importer/excel_fields.html
+msgid ""
+"\n"
+"          Excel mapping is disabled for bulk case imports. Excel columns "
+"will be used to directly\n"
+"          map to the relevant case properties.\n"
+"        "
+msgstr ""
 
 #: corehq/apps/case_importer/templates/case_importer/excel_fields.html
 msgid "Reset to default matching"
@@ -11716,15 +11755,10 @@ msgstr ""
 
 #: corehq/apps/case_importer/views.py
 msgid ""
-"The file you chose could not be processed. Please check that it is saved as "
-"a Microsoft Excel file."
-msgstr ""
-
-#: corehq/apps/case_importer/views.py
-msgid ""
-"Column names must be <a target='_blank' href='https://www.w3schools.com/xml/"
-"xml_elements.asp'>valid XML elements</a> and cannot start with a number or "
-"contain spaces or most special characters. Please update the following: {}."
+"Column names correspond to <a target=\"_blank\" href=\"https://confluence."
+"dimagi.com/display/commcarepublic/Case+Configuration\">case property names</"
+"a>. They must start with a letter, and can only contain letters, numbers and "
+"underscores. Please update the following: {}."
 msgstr ""
 
 #: corehq/apps/case_importer/views.py
@@ -11737,6 +11771,12 @@ msgstr ""
 msgid ""
 "Your spreadsheet has too many columns. A maximum of %(max_columns)s is "
 "supported."
+msgstr ""
+
+#: corehq/apps/case_importer/views.py
+msgid ""
+"The file you chose could not be processed. Please check that it is saved as "
+"a Microsoft Excel file."
 msgstr ""
 
 #: corehq/apps/case_importer/views.py
@@ -14085,7 +14125,8 @@ msgstr "Date de la propriété de dossier (avancé)"
 #: corehq/apps/data_interfaces/templates/data_interfaces/partials/case_rule_criteria.html
 #: corehq/apps/domain/forms.py
 #: corehq/apps/domain/templates/domain/manage_releases_by_location.html
-#: corehq/apps/hqwebapp/doc_info.py corehq/apps/locations/forms.py
+#: corehq/apps/events/forms.py corehq/apps/hqwebapp/doc_info.py
+#: corehq/apps/locations/forms.py
 #: corehq/apps/locations/templates/locations/manage/location.html
 #: corehq/apps/locations/templates/locations/manage/locations.html
 #: corehq/apps/locations/views.py corehq/apps/reports/commtrack/standard.py
@@ -14638,9 +14679,14 @@ msgid "Custom Logo"
 msgstr "Logo personnalisé"
 
 #: corehq/apps/domain/forms.py
+#, fuzzy, python-brace-format
+#| msgid ""
+#| "Upload a custom image to display instead of the CommCare HQ logo.  It "
+#| "will be automatically resized to a height of 32 pixels."
 msgid ""
 "Upload a custom image to display instead of the CommCare HQ logo.  It will "
-"be automatically resized to a height of 32 pixels."
+"be automatically resized to a height of 32 pixels. Upload size limit is "
+"{size_limit} MB."
 msgstr ""
 "Téléversez une image personnalisée à afficher au lieu du logo CommCare HQ.  "
 "Elle sera automatiquement redimensionnée à la taille de 32 pixels."
@@ -14789,6 +14835,10 @@ msgstr "Mettre à jour les infos de base"
 #: corehq/apps/domain/forms.py
 msgid "Default timezone"
 msgstr "Fuseau horaire par défaut"
+
+#: corehq/apps/domain/forms.py
+msgid "Logo exceeds {} MB size limit"
+msgstr ""
 
 #: corehq/apps/domain/forms.py
 msgid "Release Mode Visibility should be a boolean."
@@ -18399,6 +18449,18 @@ msgstr ""
 msgid "You cannot specify the end date in the past"
 msgstr ""
 
+#: corehq/apps/events/forms.py corehq/apps/users/forms.py
+msgid "One or more of the locations was not found."
+msgstr "Un ou plusieurs sites n'ont pas été trouvé(s)."
+
+#: corehq/apps/events/forms.py corehq/apps/users/forms.py
+msgid "Primary location must be one of the user's locations"
+msgstr ""
+
+#: corehq/apps/events/forms.py corehq/apps/users/forms.py
+msgid "Primary location can't be empty if the user has any locations set"
+msgstr ""
+
 #: corehq/apps/events/models.py
 msgid "Attendee list under review"
 msgstr ""
@@ -18416,10 +18478,56 @@ msgid "Event not started"
 msgstr ""
 
 #: corehq/apps/events/models.py
-#, fuzzy
-#| msgid "In Progress"
 msgid "Event in progress"
-msgstr "En cours"
+msgstr ""
+
+#: corehq/apps/events/templates/edit_attendee.html
+msgid "Attendee"
+msgstr ""
+
+#: corehq/apps/events/templates/edit_attendee.html
+#, python-format
+msgid ""
+"\n"
+"            This attendee cannot be deleted as <strong>%(attendee_name)s</"
+"strong> has been tracked as\n"
+"            having attended one or more events.\n"
+"          "
+msgstr ""
+
+#: corehq/apps/events/templates/edit_attendee.html
+msgid "Update Attendee"
+msgstr ""
+
+#: corehq/apps/events/templates/edit_attendee.html
+msgid "Delete Attendee"
+msgstr ""
+
+#: corehq/apps/events/templates/edit_attendee.html
+#, python-format
+msgid ""
+"\n"
+"                Are you sure you want to permanently delete "
+"<strong>%(attendee_name)s</strong>?\n"
+"              "
+msgstr ""
+
+#: corehq/apps/events/templates/edit_attendee.html
+#, python-format
+msgid ""
+"\n"
+"                This action will delete %(attendee_name)s as a potential "
+"attendee and will remove them from all\n"
+"                future events that they are currently enlisted in.\n"
+"              "
+msgstr ""
+
+#: corehq/apps/events/templates/edit_attendee.html
+msgid ""
+"\n"
+"                  This action cannot be undone.\n"
+"                "
+msgstr ""
 
 #: corehq/apps/events/templates/event_attendees.html
 msgid ""
@@ -18532,7 +18640,9 @@ msgstr ""
 msgid "Event has not yet started"
 msgstr ""
 
-#: corehq/apps/events/views.py corehq/privileges.py corehq/tabs/tabclasses.py
+#: corehq/apps/events/views.py
+#: corehq/apps/users/templates/users/roles_and_permissions.html
+#: corehq/privileges.py corehq/tabs/tabclasses.py
 msgid "Attendance Tracking"
 msgstr ""
 
@@ -18608,6 +18718,60 @@ msgstr ""
 msgid "Form validation failed: {}"
 msgstr ""
 
+#: corehq/apps/events/views.py
+msgid "Edit Attendee"
+msgstr ""
+
+#: corehq/apps/events/views.py
+#, fuzzy
+#| msgid "Mobile Worker Upload Status"
+msgid "Enabling mobile worker attendees status"
+msgstr "Statut du téléchargement en bloc des utilisateurs mobiles"
+
+#: corehq/apps/events/views.py
+msgid "Disabling mobile worker attendees status"
+msgstr ""
+
+#: corehq/apps/events/views.py
+#, fuzzy
+#| msgid "Restoring your forms, this may take some time..."
+msgid "Processing Mobile Workers. This may take some time..."
+msgstr "Restauration des formulaires, ceci peut prendre un peu de temps..."
+
+#: corehq/apps/events/views.py
+msgid "User conversion failed for some reason and we have noted this failure."
+msgstr ""
+
+#: corehq/apps/events/views.py
+#, fuzzy
+#| msgid "Go back to Mobile Workers"
+msgid "Go back to view attendees"
+msgstr "Retour aux utilisateurs mobiles"
+
+#: corehq/apps/events/views.py
+msgid "Mobile workers can now also be selected to attend events."
+msgstr ""
+
+#: corehq/apps/events/views.py
+msgid "Enabling mobile workers complete!"
+msgstr ""
+
+#: corehq/apps/events/views.py
+msgid "Enabling mobile worker attendees in progress. This may take a while..."
+msgstr ""
+
+#: corehq/apps/events/views.py
+msgid "Mobile workers are now removed from the potential attendees list."
+msgstr ""
+
+#: corehq/apps/events/views.py
+msgid "Disabling mobile workers complete!"
+msgstr ""
+
+#: corehq/apps/events/views.py
+msgid "Disabling mobile worker attendees in progress. This may take a while..."
+msgstr ""
+
 #: corehq/apps/export/det/schema_generator.py
 #, python-brace-format
 msgid "Export instance type {name} not supported!"
@@ -18616,6 +18780,13 @@ msgstr ""
 #: corehq/apps/export/det/schema_generator.py
 #, python-brace-format
 msgid "No Tables found in Export {name}"
+msgstr ""
+
+#: corehq/apps/export/exceptions.py corehq/apps/export/views/new.py
+#, python-format
+msgid ""
+"Cannot do a bulk case export as the project has more than %(max_case_types)s "
+"case types or %(max_apps)s applications."
 msgstr ""
 
 #: corehq/apps/export/forms.py
@@ -20223,6 +20394,13 @@ msgstr ""
 "filtres à moins de %(max_rows)s rangées."
 
 #: corehq/apps/export/views/download.py
+msgid ""
+"There are no sheets to export. If this is a bulk case export then the export "
+"configuration might still be busy populating its tables. Please try again "
+"later."
+msgstr ""
+
+#: corehq/apps/export/views/download.py
 msgid "You do not have permission to export de-identified exports."
 msgstr ""
 
@@ -20379,6 +20557,10 @@ msgstr ""
 #: corehq/apps/export/views/list.py
 msgid "Export De-Identified Cases"
 msgstr "Exporter les dossiers anonymisés "
+
+#: corehq/apps/export/views/list.py
+msgid "Populating tables for <strong>{}</strong>. ({}%)"
+msgstr ""
 
 #: corehq/apps/export/views/list.py
 msgid "Excel Dashboard Integration"
@@ -21964,6 +22146,18 @@ msgstr ""
 #: corehq/apps/hqcase/utils.py
 msgid "Automatic Case Update Rule"
 msgstr ""
+
+#: corehq/apps/hqcase/utils.py
+#, fuzzy
+#| msgid "Application Build"
+msgid "Deduplication Rule"
+msgstr "Construction d'application"
+
+#: corehq/apps/hqcase/utils.py
+#, fuzzy
+#| msgid "Integration"
+msgid "DHIS2 Integration"
+msgstr "Intégration "
 
 #: corehq/apps/hqmedia/cache.py
 #, python-format
@@ -28588,10 +28782,6 @@ msgstr "Cliquez pour sélectionner des groupes"
 #: corehq/apps/reports_core/templates/reports_core/filters/quarter_filter.html
 msgid "Year"
 msgstr "Année"
-
-#: corehq/apps/reports/filters/select.py
-msgid "All Case Types"
-msgstr "Tous les types de dossier"
 
 #: corehq/apps/reports/filters/select.py
 msgid "Click to select a case type"
@@ -36807,20 +36997,6 @@ msgstr ""
 "Le site principal doit toujours être réglé sur l'un des sites ci-dessus"
 
 #: corehq/apps/users/forms.py
-msgid "One or more of the locations was not found."
-msgstr "Un ou plusieurs sites n'ont pas été trouvé(s)."
-
-#: corehq/apps/users/forms.py
-msgid "Primary location can only be one of user's locations"
-msgstr "Le site principal ne peut seulement être un des sites d'utilisateur"
-
-#: corehq/apps/users/forms.py
-msgid "Primary location can't be empty if user has any locations set"
-msgstr ""
-"L'organisation principale ne peut être vide si l'utilisateur à des "
-"organisations définies"
-
-#: corehq/apps/users/forms.py
 #: corehq/apps/users/templates/users/domain_request.html
 #: corehq/apps/users/views/web.py
 msgid "Request Access"
@@ -37077,6 +37253,32 @@ msgstr "Vous avez déjà un compte?"
 #: corehq/apps/users/templates/users/accept_invite.html
 msgid "Sign In Now"
 msgstr "Se connecter maintenant"
+
+#: corehq/apps/users/templates/users/bulk_clear.html
+msgid ""
+"\n"
+"    <h2>\n"
+"      Bulk Clear Mobile Worker Data\n"
+"    </h2>\n"
+"\n"
+"    <div class=\"alert alert-warning\">\n"
+"      <p>\n"
+"        <i class=\"fa fa-warning\"></i>\n"
+"        This action removes all data associated with a user and is a "
+"permanent action. Cleared users:\n"
+"      </p>\n"
+"      <ul>\n"
+"        <li>Will not be able to access their cleared data.</li>\n"
+"        <li>Will not be able to recover cleared data for any reason.</li>\n"
+"      </ul>\n"
+"    </div>\n"
+"\n"
+"    <p class=\"help-block\">\n"
+"      To clear user data in bulk, please upload an Excel file with a single "
+"<strong>username</strong> column.\n"
+"    </p>\n"
+"  "
+msgstr ""
 
 #: corehq/apps/users/templates/users/bulk_delete.html
 msgid ""
@@ -37669,6 +37871,10 @@ msgstr "Télécharger Utilisateurs Mobiles"
 #: corehq/tabs/tabclasses.py
 msgid "Edit User Fields"
 msgstr "Éditer les champs de l`utilisateur"
+
+#: corehq/apps/users/templates/users/mobile_workers.html
+msgid "Bulk Clear Data"
+msgstr ""
 
 #: corehq/apps/users/templates/users/mobile_workers.html
 msgid "Bulk Delete Users"
@@ -38842,6 +39048,18 @@ msgstr ""
 
 #: corehq/apps/users/views/mobile/users.py
 msgid "The following users were not found: {}."
+msgstr ""
+
+#: corehq/apps/users/views/mobile/users.py
+msgid "Bulk Clear"
+msgstr ""
+
+#: corehq/apps/users/views/mobile/users.py
+msgid ""
+"\n"
+"                No users cleared. Please address the above issue(s) and re-"
+"upload your updated file.\n"
+"            "
 msgstr ""
 
 #: corehq/apps/users/views/mobile/users.py
@@ -42820,7 +43038,15 @@ msgid "View All Attendees"
 msgstr ""
 
 #: corehq/tabs/tabclasses.py
+msgid "Manage attendees for Attendance Tracking Events"
+msgstr ""
+
+#: corehq/tabs/tabclasses.py
 msgid "View All Events"
+msgstr ""
+
+#: corehq/tabs/tabclasses.py
+msgid "Manage Attendance Tracking Events"
 msgstr ""
 
 #: corehq/trans_override.py
@@ -43743,6 +43969,3 @@ msgstr "Le Score à la Fonctionnalité"
 #: manage.py
 msgid "Enter valid JSON"
 msgstr "Saisir un JSON valide"
-
-#~ msgid "The user's case sharing group"
-#~ msgstr "Le groupe de l'utilisateur de partage de dossiers"

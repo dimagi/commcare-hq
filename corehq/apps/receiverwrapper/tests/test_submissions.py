@@ -1,11 +1,13 @@
 import json
 import os
 from io import BytesIO
+import copy
 
 from django.test import TestCase
 from django.test.client import Client
 from django.test.utils import override_settings
 from django.urls import reverse
+from django.conf import settings
 
 from unittest.mock import patch
 
@@ -165,6 +167,29 @@ class SubmissionTest(BaseSubmissionTest):
         self.assertEqual(
             list_attachments(new_form),
             [("file", b"text file"), ("image", b"other fake image")])
+
+    def test_submit_invalid_attachment_size(self):
+        file_data = BytesIO(b"a" * (settings.MAX_UPLOAD_SIZE_ATTACHMENT + 1))
+        response = self._submit(
+            'simple_form.xml',
+            attachments={"file": file_data},
+            url=reverse("receiver_secure_post", args=[self.domain]),
+        )
+        self.assertEqual(response.status_code, 413)
+        self.assertEqual(response.content.decode('utf-8'),
+                         f"Attachment exceeds {settings.MAX_UPLOAD_SIZE_ATTACHMENT/(1024*1024):,.0f}MB"
+                         f" size limit\n")
+
+    def test_submit_valid_attachment_size_multiple(self):
+        file_data = BytesIO(b"a" * (settings.MAX_UPLOAD_SIZE_ATTACHMENT - 1))
+        response = self._submit(
+            'simple_form.xml',
+            attachments={"file": file_data, "image": copy.copy(file_data)},
+            url=reverse("receiver_secure_post", args=[self.domain]),
+        )
+        self.assertEqual(response.status_code, 201)
+        form = XFormInstance.objects.get_form(response['X-CommCareHQ-FormID'])
+        self.assertEqual(len(form.get_attachments()), 3)
 
 
 @patch('corehq.apps.receiverwrapper.views.domain_requires_auth', return_value=True)
