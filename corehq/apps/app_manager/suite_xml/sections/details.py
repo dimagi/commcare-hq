@@ -592,7 +592,7 @@ DetailColumnInfo = namedtuple('DetailColumnInfo', 'column sort_element order')
 
 
 def get_detail_column_infos(detail_type, detail, include_sort):
-    detail_columns = list(detail.get_columns())
+    detail_columns = list(detail.get_columns())  # evaluate generator
     if not include_sort:
         return [DetailColumnInfo(column, None, None) for column in detail_columns]
 
