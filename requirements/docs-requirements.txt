@@ -465,7 +465,7 @@ schema==0.7.5
     # via -r base-requirements.in
 sentry-sdk==1.19.1
     # via -r base-requirements.in
-sh==1.14.2
+sh==2.0.3
     # via -r base-requirements.in
 simpleeval @ git+https://github.com/dimagi/simpleeval.git@d85c5a9f972c0f0416a1716bb06d1a3ebc83e7ec
     # via -r base-requirements.in
