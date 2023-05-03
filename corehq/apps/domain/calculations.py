@@ -137,18 +137,6 @@ def forms_in_last(domain, days):
     return FormES().domain(domain).submitted(gte=then).count()
 
 
-def j2me_forms_in_last(domain, days):
-    """
-    Returns the number of forms submitted by j2me in the last given number of days
-    """
-    then = datetime.utcnow() - timedelta(days=int(days))
-    return FormES().domain(domain).j2me_submissions(gte=then).count()
-
-
-def j2me_forms_in_last_bool(domain, days):
-    return j2me_forms_in_last(domain, days) > 0
-
-
 def get_sms_count(domain, direction=None, days=None):
     """
     :param domain: domain name
@@ -261,8 +249,7 @@ CALC_ORDER = [
     'last_form_submission', 'has_app', 'web_users', 'active_apps',
     'uses_reminders', 'sms--I', 'sms--O', 'sms_in_last', 'sms_in_last--30',
     'sms_in_last_bool', 'sms_in_last_bool--30', 'sms_in_in_last--30',
-    'sms_out_in_last--30', 'j2me_forms_in_last--30', 'j2me_forms_in_last--60',
-    'j2me_forms_in_last--90', 'j2me_forms_in_last_bool--90',
+    'sms_out_in_last--30',
 ]
 
 CALCS = {
@@ -291,11 +278,7 @@ CALCS = {
     'has_app': "Has App",
     'web_users': "list of web users",
     'active_apps': "list of active apps",
-    'uses_reminders': "uses reminders",
-    'j2me_forms_in_last--30': "# j2me forms in last 30 days",
-    'j2me_forms_in_last--60': "# j2me forms in last 60 days",
-    'j2me_forms_in_last--90': "# j2me forms in last 90 days",
-    'j2me_forms_in_last_bool--90': "j2me forms in last 90 days",
+    'uses_reminders': "uses reminders"
 }
 
 CALC_FNS = {
@@ -321,8 +304,6 @@ CALC_FNS = {
     "web_users": not_implemented,
     "active_apps": app_list,
     'uses_reminders': uses_reminders,
-    'j2me_forms_in_last': j2me_forms_in_last,
-    'j2me_forms_in_last_bool': j2me_forms_in_last_bool,
     '300th_form_submission': get_300th_form_submission_received
 }
 
@@ -394,10 +375,6 @@ def calced_props(domain_obj, id, all_stats):
         "cp_n_sms_out_30_d": int(CALC_FNS["sms_out_in_last"](dom, 30)),
         "cp_n_sms_out_60_d": int(CALC_FNS["sms_out_in_last"](dom, 60)),
         "cp_n_sms_out_90_d": int(CALC_FNS["sms_out_in_last"](dom, 90)),
-        "cp_n_j2me_30_d": int(CALC_FNS["j2me_forms_in_last"](dom, 30)),
-        "cp_n_j2me_60_d": int(CALC_FNS["j2me_forms_in_last"](dom, 60)),
-        "cp_n_j2me_90_d": int(CALC_FNS["j2me_forms_in_last"](dom, 90)),
-        "cp_j2me_90_d_bool": CALC_FNS["j2me_forms_in_last_bool"](dom, 90),
         "cp_300th_form": CALC_FNS["300th_form_submission"](dom),
         "cp_n_30_day_user_cases": cases_in_last(dom, 30, case_type="commcare-user"),
         "cp_n_trivet_backends": num_telerivet_backends(dom),

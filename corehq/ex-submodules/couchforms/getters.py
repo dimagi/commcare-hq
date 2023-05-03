@@ -60,7 +60,7 @@ def get_instance_and_attachment(request):
         if not instance:
             raise MultipartEmptyPayload()
     else:
-        # j2me and touchforms; of the form
+        # touchforms; of the form
         # $ curl --data '@form.xml' $URL
         instance = request.body
         if not instance:

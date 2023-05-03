@@ -596,31 +596,21 @@
   "multimedia_map": {},
   "name": "Subcase Details",
   "phone_model": null,
-  "platform": "nokia/s40",
   "profile": {
     "features": {
-      "sense": "false",
       "users": "true"
     },
     "properties": {
-      "ViewStyle": "v_chatterbox",
       "cc-autosync-freq": "freq-weekly",
       "cc-autoup-freq": "freq-never",
       "cc-content-valid": "no",
-      "cc-entry-mode": "cc-entry-quick",
       "cc-review-days": "7",
-      "cc-send-procedure": "cc-send-http",
-      "cc-send-unsent": null,
-      "cc-user-mode": "cc-u-normal",
-      "extra_key_action": "cycle",
       "log_prop_daily": "log_never",
       "log_prop_weekly": "log_short",
       "logenabled": "Enabled",
       "loose_media": "no",
-      "password_format": "n",
       "purge-freq": "0",
       "restore-tolerance": "loose",
-      "server-tether": "sync",
       "user_reg_server": "required"
     }
   },
@@ -630,7 +620,6 @@
   "success_message": {
     "en": ""
   },
-  "text_input": "roman",
   "translations": {},
   "use_custom_suite": false,
   "user_registration": {
