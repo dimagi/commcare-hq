@@ -135,6 +135,12 @@ class SuiteSortingTest(SimpleTestCase, SuiteMixin):
                 type='index',
                 direction='descending',
                 blanks='first',
+            ),
+            SortElement(
+                field='_cc_calculated_1',
+                type='index',
+                direction='descending',
+                blanks='first',
             )
         ]
 

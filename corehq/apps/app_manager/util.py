@@ -567,10 +567,10 @@ def get_sort_and_sort_only_columns(detail_columns, sort_elements):
             sort_columns[column.field] = (sort_element, order)
 
     # pull out sort elements that refer to calculated columns
-    for field, (element, element_order) in sort_elements.items():
+    for field in list(sort_elements):
         match = re.match(CALCULATED_SORT_FIELD_RX, field)
         if match:
-            del sort_elements[field]
+            element, element_order = sort_elements.pop(field)
             column_index = int(match.group(1))
             try:
                 column = detail_columns[column_index]
