@@ -8,8 +8,7 @@ from field_audit import audit_fields
 from field_audit.models import AuditAction, AuditingManager
 
 from corehq.apps.users.landing_pages import ALL_LANDING_PAGES
-from corehq.util.models import ForeignValue, foreign_value_init
-from corehq.util.quickcache import quickcache
+from corehq.util.models import ForeignValue, foreign_init
 from dimagi.utils.logging import notify_error
 
 
@@ -255,7 +254,7 @@ class UserRole(models.Model):
 
 @audit_fields("role", "permission_fk", "allow_all", "allowed_items",
               audit_special_queryset_writes=True)
-@foreign_value_init
+@foreign_init
 class RolePermission(models.Model):
     role = models.ForeignKey("UserRole", on_delete=models.CASCADE)
     permission_fk = models.ForeignKey("Permission", on_delete=models.CASCADE)

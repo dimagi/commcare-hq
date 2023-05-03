@@ -26,6 +26,7 @@ from ..models import (
     get_attendee_case_type,
     get_user_case_sharing_groups_for_events,
 )
+from ..exceptions import AttendeeTrackedException
 
 DOMAIN = 'test-domain'
 
@@ -80,7 +81,6 @@ class TestEventModel(TestCase):
             None,
             None
         )
-        cls.webuser.save()
 
     @classmethod
     def tearDownClass(cls):
@@ -444,6 +444,24 @@ class EventCaseTests(TestCase):
 
 class TestAttendeeModel(TestCase):
 
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.domain_obj = create_domain(DOMAIN)
+        cls.webuser = WebUser.create(
+            DOMAIN,
+            'test-user',
+            'mockmock',
+            None,
+            None
+        )
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.webuser.delete(None, None)
+        cls.domain_obj.delete()
+        super().tearDownClass()
+
     @staticmethod
     @contextmanager
     def get_case(with_properties=True):
@@ -554,6 +572,42 @@ class TestAttendeeModel(TestCase):
                 reloaded.get_case_property(ATTENDEE_USER_ID_CASE_PROPERTY),
                 'c0ffee'
             )
+
+    def test_model_delete(self):
+        with self.get_case(with_properties=False) as case:
+            model = AttendeeModel(case=case, domain=DOMAIN)
+            model.save()
+            reloaded = CommCareCase.objects.get_case(case.case_id, DOMAIN)
+            self.assertFalse(reloaded.get_case_property('closed'))
+            model.delete()
+            reloaded = CommCareCase.objects.get_case(case.case_id, DOMAIN)
+            self.assertTrue(reloaded.get_case_property('closed'))
+
+    def test_has_attended_events(self):
+        today = datetime.utcnow().date()
+        event = Event(
+            domain=DOMAIN,
+            name='test-event',
+            start_date=today,
+            end_date=today,
+            attendance_target=10,
+            sameday_reg=True,
+            track_each_day=False,
+            manager_id=self.webuser.user_id
+        )
+        event.save()
+        with self.get_case(with_properties=False) as case:
+            attendee = AttendeeModel(case=case, domain=DOMAIN)
+            attendee.save()
+
+            self.assertFalse(attendee.has_attended_events())
+            event.mark_attendance([case], datetime.now())
+
+        self.assertTrue(attendee.has_attended_events())
+        self.assertRaises(
+            AttendeeTrackedException,
+            attendee.delete
+        )
 
 
 def test_doctests():

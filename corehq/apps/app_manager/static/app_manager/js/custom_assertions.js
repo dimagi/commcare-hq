@@ -1,6 +1,7 @@
 /* globals ko */
-hqDefine('app_manager/js/forms/custom_assertions', function () {
+hqDefine('app_manager/js/custom_assertions', function () {
     'use strict';
+    var initialPageData = hqImport("hqwebapp/js/initial_page_data").get;
 
     var customAssertion = function (test, text) {
         var self = {};
@@ -47,5 +48,13 @@ hqDefine('app_manager/js/forms/custom_assertions', function () {
         return self;
     };
 
-    return customAssertions();
+    $(function () {
+        if (hqImport('hqwebapp/js/toggles').toggleEnabled('CUSTOM_ASSERTIONS')) {
+            var assertions = customAssertions().wrap({
+                'customAssertions': initialPageData('custom_assertions'),
+            });
+            $('#custom-assertions').koApplyBindings(assertions);
+        }
+    });
+
 });

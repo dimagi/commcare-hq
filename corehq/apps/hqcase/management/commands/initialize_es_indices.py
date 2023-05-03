@@ -1,16 +1,15 @@
 from django.core.management import BaseCommand
 
 from corehq.apps.es.transient_util import (
-    doc_adapter_from_info,
-    index_info_from_cname,
-    iter_index_infos,
+    doc_adapter_from_cname,
+    iter_doc_adapters,
 )
-from corehq.elastic import get_es_new
 from pillowtop.reindexer.reindexer import (
     prepare_index_for_reindex,
     prepare_index_for_usage,
     clean_index
 )
+from corehq.apps.es.transient_util import iter_index_cnames
 
 
 class Command(BaseCommand):
@@ -22,7 +21,8 @@ class Command(BaseCommand):
     def add_arguments(self, parser):
         parser.add_argument(
             '--index',
-            help='Specify any one index instead of the default all'
+            help='Specify any one hq index cannonical name instead of the default all',
+            choices=list(iter_index_cnames())
         )
         parser.add_argument(
             '--reset',
@@ -53,11 +53,10 @@ class Command(BaseCommand):
                 return
 
         if index:
-            indices = [index_info_from_cname(index)]
+            doc_adapters = [doc_adapter_from_cname(index)]
         else:
-            indices = iter_index_infos()
-        for index in indices:
-            adapter = doc_adapter_from_info(index)
+            doc_adapters = iter_doc_adapters()
+        for adapter in doc_adapters:
             if set_for_usage:
                 prepare_index_for_usage(adapter.index_name)
             else:

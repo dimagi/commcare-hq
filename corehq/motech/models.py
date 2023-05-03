@@ -53,6 +53,19 @@ class RequestLogEntry:
     response_body: str
 
 
+class ConnectionQuerySet(models.QuerySet):
+
+    def delete(self):
+        from .repeaters.models import Repeater
+        repeaters = Repeater.all_objects.filter(connection_settings_id__in=self.values("id"))
+        if repeaters.exists():
+            raise models.ProtectedError(
+                "Cannot delete ConnectionSettings with related Repeater(s)",
+                repeaters,
+            )
+        return super().delete()
+
+
 class ConnectionSoftDeleteManager(models.Manager):
 
     def get_queryset(self):
@@ -94,11 +107,16 @@ class ConnectionSettings(models.Model):
     last_token_aes = models.TextField(blank=True, default="")
     is_deleted = models.BooleanField(default=False, db_index=True)
 
-    objects = ConnectionSoftDeleteManager()
-    all_objects = models.Manager()
+    objects = ConnectionSoftDeleteManager.from_queryset(ConnectionQuerySet)()
+    all_objects = ConnectionQuerySet.as_manager()
 
     def __str__(self):
         return self.name
+
+    @property
+    def repeaters(self):
+        from .repeaters.models import Repeater
+        return Repeater.objects.filter(connection_settings_id=self.id)
 
     @property
     def plaintext_password(self):
@@ -242,6 +260,14 @@ class ConnectionSettings(models.Model):
         # TODO: Check OpenmrsImporters (when OpenmrsImporters use ConnectionSettings)
 
         return kinds
+
+    def delete(self):
+        if self.repeaters.exists():
+            raise models.ProtectedError(
+                "Cannot delete ConnectionSettings with related Repeater(s)",
+                self.repeaters,
+            )
+        return super().delete()
 
     def soft_delete(self):
         self.is_deleted = True
