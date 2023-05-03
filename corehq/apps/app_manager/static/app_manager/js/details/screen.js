@@ -217,14 +217,14 @@ hqDefine("app_manager/js/details/screen", function () {
                 const moveFrom = change.moved,
                     movedTo = change.index;
                 if (movedTo > moveFrom) {
-                    move = +1;
+                    move = 1;
                     affectedColumns = self.columns.slice(moveFrom, movedTo);
                 } else {
                     move = -1;
                     affectedColumns = self.columns.slice(movedTo + 1, moveFrom + 1);
                 }
             } else if (change.status === 'deleted') {
-                move = +1;
+                move = 1;
                 affectedColumns = self.columns.slice(change.index);
             }
             if (affectedColumns) {
