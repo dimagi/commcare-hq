@@ -22,7 +22,7 @@ class TestHL7ToJson(SimpleTestCase, TestFileMixin):
     def _test_message_conversion(self, name):
         message = self.get_file(name, 'er7')
         hl7_dict = hl7_str_to_dict(message, False)
-        # comment out to update the JSON output files
+        # uncomment this to update the JSON output files
         # with open(self.get_path(name, '.json'), 'w') as f:
         #     import json
         #     json.dump(hl7_dict, f, indent=2)
