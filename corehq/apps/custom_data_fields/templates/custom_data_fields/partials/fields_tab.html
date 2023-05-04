@@ -94,21 +94,24 @@
 
         {% if request|request_has_privilege:"REGEX_FIELD_VALIDATION" or couch_user.is_superuser %}
           <div class="btn-group btn-group-separated validation-options">
-            <div data-bind="css: {active: !validationMode()},
+            <button data-bind="css: {active: !validationMode()},
+                            attr: { 'disabled': !isEditable() },
                             click: function () {validationMode(undefined)}"
                  class="btn btn-default btn-xs">
               {% trans "None" %}
-            </div>
-            <div data-bind="css: {active: validationMode() === 'choice'},
+            </button>
+            <button data-bind="css: {active: validationMode() === 'choice'},
+                            attr: { 'disabled': !isEditable() },
                             click: function () {validationMode('choice')}"
                  class="btn btn-default btn-xs">
               {% trans "Choices" %}
-            </div>
-            <div data-bind="css: {active: validationMode() === 'regex'},
+            </button>
+            <button data-bind="css: {active: validationMode() === 'regex'},
+                            attr: { 'disabled': !isEditable() },
                             click: function () {validationMode('regex')}"
                  class="btn btn-default btn-xs">
               {% trans "Regex" %}
-            </div>
+            </button>
           </div>
         {% endif %}
 
@@ -120,7 +123,14 @@
           <ul data-bind="sortable: choices" class="list-unstyled validation-list">
             <li data-bind="attr: {'data-order': _sortableOrder}">
               <div class="input-group">
-                <span class="input-group-addon"><i class="fa fa-arrows-v sortable-handle"></i></span>
+                <span class="input-group-addon">
+                  <span data-bind="if: $parent.isEditable">
+                    <i class="fa fa-arrows-v sortable-handle"></i>
+                  </span>
+                  <span data-bind="ifnot: $parent.isEditable">
+                    <i class="fa fa-arrows-v"></i>
+                  </span>
+                </span>
                 <input class="form-control" type="text" data-bind="value: value, attr: { 'disabled': !$parent.isEditable() }"/>
                 <div class="input-group-btn">
                   <button type="button"
@@ -137,9 +147,9 @@
         {% if request|request_has_privilege:"REGEX_FIELD_VALIDATION" or couch_user.is_superuser %}
           <ul data-bind="visible: validationMode() === 'regex'"
               class="list-unstyled validation-list">
-            <li><input data-bind="value: regex" class="form-control" type="text"
+            <li><input data-bind="value: regex, attr: { 'disabled': !isEditable() }" class="form-control" type="text"
                        placeholder="{% trans "Regular Expression" %}"/></li>
-            <li><input data-bind="value: regex_msg" class="form-control" type="text"
+            <li><input data-bind="value: regex_msg, attr: { 'disabled': !isEditable() }" class="form-control" type="text"
                        placeholder="{% trans "Validation Message" %}"/></li>
           </ul>
         {% endif %}
