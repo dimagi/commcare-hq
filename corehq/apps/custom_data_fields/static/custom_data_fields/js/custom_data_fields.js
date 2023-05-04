@@ -39,6 +39,12 @@ hqDefine('custom_data_fields/js/custom_data_fields', [
             return Choice(choice);
         }));
         self.validationMode = ko.observable(options.choices.length ? 'choice' : 'regex');
+        self.validationMode = ko.observable();
+        if (options.choices.length) {
+            self.validationMode('choice');
+        } else if (options.regex) {
+            self.validationMode('regex');
+        }
         self.regex = ko.observable(options.regex);
         self.regex_msg = ko.observable(options.regex_msg);
         self.upstream_id = options.upstream_id;
@@ -278,6 +284,11 @@ hqDefine('custom_data_fields/js/custom_data_fields', [
             var customField = Field(field, self);
             self.data_fields.push(customField);
             customField.choices.subscribe(function () {
+                $("#save-custom-fields").prop("disabled", false);
+            });
+            // NOTE: There must be a better way to do this.
+            // The save button's state should likely be included and controlled by the view model
+            customField.validationMode.subscribe(function () {
                 $("#save-custom-fields").prop("disabled", false);
             });
         });
