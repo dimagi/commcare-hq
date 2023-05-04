@@ -84,7 +84,7 @@ def search_view(request, domain, fhir_version_name, resource_type):
     fhir_version = _get_fhir_version(fhir_version_name)
     if not fhir_version:
         return JsonResponse(status=400, data={'message': "Unsupported FHIR version"})
-    resource_id = request.GET.get('_id')
+    resource_id = request.GET.get('_id', request.GET.get('patient_id'))
     if not resource_id:
         return JsonResponse(status=400, data={'message': "Please pass resource ID."})
     try:

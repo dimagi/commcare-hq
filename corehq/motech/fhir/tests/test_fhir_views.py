@@ -188,8 +188,8 @@ class TestFHIRSearchView(BaseFHIRViewTest):
         )
 
     @flag_enabled('FHIR_INTEGRATION')
-    def test_search_patient(self):
-        url = reverse("fhir_search", args=[DOMAIN, FHIR_VERSION, "Patient"]) + f"?_id={PERSON_CASE_ID}"
+    def test_search_patient_using_patient_id(self):
+        url = reverse("fhir_search", args=[DOMAIN, FHIR_VERSION, "Patient"]) + f"?patient_id={PERSON_CASE_ID}"
         response = self.client.get(url)
         self.assertEqual(
             response.json(),
