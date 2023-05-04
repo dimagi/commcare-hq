@@ -96,6 +96,7 @@ requests_toolbelt
 requests
 schema
 sentry-sdk
+sh
 shapely
 # Package has an unfixed issue https://github.com/danthedeckie/simpleeval/issues/90 Can use that once https://github.com/danthedeckie/simpleeval/pull/91 is merged
 simpleeval @ git+https://github.com/dimagi/simpleeval.git@d85c5a9f972c0f0416a1716bb06d1a3ebc83e7ec

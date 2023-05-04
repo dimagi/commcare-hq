@@ -504,6 +504,8 @@ schema==0.7.5
     # via -r base-requirements.in
 sentry-sdk==1.19.1
     # via -r base-requirements.in
+sh==2.0.3
+    # via -r base-requirements.in
 shapely==2.0.1
     # via
     #   -r base-requirements.in
