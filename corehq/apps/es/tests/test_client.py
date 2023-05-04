@@ -589,8 +589,16 @@ class TestElasticManageAdapter(AdapterWithIndexTestCase):
         self.assertTrue(validation)
 
     def test_index_validate_query_returns_false_for_invalid_query(self):
+        type_ = "test_doc"
+        mapping = {
+            "properties": {
+                "value": {"type": "float"}
+            }
+        }
         self.adapter.index_create(self.index)
-        query = {"query": {"termmz": {"value": 'some val'}}}
+        self.adapter.index_put_mapping(self.index, type_, mapping)
+        # Value field expects a float but string is sent in term query
+        query = {"query": {"term": {"value": 'some_string'}}}
         validation = self.adapter.index_validate_query(index=self.index, query=query)
         self.assertFalse(validation)
 
