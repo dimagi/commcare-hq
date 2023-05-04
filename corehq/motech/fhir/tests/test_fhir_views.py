@@ -164,7 +164,7 @@ class TestFHIRSearchView(BaseFHIRViewTest):
         self.assertEqual(response.status_code, 400)
         self.assertEqual(
             response.json(),
-            {'message': f"Resource type DiagnosticReport not available on {DOMAIN}"}
+            {'message': f"Resource type(s) DiagnosticReport not available on {DOMAIN}"}
         )
 
     @flag_enabled('FHIR_INTEGRATION')
@@ -205,6 +205,16 @@ class TestFHIRSearchView(BaseFHIRViewTest):
                     }
                 ]
             }
+        )
+
+    @flag_enabled('FHIR_INTEGRATION')
+    def test_no_resource_provided(self):
+        url = reverse("fhir_search_mulitple_types", args=[DOMAIN, FHIR_VERSION]) + f"?_id={PERSON_CASE_ID}"
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(
+            response.json(),
+            {'message': "No resource type specified for search."}
         )
 
 

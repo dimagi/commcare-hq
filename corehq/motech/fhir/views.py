@@ -4,6 +4,7 @@ from django.utils.translation import gettext_lazy as _
 from django.views.decorators.http import require_GET
 
 from corehq import toggles
+from corehq.apps.data_dictionary.models import CaseType
 from corehq.apps.domain.decorators import (
     login_or_api_key,
     require_superuser,
@@ -80,7 +81,7 @@ def get_view(request, domain, fhir_version_name, resource_type, resource_id):
 @require_superuser
 @toggles.FHIR_INTEGRATION.required_decorator()
 @validate_accept_header_and_format_param
-def search_view(request, domain, fhir_version_name, resource_type):
+def search_view(request, domain, fhir_version_name, resource_type=None):
     fhir_version = _get_fhir_version(fhir_version_name)
     if not fhir_version:
         return JsonResponse(status=400, data={'message': "Unsupported FHIR version"})
@@ -94,18 +95,30 @@ def search_view(request, domain, fhir_version_name, resource_type):
     except CaseNotFound:
         return JsonResponse(status=404, data={'message': "Not Found"})
 
-    case_types_for_resource_type = list(
+    def _get_resource_types(resource_type, request):
+        if resource_type:
+            return [resource_type]
+        else:
+            type_param = request.GET.get('_type')
+            return [resource_type.strip() for resource_type in type_param.split(',')] if type_param else None
+    resource_types = _get_resource_types(resource_type, request)
+
+    if not resource_types:
+        return JsonResponse(status=400,
+                            data={'message': "No resource type specified for search."})
+    case_types_for_resource_types = list(
         FHIRResourceType.objects.filter(
-            domain=domain, name=resource_type, fhir_version=fhir_version
+            domain=domain, name__in=resource_types, fhir_version=fhir_version
         ).values_list('case_type__name', flat=True)
     )
-    if not case_types_for_resource_type:
+    if not case_types_for_resource_types:
         return JsonResponse(status=400,
-                            data={'message': f"Resource type {resource_type} not available on {domain}"})
+                            data={'message':
+                                  f"Resource type(s) {', '.join(resource_types)} not available on {domain}"})
 
     cases = CommCareCase.objects.get_reverse_indexed_cases(
-        domain, [resource_id], case_types=case_types_for_resource_type, is_closed=False)
-    if found_case.type in case_types_for_resource_type:
+        domain, [resource_id], case_types=case_types_for_resource_types, is_closed=False)
+    if found_case.type in case_types_for_resource_types:
         cases.append(found_case)
     response = {
         'resourceType': "Bundle",
@@ -113,8 +126,10 @@ def search_view(request, domain, fhir_version_name, resource_type):
         "entry": []
     }
     for case in cases:
+        case_resource_type = FHIRResourceType.objects.get(
+            case_type=CaseType.objects.get(domain=domain, name=case.type))
         response["entry"].append({
-            "fullUrl": resource_url(domain, fhir_version_name, resource_type, case.case_id),
+            "fullUrl": resource_url(domain, fhir_version_name, case_resource_type, case.case_id),
             "search": {
                 "mode": "match"
             }
