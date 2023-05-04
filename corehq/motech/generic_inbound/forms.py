@@ -10,7 +10,7 @@ from corehq.apps.hqwebapp.crispy import HQFormHelper, FieldWithAddons
 from corehq.apps.userreports.models import UCRExpression
 from corehq.motech.generic_inbound.models import (
     ConfigurableAPI,
-    ConfigurableApiValidation, ApiMiddleware,
+    ConfigurableApiValidation, ApiMiddlewareOptions,
 )
 
 
@@ -31,7 +31,7 @@ class ConfigurableAPICreateForm(forms.ModelForm):
         }
         widgets = {
             "description": forms.TextInput(),
-            "middleware": forms.Select(choices=ApiMiddleware.choices)
+            "middleware": forms.Select(choices=ApiMiddlewareOptions.choices)
         }
 
     def __init__(self, request, *args, **kwargs):

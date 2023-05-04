@@ -18,7 +18,7 @@ from corehq.motech.generic_inbound.exceptions import GenericInboundApiError
 from corehq.util import reverse
 
 
-class ApiMiddleware(models.TextChoices):
+class ApiMiddlewareOptions(models.TextChoices):
     json = "json", _("JSON")
     hl7 = "hl7", _("HL7 v2")
 
@@ -36,7 +36,7 @@ class ConfigurableAPI(models.Model):
         UCRExpression, on_delete=models.PROTECT, related_name="api_filter", null=True, blank=True)
     transform_expression = models.ForeignKey(
         UCRExpression, on_delete=models.PROTECT, related_name="api_expression")
-    middleware = models.CharField(max_length=100, default=ApiMiddleware.json)
+    middleware = models.CharField(max_length=100, default=ApiMiddlewareOptions.json)
 
     objects = AuditingManager()
 
@@ -79,9 +79,9 @@ class ConfigurableAPI(models.Model):
     def middleware_class(self):
         from corehq.motech.generic_inbound.middleware.json import JsonMiddleware
         from corehq.motech.generic_inbound.middleware.hl7 import Hl7Middleware
-        if self.middleware == ApiMiddleware.json:
+        if self.middleware == ApiMiddlewareOptions.json:
             return JsonMiddleware
-        elif self.middleware == ApiMiddleware.hl7:
+        elif self.middleware == ApiMiddlewareOptions.hl7:
             return Hl7Middleware
         raise GenericInboundApiError(f"Unknown middleware type: {self.middleware}")
 

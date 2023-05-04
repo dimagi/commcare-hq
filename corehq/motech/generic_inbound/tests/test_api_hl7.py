@@ -2,7 +2,7 @@ from freezegun import freeze_time
 
 from corehq import privileges
 from corehq.form_processor.tests.utils import FormProcessorTestUtils
-from corehq.motech.generic_inbound.models import ApiMiddleware, RequestLog
+from corehq.motech.generic_inbound.models import ApiMiddlewareOptions, RequestLog
 from corehq.motech.generic_inbound.tests.test_api import GenericInboundAPIViewBaseTest
 from corehq.util.test_utils import flag_enabled, privilege_enabled
 
@@ -54,7 +54,7 @@ class TestGenericInboundAPIViewHL7(GenericInboundAPIViewBaseTest):
                 "operator": "eq",
                 "property_value": "OBS"
             },
-            middleware=ApiMiddleware.hl7
+            middleware=ApiMiddlewareOptions.hl7
         )
         response = self._call_api_advanced(api)
         self.assertEqual(response.status_code, 400, response.content)
@@ -66,7 +66,7 @@ class TestGenericInboundAPIViewHL7(GenericInboundAPIViewBaseTest):
         self.assertEqual(response.content.decode(), expected)
 
     def _test_generic_api(self, properties_expression):
-        response = self._call_api(properties_expression, middleware=ApiMiddleware.hl7)
+        response = self._call_api(properties_expression, middleware=ApiMiddlewareOptions.hl7)
         response_content = response.content
         self.assertEqual(response.status_code, 200, response_content)
         return response_content
