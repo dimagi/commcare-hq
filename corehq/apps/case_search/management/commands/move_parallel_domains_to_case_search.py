@@ -28,7 +28,7 @@ class Command(BaseCommand):
         num_cases = domains.aggregate(Sum('estimated_size'))['estimated_size__sum']
 
         confirm = input(f'\nMigrate {num_domains} domains with {num_cases} cases to Case Search Index [y/n] ')
-        if confirm:
+        if confirm == 'y':
             self.stdout.write("Migrating...\n")
             time_started = datetime.utcnow()
             jobs = [gevent.spawn(migrate_domain, domain)
