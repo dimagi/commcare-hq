@@ -67,7 +67,11 @@
     jQuery UI, if included, needs to appear before bootstrap's JavaScript;
     otherwise the two tooltip widgets and two button widgets conflict.
 {% endcomment %}
-<script src="{% static 'bootstrap/dist/js/bootstrap.min.js' %}"></script>
+{% if use_bootstrap5 %}
+  <script src="{% static 'bootstrap5/dist/js/bootstrap.min.js' %}"></script>
+{% else %}
+  <script src="{% static 'bootstrap/dist/js/bootstrap.min.js' %}"></script>
+{% endif %}
 
 {% comment %}
     Required for inline edit widget. Also used by cloudcare.
