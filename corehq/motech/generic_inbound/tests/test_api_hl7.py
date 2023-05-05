@@ -1,3 +1,4 @@
+from django.urls import reverse
 from freezegun import freeze_time
 
 from corehq import privileges
@@ -38,6 +39,21 @@ class TestGenericInboundAPIViewHL7(GenericInboundAPIViewBaseTest):
                    f'{log.id.hex}|P|2.8\r' \
                    'MSA|AA|MSG00001|success'
         self.assertEqual(response_content, expected)
+
+    @freeze_time('2023-05-02 13:01:51')
+    def test_post_not_supported_type(self):
+        generic_api = self._make_api({}, backend=ApiBackendOptions.hl7)
+        url = reverse('generic_inbound_api', args=[self.domain_name, generic_api.url_key])
+        response = self.client.post(
+            url, data={}, HTTP_AUTHORIZATION=f"apikey {self.user.username}:{self.api_key.key}"
+        )
+        self.assertEqual(response.status_code, 400)
+        log = RequestLog.objects.last()
+        expected = f"MSH|^~\\&#|||||20230502130151|||{log.id.hex}||2.8\r" \
+                   "MSA|AE||Error parsing HL7: Invalid message"
+        print(expected)
+        print(response.content.decode())
+        self.assertEqual(response.content.decode(), expected)
 
     @freeze_time('2023-05-02 13:01:51')
     def test_validation_errors(self):

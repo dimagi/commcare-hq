@@ -188,7 +188,7 @@ def generic_inbound_api(request, domain, api_id):
     def get_request_data():
         return ApiRequest.from_request(request, request_id=request_id)
 
-    response = process_api_request(api, get_request_data)
+    response = process_api_request(api, request_id, get_request_data)
 
     log_api_request(request_id, api, request, response)
     return response.get_http_response()

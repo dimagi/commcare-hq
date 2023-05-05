@@ -1,5 +1,3 @@
-from contextlib import contextmanager
-
 from django.utils.translation import gettext as _
 
 from corehq.apps.hqcase.api.core import SubmissionError, UserError, serialize_case
@@ -19,6 +17,14 @@ class BaseApiBackend:
 
     Backend is used to translate incoming data to JSON which the API can process. The response
     is also translated from JSON to the appropriate data format."""
+
+    @classmethod
+    def get_basic_error_response(cls, request_id, status_code, message):
+        """This method is intended to be used for errors that happen early in
+        the process before the request data class has been created.
+
+        It can also be used for basic errors that don't require additional context."""
+        raise NotImplementedError
 
     def __init__(self, api_model, request_data):
         self.api_model = api_model

@@ -10,6 +10,10 @@ from corehq.motech.generic_inbound.utils import ApiResponse
 class JsonBackend(BaseApiBackend):
     """API backend for handling JSON payloads"""
 
+    @classmethod
+    def get_basic_error_response(cls, request_id, status_code, message):
+        return ApiResponse(status=status_code, internal_response={'error': message})
+
     def get_success_response(self, response_json):
         return ApiResponse(status=200, internal_response=response_json)
 
@@ -20,7 +24,7 @@ class JsonBackend(BaseApiBackend):
             raise GenericInboundUserError(gettext("Payload must be valid JSON"))
 
     def _get_generic_error(self, status_code, message):
-        return ApiResponse(status=status_code, internal_response={'error': message})
+        return self.get_basic_error_response(self.request_data.request_id, status_code, message)
 
     def _get_submission_error_response(self, status_code, form_id, message):
         return ApiResponse(status=status_code, internal_response={
