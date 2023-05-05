@@ -141,17 +141,10 @@ def get_evaluation_context(restore_user, method, query, headers, body):
 def reprocess_api_request(request_log):
     from corehq.motech.generic_inbound.models import RequestLog
 
-    try:
-        backend_cls = request_log.api.backend_class
-    except GenericInboundApiError as e:
-        response = ApiResponse(status=500, internal_response={'error': str(e)})
-    else:
-        try:
-            request_data = ApiRequest.from_log(request_log)
-        except GenericInboundUserError as e:
-            response = ApiResponse(status=400, internal_response={'error': str(e)})
-        else:
-            response = backend_cls(request_log.api, request_data).run()
+    def get_request_data():
+        return ApiRequest.from_log(request_log)
+
+    response = process_api_request(request_log.api, get_request_data)
 
     with transaction.atomic():
         request_log.status = RequestLog.Status.from_status_code(response.status)
@@ -159,6 +152,21 @@ def reprocess_api_request(request_log):
         request_log.response_status = response.status
         request_log.save()
         make_processing_attempt(response, request_log, is_retry=True)
+
+
+def process_api_request(api_model, get_request_data):
+    try:
+        backend_cls = api_model.backend_class
+    except GenericInboundApiError as e:
+        response = ApiResponse(status=500, internal_response={'error': str(e)})
+    else:
+        try:
+            request_data = get_request_data()
+        except GenericInboundUserError as e:
+            response = ApiResponse(status=400, internal_response={'error': str(e)})
+        else:
+            response = backend_cls(api_model, request_data).run()
+    return response
 
 
 def archive_api_request(request_log, user_id):

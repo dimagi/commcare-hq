@@ -1,14 +1,13 @@
 import uuid
 
 from django.contrib import messages
-from django.http import Http404, HttpResponse, JsonResponse
+from django.http import Http404
 from django.shortcuts import get_object_or_404, redirect
 from django.utils.decorators import method_decorator
 from django.utils.translation import gettext as _
 from django.utils.translation import gettext_lazy
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods
-
 from memoized import memoized
 
 from corehq import privileges, toggles
@@ -20,7 +19,6 @@ from corehq.apps.hqwebapp.views import CRUDPaginatedViewMixin
 from corehq.apps.userreports.models import UCRExpression
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import HqPermissions
-from corehq.motech.generic_inbound.exceptions import GenericInboundUserError, GenericInboundApiError
 from corehq.motech.generic_inbound.forms import (
     ApiValidationFormSet,
     ConfigurableAPICreateForm,
@@ -33,10 +31,10 @@ from corehq.motech.generic_inbound.models import (
 from corehq.motech.generic_inbound.reports import ApiLogDetailView
 from corehq.motech.generic_inbound.utils import (
     ApiRequest,
-    ApiResponse,
     archive_api_request,
     reprocess_api_request,
-    log_api_request
+    log_api_request,
+    process_api_request
 )
 from corehq.util import reverse
 from corehq.util.view_utils import json_error
@@ -187,17 +185,10 @@ def generic_inbound_api(request, domain, api_id):
 
     request_id = uuid.uuid4().hex
 
-    try:
-        backend_cls = api.backend_class
-    except GenericInboundApiError as e:
-        response = ApiResponse(status=500, internal_response={'error': str(e)})
-    else:
-        try:
-            request_data = ApiRequest.from_request(request, request_id=request_id)
-        except GenericInboundUserError as e:
-            response = ApiResponse(status=400, internal_response={'error': str(e)})
-        else:
-            response = backend_cls(api, request_data).run()
+    def get_request_data():
+        return ApiRequest.from_request(request, request_id=request_id)
+
+    response = process_api_request(api, get_request_data)
 
     log_api_request(request_id, api, request, response)
     return response.get_http_response()
