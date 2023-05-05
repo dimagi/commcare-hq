@@ -51,7 +51,6 @@ from .views import (
     edit_form,
     email_report,
     export_report,
-    get_or_create_filter_hash,
     project_health_user_details,
     reports_home,
     resave_form_view,
@@ -164,8 +163,6 @@ urlpatterns = [
     ProjectReportDispatcher.url_pattern(),
     url(r'^user_management/', include(user_management_urls)),
     url(r'^release_management/', include(release_management_urls)),
-
-    url(r'^get_or_create_hash/', get_or_create_filter_hash, name='get_or_create_filter_hash'),
 ]
 
 # Exporting Case List Explorer reports with the word " on*" at the end of the search query

@@ -14470,9 +14470,14 @@ msgid "Custom Logo"
 msgstr "Logo personnalisé"
 
 #: corehq/apps/domain/forms.py
+#, fuzzy, python-brace-format
+#| msgid ""
+#| "Upload a custom image to display instead of the CommCare HQ logo.  It "
+#| "will be automatically resized to a height of 32 pixels."
 msgid ""
 "Upload a custom image to display instead of the CommCare HQ logo.  It will "
-"be automatically resized to a height of 32 pixels."
+"be automatically resized to a height of 32 pixels. Upload size limit is "
+"{size_limit} MB."
 msgstr ""
 "Téléversez une image personnalisée à afficher au lieu du logo CommCare HQ.  "
 "Elle sera automatiquement redimensionnée à la taille de 32 pixels."
@@ -14621,6 +14626,10 @@ msgstr "Mettre à jour les infos de base"
 #: corehq/apps/domain/forms.py
 msgid "Default timezone"
 msgstr "Fuseau horaire par défaut"
+
+#: corehq/apps/domain/forms.py
+msgid "Logo exceeds {} MB size limit"
+msgstr ""
 
 #: corehq/apps/domain/forms.py
 msgid "Release Mode Visibility should be a boolean."
@@ -18504,6 +18513,56 @@ msgstr ""
 msgid "Edit Attendee"
 msgstr ""
 
+#: corehq/apps/events/views.py
+#, fuzzy
+#| msgid "Mobile Worker Upload Status"
+msgid "Enabling mobile worker attendees status"
+msgstr "Statut du téléchargement en bloc des utilisateurs mobiles"
+
+#: corehq/apps/events/views.py
+msgid "Disabling mobile worker attendees status"
+msgstr ""
+
+#: corehq/apps/events/views.py
+#, fuzzy
+#| msgid "Restoring your forms, this may take some time..."
+msgid "Processing Mobile Workers. This may take some time..."
+msgstr "Restauration des formulaires, ceci peut prendre un peu de temps..."
+
+#: corehq/apps/events/views.py
+msgid "User conversion failed for some reason and we have noted this failure."
+msgstr ""
+
+#: corehq/apps/events/views.py
+#, fuzzy
+#| msgid "Go back to Mobile Workers"
+msgid "Go back to view attendees"
+msgstr "Retour aux utilisateurs mobiles"
+
+#: corehq/apps/events/views.py
+msgid "Mobile workers can now also be selected to attend events."
+msgstr ""
+
+#: corehq/apps/events/views.py
+msgid "Enabling mobile workers complete!"
+msgstr ""
+
+#: corehq/apps/events/views.py
+msgid "Enabling mobile worker attendees in progress. This may take a while..."
+msgstr ""
+
+#: corehq/apps/events/views.py
+msgid "Mobile workers are now removed from the potential attendees list."
+msgstr ""
+
+#: corehq/apps/events/views.py
+msgid "Disabling mobile workers complete!"
+msgstr ""
+
+#: corehq/apps/events/views.py
+msgid "Disabling mobile worker attendees in progress. This may take a while..."
+msgstr ""
+
 #: corehq/apps/export/det/schema_generator.py
 #, python-brace-format
 msgid "Export instance type {name} not supported!"
@@ -20126,6 +20185,13 @@ msgstr ""
 "filtres à moins de %(max_rows)s rangées."
 
 #: corehq/apps/export/views/download.py
+msgid ""
+"There are no sheets to export. If this is a bulk case export then the export "
+"configuration might still be busy populating its tables. Please try again "
+"later."
+msgstr ""
+
+#: corehq/apps/export/views/download.py
 msgid "You do not have permission to export de-identified exports."
 msgstr ""
 
@@ -20284,7 +20350,7 @@ msgid "Export De-Identified Cases"
 msgstr "Exporter les dossiers anonymisés "
 
 #: corehq/apps/export/views/list.py
-msgid "Populating tables for <strong>{}</strong> {}."
+msgid "Populating tables for <strong>{}</strong>. ({}%)"
 msgstr ""
 
 #: corehq/apps/export/views/list.py
@@ -21871,6 +21937,18 @@ msgstr ""
 #: corehq/apps/hqcase/utils.py
 msgid "Automatic Case Update Rule"
 msgstr ""
+
+#: corehq/apps/hqcase/utils.py
+#, fuzzy
+#| msgid "Application Build"
+msgid "Deduplication Rule"
+msgstr "Construction d'application"
+
+#: corehq/apps/hqcase/utils.py
+#, fuzzy
+#| msgid "Integration"
+msgid "DHIS2 Integration"
+msgstr "Intégration "
 
 #: corehq/apps/hqmedia/cache.py
 #, python-format

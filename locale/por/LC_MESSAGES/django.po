@@ -14005,9 +14005,11 @@ msgid "Custom Logo"
 msgstr ""
 
 #: corehq/apps/domain/forms.py
+#, python-brace-format
 msgid ""
 "Upload a custom image to display instead of the CommCare HQ logo.  It will "
-"be automatically resized to a height of 32 pixels."
+"be automatically resized to a height of 32 pixels. Upload size limit is "
+"{size_limit} MB."
 msgstr ""
 
 #: corehq/apps/domain/forms.py
@@ -14139,6 +14141,10 @@ msgstr ""
 
 #: corehq/apps/domain/forms.py
 msgid "Default timezone"
+msgstr ""
+
+#: corehq/apps/domain/forms.py
+msgid "Logo exceeds {} MB size limit"
 msgstr ""
 
 #: corehq/apps/domain/forms.py
@@ -17900,6 +17906,52 @@ msgstr ""
 msgid "Edit Attendee"
 msgstr ""
 
+#: corehq/apps/events/views.py
+msgid "Enabling mobile worker attendees status"
+msgstr ""
+
+#: corehq/apps/events/views.py
+msgid "Disabling mobile worker attendees status"
+msgstr ""
+
+#: corehq/apps/events/views.py
+msgid "Processing Mobile Workers. This may take some time..."
+msgstr ""
+
+#: corehq/apps/events/views.py
+msgid "User conversion failed for some reason and we have noted this failure."
+msgstr ""
+
+#: corehq/apps/events/views.py
+#, fuzzy
+#| msgid "Go back to Mobile Workers"
+msgid "Go back to view attendees"
+msgstr "Voltar para Trabalhadores Móveis"
+
+#: corehq/apps/events/views.py
+msgid "Mobile workers can now also be selected to attend events."
+msgstr ""
+
+#: corehq/apps/events/views.py
+msgid "Enabling mobile workers complete!"
+msgstr ""
+
+#: corehq/apps/events/views.py
+msgid "Enabling mobile worker attendees in progress. This may take a while..."
+msgstr ""
+
+#: corehq/apps/events/views.py
+msgid "Mobile workers are now removed from the potential attendees list."
+msgstr ""
+
+#: corehq/apps/events/views.py
+msgid "Disabling mobile workers complete!"
+msgstr ""
+
+#: corehq/apps/events/views.py
+msgid "Disabling mobile worker attendees in progress. This may take a while..."
+msgstr ""
+
 #: corehq/apps/export/det/schema_generator.py
 #, python-brace-format
 msgid "Export instance type {name} not supported!"
@@ -19503,6 +19555,13 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/export/views/download.py
+msgid ""
+"There are no sheets to export. If this is a bulk case export then the export "
+"configuration might still be busy populating its tables. Please try again "
+"later."
+msgstr ""
+
+#: corehq/apps/export/views/download.py
 msgid "You do not have permission to export de-identified exports."
 msgstr ""
 
@@ -19665,7 +19724,7 @@ msgid "Export De-Identified Cases"
 msgstr ""
 
 #: corehq/apps/export/views/list.py
-msgid "Populating tables for <strong>{}</strong> {}."
+msgid "Populating tables for <strong>{}</strong>. ({}%)"
 msgstr ""
 
 #: corehq/apps/export/views/list.py
@@ -21229,6 +21288,16 @@ msgstr ""
 
 #: corehq/apps/hqcase/utils.py
 msgid "Automatic Case Update Rule"
+msgstr ""
+
+#: corehq/apps/hqcase/utils.py
+#, fuzzy
+#| msgid "Application Type"
+msgid "Deduplication Rule"
+msgstr "Tipo de Aplicação"
+
+#: corehq/apps/hqcase/utils.py
+msgid "DHIS2 Integration"
 msgstr ""
 
 #: corehq/apps/hqmedia/cache.py
