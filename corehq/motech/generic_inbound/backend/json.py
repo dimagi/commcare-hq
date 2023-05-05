@@ -3,12 +3,12 @@ import json
 from django.utils.translation import gettext
 
 from corehq.motech.generic_inbound.exceptions import GenericInboundUserError
-from corehq.motech.generic_inbound.middleware.base import BaseApiMiddleware
+from corehq.motech.generic_inbound.backend.base import BaseApiBackend
 from corehq.motech.generic_inbound.utils import ApiResponse
 
 
-class JsonMiddleware(BaseApiMiddleware):
-    """API middleware for handling JSON payloads"""
+class JsonBackend(BaseApiBackend):
+    """API backend for handling JSON payloads"""
 
     def get_success_response(self, response_json):
         return ApiResponse(status=200, internal_response=response_json)

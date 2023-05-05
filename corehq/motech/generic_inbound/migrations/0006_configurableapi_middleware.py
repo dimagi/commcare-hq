@@ -12,7 +12,7 @@ class Migration(migrations.Migration):
     operations = [
         migrations.AddField(
             model_name='configurableapi',
-            name='middleware',
+            name='backend',
             field=models.CharField(default='json', max_length=100),
         ),
     ]

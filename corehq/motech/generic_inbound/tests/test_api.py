@@ -21,7 +21,7 @@ from corehq.motech.generic_inbound.models import (
     ConfigurableAPI,
     ConfigurableApiValidation,
     ProcessingAttempt,
-    RequestLog, ApiMiddlewareOptions,
+    RequestLog, ApiBackendOptions,
 )
 from corehq.motech.generic_inbound.utils import (
     ApiRequest,
@@ -45,12 +45,12 @@ class GenericInboundAPIViewBaseTest(TestCase):
         cls.api_key, _ = HQApiKey.objects.get_or_create(user=cls.user.get_django_user())
 
     def _make_api(self, property_expressions, filter_expression=None, validation_expression=None,
-                  middleware=ApiMiddlewareOptions.json):
+                  backend=ApiBackendOptions.json):
         api = ConfigurableAPI.objects.create(
             domain=self.domain_name,
             filter_expression=self._make_filter(filter_expression),
             transform_expression=self._make_expression(property_expressions),
-            middleware=middleware,
+            backend=backend,
         )
 
         if validation_expression:
@@ -104,10 +104,10 @@ class GenericInboundAPIViewBaseTest(TestCase):
         query_params=None,
         filter_expression=None,
         validation_expression=None,
-        middleware=ApiMiddlewareOptions.json,
+        backend=ApiBackendOptions.json,
     ):
         generic_api = self._make_api(
-            properties_expression, filter_expression, validation_expression, middleware
+            properties_expression, filter_expression, validation_expression, backend
         )
         return self._call_api_advanced(generic_api, query_params)
 

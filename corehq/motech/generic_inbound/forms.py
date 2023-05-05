@@ -10,7 +10,7 @@ from corehq.apps.hqwebapp.crispy import HQFormHelper, FieldWithAddons
 from corehq.apps.userreports.models import UCRExpression
 from corehq.motech.generic_inbound.models import (
     ConfigurableAPI,
-    ConfigurableApiValidation, ApiMiddlewareOptions,
+    ConfigurableApiValidation, ApiBackendOptions,
 )
 
 
@@ -24,14 +24,14 @@ class ConfigurableAPICreateForm(forms.ModelForm):
             "description",
             "filter_expression",
             "transform_expression",
-            "middleware",
+            "backend",
         ]
         labels = {
-            "middleware": _("Input Data Type")
+            "backend": _("Input Data Type")
         }
         widgets = {
             "description": forms.TextInput(),
-            "middleware": forms.Select(choices=ApiMiddlewareOptions.choices)
+            "backend": forms.Select(choices=ApiBackendOptions.choices)
         }
 
     def __init__(self, request, *args, **kwargs):
@@ -46,7 +46,7 @@ class ConfigurableAPICreateForm(forms.ModelForm):
                 self.fieldset_title,
                 crispy.Field('name'),
                 crispy.Field('description'),
-                crispy.Field('middleware'),
+                crispy.Field('backend'),
                 FieldWithAddons('filter_expression', post_addon=_expression_link(self.domain)),
                 FieldWithAddons('transform_expression', post_addon=_expression_link(self.domain)),
             )

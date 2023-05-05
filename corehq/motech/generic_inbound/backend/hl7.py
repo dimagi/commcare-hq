@@ -8,7 +8,7 @@ from hl7apy.exceptions import ChildNotFound, HL7apyException
 from hl7apy.parser import parse_message
 
 from corehq.motech.generic_inbound.exceptions import GenericInboundUserError
-from corehq.motech.generic_inbound.middleware.base import BaseApiMiddleware
+from corehq.motech.generic_inbound.backend.base import BaseApiBackend
 from corehq.motech.generic_inbound.utils import ApiResponse
 
 
@@ -20,8 +20,8 @@ class Hl7ApiResponse(ApiResponse):
         return HttpResponse(status=self.status, content=self.hl7_response)
 
 
-class Hl7Middleware(BaseApiMiddleware):
-    """API middleware for handling HL7 v2 payloads"""
+class Hl7Backend(BaseApiBackend):
+    """API backend for handling HL7 v2 payloads"""
 
     def __init__(self, request_data):
         super().__init__(request_data)

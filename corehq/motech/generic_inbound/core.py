@@ -13,23 +13,23 @@ from corehq.motech.generic_inbound.utils import ApiResponse
 
 def execute_generic_api(api_model, request_data):
     try:
-        middleware_cls = api_model.middleware_class
+        backend_cls = api_model.backend_class
     except GenericInboundApiError as e:
         return ApiResponse(status=500, internal_response={'error': str(e)})
 
-    middleware = middleware_cls(request_data)
-    with middleware.handle_errors():
+    backend = backend_cls(request_data)
+    with backend.handle_errors():
         response_json = _execute_generic_api(
             request_data.domain,
             request_data.couch_user,
             request_data.user_agent,
-            middleware.get_context(),
+            backend.get_context(),
             api_model,
         )
-        return middleware.get_success_response(response_json)
+        return backend.get_success_response(response_json)
 
-    # this is reached if an error is raised during processing which is handled by the middleware
-    return middleware.get_error_response()
+    # this is reached if an error is raised during processing which is handled by the backend
+    return backend.get_error_response()
 
 
 def _execute_generic_api(domain, couch_user, device_id, context, api_model):

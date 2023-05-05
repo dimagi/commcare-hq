@@ -2,7 +2,7 @@ import os
 
 from django.test import SimpleTestCase
 
-from corehq.motech.generic_inbound.middleware.hl7 import hl7_str_to_dict
+from corehq.motech.generic_inbound.backend.hl7 import hl7_str_to_dict
 from corehq.util.test_utils import TestFileMixin
 
 

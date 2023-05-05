@@ -11,10 +11,10 @@ from corehq.motech.generic_inbound.exceptions import (
 from corehq.motech.generic_inbound.utils import get_evaluation_context, ApiResponse
 
 
-class BaseApiMiddleware:
-    """Base class for Generic API middleware.
+class BaseApiBackend:
+    """Base class for Generic API backend.
 
-    Middleware is used to translate incoming data to JSON which the API can process. The response
+    Backend is used to translate incoming data to JSON which the API can process. The response
     is also translated from JSON to the appropriate data format."""
     error_response = None
 

@@ -18,7 +18,7 @@ from corehq.motech.generic_inbound.exceptions import GenericInboundApiError
 from corehq.util import reverse
 
 
-class ApiMiddlewareOptions(models.TextChoices):
+class ApiBackendOptions(models.TextChoices):
     json = "json", _("JSON")
     hl7 = "hl7", _("HL7 v2")
 
@@ -36,7 +36,7 @@ class ConfigurableAPI(models.Model):
         UCRExpression, on_delete=models.PROTECT, related_name="api_filter", null=True, blank=True)
     transform_expression = models.ForeignKey(
         UCRExpression, on_delete=models.PROTECT, related_name="api_expression")
-    middleware = models.CharField(max_length=100, default=ApiMiddlewareOptions.json)
+    backend = models.CharField(max_length=100, default=ApiBackendOptions.json)
 
     objects = AuditingManager()
 
@@ -76,14 +76,14 @@ class ConfigurableAPI(models.Model):
         return self.filter_expression.wrapped_definition(FactoryContext.empty())
 
     @cached_property
-    def middleware_class(self):
-        from corehq.motech.generic_inbound.middleware.json import JsonMiddleware
-        from corehq.motech.generic_inbound.middleware.hl7 import Hl7Middleware
-        if self.middleware == ApiMiddlewareOptions.json:
-            return JsonMiddleware
-        elif self.middleware == ApiMiddlewareOptions.hl7:
-            return Hl7Middleware
-        raise GenericInboundApiError(f"Unknown middleware type: {self.middleware}")
+    def backend_class(self):
+        from corehq.motech.generic_inbound.backend.json import JsonBackend
+        from corehq.motech.generic_inbound.backend.hl7 import Hl7Backend
+        if self.backend == ApiBackendOptions.json:
+            return JsonBackend
+        elif self.backend == ApiBackendOptions.hl7:
+            return Hl7Backend
+        raise GenericInboundApiError(f"Unknown backend type: {self.backend}")
 
     @property
     @memoized
