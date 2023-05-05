@@ -356,7 +356,6 @@ class ConditionalCaseUpdate(DocumentSchema):
 
 
 class UpdateCaseAction(FormAction):
-    # TODO: migrate from dict(property_name: question_path) to dict(property_name: ConditionalCaseUpdate)
     update = SchemaDictProperty(ConditionalCaseUpdate)
 
 

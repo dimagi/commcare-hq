@@ -16,6 +16,8 @@ asgiref==3.5.0
     # via django
 asttokens==2.0.5
     # via stack-data
+async-timeout==4.0.2
+    # via redis
 attrs==21.4.0
     # via
     #   -r base-requirements.in
@@ -30,9 +32,9 @@ beautifulsoup4==4.10.0
     # via -r test-requirements.in
 billiard==3.6.4.0
     # via celery
-boto3==1.24.28
+boto3==1.24.96
     # via -r base-requirements.in
-botocore==1.27.28
+botocore==1.27.96
     # via
     #   boto3
     #   s3transfer
@@ -54,9 +56,9 @@ cffi==1.14.3
     #   csiphash
     #   pynacl
 chardet==3.0.4
-    # via
-    #   ghdiff
-    #   requests
+    # via ghdiff
+charset-normalizer==3.1.0
+    # via requests
 click==8.0.3
     # via
     #   celery
@@ -110,7 +112,7 @@ deprecated==1.2.10
     # via
     #   jwcrypto
     #   pygithub
-diff-match-patch==20200713
+diff-match-patch==20230430
     # via -r base-requirements.in
 dimagi-memoized==1.1.3
     # via -r base-requirements.in
@@ -221,7 +223,7 @@ executing==0.8.3
     # via stack-data
 fakecouch==0.0.15
     # via -r test-requirements.in
-faker==16.6.1
+faker==18.6.1
     # via -r test-requirements.in
 fixture==1.5.11
     # via -r dev-requirements.in
@@ -525,7 +527,7 @@ radon==5.1.0
     # via -r test-requirements.in
 rcssmin==1.1.0
     # via django-compressor
-redis==3.5.3
+redis==4.5.4
     # via
     #   -r base-requirements.in
     #   django-redis
@@ -533,7 +535,7 @@ redis==3.5.3
     #   django-websocket-redis
 reportlab==3.6.9
     # via -r base-requirements.in
-requests==2.25.1
+requests==2.28.2
     # via
     #   -r base-requirements.in
     #   cloudant
@@ -566,7 +568,7 @@ s3transfer==0.6.0
     # via boto3
 schema==0.7.5
     # via -r base-requirements.in
-sentry-sdk==1.9.0
+sentry-sdk==1.19.1
     # via -r base-requirements.in
 sh==1.14.2
     # via
@@ -653,7 +655,7 @@ sqlalchemy==1.3.19
     #   sqlalchemy-postgres-copy
 sqlalchemy-postgres-copy==0.5.0
     # via -r test-requirements.in
-sqlparse==0.3.1
+sqlparse==0.4.4
     # via django
 stack-data==0.1.4
     # via ipython
@@ -696,8 +698,9 @@ unidecode==1.2.0
     # via pyphonetics
 uritemplate==4.1.1
     # via google-api-python-client
-urllib3==1.26.5
+urllib3==1.26.12
     # via
+    #   -r docs-requirements.in
     #   botocore
     #   elasticsearch2
     #   elasticsearch5

@@ -3244,10 +3244,8 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/events/static/events/js/event_attendees.js
-#, fuzzy
-#| msgid "Show Deactivated Mobile Workers"
 msgid "Disable Mobile Worker Attendees"
-msgstr "Montrer Utilisateurs Mobiles Désactivés"
+msgstr ""
 
 #: corehq/apps/events/static/events/js/event_attendees.js
 msgid "Enable Mobile Worker Attendees"
@@ -4036,6 +4034,10 @@ msgstr ""
 
 #: corehq/apps/reports/static/reports/js/reports.async.js
 msgid "Gateway Timeout. Please contact CommCare HQ Support."
+msgstr ""
+
+#: corehq/apps/reports/static/reports/js/reports.async.js
+msgid "Your search term was too long. Please provide a shorter search filter"
 msgstr ""
 
 #: corehq/apps/reports/static/reports/js/reports.async.js

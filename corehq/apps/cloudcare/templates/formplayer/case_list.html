@@ -4,7 +4,7 @@
 <script type="text/template" id="case-view-list-template">
   <div class="module-case-list-container">
 
-    <div arialabel="<%- title %>" tabindex="0" class="page-header menu-header"><h1 class="page-title"><%- title %></h1></div>
+    <div aria-label="<%- title %>" tabindex="0" class="page-header menu-header"><h1 class="page-title"><%- title %></h1></div>
 
     <div class="module-search-container">
       <div class="input-group input-group-lg">
@@ -110,7 +110,7 @@
       <% } else if(styles[index].widthHint === 0) { %>
       <div style="display:none;"><%- datum %></div>
       <% } else { %>
-      <div><%- datum %></div>
+      <div><%= renderMarkdown(datum) %></div>
       <% } %>
     </div>
     <% }); %>

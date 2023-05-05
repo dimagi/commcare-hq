@@ -1101,6 +1101,7 @@ class RelatedDocExpressionDbTest(TestCase):
     ({}, "a + b", {"a": Decimal(2), "b": Decimal(3)}, Decimal(5)),
     ({}, "a + b", {"a": Decimal(2.2), "b": Decimal(3.1)}, Decimal(5.3)),
     ({}, "range(3)", {}, [0, 1, 2]),
+    ({}, "today()", {}, date.today()),
     (
         {'dob': "2022-01-01T14:44:23.001567Z"},
         "f'{d}'[:-6] + '%03d' % round(int(f'{d:%f}')/1000) + 'Z'",
