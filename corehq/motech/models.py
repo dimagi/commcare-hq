@@ -106,6 +106,7 @@ class ConnectionSettings(models.Model):
     # last_token is stored encrypted because it can contain secrets
     last_token_aes = models.TextField(blank=True, default="")
     is_deleted = models.BooleanField(default=False, db_index=True)
+    throttle_window = models.IntegerField(null=True)
 
     objects = ConnectionSoftDeleteManager.from_queryset(ConnectionQuerySet)()
     all_objects = ConnectionQuerySet.as_manager()
