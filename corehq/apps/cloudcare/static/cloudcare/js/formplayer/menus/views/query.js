@@ -183,13 +183,15 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
             var imageUri = this.options.model.get('imageUri'),
                 audioUri = this.options.model.get('audioUri'),
                 appId = this.model.collection.appId,
-                value = this.options.model.get('value');
+                value = this.options.model.get('value'),
+                itemsetChoicesDict = this.options.model.get('itemsetChoicesDict');
 
             return {
                 imageUrl: imageUri ? FormplayerFrontend.getChannel().request('resourceMap', imageUri, appId) : "",
                 audioUrl: audioUri ? FormplayerFrontend.getChannel().request('resourceMap', audioUri, appId) : "",
                 value: value,
                 errorMessage: this.errorMessage,
+                itemsetChoicesDict: itemsetChoicesDict,
             };
         },
 
@@ -197,6 +199,7 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
             this.parentView = this.options.parentView;
             this.model = this.options.model;
             this.errorMessage = null;
+            this._setItemset(this.model.attributes.itemsetChoices, this.model.attributes.itemsetChoicesKey);
 
             // initialize with default values or with sticky values if either is present
             var value = decodeValue(this.model, this.model.get('value'))[1],
@@ -224,6 +227,25 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
             'change @ui.searchForBlank': 'notifyParentOfFieldChange',
             'dp.change @ui.queryField': 'changeDateQueryField',
             'click @ui.searchForBlank': 'toggleBlankSearch',
+        },
+
+        _setItemset: function (itemsetChoices, itemsetChoicesKey) {
+            itemsetChoices = itemsetChoices || [];
+            let itemsetChoicesDict = {};
+
+            if (this.parentView.selectValuesByKeys) {
+                itemsetChoicesKey = itemsetChoicesKey || [];
+                itemsetChoicesKey.forEach((key,i) => itemsetChoicesDict[key] = itemsetChoices[i]);
+                this.model.set({
+                    itemsetChoicesKey: itemsetChoicesKey,
+                });
+            } else {
+                itemsetChoices.forEach((value,i) => itemsetChoicesDict[i] = value);
+            }
+            this.model.set({
+                itemsetChoices: itemsetChoices,
+                itemsetChoicesDict: itemsetChoicesDict,
+            });
         },
 
         _render: function () {
@@ -412,7 +434,19 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
         childViewOptions: function () { return {parentView: this}; },
 
         initialize: function (options) {
-            this.parentModel = options.collection.models;
+            this.parentModel = options.collection.models || [];
+
+            // whether the select prompt selection is passed as itemset keys
+            // only here to maintain backward compatibility and can be removed
+            // once web apps fully transition using keys to convey select prompt selection.
+            this.selectValuesByKeys = false;
+
+            for (let model of this.parentModel) {
+                if ("itemsetChoicesKey" in model.attributes) {
+                    this.selectValuesByKeys = true;
+                    break;
+                }
+            }
         },
 
         templateContext: function () {
@@ -467,9 +501,11 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
                             }
                         }
                         self.collection.models[i].set({
-                            itemsetChoices: choices,
                             value: value,
                         });
+
+                        self.children.findByIndex(i)._setItemset(choices, response.models[i].get('itemsetChoicesKey'));
+
                         self.children.findByIndex(i)._render();      // re-render with new choice values
                     }
                 }
@@ -496,18 +532,13 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
         validateFieldChange: function (changedChildView) {
             var self = this;
             var promise = $.Deferred();
-            var invalidFields = [];
 
             self._updateModelsForValidation().done(function (response) {
                 //Gather error messages
                 self.children.each(function (childView) {
-                    //Filter out empty required fields that user has not updated yet
-                    if ((!childView.hasRequiredError() || childView === changedChildView)
-                         && !childView.isValid()) {
-                        invalidFields.push(childView.model.get('text'));
-                    }
+                    //Filter out empty required fields and check for validity
+                    if (!childView.hasRequiredError() || childView === changedChildView) { childView.isValid(); }
                 });
-
                 promise.resolve(response);
             });
 
@@ -522,8 +553,9 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
             var self = this;
             var promise = $.Deferred();
             var invalidFields = [];
+            var updatingModels = self.updateModelsForValidation || self._updateModelsForValidation();
 
-            self._updateModelsForValidation().done(function (response) {
+            $.when(updatingModels).done(function (response) {
                 // Gather error messages
                 self.children.each(function (childView) {
                     if (!childView.isValid()) {
@@ -553,11 +585,16 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
 
         _updateModelsForValidation: function () {
             var self = this;
+            var promise = $.Deferred();
+            self.updateModelsForValidation = promise;
 
             var urlObject = formplayerUtils.currentUrlToObject();
-            urlObject.setQueryData(self.getAnswers(), false);
-            var promise = $.Deferred(),
-                fetchingPrompts = FormplayerFrontend.getChannel().request("app:select:menus", urlObject);
+            urlObject.setQueryData({
+                inputs: self.getAnswers(),
+                execute: false,
+                selectValuesByKeys: self.selectValuesByKeys,
+            });
+            var fetchingPrompts = FormplayerFrontend.getChannel().request("app:select:menus", urlObject);
             $.when(fetchingPrompts).done(function (response) {
                 // Update models based on response
                 _.each(response.models, function (responseModel, i) {
