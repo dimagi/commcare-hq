@@ -3,35 +3,25 @@
   "_rev": "23-a6dc615d94c7b145f6ea9b031e50eff4",
   "profile": {
     "features": {
-      "users": "true",
-      "sense": "false"
+      "users": "true"
     },
     "properties": {
-      "cc-send-procedure": "cc-send-http",
       "logenabled": "Enabled",
       "log_prop_daily": "log_never",
-      "cc-user-mode": "cc-u-normal",
       "cc-autoup-freq": "freq-never",
       "log_prop_weekly": "log_short",
       "user_reg_server": "required",
-      "cc-send-unsent": "cc-su-auto",
       "loose_media": "no",
       "restore-tolerance": "loose",
       "purge-freq": "0",
-      "server-tether": "push-only",
-      "password_format": "n",
       "unsent-number-limit": "5",
-      "cc-content-valid": "no",
-      "cc-entry-mode": "cc-entry-quick",
-      "ViewStyle": "v_chatterbox",
-      "extra_key_action": "audio"
+      "cc-content-valid": "no"
     }
   },
   "domain": "cory",
   "short_url": null,
   "deployment_date": null,
   "user_type": null,
-  "text_input": "roman",
   "secure_submissions": false,
   "build_broken": false,
   "copy_of": null,
@@ -136,7 +126,6 @@
   "copy_history": [],
   "is_released": false,
   "use_custom_suite": false,
-  "platform": "nokia/s40",
   "version": 17,
   "admin_password": null,
   "build_spec": {
