@@ -1,23 +1,15 @@
 from gettext import gettext
 
-import attr
-from django.http import HttpResponse
 from hl7apy import load_library
 from hl7apy.core import Message
 from hl7apy.exceptions import ChildNotFound, HL7apyException
 from hl7apy.parser import parse_message
 
-from corehq.motech.generic_inbound.exceptions import GenericInboundUserError
 from corehq.motech.generic_inbound.backend.base import BaseApiBackend
+from corehq.motech.generic_inbound.exceptions import GenericInboundUserError
 from corehq.motech.generic_inbound.utils import ApiResponse
 
-
-@attr.s(kw_only=True, frozen=True, auto_attribs=True)
-class Hl7ApiResponse(ApiResponse):
-    hl7_response: str
-
-    def _get_http_response(self):
-        return HttpResponse(status=self.status, content=self.hl7_response)
+HL7_CONTENT_TYPE = "x-application/hl7-v2+er7"
 
 
 class Hl7Backend(BaseApiBackend):
@@ -30,7 +22,12 @@ class Hl7Backend(BaseApiBackend):
 
         ack.msa.msa_1 = _status_code_to_hl7_status(status_code)
         ack.msa.msa_3 = message
-        return Hl7ApiResponse(status=status_code, internal_response={"error": message}, hl7_response=ack.to_er7())
+        return ApiResponse(
+            status=status_code,
+            internal_response={"error": message},
+            external_response=ack.to_er7(),
+            content_type=HL7_CONTENT_TYPE
+        )
 
     def __init__(self, api_model, request_data):
         super().__init__(api_model, request_data)
@@ -53,28 +50,33 @@ class Hl7Backend(BaseApiBackend):
             raise GenericInboundUserError(gettext("Error parsing HL7: {}").format(str(e)))
 
     def get_success_response(self, response_json):
-        return self._make_error_response(200, "success", response_json)
+        return self._make_response(200, "success", response_json)
 
     def _get_generic_error(self, status_code, message):
-        return self._make_error_response(status_code, message, {'error': message})
+        return self._make_response(status_code, message, {'error': message})
 
     def _get_submission_error_response(self, status_code, form_id, message):
-        return self._make_error_response(status_code, message, {
+        return self._make_response(status_code, message, {
             'error': message,
             'form_id': form_id,
         })
 
     def _get_validation_error(self, status_code, message, errors):
-        return self._make_error_response(status_code, message, {
+        return self._make_response(status_code, message, {
             'error': message,
             'errors': errors,
         }, errors)
 
-    def _make_error_response(self, status_code, message, internal_response, errors=None):
+    def _make_response(self, status_code, message, internal_response, errors=None):
         if not self.hl7_message:
             return self.get_basic_error_response(self.request_data.request_id, status_code, message)
-        hl7_response = self._get_ack(message, status_code, errors)
-        return Hl7ApiResponse(status=status_code, internal_response=internal_response, hl7_response=hl7_response)
+        external_response = self._get_ack(message, status_code, errors)
+        return ApiResponse(
+            status=status_code,
+            internal_response=internal_response,
+            external_response=external_response,
+            content_type=HL7_CONTENT_TYPE
+        )
 
     def _get_ack(self, ack_text, status_code, errors=None):
         ack = Message("ACK", version=self.hl7_message.msh.version_id.value)

@@ -101,6 +101,8 @@ class ApiResponse:
     Override ``_get_http_response`` to return different HTTP response."""
     status: int
     internal_response: dict = None
+    external_response: str = None
+    content_type: str = None
 
     def get_http_response(self):
         if self.status == 204:
@@ -108,7 +110,7 @@ class ApiResponse:
         return self._get_http_response()
 
     def _get_http_response(self):
-        return JsonResponse(self.internal_response, status=self.status)
+        return HttpResponse(content=self.external_response, status=self.status, content_type=self.content_type)
 
 
 def make_processing_attempt(response, request_log, is_retry=False):
@@ -121,6 +123,7 @@ def make_processing_attempt(response, request_log, is_retry=False):
         log=request_log,
         response_status=response.status,
         raw_response=response_data,
+        external_response=response.external_response,
         xform_id=response_data.get('form_id'),
         case_ids=case_ids,
     )

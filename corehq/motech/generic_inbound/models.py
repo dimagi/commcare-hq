@@ -179,6 +179,7 @@ class ProcessingAttempt(models.Model):
     is_retry = models.BooleanField(default=False)
     response_status = models.PositiveSmallIntegerField(db_index=True)
     raw_response = models.JSONField(default=dict)
+    external_response = models.TextField(null=True)
 
     xform_id = models.CharField(max_length=36, db_index=True, null=True, blank=True)
     case_ids = ArrayField(models.CharField(max_length=36), null=True, blank=True)

@@ -2,8 +2,9 @@ from django.urls import reverse
 from freezegun import freeze_time
 
 from corehq import privileges
+from corehq.form_processor.models import CommCareCase
 from corehq.form_processor.tests.utils import FormProcessorTestUtils
-from corehq.motech.generic_inbound.models import ApiBackendOptions, RequestLog
+from corehq.motech.generic_inbound.models import ApiBackendOptions, RequestLog, ProcessingAttempt
 from corehq.motech.generic_inbound.tests.test_api import GenericInboundAPIViewBaseTest
 from corehq.util.test_utils import flag_enabled, privilege_enabled
 
@@ -39,6 +40,9 @@ class TestGenericInboundAPIViewHL7(GenericInboundAPIViewBaseTest):
                    f'{log.id.hex}|P|2.8\r' \
                    'MSA|AA|MSG00001|success'
         self.assertEqual(response_content, expected)
+        self._check_logging(log, response_content)
+        self._check_data(log, {"facility": "GOOD HEALTH HOSPITAL"})
+
 
     @freeze_time('2023-05-02 13:01:51')
     def test_post_not_supported_type(self):
@@ -51,8 +55,6 @@ class TestGenericInboundAPIViewHL7(GenericInboundAPIViewBaseTest):
         log = RequestLog.objects.last()
         expected = f"MSH|^~\\&#|||||20230502130151|||{log.id.hex}||2.8\r" \
                    "MSA|AE||Error parsing HL7: Invalid message"
-        print(expected)
-        print(response.content.decode())
         self.assertEqual(response.content.decode(), expected)
 
     @freeze_time('2023-05-02 13:01:51')
@@ -80,6 +82,39 @@ class TestGenericInboundAPIViewHL7(GenericInboundAPIViewBaseTest):
                    'MSA|AE|MSG00001|validation error\r' \
                    'ERR||207|E||||Invalid request|HD'
         self.assertEqual(response.content.decode(), expected)
+
+    def _check_logging(self, log, response_data):
+        self.assertEqual(log.domain, self.domain_name)
+        self.assertEqual(log.status, RequestLog.Status.SUCCESS)
+        self.assertEqual(log.attempts, 1)
+        self.assertEqual(log.response_status, 200)
+        self.assertEqual(log.username, self.user.username)
+        self.assertEqual(log.request_method, RequestLog.RequestMethod.POST)
+        self.assertEqual(log.request_body, self._get_post_data()[0])
+        self.assertIn('CONTENT_TYPE', log.request_headers)
+        self.assertEqual(log.request_headers['HTTP_USER_AGENT'], 'user agent string')
+        self.assertEqual(log.request_ip, '127.0.0.1')
+
+        attempt = ProcessingAttempt.objects.last()
+        self.assertEqual(attempt.is_retry, False)
+        self.assertEqual(attempt.response_status, 200)
+        self.assertTrue(bool(attempt.raw_response))
+        self.assertEqual(len(attempt.case_ids), 1)
+        self.assertEqual(attempt.external_response, response_data)
+
+    def _check_data(self, log, expected_properties):
+        attempt = ProcessingAttempt.objects.filter(log=log).last()
+        case_ids = [c['case_id'] for c in attempt.raw_response.get('cases', [])]
+        self.assertEqual(len(case_ids), 1)
+        case = CommCareCase.objects.get_case(case_ids[0])
+        actual_properties = {
+            key: value
+            for key, value in case.case_json.items()
+            if key in expected_properties
+        }
+        self.assertDictEqual(actual_properties, expected_properties)
+
+
 
     def _test_generic_api(self, properties_expression):
         response = self._call_api(properties_expression, backend=ApiBackendOptions.hl7)
