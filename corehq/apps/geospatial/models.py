@@ -1,20 +1,23 @@
 from shapely.geometry import Point
 import geopandas as gpd
 from geopy.distance import great_circle
+from dataclasses import dataclass
 
+
+@dataclass
 class GeoObject:
     """
     `lat` and `lon` are assumed to be in a EPSG:4326 map projection.
     """
-    def __init__(self, id, lon, lat):
-        if lon < -180 or lon > 180:
-            raise ValueError("Invalid lon value. Must be [-180, 180]")
-        if lat < -90 or lat > 90:
-            raise ValueError("Invalid lat value. Must be [-90, 90]")
+    id: str
+    lon: float
+    lat: float
 
-        self.id = id
-        self.lat = lat
-        self.lon = lon
+    def __post_init__(self):
+        if self.lon < -180 or self.lon > 180:
+            raise ValueError("Invalid lon value. Must be [-180, 180]")
+        if self.lat < -90 or self.lat > 90:
+            raise ValueError("Invalid lat value. Must be [-90, 90]")
 
     def get_point(self):
         return Point(self.lon, self.lat)
@@ -26,8 +29,9 @@ class GeoObject:
         }
 
 
+@dataclass
 class Objective(GeoObject):
-    is_assigned = False
+    is_assigned: bool = False
 
     def get_info(self):
         info = super().get_info()
