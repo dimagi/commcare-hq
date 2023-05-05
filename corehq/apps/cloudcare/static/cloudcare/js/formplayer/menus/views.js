@@ -357,7 +357,6 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
         childViewOptions: function () {
             return {
                 styles: this.options.styles,
-                isMultiSelect: false,
             };
         },
 
@@ -459,6 +458,40 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             }
         },
 
+        selectAllAction: function (e) {
+            const action = e.target.checked ? constants.MULTI_SELECT_ADD : constants.MULTI_SELECT_REMOVE;
+            FormplayerFrontend.trigger("multiSelect:updateCases", action, this._allCaseIds());
+        },
+
+        reconcileMultiSelectUI: function () {
+            console.log("reconcileMultiSelectUI")
+            var self = this;
+
+            self.verifySelectedCaseIdsLessThanMaxSelectValue();
+
+            // Update states of row checkboxes
+            self.children.each(function (childView) {
+                childView.ui.selectRow.prop("checked", self.selectedCaseIds.indexOf(childView.model.id) !== -1);
+            });
+
+            // Update state of Continue button
+            self.ui.continueButtonText.text(self.selectedCaseIds.length);
+            self.ui.continueButton.prop("disabled", !self.selectedCaseIds.length);
+
+            // Reconcile state of "select all" checkbox
+            self.ui.selectAllCheckbox.prop("checked", !_.difference(self._allCaseIds(), self.selectedCaseIds).length);
+        },
+
+        verifySelectedCaseIdsLessThanMaxSelectValue: function () {
+            if (this.selectedCaseIds.length > this.maxSelectValue) {
+                let errorMessage = _.template(gettext("You have selected more than the maximum selection limit " +
+                    "of <%= value %> . Please uncheck some values to continue."))({ value: this.maxSelectValue });
+                hqRequire(["hqwebapp/js/alert_user"], function (alertUser) {
+                    alertUser.alert_user(errorMessage, 'danger');
+                });
+            }
+        },
+
         templateContext: function () {
             var paginateItems = utils.paginateOptions(this.options.currentPage, this.options.pageCount);
             var casesPerPage = parseInt($.cookie("cases-per-page-limit")) || 10;
@@ -519,7 +552,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             var self = this;
             self.maxSelectValue = options.multiSelectMaxSelectValue;
             // Remove any event handling left over from previous instances of MultiSelectCaseListView.
-            // Only one of these views is supporteed on the page at any given time.
+            // Only one of these views is supported on the page at any given time.
             FormplayerFrontend.off("multiSelect:updateCases").on("multiSelect:updateCases", function (action, caseIds) {
                 if (action === constants.MULTI_SELECT_ADD) {
                     self.selectedCaseIds = _.union(self.selectedCaseIds, caseIds);
@@ -538,39 +571,6 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
 
         onRender: function () {
             this.reconcileMultiSelectUI();
-        },
-
-        selectAllAction: function (e) {
-            var action = e.target.checked ? constants.MULTI_SELECT_ADD : constants.MULTI_SELECT_REMOVE;
-            FormplayerFrontend.trigger("multiSelect:updateCases", action, this._allCaseIds());
-        },
-
-        reconcileMultiSelectUI: function () {
-            var self = this;
-
-            self.verifySelectedCaseIdsLessThanMaxSelectValue();
-
-            // Update states of row checkboxes
-            self.children.each(function (childView) {
-                childView.ui.selectRow.prop("checked", self.selectedCaseIds.indexOf(childView.model.id) !== -1);
-            });
-
-            // Update state of Continue button
-            self.ui.continueButtonText.text(self.selectedCaseIds.length);
-            self.ui.continueButton.prop("disabled", !self.selectedCaseIds.length);
-
-            // Reconcile state of "select all" checkbox
-            self.ui.selectAllCheckbox.prop("checked", !_.difference(self._allCaseIds(), self.selectedCaseIds).length);
-        },
-
-        verifySelectedCaseIdsLessThanMaxSelectValue: function () {
-            if (this.selectedCaseIds.length > this.maxSelectValue) {
-                let errorMessage = _.template(gettext("You have selected more than the maximum selection limit " +
-                    "of <%= value %> . Please uncheck some values to continue."))({ value: this.maxSelectValue });
-                hqRequire(["hqwebapp/js/alert_user"], function (alertUser) {
-                    alertUser.alert_user(errorMessage, 'danger');
-                });
-            }
         },
     });
 
@@ -595,8 +595,30 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
         }
     };
 
+    const registerContinueListener = function (self, options) {
+        self.maxSelectValue = options.multiSelectMaxSelectValue;
+        // Remove any event handling left over from previous instances of MultiSelectCaseListView.
+        // Only one of these views is supported on the page at any given time.
+        FormplayerFrontend.off("multiSelect:updateCases").on("multiSelect:updateCases", function (action, caseIds) {
+            if (action === constants.MULTI_SELECT_ADD) {
+                self.selectedCaseIds = _.union(self.selectedCaseIds, caseIds);
+            } else {
+                self.selectedCaseIds = _.difference(self.selectedCaseIds, caseIds);
+            }
+            self.reconcileMultiSelectUI();
+        });
+
+    }
+
     var CaseTileListView = CaseListView.extend({
+        ui: _.extend(CaseListViewUI(), {
+            selectAllCheckbox: "#select-all-checkbox",
+            continueButton: "#multi-select-continue-btn",
+            continueButtonText: "#multi-select-btn-text",
+        }),
+
         childView: CaseTileView,
+
         initialize: function (options) {
             CaseTileListView.__super__.initialize.apply(this, arguments);
 
@@ -618,18 +640,35 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             }
 
             $.getScript(gridPolyfillPath);
+
+            registerContinueListener(this, options)
         },
 
         childViewOptions: function () {
             var dict = CaseTileListView.__super__.childViewOptions.apply(this, arguments);
             dict.prefix = 'list';
+            dict.isMultiSelect = this.options.isMultiSelect
             return dict;
         },
 
         templateContext: function () {
             var dict = CaseTileListView.__super__.templateContext.apply(this, arguments);
             dict.useTiles = true;
+            dict.isMultiSelect = this.options.isMultiSelect
             return dict;
+        },
+
+        events: _.extend(CaseListViewEvents(), {
+            'click @ui.selectAllCheckbox': 'selectAllAction',
+            'keypress @ui.selectAllCheckbox': 'selectAllAction',
+            'click @ui.continueButton': 'continueAction',
+            'keypress @ui.continueButton': 'continueAction',
+        }),
+
+        onRender: function () {
+            if (this.options.isMultiSelect) {
+                this.reconcileMultiSelectUI();
+            }
         },
     });
 
@@ -641,6 +680,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
     var GridCaseTileListView = CaseTileListView.extend({
         initialize: function () {
             GridCaseTileListView.__super__.initialize.apply(this, arguments);
+            console.log('initializing GridCaseTileListView')
         },
         childView: GridCaseTileViewItem,
     });

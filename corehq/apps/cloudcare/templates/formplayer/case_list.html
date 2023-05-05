@@ -17,17 +17,22 @@
       </div>
     </div>
 
-    <% if (useGrid) { %>
+    <% if (useTiles) { %>
+      <% if (isMultiSelect && !hasNoItems) { %>
+      <input type="checkbox" id="select-all-checkbox"/>
+      <label for="select-all-checkbox">Select All</label>
+    <% } %>
     <section class="js-case-container clearfix"></section>
     <% } else { %>
     <div class="module-case-list-table-container">
       <table class="table module-table module-table-case-list">
-        <% if(!useTiles) { %>
+
         <thead>
         <tr>
           <% if (isMultiSelect && !hasNoItems) { %>
           <th class="module-case-list-header"><input type="checkbox" id="select-all-checkbox"/></th>
           <% } %>
+          <% if(!useTiles) { %>
           <% _.each(headers, function(header, index) { %>
           <% if (columnVisible(index)) { %>
           <% if (columnSortable(index)) { %>
@@ -37,9 +42,10 @@
           <% } %>
           <% } %>
           <% }); %>
+          <% } %>
         </tr>
         </thead>
-        <% } %>
+
         <% if (hasNoItems) { %>
         <tbody>
         <tr>
@@ -101,6 +107,11 @@
 
 <script type="text/template" id="case-tile-view-item-template">
   <div class="<%- prefix %>-cell-grid-style">
+  <% if (isMultiSelect) { %>
+    <div>
+      <input type="checkbox" class="select-row-checkbox"/>
+    </div>
+  <% } %>
     <% _.each(data, function(datum, index) { %>
     <div class="<%- prefix %>-grid-style-<%- index %> box">
       <% if (styles[index].displayFormat === 'Image') {
@@ -129,8 +140,8 @@
 <script type="text/template" id="cell-container-style-template">
   .list-cell-container-style {
   width: <%- model.widthPercentage %>%;
-  height: 0;
-  padding-bottom: <%- model.heightPercentage %>%;
+{#  height: 0;#}
+{#  padding-bottom: <%- model.heightPercentage %>%;#}
   display: inline-block;
   border: 1px solid white;
   border-collapse: collapse;
