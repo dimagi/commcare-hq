@@ -58,6 +58,17 @@ class ConnectionSettingsForm(forms.ModelForm):
         help_text=_('Pass credentials in Basic Auth header when requesting a token'),
         required=False,
     )
+    throttle_requests = forms.BooleanField(
+        label=_('Throttle requests'),
+        required=False,
+    )
+    throttle_request_window = forms.IntegerField(
+        label=_('Throttle window'),
+        help_text=_("The minimum amount of time in milliseconds allowed for subsequent requests made to the server"),
+        initial=100,
+        required=False,
+        min_value=1,
+    )
     skip_cert_verify = forms.BooleanField(
         label=_('Skip certificate verification'),
         help_text=_('Do not use in a production environment'),
@@ -88,6 +99,8 @@ class ConnectionSettingsForm(forms.ModelForm):
             'plaintext_password',
             'client_id',
             'plaintext_client_secret',
+            'throttle_requests',
+            'throttle_request_window',
             'skip_cert_verify',
             'notify_addresses_str',
             'token_url',
@@ -147,6 +160,8 @@ class ConnectionSettingsForm(forms.ModelForm):
                 ),
                 id="div_id_oauth_settings",
             ),
+            twbscrispy.PrependedText('throttle_requests', ''),
+            crispy.Field('throttle_request_window'),
             twbscrispy.PrependedText('skip_cert_verify', ''),
             self.test_connection_button,
 
@@ -213,6 +228,10 @@ class ConnectionSettingsForm(forms.ModelForm):
             self.add_error('auth_type', err)
             self.add_error('username', err)
         return cleaned_data
+
+    def clean_throttle_request_window(self):
+        if self.cleaned_data['throttle_requests'] and self.cleaned_data['throttle_request_window'] < 1:
+            raise forms.ValidationError(_("Invalid throttle window"))
 
     def clean_url(self):
         return self._clean_url(self.cleaned_data['url'])

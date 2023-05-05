@@ -157,9 +157,18 @@ hqDefine("motech/js/connection_settings_detail", [
             }
         });
 
+        $('#id_throttle_requests').change(function () {
+            if (this.checked) {
+                $('#div_id_throttle_request_window').show();
+            } else {
+                $('#div_id_throttle_request_window').hide();
+            }
+        });
+
         // Set initial state
         $authTypeSelect.trigger('change');
         $authPreset.trigger('change');
         $('#id_url').trigger('change');
+        $('#id_throttle_requests').trigger('change');
     });
 });
