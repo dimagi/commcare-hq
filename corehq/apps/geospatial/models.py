@@ -3,6 +3,7 @@ import geopandas as gpd
 from geopy.distance import great_circle
 from dataclasses import dataclass
 
+from .exceptions import InvalidCoordinate, InvalidDistributionParam
 
 @dataclass
 class GeoObject:
@@ -15,9 +16,9 @@ class GeoObject:
 
     def __post_init__(self):
         if self.lon < -180 or self.lon > 180:
-            raise ValueError("Invalid lon value. Must be [-180, 180]")
+            raise InvalidCoordinate("Invalid lon value. Must be [-180, 180]")
         if self.lat < -90 or self.lat > 90:
-            raise ValueError("Invalid lat value. Must be [-90, 90]")
+            raise InvalidCoordinate("Invalid lat value. Must be [-90, 90]")
 
     def get_point(self):
         return Point(self.lon, self.lat)
@@ -50,7 +51,9 @@ class ObjectiveAllocator:
     """
     def __init__(self, users, objectives, max_distance=None, max_assignable=None):
         if (max_distance and max_distance < 0) or (max_assignable and max_assignable < 0):
-            raise ValueError("Maximum distance and assignable count must be positive numbers")
+            raise InvalidDistributionParam(
+                "Maximum distance and assignable count must be positive numbers"
+            )
 
         self.users = users
         self.objectives = objectives

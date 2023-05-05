@@ -3,11 +3,12 @@ from contextlib import contextmanager
 
 from django.test import SimpleTestCase
 
-from corehq.apps.geospatial.models import (
+from ..models import (
     GeoObject,
     Objective,
     ObjectiveAllocator
 )
+from ..exceptions import InvalidCoordinate, InvalidDistributionParam
 
 
 class TestGeoObject(SimpleTestCase):
@@ -20,14 +21,14 @@ class TestGeoObject(SimpleTestCase):
 
     def test_invalid_create(self):
         self.assertRaises(
-            ValueError,
+            InvalidCoordinate,
             GeoObject,
             id='test',
             lon=182,
             lat=1
         )
         self.assertRaises(
-            ValueError,
+            InvalidCoordinate,
             GeoObject,
             id='test',
             lon=1,
@@ -94,7 +95,7 @@ class TestObjectiveAllocator(SimpleTestCase):
 
     def test_invalid_create(self):
         self.assertRaises(
-            ValueError,
+            InvalidDistributionParam,
             ObjectiveAllocator,
             users=self.test_users,
             objectives=self.test_objectives,
@@ -102,7 +103,7 @@ class TestObjectiveAllocator(SimpleTestCase):
             max_assignable=2
         )
         self.assertRaises(
-            ValueError,
+            InvalidDistributionParam,
             ObjectiveAllocator,
             users=self.test_users,
             objectives=self.test_objectives,
