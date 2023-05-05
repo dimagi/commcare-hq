@@ -20,8 +20,7 @@ from corehq.apps.hqwebapp.views import CRUDPaginatedViewMixin
 from corehq.apps.userreports.models import UCRExpression
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import HqPermissions
-from corehq.motech.generic_inbound.core import execute_generic_api
-from corehq.motech.generic_inbound.exceptions import GenericInboundUserError
+from corehq.motech.generic_inbound.exceptions import GenericInboundUserError, GenericInboundApiError
 from corehq.motech.generic_inbound.forms import (
     ApiValidationFormSet,
     ConfigurableAPICreateForm,
@@ -36,9 +35,7 @@ from corehq.motech.generic_inbound.utils import (
     ApiRequest,
     ApiResponse,
     archive_api_request,
-    make_processing_attempt,
     reprocess_api_request,
-    get_headers_for_api_context,
     log_api_request
 )
 from corehq.util import reverse
@@ -189,14 +186,20 @@ def generic_inbound_api(request, domain, api_id):
         raise Http404
 
     request_id = uuid.uuid4().hex
-    try:
-        request_data = ApiRequest.from_request(request, request_id=request_id)
-    except GenericInboundUserError as e:
-        response = ApiResponse(status=400, internal_response={'error': str(e)})
-    else:
-        response = execute_generic_api(api, request_data)
-    log_api_request(request_id, api, request, response)
 
+    try:
+        backend_cls = api.backend_class
+    except GenericInboundApiError as e:
+        response = ApiResponse(status=500, internal_response={'error': str(e)})
+    else:
+        try:
+            request_data = ApiRequest.from_request(request, request_id=request_id)
+        except GenericInboundUserError as e:
+            response = ApiResponse(status=400, internal_response={'error': str(e)})
+        else:
+            response = backend_cls(api, request_data).run()
+
+    log_api_request(request_id, api, request, response)
     return response.get_http_response()
 
 

@@ -1,6 +1,9 @@
 from contextlib import contextmanager
 
-from corehq.apps.hqcase.api.core import SubmissionError, UserError
+from django.utils.translation import gettext as _
+
+from corehq.apps.hqcase.api.core import SubmissionError, UserError, serialize_case
+from corehq.apps.hqcase.api.updates import handle_case_update
 from corehq.apps.userreports.exceptions import BadSpecError
 from corehq.motech.generic_inbound.exceptions import (
     GenericInboundApiError,
@@ -16,34 +19,27 @@ class BaseApiBackend:
 
     Backend is used to translate incoming data to JSON which the API can process. The response
     is also translated from JSON to the appropriate data format."""
-    error_response = None
 
-    def __init__(self, request_data):
+    def __init__(self, api_model, request_data):
+        self.api_model = api_model
         self.request_data = request_data
 
-    def get_context(self):
-        return get_evaluation_context(
-            self.request_data.restore_user,
-            self.request_data.request_method,
-            self.request_data.query,
-            self.request_data.headers,
-            self._get_body_for_eval_context()
-        )
-
-    @contextmanager
-    def handle_errors(self):
-        """Context manager for handling errors during execution of the API.
-
-        If an error is handled use ``get_error_response`` to get the ApiResponse.
-        """
+    def run(self):
         try:
-            yield
+            response_json = _execute_generic_api(
+                self.request_data.domain,
+                self.request_data.couch_user,
+                self.request_data.user_agent,
+                self.get_context(),
+                self.api_model,
+            )
+            return self.get_success_response(response_json)
         except GenericInboundRequestFiltered:
-            self.error_response = ApiResponse(status=204)
+            return ApiResponse(status=204)
         except GenericInboundValidationError as e:
-            self.error_response = self._get_validation_error(400, 'validation error', e.errors)
+            return self._get_validation_error(400, 'validation error', e.errors)
         except SubmissionError as e:
-            self.error_response = self._get_submission_error_response(400, e.form_id, str(e))
+            return self._get_submission_error_response(400, e.form_id, str(e))
         except Exception as e:
             try:
                 status = {
@@ -54,12 +50,16 @@ class BaseApiBackend:
                 }[type(e)]
             except KeyError:
                 raise e
-            self.error_response = self._get_generic_error(status, str(e))
+            return self._get_generic_error(status, str(e))
 
-    def get_error_response(self):
-        """In an error is handled by the ``handle_errors`` context manager, the response will be
-        available here."""
-        return self.error_response
+    def get_context(self):
+        return get_evaluation_context(
+            self.request_data.restore_user,
+            self.request_data.request_method,
+            self.request_data.query,
+            self.request_data.headers,
+            self._get_body_for_eval_context()
+        )
 
     def get_success_response(self, response_json):
         """Given a successful API response JSON, return an ``ApiResponse`` object."""
@@ -82,3 +82,62 @@ class BaseApiBackend:
     def _get_validation_error(self, status_code, message, errors):
         """Return an ApiResponse object for validation errors."""
         raise NotImplementedError
+
+
+def _execute_generic_api(domain, couch_user, device_id, context, api_model):
+    _apply_api_filter(api_model, context)
+    _validate_api_request(api_model, context)
+
+    data = api_model.parsed_expression(context.root_doc, context)
+
+    if not isinstance(data, list):
+        # the bulk API always requires a list
+        data = [data]
+
+    if not all(isinstance(item, dict) for item in data):
+        raise GenericInboundApiError(_("Unexpected type for transformed request"))
+
+    xform, cases = handle_case_update(
+        domain=domain,
+        data=data,
+        user=couch_user,
+        device_id=device_id,
+        is_creation=None,
+    )
+
+    return {
+        'form_id': xform.form_id,
+        'cases': [serialize_case(case) for case in cases],
+    }
+
+
+def _apply_api_filter(api, eval_context):
+    api_filter = api.parsed_filter
+    if not api_filter:
+        return False
+
+    if not api_filter(eval_context.root_doc, eval_context):
+        raise GenericInboundRequestFiltered()
+
+    return True
+
+
+def _validate_api_request(api, eval_context):
+    """Run any validation expressions against the context.
+
+    :returns: False if no expressions were run or True if all validations passed.
+    :raises: GenericInboundValidationError if any validations fail"""
+    validations = api.get_validations()
+    if not validations:
+        return False
+
+    errors = []
+    for validation in validations:
+        expr = validation.parsed_expression
+        if not expr(eval_context.root_doc, eval_context):
+            errors.append(validation.get_error_context())
+
+    if errors:
+        raise GenericInboundValidationError(errors)
+
+    return True

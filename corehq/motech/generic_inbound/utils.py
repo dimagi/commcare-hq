@@ -15,7 +15,7 @@ from casexml.apps.phone.xml import get_registration_element_data
 from corehq.apps.auditcare.models import get_standard_headers
 from corehq.apps.userreports.specs import EvaluationContext
 from corehq.apps.users.models import CouchUser
-from corehq.motech.generic_inbound.exceptions import GenericInboundUserError
+from corehq.motech.generic_inbound.exceptions import GenericInboundUserError, GenericInboundApiError
 from corehq.motech.generic_inbound.models import RequestLog
 from corehq.util import as_text
 from corehq.util.view_utils import get_form_or_404
@@ -140,14 +140,18 @@ def get_evaluation_context(restore_user, method, query, headers, body):
 
 def reprocess_api_request(request_log):
     from corehq.motech.generic_inbound.models import RequestLog
-    from corehq.motech.generic_inbound.core import execute_generic_api
 
     try:
-        request_data = ApiRequest.from_log(request_log)
-    except GenericInboundUserError as e:
-        response = ApiResponse(status=400, internal_response={'error': str(e)})
+        backend_cls = request_log.api.backend_class
+    except GenericInboundApiError as e:
+        response = ApiResponse(status=500, internal_response={'error': str(e)})
     else:
-        response = execute_generic_api(request_log.api, request_data)
+        try:
+            request_data = ApiRequest.from_log(request_log)
+        except GenericInboundUserError as e:
+            response = ApiResponse(status=400, internal_response={'error': str(e)})
+        else:
+            response = backend_cls(request_log.api, request_data).run()
 
     with transaction.atomic():
         request_log.status = RequestLog.Status.from_status_code(response.status)

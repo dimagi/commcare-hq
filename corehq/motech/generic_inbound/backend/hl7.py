@@ -23,8 +23,8 @@ class Hl7ApiResponse(ApiResponse):
 class Hl7Backend(BaseApiBackend):
     """API backend for handling HL7 v2 payloads"""
 
-    def __init__(self, request_data):
-        super().__init__(request_data)
+    def __init__(self, api_model, request_data):
+        super().__init__(api_model, request_data)
         self.hl7_message = None
 
     def _get_body_for_eval_context(self):
