@@ -199,7 +199,7 @@ def _create_module_details_app_strings(module, langs):
         # To list app strings for properties used as sorting properties only
         if detail.sort_elements:
             sort_only, sort_columns = get_sort_and_sort_only_columns(
-                detail.get_columns(),
+                list(detail.get_columns()),  # evaluate generator
                 detail.sort_elements,
             )
             for field, sort_element, order in sort_only:
