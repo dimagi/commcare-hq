@@ -1,7 +1,6 @@
-from math import radians, cos, sin, asin, sqrt
 from shapely.geometry import Point
 import geopandas as gpd
-
+from geopy.distance import great_circle
 
 class GeoObject:
     """
@@ -55,31 +54,6 @@ class ObjectiveAllocator:
     def _create_dataframe(self, item_list):
         return gpd.GeoDataFrame([item.get_info() for item in item_list]).set_index('id')
 
-    def _get_distance_between_points(self, start_point, end_point):
-        """
-        Calculate the great circle distance between two points
-        on the earth (specified in decimal degrees) using the haversine formula
-
-        Returns the distance between two points rounded to two decimal places, in km
-        """
-        # Convert decimal degrees to radians
-        lon1, lat1, lon2, lat2 = map(radians, [start_point.x, start_point.y, end_point.x, end_point.y])
-
-        # Calculate differences between latitudes and longitudes
-        dlon = lon2 - lon1
-        dlat = lat2 - lat1
-
-        # Calculate the square of half the chord length between the points
-        angular_distance = sin(dlat / 2)**2 + cos(lat1) * cos(lat2) * sin(dlon / 2)**2
-
-        # Calculate the central angle between the points
-        central_angle = 2 * asin(sqrt(angular_distance))
-
-        EARTH_RADIUS_KM = 6371.0
-        distance_km = EARTH_RADIUS_KM * central_angle
-
-        return round(distance_km, 2)
-
     def get_unassigned_objectives(self, id_only=True):
         return [
             (objective.id if id_only else objective) for objective in self.objectives
@@ -111,7 +85,10 @@ class ObjectiveAllocator:
 
             closest_user_id = users_dist_to_obj.idxmin()
             closest_user_geo = gdf.loc[closest_user_id].geometry
-            closest_user_dist = self._get_distance_between_points(closest_user_geo, obj_point)
+            closest_user_dist = great_circle(
+                (closest_user_geo.y, closest_user_geo.x),  # Format (lat, lon)
+                (obj_point.y, obj_point.x)
+            ).kilometers
 
             # If objective is too far for closest user,
             # then no user can access this objective and we'll skip it

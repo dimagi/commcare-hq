@@ -197,7 +197,11 @@ fiona==1.9.3
     # via geopandas
 future==0.18.3
     # via pyjwkest
+geographiclib==2.0
+    # via geopy
 geopandas==0.12.2
+    # via -r base-requirements.in
+geopy==2.3.0
     # via -r base-requirements.in
 gevent==21.8.0
     # via

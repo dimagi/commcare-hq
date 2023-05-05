@@ -43,6 +43,7 @@ elasticsearch5>=5.0.0,<6.0.0  # ES5 support is currently in development
 ethiopian-date-converter
 eulxml
 geopandas
+geopy
 gevent
 ghdiff
 google-api-python-client==2.32.0
