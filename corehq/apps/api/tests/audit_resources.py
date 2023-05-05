@@ -4,6 +4,7 @@ from django.test import TestCase
 
 from datetime import datetime, timedelta, date
 from zoneinfo import ZoneInfo
+from unittest.mock import patch
 
 
 class DomainNavigationEventAudits:
@@ -147,6 +148,58 @@ class testNavigationEventAuditResource(TestCase):
         )
 
         self.assertListEqual(expected_results, results)
+
+    def test_cursor_pagination_returns_items_after_cursor(self):
+        expected_results = [
+            {
+                'user': self.user2,
+                'local_date': date(2023, 5, 1),
+                'UTC_first_action_time': datetime(2023, 5, 2, 0, tzinfo=ZoneInfo("UTC")),
+                'UTC_last_action_time': datetime(2023, 5, 2, 6, tzinfo=ZoneInfo("UTC"))
+            },
+            {
+                'user': self.user1,
+                'local_date': date(2023, 5, 2),
+                'UTC_first_action_time': datetime(2023, 5, 2, 7, tzinfo=ZoneInfo("UTC")),
+                'UTC_last_action_time': datetime(2023, 5, 2, 23, tzinfo=ZoneInfo("UTC"))
+            },
+            {
+                'user': self.user2,
+                'local_date': date(2023, 5, 2),
+                'UTC_first_action_time': datetime(2023, 5, 2, 7, tzinfo=ZoneInfo("UTC")),
+                'UTC_last_action_time': datetime(2023, 5, 2, 23, tzinfo=ZoneInfo("UTC"))
+            }
+        ]
+        cursor_local_date = date(2023, 5, 1)
+        cursor_user = self.user1
+        results = self.resource.cursor_query(self.domain1_audits.domain, self.domain1_audits.timezone,
+                                            cursor_local_date=cursor_local_date, cursor_user=cursor_user)
+
+        self.assertListEqual(expected_results, results)
+
+    def test_cursor_pagination_page_size(self):
+        cursor_local_date = date(2023, 5, 1)
+        cursor_user = self.user1
+
+        custom_page_size = 2
+        with patch('corehq.apps.api.resources.v0_5.NavigationEventAuditResource.LIMIT_DEFAULT', custom_page_size):
+            results = self.resource.cursor_query(
+                self.domain1_audits.domain,
+                self.domain1_audits.timezone,
+                cursor_local_date=cursor_local_date,
+                cursor_user=cursor_user
+            )
+        self.assertEqual(len(results), custom_page_size)
+
+        custom_page_size = 3
+        with patch('corehq.apps.api.resources.v0_5.NavigationEventAuditResource.LIMIT_DEFAULT', custom_page_size):
+            results = self.resource.cursor_query(
+                self.domain1_audits.domain,
+                self.domain1_audits.timezone,
+                cursor_local_date=cursor_local_date,
+                cursor_user=cursor_user
+            )
+        self.assertEqual(len(results), custom_page_size)
 
     def _daterange(start_datetime, end_datetime):
         for n in range(int((end_datetime - start_datetime).total_seconds() // 3600) + 1):
