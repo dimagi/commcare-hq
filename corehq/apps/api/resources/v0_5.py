@@ -1054,10 +1054,28 @@ class ODataFormResource(BaseODataResource):
 
 
 class NavigationEventAuditResource():
+    LIMIT_DEFAULT = 10000
+
+    @classmethod
+    def cursor_query(cls, domain: str, local_time_zone: ZoneInfo,
+                    cursor_local_date: date, cursor_user: str,
+                    users: list[str] = [], local_start_date: date = None, local_end_date: date = None) -> list:
+        queryset = cls.query(domain, local_time_zone, users, local_start_date, local_end_date,
+                            return_as_queryset=True)
+
+        results = queryset.filter(
+            Q(local_date__gt=cursor_local_date)
+            | (Q(local_date=cursor_local_date) & Q(user__gt=cursor_user))
+        )
+
+        with override_settings(USE_TZ=True):
+            # TruncDate ignores tzinfo if the queryset is not evaluated within overridden USE_TZ setting
+            return list(results[:cls.LIMIT_DEFAULT])
 
     @classmethod
     def query(cls, domain: str, local_time_zone: ZoneInfo, users: list = [],
-            local_start_date: date = None, local_end_date: date = None):
+            local_start_date: date = None, local_end_date: date = None,
+            return_as_queryset=False):
         filters = Q(domain=domain)
         if users:
             filters &= Q(user__in=users)
@@ -1078,5 +1096,7 @@ class NavigationEventAuditResource():
         results = results.filter(date_filters).order_by('local_date', 'user')
 
         with override_settings(USE_TZ=True):
+            if return_as_queryset:
+                return results
             # TruncDate ignores tzinfo if the queryset is not evaluated within overridden USE_TZ setting
             return list(results)
