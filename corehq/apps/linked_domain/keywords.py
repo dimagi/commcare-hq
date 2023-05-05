@@ -52,7 +52,7 @@ def create_linked_keyword(domain_link, keyword_id):
     return keyword.id
 
 
-def update_keyword(domain_link, keyword_id):
+def update_keyword(domain_link, keyword_id, is_pull=False, overwrite=False):
     try:
         linked_keyword = Keyword.objects.get(id=keyword_id)
     except Keyword.DoesNotExist:
