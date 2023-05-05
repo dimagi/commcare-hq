@@ -144,6 +144,12 @@ class CaseProperty(models.Model):
         allowed_string = ', '.join(f'"{av}"' for av in allowed_values)
         return _("Valid values: %s") % allowed_string
 
+    @property
+    def group_name(self):
+        if self.group_obj:
+            return self.group_obj.name
+        return self.group
+
 
 class CasePropertyAllowedValue(models.Model):
     case_property = models.ForeignKey(
