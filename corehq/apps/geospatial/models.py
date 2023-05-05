@@ -44,10 +44,12 @@ class ObjectiveAllocator:
     :param users: Should be a list of objects of class/subclass `GeoObject` with id of `user_id`
     :param objectives: Should be a list of objects of class/subclass `GeoObject` with id of `case_id`
     :param max_distance: The maximum distance allowed for an objective to be assignable to a user (unit is km)
+        If set to None, the maximum distance will not be limited
     :param max_assignable: The maximum number of objectives that can be assigned to a user
+        If set to None, the maximum assignable count will not be limited
     """
-    def __init__(self, users, objectives, max_distance, max_assignable):
-        if max_distance < 0 or max_assignable < 0:
+    def __init__(self, users, objectives, max_distance=None, max_assignable=None):
+        if (max_distance and max_distance < 0) or (max_assignable and max_assignable < 0):
             raise ValueError("Maximum distance and assignable count must be positive numbers")
 
         self.users = users
@@ -88,16 +90,17 @@ class ObjectiveAllocator:
             users_dist_to_obj = gdf.distance(obj_point)
 
             closest_user_id = users_dist_to_obj.idxmin()
-            closest_user_geo = gdf.loc[closest_user_id].geometry
-            closest_user_dist = great_circle(
-                (closest_user_geo.y, closest_user_geo.x),  # Format (lat, lon)
-                (obj_point.y, obj_point.x)
-            ).kilometers
+            if self.max_distance:
+                closest_user_geo = gdf.loc[closest_user_id].geometry
+                closest_user_dist = great_circle(
+                    (closest_user_geo.y, closest_user_geo.x),  # Format (lat, lon)
+                    (obj_point.y, obj_point.x)
+                ).kilometers
 
-            # If objective is too far for closest user,
-            # then no user can access this objective and we'll skip it
-            if closest_user_dist > self.max_distance:
-                continue
+                # If objective is too far for closest user,
+                # then no user can access this objective and we'll skip it
+                if closest_user_dist > self.max_distance:
+                    continue
 
             if closest_user_id not in user_assignment:
                 user_assignment[closest_user_id] = []
@@ -105,7 +108,7 @@ class ObjectiveAllocator:
             obj.is_assigned = True
 
             # Remove user from selection if they've hit their assignable limit
-            if len(user_assignment[closest_user_id]) == self.max_assignable:
+            if self.max_assignable and len(user_assignment[closest_user_id]) >= self.max_assignable:
                 gdf.drop(closest_user_id, inplace=True)
 
         return user_assignment
