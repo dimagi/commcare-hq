@@ -1,10 +1,10 @@
+from datetime import datetime, timedelta, date
+from unittest.mock import patch
+from zoneinfo import ZoneInfo
+
 from corehq.apps.api.resources import v0_5
 from corehq.apps.auditcare.models import NavigationEventAudit
 from django.test import TestCase
-
-from datetime import datetime, timedelta, date
-from zoneinfo import ZoneInfo
-from unittest.mock import patch
 
 
 class DomainNavigationEventAudits:
