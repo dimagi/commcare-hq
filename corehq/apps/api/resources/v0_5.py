@@ -1,10 +1,16 @@
 import json
 from collections import namedtuple
+from datetime import date
+from zoneinfo import ZoneInfo
 
 from django.conf.urls import re_path as url
 from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError
+from django.db.models import Max, Min, Q
+from django.db.models.functions import TruncDate
+
 from django.http import Http404, HttpResponse, HttpResponseNotFound
+from django.test import override_settings
 from django.urls import reverse
 from django.utils.translation import gettext as _
 from django.utils.translation import gettext_noop
@@ -38,6 +44,7 @@ from corehq.apps.api.resources.auth import (
     ODataAuthentication,
     RequirePermissionAuthentication,
 )
+from corehq.apps.auditcare.models import NavigationEventAudit
 from corehq.apps.api.resources.meta import AdminResourceMeta, CustomResourceMeta
 from corehq.apps.api.resources.serializers import ListToSingleObjectSerializer
 from corehq.apps.api.util import get_obj
@@ -1044,3 +1051,32 @@ class ODataFormResource(BaseODataResource):
             url(r"^(?P<resource_name>{})/(?P<config_id>[\w\d_.-]+)/feed".format(
                 self._meta.resource_name), self.wrap_view('dispatch_list')),
         ]
+
+
+class NavigationEventAuditResource():
+
+    @classmethod
+    def query(cls, domain: str, local_time_zone: ZoneInfo, users: list = [],
+            local_start_date: date = None, local_end_date: date = None):
+        filters = Q(domain=domain)
+        if users:
+            filters &= Q(user__in=users)
+
+        queryset = NavigationEventAudit.objects.filter(filters)
+
+        results = (queryset
+                .annotate(local_date=TruncDate('event_date', tzinfo=local_time_zone))
+                .values("local_date", "user")
+                .annotate(UTC_first_action_time=Min('event_date'), UTC_last_action_time=Max('event_date')))
+
+        date_filters = Q()
+        if local_start_date:
+            date_filters &= Q(local_date__gte=local_start_date)
+        if local_end_date:
+            date_filters &= Q(local_date__lte=local_end_date)
+
+        results = results.filter(date_filters).order_by('local_date', 'user')
+
+        with override_settings(USE_TZ=True):
+            # TruncDate ignores tzinfo if the queryset is not evaluated within overridden USE_TZ setting
+            return list(results)
