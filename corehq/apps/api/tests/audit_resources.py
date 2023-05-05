@@ -75,6 +75,79 @@ class testNavigationEventAuditResource(TestCase):
             }
         ])
 
+    def test_users_in_specified_domain(self):
+        results = self.resource.query(self.domain1_audits.domain, self.domain1_audits.timezone)
+        for result in results:
+            self.assertTrue(result['user'] in self.domain1_audits.logs.keys())
+
+        results = self.resource.query(self.domain2_audits.domain, self.domain1_audits.timezone)
+        for result in results:
+            self.assertTrue(result['user'] in self.domain2_audits.logs.keys())
+
+    def test_queries_first_last_action_time_for_each_user(self):
+        results = self.resource.query(self.domain1_audits.domain, self.domain1_audits.timezone)
+        self.assertListEqual(results, self.domain1_audits.expected_result)
+
+    def test_queries_ordered_by_local_date_and_user(self):
+        results = self.resource.query(self.domain1_audits.domain, self.domain1_audits.timezone)
+        filtered_results = [(result['local_date'], result['user']) for result in results]
+
+        self.assertListEqual(filtered_results, sorted(filtered_results))
+
+    def test_no_repeated_local_date_per_user(self):
+        results = self.resource.query(self.domain1_audits.domain, self.domain1_audits.timezone)
+        seen_user_local_dates = {}
+        for result in results:
+            user = result['user']
+            local_date = result['local_date']
+            if user in seen_user_local_dates:
+                self.assertNotIn(local_date, seen_user_local_dates[user])
+            else:
+                seen_user_local_dates[user] = set()
+            seen_user_local_dates[user].add(local_date)
+
+    def test_filter_by_user(self):
+        user_filter = [self.user1]
+        expected_results = [
+            item for item in self.domain1_audits.expected_result
+            if item['user'] in user_filter
+        ]
+        results = self.resource.query(
+            self.domain1_audits.domain,
+            self.domain1_audits.timezone,
+            users=user_filter
+        )
+
+        self.assertListEqual(expected_results, results)
+
+    def test_filter_by_local_start_date(self):
+        local_start_date_filter = date(2023, 5, 2)
+        expected_results = [
+            item for item in self.domain1_audits.expected_result if
+            (item['local_date'] >= local_start_date_filter)
+        ]
+        results = self.resource.query(
+            self.domain1_audits.domain,
+            self.domain1_audits.timezone,
+            local_start_date=local_start_date_filter
+        )
+
+        self.assertListEqual(expected_results, results)
+
+    def test_filter_by_local_end_date(self):
+        local_end_date_filter = date(2023, 5, 1)
+        expected_results = [
+            item for item in self.domain1_audits.expected_result
+            if item['local_date'] <= local_end_date_filter
+        ]
+        results = self.resource.query(
+            self.domain1_audits.domain,
+            self.domain1_audits.timezone,
+            local_end_date=local_end_date_filter
+        )
+
+        self.assertListEqual(expected_results, results)
+
     def _daterange(start_datetime, end_datetime):
         for n in range(int((end_datetime - start_datetime).total_seconds() // 3600) + 1):
             yield start_datetime + timedelta(hours=n)
