@@ -95,13 +95,12 @@ def search_view(request, domain, fhir_version_name, resource_type=None):
     except CaseNotFound:
         return JsonResponse(status=404, data={'message': "Not Found"})
 
-    def _get_resource_types(resource_type, request):
-        if resource_type:
-            return [resource_type]
-        else:
-            type_param = request.GET.get('_type')
-            return [resource_type.strip() for resource_type in type_param.split(',')] if type_param else None
-    resource_types = _get_resource_types(resource_type, request)
+    resource_types = None
+    if resource_type:
+        resource_types = [resource_type]
+    else:
+        type_param = request.GET.get('_type')
+        resource_types = [resource_type.strip() for resource_type in type_param.split(',')] if type_param else None
 
     if not resource_types:
         return JsonResponse(status=400,
