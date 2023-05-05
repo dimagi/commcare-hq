@@ -137,7 +137,7 @@
     {% endif %}
 
     {% if not requirejs_main %}
-      {% javascript_libraries underscore=True jquery_ui=request.use_jquery_ui ko=True hq=True analytics=True %}
+      {% javascript_libraries use_bootstrap5=use_bootstrap5 underscore=True jquery_ui=request.use_jquery_ui ko=True hq=True analytics=True %}
     {% endif %}
 
     {# Up here because if daterangepicker is called from within a form widget, #}
