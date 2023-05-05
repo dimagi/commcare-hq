@@ -159,9 +159,9 @@ hqDefine("motech/js/connection_settings_detail", [
 
         $('#id_throttle_requests').change(function () {
             if (this.checked) {
-                $('#div_id_throttle_request_window').show();
+                $('#div_id_throttle_window').show();
             } else {
-                $('#div_id_throttle_request_window').hide();
+                $('#div_id_throttle_window').hide();
             }
         });
 

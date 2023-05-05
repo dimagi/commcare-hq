@@ -62,7 +62,7 @@ class ConnectionSettingsForm(forms.ModelForm):
         label=_('Throttle requests'),
         required=False,
     )
-    throttle_request_window = forms.IntegerField(
+    throttle_window = forms.IntegerField(
         label=_('Throttle window'),
         help_text=_("The minimum amount of time in milliseconds allowed for subsequent requests made to the server"),
         initial=100,
@@ -99,8 +99,7 @@ class ConnectionSettingsForm(forms.ModelForm):
             'plaintext_password',
             'client_id',
             'plaintext_client_secret',
-            'throttle_requests',
-            'throttle_request_window',
+            'throttle_window',
             'skip_cert_verify',
             'notify_addresses_str',
             'token_url',
@@ -125,12 +124,14 @@ class ConnectionSettingsForm(forms.ModelForm):
                     'plaintext_password': PASSWORD_PLACEHOLDER if password else '',
                     'plaintext_client_secret': PASSWORD_PLACEHOLDER if secret else '',
                     'auth_preset': api_setting_matches_preset(kwargs['instance']),
+                    'throttle_requests': kwargs['instance'].throttle_window is not None,
                 })
             else:
                 kwargs['initial'] = {
                     'plaintext_password': PASSWORD_PLACEHOLDER if password else '',
                     'plaintext_client_secret': PASSWORD_PLACEHOLDER if secret else '',
                     'auth_preset': api_setting_matches_preset(kwargs['instance']),
+                    'throttle_requests': kwargs['instance'].throttle_window is not None,
                 }
         super().__init__(*args, **kwargs)
 
@@ -161,7 +162,7 @@ class ConnectionSettingsForm(forms.ModelForm):
                 id="div_id_oauth_settings",
             ),
             twbscrispy.PrependedText('throttle_requests', ''),
-            crispy.Field('throttle_request_window'),
+            crispy.Field('throttle_window'),
             twbscrispy.PrependedText('skip_cert_verify', ''),
             self.test_connection_button,
 
@@ -227,11 +228,11 @@ class ConnectionSettingsForm(forms.ModelForm):
                                         .format(auth_type_name))
             self.add_error('auth_type', err)
             self.add_error('username', err)
-        return cleaned_data
 
-    def clean_throttle_request_window(self):
-        if self.cleaned_data['throttle_requests'] and self.cleaned_data['throttle_request_window'] < 1:
-            raise forms.ValidationError(_("Invalid throttle window"))
+        if not cleaned_data['throttle_requests']:
+            cleaned_data['throttle_window'] = None
+
+        return cleaned_data
 
     def clean_url(self):
         return self._clean_url(self.cleaned_data['url'])
