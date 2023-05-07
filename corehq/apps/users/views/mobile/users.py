@@ -24,6 +24,7 @@ from django.views.generic import TemplateView, View
 
 from braces.views import JsonRequestResponseMixin
 from couchdbkit import ResourceNotFound
+from django_otp.plugins.otp_static.models import StaticToken
 from django_prbac.exceptions import PermissionDenied
 from django_prbac.utils import has_privilege
 from memoized import memoized
@@ -31,6 +32,7 @@ from memoized import memoized
 from casexml.apps.phone.models import SyncLogSQL
 from couchexport.models import Format
 from couchexport.writers import Excel2007ExportWriter
+from dimagi.utils.couch import CriticalSection
 from soil import DownloadBase
 from soil.exceptions import TaskFailedError
 from soil.util import get_download_context
@@ -56,7 +58,7 @@ from corehq.apps.domain.decorators import (
     login_and_domain_required,
 )
 from corehq.apps.domain.extension_points import has_custom_clean_password
-from corehq.apps.domain.models import SMSAccountConfirmationSettings
+from corehq.apps.domain.models import Domain, SMSAccountConfirmationSettings
 from corehq.apps.domain.utils import guess_domain_language_for_sms
 from corehq.apps.domain.views.base import DomainViewMixin
 from corehq.apps.es import FormES
@@ -218,6 +220,20 @@ class EditCommCareUserView(BaseEditUserView):
     @property
     def has_any_sync_logs(self):
         return SyncLogSQL.objects.filter(user_id=self.editable_user_id).exists()
+
+    @property
+    def backup_token(self):
+        if Domain.get_by_name(self.request.domain).two_factor_auth:
+            with CriticalSection([f"backup-token-{self.editable_user._id}"]):
+                device = (self.editable_user.get_django_user()
+                          .staticdevice_set
+                          .get_or_create(name='backup')[0])
+                token = device.token_set.first()
+                if token:
+                    return device.token_set.first().token
+                else:
+                    return device.token_set.create(token=StaticToken.random_token()).token
+        return None
 
     @property
     @memoized
@@ -1375,9 +1391,10 @@ class ClearCommCareUsers(DeleteCommCareUsers):
         return self.get(request, *args, **kwargs)
 
     def _clear_users_data(self, request, user_docs_by_id):
-        from corehq.apps.users.model_log import UserModelAction
-        from corehq.apps.hqwebapp.tasks import send_mail_async
         from django.conf import settings
+
+        from corehq.apps.hqwebapp.tasks import send_mail_async
+        from corehq.apps.users.model_log import UserModelAction
 
         cleared_count = 0
         for user_id, doc in user_docs_by_id.items():
