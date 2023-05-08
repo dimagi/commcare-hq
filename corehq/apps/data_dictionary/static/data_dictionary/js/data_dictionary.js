@@ -36,7 +36,6 @@ hqDefine("data_dictionary/js/data_dictionary", [
                 groupObj.name.subscribe(changeSaveButton);
                 groupObj.description.subscribe(changeSaveButton);
                 groupObj.toBeDeprecated.subscribe(changeSaveButton);
-                groupObj.properties.subscribe(changeSaveButton);
 
                 for (let prop of group.properties) {
                     var propObj = propertyListItem(prop.name, prop.label, false, prop.group, self.name, prop.data_type,
@@ -51,6 +50,7 @@ hqDefine("data_dictionary/js/data_dictionary", [
                     propObj.allowedValues.on('change', changeSaveButton);
                     groupObj.properties.push(propObj);
                 }
+                groupObj.properties.subscribe(changeSaveButton);
                 self.groups.push(groupObj);
             }
         };
