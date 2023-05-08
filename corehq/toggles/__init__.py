@@ -654,6 +654,13 @@ LAZY_LOAD_MULTIMEDIA = StaticToggle(
     [NAMESPACE_DOMAIN],
 )
 
+THROTTLE_CONNECTION_SETTINGS = StaticToggle(
+    'throttle-connection-settings',
+    'Adds the ability to throttle requests sent to external servers by adding additional inputs to the Connection Settings page.',
+    TAG_CUSTOM,
+    [NAMESPACE_DOMAIN],
+)
+
 APP_BUILDER_ADVANCED = StaticToggle(
     'advanced-app-builder',
     'Advanced Module in App-Builder',

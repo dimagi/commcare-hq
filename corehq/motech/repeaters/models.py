@@ -153,6 +153,7 @@ from .repeater_generators import (
     ShortFormRepeaterJsonPayloadGenerator,
     UserPayloadGenerator,
 )
+from corehq.toggles import THROTTLE_CONNECTION_SETTINGS
 
 
 def log_repeater_timeout_in_datadog(domain):
@@ -467,7 +468,8 @@ class Repeater(RepeaterSuperProxy):
         return self.generator.get_payload(repeat_record, self.payload_doc(repeat_record))
 
     def send_request(self, repeat_record, payload):
-        self.do_request_preflight_check()
+        if THROTTLE_CONNECTION_SETTINGS.enabled(repeat_record.domain):
+            self.do_request_preflight_check()
 
         url = self.get_url(repeat_record)
         return simple_request(

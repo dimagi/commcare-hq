@@ -21,6 +21,7 @@ from corehq.motech.requests import validate_user_input_url_for_repeaters
 from corehq.motech.utils import api_setting_matches_preset, get_endpoint_url
 from corehq.util.urlvalidate.ip_resolver import CannotResolveHost
 from corehq.util.urlvalidate.urlvalidate import PossibleSSRFAttempt
+from corehq.toggles import THROTTLE_CONNECTION_SETTINGS
 
 
 class ConnectionSettingsForm(forms.ModelForm):
@@ -142,7 +143,6 @@ class ConnectionSettingsForm(forms.ModelForm):
     @cached_property
     def helper(self):
         from corehq.motech.views import ConnectionSettingsListView
-
         helper = hqcrispy.HQFormHelper()
         helper.layout = crispy.Layout(
             crispy.Field('name'),
@@ -163,11 +163,10 @@ class ConnectionSettingsForm(forms.ModelForm):
                 ),
                 id="div_id_oauth_settings",
             ),
-            twbscrispy.PrependedText('throttle_requests', ''),
-            crispy.Field('throttle_window'),
+            twbscrispy.PrependedText('throttle_requests', '') if self.throttle_settings_enabled else None,
+            crispy.Field('throttle_window') if self.throttle_settings_enabled else None,
             twbscrispy.PrependedText('skip_cert_verify', ''),
             self.test_connection_button,
-
             hqcrispy.FormActions(
                 twbscrispy.StrictButton(
                     _("Save"),
@@ -186,6 +185,10 @@ class ConnectionSettingsForm(forms.ModelForm):
         )
 
         return helper
+
+    @property
+    def throttle_settings_enabled(self):
+        return THROTTLE_CONNECTION_SETTINGS.enabled(self.domain)
 
     @property
     def test_connection_button(self):
@@ -231,8 +234,11 @@ class ConnectionSettingsForm(forms.ModelForm):
             self.add_error('auth_type', err)
             self.add_error('username', err)
 
-        if not cleaned_data['throttle_requests']:
-            cleaned_data['throttle_window'] = None
+        if self.throttle_settings_enabled:
+            if not cleaned_data['throttle_requests']:
+                cleaned_data['throttle_window'] = None
+        else:
+            cleaned_data.pop('throttle_window')
 
         return cleaned_data
 
