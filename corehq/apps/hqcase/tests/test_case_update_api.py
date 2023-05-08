@@ -25,7 +25,7 @@ from ..utils import submit_case_blocks
 @privilege_enabled(privileges.API_ACCESS)
 @flag_enabled('CASE_API_V0_6')
 @flag_enabled('API_THROTTLE_WHITELIST')
-@patch('corehq.apps.hqcase.views.validate_update_permission', MagicMock())
+@patch('corehq.apps.hqcase.api.updates.validate_update_permission', MagicMock())
 class TestCaseAPI(TestCase):
     domain = 'test-update-cases'
     maxDiff = None
