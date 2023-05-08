@@ -132,6 +132,7 @@ from .const import (
     RECORD_STATES,
     RECORD_SUCCESS_STATE,
     RECORD_EMPTY_STATE,
+    CHECK_REPEATERS_INTERVAL,
 )
 from .dbaccessors import (
     get_cancelled_repeat_record_count,
@@ -1410,9 +1411,11 @@ def send_request(
         message = str(RequestConnectionError(err))
         repeat_record.add_server_failure_attempt(message)
     except RequestThrottled:
-        # Simply reschedule, no need to report to user
+        # Simply reschedule, don't log attempt
         repeater.set_next_attempt(
-            repeater.connection_settings.get_next_request_attempt()
+            repeater.connection_settings.get_next_request_attempt(
+                offset_timedelta=CHECK_REPEATERS_INTERVAL,
+            )
         )
 
     except Exception as err:

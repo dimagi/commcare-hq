@@ -188,14 +188,15 @@ class ConnectionSettings(models.Model):
     def log_throttled_request_attempt(self):
         self._increment_throttled_requests_count()
 
-    def get_next_request_attempt(self):
-        # Todo: check how granularly we check for retries
-
+    def get_next_request_attempt(self, offset_timedelta=None):
         # Space out the throttled requests with 1 minute intervals
         attempt_interval_ms = self._get_throttled_requests_count() * 1000 * 60
         retry_millis = self._current_millis_from_epoch() + attempt_interval_ms
 
         request_attempt = datetime.datetime.fromtimestamp(retry_millis / 1000)
+        if offset_timedelta:
+            request_attempt = request_attempt + offset_timedelta
+
         return request_attempt
 
     def _should_throttle_request(self):
