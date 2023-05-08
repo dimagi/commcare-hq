@@ -27,12 +27,11 @@ from corehq.util.es.elasticsearch import NotFoundError
 from corehq.util.view_utils import reverse
 from corehq.apps.locations.permissions import user_can_access_case
 from corehq.apps.locations.permissions import location_safe
-from corehq.form_processor.exceptions import CaseNotFound
 
 from .api.core import SubmissionError, UserError, serialize_case, serialize_es_case
 from .api.get_list import get_list
 from .api.get_bulk import get_bulk
-from .api.updates import handle_case_update, validate_update_permission
+from .api.updates import handle_case_update
 from .tasks import delete_exploded_case_task, explode_case_task
 
 
@@ -182,17 +181,6 @@ def _handle_case_update(request, is_creation, case_id=None):
         data['case_id'] = case_id
 
     try:
-        if isinstance(data, list):
-            for data_item in data:
-                validate_update_permission(request.domain, data_item, request.couch_user, is_creation)
-        else:
-            validate_update_permission(request.domain, data, request.couch_user, is_creation)
-    except PermissionDenied as e:
-        return JsonResponse({'error': str(e)}, status=403)
-    except CaseNotFound as e:
-        return JsonResponse({'error': str(e)}, status=404)
-
-    try:
         xform, case_or_cases = handle_case_update(
             domain=request.domain,
             data=data,
@@ -200,6 +188,8 @@ def _handle_case_update(request, is_creation, case_id=None):
             device_id=request.META.get('HTTP_USER_AGENT'),
             is_creation=is_creation,
         )
+    except PermissionDenied as e:
+        return JsonResponse({'error': str(e)}, status=403)
     except UserError as e:
         return JsonResponse({'error': str(e)}, status=400)
     except SubmissionError as e:
