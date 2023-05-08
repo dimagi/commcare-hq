@@ -52,9 +52,47 @@ NOTE: Developers on Mac OS have additional prerequisites. See the [Supplementary
   - **Linux**:
 
     In Ubuntu you will also need to install the modules for `python-dev`, `pip`, and `venv` explicitly.
-    ```sh
-    sudo apt install python3.9-dev python3-pip python3-venv
-    ```
+
+    The [deadsnakes PPA](https://launchpad.net/~deadsnakes/+archive/ubuntu/ppa)
+    allows you to use multiple versions of Python on your own machine as we do
+    in production environments. The deadsnakes PPA supports Ubuntu LTS
+    releases, but you can use their Python versions on interim Ubuntu releases
+    as follows:
+
+    1. Find the name of your Ubuntu release if you don't already know it:
+       ```shell
+       $ cat /etc/lsb-release
+       DISTRIB_ID=Ubuntu
+       DISTRIB_RELEASE=23.04
+       DISTRIB_CODENAME=lunar  # <-- This is the name you want
+       DISTRIB_DESCRIPTION="Ubuntu 23.04"
+       ```
+
+    2. Pin your release's package priority to 1001 so that deadsnakes packages
+       can't replace official packages, even if they are newer:
+       ```shell
+       $ cat << EOF | sudo tee /etc/apt/preferences.d/99lunar
+       Package: *
+       Pin: release lunar
+       Pin-Priority: 1001
+       EOF
+       ```
+       but change "lunar" to the name of the release you are using.
+
+    3. Add the deadsnakes PPA, and install the Python version that CommCare HQ
+       requires:
+       ```shell
+       $ sudo add-apt-repository ppa:deadsnakes/ppa
+       ```
+       This will create a file in `/etc/apt/sources.list.d/` with the name of your
+       release. Change the filename, and the name inside the file, to the latest
+       LTS release instead (e.g. "jammy").
+
+    4. Install the version of Python that CommCare HQ requires.
+       ```shell
+       $ sudo apt update
+       $ sudo apt install python3.9 python3.9-dev python3-pip python3.9-venv
+       ```
 
   - **Mac**:
 
