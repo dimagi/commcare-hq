@@ -269,6 +269,19 @@ class CaseIDLookerUpper:
 
         return case_ids_by_external_id
 
+    def get_owner_id(self, key):
+        try:
+            return self._get_owner_id[key]
+        except KeyError:
+            raise UserError(f"Could not find an owner_id with case_id '{key}'")
+
+    @cached_property
+    def _get_owner_id(self):
+        return {
+            update.case_id: update.owner_id
+            for update in self.updates if update.owner_id
+        }
+
 
 def _submit_case_blocks(case_blocks, domain, user, device_id):
     return submit_case_blocks(
