@@ -163,6 +163,25 @@ hqDefine('users/js/edit_commcare_user', [
         $unrecognizedDataWarning.closest("form").find(":submit").prop("disabled", false);
     }
 
+    $('#request-two-factor-token').click(function () {
+        var $btn = $(this),
+            $display = $('#two-factor-token-display');
+        $btn.disableButton();
+        $.get({
+            url: initialPageData.reverse('get_backup_token'),
+            success: function (data) {
+                $display.text(data.token);
+                $btn.removeSpinnerFromButton();
+                $btn.addClass('btn-success');
+            },
+            error: function () {
+                $btn.removeSpinnerFromButton();
+                $btn.text(gettext('Failed'));
+                $btn.addClass('btn-danger');
+            },
+        });
+    });
+
     // Analytics
     $("button:submit", $userInformationForm).on("click", function () {
         googleAnalytics.track.event("Edit Mobile Worker", "Updated user info", couchUserId, "", {}, function () {

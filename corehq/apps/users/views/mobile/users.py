@@ -213,27 +213,12 @@ class EditCommCareUserView(BaseEditUserView):
             'edit_user_form_title': self.edit_user_form_title,
             'strong_mobile_passwords': self.request.project.strong_mobile_passwords,
             'has_any_sync_logs': self.has_any_sync_logs,
-            'token': self.backup_token,
         })
         return context
 
     @property
     def has_any_sync_logs(self):
         return SyncLogSQL.objects.filter(user_id=self.editable_user_id).exists()
-
-    @property
-    def backup_token(self):
-        if Domain.get_by_name(self.request.domain).two_factor_auth:
-            with CriticalSection([f"backup-token-{self.editable_user._id}"]):
-                device = (self.editable_user.get_django_user()
-                          .staticdevice_set
-                          .get_or_create(name='backup')[0])
-                token = device.token_set.first()
-                if token:
-                    return device.token_set.first().token
-                else:
-                    return device.token_set.create(token=StaticToken.random_token()).token
-        return None
 
     @property
     @memoized
@@ -563,6 +548,29 @@ def toggle_demo_mode(request, domain, user_id):
         unset_practice_mode_configured_apps(domain, user.get_id)
         messages.success(request, _("Successfully turned off demo mode!"))
     return HttpResponseRedirect(edit_user_url)
+
+
+@require_can_edit_commcare_users
+@location_safe
+def get_backup_token(request, domain, user_id):
+    user = CommCareUser.get_by_user_id(user_id, domain)
+    if (
+        not request.project.two_factor_auth or
+        not _can_edit_workers_location(request.couch_user, user)
+    ):
+        raise PermissionDenied()
+    with CriticalSection([f"backup-token-{user.user_id}"]):
+        device = (user.get_django_user()
+                  .staticdevice_set
+                  .get_or_create(name='backup')[0])
+        token = device.token_set.first()
+        if token:
+            token_str = token.token
+        else:
+            token_str = device.token_set.create(
+                token=StaticToken.random_token()
+            ).token
+    return JsonResponse({'token': token_str})
 
 
 class BaseManageCommCareUserView(BaseUserSettingsView):

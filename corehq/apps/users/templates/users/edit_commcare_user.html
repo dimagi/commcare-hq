@@ -16,6 +16,7 @@
   {% initial_page_data "show_deactivate_after_date" show_deactivate_after_date %}
   {% initial_page_data "path" request.path %}
   {% initial_page_data "metadata" couch_user.metadata %}
+  {% registerurl 'get_backup_token' domain couch_user.user_id %}
   {% if couch_user.is_loadtest_user %}
     <p class="alert alert-warning">
       {% blocktrans %}
@@ -78,7 +79,7 @@
             </div>
           </form>
           <div class="spacer"></div>
-          {% if token %}
+          {% if request.project.two_factor_auth %}
           <fieldset>
             <legend>{% trans 'Two Factor Authentication' %}</legend>
             <div class="form form-horizontal">
@@ -86,8 +87,11 @@
                 <label class="control-label col-sm-3 col-md-2">
                   {% trans "Backup Token" %}
                 </label>
-                <div class="controls col-sm-9 col-md-8 col-lg-6">
-                  <input type="text" class="form-control" disabled value="{{ token }}" />
+                <div>
+                  <button id="request-two-factor-token" class="btn btn-primary">
+                      {% trans "Show Backup Token" %}
+                  </button>
+                  <pre id="two-factor-token-display" />
                 </div>
               </div>
             </div>

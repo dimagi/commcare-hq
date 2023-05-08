@@ -67,6 +67,7 @@ from .views.mobile.users import (
     demo_restore_job_poll,
     download_commcare_users,
     force_user_412,
+    get_backup_token,
     paginate_mobile_workers,
     reset_demo_user_restore,
     restore_commcare_user,
@@ -174,6 +175,7 @@ urlpatterns = [
     url(r'^commcare/delete/$', DeleteCommCareUsers.as_view(), name=DeleteCommCareUsers.urlname),
     url(r'^commcare/clear/$', ClearCommCareUsers.as_view(), name=ClearCommCareUsers.urlname),
     url(r'^commcare/lookup/$', CommCareUsersLookup.as_view(), name=CommCareUsersLookup.urlname),
+    url(r'^commcare/token/(?P<user_id>[ \w-]+)/$', get_backup_token, name='get_backup_token'),
     url(
         r'^commcare/reset_demo_user_restore/(?P<user_id>[ \w-]+)/$',
         reset_demo_user_restore,
