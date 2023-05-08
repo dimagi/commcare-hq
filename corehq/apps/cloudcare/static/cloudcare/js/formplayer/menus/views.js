@@ -1,4 +1,4 @@
-/*global Marionette */
+/*globals DOMPurify, Marionette */
 
 hqDefine("cloudcare/js/formplayer/menus/views", function () {
     var kissmetrics = hqImport("analytix/js/kissmetrix"),
@@ -206,7 +206,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
         if (useUniformUnits) {
             heightPixels = widthPixels;
         } else {
-            heightPixels = widthPixels / 2;
+            heightPixels = "auto";
         }
 
         model = {
@@ -301,8 +301,12 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
     var CaseTileView = CaseView.extend({
         template: _.template($("#case-tile-view-item-template").html() || ""),
         templateContext: function () {
-            var dict = CaseTileView.__super__.templateContext.apply(this, arguments);
+            var dict = CaseTileView.__super__.templateContext.apply(this, arguments),
+                md = window.markdownit();
             dict['prefix'] = this.options.prefix;
+            dict['renderMarkdown'] = function (datum) {
+                return md.render(DOMPurify.sanitize(datum || ""));
+            };
             return dict;
         },
     });

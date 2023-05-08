@@ -582,6 +582,26 @@ class TestElasticManageAdapter(AdapterWithIndexTestCase):
         self.assertIn(alias, aliases)
         self.assertEqual(aliases[alias], [index])
 
+    def test_index_validate_query_returns_true_for_valid_query(self):
+        self.adapter.index_create(self.index)
+        query = {"query": {"term": {"value": 'some val'}}}
+        validation = self.adapter.index_validate_query(index=self.index, query=query)
+        self.assertTrue(validation)
+
+    def test_index_validate_query_returns_false_for_invalid_query(self):
+        type_ = "test_doc"
+        mapping = {
+            "properties": {
+                "value": {"type": "float"}
+            }
+        }
+        self.adapter.index_create(self.index)
+        self.adapter.index_put_mapping(self.index, type_, mapping)
+        # Value field expects a float but string is sent in term query
+        query = {"query": {"term": {"value": 'some_string'}}}
+        validation = self.adapter.index_validate_query(index=self.index, query=query)
+        self.assertFalse(validation)
+
     def test_index_set_replicas(self):
         self.adapter.index_create(self.index)
         # initial value is 1
@@ -1731,52 +1751,39 @@ class TestElasticMultiplexAdapter(SimpleTestCase, ESTestHelpers):
             BulkActionItem.delete(doc_1),
             BulkActionItem.index(doc_2),
         ])
-        self.addCleanup(self.adapter.delete, doc_2.id)
+        self.addCleanup(self.adapter.secondary.bulk_delete, [doc_1.id, doc_2.id])
+        self.addCleanup(self.adapter.primary.delete, doc_2.id)
         self.assertEqual(2, successes)
         self.assertEqual([], errors)
-        self.assertPrimaryAndSecondaryDocIdsEqual([doc_2.id])
+        self.assertIndexDocIds(self.adapter.primary, [doc_2.id])
+        self.assertIndexDocIds(self.adapter.secondary, [doc_1.id, doc_2.id])
 
     def test_bulk_returns_when_raise_errors_is_false(self):
         doc_ids = [self._make_doc().id for x in range(2)]
         # verify state
         self.assertPrimaryAndSecondaryDocIdsEqual([])
         # test
-        actions = [BulkActionItem.delete_id(id) for id in doc_ids]
-        success, errors = self.adapter.bulk(actions, raise_errors=False)
-        self.assertEqual(0, success)
-        self.assertEqual(len(actions), len(errors))
+        from corehq.apps.es import client
+        error_from_bulk = [{"delete": {"status": 500, "_id": "abc", "_index": "test_index"}}]
+        return_val = (0, error_from_bulk)
+        with (patch.object(client, "bulk", return_value=return_val)):
+            actions = [BulkActionItem.delete_id(id) for id in doc_ids]
+            self.adapter.bulk(actions, raise_errors=False)
 
     def test_bulk_raises_when_raise_errors_is_not_false(self):
         doc_ids = [self._make_doc().id for x in range(2)]
         # verify state
         self.assertPrimaryAndSecondaryDocIdsEqual([])
-        # test
-        actions = [BulkActionItem.delete_id(id) for id in doc_ids]
-        with self.assertRaises(BulkIndexError) as test:
-            self.adapter.bulk(actions)
-        self.assertEqual(len(actions), len(test.exception.errors))
 
-    def test_bulk_action_delete_does_not_create_tombstones_if_missing_on_primary(self):
-        missing = self._make_doc()
-        # verify state
-        self.assertPrimaryAndSecondaryDocIdsEqual([])
         # test
-        with self.assertRaises(BulkIndexError) as test:
-            self.adapter.bulk([BulkActionItem.delete(missing)])
-        error, = test.exception.errors
-        self.assertTrue(self.adapter._is_delete_not_found(error))
-        self.assertPrimaryAndSecondaryDocIdsEqual([])
+        from corehq.apps.es import client
+        error_from_bulk = [{"delete": {"status": 500, "_id": "abc", "_index": "test_index"}}]
+        return_val = (0, error_from_bulk)
 
-    def test_bulk_action_delete_does_not_create_tombstones_if_exists_on_secondary(self):
-        doc = self._make_doc()
-        # setup and verify state
-        self.adapter.index(doc)
-        self.assertPrimaryAndSecondaryDocIdsEqual([doc.id])
-        # test
-        successes, errors = self.adapter.bulk([BulkActionItem.delete(doc)])
-        self.assertEqual(1, successes)
-        self.assertEqual([], errors)
-        self.assertPrimaryAndSecondaryDocIdsEqual([])
+        with (patch.object(client, "bulk", return_value=return_val)):
+            actions = [BulkActionItem.delete_id(id) for id in doc_ids]
+            with self.assertRaises(BulkIndexError):
+                self.adapter.bulk(actions)
 
     def test_bulk_action_delete_creates_tombstones_if_missing_on_secondary(self):
         doc = self._make_doc()
@@ -1879,7 +1886,8 @@ class TestElasticMultiplexAdapter(SimpleTestCase, ESTestHelpers):
         self.assertPrimaryAndSecondaryDocIdsEqual([])
         # test
         self.adapter.bulk_index(docs)
-        self.addCleanup(self.adapter.bulk_delete, doc_ids)
+        self.addCleanup(self.adapter.primary.bulk_delete, doc_ids)
+        self.addCleanup(self.adapter.secondary.bulk_delete, doc_ids)
         self.assertPrimaryAndSecondaryDocIdsEqual(doc_ids)
 
     def test_bulk_delete(self):
@@ -1890,26 +1898,20 @@ class TestElasticMultiplexAdapter(SimpleTestCase, ESTestHelpers):
         self.assertPrimaryAndSecondaryDocIdsEqual(doc_ids)
         # test
         self.adapter.bulk_delete(doc_ids)
-        self.assertPrimaryAndSecondaryDocIdsEqual([])
+        self.assertIndexDocIds(self.adapter.primary, [])
+        self.assertIndexDocIds(self.adapter.secondary, doc_ids)
+        self.addCleanup(self.adapter.secondary.bulk_delete, doc_ids)
 
     def test_delete(self):
         doc = self._make_doc()
         # setup and verify a synced secondary condition
         self.adapter.index(doc, refresh=True)
         self.assertPrimaryAndSecondaryDocIdsEqual([doc.id])
-        # test
+        # test delete leaves tombstones on secondary
         self.adapter.delete(doc.id)
-        self.assertPrimaryAndSecondaryDocIdsEqual([])
-
-    def test_delete_raises_notfounderror_on_failure(self):
-        doc = self._make_doc()
-        # verify state
-        self.assertPrimaryAndSecondaryDocIdsEqual([])
-        # test
-        with self.assertRaises(NotFoundError) as test:
-            self.adapter.delete(doc.id)
-        self.assertEqual(test.exception.status_code, 404)
-        self.assertPrimaryAndSecondaryDocIdsEqual([])
+        self.assertIndexDocIds(self.adapter.primary, [])
+        self.assertIndexDocIds(self.adapter.secondary, [doc.id])
+        self.addCleanup(self.adapter.secondary.delete, doc.id)
 
     def test_delete_creates_tombstone_when_missing_in_secondary(self):
         doc = self._make_doc()
@@ -1919,12 +1921,13 @@ class TestElasticMultiplexAdapter(SimpleTestCase, ESTestHelpers):
         self.assertFalse(self.adapter.secondary.exists(doc.id))
         # test
         self.adapter.delete(doc.id)
-        self.addCleanup(self.adapter.secondary.delete, doc.id)
         self.assertFalse(self.adapter.primary.exists(doc.id))
         self.assertEqual(
             dict(_id=doc.id, **Tombstone.create_document()),
             self.adapter.secondary.get(doc.id),
         )
+        # Delete tombstone created on secondary
+        self.addCleanup(self.adapter.secondary.delete, doc.id)
 
     def test_index(self):
         doc = self._make_doc()
@@ -1932,8 +1935,10 @@ class TestElasticMultiplexAdapter(SimpleTestCase, ESTestHelpers):
         self.assertPrimaryAndSecondaryDocIdsEqual([])
         # test
         self.adapter.index(doc)
-        self.addCleanup(self.adapter.delete, doc.id)
         self.assertPrimaryAndSecondaryDocIdsEqual([doc.id])
+
+        self.addCleanup(self.adapter.primary.delete, doc.id)
+        self.addCleanup(self.adapter.secondary.delete, doc.id)
 
     def test_index_raises_transporterror_on_failure(self):
         doc = self._make_doc()
@@ -1973,6 +1978,14 @@ class TestElasticMultiplexAdapter(SimpleTestCase, ESTestHelpers):
             mismatch_msg = (f"{adapter.index_name} adapter document mismatch: "
                             f"expected={unordered!r}, got={got!r}")
             self.assertEqual(unordered, got, mismatch_msg)
+
+    def assertIndexDocIds(self, adapter, expected):
+        unordered = set(expected)
+        manager.index_refresh(adapter.index_name)
+        got = set(d["_id"] for d in adapter.search({})["hits"]["hits"])
+        mismatch_msg = (f"{adapter.index_name} adapter document mismatch: "
+            f"expected={unordered!r}, got={got!r}")
+        self.assertEqual(unordered, got, mismatch_msg)
 
 
 @contextmanager

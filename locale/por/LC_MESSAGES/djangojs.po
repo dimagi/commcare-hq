@@ -4001,6 +4001,10 @@ msgid "Gateway Timeout. Please contact CommCare HQ Support."
 msgstr ""
 
 #: corehq/apps/reports/static/reports/js/reports.async.js
+msgid "Your search term was too long. Please provide a shorter search filter"
+msgstr ""
+
+#: corehq/apps/reports/static/reports/js/reports.async.js
 msgid "We were unsuccessful loading the report:"
 msgstr ""
 

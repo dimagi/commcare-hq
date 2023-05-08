@@ -1036,6 +1036,7 @@ msgstr ""
 #: corehq/apps/domain/forms.py
 #: corehq/apps/domain/templates/domain/partials/payment_modal.html
 #: corehq/apps/domain/templates/domain/stripe_cards.html
+#: corehq/apps/events/templates/edit_attendee.html
 #: corehq/apps/events/templates/event_attendees.html
 #: corehq/apps/export/templates/export/customize_export_new.html
 #: corehq/apps/export/templates/export/dialogs/bulk_delete_custom_export_dialog.html
@@ -3840,10 +3841,8 @@ msgid "Unknown Application"
 msgstr "Aplicación Desconocida"
 
 #: corehq/apps/app_manager/fields.py
-#, fuzzy
-#| msgid "My Applications"
 msgid "Any Application"
-msgstr "Mis Aplicaciones"
+msgstr ""
 
 #: corehq/apps/app_manager/fields.py
 msgid "Unknown Module"
@@ -7758,6 +7757,7 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/forms/custom_assertions.html
+#: corehq/apps/app_manager/templates/app_manager/partials/settings/app_settings.html
 msgid "Custom Assertions"
 msgstr ""
 
@@ -10803,10 +10803,6 @@ msgid "There was an issue with your custom instances: {}"
 msgstr "Hubo un problema con sus instancias personalizadas: {}"
 
 #: corehq/apps/app_manager/views/forms.py
-msgid "There was an issue with your custom assertions: {}"
-msgstr ""
-
-#: corehq/apps/app_manager/views/forms.py
 msgid "Unable to validate form due to server error."
 msgstr ""
 "No fue posible validar el formulario debido a un error en el servidor. "
@@ -11115,6 +11111,10 @@ msgstr ""
 #: corehq/apps/app_manager/views/utils.py
 #, python-brace-format
 msgid "Session endpoint IDs must be unique. '{endpoint_id}' is already in-use"
+msgstr ""
+
+#: corehq/apps/app_manager/views/utils.py
+msgid "There was an issue with your custom assertions: {}"
 msgstr ""
 
 #: corehq/apps/app_manager/xform.py
@@ -14247,7 +14247,8 @@ msgstr "Fecha propiedad de caso (avanzado)"
 #: corehq/apps/data_interfaces/templates/data_interfaces/partials/case_rule_criteria.html
 #: corehq/apps/domain/forms.py
 #: corehq/apps/domain/templates/domain/manage_releases_by_location.html
-#: corehq/apps/hqwebapp/doc_info.py corehq/apps/locations/forms.py
+#: corehq/apps/events/forms.py corehq/apps/hqwebapp/doc_info.py
+#: corehq/apps/locations/forms.py
 #: corehq/apps/locations/templates/locations/manage/location.html
 #: corehq/apps/locations/templates/locations/manage/locations.html
 #: corehq/apps/locations/views.py corehq/apps/reports/commtrack/standard.py
@@ -14801,9 +14802,14 @@ msgid "Custom Logo"
 msgstr "Logo Personalizado"
 
 #: corehq/apps/domain/forms.py
+#, fuzzy, python-brace-format
+#| msgid ""
+#| "Upload a custom image to display instead of the CommCare HQ logo.  It "
+#| "will be automatically resized to a height of 32 pixels."
 msgid ""
 "Upload a custom image to display instead of the CommCare HQ logo.  It will "
-"be automatically resized to a height of 32 pixels."
+"be automatically resized to a height of 32 pixels. Upload size limit is "
+"{size_limit} MB."
 msgstr ""
 "Cargue una imagen personalizada para mostrar en vez del logo de CommCare HQ. "
 "Este será ajustado a una altura de 32 pixeles."
@@ -14950,6 +14956,10 @@ msgstr "Actualice la Información Básica"
 #: corehq/apps/domain/forms.py
 msgid "Default timezone"
 msgstr "Zona horaria por defecto"
+
+#: corehq/apps/domain/forms.py
+msgid "Logo exceeds {} MB size limit"
+msgstr ""
 
 #: corehq/apps/domain/forms.py
 msgid "Release Mode Visibility should be a boolean."
@@ -18553,19 +18563,12 @@ msgid "One or more of the locations was not found."
 msgstr "Una o más de las ubicaciones no fueron encontradas."
 
 #: corehq/apps/events/forms.py corehq/apps/users/forms.py
-#, fuzzy
-#| msgid "Primary location can only be one of user's locations"
 msgid "Primary location must be one of the user's locations"
 msgstr ""
-"La ubicación principal solo puede ser una de las ubicaciones del usuario"
 
 #: corehq/apps/events/forms.py corehq/apps/users/forms.py
-#, fuzzy
-#| msgid "Primary location can't be empty if user has any locations set"
 msgid "Primary location can't be empty if the user has any locations set"
 msgstr ""
-"La ubicación principal no puede estar vacía si el usuario ha establecido "
-"alguna ubicación"
 
 #: corehq/apps/events/models.py
 msgid "Attendee list under review"
@@ -18592,10 +18595,48 @@ msgid "Attendee"
 msgstr ""
 
 #: corehq/apps/events/templates/edit_attendee.html
-#, fuzzy
-#| msgid "Update Settings"
+#, python-format
+msgid ""
+"\n"
+"            This attendee cannot be deleted as <strong>%(attendee_name)s</"
+"strong> has been tracked as\n"
+"            having attended one or more events.\n"
+"          "
+msgstr ""
+
+#: corehq/apps/events/templates/edit_attendee.html
 msgid "Update Attendee"
-msgstr "Actualizar Configuraciones"
+msgstr ""
+
+#: corehq/apps/events/templates/edit_attendee.html
+msgid "Delete Attendee"
+msgstr ""
+
+#: corehq/apps/events/templates/edit_attendee.html
+#, python-format
+msgid ""
+"\n"
+"                Are you sure you want to permanently delete "
+"<strong>%(attendee_name)s</strong>?\n"
+"              "
+msgstr ""
+
+#: corehq/apps/events/templates/edit_attendee.html
+#, python-format
+msgid ""
+"\n"
+"                This action will delete %(attendee_name)s as a potential "
+"attendee and will remove them from all\n"
+"                future events that they are currently enlisted in.\n"
+"              "
+msgstr ""
+
+#: corehq/apps/events/templates/edit_attendee.html
+msgid ""
+"\n"
+"                  This action cannot be undone.\n"
+"                "
+msgstr ""
 
 #: corehq/apps/events/templates/event_attendees.html
 msgid ""
@@ -18787,10 +18828,58 @@ msgid "Form validation failed: {}"
 msgstr ""
 
 #: corehq/apps/events/views.py
-#, fuzzy
-#| msgid "Edit Actions"
 msgid "Edit Attendee"
-msgstr "Editar Acciones"
+msgstr ""
+
+#: corehq/apps/events/views.py
+#, fuzzy
+#| msgid "Mobile Worker Upload Status"
+msgid "Enabling mobile worker attendees status"
+msgstr "Estado de Carga de Usuario Móvil"
+
+#: corehq/apps/events/views.py
+msgid "Disabling mobile worker attendees status"
+msgstr ""
+
+#: corehq/apps/events/views.py
+#, fuzzy
+#| msgid "Restoring your forms, this may take some time..."
+msgid "Processing Mobile Workers. This may take some time..."
+msgstr "Restaurando sus formularios; esto puede llevar un tiempo..."
+
+#: corehq/apps/events/views.py
+msgid "User conversion failed for some reason and we have noted this failure."
+msgstr ""
+
+#: corehq/apps/events/views.py
+#, fuzzy
+#| msgid "Go back to Mobile Workers"
+msgid "Go back to view attendees"
+msgstr "Regresar a Usuarios Móviles"
+
+#: corehq/apps/events/views.py
+msgid "Mobile workers can now also be selected to attend events."
+msgstr ""
+
+#: corehq/apps/events/views.py
+msgid "Enabling mobile workers complete!"
+msgstr ""
+
+#: corehq/apps/events/views.py
+msgid "Enabling mobile worker attendees in progress. This may take a while..."
+msgstr ""
+
+#: corehq/apps/events/views.py
+msgid "Mobile workers are now removed from the potential attendees list."
+msgstr ""
+
+#: corehq/apps/events/views.py
+msgid "Disabling mobile workers complete!"
+msgstr ""
+
+#: corehq/apps/events/views.py
+msgid "Disabling mobile worker attendees in progress. This may take a while..."
+msgstr ""
 
 #: corehq/apps/export/det/schema_generator.py
 #, python-brace-format
@@ -20419,6 +20508,13 @@ msgstr ""
 "para que sean menos de  %(max_rows)s filas."
 
 #: corehq/apps/export/views/download.py
+msgid ""
+"There are no sheets to export. If this is a bulk case export then the export "
+"configuration might still be busy populating its tables. Please try again "
+"later."
+msgstr ""
+
+#: corehq/apps/export/views/download.py
 msgid "You do not have permission to export de-identified exports."
 msgstr ""
 
@@ -20579,10 +20675,8 @@ msgid "Export De-Identified Cases"
 msgstr "Exportar Casos Anónimos"
 
 #: corehq/apps/export/views/list.py
-#, fuzzy
-#| msgid "Export <strong>{}</strong> created."
-msgid "Populating tables for <strong>{}</strong> {}."
-msgstr "Exportación <strong>{}</strong> creada."
+msgid "Populating tables for <strong>{}</strong>. ({}%)"
+msgstr ""
 
 #: corehq/apps/export/views/list.py
 msgid "Excel Dashboard Integration"
@@ -22158,6 +22252,18 @@ msgstr ""
 #: corehq/apps/hqcase/utils.py
 msgid "Automatic Case Update Rule"
 msgstr ""
+
+#: corehq/apps/hqcase/utils.py
+#, fuzzy
+#| msgid "Application Build"
+msgid "Deduplication Rule"
+msgstr "Desarrollo de Aplicación"
+
+#: corehq/apps/hqcase/utils.py
+#, fuzzy
+#| msgid "Zapier Integration"
+msgid "DHIS2 Integration"
+msgstr "Integración Zapier"
 
 #: corehq/apps/hqmedia/cache.py
 #, python-format
@@ -39014,10 +39120,8 @@ msgid "The following users were not found: {}."
 msgstr ""
 
 #: corehq/apps/users/views/mobile/users.py
-#, fuzzy
-#| msgid "Clear"
 msgid "Bulk Clear"
-msgstr "Borrar"
+msgstr ""
 
 #: corehq/apps/users/views/mobile/users.py
 msgid ""
@@ -43003,7 +43107,15 @@ msgid "View All Attendees"
 msgstr ""
 
 #: corehq/tabs/tabclasses.py
+msgid "Manage attendees for Attendance Tracking Events"
+msgstr ""
+
+#: corehq/tabs/tabclasses.py
 msgid "View All Events"
+msgstr ""
+
+#: corehq/tabs/tabclasses.py
+msgid "Manage Attendance Tracking Events"
 msgstr ""
 
 #: corehq/trans_override.py

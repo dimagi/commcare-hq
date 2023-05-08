@@ -952,6 +952,7 @@ msgstr ""
 #: corehq/apps/domain/forms.py
 #: corehq/apps/domain/templates/domain/partials/payment_modal.html
 #: corehq/apps/domain/templates/domain/stripe_cards.html
+#: corehq/apps/events/templates/edit_attendee.html
 #: corehq/apps/events/templates/event_attendees.html
 #: corehq/apps/export/templates/export/customize_export_new.html
 #: corehq/apps/export/templates/export/dialogs/bulk_delete_custom_export_dialog.html
@@ -7286,6 +7287,7 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/forms/custom_assertions.html
+#: corehq/apps/app_manager/templates/app_manager/partials/settings/app_settings.html
 msgid "Custom Assertions"
 msgstr ""
 
@@ -10214,10 +10216,6 @@ msgid "There was an issue with your custom instances: {}"
 msgstr ""
 
 #: corehq/apps/app_manager/views/forms.py
-msgid "There was an issue with your custom assertions: {}"
-msgstr ""
-
-#: corehq/apps/app_manager/views/forms.py
 msgid "Unable to validate form due to server error."
 msgstr ""
 
@@ -10515,6 +10513,10 @@ msgstr ""
 #: corehq/apps/app_manager/views/utils.py
 #, python-brace-format
 msgid "Session endpoint IDs must be unique. '{endpoint_id}' is already in-use"
+msgstr ""
+
+#: corehq/apps/app_manager/views/utils.py
+msgid "There was an issue with your custom assertions: {}"
 msgstr ""
 
 #: corehq/apps/app_manager/xform.py
@@ -13576,7 +13578,8 @@ msgstr ""
 #: corehq/apps/data_interfaces/templates/data_interfaces/partials/case_rule_criteria.html
 #: corehq/apps/domain/forms.py
 #: corehq/apps/domain/templates/domain/manage_releases_by_location.html
-#: corehq/apps/hqwebapp/doc_info.py corehq/apps/locations/forms.py
+#: corehq/apps/events/forms.py corehq/apps/hqwebapp/doc_info.py
+#: corehq/apps/locations/forms.py
 #: corehq/apps/locations/templates/locations/manage/location.html
 #: corehq/apps/locations/templates/locations/manage/locations.html
 #: corehq/apps/locations/views.py corehq/apps/reports/commtrack/standard.py
@@ -14120,9 +14123,11 @@ msgid "Custom Logo"
 msgstr ""
 
 #: corehq/apps/domain/forms.py
+#, python-brace-format
 msgid ""
 "Upload a custom image to display instead of the CommCare HQ logo.  It will "
-"be automatically resized to a height of 32 pixels."
+"be automatically resized to a height of 32 pixels. Upload size limit is "
+"{size_limit} MB."
 msgstr ""
 
 #: corehq/apps/domain/forms.py
@@ -14254,6 +14259,10 @@ msgstr ""
 
 #: corehq/apps/domain/forms.py
 msgid "Default timezone"
+msgstr ""
+
+#: corehq/apps/domain/forms.py
+msgid "Logo exceeds {} MB size limit"
 msgstr ""
 
 #: corehq/apps/domain/forms.py
@@ -17778,7 +17787,47 @@ msgid "Attendee"
 msgstr ""
 
 #: corehq/apps/events/templates/edit_attendee.html
+#, python-format
+msgid ""
+"\n"
+"            This attendee cannot be deleted as <strong>%(attendee_name)s</"
+"strong> has been tracked as\n"
+"            having attended one or more events.\n"
+"          "
+msgstr ""
+
+#: corehq/apps/events/templates/edit_attendee.html
 msgid "Update Attendee"
+msgstr ""
+
+#: corehq/apps/events/templates/edit_attendee.html
+msgid "Delete Attendee"
+msgstr ""
+
+#: corehq/apps/events/templates/edit_attendee.html
+#, python-format
+msgid ""
+"\n"
+"                Are you sure you want to permanently delete "
+"<strong>%(attendee_name)s</strong>?\n"
+"              "
+msgstr ""
+
+#: corehq/apps/events/templates/edit_attendee.html
+#, python-format
+msgid ""
+"\n"
+"                This action will delete %(attendee_name)s as a potential "
+"attendee and will remove them from all\n"
+"                future events that they are currently enlisted in.\n"
+"              "
+msgstr ""
+
+#: corehq/apps/events/templates/edit_attendee.html
+msgid ""
+"\n"
+"                  This action cannot be undone.\n"
+"                "
 msgstr ""
 
 #: corehq/apps/events/templates/event_attendees.html
@@ -17972,6 +18021,50 @@ msgstr ""
 
 #: corehq/apps/events/views.py
 msgid "Edit Attendee"
+msgstr ""
+
+#: corehq/apps/events/views.py
+msgid "Enabling mobile worker attendees status"
+msgstr ""
+
+#: corehq/apps/events/views.py
+msgid "Disabling mobile worker attendees status"
+msgstr ""
+
+#: corehq/apps/events/views.py
+msgid "Processing Mobile Workers. This may take some time..."
+msgstr ""
+
+#: corehq/apps/events/views.py
+msgid "User conversion failed for some reason and we have noted this failure."
+msgstr ""
+
+#: corehq/apps/events/views.py
+msgid "Go back to view attendees"
+msgstr ""
+
+#: corehq/apps/events/views.py
+msgid "Mobile workers can now also be selected to attend events."
+msgstr ""
+
+#: corehq/apps/events/views.py
+msgid "Enabling mobile workers complete!"
+msgstr ""
+
+#: corehq/apps/events/views.py
+msgid "Enabling mobile worker attendees in progress. This may take a while..."
+msgstr ""
+
+#: corehq/apps/events/views.py
+msgid "Mobile workers are now removed from the potential attendees list."
+msgstr ""
+
+#: corehq/apps/events/views.py
+msgid "Disabling mobile workers complete!"
+msgstr ""
+
+#: corehq/apps/events/views.py
+msgid "Disabling mobile worker attendees in progress. This may take a while..."
 msgstr ""
 
 #: corehq/apps/export/det/schema_generator.py
@@ -19577,6 +19670,13 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/export/views/download.py
+msgid ""
+"There are no sheets to export. If this is a bulk case export then the export "
+"configuration might still be busy populating its tables. Please try again "
+"later."
+msgstr ""
+
+#: corehq/apps/export/views/download.py
 msgid "You do not have permission to export de-identified exports."
 msgstr ""
 
@@ -19735,7 +19835,7 @@ msgid "Export De-Identified Cases"
 msgstr ""
 
 #: corehq/apps/export/views/list.py
-msgid "Populating tables for <strong>{}</strong> {}."
+msgid "Populating tables for <strong>{}</strong>. ({}%)"
 msgstr ""
 
 #: corehq/apps/export/views/list.py
@@ -21246,6 +21346,14 @@ msgstr ""
 
 #: corehq/apps/hqcase/utils.py
 msgid "Automatic Case Update Rule"
+msgstr ""
+
+#: corehq/apps/hqcase/utils.py
+msgid "Deduplication Rule"
+msgstr ""
+
+#: corehq/apps/hqcase/utils.py
+msgid "DHIS2 Integration"
 msgstr ""
 
 #: corehq/apps/hqmedia/cache.py
@@ -41472,7 +41580,15 @@ msgid "View All Attendees"
 msgstr ""
 
 #: corehq/tabs/tabclasses.py
+msgid "Manage attendees for Attendance Tracking Events"
+msgstr ""
+
+#: corehq/tabs/tabclasses.py
 msgid "View All Events"
+msgstr ""
+
+#: corehq/tabs/tabclasses.py
+msgid "Manage Attendance Tracking Events"
 msgstr ""
 
 #: corehq/trans_override.py
