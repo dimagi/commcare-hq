@@ -37,7 +37,7 @@
     {% if commtrack_enabled or uses_locations %}
       <li><a href="#commtrack-data" data-toggle="tab">{% trans "Locations" %}</a></li>
     {% endif %}
-    {% if not request.is_view_only or token %}
+    {% if not request.is_view_only %}
       <li><a href="#user-password" data-toggle="tab">{% trans "Security" %}</a></li>
     {% endif %}
     {% if not is_currently_logged_in_user and not request.is_view_only %}
@@ -78,8 +78,7 @@
             </div>
           </form>
           <div class="spacer"></div>
-        {% endif %}
-        {% if token %}
+          {% if token %}
           <fieldset>
             <legend>{% trans 'Two Factor Authentication' %}</legend>
             <div class="form form-horizontal">
@@ -93,6 +92,7 @@
               </div>
             </div>
           </fieldset>
+          {% endif %}
         {% endif %}
       </div>
     </div>
