@@ -357,7 +357,6 @@ class ExpandedMobileWorkerFilter(BaseMultipleOptionFilter):
             # if userid are passed then remove default active filter
             # and move it with mobile worker filter
             q = q.remove_default_filter('active')
-            has_user_ids = True
             if HQUserType.DEACTIVATED in user_types:
                 deactivated_mbwf = filters.AND(user_es.is_active(False), user_es.mobile_users())
                 user_type_filters.append(deactivated_mbwf)
