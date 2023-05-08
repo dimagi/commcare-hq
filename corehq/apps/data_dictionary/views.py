@@ -182,7 +182,7 @@ def update_case_property(request, domain):
         errors, fhir_resource_type_obj = _update_fhir_resource_type(request, domain)
     if not errors:
         for group in group_list:
-            case_type = group.get("case_type")
+            case_type = group.get("caseType")
             id = group.get("id")
             name = group.get("name")
             index = group.get("index")

@@ -163,7 +163,7 @@ hqDefine("data_dictionary/js/data_dictionary", [
                 _.each(self.caseGroupList(), function (group, index) {
                     if (group.name() !== "") {
                         let groupData = {
-                            'case_type': self.activeCaseType(),
+                            'caseType': self.activeCaseType(),
                             'id': group.id,
                             'name': group.name(),
                             'description': group.description(),
