@@ -15,6 +15,7 @@ from corehq.apps.es.client import manager
 from corehq.apps.es.forms import form_adapter
 from corehq.apps.es.tests.utils import case_search_es_setup, es_test
 from corehq.apps.es.users import user_adapter
+from corehq.apps.es.cases import case_adapter
 from corehq.apps.hqcase.api.get_list import get_list
 from corehq.apps.locations.tests.util import setup_locations_and_types
 from corehq.apps.users.models import HqPermissions, UserRole, WebUser
@@ -31,6 +32,7 @@ from corehq.util.test_utils import (
     case_search_adapter,
     form_adapter,
     user_adapter,
+    case_adapter,
 ], setup_class=True)
 @disable_quickcache
 @privilege_enabled(privileges.API_ACCESS)
