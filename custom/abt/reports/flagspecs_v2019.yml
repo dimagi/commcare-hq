@@ -787,17 +787,6 @@ http://openrosa.org/formdesigner/FC8DCFC3-F595-40E2-955B-90721FCD246F:
     warning_fr: "Problème signalé: fiches de stocks manquantes : bouteilles/sachets vides et stocks de déchets "
     warning_por: "Problema reportado: Deficiente arquivo de registo de estoque: garrfas vazias e estoque de lixo."
     responsible_follow_up: "District Coordinator"
-  - question: [separate_cards_batch]
-    comment: [separate_cards_batch_comments]
-    base_path: [stock_audit_grp, Q6]
-    flag_name: "6. If there are insecticides that expire during spray, are there separate stock cards for each batch of insecticide?"
-    flag_name_fr: "6. S'il y a des insecticides qui expirent pendant la pulvérisation, existe-t-il des fiches de stock distinctes pour chaque lot d'insecticide?"
-    flag_name_por: "6. Se ha insecticidas que expiram durante a pulverização, existem cartões de estoque separados para cada lote de insecticidas?"
-    answer: "no"
-    warning: "Problem reported: No separate stock cards for expiring insecticide."
-    warning_fr: "Problème signalé: pas de fiches de sotck séparés pour les insecticides périmés "
-    warning_por: "Problema reportado: Nao ha separacao de cartoes de estoque de insecticida expirado."
-    responsible_follow_up: "District Coordinator"
   - question: [expired_insecticides_separate]
     comment: [expired_insecticides_separate_comments]
     base_path: [stock_audit_grp, Q6a]
