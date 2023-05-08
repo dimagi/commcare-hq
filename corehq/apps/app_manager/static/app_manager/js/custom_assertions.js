@@ -23,7 +23,14 @@ hqDefine('app_manager/js/custom_assertions', function () {
         };
 
         self.wrap = function (assertions) {
-            return ko.mapping.fromJS(assertions, self.mapping, self);
+            let ret = ko.mapping.fromJS(assertions, self.mapping, self);
+
+            // after initialization, fire change event so save button works
+            self.customAssertions.subscribe(function () {
+                $("#custom-assertions input[name='custom_assertions']").change();
+            });
+
+            return ret;
         };
 
         self.unwrap = function () {
