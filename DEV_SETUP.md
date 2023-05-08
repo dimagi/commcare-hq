@@ -273,6 +273,29 @@ please see [`xmlsec`'s install notes](https://pypi.org/project/xmlsec/).
     python3 -m pip install --upgrade pip
     ```
 
+#### Option C: With standard Python venv
+
+Virtual environments were introduced as a standard in Python 3.3 [with PEP 405](https://peps.python.org/pep-0405/).
+
+By convention, virtual environments use a ".venv" or "venv" directory in the
+root of the codebase. Once you have cloned the CommCare HQ repo in "Step 2"
+below, create a Python 3.9 virtual environment in the root of the codebase
+with:
+```shell
+$ python3.9 -m venv .venv
+```
+
+For convenience, you can create an alias to activate virtual environments in
+".venv" and "venv" directories. To do that, add the following to your
+`.bashrc` or `.zshrc` file:
+```shell
+alias venv='if [[ -d .venv ]] ; then source .venv/bin/activate ; elif [[ -d venv ]] ; then source venv/bin/activate ; fi'
+```
+Then you can activate virtual environments with
+```shell
+$ venv
+```
+
 
 ### Step 2: Clone this repo and install requirements
 
