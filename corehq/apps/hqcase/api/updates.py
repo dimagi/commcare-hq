@@ -13,7 +13,7 @@ from corehq.apps.fixtures.utils import is_identifier_invalid
 from corehq.apps.hqcase.utils import CASEBLOCK_CHUNKSIZE, submit_case_blocks
 from corehq.form_processor.models import CommCareCase
 from corehq.sql_db.util import get_db_aliases_for_partitioned_query
-from corehq.apps.es.cases import CaseES
+from corehq.apps.es.case_search import CaseSearchES
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.es.users import UserES
 from corehq.apps.users.models import CouchUser
@@ -335,7 +335,7 @@ def validate_update_permission(domain, data, user, case_db):
     owner_ids, case_ids = _get_owner_ids(data, case_db)
 
     case_owner_ids = (
-        CaseES()
+        CaseSearchES()
         .domain(domain)
         .case_ids(case_ids)
         .values_list('owner_id', flat=True)
