@@ -116,6 +116,10 @@ class BaseJsonCaseChange(jsonobject.JsonObject):
             **get_kwargs('case_type', 'case_name', 'external_id', 'owner_id'),
         ).as_text()
 
+    @property
+    def is_new_case(self):
+        return self._is_case_creation
+
 
 class JsonCaseCreation(BaseJsonCaseChange):
     temporary_id = jsonobject.StringProperty()
