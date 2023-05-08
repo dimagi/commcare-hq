@@ -13,10 +13,10 @@ from corehq.apps.fixtures.utils import is_identifier_invalid
 from corehq.apps.hqcase.utils import CASEBLOCK_CHUNKSIZE, submit_case_blocks
 from corehq.form_processor.models import CommCareCase
 from corehq.sql_db.util import get_db_aliases_for_partitioned_query
-from corehq.apps.es.case_search import case_search_adapter
-from corehq.apps.users.models import CommCareUser
-from corehq.util.es.elasticsearch import NotFoundError
-from corehq.form_processor.exceptions import CaseNotFound
+from corehq.apps.es.cases import CaseES
+from corehq.apps.locations.models import SQLLocation
+from corehq.apps.es.users import UserES
+from corehq.apps.users.models import CouchUser
 
 from .core import SubmissionError, UserError
 
@@ -168,6 +168,9 @@ def handle_case_update(domain, data, user, device_id, is_creation):
 
     case_db = CaseIDLookerUpper(domain, updates)
 
+    if isinstance(user, CouchUser):
+        validate_update_permission(domain, updates, user, case_db)
+
     case_blocks = [update.get_caseblock(case_db) for update in updates]
     xform, cases = _submit_case_blocks(case_blocks, domain, user, device_id)
     if xform.is_error:
@@ -299,55 +302,82 @@ def _submit_case_blocks(case_blocks, domain, user, device_id):
     )
 
 
-def validate_update_permission(domain, data, user, is_creation):
+def _get_owner_ids(data, case_db):
+    owner_ids = []
+    case_ids = []
+    for data_item in data:
+        if data_item.is_new_case:
+            owner_ids.append(data_item.owner_id)
+        else:
+            case_id = data_item.get_case_id(case_db)
+            case_ids.append(case_id)
+
+        for name, index in data_item.indices.items():
+            index_case_id = index.get_id(case_db)
+
+            if index_case_id in case_db.real_case_ids:
+                case_ids.append(index_case_id)
+            else:
+                case_owner_id = case_db.get_owner_id(index_case_id)
+                owner_ids.append(case_owner_id)
+
+    return owner_ids, case_ids
+
+
+def validate_update_permission(domain, data, user, case_db):
     """
-    Check whether the given `user` has permission to create/update a case.
+    Check whether the given `user` has permission to create/update cases and indices from `data`.
     Also checks whether `user` has access to all case indices, if there are any.
     """
-    from corehq.apps.locations.permissions import (
-        user_can_access_case,
-        user_can_access_location_id,
-        user_can_access_other_user
+    if user.has_permission(domain, 'access_all_locations'):
+        return
+
+    owner_ids, case_ids = _get_owner_ids(data, case_db)
+
+    case_owner_ids = (
+        CaseES()
+        .domain(domain)
+        .case_ids(case_ids)
+        .values_list('owner_id', flat=True)
     )
-    owner_id = data.get('owner_id', None)
-    if is_creation:
-        # No way of knowing if owner_id is a location or user id, so we need to check both
-        other_user = CommCareUser.get_by_user_id(owner_id, domain)
-        if not (
-            user_can_access_location_id(domain, user, owner_id)
-            or (other_user and user_can_access_other_user(domain, user, other_user))
-        ):
-            raise PermissionDenied(
-                f"You do not have permission to create a case with owner_id '{owner_id}'"
-            )
-    elif 'case_id' in data:
-        case_id = data['case_id']
-        case = _get_case_safe(case_id)
-        if not user_can_access_case(domain, user, case, es_case=True):
-            raise PermissionDenied(
-                f"You do not have permission to update the case with case_id '{case_id}'"
-            )
+    all_owner_ids = set(owner_ids + case_owner_ids)
 
-    indices = data.get('indices', {})
-    for index_name in indices.items():
-        index_case_id = indices[index_name].get('case_id', None)
-        if not index_case_id:
-            continue
+    # List of owner ids can contain either location or user ids, so separate the two
+    location_ids = set(
+        SQLLocation.objects
+        .filter(location_id__in=all_owner_ids)
+        .values_list('location_id', flat=True)
+    )
+    user_ids = all_owner_ids - set(location_ids)
 
-        case = _get_case_safe(index_case_id, is_index_case=True)
-        if not user_can_access_case(domain, user, case, es_case=True):
-            raise PermissionDenied(
-                f"You do not have permission to case index with case_id '{index_case_id}'"
-            )
+    user_location_ids = set(
+        SQLLocation.objects
+        .accessible_to_user(domain, user)
+        .values_list('location_id', flat=True)
+    )
 
+    inaccessible_location_ids = location_ids - user_location_ids
+    if inaccessible_location_ids:
+        raise PermissionDenied(
+            "No permission to access following location ids "
+            f"from given case/owner ids: {inaccessible_location_ids}"
+        )
 
-def _get_case_safe(case_id, is_index_case=False):
-    try:
-        case = case_search_adapter.get(case_id)
-    except NotFoundError:
-        if is_index_case:
-            raise CaseNotFound(f"Could not find index case with case_id '{case_id}'")
-        else:
-            raise CaseNotFound(f"Could not find case with case_id '{case_id}'")
+    # Get all user_ids that share a location with user
+    users_with_shared_locations = set(
+        UserES()
+        .domain(domain)
+        .user_ids(user_ids)
+        .location(user_location_ids)
+        .values_list('_id', flat=True)
+    )
+    inaccessible_user_ids = user_ids - set(users_with_shared_locations)
+    if inaccessible_user_ids:
+        raise PermissionDenied(
+            "No permission to access following user ids "
+            f"from given case/owner ids: {inaccessible_user_ids}"
+        )
 
-    return case
+    # Can access all users at this point, so if length is different then some users could not be found
+    if len(user_ids) != len(users_with_shared_locations):
+        raise UserError("Not all owner_ids are real owner_ids in the project")
