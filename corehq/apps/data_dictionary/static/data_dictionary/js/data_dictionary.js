@@ -168,7 +168,7 @@ hqDefine("data_dictionary/js/data_dictionary", [
                             'name': group.name(),
                             'description': group.description(),
                             'index': index,
-                            'deprecated': group.deprecated(),
+                            'deprecated': group.toBeDeprecated(),
                         };
                         postGroups.push(groupData);
                     }
@@ -185,7 +185,7 @@ hqDefine("data_dictionary/js/data_dictionary", [
                             'label': element.label() || element.name,
                             'index': index,
                             'data_type': element.dataType(),
-                            'group': group.deprecated() ? "" : group.name(),
+                            'group': group.toBeDeprecated() ? "" : group.name(),
                             'description': element.description(),
                             'fhir_resource_prop_path': (
                                 element.fhirResourcePropPath() ? element.fhirResourcePropPath().trim() : element.fhirResourcePropPath()),
@@ -212,7 +212,7 @@ hqDefine("data_dictionary/js/data_dictionary", [
                         activeCaseType.fhirResourceType(self.fhirResourceType());
                         const emptyGroup = self.caseGroupList().find(group => group.name() === "");
                         for (let group of self.caseGroupList()) {
-                            if (group.deprecated()) {
+                            if (group.toBeDeprecated()) {
                                 emptyGroup.properties.push(...group.properties.removeAll());
                             }
                         }
@@ -293,7 +293,7 @@ hqDefine("data_dictionary/js/data_dictionary", [
 
         self.newGroup = function () {
             if (_.isString(self.newGroupName())) {
-                var group = groupsViewModel(null, self.newGroupName(), '', self.activeCaseType());
+                var group = groupsViewModel(null, self.newGroupName(), '', self.activeCaseType(), false);
                 self.caseGroupList.push(group);
                 self.newGroupName(undefined);
             }
