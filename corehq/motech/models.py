@@ -1,10 +1,13 @@
+import datetime
 import json
 import re
+import time
 from typing import Any, Callable, Optional
 
 from django.db import models
 from django.utils.functional import cached_property
 from django.utils.translation import gettext as _
+from django.core.cache import cache
 
 import attr
 import jsonfield
@@ -106,6 +109,7 @@ class ConnectionSettings(models.Model):
     # last_token is stored encrypted because it can contain secrets
     last_token_aes = models.TextField(blank=True, default="")
     is_deleted = models.BooleanField(default=False, db_index=True)
+    # throttle_window is in milliseconds
     throttle_window = models.IntegerField(null=True)
 
     objects = ConnectionSoftDeleteManager.from_queryset(ConnectionQuerySet)()
@@ -163,6 +167,84 @@ class ConnectionSettings(models.Model):
     @property
     def notify_addresses(self):
         return [addr for addr in re.split('[, ]+', self.notify_addresses_str) if addr]
+
+    @property
+    def is_throttled_connection(self):
+        return self.throttle_window is not None
+
+    def request_is_throttled(self):
+        if not self.is_throttled_connection:
+            return False
+
+        if self._should_throttle_request():
+            return True
+
+        return False
+
+    def log_request_attempt(self):
+        self._clear_throttled_requests_count()
+        self._log_request_time()
+
+    def log_throttled_request_attempt(self):
+        self._increment_throttled_requests_count()
+
+    def get_next_request_attempt(self):
+        # Todo: check how granularly we check for retries
+
+        # Space out the throttled requests with 1 minute intervals
+        attempt_interval_ms = self._get_throttled_requests_count() * 1000 * 60
+        retry_millis = self._current_millis_from_epoch() + attempt_interval_ms
+
+        request_attempt = datetime.datetime.fromtimestamp(retry_millis / 1000)
+        return request_attempt
+
+    def _should_throttle_request(self):
+        last_request_timestamp_millis = self._get_last_request_time_from_cache()
+        if not last_request_timestamp_millis:
+            return False
+
+        millis_from_last_request = self._current_millis_from_epoch() - last_request_timestamp_millis
+        return millis_from_last_request < self.throttle_window
+
+    def _log_request_time(self):
+        cache.set(self._server_request_cache_key, self._current_millis_from_epoch(), 60 * 5)
+
+    def _increment_throttled_requests_count(self):
+        cache.set(self._throttled_requests_count_cache_key, self._get_throttled_requests_count() + 1, 60 * 5)
+
+    def _clear_throttled_requests_count(self):
+        cache.set(self._throttled_requests_count_cache_key, 0, 60 * 5)
+
+    def _get_last_request_time_from_cache(self):
+        """
+        Returns the milliseconds from epoch of last request made to the server
+        specified by connection_settings
+        """
+        return cache.get(self._server_request_cache_key)
+
+    def _get_throttled_requests_count(self):
+        return cache.get(self._throttled_requests_count_cache_key) or 0
+
+    def _current_millis_from_epoch(self):
+        return int(time.time() * 1000)
+
+    @property
+    def _server_request_cache_key(self):
+        """
+        This is the cache key for keeping track of when the last request was made to the connection
+        setting server on the domain
+        """
+        # self.connection_settings_id is not a UUID
+        return f'conn_{self.id}_request'
+
+    @property
+    def _throttled_requests_count_cache_key(self):
+        """
+        This is the cache key for keeping track of how many requests have been throttled in the
+        throttle window
+        """
+        # self.connection_settings_id is not a UUID
+        return f'conn_{self.id}_throttled_count'
 
     def get_requests(
         self,

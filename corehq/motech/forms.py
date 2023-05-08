@@ -64,7 +64,9 @@ class ConnectionSettingsForm(forms.ModelForm):
     )
     throttle_window = forms.IntegerField(
         label=_('Throttle window'),
-        help_text=_("The minimum amount of time in milliseconds allowed for subsequent requests made to the server"),
+        help_text=_(
+            "The minimum amount of time in milliseconds allowed between subsequent requests made to the server"
+        ),
         initial=100,
         required=False,
         min_value=1,
@@ -124,14 +126,14 @@ class ConnectionSettingsForm(forms.ModelForm):
                     'plaintext_password': PASSWORD_PLACEHOLDER if password else '',
                     'plaintext_client_secret': PASSWORD_PLACEHOLDER if secret else '',
                     'auth_preset': api_setting_matches_preset(kwargs['instance']),
-                    'throttle_requests': kwargs['instance'].throttle_window is not None,
+                    'throttle_requests': kwargs['instance'].is_throttled_connection,
                 })
             else:
                 kwargs['initial'] = {
                     'plaintext_password': PASSWORD_PLACEHOLDER if password else '',
                     'plaintext_client_secret': PASSWORD_PLACEHOLDER if secret else '',
                     'auth_preset': api_setting_matches_preset(kwargs['instance']),
-                    'throttle_requests': kwargs['instance'].throttle_window is not None,
+                    'throttle_requests': kwargs['instance'].is_throttled_connection,
                 }
         super().__init__(*args, **kwargs)
 

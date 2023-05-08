@@ -279,3 +279,51 @@ class TestRequestLogFormatting(TestCase):
             response_headers={},
             response_body='OK',
         )
+
+
+class ConnectionSettingsThrottleTest(TestCase):
+
+    DOMAIN = 'test-domain'
+    THROTTLE_WINDOW = 1000  # 1 second
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.connection_settings = ConnectionSettings.objects.create(
+            domain=cls.DOMAIN,
+            name='Test Throttle',
+            url='http://novirus.sketchy',
+            throttle_window=cls.THROTTLE_WINDOW,
+        )
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.connection_settings.delete()
+        super().tearDownClass()
+
+    def test_should_throttle(self):
+        self.assertTrue(self.connection_settings.is_throttled_connection)
+
+    def test_request_is_not_throttled(self):
+        self.assertFalse(self.connection_settings.request_is_throttled())
+
+    def test_request_is_throttled(self):
+        self.assertFalse(self.connection_settings.request_is_throttled())
+        self.assertEqual(self.connection_settings._get_throttled_requests_count(), 0)
+        self.connection_settings.log_request_attempt()
+
+        self.assertTrue(self.connection_settings.request_is_throttled())
+        self.connection_settings.log_throttled_request_attempt()
+        self.assertEqual(self.connection_settings._get_throttled_requests_count(), 1)
+
+    def test_throttled_request_reschedule(self):
+        self.connection_settings.log_request_attempt()
+
+        self.connection_settings.log_throttled_request_attempt()
+        first_request_attempt = self.connection_settings.get_next_request_attempt()
+
+        self.connection_settings.log_throttled_request_attempt()
+        second_request_attempt = self.connection_settings.get_next_request_attempt()
+
+        subsequent_request_attempt_difference = (second_request_attempt - first_request_attempt).seconds
+        self.assertEqual(subsequent_request_attempt_difference, 60)

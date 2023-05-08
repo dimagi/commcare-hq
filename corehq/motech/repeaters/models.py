@@ -139,7 +139,7 @@ from .dbaccessors import (
     get_pending_repeat_record_count,
     get_success_repeat_record_count,
 )
-from .exceptions import RequestConnectionError, UnknownRepeater
+from .exceptions import RequestConnectionError, UnknownRepeater, RequestThrottled
 from .repeater_generators import (
     AppStructureGenerator,
     CaseRepeaterJsonPayloadGenerator,
@@ -359,11 +359,15 @@ class Repeater(RepeaterSuperProxy):
             return False
         return self.repeat_records_ready.exists()
 
-    def set_next_attempt(self):
+    def set_next_attempt(self, next_attempt=None):
         now = datetime.utcnow()
-        interval = _get_retry_interval(self.last_attempt_at, now)
+
+        if next_attempt is None:
+            interval = _get_retry_interval(self.last_attempt_at, now)
+            next_attempt = now + interval
+
         self.last_attempt_at = now
-        self.next_attempt_at = now + interval
+        self.next_attempt_at = next_attempt
         self.save()
 
     def reset_next_attempt(self):
@@ -462,6 +466,8 @@ class Repeater(RepeaterSuperProxy):
         return self.generator.get_payload(repeat_record, self.payload_doc(repeat_record))
 
     def send_request(self, repeat_record, payload):
+        self.do_request_preflight_check()
+
         url = self.get_url(repeat_record)
         return simple_request(
             self.domain, url, payload,
@@ -472,6 +478,14 @@ class Repeater(RepeaterSuperProxy):
             payload_id=repeat_record.payload_id,
             method=self.request_method,
         )
+
+    def do_request_preflight_check(self):
+        if self.connection_settings.is_throttled_connection:
+            if self.connection_settings.request_is_throttled():
+                self.connection_settings.log_throttled_request_attempt()
+                raise RequestThrottled
+            else:
+                self.connection_settings.log_request_attempt()
 
     def handle_response(self, result, repeat_record):
         """
@@ -1395,6 +1409,12 @@ def send_request(
         log_repeater_timeout_in_datadog(repeat_record.domain)
         message = str(RequestConnectionError(err))
         repeat_record.add_server_failure_attempt(message)
+    except RequestThrottled:
+        # Simply reschedule, no need to report to user
+        repeater.set_next_attempt(
+            repeater.connection_settings.get_next_request_attempt()
+        )
+
     except Exception as err:
         repeat_record.add_client_failure_attempt(str(err))
     else:

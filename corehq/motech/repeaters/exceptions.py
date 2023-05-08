@@ -23,3 +23,7 @@ class UnknownRepeater(Exception):
 
     def __str__(self):
         return self.message
+
+
+class RequestThrottled(Exception):
+    pass
