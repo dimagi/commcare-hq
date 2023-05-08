@@ -158,6 +158,7 @@ class EmwfOptionsController(object):
             ]
         else:
             return [
+                (self.get_static_options_size, self.get_static_options),
                 (self.get_locations_size, self.get_locations),
                 (self.get_all_users_size, self.get_all_users),
             ]
