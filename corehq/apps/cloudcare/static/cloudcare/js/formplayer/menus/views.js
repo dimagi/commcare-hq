@@ -299,6 +299,9 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
     });
 
     var CaseTileView = CaseView.extend({
+        tagName: "div",
+        className: "formplayer-request list-cell-container-style",
+
         template: _.template($("#case-tile-view-item-template").html() || ""),
         templateContext: function () {
             var dict = CaseTileView.__super__.templateContext.apply(this, arguments),
@@ -509,7 +512,6 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
                 styles: this.options.styles,
                 breadcrumbs: this.options.breadcrumbs,
                 templateName: "case-list-template",
-                useGrid: this.options.numEntitiesPerRow > 1,
                 useTiles: false,
                 hasNoItems: this.hasNoItems,
                 noItemsText: this.options.collection.noItemsText,
@@ -587,12 +589,8 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             numEntitiesPerRow,
             useUniformUnits,
             prefix);
-        if (numEntitiesPerRow > 1) {
-            var cellContainerStyle = buildCellContainerStyle(numRows, numColumns, numEntitiesPerRow);
-            return [cellLayoutStyle, cellGridStyle, cellContainerStyle];
-        } else {
-            return [cellLayoutStyle, cellGridStyle];
-        }
+        var cellContainerStyle = buildCellContainerStyle(numRows, numColumns, numEntitiesPerRow);
+        return [cellLayoutStyle, cellGridStyle, cellContainerStyle];
     };
 
     const registerContinueListener = function (self, options) {
@@ -670,19 +668,6 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
                 this.reconcileMultiSelectUI();
             }
         },
-    });
-
-    var GridCaseTileViewItem = CaseTileView.extend({
-        tagName: "div",
-        className: "formplayer-request list-cell-container-style",
-    });
-
-    var GridCaseTileListView = CaseTileListView.extend({
-        initialize: function () {
-            GridCaseTileListView.__super__.initialize.apply(this, arguments);
-            console.log('initializing GridCaseTileListView')
-        },
-        childView: GridCaseTileViewItem,
     });
 
     var CaseListDetailView = CaseListView.extend({
@@ -915,9 +900,6 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
         },
         DetailTabListView: function (options) {
             return new DetailTabListView(options);
-        },
-        GridCaseTileListView: function (options) {
-            return new GridCaseTileListView(options);
         },
         MenuListView: function (options) {
             return new MenuListView(options);
