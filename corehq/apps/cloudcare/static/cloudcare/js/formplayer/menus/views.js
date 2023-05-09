@@ -567,12 +567,12 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
         },
     });
 
-    // Return a two- or three-length array of case tile CSS styles
+    // Return a two- or four-length array of case tile CSS styles
     //
     // styles[0] - the grid layout of the cells within a case list tile
     // styles[1] - the layout of the grid itself, IE how many rows/columns each tile should have and their size
-    // styles[2] (optional) - If showing multiple cases per line, sets the style of how to layout the case tiles in the
-    //                        outer grid
+    // styles[2] - (if showing 2+ cases per line) sets the bounds of the tile to arrange its grid based on
+    // styles[3] - (if showing 2+ cases per line) sets the layout of the case tiles on the outer, visible grid
     var buildCaseTileStyles = function (tiles, numRows, numColumns, numEntitiesPerRow, useUniformUnits, prefix) {
         var cellLayoutStyle = buildCellLayout(tiles, prefix);
         var cellGridStyle = buildCellGridStyle(numRows,
