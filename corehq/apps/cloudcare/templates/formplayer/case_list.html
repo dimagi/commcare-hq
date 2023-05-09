@@ -129,13 +129,12 @@
 <script type="text/template" id="cell-grid-style-template">
   .<%- model.prefix %>-cell-grid-style {
   display: grid;
-  grid-template-columns: repeat(<%- model.numColumns %>, <%- model.widthPixels %>px) min-content 5px;
-  grid-template-rows: repeat(<%- model.numRows %>, <%- model.heightPixels %>px) min-content 5px;
+  grid-template-columns: repeat(<%- model.numColumns %>, 1fr) min-content 5px;
+  grid-template-rows: repeat(<%- model.numRows %>, <%- model.heightString %>) min-content 5px;
   background-color: transparent;
   color: #685c53;
   justify-items: left;
-  padding-left: 20px;
-  padding-top: 10px;
+  padding: 10px 20px 0 20px;
   }
 </script>
 
@@ -150,6 +149,7 @@
   vertical-align: top;
   float: left;
   background-color: #f2f2f1;
+  container-type: inline-size;
   }
 </script>
 

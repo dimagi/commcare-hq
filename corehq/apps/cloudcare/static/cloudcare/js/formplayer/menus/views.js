@@ -169,28 +169,27 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
 
     // Dynamically generate the CSS style for the grid polyfill to use for the case tile
     // useUniformUnits - true if the grid's cells should have the same height as width
-    var buildCellGridStyle = function (numRows, numColumns, numCasesPerRow, useUniformUnits, prefix) {
+    var buildCellGridStyle = function (numRows, numColumns, useUniformUnits, prefix) {
         var templateString,
             view,
             template,
             model,
-            widthPixels,
-            heightPixels,
-            fullWidth;
+            heightPercentage,
+            heightString,
+            wrapperWidth;
 
-        fullWidth = 800;
-        widthPixels = ((1 / numColumns) / numCasesPerRow) * fullWidth;
+        wrapperWidth = 100;
         if (useUniformUnits) {
-            heightPixels = widthPixels;
+            heightPercentage = wrapperWidth / numColumns;
+            heightString = heightPercentage + "cqw";
         } else {
-            heightPixels = "auto";
+            heightString = "auto";
         }
 
         model = {
             numRows: numRows,
             numColumns: numColumns,
-            widthPixels: widthPixels,
-            heightPixels: heightPixels,
+            heightString: heightString,
             prefix: prefix,
         };
         templateString = $("#cell-grid-style-template").html();
@@ -584,7 +583,6 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
         var cellLayoutStyle = buildCellLayout(tiles, prefix);
         var cellGridStyle = buildCellGridStyle(numRows,
             numColumns,
-            numEntitiesPerRow,
             useUniformUnits,
             prefix);
         if (numEntitiesPerRow > 1) {
