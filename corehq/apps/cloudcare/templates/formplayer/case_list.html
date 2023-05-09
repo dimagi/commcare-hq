@@ -126,20 +126,6 @@
   <% }); %>
 </script>
 
-<script type="text/template" id="cell-container-style-template">
-  .list-cell-container-style {
-  width: <%- model.widthPercentage %>%;
-  height: 0;
-  padding-bottom: <%- model.heightPercentage %>%;
-  display: inline-block;
-  border: 1px solid white;
-  border-collapse: collapse;
-  vertical-align: top;
-  float: left;
-  background-color: #f2f2f1;
-  }
-</script>
-
 <script type="text/template" id="cell-grid-style-template">
   .<%- model.prefix %>-cell-grid-style {
   display: grid;
@@ -150,6 +136,20 @@
   justify-items: left;
   padding-left: 20px;
   padding-top: 10px;
+  }
+</script>
+
+<script type="text/template" id="cell-wrapper-style-template">
+  .list-cell-wrapper-style {
+  width: <%- model.widthPercentage %>%;
+  height: 0;
+  padding-bottom: <%- model.heightPercentage %>%;
+  display: inline-block;
+  border: 1px solid white;
+  border-collapse: collapse;
+  vertical-align: top;
+  float: left;
+  background-color: #f2f2f1;
   }
 </script>
 

@@ -167,29 +167,6 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
         return caseTileStyle;
     };
 
-    // Dynamically generate the CSS style to display multiple tiles per line
-    var buildCellContainerStyle = function (numRows, numColumns, numCasesPerRow) {
-        var outerGridTemplateString,
-            outerGridStyle,
-            outerGridStyleTemplate,
-            outerGridModel;
-
-        var widthPercentage = 100 / numCasesPerRow;
-        var widthHeightRatio = numRows / numColumns;
-        var heightPercentage = widthPercentage * widthHeightRatio;
-
-        outerGridModel = {
-            widthPercentage: widthPercentage,
-            heightPercentage: heightPercentage,
-        };
-        outerGridTemplateString = $("#cell-container-style-template").html();
-        outerGridStyleTemplate = _.template(outerGridTemplateString);
-        outerGridStyle = outerGridStyleTemplate({
-            model: outerGridModel,
-        });
-        return outerGridStyle;
-    };
-
     // Dynamically generate the CSS style for the grid polyfill to use for the case tile
     // useUniformUnits - true if the grid's cells should have the same height as width
     var buildCellGridStyle = function (numRows, numColumns, numCasesPerRow, useUniformUnits, prefix) {
@@ -222,6 +199,29 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             model: model,
         });
         return view;
+    };
+
+    // Dynamically generate the CSS style to display multiple tiles per line
+    var buildCellWrapperStyle = function (numRows, numColumns, numCasesPerRow) {
+        var outerGridTemplateString,
+            outerGridStyle,
+            outerGridStyleTemplate,
+            outerGridModel;
+
+        var widthPercentage = 100 / numCasesPerRow;
+        var widthHeightRatio = numRows / numColumns;
+        var heightPercentage = widthPercentage * widthHeightRatio;
+
+        outerGridModel = {
+            widthPercentage: widthPercentage,
+            heightPercentage: heightPercentage,
+        };
+        outerGridTemplateString = $("#cell-wrapper-style-template").html();
+        outerGridStyleTemplate = _.template(outerGridTemplateString);
+        outerGridStyle = outerGridStyleTemplate({
+            model: outerGridModel,
+        });
+        return outerGridStyle;
     };
 
     var CaseView = Marionette.View.extend({
@@ -588,8 +588,8 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             useUniformUnits,
             prefix);
         if (numEntitiesPerRow > 1) {
-            var cellContainerStyle = buildCellContainerStyle(numRows, numColumns, numEntitiesPerRow);
-            return [cellLayoutStyle, cellGridStyle, cellContainerStyle];
+            var cellWrapperStyle = buildCellWrapperStyle(numRows, numColumns, numEntitiesPerRow);
+            return [cellLayoutStyle, cellGridStyle, cellWrapperStyle];
         } else {
             return [cellLayoutStyle, cellGridStyle];
         }
@@ -614,7 +614,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             $("#list-cell-grid-style").html(caseTileStyles[1]).data("css-polyfilled", false);
             // If we have multiple cases per line, need to generate the outer grid style as well
             if (caseTileStyles.length > 2) {
-                $("#list-cell-container-style").html(caseTileStyles[2]).data("css-polyfilled", false);
+                $("#list-cell-wrapper-style").html(caseTileStyles[2]).data("css-polyfilled", false);
             }
 
             $.getScript(gridPolyfillPath);
@@ -635,7 +635,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
 
     var GridCaseTileViewItem = CaseTileView.extend({
         tagName: "div",
-        className: "formplayer-request list-cell-container-style",
+        className: "formplayer-request list-cell-wrapper-style",
     });
 
     var GridCaseTileListView = CaseTileListView.extend({
