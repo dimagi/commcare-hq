@@ -18,7 +18,7 @@
     </div>
 
     <% if (useGrid) { %>
-    <section class="js-case-container clearfix"></section>
+    <section class="js-case-container clearfix list-cell-container-style"></section>
     <% } else { %>
     <div class="module-case-list-table-container">
       <table class="table module-table module-table-case-list">
@@ -140,16 +140,21 @@
 
 <script type="text/template" id="cell-wrapper-style-template">
   .list-cell-wrapper-style {
-  width: <%- model.widthPercentage %>%;
-  height: 0;
-  padding-bottom: <%- model.heightPercentage %>%;
-  display: inline-block;
   border: 1px solid white;
   border-collapse: collapse;
   vertical-align: top;
-  float: left;
   background-color: #f2f2f1;
   container-type: inline-size;
+  }
+</script>
+
+<script type="text/template" id="cell-container-style-template">
+  .list-cell-container-style {
+  display: grid;
+  grid-template-columns: repeat(<%- casesPerRow %>, 1fr);
+  }
+  .list-cell-container-style::before {
+  display: none;
   }
 </script>
 
