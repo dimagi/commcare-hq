@@ -280,11 +280,15 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
         },
 
         templateContext: function () {
-            var appId = utils.currentUrlToObject().appId;
+            var appId = utils.currentUrlToObject().appId,
+                md = window.markdownit();
             return {
                 data: this.options.model.get('data'),
                 styles: this.options.styles,
                 isMultiSelect: this.options.isMultiSelect,
+                renderMarkdown: function (datum) {
+                    return md.render(DOMPurify.sanitize(datum || ""));
+                },
                 resolveUri: function (uri) {
                     return FormplayerFrontend.getChannel().request('resourceMap', uri, appId);
                 },
@@ -301,12 +305,8 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
     var CaseTileView = CaseView.extend({
         template: _.template($("#case-tile-view-item-template").html() || ""),
         templateContext: function () {
-            var dict = CaseTileView.__super__.templateContext.apply(this, arguments),
-                md = window.markdownit();
+            var dict = CaseTileView.__super__.templateContext.apply(this, arguments);
             dict['prefix'] = this.options.prefix;
-            dict['renderMarkdown'] = function (datum) {
-                return md.render(DOMPurify.sanitize(datum || ""));
-            };
             return dict;
         },
     });

@@ -147,12 +147,6 @@ hqDefine("app_manager/js/details/column", function () {
                 label: "",
             }]);
         }
-        if (self.screen.columnKey === "long") {
-            menuOptions = menuOptions.concat([{
-                value: "markdown",
-                label: gettext('Markdown'),
-            }]);
-        }
 
         if (self.useXpathExpression) {
             var menuOptionsToRemove = ['picture', 'audio'];
