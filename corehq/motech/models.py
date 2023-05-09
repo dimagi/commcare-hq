@@ -173,13 +173,7 @@ class ConnectionSettings(models.Model):
         return self.throttle_window is not None
 
     def request_is_throttled(self):
-        if not self.is_throttled_connection:
-            return False
-
-        if self._should_throttle_request():
-            return True
-
-        return False
+        return self._should_throttle_request()
 
     def log_request_attempt(self):
         self._clear_throttled_requests_count()
