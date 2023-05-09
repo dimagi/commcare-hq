@@ -87,7 +87,10 @@ class UpdateCasePropertyViewTest(TestCase):
 
     def test_new_case_type(self):
         self._assert_type()
-        post_data = {"properties": '[{"caseType": "somethingelse", "name": "property", "data_type": "date"}]'}
+        post_data = {
+            "groups": '[]',
+            "properties": '[{"caseType": "somethingelse", "name": "property", "data_type": "date"}]'
+        }
         response = self.client.post(self.url, post_data)
         self.assertEqual(response.status_code, 200)
         prop = self._get_case_property(name="property", case_type="somethingelse")
@@ -95,7 +98,10 @@ class UpdateCasePropertyViewTest(TestCase):
 
     def test_new_case_property(self):
         self._assert_type()
-        post_data = {"properties": '[{"caseType": "caseType", "name": "otherproperty", "data_type": "date"}]'}
+        post_data = {
+            "groups": '[]',
+            "properties": '[{"caseType": "caseType", "name": "otherproperty", "data_type": "date"}]'
+        }
         response = self.client.post(self.url, post_data)
         self.assertEqual(response.status_code, 200)
         prop = self._get_case_property(name="otherproperty", case_type="caseType")
@@ -103,21 +109,30 @@ class UpdateCasePropertyViewTest(TestCase):
 
     def test_update_with_incorrect_data_type(self):
         self._assert_type()
-        post_data = {"properties": '[{"caseType": "caseType", "name": "property", "data_type": "blah"}]'}
+        post_data = {
+            "groups": '[]',
+            "properties": '[{"caseType": "caseType", "name": "property", "data_type": "blah"}]'
+        }
         response = self.client.post(self.url, post_data)
         self.assertEqual(response.status_code, 400)
         self._assert_type()
 
     def test_update_no_name(self):
         self._assert_type()
-        post_data = {"properties": '[{"caseType": "caseType", "name": "", "data_type": "date"}]'}
+        post_data = {
+            "groups": '[]',
+            "properties": '[{"caseType": "caseType", "name": "", "data_type": "date"}]'
+        }
         response = self.client.post(self.url, post_data)
         self.assertEqual(response.status_code, 400)
         self._assert_type()
 
     def test_update_of_correct_data_type(self):
         self._assert_type()
-        post_data = {"properties": '[{"caseType": "caseType", "name": "property", "data_type": "date"}]'}
+        post_data = {
+            "groups": '[]',
+            "properties": '[{"caseType": "caseType", "name": "property", "data_type": "date"}]'
+        }
         response = self.client.post(self.url, post_data)
         self.assertEqual(response.status_code, 200)
         self._assert_type('date')
@@ -125,7 +140,10 @@ class UpdateCasePropertyViewTest(TestCase):
     def test_update_description(self):
         prop = self._get_property()
         self.assertEqual(prop.description, '')
-        post_data = {"properties": '[{"caseType": "caseType", "name": "property", "description": "description"}]'}
+        post_data = {
+            "groups": '[]',
+            "properties": '[{"caseType": "caseType", "name": "property", "description": "description"}]'
+        }
         response = self.client.post(self.url, post_data)
         self.assertEqual(response.status_code, 200)
         prop = self._get_property()
@@ -134,18 +152,51 @@ class UpdateCasePropertyViewTest(TestCase):
     def test_allowed_values_all_valid(self):
         prop = self._get_property()
         prop_payload = self._get_allowed_values_payload(prop)
-        response = self.client.post(self.url, {"properties": json.dumps([prop_payload])})
+        response = self.client.post(self.url, {"groups": '[]', "properties": json.dumps([prop_payload])})
         self.assertEqual(response.status_code, 200)
         self._assert_allowed_values(prop, prop_payload)
 
     def test_allowed_values_with_invalid_one(self):
         prop = self._get_property()
         prop_payload = self._get_allowed_values_payload(prop, all_valid=False)
-        response = self.client.post(self.url, {"properties": json.dumps([prop_payload])})
+        response = self.client.post(self.url, {"groups": '[]', "properties": json.dumps([prop_payload])})
         self.assertEqual(response.status_code, 400)
         response_data = json.loads(response.content)
         self.assertTrue(response_data["messages"][0].startswith("Unable to save valid values longer than"))
         self._assert_allowed_values(prop, prop_payload)
+
+    def test_update_with_group_name(self):
+        prop = self._get_property()
+        self.assertEqual(prop.group, '')
+        self.assertIsNone(prop.group_obj)
+        post_data = {
+            "groups": '[{"caseType": "caseType", "name": "group", "description": ""}]',
+            "properties": '[{"caseType": "caseType", "name": "property", "group": "group"}]'
+        }
+        response = self.client.post(self.url, post_data)
+        self.assertEqual(response.status_code, 200)
+        prop = self._get_property()
+        self.assertEqual(prop.group, 'group')
+        self.assertIsNotNone(prop.group_obj)
+
+    def test_update_with_no_group_name(self):
+        post_data = {
+            "groups": '[{"caseType": "caseType", "name": "group", "description": ""}]',
+            "properties": '[{"caseType": "caseType", "name": "property", "group": "group"}]'
+        }
+        response = self.client.post(self.url, post_data)
+        prop = self._get_property()
+        self.assertEqual(prop.group, 'group')
+        self.assertIsNotNone(prop.group_obj)
+        post_data = {
+            "groups": '[{"caseType": "caseType", "name": "group", "description": ""}]',
+            "properties": '[{"caseType": "caseType", "name": "property", "group": ""}]'
+        }
+        response = self.client.post(self.url, post_data)
+        self.assertEqual(response.status_code, 200)
+        prop = self._get_property()
+        self.assertEqual(prop.group, '')
+        self.assertIsNone(prop.group_obj)
 
 
 @flag_enabled('DATA_DICTIONARY')
