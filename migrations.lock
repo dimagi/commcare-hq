@@ -726,21 +726,7 @@ registry
 reminders
  0001_initial
 repeaters
- 0001_adjust_auth_field_format
- 0002_sqlrepeatrecord
- 0003_migrate_connectionsettings
- 0004_attempt_strings
- 0005_rename_repeaterstub_to_sql_repeater
- 0006_add_proxy_models
- 0007_migrate_to_sql
- 0008_add_related_name_in_connection_settings
- 0009_add_create_update_info
- 00010_add_repeater_name
- 0011_alter_sqlrepeater_name
- 00012_create_default_names_for_repeaters
- 0013_rename_sqlrepeaters_to_repeaters
- 0014_add_new_state_empty
- 0015_drop_connection_settings_fk
+ 0001_adjust_auth_field_format_squashed_0015_drop_connection_settings_fk (15 squashed migrations)
 reports
  0001_initial
  0002_auto_20171121_1803
