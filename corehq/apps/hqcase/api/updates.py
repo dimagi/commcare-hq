@@ -302,7 +302,7 @@ def _submit_case_blocks(case_blocks, domain, user, device_id):
     )
 
 
-def _get_owner_ids(data, case_db):
+def _get_owner_ids(domain, data, case_db):
     owner_ids = []
     case_ids = []
     for data_item in data:
@@ -321,7 +321,13 @@ def _get_owner_ids(data, case_db):
                 case_owner_id = case_db.get_owner_id(index_case_id)
                 owner_ids.append(case_owner_id)
 
-    return owner_ids, case_ids
+    case_owner_ids = (
+        CaseSearchES()
+        .domain(domain)
+        .case_ids(case_ids)
+        .values_list('owner_id', flat=True)
+    )
+    return set(owner_ids + case_owner_ids)
 
 
 def validate_update_permission(domain, data, user, case_db):
@@ -332,15 +338,7 @@ def validate_update_permission(domain, data, user, case_db):
     if user.has_permission(domain, 'access_all_locations'):
         return
 
-    owner_ids, case_ids = _get_owner_ids(data, case_db)
-
-    case_owner_ids = (
-        CaseSearchES()
-        .domain(domain)
-        .case_ids(case_ids)
-        .values_list('owner_id', flat=True)
-    )
-    all_owner_ids = set(owner_ids + case_owner_ids)
+    all_owner_ids = _get_owner_ids(domain, data, case_db)
 
     # List of owner ids can contain either location or user ids, so separate the two
     location_ids = set(
