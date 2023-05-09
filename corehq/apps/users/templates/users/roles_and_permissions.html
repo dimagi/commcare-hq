@@ -96,7 +96,7 @@
           <th class="text-center">
             {% trans "Data" %}
           </th>
-          {% if request|toggle_enabled:"EXPORT_OWNERSHIP" %}
+          {% if request|request_has_privilege:"EXPORT_OWNERSHIP" %}
             <th class="text-center">
               {% trans "Shared Exports" %}
             </th>
@@ -181,7 +181,7 @@
                                               edit: permissions.edit_data
                                             }"></div>
           </td>
-          {% if request|toggle_enabled:"EXPORT_OWNERSHIP" %}
+          {% if request|request_has_privilege:"EXPORT_OWNERSHIP" %}
             <td class="text-center">
               <div data-bind="permissionIcon: {
                                                 edit: permissions.edit_shared_exports
