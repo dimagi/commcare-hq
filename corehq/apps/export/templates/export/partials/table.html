@@ -65,7 +65,7 @@
       </th>
     {% endif %}
 
-    {% if request|toggle_enabled:"EXPORT_OWNERSHIP" %}
+    {% if request|request_has_privilege:"EXPORT_OWNERSHIP" %}
       <th class="col-sm-1"
           data-bind="visible: showOwnership">
         <span data-bind="visible: myExports">
@@ -682,7 +682,7 @@
       </td>
     {% endif %}
 
-    {% if request|toggle_enabled:"EXPORT_OWNERSHIP" %}
+    {% if request|request_has_privilege:"EXPORT_OWNERSHIP" %}
       <td>
         <div data-bind="visible: $parent.myExports">
           <div data-bind="visible: sharing() === 'private'">
