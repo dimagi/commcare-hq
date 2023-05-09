@@ -28,3 +28,31 @@ class ABDMUser(models.Model):
         authenticated in REST views.
         """
         return True
+
+
+CONSENT_REQUEST_STATUS_GRANTED = 'GRANTED'
+CONSENT_REQUEST_STATUS_DENIED = 'DENIED'
+
+
+# TODO Refine this table
+class ConsentRequest(models.Model):
+
+    CONSENT_REQUEST_STATUS = (
+        ('REQUESTED', 'REQUESTED'),
+        (CONSENT_REQUEST_STATUS_GRANTED, CONSENT_REQUEST_STATUS_GRANTED),
+        (CONSENT_REQUEST_STATUS_DENIED, CONSENT_REQUEST_STATUS_DENIED),
+        ('REVOKED', 'REVOKED'),
+        ('EXPIRED', 'EXPIRED'),
+        ('ERROR', 'ERROR')
+    )
+
+    request_id = models.UUIDField(unique=True)
+    consent_request_id = models.UUIDField(null=True)
+    created_date = models.DateTimeField(auto_now_add=True)
+    updated_date = models.DateTimeField(auto_now=True)
+    expiry_date = models.DateTimeField(null=True)
+    # TODO Add support for multiple artefacts (New Table)
+    artefact_id = models.UUIDField(null=True)
+    patient_abha_address = models.CharField(null=True, max_length=100)
+    status = models.CharField(choices=CONSENT_REQUEST_STATUS, default='REQUESTED', max_length=40)
+    details = models.JSONField(null=True)

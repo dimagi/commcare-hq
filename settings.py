@@ -234,6 +234,7 @@ DEFAULT_APPS = (
     'django_user_agents',
     'logentry_admin',
     'oauth2_provider',
+    'rest_framework'
 )
 
 SILENCED_SYSTEM_CHECKS = ['captcha.recaptcha_test_key_error']

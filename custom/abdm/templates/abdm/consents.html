@@ -1,0 +1,53 @@
+{% extends 'abdm/base.html' %}
+
+{% block content %}
+  <a class="mt-4 mb-3 btn btn-primary"  href="{% url 'generate_consent_request' %}">New Consent Request</a>
+  <legend>Consents</legend>
+  <table class="table">
+    <thead>
+      <tr>
+        <th scope="col">Id</th>
+        <th scope="col">Consent Request Id</th>
+        <th scope="col">Abha Id</th>
+        <th scope="col">Request Created On</th>
+        <th scope="col">Status</th>
+        <th scope="col">Fetch Data</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for consent in consents %}
+        <tr>
+          <td>{{consent.id}}</td>
+          <td>{{consent.consent_request_id}}</td>
+          <td>{{consent.patient_abha_address}}</td>
+          <td>{{consent.created_date}}</td>
+          <td>{{consent.status}}</td>
+          <td>
+            {% if consent.status == 'GRANTED' %}
+              <button type="button" class="btn-secondary btn-sm" onclick="getHealthData('{{consent.artefact_id}}')">Get Data</button>
+            {% endif %}
+          </td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+{% endblock %}
+{% block javascript %}
+  <script>
+    var getHealthData = function (consent_artefact_id){
+      console.log("consent_artefact_id", consent_artefact_id)
+      fetch("http://localhost:8000/abdm/hiu/request_health_info", {
+        credentials: 'include',
+        method: "POST",
+        body: JSON.stringify({
+          "consent_artefact_id": consent_artefact_id
+        }),
+        headers: {
+          "Content-type": "application/json; charset=UTF-8"
+        }
+        })
+      .then((response) => response.json())
+      .then((json) => alert("Your data is requested and will be available in some time!"));
+    }
+  </script>
+{% endblock %}

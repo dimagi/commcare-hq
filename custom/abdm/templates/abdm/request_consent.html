@@ -1,0 +1,49 @@
+{% extends 'abdm/base.html' %}
+{% block content %}
+  <a class="mt-4 mb-3 btn btn-primary"  href="{% url 'fetch_consents' %}">All Consents</a>
+  <form method="post" action="generate_consent_request">
+      {% csrf_token %}
+      <legend>Request Consent</legend>
+      <div class="mb-3">
+        <label for="patientIdentifier" class="form-label">Patient Identifier</label>
+        <input type="text" class="form-control" id="patientIdentifier" value="ajeet2050@sbx" name="patientIdentifier">
+      </div>
+      <div class="mb-3">
+        <label for="purposeOfRequest" class="form-label">Purpose of request</label>
+        <select id="purposeOfRequest" class="form-select" name="purposeOfRequest">
+          <option selected value = 'CAREMGT'>Care Management</option>
+          <option value = 'BTG'>Break the Glass</option>
+          <option value = 'PUBHLTH'>Public Health</option>
+        </select>
+      </div>
+      <div class="row mb-3">
+        <div class="col">
+          <label for="healthInfoFrom" class="form-label">Health Info From</label>
+          <input type="date" class="form-control" name="healthInfoFrom">
+        </div>
+        <div class="col">
+          <label for="healthInfoTo" class="form-label">Health Info To</label>
+          <input type="date" class="form-control" name="healthInfoTo">
+        </div>
+      </div>
+      <div class="mb-3">
+        <label for="healthInfoType" class="form-label">Health Info Type</label>
+        <select class="form-select" id="healthInfoType" name="healthInfoType" multiple>
+          <option value="OPConsultation">OP Consultation</option>
+          <option value="DiagnosticReport">Diagnostic Report</option>
+          <option value="DischargeSummary">Discharge Summary</option>
+          <option value="Prescription">Prescription</option>
+          <option value="ImmunizationRecord">Immunization Record</option>
+          <option value="HealthDocumentRecord">Health Document Record</option>
+          <option value="WellnessRecord">Wellness Record</option>
+        </select>
+      </div>
+      <div class="mb-3">
+        <label for="consentExpiry" class="form-label">Consent Expiry</label>
+        <input type="date" class="form-control" id="consentExpiry" name="consentExpiry">
+      </div>
+      <div class="mb-3">
+        <button type="submit" class="btn btn-primary">Request Consent</button>
+      </div>
+    </form>
+{% endblock %}

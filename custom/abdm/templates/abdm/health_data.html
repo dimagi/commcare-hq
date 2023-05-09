@@ -1,0 +1,25 @@
+{% extends 'abdm/base.html' %}
+{% block content %}
+  <h4>Health Data</h4>
+  <div class="alert alert-info" role="alert">
+    Below is sample data shown for demo purpose only.
+  </div>
+  <div class="card" >
+    <div class="card-body">
+      <h5 class="card-title">Patient</h5>
+      <p class="card-text">{{patient}}</p>
+      <h5 class="card-title">Practitioner</h5>
+      <p class="card-text">{{practitioner}}</p>
+      <h5 class="card-title">Medication</h5>
+      <p class="card-text">{{medication}}</p>
+      <h5 class="card-title">Dosage</h5>
+      <p class="card-text">{{dosage}}</p>
+    </div>
+  </div>
+  <h4>Raw Data</h4>
+  <div class="mb-3">
+    <code>
+      {{data}}
+    </code>
+  </div>
+{% endblock %}
