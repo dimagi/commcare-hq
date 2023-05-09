@@ -83,10 +83,12 @@ class EventsView(BaseEventView, CRUDPaginatedViewMixin):
             _("Name"),
             _("Start date"),
             _("End date"),
+            _("Location"),
             _("Attendance Target"),
             _("Status"),
             _("Total attendance"),
             _("Total attendance takers"),
+            _("Attendees"),
         ]
 
     @property
