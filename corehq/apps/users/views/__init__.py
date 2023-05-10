@@ -763,7 +763,7 @@ class ListRolesView(BaseRoleAccessView):
             'has_report_builder_access': has_report_builder_access(self.request),
             'data_file_download_enabled':
                 domain_has_privilege(self.domain, privileges.DATA_FILE_DOWNLOAD),
-            'export_ownership_enabled': toggles.EXPORT_OWNERSHIP.enabled(self.domain),
+            'export_ownership_enabled': domain_has_privilege(self.domain, privileges.EXPORT_OWNERSHIP),
             'data_registry_choices': get_data_registry_dropdown_options(self.domain),
         }
 

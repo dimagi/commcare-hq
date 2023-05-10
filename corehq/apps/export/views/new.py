@@ -180,7 +180,7 @@ class BaseExportView(BaseProjectDataView):
                 properties={'domain': self.domain}
             )
 
-            if toggles.EXPORT_OWNERSHIP.enabled(request.domain):
+            if domain_has_privilege(request.domain, privileges.EXPORT_OWNERSHIP):
                 export.owner_id = request.couch_user.user_id
             if getattr(settings, "ENTERPRISE_MODE"):
                 # default auto rebuild to False for enterprise clusters
@@ -532,7 +532,7 @@ class CopyExportView(View):
             messages.error(request, _('You can only copy new exports.'))
         else:
             new_export = export.copy_export()
-            if toggles.EXPORT_OWNERSHIP.enabled(domain):
+            if domain_has_privilege(domain, privileges.EXPORT_OWNERSHIP):
                 new_export.owner_id = request.couch_user.user_id
                 new_export.sharing = SharingOption.PRIVATE
             new_export.save()

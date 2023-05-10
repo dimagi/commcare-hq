@@ -111,13 +111,13 @@ class TestFHIRGetView(BaseFHIRViewTest):
 
 class TestFHIRSearchView(BaseFHIRViewTest):
     def test_flag_not_enabled(self):
-        url = reverse("fhir_search", args=[DOMAIN, FHIR_VERSION, "Observation"]) + f"?patient_id={PERSON_CASE_ID}"
+        url = reverse("fhir_search", args=[DOMAIN, FHIR_VERSION, "Observation"]) + f"?_id={PERSON_CASE_ID}"
         response = self.client.get(url)
         self.assertEqual(response.status_code, 404)
 
     @flag_enabled('FHIR_INTEGRATION')
     def test_unsupported_fhir_version(self):
-        url = reverse("fhir_search", args=[DOMAIN, FHIR_VERSION, "Observation"]) + f"?patient_id={PERSON_CASE_ID}"
+        url = reverse("fhir_search", args=[DOMAIN, FHIR_VERSION, "Observation"]) + f"?_id={PERSON_CASE_ID}"
         url = url.replace(FHIR_VERSION, 'A4')
         response = self.client.get(url)
         self.assertEqual(response.status_code, 400)
@@ -133,43 +133,43 @@ class TestFHIRSearchView(BaseFHIRViewTest):
         self.assertEqual(response.status_code, 400)
         self.assertEqual(
             response.json(),
-            {'message': "Please pass patient_id"}
+            {'message': "Please pass resource ID."}
         )
 
     @flag_enabled('FHIR_INTEGRATION')
     def test_deleted_case(self):
-        url = reverse("fhir_search", args=[DOMAIN, FHIR_VERSION, "Observation"]) + f"?patient_id={DELETED_CASE_ID}"
+        url = reverse("fhir_search", args=[DOMAIN, FHIR_VERSION, "Observation"]) + f"?_id={DELETED_CASE_ID}"
         response = self.client.get(url)
-        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.status_code, 410)
         self.assertEqual(
             response.json(),
-            {'message': f"Patient with ID {DELETED_CASE_ID} was removed"}
+            {'message': "Gone"}
         )
 
     @flag_enabled('FHIR_INTEGRATION')
     def test_missing_case_id(self):
-        url = reverse("fhir_search", args=[DOMAIN, FHIR_VERSION, "Observation"]) + "?patient_id=just-a-case-id"
+        url = reverse("fhir_search", args=[DOMAIN, FHIR_VERSION, "Observation"]) + "?_id=just-a-case-id"
         response = self.client.get(url)
-        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.status_code, 404)
         self.assertEqual(
             response.json(),
-            {'message': "Could not find patient with ID just-a-case-id"}
+            {'message': "Not Found"}
         )
 
     @flag_enabled('FHIR_INTEGRATION')
     def test_no_case_types_for_resource_type(self):
         url = reverse("fhir_search",
-                      args=[DOMAIN, FHIR_VERSION, "DiagnosticReport"]) + f"?patient_id={PERSON_CASE_ID}"
+                      args=[DOMAIN, FHIR_VERSION, "DiagnosticReport"]) + f"?_id={PERSON_CASE_ID}"
         response = self.client.get(url)
         self.assertEqual(response.status_code, 400)
         self.assertEqual(
             response.json(),
-            {'message': f"Resource type DiagnosticReport not available on {DOMAIN}"}
+            {'message': f"Resource type(s) DiagnosticReport not available on {DOMAIN}"}
         )
 
     @flag_enabled('FHIR_INTEGRATION')
     def test_search(self):
-        url = reverse("fhir_search", args=[DOMAIN, FHIR_VERSION, "Observation"]) + f"?patient_id={PERSON_CASE_ID}"
+        url = reverse("fhir_search", args=[DOMAIN, FHIR_VERSION, "Observation"]) + f"?_id={PERSON_CASE_ID}"
         response = self.client.get(url)
         self.assertEqual(
             response.json(),
@@ -188,7 +188,7 @@ class TestFHIRSearchView(BaseFHIRViewTest):
         )
 
     @flag_enabled('FHIR_INTEGRATION')
-    def test_search_patient(self):
+    def test_search_patient_using_patient_id(self):
         url = reverse("fhir_search", args=[DOMAIN, FHIR_VERSION, "Patient"]) + f"?patient_id={PERSON_CASE_ID}"
         response = self.client.get(url)
         self.assertEqual(
@@ -205,6 +205,16 @@ class TestFHIRSearchView(BaseFHIRViewTest):
                     }
                 ]
             }
+        )
+
+    @flag_enabled('FHIR_INTEGRATION')
+    def test_no_resource_provided(self):
+        url = reverse("fhir_search_mulitple_types", args=[DOMAIN, FHIR_VERSION]) + f"?_id={PERSON_CASE_ID}"
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(
+            response.json(),
+            {'message': "No resource type specified for search."}
         )
 
 

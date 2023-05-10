@@ -99,16 +99,6 @@ EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 
 BITLY_OAUTH_TOKEN = None
 
-####### Jar signing config ########
-
-JAR_SIGN = {
-    "jad_tool": os.path.join(BASE_DIR, "corehq", "apps", "app_manager", "JadTool.jar"),
-    "key_store": os.path.join(BASE_DIR, "InsecureTestingKeyStore"),
-    "key_alias": "javarosakey",
-    "store_pass": "onetwothreefourfive",
-    "key_pass": "onetwothreefourfive",
-}
-
 SECRET_KEY = 'you should really change this'
 
 LOG_HOME = os.path.join(BASE_DIR, 'log')
