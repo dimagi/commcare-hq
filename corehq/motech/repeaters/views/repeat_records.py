@@ -89,7 +89,8 @@ class BaseRepeatRecordReport(GenericTabularReport):
             data-record-id={}
             data-toggle="modal"
             data-target="#view-record-payload-modal">
-            View Payload
+            <i class="fa fa-search"></i>
+            Payload
         </a>
         ''', record_id)
 
