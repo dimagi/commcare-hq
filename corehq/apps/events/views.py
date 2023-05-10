@@ -30,9 +30,9 @@ from .models import (
     AttendeeModel,
     Event,
     get_attendee_case_type,
-    get_paginated_attendees,
     mobile_worker_attendees_enabled,
 )
+from .es import get_paginated_attendees
 from .tasks import (
     close_mobile_worker_attendee_cases,
     sync_mobile_worker_attendees,

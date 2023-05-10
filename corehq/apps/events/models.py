@@ -10,7 +10,6 @@ from django.utils.translation import gettext_lazy as _
 
 from casexml.apps.case.const import CASE_INDEX_EXTENSION
 
-from corehq.apps.es import CaseES
 from corehq.apps.groups.models import UnsavableGroup
 from corehq.apps.hqcase.case_helper import CaseHelper
 from corehq.apps.locations.models import SQLLocation
@@ -528,49 +527,6 @@ def _parse_id_list_str(locations_str):
     # https://docs.python.org/3/library/ast.html#ast.literal_eval
     locations_json = locations_str.replace("'", '"')  # '["abc123", "def456"]'
     return json.loads(locations_json)
-
-
-def get_paginated_attendees(domain, limit, page, query=None):
-    case_type = get_attendee_case_type(domain)
-    if query:
-        es_query = (
-            CaseES()
-            .domain(domain)
-            .case_type(case_type)
-            .is_closed(False)
-        ).search_string_query(query, ['name'])
-        total = es_query.count()
-        case_ids = es_query.get_ids()
-    else:
-        case_ids = CommCareCase.objects.get_open_case_ids_in_domain_by_type(
-            domain,
-            case_type,
-        )
-        total = len(case_ids)
-    if page:
-        start, end = page_to_slice(limit, page)
-        cases = CommCareCase.objects.get_cases(case_ids[start:end], domain)
-    else:
-        cases = CommCareCase.objects.get_cases(case_ids[:limit], domain)
-    return cases, total
-
-
-def page_to_slice(limit, page):
-    """
-    Converts ``limit``, ``page`` to start and end indices.
-
-    Assumes page numbering starts at 1.
-
-    >>> names = ['Harry', 'Hermione', 'Ron']
-    >>> start, end = page_to_slice(limit=1, page=2)
-    >>> names[start:end]
-    ['Hermione']
-    """
-    assert page > 0, 'Page numbering starts at 1'
-
-    start = (page - 1) * limit
-    end = start + limit
-    return start, end
 
 
 def iter_case_ids(cases_or_case_ids):
