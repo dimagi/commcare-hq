@@ -424,6 +424,31 @@ class AttendeeModelManager(models.Manager):
             for case in CommCareCase.objects.get_cases(case_ids, domain)
         ]
 
+    def by_location_id(
+        self,
+        domain: str,
+        location_id: str,
+    ) -> list[AttendeeModel]:
+        from .es import AttendeeSearchES
+
+        location_ids = (
+            SQLLocation.objects
+            .get_locations_and_children_ids([location_id])
+        )
+        case_type = get_attendee_case_type(domain)
+        es_query = (
+            AttendeeSearchES()
+            .domain(domain)
+            .case_type(case_type)
+            .is_closed(False)
+            .attendee_location_filter(location_ids)
+        )
+        case_ids = es_query.get_ids()
+        return [
+            AttendeeModel(case=case, domain=domain)
+            for case in CommCareCase.objects.get_cases(case_ids, domain)
+        ]
+
 
 class AttendeeModel(models.Model):
     """
