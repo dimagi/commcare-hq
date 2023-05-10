@@ -169,7 +169,12 @@ class BaseMultipleOptionFilter(BaseSingleOptionFilter):
 
     @classmethod
     def get_value(cls, request, domain):
-        return request.GET.getlist(cls.slug)
+        if isinstance(cls, cls):
+            instance = cls
+        else:
+            instance = cls(request, domain)
+        valid_options = [op[0] for op in instance.options]
+        return [option for option in request.GET.getlist(cls.slug) if option in valid_options]
 
     @property
     @memoized
