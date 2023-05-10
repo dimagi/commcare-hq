@@ -39,6 +39,7 @@ domain_specific = [
     url(r'^locations/', include(location_settings)),
     url(r'^api/id_mapping/$', project_id_mapping, name="project_id_mapping"),
     url(r'^events/', include('corehq.apps.events.urls')),
+    url(r'^geospatial/', include('corehq.apps.geospatial.urls')),
 ]
 
 users_redirect = [
