@@ -17,6 +17,7 @@ from corehq.apps.app_manager.const import (
     AUTO_SELECT_FIXTURE,
     AUTO_SELECT_RAW,
     AUTO_SELECT_USER,
+    CALCULATED_SORT_FIELD_RX,
     WORKFLOW_FORM,
     WORKFLOW_MODULE,
     WORKFLOW_PARENT_MODULE,
@@ -67,7 +68,6 @@ class ApplicationBaseValidator(object):
     def validate_app(self, existing_errors=None):
         errors = existing_errors or []
 
-        errors.extend(self._check_password_charset())
         errors.extend(self._validate_fixtures())
         errors.extend(self._validate_intents())
         errors.extend(self._validate_practice_users())
@@ -159,25 +159,6 @@ class ApplicationBaseValidator(object):
                 'build_profile_id': build_profile_id,
             }]
         return []
-
-    def _check_password_charset(self):
-        errors = []
-        if self.app.build_spec.supports_j2me() and hasattr(self.app, 'profile'):
-            password_format = self.app.profile.get('properties', {}).get('password_format', 'n')
-            message = _(
-                'Your app requires {0} passwords but the admin password is not '
-                '{0}. To resolve, go to app settings, Advanced Settings, Java '
-                'Phone General Settings, and reset the Admin Password to '
-                'something that is {0}'
-            )
-
-            if password_format == 'n' and self.app.admin_password_charset in 'ax':
-                errors.append({'type': 'password_format',
-                               'message': message.format('numeric')})
-            if password_format == 'a' and self.app.admin_password_charset in 'x':
-                errors.append({'type': 'password_format',
-                               'message': message.format('alphanumeric')})
-        return errors
 
 
 class ApplicationValidator(ApplicationBaseValidator):
@@ -610,6 +591,9 @@ class ModuleDetailValidatorMixin(object):
     def _validate_detail_screen_field(self, field):
         # If you change here, also change here:
         # corehq/apps/app_manager/static/app_manager/js/details/screen_config.js
+        if re.match(CALCULATED_SORT_FIELD_RX, field):
+            # special case for calculated properties
+            return
         field_re = r'^([a-zA-Z][\w_-]*:)*([a-zA-Z][\w_-]*/)*#?[a-zA-Z][\w_-]*$'
         if not re.match(field_re, field):
             raise ValueError("Invalid Sort Field")

@@ -1667,13 +1667,6 @@ TRAINING_MODULE = StaticToggle(
     [NAMESPACE_DOMAIN],
 )
 
-EXPORT_OWNERSHIP = StaticToggle(
-    'export_ownership',
-    'Allow exports to have ownership.',
-    TAG_SOLUTIONS_OPEN,
-    [NAMESPACE_DOMAIN],
-)
-
 APP_TRANSLATIONS_WITH_TRANSIFEX = StaticToggle(
     'app_trans_with_transifex',
     'Translate Application Content With Transifex',
@@ -2514,4 +2507,13 @@ EXPORT_MULTISORT = FrozenPrivilegeToggle(
     tag=TAG_SOLUTIONS_OPEN,
     namespaces=[NAMESPACE_DOMAIN],
     description='Sort multiple rows in exports simultaneously',
+)
+
+EXPORT_OWNERSHIP = FrozenPrivilegeToggle(
+    privileges.EXPORT_OWNERSHIP,
+    'export_ownership',
+    label='Allow exports to have ownership',
+    tag=TAG_SOLUTIONS_OPEN,
+    namespaces=[NAMESPACE_DOMAIN],
+    description='Allow exports to have ownership',
 )
