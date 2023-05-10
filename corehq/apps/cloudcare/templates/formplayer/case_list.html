@@ -19,8 +19,8 @@
 
     <% if (useTiles) { %>
       <% if (isMultiSelect && !hasNoItems) { %>
-      <input type="checkbox" id="select-all-checkbox"/>
-      <label for="select-all-checkbox">Select All</label>
+      <input type="checkbox" id="select-all-tile-checkbox"/>
+      <label id="select-all-tile-checkbox-label" for="select-all-tile-checkbox">Select All</label>
     <% } %>
     <section class="js-case-container clearfix list-cell-container-style"></section>
     <% } else { %>
@@ -108,7 +108,7 @@
 <script type="text/template" id="case-tile-view-item-template">
   <div class="<%- prefix %>-cell-grid-style">
   <% if (isMultiSelect) { %>
-    <div>
+    <div class="select-row-checkbox-div">
       <input type="checkbox" class="select-row-checkbox"/>
     </div>
   <% } %>
