@@ -68,17 +68,7 @@
                       <button class="btn btn-sm btn-default" type="button" id="collapse-all-accordion-btn">Collapse All</button>
                     </div>
 
-
                     <div class="panel-group" id="case-properties-accordion">
-
-                      {% for table in dd_properties_tables %}
-                          <div> {{ table.name }} </div>
-                      {% endfor %}
-
-                      <div> Hidden tables {{ hidden_tables }} </div>
-                      <div> Visible tables {{ visible_tables }} </div>
-
-
                       {% for table in dd_properties_tables %}
                         {% if table.name in hidden_tables %}
                           <div class="panel panel-appmanager">
@@ -90,7 +80,6 @@
                           </div>
                         {% endif %}
                       {% endfor %}
-
                       {% for table in dd_properties_tables %}
                         {% if table.name in visible_tables %}
                           <div class="panel panel-appmanager" id="{{ table.name|slugify }}-parent">
@@ -114,15 +103,6 @@
                         {% endif %}
                       {% endfor %}
                     </div>
-
-
-
-
-
-
-
-
-
                   {% else %}
                     <div class="well clearfix col-lg-10 col-md-12 col-sm-12">
                       <a target="_blank" class="pull-right"

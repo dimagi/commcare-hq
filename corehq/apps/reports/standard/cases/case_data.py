@@ -251,7 +251,7 @@ class CaseDataView(BaseProjectReportSectionView):
             if toggles.DD_CASE_DATA.enabled_for_request(self.request):
                 dd_tables = _get_dd_tables(self.domain, self.case_instance.type, dynamic_data, timezone)
                 context['dd_properties_tables'] = dd_tables
-                hidden_tables, visible_tables = separate_tables(dd_tables)
+                hidden_tables, visible_tables = _get_header_visibility_lists(dd_tables)
                 context['hidden_tables'] = hidden_tables
                 context['visible_tables'] = visible_tables
             else:
@@ -265,16 +265,19 @@ class CaseDataView(BaseProjectReportSectionView):
         context.update(case_hierarchy_context(self.case_instance, _get_case_url, timezone=timezone))
         return context
 
-def separate_tables(dd_tables):
+
+def _get_header_visibility_lists(dd_tables):
     hidden_tables = []
     visible_tables = []
 
     # Check if there is only a single table with the name 'Uncategorized'
     if len(dd_tables) == 1 and dd_tables[0].get('name') == 'Uncategorized':
         hidden_tables.append(dd_tables[0].get('name'))
-    # Check if table name is 'None'
+
+    # Check if table name is None
     elif any(table.get('name') is None for table in dd_tables):
         hidden_tables.append(None)
+
     # Check if there are only two tables: 'Uncategorized' and 'Unrecognized'
     elif len(dd_tables) == 2 and all([table.get('name') in ['Uncategorized', 'Unrecognized'] for table in dd_tables]):
         hidden_tables.append('Uncategorized')
