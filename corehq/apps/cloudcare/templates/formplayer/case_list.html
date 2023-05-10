@@ -21,6 +21,9 @@
     <section class="js-case-container clearfix"></section>
     <% } else { %>
     <div class="module-case-list-table-container">
+      <% if (showMap && !hasNoItems) { %>
+        HERE IS A MAP
+      <% } %>
       <table class="table module-table module-table-case-list">
         <% if(!useTiles) { %>
         <thead>

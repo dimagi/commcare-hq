@@ -482,6 +482,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
                 noItemsText: this.options.collection.noItemsText,
                 sortIndices: this.options.sortIndices,
                 selectedCaseIds: this.selectedCaseIds,
+                showMap: !!_.find(this.styles, function (style) { return style.displayFormat === "Address"; }),
                 isMultiSelect: false,
                 columnSortable: function (index) {
                     return this.sortIndices.indexOf(index) > -1;
