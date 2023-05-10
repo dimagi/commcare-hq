@@ -365,6 +365,10 @@ msgstr ""
 msgid "There are errors in your configuration."
 msgstr ""
 
+#: corehq/apps/app_manager/static/app_manager/js/details/screen_config.js
+msgid "<%- name %> (Calculated Property #<%- index %>)"
+msgstr ""
+
 #: corehq/apps/app_manager/static/app_manager/js/details/sort_rows.js
 msgid "Increasing (a, b, c)"
 msgstr ""
@@ -3548,7 +3552,7 @@ msgid "Key contains an invalid character."
 msgstr ""
 
 #: corehq/apps/hqwebapp/static/hqwebapp/js/ui_elements/ui-element-key-val-mapping.js
-msgid "Edit mapping for <%- property %>"
+msgid "Edit mapping for \"<%- property %>\""
 msgstr ""
 
 #: corehq/apps/hqwebapp/static/hqwebapp/js/validators.ko.js
@@ -3986,10 +3990,6 @@ msgstr ""
 
 #: corehq/apps/reports/static/reports/js/reports.async.js
 msgid "Gateway Timeout. Please contact CommCare HQ Support."
-msgstr ""
-
-#: corehq/apps/reports/static/reports/js/reports.async.js
-msgid "Your search term was too long. Please provide a shorter search filter"
 msgstr ""
 
 #: corehq/apps/reports/static/reports/js/reports.async.js

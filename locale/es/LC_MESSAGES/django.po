@@ -1086,6 +1086,7 @@ msgstr ""
 #: corehq/motech/forms.py
 #: corehq/motech/generic_inbound/templates/generic_inbound/api_edit.html
 #: corehq/motech/repeaters/templates/repeaters/partials/repeater_row.html
+#: corehq/motech/repeaters/templates/repeaters/repeat_record_report.html
 #: corehq/motech/templates/motech/connection_settings.html
 msgid "Cancel"
 msgstr "Cancelar"
@@ -5266,6 +5267,10 @@ msgstr ""
 "(ingresado a PostURL)"
 
 #: corehq/apps/app_manager/static_strings.py
+msgid "What the 'Extra Key' (# on Nokia Phones) does when pressed"
+msgstr "Qué hace la 'Tecla Extra' (# en Teléfonos Nokia) al presionarla"
+
+#: corehq/apps/app_manager/static_strings.py
 msgid ""
 "When a value is selected, this feature controls the display size of any user-"
 "provided image such that it will be consistent with the size of the original "
@@ -6287,15 +6292,6 @@ msgid ""
 "appears to be pointing\n"
 "                to a menu using \"Display only forms,\" which makes that "
 "menu an invalid choice.\n"
-"              "
-msgstr ""
-
-#: corehq/apps/app_manager/templates/app_manager/partials/build_errors.html
-msgid ""
-"\n"
-"                Linking for a form in a multi-select case list is restricted "
-"to multi-select forms only.\n"
-"                Please ensure your form is multi-select.\n"
 "              "
 msgstr ""
 
@@ -14558,17 +14554,12 @@ msgid "Custom Logo"
 msgstr "Logo Personalizado"
 
 #: corehq/apps/domain/forms.py
-#, fuzzy, python-brace-format
-#| msgid ""
-#| "Upload a custom image to display instead of the CommCare HQ logo.  It "
-#| "will be automatically resized to a height of 32 pixels."
+#, python-brace-format
 msgid ""
 "Upload a custom image to display instead of the CommCare HQ logo.  It will "
 "be automatically resized to a height of 32 pixels. Upload size limit is "
 "{size_limit} MB."
 msgstr ""
-"Cargue una imagen personalizada para mostrar en vez del logo de CommCare HQ. "
-"Este será ajustado a una altura de 32 pixeles."
 
 #: corehq/apps/domain/forms.py
 msgid "Delete Logo"
@@ -18588,30 +18579,24 @@ msgid "Edit Attendee"
 msgstr ""
 
 #: corehq/apps/events/views.py
-#, fuzzy
-#| msgid "Mobile Worker Upload Status"
 msgid "Enabling mobile worker attendees status"
-msgstr "Estado de Carga de Usuario Móvil"
+msgstr ""
 
 #: corehq/apps/events/views.py
 msgid "Disabling mobile worker attendees status"
 msgstr ""
 
 #: corehq/apps/events/views.py
-#, fuzzy
-#| msgid "Restoring your forms, this may take some time..."
 msgid "Processing Mobile Workers. This may take some time..."
-msgstr "Restaurando sus formularios; esto puede llevar un tiempo..."
+msgstr ""
 
 #: corehq/apps/events/views.py
 msgid "User conversion failed for some reason and we have noted this failure."
 msgstr ""
 
 #: corehq/apps/events/views.py
-#, fuzzy
-#| msgid "Go back to Mobile Workers"
 msgid "Go back to view attendees"
-msgstr "Regresar a Usuarios Móviles"
+msgstr ""
 
 #: corehq/apps/events/views.py
 msgid "Mobile workers can now also be selected to attend events."
@@ -22010,16 +21995,12 @@ msgid "Automatic Case Update Rule"
 msgstr ""
 
 #: corehq/apps/hqcase/utils.py
-#, fuzzy
-#| msgid "Application Build"
 msgid "Deduplication Rule"
-msgstr "Desarrollo de Aplicación"
+msgstr ""
 
 #: corehq/apps/hqcase/utils.py
-#, fuzzy
-#| msgid "Zapier Integration"
 msgid "DHIS2 Integration"
-msgstr "Integración Zapier"
+msgstr ""
 
 #: corehq/apps/hqmedia/cache.py
 #, python-format
@@ -41599,8 +41580,18 @@ msgstr ""
 msgid "Auth type '{}' requires a username."
 msgstr ""
 
-#: corehq/motech/generic_inbound/core.py
+#: corehq/motech/generic_inbound/backend/base.py
 msgid "Unexpected type for transformed request"
+msgstr ""
+
+#: corehq/motech/generic_inbound/backend/hl7.py
+#, fuzzy
+#| msgid "Error parsing XML: {}"
+msgid "Error parsing HL7: {}"
+msgstr "Error de análisis XML: {}"
+
+#: corehq/motech/generic_inbound/backend/json.py
+msgid "Payload must be valid JSON"
 msgstr ""
 
 #: corehq/motech/generic_inbound/forms.py
@@ -41608,11 +41599,26 @@ msgid "Create a new API"
 msgstr ""
 
 #: corehq/motech/generic_inbound/forms.py
+#, fuzzy
+#| msgid "Data Type"
+msgid "Input Data Type"
+msgstr "Tipo de Datos"
+
+#: corehq/motech/generic_inbound/forms.py
 msgid "Basic Configuration"
 msgstr ""
 
 #: corehq/motech/generic_inbound/forms.py corehq/tabs/tabclasses.py
 msgid "Filters and Expressions"
+msgstr ""
+
+#: corehq/motech/generic_inbound/models.py
+#: corehq/motech/repeaters/repeater_generators.py
+msgid "JSON"
+msgstr "JSON"
+
+#: corehq/motech/generic_inbound/models.py
+msgid "HL7 v2"
 msgstr ""
 
 #: corehq/motech/generic_inbound/models.py
@@ -41699,10 +41705,6 @@ msgstr ""
 
 #: corehq/motech/generic_inbound/utils.py
 msgid "Unable to decode request body"
-msgstr ""
-
-#: corehq/motech/generic_inbound/utils.py
-msgid "Payload must be valid JSON"
 msgstr ""
 
 #: corehq/motech/generic_inbound/views.py
@@ -42084,10 +42086,6 @@ msgid "XML"
 msgstr "XML"
 
 #: corehq/motech/repeaters/repeater_generators.py
-msgid "JSON"
-msgstr "JSON"
-
-#: corehq/motech/repeaters/repeater_generators.py
 msgid "Python dictionary"
 msgstr ""
 
@@ -42160,16 +42158,33 @@ msgid ""
 msgstr ""
 
 #: corehq/motech/repeaters/templates/repeaters/repeat_record_report.html
-msgid "Resend selected"
-msgstr ""
+#, fuzzy
+#| msgid "Restore selected Forms"
+msgid "Resend selected records"
+msgstr "Restaurar los Formularios seleccionados"
 
 #: corehq/motech/repeaters/templates/repeaters/repeat_record_report.html
-msgid "Cancel selected"
-msgstr ""
+#: corehq/motech/repeaters/views/repeat_records.py
+msgid "Resend"
+msgstr "Reenviar"
 
 #: corehq/motech/repeaters/templates/repeaters/repeat_record_report.html
-msgid "Requeue selected"
-msgstr ""
+#, fuzzy
+#| msgid "Archive selected forms"
+msgid "Cancel selected records"
+msgstr "Archivar los formularios seleccionados"
+
+#: corehq/motech/repeaters/templates/repeaters/repeat_record_report.html
+#, fuzzy
+#| msgid "Restore selected Forms"
+msgid "Requeue selected records"
+msgstr "Restaurar los Formularios seleccionados"
+
+#: corehq/motech/repeaters/templates/repeaters/repeat_record_report.html
+#, fuzzy
+#| msgid "Request"
+msgid "Requeue"
+msgstr "Solicitud"
 
 #: corehq/motech/repeaters/templates/repeaters/repeat_record_report.html
 #, python-format
@@ -42253,10 +42268,6 @@ msgstr "Intentos de Envíos"
 #: corehq/motech/repeaters/views/repeat_records.py
 msgid "View payload"
 msgstr "Ver carga útil"
-
-#: corehq/motech/repeaters/views/repeat_records.py
-msgid "Resend"
-msgstr "Reenviar"
 
 #: corehq/motech/repeaters/views/repeat_records.py
 msgid "Cancel or Requeue payload"
@@ -42593,6 +42604,10 @@ msgstr ""
 
 #: corehq/privileges.py
 msgid "Sort multiple rows in exports simultaneously"
+msgstr ""
+
+#: corehq/privileges.py
+msgid "Allow exports to have ownership"
 msgstr ""
 
 #: corehq/reports.py
@@ -43759,3 +43774,198 @@ msgstr ""
 #: manage.py
 msgid "Enter valid JSON"
 msgstr ""
+
+#, python-brace-format
+#~ msgid ""
+#~ "Your app requires {0} passwords but the admin password is not {0}. To "
+#~ "resolve, go to app settings, Advanced Settings, Java Phone General "
+#~ "Settings, and reset the Admin Password to something that is {0}"
+#~ msgstr ""
+#~ "Su aplicación necesita {0} contraseñas, pero la contraseña de la "
+#~ "administración no es {0}. Para solucionar esto, vaya a configuraciones de "
+#~ "la aplicación, Configuraciones Avanzadas, Configuraciones Generales de "
+#~ "Teléfono Java, y reestablezca la contraseña de la administración a algo "
+#~ "que no sea {0}"
+
+#~ msgid "Choose to label the login buttons with Icons or Text"
+#~ msgstr ""
+#~ "Elija para etiquetar los botones de inicio de sesión con Íconos o Texto"
+
+#~ msgid "CommCare Sense"
+#~ msgstr "CommCare Sense"
+
+#~ msgid "Configure for low-literate users, J2ME only"
+#~ msgstr "Configurar para usuarios con baja escolaridad, únicamente J2ME"
+
+#~ msgid "Custom Keys"
+#~ msgstr "Teclas Personalizadas"
+
+#~ msgid ""
+#~ "Determines if the server automatically attempts to send data to the phone "
+#~ "(Two-Way), or only attempt to send data on demand (Push Only); projects "
+#~ "using Case Sharing should choose Two-Way. If set to Push Only, the Auto-"
+#~ "Sync Frequency and Unsynced Time Limit settings will have no effect."
+#~ msgstr ""
+#~ "Determina si el servidor intenta enviar datos al teléfono (Dos-Vías) "
+#~ "automáticamente, o si intenta únicamente enviar datos a demanda (Al "
+#~ "Presionar Únicamente); los proyectos que utilizan Casos Compartidos deben "
+#~ "elegir únicamente Dos Vías. Si se establece en Presionar Únicamente, las "
+#~ "configuraciones de Frecuencia de Sincronización Automática y Límite de "
+#~ "Tiempo Sin Sincronizar, no tendrán efecto. "
+
+#~ msgid ""
+#~ "Determines whether phone keys will type letters or numbers by default "
+#~ "when typing in the password field."
+#~ msgstr ""
+#~ "Determina si las teclas del teléfono escribirán letras o números de forma "
+#~ "predeterminada al escribir en el campo de la contraseña."
+
+#~ msgid "Extra Key Action"
+#~ msgstr "Acción de Tecla Extra"
+
+#~ msgid "Form Entry Style"
+#~ msgstr "Estilo de Entrada del Formulario"
+
+#~ msgid "Full Keyboard"
+#~ msgstr "Teclado Completo"
+
+#~ msgid "How Send All Unsent functionality is presented to the user"
+#~ msgstr ""
+#~ "La forma en la que se muestra al usuario la función de Enviar Todo lo no "
+#~ "Enviado"
+
+#~ msgid ""
+#~ "If automatic is enabled, forms will attempt to send on their own without "
+#~ "intervention from the user. If manual is enabled, the user must manually "
+#~ "decide when to attempt to send forms."
+#~ msgstr ""
+#~ "Si el modo automático está habilitado, los formularios intentarán "
+#~ "enviarse por sí mismos sin la intervención del usuario. Si el modo manual "
+#~ "está habilitado, el usuario debe decidir cuándo intentar enviar "
+#~ "los formularios. "
+
+#~ msgid ""
+#~ "In normal mode, users log in each time with their username and password. "
+#~ "In auto-login mode, once a user (not the 'admin' or 'demo' users) has "
+#~ "logged in, the application will start up with that user already logged in."
+#~ msgstr ""
+#~ "En el modo normal, los usuarios ingresan cada vez con su usuario y "
+#~ "contraseña. En el modo de ingreso automático, una vez que un usuario (no "
+#~ "los usuarios 'admin' o 'demo') haya iniciado sesión, la aplicación "
+#~ "iniciará con el usuario ya en la sesión. "
+
+#~ msgid "Item Selection Mode"
+#~ msgstr "Modo de Selección de Ítem"
+
+#~ msgid "Java Phone General Settings"
+#~ msgstr "Configuración General de Teléfono Java"
+
+#~ msgid "Java Phone Platform"
+#~ msgstr "Plataforma de Teléfono Java"
+
+#~ msgid "Java Phone User Interface Settings"
+#~ msgstr "Configuración de Interfaz de Usuario de Teléfono Java"
+
+#~ msgid ""
+#~ "Language cycles through any available translations. Audio plays the "
+#~ "question's audio if available. NOTE: If audio is selected, a question's "
+#~ "audio will not be played by default when the question is displayed."
+#~ msgstr ""
+#~ "El Idioma busca cualquier traducción disponible. El Audio reproduce el "
+#~ "audio de la pregunta si está disponible. NOTA: Si está seleccionado el "
+#~ "audio, el audio de una pregunta no se reproducirá de forma predeterminada "
+#~ "cuando se muestra la pregunta."
+
+#~ msgid "Login Buttons"
+#~ msgstr "Botones de Inicio de Sesión"
+
+#~ msgid ""
+#~ "Multiple Questions per Screen displays a running list of questions on the "
+#~ "screen at the same time. One Question per Screen displays each question "
+#~ "independently. Note: OQPS does not support some features"
+#~ msgstr ""
+#~ "Múltiples Preguntas por Pantalla muestra una lista actualizada de "
+#~ "preguntas en la pantalla de manera simultánea. Una Pregunta por Pantalla "
+#~ "muestra cada pregunta de manera independiente. Nota: OQPS no soporta "
+#~ "algunas funciones."
+
+#~ msgid "Multiple Questions per Screen"
+#~ msgstr "Múltiples Preguntas por Pantalla"
+
+#~ msgid "Must correspond to the password format specified below."
+#~ msgstr "Debe corresponder al formato de contraseña que se especifica abajo."
+
+#~ msgid "Native (International)"
+#~ msgstr "Nativo (Internacional)"
+
+#~ msgid "Nokia S40 (default)"
+#~ msgstr "Nokia S40 (predeterminado)"
+
+#~ msgid "Nokia S60"
+#~ msgstr "Nokia S60"
+
+#~ msgid ""
+#~ "Numeric Selection mode will display information about questions for "
+#~ "longer and require more input from the user. Normal Scrolling will "
+#~ "proceed to the next question whenever enough information is provided."
+#~ msgstr ""
+#~ "El Modo de Selección Numérica mostrará información sobre preguntas más "
+#~ "tiempo y necesitará más aporte del usuario. El Desplazamiento Normal "
+#~ "pasará a la próxima pregunta cuando se provea suficiente información."
+
+#~ msgid "Password Format"
+#~ msgstr "Formato de la Contraseña"
+
+#~ msgid "Push Only"
+#~ msgstr "Solo Presionar"
+
+#~ msgid "Roman"
+#~ msgstr "Romano"
+
+#~ msgid "Send Data Over HTTP"
+#~ msgstr "Enviar Datos Vía HTTP"
+
+#~ msgid "Send Forms Mode"
+#~ msgstr "Modo de Enviar Formularios"
+
+#~ msgid "Sync Mode"
+#~ msgstr "Modo de Sincronización"
+
+#~ msgid ""
+#~ "This value will set whether the login screen uses customizable icons for "
+#~ "login and demo mode options or uses the standard buttons with labels."
+#~ msgstr ""
+#~ "Este valor establecerá si la pantalla de inicio de sesión utiliza íconos "
+#~ "personalizables para las opciones de inicio de sesión y demo, o si "
+#~ "utiliza los botones estándar con etiquetas."
+
+#~ msgid "Two-Way Sync"
+#~ msgstr "Sincronización en Dos Vías"
+
+#~ msgid "What user interface style should be used during form entry."
+#~ msgstr ""
+#~ "Qué estilo de interfaz de usuario debe utilizarse durante la entrada del "
+#~ "formulario."
+
+#~ msgid ""
+#~ "When you select this box, your data will no longer be encrypted.  Because "
+#~ "of changes regarding Java phone security certificates, it will be "
+#~ "necessary to send data over HTTP to continue sending data to CommCare."
+#~ msgstr ""
+#~ "Cuando seleccione esta casilla, sus datos ya no estarán encriptados. "
+#~ "Debido a cambios en certificados de seguridad de teléfonos Java, será "
+#~ "necesario enviar datos vía HTTP para continuar enviando datos a CommCare. "
+
+#~ msgid "Whether form entry is optimized for speed, or for new users."
+#~ msgstr ""
+#~ "Si la entrada de formularios se optimiza para velocidad, o para usuarios "
+#~ "nuevos."
+
+#~ msgid "Whether or not the phone collects, saves, and sends data."
+#~ msgstr "Si el teléfono recolecta, guarda y envía datos, o no."
+
+#~ msgid "WinMo"
+#~ msgstr "WinMo"
+
+#~ msgid "J2me Enabled"
+#~ msgstr "Habilitar J2me"

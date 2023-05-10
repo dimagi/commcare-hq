@@ -1106,6 +1106,7 @@ msgstr ""
 #: corehq/motech/forms.py
 #: corehq/motech/generic_inbound/templates/generic_inbound/api_edit.html
 #: corehq/motech/repeaters/templates/repeaters/partials/repeater_row.html
+#: corehq/motech/repeaters/templates/repeaters/repeat_record_report.html
 #: corehq/motech/templates/motech/connection_settings.html
 msgid "Cancel"
 msgstr "Annuler"
@@ -5207,6 +5208,10 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/app_manager/static_strings.py
+msgid "What the 'Extra Key' (# on Nokia Phones) does when pressed"
+msgstr ""
+
+#: corehq/apps/app_manager/static_strings.py
 msgid ""
 "When a value is selected, this feature controls the display size of any user-"
 "provided image such that it will be consistent with the size of the original "
@@ -6207,15 +6212,6 @@ msgid ""
 "appears to be pointing\n"
 "                to a menu using \"Display only forms,\" which makes that "
 "menu an invalid choice.\n"
-"              "
-msgstr ""
-
-#: corehq/apps/app_manager/templates/app_manager/partials/build_errors.html
-msgid ""
-"\n"
-"                Linking for a form in a multi-select case list is restricted "
-"to multi-select forms only.\n"
-"                Please ensure your form is multi-select.\n"
 "              "
 msgstr ""
 
@@ -14470,17 +14466,12 @@ msgid "Custom Logo"
 msgstr "Logo personnalisé"
 
 #: corehq/apps/domain/forms.py
-#, fuzzy, python-brace-format
-#| msgid ""
-#| "Upload a custom image to display instead of the CommCare HQ logo.  It "
-#| "will be automatically resized to a height of 32 pixels."
+#, python-brace-format
 msgid ""
 "Upload a custom image to display instead of the CommCare HQ logo.  It will "
 "be automatically resized to a height of 32 pixels. Upload size limit is "
 "{size_limit} MB."
 msgstr ""
-"Téléversez une image personnalisée à afficher au lieu du logo CommCare HQ.  "
-"Elle sera automatiquement redimensionnée à la taille de 32 pixels."
 
 #: corehq/apps/domain/forms.py
 msgid "Delete Logo"
@@ -18514,30 +18505,24 @@ msgid "Edit Attendee"
 msgstr ""
 
 #: corehq/apps/events/views.py
-#, fuzzy
-#| msgid "Mobile Worker Upload Status"
 msgid "Enabling mobile worker attendees status"
-msgstr "Statut du téléchargement en bloc des utilisateurs mobiles"
+msgstr ""
 
 #: corehq/apps/events/views.py
 msgid "Disabling mobile worker attendees status"
 msgstr ""
 
 #: corehq/apps/events/views.py
-#, fuzzy
-#| msgid "Restoring your forms, this may take some time..."
 msgid "Processing Mobile Workers. This may take some time..."
-msgstr "Restauration des formulaires, ceci peut prendre un peu de temps..."
+msgstr ""
 
 #: corehq/apps/events/views.py
 msgid "User conversion failed for some reason and we have noted this failure."
 msgstr ""
 
 #: corehq/apps/events/views.py
-#, fuzzy
-#| msgid "Go back to Mobile Workers"
 msgid "Go back to view attendees"
-msgstr "Retour aux utilisateurs mobiles"
+msgstr ""
 
 #: corehq/apps/events/views.py
 msgid "Mobile workers can now also be selected to attend events."
@@ -21939,16 +21924,12 @@ msgid "Automatic Case Update Rule"
 msgstr ""
 
 #: corehq/apps/hqcase/utils.py
-#, fuzzy
-#| msgid "Application Build"
 msgid "Deduplication Rule"
-msgstr "Construction d'application"
+msgstr ""
 
 #: corehq/apps/hqcase/utils.py
-#, fuzzy
-#| msgid "Integration"
 msgid "DHIS2 Integration"
-msgstr "Intégration "
+msgstr ""
 
 #: corehq/apps/hqmedia/cache.py
 #, python-format
@@ -41565,8 +41546,18 @@ msgstr ""
 msgid "Auth type '{}' requires a username."
 msgstr ""
 
-#: corehq/motech/generic_inbound/core.py
+#: corehq/motech/generic_inbound/backend/base.py
 msgid "Unexpected type for transformed request"
+msgstr ""
+
+#: corehq/motech/generic_inbound/backend/hl7.py
+#, fuzzy
+#| msgid "Error parsing XML: {}"
+msgid "Error parsing HL7: {}"
+msgstr "Une erreur est survenue dans l'analyse XML: {}"
+
+#: corehq/motech/generic_inbound/backend/json.py
+msgid "Payload must be valid JSON"
 msgstr ""
 
 #: corehq/motech/generic_inbound/forms.py
@@ -41574,11 +41565,26 @@ msgid "Create a new API"
 msgstr ""
 
 #: corehq/motech/generic_inbound/forms.py
+#, fuzzy
+#| msgid "Data Type"
+msgid "Input Data Type"
+msgstr "Type de données"
+
+#: corehq/motech/generic_inbound/forms.py
 msgid "Basic Configuration"
 msgstr ""
 
 #: corehq/motech/generic_inbound/forms.py corehq/tabs/tabclasses.py
 msgid "Filters and Expressions"
+msgstr ""
+
+#: corehq/motech/generic_inbound/models.py
+#: corehq/motech/repeaters/repeater_generators.py
+msgid "JSON"
+msgstr "JSON"
+
+#: corehq/motech/generic_inbound/models.py
+msgid "HL7 v2"
 msgstr ""
 
 #: corehq/motech/generic_inbound/models.py
@@ -41665,10 +41671,6 @@ msgstr ""
 
 #: corehq/motech/generic_inbound/utils.py
 msgid "Unable to decode request body"
-msgstr ""
-
-#: corehq/motech/generic_inbound/utils.py
-msgid "Payload must be valid JSON"
 msgstr ""
 
 #: corehq/motech/generic_inbound/views.py
@@ -42050,10 +42052,6 @@ msgid "XML"
 msgstr "XML"
 
 #: corehq/motech/repeaters/repeater_generators.py
-msgid "JSON"
-msgstr "JSON"
-
-#: corehq/motech/repeaters/repeater_generators.py
 msgid "Python dictionary"
 msgstr ""
 
@@ -42126,16 +42124,33 @@ msgid ""
 msgstr ""
 
 #: corehq/motech/repeaters/templates/repeaters/repeat_record_report.html
-msgid "Resend selected"
-msgstr ""
+#, fuzzy
+#| msgid "Restore selected Forms"
+msgid "Resend selected records"
+msgstr "Restaurer les formulaires sélectionnés"
 
 #: corehq/motech/repeaters/templates/repeaters/repeat_record_report.html
-msgid "Cancel selected"
-msgstr ""
+#: corehq/motech/repeaters/views/repeat_records.py
+msgid "Resend"
+msgstr "Renvoyer "
 
 #: corehq/motech/repeaters/templates/repeaters/repeat_record_report.html
-msgid "Requeue selected"
-msgstr ""
+#, fuzzy
+#| msgid "Archive selected forms"
+msgid "Cancel selected records"
+msgstr "Archiver formulaires sélectionnés "
+
+#: corehq/motech/repeaters/templates/repeaters/repeat_record_report.html
+#, fuzzy
+#| msgid "Restore selected Forms"
+msgid "Requeue selected records"
+msgstr "Restaurer les formulaires sélectionnés"
+
+#: corehq/motech/repeaters/templates/repeaters/repeat_record_report.html
+#, fuzzy
+#| msgid "Request"
+msgid "Requeue"
+msgstr "Requête"
 
 #: corehq/motech/repeaters/templates/repeaters/repeat_record_report.html
 #, python-format
@@ -42218,10 +42233,6 @@ msgstr "Tentatives de livraison"
 #: corehq/motech/repeaters/views/repeat_records.py
 msgid "View payload"
 msgstr "Afficher la charge utile"
-
-#: corehq/motech/repeaters/views/repeat_records.py
-msgid "Resend"
-msgstr "Renvoyer "
 
 #: corehq/motech/repeaters/views/repeat_records.py
 msgid "Cancel or Requeue payload"
@@ -42559,6 +42570,10 @@ msgstr ""
 
 #: corehq/privileges.py
 msgid "Sort multiple rows in exports simultaneously"
+msgstr ""
+
+#: corehq/privileges.py
+msgid "Allow exports to have ownership"
 msgstr ""
 
 #: corehq/reports.py
@@ -43760,3 +43775,40 @@ msgstr "Le Score à la Fonctionnalité"
 #: manage.py
 msgid "Enter valid JSON"
 msgstr "Saisir un JSON valide"
+
+#~ msgid "Choose to label the login buttons with Icons or Text"
+#~ msgstr ""
+#~ "Choisissez d'étiqueter les boutons de connexion avec des icônes ou du "
+#~ "texte"
+
+#~ msgid ""
+#~ "Determines if the server automatically attempts to send data to the phone "
+#~ "(Two-Way), or only attempt to send data on demand (Push Only); projects "
+#~ "using Case Sharing should choose Two-Way. If set to Push Only, the Auto-"
+#~ "Sync Frequency and Unsynced Time Limit settings will have no effect."
+#~ msgstr ""
+#~ "Détermine si le serveur tente automatiquement d'envoyer des données au "
+#~ "téléphone (dans les deux sens), ou s'il tente seulement d'envoyer des "
+#~ "données à la demande (Push uniquement); les projets  utilisant le partage "
+#~ "de dossiers devraient choisir l'option à deux voies. Si réglé sur Push "
+#~ "uniquement, les paramètres de la fréquence de la synchronisation "
+#~ "automatique et de la limite de temps non synchronisés n'auront aucun "
+#~ "effet."
+
+#~ msgid "Full Keyboard"
+#~ msgstr "Clavier complet"
+
+#~ msgid "Multiple Questions per Screen"
+#~ msgstr "Multiples questions par écran"
+
+#~ msgid "Nokia S40 (default)"
+#~ msgstr "Nokia S40 (par défaut)"
+
+#~ msgid "Nokia S60"
+#~ msgstr "Nokia S60"
+
+#~ msgid "Password Format"
+#~ msgstr "Format du mot de passe"
+
+#~ msgid "J2me Enabled"
+#~ msgstr "J2me activé"

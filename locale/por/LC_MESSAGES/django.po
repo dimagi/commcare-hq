@@ -1048,6 +1048,7 @@ msgstr ""
 #: corehq/motech/forms.py
 #: corehq/motech/generic_inbound/templates/generic_inbound/api_edit.html
 #: corehq/motech/repeaters/templates/repeaters/partials/repeater_row.html
+#: corehq/motech/repeaters/templates/repeaters/repeat_record_report.html
 #: corehq/motech/templates/motech/connection_settings.html
 msgid "Cancel"
 msgstr "Cancelar"
@@ -4952,6 +4953,10 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/app_manager/static_strings.py
+msgid "What the 'Extra Key' (# on Nokia Phones) does when pressed"
+msgstr ""
+
+#: corehq/apps/app_manager/static_strings.py
 msgid ""
 "When a value is selected, this feature controls the display size of any user-"
 "provided image such that it will be consistent with the size of the original "
@@ -5921,15 +5926,6 @@ msgid ""
 "appears to be pointing\n"
 "                to a menu using \"Display only forms,\" which makes that "
 "menu an invalid choice.\n"
-"              "
-msgstr ""
-
-#: corehq/apps/app_manager/templates/app_manager/partials/build_errors.html
-msgid ""
-"\n"
-"                Linking for a form in a multi-select case list is restricted "
-"to multi-select forms only.\n"
-"                Please ensure your form is multi-select.\n"
 "              "
 msgstr ""
 
@@ -17923,10 +17919,8 @@ msgid "User conversion failed for some reason and we have noted this failure."
 msgstr ""
 
 #: corehq/apps/events/views.py
-#, fuzzy
-#| msgid "Go back to Mobile Workers"
 msgid "Go back to view attendees"
-msgstr "Voltar para Trabalhadores Móveis"
+msgstr ""
 
 #: corehq/apps/events/views.py
 msgid "Mobile workers can now also be selected to attend events."
@@ -21291,10 +21285,8 @@ msgid "Automatic Case Update Rule"
 msgstr ""
 
 #: corehq/apps/hqcase/utils.py
-#, fuzzy
-#| msgid "Application Type"
 msgid "Deduplication Rule"
-msgstr "Tipo de Aplicação"
+msgstr ""
 
 #: corehq/apps/hqcase/utils.py
 msgid "DHIS2 Integration"
@@ -40361,8 +40353,18 @@ msgstr ""
 msgid "Auth type '{}' requires a username."
 msgstr ""
 
-#: corehq/motech/generic_inbound/core.py
+#: corehq/motech/generic_inbound/backend/base.py
 msgid "Unexpected type for transformed request"
+msgstr ""
+
+#: corehq/motech/generic_inbound/backend/hl7.py
+#, fuzzy
+#| msgid "Error: {}"
+msgid "Error parsing HL7: {}"
+msgstr "Erro: {}"
+
+#: corehq/motech/generic_inbound/backend/json.py
+msgid "Payload must be valid JSON"
 msgstr ""
 
 #: corehq/motech/generic_inbound/forms.py
@@ -40370,11 +40372,26 @@ msgid "Create a new API"
 msgstr ""
 
 #: corehq/motech/generic_inbound/forms.py
+#, fuzzy
+#| msgid "Inspect Data"
+msgid "Input Data Type"
+msgstr "Examinar Dados"
+
+#: corehq/motech/generic_inbound/forms.py
 msgid "Basic Configuration"
 msgstr ""
 
 #: corehq/motech/generic_inbound/forms.py corehq/tabs/tabclasses.py
 msgid "Filters and Expressions"
+msgstr ""
+
+#: corehq/motech/generic_inbound/models.py
+#: corehq/motech/repeaters/repeater_generators.py
+msgid "JSON"
+msgstr ""
+
+#: corehq/motech/generic_inbound/models.py
+msgid "HL7 v2"
 msgstr ""
 
 #: corehq/motech/generic_inbound/models.py
@@ -40461,10 +40478,6 @@ msgstr ""
 
 #: corehq/motech/generic_inbound/utils.py
 msgid "Unable to decode request body"
-msgstr ""
-
-#: corehq/motech/generic_inbound/utils.py
-msgid "Payload must be valid JSON"
 msgstr ""
 
 #: corehq/motech/generic_inbound/views.py
@@ -40842,10 +40855,6 @@ msgid "XML"
 msgstr ""
 
 #: corehq/motech/repeaters/repeater_generators.py
-msgid "JSON"
-msgstr ""
-
-#: corehq/motech/repeaters/repeater_generators.py
 msgid "Python dictionary"
 msgstr ""
 
@@ -40918,16 +40927,27 @@ msgid ""
 msgstr ""
 
 #: corehq/motech/repeaters/templates/repeaters/repeat_record_report.html
-msgid "Resend selected"
+msgid "Resend selected records"
 msgstr ""
 
 #: corehq/motech/repeaters/templates/repeaters/repeat_record_report.html
-msgid "Cancel selected"
+#: corehq/motech/repeaters/views/repeat_records.py
+msgid "Resend"
 msgstr ""
 
 #: corehq/motech/repeaters/templates/repeaters/repeat_record_report.html
-msgid "Requeue selected"
+msgid "Cancel selected records"
 msgstr ""
+
+#: corehq/motech/repeaters/templates/repeaters/repeat_record_report.html
+msgid "Requeue selected records"
+msgstr ""
+
+#: corehq/motech/repeaters/templates/repeaters/repeat_record_report.html
+#, fuzzy
+#| msgid "Request Quote"
+msgid "Requeue"
+msgstr "Requisitar cotação"
 
 #: corehq/motech/repeaters/templates/repeaters/repeat_record_report.html
 #, python-format
@@ -41007,10 +41027,6 @@ msgstr ""
 
 #: corehq/motech/repeaters/views/repeat_records.py
 msgid "View payload"
-msgstr ""
-
-#: corehq/motech/repeaters/views/repeat_records.py
-msgid "Resend"
 msgstr ""
 
 #: corehq/motech/repeaters/views/repeat_records.py
@@ -41347,6 +41363,10 @@ msgstr ""
 
 #: corehq/privileges.py
 msgid "Sort multiple rows in exports simultaneously"
+msgstr ""
+
+#: corehq/privileges.py
+msgid "Allow exports to have ownership"
 msgstr ""
 
 #: corehq/reports.py
