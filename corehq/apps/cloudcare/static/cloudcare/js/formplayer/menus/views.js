@@ -169,49 +169,43 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
 
     // Dynamically generate the CSS style for the grid polyfill to use for the case tile
     // useUniformUnits - true if the grid's cells should have the same height as width
-    var buildCellGridStyle = function (numRows, numColumns, useUniformUnits, prefix) {
-        var templateString,
-            view,
-            template,
-            model,
-            heightPercentage,
-            heightString,
-            wrapperWidth;
+    const buildCellGridStyle = function (numRows, numColumns, useUniformUnits, prefix) {
+        let heightString;
+        const wrapperWidth = 100;
 
-        wrapperWidth = 100;
         if (useUniformUnits) {
-            heightPercentage = wrapperWidth / numColumns;
+            const heightPercentage = wrapperWidth / numColumns;
             heightString = heightPercentage + "cqw";
         } else {
             heightString = "auto";
         }
 
-        model = {
+        const model = {
             numRows: numRows,
             numColumns: numColumns,
             heightString: heightString,
             prefix: prefix,
         };
-        templateString = $("#cell-grid-style-template").html();
-        template = _.template(templateString);
-        view = template({
+        const templateString = $("#cell-grid-style-template").html();
+        const template = _.template(templateString);
+        const view = template({
             model: model,
         });
         return view;
     };
 
-    var buildCellWrapperStyle = function () {
-        var outerGridTemplateString = $("#cell-wrapper-style-template").html(),
-            outerGridStyleTemplate = _.template(outerGridTemplateString),
-            outerGridStyle = outerGridStyleTemplate();
+    const buildCellWrapperStyle = function () {
+        const outerGridTemplateString = $("#cell-wrapper-style-template").html();
+        const outerGridStyleTemplate = _.template(outerGridTemplateString);
+        const outerGridStyle = outerGridStyleTemplate();
         return outerGridStyle;
     };
 
     // Dynamically generate the CSS style to display multiple tiles per line
-    var buildCellContainerStyle = function (numCasesPerRow) {
-        var caseListLayoutString = $("#cell-container-style-template").html();
-        var caseListLayoutTemplate = _.template(caseListLayoutString);
-        var caseListLayout = caseListLayoutTemplate({
+    const buildCellContainerStyle = function (numCasesPerRow) {
+        const caseListLayoutString = $("#cell-container-style-template").html();
+        const caseListLayoutTemplate = _.template(caseListLayoutString);
+        const caseListLayout = caseListLayoutTemplate({
             casesPerRow: numCasesPerRow,
         });
         return caseListLayout;
@@ -573,15 +567,15 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
     // styles[1] - the layout of the grid itself, IE how many rows/columns each tile should have and their size
     // styles[2] - (if showing 2+ cases per line) sets the bounds of the tile to arrange its grid based on
     // styles[3] - (if showing 2+ cases per line) sets the layout of the case tiles on the outer, visible grid
-    var buildCaseTileStyles = function (tiles, numRows, numColumns, numEntitiesPerRow, useUniformUnits, prefix) {
-        var cellLayoutStyle = buildCellLayout(tiles, prefix);
-        var cellGridStyle = buildCellGridStyle(numRows,
+    const buildCaseTileStyles = function (tiles, numRows, numColumns, numEntitiesPerRow, useUniformUnits, prefix) {
+        const cellLayoutStyle = buildCellLayout(tiles, prefix);
+        const cellGridStyle = buildCellGridStyle(numRows,
             numColumns,
             useUniformUnits,
             prefix);
         if (numEntitiesPerRow > 1) {
-            var cellWrapperStyle = buildCellWrapperStyle(),
-                cellContainerStyle = buildCellContainerStyle(numEntitiesPerRow);
+            const cellWrapperStyle = buildCellWrapperStyle();
+            const cellContainerStyle = buildCellContainerStyle(numEntitiesPerRow);
             return [cellLayoutStyle, cellGridStyle, cellWrapperStyle, cellContainerStyle];
         } else {
             return [cellLayoutStyle, cellGridStyle];
