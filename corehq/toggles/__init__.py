@@ -2363,6 +2363,16 @@ ATTENDANCE_TRACKING = StaticToggle(
     save_fn=_handle_attendance_tracking_role,
 )
 
+GEOSPATIAL = StaticToggle(
+    'geospatial',
+    'Allows access to GIS functionality',
+    TAG_SOLUTIONS_LIMITED,
+    namespaces=[NAMESPACE_DOMAIN],
+    description='Additional views will be added allowing for visually viewing '
+                'and assigning cases on a map.'
+
+)
+
 class FrozenPrivilegeToggle(StaticToggle):
     """
     A special toggle to represent a legacy toggle that should't be
