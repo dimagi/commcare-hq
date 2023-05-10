@@ -281,7 +281,8 @@ hqDefine("data_dictionary/js/data_dictionary", [
 
         self.newCaseProperty = function () {
             if (_.isString(self.newPropertyName())) {
-                var prop = propertyListItem(self.newPropertyName(), self.newPropertyName(), false, '', self.activeCaseType(), '', '', {});
+                let lastGroup = self.caseGroupList()[self.caseGroupList().length - 1];
+                var prop = propertyListItem(self.newPropertyName(), self.newPropertyName(), false, lastGroup.name(), self.activeCaseType(), '', '', {});
                 prop.dataType.subscribe(changeSaveButton);
                 prop.description.subscribe(changeSaveButton);
                 prop.label.subscribe(changeSaveButton);
@@ -290,7 +291,7 @@ hqDefine("data_dictionary/js/data_dictionary", [
                 prop.removeFHIRResourcePropertyPath.subscribe(changeSaveButton);
                 prop.allowedValues.on('change', changeSaveButton);
                 self.newPropertyName(undefined);
-                self.caseGroupList().find(group => group.name() === "").properties.push(prop);
+                lastGroup.properties.push(prop);
             }
         };
 
