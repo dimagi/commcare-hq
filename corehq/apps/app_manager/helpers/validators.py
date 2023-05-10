@@ -17,6 +17,7 @@ from corehq.apps.app_manager.const import (
     AUTO_SELECT_FIXTURE,
     AUTO_SELECT_RAW,
     AUTO_SELECT_USER,
+    CALCULATED_SORT_FIELD_RX,
     WORKFLOW_FORM,
     WORKFLOW_MODULE,
     WORKFLOW_PARENT_MODULE,
@@ -590,6 +591,9 @@ class ModuleDetailValidatorMixin(object):
     def _validate_detail_screen_field(self, field):
         # If you change here, also change here:
         # corehq/apps/app_manager/static/app_manager/js/details/screen_config.js
+        if re.match(CALCULATED_SORT_FIELD_RX, field):
+            # special case for calculated properties
+            return
         field_re = r'^([a-zA-Z][\w_-]*:)*([a-zA-Z][\w_-]*/)*#?[a-zA-Z][\w_-]*$'
         if not re.match(field_re, field):
             raise ValueError("Invalid Sort Field")
