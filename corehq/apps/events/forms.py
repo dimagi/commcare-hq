@@ -16,7 +16,10 @@ from corehq.apps.locations.forms import LocationSelectWidget
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.locations.util import get_locations_from_ids
 from corehq.apps.reports.filters.users import ExpandedMobileWorkerFilter
-from corehq.apps.users.dbaccessors import get_all_commcare_users_by_domain
+from corehq.apps.users.dbaccessors import (
+    get_all_commcare_users_by_domain,
+    get_mobile_users_by_filters,
+)
 from corehq.apps.users.forms import PrimaryLocationWidget
 
 from .models import EVENT_IN_PROGRESS, EVENT_NOT_STARTED, AttendeeModel
@@ -222,15 +225,24 @@ class EventForm(forms.Form):
         return cleaned_data
 
     def get_attendee_choices(self):
-        return [
-            (model.case_id, model.name)
-            for model in AttendeeModel.objects.by_domain(self.domain)
-        ]
+        if self.event and self.event.location_id:
+            models = AttendeeModel.objects.by_location_id(
+                self.domain,
+                self.event.location_id,
+            )
+        else:
+            models = AttendeeModel.objects.by_domain(self.domain)
+        return [(m.case_id, m.name) for m in models]
 
     def _get_possible_attendance_takers_ids(self):
-        return [
-            (user.user_id, user.username) for user in get_all_commcare_users_by_domain(self.domain)
-        ]
+        if self.event and self.event.location_id:
+            users = get_mobile_users_by_filters(
+                self.domain,
+                {'location_id': self.event.location_id},
+            )
+        else:
+            users = get_all_commcare_users_by_domain(self.domain)
+        return [(u.user_id, u.username) for u in users]
 
 
 class NewAttendeeForm(forms.Form):
