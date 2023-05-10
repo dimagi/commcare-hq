@@ -167,61 +167,48 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
         return caseTileStyle;
     };
 
-    // Dynamically generate the CSS style to display multiple tiles per line
-    var buildCellContainerStyle = function (numRows, numColumns, numCasesPerRow) {
-        var outerGridTemplateString,
-            outerGridStyle,
-            outerGridStyleTemplate,
-            outerGridModel;
-
-        var widthPercentage = 100 / numCasesPerRow;
-        var widthHeightRatio = numRows / numColumns;
-        var heightPercentage = widthPercentage * widthHeightRatio;
-
-        outerGridModel = {
-            widthPercentage: widthPercentage,
-            heightPercentage: heightPercentage,
-        };
-        outerGridTemplateString = $("#cell-container-style-template").html();
-        outerGridStyleTemplate = _.template(outerGridTemplateString);
-        outerGridStyle = outerGridStyleTemplate({
-            model: outerGridModel,
-        });
-        return outerGridStyle;
-    };
-
     // Dynamically generate the CSS style for the grid polyfill to use for the case tile
     // useUniformUnits - true if the grid's cells should have the same height as width
-    var buildCellGridStyle = function (numRows, numColumns, numCasesPerRow, useUniformUnits, prefix) {
-        var templateString,
-            view,
-            template,
-            model,
-            widthPixels,
-            heightPixels,
-            fullWidth;
+    const buildCellGridStyle = function (numRows, numColumns, useUniformUnits, prefix) {
+        let heightString;
+        const wrapperWidth = 100;
 
-        fullWidth = 800;
-        widthPixels = ((1 / numColumns) / numCasesPerRow) * fullWidth;
         if (useUniformUnits) {
-            heightPixels = widthPixels;
+            const heightPercentage = wrapperWidth / numColumns;
+            heightString = heightPercentage + "cqw";
         } else {
-            heightPixels = "auto";
+            heightString = "auto";
         }
 
-        model = {
+        const model = {
             numRows: numRows,
             numColumns: numColumns,
-            widthPixels: widthPixels,
-            heightPixels: heightPixels,
+            heightString: heightString,
             prefix: prefix,
         };
-        templateString = $("#cell-grid-style-template").html();
-        template = _.template(templateString);
-        view = template({
+        const templateString = $("#cell-grid-style-template").html();
+        const template = _.template(templateString);
+        const view = template({
             model: model,
         });
         return view;
+    };
+
+    const buildCellWrapperStyle = function () {
+        const outerGridTemplateString = $("#cell-wrapper-style-template").html();
+        const outerGridStyleTemplate = _.template(outerGridTemplateString);
+        const outerGridStyle = outerGridStyleTemplate();
+        return outerGridStyle;
+    };
+
+    // Dynamically generate the CSS style to display multiple tiles per line
+    const buildCellContainerStyle = function (numCasesPerRow) {
+        const caseListLayoutString = $("#cell-container-style-template").html();
+        const caseListLayoutTemplate = _.template(caseListLayoutString);
+        const caseListLayout = caseListLayoutTemplate({
+            casesPerRow: numCasesPerRow,
+        });
+        return caseListLayout;
     };
 
     var CaseView = Marionette.View.extend({
@@ -300,7 +287,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
 
     var CaseTileView = CaseView.extend({
         tagName: "div",
-        className: "formplayer-request list-cell-container-style",
+        className: "formplayer-request list-cell-wrapper-style",
 
         template: _.template($("#case-tile-view-item-template").html() || ""),
         templateContext: function () {
@@ -576,21 +563,21 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
         },
     });
 
-    // Return a two- or three-length array of case tile CSS styles
+    // Return a two- or four-length array of case tile CSS styles
     //
     // styles[0] - the grid layout of the cells within a case list tile
     // styles[1] - the layout of the grid itself, IE how many rows/columns each tile should have and their size
-    // styles[2] (optional) - If showing multiple cases per line, sets the style of how to layout the case tiles in the
-    //                        outer grid
-    var buildCaseTileStyles = function (tiles, numRows, numColumns, numEntitiesPerRow, useUniformUnits, prefix) {
-        var cellLayoutStyle = buildCellLayout(tiles, prefix);
-        var cellGridStyle = buildCellGridStyle(numRows,
+    // styles[2] - (if showing 2+ cases per line) sets the bounds of the tile to arrange its grid based on
+    // styles[3] - (if showing 2+ cases per line) sets the layout of the case tiles on the outer, visible grid
+    const buildCaseTileStyles = function (tiles, numRows, numColumns, numEntitiesPerRow, useUniformUnits, prefix) {
+        const cellLayoutStyle = buildCellLayout(tiles, prefix);
+        const cellGridStyle = buildCellGridStyle(numRows,
             numColumns,
-            numEntitiesPerRow,
             useUniformUnits,
             prefix);
-        var cellContainerStyle = buildCellContainerStyle(numRows, numColumns, numEntitiesPerRow);
-        return [cellLayoutStyle, cellGridStyle, cellContainerStyle];
+        const cellWrapperStyle = buildCellWrapperStyle();
+        const cellContainerStyle = buildCellContainerStyle(numEntitiesPerRow);
+        return [cellLayoutStyle, cellGridStyle, cellWrapperStyle, cellContainerStyle];
     };
 
     const registerContinueListener = function (self, options) {
@@ -634,7 +621,9 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             $("#list-cell-grid-style").html(caseTileStyles[1]).data("css-polyfilled", false);
             // If we have multiple cases per line, need to generate the outer grid style as well
             if (caseTileStyles.length > 2) {
-                $("#list-cell-container-style").html(caseTileStyles[2]).data("css-polyfilled", false);
+                $("#list-cell-wrapper-style").html(caseTileStyles[2]).data("css-polyfilled", false);
+                $("#list-cell-container-style").html(caseTileStyles[3]).data("css-polyfilled", false);
+
             }
 
             $.getScript(gridPolyfillPath);
