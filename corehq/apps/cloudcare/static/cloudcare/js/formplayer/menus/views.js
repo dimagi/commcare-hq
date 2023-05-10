@@ -301,6 +301,8 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
     });
 
     var PersistentCaseTileView = CaseTileView.extend({
+        className: "formplayer-request",
+
         rowClick: function (e) {
             e.preventDefault();
             if (this.options.hasInlineTile) {
