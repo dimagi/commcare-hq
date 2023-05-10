@@ -194,9 +194,7 @@ def get_case_history(case):
             'Form Name': name,
             'Form Received On': form.received_on,
             'Form Submitted By': form.metadata.username,
-            'Form User Type': (
-                get_user_type(form.metadata, case.domain) if form.metadata else 'Unknown'
-            ),
+            'Form User Type': get_user_type(form, case.domain),
         }
         case_blocks = extract_case_blocks(form)
         for block in case_blocks:

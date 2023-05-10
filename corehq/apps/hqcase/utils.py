@@ -15,6 +15,8 @@ from corehq.apps.receiverwrapper.util import submit_form_locally
 from corehq.apps.users.util import SYSTEM_USER_ID
 from corehq.form_processor.exceptions import CaseNotFound, MissingFormXml
 from corehq.form_processor.models import CommCareCase
+from corehq.apps.data_interfaces.deduplication import DEDUPE_XMLNS
+from corehq.motech.dhis2.const import XMLNS_DHIS2
 
 CASEBLOCK_CHUNKSIZE = 100
 SYSTEM_FORM_XMLNS = 'http://commcarehq.org/case'
@@ -25,6 +27,8 @@ SYSTEM_FORM_XMLNS_MAP = {
     SYSTEM_FORM_XMLNS: gettext_lazy('System Form'),
     EDIT_FORM_XMLNS: gettext_lazy('Data Cleaning Form'),
     AUTO_UPDATE_XMLNS: gettext_lazy('Automatic Case Update Rule'),
+    DEDUPE_XMLNS: gettext_lazy('Deduplication Rule'),
+    XMLNS_DHIS2: gettext_lazy('DHIS2 Integration')
 }
 
 ALLOWED_CASE_IDENTIFIER_TYPES = [

@@ -35,7 +35,7 @@ DISABLE_RANDOM_TOGGLES = UNIT_TESTING
 # Setting to declare always_enabled/always_disabled toggle states for domains
 #   declaring toggles here avoids toggle lookups from cache for all requests.
 #   Example format
-#   STATIC_TOGGLES_STATES = {
+#   STATIC_TOGGLE_STATES = {
 #     'toggle_slug': {
 #         'always_enabled': ['domain1', 'domain2],
 #         'always_disabled': ['domain4', 'domain3],
@@ -314,6 +314,7 @@ HQ_APPS = (
     'corehq.apps.mobile_auth',
     'corehq.apps.sms',
     'corehq.apps.events',
+    'corehq.apps.geospatial',
     'corehq.apps.smsforms',
     'corehq.apps.sso',
     'corehq.apps.ivr',
@@ -525,7 +526,6 @@ USER_REPORTING_METADATA_BATCH_SCHEDULE = {'timedelta': {'minutes': 5}}
 
 
 BASE_ADDRESS = 'localhost:8000'
-J2ME_ADDRESS = ''
 
 PAGINATOR_OBJECTS_PER_PAGE = 15
 PAGINATOR_MAX_PAGE_LINKS = 5

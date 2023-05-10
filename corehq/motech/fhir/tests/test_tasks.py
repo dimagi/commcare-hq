@@ -778,6 +778,7 @@ class TestBuildCaseBlock(TestCaseWithResourceType):
             }
         ))
         resource = {
+            'id': '12345',
             'identifier': [{
                 'system': SYSTEM_URI_CASE_ID,
                 'value': case_id,
@@ -792,6 +793,7 @@ class TestBuildCaseBlock(TestCaseWithResourceType):
         )
         self.assertFalse(case_block.create)
         self.assertEqual(case_block.case_id, case_id)
+        self.assertEqual(case_block.external_id, '12345')
 
     def test_resource_has_case_id_in_other_domain(self):
         case_id = str(uuid4())
@@ -849,6 +851,7 @@ class TestBuildCaseBlock(TestCaseWithResourceType):
         )
         self.assertFalse(case_block.create)
         self.assertEqual(case_block.case_id, case_id)
+        self.assertEqual(case_block.external_id, '12345')
 
     def test_resource_has_external_id_in_other_domain(self):
         case_id = str(uuid4())
@@ -877,6 +880,7 @@ class TestBuildCaseBlock(TestCaseWithResourceType):
             )
             self.assertTrue(case_block.create)
             self.assertEqual(case_block.case_id, suggested_case_id)
+            self.assertEqual(case_block.external_id, '12345')
 
     def test_same_external_id_different_case_type(self):
         case_id = str(uuid4())

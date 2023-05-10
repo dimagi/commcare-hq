@@ -1,6 +1,6 @@
 import uuid
 from contextlib import contextmanager
-from unittest.mock import patch
+from unittest.mock import Mock, patch
 
 from django.test import SimpleTestCase, TestCase
 from django.utils.dateparse import parse_datetime
@@ -8,11 +8,12 @@ from django.utils.dateparse import parse_datetime
 from celery import states
 from celery.exceptions import Ignore
 
+from casexml.apps.case.const import CASE_TAG_DATE_OPENED
 from casexml.apps.case.mock import CaseFactory, CaseStructure
 from casexml.apps.case.tests.util import delete_all_cases
 
 from corehq.apps.case_importer import exceptions
-from corehq.apps.case_importer.do_import import do_import
+from corehq.apps.case_importer.do_import import _CaseImportRow, do_import
 from corehq.apps.case_importer.tasks import bulk_import_async
 from corehq.apps.case_importer.tracking.models import CaseUploadRecord
 from corehq.apps.case_importer.util import (
@@ -43,6 +44,58 @@ class TestValidColumnNames(SimpleTestCase):
             invalid_column_names,
             {'1', 'foo+bar', '?', 'parent/maternal'}
         )
+
+
+class TestCaseImportRow(SimpleTestCase):
+
+    def get_row(self, fields_to_update):
+        config = Mock(search_field=None)
+        return _CaseImportRow(
+            search_id='123',
+            fields_to_update=fields_to_update,
+            config=config,
+            domain='importer-test',
+            user_id='abc123',
+            owner_accessor=None,
+        )
+
+    def test_get_caseblock_kwargs_update(self):
+        fields_to_update = {
+            'foo': 'bar',
+        }
+        row = self.get_row(fields_to_update)
+        kwargs = row._get_caseblock_kwargs()
+        self.assertEqual(kwargs, {
+            'index': None,
+            'update': {'foo': 'bar'},
+        })
+
+    @flag_enabled('BULK_UPLOAD_DATE_OPENED')
+    def test_get_caseblock_kwargs_date_opened(self):
+        fields_to_update = {
+            'foo': 'bar',
+            CASE_TAG_DATE_OPENED: '1970-01-01',
+        }
+        row = self.get_row(fields_to_update)
+        kwargs = row._get_caseblock_kwargs()
+        self.assertEqual(kwargs, {
+            'date_opened': '1970-01-01',
+            'index': None,
+            'update': {'foo': 'bar'},
+        })
+
+    def test_get_caseblock_kwargs_external_id(self):
+        fields_to_update = {
+            'foo': 'bar',
+            'external_id': 'one two three',
+        }
+        row = self.get_row(fields_to_update)
+        kwargs = row._get_caseblock_kwargs()
+        self.assertEqual(kwargs, {
+            'external_id': 'one two three',
+            'index': None,
+            'update': {'foo': 'bar'},
+        })
 
 
 class ImporterTest(TestCase):

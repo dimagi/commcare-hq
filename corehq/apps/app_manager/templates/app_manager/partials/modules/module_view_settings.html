@@ -27,14 +27,12 @@
           <i class="fa fa-check"></i>{% trans "Multimedia" %}
         </a>
       </li>
-      {% if not module.is_surveys %}
-        {% if add_ons.register_from_case_list or add_ons.case_list_menu_item or module.doc_type == "AdvancedModule" %}
-          <li>
-            <a href="#" data-slug="advanced" data-collapse="1">
-              <i class="fa fa-check"></i>{% trans "Advanced" %}
-            </a>
-          </li>
-        {% endif %}
+      {% if show_advanced_settings %}
+        <li>
+          <a href="#" data-slug="advanced" data-collapse="1">
+            <i class="fa fa-check"></i>{% trans "Advanced" %}
+          </a>
+        </li>
       {% endif %}
     </ul>
   </div>
@@ -215,7 +213,7 @@
         </div>
       </div>
 
-      {% if not module.is_surveys or show_advanced_settings %}
+      {% if show_advanced_settings %}
         <div class="panel panel-appmanager" data-slug="advanced">
           <div class="panel-heading">
             <h4 class="panel-title panel-title-nolink">{% trans "Advanced" %}</h4>

@@ -919,23 +919,12 @@ http://openrosa.org/formdesigner/FC8DCFC3-F595-40E2-955B-90721FCD246F:
     warning_fr: "Problème signalé: fiches de stocks manquantes : bouteilles/sachets vides et stocks de déchets "
     warning_por: "Problema reportado: Deficiente arquivo de registo de estoque: garrfas vazias e estoque de lixo."
     responsible_follow_up: "District Coordinator"
-  - question: [separate_cards_batch]
-    base_path: [stock_audit_grp, Q6]
-    comment: [separate_cards_batch_comments]
-    flag_name: "6. If there are insecticides that expire prior to next year’s campaign, have they been physically separated from the other insecticides and clearly marked in the store room?"
-    flag_name_fr: "6. S'il y a des insecticides qui expirent avant la campagne de pulvérisation de l'année prochaine, ont-ils été physiquement séparés des autres insecticides et clairement marqués dans le magasin?"
-    flag_name_por: "6. "
-    answer: "no"
-    warning: "Problem reported: Expiring insecticides not physically seperated in the store"
-    warning_fr: "Problème signalé: Insecticides expirant durant campagne suivante non séparés dans le magasin"
-    warning_por: "Problema reportado: "
-    responsible_follow_up: "ECO"
   - question: [expired_insecticides_separate]
     comment: [expired_insecticides_separate_comments]
-    base_path: [stock_audit_grp, Q7]
-    flag_name: "7. If there are insecticides that expire during spray, have they been physically separated from the other insecticides and clearly marked in the store room?"
-    flag_name_fr: "7. S'il y a des insecticides qui expirent pendant la saison de pulvérisation, ont-ils été physiquement séparés des autres insecticides dans le magasin?"
-    flag_name_por: "7. Os insecticidas que expiram durante a época de pulverização foram fisicamente separados dos outros que estão no armazém?"
+    base_path: [stock_audit_grp, Q6a]
+    flag_name: "6a. Have the insecticides that expire during the spray campaign or before next year's campaign been physically separated from the other insecticides and clearly marked in the store?"
+    flag_name_fr: "6a. Est-ce que les insecticides qui expirent pendant cette campagne de pulvérisation ou avant la campagne de l'année prochaine sont physiquement séparés des autres insecticides et clairement identifiés dans le magasin?"
+    flag_name_por: "6a. Os insecticidas que expiram durante a época de pulverização foram fisicamente separados dos outros que estão no armazém?"
     answer: "no"
     warning: "Problem reported: Expiring insecticide not physically separated from others."
     warning_fr: "Problème signalé: les insecticides périmés ne sont pas séparés physiquement des autres insecticides dans le magasin"

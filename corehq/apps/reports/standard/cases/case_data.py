@@ -361,7 +361,7 @@ def form_to_json(domain, form, timezone):
             "username": form.metadata.username if form.metadata else '',
         },
         'readable_name': form_name,
-        'user_type': get_user_type(form.metadata, domain) if form.metadata else 'Unknown',
+        'user_type': get_user_type(form, domain),
     }
 
 

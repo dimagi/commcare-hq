@@ -149,6 +149,7 @@ class SuiteInstanceTests(SimpleTestCase, SuiteMixin):
         self.assertXmlPartialEqual(
             """
             <partial>
+            <instance id="search-input:results" src="jr://instance/search-input/results"/>
             </partial>
             """,
             self.factory.app.create_suite(),

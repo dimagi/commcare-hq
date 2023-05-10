@@ -122,7 +122,8 @@ class BaseExportView(BaseProjectDataView):
         )
         table_count = 0
         if not is_all_case_types_export:
-            table_count = self.export_instance.get_default_selected_table_count()
+            # Case History table is not a selectable table, so exclude it from count
+            table_count = len([t for t in self.export_instance.tables if t.label != 'Case History'])
             schema = self.get_export_schema(
                 self.domain,
                 self.request.GET.get('app_id') or getattr(self.export_instance, 'app_id'),
@@ -136,6 +137,7 @@ class BaseExportView(BaseProjectDataView):
             sharing_options = [SharingOption.EDIT_AND_EXPORT]
 
         allow_deid = has_privilege(self.request, privileges.DEIDENTIFIED_DATA)
+
         return {
             'export_instance': self.export_instance,
             'export_home_url': self.export_home_url,
@@ -178,7 +180,7 @@ class BaseExportView(BaseProjectDataView):
                 properties={'domain': self.domain}
             )
 
-            if toggles.EXPORT_OWNERSHIP.enabled(request.domain):
+            if domain_has_privilege(request.domain, privileges.EXPORT_OWNERSHIP):
                 export.owner_id = request.couch_user.user_id
             if getattr(settings, "ENTERPRISE_MODE"):
                 # default auto rebuild to False for enterprise clusters
@@ -530,7 +532,7 @@ class CopyExportView(View):
             messages.error(request, _('You can only copy new exports.'))
         else:
             new_export = export.copy_export()
-            if toggles.EXPORT_OWNERSHIP.enabled(domain):
+            if domain_has_privilege(domain, privileges.EXPORT_OWNERSHIP):
                 new_export.owner_id = request.couch_user.user_id
                 new_export.sharing = SharingOption.PRIVATE
             new_export.save()

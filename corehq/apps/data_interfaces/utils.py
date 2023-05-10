@@ -12,12 +12,13 @@ from soil import DownloadBase
 from corehq.apps.casegroups.models import CommCareCaseGroup
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain_migration_flags.api import any_migrations_in_progress
-from corehq.apps.hqcase.utils import get_case_by_identifier
 from corehq.form_processor.models import CommCareCase, XFormInstance
 from corehq.motech.repeaters.const import RECORD_CANCELLED_STATE
 
 
 def add_cases_to_case_group(domain, case_group_id, uploaded_data, progress_tracker):
+    from corehq.apps.hqcase.utils import get_case_by_identifier
+
     response = {
         'errors': [],
         'success': [],

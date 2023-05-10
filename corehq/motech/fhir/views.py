@@ -4,6 +4,7 @@ from django.utils.translation import gettext_lazy as _
 from django.views.decorators.http import require_GET
 
 from corehq import toggles
+from corehq.apps.data_dictionary.models import CaseType
 from corehq.apps.domain.decorators import (
     login_or_api_key,
     require_superuser,
@@ -11,6 +12,7 @@ from corehq.apps.domain.decorators import (
 from corehq.form_processor.exceptions import CaseNotFound
 from corehq.form_processor.models import CommCareCase
 from corehq.motech.exceptions import ConfigurationError
+from corehq.motech.fhir.utils import validate_accept_header_and_format_param
 from corehq.motech.repeaters.views import AddRepeaterView, EditRepeaterView
 from corehq.util.view_utils import get_case_or_404
 
@@ -51,6 +53,7 @@ class EditFHIRRepeaterView(EditRepeaterView, AddFHIRRepeaterView):
 @login_or_api_key
 @require_superuser
 @toggles.FHIR_INTEGRATION.required_decorator()
+@validate_accept_header_and_format_param
 def get_view(request, domain, fhir_version_name, resource_type, resource_id):
     fhir_version = _get_fhir_version(fhir_version_name)
     if not fhir_version:
@@ -77,41 +80,55 @@ def get_view(request, domain, fhir_version_name, resource_type, resource_id):
 @login_or_api_key
 @require_superuser
 @toggles.FHIR_INTEGRATION.required_decorator()
-def search_view(request, domain, fhir_version_name, resource_type):
+@validate_accept_header_and_format_param
+def search_view(request, domain, fhir_version_name, resource_type=None):
     fhir_version = _get_fhir_version(fhir_version_name)
     if not fhir_version:
         return JsonResponse(status=400, data={'message': "Unsupported FHIR version"})
-    patient_case_id = request.GET.get('patient_id')
-    if not patient_case_id:
-        return JsonResponse(status=400, data={'message': "Please pass patient_id"})
+    resource_id = request.GET.get('_id', None) or request.GET.get('patient_id')
+    if not resource_id:
+        return JsonResponse(status=400, data={'message': "Please pass resource ID."})
     try:
-        patient_case = CommCareCase.objects.get_case(patient_case_id, domain)
-        if patient_case.is_deleted:
-            return JsonResponse(status=400, data={'message': f"Patient with ID {patient_case_id} was removed"})
+        found_case = CommCareCase.objects.get_case(resource_id, domain)
+        if found_case.is_deleted:
+            return JsonResponse(status=410, data={'message': "Gone"})
     except CaseNotFound:
-        return JsonResponse(status=400, data={'message': f"Could not find patient with ID {patient_case_id}"})
+        return JsonResponse(status=404, data={'message': "Not Found"})
 
-    case_types_for_resource_type = list(
+    resource_types = None
+    if resource_type:
+        resource_types = [resource_type]
+    else:
+        type_param = request.GET.get('_type')
+        resource_types = [resource_type.strip() for resource_type in type_param.split(',')] if type_param else None
+
+    if not resource_types:
+        return JsonResponse(status=400,
+                            data={'message': "No resource type specified for search."})
+    case_types_for_resource_types = list(
         FHIRResourceType.objects.filter(
-            domain=domain, name=resource_type, fhir_version=fhir_version
+            domain=domain, name__in=resource_types, fhir_version=fhir_version
         ).values_list('case_type__name', flat=True)
     )
-    if not case_types_for_resource_type:
+    if not case_types_for_resource_types:
         return JsonResponse(status=400,
-                            data={'message': f"Resource type {resource_type} not available on {domain}"})
+                            data={'message':
+                                  f"Resource type(s) {', '.join(resource_types)} not available on {domain}"})
 
     cases = CommCareCase.objects.get_reverse_indexed_cases(
-        domain, [patient_case_id], case_types=case_types_for_resource_type, is_closed=False)
-    if patient_case.type in case_types_for_resource_type:
-        cases.append(patient_case)
+        domain, [resource_id], case_types=case_types_for_resource_types, is_closed=False)
+    if found_case.type in case_types_for_resource_types:
+        cases.append(found_case)
     response = {
         'resourceType': "Bundle",
         "type": "searchset",
         "entry": []
     }
     for case in cases:
+        case_resource_type = FHIRResourceType.objects.get(
+            case_type=CaseType.objects.get(domain=domain, name=case.type))
         response["entry"].append({
-            "fullUrl": resource_url(domain, fhir_version_name, resource_type, case.case_id),
+            "fullUrl": resource_url(domain, fhir_version_name, case_resource_type, case.case_id),
             "search": {
                 "mode": "match"
             }

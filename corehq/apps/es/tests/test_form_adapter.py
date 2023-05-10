@@ -3,7 +3,6 @@ from django.test import TestCase
 from corehq.apps.es.forms import form_adapter
 from corehq.apps.es.tests.utils import es_test
 from corehq.form_processor.tests.utils import create_form_for_test
-from corehq.pillows.xform import transform_xform_for_elasticsearch
 
 
 @es_test(requires=[form_adapter], setup_class=True)
@@ -23,15 +22,6 @@ class TestFromPythonInForms(TestCase):
 
     def test_from_python_raises_for_other_objects(self):
         self.assertRaises(TypeError, form_adapter.from_python, set)
-
-    def test_from_python_is_same_as_transform_form_for_es(self):
-        # this test can be safely removed when transform_form_for_elasticsearch is removed
-        form_id, form = form_adapter.from_python(self.form)
-        form['_id'] = form_id
-        form.pop('inserted_at')
-        form_transformed_dict = transform_xform_for_elasticsearch(self.form.to_json())
-        form_transformed_dict.pop('inserted_at')
-        self.assertEqual(form_transformed_dict, form)
 
     def test_index_can_handle_form_dicts(self):
         form_dict = self.form.to_json()
