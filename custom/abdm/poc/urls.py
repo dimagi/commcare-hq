@@ -7,6 +7,7 @@ from custom.abdm.poc.hip.views import (
     care_context_link_confirm,
     consent_notification,
     health_info_request,
+    fetch_patients,
 )
 from custom.abdm.poc.hiu.views import (
     consent_requests_on_init,
@@ -28,6 +29,8 @@ hip_urls = [
     path('v0.5/links/link/confirm', care_context_link_confirm, name='care_context_link_confirm'),
     path('v0.5/consents/hip/notify', consent_notification, name='consent_notification'),
     path('v0.5/health-information/hip/request', health_info_request, name='health_info_request'),
+    # Internal API for Demo purpose
+    path('hip/fetch_patients', fetch_patients, name='fetch_patients'),
 ]
 
 hiu_urls = [

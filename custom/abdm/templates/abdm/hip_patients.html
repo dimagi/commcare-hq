@@ -1,0 +1,32 @@
+{% extends 'abdm/base.html' %}
+
+{% block content %}
+  <legend>HIP Patients</legend>
+  <table class="table">
+    <thead>
+      <tr>
+        <th scope="col">Name</th>
+        <th scope="col">Abha Id</th>
+        <th scope="col">City</th>
+        <th scope="col">Health Id Number</th>
+        <th scope="col">Mobile Number</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for patient in patients %}
+        <tr>
+          <td>{{patient.name}}</td>
+          <td>{{patient.abha_address}}</td>
+          <td>
+            {% if patient.address is not None %}
+              {{patient.address.district}}
+            {% endif %}
+          </td>
+          <td>{{patient.health_id_number}}</td>
+          <td>{{patient.identifiers.0.value}}</td>
+
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+{% endblock %}

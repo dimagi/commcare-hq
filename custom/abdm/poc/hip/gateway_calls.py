@@ -14,10 +14,11 @@ CONSENT_ON_NOTIFY_GW_URL = '/v0.5/consents/hip/on-notify'
 HEALTH_INFO_ON_REQUEST_GW_URL = '/v0.5/health-information/hip/on-request'
 HEALTH_INFO_ON_TRANSFER_GW_URL = '/v0.5/health-information/notify'
 
+ADDITIONAL_HEADERS = {'X-CM-ID': X_CM_ID}
+
 # TODO : Send error if validation fails, remove hard coding for all below calls
 
-
-# TEMP CONSTS
+# TEMP HARDCODED CONSTS
 PATIENT_ID = 'PT-201'
 CARE_CONTEXT_ID = 'CC-201'
 
@@ -40,9 +41,8 @@ def gw_patient_profile_on_share(request_id, health_id):
             "requestId": request_id
         }
     }
-    additional_headers = {'X-CM-ID': X_CM_ID}
-    print(get_response_http_post(api_url=PATIENT_ON_SHARE_GW_URL, payload=data,
-                                 additional_headers=additional_headers))
+    get_response_http_post(api_url=PATIENT_ON_SHARE_GW_URL, payload=data,
+                           additional_headers=ADDITIONAL_HEADERS)
 
 
 def gw_care_context_on_discover(request_id, transaction_id):
@@ -68,12 +68,11 @@ def gw_care_context_on_discover(request_id, transaction_id):
             "requestId": request_id
         }
     }
-    additional_headers = {'X-CM-ID': X_CM_ID}
-    print(get_response_http_post(api_url=CARE_CONTEXT_ON_DISCOVER_GW_URL, payload=data,
-                                 additional_headers=additional_headers))
+    get_response_http_post(api_url=CARE_CONTEXT_ON_DISCOVER_GW_URL, payload=data,
+                           additional_headers=ADDITIONAL_HEADERS)
 
 
-def gw_care_context_on_init(request_id, transaction_id):
+def gw_care_context_link_on_init(request_id, transaction_id):
     print("Sending callback request to gateway: gw_care_context_on_init")
     data = {
         "requestId": str(uuid.uuid4()),
@@ -92,14 +91,12 @@ def gw_care_context_on_init(request_id, transaction_id):
             "requestId": request_id
         }
     }
-    additional_headers = {'X-CM-ID': X_CM_ID}
-    print(get_response_http_post(api_url=CARE_CONTEXT_LINK_ON_INIT_GW_URL, payload=data,
-                                 additional_headers=additional_headers))
+    get_response_http_post(api_url=CARE_CONTEXT_LINK_ON_INIT_GW_URL, payload=data,
+                           additional_headers=ADDITIONAL_HEADERS)
 
 
-def gw_care_context_on_confirm(request_id):
+def gw_care_context_link_on_confirm(request_id):
     print("Sending callback request to gateway: gw_care_context_on_confirm")
-    additional_headers = {'X-CM-ID': X_CM_ID}
     data = {
         "requestId": str(uuid.uuid4()),
         "timestamp": datetime.utcnow().isoformat(),
@@ -117,8 +114,8 @@ def gw_care_context_on_confirm(request_id):
             "requestId": request_id
         }
     }
-    print(get_response_http_post(api_url=CARE_CONTEXT_LINK_ON_CONFIRM_GW_URL, payload=data,
-                                 additional_headers=additional_headers))
+    get_response_http_post(api_url=CARE_CONTEXT_LINK_ON_CONFIRM_GW_URL, payload=data,
+                           additional_headers=ADDITIONAL_HEADERS)
 
 
 def gw_consents_on_notify(request_id, consent_id):
@@ -134,10 +131,8 @@ def gw_consents_on_notify(request_id, consent_id):
             "requestId": request_id
         }
     }
-
-    additional_headers = {'X-CM-ID': X_CM_ID}
-    print(get_response_http_post(api_url=CONSENT_ON_NOTIFY_GW_URL, payload=data,
-                                 additional_headers=additional_headers))
+    get_response_http_post(api_url=CONSENT_ON_NOTIFY_GW_URL, payload=data,
+                           additional_headers=ADDITIONAL_HEADERS)
 
 
 def gw_health_info_on_request(request_id, transaction_id):
@@ -153,9 +148,8 @@ def gw_health_info_on_request(request_id, transaction_id):
             "requestId": request_id
         }
     }
-    additional_headers = {'X-CM-ID': X_CM_ID}
-    print(get_response_http_post(api_url=HEALTH_INFO_ON_REQUEST_GW_URL, payload=data,
-                                 additional_headers=additional_headers))
+    get_response_http_post(api_url=HEALTH_INFO_ON_REQUEST_GW_URL, payload=data,
+                           additional_headers=ADDITIONAL_HEADERS)
 
 
 def gw_health_info_on_transfer(consent_id, transaction_id):
@@ -177,13 +171,12 @@ def gw_health_info_on_transfer(consent_id, transaction_id):
                 "statusResponses": [
                     {
                         "careContextReference": CARE_CONTEXT_ID,
-                        "hiStatus": "OK",
+                        "hiStatus": "DELIVERED",
                         "description": "string"
                     }
                 ]
             }
         }
     }
-    additional_headers = {'X-CM-ID': X_CM_ID}
     print(get_response_http_post(api_url=HEALTH_INFO_ON_TRANSFER_GW_URL, payload=data,
-                                 additional_headers=additional_headers))
+                                 additional_headers=ADDITIONAL_HEADERS))

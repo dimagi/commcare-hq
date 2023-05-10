@@ -56,3 +56,15 @@ class ConsentRequest(models.Model):
     patient_abha_address = models.CharField(null=True, max_length=100)
     status = models.CharField(choices=CONSENT_REQUEST_STATUS, default='REQUESTED', max_length=40)
     details = models.JSONField(null=True)
+
+
+# Only for Demo
+class Patient(models.Model):
+
+    name = models.CharField(null=True, max_length=100)
+    created_date = models.DateTimeField(auto_now_add=True)
+    updated_date = models.DateTimeField(auto_now=True)
+    abha_address = models.CharField(null=True, max_length=100)
+    health_id_number = models.CharField(null=True, max_length=100)
+    address = models.JSONField(null=True)
+    identifiers = models.JSONField(null=True)

@@ -18,6 +18,8 @@
 #
 abdm
  0001_initial
+ 0002_consentrequest
+ 0003_patient
 accounting
  0001_squashed_0052_ensure_report_builder_plans
  0002_auto_20170222_2008
