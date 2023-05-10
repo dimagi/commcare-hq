@@ -41,12 +41,18 @@ def generate_consent_request(request):
     if request.method == "GET":
         return render(request, "abdm/request_consent.html", {})
     else:
+        # TODO Datetime convert to utc or accept utctime
         request_data = request.data
         patient_abha_address = request_data['patientIdentifier']
         consent_purpose = request_data['purposeOfRequest']
+        health_info_from = datetime.strptime(request_data['healthInfoFrom'], '%Y-%m-%d').isoformat()
+        health_info_to = datetime.strptime(request_data['healthInfoTo'], '%Y-%m-%d').isoformat()
+        health_info_type = request_data['healthInfoType']
+        consent_expiry = datetime.strptime(request_data['consentExpiry'], '%Y-%m-%dT%H:%M').isoformat()
         consent_request = ConsentRequest(request_id=str(uuid.uuid4()), patient_abha_address=patient_abha_address)
         consent_request.save()
-        gw_consent_request_init(consent_request.request_id, patient_abha_address, consent_purpose)
+        gw_consent_request_init(consent_request.request_id, patient_abha_address, consent_purpose,
+                                health_info_from, health_info_to, health_info_type, consent_expiry)
         return HttpResponseRedirect(reverse('fetch_consents'))
 
 

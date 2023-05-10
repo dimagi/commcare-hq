@@ -24,7 +24,8 @@ HIP_ID = '6004'
 HIU_ID = 'Ashish-HIU-Registered'
 
 
-def gw_consent_request_init(request_id, patient_abha_address, consent_purpose):
+def gw_consent_request_init(request_id, patient_abha_address, consent_purpose, health_info_from,
+                            health_info_to, health_info_type, consent_expiry):
     print("HIU GW: Consent Request initiation")
     data = {
         "requestId": request_id,
@@ -58,16 +59,14 @@ def gw_consent_request_init(request_id, patient_abha_address, consent_purpose):
                     "system": "https://www.mciindia.org"
                 }
             },
-            "hiTypes": [
-                "OPConsultation"
-            ],
+            "hiTypes": [health_info_type],
             "permission": {
                 "accessMode": "VIEW",
                 "dateRange": {
-                    "from": (datetime.utcnow() - timedelta(days=4)).isoformat(),
-                    "to": (datetime.utcnow() + timedelta(days=8)).isoformat()
+                    "from": health_info_from,
+                    "to": health_info_to
                 },
-                "dataEraseAt": (datetime.utcnow() + timedelta(days=4)).isoformat(),
+                "dataEraseAt": consent_expiry,
                 "frequency": {
                     "unit": "HOUR",
                     "value": 1,
@@ -76,8 +75,8 @@ def gw_consent_request_init(request_id, patient_abha_address, consent_purpose):
             }
         }
     }
-    get_response_http_post(api_url=CONSENT_REQUEST_INIT_GW_URL, payload=data,
-                           additional_headers=ADDITIONAL_HEADERS)
+    print(get_response_http_post(api_url=CONSENT_REQUEST_INIT_GW_URL, payload=data,
+                                 additional_headers=ADDITIONAL_HEADERS))
 
 
 def gw_consents_on_notify(request_id, consent_artefacts):
