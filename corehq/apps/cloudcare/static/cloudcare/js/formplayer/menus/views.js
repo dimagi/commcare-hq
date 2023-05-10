@@ -171,10 +171,9 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
     // useUniformUnits - true if the grid's cells should have the same height as width
     const buildCellGridStyle = function (numRows, numColumns, useUniformUnits, prefix) {
         let heightString;
-        const wrapperWidth = 100;
 
         if (useUniformUnits) {
-            const heightPercentage = wrapperWidth / numColumns;
+            const heightPercentage = 100 / numColumns;
             heightString = heightPercentage + "cqw";
         } else {
             heightString = "auto";
@@ -567,7 +566,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
     //
     // styles[0] - the grid layout of the cells within a case list tile
     // styles[1] - the layout of the grid itself, IE how many rows/columns each tile should have and their size
-    // styles[2] - (if showing 2+ cases per line) sets the bounds of the tile to arrange its grid based on
+    // styles[2] - (if showing 2+ cases per line) wrapper that styles the tile and is used as its boundary
     // styles[3] - (if showing 2+ cases per line) sets the layout of the case tiles on the outer, visible grid
     const buildCaseTileStyles = function (tiles, numRows, numColumns, numEntitiesPerRow, useUniformUnits, prefix) {
         const cellLayoutStyle = buildCellLayout(tiles, prefix);
