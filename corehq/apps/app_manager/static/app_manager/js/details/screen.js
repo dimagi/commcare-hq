@@ -202,7 +202,7 @@ hqDefine("app_manager/js/details/screen", function () {
         self.columns.subscribe(function (changes) {
             self.saveButton.fire('change');
 
-            // create events for column moves and fire a special event that allows us to update
+            // create events when rows (column objects) are moved and fire a special event that allows us to update
             // dependent UI elements (sort properties)
             const events = changes
                 // remove the 2nd event for column moves
