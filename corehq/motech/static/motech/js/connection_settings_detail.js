@@ -71,6 +71,17 @@ hqDefine("motech/js/connection_settings_detail", [
                         'plaintext_password',
                     ];
                     break;
+                case 'api_key':
+                    visible = [
+                        'plaintext_password',
+                    ];
+                    hidden = [
+                        'username',
+                        'client_id',
+                        'plaintext_client_secret',
+                        'oauth_settings',
+                    ];
+                    break;
                 default:
                     visible = [
                         'username',
