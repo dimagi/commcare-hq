@@ -455,7 +455,6 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
         },
 
         reconcileMultiSelectUI: function () {
-            console.log("reconcileMultiSelectUI")
             var self = this;
 
             self.verifySelectedCaseIdsLessThanMaxSelectValue();
@@ -517,6 +516,20 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
         },
     });
 
+    const registerContinueListener = function (self, options) {
+        self.maxSelectValue = options.multiSelectMaxSelectValue;
+        // Remove any event handling left over from previous instances of MultiSelectCaseListView.
+        // Only one of these views is supported on the page at any given time.
+        FormplayerFrontend.off("multiSelect:updateCases").on("multiSelect:updateCases", function (action, caseIds) {
+            if (action === constants.MULTI_SELECT_ADD) {
+                self.selectedCaseIds = _.union(self.selectedCaseIds, caseIds);
+            } else {
+                self.selectedCaseIds = _.difference(self.selectedCaseIds, caseIds);
+            }
+            self.reconcileMultiSelectUI();
+        });
+    }
+
     var MultiSelectCaseListView = CaseListView.extend({
         ui: _.extend(CaseListViewUI(), {
             selectAllCheckbox: "#select-all-checkbox",
@@ -539,18 +552,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
 
         initialize: function (options) {    // eslint-disable-line no-unused-vars
             MultiSelectCaseListView.__super__.initialize.apply(this, arguments);
-            var self = this;
-            self.maxSelectValue = options.multiSelectMaxSelectValue;
-            // Remove any event handling left over from previous instances of MultiSelectCaseListView.
-            // Only one of these views is supported on the page at any given time.
-            FormplayerFrontend.off("multiSelect:updateCases").on("multiSelect:updateCases", function (action, caseIds) {
-                if (action === constants.MULTI_SELECT_ADD) {
-                    self.selectedCaseIds = _.union(self.selectedCaseIds, caseIds);
-                } else {
-                    self.selectedCaseIds = _.difference(self.selectedCaseIds, caseIds);
-                }
-                self.reconcileMultiSelectUI();
-            });
+            registerContinueListener(this, options)
         },
 
         templateContext: function () {
@@ -580,21 +582,6 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
         const cellContainerStyle = buildCellContainerStyle(numEntitiesPerRow);
         return [cellLayoutStyle, cellGridStyle, cellWrapperStyle, cellContainerStyle];
     };
-
-    const registerContinueListener = function (self, options) {
-        self.maxSelectValue = options.multiSelectMaxSelectValue;
-        // Remove any event handling left over from previous instances of MultiSelectCaseListView.
-        // Only one of these views is supported on the page at any given time.
-        FormplayerFrontend.off("multiSelect:updateCases").on("multiSelect:updateCases", function (action, caseIds) {
-            if (action === constants.MULTI_SELECT_ADD) {
-                self.selectedCaseIds = _.union(self.selectedCaseIds, caseIds);
-            } else {
-                self.selectedCaseIds = _.difference(self.selectedCaseIds, caseIds);
-            }
-            self.reconcileMultiSelectUI();
-        });
-
-    }
 
     var CaseTileListView = CaseListView.extend({
         ui: _.extend(CaseListViewUI(), {

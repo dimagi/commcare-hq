@@ -107,11 +107,11 @@
 
 <script type="text/template" id="case-tile-view-item-template">
   <div class="<%- prefix %>-cell-grid-style">
-  <% if (isMultiSelect) { %>
-    <div class="select-row-checkbox-div">
-      <input type="checkbox" class="select-row-checkbox"/>
-    </div>
-  <% } %>
+    <% if (isMultiSelect) { %>
+      <div class="select-row-checkbox-div">
+        <input type="checkbox" class="select-row-checkbox"/>
+      </div>
+    <% } %>
     <% _.each(data, function(datum, index) { %>
     <div class="<%- prefix %>-grid-style-<%- index %> box">
       <% if (styles[index].displayFormat === 'Image') {
