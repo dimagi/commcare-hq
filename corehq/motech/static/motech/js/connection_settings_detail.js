@@ -33,8 +33,7 @@ hqDefine("motech/js/connection_settings_detail", [
         });
 
         $authTypeSelect.change(function () {
-            var visible = [],
-                hidden = [],
+            let visible = [],
                 allFields = [
                     'username',
                     'plaintext_password',
@@ -44,21 +43,15 @@ hqDefine("motech/js/connection_settings_detail", [
                 ];
             switch ($(this).val()) {
                 case '':  // Auth type is "None"
-                    hidden = allFields;
                     break;
                 case 'oauth1':
                     visible = [
                         'username',
                         'plaintext_password',
                     ];
-                    hidden = [
-                        'client_id',
-                        'auth_settings',
-                    ];
                     break;
                 case 'oauth2_pwd':
                     visible = allFields;
-                    hidden = [];
                     break;
                 case 'oauth2_client':
                     visible = [
@@ -66,20 +59,10 @@ hqDefine("motech/js/connection_settings_detail", [
                         'plaintext_client_secret',
                         'oauth_settings',
                     ];
-                    hidden = [
-                        'username',
-                        'plaintext_password',
-                    ];
                     break;
                 case 'api_key':
                     visible = [
                         'plaintext_password',
-                    ];
-                    hidden = [
-                        'username',
-                        'client_id',
-                        'plaintext_client_secret',
-                        'oauth_settings',
                     ];
                     break;
                 default:
@@ -87,17 +70,14 @@ hqDefine("motech/js/connection_settings_detail", [
                         'username',
                         'plaintext_password',
                     ];
-                    hidden = [
-                        'client_id',
-                        'plaintext_client_secret',
-                        'oauth_settings',
-                    ];
             }
-            _.each(visible, function (field) {
-                $('#div_id_' + field).show();
-            });
-            _.each(hidden, function (field) {
-                $('#div_id_' + field).hide();
+            _.each(allFields, function (field) {
+                let div = $('#div_id_' + field);
+                if (visible.includes(field)) {
+                    div.show();
+                } else {
+                    div.hide();
+                }
             });
         });
 
