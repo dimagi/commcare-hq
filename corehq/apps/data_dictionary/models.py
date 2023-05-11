@@ -51,6 +51,9 @@ class CasePropertyGroup(models.Model):
     index = models.IntegerField(default=0, blank=True)
     deprecated = models.BooleanField(default=False)
 
+    class Meta(object):
+        unique_together = ('case_type', 'name')
+
 
 class CaseProperty(models.Model):
 
