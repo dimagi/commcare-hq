@@ -9,8 +9,6 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.RunPython(
-            prompt_for_historical_migration(
-                "app_manager", get_migration_name(__file__), "3c47a08dad06c20f376b25ce2bcd4f307ff5f6e6")
-        ),
+        prompt_for_historical_migration(
+            "app_manager", get_migration_name(__file__), "3c47a08dad06c20f376b25ce2bcd4f307ff5f6e6")
     ]
