@@ -553,25 +553,21 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
         },
     });
 
-    // Return a two- or four-length array of case tile CSS styles
-    //
-    // styles[0] - the grid layout of the cells within a case list tile
-    // styles[1] - the layout of the grid itself, IE how many rows/columns each tile should have and their size
-    // styles[2] - (if showing 2+ cases per line) wrapper that styles the tile and is used as its boundary
-    // styles[3] - (if showing 2+ cases per line) sets the layout of the case tiles on the outer, visible grid
+    // Return an object of case tile CSS styles that defines:
+    // - layout of the content within a case list tile
+    // - shape and size of the tile's layout grid
+    // - (if 2+ cases per line) the tile's visual style and its outer boundary
+    // - (if 2+ cases per line) layout of the case tiles on the outer, visible grid
     const buildCaseTileStyles = function (tiles, numRows, numColumns, numEntitiesPerRow, useUniformUnits, prefix) {
-        const cellLayoutStyle = buildCellLayout(tiles, prefix);
-        const cellGridStyle = buildCellGridStyle(numRows,
-            numColumns,
-            useUniformUnits,
-            prefix);
+        const caseTileStyles = {};
+        caseTileStyles.cellLayoutStyle = buildCellLayout(tiles, prefix);
+        caseTileStyles.cellGridStyle = buildCellGridStyle(numRows, numColumns, useUniformUnits, prefix);
+
         if (numEntitiesPerRow > 1) {
-            const cellWrapperStyle = $("#cell-wrapper-style-template").html();
-            const cellContainerStyle = buildCellContainerStyle(numEntitiesPerRow);
-            return [cellLayoutStyle, cellGridStyle, cellWrapperStyle, cellContainerStyle];
-        } else {
-            return [cellLayoutStyle, cellGridStyle];
+            caseTileStyles.cellWrapperStyle = $("#cell-wrapper-style-template").html();
+            caseTileStyles.cellContainerStyle = buildCellContainerStyle(numEntitiesPerRow);
         }
+        return caseTileStyles;
     };
 
     var CaseTileListView = CaseListView.extend({
@@ -589,13 +585,12 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
 
             var gridPolyfillPath = FormplayerFrontend.getChannel().request('gridPolyfillPath');
 
-            $("#list-cell-layout-style").html(caseTileStyles[0]).data("css-polyfilled", false);
-            $("#list-cell-grid-style").html(caseTileStyles[1]).data("css-polyfilled", false);
+            $("#list-cell-layout-style").html(caseTileStyles.cellLayoutStyle).data("css-polyfilled", false);
+            $("#list-cell-grid-style").html(caseTileStyles.cellGridStyle).data("css-polyfilled", false);
             // If we have multiple cases per line, need to generate the outer grid style as well
-            if (caseTileStyles.length > 2) {
-                $("#list-cell-wrapper-style").html(caseTileStyles[2]).data("css-polyfilled", false);
-                $("#list-cell-container-style").html(caseTileStyles[3]).data("css-polyfilled", false);
-
+            if (caseTileStyles.cellWrapperStyle && caseTileStyles.cellContainerStyle) {
+                $("#list-cell-wrapper-style").html(caseTileStyles.cellWrapperStyle).data("css-polyfilled", false);
+                $("#list-cell-container-style").html(caseTileStyles.cellContainerStyle).data("css-polyfilled", false);
             }
 
             $.getScript(gridPolyfillPath);
