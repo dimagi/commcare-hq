@@ -585,7 +585,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
 
     var CaseTileListView = CaseListView.extend({
         ui: _.extend(CaseListViewUI(), {
-            selectAllCheckbox: "#select-all-checkbox",
+            selectAllCheckbox: "#select-all-tile-checkbox",
             continueButton: "#multi-select-continue-btn",
             continueButtonText: "#multi-select-btn-text",
         }),
