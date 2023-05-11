@@ -429,7 +429,7 @@ class TestEventModel(TestCase):
             self.addCleanup(event.delete)
 
             events_by_loc = list(Event.objects.filter(location=location))
-            self.assertEquals(events_by_loc, [event])
+            self.assertEqual(events_by_loc, [event])
 
             location_events = list(location.event_set.all())
             self.assertEqual(location_events, [event])
