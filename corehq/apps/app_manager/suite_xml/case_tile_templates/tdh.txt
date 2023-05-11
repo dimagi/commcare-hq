@@ -58,7 +58,7 @@
       </header>
       <template>
         <text>
-          **{header[prefix]}**&amp;nbsp;
+          &lt;b&gt;{header[prefix]} &lt;/b&gt;
           <xpath function="{header[xpath_function]}">
             {header[variables]}
           </xpath>
@@ -90,7 +90,7 @@
       </header>
       <template>
         <text>
-          **{top_left[prefix]}**&amp;nbsp;
+          &lt;b&gt;{top_left[prefix]} &lt;/b&gt;
           <xpath function="{top_left[xpath_function]}">
             {top_left[variables]}
           </xpath>
@@ -122,7 +122,7 @@
       </header>
       <template>
         <text>
-          **{sex[prefix]}**&amp;nbsp;
+          &lt;b&gt;{sex[prefix]} &lt;/b&gt;
           <xpath function="{sex[xpath_function]}">
             {sex[variables]}
           </xpath>
@@ -147,7 +147,7 @@
       </header>
       <template>
         <text>
-          **{bottom_left[prefix]}**&amp;nbsp;
+          &lt;b&gt;{bottom_left[prefix]} &lt;/b&gt;
           <xpath function="{bottom_left[xpath_function]}">
             {bottom_left[variables]}
           </xpath>
@@ -178,7 +178,7 @@
         </text>
       </header>
       <template>
-        <text>**{date[prefix]}**&amp;nbsp; <xpath function="{date[xpath_function]}"/></text>
+        <text>&lt;b&gt;{date[prefix]} &lt;/b&gt; <xpath function="{date[xpath_function]}"/></text>
       </template>
     </field>
   </detail>
