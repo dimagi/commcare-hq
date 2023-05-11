@@ -41,6 +41,7 @@ hqDefine("cloudcare/js/formplayer/app", function () {
                 breadcrumb: "#breadcrumb-region",
                 persistentCaseTile: "#persistent-case-tile",
                 restoreAsBanner: '#restore-as-region',
+                sidebar: '#sidebar-region'
             },
         });
 

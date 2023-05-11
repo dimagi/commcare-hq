@@ -7,6 +7,7 @@ hqDefine("cloudcare/js/formplayer/menus/controller", function () {
         menusUtils = hqImport("cloudcare/js/formplayer/menus/utils"),
         views = hqImport("cloudcare/js/formplayer/menus/views"),
         toggles = hqImport("hqwebapp/js/toggles"),
+        QueryListView = hqImport("cloudcare/js/formplayer/menus/views/query"),
         md = window.markdownit();
     var selectMenu = function (options) {
 
@@ -106,6 +107,7 @@ hqDefine("cloudcare/js/formplayer/menus/controller", function () {
         var appPreview = FormplayerFrontend.currentUser.displayOptions.singleAppMode;
         var changeFormLanguage = toggles.toggleEnabled('CHANGE_FORM_LANGUAGE');
         var enablePrintOption = !menuResponse.queryKey;
+        var sidebarEnabled = toggles.toggleEnabled('SPLIT_SCREEN_CASE_SEARCH');
 
         if (menuListView) {
             FormplayerFrontend.regions.getRegion('main').show(menuListView);
@@ -114,6 +116,11 @@ hqDefine("cloudcare/js/formplayer/menus/controller", function () {
             showPersistentCaseTile(menuResponse.persistentCaseTile);
         } else {
             FormplayerFrontend.regions.getRegion('persistentCaseTile').empty();
+        }
+        if (sidebarEnabled && !appPreview) { // TODO: add in check for query list response attached to the entities response
+            FormplayerFrontend.regions.getRegion('sidebar').show(QueryListView);
+        } else {
+            FormplayerFrontend.regions.getRegion('sidebar').empty();
         }
 
         if (menuResponse.breadcrumbs) {
