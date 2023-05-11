@@ -563,6 +563,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
         caseTileStyles.cellGridStyle = buildCellGridStyle(numRows, numColumns, useUniformUnits, prefix);
         caseTileStyles.cellWrapperStyle = $("#cell-wrapper-style-template").html();
         caseTileStyles.cellContainerStyle = buildCellContainerStyle(numEntitiesPerRow);
+        return caseTileStyles;
     };
 
     const CaseTileListView = CaseListView.extend({
