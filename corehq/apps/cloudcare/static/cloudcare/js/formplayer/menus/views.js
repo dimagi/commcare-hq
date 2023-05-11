@@ -254,11 +254,15 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
         },
 
         templateContext: function () {
-            const appId = utils.currentUrlToObject().appId;
+            const appId = utils.currentUrlToObject().appId,
+                md = window.markdownit();
             return {
                 data: this.options.model.get('data'),
                 styles: this.options.styles,
                 isMultiSelect: this.options.isMultiSelect,
+                renderMarkdown: function (datum) {
+                    return md.render(DOMPurify.sanitize(datum || ""));
+                },
                 resolveUri: function (uri) {
                     return FormplayerFrontend.getChannel().request('resourceMap', uri, appId);
                 },
@@ -275,12 +279,8 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
     const CaseTileView = CaseView.extend({
         template: _.template($("#case-tile-view-item-template").html() || ""),
         templateContext: function () {
-            const dict = CaseTileView.__super__.templateContext.apply(this, arguments),
-                md = window.markdownit();
+            const dict = CaseTileView.__super__.templateContext.apply(this, arguments);
             dict['prefix'] = this.options.prefix;
-            dict['renderMarkdown'] = function (datum) {
-                return md.render(DOMPurify.sanitize(datum || ""));
-            };
             return dict;
         },
     });
