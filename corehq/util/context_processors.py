@@ -139,9 +139,6 @@ def js_toggles(request):
 
 
 def js_privileges(request):
-    if not getattr(request, 'couch_user', None):
-        return {}
-
     domain = None
     if getattr(request, 'project', None):
         domain = request.project.name
