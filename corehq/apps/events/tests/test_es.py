@@ -1,4 +1,3 @@
-import doctest
 from uuid import uuid4
 
 from django.test import TestCase
@@ -184,14 +183,12 @@ class TestGetPaginatedAttendees(TestCase):
         self.assertEqual(cases, [self.bob])
 
     def test_page_0(self):
-        cases, total = get_paginated_attendees(DOMAIN, limit=1, page=0)
-        self.assertEqual(total, 2)
-        self.assertEqual(cases, [self.alice])
+        with self.assertRaises(AssertionError):
+            get_paginated_attendees(DOMAIN, limit=1, page=0)
 
     def test_limit_0(self):
-        cases, total = get_paginated_attendees(DOMAIN, limit=0, page=1)
-        self.assertEqual(total, 2)
-        self.assertEqual(cases, [])
+        with self.assertRaises(AssertionError):
+            get_paginated_attendees(DOMAIN, limit=0, page=1)
 
     def test_all(self):
         cases, total = get_paginated_attendees(DOMAIN, limit=5, page=1)
@@ -203,9 +200,3 @@ class TestGetPaginatedAttendees(TestCase):
                                                query='alice')
         self.assertEqual(total, 1)
         self.assertEqual(cases, [self.alice])
-
-
-def test_doctests():
-    import corehq.apps.events.es as module
-    results = doctest.testmod(module, optionflags=doctest.ELLIPSIS)
-    assert results.failed == 0
