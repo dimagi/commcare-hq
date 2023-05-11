@@ -78,7 +78,7 @@ hqDefine("data_dictionary/js/data_dictionary", [
             self.toBeDeprecated(false);
         };
         self.showDeprecatedWarning = ko.computed(function () {
-            return self.toBeDeprecated() && !deprecated && self.properties().length > 0
+            return self.toBeDeprecated() && !deprecated && self.properties().length > 0;
         });
         return self;
     };
