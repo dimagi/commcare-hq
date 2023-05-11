@@ -211,15 +211,7 @@ hqDefine("data_dictionary/js/data_dictionary", [
                         'case_type': self.activeCaseType(),
                     },
                     success: function () {
-                        var activeCaseType = self.getActiveCaseType();
-                        activeCaseType.fhirResourceType(self.fhirResourceType());
-                        const emptyGroup = self.caseGroupList().find(group => group.name() === "");
-                        for (let group of self.caseGroupList()) {
-                            if (group.toBeDeprecated()) {
-                                emptyGroup.properties.push(...group.properties.removeAll());
-                            }
-                        }
-                        activeCaseType.groups(self.caseGroupList());
+                        window.location.reload();
                     },
                     // Error handling is managed by SaveButton logic in main.js
                 });
