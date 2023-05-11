@@ -701,7 +701,9 @@ CASE_LIST_TILE = StaticToggle(
     'case_list_tile',
     'REC: Allow configuration of the REC case list tile',
     TAG_CUSTOM,
-    [NAMESPACE_DOMAIN]
+    [NAMESPACE_DOMAIN],
+    help_link='https://confluence.dimagi.com/pages/viewpage.action?'
+              'spaceKey=saas&title=Allow+Configuration+of+Case+List+Tiles',
 )
 
 SHOW_PERSIST_CASE_CONTEXT_SETTING = StaticToggle(
