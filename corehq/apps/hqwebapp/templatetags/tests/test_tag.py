@@ -89,6 +89,12 @@ class TagTest(SimpleTestCase):
             'hq': True,
         })
 
+    def test_javascript_libraries_hq_bootstrap5(self):
+        self._test('javascript_libraries_hq_bootstrap5', {
+            'hq': True,
+            'use_bootstrap5': True,
+        })
+
     def test_requirejs_main(self):
         self.assertEqual(
             self.render("""
