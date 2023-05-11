@@ -221,7 +221,7 @@ class ConnectionSettings(models.Model):
                 self.plaintext_password,
             )
         if self.auth_type == APIKEY_AUTH:
-            return ApiKeyAuthManager(self.password)
+            return ApiKeyAuthManager(self.plaintext_password)
         if self.auth_type == OAUTH2_PWD:
             return OAuth2PasswordGrantManager(
                 self.url,
