@@ -33,48 +33,52 @@ hqDefine("motech/js/connection_settings_detail", [
         });
 
         $authTypeSelect.change(function () {
-            let visible = [],
-                allFields = [
-                    'username',
-                    'plaintext_password',
-                    'client_id',
-                    'plaintext_client_secret',
-                    'oauth_settings',
-                ];
+            let visible = {},
+                allFields = {
+                    'username': gettext("Username"),
+                    'plaintext_password': gettext("Password"),
+                    'client_id': gettext("Client ID"),
+                    'plaintext_client_secret': gettext("Client Secret"),
+                    'oauth_settings': null,
+                };
             switch ($(this).val()) {
                 case '':  // Auth type is "None"
                     break;
                 case 'oauth1':
-                    visible = [
-                        'username',
-                        'plaintext_password',
-                    ];
+                    visible = {
+                        'username': null,
+                        'plaintext_password': null,
+                    };
                     break;
                 case 'oauth2_pwd':
                     visible = allFields;
                     break;
                 case 'oauth2_client':
-                    visible = [
-                        'client_id',
-                        'plaintext_client_secret',
-                        'oauth_settings',
-                    ];
+                    visible = {
+                        'client_id': null,
+                        'plaintext_client_secret': null,
+                        'oauth_settings': null,
+                    };
                     break;
                 case 'api_key':
-                    visible = [
-                        'plaintext_password',
-                    ];
+                    visible = {
+                        'plaintext_password': gettext("API Key"),
+                    };
                     break;
                 default:
-                    visible = [
-                        'username',
-                        'plaintext_password',
-                    ];
+                    visible = {
+                        'username': null,
+                        'plaintext_password': null,
+                    };
             }
-            _.each(allFields, function (field) {
+            _.each(_.pairs(allFields), function ([field, label]) {
                 let div = $('#div_id_' + field);
-                if (visible.includes(field)) {
+                if (field in visible) {
                     div.show();
+                    let label = visible[field] || allFields[field];
+                    if (label) {
+                        div.find('label').text(label);
+                    }
                 } else {
                     div.hide();
                 }
