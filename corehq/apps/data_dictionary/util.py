@@ -197,7 +197,7 @@ def save_case_property_group(id, name, case_type, domain, description, index, de
         group_obj.deprecated = deprecated
 
     try:
-        group_obj.full_clean()
+        group_obj.full_clean(validate_unique=True)
     except ValidationError as e:
         return str(e)
 
