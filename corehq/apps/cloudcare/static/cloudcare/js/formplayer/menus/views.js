@@ -193,13 +193,6 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
         return view;
     };
 
-    const buildCellWrapperStyle = function () {
-        const outerGridTemplateString = $("#cell-wrapper-style-template").html();
-        const outerGridStyleTemplate = _.template(outerGridTemplateString);
-        const outerGridStyle = outerGridStyleTemplate();
-        return outerGridStyle;
-    };
-
     // Dynamically generate the CSS style to display multiple tiles per line
     const buildCellContainerStyle = function (numCasesPerRow) {
         const caseListLayoutString = $("#cell-container-style-template").html();
@@ -573,7 +566,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             useUniformUnits,
             prefix);
         if (numEntitiesPerRow > 1) {
-            const cellWrapperStyle = buildCellWrapperStyle();
+            const cellWrapperStyle = $("#cell-wrapper-style-template").html();
             const cellContainerStyle = buildCellContainerStyle(numEntitiesPerRow);
             return [cellLayoutStyle, cellGridStyle, cellWrapperStyle, cellContainerStyle];
         } else {
