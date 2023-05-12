@@ -72,6 +72,24 @@ class TestAttendeeLocationFilter(TestCase):
             },
             save=True,
         )
+        cls.both_attendee = create_case(
+            DOMAIN,
+            case_id=uuid4().hex,
+            case_type=case_type,
+            name='Everywhereguy',
+            case_json={
+                LOCATION_IDS_CASE_PROPERTY: ' '.join((
+                    cls.suriname.location_id,
+                    cls.paramaribo.location_id,
+                ))
+            },
+            save=True,
+        )
+        case_search_adapter.bulk_index([
+            cls.country_attendee,
+            cls.city_attendee,
+            cls.both_attendee,
+        ], refresh=True)
 
     @classmethod
     def tearDownClass(cls):
@@ -93,7 +111,10 @@ class TestAttendeeLocationFilter(TestCase):
             .attendee_location_filter(self.suriname.location_id)
             .get_ids()
         )
-        self.assertEqual(case_ids, [self.country_attendee.case_id])
+        self.assertEqual(set(case_ids), {
+            self.country_attendee.case_id,
+            self.both_attendee.case_id,
+        })
 
     def test_child_location(self):
         case_ids = (
@@ -101,7 +122,10 @@ class TestAttendeeLocationFilter(TestCase):
             .attendee_location_filter(self.paramaribo.location_id)
             .get_ids()
         )
-        self.assertEqual(case_ids, [self.city_attendee.case_id])
+        self.assertEqual(set(case_ids), {
+            self.city_attendee.case_id,
+            self.both_attendee.case_id,
+        })
 
     def test_location_ids_list(self):
         location_ids = [
@@ -116,6 +140,7 @@ class TestAttendeeLocationFilter(TestCase):
         self.assertEqual(set(case_ids), {
             self.country_attendee.case_id,
             self.city_attendee.case_id,
+            self.both_attendee.case_id,
         })
 
     def test_location_ids_str(self):
@@ -131,6 +156,7 @@ class TestAttendeeLocationFilter(TestCase):
         self.assertEqual(set(case_ids), {
             self.country_attendee.case_id,
             self.city_attendee.case_id,
+            self.both_attendee.case_id,
         })
 
     def test_no_location_ids(self):
@@ -163,6 +189,7 @@ class TestGetPaginatedAttendees(TestCase):
             name='Bob',
             save=True,
         )
+        case_adapter.bulk_index([cls.alice, cls.bob], refresh=True)
 
     @classmethod
     def tearDownClass(cls):

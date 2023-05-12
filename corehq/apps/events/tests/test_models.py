@@ -71,7 +71,7 @@ class TestAttendeeCaseManager(TestCase):
             self.assertEqual(cases, [open_case, closed_case])
 
 
-@es_test(requires=[case_search_adapter])
+@es_test(requires=[case_search_adapter], setup_class=True)
 class TestByLocationId(TestCase):
 
     @classmethod
@@ -122,12 +122,31 @@ class TestByLocationId(TestCase):
             },
             save=True,
         )
+        cls.both_attendee = create_case(
+            DOMAIN,
+            case_id=uuid4().hex,
+            case_type=case_type,
+            name='Everywhereguy',
+            case_json={
+                LOCATION_IDS_CASE_PROPERTY: ' '.join((
+                    cls.suriname.location_id,
+                    cls.paramaribo.location_id,
+                ))
+            },
+            save=True,
+        )
+        case_search_adapter.bulk_index([
+            cls.country_attendee,
+            cls.city_attendee,
+            cls.both_attendee,
+        ], refresh=True)
 
     @classmethod
     def tearDownClass(cls):
         CommCareCase.objects.hard_delete_cases(DOMAIN, [
             cls.city_attendee.case_id,
             cls.country_attendee.case_id,
+            cls.both_attendee.case_id,
         ])
         cls.paramaribo.delete()
         cls.suriname.delete()
@@ -143,7 +162,7 @@ class TestByLocationId(TestCase):
         )
         self.assertEqual(
             {m.case for m in models},
-            {self.country_attendee, self.city_attendee},
+            {self.country_attendee, self.city_attendee, self.both_attendee},
         )
 
     def test_child_location(self):
@@ -151,7 +170,10 @@ class TestByLocationId(TestCase):
             DOMAIN,
             self.paramaribo.location_id,
         )
-        self.assertEqual([m.case for m in models], [self.city_attendee])
+        self.assertEqual(
+            {m.case for m in models},
+            {self.city_attendee, self.both_attendee},
+        )
 
     def test_location_id_empty(self):
         models = AttendeeModel.objects.by_location_id(DOMAIN, '')
@@ -493,17 +515,26 @@ class GetAttendeeCaseTypeTest(TestCase):
         self.assertEqual(case_type, DEFAULT_ATTENDEE_CASE_TYPE)
 
     def test_config(self):
+        # Before save()
+        case_type = get_attendee_case_type(DOMAIN)
+        self.assertEqual(case_type, DEFAULT_ATTENDEE_CASE_TYPE)
+
         with self.example_config():
             case_type = get_attendee_case_type(DOMAIN)
             self.assertEqual(case_type, 'travailleur')
 
+        # After delete()
+        case_type = get_attendee_case_type(DOMAIN)
+        self.assertEqual(case_type, DEFAULT_ATTENDEE_CASE_TYPE)
+
     @contextmanager
     def example_config(self):
-        config = AttendanceTrackingConfig.objects.create(
+        config = AttendanceTrackingConfig(
             domain=DOMAIN,
             mobile_worker_attendees=False,
             attendee_case_type='travailleur',
         )
+        config.save()
         try:
             yield
         finally:

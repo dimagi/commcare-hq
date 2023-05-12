@@ -91,6 +91,14 @@ class AttendanceTrackingConfig(models.Model):
         default=DEFAULT_ATTENDEE_CASE_TYPE,
     )
 
+    def save(self, *args, **kwargs):
+        get_attendee_case_type.clear(self.domain)
+        super().save(*args, **kwargs)
+
+    def delete(self, *args, **kwargs):
+        get_attendee_case_type.clear(self.domain)
+        return super().delete(*args, **kwargs)
+
 
 def toggle_mobile_worker_attendees(domain, attendees_enabled):
     AttendanceTrackingConfig.objects.update_or_create(
