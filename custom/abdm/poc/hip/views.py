@@ -8,6 +8,7 @@ from rest_framework.decorators import (
 from rest_framework.response import Response
 
 from custom.abdm.milestone_one.utils.decorators import required_request_params
+from custom.abdm.poc.const import SAMPLE_FHIR_BUNDLE
 from custom.abdm.poc.hip.gateway_calls import (
     gw_patient_profile_on_share,
     gw_care_context_on_discover,
@@ -158,7 +159,7 @@ def _transfer_health_data(request_data):
 def _encrypt_data(hiu_key_material):
     from custom.abdm.poc.encryption_util import getEcdhKeyMaterial, encryptData
     sender_key_material = getEcdhKeyMaterial()
-    with open('custom/abdm/poc/data/pathology_sample.json') as user_file:
+    with open(SAMPLE_FHIR_BUNDLE) as user_file:
         parsed_json = json.load(user_file)
     fhir_sample_json = json.dumps(parsed_json)
     import hashlib

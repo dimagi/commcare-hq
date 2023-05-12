@@ -3,10 +3,10 @@ import uuid
 import json
 import subprocess
 
+from custom.abdm.poc.const import FIDELIUS_CLI_PATH
+
 dirname = os.path.dirname(os.path.abspath(__file__))
-binPath = os.path.join(
-    dirname, 'fidelius-cli-1.2.0/bin/fidelius-cli'
-)
+binPath = FIDELIUS_CLI_PATH
 
 
 def execFideliusCli(args):

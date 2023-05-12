@@ -27,3 +27,6 @@ Not Implemented: HIP Initiated Care Context Linking
 - Data Request and Transfer
 
 Not Implemented: Patient Identification
+
+## Setup
+Update the paths for the variables [here](const.py)

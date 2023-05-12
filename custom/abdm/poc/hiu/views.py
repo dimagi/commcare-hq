@@ -19,6 +19,7 @@ from custom.abdm.poc.hiu.gateway_calls import (
     gw_health_info_notify,
 )
 from custom.abdm.models import ConsentRequest, CONSENT_REQUEST_STATUS_GRANTED
+from custom.abdm.poc.const import HIU_KEY_MATERIAL_JSON_PATH
 
 # Validations: Applicable for all API Views
 # TODO Add validation for access token (Auth) and HIU ID that will be sent by gateway. (See API spec)
@@ -29,7 +30,7 @@ from custom.abdm.models import ConsentRequest, CONSENT_REQUEST_STATUS_GRANTED
 # TODO Execute gateway callback and processing functions asynchronously
 
 # TEST DATA: Saving last key material
-with open('custom/abdm/poc/hiu/key_material.json') as user_file:
+with open(HIU_KEY_MATERIAL_JSON_PATH) as user_file:
     key_material = json.load(user_file)
 
 CONSENT_ID = None
