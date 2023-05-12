@@ -632,7 +632,7 @@ On a clean Ubuntu 18.04 LTS install, the packaged nodejs version is v8. The
 easiest way to get onto the current nodejs v14 is
 
 ```sh
-curl -sL https://deb.nodesource.com/setup_14.x | sudo -E bash -
+curl -sL https://deb.nodesource.com/setup_16.x | sudo -E bash -
 sudo apt install -y nodejs
 ```
 
