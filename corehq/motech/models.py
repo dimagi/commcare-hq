@@ -20,7 +20,7 @@ from corehq.motech.auth import (
     OAuth2PasswordGrantManager,
     api_auth_settings_choices,
     oauth1_api_endpoints,
-    oauth2_api_settings,
+    ApiKeyAuthManager,
 )
 from corehq.motech.const import (
     ALGO_AES,
@@ -32,7 +32,7 @@ from corehq.motech.const import (
     OAUTH1,
     OAUTH2_CLIENT,
     OAUTH2_PWD,
-    PASSWORD_PLACEHOLDER,
+    PASSWORD_PLACEHOLDER, APIKEY_AUTH,
 )
 from corehq.motech.utils import b64_aes_decrypt, b64_aes_encrypt
 from corehq.util import as_json_text, as_text
@@ -220,6 +220,8 @@ class ConnectionSettings(models.Model):
                 self.username,
                 self.plaintext_password,
             )
+        if self.auth_type == APIKEY_AUTH:
+            return ApiKeyAuthManager(self.plaintext_password)
         if self.auth_type == OAUTH2_PWD:
             return OAuth2PasswordGrantManager(
                 self.url,
