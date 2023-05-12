@@ -285,6 +285,9 @@ def get_instance_factory(instance_name):
         scheme, _ = instance_name.split(':', 1)
     except ValueError:
         scheme = instance_name
+        # hack for selected cases
+        if "selected_cases" in instance_name:
+            scheme = "selected_cases"
 
     return _factory_map.get(scheme, null_factory)
 
@@ -337,6 +340,11 @@ def search_input_instances(app, instance_name):
     except ValueError:
         src = 'jr://instance/search-input'  # legacy instance
     return Instance(id=instance_name, src=src)
+
+
+@register_factory('selected_cases')
+def selected_cases_instances(app, instance_name):
+    return Instance(id=instance_name, src='jr://instance/selected-entities')
 
 
 @register_factory('results')
