@@ -514,7 +514,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             }
             self.reconcileMultiSelectUI();
         });
-    }
+    };
 
     const MultiSelectCaseListView = CaseListView.extend({
         ui: _.extend(CaseListViewUI(), {
@@ -538,7 +538,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
 
         initialize: function (options) {    // eslint-disable-line no-unused-vars
             MultiSelectCaseListView.__super__.initialize.apply(this, arguments);
-            registerContinueListener(this, options)
+            registerContinueListener(this, options);
         },
 
         templateContext: function () {
@@ -597,20 +597,20 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
 
             $.getScript(gridPolyfillPath);
 
-            registerContinueListener(this, options)
+            registerContinueListener(this, options);
         },
 
         childViewOptions: function () {
             const dict = CaseTileListView.__super__.childViewOptions.apply(this, arguments);
             dict.prefix = 'list';
-            dict.isMultiSelect = this.options.isMultiSelect
+            dict.isMultiSelect = this.options.isMultiSelect;
             return dict;
         },
 
         templateContext: function () {
             const dict = CaseTileListView.__super__.templateContext.apply(this, arguments);
             dict.useTiles = true;
-            dict.isMultiSelect = this.options.isMultiSelect
+            dict.isMultiSelect = this.options.isMultiSelect;
             return dict;
         },
 
