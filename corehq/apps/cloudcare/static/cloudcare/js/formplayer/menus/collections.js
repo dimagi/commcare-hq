@@ -53,6 +53,7 @@ hqDefine("cloudcare/js/formplayer/menus/collections", function () {
             'widthHints',
             'multiSelect',
             'maxSelectValue',
+            'hasDetails',
         ],
 
         commandProperties: [
@@ -128,4 +129,3 @@ hqDefine("cloudcare/js/formplayer/menus/collections", function () {
         return new MenuSelect(response, options);
     };
 });
-
