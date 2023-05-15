@@ -1093,16 +1093,17 @@ class NavigationEventAuditResource():
 
         queryset = NavigationEventAudit.objects.filter(filters)
 
-        results = (queryset
-                .annotate(local_date=TruncDate('event_date', tzinfo=local_time_zone))
-                .values("local_date", "user"))
-
-        date_filters = Q()
+        date_filter = Q()
         if 'local_start_date' in params:
             date_filters &= Q(local_date__gte=params['local_start_date'])
         if 'local_end_date' in params:
             date_filters &= Q(local_date__lte=params['local_end_date'])
 
-        results = results.filter(date_filters).order_by('local_date', 'user')
+        results = (queryset
+                .annotate(local_date=TruncDate('event_date', tzinfo=local_time_zone))
+                .filter(date_filter)
+                .values("local_date", "user"))
+
+        results = results.order_by('local_date', 'user')
 
         return results
