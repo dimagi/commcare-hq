@@ -1058,10 +1058,11 @@ class NavigationEventAuditResource():
 
     @classmethod
     def cursor_query(cls, domain: str, local_time_zone: ZoneInfo,
-                    cursor_local_date: date, cursor_user: str,
-                    users: list[str] = [], local_start_date: date = None, local_end_date: date = None) -> list:
-        queryset = cls.query(domain, local_time_zone, users, local_start_date, local_end_date,
-                            return_as_queryset=True)
+                    params: dict = {}) -> list:
+        queryset = cls.query(domain, local_time_zone, params, return_as_queryset=True)
+
+        cursor_local_date = params.get('cursor_local_date')
+        cursor_user = params.get('cursor_user')
 
         results = queryset.filter(
             Q(local_date__gt=cursor_local_date)
@@ -1073,12 +1074,11 @@ class NavigationEventAuditResource():
             return list(results[:cls.LIMIT_DEFAULT])
 
     @classmethod
-    def query(cls, domain: str, local_time_zone: ZoneInfo, users: list = [],
-            local_start_date: date = None, local_end_date: date = None,
-            return_as_queryset=False):
+    def query(cls, domain: str, local_time_zone: ZoneInfo, return_as_queryset=False,
+            params: dict = {}):
         filters = Q(domain=domain)
-        if users:
-            filters &= Q(user__in=users)
+        if 'users' in params:
+            filters &= Q(user__in=params['users'])
 
         queryset = NavigationEventAudit.objects.filter(filters)
 
@@ -1088,10 +1088,10 @@ class NavigationEventAuditResource():
                 .annotate(UTC_first_action_time=Min('event_date'), UTC_last_action_time=Max('event_date')))
 
         date_filters = Q()
-        if local_start_date:
-            date_filters &= Q(local_date__gte=local_start_date)
-        if local_end_date:
-            date_filters &= Q(local_date__lte=local_end_date)
+        if 'local_start_date' in params:
+            date_filters &= Q(local_date__gte=params['local_start_date'])
+        if 'local_end_date' in params:
+            date_filters &= Q(local_date__lte=params['local_end_date'])
 
         results = results.filter(date_filters).order_by('local_date', 'user')
 
