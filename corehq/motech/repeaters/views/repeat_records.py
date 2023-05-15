@@ -206,13 +206,13 @@ class BaseRepeatRecordReport(GenericTabularReport):
                 sortable=False, span=3
             ),
             DataTablesColumn(_('Status')),
-            DataTablesColumn(_('URL')),
-            DataTablesColumn(_('Last sent date')),
+            DataTablesColumn(_('Remote Service')),
+            DataTablesColumn(_('Retry Date')),
             DataTablesColumn(_('Retry Date')),
             DataTablesColumn(_('Delivery Attempts')),
-            DataTablesColumn(_('View payload')),
+            DataTablesColumn(_('View Responses')),
             DataTablesColumn(_('Resend')),
-            DataTablesColumn(_('Cancel or Requeue payload'))
+            DataTablesColumn(_('Cancel or Requeue'))
         ]
         if toggles.SUPPORT.enabled_for_request(self.request):
             columns.insert(2, DataTablesColumn(_('Payload ID')))
