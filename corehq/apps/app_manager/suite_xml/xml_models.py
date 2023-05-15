@@ -637,7 +637,7 @@ class LocalizedMenu(MenuMixin, TextOrDisplay, IdNode):
 
 
 class AbstractTemplate(XmlObject):
-    form = StringField('@form', choices=['image', 'phone', 'address'])
+    form = StringField('@form', choices=['image', 'phone', 'address', 'markdown'])
     width = IntegerField('@width')
     text = NodeField('text', Text)
 
