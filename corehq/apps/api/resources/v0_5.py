@@ -1064,19 +1064,22 @@ class NavigationEventAuditResource():
         cursor_local_date = params.get('cursor_local_date')
         cursor_user = params.get('cursor_user')
 
-        results = queryset.filter(
+        queryset = queryset.filter(
             Q(local_date__gt=cursor_local_date)
             | (Q(local_date=cursor_local_date) & Q(user__gt=cursor_user))
         )
 
+        queryset = queryset.annotate(UTC_start_time=Min('event_date'), UTC_end_time=Max('event_date'))
+
         with override_settings(USE_TZ=True):
             # TruncDate ignores tzinfo if the queryset is not evaluated within overridden USE_TZ setting
-            return list(results[:cls.LIMIT_DEFAULT])
+            return list(queryset[:cls.LIMIT_DEFAULT])
 
     @classmethod
     def non_cursor_query(cls, domain: str, local_timezone: ZoneInfo, params: dict = {}):
 
         queryset = cls._query(domain, local_timezone, params)
+        queryset = queryset.annotate(UTC_start_time=Min('event_date'), UTC_end_time=Max('event_date'))
 
         with override_settings(USE_TZ=True):
             # TruncDate ignores tzinfo if the queryset is not evaluated within overridden USE_TZ setting
@@ -1092,8 +1095,7 @@ class NavigationEventAuditResource():
 
         results = (queryset
                 .annotate(local_date=TruncDate('event_date', tzinfo=local_time_zone))
-                .values("local_date", "user")
-                .annotate(UTC_first_action_time=Min('event_date'), UTC_last_action_time=Max('event_date')))
+                .values("local_date", "user"))
 
         date_filters = Q()
         if 'local_start_date' in params:
