@@ -131,7 +131,7 @@ class EventForm(forms.Form):
             )
         )
 
-        self.fields['expected_attendees'].choices = self.get_attendee_choices()
+        self.fields['expected_attendees'].choices = self._get_attendee_choices()
         self.fields['attendance_takers'].choices = self._get_possible_attendance_takers_ids()
 
         self.fields['name'].disabled = not fields_should_be_available['name']
@@ -230,7 +230,7 @@ class EventForm(forms.Form):
         self.fields['location_id'].widget = widget
         self.fields['location_id'].help_text = help_text
 
-    def get_attendee_choices(self):
+    def _get_attendee_choices(self):
         if self.event and self.event.location_id:
             models = AttendeeModel.objects.by_location_id(
                 self.domain,
