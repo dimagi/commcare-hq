@@ -1,0 +1,39 @@
+---
+name: Lint Code Base
+
+#
+# Documentation:
+# https://docs.github.com/en/actions/learn-github-actions/workflow-syntax-for-github-actions
+#
+
+on:
+  push:
+    branches-ignore: [master, main]
+
+#  pull_request:
+#    branches: [ master ]
+
+jobs:
+  build:
+    name: Lint Code Base
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: read
+      packages: read
+      statuses: write
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - name: Lint Code Base
+        uses: github/super-linter@v5
+        env:
+          VALIDATE_ALL_CODEBASE: false
+          DEFAULT_BRANCH: master
+          PYTHON_FLAKE8_CONFIG_FILE: .flake8
+          JAVASCRIPT_ES_CONFIG_FILE: ./.eslintrc.js
+#          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
