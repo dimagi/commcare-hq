@@ -154,6 +154,7 @@ class EventForm(forms.Form):
             'name': not_started,
             'start_date': not_started,
             'end_date': not_completed,
+            'location_id': no_attendance,
             'attendance_target': no_attendance,
             'sameday_reg': not_completed,
             'tracking_option': no_attendance,
