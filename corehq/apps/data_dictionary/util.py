@@ -12,6 +12,7 @@ from corehq.apps.app_manager.dbaccessors import get_case_types_from_apps
 from corehq.apps.data_dictionary.models import (
     CaseProperty,
     CasePropertyAllowedValue,
+    CasePropertyGroup,
     CaseType,
 )
 from corehq.motech.fhir.utils import update_fhir_resource_property
@@ -193,6 +194,7 @@ def save_case_property(name, case_type, domain=None, data_type=None,
         prop.description = description
     if group:
         prop.group = group
+        prop.group_obj, created = CasePropertyGroup.objects.get_or_create(name=group, case_type=prop.case_type)
     if deprecated is not None:
         prop.deprecated = deprecated
     if label is not None:
