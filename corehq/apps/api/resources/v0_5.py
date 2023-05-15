@@ -1,6 +1,7 @@
 import json
 from collections import namedtuple
 from datetime import date
+import functools
 from zoneinfo import ZoneInfo
 
 from django.conf.urls import re_path as url
@@ -47,7 +48,11 @@ from corehq.apps.api.resources.auth import (
 from corehq.apps.auditcare.models import NavigationEventAudit
 from corehq.apps.api.resources.meta import AdminResourceMeta, CustomResourceMeta
 from corehq.apps.api.resources.serializers import ListToSingleObjectSerializer
-from corehq.apps.api.util import get_obj
+from corehq.apps.api.util import (
+    get_obj,
+    django_date_filter,
+    make_date_filter,
+)
 from corehq.apps.app_manager.models import Application
 from corehq.apps.domain.models import Domain
 from corehq.apps.es import UserES
@@ -1056,6 +1061,12 @@ class ODataFormResource(BaseODataResource):
 class NavigationEventAuditResource():
     LIMIT_DEFAULT = 10000
 
+    # Compound filters take the form `prefix.qualifier=value`
+    # These filter functions are called with qualifier and value
+    COMPOUND_FILTERS = {
+        'local_date': make_date_filter(functools.partial(django_date_filter, field_name='local_date'))
+    }
+
     @classmethod
     def cursor_query(cls, domain: str, local_time_zone: ZoneInfo,
                     params: dict = {}) -> list:
@@ -1093,11 +1104,7 @@ class NavigationEventAuditResource():
 
         queryset = NavigationEventAudit.objects.filter(filters)
 
-        date_filter = Q()
-        if 'local_start_date' in params:
-            date_filters &= Q(local_date__gte=params['local_start_date'])
-        if 'local_end_date' in params:
-            date_filters &= Q(local_date__lte=params['local_end_date'])
+        date_filter = cls._get_compound_filter('local_date', params)
 
         results = (queryset
                 .annotate(local_date=TruncDate('event_date', tzinfo=local_time_zone))
@@ -1107,3 +1114,13 @@ class NavigationEventAuditResource():
         results = results.order_by('local_date', 'user')
 
         return results
+
+    @classmethod
+    def _get_compound_filter(cls, key, params):
+        compound_filter = Q()
+        for key, val in params.items():
+            if '.' in key and key.split(".")[0] in cls.COMPOUND_FILTERS:
+                prefix, qualifier = key.split(".", maxsplit=1)
+                filter_obj = cls.COMPOUND_FILTERS[prefix](qualifier, val)
+                compound_filter &= Q(**filter_obj)
+        return compound_filter
