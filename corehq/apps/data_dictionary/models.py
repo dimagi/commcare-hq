@@ -1,7 +1,7 @@
 from datetime import datetime
 
 from django.db import models
-from django.utils.translation import gettext as _
+from django.utils.translation import gettext as _, gettext_lazy
 
 from dimagi.utils.couch import CriticalSection
 from dimagi.utils.parsing import ISO_DATE_FORMAT
@@ -49,6 +49,18 @@ class CasePropertyGroup(models.Model):
     name = models.CharField(max_length=255, default=None)
     description = models.TextField(default='', blank=True)
     index = models.IntegerField(default=0, blank=True)
+    deprecated = models.BooleanField(default=False)
+
+    class Meta(object):
+        unique_together = ('case_type', 'name')
+
+    def unique_error_message(self, model_class, unique_check):
+        if model_class == type(self) and unique_check == ('case_type', 'name'):
+            return gettext_lazy('Group "{}" already exists for case type "{}"'.format(
+                self.name, self.case_type.name
+            ))
+        else:
+            return super().unique_error_message(model_class, unique_check)
 
 
 class CaseProperty(models.Model):
