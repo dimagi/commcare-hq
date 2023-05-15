@@ -787,6 +787,8 @@ class DeviceIdLastUsed(DocumentSchema):
     last_used = DateTimeProperty()
     commcare_version = StringProperty()
     app_meta = SchemaListProperty(DeviceAppMeta)
+    fcm_token = StringProperty()
+    fcm_token_timestamp = DateTimeProperty()
 
     def update_meta(self, commcare_version=None, app_meta=None):
         if commcare_version:
