@@ -49,7 +49,6 @@ class EventForm(forms.Form):
     location_id = forms.CharField(
         label=_('Location'),
         required=False,
-        widget=forms.Select(),
     )
     attendance_target = forms.IntegerField(
         label=_("Attendance target"),
@@ -88,7 +87,7 @@ class EventForm(forms.Form):
             self.title_prefix = "Add"
 
         super().__init__(*args, **kwargs)
-
+        self._init_location_id()
         fields_should_be_available = self.determine_field_availability(self.event)
         tracking_option_data_bind = "checked: trackingOption"
         if fields_should_be_available['tracking_option']:
@@ -97,7 +96,6 @@ class EventForm(forms.Form):
             tracking_option_data_bind += ", attr: {disabled: true}"
 
         self.helper = hqcrispy.HQFormHelper()
-        location_search_url = reverse('location_search', args=(self.domain,))
         self.helper.add_layout(
             crispy.Layout(
                 crispy.Fieldset(
@@ -109,11 +107,7 @@ class EventForm(forms.Form):
                         css_class='col-sm-4',
                     ),
                     crispy.Field('end_date', data_bind="value: endDate"),
-                    crispy.Field(
-                        'location_id',
-                        data_bind='value: location',
-                        data_query_url=location_search_url,
-                    ),
+                    crispy.Field('location_id'),
                     crispy.Field(
                         'attendance_target',
                         data_bind="value: attendanceTarget",
@@ -223,6 +217,18 @@ class EventForm(forms.Form):
                 raise ValidationError(_("You cannot specify the end date in the past"))
 
         return cleaned_data
+
+    def _init_location_id(self):
+        widget = LocationSelectWidget(
+            self.domain,
+            id='id_location_id',
+            placeholder=_("All Locations"),
+            attrs={'data-bind': 'value: location_id'},
+        )
+        widget.query_url = f"{widget.query_url}?show_all=true"
+        help_text = ExpandedMobileWorkerFilter.location_search_help
+        self.fields['location_id'].widget = widget
+        self.fields['location_id'].help_text = help_text
 
     def get_attendee_choices(self):
         if self.event and self.event.location_id:
