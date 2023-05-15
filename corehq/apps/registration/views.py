@@ -36,7 +36,7 @@ from corehq.apps.analytics.utils import get_meta
 from corehq.apps.domain.decorators import login_required
 from corehq.apps.domain.exceptions import NameUnavailableException
 from corehq.apps.domain.extension_points import has_custom_clean_password
-from corehq.apps.domain.models import Domain
+from corehq.apps.domain.models import Domain, LicenseAgreement
 from corehq.apps.hqwebapp.decorators import use_jquery_ui, use_ko_validation
 from corehq.apps.hqwebapp.views import BasePageView
 from corehq.apps.registration.forms import (
@@ -532,11 +532,14 @@ def confirm_domain(request, guid=''):
 
 @retry_resource(3)
 def eula_agreement(request):
+    CURRENT_VERSION = '3.0'  # Should be kept in sync with EulaMixin. Should be a const?
     if request.method == 'POST':
         current_user = CouchUser.from_django_user(request.user)
-        current_user.eula.signed = True
-        current_user.eula.date = datetime.utcnow()
-        current_user.eula.user_ip = get_ip(request)
+        new_agreement = LicenseAgreement(type="End User License Agreement", version=CURRENT_VERSION)
+        new_agreement.signed = True
+        new_agreement.date = datetime.utcnow()
+        new_agreement.user_ip = get_ip(request)
+        current_user.eulas.append(new_agreement)
         current_user.save()
 
     return HttpResponseRedirect(request.POST.get('next', '/'))
