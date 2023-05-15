@@ -308,10 +308,8 @@ class CaseClaimEndpointTests(TestCase):
                                     HTTP_X_COMMCAREHQ_LASTSYNCTOKEN=self.synclog.synclog_id)
         self.assertEqual(response.status_code, 204)
         # mock changes to case
-        case_change_patcher = patch('corehq.form_processor.models.cases.CommCareCaseManager.get_modified_case_ids',
-                                    return_value=[self.case_id])
-        case_change_patcher.start()
-        response = self.client.post(self.url, {'case_id': self.case_id},
+        with patch('corehq.form_processor.models.cases.CommCareCaseManager.get_modified_case_ids',
+                                    return_value=[self.case_id]):
+            response = self.client.post(self.url, {'case_id': self.case_id},
                                     HTTP_X_COMMCAREHQ_LASTSYNCTOKEN=self.synclog.synclog_id)
-        self.assertEqual(response.status_code, 201)
-        case_change_patcher.stop()
+            self.assertEqual(response.status_code, 201)
