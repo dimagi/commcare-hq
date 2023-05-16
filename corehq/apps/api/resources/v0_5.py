@@ -2,6 +2,7 @@ import json
 from collections import namedtuple
 from datetime import date
 import functools
+import pytz
 from zoneinfo import ZoneInfo
 
 from django.conf.urls import re_path as url
@@ -1082,7 +1083,7 @@ class NavigationEventAuditResource(HqBaseResource, ModelResource):
         domain = kwargs['domain']
         params = self._process_params(domain, bundle.request.GET)
 
-    def _process_params(self, params):
+    def _process_params(self, domain, params):
         processed_params = {}
 
         for param in params:
@@ -1090,6 +1091,11 @@ class NavigationEventAuditResource(HqBaseResource, ModelResource):
             if param == 'users':
                 val = params.getlist(param)
             processed_params[param] = val
+
+        if 'local_timezone' in processed_params:
+            self.local_timezone = pytz.timezone(processed_params['local_timezone'])
+        else:
+            self.local_timezone = Domain.get_by_name(domain).get_default_timezone()
 
         return processed_params
 
