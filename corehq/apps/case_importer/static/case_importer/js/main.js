@@ -49,6 +49,18 @@ hqDefine("case_importer/js/main", [
             return;
         }
 
+        $('#field_form').submit(function () {
+            $('[disabled]').each(function () {
+                $(this).prop('disabled', false);
+            });
+
+            return true;
+        });
+
+        if (initialPageData.get('is_bulk_import')) {
+            return;
+        }
+
         var excelFieldRows = excelFieldsModule.excelFieldRowsModel(excelFields, caseFieldSpecs);
         $('#excel-field-rows').koApplyBindings(excelFieldRows);
 
@@ -63,14 +75,6 @@ hqDefine("case_importer/js/main", [
             if (value !== originalValue) {
                 $(this).val(value);
             }
-        });
-
-        $('#field_form').submit(function () {
-            $('[disabled]').each(function () {
-                $(this).prop('disabled', false);
-            });
-
-            return true;
         });
 
         $('#autofill').click(function () {
