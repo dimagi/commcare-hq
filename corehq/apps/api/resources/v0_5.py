@@ -1089,7 +1089,15 @@ class NavigationEventAuditResource(HqBaseResource, ModelResource):
 
     def alter_list_data_to_serialize(self, request, data):
         data['meta']['local_date_timezone'] = self.local_timezone.zone
+        params = request.GET.copy()  # Makes params mutable for creating next_url below
 
+        if data['meta']['total_count'] >= data['meta']['limit']:
+            last_object = data['objects'][-1]
+            params['cursor_local_date'] = last_object.data['local_date']
+            params['cursor_user'] = last_object.data['user']
+
+            next_url = '{}?{}'.format(request.path, params.urlencode())
+            data['meta']['next'] = next_url
         return data
 
     def dehydrate(self, bundle):
