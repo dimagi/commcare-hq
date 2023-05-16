@@ -1078,9 +1078,19 @@ class NavigationEventAuditResource(HqBaseResource, ModelResource):
         'local_date': make_date_filter(functools.partial(django_date_filter, field_name='local_date'))
     }
 
+    @staticmethod
+    def to_obj(action_times):
+        '''
+        Takes a flat dict and returns an object
+        '''
+        return namedtuple('action_times', list(action_times))(**action_times)
+
     def obj_get_list(self, bundle, **kwargs):
         domain = kwargs['domain']
         params = self._process_params(domain, bundle.request.GET)
+
+        results = self.cursor_query(domain, self.local_timezone, params)
+        return list(map(self.to_obj, results))
 
     def _process_params(self, domain, params):
         processed_params = {}
