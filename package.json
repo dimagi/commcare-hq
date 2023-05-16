@@ -6,6 +6,7 @@
     "private": true,
     "dependencies": {
         "@mapbox/mapbox-gl-geocoder": "5.0.1",
+        "@mapbox/mapbox-gl-draw": "1.4.1",
         "At.js": "millerdev/At.js#master",
         "Caret.js": "INTELOGIE/Caret.js#0.3.1",
         "DOMPurify": "npm:dompurify#2.3.6",
@@ -40,7 +41,7 @@
         "fast-levenshtein": "2.0.6",
         "font-awesome": "4.7.0",
         "intl-tel-input": "9.0.7",
-        "jquery": "3.5.1",
+        "jquery": "^3.5.1",
         "jquery-color": "2.2.0",
         "jquery-form": "4.2.2",
         "jquery-memoized-ajax": "0.5.0",
