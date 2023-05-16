@@ -1,4 +1,5 @@
 import copy
+import json
 from datetime import datetime, timedelta, date
 import pytz
 
@@ -100,6 +101,16 @@ class testNavigationEventAuditResource(APIResourceTest):
                 'UTC_end_time': datetime(2023, 5, 2, 23, tzinfo=pytz.timezone("UTC"))
             }
         ])
+
+    def test_get_list(self):
+        response = self._assert_auth_get_resource(self.list_endpoint)
+        self.assertEqual(response.status_code, 200)
+
+        result_objects = json.loads(response.content)['objects']
+
+        self.assertEqual(len(result_objects), len(self.domain1_audits.expected_response_objects), result_objects)
+        for i in range(len(result_objects)):
+            self.assertDictEqual(result_objects[i], self.domain1_audits.expected_response_objects[i])
 
     def test_users_in_specified_domain(self):
         results = self.resource.non_cursor_query(self.domain1_audits.domain, self.domain1_audits.timezone)
