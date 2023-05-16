@@ -3,7 +3,6 @@ from collections import namedtuple
 from datetime import date
 import functools
 import pytz
-from zoneinfo import ZoneInfo
 
 from django.conf.urls import re_path as url
 from django.contrib.auth.models import User
@@ -1100,9 +1099,9 @@ class NavigationEventAuditResource(HqBaseResource, ModelResource):
         return processed_params
 
     @classmethod
-    def cursor_query(cls, domain: str, local_time_zone: ZoneInfo,
+    def cursor_query(cls, domain: str, local_timezone: pytz.tzinfo.DstTzInfo,
                     params: dict = {}) -> list:
-        queryset = cls._query(domain, local_time_zone, params)
+        queryset = cls._query(domain, local_timezone, params)
 
         cursor_local_date = params.get('cursor_local_date')
         cursor_user = params.get('cursor_user')
@@ -1119,7 +1118,7 @@ class NavigationEventAuditResource(HqBaseResource, ModelResource):
             return list(queryset[:cls.LIMIT_DEFAULT])
 
     @classmethod
-    def non_cursor_query(cls, domain: str, local_timezone: ZoneInfo, params: dict = {}):
+    def non_cursor_query(cls, domain: str, local_timezone: pytz.tzinfo.DstTzInfo, params: dict = {}):
 
         queryset = cls._query(domain, local_timezone, params)
         queryset = queryset.annotate(UTC_start_time=Min('event_date'), UTC_end_time=Max('event_date'))
@@ -1129,7 +1128,7 @@ class NavigationEventAuditResource(HqBaseResource, ModelResource):
             return list(queryset)
 
     @classmethod
-    def _query(cls, domain: str, local_time_zone: ZoneInfo, params: dict = {}):
+    def _query(cls, domain: str, local_timezone: pytz.tzinfo.DstTzInfo, params: dict = {}):
         filters = Q(domain=domain)
         if 'users' in params:
             filters &= Q(user__in=params['users'])
@@ -1139,7 +1138,7 @@ class NavigationEventAuditResource(HqBaseResource, ModelResource):
         date_filter = cls._get_compound_filter('local_date', params)
 
         results = (queryset
-                .annotate(local_date=TruncDate('event_date', tzinfo=local_time_zone))
+                .annotate(local_date=TruncDate('event_date', tzinfo=local_timezone))
                 .filter(date_filter)
                 .values("local_date", "user"))
 

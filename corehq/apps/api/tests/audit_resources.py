@@ -1,6 +1,6 @@
 from datetime import datetime, timedelta, date
 from unittest.mock import patch
-from zoneinfo import ZoneInfo
+import pytz
 
 from corehq.apps.api.resources import v0_5
 from corehq.apps.auditcare.models import NavigationEventAudit
@@ -8,9 +8,9 @@ from django.test import TestCase
 
 
 class DomainNavigationEventAudits:
-    def __init__(self, domain: str, project_time_zone: ZoneInfo):
+    def __init__(self, domain: str, project_timezone: pytz.tzinfo.DstTzInfo):
         self.domain = domain
-        self.timezone = project_time_zone
+        self.timezone = project_timezone
         self.logs = {}
 
     def add_log(self, user: str, date_time: datetime):
@@ -31,8 +31,8 @@ class testNavigationEventAuditResource(TestCase):
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
-        cls.domain1_audits = DomainNavigationEventAudits("domain1", ZoneInfo('America/Los_Angeles'))
-        cls.domain2_audits = DomainNavigationEventAudits("domain2", ZoneInfo('America/Los_Angeles'))
+        cls.domain1_audits = DomainNavigationEventAudits("domain1", pytz.timezone('America/Los_Angeles'))
+        cls.domain2_audits = DomainNavigationEventAudits("domain2", pytz.timezone('America/Los_Angeles'))
 
         cls.username1 = "andy@example.com"
         cls.username2 = "bob@example.com"
@@ -53,26 +53,26 @@ class testNavigationEventAuditResource(TestCase):
             {
                 'user': cls.username1,
                 'local_date': date(2023, 5, 1),
-                'UTC_start_time': datetime(2023, 5, 2, 0, tzinfo=ZoneInfo("UTC")),
-                'UTC_end_time': datetime(2023, 5, 2, 6, tzinfo=ZoneInfo("UTC"))
+                'UTC_start_time': datetime(2023, 5, 2, 0, tzinfo=pytz.timezone("UTC")),
+                'UTC_end_time': datetime(2023, 5, 2, 6, tzinfo=pytz.timezone("UTC"))
             },
             {
                 'user': cls.username2,
                 'local_date': date(2023, 5, 1),
-                'UTC_start_time': datetime(2023, 5, 2, 0, tzinfo=ZoneInfo("UTC")),
-                'UTC_end_time': datetime(2023, 5, 2, 6, tzinfo=ZoneInfo("UTC"))
+                'UTC_start_time': datetime(2023, 5, 2, 0, tzinfo=pytz.timezone("UTC")),
+                'UTC_end_time': datetime(2023, 5, 2, 6, tzinfo=pytz.timezone("UTC"))
             },
             {
                 'user': cls.username1,
                 'local_date': date(2023, 5, 2),
-                'UTC_start_time': datetime(2023, 5, 2, 7, tzinfo=ZoneInfo("UTC")),
-                'UTC_end_time': datetime(2023, 5, 2, 23, tzinfo=ZoneInfo("UTC"))
+                'UTC_start_time': datetime(2023, 5, 2, 7, tzinfo=pytz.timezone("UTC")),
+                'UTC_end_time': datetime(2023, 5, 2, 23, tzinfo=pytz.timezone("UTC"))
             },
             {
                 'user': cls.username2,
                 'local_date': date(2023, 5, 2),
-                'UTC_start_time': datetime(2023, 5, 2, 7, tzinfo=ZoneInfo("UTC")),
-                'UTC_end_time': datetime(2023, 5, 2, 23, tzinfo=ZoneInfo("UTC"))
+                'UTC_start_time': datetime(2023, 5, 2, 7, tzinfo=pytz.timezone("UTC")),
+                'UTC_end_time': datetime(2023, 5, 2, 23, tzinfo=pytz.timezone("UTC"))
             }
         ])
 
@@ -154,20 +154,20 @@ class testNavigationEventAuditResource(TestCase):
             {
                 'user': self.username2,
                 'local_date': date(2023, 5, 1),
-                'UTC_start_time': datetime(2023, 5, 2, 0, tzinfo=ZoneInfo("UTC")),
-                'UTC_end_time': datetime(2023, 5, 2, 6, tzinfo=ZoneInfo("UTC"))
+                'UTC_start_time': datetime(2023, 5, 2, 0, tzinfo=pytz.timezone("UTC")),
+                'UTC_end_time': datetime(2023, 5, 2, 6, tzinfo=pytz.timezone("UTC"))
             },
             {
                 'user': self.username1,
                 'local_date': date(2023, 5, 2),
-                'UTC_start_time': datetime(2023, 5, 2, 7, tzinfo=ZoneInfo("UTC")),
-                'UTC_end_time': datetime(2023, 5, 2, 23, tzinfo=ZoneInfo("UTC"))
+                'UTC_start_time': datetime(2023, 5, 2, 7, tzinfo=pytz.timezone("UTC")),
+                'UTC_end_time': datetime(2023, 5, 2, 23, tzinfo=pytz.timezone("UTC"))
             },
             {
                 'user': self.username2,
                 'local_date': date(2023, 5, 2),
-                'UTC_start_time': datetime(2023, 5, 2, 7, tzinfo=ZoneInfo("UTC")),
-                'UTC_end_time': datetime(2023, 5, 2, 23, tzinfo=ZoneInfo("UTC"))
+                'UTC_start_time': datetime(2023, 5, 2, 7, tzinfo=pytz.timezone("UTC")),
+                'UTC_end_time': datetime(2023, 5, 2, 23, tzinfo=pytz.timezone("UTC"))
             }
         ]
 
