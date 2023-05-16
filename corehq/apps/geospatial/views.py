@@ -2,6 +2,7 @@ from django.http import Http404
 from django.urls import reverse
 from django.utils.translation import gettext_lazy as _
 
+from django.conf import settings
 from corehq.apps.domain.views.base import BaseDomainView
 from corehq import toggles
 
@@ -24,6 +25,12 @@ class MapView(BaseGeospatialView):
     urlname = 'maps_page'
     template_name = 'map_visualization.html'
     page_title = _("Map Visualization")
+
+    @property
+    def page_context(self):
+        return {
+            'mapbox_access_token': settings.MAPBOX_ACCESS_TOKEN
+        }
 
     @property
     def page_name(self):
