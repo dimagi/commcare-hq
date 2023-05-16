@@ -1,3 +1,4 @@
+import copy
 from datetime import datetime, timedelta, date
 import pytz
 
@@ -16,8 +17,16 @@ class DomainNavigationEventAudits:
     def add_log(self, user: str, date_time: datetime):
         self.logs.setdefault(user, set()).add(date_time)
 
-    def set_expected_query_results(self, expected_result: list[dict]):
-        self.expected_result = expected_result
+    def set_expected_resource_objects(self, expected_response: list[dict]):
+        self.expected_response_objects = copy.deepcopy(expected_response)
+        for obj in self.expected_response_objects:
+            obj.update(
+                local_date=obj['local_date'].isoformat(),
+                UTC_start_time=obj['UTC_start_time'].isoformat(),
+                UTC_end_time=obj['UTC_end_time'].isoformat()
+            )
+
+        self.expected_query_result = [{k: v for k, v in d.items() if k != 'user_id'} for d in expected_response]
 
     def create(self):
         for user, times in self.logs.items():
@@ -61,27 +70,31 @@ class testNavigationEventAuditResource(APIResourceTest):
         cls.domain1_audits.create()
         cls.domain2_audits.create()
 
-        cls.domain1_audits.set_expected_query_results([
+        cls.domain1_audits.set_expected_resource_objects([
             {
                 'user': cls.username1,
+                'user_id': cls.user1._id,
                 'local_date': date(2023, 5, 1),
                 'UTC_start_time': datetime(2023, 5, 2, 0, tzinfo=pytz.timezone("UTC")),
                 'UTC_end_time': datetime(2023, 5, 2, 6, tzinfo=pytz.timezone("UTC"))
             },
             {
                 'user': cls.username2,
+                'user_id': cls.user2._id,
                 'local_date': date(2023, 5, 1),
                 'UTC_start_time': datetime(2023, 5, 2, 0, tzinfo=pytz.timezone("UTC")),
                 'UTC_end_time': datetime(2023, 5, 2, 6, tzinfo=pytz.timezone("UTC"))
             },
             {
                 'user': cls.username1,
+                'user_id': cls.user1._id,
                 'local_date': date(2023, 5, 2),
                 'UTC_start_time': datetime(2023, 5, 2, 7, tzinfo=pytz.timezone("UTC")),
                 'UTC_end_time': datetime(2023, 5, 2, 23, tzinfo=pytz.timezone("UTC"))
             },
             {
                 'user': cls.username2,
+                'user_id': cls.user2._id,
                 'local_date': date(2023, 5, 2),
                 'UTC_start_time': datetime(2023, 5, 2, 7, tzinfo=pytz.timezone("UTC")),
                 'UTC_end_time': datetime(2023, 5, 2, 23, tzinfo=pytz.timezone("UTC"))
@@ -99,7 +112,7 @@ class testNavigationEventAuditResource(APIResourceTest):
 
     def test_queries_first_last_action_time_for_each_user(self):
         results = self.resource.non_cursor_query(self.domain1_audits.domain, self.domain1_audits.timezone)
-        self.assertListEqual(results, self.domain1_audits.expected_result)
+        self.assertListEqual(results, self.domain1_audits.expected_query_result)
 
     def test_queries_ordered_by_local_date_and_user(self):
         results = self.resource.non_cursor_query(self.domain1_audits.domain, self.domain1_audits.timezone)
@@ -128,7 +141,7 @@ class testNavigationEventAuditResource(APIResourceTest):
             params=params,
         )
         expected_results = [
-            item for item in self.domain1_audits.expected_result
+            item for item in self.domain1_audits.expected_query_result
             if item['user'] in params['users']
         ]
 
@@ -148,7 +161,7 @@ class testNavigationEventAuditResource(APIResourceTest):
             params=params
         )
         expected_results = [
-            item for item in self.domain1_audits.expected_result if
+            item for item in self.domain1_audits.expected_query_result if
             (item['local_date'] >= date1 and item['local_date'] < date2)
         ]
 
