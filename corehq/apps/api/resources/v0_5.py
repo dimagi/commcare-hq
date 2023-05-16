@@ -88,6 +88,7 @@ from corehq.apps.userreports.util import (
 )
 from corehq.apps.users.dbaccessors import (
     get_all_user_id_username_pairs_by_domain,
+    get_user_id_by_username,
 )
 from corehq.apps.users.models import (
     CommCareUser,
@@ -1085,6 +1086,10 @@ class NavigationEventAuditResource(HqBaseResource, ModelResource):
         Takes a flat dict and returns an object
         '''
         return namedtuple('action_times', list(action_times))(**action_times)
+
+    def dehydrate(self, bundle):
+        bundle.data['user_id'] = get_user_id_by_username(bundle.data['user'])
+        return bundle
 
     def obj_get_list(self, bundle, **kwargs):
         domain = kwargs['domain']
