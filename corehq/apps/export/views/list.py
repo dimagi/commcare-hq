@@ -80,7 +80,7 @@ from corehq.apps.users.permissions import (
     FORM_EXPORT_PERMISSION,
     has_permission_to_view_report,
 )
-from corehq.privileges import DAILY_SAVED_EXPORT, EXCEL_DASHBOARD, ODATA_FEED
+from corehq.privileges import DAILY_SAVED_EXPORT, EXPORT_OWNERSHIP, EXCEL_DASHBOARD, ODATA_FEED
 from corehq.util.download import get_download_response
 from corehq.util.view_utils import absolute_reverse
 from django.contrib import messages
@@ -170,8 +170,7 @@ class ExportListHelper(object):
 
         # Calls self.get_saved_exports and formats each item using self.fmt_export_data
         brief_exports = sorted(self.get_saved_exports(), key=lambda x: x['name'])
-        if toggles.EXPORT_OWNERSHIP.enabled(self.domain):
-
+        if domain_has_privilege(self.domain, EXPORT_OWNERSHIP):
             def _can_view(e, user_id):
                 if not hasattr(e, 'owner_id'):
                     return True
@@ -534,6 +533,7 @@ class BaseExportListView(BaseProjectDataView):
             'max_normal_export_size': MAX_NORMAL_EXPORT_SIZE,
             'max_daily_export_size': MAX_DAILY_EXPORT_SIZE,
             'lead_text': self.lead_text,
+            'export_ownership_enabled': domain_has_privilege(self.domain, EXPORT_OWNERSHIP),
             "export_filter_form": (
                 DashboardFeedFilterForm(
                     self.domain_object,
@@ -735,9 +735,9 @@ class CaseExportListView(BaseExportListView, CaseExportListHelper):
             messages.info(
                 request,
                 format_html(
-                    _("Populating tables for <strong>{}</strong> {}."),
+                    _("Populating tables for <strong>{}</strong>. ({}%)"),
                     bulk_export_progress['table_name'],
-                    bulk_export_progress['status']
+                    bulk_export_progress['progress']
                 )
             )
 

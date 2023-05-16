@@ -206,7 +206,7 @@
             {% endif %}
           </div>
         </div>
-        {% if request|toggle_enabled:"EXPORT_OWNERSHIP" %}
+        {% if request|request_has_privilege:"EXPORT_OWNERSHIP" %}
           <div class="form-group"
                data-bind="css: { 'has-warning': hasOtherOwner && sharing() != initialSharing }">
             <label for="sharing-select"

@@ -9,7 +9,7 @@ from corehq.motech.fhir.utils import (
     load_fhir_resource_types,
     resource_url,
     update_fhir_resource_property,
-    require_fhir_json_accept_headers,
+    validate_accept_header_and_format_param,
     require_fhir_json_content_type_headers
 )
 
@@ -163,12 +163,29 @@ class TestHeaderDecorators(TestCase):
     def setUp(self):
         self.factory = RequestFactory()
 
-    def _do_get_request(self, view, headers={}):
-        request = self.factory.get('/foo', **headers)
+    def _do_get_request(self, view, params=None, headers={}):
+        request = self.factory.get('/foo', params, **headers)
         return view(request)
 
-    def test_require_fhir_json_accept_headers(self):
-        @require_fhir_json_accept_headers
+    def test_validate_format_param(self):
+        @validate_accept_header_and_format_param
+        def test_view(request):
+            return HttpResponse()
+        response = self._do_get_request(test_view)
+        self.assertEqual(response.status_code, 200)
+        response = self._do_get_request(test_view, {'_format': 'application/json'})
+        self.assertEqual(response.status_code, 200)
+        response = self._do_get_request(test_view, {'_format': 'application/xml'})
+        self.assertEqual(response.status_code, 406)
+        self.assertEqual(
+            response.content.decode("utf-8"),
+            '{"message": "Requested format in \'_format\' param not acceptable."}'
+        )
+        response = test_view(self.factory.post('/foo', {'_format': 'application/xml'}))
+        self.assertEqual(response.status_code, 406)
+
+    def test_validate_accept_header(self):
+        @validate_accept_header_and_format_param
         def test_view(request):
             return HttpResponse()
         response = self._do_get_request(test_view)
@@ -181,6 +198,14 @@ class TestHeaderDecorators(TestCase):
             response.content.decode("utf-8"),
             '{"message": "Not Acceptable"}'
         )
+
+    def test_format_param_overwrites_accept_header(self):
+        @validate_accept_header_and_format_param
+        def test_view(request):
+            return HttpResponse()
+        response = self._do_get_request(test_view, {'_format': 'application/xml'},
+                                        headers={'HTTP_ACCEPT': 'application/json'})
+        self.assertEqual(response.status_code, 406)
 
     def _do_post_request(self, view, content_type=None):
         request = self.factory.post('/foo', content_type=content_type)

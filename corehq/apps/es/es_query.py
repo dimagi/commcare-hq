@@ -421,6 +421,7 @@ class ESQuery(object):
         sort_field = {
             '{}.{}'.format(path, field_name): {
                 'order': 'desc' if desc else 'asc',
+                'nested_path': path,
                 'nested_filter': nested_filter,
             }
         }

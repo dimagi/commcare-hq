@@ -6,7 +6,6 @@
   "_rev": "2-a4a4cce77bfda4a3f1c639938e19b780",
   "deployment_date": null,
   "user_type": null,
-  "text_input": "roman",
   "secure_submissions": false,
   "build_broken": false,
   "copy_of": "b4a881eda3eab4d75a1a09fdec428cc8",
@@ -17,7 +16,6 @@
   "is_released": false,
   "media_form_errors": false,
   "application_version": "2.0",
-  "platform": "nokia/s40",
   "version": 14,
   "admin_password": null,
   "build_spec": {
@@ -66,31 +64,21 @@
   },
   "profile": {
     "features": {
-      "users": "true",
-      "sense": "false"
+      "users": "true"
     },
     "properties": {
-      "cc-user-mode": "cc-u-normal",
       "cc-show-saved": "yes",
       "restore-tolerance": "loose",
       "cc-days-form-retain": "-1",
       "cc-fuzzy-search-enabled": "yes",
       "cc-autoup-freq": "freq-never",
       "purge-freq": "0",
-      "server-tether": "push-only",
       "user_reg_server": "required",
-      "extra_key_action": "audio",
       "log_prop_daily": "log_never",
-      "ViewStyle": "v_chatterbox",
       "cc-resize-images": "none",
-      "cc-entry-mode": "cc-entry-quick",
-      "cc-send-procedure": "cc-send-http",
-      "cc-login-images": "No",
       "log_prop_weekly": "log_short",
       "cc-show-incomplete": "yes",
-      "cc-send-unsent": "cc-su-auto",
       "loose_media": "no",
-      "password_format": "n",
       "unsent-number-limit": "5",
       "cc-content-valid": "no",
       "logenabled": "Enabled"

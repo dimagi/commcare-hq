@@ -169,7 +169,12 @@ def get_module_view_context(request, app, module, lang=None):
         'unique_id': module.unique_id,
     }
     case_property_builder = _setup_case_property_builder(app)
-    show_advanced_settings = False
+    show_advanced_settings = (
+        not module.is_surveys
+        or add_ons.show("register_from_case_list", request, app, module)
+        or add_ons.show("case_list_menu_item", request, app, module) and not isinstance(module, ShadowModule)
+        or toggles.CUSTOM_ASSERTIONS.enabled(app.domain)
+    )
     if toggles.MOBILE_UCR.enabled(app.domain):
         show_advanced_settings = True
         module_brief.update({
@@ -191,16 +196,8 @@ def get_module_view_context(request, app, module, lang=None):
     if isinstance(module, ShadowModule):
         context.update(_get_shadow_module_view_context(app, module, lang))
 
-    show_advanced_settings = (
-        show_advanced_settings
-        or add_ons.show("register_from_case_list", request, app, module)
-        or add_ons.show("case_list_menu_item", request, app, module) and not isinstance(module, ShadowModule)
-    )
-    context.update({
-        'show_advanced_settings': show_advanced_settings,
-    })
-
-    context.update({'module_brief': module_brief})
+    context['show_advanced_settings'] = show_advanced_settings
+    context['module_brief'] = module_brief
     return context
 
 

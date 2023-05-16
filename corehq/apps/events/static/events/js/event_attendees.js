@@ -114,18 +114,6 @@ hqDefine("events/js/event_attendees",[
     var mobileWorkerAttendees = function() {
         self.mobileWorkerAttendeesEnabled = ko.observable(false);
         self.buttonText = ko.observable("");
-        self.toggleMobileWorkerAttendees = function() {
-            $.ajax({
-                method: 'POST',
-                url: initialPageData.reverse('attendees_config'),
-                contentType: 'application/json',
-                data: JSON.stringify({'mobile_worker_attendee_enabled': !self.mobileWorkerAttendeesEnabled()}),
-                success: function (data) {
-                    self.mobileWorkerAttendeesEnabled(data.mobile_worker_attendee_enabled);
-                    self.toggleButtonText();
-                },
-            });
-        };
 
         self.toggleButtonText = function() {
             var button = document.getElementById("mobileWorkerAttendeeButton");

@@ -5,6 +5,7 @@ hqDefine('app_manager/js/details/screen_config', function () {
     return function (spec) {
         var self = {};
         self.properties = spec.properties;
+        self.sortProperties = Array.from(spec.properties);
         self.screens = [];
         self.model = spec.model || 'case';
         self.lang = spec.lang;
@@ -71,13 +72,75 @@ hqDefine('app_manager/js/details/screen_config', function () {
             return screen;
         }
 
+        const calculatedColName = (index) => `_cc_calculated_${index}`;
+        const calculatedColLabel = (index, col) => {
+            return _.template(gettext('<%- name %> (Calculated Property #<%- index %>)'))({
+                name: col.header.val(), index: index + 1
+            });
+        }
+
+        function bindCalculatedPropsWithSortCols () {
+            // This links the calculated properties in the case list with the options available for sorting.
+            // Updates to the calculated properties are propagated to the sort rows.
+
+            // update the available sort properties with existing calculated properties
+            let calculatedCols = self.shortScreen.columns()
+                .filter(col => col.useXpathExpression)
+                .map(col => {
+                    let index = self.shortScreen.columns.indexOf(col),
+                        label = calculatedColLabel(index, col);
+                    return {value: calculatedColName(index), label: label};
+                })
+            self.sortProperties.push(...calculatedCols);
+
+            // propagate changes in calculated columns to the sort properties
+            self.shortScreen.on("columnChange", changes => {
+                let sortProps = [...self.sortProperties];
+                let valueMapping = {};  // used to handle value changes and deletions
+                changes.forEach(change => {
+                    if (!change.value.useXpathExpression) {
+                        return;
+                    }
+                    const colValue = calculatedColName(change.index);
+                    const colLabel = calculatedColLabel(change.index, change.value);
+                    if (change.status === "edited") {
+                        let prop = sortProps.find(p => {
+                            return p.value === colValue
+                        });
+                        if (prop) {
+                            prop.label = colLabel;
+                        }
+                    } else if (change.status === "added" && change.moved !== undefined) {
+                        // re-order
+                        const oldValue = calculatedColName(change.moved);
+                        let prop = sortProps.find(p => p.value === oldValue);
+                        if (prop) {
+                            prop.value = colValue;
+                            prop.label = colLabel;
+                        }
+                        valueMapping[oldValue] = colValue;
+                    } else if (change.status === "added") {
+                        sortProps.push({value: colValue, label: colLabel});
+                    } else if (change.status === "deleted") {
+                        sortProps = sortProps.filter(p => p.value !== colValue);
+                        valueMapping[colValue] = "";  // set selection to blank
+                    }
+                });
+
+                // update values for next time and for new sort-cols
+                self.sortProperties = sortProps;
+                self.sortRows.updateSortProperties(self.sortProperties, valueMapping);
+            });
+        }
+
         if (spec.state.short !== undefined) {
             self.shortScreen = addScreen(spec.state, "short");
+            bindCalculatedPropsWithSortCols();
             // Set up filter
             var filterXpath = spec.state.short.filter;
             self.filter = hqImport("app_manager/js/details/filter")(filterXpath ? filterXpath : null, self.shortScreen.saveButton);
             // Set up sortRows
-            self.sortRows = hqImport("app_manager/js/details/sort_rows")(self.properties, self.shortScreen.saveButton);
+            self.sortRows = hqImport("app_manager/js/details/sort_rows")(self.sortProperties, self.shortScreen.saveButton);
             if (spec.sortRows) {
                 for (var j = 0; j < spec.sortRows.length; j++) {
                     self.sortRows.addSortRow(

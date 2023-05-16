@@ -2,10 +2,10 @@ from couchdbkit.exceptions import ResourceNotFound
 from jsonobject.exceptions import WrappingAttributeError
 
 from corehq.apps.commtrack.const import COMMTRACK_USERNAME
+from corehq.apps.es import CANONICAL_NAME_ADAPTER_MAP
 from corehq.apps.users.models import CouchUser
 from corehq.apps.users.util import SYSTEM_USER_ID, DEMO_USER_ID
 from corehq.const import ONE_DAY
-from corehq.pillows.mappings import CANONICAL_NAME_INFO_MAP
 from corehq.util.quickcache import quickcache
 
 SYSTEM_USER_TYPE = "system"
@@ -83,7 +83,7 @@ def get_user_type_deep_cache_for_unknown_users(user_id):
 
 
 def get_all_expected_es_indices():
-    yield from CANONICAL_NAME_INFO_MAP.values()
+    yield from CANONICAL_NAME_ADAPTER_MAP.values()
 
 
 def format_form_meta_for_es(form_metadata):

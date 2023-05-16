@@ -134,7 +134,7 @@ hqDefine("app_manager/js/details/utils", function () {
                 return DOMPurify.sanitize(m);
             },
             templateResult: function (result) {
-                var formatted = result.id;
+                var formatted = result.text;
                 if (module.isAttachmentProperty(result.id)) {
                     formatted = (
                         '<i class="fa fa-paperclip"></i> ' +

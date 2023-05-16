@@ -1,32 +1,22 @@
 import collections
-import copy
-import datetime
 
 from dateutil import parser
 from django.conf import settings
-from jsonobject.exceptions import BadValueError
 
-from casexml.apps.case.exceptions import PhoneDateValueError
-from casexml.apps.case.xform import extract_case_blocks
-from casexml.apps.case.xml.parser import CaseGenerationException, case_update_from_block
 from corehq.apps.change_feed.topics import FORM_TOPICS
 from corehq.apps.change_feed.consumer.feed import KafkaChangeFeed, KafkaCheckpointEventHandler
 from corehq.apps.data_interfaces.pillow import CaseDeduplicationProcessor
-from corehq.apps.receiverwrapper.util import get_app_version_info
 from corehq.apps.userreports.data_source_providers import DynamicDataSourceProvider, StaticDataSourceProvider
 from corehq.apps.userreports.pillow import get_ucr_processor
 from corehq.apps.es.forms import form_adapter
+from corehq.apps.es.users import user_adapter
 from corehq.form_processor.backends.sql.dbaccessors import FormReindexAccessor
 from corehq.pillows.base import is_couch_change_for_sql_domain
-from corehq.pillows.mappings.xform_mapping import XFORM_INDEX_INFO
 from corehq.pillows.user import UnknownUsersProcessor
-from corehq.pillows.utils import get_user_type, format_form_meta_for_es
 from corehq.util.doc_processor.sql import SqlDocumentProvider
 from couchforms.const import RESERVED_WORDS, DEVICE_LOG_XMLNS
-from couchforms.geopoint import GeoPoint
 from pillowtop.checkpoints.manager import KafkaPillowCheckpoint, get_checkpoint_for_elasticsearch_pillow
 from pillowtop.const import DEFAULT_PROCESSOR_CHUNK_SIZE
-from pillowtop.es_utils import ElasticsearchIndexInfo
 from pillowtop.pillow.interface import ConstructedPillow
 from pillowtop.processors.form import FormSubmissionMetadataTrackerProcessor
 from pillowtop.processors.elastic import BulkElasticProcessor, ElasticProcessor
@@ -67,76 +57,6 @@ def xform_pillow_filter(doc_dict):
     )
 
 
-def transform_xform_for_elasticsearch(doc_dict):
-    """
-    Given xform JSON such as that returned by `XFormInstance.to_json()`,
-    return a copy that is ready to be sent to elasticsearch, or None, if the
-    form should not be saved to elasticsearch
-    """
-    doc_ret = copy.deepcopy(doc_dict)
-
-    if 'meta' in doc_ret['form']:
-        if not is_valid_date(doc_ret['form']['meta'].get('timeEnd', None)):
-            doc_ret['form']['meta']['timeEnd'] = None
-        if not is_valid_date(doc_ret['form']['meta'].get('timeStart', None)):
-            doc_ret['form']['meta']['timeStart'] = None
-
-        # Some docs have their @xmlns and #text here
-        if isinstance(doc_ret['form']['meta'].get('appVersion'), dict):
-            doc_ret['form']['meta'] = format_form_meta_for_es(doc_ret['form']['meta'])
-
-        app_version_info = get_app_version_info(
-            doc_ret['domain'],
-            doc_ret.get('build_id'),
-            doc_ret.get('version'),
-            doc_ret['form']['meta'],
-        )
-        doc_ret['form']['meta']['commcare_version'] = app_version_info.commcare_version
-        doc_ret['form']['meta']['app_build_version'] = app_version_info.build_version
-
-        try:
-            geo_point = GeoPoint.from_string(doc_ret['form']['meta']['location'])
-            doc_ret['form']['meta']['geo_point'] = geo_point.lat_lon
-        except (KeyError, BadValueError):
-            doc_ret['form']['meta']['geo_point'] = None
-            pass
-
-    try:
-        user_id = doc_ret['form']['meta']['userID']
-    except KeyError:
-        user_id = None
-    doc_ret['user_type'] = get_user_type(user_id)
-    doc_ret['inserted_at'] = datetime.datetime.utcnow().isoformat()
-
-    try:
-        case_blocks = extract_case_blocks(doc_ret)
-    except PhoneDateValueError:
-        pass
-    else:
-        for case_dict in case_blocks:
-            for date_modified_key in ['date_modified', '@date_modified']:
-                if not is_valid_date(case_dict.get(date_modified_key, None)):
-                    if case_dict.get(date_modified_key) == '':
-                        case_dict[date_modified_key] = None
-                    else:
-                        case_dict.pop(date_modified_key, None)
-
-            # convert all mapped dict properties to nulls if they are empty strings
-            for object_key in ['index', 'attachment', 'create', 'update']:
-                if object_key in case_dict and not isinstance(case_dict[object_key], dict):
-                    case_dict[object_key] = None
-
-        try:
-            doc_ret["__retrieved_case_ids"] = list(set(case_update_from_block(cb).id for cb in case_blocks))
-        except CaseGenerationException:
-            doc_ret["__retrieved_case_ids"] = []
-
-    if 'backend_id' not in doc_ret:
-        doc_ret['backend_id'] = 'couch'
-
-    return doc_ret
-
-
 def get_xform_to_elasticsearch_pillow(pillow_id='XFormToElasticsearchPillow', num_processes=1,
                                       process_num=0, **kwargs):
     """XForm change processor that sends form data to Elasticsearch
@@ -144,18 +64,6 @@ def get_xform_to_elasticsearch_pillow(pillow_id='XFormToElasticsearchPillow', nu
     Processors:
       - :py:class:`pillowtop.processors.elastic.ElasticProcessor`
     """
-    index_info = XFORM_INDEX_INFO
-    # todo; To remove after full rollout of https://github.com/dimagi/commcare-hq/pull/21329/
-    if 'index_name' in kwargs:
-        raw_info = XFORM_INDEX_INFO.to_json()
-        raw_info.pop("meta")
-        index_info = ElasticsearchIndexInfo.wrap(raw_info)
-        index_info.index = kwargs['index_name']
-        index_info.alias = kwargs['index_alias']
-        from corehq.apps.es.transient_util import add_dynamic_adapter
-        add_dynamic_adapter(
-            "XFormBackfill", index_info.index, index_info.type, index_info.mapping, index_info.alias
-        )
 
     checkpoint = get_checkpoint_for_elasticsearch_pillow(pillow_id, form_adapter.index_name, FORM_TOPICS)
     form_processor = ElasticProcessor(
@@ -185,14 +93,15 @@ def get_xform_pillow(pillow_id='xform-pillow', ucr_division=None,
     """Generic XForm change processor
 
     Processors:
-      - :py:class:`corehq.apps.userreports.pillow.ConfigurableReportPillowProcessor` (disabled when skip_ucr=True)
+      - :py:class:`corehq.apps.userreports.pillow.ConfigurableReportPillowProcessor`
+            - (disabled when skip_ucr=True)
       - :py:class:`pillowtop.processors.elastic.BulkElasticProcessor`
-      - :py:class:`corehq.pillows.user.UnknownUsersProcessor` (disabled when RUN_UNKNOWN_USER_PILLOW=False)
-      - :py:class:`pillowtop.form.FormSubmissionMetadataTrackerProcessor` (disabled when RUN_FORM_META_PILLOW=False)
+      - :py:class:`corehq.pillows.user.UnknownUsersProcessor`
+            - (disabled when RUN_UNKNOWN_USER_PILLOW=False)
+      - :py:class:`pillowtop.form.FormSubmissionMetadataTrackerProcessor`
+            - (disabled when RUN_FORM_META_PILLOW=False)
       - :py:class:`corehq.apps.data_interfaces.pillow.CaseDeduplicationPillow``
     """
-    # avoid circular dependency
-    from corehq.pillows.mappings.user_mapping import USER_INDEX
     if topics:
         assert set(topics).issubset(FORM_TOPICS), "This is a pillow to process cases only"
     topics = topics or FORM_TOPICS
@@ -221,7 +130,7 @@ def get_xform_pillow(pillow_id='xform-pillow', ucr_division=None,
     unknown_user_form_processor = UnknownUsersProcessor()
     form_meta_processor = FormSubmissionMetadataTrackerProcessor()
     checkpoint_id = "{}-{}-{}".format(
-        pillow_id, XFORM_INDEX_INFO.index, USER_INDEX)
+        pillow_id, form_adapter.index_name, user_adapter.index_name)
     checkpoint = KafkaPillowCheckpoint(checkpoint_id, topics)
     event_handler = KafkaCheckpointEventHandler(
         checkpoint=checkpoint, checkpoint_frequency=1000, change_feed=change_feed,
@@ -263,7 +172,7 @@ class SqlFormReindexerFactory(ReindexerFactory):
         domain = self.options.pop('domain', None)
 
         iteration_key = "SqlXFormToElasticsearchPillow_{}_reindexer_{}_{}".format(
-            XFORM_INDEX_INFO.index, limit_to_db or 'all', domain or 'all'
+            form_adapter.index_name, limit_to_db or 'all', domain or 'all'
         )
         limit_db_aliases = [limit_to_db] if limit_to_db else None
 

@@ -7,7 +7,6 @@ from corehq.apps.users.models import CommCareUser, CouchUser, WebUser
 from corehq.apps.users.util import WEIRD_USER_IDS
 from corehq.apps.userreports.data_source_providers import DynamicDataSourceProvider, StaticDataSourceProvider
 from corehq.apps.userreports.pillow import get_ucr_processor
-from corehq.pillows.mappings.user_mapping import USER_INDEX
 from corehq.util.quickcache import quickcache
 from corehq.util.doc_processor.couch import CouchDocumentProvider
 from pillowtop.checkpoints.manager import get_checkpoint_for_elasticsearch_pillow
@@ -42,28 +41,6 @@ def update_unknown_user_from_form_if_necessary(doc_dict):
         if domain:
             doc["domain_membership"] = {"domain": domain}
         user_adapter.index(doc)
-
-
-def transform_user_for_elasticsearch(doc_dict):
-    doc = copy.deepcopy(doc_dict)
-    if doc['doc_type'] == 'CommCareUser' and '@' in doc['username']:
-        doc['base_username'] = doc['username'].split("@")[0]
-    else:
-        doc['base_username'] = doc['username']
-
-    results = get_group_id_name_map_by_user(doc['_id'])
-    doc['__group_ids'] = [res.id for res in results]
-    doc['__group_names'] = [res.name for res in results]
-    doc['user_data_es'] = []
-    if 'user_data' in doc:
-        from corehq.apps.users.models import CouchUser
-        user = CouchUser.wrap_correctly(doc)
-        for key, value in user.metadata.items():
-            doc['user_data_es'].append({
-                'key': key,
-                'value': value,
-            })
-    return doc
 
 
 @quickcache(['user_id'])
@@ -197,7 +174,7 @@ class UserReindexerFactory(ReindexerFactory):
     ]
 
     def build(self):
-        iteration_key = "UserToElasticsearchPillow_{}_reindexer".format(USER_INDEX)
+        iteration_key = "UserToElasticsearchPillow_{}_reindexer".format(user_adapter.index_name)
         doc_provider = CouchDocumentProvider(iteration_key, [CommCareUser, WebUser])
         options = {
             'chunk_size': 5
