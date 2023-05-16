@@ -1067,6 +1067,7 @@ class NavigationEventAuditResource(HqBaseResource, ModelResource):
         queryset = NavigationEventAudit.objects.all()
         resource_name = "action_times"
         fields = ['user']
+        include_resource_uri = False
         allowed_methods = ['get']
         detail_allowed_methods = []
         limit = 10000
