@@ -342,7 +342,7 @@ def search_input_instances(app, instance_name):
 
 @register_factory('selected_cases')
 def selected_cases_instances(app, instance_name):
-    return Instance(id=instance_name, src='jr://instance/selected-entities')
+    return Instance(id=instance_name, src=f'jr://instance/selected-entities/{instance_name}'
 
 
 @register_factory('results')
