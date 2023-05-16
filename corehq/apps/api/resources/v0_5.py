@@ -1067,7 +1067,7 @@ class NavigationEventAuditResource(HqBaseResource, ModelResource):
     class Meta:
         authentication = RequirePermissionAuthentication(HqPermissions.view_web_users)
         queryset = NavigationEventAudit.objects.all()
-        resource_name = "action_times"
+        resource_name = 'action_times'
         fields = ['user']
         include_resource_uri = False
         allowed_methods = ['get']
@@ -1137,10 +1137,10 @@ class NavigationEventAuditResource(HqBaseResource, ModelResource):
             if limit < 0:
                 raise ValueError
         except (ValueError, TypeError):
-            raise BadRequest(_("limit must be a positive integer."))
+            raise BadRequest(_('limit must be a positive integer.'))
 
         if limit > self._meta.max_limit:
-            raise BadRequest(_("Limit may not exceed {}.").format(self._meta.max_limit))
+            raise BadRequest(_('Limit may not exceed {}.').format(self._meta.max_limit))
         return limit
 
     @classmethod
@@ -1188,7 +1188,7 @@ class NavigationEventAuditResource(HqBaseResource, ModelResource):
         results = (queryset
                 .annotate(local_date=TruncDate('event_date', tzinfo=local_timezone))
                 .filter(date_filter)
-                .values("local_date", "user"))
+                .values('local_date', 'user'))
 
         results = results.order_by('local_date', 'user')
 
@@ -1198,8 +1198,8 @@ class NavigationEventAuditResource(HqBaseResource, ModelResource):
     def _get_compound_filter(cls, key, params):
         compound_filter = Q()
         for key, val in params.items():
-            if '.' in key and key.split(".")[0] in cls.COMPOUND_FILTERS:
-                prefix, qualifier = key.split(".", maxsplit=1)
+            if '.' in key and key.split('.')[0] in cls.COMPOUND_FILTERS:
+                prefix, qualifier = key.split('.', maxsplit=1)
                 filter_obj = cls.COMPOUND_FILTERS[prefix](qualifier, val)
                 compound_filter &= Q(**filter_obj)
         return compound_filter

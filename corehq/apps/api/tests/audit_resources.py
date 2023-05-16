@@ -49,10 +49,10 @@ class testNavigationEventAuditResource(APIResourceTest):
 
         cls.domain1_audits = DomainNavigationEventAudits(cls.domain.name,
                                                         pytz.timezone(cls.domain.default_timezone))
-        cls.domain2_audits = DomainNavigationEventAudits("domain2", pytz.timezone('America/Los_Angeles'))
+        cls.domain2_audits = DomainNavigationEventAudits('domain2', pytz.timezone('America/Los_Angeles'))
 
-        cls.username1 = "andy@example.com"
-        cls.username2 = "bob@example.com"
+        cls.username1 = 'andy@example.com'
+        cls.username2 = 'bob@example.com'
 
         cls.user1 = WebUser.create(cls.domain.name, cls.username1, '***', None, None)
         cls.user2 = WebUser.create(cls.domain.name, cls.username2, '***', None, None)
@@ -77,29 +77,29 @@ class testNavigationEventAuditResource(APIResourceTest):
                 'user': cls.username1,
                 'user_id': cls.user1._id,
                 'local_date': date(2023, 5, 1),
-                'UTC_start_time': datetime(2023, 5, 2, 0, tzinfo=pytz.timezone("UTC")),
-                'UTC_end_time': datetime(2023, 5, 2, 6, tzinfo=pytz.timezone("UTC"))
+                'UTC_start_time': datetime(2023, 5, 2, 0, tzinfo=pytz.timezone('UTC')),
+                'UTC_end_time': datetime(2023, 5, 2, 6, tzinfo=pytz.timezone('UTC'))
             },
             {
                 'user': cls.username2,
                 'user_id': cls.user2._id,
                 'local_date': date(2023, 5, 1),
-                'UTC_start_time': datetime(2023, 5, 2, 0, tzinfo=pytz.timezone("UTC")),
-                'UTC_end_time': datetime(2023, 5, 2, 6, tzinfo=pytz.timezone("UTC"))
+                'UTC_start_time': datetime(2023, 5, 2, 0, tzinfo=pytz.timezone('UTC')),
+                'UTC_end_time': datetime(2023, 5, 2, 6, tzinfo=pytz.timezone('UTC'))
             },
             {
                 'user': cls.username1,
                 'user_id': cls.user1._id,
                 'local_date': date(2023, 5, 2),
-                'UTC_start_time': datetime(2023, 5, 2, 7, tzinfo=pytz.timezone("UTC")),
-                'UTC_end_time': datetime(2023, 5, 2, 23, tzinfo=pytz.timezone("UTC"))
+                'UTC_start_time': datetime(2023, 5, 2, 7, tzinfo=pytz.timezone('UTC')),
+                'UTC_end_time': datetime(2023, 5, 2, 23, tzinfo=pytz.timezone('UTC'))
             },
             {
                 'user': cls.username2,
                 'user_id': cls.user2._id,
                 'local_date': date(2023, 5, 2),
-                'UTC_start_time': datetime(2023, 5, 2, 7, tzinfo=pytz.timezone("UTC")),
-                'UTC_end_time': datetime(2023, 5, 2, 23, tzinfo=pytz.timezone("UTC"))
+                'UTC_start_time': datetime(2023, 5, 2, 7, tzinfo=pytz.timezone('UTC')),
+                'UTC_end_time': datetime(2023, 5, 2, 23, tzinfo=pytz.timezone('UTC'))
             }
         ])
 
@@ -115,8 +115,8 @@ class testNavigationEventAuditResource(APIResourceTest):
 
     def test_get_list_with_limit_param(self):
         limit = 1
-        params = {"limit": limit}
-        list_endpoint = f"{self.list_endpoint}?{urlencode(params)}"
+        params = {'limit': limit}
+        list_endpoint = f'{self.list_endpoint}?{urlencode(params)}'
         response = self._assert_auth_get_resource(list_endpoint)
         self.assertEqual(response.status_code, 200)
 
@@ -129,8 +129,8 @@ class testNavigationEventAuditResource(APIResourceTest):
     def test_get_list_with_timezone_param(self):
         timezone = 'US/Eastern'
 
-        params = {"local_timezone": timezone}
-        list_endpoint = f"{self.list_endpoint}?{urlencode(params)}"
+        params = {'local_timezone': timezone}
+        list_endpoint = f'{self.list_endpoint}?{urlencode(params)}'
         response = self._assert_auth_get_resource(list_endpoint)
         self.assertEqual(response.status_code, 200)
 
@@ -140,29 +140,29 @@ class testNavigationEventAuditResource(APIResourceTest):
                 'user': self.username1,
                 'user_id': self.user1._id,
                 'local_date': date(2023, 5, 1).isoformat(),
-                'UTC_start_time': datetime(2023, 5, 2, 0, tzinfo=pytz.timezone("UTC")).isoformat(),
-                'UTC_end_time': datetime(2023, 5, 2, 3, tzinfo=pytz.timezone("UTC")).isoformat()
+                'UTC_start_time': datetime(2023, 5, 2, 0, tzinfo=pytz.timezone('UTC')).isoformat(),
+                'UTC_end_time': datetime(2023, 5, 2, 3, tzinfo=pytz.timezone('UTC')).isoformat()
             },
             {
                 'user': self.username2,
                 'user_id': self.user2._id,
                 'local_date': date(2023, 5, 1).isoformat(),
-                'UTC_start_time': datetime(2023, 5, 2, 0, tzinfo=pytz.timezone("UTC")).isoformat(),
-                'UTC_end_time': datetime(2023, 5, 2, 3, tzinfo=pytz.timezone("UTC")).isoformat()
+                'UTC_start_time': datetime(2023, 5, 2, 0, tzinfo=pytz.timezone('UTC')).isoformat(),
+                'UTC_end_time': datetime(2023, 5, 2, 3, tzinfo=pytz.timezone('UTC')).isoformat()
             },
             {
                 'user': self.username1,
                 'user_id': self.user1._id,
                 'local_date': date(2023, 5, 2).isoformat(),
-                'UTC_start_time': datetime(2023, 5, 2, 4, tzinfo=pytz.timezone("UTC")).isoformat(),
-                'UTC_end_time': datetime(2023, 5, 2, 23, tzinfo=pytz.timezone("UTC")).isoformat()
+                'UTC_start_time': datetime(2023, 5, 2, 4, tzinfo=pytz.timezone('UTC')).isoformat(),
+                'UTC_end_time': datetime(2023, 5, 2, 23, tzinfo=pytz.timezone('UTC')).isoformat()
             },
             {
                 'user': self.username2,
                 'user_id': self.user2._id,
                 'local_date': date(2023, 5, 2).isoformat(),
-                'UTC_start_time': datetime(2023, 5, 2, 4, tzinfo=pytz.timezone("UTC")).isoformat(),
-                'UTC_end_time': datetime(2023, 5, 2, 23, tzinfo=pytz.timezone("UTC")).isoformat()
+                'UTC_start_time': datetime(2023, 5, 2, 4, tzinfo=pytz.timezone('UTC')).isoformat(),
+                'UTC_end_time': datetime(2023, 5, 2, 23, tzinfo=pytz.timezone('UTC')).isoformat()
             }
         ]
 
@@ -172,8 +172,8 @@ class testNavigationEventAuditResource(APIResourceTest):
     def test_get_list_with_user_param(self):
         users_filter = [self.username1]
 
-        params = {"users": users_filter}
-        list_endpoint = f"{self.list_endpoint}?{urlencode(params)}"
+        params = {'users': users_filter}
+        list_endpoint = f'{self.list_endpoint}?{urlencode(params)}'
         response = self._assert_auth_get_resource(list_endpoint)
         self.assertEqual(response.status_code, 200)
 
@@ -194,7 +194,7 @@ class testNavigationEventAuditResource(APIResourceTest):
             'local_date.gte': date1,
             'local_date.lt': date2,
         }
-        list_endpoint = f"{self.list_endpoint}?{urlencode(params)}"
+        list_endpoint = f'{self.list_endpoint}?{urlencode(params)}'
         response = self._assert_auth_get_resource(list_endpoint)
         self.assertEqual(response.status_code, 200)
 
@@ -212,7 +212,7 @@ class testNavigationEventAuditResource(APIResourceTest):
             'cursor_user': self.username1,
             'cursor_local_date': date(2023, 5, 1).isoformat()
         }
-        list_endpoint = f"{self.list_endpoint}?{urlencode(params)}"
+        list_endpoint = f'{self.list_endpoint}?{urlencode(params)}'
         response = self._assert_auth_get_resource(list_endpoint)
         self.assertEqual(response.status_code, 200)
 
@@ -222,22 +222,22 @@ class testNavigationEventAuditResource(APIResourceTest):
                 'user': self.username2,
                 'user_id': self.user2._id,
                 'local_date': date(2023, 5, 1).isoformat(),
-                'UTC_start_time': datetime(2023, 5, 2, 0, tzinfo=pytz.timezone("UTC")).isoformat(),
-                'UTC_end_time': datetime(2023, 5, 2, 6, tzinfo=pytz.timezone("UTC")).isoformat()
+                'UTC_start_time': datetime(2023, 5, 2, 0, tzinfo=pytz.timezone('UTC')).isoformat(),
+                'UTC_end_time': datetime(2023, 5, 2, 6, tzinfo=pytz.timezone('UTC')).isoformat()
             },
             {
                 'user': self.username1,
                 'user_id': self.user1._id,
                 'local_date': date(2023, 5, 2).isoformat(),
-                'UTC_start_time': datetime(2023, 5, 2, 7, tzinfo=pytz.timezone("UTC")).isoformat(),
-                'UTC_end_time': datetime(2023, 5, 2, 23, tzinfo=pytz.timezone("UTC")).isoformat()
+                'UTC_start_time': datetime(2023, 5, 2, 7, tzinfo=pytz.timezone('UTC')).isoformat(),
+                'UTC_end_time': datetime(2023, 5, 2, 23, tzinfo=pytz.timezone('UTC')).isoformat()
             },
             {
                 'user': self.username2,
                 'user_id': self.user2._id,
                 'local_date': date(2023, 5, 2).isoformat(),
-                'UTC_start_time': datetime(2023, 5, 2, 7, tzinfo=pytz.timezone("UTC")).isoformat(),
-                'UTC_end_time': datetime(2023, 5, 2, 23, tzinfo=pytz.timezone("UTC")).isoformat()
+                'UTC_start_time': datetime(2023, 5, 2, 7, tzinfo=pytz.timezone('UTC')).isoformat(),
+                'UTC_end_time': datetime(2023, 5, 2, 23, tzinfo=pytz.timezone('UTC')).isoformat()
             }
         ]
 
@@ -250,7 +250,7 @@ class testNavigationEventAuditResource(APIResourceTest):
             'cursor_user': self.username1,
             'cursor_local_date': date(2023, 5, 1).isoformat()
         }
-        list_endpoint = f"{self.list_endpoint}?{urlencode(params)}"
+        list_endpoint = f'{self.list_endpoint}?{urlencode(params)}'
         response = self._assert_auth_get_resource(list_endpoint)
         self.assertEqual(response.status_code, 200)
 
@@ -261,7 +261,7 @@ class testNavigationEventAuditResource(APIResourceTest):
             'cursor_user': self.username2,
             'cursor_local_date': date(2023, 5, 1).isoformat()
         }
-        expected_next_url = f"{self.list_endpoint}?{urlencode(expected_next_params)}"
+        expected_next_url = f'{self.list_endpoint}?{urlencode(expected_next_params)}'
 
         self.assertEqual(expected_next_url, response_next_url)
 
@@ -329,7 +329,6 @@ class testNavigationEventAuditResource(APIResourceTest):
             (item['local_date'] >= date1 and item['local_date'] < date2)
         ]
 
-
         self.assertListEqual(expected_results, results)
 
     def test_cursor_pagination_returns_items_after_cursor(self):
@@ -343,20 +342,20 @@ class testNavigationEventAuditResource(APIResourceTest):
             {
                 'user': self.username2,
                 'local_date': date(2023, 5, 1),
-                'UTC_start_time': datetime(2023, 5, 2, 0, tzinfo=pytz.timezone("UTC")),
-                'UTC_end_time': datetime(2023, 5, 2, 6, tzinfo=pytz.timezone("UTC"))
+                'UTC_start_time': datetime(2023, 5, 2, 0, tzinfo=pytz.timezone('UTC')),
+                'UTC_end_time': datetime(2023, 5, 2, 6, tzinfo=pytz.timezone('UTC'))
             },
             {
                 'user': self.username1,
                 'local_date': date(2023, 5, 2),
-                'UTC_start_time': datetime(2023, 5, 2, 7, tzinfo=pytz.timezone("UTC")),
-                'UTC_end_time': datetime(2023, 5, 2, 23, tzinfo=pytz.timezone("UTC"))
+                'UTC_start_time': datetime(2023, 5, 2, 7, tzinfo=pytz.timezone('UTC')),
+                'UTC_end_time': datetime(2023, 5, 2, 23, tzinfo=pytz.timezone('UTC'))
             },
             {
                 'user': self.username2,
                 'local_date': date(2023, 5, 2),
-                'UTC_start_time': datetime(2023, 5, 2, 7, tzinfo=pytz.timezone("UTC")),
-                'UTC_end_time': datetime(2023, 5, 2, 23, tzinfo=pytz.timezone("UTC"))
+                'UTC_start_time': datetime(2023, 5, 2, 7, tzinfo=pytz.timezone('UTC')),
+                'UTC_end_time': datetime(2023, 5, 2, 23, tzinfo=pytz.timezone('UTC'))
             }
         ]
 
