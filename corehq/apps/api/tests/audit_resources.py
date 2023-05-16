@@ -1,5 +1,4 @@
 from datetime import datetime, timedelta, date
-from unittest.mock import patch
 import pytz
 
 from corehq.apps.api.resources import v0_5
@@ -180,21 +179,19 @@ class testNavigationEventAuditResource(TestCase):
         }
 
         params['limit'] = 2
-        with patch('corehq.apps.api.resources.v0_5.NavigationEventAuditResource.LIMIT_DEFAULT', params['limit']):
-            results = self.resource.cursor_query(
-                self.domain1_audits.domain,
-                self.domain1_audits.timezone,
-                params=params,
-            )
+        results = self.resource.cursor_query(
+            self.domain1_audits.domain,
+            self.domain1_audits.timezone,
+            params=params,
+        )
         self.assertEqual(len(results), params['limit'])
 
         params['limit'] = 3
-        with patch('corehq.apps.api.resources.v0_5.NavigationEventAuditResource.LIMIT_DEFAULT', params['limit']):
-            results = self.resource.cursor_query(
-                self.domain1_audits.domain,
-                self.domain1_audits.timezone,
-                params=params,
-            )
+        results = self.resource.cursor_query(
+            self.domain1_audits.domain,
+            self.domain1_audits.timezone,
+            params=params,
+        )
         self.assertEqual(len(results), params['limit'])
 
     def _daterange(start_datetime, end_datetime):
