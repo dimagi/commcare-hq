@@ -741,6 +741,13 @@ class EulaMixin(DocumentSchema):
                     current_eula = eula
         return current_eula
 
+    def get_eulas(self):
+        eulas = self.eulas
+        eulas_json = []
+        for eula in eulas:
+            eulas_json.append(eula.to_json())
+        return eulas_json
+
     @property
     def eula(self, version=CURRENT_VERSION):
         current_eula = self.get_eula(version)
