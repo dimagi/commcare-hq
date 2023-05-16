@@ -333,16 +333,25 @@ class DomainLinkView(BaseProjectSettingsView):
         linked_status = None
         if upstream_link:
             linked_status = 'downstream'
+            track_workflow(
+                self.request.couch_user.username,
+                'Lands on feature page (downstream)',
+                {'domain': self.domain}
+            )
         elif linked_domains:
             linked_status = 'upstream'
-
-        # active_tab = self.request.GET.get('active_tab' '')
+            track_workflow(
+                self.request.couch_user.username,
+                'Lands on feature page (upstream)',
+                {'domain': self.domain}
+            )
 
         return {
             'domain': self.domain,
             'timezone': timezone.localize(datetime.utcnow()).tzname(),
             'linked_status': linked_status,
             'view_data': {
+                'domain': self.domain,
                 'is_superuser': is_superuser,
                 'is_downstream_domain': bool(upstream_link),
                 'upstream_domains': upstream_domain_urls,
@@ -391,10 +400,15 @@ class DomainLinkRMIView(JSONResponseMixin, View, DomainViewMixin):
         except (DomainLinkError, UnsupportedActionError) as e:
             error = str(e)
 
+        metric_name = "Linked domain: pulled and overwrote data model" \
+            if overwrite else "Linked domain: pulled data model"
         track_workflow(
             self.request.couch_user.username,
-            "Linked domain: pulled data model",
-            {"data_model": type_}
+            metric_name,
+            {
+                'domain': self.domain,
+                'data_model': type_,
+            }
         )
 
         return {
@@ -431,11 +445,15 @@ class DomainLinkRMIView(JSONResponseMixin, View, DomainViewMixin):
         push_models.delay(self.domain, in_data['models'], in_data['linked_domains'],
                           in_data['build_apps'], self.request.couch_user.username, overwrite)
 
-        track_workflow(
-            self.request.couch_user.username,
-            "Linked domain: pushed data models",
-            {"data_models": in_data['models']}
-        )
+        metric_args = {
+            'domain': self.domain,
+            'build_apps': in_data['build_apps'],
+            'data_models': in_data['models'],
+        }
+        metric_name = "Linked domain: pushed and overwrote data models" \
+            if overwrite else "Linked domain: pushed data models"
+
+        track_workflow(self.request.couch_user.username, metric_name, metric_args)
 
         return {
             'success': True,

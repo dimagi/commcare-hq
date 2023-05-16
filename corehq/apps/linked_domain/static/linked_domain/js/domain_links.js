@@ -5,6 +5,7 @@ hqDefine("linked_domain/js/domain_links", [
     'knockout',
     'hqwebapp/js/alert_user',
     'hqwebapp/js/multiselect_utils',
+    'analytix/js/kissmetrix',
     'hqwebapp/js/components.ko', // for pagination and search box
     'hqwebapp/js/select2_knockout_bindings.ko',     // selects2 for fields
 ], function (
@@ -13,7 +14,8 @@ hqDefine("linked_domain/js/domain_links", [
     _,
     ko,
     alertUser,
-    multiselectUtils
+    multiselectUtils,
+    kissmetrics
 ) {
     var _private = {};
     _private.RMI = function () {};
@@ -207,6 +209,12 @@ hqDefine("linked_domain/js/domain_links", [
                 alertUser.alert_user(gettext(
                     'Something unexpected happened.\n' +
                     'Please try again, or report an issue if the problem persists.'), 'danger');
+            });
+        };
+
+        self.addDownstreamProjectSpace = function () {
+            kissmetrics.track.event("Clicked Add Downstream Project Space button", {
+                domain: self.domain,
             });
         };
 
