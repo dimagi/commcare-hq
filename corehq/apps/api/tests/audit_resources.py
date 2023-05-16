@@ -2,6 +2,7 @@ from datetime import datetime, timedelta, date
 import pytz
 
 from corehq.apps.api.resources import v0_5
+from corehq.apps.users.models import WebUser
 from corehq.apps.auditcare.models import NavigationEventAudit
 from .utils import APIResourceTest
 
@@ -31,11 +32,22 @@ class testNavigationEventAuditResource(APIResourceTest):
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
-        cls.domain1_audits = DomainNavigationEventAudits("domain1", pytz.timezone('America/Los_Angeles'))
+
+        cls.domain.default_timezone = 'America/Los_Angeles'
+        cls.domain.save()
+
+        cls.domain1_audits = DomainNavigationEventAudits(cls.domain.name,
+                                                        pytz.timezone(cls.domain.default_timezone))
         cls.domain2_audits = DomainNavigationEventAudits("domain2", pytz.timezone('America/Los_Angeles'))
 
         cls.username1 = "andy@example.com"
         cls.username2 = "bob@example.com"
+
+        cls.user1 = WebUser.create(cls.domain.name, cls.username1, '***', None, None)
+        cls.user2 = WebUser.create(cls.domain.name, cls.username2, '***', None, None)
+
+        cls.user1.save()
+        cls.user2.save()
 
         for single_datetime in cls._daterange(datetime(2023, 5, 2, 0), datetime(2023, 5, 2, 23)):
             cls.domain1_audits.add_log(cls.username1, single_datetime)
