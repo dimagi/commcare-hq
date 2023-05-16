@@ -2805,6 +2805,7 @@ class UserReportingMetadataStaging(models.Model):
     commcare_version = models.TextField(null=True)
     build_profile_id = models.TextField(null=True)
     last_heartbeat = models.DateTimeField(null=True)
+    fcm_token = models.TextField(null=True)
 
     @classmethod
     def add_submission(cls, domain, user_id, app_id, build_id, version, metadata, received_on):

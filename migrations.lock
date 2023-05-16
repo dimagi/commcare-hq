@@ -1116,6 +1116,7 @@ users
  0050_add_manage_attendance_tracking_permission
  0051_add_attendance_tracking_privilege
  0052_hqapikey_last_used
+ 0053_userreportingmetadatastaging_fcm_token
 util
  0001_initial
  0002_complaintbouncemeta_permanentbouncemeta_transientbounceemail
