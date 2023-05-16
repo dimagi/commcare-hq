@@ -92,8 +92,9 @@ def data_dictionary_json(request, domain, case_type_name=None):
     fhir_resource_type_name_by_case_type = {}
     fhir_resource_prop_by_case_prop = {}
     queryset = CaseType.objects.filter(domain=domain).prefetch_related(
-        Prefetch('groups', queryset=CasePropertyGroup.objects.order_by('index')),
-        Prefetch('properties', queryset=CaseProperty.objects.order_by('index')),
+        Prefetch('groups', queryset=CasePropertyGroup.objects.order_by('index').prefetch_related(
+            Prefetch('properties', queryset=CaseProperty.objects.order_by('index')),
+        )),
         Prefetch('properties__allowed_values', queryset=CasePropertyAllowedValue.objects.order_by('allowed_value'))
     )
     if toggles.FHIR_INTEGRATION.enabled(domain):
