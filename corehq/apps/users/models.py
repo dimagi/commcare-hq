@@ -759,16 +759,29 @@ class EulaMixin(DocumentSchema):
     def is_eula_signed(self, version=CURRENT_VERSION):
         if self.is_superuser:
             return True
-        for eula in self.eulas:
-            if eula.version == version:
-                return eula.signed
+        current_domain = getattr(self, 'current_domain', None)
+        current_eula = self.eula
+        if current_eula.version == version:
+            if toggles.FORCE_ANNUAL_TOS.enabled(current_domain):
+                elapsed = datetime.now() - current_eula.date if current_eula.date else 365
+                return current_eula.signed and elapsed.days < 365
+            return current_eula.signed
         return False
 
     def get_eula(self, version):
+        current_eula = None
         for eula in self.eulas:
             if eula.version == version:
-                return eula
-        return None
+                if not current_eula or eula.date > current_eula.date:
+                    current_eula = eula
+        return current_eula
+
+    def get_eulas(self):
+        eulas = self.eulas
+        eulas_json = []
+        for eula in eulas:
+            eulas_json.append(eula.to_json())
+        return eulas_json
 
     @property
     def eula(self, version=CURRENT_VERSION):
