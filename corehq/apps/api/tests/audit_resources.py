@@ -34,69 +34,69 @@ class testNavigationEventAuditResource(TestCase):
         cls.domain1_audits = DomainNavigationEventAudits("domain1", ZoneInfo('America/Los_Angeles'))
         cls.domain2_audits = DomainNavigationEventAudits("domain2", ZoneInfo('America/Los_Angeles'))
 
-        cls.user1 = "emapson@dimagi.com"
-        cls.user2 = "jtang@dimagi.com"
+        cls.username1 = "andy@example.com"
+        cls.username2 = "bob@example.com"
 
         for single_datetime in cls._daterange(datetime(2023, 5, 2, 0), datetime(2023, 5, 2, 23)):
-            cls.domain1_audits.add_log(cls.user1, single_datetime)
-            cls.domain1_audits.add_log(cls.user1, single_datetime)
-            cls.domain1_audits.add_log(cls.user2, single_datetime)
+            cls.domain1_audits.add_log(cls.username1, single_datetime)
+            cls.domain1_audits.add_log(cls.username1, single_datetime)
+            cls.domain1_audits.add_log(cls.username2, single_datetime)
 
         for single_datetime in cls._daterange(datetime(2023, 6, 1, 0), datetime(2023, 5, 31, 23)):
-            cls.domain2_audits.add_log(cls.user1, single_datetime)
-            cls.domain2_audits.add_log(cls.user2, single_datetime)
+            cls.domain2_audits.add_log(cls.username1, single_datetime)
+            cls.domain2_audits.add_log(cls.username2, single_datetime)
 
         cls.domain1_audits.create()
         cls.domain2_audits.create()
 
         cls.domain1_audits.set_expected_query_results([
             {
-                'user': cls.user1,
+                'user': cls.username1,
                 'local_date': date(2023, 5, 1),
-                'UTC_first_action_time': datetime(2023, 5, 2, 0, tzinfo=ZoneInfo("UTC")),
-                'UTC_last_action_time': datetime(2023, 5, 2, 6, tzinfo=ZoneInfo("UTC"))
+                'UTC_start_time': datetime(2023, 5, 2, 0, tzinfo=ZoneInfo("UTC")),
+                'UTC_end_time': datetime(2023, 5, 2, 6, tzinfo=ZoneInfo("UTC"))
             },
             {
-                'user': cls.user2,
+                'user': cls.username2,
                 'local_date': date(2023, 5, 1),
-                'UTC_first_action_time': datetime(2023, 5, 2, 0, tzinfo=ZoneInfo("UTC")),
-                'UTC_last_action_time': datetime(2023, 5, 2, 6, tzinfo=ZoneInfo("UTC"))
+                'UTC_start_time': datetime(2023, 5, 2, 0, tzinfo=ZoneInfo("UTC")),
+                'UTC_end_time': datetime(2023, 5, 2, 6, tzinfo=ZoneInfo("UTC"))
             },
             {
-                'user': cls.user1,
+                'user': cls.username1,
                 'local_date': date(2023, 5, 2),
-                'UTC_first_action_time': datetime(2023, 5, 2, 7, tzinfo=ZoneInfo("UTC")),
-                'UTC_last_action_time': datetime(2023, 5, 2, 23, tzinfo=ZoneInfo("UTC"))
+                'UTC_start_time': datetime(2023, 5, 2, 7, tzinfo=ZoneInfo("UTC")),
+                'UTC_end_time': datetime(2023, 5, 2, 23, tzinfo=ZoneInfo("UTC"))
             },
             {
-                'user': cls.user2,
+                'user': cls.username2,
                 'local_date': date(2023, 5, 2),
-                'UTC_first_action_time': datetime(2023, 5, 2, 7, tzinfo=ZoneInfo("UTC")),
-                'UTC_last_action_time': datetime(2023, 5, 2, 23, tzinfo=ZoneInfo("UTC"))
+                'UTC_start_time': datetime(2023, 5, 2, 7, tzinfo=ZoneInfo("UTC")),
+                'UTC_end_time': datetime(2023, 5, 2, 23, tzinfo=ZoneInfo("UTC"))
             }
         ])
 
     def test_users_in_specified_domain(self):
-        results = self.resource.query(self.domain1_audits.domain, self.domain1_audits.timezone)
+        results = self.resource.non_cursor_query(self.domain1_audits.domain, self.domain1_audits.timezone)
         for result in results:
             self.assertTrue(result['user'] in self.domain1_audits.logs.keys())
 
-        results = self.resource.query(self.domain2_audits.domain, self.domain1_audits.timezone)
+        results = self.resource.non_cursor_query(self.domain2_audits.domain, self.domain1_audits.timezone)
         for result in results:
             self.assertTrue(result['user'] in self.domain2_audits.logs.keys())
 
     def test_queries_first_last_action_time_for_each_user(self):
-        results = self.resource.query(self.domain1_audits.domain, self.domain1_audits.timezone)
+        results = self.resource.non_cursor_query(self.domain1_audits.domain, self.domain1_audits.timezone)
         self.assertListEqual(results, self.domain1_audits.expected_result)
 
     def test_queries_ordered_by_local_date_and_user(self):
-        results = self.resource.query(self.domain1_audits.domain, self.domain1_audits.timezone)
+        results = self.resource.non_cursor_query(self.domain1_audits.domain, self.domain1_audits.timezone)
         filtered_results = [(result['local_date'], result['user']) for result in results]
 
         self.assertListEqual(filtered_results, sorted(filtered_results))
 
     def test_no_repeated_local_date_per_user(self):
-        results = self.resource.query(self.domain1_audits.domain, self.domain1_audits.timezone)
+        results = self.resource.non_cursor_query(self.domain1_audits.domain, self.domain1_audits.timezone)
         seen_user_local_dates = {}
         for result in results:
             user = result['user']
@@ -108,98 +108,94 @@ class testNavigationEventAuditResource(TestCase):
             seen_user_local_dates[user].add(local_date)
 
     def test_filter_by_user(self):
-        user_filter = [self.user1]
-        expected_results = [
-            item for item in self.domain1_audits.expected_result
-            if item['user'] in user_filter
-        ]
-        results = self.resource.query(
+        params = {'users': [self.username1]}
+
+        results = self.resource.non_cursor_query(
             self.domain1_audits.domain,
             self.domain1_audits.timezone,
-            users=user_filter
+            params=params,
         )
+        expected_results = [
+            item for item in self.domain1_audits.expected_result
+            if item['user'] in params['users']
+        ]
 
         self.assertListEqual(expected_results, results)
 
-    def test_filter_by_local_start_date(self):
-        local_start_date_filter = date(2023, 5, 2)
+    def test_filter_by_local_date(self):
+        date1 = date(2023, 5, 1)
+        date2 = date(2023, 5, 2)
+        params = {
+            'local_date.gte': date(2023, 5, 1).isoformat(),
+            'local_date.lt': date(2023, 5, 2).isoformat()
+        }
+
+        results = self.resource.non_cursor_query(
+            self.domain1_audits.domain,
+            self.domain1_audits.timezone,
+            params=params
+        )
         expected_results = [
             item for item in self.domain1_audits.expected_result if
-            (item['local_date'] >= local_start_date_filter)
+            (item['local_date'] >= date1 and item['local_date'] < date2)
         ]
-        results = self.resource.query(
-            self.domain1_audits.domain,
-            self.domain1_audits.timezone,
-            local_start_date=local_start_date_filter
-        )
 
-        self.assertListEqual(expected_results, results)
-
-    def test_filter_by_local_end_date(self):
-        local_end_date_filter = date(2023, 5, 1)
-        expected_results = [
-            item for item in self.domain1_audits.expected_result
-            if item['local_date'] <= local_end_date_filter
-        ]
-        results = self.resource.query(
-            self.domain1_audits.domain,
-            self.domain1_audits.timezone,
-            local_end_date=local_end_date_filter
-        )
 
         self.assertListEqual(expected_results, results)
 
     def test_cursor_pagination_returns_items_after_cursor(self):
+        params = {
+            'cursor_local_date': date(2023, 5, 1),
+            'cursor_user': self.username1
+        }
+
+        results = self.resource.cursor_query(self.domain1_audits.domain, self.domain1_audits.timezone, params)
         expected_results = [
             {
-                'user': self.user2,
+                'user': self.username2,
                 'local_date': date(2023, 5, 1),
-                'UTC_first_action_time': datetime(2023, 5, 2, 0, tzinfo=ZoneInfo("UTC")),
-                'UTC_last_action_time': datetime(2023, 5, 2, 6, tzinfo=ZoneInfo("UTC"))
+                'UTC_start_time': datetime(2023, 5, 2, 0, tzinfo=ZoneInfo("UTC")),
+                'UTC_end_time': datetime(2023, 5, 2, 6, tzinfo=ZoneInfo("UTC"))
             },
             {
-                'user': self.user1,
+                'user': self.username1,
                 'local_date': date(2023, 5, 2),
-                'UTC_first_action_time': datetime(2023, 5, 2, 7, tzinfo=ZoneInfo("UTC")),
-                'UTC_last_action_time': datetime(2023, 5, 2, 23, tzinfo=ZoneInfo("UTC"))
+                'UTC_start_time': datetime(2023, 5, 2, 7, tzinfo=ZoneInfo("UTC")),
+                'UTC_end_time': datetime(2023, 5, 2, 23, tzinfo=ZoneInfo("UTC"))
             },
             {
-                'user': self.user2,
+                'user': self.username2,
                 'local_date': date(2023, 5, 2),
-                'UTC_first_action_time': datetime(2023, 5, 2, 7, tzinfo=ZoneInfo("UTC")),
-                'UTC_last_action_time': datetime(2023, 5, 2, 23, tzinfo=ZoneInfo("UTC"))
+                'UTC_start_time': datetime(2023, 5, 2, 7, tzinfo=ZoneInfo("UTC")),
+                'UTC_end_time': datetime(2023, 5, 2, 23, tzinfo=ZoneInfo("UTC"))
             }
         ]
-        cursor_local_date = date(2023, 5, 1)
-        cursor_user = self.user1
-        results = self.resource.cursor_query(self.domain1_audits.domain, self.domain1_audits.timezone,
-                                            cursor_local_date=cursor_local_date, cursor_user=cursor_user)
 
         self.assertListEqual(expected_results, results)
 
     def test_cursor_pagination_page_size(self):
-        cursor_local_date = date(2023, 5, 1)
-        cursor_user = self.user1
+        params = {
+            'cursor_local_date': date(2023, 5, 1),
+            'cursor_user': self.username1
+        }
 
-        custom_page_size = 2
-        with patch('corehq.apps.api.resources.v0_5.NavigationEventAuditResource.LIMIT_DEFAULT', custom_page_size):
+        params['limit'] = 2
+        with patch('corehq.apps.api.resources.v0_5.NavigationEventAuditResource.LIMIT_DEFAULT', params['limit']):
             results = self.resource.cursor_query(
                 self.domain1_audits.domain,
                 self.domain1_audits.timezone,
-                cursor_local_date=cursor_local_date,
-                cursor_user=cursor_user
+                params=params,
             )
-        self.assertEqual(len(results), custom_page_size)
+        self.assertEqual(len(results), params['limit'])
 
-        custom_page_size = 3
-        with patch('corehq.apps.api.resources.v0_5.NavigationEventAuditResource.LIMIT_DEFAULT', custom_page_size):
+        params['limit'] = 3
+        with patch('corehq.apps.api.resources.v0_5.NavigationEventAuditResource.LIMIT_DEFAULT', params['limit']):
             results = self.resource.cursor_query(
                 self.domain1_audits.domain,
                 self.domain1_audits.timezone,
-                cursor_local_date=cursor_local_date,
-                cursor_user=cursor_user
+                params=params,
             )
-        self.assertEqual(len(results), custom_page_size)
+        self.assertEqual(len(results), params['limit'])
 
     def _daterange(start_datetime, end_datetime):
         for n in range(int((end_datetime - start_datetime).total_seconds() // 3600) + 1):
