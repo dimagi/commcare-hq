@@ -244,6 +244,27 @@ class testNavigationEventAuditResource(APIResourceTest):
         for i in range(len(result_objects)):
             self.assertDictEqual(result_objects[i], expected_result_objects[i])
 
+    def test_get_list_provides_next(self):
+        params = {
+            'limit': 1,
+            'cursor_user': self.username1,
+            'cursor_local_date': date(2023, 5, 1).isoformat()
+        }
+        list_endpoint = f"{self.list_endpoint}?{urlencode(params)}"
+        response = self._assert_auth_get_resource(list_endpoint)
+        self.assertEqual(response.status_code, 200)
+
+        response_next_url = json.loads(response.content)['meta']['next']
+
+        expected_next_params = {
+            'limit': 1,
+            'cursor_user': self.username2,
+            'cursor_local_date': date(2023, 5, 1).isoformat()
+        }
+        expected_next_url = f"{self.list_endpoint}?{urlencode(expected_next_params)}"
+
+        self.assertEqual(expected_next_url, response_next_url)
+
     def test_users_in_specified_domain(self):
         results = self.resource.non_cursor_query(self.domain1_audits.domain, self.domain1_audits.timezone)
         for result in results:
