@@ -728,7 +728,9 @@ class EulaMixin(DocumentSchema):
         current_eula = self.eula
         if current_eula.version == version:
             if toggles.FORCE_ANNUAL_TOS.enabled(current_domain):
-                elapsed = datetime.now() - current_eula.date if current_eula.date else 365
+                if not current_eula.date:
+                    return False
+                elapsed = datetime.now() - current_eula.date
                 return current_eula.signed and elapsed.days < 365
             return current_eula.signed
         return False
