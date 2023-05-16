@@ -235,7 +235,9 @@ class DetailContributor(SectionContributor):
 
                 if module_offers_search(module) and not module_uses_inline_search(module):
                     in_search = module_loads_registry_case(module) or "search" in id
-                    d.actions.append(self._get_case_search_action(module, in_search=in_search))
+                    # don't add search again action in split screen
+                    if not (toggles.SPLIT_SCREEN_CASE_SEARCH.enabled(self.app.domain) and in_search):
+                        d.actions.append(self._get_case_search_action(module, in_search=in_search))
 
             try:
                 if not self.app.enable_multi_sort:
