@@ -1058,7 +1058,15 @@ class ODataFormResource(BaseODataResource):
         ]
 
 
-class NavigationEventAuditResource():
+class NavigationEventAuditResource(HqBaseResource, ModelResource):
+
+    class Meta:
+        authentication = RequirePermissionAuthentication(HqPermissions.view_web_users)
+        queryset = NavigationEventAudit.objects.all()
+        resource_name = "action_times"
+        allowed_methods = ['get']
+        detail_allowed_methods = []
+
     LIMIT_DEFAULT = 10000
 
     # Compound filters take the form `prefix.qualifier=value`
