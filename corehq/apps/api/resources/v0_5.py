@@ -1087,6 +1087,11 @@ class NavigationEventAuditResource(HqBaseResource, ModelResource):
         '''
         return namedtuple('action_times', list(action_times))(**action_times)
 
+    def alter_list_data_to_serialize(self, request, data):
+        data['meta']['local_date_timezone'] = self.local_timezone.zone
+
+        return data
+
     def dehydrate(self, bundle):
         bundle.data['user_id'] = get_user_id_by_username(bundle.data['user'])
         return bundle
