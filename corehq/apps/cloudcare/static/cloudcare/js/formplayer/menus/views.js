@@ -4,6 +4,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
     const kissmetrics = hqImport("analytix/js/kissmetrix"),
         constants = hqImport("cloudcare/js/formplayer/constants"),
         FormplayerFrontend = hqImport("cloudcare/js/formplayer/app"),
+        initialPageData = hqImport("hqwebapp/js/initial_page_data"),
         toggles = hqImport("hqwebapp/js/toggles"),
         utils = hqImport("cloudcare/js/formplayer/utils/utils");
 
@@ -360,6 +361,8 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             } else {
                 self.selectedCaseIds = [];
             }
+
+            self.showMap = !!_.find(this.styles, function (style) { return style.displayFormat === "Address"; });
         },
 
         ui: CaseListViewUI(),
@@ -447,6 +450,69 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             }
         },
 
+        columnStyle: function () {
+            let self = this;
+            let mapColumn = "";
+            if (self.showMap && !self.hasNoItems) {
+                mapColumn = "[map] 300px";
+            }
+            return "display: grid;grid-template-columns: [tiles] auto " + mapColumn
+                + " ;grid-template-rows: auto";
+        },
+
+        addAddressPin: function (geocoder, addressMap, headers, model, addressIndex) {
+            let address = model.attributes.data[addressIndex];
+            geocoder.query(address, function (err, data) {
+                if (err === null) {
+                    let popupText = "";
+                    headers.forEach((header, index) => {
+                        if (header) {
+                            popupText += "<b>" + header + ":</b> " + model.attributes.data[index] + "<br>";
+                        }
+                    });
+                    L.marker(data.latlng)
+                        .addTo(addressMap)
+                        .bindPopup(popupText);
+                }
+            });
+        },
+
+        loadMap: function () {
+            let token = initialPageData.get("mapbox_access_token");
+
+            try {
+                let lat = 30;
+                let lon = 15;
+                let zoom = 3;
+                let addressMap = L.map('module-case-list-map').setView([lat, lon], zoom);
+                L.tileLayer('https://api.mapbox.com/styles/v1/{id}/tiles/{z}/{x}/{y}?access_token=' + token, {
+                    id: 'mapbox/streets-v11',
+                    attribution: '© <a href="https://www.mapbox.com/about/maps/">Mapbox</a> ©' +
+                             ' <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+                    tileSize: 512,
+                    zoomOffset: -1,
+                }).addTo(addressMap);
+
+                let addressIndex = _.findIndex(this.styles, function (style) { return style.displayFormat === "Address"; });
+                L.mapbox.accessToken = token;
+                let mapbox = L.mapbox;
+                let geocoder = mapbox.geocoder('mapbox.places');
+
+                this.options.collection.models.forEach(model => {
+                    this.addAddressPin(geocoder, addressMap, this.options.headers, model, addressIndex);
+                });
+            } catch (error) {
+                console.error(error);
+            }
+        },
+
+        onAttach() {
+            const self = this;
+            if (self.showMap && !self.hasNoItems) {
+                self.loadMap();
+            }
+        },
+
         templateContext: function () {
             const paginateItems = utils.paginateOptions(this.options.currentPage, this.options.pageCount);
             const casesPerPage = parseInt($.cookie("cases-per-page-limit")) || 10;
@@ -471,6 +537,9 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
                 sortIndices: this.options.sortIndices,
                 selectedCaseIds: this.selectedCaseIds,
                 isMultiSelect: false,
+                showMap: this.showMap,
+                columnStyle: this.columnStyle(),
+
                 columnSortable: function (index) {
                     return this.sortIndices.indexOf(index) > -1;
                 },
