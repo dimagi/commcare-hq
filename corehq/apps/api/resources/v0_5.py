@@ -1063,6 +1063,7 @@ class NavigationEventAuditResource(HqBaseResource, ModelResource):
     local_date = fields.DateField(attribute='local_date', readonly=True)
     UTC_start_time = fields.DateTimeField(attribute='UTC_start_time', readonly=True)
     UTC_end_time = fields.DateTimeField(attribute='UTC_end_time', readonly=True)
+
     class Meta:
         authentication = RequirePermissionAuthentication(HqPermissions.view_web_users)
         queryset = NavigationEventAudit.objects.all()

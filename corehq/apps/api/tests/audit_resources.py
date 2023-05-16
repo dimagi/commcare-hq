@@ -3,7 +3,7 @@ import pytz
 
 from corehq.apps.api.resources import v0_5
 from corehq.apps.auditcare.models import NavigationEventAudit
-from django.test import TestCase
+from .utils import APIResourceTest
 
 
 class DomainNavigationEventAudits:
@@ -24,8 +24,9 @@ class DomainNavigationEventAudits:
                 NavigationEventAudit.objects.create(domain=self.domain, user=user, event_date=time)
 
 
-class testNavigationEventAuditResource(TestCase):
+class testNavigationEventAuditResource(APIResourceTest):
     resource = v0_5.NavigationEventAuditResource
+    api_name = 'v0.5'
 
     @classmethod
     def setUpClass(cls):
