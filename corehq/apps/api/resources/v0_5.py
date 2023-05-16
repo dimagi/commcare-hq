@@ -1069,8 +1069,8 @@ class NavigationEventAuditResource(HqBaseResource, ModelResource):
         fields = ['user']
         allowed_methods = ['get']
         detail_allowed_methods = []
-
-    LIMIT_DEFAULT = 10000
+        limit = 10000
+        max_limit = 10000
 
     # Compound filters take the form `prefix.qualifier=value`
     # These filter functions are called with qualifier and value
@@ -1091,12 +1091,27 @@ class NavigationEventAuditResource(HqBaseResource, ModelResource):
                 val = params.getlist(param)
             processed_params[param] = val
 
+            if param == 'limit':
+                processed_params['limit'] = self._process_limit(val)
+
         if 'local_timezone' in processed_params:
             self.local_timezone = pytz.timezone(processed_params['local_timezone'])
         else:
             self.local_timezone = Domain.get_by_name(domain).get_default_timezone()
 
         return processed_params
+
+    def _process_limit(self, limit):
+        try:
+            limit = int(limit) or self._meta.limit
+            if limit < 0:
+                raise ValueError
+        except (ValueError, TypeError):
+            raise BadRequest(_("limit must be a positive integer."))
+
+        if limit > self._meta.max_limit:
+            raise BadRequest(_("Limit may not exceed {}.").format(self._meta.max_limit))
+        return limit
 
     @classmethod
     def cursor_query(cls, domain: str, local_timezone: pytz.tzinfo.DstTzInfo,
