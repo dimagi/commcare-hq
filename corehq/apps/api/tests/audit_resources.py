@@ -2,6 +2,7 @@ import copy
 import json
 from datetime import datetime, timedelta, date
 import pytz
+from urllib.parse import urlencode
 
 from corehq.apps.api.resources import v0_5
 from corehq.apps.users.models import WebUser
@@ -111,6 +112,137 @@ class testNavigationEventAuditResource(APIResourceTest):
         self.assertEqual(len(result_objects), len(self.domain1_audits.expected_response_objects), result_objects)
         for i in range(len(result_objects)):
             self.assertDictEqual(result_objects[i], self.domain1_audits.expected_response_objects[i])
+
+    def test_get_list_with_limit_param(self):
+        limit = 1
+        params = {"limit": limit}
+        list_endpoint = f"{self.list_endpoint}?{urlencode(params)}"
+        response = self._assert_auth_get_resource(list_endpoint)
+        self.assertEqual(response.status_code, 200)
+
+        result_objects = json.loads(response.content)['objects']
+
+        self.assertEqual(len(result_objects), limit)
+        for i in range(len(result_objects)):
+            self.assertDictEqual(result_objects[i], self.domain1_audits.expected_response_objects[i])
+
+    def test_get_list_with_timezone_param(self):
+        timezone = 'US/Eastern'
+
+        params = {"local_timezone": timezone}
+        list_endpoint = f"{self.list_endpoint}?{urlencode(params)}"
+        response = self._assert_auth_get_resource(list_endpoint)
+        self.assertEqual(response.status_code, 200)
+
+        result_objects = json.loads(response.content)['objects']
+        expected_result_objects = [
+            {
+                'user': self.username1,
+                'user_id': self.user1._id,
+                'local_date': date(2023, 5, 1).isoformat(),
+                'UTC_start_time': datetime(2023, 5, 2, 0, tzinfo=pytz.timezone("UTC")).isoformat(),
+                'UTC_end_time': datetime(2023, 5, 2, 3, tzinfo=pytz.timezone("UTC")).isoformat()
+            },
+            {
+                'user': self.username2,
+                'user_id': self.user2._id,
+                'local_date': date(2023, 5, 1).isoformat(),
+                'UTC_start_time': datetime(2023, 5, 2, 0, tzinfo=pytz.timezone("UTC")).isoformat(),
+                'UTC_end_time': datetime(2023, 5, 2, 3, tzinfo=pytz.timezone("UTC")).isoformat()
+            },
+            {
+                'user': self.username1,
+                'user_id': self.user1._id,
+                'local_date': date(2023, 5, 2).isoformat(),
+                'UTC_start_time': datetime(2023, 5, 2, 4, tzinfo=pytz.timezone("UTC")).isoformat(),
+                'UTC_end_time': datetime(2023, 5, 2, 23, tzinfo=pytz.timezone("UTC")).isoformat()
+            },
+            {
+                'user': self.username2,
+                'user_id': self.user2._id,
+                'local_date': date(2023, 5, 2).isoformat(),
+                'UTC_start_time': datetime(2023, 5, 2, 4, tzinfo=pytz.timezone("UTC")).isoformat(),
+                'UTC_end_time': datetime(2023, 5, 2, 23, tzinfo=pytz.timezone("UTC")).isoformat()
+            }
+        ]
+
+        for i in range(len(result_objects)):
+            self.assertDictEqual(result_objects[i], expected_result_objects[i])
+
+    def test_get_list_with_user_param(self):
+        users_filter = [self.username1]
+
+        params = {"users": users_filter}
+        list_endpoint = f"{self.list_endpoint}?{urlencode(params)}"
+        response = self._assert_auth_get_resource(list_endpoint)
+        self.assertEqual(response.status_code, 200)
+
+        result_objects = json.loads(response.content)['objects']
+        expected_result_objects = [
+            d for d in self.domain1_audits.expected_response_objects
+            if d['user'] in users_filter
+        ]
+
+        for i in range(len(result_objects)):
+            self.assertDictEqual(result_objects[i], expected_result_objects[i])
+
+    def test_get_list_with_date_param(self):
+        date1 = date(2023, 5, 1).isoformat()
+        date2 = date(2023, 5, 2).isoformat()
+
+        params = {
+            'local_date.gte': date1,
+            'local_date.lt': date2,
+        }
+        list_endpoint = f"{self.list_endpoint}?{urlencode(params)}"
+        response = self._assert_auth_get_resource(list_endpoint)
+        self.assertEqual(response.status_code, 200)
+
+        result_objects = json.loads(response.content)['objects']
+        expected_result_objects = [
+            item for item in self.domain1_audits.expected_response_objects if
+            (item['local_date'] >= date1 and item['local_date'] < date2)
+        ]
+
+        for i in range(len(result_objects)):
+            self.assertDictEqual(result_objects[i], expected_result_objects[i])
+
+    def test_get_list_with_cursor_param(self):
+        params = {
+            'cursor_user': self.username1,
+            'cursor_local_date': date(2023, 5, 1).isoformat()
+        }
+        list_endpoint = f"{self.list_endpoint}?{urlencode(params)}"
+        response = self._assert_auth_get_resource(list_endpoint)
+        self.assertEqual(response.status_code, 200)
+
+        result_objects = json.loads(response.content)['objects']
+        expected_result_objects = [
+            {
+                'user': self.username2,
+                'user_id': self.user2._id,
+                'local_date': date(2023, 5, 1).isoformat(),
+                'UTC_start_time': datetime(2023, 5, 2, 0, tzinfo=pytz.timezone("UTC")).isoformat(),
+                'UTC_end_time': datetime(2023, 5, 2, 6, tzinfo=pytz.timezone("UTC")).isoformat()
+            },
+            {
+                'user': self.username1,
+                'user_id': self.user1._id,
+                'local_date': date(2023, 5, 2).isoformat(),
+                'UTC_start_time': datetime(2023, 5, 2, 7, tzinfo=pytz.timezone("UTC")).isoformat(),
+                'UTC_end_time': datetime(2023, 5, 2, 23, tzinfo=pytz.timezone("UTC")).isoformat()
+            },
+            {
+                'user': self.username2,
+                'user_id': self.user2._id,
+                'local_date': date(2023, 5, 2).isoformat(),
+                'UTC_start_time': datetime(2023, 5, 2, 7, tzinfo=pytz.timezone("UTC")).isoformat(),
+                'UTC_end_time': datetime(2023, 5, 2, 23, tzinfo=pytz.timezone("UTC")).isoformat()
+            }
+        ]
+
+        for i in range(len(result_objects)):
+            self.assertDictEqual(result_objects[i], expected_result_objects[i])
 
     def test_users_in_specified_domain(self):
         results = self.resource.non_cursor_query(self.domain1_audits.domain, self.domain1_audits.timezone)
