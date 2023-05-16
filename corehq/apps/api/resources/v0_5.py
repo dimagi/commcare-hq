@@ -1133,10 +1133,11 @@ class NavigationEventAuditResource(HqBaseResource, ModelResource):
         cursor_local_date = params.get('cursor_local_date')
         cursor_user = params.get('cursor_user')
 
-        queryset = queryset.filter(
-            Q(local_date__gt=cursor_local_date)
-            | (Q(local_date=cursor_local_date) & Q(user__gt=cursor_user))
-        )
+        if cursor_local_date and cursor_user:
+            queryset = queryset.filter(
+                Q(local_date__gt=cursor_local_date)
+                | (Q(local_date=cursor_local_date) & Q(user__gt=cursor_user))
+            )
 
         queryset = queryset.annotate(UTC_start_time=Min('event_date'), UTC_end_time=Max('event_date'))
 
