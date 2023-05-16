@@ -843,6 +843,7 @@ def _format_enterprise_user(domain, user):
 def paginate_web_users(request, domain):
     web_users, pagination = _get_web_users(request, [domain])
     web_users_fmt = [{
+        'eulas': u.eulas,
         'email': u.get_email(),
         'domain': domain,
         'name': u.full_name,
