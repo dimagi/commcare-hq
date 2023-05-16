@@ -1,5 +1,6 @@
 from datetime import datetime
 
+from django.core.exceptions import ValidationError
 from django.db import models
 from django.utils.translation import gettext as _, gettext_lazy
 
@@ -61,6 +62,12 @@ class CasePropertyGroup(models.Model):
             ))
         else:
             return super().unique_error_message(model_class, unique_check)
+
+    def clean(self):
+        if self.description and len(self.description) > 255:
+            raise ValidationError(
+                gettext_lazy("{} group's description should be less 255 characters".format(self.name))
+            )
 
 
 class CaseProperty(models.Model):
@@ -161,6 +168,12 @@ class CaseProperty(models.Model):
         if self.group_obj:
             return self.group_obj.name
         return self.group
+
+    def clean(self):
+        if self.description and len(self.description) > 255:
+            raise ValidationError(
+                gettext_lazy("{} property's description should be less 255 characters".format(self.name))
+            )
 
 
 class CasePropertyAllowedValue(models.Model):
