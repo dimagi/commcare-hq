@@ -87,7 +87,7 @@ from corehq.apps.userreports.util import (
     get_report_config_or_not_found,
 )
 from corehq.apps.users.dbaccessors import (
-    get_all_user_id_username_pairs_by_domain, user_exists,
+    get_all_user_id_username_pairs_by_domain,
 )
 from corehq.apps.users.models import (
     CommCareUser,
