@@ -4,6 +4,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
     var kissmetrics = hqImport("analytix/js/kissmetrix"),
         constants = hqImport("cloudcare/js/formplayer/constants"),
         FormplayerFrontend = hqImport("cloudcare/js/formplayer/app"),
+        initialPageData = hqImport("hqwebapp/js/initial_page_data"),
         toggles = hqImport("hqwebapp/js/toggles"),
         utils = hqImport("cloudcare/js/formplayer/utils/utils");
 
@@ -456,6 +457,33 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
                 kissmetrics.track.event('Completed Case Search', {
                     'Split Screen Case Search': toggles.toggleEnabled('SPLIT_SCREEN_CASE_SEARCH'),
                 });
+            }
+        },
+
+        onRender: function () {
+            // TODO: extract into function, probably
+            if (typeof L === 'undefined') {
+                // TODO: show error
+                //question.error(gettext('Could not load map. Please try again later.'));
+            } else {
+                var mapId = "module-case-list-map";
+                // TODO: extract into function to share with entries.js, taking mapId, default lat, long, and zoom level as params
+                var token = initialPageData.get("mapbox_access_token");
+                if (token) {
+                    var lat = 30, lon = 15, zoom = 3;
+                    var map = L.map(mapId).setView([lat, lon], zoom);    // TODO: Do I *have* to set lat and long?
+                    /*L.tileLayer('https://api.mapbox.com/styles/v1/{id}/tiles/{z}/{x}/{y}?access_token='
+                                + token, {
+                        id: 'mapbox/streets-v11',
+                        attribution: '© <a href="https://www.mapbox.com/about/maps/">Mapbox</a> ©' +
+                                     ' <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+                        tileSize: 512,
+                        zoomOffset: -1,
+                    }).addTo(map);
+                    L.mapbox.accessToken = token;*/
+                } else {
+                    question.error(gettext('Map layer not configured.'));
+                }
             }
         },
 

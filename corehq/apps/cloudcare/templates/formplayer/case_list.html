@@ -22,9 +22,11 @@
     <% } else { %>
     <div class="module-case-list-table-container">
       <% if (showMap && !hasNoItems) { %>
-        HERE IS A MAP
+        <div id="module-case-list-map" class="map" style="width: 25%; float: right"><!-- TODO: remove .map? It has sizing styles, from webforms.css -->
+          <div class="wait" data-bind="visible: !map">{% trans "Please wait while the map loads" %}</div><!-- TODO: make visible until map is loaded -->
+        </div>
       <% } %>
-      <table class="table module-table module-table-case-list">
+      <table class="table module-table module-table-case-list" style="width: 75%; float: left;"><!-- TODO: real layout -->
         <% if(!useTiles) { %>
         <thead>
         <tr>
