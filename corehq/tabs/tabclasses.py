@@ -2510,7 +2510,6 @@ class AttendanceTrackingTab(UITab):
 class GeospatialTab(UITab):
     title = gettext_noop("Geospatial")
     view = MapView.urlname
-    _is_viewable = False
 
     url_prefix_formats = (
         '/a/{domain}/settings/geospatial',
@@ -2528,6 +2527,10 @@ class GeospatialTab(UITab):
             ])
         ]
         return items
+
+    @property
+    def _is_viewable(self):
+        return toggles.GEOSPATIAL.enabled(self.domain)
 
 
 def _get_repeat_record_report(domain):
