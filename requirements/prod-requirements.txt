@@ -304,8 +304,6 @@ kafka-python==1.4.7
     # via -r base-requirements.in
 kombu==5.2.4
     # via celery
-laboratory==0.2.0
-    # via -r base-requirements.in
 looseversion==1.0.3
     # via -r base-requirements.in
 lxml==4.9.1
