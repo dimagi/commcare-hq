@@ -1,6 +1,5 @@
 import json
 from collections import namedtuple
-from datetime import date
 import functools
 import pytz
 

@@ -38,7 +38,7 @@ class DomainNavigationEventAudits:
 
 
 @flag_enabled('ACTION_TIMES_API')
-class testNavigationEventAuditResource(APIResourceTest):
+class TestNavigationEventAuditResource(APIResourceTest):
     resource = v0_5.NavigationEventAuditResource
     api_name = 'v0.5'
 
