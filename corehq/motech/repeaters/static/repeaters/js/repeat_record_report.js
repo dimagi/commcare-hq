@@ -12,7 +12,7 @@ hqDefine('repeaters/js/repeat_record_report', function () {
             $(this).nextAll('.record-attempt').toggle();
             e.preventDefault();
         });
-        $('#report-content').on('click', '.view-attempts-btn', function (e) {
+        $('#report-content').on('click', '.view-attempts-btn', function () {
             const recordId = $(this).data().recordId;
 
             // Clear out previous error message banner, if it exists
@@ -33,19 +33,19 @@ hqDefine('repeaters/js/repeat_record_report', function () {
                     // User might have clicked to fetch attempts while previous fetch is busy,
                     // so skip if one already exists
                     $attemptTable = $(`#${recordId}.attempt-row`);
-                    if(!$attemptTable.length) {
+                    if (!$attemptTable.length) {
                         $row.after(data.attempts);
                     }
                 },
                 error: function (data) {
-                    const defaultText = gettext('Failed to fetch attempts')
+                    const defaultText = gettext('Failed to fetch attempts');
                     const errorMessage = data.responseJSON ? data.responseJSON.error : null;
                     $row.after(
                         `<tr id="${recordId}" class="attempt-error"><td colspan="10">
                             <div class="alert alert-danger">${errorMessage || defaultText}</div>
                         </td></tr>`
                     );
-                }
+                },
             });
         });
         var editor = null;
