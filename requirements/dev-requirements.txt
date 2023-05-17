@@ -117,6 +117,8 @@ defusedxml==0.7.1
     # via
     #   -r base-requirements.in
     #   oic
+dependency-metrics==0.1.0
+    # via -r dev-requirements.in
 deprecated==1.2.10
     # via
     #   jwcrypto
@@ -573,6 +575,7 @@ requests==2.28.2
     #   -r base-requirements.in
     #   cloudant
     #   datadog
+    #   dependency-metrics
     #   django-oauth-toolkit
     #   dropbox
     #   google-api-core
@@ -603,9 +606,10 @@ schema==0.7.5
     # via -r base-requirements.in
 sentry-sdk==1.19.1
     # via -r base-requirements.in
-sh==1.14.2
+sh==2.0.4
     # via
     #   -r base-requirements.in
+    #   dependency-metrics
     #   git-build-branch
 shapely==2.0.1
     # via
