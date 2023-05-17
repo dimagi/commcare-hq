@@ -32,13 +32,13 @@ jobs:
           fetch-depth: 0
 
       - name: Get changed files
-        uses: tj-actions/changed-files@v1
-        id: files
+        id: changed-files
+        uses: tj-actions/changed-files@v14.6
 
       - name: Filter Python files
         id: python-files
         run: |
-          echo "${{ steps.files.outputs.all_changed_files }}" | grep -E "\.py$"
+          echo $("${{ steps.changed-files.outputs.all_changed_files }}" | grep -E "\.py$")
 
       - name: Print changed Python files
         run: |
@@ -72,4 +72,4 @@ jobs:
           flake8: true
           flake8_extensions: py
           flake8_auto_fix: false
-          flake8_args: ${{ steps.python-files.outputs.stdout }}  # Only lint changed .py files
+          flake8_args: ${{ steps.python-files.outputs.stdout }}   # Only lint diff
