@@ -7,11 +7,11 @@ name: Lint Code Base
 #
 
 on:
-  push:
-    branches-ignore: [master, main]
+#  push:
+#    branches-ignore: [master, main]
 
-#  pull_request:
-#    branches: [ master ]
+  pull_request:
+    branches: [ investigate/super-linter ]
 
 jobs:
   build:
