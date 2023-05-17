@@ -3,6 +3,7 @@ from django.test import SimpleTestCase
 from corehq.apps.app_manager.exceptions import SuiteValidationError
 from corehq.apps.app_manager.models import (
     Application,
+    CaseListForm,
     CaseSearch,
     CaseSearchAgainLabel,
     CaseSearchLabel,
@@ -20,6 +21,7 @@ from corehq.apps.app_manager.tests.util import (
 )
 from corehq.apps.hqmedia.models import HQMediaMapItem
 from corehq.apps.userreports.models import ReportConfiguration
+from corehq.util.test_utils import flag_enabled
 
 
 @patch_get_xform_resource_overrides()
@@ -75,6 +77,46 @@ class SuiteTest(SimpleTestCase, SuiteMixin):
             self.get_xml('case-search-again-with-localized-action'),
             app.create_suite(),
             "./detail[@id='m0_search_short']/action"
+        )
+
+    @flag_enabled('SPLIT_SCREEN_CASE_SEARCH')
+    def test_splitscreen_case_search_removes_search_again(self):
+        app = Application.wrap(self.get_json('suite-advanced'))
+        app.modules[0].search_config = CaseSearch(
+            search_label=CaseSearchLabel(
+                label={'en': 'Search All Cases'},
+            ),
+            search_again_label=CaseSearchAgainLabel(
+                label={'en': 'Search Again'},
+            ),
+            properties=[CaseSearchProperty(name='name', label={'en': 'Name'})],
+        )
+        form_id = app.modules[0].forms[0].unique_id
+        app.modules[0].case_list_form = CaseListForm(
+            form_id=form_id,
+            label={'en': 'Registration Form'},
+        )
+        app = Application.wrap(app.to_json())
+
+        # case list actions unaffected
+        self.assertXmlHasXpath(
+            app.create_suite(),
+            "./detail[@id='m0_case_short']/action[display/text/locale[@id='case_search.m0']]"
+        )
+        self.assertXmlHasXpath(
+            app.create_suite(),
+            "./detail[@id='m0_case_short']/action[display/text/locale[@id='case_list_form.m0']]"
+        )
+
+        # case search results actions have "search again" removed
+        self.assertXmlDoesNotHaveXpath(
+            app.create_suite(),
+            "./detail[@id='m0_search_short']/action[display/text/locale[@id='case_search.m0.again']]"
+        )
+        # non "search again" still present
+        self.assertXmlHasXpath(
+            app.create_suite(),
+            "./detail[@id='m0_search_short']/action[display/text/locale[@id='case_list_form.m0']]"
         )
 
     def test_callcenter_suite(self, *args):
