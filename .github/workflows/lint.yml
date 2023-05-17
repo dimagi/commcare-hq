@@ -18,7 +18,6 @@ permissions:
 
 env:
   BRANCH_NAME: ${{ github.ref_name }}
-  INFO: ${{ github }}
 
 jobs:
   run-linters:
@@ -30,7 +29,7 @@ jobs:
         uses: actions/checkout@v2
 
       - name: Print info
-        run: echo $INFO
+        run: echo $(${{ github }})
 
       - name: Set up Node.js
         uses: actions/setup-node@v1
