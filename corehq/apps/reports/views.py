@@ -966,6 +966,7 @@ def _can_delete_scheduled_report(report, user, domain):
     return user._id == report.owner_id or user.is_domain_admin(domain)
 
 
+@location_safe
 @login_and_domain_required
 def send_test_scheduled_report(request, domain, scheduled_report_id):
     if not _can_send_test_report(scheduled_report_id, request.couch_user, domain):
