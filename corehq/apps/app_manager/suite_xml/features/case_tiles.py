@@ -10,12 +10,10 @@ from corehq.apps.app_manager.exceptions import SuiteError
 from corehq.apps.app_manager.suite_xml.xml_models import Detail, XPathVariable
 
 
-CaseTileTemplateConfig = namedtuple('CaseTileTemplateConfig', ['slug', 'filename'])
+CaseTileTemplateConfig = namedtuple('CaseTileTemplateConfig', ['slug', 'filename', 'fields'])
 
 
 class CaseTileHelper(object):
-    tile_fields = ["header", "top_left", "sex", "bottom_left", "date"]
-
     def __init__(self, app, module, detail, detail_type, build_profile_id):
         self.app = app
         self.module = module
@@ -34,7 +32,7 @@ class CaseTileHelper(object):
         """
         # Get template context
         context = self._get_base_context()
-        for template_field in self.tile_fields:
+        for template_field in self._case_tile_template_config.fields:
             column = self._get_matched_detail_column(template_field)
             context[template_field] = self._get_column_context(column)
 
