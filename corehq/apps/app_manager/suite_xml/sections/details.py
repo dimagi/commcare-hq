@@ -682,7 +682,18 @@ class CaseTileHelper(object):
 
         # Populate the template
         detail_as_string = self._case_tile_template_string.format(**context)
-        return load_xmlobject_from_string(detail_as_string, xmlclass=Detail)
+        detail = load_xmlobject_from_string(detail_as_string, xmlclass=Detail)
+
+        # Add case search action if needed
+        if module_offers_search(self.module) and not module_uses_inline_search(self.module):
+            in_search = module_loads_registry_case(self.module)
+            detail.actions.append(
+                DetailContributor.get_case_search_action(self.module,
+                                                         self.build_profile_id,
+                                                         in_search=in_search)
+            )
+
+        return detail
 
     def _get_matched_detail_column(self, case_tile_field):
         """
