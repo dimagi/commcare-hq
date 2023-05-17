@@ -1076,6 +1076,13 @@ CASE_API_V0_6 = StaticToggle(
     save_fn=_ensure_search_index_is_enabled,
 )
 
+ACTION_TIMES_API = StaticToggle(
+    'action_times_api',
+    'Enable the Action Times API',
+    TAG_CUSTOM,
+    namespaces=[NAMESPACE_USER],
+)
+
 HIPAA_COMPLIANCE_CHECKBOX = StaticToggle(
     'hipaa_compliance_checkbox',
     'Show HIPAA compliance checkbox',

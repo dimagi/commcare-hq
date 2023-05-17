@@ -8,6 +8,7 @@ from corehq.apps.api.resources import v0_5
 from corehq.apps.users.models import WebUser
 from corehq.apps.auditcare.models import NavigationEventAudit
 from .utils import APIResourceTest
+from corehq.util.test_utils import flag_enabled
 
 
 class DomainNavigationEventAudits:
@@ -36,6 +37,7 @@ class DomainNavigationEventAudits:
                 NavigationEventAudit.objects.create(domain=self.domain, user=user, event_date=time)
 
 
+@flag_enabled('ACTION_TIMES_API')
 class testNavigationEventAuditResource(APIResourceTest):
     resource = v0_5.NavigationEventAuditResource
     api_name = 'v0.5'

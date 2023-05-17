@@ -1088,6 +1088,18 @@ class NavigationEventAuditResource(HqBaseResource, ModelResource):
         '''
         return namedtuple('action_times', list(action_times))(**action_times)
 
+    def dispatch(self, request_type, request, **kwargs):
+        #super needs to be called first to authenticate user. Otherwise request.user returns AnonymousUser
+        response = super(HqBaseResource, self).dispatch(request_type, request, **kwargs)
+        if not toggles.ACTION_TIMES_API.enabled_for_request(request):
+            msg = (_("You don't have permission to access this API"))
+            raise ImmediateHttpResponse(HttpResponse(
+                json.dumps({"error": msg}),
+                content_type="application/json",
+                status=403))
+        else:
+            return response
+
     def alter_list_data_to_serialize(self, request, data):
         data['meta']['local_date_timezone'] = self.local_timezone.zone
         params = request.GET.copy()  # Makes params mutable for creating next_url below
