@@ -35,12 +35,6 @@ jobs:
         id: changed-files
         uses: tj-actions/changed-files@v14.6
 
-      - name: List changed files
-        run: |
-          for file in ${{ steps.changed-files.outputs.all_changed_files }}; do
-            echo "$file was changed"
-          done
-
 #      - name: Set up Node.js
 #        uses: actions/setup-node@v1
 #        with:
@@ -68,4 +62,4 @@ jobs:
           flake8: true
           flake8_extensions: py
           flake8_auto_fix: false
-          flake8_args: ${{ steps.changed-files.outputs.all_changed_files }}  # Only lint diff
+          flake8_args: ${{ steps.changed-files.outputs.all_changed_files }} | grep -o "\S*\.py"  # Only lint diff
