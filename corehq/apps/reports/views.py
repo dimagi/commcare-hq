@@ -179,6 +179,7 @@ def _can_view_form_attachment():
 can_view_form_attachment = _can_view_form_attachment()
 
 
+@location_safe
 @login_and_domain_required
 def reports_home(request, domain):
     if user_can_view_reports(request.project, request.couch_user):
@@ -659,6 +660,7 @@ def soft_shift_to_server_timezone(report_notification):
     )
 
 
+@location_safe
 class ScheduledReportsView(BaseProjectReportSectionView):
     urlname = 'edit_scheduled_report'
     page_title = _("Scheduled Report")
