@@ -914,6 +914,7 @@ class ReportNotificationUnsubscribeView(TemplateView):
         return self.get(request, *args, **kwargs)
 
 
+@location_safe
 @login_and_domain_required
 @require_POST
 def delete_scheduled_report(request, domain, scheduled_report_id):
