@@ -1,6 +1,6 @@
 [flake8]
 max-line-length = 115
 # http://pep8.readthedocs.org/en/latest/intro.html#error-codes
-ignore = E128, E265, F403, W503, W1618
+ignore = E128, E265, F403, W503
 per-file-ignores =
     **/migrations/*.py: E501, E303
