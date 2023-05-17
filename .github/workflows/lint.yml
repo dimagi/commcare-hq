@@ -17,7 +17,8 @@ permissions:
   contents: write
 
 env:
-  BRANCH_NAME: ${{ github.ref_name }}
+  BRANCH_NAME: ${{ github.head_ref }}
+  BASE_NAME: ${{ github.base_ref }}
 
 jobs:
   run-linters:
@@ -30,10 +31,8 @@ jobs:
 
       - name: Print info
         run: |
-          echo $(${{ github.ref }})
-          echo $(${{ github.head_ref }})
-          echo $(${{ github.ref_name }})
-          echo $(${{ github.base_ref }})          
+          echo $BRANCH_NAME
+          echo $BASE_NAME
 
       - name: Set up Node.js
         uses: actions/setup-node@v1
@@ -62,4 +61,4 @@ jobs:
           flake8: true
           flake8_extensions: py
           flake8_auto_fix: false
-          flake8_args: "$(git diff --name-only --diff-filter=b $(git merge-base $HEAD $BRANCH_NAME))"  # Only lint diff
+          flake8_args: "$(git diff --name-only --diff-filter=b $(git merge-base $BASE_NAME $BRANCH_NAME))"  # Only lint diff
