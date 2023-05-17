@@ -321,7 +321,7 @@ class RepeatRecordView(View):
             payload = pformat_json(payload)
 
         dhis2_errors = []
-        if isinstance(record.repeater, Dhis2EntityRepeater):
+        if toggles.DHIS2_INTEGRATION.enabled(domain) and isinstance(record.repeater, Dhis2EntityRepeater):
             logs = RequestLog.objects.filter(domain=domain, payload_id=record.payload_id)
             for log in logs:
                 resp_body = json.loads(log.response_body)
