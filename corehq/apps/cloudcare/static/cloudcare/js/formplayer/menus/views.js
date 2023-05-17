@@ -232,9 +232,23 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
         },
 
         rowClick: function (e) {
-            if (!(e.target.classList.contains('module-case-list-column-checkbox') || e.target.classList.contains("select-row-checkbox"))) {
+            if (!(
+                e.target.classList.contains('module-case-list-column-checkbox') ||  // multiselect checkbox
+                e.target.classList.contains("select-row-checkbox") ||               // multiselect select all
+                $(e.target).is('a')                                                 // actual link, as in markdown
+            )) {
                 e.preventDefault();
-                FormplayerFrontend.trigger("menu:show:detail", this.model.get('id'), 0, this.isMultiSelect);
+                let model_id = this.model.get('id');
+                if (!this.model.collection.hasDetails) {
+                    if (this.isMultiSelect) {
+                        let action = this.isChecked() ? constants.MULTI_SELECT_ADD : constants.MULTI_SELECT_REMOVE;
+                        FormplayerFrontend.trigger("multiSelect:updateCases", action, [model_id]);
+                    } else {
+                        FormplayerFrontend.trigger("menu:select", model_id);
+                    }
+                    return;
+                }
+                FormplayerFrontend.trigger("menu:show:detail", model_id, 0, this.isMultiSelect);
             }
         },
 

@@ -701,7 +701,9 @@ CASE_LIST_TILE = StaticToggle(
     'case_list_tile',
     'REC: Allow configuration of the REC case list tile',
     TAG_CUSTOM,
-    [NAMESPACE_DOMAIN]
+    [NAMESPACE_DOMAIN],
+    help_link='https://confluence.dimagi.com/pages/viewpage.action?'
+              'spaceKey=saas&title=Allow+Configuration+of+Case+List+Tiles',
 )
 
 SHOW_PERSIST_CASE_CONTEXT_SETTING = StaticToggle(
@@ -2516,4 +2518,11 @@ EXPORT_OWNERSHIP = FrozenPrivilegeToggle(
     tag=TAG_SOLUTIONS_OPEN,
     namespaces=[NAMESPACE_DOMAIN],
     description='Allow exports to have ownership',
+)
+
+FORCE_ANNUAL_TOS = StaticToggle(
+    'annual_terms_of_service',
+    "USH Specific toggle that forces users to agree to terms of service annually.",
+    TAG_CUSTOM,
+    namespaces=[NAMESPACE_DOMAIN],
 )

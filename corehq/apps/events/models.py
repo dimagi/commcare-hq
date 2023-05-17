@@ -120,9 +120,9 @@ def get_attendee_case_type(domain):
 
 class EventObjectManager(models.Manager):
 
-    def by_domain(self, domain, most_recent_first=False):
-        if most_recent_first:
-            return super().get_queryset().filter(domain=domain).order_by('start_date')
+    def by_domain(self, domain, not_started_first=False):
+        if not_started_first:
+            return super().get_queryset().filter(domain=domain).order_by('-start_date')
         return super().get_queryset().filter(domain=domain)
 
 
