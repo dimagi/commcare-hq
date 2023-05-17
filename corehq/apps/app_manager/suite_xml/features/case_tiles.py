@@ -13,6 +13,17 @@ from corehq.apps.app_manager.suite_xml.xml_models import Detail, XPathVariable
 CaseTileTemplateConfig = namedtuple('CaseTileTemplateConfig', ['slug', 'filename', 'fields'])
 
 
+@memoized
+def case_tile_template_config():
+    dirname = os.path.join(os.path.dirname(os.path.dirname(__file__)), "case_tile_templates")
+    with open(
+        os.path.join(dirname, "person_simple.json"),
+        encoding='utf-8'
+    ) as f:
+        data = json.loads(f.read())
+    return CaseTileTemplateConfig(data['slug'], os.path.join(dirname, data['filename']), data['fields'])
+
+
 class CaseTileHelper(object):
     def __init__(self, app, module, detail, detail_type, build_profile_id):
         self.app = app
@@ -32,7 +43,7 @@ class CaseTileHelper(object):
         """
         # Get template context
         context = self._get_base_context()
-        for template_field in self._case_tile_template_config.fields:
+        for template_field in case_tile_template_config().fields:
             column = self._get_matched_detail_column(template_field)
             context[template_field] = self._get_column_context(column)
 
@@ -112,21 +123,10 @@ class CaseTileHelper(object):
 
     @property
     @memoized
-    def _case_tile_template_config(self):
-        dirname = os.path.join(os.path.dirname(os.path.dirname(__file__)), "case_tile_templates")
-        with open(
-            os.path.join(dirname, "person_simple.json"),
-            encoding='utf-8'
-        ) as f:
-            data = json.loads(f.read())
-        return CaseTileTemplateConfig(data['slug'], os.path.join(dirname, data['filename']))
-
-    @property
-    @memoized
     def _case_tile_template_string(self):
         """
         Return a string suitable for building a case tile detail node
         through `String.format`.
         """
-        with open(self._case_tile_template_config.filename, encoding='utf-8') as f:
+        with open(case_tile_template_config().filename, encoding='utf-8') as f:
             return f.read()

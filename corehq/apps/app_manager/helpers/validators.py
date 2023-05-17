@@ -38,6 +38,7 @@ from corehq.apps.app_manager.exceptions import (
     XFormValidationError,
     XFormValidationFailed,
 )
+from corehq.apps.app_manager.suite_xml.features.case_tiles import case_tile_template_config
 from corehq.apps.app_manager.util import (
     app_callout_templates,
     module_case_hierarchy_has_circular_reference,
@@ -544,7 +545,7 @@ class ModuleDetailValidatorMixin(object):
                         'reason': _('Case tiles may only be used for the case list (not the case details).')
                     })
                 col_by_tile_field = {c.case_tile_field: c for c in detail.columns}
-                for field in ["header", "top_left", "sex", "bottom_left", "date"]:
+                for field in case_tile_template_config().fields:
                     if field not in col_by_tile_field:
                         errors.append({
                             'type': "invalid tile configuration",
