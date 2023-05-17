@@ -36,7 +36,7 @@ from corehq.form_processor.interfaces.processor import FormProcessorInterface
 from corehq.form_processor.models import CommCareCase, XFormInstance
 from corehq.util.couch import get_db_by_doc_type
 
-from .utils import eval_statements
+from .evaluator import eval_statements, EvalExecutionContext
 
 
 class IdentityExpressionSpec(JsonObject):
@@ -204,6 +204,8 @@ class NamedExpressionSpec(JsonObject):
     This is just a simple example - the value that ``"my_expression"`` takes
     on can be as complicated as you want and it can also reference other named
     expressions as long as it doesn't reference itself of create a recursive cycle.
+
+    See also the :any:`named` evaluator function.
     """
     type = TypeProperty('named')
     name = StringProperty(required=True)
@@ -493,7 +495,9 @@ class JsonpathExpressionSpec(NoPropertyTypeCoercionMixIn, JsonObject):
         }
 
     This above expression will evaluate to ``["a", "b", "c", "d"]``.
-    Another example is ``form.list[0].case.name`` which will evaluate to ``"c"``
+    Another example is ``form.list[0].case.name`` which will evaluate to ``"c"``.
+
+    See also the :any:`jsonpath` evaluator function.
 
     For more information consult the following resources:
 
@@ -754,6 +758,8 @@ class EvalExpressionSpec(JsonObject):
         -  ``date``
         -  ``datetime``
 
+         If ``context_variables`` is omitted, the current context of the expression will be used.
+
     **Expression limitations**
 
         Only a single expression is permitted.
@@ -766,36 +772,25 @@ class EvalExpressionSpec(JsonObject):
         - `comparison operators`_
         - `logical operators`_
 
-        In addition, expressions can perform index and slice operations as well as simple ``if else`` statements.
+        In addition, expressions can perform the following operations:
 
-        Most function calls are disabled except for the following:
+        - index: `case['name']`
+        - slice: `cases[0:2]`
+        - if statements: `1 if case.name == 'bob' else 0`
+        - list comprehension: `[i for i in range(3)]`
+        - dict, list, set construction: `{"a": 1, "b": set(cases), "c": list(range(4))}`
 
-        -  ``rand()``: generate a random number between 0 and 1
-        -  ``randint(max)``: generate a random integer between 0 and ``max``
-        -  ``int(value)``: convert ``value`` to an int. Value can be a number or
-           a string representation of a number
-        -  ``float(value)``: convert ``value`` to a floating point number
-        -  ``str(value)``: convert ``value`` to a string
-        -  ``round(value, [ndigits])``: round a number to the nearest integer or ``ndigits``
-           after the decimal point. See `round`_.
-        -  ``timedelta_to_seconds(time_delta)``: convert a TimeDelta object into
-           seconds. This is useful for getting the number of seconds between two
-           dates.
+    **Available Functions**
 
-           -  e.g. ``timedelta_to_seconds(time_end - time_start)``
+        Only the following functions are available in the evaluation context:
 
-        -  ``range(start, [stop], [skip])``: the same as the Python `range function`_.
-           Note that for performance reasons this is limited to 100 items or
-           less.
-        -  ``today()``: return the current UTC date
+        .. include:: ../corehq/apps/userreports/expressions/evaluator/FUNCTION_DOCS.rst
 
     .. _math operators: https://en.wikibooks.org/wiki/Python_Programming/Basic_Math#Mathematical_Operators
     .. _modulus: https://en.wikibooks.org/wiki/Python_Programming/Operators#Modulus
     .. _negation: https://en.wikibooks.org/wiki/Python_Programming/Operators#Negation
     .. _comparison operators: https://en.wikibooks.org/wiki/Python_Programming/Operators#Comparison
     .. _logical operators: https://en.wikibooks.org/wiki/Python_Programming/Operators#Logical_Operators
-    .. _round: https://docs.python.org/3/library/functions.html?#round
-    .. _range function: https://docs.python.org/3/library/functions.html?#range
 
     See also :ref:`ucr-evaluator-examples`.
     """
@@ -804,18 +799,27 @@ class EvalExpressionSpec(JsonObject):
     context_variables = DictProperty()
     datatype = DataTypeProperty(required=False)
 
-    def configure(self, context_variables):
-        self._context_variables = context_variables
+    def configure(self, factory_context):
+        self._factory_context = factory_context
+        self._context_variables = {
+            slug: factory_context.expression_from_spec(expression)
+            for slug, expression in self.context_variables.items()
+        }
 
     def __call__(self, item, evaluation_context=None):
         var_dict = self.get_variables(item, evaluation_context)
         try:
-            untransformed_value = eval_statements(self.statement, var_dict)
+            untransformed_value = eval_statements(self.statement, var_dict, EvalExecutionContext(
+                evaluation_context, self._factory_context
+            ))
             return transform_for_datatype(self.datatype)(untransformed_value)
         except (InvalidExpression, SyntaxError, TypeError, ZeroDivisionError):
             return None
 
     def get_variables(self, item, evaluation_context):
+        if not self._context_variables and isinstance(item, dict):
+            return IdentityExpressionSpec(type='identity')(item, evaluation_context)
+
         var_dict = {
             slug: variable_expression(item, evaluation_context)
             for slug, variable_expression in self._context_variables.items()
