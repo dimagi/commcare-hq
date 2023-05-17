@@ -21093,10 +21093,8 @@ msgid "Geospatial"
 msgstr ""
 
 #: corehq/apps/geospatial/views.py corehq/tabs/tabclasses.py
-#, fuzzy
-#| msgid "Validation"
 msgid "Map Visualization"
-msgstr "Validation"
+msgstr ""
 
 #: corehq/apps/groups/templates/groups/all_groups.html
 #: corehq/apps/reports/filters/users.py
@@ -42854,10 +42852,8 @@ msgid "Manage Attendance Tracking Events"
 msgstr ""
 
 #: corehq/tabs/tabclasses.py
-#, fuzzy
-#| msgid "View app"
 msgid "View Map"
-msgstr "Afficher l'application"
+msgstr ""
 
 #: corehq/tabs/tabclasses.py
 msgid "Visually view and manage cases on a map"

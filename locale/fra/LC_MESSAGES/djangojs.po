@@ -13,8 +13,8 @@
 # Rowena Luk <rluk@dimagi.com>, 2021
 # Dimagi Dev <devops@dimagi.com>, 2021
 # Ismaïla Diene <idiene@dimagi.com>, 2022
-# Aissetou Sawadogo <ais107@hotmail.com>, 2022
-# Tyler Wymer <twymer@dimagi.com>, 2022
+# Tyler Wymer <twymer@dimagi.com>, 2023
+# Aissetou Sawadogo <ais107@hotmail.com>, 2023
 #
 #, fuzzy
 msgid ""
@@ -22,7 +22,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "PO-Revision-Date: 2017-07-19 15:34+0000\n"
-"Last-Translator: Tyler Wymer <twymer@dimagi.com>, 2022\n"
+"Last-Translator: Aissetou Sawadogo <ais107@hotmail.com>, 2023\n"
 "Language-Team: French (https://app.transifex.com/dimagi/teams/9388/fr/)\n"
 "Language: fr\n"
 "MIME-Version: 1.0\n"
@@ -4859,7 +4859,7 @@ msgstr ""
 
 #: corehq/motech/static/motech/js/connection_settings_detail.js
 msgid "Username"
-msgstr ""
+msgstr "Nom d'utilisateur"
 
 #: corehq/motech/static/motech/js/connection_settings_detail.js
 msgid "Client ID"
@@ -4867,11 +4867,11 @@ msgstr ""
 
 #: corehq/motech/static/motech/js/connection_settings_detail.js
 msgid "Client Secret"
-msgstr ""
+msgstr "Secret client"
 
 #: corehq/motech/static/motech/js/connection_settings_detail.js
 msgid "API Key"
-msgstr ""
+msgstr "Clé API"
 
 #: corehq/motech/static/motech/js/connection_settings_detail.js
 msgid "Success! Response is: "
