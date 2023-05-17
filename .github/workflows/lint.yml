@@ -35,6 +35,10 @@ jobs:
         id: changed-files
         uses: tj-actions/changed-files@v14.6
 
+      - name: Get python files
+        run: |
+          echo "${{ steps.changed-files.outputs.all_changed_files }}" | grep -E "\.py$"
+
       - name: Set up Python
         uses: actions/setup-python@v1
         with:
@@ -49,4 +53,4 @@ jobs:
           flake8: true
           flake8_extensions: py
           flake8_auto_fix: false
-          flake8_args: $(${{ steps.changed-files.outputs.all_changed_files }} | grep -E "\.py$")   # Only lint diff
+          flake8_args: ${{ steps.changed-files.outputs.all_changed_files }}   # Todo: only lint diff
