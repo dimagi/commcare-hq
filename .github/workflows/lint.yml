@@ -28,11 +28,18 @@ jobs:
     steps:
       - name: Check out Git repository
         uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
 
-      - name: Print info
+      - name: Get changed files
+        id: changed-files
+        uses: tj-actions/changed-files@v14.6
+
+      - name: List changed files
         run: |
-          echo $BRANCH_NAME
-          echo $BASE_NAME
+          for file in ${{ steps.changed-files.outputs.all_changed_files }}; do
+            echo "$file was changed"
+          done
 
 #      - name: Set up Node.js
 #        uses: actions/setup-node@v1
@@ -61,4 +68,4 @@ jobs:
           flake8: true
           flake8_extensions: py
           flake8_auto_fix: false
-          flake8_args: "$(git diff --name-only --diff-filter=b $(git merge-base $BASE_NAME $BRANCH_NAME))"  # Only lint diff
+          flake8_args: ${{ steps.changed-files.outputs.all_changed_files }}  # Only lint diff
