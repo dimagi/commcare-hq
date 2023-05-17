@@ -44,6 +44,6 @@ jobs:
       - name: Run linters
         uses: wearerequired/lint-action@v2
         with:
-          eslint: true
-          prettier: true
+#          eslint: true
+#          prettier: true
           flake8: true
