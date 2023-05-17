@@ -16,6 +16,10 @@ permissions:
   checks: write
   contents: write
 
+env:
+  BRANCH_NAME: ${{ github.head_ref || github.ref_name }}
+  HEAD: $(basename ${{ github.ref }})
+
 jobs:
   run-linters:
     name: Run linters
@@ -24,6 +28,11 @@ jobs:
     steps:
       - name: Check out Git repository
         uses: actions/checkout@v2
+
+      - name: Print info
+        run: |
+          echo $BRANCH_NAME
+          echo $HEAD
 
       - name: Set up Node.js
         uses: actions/setup-node@v1
@@ -45,5 +54,11 @@ jobs:
         uses: wearerequired/lint-action@v2
         with:
 #          eslint: true
+#          eslint_extensions: js
+#          eslint_auto_fix: false
 #          prettier: true
+#          prettier_auto_fix: false
           flake8: true
+          flake8_extensions: py
+          flake8_auto_fix: false
+          flake8_args: "$(git diff --name-only --diff-filter=b $(git merge-base HEAD $BRANCH_NAME))"  # Only lint diff
