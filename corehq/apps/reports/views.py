@@ -554,6 +554,7 @@ def _can_email_report(report_slug, request, dispatcher_class, domain):
     return dispatcher.permissions_check(report_name, request, domain)
 
 
+@location_safe
 @login_and_domain_required
 @require_http_methods(['DELETE'])
 def delete_config(request, domain, config_id):
