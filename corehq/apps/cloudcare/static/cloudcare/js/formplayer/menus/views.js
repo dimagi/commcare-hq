@@ -258,7 +258,11 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
         },
 
         rowClick: function (e) {
-            if (!(e.target.classList.contains('module-case-list-column-checkbox') || e.target.classList.contains("select-row-checkbox"))) {
+            if (!(
+                e.target.classList.contains('module-case-list-column-checkbox') ||  // multiselect checkbox
+                e.target.classList.contains("select-row-checkbox") ||               // multiselect select all
+                $(e.target).is('a')                                                 // actual link, as in markdown
+            )) {
                 e.preventDefault();
                 FormplayerFrontend.trigger("menu:show:detail", this.model.get('id'), 0, this.isMultiSelect);
             }
