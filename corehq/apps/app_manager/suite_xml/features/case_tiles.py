@@ -1,4 +1,6 @@
+import json
 import os
+from collections import namedtuple
 from eulxml.xmlmap.core import load_xmlobject_from_string
 from memoized import memoized
 from xml.sax.saxutils import escape
@@ -6,6 +8,9 @@ from xml.sax.saxutils import escape
 from corehq.apps.app_manager import id_strings
 from corehq.apps.app_manager.exceptions import SuiteError
 from corehq.apps.app_manager.suite_xml.xml_models import Detail, XPathVariable
+
+
+CaseTileTemplateConfig = namedtuple('CaseTileTemplateConfig', ['slug', 'filename'])
 
 
 class CaseTileHelper(object):
@@ -109,13 +114,21 @@ class CaseTileHelper(object):
 
     @property
     @memoized
+    def _case_tile_template_config(self):
+        dirname = os.path.join(os.path.dirname(os.path.dirname(__file__)), "case_tile_templates")
+        with open(
+            os.path.join(dirname, "person_simple.json"),
+            encoding='utf-8'
+        ) as f:
+            data = json.loads(f.read())
+        return CaseTileTemplateConfig(data['slug'], os.path.join(dirname, data['filename']))
+
+    @property
+    @memoized
     def _case_tile_template_string(self):
         """
         Return a string suitable for building a case tile detail node
         through `String.format`.
         """
-        with open(
-            os.path.join(os.path.dirname(os.path.dirname(__file__)), "case_tile_templates", "tdh.txt"),
-            encoding='utf-8'
-        ) as f:
+        with open(self._case_tile_template_config.filename, encoding='utf-8') as f:
             return f.read()
