@@ -25,21 +25,21 @@ jobs:
       - name: Check out Git repository
         uses: actions/checkout@v2
 
-#      - name: Set up Node.js
-#        uses: actions/setup-node@v1
-#        with:
-#          node-version: 12
-#
-#      - name: Install Node.js dependencies
-#        run: npm ci
-#
-#      - name: Set up Python
-#        uses: actions/setup-python@v1
-#        with:
-#          python-version: 3.8
-#
-#      - name: Install Python dependencies
-#        run: pip install flake8
+      - name: Set up Node.js
+        uses: actions/setup-node@v1
+        with:
+          node-version: 12
+
+      - name: Install Node.js dependencies
+        run: npm ci
+
+      - name: Set up Python
+        uses: actions/setup-python@v1
+        with:
+          python-version: 3.8
+
+      - name: Install Python dependencies
+        run: pip install flake8
 
       - name: Run linters
         uses: wearerequired/lint-action@v2
