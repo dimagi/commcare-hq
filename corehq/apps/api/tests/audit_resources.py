@@ -103,7 +103,7 @@ class testNavigationEventAuditResource(APIResourceTest):
             }
         ])
 
-    def test_get_list(self):
+    def test_request(self):
         response = self._assert_auth_get_resource(self.list_endpoint)
         self.assertEqual(response.status_code, 200)
 
@@ -113,7 +113,7 @@ class testNavigationEventAuditResource(APIResourceTest):
         for i in range(len(result_objects)):
             self.assertDictEqual(result_objects[i], self.domain1_audits.expected_response_objects[i])
 
-    def test_get_list_with_limit_param(self):
+    def test_request_with_limit_param(self):
         limit = 1
         params = {'limit': limit}
         list_endpoint = f'{self.list_endpoint}?{urlencode(params)}'
@@ -126,7 +126,7 @@ class testNavigationEventAuditResource(APIResourceTest):
         for i in range(len(result_objects)):
             self.assertDictEqual(result_objects[i], self.domain1_audits.expected_response_objects[i])
 
-    def test_get_list_with_timezone_param(self):
+    def test_request_with_timezone_param(self):
         timezone = 'US/Eastern'
 
         params = {'local_timezone': timezone}
@@ -169,7 +169,7 @@ class testNavigationEventAuditResource(APIResourceTest):
         for i in range(len(result_objects)):
             self.assertDictEqual(result_objects[i], expected_result_objects[i])
 
-    def test_get_list_with_user_param(self):
+    def test_request_with_user_param(self):
         users_filter = [self.username1]
 
         params = {'users': users_filter}
@@ -186,7 +186,7 @@ class testNavigationEventAuditResource(APIResourceTest):
         for i in range(len(result_objects)):
             self.assertDictEqual(result_objects[i], expected_result_objects[i])
 
-    def test_get_list_with_date_param(self):
+    def test_request_with_date_param(self):
         date1 = date(2023, 5, 1).isoformat()
         date2 = date(2023, 5, 2).isoformat()
 
@@ -207,7 +207,7 @@ class testNavigationEventAuditResource(APIResourceTest):
         for i in range(len(result_objects)):
             self.assertDictEqual(result_objects[i], expected_result_objects[i])
 
-    def test_get_list_with_cursor_param(self):
+    def test_request_with_cursor_param(self):
         params = {
             'cursor_user': self.username1,
             'cursor_local_date': date(2023, 5, 1).isoformat()
@@ -244,7 +244,7 @@ class testNavigationEventAuditResource(APIResourceTest):
         for i in range(len(result_objects)):
             self.assertDictEqual(result_objects[i], expected_result_objects[i])
 
-    def test_get_list_provides_next(self):
+    def test_response_provides_next(self):
         params = {
             'limit': 1,
             'cursor_user': self.username1,
@@ -265,7 +265,7 @@ class testNavigationEventAuditResource(APIResourceTest):
 
         self.assertEqual(expected_next_url, response_next_url)
 
-    def test_users_in_specified_domain(self):
+    def test_query_includes_users_in_only_specified_domain(self):
         results = self.resource.non_cursor_query(self.domain1_audits.domain, self.domain1_audits.timezone)
         for result in results:
             self.assertTrue(result['user'] in self.domain1_audits.logs.keys())
@@ -274,29 +274,32 @@ class testNavigationEventAuditResource(APIResourceTest):
         for result in results:
             self.assertTrue(result['user'] in self.domain2_audits.logs.keys())
 
-    def test_queries_first_last_action_time_for_each_user(self):
+    def test_query_first_last_action_time_for_each_user(self):
         results = self.resource.non_cursor_query(self.domain1_audits.domain, self.domain1_audits.timezone)
         self.assertListEqual(results, self.domain1_audits.expected_query_result)
 
-    def test_queries_ordered_by_local_date_and_user(self):
+    def test_query_ordered_by_local_date_and_user(self):
         results = self.resource.non_cursor_query(self.domain1_audits.domain, self.domain1_audits.timezone)
         filtered_results = [(result['local_date'], result['user']) for result in results]
 
         self.assertListEqual(filtered_results, sorted(filtered_results))
 
-    def test_no_repeated_local_date_per_user(self):
+    def test_query_unique_local_date_and_user_pairs(self):
+        #Query results should not have two entries with the same local date and user
+
         results = self.resource.non_cursor_query(self.domain1_audits.domain, self.domain1_audits.timezone)
         seen_user_local_dates = {}
         for result in results:
             user = result['user']
             local_date = result['local_date']
+
             if user in seen_user_local_dates:
                 self.assertNotIn(local_date, seen_user_local_dates[user])
             else:
                 seen_user_local_dates[user] = set()
             seen_user_local_dates[user].add(local_date)
 
-    def test_filter_by_user(self):
+    def test_query_filter_by_user(self):
         params = {'users': [self.username1]}
 
         results = self.resource.non_cursor_query(
@@ -311,7 +314,7 @@ class testNavigationEventAuditResource(APIResourceTest):
 
         self.assertListEqual(expected_results, results)
 
-    def test_filter_by_local_date(self):
+    def test_query_filter_by_local_date(self):
         date1 = date(2023, 5, 1)
         date2 = date(2023, 5, 2)
         params = {
@@ -331,7 +334,7 @@ class testNavigationEventAuditResource(APIResourceTest):
 
         self.assertListEqual(expected_results, results)
 
-    def test_cursor_pagination_returns_items_after_cursor(self):
+    def test_query_cursor_pagination_returns_items_after_cursor(self):
         params = {
             'cursor_local_date': date(2023, 5, 1),
             'cursor_user': self.username1
@@ -361,7 +364,7 @@ class testNavigationEventAuditResource(APIResourceTest):
 
         self.assertListEqual(expected_results, results)
 
-    def test_cursor_pagination_page_size(self):
+    def test_query_cursor_pagination_page_size(self):
         params = {
             'cursor_local_date': date(2023, 5, 1),
             'cursor_user': self.username1
