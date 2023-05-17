@@ -35,10 +35,15 @@ jobs:
         id: changed-files
         uses: tj-actions/changed-files@v14.6
 
+      - name: All files
+        id: python-files
+        run: |
+          echo "${{ steps.changed-files.outputs.all_changed_files }}"
+
       - name: Filter Python files
         id: python-files
         run: |
-          echo $("${{ steps.changed-files.outputs.all_changed_files }}" | grep -E "\.py$")
+          echo "${{ steps.changed-files.outputs.all_changed_files }}" | grep -E "\.py$"
 
       - name: Print changed Python files
         run: |
