@@ -94,7 +94,7 @@ function usage() {
             echo "  teardown    Remove all containers, images and volumes"
             echo "  test        Run tests"
             echo ""
-            echo "All other commands are passed directly to docker-compose."
+            echo "All other commands are passed directly to docker compose."
             echo ""
             echo "Examples:"
             echo ""
@@ -140,7 +140,7 @@ else
             echo "Defaulting to most recently known M1 setup: $os_suffix"
             echo ""
             echo "To remove this message in the future, create a new 'base OS'"
-            echo "(or copy an existing, working) docker-compose configuration"
+            echo "(or copy an existing, working) docker compose configuration"
             echo "for your OS. For example:"
             echo ""
             macos_version=$(sw_vers -productVersion | cut -d. -f1)
@@ -299,12 +299,12 @@ if [ "$CMD" == "test" ]; then
     # Disabled due to: https://github.com/github/feedback/discussions/8848
     # [ -n "$GITHUB_ACTIONS" ] && echo "::group::Docker setup"  # ends in docker/run.sh
     echo "Pulling docker containers..."
-    docker-compose pull --quiet
+    docker compose pull --quiet
 
     # Print service versions
-    docker-compose run --no-deps --rm minio minio --version
-    docker-compose run --no-deps --rm postgres postgres --version
-    docker-compose run --no-deps --rm redis redis-server --version
+    docker compose run --no-deps --rm minio minio --version
+    docker compose run --no-deps --rm postgres postgres --version
+    docker compose run --no-deps --rm redis redis-server --version
     # Cannot get Couch version easily before it is running.
     #
     # The major version of elasticsearch is hard-coded in the container name
@@ -316,11 +316,11 @@ if [ "$CMD" == "test" ]; then
     # Some version information is encoded in docker image names
     docker images
 
-    docker-compose run --rm web run_tests "${TEST:-python}" "$@"
+    docker compose run --rm web run_tests "${TEST:-python}" "$@"
 elif [ "$CMD" == "shell" ]; then
-    docker-compose run --rm web ./manage.py $CMD "$@"
+    docker compose run --rm web ./manage.py $CMD "$@"
 elif [ "$CMD" == "bootstrap" ]; then
-    docker-compose run --rm web bootstrap
+    docker compose run --rm web bootstrap
 elif [ "$CMD" == "bash" ]; then
     SERVICE_NAME="${1:-web}"
     shift
@@ -328,19 +328,19 @@ elif [ "$CMD" == "bash" ]; then
     if [ "$(docker inspect -f {{.State.Running}} $CONTAINER 2> /dev/null)" == "true" ]; then
         docker exec -it $CONTAINER $CMD "$@"
     else
-        docker-compose run --rm $SERVICE_NAME $CMD "$@"
+        docker compose run --rm $SERVICE_NAME $CMD "$@"
     fi
 elif [ "$CMD" == "rebuild" ]; then
     if [ -z "$1" ]; then
-        docker-compose down --rmi local
-        docker-compose build
+        docker compose down --rmi local
+        docker compose build
     else
-        docker-compose stop "$@"
-        docker-compose rm "$@"
-        docker-compose build "$@"
+        docker compose stop "$@"
+        docker compose rm "$@"
+        docker compose build "$@"
     fi
 else
-    docker-compose $CMD "$@"
+    docker compose $CMD "$@"
     if [ "$TEARDOWN" == "yes" ]; then
         if [ "$COMPOSE_PROJECT_NAME" == "hqservice" ]; then
             echo "THIS WILL DELETE ALL SERVICE DATA"
