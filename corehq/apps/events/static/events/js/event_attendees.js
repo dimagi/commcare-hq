@@ -17,8 +17,8 @@ hqDefine("events/js/event_attendees",[
 ) {
     'use strict';
 
-    var STATUS_CSS = {
-        NONE: '',
+     var STATUS_CSS = {
+        NONE: ''
         PENDING: 'pending',
         SUCCESS: 'success',
         WARNING: 'warning',
