@@ -49,4 +49,4 @@ jobs:
           flake8: true
           flake8_extensions: py
           flake8_auto_fix: false
-          flake8_args: ${{ steps.changed-files.outputs.all_changed_files }}   # Only lint diff
+          flake8_args: $(${{ steps.changed-files.outputs.all_changed_files }} | grep -E "\.py$")   # Only lint diff
