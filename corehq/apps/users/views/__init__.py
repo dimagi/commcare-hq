@@ -682,6 +682,9 @@ class ListRolesView(BaseRoleAccessView):
             key=lambda role: role.name if role.name else '\uFFFF'
         )) + [UserRole.commcare_user_default(self.domain)]  # mobile worker default listed last
 
+    def can_edit_linked_roles(self):
+        return self.request.couch_user.can_edit_linked_data(self.domain)
+
     def get_roles_for_display(self):
         show_es_issue = False
         role_view_data = [StaticRole.domain_admin(self.domain).to_json()]
@@ -719,6 +722,7 @@ class ListRolesView(BaseRoleAccessView):
 
     @property
     def page_context(self):
+        from corehq.apps.linked_domain.dbaccessors import is_active_downstream_domain
         if (not self.can_restrict_access_by_location
                 and any(not role.permissions.access_all_locations
                         for role in self.non_admin_roles)):
@@ -737,6 +741,8 @@ class ListRolesView(BaseRoleAccessView):
             } for viz in TableauVisualization.objects.filter(domain=self.domain)]
 
         return {
+            'is_managed_by_upstream_domain': is_active_downstream_domain(self.domain),
+            'can_edit_linked_data': self.can_edit_linked_roles(),
             'user_roles': self.get_roles_for_display(),
             'non_admin_roles': self.non_admin_roles,
             'can_edit_roles': self.can_edit_roles,
@@ -986,7 +992,7 @@ def _update_role_from_view(domain, role_data):
     role.save()
 
     permissions = HqPermissions.wrap(role_data["permissions"])
-    permissions.normalize()
+    permissions.normalize(previous=role.permissions)
     role.set_permissions(permissions.to_list())
 
     assignable_by = role_data["assignable_by"]
