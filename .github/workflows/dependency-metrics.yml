@@ -7,6 +7,7 @@ jobs:
   collect-metrics:
     runs-on: ubuntu-latest
     env:
+      REPO: commcare-hq
       DATADOG_APP_KEY: ${{ secrets.DATADOG_APP_KEY }}
       DATADOG_API_KEY: ${{ secrets.DATADOG_API_KEY }}
     steps:
