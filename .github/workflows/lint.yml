@@ -50,14 +50,6 @@ jobs:
           echo "Changed Python files:"
           echo "${{ steps.python-files.outputs.stdout }}"
 
-#      - name: Set up Node.js
-#        uses: actions/setup-node@v1
-#        with:
-#          node-version: 14
-#
-#      - name: Install Node.js dependencies
-#        run: yarn install --frozen-lockfile
-
       - name: Set up Python
         uses: actions/setup-python@v1
         with:
@@ -69,11 +61,6 @@ jobs:
       - name: Run linters
         uses: wearerequired/lint-action@v2
         with:
-#          eslint: true
-#          eslint_extensions: js
-#          eslint_auto_fix: false
-#          prettier: true
-#          prettier_auto_fix: false
           flake8: true
           flake8_extensions: py
           flake8_auto_fix: false
