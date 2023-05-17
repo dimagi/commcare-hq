@@ -117,7 +117,11 @@ def data_dictionary_json(request, domain, case_type_name=None):
                 "properties": []
             }
 
-            for prop in group.properties.all():
+            group_properties = sorted(
+                [prop for prop in case_type.properties.all() if prop.group_name == group.name],
+                key=lambda _prop: _prop.index
+            )
+            for prop in group_properties:
                 group_ret['properties'].append({
                     "description": prop.description,
                     "label": prop.label,
