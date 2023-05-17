@@ -55,7 +55,7 @@ hqDefine("case_importer/js/main", [
 
             return true;
         });
-    }
+    };
 
     var behaviorForExcelMappingPage = function () {
         var excelFields = initialPageData.get('excel_fields');
