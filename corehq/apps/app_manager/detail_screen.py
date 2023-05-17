@@ -508,8 +508,7 @@ class Markdown(FormattedDetailColumn):
 
     @property
     def template_form(self):
-        if self.detail.display == 'long':
-            return 'markdown'
+        return 'markdown'
 
 
 @register_format_type('address')
