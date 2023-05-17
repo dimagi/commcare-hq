@@ -31,14 +31,19 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Get changed .py files
-        id: changed-files-specific
-        uses: tj-actions/changed-files@v35
-        with:
-          files: ./*.{py}
+      - name: Get changed files
+        uses: tj-actions/changed-files@v1
+        id: files
 
-      - name: Show changed .py files
-        run: echo ${{ steps.changed-files.outputs.changed-files-specific }}
+      - name: Filter Python files
+        id: python-files
+        run: |
+          echo "${{ steps.files.outputs.all }}" | grep -E "\.py$"
+
+      - name: Print changed Python files
+        run: |
+          echo "Changed Python files:"
+          echo "${{ steps.python-files.outputs.stdout }}"
 
 #      - name: Set up Node.js
 #        uses: actions/setup-node@v1
@@ -67,4 +72,4 @@ jobs:
           flake8: true
           flake8_extensions: py
           flake8_auto_fix: false
-          flake8_args: ${{ steps.changed-files.outputs.changed-files-specific }}  # Only lint changed .py files
+          flake8_args: ${{ steps.python-files.outputs.stdout }}  # Only lint changed .py files
