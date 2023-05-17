@@ -94,6 +94,16 @@ class BaseRepeatRecordReport(GenericTabularReport):
         </a>
         ''', record_id)
 
+    def _make_view_attempts_button(self, record_id):
+        return format_html('''
+        <button
+            class="btn btn-default view-attempts-btn"
+            data-record-id={}>
+            <i class="fa fa-search"></i>
+            Responses
+        </button>
+        ''', record_id)
+
     def _make_resend_payload_button(self, record_id):
         return format_html('''
         <button
@@ -176,7 +186,7 @@ class BaseRepeatRecordReport(GenericTabularReport):
             display.url,
             display.last_checked,
             display.next_attempt_at,
-            display.attempts,
+            self._make_view_attempts_button(record.record_id),
             self._make_view_payload_button(record.record_id),
             self._make_resend_payload_button(record.record_id),
         ]
@@ -209,7 +219,7 @@ class BaseRepeatRecordReport(GenericTabularReport):
             DataTablesColumn(_('URL')),
             DataTablesColumn(_('Last sent date')),
             DataTablesColumn(_('Retry Date')),
-            DataTablesColumn(_('Delivery Attempts')),
+            DataTablesColumn(_('View Responses')),
             DataTablesColumn(_('View payload')),
             DataTablesColumn(_('Resend')),
             DataTablesColumn(_('Cancel or Requeue payload'))
