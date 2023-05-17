@@ -54,9 +54,11 @@ jobs:
         uses: wearerequired/lint-action@v2
         with:
 #          eslint: true
+#          eslint_extensions: js
 #          eslint_auto_fix: false
 #          prettier: true
 #          prettier_auto_fix: false
           flake8: true
+          flake8_extensions: py
           flake8_auto_fix: false
-          flake8_args: "$(git diff --name-only $BASE_NAME $BRANCH_NAME)"  # Only lint diff
+          flake8_args: "$(git diff --name-only --diff-filter=b $(git merge-base $BASE_NAME $BRANCH_NAME))"  # Only lint diff
