@@ -258,7 +258,11 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
         },
 
         rowClick: function (e) {
-            if (!(e.target.classList.contains('module-case-list-column-checkbox') || e.target.classList.contains("select-row-checkbox"))) {
+            if (!(
+                e.target.classList.contains('module-case-list-column-checkbox') ||  // multiselect checkbox
+                e.target.classList.contains("select-row-checkbox") ||               // multiselect select all
+                $(e.target).is('a')                                                 // actual link, as in markdown
+            )) {
                 e.preventDefault();
                 let model_id = this.model.get('id');
                 if (!this.model.collection.hasDetails) {
@@ -290,11 +294,15 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
         },
 
         templateContext: function () {
-            var appId = utils.currentUrlToObject().appId;
+            var appId = utils.currentUrlToObject().appId,
+                md = window.markdownit();
             return {
                 data: this.options.model.get('data'),
                 styles: this.options.styles,
                 isMultiSelect: this.options.isMultiSelect,
+                renderMarkdown: function (datum) {
+                    return md.render(DOMPurify.sanitize(datum || ""));
+                },
                 resolveUri: function (uri) {
                     return FormplayerFrontend.getChannel().request('resourceMap', uri, appId);
                 },
@@ -311,12 +319,8 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
     var CaseTileView = CaseView.extend({
         template: _.template($("#case-tile-view-item-template").html() || ""),
         templateContext: function () {
-            var dict = CaseTileView.__super__.templateContext.apply(this, arguments),
-                md = window.markdownit();
+            var dict = CaseTileView.__super__.templateContext.apply(this, arguments);
             dict['prefix'] = this.options.prefix;
-            dict['renderMarkdown'] = function (datum) {
-                return md.render(DOMPurify.sanitize(datum || ""));
-            };
             return dict;
         },
     });
