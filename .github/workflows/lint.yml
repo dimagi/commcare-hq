@@ -38,7 +38,7 @@ jobs:
       - name: Filter Python files
         id: python-files
         run: |
-          echo "${{ steps.files.outputs.all }}" | grep -E "\.py$"
+          echo "${{ steps.files.outputs.all_changed_files }}" | grep -E "\.py$"
 
       - name: Print changed Python files
         run: |
