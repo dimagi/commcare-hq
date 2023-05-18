@@ -11,8 +11,8 @@ hqDefine("app_manager/js/widgets", [
     assertProperties,
     initialPageData
 ) {
-    var initVersionDropdown = function ($select, options) {
-        options = options || {};
+    var initVersionDropdown = function($select, options) {
+         options = options || {}
         assertProperties.assert(options, [], ['url', 'width', 'idValue', 'initialValue', 'extraValues',
             'onlyShowReleased']);
         var idValue = options.idValue || 'id';
