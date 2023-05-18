@@ -54,7 +54,7 @@ from corehq.apps.registration.utils import (
     send_mobile_experience_reminder,
     send_new_request_update_email,
 )
-from corehq.apps.users.models import CouchUser, EulaMixin, WebUser, Invitation
+from corehq.apps.users.models import CouchUser, WebUser, Invitation, CURRENT_VERSION
 from corehq.const import USER_CHANGE_VIA_WEB
 from corehq.util.context_processors import get_per_domain_context
 from corehq.util.jqueryrmi import JSONResponseMixin, allow_remote_invocation
@@ -534,7 +534,7 @@ def confirm_domain(request, guid=''):
 def eula_agreement(request):
     if request.method == 'POST':
         current_user = CouchUser.from_django_user(request.user)
-        new_agreement = LicenseAgreement(type="End User License Agreement", version=EulaMixin.CURRENT_VERSION)
+        new_agreement = LicenseAgreement(type="End User License Agreement", version=CURRENT_VERSION)
         new_agreement.signed = True
         new_agreement.date = datetime.utcnow()
         new_agreement.user_ip = get_ip(request)
