@@ -179,6 +179,7 @@ def _can_view_form_attachment():
 can_view_form_attachment = _can_view_form_attachment()
 
 
+@location_safe
 @login_and_domain_required
 def reports_home(request, domain):
     if user_can_view_reports(request.project, request.couch_user):
@@ -553,6 +554,7 @@ def _can_email_report(report_slug, request, dispatcher_class, domain):
     return dispatcher.permissions_check(report_name, request, domain)
 
 
+@location_safe
 @login_and_domain_required
 @require_http_methods(['DELETE'])
 def delete_config(request, domain, config_id):
@@ -659,6 +661,7 @@ def soft_shift_to_server_timezone(report_notification):
     )
 
 
+@location_safe
 class ScheduledReportsView(BaseProjectReportSectionView):
     urlname = 'edit_scheduled_report'
     page_title = _("Scheduled Report")
@@ -911,6 +914,7 @@ class ReportNotificationUnsubscribeView(TemplateView):
         return self.get(request, *args, **kwargs)
 
 
+@location_safe
 @login_and_domain_required
 @require_POST
 def delete_scheduled_report(request, domain, scheduled_report_id):
@@ -963,6 +967,7 @@ def _can_delete_scheduled_report(report, user, domain):
     return user._id == report.owner_id or user.is_domain_admin(domain)
 
 
+@location_safe
 @login_and_domain_required
 def send_test_scheduled_report(request, domain, scheduled_report_id):
     if not _can_send_test_report(scheduled_report_id, request.couch_user, domain):
