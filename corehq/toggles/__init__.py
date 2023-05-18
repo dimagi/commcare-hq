@@ -2519,10 +2519,3 @@ EXPORT_OWNERSHIP = FrozenPrivilegeToggle(
     namespaces=[NAMESPACE_DOMAIN],
     description='Allow exports to have ownership',
 )
-
-FORCE_ANNUAL_TOS = StaticToggle(
-    'annual_terms_of_service',
-    "USH Specific toggle that forces users to agree to terms of service annually.",
-    TAG_CUSTOM,
-    namespaces=[NAMESPACE_DOMAIN],
-)
