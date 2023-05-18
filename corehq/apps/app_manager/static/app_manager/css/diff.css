@@ -13,7 +13,7 @@
 .diff div:hover {
     background-color:#ffc;
 }
-.diff .control {
+.diff  .control {
     background-color: #eaf2f5;
     color: #999999;
 }

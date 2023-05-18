@@ -113,6 +113,7 @@ from corehq.util.timezones.utils import get_timezone_for_user
 from corehq.util.view_utils import reverse as reverse_util
 
 
+
 @no_conflict_require_POST
 @require_can_edit_apps
 def delete_app(request, domain, app_id):
@@ -128,7 +129,7 @@ def delete_app(request, domain, app_id):
     app.save()
     clear_app_cache(request, domain)
     clear_xmlns_app_id_cache(domain)
-    return HttpResponseRedirect(reverse(DomainDashboardView.urlname, args=[domain]))
+    return  HttpResponseRedirect(reverse(DomainDashboardView.urlname, args=[domain]))
 
 
 @no_conflict_require_POST
