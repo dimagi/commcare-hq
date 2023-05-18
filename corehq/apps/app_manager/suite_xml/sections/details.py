@@ -234,7 +234,11 @@ class DetailContributor(SectionContributor):
 
                 if module_offers_search(module) and not module_uses_inline_search(module):
                     in_search = module_loads_registry_case(module) or "search" in id
-                    d.actions.append(self._get_case_search_action(module, in_search=in_search))
+                    d.actions.append(
+                        DetailContributor.get_case_search_action(module,
+                                                                 self.build_profile_id,
+                                                                 in_search=in_search)
+                    )
 
             try:
                 if not self.app.enable_multi_sort:
@@ -360,21 +364,22 @@ class DetailContributor(SectionContributor):
         action.stack.add_frame(frame)
         return action
 
-    def _get_case_search_action(self, module, in_search=False):
+    @staticmethod
+    def get_case_search_action(module, build_profile_id, in_search=False):
         action_kwargs = DetailContributor._get_action_kwargs(module, in_search)
         if in_search:
             search_label = module.search_config.search_again_label
         else:
             search_label = module.search_config.search_label
 
-        if self.app.enable_localized_menu_media:
+        if module.get_app().enable_localized_menu_media:
             action = LocalizedAction(
                 menu_locale_id=(
                     id_strings.case_search_again_locale(module) if in_search
                     else id_strings.case_search_locale(module)
                 ),
-                media_image=search_label.uses_image(build_profile_id=self.build_profile_id),
-                media_audio=search_label.uses_audio(build_profile_id=self.build_profile_id),
+                media_image=search_label.uses_image(build_profile_id=build_profile_id),
+                media_audio=search_label.uses_audio(build_profile_id=build_profile_id),
                 image_locale_id=(
                     id_strings.case_search_again_icon_locale(module) if in_search
                     else id_strings.case_search_icon_locale(module)

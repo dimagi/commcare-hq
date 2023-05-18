@@ -8,6 +8,11 @@ from xml.sax.saxutils import escape
 from corehq.apps.app_manager import id_strings
 from corehq.apps.app_manager.exceptions import SuiteError
 from corehq.apps.app_manager.suite_xml.xml_models import Detail, XPathVariable
+from corehq.apps.app_manager.util import (
+    module_loads_registry_case,
+    module_offers_search,
+    module_uses_inline_search,
+)
 
 
 CaseTileTemplateConfig = namedtuple('CaseTileTemplateConfig', ['slug', 'filename', 'fields'])
@@ -49,7 +54,19 @@ class CaseTileHelper(object):
 
         # Populate the template
         detail_as_string = self._case_tile_template_string.format(**context)
-        return load_xmlobject_from_string(detail_as_string, xmlclass=Detail)
+        detail = load_xmlobject_from_string(detail_as_string, xmlclass=Detail)
+
+        # Add case search action if needed
+        if module_offers_search(self.module) and not module_uses_inline_search(self.module):
+            from corehq.apps.app_manager.suite_xml.sections.details import DetailContributor
+            in_search = module_loads_registry_case(self.module)
+            detail.actions.append(
+                DetailContributor.get_case_search_action(self.module,
+                                                         self.build_profile_id,
+                                                         in_search=in_search)
+            )
+
+        return detail
 
     def _get_matched_detail_column(self, case_tile_field):
         """
