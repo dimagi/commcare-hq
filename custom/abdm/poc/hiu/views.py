@@ -2,13 +2,14 @@ import uuid
 from datetime import datetime, timedelta
 import json
 
-from django.http import HttpResponseRedirect
+from django.http import HttpResponseRedirect, HttpResponse
 from django.urls import reverse
 from django.shortcuts import render
 from rest_framework.decorators import (
     api_view,
 )
 from rest_framework.response import Response
+from rest_framework.status import HTTP_202_ACCEPTED
 
 from custom.abdm.milestone_one.utils.decorators import required_request_params
 from custom.abdm.poc.hiu.gateway_calls import (
@@ -20,6 +21,8 @@ from custom.abdm.poc.hiu.gateway_calls import (
 )
 from custom.abdm.models import ConsentRequest, CONSENT_REQUEST_STATUS_GRANTED
 from custom.abdm.poc.const import HIU_KEY_MATERIAL_JSON_PATH
+
+from custom.abdm.poc.hiu.serializers import ConsentInitSerializer
 
 # Validations: Applicable for all API Views
 # TODO Add validation for access token (Auth) and HIU ID that will be sent by gateway. (See API spec)
@@ -36,8 +39,29 @@ with open(HIU_KEY_MATERIAL_JSON_PATH) as user_file:
 CONSENT_ID = None
 
 
-@api_view(["POST", "GET"])
+@api_view(["POST"])
 def generate_consent_request(request):
+    print("HIU: Generate consent Request", request.data)
+    serializer = ConsentInitSerializer(data=request.data)
+    serializer.is_valid(raise_exception=True)
+    # TODO Datetime convert to utc or accept utctime
+    # request_data = request.data
+    # patient_abha_address = request_data['patientIdentifier']
+    # consent_purpose = request_data['purposeOfRequest']
+    # health_info_from = datetime.strptime(request_data['healthInfoFrom'], '%Y-%m-%d').isoformat()
+    # health_info_to = datetime.strptime(request_data['healthInfoTo'], '%Y-%m-%d').isoformat()
+    # health_info_type = request_data['healthInfoType']
+    # consent_expiry = datetime.strptime(request_data['consentExpiry'], '%Y-%m-%dT%H:%M').isoformat()
+    # consent_request = ConsentRequest(request_id=str(uuid.uuid4()), patient_abha_address=patient_abha_address)
+    # consent_request.save()
+    # gw_consent_request_init(consent_request.request_id, patient_abha_address, consent_purpose,
+    #                         health_info_from, health_info_to, health_info_type, consent_expiry)
+    return HttpResponse(status=HTTP_202_ACCEPTED)
+
+
+# ONLY FOR DEMO
+@api_view(["POST", "GET"])
+def generate_consent_request_ui(request):
     print("HIU: Generate consent Request", request.data)
     if request.method == "GET":
         return render(request, "abdm/request_consent.html", {})

@@ -18,7 +18,8 @@ from custom.abdm.poc.hiu.views import (
     fetch_consents,
     health_info_on_request,
     health_data_receiver,
-    request_health_info
+    request_health_info,
+    generate_consent_request_ui
 )
 
 hip_urls = [
@@ -43,6 +44,8 @@ hiu_urls = [
     path('v0.5/health-information/transfer', health_data_receiver, name='health_data_receiver'),
     # Trigger consents and health info request
     path('hiu/generate_consent_request', generate_consent_request, name='generate_consent_request'),
+    # ONLY FOR DEMO
+    path('hiu/generate_consent_request_ui', generate_consent_request_ui, name='generate_consent_request_ui'),
     path('hiu/fetch_consents', fetch_consents, name='fetch_consents'),
     path('hiu/request_health_info', request_health_info, name='request_health_info'),
 ]
