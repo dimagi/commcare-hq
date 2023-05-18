@@ -78,6 +78,7 @@ LOCATION_IDS_CASE_PROPERTY = 'commcare_location_ids'
 PRIMARY_LOCATION_ID_CASE_PROPERTY = 'commcare_primary_location_id'
 
 
+
 class AttendanceTrackingConfig(models.Model):
     domain = models.CharField(max_length=255, primary_key=True)
 
@@ -86,7 +87,7 @@ class AttendanceTrackingConfig(models.Model):
 
     # For projects with existing attendee cases
     attendee_case_type = models.CharField(
-        max_length=255,
+     max_length=255,
         default=DEFAULT_ATTENDEE_CASE_TYPE,
     )
 
