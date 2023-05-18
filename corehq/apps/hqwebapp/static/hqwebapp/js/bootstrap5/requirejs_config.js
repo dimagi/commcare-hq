@@ -21,6 +21,8 @@ requirejs.config({
         "sentry_browser": "sentry/js/sentry.browser.7.28.0.min",
         "sentry_captureconsole": "sentry/js/sentry.captureconsole.7.28.0.min",
         "tempus-dominus": "eonasdan/tempus-dominus/dist/js/tempus-dominus.min",
+        "sentry_browser": "sentry/js/sentry.browser.7.28.0.min",
+        "sentry_captureconsole": "sentry/js/sentry.captureconsole.7.28.0.min",
         "underscore": "underscore/underscore",
     },
     shim: {
