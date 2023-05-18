@@ -1,4 +1,3 @@
-/*global Sentry */
 /**
  *  A menu is implemented as a collection of items. Typically, the user
  *  selects one of these items. The query screen is also implemented as
@@ -7,11 +6,13 @@
 hqDefine("cloudcare/js/formplayer/menus/collections", [
     'underscore',
     'backbone',
+    'sentry_browser',
     'cloudcare/js/formplayer/app',
     'cloudcare/js/formplayer/utils/utils',
 ], function (
     _,
     Backbone,
+    Sentry,
     FormplayerFrontend,
     Utils
 ) {
