@@ -15,7 +15,7 @@ hqDefine('app_manager/js/app_manager', function () {
     };
     module.setPrependedPageTitle = function (prependedPageTitle, noDivider) {
         _private.prependedPageTitle = prependedPageTitle;
-        if (!noDivider) {
+        if (!noDivider)  {
             _private.prependedPageTitle += " - ";
         }
     };

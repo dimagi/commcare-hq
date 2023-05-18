@@ -113,6 +113,7 @@ from corehq.util.timezones.utils import get_timezone_for_user
 from corehq.util.view_utils import reverse as reverse_util
 
 
+
 @no_conflict_require_POST
 @require_can_edit_apps
 def delete_app(request, domain, app_id):
