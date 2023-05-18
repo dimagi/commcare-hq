@@ -9,7 +9,7 @@ hqDefine("app_manager/js/app_exchange", [
     kissmetrics
 ) {
     var AppExchangeModel = function () {
-        var self = {};
+         var self = {};
 
         self.showVersions = ko.observable(false);
 

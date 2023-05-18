@@ -10,7 +10,7 @@
     white-space: normal;
     word-wrap: break-word;
 }
-.diff div:hover {
+.diff  div:hover {
     background-color:#ffc;
 }
 .diff .control {

@@ -18,10 +18,11 @@ from corehq.apps.domain.decorators import check_lockout
 from corehq.apps.users.models import CouchUser
 
 
+
 class App(XmlObject):
     ROOT_NAME = 'app'
 
-    domain = StringField('@domain')
+     domain = StringField('@domain')
     name = StringField('@name')
     environment = StringField('@environment')
     version = IntegerField('@version')
