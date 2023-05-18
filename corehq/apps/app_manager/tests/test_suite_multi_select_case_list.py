@@ -282,7 +282,6 @@ class MultiSelectSelectParentFirstTests(SimpleTestCase, TestXmlMixin):
 
     @patch('corehq.apps.app_manager.models.validate_xform', return_value=None)
     @patch('corehq.apps.app_manager.helpers.validators.domain_has_privilege', return_value=True)
-    @patch('corehq.apps.builds.models.BuildSpec.supports_j2me', return_value=False)
     def test_select_parent_first_parent_not_allowed(self, *args):
         self.module.parent_select.active = True
         self.module.parent_select.module_id = self.other_module.unique_id
@@ -498,7 +497,6 @@ class MultiSelectChildModuleDatumIDTests(SimpleTestCase, SuiteMixin):
 
 
 @patch('corehq.apps.app_manager.helpers.validators.domain_has_privilege', return_value=True)
-@patch('corehq.apps.builds.models.BuildSpec.supports_j2me', return_value=False)
 @patch('corehq.util.view_utils.get_url_base', new=lambda: "https://www.example.com")
 @patch.object(Application, 'enable_practice_users', return_value=False)
 @patch_validate_xform()

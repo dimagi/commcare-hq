@@ -526,7 +526,6 @@ USER_REPORTING_METADATA_BATCH_SCHEDULE = {'timedelta': {'minutes': 5}}
 
 
 BASE_ADDRESS = 'localhost:8000'
-J2ME_ADDRESS = ''
 
 PAGINATOR_OBJECTS_PER_PAGE = 15
 PAGINATOR_MAX_PAGE_LINKS = 5
@@ -1239,6 +1238,7 @@ TEMPLATES = [
                 'corehq.util.context_processors.status_page',
                 'corehq.util.context_processors.sentry',
                 'corehq.util.context_processors.bootstrap5',
+                'corehq.util.context_processors.js_privileges',
             ],
             'debug': DEBUG,
             'loaders': [

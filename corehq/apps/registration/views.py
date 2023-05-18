@@ -36,7 +36,7 @@ from corehq.apps.analytics.utils import get_meta
 from corehq.apps.domain.decorators import login_required
 from corehq.apps.domain.exceptions import NameUnavailableException
 from corehq.apps.domain.extension_points import has_custom_clean_password
-from corehq.apps.domain.models import Domain
+from corehq.apps.domain.models import Domain, LicenseAgreement
 from corehq.apps.hqwebapp.decorators import use_jquery_ui, use_ko_validation
 from corehq.apps.hqwebapp.views import BasePageView
 from corehq.apps.registration.forms import (
@@ -54,7 +54,7 @@ from corehq.apps.registration.utils import (
     send_mobile_experience_reminder,
     send_new_request_update_email,
 )
-from corehq.apps.users.models import CouchUser, WebUser, Invitation
+from corehq.apps.users.models import CouchUser, EulaMixin, WebUser, Invitation
 from corehq.const import USER_CHANGE_VIA_WEB
 from corehq.util.context_processors import get_per_domain_context
 from corehq.util.jqueryrmi import JSONResponseMixin, allow_remote_invocation
@@ -534,9 +534,11 @@ def confirm_domain(request, guid=''):
 def eula_agreement(request):
     if request.method == 'POST':
         current_user = CouchUser.from_django_user(request.user)
-        current_user.eula.signed = True
-        current_user.eula.date = datetime.utcnow()
-        current_user.eula.user_ip = get_ip(request)
+        new_agreement = LicenseAgreement(type="End User License Agreement", version=str(EulaMixin.CURRENT_VERSION))
+        new_agreement.signed = True
+        new_agreement.date = datetime.utcnow()
+        new_agreement.user_ip = get_ip(request)
+        current_user.eulas.append(new_agreement)
         current_user.save()
 
     return HttpResponseRedirect(request.POST.get('next', '/'))

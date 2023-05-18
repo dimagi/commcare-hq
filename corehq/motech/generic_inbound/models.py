@@ -1,3 +1,5 @@
+import enum
+from functools import cached_property
 from uuid import uuid4
 
 from django.contrib.postgres.fields import ArrayField
@@ -12,11 +14,18 @@ from memoized import memoized
 
 from corehq.apps.userreports.models import UCRExpression
 from corehq.apps.userreports.specs import FactoryContext
+from corehq.motech.generic_inbound.exceptions import GenericInboundApiError
 from corehq.util import reverse
+
+
+class ApiBackendOptions(models.TextChoices):
+    json = "json", _("JSON")
+    hl7 = "hl7", _("HL7 v2")
 
 
 @audit_fields("domain", "url_key", "name", "transform_expression", audit_special_queryset_writes=True)
 class ConfigurableAPI(models.Model):
+
     domain = models.CharField(max_length=255)
     url_key = models.CharField(max_length=32, validators=[validate_slug])
     created_on = models.DateTimeField(auto_now_add=True)
@@ -27,6 +36,7 @@ class ConfigurableAPI(models.Model):
         UCRExpression, on_delete=models.PROTECT, related_name="api_filter", null=True, blank=True)
     transform_expression = models.ForeignKey(
         UCRExpression, on_delete=models.PROTECT, related_name="api_expression")
+    backend = models.CharField(max_length=100, default=ApiBackendOptions.json)
 
     objects = AuditingManager()
 
@@ -64,6 +74,16 @@ class ConfigurableAPI(models.Model):
         if not self.filter_expression:
             return None
         return self.filter_expression.wrapped_definition(FactoryContext.empty())
+
+    @cached_property
+    def backend_class(self):
+        from corehq.motech.generic_inbound.backend.json import JsonBackend
+        from corehq.motech.generic_inbound.backend.hl7 import Hl7Backend
+        if self.backend == ApiBackendOptions.json:
+            return JsonBackend
+        elif self.backend == ApiBackendOptions.hl7:
+            return Hl7Backend
+        raise GenericInboundApiError(f"Unknown backend type: {self.backend}")
 
     @property
     @memoized
@@ -159,6 +179,7 @@ class ProcessingAttempt(models.Model):
     is_retry = models.BooleanField(default=False)
     response_status = models.PositiveSmallIntegerField(db_index=True)
     raw_response = models.JSONField(default=dict)
+    external_response = models.TextField(null=True)
 
     xform_id = models.CharField(max_length=36, db_index=True, null=True, blank=True)
     case_ids = ArrayField(models.CharField(max_length=36), null=True, blank=True)

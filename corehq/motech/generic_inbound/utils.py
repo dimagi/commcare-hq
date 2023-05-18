@@ -1,10 +1,11 @@
 import json
 import uuid
 from base64 import urlsafe_b64encode
+from functools import cached_property
 
 from django.conf import settings
 from django.db import transaction
-from django.http import QueryDict
+from django.http import QueryDict, HttpResponse, JsonResponse
 from django.utils.translation import gettext as _
 
 import attr
@@ -14,7 +15,7 @@ from casexml.apps.phone.xml import get_registration_element_data
 from corehq.apps.auditcare.models import get_standard_headers
 from corehq.apps.userreports.specs import EvaluationContext
 from corehq.apps.users.models import CouchUser
-from corehq.motech.generic_inbound.exceptions import GenericInboundUserError
+from corehq.motech.generic_inbound.exceptions import GenericInboundUserError, GenericInboundApiError
 from corehq.motech.generic_inbound.models import RequestLog
 from corehq.util import as_text
 from corehq.util.view_utils import get_form_or_404
@@ -49,12 +50,13 @@ class ApiRequest:
     couch_user: CouchUser
     request_method: str
     user_agent: str
-    data: dict
+    data: str
     query: dict  # querystring key val pairs, vals are lists
     headers: dict
+    request_id: str
 
     @classmethod
-    def from_request(cls, request):
+    def from_request(cls, request, request_id=None):
         if _request_too_large(request):
             raise GenericInboundUserError(_("Request exceeds the allowed size limit"))
 
@@ -63,64 +65,65 @@ class ApiRequest:
         except UnicodeDecodeError:
             raise GenericInboundUserError(_("Unable to decode request body"))
 
-        try:
-            request_json = json.loads(body)
-        except json.JSONDecodeError:
-            raise GenericInboundUserError(_("Payload must be valid JSON"))
         return cls(
             domain=request.domain,
             couch_user=request.couch_user,
             request_method=request.method,
             user_agent=request.META.get('HTTP_USER_AGENT'),
-            data=request_json,
+            data=body,
             query=dict(request.GET.lists()),
-            headers=get_headers_for_api_context(request)
+            headers=get_headers_for_api_context(request),
+            request_id=request_id or uuid.uuid4().hex,
         )
 
     @classmethod
     def from_log(cls, log):
-        try:
-            request_json = json.loads(log.request_body)
-        except (UnicodeDecodeError, json.JSONDecodeError):
-            raise GenericInboundUserError(_("Payload must be valid JSON"))
         return cls(
             domain=log.domain,
             couch_user=CouchUser.get_by_username(log.username),
             request_method=log.request_method,
             user_agent=log.request_headers.get('HTTP_USER_AGENT'),
-            data=request_json,
+            data=log.request_body,
             query=dict(QueryDict(log.request_query).lists()),
             headers=dict(log.request_headers),
+            request_id=log.id
         )
 
-    def to_context(self):
-        restore_user = self.couch_user.to_ota_restore_user(
+    @cached_property
+    def restore_user(self):
+        return self.couch_user.to_ota_restore_user(
             self.domain, request_user=self.couch_user)
-        return get_evaluation_context(
-            restore_user,
-            self.request_method,
-            self.query,
-            self.headers,
-            self.data,
-        )
 
 
 @attr.s(kw_only=True, frozen=True, auto_attribs=True)
 class ApiResponse:
+    """Data class for managing response data and producing HTTP responses.
+    Override ``_get_http_response`` to return different HTTP response."""
     status: int
-    data: dict = None
+    internal_response: dict = None
+    external_response: str = None
+    content_type: str = None
+
+    def get_http_response(self):
+        if self.status == 204:
+            return HttpResponse(status=204)  # no body for 204 (RFC 7230)
+        return self._get_http_response()
+
+    def _get_http_response(self):
+        return HttpResponse(content=self.external_response, status=self.status, content_type=self.content_type)
 
 
 def make_processing_attempt(response, request_log, is_retry=False):
     from corehq.motech.generic_inbound.models import ProcessingAttempt
 
-    response_data = response.data or {}
+    response_data = response.internal_response or {}
     case_ids = [c['case_id'] for c in response_data.get('cases', [])]
     ProcessingAttempt.objects.create(
         is_retry=is_retry,
         log=request_log,
         response_status=response.status,
         raw_response=response_data,
+        external_response=response.external_response,
         xform_id=response_data.get('form_id'),
         case_ids=case_ids,
     )
@@ -140,14 +143,11 @@ def get_evaluation_context(restore_user, method, query, headers, body):
 
 def reprocess_api_request(request_log):
     from corehq.motech.generic_inbound.models import RequestLog
-    from corehq.motech.generic_inbound.core import execute_generic_api
 
-    try:
-        request_data = ApiRequest.from_log(request_log)
-    except GenericInboundUserError as e:
-        response = ApiResponse(status=400, data={'error': str(e)})
-    else:
-        response = execute_generic_api(request_log.api, request_data)
+    def get_request_data():
+        return ApiRequest.from_log(request_log)
+
+    response = process_api_request(request_log.api, request_log.id, get_request_data)
 
     with transaction.atomic():
         request_log.status = RequestLog.Status.from_status_code(response.status)
@@ -155,6 +155,21 @@ def reprocess_api_request(request_log):
         request_log.response_status = response.status
         request_log.save()
         make_processing_attempt(response, request_log, is_retry=True)
+
+
+def process_api_request(api_model, request_id, get_request_data):
+    try:
+        backend_cls = api_model.backend_class
+    except GenericInboundApiError as e:
+        response = ApiResponse(status=500, internal_response={'error': str(e)})
+    else:
+        try:
+            request_data = get_request_data()
+        except GenericInboundUserError as e:
+            response = backend_cls.get_basic_error_response(request_id, 400, str(e))
+        else:
+            response = backend_cls(api_model, request_data).run()
+    return response
 
 
 def archive_api_request(request_log, user_id):
@@ -181,12 +196,13 @@ def revert_api_request_from_form(form_id):
         return
 
 
-def log_api_request(api, request, response):
+def log_api_request(request_id, api, request, response):
     if _request_too_large(request):
         body = '<truncated>'
     else:
         body = as_text(request.body)
     log = RequestLog.objects.create(
+        id=request_id,
         domain=request.domain,
         api=api,
         status=RequestLog.Status.from_status_code(response.status),

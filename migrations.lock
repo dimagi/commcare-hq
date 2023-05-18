@@ -92,6 +92,7 @@ accounting
  0070_form_case_ids_case_importer_priv
  0071_add_billingaccountwebuserhistory
  0072_export_multisort_priv
+ 0073_export_ownership_priv
 admin
  0001_initial
  0002_logentry_remove_auto_add
@@ -517,6 +518,7 @@ generic_inbound
  0003_add_logging_models
  0004_add_filter_expression
  0005_remove_requestlog_unused_fields
+ 0006_backend_external_response
 geospatial
  (no migrations)
 hqadmin
@@ -622,6 +624,7 @@ motech
  0010_auto_20211124_1931
  0011_connectionsettings_is_deleted
  0012_alter_connectionsettings_auth_type
+ 0013_alter_connectionsettings_auth_type
 notifications
  0001_squashed_0003_auto_20160504_2049 (3 squashed migrations)
  0002_auto_20160505_2058

@@ -832,11 +832,10 @@ def edit_app_attr(request, domain, app_id, attr):
     attributes = [
         'all',
         'recipients', 'name',
-        'text_input', 'platform', 'build_spec',
+        'build_spec',
         'use_custom_suite', 'custom_suite',
         'admin_password',
         'comment',
-        'use_j2me_endpoint',
         # Application only
         'cloudcare_enabled',
         'case_sharing',
@@ -873,9 +872,7 @@ def edit_app_attr(request, domain, app_id, attr):
         ('cloudcare_enabled', None, _always_allowed),
         ('manage_urls', None, _always_allowed),
         ('name', None, _always_allowed),
-        ('platform', None, _always_allowed),
         ('recipients', None, _always_allowed),
-        ('text_input', None, _always_allowed),
         ('use_custom_suite', None, _always_allowed),
         ('secure_submissions', None, _always_allowed),
         ('translation_strategy', None, _always_allowed),
@@ -885,7 +882,6 @@ def edit_app_attr(request, domain, app_id, attr):
         ('target_commcare_flavor', None, _always_allowed),
         ('comment', None, _always_allowed),
         ('custom_base_url', None, _always_allowed),
-        ('use_j2me_endpoint', None, _always_allowed),
         ('mobile_ucr_restore_version', None, _always_allowed),
         ('location_fixture_restore', None, _always_allowed),
     )

@@ -315,3 +315,22 @@ class OAuth2PasswordGrantManager(AuthManager):
         )
         make_session_public_only(session, domain_name, src='motech_oauth_send_attempt')
         return session
+
+
+class ApiKeyAuthManager(AuthManager):
+    def __init__(self, api_key):
+        self.api_key = api_key
+
+    def get_auth(self):
+        return CustomValueAuth(self.api_key)
+
+
+class CustomValueAuth(AuthBase):
+    def __init__(self, header_value):
+        self.header_value = header_value
+
+    def __call__(self, r):
+        if not re.compile('^https').match(r.url):
+            raise RequestException(None, r, "Endpoint must be 'HTTPS' to use API Key auth")
+        r.headers["Authorization"] = self.header_value
+        return r

@@ -19,7 +19,14 @@ hqDefine("app_manager/js/details/sort_rows", function () {
 
         self.showWarning = ko.observable(false);
         self.hasValidPropertyName = function () {
-            return Utils.isValidPropertyName(self.selectField.val());
+            let name = self.selectField.val();
+            // changes here should also be made in
+            // corehq.apps.app_manager.helpers.validators.ModuleDetailValidatorMixin._validate_detail_screen_field
+            if (new RegExp('^_cc_calculated_(\\d+)$').test(name)) {
+                // special case for calculated properties
+                return true;
+            }
+            return Utils.isValidPropertyName(name);
         };
         self.display = ko.observable(typeof params.display !== 'undefined' ? params.display : "");
         self.display.subscribe(function () {
@@ -31,7 +38,8 @@ hqDefine("app_manager/js/details/sort_rows", function () {
                 self.showWarning(true);
             } else {
                 self.showWarning(false);
-                self.display(self.toTitleCase(this.val()));
+                let display = self.toTitleCase(this.valLabel()).split('(')[0].trim();
+                self.display(display);
                 self.notifyButton();
             }
         });
@@ -96,6 +104,7 @@ hqDefine("app_manager/js/details/sort_rows", function () {
     var sortRows = function (properties, saveButton) {
         var self = {};
         self.sortRows = ko.observableArray([]);
+        self.properties = properties;
 
         self.addSortRow = function (field, type, direction, blanks, display, notify, sortCalculation) {
             self.sortRows.push(sortRow({
@@ -104,7 +113,7 @@ hqDefine("app_manager/js/details/sort_rows", function () {
                 direction: direction,
                 blanks: blanks,
                 display: display,
-                properties: properties,
+                properties: [...self.properties],  // clone list here to avoid updates from select2 leaking out
                 sortCalculation: sortCalculation,
             }, saveButton));
             if (notify) {
@@ -123,6 +132,24 @@ hqDefine("app_manager/js/details/sort_rows", function () {
         self.showing = ko.computed(function () {
             return self.rowCount() > 0;
         });
+
+        self.updateSortProperties = function (newProperties, changedValues) {
+            self.properties = newProperties;
+
+            // update existing sort rows with the new options
+            // and re-apply the selected value
+            self.sortRows().forEach((row) => {
+                let oldSelection = row.selectField.val();
+                row.selectField.setOptions(newProperties);
+                if (changedValues[oldSelection] !== undefined) {
+                    // handle changed values and deletions
+                    row.selectField.val(changedValues[oldSelection]);
+                } else {
+                    row.selectField.val(oldSelection);
+                }
+                row.selectField.fire("change");
+            });
+        }
 
         return self;
     };

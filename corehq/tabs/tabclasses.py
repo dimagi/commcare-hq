@@ -40,6 +40,7 @@ from corehq.apps.events.views import (
     AttendeesListView,
     EventsView,
 )
+from corehq.apps.geospatial.views import MapView
 from corehq.apps.hqadmin.reports import (
     DeployHistoryReport,
     DeviceLogSoftAssertReport,
@@ -2504,6 +2505,29 @@ class AttendanceTrackingTab(UITab):
     def _is_viewable(self):
         # The FF check is temporary until the full feature is released
         return toggles.ATTENDANCE_TRACKING.enabled(self.domain) and self.couch_user.can_manage_events(self.domain)
+
+
+class GeospatialTab(UITab):
+    title = gettext_noop("Geospatial")
+    view = MapView.urlname
+    _is_viewable = False
+
+    url_prefix_formats = (
+        '/a/{domain}/settings/geospatial',
+    )
+
+    @property
+    def sidebar_items(self):
+        items = [
+            (_("Map Visualization"), [
+                {
+                    'title': _("View Map"),
+                    'url': reverse(MapView.urlname, args=(self.domain,)),
+                    'description': _('Visually view and manage cases on a map')
+                }
+            ])
+        ]
+        return items
 
 
 def _get_repeat_record_report(domain):
