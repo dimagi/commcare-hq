@@ -28,6 +28,14 @@ class FactoryContext():
 
     domain: Optional[str] = None
 
+    def expression_from_spec(self, spec):
+        from corehq.apps.userreports.expressions.factory import ExpressionFactory
+        return ExpressionFactory.from_spec(spec, self)
+
+    def filter_from_spec(self, spec):
+        from corehq.apps.userreports.filters.factory import FilterFactory
+        return FilterFactory.from_spec(spec, self)
+
     @property
     @memoized
     def named_filters(self):
@@ -97,3 +105,7 @@ class EvaluationContext(object):
     def reset_iteration(self):
         self.iteration_cache = {}
         self.iteration = 0
+
+    @staticmethod
+    def empty():
+        return EvaluationContext({})

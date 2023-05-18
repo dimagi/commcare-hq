@@ -1086,6 +1086,7 @@ msgstr ""
 #: corehq/motech/forms.py
 #: corehq/motech/generic_inbound/templates/generic_inbound/api_edit.html
 #: corehq/motech/repeaters/templates/repeaters/partials/repeater_row.html
+#: corehq/motech/repeaters/templates/repeaters/repeat_record_report.html
 #: corehq/motech/templates/motech/connection_settings.html
 msgid "Cancel"
 msgstr "Cancelar"
@@ -5266,6 +5267,10 @@ msgstr ""
 "(ingresado a PostURL)"
 
 #: corehq/apps/app_manager/static_strings.py
+msgid "What the 'Extra Key' (# on Nokia Phones) does when pressed"
+msgstr "Qué hace la 'Tecla Extra' (# en Teléfonos Nokia) al presionarla"
+
+#: corehq/apps/app_manager/static_strings.py
 msgid ""
 "When a value is selected, this feature controls the display size of any user-"
 "provided image such that it will be consistent with the size of the original "
@@ -6287,15 +6292,6 @@ msgid ""
 "appears to be pointing\n"
 "                to a menu using \"Display only forms,\" which makes that "
 "menu an invalid choice.\n"
-"              "
-msgstr ""
-
-#: corehq/apps/app_manager/templates/app_manager/partials/build_errors.html
-msgid ""
-"\n"
-"                Linking for a form in a multi-select case list is restricted "
-"to multi-select forms only.\n"
-"                Please ensure your form is multi-select.\n"
 "              "
 msgstr ""
 
@@ -14558,17 +14554,12 @@ msgid "Custom Logo"
 msgstr "Logo Personalizado"
 
 #: corehq/apps/domain/forms.py
-#, fuzzy, python-brace-format
-#| msgid ""
-#| "Upload a custom image to display instead of the CommCare HQ logo.  It "
-#| "will be automatically resized to a height of 32 pixels."
+#, python-brace-format
 msgid ""
 "Upload a custom image to display instead of the CommCare HQ logo.  It will "
 "be automatically resized to a height of 32 pixels. Upload size limit is "
 "{size_limit} MB."
 msgstr ""
-"Cargue una imagen personalizada para mostrar en vez del logo de CommCare HQ. "
-"Este será ajustado a una altura de 32 pixeles."
 
 #: corehq/apps/domain/forms.py
 msgid "Delete Logo"
@@ -18588,30 +18579,24 @@ msgid "Edit Attendee"
 msgstr ""
 
 #: corehq/apps/events/views.py
-#, fuzzy
-#| msgid "Mobile Worker Upload Status"
 msgid "Enabling mobile worker attendees status"
-msgstr "Estado de Carga de Usuario Móvil"
+msgstr ""
 
 #: corehq/apps/events/views.py
 msgid "Disabling mobile worker attendees status"
 msgstr ""
 
 #: corehq/apps/events/views.py
-#, fuzzy
-#| msgid "Restoring your forms, this may take some time..."
 msgid "Processing Mobile Workers. This may take some time..."
-msgstr "Restaurando sus formularios; esto puede llevar un tiempo..."
+msgstr ""
 
 #: corehq/apps/events/views.py
 msgid "User conversion failed for some reason and we have noted this failure."
 msgstr ""
 
 #: corehq/apps/events/views.py
-#, fuzzy
-#| msgid "Go back to Mobile Workers"
 msgid "Go back to view attendees"
-msgstr "Regresar a Usuarios Móviles"
+msgstr ""
 
 #: corehq/apps/events/views.py
 msgid "Mobile workers can now also be selected to attend events."
@@ -21184,6 +21169,16 @@ msgstr ""
 msgid "File has been uploaded successfully and is queued for processing."
 msgstr ""
 
+#: corehq/apps/geospatial/views.py corehq/tabs/tabclasses.py
+msgid "Geospatial"
+msgstr ""
+
+#: corehq/apps/geospatial/views.py corehq/tabs/tabclasses.py
+#, fuzzy
+#| msgid "No Validation"
+msgid "Map Visualization"
+msgstr "No Validación"
+
 #: corehq/apps/groups/templates/groups/all_groups.html
 #: corehq/apps/reports/filters/users.py
 #: corehq/apps/reports/templates/reports/project_health/user_details.html
@@ -22010,16 +22005,12 @@ msgid "Automatic Case Update Rule"
 msgstr ""
 
 #: corehq/apps/hqcase/utils.py
-#, fuzzy
-#| msgid "Application Build"
 msgid "Deduplication Rule"
-msgstr "Desarrollo de Aplicación"
+msgstr ""
 
 #: corehq/apps/hqcase/utils.py
-#, fuzzy
-#| msgid "Zapier Integration"
 msgid "DHIS2 Integration"
-msgstr "Integración Zapier"
+msgstr ""
 
 #: corehq/apps/hqmedia/cache.py
 #, python-format
@@ -41599,12 +41590,24 @@ msgstr ""
 msgid "Auth type '{}' requires a username."
 msgstr ""
 
-#: corehq/motech/generic_inbound/core.py
+#: corehq/motech/generic_inbound/backend/base.py
 msgid "Unexpected type for transformed request"
+msgstr ""
+
+#: corehq/motech/generic_inbound/backend/hl7.py
+msgid "Error parsing HL7: {}"
+msgstr ""
+
+#: corehq/motech/generic_inbound/backend/json.py
+msgid "Payload must be valid JSON"
 msgstr ""
 
 #: corehq/motech/generic_inbound/forms.py
 msgid "Create a new API"
+msgstr ""
+
+#: corehq/motech/generic_inbound/forms.py
+msgid "Input Data Type"
 msgstr ""
 
 #: corehq/motech/generic_inbound/forms.py
@@ -41613,6 +41616,15 @@ msgstr ""
 
 #: corehq/motech/generic_inbound/forms.py corehq/tabs/tabclasses.py
 msgid "Filters and Expressions"
+msgstr ""
+
+#: corehq/motech/generic_inbound/models.py
+#: corehq/motech/repeaters/repeater_generators.py
+msgid "JSON"
+msgstr "JSON"
+
+#: corehq/motech/generic_inbound/models.py
+msgid "HL7 v2"
 msgstr ""
 
 #: corehq/motech/generic_inbound/models.py
@@ -41699,10 +41711,6 @@ msgstr ""
 
 #: corehq/motech/generic_inbound/utils.py
 msgid "Unable to decode request body"
-msgstr ""
-
-#: corehq/motech/generic_inbound/utils.py
-msgid "Payload must be valid JSON"
 msgstr ""
 
 #: corehq/motech/generic_inbound/views.py
@@ -42084,10 +42092,6 @@ msgid "XML"
 msgstr "XML"
 
 #: corehq/motech/repeaters/repeater_generators.py
-msgid "JSON"
-msgstr "JSON"
-
-#: corehq/motech/repeaters/repeater_generators.py
 msgid "Python dictionary"
 msgstr ""
 
@@ -42160,15 +42164,24 @@ msgid ""
 msgstr ""
 
 #: corehq/motech/repeaters/templates/repeaters/repeat_record_report.html
-msgid "Resend selected"
+msgid "Resend selected records"
 msgstr ""
 
 #: corehq/motech/repeaters/templates/repeaters/repeat_record_report.html
-msgid "Cancel selected"
+#: corehq/motech/repeaters/views/repeat_records.py
+msgid "Resend"
+msgstr "Reenviar"
+
+#: corehq/motech/repeaters/templates/repeaters/repeat_record_report.html
+msgid "Cancel selected records"
 msgstr ""
 
 #: corehq/motech/repeaters/templates/repeaters/repeat_record_report.html
-msgid "Requeue selected"
+msgid "Requeue selected records"
+msgstr ""
+
+#: corehq/motech/repeaters/templates/repeaters/repeat_record_report.html
+msgid "Requeue"
 msgstr ""
 
 #: corehq/motech/repeaters/templates/repeaters/repeat_record_report.html
@@ -42253,10 +42266,6 @@ msgstr "Intentos de Envíos"
 #: corehq/motech/repeaters/views/repeat_records.py
 msgid "View payload"
 msgstr "Ver carga útil"
-
-#: corehq/motech/repeaters/views/repeat_records.py
-msgid "Resend"
-msgstr "Reenviar"
 
 #: corehq/motech/repeaters/views/repeat_records.py
 msgid "Cancel or Requeue payload"
@@ -42595,6 +42604,10 @@ msgstr ""
 msgid "Sort multiple rows in exports simultaneously"
 msgstr ""
 
+#: corehq/privileges.py
+msgid "Allow exports to have ownership"
+msgstr ""
+
 #: corehq/reports.py
 msgid "Report Builder Reports"
 msgstr "Reportes de Desarrollador de Reportes"
@@ -42872,6 +42885,16 @@ msgstr ""
 
 #: corehq/tabs/tabclasses.py
 msgid "Manage Attendance Tracking Events"
+msgstr ""
+
+#: corehq/tabs/tabclasses.py
+#, fuzzy
+#| msgid "View app"
+msgid "View Map"
+msgstr "Ver app"
+
+#: corehq/tabs/tabclasses.py
+msgid "Visually view and manage cases on a map"
 msgstr ""
 
 #: corehq/trans_override.py

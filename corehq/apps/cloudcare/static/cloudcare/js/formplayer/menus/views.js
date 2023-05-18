@@ -232,9 +232,23 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
         },
 
         rowClick: function (e) {
-            if (!(e.target.classList.contains('module-case-list-column-checkbox') || e.target.classList.contains("select-row-checkbox"))) {
+            if (!(
+                e.target.classList.contains('module-case-list-column-checkbox') ||  // multiselect checkbox
+                e.target.classList.contains("select-row-checkbox") ||               // multiselect select all
+                $(e.target).is('a')                                                 // actual link, as in markdown
+            )) {
                 e.preventDefault();
-                FormplayerFrontend.trigger("menu:show:detail", this.model.get('id'), 0, this.isMultiSelect);
+                let model_id = this.model.get('id');
+                if (!this.model.collection.hasDetails) {
+                    if (this.isMultiSelect) {
+                        let action = this.isChecked() ? constants.MULTI_SELECT_ADD : constants.MULTI_SELECT_REMOVE;
+                        FormplayerFrontend.trigger("multiSelect:updateCases", action, [model_id]);
+                    } else {
+                        FormplayerFrontend.trigger("menu:select", model_id);
+                    }
+                    return;
+                }
+                FormplayerFrontend.trigger("menu:show:detail", model_id, 0, this.isMultiSelect);
             }
         },
 
@@ -254,11 +268,15 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
         },
 
         templateContext: function () {
-            const appId = utils.currentUrlToObject().appId;
+            const appId = utils.currentUrlToObject().appId,
+                md = window.markdownit();
             return {
                 data: this.options.model.get('data'),
                 styles: this.options.styles,
                 isMultiSelect: this.options.isMultiSelect,
+                renderMarkdown: function (datum) {
+                    return md.render(DOMPurify.sanitize(datum || ""));
+                },
                 resolveUri: function (uri) {
                     return FormplayerFrontend.getChannel().request('resourceMap', uri, appId);
                 },
@@ -277,12 +295,8 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
         className: "formplayer-request list-cell-wrapper-style",
         template: _.template($("#case-tile-view-item-template").html() || ""),
         templateContext: function () {
-            const dict = CaseTileView.__super__.templateContext.apply(this, arguments),
-                md = window.markdownit();
+            const dict = CaseTileView.__super__.templateContext.apply(this, arguments);
             dict['prefix'] = this.options.prefix;
-            dict['renderMarkdown'] = function (datum) {
-                return md.render(DOMPurify.sanitize(datum || ""));
-            };
             return dict;
         },
     });

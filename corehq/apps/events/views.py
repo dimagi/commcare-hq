@@ -95,7 +95,7 @@ class EventsView(BaseEventView, CRUDPaginatedViewMixin):
 
     @property
     def domain_events(self):
-        return Event.objects.by_domain(self.domain, most_recent_first=True)
+        return Event.objects.by_domain(self.domain, not_started_first=True)
 
     @property
     def paginated_list(self):
