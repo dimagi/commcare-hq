@@ -1080,6 +1080,7 @@ ACTION_TIMES_API = StaticToggle(
     'action_times_api',
     'Enable the Action Times API',
     TAG_CUSTOM,
+    help_link='https://confluence.dimagi.com/display/GTD/Action+Times+API',
     namespaces=[NAMESPACE_USER],
 )
 
