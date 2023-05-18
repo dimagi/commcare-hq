@@ -6,6 +6,7 @@ BASIC_AUTH = "basic"
 DIGEST_AUTH = "digest"
 OAUTH1 = "oauth1"
 BEARER_AUTH = "bearer"
+APIKEY_AUTH = "api_key"
 OAUTH2_PWD = "oauth2_pwd"
 OAUTH2_CLIENT = "oauth2_client"
 AUTH_TYPES = (
@@ -32,6 +33,9 @@ AUTH_TYPES = (
     # https://oauth.net/2/bearer-tokens/
     # https://www.rfc-editor.org/rfc/rfc6750
     (BEARER_AUTH, "Bearer Token"),
+
+    # Simple auth scheme that places the key in the request header.
+    (APIKEY_AUTH, "API Key"),
 )
 AUTH_TYPES_REQUIRE_USERNAME = (
     BASIC_AUTH,

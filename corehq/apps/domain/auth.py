@@ -20,13 +20,12 @@ from dimagi.utils.web import get_ip
 
 from corehq.apps.receiverwrapper.util import DEMO_SUBMIT_MODE
 from corehq.apps.users.models import CouchUser, HQApiKey
-from corehq.toggles import API_THROTTLE_WHITELIST, TWO_STAGE_USER_PROVISIONING
+from corehq.toggles import TWO_STAGE_USER_PROVISIONING
 from corehq.util.hmac_request import validate_request_hmac
 from corehq.util.metrics import metrics_counter
 
 auth_logger = logging.getLogger("commcare_auth")
 
-J2ME = 'j2me'
 ANDROID = 'android'
 
 BASIC = 'basic'
@@ -94,15 +93,7 @@ def determine_authtype_from_request(request, default=DIGEST):
     if request.GET.get('submit_mode') == DEMO_SUBMIT_MODE:
         return NOAUTH
 
-    user_agent = request.META.get('HTTP_USER_AGENT')
-    if is_probably_j2me(user_agent):
-        return DIGEST
     return determine_authtype_from_header(request, default)
-
-
-def is_probably_j2me(user_agent):
-    j2me_pattern = '[Nn]okia|NOKIA|CLDC|cldc|MIDP|midp|Series60|Series40|[Ss]ymbian|SymbOS|[Mm]aemo'
-    return user_agent and re.search(j2me_pattern, user_agent)
 
 
 @sensitive_variables('auth', 'password')

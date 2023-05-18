@@ -110,7 +110,7 @@ class EntryInstances(PostProcessor):
         self.require_instances(entry, instances=all_instances, instance_ids=unknown_instance_ids)
 
     def _get_all_xpaths_for_entry(self, entry):
-        relevance_by_menu, menu_by_command = self._get_menu_relevance_mapping()
+        xpaths_by_menu, menu_by_command = self._get_menu_xpaths()
         details_by_id = self._get_detail_mapping()
         detail_ids = set()
         xpaths = set()
@@ -146,8 +146,8 @@ class EntryInstances(PostProcessor):
         entry_id = entry.command.id
         if entry_id in menu_by_command:
             menu_id = menu_by_command[entry_id]
-            relevances = relevance_by_menu[menu_id]
-            xpaths.update(relevances)
+            menu_xpaths = xpaths_by_menu[menu_id]
+            xpaths.update(menu_xpaths)
 
         for detail in details:
             xpaths.update(detail.get_all_xpaths())
@@ -164,18 +164,20 @@ class EntryInstances(PostProcessor):
         return {detail.id: detail for detail in self.suite.details}
 
     @memoized
-    def _get_menu_relevance_mapping(self):
-        relevance_by_menu = defaultdict(list)
+    def _get_menu_xpaths(self):
+        xpaths_by_menu = defaultdict(list)
         menu_by_command = {}
         for menu in self.suite.menus:
             for command in menu.commands:
                 menu_by_command[command.id] = menu.id
                 if command.relevant:
-                    relevance_by_menu[menu.id].append(command.relevant)
+                    xpaths_by_menu[menu.id].append(command.relevant)
             if menu.relevant:
-                relevance_by_menu[menu.id].append(menu.relevant)
+                xpaths_by_menu[menu.id].append(menu.relevant)
+            for assertion in menu.assertions:
+                xpaths_by_menu[menu.id].append(assertion.test)
 
-        return relevance_by_menu, menu_by_command
+        return xpaths_by_menu, menu_by_command
 
     def _get_custom_instances(self, entry, known_instances, required_instances):
         if entry.command.id not in self._form_module_by_command_id:

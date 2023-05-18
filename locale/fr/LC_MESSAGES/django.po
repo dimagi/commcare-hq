@@ -988,6 +988,7 @@ msgstr ""
 #: corehq/motech/forms.py
 #: corehq/motech/generic_inbound/templates/generic_inbound/api_edit.html
 #: corehq/motech/repeaters/templates/repeaters/partials/repeater_row.html
+#: corehq/motech/repeaters/templates/repeaters/repeat_record_report.html
 #: corehq/motech/templates/motech/connection_settings.html
 msgid "Cancel"
 msgstr ""
@@ -3715,14 +3716,6 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/app_manager/helpers/validators.py
-#, python-brace-format
-msgid ""
-"Your app requires {0} passwords but the admin password is not {0}. To "
-"resolve, go to app settings, Advanced Settings, Java Phone General Settings, "
-"and reset the Admin Password to something that is {0}"
-msgstr ""
-
-#: corehq/apps/app_manager/helpers/validators.py
 msgid ""
 "Your application is using User Properties and your current subscription does "
 "not support that. You can remove User Properties functionality by opening "
@@ -4243,10 +4236,6 @@ msgid "Choose an image to replace the default CommCare Home Screen logo"
 msgstr ""
 
 #: corehq/apps/app_manager/static_strings.py
-msgid "Choose to label the login buttons with Icons or Text"
-msgstr ""
-
-#: corehq/apps/app_manager/static_strings.py
 msgid ""
 "Choose whether or not mobile workers can view previously submitted forms."
 msgstr ""
@@ -4270,14 +4259,6 @@ msgid "CommCare LTS"
 msgstr ""
 
 #: corehq/apps/app_manager/static_strings.py
-msgid "CommCare Sense"
-msgstr ""
-
-#: corehq/apps/app_manager/static_strings.py
-msgid "Configure for low-literate users, J2ME only"
-msgstr ""
-
-#: corehq/apps/app_manager/static_strings.py
 msgid ""
 "Configure form menus display. For per-module option turn on grid view for "
 "the form's menu in a module under module's settings page. Read more on the "
@@ -4287,10 +4268,6 @@ msgstr ""
 
 #: corehq/apps/app_manager/static_strings.py
 msgid "Custom Base URL"
-msgstr ""
-
-#: corehq/apps/app_manager/static_strings.py
-msgid "Custom Keys"
 msgstr ""
 
 #: corehq/apps/app_manager/static_strings.py
@@ -4331,20 +4308,6 @@ msgid "Demo Logo"
 msgstr ""
 
 #: corehq/apps/app_manager/static_strings.py
-msgid ""
-"Determines if the server automatically attempts to send data to the phone "
-"(Two-Way), or only attempt to send data on demand (Push Only); projects "
-"using Case Sharing should choose Two-Way. If set to Push Only, the Auto-Sync "
-"Frequency and Unsynced Time Limit settings will have no effect."
-msgstr ""
-
-#: corehq/apps/app_manager/static_strings.py
-msgid ""
-"Determines whether phone keys will type letters or numbers by default when "
-"typing in the password field."
-msgstr ""
-
-#: corehq/apps/app_manager/static_strings.py
 #: corehq/apps/enterprise/templates/enterprise/partials/enterprise_permissions_table.html
 #: corehq/apps/export/templates/export/partials/table.html
 #: corehq/apps/hqadmin/forms.py
@@ -4381,16 +4344,8 @@ msgid "Enabled"
 msgstr ""
 
 #: corehq/apps/app_manager/static_strings.py
-msgid "Extra Key Action"
-msgstr ""
-
-#: corehq/apps/app_manager/static_strings.py
 msgid ""
 "For mobile map displays, chooses a base tileset for the underlying map layer"
-msgstr ""
-
-#: corehq/apps/app_manager/static_strings.py
-msgid "Form Entry Style"
 msgstr ""
 
 #: corehq/apps/app_manager/static_strings.py
@@ -4399,10 +4354,6 @@ msgstr ""
 
 #: corehq/apps/app_manager/static_strings.py
 msgid "Forms are Never Removed"
-msgstr ""
-
-#: corehq/apps/app_manager/static_strings.py
-msgid "Full Keyboard"
 msgstr ""
 
 #: corehq/apps/app_manager/static_strings.py
@@ -4444,10 +4395,6 @@ msgid "Horizontal Resize"
 msgstr ""
 
 #: corehq/apps/app_manager/static_strings.py
-msgid "How Send All Unsent functionality is presented to the user"
-msgstr ""
-
-#: corehq/apps/app_manager/static_strings.py
 msgid ""
 "How often CommCare mobile should attempt to check for a new, released "
 "application version."
@@ -4469,13 +4416,6 @@ msgstr ""
 
 #: corehq/apps/app_manager/static_strings.py
 msgid ""
-"If automatic is enabled, forms will attempt to send on their own without "
-"intervention from the user. If manual is enabled, the user must manually "
-"decide when to attempt to send forms."
-msgstr ""
-
-#: corehq/apps/app_manager/static_strings.py
-msgid ""
 "If multimedia validation is enabled, CommCare will perform an additional "
 "check after installing your app to ensure that all of your multimedia is "
 "present on the phone before allowing the app to run. It is recommended for "
@@ -4487,43 +4427,13 @@ msgid "Image Compatibility on Multiple Devices"
 msgstr ""
 
 #: corehq/apps/app_manager/static_strings.py
-msgid ""
-"In normal mode, users log in each time with their username and password. In "
-"auto-login mode, once a user (not the 'admin' or 'demo' users) has logged "
-"in, the application will start up with that user already logged in."
-msgstr ""
-
-#: corehq/apps/app_manager/static_strings.py
 #: corehq/apps/cloudcare/templates/formplayer/grid_view.html
 #: corehq/apps/cloudcare/templates/formplayer/session_list.html
 msgid "Incomplete Forms"
 msgstr ""
 
 #: corehq/apps/app_manager/static_strings.py
-msgid "Item Selection Mode"
-msgstr ""
-
-#: corehq/apps/app_manager/static_strings.py
-msgid "Java Phone General Settings"
-msgstr ""
-
-#: corehq/apps/app_manager/static_strings.py
-msgid "Java Phone Platform"
-msgstr ""
-
-#: corehq/apps/app_manager/static_strings.py
-msgid "Java Phone User Interface Settings"
-msgstr ""
-
-#: corehq/apps/app_manager/static_strings.py
 msgid "Just One Day"
-msgstr ""
-
-#: corehq/apps/app_manager/static_strings.py
-msgid ""
-"Language cycles through any available translations. Audio plays the "
-"question's audio if available. NOTE: If audio is selected, a question's "
-"audio will not be played by default when the question is displayed."
 msgstr ""
 
 #: corehq/apps/app_manager/static_strings.py
@@ -4557,10 +4467,6 @@ msgstr ""
 
 #: corehq/apps/app_manager/static_strings.py
 msgid "Logging Enabled"
-msgstr ""
-
-#: corehq/apps/app_manager/static_strings.py
-msgid "Login Buttons"
 msgstr ""
 
 #: corehq/apps/app_manager/static_strings.py
@@ -4616,25 +4522,6 @@ msgid "Multimedia Validation"
 msgstr ""
 
 #: corehq/apps/app_manager/static_strings.py
-msgid ""
-"Multiple Questions per Screen displays a running list of questions on the "
-"screen at the same time. One Question per Screen displays each question "
-"independently. Note: OQPS does not support some features"
-msgstr ""
-
-#: corehq/apps/app_manager/static_strings.py
-msgid "Multiple Questions per Screen"
-msgstr ""
-
-#: corehq/apps/app_manager/static_strings.py
-msgid "Must correspond to the password format specified below."
-msgstr ""
-
-#: corehq/apps/app_manager/static_strings.py
-msgid "Native (International)"
-msgstr ""
-
-#: corehq/apps/app_manager/static_strings.py
 #: corehq/apps/linked_domain/view_helpers.py
 #: corehq/apps/reports/standard/deployments.py
 msgid "Never"
@@ -4663,14 +4550,6 @@ msgid "No"
 msgstr ""
 
 #: corehq/apps/app_manager/static_strings.py
-msgid "Nokia S40 (default)"
-msgstr ""
-
-#: corehq/apps/app_manager/static_strings.py
-msgid "Nokia S60"
-msgstr ""
-
-#: corehq/apps/app_manager/static_strings.py
 #: corehq/apps/custom_data_fields/templates/custom_data_fields/partials/fields_tab.html
 #: corehq/apps/domain/views/accounting.py corehq/apps/enterprise/views.py
 #: corehq/apps/export/templates/export/partials/table.html
@@ -4690,13 +4569,6 @@ msgstr ""
 
 #: corehq/apps/app_manager/static_strings.py
 msgid "Number of unsent forms on phone before triggering warning text"
-msgstr ""
-
-#: corehq/apps/app_manager/static_strings.py
-msgid ""
-"Numeric Selection mode will display information about questions for longer "
-"and require more input from the user. Normal Scrolling will proceed to the "
-"next question whenever enough information is provided."
 msgstr ""
 
 #: corehq/apps/app_manager/static_strings.py
@@ -4756,10 +4628,6 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/app_manager/static_strings.py
-msgid "Password Format"
-msgstr ""
-
-#: corehq/apps/app_manager/static_strings.py
 #: corehq/apps/app_manager/templates/app_manager/partials/releases/build_profiles.html
 msgid "Practice Mobile Worker"
 msgstr ""
@@ -4792,10 +4660,6 @@ msgid "Purge Frequency"
 msgstr ""
 
 #: corehq/apps/app_manager/static_strings.py
-msgid "Push Only"
-msgstr ""
-
-#: corehq/apps/app_manager/static_strings.py
 #: corehq/apps/app_manager/templates/app_manager/partials/forms/case_config.html
 #: corehq/apps/app_manager/templates/app_manager/partials/forms/case_config_ko_templates.html
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/case_search_property.html
@@ -4811,10 +4675,6 @@ msgid "Restrict this app to the selected CommCare flavor"
 msgstr ""
 
 #: corehq/apps/app_manager/static_strings.py
-msgid "Roman"
-msgstr ""
-
-#: corehq/apps/app_manager/static_strings.py
 msgid "Saved Forms"
 msgstr ""
 
@@ -4827,15 +4687,7 @@ msgid "Select the mobile worker to use as a practice user for this application"
 msgstr ""
 
 #: corehq/apps/app_manager/static_strings.py
-msgid "Send Data Over HTTP"
-msgstr ""
-
-#: corehq/apps/app_manager/static_strings.py
 msgid "Send Data"
-msgstr ""
-
-#: corehq/apps/app_manager/static_strings.py
-msgid "Send Forms Mode"
 msgstr ""
 
 #: corehq/apps/app_manager/static_strings.py
@@ -4868,10 +4720,6 @@ msgid "Strict"
 msgstr ""
 
 #: corehq/apps/app_manager/static_strings.py
-msgid "Sync Mode"
-msgstr ""
-
-#: corehq/apps/app_manager/static_strings.py
 msgid "Target CommCare Flavor"
 msgstr ""
 
@@ -4887,16 +4735,6 @@ msgstr ""
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/case_search_property.html
 #: corehq/apps/reports/v2/filters/xpath_column.py
 msgid "Text"
-msgstr ""
-
-#: corehq/apps/app_manager/static_strings.py
-msgid "The kind of Java phone you want to run the application on"
-msgstr ""
-
-#: corehq/apps/app_manager/static_strings.py
-msgid ""
-"This value will set whether the login screen uses customizable icons for "
-"login and demo mode options or uses the standard buttons with labels."
 msgstr ""
 
 #: corehq/apps/app_manager/static_strings.py
@@ -4940,10 +4778,6 @@ msgstr ""
 
 #: corehq/apps/app_manager/static_strings.py
 msgid "Two Weeks"
-msgstr ""
-
-#: corehq/apps/app_manager/static_strings.py
-msgid "Two-Way Sync"
 msgstr ""
 
 #: corehq/apps/app_manager/static_strings.py
@@ -5041,10 +4875,6 @@ msgid "Weekly"
 msgstr ""
 
 #: corehq/apps/app_manager/static_strings.py
-msgid "What characters to allow users to input"
-msgstr ""
-
-#: corehq/apps/app_manager/static_strings.py
 msgid ""
 "What kind of log transmission the phone should attempt on a daily basis "
 "(submitted to PostURL)"
@@ -5058,10 +4888,6 @@ msgstr ""
 
 #: corehq/apps/app_manager/static_strings.py
 msgid "What the 'Extra Key' (# on Nokia Phones) does when pressed"
-msgstr ""
-
-#: corehq/apps/app_manager/static_strings.py
-msgid "What user interface style should be used during form entry."
 msgstr ""
 
 #: corehq/apps/app_manager/static_strings.py
@@ -5103,13 +4929,6 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/app_manager/static_strings.py
-msgid ""
-"When you select this box, your data will no longer be encrypted.  Because of "
-"changes regarding Java phone security certificates, it will be necessary to "
-"send data over HTTP to continue sending data to CommCare."
-msgstr ""
-
-#: corehq/apps/app_manager/static_strings.py
 msgid "Whenever Possible"
 msgstr ""
 
@@ -5133,15 +4952,7 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/app_manager/static_strings.py
-msgid "Whether form entry is optimized for speed, or for new users."
-msgstr ""
-
-#: corehq/apps/app_manager/static_strings.py
 msgid "Whether logging of incidents should be activated on the client."
-msgstr ""
-
-#: corehq/apps/app_manager/static_strings.py
-msgid "Whether or not the phone collects, saves, and sends data."
 msgstr ""
 
 #: corehq/apps/app_manager/static_strings.py
@@ -5168,10 +4979,6 @@ msgstr ""
 msgid ""
 "Whether users registered on the phone need to be registered with the "
 "submission server."
-msgstr ""
-
-#: corehq/apps/app_manager/static_strings.py
-msgid "WinMo"
 msgstr ""
 
 #: corehq/apps/app_manager/static_strings.py
@@ -6050,15 +5857,6 @@ msgid ""
 "appears to be pointing\n"
 "                to a menu using \"Display only forms,\" which makes that "
 "menu an invalid choice.\n"
-"              "
-msgstr ""
-
-#: corehq/apps/app_manager/templates/app_manager/partials/build_errors.html
-msgid ""
-"\n"
-"                Linking for a form in a multi-select case list is restricted "
-"to multi-select forms only.\n"
-"                Please ensure your form is multi-select.\n"
 "              "
 msgstr ""
 
@@ -10626,10 +10424,6 @@ msgid "Superuser Only"
 msgstr ""
 
 #: corehq/apps/builds/templates/builds/edit_menu.html
-msgid "J2me Enabled"
-msgstr ""
-
-#: corehq/apps/builds/templates/builds/edit_menu.html
 msgid "Add a Version"
 msgstr ""
 
@@ -14109,9 +13903,11 @@ msgid "Custom Logo"
 msgstr ""
 
 #: corehq/apps/domain/forms.py
+#, python-brace-format
 msgid ""
 "Upload a custom image to display instead of the CommCare HQ logo.  It will "
-"be automatically resized to a height of 32 pixels."
+"be automatically resized to a height of 32 pixels. Upload size limit is "
+"{size_limit} MB."
 msgstr ""
 
 #: corehq/apps/domain/forms.py
@@ -14243,6 +14039,10 @@ msgstr ""
 
 #: corehq/apps/domain/forms.py
 msgid "Default timezone"
+msgstr ""
+
+#: corehq/apps/domain/forms.py
+msgid "Logo exceeds {} MB size limit"
 msgstr ""
 
 #: corehq/apps/domain/forms.py
@@ -18003,6 +17803,50 @@ msgstr ""
 msgid "Edit Attendee"
 msgstr ""
 
+#: corehq/apps/events/views.py
+msgid "Enabling mobile worker attendees status"
+msgstr ""
+
+#: corehq/apps/events/views.py
+msgid "Disabling mobile worker attendees status"
+msgstr ""
+
+#: corehq/apps/events/views.py
+msgid "Processing Mobile Workers. This may take some time..."
+msgstr ""
+
+#: corehq/apps/events/views.py
+msgid "User conversion failed for some reason and we have noted this failure."
+msgstr ""
+
+#: corehq/apps/events/views.py
+msgid "Go back to view attendees"
+msgstr ""
+
+#: corehq/apps/events/views.py
+msgid "Mobile workers can now also be selected to attend events."
+msgstr ""
+
+#: corehq/apps/events/views.py
+msgid "Enabling mobile workers complete!"
+msgstr ""
+
+#: corehq/apps/events/views.py
+msgid "Enabling mobile worker attendees in progress. This may take a while..."
+msgstr ""
+
+#: corehq/apps/events/views.py
+msgid "Mobile workers are now removed from the potential attendees list."
+msgstr ""
+
+#: corehq/apps/events/views.py
+msgid "Disabling mobile workers complete!"
+msgstr ""
+
+#: corehq/apps/events/views.py
+msgid "Disabling mobile worker attendees in progress. This may take a while..."
+msgstr ""
+
 #: corehq/apps/export/det/schema_generator.py
 #, python-brace-format
 msgid "Export instance type {name} not supported!"
@@ -19606,6 +19450,13 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/export/views/download.py
+msgid ""
+"There are no sheets to export. If this is a bulk case export then the export "
+"configuration might still be busy populating its tables. Please try again "
+"later."
+msgstr ""
+
+#: corehq/apps/export/views/download.py
 msgid "You do not have permission to export de-identified exports."
 msgstr ""
 
@@ -19764,7 +19615,7 @@ msgid "Export De-Identified Cases"
 msgstr ""
 
 #: corehq/apps/export/views/list.py
-msgid "Populating tables for <strong>{}</strong> {}."
+msgid "Populating tables for <strong>{}</strong>. ({}%)"
 msgstr ""
 
 #: corehq/apps/export/views/list.py
@@ -20485,6 +20336,14 @@ msgstr ""
 
 #: corehq/apps/fixtures/views.py
 msgid "File has been uploaded successfully and is queued for processing."
+msgstr ""
+
+#: corehq/apps/geospatial/views.py corehq/tabs/tabclasses.py
+msgid "Geospatial"
+msgstr ""
+
+#: corehq/apps/geospatial/views.py corehq/tabs/tabclasses.py
+msgid "Map Visualization"
 msgstr ""
 
 #: corehq/apps/groups/templates/groups/all_groups.html
@@ -21275,6 +21134,14 @@ msgstr ""
 
 #: corehq/apps/hqcase/utils.py
 msgid "Automatic Case Update Rule"
+msgstr ""
+
+#: corehq/apps/hqcase/utils.py
+msgid "Deduplication Rule"
+msgstr ""
+
+#: corehq/apps/hqcase/utils.py
+msgid "DHIS2 Integration"
 msgstr ""
 
 #: corehq/apps/hqmedia/cache.py
@@ -40245,12 +40112,24 @@ msgstr ""
 msgid "Auth type '{}' requires a username."
 msgstr ""
 
-#: corehq/motech/generic_inbound/core.py
+#: corehq/motech/generic_inbound/backend/base.py
 msgid "Unexpected type for transformed request"
+msgstr ""
+
+#: corehq/motech/generic_inbound/backend/hl7.py
+msgid "Error parsing HL7: {}"
+msgstr ""
+
+#: corehq/motech/generic_inbound/backend/json.py
+msgid "Payload must be valid JSON"
 msgstr ""
 
 #: corehq/motech/generic_inbound/forms.py
 msgid "Create a new API"
+msgstr ""
+
+#: corehq/motech/generic_inbound/forms.py
+msgid "Input Data Type"
 msgstr ""
 
 #: corehq/motech/generic_inbound/forms.py
@@ -40259,6 +40138,15 @@ msgstr ""
 
 #: corehq/motech/generic_inbound/forms.py corehq/tabs/tabclasses.py
 msgid "Filters and Expressions"
+msgstr ""
+
+#: corehq/motech/generic_inbound/models.py
+#: corehq/motech/repeaters/repeater_generators.py
+msgid "JSON"
+msgstr ""
+
+#: corehq/motech/generic_inbound/models.py
+msgid "HL7 v2"
 msgstr ""
 
 #: corehq/motech/generic_inbound/models.py
@@ -40345,10 +40233,6 @@ msgstr ""
 
 #: corehq/motech/generic_inbound/utils.py
 msgid "Unable to decode request body"
-msgstr ""
-
-#: corehq/motech/generic_inbound/utils.py
-msgid "Payload must be valid JSON"
 msgstr ""
 
 #: corehq/motech/generic_inbound/views.py
@@ -40726,10 +40610,6 @@ msgid "XML"
 msgstr ""
 
 #: corehq/motech/repeaters/repeater_generators.py
-msgid "JSON"
-msgstr ""
-
-#: corehq/motech/repeaters/repeater_generators.py
 msgid "Python dictionary"
 msgstr ""
 
@@ -40802,15 +40682,24 @@ msgid ""
 msgstr ""
 
 #: corehq/motech/repeaters/templates/repeaters/repeat_record_report.html
-msgid "Resend selected"
+msgid "Resend selected records"
 msgstr ""
 
 #: corehq/motech/repeaters/templates/repeaters/repeat_record_report.html
-msgid "Cancel selected"
+#: corehq/motech/repeaters/views/repeat_records.py
+msgid "Resend"
 msgstr ""
 
 #: corehq/motech/repeaters/templates/repeaters/repeat_record_report.html
-msgid "Requeue selected"
+msgid "Cancel selected records"
+msgstr ""
+
+#: corehq/motech/repeaters/templates/repeaters/repeat_record_report.html
+msgid "Requeue selected records"
+msgstr ""
+
+#: corehq/motech/repeaters/templates/repeaters/repeat_record_report.html
+msgid "Requeue"
 msgstr ""
 
 #: corehq/motech/repeaters/templates/repeaters/repeat_record_report.html
@@ -40891,10 +40780,6 @@ msgstr ""
 
 #: corehq/motech/repeaters/views/repeat_records.py
 msgid "View payload"
-msgstr ""
-
-#: corehq/motech/repeaters/views/repeat_records.py
-msgid "Resend"
 msgstr ""
 
 #: corehq/motech/repeaters/views/repeat_records.py
@@ -41233,6 +41118,10 @@ msgstr ""
 msgid "Sort multiple rows in exports simultaneously"
 msgstr ""
 
+#: corehq/privileges.py
+msgid "Allow exports to have ownership"
+msgstr ""
+
 #: corehq/reports.py
 msgid "Report Builder Reports"
 msgstr ""
@@ -41510,6 +41399,14 @@ msgstr ""
 
 #: corehq/tabs/tabclasses.py
 msgid "Manage Attendance Tracking Events"
+msgstr ""
+
+#: corehq/tabs/tabclasses.py
+msgid "View Map"
+msgstr ""
+
+#: corehq/tabs/tabclasses.py
+msgid "Visually view and manage cases on a map"
 msgstr ""
 
 #: corehq/trans_override.py

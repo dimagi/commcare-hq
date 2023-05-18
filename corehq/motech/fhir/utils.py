@@ -79,12 +79,24 @@ def load_fhir_resource_types(fhir_version=FHIR_VERSION_4_0_1, exclude_resource_t
     return resource_types
 
 
-def require_fhir_json_accept_headers(view_func):
+def validate_accept_header_and_format_param(view_func):
     @wraps(view_func)
     def _inner(request, *args, **kwargs):
-        accept_header = request.META.get('HTTP_ACCEPT')
-        if accept_header and accept_header not in HQ_ACCEPTABLE_FHIR_MIME_TYPES + ['*/*']:
-            return JsonResponse(status=406, data={'message': "Not Acceptable"})
+        def _get_format_param(request):
+            if request.META.get('REQUEST_METHOD') == 'POST':
+                return request.POST.get('_format')
+            elif request.META.get('REQUEST_METHOD') == 'GET':
+                return request.GET.get('_format')
+            else:
+                return None
+        _format_param = _get_format_param(request)
+        if _format_param and _format_param not in HQ_ACCEPTABLE_FHIR_MIME_TYPES + ['json']:
+            return JsonResponse(status=406,
+                                data={'message': "Requested format in '_format' param not acceptable."})
+        else:
+            accept_header = request.META.get('HTTP_ACCEPT')
+            if accept_header and accept_header not in HQ_ACCEPTABLE_FHIR_MIME_TYPES + ['*/*']:
+                return JsonResponse(status=406, data={'message': "Not Acceptable"})
         return view_func(request, *args, **kwargs)
 
     return _inner

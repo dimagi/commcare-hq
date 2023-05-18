@@ -106,8 +106,10 @@ hqDefine("app_manager/js/details/screen", function () {
 
             column.field.on('change', function () {
                 if (!column.useXpathExpression) {
-                    column.header.val(getPropertyTitle(this.val()));
-                    column.header.fire("change");
+                    const oldVal = column.header.val(),
+                        newVal = getPropertyTitle(this.val());
+                    column.header.val(newVal);
+                    column.header.fire("change", {oldVal: oldVal, newVal: newVal});
                 }
             });
             if (column.original.hasAutocomplete) {
@@ -120,6 +122,15 @@ hqDefine("app_manager/js/details/screen", function () {
                 column.field.observableVal(column.original.field);
                 hqImport('app_manager/js/details/utils').setUpAutocomplete(column.field, self.properties);
             }
+            column.header.on('change', function (e) {
+                if (e.oldValue !== e.newValue) {
+                    self.fire("columnChange", [{
+                        "value": column,
+                        "index": self.columns.indexOf(column),
+                        "status": "edited"
+                    }]);
+                }
+            })
             return column;
         };
 
@@ -188,9 +199,45 @@ hqDefine("app_manager/js/details/screen", function () {
         self.enableTilePullDown.subscribe(function () {
             self.saveButton.fire('change');
         });
-        self.columns.subscribe(function () {
+        self.columns.subscribe(function (changes) {
             self.saveButton.fire('change');
-        });
+
+            // create events when rows (column objects) are moved and fire a special event that allows us to update
+            // dependent UI elements (sort properties)
+            const events = changes
+                // remove the 2nd event for column moves
+                .filter(c => !(c.status === 'deleted' && c.moved !== undefined));
+
+            // there should only be one 'change' now.
+            const change = events[0];
+
+            // for "moved" and "deleted" we need to add events for all the other columns that have changed their index
+            let affectedColumns, move;  // 'move' is an index diff to calculate the previous index
+            if (change.moved !== undefined) {
+                const moveFrom = change.moved,
+                    movedTo = change.index;
+                if (movedTo > moveFrom) {
+                    move = 1;
+                    affectedColumns = self.columns.slice(moveFrom, movedTo);
+                } else {
+                    move = -1;
+                    affectedColumns = self.columns.slice(movedTo + 1, moveFrom + 1);
+                }
+            } else if (change.status === 'deleted') {
+                move = 1;
+                affectedColumns = self.columns.slice(change.index);
+            }
+            if (affectedColumns) {
+                affectedColumns.forEach(c => {
+                    let index = self.columns.indexOf(c);
+                    events.push({
+                        value: c, index: index, status: "added", moved: index + move
+                    })
+                });
+            }
+
+            self.fire("columnChange", events);
+        }, null, 'arrayChange');
 
         self.save = function () {
             // Only save if property names are valid

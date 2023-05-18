@@ -47,7 +47,6 @@ class FormES(HQESQuery):
             user_id,
             user_type,
             user_ids_handle_unknown,
-            j2me_submissions,
             updating_cases,
         ] + super(FormES, self).builtin_filters
 
@@ -217,13 +216,6 @@ def user_ids_handle_unknown(user_ids):
     else:
         user_filter = filters.missing('form.meta.userID')
     return user_filter
-
-
-def j2me_submissions(gt=None, gte=None, lt=None, lte=None):
-    return filters.AND(
-        filters.regexp("form.meta.appVersion", "v2+.[0-9]+.*"),
-        submitted(gt, gte, lt, lte)
-    )
 
 
 def updating_cases(case_ids):
