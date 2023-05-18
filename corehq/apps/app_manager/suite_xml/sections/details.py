@@ -689,11 +689,13 @@ class CaseTileHelper(object):
         # Add case search action if needed
         if module_offers_search(self.module) and not module_uses_inline_search(self.module):
             in_search = module_loads_registry_case(self.module)
-            detail.actions.append(
-                DetailContributor.get_case_search_action(self.module,
-                                                         self.build_profile_id,
-                                                         in_search=in_search)
-            )
+            # don't add search again action in split screen
+            if not (toggles.SPLIT_SCREEN_CASE_SEARCH.enabled(self.app.domain) and in_search):
+                detail.actions.append(
+                    DetailContributor.get_case_search_action(self.module,
+                                                            self.build_profile_id,
+                                                            in_search=in_search)
+                )
 
         return detail
 
