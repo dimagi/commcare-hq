@@ -33,14 +33,12 @@ from django.utils.safestring import mark_safe
 from django.utils.translation import gettext as _, ngettext, gettext_lazy, gettext_noop
 
 from corehq.apps.users.analytics import get_role_user_count
-from dimagi.utils.couch import CriticalSection
 from soil.exceptions import TaskFailedError
 from soil.util import expose_cached_download, get_download_context
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.debug import sensitive_post_parameters
 from django.views.decorators.http import require_GET, require_POST
 from django_digest.decorators import httpdigest
-from django_otp.plugins.otp_static.models import StaticToken
 from django_prbac.utils import has_privilege
 from memoized import memoized
 
@@ -61,7 +59,6 @@ from corehq.apps.domain.decorators import (
     require_superuser,
 )
 from corehq.apps.domain.forms import clean_password
-from corehq.apps.domain.models import Domain
 from corehq.apps.domain.views.base import BaseDomainView
 from corehq.apps.enterprise.models import EnterprisePermissions
 from corehq.apps.es import UserES, queries
@@ -306,20 +303,6 @@ class BaseEditUserView(BaseUserSettingsView):
         return context
 
     @property
-    def backup_token(self):
-        if Domain.get_by_name(self.request.domain).two_factor_auth:
-            with CriticalSection([f"backup-token-{self.editable_user._id}"]):
-                device = (self.editable_user.get_django_user()
-                          .staticdevice_set
-                          .get_or_create(name='backup')[0])
-                token = device.token_set.first()
-                if token:
-                    return device.token_set.first().token
-                else:
-                    return device.token_set.create(token=StaticToken.random_token()).token
-        return None
-
-    @property
     @memoized
     def commtrack_form(self):
         if self.request.method == "POST" and self.request.POST['form_type'] == "commtrack":
@@ -454,8 +437,6 @@ class EditWebUserView(BaseEditUserView):
             ctx.update({'tableau_form': self.tableau_form})
         if self.can_grant_superuser_access:
             ctx.update({'update_permissions': True})
-
-        ctx.update({'token': self.backup_token})
 
         idp = IdentityProvider.get_active_identity_provider_by_username(
             self.editable_user.username
@@ -837,6 +818,7 @@ def _format_enterprise_user(domain, user):
 def paginate_web_users(request, domain):
     web_users, pagination = _get_web_users(request, [domain])
     web_users_fmt = [{
+        'eulas': u.get_eulas(),
         'email': u.get_email(),
         'domain': domain,
         'name': u.full_name,
