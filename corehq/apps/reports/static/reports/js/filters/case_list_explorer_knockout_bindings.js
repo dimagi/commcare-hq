@@ -15,11 +15,13 @@ hqDefine("reports/js/filters/case_list_explorer_knockout_bindings", ['jquery', '
                         highlightActiveLine: false,
                         maxLines: 30,
                         minLines: 3,
-                        fontSize: 14,
+                        fontSize: 13,
                         wrap: true,
+                        indentedSoftWrap: false,
                         useWorker: false, // enable the worker to show syntax errors
                     }
                 );
+            // editor.setAutoScrollEditorIntoView(true);
             editor.session.setMode('ace/mode/xquery'); // does reasonable syntax highlighting for XPath
 
             var updateKOModel = function () {
@@ -55,6 +57,8 @@ hqDefine("reports/js/filters/case_list_explorer_knockout_bindings", ['jquery', '
             var casePropertyAutocomplete = {
                 getCompletions: function (editor, session, pos, prefix, callback) {
                     var currentValue = editor.getValue(),
+                        maxCharacterLength = 0,
+                        newPopupWidth = 0,
                         leftQuotesSingle = (currentValue.substr(0, pos.column).match(/'/g) || []).length,
                         leftQuotesDouble = (currentValue.substr(0, pos.column).match(/"/g) || []).length,
                         insideQuote = leftQuotesSingle && (leftQuotesSingle % 2 !== 0) || leftQuotesDouble && (leftQuotesDouble % 2 !== 0);
@@ -63,12 +67,20 @@ hqDefine("reports/js/filters/case_list_explorer_knockout_bindings", ['jquery', '
                         return;
                     }
                     callback(null, _.map(caseProperties, function (suggestion) {
+                        var metaText = suggestion.case_type || suggestion.meta_type,
+                            currentCharacterLength = suggestion.name.length + metaText.length;
+                        if (currentCharacterLength > maxCharacterLength) {
+                            maxCharacterLength = currentCharacterLength;
+                        }
                         return {
                             name: suggestion.name,
                             value: suggestion.name,
-                            meta: suggestion.case_type || suggestion.meta_type,
+                            meta: metaText,
                         };
                     }));
+                    newPopupWidth = Math.ceil((maxCharacterLength + 3) *  editor.completer.popup.renderer.layerConfig.characterWidth);
+                    editor.completer.popup.container.style.width = newPopupWidth + "px";
+                    editor.completer.popup.resize();
                 },
             };
             ace.require("ace/ext/language_tools").setCompleters([casePropertyAutocomplete]);
