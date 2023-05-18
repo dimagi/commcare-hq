@@ -534,7 +534,7 @@ def confirm_domain(request, guid=''):
 def eula_agreement(request):
     if request.method == 'POST':
         current_user = CouchUser.from_django_user(request.user)
-        new_agreement = LicenseAgreement(type="End User License Agreement", version=str(EulaMixin.CURRENT_VERSION))
+        new_agreement = LicenseAgreement(type="End User License Agreement", version=EulaMixin.CURRENT_VERSION)
         new_agreement.signed = True
         new_agreement.date = datetime.utcnow()
         new_agreement.user_ip = get_ip(request)
