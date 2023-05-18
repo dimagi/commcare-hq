@@ -36,8 +36,13 @@ jobs:
         uses: tj-actions/changed-files@v14.6
 
       - name: Get python files
+        id: python-files
         run: |
-          echo "${{ steps.changed-files.outputs.all_changed_files }}" | grep -E "\.py$"
+          output=$(echo "${{ steps.changed-files.outputs.all_changed_files }}" | grep -o "\S*\.py")
+          echo "::set-output name=python-file-names::$output"
+
+      - name: Show .py files diff
+        run: echo ${{ steps.python-files.outputs.python-file-names }}
 
       - name: Set up Python
         uses: actions/setup-python@v1
