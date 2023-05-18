@@ -712,7 +712,6 @@ class DjangoUserMixin(DocumentSchema):
 
 
 class EulaMixin(DocumentSchema):
-    CURRENT_VERSION = CURRENT_VERSION
     eulas = SchemaListProperty(LicenseAgreement)
 
     @classmethod
