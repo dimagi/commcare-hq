@@ -65,6 +65,7 @@ requirejs.config({
         },
         "ko.mapping": { deps: ['knockout'] },
         "hqwebapp/js/bootstrap5/hq.helpers": { deps: ['jquery', 'knockout', 'underscore'] },
+        "sentry/js/sentry.browser.7.28.0.min": { exports: "Sentry" },
         "datatables.bootstrap": { deps: ['datatables'] },
         "datatables.fixedColumns.bootstrap": { deps: ['datatables.fixedColumns'] },
         "jquery.rmi/jquery.rmi": {
