@@ -1,10 +1,10 @@
-/* global Sentry */
 /**
  * Backbone model for listing and selecting CommCare menus (modules, forms, and cases)
  */
 hqDefine("cloudcare/js/formplayer/menus/api", [
     'jquery',
     'underscore',
+    'sentry_browser',
     'cloudcare/js/formplayer/menus/collections',
     'cloudcare/js/formplayer/constants',
     'cloudcare/js/form_entry/errors',
@@ -17,6 +17,7 @@ hqDefine("cloudcare/js/formplayer/menus/api", [
 ], function (
     $,
     _,
+    Sentry,
     Collections,
     constants,
     errors,
