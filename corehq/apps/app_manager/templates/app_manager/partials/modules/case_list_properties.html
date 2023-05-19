@@ -6,15 +6,15 @@
     <thead data-bind="visible: columns().length > 0">
     <tr tabindex="999" data-bind="paste: function (data) { pasteCallback(data, 0); }">
       <th class="col-sm-1"></th>
-      <th class="col-sm-3">{% trans "Property" %}</th>
+      <th class="col-sm-2">{% trans "Property" %}</th>
       <!-- ko if: showCaseTileColumn() -->
       <th class="col-sm-2">{% trans "Display Text" %}</th>
       <th class="col-sm-3">{% trans "Format" %}</th>
       <th class="col-sm-2">{% trans "Case Tile Mapping" %}</th>
       <!--/ko-->
       <!-- ko ifnot: showCaseTileColumn() -->
-      <th class="col-sm-3">{% trans "Display Text" %}</th>
-      <!--th class="col-sm-4">{% trans "Format" %}</th--><!-- TODO: put this back, and add something like showCaseTileGrid, siilar to showCaseTileColumn -->
+      <th class="col-sm-2">{% trans "Display Text" %}</th>
+      <th class="col-sm-2">{% trans "Format" %}</th><!-- TODO: add something like showCaseTileGrid, similar to showCaseTileColumn, and fix various col-sm-X classes -->
       <th class="col-sm-1">{% trans "Row" %}</th>
       <th class="col-sm-1">{% trans "Column" %}</th>
       <th class="col-sm-1">{% trans "Width" %}</th>
@@ -44,7 +44,7 @@
                     "></i>
       </td>
       <!--ko if: !isTab -->
-      <td class="col-sm-3" data-bind="css: {'has-error': showWarning}">
+      <td class="col-sm-2" data-bind="css: {'has-error': showWarning}">
         <div data-bind="html: hqImport('app_manager/js/details/utils').getFieldHtml(field.val()), visible: !field.edit"></div>
         <div data-bind="jqueryElement: field.ui, visible: field.edit"></div>
         <!-- ko if: useXpathExpression -->
@@ -59,12 +59,12 @@
       </td>
       <td data-bind="jqueryElement: header.ui, css: {
                             'col-sm-2': $parent.showCaseTileColumn(),
-                            'col-sm-3': !$parent.showCaseTileColumn(),
+                            'col-sm-2': !$parent.showCaseTileColumn(),
                         }"></td>
-      <!--td data-bind="jqueryElement: $format, css: {
+      <td data-bind="jqueryElement: $format, css: {
                             'col-sm-3': $parent.showCaseTileColumn(),
-                            'col-sm-4': !$parent.showCaseTileColumn(),
-                        }"></td-->
+                            'col-sm-2': !$parent.showCaseTileColumn(),
+                        }"></td>
       <td><select class="form-control" data-bind="value: tileRow, options: tileRowOptions"></select></td>
       <td><select class="form-control" data-bind="value: tileColumn, options: tileColumnOptions"></select></td>
       <td><select class="form-control" data-bind="value: tileWidth, options: tileWidthOptions"></select></td>
