@@ -82,10 +82,6 @@ from corehq.util.timer import time_method
 
 
 class EntryInstances(PostProcessor):
-    """Adds instance declarations to the suite file
-
-    See docs/apps/instances.rst"""
-
     IGNORED_INSTANCES = {
         'jr://instance/remote',
         'jr://instance/search-input',
