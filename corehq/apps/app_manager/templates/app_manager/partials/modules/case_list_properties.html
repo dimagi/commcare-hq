@@ -15,10 +15,10 @@
       <!-- ko ifnot: showCaseTileColumn() -->
       <th class="col-sm-3">{% trans "Display Text" %}</th>
       <!--th class="col-sm-4">{% trans "Format" %}</th--><!-- TODO: put this back, and add something like showCaseTileGrid, siilar to showCaseTileColumn -->
-      <th class="col-sm-1">row start</th>
-      <th class="col-sm-1">column start</th>
-      <th class="col-sm-1">row end</th>
-      <th class="col-sm-1">column end</th>
+      <th class="col-sm-1">{% trans "Row" %}</th>
+      <th class="col-sm-1">{% trans "Column" %}</th>
+      <th class="col-sm-1">{% trans "Width" %}</th>
+      <th class="col-sm-1">{% trans "Height" %}</th>
       <!-- /ko -->
       <th class="col-sm-1"></th>
     </tr>
@@ -65,10 +65,10 @@
                             'col-sm-3': $parent.showCaseTileColumn(),
                             'col-sm-4': !$parent.showCaseTileColumn(),
                         }"></td-->
-      <td><input type="text" class="form-control" data-bind="value: gridRowStart" /></td>
-      <td><input type="text" class="form-control" data-bind="value: gridColumnStart" /></td>
-      <td><input type="text" class="form-control" data-bind="value: gridRowEnd" /></td>
-      <td><input type="text" class="form-control" data-bind="value: gridColumnEnd" /></td>
+      <td><input type="text" class="form-control" data-bind="value: tileRow" /></td>
+      <td><input type="text" class="form-control" data-bind="value: tileColumn" /></td>
+      <td><input type="text" class="form-control" data-bind="value: tileWidth" /></td>
+      <td><input type="text" class="form-control" data-bind="value: tileHeight" /></td>
       <!--/ko-->
       <!--ko if: isTab -->
       <!--ko if: $data.hasNodeset -->

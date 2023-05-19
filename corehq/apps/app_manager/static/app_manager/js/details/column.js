@@ -45,15 +45,23 @@ hqDefine("app_manager/js/details/column", function () {
         self.original.case_tile_field = ko.utils.unwrapObservable(self.original.case_tile_field) || "";
         self.case_tile_field = ko.observable(self.original.case_tile_field);
 
-        self.gridRowStart = ko.observable();
-        self.gridColumnStart = ko.observable();
-        self.gridRowEnd = ko.observable();
-        self.gridColumnEnd = ko.observable();
-        self.gridArea = ko.computed(function () {
-            if (!(self.gridRowStart() && self.gridColumnStart() && self.gridRowEnd() && self.gridColumnEnd())) {
+        self.tileRow = ko.observable();
+        self.tileColumn = ko.observable();
+        self.tileWidth = ko.observable(3);
+        self.tileHeight = ko.observable(1);
+        self.showInTilePreview = ko.computed(function() {
+            return self.tileRow() && self.tileColumn() && self.tileWidth() && self.tileHeight();
+        });
+        self.tileGridArea = ko.computed(function () {       // basically getGridAttributes
+            if (!self.showInTilePreview()) {
                 return "";
             }
-            return [self.gridRowStart(), self.gridColumnStart(), self.gridRowEnd(), self.gridColumnEnd()].join(" / ");
+            return [
+                self.tileRow(),
+                self.tileColumn(),
+                Number(self.tileRow()) + Number(self.tileHeight()),
+                Number(self.tileColumn()) + Number(self.tileWidth())
+            ].join(" / ");
         });
 
         // Set up tab defaults
