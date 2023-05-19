@@ -62,6 +62,7 @@ import html
 import re
 from collections import defaultdict
 
+from django.utils.functional import cached_property
 from django.utils.translation import gettext as _
 
 from memoized import memoized
@@ -140,6 +141,9 @@ class EntryInstances(PostProcessor):
 
         xpaths.update(self._menu_xpaths_by_command[entry.command.id])
 
+        if entry.command.id in self._relevancy_xpaths_by_command:
+            xpaths.add(self._relevancy_xpaths_by_command[entry.command.id])
+
         for detail in details:
             xpaths.update(detail.get_all_xpaths())
         for assertion in getattr(entry, 'assertions', []):
@@ -154,8 +158,7 @@ class EntryInstances(PostProcessor):
     def _get_detail_mapping(self):
         return {detail.id: detail for detail in self.suite.details}
 
-    @property
-    @memoized
+    @cached_property
     def _menu_xpaths_by_command(self):
         xpaths_by_command = defaultdict(set)
         for menu in self.suite.menus:
@@ -165,9 +168,16 @@ class EntryInstances(PostProcessor):
             for assertion in menu.assertions:
                 menu_xpaths.add(assertion.test)
             for command in menu.commands:
-                relevancy_xpath = {command.relevant} or set()
-                xpaths_by_command[command.id] = menu_xpaths | relevancy_xpath
+                xpaths_by_command[command.id] = menu_xpaths
         return xpaths_by_command
+
+    @cached_property
+    def _relevancy_xpaths_by_command(self):
+        return {
+            command.id: command.relevant
+            for menu in self.suite.menus for command in menu.commands
+            if command.relevant
+        }
 
     def _get_custom_instances(self, entry, known_instances, required_instances):
         if entry.command.id not in self._form_module_by_command_id:
