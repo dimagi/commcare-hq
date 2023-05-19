@@ -120,7 +120,12 @@
         </button>
         <div id="case-tile-preview" data-bind="foreach: columns">
           <!-- TODO: some kind of warning that this isn't pixel by pixel accurate -->
-          <div class="cell" data-bind="visible: showInTilePreview, style: {'grid-area': tileGridArea}">
+          <div class="cell" data-bind="visible: showInTilePreview, style: {
+                'grid-row-start': tileRowStart,
+                'grid-row-end': tileRowEnd,
+                'grid-column-start': tileColumnStart,
+                'grid-column-end': tileColumnEnd,
+            }">
             <div class="content" data-bind="text: tileContent"></div>
             <!-- TODO: align less terribly -->
             <!-- TODO: disable when needed -->

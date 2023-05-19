@@ -89,11 +89,10 @@ hqDefine("app_manager/js/details/screen", function () {
                 if (index >= 12) {
                     return;
                 }
-                column.tileRow(Math.ceil((index + 1) / 4));
-                column.tileColumn((index % 4) * 3 + 1);
+                column.tileRowStart(Math.ceil((index + 1) / 4));
+                column.tileColumnStart((index % 4) * 3 + 1);
                 column.tileHeight(1);
                 column.tileWidth(3);
-                console.log("index = " + index + ", column start " + column.tileColumn() + " and grid " + column.tileGridArea());
             });
         };
         self.enableTilePullDown = ko.observable(spec[self.columnKey].pull_down_tile || false);

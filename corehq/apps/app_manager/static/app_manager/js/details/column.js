@@ -45,31 +45,26 @@ hqDefine("app_manager/js/details/column", function () {
         self.original.case_tile_field = ko.utils.unwrapObservable(self.original.case_tile_field) || "";
         self.case_tile_field = ko.observable(self.original.case_tile_field);
 
-        self.tileRow = ko.observable();
+        self.tileRowStart = ko.observable();
         self.tileRowOptions = [""].concat(_.range(1, 4));
-        self.tileColumn = ko.observable();
+        self.tileColumnStart = ko.observable();
         self.tileColumnOptions = [""].concat(_.range(1, 13));
         self.tileWidth = ko.observable(3);
         self.tileWidthOptions = ko.computed(function () {
-            return _.range(1, 14 - (self.tileColumn() || 1));
+            return _.range(1, 14 - (self.tileColumnStart() || 1));
         });
         self.tileHeight = ko.observable(1);
         self.tileHeightOptions = ko.computed(function () {
-            return _.range(1, 5 - (self.tileRow() || 1));
+            return _.range(1, 5 - (self.tileRowStart() || 1));
+        });
+        self.tileRowEnd = ko.computed(function () {
+            return Number(self.tileRowStart()) + Number(self.tileHeight());
+        });
+        self.tileColumnEnd = ko.computed(function () {
+            return Number(self.tileColumnStart()) + Number(self.tileWidth());
         });
         self.showInTilePreview = ko.computed(function() {
-            return self.tileRow() && self.tileColumn() && self.tileWidth() && self.tileHeight();
-        });
-        self.tileGridArea = ko.computed(function () {       // basically getGridAttributes
-            if (!self.showInTilePreview()) {
-                return "";
-            }
-            return [
-                self.tileRow(),
-                self.tileColumn(),
-                Number(self.tileRow()) + Number(self.tileHeight()),
-                Number(self.tileColumn()) + Number(self.tileWidth())
-            ].join(" / ");
+            return self.tileRowStart() && self.tileColumnStart() && self.tileWidth() && self.tileHeight();
         });
         self.tileContent = ko.observable();
         self.setTileContent = function () {
@@ -94,10 +89,10 @@ hqDefine("app_manager/js/details/column", function () {
             self.tileHeight(self.tileHeight() + delta);
         };
         self.adjustTileRow = function (delta) {
-            self.tileRow(self.tileRow() + delta);
+            self.tileRowStart(self.tileRowStart() + delta);
         };
         self.adjustTileColumn = function (delta) {
-            self.tileColumn(self.tileColumn() + delta);
+            self.tileColumnStart(self.tileColumnStart() + delta);
         };
 
         // Set up tab defaults
