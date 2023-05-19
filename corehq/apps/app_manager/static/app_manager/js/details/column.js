@@ -86,6 +86,13 @@ hqDefine("app_manager/js/details/column", function () {
             }
             self.tileContent(content);
         };
+        // TODO: reconcile other cells
+        self.adjustTileWidth = function (delta) {
+            self.tileWidth(self.tileWidth() + delta);
+        };
+        self.adjustTileHeight = function (delta) {
+            self.tileHeight(self.tileHeight() + delta);
+        };
 
         // Set up tab defaults
         var tabDefaults = {

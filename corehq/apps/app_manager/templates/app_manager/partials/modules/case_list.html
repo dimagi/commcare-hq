@@ -113,9 +113,23 @@
       </div>
 
       <div><!-- TODO: tie visibility to "Use Case Tiles" dropdown selection -->
-        <div data-bind="foreach: columns" style="display: grid; width: 100%; margin: 10px; padding: 5px; border: 2px solid #ddd;">
-          <div data-bind="text: tileContent, visible: showInTilePreview, style: {'grid-area': tileGridArea}"
-               style="padding: 5px; margin: 2px; background-color: #eee;"></div>
+        <div id="case-tile-preview" data-bind="foreach: columns">
+          <div data-bind="visible: showInTilePreview, style: {'grid-area': tileGridArea}"
+               style="margin: 2px; background-color: #eee; position: relative;">
+            <div style="padding: 5px;" data-bind="text: tileContent"></div>
+            <!-- TODO: show on hover -->
+            <!-- TODO: align less terribly -->
+            <!-- TODO: disable when needed -->
+            <div style="xdispay: none; position: absolute; top: 0; left: 0; right: 0; bottom: 0; opacity: 0.8; background-color: white; text-align: center;">
+              <div class="btn btn-xs btn-default" data-bind="click: adjustTileWidth(-1)"><i class="fa fa-arrow-left"></i></div>
+              width
+              <div class="btn btn-xs btn-default" data-bind="click: adjustTileWidth(1)"><i class="fa fa-arrow-right"></i></div>
+              <br />
+              <div class="btn btn-xs btn-default" data-bind="click: adjustTileHeight(-1)"><i class="fa fa-arrow-down"></i></div>
+              height
+              <div class="btn btn-xs btn-default" data-bind="click: adjustTileHeight(1)"><i class="fa fa-arrow-up"></i></div>
+            </div>
+          </div>
         </div>
       </div>
 
