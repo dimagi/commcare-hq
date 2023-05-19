@@ -114,13 +114,11 @@
 
       <div><!-- TODO: tie visibility to "Use Case Tiles" dropdown selection -->
         <div id="case-tile-preview" data-bind="foreach: columns">
-          <div data-bind="visible: showInTilePreview, style: {'grid-area': tileGridArea}"
-               style="margin: 2px; background-color: #eee; position: relative;">
-            <div style="padding: 5px;" data-bind="text: tileContent"></div>
-            <!-- TODO: show on hover -->
+          <div class="cell" data-bind="visible: showInTilePreview, style: {'grid-area': tileGridArea}">
+            <div class="content" data-bind="text: tileContent"></div>
             <!-- TODO: align less terribly -->
             <!-- TODO: disable when needed -->
-            <div style="xdispay: none; position: absolute; top: 0; left: 0; right: 0; bottom: 0; opacity: 0.8; background-color: white; text-align: center;">
+            <div class="controls">
               <div class="btn btn-xs btn-default" data-bind="click: adjustTileWidth(-1)"><i class="fa fa-arrow-left"></i></div>
               width
               <div class="btn btn-xs btn-default" data-bind="click: adjustTileWidth(1)"><i class="fa fa-arrow-right"></i></div>
