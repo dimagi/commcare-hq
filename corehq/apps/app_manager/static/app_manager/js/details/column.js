@@ -45,6 +45,17 @@ hqDefine("app_manager/js/details/column", function () {
         self.original.case_tile_field = ko.utils.unwrapObservable(self.original.case_tile_field) || "";
         self.case_tile_field = ko.observable(self.original.case_tile_field);
 
+        self.gridRowStart = ko.observable();
+        self.gridColumnStart = ko.observable();
+        self.gridRowEnd = ko.observable();
+        self.gridColumnEnd = ko.observable();
+        self.gridArea = ko.computed(function () {
+            if (!(self.gridRowStart() && self.gridColumnStart() && self.gridRowEnd() && self.gridColumnEnd())) {
+                return "";
+            }
+            return [self.gridRowStart(), self.gridColumnStart(), self.gridRowEnd(), self.gridColumnEnd()].join(" / ");
+        });
+
         // Set up tab defaults
         var tabDefaults = {
             isTab: false,

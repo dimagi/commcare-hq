@@ -111,6 +111,14 @@
           </label>
         </div>
       </div>
+
+      <div><!-- TODO: tie visibility to "Use Case Tiles" dropdown selection -->
+        <div data-bind="foreach: columns" style="display: grid; width: 100%; margin: 10px; padding: 5px; border: 2px solid #ddd;">
+          <div data-bind="text: '#' + $index(), visible: gridArea, style: {'grid-area': gridArea}"
+               style="padding: 5px; margin: 2px; background-color: #eee;"></div>
+        </div>
+      </div>
+
       {% include 'app_manager/partials/modules/case_list_properties.html' %}
     </div>
   </div>

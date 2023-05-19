@@ -14,7 +14,11 @@
       <!--/ko-->
       <!-- ko ifnot: showCaseTileColumn() -->
       <th class="col-sm-3">{% trans "Display Text" %}</th>
-      <th class="col-sm-4">{% trans "Format" %}</th>
+      <!--th class="col-sm-4">{% trans "Format" %}</th--><!-- TODO: put this back, and add something like showCaseTileGrid, siilar to showCaseTileColumn -->
+      <th class="col-sm-1">row start</th>
+      <th class="col-sm-1">column start</th>
+      <th class="col-sm-1">row end</th>
+      <th class="col-sm-1">column end</th>
       <!-- /ko -->
       <th class="col-sm-1"></th>
     </tr>
@@ -57,10 +61,14 @@
                             'col-sm-2': $parent.showCaseTileColumn(),
                             'col-sm-3': !$parent.showCaseTileColumn(),
                         }"></td>
-      <td data-bind="jqueryElement: $format, css: {
+      <!--td data-bind="jqueryElement: $format, css: {
                             'col-sm-3': $parent.showCaseTileColumn(),
                             'col-sm-4': !$parent.showCaseTileColumn(),
-                        }"></td>
+                        }"></td-->
+      <td><input type="text" class="form-control" data-bind="value: gridRowStart" /></td>
+      <td><input type="text" class="form-control" data-bind="value: gridColumnStart" /></td>
+      <td><input type="text" class="form-control" data-bind="value: gridRowEnd" /></td>
+      <td><input type="text" class="form-control" data-bind="value: gridColumnEnd" /></td>
       <!--/ko-->
       <!--ko if: isTab -->
       <!--ko if: $data.hasNodeset -->
