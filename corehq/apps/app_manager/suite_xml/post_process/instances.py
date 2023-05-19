@@ -142,7 +142,7 @@ class EntryInstances(PostProcessor):
 
         details = [details_by_id[detail_id] for detail_id in detail_ids if detail_id]
 
-        xpaths.update(self._get_menu_xpaths(entry.command.id))
+        xpaths.update(self._menu_xpaths_by_command[entry.command.id])
 
         for detail in details:
             xpaths.update(detail.get_all_xpaths())
@@ -158,28 +158,20 @@ class EntryInstances(PostProcessor):
     def _get_detail_mapping(self):
         return {detail.id: detail for detail in self.suite.details}
 
-    def _get_menu_xpaths(self, entry_id):
-        xpaths_by_menu, menu_by_command = self._get_xpaths_by_menu()
-        if entry_id in menu_by_command:
-            menu_id = menu_by_command[entry_id]
-            return xpaths_by_menu[menu_id]
-        return {}
-
+    @property
     @memoized
-    def _get_xpaths_by_menu(self):
-        xpaths_by_menu = defaultdict(list)
-        menu_by_command = {}
+    def _menu_xpaths_by_command(self):
+        xpaths_by_command = defaultdict(set)
         for menu in self.suite.menus:
-            for command in menu.commands:
-                menu_by_command[command.id] = menu.id
-                if command.relevant:
-                    xpaths_by_menu[menu.id].append(command.relevant)
+            menu_xpaths = set()
             if menu.relevant:
-                xpaths_by_menu[menu.id].append(menu.relevant)
+                menu_xpaths.add(menu.relevant)
             for assertion in menu.assertions:
-                xpaths_by_menu[menu.id].append(assertion.test)
-
-        return xpaths_by_menu, menu_by_command
+                menu_xpaths.add(assertion.test)
+            for command in menu.commands:
+                relevancy_xpath = {command.relevant} or set()
+                xpaths_by_command[command.id] = menu_xpaths | relevancy_xpath
+        return xpaths_by_command
 
     def _get_custom_instances(self, entry, known_instances, required_instances):
         if entry.command.id not in self._form_module_by_command_id:
