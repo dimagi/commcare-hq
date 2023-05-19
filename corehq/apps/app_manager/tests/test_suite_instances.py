@@ -72,9 +72,16 @@ class SuiteInstanceTests(SimpleTestCase, SuiteMixin):
 
     def test_location_instances(self):
         self.form.form_filter = "instance('locations')/locations/"
+        self.factory.new_form(self.module)
+        # I'm temporarily modifying this test just for this PR
+        # Instances associated with form filters appear in the corresponding
+        # <entry> elements for all forms in the module. So adding another form
+        # to this module results in another instance declaration that I'm
+        # pretty sure is redundant
         self.assertXmlPartialEqual(
             """
             <partial>
+                <instance id='locations' src='jr://fixture/locations' />
                 <instance id='locations' src='jr://fixture/locations' />
             </partial>
             """,
