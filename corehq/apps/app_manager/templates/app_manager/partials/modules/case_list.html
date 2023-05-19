@@ -113,6 +113,11 @@
       </div>
 
       <div><!-- TODO: tie visibility to "Use Case Tiles" dropdown selection -->
+        <!-- TODO: this is some kind of temporary -->
+        <button class="btn btn-default btn-xs pull-right" data-bind="click: resetCaseTilePreview">
+            <i class="fa fa-magic"></i>
+            Reset Grid
+        </button>
         <div id="case-tile-preview" data-bind="foreach: columns">
           <div class="cell" data-bind="visible: showInTilePreview, style: {'grid-area': tileGridArea}">
             <div class="content" data-bind="text: tileContent"></div>

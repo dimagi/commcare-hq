@@ -83,6 +83,19 @@ hqDefine("app_manager/js/details/screen", function () {
             self.fireChange();
         });
         self.persistTileOnForms = ko.observable(spec[self.columnKey].persist_tile_on_forms || false);
+        self.resetCaseTilePreview = function () {   // TODO: probably want to move this
+            // On click, make each cell height 1, width 1-4 depending on number of columns, x and y top left to bottom right
+            _.each(self.columns(), function (column, index) {
+                if (index >= 12) {
+                    return;
+                }
+                column.tileRow(Math.ceil((index + 1) / 4));
+                column.tileColumn((index % 4) * 3 + 1);
+                column.tileHeight(1);
+                column.tileWidth(3);
+                console.log("index = " + index + ", column start " + column.tileColumn() + " and grid " + column.tileGridArea());
+            });
+        };
         self.enableTilePullDown = ko.observable(spec[self.columnKey].pull_down_tile || false);
         self.allowsEmptyColumns = options.allowsEmptyColumns;
         self.persistentCaseTileFromModule = (
