@@ -71,6 +71,21 @@ hqDefine("app_manager/js/details/column", function () {
                 Number(self.tileColumn()) + Number(self.tileWidth())
             ].join(" / ");
         });
+        self.tileContent = ko.observable();
+        self.setTileContent = function () {
+            var content = self.header.val();
+            if (content) {
+                content += ": ";
+            }
+            if (self.useXpathExpression) {
+                // TODO: this isn't displaying
+                content += gettext("Calculated Property") + " #" + self.$index();     // copied from calculatedColLabel
+            } else {
+                // TODO: this doesn't display if the value is in a select2 dropdown
+                content += self.field.val();
+            }
+            self.tileContent(content);
+        };
 
         // Set up tab defaults
         var tabDefaults = {
@@ -151,6 +166,15 @@ hqDefine("app_manager/js/details/column", function () {
                 }
             }
         }());
+
+        // TODO: use self.field.observableVal instead, and do something similar for header?
+        self.header.on("change", function () {
+            self.setTileContent();
+        });
+        self.field.on("change", function () {
+            self.setTileContent();
+        });
+        self.setTileContent();
 
         self.saveAttempted = ko.observable(false);
         self.useXpathExpression = self.original.useXpathExpression;
