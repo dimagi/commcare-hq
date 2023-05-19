@@ -119,18 +119,59 @@
             Reset Grid
         </button>
         <div id="case-tile-preview" data-bind="foreach: columns">
+          <!-- TODO: some kind of warning that this isn't pixel by pixel accurate -->
           <div class="cell" data-bind="visible: showInTilePreview, style: {'grid-area': tileGridArea}">
             <div class="content" data-bind="text: tileContent"></div>
             <!-- TODO: align less terribly -->
             <!-- TODO: disable when needed -->
             <div class="controls">
-              <div class="btn btn-xs btn-default" data-bind="click: adjustTileWidth(-1)"><i class="fa fa-arrow-left"></i></div>
-              width
-              <div class="btn btn-xs btn-default" data-bind="click: adjustTileWidth(1)"><i class="fa fa-arrow-right"></i></div>
-              <br />
-              <div class="btn btn-xs btn-default" data-bind="click: adjustTileHeight(-1)"><i class="fa fa-arrow-down"></i></div>
-              height
-              <div class="btn btn-xs btn-default" data-bind="click: adjustTileHeight(1)"><i class="fa fa-arrow-up"></i></div>
+              <table>
+                <tbody>
+                  <tr>
+                    <td style="width: 48%;">
+                      <table><!-- TODO: clean up table markup -->
+                        <tbody>
+                          <tr>
+                            <td class="col-sm-4"></td>
+                            <td class="col-sm-4"><div class="btn btn-xs btn-default" data-bind="click: adjustTileRow(-1)"><i class="fa fa-arrow-up"></i></div></td>
+                            <td class="col-sm-4"></td>
+                          </tr>
+                          <tr>
+                            <td class="col-sm-4"><div class="btn btn-xs btn-default" data-bind="click: adjustTileColumn(-1)"><i class="fa fa-arrow-left"></i></div></td>
+                            <td class="col-sm-4"></td>
+                            <td class="col-sm-4"><div class="btn btn-xs btn-default" data-bind="click: adjustTileColumn(-1)"><i class="fa fa-arrow-right"></i></div></td>
+                          </tr>
+                          <tr>
+                            <td class="col-sm-4"></td>
+                            <td class="col-sm-4"><div class="btn btn-xs btn-default" data-bind="click: adjustTileRow(1)"><i class="fa fa-arrow-down"></i></div></td>
+                            <td class="col-sm-4"></td>
+                          </tr>
+                        </tbody>
+                      </table>
+                    </td>
+                    <td style="width: 48%;">
+                      <table>
+                        <tbody>
+                          <tr>
+                            <td><div class="btn btn-xs btn-default" data-bind="click: adjustTileWidth(-1)"><i class="fa fa-arrow-left"></i></div></td>
+                            <td>width</td>
+                            <td><div class="btn btn-xs btn-default" data-bind="click: adjustTileWidth(1)"><i class="fa fa-arrow-right"></i></div></td>
+                          </tr>
+                          <tr>
+                            <td class="col-sm-12">&nbsp;</td>
+                          </tr>
+                          <tr>
+                            <td><div class="btn btn-xs btn-default" data-bind="click: adjustTileHeight(-1)"><i class="fa fa-arrow-down"></i></div></td>
+                            <td>height</td>
+                            <td><div class="btn btn-xs btn-default" data-bind="click: adjustTileHeight(1)"><i class="fa fa-arrow-up"></i></div></td>
+                            </td>
+                          </tr>
+                        </tbody>
+                      </table>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
             </div>
           </div>
         </div>

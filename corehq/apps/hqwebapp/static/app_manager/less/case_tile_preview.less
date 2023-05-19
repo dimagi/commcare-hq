@@ -19,21 +19,33 @@
         }
 
         .controls {
-            display: none;
+            visibility: hidden;
             opacity: 0.7;
+            background-color: white;
             text-align: center;
             position: relative;
             top: 0;
             left: 0;
             right: 0;
             bottom: 0;
-            opacity: 0.8;
-            background-color: white;
-            text-align: center;
+
+            .btn {
+              margin: 2px;
+            }
         }
 
-        &:hover .controls {
-            display: block;
+        &:hover {
+            .content {
+                position: relative;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
+            }
+
+            .controls {
+                visibility: visible;
+            }
         }
     }
 }

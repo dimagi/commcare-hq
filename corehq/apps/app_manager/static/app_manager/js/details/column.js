@@ -93,6 +93,12 @@ hqDefine("app_manager/js/details/column", function () {
         self.adjustTileHeight = function (delta) {
             self.tileHeight(self.tileHeight() + delta);
         };
+        self.adjustTileRow = function (delta) {
+            self.tileRow(self.tileRow() + delta);
+        };
+        self.adjustTileColumn = function (delta) {
+            self.tileColumn(self.tileColumn() + delta);
+        };
 
         // Set up tab defaults
         var tabDefaults = {
