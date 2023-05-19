@@ -95,6 +95,15 @@ hqDefine("app_manager/js/details/screen", function () {
                 column.tileWidth(3);
             });
         };
+        self.adjustTileGridArea = function (columnIndex, rowDelta, columnDelta, widthDelta, heightDelta) {
+            const activeColumn = self.columns()[columnIndex];
+            activeColumn.tileRowStart(activeColumn.tileRowStart() + rowDelta);
+            activeColumn.tileColumnStart(activeColumn.tileColumnStart() + columnDelta);
+            activeColumn.tileWidth(activeColumn.tileWidth() + widthDelta);
+            activeColumn.tileHeight(activeColumn.tileHeight() + heightDelta);
+
+            // TODO: Reconcile other affected cells
+        };
         self.enableTilePullDown = ko.observable(spec[self.columnKey].pull_down_tile || false);
         self.allowsEmptyColumns = options.allowsEmptyColumns;
         self.persistentCaseTileFromModule = (
