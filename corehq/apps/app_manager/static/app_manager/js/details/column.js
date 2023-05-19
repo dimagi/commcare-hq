@@ -46,9 +46,17 @@ hqDefine("app_manager/js/details/column", function () {
         self.case_tile_field = ko.observable(self.original.case_tile_field);
 
         self.tileRow = ko.observable();
+        self.tileRowOptions = [""].concat(_.range(1, 4));
         self.tileColumn = ko.observable();
+        self.tileColumnOptions = [""].concat(_.range(1, 13));
         self.tileWidth = ko.observable(3);
+        self.tileWidthOptions = ko.computed(function () {
+            return _.range(1, 14 - (self.tileColumn() || 1));
+        });
         self.tileHeight = ko.observable(1);
+        self.tileHeightOptions = ko.computed(function () {
+            return _.range(1, 5 - (self.tileRow() || 1));
+        });
         self.showInTilePreview = ko.computed(function() {
             return self.tileRow() && self.tileColumn() && self.tileWidth() && self.tileHeight();
         });
