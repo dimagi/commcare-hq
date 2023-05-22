@@ -2,6 +2,9 @@
 requirejs.config({
     baseUrl: '/static/',
     paths: {
+        "es6": "requirejs-babel7/es6",
+        "babel": "@babel/standalone/babel.min",
+        "babel-plugin-transform-modules-requirejs-babel": "babel-plugin-transform-modules-requirejs-babel/index",
         "jquery": "jquery/dist/jquery.min",
         "underscore": "underscore/underscore",
         "backbone": "backbone/backbone-min",
