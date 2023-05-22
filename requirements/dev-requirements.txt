@@ -462,7 +462,7 @@ psutil==5.8.0
     # via -r dev-requirements.in
 psycogreen==1.0.2
     # via -r base-requirements.in
-psycopg2==2.8.6
+psycopg2==2.9.6
     # via
     #   -r base-requirements.in
     #   sqlalchemy-postgres-copy

@@ -377,7 +377,7 @@ protobuf==3.18.3
     #   googleapis-common-protos
 psycogreen==1.0.2
     # via -r base-requirements.in
-psycopg2==2.8.6
+psycopg2==2.9.6
     # via -r base-requirements.in
 py-kissmetrics==1.1.0
     # via -r base-requirements.in
