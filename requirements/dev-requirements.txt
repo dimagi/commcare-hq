@@ -263,7 +263,7 @@ ghdiff==0.4
     # via -r base-requirements.in
 git-build-branch==0.1.14
     # via -r dev-requirements.in
-gnureadline==8.0.0
+gnureadline==8.1.2
     # via -r dev-requirements.in
 google-api-core==2.5.0
     # via google-api-python-client
