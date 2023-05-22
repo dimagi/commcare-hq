@@ -10,7 +10,6 @@ from corehq.util.test_utils import flag_enabled
 
 @patch_get_xform_resource_overrides()
 class SplitScreenCaseSearchTest(SimpleTestCase, SuiteMixin):
-    file_path = ('data', 'suite')
 
     @flag_enabled('SPLIT_SCREEN_CASE_SEARCH')
     def test_split_screen_case_search_removes_search_again(self):
