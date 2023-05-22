@@ -3,6 +3,8 @@ from django.test import SimpleTestCase
 from corehq.apps.app_manager.exceptions import SuiteValidationError
 from corehq.apps.app_manager.models import (
     Application,
+    CaseSearch,
+    CaseSearchProperty,
     DetailColumn,
     MappingItem,
     Module,
@@ -13,6 +15,7 @@ from corehq.apps.app_manager.tests.util import (
     TestXmlMixin,
     patch_get_xform_resource_overrides,
 )
+from corehq.util.test_utils import flag_enabled
 
 
 @patch_get_xform_resource_overrides()
@@ -361,3 +364,48 @@ class SuiteCaseTilesTest(SimpleTestCase, SuiteMixin):
         module.case_details.short.custom_xml = '<detail id="m1_case_short"></detail>'
         with self.assertRaises(SuiteValidationError):
             factory.app.create_suite()
+
+    @flag_enabled("USH_CASE_CLAIM_UPDATES")
+    def test_case_tile_with_case_search(self, *args):
+        app = Application.new_app('domain', 'Untitled Application')
+
+        module = app.add_module(Module.new_module('Untitled Module', None))
+        module.case_type = 'patient'
+        module.case_details.short.use_case_tiles = True
+        self._add_columns_for_case_details(module)
+
+        module.search_config = CaseSearch(
+            properties=[
+                CaseSearchProperty(name='name', label={'en': 'Name'}),
+            ],
+            auto_launch=True,
+        )
+        module.assign_references()
+
+        form = app.new_form(0, "Untitled Form", None)
+        form.xmlns = 'http://id_m0-f0'
+        form.requires = 'case'
+
+        self.assertXmlPartialEqual(
+            """
+            <partial>
+              <action redo_last="false"
+                auto_launch="$next_input = '' or count(instance('casedb')/casedb/case[@case_id=$next_input]) = 0">
+                <display>
+                  <text>
+                    <locale id="case_search.m0"/>
+                  </text>
+                </display>
+                <stack>
+                  <push>
+                    <mark/>
+                    <command value="'search_command.m0'"/>
+                  </push>
+                </stack>
+              </action>
+            </partial>
+            """,
+            app.create_suite(),
+            # action[1] is the reg from case list action hard-coded into the default template
+            "detail[@id='m0_case_short']/action[2]",
+        )

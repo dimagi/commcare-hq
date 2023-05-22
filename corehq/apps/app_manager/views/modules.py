@@ -78,6 +78,7 @@ from corehq.apps.app_manager.models import (
     get_all_mobile_filter_configs,
     get_auto_filter_configurations, ConditionalCaseUpdate,
 )
+from corehq.apps.app_manager.suite_xml.features.case_tiles import case_tile_template_config
 from corehq.apps.app_manager.suite_xml.features.mobile_ucr import (
     get_uuids_by_instance_id,
 )
@@ -233,6 +234,7 @@ def _get_shared_module_view_context(request, app, module, case_property_builder,
             'has_lookup_tables': bool([i for i in item_lists if i['fixture_type'] == LOOKUP_TABLE_FIXTURE]),
             'has_mobile_ucr': bool([i for i in item_lists if i['fixture_type'] == REPORT_FIXTURE]),
             'default_value_expression_enabled': app.enable_default_value_expression,
+            'case_tile_fields': case_tile_template_config().fields,
             'search_config': {
                 'search_properties':
                     module.search_config.properties if module_offers_search(module) else [],

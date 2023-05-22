@@ -496,18 +496,13 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
         validateFieldChange: function (changedChildView) {
             var self = this;
             var promise = $.Deferred();
-            var invalidFields = [];
 
             self._updateModelsForValidation().done(function (response) {
                 //Gather error messages
                 self.children.each(function (childView) {
-                    //Filter out empty required fields that user has not updated yet
-                    if ((!childView.hasRequiredError() || childView === changedChildView)
-                         && !childView.isValid()) {
-                        invalidFields.push(childView.model.get('text'));
-                    }
+                    //Filter out empty required fields and check for validity
+                    if (!childView.hasRequiredError() || childView === changedChildView) { childView.isValid(); }
                 });
-
                 promise.resolve(response);
             });
 
@@ -522,8 +517,9 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
             var self = this;
             var promise = $.Deferred();
             var invalidFields = [];
+            var updatingModels = self.updateModelsForValidation || self._updateModelsForValidation();
 
-            self._updateModelsForValidation().done(function (response) {
+            $.when(updatingModels).done(function (response) {
                 // Gather error messages
                 self.children.each(function (childView) {
                     if (!childView.isValid()) {
@@ -553,11 +549,12 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
 
         _updateModelsForValidation: function () {
             var self = this;
+            var promise = $.Deferred();
+            self.updateModelsForValidation = promise;
 
             var urlObject = formplayerUtils.currentUrlToObject();
             urlObject.setQueryData(self.getAnswers(), false);
-            var promise = $.Deferred(),
-                fetchingPrompts = FormplayerFrontend.getChannel().request("app:select:menus", urlObject);
+            var fetchingPrompts = FormplayerFrontend.getChannel().request("app:select:menus", urlObject);
             $.when(fetchingPrompts).done(function (response) {
                 // Update models based on response
                 _.each(response.models, function (responseModel, i) {

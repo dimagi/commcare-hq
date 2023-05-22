@@ -23,9 +23,9 @@ class OldExportsEnabledException(Exception):
 
 
 def generate_data_dictionary(domain):
-    properties = _get_all_case_properties(domain)
-    _create_properties_for_case_types(domain, properties)
-    CaseType.objects.filter(domain=domain, name__in=list(properties)).update(fully_generated=True)
+    case_type_to_properties = _get_all_case_properties(domain)
+    _create_properties_for_case_types(domain, case_type_to_properties)
+    CaseType.objects.filter(domain=domain, name__in=list(case_type_to_properties)).update(fully_generated=True)
     return True
 
 

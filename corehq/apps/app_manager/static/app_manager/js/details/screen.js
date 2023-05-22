@@ -55,6 +55,7 @@ hqDefine("app_manager/js/details/screen", function () {
         self.containsSearchConfiguration = options.containsSearchConfiguration;
         self.containsCustomXMLConfiguration = options.containsCustomXMLConfiguration;
         self.allowsTabs = options.allowsTabs;
+        self.caseTileFields = options.caseTileFields;
         self.useCaseTiles = ko.observable(spec[self.columnKey].use_case_tiles ? "yes" : "no");
         self.showCaseTileColumn = ko.computed(function () {
             return self.useCaseTiles() === "yes" && hqImport('hqwebapp/js/toggles').toggleEnabled('CASE_LIST_TILE');
@@ -202,7 +203,7 @@ hqDefine("app_manager/js/details/screen", function () {
         self.columns.subscribe(function (changes) {
             self.saveButton.fire('change');
 
-            // create events for column moves and fire a special event that allows us to update
+            // create events when rows (column objects) are moved and fire a special event that allows us to update
             // dependent UI elements (sort properties)
             const events = changes
                 // remove the 2nd event for column moves

@@ -219,12 +219,11 @@ def _process_file_and_get_upload(uploaded_file_handle, request, domain, max_colu
 
     context = {
         'columns': columns,
-        'unrecognized_case_types': unrecognized_case_types,
-        'case_types_from_apps': case_types_from_apps,
+        'unrecognized_case_types': [] if is_bulk_import else unrecognized_case_types,
+        'case_types_from_apps': [ALL_CASE_TYPE_IMPORT] if is_bulk_import else case_types_from_apps,
         'domain': domain,
         'slug': base.ImportCases.slug,
-        'is_bulk_import': is_bulk_import,
-        'bulk_import_case_type': ALL_CASE_TYPE_IMPORT
+        'is_bulk_import': is_bulk_import
     }
     return case_upload, context
 
