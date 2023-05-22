@@ -34,7 +34,6 @@ from corehq.apps.userreports.reports.data_source import (
     ConfigurableReportDataSource,
 )
 from corehq.apps.userreports.reports.filters.factory import ReportFilterFactory
-from corehq.toggles import COMPARE_UCR_REPORTS, NAMESPACE_OTHER
 from corehq.util.timezones.conversions import ServerTime
 from corehq.util.timezones.utils import get_timezone_for_user
 from corehq.util.xml_utils import serialize
