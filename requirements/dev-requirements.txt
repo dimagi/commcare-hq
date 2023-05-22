@@ -125,7 +125,7 @@ diff-match-patch==20230430
     # via -r base-requirements.in
 dimagi-memoized==1.1.3
     # via -r base-requirements.in
-django==3.2.18
+django==3.2.19
     # via
     #   -r base-requirements.in
     #   django-appconf
@@ -603,7 +603,7 @@ schema==0.7.5
     # via -r base-requirements.in
 sentry-sdk==1.19.1
     # via -r base-requirements.in
-sh==1.14.2
+sh==2.0.3
     # via
     #   -r base-requirements.in
     #   git-build-branch
