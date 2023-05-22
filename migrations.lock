@@ -214,6 +214,7 @@ cleanup
  0011_merge_couch_sql_pillows
  0012_add_es_index_to_checkpoint_ids
  0013_migrate_kafka_checkpoint_format
+ 0014_deletedcouchdoc
 cloudcare
  0001_initial
  0002_sqlapplicationaccess
