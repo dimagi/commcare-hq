@@ -36,6 +36,7 @@ from dimagi.utils.web import json_response
 
 from corehq import toggles
 from corehq.apps.domain.decorators import (
+    active_domains_required,
     login_and_domain_required,
     login_required,
     require_superuser,
@@ -110,6 +111,7 @@ def project_id_mapping(request, domain):
 class BaseMyAccountView(BaseSectionPageView):
     section_name = gettext_lazy("My Account")
 
+    @method_decorator(active_domains_required)
     @method_decorator(login_required)
     def dispatch(self, request, *args, **kwargs):
         # this is only here to add the login_required decorator
