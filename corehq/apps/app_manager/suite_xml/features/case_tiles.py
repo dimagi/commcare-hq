@@ -6,6 +6,7 @@ from pathlib import Path
 from typing import List
 from xml.sax.saxutils import escape
 
+from corehq import toggles
 from corehq.apps.app_manager import id_strings
 from corehq.apps.app_manager.exceptions import SuiteError
 from corehq.apps.app_manager.suite_xml.xml_models import Detail, XPathVariable
@@ -71,11 +72,13 @@ class CaseTileHelper(object):
         if module_offers_search(self.module) and not module_uses_inline_search(self.module):
             from corehq.apps.app_manager.suite_xml.sections.details import DetailContributor
             in_search = module_loads_registry_case(self.module)
-            detail.actions.append(
-                DetailContributor.get_case_search_action(self.module,
-                                                         self.build_profile_id,
-                                                         in_search=in_search)
-            )
+            # don't add search again action in split screen
+            if not (toggles.SPLIT_SCREEN_CASE_SEARCH.enabled(self.app.domain) and in_search):
+                detail.actions.append(
+                    DetailContributor.get_case_search_action(self.module,
+                                                            self.build_profile_id,
+                                                            in_search=in_search)
+                )
 
         return detail
 
