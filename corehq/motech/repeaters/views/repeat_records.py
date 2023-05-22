@@ -173,7 +173,7 @@ class BaseRepeatRecordReport(GenericTabularReport):
         row = [
             checkbox,
             display.state,
-            display.url,
+            display.remote_service,
             display.next_attempt_at,
             display.attempts,
             self._make_view_payload_button(record.record_id),
