@@ -773,6 +773,7 @@ scheduling
  0022_add_stop_date_case_property_name
  0023_add_remaining_content_models
  0024_app_id
+ 0025_schedule_deleted_on
 scheduling_partitioned
  0001_initial
  0002_case_schedule_instances

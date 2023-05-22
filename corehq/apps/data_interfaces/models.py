@@ -273,7 +273,7 @@ class AutomaticUpdateRule(models.Model):
             if self.workflow == self.WORKFLOW_SCHEDULING:
                 schedule = self.get_schedule()
                 schedule.deleted = True
-                # TODO: add schedule.deleted_on
+                schedule.deleted_on = datetime.utcnow()
                 schedule.save()
                 if isinstance(schedule, AlertSchedule):
                     delete_case_alert_schedule_instances.delay(schedule.schedule_id.hex)

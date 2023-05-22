@@ -1,6 +1,6 @@
 from corehq.messaging.scheduling.models.abstract import Schedule, Event, Broadcast, Content
 from corehq.messaging.scheduling import util
-from datetime import timedelta, time
+from datetime import timedelta, datetime
 from memoized import memoized
 from django.db import models, transaction
 
@@ -121,5 +121,6 @@ class ImmediateBroadcast(Broadcast):
             self.deleted = True
             self.save()
             self.schedule.deleted = True
+            self.schedule.deleted_on = datetime.utcnow()
             self.schedule.save()
             delete_alert_schedule_instances.delay(self.schedule_id.hex)
