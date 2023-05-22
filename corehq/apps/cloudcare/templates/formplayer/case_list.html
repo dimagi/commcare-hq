@@ -17,17 +17,22 @@
       </div>
     </div>
 
-    <% if (useGrid) { %>
+    <% if (useTiles) { %>
+      <% if (isMultiSelect && !hasNoItems) { %>
+      <input type="checkbox" id="select-all-tile-checkbox"/>
+      <label id="select-all-tile-checkbox-label" for="select-all-tile-checkbox">{% trans "Select All" %}</label>
+    <% } %>
     <section class="js-case-container clearfix list-cell-container-style"></section>
     <% } else { %>
     <div class="module-case-list-table-container">
       <table class="table module-table module-table-case-list">
-        <% if(!useTiles) { %>
+
         <thead>
         <tr>
           <% if (isMultiSelect && !hasNoItems) { %>
           <th class="module-case-list-header"><input type="checkbox" id="select-all-checkbox"/></th>
           <% } %>
+          <% if(!useTiles) { %>
           <% _.each(headers, function(header, index) { %>
           <% if (columnVisible(index)) { %>
           <% if (columnSortable(index)) { %>
@@ -37,9 +42,10 @@
           <% } %>
           <% } %>
           <% }); %>
+          <% } %>
         </tr>
         </thead>
-        <% } %>
+
         <% if (hasNoItems) { %>
         <tbody>
         <tr>
@@ -102,6 +108,12 @@
 </script>
 
 <script type="text/template" id="case-tile-view-item-template">
+    <% if (isMultiSelect) { %>
+      <div class="select-row-checkbox-div">
+        <input type="checkbox" class="select-row-checkbox"/>
+      </div>
+    <% } %>
+
   <div class="<%- prefix %>-cell-grid-style">
     <% _.each(data, function(datum, index) { %>
     <div class="<%- prefix %>-grid-style-<%- index %> box">
