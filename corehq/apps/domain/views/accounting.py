@@ -285,7 +285,7 @@ class DomainSubscriptionView(DomainAccountingSettings):
             'next_subscription': next_subscription,
             'has_credits_in_non_general_credit_line': has_credits_in_non_general_credit_line,
             'is_annual_plan': plan_version.plan.is_annual_plan,
-            'is_paused': subscription.plan_version.is_paused,
+            'is_paused': plan_version.is_paused,
             'previous_subscription_edition': (
                 subscription.previous_subscription.plan_version.plan.edition
                 if subscription.previous_subscription else ""
