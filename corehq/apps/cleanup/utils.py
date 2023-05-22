@@ -65,6 +65,5 @@ def migrate_to_deleted_on(db_cls, old_field, should_audit=False):
     update_kwargs = {'deleted_on': datetime.utcnow()}
     if should_audit:
         update_kwargs['audit_action'] = AuditAction.AUDIT
-    update_count = queryset.update(deleted_on=datetime.utcnow(),
-                                   audit_action=AuditAction.AUDIT)
+    update_count = queryset.update(**update_kwargs)
     return update_count

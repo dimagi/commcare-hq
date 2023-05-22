@@ -106,6 +106,7 @@ class AutomaticUpdateRule(models.Model):
     case_type = models.CharField(max_length=126)
     active = models.BooleanField(default=False)
     deleted = models.BooleanField(default=False)
+    deleted_on = models.DateTimeField(null=True)
     last_run = models.DateTimeField(null=True)
     filter_on_server_modified = models.BooleanField(default=True)
     workflow = models.CharField(max_length=126, choices=WORKFLOW_CHOICES)
@@ -266,11 +267,13 @@ class AutomaticUpdateRule(models.Model):
 
     def soft_delete(self):
         with transaction.atomic():
+            self.deleted_on = datetime.utcnow()
             self.deleted = True
             self.save()
             if self.workflow == self.WORKFLOW_SCHEDULING:
                 schedule = self.get_schedule()
                 schedule.deleted = True
+                # TODO: add schedule.deleted_on
                 schedule.save()
                 if isinstance(schedule, AlertSchedule):
                     delete_case_alert_schedule_instances.delay(schedule.schedule_id.hex)

@@ -307,6 +307,7 @@ data_interfaces
  0030_add_workflow_choices
  0031_add_domaincaserulerun_status_choices
  0032_bootstrap_audit_events_for_update_rules
+ 0033_automaticupdaterule_deleted_on
 dhis2
  0001_initial
  0002_auto_20170322_1323
