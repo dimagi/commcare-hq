@@ -55,7 +55,6 @@ hiredis
 httpagentparser
 iso8601
 Jinja2
-json-delta
 jsonfield
 jsonobject-couchdbkit
 jsonobject>=2.0.0
