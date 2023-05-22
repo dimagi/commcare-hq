@@ -55,6 +55,7 @@ hqDefine("app_manager/js/details/screen", function () {
         self.containsSearchConfiguration = options.containsSearchConfiguration;
         self.containsCustomXMLConfiguration = options.containsCustomXMLConfiguration;
         self.allowsTabs = options.allowsTabs;
+        self.caseTileFields = options.caseTileFields;
         self.useCaseTiles = ko.observable(spec[self.columnKey].use_case_tiles ? "yes" : "no");
         self.showCaseTileColumn = ko.computed(function () {
             return self.useCaseTiles() === "yes" && hqImport('hqwebapp/js/toggles').toggleEnabled('CASE_LIST_TILE');
