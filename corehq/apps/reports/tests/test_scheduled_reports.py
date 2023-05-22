@@ -4,6 +4,7 @@ from django.test import TestCase
 from django.urls import reverse
 
 from corehq import privileges
+from corehq.apps.commtrack.tests.util import bootstrap_domain
 from corehq.apps.es.case_search import case_search_adapter
 from corehq.apps.es.client import manager
 from corehq.apps.es.forms import form_adapter
@@ -12,9 +13,9 @@ from corehq.apps.es.users import user_adapter
 from corehq.apps.locations.tests.util import setup_locations_and_types
 from corehq.apps.reports.views import ScheduledReportsView
 from corehq.apps.saved_reports.models import ReportConfig, ReportNotification
+from corehq.apps.users.dbaccessors import delete_all_users
 from corehq.apps.users.models import HqPermissions, WebUser
 from corehq.apps.users.models_role import UserRole
-from corehq.form_processor.tests.utils import FormProcessorTestUtils
 from corehq.util.test_utils import disable_quickcache, privilege_enabled
 
 
@@ -31,6 +32,7 @@ class TestLocationRestrictedScheduledReportViews(TestCase):
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
+        cls.domain_obj = bootstrap_domain(cls.domain)
         location_types, locations = setup_locations_and_types(
             cls.domain,
             location_types=['city'],
@@ -42,8 +44,9 @@ class TestLocationRestrictedScheduledReportViews(TestCase):
 
     @classmethod
     def tearDownClass(cls):
-        FormProcessorTestUtils.delete_all_cases()
         super().tearDownClass()
+        cls.domain_obj.delete()
+        delete_all_users()
 
     def test_location_restricted_user_can_access_reports_home_view(self):
         with self._get_web_user_with_permissions_added():
