@@ -537,7 +537,7 @@ class ModuleDetailValidatorMixin(object):
                     'filter': self.module.case_list_filter,
                 })
         for detail in [self.module.case_details.short, self.module.case_details.long]:
-            if detail.use_case_tiles:
+            if detail.case_tile_template:
                 if not detail.display == "short":
                     errors.append({
                         'type': "invalid tile configuration",

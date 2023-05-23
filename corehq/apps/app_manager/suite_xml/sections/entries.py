@@ -973,8 +973,8 @@ class EntriesHelper(object):
     def _get_module_for_persistent_context(self, module_unique_id):
         module_for_persistent_context = self.app.get_module_by_unique_id(module_unique_id)
         if (module_for_persistent_context and
-                (module_for_persistent_context.case_details.short.use_case_tiles or
-                 module_for_persistent_context.case_details.short.custom_xml
+                (module_for_persistent_context.case_details.short.case_tile_template
+                 or module_for_persistent_context.case_details.short.custom_xml
                  )):
             return module_for_persistent_context
 
