@@ -117,8 +117,8 @@ hqDefine("cloudcare/js/formplayer/menus/controller", function () {
         } else {
             FormplayerFrontend.regions.getRegion('persistentCaseTile').empty();
         }
-        if (sidebarEnabled && !appPreview) { // TODO: add in check for query list response attached to the entities response
-            FormplayerFrontend.regions.getRegion('sidebar').show(QueryListView);
+        if (sidebarEnabled && !appPreview && menuResponse.type === "entities" && menuResponse.queryResponse)  {
+            FormplayerFrontend.regions.getRegion('sidebar').show(QueryListView(menuResponse.queryResponse).render());
         } else {
             FormplayerFrontend.regions.getRegion('sidebar').empty();
         }
