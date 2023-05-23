@@ -2060,3 +2060,6 @@ GOOGLE_SHEETS_API_NAME = "sheets"
 GOOGLE_SHEETS_API_VERSION = "v4"
 
 DAYS_KEEP_GSHEET_STATUS = 14
+
+# FCM Credentials file path for Push Notifications
+FCM_CREDS_PATH = os.environ.get('FCM_CREDS_PATH')
