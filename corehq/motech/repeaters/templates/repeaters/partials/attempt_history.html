@@ -4,13 +4,17 @@
 {% for attempt_number, attempt in record.get_numbered_attempts %}
     <li><strong>Attempt #{{ attempt_number }}</strong>
     {% if attempt.state == 'SUCCESS' %}
-        <br/><i class="fa fa-check"></i> {% trans "Success" %}
+        <br/><i class="fa fa-check"></i>
     {% elif attempt.state == 'EMPTY' %}
-        <br/><i class="fa fa-check"></i> {% trans "Empty" %}
+        <br/><i class="fa fa-check"></i>
     {% elif attempt.state == 'FAIL' or attempt.state == 'CANCELLED' %}
-        <br/><i class="fa fa-exclamation-triangle"></i> {% trans "Failed" %}
+        <br/><i class="fa fa-exclamation-triangle"></i>
     {% elif attempt.state == 'PENDING' %}
-        <br/><i class="fa fa-spinner"></i> {% trans "Unsent" %}
+        <br/><i class="fa fa-spinner"></i>
+    {% endif %}
+    {% if attempt.state == 'PENDING' %}
+    {% elif attempt.state == 'EMPTY' %}({{ attempt.created_at }})
+    {% else %}{{ attempt.created_at }}
     {% endif %}
     {% if attempt.message %}
         <a href="#" class="toggle-next-attempt">…</a>
