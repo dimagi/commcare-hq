@@ -18,13 +18,13 @@
                         <div>
                             <strong>Attempt #{{ attempt_number }}</strong> -
                             {% if attempt.state == 'SUCCESS' %}
-                                <i class="fa fa-check"></i>
+                                <br/><i class="fa fa-check"></i>
                             {% elif attempt.state == 'EMPTY' %}
-                                <i class="fa fa-check"></i>
+                                <br/><i class="fa fa-check"></i>
                             {% elif attempt.state == 'CANCELLED' %}
-                                <i class="fa fa-remove"></i> {% trans "Cancelled" %}
+                                <br/><i class="fa fa-remove"></i> {% trans "Cancelled" %}
                             {% elif attempt.state == 'FAIL' or attempt.state == 'CANCELLED' %}
-                                <i class="fa fa-exclamation-triangle"></i>
+                                <br/><i class="fa fa-exclamation-triangle"></i>
                             {% elif attempt.state == 'PENDING' %}
                                 <br/><i class="fa fa-spinner"></i>
                             {% endif %}
