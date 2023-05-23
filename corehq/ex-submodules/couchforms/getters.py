@@ -49,7 +49,7 @@ def get_instance_and_attachment(request):
             if instance_file.size > settings.MAX_UPLOAD_SIZE:
                 logging.info("Domain {request.domain} attempted to submit a form exceeding the allowed size")
                 raise PayloadTooLarge()
-            if not _valid_file_extension(instance_file):
+            if not _valid_instance_file_extension(instance_file):
                 raise InvalidSubmissionFileExtensionError()
             instance = instance_file.read()
             for key, item in request.FILES.items():
@@ -69,7 +69,7 @@ def get_instance_and_attachment(request):
     return instance, attachments
 
 
-def _valid_file_extension(file):
+def _valid_instance_file_extension(file):
     if "." not in file.name:
         return False
     file_extension = file.name.rsplit(".", 1)[-1]
