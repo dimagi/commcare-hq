@@ -1,10 +1,9 @@
-from django.db.models import Q
+from django.db import models, transaction
 
 from corehq.messaging.scheduling.models.abstract import Schedule, Event, Broadcast, Content
 from corehq.messaging.scheduling import util
 from datetime import timedelta, datetime
 from memoized import memoized
-from django.db import models, transaction
 
 
 class AlertSchedule(Schedule):
@@ -13,7 +12,7 @@ class AlertSchedule(Schedule):
         indexes = [
             models.Index(fields=['deleted_on'],
                          name='alertschedule_deleted_on_idx',
-                         condition=Q(deleted_on__isnull=False))
+                         condition=models.Q(deleted_on__isnull=False))
         ]
 
     @property
@@ -123,11 +122,18 @@ class AlertEvent(Event):
 class ImmediateBroadcast(Broadcast):
     schedule = models.ForeignKey('scheduling.AlertSchedule', on_delete=models.CASCADE)
 
+    class Meta:
+        indexes = [
+            models.Index(fields=['deleted_on'], name='imm_broadcast_deleted_on_idx',
+                         condition=models.Q(deleted_on__isnull=False))
+        ]
+
     def soft_delete(self):
         from corehq.messaging.scheduling.tasks import delete_alert_schedule_instances
 
         with transaction.atomic():
             self.deleted = True
+            self.deleted_on = datetime.utcnow()
             self.save()
             self.schedule.deleted = True
             self.schedule.deleted_on = datetime.utcnow()

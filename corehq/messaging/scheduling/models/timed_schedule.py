@@ -5,7 +5,7 @@ import random
 import re
 from copy import deepcopy
 
-from django.db.models import Q
+from django.db import models, transaction
 
 from corehq.apps.data_interfaces.utils import property_references_parent
 from corehq.messaging.scheduling.exceptions import InvalidMonthlyScheduleConfiguration
@@ -16,7 +16,6 @@ from datetime import timedelta, datetime, date, time
 from dateutil.parser import parse
 from dateutil.relativedelta import relativedelta
 from memoized import memoized
-from django.db import models, transaction
 
 
 class TimedSchedule(Schedule):
@@ -58,7 +57,7 @@ class TimedSchedule(Schedule):
         indexes = [
             models.Index(fields=['deleted_on'],
                          name='timedschedule_deleted_on_idx',
-                         condition=Q(deleted_on__isnull=False))
+                         condition=models.Q(deleted_on__isnull=False))
         ]
 
     def get_schedule_revision(self, case=None):
@@ -661,11 +660,18 @@ class ScheduledBroadcast(Broadcast):
     schedule = models.ForeignKey('scheduling.TimedSchedule', on_delete=models.CASCADE)
     start_date = models.DateField()
 
+    class Meta:
+        indexes = [
+            models.Index(fields=['deleted_on'], name='sch_broadcast_deleted_on_idx',
+                         condition=models.Q(deleted_on__isnull=False))
+        ]
+
     def soft_delete(self):
         from corehq.messaging.scheduling.tasks import delete_timed_schedule_instances
 
         with transaction.atomic():
             self.deleted = True
+            self.deleted_on = datetime.utcnow()
             self.save()
             self.schedule.deleted = True
             self.schedule.deleted_on = datetime.utcnow()
