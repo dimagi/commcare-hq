@@ -18,6 +18,7 @@ class Command(AppMigrationCommandBase):
     include_linked_apps = True
     DOMAIN_LIST_FILENAME = 'add_case_tile_template_field.txt'
     DOMAIN_PROGRESS_NUMBER_FILENAME = 'add_case_tile_template_field.txt'
+    chunk_size = 25
 
     def get_domains(self):
         return CASE_LIST_TILE.get_enabled_domains()
