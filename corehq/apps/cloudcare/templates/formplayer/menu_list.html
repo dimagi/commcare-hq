@@ -128,9 +128,17 @@
 </script>
 
 <script type="text/template" id="form-menu-template">
-  <div tabindex="0" id="form-menu-dropdown">
-     <i class="fa fa-bars dropdown-toggle" data-toggle="dropdown"></i>
-     <ul class="dropdown-menu dropdown-menu-right noprint-sub-container">
+  <div id="form-menu-dropdown">
+    <a class="dropdown-toggle"
+       title="{% trans 'Dropdown toggle' %}"
+       role="button"
+       href="javascript:void(0);"
+       data-toggle="dropdown"
+       aria-haspopup="true"
+       aria-expanded="false">
+      <i class="fa fa-bars" style="color: #fff"></i>
+    </a>
+     <ul class="dropdown-menu dropdown-menu-right noprint-sub-container" aria-label="Dropdown">
        <li tabindex="0" class="dropdown-header" id="print-header">{% trans "Print" %}</li>
        <% if (languageOptionsEnabled) { %>
        <li><hr class="dropdown-divider"></li>
