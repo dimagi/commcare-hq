@@ -200,7 +200,7 @@ hqDefine("reports/js/hq_report", [
                         'params': '',
                     },
                     success: function (data) {
-                        params = data.query_string
+                        params = data.query_string;
                     },
                 });
             }
