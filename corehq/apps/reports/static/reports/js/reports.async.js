@@ -229,9 +229,14 @@ hqDefine("reports/js/reports.async", function () {
             });
         };
 
-        self.loadingIssueModal.on('click', '.try-again', function () {
+        $(document).on('click', '.try-again', function () {
             self.loadingIssueModal.find('.btn-primary').button('loading');
-            self.updateReport(true, window.location.search.substr(1));
+            if (self.isCaseListRelated(window.location.pathname)) {
+                self.getQueryId(window.location.search.substr(1), true, true, window.location.pathname);
+            }
+            else {
+                self.updateReport(true, window.location.search.substr(1));
+            }
         });
 
         self.loadingIssueModal.on('hide hide.bs.modal', function () {
