@@ -70,19 +70,8 @@
 
                     <div class="panel-group" id="case-properties-accordion">
                       {% for table in dd_properties_tables %}
-                        {% if table.name in hidden_tables %}
-                          <div class="panel panel-appmanager">
-                            <div class="panel-collapse collapse in">
-                              <div class="panel-body">
-                                {% include "reports/partials/case_property_table.html" with rows=table.rows %}
-                              </div>
-                            </div>
-                          </div>
-                        {% endif %}
-                      {% endfor %}
-                      {% for table in dd_properties_tables %}
-                        {% if table.name in visible_tables %}
-                          <div class="panel panel-appmanager" id="{{ table.name|slugify }}-parent">
+                        <div class="panel panel-appmanager" id="{{ table.name|slugify }}-parent">
+                          {% if table.name is not None %}
                             <div class="panel-heading">
                               <h4 class="panel-title">
                                 <a data-toggle="collapse"
@@ -94,13 +83,13 @@
                                 </a>
                               </h4>
                             </div>
-                            <div class="panel-collapse collapse in" id="{{ table.name }}">
-                              <div class="panel-body">
-                                {% include "reports/partials/case_property_table.html" with rows=table.rows %}
-                              </div>
+                          {% endif %}
+                          <div class="panel-collapse collapse in" id="{{ table.name }}">
+                            <div class="panel-body">
+                              {% include "reports/partials/case_property_table.html" with rows=table.rows %}
                             </div>
                           </div>
-                        {% endif %}
+                        </div>
                       {% endfor %}
                     </div>
                   {% else %}
