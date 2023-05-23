@@ -49,10 +49,6 @@ class RepeatRecordDisplay:
     def state(self):
         return format_html('<span class="label label-{}">{}</span>', *_get_state_tuple(self.record))
 
-    @property
-    def attempts(self):
-        return render_to_string('repeaters/partials/attempt_history.html', {'record': self.record})
-
     def _format_date(self, date):
         if not date:
             return '---'
