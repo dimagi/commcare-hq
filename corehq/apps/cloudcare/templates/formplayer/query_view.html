@@ -45,18 +45,18 @@
     <% if (input == "select1") { %>
     <select class="query-field form-control hqwebapp-select2" data-receive="<%- receive %>"<% if (required) { %> aria-required="true"<% } %>>
         <option value=""></option>
-        <% for (var i = 0; i < itemsetChoices.length; i++) { %>
-        <option value="<%- i %>" <% if (value === String(i)) { %>selected<% } %>>
-            <%- itemsetChoices[i] %>
+        <% for (let key in itemsetChoicesDict) { %>
+        <option value="<%- key %>" <% if (value === String(key)) { %>selected<% } %>>
+            <%- itemsetChoicesDict[key] %>
         </option>
         <% } %>
     </select>
 
     <% } else if (input == "select") { %>
     <select multiple class="query-field form-control hqwebapp-select2" data-receive="<%- receive %>"<% if (required) { %> aria-required="true"<% } %>>
-        <% for (var i = 0; i < itemsetChoices.length; i++) { %>
-        <option value="<%- i %>" <% if (value && value.indexOf(String(i)) > -1) { %>selected<% } %>>
-            <%- itemsetChoices[i] %>
+        <% for (let key in itemsetChoicesDict) { %>
+        <option value="<%- key %>" <% if (value && value.indexOf(String(key)) > -1) { %>selected<% } %>>
+            <%- itemsetChoicesDict[key] %>
         </option>
         <% } %>
     </select>
@@ -81,11 +81,11 @@
     <% } else if (input === "checkbox") { %>
     <fieldset multiple class="query-field" id="<%- text ? text : "" %>" <% if (required) { %> aria-required="true"<% } %>>
       <legend class="sr-only"><%- text ? text : "" %></legend>
-      <% for (var i = 0; i < itemsetChoices.length; i++) { %>
-      <div id="<%- text ? text : "checkbox" %>-<%- i %>" class="checkbox">
+      <% for (let key in itemsetChoicesDict) { %>
+      <div id="<%- text ? text : "checkbox" %>-<%- key %>" class="checkbox">
         <label>
-          <input type="checkbox" value="<%- i %>" <% if (value && value.indexOf(String(i)) !== -1) { %>checked<% } %>>
-          <%- itemsetChoices[i] %>
+          <input type="checkbox" value="<%- key %>" <% if (value && value.indexOf(String(key)) !== -1) { %>checked<% } %>>
+          <%- itemsetChoicesDict[key] %>
         </label>
       </div>
       <% } %>

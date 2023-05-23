@@ -2,26 +2,21 @@ import copy
 import uuid
 from datetime import date, datetime
 from decimal import Decimal
+from unittest.mock import MagicMock, patch
 
 from django.test import SimpleTestCase, TestCase
-
-from unittest.mock import MagicMock, patch
-from simpleeval import InvalidExpression
 from testil import Config
 
 from casexml.apps.case.const import CASE_INDEX_EXTENSION
 from casexml.apps.case.mock import CaseFactory, CaseIndex, CaseStructure
 from casexml.apps.case.tests.util import delete_all_cases, delete_all_xforms
-
 from corehq.apps.groups.models import Group
 from corehq.apps.userreports.decorators import ucr_context_cache
 from corehq.apps.userreports.exceptions import BadSpecError
 from corehq.apps.userreports.expressions.factory import ExpressionFactory
-from corehq.apps.userreports.expressions.getters import transform_datetime
 from corehq.apps.userreports.expressions.specs import (
     PropertyNameGetterSpec,
     PropertyPathGetterSpec,
-    eval_statements,
 )
 from corehq.apps.userreports.specs import EvaluationContext, FactoryContext
 from corehq.apps.users.models import CommCareUser, WebUser
@@ -1054,172 +1049,6 @@ class RelatedDocExpressionDbTest(TestCase):
             'related_id': id,
             'domain': cls.domain,
         }
-
-
-@generate_cases([
-    ({}, "a + b", {"a": 2, "b": 3}, 2 + 3),
-    (
-        {},
-        "timedelta_to_seconds(a - b)",
-        {
-            "a": "2016-01-01T11:30:00.000000Z",
-            "b": "2016-01-01T11:00:00.000000Z"
-        },
-        30 * 60
-    ),
-    # supports string manipulation
-    ({}, "str(a)+'text'", {"a": 3}, "3text"),
-    # context can contain expressions
-    (
-        {"age": 1},
-        "a + b",
-        {
-            "a": {
-                "type": "property_name",
-                "property_name": "age"
-            },
-            "b": 5
-        },
-        1 + 5
-    ),
-    # context variable can itself be evaluation expression
-    (
-        {},
-        "age + b",
-        {
-            "age": {
-                "type": "evaluator",
-                "statement": "a",
-                "context_variables": {
-                    "a": 2
-                }
-            },
-            "b": 5
-        },
-        5 + 2
-    ),
-    ({}, "a + b", {"a": Decimal(2), "b": Decimal(3)}, Decimal(5)),
-    ({}, "a + b", {"a": Decimal(2.2), "b": Decimal(3.1)}, Decimal(5.3)),
-    ({}, "range(3)", {}, [0, 1, 2]),
-    ({}, "today()", {}, date.today()),
-    (
-        {'dob': "2022-01-01T14:44:23.001567Z"},
-        "f'{d}'[:-6] + '%03d' % round(int(f'{d:%f}')/1000) + 'Z'",
-        {
-            "d": {
-                "type": "property_name",
-                "property_name": "dob",
-                "datatype": "datetime",
-            },
-        },
-        '2022-01-01 14:44:23.002Z'),
-])
-def test_valid_eval_expression(self, source_doc, statement, context, expected_value):
-    expression = ExpressionFactory.from_spec({
-        "type": "evaluator",
-        "statement": statement,
-        "context_variables": context
-    })
-    if isinstance(expected_value, str):
-        self.assertEqual(expression(source_doc), expected_value)
-    else:
-        # almostEqual handles decimal (im)precision - it means "equal to 7 places"
-        self.assertAlmostEqual(expression(source_doc), expected_value)
-
-
-@generate_cases([
-    # context must be a dict
-    ({}, "2 + 3", "text context"),
-    ({}, "2 + 3", 42),
-    ({}, "2 + 3", []),
-    # statement must be string
-    ({}, 2 + 3, {"a": 2, "b": 3})
-])
-def test_invalid_eval_expression(self, source_doc, statement, context):
-    with self.assertRaises(BadSpecError):
-        ExpressionFactory.from_spec({
-            "type": "evaluator",
-            "statement": statement,
-            "context_variables": context
-        })
-
-
-@generate_cases([
-    ("a + (a*b)", {"a": 2, "b": 3}, 2 + (2 * 3)),
-    ("a-b", {"a": 5, "b": 2}, 5 - 2),
-    ("a+b+c+9", {"a": 5, "b": 2, "c": 8}, 5 + 2 + 8 + 9),
-    ("a*b", {"a": 2, "b": 23}, 2 * 23),
-    ("a*b if a > b else b -a", {"a": 2, "b": 23}, 23 - 2),
-    ("'text1' if a < 5 else 'text2'", {"a": 4}, 'text1'),
-    ("a if a else b", {"a": 0, "b": 1}, 1),
-    ("a if a else b", {"a": False, "b": 1}, 1),
-    ("a if a else b", {"a": None, "b": 1}, 1),
-    ("range(1, a)", {"a": 5}, [1, 2, 3, 4]),
-    ("a or b", {"a": 0, "b": 1}, True),
-    ("a and b", {"a": 0, "b": 1}, False),
-    # ranges > 100 items aren't supported
-    ("range(200)", {}, None),
-    ("f'{a}'[1:3]", {"a": 1234}, "23"),
-    ("a and not b", {"a": 1, "b": 0}, True),
-    ("int(a)", {"a": 1.23}, 1),
-    ("round(a)", {"a": 1.23}, 1),
-    ("f'{a:%Y-%m-%d %H:%M}'", {"a": transform_datetime("2022-01-01T14:44:23.123123Z")}, '2022-01-01 14:44'),
-    ("a + b", {"a": 'this is ', "b": 'text'}, 'this is text'),
-])
-def test_supported_evaluator_statements(self, eq, context, expected_value):
-    self.assertEqual(eval_statements(eq, context), expected_value)
-
-
-@generate_cases([
-    # missing context, b not defined
-    ("a + (a*b)", {"a": 2}),
-    # power function not supported
-    ("a**b", {"a": 2, "b": 23}),
-    # lambda not supported
-    ("lambda x: x*x", {"a": 2}),
-    # max function not defined
-    ("max(a, b)", {"a": 3, "b": 5}),
-    # method calls not allowed
-    ('"WORD".lower()', {"a": 5}),
-    ('f"{a.lower()}"', {"a": "b"}),
-])
-def test_unsupported_evaluator_statements(self, eq, context):
-    with self.assertRaises(InvalidExpression):
-        eval_statements(eq, context)
-    expression = ExpressionFactory.from_spec({
-        "type": "evaluator",
-        "statement": eq,
-        "context_variables": context
-    })
-    self.assertEqual(expression({}), None)
-
-
-@generate_cases([
-    ("a/b", {"a": 5, "b": None}, TypeError),
-    ("a/b", {"a": 5, "b": 0}, ZeroDivisionError),
-])
-def test_errors_in_evaluator_statements(self, eq, context, error_type):
-    with self.assertRaises(error_type):
-        eval_statements(eq, context)
-    expression = ExpressionFactory.from_spec({
-        "type": "evaluator",
-        "statement": eq,
-        "context_variables": context
-    })
-    self.assertEqual(expression({}), None)
-
-
-class TestEvaluatorTypes(SimpleTestCase):
-
-    def test_datatype(self):
-        spec = {
-            "type": "evaluator",
-            "statement": '1.0 + a',
-            "context_variables": {'a': 1.0}
-        }
-        self.assertEqual(type(ExpressionFactory.from_spec(spec)({})), float)
-        spec['datatype'] = 'integer'
-        self.assertEqual(type(ExpressionFactory.from_spec(spec)({})), int)
 
 
 class TestFormsExpressionSpec(TestCase):

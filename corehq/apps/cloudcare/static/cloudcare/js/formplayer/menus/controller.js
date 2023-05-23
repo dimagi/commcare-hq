@@ -242,9 +242,9 @@ hqDefine("cloudcare/js/formplayer/menus/controller", function () {
         var caseTileStyles = views.buildCaseTileStyles(detailObject.tiles, numRows, numColumns,
             numEntitiesPerRow, useUniformUnits, 'persistent');
         // Style the positioning of the elements within a tile (IE element 1 at grid position 1 / 2 / 4 / 3
-        $("#persistent-cell-layout-style").html(caseTileStyles[0]).data("css-polyfilled", false);
+        $("#persistent-cell-layout-style").html(caseTileStyles.cellLayoutStyle).data("css-polyfilled", false);
         // Style the grid (IE each tile has 6 rows, 12 columns)
-        $("#persistent-cell-grid-style").html(caseTileStyles[1]).data("css-polyfilled", false);
+        $("#persistent-cell-grid-style").html(caseTileStyles.cellGridStyle).data("css-polyfilled", false);
         return views.PersistentCaseTileView({
             model: detailModel,
             styles: detailObject.styles,

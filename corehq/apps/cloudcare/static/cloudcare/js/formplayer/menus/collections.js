@@ -53,6 +53,7 @@ hqDefine("cloudcare/js/formplayer/menus/collections", function () {
             'widthHints',
             'multiSelect',
             'maxSelectValue',
+            'hasDetails',
             'queryResponse',
         ],
 
@@ -102,6 +103,8 @@ hqDefine("cloudcare/js/formplayer/menus/collections", function () {
                     length: response.entities.length,
                     multiSelect: response.multiSelect,
                 }));
+                // backwards compatibility - remove after FP deploy of #1374
+                _.defaults(response, {"hasDetails": true});
                 _.extend(this, _.pick(response, this.entityProperties));
                 return response.entities;
             } else if (response.type === "query") {
@@ -129,4 +132,3 @@ hqDefine("cloudcare/js/formplayer/menus/collections", function () {
         return new MenuSelect(response, options);
     };
 });
-

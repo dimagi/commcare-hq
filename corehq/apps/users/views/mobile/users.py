@@ -211,7 +211,6 @@ class EditCommCareUserView(BaseEditUserView):
             'edit_user_form_title': self.edit_user_form_title,
             'strong_mobile_passwords': self.request.project.strong_mobile_passwords,
             'has_any_sync_logs': self.has_any_sync_logs,
-            'token': self.backup_token,
         })
         return context
 

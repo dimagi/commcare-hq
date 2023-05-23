@@ -66,6 +66,7 @@ hqDefine('app_manager/js/details/screen_config', function () {
                     containsCustomXMLConfiguration: columnType === "short",
                     allowsTabs: columnType === 'long',
                     allowsEmptyColumns: columnType === 'long',
+                    caseTileFields: [""].concat(spec.caseTileFields),
                 }
             );
             self.screens.push(screen);
