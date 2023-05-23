@@ -1137,7 +1137,7 @@ def edit_module_detail_screens(request, domain, app_id, module_unique_id):
     sort_elements = params.get('sort_elements', None)
     persist_case_context = params.get('persistCaseContext', None)
     persistent_case_context_xml = params.get('persistentCaseContextXML', None)
-    use_case_tiles = params.get('useCaseTiles', None)
+    case_tile_template = params.get('caseTileTemplate', None)
     persist_tile_on_forms = params.get("persistTileOnForms", None)
     persistent_case_tile_from_module = params.get("persistentCaseTileFromModule", None)
     pull_down_tile = params.get("enableTilePullDown", None)
@@ -1176,8 +1176,8 @@ def edit_module_detail_screens(request, domain, app_id, module_unique_id):
         if persist_case_context is not None:
             detail.short.persist_case_context = persist_case_context
             detail.short.persistent_case_context_xml = persistent_case_context_xml
-        if use_case_tiles is not None:
-            detail.short.use_case_tiles = use_case_tiles
+        if case_tile_template is not None:
+            detail.short.case_tile_template = case_tile_template
         if persist_tile_on_forms is not None:
             detail.short.persist_tile_on_forms = persist_tile_on_forms
         if persistent_case_tile_from_module is not None:
