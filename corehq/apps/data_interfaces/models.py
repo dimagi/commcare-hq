@@ -134,6 +134,11 @@ class AutomaticUpdateRule(models.Model):
 
     class Meta(object):
         app_label = "data_interfaces"
+        indexes = [
+            models.Index(fields=['deleted_on'],
+                         name='rule_deleted_on_idx',
+                         condition=Q(deleted_on__isnull=False))
+        ]
 
     class MigrationError(Exception):
         pass

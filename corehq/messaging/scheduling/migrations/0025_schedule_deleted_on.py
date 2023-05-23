@@ -3,15 +3,6 @@ from django.db import migrations, models
 from corehq.apps.cleanup.utils import migrate_to_deleted_on
 from corehq.messaging.scheduling.models import AlertSchedule, TimedSchedule
 
-ALERT_INDEX_NAME = 'alertschedule_deleted_on_idx'
-ALERT_TABLE_NAME = 'scheduling_alertschedule'
-TIMED_INDEX_NAME = 'timedschedule_deleted_on_idx'
-TIMED_TABLE_NAME = 'scheduling_timedschedule'
-COLUMNS = 'deleted_on'
-WHERE_CLAUSE = 'deleted_on IS NOT NULL'
-ALERT_CREATE_INDEX = f"CREATE INDEX {ALERT_INDEX_NAME} ON {ALERT_TABLE_NAME} ({COLUMNS}) WHERE {WHERE_CLAUSE}"
-TIMED_CREATE_INDEX = f"CREATE INDEX {TIMED_INDEX_NAME} ON {TIMED_TABLE_NAME} ({COLUMNS}) WHERE {WHERE_CLAUSE}"
-
 
 def set_deleted_on_field(apps, schema_editor):
     migrate_to_deleted_on(AlertSchedule, 'deleted')
@@ -35,7 +26,17 @@ class Migration(migrations.Migration):
             name='deleted_on',
             field=models.DateTimeField(null=True),
         ),
-        migrations.RunSQL(ALERT_CREATE_INDEX),
-        migrations.RunSQL(TIMED_CREATE_INDEX),
+        migrations.AddIndex(
+            model_name='alertschedule',
+            index=models.Index(
+                condition=models.Q(('deleted_on__isnull', False)),
+                fields=['deleted_on'], name='alertschedule_deleted_on_idx'),
+        ),
+        migrations.AddIndex(
+            model_name='timedschedule',
+            index=models.Index(
+                condition=models.Q(('deleted_on__isnull', False)),
+                fields=['deleted_on'], name='timedschedule_deleted_on_idx'),
+        ),
         migrations.RunPython(set_deleted_on_field)
     ]

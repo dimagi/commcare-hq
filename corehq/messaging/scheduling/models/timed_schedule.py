@@ -4,6 +4,9 @@ import json
 import random
 import re
 from copy import deepcopy
+
+from django.db.models import Q
+
 from corehq.apps.data_interfaces.utils import property_references_parent
 from corehq.messaging.scheduling.exceptions import InvalidMonthlyScheduleConfiguration
 from corehq.messaging.scheduling.models.abstract import Schedule, Event, Broadcast, Content
@@ -50,6 +53,13 @@ class TimedSchedule(Schedule):
     # here. But the framework should handle a schedule with mixed event types or
     # mixed content types.
     event_type = models.CharField(max_length=50, default=EVENT_SPECIFIC_TIME)
+
+    class Meta:
+        indexes = [
+            models.Index(fields=['deleted_on'],
+                         name='timedschedule_deleted_on_idx',
+                         condition=Q(deleted_on__isnull=False))
+        ]
 
     def get_schedule_revision(self, case=None):
         """
