@@ -24,7 +24,7 @@ class Migration(migrations.Migration):
             model_name='automaticupdaterule',
             index=models.Index(
                 condition=models.Q(('deleted_on__isnull', False)),
-                fields=['deleted_on'], name='rule_deleted_on_idx'),
+                fields=['deleted_on'], name='updaterule_deleted_on_idx'),
         ),
-        migrations.RunPython(set_deleted_on_field)
+        migrations.RunPython(set_deleted_on_field),
     ]
