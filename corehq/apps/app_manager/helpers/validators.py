@@ -545,7 +545,7 @@ class ModuleDetailValidatorMixin(object):
                         'reason': _('Case tiles may only be used for the case list (not the case details).')
                     })
                 col_by_tile_field = {c.case_tile_field: c for c in detail.columns}
-                for field in case_tile_template_config().fields:
+                for field in case_tile_template_config(detail.case_tile_template).fields:
                     if field not in col_by_tile_field:
                         errors.append({
                             'type': "invalid tile configuration",
