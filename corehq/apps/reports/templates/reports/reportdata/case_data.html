@@ -63,11 +63,12 @@
                   {% if dynamic_properties_table %}
                     {% include "reports/partials/case_property_table.html" with rows=dynamic_properties_table %}
                   {% elif dd_properties_tables %}
-                    <div class="pull-right btn-grp" role="group" data-bind="visible: {{ visible_tables | length }} > 1 ">
-                      <button class="btn btn-sm btn-default" type="button" id="expand-all-accordion-btn">Expand All</button>
-                      <button class="btn btn-sm btn-default" type="button" id="collapse-all-accordion-btn">Collapse All</button>
-                    </div>
-
+                    {% if show_expand_collapse_buttons %}
+                      <div class="pull-right btn-grp" role="group">
+                        <button class="btn btn-sm btn-default" type="button" id="expand-all-accordion-btn">Expand All</button>
+                        <button class="btn btn-sm btn-default" type="button" id="collapse-all-accordion-btn">Collapse All</button>
+                      </div>
+                    {% endif %}
                     <div class="panel-group" id="case-properties-accordion">
                       {% for table in dd_properties_tables %}
                         <div class="panel panel-appmanager" id="{{ table.name|slugify }}-parent">
