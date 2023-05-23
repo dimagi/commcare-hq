@@ -17,6 +17,7 @@ from corehq.apps.app_manager.tests.util import (
     SuiteMixin,
     TestXmlMixin,
     patch_get_xform_resource_overrides,
+    case_search_sync_cases_on_form_entry_enabled_for_domain
 )
 from corehq.apps.hqmedia.models import HQMediaMapItem
 from corehq.apps.userreports.models import ReportConfiguration
@@ -267,3 +268,30 @@ class SuiteTest(SimpleTestCase, SuiteMixin):
             suite,
             "entry[1]/instance"
         )
+
+    def test_sync_cases_on_form_entry_disabled(self, *args):
+        factory = AppFactory()
+        module, form = factory.new_basic_module('m0', 'case1')
+        form.requires = 'case'
+
+        module.search_config = CaseSearch(
+            properties=[
+                CaseSearchProperty(name='name', label={'en': 'Name'}),
+            ],
+        )
+        module.assign_references()
+        self.assertXmlDoesNotHaveXpath(factory.app.create_suite(), "./entry/post")
+
+    @case_search_sync_cases_on_form_entry_enabled_for_domain()
+    def test_sync_cases_on_form_entry_enabled(self, *args):
+        factory = AppFactory()
+        module, form = factory.new_basic_module('m0', 'case1')
+        form.requires = 'case'
+
+        module.search_config = CaseSearch(
+            properties=[
+                CaseSearchProperty(name='name', label={'en': 'Name'}),
+            ],
+        )
+        module.assign_references()
+        self.assertXmlHasXpath(factory.app.create_suite(), "./entry/post")
