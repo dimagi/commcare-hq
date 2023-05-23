@@ -78,7 +78,7 @@ Pillow
 polib
 prometheus-client
 psycogreen
-psycopg2>=2.8.4  # Python 3.8 support
+psycopg2
 py-KISSmetrics
 pycryptodome>=3.6.6  # security update
 PyGithub
