@@ -46,16 +46,12 @@ SMS_MAPPING = {
         },
         "domain": {
             "fields": {
-                "domain": {
-                    "index": "analyzed",
-                    "type": "string"
-                },
                 "exact": {
                     "index": "not_analyzed",
                     "type": "string"
                 }
             },
-            "type": "multi_field"
+            "type": "string"
         },
         "phone_number": {
             "type": "string"
