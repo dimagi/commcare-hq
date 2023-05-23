@@ -3,6 +3,7 @@ import os
 from io import BytesIO
 import copy
 
+from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import TestCase
 from django.test.client import Client
 from django.test.utils import override_settings
@@ -19,7 +20,10 @@ from corehq.form_processor.tests.utils import FormProcessorTestUtils, sharded
 from corehq.util.json import CommCareJSONEncoder
 from corehq.util.test_utils import TestFileMixin, softer_assert
 
-from couchforms.exceptions import InvalidSubmissionFileExtensionError
+from couchforms.exceptions import (
+    InvalidAttachmentFileError,
+    InvalidSubmissionFileExtensionError
+)
 
 
 class BaseSubmissionTest(TestCase):
@@ -130,6 +134,41 @@ class SubmissionTest(BaseSubmissionTest):
     def test_invalid_form_submission_file_extension(self):
         response = self._submit('suspicious_form.abc', url=reverse("receiver_secure_post", args=[self.domain]))
         expected_error = InvalidSubmissionFileExtensionError()
+        self.assertEqual(response.status_code, expected_error.status_code)
+        self.assertEqual(
+            response.content.decode('utf-8'),
+            f'<OpenRosaResponse xmlns="http://openrosa.org/http/response"><message nature="processing_failure">'
+            f'{expected_error.message}'
+            f'</message></OpenRosaResponse>'
+        )
+
+    def test_valid_attachment_file_extension_with_valid_mimetype(self):
+        image = SimpleUploadedFile("image.png", b"fake image", content_type="image/png")
+        response = self._submit('simple_form.xml', attachments={
+            "image.png": image,
+        })
+        self.assertEqual(response.status_code, 201)
+
+    def test_invalid_attachment_file_extension_with_valid_mimetype(self):
+        image = SimpleUploadedFile("image.xyz", b"fake image", content_type="image/png")
+        response = self._submit('simple_form.xml', attachments={
+            "image.xyz": image,
+        })
+        self.assertEqual(response.status_code, 201)
+
+    def test_valid_attachment_file_extension_with_invalid_mimetype(self):
+        image = SimpleUploadedFile("image.png", b"fake image", content_type="fake/image")
+        response = self._submit('simple_form.xml', attachments={
+            "image.png": image,
+        })
+        self.assertEqual(response.status_code, 201)
+
+    def test_invalid_attachment_file_extension_with_invalid_mimetype(self):
+        image = SimpleUploadedFile("image.xyz", b"fake image", content_type="fake/image")
+        response = self._submit('simple_form.xml', attachments={
+            "image.xyz": image,
+        })
+        expected_error = InvalidAttachmentFileError()
         self.assertEqual(response.status_code, expected_error.status_code)
         self.assertEqual(
             response.content.decode('utf-8'),
