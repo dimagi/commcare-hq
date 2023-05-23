@@ -116,6 +116,7 @@ hqDefine("cloudcare/js/formplayer/app", function () {
 
     FormplayerFrontend.on('clearBreadcrumbs', function () {
         $('#persistent-case-tile').html("");
+        $('#sidebar-region').html("");
     });
 
     FormplayerFrontend.on('clearForm', function () {
