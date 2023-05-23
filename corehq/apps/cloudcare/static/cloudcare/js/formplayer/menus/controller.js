@@ -117,8 +117,10 @@ hqDefine("cloudcare/js/formplayer/menus/controller", function () {
         } else {
             FormplayerFrontend.regions.getRegion('persistentCaseTile').empty();
         }
-        if (sidebarEnabled && !appPreview && menuResponse.type === "entities" && menuResponse.queryResponse)  {
-            FormplayerFrontend.regions.getRegion('sidebar').show(QueryListView(menuResponse.queryResponse).render());
+        var queryResponse = menuResponse.queryResponse;
+        if (sidebarEnabled && !appPreview && menuResponse.type === "entities" && queryResponse != undefined)  {
+            var queryCollection = new Backbone.Collection(queryResponse.displays);
+            FormplayerFrontend.regions.getRegion('sidebar').show(QueryListView({collection: queryCollection, title: menuResponse.title, description: menuResponse.description,  sidebarEnabled: true}).render());
         } else {
             FormplayerFrontend.regions.getRegion('sidebar').empty();
         }
