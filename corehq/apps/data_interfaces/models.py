@@ -63,7 +63,7 @@ from corehq.messaging.scheduling.tasks import (
 from corehq.sql_db.util import (
     get_db_aliases_for_partitioned_query,
     paginate_query,
-    paginate_query_across_partitioned_databases,
+    paginate_query_across_partitioned_databases, create_unique_index_name,
 )
 from corehq.util.log import with_progress_bar
 from corehq.util.quickcache import quickcache
@@ -136,7 +136,9 @@ class AutomaticUpdateRule(models.Model):
         app_label = "data_interfaces"
         indexes = [
             models.Index(fields=['deleted_on'],
-                         name='updaterule_deleted_on_idx',
+                         name=create_unique_index_name('data_interfaces',
+                                                       'automaticupdaterule',
+                                                       ['deleted_on']),
                          condition=Q(deleted_on__isnull=False))
         ]
 

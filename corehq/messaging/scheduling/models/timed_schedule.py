@@ -11,6 +11,7 @@ from corehq.apps.data_interfaces.utils import property_references_parent
 from corehq.messaging.scheduling.exceptions import InvalidMonthlyScheduleConfiguration
 from corehq.messaging.scheduling.models.abstract import Schedule, Event, Broadcast, Content
 from corehq.messaging.scheduling import util
+from corehq.sql_db.util import create_unique_index_name
 from corehq.util.timezones.conversions import UserTime
 from datetime import timedelta, datetime, date, time
 from dateutil.parser import parse
@@ -56,7 +57,9 @@ class TimedSchedule(Schedule):
     class Meta:
         indexes = [
             models.Index(fields=['deleted_on'],
-                         name='timedschedule_deleted_on_idx',
+                         name=create_unique_index_name('scheduling',
+                                                       'timedschedule',
+                                                       ['deleted_on']),
                          condition=models.Q(deleted_on__isnull=False))
         ]
 
@@ -662,7 +665,10 @@ class ScheduledBroadcast(Broadcast):
 
     class Meta:
         indexes = [
-            models.Index(fields=['deleted_on'], name='sch_broadcast_deleted_on_idx',
+            models.Index(fields=['deleted_on'],
+                         name=create_unique_index_name('scheduling',
+                                                       'scheduledbroadcast',
+                                                       ['deleted_on']),
                          condition=models.Q(deleted_on__isnull=False))
         ]
 

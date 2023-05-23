@@ -5,13 +5,17 @@ from corehq.messaging.scheduling import util
 from datetime import timedelta, datetime
 from memoized import memoized
 
+from corehq.sql_db.util import create_unique_index_name
+
 
 class AlertSchedule(Schedule):
 
     class Meta:
         indexes = [
             models.Index(fields=['deleted_on'],
-                         name='alertschedule_deleted_on_idx',
+                         name=create_unique_index_name('scheduling',
+                                                       'alertschedule',
+                                                       ['deleted_on']),
                          condition=models.Q(deleted_on__isnull=False))
         ]
 
@@ -124,7 +128,10 @@ class ImmediateBroadcast(Broadcast):
 
     class Meta:
         indexes = [
-            models.Index(fields=['deleted_on'], name='imm_broadcast_deleted_on_idx',
+            models.Index(fields=['deleted_on'],
+                         name=create_unique_index_name('scheduling',
+                                                       'immediatebroadcast',
+                                                       ['deleted_on']),
                          condition=models.Q(deleted_on__isnull=False))
         ]
 
