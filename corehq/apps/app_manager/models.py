@@ -1953,7 +1953,7 @@ class Detail(IndexedSchema, CaseListLookupMixin):
     max_select_value = IntegerProperty(default=100)
 
     # If True, use case tiles in the case list
-    use_case_tiles = BooleanProperty()
+    case_tile_template = StringProperty(exclude_if_none=True)
     # If given, use this string for the case tile markup instead of the default temaplte
     custom_xml = StringProperty(exclude_if_none=True)
 
