@@ -189,7 +189,7 @@ class SubmissionTest(BaseSubmissionTest):
         # submit a form to try again as duplicate with one attachment modified
         self._submit('simple_form.xml', attachments={
             "image": BytesIO(b"fake image"),
-            "file": BytesIO(b"text file"),
+            "audio": BytesIO(b"fake audio"),
         })
         response = self._submit(
             'simple_form_edited.xml',
@@ -202,10 +202,10 @@ class SubmissionTest(BaseSubmissionTest):
         self.assertIn(b"<bop>bong</bop>", new_form.get_xml())
         self.assertEqual(
             list_attachments(old_form),
-            [("file", b"text file"), ("image", b"fake image")])
+            [("audio", b"fake audio"), ("image", b"fake image")])
         self.assertEqual(
             list_attachments(new_form),
-            [("file", b"text file"), ("image", b"other fake image")])
+            [("audio", b"fake audio"), ("image", b"other fake image")])
 
     def test_submit_invalid_attachment_size(self):
         file_data = BytesIO(b"a" * (settings.MAX_UPLOAD_SIZE_ATTACHMENT + 1))
