@@ -70,8 +70,8 @@ hqDefine("reports/js/hq_report", [
                                     data: getReportParams(undefined),
                                     type: "POST",
                                     success: function () {
-                                        alertUser.alert_user(gettext("Your requested Excel report will be sent to the email " +
-                                            "address defined in your account settings."), "success");
+                                        alertUser.alert_user(gettext("Your requested Excel report will be sent " +
+                                            "to the email address defined in your account settings."), "success");
                                     },
                                 });
                             } else {
@@ -188,15 +188,29 @@ hqDefine("reports/js/hq_report", [
 
         function getReportParams(additionalParams) {
             var params = window.location.search.substr(1);
+            if (params.includes('query_id=')) {
+                // getting the proper params for reports with obfuscated urls (Case List Explorer)
+                $.ajax({
+                    url: getReportBaseUrl('get_or_create_hash'),
+                    type: 'POST',
+                    dataType: 'json',
+                    async: false,
+                    data: {
+                        'query_id': params.replace('query_id=', ''),
+                        'params': '',
+                    },
+                    success: function (data) {
+                        params = data.query_string
+                    },
+                });
+            }
             if (params.length <= 1) {
                 if (self.loadDatespanFromCookie()) {
-                    params = "startdate=" + self.datespan.startdate +
-                        "&enddate=" + self.datespan.enddate;
+                    params = "startdate=" + self.datespan.startdate + "&enddate=" + self.datespan.enddate;
                 }
             }
             params += (additionalParams ? "&" + additionalParams : "");
             return params;
-
         }
 
         function getReportBaseUrl(renderType) {
