@@ -1,5 +1,5 @@
 from django.utils.datastructures import MultiValueDictKeyError
-from couchforms.const import MAGIC_PROPERTY
+from couchforms.const import MAGIC_PROPERTY, VALID_ATTACHMENT_FILE_EXTENSIONS
 import logging
 from datetime import datetime
 from django.conf import settings
@@ -9,6 +9,7 @@ from couchforms.exceptions import (
     MultipartEmptyPayload,
     MultipartFilenameError,
     PayloadTooLarge,
+    InvalidAttachmentFileError,
     InvalidSubmissionFileExtensionError,
     AttachmentSizeTooLarge,
 )
@@ -56,6 +57,8 @@ def get_instance_and_attachment(request):
                 if key != MAGIC_PROPERTY:
                     if _attachment_exceeds_size_limit(item):
                         raise AttachmentSizeTooLarge()
+                    if not _valid_attachment_file(item):
+                        raise InvalidAttachmentFileError()
                     attachments[key] = item
         if not instance:
             raise MultipartEmptyPayload()
@@ -74,6 +77,25 @@ def _valid_instance_file_extension(file):
         return False
     file_extension = file.name.rsplit(".", 1)[-1]
     return file_extension == 'xml'
+
+
+def _valid_attachment_file(file):
+    return _valid_attachment_file_extension(file) or _valid_attachment_file_mimetype(file)
+
+
+def _valid_attachment_file_extension(file):
+    if "." not in file.name:
+        return False
+    file_extension = file.name.rsplit(".", 1)[-1]
+    return file_extension in VALID_ATTACHMENT_FILE_EXTENSIONS
+
+
+def _valid_attachment_file_mimetype(file):
+    return (
+        file.content_type.startswith(("audio/", "image/", "video/"))
+        # default mimetype set by CommCare
+        or file.content_type == "application/octet-stream"
+    )
 
 
 def _attachment_exceeds_size_limit(file):
