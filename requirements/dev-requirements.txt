@@ -270,7 +270,7 @@ ghdiff==0.4
     # via -r base-requirements.in
 git-build-branch==0.1.14
     # via -r dev-requirements.in
-gnureadline==8.0.0
+gnureadline==8.1.2
     # via -r dev-requirements.in
 google-api-core==2.5.0
     # via google-api-python-client
@@ -469,7 +469,7 @@ psutil==5.8.0
     # via -r dev-requirements.in
 psycogreen==1.0.2
     # via -r base-requirements.in
-psycopg2==2.8.6
+psycopg2==2.9.6
     # via
     #   -r base-requirements.in
     #   sqlalchemy-postgres-copy
@@ -534,7 +534,7 @@ python-dateutil==2.8.2
     #   pandas
 python-imap==1.0.0
     # via -r base-requirements.in
-python-magic==0.4.22
+python-magic==0.4.27
     # via -r base-requirements.in
 python-mimeparse==1.6.0
     # via django-tastypie
