@@ -81,6 +81,7 @@ from corehq.apps.app_manager.xpath import (
 from corehq.apps.case_search.const import COMMCARE_PROJECT, EXCLUDE_RELATED_CASES_FILTER
 from corehq.apps.case_search.models import (
     CASE_SEARCH_BLACKLISTED_OWNER_ID_KEY,
+    case_search_sync_cases_on_form_entry_enabled_for_domain,
     CASE_SEARCH_CUSTOM_RELATED_CASE_PROPERTY_KEY,
     CASE_SEARCH_REGISTRY_ID_KEY,
     CASE_SEARCH_INCLUDE_ALL_RELATED_CASES_KEY
@@ -109,13 +110,14 @@ class QuerySessionXPath(InstanceXpath):
 
 class RemoteRequestFactory(object):
     def __init__(self, suite, module, detail_section_elements,
-                 case_session_var=None, storage_instance=RESULTS_INSTANCE):
+                 case_session_var=None, storage_instance=RESULTS_INSTANCE, exclude_relevant=False):
         self.suite = suite
         self.app = module.get_app()
         self.domain = self.app.domain
         self.module = module
         self.detail_section_elements = detail_section_elements
         self.storage_instance = storage_instance
+        self.exclude_relevant = exclude_relevant
         if case_session_var:
             self.case_session_var = case_session_var
         else:
@@ -150,7 +152,8 @@ class RemoteRequestFactory(object):
         if self.module.is_multi_select():
             data.ref = "."
             data.nodeset = self._get_multi_select_nodeset()
-            data.exclude = self._get_multi_select_exclude()
+            if self.exclude_relevant:
+                data.exclude = self._get_multi_select_exclude()
         else:
             data.ref = QuerySessionXPath(self.case_session_var).instance()
         return data
@@ -162,6 +165,8 @@ class RemoteRequestFactory(object):
         return CaseIDXPath(XPath("current()").slash(".")).case().count().eq(1)
 
     def get_post_relevant(self):
+        if self.exclude_relevant:
+            return None
         case_not_claimed = self.module.search_config.get_relevant(
             self.case_session_var, self.module.is_multi_select())
         if module_uses_smart_links(self.module):
