@@ -25,6 +25,7 @@ from django.utils.html import format_html, format_html_join
 from django.utils.safestring import mark_safe
 from django.utils.translation import gettext as _
 from django.utils.translation import gettext_lazy, gettext_noop
+from dimagi.utils.couch.cache import cache_core
 from django.views.decorators.http import (
     require_GET,
     require_http_methods,
@@ -557,7 +558,6 @@ def _can_email_report(report_slug, request, dispatcher_class, domain):
 @require_http_methods(['DELETE'])
 def delete_config(request, domain, config_id):
     ReportConfig.shared_on_domain.clear(ReportConfig, domain)
-
     try:
         saved_report = ReportConfig.get(config_id)
     except ResourceNotFound:
@@ -566,7 +566,9 @@ def delete_config(request, domain, config_id):
     if not _can_delete_saved_report(saved_report, request.couch_user, domain):
         raise Http404()
 
+    print(f"invalidate result {cache_core.invalidate_doc(saved_report)}")
     saved_report.delete()
+    print(f"invalidate result {cache_core.invalidate_doc(saved_report)}")
     ProjectReportsTab.clear_dropdown_cache(domain, request.couch_user)
 
     touch_saved_reports_views(request.couch_user, domain)

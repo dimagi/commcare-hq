@@ -97,8 +97,7 @@ def invalidate_doc(doc, deleted=False):
 
     invalidate_doc_generation(invalidate_doc)
     rcache().delete(key_doc_id(doc_id))
-
-    if not deleted and invalidate_doc.get('doc_id', None) in GenerationCache.doc_type_generation_map():
+    if not deleted and doc_id in GenerationCache.doc_type_generation_map():
         do_cache_doc(doc)
 
     if prior_ver:
