@@ -263,7 +263,7 @@ gevent==21.8.0
     #   git-build-branch
 ghdiff==0.4
     # via -r base-requirements.in
-git-build-branch==0.1.14
+git-build-branch==0.1.15
     # via -r dev-requirements.in
 gnureadline==8.0.0
     # via -r dev-requirements.in
