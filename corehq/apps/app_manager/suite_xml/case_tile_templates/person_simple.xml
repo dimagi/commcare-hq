@@ -56,7 +56,7 @@
           <locale id="{header[locale_id]}"/>
         </text>
       </header>
-      <template>
+      <template form="{header[format]}">
         <text>
           &lt;b&gt;{header[prefix]} &lt;/b&gt;
           <xpath function="{header[xpath_function]}">
@@ -88,7 +88,7 @@
           <locale id="{top_left[locale_id]}"/>
         </text>
       </header>
-      <template>
+      <template form="{top_left[format]}">
         <text>
           &lt;b&gt;{top_left[prefix]} &lt;/b&gt;
           <xpath function="{top_left[xpath_function]}">
@@ -120,7 +120,7 @@
           <locale id="{sex[locale_id]}"/>
         </text>
       </header>
-      <template>
+      <template form="{sex[format]}">
         <text>
           &lt;b&gt;{sex[prefix]} &lt;/b&gt;
           <xpath function="{sex[xpath_function]}">
@@ -142,10 +142,10 @@
        </style>
       <header>
         <text>
-          <locale id="{header[locale_id]}"/>
+          <locale id="{bottom_left[locale_id]}"/>
         </text>
       </header>
-      <template>
+      <template form="{bottom_left[format]}">
         <text>
           &lt;b&gt;{bottom_left[prefix]} &lt;/b&gt;
           <xpath function="{bottom_left[xpath_function]}">
@@ -177,7 +177,7 @@
           <locale id="{header[locale_id]}"/>
         </text>
       </header>
-      <template>
+      <template form="{date[format]}">
         <text>&lt;b&gt;{date[prefix]} &lt;/b&gt; <xpath function="{date[xpath_function]}"/></text>
       </template>
     </field>
