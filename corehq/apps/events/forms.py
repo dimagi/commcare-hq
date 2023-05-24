@@ -224,7 +224,7 @@ class EventForm(forms.Form):
             self.domain,
             id='id_location_id',
             placeholder=_("All Locations"),
-            attrs={'data-bind': 'value: location_id'},
+            attrs={'data-bind': 'value: locationId'},
         )
         widget.query_url = f"{widget.query_url}?show_all=true"
         help_text = ExpandedMobileWorkerFilter.location_search_help

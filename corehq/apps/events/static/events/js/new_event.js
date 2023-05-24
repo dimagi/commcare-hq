@@ -43,7 +43,7 @@ hqDefine("events/js/new_event", [
             self.name = ko.observable(initialData.name);
             self.startDate = ko.observable(initialData.start_date);
             self.endDate = ko.observable(initialData.end_date);
-            self.location = ko.observable(initialData.location_id);
+            self.locationId = ko.observable(initialData.location_id);
             self.attendanceTarget = ko.observable(initialData.attendance_target || 1);
             self.sameDayRegistration = ko.observable(initialData.sameday_reg);
             self.trackingOption = ko.observable(initialData.tracking_option || "by_day");
