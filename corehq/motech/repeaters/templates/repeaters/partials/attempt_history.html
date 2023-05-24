@@ -17,7 +17,7 @@
                     <td>
                         <div>
                             <strong>Attempt #{{ attempt_number }}</strong> -
-                            {% elif attempt.state == 'SUCCESS' or attempt.state == 'EMPTY' %}
+                            {% if attempt.state == 'SUCCESS' or attempt.state == 'EMPTY' %}
                                 <br/><i class="fa fa-check"></i>
                             {% elif attempt.state == 'FAIL' or attempt.state == 'CANCELLED' %}
                                 <br/><i class="fa fa-exclamation-triangle"></i>
