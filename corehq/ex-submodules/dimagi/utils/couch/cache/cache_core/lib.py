@@ -1,11 +1,16 @@
 import simplejson
 from . import CACHE_DOCS, key_doc_id, rcache
+from couchdbkit.exceptions import ResourceNotFound
 
 
 def invalidate_doc_generation(doc):
     from .gen import GenerationCache
-    doc_type = doc.get('doc_type', None)
+    try:
+        doc_type = doc.get('doc_type', None)
+    except ResourceNotFound:
+        doc_type = getattr(doc, 'doc_type', None)
     generation_mgr = GenerationCache.doc_type_generation_map()
+
     if doc_type in generation_mgr:
         generation_mgr[doc_type].invalidate_all()
 
