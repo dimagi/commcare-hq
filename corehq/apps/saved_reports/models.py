@@ -142,6 +142,7 @@ class ReportConfig(CachedCouchDocumentMixin, Document):
             **kwargs
         )
 
+
         if include_shared:
             user_configs_ids = [c._id for c in configs]
             shared_configs = [c for c in cls.shared_on_domain(domain) if c._id not in user_configs_ids]
