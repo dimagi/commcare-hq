@@ -85,7 +85,7 @@
                               </h4>
                             </div>
                           {% endif %}
-                          <div class="panel-collapse collapse in" id="{{ table.name }}">
+                          <div class="panel-collapse collapse in" id="property-table-{{ forloop.counter }}">
                             <div class="panel-body">
                               {% include "reports/partials/case_property_table.html" with rows=table.rows %}
                             </div>
