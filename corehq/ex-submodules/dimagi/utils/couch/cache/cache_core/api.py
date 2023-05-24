@@ -1,4 +1,4 @@
-from couchdbkit import MultipleResultsFound
+from couchdbkit import MultipleResultsFound, ResourceNotFound
 from django_redis.exceptions import ConnectionInterrupted
 import simplejson
 from . import COUCH_CACHE_TIMEOUT, CACHE_DOCS, rcache, key_doc_id
@@ -87,18 +87,21 @@ def invalidate_doc(doc, deleted=False):
     #first by just individual doc
     doc_id = doc['_id']
     doc_key = key_doc_id(doc_id)
+    try:
+        doc_type = doc.get('doc_type', None)
+    except ResourceNotFound:
+        doc_type = getattr(doc, 'doc_type', None)
 
     # regardless if it exist or not, send it to the generational lookup and invalidate_all.
     prior_ver = rcache().get(doc_key, None)
-    if prior_ver and not doc.get('doc_type', None):
+    if prior_ver and not doc_type:
         invalidate_doc = simplejson.loads(prior_ver)
     else:
         invalidate_doc = doc
 
     invalidate_doc_generation(invalidate_doc)
     rcache().delete(key_doc_id(doc_id))
-
-    if not deleted and invalidate_doc.get('doc_id', None) in GenerationCache.doc_type_generation_map():
+    if not deleted and doc_id in GenerationCache.doc_type_generation_map():
         do_cache_doc(doc)
 
     if prior_ver:
