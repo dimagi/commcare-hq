@@ -41,6 +41,7 @@ hqDefine("cloudcare/js/formplayer/app", function () {
                 breadcrumb: "#breadcrumb-region",
                 persistentCaseTile: "#persistent-case-tile",
                 restoreAsBanner: '#restore-as-region',
+                sidebar: '#sidebar-region'
             },
         });
 
@@ -115,6 +116,7 @@ hqDefine("cloudcare/js/formplayer/app", function () {
 
     FormplayerFrontend.on('clearBreadcrumbs', function () {
         $('#persistent-case-tile').html("");
+        $('#sidebar-region').html("");
     });
 
     FormplayerFrontend.on('clearForm', function () {

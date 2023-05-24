@@ -450,10 +450,15 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
         },
 
         templateContext: function () {
-            var description = md.render(this.options.collection.description.trim());
+            if (this.options.collection.description) {
+                var description = md.render(this.options.collection.description.trim());
+            } else {
+                var description = this.options.description;
+            }
             return {
                 title: this.options.title.trim(),
                 description: DOMPurify.sanitize(description),
+                sidebarEnabled: this.options.sidebarEnabled,
             };
         },
 
