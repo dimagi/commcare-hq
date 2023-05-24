@@ -200,6 +200,7 @@ case_search
  0009_delete_casesearchqueryaddition
  0010_casesearchconfig_synchronous_web_apps
  0011_domainsnotincasesearchindex
+ 0012_casesearchconfig_sync_cases_on_form_entry
 cleanup
  0001_convert_change_feed_checkpoint_to_sql
  0002_convert_mc_checkpoint_to_sql
