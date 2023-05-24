@@ -1953,7 +1953,7 @@ class Detail(IndexedSchema, CaseListLookupMixin):
     max_select_value = IntegerProperty(default=100)
 
     # If True, use case tiles in the case list
-    use_case_tiles = BooleanProperty()
+    case_tile_template = StringProperty(exclude_if_none=True)
     # If given, use this string for the case tile markup instead of the default temaplte
     custom_xml = StringProperty(exclude_if_none=True)
 
@@ -2011,7 +2011,7 @@ class Detail(IndexedSchema, CaseListLookupMixin):
         """
         Return True if configured to persist a case tile on forms
         """
-        return self.persist_tile_on_forms and (self.use_case_tiles or self.custom_xml)
+        return self.persist_tile_on_forms and (self.case_tile_template or self.custom_xml)
 
     def overwrite_attrs(self, src_detail, attrs):
         """
@@ -2021,7 +2021,7 @@ class Detail(IndexedSchema, CaseListLookupMixin):
         This method is relevant only for short details.
         """
         case_tile_configuration_list = [
-            'use_case_tiles',
+            'case_tile_template',
             'persist_tile_on_forms',
             'persistent_case_tile_from_module',
             'pull_down_tile',
