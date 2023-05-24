@@ -378,6 +378,7 @@ events
  0007_alter_event_attendee_list_status
  0008_alter_event__case_id
  0009_attendeemodel
+ 0010_event_location
 export
  0001_initial
  0002_datafile
