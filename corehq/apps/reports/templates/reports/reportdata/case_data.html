@@ -71,13 +71,13 @@
                     {% endif %}
                     <div class="panel-group" id="case-properties-accordion">
                       {% for table in dd_properties_tables %}
-                        <div class="panel panel-appmanager" id="{{ table.name|slugify }}-parent">
+                        <div class="panel panel-appmanager" id="property-table-{{ forloop.counter }}-parent">
                           {% if table.name is not None %}
                             <div class="panel-heading">
                               <h4 class="panel-title">
                                 <a data-toggle="collapse"
-                                   data-parent="#{{ table.name|slugify }}-parent"
-                                   href="#{{ table.name }}"
+                                   data-parent="#property-table-{{ forloop.counter }}-parent"
+                                   href="#property-table-{{ forloop.counter }}"
                                    class="collapse in">
                                   <i class="fa fa-angle-double-down"></i>
                                   {{ table.name }}
@@ -85,7 +85,7 @@
                               </h4>
                             </div>
                           {% endif %}
-                          <div class="panel-collapse collapse in" id="{{ table.name }}">
+                          <div class="panel-collapse collapse in" id="property-table-{{ forloop.counter }}">
                             <div class="panel-body">
                               {% include "reports/partials/case_property_table.html" with rows=table.rows %}
                             </div>
