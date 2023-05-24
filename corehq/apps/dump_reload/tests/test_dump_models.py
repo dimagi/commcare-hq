@@ -93,6 +93,9 @@ IGNORE_MODELS = {
     "tastypie.ApiKey",  # not domain-specific
     "toggle_ui.ToggleAudit",
     "two_factor.PhoneDevice",
+    "userreports.ReportComparisonDiff",
+    "userreports.ReportComparisonException",
+    "userreports.ReportComparisonTiming",
     "users.Permission",
     "util.BouncedEmail",
     "util.ComplaintBounceMeta",

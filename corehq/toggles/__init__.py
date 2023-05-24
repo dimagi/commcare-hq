@@ -1623,6 +1623,15 @@ CUSTOM_ICON_BADGES = StaticToggle(
     namespaces=[NAMESPACE_DOMAIN],
 )
 
+COMPARE_UCR_REPORTS = DynamicallyPredictablyRandomToggle(
+    'compare_ucr_reports',
+    'Compare UCR reports against other reports or against other databases.',
+    TAG_CUSTOM,
+    namespaces=[NAMESPACE_OTHER],
+    default_randomness=0.001,  # 1 in 1000
+    description='Reports for comparison must be listed in settings.UCR_COMPARISONS.'
+)
+
 MULTI_MASTER_LINKED_DOMAINS = StaticToggle(
     'multi_master_linked_domains',
     "Allow linked apps to pull from multiple master apps in the upstream domain",

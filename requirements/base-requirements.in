@@ -55,6 +55,7 @@ hiredis
 httpagentparser
 iso8601
 Jinja2
+json-delta
 jsonfield
 jsonobject-couchdbkit
 jsonobject>=2.0.0
@@ -63,6 +64,7 @@ jsonobject>=2.0.0
 jsonpath-ng @ https://github.com/kaapstorm/python-jsonpath-rw/raw/wherenot+find_or_create/wheel/jsonpath_ng-1.5.2.2-py3-none-any.whl
 jsonschema
 kafka-python
+laboratory
 looseversion
 lxml
 markdown
