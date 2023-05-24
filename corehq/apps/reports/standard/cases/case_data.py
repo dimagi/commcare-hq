@@ -250,7 +250,7 @@ class CaseDataView(BaseProjectReportSectionView):
         if dynamic_data:
             if toggles.DD_CASE_DATA.enabled_for_request(self.request):
                 dd_properties_tables = _get_dd_tables(self.domain, self.case_instance.type,
-                                                                 dynamic_data, timezone)
+                                                      dynamic_data, timezone)
                 context['dd_properties_tables'] = dd_properties_tables
                 context['show_expand_collapse_buttons'] = len(
                     [table.get('name') for table in dd_properties_tables if table.get('name') is not None]) > 1
