@@ -1,10 +1,16 @@
 import json
 from collections import namedtuple
+import functools
+import pytz
 
 from django.conf.urls import re_path as url
 from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError
+from django.db.models import Max, Min, Q
+from django.db.models.functions import TruncDate
+
 from django.http import Http404, HttpResponse, HttpResponseNotFound
+from django.test import override_settings
 from django.urls import reverse
 from django.utils.translation import gettext as _
 from django.utils.translation import gettext_noop
@@ -38,9 +44,14 @@ from corehq.apps.api.resources.auth import (
     ODataAuthentication,
     RequirePermissionAuthentication,
 )
+from corehq.apps.auditcare.models import NavigationEventAudit
 from corehq.apps.api.resources.meta import AdminResourceMeta, CustomResourceMeta
 from corehq.apps.api.resources.serializers import ListToSingleObjectSerializer
-from corehq.apps.api.util import get_obj
+from corehq.apps.api.util import (
+    get_obj,
+    django_date_filter,
+    make_date_filter,
+)
 from corehq.apps.app_manager.models import Application
 from corehq.apps.domain.models import Domain
 from corehq.apps.es import UserES
@@ -75,7 +86,8 @@ from corehq.apps.userreports.util import (
     get_report_config_or_not_found,
 )
 from corehq.apps.users.dbaccessors import (
-    get_all_user_id_username_pairs_by_domain, user_exists,
+    get_all_user_id_username_pairs_by_domain,
+    get_user_id_by_username,
 )
 from corehq.apps.users.models import (
     CommCareUser,
@@ -1044,3 +1056,161 @@ class ODataFormResource(BaseODataResource):
             url(r"^(?P<resource_name>{})/(?P<config_id>[\w\d_.-]+)/feed".format(
                 self._meta.resource_name), self.wrap_view('dispatch_list')),
         ]
+
+
+class NavigationEventAuditResource(HqBaseResource, ModelResource):
+    local_date = fields.DateField(attribute='local_date', readonly=True)
+    UTC_start_time = fields.DateTimeField(attribute='UTC_start_time', readonly=True)
+    UTC_end_time = fields.DateTimeField(attribute='UTC_end_time', readonly=True)
+
+    class Meta:
+        authentication = RequirePermissionAuthentication(HqPermissions.view_web_users)
+        queryset = NavigationEventAudit.objects.all()
+        resource_name = 'action_times'
+        fields = ['user']
+        include_resource_uri = False
+        allowed_methods = ['get']
+        detail_allowed_methods = []
+        limit = 10000
+        max_limit = 10000
+
+    # Compound filters take the form `prefix.qualifier=value`
+    # These filter functions are called with qualifier and value
+    COMPOUND_FILTERS = {
+        'local_date': make_date_filter(functools.partial(django_date_filter, field_name='local_date'))
+    }
+
+    @staticmethod
+    def to_obj(action_times):
+        '''
+        Takes a flat dict and returns an object
+        '''
+        return namedtuple('action_times', list(action_times))(**action_times)
+
+    def dispatch(self, request_type, request, **kwargs):
+        #super needs to be called first to authenticate user. Otherwise request.user returns AnonymousUser
+        response = super(HqBaseResource, self).dispatch(request_type, request, **kwargs)
+        if not toggles.ACTION_TIMES_API.enabled_for_request(request):
+            msg = (_("You don't have permission to access this API"))
+            raise ImmediateHttpResponse(HttpResponse(
+                json.dumps({"error": msg}),
+                content_type="application/json",
+                status=403))
+        else:
+            return response
+
+    def alter_list_data_to_serialize(self, request, data):
+        data['meta']['local_date_timezone'] = self.local_timezone.zone
+        params = request.GET.copy()  # Makes params mutable for creating next_url below
+
+        if data['meta']['total_count'] >= data['meta']['limit']:
+            last_object = data['objects'][-1]
+            params['cursor_local_date'] = last_object.data['local_date']
+            params['cursor_user'] = last_object.data['user']
+
+            next_url = '{}?{}'.format(request.path, params.urlencode())
+            data['meta']['next'] = next_url
+        return data
+
+    def dehydrate(self, bundle):
+        bundle.data['user_id'] = get_user_id_by_username(bundle.data['user'])
+        return bundle
+
+    def obj_get_list(self, bundle, **kwargs):
+        domain = kwargs['domain']
+        params = self._process_params(domain, bundle.request.GET)
+
+        results = self.cursor_query(domain, self.local_timezone, params)
+        return list(map(self.to_obj, results))
+
+    def _process_params(self, domain, params):
+        processed_params = {}
+
+        for param in params:
+            val = params.get(param)
+            if param == 'users':
+                val = params.getlist(param)
+            processed_params[param] = val
+
+            if param == 'limit':
+                processed_params['limit'] = self._process_limit(val)
+
+        if 'local_timezone' in processed_params:
+            self.local_timezone = pytz.timezone(processed_params['local_timezone'])
+        else:
+            self.local_timezone = Domain.get_by_name(domain).get_default_timezone()
+
+        return processed_params
+
+    def _process_limit(self, limit):
+        try:
+            limit = int(limit) or self._meta.limit
+            if limit < 0:
+                raise ValueError
+        except (ValueError, TypeError):
+            raise BadRequest(_('limit must be a positive integer.'))
+
+        if limit > self._meta.max_limit:
+            raise BadRequest(_('Limit may not exceed {}.').format(self._meta.max_limit))
+        return limit
+
+    @classmethod
+    def cursor_query(cls, domain: str, local_timezone: pytz.tzinfo.DstTzInfo,
+                    params: dict = {}) -> list:
+        if 'limit' not in params:
+            params['limit'] = cls._meta.limit
+        queryset = cls._query(domain, local_timezone, params)
+
+        cursor_local_date = params.get('cursor_local_date')
+        cursor_user = params.get('cursor_user')
+
+        if cursor_local_date and cursor_user:
+            queryset = queryset.filter(
+                Q(local_date__gt=cursor_local_date)
+                | (Q(local_date=cursor_local_date) & Q(user__gt=cursor_user))
+            )
+
+        queryset = queryset.annotate(UTC_start_time=Min('event_date'), UTC_end_time=Max('event_date'))
+
+        with override_settings(USE_TZ=True):
+            # TruncDate ignores tzinfo if the queryset is not evaluated within overridden USE_TZ setting
+            return list(queryset[:params['limit']])
+
+    @classmethod
+    def non_cursor_query(cls, domain: str, local_timezone: pytz.tzinfo.DstTzInfo, params: dict = {}):
+
+        queryset = cls._query(domain, local_timezone, params)
+        queryset = queryset.annotate(UTC_start_time=Min('event_date'), UTC_end_time=Max('event_date'))
+
+        with override_settings(USE_TZ=True):
+            # TruncDate ignores tzinfo if the queryset is not evaluated within overridden USE_TZ setting
+            return list(queryset)
+
+    @classmethod
+    def _query(cls, domain: str, local_timezone: pytz.tzinfo.DstTzInfo, params: dict = {}):
+        filters = Q(domain=domain)
+        if 'users' in params:
+            filters &= Q(user__in=params['users'])
+
+        queryset = NavigationEventAudit.objects.filter(filters)
+
+        date_filter = cls._get_compound_filter('local_date', params)
+
+        results = (queryset
+                .annotate(local_date=TruncDate('event_date', tzinfo=local_timezone))
+                .filter(date_filter)
+                .values('local_date', 'user'))
+
+        results = results.order_by('local_date', 'user')
+
+        return results
+
+    @classmethod
+    def _get_compound_filter(cls, key, params):
+        compound_filter = Q()
+        for key, val in params.items():
+            if '.' in key and key.split('.')[0] in cls.COMPOUND_FILTERS:
+                prefix, qualifier = key.split('.', maxsplit=1)
+                filter_obj = cls.COMPOUND_FILTERS[prefix](qualifier, val)
+                compound_filter &= Q(**filter_obj)
+        return compound_filter
