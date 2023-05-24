@@ -4,7 +4,6 @@ from rest_framework.decorators import (
     permission_classes,
 )
 from rest_framework.permissions import IsAuthenticated
-from rest_framework.status import HTTP_409_CONFLICT
 
 from custom.abdm.auth import ABDMUserAuthentication
 from custom.abdm.milestone_one.utils import abha_verification_util as abdm_util
@@ -14,6 +13,7 @@ from custom.abdm.milestone_one.utils.response_util import (
     parse_response,
 )
 from custom.abdm.utils import check_for_existing_abha_number
+from custom.abdm.const import ABHA_IN_USE_ERROR_CODE, ERROR_MESSAGES
 
 
 @api_view(["GET"])
@@ -25,8 +25,8 @@ def get_auth_methods(request):
         error_msg = "Missing required parameter: health_id"
         return generate_invalid_req_response(error_msg)
     if check_for_existing_abha_number(request.user.domain, health_id):
-        error_msg = "Provided ABHA is already linked to another beneficiary!"
-        return generate_invalid_req_response(error_msg, response_code=HTTP_409_CONFLICT)
+        return generate_invalid_req_response(ERROR_MESSAGES[ABHA_IN_USE_ERROR_CODE],
+                                             error_code=ABHA_IN_USE_ERROR_CODE)
     resp = abdm_util.search_by_health_id(health_id)
     auth_methods = resp.get("authMethods")
     resp = {"auth_methods": auth_methods}
