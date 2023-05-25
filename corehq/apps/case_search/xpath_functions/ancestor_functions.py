@@ -100,8 +100,8 @@ def _child_case_lookup(context, case_ids, identifier):
 def ancestor_exists(node, context):
     """
     Supports the following syntax:
-    - ancestor_exists(parent, {ancestor_filter})
-    i.e. ancestor-exists(parent,city="SF")
+    - ancestor_exists({ancestor_path_expression}, {ancestor_filter})
+    i.e. ancestor-exists(host/parent,city='SF')
 
     Since ES has no way of performing joins, we filter down in stages:
     1. Find the ids of all cases where the condition is met
@@ -113,22 +113,16 @@ def ancestor_exists(node, context):
     ancestor_path_node, ancestor_case_filter_node = node.args
     _validate_ancestor_exists_filter(ancestor_case_filter_node)
 
-    from corehq.apps.case_search.filter_dsl import build_filter_from_ast
-    es_filter = build_filter_from_ast(ancestor_case_filter_node, context)
-
-    es_query = CaseSearchES().domain(context.domain).filter(es_filter)
-    if es_query.count() > MAX_RELATED_CASES:
-        new_query = serialize(node)
-        raise TooManyRelatedCasesError(
-            gettext("The related case lookup you are trying to perform would return too many cases"),
-            new_query
-        )
-    base_case_ids = es_query.scroll_ids()
+    base_case_ids = _get_case_ids_from_ast_filter(context, ancestor_case_filter_node)
 
     return walk_ancestor_hierarchy(context, ancestor_path_node, base_case_ids)
 
 
 def _validate_ancestor_exists_filter(node):
+    """
+    ancestor_exists(status="active" and subcase-exists(...)) raises error
+    """
+
     incompatible_xpath_query_functions = {'subcase-exists', 'subcase-count'}
 
     if isinstance(node, FunctionCall) and node.name in incompatible_xpath_query_functions:
@@ -139,3 +133,18 @@ def _validate_ancestor_exists_filter(node):
         return OPERATOR_MAPPING[node.op](_validate_ancestor_exists_filter(node.left),
                                         _validate_ancestor_exists_filter(node.right))
     return
+
+
+def _get_case_ids_from_ast_filter(context, node):
+    from corehq.apps.case_search.filter_dsl import build_filter_from_ast
+    es_filter = build_filter_from_ast(node, context)
+
+    es_query = CaseSearchES().domain(context.domain).filter(es_filter)
+    if es_query.count() > MAX_RELATED_CASES:
+        new_query = serialize(node)
+        raise TooManyRelatedCasesError(
+            gettext("The related case lookup you are trying to perform would return too many cases"),
+            new_query
+        )
+
+    return es_query.scroll_ids()
