@@ -120,11 +120,6 @@ hqDefine("cloudcare/js/formplayer/menus/controller", function () {
             menusUtils.showBreadcrumbs(menuResponse.breadcrumbs);
             if (!appPreview && ((menuResponse.langs && menuResponse.langs.length > 1 && changeFormLanguage) || enablePrintOption)) {
                 menusUtils.showFormMenu(menuResponse.langs, changeFormLanguage);
-                // Make menu the last element in the breadcrumbs
-                const formMenuEl = $("#form-menu");
-                const formMenuElParent = formMenuEl.parent();
-                formMenuEl.remove();
-                formMenuElParent.append(formMenuEl);
             }
         } else {
             FormplayerFrontend.regions.getRegion('breadcrumb').empty();
