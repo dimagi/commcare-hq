@@ -1,5 +1,6 @@
 from django.utils.translation import gettext
 from eulxml.xpath import serialize
+from eulxml.xpath import parse as parse_xpath
 from eulxml.xpath.ast import BinaryExpression, FunctionCall, Step
 
 from corehq.apps.case_search.const import OPERATOR_MAPPING
@@ -25,22 +26,19 @@ def ancestor_comparison_query(context, node):
     """Return a query that will fulfill the filter on the related case.
 
     :param node: a node returned from eulxml.xpath.parse of the form `parent/grandparent/property = 'value'`
-
-    Since ES has no way of performing joins, we filter down in stages:
-    1. Find the ids of all cases where the condition is met
-    2. Walk down the case hierarchy, finding all related cases with the right identifier to the ids
-    found in (1).
-    3. Return the lowest of these ids as a related case query filter
     """
 
-    # fetch the ids of the highest level cases that match the case_property
-    # i.e. all the cases which have `property = 'value'`
-    case_ids = _parent_property_lookup(context, node)
-
+    case_property = serialize(node.left.right)
+    value = node.right
     # extract ancestor path:
     # `parent/grandparent/property = 'value'` --> `parent/grandparent`
-    ancestor_path = node.left.left
-    return walk_ancestor_hierarchy(context, ancestor_path, case_ids)
+    ancestor_path = serialize(node.left.left)
+
+    xpath = f'ancestor-exists({ancestor_path},{case_property}="{value}")'
+    ancestor_case_filter_node = parse_xpath(xpath)
+
+    from corehq.apps.case_search.filter_dsl import build_filter_from_ast
+    return build_filter_from_ast(ancestor_case_filter_node, context)
 
 
 def walk_ancestor_hierarchy(context, ancestor_path_node, case_ids):
@@ -116,13 +114,22 @@ def _child_case_lookup(context, case_ids, identifier):
 
 
 def ancestor_exists(node, context):
+    """
+    Supports the following syntax:
+    - ancestor_exists(parent, {ancestor_filter})
+    i.e. ancestor-exists(parent,city="SF")
+
+    Since ES has no way of performing joins, we filter down in stages:
+    1. Find the ids of all cases where the condition is met
+    2. Walk down the case hierarchy, finding all related cases with the right identifier to the ids
+    found in (1).
+    3. Return the lowest of these ids as a related case query filter
+    """
     confirm_args_count(node, 2)
     ancestor_path_node, ancestor_case_filter_node = node.args
     _validate_ancestor_exists_filter(ancestor_case_filter_node)
 
-    from corehq.apps.case_search.filter_dsl import (
-        build_filter_from_ast
-    )
+    from corehq.apps.case_search.filter_dsl import build_filter_from_ast
     es_filter = build_filter_from_ast(ancestor_case_filter_node, context)
 
     es_query = CaseSearchES().domain(context.domain).filter(es_filter)
@@ -133,6 +140,7 @@ def ancestor_exists(node, context):
             new_query
         )
     base_case_ids = es_query.scroll_ids()
+
     return walk_ancestor_hierarchy(context, ancestor_path_node, base_case_ids)
 
 
