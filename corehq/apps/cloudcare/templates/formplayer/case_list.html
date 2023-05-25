@@ -28,26 +28,22 @@
         <% } else { %>
         <div class="module-case-list-table-container">
           <table class="table module-table module-table-case-list">
-
-            <thead>
-            <tr>
-              <% if (isMultiSelect && !hasNoItems) { %>
-              <th class="module-case-list-header"><input type="checkbox" id="select-all-checkbox"/></th>
-              <% } %>
-              <% if(!useTiles) { %>
-              <% _.each(headers, function(header, index) { %>
-              <% if (columnVisible(index)) { %>
+        <thead>
+        <tr>
+          <% if (isMultiSelect && !hasNoItems) { %>
+          <th class="module-case-list-header"><input type="checkbox" id="select-all-checkbox"/></th>
+          <% } %>
+          <% _.each(headers, function(header, index) { %>
+            <% if (columnVisible(index)) { %>
               <% if (columnSortable(index)) { %>
-              <th class="module-case-list-header header-clickable formplayer-request" data-id="<%- index %>"> <%- header %></th>
+                <th class="module-case-list-header header-clickable formplayer-request" data-id="<%- index %>"> <%- header %></th>
               <% } else { %>
-              <th class="module-case-list-header" data-id="<%- index %>"> <%- header %></th>
+                <th class="module-case-list-header" data-id="<%- index %>"> <%- header %></th>
               <% } %>
-              <% } %>
-              <% }); %>
-              <% } %>
-            </tr>
-            </thead>
-
+            <% } %>
+          <% }); %>
+        </tr>
+        </thead>
             <% if (hasNoItems) { %>
             <tbody>
             <tr>
