@@ -5,6 +5,7 @@ from dataclasses import dataclass
 from datetime import datetime, timedelta
 from functools import cmp_to_key, wraps
 
+from cloudant.error import CloudantDocumentException
 from django.conf import settings
 from django.contrib import messages
 from django.core.exceptions import PermissionDenied, ValidationError
@@ -232,7 +233,7 @@ class MySavedReportsView(BaseProjectReportSectionView):
         for config in all_configs:
             try:
                 ReportConfig.get(config._id)
-            except ResourceNotFound:
+            except (ResourceNotFound, CloudantDocumentException):
                 import logging
                 logging.info(f"Skipping report config with id {config._id} as not found")
                 continue
