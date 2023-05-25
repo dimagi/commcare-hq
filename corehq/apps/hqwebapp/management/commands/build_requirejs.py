@@ -43,6 +43,11 @@ class Command(ResourceStaticCommand):
                             help="Specify bootstrap3 or bootstrap5 (bootstrap3 is default)")
 
     def handle(self, **options):
+        bootstrap_version = options.get('bootstrap_version')
+        if bootstrap_version != "bootstrap3":
+            print("Only supports bootstrap3 for now.")
+            return
+
         logger.setLevel('DEBUG')
 
         local = options['local']
