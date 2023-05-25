@@ -1,0 +1,23 @@
+--- 
++++ 
+@@ -1,10 +1,10 @@
+-hqDefine("hqwebapp/js/bootstrap3/base_main", [
++hqDefine("hqwebapp/js/bootstrap5/base_main", [
+     'hqwebapp/js/downgrade_modal',
+     'hqwebapp/js/prepaid_modal',
+     'hqwebapp/js/hq.helpers',
+     'hqwebapp/js/layout',
+     'hqwebapp/js/hq-bug-report',
+-    'hqwebapp/js/bootstrap3/sticky_tabs',
++    'hqwebapp/js/bootstrap5/sticky_tabs',
+     'hqwebapp/js/main',
+     'hqwebapp/js/inactivity',
+     'notifications/js/notifications_service_main',
+@@ -14,6 +14,6 @@
+     'analytix/js/hubspot',
+     'analytix/js/kissmetrix',
+     'hqwebapp/js/mobile_experience_warning',
+-], function() {
++], function () {
+     // nothing to do, this is just to define the dependencies for hqwebapp/base.html
+ });
