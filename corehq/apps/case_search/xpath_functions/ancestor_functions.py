@@ -7,7 +7,6 @@ from corehq.apps.case_search.const import OPERATOR_MAPPING
 from corehq.apps.case_search.exceptions import CaseFilterError, TooManyRelatedCasesError
 from corehq.apps.case_search.xpath_functions.utils import confirm_args_count
 from corehq.apps.case_search.const import MAX_RELATED_CASES
-from corehq.apps.case_search.xpath_functions.comparison import property_comparison_query
 from corehq.apps.es.case_search import CaseSearchES, reverse_index_case_query
 
 
@@ -90,21 +89,6 @@ def _is_ancestor_path_expression(node):
         return _is_ancestor_path_expression(node.left)
 
     return isinstance(node.left, Step)
-
-
-def _parent_property_lookup(context, node):
-    """given a node of the form `parent/foo = 'thing'`, return all case_ids where `foo = thing`
-    """
-    es_filter = property_comparison_query(context, node.left.right, node.op, node.right, node)
-    es_query = CaseSearchES().domain(context.domain).filter(es_filter)
-    if es_query.count() > MAX_RELATED_CASES:
-        new_query = '{} {} "{}"'.format(serialize(node.left.right), node.op, node.right)
-        raise TooManyRelatedCasesError(
-            gettext("The related case lookup you are trying to perform would return too many cases"),
-            new_query
-        )
-
-    return es_query.scroll_ids()
 
 
 def _child_case_lookup(context, case_ids, identifier):
