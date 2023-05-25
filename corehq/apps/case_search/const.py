@@ -67,6 +67,7 @@ SPECIAL_CASE_PROPERTIES_MAP = {
     'last_modified': SpecialCaseProperty('last_modified', lambda doc: doc.get('modified_on'), 'modified_on',
                                          get_field_lambda('modified_on')),
 }
+
 SPECIAL_CASE_PROPERTIES = list(SPECIAL_CASE_PROPERTIES_MAP.keys())
 
 

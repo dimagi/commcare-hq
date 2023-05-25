@@ -226,6 +226,9 @@ class Command(BaseCommand):
         Role(slug=privileges.CASE_LIST_EXPLORER,
              name='Case List Explorer',
              description='Show Case List Explorer under Inspect Data in Reports'),
+        Role(slug=privileges.CASE_COPY,
+             name='Allow Case Copy',
+             description='Allow case copy from one user to another'),
     ]
 
     BOOTSTRAP_PLANS = [

@@ -1,3 +1,5 @@
+from django.conf import settings
+from django.contrib import messages
 from django.utils.translation import gettext as _
 from django.utils.translation import gettext_lazy
 
@@ -22,6 +24,7 @@ from corehq.apps.reports.standard.cases.utils import (
 )
 from corehq.apps.reports.standard.inspect import ProjectInspectionReport
 from corehq.elastic import ESError
+from corehq.toggles import CASE_LIST_EXPLORER
 
 from .data_sources import CaseDisplayES
 
@@ -52,8 +55,8 @@ class CaseListMixin(ElasticProjectInspectionReport, ProjectReportParametersMixin
 
         query = query.NOT(case_es.case_type("user-owner-mapping-case"))
 
-        if self.case_type:
-            query = query.case_type(self.case_type)
+        if self.case_types:
+            query = query.case_type(self.case_types)
 
         if self.case_status:
             query = query.is_closed(self.case_status == 'closed')
@@ -164,6 +167,26 @@ class CaseListReport(CaseListMixin, ProjectInspectionReport, ReportDataSource):
                 'urlname': CaseDataView.urlname,
             },
         ]
+
+    @property
+    def can_upgrade_to_case_list_explorer(self):
+        if settings.ENTERPRISE_MODE:
+            return False
+
+        if self.request.couch_user.is_dimagi and not CASE_LIST_EXPLORER.enabled(self.domain):
+            return True
+
+        return False
+
+    @property
+    def view_response(self):
+        if self.can_upgrade_to_case_list_explorer:
+            messages.warning(
+                self.request,
+                'Hey Dimagi User! Have you tried out the <a href="https://confluence.dimagi.com/display/saas/Case+List+Explorer" target="_blank">Case List Explorer</a> yet? It might be just what you are looking for!',  # noqa: E501
+                extra_tags='html',
+            )
+        return super(CaseListReport, self).view_response
 
     @classmethod
     def display_in_dropdown(cls, domain=None, project=None, user=None):

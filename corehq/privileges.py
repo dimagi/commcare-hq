@@ -115,6 +115,8 @@ SHOW_OWNER_LOCATION_PROPERTY_IN_REPORT_BUILDER = 'show_owner_location_property_i
 
 CASE_LIST_EXPLORER = 'case_list_explorer'
 
+CASE_COPY = 'case_copy'
+
 MAX_PRIVILEGES = [
     LOOKUP_TABLES,
     API_ACCESS,
@@ -175,6 +177,7 @@ MAX_PRIVILEGES = [
     FILTERED_BULK_USER_DOWNLOAD,
     APPLICATION_ERROR_REPORT,
     CASE_LIST_EXPLORER,
+    CASE_COPY,
 ]
 
 # These are special privileges related to their own rates in a SoftwarePlanVersion
@@ -250,4 +253,5 @@ class Titles(object):
             FILTERED_BULK_USER_DOWNLOAD: _("Bulk user management features"),
             APPLICATION_ERROR_REPORT: _("Application error report"),
             CASE_LIST_EXPLORER: _("Case List Explorer"),
+            CASE_COPY: _("Allow case copy from one user to another"),
         }.get(privilege, privilege)
