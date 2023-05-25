@@ -1,8 +1,10 @@
 from django.utils.translation import gettext
 from eulxml.xpath import serialize
-from eulxml.xpath.ast import BinaryExpression, Step
+from eulxml.xpath.ast import BinaryExpression, FunctionCall, Step
 
-from corehq.apps.case_search.exceptions import TooManyRelatedCasesError
+from corehq.apps.case_search.const import OPERATOR_MAPPING
+from corehq.apps.case_search.exceptions import CaseFilterError, TooManyRelatedCasesError
+from corehq.apps.case_search.xpath_functions.utils import confirm_args_count
 from corehq.apps.case_search.const import MAX_RELATED_CASES
 from corehq.apps.case_search.xpath_functions.comparison import property_comparison_query
 from corehq.apps.es.case_search import CaseSearchES, reverse_index_case_query
@@ -114,4 +116,20 @@ def _child_case_lookup(context, case_ids, identifier):
 
 
 def ancestor_exists(node, context):
+    confirm_args_count(node, 2)
+    ancestor_path_node, ancestor_case_filter_node = node.args
+    _validate_ancestor_exists_filter(ancestor_case_filter_node)
     pass
+
+
+def _validate_ancestor_exists_filter(node):
+    incompatible_xpath_query_functions = {'subcase-exists', 'subcase-count'}
+
+    if isinstance(node, FunctionCall) and node.name in incompatible_xpath_query_functions:
+        raise CaseFilterError(gettext(f"{node.name} is not supported with ancestor-exists"), node.name)
+
+    if hasattr(node, 'op') and node.op in OPERATOR_MAPPING:
+        # This node is a leaf
+        return OPERATOR_MAPPING[node.op](_validate_ancestor_exists_filter(node.left),
+                                        _validate_ancestor_exists_filter(node.right))
+    return
