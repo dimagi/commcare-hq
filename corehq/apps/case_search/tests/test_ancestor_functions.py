@@ -62,20 +62,36 @@ class TestAncestorQueries(BaseCaseSearchTest):
                 'host': ('h', 'h2', 'extension'),
                 'parent': ('g', 'g2'),
             }},
+            {'_id': 'c1', 'city': 'SF', 'case_type': 'c'},
             {'_id': 'a1', 'case_type': 'a', 'index': {
                 'parent': ('p', 'p1'),
             }},
-            {'_id': 'a3', 'case_type': 'a'},
             {'_id': 'a2', 'case_type': 'a', 'index': {
                 'host': ('h', 'h1', 'extension'),
             }},
-            {'_id': 'c1', 'city': 'SF', 'case_type': 'c', 'index': {
-                'parent': ('a', 'a3'),
+            {'_id': 'a3', 'city': 'SF', 'case_type': 'a', 'index': {
+                'parent': ('c', 'c1'),
             }},
         ]
         self._bootstrap_cases_in_es_for_domain(self.domain, cases)
 
-    def testparent(self):
+    def test_single_term_ancestor_query(self):
+        query1 = get_case_search_query(
+            self.domain,
+            ['h'],
+            {'parent/country': 'USA'},
+        )
+        self.assertItemsEqual(query1.get_ids(), ['h1'])
+
+    def test_multi_term_ancestor_query(self):
+        query1 = get_case_search_query(
+            self.domain,
+            ['a'],
+            {'parent/city': ['LA', 'SF']},
+        )
+        self.assertItemsEqual(query1.get_ids(), ['a1', 'a3'])
+
+    def test_parent(self):
         query1 = get_case_search_query(
             self.domain,
             ['a'],
@@ -115,10 +131,19 @@ class TestAncestorQueries(BaseCaseSearchTest):
         )
         self.assertItemsEqual(query1.get_ids(), ['a2'])
 
-    def testparenthost(self):
+    def test_parenthost(self):
         query1 = get_case_search_query(
             self.domain,
             ['a'],
             {'_xpath_query': "ancestor-exists(parent/host, country='USA')"},
+        )
+        self.assertItemsEqual(query1.get_ids(), ['a1'])
+
+    def test_nested_ancestor_exists(self):
+        xpath = "ancestor-exists(parent, city='LA' and ancestor-exists(parent,state='CA'))"
+        query1 = get_case_search_query(
+            self.domain,
+            ['a'],
+            {'_xpath_query': xpath},
         )
         self.assertItemsEqual(query1.get_ids(), ['a1'])
