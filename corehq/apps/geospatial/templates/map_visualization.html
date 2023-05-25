@@ -1,52 +1,16 @@
-{% extends "hqwebapp/bootstrap3/base_section.html" %}
+{% extends "reports/tabular.html" %}
+
 {% load i18n %}
 {% load hq_shared_tags %}
-
-{% block stylesheets %}{{ block.super }}
-<link rel="stylesheet" href="https://api.mapbox.com/mapbox-gl-js/v2.14.1/mapbox-gl.css">
-<link rel="stylesheet" href="https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-draw/v1.4.0/mapbox-gl-draw.css" type="text/css">
-{% endblock stylesheets %}
-
-{% block head %}{{ block.super }}
-<style>
-  #geospatial-map {
-    height: 500px;
-  }
-
-  .calculation-box {
-    height: 75px;
-    width: 150px;
-    position: absolute;
-    bottom: 40px;
-      left: 10px;
-      background-color: rgba(255, 255, 255, 0.9);
-      padding: 15px;
-      text-align: center;
-    }
-
-    p {
-      font-family: 'Open Sans';
-      margin: 0;
-      font-size: 13px;
-    }
-    </style>
-{% endblock %}
-
-
-{% block additional_initial_page_data %}
-{% initial_page_data 'mapbox_access_token' mapbox_access_token %}
-{% endblock %}
-
-{% requirejs_main 'geospatial/js/map' %}
 
 {% block page_title %}
 {{ current_page.title }}
 {% endblock %}
 
-{% block page_content %}
-<div id="geospatial-map"></div>
-<div class="calculation-box">
-  <p>Some custom message if we want</p>
-  <div id="calculated-area"></div>
-</div>
+{% block reportcontent %}
+<!-- This is used to get the data from report_context -->
+<div class="base-maps-data"
+     data-context="{% html_attr context %}"></div>
+
+     <div id="geospatial-map" style="height: 500px"></div>
 {% endblock %}
