@@ -2,6 +2,7 @@ from django.utils.translation import gettext
 from eulxml.xpath import serialize
 from eulxml.xpath import parse as parse_xpath
 from eulxml.xpath.ast import BinaryExpression, FunctionCall, Step
+import itertools
 
 from corehq.apps.case_search.const import OPERATOR_MAPPING, EQ, NEQ
 from corehq.apps.case_search.exceptions import CaseFilterError, TooManyRelatedCasesError
@@ -140,9 +141,9 @@ def _get_case_ids_from_ast_filter(context, filter_node):
         # case id is provided in query i.e @case_id="b9eaf791-e427-482d-add4-2a60acf0362e"
         case_ids = filter_node.right
         if isinstance(filter_node.right, str):
-            yield [case_ids]
+            return itertools([case_ids])
         else:
-            yield case_ids
+            return itertools(case_ids)
     else:
         from corehq.apps.case_search.filter_dsl import build_filter_from_ast
         es_filter = build_filter_from_ast(filter_node, context)
