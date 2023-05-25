@@ -111,3 +111,7 @@ def _child_case_lookup(context, case_ids, identifier):
     """returns a list of all case_ids who have parents `case_id` with the relationship `identifier`
     """
     return CaseSearchES().domain(context.domain).get_child_cases(case_ids, identifier).scroll_ids()
+
+
+def ancestor_exists(node, context):
+    pass

@@ -8,6 +8,7 @@ from .query_functions import (
     starts_with
 )
 from .subcase_functions import subcase
+from .ancestor_functions import ancestor_exists
 from .value_functions import date, date_add, today
 
 # functions that transform or produce a value
@@ -29,4 +30,5 @@ XPATH_QUERY_FUNCTIONS = {
     'fuzzy-match': fuzzy_match,
     'phonetic-match': phonetic_match,
     'starts-with': starts_with,
+    'ancestor-exists': ancestor_exists,
 }
