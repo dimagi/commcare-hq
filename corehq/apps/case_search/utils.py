@@ -189,8 +189,7 @@ class CaseSearchQueryBuilder:
             if not criteria.is_empty:
                 if criteria.has_multiple_terms:
                     for value in criteria.value:
-                        search_es = search_es.filter(build_filter_from_xpath(self.query_domains, value,
-                                                                            multi_term=True))
+                        search_es = search_es.filter(build_filter_from_xpath(self.query_domains, value))
                     return search_es
                 else:
                     return search_es.filter(build_filter_from_xpath(self.query_domains, criteria.value))
