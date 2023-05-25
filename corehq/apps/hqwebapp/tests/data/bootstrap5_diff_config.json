@@ -21,12 +21,6 @@
   ],
   "apps/hqwebapp/static/hqwebapp": [
     {
-      "directories": ["js/bootstrap3/", "js/bootstrap5/"],
-      "file_type": "javascript",
-      "label": "javascript/hqwebapp",
-      "compare_all_files": true
-    },
-    {
       "directories": ["less/", "scss/"],
       "file_type": "stylesheet",
       "label": "stylesheets",
