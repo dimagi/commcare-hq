@@ -119,7 +119,21 @@ def ancestor_exists(node, context):
     confirm_args_count(node, 2)
     ancestor_path_node, ancestor_case_filter_node = node.args
     _validate_ancestor_exists_filter(ancestor_case_filter_node)
-    pass
+
+    from corehq.apps.case_search.filter_dsl import (
+        build_filter_from_ast
+    )
+    es_filter = build_filter_from_ast(ancestor_case_filter_node, context)
+
+    es_query = CaseSearchES().domain(context.domain).filter(es_filter)
+    if es_query.count() > MAX_RELATED_CASES:
+        new_query = serialize(node)
+        raise TooManyRelatedCasesError(
+            gettext("The related case lookup you are trying to perform would return too many cases"),
+            new_query
+        )
+    base_case_ids = es_query.scroll_ids()
+    return walk_ancestor_hierarchy(context, ancestor_path_node, base_case_ids)
 
 
 def _validate_ancestor_exists_filter(node):
