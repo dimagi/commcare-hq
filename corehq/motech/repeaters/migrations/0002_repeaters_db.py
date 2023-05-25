@@ -14,13 +14,13 @@ MOVE_TO_SEPARATE_DB = """
         OPTIONS (user '{USER}', password '{PASSWORD}');
     GRANT USAGE ON FOREIGN SERVER repeaters_fdw TO {USER};
 
+    DROP TABLE repeaters_repeatrecordattempt;
     DROP TABLE repeaters_repeatrecord;
     LOCK TABLE repeaters_repeater IN SHARE ROW EXCLUSIVE mode;
     ALTER TABLE repeaters_repeater RENAME TO repeaters_repeater_old;
     IMPORT FOREIGN SCHEMA public LIMIT TO ("repeaters_repeater", "repeaters_repeatrecord")
         FROM SERVER repeaters_fdw INTO public;
     INSERT INTO repeaters_repeater SELECT * FROM repeaters_repeater_old;
-    DROP TABLE repeaters_repeatrecordattempt;
     DROP TABLE repeaters_repeater_old;
 """
 
