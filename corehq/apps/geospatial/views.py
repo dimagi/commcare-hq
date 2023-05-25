@@ -1,41 +1,8 @@
-from django.http import Http404
-from django.urls import reverse
+from django.http import HttpResponseRedirect
 from django.utils.translation import gettext_lazy as _
 
-from django.conf import settings
-from corehq.apps.domain.views.base import BaseDomainView
-from corehq import toggles
+from corehq.apps.geospatial.reports import CaseManagementMap
 
 
-class BaseGeospatialView(BaseDomainView):
-    urlname = 'maps_page'
-    section_name = _("Geospatial")
-
-    def dispatch(self, *args, **kwargs):
-        if not toggles.GEOSPATIAL.enabled(self.domain):
-            raise Http404
-        return super(BaseGeospatialView, self).dispatch(*args, **kwargs)
-
-    @property
-    def section_url(self):
-        return reverse(BaseGeospatialView.urlname, args=(self.domain,))
-
-
-class MapView(BaseGeospatialView):
-    urlname = 'maps_page'
-    template_name = 'map_visualization.html'
-    page_title = _("Map Visualization")
-
-    @property
-    def page_context(self):
-        return {
-            'mapbox_access_token': settings.MAPBOX_ACCESS_TOKEN
-        }
-
-    @property
-    def page_name(self):
-        return _("Map Visualization")
-
-    @property
-    def page_url(self):
-        return reverse(self.urlname, args=[self.domain])
+def geospatial_default(request, *args, **kwargs):
+    return HttpResponseRedirect(CaseManagementMap.get_url(*args, **kwargs))

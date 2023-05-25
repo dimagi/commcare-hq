@@ -1,16 +1,19 @@
-from django.utils.translation import gettext_noop
-from corehq.apps.reports.standard.cases.basic import CaseListMixin
-from corehq.apps.reports.standard import ProjectReport
-from corehq.apps.reports.standard.cases.data_sources import CaseDisplayES
 from django.conf import settings
 from django.urls import reverse
+from django.utils.translation import gettext_noop
+
+from corehq.apps.geospatial.dispatchers import CaseManagementMapDispatcher
+from corehq.apps.reports.standard import ProjectReport
+from corehq.apps.reports.standard.cases.basic import CaseListMixin
+from corehq.apps.reports.standard.cases.data_sources import CaseDisplayES
 
 
 class CaseManagementMap(ProjectReport, CaseListMixin):
     name = gettext_noop("Case Management")
     slug = "case_management_map"
-    # base_template = 'reports/base_template.html'
     report_template_path = "map_visualization.html"
+
+    dispatcher = CaseManagementMapDispatcher
 
     @property
     def template_context(self):
@@ -33,4 +36,4 @@ class CaseManagementMap(ProjectReport, CaseListMixin):
 
     @property
     def default_report_url(self):
-        return reverse('reports_home', args=[self.request.project.name])
+        return reverse('geospatial_default', args=[self.request.project.name])

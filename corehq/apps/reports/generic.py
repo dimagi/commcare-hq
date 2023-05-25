@@ -288,7 +288,7 @@ class GenericReportView(object):
         original_template = self.report_template_path or "reports/async/basic.html"
         if self.is_rendered_as_email:
             self.context.update(original_template=original_template)
-            original_template = self.override_template
+            return self.override_template
         return original_template
 
     @property
@@ -583,7 +583,6 @@ class GenericReportView(object):
                 self.update_filter_context()
                 self.update_report_context()
                 template = self.template_report
-
             return render(self.request, template, self.context)
 
     @property
@@ -938,6 +937,7 @@ class GenericTabularReport(GenericReportView):
             ret["total_row"] = list(self.total_row)
         if self.statistics_rows:
             ret["statistics_rows"] = list(self.statistics_rows)
+
         return ret
 
     @property
@@ -1114,7 +1114,6 @@ class GenericTabularReport(GenericReportView):
         })
         for provider_function in self.extra_context_providers:
             context.update(provider_function(self))
-        print(f"\n----Report COntext\n{context}\n-------")
         return context
 
     def table_cell(self, value, html=None, zerostyle=False):

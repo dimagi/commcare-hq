@@ -10,7 +10,7 @@ hqDefine("geospatial/js/geospatial_map", [
         var loadMapBox = function (context) {
             'use strict';
             var self = {};
-            console.log("Context: ", context);
+
             mapboxgl.accessToken = initialPageData.get('mapbox_access_token');
             let centerCoordinates = [-91.874, 42.76]; // should be domain specific
             const map = new mapboxgl.Map({
