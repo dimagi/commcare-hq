@@ -230,6 +230,12 @@ class MySavedReportsView(BaseProjectReportSectionView):
         all_configs = ReportConfig.by_domain_and_owner(self.domain, self.request.couch_user._id)
         good_configs = []
         for config in all_configs:
+            try:
+                ReportConfig.get(config._id)
+            except ResourceNotFound:
+                import logging
+                logging.info(f"Skipping report config with id {config._id} as not found")
+                continue
             if config.is_configurable_report and not config.configurable_report:
                 continue
 
