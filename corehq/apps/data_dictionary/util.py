@@ -188,8 +188,7 @@ def save_case_property(name, case_type, domain=None, data_type=None,
     prop = CaseProperty.get_or_create(
         name=name, case_type=case_type, domain=domain
     )
-    if data_type:
-        prop.data_type = data_type
+    prop.data_type = data_type if data_type else ""
     if description is not None:
         prop.description = description
     if group is not None:
