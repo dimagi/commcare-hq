@@ -46,6 +46,8 @@ class CaseReassignmentInterface(CaseListMixin, BulkDataInterface):
     name = gettext_noop("Reassign Cases")
     slug = "reassign_cases"
     report_template_path = 'data_interfaces/interfaces/case_management.html'
+    action = "reassign"
+    action_text = gettext_lazy("Reassign")
 
     @property
     @memoized
@@ -60,6 +62,8 @@ class CaseReassignmentInterface(CaseListMixin, BulkDataInterface):
         context = super(CaseReassignmentInterface, self).template_context
         context.update({
             "total_cases": self.total_records,
+            "action": self.action,
+            "action_text": self.action_text,
         })
         return context
 
@@ -139,6 +143,66 @@ class CaseReassignmentInterface(CaseListMixin, BulkDataInterface):
                 args=[self.domain, task_ref.download_id]
             )
         )
+
+
+@location_safe
+class CaseCopyInterface(CaseReassignmentInterface):
+    name = gettext_noop("Copy Cases")
+    slug = "copy_cases"
+    report_template_path = 'data_interfaces/interfaces/case_management.html'
+    action = "copy"
+    action_text = gettext_lazy("Copy")
+
+    @property
+    def headers(self):
+        headers = DataTablesHeader(
+            DataTablesColumn(mark_safe(  # nosec: no user input
+                'Select  <a href="#" class="select-all btn btn-xs btn-default">all'
+                '</a> <a href="#" class="select-none btn btn-xs btn-default">'
+                'none</a>'), sortable=False, span=2),
+            DataTablesColumn(_("Case Name"), span=3, prop_name="name.exact"),
+            DataTablesColumn(_("Case Type"), span=2, prop_name="type.exact"),
+            DataTablesColumn(_("Owner"), span=2, prop_name="owner_display", sortable=False),
+        )
+        return headers
+
+    @property
+    def rows(self):
+        checkbox_format = ('<input type="checkbox" class="selected-commcare-case"'
+            ' data-caseid="{case_id}" data-owner="{owner}" data-ownertype="{owner_type}" />')
+
+        for row in self.es_results['hits'].get('hits', []):
+            es_case = self.get_case(row)
+            display = CaseDisplayES(es_case, self.timezone, self.individual)
+            yield [
+                format_html(
+                    checkbox_format,
+                    case_id=es_case['_id'],
+                    owner=display.owner_id,
+                    owner_type=display.owner_type),
+                display.case_link,
+                display.case_type,
+                display.owner_display,
+            ]
+
+    @property
+    def template_context(self):
+        context = super(CaseReassignmentInterface, self).template_context
+        context.update({
+            "action": self.action,
+            "action_text": self.action_text,
+        })
+        return context
+
+    @property
+    def fields(self):
+        return [
+            'corehq.apps.reports.filters.users.SelectMobileWorkerFilter',
+            'corehq.apps.reports.filters.select.MultiCaseTypeFilter',
+            'corehq.apps.reports.filters.select.SelectOpenCloseFilter',
+            'corehq.apps.reports.standard.cases.filters.CaseSearchFilter',
+            'corehq.apps.reports.standard.cases.filters.SensitiveCaseProperties',
+        ]
 
 
 class FormManagementMode(object):
