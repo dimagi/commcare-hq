@@ -22,7 +22,7 @@ def property_comparison_query(context, case_property_name_raw, op, value_raw, no
 
     # In initial xpath parsing, multiple terms are converted to string
     # i.e "['val1','val2']". This converts it back to a list for ES to filter by
-    if value.startswith('[') and value.endswith(']'):
+    if context.multi_term:
         value = _parse_multiple_terms_list_str(value)
 
     if op in [EQ, NEQ]:

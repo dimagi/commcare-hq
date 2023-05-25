@@ -189,7 +189,8 @@ class CaseSearchQueryBuilder:
             if not criteria.is_empty:
                 if criteria.has_multiple_terms:
                     for value in criteria.value:
-                        search_es = search_es.filter(build_filter_from_xpath(self.query_domains, value))
+                        search_es = search_es.filter(build_filter_from_xpath(self.query_domains, value,
+                                                                            multi_term=True))
                     return search_es
                 else:
                     return search_es.filter(build_filter_from_xpath(self.query_domains, criteria.value))
@@ -235,7 +236,8 @@ class CaseSearchQueryBuilder:
         fuzzy = criteria.key in self._fuzzy_properties
         if criteria.is_ancestor_query:
             query = f'{criteria.key} = "{value}"'
-            return build_filter_from_xpath(self.query_domains, query, fuzzy=fuzzy)
+            return build_filter_from_xpath(self.query_domains, query,
+                                        fuzzy=fuzzy, multi_term=criteria.has_multiple_terms)
         elif criteria.is_index_query:
             return reverse_index_case_query(value, criteria.index_query_identifier)
         else:
