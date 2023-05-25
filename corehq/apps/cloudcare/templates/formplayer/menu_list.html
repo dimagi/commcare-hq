@@ -128,23 +128,19 @@
 </script>
 
 <script type="text/template" id="form-menu-template">
-  <div id="form-menu-dropdown">
-    <a class="dropdown-toggle"
-       title="{% trans 'Dropdown toggle' %}"
-       role="button"
-       href="javascript:void(0);"
-       data-toggle="dropdown"
-       aria-haspopup="true"
-       aria-expanded="false">
-      <i class="fa fa-bars" style="color: #fff"></i>
-    </a>
-     <ul class="dropdown-menu dropdown-menu-right noprint-sub-container" aria-label="Dropdown">
-       <li tabindex="0" class="dropdown-header" id="print-header">{% trans "Print" %}</li>
-       <% if (languageOptionsEnabled) { %>
-       <li><hr class="dropdown-divider"></li>
-       <li class="dropdown-header">{% trans "Languages" %}</li>
-       <% } %>
-     </ul>
+  <div class="btn-group" id="form-menu-dropdown">
+    <button class="btn btn-primary-dark dropdown-toggle" role="button"
+            data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+      <i class="fa fa-bars"></i>
+      <span class="sr-only">{% trans 'Dropdown toggle' %}</span>
+    </button>
+    <ul class="dropdown-menu dropdown-menu-right noprint-sub-container" aria-label="Dropdown">
+      <li tabindex="0" class="dropdown-header" id="print-header">{% trans "Print" %}</li>
+      <% if (languageOptionsEnabled) { %>
+      <li><hr class="dropdown-divider"></li>
+      <li class="dropdown-header">{% trans "Languages" %}</li>
+      <% } %>
+    </ul>
   </div>
 </script>
 
