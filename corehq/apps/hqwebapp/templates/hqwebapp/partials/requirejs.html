@@ -23,7 +23,7 @@
       deps: [
           'knockout',
           'ko.mapping',
-          {% if use_bootstrap5 %}'es6!bootstrap5_loader',{% endif %}
+          {% if use_bootstrap5 %}'es6!bootstrap5_loader'{% else %}'bootstrap'{% endif %},
       ],
       callback: function (ko, mapping{% if use_bootstrap5 %}, bootstrap5{% endif %}) {
         ko.mapping = mapping;
