@@ -35,10 +35,7 @@ def ancestor_comparison_query(context, node):
     ancestor_path = serialize(node.left.left)
 
     xpath = f'ancestor-exists({ancestor_path},{case_property}{node.op}"{value}")'
-    ancestor_case_filter_node = parse_xpath(xpath)
-
-    from corehq.apps.case_search.filter_dsl import build_filter_from_ast
-    return build_filter_from_ast(ancestor_case_filter_node, context)
+    return ancestor_exists(parse_xpath(xpath), context)
 
 
 def walk_ancestor_hierarchy(context, ancestor_path_node, case_ids):
