@@ -39,16 +39,16 @@ class TestIsAncestorPath(SimpleTestCase):
 
 
 @es_test
-class TestAncestorExists(BaseCaseSearchTest):
+class TestAncestorQueries(BaseCaseSearchTest):
     def setUp(self):
-        super(TestAncestorExists, self).setUp()
+        super(TestAncestorQueries, self).setUp()
         self._create_case_search_config()
         # Note that cases must be defined before other cases can reference them
         # a1>p1(LA)>g1(CA)
         # a1>p1(LA):>h3(USA)
         # a2:>h1>(BOS):>h2(MA)
         # a2:>h1>(BOS)>g2(USA)
-        # c1>a3
+        # a3>c1(SF)
         cases = [
             {'_id': 'h3', 'country': 'USA', 'case_type': 'h'},
             {'_id': 'g2', 'country': 'USA', 'case_type': 'g'},
@@ -83,7 +83,7 @@ class TestAncestorExists(BaseCaseSearchTest):
         )
         self.assertItemsEqual(query1.get_ids(), ['a1'])
 
-    def testparentparent(self):
+    def test_parentparent(self):
         query1 = get_case_search_query(
             self.domain,
             ['a'],
@@ -91,7 +91,7 @@ class TestAncestorExists(BaseCaseSearchTest):
         )
         self.assertItemsEqual(query1.get_ids(), ['a1'])
 
-    def testhost(self):
+    def test_host(self):
         query1 = get_case_search_query(
             self.domain,
             ['a'],
@@ -99,7 +99,7 @@ class TestAncestorExists(BaseCaseSearchTest):
         )
         self.assertItemsEqual(query1.get_ids(), ['a2'])
 
-    def testhosthost(self):
+    def test_hosthost(self):
         query1 = get_case_search_query(
             self.domain,
             ['a'],
@@ -107,7 +107,7 @@ class TestAncestorExists(BaseCaseSearchTest):
         )
         self.assertItemsEqual(query1.get_ids(), ['a2'])
 
-    def testhostparent(self):
+    def test_hostparent(self):
         query1 = get_case_search_query(
             self.domain,
             ['a'],
