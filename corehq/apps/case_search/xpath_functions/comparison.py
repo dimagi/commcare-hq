@@ -1,6 +1,7 @@
 from django.utils.translation import gettext
 from eulxml.xpath import serialize
 from eulxml.xpath.ast import Step
+import json
 
 from corehq.apps.case_search.dsl_utils import unwrap_value
 from corehq.apps.case_search.exceptions import CaseFilterError
@@ -18,6 +19,12 @@ def property_comparison_query(context, case_property_name_raw, op, value_raw, no
 
     case_property_name = serialize(case_property_name_raw)
     value = unwrap_value(value_raw, context)
+
+    # In initial xpath parsing, multiple terms are converted to string
+    # i.e "['val1','val2']". This converts it back to a list for ES to filter by
+    if value.startswith('[') and value.endswith(']'):
+        value = _parse_multiple_terms_list_str(value)
+
     if op in [EQ, NEQ]:
         query = case_property_query(case_property_name, value, fuzzy=context.fuzzy)
         if op == NEQ:
@@ -32,3 +39,9 @@ def property_comparison_query(context, case_property_name_raw, op, value_raw, no
                   "Dates must be surrounded in quotation marks"),
                 serialize(node),
             )
+
+
+def _parse_multiple_terms_list_str(value):
+    # Given a string representation of a list of strings, returns a list.
+    value = value.replace("'", '"')  # '["abc123", "def456"]'
+    return json.loads(value)
