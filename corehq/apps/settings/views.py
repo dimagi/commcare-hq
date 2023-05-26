@@ -111,7 +111,6 @@ def project_id_mapping(request, domain):
 class BaseMyAccountView(BaseSectionPageView):
     section_name = gettext_lazy("My Account")
 
-    @method_decorator(active_domains_required)
     @method_decorator(login_required)
     def dispatch(self, request, *args, **kwargs):
         # this is only here to add the login_required decorator
@@ -374,6 +373,7 @@ class TwoFactorProfileView(BaseMyAccountView, ProfileView):
     template_name = 'two_factor/profile/profile.html'
     page_title = gettext_lazy("Two Factor Authentication")
 
+    @method_decorator(active_domains_required)
     @method_decorator(login_required)
     def dispatch(self, request, *args, **kwargs):
         # this is only here to add the login_required decorator
@@ -414,6 +414,7 @@ class TwoFactorSetupView(BaseMyAccountView, SetupView):
         ('validation', HQDeviceValidationForm),
     )
 
+    @method_decorator(active_domains_required)
     @method_decorator(login_required)
     def dispatch(self, request, *args, **kwargs):
         # this is only here to add the login_required decorator
