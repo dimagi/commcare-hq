@@ -15,6 +15,6 @@
   3 corehq/apps/reports/tasks.py
   3 corehq/apps/saved_reports/tasks.py
   3 corehq/apps/smsforms/tasks.py
-  7 corehq/apps/userreports/tasks.py
+  6 corehq/apps/userreports/tasks.py
  11 corehq/apps/users/tasks.py
   1 corehq/ex-submodules/casexml/apps/phone/tasks.py

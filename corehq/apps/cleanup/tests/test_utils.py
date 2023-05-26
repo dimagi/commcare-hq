@@ -1,6 +1,7 @@
 from django.test import TestCase
 
-from corehq.apps.cleanup.utils import DeletedDomains
+from corehq.apps.cleanup.utils import DeletedDomains, migrate_to_deleted_on
+from corehq.apps.data_interfaces.models import AutomaticUpdateRule
 from corehq.apps.domain.shortcuts import create_domain
 
 
@@ -28,3 +29,18 @@ class TestDeletedDomains(TestCase):
         cls.deleted_domain = create_domain('deleted', active=False)
         cls.deleted_domain.delete(leave_tombstone=True)
         cls.addClassCleanup(cls.deleted_domain.delete)
+
+
+class TestMigrateToDeletedOn(TestCase):
+
+    def test_deleted_on_is_set_if_object_is_deleted(self):
+        rule = AutomaticUpdateRule.objects.create(domain='test', deleted=True)
+        self.assertIsNone(rule.deleted_on)
+        migrate_to_deleted_on(AutomaticUpdateRule, 'deleted', should_audit=True)
+        self.assertIsNotNone(AutomaticUpdateRule.objects.get(id=rule.id).deleted_on)
+
+    def test_deleted_on_is_not_set_if_object_is_not_deleted(self):
+        rule = AutomaticUpdateRule.objects.create(domain='test')
+        self.assertIsNone(rule.deleted_on)
+        migrate_to_deleted_on(AutomaticUpdateRule, 'deleted', should_audit=True)
+        self.assertIsNone(AutomaticUpdateRule.objects.get(id=rule.id).deleted_on)
