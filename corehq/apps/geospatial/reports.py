@@ -9,7 +9,7 @@ from corehq.apps.reports.standard.cases.data_sources import CaseDisplayES
 
 
 class CaseManagementMap(ProjectReport, CaseListMixin):
-    name = gettext_noop("Case Management")
+    name = gettext_noop("Case Management Map")
     slug = "case_management_map"
     report_template_path = "map_visualization.html"
 
