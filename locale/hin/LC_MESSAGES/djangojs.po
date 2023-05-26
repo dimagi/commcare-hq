@@ -255,10 +255,6 @@ msgid "Display Condition"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/details/column.js
-msgid "Markdown"
-msgstr ""
-
-#: corehq/apps/app_manager/static/app_manager/js/details/column.js
 msgid "Oct 31, "
 msgstr ""
 
@@ -444,6 +440,10 @@ msgstr "संपूर्ण पता "
 
 #: corehq/apps/app_manager/static/app_manager/js/details/utils.js
 msgid "Distance from current location"
+msgstr ""
+
+#: corehq/apps/app_manager/static/app_manager/js/details/utils.js
+msgid "Markdown"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/details/utils.js
@@ -4792,6 +4792,10 @@ msgstr ""
 
 #: corehq/motech/openmrs/static/openmrs/js/openmrs_importers.js
 msgid "Failed to schedule task to import from OpenMRS."
+msgstr ""
+
+#: corehq/motech/repeaters/static/repeaters/js/repeat_record_report.js
+msgid "Failed to fetch attempts"
 msgstr ""
 
 #: corehq/motech/repeaters/static/repeaters/js/repeat_record_report.js

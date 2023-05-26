@@ -55,7 +55,6 @@ hiredis
 httpagentparser
 iso8601
 Jinja2
-json-delta
 jsonfield
 jsonobject-couchdbkit
 jsonobject>=2.0.0
@@ -64,7 +63,6 @@ jsonobject>=2.0.0
 jsonpath-ng @ https://github.com/kaapstorm/python-jsonpath-rw/raw/wherenot+find_or_create/wheel/jsonpath_ng-1.5.2.2-py3-none-any.whl
 jsonschema
 kafka-python
-laboratory
 looseversion
 lxml
 markdown
@@ -77,7 +75,7 @@ Pillow
 polib
 prometheus-client
 psycogreen
-psycopg2>=2.8.4  # Python 3.8 support
+psycopg2
 py-KISSmetrics
 pycryptodome>=3.6.6  # security update
 PyGithub
