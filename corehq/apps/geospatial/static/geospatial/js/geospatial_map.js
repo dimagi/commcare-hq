@@ -6,19 +6,25 @@ hqDefine("geospatial/js/geospatial_map", [
     initialPageData,
 ) {
     $(function () {
-        var mapDiv = '#geospatial-map'
-        var loadMapBox = function (context) {
-            'use strict';
-            var self = {};
+        var mapInitialized = false;
 
+         var loadMapBox = function (centerCoordinates) {
+            'use strict';
+
+            var self = {};
             mapboxgl.accessToken = initialPageData.get('mapbox_access_token');
-            let centerCoordinates = [-91.874, 42.76]; // should be domain specific
+
+            if (!centerCoordinates) {
+                centerCoordinates = [-91.874, 42.76]; // should be domain specific
+            }
+
             const map = new mapboxgl.Map({
                 container: 'geospatial-map', // container ID
                 style: 'mapbox://styles/mapbox/streets-v12', // style URL
                 center: centerCoordinates, // starting position [lng, lat]
-                zoom: 12 // starting zoom
-                // TODO attribution
+                zoom: 12,
+                attribution: '© <a href="https://www.mapbox.com/about/maps/">Mapbox</a> ©' +
+                             ' <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>'
             });
 
             const draw = new MapboxDraw({
@@ -42,31 +48,25 @@ hqDefine("geospatial/js/geospatial_map", [
 
             function updateArea(e) {
                 const data = draw.getAll();
-                // const answer = document.getElementById('calculated-area');
-                if (data.features.length > 0) {
-                    const area = turf.area(data);
-                    // Restrict the area to 2 decimal points.
-                    const rounded_area = Math.round(area * 100) / 100;
-                    // answer.innerHTML = `<p><strong>${rounded_area}</strong></p><p>square meters</p>`;
-                } else {
-                    // answer.innerHTML = '';
-                    // if (e.type !== 'draw.delete') {
-                    //     alert('Click the map to draw a polygon.');
-                    // }
-                }
+                const area = turf.area(data);
+                // Restrict the area to 2 decimal points.
+                const rounded_area = Math.round(area * 100) / 100;
             }
 
             // We should consider refactoring and splitting the below out to a new JS file
             let clickedMarker;
 
-            function addCaseMarkersToMap(cases) {
+            self.addCaseMarkersToMap = function (cases) {
                 const markerColor = "#00FF00";
                 cases.forEach(element => {
-                    addMarker(element.coordinates, markerColor);
+                    let coordinates = element.coordinates;
+                    if (coordinates && coordinates.lat && coordinates.lng) {
+                        self.addMarker(coordinates, markerColor);
+                    }
                 });
             };
 
-            function addMarker(coordinates, color) {
+            self.addMarker = function (coordinates, color) {
                 const marker = new mapboxgl.Marker({color: color, draggable: false});
                 marker.setLngLat(coordinates);
                 marker.addTo(map);
@@ -75,6 +75,10 @@ hqDefine("geospatial/js/geospatial_map", [
             function moveMarkerToClickedCoordinate(coordinates) {
                 if (clickedMarker != null) {
                     clickedMarker.remove();
+                }
+                if (draw.getMode() === 'draw_polygon') {
+                    // It's weird moving the marker around with the ploygon
+                    return;
                 }
                 clickedMarker = new mapboxgl.Marker({color: "FF0000", draggable: true});
                 clickedMarker.setLngLat(coordinates);
@@ -91,15 +95,24 @@ hqDefine("geospatial/js/geospatial_map", [
             // Handle click events here
             map.on('click', (event) => {
                 let coordinates = getCoordinates(event);
+                moveMarkerToClickedCoordinate(coordinates);
             });
             return self;
         };
 
+        var map;
+
         $(document).ajaxComplete(function () {
-            var $data = $(".base-maps-data");
-            if ($data.length && $(mapDiv).length) {
-                var context = $data.data("context");
-                loadMapBox(context);
+            var mapDiv = $('#geospatial-map');
+            var $data = $(".map-data");
+
+            if (mapDiv.length && !map && !mapInitialized) {
+                map = loadMapBox();
+            }
+
+            if ($data.length && !mapInitialized) {
+                var caseData = $data.data("context");
+                map.addCaseMarkersToMap(caseData.cases)
             }
         });
     });
