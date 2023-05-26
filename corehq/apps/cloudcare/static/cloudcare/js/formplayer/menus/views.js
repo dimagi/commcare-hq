@@ -4,6 +4,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
     const kissmetrics = hqImport("analytix/js/kissmetrix"),
         constants = hqImport("cloudcare/js/formplayer/constants"),
         FormplayerFrontend = hqImport("cloudcare/js/formplayer/app"),
+        initialPageData = hqImport("hqwebapp/js/initial_page_data"),
         toggles = hqImport("hqwebapp/js/toggles"),
         utils = hqImport("cloudcare/js/formplayer/utils/utils");
 
@@ -291,6 +292,8 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
     });
 
     const CaseTileView = CaseView.extend({
+        tagName: "div",
+        className: "formplayer-request list-cell-wrapper-style",
         template: _.template($("#case-tile-view-item-template").html() || ""),
         templateContext: function () {
             const dict = CaseTileView.__super__.templateContext.apply(this, arguments);
@@ -300,6 +303,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
     });
 
     const PersistentCaseTileView = CaseTileView.extend({
+        className: "formplayer-request",
         rowClick: function (e) {
             e.preventDefault();
             if (this.options.hasInlineTile) {
@@ -345,7 +349,6 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
         childViewOptions: function () {
             return {
                 styles: this.options.styles,
-                isMultiSelect: false,
             };
         },
 
@@ -360,6 +363,8 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             } else {
                 self.selectedCaseIds = [];
             }
+
+            self.showMap = !!_.find(this.styles, function (style) { return style.displayFormat === "Address"; });
         },
 
         ui: CaseListViewUI(),
@@ -447,87 +452,6 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             }
         },
 
-        templateContext: function () {
-            const paginateItems = utils.paginateOptions(this.options.currentPage, this.options.pageCount);
-            const casesPerPage = parseInt($.cookie("cases-per-page-limit")) || 10;
-            return {
-                startPage: paginateItems.startPage,
-                title: this.options.title,
-                headers: this.options.headers,
-                widthHints: this.options.widthHints,
-                actions: this.options.actions,
-                currentPage: this.options.currentPage,
-                endPage: paginateItems.endPage,
-                pageCount: paginateItems.pageCount,
-                rowRange: [10, 25, 50, 100],
-                limit: casesPerPage,
-                styles: this.options.styles,
-                breadcrumbs: this.options.breadcrumbs,
-                templateName: "case-list-template",
-                useGrid: this.options.numEntitiesPerRow > 1,
-                useTiles: false,
-                hasNoItems: this.hasNoItems,
-                noItemsText: this.options.collection.noItemsText,
-                sortIndices: this.options.sortIndices,
-                selectedCaseIds: this.selectedCaseIds,
-                isMultiSelect: false,
-                columnSortable: function (index) {
-                    return this.sortIndices.indexOf(index) > -1;
-                },
-                columnVisible: function (index) {
-                    return !(this.widthHints && this.widthHints[index] === 0);
-                },
-                pageNumLabel: _.template(gettext("Page <%-num%>")),
-            };
-        },
-    });
-
-    const MultiSelectCaseListView = CaseListView.extend({
-        ui: _.extend(CaseListViewUI(), {
-            selectAllCheckbox: "#select-all-checkbox",
-            continueButton: "#multi-select-continue-btn",
-            continueButtonText: "#multi-select-btn-text",
-        }),
-
-        events: _.extend(CaseListViewEvents(), {
-            'click @ui.selectAllCheckbox': 'selectAllAction',
-            'keypress @ui.selectAllCheckbox': 'selectAllAction',
-            'click @ui.continueButton': 'continueAction',
-            'keypress @ui.continueButton': 'continueAction',
-        }),
-
-        childViewOptions: function () {
-            const options = MultiSelectCaseListView.__super__.childViewOptions.apply(this);
-            options.isMultiSelect = true;
-            return options;
-        },
-
-        initialize: function (options) {    // eslint-disable-line no-unused-vars
-            MultiSelectCaseListView.__super__.initialize.apply(this, arguments);
-            const self = this;
-            self.maxSelectValue = options.multiSelectMaxSelectValue;
-            // Remove any event handling left over from previous instances of MultiSelectCaseListView.
-            // Only one of these views is supporteed on the page at any given time.
-            FormplayerFrontend.off("multiSelect:updateCases").on("multiSelect:updateCases", function (action, caseIds) {
-                if (action === constants.MULTI_SELECT_ADD) {
-                    self.selectedCaseIds = _.union(self.selectedCaseIds, caseIds);
-                } else {
-                    self.selectedCaseIds = _.difference(self.selectedCaseIds, caseIds);
-                }
-                self.reconcileMultiSelectUI();
-            });
-        },
-
-        templateContext: function () {
-            const context = MultiSelectCaseListView.__super__.templateContext.apply(this);
-            context.isMultiSelect = true;
-            return context;
-        },
-
-        onRender: function () {
-            this.reconcileMultiSelectUI();
-        },
-
         selectAllAction: function (e) {
             const action = e.target.checked ? constants.MULTI_SELECT_ADD : constants.MULTI_SELECT_REMOVE;
             FormplayerFrontend.trigger("multiSelect:updateCases", action, this._allCaseIds());
@@ -553,34 +477,186 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
 
         verifySelectedCaseIdsLessThanMaxSelectValue: function () {
             if (this.selectedCaseIds.length > this.maxSelectValue) {
-                const errorMessage = _.template(gettext("You have selected more than the maximum selection limit " +
+                let errorMessage = _.template(gettext("You have selected more than the maximum selection limit " +
                     "of <%= value %> . Please uncheck some values to continue."))({ value: this.maxSelectValue });
                 hqRequire(["hqwebapp/js/alert_user"], function (alertUser) {
                     alertUser.alert_user(errorMessage, 'danger');
                 });
             }
         },
+
+        columnStyle: function () {
+            let self = this;
+            let mapColumn = "";
+            if (self.showMap && !self.hasNoItems) {
+                mapColumn = "[map] 300px";
+            }
+            return "display: grid;grid-template-columns: [tiles] auto " + mapColumn
+                + " ;grid-template-rows: auto";
+        },
+
+        addAddressPin: function (geocoder, addressMap, headers, model, addressIndex) {
+            let address = model.attributes.data[addressIndex];
+            geocoder.query(address, function (err, data) {
+                if (err === null) {
+                    let popupText = "";
+                    headers.forEach((header, index) => {
+                        if (header) {
+                            popupText += "<b>" + header + ":</b> " + model.attributes.data[index] + "<br>";
+                        }
+                    });
+                    L.marker(data.latlng)
+                        .addTo(addressMap)
+                        .bindPopup(popupText);
+                }
+            });
+        },
+
+        loadMap: function () {
+            let token = initialPageData.get("mapbox_access_token");
+
+            try {
+                let lat = 30;
+                let lon = 15;
+                let zoom = 3;
+                let addressMap = L.map('module-case-list-map').setView([lat, lon], zoom);
+                L.tileLayer('https://api.mapbox.com/styles/v1/{id}/tiles/{z}/{x}/{y}?access_token=' + token, {
+                    id: 'mapbox/streets-v11',
+                    attribution: '© <a href="https://www.mapbox.com/about/maps/">Mapbox</a> ©' +
+                             ' <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+                    tileSize: 512,
+                    zoomOffset: -1,
+                }).addTo(addressMap);
+
+                let addressIndex = _.findIndex(this.styles, function (style) { return style.displayFormat === "Address"; });
+                L.mapbox.accessToken = token;
+                let mapbox = L.mapbox;
+                let geocoder = mapbox.geocoder('mapbox.places');
+
+                this.options.collection.models.forEach(model => {
+                    this.addAddressPin(geocoder, addressMap, this.options.headers, model, addressIndex);
+                });
+            } catch (error) {
+                console.error(error);
+            }
+        },
+
+        onAttach() {
+            const self = this;
+            if (self.showMap && !self.hasNoItems) {
+                self.loadMap();
+            }
+        },
+
+        templateContext: function () {
+            const paginateItems = utils.paginateOptions(this.options.currentPage, this.options.pageCount);
+            const casesPerPage = parseInt($.cookie("cases-per-page-limit")) || 10;
+            return {
+                startPage: paginateItems.startPage,
+                title: this.options.title,
+                headers: this.options.headers,
+                widthHints: this.options.widthHints,
+                actions: this.options.actions,
+                currentPage: this.options.currentPage,
+                endPage: paginateItems.endPage,
+                pageCount: paginateItems.pageCount,
+                rowRange: [10, 25, 50, 100],
+                limit: casesPerPage,
+                styles: this.options.styles,
+                breadcrumbs: this.options.breadcrumbs,
+                templateName: "case-list-template",
+                useTiles: false,
+                hasNoItems: this.hasNoItems,
+                noItemsText: this.options.collection.noItemsText,
+                sortIndices: this.options.sortIndices,
+                selectedCaseIds: this.selectedCaseIds,
+                isMultiSelect: false,
+                showMap: this.showMap,
+                columnStyle: this.columnStyle(),
+
+                columnSortable: function (index) {
+                    return this.sortIndices.indexOf(index) > -1;
+                },
+                columnVisible: function (index) {
+                    return !(this.widthHints && this.widthHints[index] === 0);
+                },
+                pageNumLabel: _.template(gettext("Page <%-num%>")),
+            };
+        },
+    });
+
+    const registerContinueListener = function (self, options) {
+        self.maxSelectValue = options.multiSelectMaxSelectValue;
+        // Remove any event handling left over from previous instances of MultiSelectCaseListView.
+        // Only one of these views is supported on the page at any given time.
+        FormplayerFrontend.off("multiSelect:updateCases").on("multiSelect:updateCases", function (action, caseIds) {
+            if (action === constants.MULTI_SELECT_ADD) {
+                self.selectedCaseIds = _.union(self.selectedCaseIds, caseIds);
+            } else {
+                self.selectedCaseIds = _.difference(self.selectedCaseIds, caseIds);
+            }
+            self.reconcileMultiSelectUI();
+        });
+    };
+
+    const MultiSelectCaseListView = CaseListView.extend({
+        ui: _.extend(CaseListViewUI(), {
+            selectAllCheckbox: "#select-all-checkbox",
+            continueButton: "#multi-select-continue-btn",
+            continueButtonText: "#multi-select-btn-text",
+        }),
+
+        events: _.extend(CaseListViewEvents(), {
+            'click @ui.selectAllCheckbox': 'selectAllAction',
+            'keypress @ui.selectAllCheckbox': 'selectAllAction',
+            'click @ui.continueButton': 'continueAction',
+            'keypress @ui.continueButton': 'continueAction',
+        }),
+
+        childViewOptions: function () {
+            const options = MultiSelectCaseListView.__super__.childViewOptions.apply(this);
+            options.isMultiSelect = true;
+            return options;
+        },
+
+        initialize: function (options) {    // eslint-disable-line no-unused-vars
+            MultiSelectCaseListView.__super__.initialize.apply(this, arguments);
+            registerContinueListener(this, options);
+        },
+
+        templateContext: function () {
+            const context = MultiSelectCaseListView.__super__.templateContext.apply(this);
+            context.isMultiSelect = true;
+            return context;
+        },
+
+        onRender: function () {
+            this.reconcileMultiSelectUI();
+        },
     });
 
     // Return an object of case tile CSS styles that defines:
     // - layout of the content within a case list tile
     // - shape and size of the tile's layout grid
-    // - (if 2+ cases per line) the tile's visual style and its outer boundary
-    // - (if 2+ cases per line) layout of the case tiles on the outer, visible grid
+    // - the tile's visual style and its outer boundary
+    // - layout of the case tiles on the outer, visible grid
     const buildCaseTileStyles = function (tiles, numRows, numColumns, numEntitiesPerRow, useUniformUnits, prefix) {
         const caseTileStyles = {};
         caseTileStyles.cellLayoutStyle = buildCellLayout(tiles, prefix);
         caseTileStyles.cellGridStyle = buildCellGridStyle(numRows, numColumns, useUniformUnits, prefix);
-
-        if (numEntitiesPerRow > 1) {
-            caseTileStyles.cellWrapperStyle = $("#cell-wrapper-style-template").html();
-            caseTileStyles.cellContainerStyle = buildCellContainerStyle(numEntitiesPerRow);
-        }
+        caseTileStyles.cellWrapperStyle = $("#cell-wrapper-style-template").html();
+        caseTileStyles.cellContainerStyle = buildCellContainerStyle(numEntitiesPerRow);
         return caseTileStyles;
     };
 
     const CaseTileListView = CaseListView.extend({
+        ui: _.extend(CaseListViewUI(), {
+            selectAllCheckbox: "#select-all-tile-checkbox",
+            continueButton: "#multi-select-continue-btn",
+            continueButtonText: "#multi-select-btn-text",
+        }),
         childView: CaseTileView,
+
         initialize: function (options) {
             CaseTileListView.__super__.initialize.apply(this, arguments);
 
@@ -603,31 +679,36 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             }
 
             $.getScript(gridPolyfillPath);
+
+            registerContinueListener(this, options);
         },
 
         childViewOptions: function () {
             const dict = CaseTileListView.__super__.childViewOptions.apply(this, arguments);
             dict.prefix = 'list';
+            dict.isMultiSelect = this.options.isMultiSelect;
             return dict;
         },
 
         templateContext: function () {
             const dict = CaseTileListView.__super__.templateContext.apply(this, arguments);
             dict.useTiles = true;
+            dict.isMultiSelect = this.options.isMultiSelect;
             return dict;
         },
-    });
 
-    const GridCaseTileViewItem = CaseTileView.extend({
-        tagName: "div",
-        className: "formplayer-request list-cell-wrapper-style",
-    });
+        events: _.extend(CaseListViewEvents(), {
+            'click @ui.selectAllCheckbox': 'selectAllAction',
+            'keypress @ui.selectAllCheckbox': 'selectAllAction',
+            'click @ui.continueButton': 'continueAction',
+            'keypress @ui.continueButton': 'continueAction',
+        }),
 
-    const GridCaseTileListView = CaseTileListView.extend({
-        initialize: function () {
-            GridCaseTileListView.__super__.initialize.apply(this, arguments);
+        onRender: function () {
+            if (this.options.isMultiSelect) {
+                this.reconcileMultiSelectUI();
+            }
         },
-        childView: GridCaseTileViewItem,
     });
 
     const CaseListDetailView = CaseListView.extend({
@@ -859,9 +940,6 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
         },
         DetailTabListView: function (options) {
             return new DetailTabListView(options);
-        },
-        GridCaseTileListView: function (options) {
-            return new GridCaseTileListView(options);
         },
         MenuListView: function (options) {
             return new MenuListView(options);
