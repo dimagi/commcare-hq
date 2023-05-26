@@ -470,7 +470,9 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
                         let popupText = "";
                         headers.forEach((header, index) => {
                             if (header) {
-                                popupText += "<b>" + header + ":</b> " + model.attributes.data[index] + "<br>";
+                                const valueSanitized = DOMPurify.sanitize(model.attributes.data[index])
+                                const headerSanitized = DOMPurify.sanitize(header)
+                                popupText += "<b>" + headerSanitized + ":</b> " + valueSanitized + "<br>";
                             }
                         });
                         L.marker(data.latlng)
