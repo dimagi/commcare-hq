@@ -94,8 +94,10 @@
   {% initial_page_data "web_user_id" request.couch_user.userID %}
   {% initial_page_data "web_username" request.couch_user.username %}
   {% initial_page_data 'user_types' user_types %}
+  {% initial_page_data 'action' action %}
   {% registerurl "reassign_case_options" domain %}
   {% registerurl "receiver_secure_post" domain %}
+  {% registerurl "copy_cases" domain %}
 
   {% if request.datespan %}
     {% initial_page_data 'startdate' datespan.startdate|date:"Y-m-d" %}

@@ -5,7 +5,7 @@
 {% block reportcontent %}
   <div id="data-interfaces-reassign-cases">
     <div class="row">
-      <form class="well form-inline" style="margin: 1em; display: none;" data-bind="submit: updateCaseOwners, caseReassignmentForm: selectedCases">
+      <form class="well form-inline" style="margin: 1em; display: none;" data-bind="submit: onSubmit, caseActionForm: selectedCases">
         <label for="reassign_owner_select" class="inline">
           {% blocktrans %}
           <!-- ko if: selectAllMatches -->

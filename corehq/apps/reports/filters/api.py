@@ -2,8 +2,11 @@
 API endpoints for filter options
 """
 import logging
+import json
 
 from django.views.generic import View
+from django.http import JsonResponse
+from django.views.decorators.http import require_POST
 
 from braces.views import JSONResponseMixin
 from memoized import memoized
@@ -197,3 +200,11 @@ class DeviceLogUsers(DeviceLogFilter):
 
 class DeviceLogIds(DeviceLogFilter):
     field = 'device_id'
+
+
+@require_POST
+@location_safe
+def copy_cases(request, domain, *args, **kwargs):
+    body = json.loads(request.body)
+
+    return JsonResponse({})

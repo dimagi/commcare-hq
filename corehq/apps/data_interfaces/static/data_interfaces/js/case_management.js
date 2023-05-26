@@ -106,15 +106,56 @@ hqDefine("data_interfaces/js/case_management",[
         };
 
         self.updateAllMatches = function (ownerId) {
-            var report = standardHqReport.getStandardHQReport();
-            var params = new URLSearchParams(report.getReportParams());
-            var paramsObject = Object.fromEntries(params.entries());
+            var paramsObject = self.getReportParamsObject();
             paramsObject['new_owner_id'] = ownerId;
             var bulkReassignUrl = window.location.href.replace("data/edit", "data/edit/bulk");
             $.postGo(
                 bulkReassignUrl,
                 paramsObject
             );
+        };
+
+        self.onSubmit = function (form) {
+            var action = initialPageData.get("action");
+            if (action === "copy") {
+                self.copyCases(form);
+            } else {
+                self.updateCaseOwners(form);
+            }
+        }
+
+        self.copyCases = function (form) {
+            var newOwner = $(form).find('#reassign_owner_select').val(),
+                $modal = $('#caseManagementStatusModal'),
+                ownerType = getOwnerType(newOwner);
+
+            if (newOwner.includes('__')) {
+                // groups and users have different number of characters before the id
+                // users are u__id and groups are sg__id
+                newOwner = newOwner.slice(newOwner.indexOf('__') + 2);
+            }
+
+            if (_.isEmpty(newOwner)) {
+                $modal.find('.modal-body').text("Please select an owner");
+                $modal.modal('show');
+            } else {
+                if (self.selectAllMatches()) {
+                    self.updateAllMatches(newOwner);
+                    return;
+                }
+                $(form).find("[type='submit']").disableButton();
+                var sensitiveProperties = self.getReportParamsObject().sensitive_properties;
+
+                $.ajax({
+                    url: initialPageData.reverse("copy_cases"),
+                    type: 'post',
+                    data: JSON.stringify({
+                        case_ids: self.selectedCases(),
+                        sensitive_properties: JSON.parse(sensitiveProperties)
+                    }),
+                    contentType: "application/json"
+                });
+            }
         };
 
         self.updateCaseOwners = function (form) {
@@ -160,10 +201,16 @@ hqDefine("data_interfaces/js/case_management",[
             }
         };
 
+        self.getReportParamsObject = function () {
+            var report = standardHqReport.getStandardHQReport();
+            var params = new URLSearchParams(report.getReportParams());
+            return Object.fromEntries(params.entries());
+        }
+
         return self;
     };
 
-    ko.bindingHandlers.caseReassignmentForm = {
+    ko.bindingHandlers.caseActionForm = {
         update: function (element, valueAccessor) {
             var value = valueAccessor()();
             var $element = $(element);
