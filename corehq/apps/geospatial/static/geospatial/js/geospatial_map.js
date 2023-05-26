@@ -6,8 +6,6 @@ hqDefine("geospatial/js/geospatial_map", [
     initialPageData,
 ) {
     $(function () {
-        var mapInitialized = false;
-
          var loadMapBox = function (centerCoordinates) {
             'use strict';
 
@@ -106,11 +104,11 @@ hqDefine("geospatial/js/geospatial_map", [
             var mapDiv = $('#geospatial-map');
             var $data = $(".map-data");
 
-            if (mapDiv.length && !map && !mapInitialized) {
+            if (mapDiv.length && !map) {
                 map = loadMapBox();
             }
 
-            if ($data.length && !mapInitialized) {
+            if ($data.length && map) {
                 var caseData = $data.data("context");
                 map.addCaseMarkersToMap(caseData.cases)
             }
