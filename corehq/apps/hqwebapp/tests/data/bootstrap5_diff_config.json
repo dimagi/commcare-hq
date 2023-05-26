@@ -36,6 +36,7 @@
         ["includes/variables.less", "_variables.scss"],
         ["includes/variables.less", "_variables_bootstrap3.scss"],
         ["includes/mixins.less", "_mixins.scss"],
+        ["ace_cle.less", "_ace_cle.scss"],
         ["alerts.less", "_alert.scss"],
         ["appcues.less", "_appcues.scss"],
         ["backgrounds.less", "_backgrounds.scss"],
