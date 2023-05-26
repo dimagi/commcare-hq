@@ -93,8 +93,11 @@ body {
 }
 
 .flex-child {
-    flex: 1;
-    min-width: 200px;
+  flex: 1;
+  min-width: 200px;
+  &:empty {
+    display: none;
+  }
 }
 
 .flex-child-sidebar {
