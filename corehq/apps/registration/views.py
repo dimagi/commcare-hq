@@ -18,6 +18,7 @@ from django.views.generic.base import TemplateView, View
 
 from memoized import memoized
 
+from corehq.apps.accounting.utils.account import is_user_restricted_from_domain_creation
 from corehq.apps.sso.models import IdentityProvider
 from dimagi.utils.couch import CriticalSection
 from dimagi.utils.couch.resource_conflict import retry_resource
@@ -355,7 +356,9 @@ class RegisterDomainView(TemplateView):
         if not form.is_valid():
             return self.render_to_response(context)
 
-        if settings.RESTRICT_DOMAIN_CREATION and not request.user.is_superuser:
+        restrict_domain_creation = (settings.RESTRICT_DOMAIN_CREATION or
+                                    is_user_restricted_from_domain_creation(request.couch_user))
+        if restrict_domain_creation and not request.user.is_superuser:
             context.update({
                 'current_page': {'page_name': _('Oops!')},
                 'error_msg': _('Your organization has requested that project creation be restricted. '
