@@ -1188,11 +1188,9 @@ class NavigationEventAuditResource(HqBaseResource, ModelResource):
 
     @classmethod
     def _query(cls, domain: str, local_timezone: pytz.tzinfo.DstTzInfo, params: dict = {}):
-        filters = Q(domain=domain)
+        queryset = NavigationEventAudit.objects.filter(domain=domain)
         if 'users' in params:
-            filters &= Q(user__in=params['users'])
-
-        queryset = NavigationEventAudit.objects.filter(filters)
+            queryset = queryset.filter(user__in=params['users'])
 
         date_filter = cls._get_compound_filter('local_date', params)
 
