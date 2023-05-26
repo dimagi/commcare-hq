@@ -959,6 +959,7 @@ class UserRepeaterTest(TestCase, DomainSubscriptionMixin):
                 'groups': [],
                 'phone_numbers': [],
                 'email': '',
+                'eulas': '[]',
                 'resource_uri': '/a/user-repeater/api/v0.5/user/{}/'.format(user._id),
             }
         )

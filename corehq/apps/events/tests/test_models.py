@@ -8,11 +8,16 @@ from django.test import TestCase
 from casexml.apps.case.mock import CaseFactory, CaseStructure
 
 from corehq.apps.domain.shortcuts import create_domain
+from corehq.apps.es.case_search import case_search_adapter
+from corehq.apps.es.tests.utils import es_test
+from corehq.apps.hqcase.case_helper import CaseHelper
+from corehq.apps.locations.models import LocationType, SQLLocation
 from corehq.apps.users.models import CommCareUser, WebUser
 from corehq.form_processor.models import CommCareCase, CommCareCaseIndex
 from corehq.util.test_utils import create_test_case
+from corehq.form_processor.tests.utils import create_case
 
-from ...hqcase.case_helper import CaseHelper
+from ..exceptions import AttendeeTrackedException
 from ..models import (
     ATTENDEE_USER_ID_CASE_PROPERTY,
     DEFAULT_ATTENDEE_CASE_TYPE,
@@ -26,7 +31,6 @@ from ..models import (
     get_attendee_case_type,
     get_user_case_sharing_groups_for_events,
 )
-from ..exceptions import AttendeeTrackedException
 
 DOMAIN = 'test-domain'
 
@@ -65,6 +69,119 @@ class TestAttendeeCaseManager(TestCase):
                 include_closed=True,
             )]
             self.assertEqual(cases, [open_case, closed_case])
+
+
+@es_test(requires=[case_search_adapter], setup_class=True)
+class TestByLocationId(TestCase):
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.domain_obj = create_domain(DOMAIN)
+        cls.country = LocationType.objects.create(
+            domain=DOMAIN,
+            name='Country',
+        )
+        cls.city = LocationType.objects.create(
+            domain=DOMAIN,
+            name='City',
+            parent_type=cls.country,
+        )
+        cls.suriname = SQLLocation.objects.create(
+            domain=DOMAIN,
+            name='Suriname',
+            location_id=str(uuid4()),
+            location_type=cls.country,
+        )
+        cls.paramaribo = SQLLocation.objects.create(
+            domain=DOMAIN,
+            name='Paramaribo',
+            location_id=str(uuid4()),
+            location_type=cls.city,
+            parent=cls.suriname,
+        )
+
+        case_type = get_attendee_case_type(DOMAIN)
+        cls.country_attendee = create_case(
+            DOMAIN,
+            case_id=uuid4().hex,
+            case_type=case_type,
+            name='Countryboy',
+            case_json={
+                LOCATION_IDS_CASE_PROPERTY: cls.suriname.location_id,
+            },
+            save=True,
+        )
+        cls.city_attendee = create_case(
+            DOMAIN,
+            case_id=uuid4().hex,
+            case_type=case_type,
+            name='Citygirl',
+            case_json={
+                LOCATION_IDS_CASE_PROPERTY: cls.paramaribo.location_id,
+            },
+            save=True,
+        )
+        cls.both_attendee = create_case(
+            DOMAIN,
+            case_id=uuid4().hex,
+            case_type=case_type,
+            name='Everywhereguy',
+            case_json={
+                LOCATION_IDS_CASE_PROPERTY: ' '.join((
+                    cls.suriname.location_id,
+                    cls.paramaribo.location_id,
+                ))
+            },
+            save=True,
+        )
+        case_search_adapter.bulk_index([
+            cls.country_attendee,
+            cls.city_attendee,
+            cls.both_attendee,
+        ], refresh=True)
+
+    @classmethod
+    def tearDownClass(cls):
+        CommCareCase.objects.hard_delete_cases(DOMAIN, [
+            cls.city_attendee.case_id,
+            cls.country_attendee.case_id,
+            cls.both_attendee.case_id,
+        ])
+        cls.paramaribo.delete()
+        cls.suriname.delete()
+        cls.city.delete()
+        cls.country.delete()
+        cls.domain_obj.delete()
+        super().tearDownClass()
+
+    def test_parent_location(self):
+        models = AttendeeModel.objects.by_location_id(
+            DOMAIN,
+            self.suriname.location_id,
+        )
+        self.assertEqual(
+            {m.case for m in models},
+            {self.country_attendee, self.city_attendee, self.both_attendee},
+        )
+
+    def test_child_location(self):
+        models = AttendeeModel.objects.by_location_id(
+            DOMAIN,
+            self.paramaribo.location_id,
+        )
+        self.assertEqual(
+            {m.case for m in models},
+            {self.city_attendee, self.both_attendee},
+        )
+
+    def test_location_id_empty(self):
+        models = AttendeeModel.objects.by_location_id(DOMAIN, '')
+        self.assertEqual([m.case for m in models], [])
+
+    def test_location_id_none(self):
+        models = AttendeeModel.objects.by_location_id(DOMAIN, None)
+        self.assertEqual([m.case for m in models], [])
 
 
 class TestEventModel(TestCase):
@@ -123,6 +240,24 @@ class TestEventModel(TestCase):
         finally:
             mobile_worker.delete(None, None)
 
+    @contextmanager
+    def _get_location(self):
+        location_type = LocationType.objects.create(
+            domain=DOMAIN,
+            name='Place',
+        )
+        location = SQLLocation.objects.create(
+            domain=DOMAIN,
+            name='Otherworld',
+            location_id=str(uuid4()),
+            location_type=location_type,
+        )
+        try:
+            yield location
+        finally:
+            location.delete()
+            location_type.delete()
+
     def test_create_event(self):
         tomorrow = (datetime.utcnow() + timedelta(days=1)).date()
         event = Event(
@@ -136,6 +271,7 @@ class TestEventModel(TestCase):
             manager_id=self.webuser.user_id,
         )
         event.save()
+        self.addCleanup(event.delete)
 
         self.assertEqual(event.status, EVENT_NOT_STARTED)
         self.assertEqual(event.is_open, True)
@@ -154,6 +290,7 @@ class TestEventModel(TestCase):
             manager_id=self.webuser.user_id,
         )
         event.save()
+        self.addCleanup(event.delete)
 
         self.assertEqual(event.status, EVENT_NOT_STARTED)
         self.assertEqual(event.is_open, True)
@@ -174,6 +311,7 @@ class TestEventModel(TestCase):
                 manager_id=self.webuser.user_id,
             )
             event.save()
+            self.addCleanup(event.delete)
             event.set_expected_attendees([attendee])
 
             attendee_case_type = get_attendee_case_type(DOMAIN)
@@ -209,6 +347,7 @@ class TestEventModel(TestCase):
                 manager_id=self.webuser.user_id,
             )
             event.save()
+            self.addCleanup(event.delete)
 
             event.set_expected_attendees([attendee1, attendee2])
             self.assertEqual(
@@ -239,6 +378,7 @@ class TestEventModel(TestCase):
                 manager_id=self.webuser.user_id,
             )
             event.save()
+            self.addCleanup(event.delete)
             event.set_expected_attendees([attendee1, attendee2, attendee3])
             event.mark_attendance([attendee1, attendee2], datetime.utcnow())
             self.assertEqual(
@@ -292,9 +432,29 @@ class TestEventModel(TestCase):
                 attendance_taker_ids=[commcare_user.user_id]
             )
             event.save()
+            self.addCleanup(event.delete)
 
             self.assertEqual(event.get_total_attendance_takers(), 1)
             self.assertEqual(event.attendance_taker_ids[0], commcare_user.user_id)
+
+    def test_get_events_by_location(self):
+        with self._get_location() as location:
+            today = datetime.utcnow().date()
+            event = Event.objects.create(
+                domain=DOMAIN,
+                name='test-event',
+                start_date=today,
+                end_date=today,
+                location=location,
+                attendance_target=0,
+            )
+            self.addCleanup(event.delete)
+
+            events_by_loc = list(Event.objects.filter(location=location))
+            self.assertEqual(events_by_loc, [event])
+
+            location_events = list(location.event_set.all())
+            self.assertEqual(location_events, [event])
 
 
 class TestCaseSharingGroup(TestCase):
@@ -355,17 +515,26 @@ class GetAttendeeCaseTypeTest(TestCase):
         self.assertEqual(case_type, DEFAULT_ATTENDEE_CASE_TYPE)
 
     def test_config(self):
+        # Before save()
+        case_type = get_attendee_case_type(DOMAIN)
+        self.assertEqual(case_type, DEFAULT_ATTENDEE_CASE_TYPE)
+
         with self.example_config():
             case_type = get_attendee_case_type(DOMAIN)
             self.assertEqual(case_type, 'travailleur')
 
+        # After delete()
+        case_type = get_attendee_case_type(DOMAIN)
+        self.assertEqual(case_type, DEFAULT_ATTENDEE_CASE_TYPE)
+
     @contextmanager
     def example_config(self):
-        config = AttendanceTrackingConfig.objects.create(
+        config = AttendanceTrackingConfig(
             domain=DOMAIN,
             mobile_worker_attendees=False,
             attendee_case_type='travailleur',
         )
+        config.save()
         try:
             yield
         finally:

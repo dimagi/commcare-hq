@@ -38,6 +38,9 @@ hqDefine("app_manager/js/details/utils", function () {
         }, {
             value: "distance",
             label: gettext('Distance from current location'),
+        }, {
+            value: "markdown",
+            label: gettext('Markdown'),
         }];
 
         if (hqImport('hqwebapp/js/toggles').toggleEnabled('MM_CASE_PROPERTIES')) {

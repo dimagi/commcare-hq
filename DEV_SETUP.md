@@ -399,10 +399,11 @@ needs of most developers.
     source $WORKON_HOME/hq/bin/activate
     ```
 
-3. Install the `docker-compose` python library
-
+3. Install `docker compose`
+  - **Mac**: comes with Docker Desktop
+  - **Linux**:
     ```sh
-    pip install docker-compose
+    sudo apt install docker-compose-plugin
     ```
 
 4. Ensure the elasticsearch config files are world-readable (their containers
