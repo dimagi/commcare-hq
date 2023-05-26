@@ -21,29 +21,27 @@
       <div>
         <% if (useGrid) { %>
             <section  class="js-case-container clearfix list-cell-container-style"></section>
-          </div>
         <% } else { %>
         <div class="module-case-list-table-container">
           <table class="table module-table module-table-case-list">
-<% if(!useTiles) { %>
-            <thead>
-            <tr>
-              <% if (isMultiSelect && !hasNoItems) { %>
-              <th class="module-case-list-header"><input type="checkbox" id="select-all-checkbox"/></th>
-              <% } %>
-              <%  _.each(headers, function(header, index) { %>
-              <% if (columnVisible(index)) { %>
-              <% if (columnSortable(index)) { %>
-              <th class="module-case-list-header header-clickable formplayer-request" data-id="<%- index %>"> <%- header %></th>
-              <% } else { %>
-              <th class="module-case-list-header" data-id="<%- index %>"> <%- header %></th>
-
-              <% } %>
-              <% } %>
-              <% }); %>
-            </tr>
-            </thead>
-<% } %>
+            <% if(!useTiles) { %>
+              <thead>
+                <tr>
+                  <% if (isMultiSelect && !hasNoItems) { %>
+                    <th class="module-case-list-header"><input type="checkbox" id="select-all-checkbox"/></th>
+                  <% } %>
+                  <%  _.each(headers, function(header, index) { %>
+                    <% if (columnVisible(index)) { %>
+                      <% if (columnSortable(index)) { %>
+                        <th class="module-case-list-header header-clickable formplayer-request" data-id="<%- index %>"> <%- header %></th>
+                      <% } else { %>
+                        <th class="module-case-list-header" data-id="<%- index %>"> <%- header %></th>
+                      <% } %>
+                    <% } %>
+                  <% }); %>
+                </tr>
+              </thead>
+            <% } %>
             <% if (hasNoItems) { %>
             <tbody>
             <tr>

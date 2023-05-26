@@ -8,6 +8,8 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
         toggles = hqImport("hqwebapp/js/toggles"),
         utils = hqImport("cloudcare/js/formplayer/utils/utils");
 
+    const FormatAddress = "Address";
+
     const MenuView = Marionette.View.extend({
         tagName: function () {
             if (this.model.collection.layoutStyle === 'grid') {
@@ -362,7 +364,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
                 self.selectedCaseIds = [];
             }
 
-            self.showMap = !!_.find(this.styles, function (style) { return style.displayFormat === "Address"; });
+            self.showMap = !!_.find(this.styles, function (style) { return style.displayFormat === FormatAddress; });
         },
 
         ui: CaseListViewUI(),
@@ -451,7 +453,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
         },
 
         columnStyle: function () {
-            let self = this;
+            const self = this;
             let mapColumn = "";
             if (self.showMap && !self.hasNoItems) {
                 mapColumn = "[map] 300px";
@@ -461,30 +463,36 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
         },
 
         addAddressPin: function (geocoder, addressMap, headers, model, addressIndex) {
-            let address = model.attributes.data[addressIndex];
-            geocoder.query(address, function (err, data) {
-                if (err === null) {
-                    let popupText = "";
-                    headers.forEach((header, index) => {
-                        if (header) {
-                            popupText += "<b>" + header + ":</b> " + model.attributes.data[index] + "<br>";
-                        }
-                    });
-                    L.marker(data.latlng)
-                        .addTo(addressMap)
-                        .bindPopup(popupText);
-                }
+            const address = model.attributes.data[addressIndex];
+            return new Promise((resolve, reject) => {
+                geocoder.query(address, function (err, data) {
+                    if (err === null) {
+                        let popupText = "";
+                        headers.forEach((header, index) => {
+                            if (header) {
+                                popupText += "<b>" + header + ":</b> " + model.attributes.data[index] + "<br>";
+                            }
+                        });
+                        L.marker(data.latlng)
+                            .addTo(addressMap)
+                            .bindPopup(popupText);
+
+                        resolve(data.latlng)
+                    } else {
+                        resolve(undefined)
+                    }
+                });
             });
         },
 
         loadMap: function () {
-            let token = initialPageData.get("mapbox_access_token");
+            const token = initialPageData.get("mapbox_access_token");
 
             try {
-                let lat = 30;
-                let lon = 15;
-                let zoom = 3;
-                let addressMap = L.map('module-case-list-map').setView([lat, lon], zoom);
+                const lat = 30;
+                const lon = 15;
+                const zoom = 3;
+                const addressMap = L.map('module-case-list-map').setView([lat, lon], zoom);
                 L.tileLayer('https://api.mapbox.com/styles/v1/{id}/tiles/{z}/{x}/{y}?access_token=' + token, {
                     id: 'mapbox/streets-v11',
                     attribution: '© <a href="https://www.mapbox.com/about/maps/">Mapbox</a> ©' +
@@ -493,14 +501,18 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
                     zoomOffset: -1,
                 }).addTo(addressMap);
 
-                let addressIndex = _.findIndex(this.styles, function (style) { return style.displayFormat === "Address"; });
+                const addressIndex = _.findIndex(this.styles, function (style) { return style.displayFormat === FormatAddress; });
                 L.mapbox.accessToken = token;
-                let mapbox = L.mapbox;
-                let geocoder = mapbox.geocoder('mapbox.places');
+                const mapbox = L.mapbox;
+                const geocoder = mapbox.geocoder('mapbox.places');
 
-                this.options.collection.models.forEach(model => {
-                    this.addAddressPin(geocoder, addressMap, this.options.headers, model, addressIndex);
-                });
+                const latLons = this.options.collection.models
+                    .map(model => this.addAddressPin(geocoder, addressMap, this.options.headers, model, addressIndex))
+                    .filter(latLon => latLon);
+                Promise.all(latLons).then(lls => {
+                    addressMap.fitBounds(lls, {maxZoom: 8});
+                })
+
             } catch (error) {
                 console.error(error);
             }
