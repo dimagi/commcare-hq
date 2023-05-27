@@ -709,7 +709,6 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
 
     const FormMenuView = Marionette.CollectionView.extend({
         template: _.template($("#form-menu-template").html() || ""),
-        tagName: 'li',
         childView: LanguageOptionView,
         childViewContainer: 'ul',
         ui: {
