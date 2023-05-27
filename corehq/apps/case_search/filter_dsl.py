@@ -26,6 +26,7 @@ from corehq.apps.case_search.xpath_functions.comparison import property_comparis
 class SearchFilterContext:
     domain: str
     fuzzy: bool = False
+    multi_term: bool = False
 
 
 def print_ast(node):
@@ -114,7 +115,7 @@ def build_filter_from_ast(node, context):
     return visit(node)
 
 
-def build_filter_from_xpath(domain, xpath, fuzzy=False):
+def build_filter_from_xpath(domain, xpath, fuzzy=False, multi_term=False):
     """Given an xpath expression this function will generate an Elasticsearch
     filter"""
     error_message = _(
@@ -123,7 +124,7 @@ def build_filter_from_xpath(domain, xpath, fuzzy=False):
         "The operators we accept are: {}"
     )
 
-    context = SearchFilterContext(domain, fuzzy)
+    context = SearchFilterContext(domain, fuzzy, multi_term)
     try:
         return build_filter_from_ast(parse_xpath(xpath), context)
     except TypeError as e:
