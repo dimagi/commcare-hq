@@ -9,7 +9,7 @@ from django.core.exceptions import ValidationError
 from django.db.models import Max, Min, Q
 from django.db.models.functions import TruncDate
 
-from django.http import Http404, HttpResponse, HttpResponseNotFound
+from django.http import Http404, HttpResponse, HttpResponseNotFound, JsonResponse
 from django.test import override_settings
 from django.urls import reverse
 from django.utils.translation import gettext as _
@@ -1092,10 +1092,7 @@ class NavigationEventAuditResource(HqBaseResource, Resource):
         response = super(HqBaseResource, self).dispatch(request_type, request, **kwargs)
         if not toggles.ACTION_TIMES_API.enabled_for_request(request):
             msg = (_("You don't have permission to access this API"))
-            raise ImmediateHttpResponse(HttpResponse(
-                json.dumps({"error": msg}),
-                content_type="application/json",
-                status=403))
+            raise ImmediateHttpResponse(JsonResponse({"error": msg}, status=403))
         else:
             return response
 
@@ -1192,11 +1189,11 @@ class NavigationEventAuditResource(HqBaseResource, Resource):
         if 'users' in params:
             queryset = queryset.filter(user__in=params['users'])
 
-        date_filter = cls._get_compound_filter('local_date', params)
+        local_date_filter = cls._get_compound_filter('local_date', params)
 
         results = (queryset
                 .annotate(local_date=TruncDate('event_date', tzinfo=local_timezone))
-                .filter(date_filter)
+                .filter(local_date_filter)
                 .values('local_date', 'user'))
 
         results = results.order_by('local_date', 'user')
