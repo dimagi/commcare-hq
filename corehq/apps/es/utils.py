@@ -186,4 +186,6 @@ def mapping_sort_key(item):
 
 def index_runtime_name(name):
     # transform the name if testing
-    return f"{TEST_DATABASE_PREFIX}{name}" if settings.UNIT_TESTING else name
+    if settings.UNIT_TESTING and not name.startswith(TEST_DATABASE_PREFIX):
+        return f"{TEST_DATABASE_PREFIX}{name}"
+    return name
