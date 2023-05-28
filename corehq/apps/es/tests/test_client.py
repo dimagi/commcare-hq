@@ -2017,6 +2017,7 @@ class TestTombstone(SimpleTestCase):
         )
 
 
+@es_test
 @override_settings(ES_FOR_TEST_INDEX_MULTIPLEXED=False)
 @override_settings(ES_FOR_TEST_INDEX_SWAPPED=False)
 class TestCreateDocumentAdapter(SimpleTestCase):
