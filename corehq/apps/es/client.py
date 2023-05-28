@@ -5,7 +5,6 @@ import logging
 from enum import Enum
 from functools import cached_property
 
-from django.db.backends.base.creation import TEST_DATABASE_PREFIX
 from django.conf import settings
 
 from memoized import memoized
@@ -31,7 +30,7 @@ from .const import (
 )
 from .exceptions import ESError, ESShardFailure, TaskError, TaskMissing
 from .index.analysis import DEFAULT_ANALYSIS
-from .utils import ElasticJSONSerializer
+from .utils import ElasticJSONSerializer, index_runtime_name
 
 log = logging.getLogger(__name__)
 
@@ -1327,13 +1326,10 @@ def create_document_adapter(cls, index_name, type_, *, secondary=None):
         default), the returned adapter will be an instance of ``cls``.
     :returns: a document adapter instance.
     """
-    def runtime_name(name):
-        # transform the name if testing
-        return f"{TEST_DATABASE_PREFIX}{name}" if settings.UNIT_TESTING else name
 
-    doc_adapter = cls(runtime_name(index_name), type_)
+    doc_adapter = cls(index_runtime_name(index_name), type_)
     if secondary is not None:
-        secondary_adapter = cls(runtime_name(secondary), type_)
+        secondary_adapter = cls(index_runtime_name(secondary), type_)
         doc_adapter = ElasticMultiplexAdapter(doc_adapter, secondary_adapter)
 
     return doc_adapter
