@@ -55,6 +55,7 @@ class TestNavigationEventAuditResource(APIResourceTest):
 
         cls.username1 = 'andy@example.com'
         cls.username2 = 'bob@example.com'
+        cls.username3 = 'chloe@example.com'
 
         cls.user1 = WebUser.create(cls.domain.name, cls.username1, '***', None, None)
         cls.user2 = WebUser.create(cls.domain.name, cls.username2, '***', None, None)
@@ -67,9 +68,8 @@ class TestNavigationEventAuditResource(APIResourceTest):
             cls.domain1_audits.add_log(cls.username1, single_datetime)
             cls.domain1_audits.add_log(cls.username2, single_datetime)
 
-        for single_datetime in cls._daterange(datetime(2023, 6, 1, 0), datetime(2023, 5, 31, 23)):
-            cls.domain2_audits.add_log(cls.username1, single_datetime)
-            cls.domain2_audits.add_log(cls.username2, single_datetime)
+        for single_datetime in cls._daterange(datetime(2023, 6, 1, 0), datetime(2023, 6, 1, 23)):
+            cls.domain2_audits.add_log(cls.username3, single_datetime)
 
         cls.domain1_audits.create()
         cls.domain2_audits.create()
