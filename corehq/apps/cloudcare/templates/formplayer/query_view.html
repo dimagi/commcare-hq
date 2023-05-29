@@ -53,10 +53,10 @@
       </div>
       <% } %>
     </div>
-    </<%- contentTag %>>
-    <<%- contentTag %>
-      class="<% if (contentTag === 'td') { %>col-sm-6 <% } %>query-input-group
-             <% if (errorMessage) { %> has-error<% } %>">
+  </<%- contentTag %>>
+  <<%- contentTag %>
+    class="<% if (contentTag === 'td') { %>col-sm-6 <% } %>query-input-group
+           <% if (errorMessage) { %> has-error<% } %>">
 
     <% if (input == "select1") { %>
     <select class="query-field form-control hqwebapp-select2" data-receive="<%- receive %>"<% if (required) { %> aria-required="true"<% } %>>
