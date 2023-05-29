@@ -77,7 +77,8 @@ hqDefine("data_dictionary/js/data_dictionary", [
         self.restoreGroup = function () {
             self.toBeDeprecated(false);
         };
-        self.showDeprecatedWarning = ko.computed(function () {
+        // Show a warning that properties will be transferred to "No Group" section on deprecating a group.
+        self.showGroupPropertyTransferWarning = ko.computed(function () {
             return self.toBeDeprecated() && !deprecated && self.properties().length > 0;
         });
         return self;

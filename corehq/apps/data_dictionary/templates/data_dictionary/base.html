@@ -169,7 +169,7 @@
           </div>
           <div data-bind="sortable: { data: caseGroupList, connectClass: 'groups', options: { handle: 'i.sortable-handle' } }">
           <div>
-          <div class="group-deprecated" data-bind="visible: showDeprecatedWarning" style="display: none;">
+          <div class="group-deprecated" data-bind="visible: showGroupPropertyTransferWarning" style="display: none;">
             <b data-bind="text: name()"></b>
             {% trans "group's properties will be moved to" %}
             <b>"No Group"</b>
