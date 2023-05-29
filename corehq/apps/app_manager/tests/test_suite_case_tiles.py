@@ -54,7 +54,7 @@ class SuiteCaseTilesTest(SimpleTestCase, SuiteMixin):
                 header={'en': 'd'},
                 model='case',
                 field='d',
-                format='plain',
+                format='address',
                 case_tile_field='bottom_left'
             ),
             DetailColumn(
@@ -109,6 +109,24 @@ class SuiteCaseTilesTest(SimpleTestCase, SuiteMixin):
             self.get_xml('case_tile_pulldown_session'),
             app.create_suite(),
             "./entry/session"
+        )
+
+    def test_case_tile_format_propagated(self, *args):
+        app = Application.new_app('domain', 'Untitled Application')
+
+        module = app.add_module(Module.new_module('Untitled Module', None))
+        module.case_type = 'patient'
+        module.case_details.short.use_case_tiles = True
+        self._add_columns_for_case_details(module)
+
+        form = app.new_form(0, "Untitled Form", None)
+        form.xmlns = 'http://id_m0-f0'
+        form.requires = 'case'
+
+        self.assertXmlPartialEqual(
+            self.get_xml('case_tile_template_format'),
+            app.create_suite(),
+            "./detail[@id='m0_case_short']/field[5]/template"
         )
 
     def test_inline_case_detail_from_another_module(self, *args):
