@@ -4,9 +4,17 @@ from datetime import datetime
 from django.conf import settings
 from django.core.management import color_style
 from django.utils.functional import cached_property
+
 from field_audit.models import AuditAction
 
+from corehq.apps.data_interfaces.models import AutomaticUpdateRule
 from corehq.apps.domain.models import Domain
+from corehq.messaging.scheduling.models import (
+    AlertSchedule,
+    ImmediateBroadcast,
+    ScheduledBroadcast,
+    TimedSchedule,
+)
 
 
 def abort():
@@ -67,3 +75,26 @@ def migrate_to_deleted_on(db_cls, old_field, should_audit=False):
         update_kwargs['audit_action'] = AuditAction.AUDIT
     update_count = queryset.update(**update_kwargs)
     return update_count
+
+
+def hard_delete_sql_objects_before_cutoff(cutoff):
+    """
+    Permanently deletes SQL objects with deleted_on set to a datetime earlier
+    than the specified cutoff datetime
+    :param cutoff: datetime used to obtain objects to be hard deleted
+    :return: dictionary of count of deleted objects per table
+    """
+    counts = {}
+    tables = [AutomaticUpdateRule, AlertSchedule, TimedSchedule, ScheduledBroadcast, ImmediateBroadcast]
+    audited_tables = [AutomaticUpdateRule]
+    for table in tables:
+        kwargs = {}
+        if table in audited_tables:
+            kwargs = {'audit_action': AuditAction.AUDIT}
+
+        queryset = table.objects.filter(deleted_on__lt=cutoff)
+        if queryset.exists():
+            deleted_counts = queryset.delete(**kwargs)[1]
+            counts.update(deleted_counts)
+
+    return counts
