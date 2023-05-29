@@ -405,6 +405,53 @@ class TestCommCareCaseManager(BaseCaseManagerTest):
         self.assertEqual([], CaseTransaction.objects.get_transactions(case1.case_id))
 
 
+class TestHardDeleteCasesBeforeCutoff(TestCase):
+
+    def test_case_is_hard_deleted_if_deleted_on_is_before_cutoff(self):
+        case = create_case(self.domain, deleted_on=datetime(2020, 1, 1, 12, 29), save=True)
+
+        CommCareCase.objects.hard_delete_cases_before_cutoff(self.cutoff)
+
+        with self.assertRaises(CaseNotFound):
+            CommCareCase.objects.get_case(case.case_id)
+
+    def test_case_is_not_hard_deleted_if_deleted_on_is_cutoff(self):
+        case = create_case(self.domain, deleted_on=self.cutoff, save=True)
+
+        CommCareCase.objects.hard_delete_cases_before_cutoff(self.cutoff)
+
+        fetched_case = CommCareCase.objects.get_case(case.case_id)
+        self.assertIsNotNone(fetched_case)
+
+    def test_case_is_not_hard_deleted_if_deleted_on_is_after_cutoff(self):
+        case = create_case(self.domain, deleted_on=datetime(2020, 1, 1, 12, 31), save=True)
+
+        CommCareCase.objects.hard_delete_cases_before_cutoff(self.cutoff)
+
+        fetched_case = CommCareCase.objects.get_case(case.case_id)
+        self.assertIsNotNone(fetched_case)
+
+    def test_case_is_not_hard_deleted_if_deleted_on_is_null(self):
+        case = create_case(self.domain, deleted_on=None, save=True)
+
+        CommCareCase.objects.hard_delete_cases_before_cutoff(self.cutoff)
+
+        fetched_case = CommCareCase.objects.get_case(case.case_id)
+        self.assertIsNotNone(fetched_case)
+
+    def test_returns_deleted_counts(self):
+        for _ in range(5):
+            create_case(self.domain, deleted_on=datetime(2020, 1, 1, 12, 29), save=True)
+
+        counts = CommCareCase.objects.hard_delete_cases_before_cutoff(self.cutoff)
+
+        self.assertEqual(counts, {'form_processor.CaseTransaction': 5, 'form_processor.CommCareCase': 5})
+
+    def setUp(self):
+        self.domain = 'test_hard_delete_cases_before_cutoff'
+        self.cutoff = datetime(2020, 1, 1, 12, 30)
+
+
 @sharded
 class TestCommCareCase(BaseCaseManagerTest):
 

@@ -291,6 +291,20 @@ class CommCareCaseManager(RequireDBManager):
 
         return deleted_count
 
+    def hard_delete_cases_before_cutoff(self, cutoff):
+        """
+        Permanently deletes cases with deleted_on set to a datetime earlier than
+        the specified cutoff datetime
+        :param cutoff: datetime used to obtain the cases to be hard deleted
+        :return: dictionary of count of deleted objects per table
+        """
+        counts = {}
+        for db_name in get_db_aliases_for_partitioned_query():
+            queryset = self.using(db_name).filter(deleted_on__lt=cutoff)
+            deleted_counts = queryset.delete()[1]
+            counts.update(deleted_counts)
+        return counts
+
     @staticmethod
     def publish_deleted_cases(domain, case_ids):
         from ..change_publishers import publish_case_deleted
