@@ -1100,7 +1100,7 @@ class NavigationEventAuditResource(HqBaseResource, Resource):
         data['meta']['local_date_timezone'] = self.local_timezone.zone
         params = request.GET.copy()  # Makes params mutable for creating next_url below
 
-        if data['meta']['total_count'] >= data['meta']['limit']:
+        if data['meta']['total_count'] > data['meta']['limit']:
             last_object = data['objects'][-1]
             params['cursor_local_date'] = last_object.data['local_date']
             params['cursor_user'] = last_object.data['user']
@@ -1153,8 +1153,6 @@ class NavigationEventAuditResource(HqBaseResource, Resource):
 
     @classmethod
     def cursor_query(cls, domain: str, local_timezone: pytz.tzinfo.DstTzInfo, params: dict = {}) -> list:
-        if 'limit' not in params:
-            params['limit'] = cls._meta.limit
         queryset = cls._query(domain, local_timezone, params)
 
         cursor_local_date = params.get('cursor_local_date')
@@ -1170,7 +1168,7 @@ class NavigationEventAuditResource(HqBaseResource, Resource):
 
         with override_settings(USE_TZ=True):
             # TruncDate ignores tzinfo if the queryset is not evaluated within overridden USE_TZ setting
-            return list(queryset[:params['limit']])
+            return list(queryset)
 
 
     @classmethod
