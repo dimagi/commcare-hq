@@ -32,7 +32,7 @@ hqDefine("data_dictionary/js/data_dictionary", [
 
         self.init = function (groupData, changeSaveButton) {
             for (let group of groupData) {
-                let groupObj = groupsViewModel(group.id, group.name, group.description, self.name, group.deprecated);
+                let groupObj = groupsViewModel(self.name, group.id, group.name, group.description, group.deprecated);
                 groupObj.name.subscribe(changeSaveButton);
                 groupObj.description.subscribe(changeSaveButton);
                 groupObj.toBeDeprecated.subscribe(changeSaveButton);
@@ -58,7 +58,7 @@ hqDefine("data_dictionary/js/data_dictionary", [
         return self;
     };
 
-    var groupsViewModel = function (id, name, description, caseType, deprecated) {
+    var groupsViewModel = function (caseType, id, name, description, deprecated) {
         var self = {};
         self.id = id;
         self.name = ko.observable(name);
@@ -290,7 +290,7 @@ hqDefine("data_dictionary/js/data_dictionary", [
 
         self.newGroup = function () {
             if (_.isString(self.newGroupName())) {
-                var group = groupsViewModel(null, self.newGroupName(), '', self.activeCaseType(), false);
+                var group = groupsViewModel(self.activeCaseType(), null, self.newGroupName(), '', false);
                 self.caseGroupList.push(group);
                 self.newGroupName(undefined);
             }
