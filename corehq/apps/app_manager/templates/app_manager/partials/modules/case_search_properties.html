@@ -155,23 +155,25 @@
               {% include "app_manager/partials/nav_menu_media.html" with qualifier='case_search-search_label_media_' ICON_LABEL="Search Icon" AUDIO_LABEL="Search Audio" %}
             <!-- /ko -->
           </div>
-          <div class="form-group" data-bind="hidden: inlineSearchActive">
-            <label for="search_again_label" class="{% css_label_class %} control-label">
-              {% trans "Label for Searching Again" %}
-              <span class="hq-help-template" data-title="{% trans "Label for Searching Again" %}"
-                    data-content="{% trans_html_attr "This text is for the search button displayed at the bottom of search results, so users can search again." %}">
-            </label>
-            <div class="{% css_field_class %}">
-              {% input_trans module.search_config.search_again_label.label langs input_name='search_again_label' input_id='search_again_label' data_bind="value: search_again_label" %}
+            {% if not request|toggle_enabled:'SPLIT_SCREEN_CASE_SEARCH' %}
+            <div class="form-group" data-bind="hidden: inlineSearchActive">
+              <label for="search_again_label" class="{% css_label_class %} control-label">
+                {% trans "Label for Searching Again" %}
+                <span class="hq-help-template" data-title="{% trans "Label for Searching Again" %}"
+                      data-content="{% trans_html_attr "This text is for the search button displayed at the bottom of search results, so users can search again." %}">
+              </label>
+              <div class="{% css_field_class %}">
+                {% input_trans module.search_config.search_again_label.label langs input_name='search_again_label' input_id='search_again_label' data_bind="value: search_again_label" %}
+              </div>
             </div>
-          </div>
-          <div class="case-search-multimedia-input" data-bind="hidden: inlineSearchActive">
-          <!-- stopBinding to avoid conflicts with the binding of enclosing template to a different object 'search'-->
-          <!-- binding for this partial is done via app_manager/js/nav_menu_media-->
-            <!-- ko stopBinding: true -->
-              {% include "app_manager/partials/nav_menu_media.html" with qualifier='case_search-search_again_label_media_' ICON_LABEL="Search Again Icon" AUDIO_LABEL="Search Again Audio" %}
-            <!-- /ko -->
-          </div>
+            <div class="case-search-multimedia-input" data-bind="hidden: inlineSearchActive">
+            <!-- stopBinding to avoid conflicts with the binding of enclosing template to a different object 'search'-->
+            <!-- binding for this partial is done via app_manager/js/nav_menu_media-->
+              <!-- ko stopBinding: true -->
+                {% include "app_manager/partials/nav_menu_media.html" with qualifier='case_search-search_again_label_media_' ICON_LABEL="Search Again Icon" AUDIO_LABEL="Search Again Audio" %}
+              <!-- /ko -->
+            </div>
+            {% endif %}
           <div class="form-group">
             <label for="search_screen_title" class="{% css_label_class %} control-label">
               {% trans "Search Screen Title" %}
