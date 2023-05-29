@@ -9,13 +9,14 @@ from .query_functions import (
 )
 from .subcase_functions import subcase
 from .ancestor_functions import ancestor_exists
-from .value_functions import date, date_add, today
+from .value_functions import date, date_add, today, unwrap_list
 
 # functions that transform or produce a value
 XPATH_VALUE_FUNCTIONS = {
     'date': date,
     'date-add': date_add,
     'today': today,
+    'unwrap-list': unwrap_list,
 }
 
 

@@ -115,7 +115,7 @@ def build_filter_from_ast(node, context):
     return visit(node)
 
 
-def build_filter_from_xpath(domain, xpath, fuzzy=False, multi_term=False):
+def build_filter_from_xpath(domain, xpath, fuzzy=False):
     """Given an xpath expression this function will generate an Elasticsearch
     filter"""
     error_message = _(
@@ -124,7 +124,7 @@ def build_filter_from_xpath(domain, xpath, fuzzy=False, multi_term=False):
         "The operators we accept are: {}"
     )
 
-    context = SearchFilterContext(domain, fuzzy, multi_term)
+    context = SearchFilterContext(domain, fuzzy)
     try:
         return build_filter_from_ast(parse_xpath(xpath), context)
     except TypeError as e:

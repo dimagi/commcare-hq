@@ -1,5 +1,6 @@
 import re
 from collections import defaultdict
+import json
 
 from django.utils.functional import cached_property
 from django.utils.translation import gettext as _
@@ -235,8 +236,9 @@ class CaseSearchQueryBuilder:
         fuzzy = criteria.key in self._fuzzy_properties
         if criteria.is_ancestor_query:
             query = f'{criteria.key} = "{value}"'
-            return build_filter_from_xpath(self.query_domains, query,
-                                        fuzzy=fuzzy, multi_term=criteria.has_multiple_terms)
+            if isinstance(value, list):
+                query = f"""{criteria.key} = unwrap-list('{json.dumps(value)}')"""
+            return build_filter_from_xpath(self.query_domains, query, fuzzy=fuzzy)
         elif criteria.is_index_query:
             return reverse_index_case_query(value, criteria.index_query_identifier)
         else:
