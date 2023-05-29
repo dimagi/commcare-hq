@@ -6,7 +6,7 @@ hqDefine("geospatial/js/geospatial_map", [
     initialPageData,
 ) {
     $(function () {
-         var loadMapBox = function (centerCoordinates) {
+        var loadMapBox = function (centerCoordinates) {
             'use strict';
 
             var self = {};
@@ -54,6 +54,9 @@ hqDefine("geospatial/js/geospatial_map", [
             // We should consider refactoring and splitting the below out to a new JS file
             let clickedMarker;
 
+            self.getMapboxInstance = function() {
+                return map;
+            }
             self.addCaseMarkersToMap = function (cases) {
                 const markerColor = "#00FF00";
                 cases.forEach(element => {
@@ -99,6 +102,14 @@ hqDefine("geospatial/js/geospatial_map", [
         };
 
         var map;
+
+        $(document).on('click', '#apply-filters', function() {
+            if (map) {
+                mapbox = map.getMapboxInstance();
+                mapbox.remove();
+                map = null;
+            }
+        })
 
         $(document).ajaxComplete(function () {
             var mapDiv = $('#geospatial-map');
