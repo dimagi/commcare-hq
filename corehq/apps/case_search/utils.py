@@ -238,8 +238,7 @@ class CaseSearchQueryBuilder:
             query = f'{criteria.key} = "{value}"'
             if isinstance(value, list):
                 query = f"""{criteria.key} = unwrap-list('{json.dumps(value)}')"""
-            return build_filter_from_xpath(self.query_domains, query,
-                                        fuzzy=fuzzy, multi_term=criteria.has_multiple_terms)
+            return build_filter_from_xpath(self.query_domains, query, fuzzy=fuzzy)
         elif criteria.is_index_query:
             return reverse_index_case_query(value, criteria.index_query_identifier)
         else:
