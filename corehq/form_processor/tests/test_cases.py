@@ -405,6 +405,54 @@ class TestCommCareCaseManager(BaseCaseManagerTest):
         self.assertEqual([], CaseTransaction.objects.get_transactions(case1.case_id))
 
 
+class TestHardDeleteCasesBeforeCutoff(TestCase):
+
+    def test_case_is_hard_deleted_if_deleted_on_is_before_cutoff(self):
+        case = create_case(self.domain, deleted_on=datetime(2020, 1, 1, 12, 29), save=True)
+
+        CommCareCase.objects.hard_delete_cases_before_cutoff(self.cutoff)
+
+        with self.assertRaises(CaseNotFound):
+            CommCareCase.objects.get_case(case.case_id)
+
+    def test_case_is_not_hard_deleted_if_deleted_on_is_cutoff(self):
+        case = create_case(self.domain, deleted_on=self.cutoff, save=True)
+
+        CommCareCase.objects.hard_delete_cases_before_cutoff(self.cutoff)
+
+        fetched_case = CommCareCase.objects.get_case(case.case_id)
+        self.assertIsNotNone(fetched_case)
+
+    def test_case_is_not_hard_deleted_if_deleted_on_is_after_cutoff(self):
+        case = create_case(self.domain, deleted_on=datetime(2020, 1, 1, 12, 31), save=True)
+
+        CommCareCase.objects.hard_delete_cases_before_cutoff(self.cutoff)
+
+        fetched_case = CommCareCase.objects.get_case(case.case_id)
+        self.assertIsNotNone(fetched_case)
+
+    def test_case_is_not_hard_deleted_if_deleted_on_is_null(self):
+        case = create_case(self.domain, deleted_on=None, save=True)
+
+        CommCareCase.objects.hard_delete_cases_before_cutoff(self.cutoff)
+
+        fetched_case = CommCareCase.objects.get_case(case.case_id)
+        self.assertIsNotNone(fetched_case)
+
+    def test_returns_deleted_count(self):
+        expected_count = 5
+        for _ in range(expected_count):
+            create_case(self.domain, deleted_on=datetime(2020, 1, 1, 12, 29), save=True)
+
+        count = CommCareCase.objects.hard_delete_cases_before_cutoff(self.cutoff)
+
+        self.assertEqual(count, expected_count)
+
+    def setUp(self):
+        self.domain = 'test_hard_delete_cases_before_cutoff'
+        self.cutoff = datetime(2020, 1, 1, 12, 30)
+
+
 @sharded
 class TestCommCareCase(BaseCaseManagerTest):
 
