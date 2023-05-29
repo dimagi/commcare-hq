@@ -12,6 +12,8 @@ from custom.abdm.milestone_one.utils.response_util import (
     generate_invalid_req_response,
     parse_response,
 )
+from custom.abdm.utils import check_for_existing_abha_number
+from custom.abdm.const import ABHA_IN_USE_ERROR_CODE, ERROR_MESSAGES
 
 
 @api_view(["GET"])
@@ -22,6 +24,9 @@ def get_auth_methods(request):
     if not health_id:
         error_msg = "Missing required parameter: health_id"
         return generate_invalid_req_response(error_msg)
+    if check_for_existing_abha_number(request.user.domain, health_id):
+        return generate_invalid_req_response(ERROR_MESSAGES[ABHA_IN_USE_ERROR_CODE],
+                                             error_code=ABHA_IN_USE_ERROR_CODE)
     resp = abdm_util.search_by_health_id(health_id)
     auth_methods = resp.get("authMethods")
     resp = {"auth_methods": auth_methods}
