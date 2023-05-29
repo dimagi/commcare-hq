@@ -193,6 +193,20 @@ class XFormInstanceManager(RequireDBManager):
             )
         return result
 
+    def hard_delete_forms_before_cutoff(self, cutoff):
+        """
+        Permanently deletes forms with deleted_on set to a datetime earlier than
+        the specified cutoff datetime
+        :param cutoff: datetime used to obtain the forms to be hard deleted
+        :return: count of hard deleted forms
+        """
+        total_count = 0
+        for db_name in get_db_aliases_for_partitioned_query():
+            queryset = self.using(db_name).filter(deleted_on__lt=cutoff)
+            total_count += queryset.count()
+            queryset.delete()
+        return total_count
+
     def iter_form_ids_by_xmlns(self, domain, xmlns=None):
         q_expr = Q(domain=domain) & Q(state=self.model.NORMAL)
         if xmlns:
