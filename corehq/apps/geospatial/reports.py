@@ -44,8 +44,6 @@ class CaseManagementMap(ProjectReport, CaseListMixin):
         for row in self.es_results['hits'].get('hits', []):
             es_case = self.get_case(row)
             display = CaseDisplayES(es_case, self.timezone, self.individual)
-            # To add coordinates, we need to send it down like this:
-            # {"coordinates": {'lng': -91.91399898526271, 'lat': 42.77590015338612}}
             # We should consider passing in a "center_coordinates" fields to center the map
             # to the relavent
             case = {
