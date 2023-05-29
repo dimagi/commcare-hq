@@ -91,6 +91,21 @@ class TestAncestorQueries(BaseCaseSearchTest):
         )
         self.assertItemsEqual(query1.get_ids(), ['a1', 'a3'])
 
+    def test_case_id_shortcut(self):
+        query1 = get_case_search_query(
+            self.domain,
+            ['h'],
+            {'parent/@case_id': 'g2'},
+        )
+        self.assertItemsEqual(query1.get_ids(), ['h1'])
+
+        query2 = get_case_search_query(
+            self.domain,
+            ['h'],
+            {'_xpath_query': "ancestor-exists(parent,@case_id='g2')"},
+        )
+        self.assertItemsEqual(query2.get_ids(), ['h1'])
+
     def test_parent(self):
         query1 = get_case_search_query(
             self.domain,
