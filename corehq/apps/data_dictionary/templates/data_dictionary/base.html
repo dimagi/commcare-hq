@@ -215,7 +215,7 @@
             </div>
             {% endif %}
           </div>
-          <div data-bind="sortable: { data: properties, connectClass: 'properties', options: { handle: 'i.sortable-handle' } }, css: { hidden: !expanded()}">
+          <div data-bind="sortable: { data: properties, connectClass: 'properties', options: { handle: 'i.sortable-handle' } }, visible: expanded() && (!deprecated || $root.showAll())">
             <div class="table-row" data-bind="visible: expanded() && (!deprecated() || $root.showAll())">
               <div class="row-item-small">
               {% if not request.is_view_only %}
