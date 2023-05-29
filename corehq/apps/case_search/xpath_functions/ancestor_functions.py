@@ -28,14 +28,16 @@ def ancestor_comparison_query(context, node):
     :param node: a node returned from eulxml.xpath.parse of the form `parent/grandparent/property = 'value'`
     """
 
-    case_property = serialize(node.left.right)
-    value = node.right
     # extract ancestor path:
     # `parent/grandparent/property = 'value'` --> `parent/grandparent`
     ancestor_path = serialize(node.left.left)
+    parsed_ancestor_path = parse_xpath(ancestor_path)
 
-    xpath = f'ancestor-exists({ancestor_path},{case_property}{node.op}"{value}")'
-    return ancestor_exists(parse_xpath(xpath), context)
+    case_property = serialize(node.left.right)
+    value = serialize(node.right)
+    parsed_ancestor_filter = parse_xpath(f'{case_property}{node.op}{value}')
+
+    return process_ancestor_exists(parsed_ancestor_path, parsed_ancestor_filter, context)
 
 
 def walk_ancestor_hierarchy(context, ancestor_path_node, case_ids):
@@ -109,6 +111,10 @@ def ancestor_exists(node, context):
     """
     confirm_args_count(node, 2)
     ancestor_path_node, ancestor_case_filter_node = node.args
+    return process_ancestor_exists(ancestor_path_node, ancestor_case_filter_node, context)
+
+
+def process_ancestor_exists(ancestor_path_node, ancestor_case_filter_node, context):
     _validate_ancestor_exists_filter(ancestor_case_filter_node)
     base_case_ids = _get_case_ids_from_ast_filter(context, ancestor_case_filter_node)
 
