@@ -260,20 +260,20 @@ class TestNavigationEventAuditResource(APIResourceTest):
         self.assertEqual(expected_next_url, response_next_url)
 
     def test_query_includes_users_in_only_specified_domain(self):
-        results = self.resource.non_cursor_query(self.domain1_audits.domain, self.domain1_audits.timezone)
+        results = self.resource.cursor_query(self.domain1_audits.domain, self.domain1_audits.timezone)
         for result in results:
             self.assertTrue(result['user'] in self.domain1_audits.users)
 
-        results = self.resource.non_cursor_query(self.domain2_audits.domain, self.domain2_audits.timezone)
+        results = self.resource.cursor_query(self.domain2_audits.domain, self.domain2_audits.timezone)
         for result in results:
             self.assertTrue(result['user'] in self.domain2_audits.users)
 
     def test_query_first_last_action_time_for_each_user(self):
-        results = self.resource.non_cursor_query(self.domain1_audits.domain, self.domain1_audits.timezone)
+        results = self.resource.cursor_query(self.domain1_audits.domain, self.domain1_audits.timezone)
         self.assertListEqual(results, self.domain1_audits.expected_query_result)
 
     def test_query_ordered_by_local_date_and_user(self):
-        results = self.resource.non_cursor_query(self.domain1_audits.domain, self.domain1_audits.timezone)
+        results = self.resource.cursor_query(self.domain1_audits.domain, self.domain1_audits.timezone)
         filtered_results = [(result['local_date'], result['user']) for result in results]
 
         self.assertListEqual(filtered_results, sorted(filtered_results))
@@ -281,7 +281,7 @@ class TestNavigationEventAuditResource(APIResourceTest):
     def test_query_unique_local_date_and_user_pairs(self):
         #Query results should not have two entries with the same local date and user
 
-        results = self.resource.non_cursor_query(self.domain1_audits.domain, self.domain1_audits.timezone)
+        results = self.resource.cursor_query(self.domain1_audits.domain, self.domain1_audits.timezone)
         seen_user_local_dates = {}
         for result in results:
             user = result['user']
@@ -296,7 +296,7 @@ class TestNavigationEventAuditResource(APIResourceTest):
     def test_query_filter_by_user(self):
         params = {'users': [self.username1]}
 
-        results = self.resource.non_cursor_query(
+        results = self.resource.cursor_query(
             self.domain1_audits.domain,
             self.domain1_audits.timezone,
             params=params,
@@ -316,7 +316,7 @@ class TestNavigationEventAuditResource(APIResourceTest):
             'local_date.lt': date(2023, 5, 2).isoformat()
         }
 
-        results = self.resource.non_cursor_query(
+        results = self.resource.cursor_query(
             self.domain1_audits.domain,
             self.domain1_audits.timezone,
             params=params

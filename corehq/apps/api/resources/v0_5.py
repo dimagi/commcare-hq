@@ -1152,8 +1152,7 @@ class NavigationEventAuditResource(HqBaseResource, Resource):
         return limit
 
     @classmethod
-    def cursor_query(cls, domain: str, local_timezone: pytz.tzinfo.DstTzInfo,
-                    params: dict = {}) -> list:
+    def cursor_query(cls, domain: str, local_timezone: pytz.tzinfo.DstTzInfo, params: dict = {}) -> list:
         if 'limit' not in params:
             params['limit'] = cls._meta.limit
         queryset = cls._query(domain, local_timezone, params)
@@ -1173,15 +1172,6 @@ class NavigationEventAuditResource(HqBaseResource, Resource):
             # TruncDate ignores tzinfo if the queryset is not evaluated within overridden USE_TZ setting
             return list(queryset[:params['limit']])
 
-    @classmethod
-    def non_cursor_query(cls, domain: str, local_timezone: pytz.tzinfo.DstTzInfo, params: dict = {}):
-
-        queryset = cls._query(domain, local_timezone, params)
-        queryset = queryset.annotate(UTC_start_time=Min('event_date'), UTC_end_time=Max('event_date'))
-
-        with override_settings(USE_TZ=True):
-            # TruncDate ignores tzinfo if the queryset is not evaluated within overridden USE_TZ setting
-            return list(queryset)
 
     @classmethod
     def _query(cls, domain: str, local_timezone: pytz.tzinfo.DstTzInfo, params: dict = {}):
