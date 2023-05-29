@@ -11,6 +11,8 @@ from corehq.apps.reports.standard.cases.data_sources import CaseDisplayES
 class CaseManagementMap(ProjectReport, CaseListMixin):
     name = gettext_noop("Case Management Map")
     slug = "case_management_map"
+
+    base_template = "geospatial/map_visualization_base.html"
     report_template_path = "map_visualization.html"
 
     dispatcher = CaseManagementMapDispatcher
@@ -23,6 +25,18 @@ class CaseManagementMap(ProjectReport, CaseListMixin):
             'mapbox_access_token': settings.MAPBOX_ACCESS_TOKEN,
         })
         return context
+
+    def _get_geo_location(self, case):
+        geo_point = case['case_json'].get('commcare_gps_point')
+        if not geo_point:
+            return
+        try:
+            # Update if we need altitude and accuracy
+            lat, lon, _alt, _acc = geo_point.split(" ")
+            return {"lat": float(lat), "lng": float(lon)}
+        except ValueError:
+            # Invalid coordinates
+            return None
 
     @property
     def report_context(self):
@@ -38,6 +52,7 @@ class CaseManagementMap(ProjectReport, CaseListMixin):
                 "case_id": display.case_id,
                 "case_type": display.case_type,
                 "name": display.case_name,
+                "coordinates": self._get_geo_location(es_case)
             }
             cases.append(case)
         return dict(

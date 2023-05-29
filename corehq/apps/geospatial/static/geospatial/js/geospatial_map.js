@@ -10,6 +10,7 @@ hqDefine("geospatial/js/geospatial_map", [
             'use strict';
 
             var self = {};
+            var markers = [];
             mapboxgl.accessToken = initialPageData.get('mapbox_access_token');
 
             if (!centerCoordinates) {
@@ -57,10 +58,21 @@ hqDefine("geospatial/js/geospatial_map", [
             self.getMapboxInstance = function() {
                 return map;
             }
+
+            self.removeAllMarkers = function() {
+                console.log("Markers before: ", markers);
+                markers.forEach(marker => {
+                    marker.remove();
+                })
+                markers = []
+            }
+
             self.addCaseMarkersToMap = function (cases) {
+                console.log("Current state of markeers: ", markers);
                 const markerColor = "#00FF00";
                 cases.forEach(element => {
                     let coordinates = element.coordinates;
+                    console.log("element: ", element);
                     if (coordinates && coordinates.lat && coordinates.lng) {
                         self.addMarker(coordinates, markerColor);
                     }
@@ -71,6 +83,8 @@ hqDefine("geospatial/js/geospatial_map", [
                 const marker = new mapboxgl.Marker({color: color, draggable: false});
                 marker.setLngLat(coordinates);
                 marker.addTo(map);
+                // We need to keep track of current markers
+                markers.push(marker);
             }
 
             function moveMarkerToClickedCoordinate(coordinates) {
@@ -103,14 +117,6 @@ hqDefine("geospatial/js/geospatial_map", [
 
         var map;
 
-        $(document).on('click', '#apply-filters', function() {
-            if (map) {
-                mapbox = map.getMapboxInstance();
-                mapbox.remove();
-                map = null;
-            }
-        })
-
         $(document).ajaxComplete(function () {
             // This fires everytime an ajax request is completed
             var mapDiv = $('#geospatial-map');
@@ -122,6 +128,7 @@ hqDefine("geospatial/js/geospatial_map", [
 
             if ($data.length && map) {
                 var caseData = $data.data("context");
+                map.removeAllMarkers();
                 map.addCaseMarkersToMap(caseData.cases)
             }
         });
