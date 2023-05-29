@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from django.core.exceptions import ValidationError
+from django.core.validators import MaxLengthValidator
 from django.db import models
 from django.utils.translation import gettext as _, gettext_lazy
 
@@ -48,7 +48,10 @@ class CasePropertyGroup(models.Model):
         related_query_name='group'
     )
     name = models.CharField(max_length=255, default=None)
-    description = models.TextField(default='', blank=True)
+    # use initially added text field with custom validations instead of CharField with max_length
+    # to avoid truncating longer descriptions
+    description = models.TextField(default='', blank=True, validators=[
+        MaxLengthValidator(255, message=_("Group description should be less 255 characters"))])
     index = models.IntegerField(default=0, blank=True)
     deprecated = models.BooleanField(default=False)
 
@@ -62,12 +65,6 @@ class CasePropertyGroup(models.Model):
             ))
         else:
             return super().unique_error_message(model_class, unique_check)
-
-    def clean(self):
-        if self.description and len(self.description) > 255:
-            raise ValidationError(
-                gettext_lazy("{} group's description should be less 255 characters".format(self.name))
-            )
 
 
 class CaseProperty(models.Model):
@@ -91,7 +88,10 @@ class CaseProperty(models.Model):
     )
     name = models.CharField(max_length=255, default=None)
     label = models.CharField(max_length=255, default='', blank=True)
-    description = models.TextField(default='', blank=True)
+    # use initially added text field with custom validations instead of CharField with max_length
+    # to avoid truncating longer descriptions
+    description = models.TextField(default='', blank=True, validators=[
+        MaxLengthValidator(255, message=_("Property description should be less 255 characters"))])
     deprecated = models.BooleanField(default=False)
     data_type = models.CharField(
         choices=DataType.choices,
@@ -168,12 +168,6 @@ class CaseProperty(models.Model):
         if self.group_obj:
             return self.group_obj.name
         return self.group
-
-    def clean(self):
-        if self.description and len(self.description) > 255:
-            raise ValidationError(
-                gettext_lazy("{} property's description should be less 255 characters".format(self.name))
-            )
 
 
 class CasePropertyAllowedValue(models.Model):
