@@ -112,6 +112,7 @@ hqDefine("geospatial/js/geospatial_map", [
         })
 
         $(document).ajaxComplete(function () {
+            // This fires everytime an ajax request is completed
             var mapDiv = $('#geospatial-map');
             var $data = $(".map-data");
 
