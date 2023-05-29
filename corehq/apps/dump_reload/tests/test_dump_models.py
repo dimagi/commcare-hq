@@ -45,6 +45,7 @@ IGNORE_MODELS = {
     "auth.Group",
     "auth.Permission",
     "blobs.BlobMigrationState",
+    "cleanup.DeletedCouchDoc",
     "contenttypes.ContentType",
     "data_analytics.GIRRow",
     "data_analytics.MALTRow",
