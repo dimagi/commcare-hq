@@ -4,7 +4,7 @@ import uuid
 from django.test import Client, TestCase
 from django.urls import reverse
 
-from corehq.apps.data_dictionary.models import CaseProperty, CasePropertyAllowedValue, CaseType
+from corehq.apps.data_dictionary.models import CaseProperty, CasePropertyGroup, CasePropertyAllowedValue, CaseType
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.users.models import WebUser, HqPermissions
 from corehq.apps.users.models_role import UserRole
@@ -26,6 +26,7 @@ class UpdateCasePropertyViewTest(TestCase):
         cls.case_type_obj = CaseType(name='caseType', domain=cls.domain_name)
         cls.case_type_obj.save()
         CaseProperty(case_type=cls.case_type_obj, name='property').save()
+        CasePropertyGroup(case_type=cls.case_type_obj, name='group').save()
 
     @classmethod
     def tearDownClass(cls):
@@ -170,7 +171,7 @@ class UpdateCasePropertyViewTest(TestCase):
         self.assertEqual(prop.group, '')
         self.assertIsNone(prop.group_obj)
         post_data = {
-            "groups": '[{"caseType": "caseType", "name": "group", "description": ""}]',
+            "groups": '[{"id": 1, "caseType": "caseType", "name": "group", "description": ""}]',
             "properties": '[{"caseType": "caseType", "name": "property", "group": "group"}]'
         }
         response = self.client.post(self.url, post_data)
@@ -180,16 +181,13 @@ class UpdateCasePropertyViewTest(TestCase):
         self.assertIsNotNone(prop.group_obj)
 
     def test_update_with_no_group_name(self):
-        post_data = {
-            "groups": '[{"caseType": "caseType", "name": "group", "description": ""}]',
-            "properties": '[{"caseType": "caseType", "name": "property", "group": "group"}]'
-        }
-        response = self.client.post(self.url, post_data)
         prop = self._get_property()
-        self.assertEqual(prop.group, 'group')
-        self.assertIsNotNone(prop.group_obj)
+        group = CasePropertyGroup.objects.filter(case_type=self.case_type_obj, name='group').first()
+        prop.group = group.name
+        prop.group_obj = group
+        prop.save()
         post_data = {
-            "groups": '[{"caseType": "caseType", "name": "group", "description": ""}]',
+            "groups": '[]',
             "properties": '[{"caseType": "caseType", "name": "property", "group": ""}]'
         }
         response = self.client.post(self.url, post_data)
