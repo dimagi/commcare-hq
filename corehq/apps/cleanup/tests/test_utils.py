@@ -1,8 +1,15 @@
+from datetime import datetime
+
 from django.test import TestCase
 
-from corehq.apps.cleanup.utils import DeletedDomains, migrate_to_deleted_on
+from corehq.apps.cleanup.utils import (
+    DeletedDomains,
+    hard_delete_sql_objects_before_cutoff,
+    migrate_to_deleted_on,
+)
 from corehq.apps.data_interfaces.models import AutomaticUpdateRule
 from corehq.apps.domain.shortcuts import create_domain
+from corehq.messaging.scheduling.models import AlertSchedule
 
 
 class TestDeletedDomains(TestCase):
@@ -44,3 +51,56 @@ class TestMigrateToDeletedOn(TestCase):
         self.assertIsNone(rule.deleted_on)
         migrate_to_deleted_on(AutomaticUpdateRule, 'deleted', should_audit=True)
         self.assertIsNone(AutomaticUpdateRule.objects.get(id=rule.id).deleted_on)
+
+
+class TestHardDeleteSQLObjectsBeforeCutoff(TestCase):
+
+    def test_object_is_hard_deleted_if_deleted_on_is_before_cutoff(self):
+        obj = AlertSchedule.objects.create(domain=self.domain, deleted_on=datetime(2020, 1, 1, 12, 29))
+
+        hard_delete_sql_objects_before_cutoff(self.cutoff)
+
+        with self.assertRaises(AlertSchedule.DoesNotExist):
+            AlertSchedule.objects.get(schedule_id=obj.schedule_id)
+
+    def test_object_is_not_hard_deleted_if_deleted_on_is_cutoff(self):
+        obj = AlertSchedule.objects.create(domain=self.domain, deleted_on=self.cutoff)
+
+        hard_delete_sql_objects_before_cutoff(self.cutoff)
+
+        self.assertIsNotNone(AlertSchedule.objects.get(schedule_id=obj.schedule_id))
+
+    def test_object_is_not_hard_deleted_if_deleted_on_is_after_cutoff(self):
+        obj = AlertSchedule.objects.create(domain=self.domain, deleted_on=datetime(2020, 1, 1, 12, 31))
+
+        hard_delete_sql_objects_before_cutoff(self.cutoff)
+
+        self.assertIsNotNone(AlertSchedule.objects.get(schedule_id=obj.schedule_id))
+
+    def test_object_is_not_hard_deleted_if_deleted_on_is_null(self):
+        obj = AlertSchedule.objects.create(domain=self.domain, deleted_on=None)
+
+        hard_delete_sql_objects_before_cutoff(self.cutoff)
+
+        self.assertIsNotNone(AlertSchedule.objects.get(schedule_id=obj.schedule_id))
+
+    def test_audited_object_is_hard_deleted_successfully(self):
+        obj = AutomaticUpdateRule.objects.create(domain=self.domain, deleted_on=datetime(2020, 1, 1, 12, 29))
+
+        hard_delete_sql_objects_before_cutoff(self.cutoff)
+
+        with self.assertRaises(AutomaticUpdateRule.DoesNotExist):
+            AutomaticUpdateRule.objects.get(id=obj.id)
+
+    def test_returns_deleted_counts(self):
+        deleted_on = datetime(2020, 1, 1, 12, 29)
+        for table in [AutomaticUpdateRule, AlertSchedule]:
+            table.objects.create(domain=self.domain, deleted_on=deleted_on)
+
+        counts = hard_delete_sql_objects_before_cutoff(self.cutoff)
+
+        self.assertEqual(counts, {'AutomaticUpdateRule': 1, 'AlertSchedule': 1})
+
+    def setUp(self):
+        self.domain = 'test_hard_delete_sql_objects_before_cutoff'
+        self.cutoff = datetime(2020, 1, 1, 12, 30)
