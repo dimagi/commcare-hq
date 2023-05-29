@@ -130,8 +130,8 @@ hqDefine("cloudcare/js/formplayer/menus/utils", function () {
             sortIndices: menuResponse.sortIndices,
             isMultiSelect: menuResponse.multiSelect,
             multiSelectMaxSelectValue: menuResponse.maxSelectValue,
-        };
-    }
+        }
+    };
 
     var getMenuView = function (menuResponse) {
         var menuData = getMenuData(menuResponse);

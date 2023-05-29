@@ -450,11 +450,8 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
         },
 
         templateContext: function () {
-            if (this.options.collection.description) {
-                var description = md.render(this.options.collection.description.trim());
-            } else {
-                var description = this.options.description;
-            }
+            var description = this.options.collection.description === undefined ?
+                "" : md.render(this.options.collection.description.trim());
             return {
                 title: this.options.title.trim(),
                 description: DOMPurify.sanitize(description),
