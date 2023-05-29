@@ -162,8 +162,8 @@ hqDefine("data_dictionary/js/data_dictionary", [
         self.saveButton = hqMain.initSaveButton({
             unsavedMessage: gettext("You have unsaved changes to your data dictionary."),
             save: function () {
-                let postGroups = [];
-                var postProperties = [];
+                const groups = [];
+                const properties = [];
                 _.each(self.caseGroupList(), function (group, index) {
                     if (group.name() !== "") {
                         let groupData = {
@@ -174,7 +174,7 @@ hqDefine("data_dictionary/js/data_dictionary", [
                             'index': index,
                             'deprecated': group.toBeDeprecated(),
                         };
-                        postGroups.push(groupData);
+                        groups.push(groupData);
                     }
 
                     _.each(group.properties(), function (element, index) {
@@ -197,7 +197,7 @@ hqDefine("data_dictionary/js/data_dictionary", [
                             'removeFHIRResourcePropertyPath': element.removeFHIRResourcePropertyPath(),
                             'allowed_values': pureAllowedValues,
                         };
-                        postProperties.push(data);
+                        properties.push(data);
                     });
                 });
                 self.saveButton.ajax({
@@ -205,8 +205,8 @@ hqDefine("data_dictionary/js/data_dictionary", [
                     type: 'POST',
                     dataType: 'JSON',
                     data: {
-                        'groups': JSON.stringify(postGroups),
-                        'properties': JSON.stringify(postProperties),
+                        'groups': JSON.stringify(groups),
+                        'properties': JSON.stringify(properties),
                         'fhir_resource_type': self.fhirResourceType(),
                         'remove_fhir_resource_type': self.removefhirResourceType(),
                         'case_type': self.activeCaseType(),
