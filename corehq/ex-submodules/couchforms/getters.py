@@ -92,7 +92,7 @@ def _valid_attachment_file_extension(file):
 
 def _valid_attachment_file_mimetype(file):
     return (
-        file.content_type.startswith(("audio", "image", "video"))
+        file.content_type.startswith(("audio/", "image/", "video/"))
         # default mimetype set by CommCare
         or file.content_type == "application/octet-stream"
     )
