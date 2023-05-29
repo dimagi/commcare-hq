@@ -15,10 +15,7 @@ class DomainNavigationEventAudits:
     def __init__(self, domain: str, project_timezone: pytz.tzinfo.DstTzInfo):
         self.domain = domain
         self.timezone = project_timezone
-        self.logs = {}
-
-    def add_log(self, user: str, date_time: datetime):
-        self.logs.setdefault(user, set()).add(date_time)
+        self.users = set()
 
     def set_expected_resource_objects(self, expected_response: list[dict]):
         self.expected_response_objects = copy.deepcopy(expected_response)
@@ -31,10 +28,9 @@ class DomainNavigationEventAudits:
 
         self.expected_query_result = [{k: v for k, v in d.items() if k != 'user_id'} for d in expected_response]
 
-    def create(self):
-        for user, times in self.logs.items():
-            for time in times:
-                NavigationEventAudit.objects.create(domain=self.domain, user=user, event_date=time)
+    def create_event(self, user, event_date):
+        self.users.add(user)
+        NavigationEventAudit.objects.create(domain=self.domain, user=user, event_date=event_date)
 
 
 @flag_enabled('ACTION_TIMES_API')
@@ -64,15 +60,11 @@ class TestNavigationEventAuditResource(APIResourceTest):
         cls.user2.save()
 
         for single_datetime in cls._daterange(datetime(2023, 5, 2, 0), datetime(2023, 5, 2, 23)):
-            cls.domain1_audits.add_log(cls.username1, single_datetime)
-            cls.domain1_audits.add_log(cls.username1, single_datetime)
-            cls.domain1_audits.add_log(cls.username2, single_datetime)
+            cls.domain1_audits.create_event(cls.username1, single_datetime)
+            cls.domain1_audits.create_event(cls.username2, single_datetime)
 
         for single_datetime in cls._daterange(datetime(2023, 6, 1, 0), datetime(2023, 6, 1, 23)):
-            cls.domain2_audits.add_log(cls.username3, single_datetime)
-
-        cls.domain1_audits.create()
-        cls.domain2_audits.create()
+            cls.domain2_audits.create_event(cls.username3, single_datetime)
 
         cls.domain1_audits.set_expected_resource_objects([
             {
@@ -270,11 +262,11 @@ class TestNavigationEventAuditResource(APIResourceTest):
     def test_query_includes_users_in_only_specified_domain(self):
         results = self.resource.non_cursor_query(self.domain1_audits.domain, self.domain1_audits.timezone)
         for result in results:
-            self.assertTrue(result['user'] in self.domain1_audits.logs.keys())
+            self.assertTrue(result['user'] in self.domain1_audits.users)
 
-        results = self.resource.non_cursor_query(self.domain2_audits.domain, self.domain1_audits.timezone)
+        results = self.resource.non_cursor_query(self.domain2_audits.domain, self.domain2_audits.timezone)
         for result in results:
-            self.assertTrue(result['user'] in self.domain2_audits.logs.keys())
+            self.assertTrue(result['user'] in self.domain2_audits.users)
 
     def test_query_first_last_action_time_for_each_user(self):
         results = self.resource.non_cursor_query(self.domain1_audits.domain, self.domain1_audits.timezone)
