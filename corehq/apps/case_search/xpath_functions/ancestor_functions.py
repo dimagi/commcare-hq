@@ -139,14 +139,15 @@ def _validate_ancestor_exists_filter(node):
 
 
 def _get_case_ids_from_ast_filter(context, filter_node):
+    from corehq.apps.case_search.dsl_utils import unwrap_value
     if (isinstance(filter_node, BinaryExpression)
     and serialize(filter_node.left) == "@case_id" and filter_node.op in (EQ, NEQ)):
         # case id is provided in query i.e @case_id="b9eaf791-e427-482d-add4-2a60acf0362e"
-        case_ids = filter_node.right
-        if isinstance(filter_node.right, str):
-            return itertools([case_ids])
+        case_ids = unwrap_value(filter_node.right, context)
+        if isinstance(case_ids, str):
+            return (case_id for case_id in [case_ids])
         else:
-            return itertools(case_ids)
+            return (case_id for case_id in case_ids)
     else:
         from corehq.apps.case_search.filter_dsl import build_filter_from_ast
         es_filter = build_filter_from_ast(filter_node, context)
