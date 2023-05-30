@@ -8,8 +8,6 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
         toggles = hqImport("hqwebapp/js/toggles"),
         utils = hqImport("cloudcare/js/formplayer/utils/utils");
 
-    const FormatAddress = "Address";
-
     const MenuView = Marionette.View.extend({
         tagName: function () {
             if (this.model.collection.layoutStyle === 'grid') {
@@ -366,7 +364,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
                 self.selectedCaseIds = [];
             }
 
-            self.showMap = !!_.find(this.styles, function (style) { return style.displayFormat === FormatAddress; });
+            self.showMap = !!_.find(this.styles, function (style) { return style.displayFormat === constants.FORMAT_ADDRESS; });
         },
 
         ui: CaseListViewUI(),
@@ -499,21 +497,25 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
 
         addAddressPin: function (geocoder, addressMap, headers, model, addressIndex) {
             const coordinates = model.attributes.data[addressIndex];
-            let latLng = coordinates.split(" ").slice(0,2);
+            if (coordinates) {
+                let latLng = coordinates.split(" ").slice(0,2);
+                if (latLng.length > 1) {
+                    let popupText = "";
+                    headers.forEach((header, index) => {
+                        if (header) {
+                            const valueSanitized = DOMPurify.sanitize(model.attributes.data[index]);
+                            const headerSanitized = DOMPurify.sanitize(header);
+                            popupText += "<b>" + headerSanitized + ":</b> " + valueSanitized + "<br>";
+                        }
+                    });
+                    L.marker(latLng)
+                        .addTo(addressMap)
+                        .bindPopup(popupText);
 
-            let popupText = "";
-            headers.forEach((header, index) => {
-                if (header) {
-                    const valueSanitized = DOMPurify.sanitize(model.attributes.data[index]);
-                    const headerSanitized = DOMPurify.sanitize(header);
-                    popupText += "<b>" + headerSanitized + ":</b> " + valueSanitized + "<br>";
+                    return latLng;
                 }
-            });
-            L.marker(latLng)
-                .addTo(addressMap)
-                .bindPopup(popupText);
-
-            return latLng;
+            }
+            return null;
         },
 
         loadMap: function () {
@@ -532,7 +534,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
                     zoomOffset: -1,
                 }).addTo(addressMap);
 
-                const addressIndex = _.findIndex(this.styles, function (style) { return style.displayFormat === FormatAddress; });
+                const addressIndex = _.findIndex(this.styles, function (style) { return style.displayFormat === constants.FORMAT_ADDRESS; });
                 L.mapbox.accessToken = token;
                 const mapbox = L.mapbox;
                 const geocoder = mapbox.geocoder('mapbox.places');
