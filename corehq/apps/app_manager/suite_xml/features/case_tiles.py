@@ -1,4 +1,5 @@
 import json
+
 from dataclasses import dataclass
 from eulxml.xmlmap.core import load_xmlobject_from_string
 from memoized import memoized
