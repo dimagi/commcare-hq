@@ -1,7 +1,9 @@
 import json
+from base64 import b64decode, b64encode
 from collections import namedtuple
 import functools
 import pytz
+from urllib.parse import urlencode
 
 from django.conf.urls import re_path as url
 from django.contrib.auth.models import User
@@ -9,7 +11,7 @@ from django.core.exceptions import ValidationError
 from django.db.models import Max, Min, Q
 from django.db.models.functions import TruncDate
 
-from django.http import Http404, HttpResponse, HttpResponseNotFound, JsonResponse
+from django.http import Http404, HttpResponse, HttpResponseNotFound, JsonResponse, QueryDict
 from django.test import override_settings
 from django.urls import reverse
 from django.utils.translation import gettext as _
@@ -1102,9 +1104,12 @@ class NavigationEventAuditResource(HqBaseResource, Resource):
 
         if data['meta']['total_count'] > data['meta']['limit']:
             last_object = data['objects'][-1]
-            params['cursor_local_date'] = last_object.data['local_date']
-            params['cursor_user'] = last_object.data['user']
-
+            cursor = {
+                'cursor_local_date': last_object.data['local_date'],
+                'cursor_user': last_object.data['user'],
+            }
+            encoded_cursor = b64encode(urlencode(cursor).encode('utf-8'))
+            params['cursor'] = encoded_cursor
             next_url = '{}?{}'.format(request.path, params.urlencode())
             data['meta']['next'] = next_url
         return data
@@ -1131,6 +1136,12 @@ class NavigationEventAuditResource(HqBaseResource, Resource):
 
             if param == 'limit':
                 processed_params['limit'] = self._process_limit(val)
+
+            if param == 'cursor':
+                cursor_params_string = b64decode(params['cursor']).decode('utf-8')
+                cursor_params = QueryDict(cursor_params_string, mutable=True)
+                processed_params['cursor_local_date'] = cursor_params.get('cursor_local_date')
+                processed_params['cursor_user'] = cursor_params.get('cursor_user')
 
         if 'local_timezone' in processed_params:
             self.local_timezone = pytz.timezone(processed_params['local_timezone'])
