@@ -30,14 +30,11 @@ def ancestor_comparison_query(context, node):
 
     # extract ancestor path:
     # `parent/grandparent/property = 'value'` --> `parent/grandparent`
-    ancestor_path = serialize(node.left.left)
-    parsed_ancestor_path = parse_xpath(ancestor_path)
-
-    case_property = serialize(node.left.right)
-    value = serialize(node.right)
-    parsed_ancestor_filter = parse_xpath(f'{case_property}{node.op}{value}')
-
-    return process_ancestor_exists(parsed_ancestor_path, parsed_ancestor_filter, context)
+    ancestor_path_node = node.left.left
+    case_property = node.left.right
+    value = node.right
+    ancestor_filter_node = BinaryExpression(case_property, node.op, value)
+    return process_ancestor_exists(ancestor_path_node, ancestor_filter_node, context)
 
 
 def walk_ancestor_hierarchy(context, ancestor_path_node, case_ids):
