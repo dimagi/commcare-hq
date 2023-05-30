@@ -1,4 +1,5 @@
 import sys
+from collections import defaultdict
 from datetime import datetime
 
 from django.conf import settings
@@ -6,7 +7,11 @@ from django.core.management import color_style
 from django.utils.functional import cached_property
 from field_audit.models import AuditAction
 
+from dimagi.utils.couch.database import iter_bulk_delete
+
+from corehq.apps.cleanup.models import DeletedCouchDoc
 from corehq.apps.domain.models import Domain
+from corehq.util.couch import get_db_by_doc_type
 
 
 def abort():
@@ -67,3 +72,28 @@ def migrate_to_deleted_on(db_cls, old_field, should_audit=False):
         update_kwargs['audit_action'] = AuditAction.AUDIT
     update_count = queryset.update(**update_kwargs)
     return update_count
+
+
+def hard_delete_couch_docs_before_cutoff(cutoff):
+    """
+    Permanently deletes couch objects with deleted_on set to a datetime earlier
+    than the specified cutoff datetime
+    :param cutoff: datetime used to obtain couch docs to be hard deleted
+    :return: dictionary of count of deleted objects per table
+    """
+    counts = {}
+    deleted_docs = DeletedCouchDoc.objects.filter(deleted_on__lt=cutoff)
+
+    doc_ids_by_doc_type = defaultdict(list)
+    for doc in deleted_docs:
+        doc_ids_by_doc_type[doc.doc_type].append(doc.doc_id)
+
+    for doc_type in doc_ids_by_doc_type.keys():
+        db = get_db_by_doc_type(doc_type)
+        doc_ids = doc_ids_by_doc_type[doc_type]
+        counts[doc_type] = len(doc_ids)
+        iter_bulk_delete(db, doc_ids)
+        sql_objs = DeletedCouchDoc.objects.filter(doc_type=doc_type, doc_id__in=doc_ids)
+        sql_objs.delete()
+
+    return counts
