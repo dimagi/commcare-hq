@@ -51,38 +51,6 @@ from corehq.util.workbook_reading.datamodels import Cell
 FHIR_RESOURCE_TYPE_MAPPING_SHEET = "fhir_mapping"
 ALLOWED_VALUES_SHEET_SUFFIX = "-vl"
 
-data_dictionary_rebuild_rate_limiter = RateLimiter(
-    feature_key='data_dictionary_rebuilds_per_user',
-    get_rate_limits=lambda scope: get_dynamic_rate_definition(
-        'data_dictionary_rebuilds_per_user',
-        default=RateDefinition(
-            per_hour=3,
-            per_minute=2,
-            per_second=1,
-        )
-    ).get_rate_limits(scope),
-)
-
-
-@login_and_domain_required
-@toggles.DATA_DICTIONARY.required_decorator()
-@require_permission(HqPermissions.edit_data_dict)
-def generate_data_dictionary(request, domain):
-    if data_dictionary_rebuild_rate_limiter.allow_usage(domain):
-        data_dictionary_rebuild_rate_limiter.report_usage(domain)
-        try:
-            util.generate_data_dictionary(domain)
-        except util.OldExportsEnabledException:
-            return JsonResponse({
-                "failed": "Data Dictionary requires access to new exports"
-            }, status=400)
-
-        return JsonResponse({"status": "success"})
-    else:
-        return JsonResponse({
-            "failed": "Rate limit exceeded. Please try again later."
-        }, status=429)
-
 
 @login_and_domain_required
 @toggles.DATA_DICTIONARY.required_decorator()
