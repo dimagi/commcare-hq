@@ -66,6 +66,7 @@ from corehq.apps.app_manager.util import (
     module_uses_smart_links,
     module_offers_registry_search,
     module_uses_inline_search,
+    module_uses_include_all_related_cases,
 )
 from corehq.apps.app_manager.xpath import (
     CaseClaimXpath,
@@ -80,8 +81,11 @@ from corehq.apps.app_manager.xpath import (
 from corehq.apps.case_search.const import COMMCARE_PROJECT, EXCLUDE_RELATED_CASES_FILTER
 from corehq.apps.case_search.models import (
     CASE_SEARCH_BLACKLISTED_OWNER_ID_KEY,
+    case_search_sync_cases_on_form_entry_enabled_for_domain,
     CASE_SEARCH_CUSTOM_RELATED_CASE_PROPERTY_KEY,
     CASE_SEARCH_REGISTRY_ID_KEY,
+    CASE_SEARCH_INCLUDE_ALL_RELATED_CASES_KEY
+
 )
 from corehq.util.timer import time_method
 from corehq.util.view_utils import absolute_reverse
@@ -106,13 +110,14 @@ class QuerySessionXPath(InstanceXpath):
 
 class RemoteRequestFactory(object):
     def __init__(self, suite, module, detail_section_elements,
-                 case_session_var=None, storage_instance=RESULTS_INSTANCE):
+                 case_session_var=None, storage_instance=RESULTS_INSTANCE, exclude_relevant=False):
         self.suite = suite
         self.app = module.get_app()
         self.domain = self.app.domain
         self.module = module
         self.detail_section_elements = detail_section_elements
         self.storage_instance = storage_instance
+        self.exclude_relevant = exclude_relevant
         if case_session_var:
             self.case_session_var = case_session_var
         else:
@@ -147,7 +152,8 @@ class RemoteRequestFactory(object):
         if self.module.is_multi_select():
             data.ref = "."
             data.nodeset = self._get_multi_select_nodeset()
-            data.exclude = self._get_multi_select_exclude()
+            if not self.exclude_relevant:
+                data.exclude = self._get_multi_select_exclude()
         else:
             data.ref = QuerySessionXPath(self.case_session_var).instance()
         return data
@@ -159,6 +165,8 @@ class RemoteRequestFactory(object):
         return CaseIDXPath(XPath("current()").slash(".")).case().count().eq(1)
 
     def get_post_relevant(self):
+        if self.exclude_relevant:
+            return None
         case_not_claimed = self.module.search_config.get_relevant(
             self.case_session_var, self.module.is_multi_select())
         if module_uses_smart_links(self.module):
@@ -180,6 +188,11 @@ class RemoteRequestFactory(object):
             text=Text(locale_id=id_strings.case_search_title_translation(self.module))
         )
 
+    def build_description(self):
+        return Display(
+            text=Text(locale_id=id_strings.case_search_description_locale(self.module))
+        )
+
     @cached_property
     def _details_helper(self):
         return DetailsHelper(self.app)
@@ -197,6 +210,7 @@ class RemoteRequestFactory(object):
                 storage_instance=self.storage_instance,
                 template='case',
                 title=self.build_title() if self.app.enable_case_search_title_translation else None,
+                description=self.build_description() if self.module.search_config.description != {} else None,
                 data=self._remote_request_query_datums,
                 prompts=self.build_query_prompts(),
                 default_search=self.module.search_config.default_search,
@@ -217,7 +231,7 @@ class RemoteRequestFactory(object):
             if additional_types:
                 nodeset = CaseTypeXpath(self.module.case_type).cases(
                     additional_types, instance_name=self.storage_instance)
-            if self.module.search_config.search_filter:
+            if self.module.search_config.search_filter and toggles.USH_SEARCH_FILTER.enabled(self.app.domain):
                 nodeset = f"{nodeset}[{interpolate_xpath(self.module.search_config.search_filter)}]"
         nodeset += EXCLUDE_RELATED_CASES_FILTER
 
@@ -228,6 +242,8 @@ class RemoteRequestFactory(object):
             value='./@case_id',
             detail_select=self._details_helper.get_detail_id_safe(self.module, short_detail_id),
             detail_confirm=self._details_helper.get_detail_id_safe(self.module, long_detail_id),
+            autoselect=self.module.is_auto_select(),
+            max_select_value=self.module.max_select_value,
         )]
 
     @cached_property
@@ -260,6 +276,13 @@ class RemoteRequestFactory(object):
                 QueryData(
                     key=CASE_SEARCH_CUSTOM_RELATED_CASE_PROPERTY_KEY,
                     ref=f"'{self.module.search_config.custom_related_case_property}'",
+                )
+            )
+        if (module_uses_include_all_related_cases(self.module)):
+            datums.append(
+                QueryData(
+                    key=CASE_SEARCH_INCLUDE_ALL_RELATED_CASES_KEY,
+                    ref="'true'",
                 )
             )
         return datums

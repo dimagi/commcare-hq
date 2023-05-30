@@ -1,7 +1,7 @@
 .. This is the main index for HQ's docs.
 
-Welcome to CommCareHQ's documentation!
-======================================
+Welcome to CommCare HQ's documentation!
+=======================================
 
 CommCare is a multi-tier mobile, server, and messaging platform. The platform enables users to build and
 configure content and a user interface, deploy that application to Android devices or to an end-user-facing web

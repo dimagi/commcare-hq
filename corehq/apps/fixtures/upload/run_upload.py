@@ -1,6 +1,5 @@
 from collections import defaultdict
 from datetime import datetime, timedelta
-from itertools import chain
 from operator import attrgetter
 
 from attrs import define, field
@@ -8,9 +7,10 @@ from attrs import define, field
 from django.core.exceptions import ValidationError
 from django.db.models import Q
 from django.db.models.functions import Lower
+from django.db.transaction import atomic
 from django.utils.translation import gettext as _
 
-from dimagi.utils.couch.bulk import CouchTransaction
+from dimagi.utils.chunked import chunked
 from soil import DownloadBase
 
 from corehq.apps.fixtures.models import (
@@ -154,20 +154,24 @@ class Mutation:
 
 
 def flush(tables, rows, owners):
-    with CouchTransaction() as couch:
-        # keep Couch in sync with recursive_delete
-        from dimagi.utils.couch.database import iter_docs
-        doc_ids = [t._migration_couch_id for t in tables.to_delete]
-        CouchType = LookupTable._migration_get_couch_model_class()
-        couch_deletes = [CouchType.wrap(d) for d in iter_docs(CouchType.get_db(), doc_ids)]
-        for table in couch_deletes:
-            table.recursive_delete(couch)
+    def bulk_create(model_class, to_create):
+        for chunk in chunked(to_create, 1000, list):
+            model_class.objects.bulk_create(chunk)
 
-        deleted_ids = {d._migration_couch_id for dx in couch.docs_to_delete.values() for d in dx}
-        to_delete = chain(rows.to_delete, owners.to_delete)
-        couch.delete_all(d for d in to_delete if d._migration_couch_id not in deleted_ids)
-        for doc in chain(tables.to_create, rows.to_create, owners.to_create):
-            couch.save(doc)
+    def bulk_delete(model_class, to_delete):
+        ids = (obj.id for obj in to_delete)
+        for chunk in chunked(ids, 1000, list):
+            model_class.objects.filter(id__in=chunk).delete()
+
+    with atomic():
+        bulk_delete(LookupTable, tables.to_delete)
+        bulk_delete(LookupTableRow, rows.to_delete)
+        bulk_delete(LookupTableRowOwner, owners.to_delete)
+
+        bulk_create(LookupTable, tables.to_create)
+        bulk_create(LookupTableRow, rows.to_create)
+        bulk_create(LookupTableRowOwner, owners.to_create)
+
     tables.clear()
     rows.clear()
     owners.clear()

@@ -7,6 +7,7 @@ from corehq.apps.dump_reload.util import get_model_label
 
 IGNORE_MODELS = {
     "accounting.BillingAccount",
+    "accounting.BillingAccountWebUserHistory",
     "accounting.BillingContactInfo",
     "accounting.BillingRecord",
     "accounting.CreditAdjustment",
@@ -44,12 +45,13 @@ IGNORE_MODELS = {
     "auth.Group",
     "auth.Permission",
     "blobs.BlobMigrationState",
+    "cleanup.DeletedCouchDoc",
     "contenttypes.ContentType",
     "data_analytics.GIRRow",
     "data_analytics.MALTRow",
-    "django_celery_results.TaskResult",
     "django_celery_results.ChordCounter",
     "django_celery_results.GroupResult",
+    "django_celery_results.TaskResult",
     "django_digest.PartialDigest",
     "django_digest.UserNonce",
     "django_prbac.Grant",
@@ -59,7 +61,7 @@ IGNORE_MODELS = {
     "enterprise.EnterpriseMobileWorkerSettings",    # tied to an account, not a domain
     "enterprise.EnterprisePermissions",
     "export.DefaultExportSettings",     # tied to an account, not a domain
-    "export.EmailExportWhenDoneRequest",   # temporary model
+    "export.EmailExportWhenDoneRequest",  # transient model tied to an export task
     "form_processor.DeprecatedXFormAttachmentSQL",
     "hqadmin.HistoricalPillowCheckpoint",
     "hqadmin.HqDeploy",
@@ -88,18 +90,18 @@ IGNORE_MODELS = {
 
     "sessions.Session",
     "sites.Site",
-    "tastypie.ApiAccess",
-    "tastypie.ApiKey",
+    "tastypie.ApiAccess",  # not tagged by domain
+    "tastypie.ApiKey",  # not domain-specific
     "toggle_ui.ToggleAudit",
     "two_factor.PhoneDevice",
     "userreports.ReportComparisonDiff",
     "userreports.ReportComparisonException",
     "userreports.ReportComparisonTiming",
+    "users.Permission",
     "util.BouncedEmail",
     "util.ComplaintBounceMeta",
     "util.PermanentBounceMeta",
     "util.TransientBounceEmail",
-    "users.Permission",
 }
 
 # TODO: determine which of these should not be ignored
@@ -122,9 +124,6 @@ UNKNOWN_MODELS = {
     "data_interfaces.CaseDuplicate",
     "dhis2.SQLDataSetMap",
     "dhis2.SQLDataValueMap",
-    "export.IncrementalExport",
-    "export.IncrementalExportCheckpoint",
-    "export.LedgerSectionEntry",
     "fhir.FHIRImportConfig",
     "fhir.FHIRImportResourceProperty",
     "fhir.FHIRImportResourceType",
@@ -168,10 +167,7 @@ UNKNOWN_MODELS = {
     "userreports.DataSourceActionLog",
     "userreports.InvalidUCRData",
     "userreports.UCRExpression",
-    "users.DeactivateMobileWorkerTrigger",
-    "users.DomainRequest",
     "users.HQApiKey",
-    "users.Invitation",
     "users.UserHistory",
     "users.UserReportingMetadataStaging",
 }

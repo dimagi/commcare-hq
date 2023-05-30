@@ -20,7 +20,7 @@ from corehq.motech.auth import (
     OAuth2PasswordGrantManager,
     api_auth_settings_choices,
     oauth1_api_endpoints,
-    oauth2_api_settings,
+    ApiKeyAuthManager,
 )
 from corehq.motech.const import (
     ALGO_AES,
@@ -28,10 +28,11 @@ from corehq.motech.const import (
     BASIC_AUTH,
     BEARER_AUTH,
     DIGEST_AUTH,
+    MAX_REQUEST_LOG_LENGTH,
     OAUTH1,
     OAUTH2_CLIENT,
     OAUTH2_PWD,
-    PASSWORD_PLACEHOLDER,
+    PASSWORD_PLACEHOLDER, APIKEY_AUTH,
 )
 from corehq.motech.utils import b64_aes_decrypt, b64_aes_encrypt
 from corehq.util import as_json_text, as_text
@@ -50,6 +51,19 @@ class RequestLogEntry:
     response_status: int
     response_headers: dict
     response_body: str
+
+
+class ConnectionQuerySet(models.QuerySet):
+
+    def delete(self):
+        from .repeaters.models import Repeater
+        repeaters = Repeater.all_objects.filter(connection_settings_id__in=self.values("id"))
+        if repeaters.exists():
+            raise models.ProtectedError(
+                "Cannot delete ConnectionSettings with related Repeater(s)",
+                repeaters,
+            )
+        return super().delete()
 
 
 class ConnectionSoftDeleteManager(models.Manager):
@@ -93,11 +107,16 @@ class ConnectionSettings(models.Model):
     last_token_aes = models.TextField(blank=True, default="")
     is_deleted = models.BooleanField(default=False, db_index=True)
 
-    objects = ConnectionSoftDeleteManager()
-    all_objects = models.Manager()
+    objects = ConnectionSoftDeleteManager.from_queryset(ConnectionQuerySet)()
+    all_objects = ConnectionQuerySet.as_manager()
 
     def __str__(self):
         return self.name
+
+    @property
+    def repeaters(self):
+        from .repeaters.models import Repeater
+        return Repeater.objects.filter(connection_settings_id=self.id)
 
     @property
     def plaintext_password(self):
@@ -201,6 +220,8 @@ class ConnectionSettings(models.Model):
                 self.username,
                 self.plaintext_password,
             )
+        if self.auth_type == APIKEY_AUTH:
+            return ApiKeyAuthManager(self.plaintext_password)
         if self.auth_type == OAUTH2_PWD:
             return OAuth2PasswordGrantManager(
                 self.url,
@@ -231,20 +252,24 @@ class ConnectionSettings(models.Model):
         this instance. Used for informing users, and determining whether
         the instance can be deleted.
         """
-        from corehq.motech.repeaters.models import Repeater
 
         kinds = set()
-        if self.incrementalexport_set.exists():
-            kinds.add(_('Incremental Exports'))
         if self.sqldatasetmap_set.exists():
             kinds.add(_('DHIS2 DataSet Maps'))
-        if any(r.connection_settings_id == self.id
-                for r in Repeater.by_domain(self.domain)):
+        if self.repeaters.exists():
             kinds.add(_('Data Forwarding'))
 
         # TODO: Check OpenmrsImporters (when OpenmrsImporters use ConnectionSettings)
 
         return kinds
+
+    def delete(self):
+        if self.repeaters.exists():
+            raise models.ProtectedError(
+                "Cannot delete ConnectionSettings with related Repeater(s)",
+                self.repeaters,
+            )
+        return super().delete()
 
     def soft_delete(self):
         self.is_deleted = True
@@ -287,9 +312,9 @@ class RequestLog(models.Model):
             request_url=log_entry.url,
             request_headers=log_entry.headers,
             request_params=log_entry.params,
-            request_body=as_json_text(log_entry.data),
+            request_body=as_json_text(log_entry.data)[:MAX_REQUEST_LOG_LENGTH],
             request_error=log_entry.error,
             response_status=log_entry.response_status,
             response_headers=log_entry.response_headers,
-            response_body=as_text(log_entry.response_body),
+            response_body=as_text(log_entry.response_body)[:MAX_REQUEST_LOG_LENGTH],
         )

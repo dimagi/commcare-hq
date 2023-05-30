@@ -18,11 +18,10 @@ from dimagi.utils.couch.database import retry_on_couch_error
 from dimagi.utils.parsing import json_format_datetime
 
 from corehq.apps.app_manager.models import Application
-from corehq.apps.auditcare.models import AuditEvent
 from corehq.apps.userreports.models import ReportConfiguration
 from corehq.apps.users.models import CommCareUser
 from corehq.apps.domain.models import Domain
-from corehq.motech.repeaters.models import Repeater
+from corehq.motech.repeaters.models import RepeatRecord
 from corehq.toggles.models import Toggle
 from corehq.util.couch_helpers import NoSkipArgsProvider
 from corehq.util.pagination import ResumableFunctionIterator
@@ -54,18 +53,8 @@ DOC_TYPES_BY_NAME = {
         "type": Application,
         "use_domain": True,
     },
-    "auditcare": {
-        "type": AuditEvent,
-        "use_domain": True,
-        "view": "auditcare/all_events",
-    },
-    "receiver_wrapper_repeaters": {
-        "type": Repeater,
-        "use_domain": True,
-        "view": "repeaters/repeaters",
-    },
     "receiver_wrapper_repeat_records": {
-        "type": Repeater,
+        "type": RepeatRecord,
         "use_domain": True,
         "view": "repeaters/repeat_records",
     },

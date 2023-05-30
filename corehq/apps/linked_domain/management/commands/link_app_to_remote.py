@@ -13,10 +13,10 @@ class Command(BaseCommand):
     """
 
     def add_arguments(self, parser):
-        parser.add_argument('-l', '--linked_id', required=True,
-                            help="ID of the local app to be linked")
-        parser.add_argument('-m', '--master_id', required=True,
-                            help="ID of the master app on remote system")
+        parser.add_argument('-D', '--downstream_id', required=True,
+                            help="ID of the app on the local system")
+        parser.add_argument('-U', '--upstream_id', required=True,
+                            help="ID of the app on the remote system")
         parser.add_argument('-r', '--url_base', required=True,
                             help="Base URL of remote system e.g. https://www.commcarehq.org")
         parser.add_argument('-d', '--domain', required=True,
@@ -26,13 +26,13 @@ class Command(BaseCommand):
         parser.add_argument('-k', '--api_key', required=True,
                             help="ApiKey for remote authentication")
 
-    def handle(self, master_id, linked_id, url_base, domain, username, api_key, **options):
+    def handle(self, downstream_id, upstream_id, url_base, domain, username, api_key, **options):
         remote_details = RemoteLinkDetails(
             url_base,
             username,
             api_key,
         )
 
-        linked_app = LinkedApplication.get(linked_id)
-        link_app(linked_app, domain, master_id, remote_details)
-        update_linked_app(linked_app, master_id, 'system')
+        linked_app = LinkedApplication.get(downstream_id)
+        link_app(linked_app, domain, upstream_id, remote_details)
+        update_linked_app(linked_app, upstream_id, 'system')

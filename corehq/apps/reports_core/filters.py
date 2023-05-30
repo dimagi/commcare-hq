@@ -454,6 +454,7 @@ class LocationDrilldownFilter(BaseFilter):
             'locations': load_locs_json(self.domain, selected_loc_id=loc_id, user=request_user),
             'loc_url': self.api_root,
             'max_drilldown_levels': self.max_drilldown_levels,
+            'auto_drill': 'false',
         }
 
     def valid_location_ids(self, location_id):

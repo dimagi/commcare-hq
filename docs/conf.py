@@ -11,7 +11,6 @@
 # serve to show the default.
 
 import sys, os
-import sphinx_rtd_theme
 
 sys.path.insert(0, os.path.abspath('..'))
 from manage import init_hq_python_path, run_patches
@@ -46,6 +45,7 @@ extensions = [
     'sphinx.ext.autodoc',
     'sphinx.ext.viewcode',
     'sphinxcontrib_django',
+    'sphinx_rtd_theme',
 ]
 
 # Add any paths that contain templates here, relative to this directory.
@@ -74,10 +74,6 @@ pygments_style = 'sphinx'
 # a list of builtin themes.
 #  html_theme = 'default'
 html_theme = "sphinx_rtd_theme"
-
-# Add any paths that contain custom themes here, relative to this directory.
-#html_theme_path = []
-html_theme_path = [sphinx_rtd_theme.get_html_theme_path()]
 
 # Output file base name for HTML help builder.
 htmlhelp_basename = 'CommCareHQdoc'

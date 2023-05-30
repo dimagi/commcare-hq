@@ -1,0 +1,107 @@
+--- 
++++ 
+@@ -1,12 +1,12 @@
+ .helpbubble {
+-  @bubble-radius: 10px;
++  $bubble-radius: 10px;
+   position: relative;
+   padding: 20px 20px 10px;
+   box-shadow: 2px 3px 15px rgba(0,0,0,.45);
+   color: white;
+-  -webkit-border-radius: @bubble-radius;
+-  -moz-border-radius: @bubble-radius;
+-  border-radius: @bubble-radius;
++  -webkit-border-radius: $bubble-radius;
++  -moz-border-radius: $bubble-radius;
++  border-radius: $bubble-radius;
+   margin-bottom: 20px;
+   margin-right: 15px;
+   margin-top: 15px;
+@@ -78,72 +78,72 @@
+ }
+ 
+ .helpbubble-primary {
+-  background: @cc-brand-mid;
++  background: $cc-brand-mid;
+ 
+   &.helpbubble-left:after,
+   &.helpbubble-right:after {
+-    border-color: transparent @cc-brand-mid;
++    border-color: transparent $cc-brand-mid;
+   }
+ 
+   &.helpbubble-top-left:after,
+   &.helpbubble-bottom-left:after,
+   &.helpbubble-bottom-center:after {
+-    border-color: @cc-brand-mid transparent ;
++    border-color: $cc-brand-mid transparent ;
+   }
+   a, a:link, a:visited {
+-    color: @cc-brand-hi;
++    color: $cc-brand-hi;
+   }
+   a:hover {
+     color: #ffffff;
+   }
+   .alert {
+     a, a:link, a:visited {
+-      color: @cc-brand-mid;
++      color: $cc-brand-mid;
+     }
+     a:hover {
+-      color: @cc-brand-low;
++      color: $cc-brand-low;
+     }
+   }
+ }
+ 
+ .helpbubble-secondary {
+-  background: @cc-light-cool-accent-mid;
++  background: $cc-light-cool-accent-mid;
+ 
+   &.helpbubble-left:after,
+   &.helpbubble-right:after {
+-    border-color: transparent @cc-light-cool-accent-mid;
++    border-color: transparent $cc-light-cool-accent-mid;
+   }
+   &.helpbubble-top-left:after,
+   &.helpbubble-bottom-left:after,
+   &.helpbubble-bottom-center:after {
+-    border-color: @cc-light-cool-accent-mid transparent ;
++    border-color: $cc-light-cool-accent-mid transparent ;
+   }
+ }
+ 
+ .helpbubble-purple {
+-  background: @cc-dark-cool-accent-mid;
++  background: $cc-dark-cool-accent-mid;
+ 
+   &.helpbubble-left:after,
+   &.helpbubble-right:after {
+-    border-color: transparent @cc-dark-cool-accent-mid;
++    border-color: transparent $cc-dark-cool-accent-mid;
+   }
+   &.helpbubble-top-left:after,
+   &.helpbubble-bottom-left:after,
+   &.helpbubble-bottom-center:after {
+-    border-color: @cc-dark-cool-accent-mid transparent ;
++    border-color: $cc-dark-cool-accent-mid transparent ;
+   }
+   a, a:link, a:visited {
+-    color: @cc-dark-cool-accent-hi;
++    color: $cc-dark-cool-accent-hi;
+   }
+   a:hover {
+     color: #ffffff;
+   }
+   .alert {
+     a, a:link, a:visited {
+-      color: @cc-dark-cool-accent-mid;
++      color: $cc-dark-cool-accent-mid;
+     }
+     a:hover {
+-      color: @cc-dark-cool-accent-low;
++      color: $cc-dark-cool-accent-low;
+     }
+   }
+ }

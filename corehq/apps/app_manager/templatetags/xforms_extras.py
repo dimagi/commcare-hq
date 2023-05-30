@@ -118,8 +118,24 @@ def html_name(name):
 
 
 @register.simple_tag
-def input_trans(name, langs=None, input_name='name', input_id=None, data_bind=None):
-    options = _get_dynamic_input_trans_options(name, langs=langs)
+def input_trans(name, langs=None, input_name='name', input_id=None, data_bind=None, element_type='input_text'):
+    if element_type == 'input_text':
+        options = _get_dynamic_input_trans_options(name, langs=langs)
+        template = '''
+            <input type="text"
+                   name="{input_name}" {input_id_attribute} {data_bind_attribute}
+                   class="form-control"
+                   value="{value}"
+                   placeholder="{placeholder}" />
+        '''
+    elif element_type == 'textarea':
+        options = _get_dynamic_input_trans_options(name, langs=langs, is_textarea=True)
+        template = '''
+            <textarea name="{input_name}" {input_id_attribute} {data_bind_attribute}
+                      class="form-control vertical-resize"
+                      >{value}</textarea>
+        '''
+
     input_id_attribute = format_html("id='{}'", input_id) if input_id else ""
     data_bind_attribute = format_html("data-bind='{}'", data_bind) if data_bind else ""
 
@@ -128,14 +144,6 @@ def input_trans(name, langs=None, input_name='name', input_id=None, data_bind=No
         "input_id_attribute": input_id_attribute,
         "data_bind_attribute": data_bind_attribute
     })
-
-    template = '''
-        <input type="text"
-               name="{input_name}" {input_id_attribute} {data_bind_attribute}
-               class="form-control"
-               value="{value}"
-               placeholder="{placeholder}" />
-    '''
 
     return format_html(template, **options)
 
@@ -173,7 +181,7 @@ def inline_edit_trans(name, langs=None, url='', saveValueName='', postSave='',
     return format_html(template, **options)
 
 
-def _get_dynamic_input_trans_options(name, langs=None, allow_blank=True):
+def _get_dynamic_input_trans_options(name, langs=None, allow_blank=True, is_textarea=False):
     if langs is None:
         langs = ["default"]
     placeholder = _("Untitled")
@@ -193,5 +201,18 @@ def _get_dynamic_input_trans_options(name, langs=None, allow_blank=True):
                 options['placeholder'] = name[lang] if (allow_blank or name[lang] != '') else placeholder
                 options['lang'] = lang
             break
-    options = {key: html.escapejs(value) for (key, value) in options.items()}
+    if is_textarea:
+        options = _escape_options(options, keys_to_html_escape=['value'])
+    else:
+        options = _escape_options(options)
     return options
+
+
+def _escape_options(options, keys_to_html_escape: list[str] = []):
+    escaped_options = {}
+    for (key, value) in options.items():
+        if key in keys_to_html_escape:
+            escaped_options[key] = html.escape(value)
+        else:
+            escaped_options[key] = html.escapejs(value)
+    return escaped_options

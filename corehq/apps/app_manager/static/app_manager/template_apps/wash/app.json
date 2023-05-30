@@ -66,13 +66,11 @@
     }
   },
   "archived_media": {},
-  "platform": "nokia/s40",
   "target_commcare_flavor": "none",
   "auto_gps_capture": false,
   "mobile_ucr_restore_version": "1.0",
   "deployment_date": null,
   "user_type": null,
-  "text_input": "roman",
   "secure_submissions": true,
   "location_fixture_restore": "project_default",
   "build_broken": false,
@@ -290,7 +288,9 @@
               }
             },
             "open_case": {
-              "name_path": "/data/client_full_name",
+              "name_update": {
+                "question_path": "/data/client_full_name"
+              },
               "doc_type": "OpenCaseAction",
               "external_id": null,
               "condition": {
@@ -703,7 +703,9 @@
                 "case_type": "referall",
                 "reference_id": null,
                 "repeat_context": null,
-                "case_name": "/data/client_name",
+                "name_update": {
+                  "question_path": "/data/client_name"
+                },
                 "condition": {
                   "answer": "1",
                   "question": "/data/create_referral",
@@ -794,7 +796,9 @@
               }
             },
             "open_case": {
-              "name_path": "/data/where_you_able_to_access_the_meter",
+              "name_update": {
+                "question_path": "/data/where_you_able_to_access_the_meter"
+              },
               "doc_type": "OpenCaseAction",
               "external_id": null,
               "condition": {
@@ -992,7 +996,9 @@
                 "case_type": "referall",
                 "reference_id": null,
                 "repeat_context": null,
-                "case_name": "/data/client_name",
+                "name_update": {
+                  "question_path": "/data/client_name"
+                },
                 "condition": {
                   "answer": null,
                   "question": "/data/create_referral",
@@ -1067,7 +1073,9 @@
               }
             },
             "open_case": {
-              "name_path": "/data/where_you_able_to_access_the_housetap",
+              "name_update": {
+                "question_path": "/data/where_you_able_to_access_the_housetap"
+              },
               "doc_type": "OpenCaseAction",
               "external_id": null,
               "condition": {
@@ -1614,7 +1622,9 @@
                 "case_type": "referall",
                 "reference_id": null,
                 "repeat_context": null,
-                "case_name": "/data/client_name",
+                "name_update": {
+                  "question_path": "/data/client_name"
+                },
                 "condition": {
                   "answer": "1",
                   "question": "/data/create_referral",
@@ -1697,7 +1707,9 @@
               }
             },
             "open_case": {
-              "name_path": "/data/cut_water_group/cut_water",
+              "name_update": {
+                "question_path": "/data/cut_water_group/cut_water"
+              },
               "doc_type": "OpenCaseAction",
               "external_id": null,
               "condition": {
@@ -2311,7 +2323,7 @@
               }
             },
             "open_case": {
-              "name_path": null,
+              "name_update": null,
               "doc_type": "OpenCaseAction",
               "external_id": null,
               "condition": {
@@ -2978,7 +2990,7 @@
               }
             },
             "open_case": {
-              "name_path": null,
+              "name_update": null,
               "doc_type": "OpenCaseAction",
               "external_id": null,
               "condition": {
@@ -3351,8 +3363,6 @@
   "smart_lang_display": null,
   "vellum_case_management": true,
   "is_auto_generated": false,
-  "use_j2me_endpoint": false,
-  "admin_password": null,
   "build_spec": {
     "doc_type": "BuildSpec",
     "version": "2.44.3",
@@ -3363,11 +3373,9 @@
   "linked_whitelist": [],
   "profile": {
     "features": {
-      "users": "true",
-      "sense": "false"
+      "users": "true"
     },
     "properties": {
-      "cc-user-mode": "cc-u-normal",
       "cc-show-saved": "no",
       "unsent-time-limit": "5",
       "cc-autosync-freq": "freq-never",
@@ -3377,21 +3385,13 @@
       "cc-fuzzy-search-enabled": "yes",
       "cc-autoup-freq": "freq-never",
       "purge-freq": "0",
-      "server-tether": "push-only",
       "user_reg_server": "required",
-      "extra_key_action": "audio",
       "log_prop_daily": "log_never",
-      "ViewStyle": "v_chatterbox",
       "cc-login-duration-seconds": "86400",
       "cc-resize-images": "none",
-      "cc-entry-mode": "cc-entry-quick",
-      "cc-send-procedure": "cc-send-http",
-      "cc-login-images": "No",
       "log_prop_weekly": "log_short",
       "cc-show-incomplete": "no",
-      "cc-send-unsent": "cc-su-auto",
       "loose_media": "no",
-      "password_format": "a",
       "unsent-number-limit": "5",
       "cc-content-valid": "yes",
       "logenabled": "Enabled"

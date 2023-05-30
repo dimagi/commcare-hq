@@ -223,7 +223,8 @@ class ReportModuleTests(SimpleTestCase):
 
     @flag_enabled('MOBILE_UCR')
     @patch('dimagi.ext.couchdbkit.Document.get_db')
-    def test_purge_report_from_mobile_ucr(self, get_db):
+    @patch('corehq.motech.repeaters.models.AppStructureRepeater.objects.by_domain')
+    def test_purge_report_from_mobile_ucr(self, repeater_patch, get_db):
         report_config = ReportConfiguration(domain='domain', config_id='foo1')
         report_config._id = "my_report_config"
 

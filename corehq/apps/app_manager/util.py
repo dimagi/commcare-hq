@@ -21,6 +21,7 @@ from dimagi.utils.couch import CriticalSection
 from corehq import toggles
 from corehq.apps.app_manager.const import (
     AUTO_SELECT_USERCASE,
+    CALCULATED_SORT_FIELD_RX,
     REGISTRY_WORKFLOW_LOAD_CASE,
     REGISTRY_WORKFLOW_SMART_LINK,
     USERCASE_ID,
@@ -180,18 +181,19 @@ def save_xform(app, form, xml):
 
     form.source = xml.decode('utf-8')
 
+    from corehq.apps.app_manager.models import ConditionalCaseUpdate
     if form.is_registration_form():
         # For registration forms, assume that the first question is the
         # case name unless something else has been specified
         questions = form.get_questions([app.default_language])
         if hasattr(form.actions, 'open_case'):
-            path = form.actions.open_case.name_update.question_path
+            path = getattr(form.actions.open_case.name_update, 'question_path', None)
             if path:
                 name_questions = [q for q in questions if q['value'] == path]
                 if not len(name_questions):
                     path = None
             if not path and len(questions):
-                form.actions.open_case.name_update.question_path = questions[0]['value']
+                form.actions.open_case.name_update = ConditionalCaseUpdate(question_path=questions[0]['value'])
 
     return xml
 
@@ -421,6 +423,13 @@ def module_uses_inline_search(module):
     )
 
 
+def module_uses_include_all_related_cases(module):
+    return (
+        module_offers_search(module)
+        and module.search_config.include_all_related_cases
+    )
+
+
 def get_cloudcare_session_data(domain_name, form, couch_user):
     from corehq.apps.app_manager.suite_xml.sections.entries import EntriesHelper
 
@@ -556,6 +565,20 @@ def get_sort_and_sort_only_columns(detail_columns, sort_elements):
         sort_element, order = sort_elements.pop(column.field, (None, None))
         if sort_element:
             sort_columns[column.field] = (sort_element, order)
+
+    # pull out sort elements that refer to calculated columns
+    for field in list(sort_elements):
+        match = re.match(CALCULATED_SORT_FIELD_RX, field)
+        if match:
+            element, element_order = sort_elements.pop(field)
+            column_index = int(match.group(1))
+            try:
+                column = detail_columns[column_index]
+            except IndexError:
+                raise AppManagerException(f"Sort column references an unknown column at index: {column_index}")
+            if not column.useXpathExpression:
+                raise AppManagerException(f"Calculation sort column references an incorrect column: {column.field}")
+            sort_columns[column.field] = (element, element_order)
 
     sort_only_elements = [
         SortOnlyElement(field, element, element_order)
@@ -710,23 +733,3 @@ def extract_instance_id_from_nodeset_ref(nodeset):
     if nodeset:
         matches = re.findall(r"instance\('(.*?)'\)", nodeset)
         return matches[0] if matches else None
-
-
-def wrap_transition_from_old_update_case_action(properties_dict):
-    """
-    This function assists wrap functions for changes to the FormActions and AdvancedFormActions models.
-    A modification of UpdateCaseAction to use a ConditionalCaseUpdate instead of a simple question path
-    was part of these changes. It also used as part of a follow-up migration.
-    """
-    if(properties_dict):
-        first_prop_value = list(properties_dict.values())[0]
-        # If the dict just holds question paths (strings) as values we want to translate the old
-        # type of UpdateCaseAction model to the new.
-        if isinstance(first_prop_value, str):
-            new_dict_values = {}
-            for case_property, question_path in properties_dict.items():
-                new_dict_values[case_property] = {
-                    'question_path': question_path
-                }
-            return new_dict_values
-    return properties_dict

@@ -7,10 +7,11 @@ from django_prbac.utils import has_privilege
 from ws4redis.context_processors import default
 
 from corehq import feature_previews, privileges, toggles
-from corehq.apps.accounting.models import BillingAccount, SubscriptionType
-from corehq.apps.accounting.utils import domain_has_privilege
+from corehq.apps.accounting.models import BillingAccount, Subscription, SubscriptionType
+from corehq.apps.accounting.utils import domain_has_privilege, get_privileges
 from corehq.apps.analytics.utils.hubspot import is_hubspot_js_allowed_for_request
 from corehq.apps.hqwebapp.utils import get_environment_friendly_name
+from corehq.apps.hqwebapp.utils import bootstrap
 
 COMMCARE = 'commcare'
 COMMTRACK = 'commtrack'
@@ -113,7 +114,7 @@ def js_api_keys(request):
         # set to an empty string rather than delete. otherwise a strange race
         # happens in redis, throwing an error
         api_keys['ANALYTICS_IDS']['HUBSPOT_API_ID'] = ''
-        api_keys['ANALYTICS_IDS']['HUBSPOT_API_KEY'] = ''
+        api_keys['ANALYTICS_IDS']['HUBSPOT_ACCESS_TOKEN'] = ''
 
     return api_keys
 
@@ -134,6 +135,22 @@ def js_toggles(request):
     return {
         'toggles_dict': toggles.toggle_values_by_name(username=request.couch_user.username, domain=domain),
         'previews_dict': feature_previews.preview_values_by_name(domain=domain)
+    }
+
+
+def js_privileges(request):
+    domain = None
+    if getattr(request, 'project', None):
+        domain = request.project.name
+    elif getattr(request, 'domain', None):
+        domain = request.domain
+
+    if not domain:
+        return {}
+
+    plan_version = Subscription.get_subscribed_plan_by_domain(domain)
+    return {
+        'privileges': list(get_privileges(plan_version)),
     }
 
 
@@ -273,4 +290,20 @@ def get_demo(request):
 def status_page(request):
     return {
         'show_status_page': settings.IS_SAAS_ENVIRONMENT
+    }
+
+
+def sentry(request):
+    return {
+        "sentry": {
+            "dsn": settings.SENTRY_DSN,
+            "environment": settings.SERVER_ENVIRONMENT,
+            "release": settings.COMMCARE_RELEASE
+        }
+    }
+
+
+def bootstrap5(request):
+    return {
+        "use_bootstrap5": bootstrap.get_bootstrap_version() == bootstrap.BOOTSTRAP_5,
     }

@@ -25,8 +25,7 @@ from corehq.apps.accounting.models import (
     Subscription,
     SubscriptionAdjustment,
 )
-from corehq.apps.api.resources.auth import AdminAuthentication
-from corehq.apps.api.resources.meta import CustomResourceMeta
+from corehq.apps.api.resources.meta import AdminResourceMeta
 
 
 class AccToManyField(ToManyField):
@@ -40,8 +39,7 @@ class AccToManyField(ToManyField):
         return only_ids
 
 
-class AccountingResourceMeta(CustomResourceMeta):
-    authentication = AdminAuthentication()
+class AccountingResourceMeta(AdminResourceMeta):
     list_allowed_methods = ['get']
     detail_allowed_methods = ['get']
     include_resource_uri = False

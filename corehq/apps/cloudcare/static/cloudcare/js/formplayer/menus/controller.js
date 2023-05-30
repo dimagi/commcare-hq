@@ -1,8 +1,12 @@
 /*global Backbone, DOMPurify */
 
 hqDefine("cloudcare/js/formplayer/menus/controller", function () {
-    var FormplayerFrontend = hqImport("cloudcare/js/formplayer/app"),
-        Utils = hqImport("cloudcare/js/formplayer/utils/utils"),
+    var constants = hqImport("cloudcare/js/formplayer/constants"),
+        FormplayerFrontend = hqImport("cloudcare/js/formplayer/app"),
+        formplayerUtils = hqImport("cloudcare/js/formplayer/utils/utils"),
+        menusUtils = hqImport("cloudcare/js/formplayer/menus/utils"),
+        views = hqImport("cloudcare/js/formplayer/menus/views"),
+        toggles = hqImport("hqwebapp/js/toggles"),
         md = window.markdownit();
     var selectMenu = function (options) {
 
@@ -36,12 +40,24 @@ hqDefine("cloudcare/js/formplayer/menus/controller", function () {
                 return;
             }
 
-            var urlObject = Utils.currentUrlToObject();
-
+            var urlObject = formplayerUtils.currentUrlToObject();
             if (urlObject.endpointId) {
                 urlObject.replaceEndpoint(menuResponse.selections);
-                Utils.setUrlToObject(urlObject);
+                formplayerUtils.setUrlToObject(urlObject);
             }
+
+            formplayerUtils.doUrlAction((urlObject) => {
+                let updated = false;
+                if (menuResponse.session_id) {
+                    urlObject.sessionId = menuResponse.session_id;
+                    updated = true;
+                } else if (urlObject.sessionId) {
+                    urlObject.sessionId = null;
+                    updated = true;
+                }
+                return updated;
+            }, true);
+
 
             // If we don't have an appId in the URL (usually due to form preview)
             // then parse the appId from the response.
@@ -53,7 +69,7 @@ hqDefine("cloudcare/js/formplayer/menus/controller", function () {
                     return;
                 }
                 urlObject.appId = menuResponse.appId;
-                Utils.setUrlToObject(urlObject);
+                formplayerUtils.setUrlToObject(urlObject);
             }
 
             showMenu(menuResponse);
@@ -63,9 +79,9 @@ hqDefine("cloudcare/js/formplayer/menus/controller", function () {
             }
 
             if (menuResponse.shouldRequestLocation) {
-                hqImport("cloudcare/js/formplayer/menus/utils").handleLocationRequest(options);
+                menusUtils.handleLocationRequest(options);
             }
-            hqImport("cloudcare/js/formplayer/menus/utils").startOrStopLocationWatching(menuResponse.shouldWatchLocation);
+            menusUtils.startOrStopLocationWatching(menuResponse.shouldWatchLocation);
         }).fail(function () {
             //  if it didn't go through, then it displayed an error message.
             // the right thing to do is then to just stay in the same place.
@@ -73,7 +89,7 @@ hqDefine("cloudcare/js/formplayer/menus/controller", function () {
     };
 
     var selectDetail = function (caseId, detailIndex, isPersistent, isMultiSelect) {
-        var urlObject = Utils.currentUrlToObject();
+        var urlObject = formplayerUtils.currentUrlToObject();
         if (!isPersistent) {
             urlObject.addSelection(caseId);
         }
@@ -86,9 +102,10 @@ hqDefine("cloudcare/js/formplayer/menus/controller", function () {
     };
 
     var showMenu = function (menuResponse) {
-        var menuListView = hqImport("cloudcare/js/formplayer/menus/utils").getMenuView(menuResponse);
+        var menuListView = menusUtils.getMenuView(menuResponse);
         var appPreview = FormplayerFrontend.currentUser.displayOptions.singleAppMode;
-        var changeFormLanguage = FormplayerFrontend.currentUser.changeFormLanguage;
+        var changeFormLanguage = toggles.toggleEnabled('CHANGE_FORM_LANGUAGE');
+        var enablePrintOption = !menuResponse.queryKey;
 
         if (menuListView) {
             FormplayerFrontend.regions.getRegion('main').show(menuListView);
@@ -100,9 +117,9 @@ hqDefine("cloudcare/js/formplayer/menus/controller", function () {
         }
 
         if (menuResponse.breadcrumbs) {
-            hqImport("cloudcare/js/formplayer/menus/utils").showBreadcrumbs(menuResponse.breadcrumbs);
-            if (menuResponse.langs && menuResponse.langs.length > 1 && !appPreview && changeFormLanguage) {
-                hqImport("cloudcare/js/formplayer/menus/utils").showLanguageMenu(menuResponse.langs);
+            menusUtils.showBreadcrumbs(menuResponse.breadcrumbs);
+            if (!appPreview && ((menuResponse.langs && menuResponse.langs.length > 1 && changeFormLanguage) || enablePrintOption)) {
+                menusUtils.showFormMenu(menuResponse.langs, changeFormLanguage);
             }
         } else {
             FormplayerFrontend.regions.getRegion('breadcrumb').empty();
@@ -122,8 +139,7 @@ hqDefine("cloudcare/js/formplayer/menus/controller", function () {
         // If we have no details, just select the entity
         if (detailObjects === null || detailObjects === undefined || detailObjects.length === 0) {
             if (isMultiSelect) {
-                var Constants = hqImport("cloudcare/js/formplayer/constants");
-                FormplayerFrontend.trigger("multiSelect:updateCases", Constants.MULTI_SELECT_ADD, [caseId]);
+                FormplayerFrontend.trigger("multiSelect:updateCases", constants.MULTI_SELECT_ADD, [caseId]);
             } else {
                 FormplayerFrontend.trigger("menu:select", caseId);
             }
@@ -138,13 +154,13 @@ hqDefine("cloudcare/js/formplayer/menus/controller", function () {
         var tabCollection = new Backbone.Collection();
         tabCollection.reset(tabModels);
 
-        var tabListView = hqImport("cloudcare/js/formplayer/menus/views").DetailTabListView({
+        var tabListView = views.DetailTabListView({
             collection: tabCollection,
             onTabClick: function (detailTabIndex) {
                 showDetail(model, detailTabIndex, caseId, isMultiSelect);
             },
         });
-        var detailFooterView = hqImport("cloudcare/js/formplayer/menus/views").CaseDetailFooterView({
+        var detailFooterView = views.CaseDetailFooterView({
             model: model,
             caseId: caseId,
             isMultiSelect: isMultiSelect,
@@ -177,7 +193,7 @@ hqDefine("cloudcare/js/formplayer/menus/controller", function () {
                 styles: detailObject.get('styles'),
                 title: detailObject.get('title'),
             };
-            return hqImport("cloudcare/js/formplayer/menus/views").CaseListDetailView(menuData);
+            return views.CaseListDetailView(menuData);
         }
 
         // This is a regular detail, displaying name-value pairs
@@ -199,7 +215,7 @@ hqDefine("cloudcare/js/formplayer/menus/controller", function () {
         }
         var detailCollection = new Backbone.Collection();
         detailCollection.reset(detailModel);
-        return hqImport("cloudcare/js/formplayer/menus/views").DetailListView({
+        return views.DetailListView({
             collection: detailCollection,
         });
     };
@@ -214,13 +230,13 @@ hqDefine("cloudcare/js/formplayer/menus/controller", function () {
         var numRows = detailObject.maxHeight;
         var numColumns = detailObject.maxWidth;
         var useUniformUnits = detailObject.useUniformUnits || false;
-        var caseTileStyles = hqImport("cloudcare/js/formplayer/menus/views").buildCaseTileStyles(detailObject.tiles, numRows, numColumns,
+        var caseTileStyles = views.buildCaseTileStyles(detailObject.tiles, numRows, numColumns,
             numEntitiesPerRow, useUniformUnits, 'persistent');
         // Style the positioning of the elements within a tile (IE element 1 at grid position 1 / 2 / 4 / 3
-        $("#persistent-cell-layout-style").html(caseTileStyles[0]).data("css-polyfilled", false);
+        $("#persistent-cell-layout-style").html(caseTileStyles.cellLayoutStyle).data("css-polyfilled", false);
         // Style the grid (IE each tile has 6 rows, 12 columns)
-        $("#persistent-cell-grid-style").html(caseTileStyles[1]).data("css-polyfilled", false);
-        return hqImport("cloudcare/js/formplayer/menus/views").PersistentCaseTileView({
+        $("#persistent-cell-grid-style").html(caseTileStyles.cellGridStyle).data("css-polyfilled", false);
+        return views.PersistentCaseTileView({
             model: detailModel,
             styles: detailObject.styles,
             tiles: detailObject.tiles,

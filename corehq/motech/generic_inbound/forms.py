@@ -1,14 +1,16 @@
 from django import forms
 from django.forms import inlineformset_factory
+from django.urls import reverse
+from django.utils.safestring import SafeString
 from django.utils.translation import gettext_lazy as _
 
 from crispy_forms import layout as crispy
 
-from corehq.apps.hqwebapp.crispy import HQFormHelper
+from corehq.apps.hqwebapp.crispy import HQFormHelper, FieldWithAddons
 from corehq.apps.userreports.models import UCRExpression
 from corehq.motech.generic_inbound.models import (
     ConfigurableAPI,
-    ConfigurableApiValidation,
+    ConfigurableApiValidation, ApiBackendOptions,
 )
 
 
@@ -22,9 +24,14 @@ class ConfigurableAPICreateForm(forms.ModelForm):
             "description",
             "filter_expression",
             "transform_expression",
+            "backend",
         ]
+        labels = {
+            "backend": _("Input Data Type")
+        }
         widgets = {
-            'description': forms.TextInput(),
+            "description": forms.TextInput(),
+            "backend": forms.Select(choices=ApiBackendOptions.choices)
         }
 
     def __init__(self, request, *args, **kwargs):
@@ -39,8 +46,9 @@ class ConfigurableAPICreateForm(forms.ModelForm):
                 self.fieldset_title,
                 crispy.Field('name'),
                 crispy.Field('description'),
-                crispy.Field('filter_expression'),
-                crispy.Field('transform_expression'),
+                crispy.Field('backend'),
+                FieldWithAddons('filter_expression', post_addon=_expression_link(self.domain)),
+                FieldWithAddons('transform_expression', post_addon=_expression_link(self.domain)),
             )
         )
         self.helper.render_required_fields = True
@@ -67,3 +75,12 @@ ApiValidationFormSet = inlineformset_factory(
     ConfigurableAPI, ConfigurableApiValidation, fields=("name", "expression", "message"),
     extra=0, can_delete=True
 )
+
+
+def _expression_link(domain):
+    return SafeString(
+        '<a href="{url}" target="_blank" title="{title}"><i class="fa fa-external-link"></i></a>'.format(
+            url=reverse('ucr_expressions', args=(domain,)),
+            title=_("Filters and Expressions")
+        )
+    )

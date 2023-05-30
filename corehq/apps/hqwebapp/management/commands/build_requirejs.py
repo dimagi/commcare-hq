@@ -19,7 +19,7 @@ from corehq.apps.hqwebapp.management.commands.resource_static import \
     Command as ResourceStaticCommand
 from corehq.util.log import with_progress_bar
 
-logger = logging.getLogger('__name__')
+logger = logging.getLogger(__name__)
 ROOT_DIR = settings.FILEPATH
 BUILD_JS_FILENAME = "staticfiles/build.js"
 BUILD_TXT_FILENAME = "staticfiles/build.txt"
@@ -38,8 +38,16 @@ class Command(ResourceStaticCommand):
                  'Does not allow you to mimic CDN.')
         parser.add_argument('--no_optimize', action='store_true',
             help='Don\'t minify files. Runs much faster. Useful when running on a local environment.')
+        parser.add_argument('--bootstrap_version',
+                            default="bootstrap3",
+                            help="Specify bootstrap3 or bootstrap5 (bootstrap3 is default)")
 
     def handle(self, **options):
+        bootstrap_version = options.get('bootstrap_version')
+        if bootstrap_version != "bootstrap3":
+            print("Only supports bootstrap3 for now.")
+            return
+
         logger.setLevel('DEBUG')
 
         local = options['local']
@@ -213,7 +221,8 @@ def _get_main_js_modules_by_dir(html_files):
                 main = match.group(1)
                 directory = match.group(2)
                 if os.path.exists(os.path.join(ROOT_DIR, 'staticfiles', main + '.js')):
-                    dirs[directory].add(main)
+                    if not re.search(r'/spec/', main):
+                        dirs[directory].add(main)
     return dirs
 
 

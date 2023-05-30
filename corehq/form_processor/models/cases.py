@@ -927,7 +927,7 @@ class CaseAttachment(PartitionedModel, models.Model, SaveStateMixin, IsImageMixi
     @classmethod
     def get_content(cls, case_id, name):
         att = cls.objects.get_attachment_by_name(case_id, name)
-        return AttachmentContent(att.content_type, att.open())
+        return AttachmentContent(att.content_type, att.open(), att.content_length)
 
     def __str__(self):
         return str(
@@ -1014,7 +1014,14 @@ class CommCareCaseIndexManager(RequireDBManager):
             ) for index in indexes
         ]
 
-    def get_extension_case_ids(self, domain, case_ids, include_closed=True, exclude_for_case_type=None):
+    def get_extension_case_ids(
+        self,
+        domain,
+        case_ids,
+        include_closed=True,
+        exclude_for_case_type=None,
+        case_type=None,
+    ):
         """
         Given a base list of case ids, get all ids of all extension cases that reference them
         """
@@ -1031,6 +1038,8 @@ class CommCareCaseIndexManager(RequireDBManager):
                 query = query.filter(case__closed=False)
             if exclude_for_case_type:
                 query = query.exclude(referenced_type=exclude_for_case_type)
+            if case_type:
+                query = query.filter(case__type=case_type)
             extension_case_ids.update(query.values_list('case_id', flat=True))
         return list(extension_case_ids)
 

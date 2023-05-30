@@ -3,7 +3,6 @@ import csv
 import io
 from collections import defaultdict
 from datetime import datetime
-from functools import partial
 
 from django.contrib import messages
 from django.http import (
@@ -90,6 +89,7 @@ from corehq.util.timezones.utils import get_timezone_for_user
 from corehq.util.view_utils import absolute_reverse, get_case_or_404, reverse
 
 from .basic import CaseListReport
+from .utils import get_user_type
 
 # Number of columns in case property history popup
 DYNAMIC_CASE_PROPERTIES_COLUMNS = 4
@@ -248,8 +248,11 @@ class CaseDataView(BaseProjectReportSectionView):
         }
         if dynamic_data:
             if toggles.DD_CASE_DATA.enabled_for_request(self.request):
-                context['dd_properties_tables'] = _get_dd_tables(
-                    self.domain, self.case_instance.type, dynamic_data, timezone)
+                dd_properties_tables = _get_dd_tables(self.domain, self.case_instance.type,
+                                                      dynamic_data, timezone)
+                context['dd_properties_tables'] = dd_properties_tables
+                context['show_expand_collapse_buttons'] = len(
+                    [table.get('name') for table in dd_properties_tables if table.get('name') is not None]) > 1
             else:
                 definition = {
                     "layout": list(chunked([
@@ -266,7 +269,7 @@ def _get_dd_tables(domain, case_type, dynamic_data, timezone):
     dd_props_by_group = list(_get_dd_props_by_group(domain, case_type))
     tables = [
         (group, _table_definition([
-            (p.name, p.description) for p in props
+            (p.name, p.label, p.description) for p in props
         ]))
         for group, props in dd_props_by_group
     ]
@@ -276,7 +279,7 @@ def _get_dd_tables(domain, case_type, dynamic_data, timezone):
     unrecognized = set(dynamic_data.keys()) - props_in_dd
     if unrecognized:
         tables.append((_('Unrecognized'), _table_definition([
-            (p, None) for p in unrecognized
+            (p, None, None) for p in unrecognized
         ])))
 
     return [{
@@ -292,7 +295,7 @@ def _get_dd_props_by_group(domain, case_type):
             case_type__name=case_type,
             deprecated=False,
     ):
-        ret[prop.group].append(prop)
+        ret[prop.group_name].append(prop)
 
     uncategorized = ret.pop('', None)
     for group, props in sorted(ret.items()):
@@ -306,10 +309,11 @@ def _table_definition(props):
     return {
         "layout": list(chunked([
             DisplayConfig(
-                expr=name,
+                expr=prop_name,
+                name=label or prop_name,
                 description=description,
                 has_history=True
-            ) for name, description in sorted(props)
+            ) for prop_name, label, description in sorted(props)
         ], DYNAMIC_CASE_PROPERTIES_COLUMNS))
     }
 
@@ -332,6 +336,7 @@ def form_to_json(domain, form, timezone):
             "username": form.metadata.username if form.metadata else '',
         },
         'readable_name': form_name,
+        'user_type': get_user_type(form, domain),
     }
 
 

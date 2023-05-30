@@ -1,0 +1,14 @@
+{% load i18n %}
+{% if submenu.html %}
+  <li>{{ submenu.html }}</li>
+{% else %}
+  {% if submenu.is_divider %}
+    <li><hr class="dropdown-divider"></li>
+  {% else %}
+    <li {% if submenu.is_header %}class="nav-header dropdown-header"{% endif %}>{# old classes #}
+      {% if submenu.url %}<a class="dropdown-item" href="{{ submenu.url }}" {% if submenu.data_id %}data-id="{{ submenu.data_id }}"{% endif %}>{% endif %}
+      {% trans submenu.title %}
+      {% if submenu.url %}</a>{% endif %}
+    </li>
+  {% endif %}
+{% endif %}

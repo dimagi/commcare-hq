@@ -1,875 +1,756 @@
 {
-    "multimedia_map": {}, 
-    "domain":"project-commcarehq",
-    "build_langs":[  
-        "en"
-    ],
-    "auto_gps_capture":false,
-    "short_url":null,
-    "_rev":"2-a4a4cce77bfda4a3f1c639938e19b780",
-    "deployment_date":null,
-    "user_type":null,
-    "text_input":"roman",
-    "secure_submissions":false,
-    "build_broken":false,
-    "copy_of":"b4a881eda3eab4d75a1a09fdec428cc8",
-    "phone_model":null,
-    "build_signed":true,
-    "recipients":"",
-    "copy_history":[  
-
-    ],
-    "is_released":false,
-    "media_form_errors":false,
-    "application_version":"2.0",
-    "platform":"nokia/s40",
-    "version":14,
-    "admin_password":null,
-    "build_spec":{  
-        "doc_type":"BuildSpec",
-        "version":"2.20.0",
-        "build_number":null,
-        "latest":true
+  "multimedia_map": {},
+  "domain": "project-commcarehq",
+  "auto_gps_capture": false,
+  "short_url": null,
+  "_rev": "2-a4a4cce77bfda4a3f1c639938e19b780",
+  "deployment_date": null,
+  "user_type": null,
+  "secure_submissions": false,
+  "build_broken": false,
+  "copy_of": "b4a881eda3eab4d75a1a09fdec428cc8",
+  "phone_model": null,
+  "build_signed": true,
+  "recipients": "",
+  "copy_history": [],
+  "is_released": false,
+  "media_form_errors": false,
+  "application_version": "2.0",
+  "version": 14,
+  "admin_password": null,
+  "build_spec": {
+    "doc_type": "BuildSpec",
+    "version": "2.20.0",
+    "build_number": null,
+    "latest": true
+  },
+  "admin_password_charset": "n",
+  "logo_refs": {},
+  "short_odk_media_url": null,
+  "success_message": {},
+  "short_odk_url": null,
+  "amplifies_workers": "not_set",
+  "comment_from": "5a0dc4bc05d06593d6763b97911ee14d",
+  "cloudcare_enabled": true,
+  "description": null,
+  "user_registration": {
+    "doc_type": "UserRegistrationForm",
+    "xmlns": null,
+    "name": {},
+    "password_path": "password",
+    "auto_gps_capture": false,
+    "schedule_form_id": null,
+    "show_count": false,
+    "version": null,
+    "no_vellum": false,
+    "form_links": [],
+    "post_form_workflow": "default",
+    "form_type": "user_registration",
+    "username_path": "username",
+    "unique_id": "9514f5867dbefe88dfe195b7276f327ab1e37edc",
+    "data_paths": {}
+  },
+  "use_grid_menus": false,
+  "translations": {},
+  "_id": "b4a881eda3eab4d75a1a09fdec4278ef",
+  "built_on": "2015-10-29T18:10:23.324247Z",
+  "built_with": {
+    "doc_type": "BuildRecord",
+    "build_number": 348177,
+    "signed": false,
+    "datetime": "2015-10-29T18:10:23.324247Z",
+    "version": "2.20.0",
+    "latest": null
+  },
+  "profile": {
+    "features": {
+      "users": "true"
     },
-    "admin_password_charset":"n",
-    "logo_refs":{  
-
-    },
-    "short_odk_media_url":null,
-    "success_message":{  
-
-    },
-    "short_odk_url":null,
-    "amplifies_workers":"not_set",
-    "comment_from":"5a0dc4bc05d06593d6763b97911ee14d",
-    "cloudcare_enabled":true,
-    "description":null,
-    "user_registration":{  
-        "doc_type":"UserRegistrationForm",
-        "xmlns":null,
-        "name":{  
-
+    "properties": {
+      "cc-show-saved": "yes",
+      "restore-tolerance": "loose",
+      "cc-days-form-retain": "-1",
+      "cc-fuzzy-search-enabled": "yes",
+      "cc-autoup-freq": "freq-never",
+      "purge-freq": "0",
+      "user_reg_server": "required",
+      "log_prop_daily": "log_never",
+      "cc-resize-images": "none",
+      "log_prop_weekly": "log_short",
+      "cc-show-incomplete": "yes",
+      "loose_media": "no",
+      "unsent-number-limit": "5",
+      "cc-content-valid": "no",
+      "logenabled": "Enabled"
+    }
+  },
+  "langs": [
+    "en"
+  ],
+  "use_custom_suite": false,
+  "build_comment": "initial commit",
+  "build_broken_reason": null,
+  "doc_type": "Application",
+  "cached_properties": {},
+  "name": "Test extra connectors",
+  "amplifies_project": "not_set",
+  "modules": [
+    {
+      "referral_label": {
+        "fra": "Referrals",
+        "en": "Referrals"
+      },
+      "case_list": {
+        "doc_type": "CaseList",
+        "label": {
+          "en": "View Songs"
         },
-        "password_path":"password",
-        "auto_gps_capture":false,
-        "schedule_form_id":null,
-        "show_count":false,
-        "version":null,
-        "no_vellum":false,
-        "form_links":[  
-
-        ],
-        "post_form_workflow":"default",
-        "form_type":"user_registration",
-        "username_path":"username",
-        "unique_id":"9514f5867dbefe88dfe195b7276f327ab1e37edc",
-        "data_paths":{  
-
-        }
-    },
-    "use_grid_menus":false,
-    "translations":{  
-
-    },
-    "_id":"b4a881eda3eab4d75a1a09fdec4278ef",
-    "built_on":"2015-10-29T18:10:23.324247Z",
-    "built_with":{  
-        "doc_type":"BuildRecord",
-        "build_number":348177,
-        "signed":false,
-        "datetime":"2015-10-29T18:10:23.324247Z",
-        "version":"2.20.0",
-        "latest":null
-    },
-    "profile":{  
-        "features":{  
-            "users":"true",
-            "sense":"false"
+        "media_audio": null,
+        "media_image": null,
+        "show": true
+      },
+      "auto_select_case": false,
+      "put_in_root": true,
+      "root_module_id": null,
+      "ref_details": {
+        "doc_type": "DetailPair",
+        "short": {
+          "doc_type": "Detail",
+          "persist_case_context": null,
+          "lookup_extras": [],
+          "sort_elements": [],
+          "tabs": [],
+          "lookup_responses": [],
+          "lookup_image": null,
+          "filter": null,
+          "persist_tile_on_forms": null,
+          "custom_xml": null,
+          "lookup_enabled": false,
+          "lookup_name": null,
+          "use_case_tiles": null,
+          "pull_down_tile": null,
+          "lookup_action": null,
+          "display": "short",
+          "columns": []
         },
-        "properties":{  
-            "cc-user-mode":"cc-u-normal",
-            "cc-show-saved":"yes",
-            "restore-tolerance":"loose",
-            "cc-days-form-retain":"-1",
-            "cc-fuzzy-search-enabled":"yes",
-            "cc-autoup-freq":"freq-never",
-            "purge-freq":"0",
-            "server-tether":"push-only",
-            "user_reg_server":"required",
-            "extra_key_action":"audio",
-            "log_prop_daily":"log_never",
-            "ViewStyle":"v_chatterbox",
-            "cc-resize-images":"none",
-            "cc-entry-mode":"cc-entry-quick",
-            "cc-send-procedure":"cc-send-http",
-            "cc-login-images":"No",
-            "log_prop_weekly":"log_short",
-            "cc-show-incomplete":"yes",
-            "cc-send-unsent":"cc-su-auto",
-            "loose_media":"no",
-            "password_format":"n",
-            "unsent-number-limit":"5",
-            "cc-content-valid":"no",
-            "logenabled":"Enabled"
+        "long": {
+          "doc_type": "Detail",
+          "persist_case_context": null,
+          "lookup_extras": [],
+          "sort_elements": [],
+          "tabs": [],
+          "lookup_responses": [],
+          "lookup_image": null,
+          "filter": null,
+          "persist_tile_on_forms": null,
+          "custom_xml": null,
+          "lookup_enabled": false,
+          "lookup_name": null,
+          "use_case_tiles": null,
+          "pull_down_tile": null,
+          "lookup_action": null,
+          "display": "long",
+          "columns": []
         }
-    },
-    "langs":[  
-        "en"
-    ],
-    "use_custom_suite":false,
-    "build_comment":"initial commit",
-    "build_broken_reason":null,
-    "doc_type":"Application",
-    "cached_properties":{  
-
-    },
-    "name":"Test extra connectors",
-    "amplifies_project":"not_set",
-    "modules":[  
-        {  
-            "referral_label":{  
-                "fra":"Referrals",
-                "en":"Referrals"
+      },
+      "case_label": {
+        "fra": "Cases",
+        "en": "Songs"
+      },
+      "referral_list": {
+        "doc_type": "CaseList",
+        "label": {},
+        "media_audio": null,
+        "media_image": null,
+        "show": false
+      },
+      "media_image": null,
+      "parent_select": {
+        "active": false,
+        "module_id": null,
+        "relationship": "parent",
+        "doc_type": "ParentSelect"
+      },
+      "forms": [
+        {
+          "doc_type": "Form",
+          "xmlns": "http://openrosa.org/formdesigner/B520859B-BE3D-4DAB-B8E9-585C3E1019C5",
+          "form_filter": "",
+          "name": {
+            "en": "Add Song"
+          },
+          "auto_gps_capture": false,
+          "schedule_form_id": null,
+          "show_count": false,
+          "requires": "none",
+          "actions": {
+            "doc_type": "FormActions",
+            "subcases": [],
+            "usercase_preload": {
+              "preload": {},
+              "doc_type": "PreloadAction",
+              "condition": {
+                "operator": "=",
+                "doc_type": "FormActionCondition",
+                "answer": null,
+                "question": null,
+                "type": "never"
+              }
             },
-            "case_list":{  
-                "doc_type":"CaseList",
-                "label":{  
-                    "en":"View Songs"
+            "update_case": {
+              "doc_type": "UpdateCaseAction",
+              "update": {
+                "plays": {
+                  "question_path": "/data/plays",
+                  "update_mode": "always"
                 },
-                "media_audio":null,
-                "media_image":null,
-                "show":true
-            },
-            "auto_select_case":false,
-            "put_in_root":true,
-            "root_module_id":null,
-            "ref_details":{  
-                "doc_type":"DetailPair",
-                "short":{  
-                    "doc_type":"Detail",
-                    "persist_case_context":null,
-                    "lookup_extras":[  
-
-                    ],
-                    "sort_elements":[  
-
-                    ],
-                    "tabs":[  
-
-                    ],
-                    "lookup_responses":[  
-
-                    ],
-                    "lookup_image":null,
-                    "filter":null,
-                    "persist_tile_on_forms":null,
-                    "custom_xml":null,
-                    "lookup_enabled":false,
-                    "lookup_name":null,
-                    "use_case_tiles":null,
-                    "pull_down_tile":null,
-                    "lookup_action":null,
-                    "display":"short",
-                    "columns":[  
-
-                    ]
-                },
-                "long":{  
-                    "doc_type":"Detail",
-                    "persist_case_context":null,
-                    "lookup_extras":[  
-
-                    ],
-                    "sort_elements":[  
-
-                    ],
-                    "tabs":[  
-
-                    ],
-                    "lookup_responses":[  
-
-                    ],
-                    "lookup_image":null,
-                    "filter":null,
-                    "persist_tile_on_forms":null,
-                    "custom_xml":null,
-                    "lookup_enabled":false,
-                    "lookup_name":null,
-                    "use_case_tiles":null,
-                    "pull_down_tile":null,
-                    "lookup_action":null,
-                    "display":"long",
-                    "columns":[  
-
-                    ]
+                "artist": {
+                  "question_path": "/data/artist",
+                  "update_mode": "always"
                 }
+              },
+              "condition": {
+                "answer": null,
+                "question": null,
+                "type": "always",
+                "operator": null,
+                "doc_type": "FormActionCondition"
+              }
             },
-            "case_label":{  
-                "fra":"Cases",
-                "en":"Songs"
+            "close_referral": {
+              "doc_type": "FormAction",
+              "condition": {
+                "operator": "=",
+                "doc_type": "FormActionCondition",
+                "answer": null,
+                "question": null,
+                "type": "never"
+              }
             },
-            "referral_list":{  
-                "doc_type":"CaseList",
-                "label":{  
-
+            "open_referral": {
+              "name_path": null,
+              "doc_type": "OpenReferralAction",
+              "condition": {
+                "operator": "=",
+                "doc_type": "FormActionCondition",
+                "answer": null,
+                "question": null,
+                "type": "never"
+              },
+              "followup_date": null
+            },
+            "open_case": {
+              "name_update": {
+                "question_path": "/data/name"
+              },
+              "doc_type": "OpenCaseAction",
+              "external_id": null,
+              "condition": {
+                "operator": null,
+                "doc_type": "FormActionCondition",
+                "answer": null,
+                "question": null,
+                "type": "always"
+              }
+            },
+            "usercase_update": {
+              "doc_type": "UpdateCaseAction",
+              "update": {},
+              "condition": {
+                "operator": "=",
+                "doc_type": "FormActionCondition",
+                "answer": null,
+                "question": null,
+                "type": "never"
+              }
+            },
+            "update_referral": {
+              "doc_type": "UpdateReferralAction",
+              "followup_date": null,
+              "condition": {
+                "operator": "=",
+                "doc_type": "FormActionCondition",
+                "answer": null,
+                "question": null,
+                "type": "never"
+              }
+            },
+            "referral_preload": {
+              "preload": {},
+              "doc_type": "PreloadAction",
+              "condition": {
+                "operator": "=",
+                "doc_type": "FormActionCondition",
+                "answer": null,
+                "question": null,
+                "type": "never"
+              }
+            },
+            "case_preload": {
+              "preload": {},
+              "doc_type": "PreloadAction",
+              "condition": {
+                "answer": null,
+                "question": null,
+                "type": "always",
+                "operator": null,
+                "doc_type": "FormActionCondition"
+              }
+            },
+            "close_case": {
+              "doc_type": "FormAction",
+              "condition": {
+                "operator": null,
+                "doc_type": "FormActionCondition",
+                "answer": null,
+                "question": null,
+                "type": "never"
+              }
+            }
+          },
+          "version": null,
+          "no_vellum": false,
+          "media_image": null,
+          "form_links": [],
+          "post_form_workflow": "default",
+          "form_type": "module_form",
+          "media_audio": null,
+          "unique_id": "43bfab4ded5e7093e0377d3db9965e453bfdbfe2"
+        },
+        {
+          "doc_type": "Form",
+          "xmlns": "http://openrosa.org/formdesigner/EBAB623F-3DF8-421B-A083-ED7CEF5A9A97",
+          "form_filter": "",
+          "name": {
+            "en": "Play Song"
+          },
+          "auto_gps_capture": false,
+          "schedule_form_id": null,
+          "show_count": false,
+          "requires": "case",
+          "actions": {
+            "doc_type": "FormActions",
+            "subcases": [],
+            "usercase_preload": {
+              "preload": {},
+              "doc_type": "PreloadAction",
+              "condition": {
+                "operator": "=",
+                "doc_type": "FormActionCondition",
+                "answer": null,
+                "question": null,
+                "type": "never"
+              }
+            },
+            "update_case": {
+              "doc_type": "UpdateCaseAction",
+              "update": {
+                "plays": {
+                  "question_path": "/data/new_plays",
+                  "update_mode": "always"
                 },
-                "media_audio":null,
-                "media_image":null,
-                "show":false
-            },
-            "media_image":null,
-            "parent_select":{  
-                "active":false,
-                "module_id":null,
-                "relationship":"parent",
-                "doc_type":"ParentSelect"
-            },
-            "forms":[  
-                {  
-                    "doc_type":"Form",
-                    "xmlns":"http://openrosa.org/formdesigner/B520859B-BE3D-4DAB-B8E9-585C3E1019C5",
-                    "form_filter":"",
-                    "name":{  
-                        "en":"Add Song"
-                    },
-                    "auto_gps_capture":false,
-                    "schedule_form_id":null,
-                    "show_count":false,
-                    "requires":"none",
-                    "actions":{  
-                        "doc_type":"FormActions",
-                        "subcases":[  
-
-                        ],
-                        "usercase_preload":{  
-                            "preload":{  
-
-                            },
-                            "doc_type":"PreloadAction",
-                            "condition":{  
-                                "operator":"=",
-                                "doc_type":"FormActionCondition",
-                                "answer":null,
-                                "question":null,
-                                "type":"never"
-                            }
-                        },
-                        "update_case":{  
-                            "doc_type":"UpdateCaseAction",
-                            "update":{  
-                              "plays": {
-                                "question_path": "/data/plays",
-                                "update_mode": "always"
-                              },
-                              "artist": {
-                                "question_path": "/data/artist",
-                                "update_mode": "always"
-                              }
-                            },
-                            "condition":{  
-                                "answer":null,
-                                "question":null,
-                                "type":"always",
-                                "operator":null,
-                                "doc_type":"FormActionCondition"
-                            }
-                        },
-                        "close_referral":{  
-                            "doc_type":"FormAction",
-                            "condition":{  
-                                "operator":"=",
-                                "doc_type":"FormActionCondition",
-                                "answer":null,
-                                "question":null,
-                                "type":"never"
-                            }
-                        },
-                        "open_referral":{  
-                            "name_path":null,
-                            "doc_type":"OpenReferralAction",
-                            "condition":{  
-                                "operator":"=",
-                                "doc_type":"FormActionCondition",
-                                "answer":null,
-                                "question":null,
-                                "type":"never"
-                            },
-                            "followup_date":null
-                        },
-                        "open_case":{  
-                            "name_path":"/data/name",
-                            "doc_type":"OpenCaseAction",
-                            "external_id":null,
-                            "condition":{  
-                                "operator":null,
-                                "doc_type":"FormActionCondition",
-                                "answer":null,
-                                "question":null,
-                                "type":"always"
-                            }
-                        },
-                        "usercase_update":{  
-                            "doc_type":"UpdateCaseAction",
-                            "update":{  
-
-                            },
-                            "condition":{  
-                                "operator":"=",
-                                "doc_type":"FormActionCondition",
-                                "answer":null,
-                                "question":null,
-                                "type":"never"
-                            }
-                        },
-                        "update_referral":{  
-                            "doc_type":"UpdateReferralAction",
-                            "followup_date":null,
-                            "condition":{  
-                                "operator":"=",
-                                "doc_type":"FormActionCondition",
-                                "answer":null,
-                                "question":null,
-                                "type":"never"
-                            }
-                        },
-                        "referral_preload":{  
-                            "preload":{  
-
-                            },
-                            "doc_type":"PreloadAction",
-                            "condition":{  
-                                "operator":"=",
-                                "doc_type":"FormActionCondition",
-                                "answer":null,
-                                "question":null,
-                                "type":"never"
-                            }
-                        },
-                        "case_preload":{  
-                            "preload":{  
-
-                            },
-                            "doc_type":"PreloadAction",
-                            "condition":{  
-                                "answer":null,
-                                "question":null,
-                                "type":"always",
-                                "operator":null,
-                                "doc_type":"FormActionCondition"
-                            }
-                        },
-                        "close_case":{  
-                            "doc_type":"FormAction",
-                            "condition":{  
-                                "operator":null,
-                                "doc_type":"FormActionCondition",
-                                "answer":null,
-                                "question":null,
-                                "type":"never"
-                            }
-                        }
-                    },
-                    "version":null,
-                    "no_vellum":false,
-                    "media_image":null,
-                    "form_links":[  
-
-                    ],
-                    "post_form_workflow":"default",
-                    "form_type":"module_form",
-                    "media_audio":null,
-                    "unique_id":"43bfab4ded5e7093e0377d3db9965e453bfdbfe2"
-                },
-                {  
-                    "doc_type":"Form",
-                    "xmlns":"http://openrosa.org/formdesigner/EBAB623F-3DF8-421B-A083-ED7CEF5A9A97",
-                    "form_filter":"",
-                    "name":{  
-                        "en":"Play Song"
-                    },
-                    "auto_gps_capture":false,
-                    "schedule_form_id":null,
-                    "show_count":false,
-                    "requires":"case",
-                    "actions":{  
-                        "doc_type":"FormActions",
-                        "subcases":[  
-
-                        ],
-                        "usercase_preload":{  
-                            "preload":{  
-
-                            },
-                            "doc_type":"PreloadAction",
-                            "condition":{  
-                                "operator":"=",
-                                "doc_type":"FormActionCondition",
-                                "answer":null,
-                                "question":null,
-                                "type":"never"
-                            }
-                        },
-                        "update_case":{  
-                            "doc_type":"UpdateCaseAction",
-                            "update":{  
-                              "plays": {
-                                "question_path": "/data/new_plays",
-                                "update_mode": "always"
-                              },
-                              "last_played": {
-                                "question_path": "/data/today",
-                                "update_mode": "always"
-                              }
-                            },
-                            "condition":{  
-                                "answer":null,
-                                "question":null,
-                                "type":"always",
-                                "operator":null,
-                                "doc_type":"FormActionCondition"
-                            }
-                        },
-                        "close_referral":{  
-                            "doc_type":"FormAction",
-                            "condition":{  
-                                "operator":"=",
-                                "doc_type":"FormActionCondition",
-                                "answer":null,
-                                "question":null,
-                                "type":"never"
-                            }
-                        },
-                        "open_referral":{  
-                            "name_path":null,
-                            "doc_type":"OpenReferralAction",
-                            "condition":{  
-                                "operator":"=",
-                                "doc_type":"FormActionCondition",
-                                "answer":null,
-                                "question":null,
-                                "type":"never"
-                            },
-                            "followup_date":null
-                        },
-                        "open_case":{  
-                            "name_path":null,
-                            "doc_type":"OpenCaseAction",
-                            "external_id":null,
-                            "condition":{  
-                                "operator":null,
-                                "doc_type":"FormActionCondition",
-                                "answer":null,
-                                "question":null,
-                                "type":"never"
-                            }
-                        },
-                        "usercase_update":{  
-                            "doc_type":"UpdateCaseAction",
-                            "update":{  
-
-                            },
-                            "condition":{  
-                                "operator":"=",
-                                "doc_type":"FormActionCondition",
-                                "answer":null,
-                                "question":null,
-                                "type":"never"
-                            }
-                        },
-                        "update_referral":{  
-                            "doc_type":"UpdateReferralAction",
-                            "followup_date":null,
-                            "condition":{  
-                                "operator":"=",
-                                "doc_type":"FormActionCondition",
-                                "answer":null,
-                                "question":null,
-                                "type":"never"
-                            }
-                        },
-                        "referral_preload":{  
-                            "preload":{  
-
-                            },
-                            "doc_type":"PreloadAction",
-                            "condition":{  
-                                "operator":"=",
-                                "doc_type":"FormActionCondition",
-                                "answer":null,
-                                "question":null,
-                                "type":"never"
-                            }
-                        },
-                        "case_preload":{  
-                            "preload":{  
-                                "/data/old_plays":"plays"
-                            },
-                            "doc_type":"PreloadAction",
-                            "condition":{  
-                                "answer":null,
-                                "question":null,
-                                "type":"always",
-                                "operator":null,
-                                "doc_type":"FormActionCondition"
-                            }
-                        },
-                        "close_case":{  
-                            "doc_type":"FormAction",
-                            "condition":{  
-                                "operator":null,
-                                "doc_type":"FormActionCondition",
-                                "answer":null,
-                                "question":null,
-                                "type":"never"
-                            }
-                        }
-                    },
-                    "version":null,
-                    "no_vellum":false,
-                    "media_image":null,
-                    "form_links":[  
-
-                    ],
-                    "post_form_workflow":"default",
-                    "form_type":"module_form",
-                    "media_audio":null,
-                    "unique_id":"664a12c82d9cb0810f897e3a00d3714f75ac7c62"
+                "last_played": {
+                  "question_path": "/data/today",
+                  "update_mode": "always"
                 }
-            ],
-            "module_filter":null,
-            "module_type":"basic",
-            "case_list_form":{  
-                "doc_type":"CaseListForm",
-                "label":{  
-
-                },
-                "media_audio":null,
-                "form_id":null,
-                "media_image":null
+              },
+              "condition": {
+                "answer": null,
+                "question": null,
+                "type": "always",
+                "operator": null,
+                "doc_type": "FormActionCondition"
+              }
             },
-            "case_details":{  
-                "doc_type":"DetailPair",
-                "short":{  
-                    "doc_type":"Detail",
-                    "persist_case_context":false,
-                    "lookup_extras":[  
-
-                    ],
-                    "sort_elements":[  
-
-                    ],
-                    "tabs":[  
-
-                    ],
-                    "lookup_responses":[  
-
-                    ],
-                    "lookup_image":null,
-                    "filter":null,
-                    "persist_tile_on_forms":false,
-                    "custom_xml":"",
-                    "lookup_enabled":false,
-                    "lookup_name":null,
-                    "use_case_tiles":false,
-                    "pull_down_tile":false,
-                    "lookup_action":null,
-                    "display":"short",
-                    "columns":[  
-                        {  
-                            "doc_type":"DetailColumn",
-                            "nodeset":"",
-                            "filter_xpath":"",
-                            "format":"plain",
-                            "isTab":false,
-                            "enum":[  
-
-                            ],
-                            "time_ago_interval":365.25,
-                            "late_flag":30,
-                            "hasNodeset":false,
-                            "header":{  
-                                "fra":"",
-                                "en":"Name"
-                            },
-                            "connectors":{  
-
-                            },
-                            "case_tile_field":"",
-                            "calc_xpath":".",
-                            "field":"name",
-                            "model":"case",
-                            "hasAutocomplete":true,
-                            "graph_configuration":null,
-                            "advanced":""
-                        }
-                    ]
-                },
-                "long":{  
-                    "doc_type":"Detail",
-                    "persist_case_context":null,
-                    "lookup_extras":[  
-
-                    ],
-                    "sort_elements":[  
-
-                    ],
-                    "tabs":[  
-                        {  
-                            "doc_type":"DetailTab",
-                            "has_nodeset":false,
-                            "nodeset":"",
-                            "isTab":true,
-                            "header":{  
-                                "en":"Basics"
-                            },
-                            "connectors":{  
-
-                            },
-                            "starting_index":0
-                        },
-                        {  
-                            "doc_type":"DetailTab",
-                            "has_nodeset":true,
-                            "nodeset":"",
-                            "nodeset_case_type":"show",
-                            "nodeset_filter":"biggest_fan = #user/username",
-                            "isTab":true,
-                            "header":{  
-                                "en":"Data"
-                            },
-                            "connectors":{  
-
-                            },
-                            "starting_index":3
-                        },
-                        {  
-                            "doc_type":"DetailTab",
-                            "has_nodeset":true,
-                            "nodeset":"instance('commtrack:products')/some/data",
-                            "isTab":true,
-                            "header":{  
-                                "en":"External Data"
-                            },
-                            "starting_index":4,
-                            "relevant": "gender='male'"
-                        }
-                    ],
-                    "lookup_responses":[  
-
-                    ],
-                    "lookup_image":null,
-                    "filter":null,
-                    "persist_tile_on_forms":null,
-                    "custom_xml":null,
-                    "lookup_enabled":false,
-                    "lookup_name":null,
-                    "use_case_tiles":null,
-                    "pull_down_tile":null,
-                    "lookup_action":null,
-                    "display":"long",
-                    "columns":[  
-                        {  
-                            "doc_type":"DetailColumn",
-                            "nodeset":"",
-                            "filter_xpath":"",
-                            "format":"plain",
-                            "late_flag":30,
-                            "enum":[  
-
-                            ],
-                            "time_ago_interval":365.25,
-                            "hasNodeset":false,
-                            "calc_xpath":".",
-                            "header":{  
-                                "en":"Name"
-                            },
-                            "connectors":{  
-
-                            },
-                            "case_tile_field":"",
-                            "isTab":false,
-                            "field":"name",
-                            "model":"case",
-                            "hasAutocomplete":true,
-                            "graph_configuration":null,
-                            "advanced":""
-                        },
-                        {  
-                            "doc_type":"DetailColumn",
-                            "nodeset":"",
-                            "filter_xpath":"",
-                            "format":"plain",
-                            "late_flag":30,
-                            "enum":[  
-                                {  
-                                    "doc_type":"MappingItem",
-                                    "value":{  
-                                        "en":":)"
-                                    },
-                                    "key":"yes"
-                                },
-                                {  
-                                    "doc_type":"MappingItem",
-                                    "value":{  
-                                        "en":":("
-                                    },
-                                    "key":"no"
-                                }
-                            ],
-                            "time_ago_interval":365.25,
-                            "hasNodeset":false,
-                            "header":{  
-                                "en":"Artist"
-                            },
-                            "connectors":{  
-
-                            },
-                            "case_tile_field":"",
-                            "isTab":false,
-                            "field":"artist",
-                            "calc_xpath":".",
-                            "model":"case",
-                            "hasAutocomplete":true,
-                            "graph_configuration":null,
-                            "advanced":""
-                        },
-                        {  
-                            "doc_type":"DetailColumn",
-                            "nodeset":"",
-                            "filter_xpath":"",
-                            "format":"plain",
-                            "late_flag":30,
-                            "enum":[  
-
-                            ],
-                            "time_ago_interval":365.25,
-                            "hasNodeset":false,
-                            "header":{  
-                                "en":"Plays"
-                            },
-                            "connectors":{  
-
-                            },
-                            "case_tile_field":"",
-                            "isTab":false,
-                            "field":"plays",
-                            "calc_xpath":".",
-                            "model":"case",
-                            "hasAutocomplete":true,
-                            "graph_configuration":null,
-                            "advanced":""
-                        },
-                        {  
-                            "case_tile_field":"",
-                            "doc_type":"DetailColumn",
-                            "filter_xpath":"",
-                            "format":"calculate",
-                            "late_flag":30,
-                            "nodeset":"",
-                            "enum":[  
-
-                            ],
-                            "connectors":{  
-
-                            },
-                            "hasNodeset":false,
-                            "header":{  
-                                "en":"Column"
-                            },
-                            "time_ago_interval":365.25,
-                            "field":"column",
-                            "isTab":false,
-                            "calc_xpath":"column",
-                            "model":"case",
-                            "hasAutocomplete":false,
-                            "graph_configuration":null,
-                            "advanced":""
-                        },
-                        {  
-                            "case_tile_field":"",
-                            "doc_type":"DetailColumn",
-                            "filter_xpath":"",
-                            "format":"calculate",
-                            "late_flag":30,
-                            "nodeset":"",
-                            "enum":[  
-
-                            ],
-                            "connectors":{  
-
-                            },
-                            "hasNodeset":false,
-                            "header":{  
-                                "en":"Column"
-                            },
-                            "time_ago_interval":365.25,
-                            "field":"column",
-                            "isTab":false,
-                            "calc_xpath":"column",
-                            "model":"case",
-                            "hasAutocomplete":false,
-                            "graph_configuration":null,
-                            "advanced":""
-                        },
-                        {
-                            "doc_type":"DetailColumn",
-                            "nodeset":"",
-                            "filter_xpath":"",
-                            "format":"invisible",
-                            "late_flag":30,
-                            "enum":[
-
-                            ],
-                            "time_ago_interval":365.25,
-                            "hasNodeset":false,
-                            "calc_xpath":".",
-                            "header":{
-                                "en":"Gender"
-                            },
-                            "connectors":{
-
-                            },
-                            "case_tile_field":"",
-                            "isTab":false,
-                            "field":"gender",
-                            "model":"case",
-                            "hasAutocomplete":true,
-                            "graph_configuration":null,
-                            "advanced":""
-                        }
-                    ]
-                }
+            "close_referral": {
+              "doc_type": "FormAction",
+              "condition": {
+                "operator": "=",
+                "doc_type": "FormActionCondition",
+                "answer": null,
+                "question": null,
+                "type": "never"
+              }
             },
-            "doc_type":"Module",
-            "name":{  
-                "en":"Songs"
+            "open_referral": {
+              "name_path": null,
+              "doc_type": "OpenReferralAction",
+              "condition": {
+                "operator": "=",
+                "doc_type": "FormActionCondition",
+                "answer": null,
+                "question": null,
+                "type": "never"
+              },
+              "followup_date": null
             },
-            "case_type":"song",
-            "task_list":{  
-                "doc_type":"CaseList",
-                "label":{  
-
-                },
-                "media_audio":null,
-                "media_image":null,
-                "show":false
+            "open_case": {
+              "name_update": null,
+              "doc_type": "OpenCaseAction",
+              "external_id": null,
+              "condition": {
+                "operator": null,
+                "doc_type": "FormActionCondition",
+                "answer": null,
+                "question": null,
+                "type": "never"
+              }
             },
-            "fixture_select":{  
-                "xpath":"",
-                "doc_type":"FixtureSelect",
-                "variable_column":null,
-                "fixture_type":null,
-                "active":false,
-                "localize":false,
-                "display_column":null
+            "usercase_update": {
+              "doc_type": "UpdateCaseAction",
+              "update": {},
+              "condition": {
+                "operator": "=",
+                "doc_type": "FormActionCondition",
+                "answer": null,
+                "question": null,
+                "type": "never"
+              }
             },
-            "media_audio":null,
-            "unique_id":"b8df7e2d265f07f1f83c18465dd06990f9178a29"
+            "update_referral": {
+              "doc_type": "UpdateReferralAction",
+              "followup_date": null,
+              "condition": {
+                "operator": "=",
+                "doc_type": "FormActionCondition",
+                "answer": null,
+                "question": null,
+                "type": "never"
+              }
+            },
+            "referral_preload": {
+              "preload": {},
+              "doc_type": "PreloadAction",
+              "condition": {
+                "operator": "=",
+                "doc_type": "FormActionCondition",
+                "answer": null,
+                "question": null,
+                "type": "never"
+              }
+            },
+            "case_preload": {
+              "preload": {
+                "/data/old_plays": "plays"
+              },
+              "doc_type": "PreloadAction",
+              "condition": {
+                "answer": null,
+                "question": null,
+                "type": "always",
+                "operator": null,
+                "doc_type": "FormActionCondition"
+              }
+            },
+            "close_case": {
+              "doc_type": "FormAction",
+              "condition": {
+                "operator": null,
+                "doc_type": "FormActionCondition",
+                "answer": null,
+                "question": null,
+                "type": "never"
+              }
+            }
+          },
+          "version": null,
+          "no_vellum": false,
+          "media_image": null,
+          "form_links": [],
+          "post_form_workflow": "default",
+          "form_type": "module_form",
+          "media_audio": null,
+          "unique_id": "664a12c82d9cb0810f897e3a00d3714f75ac7c62"
         }
-    ],
-    "created_from_template":null,
-    "attribution_notes":null,
-    "translation_strategy":"select-known",
-    "case_sharing":false,
-    "show_user_registration":false
+      ],
+      "module_filter": null,
+      "module_type": "basic",
+      "case_list_form": {
+        "doc_type": "CaseListForm",
+        "label": {},
+        "media_audio": null,
+        "form_id": null,
+        "media_image": null
+      },
+      "case_details": {
+        "doc_type": "DetailPair",
+        "short": {
+          "doc_type": "Detail",
+          "persist_case_context": false,
+          "lookup_extras": [],
+          "sort_elements": [],
+          "tabs": [],
+          "lookup_responses": [],
+          "lookup_image": null,
+          "filter": null,
+          "persist_tile_on_forms": false,
+          "custom_xml": "",
+          "lookup_enabled": false,
+          "lookup_name": null,
+          "use_case_tiles": false,
+          "pull_down_tile": false,
+          "lookup_action": null,
+          "display": "short",
+          "columns": [
+            {
+              "doc_type": "DetailColumn",
+              "nodeset": "",
+              "filter_xpath": "",
+              "format": "plain",
+              "isTab": false,
+              "enum": [],
+              "time_ago_interval": 365.25,
+              "late_flag": 30,
+              "hasNodeset": false,
+              "header": {
+                "fra": "",
+                "en": "Name"
+              },
+              "connectors": {},
+              "case_tile_field": "",
+              "calc_xpath": ".",
+              "field": "name",
+              "model": "case",
+              "hasAutocomplete": true,
+              "graph_configuration": null,
+              "advanced": ""
+            }
+          ]
+        },
+        "long": {
+          "doc_type": "Detail",
+          "persist_case_context": null,
+          "lookup_extras": [],
+          "sort_elements": [],
+          "tabs": [
+            {
+              "doc_type": "DetailTab",
+              "has_nodeset": false,
+              "nodeset": "",
+              "isTab": true,
+              "header": {
+                "en": "Basics"
+              },
+              "connectors": {},
+              "starting_index": 0
+            },
+            {
+              "doc_type": "DetailTab",
+              "has_nodeset": true,
+              "nodeset": "",
+              "nodeset_case_type": "show",
+              "nodeset_filter": "biggest_fan = #user/username",
+              "isTab": true,
+              "header": {
+                "en": "Data"
+              },
+              "connectors": {},
+              "starting_index": 3
+            },
+            {
+              "doc_type": "DetailTab",
+              "has_nodeset": true,
+              "nodeset": "instance('commtrack:products')/some/data",
+              "isTab": true,
+              "header": {
+                "en": "External Data"
+              },
+              "starting_index": 4,
+              "relevant": "gender='male'"
+            }
+          ],
+          "lookup_responses": [],
+          "lookup_image": null,
+          "filter": null,
+          "persist_tile_on_forms": null,
+          "custom_xml": null,
+          "lookup_enabled": false,
+          "lookup_name": null,
+          "use_case_tiles": null,
+          "pull_down_tile": null,
+          "lookup_action": null,
+          "display": "long",
+          "columns": [
+            {
+              "doc_type": "DetailColumn",
+              "nodeset": "",
+              "filter_xpath": "",
+              "format": "plain",
+              "late_flag": 30,
+              "enum": [],
+              "time_ago_interval": 365.25,
+              "hasNodeset": false,
+              "calc_xpath": ".",
+              "header": {
+                "en": "Name"
+              },
+              "connectors": {},
+              "case_tile_field": "",
+              "isTab": false,
+              "field": "name",
+              "model": "case",
+              "hasAutocomplete": true,
+              "graph_configuration": null,
+              "advanced": ""
+            },
+            {
+              "doc_type": "DetailColumn",
+              "nodeset": "",
+              "filter_xpath": "",
+              "format": "plain",
+              "late_flag": 30,
+              "enum": [
+                {
+                  "doc_type": "MappingItem",
+                  "value": {
+                    "en": ":)"
+                  },
+                  "key": "yes"
+                },
+                {
+                  "doc_type": "MappingItem",
+                  "value": {
+                    "en": ":("
+                  },
+                  "key": "no"
+                }
+              ],
+              "time_ago_interval": 365.25,
+              "hasNodeset": false,
+              "header": {
+                "en": "Artist"
+              },
+              "connectors": {},
+              "case_tile_field": "",
+              "isTab": false,
+              "field": "artist",
+              "calc_xpath": ".",
+              "model": "case",
+              "hasAutocomplete": true,
+              "graph_configuration": null,
+              "advanced": ""
+            },
+            {
+              "doc_type": "DetailColumn",
+              "nodeset": "",
+              "filter_xpath": "",
+              "format": "plain",
+              "late_flag": 30,
+              "enum": [],
+              "time_ago_interval": 365.25,
+              "hasNodeset": false,
+              "header": {
+                "en": "Plays"
+              },
+              "connectors": {},
+              "case_tile_field": "",
+              "isTab": false,
+              "field": "plays",
+              "calc_xpath": ".",
+              "model": "case",
+              "hasAutocomplete": true,
+              "graph_configuration": null,
+              "advanced": ""
+            },
+            {
+              "case_tile_field": "",
+              "doc_type": "DetailColumn",
+              "filter_xpath": "",
+              "format": "plain",
+              "late_flag": 30,
+              "nodeset": "",
+              "enum": [],
+              "connectors": {},
+              "hasNodeset": false,
+              "header": {
+                "en": "Column"
+              },
+              "time_ago_interval": 365.25,
+              "field": "column",
+              "isTab": false,
+              "calc_xpath": "column",
+              "model": "case",
+              "hasAutocomplete": false,
+              "graph_configuration": null,
+              "advanced": "",
+              "useXpathExpression": true
+            },
+            {
+              "case_tile_field": "",
+              "doc_type": "DetailColumn",
+              "filter_xpath": "",
+              "format": "plain",
+              "late_flag": 30,
+              "nodeset": "",
+              "enum": [],
+              "connectors": {},
+              "hasNodeset": false,
+              "header": {
+                "en": "Column"
+              },
+              "time_ago_interval": 365.25,
+              "field": "column",
+              "isTab": false,
+              "calc_xpath": "column",
+              "model": "case",
+              "hasAutocomplete": false,
+              "graph_configuration": null,
+              "advanced": "",
+              "useXpathExpression": true
+            },
+            {
+              "doc_type": "DetailColumn",
+              "nodeset": "",
+              "filter_xpath": "",
+              "format": "invisible",
+              "late_flag": 30,
+              "enum": [],
+              "time_ago_interval": 365.25,
+              "hasNodeset": false,
+              "calc_xpath": ".",
+              "header": {
+                "en": "Gender"
+              },
+              "connectors": {},
+              "case_tile_field": "",
+              "isTab": false,
+              "field": "gender",
+              "model": "case",
+              "hasAutocomplete": true,
+              "graph_configuration": null,
+              "advanced": ""
+            }
+          ]
+        }
+      },
+      "doc_type": "Module",
+      "name": {
+        "en": "Songs"
+      },
+      "case_type": "song",
+      "task_list": {
+        "doc_type": "CaseList",
+        "label": {},
+        "media_audio": null,
+        "media_image": null,
+        "show": false
+      },
+      "fixture_select": {
+        "xpath": "",
+        "doc_type": "FixtureSelect",
+        "variable_column": null,
+        "fixture_type": null,
+        "active": false,
+        "localize": false,
+        "display_column": null
+      },
+      "media_audio": null,
+      "unique_id": "b8df7e2d265f07f1f83c18465dd06990f9178a29"
+    }
+  ],
+  "created_from_template": null,
+  "attribution_notes": null,
+  "translation_strategy": "select-known",
+  "case_sharing": false,
+  "show_user_registration": false
 }

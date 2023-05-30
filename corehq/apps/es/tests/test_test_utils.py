@@ -1,184 +1,162 @@
 from django.test import SimpleTestCase
-from testil import assert_raises, eq
+from nose.tools import assert_raises_regex
+from testil import assert_raises
+from unittest.mock import patch
 
-from .utils import es_test, es_test_attr, temporary_index
-from ..client import ElasticManageAdapter
-from ..exceptions import ESRegistryError
-from ..registry import (
-    get_registry,
-    verify_registered,
-)
+from .utils import TestDocumentAdapter, es_test, es_test_attr, temporary_index
+from ..client import manager
 
 
-class MetaInfo:
+class TestSetupAndCleanups(SimpleTestCase):
 
-    def __init__(self, name):
-        self.alias = name
+    class TestSimpleTestCase(SimpleTestCase):
+        """Use a subclass of ``SimpleTestCase`` for making discrete calls to
+        setUp[Class]/do[Class]Cleanups so we can't break other tests if we use it
+        in a non-standard way.
+        """
 
+    def test_no_setup(self):
+        test = es_test(self.TestSimpleTestCase)()
+        with patch.object(manager, "index_create") as mock:
+            test.setUp()
+        mock.assert_not_called()
 
-CATS = MetaInfo("cats")
-DOGS = MetaInfo("dogs")
-PIGS = MetaInfo("pigs")
+    def test_no_cleanups(self):
+        test = es_test(self.TestSimpleTestCase)()
+        test.setUp()
+        with patch.object(manager, "index_delete") as mock:
+            test.tearDown()
+            test.doCleanups()
+        mock.assert_not_called()
 
+    def test_no_class_setup(self):
+        Test = es_test(self.TestSimpleTestCase)
+        with patch.object(manager, "index_create") as mock:
+            Test.setUpClass()
+        mock.assert_not_called()
+        Test.tearDownClass()
+        Test.doClassCleanups()
 
-@es_test
-class TestNoSetup(SimpleTestCase):
-
-    def test_no_indices_registered(self):
-        with self.assertRaises(AttributeError):
-            self._indices
-
-
-@es_test(index=CATS)
-class TestSetupIndex(SimpleTestCase):
-
-    def test_index_registered(self):
-        self.assertEqual(list(self._indices.values()), [CATS])
-
-
-@es_test(indices=[CATS, DOGS])
-class TestSetupIndices(SimpleTestCase):
-
-    def test_indices_registered(self):
-        verify_registered(DOGS)
-        verify_registered(CATS)
-
-
-@es_test(index=CATS, setup_class=True)
-class TestSetupClass(SimpleTestCase):
-
-    def test_class_indices_registered(self):
-        self.assertEqual(list(self.__class__._indices.values()), [CATS])
+    def test_no_class_cleanups(self):
+        Test = es_test(self.TestSimpleTestCase)
+        Test.setUpClass()
+        with patch.object(manager, "index_delete") as mock:
+            Test.tearDownClass()
+            Test.doClassCleanups()
+        mock.assert_not_called()
 
 
-@es_test(index=CATS, setup_class=True)
-class BaseSetupTeardownCatsClass(SimpleTestCase):
-
-    state_log = []
-
-    @classmethod
-    def setUpClass(cls):
-        super().setUpClass()
-        cls.state_log.append("class_up")
-
-    @classmethod
-    def tearDownClass(cls):
-        super().tearDownClass()
-        cls.state_log.append("class_down")
+cats_adapter = TestDocumentAdapter("cats", "cat")
+dogs_adapter = TestDocumentAdapter("dogs", "dog")
+pigs_adapter = TestDocumentAdapter("pigs", "pig")
 
 
-class TestSetupTeardownClassDecoratedAndCalled(BaseSetupTeardownCatsClass):
+def test_setup_tolerates_existing_index():
 
-    @classmethod
-    def tearDownClass(cls):
-        super().tearDownClass()
-        # non-standard: test that the class is torn down
-        with assert_raises(ESRegistryError):
-            verify_registered(CATS)
-        eq(cls.state_log, ["class_up", "class_down"])
+    @es_test(requires=[cats_adapter])
+    class TestCatsRequired(SimpleTestCase):
+        def test_index_exists(self):
+            assert_index_exists(cats_adapter)
 
-    def test_class_is_setup(self):
-        verify_registered(CATS)
-        self.assertEqual(self.state_log, ["class_up"])
+    dirty_test = TestCatsRequired()
+    dirty_test.setUp()
+    dirty_test.test_index_exists()
+    # dirty test never cleans up
+    tolerant_test = TestCatsRequired()
+    tolerant_test.setUp()  # does not raise "index_already_exists_exception"
+    tolerant_test.test_index_exists()
+    tolerant_test.tearDown()
+    tolerant_test.doCleanups()
+    # tolerant test still cleans up
+    assert_not_index_exists(cats_adapter)
 
 
-@es_test(index=CATS)
-class TestSetupTeardownDecoratedAndCalled(SimpleTestCase):
+def test_setup_cleanup_index():
 
-    state_log = []
+    @es_test(requires=[pigs_adapter])
+    class Test(SimpleTestCase):
+        def test_index_exists(self):
+            assert_index_exists(pigs_adapter)
 
-    @classmethod
-    def tearDownClass(cls):
-        super().tearDownClass()
-        # non-standard: test that the instance is torn down
-        with assert_raises(ESRegistryError):
-            verify_registered(CATS)
-        eq(cls.state_log, ["instance_up", "instance_down"])
+    assert_not_index_exists(pigs_adapter)
+    test = Test()
+    test.setUp()
+    test.test_index_exists()
+    test.tearDown()
+    test.doCleanups()
+    assert_not_index_exists(pigs_adapter)
 
-    def setUp(self):
-        super().setUp()
-        self.state_log.append("instance_up")
 
-    def tearDown(self):
-        super().tearDown()
-        self.state_log.append("instance_down")
+def test_setup_cleanup_class_index():
 
-    def test_instance_is_setup(self):
-        verify_registered(CATS)
-        self.assertEqual(self.state_log, ["instance_up"])
+    @es_test(requires=[pigs_adapter], setup_class=True)
+    class Test(SimpleTestCase):
+        def test_index_exists(self):
+            assert_index_exists(pigs_adapter)
+
+    assert_not_index_exists(pigs_adapter)
+    Test.setUpClass()
+    Test().test_index_exists()
+    Test.tearDownClass()
+    Test.doClassCleanups()
+    assert_not_index_exists(pigs_adapter)
 
 
 class TestPartialESTest(SimpleTestCase):
 
     @es_test_attr
-    def test_no_pet_indices_registered(self):
-        infos = get_registry().values()
-        self.assertNotIn(CATS, infos)
-        self.assertNotIn(DOGS, infos)
-        self.assertNotIn(PIGS, infos)
+    def test_no_pet_indexes_exist(self):
+        assert_not_index_exists(cats_adapter)
+        assert_not_index_exists(dogs_adapter)
 
-    @es_test(index=CATS)
-    def test_only_cat_indices_registered(self):
-        verify_registered(CATS)
-        with self.assertRaises(ESRegistryError):
-            verify_registered(DOGS)
+    @es_test(requires=[cats_adapter])
+    def test_only_cat_index_exists(self):
+        assert_index_exists(cats_adapter)
+        assert_not_index_exists(dogs_adapter)
 
-    @es_test(index=DOGS)
-    def test_only_dog_indices_registered(self):
-        verify_registered(DOGS)
-        with self.assertRaises(ESRegistryError):
-            verify_registered(CATS)
+    @es_test(requires=[dogs_adapter])
+    def test_only_dog_index_exists(self):
+        assert_index_exists(dogs_adapter)
+        assert_not_index_exists(cats_adapter)
 
 
 @es_test_attr
-def test_registry_state_with_function_decorator():
+def test_index_state_with_function_decorator():
 
-    @es_test(index=PIGS)
-    def test_pig_index_registered():
-        verify_registered(PIGS)
+    @es_test(requires=[pigs_adapter])
+    def test_pig_index_exists():
+        assert_index_exists(pigs_adapter)
 
-    def test_pig_index_not_registered():
-        with assert_raises(ESRegistryError):
-            verify_registered(PIGS)
+    def test_pig_index_does_not_exist():
+        assert_not_index_exists(pigs_adapter)
 
-    yield test_pig_index_registered,
-    yield test_pig_index_not_registered,
+    yield test_pig_index_exists,
+    yield test_pig_index_does_not_exist,
 
 
-@es_test(index=PIGS, setup_class=True)
-class TestNoSetupTeardownMethods:
+def assert_index_exists(adapter):
+    indexes = list(manager.get_indices())
+    assert adapter.index_name in indexes, \
+        f"AssertionError: {adapter.index_name!r} not found in {indexes!r}"
 
-    def test_test_instantiation_should_not_raise_attributeerror(self):
-        pass
+
+def assert_not_index_exists(adapter):
+    indexes = list(manager.get_indices())
+    assert adapter.index_name not in indexes, \
+        f"AssertionError: {adapter.index_name!r} unexpectedly found in {indexes!r}"
 
 
 @es_test_attr
-def test_setup_class_expects_classmethods():
-
-    with assert_raises(ValueError):
-
-        @es_test(index=PIGS, setup_class=True)
-        class TestMissingClassmethods:
-
+def test_setup_class_expects_classmethod():
+    with assert_raises_regex(ValueError, "^'setup_class' expects a classmethod"):
+        @es_test(requires=[pigs_adapter], setup_class=True)
+        class TestExpectsClassmethod:
             def setUpClass(self):
-                pass
-
-
-@es_test_attr
-def test_teardown_class_expects_classmethods():
-
-    with assert_raises(ValueError):
-
-        @es_test(index=PIGS, setup_class=True)
-        class TestMissingClassmethods:
-
-            def tearDownClass(self):
                 pass
 
 
 @es_test
 def test_temporary_index():
-    manager = ElasticManageAdapter()
     index = "test_index"
 
     def test_temporary_index_with_args(*args):
@@ -187,12 +165,11 @@ def test_temporary_index():
         assert not manager.index_exists(index)
 
     yield test_temporary_index_with_args,  # without type/mapping
-    yield test_temporary_index_with_args, "test_doc", {}  # with type/mapping
+    yield test_temporary_index_with_args, "test_doc", {"_meta": {}}  # with type/mapping
 
 
 @es_test
 def test_temporary_index_fails_with_invalid_args():
-    manager = ElasticManageAdapter()
     index = "test_index"
 
     def test_temporary_index_with_args(type_, mapping):

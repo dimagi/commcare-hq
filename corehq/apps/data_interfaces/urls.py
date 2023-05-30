@@ -1,6 +1,9 @@
 from django.conf.urls import include, re_path as url
 
-from corehq.apps.data_interfaces.dispatcher import EditDataInterfaceDispatcher
+from corehq.apps.data_interfaces.dispatcher import (
+    EditDataInterfaceDispatcher,
+    BulkEditDataInterfaceDispatcher,
+)
 from corehq.apps.data_interfaces.views import (
     AddCaseRuleView,
     AutomaticUpdateRuleListView,
@@ -16,6 +19,8 @@ from corehq.apps.data_interfaces.views import (
     default,
     find_by_id,
     xform_management_job_poll,
+    BulkCaseReassignSatusView,
+    case_reassign_job_poll
 )
 from corehq.apps.userreports.views import UCRExpressionListView, UCRExpressionEditView
 
@@ -34,6 +39,10 @@ edit_data_urls = [
     ),
     url(r'^xform_management/status/poll/(?P<download_id>(?:dl-)?[0-9a-fA-Z]{25,32})/$',
         xform_management_job_poll, name='xform_management_job_poll'),
+    url(r'^case_reassign/status/(?P<download_id>(?:dl-)?[0-9a-fA-Z]{25,32})/$',
+        BulkCaseReassignSatusView.as_view(), name=BulkCaseReassignSatusView.urlname),
+    url(r'^case_reassign/status/poll/(?P<download_id>(?:dl-)?[0-9a-fA-Z]{25,32})/$',
+        case_reassign_job_poll, name='case_reassign_job_poll'),
     url(r'^case_groups/$', CaseGroupListView.as_view(), name=CaseGroupListView.urlname),
     url(r'^case_groups/(?P<group_id>[\w-]+)/$',
         CaseGroupCaseManagementView.as_view(), name=CaseGroupCaseManagementView.urlname),
@@ -47,6 +56,7 @@ edit_data_urls = [
     url(r'^deduplication_rules/edit/(?P<rule_id>\d+)/$', DeduplicationRuleEditView.as_view(),
         name=DeduplicationRuleEditView.urlname),
     EditDataInterfaceDispatcher.url_pattern(),
+    BulkEditDataInterfaceDispatcher.url_pattern(),
 ]
 
 urlpatterns = [
@@ -56,6 +66,6 @@ urlpatterns = [
     url(r'^export/', include('corehq.apps.export.urls')),
     url(r'^find/$', find_by_id, name="data_find_by_id"),
     url(r'^ucr_expressions/$', UCRExpressionListView.as_view(), name=UCRExpressionListView.urlname),
-    url(r'^ucr_expressions/(?P<expression_id>\d+)/$', UCRExpressionEditView.as_view(),
+    url(r'^ucr_expressions/(?P<expression_id>[\d-]+)/$', UCRExpressionEditView.as_view(),
         name=UCRExpressionEditView.urlname),
 ]

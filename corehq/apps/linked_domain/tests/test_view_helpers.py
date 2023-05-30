@@ -42,6 +42,11 @@ from corehq.apps.linked_domain.view_helpers import (
     get_upstream_and_downstream_keywords,
     get_upstream_and_downstream_reports,
     get_upstream_and_downstream_ucr_expressions,
+    pop_app,
+    pop_fixture,
+    pop_keyword,
+    pop_report,
+    pop_ucr_expression,
 )
 from corehq.apps.sms.models import Keyword, KeywordAction
 from corehq.apps.userreports.const import UCR_NAMED_EXPRESSION
@@ -284,25 +289,25 @@ class TestGetDataModels(BaseLinkedDomainTest):
         self.assertEqual(expected_downstream_ucr_expressions, actual_downstream_ucr_expressions)
 
     def test_get_fixtures_for_upstream_domain(self):
-        expected_upstream_fixtures = [self.original_fixture._migration_couch_id]
+        expected_upstream_fixtures = [self.original_fixture.id]
         expected_downstream_fixtures = []
 
         upstream_fixtures, downstream_fixtures = get_upstream_and_downstream_fixtures(self.upstream_domain, None)
-        actual_upstream_fixtures = [fixture._migration_couch_id for fixture in upstream_fixtures.values()]
-        actual_downstream_fixtures = [fixture._migration_couch_id for fixture in downstream_fixtures.values()]
+        actual_upstream_fixtures = [fixture.id for fixture in upstream_fixtures.values()]
+        actual_downstream_fixtures = [fixture.id for fixture in downstream_fixtures.values()]
 
         self.assertEqual(expected_upstream_fixtures, actual_upstream_fixtures)
         self.assertEqual(expected_downstream_fixtures, actual_downstream_fixtures)
 
     def test_get_fixtures_for_downstream_domain(self):
         expected_upstream_fixtures = []
-        expected_downstream_fixtures = [self.original_fixture._migration_couch_id]
+        expected_downstream_fixtures = [self.original_fixture.id]
 
         upstream_fixtures, downstream_fixtures = get_upstream_and_downstream_fixtures(
             self.downstream_domain, self.domain_link
         )
-        actual_upstream_fixtures = [fixture._migration_couch_id for fixture in upstream_fixtures.values()]
-        actual_downstream_fixtures = [fixture._migration_couch_id for fixture in downstream_fixtures.values()]
+        actual_upstream_fixtures = [fixture.id for fixture in upstream_fixtures.values()]
+        actual_downstream_fixtures = [fixture.id for fixture in downstream_fixtures.values()]
 
         self.assertEqual(expected_upstream_fixtures, actual_upstream_fixtures)
         self.assertEqual(expected_downstream_fixtures, actual_downstream_fixtures)
@@ -885,3 +890,21 @@ class TestBuildPullableViewModels(BaseLinkedDomainTest):
             link=self.domain_link, date=datetime.utcnow(), model=model_type, model_detail=model_detail
         )
         sync_event.save()
+
+
+class PopDataModelsTests(TestCase):
+
+    def test_pop_app_returns_none_if_does_not_exist(self):
+        self.assertIsNone(pop_app('unknown', {}))
+
+    def test_pop_fixture_returns_none_if_does_not_exist(self):
+        self.assertIsNone(pop_fixture('unknown', {}, 'pop-test'))
+
+    def test_pop_report_returns_none_if_does_not_exist(self):
+        self.assertIsNone(pop_report('unknown', {}))
+
+    def test_pop_keyword_returns_none_if_does_not_exist(self):
+        self.assertIsNone(pop_keyword(0, {}))
+
+    def test_pop_ucr_expression_returns_none_if_does_not_exist(self):
+        self.assertIsNone(pop_ucr_expression(0, {}))

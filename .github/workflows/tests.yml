@@ -31,8 +31,11 @@ jobs:
     - name: Docker info
       run: |
         docker version
-        docker-compose version
+        docker compose version
     - name: Docker login
+      env:
+        TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
+      if: env.TOKEN != ''
       uses: docker/login-action@v1
       with:
         username: dimagi
@@ -45,6 +48,9 @@ jobs:
         KAFKA_HOSTNAME: kafka
       run: scripts/docker test --noinput --stop -v --divided-we-run=${{ matrix.NOSE_DIVIDED_WE_RUN }} --divide-depth=1 --with-timing --with-flaky --threshold=10 --max-test-time=29
     - name: "Codecov upload"
+      env:
+        TOKEN: ${{ secrets.CODECOV_TOKEN }}
+      if: env.TOKEN != ''
       uses: codecov/codecov-action@v2
       with:
         token: ${{ secrets.CODECOV_TOKEN }}

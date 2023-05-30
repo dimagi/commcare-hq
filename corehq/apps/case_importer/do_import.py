@@ -80,12 +80,14 @@ def do_import(spreadsheet, config, domain, task=None, record_form_callback=None)
 class _Importer(object):
     def __init__(self, domain, config, task, record_form_callback, import_results=None, multi_domain=False):
         self.domain = domain
-        self.config = config
         self.task = task
         self.record_form_callback = record_form_callback
         self.results = import_results or _ImportResults()
+        self.config = config
+        self.submission_handler = SubmitCaseBlockHandler(
+            domain, self.results, self.config.case_type, self.user, record_form_callback, throttle=False
+        )
         self.owner_accessor = _OwnerAccessor(domain, self.user)
-        self.uncreated_external_ids = set()
         self._unsubmitted_caseblocks = []
         self.multi_domain = multi_domain
         if CASE_IMPORT_DATA_DICTIONARY_VALIDATION.enabled(self.domain):
@@ -93,6 +95,7 @@ class _Importer(object):
         else:
             self.fields_to_validate = {}
         self.field_map = self._create_field_map()
+
 
     def do_import(self, spreadsheet):
         with TaskProgressManager(self.task, src="case_importer") as progress_manager:
@@ -115,7 +118,7 @@ class _Importer(object):
                 except exceptions.CaseRowError as error:
                     self.results.add_error(row_num, error)
 
-            self.commit_caseblocks()
+            self.submission_handler.commit_caseblocks()
             return self.results.to_json()
 
     def import_row(self, row_num, raw_row, import_context):
@@ -136,15 +139,15 @@ class _Importer(object):
             user_id=self.user.user_id,
             owner_accessor=self.owner_accessor,
         )
-        if row.relies_on_uncreated_case(self.uncreated_external_ids):
-            self.commit_caseblocks()
+        if row.relies_on_uncreated_case(self.submission_handler.uncreated_external_ids):
+            self.submission_handler.commit_caseblocks()
         if row.is_new_case and not self.config.create_new_cases:
             return
 
         try:
             if row.is_new_case:
                 if row.external_id:
-                    self.uncreated_external_ids.add(row.external_id)
+                    self.submission_handler.uncreated_external_ids.add(row.external_id)
                 caseblock = row.get_create_caseblock()
                 self.results.add_created(row_num)
             else:
@@ -153,7 +156,7 @@ class _Importer(object):
         except CaseBlockError as e:
             raise exceptions.CaseGeneration(message=str(e))
 
-        self.add_caseblock(RowAndCase(row_num, caseblock))
+        self.submission_handler.add_caseblock(RowAndCase(row_num, caseblock))
 
     def _has_custom_case_import_operations(self):
         return any(
@@ -174,65 +177,6 @@ class _Importer(object):
     @cached_property
     def user(self):
         return CouchUser.get_by_user_id(self.config.couch_user_id)
-
-    def add_caseblock(self, caseblock):
-        self._unsubmitted_caseblocks.append(caseblock)
-        # check if we've reached a reasonable chunksize and if so, submit
-        if len(self._unsubmitted_caseblocks) >= CASEBLOCK_CHUNKSIZE:
-            self.commit_caseblocks()
-
-    def commit_caseblocks(self):
-        if self._unsubmitted_caseblocks:
-            self.submit_and_process_caseblocks(self._unsubmitted_caseblocks)
-            self.results.num_chunks += 1
-            self._unsubmitted_caseblocks = []
-            self.uncreated_external_ids = set()
-
-    def submit_and_process_caseblocks(self, caseblocks):
-        if not caseblocks:
-            return
-        self.pre_submit_hook()
-        try:
-            form, cases = self.submit_case_blocks(caseblocks)
-            if form.is_error:
-                raise Exception("Form error during case import: {}".format(form.problem))
-        except Exception:
-            notify_exception(None, "Case Importer: Uncaught failure submitting caseblocks")
-            for row_number, case in caseblocks:
-                self.results.add_error(row_number, exceptions.ImportErrorMessage())
-        else:
-            if self.record_form_callback:
-                self.record_form_callback(form.form_id)
-            properties = {p for c in cases for p in c.dynamic_case_properties().keys()}
-            if self.config.case_type and len(properties):
-                add_inferred_export_properties.delay(
-                    'CaseImporter',
-                    self.domain,
-                    self.config.case_type,
-                    properties,
-                )
-            else:
-                _soft_assert = soft_assert(notify_admins=True)
-                _soft_assert(
-                    len(properties) == 0,
-                    'error adding inferred export properties in domain '
-                    '({}): {}'.format(self.domain, ", ".join(properties))
-                )
-
-    def pre_submit_hook(self):
-        pass
-
-    def submit_case_blocks(self, caseblocks):
-        return submit_case_blocks(
-            [cb.case.as_text() for cb in caseblocks],
-            self.domain,
-            self.user.username,
-            self.user.user_id,
-            device_id=__name__ + ".do_import",
-            # Skip the rate-limiting
-            # because this importing code will take care of any rate-limiting
-            max_wait=None,
-        )
 
     def _parse_search_id(self, row):
         """ Find and convert the search id in an Excel row """
@@ -336,9 +280,7 @@ class _Importer(object):
 class _TimedAndThrottledImporter(_Importer):
     def __init__(self, domain, config, task, record_form_callback, import_results=None, multi_domain=False):
         super().__init__(domain, config, task, record_form_callback, import_results, multi_domain)
-
-        self._last_submission_duration = 1  # duration in seconds; start with a value of 1s
-        self._total_delayed_duration = 0  # sum of all rate limiter delays, in seconds
+        self.submission_handler.throttle = True
 
     def do_import(self, spreadsheet):
         with TimingContext() as timer:
@@ -351,7 +293,7 @@ class _TimedAndThrottledImporter(_Importer):
             return results
 
     def _report_import_timings(self, timer, results):
-        active_duration = timer.duration - self._total_delayed_duration
+        active_duration = timer.duration - self.submission_handler._total_delayed_duration
         rows_created = results['created_count']
         rows_updated = results['match_count']
         rows_failed = results['failed_count']
@@ -370,7 +312,68 @@ class _TimedAndThrottledImporter(_Importer):
                 'status': status,
             })
 
+
+class SubmitCaseBlockHandler(object):
+
+    def __init__(self, domain, import_results, case_type, user, record_form_callback=None, throttle=False):
+        self.domain = domain
+        self._unsubmitted_caseblocks = []
+        self.results = import_results or _ImportResults()
+        self.uncreated_external_ids = set()
+        self.record_form_callback = record_form_callback
+        self._last_submission_duration = 1  # duration in seconds; start with a value of 1s
+        self._total_delayed_duration = 0  # sum of all rate limiter delays, in seconds
+        self.throttle = throttle
+        self.case_type = case_type
+        self.user = user
+
+    def add_caseblock(self, caseblock):
+        self._unsubmitted_caseblocks.append(caseblock)
+        # check if we've reached a reasonable chunksize and if so, submit
+        if len(self._unsubmitted_caseblocks) >= CASEBLOCK_CHUNKSIZE:
+            self.commit_caseblocks()
+
+    def commit_caseblocks(self):
+        if self._unsubmitted_caseblocks:
+            self.submit_and_process_caseblocks(self._unsubmitted_caseblocks)
+            self.results.num_chunks += 1
+            self._unsubmitted_caseblocks = []
+            self.uncreated_external_ids = set()
+
+    def submit_and_process_caseblocks(self, caseblocks):
+        if not caseblocks:
+            return
+        self.pre_submit_hook()
+        try:
+            form, cases = self.submit_case_blocks(caseblocks)
+            if form.is_error:
+                raise Exception("Form error during case import: {}".format(form.problem))
+        except Exception:
+            notify_exception(None, "Case Importer: Uncaught failure submitting caseblocks")
+            for row_number, case in caseblocks:
+                self.results.add_error(row_number, exceptions.ImportErrorMessage())
+        else:
+            if self.record_form_callback:
+                self.record_form_callback(form.form_id)
+            properties = {p for c in cases for p in c.dynamic_case_properties().keys()}
+            if self.case_type and len(properties):
+                add_inferred_export_properties.delay(
+                    'CaseImporter',
+                    self.domain,
+                    self.case_type,
+                    properties,
+                )
+            else:
+                _soft_assert = soft_assert(notify_admins=True)
+                _soft_assert(
+                    len(properties) == 0,
+                    'error adding inferred export properties in domain '
+                    '({}): {}'.format(self.domain, ", ".join(properties))
+                )
+
     def pre_submit_hook(self):
+        if not self.throttle:
+            return
         if rate_limit_submission(
                 self.domain,
                 delay_rather_than_reject=True,
@@ -390,14 +393,29 @@ class _TimedAndThrottledImporter(_Importer):
             )
             self._total_delayed_duration += self._last_submission_duration
 
+
     def submit_case_blocks(self, caseblocks):
+        if not self.throttle:
+            return self._submit_case_blocks(caseblocks)
         timer = None
         try:
             with TimingContext() as timer:
-                return super().submit_case_blocks(caseblocks)
+                return self._submit_case_blocks(caseblocks)
         finally:
             if timer:
                 self._last_submission_duration = timer.duration
+
+    def _submit_case_blocks(self, caseblocks):
+        return submit_case_blocks(
+            [cb.case.as_text() for cb in caseblocks],
+            self.domain,
+            self.user.username,
+            self.user.user_id,
+            device_id=__name__ + ".do_import",
+            # Skip the rate-limiting
+            # because this importing code will take care of any rate-limiting
+            max_wait=None,
+        )
 
 
 class _CaseImportRow(object):
@@ -510,12 +528,15 @@ class _CaseImportRow(object):
         return self.external_id
 
     def _get_caseblock_kwargs(self):
-        return {
+        kwargs = {
             'update': self.fields_to_update,
             'index': self._get_parent_index(),
-            'date_opened': self._get_date_opened() or CaseBlock.undefined,
-            'external_id': self._get_external_id() or CaseBlock.undefined,
         }
+        if date_opened := self._get_date_opened():
+            kwargs['date_opened'] = date_opened
+        if external_id := self._get_external_id():
+            kwargs['external_id'] = external_id
+        return kwargs
 
     def get_create_caseblock(self):
         return CaseBlock(

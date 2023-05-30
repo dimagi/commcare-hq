@@ -1,11 +1,12 @@
+from unittest.mock import patch
 import uuid
 
 from django.test import SimpleTestCase
 
-from corehq.util.es.elasticsearch import ConnectionError
-
-from pillowtop.es_utils import initialize_index_and_mapping
-
+from corehq.apps.es.cases import case_adapter
+from corehq.apps.es.forms import form_adapter
+from corehq.apps.es.groups import group_adapter
+from corehq.apps.es.tests.utils import es_test
 from corehq.apps.export.esaccessors import get_case_export_base_query
 from corehq.apps.export.export import get_export_documents
 from corehq.apps.export.filters import (
@@ -28,14 +29,7 @@ from corehq.apps.export.tests.util import (
     new_case,
     new_form,
 )
-from corehq.apps.es.tests.utils import es_test
 from corehq.apps.groups.models import Group
-from corehq.elastic import get_es_new, send_to_elasticsearch
-from corehq.pillows.mappings.case_mapping import CASE_INDEX_INFO
-from corehq.pillows.mappings.group_mapping import GROUP_INDEX_INFO
-from corehq.pillows.mappings.xform_mapping import XFORM_INDEX_INFO
-from corehq.util.elastic import ensure_index_deleted
-from corehq.util.test_utils import trap_extra_setup
 
 
 @es_test
@@ -49,57 +43,40 @@ class ExportFilterTest(SimpleTestCase):
         )
 
 
-@es_test
+@es_test(
+    requires=[case_adapter, form_adapter, group_adapter],
+    setup_class=True
+)
 class ExportFilterResultTest(SimpleTestCase):
 
     @classmethod
     def setUpClass(cls):
-        with trap_extra_setup(ConnectionError, msg="cannot connect to elasicsearch"):
-            es = get_es_new()
-            cls.tearDownClass()
-            initialize_index_and_mapping(es, CASE_INDEX_INFO)
-            initialize_index_and_mapping(es, GROUP_INDEX_INFO)
-            initialize_index_and_mapping(es, XFORM_INDEX_INFO)
+        super().setUpClass()
+        with patch('corehq.pillows.utils.get_user_type', return_value='CommCareUser'):
+            cases = [
+                new_case(closed=True),
+                new_case(closed=False),
+                new_case(closed=True, owner_id="foo"),
+                new_case(closed=False, owner_id="bar"),
+            ]
+            case_adapter.bulk_index(cases, refresh=True)
 
-        case = new_case(closed=True)
-        send_to_elasticsearch('cases', case.to_json())
+            group = Group(_id=uuid.uuid4().hex, users=["foo", "bar"])
+            cls.group_id = group._id
+            group_adapter.index(group, refresh=True)
 
-        case = new_case(closed=False)
-        send_to_elasticsearch('cases', case.to_json())
+            form_json = new_form({"meta": "", "#type": "data"}).to_json()
+            # fabricate null userID because convert_form_to_xml will not accept it
+            form_json["form"] = {"meta": {"userID": None}}
 
-        case = new_case(closed=True, owner_id="foo")
-        send_to_elasticsearch('cases', case.to_json())
+            forms = [
+                form_json,
+                new_form({"meta": {"userID": ""}, "#type": "data"}),
+                new_form({"meta": {"deviceID": "abc"}, "#type": "data"}),
+                new_form({"meta": {"userID": uuid.uuid4().hex}, "#type": "data"})
+            ]
 
-        case = new_case(closed=False, owner_id="bar")
-        send_to_elasticsearch('cases', case.to_json())
-
-        group = Group(_id=uuid.uuid4().hex, users=["foo", "bar"])
-        cls.group_id = group._id
-        send_to_elasticsearch('groups', group.to_json())
-
-        form_json = new_form({"meta": "", "#type": "data"}).to_json()
-        # fabricate null userID because convert_form_to_xml will not accept it
-        form_json["form"] = {"meta": {"userID": None}}
-        send_to_elasticsearch('forms', form_json)
-
-        form = new_form({"meta": {"userID": ""}, "#type": "data"})
-        send_to_elasticsearch('forms', form.to_json())
-
-        form = new_form({"meta": {"deviceID": "abc"}, "#type": "data"})
-        send_to_elasticsearch('forms', form.to_json())
-
-        form = new_form({"meta": {"userID": uuid.uuid4().hex}, "#type": "data"})
-        send_to_elasticsearch('forms', form.to_json())
-
-        es.indices.refresh(CASE_INDEX_INFO.index)
-        es.indices.refresh(XFORM_INDEX_INFO.index)
-        es.indices.refresh(GROUP_INDEX_INFO.index)
-
-    @classmethod
-    def tearDownClass(cls):
-        ensure_index_deleted(CASE_INDEX_INFO.index)
-        ensure_index_deleted(XFORM_INDEX_INFO.index)
-        ensure_index_deleted(GROUP_INDEX_INFO.index)
+            form_adapter.bulk_index(forms, refresh=True)
 
     def test_filter_combination(self):
         owner_filter = OwnerFilter(DEFAULT_USER)

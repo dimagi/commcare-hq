@@ -5,6 +5,7 @@ from math import ceil
 
 from django.contrib import messages
 from django.core.exceptions import ValidationError
+from django.core.paginator import Paginator
 from django.db.models import Count
 from django.http import HttpResponseRedirect
 from django.http.response import Http404, HttpResponse, JsonResponse
@@ -13,6 +14,7 @@ from django.template.loader import render_to_string
 from django.utils.decorators import method_decorator
 from django.utils.translation import gettext as _
 from django.utils.translation import gettext_lazy
+from django.utils.safestring import mark_safe
 from django.views.decorators.cache import cache_control
 from django.views.generic import View
 
@@ -31,6 +33,7 @@ from corehq.apps.analytics.tasks import (
     track_built_app_on_hubspot,
     track_workflow,
 )
+from corehq.apps.app_manager.const import DEFAULT_PAGE_LIMIT
 from corehq.apps.app_manager.dbaccessors import (
     get_app,
     get_app_cached,
@@ -58,6 +61,7 @@ from corehq.apps.app_manager.exceptions import (
 from corehq.apps.app_manager.forms import PromptUpdateSettingsForm
 from corehq.apps.app_manager.models import (
     Application,
+    ApplicationReleaseLog,
     AppReleaseByLocation,
     BuildProfile,
     LatestEnabledBuildProfiles,
@@ -89,7 +93,10 @@ from corehq.apps.locations.permissions import location_safe
 from corehq.apps.sms.views import get_sms_autocomplete_context
 from corehq.apps.userreports.exceptions import ReportConfigurationNotFoundError
 from corehq.apps.users.models import CommCareUser, CouchUser
+from corehq.apps.users.util import cached_user_id_to_user_display
+from corehq.const import USER_DATETIME_FORMAT
 from corehq.toggles import toggles_enabled_for_request
+from corehq.util.timezones.conversions import ServerTime
 from corehq.util.timezones.utils import get_timezone_for_user
 from corehq.util.view_utils import reverse
 
@@ -128,7 +135,7 @@ def paginate_releases(request, domain, app_id):
             limit=limit,
             skip=skip,
             wrapper=lambda x: (
-                SavedAppBuild.wrap(x['value'], scrap_old_conventions=False)
+                SavedAppBuild.wrap(x['value'])
                 .releases_list_json(timezone)
             ),
         ).all()
@@ -163,7 +170,7 @@ def paginate_releases(request, domain, app_id):
         apps = get_docs(Application.get_db(), app_ids)
 
         saved_apps = [
-            SavedAppBuild.wrap(app, scrap_old_conventions=False).releases_list_json(timezone)
+            SavedAppBuild.wrap(app).releases_list_json(timezone)
             for app in apps
         ]
 
@@ -209,6 +216,8 @@ def get_releases_context(request, domain, app_id):
         'prompt_settings_form': prompt_settings_form,
         'full_name': request.couch_user.full_name,
         'can_edit_apps': request.couch_user.can_edit_apps(),
+        'can_view_app_diff': (domain_has_privilege(domain, privileges.VIEW_APP_DIFF)
+                              or request.user.is_superuser)
     }
     if not app.is_remote_app():
         context.update({
@@ -276,6 +285,15 @@ def release_build(request, domain, app_id, saved_app_id):
             create_build_files_for_all_app_profiles.delay(domain, saved_app_id)
         _track_build_for_app_preview(domain, request.couch_user, app_id, 'User starred a build')
 
+    if toggles.APPLICATION_RELEASE_LOGS.enabled(domain):
+        ApplicationReleaseLog.objects.create(
+            domain=domain,
+            action=ApplicationReleaseLog.ACTION_RELEASED if is_released else ApplicationReleaseLog.ACTION_IN_TEST,
+            version=saved_app.version,
+            app_id=app_id,
+            user_id=request.couch_user.get_id
+        )
+
     if ajax:
         return json_response({
             'is_released': is_released,
@@ -299,6 +317,14 @@ def save_copy(request, domain, app_id):
         with report_build_time(domain, app._id, 'new_release'):
             copy = make_app_build(app, comment, user_id)
         CouchUser.get(user_id).set_has_built_app()
+        if toggles.APPLICATION_RELEASE_LOGS.enabled(domain):
+            ApplicationReleaseLog.objects.create(
+                domain=domain,
+                action=ApplicationReleaseLog.ACTION_CREATED,
+                version=copy.version,
+                app_id=app_id,
+                user_id=user_id
+            )
     except AppValidationError as e:
         lang, langs = get_langs(request, app)
         return JsonResponse({
@@ -387,11 +413,23 @@ def revert_to_copy(request, domain, app_id):
         copy_build_comment_template = _("Reverted to version {old_version}")
 
     try:
+        user_id = request.couch_user.get_id
         copy = app.make_build(
             comment=copy_build_comment_template.format(**copy_build_comment_params),
-            user_id=request.couch_user.get_id,
+            user_id=user_id,
         )
         copy.save(increment_version=False)
+        if toggles.APPLICATION_RELEASE_LOGS.enabled(domain):
+            ApplicationReleaseLog.objects.create(
+                domain=domain,
+                action=ApplicationReleaseLog.ACTION_REVERTED,
+                version=app.version,
+                app_id=app_id,
+                user_id=user_id,
+                info={
+                    'version': copy_build_comment_params['old_version']
+                }
+            )
     except AppValidationError:
         messages.error(
             request,
@@ -412,6 +450,14 @@ def delete_copy(request, domain, app_id):
     app = get_app(domain, app_id)
     copy = get_app(domain, request.POST['saved_app'])
     app.delete_copy(copy)
+    if toggles.APPLICATION_RELEASE_LOGS.enabled(domain):
+        ApplicationReleaseLog.objects.create(
+            domain=domain,
+            action=ApplicationReleaseLog.ACTION_DELETED,
+            version=copy.version,
+            app_id=app_id,
+            user_id=request.couch_user.get_id
+        )
     return json_response({})
 
 
@@ -458,12 +504,6 @@ def odk_media_qr_code(request, domain, app_id):
         with_media=True, build_profile_id=profile, download_target_version=download_target_version
     )
     return HttpResponse(qr_code, content_type="image/png")
-
-
-def short_url(request, domain, app_id):
-    build_profile_id = request.GET.get('profile')
-    short_url = get_app(domain, app_id).get_short_url(build_profile_id=build_profile_id)
-    return HttpResponse(short_url)
 
 
 def short_odk_url(request, domain, app_id, with_media=False):
@@ -520,7 +560,7 @@ def _get_app_diffs(first_app, second_app):
     file_pairs = _get_file_pairs(first_app, second_app)
     diffs = []
     for name, files in file_pairs.items():
-        diff_html = ghdiff.diff(files[0], files[1], n=4, css=False)
+        diff_html = mark_safe(ghdiff.diff(files[0], files[1], n=4, css=False))  # nosec: ghdiff produces HTML
         additions, deletions = _get_change_counts(diff_html)
         if additions == 0 and deletions == 0:
             diff_html = ""
@@ -649,3 +689,41 @@ def toggle_build_profile(request, domain, build_id, build_profile_id):
                 build.build_profiles[build_profile_id].name
             ))
     return HttpResponseRedirect(reverse('download_index', args=[domain, build_id]))
+
+
+@require_deploy_apps
+def paginate_release_logs(request, domain, app_id):
+    limit = request.GET.get('limit')
+    page = int(request.GET.get('page', 1))
+    page = max(page, 1)
+    try:
+        limit = int(limit)
+    except (TypeError, ValueError):
+        limit = DEFAULT_PAGE_LIMIT
+
+    app_release_logs = ApplicationReleaseLog.objects.filter(app_id=app_id).order_by('-created_at')
+    paginator = Paginator(object_list=app_release_logs, per_page=limit)
+    current_page = paginator.get_page(page)
+
+    timezone = get_timezone_for_user(request.couch_user, domain)
+    transformed_logs = list(populate_data_app_release_logs(log, timezone) for log in current_page)
+
+    return JsonResponse({
+        'app_release_logs': transformed_logs,
+        'pagination': {
+            'total': paginator.count,
+            'num_pages': paginator.num_pages,
+            'current_page': page,
+        }
+    })
+
+
+def populate_data_app_release_logs(log, timezone):
+    timestamp = ServerTime(log.created_at).user_time(timezone)
+    return_log = log.to_json()
+    return_log["created_at_string"] = timestamp.ui_string(USER_DATETIME_FORMAT)
+    return_log["user_email"] = cached_user_id_to_user_display(log.user_id)
+    return_log["info"] = ""
+    if log.action == ApplicationReleaseLog.ACTION_REVERTED:
+        return_log["info"] = _(f"Reverted to version {log.info['version']}")
+    return return_log

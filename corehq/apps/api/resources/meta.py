@@ -3,7 +3,7 @@ from django.conf import settings
 from tastypie.authorization import ReadOnlyAuthorization
 from tastypie.throttle import BaseThrottle
 
-from corehq.apps.api.resources.auth import LoginAndDomainAuthentication
+from corehq.apps.api.resources.auth import AdminAuthentication, LoginAndDomainAuthentication
 from corehq.apps.api.serializers import CustomXMLSerializer
 from corehq.project_limits.rate_limiter import (
     PerUserRateDefinition,
@@ -74,3 +74,8 @@ class CustomResourceMeta(object):
     serializer = CustomXMLSerializer()
     default_format = 'application/json'
     throttle = get_hq_throttle()
+
+
+class AdminResourceMeta(CustomResourceMeta):
+    authentication = AdminAuthentication()
+    throttle = BaseThrottle()

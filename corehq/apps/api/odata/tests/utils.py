@@ -22,9 +22,6 @@ from corehq.apps.export.models import (
     ExportColumn, TableConfiguration)
 from corehq.apps.es.tests.utils import es_test
 from corehq.apps.users.models import HQApiKey, WebUser
-from corehq.pillows.mappings.case_mapping import CASE_INDEX_INFO
-from corehq.pillows.mappings.xform_mapping import XFORM_INDEX_INFO
-from corehq.util.elastic import ensure_index_deleted, reset_es_index
 
 
 class OdataTestMixin(object):
@@ -155,19 +152,3 @@ def generate_api_key_from_web_user(web_user):
     api_key.key = api_key.generate_key()
     api_key.save()
     return api_key
-
-
-def setup_es_case_index():
-    reset_es_index(CASE_INDEX_INFO)
-
-
-def setup_es_form_index():
-    reset_es_index(XFORM_INDEX_INFO)
-
-
-def ensure_es_case_index_deleted():
-    ensure_index_deleted(CASE_INDEX_INFO.index)
-
-
-def ensure_es_form_index_deleted():
-    ensure_index_deleted(XFORM_INDEX_INFO.index)

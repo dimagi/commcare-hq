@@ -17,7 +17,7 @@ from corehq.apps.domain.decorators import (
     require_superuser_or_contractor,
 )
 from corehq.apps.domain.views.settings import BaseProjectSettingsView
-from corehq.apps.es.case_search import ElasticCaseSearch
+from corehq.apps.es.case_search import case_search_adapter
 from corehq.apps.hqwebapp.decorators import waf_allow
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import HqPermissions
@@ -82,17 +82,20 @@ class ExplodeCasesView(BaseProjectSettingsView, TemplateView):
 @waf_allow('XSS_BODY')
 @csrf_exempt
 @allow_cors(['OPTIONS', 'GET', 'POST', 'PUT'])
-@api_auth
+@api_auth(allow_creds_in_data=False)
 @require_permission(HqPermissions.edit_data)
 @require_permission(HqPermissions.access_api)
 @CASE_API_V0_6.required_decorator()
 @requires_privilege_with_fallback(privileges.API_ACCESS)
 @api_throttle
 def case_api(request, domain, case_id=None):
+    # TODO: Make all handle functions location-safe,
+    #       then decorate view @location_safe
+    #       Context: SC-2368
     if request.method == 'GET' and case_id:
         return _handle_get(request, case_id)
     if request.method == 'GET' and not case_id:
-        return _handle_list_view(request)
+        return _handle_list_view(request)  # is location-safe
     if request.method == 'POST' and not case_id:
         return _handle_case_update(request, is_creation=True)
     if request.method == 'PUT':
@@ -103,7 +106,7 @@ def case_api(request, domain, case_id=None):
 @waf_allow('XSS_BODY')
 @csrf_exempt
 @allow_cors(['OPTIONS', 'GET', 'POST'])
-@api_auth
+@api_auth(allow_creds_in_data=False)
 @require_permission(HqPermissions.edit_data)
 @require_permission(HqPermissions.access_api)
 @CASE_API_V0_6.required_decorator()
@@ -130,7 +133,7 @@ def _get_bulk_cases(request, case_ids=None, external_ids=None):
 
 def _get_single_case(request, case_id):
     try:
-        case = ElasticCaseSearch().get(case_id)
+        case = case_search_adapter.get(case_id)
         if case['domain'] != request.domain:
             raise NotFoundError()
     except NotFoundError:
@@ -154,7 +157,7 @@ def _handle_bulk_fetch(request):
 
 def _handle_list_view(request):
     try:
-        res = get_list(request.domain, request.GET.dict())
+        res = get_list(request.domain, request.couch_user, request.GET)
     except UserError as e:
         return JsonResponse({'error': str(e)}, status=400)
 

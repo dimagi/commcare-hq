@@ -2,9 +2,7 @@ import datetime
 import uuid
 
 from django.test import TestCase
-from requests import ConnectionError
 
-from corehq.const import MISSING_APP_ID
 from couchforms.analytics import (
     app_has_been_submitted_to_in_last_30_days,
     domain_has_submission_in_last_30_days,
@@ -15,28 +13,29 @@ from couchforms.analytics import (
     get_last_form_submission_received,
     get_number_of_forms_in_domain,
 )
-from pillowtop.es_utils import initialize_index_and_mapping
-from testapps.test_pillowtop.utils import process_pillow_changes
 
+from corehq.apps.es.client import manager
+from corehq.apps.es.forms import form_adapter
 from corehq.apps.es.tests.utils import es_test
-from corehq.elastic import get_es_new, send_to_elasticsearch
+from corehq.apps.es.users import user_adapter
+from corehq.const import MISSING_APP_ID
 from corehq.form_processor.interfaces.processor import FormProcessorInterface
 from corehq.form_processor.models import XFormInstance
-from corehq.form_processor.tests.utils import FormProcessorTestUtils, create_form_for_test
+from corehq.form_processor.tests.utils import (
+    FormProcessorTestUtils,
+    create_form_for_test,
+)
 from corehq.form_processor.utils import TestFormMetadata
-from corehq.pillows.xform import transform_xform_for_elasticsearch
-from corehq.pillows.mappings.xform_mapping import XFORM_INDEX_INFO
-from corehq.util.elastic import ensure_index_deleted
 from corehq.util.test_utils import (
     DocTestMixin,
     disable_quickcache,
     flaky_slow,
     get_form_ready_to_save,
-    trap_extra_setup,
 )
+from testapps.test_pillowtop.utils import process_pillow_changes
 
 
-@es_test
+@es_test(requires=[form_adapter], setup_class=True)
 @disable_quickcache
 class ExportsFormsAnalyticsTest(TestCase, DocTestMixin):
     maxDiff = None
@@ -45,12 +44,9 @@ class ExportsFormsAnalyticsTest(TestCase, DocTestMixin):
     def setUpClass(cls):
         super(ExportsFormsAnalyticsTest, cls).setUpClass()
         from casexml.apps.case.tests.util import delete_all_xforms
-        from corehq.apps.app_manager.models import Application, Module, Form
-        delete_all_xforms()
 
-        with trap_extra_setup(ConnectionError, msg="cannot connect to elasicsearch"):
-            cls.es = get_es_new()
-            initialize_index_and_mapping(cls.es, XFORM_INDEX_INFO)
+        from corehq.apps.app_manager.models import Application, Form, Module
+        delete_all_xforms()
 
         cls.domain = 'exports_forms_analytics_domain'
         cls.app_id_1 = 'a' + uuid.uuid4().hex
@@ -71,16 +67,12 @@ class ExportsFormsAnalyticsTest(TestCase, DocTestMixin):
         cls.error_forms = [create_form_for_test(domain=cls.domain, state=XFormInstance.ERROR, save=False)]
         cls.all_forms = cls.forms + cls.error_forms
         for form in cls.all_forms:
-            elastic_form = transform_xform_for_elasticsearch(form.to_json())
-            send_to_elasticsearch('forms', elastic_form)
-
-        cls.es.indices.refresh(XFORM_INDEX_INFO.alias)
+            form_adapter.index(form, refresh=True)
 
     @classmethod
     def tearDownClass(cls):
         for app in cls.apps:
             app.delete()
-        ensure_index_deleted(XFORM_INDEX_INFO.alias)
         super(ExportsFormsAnalyticsTest, cls).tearDownClass()
 
     def test_get_form_analytics_metadata__no_match(self):
@@ -122,7 +114,7 @@ class ExportsFormsAnalyticsTest(TestCase, DocTestMixin):
         }])
 
 
-@es_test
+@es_test(requires=[form_adapter, user_adapter], setup_class=True)
 @disable_quickcache
 class CouchformsESAnalyticsTest(TestCase):
     domain = 'hqadmin-es-accessor'
@@ -156,16 +148,11 @@ class CouchformsESAnalyticsTest(TestCase):
 
         from casexml.apps.case.tests.util import delete_all_xforms
         delete_all_xforms()
-        with trap_extra_setup(ConnectionError):
-            cls.elasticsearch = get_es_new()
-            initialize_index_and_mapping(cls.elasticsearch, XFORM_INDEX_INFO)
-            cls.forms = create_forms_and_sync_to_es()
-
-        cls.elasticsearch.indices.refresh(XFORM_INDEX_INFO.alias)
+        cls.forms = create_forms_and_sync_to_es()
+        manager.index_refresh(form_adapter.index_name)
 
     @classmethod
     def tearDownClass(cls):
-        ensure_index_deleted(XFORM_INDEX_INFO.alias)
         FormProcessorTestUtils.delete_all_cases_forms_ledgers(cls.domain)
         super(CouchformsESAnalyticsTest, cls).tearDownClass()
 

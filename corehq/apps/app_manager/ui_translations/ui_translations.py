@@ -1,7 +1,6 @@
 import io
 import re
 from collections import defaultdict
-from distutils.version import StrictVersion
 
 from django.utils.translation import gettext as _
 
@@ -12,6 +11,7 @@ from corehq.apps.app_manager import app_strings
 from corehq.apps.app_manager.ui_translations.commcare_versioning import (
     get_commcare_version_from_workbook,
     set_commcare_version_in_workbook,
+    get_strict_commcare_version_string,
 )
 from corehq.apps.translations.models import TransifexBlacklist
 from corehq.util.workbook_json.excel import (
@@ -127,10 +127,7 @@ def build_ui_translation_download_file(app):
             row_dict[prop].append(trans)
 
     rows = list(row_dict.values())
-    try:
-        commcare_version = str(StrictVersion(app.build_version.vstring))
-    except ValueError:
-        commcare_version = None
+    commcare_version = get_strict_commcare_version_string(app.build_version)
 
     all_prop_trans = get_default_translations_for_download(app, commcare_version)
     rows.extend([[t] for t in sorted(all_prop_trans.keys()) if t not in row_dict and t not in blacklist])

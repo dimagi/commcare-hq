@@ -1,0 +1,32 @@
+--- 
++++ 
+@@ -1,18 +1,15 @@
+ {% load i18n %}
+ 
+ <div id="unsupported-browser"
+-        class="alert alert-danger hide">
+-    <p>
+-    <i class="fa fa-warning-sign"></i>
+-    <strong>
+-        {% trans 'Your browser is unsupported, please consider another option'%}
+-    </strong>
+-    </p>
+-    <p>
+-    {% blocktrans %}
+-        We recommend
+-        <a href="https://www.google.com/chrome">Chrome</a>
+-        or <a href="http://www.mozilla.org/">Firefox</a>.
+-    {% endblocktrans %}
+-    </p>
+-</div>+     role="alert"
++     class="alert alert-danger rounded-0 d-none">
++  <i class="fa-solid fa-triangle-exclamation"></i>
++  <strong>
++    {% trans 'Your browser is unsupported, please consider another option.' %}
++  </strong>
++  {% blocktrans %}
++    We recommend
++    <a href="https://www.google.com/chrome" class="alert-link">Chrome</a>
++    or <a href="http://www.mozilla.org/" class="alert-link">Firefox</a>.
++  {% endblocktrans %}
++</div>

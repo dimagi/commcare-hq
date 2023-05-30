@@ -3,7 +3,7 @@ from copy import deepcopy
 from dateutil import parser
 
 from corehq.apps.es.fake.es_query_fake import HQESQueryFake
-from corehq.pillows.xform import transform_xform_for_elasticsearch
+from corehq.apps.es.forms import form_adapter
 
 
 class FormESFake(HQESQueryFake):
@@ -25,7 +25,7 @@ class FormESFake(HQESQueryFake):
         doc = deepcopy(doc)
         doc['xmlns.exact'] = doc.get('xmlns', '')
         doc['form.meta.timeEnd'] = parser.parse(doc['form']['meta']['timeEnd'])
-        return transform_xform_for_elasticsearch(doc)
+        return form_adapter.to_json(doc)
 
     def count(self):
         return len(self._result_docs)

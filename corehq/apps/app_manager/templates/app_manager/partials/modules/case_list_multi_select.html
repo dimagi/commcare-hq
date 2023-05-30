@@ -11,12 +11,28 @@
     </div>
     <div class="panel-body">
       <div class="row">
-        <div class="col-sm-8">
+        <div>
           <div class="checkbox">
             <label>
               <input type="checkbox" data-bind="checked: multiSelectEnabled"/>
               {% trans "Enable multi-select case list" %}
             </label>
+          </div>
+          <div class="checkbox">
+            <label>
+              <input type="checkbox" data-bind="checked: autoSelectEnabled, enable: multiSelectEnabled()"/>
+              {% trans "Enable auto select" %}
+            </label>
+          </div>
+          <div data-bind="visible: multiSelectEnabled()">
+            <label class="control-label {% css_label_class %}">
+                {% trans "Maximum selected value" %}
+                <span class="hq-help-template" data-title="{% trans 'Maximum Selected Value' %}"
+                      data-content="{% trans_html_attr 'Sets a maximum selected value for multi select case lists. If no value is inputted, the default value is used.' %}">
+            </label>
+            <div class="{% css_field_class %}">
+              <input type="text" name="max-select-value-input" data-bind="value: maxSelectValue" class="form-control">
+            </div>
           </div>
         </div>
       </div>

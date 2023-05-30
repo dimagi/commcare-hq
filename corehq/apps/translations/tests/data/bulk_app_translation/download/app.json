@@ -5,7 +5,6 @@
   "auto_gps_capture": false,
   "deployment_date": null,
   "user_type": null,
-  "text_input": "roman",
   "secure_submissions": false,
   "build_broken": false,
   "show_user_registration": false,
@@ -190,7 +189,7 @@
               "followup_date": null
             },
             "open_case": {
-              "name_path": null,
+              "name_update": null,
               "doc_type": "OpenCaseAction",
               "external_id": null,
               "condition": {
@@ -283,6 +282,7 @@
           "custom_xml": null,
           "persist_tile_on_forms": null,
           "display": "short",
+          "no_items_text": {"en": "Empty List"},
           "columns": [
             {
               "case_tile_field": null,
@@ -555,7 +555,9 @@
               }
             },
             "open_case": {
-              "name_path": "/data/name_of_series",
+              "name_update": {
+                "question_path": "/data/name_of_series"
+              },
               "doc_type": "OpenCaseAction",
               "external_id": null,
               "condition": {
@@ -952,7 +954,9 @@
                 "case_type": "point",
                 "reference_id": null,
                 "repeat_context": null,
-                "case_name": "/data/x",
+                "name_update": {
+                  "question_path": "/data/x"
+                },
                 "condition": {
                   "answer": null,
                   "question": null,
@@ -1018,7 +1022,7 @@
               }
             },
             "open_case": {
-              "name_path": null,
+              "name_update": null,
               "doc_type": "OpenCaseAction",
               "external_id": null,
               "condition": {
@@ -1545,7 +1549,7 @@
               }
             },
             "open_case": {
-              "name_path": null,
+              "name_update": null,
               "doc_type": "OpenCaseAction",
               "external_id": null,
               "condition": {

@@ -7,6 +7,8 @@
 {% block page_title %}{{ current_page.title }}{% endblock %}
 
 {% block pagination_templates %}
+{% registerurl 'edit_ucr_expression' domain '000' %}
+{% registerurl 'ucr_expressions' domain %}
 <script type="text/html" id="base-api-config-template">
     <td>
       <a data-bind="text: name, attr: {href: edit_url}"></a>

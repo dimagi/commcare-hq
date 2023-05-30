@@ -178,7 +178,7 @@ class CaseMetaTest(SimpleTestCase, TestXmlMixin):
         })
         meta = app.get_case_metadata()
         self._assert_properties(meta, {'name', 'save_to_case_p1', 'save_to_case_p2'})
-        self.assertEqual(
+        self.assertCountEqual(
             meta.get_type('household').get_save_properties(m0f1.unique_id, '/data/question1'),
             ['save_to_case_p1', 'save_to_case_p2']
         )

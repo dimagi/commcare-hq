@@ -1,3 +1,4 @@
+from couchdbkit import ResourceNotFound
 from django.utils.translation import gettext as _
 
 from corehq.apps.app_manager.dbaccessors import get_brief_apps_in_domain
@@ -302,22 +303,17 @@ def build_view_models_from_data_models(
     return view_models
 
 
-def pop_app_for_action(action, apps):
-    app = None
-    if action.model_detail:
-        app_id = action.wrapped_detail.app_id
-        app = apps.pop(app_id, None)
-
-    return app
+def pop_app(app_id, apps):
+    return apps.pop(app_id, None)
 
 
-def pop_fixture_for_action(action, fixtures, domain):
-    fixture = None
-    if action.model_detail:
-        tag = action.wrapped_detail.tag
-        fixture = fixtures.pop(tag, None)
-        if not fixture:
-            fixture = LookupTable.objects.by_domain_tag(domain, tag)
+def pop_fixture(fixture_id, fixtures, domain):
+    fixture = fixtures.pop(fixture_id, None)
+    if not fixture:
+        try:
+            fixture = LookupTable.objects.by_domain_tag(domain, fixture_id)
+        except LookupTable.DoesNotExist:
+            fixture = None
 
     return fixture
 
@@ -325,9 +321,13 @@ def pop_fixture_for_action(action, fixtures, domain):
 def pop_report(report_id, reports):
     report = reports.pop(report_id, None)
     if report is None:
-        report = ReportConfiguration.get(report_id)
-        if report.doc_type == "ReportConfiguration-Deleted":
+        try:
+            report = ReportConfiguration.get(report_id)
+        except ResourceNotFound:
             return None
+
+        if report.doc_type == "ReportConfiguration-Deleted":
+            report = None
     return report
 
 
@@ -374,10 +374,12 @@ def build_pullable_view_models_from_data_models(
         last_update = server_to_user_time(action.date, timezone)
 
         if action.model == MODEL_APP:
-            app = pop_app_for_action(action, apps)
+            app_id = action.wrapped_detail.app_id if action.model_detail else None
+            app = pop_app(app_id, apps)
             view_model = build_app_view_model(app, last_update=last_update)
         elif action.model == MODEL_FIXTURE:
-            fixture = pop_fixture_for_action(action, fixtures, domain)
+            fixture_id = action.wrapped_detail.tag if action.model_detail else None
+            fixture = pop_fixture(fixture_id, fixtures, domain)
             view_model = build_fixture_view_model(fixture, last_update=last_update)
         elif action.model == MODEL_REPORT:
             report = pop_report(action.wrapped_detail.report_id, reports)

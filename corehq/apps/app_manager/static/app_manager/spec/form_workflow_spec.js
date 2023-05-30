@@ -80,8 +80,8 @@ describe('Form Workflow', function () {
                 { name: 'My First Form', unique_id: realID, auto_link: true },
             ];
             options.formLinks = [
-                { xpath: "true()", doc_type: "FormLink", form_id: realID, datums: [] },
-                { xpath: "false()", doc_type: "FormLink", form_id: fakeID, datums: [] },
+                { xpath: "true()", doc_type: "FormLink", form_id: realID, datums: [], uniqueId: realID },
+                { xpath: "false()", doc_type: "FormLink", form_id: fakeID, datums: [], uniqueId: fakeID },
             ];
             workflow = new FormWorkflow(options);
             assert.lengthOf(workflow.forms, 1);

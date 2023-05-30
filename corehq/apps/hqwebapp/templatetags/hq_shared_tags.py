@@ -45,7 +45,7 @@ def JSON(obj):
 
 def escape_script_tags(unsafe_str):
     # seriously: http://stackoverflow.com/a/1068548/8207
-    return unsafe_str.replace('</script>', '<" + "/script>')
+    return unsafe_str.replace('</script>', '<\\/script>')
 
 
 @register.filter
@@ -130,8 +130,12 @@ def domains_for_user(context, request, selected_domain=None):
         'domain_links': domain_links,
         'show_all_projects_link': show_all_projects_link,
     }
+    from corehq.apps.hqwebapp.utils.bootstrap import get_bootstrap_version
     return mark_safe(  # nosec: render_to_string should have already handled escaping
-        render_to_string('hqwebapp/includes/domain_list_dropdown.html', context, request)
+        render_to_string(
+            f"hqwebapp/includes/{get_bootstrap_version()}/domain_list_dropdown.html",
+            context, request
+        )
     )
 
 
@@ -703,8 +707,17 @@ def breadcrumbs(page, section, parents=None):
     :return:
     """
 
-    return render_to_string('hqwebapp/partials/breadcrumbs.html', {
+    from corehq.apps.hqwebapp.utils.bootstrap import get_bootstrap_version
+    return render_to_string(f"hqwebapp/partials/{get_bootstrap_version()}/breadcrumbs.html", {
         'page': page,
         'section': section,
         'parents': parents or [],
     })
+
+
+@register.filter
+def request_has_privilege(request, privilege_name):
+    from corehq.apps.accounting.utils import domain_has_privilege
+    from corehq import privileges
+    privilege = _get_obj_from_name_or_instance(privileges, privilege_name)
+    return domain_has_privilege(request.domain, privilege)

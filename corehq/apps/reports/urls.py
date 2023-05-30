@@ -51,6 +51,7 @@ from .views import (
     edit_form,
     email_report,
     export_report,
+    get_or_create_filter_hash,
     project_health_user_details,
     reports_home,
     resave_form_view,
@@ -119,8 +120,7 @@ urlpatterns = [
     url(r'^form_data/(?P<instance_id>[\w\-:]+)/archive/$', archive_form, name='archive_form'),
     url(r'^form_data/(?P<instance_id>[\w\-:]+)/unarchive/$', unarchive_form, name='unarchive_form'),
     url(r'^form_data/(?P<instance_id>[\w\-:]+)/rebuild/$', resave_form_view, name='resave_form'),
-    url(r'^form_data/(?P<instance_id>[\w\-:]+)/attachment/(?P<attachment_id>.*)$', view_form_attachment,
-        name='form_attachment_view'),
+    url(r'^form_data/(?P<instance_id>[\w\-:]+)/attachment/(?P<attachment_id>.*)$', view_form_attachment),
 
     # project health ajax
     url(r'^project_health/ajax/(?P<user_id>[\w\-]+)/$', project_health_user_details,
@@ -164,6 +164,8 @@ urlpatterns = [
     ProjectReportDispatcher.url_pattern(),
     url(r'^user_management/', include(user_management_urls)),
     url(r'^release_management/', include(release_management_urls)),
+
+    url(r'^get_or_create_hash/', get_or_create_filter_hash, name='get_or_create_filter_hash'),
 ]
 
 # Exporting Case List Explorer reports with the word " on*" at the end of the search query

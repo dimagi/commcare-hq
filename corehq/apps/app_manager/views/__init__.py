@@ -94,11 +94,11 @@ from corehq.apps.app_manager.views.releases import (
     odk_media_qr_code,
     odk_qr_code,
     paginate_releases,
+    paginate_release_logs,
     release_build,
     revert_to_copy,
     save_copy,
     short_odk_url,
-    short_url,
     toggle_build_profile,
     update_build_comment,
 )

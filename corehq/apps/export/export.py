@@ -6,20 +6,21 @@ from collections import Counter
 
 from couchdbkit import ResourceConflict
 
+from corehq.apps.export.exceptions import ExportTooLargeException
 from corehq.util.metrics import metrics_counter, metrics_track_errors
 from couchexport.export import FormattedRow, get_writer
 from couchexport.models import Format
 from dimagi.utils.logging import notify_exception
 from soil import DownloadBase
 
-from corehq.apps.export.const import MAX_EXPORTABLE_ROWS
+from corehq.apps.export.const import MAX_NORMAL_EXPORT_SIZE, MAX_DAILY_EXPORT_SIZE
 from corehq.apps.export.dbaccessors import get_properly_wrapped_export_instance
 from corehq.apps.export.models.new import (
     CaseExportInstance,
     FormExportInstance,
     SMSExportInstance,
+    ALL_CASE_TYPE_TABLE
 )
-from corehq.elastic import iter_es_docs_from_query
 from corehq.toggles import PAGINATED_EXPORTS
 from corehq.util.metrics.load_counters import load_counter
 from corehq.util.files import TransientTempfile, safe_filename
@@ -251,7 +252,7 @@ class _PaginatedExportWriter(object):
         :param table: A TableConfiguration
         :param row: An ExportRow
         """
-        if self.rows_written[table] >= MAX_EXPORTABLE_ROWS * (self.pages[table] + 1):
+        if self.rows_written[table] >= MAX_NORMAL_EXPORT_SIZE * (self.pages[table] + 1):
             self.pages[table] += 1
             self.writer.add_table(
                 self._paged_table_index(table),
@@ -301,7 +302,7 @@ def get_export_download(domain, export_ids, exports_type, username, es_filters, 
     return download
 
 
-def get_export_file(export_instances, es_filters, temp_path, progress_tracker=None):
+def get_export_file(export_instances, es_filters, temp_path, progress_tracker=None, include_hyperlinks=True):
     """
     Return an export file for the given ExportInstance and list of filters
     """
@@ -309,7 +310,9 @@ def get_export_file(export_instances, es_filters, temp_path, progress_tracker=No
     with writer.open(export_instances):
         for export_instance in export_instances:
             docs = get_export_documents(export_instance, es_filters, are_filters_es_formatted=True)
-            write_export_instance(writer, export_instance, docs, progress_tracker)
+            write_export_instance(writer, export_instance, docs,
+                                  progress_tracker,
+                                  include_hyperlinks=include_hyperlinks)
 
     return ExportFile(writer.path, writer.format)
 
@@ -317,7 +320,7 @@ def get_export_file(export_instances, es_filters, temp_path, progress_tracker=No
 def get_export_documents(export_instance, filters, are_filters_es_formatted=False):
     # Pull doc ids from elasticsearch and stream to disk
     query = get_export_query(export_instance, filters, are_filters_es_formatted)
-    return iter_es_docs_from_query(query)
+    return query.scroll_ids_to_disk_and_iter_docs()
 
 
 def get_export_query(export_instance, filters, are_filters_es_formatted=False):
@@ -337,7 +340,8 @@ def get_export_size(export_instance, filters):
     return get_export_query(export_instance, filters).count()
 
 
-def write_export_instance(writer, export_instance, documents, progress_tracker=None):
+def write_export_instance(writer, export_instance, documents,
+                          progress_tracker=None, include_hyperlinks=True):
     """
     Write rows to the given open _Writer.
     Rows will be written to each table in the export instance for each of
@@ -346,6 +350,8 @@ def write_export_instance(writer, export_instance, documents, progress_tracker=N
     :param export_instance: An ExportInstance
     :param documents: An iterable yielding documents
     :param progress_tracker: A task for soil to track progress against
+    :param include_hyperlinks: if True will generate hyperlinks in export
+            This is disabled for larger exports due to time to run constraints
     :return: None
     """
     with TaskProgressManager(progress_tracker, src="export") as progress_manager:
@@ -360,12 +366,19 @@ def write_export_instance(writer, export_instance, documents, progress_tracker=N
         for row_number, doc in enumerate(documents):
             total_bytes += sys.getsizeof(doc)
             for table in export_instance.selected_tables:
+                # This is for bulk exports on all case types.
+                # Skip over the tables that this doc shouldn't go into.
+                path_names = [path.name for path in table.path]
+                if ALL_CASE_TYPE_TABLE in table.path and doc['type'] not in path_names:
+                    continue
+
                 try:
                     rows = table.get_rows(
                         doc,
                         row_number,
                         split_columns=export_instance.split_multiselects,
                         transform_dates=export_instance.transform_dates,
+                        include_hyperlinks=include_hyperlinks,
                     )
                 except Exception as e:
                     notify_exception(None, "Error exporting doc", details={
@@ -435,9 +448,17 @@ def rebuild_export(export_instance, progress_tracker):
     Rebuild the given daily saved ExportInstance
     """
     filters = export_instance.get_filters() or []
+    export_size = get_export_size(export_instance, filters)
+    include_hyperlinks = export_size < MAX_NORMAL_EXPORT_SIZE
+    if export_size > MAX_DAILY_EXPORT_SIZE:
+        raise ExportTooLargeException(
+            f"{export_instance.name} is {export_size} rows. Exceeds the limit "
+            f"of {MAX_DAILY_EXPORT_SIZE} rows.")
     es_filters = [f.to_es_filter() for f in filters]
     with TransientTempfile() as temp_path:
-        export_file = get_export_file([export_instance], es_filters, temp_path, progress_tracker)
+        export_file = get_export_file([export_instance], es_filters, temp_path,
+                                      progress_tracker,
+                                      include_hyperlinks=include_hyperlinks)
         with export_file as payload:
             save_export_payload(export_instance, payload)
 

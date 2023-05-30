@@ -49,7 +49,7 @@ from corehq.apps.users.models import (
     InvitationStatus
 )
 from corehq.const import USER_CHANGE_VIA_BULK_IMPORTER
-from corehq.toggles import DOMAIN_PERMISSIONS_MIRROR
+from corehq.toggles import DOMAIN_PERMISSIONS_MIRROR, TABLEAU_USER_SYNCING
 from corehq.apps.sms.util import validate_phone_number
 
 required_headers = set(['username'])
@@ -87,6 +87,9 @@ def check_headers(user_specs, domain, is_web_upload=False):
 
     if not is_web_upload and EnterpriseMobileWorkerSettings.is_domain_using_custom_deactivation(domain):
         allowed_headers.add('deactivate_after')
+
+    if TABLEAU_USER_SYNCING.enabled(domain):
+        allowed_headers.update({'tableau_role', 'tableau_groups'})
 
     illegal_headers = headers - allowed_headers
 
@@ -750,6 +753,7 @@ def create_or_update_web_users(upload_domain, user_specs, upload_user, upload_re
 
         location_codes = row.get('location_code', []) if 'location_code' in row else None
         location_codes = format_location_codes(location_codes)
+
 
         try:
             remove = spec_value_to_boolean_or_none(row, 'remove')

@@ -87,7 +87,7 @@ class FixtureAccessor:
     @cached_property
     def _data_types_ids(self):
         return {
-            table.tag: table._migration_couch_id
+            table.tag: table.id
             for table in LookupTable.objects.by_domain(self.domain)
         }
 

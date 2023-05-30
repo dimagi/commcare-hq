@@ -1,7 +1,9 @@
 from django.db import migrations
 
-from corehq.pillows.mappings.case_search_mapping import CASE_SEARCH_ALIAS
-from corehq.util.django_migrations import update_es_mapping
+from corehq.util.django_migrations import (
+    get_migration_name,
+    prompt_for_historical_migration,
+)
 
 
 class Migration(migrations.Migration):
@@ -10,4 +12,10 @@ class Migration(migrations.Migration):
         ('pillowtop', '0005_kafkacheckpoint_doc_modification_time'),
     ]
 
-    operations = [update_es_mapping(CASE_SEARCH_ALIAS)]
+    operations = [
+        prompt_for_historical_migration(
+            'pillowtop', get_migration_name(__file__),
+            # the commit (on 'master') that this branch is currently based on
+            required_commit='08d594d1877cfe3ca20fcf8aa29155bce4ff26bf'
+        )
+    ]

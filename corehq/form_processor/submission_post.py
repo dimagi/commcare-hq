@@ -22,6 +22,7 @@ from corehq.apps.receiverwrapper.rate_limiter import report_case_usage, report_s
 from corehq.const import OPENROSA_VERSION_3
 from corehq.middleware import OPENROSA_VERSION_HEADER
 from corehq.toggles import ASYNC_RESTORE, SUMOLOGIC_LOGS, NAMESPACE_OTHER
+from corehq.apps.app_manager.dbaccessors import get_current_app
 from corehq.apps.cloudcare.const import DEVICE_ID as FORMPLAYER_DEVICE_ID
 from corehq.apps.commtrack.exceptions import MissingProductId
 from corehq.apps.domain_migration_flags.api import any_migrations_in_progress
@@ -35,14 +36,16 @@ from corehq.form_processor.parsers.form import process_xform_xml
 from corehq.form_processor.system_action import SYSTEM_ACTION_XMLNS, handle_system_action
 from corehq.form_processor.utils.metadata import scrub_meta
 from corehq.form_processor.submission_process_tracker import unfinished_submission
+from corehq.util.metrics import metrics_counter
 from corehq.util.metrics.load_counters import form_load_counter
 from corehq.util.global_request import get_request
+from corehq.util.quickcache import quickcache
 from corehq.util.timer import TimingContext
+from couchdbkit.exceptions import ResourceNotFound
 from couchforms import openrosa_response
 from couchforms.const import DEVICE_LOG_XMLNS
 from couchforms.models import DefaultAuthContext, UnfinishedSubmissionStub
 from couchforms.signals import successful_form_received
-from couchforms.util import legacy_notification_assert
 from couchforms.openrosa_response import OpenRosaResponse, ResponseNature
 from dimagi.utils.logging import notify_exception, log_signal_errors
 from phonelog.utils import process_device_log, SumoLogicLog
@@ -140,8 +143,7 @@ class SubmissionPost(object):
 
     def _post_process_form(self, xform):
         self._set_submission_properties(xform)
-        found_old = scrub_meta(xform)
-        legacy_notification_assert(not found_old, 'Form with old metadata submitted', xform.form_id)
+        scrub_meta(xform)
 
     def _get_success_message(self, instance, cases=None):
         '''
@@ -151,14 +153,37 @@ class SubmissionPost(object):
         Message is formatted with markdown.
         '''
 
-        if not instance.metadata or instance.metadata.deviceID != FORMPLAYER_DEVICE_ID:
+        if instance.metadata and (not instance.metadata.userID or not instance.metadata.instanceID):
+            metrics_counter('commcare.xform_submissions.partial_metadata', tags={
+                'domain': instance.domain,
+            })
+        elif not instance.metadata:
+            metrics_counter('commcare.xform_submissions.no_metadata', tags={
+                'domain': instance.domain,
+            })
+            return '   √   '
+        if instance.metadata.deviceID != FORMPLAYER_DEVICE_ID:
             return '   √   '
 
-        messages = []
         user = CouchUser.get_by_user_id(instance.user_id)
-        if not user or not user.is_web_user():
-            return _('Form successfully saved!')
+        messages = [_("'{form_name}' successfully saved!")
+                    .format(form_name=self._get_form_name(instance, user))]
+        if user and user.is_web_user():
+            messages.extend(self._success_message_links(user, instance, cases))
+        return "\n\n".join(messages)
 
+    def _get_form_name(self, instance, user):
+        if instance.build_id:
+            default_language, names_by_xmlns = _get_form_name_info(instance.domain, instance.build_id)
+            names = names_by_xmlns.get(instance.xmlns, {})
+            if user and user.language and names.get(user.language):
+                return names[user.language]
+            if names.get(default_language):
+                return names[default_language]
+        return instance.name
+
+    def _success_message_links(self, user, instance, cases):
+        """Yield links to reports/exports, if accessible"""
         from corehq.apps.export.views.list import CaseExportListView, FormExportListView
         from corehq.apps.export.views.utils import can_view_case_exports, can_view_form_exports
         from corehq.apps.reports.standard.cases.case_data import CaseDataView
@@ -180,38 +205,31 @@ class SubmissionPost(object):
         if cases and can_view_case_exports(user, instance.domain):
             case_export_link = reverse(CaseExportListView.urlname, args=[instance.domain])
 
-        # Start with generic message
-        messages.append(_('Form successfully saved!'))
-
         # Add link to form/case if possible
         if form_link and case_link:
             if len(cases) == 1:
-                messages.append(
-                    _("You submitted [this form]({}), which affected [this case]({}).")
-                    .format(form_link, case_link))
+                yield (_("You submitted [this form]({}), which affected [this case]({}).")
+                       .format(form_link, case_link))
             else:
-                messages.append(
-                    _("You submitted [this form]({}), which affected these cases: {}.")
-                    .format(form_link, case_link))
+                yield (_("You submitted [this form]({}), which affected these cases: {}.")
+                       .format(form_link, case_link))
         elif form_link:
-            messages.append(_("You submitted [this form]({}).").format(form_link))
+            yield _("You submitted [this form]({}).").format(form_link)
         elif case_link:
             if len(cases) == 1:
-                messages.append(_("Your form affected [this case]({}).").format(case_link))
+                yield _("Your form affected [this case]({}).").format(case_link)
             else:
-                messages.append(_("Your form affected these cases: {}.").format(case_link))
+                yield _("Your form affected these cases: {}.").format(case_link)
 
         # Add link to all form/case exports
         if form_export_link and case_export_link:
-            messages.append(
-                _("Click to export your [case]({}) or [form]({}) data.")
-                .format(case_export_link, form_export_link))
+            yield (_("Click to export your [case]({}) or [form]({}) data.")
+                   .format(case_export_link, form_export_link))
         elif form_export_link:
-            messages.append(_("Click to export your [form data]({}).").format(form_export_link))
+            yield _("Click to export your [form data]({}).").format(form_export_link)
         elif case_export_link:
-            messages.append(_("Click to export your [case data]({}).").format(case_export_link))
+            yield _("Click to export your [case data]({}).").format(case_export_link)
 
-        return "\n\n".join(messages)
 
     def run(self):
         self.track_load()
@@ -323,13 +341,13 @@ class SubmissionPost(object):
                         raise
                     else:
                         instance.initial_processing_complete = True
+                        report_case_usage(self.domain, len(case_stock_result.case_models))
                         openrosa_kwargs['error_message'] = self.save_processed_models(case_db, xforms,
                                                                                       case_stock_result)
                         if openrosa_kwargs['error_message']:
                             openrosa_kwargs['error_nature'] = ResponseNature.POST_PROCESSING_FAILURE
                         cases = case_stock_result.case_models
                         ledgers = case_stock_result.stock_result.models_to_save
-                        report_case_usage(self.domain, len(cases))
                         openrosa_kwargs['success_message'] = self._get_success_message(instance, cases=cases)
                 elif instance.is_error:
                     submission_type = 'error'
@@ -459,14 +477,13 @@ class SubmissionPost(object):
         if not case_search_synchronous_web_apps_for_domain(instance.domain):
             return
 
-        from corehq.pillows.case_search import transform_case_for_elasticsearch
-        from corehq.apps.es.case_search import ElasticCaseSearch
+        from corehq.apps.es.case_search import case_search_adapter
         actions = [
-            BulkActionItem.index(transform_case_for_elasticsearch(case_model.to_json()))
+            BulkActionItem.index(case_model)
             for case_model in case_models
         ]
         try:
-            _, errors = ElasticCaseSearch().bulk(actions, raise_on_error=False, raise_on_exception=False)
+            _, errors = case_search_adapter.bulk(actions, raise_errors=False)
         except Exception as e:
             errors = [str(e)]
 
@@ -639,3 +656,18 @@ def notify_submission_error(instance, message, exec_info=None):
     }
     request = get_request()
     notify_exception(request, message, details=details, exec_info=exec_info)
+
+
+@quickcache(['domain', 'build_id'])
+def _get_form_name_info(domain, build_id):
+    """
+    :return: (default_language, {'http://my.xmlns': {'en': 'My Form'}})
+    """
+    try:
+        app_build = get_current_app(domain, build_id)
+    except ResourceNotFound:
+        return 'en', {}
+    return (
+        app_build.default_language,
+        {form.xmlns: dict(form.name) for form in app_build.get_forms() if form.form_type != 'shadow_form'}
+    )

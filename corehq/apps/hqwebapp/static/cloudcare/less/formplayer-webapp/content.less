@@ -42,6 +42,8 @@ body {
   > div {
     background: white;
     margin-bottom: 20px;
+    display: grid;
+    container-type: inline-size;
   }
 }
 
@@ -55,7 +57,7 @@ body {
   }
 
   .noprint-sub-container {
-    display: none;
+    display: none !important;
   }
 
   #cloudcare-main {
@@ -73,5 +75,14 @@ body {
 
   video {
     border: 1px solid #ddd;
+  }
+}
+
+#query-description {
+  a {
+    color: @cc-brand-mid;
+  }
+  a:hover {
+    color: @cc-brand-low;
   }
 }

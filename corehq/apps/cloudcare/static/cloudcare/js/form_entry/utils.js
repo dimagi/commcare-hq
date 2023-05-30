@@ -1,32 +1,18 @@
 /*global MapboxGeocoder*/
 hqDefine("cloudcare/js/form_entry/utils", function () {
+    var errors = hqImport("cloudcare/js/form_entry/errors"),
+        formEntryConst = hqImport("cloudcare/js/form_entry/const");
+
     var module = {
         resourceMap: undefined,
     };
 
     module.touchformsError = function (message) {
-        return hqImport("cloudcare/js/form_entry/errors").GENERIC_ERROR + message;
+        return errors.GENERIC_ERROR + message;
     };
 
     module.jsError = function (message) {
-        return hqImport("cloudcare/js/form_entry/errors").JS_ERROR + message;
-    };
-
-    module.isWebApps = function () {
-        var FormplayerFrontend = hqImport("cloudcare/js/formplayer/app"),
-            environment = FormplayerFrontend.getChannel().request('currentUser').environment;
-        return environment === hqImport("cloudcare/js/formplayer/constants").WEB_APPS_ENVIRONMENT;
-    };
-
-    module.reloginErrorHtml = function () {
-        if (module.isWebApps()) {
-            var url = hqImport("hqwebapp/js/initial_page_data").reverse('login_new_window');
-            return _.template(gettext("Looks like you got logged out because of inactivity, but your work is safe. " +
-                                      "<a href='<%- url %>' target='_blank'>Click here to log back in.</a>"))({url: url});
-        } else {
-            // target=_blank doesn't work properly within an iframe
-            return gettext("You have been logged out because of inactivity.");
-        }
+        return errors.JS_ERROR + message;
     };
 
     /**
@@ -50,27 +36,34 @@ hqDefine("cloudcare/js/form_entry/utils", function () {
      * @param {Object} $div - The jquery element that the form will be rendered in.
      */
     module.initialRender = function (formJSON, resourceMap, $div) {
-        var form = hqImport("cloudcare/js/form_entry/form_ui").Form(formJSON),  // circular dependency
-            $debug = $('#cloudcare-debugger'),
-            CloudCareDebugger = hqImport('cloudcare/js/debugger/debugger').CloudCareDebuggerFormEntry,
-            cloudCareDebugger;
-        module.resourceMap = resourceMap;
-        ko.cleanNode($div[0]);
-        $div.koApplyBindings(form);
+        var defer = $.Deferred();
+        hqRequire([
+            "cloudcare/js/debugger/debugger",
+            "cloudcare/js/form_entry/form_ui",
+        ], function (Debugger, FormUI) {
+            var form = FormUI.Form(formJSON),
+                $debug = $('#cloudcare-debugger'),
+                CloudCareDebugger = Debugger.CloudCareDebuggerFormEntry,
+                cloudCareDebugger;
+            module.resourceMap = resourceMap;
+            ko.cleanNode($div[0]);
+            $div.koApplyBindings(form);
 
-        if ($debug.length) {
-            cloudCareDebugger = new CloudCareDebugger({
-                baseUrl: formJSON.xform_url,
-                formSessionId: formJSON.session_id,
-                username: formJSON.username,
-                restoreAs: formJSON.restoreAs,
-                domain: formJSON.domain,
-            });
-            ko.cleanNode($debug[0]);
-            $debug.koApplyBindings(cloudCareDebugger);
-        }
+            if ($debug.length) {
+                cloudCareDebugger = new CloudCareDebugger({
+                    baseUrl: formJSON.xform_url,
+                    formSessionId: formJSON.session_id,
+                    username: formJSON.username,
+                    restoreAs: formJSON.restoreAs,
+                    domain: formJSON.domain,
+                });
+                ko.cleanNode($debug[0]);
+                $debug.koApplyBindings(cloudCareDebugger);
+            }
 
-        return form;
+            defer.resolve(form);
+        });
+        return defer.promise();
     };
 
     /**
@@ -79,8 +72,9 @@ hqDefine("cloudcare/js/form_entry/utils", function () {
      * @param {Object} itemCallback - function to call back after new search
      * @param {Object} clearCallBack - function to call back after clearing the input
      * @param {Object} initialPageData - initial_page_data object
+     * @param {function|undefined} inputOnKeyDown - inputOnKeyDown function (optional)
      */
-    module.renderMapboxInput = function (divId, itemCallback, clearCallBack, initialPageData) {
+    module.renderMapboxInput = function (divId, itemCallback, clearCallBack, initialPageData, inputOnKeyDown) {
         var defaultGeocoderLocation = initialPageData.get('default_geocoder_location') || {};
         var geocoder = new MapboxGeocoder({
             accessToken: initialPageData.get("mapbox_access_token"),
@@ -93,10 +87,31 @@ hqDefine("cloudcare/js/form_entry/utils", function () {
         }
         geocoder.on('clear', clearCallBack);
         geocoder.addTo('#' + divId);
+        const divEl = $("#" + divId);
+        const liveRegionEl = $("#" + divId + "-sr[role='region']");
         // Must add the form-control class to the input created by mapbox in order to edit.
-        var inputEl = $('input.mapboxgl-ctrl-geocoder--input');
+        var inputEl = divEl.find('input.mapboxgl-ctrl-geocoder--input');
         inputEl.addClass('form-control');
-        inputEl.on('keydown', _.debounce(self._inputOnKeyDown, 200));
+        inputEl.on('keydown', _.debounce((e) => {
+            if (inputOnKeyDown) {
+                inputOnKeyDown(e);
+            }
+
+            // This captures arrow up/down events on geocoder input box and updates the
+            // screen reader live region with the current highlighted value.
+            if (e.key === "ArrowUp" || e.key === "ArrowDown") {
+                const currentOption = divEl.find("ul.suggestions li.active").text();
+                liveRegionEl.html("<p>" + currentOption + "</p>");
+            }
+        }, 200));
+
+        // This populates the "region" html node with the first option, so that it is read by
+        // screen readers on focus.
+        geocoder.on('results', (items) => {
+            if (items && items.features) {
+                liveRegionEl.html("<p>" + items.features[0].place_name + "</p>");
+            }
+        });
     };
 
     /**
@@ -178,11 +193,10 @@ hqDefine("cloudcare/js/form_entry/utils", function () {
      * the current group (a child of the repeat juncture).
     **/
     module.getBroadcastContainer = (question) => {
-        var Const = hqImport("cloudcare/js/form_entry/const");
         return getRoot(question, function (container) {
             // Return first containing repeat group, or form if there are no ancestor repeats
             var parent = container.parent;
-            return parent && parent.type && parent.type() === Const.REPEAT_TYPE;
+            return parent && parent.type && parent.type() === formEntryConst.REPEAT_TYPE;
         });
     };
 

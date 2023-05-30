@@ -1,9 +1,6 @@
 hqDefine("cloudcare/js/formplayer/middleware", function () {
     var FormplayerFrontend = hqImport("cloudcare/js/formplayer/app");
 
-    var logRouteMiddleware = function (name) {
-        window.console.log('User navigated to ' + name);
-    };
     var clearFormMiddleware = function () {
         FormplayerFrontend.trigger("clearForm");
     };
@@ -39,7 +36,6 @@ hqDefine("cloudcare/js/formplayer/middleware", function () {
     var self = {};
 
     self.middlewares = [
-        logRouteMiddleware,
         clearFormMiddleware,
         navigationMiddleware,
         clearVersionInfo,

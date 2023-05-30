@@ -2,15 +2,14 @@
 
 function usage() {
     cat << EOF
-usage: $0 [-h|--help] [-v|--verbose] [--deploy|--no-push] [--skip-fetch]
+usage: $0 [-h|--help] [-v|--verbose] [--deploy|--no-push]
 
-rebuild staging from yaml configuration (scripts/staging.yml)
+rebuild staging from yaml configuration (downloaded from https://github.com/dimagi/staging-branches/blob/main/commcare-hq-staging.yml)
 
     -h --help       print this help text
     -v --verbose    display debugging output
     --deploy        deploy after rebuild is complete
     --no-push       do not push changes (cannot be used with --deploy)
-    --skip-fetch    assume local copy is already update date with remote
 EOF
 }
 
@@ -30,10 +29,6 @@ do
       -v|--verbose)
         verbose=y
         ;;
-      --skip-fetch)
-        skip_fetch=y
-        echo skip-fetch
-        ;;
       --no-push)
         no_push=y
         echo no-push
@@ -46,8 +41,17 @@ do
 done
 
 function rebuildstaging() {
-    echo "rebuilding staging branch, this might take a while..."
-    git-build-branch scripts/staging.yml "$@"
+    REPO_ROOT='artifacts/staging-branches'
+    if [[ ! -d "$REPO_ROOT/.git" ]]
+    then
+        git clone https://github.com/dimagi/staging-branches.git "$REPO_ROOT"
+    else
+        git -C "$REPO_ROOT" pull origin main
+    fi
+
+    git -C "$REPO_ROOT" show -n 1 -- commcare-hq-staging.yml
+    echo "rebuilding staging branch..."
+    git-build-branch "$REPO_ROOT/commcare-hq-staging.yml" "$@"
 }
 
 args=''
@@ -55,24 +59,13 @@ args=''
 [[ $verbose = 'y' ]] && args="$args -v"
 [[ -z "$no_push" || $no_push != 'y' ]] && args="$args --push"
 
-[[ $skip_fetch = 'y' ]] && args="$args sync rebuild"
-
-# if staging.yml isn't up-to-date, warn and quit
-git fetch origin master
-if [[ -n $(git diff origin/master -- scripts/staging.yml) && $no_push != 'y' ]]
-then
-    echo "scripts/staging.yml on this branch different from the one on master"
-    echo "Aborting."
-    exit 1
-fi
-
-if [[ $deploy = 'y' && $no_push != 'y' ]]
-then
-    rebuildstaging $args && {
+if rebuildstaging $args ; then
+    if [[ $deploy = 'y' && $no_push != 'y' ]]; then
         which commcare-cloud \
         && commcare-cloud --control staging deploy --quiet \
         || echo 'Could not auto-deploy for you. Run `commcare-cloud --control staging deploy` to deploy.'
-    }
+    fi
 else
-    rebuildstaging $args
+    echo "You can edit the branch build configuration here:"
+    echo "  https://github.com/dimagi/staging-branches/blob/main/commcare-hq-staging.yml"
 fi

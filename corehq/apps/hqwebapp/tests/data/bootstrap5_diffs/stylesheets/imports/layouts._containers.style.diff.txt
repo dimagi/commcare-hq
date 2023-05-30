@@ -1,0 +1,38 @@
+--- 
++++ 
+@@ -1,32 +1,11 @@
+-body, html {
+-    height: 100%;
+-}
+-
+ .hq-container {
+     min-height: 100%;
+     height: auto !important;
+-    margin-bottom: -@navbar-footer-height;
+-    padding-bottom: @navbar-footer-height;
++    margin-bottom: -$navbar-footer-height;
++    padding-bottom: $navbar-footer-height;
+ }
+-
+ 
+ .container.ui-widget,
+ .container.ui-widget.ui-widget-content {
+   border: none;
+-}
+-
+-.footer-mobile {
+-  font-size: 10px;
+-  text-align: center;
+-  border-top: 1px solid @cc-neutral-hi;
+-  padding-top: 8px;
+-  margin-top:10px;
+-
+-  p {
+-    margin: 0;
+-  }
+-}
+-
+-.ui-widget-content a.btn-primary {
+-  color: white;
+-}
++}

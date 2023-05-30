@@ -1,4 +1,4 @@
-{%  extends 'hqwebapp/base_section.html' %}
+{%  extends 'hqwebapp/bootstrap3/base_section.html' %}
 {% load crispy_forms_tags %}
 {% load i18n %}
 {% load hq_shared_tags %}
@@ -23,6 +23,7 @@
   {% initial_page_data 'shared_export_type' shared_export_type %}
   {% initial_page_data 'static_model_type' static_model_type %}
   {% initial_page_data 'domain' domain %}
+  {% initial_page_data 'export_ownership_enabled' export_ownership_enabled %}
   {% registerurl 'commit_filters' domain %}
   {% registerurl 'get_app_data_drilldown_values' domain %}
   {% registerurl 'get_exports_page' domain %}

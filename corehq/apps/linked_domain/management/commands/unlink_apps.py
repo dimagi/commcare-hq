@@ -3,6 +3,7 @@ from django.core.management.base import BaseCommand
 from couchdbkit import ResourceNotFound
 
 from corehq.apps.app_manager.models import Application
+from corehq.apps.linked_domain.const import MODEL_APP
 from corehq.apps.linked_domain.models import DomainLink, DomainLinkHistory
 
 
@@ -53,7 +54,10 @@ class Command(BaseCommand):
     @staticmethod
     def hide_domain_link_history(linked_domain, linked_app_id, master_domain):
         domain_link = DomainLink.all_objects.get(linked_domain=linked_domain, master_domain=master_domain)
-        for history in DomainLinkHistory.objects.filter(link=domain_link):
+        for history in DomainLinkHistory.objects.filter(
+            link=domain_link,
+            model=MODEL_APP,
+        ):
             if history.model_detail['app_id'] == linked_app_id:
                 history.hidden = True
                 history.save()

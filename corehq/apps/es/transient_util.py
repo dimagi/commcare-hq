@@ -1,16 +1,13 @@
 """Transient utilities needed during the interim of converting HQ Elastic logic
 to use the new "client adapter" models.
+
+This module includes tools needed to route the legacy ElasticsearchInterface
+logic (corehq.util.es.*) through the new document adapters (corehq.apps.es.*),
+and will be completely removed when the code that uses the old "interface" is
+refactored to use the new "adapters".
 """
 
 from .client import ElasticDocumentAdapter
-from .registry import get_registry
-
-
-def get_adapter_mapping(adapter):
-    """Temporary function for fetching the Elastic mapping (still defined in
-    pillowtop module) for an adapter.
-    """
-    return _DOC_MAPPINGS_BY_INDEX[(adapter.index_name, adapter.type)]
 
 
 def from_dict_with_possible_id(doc):
@@ -22,28 +19,42 @@ def from_dict_with_possible_id(doc):
     return None, doc
 
 
-def doc_adapter_from_info(index_info, for_export=False):
-    """Return the document adapter for the provided ``index_info`` object.
+def doc_adapter_from_cname(index_cname, for_export=False):
+    """Return the document adapter for the provided ``index_cname``.
 
-    :param index_info: instance of a pillowtop ``ElasticsearchIndexInfo`` object
+    :param index_cname: ``str`` canonical name of the index
     :param for_export: ``bool`` used to instantiate the adapter instance
     :returns: instance of an ``ElasticDocumentAdapter`` subclass
     """
-    return _DOC_ADAPTERS_BY_INDEX[index_info.index](for_export=for_export)
+    from corehq.apps.es import CANONICAL_NAME_ADAPTER_MAP
+    return _get_doc_adapter(CANONICAL_NAME_ADAPTER_MAP[index_cname], for_export)
 
 
-def doc_adapter_from_alias(index_alias, for_export=False):
-    """Return the document adapter for the provided ``index_alias``.
+def doc_adapter_from_index_name(index_name, for_export=False):
+    """Return the document adapter for the provided ``index_name``.
 
-    :param index_alias: ``str`` name of a valid alias assigned to an index
+    :param index_name: ``str`` name of the index
     :param for_export: ``bool`` used to instantiate the adapter instance
     :returns: instance of an ``ElasticDocumentAdapter`` subclass
     """
-    return _DOC_ADAPTERS_BY_ALIAS[index_alias](for_export=for_export)
+    return _get_doc_adapter(_DOC_ADAPTERS_BY_INDEX[index_name], for_export)
 
 
-def report_and_fail_on_shard_failures(search_result):
-    ElasticDocumentAdapter._report_and_fail_on_shard_failures(search_result)
+def _get_doc_adapter(adapter, for_export):
+    """Helper function to keep things DRY. Returns an adapter instance that is
+    configured for export (or not).
+    """
+    return adapter.export_adapter() if for_export else adapter
+
+
+def iter_doc_adapters():
+    from corehq.apps.es import CANONICAL_NAME_ADAPTER_MAP
+    yield from CANONICAL_NAME_ADAPTER_MAP.values()
+
+
+def iter_index_cnames():
+    from corehq.apps.es import CANONICAL_NAME_ADAPTER_MAP
+    yield from CANONICAL_NAME_ADAPTER_MAP
 
 
 def populate_doc_adapter_map():
@@ -54,44 +65,37 @@ def populate_doc_adapter_map():
     method. Do not call this function other places.
     """
     from django.conf import settings
-    from .apps import ElasticApp
-    from .case_search import ElasticCaseSearch
-    from .cases import ElasticCase
-    from .domains import ElasticDomain
-    from .forms import ElasticForm
-    from .groups import ElasticGroup
-    from .sms import ElasticSMS
-    from .users import ElasticUser
+    from .apps import app_adapter
+    from .case_search import case_search_adapter
+    from .cases import case_adapter
+    from .domains import domain_adapter
+    from .forms import form_adapter
+    from .groups import group_adapter
+    from .sms import sms_adapter
+    from .users import user_adapter
 
     # by index
-    for DocAdapter in [ElasticApp, ElasticCaseSearch, ElasticCase,
-                       ElasticDomain, ElasticForm, ElasticGroup, ElasticSMS,
-                       ElasticUser]:
-        assert DocAdapter.index_name not in _DOC_ADAPTERS_BY_INDEX, \
-            (DocAdapter.index_name, _DOC_ADAPTERS_BY_INDEX)
-        _DOC_ADAPTERS_BY_INDEX[DocAdapter.index_name] = DocAdapter
-    # aliases and mappings
-    for index_info in get_registry().values():
-        _DOC_ADAPTERS_BY_ALIAS[index_info.alias] = _DOC_ADAPTERS_BY_INDEX[index_info.index]
-        mapping_key = (index_info.index, index_info.type)
-        _DOC_MAPPINGS_BY_INDEX[mapping_key] = index_info.mapping
+    for doc_adapter in [app_adapter, case_search_adapter, case_adapter,
+                       domain_adapter, form_adapter, group_adapter, sms_adapter,
+                       user_adapter]:
+        assert doc_adapter.index_name not in _DOC_ADAPTERS_BY_INDEX, \
+            (doc_adapter.index_name, _DOC_ADAPTERS_BY_INDEX)
+        _DOC_ADAPTERS_BY_INDEX[doc_adapter.index_name] = doc_adapter
+        mapping_key = (doc_adapter.index_name, doc_adapter.type)
+        _DOC_MAPPINGS_BY_INDEX[mapping_key] = doc_adapter.mapping
 
     if settings.UNIT_TESTING:
-        from pillowtop.tests.utils import TEST_INDEX_INFO
-        add_dynamic_es_adapter("PillowTop", TEST_INDEX_INFO.index,
-                               TEST_INDEX_INFO.type, TEST_INDEX_INFO.mapping,
-                               TEST_INDEX_INFO.alias)
+        from pillowtop.tests.utils import TEST_ES_TYPE, TEST_ES_MAPPING, TEST_ES_INDEX
+        add_dynamic_adapter("PillowTop", TEST_ES_INDEX, TEST_ES_TYPE, TEST_ES_MAPPING)
 
         from corehq.apps.es.tests.utils import TEST_ES_INFO, TEST_ES_MAPPING
-        add_dynamic_es_adapter("UtilES", TEST_ES_INFO.alias, TEST_ES_INFO.type,
-                               TEST_ES_MAPPING, TEST_ES_INFO.alias)
+        add_dynamic_adapter("UtilES", TEST_ES_INFO.alias, TEST_ES_INFO.type,
+                        TEST_ES_MAPPING)
 
 
-def add_dynamic_es_adapter(descriptor, index_, type_, mapping_, alias):
+def add_dynamic_adapter(descriptor, index_, type_, mapping_):
 
     class Adapter(ElasticDocumentAdapter):
-        index_name = index_  # override the classproperty
-        type = type_
         mapping = mapping_
 
         @classmethod
@@ -99,11 +103,10 @@ def add_dynamic_es_adapter(descriptor, index_, type_, mapping_, alias):
             return from_dict_with_possible_id(doc)
 
     Adapter.__name__ = f"{descriptor}Test"
-    _DOC_ADAPTERS_BY_INDEX[index_] = Adapter
-    _DOC_ADAPTERS_BY_ALIAS[alias] = Adapter
+    test_adapter = Adapter(index_, type_)
+    _DOC_ADAPTERS_BY_INDEX[index_] = test_adapter
     _DOC_MAPPINGS_BY_INDEX[index_] = mapping_
 
 
 _DOC_ADAPTERS_BY_INDEX = {}
-_DOC_ADAPTERS_BY_ALIAS = {}
 _DOC_MAPPINGS_BY_INDEX = {}

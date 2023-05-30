@@ -1,8 +1,7 @@
 import decimal
 import json
-from collections import Counter
+from collections import Counter, defaultdict
 
-from couchdbkit.exceptions import ResourceNotFound
 from django.conf import settings
 from django.contrib import messages
 from django.http import JsonResponse
@@ -11,36 +10,42 @@ from django.utils.decorators import method_decorator
 from django.utils.functional import cached_property
 from django.views.decorators.http import require_POST
 
-from corehq.apps.accounting.models import Subscription
+from couchdbkit.exceptions import ResourceNotFound
+
+from couchforms.analytics import get_last_form_submission_received
+from soil import DownloadBase
+
 from corehq.apps.domain.decorators import require_superuser_or_contractor
 from corehq.apps.hqwebapp.decorators import use_datatables
 from corehq.apps.hqwebapp.views import BasePageView
 from corehq.apps.toggle_ui.models import ToggleAudit
 from corehq.apps.toggle_ui.tasks import generate_toggle_csv_download
-from corehq.apps.toggle_ui.utils import find_static_toggle
+from corehq.apps.toggle_ui.utils import (
+    find_static_toggle,
+    get_subscription_info,
+)
 from corehq.apps.users.models import CouchUser
 from corehq.toggles import (
     ALL_NAMESPACES,
     ALL_TAG_GROUPS,
     NAMESPACE_DOMAIN,
+    NAMESPACE_EMAIL_DOMAIN,
     NAMESPACE_USER,
     TAG_CUSTOM,
     TAG_DEPRECATED,
     TAG_INTERNAL,
     DynamicallyPredictablyRandomToggle,
+    FeatureRelease,
     PredictablyRandomToggle,
     all_toggles,
-    NAMESPACE_EMAIL_DOMAIN,
     toggles_enabled_for_domain,
     toggles_enabled_for_email_domain,
-    toggles_enabled_for_user, FeatureRelease,
+    toggles_enabled_for_user,
 )
 from corehq.toggles.models import Toggle
-from corehq.toggles.shortcuts import parse_toggle, namespaced_item
+from corehq.toggles.shortcuts import namespaced_item, parse_toggle
 from corehq.util import reverse
 from corehq.util.soft_assert import soft_assert
-from couchforms.analytics import get_last_form_submission_received
-from soil import DownloadBase
 
 NOT_FOUND = "Not Found"
 
@@ -176,7 +181,7 @@ class ToggleEditView(BasePageView):
             context['last_used'] = _get_usage_info(toggle)
 
         if self.show_service_type:
-            context['service_type'] = _get_service_type(toggle)
+            context['service_type'], context['by_service'] = _get_service_type(toggle)
 
         return context
 
@@ -213,7 +218,7 @@ class ToggleEditView(BasePageView):
         if self.usage_info:
             data['last_used'] = _get_usage_info(toggle)
         if self.show_service_type:
-            data['service_type'] = _get_service_type(toggle)
+            data['service_type'], data['by_service'] = _get_service_type(toggle)
         return HttpResponse(json.dumps(data), content_type="application/json")
 
     def _save_randomness(self, toggle, randomness):
@@ -332,10 +337,14 @@ def _get_service_type(toggle):
     for enabled in toggle.enabled_users:
         name = _enabled_item_name(enabled)
         if _namespace_domain(enabled):
-            subscription = Subscription.get_active_subscription_by_domain(name)
-            if subscription:
-                service_type[name] = subscription.service_type
-    return service_type
+            plan_type, plan = get_subscription_info(name)
+            service_type[name] = f"{plan_type} : {plan}"
+
+    by_service = defaultdict(list)
+    for domain, _type in sorted(service_type.items()):
+        by_service[_type].append(domain)
+
+    return service_type, dict(by_service)
 
 
 def _namespace_domain(enabled_item):

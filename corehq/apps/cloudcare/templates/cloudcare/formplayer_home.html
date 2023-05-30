@@ -1,4 +1,4 @@
-{% extends 'hqwebapp/base_navigation.html' %}
+{% extends 'hqwebapp/bootstrap3/base_navigation.html' %}
 {% load i18n %}
 {% load hq_shared_tags %}
 {% load compress %}
@@ -11,12 +11,11 @@
 
 {% block head %}
   {{ block.super }}
-  <script src="{% static 'datatables.net/js/jquery.dataTables.min.js' %}"></script>
-  <script src="{% static 'datatables-bootstrap3/BS3/assets/js/datatables.js' %}"></script>
   <style id="persistent-cell-layout-style"></style>
   <style id="persistent-cell-grid-style"></style>
   <style id="list-cell-layout-style"></style>
   <style id="list-cell-grid-style"></style>
+  <style id="list-cell-wrapper-style"></style>
   <style id="list-cell-container-style"></style>
 {% endblock %}
 
@@ -35,10 +34,6 @@
   {% compress css %}
     <link rel="stylesheet" href="{% static 'nprogress/nprogress.css' %}">
     <link rel="stylesheet" href="{% static 'At.js/dist/css/jquery.atwho.min.css' %}">
-    <link type="text/css"
-          rel="stylesheet"
-          media="all"
-          href="{% static 'datatables.net-dt/css/jquery.dataTables.min.css' %}"/>
     <link rel="stylesheet" href="{% static 'cloudcare/css/webforms.css' %}">
     <link rel="stylesheet" href="{% static 'bootstrap-switch/dist/css/bootstrap3/bootstrap-switch.css' %}"/>
   {% endcompress %}
@@ -83,11 +78,13 @@
   {% initial_page_data 'hmac_root_url' integrations.hmac_root_url %}
   {% initial_page_data 'hmac_api_key' integrations.hmac_api_key %}
   {% initial_page_data 'hmac_hashed_secret' integrations.hmac_hashed_secret %}
+  {% initial_page_data 'sentry' sentry %}
   {% registerurl 'list_case_exports' request.domain %}
   {% registerurl 'list_form_exports' request.domain %}
   {% registerurl 'case_data' request.domain '---' %}
   {% registerurl 'render_form_data' request.domain '---' %}
   {% registerurl 'report_formplayer_error' request.domain %}
+  {% registerurl 'report_sentry_error' request.domain %}
   {% registerurl 'dialer_view' request.domain %}
   {% if integrations.gaen_otp_enabled %}
     {% registerurl 'gaen_otp_view' request.domain %}
@@ -114,6 +111,7 @@
                 }">
       </section>
     </div>
+    <div role="region" id="sr-notification-region" class="sr-only" aria-live="assertive" aria-relevant="all"></div>
     <small id="version-info"></small>
     {% if request.couch_user.can_edit_data %}
       <section id="cloudcare-debugger" data-bind="

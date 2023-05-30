@@ -1,42 +1,49 @@
 from abc import ABCMeta, abstractmethod
 from functools import partial
+from unittest import mock
 
 from django.test import SimpleTestCase, TestCase
 from django.utils.translation import gettext
 
-from unittest import mock
-
-from pillowtop.es_utils import initialize_index_and_mapping
-
 from corehq.apps.domain.shortcuts import create_domain, create_user
-from corehq.apps.domain.tests.test_utils import delete_all_domains
 from corehq.apps.es.fake.groups_fake import GroupESFake
 from corehq.apps.es.fake.users_fake import UserESFake
+from corehq.apps.es.client import manager
+from corehq.apps.es.users import user_adapter
 from corehq.apps.es.tests.utils import es_test
 from corehq.apps.groups.models import Group
 from corehq.apps.locations.tests.util import LocationHierarchyTestCase
-from corehq.apps.registry.tests.utils import Invitation, create_registry_for_test, Grant
+from corehq.apps.registry.tests.utils import (
+    Grant,
+    Invitation,
+    create_registry_for_test,
+)
 from corehq.apps.reports_core.filters import Choice
-from corehq.apps.userreports.models import ReportConfiguration, RegistryDataSourceConfiguration, \
-    RegistryReportConfiguration
+from corehq.apps.userreports.models import (
+    RegistryDataSourceConfiguration,
+    RegistryReportConfiguration,
+    ReportConfiguration,
+)
 from corehq.apps.userreports.reports.filters.choice_providers import (
     ChoiceQueryContext,
+    DomainChoiceProvider,
     GroupChoiceProvider,
     LocationChoiceProvider,
     OwnerChoiceProvider,
     SearchableChoice,
     StaticChoiceProvider,
     UserChoiceProvider,
-    DomainChoiceProvider,
 )
 from corehq.apps.userreports.reports.filters.values import SHOW_ALL_CHOICE
 from corehq.apps.users.dbaccessors import delete_all_users
-from corehq.apps.users.models import CommCareUser, DomainMembership, WebUser, HqPermissions
+from corehq.apps.users.models import (
+    CommCareUser,
+    DomainMembership,
+    HqPermissions,
+    WebUser,
+)
 from corehq.apps.users.models_role import UserRole
 from corehq.apps.users.util import normalize_username
-from corehq.elastic import get_es_new
-from corehq.pillows.mappings.user_mapping import USER_INDEX, USER_INDEX_INFO
-from corehq.util.elastic import ensure_index_deleted
 from corehq.util.es.testing import sync_users_to_es
 from corehq.util.test_utils import flag_disabled, flag_enabled
 
@@ -279,7 +286,7 @@ class UserChoiceProviderTest(SimpleTestCase, ChoiceProviderTestMixin):
         return user
 
     @classmethod
-    @mock.patch('corehq.pillows.user.get_group_id_name_map_by_user', mock.Mock(return_value=[]))
+    @mock.patch('corehq.apps.groups.dbaccessors.get_group_id_name_map_by_user', mock.Mock(return_value=[]))
     def setUpClass(cls):
         super(UserChoiceProviderTest, cls).setUpClass()
         report = ReportConfiguration(domain=cls.domain)
@@ -331,7 +338,7 @@ class GroupChoiceProviderTest(SimpleTestCase, ChoiceProviderTestMixin):
         return group
 
     @classmethod
-    @mock.patch('corehq.pillows.user.get_group_id_name_map_by_user', mock.Mock(return_value=[]))
+    @mock.patch('corehq.apps.groups.dbaccessors.get_group_id_name_map_by_user', mock.Mock(return_value=[]))
     def setUpClass(cls):
         super(GroupChoiceProviderTest, cls).setUpClass()
         report = ReportConfiguration(domain=cls.domain)
@@ -418,7 +425,7 @@ class OwnerChoiceProviderTest(LocationHierarchyTestCase, ChoiceProviderTestMixin
         )
 
 
-@es_test
+@es_test(requires=[user_adapter], setup_class=True)
 class UserMetadataChoiceProviderTest(TestCase, ChoiceProviderTestMixin):
     domain = 'user-meta-choice-provider'
 
@@ -438,8 +445,6 @@ class UserMetadataChoiceProviderTest(TestCase, ChoiceProviderTestMixin):
     @classmethod
     def setUpClass(cls):
         super(UserMetadataChoiceProviderTest, cls).setUpClass()
-        cls.elasticsearch = get_es_new()
-        initialize_index_and_mapping(cls.elasticsearch, USER_INDEX_INFO)
         report = ReportConfiguration(domain=cls.domain)
         cls.domain_obj = create_domain(cls.domain)
 
@@ -455,7 +460,7 @@ class UserMetadataChoiceProviderTest(TestCase, ChoiceProviderTestMixin):
                 cls.make_mobile_worker('Sauron', metadata={'sigil': 'eye',
                                        'seat': 'Mordor'}, domain='some-other-domain-lotr'),
             ]
-        cls.elasticsearch.indices.refresh(USER_INDEX)
+        manager.index_refresh(user_adapter.index_name)
 
         choices = [
             SearchableChoice(
@@ -484,7 +489,6 @@ class UserMetadataChoiceProviderTest(TestCase, ChoiceProviderTestMixin):
     def tearDownClass(cls):
         delete_all_users()
         cls.domain_obj.delete()
-        ensure_index_deleted(USER_INDEX)
         super().tearDownClass()
 
     @flag_enabled('RESTRICT_LOGIN_AS')
@@ -537,18 +541,28 @@ class DomainChoiceProviderTest(TestCase, ChoiceProviderTestMixin):
 
     @classmethod
     def setUpClass(cls):
-        super(DomainChoiceProviderTest, cls).setUpClass()
+        super().setUpClass()
         cls.domain_a = create_domain(name="A")
         cls.domain_b = create_domain(name="B")
         cls.domain_c = create_domain(name="C")
         cls.domain_d = create_domain(name="D")
         for domain in [cls.domain_a, cls.domain_b, cls.domain_c, cls.domain_d]:
             domain.save()
+            cls.addClassCleanup(domain.delete)
+
         cls.user = create_user("admin", "123")
-        cls.web_user = cls.make_web_user_with_registry_role('web-user@ex.com', cls.domain_a,
-                                                            has_registry_access=True)
-        cls.web_user_no_registry_access = cls.make_web_user_with_registry_role('other-web-user@ex.com',
-                                                                               cls.domain_a)
+        cls.addClassCleanup(cls.user.delete, None, None)
+
+        cls.web_user = cls.make_web_user_with_registry_role(
+            'web-user@ex.com',
+            cls.domain_a,
+            has_registry_access=True)
+        cls.addClassCleanup(cls.web_user.delete, None, None)
+
+        cls.web_user_no_registry_access = cls.make_web_user_with_registry_role(
+            'other-web-user@ex.com',
+            cls.domain_a)
+        cls.addClassCleanup(cls.web_user_no_registry_access.delete, None, None)
 
         invitations = [Invitation('A'), Invitation('B'), Invitation('C')]
         # A, B, and C are in the registry A has access to B and C, B has access to C
@@ -564,9 +578,11 @@ class DomainChoiceProviderTest(TestCase, ChoiceProviderTestMixin):
             referenced_doc_type='CommCareCase', registry_slug=cls.registry.slug,
         )
         cls.config.save()
+        cls.addClassCleanup(cls.config.delete)
 
         cls.report = RegistryReportConfiguration(domain="A", config_id=cls.config._id)
         cls.report.save()
+        cls.addClassCleanup(cls.report.delete)
 
         choices = [
             SearchableChoice("A", "A", ["A"]),
@@ -576,14 +592,6 @@ class DomainChoiceProviderTest(TestCase, ChoiceProviderTestMixin):
         choices.sort(key=lambda choice: choice.display)
         cls.choice_provider = DomainChoiceProvider(cls.report, None)
         cls.static_choice_provider = StaticChoiceProvider(choices)
-
-    @classmethod
-    def tearDownClass(cls):
-        delete_all_users()
-        delete_all_domains()
-        cls.config.delete()
-        cls.report.delete()
-        super(DomainChoiceProviderTest, cls).tearDownClass()
 
     def test_query_search(self):
         self._test_query(ChoiceQueryContext("A", limit=1, page=0, user=self.web_user))
@@ -629,12 +637,14 @@ class DomainChoiceProviderTest(TestCase, ChoiceProviderTestMixin):
             referenced_doc_type='CommCareCase', registry_slug=self.registry.slug,
         )
         config.save()
+        self.addCleanup(config.delete)
+
         report = RegistryReportConfiguration(domain="B", config_id=config._id)
         self.choice_provider = DomainChoiceProvider(report, None)
+
         self.assertEqual([Choice(value='B', display='B'), Choice(value='C', display='C', )],
                          self.choice_provider.query(ChoiceQueryContext(query='', offset=0,
                                                                        user=user)))
-        config.delete()
 
     def test_domain_with_no_grants(self):
         user = self.make_web_user_with_registry_role('yet-another-web-user@ex.com', self.domain_c,
@@ -644,9 +654,11 @@ class DomainChoiceProviderTest(TestCase, ChoiceProviderTestMixin):
             referenced_doc_type='CommCareCase', registry_slug=self.registry.slug,
         )
         config.save()
+        self.addCleanup(config.delete)
+
         report = RegistryReportConfiguration(domain="C", config_id=config._id)
         self.choice_provider = DomainChoiceProvider(report, None)
+
         self.assertEqual([Choice(value='C', display='C')],
                          self.choice_provider.query(ChoiceQueryContext(query='', offset=0,
                                                                        user=user)))
-        config.delete()

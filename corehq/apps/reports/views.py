@@ -4,7 +4,6 @@ import re
 from dataclasses import dataclass
 from datetime import datetime, timedelta
 from functools import cmp_to_key, wraps
-from wsgiref.util import FileWrapper
 
 from django.conf import settings
 from django.contrib import messages
@@ -18,12 +17,12 @@ from django.http import (
     HttpResponseNotFound,
     HttpResponseRedirect,
     JsonResponse,
-    StreamingHttpResponse,
 )
 from django.shortcuts import render
 from django.template.loader import render_to_string
 from django.utils.decorators import method_decorator
 from django.utils.html import format_html, format_html_join
+from django.utils.safestring import mark_safe
 from django.utils.translation import gettext as _
 from django.utils.translation import gettext_lazy, gettext_noop
 from django.views.decorators.http import (
@@ -88,6 +87,7 @@ from corehq.apps.reports.formdetails.readable import (
     get_data_cleaning_data,
     get_readable_data_for_submission,
 )
+from corehq.apps.reports.models import QueryStringHash
 from corehq.apps.saved_reports.models import ReportConfig, ReportNotification
 from corehq.apps.saved_reports.tasks import (
     send_delayed_report,
@@ -99,7 +99,6 @@ from corehq.apps.users.dbaccessors import get_all_user_rows
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import (
     CommCareUser,
-    CouchUser,
     HqPermissions,
     WebUser,
 )
@@ -112,12 +111,13 @@ from corehq.blobs import CODES, NotFound, get_blob_db, models
 from corehq.form_processor.exceptions import AttachmentNotFound, CaseNotFound
 from corehq.form_processor.interfaces.processor import FormProcessorInterface
 from corehq.form_processor.models import CommCareCase, XFormInstance
-from corehq.form_processor.utils.general import use_sqlite_backend
 from corehq.form_processor.utils.xform import resave_form
+from corehq.motech.generic_inbound.utils import revert_api_request_from_form
 from corehq.tabs.tabclasses import ProjectReportsTab
 from corehq.toggles import VIEW_FORM_ATTACHMENT
 from corehq.util import cmp
 from corehq.util.couch import get_document_or_404
+from corehq.util.download import get_download_response
 from corehq.util.timezones.conversions import ServerTime
 from corehq.util.timezones.utils import (
     get_timezone_for_request,
@@ -130,6 +130,7 @@ from .forms import (
     SavedReportConfigForm,
     TableauServerForm,
     TableauVisualizationForm,
+    UpdateTableauVisualizationForm,
 )
 from .lookup import ReportLookup, get_full_report_name
 from .models import TableauServer, TableauVisualization
@@ -172,7 +173,7 @@ def _can_view_form_attachment():
                 response = HttpResponseForbidden()
             return response
 
-        return api_auth(_inner)
+        return api_auth()(_inner)
     return decorator
 
 
@@ -1125,7 +1126,8 @@ def render_full_report_notification(request, content, email=None, report_notific
         })
 
     return render(request, "reports/report_email.html", {
-        'email_content': content,
+        # TODO: move the responsibility for safety up the chain, to scheduled reports, etc
+        'email_content': mark_safe(content),  # nosec: content is expected to be the report's HTML
         'unsub_link': unsub_link
     })
 
@@ -1439,25 +1441,52 @@ class FormDataView(BaseProjectReportSectionView):
 @require_form_view_permission
 @location_safe
 def view_form_attachment(request, domain, instance_id, attachment_id):
-    # Open form attachment in browser
-    return get_form_attachment_response(request, domain, instance_id, attachment_id)
+    # This view differs from corehq.apps.api.object_fetch_api.view_form_attachment
+    # by using login_and_domain_required as auth to allow domain aware login page
+    # in browser
+    # This is not used in HQ anywhere but the link for the same is created
+    # in the apps and saved as case properties
+    # example: https://india.commcarehq.org/a/gcc-sangath/reports/case_data/b7dcdb76-d58a-4aa6-80d1-de35d7f600d0/
+    # View image/audio/video form attachment in browser
+    # download option is restricted in html for audio/video if FF enabled
+    _ensure_form_access(request, domain, instance_id, attachment_id)
+    attachment_meta = XFormInstance.objects.get_attachment_by_name(instance_id, attachment_id)
+    context = {
+        'download_url': reverse('api_form_attachment', args=[domain, instance_id, attachment_id]),
+        'content_name': attachment_id,
+        'disable_download': toggles.DISABLE_FORM_ATTACHMENT_DOWNLOAD_IN_BROWSER.enabled_for_request(request),
+        'is_image': attachment_meta.is_image
+    }
+    return render(
+        request,
+        template_name='reports/reportdata/view_form_attachment.html',
+        context=context
+    )
 
 
-def get_form_attachment_response(request, domain, instance_id=None, attachment_id=None):
+def _ensure_form_access(request, domain, instance_id, attachment_id):
     if not instance_id or not attachment_id:
         raise Http404
 
     # this raises a PermissionDenied error if necessary
     safely_get_form(request, domain, instance_id)
 
+
+def get_form_attachment_response(request, domain, instance_id=None, attachment_id=None):
+    _ensure_form_access(request, domain, instance_id, attachment_id)
+
     try:
         content = XFormInstance.objects.get_attachment_content(instance_id, attachment_id)
     except AttachmentNotFound:
         raise Http404
 
-    return StreamingHttpResponse(
-        streaming_content=FileWrapper(content.content_stream),
-        content_type=content.content_type
+    return get_download_response(
+        payload=content.content_stream,
+        content_length=content.content_length,
+        content_type=content.content_type,
+        download=False,
+        filename=attachment_id,
+        request=request
     )
 
 
@@ -1528,6 +1557,7 @@ def archive_form(request, domain, instance_id):
             notify_level = messages.ERROR
         else:
             instance.archive(user_id=request.couch_user._id)
+            revert_api_request_from_form(instance_id)
             notify_msg = _("Form was successfully archived.")
     elif instance.is_archived:
         notify_msg = _("Form was already archived.")
@@ -1834,6 +1864,9 @@ class TableauVisualizationListView(BaseProjectReportSectionView, CRUDPaginatedVi
             'title': tableau_visualization.title,
             'server': tableau_visualization.server.server_name,
             'view_url': tableau_visualization.view_url,
+            'updateForm': self.get_update_form_response(
+                self.get_update_form(tableau_visualization)
+            ),
         }
         return data
 
@@ -1846,6 +1879,23 @@ class TableauVisualizationListView(BaseProjectReportSectionView, CRUDPaginatedVi
         return {
             'itemData': self._get_item_data(tableau_viz),
             'template': 'tableau-visualization-deleted-template',
+        }
+
+    def get_update_form(self, instance=None):
+        if instance is None:
+            instance = TableauVisualization.objects.get(
+                pk=self.request.POST.get("id"),
+                domain=self.domain,
+            )
+        if self.request.method == 'POST' and self.action == 'update':
+            return UpdateTableauVisualizationForm(self.domain, self.request.POST, instance=instance)
+        return UpdateTableauVisualizationForm(self.domain, instance=instance)
+
+    def get_updated_item_data(self, update_form):
+        tableau_viz = update_form.save()
+        return {
+            "itemData": self._get_item_data(tableau_viz),
+            "template": "tableau-visualization-template",
         }
 
     def post(self, *args, **kwargs):
@@ -1888,3 +1938,36 @@ class TableauVisualizationDetailView(BaseProjectReportSectionView, ModelFormMixi
     def form_valid(self, form):
         form.save()
         return super().form_valid(form)
+
+
+@login_and_domain_required
+@location_safe
+@require_POST
+def get_or_create_filter_hash(request, domain):
+    query_id = request.POST.get('query_id')
+    query_string = request.POST.get('params')
+    not_found = False
+
+    if query_string:
+        query, created = QueryStringHash.objects.get_or_create(query_string=query_string, domain=domain)
+        query_id = query.query_id.hex
+        query.save()  # Updates the 'last_accessed' field
+    elif query_id:
+        try:
+            query = QueryStringHash.objects.filter(query_id=query_id, domain=domain)
+        except ValidationError:
+            query = None
+        if not query:
+            not_found = True
+        else:
+            query = query[0]
+            query_string = query.query_string
+            query.save()  # Updates the 'last_accessed' field
+    else:
+        not_found = True
+
+    return JsonResponse({
+        'query_string': query_string,
+        'query_id': query_id,
+        'not_found': not_found,
+    })

@@ -2,9 +2,10 @@ from datetime import datetime, timedelta
 
 from django.test import SimpleTestCase, TestCase
 
-from pillowtop.es_utils import initialize_index_and_mapping
-
 from corehq.apps.domain.shortcuts import create_domain
+from corehq.apps.es.cases import case_adapter
+from corehq.apps.es.forms import form_adapter
+from corehq.apps.es.tests.utils import es_test
 from corehq.apps.reports.views import get_scheduled_report_response
 from corehq.apps.saved_reports.models import ReportConfig, ReportNotification
 from corehq.apps.saved_reports.scheduled import (
@@ -12,8 +13,6 @@ from corehq.apps.saved_reports.scheduled import (
     guess_reporting_minute,
 )
 from corehq.apps.users.models import HqPermissions, UserRole, WebUser
-from corehq.pillows.mappings.case_mapping import CASE_INDEX_INFO
-from corehq.util.elastic import ensure_active_es, ensure_index_deleted
 
 
 class GuessReportingMinuteTest(SimpleTestCase):
@@ -236,6 +235,7 @@ class ScheduledReportTest(TestCase):
         self._check('monthly', datetime(2014, 10, 31, 12, 0), 1)
 
 
+@es_test(requires=[case_adapter, form_adapter], setup_class=True)
 class ScheduledReportSendingTest(TestCase):
 
     domain = 'test-scheduled-reports'
@@ -245,7 +245,6 @@ class ScheduledReportSendingTest(TestCase):
 
     @classmethod
     def setUpClass(cls):
-        es = ensure_active_es()
         super(ScheduledReportSendingTest, cls).setUpClass()
 
         cls.domain_obj = create_domain(cls.domain)
@@ -261,13 +260,10 @@ class ScheduledReportSendingTest(TestCase):
             role_id=cls.reports_role.get_id
         )
 
-        initialize_index_and_mapping(es, CASE_INDEX_INFO)
-
     @classmethod
     def tearDownClass(cls):
         cls.domain_obj.delete()
         delete_all_report_notifications()
-        ensure_index_deleted(CASE_INDEX_INFO.index)
         super(ScheduledReportSendingTest, cls).tearDownClass()
 
     def test_get_scheduled_report_response(self):

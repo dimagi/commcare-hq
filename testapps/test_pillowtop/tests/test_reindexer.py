@@ -1,41 +1,50 @@
 import uuid
 
 from django.test import TestCase
-from corehq.util.es.elasticsearch import ConnectionError
-from unittest import mock
+
+from pillowtop.utils import get_pillow_by_name
 
 from corehq.apps.callcenter.tests.test_utils import CallCenterDomainMockTest
-from corehq.apps.case_search.models import CaseSearchConfig
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.domain.tests.test_utils import delete_all_domains
-from corehq.apps.es import CaseES, CaseSearchES, DomainES, FormES, UserES, GroupES
+from corehq.apps.es import (
+    CaseES,
+    CaseSearchES,
+    DomainES,
+    FormES,
+    GroupES,
+    UserES,
+    case_adapter,
+    case_search_adapter,
+    domain_adapter,
+    form_adapter,
+    group_adapter,
+    user_adapter,
+)
+from corehq.apps.es.client import manager
 from corehq.apps.es.tests.utils import es_test
 from corehq.apps.groups.models import Group
 from corehq.apps.groups.tests.test_utils import delete_all_groups
-from corehq.apps.hqcase.management.commands.ptop_reindexer_v2 import reindex_and_clean
+from corehq.apps.hqcase.management.commands.ptop_reindexer_v2 import (
+    reindex_and_clean,
+)
 from corehq.apps.users.dbaccessors import delete_all_users
 from corehq.apps.users.models import CommCareUser, WebUser
-from corehq.elastic import get_es_new
 from corehq.form_processor.tests.utils import FormProcessorTestUtils
 from corehq.pillows.application import AppReindexerFactory
 from corehq.pillows.case import SqlCaseReindexerFactory
-from corehq.pillows.case_search import domains_needing_search_index
 from corehq.pillows.domain import DomainReindexerFactory
 from corehq.pillows.group import GroupReindexerFactory
 from corehq.pillows.groups_to_user import GroupToUserReindexerFactory
-from corehq.pillows.mappings.case_mapping import CASE_INDEX, CASE_INDEX_INFO
-from corehq.pillows.mappings.case_search_mapping import CASE_SEARCH_INDEX
-from corehq.pillows.mappings.domain_mapping import DOMAIN_INDEX
-from corehq.pillows.mappings.group_mapping import GROUP_INDEX_INFO
-from corehq.pillows.mappings.user_mapping import USER_INDEX
-from corehq.pillows.mappings.xform_mapping import XFORM_INDEX
 from corehq.pillows.sms import SmsReindexerFactory
 from corehq.pillows.user import UserReindexerFactory
 from corehq.pillows.xform import SqlFormReindexerFactory
 from corehq.util.elastic import delete_es_index, ensure_index_deleted
-from corehq.util.test_utils import trap_extra_setup, create_and_save_a_form, create_and_save_a_case, generate_cases
-from pillowtop.es_utils import initialize_index_and_mapping
-from pillowtop.utils import get_pillow_by_name
+from corehq.util.test_utils import (
+    create_and_save_a_case,
+    create_and_save_a_form,
+    generate_cases,
+)
 from testapps.test_pillowtop.utils import real_pillow_settings
 
 DOMAIN = 'reindex-test-domain'
@@ -45,21 +54,9 @@ DOMAIN = 'reindex-test-domain'
 class PillowtopReindexerTest(TestCase):
     domain = DOMAIN
 
-    @classmethod
-    def setUpClass(cls):
-        super(PillowtopReindexerTest, cls).setUpClass()
-        with trap_extra_setup(ConnectionError):
-            initialize_index_and_mapping(get_es_new(), CASE_INDEX_INFO)
-
-    @classmethod
-    def tearDownClass(cls):
-        for index in [CASE_SEARCH_INDEX, USER_INDEX, CASE_INDEX, XFORM_INDEX]:
-            ensure_index_deleted(index)
-        super(PillowtopReindexerTest, cls).tearDownClass()
-
     def test_domain_reindexer(self):
         delete_all_domains()
-        ensure_index_deleted(DOMAIN_INDEX)
+        ensure_index_deleted(domain_adapter.index_name)
         name = 'reindex-test-domain'
         create_domain(name)
         reindex_and_clean('domain')
@@ -68,7 +65,7 @@ class PillowtopReindexerTest(TestCase):
         domain_doc = results.hits[0]
         self.assertEqual(name, domain_doc['name'])
         self.assertEqual('Domain', domain_doc['doc_type'])
-        delete_es_index(DOMAIN_INDEX)
+        self.addCleanup(delete_es_index, domain_adapter.index_name)
 
     def test_case_reindexer_v2(self):
         FormProcessorTestUtils.delete_all_cases()
@@ -76,30 +73,18 @@ class PillowtopReindexerTest(TestCase):
 
         index_id = 'sql-case'
         reindex_and_clean(index_id, reset=True)
-
         self._assert_case_is_in_es(case)
+        self.addCleanup(delete_es_index, case_adapter.index_name)
 
     def test_case_search_reindexer(self):
-        es = get_es_new()
         FormProcessorTestUtils.delete_all_cases()
         case = _create_and_save_a_case()
+        create_domain(case.domain)
 
-        ensure_index_deleted(CASE_SEARCH_INDEX)
-
-        # With case search not enabled, case should not make it to ES
-        CaseSearchConfig.objects.all().delete()
-        domains_needing_search_index.clear()
         reindex_and_clean('case-search')
-        es.indices.refresh(CASE_SEARCH_INDEX)  # as well as refresh the index
-        self._assert_es_empty(esquery=CaseSearchES())
-
-        # With case search enabled, it should get indexed
-        with mock.patch('corehq.pillows.case_search.domains_needing_search_index',
-                        mock.MagicMock(return_value=[self.domain])):
-            reindex_and_clean('case-search')
-
-        es.indices.refresh(CASE_SEARCH_INDEX)  # as well as refresh the index
+        manager.index_refresh(case_search_adapter.index_name)
         self._assert_case_is_in_es(case, esquery=CaseSearchES())
+        self.addCleanup(delete_es_index, case_search_adapter.index_name)
 
     def test_xform_reindexer_v2(self):
         FormProcessorTestUtils.delete_all_xforms()
@@ -109,6 +94,7 @@ class PillowtopReindexerTest(TestCase):
         reindex_and_clean(index_id, reset=True)
 
         self._assert_form_is_in_es(form)
+        self.addCleanup(delete_es_index, form_adapter.index_name)
 
     def _assert_es_empty(self, esquery=CaseES()):
         results = esquery.run()
@@ -215,22 +201,17 @@ def test_no_checkpoint_creation(self, reindexer_factory, pillow_name):
         )
 
 
+@es_test(requires=[user_adapter], setup_class=True)
 class UserReindexerTest(TestCase):
 
     def setUp(self):
-        super(UserReindexerTest, self).setUp()
+        super().setUp()
         delete_all_users()
 
     @classmethod
     def setUpClass(cls):
         super(UserReindexerTest, cls).setUpClass()
         create_domain(DOMAIN)
-        ensure_index_deleted(USER_INDEX)
-
-    @classmethod
-    def tearDownClass(cls):
-        ensure_index_deleted(USER_INDEX)
-        super(UserReindexerTest, cls).tearDownClass()
 
     def test_user_reindexer_v2(self):
         username = 'reindex-test-username-v2'
@@ -256,21 +237,12 @@ class UserReindexerTest(TestCase):
             self.assertEqual('WebUser', user_doc['doc_type'])
 
 
+@es_test(requires=[group_adapter], setup_class=True)
 class GroupReindexerTest(TestCase):
 
     def setUp(self):
         super(GroupReindexerTest, self).setUp()
         delete_all_groups()
-
-    @classmethod
-    def setUpClass(cls):
-        super(GroupReindexerTest, cls).setUpClass()
-        ensure_index_deleted(GROUP_INDEX_INFO.index)
-
-    @classmethod
-    def tearDownClass(cls):
-        ensure_index_deleted(GROUP_INDEX_INFO.index)
-        super(GroupReindexerTest, cls).tearDownClass()
 
     def test_group_reindexer(self):
         group = Group(domain=DOMAIN, name='g1')

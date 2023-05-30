@@ -2,6 +2,7 @@ import json
 import re
 import string
 
+import requests
 import sentry_sdk
 from django.conf import settings
 from django.contrib import messages
@@ -26,7 +27,7 @@ from text_unidecode import unidecode
 
 from corehq.apps.formplayer_api.utils import get_formplayer_url
 from corehq.util.metrics import metrics_counter
-from dimagi.utils.logging import notify_error
+from dimagi.utils.logging import notify_error, notify_exception
 from dimagi.utils.web import get_url_base, json_response
 
 from corehq import privileges, toggles
@@ -70,7 +71,6 @@ from corehq.apps.domain.decorators import (
 from corehq.apps.groups.models import Group
 from corehq.apps.hqwebapp.decorators import (
     use_daterangepicker,
-    use_datatables,
     use_jquery_ui,
     waf_allow,
 )
@@ -100,7 +100,6 @@ class FormplayerMain(View):
     urlname = 'formplayer_main'
 
     @use_daterangepicker
-    @use_datatables
     @use_jquery_ui
     @method_decorator(require_cloudcare_access)
     @method_decorator(requires_privilege_for_commcare_user(privileges.CLOUDCARE))
@@ -243,7 +242,6 @@ class FormplayerPreviewSingleApp(View):
 
     urlname = 'formplayer_single_app'
 
-    @use_datatables
     @use_jquery_ui
     @method_decorator(require_cloudcare_access)
     @method_decorator(requires_privilege_for_commcare_user(privileges.CLOUDCARE))
@@ -476,7 +474,7 @@ def report_formplayer_error(request, domain):
             'domain': domain,
             'cloudcare_env': data.get('cloudcareEnv'),
         })
-        message = data.get("readableErrorMessage") or "request failure in web form session"
+        message = data.get("message") or "request failure in web form session"
         thread_topic = _message_to_sentry_thread_topic(message)
         notify_error(message=f'[Cloudcare] {thread_topic}', details=data)
     elif error_type == 'show_error_notification':
@@ -495,6 +493,34 @@ def report_formplayer_error(request, domain):
         })
         notify_error(message='[Cloudcare] unknown error type', details=data)
     return JsonResponse({'status': 'ok'})
+
+
+@waf_allow('XSS_BODY')
+@csrf_exempt
+@location_safe
+@login_and_domain_required
+def report_sentry_error(request, domain):
+    # code modified from Sentry example:
+    # https://github.com/getsentry/examples/blob/master/tunneling/python/app.py
+
+    try:
+        envelope = request.body.decode("utf-8")
+        json_lines = envelope.split("\n")
+        header = json.loads(json_lines[0])
+        if header.get("dsn") != settings.SENTRY_DSN:
+            raise Exception(f"Invalid Sentry DSN: {header.get('dsn')}")
+
+        dsn = urllib.parse.urlparse(header.get("dsn"))
+        project_id = dsn.path.strip("/")
+        if project_id != settings.SENTRY_DSN.split('/')[-1]:
+            raise Exception(f"Invalid Sentry Project ID: {project_id}")
+
+        url = f"https://{dsn.hostname}/api/{project_id}/envelope/"
+        requests.post(url=url, data=envelope)
+    except Exception:
+        notify_exception(request, "Error sending frontend data to Sentry")
+
+    return JsonResponse({})
 
 
 def _message_to_tag_value(message, allowed_chars=string.ascii_lowercase + string.digits + '_'):
@@ -555,8 +581,10 @@ def session_endpoint(request, domain, app_id, endpoint_id):
         if app_id in id_map:
             if len(id_map[app_id]) == 1:
                 build_id = _fetch_build_id(domain, request.couch_user.username, id_map[app_id][0])
+            else:
+                return _fail(_("Multiple corresponding applications found. Could not follow link."))
         if not build_id:
-            return _fail(_("Could not find application."))
+            return _fail(_("No corresponding application found in this project."))
 
     restore_as_user, set_cookie = FormplayerMain.get_restore_as_user(request, domain)
     force_login_as = not restore_as_user.is_commcare_user()

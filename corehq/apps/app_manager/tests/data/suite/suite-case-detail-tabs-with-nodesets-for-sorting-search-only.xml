@@ -70,7 +70,7 @@
             </sort>
           </field>
         </detail>
-        <detail nodeset="instance('commtrack:products')/some/data">
+        <detail nodeset="instance('commtrack:products')/some/data" relevant="gender='male'">
           <title>
             <text>
               <locale id="m0.case_long.tab.3.title"/>

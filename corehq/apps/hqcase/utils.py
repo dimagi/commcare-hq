@@ -15,6 +15,8 @@ from corehq.apps.receiverwrapper.util import submit_form_locally
 from corehq.apps.users.util import SYSTEM_USER_ID
 from corehq.form_processor.exceptions import CaseNotFound, MissingFormXml
 from corehq.form_processor.models import CommCareCase
+from corehq.apps.data_interfaces.deduplication import DEDUPE_XMLNS
+from corehq.motech.dhis2.const import XMLNS_DHIS2
 
 CASEBLOCK_CHUNKSIZE = 100
 SYSTEM_FORM_XMLNS = 'http://commcarehq.org/case'
@@ -25,6 +27,8 @@ SYSTEM_FORM_XMLNS_MAP = {
     SYSTEM_FORM_XMLNS: gettext_lazy('System Form'),
     EDIT_FORM_XMLNS: gettext_lazy('Data Cleaning Form'),
     AUTO_UPDATE_XMLNS: gettext_lazy('Automatic Case Update Rule'),
+    DEDUPE_XMLNS: gettext_lazy('Deduplication Rule'),
+    XMLNS_DHIS2: gettext_lazy('DHIS2 Integration')
 }
 
 ALLOWED_CASE_IDENTIFIER_TYPES = [
@@ -33,9 +37,20 @@ ALLOWED_CASE_IDENTIFIER_TYPES = [
 ]
 
 
-def submit_case_blocks(case_blocks, domain, username="system", user_id=None,
-                       xmlns=None, attachments=None, form_id=None,
-                       submission_extras=None, case_db=None, device_id=None, form_name=None, max_wait=...):
+def submit_case_blocks(
+    case_blocks,
+    domain,
+    username="system",
+    user_id=None,
+    xmlns=None,
+    attachments=None,
+    form_id=None,
+    submission_extras=None,
+    case_db=None,
+    device_id=None,
+    form_name=None,
+    max_wait=...,
+):
     """
     Submits casexml in a manner similar to how they would be submitted from a phone.
 
@@ -104,8 +119,14 @@ def get_case_by_identifier(domain, identifier):
     return None
 
 
-def submit_case_block_from_template(domain, template, context, xmlns=None,
-        user_id=None, device_id=None):
+def submit_case_block_from_template(
+    domain,
+    template,
+    context,
+    xmlns=None,
+    user_id=None,
+    device_id=None,
+):
     case_block = render_to_string(template, context)
     # Ensure the XML is formatted properly
     # An exception is raised if not
@@ -120,13 +141,22 @@ def submit_case_block_from_template(domain, template, context, xmlns=None,
     )
 
 
-def _get_update_or_close_case_block(case_id, case_properties=None, close=False, owner_id=None):
+def _get_update_or_close_case_block(
+    case_id,
+    case_properties=None,
+    close=False,
+    owner_id=None,
+):
     kwargs = {
         'create': False,
         'user_id': SYSTEM_USER_ID,
         'close': close,
     }
     if case_properties:
+        if 'external_id' in case_properties:
+            # `copy()` so as not to modify by reference
+            case_properties = case_properties.copy()
+            kwargs['external_id'] = case_properties.pop('external_id')
         kwargs['update'] = case_properties
     if owner_id:
         kwargs['owner_id'] = owner_id
@@ -134,8 +164,17 @@ def _get_update_or_close_case_block(case_id, case_properties=None, close=False, 
     return CaseBlock.deprecated_init(case_id, **kwargs)
 
 
-def update_case(domain, case_id, case_properties=None, close=False,
-                xmlns=None, device_id=None, form_name=None, owner_id=None, max_wait=...):
+def update_case(
+    domain,
+    case_id,
+    case_properties=None,
+    close=False,
+    xmlns=None,
+    device_id=None,
+    form_name=None,
+    owner_id=None,
+    max_wait=...,
+):
     """
     Updates or closes a case (or both) by submitting a form.
     domain - the case's domain

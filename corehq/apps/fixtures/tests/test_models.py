@@ -1,3 +1,6 @@
+from uuid import UUID
+from operator import attrgetter
+
 from django.db import IntegrityError
 from django.test import SimpleTestCase, TestCase
 
@@ -51,7 +54,7 @@ class TestLookupTableManager(TestCase):
             fields=[],
             item_attributes=[],
         )
-        table.save(sync_to_couch=False)
+        table.save()
 
 
 class TestLookupTable(TestCase):
@@ -70,7 +73,7 @@ class TestLookupTable(TestCase):
         table = LookupTable(domain="test", tag="x", fields=[TypeField("vera")])
         self.assertEqual(table.fields[0].name, "vera")
         self.assertEqual(table.fields[0].properties, [])
-        table.save(sync_to_couch=False)
+        table.save()
         new = LookupTable.objects.get(id=table.id)
         self.assertEqual(new.fields, table.fields)
         self.assertIsNot(new.fields, table.fields)
@@ -111,7 +114,7 @@ class TestLookupTableRowManager(TestCase):
             tag="pink",
             fields=[TypeField("vera")],
         )
-        cls.table.save(sync_to_couch=False)
+        cls.table.save()
 
     def test_iter_rows(self):
         self.create_rows(10)
@@ -170,6 +173,60 @@ class TestLookupTableRowManager(TestCase):
                 [str(x) for x in range(0, 20, 2)],
             )
 
+    def test_iter_by_user_with_multiple_tables(self):
+        class bob:
+            domain = self.domain.name
+            user_id = "bob"
+            sql_location = None
+        self.maxDiff = None
+
+        # create tables with ids indexed off of "pink" self.table.id
+        blue_table = LookupTable(
+            id=UUID(int=self.table.id.int - 1),
+            domain=self.domain.name,
+            tag="blue",
+        )
+        red_table = LookupTable(
+            id=UUID(int=self.table.id.int + 1),
+            domain=self.domain.name,
+            tag="red",
+        )
+        LookupTable.objects.bulk_create([red_table, blue_table])
+
+        pink_rows = self.create_rows(10, sort_key=10)
+
+        # create row with lower table_id, lower id, and equal sort_key to pink_rows
+        # requires table_id in
+        #   Q(table_id=row.table_id, sort_key=row.sort_key, id__gt=row.id)
+        blue_row = LookupTableRow(
+            id=UUID(int=max(p.id for p in pink_rows).int + 1),
+            domain=self.domain.name,
+            table=blue_table,
+            sort_key=10,
+        )
+        blue_row.save()
+
+        # create rows with higher table_id and lower sort_key than pink_rows
+        # requires table_id in
+        #   Q(table_id=row.table_id, sort_key__gt=row.sort_key)
+        #   and
+        #   Q(table_id__gt=row.table_id)
+        red_rows = self.create_rows(10, table=red_table, sort_key=5)
+
+        self.add_owner(bob, [blue_row] + red_rows + pink_rows)
+        ident = attrgetter("id")
+        tags = {t.id: t.tag for t in [self.table, red_table, blue_table]}
+
+        # 21 rows -> 8 queries: 7 batches of size 3 + 1 extra query
+        with self.assertNumQueries(8):
+            rows = list(LookupTableRow.objects.iter_by_user(bob, batch_size=3))
+            self.assertEqual(
+                [(tags[r.table_id], r.id) for r in rows],
+                [('blue', blue_row.id)]
+                + [('pink', e.id) for e in sorted(pink_rows, key=ident)]
+                + [('red', d.id) for d in sorted(red_rows, key=ident)],
+            )
+
     def test_iter_by_user_with_duplicate_sort_keys(self):
         class bob:
             domain = self.domain.name
@@ -202,10 +259,12 @@ class TestLookupTableRowManager(TestCase):
         rows = LookupTableRow.objects.with_value(self.domain.name, self.table.id, "num", "10")
         self.assertEqual(rows.count(), 1)
 
-    def create_rows(self, count, sort_key=None, get_fields=lambda i: [Field(value=str(i))]):
+    def create_rows(self, count,
+                    table=None, sort_key=None,
+                    get_fields=lambda i: [Field(value=str(i))]):
         rows = [LookupTableRow(
             domain=self.domain.name,
-            table=self.table,
+            table=(table or self.table),
             fields={"num": get_fields(index)},
             sort_key=index if sort_key is None else sort_key,
         ) for index in range(count)]
@@ -228,8 +287,8 @@ class TestLookupTableRow(TestCase):
         row = self.make_row(save=False)
         self.assertEqual(row.fields["vera"][0].value, "What has become of you?")
         self.assertEqual(row.fields["vera"][0].properties, {})
-        row.table.save(sync_to_couch=False)
-        row.save(sync_to_couch=False)
+        row.table.save()
+        row.save()
         new = LookupTableRow.objects.get(id=row.id)
         self.assertEqual(new.fields, row.fields)
         self.assertIsNot(new.fields, row.fields)
@@ -276,8 +335,8 @@ class TestLookupTableRow(TestCase):
             "vera": [Field("What has become of you?")],
         }, sort_key=0)
         if save:
-            row.table.save(sync_to_couch=False)
-            row.save(sync_to_couch=False)
+            row.table.save()
+            row.save()
         return row
 
 

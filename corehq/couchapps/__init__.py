@@ -9,10 +9,10 @@ CouchAppsPreindexPlugin.register('couchapps', __file__, {
     'users_extra': settings.USERS_GROUPS_DB,
     'deleted_users_by_username': settings.USERS_GROUPS_DB,
     'all_docs': (
-        None, settings.USERS_GROUPS_DB, settings.FIXTURES_DB, settings.META_DB,
+        None, settings.USERS_GROUPS_DB, settings.META_DB,
         settings.DOMAINS_DB, settings.APPS_DB),
     'by_domain_doc_type_date': (
-        None, settings.USERS_GROUPS_DB, settings.FIXTURES_DB, settings.META_DB,
+        None, settings.USERS_GROUPS_DB, settings.META_DB,
         settings.DOMAINS_DB, settings.APPS_DB),
     'last_modified': (settings.USERS_GROUPS_DB, settings.DOMAINS_DB, settings.APPS_DB),
 

@@ -1,6 +1,7 @@
 import re
 
 import attr
+from django.conf import settings
 from django.contrib.postgres.fields import ArrayField
 from django.db import models
 from django.forms import model_to_dict
@@ -21,11 +22,13 @@ CASE_SEARCH_INDEX_KEY_PREFIX = "indices."
 # This is a purely aesthetic distinction and not functional
 CASE_SEARCH_REGISTRY_ID_KEY = 'x_commcare_data_registry'
 CASE_SEARCH_CUSTOM_RELATED_CASE_PROPERTY_KEY = 'x_commcare_custom_related_case_property'
+CASE_SEARCH_INCLUDE_ALL_RELATED_CASES_KEY = 'x_commcare_include_all_related_cases'
 
 CONFIG_KEYS_MAPPING = {
     CASE_SEARCH_CASE_TYPE_KEY: "case_types",
     CASE_SEARCH_REGISTRY_ID_KEY: "data_registry",
-    CASE_SEARCH_CUSTOM_RELATED_CASE_PROPERTY_KEY: "custom_related_case_property"
+    CASE_SEARCH_CUSTOM_RELATED_CASE_PROPERTY_KEY: "custom_related_case_property",
+    CASE_SEARCH_INCLUDE_ALL_RELATED_CASES_KEY: "include_all_related_cases",
 }
 UNSEARCHABLE_KEYS = (
     CASE_SEARCH_BLACKLISTED_OWNER_ID_KEY,
@@ -136,7 +139,7 @@ class SearchCriteria:
         for v in values:
             match = pattern.match(v)
             if not match:
-                raise CaseFilterError(_('Invalid date range format, {}'), self.key)
+                raise CaseFilterError(_('Invalid date range format, {}').format(v), self.key)
 
 
 def criteria_dict_to_criteria_list(criteria_dict):
@@ -152,6 +155,7 @@ class CaseSearchRequestConfig:
     case_types = attr.ib(kw_only=True, default=None)
     data_registry = attr.ib(kw_only=True, default=None, converter=_flatten_singleton_list)
     custom_related_case_property = attr.ib(kw_only=True, default=None, converter=_flatten_singleton_list)
+    include_all_related_cases = attr.ib(kw_only=True, default=None, converter=_flatten_singleton_list)
 
     @case_types.validator
     def _require_case_type(self, attribute, value):
@@ -254,6 +258,7 @@ class CaseSearchConfig(models.Model):
     )
     enabled = models.BooleanField(blank=False, null=False, default=False)
     synchronous_web_apps = models.BooleanField(blank=False, null=False, default=False)
+    sync_cases_on_form_entry = models.BooleanField(blank=False, null=False, default=False)
     fuzzy_properties = models.ManyToManyField(FuzzyProperties)
     ignore_patterns = models.ManyToManyField(IgnorePatterns)
 
@@ -284,6 +289,7 @@ class CaseSearchConfig(models.Model):
             return None
 
         config.synchronous_web_apps = json_def['synchronous_web_apps']
+        config.sync_cases_on_form_entry = json_def['sync_cases_on_form_entry']
         config.ignore_patterns.all().delete()
         config.fuzzy_properties.all().delete()
         config.save()
@@ -328,17 +334,24 @@ def case_search_synchronous_web_apps_for_domain(domain):
     return False
 
 
+@quickcache(['domain'], timeout=24 * 60 * 60, memoize_timeout=60)
+def case_search_sync_cases_on_form_entry_enabled_for_domain(domain):
+    if settings.UNIT_TESTING:
+        return False  # override with .tests.util.commtrack_enabled
+    config = CaseSearchConfig.objects.get_or_none(pk=domain, enabled=True)
+    return config.sync_cases_on_form_entry if config else False
+
+
 def enable_case_search(domain):
     from corehq.apps.case_search.tasks import reindex_case_search_for_domain
-    from corehq.pillows.case_search import domains_needing_search_index
 
     config, created = CaseSearchConfig.objects.get_or_create(pk=domain)
     if not config.enabled:
         config.enabled = True
         config.save()
         case_search_enabled_for_domain.clear(domain)
-        domains_needing_search_index.clear()
         reindex_case_search_for_domain.delay(domain)
+        case_search_sync_cases_on_form_entry_enabled_for_domain.clear(domain)
     return config
 
 
@@ -346,7 +359,6 @@ def disable_case_search(domain):
     from corehq.apps.case_search.tasks import (
         delete_case_search_cases_for_domain,
     )
-    from corehq.pillows.case_search import domains_needing_search_index
 
     try:
         config = CaseSearchConfig.objects.get(pk=domain)
@@ -357,8 +369,8 @@ def disable_case_search(domain):
         config.enabled = False
         config.save()
         case_search_enabled_for_domain.clear(domain)
-        domains_needing_search_index.clear()
         delete_case_search_cases_for_domain.delay(domain)
+        case_search_sync_cases_on_form_entry_enabled_for_domain.clear(domain)
     return config
 
 
@@ -366,3 +378,27 @@ def case_search_enabled_domains():
     """Returns a list of all domains that have case search enabled
     """
     return CaseSearchConfig.objects.filter(enabled=True).values_list('domain', flat=True)
+
+
+class DomainsNotInCaseSearchIndex(models.Model):
+    """
+    NOTE: This is a temporary "migration" model.
+    This model is to be confused with the Case Search feature itself.
+    This is a temporary object used to track domains that have not yet
+    had their case data moved over to the Case Search Elasticsearch Index.
+
+    Moving forward, the case data from all domains will be indexed by the
+    CaseSearchIndex as well as the CaseIndex in elasticsearch.
+    This is due to the efforts from SaaS to GA the Case List Explorer.
+    This model exists to ensure that data from older domains is migrated in
+    small controllable chunks so as not to overload pillows.
+    Eventually, this model will be removed once the indexing of older
+    data is complete.
+    """
+    domain = models.CharField(
+        max_length=256,
+        null=False,
+        blank=False,
+        db_index=True,
+    )
+    estimated_size = models.IntegerField()

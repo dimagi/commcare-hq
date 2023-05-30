@@ -1,0 +1,11 @@
+--- 
++++ 
+@@ -2,7 +2,7 @@
+   .column-icon {
+     text-align: center;
+     font-size: 200px;
+-    color: @cc-brand-low;
++    color: $cc-brand-low;
+     line-height: 200px;
+   }
+ 

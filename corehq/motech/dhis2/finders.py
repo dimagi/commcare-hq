@@ -20,17 +20,17 @@ class TrackedEntityInstanceFinder:
 
     @property
     def property_weights(self):
-        return self.case_config.finder_config.property_weights
+        return self.case_config['finder_config']['property_weights']
 
     @property
     def confidence_margin(self):
-        return self.case_config.finder_config.confidence_margin
+        return self.case_config['finder_config']['confidence_margin']
 
     @memoized_property
     def attr_type_id_value_source_by_case_property(self):
         return {
             value_source["case_property"]: (attr_type_id, value_source)
-            for attr_type_id, value_source in self.case_config.attributes.items()
+            for attr_type_id, value_source in self.case_config['attributes'].items()
         }
 
     def find_tracked_entity_instances(self, case_trigger_info):
@@ -70,8 +70,8 @@ class TrackedEntityInstanceFinder:
         if not query_filters:
             return []
         params = {
-            "trackedEntityType": self.case_config.te_type_id,
-            "ou": get_value(self.case_config.org_unit_id, case_trigger_info),
+            "trackedEntityType": self.case_config['te_type_id'],
+            "ou": get_value(self.case_config['org_unit_id'], case_trigger_info),
             "filter": query_filters,
             "ouMode": "DESCENDANTS",
             "skipPaging": "true",

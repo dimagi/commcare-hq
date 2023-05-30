@@ -2,38 +2,31 @@ import datetime
 
 from django.test import TestCase
 
+from dimagi.utils.dates import add_months_to_date
+from pillowtop.processors.form import mark_latest_submission
+
 from corehq import toggles
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.enterprise.models import EnterpriseMobileWorkerSettings
 from corehq.apps.enterprise.tests.utils import (
-    get_enterprise_account,
     add_domains_to_enterprise_account,
+    get_enterprise_account,
     get_enterprise_software_plan,
 )
+from corehq.apps.es.forms import form_adapter
 from corehq.apps.es.tests.utils import es_test
+from corehq.apps.es.users import user_adapter
 from corehq.apps.users.models import CommCareUser
-from corehq.elastic import get_es_new, send_to_elasticsearch
 from corehq.form_processor.utils import TestFormMetadata
-from corehq.pillows.mappings import XFORM_INDEX_INFO
-from corehq.pillows.mappings.user_mapping import USER_INDEX_INFO
-from corehq.pillows.user import transform_user_for_elasticsearch
-from corehq.util.elastic import ensure_index_deleted
 from corehq.util.test_utils import make_es_ready_form
-from dimagi.utils.dates import add_months_to_date
-from pillowtop.es_utils import initialize_index_and_mapping
-from pillowtop.processors.form import mark_latest_submission
 
 
-@es_test
+@es_test(requires=[user_adapter, form_adapter], setup_class=True)
 class TestEnterpriseMobileWorkerSettings(TestCase):
 
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
-
-        cls.es = get_es_new()
-        initialize_index_and_mapping(cls.es, USER_INDEX_INFO)
-        initialize_index_and_mapping(cls.es, XFORM_INDEX_INFO)
 
         today = datetime.datetime.utcnow()
 
@@ -165,7 +158,7 @@ class TestEnterpriseMobileWorkerSettings(TestCase):
             user.created_on = form_metadata.received_on
             user.save()
             form_pair = make_es_ready_form(form_metadata)
-            send_to_elasticsearch('forms', form_pair.json_form)
+            form_adapter.index(form_pair.json_form, refresh=True)
             mark_latest_submission(
                 form_metadata.domain,
                 user,
@@ -178,17 +171,11 @@ class TestEnterpriseMobileWorkerSettings(TestCase):
 
         for user in cls.users:
             fresh_user = CommCareUser.get_by_user_id(user.user_id)
-            elastic_user = transform_user_for_elasticsearch(fresh_user.to_json())
-            send_to_elasticsearch('users', elastic_user)
-
-        cls.es.indices.refresh(USER_INDEX_INFO.alias)
-        cls.es.indices.refresh(XFORM_INDEX_INFO.alias)
+            user_adapter.index(fresh_user, refresh=True)
 
     @classmethod
     def tearDownClass(cls):
         EnterpriseMobileWorkerSettings.objects.all().delete()
-        ensure_index_deleted(USER_INDEX_INFO.alias)
-        ensure_index_deleted(XFORM_INDEX_INFO.alias)
         for user in cls.users:
             user.delete(user.domain, None)
         for domain in cls.domains:

@@ -1,31 +1,29 @@
 from datetime import datetime
+from unittest.mock import patch
 
 from django.test import override_settings
 from django.test.testcases import SimpleTestCase, TestCase
 
 from couchdbkit import ResourceConflict
-from unittest.mock import patch
 
 from dimagi.utils.parsing import string_to_utc_datetime
 from pillow_retry.models import PillowError
 
 from corehq.apps.es import FormES
+from corehq.apps.es.client import manager
+from corehq.apps.es.forms import form_adapter
 from corehq.apps.es.tests.utils import es_test
 from corehq.apps.users.models import CommCareUser, UserReportingMetadataStaging
 from corehq.apps.users.tasks import process_reporting_metadata_staging
-from corehq.elastic import get_es_new
 from corehq.form_processor.interfaces.processor import FormProcessorInterface
 from corehq.form_processor.models import XFormInstance
 from corehq.form_processor.tests.utils import FormProcessorTestUtils
 from corehq.form_processor.utils import TestFormMetadata
-from corehq.pillows.mappings.xform_mapping import XFORM_INDEX_INFO
-from corehq.pillows.xform import transform_xform_for_elasticsearch
-from corehq.util.elastic import ensure_index_deleted, reset_es_index
 from corehq.util.test_utils import get_form_ready_to_save
 from testapps.test_pillowtop.utils import process_pillow_changes
 
 
-@es_test
+@es_test(requires=[form_adapter])
 class XFormPillowTest(TestCase):
     domain = 'xform-pillowtest-domain'
     username = 'xform-pillowtest-user'
@@ -52,11 +50,8 @@ class XFormPillowTest(TestCase):
     def setUp(self):
         super().setUp()
         FormProcessorTestUtils.delete_all_xforms()
-        self.elasticsearch = get_es_new()
-        reset_es_index(XFORM_INDEX_INFO)
 
     def tearDown(self):
-        ensure_index_deleted(XFORM_INDEX_INFO.index)
         user = CommCareUser.get_by_user_id(self.user._id, self.domain)
         user.reporting_metadata.last_submissions = []
         user.save()
@@ -91,7 +86,7 @@ class XFormPillowTest(TestCase):
         # soft delete the form
         with self.process_form_changes:
             XFormInstance.objects.soft_delete_forms(self.domain, [form.form_id])
-        self.elasticsearch.indices.refresh(XFORM_INDEX_INFO.index)
+        manager.index_refresh(form_adapter.index_name)
 
         # ensure not there anymore
         results = FormES().run()
@@ -107,7 +102,7 @@ class XFormPillowTest(TestCase):
         # soft delete the form
         with self.process_form_changes:
             XFormInstance.objects.hard_delete_forms(self.domain, [form.form_id])
-        self.elasticsearch.indices.refresh(XFORM_INDEX_INFO.index)
+        manager.index_refresh(form_adapter.index_name)
 
         # ensure not there anymore
         results = FormES().run()
@@ -226,7 +221,7 @@ class XFormPillowTest(TestCase):
     def _create_form_and_sync_to_es(self):
         with self.process_form_changes:
             form = self._create_form()
-        self.elasticsearch.indices.refresh(XFORM_INDEX_INFO.index)
+        manager.index_refresh(form_adapter.index_name)
         return form, self.metadata
 
     def _create_form(self):
@@ -239,6 +234,7 @@ class XFormPillowTest(TestCase):
 class TransformXformForESTest(SimpleTestCase):
     def test_transform_xform_for_elasticsearch_app_versions(self):
         doc_dict = {
+            '_id': 1,
             'domain': 'demo',
             'received_on': '2013-10-12T11:59:41Z',
             'form': {
@@ -247,12 +243,13 @@ class TransformXformForESTest(SimpleTestCase):
                 }
             }
         }
-        doc_ret = transform_xform_for_elasticsearch(doc_dict)
+        doc_ret = form_adapter.to_json(doc_dict)
         self.assertEqual(doc_ret['form']['meta']['commcare_version'], '2.27.2')
         self.assertEqual(doc_ret['form']['meta']['app_build_version'], 56)
 
     def test_transform_xform_for_elasticsearch_app_versions_none(self):
         doc_dict = {
+            '_id': 1,
             'domain': 'demo',
             'received_on': '2013-10-12T11:59:41Z',
             'form': {
@@ -261,12 +258,13 @@ class TransformXformForESTest(SimpleTestCase):
                 }
             }
         }
-        doc_ret = transform_xform_for_elasticsearch(doc_dict)
+        doc_ret = form_adapter.to_json(doc_dict)
         self.assertEqual(doc_ret['form']['meta']['commcare_version'], None)
         self.assertEqual(doc_ret['form']['meta']['app_build_version'], None)
 
     def test_transform_xform_for_elasticsearch_location(self):
         doc_dict = {
+            '_id': 1,
             'domain': 'demo',
             'received_on': '2013-10-12T11:59:41Z',
             'form': {
@@ -275,11 +273,12 @@ class TransformXformForESTest(SimpleTestCase):
                 }
             }
         }
-        doc_ret = transform_xform_for_elasticsearch(doc_dict)
+        doc_ret = form_adapter.to_json(doc_dict)
         self.assertEqual(doc_ret['form']['meta']['geo_point'], {'lat': 42.7, 'lon': -21})
 
     def test_transform_xform_for_elasticsearch_location_missing(self):
         doc_dict = {
+            '_id': 1,
             'domain': 'demo',
             'received_on': '2013-10-12T11:59:41Z',
             'form': {
@@ -287,11 +286,12 @@ class TransformXformForESTest(SimpleTestCase):
                 }
             }
         }
-        doc_ret = transform_xform_for_elasticsearch(doc_dict)
+        doc_ret = form_adapter.to_json(doc_dict)
         self.assertEqual(doc_ret['form']['meta']['geo_point'], None)
 
     def test_transform_xform_for_elasticsearch_location_bad(self):
         doc_dict = {
+            '_id': 1,
             'domain': 'demo',
             'received_on': '2013-10-12T11:59:41Z',
             'form': {
@@ -300,11 +300,12 @@ class TransformXformForESTest(SimpleTestCase):
                 }
             }
         }
-        doc_ret = transform_xform_for_elasticsearch(doc_dict)
+        doc_ret = form_adapter.to_json(doc_dict)
         self.assertEqual(doc_ret['form']['meta']['geo_point'], None)
 
     def test_transform_xform_base_case_dates(self):
         doc_dict = {
+            '_id': 1,
             'domain': 'demo',
             'received_on': '2013-10-12T11:59:41Z',
             'form': {
@@ -315,11 +316,12 @@ class TransformXformForESTest(SimpleTestCase):
             }
         }
         # previously raised an error
-        doc_ret = transform_xform_for_elasticsearch(doc_dict)
+        doc_ret = form_adapter.to_json(doc_dict)
         self.assertIsNotNone(doc_ret)
 
     def test_transform_xform_base_case_xmlns(self):
         doc_dict = {
+            '_id': 1,
             'domain': 'demo',
             'received_on': '2013-10-12T11:59:41Z',
             'form': {
@@ -330,5 +332,5 @@ class TransformXformForESTest(SimpleTestCase):
             }
         }
         # previously raised an error
-        doc_ret = transform_xform_for_elasticsearch(doc_dict)
+        doc_ret = form_adapter.to_json(doc_dict)
         self.assertIsNotNone(doc_ret)

@@ -24,7 +24,7 @@ from corehq.apps.change_feed.connection import (
     get_kafka_client,
     get_kafka_consumer,
 )
-from corehq.apps.es import GroupES
+from corehq.apps.es.groups import group_adapter
 from corehq.apps.formplayer_api.utils import get_formplayer_url
 from corehq.apps.hqadmin.escheck import check_es_cluster_health
 from corehq.blobs import CODES, get_blob_db
@@ -32,7 +32,6 @@ from corehq.celery_monitoring.heartbeat import (
     Heartbeat,
     HeartbeatNeverRecorded,
 )
-from corehq.elastic import refresh_elasticsearch_index, send_to_elasticsearch
 from corehq.util.decorators import change_log_level, ignore_warning
 from corehq.util.timer import TimingContext
 
@@ -128,18 +127,15 @@ def check_elasticsearch():
     if cluster_health == 'red':
         return ServiceStatus(False, "Cluster health at %s" % cluster_health)
 
-    doc = {'_id': 'elasticsearch-service-check-{}'.format(uuid.uuid4().hex[:7]),
-           'date': datetime.datetime.now().isoformat()}
+    doc_id = f'elasticsearch-service-check-{uuid.uuid4().hex[:7]}'
+    doc = {'_id': doc_id, 'date': datetime.datetime.now().isoformat()}
     try:
-        send_to_elasticsearch('groups', doc)
-        refresh_elasticsearch_index('groups')
-        hits = GroupES().remove_default_filters().doc_id(doc['_id']).run().hits
-        if doc in hits:
-            return ServiceStatus(True, "Successfully sent a doc to ES and read it back")
-        else:
-            return ServiceStatus(False, "Something went wrong sending a doc to ES")
-    finally:
-        send_to_elasticsearch('groups', doc, delete=True)  # clean up
+        group_adapter.index(doc, refresh=True)
+        assert group_adapter.exists(doc_id), f"Indexed doc not found: {doc_id}"
+        group_adapter.delete(doc_id)
+    except Exception as exc:
+        return ServiceStatus(False, "Something went wrong sending a doc to ES", exc)
+    return ServiceStatus(True, "Successfully sent a doc to ES and read it back")
 
 
 def check_blobdb():

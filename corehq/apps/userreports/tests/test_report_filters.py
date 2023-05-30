@@ -4,7 +4,6 @@ from django.http import HttpRequest, QueryDict
 from django.test import SimpleTestCase, TestCase
 from django.utils.http import urlencode
 
-from corehq.apps.userreports.datatypes import DATA_TYPE_DATETIME, DATA_TYPE_DATE
 from dimagi.utils.dates import DateSpan
 
 from corehq.apps.locations.tests.util import LocationHierarchyTestCase
@@ -23,7 +22,10 @@ from corehq.apps.reports_core.filters import (
     NumericFilter,
     PreFilter,
 )
-from corehq.apps.userreports.const import UCR_SQL_BACKEND
+from corehq.apps.userreports.datatypes import (
+    DATA_TYPE_DATE,
+    DATA_TYPE_DATETIME,
+)
 from corehq.apps.userreports.exceptions import BadSpecError
 from corehq.apps.userreports.models import (
     DataSourceConfiguration,
@@ -153,7 +155,7 @@ class DateFilterDBTest(ConfigurableReportTestMixin, TestCase):
 
     @classmethod
     def setUpClass(cls):
-        super(DateFilterDBTest, cls).setUpClass()
+        super().setUpClass()
         cls._create_data()
         cls._create_data_source()
         cls.report_config = cls._create_report()
@@ -164,10 +166,7 @@ class DateFilterDBTest(ConfigurableReportTestMixin, TestCase):
 
     @classmethod
     def _create_data_source(cls):
-        cls.data_sources = {}
-        cls.adapters = {}
-
-        config = DataSourceConfiguration(
+        cls.config = DataSourceConfiguration(
             domain=cls.domain,
             display_name=cls.domain,
             referenced_doc_type='CommCareCase',
@@ -212,18 +211,19 @@ class DateFilterDBTest(ConfigurableReportTestMixin, TestCase):
                 }
             ],
         )
-        config.validate()
-        config.save()
-        rebuild_indicators(config._id)
-        adapter = get_indicator_adapter(config)
-        cls.data_sources[UCR_SQL_BACKEND] = config
-        cls.adapters[UCR_SQL_BACKEND] = adapter
+        cls.config.validate()
+        cls.config.save()
+        cls.addClassCleanup(cls.config.delete)
+
+        cls.adapter = get_indicator_adapter(cls.config)
+        rebuild_indicators(cls.config._id)
+        cls.addClassCleanup(cls.adapter.drop_table)
 
     @classmethod
     def _create_report(cls):
         report_config = ReportConfiguration(
             domain=cls.domain,
-            config_id=cls.data_sources[UCR_SQL_BACKEND]._id,
+            config_id=cls.config._id,
             title='foo',
             filters=[
                 {
@@ -258,6 +258,7 @@ class DateFilterDBTest(ConfigurableReportTestMixin, TestCase):
             }],
         )
         report_config.save()
+        cls.addClassCleanup(report_config.delete)
         return report_config
 
     def _create_view(self, filter_values):
@@ -269,13 +270,6 @@ class DateFilterDBTest(ConfigurableReportTestMixin, TestCase):
         view._lang = "en"
         view._report_config_id = self.report_config._id
         return view
-
-    @classmethod
-    def tearDownClass(cls):
-        for key, adapter in cls.adapters.items():
-            adapter.drop_table()
-        cls._delete_everything()
-        super(DateFilterDBTest, cls).tearDownClass()
 
     def docs_returned(self, export_table):
         rows = export_table[0][1]
@@ -826,7 +820,8 @@ class LocationDrilldownFilterTest(LocationHierarchyTestCase):
             'hierarchy': location_hierarchy_config(self.domain),
             'locations': load_locs_json(self.domain),
             'loc_url': '/a/{}/api/v0.5/location_internal/'.format(self.domain),
-            'max_drilldown_levels': 99
+            'max_drilldown_levels': 99,
+            'auto_drill': 'false',
         }
         self.assertDictEqual(ui_filter.filter_context(self.user), filter_context_expected)
 

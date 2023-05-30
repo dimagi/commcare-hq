@@ -277,20 +277,26 @@ class TestInputTransFilter(SimpleTestCase):
         langs=['en'],
         input_name='name',
         input_id='test_id',
-        data_bind='data_binding'
+        data_bind='data_binding',
+        element_type='input_text'
     ):
         markup = input_trans(
             name=name_dict,
             langs=langs,
             input_name=input_name,
             input_id=input_id,
-            data_bind=data_bind)
+            data_bind=data_bind,
+            element_type=element_type)
 
         return fragment_fromstring(markup)
 
     def test_creates_input_tag(self):
         fragment = self.generate_markup_fragment()
         self.assertEqual(fragment.tag, 'input')
+
+    def test_creates_textarea_tag(self):
+        fragment = self.generate_markup_fragment(element_type='textarea')
+        self.assertEqual(fragment.tag, 'textarea')
 
     def test_fills_all_attributes(self):
         fragment = self.generate_markup_fragment(

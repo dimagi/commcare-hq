@@ -1,4 +1,4 @@
-from django.test import TestCase
+from django.test import SimpleTestCase, TestCase
 from field_audit.models import AuditEvent
 from nose.tools import nottest
 
@@ -43,7 +43,7 @@ class CaseWithDomainAndRole(BaseEventSetupCase):
         super().setUpClass()
         cls.domain_name = "pets"
         cls.role_name = "test-role"
-        cls.domain = Domain(name=cls.domain_name)
+        cls.domain = Domain.get_or_create_with_name(name=cls.domain_name, is_active=True)
         cls.domain.save()
         cls.addClassCleanup(cls.domain.delete)
 
@@ -309,3 +309,60 @@ class TestPermission(BaseEventSetupCase):
         self.assertEqual(remember, event.object_pk)
         self.assertTrue(event.is_delete)
         self.assertEqual({"value": {"old": "do_bupkis"}}, event.delta)
+
+
+class HqPermissionsTest(SimpleTestCase):
+
+    def setUp(self):
+        self.hq_permissions = HqPermissions()
+        self.permission_names = self.hq_permissions.permission_names()
+        self.permissions = {name: getattr(self.hq_permissions, name) for name in self.permission_names}
+
+    def test_permissions_default(self):
+        default_true_permissions = ['access_all_locations', 'report_an_issue']
+        for name, value in self.permissions.items():
+            if name not in default_true_permissions:
+                self.assertFalse(value)
+            else:
+                self.assertTrue(value)
+
+    def test_view_allowed_when_edit_allowed(self):
+        edit_view_permission_dict = {
+            'edit_web_users': 'view_web_users',
+            'edit_commcare_users': 'view_commcare_users',
+            'edit_groups': 'view_groups',
+            'edit_locations': 'view_locations',
+            'edit_data_dict': 'view_data_dict',
+            'edit_apps': 'view_apps',
+        }
+        for edit_permission_name in edit_view_permission_dict:
+            setattr(self.hq_permissions, edit_permission_name, True)
+        self.hq_permissions.normalize()
+        for view_permission_name in edit_view_permission_dict.values():
+            self.assertTrue(getattr(self.hq_permissions, view_permission_name))
+
+    def test_download_reports_removed_when_view_reports_false(self):
+        self.hq_permissions.view_reports = False
+        self._check_normalized_permission("download_reports", expect_changed=True)
+
+    def test_download_reports_not_removed_when_view_reports_true(self):
+        self.hq_permissions.view_reports = True
+        self._check_normalized_permission("download_reports", expect_changed=False)
+
+    def test_download_reports_not_removed_when_view_reports_list(self):
+        self.hq_permissions.view_reports = False
+        self.hq_permissions.view_report_list = ["a"]
+        self._check_normalized_permission("download_reports", expect_changed=False)
+
+    def _check_normalized_permission(self, permission, initial_value=True, expect_changed=True):
+        setattr(self.hq_permissions, permission, initial_value)
+        self.hq_permissions.normalize()
+        if expect_changed:
+            self.assertNotEqual(getattr(self.hq_permissions, permission), initial_value)
+        else:
+            self.assertEqual(getattr(self.hq_permissions, permission), initial_value)
+
+        # Test that the inverse value isn't affected
+        setattr(self.hq_permissions, permission, not initial_value)
+        self.hq_permissions.normalize()
+        self.assertEqual(getattr(self.hq_permissions, permission), not initial_value)

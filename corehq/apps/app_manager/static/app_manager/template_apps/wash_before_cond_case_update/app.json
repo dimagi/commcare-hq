@@ -66,13 +66,11 @@
     }
   },
   "archived_media": {},
-  "platform": "nokia/s40",
   "target_commcare_flavor": "none",
   "auto_gps_capture": false,
   "mobile_ucr_restore_version": "1.0",
   "deployment_date": null,
   "user_type": null,
-  "text_input": "roman",
   "secure_submissions": true,
   "location_fixture_restore": "project_default",
   "build_broken": false,
@@ -203,17 +201,39 @@
             "update_case": {
               "doc_type": "UpdateCaseAction",
               "update": {
-                "last_reading_date": "/data/last_reading_date",
-                "consumption": "/data/consumption",
-                "number_of_household_members": "/data/number_of_household_members",
-                "point_of_reference": "/data/point_of_reference",
-                "client_status": "/data/client_status",
-                "last_reading": "/data/last_reading",
-                "full_address": "/data/full_address",
-                "current_reading": "/data/current_reading",
-                "consumer_level": "/data/consumer_level",
-                "client_id": "/data/client_id",
-                "preferred_day_of_payment": "/data/preferred_day_of_payment"
+                "last_reading_date": {
+                  "question_path": "/data/last_reading_date"
+                },
+                "consumption": {
+                  "question_path": "/data/consumption"
+                },
+                "number_of_household_members": {
+                  "question_path": "/data/number_of_household_members"
+                },
+                "point_of_reference": {
+                  "question_path": "/data/point_of_reference"
+                },
+                "client_status": {
+                  "question_path": "/data/client_status"
+                },
+                "last_reading": {
+                  "question_path": "/data/last_reading"
+                },
+                "full_address": {
+                  "question_path": "/data/full_address"
+                },
+                "current_reading": {
+                  "question_path": "/data/current_reading"
+                },
+                "consumer_level": {
+                  "question_path": "/data/consumer_level"
+                },
+                "client_id": {
+                  "question_path": "/data/client_id"
+                },
+                "preferred_day_of_payment": {
+                  "question_path": "/data/preferred_day_of_payment"
+                }
               },
               "condition": {
                 "answer": null,
@@ -257,7 +277,9 @@
               }
             },
             "open_case": {
-              "name_path": "/data/client_full_name",
+              "name_update": {
+                "question_path": "/data/client_full_name"
+              },
               "doc_type": "OpenCaseAction",
               "external_id": null,
               "condition": {
@@ -646,15 +668,25 @@
                   "doc_type": "FormActionCondition"
                 },
                 "case_properties": {
-                  "repairs": "/data/repairs",
-                  "referral_date": "/data/refferral_date",
-                  "leakage": "/data/leakadge_group/leakage",
-                  "reason_for_referral": "/data/reason_for_referral"
+                  "repairs": {
+                    "question_path": "/data/repairs"
+                  },
+                  "referral_date": {
+                    "question_path": "/data/refferral_date"
+                  },
+                  "leakage": {
+                    "question_path": "/data/leakadge_group/leakage"
+                  },
+                  "reason_for_referral": {
+                    "question_path": "/data/reason_for_referral"
+                  }
                 },
                 "case_type": "referall",
                 "reference_id": null,
                 "repeat_context": null,
-                "case_name": "/data/client_name",
+                "name_update": {
+                  "question_path": "/data/client_name"
+                },
                 "condition": {
                   "answer": "1",
                   "question": "/data/create_referral",
@@ -678,12 +710,24 @@
             "update_case": {
               "doc_type": "UpdateCaseAction",
               "update": {
-                "last_reading_date": "/data/last_reading_date",
-                "consumption": "/data/consumption",
-                "average_dailly_consumption": "/data/average_dailly_consumption",
-                "last_reading": "/data/last_reading",
-                "current_reading": "/data/current_reading",
-                "leakage": "/data/leakadge_group/leakage"
+                "last_reading_date": {
+                  "question_path": "/data/last_reading_date"
+                },
+                "consumption": {
+                  "question_path": "/data/consumption"
+                },
+                "average_dailly_consumption": {
+                  "question_path": "/data/average_dailly_consumption"
+                },
+                "last_reading": {
+                  "question_path": "/data/last_reading"
+                },
+                "current_reading": {
+                  "question_path": "/data/current_reading"
+                },
+                "leakage": {
+                  "question_path": "/data/leakadge_group/leakage"
+                }
               },
               "condition": {
                 "answer": null,
@@ -727,7 +771,9 @@
               }
             },
             "open_case": {
-              "name_path": "/data/where_you_able_to_access_the_meter",
+              "name_update": {
+                "question_path": "/data/where_you_able_to_access_the_meter"
+              },
               "doc_type": "OpenCaseAction",
               "external_id": null,
               "condition": {
@@ -866,22 +912,46 @@
                   "doc_type": "FormActionCondition"
                 },
                 "case_properties": {
-                  "reason_for_referral": "/data/reason_for_referral",
-                  "hygiene_score": "/data/hygiene_water_sanitation/hygiene_score",
-                  "turbidity_referral": "/data/turbidity_referral",
-                  "ph_referral": "/data/ph_referral",
-                  "hygene_referral": "/data/hygene_referral",
-                  "water_ph": "/data/visit_info/water_ph",
-                  "clorine_referral": "/data/clorine_referral",
-                  "hygiene_possible": "/data/hygiene_water_sanitation/hygiene_possible",
-                  "residual_chlorine_concentration": "/data/visit_info/residual_chlorine_concentration",
-                  "water_turbidity": "/data/visit_info/water_turbidity",
-                  "referral_date": "/data/refferral_date"
+                  "reason_for_referral": {
+                    "question_path": "/data/reason_for_referral"
+                  },
+                  "hygiene_score": {
+                    "question_path": "/data/hygiene_water_sanitation/hygiene_score"
+                  },
+                  "turbidity_referral": {
+                    "question_path": "/data/turbidity_referral"
+                  },
+                  "ph_referral": {
+                    "question_path": "/data/ph_referral"
+                  },
+                  "hygene_referral": {
+                    "question_path": "/data/hygene_referral"
+                  },
+                  "water_ph": {
+                    "question_path": "/data/visit_info/water_ph"
+                  },
+                  "clorine_referral": {
+                    "question_path": "/data/clorine_referral"
+                  },
+                  "hygiene_possible": {
+                    "question_path": "/data/hygiene_water_sanitation/hygiene_possible"
+                  },
+                  "residual_chlorine_concentration": {
+                    "question_path": "/data/visit_info/residual_chlorine_concentration"
+                  },
+                  "water_turbidity": {
+                    "question_path": "/data/visit_info/water_turbidity"
+                  },
+                  "referral_date": {
+                    "question_path": "/data/refferral_date"
+                  }
                 },
                 "case_type": "referall",
                 "reference_id": null,
                 "repeat_context": null,
-                "case_name": "/data/client_name",
+                "name_update": {
+                  "question_path": "/data/client_name"
+                },
                 "condition": {
                   "answer": null,
                   "question": "/data/create_referral",
@@ -905,8 +975,12 @@
             "update_case": {
               "doc_type": "UpdateCaseAction",
               "update": {
-                "hygiene_score": "/data/hygiene_water_sanitation/hygiene_score",
-                "hygiene_possible": "/data/hygiene_water_sanitation/hygiene_possible"
+                "hygiene_score": {
+                  "question_path": "/data/hygiene_water_sanitation/hygiene_score"
+                },
+                "hygiene_possible": {
+                  "question_path": "/data/hygiene_water_sanitation/hygiene_possible"
+                }
               },
               "condition": {
                 "answer": null,
@@ -950,7 +1024,9 @@
               }
             },
             "open_case": {
-              "name_path": "/data/where_you_able_to_access_the_housetap",
+              "name_update": {
+                "question_path": "/data/where_you_able_to_access_the_housetap"
+              },
               "doc_type": "OpenCaseAction",
               "external_id": null,
               "condition": {
@@ -1468,16 +1544,28 @@
                   "doc_type": "FormActionCondition"
                 },
                 "case_properties": {
-                  "restore_water": "/data/restore_water_group/restore_water",
-                  "cut_water": "/data/cut_water_group/cut_water",
-                  "client_status": "/data/client_status",
-                  "reason_for_referral": "/data/reason_for_referral",
-                  "motive_to_cut_water_supply": "/data/cut_water_group/motive_to_cut_water_supply"
+                  "restore_water": {
+                    "question_path": "/data/restore_water_group/restore_water"
+                  },
+                  "cut_water": {
+                    "question_path": "/data/cut_water_group/cut_water"
+                  },
+                  "client_status": {
+                    "question_path": "/data/client_status"
+                  },
+                  "reason_for_referral": {
+                    "question_path": "/data/reason_for_referral"
+                  },
+                  "motive_to_cut_water_supply": {
+                    "question_path": "/data/cut_water_group/motive_to_cut_water_supply"
+                  }
                 },
                 "case_type": "referall",
                 "reference_id": null,
                 "repeat_context": null,
-                "case_name": "/data/client_name",
+                "name_update": {
+                  "question_path": "/data/client_name"
+                },
                 "condition": {
                   "answer": "1",
                   "question": "/data/create_referral",
@@ -1501,10 +1589,18 @@
             "update_case": {
               "doc_type": "UpdateCaseAction",
               "update": {
-                "cut_water": "/data/cut_water_group/cut_water",
-                "client_status": "/data/client_status",
-                "reason_for_referral": "/data/reason_for_referral",
-                "motive_to_cut_water_supply": "/data/cut_water_group/motive_to_cut_water_supply"
+                "cut_water": {
+                  "question_path": "/data/cut_water_group/cut_water"
+                },
+                "client_status": {
+                  "question_path": "/data/client_status"
+                },
+                "reason_for_referral": {
+                  "question_path": "/data/reason_for_referral"
+                },
+                "motive_to_cut_water_supply": {
+                  "question_path": "/data/cut_water_group/motive_to_cut_water_supply"
+                }
               },
               "condition": {
                 "answer": null,
@@ -1548,7 +1644,9 @@
               }
             },
             "open_case": {
-              "name_path": "/data/cut_water_group/cut_water",
+              "name_update": {
+                "question_path": "/data/cut_water_group/cut_water"
+              },
               "doc_type": "OpenCaseAction",
               "external_id": null,
               "condition": {
@@ -2091,13 +2189,27 @@
             "update_case": {
               "doc_type": "UpdateCaseAction",
               "update": {
-                "cut_water": "/data/cut_water_referrals_group/cut_water_referral_value",
-                "turbidity_referral": "/data/water_quality_referrals_group/turbidity_referral_value",
-                "ph_referral": "/data/water_quality_referrals_group/ph_referral_value",
-                "restore_water": "/data/restore_water_referrals_group/restore_supply_referral_value",
-                "leakage": "/data/leakage_referrals_group/leakage_referral_value",
-                "clorine_referral": "/data/water_quality_referrals_group/clorine_referral_value",
-                "hygene_referral": "/data/hygiene_referrals_group/hygiene_referral_value"
+                "cut_water": {
+                  "question_path": "/data/cut_water_referrals_group/cut_water_referral_value"
+                },
+                "turbidity_referral": {
+                  "question_path": "/data/water_quality_referrals_group/turbidity_referral_value"
+                },
+                "ph_referral": {
+                  "question_path": "/data/water_quality_referrals_group/ph_referral_value"
+                },
+                "restore_water": {
+                  "question_path": "/data/restore_water_referrals_group/restore_supply_referral_value"
+                },
+                "leakage": {
+                  "question_path": "/data/leakage_referrals_group/leakage_referral_value"
+                },
+                "clorine_referral": {
+                  "question_path": "/data/water_quality_referrals_group/clorine_referral_value"
+                },
+                "hygene_referral": {
+                  "question_path": "/data/hygiene_referrals_group/hygiene_referral_value"
+                }
               },
               "condition": {
                 "answer": null,
@@ -2141,7 +2253,7 @@
               }
             },
             "open_case": {
-              "name_path": null,
+              "name_update": null,
               "doc_type": "OpenCaseAction",
               "external_id": null,
               "condition": {
@@ -2757,8 +2869,12 @@
             "update_case": {
               "doc_type": "UpdateCaseAction",
               "update": {
-                "contract_termination_date": "/data/contract_termination_date",
-                "reason_for_terminating_the_contract": "/data/reason_for_terminating_the_contract"
+                "contract_termination_date": {
+                  "question_path": "/data/contract_termination_date"
+                },
+                "reason_for_terminating_the_contract": {
+                  "question_path": "/data/reason_for_terminating_the_contract"
+                }
               },
               "condition": {
                 "answer": null,
@@ -2802,7 +2918,7 @@
               }
             },
             "open_case": {
-              "name_path": null,
+              "name_update": null,
               "doc_type": "OpenCaseAction",
               "external_id": null,
               "condition": {
@@ -3175,8 +3291,6 @@
   "smart_lang_display": null,
   "vellum_case_management": true,
   "is_auto_generated": false,
-  "use_j2me_endpoint": false,
-  "admin_password": null,
   "build_spec": {
     "doc_type": "BuildSpec",
     "version": "2.44.3",
@@ -3187,11 +3301,9 @@
   "linked_whitelist": [],
   "profile": {
     "features": {
-      "users": "true",
-      "sense": "false"
+      "users": "true"
     },
     "properties": {
-      "cc-user-mode": "cc-u-normal",
       "cc-show-saved": "no",
       "unsent-time-limit": "5",
       "cc-autosync-freq": "freq-never",
@@ -3201,21 +3313,13 @@
       "cc-fuzzy-search-enabled": "yes",
       "cc-autoup-freq": "freq-never",
       "purge-freq": "0",
-      "server-tether": "push-only",
       "user_reg_server": "required",
-      "extra_key_action": "audio",
       "log_prop_daily": "log_never",
-      "ViewStyle": "v_chatterbox",
       "cc-login-duration-seconds": "86400",
       "cc-resize-images": "none",
-      "cc-entry-mode": "cc-entry-quick",
-      "cc-send-procedure": "cc-send-http",
-      "cc-login-images": "No",
       "log_prop_weekly": "log_short",
       "cc-show-incomplete": "no",
-      "cc-send-unsent": "cc-su-auto",
       "loose_media": "no",
-      "password_format": "a",
       "unsent-number-limit": "5",
       "cc-content-valid": "yes",
       "logenabled": "Enabled"

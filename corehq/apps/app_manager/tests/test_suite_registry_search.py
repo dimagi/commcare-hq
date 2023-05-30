@@ -84,7 +84,7 @@ class RemoteRequestSuiteTest(SimpleTestCase, SuiteMixin):
         self.reg_form.actions.open_case.condition.type = 'always'
         self.reg_form.post_form_workflow = WORKFLOW_FORM
         self.reg_form.form_links = [
-            FormLink(form_id=self.form.get_unique_id())
+            FormLink(form_id=self.form.get_unique_id(), form_module_id=self.module.unique_id)
         ]
 
         # wrap to have assign_references called
@@ -180,7 +180,7 @@ class RemoteRequestSuiteTest(SimpleTestCase, SuiteMixin):
         self.assertXmlPartialEqual(expected_entry_query, suite, "./entry[1]/session/query[2]")
 
         self.assertXmlHasXpath(suite, "./entry[1]/instance[@id='commcaresession']")
-        self.assertXmlDoesNotHaveXpath(suite, "./entry[1]/instance[@id='registry']")
+        self.assertXmlHasXpath(suite, "./entry[1]/instance[@id='registry']")
 
     def test_form_linking_from_registry_module(self, *args):
         self.form.post_form_workflow = WORKFLOW_FORM
@@ -472,7 +472,7 @@ class RemoteRequestSuiteFormLinkChildModuleTest(SimpleTestCase, SuiteMixin):
 
         # link from f1 to f2 (both in the child module)
         f1.post_form_workflow = WORKFLOW_FORM
-        f1.form_links = [FormLink(form_id=f2.get_unique_id())]
+        f1.form_links = [FormLink(form_id=f2.get_unique_id(), form_module_id=m1.unique_id)]
 
         factory.app._id = "123"
         # wrap to have assign_references called
@@ -546,6 +546,7 @@ class InlineSearchDataRegistryModuleTest(SimpleTestCase, SuiteMixin):
               </text>
             </command>
             <instance id="commcaresession" src="jr://instance/session"/>
+            <instance id="results:inline" src="jr://instance/remote/results:inline"/>
             <session>
                 <query url="http://localhost:8000/a/test_domain/phone/search/123/" storage-instance="{RESULTS_INSTANCE_INLINE}"
                     template="case" default_search="false">

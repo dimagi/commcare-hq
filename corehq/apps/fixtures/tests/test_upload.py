@@ -1,3 +1,4 @@
+from contextlib import contextmanager
 from datetime import timedelta
 from io import BytesIO
 from unittest.mock import patch
@@ -10,7 +11,6 @@ from couchexport.export import export_raw
 from couchexport.models import Format
 
 from corehq.apps.domain.shortcuts import create_domain
-from corehq.apps.fixtures.dbaccessors import delete_all_fixture_data
 from corehq.apps.fixtures.exceptions import FixtureUploadError
 from corehq.apps.fixtures.models import (
     Field,
@@ -399,13 +399,6 @@ class TestFixtureUpload(TestCase):
         cls.project = create_domain(cls.domain)
         cls.addClassCleanup(cls.project.delete)
 
-    def setUp(self):
-        self.upload_domains = {self.domain}
-
-    def tearDown(self):
-        for domain_name in self.upload_domains:
-            delete_all_fixture_data(domain_name)
-
     @staticmethod
     def get_workbook_from_data(headers, rows):
         file = BytesIO()
@@ -419,7 +412,6 @@ class TestFixtureUpload(TestCase):
         else:
             workbook = rows_or_workbook
         domain = kw.pop("domain", self.domain)
-        self.upload_domains.add(domain)
         return type(self).do_upload(domain, workbook, **kw)
 
     def get_table(self, domain=None):
@@ -650,32 +642,40 @@ class TestFixtureUpload(TestCase):
         ]
         workbook = self.get_workbook_from_data(headers, data)
         result = self.upload(workbook, skip_orm=True)
-        apple_id, = [r._migration_couch_id for r in self.get_rows(None)]
+        apple_id, = [r.id for r in self.get_rows(None)]
 
         ownerships = list(LookupTableRowOwner.objects.filter(domain=self.domain, row_id=apple_id))
         self.assertFalse(ownerships)
         self.assertFalse(result.errors)
 
     def test_sql_transaction(self):
+        @contextmanager
         def checked_tx():
-            tx = CouchTransaction()
-            tx.add_post_commit_action(check)
-            return tx
-
-        def check():
-            with new_db_connection(), self.assertRaises(LookupTable.DoesNotExist):
-                get_table()
-            did_check.append(True)
+            with atomic():
+                yield
+                with new_db_connection(), self.assertRaises(LookupTable.DoesNotExist):
+                    get_table()
+                did_check.append(True)
 
         def get_table():
             return LookupTable.objects.get(domain=self.domain, tag='things')
 
-        CouchTransaction = mod.CouchTransaction
+        atomic = mod.atomic
         did_check = []
-        with patch.object(mod, "CouchTransaction", checked_tx):
+        with patch.object(mod, "atomic", checked_tx):
             self.upload([(None, 'N', 'apple'), (None, 'N', 'orange')])
         self.assertIsNotNone(get_table())
         self.assertTrue(did_check)
+
+    def test_upload_should_clear_cache_on_error(self):
+        def error_tx():
+            raise Exception("cannot save")
+
+        upload_error = patch.object(mod, "atomic", error_tx)
+        clear_patch = patch.object(mod, "clear_fixture_cache")
+        with upload_error, clear_patch as clear_cache, self.assertRaises(Exception):
+            self.upload([(None, 'N', 'orange')])
+        clear_cache.assert_called_once()
 
 
 class TestLookupTableOwnershipUpload(TestCase):
@@ -721,9 +721,6 @@ class TestLookupTableOwnershipUpload(TestCase):
         cls.loc2.save()
         cls.loc3 = SQLLocation(domain=cls.domain, name="3", location_type=cls.region)
         cls.loc3.save()
-
-    def tearDown(self):
-        delete_all_fixture_data(self.domain)
 
     def test_row_ownership(self):
         self.upload([(None, 'N', 'apple', 'user1', 'G1', 'loc1')])

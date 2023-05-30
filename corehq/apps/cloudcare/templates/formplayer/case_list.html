@@ -4,7 +4,7 @@
 <script type="text/template" id="case-view-list-template">
   <div class="module-case-list-container">
 
-    <div arialabel="<%- title %>" tabindex="0" class="page-header menu-header"><h1 class="page-title"><%- title %></h1></div>
+    <div aria-label="<%- title %>" tabindex="0" class="page-header menu-header"><h1 class="page-title"><%- title %></h1></div>
 
     <div class="module-search-container">
       <div class="input-group input-group-lg">
@@ -18,7 +18,7 @@
     </div>
 
     <% if (useGrid) { %>
-    <section class="js-case-container clearfix"></section>
+    <section class="js-case-container clearfix list-cell-container-style"></section>
     <% } else { %>
     <div class="module-case-list-table-container">
       <table class="table module-table module-table-case-list">
@@ -44,7 +44,11 @@
         <tbody>
         <tr>
           <td class="module-case-list-column module-case-list-column-empty" colspan="<%-headers.length%>">
-            <div class="alert alert-info">{% trans "List is empty." %}</div>
+            <% if (noItemsText === null) {%>
+              <div class="alert alert-info">{% trans "List is empty." %}</div>
+            <% } else { %>
+              <div class="alert alert-info"><%- noItemsText %></div>
+            <% } %>
           </td>
         </tr>
         </tbody>
@@ -86,6 +90,8 @@
   <% if (!(styles[index].widthHint === 0)) { %>
   <% if (styles[index].displayFormat === 'Image') { %>
   <td class="module-case-list-column"><img class="module-icon" src="<%- resolveUri(datum) %>"/></td>
+  <% } else if (styles[index].displayFormat === 'Markdown') { %>
+  <td class="module-case-list-column"><%= renderMarkdown(datum) %></td>
   <% } else if (styles[index].displayFormat === 'Graph') { %>
   <td class="module-case-list-column"><iframe srcdoc="<%- datum %>" height="300" width="300"></iframe></td>
   <% } else { %>
@@ -106,7 +112,7 @@
       <% } else if(styles[index].widthHint === 0) { %>
       <div style="display:none;"><%- datum %></div>
       <% } else { %>
-      <div><%- datum %></div>
+      <div><%= renderMarkdown(datum) %></div>
       <% } %>
     </div>
     <% }); %>
@@ -122,30 +128,35 @@
   <% }); %>
 </script>
 
-<script type="text/template" id="cell-container-style-template">
-  .list-cell-container-style {
-  width: <%- model.widthPercentage %>%;
-  height: 0;
-  padding-bottom: <%- model.heightPercentage %>%;
-  display: inline-block;
-  border: 1px solid white;
-  border-collapse: collapse;
-  vertical-align: top;
-  float: left;
-  background-color: #f2f2f1;
-  }
-</script>
-
 <script type="text/template" id="cell-grid-style-template">
   .<%- model.prefix %>-cell-grid-style {
   display: grid;
-  grid-template-columns: repeat(<%- model.numColumns %>, <%- model.widthPixels %>px) min-content 5px;
-  grid-template-rows: repeat(<%- model.numRows %>, <%- model.heightPixels %>px) min-content 5px;
+  grid-template-columns: repeat(<%- model.numColumns %>, 1fr) min-content 5px;
+  grid-template-rows: repeat(<%- model.numRows %>, <%- model.heightString %>) min-content 5px;
   background-color: transparent;
   color: #685c53;
   justify-items: left;
-  padding-left: 20px;
-  padding-top: 10px;
+  padding: 10px 20px 0 20px;
+  }
+</script>
+
+<script type="text/template" id="cell-wrapper-style-template">
+  .list-cell-wrapper-style {
+  border: 1px solid white;
+  border-collapse: collapse;
+  vertical-align: top;
+  background-color: #f2f2f1;
+  container-type: inline-size;
+  }
+</script>
+
+<script type="text/template" id="cell-container-style-template">
+  .list-cell-container-style {
+  display: grid;
+  grid-template-columns: repeat(<%- casesPerRow %>, 1fr);
+  }
+  .list-cell-container-style::before {
+  display: none;
   }
 </script>
 

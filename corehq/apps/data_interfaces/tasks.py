@@ -3,28 +3,34 @@ from typing import List, Literal, Optional
 
 from django.conf import settings
 from django.core.cache import cache
+from django.template.loader import render_to_string
 from django.utils.translation import gettext as _
 
 from celery.schedules import crontab
 from celery.utils.log import get_task_logger
 
 from dimagi.utils.couch import CriticalSection
+from soil import DownloadBase
 
+from casexml.apps.case.mock import CaseBlock
 from corehq.apps.celery import periodic_task, task
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain_migration_flags.api import any_migrations_in_progress
 from corehq.apps.hqcase.utils import AUTO_UPDATE_XMLNS
+from corehq.apps.users.models import CouchUser
 from corehq.form_processor.models import XFormInstance
 from corehq.motech.repeaters.dbaccessors import (
     get_couch_repeat_record_ids_by_payload_id,
     get_sql_repeat_records_by_payload_id,
     iter_repeat_record_ids_by_repeater,
 )
+from corehq.apps.case_importer.do_import import SubmitCaseBlockHandler, RowAndCase
 from corehq.motech.repeaters.models import SQLRepeatRecord
 from corehq.sql_db.util import get_db_aliases_for_partitioned_query
 from corehq.toggles import CASE_DEDUPE, DISABLE_CASE_UPDATE_RULE_SCHEDULED_TASK
 from corehq.util.celery_utils import no_result_task
 from corehq.util.decorators import serial_task
+from corehq.util.log import send_HTML_email
 
 from .deduplication import backfill_deduplicate_rule, reset_deduplicate_rule
 from .interfaces import FormManagementMode
@@ -170,7 +176,8 @@ def run_case_update_rules_for_domain_and_db(domain, now, run_id, case_type, db=N
 
     if run.status == DomainCaseRuleRun.STATUS_FINISHED:
         for rule in rules:
-            AutomaticUpdateRule.objects.filter(pk=rule.pk).update(last_run=now)
+            rule.last_run = now
+            rule.save(update_fields=['last_run'])
 
 
 @task(serializer='pickle', queue='background_queue', acks_late=True, ignore_result=True)
@@ -243,3 +250,47 @@ def _get_repeat_record_ids(
             return [r['id'] for r in queryset.values('id')]
         else:
             return list(iter_repeat_record_ids_by_repeater(domain, repeater_id))
+
+
+@task
+def bulk_case_reassign_async(domain, user_id, owner_id, download_id, report_url):
+    task = bulk_case_reassign_async
+    case_ids = DownloadBase.get(download_id).get_content()
+    DownloadBase.set_progress(task, 0, len(case_ids))
+    user = CouchUser.get_by_user_id(user_id)
+    submission_handler = SubmitCaseBlockHandler(
+        domain, None, None, user, None, throttle=True
+    )
+    for idx, case_id in enumerate(case_ids):
+        submission_handler.add_caseblock(
+            RowAndCase(idx, CaseBlock(case_id, owner_id=owner_id))
+        )
+        DownloadBase.set_progress(task, idx, len(case_ids))
+    submission_handler.commit_caseblocks()
+    DownloadBase.set_progress(task, len(case_ids), len(case_ids))
+    result = submission_handler.results.to_json()
+    result['success'] = True
+    result['case_count'] = len(case_ids)
+    result['report_url'] = report_url
+
+    def _send_email():
+        context = {
+            'case_count': len(case_ids),
+            'report_url': report_url,
+        }
+        text_content = """
+        {case_count} cases were reassigned. The list of cases that
+        were reassigned are <a href='{report_url}'>here</a>.
+        It's possible that in the report the owner_id is not yet
+        updated, you can open individual cases and confirm
+        the right case owner, the report gets updated with a slight delay.
+        """.format(**context)
+        send_HTML_email(
+            "Reassign Cases Complete on {domain}- CommCare HQ",
+            user.get_email(),
+            render_to_string("data_interfaces/partials/case_reassign_complete_email.html", context),
+            text_content=text_content,
+        )
+
+    _send_email()
+    return {"messages": result}

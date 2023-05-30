@@ -1,0 +1,10 @@
+--- 
++++ 
+@@ -2,6 +2,6 @@
+     font-weight: normal;
+ 
+     i {
+-        color: @cc-brand-mid;
++        color: $cc-brand-mid;
+     }
+ }

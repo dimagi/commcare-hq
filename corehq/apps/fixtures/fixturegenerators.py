@@ -96,7 +96,7 @@ def get_global_items_by_domain(domain, case_id):
     global_types = {}
     for data_type in LookupTable.objects.by_domain(domain):
         if data_type.is_global:
-            global_types[data_type._migration_couch_id] = data_type
+            global_types[data_type.id] = data_type
     if global_types:
         data_fn = partial(ItemListsProvider()._get_global_items, global_types, domain)
         return get_or_cache_global_fixture(domain, case_id, FIXTURE_BUCKET, '', data_fn)
@@ -111,7 +111,7 @@ class ItemListsProvider(FixtureProvider):
         user_types = {}
         for data_type in LookupTable.objects.by_domain(restore_user.domain):
             if data_type.is_global:
-                global_types[data_type._migration_couch_id] = data_type
+                global_types[data_type.id] = data_type
             else:
                 user_types[data_type.id] = data_type
         items = []

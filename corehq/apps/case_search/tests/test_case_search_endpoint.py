@@ -14,16 +14,17 @@ from corehq.apps.app_manager.tests.app_factory import AppFactory
 from corehq.apps.case_search.const import IS_RELATED_CASE
 from corehq.apps.case_search.models import CaseSearchConfig, SearchCriteria
 from corehq.apps.domain.shortcuts import create_user
+from corehq.apps.es.case_search import case_search_adapter
 from corehq.apps.es.tests.utils import (
     case_search_es_setup,
-    case_search_es_teardown,
     es_test,
 )
+from corehq.form_processor.tests.utils import FormProcessorTestUtils
 
 from ..utils import get_case_search_results
 
 
-@es_test
+@es_test(requires=[case_search_adapter], setup_class=True)
 class TestCaseSearchEndpoint(TestCase):
     domain = "TestCaseSearchEndpoint"
 
@@ -67,7 +68,7 @@ class TestCaseSearchEndpoint(TestCase):
 
     @classmethod
     def tearDownClass(cls):
-        case_search_es_teardown()
+        FormProcessorTestUtils.delete_all_cases()
         super().tearDownClass()
 
     def test_basic(self):

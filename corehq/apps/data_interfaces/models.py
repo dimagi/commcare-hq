@@ -11,6 +11,8 @@ from django.utils.translation import gettext_lazy
 import jsonfield
 import pytz
 from dateutil.parser import parse
+from field_audit import audit_fields
+from field_audit.models import AuditingManager
 from jsonobject.api import JsonObject
 from jsonobject.properties import (
     BooleanProperty,
@@ -61,7 +63,7 @@ from corehq.messaging.scheduling.tasks import (
 from corehq.sql_db.util import (
     get_db_aliases_for_partitioned_query,
     paginate_query,
-    paginate_query_across_partitioned_databases,
+    paginate_query_across_partitioned_databases, create_unique_index_name,
 )
 from corehq.util.log import with_progress_bar
 from corehq.util.quickcache import quickcache
@@ -84,6 +86,8 @@ def _try_date_conversion(date_or_string):
     return date_or_string
 
 
+@audit_fields("active", "case_type", "deleted", "domain", "name", "workflow",
+              audit_special_queryset_writes=True)
 class AutomaticUpdateRule(models.Model):
     # Used when the rule performs case update actions
     WORKFLOW_CASE_UPDATE = 'CASE_UPDATE'
@@ -102,9 +106,12 @@ class AutomaticUpdateRule(models.Model):
     case_type = models.CharField(max_length=126)
     active = models.BooleanField(default=False)
     deleted = models.BooleanField(default=False)
+    deleted_on = models.DateTimeField(null=True)
     last_run = models.DateTimeField(null=True)
     filter_on_server_modified = models.BooleanField(default=True)
     workflow = models.CharField(max_length=126, choices=WORKFLOW_CHOICES)
+
+    objects = AuditingManager()
 
     class CriteriaOperator(models.TextChoices):
         ALL = 'ALL', gettext_lazy('ALL of the criteria are met')
@@ -127,6 +134,13 @@ class AutomaticUpdateRule(models.Model):
 
     class Meta(object):
         app_label = "data_interfaces"
+        indexes = [
+            models.Index(fields=['deleted_on'],
+                         name=create_unique_index_name('data_interfaces',
+                                                       'automaticupdaterule',
+                                                       ['deleted_on']),
+                         condition=Q(deleted_on__isnull=False))
+        ]
 
     class MigrationError(Exception):
         pass
@@ -249,29 +263,6 @@ class AutomaticUpdateRule(models.Model):
                 CommCareCase, q_expression, load_source='auto_update_rule'
             )
 
-    @classmethod
-    def _iter_cases_from_es(cls, domain, case_type, boundary_date=None):
-        case_ids = list(cls._get_case_ids_from_es(domain, case_type, boundary_date))
-        return CommCareCase.objects.iter_cases(case_ids, domain)
-
-    @classmethod
-    def _get_case_ids_from_es(cls, domain, case_type, boundary_date=None):
-        query = (CaseES()
-                 .domain(domain)
-                 .case_type(case_type)
-                 .is_closed(closed=False)
-                 .exclude_source()
-                 .size(100))
-
-        if boundary_date:
-            query = query.server_modified_range(lte=boundary_date)
-
-        for case_id in query.scroll():
-            if not isinstance(case_id, str):
-                raise ValueError("Something is wrong with the query, expected ids only")
-
-            yield case_id
-
     def activate(self, active=True):
         previous_active = self.active
         self.active = active
@@ -283,11 +274,13 @@ class AutomaticUpdateRule(models.Model):
 
     def soft_delete(self):
         with transaction.atomic():
+            self.deleted_on = datetime.utcnow()
             self.deleted = True
             self.save()
             if self.workflow == self.WORKFLOW_SCHEDULING:
                 schedule = self.get_schedule()
                 schedule.deleted = True
+                schedule.deleted_on = datetime.utcnow()
                 schedule.save()
                 if isinstance(schedule, AlertSchedule):
                     delete_case_alert_schedule_instances.delay(schedule.schedule_id.hex)

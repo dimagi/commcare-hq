@@ -34,6 +34,7 @@ Table of contents
     security
     static-files
     inheritance
+    code-review
 
 .. toctree::
     :caption: Development Process

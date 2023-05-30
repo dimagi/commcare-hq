@@ -225,3 +225,34 @@ class AppManagerTranslationsTest(TestCase, SuiteMixin):
                 default_strings[f'android.package.name.{app_id}'],
                 app_name
             )
+
+    def test_no_items_text_app_strings(self):
+        factory = AppFactory(build_version='2.54.0')
+        factory.app.langs = ['en', 'es']
+        factory.app.build_profiles = OrderedDict({
+            'en': BuildProfile(langs=['en'], name='en-profile'),
+            'es': BuildProfile(langs=['es'], name='es-profile'),
+        })
+        module, form = factory.new_basic_module('my_module', 'cases')
+        module.case_details.short.no_items_text = {'en': 'Empty List.', 'es': 'Lista Vacía.'}
+
+        # wrap to have assign_references called
+        app = Application.wrap(factory.app.to_json())
+
+        with flag_enabled('USH_EMPTY_CASE_LIST_TEXT'):
+            # default language
+            en_app_strings = self._generate_app_strings(app, 'default', build_profile_id='en')
+            self.assertEqual(en_app_strings['m0_no_items_text'], 'Empty List.')
+
+            # non-default language
+            es_app_strings = self._generate_app_strings(app, 'es', build_profile_id='es')
+            self.assertEqual(es_app_strings['m0_no_items_text'], 'Lista Vacía.')
+
+        factory.new_report_module('my_module')
+        app = Application.wrap(factory.app.to_json())
+
+        with flag_enabled('USH_EMPTY_CASE_LIST_TEXT'):
+            try:
+                en_app_strings = self._generate_app_strings(app, 'default', build_profile_id='en')
+            except AttributeError:
+                self.fail("_generate_app_strings raised AttributeError unexpectedly")

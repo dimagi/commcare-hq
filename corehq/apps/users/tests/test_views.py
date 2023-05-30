@@ -1,12 +1,20 @@
 import json
+from contextlib import contextmanager
 from unittest.mock import patch
 
 from django.http import Http404
 from django.test import TestCase
 from django.urls import reverse
 
+from corehq import privileges
 from corehq.apps.domain.shortcuts import create_domain
-from corehq.apps.es.tests.utils import populate_user_index
+from corehq.apps.es.tests.utils import es_test, populate_user_index
+from corehq.apps.es.users import user_adapter
+from corehq.apps.events.models import (
+    AttendanceTrackingConfig,
+    AttendeeModel,
+)
+from corehq.apps.hqcase.case_helper import CaseHelper
 from corehq.apps.locations.models import LocationType
 from corehq.apps.locations.tests.util import delete_all_locations, make_loc
 from corehq.apps.users.audit.change_messages import UserChangeMessage
@@ -23,11 +31,13 @@ from corehq.apps.users.models import (
 from corehq.apps.users.views import _delete_user_role, _update_role_from_view
 from corehq.apps.users.views.mobile.users import MobileWorkerListView
 from corehq.const import USER_CHANGE_VIA_WEB
-from corehq.pillows.mappings.user_mapping import USER_INDEX
 from corehq.toggles import FILTERED_BULK_USER_DOWNLOAD, NAMESPACE_DOMAIN
 from corehq.toggles.shortcuts import set_toggle
-from corehq.util.elastic import ensure_index_deleted
-from corehq.util.test_utils import generate_cases
+from corehq.util.test_utils import (
+    flag_enabled,
+    generate_cases,
+    privilege_enabled,
+)
 
 
 class TestMobileWorkerListView(TestCase):
@@ -80,6 +90,79 @@ class TestMobileWorkerListView(TestCase):
         )
         self.assertIsNotNone(user)
         self.assertEqual(user.get_role(self.domain).id, self.role.id)
+
+    @flag_enabled('ATTENDANCE_TRACKING')
+    @privilege_enabled(privileges.ATTENDANCE_TRACKING)
+    def test_commcare_attendee_case_created(self):
+        """An attendance tracking case should be created for a mobile worker on creation"""
+        with self.enable_mobile_worker_attendees(), \
+                self.get_mobile_worker() as user:
+            self.assertAttendeeCreatedForUser(user)
+
+    @flag_enabled('ATTENDANCE_TRACKING')
+    def test_commcare_attendee_case_not_created_due_to_privilege(self):
+        """This tests the case where a domain was on a higher plan and used the attendance tracking, but have
+        downgraded ever since and now creates a new mobile worker"""
+        with self.enable_mobile_worker_attendees(), \
+                self.get_mobile_worker():
+            self.assertAttendeeNotCreated()
+
+    @flag_enabled('ATTENDANCE_TRACKING')
+    @privilege_enabled(privileges.ATTENDANCE_TRACKING)
+    def test_commcare_attendee_case_not_created_due_to_config(self):
+        # AttendanceTrackingConfig does not exist for this domain
+        self.assertNoAttendanceTrackingConfig()
+        with self.get_mobile_worker():
+            self.assertAttendeeNotCreated()
+
+    def assertAttendeeCreatedForUser(self, user):
+        models = AttendeeModel.objects.by_domain(self.domain)
+        self.assertEqual(len(models), 1)
+        self.assertEqual(models[0].user_id, user.user_id)
+
+    def assertAttendeeNotCreated(self):
+        self.assertEqual(AttendeeModel.objects.by_domain(self.domain), [])
+
+    def assertNoAttendanceTrackingConfig(self):
+        self.assertIsNone(
+            AttendanceTrackingConfig.objects.filter(domain=self.domain).first()
+        )
+
+    @contextmanager
+    def enable_mobile_worker_attendees(self):
+        config, __ = AttendanceTrackingConfig.objects.update_or_create(
+            domain=self.domain,
+            defaults={'mobile_worker_attendees': True},
+        )
+        try:
+            yield
+        finally:
+            config.delete()
+
+    @contextmanager
+    def get_mobile_worker(self):
+        username = 'test.test'
+        self._remote_invoke('create_mobile_worker', {
+            "user": {
+                "first_name": "Test",
+                "last_name": "Test",
+                "username": username,
+                "password": "123"
+            }
+        })
+        user = CouchUser.get_by_username(f'{username}@{self.domain}.commcarehq.org')
+        try:
+            yield user
+        finally:
+            close_user_attendee(self.domain, user.user_id)
+            user.delete(None, None)
+
+
+def close_user_attendee(domain, user_id):
+    for model in AttendeeModel.objects.by_domain(domain):
+        if model.user_id == user_id:
+            helper = CaseHelper(case_id=model.case_id, domain=domain)
+            helper.close()
 
 
 @generate_cases((
@@ -253,6 +336,7 @@ class TestDeletePhoneNumberView(TestCase):
         self.assertEqual(user_history_log.changed_via, USER_CHANGE_VIA_WEB)
 
 
+@es_test(requires=[user_adapter], setup_class=True)
 class TestCountWebUsers(TestCase):
 
     view = 'count_web_users'
@@ -303,7 +387,6 @@ class TestCountWebUsers(TestCase):
 
     @classmethod
     def tearDownClass(cls):
-        ensure_index_deleted(USER_INDEX)
         delete_all_locations()
 
         cls.admin_user_with_location.delete(cls.domain_obj.name, deleted_by=None)
@@ -318,7 +401,7 @@ class TestCountWebUsers(TestCase):
             password='badpassword',
         )
         result = self.client.get(reverse(self.view, kwargs={'domain': self.domain}))
-        self.assertEqual(json.loads(result.content)['count'], 2)
+        self.assertEqual(json.loads(result.content)['user_count'], 2)
 
     def test_admin_location_user_sees_all_web_users(self):
         self.client.login(
@@ -326,4 +409,4 @@ class TestCountWebUsers(TestCase):
             password='badpassword',
         )
         result = self.client.get(reverse(self.view, kwargs={'domain': self.domain}))
-        self.assertEqual(json.loads(result.content)['count'], 2)
+        self.assertEqual(json.loads(result.content)['user_count'], 2)

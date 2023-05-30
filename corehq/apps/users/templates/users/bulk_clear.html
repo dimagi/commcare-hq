@@ -1,0 +1,32 @@
+{% extends 'hqwebapp/bootstrap3/base_section.html' %}
+
+{% load crispy_forms_tags %}
+{% load hq_shared_tags %}
+{% load i18n %}
+
+{% requirejs_main 'hqwebapp/js/bulk_upload_file' %}
+
+{% block page_content %}
+  {% blocktrans %}
+    <h2>
+      Bulk Clear Mobile Worker Data
+    </h2>
+
+    <div class="alert alert-warning">
+      <p>
+        <i class="fa fa-warning"></i>
+        This action removes all data associated with a user and is a permanent action. Cleared users:
+      </p>
+      <ul>
+        <li>Will not be able to access their cleared data.</li>
+        <li>Will not be able to recover cleared data for any reason.</li>
+      </ul>
+    </div>
+
+    <p class="help-block">
+      To clear user data in bulk, please upload an Excel file with a single <strong>username</strong> column.
+    </p>
+  {% endblocktrans %}
+
+  {% crispy bulk_upload_form %}
+{% endblock page_content %}

@@ -7,7 +7,15 @@ from time import time
 from django.core.management import BaseCommand
 
 from corehq.apps.app_manager.models import Application
-from corehq.util.couch import DocUpdate, iter_update
+from corehq.apps.domain.dbaccessors import get_doc_ids_in_domain_by_type
+from corehq.apps.domain_migration_flags.api import (
+    ALL_DOMAINS,
+    migration_in_progress,
+    set_migration_complete,
+    set_migration_started,
+    get_migration_complete
+)
+from corehq.util.couch import DocUpdate, get_db_by_doc_type, iter_update
 
 logger = logging.getLogger('app_migration')
 logger.setLevel('DEBUG')
@@ -24,6 +32,13 @@ def get_all_app_ids(domain=None, include_builds=False):
         endkey=key + [{}],
         reduce=False,
     ).all()}
+
+
+def get_deleted_app_ids(domain=None):
+    db = get_db_by_doc_type('Application')
+    return (get_doc_ids_in_domain_by_type(domain, 'Application-Deleted', database=db)
+        + get_doc_ids_in_domain_by_type(domain, 'LinkedApplication-Deleted', database=db)
+        + get_doc_ids_in_domain_by_type(domain, 'RemoteApp-Deleted', database=db))
 
 
 SaveError = namedtuple('SaveError', 'id error reason')
@@ -67,10 +82,26 @@ class AppMigrationCommandBase(BaseCommand):
             help="If existing progress files for this command exist, turn this flag on to ignore them and start"
                  "from scratch.",
         )
+        parser.add_argument(
+            '--force-run-again',
+            action='store_true',
+            default=False,
+            help='''By default, this migration will not run a second time once it has been run. This flag forces
+                    the migration to run a second time, even if it has been run before on the environment.''',
+        )
 
     def handle(self, **options):
-        start_time = time()
         self.options = options
+
+        if not self.options.get('force_run_again', False) and not self.is_dry_run:
+            self.command_name = self.__module__[self.__module__.rindex('.') + 1:]
+            if get_migration_complete(ALL_DOMAINS, self.command_name):
+                logger.info("This migration command has already been run on this environment. Exiting...")
+                return
+            elif not migration_in_progress(ALL_DOMAINS, self.command_name):
+                set_migration_started(ALL_DOMAINS, self.command_name)
+
+        self.start_time = time()
         self.check_filenames_set()
 
         if self.options['domain']:
@@ -88,10 +119,7 @@ class AppMigrationCommandBase(BaseCommand):
             logger.info('migrating {} apps{}'.format(len(app_ids), f" in {domain}" if domain else ""))
             iter_update(Application.get_db(), self._migrate_app, app_ids, verbose=True, chunksize=self.chunk_size)
             domain_list_position = self.increment_progress(domain_list_position)
-        self.remove_storage_files()
-        end_time = time()
-        execution_time_seconds = end_time - start_time
-        logger.info(f"Completed in {timedelta(seconds=execution_time_seconds)}.")
+        self.end_migration()
 
     @property
     def is_dry_run(self):
@@ -179,3 +207,14 @@ class AppMigrationCommandBase(BaseCommand):
             os.remove(self.DOMAIN_PROGRESS_NUMBER_FILENAME)
         except FileNotFoundError:
             pass
+
+    def end_migration(self):
+        self.remove_storage_files()
+        end_time = time()
+        execution_time_seconds = end_time - self.start_time
+
+        if (not self.is_dry_run and not self.options.get('force_run_again', False)
+           and migration_in_progress(ALL_DOMAINS, self.command_name)):
+            set_migration_complete(ALL_DOMAINS, self.command_name)
+
+        logger.info(f"Completed in {timedelta(seconds=execution_time_seconds)}.")

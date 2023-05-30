@@ -10,7 +10,8 @@
         data-locs='{{ context_.locations|JSON }}'
         data-selected='{{ context_.loc_id|default_if_none:"" }}'
         data-hierarchy='{{ context_.hierarchy|JSON }}'
-        data-max-drilldown-levels='{{ context_.max_drilldown_levels }}'>
+        data-max-drilldown-levels='{{ context_.max_drilldown_levels }}'
+        data-auto-drill='{{ context_.auto_drill }}'>
         <div data-bind="foreach: selected_path" style="display: inline-block;">
             {% block location_select %}
               <select class="form-control"

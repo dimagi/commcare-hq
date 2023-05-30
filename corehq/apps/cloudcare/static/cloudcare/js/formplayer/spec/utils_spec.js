@@ -20,12 +20,16 @@ describe('Utils', function () {
         it('should retrieve saved display options', function () {
             let options = { option: 'yes' };
             Utils.saveDisplayOptions(options);
-            assert.deepEqual(Utils.getSavedDisplayOptions(), options);
+            $.when(Utils.getSavedDisplayOptions(), function (response) {
+                assert.deepEqual(response, options);
+            });
         });
 
         it('should not fail on bad json saved', function () {
             localStorage.setItem(Utils.getDisplayOptionsKey(), 'bad json');
-            assert.deepEqual(Utils.getSavedDisplayOptions(), {});
+            $.when(Utils.getSavedDisplayOptions(), function (response) {
+                assert.deepEqual(response, {});
+            });
         });
 
     });
@@ -59,6 +63,12 @@ describe('Utils', function () {
                         empty: function () { return; },
                     };
                 },
+                addRegions: function () {
+                    return {
+                        show: function () { return; },
+                        empty: function () { return; },
+                    };
+                },
             };
 
             // Note this calls queryFormplayer
@@ -83,6 +93,7 @@ describe('Utils', function () {
             assert.equal(url.queryData, null);
             assert.equal(url.search, null);
             assert.equal(url.appId, 'abc123');
+            assert.isNotOk(url.sessionId);
             assert.isTrue(stubs.queryFormplayer.calledTwice);
             let lastCall = stubs.queryFormplayer.lastCall;
             assert.equal(lastCall.args[1], "navigate_menu");
@@ -94,6 +105,7 @@ describe('Utils', function () {
             assert.equal(url.queryData, null);
             assert.equal(url.search, null);
             assert.equal(url.appId, 'abc123');
+            assert.equal(url.sessionId, '123456789abcdefg');
             assert.isTrue(stubs.queryFormplayer.calledThrice);
             lastCall = stubs.queryFormplayer.lastCall;
             assert.equal(lastCall.args[1], "navigate_menu");

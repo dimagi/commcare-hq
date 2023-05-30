@@ -208,7 +208,7 @@ def _record_metrics(tags, submission_type, response, timer=None, xform=None):
 
 @waf_allow('XSS_BODY')
 @csrf_exempt
-@api_auth
+@api_auth()
 @require_permission(HqPermissions.edit_data)
 @require_permission(HqPermissions.access_api)
 @require_POST

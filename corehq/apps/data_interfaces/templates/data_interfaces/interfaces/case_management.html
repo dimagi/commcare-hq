@@ -6,7 +6,22 @@
   <div id="data-interfaces-reassign-cases">
     <div class="row">
       <form class="well form-inline" style="margin: 1em; display: none;" data-bind="submit: updateCaseOwners, caseReassignmentForm: selectedCases">
-        <label for="reassign_owner_select" class="inline">{% trans 'Reassign selected cases to' %} </label>
+        <label for="reassign_owner_select" class="inline">
+          {% blocktrans %}
+          <!-- ko if: selectAllMatches -->
+            Reassign {{total_cases}} selected cases to
+          <!-- /ko -->
+          <!-- ko ifnot: selectAllMatches -->
+            Reassign <span data-bind="text: selectedCount"></span> selected cases to
+          <!-- /ko -->
+          {% endblocktrans %}
+        </label>
+        <div class="checkbox" style="float:right">
+          <label>
+            <input type="checkbox" data-bind="checked: selectAllMatches" />
+            {% trans 'Select all' %} {{total_cases}} cases
+          </label>
+        </div>
         <span data-bind="visible: shouldShowOwners">
           <select name="reassign_owner"
                   id="reassign_owner_select"

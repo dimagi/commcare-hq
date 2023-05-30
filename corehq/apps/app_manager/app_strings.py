@@ -1,5 +1,5 @@
 import functools
-from distutils.version import LooseVersion
+from looseversion import LooseVersion
 
 from django.utils.translation import gettext
 
@@ -66,6 +66,12 @@ def _create_custom_app_strings(app, lang, for_default=False, build_profile_id=No
 
     yield id_strings.current_language(), lang
 
+    for id, custom_assertion in enumerate(app.custom_assertions):
+        yield (
+            id_strings.custom_assertion_locale(id),
+            clean_trans(custom_assertion.text, langs)
+        )
+
     for module in app.get_modules():
         yield from _create_module_details_app_strings(module, langs)
 
@@ -73,6 +79,12 @@ def _create_custom_app_strings(app, lang, for_default=False, build_profile_id=No
             id_strings.module_locale(module),
             _maybe_add_index(clean_trans(module.name, langs), app)
         )
+
+        for id, custom_assertion in enumerate(module.custom_assertions):
+            yield (
+                id_strings.custom_assertion_locale(id, module),
+                clean_trans(custom_assertion.text, langs)
+            )
 
         yield from _create_icon_audio_app_strings(
             module,
@@ -124,6 +136,12 @@ def _create_custom_app_strings(app, lang, for_default=False, build_profile_id=No
 
 
 def _create_module_details_app_strings(module, langs):
+    if module.get_app().supports_empty_case_list_text and hasattr(module, 'case_details'):
+        yield (
+            id_strings.no_items_text_detail(module),
+            clean_trans(module.case_details.short.no_items_text, langs)
+        )
+
     for detail_type, detail, _ in module.get_details():
         for column in detail.get_columns():
             yield (
@@ -181,7 +199,7 @@ def _create_module_details_app_strings(module, langs):
         # To list app strings for properties used as sorting properties only
         if detail.sort_elements:
             sort_only, sort_columns = get_sort_and_sort_only_columns(
-                detail.get_columns(),
+                list(detail.get_columns()),  # evaluate generator
                 detail.sort_elements,
             )
             for field, sort_element, order in sort_only:
@@ -347,6 +365,11 @@ def _create_case_search_app_strings(
             if app.enable_case_search_title_translation:
                 yield id_strings.case_search_title_translation(module), title_label
 
+            yield (
+                id_strings.case_search_description_locale(module),
+                clean_trans(module.search_config.description, langs)
+            )
+
             # search again label
             yield (
                 id_strings.case_search_again_locale(module),
@@ -370,6 +393,10 @@ def _create_case_search_app_strings(
             yield(
                 id_strings.case_search_title_translation(module),
                 clean_trans(CaseSearch.title_label.default(), langs)
+            )
+            yield (
+                id_strings.case_search_description_locale(module),
+                clean_trans(CaseSearch.description.default(), langs)
             )
             yield (
                 id_strings.case_search_locale(module),
@@ -448,7 +475,7 @@ def _create_forms_app_strings(
 
         for id, custom_assertion in enumerate(form.custom_assertions):
             yield (
-                id_strings.custom_assertion_locale(module, form, id),
+                id_strings.custom_assertion_locale(id, module, form),
                 clean_trans(custom_assertion.text, langs)
             )
 

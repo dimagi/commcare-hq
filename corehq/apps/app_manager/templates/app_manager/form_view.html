@@ -72,11 +72,6 @@
       <script src="{% static 'app_manager/js/forms/custom_instances.js' %}"></script>
     {% endcompress %}
   {% endif %}
-  {% if request|toggle_enabled:"CUSTOM_ASSERTIONS"%}
-    {% compress js %}
-      <script src="{% static 'app_manager/js/forms/custom_assertions.js' %}"></script>
-    {% endcompress %}
-  {% endif %}
   {% if allow_form_copy and request|toggle_enabled:"COPY_FORM_TO_APP" %}
     {% compress js %}
       <script src="{% static 'app_manager/js/forms/copy_form_to_app.js' %}"></script>
@@ -129,7 +124,6 @@
   {% initial_page_data 'case_config_options' case_config_options %}
   {% initial_page_data 'current_language' lang %}
   {% initial_page_data 'custom_instances' custom_instances %}
-  {% initial_page_data 'custom_assertions' custom_assertions %}
   {% initial_page_data 'default_language' app.default_language %}
   {% initial_page_data 'enable_release_notes' form.enable_release_notes %}
   {% initial_page_data 'form_filter' form.form_filter %}
@@ -158,7 +152,7 @@
   {% registerurl "validate_form_for_build" domain app.id form.unique_id %}
 
   {# End of form navigation #}
-  {% initial_page_data 'form_links' form.form_links %}
+  {% initial_page_data 'form_links' form_links %}
   {% initial_page_data 'linkable_forms' linkable_forms %}
   {% initial_page_data 'post_form_workflow' form.post_form_workflow %}
   {% initial_page_data 'post_form_workflow_fallback' form.post_form_workflow_fallback %}
@@ -320,14 +314,3 @@
   {% include "app_manager/partials/forms/form_view_modals.html" %}
   {% include "app_manager/partials/nav_menu_media_modals.html" %}
 {% endblock modals %}
-
-{% block breadcrumbs %}
-  {{ block.super }}
-  {% include 'app_manager/partials/modules/module_view_breadcrumbs.html' %}
-  <li>
-    <a class="track-usage-link" href="{% url "view_form" domain app.id form.unique_id %}"
-       data-category="App Builder" data-action="View Form" data-label="Breadcrumb">
-      <span class="app-manager-title variable-form_name">{{ form.name|html_trans:langs|safe }}</span>
-    </a>
-  </li>
-{% endblock %}

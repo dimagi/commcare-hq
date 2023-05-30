@@ -103,6 +103,7 @@ from corehq.apps.domain.models import (
     RESTRICTED_UCR_EXPRESSIONS,
     SUB_AREA_CHOICES,
     AllowedUCRExpressionSettings,
+    AppReleaseModeSetting,
     OperatorCallLimitSettings,
     SMSAccountConfirmationSettings,
     TransferDomainRequest,
@@ -337,9 +338,11 @@ class DomainGlobalSettingsForm(forms.Form):
     logo = ImageField(
         label=gettext_lazy("Custom Logo"),
         required=False,
-        help_text=gettext_lazy("Upload a custom image to display instead of the "
-                    "CommCare HQ logo.  It will be automatically resized to "
-                    "a height of 32 pixels.")
+        help_text=gettext_lazy(
+            "Upload a custom image to display instead of the "
+            "CommCare HQ logo.  It will be automatically resized to "
+            "a height of 32 pixels. Upload size limit is {size_limit} MB."
+        ).format(size_limit=f"{settings.MAX_UPLOAD_SIZE_ATTACHMENT/(1024*1024):,.0f}")
     )
     delete_logo = BooleanField(
         label=gettext_lazy("Delete Logo"),
@@ -420,6 +423,19 @@ class DomainGlobalSettingsForm(forms.Form):
         help_text=gettext_lazy("Name of the project to be used in SMS sent for account confirmation to users.")
     )
 
+    release_mode_visibility = BooleanField(
+        label=gettext_lazy("Enable Release Mode"),
+        required=False,
+        help_text=gettext_lazy(
+            """
+            Check this box to enable release mode setting on the app release page.
+            Enabled setting restricts user to directly mark a version 'released'
+            and allows users to do so only when they are in 'Release Mode' on the
+            release page of applications.
+            """
+        )
+    )
+
     def __init__(self, *args, **kwargs):
         self.project = kwargs.pop('domain', None)
         self.domain = self.project.name
@@ -428,6 +444,7 @@ class DomainGlobalSettingsForm(forms.Form):
         self.helper = hqcrispy.HQFormHelper(self)
         self.helper[5] = twbscrispy.PrependedText('delete_logo', '')
         self.helper[6] = twbscrispy.PrependedText('call_center_enabled', '')
+        self.helper[14] = twbscrispy.PrependedText('release_mode_visibility', '')
         self.helper.all().wrap_together(crispy.Fieldset, _('Edit Basic Information'))
         self.helper.layout.append(
             hqcrispy.FormActions(
@@ -462,6 +479,7 @@ class DomainGlobalSettingsForm(forms.Form):
 
         self._handle_call_limit_visibility()
         self._handle_account_confirmation_by_sms_settings()
+        self._handle_release_mode_setting_value()
 
     def _handle_account_confirmation_by_sms_settings(self):
         if not TWO_STAGE_USER_PROVISIONING_BY_SMS.enabled(self.domain):
@@ -490,6 +508,10 @@ class DomainGlobalSettingsForm(forms.Form):
             OperatorCallLimitSettings.CALL_LIMIT_MAXIMUM
         )
 
+    def _handle_release_mode_setting_value(self):
+        self.fields['release_mode_visibility'].initial = AppReleaseModeSetting.get_settings(
+            domain=self.domain).is_visible
+
     def _add_range_validation_to_integer_input(self, settings_name, min_value, max_value):
         setting = self.fields.get(settings_name)
         min_validator = MinValueValidator(min_value)
@@ -508,6 +530,17 @@ class DomainGlobalSettingsForm(forms.Form):
             return data
         return json.loads(data or '{}')
 
+    def clean_logo(self):
+        logo = self.cleaned_data['logo']
+        if self.can_use_custom_logo and logo:
+            if logo.size > settings.MAX_UPLOAD_SIZE_ATTACHMENT:
+                raise ValidationError(
+                    _("Logo exceeds {} MB size limit").format(
+                        f"{settings.MAX_UPLOAD_SIZE_ATTACHMENT/(1024*1024):,.0f}"
+                    )
+                )
+        return logo
+
     def clean_confirmation_link_expiry(self):
         data = self.cleaned_data['confirmation_link_expiry']
         return DomainGlobalSettingsForm.validate_integer_value(data, "Confirmation link expiry")
@@ -515,6 +548,12 @@ class DomainGlobalSettingsForm(forms.Form):
     def clean_operator_call_limit(self):
         data = self.cleaned_data['operator_call_limit']
         return DomainGlobalSettingsForm.validate_integer_value(data, "Operator call limit")
+
+    def clean_release_mode_visibility(self):
+        data = self.cleaned_data['release_mode_visibility']
+        if data not in [True, False]:
+            raise forms.ValidationError(_("Release Mode Visibility should be a boolean."))
+        return data
 
     @staticmethod
     def validate_integer_value(value, value_name):
@@ -596,6 +635,12 @@ class DomainGlobalSettingsForm(forms.Form):
             settings.confirmation_link_expiry_time = self.cleaned_data.get('confirmation_link_expiry')
             settings.save()
 
+    def _save_release_mode_setting(self, domain):
+        setting_obj = AppReleaseModeSetting.get_settings(domain=domain.name)
+        if self.cleaned_data.get("release_mode_visibility") != setting_obj.is_visible:
+            setting_obj.is_visible = self.cleaned_data.get("release_mode_visibility")
+            setting_obj.save()
+
     def save(self, request, domain):
         domain.hr_name = self.cleaned_data['hr_name']
         domain.project_description = self.cleaned_data['project_description']
@@ -612,6 +657,7 @@ class DomainGlobalSettingsForm(forms.Form):
         self._save_call_center_configuration(domain)
         self._save_timezone_configuration(domain)
         self._save_account_confirmation_settings(domain)
+        self._save_release_mode_setting(domain)
         domain.save()
         return True
 

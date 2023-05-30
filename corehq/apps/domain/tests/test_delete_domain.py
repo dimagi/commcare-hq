@@ -82,6 +82,7 @@ from corehq.apps.products.models import Product, SQLProduct
 from corehq.apps.registration.models import RegistrationRequest
 from corehq.apps.reminders.models import EmailUsage
 from corehq.apps.reports.models import (
+    TableauConnectedApp,
     TableauServer,
     TableauVisualization,
 )
@@ -128,9 +129,8 @@ from corehq.form_processor.tests.utils import (
 from corehq.motech.models import ConnectionSettings, RequestLog
 from corehq.motech.repeaters.const import RECORD_SUCCESS_STATE
 from corehq.motech.repeaters.models import (
+    CaseRepeater,
     Repeater,
-    SQLCaseRepeater,
-    SQLRepeater,
     SQLRepeatRecord,
     SQLRepeatRecordAttempt,
 )
@@ -165,6 +165,7 @@ class TestDeleteDomain(TestCase):
         )
         MessagingSubEvent.objects.create(
             parent=event,
+            domain=domain_name,
             date=datetime.utcnow(),
             recipient_type=MessagingEvent.RECIPIENT_CASE,
             content_type=MessagingEvent.CONTENT_SMS,
@@ -225,7 +226,7 @@ class TestDeleteDomain(TestCase):
         self.assertEqual(ExpectedCallback.objects.filter(domain=domain).count(), number)
         self.assertEqual(PhoneNumber.objects.filter(domain=domain).count(), number)
         self.assertEqual(MessagingEvent.objects.filter(domain=domain).count(), number)
-        self.assertEqual(MessagingSubEvent.objects.filter(parent__domain=domain).count(), number)
+        self.assertEqual(MessagingSubEvent.objects.filter(domain=domain).count(), number)
         self.assertEqual(SQLMobileBackend.objects.filter(domain=domain).count(), number)
         self.assertEqual(SQLMobileBackendMapping.objects.filter(domain=domain).count(), number)
         self.assertEqual(MobileBackendInvitation.objects.filter(domain=domain).count(), number)
@@ -680,6 +681,7 @@ class TestDeleteDomain(TestCase):
         self._assert_queryset_count([
             TableauServer.objects.filter(domain=domain_name),
             TableauVisualization.objects.filter(domain=domain_name),
+            TableauConnectedApp.objects.filter(server__domain=domain_name),
         ], count)
 
     def test_reports_delete(self):
@@ -694,6 +696,11 @@ class TestDeleteDomain(TestCase):
                 domain=domain_name,
                 server=server,
                 view_url='my_url',
+            )
+            TableauConnectedApp.objects.create(
+                app_client_id='qwer1234',
+                secret_id='asdf5678',
+                server=server,
             )
             self._assert_reports_counts(domain_name, 1)
 
@@ -884,9 +891,14 @@ class TestDeleteDomain(TestCase):
         self.assertEqual(user_history.changes, {})
 
     def _assert_role_counts(self, domain_name, roles, permissions, assignments):
-        self.assertEqual(UserRole.objects.filter(domain=domain_name).count(), roles)
-        self.assertEqual(RolePermission.objects.filter(role__domain=domain_name).count(), permissions)
-        self.assertEqual(RoleAssignableBy.objects.filter(role__domain=domain_name).count(), assignments)
+        self.assertEqual(UserRole.objects.filter(domain=domain_name
+                                                 ).exclude(name='Attendance Coordinator').count(), roles)
+        self.assertEqual(RolePermission.objects.filter(
+            role__domain=domain_name
+        ).exclude(role__name='Attendance Coordinator').count(), permissions)
+        self.assertEqual(RoleAssignableBy.objects.filter(
+            role__domain=domain_name
+        ).exclude(role__name='Attendance Coordinator').count(), assignments)
 
     def test_roles_delete(self):
         for domain_name in [self.domain.name, self.domain2.name]:
@@ -902,7 +914,7 @@ class TestDeleteDomain(TestCase):
                 PermissionInfo(HqPermissions.view_reports.name, allow=PermissionInfo.ALLOW_ALL)
             ])
             role.set_assignable_by([role1.id])
-            self._assert_role_counts(domain_name, 2, 1, 1)
+            self._assert_role_counts(self.domain.name, 2, 1, 1)
 
         self.domain.delete()
 
@@ -947,23 +959,19 @@ class TestDeleteDomain(TestCase):
 
     def _assert_repeaters_count(self, domain_name, count):
         self._assert_queryset_count([
-            SQLRepeater.objects.filter(domain=domain_name),
+            Repeater.objects.filter(domain=domain_name),
             SQLRepeatRecord.objects.filter(domain=domain_name),
             SQLRepeatRecordAttempt.objects.filter(repeat_record__domain=domain_name),
         ], count)
 
-    # Repeater.get_class_from_doc_type is patched because while syncing the
-    # SQL object to couch, the Repeater.save was erroring while clearing cache
-    @patch.object(Repeater, 'get_class_from_doc_type')
-    def test_repeaters_delete(self, mock):
-        mock.return_value = Repeater
+    def test_repeaters_delete(self):
         for domain_name in [self.domain.name, self.domain2.name]:
             conn = ConnectionSettings.objects.create(
                 domain=domain_name,
                 name='To Be Deleted',
                 url="http://localhost/api/"
             )
-            repeater = SQLCaseRepeater.objects.create(
+            repeater = CaseRepeater.objects.create(
                 domain=domain_name,
                 connection_settings=conn
             )

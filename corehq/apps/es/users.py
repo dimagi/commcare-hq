@@ -22,16 +22,17 @@ of all unknown users, web users, and demo users on a domain.
 
     owner_ids = query.get_ids()
 """
-from copy import deepcopy
 
 from . import filters, queries
-from .client import ElasticDocumentAdapter
+from .client import ElasticDocumentAdapter, create_document_adapter
 from .es_query import HQESQuery
-from .transient_util import get_adapter_mapping, from_dict_with_possible_id
+from .index.settings import IndexSettingsKey
+
+HQ_USERS_INDEX_CANONICAL_NAME = 'users'
 
 
 class UserES(HQESQuery):
-    index = 'users'
+    index = HQ_USERS_INDEX_CANONICAL_NAME
     default_filters = {
         'not_deleted': filters.term("base_doc", "couchuser"),
         'active': filters.term("is_active", True),
@@ -68,16 +69,53 @@ class UserES(HQESQuery):
 
 class ElasticUser(ElasticDocumentAdapter):
 
-    _index_name = "hqusers_2017-09-07"
-    type = "user"
+    settings_key = IndexSettingsKey.USERS
+    canonical_name = HQ_USERS_INDEX_CANONICAL_NAME
+
+    @property
+    def model_cls(self):
+        from corehq.apps.users.models import CouchUser
+        return CouchUser
 
     @property
     def mapping(self):
-        return get_adapter_mapping(self)
+        from .mappings.user_mapping import USER_MAPPING
+        return USER_MAPPING
 
-    @classmethod
-    def from_python(cls, doc):
-        return from_dict_with_possible_id(doc)
+    def _from_dict(self, user_dict):
+        """
+        Takes a user dict and applies required transfomation to make it suitable for ES.
+
+        :param user: an instance ``dict`` which is result of ``CouchUser.to_json()``
+        """
+        from corehq.apps.groups.dbaccessors import (
+            get_group_id_name_map_by_user,
+        )
+
+        if user_dict['doc_type'] == 'CommCareUser' and '@' in user_dict['username']:
+            user_dict['base_username'] = user_dict['username'].split("@")[0]
+        else:
+            user_dict['base_username'] = user_dict['username']
+
+        results = get_group_id_name_map_by_user(user_dict['_id'])
+        user_dict['__group_ids'] = [res.id for res in results]
+        user_dict['__group_names'] = [res.name for res in results]
+        user_dict['user_data_es'] = []
+        if 'user_data' in user_dict:
+            user_obj = self.model_cls.wrap_correctly(user_dict)
+            for key, value in user_obj.metadata.items():
+                user_dict['user_data_es'].append({
+                    'key': key,
+                    'value': value,
+                })
+        return super()._from_dict(user_dict)
+
+
+user_adapter = create_document_adapter(
+    ElasticUser,
+    "hqusers_2017-09-07",
+    "user",
+)
 
 
 def domain(domain, allow_enterprise=False):

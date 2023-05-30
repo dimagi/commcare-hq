@@ -1,21 +1,17 @@
 -r test-requirements.in
+-r docs-requirements.in
 
-fixture
-sniffer
-psutil>5.1.3  # for memory profiling
+dependency-metrics
 django-extensions
-ipython  # for nicer django shell experience
-wheel
-gnureadline
+fixture
 git-build-branch
-
-# documentation
-Sphinx
-sphinx-rtd-theme
-docutils
-sphinxcontrib-django
+gnureadline
+ipython  # for nicer django shell experience
+psutil>5.1.3  # for memory profiling
+sniffer
+wheel
 
 # linting/formatting
 flake8
-yapf
 isort
+yapf

@@ -84,7 +84,7 @@ The template should use `knockout templates <http://knockoutjs.com/documentation
 to render the data you pass back to the view. Each template will have access to
 everything inside of `itemData`. Here's an example:
 
-.. code-block:: html
+.. code-block:: text
 
     {% extends 'hqwebapp/base_paginated_crud.html' %}
 
@@ -245,7 +245,7 @@ The `UpdatePuppyForm` should look something like:
 
 You should add the following to your `base-puppy-template` knockout template:
 
-.. code-block:: html
+.. code-block:: text
 
     <script type="text/html" id="base-puppy-template">
         ...
@@ -311,7 +311,7 @@ If you want to delete data with your paginated view, you should implement someth
 
 You should add the following to your `base-puppy-template` knockout template:
 
-.. code-block:: html
+.. code-block:: text
 
     <script type="text/html" id="base-puppy-template">
         ...

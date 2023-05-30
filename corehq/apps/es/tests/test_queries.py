@@ -24,19 +24,19 @@ class TestQueries(TestCase):
         self.assertHasQuery(query, {"fancy_query": {"foo": "bar"}})
 
     def test_null_query_string_queries(self):
-        query = HQESQuery('forms').search_string_query("")
+        query = HQESQuery('forms').search_string_query("", ["name"])
         self.assertHasQuery(query, {"match_all": {}})
 
-        query = HQESQuery('forms').search_string_query(None)
+        query = HQESQuery('forms').search_string_query(None, ["name"])
         self.assertHasQuery(query, {"match_all": {}})
 
     def test_basic_query_string_query(self):
-        query = HQESQuery('forms').search_string_query("foo")
+        query = HQESQuery('forms').search_string_query("foo", ["name"])
         self.assertHasQuery(query, {
             "query_string": {
                 "query": "*foo*",
                 "default_operator": "AND",
-                "fields": None,
+                "fields": ["name"],
             }
         })
 
@@ -52,14 +52,15 @@ class TestQueries(TestCase):
         })
 
     def test_complex_query_with_fields(self):
+        # complex queries should be flattened to individual search terms to avoid potential ES injection
         default_fields = ['name', 'type', 'date']
         query = (HQESQuery('forms')
                  .search_string_query("name: foo", default_fields))
         self.assertHasQuery(query, {
-            "simple_query_string": {
-                "query": "name: foo",
+            "query_string": {
+                "query": "*name* *foo*",
                 "default_operator": "AND",
-                "fields": None,
+                "fields": ['name', 'type', 'date'],
             }
         })
 

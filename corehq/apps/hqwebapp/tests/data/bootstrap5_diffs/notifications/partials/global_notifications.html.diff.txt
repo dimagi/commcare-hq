@@ -1,0 +1,56 @@
+--- 
++++ 
+@@ -1,14 +1,19 @@
+ {% load i18n %}
+ {% load hq_shared_tags %}
+ 
+-<li id="js-settingsmenu-notifications" class="dropdown">
+-  <a href="#" data-bind="click: bellClickHandler" class="dropdown-toggle dropdown-toggle-with-icon"
+-     data-toggle="dropdown" id="notification-icon" aria-label='{% trans_html_attr "Notifications" %}'>
++<li id="js-settingsmenu-notifications" class="nav-item dropdown">
++  <a href="#" data-bind="click: bellClickHandler"
++     class="nav-link dropdown-toggle dropdown-toggle-with-icon"
++     data-bs-toggle="dropdown"
++     aria-expanded="false"
++     id="notification-icon"
++     aria-label='{% trans_html_attr "Notifications" %}'>
+     <i class="icon-bell-alt fa fa-bell nav-main-icon"
+        data-bind="css: {'notifications-active-icon': !seen()}"></i>
+-    <span class="responsive-label">{% trans "Notifications" %}</span>
++{#    <span class="responsive-label">{% trans "Notifications" %}</span>#}
+   </a>
+   <ul class="dropdown-menu notifications-dropdown dropdown-menu-right"
++      aria-labelledby="notification-icon"
+       role="menu">
+     <li class="notifications-title dropdown-header nav-header">
+       {% trans "Notifications" %}
+@@ -19,7 +24,7 @@
+                 'notifications-info': isInfo() || isFeature(),
+                 'notifications-unread': !isRead()
+             }">
+-      <a data-bind="attr: {href: url}, click: markAsRead" class="clearfix notification-link" target="_blank">
++      <a data-bind="attr: {href: url}, click: markAsRead" class="dropdown-item clearfix notification-link" target="_blank">
+         <span class="notifications-icon">
+           <i class="notifications-type fa"
+              data-bind="css: {
+@@ -34,7 +39,7 @@
+     <!-- /ko -->
+     <li class="notifications-error" data-bind="visible: hasError()">
+       <a href="http://www.dimagi.com/blog/category/commcare-updates/"
+-         class="clearfix"
++         class="clearfix dropdown-item"
+          target="_blank">
+         <span class="notifications-icon">
+           <i class="fa fa-exclamation-circle icon-alert"></i>
+@@ -45,9 +50,10 @@
+         </span>
+       </a>
+     </li>
+-    <li class="nav-divider divider"></li>
++    <li><hr class="dropdown-divider"></li>
+     <li class="notifications-more">
+       <a href="http://www.dimagi.com/blog/category/commcare-updates/"
++         class="dropdown-item"
+          target="_blank">
+         <i class="fa fa-list icon-list dropdown-icon"></i> {% trans "See More" %}
+       </a>

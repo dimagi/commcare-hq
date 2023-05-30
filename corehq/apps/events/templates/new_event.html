@@ -1,0 +1,14 @@
+{% extends "hqwebapp/bootstrap3/base_section.html" %}
+{% load hq_shared_tags %}
+{% load crispy_forms_tags %}
+{% load i18n %}
+
+{% requirejs_main 'events/js/new_event' %}
+
+{% block page_content %}
+  {% initial_page_data 'current_values' form.current_values %}
+
+  <form id="tracking-event-form" class="form-horizontal disable-on-submit" method="post">
+    {% crispy form %}
+  </form>
+{% endblock %}

@@ -1,4 +1,4 @@
-{% extends "hqwebapp/base_section.html" %}
+{% extends "hqwebapp/bootstrap3/base_section.html" %}
 {% load hq_shared_tags %}
 {% load i18n %}
 
@@ -80,6 +80,23 @@
           <p class="help-block">
             {% blocktrans %}
               This will slow down submissions but prevent case search data from going stale.
+            {% endblocktrans %}
+          </p>
+        </div>
+
+        <div data-bind="visible: toggleEnabled">
+          <h2>{% trans "Sync Cases On Form Entry" %}</h2>
+          <p>
+            <input id="sync-case-on-form-entry" type="checkbox" data-bind="checked: syncCaseOnFormEntry"/>
+            <label for="sync-case-on-form-entry">
+              {% blocktrans %}
+                Update local case data immediately before entering a web apps form.
+              {% endblocktrans %}
+            </label>
+          </p>
+          <p class="help-block">
+            {% blocktrans %}
+              This will slow down form entry, but will prevent stale case data from populating the form.
             {% endblocktrans %}
           </p>
         </div>

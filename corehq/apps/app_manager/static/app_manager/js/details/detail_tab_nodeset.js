@@ -22,7 +22,7 @@ hqDefine('app_manager/js/details/detail_tab_nodeset', function () {
             return !self.nodesetCaseType();
         });
 
-        self.showFilter = ko.observable(!!self.nodesetFilter());
+        self.showFilter = ko.observable(!!self.nodesetFilter());    // show button if there's no saved filter
 
         self.ui = $(_.template($("#module-case-detail-tab-nodeset-template").text())());
         self.ui.koApplyBindings(self);
@@ -35,7 +35,6 @@ hqDefine('app_manager/js/details/detail_tab_nodeset', function () {
             self.fire('change');
             if (newValue) {
                 self.nodeset("");
-                self.showFilter(true);
             } else {
                 self.nodesetFilter("");
                 self.showFilter(false);

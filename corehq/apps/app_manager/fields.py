@@ -6,6 +6,7 @@ from copy import copy
 from django import forms
 from django.http import Http404
 from django.urls import reverse
+from django.utils.safestring import mark_safe
 from django.utils.translation import gettext as _
 
 from memoized import memoized
@@ -29,6 +30,7 @@ from corehq.apps.userreports.app_manager.data_source_meta import (
 from corehq.apps.userreports.dbaccessors import get_datasources_for_domain
 from corehq.toggles import AGGREGATE_UCRS
 from corehq.util.soft_assert import soft_assert
+from corehq.apps.export.const import ALL_CASE_TYPE_EXPORT
 
 DataSource = collections.namedtuple('DataSource', ['application', 'source_type', 'source', 'registry_slug'])
 RMIDataChoice = collections.namedtuple('RMIDataChoice', ['id', 'text', 'data'])
@@ -98,7 +100,8 @@ class ApplicationDataSourceUIHelper(object):
                                                    widget=forms.Select(choices=source_choices))
 
         self.source_field = forms.ChoiceField(label=_('Data Source'), widget=forms.Select())
-        self.source_field.label = '<span data-bind="text: labelMap[sourceType()]"></span>'
+        self.source_field.label = mark_safe(  # nosec: no user input
+            '<span data-bind=\'text: labelMap[sourceType()]\'></span>')
 
         self.registry_slug_field = forms.ChoiceField(label=_('Data Registry'), widget=forms.HiddenInput,
                                                      required=False)
@@ -278,6 +281,7 @@ class ApplicationDataRMIHelper(object):
     """
     UNKNOWN_SOURCE = '_unknown'
     UNKNOWN_MODULE_ID = '_unknown_module'
+    ALL_SOURCES = '_all_apps'
 
     APP_TYPE_ALL = 'all'
     APP_TYPE_DELETED = 'deleted'
@@ -491,7 +495,7 @@ class ApplicationDataRMIHelper(object):
                     final_choices[k].append(v)
         return final_choices
 
-    def _get_applications_by_type(self, as_dict=True):
+    def _get_applications_by_type(self, as_dict=True, include_any_app=False):
         apps_by_type = (
             (self.APP_TYPE_ALL, self._available_app_forms),
             (self.APP_TYPE_UNKNOWN, self._unknown_forms)
@@ -504,6 +508,17 @@ class ApplicationDataRMIHelper(object):
         apps_by_type = list(map(_app_fmt, apps_by_type))
         apps_by_type = dict(apps_by_type)
         apps_by_type = self._get_unique_choices(apps_by_type)
+
+        # A placeholder choice for selecting a case type from any application
+        if include_any_app:
+            apps_by_type[self.APP_TYPE_ALL].insert(
+                0,
+                RMIDataChoice(
+                    self.ALL_SOURCES,
+                    _("Any Application"),
+                    {}
+                )
+            )
 
         # include restore URL for deleted apps
         for app in apps_by_type[self.APP_TYPE_DELETED]:
@@ -609,12 +624,12 @@ class ApplicationDataRMIHelper(object):
             response = response._asdict()
         return response
 
-    def _get_cases_for_apps(self, apps_by_type, as_dict=True):
+    def _get_cases_for_apps(self, apps_by_type, as_dict=True, include_any_app=False):
         used_case_types = set()
         case_types_by_app = collections.defaultdict(list)
         for app_type, apps in apps_by_type.items():
             for app_choice in apps:
-                if not app_choice.id == self.UNKNOWN_SOURCE:
+                if app_choice.id not in [self.UNKNOWN_SOURCE, self.ALL_SOURCES]:
                     app = get_app(self.domain, app_choice.id)
                     case_types = []
                     if hasattr(app, 'modules'):
@@ -647,18 +662,47 @@ class ApplicationDataRMIHelper(object):
                 'unknown': True,
             }
         ) for c in unknown_case_types]
+
+        # Add all case types, along with "Select All" placeholder choice to
+        # the "Any Application" application placeholder
+        all_case_types = []
+        if include_any_app:
+            all_case_types = used_case_types
+            all_case_types = [RMIDataChoice(
+                id=c,
+                text=c,
+                data={
+                    'unknown': True
+                }
+            ) for c in used_case_types]
+            all_case_types.insert(
+                0,
+                RMIDataChoice(
+                    id=ALL_CASE_TYPE_EXPORT,
+                    text=_('All Case Types'),
+                    data={
+                        'unknown': True
+                    }
+                )
+            )
+
         if as_dict:
             unknown_case_types = [c._asdict() for c in unknown_case_types]
+            all_case_types = [c._asdict() for c in all_case_types]
         case_types_by_app[self.UNKNOWN_SOURCE] = unknown_case_types
+        case_types_by_app[self.ALL_SOURCES] = all_case_types
 
         return case_types_by_app
 
-    def get_case_rmi_response(self):
+    def get_case_rmi_response(self, include_any_app=False):
         """
-        Used for creating case-based exports.
+        Used for creating case-based exports. If include_any_app is True, it will also include
+        a separate choice for "Any Application" which has a list of all case types. One of these
+        choices is "Select All" which allows for doing a bulk case export of all case types.
+        :param include_any_app: A boolean on whether to include the "Any Application" option.
         """
-        apps_by_type = self._get_applications_by_type(as_dict=False)
-        case_types_by_app = self._get_cases_for_apps(apps_by_type, self.as_dict)
+        apps_by_type = self._get_applications_by_type(as_dict=False, include_any_app=include_any_app)
+        case_types_by_app = self._get_cases_for_apps(apps_by_type, self.as_dict, include_any_app=include_any_app)
         # If there are Unknown case types, ensure that there exists an Unknown Application
         if case_types_by_app.get(self.UNKNOWN_SOURCE) and not apps_by_type[self.APP_TYPE_UNKNOWN]:
             apps_by_type[self.APP_TYPE_UNKNOWN].append(

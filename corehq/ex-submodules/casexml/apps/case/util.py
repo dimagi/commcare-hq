@@ -184,6 +184,7 @@ def get_paged_changes_to_case_property(case, case_property_name, start=0, per_pa
 def get_case_history(case):
     from casexml.apps.case.xform import extract_case_blocks
     from corehq.apps.reports.display import xmlns_to_name
+    from corehq.apps.reports.standard.cases.utils import get_user_type
 
     changes = defaultdict(dict)
     for form in XFormInstance.objects.get_forms(case.xform_ids, case.domain):
@@ -193,6 +194,7 @@ def get_case_history(case):
             'Form Name': name,
             'Form Received On': form.received_on,
             'Form Submitted By': form.metadata.username,
+            'Form User Type': get_user_type(form, case.domain),
         }
         case_blocks = extract_case_blocks(form)
         for block in case_blocks:

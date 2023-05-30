@@ -1,21 +1,14 @@
 {
-  "build_langs": [
-    "en"
-  ],
   "auto_gps_capture": false,
   "deployment_date": null,
   "user_type": null,
-  "text_input": "roman",
   "secure_submissions": false,
   "build_broken": false,
   "show_user_registration": false,
   "phone_model": null,
   "build_signed": true,
   "recipients": "",
-  "copy_history": [
-    
-  ],
-  "platform": "nokia\/s40",
+  "copy_history": [],
   "media_form_errors": false,
   "application_version": "2.0",
   "is_released": false,
@@ -28,36 +21,24 @@
   },
   "admin_password_charset": "n",
   "build_comment": null,
-  "success_message": {
-    
-  },
+  "success_message": {},
   "profile": {
     "features": {
-      "users": "true",
-      "sense": "false"
+      "users": "true"
     },
     "properties": {
-      "cc-user-mode": "cc-u-normal",
       "cc-show-saved": "yes",
       "restore-tolerance": "loose",
       "cc-days-form-retain": "-1",
       "cc-fuzzy-search-enabled": "yes",
       "cc-autoup-freq": "freq-never",
       "purge-freq": "0",
-      "server-tether": "push-only",
       "user_reg_server": "required",
-      "extra_key_action": "audio",
       "log_prop_daily": "log_never",
-      "ViewStyle": "v_chatterbox",
       "cc-resize-images": "none",
-      "cc-entry-mode": "cc-entry-quick",
-      "cc-send-procedure": "cc-send-http",
-      "cc-login-images": "No",
       "log_prop_weekly": "log_short",
       "cc-show-incomplete": "yes",
-      "cc-send-unsent": "cc-su-auto",
       "loose_media": "no",
-      "password_format": "n",
       "unsent-number-limit": "5",
       "cc-content-valid": "no",
       "logenabled": "Enabled"
@@ -70,9 +51,7 @@
   "user_registration": {
     "doc_type": "UserRegistrationForm",
     "xmlns": null,
-    "name": {
-      
-    },
+    "name": {},
     "password_path": "password",
     "auto_gps_capture": false,
     "show_count": false,
@@ -82,13 +61,9 @@
     "form_type": "user_registration",
     "username_path": "username",
     "unique_id": "5448577d4c415a91cacb4165574807b00e6cc351",
-    "data_paths": {
-      
-    }
+    "data_paths": {}
   },
-  "translations": {
-    
-  },
+  "translations": {},
   "built_on": null,
   "built_with": {
     "doc_type": "BuildRecord",
@@ -98,21 +73,15 @@
     "version": null,
     "latest": null
   },
-  "multimedia_map": {
-    
-  },
+  "multimedia_map": {},
   "langs": [
     "en"
   ],
   "use_custom_suite": false,
-  "logo_refs": {
-    
-  },
+  "logo_refs": {},
   "build_broken_reason": null,
   "doc_type": "Application",
-  "cached_properties": {
-    
-  },
+  "cached_properties": {},
   "name": "Case Tile Experiment",
   "amplifies_project": "not_set",
   "modules": [
@@ -126,9 +95,7 @@
       },
       "referral_list": {
         "doc_type": "CaseList",
-        "label": {
-          
-        },
+        "label": {},
         "show": false
       },
       "media_image": null,
@@ -140,22 +107,18 @@
       },
       "task_list": {
         "doc_type": "CaseList",
-        "label": {
-          
-        },
+        "label": {},
         "show": false
       },
       "case_list": {
         "doc_type": "CaseList",
-        "label": {
-          
-        },
+        "label": {},
         "show": false
       },
       "forms": [
         {
           "doc_type": "Form",
-          "xmlns": "http:\/\/openrosa.org\/formdesigner\/ca8443d0ed32c1315d59d13737c48f3ec347b979",
+          "xmlns": "http://openrosa.org/formdesigner/ca8443d0ed32c1315d59d13737c48f3ec347b979",
           "form_filter": "",
           "name": {
             "en": "form1"
@@ -165,14 +128,10 @@
           "requires": "case",
           "actions": {
             "doc_type": "FormActions",
-            "subcases": [
-              
-            ],
+            "subcases": [],
             "update_case": {
               "doc_type": "UpdateCaseAction",
-              "update": {
-                
-              },
+              "update": {},
               "condition": {
                 "answer": null,
                 "question": null,
@@ -204,7 +163,7 @@
               "followup_date": null
             },
             "open_case": {
-              "name_path": null,
+              "name_update": null,
               "doc_type": "OpenCaseAction",
               "external_id": null,
               "condition": {
@@ -227,9 +186,7 @@
               }
             },
             "referral_preload": {
-              "preload": {
-                
-              },
+              "preload": {},
               "doc_type": "PreloadAction",
               "condition": {
                 "operator": "=",
@@ -240,9 +197,7 @@
               }
             },
             "case_preload": {
-              "preload": {
-                
-              },
+              "preload": {},
               "doc_type": "PreloadAction",
               "condition": {
                 "answer": null,
@@ -282,12 +237,8 @@
         "doc_type": "DetailPair",
         "short": {
           "doc_type": "Detail",
-          "sort_elements": [
-            
-          ],
-          "tabs": [
-            
-          ],
+          "sort_elements": [],
+          "tabs": [],
           "filter": null,
           "use_case_tiles": true,
           "custom_xml": "",
@@ -297,11 +248,9 @@
             {
               "case_tile_field": "header",
               "filter_xpath": "",
-              "format": "calculate",
+              "format": "plain",
               "isTab": false,
-              "enum": [
-                
-              ],
+              "enum": [],
               "time_ago_interval": 365.25,
               "late_flag": 30,
               "header": {
@@ -309,11 +258,12 @@
               },
               "doc_type": "DetailColumn",
               "calc_xpath": "if(today() - date(dob) > 30, concat(name, ' (', int((today() - date(dob)) div 30.25), ' Mois)'), concat(name, ' (',int(today() - date(dob)), ' Jours)'))",
-              "field": "name",
+              "field": "if(today() - date(dob) > 30, concat(name, ' (', int((today() - date(dob)) div 30.25), ' Mois)'), concat(name, ' (',int(today() - date(dob)), ' Jours)'))",
               "model": "case",
-              "hasAutocomplete": true,
+              "hasAutocomplete": false,
               "graph_configuration": null,
-              "advanced": ""
+              "advanced": "",
+              "useXpathExpression": true
             },
             {
               "case_tile_field": "top_left",
@@ -321,9 +271,7 @@
               "filter_xpath": "",
               "format": "plain",
               "late_flag": 30,
-              "enum": [
-                
-              ],
+              "enum": [],
               "header": {
                 "en": "Town:"
               },
@@ -342,9 +290,7 @@
               "filter_xpath": "",
               "format": "plain",
               "late_flag": 30,
-              "enum": [
-                
-              ],
+              "enum": [],
               "header": {
                 "en": "Mother's name:"
               },
@@ -395,33 +341,28 @@
               "case_tile_field": "date",
               "doc_type": "DetailColumn",
               "filter_xpath": "",
-              "format": "calculate",
+              "format": "plain",
               "late_flag": 30,
-              "enum": [
-                
-              ],
+              "enum": [],
               "header": {
                 "en": ""
               },
               "time_ago_interval": 365.25,
-              "field": "dob",
+              "field": "format-date(date(dob), \"%e/%n/%Y\")",
               "isTab": false,
               "calc_xpath": "format-date(date(dob), \"%e/%n/%Y\")",
               "model": "case",
-              "hasAutocomplete": true,
+              "hasAutocomplete": false,
               "graph_configuration": null,
-              "advanced": ""
+              "advanced": "",
+              "useXpathExpression": true
             }
           ]
         },
         "long": {
           "doc_type": "Detail",
-          "sort_elements": [
-            
-          ],
-          "tabs": [
-            
-          ],
+          "sort_elements": [],
+          "tabs": [],
           "filter": null,
           "use_case_tiles": null,
           "custom_xml": null,
@@ -433,9 +374,7 @@
               "filter_xpath": "",
               "format": "plain",
               "late_flag": 30,
-              "enum": [
-                
-              ],
+              "enum": [],
               "time_ago_interval": 365.25,
               "header": {
                 "en": "Name"
@@ -446,19 +385,11 @@
               "model": "case",
               "graph_configuration": {
                 "doc_type": "GraphConfiguration",
-                "series": [
-                  
-                ],
-                "locale_specific_config": {
-                  
-                },
+                "series": [],
+                "locale_specific_config": {},
                 "graph_type": null,
-                "config": {
-                  
-                },
-                "annotations": [
-                  
-                ]
+                "config": {},
+                "annotations": []
               },
               "advanced": ""
             }
@@ -471,37 +402,25 @@
         "doc_type": "DetailPair",
         "short": {
           "doc_type": "Detail",
-          "sort_elements": [
-            
-          ],
-          "tabs": [
-            
-          ],
+          "sort_elements": [],
+          "tabs": [],
           "filter": null,
           "use_case_tiles": null,
           "custom_xml": null,
           "persist_tile_on_forms": null,
           "display": "short",
-          "columns": [
-            
-          ]
+          "columns": []
         },
         "long": {
           "doc_type": "Detail",
-          "sort_elements": [
-            
-          ],
-          "tabs": [
-            
-          ],
+          "sort_elements": [],
+          "tabs": [],
           "filter": null,
           "use_case_tiles": null,
           "custom_xml": null,
           "persist_tile_on_forms": null,
           "display": "long",
-          "columns": [
-            
-          ]
+          "columns": []
         }
       }
     },
@@ -515,9 +434,7 @@
       },
       "referral_list": {
         "doc_type": "CaseList",
-        "label": {
-          
-        },
+        "label": {},
         "show": false
       },
       "media_image": null,
@@ -529,22 +446,18 @@
       },
       "task_list": {
         "doc_type": "CaseList",
-        "label": {
-          
-        },
+        "label": {},
         "show": false
       },
       "case_list": {
         "doc_type": "CaseList",
-        "label": {
-          
-        },
+        "label": {},
         "show": false
       },
       "forms": [
         {
           "doc_type": "Form",
-          "xmlns": "http:\/\/openrosa.org\/formdesigner\/4CF9280B-1975-4F05-B8CB-693F5CD165BC",
+          "xmlns": "http://openrosa.org/formdesigner/4CF9280B-1975-4F05-B8CB-693F5CD165BC",
           "form_filter": "",
           "name": {
             "en": "Create case"
@@ -554,30 +467,28 @@
           "requires": "none",
           "actions": {
             "doc_type": "FormActions",
-            "subcases": [
-              
-            ],
+            "subcases": [],
             "update_case": {
               "doc_type": "UpdateCaseAction",
               "update": {
                 "town": {
-                  "question_path": "\/data\/village",
+                  "question_path": "/data/village",
                   "update_mode": "always"
                 },
                 "dob": {
-                  "question_path": "\/data\/dob",
+                  "question_path": "/data/dob",
                   "update_mode": "always"
                 },
                 "other_name": {
-                  "question_path": "\/data\/name",
+                  "question_path": "/data/name",
                   "update_mode": "always"
                 },
                 "mother_name": {
-                  "question_path": "\/data\/mother_name",
+                  "question_path": "/data/mother_name",
                   "update_mode": "always"
                 },
                 "sex": {
-                  "question_path": "\/data\/sex",
+                  "question_path": "/data/sex",
                   "update_mode": "always"
                 }
               },
@@ -612,7 +523,9 @@
               "followup_date": null
             },
             "open_case": {
-              "name_path": "\/data\/name",
+              "name_update": {
+                "question_path": "/data/name"
+              },
               "doc_type": "OpenCaseAction",
               "external_id": null,
               "condition": {
@@ -635,9 +548,7 @@
               }
             },
             "referral_preload": {
-              "preload": {
-                
-              },
+              "preload": {},
               "doc_type": "PreloadAction",
               "condition": {
                 "operator": "=",
@@ -648,9 +559,7 @@
               }
             },
             "case_preload": {
-              "preload": {
-                
-              },
+              "preload": {},
               "doc_type": "PreloadAction",
               "condition": {
                 "answer": null,
@@ -690,12 +599,8 @@
         "doc_type": "DetailPair",
         "short": {
           "doc_type": "Detail",
-          "sort_elements": [
-            
-          ],
-          "tabs": [
-            
-          ],
+          "sort_elements": [],
+          "tabs": [],
           "filter": null,
           "use_case_tiles": false,
           "custom_xml": "",
@@ -707,9 +612,7 @@
               "filter_xpath": "",
               "format": "plain",
               "isTab": false,
-              "enum": [
-                
-              ],
+              "enum": [],
               "time_ago_interval": 365.25,
               "late_flag": 30,
               "header": {
@@ -729,9 +632,7 @@
               "filter_xpath": "",
               "format": "plain",
               "late_flag": 30,
-              "enum": [
-                
-              ],
+              "enum": [],
               "header": {
                 "en": "Town"
               },
@@ -750,9 +651,7 @@
               "filter_xpath": "",
               "format": "date",
               "late_flag": 30,
-              "enum": [
-                
-              ],
+              "enum": [],
               "header": {
                 "en": "Date of Birth"
               },
@@ -805,9 +704,7 @@
               "filter_xpath": "",
               "format": "plain",
               "late_flag": 30,
-              "enum": [
-                
-              ],
+              "enum": [],
               "header": {
                 "en": "Mother Name"
               },
@@ -826,9 +723,7 @@
               "filter_xpath": "",
               "format": "plain",
               "late_flag": 30,
-              "enum": [
-                
-              ],
+              "enum": [],
               "header": {
                 "en": "Other Name"
               },
@@ -845,12 +740,8 @@
         },
         "long": {
           "doc_type": "Detail",
-          "sort_elements": [
-            
-          ],
-          "tabs": [
-            
-          ],
+          "sort_elements": [],
+          "tabs": [],
           "filter": null,
           "use_case_tiles": null,
           "custom_xml": null,
@@ -862,9 +753,7 @@
               "filter_xpath": "",
               "format": "plain",
               "late_flag": 30,
-              "enum": [
-                
-              ],
+              "enum": [],
               "time_ago_interval": 365.25,
               "header": {
                 "en": "Name"
@@ -875,19 +764,11 @@
               "model": "case",
               "graph_configuration": {
                 "doc_type": "GraphConfiguration",
-                "series": [
-                  
-                ],
-                "locale_specific_config": {
-                  
-                },
+                "series": [],
+                "locale_specific_config": {},
                 "graph_type": null,
-                "config": {
-                  
-                },
-                "annotations": [
-                  
-                ]
+                "config": {},
+                "annotations": []
               },
               "advanced": ""
             }
@@ -900,45 +781,33 @@
         "doc_type": "DetailPair",
         "short": {
           "doc_type": "Detail",
-          "sort_elements": [
-            
-          ],
-          "tabs": [
-            
-          ],
+          "sort_elements": [],
+          "tabs": [],
           "filter": null,
           "use_case_tiles": null,
           "custom_xml": null,
           "persist_tile_on_forms": null,
           "display": "short",
-          "columns": [
-            
-          ]
+          "columns": []
         },
         "long": {
           "doc_type": "Detail",
-          "sort_elements": [
-            
-          ],
-          "tabs": [
-            
-          ],
+          "sort_elements": [],
+          "tabs": [],
           "filter": null,
           "use_case_tiles": null,
           "custom_xml": null,
           "persist_tile_on_forms": null,
           "display": "long",
-          "columns": [
-            
-          ]
+          "columns": []
         }
       }
     }
   ],
   "_attachments": {
-    "790b518acd3405563863245e51623c7bb41e626c.xml": "<h:html xmlns:h=\"http:\/\/www.w3.org\/1999\/xhtml\" xmlns:orx=\"http:\/\/openrosa.org\/jr\/xforms\" xmlns=\"http:\/\/www.w3.org\/2002\/xforms\" xmlns:xsd=\"http:\/\/www.w3.org\/2001\/XMLSchema\" xmlns:jr=\"http:\/\/openrosa.org\/javarosa\" xmlns:vellum=\"http:\/\/commcarehq.org\/xforms\/vellum\">\n\t<h:head>\n\t\t<h:title>form1<\/h:title>\n\t\t<model>\n\t\t\t<instance>\n\t\t\t\t<data xmlns:jrm=\"http:\/\/dev.commcarehq.org\/jr\/xforms\" xmlns=\"http:\/\/openrosa.org\/formdesigner\/ca8443d0ed32c1315d59d13737c48f3ec347b979\" uiVersion=\"1\" version=\"1\" name=\"form1\">\n\t\t\t\t\t<name\/>\n\t\t\t\t\t<village\/>\n\t\t\t\t\t<sex\/>\n\t\t\t\t\t<dob\/>\n\t\t\t\t\t<mother_name\/>\n\t\t\t\t<\/data><\/instance>\n\t\t\t<bind nodeset=\"\/data\/name\" type=\"xsd:string\"\/>\n\t\t\t<bind nodeset=\"\/data\/village\" type=\"xsd:string\"\/>\n\t\t\t<bind nodeset=\"\/data\/sex\"\/>\n\t\t\t<bind nodeset=\"\/data\/dob\" type=\"xsd:date\"\/>\n\t\t\t<bind nodeset=\"\/data\/mother_name\" type=\"xsd:string\"\/>\n\t\t\t<itext>\n\t\t\t\t<translation lang=\"en\" default=\"\">\n\t\t\t\t\t<text id=\"name-label\">\n\t\t\t\t\t\t<value>name<\/value>\n\t\t\t\t\t<\/text>\n\t\t\t\t\t<text id=\"village-label\">\n\t\t\t\t\t\t<value>village<\/value>\n\t\t\t\t\t<\/text>\n\t\t\t\t\t<text id=\"sex-label\">\n\t\t\t\t\t\t<value>sex<\/value>\n\t\t\t\t\t<\/text>\n\t\t\t\t\t<text id=\"sex-male-label\">\n\t\t\t\t\t\t<value>male<\/value>\n\t\t\t\t\t<\/text>\n\t\t\t\t\t<text id=\"sex-female-label\">\n\t\t\t\t\t\t<value>female<\/value>\n\t\t\t\t\t<\/text>\n\t\t\t\t\t<text id=\"dob-label\">\n\t\t\t\t\t\t<value>Date of Birth<\/value>\n\t\t\t\t\t<\/text>\n\t\t\t\t\t<text id=\"mother_name-label\">\n\t\t\t\t\t\t<value>Mother name<\/value>\n\t\t\t\t\t<\/text>\n\t\t\t\t<\/translation>\n\t\t\t<\/itext>\n\t\t<\/model>\n\t<\/h:head>\n\t<h:body>\n\t\t<input ref=\"\/data\/name\">\n\t\t\t<label ref=\"jr:itext('name-label')\"\/>\n\t\t<\/input>\n\t\t<input ref=\"\/data\/village\">\n\t\t\t<label ref=\"jr:itext('village-label')\"\/>\n\t\t<\/input>\n\t\t<select1 ref=\"\/data\/sex\">\n\t\t\t<label ref=\"jr:itext('sex-label')\"\/>\n\t\t\t<item>\n\t\t\t\t<label ref=\"jr:itext('sex-male-label')\"\/>\n\t\t\t\t<value>male<\/value>\n\t\t\t<\/item>\n\t\t\t<item>\n\t\t\t\t<label ref=\"jr:itext('sex-female-label')\"\/>\n\t\t\t\t<value>female<\/value>\n\t\t\t<\/item>\n\t\t<\/select1>\n\t\t<input ref=\"\/data\/dob\">\n\t\t\t<label ref=\"jr:itext('dob-label')\"\/>\n\t\t<\/input>\n\t\t<input ref=\"\/data\/mother_name\">\n\t\t\t<label ref=\"jr:itext('mother_name-label')\"\/>\n\t\t<\/input>\n\t<\/h:body>\n<\/h:html>",
-    "d49c1343f0c1f46c2039a46f39d28a9ce789f60c.xml": "<h:html xmlns:h=\"http:\/\/www.w3.org\/1999\/xhtml\" xmlns:orx=\"http:\/\/openrosa.org\/jr\/xforms\" xmlns=\"http:\/\/www.w3.org\/2002\/xforms\" xmlns:xsd=\"http:\/\/www.w3.org\/2001\/XMLSchema\" xmlns:jr=\"http:\/\/openrosa.org\/javarosa\" xmlns:vellum=\"http:\/\/commcarehq.org\/xforms\/vellum\">\n\t<h:head>\n\t\t<h:title>update case<\/h:title>\n\t\t<model>\n\t\t\t<instance>\n\t\t\t\t<data xmlns:jrm=\"http:\/\/dev.commcarehq.org\/jr\/xforms\" xmlns=\"http:\/\/openrosa.org\/formdesigner\/6D979108-CF40-49C0-83DF-BA53185CEF0E\" uiVersion=\"1\" version=\"1\" name=\"update case\">\n\t\t\t\t\t<question1\/>\n\t\t\t\t<\/data>\n\t\t\t<\/instance>\n\t\t\t<bind nodeset=\"\/data\/question1\" type=\"xsd:string\"\/>\n\t\t\t<itext>\n\t\t\t\t<translation lang=\"en\" default=\"\">\n\t\t\t\t\t<text id=\"question1-label\">\n\t\t\t\t\t\t<value>question1<\/value>\n\t\t\t\t\t<\/text>\n\t\t\t\t<\/translation>\n\t\t\t<\/itext>\n\t\t<\/model>\n\t<\/h:head>\n\t<h:body>\n\t\t<input ref=\"\/data\/question1\">\n\t\t\t<label ref=\"jr:itext('question1-label')\"\/>\n\t\t<\/input>\n\t<\/h:body>\n<\/h:html>",
-    "64dab8c2201de25bc362fbdf76d48e1766df776f.xml": "<h:html xmlns:h=\"http:\/\/www.w3.org\/1999\/xhtml\" xmlns:orx=\"http:\/\/openrosa.org\/jr\/xforms\" xmlns=\"http:\/\/www.w3.org\/2002\/xforms\" xmlns:xsd=\"http:\/\/www.w3.org\/2001\/XMLSchema\" xmlns:jr=\"http:\/\/openrosa.org\/javarosa\" xmlns:vellum=\"http:\/\/commcarehq.org\/xforms\/vellum\">\n\t<h:head>\n\t\t<h:title>Create case<\/h:title>\n\t\t<model>\n\t\t\t<instance>\n\t\t\t\t<data xmlns:jrm=\"http:\/\/dev.commcarehq.org\/jr\/xforms\" xmlns=\"http:\/\/openrosa.org\/formdesigner\/4CF9280B-1975-4F05-B8CB-693F5CD165BC\" uiVersion=\"1\" version=\"1\" name=\"Create case\">\n\t\t\t\t\t<name\/>\n\t\t\t\t\t<village\/>\n\t\t\t\t\t<sex\/>\n\t\t\t\t\t<dob\/>\n\t\t\t\t\t<mother_name\/>\n\t\t\t\t<\/data>\n\t\t\t<\/instance>\n\t\t\t<bind nodeset=\"\/data\/name\" type=\"xsd:string\"\/>\n\t\t\t<bind nodeset=\"\/data\/village\" type=\"xsd:string\"\/>\n\t\t\t<bind nodeset=\"\/data\/sex\"\/>\n\t\t\t<bind nodeset=\"\/data\/dob\" type=\"xsd:date\"\/>\n\t\t\t<bind nodeset=\"\/data\/mother_name\" type=\"xsd:string\"\/>\n\t\t\t<itext>\n\t\t\t\t<translation lang=\"en\" default=\"\">\n\t\t\t\t\t<text id=\"name-label\">\n\t\t\t\t\t\t<value>name<\/value>\n\t\t\t\t\t<\/text>\n\t\t\t\t\t<text id=\"village-label\">\n\t\t\t\t\t\t<value>village<\/value>\n\t\t\t\t\t<\/text>\n\t\t\t\t\t<text id=\"sex-label\">\n\t\t\t\t\t\t<value>sex<\/value>\n\t\t\t\t\t<\/text>\n\t\t\t\t\t<text id=\"sex-male-label\">\n\t\t\t\t\t\t<value>male<\/value>\n\t\t\t\t\t<\/text>\n\t\t\t\t\t<text id=\"sex-female-label\">\n\t\t\t\t\t\t<value>female<\/value>\n\t\t\t\t\t<\/text>\n\t\t\t\t\t<text id=\"dob-label\">\n\t\t\t\t\t\t<value>Date of Birth<\/value>\n\t\t\t\t\t<\/text>\n\t\t\t\t\t<text id=\"mother_name-label\">\n\t\t\t\t\t\t<value>Mother name<\/value>\n\t\t\t\t\t<\/text>\n\t\t\t\t<\/translation>\n\t\t\t<\/itext>\n\t\t<\/model>\n\t<\/h:head>\n\t<h:body>\n\t\t<input ref=\"\/data\/name\">\n\t\t\t<label ref=\"jr:itext('name-label')\"\/>\n\t\t<\/input>\n\t\t<input ref=\"\/data\/village\">\n\t\t\t<label ref=\"jr:itext('village-label')\"\/>\n\t\t<\/input>\n\t\t<select1 ref=\"\/data\/sex\">\n\t\t\t<label ref=\"jr:itext('sex-label')\"\/>\n\t\t\t<item>\n\t\t\t\t<label ref=\"jr:itext('sex-male-label')\"\/>\n\t\t\t\t<value>male<\/value>\n\t\t\t<\/item>\n\t\t\t<item>\n\t\t\t\t<label ref=\"jr:itext('sex-female-label')\"\/>\n\t\t\t\t<value>female<\/value>\n\t\t\t<\/item>\n\t\t<\/select1>\n\t\t<input ref=\"\/data\/dob\">\n\t\t\t<label ref=\"jr:itext('dob-label')\"\/>\n\t\t<\/input>\n\t\t<input ref=\"\/data\/mother_name\">\n\t\t\t<label ref=\"jr:itext('mother_name-label')\"\/>\n\t\t<\/input>\n\t<\/h:body>\n<\/h:html>"
+    "790b518acd3405563863245e51623c7bb41e626c.xml": "<h:html xmlns:h=\"http://www.w3.org/1999/xhtml\" xmlns:orx=\"http://openrosa.org/jr/xforms\" xmlns=\"http://www.w3.org/2002/xforms\" xmlns:xsd=\"http://www.w3.org/2001/XMLSchema\" xmlns:jr=\"http://openrosa.org/javarosa\" xmlns:vellum=\"http://commcarehq.org/xforms/vellum\">\n\t<h:head>\n\t\t<h:title>form1</h:title>\n\t\t<model>\n\t\t\t<instance>\n\t\t\t\t<data xmlns:jrm=\"http://dev.commcarehq.org/jr/xforms\" xmlns=\"http://openrosa.org/formdesigner/ca8443d0ed32c1315d59d13737c48f3ec347b979\" uiVersion=\"1\" version=\"1\" name=\"form1\">\n\t\t\t\t\t<name/>\n\t\t\t\t\t<village/>\n\t\t\t\t\t<sex/>\n\t\t\t\t\t<dob/>\n\t\t\t\t\t<mother_name/>\n\t\t\t\t</data></instance>\n\t\t\t<bind nodeset=\"/data/name\" type=\"xsd:string\"/>\n\t\t\t<bind nodeset=\"/data/village\" type=\"xsd:string\"/>\n\t\t\t<bind nodeset=\"/data/sex\"/>\n\t\t\t<bind nodeset=\"/data/dob\" type=\"xsd:date\"/>\n\t\t\t<bind nodeset=\"/data/mother_name\" type=\"xsd:string\"/>\n\t\t\t<itext>\n\t\t\t\t<translation lang=\"en\" default=\"\">\n\t\t\t\t\t<text id=\"name-label\">\n\t\t\t\t\t\t<value>name</value>\n\t\t\t\t\t</text>\n\t\t\t\t\t<text id=\"village-label\">\n\t\t\t\t\t\t<value>village</value>\n\t\t\t\t\t</text>\n\t\t\t\t\t<text id=\"sex-label\">\n\t\t\t\t\t\t<value>sex</value>\n\t\t\t\t\t</text>\n\t\t\t\t\t<text id=\"sex-male-label\">\n\t\t\t\t\t\t<value>male</value>\n\t\t\t\t\t</text>\n\t\t\t\t\t<text id=\"sex-female-label\">\n\t\t\t\t\t\t<value>female</value>\n\t\t\t\t\t</text>\n\t\t\t\t\t<text id=\"dob-label\">\n\t\t\t\t\t\t<value>Date of Birth</value>\n\t\t\t\t\t</text>\n\t\t\t\t\t<text id=\"mother_name-label\">\n\t\t\t\t\t\t<value>Mother name</value>\n\t\t\t\t\t</text>\n\t\t\t\t</translation>\n\t\t\t</itext>\n\t\t</model>\n\t</h:head>\n\t<h:body>\n\t\t<input ref=\"/data/name\">\n\t\t\t<label ref=\"jr:itext('name-label')\"/>\n\t\t</input>\n\t\t<input ref=\"/data/village\">\n\t\t\t<label ref=\"jr:itext('village-label')\"/>\n\t\t</input>\n\t\t<select1 ref=\"/data/sex\">\n\t\t\t<label ref=\"jr:itext('sex-label')\"/>\n\t\t\t<item>\n\t\t\t\t<label ref=\"jr:itext('sex-male-label')\"/>\n\t\t\t\t<value>male</value>\n\t\t\t</item>\n\t\t\t<item>\n\t\t\t\t<label ref=\"jr:itext('sex-female-label')\"/>\n\t\t\t\t<value>female</value>\n\t\t\t</item>\n\t\t</select1>\n\t\t<input ref=\"/data/dob\">\n\t\t\t<label ref=\"jr:itext('dob-label')\"/>\n\t\t</input>\n\t\t<input ref=\"/data/mother_name\">\n\t\t\t<label ref=\"jr:itext('mother_name-label')\"/>\n\t\t</input>\n\t</h:body>\n</h:html>",
+    "d49c1343f0c1f46c2039a46f39d28a9ce789f60c.xml": "<h:html xmlns:h=\"http://www.w3.org/1999/xhtml\" xmlns:orx=\"http://openrosa.org/jr/xforms\" xmlns=\"http://www.w3.org/2002/xforms\" xmlns:xsd=\"http://www.w3.org/2001/XMLSchema\" xmlns:jr=\"http://openrosa.org/javarosa\" xmlns:vellum=\"http://commcarehq.org/xforms/vellum\">\n\t<h:head>\n\t\t<h:title>update case</h:title>\n\t\t<model>\n\t\t\t<instance>\n\t\t\t\t<data xmlns:jrm=\"http://dev.commcarehq.org/jr/xforms\" xmlns=\"http://openrosa.org/formdesigner/6D979108-CF40-49C0-83DF-BA53185CEF0E\" uiVersion=\"1\" version=\"1\" name=\"update case\">\n\t\t\t\t\t<question1/>\n\t\t\t\t</data>\n\t\t\t</instance>\n\t\t\t<bind nodeset=\"/data/question1\" type=\"xsd:string\"/>\n\t\t\t<itext>\n\t\t\t\t<translation lang=\"en\" default=\"\">\n\t\t\t\t\t<text id=\"question1-label\">\n\t\t\t\t\t\t<value>question1</value>\n\t\t\t\t\t</text>\n\t\t\t\t</translation>\n\t\t\t</itext>\n\t\t</model>\n\t</h:head>\n\t<h:body>\n\t\t<input ref=\"/data/question1\">\n\t\t\t<label ref=\"jr:itext('question1-label')\"/>\n\t\t</input>\n\t</h:body>\n</h:html>",
+    "64dab8c2201de25bc362fbdf76d48e1766df776f.xml": "<h:html xmlns:h=\"http://www.w3.org/1999/xhtml\" xmlns:orx=\"http://openrosa.org/jr/xforms\" xmlns=\"http://www.w3.org/2002/xforms\" xmlns:xsd=\"http://www.w3.org/2001/XMLSchema\" xmlns:jr=\"http://openrosa.org/javarosa\" xmlns:vellum=\"http://commcarehq.org/xforms/vellum\">\n\t<h:head>\n\t\t<h:title>Create case</h:title>\n\t\t<model>\n\t\t\t<instance>\n\t\t\t\t<data xmlns:jrm=\"http://dev.commcarehq.org/jr/xforms\" xmlns=\"http://openrosa.org/formdesigner/4CF9280B-1975-4F05-B8CB-693F5CD165BC\" uiVersion=\"1\" version=\"1\" name=\"Create case\">\n\t\t\t\t\t<name/>\n\t\t\t\t\t<village/>\n\t\t\t\t\t<sex/>\n\t\t\t\t\t<dob/>\n\t\t\t\t\t<mother_name/>\n\t\t\t\t</data>\n\t\t\t</instance>\n\t\t\t<bind nodeset=\"/data/name\" type=\"xsd:string\"/>\n\t\t\t<bind nodeset=\"/data/village\" type=\"xsd:string\"/>\n\t\t\t<bind nodeset=\"/data/sex\"/>\n\t\t\t<bind nodeset=\"/data/dob\" type=\"xsd:date\"/>\n\t\t\t<bind nodeset=\"/data/mother_name\" type=\"xsd:string\"/>\n\t\t\t<itext>\n\t\t\t\t<translation lang=\"en\" default=\"\">\n\t\t\t\t\t<text id=\"name-label\">\n\t\t\t\t\t\t<value>name</value>\n\t\t\t\t\t</text>\n\t\t\t\t\t<text id=\"village-label\">\n\t\t\t\t\t\t<value>village</value>\n\t\t\t\t\t</text>\n\t\t\t\t\t<text id=\"sex-label\">\n\t\t\t\t\t\t<value>sex</value>\n\t\t\t\t\t</text>\n\t\t\t\t\t<text id=\"sex-male-label\">\n\t\t\t\t\t\t<value>male</value>\n\t\t\t\t\t</text>\n\t\t\t\t\t<text id=\"sex-female-label\">\n\t\t\t\t\t\t<value>female</value>\n\t\t\t\t\t</text>\n\t\t\t\t\t<text id=\"dob-label\">\n\t\t\t\t\t\t<value>Date of Birth</value>\n\t\t\t\t\t</text>\n\t\t\t\t\t<text id=\"mother_name-label\">\n\t\t\t\t\t\t<value>Mother name</value>\n\t\t\t\t\t</text>\n\t\t\t\t</translation>\n\t\t\t</itext>\n\t\t</model>\n\t</h:head>\n\t<h:body>\n\t\t<input ref=\"/data/name\">\n\t\t\t<label ref=\"jr:itext('name-label')\"/>\n\t\t</input>\n\t\t<input ref=\"/data/village\">\n\t\t\t<label ref=\"jr:itext('village-label')\"/>\n\t\t</input>\n\t\t<select1 ref=\"/data/sex\">\n\t\t\t<label ref=\"jr:itext('sex-label')\"/>\n\t\t\t<item>\n\t\t\t\t<label ref=\"jr:itext('sex-male-label')\"/>\n\t\t\t\t<value>male</value>\n\t\t\t</item>\n\t\t\t<item>\n\t\t\t\t<label ref=\"jr:itext('sex-female-label')\"/>\n\t\t\t\t<value>female</value>\n\t\t\t</item>\n\t\t</select1>\n\t\t<input ref=\"/data/dob\">\n\t\t\t<label ref=\"jr:itext('dob-label')\"/>\n\t\t</input>\n\t\t<input ref=\"/data/mother_name\">\n\t\t\t<label ref=\"jr:itext('mother_name-label')\"/>\n\t\t</input>\n\t</h:body>\n</h:html>"
   },
   "attribution_notes": null,
   "translation_strategy": "select-known",

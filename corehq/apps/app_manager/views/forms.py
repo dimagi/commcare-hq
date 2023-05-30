@@ -51,8 +51,10 @@ from corehq.apps.app_manager.decorators import (
     require_deploy_apps,
 )
 from corehq.apps.app_manager.exceptions import (
+    AppMisconfigurationError,
     FormNotFoundException,
     XFormValidationFailed,
+    ModuleNotFoundException,
 )
 from corehq.apps.app_manager.helpers.validators import load_case_reserved_words
 from corehq.apps.app_manager.models import (
@@ -61,7 +63,6 @@ from corehq.apps.app_manager.models import (
     AppEditingError,
     ArbitraryDatum,
     CaseReferences,
-    CustomAssertion,
     CustomIcon,
     CustomInstance,
     DeleteFormRecord,
@@ -71,7 +72,6 @@ from corehq.apps.app_manager.models import (
     FormDatum,
     FormLink,
     IncompatibleFormTypeException,
-    ModuleNotFoundException,
     OpenCaseAction,
     UpdateCaseAction,
 )
@@ -96,11 +96,12 @@ from corehq.apps.app_manager.views.schedules import get_schedule_context
 from corehq.apps.app_manager.views.utils import (
     CASE_TYPE_CONFLICT_MSG,
     back_to_main,
+    capture_user_errors,
     clear_xmlns_app_id_cache,
     form_has_submissions,
     get_langs,
     handle_custom_icon_edits,
-    InvalidSessionEndpoint,
+    validate_custom_assertions,
     set_session_endpoint,
 )
 from corehq.apps.app_manager.xform import (
@@ -122,6 +123,7 @@ from corehq.apps.programs.models import Program
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import HqPermissions
 from corehq.util.view_utils import set_file_download
+from no_exceptions.exceptions import Http400
 
 
 @no_conflict_require_POST
@@ -267,6 +269,7 @@ def edit_form_attr(request, domain, app_id, form_unique_id, attr):
 
 @no_conflict_require_POST
 @require_permission(HqPermissions.edit_apps, login_decorator=None)
+@capture_user_errors
 def _edit_form_attr(request, domain, app_id, form_unique_id, attr):
     """
     Called to edit any (supported) form attribute, given by attr
@@ -372,15 +375,14 @@ def _edit_form_attr(request, domain, app_id, form_unique_id, attr):
     if should_edit('enable_release_notes'):
         form.enable_release_notes = request.POST['enable_release_notes'] == 'true'
         if not form.is_release_notes_form and form.enable_release_notes:
-            return json_response(
-                {'message': _("You can't enable a form as release notes without allowing it as "
-                    "a release notes form <TODO messaging>")},
-                status_code=400
-            )
+            raise AppMisconfigurationError(_(
+                "You can't enable a form as release notes without allowing it as "
+                "a release notes form <TODO messaging>"
+            ))
     if (should_edit("form_links_xpath_expressions")
             and should_edit("form_links_form_ids")
-            and toggles.FORM_LINK_WORKFLOW.enabled(domain)):
-        form_links = zip(
+            and domain_has_privilege(domain, privileges.FORM_LINK_WORKFLOW)):
+        form_link_data = zip(
             request.POST.getlist('form_links_xpath_expressions'),
             request.POST.getlist('form_links_form_ids'),
             [
@@ -389,15 +391,27 @@ def _edit_form_attr(request, domain, app_id, form_unique_id, attr):
             ],
         )
         module_unique_ids = [m.unique_id for m in app.get_modules()]
-        form.form_links = [FormLink(
-            xpath=link[0],
-            form_id=link[1] if link[1] not in module_unique_ids else None,
-            module_unique_id=link[1] if link[1] in module_unique_ids else None,
-            datums=[
-                FormDatum(name=datum['name'], xpath=datum['xpath'])
-                for datum in link[2]
-            ]
-        ) for link in form_links]
+        form_links = []
+        for link in form_link_data:
+            xpath, unique_id, datums = link
+            if '.' in unique_id:
+                form_module_id, form_id = unique_id.split('.')
+                module_unique_id = None
+            else:
+                form_id = unique_id if unique_id not in module_unique_ids else None
+                module_unique_id = unique_id if unique_id in module_unique_ids else None
+                form_module_id = None
+            form_links.append(FormLink(
+                xpath=xpath,
+                form_id=form_id,
+                form_module_id=form_module_id,
+                module_unique_id=module_unique_id,
+                datums=[
+                    FormDatum(name=datum['name'], xpath=datum['xpath'])
+                    for datum in datums
+                ]
+            ))
+        form.form_links = form_links
 
     if should_edit('post_form_workflow_fallback'):
         form.post_form_workflow_fallback = request.POST.get('post_form_workflow_fallback')
@@ -413,9 +427,8 @@ def _edit_form_attr(request, domain, app_id, form_unique_id, attr):
                     )
                 )
         except etree.XMLSyntaxError as error:
-            return json_response(
-                {'message': _("There was an issue with your custom instances: {}").format(error)},
-                status_code=400
+            raise AppMisconfigurationError(
+                _("There was an issue with your custom instances: {}").format(error)
             )
 
         form.custom_instances = [
@@ -425,53 +438,22 @@ def _edit_form_attr(request, domain, app_id, form_unique_id, attr):
             ) for instance in instances
         ]
 
-    if should_edit('custom_assertions'):
-        assertions = json.loads(request.POST.get('custom_assertions'))
-        try:  # validate that custom assertions can be added into the XML
-            for assertion in assertions:
-                etree.fromstring(
-                    '<assertion test="{test}"><text><locale id="abc.def"/>{text}</text></assertion>'.format(
-                        **assertion
-                    )
-                )
-        except etree.XMLSyntaxError as error:
-            return json_response(
-                {'message': _("There was an issue with your custom assertions: {}").format(error)},
-                status_code=400
-            )
-
-        existing_assertions = {assertion.test: assertion for assertion in form.custom_assertions}
-        new_assertions = []
-        for assertion in assertions:
-            try:
-                new_assertion = existing_assertions[assertion.get('test')]
-                new_assertion.text[lang] = assertion.get('text')
-            except KeyError:
-                new_assertion = CustomAssertion(
-                    test=assertion.get('test'),
-                    text={lang: assertion.get('text')}
-                )
-            new_assertions.append(new_assertion)
-
-        form.custom_assertions = new_assertions
+    if should_edit("custom_assertions"):
+        form.custom_assertions = validate_custom_assertions(
+            request.POST.get('custom_assertions'),
+            form.custom_assertions,
+            lang,
+        )
 
     if should_edit("shadow_parent"):
         form.shadow_parent_form_id = request.POST['shadow_parent']
 
     if should_edit("custom_icon_form"):
-        error_message = handle_custom_icon_edits(request, form, lang)
-        if error_message:
-            return json_response(
-                {'message': error_message},
-                status_code=400
-            )
+        handle_custom_icon_edits(request, form, lang)
 
     if should_edit('session_endpoint_id'):
         raw_endpoint_id = request.POST['session_endpoint_id']
-        try:
-            set_session_endpoint(form, raw_endpoint_id, app)
-        except InvalidSessionEndpoint as e:
-            return json_response({'message': str(e)}, status_code=400)
+        set_session_endpoint(form, raw_endpoint_id, app)
 
     if should_edit('function_datum_endpoints'):
         if request.POST['function_datum_endpoints']:
@@ -796,7 +778,7 @@ def get_form_view_context_and_template(request, domain, form, langs, current_lan
     if module.root_module_id and not module.root_module.put_in_root:
         if not module.root_module.is_multi_select():
             form_workflows[WORKFLOW_PARENT_MODULE] = _("Parent Menu: ") + trans(module.root_module.name, langs)
-    allow_form_workflow = toggles.FORM_LINK_WORKFLOW.enabled and not form.get_module().is_multi_select()
+    allow_form_workflow = domain_has_privilege(domain, privileges.FORM_LINK_WORKFLOW)
     if allow_form_workflow or form.post_form_workflow == WORKFLOW_FORM:
         form_workflows[WORKFLOW_FORM] = _("Link to other form or menu")
 
@@ -850,8 +832,8 @@ def get_form_view_context_and_template(request, domain, form, langs, current_lan
     if toggles.COPY_FORM_TO_APP.enabled_for_request(request):
         context['apps_modules'] = get_apps_modules(domain, app.id, module.unique_id)
 
-    if toggles.FORM_LINK_WORKFLOW.enabled(domain):
-        context.update(_get_form_link_context(module, langs))
+    if allow_form_workflow:
+        context.update(_get_form_link_context(app, module, form, langs))
 
     if isinstance(form, AdvancedForm):
         def commtrack_programs():
@@ -905,24 +887,45 @@ def get_form_view_context_and_template(request, domain, form, langs, current_lan
     return "app_manager/form_view.html", context
 
 
-def _get_form_link_context(module, langs):
+def _get_form_link_context(app, module, form, langs):
+    return {
+        'linkable_forms': _get_linkable_forms_context(module, langs),
+        'form_links': _get_form_links(app, form)
+    }
+
+
+def _get_form_links(app, form):
+    """Augments the form link JSON with the 'unique_id' field
+    which is dynamically generated.
+    """
+    links = []
+    for link in form.form_links:
+        link_context = link.to_json()
+        try:
+            link_context['uniqueId'] = link.get_unique_id(app)
+        except FormNotFoundException:
+            continue
+        else:
+            links.append(link_context)
+    return links
+
+
+def _get_linkable_forms_context(module, langs):
     def _module_name(module):
         return trans(module.name, langs)
 
-    def _form_name(form):
-        module_name = _module_name(form.get_module())
+    def _form_name(module, form):
+        module_name = _module_name(module)
         form_name = trans(form.name, langs)
         return "{} > {}".format(module_name, form_name)
 
     linkable_items = []
+    is_multi_select = module.is_multi_select()
     for candidate_module in module.get_app().get_modules():
         # Menus can be linked automatically if they're a top-level menu (no parent)
         # or their parent menu's case type matches the current menu's parent's case type.
         # Menus that use display-only forms can't be linked at all, since they don't have a
-        # dedicated screen to navigate to. Multi-select menus can't be linked to at all.
-        # All other menus can be linked manually.
-        if candidate_module.is_multi_select():
-            continue
+        # dedicated screen to navigate to. All other menus can be linked manually.
         if not candidate_module.put_in_root:
             is_top_level = candidate_module.root_module_id is None
             is_child_match = (
@@ -937,39 +940,59 @@ def _get_form_link_context(module, langs):
                     'auto_link': True,
                     'allow_manual_linking': False,
                 })
-        for candidate_form in candidate_module.get_forms():
+        for candidate_form in candidate_module.get_suite_forms():
             # Forms can be linked automatically if their module is the same case type as this module,
             # or if they belong to this module's parent module. All other forms can be linked manually.
             case_type_match = candidate_module.case_type == module.case_type
             is_parent = candidate_module.unique_id == module.root_module_id
             linkable_items.append({
-                'unique_id': candidate_form.unique_id,
-                'name': _form_name(candidate_form),
-                'auto_link': case_type_match or is_parent,
+                # this is necessary to disambiguate forms in shadow modules
+                'unique_id': f'{candidate_module.unique_id}.{candidate_form.unique_id}',
+                'name': _form_name(candidate_module, candidate_form),
+                'auto_link': not is_multi_select and (case_type_match or is_parent),
                 'allow_manual_linking': True,
             })
 
-    return {
-        'linkable_forms': sorted(linkable_items, key=lambda link: link['name']),
-    }
+    return sorted(linkable_items, key=lambda link: link['name'])
 
 
 @require_can_edit_apps
 def get_form_datums(request, domain, app_id):
-    from corehq.apps.app_manager.suite_xml.sections.entries import EntriesHelper
     form_id = request.GET.get('form_id')
+    try:
+        datums = _get_form_datums(domain, app_id, form_id)
+    except Exception:
+        notify_exception(request, "Error fetching form datums", details={
+            "domain": domain, "app_id": app_id, "form_id": form_id
+        })
+        raise
+    return JsonResponse(datums, safe=False)
+
+
+def _get_form_datums(domain, app_id, form_id):
+    from corehq.apps.app_manager.suite_xml.sections.entries import EntriesHelper
     app = get_app(domain, app_id)
-    form = app.get_form(form_id)
+
+    try:
+        module_id, form_id = form_id.split('.')
+    except ValueError:
+        raise Http400
+
+    try:
+        module = app.get_module_by_unique_id(module_id)
+        form = app.get_form(form_id)
+    except (ModuleNotFoundException, FormNotFoundException) as e:
+        raise Http404(str(e))
 
     def make_datum(datum):
         return {'name': datum.id, 'case_type': datum.case_type}
 
     helper = EntriesHelper(app)
     datums = [
-        make_datum(datum) for datum in helper.get_datums_meta_for_form_generic(form)
+        make_datum(datum) for datum in helper.get_datums_meta_for_form_generic(form, module)
         if datum.requires_selection
     ]
-    return JsonResponse(datums)
+    return datums
 
 
 @require_GET

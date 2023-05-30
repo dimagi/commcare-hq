@@ -1,0 +1,92 @@
+
+// Configuration
+@import "functions";
+@import "commcarehq/variables";  // This comes before Bootstrap 5 variables to override the defaults
+@import "variables";
+@import "commcarehq/variables_bootstrap3";  // Variables specific to B3-era Stylesheet
+@import "maps";
+@import "mixins";
+@import "commcarehq/mixins";
+@import "utilities";
+
+// Layout & components
+@import "root";
+@import "reboot";
+@import "type";
+@import "commcarehq/type";
+@import "images";
+@import "containers";
+@import "commcarehq/containers";
+@import "grid";
+@import "tables";
+@import "commcarehq/tables";
+@import "forms";
+@import "commcarehq/forms";
+@import "buttons";
+@import "commcarehq/buttons";
+@import "transitions";
+@import "dropdown";
+@import "commcarehq/dropdown";
+@import "button-group";
+@import "nav";
+@import "commcarehq/nav";
+@import "navbar";
+@import "commcarehq/navbar";
+@import "card";
+@import "accordion";
+@import "breadcrumb";
+@import "commcarehq/breadcrumb";
+@import "pagination";
+@import "badge";
+@import "alert";
+@import "commcarehq/alert";
+@import "progress";
+@import "list-group";
+@import "close";
+@import "toasts";
+@import "modal";
+@import "commcarehq/modal";
+@import "modal";
+@import "tooltip";
+@import "popover";
+@import "commcarehq/popover";
+@import "carousel";
+@import "spinners";
+@import "offcanvas";
+@import "placeholders";
+
+// Helpers
+@import "helpers";
+
+// Utilities
+@import "utilities/api";
+@import "commcarehq/utils";
+
+// Custom Widgets
+@import "commcarehq/appcues";
+@import "commcarehq/backgrounds";
+@import "commcarehq/datagrid";
+@import "commcarehq/datatables";
+@import "commcarehq/date_range_picker";
+@import "commcarehq/datetimepicker";
+@import "commcarehq/facet";
+@import "commcarehq/feedback";
+@import "commcarehq/form_steps";
+@import "commcarehq/helpbubble";
+@import "commcarehq/hubspot";
+@import "commcarehq/icons";
+@import "commcarehq/inline_edit";
+@import "commcarehq/label";
+@import "commcarehq/layouts";
+@import "commcarehq/list";
+@import "commcarehq/mapbox";
+@import "commcarehq/notifications";
+@import "commcarehq/pagination";
+@import "commcarehq/panels";
+@import "commcarehq/paused";
+@import "commcarehq/radio_select";
+@import "commcarehq/readable_forms";
+@import "commcarehq/report";
+@import "commcarehq/select2";
+@import "commcarehq/svg";
+@import "commcarehq/tabs";

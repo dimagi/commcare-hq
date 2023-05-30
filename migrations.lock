@@ -83,6 +83,16 @@ accounting
  0061_remove_enterprise_v1
  0062_add_release_management_to_enterprise
  0063_replace_linked_projects_ff_with_erm
+ 0064_add_form_link_workflow_priv
+ 0065_phone_apk_heartbeat_privs
+ 0066_data_file_download_priv
+ 0067_add_view_app_diff_priv
+ 0068_regex_field_validation_privilege
+ 0069_location_safe_case_imports_priv
+ 0070_form_case_ids_case_importer_priv
+ 0071_add_billingaccountwebuserhistory
+ 0072_export_multisort_priv
+ 0073_export_ownership_priv
 admin
  0001_initial
  0002_logentry_remove_auto_add
@@ -125,6 +135,10 @@ app_manager
  0020_exchangeapplication_allow_blank_privilege
  0021_migrate_case_search_itemset_ids
  0022_migrate_to_conditional_case_update
+ 0023_applicationreleaselog
+ 0024_applicationreleaselog_info
+ 0025_migrate_to_search_filter_flag
+ 0026_conditional_case_update_deleted_apps
 auditcare
  0001_sqlmodels
  0002_uniques
@@ -185,6 +199,8 @@ case_search
  0008_auto_20180119_1716
  0009_delete_casesearchqueryaddition
  0010_casesearchconfig_synchronous_web_apps
+ 0011_domainsnotincasesearchindex
+ 0012_casesearchconfig_sync_cases_on_form_entry
 cleanup
  0001_convert_change_feed_checkpoint_to_sql
  0002_convert_mc_checkpoint_to_sql
@@ -199,6 +215,7 @@ cleanup
  0011_merge_couch_sql_pillows
  0012_add_es_index_to_checkpoint_ids
  0013_migrate_kafka_checkpoint_format
+ 0014_deletedcouchdoc
 cloudcare
  0001_initial
  0002_sqlapplicationaccess
@@ -256,6 +273,10 @@ data_dictionary
  0006_caseproperty_group
  0007_property_type_choices
  0008_casepropertyallowedvalue
+ 0009_caseproperty_label
+ 0010_caseproperty_index
+ 0011_casepropertygroup
+ 0012_populate_case_property_groups
 data_interfaces
  0001_initial
  0002_remove_exists_option
@@ -288,6 +309,8 @@ data_interfaces
  0029_locationfilterdefinition_include_child_locations
  0030_add_workflow_choices
  0031_add_domaincaserulerun_status_choices
+ 0032_bootstrap_audit_events_for_update_rules
+ 0033_automaticupdaterule_deleted_on
 dhis2
  0001_initial
  0002_auto_20170322_1323
@@ -331,6 +354,7 @@ domain
  0011_alloweducrexpressionsettings
  0012_operatorcalllimitsettings
  0013_accountconfirmationsettings_squashed_0016_alter_smsaccountconfirmationsettings_project_name (4 squashed migrations)
+ 0014_appreleasemodesetting
 domain_migration_flags
  0001_initial
  0002_migrate_data_from_tzmigration
@@ -342,6 +366,21 @@ enterprise
  0002_enterprisepermissions_account_unique
  0003_enterprisepermissions_modify_account
  0004_enterprisemobileworkersettings
+es
+ 0001_bootstrap_es_indexes
+ 0002_add_tombstones
+ 0003_add_assigned_location_ids
+events
+ 0001_add_events_model
+ 0002_attendancetrackingconfig
+ 0003_event_attendance_taker_ids
+ 0004_event_id_case_id
+ 0005_rename_alter_event__attendance_taker_ids
+ 0006_remove_end_date_constraint
+ 0007_alter_event_attendee_list_status
+ 0008_alter_event__case_id
+ 0009_attendeemodel
+ 0010_event_location
 export
  0001_initial
  0002_datafile
@@ -355,6 +394,7 @@ export
  0010_defaultexportsettings
  0011_defaultexportsettings_usecouchfiletypes
  0012_defaultexportsettings_remove_duplicates_option
+ 0013_rm_incrementalexport
 fhir
  0001_initial
  0002_fhirresourcetype
@@ -375,10 +415,9 @@ fixtures
  0002_rm_blobdb_domain_fixtures
  0003_rm_blobdb_domain_fixtures
  0004_userlookuptablestatus
- 0005_lookuptablemodels
- 0006_index_row_id
- 0007_db_cascade
+ 0005_sqllookuptablemodels (3 squashed migrations)
  0008_sqllookuptables
+ 0009_remove_lookuptablerowowner_couch_id
 form_processor
  0001_initial
  0002_xformattachmentsql
@@ -483,6 +522,10 @@ generic_inbound
  0002_configurableapivalidation
  0003_add_logging_models
  0004_add_filter_expression
+ 0005_remove_requestlog_unused_fields
+ 0006_backend_external_response
+geospatial
+ (no migrations)
 hqadmin
  0001_initial
  0002_vcmmigrationaudit
@@ -514,6 +557,7 @@ hqwebapp
  0007_user_access_agent
  0008_hqoauthapplication
  0009_truncate_authtoken_table
+ 0010_maintenancealert_scheduling
 integration
  0001_initial
  0002_dialersettings
@@ -584,6 +628,8 @@ motech
  0009_auto_20211122_2011
  0010_auto_20211124_1931
  0011_connectionsettings_is_deleted
+ 0012_alter_connectionsettings_auth_type
+ 0013_alter_connectionsettings_auth_type
 notifications
  0001_squashed_0003_auto_20160504_2049 (3 squashed migrations)
  0002_auto_20160505_2058
@@ -663,6 +709,8 @@ pillowtop
  0005_kafkacheckpoint_doc_modification_time
  0006_add_geopoint_to_case_search_index
  0007_copy_xforms_checkpoint
+preindex
+ 0001_initial
 products
  0001_initial
 project_limits
@@ -685,13 +733,7 @@ registry
 reminders
  0001_initial
 repeaters
- 0001_adjust_auth_field_format
- 0002_sqlrepeatrecord
- 0003_migrate_connectionsettings
- 0004_attempt_strings
- 0005_rename_repeaterstub_to_sql_repeater
- 0006_add_proxy_models
- 0007_migrate_to_sql
+ 0001_adjust_auth_field_format_squashed_0015_drop_connection_settings_fk (15 squashed migrations)
 reports
  0001_initial
  0002_auto_20171121_1803
@@ -703,6 +745,10 @@ reports
  0008_tableauvisualization_title
  0009_remove_tableauserver_domain_username
  0010_delete_reportssidebarordering
+ 0011_tableauconnectedapp
+ 0012_tableaugroup_tableauuser
+ 0013_tableau_various_20221205
+ 0014_querystringhash
 saved_reports
  0001_initial
  0002_scheduledreportlog
@@ -731,6 +777,7 @@ scheduling
  0022_add_stop_date_case_property_name
  0023_add_remaining_content_models
  0024_app_id
+ 0025_schedule_and_broadcast_deleted_on
 scheduling_partitioned
  0001_initial
  0002_case_schedule_instances
@@ -797,6 +844,11 @@ sms
  0049_auto_enable_turnio_ff
  0050_sms_email_date_modified
  0051_reset_modified_on
+ 0052_messagingsubevent_date_last_activity
+ 0053_alter_messagingsubevent_date_last_activity
+ 0054_messagingsubevent_domain
+ 0055_messagingsubevent_index_domain_date_id
+ 0056_backfill_sms_event_date
 smsbillables
  0001_initial
  0002_bootstrap
@@ -1065,6 +1117,11 @@ users
  0045_add_view_tableau_permission
  0046_add_default_mobile_worker_role
  0047_rename_sqlpermission_permission
+ 0048_expiring_keys
+ 0049_add_data_dict_permissions
+ 0050_add_manage_attendance_tracking_permission
+ 0051_add_attendance_tracking_privilege
+ 0052_hqapikey_last_used
 util
  0001_initial
  0002_complaintbouncemeta_permanentbouncemeta_transientbounceemail

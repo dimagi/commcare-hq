@@ -3,9 +3,16 @@
 
 <script type="text/template" id="query-view-list-template">
   <form>
-    <p><h2 tabindex="0"><%- title %></h2></p>
-    <table class="table table-hover table-striped table-bordered">
-      <tbody>
+    <% if (title.length > 0) {%>
+      <h2 tabindex="0"><%- title %></h2>
+    <% } %>
+    <% if (description.length > 0) {%>
+      <div id="query-description" tabindex="0">
+        <%= description %>
+      </div>
+    <% } %>
+    <table class="table table-hover table-striped table-bordered" role="presentation">
+      <tbody id="query-properties">
       </tbody>
     </table>
     <button class="btn btn-default" type="button" id="query-clear-button">
@@ -38,21 +45,21 @@
     <% if (input == "select1") { %>
     <select class="query-field form-control hqwebapp-select2" data-receive="<%- receive %>"<% if (required) { %> aria-required="true"<% } %>>
         <option value=""></option>
-        <% for (var i = 0; i < itemsetChoices.length; i++) { %>
-        <option value="<%- i %>" <% if (value === String(i)) { %>selected<% } %>>
-            <%- itemsetChoices[i] %>
+        <% for (let key in itemsetChoicesDict) { %>
+        <option value="<%- key %>" <% if (value === String(key)) { %>selected<% } %>>
+            <%- itemsetChoicesDict[key] %>
         </option>
         <% } %>
-    <select>
+    </select>
 
     <% } else if (input == "select") { %>
     <select multiple class="query-field form-control hqwebapp-select2" data-receive="<%- receive %>"<% if (required) { %> aria-required="true"<% } %>>
-        <% for (var i = 0; i < itemsetChoices.length; i++) { %>
-        <option value="<%- i %>" <% if (value && value.indexOf(String(i)) > -1) { %>selected<% } %>>
-            <%- itemsetChoices[i] %>
+        <% for (let key in itemsetChoicesDict) { %>
+        <option value="<%- key %>" <% if (value && value.indexOf(String(key)) > -1) { %>selected<% } %>>
+            <%- itemsetChoicesDict[key] %>
         </option>
         <% } %>
-    <select>
+    </select>
 
     <% } else if (input === "date") { %>
     <div class="input-group">
@@ -71,7 +78,22 @@
            value="<%- value %>"
            <% if (required) { %> aria-required="true"<% } %>>
 
+    <% } else if (input === "checkbox") { %>
+    <fieldset multiple class="query-field" id="<%- text ? text : "" %>" <% if (required) { %> aria-required="true"<% } %>>
+      <legend class="sr-only"><%- text ? text : "" %></legend>
+      <% for (let key in itemsetChoicesDict) { %>
+      <div id="<%- text ? text : "checkbox" %>-<%- key %>" class="checkbox">
+        <label>
+          <input type="checkbox" value="<%- key %>" <% if (value && value.indexOf(String(key)) !== -1) { %>checked<% } %>>
+          <%- itemsetChoicesDict[key] %>
+        </label>
+      </div>
+      <% } %>
+    </fieldset>
+
     <% } else if (input == "address") { %>
+    <!-- ARIA live region for highlighted geocoder values, populated via javascript -->
+    <div role="region" aria-live="polite" class="sr-only" id="<%- id %>_mapbox-sr"></div>
     <div class="query-field" value="<%- value %>" id="<%- id %>_mapbox" data-address="<%- id %>">
     </div>
 

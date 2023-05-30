@@ -3619,6 +3619,7 @@ class ConditionalAlertForm(Form):
     name = TrimmedCharField(
         label=gettext_lazy("Name"),
         required=True,
+        max_length=126,
     )
 
     def __init__(self, domain, rule, *args, **kwargs):

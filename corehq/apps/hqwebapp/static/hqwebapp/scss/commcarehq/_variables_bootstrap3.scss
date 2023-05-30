@@ -1,0 +1,66 @@
+/*
+These are Boostrap 3 variables that were carried over in the
+migration because we wanted to minimize visual layout disruption.
+We should either remove or update to use Bootstrap 5 variables
+in a future full redesign.
+ */
+
+// V3 color references
+$brand-primary: $primary;
+$brand-success: $success;
+$brand-info: $info;
+$brand-warning: $warning;
+$brand-danger: $danger;
+
+$text-color: $body-color;
+
+$gray-base: #000;
+$gray: lighten($gray-base, 33.5%); // #555
+$gray-light: lighten($gray-base, 46.7%); // #777
+$gray-lighter: lighten($gray-base, 93.5%);
+
+$btn-default-color:              $cc-text;
+$btn-default-bg:                 $cc-bg;
+$btn-default-border:             $cc-neutral-hi;
+
+$btn-footer-color:  #ffffff;
+$btn-footer-bg:     #474747;
+$btn-footer-border: #cccccc;
+
+// Navigation Bar
+$navbar-height:                  60px;
+$navbar-padding-vertical:        calc(($navbar-height - 20px) / 2);
+$navbar-default-bg:              $cc-bg;
+
+$navbar-footer-height:            38px;
+$navbar-footer-link-color:        mix(darken(#ffffff, 10), $brand-primary, 90%);
+$navbar-footer-link-color-hover:  $gray-lighter;
+$navbar-footer-button-color:      #474747;
+
+$navbar-mobile-height: 40px;
+
+
+// Misc variables originally only refrenced in bootstrap 3 stylesheets
+$grid-float-breakpoint: map-get($grid-breakpoints, "sm");
+$line-height-computed: 20px;
+$border-radius-base: 4px;
+$legend-border-color: #e5e5e5;
+
+$checkbox-default-color: $call-to-action-mid;
+
+// Z-index master list
+// -------------------------
+// Also see Bootstrap 3's own master list:
+// bootstrap/less/variables.less
+$zindexDashboardSpinner:              500;
+$zindexAccountingPricingTableHeader:  800;
+
+// Other Zindecies
+$zindex-navbar:                       1000;
+$zindex-report-loading:               100;
+$zindex-app-preview:                  998;
+$zindex-navbar-cloudcare:             995;
+$zindex-formplayer-progress:          990;
+$zindex-cloudcare-debugger:           1005;
+
+$cursor-disabled: 'not-allowed';

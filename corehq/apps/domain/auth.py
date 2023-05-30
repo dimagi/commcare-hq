@@ -1,31 +1,31 @@
 import base64
+import binascii
 import logging
 import re
 from functools import wraps
 
-import binascii
 from django.contrib.auth import authenticate, get_user_model
 from django.contrib.auth.models import User
 from django.db.models import Q
 from django.http import HttpResponse
 from django.views.decorators.debug import sensitive_variables
 
+from no_exceptions.exceptions import Http400
+from python_digest import parse_digest_credentials
 from tastypie.authentication import ApiKeyAuthentication
 
+from django.utils import timezone
 from dimagi.utils.django.request import mutable_querydict
 from dimagi.utils.web import get_ip
 
 from corehq.apps.receiverwrapper.util import DEMO_SUBMIT_MODE
 from corehq.apps.users.models import CouchUser, HQApiKey
-from corehq.toggles import API_THROTTLE_WHITELIST, TWO_STAGE_USER_PROVISIONING
+from corehq.toggles import TWO_STAGE_USER_PROVISIONING
 from corehq.util.hmac_request import validate_request_hmac
-from no_exceptions.exceptions import Http400
-from python_digest import parse_digest_credentials
-
+from corehq.util.metrics import metrics_counter
 
 auth_logger = logging.getLogger("commcare_auth")
 
-J2ME = 'j2me'
 ANDROID = 'android'
 
 BASIC = 'basic'
@@ -93,15 +93,7 @@ def determine_authtype_from_request(request, default=DIGEST):
     if request.GET.get('submit_mode') == DEMO_SUBMIT_MODE:
         return NOAUTH
 
-    user_agent = request.META.get('HTTP_USER_AGENT')
-    if is_probably_j2me(user_agent):
-        return DIGEST
     return determine_authtype_from_header(request, default)
-
-
-def is_probably_j2me(user_agent):
-    j2me_pattern = '[Nn]okia|NOKIA|CLDC|cldc|MIDP|midp|Series60|Series40|[Ss]ymbian|SymbOS|[Mm]aemo'
-    return user_agent and re.search(j2me_pattern, user_agent)
 
 
 @sensitive_variables('auth', 'password')
@@ -253,6 +245,10 @@ def get_active_users_by_email(email):
 
 
 class HQApiKeyAuthentication(ApiKeyAuthentication):
+    def __init__(self, *args, allow_creds_in_data=True, **kwargs):
+        self._allow_creds_in_data = allow_creds_in_data
+        super().__init__(*args, **kwargs)
+
     def is_authenticated(self, request):
         """Follows what tastypie does, then tests for IP whitelisting
         """
@@ -281,6 +277,11 @@ class HQApiKeyAuthentication(ApiKeyAuthentication):
         except HQApiKey.DoesNotExist:
             return self._unauthorized()
 
+        # update api_key.last used every 30 seconds
+        if key.last_used is None or (timezone.now() - key.last_used).total_seconds() > 30:
+            key.last_used = timezone.now()
+            key.save()
+
         # ensure the IP address is in the allowlist, if that exists
         if key.ip_allowlist and (get_ip(request) not in key.ip_allowlist):
             return self._unauthorized()
@@ -302,3 +303,24 @@ class HQApiKeyAuthentication(ApiKeyAuthentication):
         username = self.extract_credentials(request)[0]
         domain = getattr(request, 'domain', '')
         return ApiIdentifier(username=username, domain=domain)
+
+    def extract_credentials(self, request):
+        """Extract username and key from request"""
+        # This overrides an existing tastypie method
+        try:
+            data = self.get_authorization_data(request)
+        except ValueError:
+            if self._allow_creds_in_data:
+                username = request.GET.get('username') or request.POST.get('username')
+                api_key = request.GET.get('api_key') or request.POST.get('api_key')
+                if username and api_key:
+                    metrics_counter('commcare.auth.credentials_in_data', tags={
+                        'domain': getattr(request, 'domain', None),
+                        'request_method': request.method,
+                    })
+            else:
+                username, api_key = None, None
+        else:
+            username, api_key = data.split(':', 1)
+
+        return username, api_key

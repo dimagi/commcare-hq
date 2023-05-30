@@ -3,6 +3,64 @@ hqDefine("app_manager/js/releases/app_view_release_manager", function () {
 
     hqImport('app_manager/js/app_manager').setPrependedPageTitle(gettext("Releases"));
 
+    var appReleaseLogsModel = function () {
+        let self = {};
+        self.releaseLogs = ko.observableArray();
+        self.fetchLimit = ko.observable();
+        self.totalItems = ko.observable();
+        self.fetchState = ko.observable();
+
+        self.onPaginationLoad = function () {
+            self.goToPage(1);
+        };
+
+        self.goToPage = function (page) {
+            if (self.fetchState() === 'pending') {
+                return false;
+            }
+            self.fetchState('pending');
+            var url = hqImport("hqwebapp/js/initial_page_data").reverse("paginate_release_logs");
+            $.ajax({
+                url: url,
+                dataType: 'json',
+                data: {
+                    page: page,
+                    limit: self.fetchLimit,
+                },
+                success: function (data) {
+                    self.releaseLogs(
+                        _.map(data.app_release_logs, function (log) {
+                            return ko.mapping.fromJS(log);
+                        })
+                    );
+                    self.totalItems(data.pagination.total);
+                    self.fetchState('');
+                },
+                error: function () {
+                    self.fetchState('error');
+                },
+            });
+        };
+
+        self.showLoadingSpinner = ko.observable(true);
+        self.showPaginationSpinner = ko.observable(false);
+        self.fetchState.subscribe(function (newValue) {
+            if (newValue === 'pending') {
+                self.showPaginationSpinner(true);
+            } else {
+                self.showLoadingSpinner(false);
+                self.showPaginationSpinner(false);
+            }
+        });
+        return self;
+    };
+
+    var $releaseLogsTab = $('#release-logs-tab');
+    var appReleaseLogs = appReleaseLogsModel();
+    if ($releaseLogsTab.length) {
+        $releaseLogsTab.koApplyBindings(appReleaseLogs);
+    }
+
     // Main releases content
     var releasesMainModel = hqImport('app_manager/js/releases/releases').releasesMainModel;
     var o = {
@@ -12,12 +70,38 @@ hqDefine("app_manager/js/releases/app_view_release_manager", function () {
         latestReleasedVersion: initial_page_data('latestReleasedVersion'),
         upstreamBriefs: initial_page_data('upstream_briefs'),
         upstreamUrl: initial_page_data('upstream_url'),
+        appReleaseLogs: appReleaseLogs,
     };
     var el = $('#releases-table');
+    var releasesMain = releasesMainModel(o);
     if (el.length) {
-        var releasesMain = releasesMainModel(o);
         el.koApplyBindings(releasesMain);
         _.defer(function () { releasesMain.goToPage(1); });
+
+        var releaseControlEl = $('#release-control');
+        if (releaseControlEl.length) {
+            releasesMain.showReleaseOperations(false);
+            var setReleaseLockButtons = function () {
+                if (releasesMain.showReleaseOperations()) {
+                    $("#btn-release-unlocked").show();
+                    $("#btn-release-locked").hide();
+                } else {
+                    $("#btn-release-unlocked").hide();
+                    $("#btn-release-locked").show();
+                }
+            };
+
+            $("#btn-release-unlocked").click(function () {
+                releasesMain.showReleaseOperations(false);
+                setReleaseLockButtons();
+            });
+            $("#btn-release-locked").click(function () {
+                releasesMain.showReleaseOperations(true);
+                setReleaseLockButtons();
+            });
+
+            setReleaseLockButtons();
+        }
     }
 
     // View changes / app diff

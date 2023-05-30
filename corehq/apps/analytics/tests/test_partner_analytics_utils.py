@@ -1,46 +1,39 @@
 import calendar
 import datetime
-
 from unittest import mock
 
-from django.test import TestCase, SimpleTestCase
+from django.test import SimpleTestCase, TestCase
+
+from dimagi.utils.dates import get_start_and_end_dates_of_month
 
 from corehq.apps.accounting.models import DomainUserHistory
 from corehq.apps.analytics.models import (
     PartnerAnalyticsContact,
-    PartnerAnalyticsReport,
     PartnerAnalyticsDataPoint,
+    PartnerAnalyticsReport,
 )
 from corehq.apps.analytics.utils.partner_analytics import (
-    get_number_of_mobile_workers,
-    get_number_of_web_users,
-    get_number_of_submissions,
-    generate_monthly_mobile_worker_statistics,
-    track_partner_access,
-    generate_monthly_web_user_statistics,
-    generate_monthly_submissions_statistics,
-    get_csv_details_for_partner,
-    send_partner_emails,
-    NUMBER_OF_MOBILE_WORKERS,
-    NUMBER_OF_WEB_USERS,
-    NUMBER_OF_SUBMISSIONS,
     ACCESS_ODATA,
+    NUMBER_OF_MOBILE_WORKERS,
+    NUMBER_OF_SUBMISSIONS,
+    NUMBER_OF_WEB_USERS,
     _get_csv_value,
+    generate_monthly_mobile_worker_statistics,
+    generate_monthly_submissions_statistics,
+    generate_monthly_web_user_statistics,
+    get_csv_details_for_partner,
+    get_number_of_mobile_workers,
+    get_number_of_submissions,
+    get_number_of_web_users,
+    send_partner_emails,
+    track_partner_access,
 )
 from corehq.apps.domain.models import Domain
+from corehq.apps.es.forms import form_adapter
 from corehq.apps.es.tests.utils import es_test
-from corehq.apps.users.models import WebUser, Invitation
-from corehq.elastic import get_es_new, send_to_elasticsearch
-from corehq.form_processor.tests.utils import (
-    FormProcessorTestUtils,
-    create_form_for_test,
-)
-from corehq.pillows.mappings import USER_INDEX_INFO, XFORM_INDEX_INFO
-from corehq.pillows.user import transform_user_for_elasticsearch
-from corehq.pillows.xform import transform_xform_for_elasticsearch
-from corehq.util.elastic import ensure_index_deleted
-from dimagi.utils.dates import get_start_and_end_dates_of_month
-from pillowtop.es_utils import initialize_index_and_mapping
+from corehq.apps.es.users import user_adapter
+from corehq.apps.users.models import Invitation, WebUser
+from corehq.form_processor.tests.utils import create_form_for_test
 
 
 def _get_fake_number_of_mobile_workers(domain, _year, _month):
@@ -67,19 +60,16 @@ def _get_fake_number_of_submissions(domain, _year, _month):
     }[domain]
 
 
-@es_test
+@es_test(requires=[user_adapter, form_adapter], setup_class=True)
 class TestPartnerAnalyticsDataUtils(TestCase):
 
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
 
-        cls.es = get_es_new()
-        initialize_index_and_mapping(cls.es, USER_INDEX_INFO)
-        initialize_index_and_mapping(cls.es, XFORM_INDEX_INFO)
-
         cls.date_start, cls.date_end = get_start_and_end_dates_of_month(2021, 11)
         cls.domain = Domain.get_or_create_with_name('test-partner-analytics', is_active=True)
+        cls.addClassCleanup(cls.domain.delete)
 
         # Data for Mobile Workers Tests
         DomainUserHistory.objects.create(
@@ -117,9 +107,16 @@ class TestPartnerAnalyticsDataUtils(TestCase):
                 date=cls.date_start + datetime.timedelta(days=6)
             ),
         ]
+
+        def delete_user(user):
+            from couchdbkit import ResourceNotFound
+            try:
+                user.delete(cls.domain.name, None)
+            except ResourceNotFound:
+                pass
         for user in cls.users:
-            elastic_user = transform_user_for_elasticsearch(user.to_json())
-            send_to_elasticsearch('users', elastic_user)
+            user_adapter.index(user, refresh=True)
+            cls.addClassCleanup(delete_user, user)
 
         invitations = [
             Invitation.objects.create(
@@ -165,24 +162,7 @@ class TestPartnerAnalyticsDataUtils(TestCase):
             ),
         ]
         for form in forms:
-            elastic_form = transform_xform_for_elasticsearch(form.to_json())
-            send_to_elasticsearch('forms', elastic_form)
-
-        cls.es.indices.refresh(USER_INDEX_INFO.alias)
-        cls.es.indices.refresh(XFORM_INDEX_INFO.alias)
-
-    @classmethod
-    def tearDownClass(cls):
-        ensure_index_deleted(USER_INDEX_INFO.alias)
-        ensure_index_deleted(XFORM_INDEX_INFO.alias)
-        for user in cls.users:
-            user.delete(cls.domain.name, None)
-        FormProcessorTestUtils.delete_all_sql_forms(cls.domain.name)
-        FormProcessorTestUtils.delete_all_sql_cases(cls.domain.name)
-        Invitation.objects.all().delete()
-        DomainUserHistory.objects.all().delete()
-        cls.domain.delete()
-        super().tearDownClass()
+            form_adapter.index(form, refresh=True)
 
     def test_get_number_of_mobile_workers(self):
         self.assertEqual(

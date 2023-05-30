@@ -125,6 +125,7 @@ SHARED_DRIVE_ROOT = '/sharedfiles'
 ALLOWED_HOSTS = ['*']
 #FIX_LOGGER_ERROR_OBFUSCATION = True
 
+CELERY_BROKER_URL = 'redis://redis:6379/0'
 CELERY_TASK_ALWAYS_EAGER = True
 CELERY_EAGER_PROPAGATES_EXCEPTIONS = True
 INACTIVITY_TIMEOUT = 60 * 24 * 365
@@ -144,16 +145,6 @@ EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 
 BITLY_OAUTH_TOKEN = None
 
-####### Jar signing config ########
-
-_ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
-JAR_SIGN = {
-    "jad_tool": os.path.join(_ROOT_DIR, "corehq", "apps", "app_manager", "JadTool.jar"),
-    "key_store": os.path.join(_ROOT_DIR, "InsecureTestingKeyStore"),
-    "key_alias": "javarosakey",
-    "store_pass": "onetwothreefourfive",
-    "key_pass": "onetwothreefourfive",
-}
 
 SECRET_KEY = 'secrettravis'
 

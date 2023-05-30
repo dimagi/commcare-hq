@@ -182,6 +182,16 @@
               {% input_trans module.search_config.title_label langs input_name='title_label' input_id='title_label' data_bind="value: title_label" %}
             </div>
           </div>
+          <div class="form-group">
+            <label for="description" class="{% css_label_class %} control-label">
+              {% trans "Search Screen Subtitle" %}
+              <span class="hq-help-template" data-title="{% trans "Search Screen Subtitle" %}"
+                    data-content="{% trans_html_attr "Define descriptive text displayed on the search screen. Use text formatting to <strong>bold</strong> and <em>italicize</em> words, use bulleted lists, and <a target='_blank' href='https://help.commcarehq.org/display/commcarepublic/Text+Formatting'>more</a>." %}">
+            </label>
+            <div class="{% css_field_class %}">
+              {% input_trans module.search_config.description langs input_name='description' input_id='description' data_bind="value: description" element_type="textarea" %}
+            </div>
+          </div>
           {% endif %}
           <div class="form-group" data-bind="slideVisible: !auto_launch()">
             <label for="search-display-condition" class="control-label {% css_label_class %}">
@@ -201,7 +211,7 @@
               ></textarea>
             </div>
           </div>
-          {% if request|toggle_enabled:'USH_CASE_CLAIM_UPDATES' %}
+          {% if request|toggle_enabled:'USH_SEARCH_FILTER' %}
           <div class="form-group">
             <label for="search-filter" class="control-label {% css_label_class %}">
               {% trans "Search Filter" %}
@@ -353,6 +363,18 @@
                          class="form-control"
                          data-bind="value: custom_related_case_property"/>
               </div>
+          </div>
+          <div class="form-group">
+            <label class="control-label {% css_label_class %}">
+              {% trans "Include all related cases in search results" %}
+            </label>
+            <div>
+              <div class="{% css_field_class %} checkbox">
+                <label>
+                  <input type="checkbox" data-bind="checked: include_all_related_cases"/>
+                </label>
+              </div>
+            </div>
           </div>
           {% endif %}
           <span class="hide" id="searchFilterXpathErrorHtml">

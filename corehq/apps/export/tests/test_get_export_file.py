@@ -1,19 +1,18 @@
 import json
 import re
+from unittest.mock import patch
 
 from django.core.cache import cache
 from django.test import SimpleTestCase
 
-from corehq.util.es.elasticsearch import ConnectionError
-from corehq.apps.es.tests.utils import es_test
-from unittest.mock import patch
 from openpyxl import load_workbook
 
 from couchexport.export import get_writer
 from couchexport.models import Format
 from couchexport.transforms import couch_to_excel_datetime
-from pillowtop.es_utils import initialize_index_and_mapping
 
+from corehq.apps.es.cases import case_adapter
+from corehq.apps.es.tests.utils import es_test
 from corehq.apps.export.const import (
     CASE_NAME_TRANSFORM,
     DEID_DATE_TRANSFORM,
@@ -48,11 +47,8 @@ from corehq.apps.export.tests.util import (
     get_export_json,
     new_case,
 )
-from corehq.elastic import get_es_new, send_to_elasticsearch
-from corehq.pillows.mappings.case_mapping import CASE_INDEX_INFO
-from corehq.util.elastic import ensure_index_deleted
 from corehq.util.files import TransientTempfile
-from corehq.util.test_utils import flag_enabled, trap_extra_setup
+from corehq.util.test_utils import flag_enabled
 
 
 def assert_instance_gives_results(docs, export_instance, expected_result):
@@ -137,7 +133,7 @@ class WriterTest(SimpleTestCase):
         self.assertTrue(export_save.called)
 
     @patch('corehq.apps.export.models.FormExportInstance.save')
-    @patch('corehq.apps.export.export.MAX_EXPORTABLE_ROWS', 2)
+    @patch('corehq.apps.export.export.MAX_NORMAL_EXPORT_SIZE', 2)
     @flag_enabled('PAGINATED_EXPORTS')
     def test_paginated_table(self, export_save):
         export_instance = FormExportInstance(
@@ -674,41 +670,32 @@ class WriterTest(SimpleTestCase):
         self.assertTrue(export_save.called)
 
 
-@es_test
+@es_test(requires=[case_adapter], setup_class=True)
 class ExportTest(SimpleTestCase):
 
     @classmethod
     def setUpClass(cls):
         super(ExportTest, cls).setUpClass()
-        with trap_extra_setup(ConnectionError, msg="cannot connect to elasicsearch"):
-            cls.es = get_es_new()
-            initialize_index_and_mapping(cls.es, CASE_INDEX_INFO)
+        with patch('corehq.pillows.utils.get_user_type', return_value='CommCareUser'):
+            cases = [
+                new_case(
+                    case_id='robin',
+                    name='batman',
+                    case_json={"foo": "apple", "bar": "banana", "date": '2016-4-24'},
+                ),
+                new_case(
+                    owner_id="some_other_owner",
+                    case_json={"foo": "apple", "bar": "banana", "date": '2016-4-04'},
+                ),
+                new_case(type="some_other_type", case_json={"foo": "apple", "bar": "banana"}),
+                new_case(closed=True, case_json={"foo": "apple", "bar": "banana"})
+            ]
+            case_adapter.bulk_index(cases, refresh=True)
 
-        case = new_case(
-            case_id='robin',
-            name='batman',
-            case_json={"foo": "apple", "bar": "banana", "date": '2016-4-24'},
-        )
-        send_to_elasticsearch('cases', case.to_json())
-
-        case = new_case(
-            owner_id="some_other_owner",
-            case_json={"foo": "apple", "bar": "banana", "date": '2016-4-04'},
-        )
-        send_to_elasticsearch('cases', case.to_json())
-
-        case = new_case(type="some_other_type", case_json={"foo": "apple", "bar": "banana"})
-        send_to_elasticsearch('cases', case.to_json())
-
-        case = new_case(closed=True, case_json={"foo": "apple", "bar": "banana"})
-        send_to_elasticsearch('cases', case.to_json())
-
-        cls.es.indices.refresh(CASE_INDEX_INFO.index)
-        cache.clear()
+            cache.clear()
 
     @classmethod
     def tearDownClass(cls):
-        ensure_index_deleted(CASE_INDEX_INFO.index)
         cache.clear()
         super(ExportTest, cls).tearDownClass()
 

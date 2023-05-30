@@ -1,28 +1,23 @@
 import json
 from contextlib import contextmanager
-from functools import wraps
 from datetime import datetime
+from functools import wraps
 from inspect import isclass
 
 from nose.plugins.attrib import attr
 from nose.tools import nottest
 
 from pillowtop.es_utils import initialize_index_and_mapping
-from pillowtop.tests.utils import TEST_INDEX_INFO
+from pillowtop.tests.utils import get_pillow_doc_adapter
 
-from corehq.elastic import get_es_new, send_to_elasticsearch
-from corehq.form_processor.tests.utils import FormProcessorTestUtils
-from corehq.pillows.case_search import transform_case_for_elasticsearch
-from corehq.pillows.mappings.case_search_mapping import CASE_SEARCH_INDEX_INFO
+from corehq.apps.es.client import ElasticMultiplexAdapter
+from corehq.apps.es.migration_operations import CreateIndex
+from corehq.tests.util.warnings import filter_warnings
 from corehq.util.elastic import ensure_index_deleted
-from corehq.util.test_utils import trap_extra_setup
+from corehq.util.es.elasticsearch import NotFoundError
 
-from ..client import ElasticDocumentAdapter, ElasticManageAdapter
-from ..registry import (
-    register,
-    deregister,
-    registry_entry,
-)
+from ..client import ElasticDocumentAdapter, manager
+from ..transient_util import doc_adapter_from_cname
 
 TEST_ES_MAPPING = {
     '_meta': {
@@ -38,6 +33,11 @@ TEST_ES_MAPPING = {
 TEST_ES_TYPE = 'test_es_doc'
 TEST_ES_ALIAS = "test_es"
 
+ignore_index_settings_key_warning = filter_warnings(
+    "ignore",
+    r"Invalid index settings key .+, expected one of \[",
+    UserWarning,
+)
 
 es_test_attr = attr(es_test=True)
 
@@ -52,12 +52,14 @@ class ElasticTestMixin(object):
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
-        cls._es_instance = get_es_new()
-        initialize_index_and_mapping(cls._es_instance, TEST_INDEX_INFO)
+        cls.test_adapter = get_pillow_doc_adapter()
+        # TODO: make individual test[ case]s warning-safe and remove this
+        with ignore_index_settings_key_warning:
+            initialize_index_and_mapping(cls.test_adapter)
 
     @classmethod
     def tearDownClass(cls):
-        ensure_index_deleted(TEST_INDEX_INFO.index)
+        ensure_index_deleted(cls.test_adapter.index_name)
         super().tearDownClass()
 
     def validate_query(self, query):
@@ -65,12 +67,13 @@ class ElasticTestMixin(object):
             return
         # only query portion can be validated using ES validate API
         query = {'query': query.pop('query', {})}
-        validation = self._es_instance.indices.validate_query(
-            body=query,
-            index=TEST_INDEX_INFO.index,
+        # TODO: expose validate_query in document adapter
+        validation = manager.index_validate_query(
+            query=query,
+            index=self.test_adapter.index_name,
             params={'explain': 'true'},
         )
-        self.assertTrue(validation['valid'], validation)
+        self.assertTrue(validation)
 
     def checkQuery(self, query, expected_json, is_raw_query=False, validate_query=True):
         self.maxDiff = None
@@ -93,118 +96,144 @@ class ElasticTestMixin(object):
 
 
 @nottest
-def es_test(test=None, index=None, indices=[], setup_class=False):
+def es_test(test=None, requires=None, setup_class=False):
     """Decorator for Elasticsearch tests.
-    The decorator sets the `es_test` nose attribute and optionally performs
-    index registry setup/teardown before and after the test(s).
+    The decorator sets the ``es_test`` nose attribute and optionally performs
+    index setup/cleanup before and after the test(s).
 
-    :param test: A test class, method, or function (only used via the @decorator
-                 syntax).
-    :param index: Index info object or `(info_obj, cname)` tuple of an index to
-                  be registered for the test, mutually exclusive with the
-                  `indices` param (raises ValueError if both provided).
-    :param indices: A list of index info objects (or tuples, see above) of
-                    indices to be registered for the test, mutually exclusive
-                    with the the `index` param (raises ValueError).
-    :param setup_class: Set to `True` to perform registry setup/teardown in the
-                        `setUpClass` and `tearDownClass` (instead of the default
-                        `setUp` and `tearDown`) methods. Invalid if true when
-                        decorating non-class objects (raises ValueError).
-    :raises: ValueError
+    :param test: A test class, method, or function -- only used via the
+        ``@decorator`` format (i.e. not the ``@decorator(...)`` format).
+    :param requires: A list of document adapters whose indexes are required by
+        the test(s).
+    :param setup_class: Optional (default: ``False``). Set to ``True`` to
+        perform index setup/add-cleanup in the ``setUpClass`` method (instead of
+        ``setUp``). Invalid if true when decorating non-class objects (raises
+        ValueError).
+    :raises: ``ValueError``
 
     See test_test_utils.py for examples.
     """
     if test is None:
         def es_test_decorator(test):
-            return es_test(test, index, indices, setup_class)
+            return es_test(test, requires, setup_class)
         return es_test_decorator
 
-    if not (index or indices):
+    if not requires:
         return es_test_attr(test)
 
-    if index is None:
-        _registration_info = list(indices)
-    elif not indices:
-        _registration_info = [index]
-    else:
-        raise ValueError(f"index and indices are mutually exclusive {(index, indices)}")
-
-    def registry_setup():
-        reg = {}
-        for info in _registration_info:
-            if isinstance(info, tuple):
-                info, cname = info
-            else:
-                cname = None
-            reg[register(info, cname)] = info
-        return reg
-
-    def registry_teardown():
-        for dereg in _registration_info:
-            if isinstance(dereg, tuple):
-                info, dereg = dereg
-            deregister(dereg)
-
+    comment = f"created for {test.__module__}.{test.__qualname__}"
+    operations = _index_operations(requires, comment)
     if isclass(test):
-        test = _add_setup_and_teardown(test, setup_class, registry_setup, registry_teardown)
+        test = _add_setup_and_cleanup(test, setup_class, operations)
     else:
         if setup_class:
             raise ValueError(f"keyword 'setup_class' is for class decorators, test={test}")
-        test = _decorate_test_function(test, registry_setup, registry_teardown)
+        test = _decorate_test_function(test, operations)
     return es_test_attr(test)
 
 
-def _decorate_test_function(test, registry_setup, registry_teardown):
+def _index_operations(adapters, comment):
+
+    def iter_all_adapters():
+        for adapter in adapters:
+            if isinstance(adapter, ElasticMultiplexAdapter):
+                yield adapter.primary
+                yield adapter.secondary
+            else:
+                yield adapter
+
+    operations = {}
+    for adapter in iter_all_adapters():
+        operations[adapter.index_name] = CreateIndex(
+            adapter.index_name,
+            adapter.type,
+            adapter.mapping,
+            adapter.analysis,
+            adapter.settings_key,
+            comment=comment,
+        )
+    return operations
+
+
+def _decorate_test_function(test, operations):
 
     @wraps(test)
     def wrapper(*args, **kw):
-        registry_setup()
+        created = []
         try:
+            for index_name, operation in operations.items():
+                _run_create_index_operation(index_name, operation)
+                created.append(operation)
             return test(*args, **kw)
         finally:
-            registry_teardown()
+            for operation in reversed(created):
+                operation.reverse_run()
 
     return wrapper
 
 
-def _add_setup_and_teardown(test_class, setup_class, registry_setup, registry_teardown):
+def _add_setup_and_cleanup(test_class, setup_class, operations):
+    """Decorates ``test_class.setUp[Class]`` to create Elasticsearch index(es)
+    and clean them up afterwards.
+
+    :param test_class: the test case class being decorated
+    :param operations: a dictionary of ``CreateIndex`` operations (keyed by
+        index name) to use for creating and cleaning up the required Elastic
+        index(es).
+    """
 
     def setup_decorator(setup):
         @wraps(setup)
         def wrapper(self, *args, **kw):
-            self._indices = registry_setup()
+            if setup_class:
+                cleanup_args = []
+                cleanup_meth = "addClassCleanup"
+            else:
+                cleanup_args = [self]
+                cleanup_meth = "addCleanup"
+            add_cleanup = getattr(test_class, cleanup_meth)
+            for index_name, operation in operations.items():
+                _run_create_index_operation(index_name, operation)
+                # only add a cleanup after the index is successfully created
+                add_cleanup(*(cleanup_args + [operation.reverse_run]))
             if setup is not None:
+                # call the existing 'setUp[Class]()' method
                 return setup(self, *args, **kw)
         return wrapper
 
-    def teardown_decorator(teardown):
-        @wraps(teardown)
-        def wrapper(*args, **kw):
+    func_name = "setUpClass" if setup_class else "setUp"
+    func = getattr(test_class, func_name, None)
+    if setup_class:
+        # decorate setUpClass
+        if func is not None:
+            # 'func' is the classmethod decoration, get the function it wraps
             try:
-                if teardown is not None:
-                    return teardown(*args, **kw)
-            finally:
-                registry_teardown()
-        return wrapper
-
-    def decorate(name, decorator):
-        func_name = f"{name}Class" if setup_class else name
-        func = getattr(test_class, func_name, None)
-        if setup_class:
-            if func is not None:
-                try:
-                    func = func.__func__
-                except AttributeError:
-                    raise ValueError(f"'setup_class' expects a classmethod, "
-                                     f"got {func} (test_class={test_class})")
-            decorated = classmethod(decorator(func))
-        else:
-            decorated = decorator(func)
-        setattr(test_class, func_name, decorated)
-
-    decorate("setUp", setup_decorator)
-    decorate("tearDown", teardown_decorator)
+                func = func.__func__
+            except AttributeError:
+                raise ValueError(f"'setup_class' expects a classmethod, "
+                                 f"got {func} (test_class={test_class})")
+        decorated = classmethod(setup_decorator(func))
+    else:
+        # decorate setUp
+        decorated = setup_decorator(func)
+    setattr(test_class, func_name, decorated)
     return test_class
+
+
+def _run_create_index_operation(index_name, operation):
+    # --------------------------------------------------------------------------
+    # TODO: This preemptive delete will be removed in the future.
+    #
+    # Prior to creating the index, an attempt is made to preemptively delete it
+    # in case it already exists. This workaround is only necessary because there
+    # are (many, at the time of this writing) existing tests that create indexes
+    # but do not delete them afterwards.
+    try:
+        manager.index_delete(index_name)
+    except NotFoundError:
+        pass
+    # --------------------------------------------------------------------------
+    operation.run()
 
 
 @contextmanager
@@ -214,7 +243,6 @@ def temporary_index(index, type_=None, mapping=None, *, purge=True):
         raise ValueError(f"type_ and mapping args are mutually inclusive "
                          f"(index={index!r}, type_={type_!r}, "
                          f"mapping={mapping!r})")
-    manager = ElasticManageAdapter()
     if purge and manager.index_exists(index):
         manager.index_delete(index)
     manager.index_create(index)
@@ -226,17 +254,11 @@ def temporary_index(index, type_=None, mapping=None, *, purge=True):
         manager.index_delete(index)
 
 
-def populate_es_index(models, index_cname, doc_prep_fn=lambda doc: doc):
-    index_info = registry_entry(index_cname)
-    es = get_es_new()
-    with trap_extra_setup(ConnectionError):
-        initialize_index_and_mapping(es, index_info)
+def populate_es_index(models, index_cname):
+    adapter = doc_adapter_from_cname(index_cname)
     for model in models:
-        send_to_elasticsearch(
-            index_cname,
-            doc_prep_fn(model.to_json() if hasattr(model, 'to_json') else model)
-        )
-    es.indices.refresh(index_info.index)
+        adapter.index(model)
+    manager.index_refresh(adapter.index_name)
 
 
 def populate_user_index(users):
@@ -256,12 +278,7 @@ def case_search_es_setup(domain, case_blocks):
 
 
 def populate_case_search_index(cases):
-    populate_es_index(cases, 'case_search', transform_case_for_elasticsearch)
-
-
-def case_search_es_teardown():
-    FormProcessorTestUtils.delete_all_cases()
-    ensure_index_deleted(CASE_SEARCH_INDEX_INFO.index)
+    populate_es_index(cases, 'case_search')
 
 
 def docs_from_result(result):
@@ -319,8 +336,6 @@ class TestDocumentAdapter(ElasticDocumentAdapter):
     involving ``TestDoc`` model objects.
     """
 
-    _index_name = "doc-adapter"
-    type = "test_doc"
     mapping = {
         "properties": {
             "value": {
@@ -336,3 +351,6 @@ class TestDocumentAdapter(ElasticDocumentAdapter):
     @classmethod
     def from_python(cls, doc):
         return doc.id, {"value": doc.value, "entropy": doc.entropy}
+
+
+test_adapter = TestDocumentAdapter("doc-adapter", "test_doc")

@@ -1,5 +1,5 @@
 import os
-from unittest.mock import patch
+from unittest.mock import patch, Mock
 
 from django.core.cache import cache
 from django.test import SimpleTestCase
@@ -12,6 +12,8 @@ from corehq.form_processor.exceptions import XFormNotFound
 from corehq.form_processor.models import XFormInstance
 from corehq.form_processor.utils import TestFormMetadata
 from corehq.util.test_utils import TestFileMixin, get_form_ready_to_save
+from corehq.apps.reports.standard.cases.utils import get_user_type
+from corehq.apps.data_interfaces.deduplication import DEDUPE_XMLNS
 
 DOMAIN = 'test_domain'
 USER_ID = "5bc1315c-da6f-466d-a7c4-4580bc84a7b9"
@@ -39,6 +41,37 @@ class TestSummarizeUserCounts(SimpleTestCase):
             summarize_user_counts({'a': 1, 'b': 10, 'c': 2}, n=4),
             {'a': 1, 'b': 10, 'c': 2, (): 0},
         )
+
+
+class TestGetUserType(SimpleTestCase):
+    def setUp(self):
+        self.form = Mock(
+            xmlns='my-xmlns',
+            metadata=Mock(
+                userID=None,
+                username='foobar'
+            )
+        )
+
+    def test_unknown_user(self):
+        self.assertEqual(get_user_type(self.form), 'Unknown')
+
+    def test_system_user(self):
+        self.form.metadata.username = 'system'
+        self.assertEqual(get_user_type(self.form), 'System')
+
+    def test_system_update(self):
+        self.form.metadata.username = 'system'
+        self.form.xmlns = DEDUPE_XMLNS
+        self.assertEqual(get_user_type(self.form), 'Deduplication Rule')
+
+    @patch(
+        'corehq.apps.reports.standard.cases.utils.get_doc_info_by_id',
+        return_value=Mock(type_display='Foobar')
+    )
+    def test_display_user(self, _):
+        self.form.metadata.userID = '1234'
+        self.assertEqual(get_user_type(self.form), 'Foobar')
 
 
 def test_get_user_id():

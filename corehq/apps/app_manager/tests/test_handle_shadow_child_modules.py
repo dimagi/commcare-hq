@@ -11,6 +11,16 @@ from corehq.apps.app_manager.views.utils import (
     handle_shadow_child_modules,
 )
 
+EXPLANATION = """
+    If we have a shadow module whose source module is a parent,
+    handle_shadow_child_modules will automatically create shadows of the source
+    module's child modules. If you're reading this, you probably added a new
+    property to ModuleBase or ShadowModule. You need to declare whether this
+    property should be automatically copied to these shadow child modules
+    (add it to MODULE_BASE_PROPERTIES_TO_COPY or SHADOW_MODULE_PROPERTIES_TO_COPY),
+    or excluded (add it to ignored_properties in this test).
+"""
+
 
 class HandleShadowChildModulesTest(TestCase):
     """Test how shadow child modules are created and deleted
@@ -139,13 +149,9 @@ class HandleShadowChildModulesTest(TestCase):
         }
         copied_properties = {prop for prop, _ in SHADOW_MODULE_PROPERTIES_TO_COPY}
 
-        self.assertItemsEqual(
-            required_properties - copied_properties,
-            [],
-            (f"Please handle the new property you just added '{required_properties - copied_properties}' "
-             "to ShadowModule in app_manager.views.utils.handle_shadow_child_modules, or add it "
-             "to the ignored_propertieslist in this test."),
-        )
+        unexpected_properties = required_properties - copied_properties
+        msg = f"Unexpected properties {unexpected_properties}\n{EXPLANATION}"
+        self.assertItemsEqual(unexpected_properties, [], msg)
 
     def test_all_base_module_properties_set(self):
         ignored_properties = [
@@ -155,6 +161,7 @@ class HandleShadowChildModulesTest(TestCase):
             "case_type",
             "unique_id",
             "session_endpoint_id",
+            "custom_assertions",
         ]
         required_properties = {
             prop
@@ -170,11 +177,6 @@ class HandleShadowChildModulesTest(TestCase):
         }
 
         copied_properties = {prop for prop, _ in MODULE_BASE_PROPERTIES_TO_COPY}
-
-        self.assertItemsEqual(
-            required_properties - copied_properties,
-            [],
-            (f"Please handle the new property you just added '{required_properties - copied_properties}' "
-             "to ShadowModule in app_manager.views.utils.handle_shadow_child_modules, or add it "
-             "to the ignored_properties list in this test."),
-        )
+        unexpected_properties = required_properties - copied_properties
+        msg = f"Unexpected properties {unexpected_properties}\n{EXPLANATION}"
+        self.assertItemsEqual(unexpected_properties, [], msg)

@@ -7,6 +7,7 @@ from django.core.management import call_command
 from django.core.management.base import BaseCommand
 
 from corehq.util.log import get_traceback_string
+from corehq.preindex import django_migrations as reindexer
 
 
 class Command(BaseCommand):
@@ -38,6 +39,7 @@ class Command(BaseCommand):
         def migrate_db(db_alias, options=options):
             call_options = copy(options)
             call_options['database'] = db_alias
+            call_options['should_reindex'] = False
             call_command('migrate', *args, **call_options)
 
         dbs_to_migrate = [
@@ -67,6 +69,14 @@ class Command(BaseCommand):
                 print(repr(job))
                 print(get_traceback_string())
                 migration_error_occured = True
+
+        try:
+            if reindexer.should_reindex:
+                reindexer.run_reindex()
+        except Exception:
+            print('\n======================= Error During Reindex =======================')
+            print(get_traceback_string())
+            migration_error_occured = True
 
         if migration_error_occured:
             sys.exit(1)

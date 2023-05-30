@@ -68,6 +68,7 @@ hqDefine("users/js/roles_and_permissions",[
             webAppsPrivilege: initialPageData.get("web_apps_privilege"),
             ermPrivilege: initialPageData.get("erm_privilege"),
             mrmPrivilege: initialPageData.get("mrm_privilege"),
+            attendanceTrackingPrivilege: initialPageData.get("attendance_tracking_privilege"),
             DataFileDownloadEnabled: initialPageData.get("data_file_download_enabled"),
             ExportOwnershipEnabled: initialPageData.get("export_ownership_enabled"),
             dataRegistryChoices: initialPageData.get("data_registry_choices"),

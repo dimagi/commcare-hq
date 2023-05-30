@@ -1,13 +1,13 @@
 import json
 from collections import OrderedDict
 from contextlib import contextmanager
-from copy import deepcopy
 from tempfile import NamedTemporaryFile
 
 from attrs import asdict
 
 from django.contrib import messages
 from django.core.exceptions import ValidationError
+from django.db.transaction import atomic
 from django.http import (
     Http404,
     HttpResponseBadRequest,
@@ -25,7 +25,6 @@ from django.views.decorators.http import require_POST
 from django.views.generic.base import TemplateView
 
 from corehq.apps.hqwebapp.decorators import waf_allow
-from dimagi.utils.couch.bulk import CouchTransaction
 from dimagi.utils.decorators.view import get_file
 from dimagi.utils.logging import notify_exception
 from dimagi.utils.web import get_url_base, json_response
@@ -103,13 +102,8 @@ def update_tables(request, domain, data_type_id=None):
             return json_response(table_json(data_type))
 
         elif request.method == 'DELETE':
-            couch_type = data_type._migration_get_couch_object()
-            try:
-                with CouchTransaction() as transaction:
-                    couch_type.recursive_delete(transaction)
-                data_type.delete(sync_to_couch=False)
-            finally:
-                clear_fixture_cache(domain)
+            data_type.delete()
+            clear_fixture_cache(domain)
             return json_response({})
         elif not request.method == 'PUT':
             return HttpResponseBadRequest()
@@ -149,17 +143,16 @@ def update_tables(request, domain, data_type_id=None):
                     "correctly formatted"),
             })
 
-        try:
-            with CouchTransaction() as transaction:
-                if data_type_id:
-                    data_type = _update_types(
-                        fields_patches, domain, data_type_id, data_tag, is_global, description, transaction)
-                    _update_items(fields_patches, domain, data_type_id, transaction)
-                else:
-                    data_type = _create_types(
-                        fields_patches, domain, data_tag, is_global, description, transaction)
-        finally:
-            clear_fixture_cache(domain)
+        with atomic():
+            if data_type_id:
+                assert data_type is not None, data_type_id
+                data_type = _update_types(
+                    data_type, fields_patches, data_tag, is_global, description)
+                _update_items(fields_patches, domain, data_type_id)
+            else:
+                data_type = _create_types(
+                    fields_patches, domain, data_tag, is_global, description)
+        clear_fixture_cache(domain)
         return json_response(table_json(data_type))
 
 
@@ -173,9 +166,8 @@ def table_json(table):
     return data
 
 
-def _update_types(patches, domain, data_type_id, data_tag, is_global, description, transaction):
-    data_type = LookupTable.objects.get(id=data_type_id)
-    fields_patches = deepcopy(patches)
+def _update_types(data_type, patches, data_tag, is_global, description):
+    fields_patches = dict(patches)
     old_fields = data_type.fields
     new_fixture_fields = []
     data_type.tag = data_tag
@@ -186,26 +178,19 @@ def _update_types(patches, domain, data_type_id, data_tag, is_global, descriptio
         if not any(patch):
             new_fixture_fields.append(old_field)
         if "update" in patch:
-            setattr(old_field, "field_name", patch["update"])
+            old_field.name = patch["update"]
             new_fixture_fields.append(old_field)
-        if "remove" in patch:
-            continue
     new_fields = list(fields_patches.keys())
     for new_field_name in new_fields:
         patch = fields_patches.pop(new_field_name)
         if "is_new" in patch:
             new_fixture_fields.append(TypeField(name=new_field_name))
     data_type.fields = new_fixture_fields
-
-    def update_sql_objects():
-        data_type.save()
-        return []
-
-    transaction.set_sql_save_action(LookupTable, update_sql_objects)
+    data_type.save()
     return data_type
 
 
-def _update_items(fields_patches, domain, data_type_id, transaction):
+def _update_items(fields_patches, domain, data_type_id):
     fields_json = "fields"
     for field_name, patch in fields_patches.items():
         if "update" in patch:
@@ -222,18 +207,13 @@ def _update_items(fields_patches, domain, data_type_id, transaction):
             fields_json = JsonSet(fields_json, [field_name], [])
 
     if fields_json != "fields":
-        def update_sql_objects():
-            query = LookupTableRow.objects.filter(
-                domain=domain,
-                table_id=data_type_id,
-            )
-            query.update(fields=fields_json)
-            return query
-
-        transaction.set_sql_save_action(LookupTableRow, update_sql_objects)
+        LookupTableRow.objects.filter(
+            domain=domain,
+            table_id=data_type_id,
+        ).update(fields=fields_json)
 
 
-def _create_types(fields_patches, domain, data_tag, is_global, description, transaction):
+def _create_types(fields_patches, domain, data_tag, is_global, description):
     data_type = LookupTable(
         domain=domain,
         tag=data_tag,
@@ -242,7 +222,7 @@ def _create_types(fields_patches, domain, data_tag, is_global, description, tran
         item_attributes=[],
         description=description,
     )
-    transaction.save(data_type)
+    data_type.save()
     return data_type
 
 
@@ -271,9 +251,15 @@ def data_table(request, domain):
     headers = [DataTablesColumn(header) for header in selected_sheet["headers"]]
     data_table["headers"] = DataTablesHeader(*headers)
     if selected_sheet["headers"] and selected_sheet["rows"]:
-        data_table["rows"] = [[format_datatables_data(x or "--", "a") for x in row] for row in selected_sheet["rows"]]
+        data_table["rows"] = [
+            [format_datatables_data(x or "--", "a") for x in row]
+            for row in selected_sheet["rows"]
+        ]
     else:
-        messages.info(request, _("No items are added in this table type. Upload using excel to add some rows to this table"))
+        messages.info(request, _(
+            "No items are added in this table type. "
+            "Upload using excel to add some rows to this table"
+        ))
         data_table["rows"] = [["--" for x in range(0, len(headers))]]
     return data_table
 
@@ -323,7 +309,7 @@ class UploadItemLists(TemplateView):
         file_ref = expose_cached_download(
             request.file.read(),
             file_extension=file_extention_from_filename(request.file.name),
-            expiry=1*60*60,
+            expiry=60 * 60,
         )
 
         # catch basic validation in the synchronous UI
@@ -431,7 +417,7 @@ class AsyncUploadFixtureAPIResponse(UploadFixtureAPIResponse):
 @waf_allow('XSS_BODY')
 @csrf_exempt
 @require_POST
-@api_auth
+@api_auth()
 @require_can_edit_fixtures
 @api_throttle
 def upload_fixture_api(request, domain, **kwargs):
@@ -447,7 +433,7 @@ def upload_fixture_api(request, domain, **kwargs):
 
 
 @csrf_exempt
-@api_auth
+@api_auth()
 @require_can_edit_fixtures
 def fixture_api_upload_status(request, domain, download_id, **kwargs):
     """

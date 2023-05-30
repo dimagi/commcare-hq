@@ -7,14 +7,11 @@ from django.utils.translation import gettext as _
 from django.utils.translation import gettext_lazy
 
 import dateutil
-from crispy_forms import bootstrap as twbscrispy
-from corehq.apps.hqwebapp import crispy as hqcrispy
 from crispy_forms import layout as crispy
 
 from corehq import privileges
 from dimagi.utils.dates import DateSpan
 
-from corehq.motech.models import ConnectionSettings
 from corehq.apps.export.filters import (
     AND,
     NOT,
@@ -28,7 +25,6 @@ from corehq.apps.export.filters import (
     SmsReceivedRangeFilter,
     UserTypeFilter,
 )
-from corehq.apps.export.models import IncrementalExport
 from corehq.apps.export.models.new import (
     CaseExportInstance,
     CaseExportInstanceFilters,
@@ -1077,98 +1073,3 @@ class FilterSmsESExportDownloadForm(BaseFilterExportDownloadForm):
                 data_bind='value: dateRange',
             ),
         ]
-
-
-class IncrementalExportForm(forms.ModelForm):
-
-    class Meta:
-        model = IncrementalExport
-        fields = [
-            'name',
-            'export_instance_id',
-            'connection_settings',
-            'active',
-        ]
-
-    def __init__(self, request, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.domain = request.domain
-        self.fields['export_instance_id'] = forms.ChoiceField(
-            label=_('Case Data Export'),
-            choices=_get_case_data_export_choices(request),
-        )
-        self.fields['connection_settings'].queryset = ConnectionSettings.objects.filter(domain=self.domain)
-
-        self.helper = HQFormHelper()
-        self.helper.layout = crispy.Layout(
-            crispy.Fieldset(
-                _('Incremental Export'),
-                crispy.Field('name'),
-                crispy.Field('export_instance_id'),
-                crispy.Field('connection_settings'),
-                crispy.Field('active'),
-            )
-        )
-        self.helper.add_input(
-            crispy.Submit('submit', _('Save'))
-        )
-        self.helper.render_required_fields = True
-
-    def save(self, commit=True):
-        self.instance.domain = self.domain
-        return super().save(commit)
-
-
-class UpdateIncrementalExportForm(forms.ModelForm):
-
-    class Meta:
-        model = IncrementalExport
-        fields = [
-            'id',
-            'name',
-            'export_instance_id',
-            'connection_settings',
-            'active',
-        ]
-
-    def __init__(self, request, *args, **kwargs):
-        super(UpdateIncrementalExportForm, self).__init__(*args, **kwargs)
-        self.domain = request.domain
-        self.fields['id'] = forms.CharField(widget=forms.HiddenInput())
-        self.fields['export_instance_id'] = forms.ChoiceField(
-            label=_('Case Data Export'),
-            choices=_get_case_data_export_choices(request),
-        )
-        self.fields['connection_settings'].queryset = ConnectionSettings.objects.filter(domain=self.domain)
-        self.helper = HQFormHelper()
-        self.helper.layout = crispy.Layout(
-            crispy.Field('id'),
-            crispy.Field('name'),
-            crispy.Field('export_instance_id'),
-            crispy.Field('connection_settings'),
-            crispy.Field('active'),
-            hqcrispy.FormActions(
-                twbscrispy.StrictButton(
-                    gettext_lazy("Update"),
-                    css_class='btn btn-primary',
-                    type='submit',
-                ),
-                crispy.HTML('<button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>'),
-                css_class="modal-footer",
-            )
-        )
-
-
-def _get_case_data_export_choices(request):
-    from corehq.apps.export.views.list import CaseExportListHelper
-    from corehq.apps.export.views.list import DailySavedExportListHelper
-
-    case_export_list_helper = CaseExportListHelper(request)
-    exports = [(exp['_id'], exp['name']) for exp in case_export_list_helper.get_saved_exports()]
-
-    daily_saved_list_helper = DailySavedExportListHelper(request)
-    exports.extend(
-        (exp['_id'], "{} - {}".format(exp['name'], _("Daily Saved Export")))
-        for exp in daily_saved_list_helper.get_saved_exports()
-    )
-    return exports

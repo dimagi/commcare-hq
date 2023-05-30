@@ -1,20 +1,23 @@
-from distutils.version import LooseVersion
+from urllib.parse import quote, urljoin
 
 from django.urls import reverse
 
-from urllib.parse import quote, urljoin
+from looseversion import LooseVersion
 
 from corehq.apps.app_manager import id_strings
 from corehq.apps.app_manager.exceptions import MediaResourceError
 from corehq.apps.app_manager.suite_xml.features.scheduler import (
     SchedulerFixtureContributor,
 )
+from corehq.apps.app_manager.suite_xml.post_process.endpoints import (
+    EndpointsHelper,
+)
 from corehq.apps.app_manager.suite_xml.post_process.instances import (
     EntryInstances,
 )
-from corehq.apps.app_manager.suite_xml.post_process.menu import GridMenuHelper
-from corehq.apps.app_manager.suite_xml.post_process.endpoints import (
-    EndpointsHelper,
+from corehq.apps.app_manager.suite_xml.post_process.menu import (
+    GridMenuHelper,
+    RootMenuAssertionsHelper,
 )
 from corehq.apps.app_manager.suite_xml.post_process.remote_requests import (
     RemoteRequestsHelper,
@@ -107,6 +110,8 @@ class SuiteGenerator(object):
             WorkflowHelper(self.suite, self.app, self.modules).update_suite()
         if self.app.use_grid_menus:
             GridMenuHelper(self.suite, self.app, self.modules).update_suite()
+        if self.app.custom_assertions:
+            RootMenuAssertionsHelper(self.suite, self.app, self.modules).update_suite()
 
         EntryInstances(self.suite, self.app, self.modules).update_suite()
         ResourceOverrideHelper(self.suite, self.app, self.modules).update_suite()

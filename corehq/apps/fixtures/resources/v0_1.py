@@ -1,13 +1,9 @@
-from uuid import UUID
-
 from django.db.models import Max
 
 from tastypie import fields as tp_f
 from tastypie.exceptions import BadRequest, ImmediateHttpResponse, NotFound
 from tastypie.http import HttpAccepted
 from tastypie.resources import Resource
-
-from dimagi.utils.couch.bulk import CouchTransaction
 
 from corehq.apps.api.fields import UUIDField
 from corehq.apps.api.resources import HqBaseResource
@@ -138,13 +134,8 @@ class LookupTableResource(HqBaseResource):
         if not query.exists():
             raise NotFound('Lookup table not found')
 
-        data_type = LookupTable._migration_get_couch_model_class().get(UUID(kwargs['pk']).hex)
-        try:
-            query.delete()
-            with CouchTransaction() as transaction:
-                data_type.recursive_delete(transaction)
-        finally:
-            clear_fixture_cache(kwargs['domain'])
+        query.delete()
+        clear_fixture_cache(kwargs['domain'])
         return ImmediateHttpResponse(response=HttpAccepted())
 
     def obj_create(self, bundle, request=None, **kwargs):
@@ -259,12 +250,8 @@ class LookupTableItemResource(HqBaseResource):
             row = LookupTableRow.objects.get(id=kwargs['pk'])
         except LookupTableRow.DoesNotExist:
             raise NotFound('Lookup table item not found')
-        try:
-            with CouchTransaction() as transaction:
-                row._migration_get_couch_object().recursive_delete(transaction)
-            row.delete(sync_to_couch=False)
-        finally:
-            clear_fixture_cache(row.domain)
+        row.delete()
+        clear_fixture_cache(row.domain)
         return ImmediateHttpResponse(response=HttpAccepted())
 
     def obj_create(self, bundle, request=None, **kwargs):

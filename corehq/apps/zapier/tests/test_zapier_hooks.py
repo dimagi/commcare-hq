@@ -8,7 +8,6 @@ from corehq.apps.zapier.consts import CASE_TYPE_REPEATER_CLASS_MAP, EventTypes
 from corehq.apps.zapier.models import ZapierSubscription
 from corehq.apps.zapier.tests.test_utils import bootrap_domain_for_zapier
 from corehq.apps.zapier.views import SubscribeView, UnsubscribeView
-from corehq.motech.repeaters.dbaccessors import delete_all_repeaters
 from corehq.motech.repeaters.models import CreateCaseRepeater, FormRepeater
 
 ZAPIER_URL = "https://zapier.com/hooks/standard/1387607/5ccf35a5a1944fc9bfdd2c94c28c9885/"
@@ -90,7 +89,6 @@ class TestZapierIntegration(TestCase):
         cls.web_user.delete(cls.domain, deleted_by=None)
         cls.application.delete()
         cls.domain_object.delete()
-        delete_all_repeaters()
         super(TestZapierIntegration, cls).tearDownClass()
 
     def tearDown(self):
@@ -142,8 +140,8 @@ class TestZapierIntegration(TestCase):
             )
             self.assertIsNotNone(subscription.repeater_id)
             self.assertNotEqual(subscription.repeater_id, '')
-            self.assertEqual(repeater_class.get_db().get(subscription.repeater_id)['doc_type'],
-                             repeater_class.__name__)
+            self.assertEqual(repeater_class.objects.get(repeater_id=subscription.repeater_id).repeater_type,
+                             repeater_class._repeater_type)
 
     def test_subscribe_error(self):
         data = {
@@ -167,7 +165,7 @@ class TestZapierIntegration(TestCase):
             application_id=self.application.get_id,
             form_xmlns=FORM_XMLNS
         )
-        self.assertNotEqual(len(FormRepeater.by_domain(TEST_DOMAIN)), 0)
+        self.assertNotEqual(len(FormRepeater.objects.by_domain(TEST_DOMAIN)), 0)
         data = {
             "target_url": ZAPIER_URL
         }
@@ -177,7 +175,7 @@ class TestZapierIntegration(TestCase):
                                     HTTP_AUTHORIZATION='ApiKey test:{}'.format(self.api_key))
         self.assertEqual(response.status_code, 200)
         self.assertEqual(ZapierSubscription.objects.all().count(), 0)
-        self.assertEqual(len(FormRepeater.by_domain(TEST_DOMAIN)), 0)
+        self.assertEqual(len(FormRepeater.objects.by_domain(TEST_DOMAIN)), 0)
 
     def test_unsubscribe_case(self):
         ZapierSubscription.objects.create(
@@ -188,7 +186,7 @@ class TestZapierIntegration(TestCase):
             application_id=self.application.get_id,
             case_type=CASE_TYPE,
         )
-        self.assertNotEqual(len(CreateCaseRepeater.by_domain(TEST_DOMAIN)), 0)
+        self.assertNotEqual(len(CreateCaseRepeater.objects.by_domain(TEST_DOMAIN)), 0)
         data = {
             "target_url": ZAPIER_URL
         }
@@ -198,7 +196,7 @@ class TestZapierIntegration(TestCase):
                                     HTTP_AUTHORIZATION='ApiKey test:{}'.format(self.api_key))
         self.assertEqual(response.status_code, 200)
         self.assertEqual(ZapierSubscription.objects.all().count(), 0)
-        self.assertEqual(len(CreateCaseRepeater.by_domain(TEST_DOMAIN)), 0)
+        self.assertEqual(len(CreateCaseRepeater.objects.by_domain(TEST_DOMAIN)), 0)
 
     def test_urls_conflict(self):
         data = {

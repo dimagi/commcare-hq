@@ -14,7 +14,6 @@
         "register_from_case_list": true,
         "subcases": true
     },
-    "admin_password": null,
     "admin_password_charset": "n",
     "amplifies_project": "not_set",
     "amplifies_workers": "not_set",
@@ -271,7 +270,9 @@
                             },
                             "doc_type": "OpenCaseAction",
                             "external_id": null,
-                            "name_path": "/data/what_is_the_mothers_name"
+                            "name_update": {
+                                "question_path": "/data/what_is_the_mothers_name"
+                            }
                         },
                         "open_referral": {
                             "condition": {
@@ -424,7 +425,9 @@
                             },
                             "doc_type": "OpenCaseAction",
                             "external_id": null,
-                            "name_path": "/data/how_are_you_today"
+                            "name_update": {
+                                "question_path": "/data/how_are_you_today"
+                            }
                         },
                         "open_referral": {
                             "condition": {
@@ -451,9 +454,13 @@
                         },
                         "subcases": [
                             {
-                                "case_name": "/data/voucher-name",
+                                "name_update": {
+                                    "question_path": "/data/voucher-name"
+                                },
                                 "case_properties": {
-                                    "how_many_babies": "/data/how_many_babies"
+                                    "how_many_babies": {
+                                        "question_path": "/data/how_many_babies"
+                                    }
                                 },
                                 "case_type": "voucher",
                                 "close_condition": {
@@ -476,7 +483,9 @@
                                 "repeat_context": null
                             },
                             {
-                                "case_name": "/data/babies/whats_the_babys_name",
+                                "name_update": {
+                                    "question_path": "/data/babies/whats_the_babys_name"
+                                },
                                 "case_properties": {
                                   "eye_color": {
                                     "doc_type": "ConditionalCaseUpdate",
@@ -915,7 +924,7 @@
                             },
                             "doc_type": "OpenCaseAction",
                             "external_id": null,
-                            "name_path": null
+                            "name_update": null
                         },
                         "open_referral": {
                             "condition": {
@@ -1323,7 +1332,7 @@
                             },
                             "doc_type": "OpenCaseAction",
                             "external_id": null,
-                            "name_path": null
+                            "name_update": null
                         },
                         "open_referral": {
                             "condition": {
@@ -1532,39 +1541,28 @@
     "multimedia_map": {},
     "name": "Maternal and Child Health",
     "phone_model": null,
-    "platform": "nokia/s40",
     "practice_mobile_worker_id": "",
     "profile": {
         "features": {
-            "sense": "false",
             "users": "true"
         },
         "properties": {
-            "ViewStyle": "v_chatterbox",
             "cc-autosync-freq": "freq-never",
             "cc-autoup-freq": "freq-never",
             "cc-content-valid": "yes",
             "cc-days-form-retain": "-1",
-            "cc-entry-mode": "cc-entry-quick",
             "cc-fuzzy-search-enabled": "yes",
             "cc-inflation-target-density": "none",
             "cc-login-duration-seconds": "86400",
-            "cc-login-images": "No",
             "cc-resize-images": "none",
-            "cc-send-procedure": "cc-send-http",
-            "cc-send-unsent": "cc-su-auto",
             "cc-show-incomplete": "no",
             "cc-show-saved": "no",
-            "cc-user-mode": "cc-u-normal",
-            "extra_key_action": "audio",
             "log_prop_daily": "log_never",
             "log_prop_weekly": "log_short",
             "logenabled": "Enabled",
             "loose_media": "no",
-            "password_format": "n",
             "purge-freq": "0",
             "restore-tolerance": "loose",
-            "server-tether": "push-only",
             "unsent-number-limit": "5",
             "unsent-time-limit": "5",
             "user_reg_server": "required"
@@ -1575,12 +1573,10 @@
     "short_odk_media_url": null,
     "short_odk_url": null,
     "short_url": null,
-    "text_input": "roman",
     "translation_strategy": "select-known",
     "translations": {},
     "use_custom_suite": false,
     "use_grid_menus": false,
-    "use_j2me_endpoint": false,
     "user_type": null,
     "vellum_case_management": true,
     "version": 50

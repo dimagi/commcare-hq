@@ -1,8 +1,9 @@
 -r base-requirements.in
 
 django-extensions
-docutils
 myst-parser
 Sphinx
 sphinxcontrib-django
 sphinx-rtd-theme
+
+urllib3<=1.26.12  # fix doc tests AssertionError: Current app already created

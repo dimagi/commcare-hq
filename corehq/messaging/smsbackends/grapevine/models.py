@@ -38,7 +38,7 @@ class GrapevineException(Exception):
 
 class SQLGrapevineBackend(SQLSMSBackend):
 
-    url = 'http://www.gvi.bms9.vine.co.za/httpInputhandler/ApplinkUpload'
+    url = 'https://bms27.vine.co.za/httpInputhandler/ApplinkUpload'
     show_inbound_api_key_during_edit = False
 
     class Meta(object):

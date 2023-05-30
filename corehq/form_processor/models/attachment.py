@@ -147,6 +147,7 @@ class Attachment(IsImageMixin):
 class AttachmentContent:
     content_type = attr.ib()
     content_stream = attr.ib()
+    content_length = attr.ib()
 
     @property
     def content_body(self):

@@ -28,19 +28,28 @@ hqDefine('users/js/filtered_download', [
             return self.domains() && self.domains().length > 0;
         });
 
-        self.count = ko.observable(null);
-        self.buttonHTML = ko.computed(function () {
-            if (self.count() === null) {
-                return "<i class='fa fa-spin fa-spinner'></i>";
+        self.user_count = ko.observable(null);
+        self.group_count = ko.observable(null);
+        self.areStatsLoading = ko.computed(function () {
+            return self.user_count() === null;
+        });
+        self.haveStatsLoaded = ko.computed(function () {
+            return !self.areStatsLoading();
+        });
+        self.statsText = ko.computed(function () {
+            var template = self.user_count() === 1 ? gettext("<%- user_count %> user") : gettext("<%- user_count %> users");
+            if (self.group_count() !== 0 && self.columns() !== 'usernames') {
+                template += self.group_count() === 1 ? gettext(" and <%- group_count %> group") : gettext(" and <%- group_count %> groups");
             }
-            var template = self.count() === 1 ? gettext("Download <%- count %> user") : gettext("Download <%- count %> users");
             return _.template(template)({
-                count: self.count(),
+                user_count: self.user_count(),
+                group_count: self.group_count(),
             });
         });
 
         self.countUsers = function () {
-            self.count(null);
+            self.user_count(null);
+            self.group_count(null);
             var data = {
                 search_string: self.search_string(),
                 domains: self.domains(),
@@ -58,7 +67,8 @@ hqDefine('users/js/filtered_download', [
                 url: options.url,
                 data: data,
                 success: function (data) {
-                    self.count(data.count);
+                    self.user_count(data.user_count);
+                    self.group_count(data.group_count);
                 },
                 error: function () {
                     alert(gettext("Error determining number of matching users"));

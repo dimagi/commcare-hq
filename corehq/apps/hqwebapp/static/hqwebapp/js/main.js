@@ -442,7 +442,8 @@ hqDefine('hqwebapp/js/main', [
 
         var $unsupportedBrowser = $("#unsupported-browser");
         if (unsupportedBrowser()) {
-            $unsupportedBrowser.removeClass('hide');
+            $unsupportedBrowser.removeClass('hide'); // todo remove after bootstrap5 migration
+            $unsupportedBrowser.removeClass('d-none');
         }
 
         // EULA modal

@@ -244,7 +244,7 @@ class AdminRestoreView(TemplateView):
             return HttpResponseBadRequest(msg)
 
         if not self._validate_user_access(self.user):
-            raise Http404()
+            return HttpResponseNotFound('User %s not found.' % full_username)
 
         self.app_id = kwargs.get('app_id', None)
 
@@ -262,9 +262,11 @@ class AdminRestoreView(TemplateView):
         return super(AdminRestoreView, self).get(request, *args, **kwargs)
 
     def _get_restore_response(self):
+        params = get_restore_params(self.request, self.domain)
+        params['as_user'] = self.user.username
         return get_restore_response(
-            self.domain, self.user, app_id=self.app_id,
-            **get_restore_params(self.request, self.domain)
+            self.domain, self.request.couch_user, app_id=self.app_id,
+            **params
         )
 
     @staticmethod
@@ -342,7 +344,7 @@ class AdminRestoreView(TemplateView):
         else:
             if response.status_code in (401, 404):
                 # corehq.apps.ota.views.get_restore_response couldn't find user or user didn't have perms
-                xml_payload = E.error(response.content)
+                xml_payload = E.error(response.content.decode())
             elif response.status_code == 412:
                 # RestoreConfig.get_response returned HttpResponse 412. Response content is already XML
                 xml_payload = etree.fromstring(response.content)

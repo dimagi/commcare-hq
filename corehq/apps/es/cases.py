@@ -15,14 +15,20 @@ closed after May 1st.
          .OR(case_es.is_closed(False),
              case_es.closed_range(gte=datetime.date(2015, 05, 01))))
 """
+from datetime import datetime
+
+from dimagi.utils.parsing import json_format_datetime
+
 from . import aggregations, filters
-from .client import ElasticDocumentAdapter
+from .client import ElasticDocumentAdapter, create_document_adapter
 from .es_query import HQESQuery
-from .transient_util import get_adapter_mapping, from_dict_with_possible_id
+from .index.settings import IndexSettingsKey
+
+HQ_CASES_INDEX_CANONICAL_NAME = 'cases'
 
 
 class CaseES(HQESQuery):
-    index = 'cases'
+    index = HQ_CASES_INDEX_CANONICAL_NAME
 
     @property
     def builtin_filters(self):
@@ -46,16 +52,45 @@ class CaseES(HQESQuery):
 
 class ElasticCase(ElasticDocumentAdapter):
 
-    _index_name = "hqcases_2016-03-04"
-    type = "case"
+    settings_key = IndexSettingsKey.CASES
+    canonical_name = HQ_CASES_INDEX_CANONICAL_NAME
 
     @property
     def mapping(self):
-        return get_adapter_mapping(self)
+        from .mappings.case_mapping import CASE_MAPPING
+        return CASE_MAPPING
 
-    @classmethod
-    def from_python(cls, doc):
-        return from_dict_with_possible_id(doc)
+    @property
+    def model_cls(self):
+        from corehq.form_processor.models.cases import CommCareCase
+        return CommCareCase
+
+    def _from_dict(self, case):
+        """
+        Takes in case dict and applies required transformation to make it suitable for ES.
+
+        :param case: an instance of ``dict`` which is ``CommcareCase.to_json()``
+        """
+        from corehq.pillows.utils import get_user_type
+
+        if not case.get("owner_id"):
+            if case.get("user_id"):
+                case["owner_id"] = case["user_id"]
+
+        case['owner_type'] = get_user_type(case.get("owner_id", None))
+        case['inserted_at'] = json_format_datetime(datetime.utcnow())
+
+        if 'backend_id' not in case:
+            case['backend_id'] = 'sql'
+
+        return super()._from_dict(case)
+
+
+case_adapter = create_document_adapter(
+    ElasticCase,
+    "hqcases_2016-03-04",
+    "case",
+)
 
 
 def opened_range(gt=None, gte=None, lt=None, lte=None):

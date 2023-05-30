@@ -12,9 +12,12 @@ architect==0.6.0
     # via -r base-requirements.in
 asgiref==3.5.0
     # via django
+async-timeout==4.0.2
+    # via redis
 attrs==21.4.0
     # via
     #   -r base-requirements.in
+    #   fiona
     #   jsonschema
 beaker==1.11.0
     # via oic
@@ -22,9 +25,9 @@ beautifulsoup4==4.10.0
     # via -r test-requirements.in
 billiard==3.6.4.0
     # via celery
-boto3==1.24.28
+boto3==1.24.96
     # via -r base-requirements.in
-botocore==1.27.28
+botocore==1.27.96
     # via
     #   boto3
     #   s3transfer
@@ -36,8 +39,10 @@ celery==5.2.7
     # via
     #   -r base-requirements.in
     #   django-celery-results
-certifi==2022.9.24
+certifi==2022.12.7
     # via
+    #   fiona
+    #   pyproj
     #   requests
     #   sentry-sdk
 cffi==1.14.3
@@ -46,22 +51,28 @@ cffi==1.14.3
     #   csiphash
     #   pynacl
 chardet==3.0.4
-    # via
-    #   ghdiff
-    #   requests
+    # via ghdiff
+charset-normalizer==3.1.0
+    # via requests
 click==8.1.3
     # via
     #   celery
     #   click-didyoumean
     #   click-plugins
     #   click-repl
+    #   cligj
+    #   fiona
     #   pip-tools
 click-didyoumean==0.3.0
     # via celery
 click-plugins==1.1.1
-    # via celery
+    # via
+    #   celery
+    #   fiona
 click-repl==0.2.0
     # via celery
+cligj==0.7.2
+    # via fiona
 cloudant==2.14.0
     # via jsonobject-couchdbkit
 colorama==0.4.4
@@ -70,9 +81,9 @@ commcaretranslationchecker==0.9.7
     # via -r base-requirements.in
 contextlib2==21.6.0
     # via schema
-coverage==5.5
+coverage==7.1.0
     # via -r test-requirements.in
-cryptography==3.4.8
+cryptography==39.0.1
     # via
     #   jwcrypto
     #   oic
@@ -93,12 +104,14 @@ defusedxml==0.7.1
     #   -r base-requirements.in
     #   oic
 deprecated==1.2.10
-    # via pygithub
-diff-match-patch==20200713
+    # via
+    #   jwcrypto
+    #   pygithub
+diff-match-patch==20230430
     # via -r base-requirements.in
 dimagi-memoized==1.1.3
     # via -r base-requirements.in
-django==3.2.16
+django==3.2.19
     # via
     #   -r base-requirements.in
     #   django-appconf
@@ -137,7 +150,7 @@ django-crispy-forms==1.10.0
     # via -r base-requirements.in
 django-cte==1.2.0
     # via -r base-requirements.in
-django-field-audit==1.2.3
+django-field-audit==1.2.6
     # via -r base-requirements.in
 django-formtools==2.3
     # via
@@ -153,13 +166,13 @@ django-otp==1.1.3
     # via
     #   -r base-requirements.in
     #   django-two-factor-auth
-django-phonenumber-field==5.2.0
+django-phonenumber-field==6.4.0
     # via
     #   -r base-requirements.in
     #   django-two-factor-auth
 django-prbac==1.0.1
     # via -r base-requirements.in
-django-recaptcha==2.0.6
+django-recaptcha==3.0.0
     # via -r base-requirements.in
 django-redis==4.12.1
     # via -r base-requirements.in
@@ -179,7 +192,7 @@ django-websocket-redis @ https://raw.githubusercontent.com/dimagi/django-websock
     # via -r base-requirements.in
 djangorestframework==3.13.1
     # via -r base-requirements.in
-dropbox==9.3.0
+dropbox==11.36.0
     # via -r base-requirements.in
 elasticsearch2==2.5.1
     # via -r base-requirements.in
@@ -193,16 +206,24 @@ eulxml==1.1.3
     # via -r base-requirements.in
 fakecouch==0.0.15
     # via -r test-requirements.in
-faker==14.2.0
+faker==18.6.1
     # via -r test-requirements.in
+fiona==1.9.3
+    # via geopandas
 flaky==3.7.0
     # via -r test-requirements.in
 freezegun==1.1.0
     # via -r test-requirements.in
-future==0.18.2
+future==0.18.3
     # via
     #   pyjwkest
     #   radon
+geographiclib==2.0
+    # via geopy
+geopandas==0.12.2
+    # via -r base-requirements.in
+geopy==2.3.0
+    # via -r base-requirements.in
 gevent==21.8.0
     # via
     #   -r base-requirements.in
@@ -236,6 +257,8 @@ gunicorn==20.0.4
     # via -r base-requirements.in
 hiredis==2.0.0
     # via -r base-requirements.in
+hl7apy==1.3.4
+    # via -r base-requirements.in
 httpagentparser==1.9.0
     # via -r base-requirements.in
 httplib2==0.20.4
@@ -244,22 +267,22 @@ httplib2==0.20.4
     #   google-auth-httplib2
 idna==2.10
     # via requests
-importlib-metadata==4.12.0
-    # via markdown
+importlib-metadata==6.0.0
+    # via
+    #   fiona
+    #   markdown
 intervaltree==3.1.0
     # via ddtrace
 iso8601==1.1.0
     # via -r base-requirements.in
 isodate==0.6.1
     # via python3-saml
-jinja2==2.11.3
+jinja2==3.1.2
     # via -r base-requirements.in
 jmespath==0.10.0
     # via
     #   boto3
     #   botocore
-json-delta==2.0
-    # via -r base-requirements.in
 jsonfield==2.1.1
     # via
     #   -r base-requirements.in
@@ -272,15 +295,15 @@ jsonobject-couchdbkit==1.0.1
     # via -r base-requirements.in
 jsonpath-ng @ https://github.com/kaapstorm/python-jsonpath-rw/raw/wherenot+find_or_create/wheel/jsonpath_ng-1.5.2.2-py3-none-any.whl
     # via -r base-requirements.in
-jsonschema==3.2.0
+jsonschema==4.17.3
     # via -r base-requirements.in
-jwcrypto==0.8
+jwcrypto==1.4
     # via django-oauth-toolkit
 kafka-python==1.4.7
     # via -r base-requirements.in
 kombu==5.2.4
     # via celery
-laboratory==0.2.0
+looseversion==1.0.3
     # via -r base-requirements.in
 lxml==4.9.1
     # via
@@ -294,12 +317,15 @@ mako==1.2.2
     #   oic
 mando==0.6.4
     # via radon
-markdown==3.3.6
+markdown==3.4.1
     # via -r base-requirements.in
-markupsafe==1.1.1
+markupsafe==2.1.2
     # via
     #   jinja2
     #   mako
+    #   werkzeug
+munch==2.5.0
+    # via fiona
 nose==1.3.7
     # via
     #   -r test-requirements.in
@@ -307,6 +333,10 @@ nose==1.3.7
     #   nose-exclude
 nose-exclude==0.5.0
     # via -r test-requirements.in
+numpy==1.24.3
+    # via
+    #   pandas
+    #   shapely
 oauthlib==3.1.0
     # via
     #   django-oauth-toolkit
@@ -317,15 +347,20 @@ openpyxl==3.0.9
     # via
     #   -r base-requirements.in
     #   commcaretranslationchecker
-packaging==21.3
-    # via build
+packaging==23.0
+    # via
+    #   -r base-requirements.in
+    #   build
+    #   geopandas
+pandas==2.0.1
+    # via geopandas
 pep517==0.10.0
     # via build
 phonenumberslite==8.12.48
     # via -r base-requirements.in
 pickle5==0.0.11
     # via -r base-requirements.in
-pillow==9.0.1
+pillow==9.3.0
     # via
     #   -r base-requirements.in
     #   reportlab
@@ -335,11 +370,12 @@ ply==3.11
     # via
     #   eulxml
     #   jsonpath-ng
+    #   stone
 polib==1.1.1
     # via -r base-requirements.in
 prometheus-client==0.14.1
     # via -r base-requirements.in
-prompt-toolkit==3.0.29
+prompt-toolkit==3.0.36
     # via click-repl
 protobuf==3.18.3
     # via
@@ -348,7 +384,7 @@ protobuf==3.18.3
     #   googleapis-common-protos
 psycogreen==1.0.2
     # via -r base-requirements.in
-psycopg2==2.8.6
+psycopg2==2.9.6
     # via
     #   -r base-requirements.in
     #   sqlalchemy-postgres-copy
@@ -374,18 +410,21 @@ pyjwkest==1.4.2
     # via oic
 pyjwt==2.4.0
     # via
+    #   -r base-requirements.in
     #   pygithub
     #   twilio
 pynacl==1.5.0
     # via pygithub
-pyopenssl==20.0.1
+pyopenssl==23.0.0
     # via -r sso-requirements.in
 pyparsing==3.0.7
-    # via
-    #   httplib2
-    #   packaging
+    # via httplib2
 pyphonetics==0.5.3
     # via -r base-requirements.in
+pypng==0.20220715.0
+    # via qrcode
+pyproj==3.5.0
+    # via geopandas
 pyrsistent==0.17.3
     # via jsonschema
 python-dateutil==2.8.2
@@ -395,9 +434,10 @@ python-dateutil==2.8.2
     #   django-tastypie
     #   faker
     #   freezegun
+    #   pandas
 python-imap==1.0.0
     # via -r base-requirements.in
-python-magic==0.4.22
+python-magic==0.4.27
     # via -r base-requirements.in
 python-mimeparse==1.6.0
     # via django-tastypie
@@ -408,12 +448,13 @@ pytz==2022.1
     #   celery
     #   django
     #   djangorestframework
+    #   pandas
     #   twilio
 pyyaml==6.0
     # via -r base-requirements.in
 pyzxcvbn==0.8.0
     # via -r base-requirements.in
-qrcode==4.0.4
+qrcode==7.4.2
     # via
     #   -r base-requirements.in
     #   django-two-factor-auth
@@ -423,7 +464,7 @@ radon==5.1.0
     # via -r test-requirements.in
 rcssmin==1.1.0
     # via django-compressor
-redis==3.5.3
+redis==4.5.4
     # via
     #   -r base-requirements.in
     #   django-redis
@@ -431,7 +472,7 @@ redis==3.5.3
     #   django-websocket-redis
 reportlab==3.6.9
     # via -r base-requirements.in
-requests==2.25.1
+requests==2.28.2
     # via
     #   -r base-requirements.in
     #   cloudant
@@ -463,10 +504,14 @@ s3transfer==0.6.0
     # via boto3
 schema==0.7.5
     # via -r base-requirements.in
-sentry-sdk==1.9.0
+sentry-sdk==1.19.1
     # via -r base-requirements.in
-sh==1.14.2
+sh==2.0.3
     # via -r base-requirements.in
+shapely==2.0.1
+    # via
+    #   -r base-requirements.in
+    #   geopandas
 simpleeval @ git+https://github.com/dimagi/simpleeval.git@d85c5a9f972c0f0416a1716bb06d1a3ebc83e7ec
     # via -r base-requirements.in
 simplejson==3.17.6
@@ -493,16 +538,15 @@ six==1.16.0
     #   jsonobject
     #   jsonobject-couchdbkit
     #   jsonpath-ng
-    #   jsonschema
     #   mando
+    #   munch
     #   pyjwkest
-    #   pyopenssl
     #   python-dateutil
     #   pyzxcvbn
-    #   qrcode
     #   quickcache
     #   requests-mock
     #   sqlalchemy-postgres-copy
+    #   stone
     #   tenacity
 socketpool==0.5.3
     # via -r base-requirements.in
@@ -520,8 +564,10 @@ sqlalchemy==1.3.19
     #   sqlalchemy-postgres-copy
 sqlalchemy-postgres-copy==0.5.0
     # via -r test-requirements.in
-sqlparse==0.3.1
+sqlparse==0.4.4
     # via django
+stone==3.3.1
+    # via dropbox
 stripe==4.1.0
     # via -r base-requirements.in
 suds-py3==1.4.5.0
@@ -548,13 +594,16 @@ typing-extensions==4.1.1
     # via
     #   django-countries
     #   oic
+    #   qrcode
+tzdata==2023.3
+    # via pandas
 ua-parser==0.10.0
     # via user-agents
 unidecode==1.2.0
     # via pyphonetics
 uritemplate==4.1.1
     # via google-api-python-client
-urllib3==1.26.5
+urllib3==1.26.15
     # via
     #   botocore
     #   elasticsearch2
@@ -573,9 +622,9 @@ vine==5.0.0
     #   kombu
 wcwidth==0.2.5
     # via prompt-toolkit
-werkzeug==1.0.1
+werkzeug==2.2.3
     # via -r base-requirements.in
-wheel==0.37.0
+wheel==0.38.1
     # via pip-tools
 wrapt==1.12.1
     # via deprecated
@@ -593,14 +642,13 @@ zope-interface==5.4.0
     # via gevent
 
 # The following packages are considered to be unsafe in a requirements file:
-pip==21.3.1
+pip==23.0.1
     # via pip-tools
-setuptools==50.3.0
+setuptools==67.3.2
     # via
     #   django-websocket-redis
     #   gevent
     #   gunicorn
-    #   jsonschema
     #   pip-tools
     #   zope-event
     #   zope-interface

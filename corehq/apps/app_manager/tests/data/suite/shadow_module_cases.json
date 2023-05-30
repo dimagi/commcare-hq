@@ -1,14 +1,8 @@
 {
-  "multimedia_map": {
-    
-  },
-  "build_langs": [
-    "en"
-  ],
+  "multimedia_map": {},
   "auto_gps_capture": false,
   "deployment_date": null,
   "user_type": null,
-  "text_input": "roman",
   "secure_submissions": false,
   "build_broken": false,
   "phone_model": null,
@@ -16,32 +10,23 @@
   "user_registration": {
     "doc_type": "UserRegistrationForm",
     "xmlns": null,
-    "name": {
-      
-    },
+    "name": {},
     "password_path": "password",
     "auto_gps_capture": false,
     "schedule_form_id": null,
     "show_count": false,
     "version": null,
     "no_vellum": false,
-    "form_links": [
-      
-    ],
+    "form_links": [],
     "post_form_workflow": "default",
     "form_type": "user_registration",
-    "data_paths": {
-      
-    },
+    "data_paths": {},
     "unique_id": "dfe940fb315ad613e1e9f62e4704d7ae7a6e15f2",
     "username_path": "username"
   },
-  "copy_history": [
-    
-  ],
+  "copy_history": [],
   "is_released": false,
   "use_custom_suite": false,
-  "platform": "nokia\/s40",
   "admin_password": null,
   "build_spec": {
     "doc_type": "BuildSpec",
@@ -50,36 +35,24 @@
     "latest": true
   },
   "build_comment": null,
-  "success_message": {
-    
-  },
+  "success_message": {},
   "profile": {
     "features": {
-      "users": "true",
-      "sense": "false"
+      "users": "true"
     },
     "properties": {
       "cc-days-form-retain": "-1",
       "cc-show-saved": "yes",
       "restore-tolerance": "loose",
-      "cc-user-mode": "cc-u-normal",
       "cc-fuzzy-search-enabled": "yes",
       "cc-autoup-freq": "freq-never",
       "purge-freq": "0",
-      "server-tether": "push-only",
       "user_reg_server": "required",
-      "extra_key_action": "audio",
       "log_prop_daily": "log_never",
-      "ViewStyle": "v_chatterbox",
       "cc-resize-images": "none",
-      "cc-entry-mode": "cc-entry-quick",
-      "cc-send-procedure": "cc-send-http",
-      "cc-login-images": "No",
       "log_prop_weekly": "log_short",
       "cc-show-incomplete": "yes",
-      "cc-send-unsent": "cc-su-auto",
       "loose_media": "no",
-      "password_format": "n",
       "unsent-number-limit": "5",
       "cc-content-valid": "no",
       "logenabled": "Enabled"
@@ -90,9 +63,7 @@
   "cloudcare_enabled": false,
   "description": null,
   "recipients": "",
-  "translations": {
-    
-  },
+  "translations": {},
   "built_on": null,
   "built_with": {
     "doc_type": "BuildRecord",
@@ -106,14 +77,10 @@
     "en"
   ],
   "application_version": "2.0",
-  "logo_refs": {
-    
-  },
+  "logo_refs": {},
   "build_broken_reason": null,
   "doc_type": "Application",
-  "cached_properties": {
-    
-  },
+  "cached_properties": {},
   "name": "Test: Shadow Modules with Cases",
   "amplifies_project": "not_set",
   "modules": [
@@ -127,15 +94,9 @@
       "referral_list": {
         "doc_type": "CaseList",
         "show": false,
-        "media_audio": {
-          
-        },
-        "media_image": {
-          
-        },
-        "label": {
-          
-        }
+        "media_audio": {},
+        "media_image": {},
+        "label": {}
       },
       "media_image": {
         "en": ""
@@ -150,9 +111,7 @@
         "doc_type": "DetailPair",
         "short": {
           "doc_type": "Detail",
-          "lookup_responses": [
-            
-          ],
+          "lookup_responses": [],
           "sort_elements": [
             {
               "field": "name",
@@ -161,9 +120,7 @@
               "doc_type": "SortElement"
             }
           ],
-          "tabs": [
-            
-          ],
+          "tabs": [],
           "lookup_name": null,
           "lookup_image": null,
           "filter": null,
@@ -172,9 +129,7 @@
           "lookup_enabled": false,
           "pull_down_tile": false,
           "use_case_tiles": false,
-          "lookup_extras": [
-            
-          ],
+          "lookup_extras": [],
           "lookup_action": null,
           "display": "short",
           "columns": [
@@ -184,9 +139,7 @@
               "filter_xpath": "",
               "format": "plain",
               "isTab": false,
-              "enum": [
-                
-              ],
+              "enum": [],
               "header": {
                 "en": "Name, Normal Module"
               },
@@ -203,15 +156,9 @@
         },
         "long": {
           "doc_type": "Detail",
-          "lookup_responses": [
-            
-          ],
-          "sort_elements": [
-            
-          ],
-          "tabs": [
-            
-          ],
+          "lookup_responses": [],
+          "sort_elements": [],
+          "tabs": [],
           "lookup_name": null,
           "lookup_image": null,
           "filter": null,
@@ -220,9 +167,7 @@
           "lookup_enabled": false,
           "pull_down_tile": null,
           "use_case_tiles": null,
-          "lookup_extras": [
-            
-          ],
+          "lookup_extras": [],
           "lookup_action": null,
           "display": "long",
           "columns": [
@@ -232,9 +177,7 @@
               "filter_xpath": "",
               "format": "plain",
               "late_flag": 30,
-              "enum": [
-                
-              ],
+              "enum": [],
               "header": {
                 "en": "Name"
               },
@@ -244,19 +187,11 @@
               "model": "case",
               "graph_configuration": {
                 "doc_type": "GraphConfiguration",
-                "series": [
-                  
-                ],
-                "locale_specific_config": {
-                  
-                },
+                "series": [],
+                "locale_specific_config": {},
                 "graph_type": null,
-                "config": {
-                  
-                },
-                "annotations": [
-                  
-                ]
+                "config": {},
+                "annotations": []
               },
               "advanced": ""
             }
@@ -273,9 +208,7 @@
         "media_image": {
           "en": ""
         },
-        "label": {
-          
-        }
+        "label": {}
       },
       "module_filter": "",
       "doc_type": "Module",
@@ -297,15 +230,9 @@
       "task_list": {
         "doc_type": "CaseList",
         "show": false,
-        "media_audio": {
-          
-        },
-        "media_image": {
-          
-        },
-        "label": {
-          
-        }
+        "media_audio": {},
+        "media_image": {},
+        "label": {}
       },
       "fixture_select": {
         "xpath": "",
@@ -319,7 +246,7 @@
       "forms": [
         {
           "doc_type": "Form",
-          "xmlns": "http:\/\/openrosa.org\/formdesigner\/9750C94C-A30B-4346-84AC-40E9A46BCEE1",
+          "xmlns": "http://openrosa.org/formdesigner/9750C94C-A30B-4346-84AC-40E9A46BCEE1",
           "name": {
             "en": "Add Case"
           },
@@ -332,13 +259,9 @@
           "requires": "none",
           "actions": {
             "doc_type": "FormActions",
-            "subcases": [
-              
-            ],
+            "subcases": [],
             "usercase_preload": {
-              "preload": {
-                
-              },
+              "preload": {},
               "doc_type": "PreloadAction",
               "condition": {
                 "operator": "=",
@@ -350,9 +273,7 @@
             },
             "update_case": {
               "doc_type": "UpdateCaseAction",
-              "update": {
-                
-              },
+              "update": {},
               "condition": {
                 "answer": null,
                 "type": "always",
@@ -384,7 +305,9 @@
               }
             },
             "open_case": {
-              "name_path": "\/data\/name",
+              "name_update": {
+                "question_path": "/data/name"
+              },
               "doc_type": "OpenCaseAction",
               "external_id": null,
               "condition": {
@@ -397,9 +320,7 @@
             },
             "usercase_update": {
               "doc_type": "UpdateCaseAction",
-              "update": {
-                
-              },
+              "update": {},
               "condition": {
                 "operator": "=",
                 "doc_type": "FormActionCondition",
@@ -420,9 +341,7 @@
               "followup_date": null
             },
             "referral_preload": {
-              "preload": {
-                
-              },
+              "preload": {},
               "doc_type": "PreloadAction",
               "condition": {
                 "operator": "=",
@@ -433,9 +352,7 @@
               }
             },
             "case_preload": {
-              "preload": {
-                
-              },
+              "preload": {},
               "doc_type": "PreloadAction",
               "condition": {
                 "answer": null,
@@ -461,9 +378,7 @@
           "media_image": {
             "en": ""
           },
-          "form_links": [
-            
-          ],
+          "form_links": [],
           "show_count": false,
           "form_type": "module_form",
           "form_filter": "",
@@ -471,7 +386,7 @@
         },
         {
           "doc_type": "Form",
-          "xmlns": "http:\/\/openrosa.org\/formdesigner\/72ED647F-C2C2-4ADB-A7B4-61718E31D6A8",
+          "xmlns": "http://openrosa.org/formdesigner/72ED647F-C2C2-4ADB-A7B4-61718E31D6A8",
           "name": {
             "en": "Update Case"
           },
@@ -484,13 +399,9 @@
           "requires": "case",
           "actions": {
             "doc_type": "FormActions",
-            "subcases": [
-              
-            ],
+            "subcases": [],
             "usercase_preload": {
-              "preload": {
-                
-              },
+              "preload": {},
               "doc_type": "PreloadAction",
               "condition": {
                 "operator": "=",
@@ -504,7 +415,7 @@
               "doc_type": "UpdateCaseAction",
               "update": {
                 "name": {
-                  "question_path": "\/data\/name",
+                  "question_path": "/data/name",
                   "update_mode": "always"
                 }
               },
@@ -539,7 +450,7 @@
               }
             },
             "open_case": {
-              "name_path": null,
+              "name_update": null,
               "doc_type": "OpenCaseAction",
               "external_id": null,
               "condition": {
@@ -552,9 +463,7 @@
             },
             "usercase_update": {
               "doc_type": "UpdateCaseAction",
-              "update": {
-                
-              },
+              "update": {},
               "condition": {
                 "operator": "=",
                 "doc_type": "FormActionCondition",
@@ -575,9 +484,7 @@
               "followup_date": null
             },
             "referral_preload": {
-              "preload": {
-                
-              },
+              "preload": {},
               "doc_type": "PreloadAction",
               "condition": {
                 "operator": "=",
@@ -589,7 +496,7 @@
             },
             "case_preload": {
               "preload": {
-                "\/data\/name": "name"
+                "/data/name": "name"
               },
               "doc_type": "PreloadAction",
               "condition": {
@@ -616,9 +523,7 @@
           "media_image": {
             "en": ""
           },
-          "form_links": [
-            
-          ],
+          "form_links": [],
           "show_count": false,
           "form_type": "module_form",
           "form_filter": "",
@@ -631,58 +536,38 @@
         "short": {
           "doc_type": "Detail",
           "lookup_name": null,
-          "sort_elements": [
-            
-          ],
-          "tabs": [
-            
-          ],
-          "lookup_responses": [
-            
-          ],
+          "sort_elements": [],
+          "tabs": [],
+          "lookup_responses": [],
           "lookup_image": null,
           "filter": null,
           "persist_tile_on_forms": null,
           "custom_xml": null,
           "lookup_enabled": false,
-          "lookup_extras": [
-            
-          ],
+          "lookup_extras": [],
           "use_case_tiles": null,
           "pull_down_tile": null,
           "lookup_action": null,
           "display": "short",
-          "columns": [
-            
-          ]
+          "columns": []
         },
         "long": {
           "doc_type": "Detail",
           "lookup_name": null,
-          "sort_elements": [
-            
-          ],
-          "tabs": [
-            
-          ],
-          "lookup_responses": [
-            
-          ],
+          "sort_elements": [],
+          "tabs": [],
+          "lookup_responses": [],
           "lookup_image": null,
           "filter": null,
           "persist_tile_on_forms": null,
           "custom_xml": null,
           "lookup_enabled": false,
-          "lookup_extras": [
-            
-          ],
+          "lookup_extras": [],
           "use_case_tiles": null,
           "pull_down_tile": null,
           "lookup_action": null,
           "display": "long",
-          "columns": [
-            
-          ]
+          "columns": []
         }
       },
       "media_audio": {
@@ -696,29 +581,17 @@
     {
       "case_list_form": {
         "doc_type": "CaseListForm",
-        "media_image": {
-          
-        },
-        "media_audio": {
-          
-        },
+        "media_image": {},
+        "media_audio": {},
         "form_id": null,
-        "label": {
-          
-        }
+        "label": {}
       },
       "case_list": {
         "doc_type": "CaseList",
         "show": false,
-        "media_audio": {
-          
-        },
-        "media_image": {
-          
-        },
-        "label": {
-          
-        }
+        "media_audio": {},
+        "media_image": {},
+        "label": {}
       },
       "put_in_root": false,
       "root_module_id": null,
@@ -727,58 +600,38 @@
         "short": {
           "doc_type": "Detail",
           "lookup_name": null,
-          "sort_elements": [
-            
-          ],
-          "tabs": [
-            
-          ],
-          "lookup_responses": [
-            
-          ],
+          "sort_elements": [],
+          "tabs": [],
+          "lookup_responses": [],
           "lookup_image": null,
           "filter": null,
           "persist_tile_on_forms": null,
           "custom_xml": null,
           "lookup_enabled": false,
-          "lookup_extras": [
-            
-          ],
+          "lookup_extras": [],
           "use_case_tiles": null,
           "pull_down_tile": null,
           "lookup_action": null,
           "display": "short",
-          "columns": [
-            
-          ]
+          "columns": []
         },
         "long": {
           "doc_type": "Detail",
           "lookup_name": null,
-          "sort_elements": [
-            
-          ],
-          "tabs": [
-            
-          ],
-          "lookup_responses": [
-            
-          ],
+          "sort_elements": [],
+          "tabs": [],
+          "lookup_responses": [],
           "lookup_image": null,
           "filter": null,
           "persist_tile_on_forms": null,
           "custom_xml": null,
           "lookup_enabled": false,
-          "lookup_extras": [
-            
-          ],
+          "lookup_extras": [],
           "use_case_tiles": null,
           "pull_down_tile": null,
           "lookup_action": null,
           "display": "long",
-          "columns": [
-            
-          ]
+          "columns": []
         }
       },
       "case_label": {
@@ -788,15 +641,9 @@
       "referral_list": {
         "doc_type": "CaseList",
         "show": false,
-        "media_audio": {
-          
-        },
-        "media_image": {
-          
-        },
-        "label": {
-          
-        }
+        "media_audio": {},
+        "media_image": {},
+        "label": {}
       },
       "media_image": {
         "en": ""
@@ -807,9 +654,7 @@
         "relationship": "parent",
         "doc_type": "ParentSelect"
       },
-      "forms": [
-        
-      ],
+      "forms": [],
       "module_filter": "",
       "module_type": "shadow",
       "referral_label": {
@@ -819,9 +664,7 @@
         "doc_type": "DetailPair",
         "short": {
           "doc_type": "Detail",
-          "lookup_responses": [
-            
-          ],
+          "lookup_responses": [],
           "sort_elements": [
             {
               "field": "name",
@@ -830,9 +673,7 @@
               "doc_type": "SortElement"
             }
           ],
-          "tabs": [
-            
-          ],
+          "tabs": [],
           "lookup_name": null,
           "lookup_image": null,
           "filter": null,
@@ -841,9 +682,7 @@
           "lookup_enabled": false,
           "pull_down_tile": false,
           "use_case_tiles": false,
-          "lookup_extras": [
-            
-          ],
+          "lookup_extras": [],
           "lookup_action": null,
           "display": "short",
           "columns": [
@@ -853,9 +692,7 @@
               "filter_xpath": "",
               "format": "plain",
               "isTab": false,
-              "enum": [
-                
-              ],
+              "enum": [],
               "header": {
                 "en": "Name, Shadow Module"
               },
@@ -872,15 +709,9 @@
         },
         "long": {
           "doc_type": "Detail",
-          "lookup_responses": [
-            
-          ],
-          "sort_elements": [
-            
-          ],
-          "tabs": [
-            
-          ],
+          "lookup_responses": [],
+          "sort_elements": [],
+          "tabs": [],
           "lookup_name": null,
           "lookup_image": null,
           "filter": null,
@@ -889,9 +720,7 @@
           "lookup_enabled": false,
           "pull_down_tile": null,
           "use_case_tiles": null,
-          "lookup_extras": [
-            
-          ],
+          "lookup_extras": [],
           "lookup_action": null,
           "display": "long",
           "columns": [
@@ -901,9 +730,7 @@
               "filter_xpath": "",
               "format": "plain",
               "late_flag": 30,
-              "enum": [
-                
-              ],
+              "enum": [],
               "header": {
                 "en": "Name"
               },
@@ -913,19 +740,11 @@
               "model": "case",
               "graph_configuration": {
                 "doc_type": "GraphConfiguration",
-                "series": [
-                  
-                ],
-                "locale_specific_config": {
-                  
-                },
+                "series": [],
+                "locale_specific_config": {},
                 "graph_type": null,
-                "config": {
-                  
-                },
-                "annotations": [
-                  
-                ]
+                "config": {},
+                "annotations": []
               },
               "advanced": ""
             }
@@ -940,15 +759,9 @@
       "task_list": {
         "doc_type": "CaseList",
         "show": false,
-        "media_audio": {
-          
-        },
-        "media_image": {
-          
-        },
-        "label": {
-          
-        }
+        "media_audio": {},
+        "media_image": {},
+        "label": {}
       },
       "fixture_select": {
         "xpath": "",
@@ -967,9 +780,9 @@
   ],
   "created_from_template": null,
   "_attachments": {
-    "e5763819513c8b9856e438f936b0928717a1c318.xml": "<?xml version=\"1.0\" encoding=\"UTF-8\" ?>\n<h:html xmlns:h=\"http:\/\/www.w3.org\/1999\/xhtml\" xmlns:orx=\"http:\/\/openrosa.org\/jr\/xforms\" xmlns=\"http:\/\/www.w3.org\/2002\/xforms\" xmlns:xsd=\"http:\/\/www.w3.org\/2001\/XMLSchema\" xmlns:jr=\"http:\/\/openrosa.org\/javarosa\" xmlns:vellum=\"http:\/\/commcarehq.org\/xforms\/vellum\">\n\t<h:head>\n\t\t<h:title>Update Case<\/h:title>\n\t\t<model>\n\t\t\t<instance>\n\t\t\t\t<data xmlns:jrm=\"http:\/\/dev.commcarehq.org\/jr\/xforms\" xmlns=\"http:\/\/openrosa.org\/formdesigner\/72ED647F-C2C2-4ADB-A7B4-61718E31D6A8\" uiVersion=\"1\" version=\"1\" name=\"Update Case\">\n\t\t\t\t\t<name \/>\n\t\t\t\t<\/data>\n\t\t\t<\/instance>\n\t\t\t<bind nodeset=\"\/data\/name\" type=\"xsd:string\" \/>\n\t\t\t<itext>\n\t\t\t\t<translation lang=\"en\" default=\"\">\n\t\t\t\t\t<text id=\"name-label\">\n\t\t\t\t\t\t<value>name<\/value>\n\t\t\t\t\t<\/text>\n\t\t\t\t<\/translation>\n\t\t\t<\/itext>\n\t\t<\/model>\n\t<\/h:head>\n\t<h:body>\n\t\t<input ref=\"\/data\/name\">\n\t\t\t<label ref=\"jr:itext('name-label')\" \/>\n\t\t<\/input>\n\t<\/h:body>\n<\/h:html>",
-    "b25ac5ae9b40f5056289c1fc16f3b5846b6c4fbc.xml": "<?xml version=\"1.0\" encoding=\"UTF-8\" ?>\n<h:html xmlns:h=\"http:\/\/www.w3.org\/1999\/xhtml\" xmlns:orx=\"http:\/\/openrosa.org\/jr\/xforms\" xmlns=\"http:\/\/www.w3.org\/2002\/xforms\" xmlns:xsd=\"http:\/\/www.w3.org\/2001\/XMLSchema\" xmlns:jr=\"http:\/\/openrosa.org\/javarosa\" xmlns:vellum=\"http:\/\/commcarehq.org\/xforms\/vellum\">\n\t<h:head>\n\t\t<h:title>Untitled Form<\/h:title>\n\t\t<model>\n\t\t\t<instance>\n\t\t\t\t<data xmlns:jrm=\"http:\/\/dev.commcarehq.org\/jr\/xforms\" xmlns=\"http:\/\/openrosa.org\/formdesigner\/15356789-A117-4953-B4EA-699EEDA0D07C\" uiVersion=\"1\" version=\"1\" name=\"Untitled Form\">\n\t\t\t\t\t<question1 \/>\n\t\t\t\t<\/data>\n\t\t\t<\/instance>\n\t\t\t<bind nodeset=\"\/data\/question1\" type=\"xsd:string\" \/>\n\t\t\t<itext>\n\t\t\t\t<translation lang=\"en\" default=\"\">\n\t\t\t\t\t<text id=\"question1-label\">\n\t\t\t\t\t\t<value>question1<\/value>\n\t\t\t\t\t<\/text>\n\t\t\t\t<\/translation>\n\t\t\t<\/itext>\n\t\t<\/model>\n\t<\/h:head>\n\t<h:body>\n\t\t<input ref=\"\/data\/question1\">\n\t\t\t<label ref=\"jr:itext('question1-label')\" \/>\n\t\t<\/input>\n\t<\/h:body>\n<\/h:html>",
-    "a3df6dd85bbf4345023e9a1c41d77b9cd1b7f89.xml": "<?xml version=\"1.0\" encoding=\"UTF-8\" ?>\n<h:html xmlns:h=\"http:\/\/www.w3.org\/1999\/xhtml\" xmlns:orx=\"http:\/\/openrosa.org\/jr\/xforms\" xmlns=\"http:\/\/www.w3.org\/2002\/xforms\" xmlns:xsd=\"http:\/\/www.w3.org\/2001\/XMLSchema\" xmlns:jr=\"http:\/\/openrosa.org\/javarosa\" xmlns:vellum=\"http:\/\/commcarehq.org\/xforms\/vellum\">\n\t<h:head>\n\t\t<h:title>Add Case<\/h:title>\n\t\t<model>\n\t\t\t<instance>\n\t\t\t\t<data xmlns:jrm=\"http:\/\/dev.commcarehq.org\/jr\/xforms\" xmlns=\"http:\/\/openrosa.org\/formdesigner\/9750C94C-A30B-4346-84AC-40E9A46BCEE1\" uiVersion=\"1\" version=\"1\" name=\"Add Case\">\n\t\t\t\t\t<name \/>\n\t\t\t\t<\/data>\n\t\t\t<\/instance>\n\t\t\t<bind nodeset=\"\/data\/name\" type=\"xsd:string\" \/>\n\t\t\t<itext>\n\t\t\t\t<translation lang=\"en\" default=\"\">\n\t\t\t\t\t<text id=\"name-label\">\n\t\t\t\t\t\t<value>name<\/value>\n\t\t\t\t\t<\/text>\n\t\t\t\t<\/translation>\n\t\t\t<\/itext>\n\t\t<\/model>\n\t<\/h:head>\n\t<h:body>\n\t\t<input ref=\"\/data\/name\">\n\t\t\t<label ref=\"jr:itext('name-label')\" \/>\n\t\t<\/input>\n\t<\/h:body>\n<\/h:html>"
+    "e5763819513c8b9856e438f936b0928717a1c318.xml": "<?xml version=\"1.0\" encoding=\"UTF-8\" ?>\n<h:html xmlns:h=\"http://www.w3.org/1999/xhtml\" xmlns:orx=\"http://openrosa.org/jr/xforms\" xmlns=\"http://www.w3.org/2002/xforms\" xmlns:xsd=\"http://www.w3.org/2001/XMLSchema\" xmlns:jr=\"http://openrosa.org/javarosa\" xmlns:vellum=\"http://commcarehq.org/xforms/vellum\">\n\t<h:head>\n\t\t<h:title>Update Case</h:title>\n\t\t<model>\n\t\t\t<instance>\n\t\t\t\t<data xmlns:jrm=\"http://dev.commcarehq.org/jr/xforms\" xmlns=\"http://openrosa.org/formdesigner/72ED647F-C2C2-4ADB-A7B4-61718E31D6A8\" uiVersion=\"1\" version=\"1\" name=\"Update Case\">\n\t\t\t\t\t<name />\n\t\t\t\t</data>\n\t\t\t</instance>\n\t\t\t<bind nodeset=\"/data/name\" type=\"xsd:string\" />\n\t\t\t<itext>\n\t\t\t\t<translation lang=\"en\" default=\"\">\n\t\t\t\t\t<text id=\"name-label\">\n\t\t\t\t\t\t<value>name</value>\n\t\t\t\t\t</text>\n\t\t\t\t</translation>\n\t\t\t</itext>\n\t\t</model>\n\t</h:head>\n\t<h:body>\n\t\t<input ref=\"/data/name\">\n\t\t\t<label ref=\"jr:itext('name-label')\" />\n\t\t</input>\n\t</h:body>\n</h:html>",
+    "b25ac5ae9b40f5056289c1fc16f3b5846b6c4fbc.xml": "<?xml version=\"1.0\" encoding=\"UTF-8\" ?>\n<h:html xmlns:h=\"http://www.w3.org/1999/xhtml\" xmlns:orx=\"http://openrosa.org/jr/xforms\" xmlns=\"http://www.w3.org/2002/xforms\" xmlns:xsd=\"http://www.w3.org/2001/XMLSchema\" xmlns:jr=\"http://openrosa.org/javarosa\" xmlns:vellum=\"http://commcarehq.org/xforms/vellum\">\n\t<h:head>\n\t\t<h:title>Untitled Form</h:title>\n\t\t<model>\n\t\t\t<instance>\n\t\t\t\t<data xmlns:jrm=\"http://dev.commcarehq.org/jr/xforms\" xmlns=\"http://openrosa.org/formdesigner/15356789-A117-4953-B4EA-699EEDA0D07C\" uiVersion=\"1\" version=\"1\" name=\"Untitled Form\">\n\t\t\t\t\t<question1 />\n\t\t\t\t</data>\n\t\t\t</instance>\n\t\t\t<bind nodeset=\"/data/question1\" type=\"xsd:string\" />\n\t\t\t<itext>\n\t\t\t\t<translation lang=\"en\" default=\"\">\n\t\t\t\t\t<text id=\"question1-label\">\n\t\t\t\t\t\t<value>question1</value>\n\t\t\t\t\t</text>\n\t\t\t\t</translation>\n\t\t\t</itext>\n\t\t</model>\n\t</h:head>\n\t<h:body>\n\t\t<input ref=\"/data/question1\">\n\t\t\t<label ref=\"jr:itext('question1-label')\" />\n\t\t</input>\n\t</h:body>\n</h:html>",
+    "a3df6dd85bbf4345023e9a1c41d77b9cd1b7f89.xml": "<?xml version=\"1.0\" encoding=\"UTF-8\" ?>\n<h:html xmlns:h=\"http://www.w3.org/1999/xhtml\" xmlns:orx=\"http://openrosa.org/jr/xforms\" xmlns=\"http://www.w3.org/2002/xforms\" xmlns:xsd=\"http://www.w3.org/2001/XMLSchema\" xmlns:jr=\"http://openrosa.org/javarosa\" xmlns:vellum=\"http://commcarehq.org/xforms/vellum\">\n\t<h:head>\n\t\t<h:title>Add Case</h:title>\n\t\t<model>\n\t\t\t<instance>\n\t\t\t\t<data xmlns:jrm=\"http://dev.commcarehq.org/jr/xforms\" xmlns=\"http://openrosa.org/formdesigner/9750C94C-A30B-4346-84AC-40E9A46BCEE1\" uiVersion=\"1\" version=\"1\" name=\"Add Case\">\n\t\t\t\t\t<name />\n\t\t\t\t</data>\n\t\t\t</instance>\n\t\t\t<bind nodeset=\"/data/name\" type=\"xsd:string\" />\n\t\t\t<itext>\n\t\t\t\t<translation lang=\"en\" default=\"\">\n\t\t\t\t\t<text id=\"name-label\">\n\t\t\t\t\t\t<value>name</value>\n\t\t\t\t\t</text>\n\t\t\t\t</translation>\n\t\t\t</itext>\n\t\t</model>\n\t</h:head>\n\t<h:body>\n\t\t<input ref=\"/data/name\">\n\t\t\t<label ref=\"jr:itext('name-label')\" />\n\t\t</input>\n\t</h:body>\n</h:html>"
   },
   "attribution_notes": null,
   "admin_password_charset": "n",

@@ -2,32 +2,15 @@ import uuid
 
 from django.test import SimpleTestCase
 
-from pillowtop.es_utils import initialize_index_and_mapping
-
-from corehq.apps.export.esaccessors import get_groups_user_ids
+from corehq.apps.es.groups import group_adapter
 from corehq.apps.es.tests.utils import es_test
+from corehq.apps.export.esaccessors import get_groups_user_ids
 from corehq.apps.groups.models import Group
-from corehq.elastic import get_es_new, send_to_elasticsearch
-from corehq.pillows.mappings.group_mapping import GROUP_INDEX_INFO
-from corehq.util.elastic import ensure_index_deleted
 
 
-@es_test
+@es_test(requires=[group_adapter], setup_class=True)
 class TestGroupUserIds(SimpleTestCase):
     domain = 'group-es-domain'
-
-    @classmethod
-    def setUpClass(cls):
-        super(TestGroupUserIds, cls).setUpClass()
-        ensure_index_deleted(GROUP_INDEX_INFO.index)
-        cls.es = get_es_new()
-        initialize_index_and_mapping(cls.es, GROUP_INDEX_INFO)
-        cls.es.indices.refresh(GROUP_INDEX_INFO.index)
-
-    @classmethod
-    def tearDownClass(cls):
-        ensure_index_deleted(GROUP_INDEX_INFO.index)
-        super(TestGroupUserIds, cls).tearDownClass()
 
     def _send_group_to_es(self, _id=None, users=None):
         group = Group(
@@ -38,8 +21,7 @@ class TestGroupUserIds(SimpleTestCase):
             reporting=True,
             _id=_id or uuid.uuid4().hex,
         )
-        send_to_elasticsearch('groups', group.to_json())
-        self.es.indices.refresh(GROUP_INDEX_INFO.index)
+        group_adapter.index(group, refresh=True)
         return group
 
     def test_one_group_to_users(self):

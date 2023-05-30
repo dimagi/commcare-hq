@@ -10,6 +10,8 @@ from corehq.apps.es import case_search as case_search_es
          .domain('testproject')
 """
 
+from copy import deepcopy
+from datetime import datetime
 from warnings import warn
 
 from django.conf import settings
@@ -24,26 +26,29 @@ from corehq.apps.case_search.const import (
     IS_RELATED_CASE,
     REFERENCED_ID,
     RELEVANCE_SCORE,
-    SPECIAL_CASE_PROPERTIES,
     SPECIAL_CASE_PROPERTIES_MAP,
     SYSTEM_PROPERTIES,
     VALUE,
 )
 from corehq.apps.es.cases import CaseES, owner
 from corehq.util.dates import iso_string_to_datetime
+from dimagi.utils.parsing import json_format_datetime
 
 from . import filters, queries
-from .cases import ElasticCase
-from .client import ElasticDocumentAdapter
-from .transient_util import get_adapter_mapping, from_dict_with_possible_id
+from .cases import case_adapter
+from .client import ElasticDocumentAdapter, create_document_adapter
+from .index.analysis import PHONETIC_ANALYSIS
+from .index.settings import IndexSettingsKey
 
 PROPERTY_KEY = "{}.key.exact".format(CASE_PROPERTIES_PATH)
 PROPERTY_VALUE = '{}.{}'.format(CASE_PROPERTIES_PATH, VALUE)
 PROPERTY_VALUE_EXACT = '{}.{}.exact'.format(CASE_PROPERTIES_PATH, VALUE)
 
+HQ_CASE_SEARCH_INDEX_CANONICAL_NAME = "case_search"
+
 
 class CaseSearchES(CaseES):
-    index = "case_search"
+    index = HQ_CASE_SEARCH_INDEX_CANONICAL_NAME
 
     @property
     def builtin_filters(self):
@@ -139,16 +144,46 @@ class CaseSearchES(CaseES):
 
 class ElasticCaseSearch(ElasticDocumentAdapter):
 
-    _index_name = getattr(settings, "ES_CASE_SEARCH_INDEX_NAME", "case_search_2018-05-29")
-    type = ElasticCase.type
+    analysis = PHONETIC_ANALYSIS
+    settings_key = IndexSettingsKey.CASE_SEARCH
+    canonical_name = HQ_CASE_SEARCH_INDEX_CANONICAL_NAME
 
     @property
     def mapping(self):
-        return get_adapter_mapping(self)
+        from .mappings.case_search_mapping import CASE_SEARCH_MAPPING
+        return CASE_SEARCH_MAPPING
 
-    @classmethod
-    def from_python(cls, doc):
-        return from_dict_with_possible_id(doc)
+    @property
+    def model_cls(self):
+        from corehq.form_processor.models.cases import CommCareCase
+        return CommCareCase
+
+    def _from_dict(self, case):
+        """
+        Takes in a dict which is result of ``CommCareCase.to_json``
+        and applies required transformation to make it suitable for ES.
+
+        :param case: an instance of ``dict`` which is ``case.to_json()``
+        """
+        from corehq.pillows.case_search import _get_case_properties
+
+        case_dict = deepcopy(case)
+        doc = {
+            desired_property: case_dict.get(desired_property)
+            for desired_property in self.mapping['properties'].keys()
+            if desired_property not in SYSTEM_PROPERTIES
+        }
+        doc[INDEXED_ON] = json_format_datetime(datetime.utcnow())
+        doc['case_properties'] = _get_case_properties(case_dict)
+        doc['_id'] = case_dict['_id']
+        return super()._from_dict(doc)
+
+
+case_search_adapter = create_document_adapter(
+    ElasticCaseSearch,
+    getattr(settings, "ES_CASE_SEARCH_INDEX_NAME", "case_search_2018-05-29"),
+    case_adapter.type,
+)
 
 
 def case_property_filter(case_property_name, value):
@@ -226,6 +261,7 @@ def sounds_like_text_query(case_property_name, value):
         case_property_name,
         queries.match(value, '{}.{}.phonetic'.format(CASE_PROPERTIES_PATH, VALUE))
     )
+
 
 def case_property_starts_with(case_property_name, value):
     """Filter by case_properties.key and do a text search in case_properties.value that
@@ -347,11 +383,11 @@ def indexed_on(gt=None, gte=None, lt=None, lte=None):
     return filters.date_range(INDEXED_ON, gt, gte, lt, lte)
 
 
-def wrap_case_search_hit(hit, include_score=False, is_related_case=False):
+def wrap_case_search_hit(hit, include_score=False):
     """Convert case search index hit to CommCareCase
 
     Nearly the opposite of
-    `corehq.pillows.case_search.transform_case_for_elasticsearch`.
+    `corehq.apps.es.case_search.ElasticCaseSearch._from_dict`.
 
     The "case_properties" list of key/value pairs is converted to a dict
     and assigned to `case_json`. 'Secial' case properties are excluded
@@ -363,7 +399,7 @@ def wrap_case_search_hit(hit, include_score=False, is_related_case=False):
     with a matching name. Fields like "doc_type" and "@indexed_on" are
     ignored.
 
-    Warning: `include_score=True` or `is_related_case=True` may cause
+    Warning: `include_score=True` may cause
     the relevant user-defined properties to be overwritten.
 
     :returns: A `CommCareCase` instance.
@@ -391,8 +427,6 @@ def wrap_case_search_hit(hit, include_score=False, is_related_case=False):
             _setattr(case, key, value)
     if include_score:
         case.case_json[RELEVANCE_SCORE] = hit['_score']
-    if is_related_case:
-        case.case_json[IS_RELATED_CASE] = "true"
     return case
 
 

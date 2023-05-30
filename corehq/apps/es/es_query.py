@@ -91,16 +91,12 @@ from copy import deepcopy
 
 from memoized import memoized
 
-from corehq.elastic import (
-    ESError,
-    run_query,
-    count_query,
-    scroll_query,
-)
+from corehq.util.files import TransientTempfile
 
 from . import aggregations, filters, queries
 from .const import SCROLL_SIZE, SIZE_LIMIT
-from .registry import verify_registered
+from .exceptions import ESError
+from .transient_util import doc_adapter_from_cname
 from .utils import flatten_field_dict, values_list
 
 
@@ -140,14 +136,11 @@ class ESQuery(object):
     }
 
     def __init__(self, index=None, for_export=False):
-        if index is not None:
-            self.index = index
-        # verify index canonical name
-        verify_registered(self.index)  # raises ESRegistryError on failure
-
+        if index is None:
+            index = self.index  # use class attribute
+        self.adapter = doc_adapter_from_cname(index, for_export=for_export)
         self._default_filters = deepcopy(self.default_filters)
         self._aggregations = []
-        self.for_export = for_export
         self.es_query = {
             "query": {
                 "bool": {
@@ -156,6 +149,16 @@ class ESQuery(object):
                 }
             }
         }
+
+    def clone(self):
+        adapter = self.adapter
+        del self.adapter  # don't deep copy the adapter
+        try:
+            cloned = deepcopy(self)
+        finally:
+            self.adapter = adapter
+        cloned.adapter = adapter
+        return cloned
 
     @property
     def builtin_filters(self):
@@ -202,12 +205,7 @@ class ESQuery(object):
 
     def run(self):
         """Actually run the query.  Returns an ESQuerySet object."""
-        raw = run_query(
-            self.index,
-            self.raw_query,
-            for_export=self.for_export,
-        )
-        return ESQuerySet(raw, deepcopy(self))
+        return ESQuerySet(self.adapter.search(self.raw_query), self.clone())
 
     def scroll(self):
         """
@@ -224,9 +222,8 @@ class ESQuery(object):
         # The '_assemble()' method sets size=SIZE_LIMIT when no query size is
         # configured, and overrides that with size=0 for aggregation queries,
         # neither of which are acceptable for a scroll query.
-        result = scroll_query(self.index, raw_query, for_export=self.for_export)
-        for r in result:
-            yield ESQuerySet.normalize_result(self, r)
+        for result in self.adapter.scroll(raw_query):
+            yield ESQuerySet.normalize_result(self, result)
 
     @property
     def _filters(self):
@@ -244,7 +241,7 @@ class ESQuery(object):
         Add the passed-in filter to the query.  All filtering goes through
         this class.
         """
-        query = deepcopy(self)
+        query = self.clone()
         query._filters.append(filter)
         return query
 
@@ -263,12 +260,12 @@ class ESQuery(object):
         """
         Add the passed-in aggregation to the query
         """
-        query = deepcopy(self)
+        query = self.clone()
         query._aggregations.append(aggregation)
         return query
 
     def aggregations(self, aggregations):
-        query = deepcopy(self)
+        query = self.clone()
         query._aggregations.extend(aggregations)
         return query
 
@@ -287,7 +284,7 @@ class ESQuery(object):
         Set the query.  Most stuff we want is better done with filters, but
         if you actually want Levenshtein distance or prefix querying...
         """
-        es = deepcopy(self)
+        es = self.clone()
         es.es_query['query']['bool']['must'] = query
         return es
 
@@ -317,7 +314,7 @@ class ESQuery(object):
     def get_query(self):
         return self.es_query['query']['bool']['must']
 
-    def search_string_query(self, search_string, default_fields=None):
+    def search_string_query(self, search_string, default_fields):
         """Accepts a user-defined search string"""
         return self.set_query(
             queries.search_string_query(search_string, default_fields)
@@ -349,13 +346,13 @@ class ESQuery(object):
                 'include': include,
                 'exclude': exclude
             }
-        query = deepcopy(self)
+        query = self.clone()
         query._source = source
         return query
 
     def start(self, start):
         """Pagination.  Analagous to SQL offset."""
-        query = deepcopy(self)
+        query = self.clone()
         query._start = start
         return query
 
@@ -364,13 +361,13 @@ class ESQuery(object):
         when performing a scroll, in which case this value becomes the number of
         results to fetch per scroll request.
         """
-        query = deepcopy(self)
+        query = self.clone()
         query._size = size
         return query
 
     @property
     def raw_query(self):
-        query = deepcopy(self)
+        query = self.clone()
         query._assemble()
         return query.es_query
 
@@ -401,7 +398,7 @@ class ESQuery(object):
         print(self.dumps(pretty=True))
 
     def _sort(self, sort, reset_sort):
-        query = deepcopy(self)
+        query = self.clone()
         if reset_sort:
             query.es_query['sort'] = [sort]
         else:
@@ -424,6 +421,7 @@ class ESQuery(object):
         sort_field = {
             '{}.{}'.format(path, field_name): {
                 'order': 'desc' if desc else 'asc',
+                'nested_path': path,
                 'nested_filter': nested_filter,
             }
         }
@@ -431,19 +429,19 @@ class ESQuery(object):
 
     def set_sorting_block(self, sorting_block):
         """To be used with `get_sorting_block`, which interprets datatables sorting"""
-        query = deepcopy(self)
+        query = self.clone()
         query.es_query['sort'] = sorting_block
         return query
 
     def remove_default_filters(self):
         """Sensible defaults are provided.  Use this if you don't want 'em"""
-        query = deepcopy(self)
+        query = self.clone()
         query._default_filters = {"match_all": filters.match_all()}
         return query
 
     def remove_default_filter(self, default):
         """Remove a specific default filter by passing in its name."""
-        query = deepcopy(self)
+        query = self.clone()
         if default in query._default_filters:
             query._default_filters.pop(default)
         if len(query._default_filters) == 0:
@@ -466,7 +464,7 @@ class ESQuery(object):
         return values_list(hits, *fields, **kwargs)
 
     def count(self):
-        return count_query(self.index, self.raw_query)
+        return self.adapter.count(self.raw_query)
 
     def get_ids(self):
         """Performs a minimal query to get the ids of the matching documents
@@ -477,6 +475,53 @@ class ESQuery(object):
     def scroll_ids(self):
         """Returns a generator of all matching ids"""
         return self.exclude_source().scroll()
+
+    def scroll_ids_to_disk_and_iter_docs(self):
+        """Returns a ``ScanResult`` for all matched documents.
+
+        Used for iterating docs for a very large query where consuming the docs
+        via ``self.scroll()`` may exceed the amount of time that the scroll
+        context can remain open. This is achieved by:
+
+        1. Fetching the IDs for all matched documents (via ``scroll_ids()``) and
+           caching them in a temporary file on disk, then
+        2. fetching the documents by (chunked blocks of) IDs streamed from the
+           temporary file.
+
+        Original design PR: https://github.com/dimagi/commcare-hq/pull/20282
+
+        Caveats:
+        - There is no guarantee that the returned ScanResult's ``count``
+        property will match the number of yielded docs.
+        - Documents that are present when ``scroll_ids()`` is called, but are
+        deleted prior to being fetched in full will be missing from the
+        results, and this scenario will *not* raise an exception.
+        - If Elastic document ID values are ever reused (i.e. new documents
+        are created with the same ID of a previously-deleted document) then
+        this method would become unsafe because it could yield documents that
+        were not matched by the query.
+        """
+        def iter_export_docs():
+            with TransientTempfile() as temp_path:
+                # Write all ids to disk as quickly as ES scrolls them
+                with open(temp_path, 'w', encoding='utf-8') as stream:
+                    for doc_id in self.scroll_ids():
+                        stream.write(doc_id + '\n')
+                # Stream doc ids from disk and fetch documents from ES in chunks
+                with open(temp_path, 'r', encoding='utf-8') as stream:
+                    doc_ids = (doc_id.strip() for doc_id in stream)
+                    yield from self.adapter.iter_docs(doc_ids)
+        return ScanResult(self.count(), iter_export_docs())
+
+
+class ScanResult(object):
+
+    def __init__(self, count, iterator):
+        self._iterator = iterator
+        self.count = count
+
+    def __iter__(self):
+        yield from self._iterator
 
 
 class ESQuerySet(object):

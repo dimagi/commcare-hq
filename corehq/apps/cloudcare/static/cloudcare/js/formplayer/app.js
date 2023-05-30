@@ -5,25 +5,32 @@
  */
 
 hqDefine("cloudcare/js/formplayer/app", function () {
+    var appcues = hqImport('analytix/js/appcues'),
+        initialPageData = hqImport("hqwebapp/js/initial_page_data"),
+        CloudcareUtils = hqImport("cloudcare/js/utils"),
+        Const = hqImport("cloudcare/js/formplayer/constants"),
+        FormplayerUtils = hqImport("cloudcare/js/formplayer/utils/utils"),
+        GGAnalytics = hqImport("analytix/js/google"),
+        Kissmetrics = hqImport("analytix/js/kissmetrix"),
+        ProgressBar = hqImport("cloudcare/js/formplayer/layout/views/progress_bar"),
+        Toggles = hqImport("hqwebapp/js/toggles"),
+        UsersModels = hqImport("cloudcare/js/formplayer/users/models"),
+        WebFormSession = hqImport('cloudcare/js/form_entry/web_form_session');
+
     Marionette.setRenderer(Marionette.TemplateCache.render);
     var FormplayerFrontend = new Marionette.Application();
-    var showError = hqImport('cloudcare/js/utils').showError;
-    var showHTMLError = hqImport('cloudcare/js/utils').showHTMLError;
-    var showSuccess = hqImport('cloudcare/js/utils').showSuccess;
-    var showWarning = hqImport('cloudcare/js/utils').showWarning;
-    var formplayerLoading = hqImport('cloudcare/js/utils').formplayerLoading;
-    var formplayerLoadingComplete = hqImport('cloudcare/js/utils').formplayerLoadingComplete;
-    var formplayerSyncComplete = hqImport('cloudcare/js/utils').formplayerSyncComplete;
-    var clearUserDataComplete = hqImport('cloudcare/js/utils').clearUserDataComplete;
-    var breakLocksComplete = hqImport('cloudcare/js/utils').breakLocksComplete;
-    var Utils = hqImport("cloudcare/js/formplayer/utils/utils");
-    var WebFormSession = hqImport('cloudcare/js/form_entry/web_form_session').WebFormSession;
-    var appcues = hqImport('analytix/js/appcues');
 
     FormplayerFrontend.on("before:start", function (app, options) {
+        const xsrfRequest = new $.Deferred();
+        this.xsrfRequest = xsrfRequest.promise();
         // Make a get call if the csrf token isn't available when the page loads.
         if ($.cookie('XSRF-TOKEN') === undefined) {
-            $.get({url: options.formplayer_url + '/serverup', global: false, xhrFields: { withCredentials: true }});
+            $.get(
+                {url: options.formplayer_url + '/serverup', global: false, xhrFields: { withCredentials: true }}
+            ).always(() => { xsrfRequest.resolve(); });
+        } else {
+            // resolve immediately
+            xsrfRequest.resolve();
         }
         var RegionContainer = Marionette.View.extend({
             el: "#menu-container",
@@ -38,7 +45,9 @@ hqDefine("cloudcare/js/formplayer/app", function () {
         });
 
         FormplayerFrontend.regions = new RegionContainer();
-        FormplayerFrontend.router = hqImport("cloudcare/js/formplayer/router").start();
+        hqRequire(["cloudcare/js/formplayer/router"], function (Router) {
+            FormplayerFrontend.router = Router.start();
+        });
     });
 
     FormplayerFrontend.navigate = function (route, options) {
@@ -90,7 +99,7 @@ hqDefine("cloudcare/js/formplayer/app", function () {
 
     FormplayerFrontend.getChannel().reply('currentUser', function () {
         if (!FormplayerFrontend.currentUser) {
-            FormplayerFrontend.currentUser = hqImport("cloudcare/js/formplayer/users/models").CurrentUser();
+            FormplayerFrontend.currentUser = UsersModels.CurrentUser();
         }
         return FormplayerFrontend.currentUser;
     });
@@ -123,10 +132,10 @@ hqDefine("cloudcare/js/formplayer/app", function () {
 
     $(document).on("ajaxStart", function () {
         $(".formplayer-request").addClass('formplayer-requester-disabled');
-        formplayerLoading();
+        CloudcareUtils.formplayerLoading();
     }).on("ajaxStop", function () {
         $(".formplayer-request").removeClass('formplayer-requester-disabled');
-        formplayerLoadingComplete();
+        CloudcareUtils.formplayerLoadingComplete();
     });
 
     FormplayerFrontend.on('clearNotifications', function () {
@@ -135,18 +144,18 @@ hqDefine("cloudcare/js/formplayer/app", function () {
 
     FormplayerFrontend.on('showError', function (errorMessage, isHTML, reportToHq) {
         if (isHTML) {
-            showHTMLError(errorMessage, $("#cloudcare-notifications"), null, reportToHq);
+            CloudcareUtils.showHTMLError(errorMessage, $("#cloudcare-notifications"), null, reportToHq);
         } else {
-            showError(errorMessage, $("#cloudcare-notifications"), reportToHq);
+            CloudcareUtils.showError(errorMessage, $("#cloudcare-notifications"), reportToHq);
         }
     });
 
     FormplayerFrontend.on('showWarning', function (message) {
-        showWarning(message, $("#cloudcare-notifications"));
+        CloudcareUtils.showWarning(message, $("#cloudcare-notifications"));
     });
 
     FormplayerFrontend.on('showSuccess', function (successMessage) {
-        showSuccess(successMessage, $("#cloudcare-notifications"), 10000);
+        CloudcareUtils.showSuccess(successMessage, $("#cloudcare-notifications"), 10000);
     });
 
     FormplayerFrontend.on('handleNotification', function (notification) {
@@ -166,10 +175,12 @@ hqDefine("cloudcare/js/formplayer/app", function () {
 
     FormplayerFrontend.on('startForm', function (data) {
         FormplayerFrontend.getChannel().request("clearMenu");
-        hqImport("cloudcare/js/formplayer/menus/utils").showBreadcrumbs(data.breadcrumbs);
+        hqRequire(["cloudcare/js/formplayer/menus/utils"], function (MenusUtils) {
+            MenusUtils.showBreadcrumbs(data.breadcrumbs);
+        });
 
-        data.onLoading = formplayerLoading;
-        data.onLoadingComplete = formplayerLoadingComplete;
+        data.onLoading = CloudcareUtils.formplayerLoading;
+        data.onLoadingComplete = CloudcareUtils.formplayerLoadingComplete;
         var user = FormplayerFrontend.getChannel().request('currentUser');
         data.xform_url = user.formplayer_url;
         data.domain = user.domain;
@@ -183,28 +194,25 @@ hqDefine("cloudcare/js/formplayer/app", function () {
                 message = resp.notification.message;
             }
             if (resp.is_html) {
-                showHTMLError(message, $("#cloudcare-notifications"), null, resp.reportToHq);
+                CloudcareUtils.showHTMLError(message, $("#cloudcare-notifications"), null, resp.reportToHq);
             } else {
-                showError(message, $("#cloudcare-notifications"), resp.reportToHq);
+                CloudcareUtils.showError(message, $("#cloudcare-notifications"), resp.reportToHq);
             }
         };
-        if (hqImport('hqwebapp/js/toggles').toggleEnabled('APP_ANALYTICS')) {
-            hqImport('analytix/js/kissmetrix').track.event('Viewed Form', {
-                domain: data.domain,
-                name: data.title,
-            });
-        }
+        Kissmetrics.track.event('Viewed Form', {
+            domain: data.domain,
+            name: data.title,
+        });
         data.onsubmit = function (resp) {
             if (resp.status === "success") {
                 var $alert;
                 if (resp.submitResponseMessage) {
                     var markdowner = window.markdownit(),
-                        reverse = hqImport("hqwebapp/js/initial_page_data").reverse,
                         analyticsLinks = [
-                            { url: reverse('list_case_exports'), text: '[Data Feedback Loop Test] Clicked on Export Cases Link' },
-                            { url: reverse('list_form_exports'), text: '[Data Feedback Loop Test] Clicked on Export Forms Link' },
-                            { url: reverse('case_data', '.*'), text: '[Data Feedback Loop Test] Clicked on Case Data Link' },
-                            { url: reverse('render_form_data', '.*'), text: '[Data Feedback Loop Test] Clicked on Form Data Link' },
+                            { url: initialPageData.reverse('list_case_exports'), text: '[Data Feedback Loop Test] Clicked on Export Cases Link' },
+                            { url: initialPageData.reverse('list_form_exports'), text: '[Data Feedback Loop Test] Clicked on Export Forms Link' },
+                            { url: initialPageData.reverse('case_data', '.*'), text: '[Data Feedback Loop Test] Clicked on Case Data Link' },
+                            { url: initialPageData.reverse('render_form_data', '.*'), text: '[Data Feedback Loop Test] Clicked on Form Data Link' },
                         ],
                         dataFeedbackLoopAnalytics = function (e) {
                             var $target = $(e.target);
@@ -213,15 +221,15 @@ hqDefine("cloudcare/js/formplayer/app", function () {
                                 _.each(analyticsLinks, function (link) {
                                     if (href.match(RegExp(link.url))) {
                                         $target.attr("target", "_blank");
-                                        hqImport('analytix/js/kissmetrix').track.event(link.text);
+                                        Kissmetrics.track.event(link.text);
                                     }
                                 });
                             }
                         };
                     $("#cloudcare-notifications").off('click').on('click', dataFeedbackLoopAnalytics);
-                    $alert = showSuccess(markdowner.render(resp.submitResponseMessage), $("#cloudcare-notifications"), undefined, true);
+                    $alert = CloudcareUtils.showSuccess(markdowner.render(resp.submitResponseMessage), $("#cloudcare-notifications"), undefined, true);
                 } else {
-                    $alert = showSuccess(gettext("Form successfully saved!"), $("#cloudcare-notifications"));
+                    $alert = CloudcareUtils.showSuccess(gettext("Form successfully saved!"), $("#cloudcare-notifications"));
                 }
                 if ($alert) {
                     // Clear the success notification the next time user changes screens
@@ -236,22 +244,27 @@ hqDefine("cloudcare/js/formplayer/app", function () {
                     });
                 }
 
-                if (user.environment === hqImport("cloudcare/js/formplayer/constants").PREVIEW_APP_ENVIRONMENT) {
-                    hqImport('analytix/js/kissmetrix').track.event("[app-preview] User submitted a form");
-                    hqImport('analytix/js/google').track.event("App Preview", "User submitted a form");
+                if (user.environment === Const.PREVIEW_APP_ENVIRONMENT) {
+                    Kissmetrics.track.event("[app-preview] User submitted a form");
+                    GGAnalytics.track.event("App Preview", "User submitted a form");
                     appcues.trackEvent(appcues.EVENT_TYPES.FORM_SUBMIT, { success: true });
-                } else if (user.environment === hqImport("cloudcare/js/formplayer/constants").WEB_APPS_ENVIRONMENT) {
-                    hqImport('analytix/js/kissmetrix').track.event("[web apps] User submitted a form");
-                    hqImport('analytix/js/google').track.event("Web Apps", "User submitted a form");
+                } else if (user.environment === Const.WEB_APPS_ENVIRONMENT) {
+                    Kissmetrics.track.event("[web apps] User submitted a form");
+                    GGAnalytics.track.event("Web Apps", "User submitted a form");
                     appcues.trackEvent(appcues.EVENT_TYPES.FORM_SUBMIT, { success: true });
                 }
 
                 // After end of form nav, we want to clear everything except app and sesson id
-                var urlObject = Utils.currentUrlToObject();
+                var urlObject = FormplayerUtils.currentUrlToObject();
                 urlObject.onSubmit();
-                Utils.setUrlToObject(urlObject);
+                FormplayerUtils.setUrlToObject(urlObject);
 
                 if (resp.nextScreen !== null && resp.nextScreen !== undefined) {
+                    if (resp.nextScreen.session_id) {
+                        FormplayerUtils.doUrlAction((urlObject) => {
+                            urlObject.sessionId = resp.nextScreen.session_id;
+                        }, true);
+                    }
                     FormplayerFrontend.trigger("renderResponse", resp.nextScreen);
                 } else if (urlObject.appId !== null && urlObject.appId !== undefined) {
                     FormplayerFrontend.trigger("apps:currentApp");
@@ -259,92 +272,104 @@ hqDefine("cloudcare/js/formplayer/app", function () {
                     FormplayerFrontend.navigate('/apps', { trigger: true });
                 }
             } else {
-                if (user.environment === hqImport("cloudcare/js/formplayer/constants").PREVIEW_APP_ENVIRONMENT) {
+                if (user.environment === Const.PREVIEW_APP_ENVIRONMENT) {
                     appcues.trackEvent(appcues.EVENT_TYPES.FORM_SUBMIT, { success: false });
                 }
-                showError(resp.output, $("#cloudcare-notifications"));
+                CloudcareUtils.showError(resp.output, $("#cloudcare-notifications"));
             }
         };
         data.debuggerEnabled = user.debuggerEnabled;
         data.resourceMap = function (resourcePath) {
-            var urlObject = Utils.currentUrlToObject();
+            var urlObject = FormplayerUtils.currentUrlToObject();
             var appId = urlObject.appId;
             return FormplayerFrontend.getChannel().request('resourceMap', resourcePath, appId);
         };
-        var sess = WebFormSession(data);
+        var sess = WebFormSession.WebFormSession(data);
         sess.renderFormXml(data, $('#webforms'));
-        if (user.environment === hqImport("cloudcare/js/formplayer/constants").WEB_APPS_ENVIRONMENT) {
-            var notifications = hqImport('notifications/js/notifications_service_main');
-            notifications.initNotifications();
+        if (user.environment === Const.WEB_APPS_ENVIRONMENT) {
+            // This isn't a circular import, but importing it at the top level would
+            // mean it would need to be faked for tests
+            hqRequire(["notifications/js/notifications_service_main"], function (Notifications) {
+                Notifications.initNotifications();
+            });
         }
         $('.menu-scrollable-container').addClass('hide');
     });
 
     FormplayerFrontend.on("start", function (model, options) {
         var user = FormplayerFrontend.getChannel().request('currentUser'),
-            savedDisplayOptions,
             self = this;
         user.username = options.username;
         user.domain = options.domain;
         user.formplayer_url = options.formplayer_url;
         user.debuggerEnabled = options.debuggerEnabled;
         user.environment = options.environment;
-        user.changeFormLanguage = options.changeFormLanguage;
         user.restoreAs = FormplayerFrontend.getChannel().request('restoreAsUser', user.domain, user.username);
 
-        hqImport("cloudcare/js/formplayer/apps/api").primeApps(user.restoreAs, options.apps);
-
-        savedDisplayOptions = _.pick(
-            Utils.getSavedDisplayOptions(),
-            hqImport("cloudcare/js/formplayer/constants").ALLOWED_SAVED_OPTIONS
-        );
-        user.displayOptions = _.defaults(savedDisplayOptions, {
-            singleAppMode: options.singleAppMode,
-            landingPageAppMode: options.landingPageAppMode,
-            phoneMode: options.phoneMode,
-            oneQuestionPerScreen: options.oneQuestionPerScreen,
-            language: options.language,
+        hqRequire(["cloudcare/js/formplayer/apps/api"], function (AppsAPI) {
+            AppsAPI.primeApps(user.restoreAs, options.apps);
         });
-
-        FormplayerFrontend.getChannel().request('gridPolyfillPath', options.gridPolyfillPath);
-        $.when(FormplayerFrontend.getChannel().request("appselect:apps")).done(function (appCollection) {
-            var appId;
-            var apps = appCollection.toJSON();
-            if (Backbone.history) {
-                Backbone.history.start();
-                FormplayerFrontend.regions.getRegion('restoreAsBanner').show(
-                    hqImport("cloudcare/js/formplayer/users/views").RestoreAsBanner({
-                        model: user,
-                    })
-                );
-                if (user.displayOptions.singleAppMode || user.displayOptions.landingPageAppMode) {
-                    appId = apps[0]['_id'];
-                }
-
-                if (self.getCurrentRoute() === "") {
-                    if (user.displayOptions.singleAppMode) {
-                        FormplayerFrontend.trigger('setAppDisplayProperties', apps[0]);
-                        FormplayerFrontend.trigger("app:singleApp", appId);
-                    } else if (user.displayOptions.landingPageAppMode) {
-                        FormplayerFrontend.trigger('setAppDisplayProperties', apps[0]);
-                        FormplayerFrontend.trigger("app:landingPageApp", appId);
-                    } else {
-                        FormplayerFrontend.trigger("apps:list", apps);
-                    }
-                    if (user.displayOptions.phoneMode) {
-                        // Refresh on start of preview mode so it ensures we're on the latest app
-                        // since app updates do not work.
-                        FormplayerFrontend.trigger('refreshApplication', appId);
-                    }
-                }
-            }
-        });
-        if (options.allowedHost) {
-            window.addEventListener(
-                "message",
-                hqImport("cloudcare/js/formplayer/hq_events").Receiver(options.allowedHost),
-                false
+        $.when(FormplayerUtils.getSavedDisplayOptions()).done(function (savedDisplayOptions) {
+            savedDisplayOptions = _.pick(
+                savedDisplayOptions,
+                Const.ALLOWED_SAVED_OPTIONS
             );
+            user.displayOptions = _.defaults(savedDisplayOptions, {
+                singleAppMode: options.singleAppMode,
+                landingPageAppMode: options.landingPageAppMode,
+                phoneMode: options.phoneMode,
+                oneQuestionPerScreen: options.oneQuestionPerScreen,
+                language: options.language,
+            });
+
+            FormplayerFrontend.getChannel().request('gridPolyfillPath', options.gridPolyfillPath);
+            $.when(
+                FormplayerFrontend.getChannel().request("appselect:apps"),
+                FormplayerFrontend.xsrfRequest
+            ).done(function (appCollection) {
+                var appId;
+                var apps = appCollection.toJSON();
+                if (Backbone.history) {
+                    Backbone.history.start();
+                    hqRequire(["cloudcare/js/formplayer/users/views"], function (UsersViews) {
+                        FormplayerFrontend.regions.getRegion('restoreAsBanner').show(
+                            UsersViews.RestoreAsBanner({
+                                model: user,
+                            })
+                        );
+                    });
+                    if (user.displayOptions.singleAppMode || user.displayOptions.landingPageAppMode) {
+                        appId = apps[0]['_id'];
+                    }
+
+                    if (self.getCurrentRoute() === "") {
+                        if (user.displayOptions.singleAppMode) {
+                            FormplayerFrontend.trigger('setAppDisplayProperties', apps[0]);
+                            FormplayerFrontend.trigger("app:singleApp", appId);
+                        } else if (user.displayOptions.landingPageAppMode) {
+                            FormplayerFrontend.trigger('setAppDisplayProperties', apps[0]);
+                            FormplayerFrontend.trigger("app:landingPageApp", appId);
+                        } else {
+                            FormplayerFrontend.trigger("apps:list", apps);
+                        }
+                        if (user.displayOptions.phoneMode) {
+                            // Refresh on start of preview mode so it ensures we're on the latest app
+                            // since app updates do not work.
+                            FormplayerFrontend.trigger('refreshApplication', appId);
+                        }
+                    }
+                }
+            });
+        });
+
+        if (options.allowedHost) {
+            hqRequire(["cloudcare/js/formplayer/hq_events"], function (HQEvents) {
+                window.addEventListener(
+                    "message",
+                    HQEvents.Receiver(options.allowedHost),
+                    false
+                );
+            });
         }
 
         const reconnectTimingWindow = 2000;
@@ -355,7 +380,7 @@ hqDefine("cloudcare/js/formplayer/app", function () {
                 offlineTime = new Date();
                 _.delay(function () {
                     if (!this.navigator.onLine && (new Date() - offlineTime) > reconnectTimingWindow) {
-                        showError(gettext("You are now offline. Web Apps is not optimized " +
+                        CloudcareUtils.showError(gettext("You are now offline. Web Apps is not optimized " +
                             "for offline use. Please reconnect to the Internet before " +
                             "continuing."), $("#cloudcare-notifications"));
                         $('.submit').prop('disabled', 'disabled');
@@ -367,7 +392,7 @@ hqDefine("cloudcare/js/formplayer/app", function () {
         window.addEventListener(
             'online', function () {
                 if ((new Date() - offlineTime) > reconnectTimingWindow) {
-                    showSuccess(gettext("You are are back online."), $("#cloudcare-notifications"));
+                    CloudcareUtils.showSuccess(gettext("You are are back online."), $("#cloudcare-notifications"));
                     $('.submit').prop('disabled', false);
                     $('.form-control').prop('disabled', false);
                 }
@@ -388,38 +413,40 @@ hqDefine("cloudcare/js/formplayer/app", function () {
     });
 
     FormplayerFrontend.on('configureDebugger', function () {
-        var CloudCareDebugger = hqImport('cloudcare/js/debugger/debugger').CloudCareDebuggerMenu,
-            TabIDs = hqImport('cloudcare/js/debugger/debugger').TabIDs,
-            user = FormplayerFrontend.getChannel().request('currentUser'),
-            cloudCareDebugger,
-            $debug = $('#cloudcare-debugger');
+        hqRequire(["cloudcare/js/debugger/debugger"], function (Debugger) {
+            var CloudCareDebugger = Debugger.CloudCareDebuggerMenu,
+                TabIDs = Debugger.TabIDs,
+                user = FormplayerFrontend.getChannel().request('currentUser'),
+                cloudCareDebugger,
+                $debug = $('#cloudcare-debugger');
 
-        if (!$debug.length) {
-            return;
-        }
+            if (!$debug.length) {
+                return;
+            }
 
-        var urlObject = Utils.currentUrlToObject();
+            var urlObject = FormplayerUtils.currentUrlToObject();
 
-        $debug.html('');
-        cloudCareDebugger = new CloudCareDebugger({
-            baseUrl: user.formplayer_url,
-            selections: urlObject.selections,
-            queryData: urlObject.queryData,
-            username: user.username,
-            restoreAs: user.restoreAs,
-            domain: user.domain,
-            appId: urlObject.appId,
-            tabs: [
-                TabIDs.EVAL_XPATH,
-            ],
+            $debug.html('');
+            cloudCareDebugger = new CloudCareDebugger({
+                baseUrl: user.formplayer_url,
+                selections: urlObject.selections,
+                queryData: urlObject.queryData,
+                username: user.username,
+                restoreAs: user.restoreAs,
+                domain: user.domain,
+                appId: urlObject.appId,
+                tabs: [
+                    TabIDs.EVAL_XPATH,
+                ],
+            });
+            ko.cleanNode($debug[0]);
+            $debug.koApplyBindings(cloudCareDebugger);
         });
-        ko.cleanNode($debug[0]);
-        $debug.koApplyBindings(cloudCareDebugger);
     });
 
     FormplayerFrontend.getChannel().reply('getCurrentAppId', function () {
         // First attempt to grab app id from URL
-        var urlObject = Utils.currentUrlToObject(),
+        var urlObject = FormplayerUtils.currentUrlToObject(),
             user = FormplayerFrontend.getChannel().request('currentUser'),
             appId;
 
@@ -463,14 +490,7 @@ hqDefine("cloudcare/js/formplayer/app", function () {
         return FormplayerFrontend.DisplayProperties || {};
     });
 
-    FormplayerFrontend.getChannel().reply('restoreAsUser', function (domain, username) {
-        return hqImport("cloudcare/js/formplayer/users/utils").Users.getRestoreAsUser(
-            domain,
-            username
-        );
-    });
-
-    // Support for workflows that require Login As before moving on to the
+    // Support for workflows that require Log In As before moving on to the
     // screen that the user originally requested.
     FormplayerFrontend.on('setLoginAsNextOptions', function (options) {
         FormplayerFrontend.LoginAsNextOptions = options;
@@ -485,29 +505,6 @@ hqDefine("cloudcare/js/formplayer/app", function () {
 
     FormplayerFrontend.getChannel().reply('getLoginAsNextOptions', function () {
         return FormplayerFrontend.LoginAsNextOptions || null;
-    });
-
-    /**
-     * clearRestoreAsUser
-     *
-     * This will unset the localStorage restore as user as well as
-     * unset the restore as user from the currentUser. It then
-     * navigates you to the main page.
-     */
-    FormplayerFrontend.on('clearRestoreAsUser', function () {
-        var user = FormplayerFrontend.getChannel().request('currentUser');
-        hqImport("cloudcare/js/formplayer/users/utils").Users.clearRestoreAsUser(
-            user.domain,
-            user.username
-        );
-        user.restoreAs = null;
-        FormplayerFrontend.regions.getRegion('restoreAsBanner').show(
-            hqImport("cloudcare/js/formplayer/users/views").RestoreAsBanner({
-                model: user,
-            })
-        );
-
-        FormplayerFrontend.trigger('navigateHome');
     });
 
     FormplayerFrontend.on("sync", function () {
@@ -532,7 +529,7 @@ hqDefine("cloudcare/js/formplayer/app", function () {
                 }, gettext('Waiting for server progress'));
             } else {
                 FormplayerFrontend.trigger('clearProgress');
-                formplayerSyncComplete(response.responseJSON.status === 'error');
+                CloudcareUtils.formplayerSyncComplete(response.responseJSON.status === 'error');
             }
         };
         options = {
@@ -540,7 +537,7 @@ hqDefine("cloudcare/js/formplayer/app", function () {
             data: JSON.stringify(data),
             complete: complete,
         };
-        Utils.setCrossDomainAjaxOptions(options);
+        FormplayerUtils.setCrossDomainAjaxOptions(options);
         $.ajax(options);
     });
 
@@ -560,7 +557,7 @@ hqDefine("cloudcare/js/formplayer/app", function () {
         progressMessage = progressMessage || gettext('Please wait...');
 
         if (!progressView) {
-            progressView = hqImport("cloudcare/js/formplayer/layout/views/progress_bar")({
+            progressView = ProgressBar({
                 progressMessage: progressMessage,
             });
             FormplayerFrontend.regions.getRegion('loadingProgress').show(progressView);
@@ -632,18 +629,18 @@ hqDefine("cloudcare/js/formplayer/app", function () {
                     restoreAs: user.restoreAs,
                 }),
             };
-        Utils.setCrossDomainAjaxOptions(options);
-        formplayerLoading();
+        FormplayerUtils.setCrossDomainAjaxOptions(options);
+        CloudcareUtils.formplayerLoading();
         resp = $.ajax(options);
         resp.fail(function () {
-            formplayerLoadingComplete(true);
+            CloudcareUtils.formplayerLoadingComplete(true);
         }).done(function (response) {
             if (_.has(response, 'exception')) {
-                formplayerLoadingComplete(true);
+                CloudcareUtils.formplayerLoadingComplete(true);
                 return;
             }
 
-            formplayerLoadingComplete();
+            CloudcareUtils.formplayerLoadingComplete();
             $("#cloudcare-notifications").empty();
             FormplayerFrontend.trigger('navigateHome');
         });
@@ -667,13 +664,13 @@ hqDefine("cloudcare/js/formplayer/app", function () {
                     restoreAs: user.restoreAs,
                 }),
             };
-        Utils.setCrossDomainAjaxOptions(options);
-        formplayerLoading();
+        FormplayerUtils.setCrossDomainAjaxOptions(options);
+        CloudcareUtils.formplayerLoading();
         resp = $.ajax(options);
         resp.fail(function () {
-            formplayerLoadingComplete(true);
+            CloudcareUtils.formplayerLoadingComplete(true);
         }).done(function (response) {
-            breakLocksComplete(_.has(response, 'exception'), response.message);
+            CloudcareUtils.breakLocksComplete(_.has(response, 'exception'), response.message);
         });
         return resp;
     });
@@ -696,13 +693,13 @@ hqDefine("cloudcare/js/formplayer/app", function () {
                     restoreAs: user.restoreAs,
                 }),
             };
-        Utils.setCrossDomainAjaxOptions(options);
-        formplayerLoading();
+        FormplayerUtils.setCrossDomainAjaxOptions(options);
+        CloudcareUtils.formplayerLoading();
         resp = $.ajax(options);
         resp.fail(function () {
-            formplayerLoadingComplete(true);
+            CloudcareUtils.formplayerLoadingComplete(true);
         }).done(function (response) {
-            clearUserDataComplete(_.has(response, 'exception'));
+            CloudcareUtils.clearUserDataComplete(_.has(response, 'exception'));
         });
         return resp;
     });
@@ -711,7 +708,7 @@ hqDefine("cloudcare/js/formplayer/app", function () {
         // switches tab back from the application name
         document.title = gettext("Web Apps - CommCare HQ");
 
-        var urlObject = Utils.currentUrlToObject(),
+        var urlObject = FormplayerUtils.currentUrlToObject(),
             appId,
             currentUser = FormplayerFrontend.getChannel().request('currentUser');
         urlObject.clearExceptApp();

@@ -1,0 +1,16 @@
+{% extends 'hqwebapp/bootstrap5/two_column.html' %}
+{% load hq_shared_tags %}
+
+{% block title %}{% if current_page.title %}{{ current_page.title }} : {% endif %}{{ section.page_name }} :: {% endblock %}
+
+{% block page_breadcrumbs %}
+  {% captureas page_actions_block %}{% block page_actions %}{% endblock page_actions %}{% endcaptureas %}
+  {% if page_actions_block %}
+    <div class="pull-right page-actions-toolbar">
+      {{ page_actions_block }}
+    </div>
+  {% endif %}
+
+  {% breadcrumbs current_page section current_page.parents %}
+
+{% endblock %}

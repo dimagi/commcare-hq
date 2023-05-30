@@ -3,7 +3,9 @@
  */
 
 hqDefine("cloudcare/js/formplayer/sessions/api", function () {
-    var FormplayerFrontend = hqImport("cloudcare/js/formplayer/app");
+    var Collections = hqImport("cloudcare/js/formplayer/sessions/collections"),
+        FormplayerFrontend = hqImport("cloudcare/js/formplayer/app"),
+        MenuCollections = hqImport("cloudcare/js/formplayer/menus/collections");
 
     var API = {
 
@@ -36,7 +38,7 @@ hqDefine("cloudcare/js/formplayer/sessions/api", function () {
                 },
             };
 
-            var menus = hqImport("cloudcare/js/formplayer/sessions/collections")(options);
+            var menus = Collections(options);
 
             var defer = $.Deferred();
             menus.fetch(options);
@@ -47,7 +49,7 @@ hqDefine("cloudcare/js/formplayer/sessions/api", function () {
 
             var user = FormplayerFrontend.getChannel().request('currentUser');
             var formplayerUrl = user.formplayer_url;
-            var menus = hqImport("cloudcare/js/formplayer/menus/collections")();
+            var menus = MenuCollections();
             var defer = $.Deferred();
 
             menus.fetch({

@@ -6,13 +6,12 @@ from memoized import memoized
 
 from casexml.apps.case.xform import extract_case_blocks
 from couchforms.const import TAG_FORM, TAG_META
-from dimagi.ext.couchdbkit import BooleanProperty, StringProperty
 
 from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.form_processor.exceptions import CaseNotFound
 from corehq.form_processor.models import CommCareCase, XFormInstance
 from corehq.motech.repeater_helpers import RepeaterResponse
-from corehq.motech.repeaters.models import CaseRepeater, OptionValue, SQLCaseRepeater
+from corehq.motech.repeaters.models import OptionValue, CaseRepeater
 from corehq.motech.repeaters.repeater_generators import (
     FormDictPayloadGenerator,
 )
@@ -34,126 +33,6 @@ from .repeater_helpers import (
 
 
 class FHIRRepeater(CaseRepeater):
-    class Meta:
-        app_label = 'repeaters'
-
-    friendly_name = _('Forward Cases to a FHIR API')
-    payload_generator_classes = (FormDictPayloadGenerator,)
-    include_app_id_param = False
-    _has_config = False
-
-    fhir_version = StringProperty(default=FHIR_VERSION_4_0_1)
-    patient_registration_enabled = BooleanProperty(default=True)
-    patient_search_enabled = BooleanProperty(default=False)
-
-    @memoized
-    def payload_doc(self, repeat_record):
-        return XFormInstance.objects.get_form(repeat_record.payload_id, repeat_record.domain)
-
-    @property
-    def form_class_name(self):
-        # The class name used to determine which edit form to use
-        return self.__class__.__name__
-
-    @classmethod
-    def available_for_domain(cls, domain):
-        return (domain_has_privilege(domain, DATA_FORWARDING)
-                and FHIR_INTEGRATION.enabled(domain))
-
-    def allowed_to_forward(self, payload):
-        # When we update a case's external_id to their ID on a remote
-        # FHIR service, the form is submitted with XMLNS_FHIR. This
-        # check makes sure that we don't send the update back to FHIR.
-        return payload.xmlns != XMLNS_FHIR
-
-    def send_request(self, repeat_record, payload):
-        """
-        Generates FHIR resources from ``payload``, and sends them as a
-        FHIR transaction bundle. If there are patients that need to be
-        registered, that is done first.
-
-        Returns an HTTP response-like object. If the payload has nothing
-        to send, returns True.
-        """
-        requests = self.connection_settings.get_requests(repeat_record.payload_id)
-        infos, resource_types = self.get_infos_resource_types(
-            payload,
-            self.fhir_version,
-        )
-        try:
-            resources = get_info_resource_list(infos, resource_types)
-            resources = register_patients(
-                requests,
-                resources,
-                self.patient_registration_enabled,
-                self.patient_search_enabled,
-                self._id,
-            )
-            response = send_resources(
-                requests,
-                resources,
-                self.fhir_version,
-                self._id,
-            )
-        except Exception as err:
-            requests.notify_exception(str(err))
-            return RepeaterResponse(400, 'Bad Request', pformat_json(str(err)))
-        return response
-
-    def get_infos_resource_types(
-        self,
-        form_json: dict,
-        fhir_version: str,
-    ) -> Tuple[List[CaseTriggerInfo], Dict[str, FHIRResourceType]]:
-
-        form_question_values = get_form_question_values(form_json)
-        case_blocks = extract_case_blocks(form_json)
-        cases_by_id = _get_cases_by_id(self.domain, case_blocks)
-        resource_types_by_case_type = _get_resource_types_by_case_type(
-            self.domain,
-            fhir_version,
-            cases_by_id.values(),
-        )
-
-        case_trigger_info_list = []
-        for case_block in case_blocks:
-            try:
-                case = cases_by_id[case_block['@case_id']]
-            except KeyError:
-                form_id = form_json[TAG_FORM][TAG_META]['instanceID']
-                raise CaseNotFound(
-                    f"Form {form_id!r} touches case {case_block['@case_id']!r} "
-                    "but that case is not found."
-                )
-            try:
-                resource_type = resource_types_by_case_type[case.type]
-            except KeyError:
-                # The case type is not mapped to a FHIR resource type.
-                # This case is not meant to be represented as a FHIR
-                # resource.
-                continue
-            case_trigger_info_list.append(get_case_trigger_info(
-                case,
-                resource_type,
-                case_block,
-                form_question_values,
-            ))
-        return case_trigger_info_list, resource_types_by_case_type
-
-    @classmethod
-    def _migration_get_sql_model_class(cls):
-        return SQLFHIRRepeater
-
-    @classmethod
-    def _migration_get_fields(cls):
-        return super()._migration_get_fields() + [
-            "fhir_version",
-            "patient_registration_enabled",
-            "patient_search_enabled"
-        ]
-
-
-class SQLFHIRRepeater(SQLCaseRepeater):
     class Meta:
         proxy = True
         app_label = 'repeaters'
@@ -260,18 +139,6 @@ class SQLFHIRRepeater(SQLCaseRepeater):
                 form_question_values,
             ))
         return case_trigger_info_list, resource_types_by_case_type
-
-    @classmethod
-    def _migration_get_couch_model_class(cls):
-        return FHIRRepeater
-
-    @classmethod
-    def _migration_get_fields(cls):
-        return super()._migration_get_fields() + [
-            "fhir_version",
-            "patient_registration_enabled",
-            "patient_search_enabled"
-        ]
 
 
 def _get_cases_by_id(domain, case_blocks):

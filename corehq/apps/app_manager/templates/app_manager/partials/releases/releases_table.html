@@ -1,6 +1,5 @@
 {% load hq_shared_tags %}
 {% load i18n %}
-
 <div id="releases-table" class="hide" data-bind="css: {hide: false}">
   <div class="alert alert-danger hide" data-bind="visible: brokenBuilds, css: {hide: false}">
     <p>
@@ -34,7 +33,7 @@
         </span>
   </p>
   <p>
-    {% if request|toggle_enabled:"VIEW_APP_CHANGES" %}
+    {% if can_view_app_diff %}
       <a class="btn btn-default" data-bind="
                 attr: {href: compareUnbuiltChangesUrl},
                 visible: savedApps().length,
@@ -52,7 +51,7 @@
     {% endif %}
     <button class="btn btn-primary" data-bind="
             click: function() {
-              trackClick('Clicked Make New Version')
+              trackClick('Clicked Make New Version');
               return makeNewBuild();
             },
             attr: {disabled: !buildButtonEnabled() ? 'disabled' : undefined},
@@ -138,20 +137,22 @@
             <button type="button"
                     class="btn btn-xs"
                     data-bind="click: $root.toggleRelease,
+                                attr: {disabled: !showReleaseOperations()},
                                            css: {
                                               'active': is_released(),
                                               'btn-primary': is_released(),
-                                              'btn-default': !is_released()
+                                              'btn-default': !is_released(),
                                            }">
               {% trans "Released" %}
             </button>
             <button type="button"
                     class="btn btn-xs btn-default"
                     data-bind="click: $root.toggleRelease,
+                                attr: {disabled: !showReleaseOperations()},
                                            css: {
                                               'active': !is_released(),
                                               'btn-primary': !is_released(),
-                                              'btn-default': is_released()
+                                              'btn-default': is_released(),
                                            }">
               {% trans "In Test" %}
             </button>
@@ -195,7 +196,7 @@
         </div>
       </div><!-- .panel-body -->
       <div class="panel-footer clearfix">
-        {% if request|toggle_enabled:"VIEW_APP_CHANGES" %}
+        {% if can_view_app_diff %}
           <a class="btn btn-default" data-bind="
                     attr: {href: $parent.reverse(
                             'app_form_summary_diff',

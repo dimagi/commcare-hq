@@ -65,7 +65,7 @@
       </th>
     {% endif %}
 
-    {% if request|toggle_enabled:"EXPORT_OWNERSHIP" %}
+    {% if request|request_has_privilege:"EXPORT_OWNERSHIP" %}
       <th class="col-sm-1"
           data-bind="visible: showOwnership">
         <span data-bind="visible: myExports">
@@ -349,6 +349,14 @@
               {% endblocktrans %}
             </p>
 
+            <p class="text-danger"
+               data-bind="if: emailedExport.taskStatus && emailedExport.taskStatus.failed() == 'too_large'">
+              <i class="fa fa-exclamation-triangle"></i>
+              {% blocktrans with max_rows=max_daily_export_size|intcomma %}
+                Your export exceeds the limit of {{ max_rows }} rows. Please see <a href="https://confluence.dimagi.com/display/commcarepublic/Selecting+Tools+for+CommCare+Data+Processing+and+Analysis" data-toggle="modal">documentation</a> for more information.
+              {% endblocktrans %}
+            </p>
+
             <p class="text-success"
                data-bind="if: emailedExport.taskStatus && emailedExport.taskStatus.justFinished() && emailedExport.taskStatus.success()">
               <i class="fa fa-check"></i>
@@ -358,7 +366,7 @@
             </p>
 
             <p class="text-danger"
-               data-bind="if: emailedExport.taskStatus && emailedExport.taskStatus.justFinished() && emailedExport.taskStatus.failed()">
+               data-bind="if: emailedExport.taskStatus && emailedExport.taskStatus.justFinished() && emailedExport.taskStatus.failed() == 'unknown'">
               <i class="fa fa-exclamation-triangle"></i>
               <strong>
                 {% trans "Data update failed!" %}
@@ -674,7 +682,7 @@
       </td>
     {% endif %}
 
-    {% if request|toggle_enabled:"EXPORT_OWNERSHIP" %}
+    {% if request|request_has_privilege:"EXPORT_OWNERSHIP" %}
       <td>
         <div data-bind="visible: $parent.myExports">
           <div data-bind="visible: sharing() === 'private'">

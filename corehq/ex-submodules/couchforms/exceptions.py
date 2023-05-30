@@ -1,3 +1,4 @@
+from django.conf import settings
 from couchforms.const import MAGIC_PROPERTY
 
 
@@ -48,6 +49,14 @@ class EmptyPayload(BadSubmissionRequest):
         super().__init__('Post may not have an empty body\n')
 
 
+class PayloadTooLarge(BadSubmissionRequest):
+    def __init__(self):
+        super().__init__(
+            "Form exceeds 10MB size limit\n",
+            413
+        )
+
+
 class UnprocessableFormSubmission(BadSubmissionRequest):
     pass
 
@@ -59,4 +68,12 @@ class InvalidSubmissionFileExtensionError(UnprocessableFormSubmission):
             "submitting form xml. You may also do a normal (non-multipart) "
             "with the xml submission as the request body instead\n",
             422
+        )
+
+
+class AttachmentSizeTooLarge(BadSubmissionRequest):
+    def __init__(self):
+        super().__init__(
+            f"Attachment exceeds {settings.MAX_UPLOAD_SIZE_ATTACHMENT/(1024*1024):,.0f}MB size limit\n",
+            413
         )

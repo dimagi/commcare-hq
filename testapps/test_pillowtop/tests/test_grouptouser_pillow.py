@@ -1,47 +1,46 @@
 import uuid
-from django.core.management import call_command
+from unittest.mock import patch
+
 from django.test import SimpleTestCase, TestCase
-from corehq.util.es.elasticsearch import ConnectionError
 
 from corehq.apps.change_feed import data_sources, topics
 from corehq.apps.change_feed.document_types import change_meta_from_doc
 from corehq.apps.change_feed.producer import producer
 from corehq.apps.change_feed.topics import get_topic_offset
+from corehq.apps.es.client import manager
 from corehq.apps.es.tests.utils import es_test
+from corehq.apps.es.users import user_adapter
 from corehq.apps.groups.models import Group
 from corehq.apps.groups.tests.test_utils import delete_all_groups
-from corehq.apps.hqcase.management.commands.ptop_reindexer_v2 import reindex_and_clean
+from corehq.apps.hqcase.management.commands.ptop_reindexer_v2 import (
+    reindex_and_clean,
+)
 from corehq.apps.users.models import CommCareUser
-from corehq.elastic import get_es_new, send_to_elasticsearch
-from corehq.pillows.groups_to_user import update_es_user_with_groups, get_group_pillow, \
-    remove_group_from_users
-from corehq.pillows.mappings.user_mapping import USER_INDEX, USER_INDEX_INFO
-from corehq.util.elastic import ensure_index_deleted
-from corehq.util.test_utils import trap_extra_setup
-from pillowtop.es_utils import initialize_index_and_mapping
+from corehq.pillows.groups_to_user import (
+    get_group_pillow,
+    remove_group_from_users,
+    update_es_user_with_groups,
+)
 
 
-@es_test
+@es_test(requires=[user_adapter])
 class GroupToUserPillowTest(SimpleTestCase):
 
     domain = 'grouptouser-pillowtest-domain'
 
     def setUp(self):
         super(GroupToUserPillowTest, self).setUp()
-        with trap_extra_setup(ConnectionError):
-            ensure_index_deleted(USER_INDEX)
-        self.es_client = get_es_new()
-        initialize_index_and_mapping(self.es_client, USER_INDEX_INFO)
         self.user_id = 'user1'
-        _create_es_user(self.es_client, self.user_id, self.domain)
-
-    def tearDown(self):
-        ensure_index_deleted(USER_INDEX)
-        super(GroupToUserPillowTest, self).tearDown()
+        self._create_es_user_without_db_calls(self.user_id, self.domain)
 
     def _check_es_user(self, group_ids=None, group_names=None):
         _assert_es_user_and_groups(
-            self, self.es_client, self.user_id, group_ids, group_names)
+            self, self.user_id, group_ids, group_names
+        )
+
+    def _create_es_user_without_db_calls(self, *args):
+        with patch('corehq.apps.groups.dbaccessors.get_group_id_name_map_by_user', return_value=[]):
+            _create_es_user(*args)
 
     def test_update_es_user_with_groups(self):
         group_doc = {
@@ -111,10 +110,9 @@ class GroupToUserPillowTest(SimpleTestCase):
         remove_group_from_users(group_doc)
 
 
-def _assert_es_user_and_groups(test_case, es_client, user_id, group_ids=None, group_names=None):
-    es_client.indices.refresh(USER_INDEX)
-    es_user = es_client.get(USER_INDEX, user_id)
-    user_doc = es_user['_source']
+def _assert_es_user_and_groups(test_case, user_id, group_ids=None, group_names=None):
+    manager.index_refresh(user_adapter.index_name)
+    user_doc = user_adapter.get(user_id)
     if group_ids is None:
         test_case.assertTrue('__group_ids' not in user_doc or not user_doc['__group_ids'])
     else:
@@ -126,7 +124,7 @@ def _assert_es_user_and_groups(test_case, es_client, user_id, group_ids=None, gr
         test_case.assertEqual(set(user_doc['__group_names']), set(group_names))
 
 
-def _create_es_user(es_client, user_id, domain):
+def _create_es_user(user_id, domain):
     user = CommCareUser(
         _id=user_id,
         domain=domain,
@@ -135,27 +133,18 @@ def _create_es_user(es_client, user_id, domain):
         last_name='Casual',
         is_active=True,
     )
-    send_to_elasticsearch('users', user.to_json())
-    es_client.indices.refresh(USER_INDEX)
+    user_adapter.index(user, refresh=True)
     return user
 
 
-@es_test
+@es_test(requires=[user_adapter])
 class GroupToUserPillowDbTest(TestCase):
-
-    def setUp(self):
-        ensure_index_deleted(USER_INDEX)
-        self.es_client = get_es_new()
-        initialize_index_and_mapping(self.es_client, USER_INDEX_INFO)
-
-    def tearDown(self):
-        ensure_index_deleted(USER_INDEX)
 
     def test_pillow(self):
         user_id = uuid.uuid4().hex
         domain = 'dbtest-group-user'
-        _create_es_user(self.es_client, user_id, domain)
-        _assert_es_user_and_groups(self, self.es_client, user_id, None, None)
+        _create_es_user(user_id, domain)
+        _assert_es_user_and_groups(self, user_id, None, None)
 
         # create and save a group
         group = Group(domain=domain, name='g1', users=[user_id])
@@ -170,8 +159,8 @@ class GroupToUserPillowDbTest(TestCase):
         pillow.process_changes(since=since, forever=False)
 
         # confirm updated in elasticsearch
-        self.es_client.indices.refresh(USER_INDEX)
-        _assert_es_user_and_groups(self, self.es_client, user_id, [group._id], [group.name])
+        manager.index_refresh(user_adapter.index_name)
+        _assert_es_user_and_groups(self, user_id, [group._id], [group.name])
         return user_id, group
 
     def test_pillow_deletion(self):
@@ -186,8 +175,8 @@ class GroupToUserPillowDbTest(TestCase):
         pillow.process_changes(since=since, forever=False)
 
         # confirm removed in elasticsearch
-        self.es_client.indices.refresh(USER_INDEX)
-        _assert_es_user_and_groups(self, self.es_client, user_id, [], [])
+        manager.index_refresh(user_adapter.index_name)
+        _assert_es_user_and_groups(self, user_id, [], [])
 
 
 def _group_to_change_meta(group):
@@ -198,35 +187,22 @@ def _group_to_change_meta(group):
     )
 
 
-@es_test
+@es_test(requires=[user_adapter], setup_class=True)
 class GroupsToUserReindexerTest(TestCase):
 
     def setUp(self):
         super(GroupsToUserReindexerTest, self).setUp()
         delete_all_groups()
 
-    @classmethod
-    def setUpClass(cls):
-        super(GroupsToUserReindexerTest, cls).setUpClass()
-        cls.es = get_es_new()
-        ensure_index_deleted(USER_INDEX)
-        initialize_index_and_mapping(cls.es, USER_INDEX_INFO)
-
-    @classmethod
-    def tearDownClass(cls):
-        ensure_index_deleted(USER_INDEX)
-        super(GroupsToUserReindexerTest, cls).tearDownClass()
-
     def test_groups_to_user_reindexer(self):
-        initialize_index_and_mapping(self.es, USER_INDEX_INFO)
         user_id = uuid.uuid4().hex
         domain = 'test-groups-to-user-reindex'
-        _create_es_user(self.es, user_id, domain)
+        _create_es_user(user_id, domain)
 
         # create and save a group
         group = Group(domain=domain, name='g1', users=[user_id])
         group.save()
 
         reindex_and_clean('groups-to-user')
-        self.es.indices.refresh(USER_INDEX)
-        _assert_es_user_and_groups(self, self.es, user_id, [group._id], [group.name])
+        manager.index_refresh(user_adapter.index_name)
+        _assert_es_user_and_groups(self, user_id, [group._id], [group.name])

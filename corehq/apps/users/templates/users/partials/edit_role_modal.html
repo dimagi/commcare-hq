@@ -129,21 +129,6 @@
                 </div>
               </div>
             </div>
-            {% if request|toggle_enabled:"USER_CONFIGURABLE_REPORTS" %}
-            <div data-bind="foreach: ucrs">
-              <div class="form-group" data-bind="visible: visibilityRestraint">
-                <label class="col-sm-4 control-label" data-bind="text: text"></label>
-                <div class="col-sm-8 controls">
-                  <div class="form-check">
-                    <input type="checkbox"
-                           data-bind="attr:{id: checkboxLabel}, checked: checkboxPermission, disable: !$root.allowEdit" />
-                    <label data-bind="attr:{for: checkboxLabel}, text: checkboxText">
-                    </label>
-                  </div>
-                </div>
-              </div>
-            </div>
-            {% endif %}
             <div class="form-group" data-bind="visible: !reportPermissions.all()">
               <label class="col-sm-4 control-label">
                 {% trans "Access Specific Reports" %}
@@ -164,22 +149,6 @@
                       </label>
                     </div>
                   </div>
-                </div>
-              </div>
-            </div>
-
-              <div class="form-group" data-bind="visible: canSeeAnyReports">
-              <label class="col-sm-4 control-label">
-                {% trans "Download and Email Reports" %}
-              </label>
-              <div class="col-sm-8 controls">
-                <div class="form-check">
-                  <input type="checkbox"
-                    id="download-and-email-reports-checkbox"
-                    data-bind="checked: permissions.download_reports, disable: !$root.allowEdit" />
-                  <label for="download-and-email-reports-checkbox">
-                    {% trans "Allow role to download and email report data." %}
-                  </label>
                 </div>
               </div>
             </div>
@@ -336,7 +305,7 @@
                          data-bind="checked: permissions.login_as_all_users,
                                     disable: !$root.allowEdit" />
                   <label for="login-as-all-users-checkbox">
-                    {% trans "Allow the user to login as any mobile worker in Web Apps." %}
+                    {% trans "Allow the user to log in as any mobile worker in Web Apps." %}
                   </label>
                 </div>
               </div>
@@ -351,7 +320,7 @@
                 <div class="form-check" data-bind="visible: permissions.login_as_all_users()">
                   <input type="checkbox" disabled="disabled" />
                   <label for="limited-login-as-checkbox">
-                    {% trans "Allow the user to login as only specified users in Web Apps." %}
+                    {% trans "Allow the user to log in as only specified users in Web Apps." %}
                   </label>
                 </div>
                 {# REAL CHECKBOX WHEN login_as_all_users IS FALSE #}
@@ -361,7 +330,7 @@
                          data-bind="checked: permissions.limited_login_as,
                                     disable: !$root.allowEdit" />
                   <label for="limited-login-as-checkbox">
-                    {% trans "Allow the user to login as only specified users in Web Apps." %}
+                    {% trans "Allow the user to log in as only specified users in Web Apps." %}
                   </label>
                 </div>
               </div>
@@ -371,11 +340,11 @@
                 {% trans "Login-As Default User" %}
               </label>
               <div class="col-sm-8 controls">
-                {# Placeholder disabled checkbox when not using limited login as #}
+                {# Placeholder disabled checkbox when not using limited log in as #}
                 <div class="form-check" data-bind="visible: permissions.login_as_all_users() || !permissions.limited_login_as()">
                   <input type="checkbox" disabled="disabled" data-bind="checked: permissions.login_as_all_users()" />
                   <label for="default-login-as-checkbox">
-                    {% trans "Allow the user to login as the default user in Web Apps." %}
+                    {% trans "Allow the user to log in as the default user in Web Apps." %}
                   </label>
                 </div>
                 {# Real checkbox #}
@@ -385,7 +354,7 @@
                          data-bind="checked: permissions.access_default_login_as_user,
                                     disable: !$root.allowEdit" />
                   <label for="default-login-as-checkbox">
-                    {% trans "Allow the user to login as the default user in Web Apps." %}
+                    {% trans "Allow the user to log in as the default user in Web Apps." %}
                   </label>
                 </div>
               </div>

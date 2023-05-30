@@ -1,4 +1,4 @@
-{% extends "hqwebapp/base_section.html" %}
+{% extends "hqwebapp/bootstrap3/base_section.html" %}
 {% load compress %}
 {% load i18n %}
 {% load hq_shared_tags %}
@@ -102,6 +102,12 @@
               <a class="btn btn-default" href="{% url "user_fields_view" domain %}" id="btn-edit_user_fields">
                 <i class="fa fa-edit"></i>
                 {% trans "Edit User Fields" %}
+              </a>
+            {% endif %}
+            {% if request|toggle_enabled:"CLEAR_MOBILE_WORKER_DATA" %}
+              <a id="clear-data" class="btn btn-danger" href="{% url "clear_commcare_users" domain %}">
+                <i class="fa fa-eraser"></i>
+                {% trans "Bulk Clear Data" %}
               </a>
             {% endif %}
             {% if request|toggle_enabled:"FILTERED_BULK_USER_DOWNLOAD" %}

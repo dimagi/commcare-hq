@@ -2,8 +2,10 @@ from django.http.request import QueryDict
 from django.test import TestCase
 from django.test.client import RequestFactory
 
-from pillowtop.es_utils import initialize_index_and_mapping
-
+from corehq.apps.es.cases import case_adapter
+from corehq.apps.es.groups import group_adapter
+from corehq.apps.es.tests.utils import es_test
+from corehq.apps.es.users import user_adapter
 from corehq.apps.reports.standard.cases.basic import CaseListReport
 from corehq.apps.users.models import (
     CommCareUser,
@@ -11,15 +13,10 @@ from corehq.apps.users.models import (
     DomainMembership,
     WebUser,
 )
-from corehq.elastic import get_es_new, send_to_elasticsearch
 from corehq.form_processor.models import CommCareCase
-from corehq.pillows.mappings.case_mapping import CASE_INDEX, CASE_INDEX_INFO
-from corehq.pillows.mappings.group_mapping import GROUP_INDEX_INFO
-from corehq.pillows.mappings.user_mapping import USER_INDEX, USER_INDEX_INFO
-from corehq.pillows.user import transform_user_for_elasticsearch
-from corehq.util.elastic import ensure_index_deleted
 
 
+@es_test(requires=[case_adapter, group_adapter, user_adapter], setup_class=True)
 class TestCaseListReport(TestCase):
     @classmethod
     def setUpClass(cls):
@@ -48,12 +45,6 @@ class TestCaseListReport(TestCase):
         cls.case_list = []
         for case in dummy_case_list:
             cls.case_list.append(CommCareCase(**case))
-        cls.es = get_es_new()
-        ensure_index_deleted(USER_INDEX)
-        ensure_index_deleted(CASE_INDEX)
-        initialize_index_and_mapping(cls.es, USER_INDEX_INFO)
-        initialize_index_and_mapping(cls.es, CASE_INDEX_INFO)
-        initialize_index_and_mapping(cls.es, GROUP_INDEX_INFO)
         cls._send_users_to_es()
         cls._send_cases_to_es()
 
@@ -66,8 +57,6 @@ class TestCaseListReport(TestCase):
 
     @classmethod
     def tearDownClass(cls):
-        ensure_index_deleted(USER_INDEX)
-        ensure_index_deleted(CASE_INDEX)
         for user in cls.user_list:
             user.delete(cls.domain, deleted_by=None)
         super().tearDownClass()
@@ -75,14 +64,11 @@ class TestCaseListReport(TestCase):
     @classmethod
     def _send_users_to_es(cls):
         for user_obj in cls.user_list:
-            send_to_elasticsearch('users', transform_user_for_elasticsearch(user_obj.to_json()))
-        cls.es.indices.refresh(USER_INDEX)
+            user_adapter.index(user_obj, refresh=True)
 
     @classmethod
     def _send_cases_to_es(cls):
-        for case in cls.case_list:
-            send_to_elasticsearch('cases', case.to_json())
-        cls.es.indices.refresh(CASE_INDEX_INFO.index)
+        case_adapter.bulk_index(cls.case_list, refresh=True)
 
     def test_with_project_data_slug(self):
         report_slugs = ['project_data']

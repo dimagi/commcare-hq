@@ -1,0 +1,372 @@
+--- 
++++ 
+@@ -1,352 +1,3 @@
+-// FORM ACTIONS from TWBS 2
+-// ------------
+-
+-[ng\:cloak],[ng-cloak],.ng-cloak{
+-  display:none !important
+-}
+-
+-.form-actions {
+-  padding: (@line-height-base * @font-size-base - 1px) 0px @line-height-base * @font-size-base;
+-  margin-top: @line-height-base * 1em;
+-  margin-bottom: 0;
+-  background-color: @navbar-default-bg;
+-  border-top: 1px solid @legend-border-color;
+-  .border-bottom-radius(@border-radius-base);
+-  .clearfix(); // Adding clearfix to allow for .pull-right button containers
+-  .controls {
+-     padding-left: 8px;
+-  }
+-  .btn-default {
+-    background-color: lighten(@cc-bg, 3%);
+-  }
+-  .btn {
+-    margin-left: 5px;
+-    &:first-child {
+-      margin-left: 0;
+-    }
+-  }
+-}
+-
+-.form-horizontal .control-label {
+-  text-align: left;     // override bootstrap
+-}
+-
+-legend .subtext {
+-  font-size: .8em;
+-  color: lighten(@cc-text, 40%);
+-  padding-bottom: 5px;
+-}
+-
+-.checkbox-table-cell {
+-  margin: 0;
+-  font-size: 20px;
+-  cursor: pointer;
+-  input {
+-    cursor: pointer;
+-  }
+-}
+-
+-.checkbox-app-settings {
+-  margin-top: 5px;
+-}
+-
+-.form-horizontal .form-group label.checkbox {
+-  margin-left: 20px;
+-  font-weight: normal;
+-  line-height: 18px;
+-  input {
+-    vertical-align: top;
+-    margin-top: 2px;
+-  }
+-}
+-
+-.form-horizontal .controls label.radio {
+-  margin-left: 20px;
+-  line-height: 22px;
+-  font-weight: normal;
+-}
+-
+-.form-control-text {
+-  margin-top: 8px;
+-  line-height: @line-height-computed;
+-}
+-
+-.form-horizontal .form-group .checkbox > div > label {
+-  padding-left: 30px;
+-  line-height: @line-height-computed;
+-  > input {
+-    vertical-align: top;
+-    margin-top: 1px;
+-  }
+-}
+-
+-.form-horizontal .form-group > div .row {
+-  select {
+-    margin-left: 20px;
+-  }
+-  .ui-multiselect {
+-    margin-left: 20px;
+-  }
+-}
+-.form-horizontal .form-group > .controls-multiple > .row {
+-  margin-left: -5px;
+-}
+-.form-horizontal .form-group > .controls-multiple .form-group {
+-  margin: 0;
+-  padding: 0;
+-}
+-
+-.form-horizontal .form-group > .controls-multiple .row {
+-  select {
+-    margin-left: 0px;
+-  }
+-  .ui-multiselect {
+-    margin-left: 0px;
+-  }
+-}
+-
+-.langcode-container {
+-    position: relative;
+-}
+-
+-.langcode-input {
+-    position: absolute;
+-    top: 6px;
+-    right: 15px;
+-}
+-
+-textarea.vertical-resize {
+-    resize: vertical;
+-}
+-
+-// Input groups have buttons attached to text inputs.
+-// Make the button border match the input border
+-.input-group .btn-default {
+-    border-color: @cc-neutral-hi;
+-}
+-
+-.form-bubble {
+-  padding: 20px;
+-  margin: 10px 0;
+-  .border-top-radius(5px);
+-  .border-bottom-radius(5px);
+-  box-sizing: content-box;
+-  background-color: @call-to-action-extra-hi;
+-
+-  fieldset {
+-    padding: 0.01em 0 0 0;
+-  }
+-
+-  legend {
+-    border-bottom: none;
+-    margin-bottom: 0;
+-    padding: 0;
+-    display: table;
+-    text-align: center;
+-  }
+-
+-  .help-block {
+-    text-align: left;
+-  }
+-
+-  a,
+-  a:visited,
+-  a:link {
+-    color: @cc-brand-mid;
+-  }
+-
+-  .btn-default {
+-    background-color: @call-to-action-extra-hi;
+-  }
+-}
+-
+-.form-bubble-purple {
+-  background-color: @color-purple-dark;
+-  color: @color-purple-dark-inverse;
+-  border: none;
+-
+-  a, a:active, a:hover, a:link {
+-    color: @color-purple-dark-inverse;
+-  }
+-
+-  .btn-purple {
+-    background-color: @color-purple-dark;
+-    color: @component-active-color;
+-    border: 1px solid @color-purple-dark-inverse;
+-
+-    &:hover {
+-      background-color: lighten(@color-purple-dark, 5);
+-    }
+-  }
+-}
+-
+-.form-bubble-actions {
+-  text-align: center;
+-  padding-bottom: 10px;
+-}
+-
+-.form-bubble-lg {
+-  input[type="text"],
+-  input[type="number"],
+-  input[type="password"],
+-  span.form-control {
+-    .input-size(@input-height-large; @padding-large-vertical; @padding-large-horizontal; @font-size-large; @line-height-large; @input-border-radius-large);
+-    width: 100%;
+-    color: @cc-text;
+-  }
+-}
+-
+-.form-bubble {
+-  .has-feedback .form-control {
+-    border-width: 2px;
+-  }
+-
+-  .has-success .form-control,
+-  .has-success .form-control:focus,
+-  .has-success input[type="text"],
+-  .has-success input[type="text"]:focus,
+-  .has-success input[type="number"],
+-  .has-success input[type="number"]:focus,
+-  .has-success input[type="password"],
+-  .has-success input[type="password"]:focus {
+-    border-color: @cc-att-pos-mid;
+-  }
+-  .has-success .form-control,
+-  .has-success input[type="text"],
+-  .has-success input[type="number"],
+-  .has-success input[type="password"] {
+-    .box-shadow(0px 0px 10px 1px rgba(175, 242, 133, .5));
+-  }
+-  .has-success .form-control:focus,
+-  .has-success input[type="text"]:focus,
+-  .has-success input[type="number"]:focus,
+-  .has-success input[type="password"]:focus {
+-    .box-shadow(0px 0px 15px 1px rgba(175, 242, 133, .75));
+-  }
+-
+-  .has-error .form-control,
+-  .has-error .form-control:focus,
+-  .has-error input[type="text"],
+-  .has-error input[type="text"]:focus,
+-  .has-error input[type="number"],
+-  .has-error input[type="number"]:focus,
+-  .has-error input[type="password"],
+-  .has-error input[type="password"]:focus {
+-    border-color: @cc-att-neg-mid;
+-  }
+-  .has-error .form-control,
+-  .has-error input[type="text"],
+-  .has-error input[type="number"],
+-  .has-error input[type="password"] {
+-    .box-shadow(0px 0px 10px 1px rgba(239, 207, 203, .5));
+-  }
+-  .has-error .form-control:focus,
+-  .has-error input[type="text"]:focus,
+-  .has-error input[type="number"]:focus,
+-  .has-error input[type="password"]:focus {
+-    .box-shadow(0px 0px 15px 1px rgba(239, 207, 203, .75));
+-  }
+-
+-  .has-warning .form-control,
+-  .has-warning .form-control:focus,
+-  .has-warning input[type="text"],
+-  .has-warning input[type="text"]:focus,
+-  .has-warning input[type="number"],
+-  .has-warning input[type="number"]:focus,
+-  .has-warning input[type="password"],
+-  .has-warning input[type="password"]:focus {
+-    border-color: @cc-light-warm-accent-mid;
+-  }
+-  .has-warning .form-control,
+-  .has-warning input[type="text"],
+-  .has-warning input[type="number"],
+-  .has-warning input[type="password"] {
+-    .box-shadow(0px 0px 10px 1px rgba(248, 236, 189, .5));
+-  }
+-  .has-warning .form-control:focus,
+-  .has-warning input[type="text"]:focus,
+-  .has-warning input[type="number"]:focus,
+-  .has-warning input[type="password"]:focus {
+-    .box-shadow(0px 0px 15px 1px rgba(248, 236, 189, .75));
+-  }
+-
+-  input[type="checkbox"] {
+-    margin-top: 1px;
+-    margin-right: 7px;
+-    float: left;
+-  }
+-}
+-
+-.form-check {
+-  padding-left: 10px;
+-  white-space: nowrap;
+-}
+-
+-.form-check label{
+-  cursor: pointer;
+-  position: relative;
+-  font-weight: normal;
+-  margin-top: 7px;
+-  white-space: normal;
+-}
+-
+-.form-check label::before {
+-  content: "";
+-  display: inline-block;
+-  position: absolute;
+-  width: 17px;
+-  height: 17px;
+-  left: 0;
+-  border: 2px solid @checkbox-default-color;
+-  border-radius: 3px;
+-  background-color: white;
+-  margin-left: -25px;
+-}
+-
+-.form-check label::after {
+-  display: inline-block;
+-  position: absolute;
+-  width: 16px;
+-  height: 16px;
+-  left: 0;
+-  top: 0;
+-  margin-left: -25px;
+-  padding-left: 3px;
+-  padding-top: 1px;
+-  font-size: 11px;
+-  color: #555555;
+-}
+-
+-.form-check input[type="checkbox"] {
+-  opacity: 0;
+-}
+-.form-check input[type="checkbox"]:checked + label::before {
+-  background-color: @checkbox-default-color;
+-  border-color: @checkbox-default-color;
+-}
+-.form-check input[type="checkbox"]:checked + label::after {
+-  font-family: 'FontAwesome';
+-  content: "\f00c";
+-  color: white;
+-}
+-.form-check input[type="checkbox"]:disabled + label {
+-  opacity: 0.65;
+-}
+-.form-check-placeholder label {
+-  font-weight: bold;
+-  margin-top: 15px;
+-  margin-left: 2px;
+-  border-bottom: 2px solid @gray-light;
+-  width: 13px;
+-  height: 4px;
+-  opacity: 0.65;
+-  display: inline-block;
+-}
+-
+-.controls-text {
+-  padding-top: 7px;
+-}
+-
+ .form-hide-actions .form-actions {
+   display: none;
+ }
+@@ -355,7 +6,15 @@
+   .validationMessage {
+     display: block;
+     padding-top: 8px;
+-    color: @cc-att-neg-low;
++    color: $cc-att-neg-low;
+     font-weight: bold;
+   }
+ }
++
++.help-block,
++p.help-block {
++  display: block;
++  margin-top: 5px;
++  margin-bottom: 10px;
++  color: lighten($cc-text, 25%);
++}

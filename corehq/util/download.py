@@ -46,11 +46,12 @@ class RangedFileWrapper(object):
             yield data
 
 
-def get_download_response(payload, content_length, content_format, filename, request=None):
+def get_download_response(payload, content_length, content_type, download, filename, request=None):
     """
     :param payload: File like object.
     :param content_length: Size of payload in bytes
-    :param content_format: ``couchexport.models.Format`` instance
+    :param content_type: Content Type
+    :param download: Boolean for if its a download request
     :param filename: Name of the download
     :param request: The request. Used to determine if a range response should be given.
     :return: HTTP response
@@ -58,15 +59,15 @@ def get_download_response(payload, content_length, content_format, filename, req
     ranges = None
     if request and "HTTP_RANGE" in request.META:
         try:
-            ranges = parse_range_header(request.META['HTTP_RANGE'], content_length)
+            ranges = parse_range_header(request.META['HTTP_RANGE'])
         except ValueError:
             pass
 
     if ranges and len(ranges.ranges) != 1:
         ranges = None
 
-    response = StreamingHttpResponse(content_type=content_format.mimetype)
-    if content_format.download:
+    response = StreamingHttpResponse(content_type=content_type)
+    if download:
         response['Content-Disposition'] = safe_filename_header(filename)
 
     response["Content-Length"] = content_length

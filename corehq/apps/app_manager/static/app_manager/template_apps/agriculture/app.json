@@ -120,13 +120,11 @@
     }
   },
   "archived_media": {},
-  "platform": "nokia/s40",
   "custom_base_url": null,
   "mobile_ucr_sync_interval": null,
   "mobile_ucr_restore_version": "1.0",
   "build_profiles": {},
   "user_type": "",
-  "text_input": "roman",
   "migrating_blobs_from_couch": false,
   "location_fixture_restore": "project_default",
   "build_comment": "Fixed bugs in rice report and corn report",
@@ -343,7 +341,9 @@
               }
             },
             "open_case": {
-              "name_path": "/data/cooperative/cooperative_name",
+              "name_update": {
+                "question_path": "/data/cooperative/cooperative_name"
+              },
               "doc_type": "OpenCaseAction",
               "external_id": null,
               "condition": {
@@ -822,7 +822,9 @@
                 "case_type": "farmer",
                 "reference_id": null,
                 "repeat_context": "/data/farmer",
-                "case_name": "/data/farmer/farmer_name/farmer_full_name",
+                "name_update": {
+                  "question_path": "/data/farmer/farmer_name/farmer_full_name"
+                },
                 "condition": {
                   "answer": "1",
                   "type": "if",
@@ -888,7 +890,7 @@
               }
             },
             "open_case": {
-              "name_path": null,
+              "name_update": null,
               "doc_type": "OpenCaseAction",
               "external_id": null,
               "condition": {
@@ -1054,7 +1056,7 @@
               }
             },
             "open_case": {
-              "name_path": null,
+              "name_update": null,
               "doc_type": "OpenCaseAction",
               "external_id": null,
               "condition": {
@@ -1261,7 +1263,7 @@
               }
             },
             "open_case": {
-              "name_path": null,
+              "name_update": null,
               "doc_type": "OpenCaseAction",
               "external_id": null,
               "condition": {
@@ -2082,7 +2084,7 @@
               }
             },
             "open_case": {
-              "name_path": null,
+              "name_update": null,
               "doc_type": "OpenCaseAction",
               "external_id": null,
               "condition": {
@@ -2402,7 +2404,7 @@
               }
             },
             "open_case": {
-              "name_path": null,
+              "name_update": null,
               "doc_type": "OpenCaseAction",
               "external_id": null,
               "condition": {
@@ -2684,7 +2686,7 @@
               }
             },
             "open_case": {
-              "name_path": null,
+              "name_update": null,
               "doc_type": "OpenCaseAction",
               "external_id": null,
               "condition": {
@@ -2911,7 +2913,7 @@
               }
             },
             "open_case": {
-              "name_path": null,
+              "name_update": null,
               "doc_type": "OpenCaseAction",
               "external_id": null,
               "condition": {
@@ -3687,7 +3689,7 @@
               }
             },
             "open_case": {
-              "name_path": null,
+              "name_update": null,
               "doc_type": "OpenCaseAction",
               "external_id": null,
               "condition": {
@@ -4200,8 +4202,6 @@
   "smart_lang_display": null,
   "vellum_case_management": true,
   "is_auto_generated": false,
-  "use_j2me_endpoint": false,
-  "admin_password": null,
   "build_spec": {
     "doc_type": "BuildSpec",
     "version": "2.44.3",
@@ -4214,8 +4214,7 @@
   "linked_whitelist": [],
   "profile": {
     "features": {
-      "users": "true",
-      "sense": "false"
+      "users": "true"
     },
     "properties": {
       "cc-days-form-retain": "-1",
@@ -4223,25 +4222,16 @@
       "unsent-time-limit": "5",
       "log_prop_daily": "log_never",
       "restore-tolerance": "loose",
-      "cc-user-mode": "cc-u-normal",
       "cc-fuzzy-search-enabled": "yes",
       "cc-autoup-freq": "freq-never",
       "purge-freq": "0",
-      "server-tether": "push-only",
       "user_reg_server": "required",
-      "extra_key_action": "audio",
       "cc-autosync-freq": "freq-never",
-      "ViewStyle": "v_chatterbox",
       "cc-login-duration-seconds": "86400",
       "cc-resize-images": "none",
-      "cc-entry-mode": "cc-entry-quick",
-      "cc-send-procedure": "cc-send-http",
-      "cc-login-images": "No",
       "log_prop_weekly": "log_short",
       "cc-show-incomplete": "yes",
-      "cc-send-unsent": "cc-su-auto",
       "loose_media": "no",
-      "password_format": "n",
       "unsent-number-limit": "5",
       "cc-content-valid": "no",
       "logenabled": "Enabled"

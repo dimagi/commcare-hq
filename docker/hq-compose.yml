@@ -9,7 +9,6 @@ services:
       CODECOV_TOKEN: "${CODECOV_TOKEN}"
       DATADOG_API_KEY: "${DATADOG_API_KEY}"
       DATADOG_APP_KEY: "${DATADOG_APP_KEY}"
-      DEPENDENT_SERVICES: "couch:5984 postgres:5432 redis:6379 elasticsearch2:9200 minio:9980 kafka:9092"
       DOCKER_HQ_OVERLAY: "${DOCKER_HQ_OVERLAY}"
       DOCKER_HQ_OVERLAYFS_CHMOD: "${DOCKER_HQ_OVERLAYFS_CHMOD}"
       DOCKER_HQ_OVERLAYFS_METACOPY: "${DOCKER_HQ_OVERLAYFS_METACOPY}"
@@ -33,14 +32,20 @@ services:
       TRAVIS_REPO_SLUG: "${TRAVIS_REPO_SLUG}"
     privileged: true  # allows mount inside container
     depends_on:
-      - postgres
-      - couch
-      - redis
-      - elasticsearch2
-      - elasticsearch5
-      - kafka
-      - zookeeper
-      - minio
+      postgres:
+        condition: service_healthy
+      couch:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      elasticsearch2:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+      zookeeper:
+        condition: service_started
+      minio:
+        condition: service_healthy
     volumes:
       - ..:/mnt/commcare-hq-ro${RO}
       - ${VOLUME_PREFIX}${BLANK_IF_TESTS-lib:}/mnt/lib
@@ -65,6 +70,10 @@ services:
       POSTGRES_PASSWORD: commcarehq
     expose:
       - "5432"
+    healthcheck:
+      test: pg_isready -h postgres -U commcarehq
+      interval: 10s
+      retries: 10
     volumes:
       - ${VOLUME_PREFIX}${BLANK_IF_TESTS-postgresql:}/var/lib/postgresql/data
 
@@ -79,32 +88,52 @@ services:
         hard: 1048576
     expose:
       - "5984"
+    healthcheck:
+      test: bash -c 'exec 6<>/dev/tcp/couch/5984'
+      interval: 10s
+      retries: 10
     volumes:
       - ${VOLUME_PREFIX}${BLANK_IF_TESTS-couchdb2:}/usr/src/couchdb/dev/lib/node1/data
 
   redis:
-    image: redis:6.2
+    image: redis:7
     expose:
       - "6379"
+    healthcheck:
+      test: bash -c 'exec 6<>/dev/tcp/redis/6379'
+      interval: 10s
+      retries: 10
     volumes:
       - ${VOLUME_PREFIX}${BLANK_IF_TESTS-redis:}/data
 
   elasticsearch2:
-    image: elasticsearch:2.4.6
+    build:
+      context: .
+      dockerfile: ./files/Dockerfile.es.2
     environment:
       ES_JAVA_OPTS: "-Des.script.engine.groovy.inline.aggs=true -Des.script.engine.groovy.inline.search=true"
     expose:
       - "9200"
+    healthcheck:
+      test: bash -c 'exec 6<>/dev/tcp/elasticsearch2/9200'
+      interval: 10s
+      retries: 10
     volumes:
       - ${VOLUME_PREFIX}${BLANK_IF_TESTS-elasticsearch2:}/usr/share/elasticsearch/data
       - ./files/elasticsearch_2.yml:/usr/share/elasticsearch/config/elasticsearch.yml:rw
 
   elasticsearch5:
-    image: elasticsearch:5.6.16
+    build:
+      context: .
+      dockerfile: ./files/Dockerfile.es.5
     environment:
       ES_JAVA_OPTS: "-Xms750m -Xmx750m -Des.script.engine.groovy.inline.aggs=true -Des.script.engine.groovy.inline.search=true"
     expose:
       - "9200"
+    healthcheck:
+      test: bash -c 'exec 6<>/dev/tcp/elasticsearch5/9200'
+      interval: 10s
+      retries: 10
     volumes:
       - ${VOLUME_PREFIX}${BLANK_IF_TESTS-elasticsearch5:}/usr/share/elasticsearch/data
       - ./files/elasticsearch_5.yml:/usr/share/elasticsearch/config/elasticsearch.yml:rw
@@ -113,6 +142,12 @@ services:
     image: zookeeper:3.7
     expose:
       - "2181"
+    # No healthcheck:
+    #   * Polling the port causes "EndOfStreamException: Unable to read
+    #     additional data from client, it probably closed the socket"
+    #   * Using the "ruok" command returns "ruok is not executed because it is
+    #     not in the whitelist."
+    #     See https://zookeeper.apache.org/doc/r3.7.1/zookeeperAdmin.html#sc_4lw
     volumes:
       - ${VOLUME_PREFIX}${BLANK_IF_TESTS-zookeeper:}/opt/zookeeper-3.7/data
 
@@ -135,18 +170,30 @@ services:
         else
           echo "Wait script download failed"
         fi
+    healthcheck:
+      test: bash -c 'exec 6<>/dev/tcp/kafka/9092'
+      start_period: 15s
+      interval: 10s
+      retries: 10
     volumes:
       - ${DOCKER_SOCK}:${DOCKER_SOCK}
       - ${VOLUME_PREFIX}${BLANK_IF_TESTS-kafka:}/kafka/kafka-logs-1
 
   minio:
     image: minio/minio
-    command: server --address :9980 /data
+    command: server --address :9980 --console-address :9981 /data
     expose:
       - "9980"
+      - "9981"
+    healthcheck:
+      # https://min.io/docs/minio/linux/operations/monitoring/healthcheck-probe.html#node-liveness
+      test: curl -I http://minio:9980/minio/health/live
+      start_period: 15s
+      interval: 10s
+      retries: 10
     volumes:
       - ${VOLUME_PREFIX}${BLANK_IF_TESTS-minio-conf:}/root/.minio
       - ${VOLUME_PREFIX}${BLANK_IF_TESTS-minio-data:}/data
     environment:
-      MINIO_ACCESS_KEY: admin-key
-      MINIO_SECRET_KEY: admin-secret
+      MINIO_ROOT_USER: admin-key
+      MINIO_ROOT_PASSWORD: admin-secret

@@ -55,6 +55,7 @@ hqDefine("app_manager/js/details/screen", function () {
         self.containsSearchConfiguration = options.containsSearchConfiguration;
         self.containsCustomXMLConfiguration = options.containsCustomXMLConfiguration;
         self.allowsTabs = options.allowsTabs;
+        self.caseTileFields = options.caseTileFields;
         self.useCaseTiles = ko.observable(spec[self.columnKey].use_case_tiles ? "yes" : "no");
         self.showCaseTileColumn = ko.computed(function () {
             return self.useCaseTiles() === "yes" && hqImport('hqwebapp/js/toggles').toggleEnabled('CASE_LIST_TILE');
@@ -70,6 +71,15 @@ hqDefine("app_manager/js/details/screen", function () {
         });
         self.multiSelectEnabled = ko.observable(spec[self.columnKey].multi_select);
         self.multiSelectEnabled.subscribe(function () {
+            self.autoSelectEnabled(self.multiSelectEnabled() && self.autoSelectEnabled());
+            self.fireChange();
+        });
+        self.maxSelectValue = ko.observable(spec[self.columnKey].max_select_value);
+        self.maxSelectValue.subscribe(function () {
+            self.fireChange();
+        });
+        self.autoSelectEnabled = ko.observable(spec[self.columnKey].auto_select);
+        self.autoSelectEnabled.subscribe(function () {
             self.fireChange();
         });
         self.persistTileOnForms = ko.observable(spec[self.columnKey].persist_tile_on_forms || false);
@@ -97,8 +107,10 @@ hqDefine("app_manager/js/details/screen", function () {
 
             column.field.on('change', function () {
                 if (!column.useXpathExpression) {
-                    column.header.val(getPropertyTitle(this.val()));
-                    column.header.fire("change");
+                    const oldVal = column.header.val(),
+                        newVal = getPropertyTitle(this.val());
+                    column.header.val(newVal);
+                    column.header.fire("change", {oldVal: oldVal, newVal: newVal});
                 }
             });
             if (column.original.hasAutocomplete) {
@@ -111,6 +123,15 @@ hqDefine("app_manager/js/details/screen", function () {
                 column.field.observableVal(column.original.field);
                 hqImport('app_manager/js/details/utils').setUpAutocomplete(column.field, self.properties);
             }
+            column.header.on('change', function (e) {
+                if (e.oldValue !== e.newValue) {
+                    self.fire("columnChange", [{
+                        "value": column,
+                        "index": self.columns.indexOf(column),
+                        "status": "edited"
+                    }]);
+                }
+            })
             return column;
         };
 
@@ -179,9 +200,45 @@ hqDefine("app_manager/js/details/screen", function () {
         self.enableTilePullDown.subscribe(function () {
             self.saveButton.fire('change');
         });
-        self.columns.subscribe(function () {
+        self.columns.subscribe(function (changes) {
             self.saveButton.fire('change');
-        });
+
+            // create events when rows (column objects) are moved and fire a special event that allows us to update
+            // dependent UI elements (sort properties)
+            const events = changes
+                // remove the 2nd event for column moves
+                .filter(c => !(c.status === 'deleted' && c.moved !== undefined));
+
+            // there should only be one 'change' now.
+            const change = events[0];
+
+            // for "moved" and "deleted" we need to add events for all the other columns that have changed their index
+            let affectedColumns, move;  // 'move' is an index diff to calculate the previous index
+            if (change.moved !== undefined) {
+                const moveFrom = change.moved,
+                    movedTo = change.index;
+                if (movedTo > moveFrom) {
+                    move = 1;
+                    affectedColumns = self.columns.slice(moveFrom, movedTo);
+                } else {
+                    move = -1;
+                    affectedColumns = self.columns.slice(movedTo + 1, moveFrom + 1);
+                }
+            } else if (change.status === 'deleted') {
+                move = 1;
+                affectedColumns = self.columns.slice(change.index);
+            }
+            if (affectedColumns) {
+                affectedColumns.forEach(c => {
+                    let index = self.columns.indexOf(c);
+                    events.push({
+                        value: c, index: index, status: "added", moved: index + move
+                    })
+                });
+            }
+
+            self.fire("columnChange", events);
+        }, null, 'arrayChange');
 
         self.save = function () {
             // Only save if property names are valid
@@ -331,6 +388,8 @@ hqDefine("app_manager/js/details/screen", function () {
             }
             data[self.columnKey + '_custom_variables'] = self.customVariablesViewModel.xml();
             data.multi_select = self.multiSelectEnabled();
+            data.auto_select = self.autoSelectEnabled();
+            data.max_select_value = self.maxSelectValue();
             if (self.containsSearchConfiguration) {
                 data.search_properties = JSON.stringify(self.config.search.serialize());
             }

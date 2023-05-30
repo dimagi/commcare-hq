@@ -11,9 +11,11 @@ from couchdbkit.exceptions import ResourceNotFound
 from crispy_forms.utils import render_crispy_form
 
 from corehq.apps.registry.utils import get_data_registry_dropdown_options
-from corehq.apps.reports.models import TableauVisualization
+from corehq.apps.reports.models import TableauVisualization, TableauUser
 from corehq.apps.sso.models import IdentityProvider
 from corehq.apps.sso.utils.user_helpers import get_email_domain_from_username
+from corehq.toggles import TABLEAU_USER_SYNCING
+
 from django.contrib import messages
 from django.core.exceptions import ValidationError
 from django.http import (
@@ -31,14 +33,12 @@ from django.utils.safestring import mark_safe
 from django.utils.translation import gettext as _, ngettext, gettext_lazy, gettext_noop
 
 from corehq.apps.users.analytics import get_role_user_count
-from dimagi.utils.couch import CriticalSection
 from soil.exceptions import TaskFailedError
 from soil.util import expose_cached_download, get_download_context
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.debug import sensitive_post_parameters
 from django.views.decorators.http import require_GET, require_POST
 from django_digest.decorators import httpdigest
-from django_otp.plugins.otp_static.models import StaticToken
 from django_prbac.utils import has_privilege
 from memoized import memoized
 
@@ -59,7 +59,6 @@ from corehq.apps.domain.decorators import (
     require_superuser,
 )
 from corehq.apps.domain.forms import clean_password
-from corehq.apps.domain.models import Domain
 from corehq.apps.domain.views.base import BaseDomainView
 from corehq.apps.enterprise.models import EnterprisePermissions
 from corehq.apps.es import UserES, queries
@@ -71,6 +70,7 @@ from corehq.apps.locations.permissions import (
 from corehq.apps.registration.forms import (
     AdminInvitesUserForm,
 )
+from corehq.apps.reports.exceptions import TableauAPIError
 from corehq.apps.reports.util import get_possible_reports
 from corehq.apps.sms.mixin import BadSMSConfigException
 from corehq.apps.sms.verify import (
@@ -96,6 +96,7 @@ from corehq.apps.users.forms import (
     CommtrackUserForm,
     SetUserPasswordForm,
     UpdateUserRoleForm,
+    TableauUserForm,
 )
 from corehq.apps.users.landing_pages import get_allowed_landing_pages, validate_landing_page
 from corehq.apps.users.models import (
@@ -125,6 +126,8 @@ from corehq.util.workbook_json.excel import (
     WorksheetNotFound,
     get_workbook,
 )
+
+from dimagi.utils.logging import notify_exception
 
 
 def _users_context(request, domain):
@@ -300,20 +303,6 @@ class BaseEditUserView(BaseUserSettingsView):
         return context
 
     @property
-    def backup_token(self):
-        if Domain.get_by_name(self.request.domain).two_factor_auth:
-            with CriticalSection([f"backup-token-{self.editable_user._id}"]):
-                device = (self.editable_user.get_django_user()
-                          .staticdevice_set
-                          .get_or_create(name='backup')[0])
-                token = device.token_set.first()
-                if token:
-                    return device.token_set.first().token
-                else:
-                    return device.token_set.create(token=StaticToken.random_token()).token
-        return None
-
-    @property
     @memoized
     def commtrack_form(self):
         if self.request.method == "POST" and self.request.POST['form_type'] == "commtrack":
@@ -334,6 +323,36 @@ class BaseEditUserView(BaseUserSettingsView):
         if self.form_user_update.is_valid():
             return self.form_user_update.update_user()
 
+    @property
+    @memoized
+    def tableau_form(self):
+        try:
+            if self.request.method == "POST" and self.request.POST['form_type'] == "tableau":
+                return TableauUserForm(self.request.POST,
+                                    request=self.request,
+                                    domain=self.domain,
+                                    username=self.editable_user.username)
+
+            tableau_user = TableauUser.objects.filter(server__domain=self.domain).get(
+                username=self.editable_user.username
+            )
+            return TableauUserForm(
+                domain=self.domain,
+                request=self.request,
+                username=self.editable_user.username,
+                initial={
+                    'role': tableau_user.role
+                }
+            )
+        except (TableauAPIError, TableauUser.DoesNotExist) as e:
+            messages.error(self.request, _('''There was an error getting data for this user's associated Tableau
+                                             user. Please contact support if this error persists.'''))
+            notify_exception(self.request, str(e), details={
+                'domain': self.domain,
+                'exception_type': type(e),
+            })
+
+
     def post(self, request, *args, **kwargs):
         saved = False
         if self.request.POST['form_type'] == "commtrack":
@@ -343,6 +362,10 @@ class BaseEditUserView(BaseUserSettingsView):
         elif self.request.POST['form_type'] == "update-user":
             if self.update_user():
                 messages.success(self.request, _('Changes saved for user "%s"') % self.editable_user.raw_username)
+                saved = True
+        elif self.request.POST['form_type'] == "tableau":
+            if self.tableau_form and self.tableau_form.is_valid():
+                self.tableau_form.save(self.editable_user.username)
                 saved = True
         if saved:
             return HttpResponseRedirect(self.page_url)
@@ -410,10 +433,10 @@ class EditWebUserView(BaseEditUserView):
         if (self.request.project.commtrack_enabled or
                 self.request.project.uses_locations):
             ctx.update({'update_form': self.commtrack_form})
+        if TABLEAU_USER_SYNCING.enabled(self.domain):
+            ctx.update({'tableau_form': self.tableau_form})
         if self.can_grant_superuser_access:
             ctx.update({'update_permissions': True})
-
-        ctx.update({'token': self.backup_token})
 
         idp = IdentityProvider.get_active_identity_provider_by_username(
             self.editable_user.username
@@ -707,15 +730,21 @@ class ListRolesView(BaseRoleAccessView):
             'can_restrict_access_by_location': self.can_restrict_access_by_location,
             'landing_page_choices': self.landing_page_choices,
             'show_integration': (
-                toggles.OPENMRS_INTEGRATION.enabled(self.domain) or
-                toggles.DHIS2_INTEGRATION.enabled(self.domain)
+                toggles.OPENMRS_INTEGRATION.enabled(self.domain)
+                or toggles.DHIS2_INTEGRATION.enabled(self.domain)
+                or toggles.GENERIC_INBOUND_API.enabled(self.domain)
             ),
             'web_apps_privilege': self.web_apps_privilege,
             'erm_privilege': self.release_management_privilege,
             'mrm_privilege': self.lite_release_management_privilege,
+            'attendance_tracking_privilege': (
+                toggles.ATTENDANCE_TRACKING.enabled(self.domain)
+                and domain_has_privilege(self.domain, privileges.ATTENDANCE_TRACKING)
+            ),
             'has_report_builder_access': has_report_builder_access(self.request),
-            'data_file_download_enabled': toggles.DATA_FILE_DOWNLOAD.enabled(self.domain),
-            'export_ownership_enabled': toggles.EXPORT_OWNERSHIP.enabled(self.domain),
+            'data_file_download_enabled':
+                domain_has_privilege(self.domain, privileges.DATA_FILE_DOWNLOAD),
+            'export_ownership_enabled': domain_has_privilege(self.domain, privileges.EXPORT_OWNERSHIP),
             'data_registry_choices': get_data_registry_dropdown_options(self.domain),
         }
 
@@ -789,6 +818,7 @@ def _format_enterprise_user(domain, user):
 def paginate_web_users(request, domain):
     web_users, pagination = _get_web_users(request, [domain])
     web_users_fmt = [{
+        'eulas': u.get_eulas(),
         'email': u.get_email(),
         'domain': domain,
         'name': u.full_name,

@@ -54,7 +54,7 @@ from corehq.messaging.scheduling.scheduling_partitioned.models import (
     AlertScheduleInstance,
 )
 from corehq.motech.models import ConnectionSettings
-from corehq.motech.repeaters.models import SQLCreateCaseRepeater
+from corehq.motech.repeaters.models import CreateCaseRepeater
 
 
 class BaseDumpLoadTest(TestCase):
@@ -581,6 +581,7 @@ class TestSQLDumpLoad(BaseDumpLoadTest):
         )
         MessagingSubEvent.objects.create(
             parent=event,
+            domain=self.domain_name,
             date=datetime.utcnow(),
             recipient_type=MessagingEvent.RECIPIENT_CASE,
             content_type=MessagingEvent.CONTENT_SMS,
@@ -731,8 +732,7 @@ class TestSQLDumpLoad(BaseDumpLoadTest):
             url='example.com',
             user_id='user_id',
         )
-        # connection settings and sqlrepeater instances would be created automatically with sql sync logic in place
-        self._dump_and_load(Counter({SQLCreateCaseRepeater: 1, ConnectionSettings: 1, ZapierSubscription: 1}))
+        self._dump_and_load(Counter({CreateCaseRepeater: 1, ConnectionSettings: 1, ZapierSubscription: 1}))
 
     def test_lookup_table(self):
         from corehq.apps.fixtures.models import LookupTable, LookupTableRow, LookupTableRowOwner, OwnerType

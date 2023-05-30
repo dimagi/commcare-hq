@@ -1,4 +1,4 @@
-{% extends "hqwebapp/base_section.html" %}
+{% extends "hqwebapp/bootstrap3/base_section.html" %}
 {% load hq_shared_tags %}
 {% load crispy_forms_tags %}
 {% load i18n %}
@@ -12,7 +12,6 @@
   {% initial_page_data 'appVersionOnlyShowReleased' True %}
   {% initial_page_data 'buildProfilesPerApp' build_profiles_per_app %}
   {% registerurl 'toggle_release_restriction_by_app_profile' domain '---'%}
-  {% registerurl 'manage_hosted_ccz' domain %}
   {% registerurl "paginate_releases" domain '---' %}
     <ul class="nav nav-tabs sticky-tabs">
       <li><a data-toggle="tab" href="#search-form" id="search-tab">{% trans "Search" %}</a></li>
@@ -50,10 +49,6 @@
           <td data-bind="text: version"></td>
           <td data-bind="text: status"></td>
           <td>
-            <a type="button" class="btn btn-default" data-bind="attr: { href: hostedCCZLink },
-              visible: hostedCCZLink" target="_blank">
-              {% trans 'View Hostings' %}
-            </a>
             <button type="button" class="btn btn-default"
                     data-bind="click: toggleRestriction, css: buttonClass,
                                       disable: ajaxInProgress">

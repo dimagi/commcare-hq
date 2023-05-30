@@ -1,4 +1,4 @@
-{% extends 'hqwebapp/base_section.html' %}
+{% extends 'hqwebapp/bootstrap3/base_section.html' %}
 {% load i18n %}
 {% load hq_shared_tags %}
 {% load crispy_forms_tags %}
@@ -38,7 +38,7 @@
                         hide: !isAlertVisible()
                       }">
         <div class="col-md-12">
-          <div class="alert"
+          <div class="alert alert-danger"
                data-bind="html: alertHtml"></div>
         </div>
       </div>

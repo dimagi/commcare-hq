@@ -7,7 +7,7 @@ from corehq.apps.es.cases import (
     opened_range,
     owner,
     owner_type,
-    user, server_modified_range,
+    user,
 )
 from corehq.apps.es.forms import app, submitted, user_id, user_type
 from corehq.apps.es.sms import received as sms_received
@@ -151,12 +151,6 @@ class ModifiedOnRangeFilter(RangeExportFilter):
 
     def to_es_filter(self):
         return modified_range(self.gt, self.gte, self.lt, self.lte)
-
-
-class ServerModifiedOnRangeFilter(RangeExportFilter):
-
-    def to_es_filter(self):
-        return server_modified_range(self.gt, self.gte, self.lt, self.lte)
 
 
 class LastModifiedByFilter(ExportFilter):

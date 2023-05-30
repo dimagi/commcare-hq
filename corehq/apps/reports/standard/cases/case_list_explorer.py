@@ -24,7 +24,6 @@ from corehq.apps.reports.standard.cases.filters import (
     CaseListExplorerColumns,
     XPathCaseSearchFilter,
 )
-from corehq.elastic import iter_es_docs_from_query
 from corehq.util.metrics import metrics_histogram_timer
 
 
@@ -133,8 +132,8 @@ class CaseListExplorer(CaseListReport):
 
         return persistent_cols + [
             DataTablesColumn(
-                column,
-                prop_name=column,
+                column["label"],
+                prop_name=column["name"],
                 sortable=column not in CASE_COMPUTED_METADATA,
             )
             for column in CaseListExplorerColumns.get_value(self.request, self.domain)
@@ -161,7 +160,8 @@ class CaseListExplorer(CaseListReport):
 
     @property
     def get_all_rows(self):
-        data = (wrap_case_search_hit(r) for r in iter_es_docs_from_query(self._build_query(sort=False)))
+        query = self._build_query(sort=False)
+        data = (wrap_case_search_hit(r) for r in query.scroll_ids_to_disk_and_iter_docs())
         return self._get_rows(data)
 
     def _get_rows(self, data):

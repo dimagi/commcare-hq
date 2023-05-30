@@ -23,7 +23,9 @@ from corehq.sql_db.connections import connection_manager
 
 
 def get_sample_report_config():
-    return _get_sample_doc('sample_report_config.json', ReportConfiguration)
+    config = _get_sample_doc('sample_report_config.json', ReportConfiguration)
+    config.validate()
+    return config
 
 
 def get_sample_data_source():

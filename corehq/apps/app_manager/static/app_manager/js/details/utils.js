@@ -38,6 +38,9 @@ hqDefine("app_manager/js/details/utils", function () {
         }, {
             value: "distance",
             label: gettext('Distance from current location'),
+        }, {
+            value: "markdown",
+            label: gettext('Markdown'),
         }];
 
         if (hqImport('hqwebapp/js/toggles').toggleEnabled('MM_CASE_PROPERTIES')) {
@@ -134,7 +137,7 @@ hqDefine("app_manager/js/details/utils", function () {
                 return DOMPurify.sanitize(m);
             },
             templateResult: function (result) {
-                var formatted = result.id;
+                var formatted = result.text;
                 if (module.isAttachmentProperty(result.id)) {
                     formatted = (
                         '<i class="fa fa-paperclip"></i> ' +

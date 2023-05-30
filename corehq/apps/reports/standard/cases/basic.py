@@ -91,7 +91,11 @@ class CaseListMixin(ElasticProjectInspectionReport, ProjectReportParametersMixin
         query = query.OR(*case_owner_filters)
 
         if not self.request.can_access_all_locations:
-            query = query_location_restricted_cases(query, self.request)
+            query = query_location_restricted_cases(
+                query,
+                self.request.domain,
+                self.request.couch_user,
+            )
 
         search_string = CaseSearchFilter.get_value(self.request, self.domain)
         if search_string:

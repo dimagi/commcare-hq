@@ -23123,6 +23123,10 @@ define('vellum/richText',[
     CKEDITOR.config.title = false;
     CKEDITOR.config.extraPlugins = 'bubbles';
     CKEDITOR.config.disableNativeSpellChecker = false;
+    // We don't use Toolbar, however it is required by clipboard.
+    // Once https://github.com/ckeditor/ckeditor4/issues/654 is resolved,
+    // toolbar can be removed from the source(build).
+    CKEDITOR.config.toolbar = [];
 
     /**
      * Get or create a rich text editor for the given element
@@ -23735,6 +23739,9 @@ define('vellum/richText',[
                    .replace(/<\/p>/ig, "\n")
                    .replace(/<br \/>/ig, "\n")
                    .replace(/(&nbsp;|\xa0|\u2005)/ig, " ")
+                   // While copying widgets with text, CKEditor adds these html elements
+                   .replace(/<span\b[^>]*?id="?cke_bm_\d+\w"?\b[^>]*?>.*?<\/span>/ig, "")
+                   .replace(/<span\b[^>]*?data-cke-copybin-(start|end)[^<]*?<\/span>/ig, "")
                    // CKEditor uses zero-width spaces as markers
                    // and sometimes they leak out (on copy/paste?)
                    .replace(/\u200b+/ig, " ")
@@ -23865,6 +23872,7 @@ define('vellum/richText',[
                 var xpath = extractXPathInfo($(this)).value;
                 return widget.mug.form.normalizeHashtag(xpath);
             });
+            description = xml.normalize(description);
 
             // Remove ckeditor-supplied title attributes, which will otherwise override popover title
             $imgs.removeAttr("title");
@@ -23877,13 +23885,13 @@ define('vellum/richText',[
                 html: true,
                 sanitize: false,  // bootstrap, don't remove data-ufid attribute
                 content: easy_reference_popover({
-                    text: description.text(),
+                    text: description,
                     ufid: labelMug ? labelMug.ufid : "",
                 }),
                 template: '<div contenteditable="false" class="popover rich-text-popover">' +
                     '<div class="popover-inner">' +
                     '<div class="popover-title"></div>' +
-                    (labelMug || description.text() ?
+                    (labelMug || description ?
                         '<div class="popover-content"><p></p></div>' : '') +
                     '</div></div>',
                 delay: {

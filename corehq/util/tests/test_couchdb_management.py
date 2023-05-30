@@ -37,7 +37,6 @@ class CouchConfigTest(SimpleTestCase):
         for key, value in {
             None: self.remote_db_uri,
             'users': '{}__users'.format(self.remote_db_uri),
-            'fixtures': '{}__fixtures'.format(self.remote_db_uri),
             'meta': '{}__meta'.format(self.remote_db_uri),
         }.items():
             self.assertEqual(config.all_db_uris_by_slug[key], value, f"key: {key!r}")

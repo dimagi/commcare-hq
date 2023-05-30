@@ -1,0 +1,153 @@
+.navbar-hq-main-menu {
+  border: 1px solid #d5d5d5;
+  font-size: 13px;
+  background: linear-gradient(#fdfdfd, #f4f4f4);
+  margin-bottom: 0px;
+  min-height: $navbar-height;
+
+  .navbar-brand {
+    line-height: 17px;
+    height: $navbar-height - 4px;
+    display: inline-block;
+
+    // Standard HQ logo
+    // Custom domain logos use an actual image
+    > div {
+        background-image: url(/static/hqstyle/images/commcare-flower.png);
+        background-size: contain;
+        width: 38px;
+        height: 38px;
+
+        @media only screen and (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
+            background-image: url(/static/hqstyle/images/commcare-flower-lg.png);
+            width: 51px;
+        }
+    }
+  }
+
+  .dropdown-item {
+    color: #333333;
+  }
+
+  &.navbar-expand-lg .navbar-nav .nav-link {
+    padding: 21px 15px;
+    line-height: 19.5px;
+  }
+
+  &.navbar-expand-lg .navbar-nav li:not(.active) > .nav-link:focus,
+  &.navbar-expand-lg .navbar-nav li:not(.active) > .nav-link:hover {
+    transition: color .2s ease-in-out, background .2s ease-in-out;
+    box-shadow: inset 0 3px 8px $navbar-default-bg;
+    background-color: #edeff2;
+    color: #1557a2;
+    text-decoration: none;
+  }
+
+  &.navbar-expand-lg .navbar-nav li > .nav-link:hover,
+  &.navbar-expand-lg .navbar-nav li > .nav-link.hovered {
+    text-decoration: none;
+    background-color: $gray-lighter;
+  }
+
+  &.navbar-expand-lg .navbar-nav li.active > a {
+    box-shadow: inset 0 3px 8px rgba(0, 0, 0, 0.125);
+  }
+  .navbar-toggler,
+  .navbar-toggler:focus {
+    border: none;
+    outline: none;
+    border-radius: 0;
+    box-shadow: none;
+  }
+}
+
+.nav-settings-bar {
+  margin-left: auto;
+  order: 2;
+}
+
+@media(max-width: 1057px) {
+  .navbar-hq-main-menu.navbar-expand-lg .navbar-nav .nav-link {
+    padding: 21px 10px;
+  }
+}
+
+@media (max-width: map-get($grid-breakpoints, "lg")) {
+  .navbar-hq-main-menu {
+    &.navbar-expand-lg .navbar-nav .nav-link {
+      padding: 10px 15px;
+      line-height: 19.5px;
+    }
+
+    .navbar-collapse.collapsing,
+    .navbar-collapse.show {
+      border-top: 1px solid $gray-300;
+      margin-left: -13px !important;
+      margin-right: -13px !important;
+    }
+    .dropdown-menu {
+      border: none;
+      padding: 2px;
+    }
+    .dropdown-header {
+      font-size: $dropdown-font-size;
+    }
+    .dropdown-item {
+      padding-left: 20px;
+      color: #777;
+    }
+  }
+}
+
+.navbar-hq-footer {
+  margin-bottom: 0px;
+  border-radius: 0px;
+  height: $navbar-footer-height;
+  min-height: $navbar-footer-height;
+  color: #ffffff;
+  text-align: center;
+  line-height: $navbar-footer-height - 1px;
+
+  // Needed for firefox to set height and min-height properly
+  // Possibly due to https://bugzilla.mozilla.org/show_bug.cgi?id=307866 ?
+  overflow: hidden;
+  width: 100%;
+
+  a, a:link, a:visited {
+    color: $navbar-footer-link-color;
+    &.btn { color: #ffffff; }
+  }
+
+  a:hover {
+    color: $navbar-footer-link-color-hover;
+    &.btn { color: #ffffff; }
+  }
+  a.footer-link-img {
+    &:hover {
+      text-decoration: none;
+    }
+  }
+
+  .dimagi-logo svg {
+    height: 22px;
+    width: 50px;
+    top: 3px;
+    position: relative;
+    display: inline-block;
+  }
+
+  @media (max-width: map-get($grid-breakpoints, "sm")) {
+    height: $navbar-footer-height * 2;
+    min-height: $navbar-footer-height * 2;
+  }
+
+  @media (max-width: map-get($grid-breakpoints, "xs")) {
+    height: $navbar-footer-height * 3;
+    min-height: $navbar-footer-height * 3;
+  }
+
+  @media (max-width: 340px) {
+    height: $navbar-footer-height * 4;
+    min-height: $navbar-footer-height* 4;
+  }
+}

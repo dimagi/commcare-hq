@@ -27,14 +27,12 @@
           <i class="fa fa-check"></i>{% trans "Multimedia" %}
         </a>
       </li>
-      {% if not module.is_surveys %}
-        {% if add_ons.register_from_case_list or add_ons.case_list_menu_item or module.doc_type == "AdvancedModule" %}
-          <li>
-            <a href="#" data-slug="advanced" data-collapse="1">
-              <i class="fa fa-check"></i>{% trans "Advanced" %}
-            </a>
-          </li>
-        {% endif %}
+      {% if show_advanced_settings %}
+        <li>
+          <a href="#" data-slug="advanced" data-collapse="1">
+            <i class="fa fa-check"></i>{% trans "Advanced" %}
+          </a>
+        </li>
       {% endif %}
     </ul>
   </div>
@@ -215,7 +213,7 @@
         </div>
       </div>
 
-      {% if not module.is_surveys or show_advanced_settings %}
+      {% if show_advanced_settings %}
         <div class="panel panel-appmanager" data-slug="advanced">
           <div class="panel-heading">
             <h4 class="panel-title panel-title-nolink">{% trans "Advanced" %}</h4>
@@ -253,6 +251,24 @@
 
             {% if session_endpoints_enabled %}
               {% include "app_manager/partials/session_endpoints.html" with module_or_form=module %}
+            {% endif %}
+
+            {% if request|toggle_enabled:'USH_EMPTY_CASE_LIST_TEXT' %}
+            <div class="form-group">
+              <label for="no_items_text" class="{% css_label_class %} control-label">
+                {% trans "Empty Case List Text" %}
+                <span class="hq-help-template" data-title="{% trans "Empty Case List Text" %}"
+                      data-content="{% trans_html_attr "Define text displayed when case list has no results." %}"
+                ></span>
+              </label>
+              <div class="{% css_field_class %} commcare-feature" data-since-version="2.54">
+                {% input_trans module.case_details.short.no_items_text langs input_name='no_items_text' input_id='no_items_text' data_bind="value: no_items_text" element_type="textarea" %}
+              </div>
+            </div>
+            {% endif %}
+
+            {% if app.supports_module_assertions %}
+              {% include "app_manager/partials/forms/custom_assertions.html" %}
             {% endif %}
 
           </div><!-- end .panel-body -->

@@ -1,4 +1,3 @@
-from collections import namedtuple
 from datetime import datetime
 
 from django.db import models
@@ -40,6 +39,18 @@ class CaseType(models.Model):
         return super(CaseType, self).save(*args, **kwargs)
 
 
+class CasePropertyGroup(models.Model):
+    case_type = models.ForeignKey(
+        CaseType,
+        on_delete=models.CASCADE,
+        related_name='groups',
+        related_query_name='group'
+    )
+    name = models.CharField(max_length=255, default=None)
+    description = models.TextField(default='', blank=True)
+    index = models.IntegerField(default=0, blank=True)
+
+
 class CaseProperty(models.Model):
 
     class DataType(models.TextChoices):
@@ -60,6 +71,7 @@ class CaseProperty(models.Model):
         related_query_name='property'
     )
     name = models.CharField(max_length=255, default=None)
+    label = models.CharField(max_length=255, default='', blank=True)
     description = models.TextField(default='', blank=True)
     deprecated = models.BooleanField(default=False)
     data_type = models.CharField(
@@ -69,6 +81,16 @@ class CaseProperty(models.Model):
         blank=True,
     )
     group = models.TextField(default='', blank=True)
+    index = models.IntegerField(default=0, blank=True)
+    group_obj = models.ForeignKey(
+        CasePropertyGroup,
+        on_delete=models.CASCADE,
+        related_name='properties',
+        related_query_name='property',
+        db_column="group_id",
+        null=True,
+        blank=True
+    )
 
     class Meta(object):
         unique_together = ('case_type', 'name')
@@ -121,6 +143,12 @@ class CaseProperty(models.Model):
         allowed_values = self.allowed_values.values_list('allowed_value', flat=True)
         allowed_string = ', '.join(f'"{av}"' for av in allowed_values)
         return _("Valid values: %s") % allowed_string
+
+    @property
+    def group_name(self):
+        if self.group_obj:
+            return self.group_obj.name
+        return self.group
 
 
 class CasePropertyAllowedValue(models.Model):

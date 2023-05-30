@@ -41,8 +41,6 @@ class OtaFixtureTest(TestCase):
         make_item_lists(FR_PROVINCES, 'burgundy', cls.group1),
         make_item_lists(CA_PROVINCES, 'alberta', cls.group2),
 
-        from corehq.apps.fixtures.dbaccessors import delete_all_fixture_data
-        cls.addClassCleanup(delete_all_fixture_data, DOMAIN)
         cls.addClassCleanup(get_blob_db().delete, key=FIXTURE_BUCKET + "/" + DOMAIN)
 
         cls.restore_user = cls.user.to_ota_restore_user(DOMAIN)

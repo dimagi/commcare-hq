@@ -1,28 +1,19 @@
 from datetime import datetime
 from functools import reduce
 from itertools import chain
-from uuid import UUID, uuid4
+from uuid import uuid4
 
 from attrs import define, field
 from django.db import models
 from django.db.models.expressions import RawSQL
 
-from dimagi.utils.couch.migration import SyncSQLToCouchMixin
-
 from corehq.apps.groups.models import Group
 from corehq.sql_db.fields import CharIdField
 from corehq.util.jsonattrs import AttrsDict, AttrsList, list_of
 
-from .couchmodels import (  # noqa: F401
-    FIXTURE_BUCKET,
-    FieldList,
-    FixtureDataItem,
-    FixtureDataType,
-    FixtureItemField,
-    FixtureOwnership,
-    FixtureTypeField,
-)
 from .exceptions import FixtureVersionError
+
+FIXTURE_BUCKET = 'domain-fixtures'
 
 
 class LookupTableManager(models.Manager):
@@ -63,7 +54,7 @@ class TypeField:
         return hash((self.name, tuple(self.properties), self.is_indexed))
 
 
-class LookupTable(SyncSQLToCouchMixin, models.Model):
+class LookupTable(models.Model):
     """Lookup Table
 
     `fields` structure:
@@ -96,44 +87,6 @@ class LookupTable(SyncSQLToCouchMixin, models.Model):
     class Meta:
         app_label = 'fixtures'
         unique_together = [('domain', 'tag')]
-
-    _migration_couch_id_name = "id"
-
-    @property
-    def _migration_couch_id(self):
-        return self.id.hex
-
-    @_migration_couch_id.setter
-    def _migration_couch_id(self, value):
-        self.id = UUID(value)
-
-    @classmethod
-    def _migration_get_fields(cls):
-        return [
-            "domain",
-            "is_global",
-            "tag",
-            "item_attributes",
-        ]
-
-    def _migration_sync_to_couch(self, couch_object, save=True):
-        if self.fields != couch_object._sql_fields:
-            couch_object.fields = [FixtureTypeField.from_sql(f) for f in self.fields]
-        if self.description != (couch_object.description or ""):
-            couch_object.description = self.description
-        super()._migration_sync_to_couch(couch_object, save=save)
-
-    @classmethod
-    def _migration_get_couch_model_class(cls):
-        return FixtureDataType
-
-    def _migration_get_or_create_couch_object(self):
-        cls = self._migration_get_couch_model_class()
-        obj = self._migration_get_couch_object()
-        if obj is None:
-            obj = cls(_id=self._migration_couch_id)
-            obj.save(sync_to_sql=False)
-        return obj
 
     @property
     def is_indexed(self):
@@ -196,10 +149,14 @@ class LookupTableRowManager(models.Manager):
                 break
             row = results._result_cache[-1]
             next_page = models.Q(
+                table_id=row.table_id,
                 sort_key=row.sort_key,
                 id__gt=row.id,
             ) | models.Q(
+                table_id=row.table_id,
                 sort_key__gt=row.sort_key
+            ) | models.Q(
+                table_id__gt=row.table_id,
             )
 
     def with_value(self, domain, table_id, field_name, value):
@@ -245,7 +202,7 @@ class Field:
 DB_CASCADE = models.DO_NOTHING
 
 
-class LookupTableRow(SyncSQLToCouchMixin, models.Model):
+class LookupTableRow(models.Model):
     """Lookup Table Row data model
 
     `fields` structure:
@@ -276,7 +233,7 @@ class LookupTableRow(SyncSQLToCouchMixin, models.Model):
 
     id = models.UUIDField(primary_key=True, default=uuid4)
     domain = CharIdField(max_length=126, db_index=True, default=None)
-    table = models.ForeignKey(LookupTable, on_delete=DB_CASCADE)
+    table = models.ForeignKey(LookupTable, on_delete=DB_CASCADE, db_constraint=False)
     fields = AttrsDict(list_of(Field), default=dict)
     item_attributes = models.JSONField(default=dict)
     sort_key = models.IntegerField()
@@ -286,48 +243,6 @@ class LookupTableRow(SyncSQLToCouchMixin, models.Model):
         indexes = [
             models.Index(fields=["domain", "table_id", "sort_key", "id"]),
         ]
-
-    _migration_couch_id_name = "id"
-
-    @property
-    def _migration_couch_id(self):
-        return self.id.hex
-
-    @_migration_couch_id.setter
-    def _migration_couch_id(self, value):
-        self.id = UUID(value)
-
-    @classmethod
-    def _migration_get_fields(cls):
-        return ["domain", "sort_key"]
-
-    def _migration_sync_to_couch(self, couch_object, save=True):
-        if couch_object.data_type_id is None or UUID(couch_object.data_type_id) != self.table_id:
-            couch_object.data_type_id = self.table_id.hex
-        if self.fields != couch_object._sql_fields:
-            couch_object.fields = {
-                name: FieldList(field_list=[
-                    FixtureItemField(
-                        field_value=val.value,
-                        properties=val.properties,
-                    ) for val in values
-                ]) for name, values in self.fields.items()
-            }
-        if self.item_attributes != couch_object._sql_item_attributes:
-            couch_object.item_attributes = self.item_attributes
-        super()._migration_sync_to_couch(couch_object, save=save)
-
-    @classmethod
-    def _migration_get_couch_model_class(cls):
-        return FixtureDataItem
-
-    def _migration_get_or_create_couch_object(self):
-        cls = self._migration_get_couch_model_class()
-        obj = self._migration_get_couch_object()
-        if obj is None:
-            obj = cls(_id=self._migration_couch_id)
-            obj.save(sync_to_sql=False)
-        return obj
 
     @property
     def fields_without_attributes(self):
@@ -357,33 +272,17 @@ class OwnerType(models.IntegerChoices):
         return getattr(cls, value.title())
 
 
-class LookupTableRowOwner(SyncSQLToCouchMixin, models.Model):
+class LookupTableRowOwner(models.Model):
     domain = CharIdField(max_length=126, default=None)
     owner_type = models.PositiveSmallIntegerField(choices=OwnerType.choices)
     owner_id = CharIdField(max_length=126, default=None)
-    row = models.ForeignKey(LookupTableRow, on_delete=DB_CASCADE)
-    couch_id = CharIdField(max_length=126, null=True, db_index=True)
+    row = models.ForeignKey(LookupTableRow, on_delete=DB_CASCADE, db_constraint=False)
 
     class Meta:
         app_label = 'fixtures'
         indexes = [
             models.Index(fields=["domain", "owner_type", "owner_id"])
         ]
-
-    @classmethod
-    def _migration_get_fields(cls):
-        return ["domain", "owner_id"]
-
-    def _migration_sync_to_couch(self, couch_object, save=True):
-        if couch_object.data_item_id is None or UUID(couch_object.data_item_id) != self.row_id:
-            couch_object.data_item_id = self.row_id.hex
-        if OwnerType(self.owner_type).name.lower() != couch_object.owner_type:
-            couch_object.owner_type = OwnerType(self.owner_type).name.lower()
-        super()._migration_sync_to_couch(couch_object, save=save)
-
-    @classmethod
-    def _migration_get_couch_model_class(cls):
-        return FixtureOwnership
 
 
 class UserLookupTableType:

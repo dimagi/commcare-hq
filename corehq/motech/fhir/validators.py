@@ -1,12 +1,12 @@
 from django.core.validators import ValidationError
 from django.utils.translation import gettext_lazy as _
 
-from corehq.motech.fhir.const import SUPPORTED_FHIR_RESOURCE_TYPES
-
 
 def validate_supported_type(value):
-    if value and value not in SUPPORTED_FHIR_RESOURCE_TYPES:
+    from corehq.motech.fhir.utils import load_fhir_resource_types
+    supported_resources_types = load_fhir_resource_types()
+    if value and value not in supported_resources_types:
         raise ValidationError(
             _('Unsupported FHIR Resource type {}. Please choose from {}').format(
-                value, ', '.join(SUPPORTED_FHIR_RESOURCE_TYPES))
+                value, ', '.join(supported_resources_types))
         )

@@ -40,7 +40,11 @@
 
     <link href="https://fonts.googleapis.com/css?family=Nunito+Sans:100,300,400,500,700,800" rel="stylesheet">
 
-    {% include 'hqwebapp/includes/less.html' %}
+    {% if use_bootstrap5 %}
+      {% include 'hqwebapp/includes/bootstrap5/core_stylesheets.html' %}
+    {% else %}
+      {% include 'hqwebapp/includes/bootstrap3/core_stylesheets.html' %}
+    {% endif %}
 
     {% if CUSTOM_LOGO_URL %}
       <link rel="apple-touch-icon" href="{{ CUSTOM_LOGO_URL }}"/>
@@ -75,7 +79,7 @@
       {% endcompress %}
     {% endif %}
 
-    {% if request.use_daterangepicker %}
+    {% if request.use_daterangepicker and not use_bootstrap5 %}
       {% compress css %}
         <link type="text/css"
               rel="stylesheet"
@@ -84,7 +88,7 @@
       {% endcompress %}
     {% endif %}
 
-    {% if request.use_timepicker %}
+    {% if request.use_timepicker and not use_bootstrap5 %}
       {% compress css %}
         <link type="text/less"
               rel="stylesheet"
@@ -102,7 +106,7 @@
       {% endcompress %}
     {% endif %}
 
-    {% if request.use_datatables %}
+    {% if request.use_datatables and not use_bootstrap5 %}
       {% compress css %}
         <link type="text/css"
               rel="stylesheet"
@@ -138,7 +142,7 @@
 
     {# Up here because if daterangepicker is called from within a form widget, #}
     {# the javascript requiring the config file is run before js-inline #}
-    {% if request.use_daterangepicker and not requirejs_main %}
+    {% if request.use_daterangepicker and not requirejs_main and not use_bootstrap5 %}
       {% compress js %}
         <script src="{% static 'moment/moment.js' %}"></script>
         <script src="{% static 'bootstrap-daterangepicker/daterangepicker.js' %}"></script>
@@ -148,13 +152,6 @@
 
     {% block head %}
     {% endblock %}
-
-    {# This is fine as an inline script; it'll be removed once form designer is migrated to RequireJS #}
-    <script>
-      // hqModules.js uses `typeof define` and `define.amd` to determine whether or not to use RequireJS, but
-      // this fails for form designer, which currently uses RequireJS for vellum but not for the surrounding page.
-      window.USE_REQUIREJS = {{ requirejs_main|BOOL }};
-    </script>
   </head>
   <body>
     {% if ANALYTICS_IDS.GTM_ID %}
@@ -192,7 +189,11 @@
 
     {# Report Issue #}
     {% if enterprise_mode and allow_report_an_issue and not 500traceback or not enterprise_mode %}
-      {% include 'hqwebapp/includes/modal_report_issue.html' %}
+      {% if use_bootstrap5 %}
+        {% include 'hqwebapp/includes/bootstrap5/modal_report_issue.html' %}
+      {% else %}
+        {% include 'hqwebapp/includes/bootstrap3/modal_report_issue.html' %}
+      {% endif %}
     {% else %}
       <style>
         a[href='#modalReportIssue'] {
@@ -233,6 +234,7 @@
     {% initial_page_data 'secure_cookies' secure_cookies %}
     {% initial_page_data 'minimumZxcvbnScore' MINIMUM_ZXCVBN_SCORE %}
     {% initial_page_data 'minimumPasswordLength' MINIMUM_PASSWORD_LENGTH %}
+    {% initial_page_data 'privileges' privileges %}
 
 
     {# for get demo and get trial forms #}
@@ -278,43 +280,22 @@
 
     {# javascript below this line #}
 
-    {% if requirejs_main %}
-      <script src="{% statici18n LANGUAGE_CODE %}"></script> {# DO NOT COMPRESS #}
-      <script src="{% static 'requirejs/require.js' %}"></script>
-      <script src="{% static 'hqwebapp/js/hqModules.js' %}"></script>
-      {# Do not compress these, which are re-written during depeloy #}
-      <script src="{% static 'hqwebapp/js/requirejs_config.js' %}"></script>
-      <script src="{% static 'hqwebapp/js/resource_versions.js' %}"></script>
-      <script>
-        requirejs.config({
-          deps: ['knockout', 'ko.mapping'],
-          callback: function (ko, mapping) {
-            ko.mapping = mapping;
-          }
-        });
-        requirejs([
-          'hqwebapp/js/common',
-        ], function() {
-          requirejs([
-            'hqwebapp/js/base_main',
-          ], function () {
-            requirejs(['{{ requirejs_main }}'], function () {
-              console.log("Loaded requirejs main module: {{ requirejs_main }}");
-            });
-          });
-        });
-      </script>
+    {% if use_bootstrap5 %}
+      <script src="{% static "bootstrap5/dist/js/bootstrap.bundle.min.js" %}"></script>
+    {% else %}
+      {% include "hqwebapp/partials/requirejs.html" with BASE_MAIN=True %}
     {% endif %}
+
+    <script src="{% statici18n LANGUAGE_CODE %}"></script> {# DO NOT COMPRESS #}
 
     {# HQ Specific Libraries #}
     {% if not requirejs_main %}
-      <script src="{% statici18n LANGUAGE_CODE %}"></script> {# DO NOT COMPRESS #}
-
       {% compress js %}
         <script src="{% static 'hqwebapp/js/hq_extensions.jquery.js' %}"></script>
         <script src="{% static 'hqwebapp/js/hq-bug-report.js' %}"></script>
         <script src="{% static 'hqwebapp/js/layout.js' %}"></script>
         <script src="{% static 'hqwebapp/js/toggles.js' %}"></script>
+        <script src="{% static 'hqwebapp/js/privileges.js' %}"></script>
         <script src="{% static 'hqwebapp/js/alert_user.js' %}"></script>
         <script src="{% static 'hqwebapp/js/main.js' %}"></script>
         <script src="{% static 'hqwebapp/js/mobile_experience_warning.js' %}"></script>
@@ -351,7 +332,7 @@
       {% endcompress %}
     {% endif %}
 
-    {% if request.use_datatables and not requirejs_main %}
+    {% if request.use_datatables and not requirejs_main and not use_bootstrap5 %}
       {% compress js %}
         <script src="{% static 'datatables.net/js/jquery.dataTables.min.js' %}"></script>
         <script src="{% static 'datatables-fixedcolumns/js/dataTables.fixedColumns.js' %}"></script>
@@ -359,14 +340,14 @@
       {% endcompress %}
     {% endif %}
 
-    {% if request.use_typeahead and not requirejs_main %}
+    {% if request.use_typeahead and not requirejs_main and not use_bootstrap5 %}
       {% compress js %}
         <script src="{% static 'bootstrap3-typeahead/bootstrap3-typeahead.min.js' %}"></script>
         <script src="{% static 'hqwebapp/js/bootstrap-multi-typeahead.js' %}"></script>
       {% endcompress %}
     {% endif %}
 
-    {% if request.use_timepicker and not requirejs_main %}
+    {% if request.use_timepicker and not requirejs_main and not use_bootstrap5 %}
       {% compress js %}
         <script src="{% static 'bootstrap-timepicker/js/bootstrap-timepicker.js' %}"></script>
       {% endcompress %}

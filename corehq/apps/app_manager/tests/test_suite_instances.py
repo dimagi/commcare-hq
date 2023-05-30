@@ -11,13 +11,14 @@ from corehq.apps.app_manager.models import (
     Itemset,
     ShadowModule,
 )
+from corehq.apps.app_manager.suite_xml.post_process.instances import get_instance_names
 from corehq.apps.app_manager.tests.app_factory import AppFactory
 from corehq.apps.app_manager.tests.util import (
     SuiteMixin,
     patch_get_xform_resource_overrides,
 )
 from corehq.apps.locations.models import LocationFixtureConfiguration
-from corehq.util.test_utils import flag_enabled
+from corehq.util.test_utils import flag_enabled, generate_cases
 
 
 @patch_get_xform_resource_overrides()
@@ -148,6 +149,7 @@ class SuiteInstanceTests(SimpleTestCase, SuiteMixin):
         self.assertXmlPartialEqual(
             """
             <partial>
+            <instance id="search-input:results" src="jr://instance/search-input/results"/>
             </partial>
             """,
             self.factory.app.create_suite(),
@@ -234,3 +236,16 @@ class SuiteInstanceTests(SimpleTestCase, SuiteMixin):
             suite,
             f"./remote-request[1]/instance[@id='{instance_id}']",
         )
+
+
+@generate_cases([
+    ("instance('test')/rows/row", {"test"}),
+    ("instance('test')/rows/row/0 != instance('test')/rows/row/1", {"test"}),
+    ("instance('one')/rows/row/0 != instance('two')/rows/row/1", {"one", "two"}),
+    ("instance( 'test' )/something", {"test"}),
+    ("""instance(
+        'search-input:results'
+    )/input/field[@name = 'first_name']""", {"search-input:results"}),
+], SuiteInstanceTests)
+def test_get_instance_names(self, xpath, expected_names):
+    self.assertEqual(get_instance_names(xpath), expected_names)

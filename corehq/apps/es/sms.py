@@ -3,13 +3,15 @@ SMSES
 --------
 """
 from . import filters
-from .client import ElasticDocumentAdapter
+from .client import ElasticDocumentAdapter, create_document_adapter
 from .es_query import HQESQuery
-from .transient_util import get_adapter_mapping, from_dict_with_possible_id
+from .index.settings import IndexSettingsKey
+
+HQ_SMS_INDEX_CANONICAL_NAME = "sms"
 
 
 class SMSES(HQESQuery):
-    index = 'sms'
+    index = HQ_SMS_INDEX_CANONICAL_NAME
 
     @property
     def builtin_filters(self):
@@ -33,16 +35,25 @@ class SMSES(HQESQuery):
 
 class ElasticSMS(ElasticDocumentAdapter):
 
-    _index_name = "smslogs_2020-01-28"
-    type = "sms"
+    settings_key = IndexSettingsKey.SMS
+    canonical_name = HQ_SMS_INDEX_CANONICAL_NAME
 
     @property
     def mapping(self):
-        return get_adapter_mapping(self)
+        from .mappings.sms_mapping import SMS_MAPPING
+        return SMS_MAPPING
 
-    @classmethod
-    def from_python(cls, doc):
-        return from_dict_with_possible_id(doc)
+    @property
+    def model_cls(self):
+        from corehq.apps.sms.models import SMS
+        return SMS
+
+
+sms_adapter = create_document_adapter(
+    ElasticSMS,
+    "smslogs_2020-01-28",
+    "sms",
+)
 
 
 def incoming_messages():

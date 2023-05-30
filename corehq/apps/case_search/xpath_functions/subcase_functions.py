@@ -2,7 +2,6 @@ from collections import Counter
 from dataclasses import dataclass
 
 from django.utils.translation import gettext as _
-
 from eulxml.xpath.ast import (
     BinaryExpression,
     FunctionCall,
@@ -10,6 +9,7 @@ from eulxml.xpath.ast import (
     serialize,
 )
 
+from corehq.apps.case_search.const import MAX_RELATED_CASES
 from corehq.apps.case_search.exceptions import XPathFunctionException
 from corehq.apps.es import CaseSearchES, filters, queries
 
@@ -74,7 +74,6 @@ def _get_parent_case_ids_matching_subcase_query(subcase_query, context):
     """
     # TODO: validate that the subcase filter doesn't contain any ancestor filtering
     from corehq.apps.case_search.filter_dsl import (
-        MAX_RELATED_CASES,
         build_filter_from_ast,
     )
 

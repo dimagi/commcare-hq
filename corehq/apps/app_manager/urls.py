@@ -66,6 +66,7 @@ from corehq.apps.app_manager.views import (
     odk_qr_code,
     overwrite_module_case_list,
     paginate_releases,
+    paginate_release_logs,
     patch_xform,
     pull_upstream_app,
     rearrange,
@@ -73,7 +74,6 @@ from corehq.apps.app_manager.views import (
     revert_to_copy,
     save_copy,
     short_odk_url,
-    short_url,
     toggle_build_profile,
     undo_delete_app,
     undo_delete_form,
@@ -121,6 +121,7 @@ app_urls = [
     url(r'^add_ons/edit/$', edit_add_ons, name='edit_add_ons'),
     url(r'^current_version/$', current_app_version, name='current_app_version'),
     url(r'^releases/json/$', paginate_releases, name='paginate_releases'),
+    url(r'^releases/logs/json/$', paginate_release_logs, name='paginate_release_logs'),
     url(r'^releases/release/(?P<saved_app_id>[\w-]+)/$', release_build,
         name='release_build'),
     url(r'^releases/unrelease/(?P<saved_app_id>[\w-]+)/$', release_build,
@@ -247,7 +248,6 @@ urlpatterns = [
     url(r'^odk/(?P<app_id>[\w-]+)/install/$', odk_install, name="odk_install"),
     url(r'^odk/(?P<app_id>[\w-]+)/media_install/$', odk_install, {'with_media': True}, name="odk_media_install"),
 
-    url(r'^odk/(?P<app_id>[\w-]+)/short_url/$', short_url, name='short_url'),
     url(r'^odk/(?P<app_id>[\w-]+)/short_odk_media_url/$', short_odk_url, {'with_media': True}),
     url(r'^odk/(?P<app_id>[\w-]+)/short_odk_url/$', short_odk_url),
 
