@@ -98,7 +98,7 @@ class PillowCheckpoint(object):
         return False
 
 
-class KafkaPillowCheckpoint(PillowCheckpoint):
+class KafkaPillowCheckpoint:
 
     def __init__(self, checkpoint_id, topics):
         self.checkpoint_id = checkpoint_id
