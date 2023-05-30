@@ -498,28 +498,22 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
         },
 
         addAddressPin: function (geocoder, addressMap, headers, model, addressIndex) {
-            const address = model.attributes.data[addressIndex];
-            return new Promise((resolve) => {
-                geocoder.query(address, function (err, data) {
-                    if (err === null) {
-                        let popupText = "";
-                        headers.forEach((header, index) => {
-                            if (header) {
-                                const valueSanitized = DOMPurify.sanitize(model.attributes.data[index]);
-                                const headerSanitized = DOMPurify.sanitize(header);
-                                popupText += "<b>" + headerSanitized + ":</b> " + valueSanitized + "<br>";
-                            }
-                        });
-                        L.marker(data.latlng)
-                            .addTo(addressMap)
-                            .bindPopup(popupText);
+            const coordinates = model.attributes.data[addressIndex];
+            let latLng = coordinates.split(" ").slice(0,2);
 
-                        resolve(data.latlng);
-                    } else {
-                        resolve(undefined);
-                    }
-                });
+            let popupText = "";
+            headers.forEach((header, index) => {
+                if (header) {
+                    const valueSanitized = DOMPurify.sanitize(model.attributes.data[index]);
+                    const headerSanitized = DOMPurify.sanitize(header);
+                    popupText += "<b>" + headerSanitized + ":</b> " + valueSanitized + "<br>";
+                }
             });
+            L.marker(latLng)
+                .addTo(addressMap)
+                .bindPopup(popupText);
+
+            return latLng;
         },
 
         loadMap: function () {
@@ -546,9 +540,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
                 const latLons = this.options.collection.models
                     .map(model => this.addAddressPin(geocoder, addressMap, this.options.headers, model, addressIndex))
                     .filter(latLon => latLon);
-                Promise.all(latLons).then(lls => {
-                    addressMap.fitBounds(lls, {maxZoom: 8});
-                });
+                addressMap.fitBounds(latLons, {maxZoom: 8});
 
             } catch (error) {
                 console.error(error);
