@@ -1,5 +1,5 @@
 """
-EntryInstances
+InstancesHelper
 --------------
 
 Every instance referenced in an xpath expression needs to be added to the relevant entry,
@@ -82,7 +82,7 @@ from corehq.apps.app_manager.util import (
 from corehq.util.timer import time_method
 
 
-class EntryInstances(PostProcessor):
+class InstancesHelper(PostProcessor):
     IGNORED_INSTANCES = {
         'jr://instance/remote',
         'jr://instance/search-input',
@@ -248,9 +248,9 @@ class EntryInstances(PostProcessor):
     @staticmethod
     def require_instances(entry, instances, unknown_instance_ids):
         used = {(instance.id, instance.src) for instance in entry.instances}
-        instance_order_updated = EntryInstances.update_instance_order(entry)
+        instance_order_updated = InstancesHelper.update_instance_order(entry)
         for instance in instances:
-            if instance.src in EntryInstances.IGNORED_INSTANCES:  # ignore legacy instances
+            if instance.src in InstancesHelper.IGNORED_INSTANCES:  # ignore legacy instances
                 continue
             if (instance.id, instance.src) not in used:
                 entry.instances.append(
@@ -259,7 +259,7 @@ class EntryInstances(PostProcessor):
                     Instance(id=instance.id, src=instance.src)
                 )
                 if not instance_order_updated:
-                    instance_order_updated = EntryInstances.update_instance_order(entry)
+                    instance_order_updated = InstancesHelper.update_instance_order(entry)
         covered_ids = {instance_id for instance_id, _ in used}
         assert_no_unknown_instances(unknown_instance_ids - covered_ids)
 
