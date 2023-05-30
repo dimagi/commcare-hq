@@ -11257,17 +11257,21 @@ msgid ""
 "\n"
 "      <p>\n"
 "        <i class=\"fa fa-warning\"></i>\n"
-"        A bulk case import for multiple case types has been detected. For "
-"bulk case imports:\n"
+"        A bulk case import for multiple case types has been detected. This "
+"is because every sheet name in\n"
+"        the Excel file matches a case type in the project. If this is "
+"incorrect, then please rename at least\n"
+"        one Excel sheet so that not all sheet names match case types in the "
+"project.\n"
 "      </p>\n"
-"      <ul>\n"
-"        <li>Excel mapping is disabled.</li>\n"
-"        <li>New cases for new case types cannot be created.</li>\n"
-"      </ul>\n"
 "      <p>\n"
-"        If this is incorrect, then please rename the Excel sheets so that "
-"they do not share the same\n"
-"        name as the case types in the project.\n"
+"        Documentation for bulk case imports can be found on our\n"
+"        <a\n"
+"          href=\"https://confluence.dimagi.com/display/commcarepublic/"
+"Updating+Cases+-+Update+multiple+case+types+in+a+single+Excel+import\"\n"
+"          target=\"_blank\">\n"
+"          help page for this feature.\n"
+"        </a>\n"
 "      </p>\n"
 "      "
 msgstr ""
@@ -11308,6 +11312,14 @@ msgstr "Gérer nouveaux rapports"
 #: corehq/apps/case_importer/templates/case_importer/excel_config.html
 msgid "Create new records if there is no matching case"
 msgstr "Créer de nouveaux dossiers s'il n'y a aucun dossier correspondant"
+
+#: corehq/apps/case_importer/templates/case_importer/excel_config.html
+msgid ""
+"\n"
+"            Selecting a case type, excel column, or corresponding case field "
+"is disabled when doing a bulk case import.\n"
+"          "
+msgstr ""
 
 #: corehq/apps/case_importer/templates/case_importer/excel_config.html
 #: corehq/apps/case_importer/templates/case_importer/excel_fields.html
@@ -14730,7 +14742,6 @@ msgid "HIPAA compliant"
 msgstr "Conforme à HIPAA"
 
 #: corehq/apps/domain/forms.py corehq/apps/settings/views.py
-#: corehq/apps/users/templates/users/edit_commcare_user.html
 msgid "Two Factor Authentication"
 msgstr "Authentification à deux facteurs "
 
@@ -21093,10 +21104,8 @@ msgid "Geospatial"
 msgstr ""
 
 #: corehq/apps/geospatial/views.py corehq/tabs/tabclasses.py
-#, fuzzy
-#| msgid "Validation"
 msgid "Map Visualization"
-msgstr "Validation"
+msgstr ""
 
 #: corehq/apps/groups/templates/groups/all_groups.html
 #: corehq/apps/reports/filters/users.py
@@ -37277,11 +37286,6 @@ msgid "User Location"
 msgstr "Site de l'Utilisateur"
 
 #: corehq/apps/users/templates/users/edit_commcare_user.html
-#: corehq/apps/users/templates/users/edit_web_user.html
-msgid "Backup Token"
-msgstr "Jeton de remplacement"
-
-#: corehq/apps/users/templates/users/edit_commcare_user.html
 msgid "Force Full Refresh on next Mobile Sync"
 msgstr ""
 
@@ -42062,6 +42066,10 @@ msgid "Python dictionary"
 msgstr ""
 
 #: corehq/motech/repeaters/templates/repeaters/partials/attempt_history.html
+msgid "No attempts exist for this record."
+msgstr ""
+
+#: corehq/motech/repeaters/templates/repeaters/partials/attempt_history.html
 msgid "Unsent"
 msgstr ""
 
@@ -42225,8 +42233,10 @@ msgid "Retry Date"
 msgstr "Réessayer date"
 
 #: corehq/motech/repeaters/views/repeat_records.py
-msgid "Delivery Attempts"
-msgstr "Tentatives de livraison"
+#, fuzzy
+#| msgid "Responses"
+msgid "View Responses"
+msgstr "Réponses"
 
 #: corehq/motech/repeaters/views/repeat_records.py
 msgid "View payload"
@@ -42854,10 +42864,8 @@ msgid "Manage Attendance Tracking Events"
 msgstr ""
 
 #: corehq/tabs/tabclasses.py
-#, fuzzy
-#| msgid "View app"
 msgid "View Map"
-msgstr "Afficher l'application"
+msgstr ""
 
 #: corehq/tabs/tabclasses.py
 msgid "Visually view and manage cases on a map"
@@ -43783,3 +43791,9 @@ msgstr "Le Score à la Fonctionnalité"
 #: manage.py
 msgid "Enter valid JSON"
 msgstr "Saisir un JSON valide"
+
+#~ msgid "Backup Token"
+#~ msgstr "Jeton de remplacement"
+
+#~ msgid "Delivery Attempts"
+#~ msgstr "Tentatives de livraison"

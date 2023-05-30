@@ -10,11 +10,12 @@ from django.utils.translation import gettext_lazy as _
 
 from casexml.apps.case.const import CASE_INDEX_EXTENSION
 
-from corehq.apps.es import CaseES
 from corehq.apps.groups.models import UnsavableGroup
 from corehq.apps.hqcase.case_helper import CaseHelper
+from corehq.apps.locations.models import SQLLocation
 from corehq.form_processor.models import CommCareCase, CommCareCaseIndex
 from corehq.util.quickcache import quickcache
+
 from .exceptions import AttendeeTrackedException
 
 # Attendee list status is set by the Attendance Coordinator after the
@@ -90,6 +91,14 @@ class AttendanceTrackingConfig(models.Model):
         default=DEFAULT_ATTENDEE_CASE_TYPE,
     )
 
+    def save(self, *args, **kwargs):
+        get_attendee_case_type.clear(self.domain)
+        super().save(*args, **kwargs)
+
+    def delete(self, *args, **kwargs):
+        get_attendee_case_type.clear(self.domain)
+        return super().delete(*args, **kwargs)
+
 
 def toggle_mobile_worker_attendees(domain, attendees_enabled):
     AttendanceTrackingConfig.objects.update_or_create(
@@ -136,6 +145,13 @@ class Event(models.Model):
     _case_id = models.UUIDField(null=True, default=None)
     start_date = models.DateField(null=False)
     end_date = models.DateField(null=True)
+    location = models.ForeignKey(
+        SQLLocation,
+        to_field='location_id',
+        on_delete=models.SET_NULL,
+        null=True,
+        default=None,
+    )
     attendance_target = models.IntegerField(null=False)
     total_attendance = models.IntegerField(null=False, default=0)
     sameday_reg = models.BooleanField(default=False)
@@ -416,6 +432,31 @@ class AttendeeModelManager(models.Manager):
             for case in CommCareCase.objects.get_cases(case_ids, domain)
         ]
 
+    def by_location_id(
+        self,
+        domain: str,
+        location_id: str,
+    ) -> list[AttendeeModel]:
+        from .es import AttendeeSearchES
+
+        location_ids = (
+            SQLLocation.objects
+            .get_locations_and_children_ids([location_id])
+        )
+        case_type = get_attendee_case_type(domain)
+        es_query = (
+            AttendeeSearchES()
+            .domain(domain)
+            .case_type(case_type)
+            .is_closed(False)
+            .attendee_location_filter(location_ids)
+        )
+        case_ids = es_query.get_ids()
+        return [
+            AttendeeModel(case=case, domain=domain)
+            for case in CommCareCase.objects.get_cases(case_ids, domain)
+        ]
+
 
 class AttendeeModel(models.Model):
     """
@@ -519,49 +560,6 @@ def _parse_id_list_str(locations_str):
     # https://docs.python.org/3/library/ast.html#ast.literal_eval
     locations_json = locations_str.replace("'", '"')  # '["abc123", "def456"]'
     return json.loads(locations_json)
-
-
-def get_paginated_attendees(domain, limit, page, query=None):
-    case_type = get_attendee_case_type(domain)
-    if query:
-        es_query = (
-            CaseES()
-            .domain(domain)
-            .case_type(case_type)
-            .is_closed(False)
-        ).search_string_query(query, ['name'])
-        total = es_query.count()
-        case_ids = es_query.get_ids()
-    else:
-        case_ids = CommCareCase.objects.get_open_case_ids_in_domain_by_type(
-            domain,
-            case_type,
-        )
-        total = len(case_ids)
-    if page:
-        start, end = page_to_slice(limit, page)
-        cases = CommCareCase.objects.get_cases(case_ids[start:end], domain)
-    else:
-        cases = CommCareCase.objects.get_cases(case_ids[:limit], domain)
-    return cases, total
-
-
-def page_to_slice(limit, page):
-    """
-    Converts ``limit``, ``page`` to start and end indices.
-
-    Assumes page numbering starts at 1.
-
-    >>> names = ['Harry', 'Hermione', 'Ron']
-    >>> start, end = page_to_slice(limit=1, page=2)
-    >>> names[start:end]
-    ['Hermione']
-    """
-    assert page > 0, 'Page numbering starts at 1'
-
-    start = (page - 1) * limit
-    end = start + limit
-    return start, end
 
 
 def iter_case_ids(cases_or_case_ids):

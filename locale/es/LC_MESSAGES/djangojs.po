@@ -5,8 +5,8 @@
 #
 # Translators:
 # Dimagi Dev <devops@dimagi.com>, 2021
-# Gladys Teos <info@enestranslations.com>, 2022
 # Michelle B. Sultan <msultan@dimagi.com>, 2022
+# Gladys Teos <info@enestranslations.com>, 2023
 #
 #, fuzzy
 msgid ""
@@ -14,7 +14,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "PO-Revision-Date: 2017-07-19 15:34+0000\n"
-"Last-Translator: Michelle B. Sultan <msultan@dimagi.com>, 2022\n"
+"Last-Translator: Gladys Teos <info@enestranslations.com>, 2023\n"
 "Language-Team: Spanish (https://app.transifex.com/dimagi/teams/9388/es/)\n"
 "Language: es\n"
 "MIME-Version: 1.0\n"
@@ -260,10 +260,6 @@ msgid "Display Condition"
 msgstr "Condición de Visualización"
 
 #: corehq/apps/app_manager/static/app_manager/js/details/column.js
-msgid "Markdown"
-msgstr ""
-
-#: corehq/apps/app_manager/static/app_manager/js/details/column.js
 msgid "Oct 31, "
 msgstr ""
 
@@ -453,6 +449,10 @@ msgstr "Dirección"
 #: corehq/apps/app_manager/static/app_manager/js/details/utils.js
 msgid "Distance from current location"
 msgstr "Distancia de la ubicación actual"
+
+#: corehq/apps/app_manager/static/app_manager/js/details/utils.js
+msgid "Markdown"
+msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/details/utils.js
 msgid "Picture"
@@ -4995,6 +4995,12 @@ msgid "Failed to schedule task to import from OpenMRS."
 msgstr ""
 
 #: corehq/motech/repeaters/static/repeaters/js/repeat_record_report.js
+#, fuzzy
+#| msgid "Failed to re-process"
+msgid "Failed to fetch attempts"
+msgstr "Reproceso fallido"
+
+#: corehq/motech/repeaters/static/repeaters/js/repeat_record_report.js
 msgid "Failed to fetch payload"
 msgstr ""
 
@@ -5008,7 +5014,7 @@ msgstr ""
 
 #: corehq/motech/static/motech/js/connection_settings_detail.js
 msgid "Username"
-msgstr ""
+msgstr "Nombre de Usuario"
 
 #: corehq/motech/static/motech/js/connection_settings_detail.js
 msgid "Client ID"
@@ -5016,11 +5022,11 @@ msgstr ""
 
 #: corehq/motech/static/motech/js/connection_settings_detail.js
 msgid "Client Secret"
-msgstr ""
+msgstr "Secreto de Cliente"
 
 #: corehq/motech/static/motech/js/connection_settings_detail.js
 msgid "API Key"
-msgstr ""
+msgstr "Clave API"
 
 #: corehq/motech/static/motech/js/connection_settings_detail.js
 msgid "Success! Response is: "
