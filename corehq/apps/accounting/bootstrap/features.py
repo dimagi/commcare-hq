@@ -71,6 +71,7 @@ standard_v1 = community_v2 + [
     privileges.FORM_LINK_WORKFLOW,
     privileges.PHONE_APK_HEARTBEAT,
     privileges.FORM_CASE_IDS_CASE_IMPORTER,
+    privileges.EXPORT_MULTISORT,
 ]
 
 
@@ -106,6 +107,7 @@ pro_v1 = standard_v1 + [
     privileges.DATA_FILE_DOWNLOAD,
     privileges.ATTENDANCE_TRACKING,
     privileges.REGEX_FIELD_VALIDATION,
+    privileges.EXPORT_OWNERSHIP,
 ]
 
 

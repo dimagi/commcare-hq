@@ -19,8 +19,8 @@ from corehq.apps.users.util import (
 )
 from corehq.const import USER_CHANGE_VIA_AUTO_DEACTIVATE
 from unittest.mock import patch
-from corehq.apps.locations.models import SQLLocation
-from corehq.apps.users.views.utils import get_locations_with_single_user
+from corehq.apps.locations.models import LocationType, SQLLocation
+from corehq.apps.users.views.utils import get_locations_with_orphaned_cases
 
 
 class TestUsernameToUserID(TestCase):
@@ -265,44 +265,70 @@ class TestGetCompleteMobileUsername(SimpleTestCase):
         self.assertEqual(username, 'test@test-domain.commcarehq.org')
 
 
-class TestGetLocationsWithSingleUser(TestCase):
+class TestGetLocationsWithOrphanedCases(TestCase):
 
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
         cls.domain = 'test-domain'
+        cls.domain_obj = create_domain(cls.domain)
         cls.user_id = 'test-user-id'
-        cls.location_ids = ['123']
-        locations = [
-            SQLLocation(
-                name='Brazil',
-                location_id='123'
-            ),
-            SQLLocation(
-                name='Asia',
-                location_id='456'
-            )
-        ]
+        cls.location_ids = ['123', '456']
 
-        get_locations_patch = patch('corehq.apps.users.views.utils._get_location_case_counts_with_single_user')
-        cls.get_locations_func = get_locations_patch.start()
-        cls.addClassCleanup(get_locations_patch.stop)
-        cls.get_locations_func.return_value = [locations, {'123': 1}]
+        cls.country = LocationType.objects.create(
+            domain=cls.domain,
+            name='country',
+            view_descendants=True
+        )
+        cls.province = LocationType.objects.create(
+            domain=cls.domain,
+            name='province'
+        )
+        cls.orphan_location = SQLLocation.objects.create(
+            domain=cls.domain,
+            name='Brazil',
+            location_id='123',
+            location_type=cls.country
+        )
+        cls.shared_location = SQLLocation.objects.create(
+            domain=cls.domain,
+            name='Asia',
+            location_id='456',
+            location_type=cls.country
+        )
+        cls.descendant_location = SQLLocation.objects.create(
+            domain=cls.domain,
+            name='Rio',
+            location_id='789',
+            location_type=cls.province,
+            parent=cls.orphan_location
+        )
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.orphan_location.delete()
+        cls.shared_location.delete()
+        cls.descendant_location.delete()
+        cls.domain_obj.delete()
+
+        super().tearDownClass()
 
     @patch(
-        'corehq.apps.users.views.utils._get_location_ids_with_single_user',
-        return_value=[]
+        'corehq.apps.users.views.utils._get_location_ids_with_other_users',
+        return_value={'123', '456'}
     )
     def test_no_locations(self, _):
-        locations_with_single_user = get_locations_with_single_user(self.domain, self.location_ids, self.user_id)
-        self.assertEqual(len(locations_with_single_user), 0)
+        locations = get_locations_with_orphaned_cases(self.domain, self.location_ids, self.user_id)
+        self.assertEqual(len(locations), 0)
 
     @patch(
-        'corehq.apps.users.views.utils._get_location_ids_with_single_user',
-        return_value=['123']
+        'corehq.apps.users.views.utils._get_location_ids_with_other_users',
+        return_value={'456'}
     )
-    def test_with_locations(self, _):
-        locations = get_locations_with_single_user(self.domain, self.location_ids, self.user_id)
-        self.assertEqual(len(locations), 2)
-        self.assertEqual(locations['Brazil'], 1)
-        self.assertEqual(locations['Asia'], 0)
+    @patch(
+        'corehq.apps.users.views.utils._get_location_case_counts',
+        return_value={'123': 1, '789': 3}
+    )
+    def test_with_locations(self, _, __):
+        locations = get_locations_with_orphaned_cases(self.domain, self.location_ids, self.user_id)
+        self.assertEqual(locations, {'Brazil': 1, 'Brazil/Rio': 3})

@@ -112,6 +112,8 @@ COMMCARE_USER = 'commcare'
 MAX_WEB_USER_LOGIN_ATTEMPTS = 5
 MAX_COMMCARE_USER_LOGIN_ATTEMPTS = 500
 
+EULA_CURRENT_VERSION = '3.0'  # Set this to the most up to date version of the eula
+
 
 def _add_to_list(list, obj, default):
     if obj in list:
@@ -710,7 +712,7 @@ class DjangoUserMixin(DocumentSchema):
 
 
 class EulaMixin(DocumentSchema):
-    CURRENT_VERSION = '3.0'  # Set this to the most up to date version of the eula
+    CURRENT_VERSION = EULA_CURRENT_VERSION
     eulas = SchemaListProperty(LicenseAgreement)
 
     @classmethod
@@ -724,16 +726,31 @@ class EulaMixin(DocumentSchema):
     def is_eula_signed(self, version=CURRENT_VERSION):
         if self.is_superuser:
             return True
-        for eula in self.eulas:
-            if eula.version == version:
-                return eula.signed
+        current_domain = getattr(self, 'current_domain', None)
+        current_eula = self.eula
+        if current_eula.version == version:
+            if toggles.FORCE_ANNUAL_TOS.enabled(current_domain):
+                if not current_eula.date:
+                    return False
+                elapsed = datetime.now() - current_eula.date
+                return current_eula.signed and elapsed.days < 365
+            return current_eula.signed
         return False
 
     def get_eula(self, version):
+        current_eula = None
         for eula in self.eulas:
             if eula.version == version:
-                return eula
-        return None
+                if not current_eula or eula.date > current_eula.date:
+                    current_eula = eula
+        return current_eula
+
+    def get_eulas(self):
+        eulas = self.eulas
+        eulas_json = []
+        for eula in eulas:
+            eulas_json.append(eula.to_json())
+        return eulas_json
 
     @property
     def eula(self, version=CURRENT_VERSION):
@@ -1840,14 +1857,30 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
         if not deleted_by and not settings.UNIT_TESTING:
             raise ValueError("Missing deleted_by")
 
+        deletion_id, deletion_date = self.delete_user_data()
         suffix = DELETED_SUFFIX
-        deletion_id = uuid4().hex
-        deletion_date = datetime.utcnow()
+
         # doc_type remains the same, since the views use base_doc instead
         if not self.base_doc.endswith(suffix):
             self.base_doc += suffix
             self['-deletion_id'] = deletion_id
             self['-deletion_date'] = deletion_date
+
+        try:
+            django_user = self.get_django_user()
+        except User.DoesNotExist:
+            pass
+        else:
+            django_user.delete()
+        if deleted_by:
+            log_user_change(by_domain=retired_by_domain, for_domain=self.domain,
+                            couch_user=self, changed_by_user=deleted_by,
+                            changed_via=deleted_via, action=UserModelAction.DELETE)
+        self.save()
+
+    def delete_user_data(self):
+        deletion_id = uuid4().hex
+        deletion_date = datetime.utcnow()
 
         deleted_cases = set()
         for case_id_list in chunked(self._get_case_ids(), 50):
@@ -1866,17 +1899,7 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
         from corehq.apps.app_manager.views.utils import unset_practice_mode_configured_apps
         unset_practice_mode_configured_apps(self.domain, self.get_id)
 
-        try:
-            django_user = self.get_django_user()
-        except User.DoesNotExist:
-            pass
-        else:
-            django_user.delete()
-        if deleted_by:
-            log_user_change(by_domain=retired_by_domain, for_domain=self.domain,
-                            couch_user=self, changed_by_user=deleted_by,
-                            changed_via=deleted_via, action=UserModelAction.DELETE)
-        self.save()
+        return deletion_id, deletion_date
 
     def confirm_account(self, password):
         if self.is_account_confirmed:
@@ -3007,6 +3030,7 @@ class UserHistory(models.Model):
     CREATE = 1
     UPDATE = 2
     DELETE = 3
+    CLEAR = 4  # currently only for logging purposes
 
     ACTION_CHOICES = (
         (CREATE, _('Create')),

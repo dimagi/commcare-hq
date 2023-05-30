@@ -59,20 +59,74 @@ def send_dhis2_entities(requests, repeater, case_trigger_infos):
     Send request to register / update tracked entities
     """
     errors = []
+    info_config_entities = _update_or_register_teis(
+        requests,
+        repeater,
+        case_trigger_infos,
+        errors,
+    )
+    _create_all_relationships(
+        requests,
+        repeater,
+        info_config_entities,
+        errors,
+    )
+    if errors:
+        errors_str = f"Errors sending to {repeater}: " + pformat_json([str(e) for e in errors])
+        requests.notify_error(errors_str)
+        return RepeaterResponse(400, 'Bad Request', errors_str)
+    elif not len(info_config_entities):
+        return RepeaterResponse(204, "No content")
+
+    return RepeaterResponse(200, "OK")
+
+
+def _update_or_register_teis(requests, repeater, case_trigger_infos, errors):
+    """
+    Updates or registers tracked entity instances.
+
+    Errors are returned by reference in ``errors``
+    """
     info_config_pairs = _get_info_config_pairs(repeater, case_trigger_infos)
+    info_config_entities = []
     for info, case_config in info_config_pairs:
         try:
-            tracked_entity, etag = get_tracked_entity_and_etag(requests, info, case_config)
+            tracked_entity, etag = get_tracked_entity_and_etag(
+                requests,
+                info,
+                case_config,
+            )
             if tracked_entity:
-                update_tracked_entity_instance(requests, tracked_entity, etag, info, case_config)
+                update_tracked_entity_instance(
+                    requests,
+                    tracked_entity,
+                    etag,
+                    info,
+                    case_config,
+                )
             else:
-                register_tracked_entity_instance(requests, info, case_config)
+                tracked_entity = register_tracked_entity_instance(
+                    requests,
+                    info,
+                    case_config,
+                )
+            info_config_entities.append((info, case_config, tracked_entity))
         except (Dhis2Exception, HTTPError) as err:
             errors.append(str(err))
+    return info_config_entities
 
-    # Create relationships after handling tracked entity instances, to
-    # ensure that both the instances in the relationship have been created.
-    for info, case_config in info_config_pairs:
+
+def _create_all_relationships(
+    requests,
+    repeater,
+    info_config_entities,
+    errors,
+):
+    """
+    Create relationships after handling tracked entity instances, to
+    ensure that both the instances in the relationship have been created.
+    """
+    for info, case_config, tracked_entity in info_config_entities:
         if not case_config['relationships_to_export']:
             continue
         try:
@@ -81,16 +135,12 @@ def send_dhis2_entities(requests, repeater, case_trigger_infos):
                 info,
                 case_config,
                 repeater.dhis2_entity_config,
-                tracked_entity_relationships=_get_tracked_entity_relationship_specs(tracked_entity)
+                tracked_entity_relationships=_get_tracked_entity_relationship_specs(
+                    tracked_entity,
+                ),
             )
         except (Dhis2Exception, HTTPError) as err:
             errors.append(str(err))
-
-    if errors:
-        errors_str = f"Errors sending to {repeater}: " + pformat_json([str(e) for e in errors])
-        requests.notify_error(errors_str)
-        return RepeaterResponse(400, 'Bad Request', errors_str)
-    return RepeaterResponse(200, "OK")
 
 
 def _get_tracked_entity_relationship_specs(tracked_entity):
@@ -317,6 +367,8 @@ def register_tracked_entity_instance(requests, case_trigger_info, case_config):
             'Error(s) while registering DHIS2 tracked entity. '
             'Errors from DHIS2 can be found in Remote API Logs: {url}'
         ).format(url=absolute_reverse(MotechLogListView.urlname, args=[requests.domain_name])))
+
+    return tracked_entity
 
 
 def create_relationships(

@@ -27,11 +27,12 @@ from . import filters, queries
 from .client import ElasticDocumentAdapter, create_document_adapter
 from .es_query import HQESQuery
 from .index.settings import IndexSettingsKey
-from .transient_util import get_adapter_mapping
+
+HQ_USERS_INDEX_CANONICAL_NAME = 'users'
 
 
 class UserES(HQESQuery):
-    index = 'users'
+    index = HQ_USERS_INDEX_CANONICAL_NAME
     default_filters = {
         'not_deleted': filters.term("base_doc", "couchuser"),
         'active': filters.term("is_active", True),
@@ -69,6 +70,7 @@ class UserES(HQESQuery):
 class ElasticUser(ElasticDocumentAdapter):
 
     settings_key = IndexSettingsKey.USERS
+    canonical_name = HQ_USERS_INDEX_CANONICAL_NAME
 
     @property
     def model_cls(self):
@@ -77,13 +79,12 @@ class ElasticUser(ElasticDocumentAdapter):
 
     @property
     def mapping(self):
-        return get_adapter_mapping(self)
+        from .mappings.user_mapping import USER_MAPPING
+        return USER_MAPPING
 
     def _from_dict(self, user_dict):
         """
         Takes a user dict and applies required transfomation to make it suitable for ES.
-        The function is replica of ``transform_user_for_elasticsearch``.
-        In future all references to  ``transform_user_for_elasticsearch`` will be replaced by `from_python`
 
         :param user: an instance ``dict`` which is result of ``CouchUser.to_json()``
         """

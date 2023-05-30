@@ -1084,9 +1084,9 @@ hqDefine("cloudcare/js/form_entry/entries", function () {
             var query = $(form).find('.query').val();
             self.geocoder.query(query, function (err, data) {
                 if (err === null) {
-                    if (data.lbounds !== null) {
+                    if (data.lbounds) {
                         self.map.fitBounds(data.lbounds);
-                    } else if (data.latlng !== null) {
+                    } else if (data.latlng) {
                         self.map.setView([data.latlng[0], data.latlng[1]], self.DEFAULT.zoom);
                     }
                 }

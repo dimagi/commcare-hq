@@ -181,9 +181,10 @@ services:
 
   minio:
     image: minio/minio
-    command: server --address :9980 /data
+    command: server --address :9980 --console-address :9981 /data
     expose:
       - "9980"
+      - "9981"
     healthcheck:
       # https://min.io/docs/minio/linux/operations/monitoring/healthcheck-probe.html#node-liveness
       test: curl -I http://minio:9980/minio/health/live
@@ -194,5 +195,5 @@ services:
       - ${VOLUME_PREFIX}${BLANK_IF_TESTS-minio-conf:}/root/.minio
       - ${VOLUME_PREFIX}${BLANK_IF_TESTS-minio-data:}/data
     environment:
-      MINIO_ACCESS_KEY: admin-key
-      MINIO_SECRET_KEY: admin-secret
+      MINIO_ROOT_USER: admin-key
+      MINIO_ROOT_PASSWORD: admin-secret

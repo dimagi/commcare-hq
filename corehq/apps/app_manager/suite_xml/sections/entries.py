@@ -19,6 +19,7 @@ from itertools import zip_longest
 
 import attr
 from django.utils.translation import gettext as _
+from memoized import memoized
 
 from corehq.apps.app_manager import id_strings
 from corehq.apps.app_manager.const import USERCASE_ID, USERCASE_TYPE
@@ -40,6 +41,7 @@ from corehq.apps.app_manager.util import (
     actions_use_usercase,
     module_loads_registry_case,
     module_uses_inline_search,
+    module_offers_search,
 )
 from corehq.apps.app_manager.xform import (
     autoset_owner_id_for_advanced_action,
@@ -56,7 +58,8 @@ from corehq.apps.app_manager.xpath import (
     session_var,
 )
 from corehq.apps.case_search.const import EXCLUDE_RELATED_CASES_FILTER
-from corehq.apps.case_search.models import CASE_SEARCH_REGISTRY_ID_KEY
+from corehq.apps.case_search.models import CASE_SEARCH_REGISTRY_ID_KEY, \
+    case_search_sync_cases_on_form_entry_enabled_for_domain
 from corehq.toggles import USH_SEARCH_FILTER
 from corehq.util.timer import time_method
 from corehq.util.view_utils import absolute_reverse
@@ -214,12 +217,21 @@ class EntriesHelper(object):
         ]
         return datum, assertions
 
+    @memoized
+    def include_post_in_entry(self, module_id):
+        module = self.app.get_module_by_unique_id(module_id)
+        loads_registry_case = module_loads_registry_case(module)
+        using_inline_search = module_uses_inline_search(module)
+        sync_on_form_entry = (
+            module_offers_search(module)
+            and case_search_sync_cases_on_form_entry_enabled_for_domain(self.app.domain)
+        )
+        return (using_inline_search or sync_on_form_entry) and not loads_registry_case
+
     def entry_for_module(self, module):
         # avoid circular dependency
         from corehq.apps.app_manager.models import Module, AdvancedModule
         results = []
-        loads_registry_case = module_loads_registry_case(module)
-        using_inline_search = module_uses_inline_search(module) and not loads_registry_case
         for form in module.get_suite_forms():
             e = Entry()
             e.form = form.xmlns
@@ -227,14 +239,16 @@ class EntriesHelper(object):
             if module.report_context_tile:
                 from corehq.apps.app_manager.suite_xml.features.mobile_ucr import get_report_context_tile_datum
                 e.datums.append(get_report_context_tile_datum())
-
-            if form.requires_case() and using_inline_search:
+            if form.requires_case() and self.include_post_in_entry(module.get_or_create_unique_id()):
+                case_session_var = self.get_case_session_var_for_form(form)
                 from corehq.apps.app_manager.suite_xml.post_process.remote_requests import (
                     RemoteRequestFactory, RESULTS_INSTANCE_INLINE
                 )
-                case_session_var = self.get_case_session_var_for_form(form)
+                storage_instance = RESULTS_INSTANCE_INLINE if module_uses_inline_search(module) \
+                    else 'casedb'
                 remote_request_factory = RemoteRequestFactory(
-                    None, module, [], case_session_var=case_session_var, storage_instance=RESULTS_INSTANCE_INLINE)
+                    None, module, [], case_session_var=case_session_var, storage_instance=storage_instance,
+                    exclude_relevant=case_search_sync_cases_on_form_entry_enabled_for_domain(self.app.domain))
                 e.post = remote_request_factory.build_remote_request_post()
 
             # Ideally all of this version check should happen in Command/Display class
@@ -370,7 +384,7 @@ class EntriesHelper(object):
     @staticmethod
     def add_custom_assertions(entry, form):
         for id, assertion in enumerate(form.custom_assertions):
-            locale_id = id_strings.custom_assertion_locale(form.get_module(), form, id)
+            locale_id = id_strings.custom_assertion_locale(id, form.get_module(), form)
             entry.assertions.append(EntriesHelper.get_assertion(assertion.test, locale_id))
 
     @staticmethod
@@ -603,7 +617,7 @@ class EntriesHelper(object):
         The case details is then populated with data from the results of the query.
         """
         from corehq.apps.app_manager.suite_xml.post_process.remote_requests import (
-            RemoteRequestFactory, RESULTS_INSTANCE, RESULTS_INSTANCE_INLINE
+            RemoteRequestFactory, RESULTS_INSTANCE_INLINE, RESULTS_INSTANCE
         )
         storage_instance = RESULTS_INSTANCE_INLINE if uses_inline_search else RESULTS_INSTANCE
         factory = RemoteRequestFactory(None, module, [], storage_instance=storage_instance)

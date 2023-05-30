@@ -205,7 +205,13 @@ class Command(BaseCommand):
              description='Location-restricted users can import cases at their location or below'),
         Role(slug=privileges.FORM_CASE_IDS_CASE_IMPORTER,
              name='Download buttons for Form- and Case IDs on Case Importer',
-             description='Display the "Form IDs" and "Case IDs" download buttons on Case Importer')
+             description='Display the "Form IDs" and "Case IDs" download buttons on Case Importer'),
+        Role(slug=privileges.EXPORT_MULTISORT,
+             name='Sort multiple rows in exports simultaneously',
+             description='Sort multiple rows in exports simultaneously'),
+        Role(slug=privileges.EXPORT_OWNERSHIP,
+             name='Allow exports to have ownership',
+             description='Allow exports to have ownership'),
     ]
 
     BOOTSTRAP_PLANS = [

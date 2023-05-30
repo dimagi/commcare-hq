@@ -654,13 +654,6 @@ LAZY_LOAD_MULTIMEDIA = StaticToggle(
     [NAMESPACE_DOMAIN],
 )
 
-USE_CUSTOM_EXTERNAL_ID_CASE_PROPERTY = StaticToggle(
-    'custom-external_id-case-property',
-    'eCHIS: Use the user defined external_id case property when running auto case update rules.',
-    TAG_CUSTOM,
-    [NAMESPACE_DOMAIN],
-)
-
 APP_BUILDER_ADVANCED = StaticToggle(
     'advanced-app-builder',
     'Advanced Module in App-Builder',
@@ -708,7 +701,9 @@ CASE_LIST_TILE = StaticToggle(
     'case_list_tile',
     'REC: Allow configuration of the REC case list tile',
     TAG_CUSTOM,
-    [NAMESPACE_DOMAIN]
+    [NAMESPACE_DOMAIN],
+    help_link='https://confluence.dimagi.com/pages/viewpage.action?'
+              'spaceKey=saas&title=Allow+Configuration+of+Case+List+Tiles',
 )
 
 SHOW_PERSIST_CASE_CONTEXT_SETTING = StaticToggle(
@@ -1557,12 +1552,11 @@ PAGINATED_EXPORTS = StaticToggle(
     [NAMESPACE_DOMAIN]
 )
 
-INCREMENTAL_EXPORTS = StaticToggle(
-    'incremental_exports',
-    'Allows sending of incremental CSV exports to a particular endpoint',
+CLEAR_MOBILE_WORKER_DATA = StaticToggle(
+    'clear_mobile_worker_data',
+    "Allows a web user to clear mobile workers' data",
     TAG_CUSTOM,
     [NAMESPACE_DOMAIN],
-    help_link="https://confluence.dimagi.com/display/saas/Incremental+Data+Exports"
 )
 
 SKIP_REMOVE_INDICES = StaticToggle(
@@ -1629,15 +1623,6 @@ CUSTOM_ICON_BADGES = StaticToggle(
     namespaces=[NAMESPACE_DOMAIN],
 )
 
-COMPARE_UCR_REPORTS = DynamicallyPredictablyRandomToggle(
-    'compare_ucr_reports',
-    'Compare UCR reports against other reports or against other databases.',
-    TAG_CUSTOM,
-    namespaces=[NAMESPACE_OTHER],
-    default_randomness=0.001,  # 1 in 1000
-    description='Reports for comparison must be listed in settings.UCR_COMPARISONS.'
-)
-
 MULTI_MASTER_LINKED_DOMAINS = StaticToggle(
     'multi_master_linked_domains',
     "Allow linked apps to pull from multiple master apps in the upstream domain",
@@ -1672,20 +1657,6 @@ TRAINING_MODULE = StaticToggle(
     'training-module',
     'Training Modules',
     TAG_CUSTOM,
-    [NAMESPACE_DOMAIN],
-)
-
-EXPORT_MULTISORT = StaticToggle(
-    'export_multisort',
-    'Sort multiple rows in exports at once.',
-    TAG_SOLUTIONS_OPEN,
-    [NAMESPACE_DOMAIN],
-)
-
-EXPORT_OWNERSHIP = StaticToggle(
-    'export_ownership',
-    'Allow exports to have ownership.',
-    TAG_SOLUTIONS_OPEN,
     [NAMESPACE_DOMAIN],
 )
 
@@ -2385,6 +2356,16 @@ ATTENDANCE_TRACKING = StaticToggle(
     save_fn=_handle_attendance_tracking_role,
 )
 
+GEOSPATIAL = StaticToggle(
+    'geospatial',
+    'Allows access to GIS functionality',
+    TAG_SOLUTIONS_LIMITED,
+    namespaces=[NAMESPACE_DOMAIN],
+    description='Additional views will be added allowing for visually viewing '
+                'and assigning cases on a map.'
+
+)
+
 class FrozenPrivilegeToggle(StaticToggle):
     """
     A special toggle to represent a legacy toggle that should't be
@@ -2510,7 +2491,29 @@ FORM_CASE_IDS_CASE_IMPORTER = FrozenPrivilegeToggle(
     tag=TAG_SOLUTIONS_OPEN,
     namespaces=[NAMESPACE_DOMAIN],
     description='Display the "Form IDs" and "Case IDs" download buttons on Case Importer',
-    # TODO: Move to public wiki
-    help_link=('https://confluence.dimagi.com/display/saas/Show+the+form+and+case+ids+download+button+on+the+'
-        'case+importer')
+)
+
+EXPORT_MULTISORT = FrozenPrivilegeToggle(
+    privileges.EXPORT_MULTISORT,
+    'export_multisort',
+    label='Sort multiple rows in exports simultaneously',
+    tag=TAG_SOLUTIONS_OPEN,
+    namespaces=[NAMESPACE_DOMAIN],
+    description='Sort multiple rows in exports simultaneously',
+)
+
+EXPORT_OWNERSHIP = FrozenPrivilegeToggle(
+    privileges.EXPORT_OWNERSHIP,
+    'export_ownership',
+    label='Allow exports to have ownership',
+    tag=TAG_SOLUTIONS_OPEN,
+    namespaces=[NAMESPACE_DOMAIN],
+    description='Allow exports to have ownership',
+)
+
+FORCE_ANNUAL_TOS = StaticToggle(
+    'annual_terms_of_service',
+    "USH Specific toggle that forces users to agree to terms of service annually.",
+    TAG_CUSTOM,
+    namespaces=[NAMESPACE_DOMAIN],
 )

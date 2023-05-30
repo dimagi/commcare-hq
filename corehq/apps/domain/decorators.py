@@ -550,8 +550,20 @@ def login_required(view_func):
         if not (user.is_authenticated and user.is_active):
             return redirect_for_login_or_domain(request)
 
-        # User's login and domain have been validated - it's safe to call the view function
         return view_func(request, *args, **kwargs)
+    return _inner
+
+
+def active_domains_required(view_func):
+    from corehq.apps.registration.views import registration_default
+
+    @wraps(view_func)
+    def _inner(request, *args, **kwargs):
+        if not Domain.active_for_user(request.user):
+            return registration_default(request)
+
+        return view_func(request, *args, **kwargs)
+
     return _inner
 
 

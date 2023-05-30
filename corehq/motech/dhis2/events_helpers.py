@@ -2,6 +2,7 @@ from schema import Schema, SchemaError
 
 from corehq.motech.dhis2.schema import get_event_schema
 from corehq.motech.exceptions import ConfigurationError
+from corehq.motech.repeater_helpers import RepeaterResponse
 from corehq.motech.value_source import (
     CaseTriggerInfo,
     get_form_question_values,
@@ -14,6 +15,8 @@ def send_dhis2_event(request, form_config, payload):
     if event:
         validate_event_schema(event)
         return request.post('/api/events', json=event, raise_for_status=True)
+    else:
+        return RepeaterResponse(204, "No content")
 
 
 def get_event(domain, config, form_json=None, info=None):

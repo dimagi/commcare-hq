@@ -139,3 +139,13 @@ UNKNOWN_EXPORT_OWNER = 'unknown'
 
 EXPORT_FAILURE_TOO_LARGE = 'too_large'
 EXPORT_FAILURE_UNKNOWN = 'unknown'
+
+# For bulk case exports
+ALL_CASE_TYPE_EXPORT = 'commcare-all-case-types'
+
+# Key for saving bulk case export task progress to cache
+BULK_CASE_EXPORT_CACHE = 'bulk-case-export-task'
+
+# Max limits allowed for being able to do a bulk case export
+MAX_CASE_TYPE_COUNT = 30
+MAX_APP_COUNT = 20

@@ -29,7 +29,6 @@ from corehq.apps.data_interfaces.interfaces import (
     CaseReassignmentInterface,
 )
 from corehq.apps.domain.dbaccessors import get_doc_ids_in_domain_by_class
-from corehq.apps.export.views.incremental import IncrementalExportLogView
 from corehq.apps.fixtures.interface import (
     FixtureEditInterface,
     FixtureViewInterface,
@@ -329,7 +328,6 @@ DOMAIN_REPORTS = (
         DomainForwardingRepeatRecords,
         SQLRepeatRecordReport,
         DomainLinkHistoryReport,
-        IncrementalExportLogView,
         ApiRequestLogReport,
     )),
 )

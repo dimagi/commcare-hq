@@ -300,7 +300,7 @@ hqDefine('hqwebapp/js/ui_elements/ui-element-key-val-mapping', function () {
             });
             $modalDiv.koApplyBindings({
                 modalTitle: ko.computed(function () {
-                    return _.template(gettext('Edit mapping for <%- property %>'))({
+                    return _.template(gettext('Edit mapping for "<%- property %>"'))({
                         property: m.getPropertyName(),
                     });
                 }),

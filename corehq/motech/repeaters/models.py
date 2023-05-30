@@ -115,6 +115,7 @@ from corehq.motech.repeaters.optionvalue import OptionValue
 from corehq.motech.requests import simple_request
 from corehq.privileges import DATA_FORWARDING, ZAPIER_INTEGRATION
 from corehq.util.metrics import metrics_counter
+from corehq.util.models import ForeignObject, foreign_init
 from corehq.util.quickcache import quickcache
 from corehq.util.urlvalidate.ip_resolver import CannotResolveHost
 from corehq.util.urlvalidate.urlvalidate import PossibleSSRFAttempt
@@ -130,6 +131,7 @@ from .const import (
     RECORD_PENDING_STATE,
     RECORD_STATES,
     RECORD_SUCCESS_STATE,
+    RECORD_EMPTY_STATE,
 )
 from .dbaccessors import (
     get_cancelled_repeat_record_count,
@@ -248,6 +250,7 @@ class RepeaterManager(models.Manager):
         return list(self.filter(domain=domain))
 
 
+@foreign_init
 class Repeater(RepeaterSuperProxy):
     domain = models.CharField(max_length=126, db_index=True)
     repeater_id = models.CharField(max_length=36, unique=True)
@@ -262,11 +265,7 @@ class Repeater(RepeaterSuperProxy):
     next_attempt_at = models.DateTimeField(null=True, blank=True)
     last_attempt_at = models.DateTimeField(null=True, blank=True)
     options = JSONField(default=dict)
-    connection_settings = models.ForeignKey(
-        ConnectionSettings,
-        on_delete=models.PROTECT,
-        related_name='repeaters'
-    )
+    connection_settings_id = models.IntegerField(db_index=True)
     is_deleted = models.BooleanField(default=False, db_index=True)
     last_modified = models.DateTimeField(auto_now=True)
     date_created = models.DateTimeField(auto_now_add=True)
@@ -283,6 +282,13 @@ class Repeater(RepeaterSuperProxy):
 
     _has_config = False
 
+    def __str__(self):
+        return self.name or self.connection_settings.name
+
+    def _get_connection_settings(self, id_):
+        return ConnectionSettings.objects.get(id=id_, domain=self.domain)
+
+    connection_settings = ForeignObject(connection_settings_id, _get_connection_settings)
 
     @cached_property
     def _optionvalue_fields(self):
@@ -314,6 +320,7 @@ class Repeater(RepeaterSuperProxy):
         repeater_dict.pop('is_deleted', None)
         repeater_dict.pop('next_attempt_at', None)
         repeater_dict.pop('last_attempt_at', None)
+        repeater_dict.pop('_ForeignObject_connection_settings', None)
 
         self._convert_to_serializable(repeater_dict)
         return repeater_dict
@@ -854,7 +861,9 @@ class RepeatRecordAttempt(DocumentSchema):
     @property
     def state(self):
         state = RECORD_PENDING_STATE
-        if self.succeeded:
+        if self.succeeded and self.cancelled:
+            state = RECORD_EMPTY_STATE
+        elif self.succeeded:
             state = RECORD_SUCCESS_STATE
         elif self.cancelled:
             state = RECORD_CANCELLED_STATE
@@ -940,7 +949,9 @@ class RepeatRecord(Document):
     @property
     def state(self):
         state = RECORD_PENDING_STATE
-        if self.succeeded:
+        if self.succeeded and self.cancelled:
+            state = RECORD_EMPTY_STATE
+        elif self.succeeded:
             state = RECORD_SUCCESS_STATE
         elif self.cancelled:
             state = RECORD_CANCELLED_STATE
@@ -1065,8 +1076,9 @@ class RepeatRecord(Document):
                 response.status_code,
                 self.repeater_type
             )
+        # Mark as cancelled and successful if it was an empty payload with nothing to send
         return RepeatRecordAttempt(
-            cancelled=False,
+            cancelled=(response.status_code == 204),
             datetime=now,
             failure_reason=None,
             success_response=self._format_response(response),

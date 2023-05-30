@@ -18,6 +18,7 @@ from django.views.decorators.http import require_GET, require_POST
 
 from couchdbkit import ResourceConflict
 from iso8601 import iso8601
+from memoized import memoized
 from tastypie.http import HttpTooManyRequests
 
 from casexml.apps.case.cleanup import claim_case, get_first_claims
@@ -161,18 +162,34 @@ def claim(request, domain):
                    host_name=unquote(request.POST.get('case_name', '')),
                    device_id=__name__ + ".claim")
 
-    def phone_holds_all_cases(request):
+    @memoized
+    def get_synclog(sync_token):
         try:
-            synclog = get_properly_wrapped_sync_log(request.last_sync_token)
-            missing_case_ids_on_phone = set(case_ids) - synclog.case_ids_on_phone
-            return not missing_case_ids_on_phone
+            return get_properly_wrapped_sync_log(sync_token)
         except MissingSyncLog:
             return False
 
-    if not case_ids_to_claim and phone_holds_all_cases(request):
-        return HttpResponse(status=204)
+    def phone_holds_all_cases(request):
+        if get_synclog(request.last_sync_token):
+            synclog = get_synclog(request.last_sync_token)
+            missing_case_ids_on_phone = set(case_ids) - synclog.case_ids_on_phone
+            return not missing_case_ids_on_phone
 
-    return HttpResponse(status=201)
+    def cases_have_been_modified_since_last_synclog_date():
+        if get_synclog(request.last_sync_token):
+            synclog = get_synclog(request.last_sync_token)
+            return bool(CommCareCase.objects.get_modified_case_ids(domain, case_ids, synclog))
+
+    if case_ids_to_claim:
+        return HttpResponse(status=201)
+
+    if not phone_holds_all_cases(request):
+        return HttpResponse(status=201)
+
+    if cases_have_been_modified_since_last_synclog_date():
+        return HttpResponse(status=201)
+
+    return HttpResponse(status=204)
 
 
 def get_restore_params(request, domain):
@@ -206,6 +223,7 @@ def get_restore_params(request, domain):
         'user_id': request.GET.get('user_id'),
         'skip_fixtures': skip_fixtures,
         'auth_type': getattr(request, 'auth_type', None),
+        'fail_hard': request.GET.get('fail_hard') == 'true',
     }
 
 
@@ -215,7 +233,8 @@ def get_restore_response(domain, couch_user, app_id=None, since=None, version='1
                          cache_timeout=None, overwrite_cache=False,
                          as_user=None, device_id=None, user_id=None,
                          openrosa_version=None,
-                         skip_fixtures=False, auth_type=None):
+                         skip_fixtures=False, auth_type=None,
+                         fail_hard=False):
     """
     :param domain: Domain being restored from
     :param couch_user: User performing restore
@@ -234,6 +253,8 @@ def get_restore_response(domain, couch_user, app_id=None, since=None, version='1
     :param skip_fixtures: Do not include fixtures in sync payload
     :param auth_type: The type of auth that was used to authenticate the request.
         Used to determine if the request is coming from an actual user or as part of some automation.
+    :param fail_hard: In case of exceptions, fail hardly by raising exception instead of logging
+        silently.
     :return: Tuple of (http response, timing context or None)
     """
 
@@ -297,6 +318,7 @@ def get_restore_response(domain, couch_user, app_id=None, since=None, version='1
             app=app,
             device_id=device_id,
             openrosa_version=openrosa_version,
+            fail_hard=fail_hard,
         ),
         cache_settings=RestoreCacheSettings(
             force_cache=force_cache or async_restore_enabled,

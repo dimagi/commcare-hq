@@ -72,11 +72,6 @@
       <script src="{% static 'app_manager/js/forms/custom_instances.js' %}"></script>
     {% endcompress %}
   {% endif %}
-  {% if request|toggle_enabled:"CUSTOM_ASSERTIONS"%}
-    {% compress js %}
-      <script src="{% static 'app_manager/js/forms/custom_assertions.js' %}"></script>
-    {% endcompress %}
-  {% endif %}
   {% if allow_form_copy and request|toggle_enabled:"COPY_FORM_TO_APP" %}
     {% compress js %}
       <script src="{% static 'app_manager/js/forms/copy_form_to_app.js' %}"></script>
@@ -129,7 +124,6 @@
   {% initial_page_data 'case_config_options' case_config_options %}
   {% initial_page_data 'current_language' lang %}
   {% initial_page_data 'custom_instances' custom_instances %}
-  {% initial_page_data 'custom_assertions' custom_assertions %}
   {% initial_page_data 'default_language' app.default_language %}
   {% initial_page_data 'enable_release_notes' form.enable_release_notes %}
   {% initial_page_data 'form_filter' form.form_filter %}

@@ -5,8 +5,8 @@
 #
 # Translators:
 # Dimagi Dev <devops@dimagi.com>, 2021
-# Gladys Teos <info@enestranslations.com>, 2022
 # Michelle B. Sultan <msultan@dimagi.com>, 2022
+# Gladys Teos <info@enestranslations.com>, 2023
 #
 #, fuzzy
 msgid ""
@@ -14,8 +14,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "PO-Revision-Date: 2017-07-19 15:34+0000\n"
-"Last-Translator: Michelle B. Sultan <msultan@dimagi.com>, 2022\n"
-"Language-Team: Spanish (https://www.transifex.com/dimagi/teams/9388/es/)\n"
+"Last-Translator: Gladys Teos <info@enestranslations.com>, 2023\n"
+"Language-Team: Spanish (https://app.transifex.com/dimagi/teams/9388/es/)\n"
 "Language: es\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
@@ -260,10 +260,6 @@ msgid "Display Condition"
 msgstr "Condición de Visualización"
 
 #: corehq/apps/app_manager/static/app_manager/js/details/column.js
-msgid "Markdown"
-msgstr ""
-
-#: corehq/apps/app_manager/static/app_manager/js/details/column.js
 msgid "Oct 31, "
 msgstr ""
 
@@ -375,6 +371,10 @@ msgstr ""
 msgid "There are errors in your configuration."
 msgstr ""
 
+#: corehq/apps/app_manager/static/app_manager/js/details/screen_config.js
+msgid "<%- name %> (Calculated Property #<%- index %>)"
+msgstr ""
+
 #: corehq/apps/app_manager/static/app_manager/js/details/sort_rows.js
 msgid "Increasing (a, b, c)"
 msgstr "Ascendente (a, b, c)"
@@ -449,6 +449,10 @@ msgstr "Dirección"
 #: corehq/apps/app_manager/static/app_manager/js/details/utils.js
 msgid "Distance from current location"
 msgstr "Distancia de la ubicación actual"
+
+#: corehq/apps/app_manager/static/app_manager/js/details/utils.js
+msgid "Markdown"
+msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/details/utils.js
 msgid "Picture"
@@ -1287,6 +1291,7 @@ msgstr "Número de teléfono o ID Numérico"
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 #: corehq/apps/cloudcare/static/cloudcare/js/form_entry/entries.js
+#: corehq/motech/static/motech/js/connection_settings_detail.js
 msgid "Password"
 msgstr "Contraseña"
 
@@ -3351,6 +3356,14 @@ msgid ""
 "href='mailto:<%- email %>'><%- email %></a> to change the list of domains."
 msgstr ""
 
+#: corehq/apps/events/static/events/js/event_attendees.js
+msgid "Disable Mobile Worker Attendees"
+msgstr ""
+
+#: corehq/apps/events/static/events/js/event_attendees.js
+msgid "Enable Mobile Worker Attendees"
+msgstr ""
+
 #: corehq/apps/events/static/events/js/new_event.js
 msgid "Possible Attendees"
 msgstr ""
@@ -3692,7 +3705,7 @@ msgid "Key contains an invalid character."
 msgstr ""
 
 #: corehq/apps/hqwebapp/static/hqwebapp/js/ui_elements/ui-element-key-val-mapping.js
-msgid "Edit mapping for <%- property %>"
+msgid "Edit mapping for \"<%- property %>\""
 msgstr ""
 
 #: corehq/apps/hqwebapp/static/hqwebapp/js/validators.ko.js
@@ -4982,6 +4995,12 @@ msgid "Failed to schedule task to import from OpenMRS."
 msgstr ""
 
 #: corehq/motech/repeaters/static/repeaters/js/repeat_record_report.js
+#, fuzzy
+#| msgid "Failed to re-process"
+msgid "Failed to fetch attempts"
+msgstr "Reproceso fallido"
+
+#: corehq/motech/repeaters/static/repeaters/js/repeat_record_report.js
 msgid "Failed to fetch payload"
 msgstr ""
 
@@ -4992,6 +5011,22 @@ msgstr ""
 #: corehq/motech/repeaters/static/repeaters/js/repeat_record_report.js
 msgid "Failed to cancel"
 msgstr ""
+
+#: corehq/motech/static/motech/js/connection_settings_detail.js
+msgid "Username"
+msgstr "Nombre de Usuario"
+
+#: corehq/motech/static/motech/js/connection_settings_detail.js
+msgid "Client ID"
+msgstr ""
+
+#: corehq/motech/static/motech/js/connection_settings_detail.js
+msgid "Client Secret"
+msgstr "Secreto de Cliente"
+
+#: corehq/motech/static/motech/js/connection_settings_detail.js
+msgid "API Key"
+msgstr "Clave API"
 
 #: corehq/motech/static/motech/js/connection_settings_detail.js
 msgid "Success! Response is: "

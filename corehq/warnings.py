@@ -52,6 +52,11 @@ WHITELIST = [
         re.compile(r"Invalid index settings key .+, expected one of \["),
         UserWarning,
     ),
+    (
+        # This should be tested on a newer version(>2.5) of ES.Should be removed if fixed
+        "elasticsearch2.connection.http_urllib3",
+        "HTTPResponse.getheaders() is deprecated and will be removed in urllib3 v2.1.0."
+    ),
 
     # other, resolution not obvious
     ("IPython.core.interactiveshell", "install IPython inside the virtualenv.", UserWarning),
@@ -158,6 +163,8 @@ def augment_warning_messages():
         message += f"\nmodule: {module} line {lineno}"
         if category and issubclass(category, DeprecationWarning):
             message += POSSIBLE_RESOLUTIONS
+            if os.environ.get("CCHQ_STRICT_WARNINGS") and os.environ.get('CCHQ_TESTING') != '1':
+                message += STRICT_WARNINGS_WORKAROUND
 
         stacklevel += 1
         return real_warn(message, category, stacklevel, source)
@@ -198,4 +205,9 @@ Possible resolutions:
   path or to add a whitelist item that uniquely matches the deprecation
   warning, use the `corehq.tests.util.warnings.filter_warnings()`
   decorator to filter the specific warning in tests that trigger it.
+"""
+
+STRICT_WARNINGS_WORKAROUND = """
+Workaround: prepend the command with 'env -u CCHQ_STRICT_WARNINGS ' to
+disable strict warnings if none of these resolutions are appropriate.
 """

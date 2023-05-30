@@ -35,7 +35,6 @@ from corehq.motech.openmrs.exceptions import (
 )
 from corehq.motech.openmrs.repeaters import AtomFeedStatus, OpenmrsRepeater
 from corehq.motech.openmrs.tasks import poll_openmrs_atom_feeds
-from corehq.motech.repeaters.dbaccessors import delete_all_repeaters
 from ...repeaters.tests.data.repeaters import ENCOUNTER_FEED_XML, PATIENT_FEED_XML
 from corehq.motech.requests import Requests
 from corehq.util.test_utils import TestFileMixin
@@ -593,13 +592,14 @@ class TestPollOpenmrsAtomFeeds(TestCase, TestFileMixin):
     root = os.path.dirname(__file__)
 
     def setUp(self):
+        from corehq.motech.repeaters.tests.data.repeaters import openmrs_repeater
         super().setUp()
         self.conn = ConnectionSettings.objects.create(
             id=1,
             url="http://abc.com",
-            name="http://abc.com"
+            name="http://abc.com",
+            domain=openmrs_repeater["domain"],
         )
-        from corehq.motech.repeaters.tests.data.repeaters import openmrs_repeater
         self.repeater = OpenmrsRepeater(**openmrs_repeater).save()
 
         self.encounter_feed_xml = inspect.cleandoc(ENCOUNTER_FEED_XML)
@@ -607,10 +607,6 @@ class TestPollOpenmrsAtomFeeds(TestCase, TestFileMixin):
 
         self.patient_feed_xml = inspect.cleandoc(PATIENT_FEED_XML)
         self.patient_feed_elem = etree.XML(self.patient_feed_xml.encode('utf-8'))
-
-    def tearDown(self):
-        delete_all_repeaters()
-        return super().tearDown()
 
     @patch('corehq.motech.openmrs.atom_feed.get_feed_xml')
     @patch('corehq.motech.openmrs.atom_feed.get_patient_by_uuid')

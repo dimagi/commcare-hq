@@ -96,7 +96,7 @@
           <th class="text-center">
             {% trans "Data" %}
           </th>
-          {% if request|toggle_enabled:"EXPORT_OWNERSHIP" %}
+          {% if request|request_has_privilege:"EXPORT_OWNERSHIP" %}
             <th class="text-center">
               {% trans "Shared Exports" %}
             </th>
@@ -121,6 +121,11 @@
           {% if request|toggle_enabled:"DATA_REGISTRY" %}
           <th class="text-center">
             {% trans "Data Registries" %}
+          </th>
+          {% endif %}
+          {% if request|request_has_privilege:"ATTENDANCE_TRACKING" and request|toggle_enabled:"ATTENDANCE_TRACKING" %}
+          <th class="text-center">
+            {% trans "Attendance Tracking" %}
           </th>
           {% endif %}
           <th>{% trans "Actions" %}</th>
@@ -176,7 +181,7 @@
                                               edit: permissions.edit_data
                                             }"></div>
           </td>
-          {% if request|toggle_enabled:"EXPORT_OWNERSHIP" %}
+          {% if request|request_has_privilege:"EXPORT_OWNERSHIP" %}
             <td class="text-center">
               <div data-bind="permissionIcon: {
                                                 edit: permissions.edit_shared_exports
@@ -238,6 +243,14 @@
               </span>
             </div>
           </td>
+          {% endif %}
+          {% if request|request_has_privilege:"ATTENDANCE_TRACKING" and request|toggle_enabled:"ATTENDANCE_TRACKING" %}
+            <td class="text-center">
+              <div data-bind="visible: permissions.manage_attendance_tracking,
+                                        permissionIcon: {
+                                          manage: permissions.manage_attendance_tracking,
+                                        }"></div>
+            </td>
           {% endif %}
           <td>
             <button class="btn btn-default" data-bind="visible: $data._id, click: $data._id ? $root.setRoleBeingEdited : null">

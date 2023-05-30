@@ -1,5 +1,6 @@
-from collections import namedtuple
+import re
 import uuid
+from collections import namedtuple
 
 from django.contrib import messages
 from django.http import Http404, HttpResponseRedirect
@@ -8,7 +9,7 @@ from django.utils.decorators import method_decorator
 from django.utils.translation import gettext as _
 from django.utils.translation import gettext_lazy
 from django.views.decorators.http import require_POST
-from corehq.motech.models import ConnectionSettings
+
 from memoized import memoized
 
 from corehq import privileges, toggles
@@ -21,11 +22,12 @@ from corehq.apps.users.decorators import (
 )
 from corehq.apps.users.models import HqPermissions
 from corehq.motech.const import PASSWORD_PLACEHOLDER
+from corehq.motech.models import ConnectionSettings
 
 from ..forms import CaseRepeaterForm, FormRepeaterForm, GenericRepeaterForm
 from ..models import (
-    RepeatRecord,
     Repeater,
+    RepeatRecord,
     are_repeat_records_migrated,
     get_all_repeater_types,
 )
@@ -256,6 +258,10 @@ class AddFormRepeaterView(AddRepeaterView):
             self.add_repeater_form.cleaned_data['include_app_id_param'])
         repeater.user_blocklist = (
             self.add_repeater_form.cleaned_data['user_blocklist'])
+        repeater.white_listed_form_xmlns = [xmlns for xmlns in re.split(
+            r'[, \r\n]',
+            self.add_repeater_form.cleaned_data['white_listed_form_xmlns'],
+        ) if xmlns]
         return repeater
 
 

@@ -1,15 +1,22 @@
-from corehq.apps.domain.shortcuts import create_domain
-from corehq.apps.events.models import AttendeeCase, ATTENDEE_USER_ID_CASE_PROPERTY
-from corehq.apps.events.tasks import get_user_attendee_cases_on_domain
-from corehq.apps.events import tasks
-from corehq.apps.users.models import HqPermissions, UserRole, WebUser
-from corehq.apps.users.models import CommCareUser
-from corehq.apps.users.role_utils import UserRolePresets
 from django.test import TestCase
-import uuid
-from corehq.apps.hqcase.utils import submit_case_blocks
-from casexml.apps.case.mock import CaseBlock
-from corehq.apps.events.models import get_attendee_case_type
+
+from corehq.apps.domain.shortcuts import create_domain
+from corehq.apps.hqcase.case_helper import CaseHelper
+from corehq.apps.users.models import (
+    CommCareUser,
+    HqPermissions,
+    UserRole,
+    WebUser,
+)
+from corehq.apps.users.role_utils import UserRolePresets
+from corehq.form_processor.models import CommCareCase
+
+from ..models import AttendeeModel, get_attendee_case_type
+from ..tasks import (
+    close_mobile_worker_attendee_cases,
+    get_user_attendee_models_on_domain,
+    sync_mobile_worker_attendees,
+)
 
 
 class TestTasks(TestCase):
@@ -68,40 +75,44 @@ class TestTasks(TestCase):
         """Test that the `sync_mobile_worker_attendees` task creates `commcare-attendee` cases for mobile
         workers.
         """
-        user_id_case_mapping = get_user_attendee_cases_on_domain(self.domain)
-        user_ids = list(user_id_case_mapping.keys())
-        tasks.sync_mobile_worker_attendees(domain_name=self.domain, user_id=self.webuser.user_id)
-        user_id_case_mapping = get_user_attendee_cases_on_domain(self.domain)
-        user_ids = list(user_id_case_mapping.keys())
+        user_id_model_mapping = get_user_attendee_models_on_domain(self.domain)
+        self.assertEqual(len(user_id_model_mapping), 0)
 
-        self.assertEqual(len(user_ids), 2)
-        # The case_name for mobile workers should be their username
-        for mobile_worker_case in AttendeeCase.objects.by_domain(self.domain):
-            commcare_user_id = mobile_worker_case.case_json['commcare_user_id']
+        sync_mobile_worker_attendees(self.domain, user_id=self.webuser.user_id)
+        user_id_model_mapping = get_user_attendee_models_on_domain(self.domain)
+        self.assertEqual(len(user_id_model_mapping), 2)
+
+        mobile_worker_attendee_models = (
+            model for model in AttendeeModel.objects.by_domain(self.domain)
+            if model.user_id
+        )
+        for model in mobile_worker_attendee_models:
+            commcare_user_id = model.user_id
             commcare_user = CommCareUser.get_by_user_id(commcare_user_id)
-            self.assertEqual(mobile_worker_case.name, commcare_user.username.split('@')[0])
+            # The case_name for mobile workers should be their username
+            self.assertEqual(model.name, commcare_user.username.split('@')[0])
 
     def test_duplicate_cases_not_created(self):
         # Let's call this to create initial cases
-        tasks.sync_mobile_worker_attendees(domain_name=self.domain, user_id=self.webuser.user_id)
+        sync_mobile_worker_attendees(domain_name=self.domain, user_id=self.webuser.user_id)
 
         # Get the case count
-        cases = AttendeeCase.objects.by_domain(self.domain, include_closed=True)
-        case_count_before = len(cases)
+        models = AttendeeModel.objects.by_domain(self.domain, include_closed=True)
+        case_count_before = len(models)
 
         # Now call the task again, which should not create new cases
-        tasks.sync_mobile_worker_attendees(domain_name=self.domain, user_id=self.webuser.user_id)
+        sync_mobile_worker_attendees(domain_name=self.domain, user_id=self.webuser.user_id)
 
         # Check total case count again
-        cases = AttendeeCase.objects.by_domain(self.domain, include_closed=True)
-        case_count = len(cases)
+        models = AttendeeModel.objects.by_domain(self.domain, include_closed=True)
+        case_count = len(models)
         self.assertEqual(case_count, case_count_before)
 
     def test_closed_cases_reopened_for_mobile_workers(self):
         """Test that the `sync_mobile_worker_attendees` task reopens closed attendee cases associated with
         mobile workers
         """
-        tasks.sync_mobile_worker_attendees(domain_name=self.domain, user_id=self.webuser.user_id)
+        sync_mobile_worker_attendees(domain_name=self.domain, user_id=self.webuser.user_id)
 
         # Close the current attendee cases for mobile workers
         self._assert_cases_state(closed=False)
@@ -112,70 +123,58 @@ class TestTasks(TestCase):
         self._assert_cases_state(closed=True)
 
         # Now call the task again, which should reopen the cases
-        tasks.sync_mobile_worker_attendees(domain_name=self.domain, user_id=self.webuser.user_id)
+        sync_mobile_worker_attendees(domain_name=self.domain, user_id=self.webuser.user_id)
 
         self._assert_cases_state(closed=False)
 
     def test_mobile_worker_attendee_cases_closed(self):
         """Only mobile worker attendee cases should be closed, not all attendee cases"""
         # Create some mobile worker attendee cases
-        tasks.sync_mobile_worker_attendees(domain_name=self.domain, user_id=self.webuser.user_id)
+        sync_mobile_worker_attendees(domain_name=self.domain, user_id=self.webuser.user_id)
 
         # Let's add another attendee case, not associated with any mobile worker
         self._create_non_mobile_worker_attendee_case()
 
         # Let's make sure they're all open
-        user_id_case_mapping = get_user_attendee_cases_on_domain(self.domain)
-        self.assertEqual(len(user_id_case_mapping), 3)
-
-        for case in user_id_case_mapping.values():
-            self.assertFalse(case.closed)
+        models = AttendeeModel.objects.by_domain(self.domain, include_closed=True)
+        are_mobile_workers = [m for m in models if m.user_id]
+        are_not_mobile_workers = [m for m in models if not m.user_id]
+        self.assertEqual(len(models), 3)
+        self.assertEqual(len(are_mobile_workers), 2)
+        self.assertEqual(len(are_not_mobile_workers), 1)
+        self.assertTrue(all(not m.case.closed for m in models))
 
         # Now close mobile worker cases
-        tasks.close_mobile_worker_attendee_cases(domain_name=self.domain)
+        close_mobile_worker_attendee_cases(domain_name=self.domain)
 
         # Only those with the `ATTENDEE_USER_ID_CASE_PROPERTY` property should be closed
-        user_id_case_mapping = get_user_attendee_cases_on_domain(self.domain)
-        for case in user_id_case_mapping.values():
-            if case.get_case_property(ATTENDEE_USER_ID_CASE_PROPERTY):
-                self.assertTrue(case.closed)
+        models = AttendeeModel.objects.by_domain(self.domain, include_closed=True)
+        for model in models:
+            if model.user_id:
+                self.assertTrue(model.case.closed)
             else:
-                self.assertFalse(case.closed)
+                self.assertFalse(model.case.closed)
 
     def _close_mobile_worker_attendee_cases(self):
-        from corehq.apps.hqcase.api.updates import JsonCaseUpdate, CaseIDLookerUpper
-        from corehq.apps.hqcase.utils import submit_case_blocks
-
-        cases = AttendeeCase.objects.by_domain(self.domain, include_closed=True)
-        updates = []
-        data = {
-            "close": True,
-            "user_id": self.webuser.user_id,
-        }
-        for case in cases:
-            data['case_id'] = case.case_id
-            update = JsonCaseUpdate.wrap(data)
-            updates.append(update)
-        case_db = CaseIDLookerUpper(self.domain, updates)
-        case_blocks = [update.get_caseblock(case_db) for update in updates]
-        submit_case_blocks(case_blocks, domain=self.domain, user_id=self.webuser.user_id)
+        case_ids = CommCareCase.objects.get_open_case_ids_in_domain_by_type(
+            domain=self.domain,
+            case_type=get_attendee_case_type(self.domain)
+        )
+        for case_id in case_ids:
+            helper = CaseHelper(case_id=case_id, domain=self.domain)
+            helper.close(user_id=self.webuser.user_id)
 
     def _assert_cases_state(self, closed=False):
         """Loop through attendee cases associated with mobile workers and asserts if the cases are open
         or closed
         """
-        cases = AttendeeCase.objects.by_domain(self.domain, include_closed=True)
-        assert_method = self.assertTrue
-        if not closed:
-            assert_method = self.assertFalse
-        for case in cases:
-            assert_method(case.closed)
+        assert_method = self.assertTrue if closed else self.assertFalse
+        for model in AttendeeModel.objects.by_domain(self.domain, include_closed=True):
+            assert_method(model.case.closed)
 
     def _create_non_mobile_worker_attendee_case(self):
-        case_id = uuid.uuid4().hex
-        caseblock = CaseBlock(
-            case_id=case_id,
-            case_type=get_attendee_case_type(self.domain),
-            case_name="Court Case",
-        )
-        submit_case_blocks(caseblock.as_text(), domain=self.domain)
+        helper = CaseHelper(domain=self.domain)
+        helper.create_case({
+            'case_name': "Court Case",
+            'case_type': get_attendee_case_type(self.domain),
+        })

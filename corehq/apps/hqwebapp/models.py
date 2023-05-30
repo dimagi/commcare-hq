@@ -9,7 +9,7 @@ import architect
 from oauth2_provider.settings import APPLICATION_MODEL
 
 from corehq.util.markup import mark_up_urls
-from corehq.util.models import ForeignValue, foreign_value_init
+from corehq.util.models import ForeignValue, foreign_init
 from corehq.util.quickcache import quickcache
 
 PageInfoContext = namedtuple('PageInfoContext', 'title url')
@@ -70,7 +70,7 @@ class UserAgent(models.Model):
 
 
 @architect.install('partition', type='range', subtype='date', constraint='month', column='timestamp')
-@foreign_value_init
+@foreign_init
 class UserAccessLog(models.Model):
     TYPE_LOGIN = 'login'
     TYPE_LOGOUT = 'logout'

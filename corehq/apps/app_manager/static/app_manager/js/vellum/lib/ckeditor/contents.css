@@ -2,7 +2,8 @@
 body
 {
 	
-	font-family: sans-serif, Arial, Verdana, "Trebuchet MS";
+	
+	font-family: sans-serif, Arial, Verdana, "Trebuchet MS", "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
 	font-size: 12px;
 	
 	color: #333;
@@ -91,8 +92,7 @@ span[lang]
 figure
 {
 	text-align: center;
-	border: solid 1px #ccc;
-	border-radius: 2px;
+	outline: solid 1px #ccc;
 	background: rgba(0,0,0,0.05);
 	padding: 10px;
 	margin: 10px 20px;

@@ -1,3 +1,5 @@
+import json
+
 from django.http import (
     Http404,
     HttpRequest,
@@ -11,6 +13,7 @@ from django.utils.html import format_html
 from django.utils.translation import gettext as _
 from django.views.decorators.http import require_POST
 from django.views.generic import View
+from django.template.loader import render_to_string
 
 from couchdbkit import ResourceNotFound
 from memoized import memoized
@@ -32,6 +35,9 @@ from corehq.apps.users.decorators import require_can_edit_web_users
 from corehq.form_processor.exceptions import XFormNotFound
 from corehq.motech.utils import pformat_json
 from corehq.util.xml_utils import indent_xml
+from corehq.motech.dhis2.repeaters import Dhis2EntityRepeater
+from corehq.motech.dhis2.parse_response import get_errors
+from corehq.motech.models import RequestLog
 
 from ..const import RECORD_CANCELLED_STATE
 from ..dbaccessors import (
@@ -89,8 +95,19 @@ class BaseRepeatRecordReport(GenericTabularReport):
             data-record-id={}
             data-toggle="modal"
             data-target="#view-record-payload-modal">
-            View Payload
+            <i class="fa fa-search"></i>
+            Payload
         </a>
+        ''', record_id)
+
+    def _make_view_attempts_button(self, record_id):
+        return format_html('''
+        <button
+            class="btn btn-default view-attempts-btn"
+            data-record-id={}>
+            <i class="fa fa-search"></i>
+            Responses
+        </button>
         ''', record_id)
 
     def _make_resend_payload_button(self, record_id):
@@ -172,10 +189,9 @@ class BaseRepeatRecordReport(GenericTabularReport):
         row = [
             checkbox,
             display.state,
-            display.url,
-            display.last_checked,
+            display.remote_service,
             display.next_attempt_at,
-            display.attempts,
+            self._make_view_attempts_button(record.record_id),
             self._make_view_payload_button(record.record_id),
             self._make_resend_payload_button(record.record_id),
         ]
@@ -205,13 +221,12 @@ class BaseRepeatRecordReport(GenericTabularReport):
                 sortable=False, span=3
             ),
             DataTablesColumn(_('Status')),
-            DataTablesColumn(_('URL')),
-            DataTablesColumn(_('Last sent date')),
+            DataTablesColumn(_('Remote Service')),
             DataTablesColumn(_('Retry Date')),
             DataTablesColumn(_('Delivery Attempts')),
-            DataTablesColumn(_('View payload')),
+            DataTablesColumn(_('View Responses')),
             DataTablesColumn(_('Resend')),
-            DataTablesColumn(_('Cancel or Requeue payload'))
+            DataTablesColumn(_('Cancel or Requeue'))
         ]
         if toggles.SUPPORT.enabled_for_request(self.request):
             columns.insert(2, DataTablesColumn(_('Payload ID')))
@@ -303,8 +318,28 @@ class RepeatRecordView(View):
         elif content_type == 'application/json':
             payload = pformat_json(payload)
 
+        dhis2_errors = []
+        if toggles.DHIS2_INTEGRATION.enabled(domain) and isinstance(record.repeater, Dhis2EntityRepeater):
+            logs = RequestLog.objects.filter(domain=domain, payload_id=record.payload_id)
+            for log in logs:
+                resp_body = json.loads(log.response_body)
+                log_errors = [error for error in get_errors(resp_body).values()]
+                dhis2_errors += log_errors
+
+        attempt_html = render_to_string(
+            'repeaters/partials/attempt_history.html',
+            context={
+                'record': record,
+                'record_id': record_id,
+                'dhis2_errors': dhis2_errors,
+                'has_attempts': any(record.attempts),
+                'has_dhis2_errors': any(dhis2_errors)
+            }
+        )
+
         return JsonResponse({
             'payload': payload,
+            'attempts': attempt_html,
             'content_type': content_type,
         })
 

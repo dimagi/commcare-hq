@@ -8,7 +8,6 @@ from dimagi.utils.parsing import json_format_datetime, string_to_datetime
 from collections import namedtuple
 from functools import partial
 import six
-from corehq.toggles import USE_CUSTOM_EXTERNAL_ID_CASE_PROPERTY
 
 # relationship = "child" for index to a parent case (default)
 # relationship = "extension" for index to a host case
@@ -20,26 +19,24 @@ class CaseBlock(object):
     """
     see https://github.com/dimagi/commcare/wiki/casexml20 for spec
     """
-    undefined = object()
     _built_ins = {'case_type', 'case_name', 'owner_id'}
 
     def __init__(
         self,
         case_id,
         date_modified=None,
-        user_id=undefined,
-        owner_id=undefined,
-        external_id=undefined,
-        case_type=undefined,
-        case_name=undefined,
+        user_id=...,
+        owner_id=...,
+        external_id=...,
+        case_type=...,
+        case_name=...,
         create=False,
-        date_opened=undefined,
+        date_opened=...,
         update=None,
         close=False,
         index=None,
         strict=True,
         date_opened_deprecated_behavior=False,
-        domain=None,
     ):
         """
         When `date_opened_deprecated_behavior`, a date_opened YYYY-MM-DD value is inserted on new cases.
@@ -49,13 +46,12 @@ class CaseBlock(object):
             case_id = case_id.decode('utf-8')
         if isinstance(user_id, bytes):
             user_id = user_id.decode('utf-8')
-        # todo: can we use None instead of CaseBlock.undefined, throughout?
-        owner_id = CaseBlock.undefined if owner_id is None else owner_id
+        owner_id = ... if owner_id is None else owner_id
         self.update = copy.copy(update) if update else {}
         now = datetime.utcnow()
         self.date_modified = date_modified or now
         if date_opened_deprecated_behavior:
-            self.date_opened = (now.date() if create and date_opened is CaseBlock.undefined
+            self.date_opened = (now.date() if create and date_opened is ...
                                 else date_opened)
         else:
             self.date_opened = date_opened
@@ -71,7 +67,6 @@ class CaseBlock(object):
             self._check_for_duplicate_properties()
         self.index = {key: self._make_index_attrs(value)
                       for key, value in index.items()} if index else {}
-        self.domain = domain
 
     @classmethod
     def deprecated_init(cls, *args, **kwargs):
@@ -90,7 +85,7 @@ class CaseBlock(object):
 
     def _check_for_duplicate_properties(self):
         for property_name, passed_value in self._updatable_built_ins():
-            if passed_value is not CaseBlock.undefined and property_name in self.update:
+            if passed_value is not ... and property_name in self.update:
                 raise CaseBlockError("Key '{}' specified twice".format(property_name))
 
     @staticmethod
@@ -114,18 +109,13 @@ class CaseBlock(object):
             'update': self.update,
         }
 
-        external_id = self.external_id
-        # This is probably not the best way, but is needed currently.
-        if self.domain and USE_CUSTOM_EXTERNAL_ID_CASE_PROPERTY.enabled(self.domain):
-            external_id = self.update.get('external_id', external_id)
-
         result['update'].update({
-            'external_id': external_id,
+            'external_id': self.external_id,
             'date_opened': self.date_opened,
         })
 
         create_or_update = {key: val for key, val in self._updatable_built_ins()
-                            if val is not CaseBlock.undefined}
+                            if val is not ...}
         if self.create:
             for key in self._built_ins:
                 create_or_update.setdefault(key, "")
@@ -136,8 +126,8 @@ class CaseBlock(object):
         if self.close:
             result['close'] = {}
 
-        if all(val is CaseBlock.undefined for val in result['update'].values()):
-                result['update'] = CaseBlock.undefined
+        if all(val is ... for val in result['update'].values()):
+            result['update'] = ...
 
         if self.index:
             result['index'] = {}
@@ -228,13 +218,13 @@ class _DictToXML(object):
     def build(self, block, dct):
         if '_attrib' in dct:
             for (key, value) in dct['_attrib'].items():
-                if value is not CaseBlock.undefined:
+                if value is not ...:
                     block.set(key, self.fmt(value))
         if '_text' in dct:
             block.text = six.text_type(dct['_text'])
 
         for (key, value) in sorted(list(dct.items()), key=self.sort_key):
-            if value is not CaseBlock.undefined and not key.startswith('_'):
+            if value is not ... and not key.startswith('_'):
                 elem = ElementTree.Element(key)
                 block.append(elem)
                 if isinstance(value, dict):

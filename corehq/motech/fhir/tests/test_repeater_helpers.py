@@ -420,7 +420,8 @@ class TestWhenToBundle(TestCase):
             FHIR_VERSION_4_0_1,
             repeater_id='abc123',
         )
-        self.assertEqual(response, True)
+        self.assertEqual(response.status_code, 204)
+        self.assertEqual(response.reason, 'No content')
 
     def test_one_to_send(self):
         info = CaseTriggerInfo(

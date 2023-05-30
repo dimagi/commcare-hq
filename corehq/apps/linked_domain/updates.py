@@ -106,7 +106,7 @@ from corehq.apps.userreports.util import (
 )
 from corehq.apps.users.models import UserRole, HqPermissions
 from corehq.apps.users.views.mobile import UserFieldsView
-from corehq.toggles import NAMESPACE_DOMAIN
+from corehq.toggles import NAMESPACE_DOMAIN, EMBEDDED_TABLEAU
 from corehq.toggles.shortcuts import set_toggle
 
 
@@ -267,6 +267,11 @@ def update_user_roles(domain_link):
         if role.upstream_id:
             local_roles_by_upstream_id[role.upstream_id] = role
 
+    is_embedded_tableau_enabled = EMBEDDED_TABLEAU.enabled(domain_link.linked_domain)
+    if is_embedded_tableau_enabled:
+        visualizations_for_linked_domain = TableauVisualization.objects.filter(
+            domain=domain_link.linked_domain)
+
     # Update downstream roles based on upstream roles
     for role_def in master_results:
         role = local_roles_by_upstream_id.get(role_def['_id']) or local_roles_by_name.get(role_def['name'])
@@ -281,6 +286,9 @@ def update_user_roles(domain_link):
         role.save()
 
         permissions = HqPermissions.wrap(role_def["permissions"])
+        if is_embedded_tableau_enabled:
+            permissions.view_tableau_list = _get_new_tableau_report_permissions(
+                visualizations_for_linked_domain, permissions, role.permissions)
         role.set_permissions(permissions.to_list())
 
     # Update assignable_by ids - must be done after main update to guarantee all local roles have ids
@@ -555,3 +563,15 @@ def _convert_reports_permissions(domain_link, master_results):
                 new_report_perms.append(get_ucr_class_name(linked_id))
 
         role_def['permissions']['view_report_list'] = new_report_perms
+
+
+def _get_new_tableau_report_permissions(downstream_domain_visualizations, upstream_permissions,
+                                        original_downstream_permissions):
+    new_downstream_view_tableau_list = []
+    for viz in downstream_domain_visualizations:
+        upstream_viz_enabled = viz.upstream_id and viz.upstream_id in upstream_permissions.view_tableau_list
+        no_upstream_viz_and_viz_enabled_downstream = (not viz.upstream_id
+            and str(viz.id) in original_downstream_permissions.view_tableau_list)
+        if upstream_viz_enabled or no_upstream_viz_and_viz_enabled_downstream:
+            new_downstream_view_tableau_list.append(str(viz.id))
+    return new_downstream_view_tableau_list

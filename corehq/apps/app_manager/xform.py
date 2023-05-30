@@ -1661,7 +1661,7 @@ class XForm(WrappedNode):
         if form.get_module().is_multi_select():
             self.add_instance(
                 'selected_cases',
-                'jr://instance/selected-entities'
+                'jr://instance/selected-entities/selected_cases'
             )
             default_case_management = False
         else:

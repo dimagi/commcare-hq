@@ -124,7 +124,7 @@ class CaseClaimEndpointTests(TestCase):
         self.assertEqual(response.status_code, 201)
         # Dup claim
         response = self.client.post(self.url, {'case_id': self.case_id},
-            HTTP_X_COMMCAREHQ_LASTSYNCTOKEN=self.synclog.synclog_id)
+                                    HTTP_X_COMMCAREHQ_LASTSYNCTOKEN=self.synclog.synclog_id)
         self.assertEqual(response.status_code, 204)
 
     def test_duplicate_claim_with_missing_synclog_id(self):
@@ -137,7 +137,7 @@ class CaseClaimEndpointTests(TestCase):
         # Dup claim
         random_id = uuid1()
         response = self.client.post(self.url, {'case_id': self.case_id},
-            HTTP_X_COMMCAREHQ_LASTSYNCTOKEN=random_id)
+                                    HTTP_X_COMMCAREHQ_LASTSYNCTOKEN=random_id)
         self.assertEqual(response.status_code, 201)
 
     def test_duplicate_claim_with_new_synclog_id(self):
@@ -158,7 +158,7 @@ class CaseClaimEndpointTests(TestCase):
 
         # Dup claim, with new sync log
         response = self.client.post(self.url, {'case_id': self.case_id},
-            HTTP_X_COMMCAREHQ_LASTSYNCTOKEN=second_synclog.synclog_id)
+                                    HTTP_X_COMMCAREHQ_LASTSYNCTOKEN=second_synclog.synclog_id)
         self.assertEqual(response.status_code, 201)
 
     def test_multiple_case_claim(self):
@@ -294,3 +294,22 @@ class CaseClaimEndpointTests(TestCase):
     def _assert_empty_search_result(self, response, message=None):
         self.assertEqual(response.status_code, 200, message)
         self.assertEqual('<results id="case" />', response.content.decode('utf-8'), message)
+
+    def test_duplicate_claim_after_case_changes(self):
+        """
+        Claiming a case a second time with a non-existent synclog ID should result in a 201 not a 204
+        """
+        # First claim
+        response = self.client.post(self.url, {'case_id': self.case_id},
+                                    HTTP_X_COMMCAREHQ_LASTSYNCTOKEN=self.synclog.synclog_id)
+        self.assertEqual(response.status_code, 201)
+        # Second claim no changes
+        response = self.client.post(self.url, {'case_id': self.case_id},
+                                    HTTP_X_COMMCAREHQ_LASTSYNCTOKEN=self.synclog.synclog_id)
+        self.assertEqual(response.status_code, 204)
+        # mock changes to case
+        with patch('corehq.form_processor.models.cases.CommCareCaseManager.get_modified_case_ids',
+                   return_value=[self.case_id]):
+            response = self.client.post(self.url, {'case_id': self.case_id},
+                                        HTTP_X_COMMCAREHQ_LASTSYNCTOKEN=self.synclog.synclog_id)
+            self.assertEqual(response.status_code, 201)

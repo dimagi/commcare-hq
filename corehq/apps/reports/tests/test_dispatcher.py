@@ -65,7 +65,6 @@ class DomainReportDispatcherTests(SimpleTestCase):
         self.assertEqual(name, 'Project Settings')
         report_names = {report.slug for report in project_settings_reports}
         self.assertEqual(report_names, {
-            'incremental_export_logs',
             'couch_repeat_record_report',
             'project_link_report',
             'repeat_record_report',

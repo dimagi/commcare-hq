@@ -47,7 +47,10 @@ from corehq.apps.app_manager.decorators import (
     require_can_edit_apps,
     require_deploy_apps,
 )
-from corehq.apps.app_manager.exceptions import CaseSearchConfigError
+from corehq.apps.app_manager.exceptions import (
+    AppMisconfigurationError,
+    CaseSearchConfigError,
+)
 from corehq.apps.app_manager.models import (
     Application,
     AdvancedModule,
@@ -75,6 +78,7 @@ from corehq.apps.app_manager.models import (
     get_all_mobile_filter_configs,
     get_auto_filter_configurations, ConditionalCaseUpdate,
 )
+from corehq.apps.app_manager.suite_xml.features.case_tiles import case_tile_template_config
 from corehq.apps.app_manager.suite_xml.features.mobile_ucr import (
     get_uuids_by_instance_id,
 )
@@ -94,11 +98,12 @@ from corehq.apps.app_manager.views.media_utils import (
 from corehq.apps.app_manager.views.utils import (
     back_to_main,
     bail,
+    capture_user_errors,
     clear_xmlns_app_id_cache,
     get_langs,
+    validate_custom_assertions,
     handle_custom_icon_edits,
     handle_shadow_child_modules,
-    InvalidSessionEndpoint,
     set_session_endpoint,
 )
 from corehq.apps.app_manager.xform import CaseError
@@ -150,6 +155,10 @@ def get_module_view_context(request, app, module, lang=None):
             and has_privilege(request, privileges.CLOUDCARE)
             and toggles.USH_CASE_CLAIM_UPDATES.enabled(app.domain)
         ),
+        'custom_assertions': [
+            {'test': assertion.test, 'text': assertion.text.get(lang)}
+            for assertion in module.custom_assertions
+        ],
     }
     module_brief = {
         'id': module.id,
@@ -161,7 +170,12 @@ def get_module_view_context(request, app, module, lang=None):
         'unique_id': module.unique_id,
     }
     case_property_builder = _setup_case_property_builder(app)
-    show_advanced_settings = False
+    show_advanced_settings = (
+        not module.is_surveys
+        or add_ons.show("register_from_case_list", request, app, module)
+        or add_ons.show("case_list_menu_item", request, app, module) and not isinstance(module, ShadowModule)
+        or toggles.CUSTOM_ASSERTIONS.enabled(app.domain)
+    )
     if toggles.MOBILE_UCR.enabled(app.domain):
         show_advanced_settings = True
         module_brief.update({
@@ -183,16 +197,8 @@ def get_module_view_context(request, app, module, lang=None):
     if isinstance(module, ShadowModule):
         context.update(_get_shadow_module_view_context(app, module, lang))
 
-    show_advanced_settings = (
-        show_advanced_settings
-        or add_ons.show("register_from_case_list", request, app, module)
-        or add_ons.show("case_list_menu_item", request, app, module) and not isinstance(module, ShadowModule)
-    )
-    context.update({
-        'show_advanced_settings': show_advanced_settings,
-    })
-
-    context.update({'module_brief': module_brief})
+    context['show_advanced_settings'] = show_advanced_settings
+    context['module_brief'] = module_brief
     return context
 
 
@@ -228,6 +234,7 @@ def _get_shared_module_view_context(request, app, module, case_property_builder,
             'has_lookup_tables': bool([i for i in item_lists if i['fixture_type'] == LOOKUP_TABLE_FIXTURE]),
             'has_mobile_ucr': bool([i for i in item_lists if i['fixture_type'] == REPORT_FIXTURE]),
             'default_value_expression_enabled': app.enable_default_value_expression,
+            'case_tile_fields': case_tile_template_config().fields,
             'search_config': {
                 'search_properties':
                     module.search_config.properties if module_offers_search(module) else [],
@@ -574,6 +581,7 @@ def _case_list_form_not_allowed_reasons(module):
 @no_conflict_require_POST
 @require_can_edit_apps
 @track_domain_request(calculated_prop='cp_n_saved_app_changes')
+@capture_user_errors
 def edit_module_attr(request, domain, app_id, module_unique_id, attr):
     """
     Called to edit any (supported) module attribute, given by attr
@@ -618,6 +626,7 @@ def edit_module_attr(request, domain, app_id, module_unique_id, attr):
         "use_default_image_for_all": None,
         "use_default_audio_for_all": None,
         "session_endpoint_id": None,
+        'custom_assertions': None,
     }
 
     if attr not in attributes:
@@ -646,20 +655,15 @@ def edit_module_attr(request, domain, app_id, module_unique_id, attr):
     lang = request.COOKIES.get('lang', app.langs[0])
     resp = {'update': {}, 'corrections': {}}
     if should_edit("custom_icon_form"):
-        error_message = handle_custom_icon_edits(request, module, lang)
-        if error_message:
-            return json_response(
-                {'message': error_message},
-                status_code=400
-            )
+        handle_custom_icon_edits(request, module, lang)
     if should_edit("no_items_text"):
         module.case_details.short.no_items_text[lang] = request.POST.get("no_items_text")
     if should_edit("case_type"):
         case_type = request.POST.get("case_type", None)
         if case_type == USERCASE_TYPE and not isinstance(module, AdvancedModule):
-            return HttpResponseBadRequest('"{}" is a reserved case type'.format(USERCASE_TYPE))
+            raise AppMisconfigurationError('"{}" is a reserved case type'.format(USERCASE_TYPE))
         elif case_type and not is_valid_case_type(case_type, module):
-            return HttpResponseBadRequest("case type is improperly formatted")
+            raise AppMisconfigurationError("case type is improperly formatted")
         else:
             old_case_type = module["case_type"]
             module["case_type"] = case_type
@@ -700,7 +704,7 @@ def edit_module_attr(request, domain, app_id, module_unique_id, attr):
         parent_module = request.POST.get("parent_module")
         module.parent_select.module_id = parent_module
         if module_case_hierarchy_has_circular_reference(module):
-            return HttpResponseBadRequest(_("The case hierarchy contains a circular reference."))
+            raise AppMisconfigurationError(_("The case hierarchy contains a circular reference."))
     if should_edit("auto_select_case"):
         module["auto_select_case"] = request.POST.get("auto_select_case") == 'true'
 
@@ -727,7 +731,7 @@ def edit_module_attr(request, domain, app_id, module_unique_id, attr):
         label = '{SLUG}-label'.format(SLUG=SLUG)
         if request.POST.get(show) == 'true' and (request.POST.get(label) == ''):
             # Show item, but empty label, was just getting ignored
-            return HttpResponseBadRequest("A label is required for {SLUG}".format(SLUG=SLUG))
+            raise AppMisconfigurationError("A label is required for {SLUG}".format(SLUG=SLUG))
         if should_edit(SLUG):
             module[SLUG].show = json.loads(request.POST[show])
             module[SLUG].label[lang] = request.POST[label]
@@ -765,10 +769,14 @@ def edit_module_attr(request, domain, app_id, module_unique_id, attr):
 
     if should_edit('session_endpoint_id'):
         raw_endpoint_id = request.POST['session_endpoint_id']
-        try:
-            set_session_endpoint(module, raw_endpoint_id, app)
-        except InvalidSessionEndpoint as e:
-            return HttpResponseBadRequest(str(e))
+        set_session_endpoint(module, raw_endpoint_id, app)
+
+    if should_edit('custom_assertions'):
+        module.custom_assertions = validate_custom_assertions(
+            request.POST.get('custom_assertions'),
+            module.custom_assertions,
+            lang,
+        )
 
     handle_media_edits(request, module, should_edit, resp, lang)
     handle_media_edits(request, module.case_list_form, should_edit, resp, lang, prefix='case_list_form_')
