@@ -100,7 +100,7 @@ class CustomSuiteAssertionsTest(SimpleTestCase, TestXmlMixin):
         self.assertXmlPartialEqual(
             self._instance_declaration, suite, "menu[@id='root']/instance")
 
-    def test_custom_app_assertions(self, *args):
+    def test_unknown_instance_reference(self, *args):
         factory = AppFactory(build_version='2.54.0')
         module, form = factory.new_basic_module('m0', 'case1')
         xpath = "instance('unknown')/thing/val = 1"
