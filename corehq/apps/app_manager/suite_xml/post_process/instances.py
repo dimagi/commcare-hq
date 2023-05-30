@@ -2,19 +2,23 @@
 InstancesHelper
 --------------
 
-Every instance referenced in an xpath expression needs to be added to the relevant entry,
-so that CommCare knows what data to load when.  This includes case list calculations,
-form display conditions, etc.
+Every instance referenced in an xpath expression needs to be added to the
+relevant entry or menu node, so that CommCare knows what data to load when.
+This includes case list calculations, form/menu display conditions, assertions,
+etc.
 
 HQ knows about a particular set of instances (locations, reports, etc.).
-There's factory-based code dealing with these "known" instances
-When a new feature involves any kind of XPath calculation, it needs to be scanned for instances.
+There's factory-based code dealing with these "known" instances. When a new
+feature involves any kind of XPath calculation, it needs to be scanned for
+instances.
 
-Instances are used to reference data beyond the scope of the current XML document.
-Examples are the commcare session, casedb, lookup tables, mobile reports, case search data etc.
+Instances are used to reference data beyond the scope of the current XML
+document. Examples are the commcare session, casedb, lookup tables, mobile
+reports, case search data etc.
 
-Instances are added into the suite file in ``<entry>`` elements and directly in the form XML. This is
-done in post processing of the suite file in ``corehq.apps.app_manager.suite_xml.post_process.instances``.
+Instances are added into the suite file in ``<entry>`` or ``<menu>`` elements
+and directly in the form XML. This is done in post processing of the suite file
+in ``corehq.apps.app_manager.suite_xml.post_process.instances``.
 
 How instances work
 ------------------
