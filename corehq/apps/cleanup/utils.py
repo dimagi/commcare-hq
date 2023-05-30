@@ -1,5 +1,5 @@
 import sys
-from datetime import datetime
+from datetime import datetime, timedelta
 
 from django.conf import settings
 from django.core.management import color_style
@@ -67,3 +67,7 @@ def migrate_to_deleted_on(db_cls, old_field, should_audit=False):
         update_kwargs['audit_action'] = AuditAction.AUDIT
     update_count = queryset.update(**update_kwargs)
     return update_count
+
+
+def get_cutoff_date_for_data_deletion():
+    return datetime.utcnow() - timedelta(days=settings.PERMANENT_DELETION_WINDOW)
