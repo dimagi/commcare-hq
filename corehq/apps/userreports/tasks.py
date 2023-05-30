@@ -551,7 +551,7 @@ def _indicator_metrics(date_created=None):
     return ret
 
 
-@task(serializer='pickle')
+@task(serializer='pickle', queue=UCR_CELERY_QUEUE)
 def export_ucr_async(report_export, download_id, user):
     use_transfer = settings.SHARED_DRIVE_CONF.transfer_enabled
     ascii_title = report_export.title.encode('ascii', 'replace').decode('utf-8')
