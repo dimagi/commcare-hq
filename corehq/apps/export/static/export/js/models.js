@@ -548,10 +548,12 @@ hqDefine('export/js/models', [
      */
     var TableConfiguration = function (tableJSON) {
         var self = this;
+        const urlParams = new URLSearchParams(window.location.search);
         // Whether or not to show advanced columns in the UI
         self.showAdvanced = ko.observable(false);
-        self.showDeleted = ko.observable(false);
-        self.showDeprecated = ko.observable(false);
+        self.showDeleted = ko.observable(urlParams.get('delete_filter_enabled') == 'True');
+
+        self.showDeprecated = ko.observable(urlParams.get('load_deprecated') == 'True');
         ko.mapping.fromJS(tableJSON, TableConfiguration.mapping, self);
     };
 
