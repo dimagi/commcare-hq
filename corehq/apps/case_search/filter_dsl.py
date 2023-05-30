@@ -26,7 +26,6 @@ from corehq.apps.case_search.xpath_functions.comparison import property_comparis
 class SearchFilterContext:
     domain: str
     fuzzy: bool = False
-    multi_term: bool = False
 
 
 def print_ast(node):

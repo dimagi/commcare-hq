@@ -1,10 +1,8 @@
 from django.utils.translation import gettext
 from eulxml.xpath import serialize
-from eulxml.xpath import parse as parse_xpath
 from eulxml.xpath.ast import BinaryExpression, FunctionCall, Step
-import itertools
 
-from corehq.apps.case_search.const import OPERATOR_MAPPING, EQ, NEQ
+from corehq.apps.case_search.const import OPERATOR_MAPPING, EQ
 from corehq.apps.case_search.exceptions import CaseFilterError, TooManyRelatedCasesError
 from corehq.apps.case_search.xpath_functions.utils import confirm_args_count
 from corehq.apps.case_search.const import MAX_RELATED_CASES
@@ -30,14 +28,11 @@ def ancestor_comparison_query(context, node):
 
     # extract ancestor path:
     # `parent/grandparent/property = 'value'` --> `parent/grandparent`
-    ancestor_path = serialize(node.left.left)
-    parsed_ancestor_path = parse_xpath(ancestor_path)
-
-    case_property = serialize(node.left.right)
-    value = serialize(node.right)
-    parsed_ancestor_filter = parse_xpath(f'{case_property}{node.op}{value}')
-
-    return process_ancestor_exists(parsed_ancestor_path, parsed_ancestor_filter, context)
+    ancestor_path_node = node.left.left
+    case_property = node.left.right
+    value = node.right
+    ancestor_filter_node = BinaryExpression(case_property, node.op, value)
+    return process_ancestor_exists(ancestor_path_node, ancestor_filter_node, context)
 
 
 def walk_ancestor_hierarchy(context, ancestor_path_node, case_ids):
@@ -133,20 +128,20 @@ def _validate_ancestor_exists_filter(node):
 
     if hasattr(node, 'op') and node.op in OPERATOR_MAPPING:
         # This node is a leaf
-        return OPERATOR_MAPPING[node.op](_validate_ancestor_exists_filter(node.left),
-                                        _validate_ancestor_exists_filter(node.right))
-    return
+        _validate_ancestor_exists_filter(node.left)
+        _validate_ancestor_exists_filter(node.right)
 
 
 def _get_case_ids_from_ast_filter(context, filter_node):
+    from corehq.apps.case_search.dsl_utils import unwrap_value
     if (isinstance(filter_node, BinaryExpression)
-    and serialize(filter_node.left) == "@case_id" and filter_node.op in (EQ, NEQ)):
+    and serialize(filter_node.left) == "@case_id" and filter_node.op == EQ):
         # case id is provided in query i.e @case_id="b9eaf791-e427-482d-add4-2a60acf0362e"
-        case_ids = filter_node.right
-        if isinstance(filter_node.right, str):
-            return itertools([case_ids])
+        case_ids = unwrap_value(filter_node.right, context)
+        if isinstance(case_ids, str):
+            return (case_id for case_id in [case_ids])
         else:
-            return itertools(case_ids)
+            return (case_id for case_id in case_ids)
     else:
         from corehq.apps.case_search.filter_dsl import build_filter_from_ast
         es_filter = build_filter_from_ast(filter_node, context)

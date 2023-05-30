@@ -3,7 +3,6 @@ from datetime import datetime, timedelta
 from django.utils.translation import gettext
 from eulxml.xpath import serialize
 from eulxml.xpath.ast import Step
-import json
 
 from corehq.apps.case_search.dsl_utils import unwrap_value
 from corehq.apps.case_search.exceptions import CaseFilterError, XPathFunctionException
