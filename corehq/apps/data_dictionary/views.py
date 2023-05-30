@@ -66,26 +66,6 @@ data_dictionary_rebuild_rate_limiter = RateLimiter(
 
 @login_and_domain_required
 @toggles.DATA_DICTIONARY.required_decorator()
-@require_permission(HqPermissions.edit_data_dict)
-def generate_data_dictionary(request, domain):
-    if data_dictionary_rebuild_rate_limiter.allow_usage(domain):
-        data_dictionary_rebuild_rate_limiter.report_usage(domain)
-        try:
-            util.generate_data_dictionary(domain)
-        except util.OldExportsEnabledException:
-            return JsonResponse({
-                "failed": "Data Dictionary requires access to new exports"
-            }, status=400)
-
-        return JsonResponse({"status": "success"})
-    else:
-        return JsonResponse({
-            "failed": "Rate limit exceeded. Please try again later."
-        }, status=429)
-
-
-@login_and_domain_required
-@toggles.DATA_DICTIONARY.required_decorator()
 def data_dictionary_json(request, domain, case_type_name=None):
     props = []
     fhir_resource_type_name_by_case_type = {}
