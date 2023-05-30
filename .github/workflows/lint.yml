@@ -1,0 +1,31 @@
+name: Lint
+
+on:
+  pull_request:
+    branches:
+      - cs/linter-options
+
+jobs:
+  run_linter:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v3
+        with:
+          node-version: 16
+
+      - run: yarn install --frozen-lockfile
+      - uses: sibiraj-s/action-eslint@v2
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }} # Optional
+          eslint-args: '--ignore-path=.gitignore --quiet'
+          extensions: 'js,jsx,ts,tsx'
+          annotations: true
+
+      - name: Set up Python environment
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.11"
+
+      - name: flake8 Lint
+        uses: py-actions/flake8@v2
