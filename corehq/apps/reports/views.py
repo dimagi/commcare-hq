@@ -1578,6 +1578,14 @@ def archive_form(request, domain, instance_id):
     return HttpResponseRedirect(redirect)
 
 
+@require_form_view_permission
+@require_permission(HqPermissions.edit_data)
+@require_POST
+@location_safe
+def delete_form(request, domain, instance_id):
+    pass
+
+
 def _get_cases_with_forms_message(domain, cases_with_other_forms, case_id_from_request):
     def _get_all_case_links():
         all_case_links = []
