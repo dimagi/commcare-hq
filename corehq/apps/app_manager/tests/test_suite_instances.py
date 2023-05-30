@@ -2,7 +2,10 @@ from unittest import mock
 
 from django.test import SimpleTestCase
 
-from corehq.apps.app_manager.exceptions import DuplicateInstanceIdError
+from corehq.apps.app_manager.exceptions import (
+    DuplicateInstanceIdError,
+    UnknownInstanceError,
+)
 from corehq.apps.app_manager.models import (
     CaseSearch,
     CaseSearchProperty,
@@ -11,7 +14,9 @@ from corehq.apps.app_manager.models import (
     Itemset,
     ShadowModule,
 )
-from corehq.apps.app_manager.suite_xml.post_process.instances import get_instance_names
+from corehq.apps.app_manager.suite_xml.post_process.instances import (
+    get_instance_names,
+)
 from corehq.apps.app_manager.tests.app_factory import AppFactory
 from corehq.apps.app_manager.tests.util import (
     SuiteMixin,
@@ -43,6 +48,13 @@ class SuiteInstanceTests(SimpleTestCase, SuiteMixin):
             self.factory.app.create_suite(),
             "entry/instance"
         )
+
+    def test_unknown_instances(self):
+        xpath = "instance('unknown')/thing/val = 1"
+        self.form.form_filter = xpath
+        with self.assertRaises(UnknownInstanceError) as e:
+            self.factory.app.create_suite()
+        self.assertIn(xpath, str(e.exception))
 
     def test_duplicate_custom_instances(self):
         self.factory.form_requires_case(self.form)

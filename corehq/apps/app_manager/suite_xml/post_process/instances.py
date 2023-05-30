@@ -107,7 +107,7 @@ class EntryInstances(PostProcessor):
             unknown_instance_ids
         )
         all_instances = known_instances | custom_instances
-        self.require_instances(entry, instances=all_instances, instance_ids=unknown_instance_ids)
+        self.require_instances(entry, all_instances, unknown_instance_ids)
 
     def _get_all_xpaths_for_entry(self, entry):
         details_by_id = self._get_detail_mapping()
@@ -184,6 +184,15 @@ class EntryInstances(PostProcessor):
         }
 
     def _get_custom_instances(self, entry, known_instances, required_instances):
+        """Lookup custom instance declarations defined in the form or module
+
+        :param known_instances: instances for which we already have declarations
+        :param required_instances: unrecognized instances that we need to find references for
+        :return: (custom_instances, required_instances) where
+            custom_instances - instances defined in the form or in the module's
+                search config lookup table setup
+            required_instances - remaining unrecognized instances
+        """
         if entry.command.id not in self._form_module_by_command_id:
             return set(), required_instances
 
@@ -237,7 +246,7 @@ class EntryInstances(PostProcessor):
         return by_command
 
     @staticmethod
-    def require_instances(entry, instances=(), instance_ids=()):
+    def require_instances(entry, instances, unknown_instance_ids):
         used = {(instance.id, instance.src) for instance in entry.instances}
         instance_order_updated = EntryInstances.update_instance_order(entry)
         for instance in instances:
@@ -252,13 +261,7 @@ class EntryInstances(PostProcessor):
                 if not instance_order_updated:
                     instance_order_updated = EntryInstances.update_instance_order(entry)
         covered_ids = {instance_id for instance_id, _ in used}
-        for instance_id in instance_ids:
-            if instance_id not in covered_ids:
-                raise UnknownInstanceError(
-                    "Instance reference not recognized: {} in XPath \"{}\""
-                    # to get xpath context to show in this error message
-                    # make instance_id a unicode subclass with an xpath property
-                    .format(instance_id, getattr(instance_id, 'xpath', "(XPath Unknown)")))
+        assert_no_unknown_instances(unknown_instance_ids - covered_ids)
 
         sorted_instances = sorted(entry.instances, key=lambda instance: instance.id)
         if sorted_instances != entry.instances:
@@ -416,6 +419,15 @@ def get_all_instances_referenced_in_xpaths(app, xpaths):
                 unknown_instance_ids.add(instance_name)
     return instances, unknown_instance_ids
 
+
+def assert_no_unknown_instances(instance_ids):
+    for instance_id in instance_ids:
+        # instance_id should be a UnicodeWithContext instance
+        # to get xpath context to show in this error message
+        raise UnknownInstanceError(
+            "Instance reference not recognized: {} in XPath \"{}\""
+            .format(instance_id, getattr(instance_id, 'xpath', "(XPath Unknown)"))
+        )
 
 instance_re = re.compile(r"""instance\(\s*['"]([\w\-:]+)['"]\s*\)""", re.UNICODE)
 
