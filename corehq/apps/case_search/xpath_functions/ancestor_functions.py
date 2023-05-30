@@ -1,8 +1,6 @@
 from django.utils.translation import gettext
 from eulxml.xpath import serialize
-from eulxml.xpath import parse as parse_xpath
 from eulxml.xpath.ast import BinaryExpression, FunctionCall, Step
-import itertools
 
 from corehq.apps.case_search.const import OPERATOR_MAPPING, EQ
 from corehq.apps.case_search.exceptions import CaseFilterError, TooManyRelatedCasesError
