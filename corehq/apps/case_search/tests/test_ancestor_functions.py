@@ -1,9 +1,10 @@
 from django.test import SimpleTestCase
 from eulxml.xpath import parse as parse_xpath
-from testil import eq
+from testil import eq, assert_raises
 
 from corehq.apps.case_search.xpath_functions.ancestor_functions import is_ancestor_comparison, \
     _is_ancestor_path_expression
+from corehq.apps.case_search.filter_dsl import CaseFilterError
 from corehq.apps.case_search.tests.utils import get_case_search_query
 from corehq.apps.es.tests.test_case_search_es import BaseCaseSearchTest
 from corehq.apps.es.tests.utils import es_test
@@ -162,3 +163,15 @@ class TestAncestorQueries(BaseCaseSearchTest):
             {'_xpath_query': xpath},
         )
         self.assertItemsEqual(query1.get_ids(), ['a1'])
+
+    @generate_cases([
+        ("ancestor_exists(status='active' and subcase-exists('parent', city = 'LA'))",),
+        ("ancestor_exists(status='active' and subcase-count('parent', city = 'LA')) > 3",),
+    ])
+    def test_search_criteria_validate(self, xpath):
+        with assert_raises(CaseFilterError):
+            get_case_search_query(
+                self.domain,
+                ['a'],
+                {'_xpath_query': xpath},
+            )
