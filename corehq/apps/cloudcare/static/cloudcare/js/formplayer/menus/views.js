@@ -499,14 +499,14 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
 
         addAddressPin: function (geocoder, addressMap, headers, model, addressIndex) {
             const address = model.attributes.data[addressIndex];
-            return new Promise((resolve, reject) => {
+            return new Promise((resolve) => {
                 geocoder.query(address, function (err, data) {
                     if (err === null) {
                         let popupText = "";
                         headers.forEach((header, index) => {
                             if (header) {
-                                const valueSanitized = DOMPurify.sanitize(model.attributes.data[index])
-                                const headerSanitized = DOMPurify.sanitize(header)
+                                const valueSanitized = DOMPurify.sanitize(model.attributes.data[index]);
+                                const headerSanitized = DOMPurify.sanitize(header);
                                 popupText += "<b>" + headerSanitized + ":</b> " + valueSanitized + "<br>";
                             }
                         });
@@ -514,9 +514,9 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
                             .addTo(addressMap)
                             .bindPopup(popupText);
 
-                        resolve(data.latlng)
+                        resolve(data.latlng);
                     } else {
-                        resolve(undefined)
+                        resolve(undefined);
                     }
                 });
             });
@@ -548,7 +548,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
                     .filter(latLon => latLon);
                 Promise.all(latLons).then(lls => {
                     addressMap.fitBounds(lls, {maxZoom: 8});
-                })
+                });
 
             } catch (error) {
                 console.error(error);
