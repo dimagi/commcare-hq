@@ -10734,17 +10734,21 @@ msgid ""
 "\n"
 "      <p>\n"
 "        <i class=\"fa fa-warning\"></i>\n"
-"        A bulk case import for multiple case types has been detected. For "
-"bulk case imports:\n"
+"        A bulk case import for multiple case types has been detected. This "
+"is because every sheet name in\n"
+"        the Excel file matches a case type in the project. If this is "
+"incorrect, then please rename at least\n"
+"        one Excel sheet so that not all sheet names match case types in the "
+"project.\n"
 "      </p>\n"
-"      <ul>\n"
-"        <li>Excel mapping is disabled.</li>\n"
-"        <li>New cases for new case types cannot be created.</li>\n"
-"      </ul>\n"
 "      <p>\n"
-"        If this is incorrect, then please rename the Excel sheets so that "
-"they do not share the same\n"
-"        name as the case types in the project.\n"
+"        Documentation for bulk case imports can be found on our\n"
+"        <a\n"
+"          href=\"https://confluence.dimagi.com/display/commcarepublic/"
+"Updating+Cases+-+Update+multiple+case+types+in+a+single+Excel+import\"\n"
+"          target=\"_blank\">\n"
+"          help page for this feature.\n"
+"        </a>\n"
 "      </p>\n"
 "      "
 msgstr ""
@@ -10784,6 +10788,14 @@ msgstr ""
 
 #: corehq/apps/case_importer/templates/case_importer/excel_config.html
 msgid "Create new records if there is no matching case"
+msgstr ""
+
+#: corehq/apps/case_importer/templates/case_importer/excel_config.html
+msgid ""
+"\n"
+"            Selecting a case type, excel column, or corresponding case field "
+"is disabled when doing a bulk case import.\n"
+"          "
 msgstr ""
 
 #: corehq/apps/case_importer/templates/case_importer/excel_config.html
@@ -14146,7 +14158,6 @@ msgid "HIPAA compliant"
 msgstr ""
 
 #: corehq/apps/domain/forms.py corehq/apps/settings/views.py
-#: corehq/apps/users/templates/users/edit_commcare_user.html
 msgid "Two Factor Authentication"
 msgstr ""
 
@@ -35913,11 +35924,6 @@ msgid "User Location"
 msgstr ""
 
 #: corehq/apps/users/templates/users/edit_commcare_user.html
-#: corehq/apps/users/templates/users/edit_web_user.html
-msgid "Backup Token"
-msgstr ""
-
-#: corehq/apps/users/templates/users/edit_commcare_user.html
 msgid "Force Full Refresh on next Mobile Sync"
 msgstr ""
 
@@ -40614,6 +40620,10 @@ msgid "Python dictionary"
 msgstr ""
 
 #: corehq/motech/repeaters/templates/repeaters/partials/attempt_history.html
+msgid "No attempts exist for this record."
+msgstr ""
+
+#: corehq/motech/repeaters/templates/repeaters/partials/attempt_history.html
 msgid "Unsent"
 msgstr ""
 
@@ -40775,7 +40785,7 @@ msgid "Retry Date"
 msgstr ""
 
 #: corehq/motech/repeaters/views/repeat_records.py
-msgid "Delivery Attempts"
+msgid "View Responses"
 msgstr ""
 
 #: corehq/motech/repeaters/views/repeat_records.py

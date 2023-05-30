@@ -294,6 +294,8 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
     });
 
     const CaseTileView = CaseView.extend({
+        tagName: "div",
+        className: "formplayer-request list-cell-wrapper-style",
         template: _.template($("#case-tile-view-item-template").html() || ""),
         templateContext: function () {
             const dict = CaseTileView.__super__.templateContext.apply(this, arguments);
@@ -303,6 +305,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
     });
 
     const PersistentCaseTileView = CaseTileView.extend({
+        className: "formplayer-request",
         rowClick: function (e) {
             e.preventDefault();
             if (this.options.hasInlineTile) {
@@ -348,7 +351,6 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
         childViewOptions: function () {
             return {
                 styles: this.options.styles,
-                isMultiSelect: false,
             };
         },
 
@@ -452,6 +454,39 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             }
         },
 
+        selectAllAction: function (e) {
+            const action = e.target.checked ? constants.MULTI_SELECT_ADD : constants.MULTI_SELECT_REMOVE;
+            FormplayerFrontend.trigger("multiSelect:updateCases", action, this._allCaseIds());
+        },
+
+        reconcileMultiSelectUI: function () {
+            const self = this;
+
+            self.verifySelectedCaseIdsLessThanMaxSelectValue();
+
+            // Update states of row checkboxes
+            self.children.each(function (childView) {
+                childView.ui.selectRow.prop("checked", self.selectedCaseIds.indexOf(childView.model.id) !== -1);
+            });
+
+            // Update state of Continue button
+            self.ui.continueButtonText.text(self.selectedCaseIds.length);
+            self.ui.continueButton.prop("disabled", !self.selectedCaseIds.length);
+
+            // Reconcile state of "select all" checkbox
+            self.ui.selectAllCheckbox.prop("checked", !_.difference(self._allCaseIds(), self.selectedCaseIds).length);
+        },
+
+        verifySelectedCaseIdsLessThanMaxSelectValue: function () {
+            if (this.selectedCaseIds.length > this.maxSelectValue) {
+                let errorMessage = _.template(gettext("You have selected more than the maximum selection limit " +
+                    "of <%= value %> . Please uncheck some values to continue."))({ value: this.maxSelectValue });
+                hqRequire(["hqwebapp/js/alert_user"], function (alertUser) {
+                    alertUser.alert_user(errorMessage, 'danger');
+                });
+            }
+        },
+
         columnStyle: function () {
             const self = this;
             let mapColumn = "";
@@ -544,7 +579,6 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
                 styles: this.options.styles,
                 breadcrumbs: this.options.breadcrumbs,
                 templateName: "case-list-template",
-                useGrid: this.options.numEntitiesPerRow > 1,
                 useTiles: false,
                 hasNoItems: this.hasNoItems,
                 noItemsText: this.options.collection.noItemsText,
@@ -564,6 +598,20 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             };
         },
     });
+
+    const registerContinueListener = function (self, options) {
+        self.maxSelectValue = options.multiSelectMaxSelectValue;
+        // Remove any event handling left over from previous instances of MultiSelectCaseListView.
+        // Only one of these views is supported on the page at any given time.
+        FormplayerFrontend.off("multiSelect:updateCases").on("multiSelect:updateCases", function (action, caseIds) {
+            if (action === constants.MULTI_SELECT_ADD) {
+                self.selectedCaseIds = _.union(self.selectedCaseIds, caseIds);
+            } else {
+                self.selectedCaseIds = _.difference(self.selectedCaseIds, caseIds);
+            }
+            self.reconcileMultiSelectUI();
+        });
+    };
 
     const MultiSelectCaseListView = CaseListView.extend({
         ui: _.extend(CaseListViewUI(), {
@@ -587,18 +635,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
 
         initialize: function (options) {    // eslint-disable-line no-unused-vars
             MultiSelectCaseListView.__super__.initialize.apply(this, arguments);
-            const self = this;
-            self.maxSelectValue = options.multiSelectMaxSelectValue;
-            // Remove any event handling left over from previous instances of MultiSelectCaseListView.
-            // Only one of these views is supporteed on the page at any given time.
-            FormplayerFrontend.off("multiSelect:updateCases").on("multiSelect:updateCases", function (action, caseIds) {
-                if (action === constants.MULTI_SELECT_ADD) {
-                    self.selectedCaseIds = _.union(self.selectedCaseIds, caseIds);
-                } else {
-                    self.selectedCaseIds = _.difference(self.selectedCaseIds, caseIds);
-                }
-                self.reconcileMultiSelectUI();
-            });
+            registerContinueListener(this, options);
         },
 
         templateContext: function () {
@@ -610,60 +647,30 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
         onRender: function () {
             this.reconcileMultiSelectUI();
         },
-
-        selectAllAction: function (e) {
-            const action = e.target.checked ? constants.MULTI_SELECT_ADD : constants.MULTI_SELECT_REMOVE;
-            FormplayerFrontend.trigger("multiSelect:updateCases", action, this._allCaseIds());
-        },
-
-        reconcileMultiSelectUI: function () {
-            const self = this;
-
-            self.verifySelectedCaseIdsLessThanMaxSelectValue();
-
-            // Update states of row checkboxes
-            self.children.each(function (childView) {
-                childView.ui.selectRow.prop("checked", self.selectedCaseIds.indexOf(childView.model.id) !== -1);
-            });
-
-            // Update state of Continue button
-            self.ui.continueButtonText.text(self.selectedCaseIds.length);
-            self.ui.continueButton.prop("disabled", !self.selectedCaseIds.length);
-
-            // Reconcile state of "select all" checkbox
-            self.ui.selectAllCheckbox.prop("checked", !_.difference(self._allCaseIds(), self.selectedCaseIds).length);
-        },
-
-        verifySelectedCaseIdsLessThanMaxSelectValue: function () {
-            if (this.selectedCaseIds.length > this.maxSelectValue) {
-                const errorMessage = _.template(gettext("You have selected more than the maximum selection limit " +
-                    "of <%= value %> . Please uncheck some values to continue."))({ value: this.maxSelectValue });
-                hqRequire(["hqwebapp/js/alert_user"], function (alertUser) {
-                    alertUser.alert_user(errorMessage, 'danger');
-                });
-            }
-        },
     });
 
     // Return an object of case tile CSS styles that defines:
     // - layout of the content within a case list tile
     // - shape and size of the tile's layout grid
-    // - (if 2+ cases per line) the tile's visual style and its outer boundary
-    // - (if 2+ cases per line) layout of the case tiles on the outer, visible grid
+    // - the tile's visual style and its outer boundary
+    // - layout of the case tiles on the outer, visible grid
     const buildCaseTileStyles = function (tiles, numRows, numColumns, numEntitiesPerRow, useUniformUnits, prefix) {
         const caseTileStyles = {};
         caseTileStyles.cellLayoutStyle = buildCellLayout(tiles, prefix);
         caseTileStyles.cellGridStyle = buildCellGridStyle(numRows, numColumns, useUniformUnits, prefix);
-
-        if (numEntitiesPerRow > 1) {
-            caseTileStyles.cellWrapperStyle = $("#cell-wrapper-style-template").html();
-            caseTileStyles.cellContainerStyle = buildCellContainerStyle(numEntitiesPerRow);
-        }
+        caseTileStyles.cellWrapperStyle = $("#cell-wrapper-style-template").html();
+        caseTileStyles.cellContainerStyle = buildCellContainerStyle(numEntitiesPerRow);
         return caseTileStyles;
     };
 
     const CaseTileListView = CaseListView.extend({
+        ui: _.extend(CaseListViewUI(), {
+            selectAllCheckbox: "#select-all-tile-checkbox",
+            continueButton: "#multi-select-continue-btn",
+            continueButtonText: "#multi-select-btn-text",
+        }),
         childView: CaseTileView,
+
         initialize: function (options) {
             CaseTileListView.__super__.initialize.apply(this, arguments);
 
@@ -686,31 +693,36 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             }
 
             $.getScript(gridPolyfillPath);
+
+            registerContinueListener(this, options);
         },
 
         childViewOptions: function () {
             const dict = CaseTileListView.__super__.childViewOptions.apply(this, arguments);
             dict.prefix = 'list';
+            dict.isMultiSelect = this.options.isMultiSelect;
             return dict;
         },
 
         templateContext: function () {
             const dict = CaseTileListView.__super__.templateContext.apply(this, arguments);
             dict.useTiles = true;
+            dict.isMultiSelect = this.options.isMultiSelect;
             return dict;
         },
-    });
 
-    const GridCaseTileViewItem = CaseTileView.extend({
-        tagName: "div",
-        className: "formplayer-request list-cell-wrapper-style",
-    });
+        events: _.extend(CaseListViewEvents(), {
+            'click @ui.selectAllCheckbox': 'selectAllAction',
+            'keypress @ui.selectAllCheckbox': 'selectAllAction',
+            'click @ui.continueButton': 'continueAction',
+            'keypress @ui.continueButton': 'continueAction',
+        }),
 
-    const GridCaseTileListView = CaseTileListView.extend({
-        initialize: function () {
-            GridCaseTileListView.__super__.initialize.apply(this, arguments);
+        onRender: function () {
+            if (this.options.isMultiSelect) {
+                this.reconcileMultiSelectUI();
+            }
         },
-        childView: GridCaseTileViewItem,
     });
 
     const CaseListDetailView = CaseListView.extend({
@@ -792,7 +804,6 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
 
     const FormMenuView = Marionette.CollectionView.extend({
         template: _.template($("#form-menu-template").html() || ""),
-        tagName: 'li',
         childView: LanguageOptionView,
         childViewContainer: 'ul',
         ui: {
@@ -943,9 +954,6 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
         },
         DetailTabListView: function (options) {
             return new DetailTabListView(options);
-        },
-        GridCaseTileListView: function (options) {
-            return new GridCaseTileListView(options);
         },
         MenuListView: function (options) {
             return new MenuListView(options);

@@ -3,13 +3,15 @@ hqDefine("events/js/new_event", [
     "knockout",
     "hqwebapp/js/multiselect_utils",
     "hqwebapp/js/initial_page_data",
+    "locations/js/widgets",
     "hqwebapp/js/widgets",
     "jquery-ui/ui/widgets/datepicker",
 ], function (
     $,
     ko,
     multiselectUtils,
-    initialPageData
+    initialPageData,
+    locationsWidgets
 ) {
     $(function () {
         $("#id_start_date").datepicker({
@@ -41,9 +43,15 @@ hqDefine("events/js/new_event", [
             self.name = ko.observable(initialData.name);
             self.startDate = ko.observable(initialData.start_date);
             self.endDate = ko.observable(initialData.end_date);
+            self.locationId = ko.observable(initialData.location_id);
             self.attendanceTarget = ko.observable(initialData.attendance_target || 1);
             self.sameDayRegistration = ko.observable(initialData.sameday_reg);
             self.trackingOption = ko.observable(initialData.tracking_option || "by_day");
+
+            var $locationSelect = $("#id_location_id");
+            if ($locationSelect.length) {
+                locationsWidgets.initAutocomplete($locationSelect);
+            }
 
             self.showTrackingOptions = ko.computed(function () {
                 var startDateValue = self.startDate();

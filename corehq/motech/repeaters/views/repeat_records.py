@@ -189,8 +189,7 @@ class BaseRepeatRecordReport(GenericTabularReport):
         row = [
             checkbox,
             display.state,
-            display.url,
-            display.last_checked,
+            display.remote_service,
             display.next_attempt_at,
             self._make_view_attempts_button(record.record_id),
             self._make_view_payload_button(record.record_id),
@@ -222,13 +221,12 @@ class BaseRepeatRecordReport(GenericTabularReport):
                 sortable=False, span=3
             ),
             DataTablesColumn(_('Status')),
-            DataTablesColumn(_('URL')),
-            DataTablesColumn(_('Last sent date')),
+            DataTablesColumn(_('Remote Service')),
             DataTablesColumn(_('Retry Date')),
+            DataTablesColumn(_('Delivery Attempts')),
             DataTablesColumn(_('View Responses')),
-            DataTablesColumn(_('View payload')),
             DataTablesColumn(_('Resend')),
-            DataTablesColumn(_('Cancel or Requeue payload'))
+            DataTablesColumn(_('Cancel or Requeue'))
         ]
         if toggles.SUPPORT.enabled_for_request(self.request):
             columns.insert(2, DataTablesColumn(_('Payload ID')))

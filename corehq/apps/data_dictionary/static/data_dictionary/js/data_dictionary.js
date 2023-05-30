@@ -234,7 +234,7 @@ hqDefine("data_dictionary/js/data_dictionary", [
         };
 
         self.newCaseProperty = function () {
-            if (_.isString(self.newPropertyName())) {
+            if (_.isString(self.newPropertyName()) && self.newPropertyName().trim()) {
                 var prop = propertyListItem(self.newPropertyName(), self.newPropertyName(), false, '', self.activeCaseType(), '', '', {});
                 prop.dataType.subscribe(changeSaveButton);
                 prop.description.subscribe(changeSaveButton);
@@ -249,7 +249,7 @@ hqDefine("data_dictionary/js/data_dictionary", [
         };
 
         self.newGroup = function () {
-            if (_.isString(self.newGroupName())) {
+            if (_.isString(self.newGroupName()) && self.newGroupName().trim()) {
                 var group = propertyListItem(self.newGroupName(), '', true, '', self.activeCaseType());
                 self.casePropertyList.push(group);
                 self.newGroupName(undefined);
