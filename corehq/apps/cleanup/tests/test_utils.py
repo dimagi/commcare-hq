@@ -2,13 +2,19 @@ from datetime import datetime
 
 from django.test import TestCase
 
+from couchdbkit import ResourceNotFound
+
+from corehq.apps.app_manager.models import Application
+from corehq.apps.cleanup.models import DeletedCouchDoc
 from corehq.apps.cleanup.utils import (
     DeletedDomains,
+    hard_delete_couch_docs_before_cutoff,
     hard_delete_sql_objects_before_cutoff,
     migrate_to_deleted_on,
 )
 from corehq.apps.data_interfaces.models import AutomaticUpdateRule
 from corehq.apps.domain.shortcuts import create_domain
+from corehq.apps.userreports.models import ReportConfiguration
 from corehq.messaging.scheduling.models import AlertSchedule
 
 
@@ -103,4 +109,76 @@ class TestHardDeleteSQLObjectsBeforeCutoff(TestCase):
 
     def setUp(self):
         self.domain = 'test_hard_delete_sql_objects_before_cutoff'
+        self.cutoff = datetime(2020, 1, 1, 12, 30)
+
+
+class TestHardDeleteCouchDocsBeforeCutoff(TestCase):
+
+    def test_doc_is_hard_deleted_if_deleted_on_is_before_cutoff(self):
+        app = Application(domain=self.domain, name='before-cutoff-app')
+        app.save()
+        sql_obj = DeletedCouchDoc.objects.create(doc_id=app._id,
+                                                 doc_type="Application",
+                                                 deleted_on=datetime(2020, 1, 1, 12, 29))
+
+        hard_delete_couch_docs_before_cutoff(self.cutoff)
+
+        with self.assertRaises(ResourceNotFound):
+            Application.get_db().get(app._id)
+
+        with self.assertRaises(DeletedCouchDoc.DoesNotExist):
+            DeletedCouchDoc.objects.get(id=sql_obj.id)
+
+    def test_doc_is_not_hard_deleted_if_deleted_on_is_cutoff(self):
+        app = Application(domain=self.domain, name='on-cutoff-app')
+        app.save()
+        sql_obj = DeletedCouchDoc.objects.create(doc_id=app._id,
+                                                 doc_type="Application",
+                                                 deleted_on=self.cutoff)
+
+        hard_delete_couch_docs_before_cutoff(self.cutoff)
+
+        self.assertIsNotNone(Application.get_db().get(app._id))
+        self.assertIsNotNone(DeletedCouchDoc.objects.get(id=sql_obj.id))
+
+    def test_doc_is_not_hard_deleted_if_deleted_on_is_after_cutoff(self):
+        app = Application(domain=self.domain, name='after-cutoff-app')
+        app.save()
+        sql_obj = DeletedCouchDoc.objects.create(doc_id=app._id,
+                                                 doc_type="Application",
+                                                 deleted_on=datetime(2020, 1, 1, 12, 31))
+
+        hard_delete_couch_docs_before_cutoff(self.cutoff)
+
+        self.assertIsNotNone(Application.get_db().get(app._id))
+        self.assertIsNotNone(DeletedCouchDoc.objects.get(id=sql_obj.id))
+
+    def test_doc_is_not_hard_deleted_if_no_deleted_couch_doc_exists(self):
+        app = Application(domain=self.domain, name='after-cutoff-app')
+        app.save()
+
+        hard_delete_couch_docs_before_cutoff(self.cutoff)
+
+        self.assertIsNotNone(Application.get_db().get(app._id))
+
+    def test_returns_deleted_counts(self):
+        deleted_on = datetime(2020, 1, 1, 12, 29)
+        app = Application(domain=self.domain, name='after-cutoff-app')
+        app.save()
+        DeletedCouchDoc.objects.create(doc_id=app._id,
+                                       doc_type="Application",
+                                       deleted_on=deleted_on)
+
+        report_config = ReportConfiguration(domain=self.domain, config_id='abc123')
+        report_config.save()
+        DeletedCouchDoc.objects.create(doc_id=report_config._id,
+                                       doc_type="ReportConfiguration",
+                                       deleted_on=deleted_on)
+
+        counts = hard_delete_couch_docs_before_cutoff(self.cutoff)
+
+        self.assertEqual(counts, {'Application': 1, 'ReportConfiguration': 1})
+
+    def setUp(self):
+        self.domain = 'test_hard_delete_couch_docs_before_cutoff'
         self.cutoff = datetime(2020, 1, 1, 12, 30)
