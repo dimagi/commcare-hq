@@ -1,6 +1,10 @@
+import uuid
 from dataclasses import dataclass
 
 from corehq.apps.users.models import CouchUser
+from corehq.form_processor.models.cases import CommCareCase
+from corehq.apps.hqcase.utils import submit_case_blocks
+from casexml.apps.case.mock import CaseBlock
 
 from .api.updates import BaseJsonCaseChange, handle_case_update
 
@@ -162,6 +166,89 @@ class CaseHelper:
             device_id=device_id,
             is_creation=False,
         )
+
+    @classmethod
+    def copy_cases(cls, domain, case_ids, to_owner, replace_props=None):
+        """
+        Copies the cases governed by 'case_ids' to the respective 'to_owner'
+        and replacing the relevant case properties with the specified 'replace_props'
+        on the copied cases (useful for hiding sensitive data).
+        """
+        original_cases = CommCareCase.objects.get_cases(case_ids=case_ids, domain=domain)
+        processed_cases = {}
+        copied_cases_case_blocks = []
+
+        def _get_new_identifier_index(case_identifier_index):
+            _identifier_index = {**case_identifier_index}
+            original_referenced_id = _identifier_index['case_id']
+
+            # We need the copied case's case_id for the new index
+            if original_referenced_id in processed_cases:
+                _identifier_index['case_id'] = processed_cases[original_referenced_id].case_id
+            else:
+                # Need to process the referenced case first to get the case_id of the copied case
+                original_parent_case = next((
+                    orig_case for orig_case in original_cases if orig_case.case_id == original_referenced_id
+                ))
+                if not original_parent_case:
+                    return {}
+                referenced_case_block = _process_case(original_parent_case)
+                _identifier_index['case_id'] = referenced_case_block.case_id
+            return (
+                _identifier_index['case_type'],
+                _identifier_index['case_id'],
+                _identifier_index['relationship'],
+            )
+
+        def _get_new_index_map(_case):
+            new_case_index = {}
+            for identifier in _case.get_index_map():
+                identifier_index = _get_new_identifier_index(
+                    _case.get_index_map()[identifier]
+                )
+                if identifier_index:
+                    new_case_index[identifier] = identifier_index
+            return new_case_index
+
+        def _process_case(_case):
+            if _case.case_id in processed_cases:
+                return
+
+            case_name = _case.name
+            if replace_props:
+                case_name = replace_props.get('case_name', _case.name)
+
+            case_block = CaseBlock(
+                create=True,
+                case_id=uuid.uuid4().hex,
+                owner_id=to_owner,
+                case_type=_case.type,
+                case_name=case_name,
+                update=cls._get_case_properties_with_replacements(_case, replace_props),
+                index=_get_new_index_map(_case),
+            )
+
+            copied_cases_case_blocks.append(case_block.as_text())
+            processed_cases[_case.case_id] = case_block
+
+            return case_block
+
+        for c in original_cases:
+            _process_case(c)
+
+        return submit_case_blocks(
+            case_blocks=copied_cases_case_blocks,
+            domain=domain,
+        )
+
+    @classmethod
+    def _get_case_properties_with_replacements(cls, case, replacement_properties):
+        """
+        Returns a map of the provided case's properties with the relevant properties
+        replaced as specified in replacement_properties
+        """
+        relevant_replace_props = {k: v for k, v in replacement_properties.items() if k in case.case_json}
+        return {**case.case_json, **relevant_replace_props}
 
     @staticmethod
     def _clean_serialized_case(case_data):

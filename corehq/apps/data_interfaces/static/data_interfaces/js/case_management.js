@@ -151,6 +151,7 @@ hqDefine("data_interfaces/js/case_management",[
                     type: 'post',
                     data: JSON.stringify({
                         case_ids: self.selectedCases(),
+                        owner_id: newOwner,
                         sensitive_properties: JSON.parse(sensitiveProperties)
                     }),
                     contentType: "application/json"

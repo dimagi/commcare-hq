@@ -5,7 +5,7 @@ import logging
 import json
 
 from django.views.generic import View
-from django.http import JsonResponse
+from django.http import JsonResponse, HttpResponseBadRequest
 from django.views.decorators.http import require_POST
 
 from braces.views import JSONResponseMixin
@@ -26,6 +26,7 @@ from corehq.apps.reports.filters.controllers import (
 )
 from corehq.apps.users.analytics import get_search_users_in_domain_es_query
 from corehq.elastic import ESError
+from corehq.apps.hqcase.case_helper import CaseHelper
 
 logger = logging.getLogger(__name__)
 
@@ -206,5 +207,37 @@ class DeviceLogIds(DeviceLogFilter):
 @location_safe
 def copy_cases(request, domain, *args, **kwargs):
     body = json.loads(request.body)
+    print(body)
+    # {
+    #     'case_ids': [
+    #         'c6eb081166854fdab9ef8cef4697b450',
+    #         '6522c518-23bb-4694-a0ae-918fc9e80230',
+    #         '24c81a19-174f-43b6-b2f3-f26427bdca26',
+    #         '35e748da-ef60-4373-bf1a-7e8212458b47'
+    #     ],
+    #     'owner_id': '607f90af4fa84c6dac415ddcd2c58498',
+    #     'sensitive_properties': [
+    #         {'name': 'case_name', 'label': 'case_name'},
+    #         {'name': 'age', 'label': 'age'}
+    #     ]
+    # }
+    case_ids = body['case_ids']
+    if not case_ids:
+        return HttpResponseBadRequest("Missing case ids")
 
-    return JsonResponse({})
+    new_owner = body['owner_id']
+    if not new_owner:
+        return HttpResponseBadRequest("Missing new owner id")
+
+    props = {prop['name']: prop['label'] for prop in body['sensitive_properties']}
+
+    helper = CaseHelper(domain=domain)
+    _, cases_copied = helper.copy_cases(
+        case_ids=case_ids,
+        to_owner=new_owner,
+        replace_props=props,
+    )
+
+    return JsonResponse({
+        'cases_copied': len(cases_copied)
+    })
