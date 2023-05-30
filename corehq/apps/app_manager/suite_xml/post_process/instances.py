@@ -1,6 +1,6 @@
 """
 InstancesHelper
---------------
+---------------
 
 Every instance referenced in an xpath expression needs to be added to the
 relevant entry or menu node, so that CommCare knows what data to load when.
