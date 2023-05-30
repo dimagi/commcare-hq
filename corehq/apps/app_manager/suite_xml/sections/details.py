@@ -108,7 +108,7 @@ class DetailContributor(SectionContributor):
                             include_sort=detail_type.endswith('short'),
                         )  # list of DetailColumnInfo named tuples
                     if detail_column_infos:
-                        if detail.use_case_tiles:
+                        if detail.case_tile_template:
                             helper = CaseTileHelper(self.app, module, detail,
                                                     detail_type, self.build_profile_id)
                             elements.append(helper.build_case_tile_detail())
@@ -134,7 +134,7 @@ class DetailContributor(SectionContributor):
                     # add the persist case context if needed and if
                     # case tiles are present and have their own persistent block
                     if (detail.persist_case_context and
-                            not (detail.use_case_tiles and detail.persist_tile_on_forms)):
+                            not (detail.case_tile_template and detail.persist_tile_on_forms)):
                         d = self._get_persistent_case_context_detail(module, detail.persistent_case_context_xml)
                         elements.append(d)
 

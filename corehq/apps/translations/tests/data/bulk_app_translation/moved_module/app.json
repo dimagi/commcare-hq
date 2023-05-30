@@ -141,7 +141,7 @@
           "print_template": {},
           "lookup_name": null,
           "filter": null,
-          "use_case_tiles": null,
+          "case_tile_template": null,
           "lookup_action": null,
           "display": "short"
         },
@@ -168,7 +168,7 @@
           "print_template": {},
           "lookup_name": null,
           "filter": null,
-          "use_case_tiles": null,
+          "case_tile_template": null,
           "lookup_action": null,
           "display": "long"
         }
@@ -443,7 +443,7 @@
           "print_template": {},
           "lookup_name": null,
           "lookup_autolaunch": false,
-          "use_case_tiles": null,
+          "case_tile_template": null,
           "display": "short"
         },
         "long": {
@@ -496,7 +496,7 @@
           "print_template": {},
           "lookup_name": null,
           "lookup_autolaunch": false,
-          "use_case_tiles": null,
+          "case_tile_template": null,
           "display": "long"
         }
       },
@@ -701,7 +701,7 @@
           "tabs": [
           ],
           "filter": null,
-          "use_case_tiles": null,
+          "case_tile_template": null,
           "custom_xml": null,
           "persist_tile_on_forms": null,
           "display": "short",
@@ -744,7 +744,7 @@
           "tabs": [
           ],
           "filter": null,
-          "use_case_tiles": null,
+          "case_tile_template": null,
           "custom_xml": null,
           "persist_tile_on_forms": null,
           "display": "long",
@@ -795,7 +795,7 @@
           "tabs": [
           ],
           "filter": null,
-          "use_case_tiles": null,
+          "case_tile_template": null,
           "custom_xml": null,
           "persist_tile_on_forms": null,
           "display": "short",
@@ -809,7 +809,7 @@
           "tabs": [
           ],
           "filter": null,
-          "use_case_tiles": null,
+          "case_tile_template": null,
           "custom_xml": null,
           "persist_tile_on_forms": null,
           "display": "long",
@@ -860,7 +860,7 @@
           "print_template": {},
           "lookup_name": null,
           "filter": null,
-          "use_case_tiles": null,
+          "case_tile_template": null,
           "lookup_action": null,
           "display": "short"
         },
@@ -887,7 +887,7 @@
           "print_template": {},
           "lookup_name": null,
           "filter": null,
-          "use_case_tiles": null,
+          "case_tile_template": null,
           "lookup_action": null,
           "display": "long"
         }
@@ -1197,7 +1197,7 @@
           "print_template": {},
           "lookup_name": null,
           "lookup_autolaunch": false,
-          "use_case_tiles": null,
+          "case_tile_template": null,
           "display": "short"
         },
         "long": {
@@ -1349,7 +1349,7 @@
           "print_template": {},
           "lookup_name": null,
           "lookup_autolaunch": false,
-          "use_case_tiles": null,
+          "case_tile_template": null,
           "display": "long"
         }
       },
@@ -1424,7 +1424,7 @@
           "print_template": {},
           "lookup_name": null,
           "filter": null,
-          "use_case_tiles": null,
+          "case_tile_template": null,
           "lookup_action": null,
           "display": "short"
         },
@@ -1451,7 +1451,7 @@
           "print_template": {},
           "lookup_name": null,
           "filter": null,
-          "use_case_tiles": null,
+          "case_tile_template": null,
           "lookup_action": null,
           "display": "long"
         }
@@ -1752,7 +1752,7 @@
           "print_template": {},
           "lookup_name": null,
           "lookup_autolaunch": false,
-          "use_case_tiles": false,
+          "case_tile_template": null,
           "display": "short"
         },
         "long": {
@@ -1825,7 +1825,7 @@
           "print_template": {},
           "lookup_name": null,
           "lookup_autolaunch": false,
-          "use_case_tiles": null,
+          "case_tile_template": null,
           "display": "long"
         }
       },
@@ -2136,7 +2136,7 @@
           "print_template": {},
           "lookup_name": null,
           "lookup_autolaunch": false,
-          "use_case_tiles": null,
+          "case_tile_template": null,
           "display": "short"
         },
         "long": {
@@ -2188,7 +2188,7 @@
           "print_template": {},
           "lookup_name": null,
           "lookup_autolaunch": false,
-          "use_case_tiles": null,
+          "case_tile_template": null,
           "display": "long"
         }
       },
@@ -2221,7 +2221,7 @@
           "print_template": {},
           "lookup_responses": [],
           "filter": null,
-          "use_case_tiles": null,
+          "case_tile_template": null,
           "columns": [
             {
               "doc_type": "DetailColumn",
@@ -2273,7 +2273,7 @@
           "print_template": {},
           "lookup_name": null,
           "filter": null,
-          "use_case_tiles": null,
+          "case_tile_template": null,
           "lookup_action": null,
           "display": "long"
         }
