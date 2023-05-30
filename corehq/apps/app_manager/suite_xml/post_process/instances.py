@@ -287,10 +287,9 @@ class EntryInstances(PostProcessor):
             xpaths.add(menu.relevant)
 
         known_instances, unknown_instance_ids = get_all_instances_referenced_in_xpaths(self.app, xpaths)
+        assert_no_unknown_instances(unknown_instance_ids)
         for instance in known_instances:
             menu.instances.append(instance)
-
-        # TODO deal with unknown_instance_ids
 
 _factory_map = {}
 

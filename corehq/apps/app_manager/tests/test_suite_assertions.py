@@ -2,6 +2,7 @@ from django.test import SimpleTestCase
 
 import commcare_translations
 
+from corehq.apps.app_manager.exceptions import UnknownInstanceError
 from corehq.apps.app_manager.models import CustomAssertion
 from corehq.apps.app_manager.tests.app_factory import AppFactory
 from corehq.apps.app_manager.tests.util import (
@@ -98,3 +99,12 @@ class CustomSuiteAssertionsTest(SimpleTestCase, TestXmlMixin):
         self._assert_translations(factory.app, 'root')
         self.assertXmlPartialEqual(
             self._instance_declaration, suite, "menu[@id='root']/instance")
+
+    def test_custom_app_assertions(self, *args):
+        factory = AppFactory(build_version='2.54.0')
+        module, form = factory.new_basic_module('m0', 'case1')
+        xpath = "instance('unknown')/thing/val = 1"
+        factory.app.custom_assertions = [CustomAssertion(test=xpath, text={'en': "en-0"})]
+        with self.assertRaises(UnknownInstanceError) as e:
+            factory.app.create_suite()
+        self.assertIn(xpath, str(e.exception))
