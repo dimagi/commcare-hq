@@ -221,7 +221,10 @@ hqDefine('export/js/models', [
 
         // We've already built the schema and now the user is clicking the button to refresh the page
         if (this.buildSchemaProgress() === 100) {
-            window.location.reload(false);
+            // This param will let us know to automatically enable the filter after the page refreshes
+            let pageUrl = new URL(window.location.href);
+            pageUrl.searchParams.append('delete_filter_enabled', 'True');
+            window.location.href = pageUrl;
             return;
         }
 
