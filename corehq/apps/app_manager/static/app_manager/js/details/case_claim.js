@@ -9,7 +9,7 @@ hqDefine("app_manager/js/details/case_claim", function () {
         },
         subscribeToSave = function (model, observableNames, saveButton) {
             _.each(observableNames, function (name) {
-                model[name].subscribe(function () {
+                model[name].subscribe(function (){
                     saveButton.fire('change');
                 });
             });

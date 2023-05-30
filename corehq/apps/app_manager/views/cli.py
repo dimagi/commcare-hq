@@ -23,13 +23,12 @@ from ..dbaccessors import (
     wrap_app,
 )
 
-
 @json_error
 @api_auth()
 @api_throttle
 def list_apps(request, domain):
     def app_to_json(app):
-        return {
+         return {
             'name': app.name,
             'version': app.version,
             'app_id': app.get_id,
