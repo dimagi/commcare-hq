@@ -51,18 +51,6 @@ from corehq.util.workbook_reading.datamodels import Cell
 FHIR_RESOURCE_TYPE_MAPPING_SHEET = "fhir_mapping"
 ALLOWED_VALUES_SHEET_SUFFIX = "-vl"
 
-data_dictionary_rebuild_rate_limiter = RateLimiter(
-    feature_key='data_dictionary_rebuilds_per_user',
-    get_rate_limits=lambda scope: get_dynamic_rate_definition(
-        'data_dictionary_rebuilds_per_user',
-        default=RateDefinition(
-            per_hour=3,
-            per_minute=2,
-            per_second=1,
-        )
-    ).get_rate_limits(scope),
-)
-
 
 @login_and_domain_required
 @toggles.DATA_DICTIONARY.required_decorator()
