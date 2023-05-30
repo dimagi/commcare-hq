@@ -130,9 +130,8 @@ def _validate_ancestor_exists_filter(node):
 
     if hasattr(node, 'op') and node.op in OPERATOR_MAPPING:
         # This node is a leaf
-        return OPERATOR_MAPPING[node.op](_validate_ancestor_exists_filter(node.left),
-                                        _validate_ancestor_exists_filter(node.right))
-    return
+        _validate_ancestor_exists_filter(node.left)
+        _validate_ancestor_exists_filter(node.right)
 
 
 def _get_case_ids_from_ast_filter(context, filter_node):
