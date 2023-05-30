@@ -94,6 +94,9 @@ class EntryInstances(PostProcessor):
             self.add_entry_instances(entry)
         for remote_request in self.suite.remote_requests:
             self.add_entry_instances(remote_request)
+        if self.app.supports_menu_instances:
+            for menu in self.suite.menus:
+                self._add_menu_instances(menu)
 
     def add_entry_instances(self, entry):
         xpaths = self._get_all_xpaths_for_entry(entry)
@@ -139,7 +142,8 @@ class EntryInstances(PostProcessor):
 
         details = [details_by_id[detail_id] for detail_id in detail_ids if detail_id]
 
-        xpaths.update(self._menu_xpaths_by_command[entry.command.id])
+        if not self.app.supports_menu_instances:
+            xpaths.update(self._menu_xpaths_by_command[entry.command.id])
 
         if entry.command.id in self._relevancy_xpaths_by_command:
             xpaths.add(self._relevancy_xpaths_by_command[entry.command.id])
@@ -272,6 +276,18 @@ class EntryInstances(PostProcessor):
             entry.node.insert(entry.node.index(command_node) + 1, instance_node)
             return True
 
+    def _add_menu_instances(self, menu):
+        # 2.54 and later only (supports_menu_instances)
+        # Prior to that, instances are added to entries
+        xpaths = {assertion.test for assertion in menu.assertions}
+        if menu.relevant:
+            xpaths.add(menu.relevant)
+
+        known_instances, unknown_instance_ids = get_all_instances_referenced_in_xpaths(self.app, xpaths)
+        for instance in known_instances:
+            menu.instances.append(instance)
+
+        # TODO deal with unknown_instance_ids
 
 _factory_map = {}
 
