@@ -988,6 +988,9 @@ class NewMobileWorkerForm(forms.Form):
         location_id = self.cleaned_data['location_id']
         if not user_can_access_location_id(self.domain, self.request_user, location_id):
             raise forms.ValidationError("You do not have access to that location.")
+        if location_id:
+            if not SQLLocation.active_objects.filter(domain=self.domain, location_id=location_id).exists():
+                raise forms.ValidationError(_("This location does not exist"))
         return location_id
 
     def clean_username(self):
