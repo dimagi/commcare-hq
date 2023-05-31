@@ -1,4 +1,5 @@
 import copy
+from base64 import b64encode
 import json
 from datetime import datetime, timedelta, date
 import pytz
@@ -235,14 +236,17 @@ class TestNavigationEventAuditResource(APIResourceTest):
             }
         ]
 
-        for i in range(len(result_objects)):
-            self.assertDictEqual(result_objects[i], expected_result_objects[i])
+        self.assertEqual(result_objects, expected_result_objects)
 
     def test_response_provides_next(self):
-        params = {
-            'limit': 1,
+        cursor = {
             'cursor_user': self.username1,
             'cursor_local_date': date(2023, 5, 1).isoformat()
+        }
+        encoded_cursor = b64encode(urlencode(cursor).encode('utf-8'))
+        params = {
+            'limit': 1,
+            'cursor': encoded_cursor,
         }
         list_endpoint = f'{self.list_endpoint}?{urlencode(params)}'
         response = self._assert_auth_get_resource(list_endpoint)
@@ -250,10 +254,14 @@ class TestNavigationEventAuditResource(APIResourceTest):
 
         response_next_url = json.loads(response.content)['meta']['next']
 
+        expected_cursor = {
+            'cursor_local_date': date(2023, 5, 1).isoformat(),
+            'cursor_user': self.username2,
+        }
+        encoded_expected_cursor = b64encode(urlencode(expected_cursor).encode('utf-8'))
         expected_next_params = {
             'limit': 1,
-            'cursor_user': self.username2,
-            'cursor_local_date': date(2023, 5, 1).isoformat()
+            'cursor': encoded_expected_cursor
         }
         expected_next_url = f'{self.list_endpoint}?{urlencode(expected_next_params)}'
 
