@@ -24,6 +24,8 @@ def is_user_restricted_from_domain_creation(couch_user):
     """
     domains = [dm.domain for dm in couch_user.domain_memberships]
     linked_accounts = list({BillingAccount.get_account_by_domain(d) for d in domains})
+    if any([couch_user.username in acc.enterprise_admin_emails for acc in linked_accounts]):
+        return True
     # if the user is part of any billing account that does not have this enabled
     # they can keep creating domains
     return all([acc.restrict_domain_creation for acc in linked_accounts])
