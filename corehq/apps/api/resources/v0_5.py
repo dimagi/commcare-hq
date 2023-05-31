@@ -1183,7 +1183,6 @@ class NavigationEventAuditResource(HqBaseResource, Resource):
             # TruncDate ignores tzinfo if the queryset is not evaluated within overridden USE_TZ setting
             return list(queryset[:params['limit']])
 
-
     @classmethod
     def _query(cls, domain: str, local_timezone: pytz.tzinfo.DstTzInfo, params: dict = {}):
         queryset = NavigationEventAudit.objects.filter(domain=domain)
