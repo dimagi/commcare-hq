@@ -21,7 +21,6 @@ hqDefine("reports/js/filters/case_list_explorer_knockout_bindings", ['jquery', '
                         useWorker: false, // enable the worker to show syntax errors
                     }
                 );
-            // editor.setAutoScrollEditorIntoView(true);
             editor.session.setMode('ace/mode/xquery'); // does reasonable syntax highlighting for XPath
 
             var updateKOModel = function () {
