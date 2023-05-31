@@ -15,6 +15,7 @@ def _grandfather_filtered_bulk_user_download_priv(apps, schema_editor):
         SoftwarePlanEdition.PAUSED,
         SoftwarePlanEdition.COMMUNITY,
         SoftwarePlanEdition.STANDARD,
+        SoftwarePlanEdition.PRO
     ))
     call_command(
         'cchq_prbac_grandfather_privs',
