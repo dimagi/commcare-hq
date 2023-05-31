@@ -21,7 +21,6 @@ from corehq.apps.users.dbaccessors import (
     get_mobile_users_by_filters,
 )
 from corehq.apps.users.forms import PrimaryLocationWidget
-from corehq.apps.users.util import raw_username
 
 from .models import EVENT_IN_PROGRESS, EVENT_NOT_STARTED, AttendeeModel
 
@@ -250,7 +249,7 @@ class EventForm(forms.Form):
             )
         else:
             users = get_all_commcare_users_by_domain(self.domain)
-        return [(u.user_id, raw_username(u.username)) for u in users]
+        return [(u.user_id, u.raw_username) for u in users]
 
 
 class NewAttendeeForm(forms.Form):
