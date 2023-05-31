@@ -4,6 +4,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
     const kissmetrics = hqImport("analytix/js/kissmetrix"),
         constants = hqImport("cloudcare/js/formplayer/constants"),
         FormplayerFrontend = hqImport("cloudcare/js/formplayer/app"),
+        initialPageData = hqImport("hqwebapp/js/initial_page_data"),
         toggles = hqImport("hqwebapp/js/toggles"),
         utils = hqImport("cloudcare/js/formplayer/utils/utils");
 
@@ -362,6 +363,8 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             } else {
                 self.selectedCaseIds = [];
             }
+
+            self.showMap = !!_.find(this.styles, function (style) { return style.displayFormat === constants.FORMAT_ADDRESS; });
         },
 
         ui: CaseListViewUI(),
@@ -482,6 +485,77 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             }
         },
 
+        columnStyle: function () {
+            const self = this;
+            let mapColumn = "";
+            if (self.showMap && !self.hasNoItems) {
+                mapColumn = "[map] 300px";
+            }
+            return "display: grid;grid-template-columns: [tiles] auto " + mapColumn
+                + " ;grid-template-rows: auto";
+        },
+
+        addAddressPin: function (geocoder, addressMap, headers, model, addressIndex) {
+            const coordinates = model.attributes.data[addressIndex];
+            if (coordinates) {
+                let latLng = coordinates.split(" ").slice(0,2);
+                if (latLng.length > 1) {
+                    let popupText = "";
+                    headers.forEach((header, index) => {
+                        if (header) {
+                            const valueSanitized = DOMPurify.sanitize(model.attributes.data[index]);
+                            const headerSanitized = DOMPurify.sanitize(header);
+                            popupText += "<b>" + headerSanitized + ":</b> " + valueSanitized + "<br>";
+                        }
+                    });
+                    L.marker(latLng)
+                        .addTo(addressMap)
+                        .bindPopup(popupText);
+
+                    return latLng;
+                }
+            }
+            return null;
+        },
+
+        loadMap: function () {
+            const token = initialPageData.get("mapbox_access_token");
+
+            try {
+                const lat = 30;
+                const lon = 15;
+                const zoom = 3;
+                const addressMap = L.map('module-case-list-map').setView([lat, lon], zoom);
+                L.tileLayer('https://api.mapbox.com/styles/v1/{id}/tiles/{z}/{x}/{y}?access_token=' + token, {
+                    id: 'mapbox/streets-v11',
+                    attribution: '© <a href="https://www.mapbox.com/about/maps/">Mapbox</a> ©' +
+                             ' <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+                    tileSize: 512,
+                    zoomOffset: -1,
+                }).addTo(addressMap);
+
+                const addressIndex = _.findIndex(this.styles, function (style) { return style.displayFormat === constants.FORMAT_ADDRESS; });
+                L.mapbox.accessToken = token;
+                const mapbox = L.mapbox;
+                const geocoder = mapbox.geocoder('mapbox.places');
+
+                const latLons = this.options.collection.models
+                    .map(model => this.addAddressPin(geocoder, addressMap, this.options.headers, model, addressIndex))
+                    .filter(latLon => latLon);
+                addressMap.fitBounds(latLons, {maxZoom: 8});
+
+            } catch (error) {
+                console.error(error);
+            }
+        },
+
+        onAttach() {
+            const self = this;
+            if (self.showMap && !self.hasNoItems) {
+                self.loadMap();
+            }
+        },
+
         templateContext: function () {
             const paginateItems = utils.paginateOptions(this.options.currentPage, this.options.pageCount);
             const casesPerPage = parseInt($.cookie("cases-per-page-limit")) || 10;
@@ -505,6 +579,9 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
                 sortIndices: this.options.sortIndices,
                 selectedCaseIds: this.selectedCaseIds,
                 isMultiSelect: false,
+                showMap: this.showMap,
+                columnStyle: this.columnStyle(),
+
                 columnSortable: function (index) {
                     return this.sortIndices.indexOf(index) > -1;
                 },
