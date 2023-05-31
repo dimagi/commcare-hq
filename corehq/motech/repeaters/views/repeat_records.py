@@ -1,4 +1,5 @@
 import json
+import re
 
 from django.http import (
     Http404,
@@ -322,9 +323,15 @@ class RepeatRecordView(View):
         if toggles.DHIS2_INTEGRATION.enabled(domain) and isinstance(record.repeater, Dhis2EntityRepeater):
             logs = RequestLog.objects.filter(domain=domain, payload_id=record.payload_id)
             for log in logs:
-                resp_body = json.loads(log.response_body)
-                log_errors = [error for error in get_errors(resp_body).values()]
-                dhis2_errors += log_errors
+                try:
+                    resp_body = json.loads(log.response_body)
+                    log_errors = [error for error in get_errors(resp_body).values()]
+                    dhis2_errors += log_errors
+                except json.JSONDecodeError:
+                    # If it's not JSON, then we might be dealing with an HTML string, so remove HTML tags
+                    tag_remove_regex = re.compile('<.*?>')
+                    cleaned_log = re.sub(tag_remove_regex, '', log.response_body)
+                    dhis2_errors.append(cleaned_log)
 
         attempt_html = render_to_string(
             'repeaters/partials/attempt_history.html',
