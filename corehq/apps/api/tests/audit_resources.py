@@ -103,10 +103,7 @@ class TestNavigationEventAuditResource(APIResourceTest):
         self.assertEqual(response.status_code, 200)
 
         result_objects = json.loads(response.content)['objects']
-
-        self.assertEqual(len(result_objects), len(self.domain1_audits.expected_response_objects), result_objects)
-        for i in range(len(result_objects)):
-            self.assertDictEqual(result_objects[i], self.domain1_audits.expected_response_objects[i])
+        self.assertEqual(result_objects, self.domain1_audits.expected_response_objects)
 
     def test_request_with_limit_param(self):
         limit = 1
@@ -118,8 +115,7 @@ class TestNavigationEventAuditResource(APIResourceTest):
         result_objects = json.loads(response.content)['objects']
 
         self.assertEqual(len(result_objects), limit)
-        for i in range(len(result_objects)):
-            self.assertDictEqual(result_objects[i], self.domain1_audits.expected_response_objects[i])
+        self.assertEqual(result_objects, self.domain1_audits.expected_response_objects[:limit])
 
     def test_request_with_timezone_param(self):
         timezone = 'US/Eastern'
@@ -161,14 +157,14 @@ class TestNavigationEventAuditResource(APIResourceTest):
             }
         ]
 
-        for i in range(len(result_objects)):
-            self.assertDictEqual(result_objects[i], expected_result_objects[i])
+        self.assertEqual(result_objects, expected_result_objects)
 
     def test_request_with_user_param(self):
         users_filter = [self.username1]
 
         params = {'users': users_filter}
-        list_endpoint = f'{self.list_endpoint}?{urlencode(params)}'
+        list_endpoint = f'{self.list_endpoint}?{urlencode(params, True)}'
+        print("list end point is", list_endpoint)
         response = self._assert_auth_get_resource(list_endpoint)
         self.assertEqual(response.status_code, 200)
 
@@ -178,8 +174,7 @@ class TestNavigationEventAuditResource(APIResourceTest):
             if d['user'] in users_filter
         ]
 
-        for i in range(len(result_objects)):
-            self.assertDictEqual(result_objects[i], expected_result_objects[i])
+        self.assertEqual(result_objects, expected_result_objects)
 
     def test_request_with_date_param(self):
         date1 = date(2023, 5, 1).isoformat()
@@ -190,6 +185,7 @@ class TestNavigationEventAuditResource(APIResourceTest):
             'local_date.lt': date2,
         }
         list_endpoint = f'{self.list_endpoint}?{urlencode(params)}'
+        print("date listendpoint", list_endpoint)
         response = self._assert_auth_get_resource(list_endpoint)
         self.assertEqual(response.status_code, 200)
 
@@ -199,8 +195,7 @@ class TestNavigationEventAuditResource(APIResourceTest):
             (item['local_date'] >= date1 and item['local_date'] < date2)
         ]
 
-        for i in range(len(result_objects)):
-            self.assertDictEqual(result_objects[i], expected_result_objects[i])
+        self.assertEqual(result_objects, expected_result_objects)
 
     def test_request_with_cursor_param(self):
         params = {
