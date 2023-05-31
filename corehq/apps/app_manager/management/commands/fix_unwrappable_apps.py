@@ -1,8 +1,6 @@
 from corehq.apps.app_manager.dbaccessors import wrap_app
 from corehq.apps.app_manager.management.commands.helpers import (
     AppMigrationCommandBase,
-    get_all_app_ids,
-    get_deleted_app_ids,
 )
 
 
