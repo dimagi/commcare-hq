@@ -229,14 +229,9 @@ class MySavedReportsView(BaseProjectReportSectionView):
 
     @property
     def good_configs(self):
-        all_configs = ReportConfig.by_domain_and_owner(self.domain, self.request.couch_user._id)
+        all_configs = ReportConfig.by_domain_and_owner(self.domain, self.request.couch_user._id, stale=False)
         good_configs = []
         for config in all_configs:
-            try:
-                ReportConfig.get(config._id)
-            except (ResourceNotFound, CloudantDocumentException):
-                # Report Config is deleted and still in cache. Not to return it.
-                continue
             if config.is_configurable_report and not config.configurable_report:
                 continue
 
