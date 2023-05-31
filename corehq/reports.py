@@ -27,6 +27,7 @@ from corehq.apps.case_importer.base import ImportCases
 from corehq.apps.data_interfaces.interfaces import (
     BulkFormManagementInterface,
     CaseReassignmentInterface,
+    CaseCopyInterface,
 )
 from corehq.apps.domain.dbaccessors import get_doc_ids_in_domain_by_class
 from corehq.apps.fixtures.interface import (
@@ -271,6 +272,7 @@ def get_report_builder_count(domain):
 EDIT_DATA_INTERFACES = (
     (gettext_lazy('Edit Data'), (
         CaseReassignmentInterface,
+        CaseCopyInterface,
         ImportCases,
         BulkFormManagementInterface,
     )),
