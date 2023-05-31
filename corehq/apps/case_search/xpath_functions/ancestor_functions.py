@@ -138,10 +138,7 @@ def _get_case_ids_from_ast_filter(context, filter_node):
     and serialize(filter_node.left) == "@case_id" and filter_node.op == EQ):
         # case id is provided in query i.e @case_id="b9eaf791-e427-482d-add4-2a60acf0362e"
         case_ids = unwrap_value(filter_node.right, context)
-        if isinstance(case_ids, str):
-            return (case_id for case_id in [case_ids])
-        else:
-            return (case_id for case_id in case_ids)
+        return [case_ids] if isinstance(case_ids, str) else case_ids
     else:
         from corehq.apps.case_search.filter_dsl import build_filter_from_ast
         es_filter = build_filter_from_ast(filter_node, context)
