@@ -19,12 +19,12 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='caseproperty',
             name='description',
-            field=models.TextField(blank=True, default='', validators=[django.core.validators.MaxLengthValidator(255, message='Property description should be less 255 characters')]),
+            field=models.TextField(blank=True, default='', validators=[django.core.validators.MaxLengthValidator(255, message='Property description should be less than 255 characters')]),
         ),
         migrations.AlterField(
             model_name='casepropertygroup',
             name='description',
-            field=models.TextField(blank=True, default='', validators=[django.core.validators.MaxLengthValidator(255, message='Group description should be less 255 characters')]),
+            field=models.TextField(blank=True, default='', validators=[django.core.validators.MaxLengthValidator(255, message='Group description should be less than 255 characters')]),
         ),
         migrations.AlterUniqueTogether(
             name='casepropertygroup',
