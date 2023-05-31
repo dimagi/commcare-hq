@@ -78,6 +78,8 @@ from corehq.apps.app_manager.models import (
     get_all_mobile_filter_configs,
     get_auto_filter_configurations, ConditionalCaseUpdate,
 )
+from corehq.apps.app_manager.suite_xml.const import CASE_TILE_TEMPLATE_NAME_PERSON_SIMPLE
+from corehq.apps.app_manager.suite_xml.features.case_tiles import case_tile_template_config
 from corehq.apps.app_manager.suite_xml.features.mobile_ucr import (
     get_uuids_by_instance_id,
 )
@@ -233,6 +235,7 @@ def _get_shared_module_view_context(request, app, module, case_property_builder,
             'has_lookup_tables': bool([i for i in item_lists if i['fixture_type'] == LOOKUP_TABLE_FIXTURE]),
             'has_mobile_ucr': bool([i for i in item_lists if i['fixture_type'] == REPORT_FIXTURE]),
             'default_value_expression_enabled': app.enable_default_value_expression,
+            'case_tile_fields': case_tile_template_config(CASE_TILE_TEMPLATE_NAME_PERSON_SIMPLE).fields,
             'search_config': {
                 'search_properties':
                     module.search_config.properties if module_offers_search(module) else [],
@@ -1134,7 +1137,7 @@ def edit_module_detail_screens(request, domain, app_id, module_unique_id):
     sort_elements = params.get('sort_elements', None)
     persist_case_context = params.get('persistCaseContext', None)
     persistent_case_context_xml = params.get('persistentCaseContextXML', None)
-    use_case_tiles = params.get('useCaseTiles', None)
+    case_tile_template = params.get('caseTileTemplate', None)
     persist_tile_on_forms = params.get("persistTileOnForms", None)
     persistent_case_tile_from_module = params.get("persistentCaseTileFromModule", None)
     pull_down_tile = params.get("enableTilePullDown", None)
@@ -1173,8 +1176,8 @@ def edit_module_detail_screens(request, domain, app_id, module_unique_id):
         if persist_case_context is not None:
             detail.short.persist_case_context = persist_case_context
             detail.short.persistent_case_context_xml = persistent_case_context_xml
-        if use_case_tiles is not None:
-            detail.short.use_case_tiles = use_case_tiles
+        if case_tile_template is not None:
+            detail.short.case_tile_template = case_tile_template
         if persist_tile_on_forms is not None:
             detail.short.persist_tile_on_forms = persist_tile_on_forms
         if persistent_case_tile_from_module is not None:

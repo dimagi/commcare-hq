@@ -60,7 +60,7 @@
             <a href="https://confluence.dimagi.com/display/commcarepublic/Create+and+Manage+CommCare+Mobile+Workers" target="_blank">Help Site</a>.
           {% endblocktrans %}
         </p>
-        {% if request|ui_notify_enabled:"MULTI_DOMAIN_DOWNLOAD_MOBILE_WORKERS" and request|toggle_enabled:"FILTERED_BULK_USER_DOWNLOAD" and request|toggle_enabled:"DOMAIN_PERMISSIONS_MIRROR" %}
+        {% if request|ui_notify_enabled:"MULTI_DOMAIN_DOWNLOAD_MOBILE_WORKERS" and request|request_has_privilege:"FILTERED_BULK_USER_DOWNLOAD" and request|toggle_enabled:"DOMAIN_PERMISSIONS_MIRROR" %}
           <div class="alert alert-ui-notify alert-dismissible helpbubble helpbubble-purple helpbubble-no-arrow fade in"
                data-slug="{{ 'MULTI_DOMAIN_DOWNLOAD_MOBILE_WORKERS'|ui_notify_slug }}"
                role="alert">
@@ -110,7 +110,7 @@
                 {% trans "Bulk Clear Data" %}
               </a>
             {% endif %}
-            {% if request|toggle_enabled:"FILTERED_BULK_USER_DOWNLOAD" %}
+            {% if request|request_has_privilege:"FILTERED_BULK_USER_DOWNLOAD" %}
               <a class="btn btn-danger" href="{% url "delete_commcare_users" domain %}">
                 <i class="fa fa-trash"></i>
                 {% trans "Bulk Delete Users" %}

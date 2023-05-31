@@ -1,7 +1,7 @@
 from contextlib import contextmanager
 from datetime import datetime
 from unittest.mock import patch
-import json
+import uuid
 
 from django.test import TestCase
 from django.urls import reverse
@@ -15,16 +15,14 @@ from corehq.form_processor.models import CommCareCase
 from corehq.util.test_utils import flag_enabled
 from corehq.apps.events.models import AttendanceTrackingConfig
 
-from ..models import (
-    Event,
-    get_attendee_case_type,
-    AttendeeModel,
-)
+from ..models import Event, get_attendee_case_type, AttendeeModel
 from ..views import (
     EventCreateView,
     EventsView,
     AttendeesConfigView,
-    AttendeeDeleteView
+    ConvertMobileWorkerAttendeesView,
+    AttendeeDeleteView,
+    EventEditView
 )
 
 
@@ -130,6 +128,57 @@ class TestEventsListView(BaseEventViewTestClass):
 
         response = self.client.get(self.endpoint)
         self.assertEqual(response.status_code, 200)
+
+
+@flag_enabled('ATTENDANCE_TRACKING')
+class TestEventsEditView(BaseEventViewTestClass):
+
+    urlname = EventEditView.urlname
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        today = datetime.utcnow()
+        cls.event = Event(
+            domain=cls.domain,
+            name='test-event',
+            start_date=today,
+            end_date=today,
+            attendance_target=10
+        )
+        cls.event.save()
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.event.delete()
+        super().tearDownClass()
+
+    def _get_response(self, event_id=None):
+        if not event_id:
+            event_id = uuid.uuid4()
+        endpoint = reverse(self.urlname, args=(self.domain, event_id))
+        response = self.client.get(endpoint)
+        return response
+
+    def test_user_does_not_have_permission(self):
+        self.log_user_in(self.non_admin_webuser)
+        response = self._get_response(self.event.event_id)
+        self.assertEqual(response.status_code, 404)
+
+    def test_user_is_domain_admin(self):
+        self.log_user_in(self.admin_webuser)
+        response = self._get_response(self.event.event_id)
+        self.assertEqual(response.status_code, 200)
+
+    def test_non_admin_user_with_appropriate_role(self):
+        self.log_user_in(self.role_webuser)
+        response = self._get_response(self.event.event_id)
+        self.assertEqual(response.status_code, 200)
+
+    def test_event_not_found(self):
+        self.log_user_in(self.admin_webuser)
+        response = self._get_response()
+        self.assertEqual(response.status_code, 404)
 
 
 class TestEventsCreateView(BaseEventViewTestClass):
@@ -247,49 +296,51 @@ class TestAttendeesConfigView(BaseEventViewTestClass):
         json_data = response.json()
         self.assertEqual(json_data['mobile_worker_attendee_enabled'], False)
 
+
+class TestConvertMobileWorkerAttendeesView(BaseEventViewTestClass):
+    urlname = ConvertMobileWorkerAttendeesView.urlname
+
     @flag_enabled('ATTENDANCE_TRACKING')
-    @patch('corehq.apps.events.views.sync_mobile_worker_attendees')
-    def test_post_updates_attendance_tracking_config(self, sync_mobile_worker_attendees_mock):
+    @patch('corehq.apps.events.tasks.sync_mobile_worker_attendees')
+    def test_toggle_updates_attendance_tracking_config(self, sync_mobile_worker_attendees_mock):
         config, _created = AttendanceTrackingConfig.objects.get_or_create(domain=self.domain)
         update_value = not config.mobile_worker_attendees
         self.log_user_in(self.role_webuser)
 
-        # Make sure we respond with the correct value
-        json_payload = json.dumps({'mobile_worker_attendee_enabled': update_value})
-        response = self.client.post(self.endpoint, json_payload, content_type='application/json')
-        self.assertEqual(response.status_code, 200)
-        json_data = response.json()
-        self.assertEqual(json_data['mobile_worker_attendee_enabled'], update_value)
+        response = self.client.get(self.endpoint, content_type='application/json')
+        self.assertEqual(response.status_code, 302)
 
         # Make sure it updated
         config, _created = AttendanceTrackingConfig.objects.get_or_create(domain=self.domain)
         self.assertEqual(config.mobile_worker_attendees, update_value)
 
     @flag_enabled('ATTENDANCE_TRACKING')
-    @patch('corehq.apps.events.views.sync_mobile_worker_attendees')
-    def test_enable_mobile_worker_attendee_triggers_task(self, sync_mobile_worker_attendees_mock):
+    @patch('corehq.apps.events.views.sync_mobile_worker_attendees.delay')
+    @patch('soil.CachedDownload.set_task')
+    def test_enable_mobile_worker_attendee_triggers_task(self, sync_mobile_worker_attendees_mock, *args):
         config, _created = AttendanceTrackingConfig.objects.get_or_create(domain=self.domain)
         self.log_user_in(self.role_webuser)
 
         # Make sure we respond with the correct value
         self.assertFalse(config.mobile_worker_attendees)
-        json_payload = json.dumps({'mobile_worker_attendee_enabled': True})
-        response = self.client.post(self.endpoint, json_payload, content_type='application/json')
-        self.assertEqual(response.status_code, 200)
-        sync_mobile_worker_attendees_mock.delay.assert_called_once()
+
+        response = self.client.get(self.endpoint, content_type='application/json')
+        self.assertEqual(response.status_code, 302)
+        sync_mobile_worker_attendees_mock.assert_called_once()
 
     @flag_enabled('ATTENDANCE_TRACKING')
-    @patch('corehq.apps.events.views.close_mobile_worker_attendee_cases')
-    def test_disable_mobile_worker_attendee_triggers_task(self, close_mobile_worker_attendee_cases_mock):
+    @patch('corehq.apps.events.views.close_mobile_worker_attendee_cases.delay')
+    @patch('soil.CachedDownload.set_task')
+    def test_disable_mobile_worker_attendee_triggers_task(self, close_mobile_worker_attendee_cases_mock, *args):
         config, _created = AttendanceTrackingConfig.objects.get_or_create(domain=self.domain)
         self.log_user_in(self.role_webuser)
 
         # Make sure we respond with the correct value
         self.assertFalse(config.mobile_worker_attendees)
-        json_payload = json.dumps({'mobile_worker_attendee_enabled': False})
-        response = self.client.post(self.endpoint, json_payload, content_type='application/json')
-        self.assertEqual(response.status_code, 200)
-        close_mobile_worker_attendee_cases_mock.delay.assert_called_once()
+
+        response = self.client.get(self.endpoint, content_type='application/json')
+        self.assertEqual(response.status_code, 302)
+        close_mobile_worker_attendee_cases_mock.assert_called_once()
 
 
 class TestAttendeesDeleteView(BaseEventViewTestClass):

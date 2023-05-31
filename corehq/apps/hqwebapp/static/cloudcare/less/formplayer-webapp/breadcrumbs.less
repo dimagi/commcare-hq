@@ -20,6 +20,24 @@
   }
 }
 
+#breadcrumb-region .breadcrumb-nav {
+  background-color: @cc-brand-mid;
+  box-shadow: 0 0 5px 2px rgba(0,0,0,.3);
+  display: flex;
+  align-items: center;
+
+  .breadcrumb {
+    box-shadow: none;
+    background-color: unset;
+    padding: 10px 10px 0 10px;
+    margin-bottom: 0;
+    flex-grow: 1;
+  }
+
+  .btn-group {
+    padding-right: 10px;
+  }
+}
 
 @media print {
   #breadcrumb-region {

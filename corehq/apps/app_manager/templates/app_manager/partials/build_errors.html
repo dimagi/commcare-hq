@@ -77,12 +77,6 @@
                 to a menu using "Display only forms," which makes that menu an invalid choice.
               {% endblocktrans %}
               {% include "app_manager/partials/form_error_message.html" %}
-            {% case "multi select form links" %}
-              {% blocktrans %}
-                Linking for a form in a multi-select case list is restricted to multi-select forms only.
-                Please ensure your form is multi-select.
-              {% endblocktrans %}
-              {% include "app_manager/partials/form_error_message.html" %}
             {% case "mismatch multi select form links" %}
               {% blocktrans %}
                 Please check that end of form navigation is correct. It appears to involve both

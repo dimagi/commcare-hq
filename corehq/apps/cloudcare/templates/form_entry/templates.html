@@ -202,17 +202,23 @@
             }
         ">
     <label class="caption control-label" data-bind="css: labelWidth, attr: {'for': entry.entryId}">
-      <div>
+      <div data-bind="css: {'row': help()}">
+        <span class="webapp-markdown-output" tabindex="0"
+              data-bind="
+                html: ko.utils.unwrapObservable($data.caption_markdown) || caption(),
+                css: {'col-md-11' : help()}"></span>
         <!-- ko if: help() -->
         <a
-          class="help-text-trigger"
+          class="help-text-trigger col-md-1"
           role="button"
+          href="javascript:void(0)"
+          title="{% trans "Show help dialog" %}"
         ><i class="fa fa-question-circle"></i></a>
         <div class="modal fade" role="dialog">
           <div class="modal-dialog">
             <div class="modal-content">
               <div class="modal-body">
-                <p class="webapp-markdown-output" align="left" data-bind="html: help"></p>
+                <p class="webapp-markdown-output" tabindex="0" align="left" data-bind="html: help"></p>
               </div>
               <div class="modal-footer">
                 <button class="btn btn-default help-modal-close" data-dismiss="modal">{% trans "Close" %}</button>
@@ -221,7 +227,6 @@
           </div>
         </div>
         <!-- /ko -->
-        <span class="webapp-markdown-output" tabindex="0" data-bind="html: ko.utils.unwrapObservable($data.caption_markdown) || caption()"></span>
       </div>
       <i class="hint-text" data-bind="text: ko.utils.unwrapObservable($data.hint)"></i>
       <!-- ko if: required() -->
@@ -265,7 +270,12 @@
   <div class="info panel panel-default">
     <div class="panel-body">
       <span class="ix" data-bind="text: ixInfo($data)">></span>
-      <span class="caption webapp-markdown-output" data-bind="html: ko.utils.unwrapObservable($data.caption_markdown) || caption(), attr: {'for': entry.entryId}"></span>
+      <span class="caption webapp-markdown-output"
+            data-bind="
+              html: ko.utils.unwrapObservable($data.caption_markdown) || caption(),
+              attr: {'for': entry.entryId}"
+            tabindex="0">
+      </span>
       <div class="widget-multimedia" data-bind="
                 template: { name: 'widget-multimedia-ko-template', data: $data }"
       >

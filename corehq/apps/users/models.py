@@ -112,6 +112,8 @@ COMMCARE_USER = 'commcare'
 MAX_WEB_USER_LOGIN_ATTEMPTS = 5
 MAX_COMMCARE_USER_LOGIN_ATTEMPTS = 500
 
+EULA_CURRENT_VERSION = '3.0'  # Set this to the most up to date version of the eula
+
 
 def _add_to_list(list, obj, default):
     if obj in list:
@@ -710,7 +712,7 @@ class DjangoUserMixin(DocumentSchema):
 
 
 class EulaMixin(DocumentSchema):
-    CURRENT_VERSION = '3.0'  # Set this to the most up to date version of the eula
+    CURRENT_VERSION = EULA_CURRENT_VERSION
     eulas = SchemaListProperty(LicenseAgreement)
 
     @classmethod
@@ -724,16 +726,31 @@ class EulaMixin(DocumentSchema):
     def is_eula_signed(self, version=CURRENT_VERSION):
         if self.is_superuser:
             return True
-        for eula in self.eulas:
-            if eula.version == version:
-                return eula.signed
+        current_domain = getattr(self, 'current_domain', None)
+        current_eula = self.eula
+        if current_eula.version == version:
+            if toggles.FORCE_ANNUAL_TOS.enabled(current_domain):
+                if not current_eula.date:
+                    return False
+                elapsed = datetime.now() - current_eula.date
+                return current_eula.signed and elapsed.days < 365
+            return current_eula.signed
         return False
 
     def get_eula(self, version):
+        current_eula = None
         for eula in self.eulas:
             if eula.version == version:
-                return eula
-        return None
+                if not current_eula or eula.date > current_eula.date:
+                    current_eula = eula
+        return current_eula
+
+    def get_eulas(self):
+        eulas = self.eulas
+        eulas_json = []
+        for eula in eulas:
+            eulas_json.append(eula.to_json())
+        return eulas_json
 
     @property
     def eula(self, version=CURRENT_VERSION):

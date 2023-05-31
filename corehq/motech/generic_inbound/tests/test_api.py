@@ -21,7 +21,7 @@ from corehq.motech.generic_inbound.models import (
     ConfigurableAPI,
     ConfigurableApiValidation,
     ProcessingAttempt,
-    RequestLog,
+    RequestLog, ApiBackendOptions,
 )
 from corehq.motech.generic_inbound.utils import (
     ApiRequest,
@@ -32,11 +32,8 @@ from corehq.motech.generic_inbound.utils import (
 from corehq.util.test_utils import flag_enabled, privilege_enabled
 
 
-@privilege_enabled(privileges.API_ACCESS)
-@flag_enabled('API_THROTTLE_WHITELIST')
-class TestGenericInboundAPIView(TestCase):
+class GenericInboundAPIViewBaseTest(TestCase):
     domain_name = 'ucr-api-test'
-    example_post_data = {'name': 'cricket', 'is_team_sport': True}
 
     @classmethod
     def setUpClass(cls):
@@ -47,11 +44,13 @@ class TestGenericInboundAPIView(TestCase):
 
         cls.api_key, _ = HQApiKey.objects.get_or_create(user=cls.user.get_django_user())
 
-    def _make_api(self, property_expressions, filter_expression=None, validation_expression=None):
+    def _make_api(self, property_expressions, filter_expression=None, validation_expression=None,
+                  backend=ApiBackendOptions.json):
         api = ConfigurableAPI.objects.create(
             domain=self.domain_name,
             filter_expression=self._make_filter(filter_expression),
-            transform_expression=self._make_expression(property_expressions)
+            transform_expression=self._make_expression(property_expressions),
+            backend=backend,
         )
 
         if validation_expression:
@@ -86,11 +85,8 @@ class TestGenericInboundAPIView(TestCase):
             'type': 'dict',
             'properties': {
                 'create': True,
-                'case_type': 'sport',
-                'case_name': {
-                    'type': 'jsonpath',
-                    'jsonpath': 'body.name',
-                },
+                'case_type': 'test-generic-inbound',
+                'case_name': 'test inbound api',
                 'owner_id': {
                     'type': 'jsonpath',
                     'jsonpath': 'user.uuid'
@@ -102,18 +98,58 @@ class TestGenericInboundAPIView(TestCase):
             }
         }
 
+    def _call_api(
+        self,
+        properties_expression,
+        query_params=None,
+        filter_expression=None,
+        validation_expression=None,
+        backend=ApiBackendOptions.json,
+    ):
+        generic_api = self._make_api(
+            properties_expression, filter_expression, validation_expression, backend
+        )
+        return self._call_api_advanced(generic_api, query_params)
+
+    def _call_api_advanced(self, api, query_params=None):
+        url = reverse('generic_inbound_api', args=[self.domain_name, api.url_key])
+        if query_params:
+            url = f"{url}?{urlencode(query_params)}"
+        data, content_type = self._get_post_data()
+        response = self.client.post(
+            url, data=data, content_type=content_type,
+            HTTP_AUTHORIZATION=f"apikey {self.user.username}:{self.api_key.key}",
+            HTTP_USER_AGENT="user agent string",
+        )
+        return response
+    
+    def _get_post_data(self):
+        """Return request POST data as a tuple(data, content_type)"""
+        raise NotImplementedError
+
     @classmethod
     def tearDownClass(cls):
         FormProcessorTestUtils.delete_all_cases_forms_ledgers(cls.domain_name)
         super().tearDownClass()
 
+
+@privilege_enabled(privileges.API_ACCESS)
+@flag_enabled('API_THROTTLE_WHITELIST')
+class TestGenericInboundAPIView(GenericInboundAPIViewBaseTest):
+
+    def _get_post_data(self):
+        return (
+            json.dumps({'name': 'cricket', 'is_team_sport': True}),
+            "application/json"
+        )
+    
     def test_post_denied(self):
         generic_api = self._make_api({})
         url = reverse('generic_inbound_api', args=[self.domain_name, generic_api.url_key])
         response = self.client.post(url, data={})
         self.assertEqual(response.status_code, 401)
 
-    def test_post_not_json(self):
+    def test_post_not_supported_type(self):
         generic_api = self._make_api({})
         url = reverse('generic_inbound_api', args=[self.domain_name, generic_api.url_key])
         response = self.client.post(
@@ -177,28 +213,6 @@ class TestGenericInboundAPIView(TestCase):
         self.assertEqual(response_json['cases'][0]['owner_id'], self.user.get_id)
         return response_json
 
-    def _call_api(
-        self,
-        properties_expression,
-        query_params=None,
-        filter_expression=None,
-        validation_expression=None
-    ):
-        generic_api = self._make_api(properties_expression, filter_expression, validation_expression)
-        return self._call_api_advanced(generic_api, query_params)
-
-    def _call_api_advanced(self, api, query_params=None):
-        url = reverse('generic_inbound_api', args=[self.domain_name, api.url_key])
-        if query_params:
-            url = f"{url}?{urlencode(query_params)}"
-        data = json.dumps(self.example_post_data)
-        response = self.client.post(
-            url, data=data, content_type="application/json",
-            HTTP_AUTHORIZATION=f"apikey {self.user.username}:{self.api_key.key}",
-            HTTP_USER_AGENT="user agent string",
-        )
-        return response
-
     def test_logging(self):
         query_params = {"param": "value"}
         properties_expression = {
@@ -218,7 +232,7 @@ class TestGenericInboundAPIView(TestCase):
         self.assertEqual(log.username, self.user.username)
         self.assertEqual(log.request_method, RequestLog.RequestMethod.POST)
         self.assertEqual(log.request_query, 'param=value')
-        self.assertEqual(log.request_body, json.dumps(self.example_post_data))
+        self.assertEqual(log.request_body, self._get_post_data()[0])
         self.assertIn('CONTENT_TYPE', log.request_headers)
         self.assertEqual(log.request_headers['HTTP_USER_AGENT'], 'user agent string')
         self.assertEqual(log.request_ip, '127.0.0.1')
@@ -227,6 +241,7 @@ class TestGenericInboundAPIView(TestCase):
         self.assertEqual(attempt.is_retry, False)
         self.assertEqual(attempt.response_status, 200)
         self.assertEqual(attempt.raw_response, response_json)
+        self.assertEqual(json.loads(attempt.external_response), response_json)
         self.assertEqual(attempt.xform_id, response_json.get('form_id'))
         self.assertEqual(attempt.case_ids, [response_json.get('cases')[0]['case_id']])
 
@@ -295,7 +310,7 @@ class TestGenericInboundAPIView(TestCase):
         request = self._call_api(properties_expression, query_params).wsgi_request
         log = RequestLog.objects.last()
 
-        original_data = ApiRequest.from_request(request)
+        original_data = ApiRequest.from_request(request, request_id=log.id)
         log_data = ApiRequest.from_log(log)
 
         for k, original_value in attrs.asdict(original_data).items():

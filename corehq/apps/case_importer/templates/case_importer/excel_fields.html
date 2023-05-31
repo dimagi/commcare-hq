@@ -30,6 +30,7 @@
 
   {% initial_page_data 'excel_fields' excel_fields %}
   {% initial_page_data 'case_field_specs' case_field_specs %}
+  {% initial_page_data 'is_bulk_import' is_bulk_import %}
 
   <form action="{% url "excel_commit" domain %}"
         method="post"

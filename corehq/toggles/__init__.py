@@ -701,7 +701,9 @@ CASE_LIST_TILE = StaticToggle(
     'case_list_tile',
     'REC: Allow configuration of the REC case list tile',
     TAG_CUSTOM,
-    [NAMESPACE_DOMAIN]
+    [NAMESPACE_DOMAIN],
+    help_link='https://confluence.dimagi.com/pages/viewpage.action?'
+              'spaceKey=saas&title=Allow+Configuration+of+Case+List+Tiles',
 )
 
 SHOW_PERSIST_CASE_CONTEXT_SETTING = StaticToggle(
@@ -1588,18 +1590,6 @@ ENABLE_ALL_ADD_ONS = StaticToggle(
     [NAMESPACE_DOMAIN]
 )
 
-FILTERED_BULK_USER_DOWNLOAD = StaticToggle(
-    'filtered_bulk_user_download',
-    "Bulk user management features",
-    TAG_SOLUTIONS_OPEN,
-    [NAMESPACE_DOMAIN],
-    help_link='https://confluence.dimagi.com/display/saas/Bulk+User+Management',
-    description="""
-        For mobile users, enables bulk deletion page and bulk lookup page.
-        For web users, enables filtered download page.
-    """
-)
-
 BULK_UPLOAD_DATE_OPENED = StaticToggle(
     'bulk_upload_date_opened',
     "Allow updating of the date_opened field with the bulk uploader",
@@ -1619,15 +1609,6 @@ CUSTOM_ICON_BADGES = StaticToggle(
     'Custom Icon Badges for modules and forms',
     TAG_SOLUTIONS_LIMITED,
     namespaces=[NAMESPACE_DOMAIN],
-)
-
-COMPARE_UCR_REPORTS = DynamicallyPredictablyRandomToggle(
-    'compare_ucr_reports',
-    'Compare UCR reports against other reports or against other databases.',
-    TAG_CUSTOM,
-    namespaces=[NAMESPACE_OTHER],
-    default_randomness=0.001,  # 1 in 1000
-    description='Reports for comparison must be listed in settings.UCR_COMPARISONS.'
 )
 
 MULTI_MASTER_LINKED_DOMAINS = StaticToggle(
@@ -1664,13 +1645,6 @@ TRAINING_MODULE = StaticToggle(
     'training-module',
     'Training Modules',
     TAG_CUSTOM,
-    [NAMESPACE_DOMAIN],
-)
-
-EXPORT_OWNERSHIP = StaticToggle(
-    'export_ownership',
-    'Allow exports to have ownership.',
-    TAG_SOLUTIONS_OPEN,
     [NAMESPACE_DOMAIN],
 )
 
@@ -2370,6 +2344,16 @@ ATTENDANCE_TRACKING = StaticToggle(
     save_fn=_handle_attendance_tracking_role,
 )
 
+GEOSPATIAL = StaticToggle(
+    'geospatial',
+    'Allows access to GIS functionality',
+    TAG_SOLUTIONS_LIMITED,
+    namespaces=[NAMESPACE_DOMAIN],
+    description='Additional views will be added allowing for visually viewing '
+                'and assigning cases on a map.'
+
+)
+
 class FrozenPrivilegeToggle(StaticToggle):
     """
     A special toggle to represent a legacy toggle that should't be
@@ -2504,4 +2488,34 @@ EXPORT_MULTISORT = FrozenPrivilegeToggle(
     tag=TAG_SOLUTIONS_OPEN,
     namespaces=[NAMESPACE_DOMAIN],
     description='Sort multiple rows in exports simultaneously',
+)
+
+EXPORT_OWNERSHIP = FrozenPrivilegeToggle(
+    privileges.EXPORT_OWNERSHIP,
+    'export_ownership',
+    label='Allow exports to have ownership',
+    tag=TAG_SOLUTIONS_OPEN,
+    namespaces=[NAMESPACE_DOMAIN],
+    description='Allow exports to have ownership',
+)
+
+FORCE_ANNUAL_TOS = StaticToggle(
+    'annual_terms_of_service',
+    "USH Specific toggle that forces users to agree to terms of service annually.",
+    TAG_CUSTOM,
+    namespaces=[NAMESPACE_DOMAIN],
+)
+
+FILTERED_BULK_USER_DOWNLOAD = FrozenPrivilegeToggle(
+    privileges.FILTERED_BULK_USER_DOWNLOAD,
+    'filtered_bulk_user_download',
+    label='Bulk user management features',
+    tag=TAG_SOLUTIONS_OPEN,
+    namespaces=[NAMESPACE_DOMAIN],
+    description="""
+        For mobile users, enables bulk deletion page and bulk lookup page.
+        For web users, enables filtered download page.
+    """,
+    # TODO: Move to public wiki
+    help_link='https://confluence.dimagi.com/display/saas/Bulk+User+Management'
 )

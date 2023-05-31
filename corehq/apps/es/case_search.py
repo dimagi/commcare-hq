@@ -39,15 +39,16 @@ from .cases import case_adapter
 from .client import ElasticDocumentAdapter, create_document_adapter
 from .index.analysis import PHONETIC_ANALYSIS
 from .index.settings import IndexSettingsKey
-from .transient_util import get_adapter_mapping
 
 PROPERTY_KEY = "{}.key.exact".format(CASE_PROPERTIES_PATH)
 PROPERTY_VALUE = '{}.{}'.format(CASE_PROPERTIES_PATH, VALUE)
 PROPERTY_VALUE_EXACT = '{}.{}.exact'.format(CASE_PROPERTIES_PATH, VALUE)
 
+HQ_CASE_SEARCH_INDEX_CANONICAL_NAME = "case_search"
+
 
 class CaseSearchES(CaseES):
-    index = "case_search"
+    index = HQ_CASE_SEARCH_INDEX_CANONICAL_NAME
 
     @property
     def builtin_filters(self):
@@ -145,10 +146,12 @@ class ElasticCaseSearch(ElasticDocumentAdapter):
 
     analysis = PHONETIC_ANALYSIS
     settings_key = IndexSettingsKey.CASE_SEARCH
+    canonical_name = HQ_CASE_SEARCH_INDEX_CANONICAL_NAME
 
     @property
     def mapping(self):
-        return get_adapter_mapping(self)
+        from .mappings.case_search_mapping import CASE_SEARCH_MAPPING
+        return CASE_SEARCH_MAPPING
 
     @property
     def model_cls(self):
@@ -159,18 +162,15 @@ class ElasticCaseSearch(ElasticDocumentAdapter):
         """
         Takes in a dict which is result of ``CommCareCase.to_json``
         and applies required transformation to make it suitable for ES.
-        The function is replica of ``transform_case_for_elasticsearch``
-        In future all references to  ``transform_case_for_elasticsearch`` will be replaced by `from_python`
 
         :param case: an instance of ``dict`` which is ``case.to_json()``
         """
         from corehq.pillows.case_search import _get_case_properties
-        from corehq.pillows.mappings.case_search_mapping import CASE_SEARCH_MAPPING
 
         case_dict = deepcopy(case)
         doc = {
             desired_property: case_dict.get(desired_property)
-            for desired_property in CASE_SEARCH_MAPPING['properties'].keys()
+            for desired_property in self.mapping['properties'].keys()
             if desired_property not in SYSTEM_PROPERTIES
         }
         doc[INDEXED_ON] = json_format_datetime(datetime.utcnow())
@@ -388,7 +388,7 @@ def wrap_case_search_hit(hit, include_score=False):
     """Convert case search index hit to CommCareCase
 
     Nearly the opposite of
-    `corehq.pillows.case_search.transform_case_for_elasticsearch`.
+    `corehq.apps.es.case_search.ElasticCaseSearch._from_dict`.
 
     The "case_properties" list of key/value pairs is converted to a dict
     and assigned to `case_json`. 'Secial' case properties are excluded

@@ -98,23 +98,34 @@ def get_user_roles(domain):
 
 def get_data_dictionary(domain):
     data_dictionary = {}
-    for case_type in CaseType.objects.filter(domain=domain):
-        entry = {
+    for case_type_obj in CaseType.objects.filter(domain=domain):
+        case_type = {
             'domain': domain,
-            'description': case_type.description,
-            'fully_generated': case_type.fully_generated
+            'description': case_type_obj.description,
+            'fully_generated': case_type_obj.fully_generated,
+            'groups': {},
         }
+        case_properties = (CaseProperty.objects
+                        .filter(case_type=case_type_obj)
+                        .prefetch_related("group_obj")
+                        .order_by("group_obj__name"))
+        for property in case_properties:
+            group = case_type["groups"].get(property.group_name)
 
-        entry['properties'] = {
-            property.name: {
+            if not group:
+                group = {"properties": {}}
+                if property.group_obj:
+                    group["description"] = property.group_obj.description
+                    group["index"] = property.group_obj.index
+                case_type["groups"][property.group_name] = group
+
+            group["properties"][property.name] = {
                 'description': property.description,
                 'deprecated': property.deprecated,
                 'data_type': property.data_type,
-                'group': property.group
             }
-            for property in CaseProperty.objects.filter(case_type=case_type)}
 
-        data_dictionary[case_type.name] = entry
+        data_dictionary[case_type_obj.name] = case_type
     return data_dictionary
 
 

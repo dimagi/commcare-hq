@@ -1,0 +1,25 @@
+name: commcare-hq dependency metrics
+on:
+  schedule:
+  - cron: "0 0 * * *"
+
+jobs:
+  collect-metrics:
+    runs-on: ubuntu-latest
+    env:
+      REPO: commcare-hq
+      DATADOG_APP_KEY: ${{ secrets.DATADOG_APP_KEY }}
+      DATADOG_API_KEY: ${{ secrets.DATADOG_API_KEY }}
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-python@v4
+        with:
+          python-version: '3.9'
+      - name: install libxml
+        run: sudo apt-get update && sudo apt-get install -y --no-install-recommends libxmlsec1-dev
+      - name: install dev-requirements
+        run: pip install -r requirements/dev-requirements.txt
+      - name: run metrics for pip
+        run: metrics pip --send
+      - name: run metrics for yarn
+        run: metrics yarn --send

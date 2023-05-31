@@ -10,7 +10,6 @@
    "short_url": null,
    "deployment_date": null,
    "user_type": null,
-   "text_input": "roman",
    "secure_submissions": true,
    "build_broken": false,
    "minimum_use_threshold": "15",
@@ -24,7 +23,6 @@
    ],
    "is_released": false,
    "application_version": "2.0",
-   "platform": "nokia/s40",
    "version": 12,
    "admin_password": null,
    "build_spec": {
@@ -41,31 +39,21 @@
        "custom_properties": {
        },
        "features": {
-           "users": "true",
-           "sense": "false"
+           "users": "true"
        },
        "properties": {
            "cc-days-form-retain": "-1",
            "cc-show-saved": "yes",
            "restore-tolerance": "loose",
-           "cc-user-mode": "cc-u-normal",
            "cc-fuzzy-search-enabled": "yes",
            "cc-autoup-freq": "freq-never",
            "purge-freq": "0",
-           "server-tether": "push-only",
            "user_reg_server": "required",
-           "extra_key_action": "audio",
            "log_prop_daily": "log_never",
-           "ViewStyle": "v_chatterbox",
            "cc-resize-images": "none",
-           "cc-entry-mode": "cc-entry-quick",
-           "cc-send-procedure": "cc-send-http",
-           "cc-login-images": "No",
            "log_prop_weekly": "log_short",
            "cc-show-incomplete": "yes",
-           "cc-send-unsent": "cc-su-auto",
            "loose_media": "no",
-           "password_format": "n",
            "unsent-number-limit": "5",
            "cc-content-valid": "no",
            "logenabled": "Enabled"
@@ -160,7 +148,7 @@
                    "lookup_enabled": false,
                    "lookup_extras": [
                    ],
-                   "use_case_tiles": null,
+                   "case_tile_template": null,
                    "pull_down_tile": null,
                    "lookup_action": null,
                    "display": "short",
@@ -184,7 +172,7 @@
                    "lookup_enabled": false,
                    "lookup_extras": [
                    ],
-                   "use_case_tiles": null,
+                   "case_tile_template": null,
                    "pull_down_tile": null,
                    "lookup_action": null,
                    "display": "long",
@@ -405,7 +393,7 @@
                    "custom_xml": null,
                    "lookup_enabled": false,
                    "pull_down_tile": null,
-                   "use_case_tiles": null,
+                   "case_tile_template": null,
                    "lookup_extras": [
                    ],
                    "lookup_action": null,
@@ -458,7 +446,7 @@
                    "custom_xml": null,
                    "lookup_enabled": false,
                    "pull_down_tile": null,
-                   "use_case_tiles": null,
+                   "case_tile_template": null,
                    "lookup_extras": [
                    ],
                    "lookup_action": null,
