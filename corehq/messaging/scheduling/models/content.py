@@ -5,6 +5,7 @@ from datetime import datetime
 
 from django.core.exceptions import ValidationError
 from django.core.validators import validate_email
+from django.utils.translation import gettext as _, gettext_lazy
 
 from corehq import toggles
 from corehq.apps.accounting.utils import domain_is_on_trial
@@ -478,3 +479,42 @@ class CustomContent(Content):
             logged_subevent.error(MessagingEvent.ERROR_CANNOT_RENDER_MESSAGE, additional_error_text=str(error))
             raise
         logged_subevent.completed()
+
+
+class FCMNotificationContent(Content):
+    ACTION_CHOICES = [
+        ('SYNC', _('Background Sync'))
+    ]
+
+    MESSAGE_TYPE_NOTIFICATION = 'NOTIFICATION'
+    MESSAGE_TYPE_DATA = 'DATA'
+
+    MESSAGE_TYPES = [
+        (MESSAGE_TYPE_NOTIFICATION, _('Display Messages')),
+        (MESSAGE_TYPE_DATA, _('Data Messages'))
+    ]
+    # subject and message corresponds to 'title' and 'body' respectively in FCM terms.
+    subject = old_jsonfield.JSONField(default=dict)
+    message = old_jsonfield.JSONField(default=dict)
+    action = models.CharField(null=True, choices=ACTION_CHOICES, max_length=25)
+    message_type = models.CharField(choices=MESSAGE_TYPES, max_length=25)
+    
+
+    def create_copy(self):
+        """
+        See Content.create_copy() for docstring
+        """
+        return FCMNotificationContent(
+            subject=deepcopy(self.subject),
+            message=deepcopy(self.message),
+            action=self.action,
+            message_type=self.message_type
+        )
+
+    def render_subject_and_message(self, subject, message, recipient):
+        renderer = self.get_template_renderer(recipient)
+        return renderer.render(subject), renderer.render(message)
+
+    def send(self, recipient, logged_event, phone_entry=None):
+        # TODO
+        pass
