@@ -68,7 +68,7 @@ hqDefine("reports/js/filters/case_list_explorer_knockout_bindings", ['jquery', '
                     callback(null, _.map(caseProperties, function (suggestion) {
                         var currentLabelLength = suggestion.name.length,
                             metaText = suggestion.case_type || suggestion.meta_type,
-                            currentMetaLength = metaText.length,
+                            currentMetaLength = metaText ? metaText.length : 0,
                             minPopupWidth = currentLabelLength * 6.5 + currentMetaLength * 5.2;
                         if (minPopupWidth > newPopupWidth) {
                             newPopupWidth = minPopupWidth;
