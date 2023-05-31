@@ -81,6 +81,7 @@ API_LIST = (
         v0_5.ODataFormResource,
         LookupTableResource,
         LookupTableItemResource,
+        v0_5.NavigationEventAuditResource,
     )),
     ((0, 6), (
         locations.v0_6.LocationResource,
