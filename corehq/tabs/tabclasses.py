@@ -30,6 +30,7 @@ from corehq.apps.app_manager.dbaccessors import (
 )
 from corehq.apps.app_manager.util import is_remote_app
 from corehq.apps.builds.views import EditMenuView
+from corehq.apps.domain.models import Domain
 from corehq.apps.domain.views.internal import ProjectLimitsView
 from corehq.apps.domain.views.releases import ManageReleasesByLocation
 from corehq.apps.enterprise.dispatcher import EnterpriseReportDispatcher
@@ -2170,20 +2171,19 @@ class MySettingsTab(UITab):
                 'url': reverse(MyProjectsList.urlname),
             })
 
-        menu_items.extend([
-            {
-                'title': _(ChangeMyPasswordView.page_title),
-                'url': reverse(ChangeMyPasswordView.urlname),
-            },
-            {
+        menu_items.append({
+            'title': _(ChangeMyPasswordView.page_title),
+            'url': reverse(ChangeMyPasswordView.urlname),
+        })
+        if Domain.active_for_couch_user(self.couch_user):
+            menu_items.append({
                 'title': _(TwoFactorProfileView.page_title),
                 'url': reverse(TwoFactorProfileView.urlname),
-            },
-            {
-                'title': _(ApiKeyView.page_title),
-                'url': reverse(ApiKeyView.urlname),
-            },
-        ])
+            })
+        menu_items.append({
+            'title': _(ApiKeyView.page_title),
+            'url': reverse(ApiKeyView.urlname),
+        })
 
         if EnableMobilePrivilegesView.is_user_authorized(self.couch_user):
             menu_items.append({

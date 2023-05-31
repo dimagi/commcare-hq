@@ -211,7 +211,6 @@ class EditCommCareUserView(BaseEditUserView):
             'edit_user_form_title': self.edit_user_form_title,
             'strong_mobile_passwords': self.request.project.strong_mobile_passwords,
             'has_any_sync_logs': self.has_any_sync_logs,
-            'token': self.backup_token,
         })
         return context
 
@@ -834,7 +833,7 @@ class MobileWorkerListView(JSONResponseMixin, BaseUserSettingsView):
             last_name=last_name,
             metadata=self.custom_data.get_data_to_save(),
             is_account_confirmed=is_account_confirmed,
-            location=SQLLocation.objects.get(location_id=location_id) if location_id else None,
+            location=SQLLocation.objects.get(domain=self.domain, location_id=location_id) if location_id else None,
             role_id=role_id
         )
 

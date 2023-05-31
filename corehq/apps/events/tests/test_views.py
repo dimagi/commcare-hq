@@ -1,7 +1,7 @@
 from contextlib import contextmanager
 from datetime import datetime
 from unittest.mock import patch
-import json
+import uuid
 
 from django.test import TestCase
 from django.urls import reverse
@@ -22,6 +22,7 @@ from ..views import (
     AttendeesConfigView,
     ConvertMobileWorkerAttendeesView,
     AttendeeDeleteView,
+    EventEditView
 )
 
 
@@ -127,6 +128,57 @@ class TestEventsListView(BaseEventViewTestClass):
 
         response = self.client.get(self.endpoint)
         self.assertEqual(response.status_code, 200)
+
+
+@flag_enabled('ATTENDANCE_TRACKING')
+class TestEventsEditView(BaseEventViewTestClass):
+
+    urlname = EventEditView.urlname
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        today = datetime.utcnow()
+        cls.event = Event(
+            domain=cls.domain,
+            name='test-event',
+            start_date=today,
+            end_date=today,
+            attendance_target=10
+        )
+        cls.event.save()
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.event.delete()
+        super().tearDownClass()
+
+    def _get_response(self, event_id=None):
+        if not event_id:
+            event_id = uuid.uuid4()
+        endpoint = reverse(self.urlname, args=(self.domain, event_id))
+        response = self.client.get(endpoint)
+        return response
+
+    def test_user_does_not_have_permission(self):
+        self.log_user_in(self.non_admin_webuser)
+        response = self._get_response(self.event.event_id)
+        self.assertEqual(response.status_code, 404)
+
+    def test_user_is_domain_admin(self):
+        self.log_user_in(self.admin_webuser)
+        response = self._get_response(self.event.event_id)
+        self.assertEqual(response.status_code, 200)
+
+    def test_non_admin_user_with_appropriate_role(self):
+        self.log_user_in(self.role_webuser)
+        response = self._get_response(self.event.event_id)
+        self.assertEqual(response.status_code, 200)
+
+    def test_event_not_found(self):
+        self.log_user_in(self.admin_webuser)
+        response = self._get_response()
+        self.assertEqual(response.status_code, 404)
 
 
 class TestEventsCreateView(BaseEventViewTestClass):

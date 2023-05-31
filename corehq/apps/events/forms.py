@@ -16,8 +16,12 @@ from corehq.apps.locations.forms import LocationSelectWidget
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.locations.util import get_locations_from_ids
 from corehq.apps.reports.filters.users import ExpandedMobileWorkerFilter
-from corehq.apps.users.dbaccessors import get_all_commcare_users_by_domain
+from corehq.apps.users.dbaccessors import (
+    get_all_commcare_users_by_domain,
+    get_mobile_users_by_filters,
+)
 from corehq.apps.users.forms import PrimaryLocationWidget
+from corehq.apps.users.util import raw_username
 
 from .models import EVENT_IN_PROGRESS, EVENT_NOT_STARTED, AttendeeModel
 
@@ -42,6 +46,10 @@ class EventForm(forms.Form):
     end_date = forms.DateField(
         label=_('End Date'),
         required=False
+    )
+    location_id = forms.CharField(
+        label=_('Location'),
+        required=False,
     )
     attendance_target = forms.IntegerField(
         label=_("Attendance target"),
@@ -80,7 +88,7 @@ class EventForm(forms.Form):
             self.title_prefix = "Add"
 
         super().__init__(*args, **kwargs)
-
+        self._init_location_id()
         fields_should_be_available = self.determine_field_availability(self.event)
         tracking_option_data_bind = "checked: trackingOption"
         if fields_should_be_available['tracking_option']:
@@ -100,8 +108,15 @@ class EventForm(forms.Form):
                         css_class='col-sm-4',
                     ),
                     crispy.Field('end_date', data_bind="value: endDate"),
-                    crispy.Field('attendance_target', data_bind="value: attendanceTarget"),
-                    crispy.Field('sameday_reg', data_bind="checked: sameDayRegistration"),
+                    crispy.Field('location_id'),
+                    crispy.Field(
+                        'attendance_target',
+                        data_bind="value: attendanceTarget",
+                    ),
+                    crispy.Field(
+                        'sameday_reg',
+                        data_bind="checked: sameDayRegistration",
+                    ),
                     crispy.Div(
                         crispy.Field(
                             'tracking_option',
@@ -117,7 +132,7 @@ class EventForm(forms.Form):
             )
         )
 
-        self.fields['expected_attendees'].choices = self.get_attendee_choices()
+        self.fields['expected_attendees'].choices = self._get_attendee_choices()
         self.fields['attendance_takers'].choices = self._get_possible_attendance_takers_ids()
 
         self.fields['name'].disabled = not fields_should_be_available['name']
@@ -140,6 +155,7 @@ class EventForm(forms.Form):
             'name': not_started,
             'start_date': not_started,
             'end_date': not_completed,
+            'location_id': no_attendance,
             'attendance_target': no_attendance,
             'sameday_reg': not_completed,
             'tracking_option': no_attendance,
@@ -152,6 +168,7 @@ class EventForm(forms.Form):
             'name': self['name'].value(),
             'start_date': self['start_date'].value(),
             'end_date': self['end_date'].value(),
+            'location_id': self['location_id'].value(),
             'attendance_target': self['attendance_target'].value(),
             'sameday_reg': self['sameday_reg'].value(),
             'tracking_option': self['tracking_option'].value(),
@@ -164,6 +181,7 @@ class EventForm(forms.Form):
             'name': event.name,
             'start_date': event.start_date,
             'end_date': event.end_date,
+            'location_id': event.location_id,
             'attendance_target': event.attendance_target,
             'sameday_reg': event.sameday_reg,
             'tracking_option': TRACK_BY_DAY if event.track_each_day else TRACK_BY_EVENT,
@@ -202,16 +220,37 @@ class EventForm(forms.Form):
 
         return cleaned_data
 
-    def get_attendee_choices(self):
-        return [
-            (model.case_id, model.name)
-            for model in AttendeeModel.objects.by_domain(self.domain)
-        ]
+    def _init_location_id(self):
+        widget = LocationSelectWidget(
+            self.domain,
+            id='id_location_id',
+            placeholder=_("All Locations"),
+            attrs={'data-bind': 'value: locationId'},
+        )
+        widget.query_url = f"{widget.query_url}?show_all=true"
+        help_text = ExpandedMobileWorkerFilter.location_search_help
+        self.fields['location_id'].widget = widget
+        self.fields['location_id'].help_text = help_text
+
+    def _get_attendee_choices(self):
+        if self.event and self.event.location_id:
+            models = AttendeeModel.objects.by_location_id(
+                self.domain,
+                self.event.location_id,
+            )
+        else:
+            models = AttendeeModel.objects.by_domain(self.domain)
+        return [(m.case_id, m.name) for m in models]
 
     def _get_possible_attendance_takers_ids(self):
-        return [
-            (user.user_id, user.username) for user in get_all_commcare_users_by_domain(self.domain)
-        ]
+        if self.event and self.event.location_id:
+            users = get_mobile_users_by_filters(
+                self.domain,
+                {'location_id': self.event.location_id},
+            )
+        else:
+            users = get_all_commcare_users_by_domain(self.domain)
+        return [(u.user_id, raw_username(u.username)) for u in users]
 
 
 class NewAttendeeForm(forms.Form):

@@ -55,9 +55,10 @@ hqDefine("app_manager/js/details/screen", function () {
         self.containsSearchConfiguration = options.containsSearchConfiguration;
         self.containsCustomXMLConfiguration = options.containsCustomXMLConfiguration;
         self.allowsTabs = options.allowsTabs;
-        self.useCaseTiles = ko.observable(spec[self.columnKey].use_case_tiles ? "yes" : "no");
+        self.caseTileFields = options.caseTileFields;
+        self.caseTileTemplate = ko.observable(spec[self.columnKey].case_tile_template ? "yes" : "no");
         self.showCaseTileColumn = ko.computed(function () {
-            return self.useCaseTiles() === "yes" && hqImport('hqwebapp/js/toggles').toggleEnabled('CASE_LIST_TILE');
+            return self.caseTileTemplate() === "yes" && hqImport('hqwebapp/js/toggles').toggleEnabled('CASE_LIST_TILE');
         });
         self.persistCaseContext = ko.observable(spec[self.columnKey].persist_case_context || false);
         self.persistentCaseContextXML = ko.observable(spec[self.columnKey].persistent_case_context_xml || 'case_name');
@@ -181,7 +182,7 @@ hqDefine("app_manager/js/details/screen", function () {
         self.on('change', function () {
             self.saveButton.fire('change');
         });
-        self.useCaseTiles.subscribe(function () {
+        self.caseTileTemplate.subscribe(function () {
             self.saveButton.fire('change');
         });
         self.persistCaseContext.subscribe(function () {
@@ -332,7 +333,7 @@ hqDefine("app_manager/js/details/screen", function () {
                 }
             ));
 
-            data.useCaseTiles = self.useCaseTiles() === "yes";
+            data.caseTileTemplate = self.caseTileTemplate() === "yes" ? "person_simple" : null;
             data.persistCaseContext = self.persistCaseContext();
             data.persistentCaseContextXML = self.persistentCaseContextXML();
             data.persistTileOnForms = self.persistTileOnForms();

@@ -1048,6 +1048,7 @@ msgstr ""
 #: corehq/motech/forms.py
 #: corehq/motech/generic_inbound/templates/generic_inbound/api_edit.html
 #: corehq/motech/repeaters/templates/repeaters/partials/repeater_row.html
+#: corehq/motech/repeaters/templates/repeaters/repeat_record_report.html
 #: corehq/motech/templates/motech/connection_settings.html
 msgid "Cancel"
 msgstr "Cancelar"
@@ -4952,6 +4953,10 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/app_manager/static_strings.py
+msgid "What the 'Extra Key' (# on Nokia Phones) does when pressed"
+msgstr ""
+
+#: corehq/apps/app_manager/static_strings.py
 msgid ""
 "When a value is selected, this feature controls the display size of any user-"
 "provided image such that it will be consistent with the size of the original "
@@ -5921,15 +5926,6 @@ msgid ""
 "appears to be pointing\n"
 "                to a menu using \"Display only forms,\" which makes that "
 "menu an invalid choice.\n"
-"              "
-msgstr ""
-
-#: corehq/apps/app_manager/templates/app_manager/partials/build_errors.html
-msgid ""
-"\n"
-"                Linking for a form in a multi-select case list is restricted "
-"to multi-select forms only.\n"
-"                Please ensure your form is multi-select.\n"
 "              "
 msgstr ""
 
@@ -10818,17 +10814,21 @@ msgid ""
 "\n"
 "      <p>\n"
 "        <i class=\"fa fa-warning\"></i>\n"
-"        A bulk case import for multiple case types has been detected. For "
-"bulk case imports:\n"
+"        A bulk case import for multiple case types has been detected. This "
+"is because every sheet name in\n"
+"        the Excel file matches a case type in the project. If this is "
+"incorrect, then please rename at least\n"
+"        one Excel sheet so that not all sheet names match case types in the "
+"project.\n"
 "      </p>\n"
-"      <ul>\n"
-"        <li>Excel mapping is disabled.</li>\n"
-"        <li>New cases for new case types cannot be created.</li>\n"
-"      </ul>\n"
 "      <p>\n"
-"        If this is incorrect, then please rename the Excel sheets so that "
-"they do not share the same\n"
-"        name as the case types in the project.\n"
+"        Documentation for bulk case imports can be found on our\n"
+"        <a\n"
+"          href=\"https://confluence.dimagi.com/display/commcarepublic/"
+"Updating+Cases+-+Update+multiple+case+types+in+a+single+Excel+import\"\n"
+"          target=\"_blank\">\n"
+"          help page for this feature.\n"
+"        </a>\n"
 "      </p>\n"
 "      "
 msgstr ""
@@ -10868,6 +10868,14 @@ msgstr ""
 
 #: corehq/apps/case_importer/templates/case_importer/excel_config.html
 msgid "Create new records if there is no matching case"
+msgstr ""
+
+#: corehq/apps/case_importer/templates/case_importer/excel_config.html
+msgid ""
+"\n"
+"            Selecting a case type, excel column, or corresponding case field "
+"is disabled when doing a bulk case import.\n"
+"          "
 msgstr ""
 
 #: corehq/apps/case_importer/templates/case_importer/excel_config.html
@@ -14248,7 +14256,6 @@ msgid "HIPAA compliant"
 msgstr ""
 
 #: corehq/apps/domain/forms.py corehq/apps/settings/views.py
-#: corehq/apps/users/templates/users/edit_commcare_user.html
 msgid "Two Factor Authentication"
 msgstr ""
 
@@ -17923,10 +17930,8 @@ msgid "User conversion failed for some reason and we have noted this failure."
 msgstr ""
 
 #: corehq/apps/events/views.py
-#, fuzzy
-#| msgid "Go back to Mobile Workers"
 msgid "Go back to view attendees"
-msgstr "Voltar para Trabalhadores Móveis"
+msgstr ""
 
 #: corehq/apps/events/views.py
 msgid "Mobile workers can now also be selected to attend events."
@@ -20486,6 +20491,14 @@ msgstr ""
 msgid "File has been uploaded successfully and is queued for processing."
 msgstr ""
 
+#: corehq/apps/geospatial/views.py corehq/tabs/tabclasses.py
+msgid "Geospatial"
+msgstr ""
+
+#: corehq/apps/geospatial/views.py corehq/tabs/tabclasses.py
+msgid "Map Visualization"
+msgstr ""
+
 #: corehq/apps/groups/templates/groups/all_groups.html
 #: corehq/apps/reports/filters/users.py
 #: corehq/apps/reports/templates/reports/project_health/user_details.html
@@ -21291,10 +21304,8 @@ msgid "Automatic Case Update Rule"
 msgstr ""
 
 #: corehq/apps/hqcase/utils.py
-#, fuzzy
-#| msgid "Application Type"
 msgid "Deduplication Rule"
-msgstr "Tipo de Aplicação"
+msgstr ""
 
 #: corehq/apps/hqcase/utils.py
 msgid "DHIS2 Integration"
@@ -36132,11 +36143,6 @@ msgid "User Location"
 msgstr ""
 
 #: corehq/apps/users/templates/users/edit_commcare_user.html
-#: corehq/apps/users/templates/users/edit_web_user.html
-msgid "Backup Token"
-msgstr ""
-
-#: corehq/apps/users/templates/users/edit_commcare_user.html
 msgid "Force Full Refresh on next Mobile Sync"
 msgstr "Forçar Atualização Completa na próxima Sincronização Móvel"
 
@@ -40361,12 +40367,24 @@ msgstr ""
 msgid "Auth type '{}' requires a username."
 msgstr ""
 
-#: corehq/motech/generic_inbound/core.py
+#: corehq/motech/generic_inbound/backend/base.py
 msgid "Unexpected type for transformed request"
+msgstr ""
+
+#: corehq/motech/generic_inbound/backend/hl7.py
+msgid "Error parsing HL7: {}"
+msgstr ""
+
+#: corehq/motech/generic_inbound/backend/json.py
+msgid "Payload must be valid JSON"
 msgstr ""
 
 #: corehq/motech/generic_inbound/forms.py
 msgid "Create a new API"
+msgstr ""
+
+#: corehq/motech/generic_inbound/forms.py
+msgid "Input Data Type"
 msgstr ""
 
 #: corehq/motech/generic_inbound/forms.py
@@ -40375,6 +40393,15 @@ msgstr ""
 
 #: corehq/motech/generic_inbound/forms.py corehq/tabs/tabclasses.py
 msgid "Filters and Expressions"
+msgstr ""
+
+#: corehq/motech/generic_inbound/models.py
+#: corehq/motech/repeaters/repeater_generators.py
+msgid "JSON"
+msgstr ""
+
+#: corehq/motech/generic_inbound/models.py
+msgid "HL7 v2"
 msgstr ""
 
 #: corehq/motech/generic_inbound/models.py
@@ -40461,10 +40488,6 @@ msgstr ""
 
 #: corehq/motech/generic_inbound/utils.py
 msgid "Unable to decode request body"
-msgstr ""
-
-#: corehq/motech/generic_inbound/utils.py
-msgid "Payload must be valid JSON"
 msgstr ""
 
 #: corehq/motech/generic_inbound/views.py
@@ -40842,11 +40865,11 @@ msgid "XML"
 msgstr ""
 
 #: corehq/motech/repeaters/repeater_generators.py
-msgid "JSON"
+msgid "Python dictionary"
 msgstr ""
 
-#: corehq/motech/repeaters/repeater_generators.py
-msgid "Python dictionary"
+#: corehq/motech/repeaters/templates/repeaters/partials/attempt_history.html
+msgid "No attempts exist for this record."
 msgstr ""
 
 #: corehq/motech/repeaters/templates/repeaters/partials/attempt_history.html
@@ -40918,15 +40941,24 @@ msgid ""
 msgstr ""
 
 #: corehq/motech/repeaters/templates/repeaters/repeat_record_report.html
-msgid "Resend selected"
+msgid "Resend selected records"
 msgstr ""
 
 #: corehq/motech/repeaters/templates/repeaters/repeat_record_report.html
-msgid "Cancel selected"
+#: corehq/motech/repeaters/views/repeat_records.py
+msgid "Resend"
 msgstr ""
 
 #: corehq/motech/repeaters/templates/repeaters/repeat_record_report.html
-msgid "Requeue selected"
+msgid "Cancel selected records"
+msgstr ""
+
+#: corehq/motech/repeaters/templates/repeaters/repeat_record_report.html
+msgid "Requeue selected records"
+msgstr ""
+
+#: corehq/motech/repeaters/templates/repeaters/repeat_record_report.html
+msgid "Requeue"
 msgstr ""
 
 #: corehq/motech/repeaters/templates/repeaters/repeat_record_report.html
@@ -41002,15 +41034,13 @@ msgid "Retry Date"
 msgstr ""
 
 #: corehq/motech/repeaters/views/repeat_records.py
-msgid "Delivery Attempts"
-msgstr ""
+#, fuzzy
+#| msgid "View Case"
+msgid "View Responses"
+msgstr "Ver Caso"
 
 #: corehq/motech/repeaters/views/repeat_records.py
 msgid "View payload"
-msgstr ""
-
-#: corehq/motech/repeaters/views/repeat_records.py
-msgid "Resend"
 msgstr ""
 
 #: corehq/motech/repeaters/views/repeat_records.py
@@ -41349,6 +41379,10 @@ msgstr ""
 msgid "Sort multiple rows in exports simultaneously"
 msgstr ""
 
+#: corehq/privileges.py
+msgid "Allow exports to have ownership"
+msgstr ""
+
 #: corehq/reports.py
 msgid "Report Builder Reports"
 msgstr ""
@@ -41626,6 +41660,14 @@ msgstr ""
 
 #: corehq/tabs/tabclasses.py
 msgid "Manage Attendance Tracking Events"
+msgstr ""
+
+#: corehq/tabs/tabclasses.py
+msgid "View Map"
+msgstr ""
+
+#: corehq/tabs/tabclasses.py
+msgid "Visually view and manage cases on a map"
 msgstr ""
 
 #: corehq/trans_override.py
