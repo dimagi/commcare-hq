@@ -23,9 +23,10 @@ from corehq.apps.data_dictionary import util
 from corehq.apps.data_dictionary.models import (
     CaseProperty,
     CasePropertyAllowedValue,
+    CasePropertyGroup,
     CaseType,
 )
-from corehq.apps.data_dictionary.util import save_case_property
+from corehq.apps.data_dictionary.util import save_case_property, save_case_property_group
 from corehq.apps.domain.decorators import login_and_domain_required
 from corehq.apps.hqwebapp.decorators import use_jquery_ui
 from corehq.apps.hqwebapp.utils import get_bulk_upload_form
@@ -59,7 +60,8 @@ def data_dictionary_json(request, domain, case_type_name=None):
     fhir_resource_type_name_by_case_type = {}
     fhir_resource_prop_by_case_prop = {}
     queryset = CaseType.objects.filter(domain=domain).prefetch_related(
-        Prefetch('properties', queryset=CaseProperty.objects.order_by('name')),
+        Prefetch('groups', queryset=CasePropertyGroup.objects.order_by('index')),
+        Prefetch('properties', queryset=CaseProperty.objects.order_by('index')),
         Prefetch('properties__allowed_values', queryset=CasePropertyAllowedValue.objects.order_by('allowed_value'))
     )
     if toggles.FHIR_INTEGRATION.enabled(domain):
@@ -71,20 +73,48 @@ def data_dictionary_json(request, domain, case_type_name=None):
         p = {
             "name": case_type.name,
             "fhir_resource_type": fhir_resource_type_name_by_case_type.get(case_type),
+            "groups": [],
             "properties": [],
         }
-        for prop in case_type.properties.all():
-            p['properties'].append({
-                "description": prop.description,
-                "label": prop.label,
-                "index": prop.index,
-                "fhir_resource_prop_path": fhir_resource_prop_by_case_prop.get(prop),
-                "name": prop.name,
-                "data_type": prop.data_type,
-                "group": prop.group_name,
-                "deprecated": prop.deprecated,
-                "allowed_values": {av.allowed_value: av.description for av in prop.allowed_values.all()},
-            })
+        for group in case_type.groups.all():
+            group_ret = {
+                "id": group.id,
+                "name": group.name,
+                "description": group.description,
+                "deprecated": group.deprecated,
+                "properties": []
+            }
+
+            group_properties = sorted(
+                [prop for prop in case_type.properties.all() if prop.group_name == group.name],
+                key=lambda _prop: _prop.index
+            )
+            for prop in group_properties:
+                group_ret['properties'].append({
+                    "description": prop.description,
+                    "label": prop.label,
+                    "fhir_resource_prop_path": fhir_resource_prop_by_case_prop.get(prop),
+                    "name": prop.name,
+                    "data_type": prop.data_type,
+                    "deprecated": prop.deprecated,
+                    "allowed_values": {av.allowed_value: av.description for av in prop.allowed_values.all()},
+                })
+
+            p["groups"].append(group_ret)
+
+        # Aggregate properties that dont have a group
+        p["groups"].append({
+            "name": "",
+            "properties": [{
+                    "description": prop.description,
+                    "label": prop.label,
+                    "fhir_resource_prop_path": fhir_resource_prop_by_case_prop.get(prop),
+                    "name": prop.name,
+                    "data_type": prop.data_type,
+                    "deprecated": prop.deprecated,
+                    "allowed_values": {av.allowed_value: av.description for av in prop.allowed_values.all()},
+            } for prop in case_type.properties.all() if not prop.group]
+        })
         props.append(p)
     return JsonResponse({'case_types': props})
 
@@ -118,10 +148,25 @@ def update_case_property(request, domain):
     errors = []
     update_fhir_resources = toggles.FHIR_INTEGRATION.enabled(domain)
     property_list = json.loads(request.POST.get('properties'))
+    group_list = json.loads(request.POST.get('groups'))
 
     if update_fhir_resources:
         errors, fhir_resource_type_obj = _update_fhir_resource_type(request, domain)
     if not errors:
+        for group in group_list:
+            case_type = group.get("caseType")
+            id = group.get("id")
+            name = group.get("name")
+            index = group.get("index")
+            description = group.get("description")
+            deprecated = group.get("deprecated")
+
+            if name:
+                error = save_case_property_group(id, name, case_type, domain, description, index, deprecated)
+
+            if error:
+                errors.append(error)
+
         for property in property_list:
             case_type = property.get('caseType')
             name = property.get('name')
