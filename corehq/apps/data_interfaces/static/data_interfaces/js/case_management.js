@@ -173,7 +173,11 @@ hqDefine("data_interfaces/js/case_management",[
                         sensitive_properties: JSON.parse(sensitiveProperties)
                     }),
                     contentType: "application/json",
-                    success: updateCaseRowCopy(self.selectedCases(), newOwner, ownerType)
+                    success: updateCaseRowCopy(self.selectedCases(), newOwner, ownerType),
+                    error: function (response) {
+                        self.clearCaseSelection();
+                        hqImport('hqwebapp/js/alert_user').alert_user(response.responseText, "danger");
+                    }
                 });
             }
         };

@@ -215,12 +215,14 @@ def copy_cases(request, domain, *args, **kwargs):
     if not new_owner:
         return HttpResponseBadRequest("Missing new owner id")
 
-    props = {prop['name']: prop['label'] for prop in body['sensitive_properties']}
-    _, _ = CaseHelper(domain=domain).copy_cases(
-        domain=domain,
-        case_ids=case_ids,
-        to_owner=new_owner,
-        replace_props=props,
-    )
-
-    return JsonResponse({})
+    props = {prop['name']: prop['label'] for prop in body.get('sensitive_properties', [])}
+    try:
+        _, _ = CaseHelper(domain=domain).copy_cases(
+            domain=domain,
+            case_ids=case_ids,
+            to_owner=new_owner,
+            replace_props=props,
+        )
+        return JsonResponse({})
+    except Exception as e:
+        return HttpResponseBadRequest(str(e))
