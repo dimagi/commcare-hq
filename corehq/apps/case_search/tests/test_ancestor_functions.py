@@ -165,8 +165,8 @@ class TestAncestorQueries(BaseCaseSearchTest):
         self.assertItemsEqual(query1.get_ids(), ['a1'])
 
     @generate_cases([
-        ("ancestor_exists(status='active' and subcase-exists('parent', city = 'LA'))",),
-        ("ancestor_exists(status='active' and subcase-count('parent', city = 'LA')) > 3",),
+        ("ancestor-exists(status='active' and subcase-exists('parent', city = 'LA'))",),
+        ("ancestor-exists(status='active' and subcase-count('parent', city = 'LA')) > 3",),
     ])
     def test_search_criteria_validate(self, xpath):
         with assert_raises(CaseFilterError):
