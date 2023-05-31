@@ -100,13 +100,6 @@ hqDefine("geospatial/js/geospatial_map", [
                 clickedMarker.addTo(map);
             }
 
-            function showCreateCasePopup(coordinates) {
-                new mapboxgl.Popup()
-                .setLngLat(coordinates)
-                .setHTML(coordinates + '<br/><button> Create Case at this point </button>')
-                .addTo(map);
-            }
-
             // Handle click events here
             map.on('click', (event) => {
                 let coordinates = getCoordinates(event);
