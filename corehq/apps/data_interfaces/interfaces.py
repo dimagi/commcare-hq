@@ -154,38 +154,6 @@ class CaseCopyInterface(CaseReassignmentInterface):
     action_text = gettext_lazy("Copy")
 
     @property
-    def headers(self):
-        headers = DataTablesHeader(
-            DataTablesColumn(mark_safe(  # nosec: no user input
-                'Select  <a href="#" class="select-all btn btn-xs btn-default">all'
-                '</a> <a href="#" class="select-none btn btn-xs btn-default">'
-                'none</a>'), sortable=False, span=2),
-            DataTablesColumn(_("Case Name"), span=3, prop_name="name.exact"),
-            DataTablesColumn(_("Case Type"), span=2, prop_name="type.exact"),
-            DataTablesColumn(_("Owner"), span=2, prop_name="owner_display", sortable=False),
-        )
-        return headers
-
-    @property
-    def rows(self):
-        checkbox_format = ('<input type="checkbox" class="selected-commcare-case"'
-            ' data-caseid="{case_id}" data-owner="{owner}" data-ownertype="{owner_type}" />')
-
-        for row in self.es_results['hits'].get('hits', []):
-            es_case = self.get_case(row)
-            display = CaseDisplayES(es_case, self.timezone, self.individual)
-            yield [
-                format_html(
-                    checkbox_format,
-                    case_id=es_case['_id'],
-                    owner=display.owner_id,
-                    owner_type=display.owner_type),
-                display.case_link,
-                display.case_type,
-                display.owner_display,
-            ]
-
-    @property
     def template_context(self):
         context = super(CaseReassignmentInterface, self).template_context
         context.update({

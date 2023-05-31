@@ -207,20 +207,6 @@ class DeviceLogIds(DeviceLogFilter):
 @location_safe
 def copy_cases(request, domain, *args, **kwargs):
     body = json.loads(request.body)
-    print(body)
-    # {
-    #     'case_ids': [
-    #         'c6eb081166854fdab9ef8cef4697b450',
-    #         '6522c518-23bb-4694-a0ae-918fc9e80230',
-    #         '24c81a19-174f-43b6-b2f3-f26427bdca26',
-    #         '35e748da-ef60-4373-bf1a-7e8212458b47'
-    #     ],
-    #     'owner_id': '607f90af4fa84c6dac415ddcd2c58498',
-    #     'sensitive_properties': [
-    #         {'name': 'case_name', 'label': 'case_name'},
-    #         {'name': 'age', 'label': 'age'}
-    #     ]
-    # }
     case_ids = body['case_ids']
     if not case_ids:
         return HttpResponseBadRequest("Missing case ids")
@@ -230,14 +216,11 @@ def copy_cases(request, domain, *args, **kwargs):
         return HttpResponseBadRequest("Missing new owner id")
 
     props = {prop['name']: prop['label'] for prop in body['sensitive_properties']}
-
-    helper = CaseHelper(domain=domain)
-    _, cases_copied = helper.copy_cases(
+    _, _ = CaseHelper(domain=domain).copy_cases(
+        domain=domain,
         case_ids=case_ids,
         to_owner=new_owner,
         replace_props=props,
     )
 
-    return JsonResponse({
-        'cases_copied': len(cases_copied)
-    })
+    return JsonResponse({})

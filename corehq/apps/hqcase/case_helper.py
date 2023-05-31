@@ -173,6 +173,15 @@ class CaseHelper:
         Copies the cases governed by 'case_ids' to the respective 'to_owner'
         and replacing the relevant case properties with the specified 'replace_props'
         on the copied cases (useful for hiding sensitive data).
+
+            Parameters:
+                domain: the domain string
+                case_ids: case ids of the cases to copy
+                to_owner: the owner to copy the cases to
+                replace_props: the properties to be replaced specified as a dict
+
+            Returns:
+                Tuple with the copied case ids and their original counterparts
         """
         original_cases = CommCareCase.objects.get_cases(case_ids=case_ids, domain=domain)
         processed_cases = {}
