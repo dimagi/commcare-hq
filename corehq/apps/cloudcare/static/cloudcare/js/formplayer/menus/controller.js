@@ -7,6 +7,7 @@ hqDefine("cloudcare/js/formplayer/menus/controller", function () {
         menusUtils = hqImport("cloudcare/js/formplayer/menus/utils"),
         views = hqImport("cloudcare/js/formplayer/menus/views"),
         toggles = hqImport("hqwebapp/js/toggles"),
+        QueryListView = hqImport("cloudcare/js/formplayer/menus/views/query"),
         md = window.markdownit();
     var selectMenu = function (options) {
 
@@ -106,6 +107,7 @@ hqDefine("cloudcare/js/formplayer/menus/controller", function () {
         var appPreview = FormplayerFrontend.currentUser.displayOptions.singleAppMode;
         var changeFormLanguage = toggles.toggleEnabled('CHANGE_FORM_LANGUAGE');
         var enablePrintOption = !menuResponse.queryKey;
+        var sidebarEnabled = toggles.toggleEnabled('SPLIT_SCREEN_CASE_SEARCH');
 
         if (menuListView) {
             FormplayerFrontend.regions.getRegion('main').show(menuListView);
@@ -114,6 +116,13 @@ hqDefine("cloudcare/js/formplayer/menus/controller", function () {
             showPersistentCaseTile(menuResponse.persistentCaseTile);
         } else {
             FormplayerFrontend.regions.getRegion('persistentCaseTile').empty();
+        }
+        var queryResponse = menuResponse.queryResponse;
+        if (sidebarEnabled && !appPreview && menuResponse.type === "entities" && queryResponse !== undefined)  {
+            var queryCollection = new Backbone.Collection(queryResponse.displays);
+            FormplayerFrontend.regions.getRegion('sidebar').show(QueryListView({collection: queryCollection, title: menuResponse.title, description: menuResponse.description,  sidebarEnabled: true}).render());
+        } else {
+            FormplayerFrontend.regions.getRegion('sidebar').empty();
         }
 
         if (menuResponse.breadcrumbs) {

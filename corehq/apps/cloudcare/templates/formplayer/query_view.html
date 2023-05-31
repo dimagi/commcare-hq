@@ -3,10 +3,18 @@
 
 <script type="text/template" id="query-view-list-template">
   <form>
-    <% if (title.length > 0) {%>
+    <% if (sidebarEnabled) {%>
+      <button class="btn btn-default" type="button" id="query-clear-button">
+        <div>{% trans "Clear" %}</div>
+      </button>
+      <button class="btn btn-primary" type="submit" id="query-submit-button">
+        <div>{% trans "Submit" %}</div>
+      </button>
+    <% } %>
+    <% if (title.length > 0 && !sidebarEnabled) {%>
       <h2 tabindex="0"><%- title %></h2>
     <% } %>
-    <% if (description.length > 0) {%>
+    <% if (description.length > 0 && !sidebarEnabled) {%>
       <div id="query-description" tabindex="0">
         <%= description %>
       </div>
@@ -15,12 +23,14 @@
       <tbody id="query-properties">
       </tbody>
     </table>
-    <button class="btn btn-default" type="button" id="query-clear-button">
-      <div>{% trans "Clear" %}</div>
-    </button>
-    <button class="btn btn-primary" type="submit" id="query-submit-button">
-      <div>{% trans "Submit" %}</div>
-    </button>
+    <% if (!sidebarEnabled) {%>
+      <button class="btn btn-default" type="button" id="query-clear-button">
+        <div>{% trans "Clear" %}</div>
+      </button>
+      <button class="btn btn-primary" type="submit" id="query-submit-button">
+        <div>{% trans "Submit" %}</div>
+      </button>
+    <% } %>
   </form>
 </script>
 
