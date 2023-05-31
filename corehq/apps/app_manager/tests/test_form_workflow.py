@@ -562,8 +562,6 @@ class TestFormWorkflow(SimpleTestCase, TestXmlMixin):
         self.assertXmlPartialEqual(expected, suite_xml, "./entry[1]/stack")
 
     def test_form_links_other_child_module(self):
-        # This test demonstrates current behavior that I believe to be flawed
-
         factory = AppFactory(build_version='2.9.0')
         m0, m0f0 = factory.new_basic_module('parent', 'mother')
         factory.form_opens_case(m0f0)
