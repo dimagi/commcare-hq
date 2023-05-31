@@ -183,7 +183,13 @@ class CaseHelper:
             Returns:
                 Tuple with the copied case ids and their original counterparts
         """
+        if not to_owner:
+            raise Exception('Must copy cases to valid new owner')
+
         original_cases = CommCareCase.objects.get_cases(case_ids=case_ids, domain=domain)
+        if not any(original_cases):
+            return None, []
+
         processed_cases = {}
         copied_cases_case_blocks = []
 
@@ -196,10 +202,11 @@ class CaseHelper:
                 _identifier_index['case_id'] = processed_cases[original_referenced_id].case_id
             else:
                 # Need to process the referenced case first to get the case_id of the copied case
-                original_parent_case = next((
-                    orig_case for orig_case in original_cases if orig_case.case_id == original_referenced_id
-                ))
-                if not original_parent_case:
+                try:
+                    original_parent_case = next((
+                        orig_case for orig_case in original_cases if orig_case.case_id == original_referenced_id
+                    ))
+                except StopIteration:
                     return {}
                 referenced_case_block = _process_case(original_parent_case)
                 _identifier_index['case_id'] = referenced_case_block.case_id
@@ -243,6 +250,8 @@ class CaseHelper:
             return case_block
 
         for c in original_cases:
+            if c.owner_id == to_owner:
+                raise Exception("Cannot copy case to self")
             _process_case(c)
 
         return submit_case_blocks(
@@ -256,6 +265,9 @@ class CaseHelper:
         Returns a map of the provided case's properties with the relevant properties
         replaced as specified in replacement_properties
         """
+        if replacement_properties is None:
+            return {**case.case_json}
+
         relevant_replace_props = {k: v for k, v in replacement_properties.items() if k in case.case_json}
         return {**case.case_json, **relevant_replace_props}
 
