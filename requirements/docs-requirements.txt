@@ -532,7 +532,7 @@ socketpool==0.5.3
     # via -r base-requirements.in
 sortedcontainers==2.3.0
     # via intervaltree
-sphinx==6.1.3
+sphinx==6.2.1
     # via
     #   -r docs-requirements.in
     #   myst-parser
