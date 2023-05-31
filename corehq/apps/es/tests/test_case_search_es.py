@@ -1,6 +1,7 @@
 import uuid
 from datetime import date, datetime
 from unittest.mock import MagicMock, patch
+import pytz
 
 from django.test import TestCase
 from django.test.testcases import SimpleTestCase
@@ -9,6 +10,7 @@ from couchforms.geopoint import GeoPoint
 
 from corehq.apps.case_search.const import IS_RELATED_CASE, RELEVANCE_SCORE
 from corehq.apps.case_search.models import CaseSearchConfig
+from corehq.apps.case_search.xpath_functions.comparison import adjust_input_date_by_timezone
 from corehq.apps.es import queries
 from corehq.apps.es.client import manager
 from corehq.apps.es.case_search import (
@@ -543,3 +545,80 @@ class TestCaseSearchLookups(BaseCaseSearchTest):
             "starts-with(ssn, '100')",
             ['c5', 'c6', 'c2']
         )
+
+    def test_user_input_forward_timezone_adjustment(self):
+        """
+        Project timezone is UTC+0900 (Asia/Seoul)
+
+        Scenario 1:
+        User input: last_modified < "2023-06-04"
+        A case with last_modified displayed as 2023-06-04 is actually 2023-06-03T20:00:00 in ES
+        Input modified to be last_modified < "2023-06-03T15:00:00" to exclude above case
+
+        Scenario 2:
+        User input: last_modified > "2023-06-04"
+        A case with last_modified displayed as 2023-06-05 is actually 2023-06-04T20:00:00 in ES
+        Input modified to be last_modified > "2023-06-04T15:00:00" to include above case
+
+        Scenario 3:
+        User input: last_modified <= "2023-06-04"
+        A case with last_modified displayed as 2023-06-05 is actually 2023-06-04T20:00:00 in ES
+        Input modified to be last_modified <= "2023-06-04T15:00:00" to exclude above case
+
+        Scenario 4:
+        User input: last_modified >= "2023-06-04"
+        A case with last_modified displayed as 2023-06-04 is actually 2023-06-03T20:00:00 in ES
+        Input modified to be last_modified >= "2023-06-03T15:00:00" to include above case
+        """
+
+        timezone = pytz.timezone('Asia/Seoul')
+        # user input: last_modified < '2023-06-04'
+        self.assertEqual('2023-06-03T15:00:00',
+                         adjust_input_date_by_timezone('2023-06-04', timezone, '<'))
+        # user input: last_modified > '2023-06-04'
+        self.assertEqual('2023-06-04T15:00:000',
+                         adjust_input_date_by_timezone('2023-06-04', timezone, '>'))
+        # user input: last_modified <= '2023-06-04'
+        self.assertEqual('2023-06-04T15:00:00',
+                         adjust_input_date_by_timezone('2023-06-04', timezone, '<='))
+        # user input: last_modified >= '2023-06-04'
+        self.assertEqual('2023-06-03T15:00:00',
+                         adjust_input_date_by_timezone('2023-06-04', timezone, '>='))
+
+    def test_user_input_backwards_timezone_adjustment(self):
+        """
+        Project timezone is UTC-1000 hours (US/Hawaii)
+
+        Scenario 1:
+        User input = last_modified > "2023-06-03"
+        A case with last_modified displayed as 2023-06-03 is actually 2023-06-04T05:00:00 in ES
+        Input modified to be last_modified > "2023-06-04T10:00:00" to exclude above case
+
+        Scenario 2:
+        User input = last_modified < "2023-06-03"
+        A case with last_modified displayed as 2023-06-02 is actually 2023-06-03T05:00:00 in ES
+        Input modified to be last_modified > "2023-06-03T10:00:00" to include above case
+
+        Scenario 3:
+        User input = last_modified >= "2023-06-03"
+        A case with last_modified displayed as 2023-06-02 is actually 2023-06-03T05:00:00 in ES
+        Input modified to be last_modified > "2023-06-03T10:00:00" to exclude above case
+
+        Scenario 4:
+        User input = last_modified <= "2023-06-03"
+        A case with last_modified displayed as 2023-06-03 is actually 2023-06-04T05:00:00 in ES
+        Input modified to be last_modified >= "2023-06-04T10:00:00" to include above case
+        """
+        timezone = pytz.timezone('US/Hawaii')
+        # user input: last_modified > '2023-06-03'
+        self.assertEqual('2023-06-04T10:00:00',
+                         adjust_input_date_by_timezone('2023-06-03', timezone, '>'))
+        # user input: last_modified > '2023-06-03'
+        self.assertEqual('2023-06-03T10:00:00',
+                         adjust_input_date_by_timezone('2023-06-03', timezone, '<'))
+        # user input: last_modified <= '2023-06-03'
+        self.assertEqual('2023-06-03T10:00:00',
+                         adjust_input_date_by_timezone('2023-06-03', timezone, '>='))
+        # user input: last_modified >= '2023-06-04'
+        self.assertEqual('2023-06-04T10:00:00',
+                         adjust_input_date_by_timezone('2023-06-04', timezone, '<='))

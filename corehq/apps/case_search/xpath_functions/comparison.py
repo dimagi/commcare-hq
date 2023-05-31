@@ -26,13 +26,9 @@ def property_comparison_query(context, case_property_name_raw, op, value_raw, no
     # adjust the user's input date based on project timezones
     is_user_input = False
     try:
-        date = _value_to_date(node, value)
-        date = datetime.combine(date, datetime.min.time())
-        if op == '>' or op == '<=':
-            # this might be inconsistent in daylight savings situations
-            date += timedelta(days=1)
-        project_timezone = get_timezone_for_domain(context.domain)
-        value = UserTime(date, tzinfo=project_timezone).server_time().done().isoformat()
+        # this might be inconsistent in daylight savings situations
+        value = adjust_input_date_by_timezone(_value_to_date(node, value),
+                                              get_timezone_for_domain(context.domain), op)
         is_user_input = True
     except (XPathFunctionException, AssertionError):
         # AssertionError is caused by tests that use domains without a valid timezone (in get_timezeone_for_domain)
@@ -52,3 +48,10 @@ def property_comparison_query(context, case_property_name_raw, op, value_raw, no
                   "Dates must be surrounded in quotation marks"),
                 serialize(node),
             )
+
+
+def adjust_input_date_by_timezone(date, timezone, op):
+    date = datetime.combine(date, datetime.min.time())
+    if op == '>' or op == '<=':
+        date += timedelta(days=1)
+    return UserTime(date, tzinfo=timezone).server_time().done().isoformat()
