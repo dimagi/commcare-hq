@@ -23,6 +23,11 @@
     chalk "^2.0.0"
     js-tokens "^4.0.0"
 
+"@babel/standalone@^7.21.4":
+  version "7.21.4"
+  resolved "https://registry.yarnpkg.com/@babel/standalone/-/standalone-7.21.4.tgz#f1a7131775df87c526cc393c36d013acd2b3c609"
+  integrity sha512-Rw4nGqH/iyVeYxARKcz7iGP+njkPsVqJ45TmXMONoGoxooWjXCAs+CUcLeAZdBGCLqgaPvHKCYvIaDT2Iq+KfA==
+
 "@colors/colors@1.5.0":
   version "1.5.0"
   resolved "https://registry.yarnpkg.com/@colors/colors/-/colors-1.5.0.tgz#bb504579c1cae923e6576a4f5da43d25f97bdbd9"
@@ -624,6 +629,11 @@ aws4@^1.8.0:
   version "1.10.0"
   resolved "https://registry.yarnpkg.com/aws4/-/aws4-1.10.0.tgz#a17b3a8ea811060e74d47d306122400ad4497ae2"
   integrity sha512-3YDiu347mtVtjpyV3u5kVqQLP242c06zwDOgpeRnybmXlYYsLbtTrUBUm8i8srONt+FWobl5aibnU1030PeeuA==
+
+babel-plugin-transform-modules-requirejs-babel@^0.1.0:
+  version "0.1.0"
+  resolved "https://registry.yarnpkg.com/babel-plugin-transform-modules-requirejs-babel/-/babel-plugin-transform-modules-requirejs-babel-0.1.0.tgz#492529fc07581897e0bdfdc0003165bd6fccf42c"
+  integrity sha512-9++Y5vjFz7tAFZvl/JXkS/xDX9xVDDRMczfZ0ORms5mkuh6y3NzkXYaFPSTFNIaXfHwe81gdt566sOdvyouj/Q==
 
 backbone.marionette@4.1.3:
   version "4.1.3"
@@ -4667,6 +4677,11 @@ require-main-filename@^2.0.0:
   version "2.0.0"
   resolved "https://registry.yarnpkg.com/require-main-filename/-/require-main-filename-2.0.0.tgz#d0b329ecc7cc0f61649f62215be69af54aa8989b"
   integrity sha512-NKN5kMDylKuldxYLSUfrbo5Tuzh4hd+2E8NPPX02mZtn1VuREQToYe/ZdlJy+J3uCpfaiGF05e7B8W0iXbQHmg==
+
+requirejs-babel7@^1.3.2:
+  version "1.3.2"
+  resolved "https://registry.yarnpkg.com/requirejs-babel7/-/requirejs-babel7-1.3.2.tgz#64ed7bb3911e5aeda4b8a755addf8d953d36c2b4"
+  integrity sha512-6kV79aVK64oCy+46inv9F+xY5eE2LrBdZiX5F60+opFXoaXnIYSGh7UzAcoKDx6WTp7dJXGKcryme5RzxDEccw==
 
 requirejs@2.3.6, requirejs@^2.3.6:
   version "2.3.6"
