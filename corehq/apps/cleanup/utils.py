@@ -99,8 +99,8 @@ def hard_delete_sql_objects_before_cutoff(cutoff):
 
         queryset = table.objects.filter(deleted_on__lt=cutoff)
         if queryset.exists():
-            counts[table.__name__] = queryset.count()
-            queryset.delete(**kwargs)
+            deleted_counts = queryset.delete(**kwargs)[1]
+            counts.update(deleted_counts)
 
     return counts
 
@@ -122,9 +122,9 @@ def hard_delete_couch_docs_before_cutoff(cutoff):
     for doc_type in doc_ids_by_doc_type.keys():
         db = get_db_by_doc_type(doc_type)
         doc_ids = doc_ids_by_doc_type[doc_type]
-        counts[doc_type] = len(doc_ids)
         iter_bulk_delete(db, doc_ids)
         sql_objs = DeletedCouchDoc.objects.filter(doc_type=doc_type, doc_id__in=doc_ids)
-        sql_objs.delete()
+        deleted_counts = sql_objs.delete()[0]
+        counts[doc_type] = deleted_counts
 
     return counts
