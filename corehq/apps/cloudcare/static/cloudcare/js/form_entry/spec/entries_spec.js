@@ -35,6 +35,7 @@ describe('Entries', function () {
             "ix": "0",
             "relevant": 1,
             "help": null,
+            "help_image": null,
             "answer": null,
             "datatype": "int",
             "style": {},
