@@ -23,6 +23,13 @@
               {% blocktrans %}If this problem persists, please <a href="#modalReportIssue" data-toggle="modal">Report an Issue</a>.{% endblocktrans %}
             </p>
           </div>
+          <div>
+            <ul>
+                {% for case_type in case_types_for_domain %}
+                    <li>{{ case_type }}</li>
+                {% endfor %}
+            </ul>
+          </div>
           {% crispy create_export_form %}
           <div class="alert alert-info" data-bind="visible: showHasNoCaseTypes">
             {% blocktrans %}

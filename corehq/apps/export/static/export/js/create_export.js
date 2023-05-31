@@ -29,7 +29,6 @@ hqDefine("export/js/create_export", [
         assertProperties.assert(options, ['drilldown_fetch_url', 'drilldown_submit_url', 'page'], ['model_type']);
 
         var self = {};
-
         self.isOData = initialPageData.get('is_odata', true);
 
         // This contains flags that distinguish the various pages that use this modal.
@@ -135,6 +134,7 @@ hqDefine("export/js/create_export", [
             }
         },
         self._initSelect2 = function (observable, fieldSlug) {
+            console.log(">>>>>>>>> filed slug " + fieldSlug);
             return function (fieldData) {
                 if (fieldSlug) {
                     observable('');
@@ -181,7 +181,8 @@ hqDefine("export/js/create_export", [
                     self.selectedFormData({});
                     self.setForms();
                 } else {
-                    var caseTypeChoices = self._case_types_by_app[newValue];
+                    debugger
+                    var caseTypeChoices = self._case_types_by_app;
                     self.setCaseTypes(caseTypeChoices);
                     self.hasNoCaseTypes(_.isEmpty(caseTypeChoices));
                 }
@@ -327,7 +328,11 @@ hqDefine("export/js/create_export", [
                     self._apps_by_type = data.apps_by_type || {};
                     self._modules_by_app = data.modules_by_app || {};
                     self._forms_by_app_by_module = data.forms_by_app_by_module || {};
-                    self._case_types_by_app = data.case_types_by_app || {};
+                    console.log("data.case_types_for_domain " + data.case_types_for_domain);
+                    console.log("data.case_types_by_app " + data.case_types_by_app);
+                    console.log("data.case_types_by_app len" + data.case_types_by_app.length);
+                    console.log("data.case_types_by_app data" + JSON.stringify(data.case_types_by_app));
+                    self._case_types_by_app = data.case_types_for_domain || {};
 
                     self.setAppTypes();
                     self.setApps(data.apps_by_type[self.appType()]);

@@ -20,7 +20,7 @@ from corehq.apps.registry.models import DataRegistry
 from corehq.apps.registry.utils import get_data_registry_dropdown_options
 from corehq.apps.hqwebapp import crispy as hqcrispy
 from corehq.apps.reports.analytics.esaccessors import (
-    get_case_types_for_domain_es,
+    get_case_types_for_domain_es, get_case_types_for_domain,
 )
 from corehq.apps.userreports.app_manager.data_source_meta import (
     DATA_SOURCE_TYPE_CASE,
@@ -42,7 +42,7 @@ AppFormRMIPlaceholder = collections.namedtuple('AppFormRMIPlaceholder', [
     'application', 'module', 'form'
 ])
 AppCaseRMIResponse = collections.namedtuple('AppCaseRMIResponse', [
-    'app_types', 'apps_by_type', 'case_types_by_app', 'placeholders'
+    'app_types', 'apps_by_type', 'case_types_by_app', 'placeholders', 'case_types_for_domain'
 ])
 AppCaseRMIPlaceholder = collections.namedtuple('AppCaseRMIPlaceholder', [
     'application', 'case_type'
@@ -710,13 +710,16 @@ class ApplicationDataRMIHelper(object):
             )
         if self.as_dict:
             apps_by_type = self._map_chosen_by_choice_as_dict(apps_by_type)
+        import json
+        print(f"json.dumps(list(get_case_types_for_domain(self.domain))) {json.dumps(list(get_case_types_for_domain(self.domain)))}")
         response = AppCaseRMIResponse(
             app_types=self._get_app_type_choices_for_cases(
                 has_unknown_case_types=bool(case_types_by_app.get(self.UNKNOWN_SOURCE))
             ),
             apps_by_type=apps_by_type,
             case_types_by_app=case_types_by_app,
-            placeholders=self.case_placeholders
+            placeholders=self.case_placeholders,
+            case_types_for_domain=json.dumps(list(get_case_types_for_domain(self.domain)))
         )
         if self.as_dict:
             response = response._asdict()
