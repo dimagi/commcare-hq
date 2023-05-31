@@ -1584,6 +1584,24 @@ def archive_form(request, domain, instance_id):
     return HttpResponseRedirect(redirect)
 
 
+@require_form_view_permission
+@require_permission(HqPermissions.edit_data)
+@require_POST
+@location_safe
+def delete_form(request, domain, instance_id):
+    form = safely_get_form(request, domain, instance_id)
+    assert form.domain == domain
+    if form.is_archived:
+        form.soft_delete()
+        form.save()
+        return HttpResponseRedirect(reverse('project_report_dispatcher',
+                                            args=(domain, 'submit_history')))
+    else:
+        return HttpResponseForbidden(
+            _(f"Cannot delete form {instance_id} because it is not archived.")
+        )
+
+
 def _get_cases_with_forms_message(domain, cases_with_other_forms, case_id_from_request):
     def _get_all_case_links():
         all_case_links = []
