@@ -2342,6 +2342,11 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
             if device.device_id == device_id:
                 return device
 
+    def get_devices_fcm_token(self):
+        if not self.devices:
+            return None
+        return [device.fcm_token for device in self.devices if device.fcm_token]
+
 
 def update_fixture_status_for_users(user_ids, fixture_type):
     from corehq.apps.fixtures.models import UserLookupTableStatus
