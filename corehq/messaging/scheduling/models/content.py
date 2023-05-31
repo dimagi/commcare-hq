@@ -1,7 +1,7 @@
 import jsonfield as old_jsonfield
 from contextlib import contextmanager
 from copy import deepcopy
-from datetime import datetime
+from datetime import datetime, timezone
 
 from django.core.exceptions import ValidationError
 from django.core.validators import validate_email
@@ -17,7 +17,7 @@ from corehq.apps.smsforms.app import start_session
 from corehq.apps.smsforms.tasks import send_first_message
 from corehq.apps.smsforms.util import form_requires_input, critical_section_for_smsforms_sessions
 from corehq.form_processor.utils import is_commcarecase
-from corehq.messaging.scheduling.exceptions import EmailValidationException
+from corehq.messaging.scheduling.exceptions import EmailValidationException, FCMTokenValidationException
 from corehq.messaging.scheduling.models.abstract import Content
 from corehq.apps.reminders.models import EmailUsage
 from corehq.apps.sms.models import MessagingEvent, PhoneNumber, PhoneBlacklist, Email
@@ -32,6 +32,7 @@ from django.db import models
 from django.http import Http404
 from corehq.apps.formplayer_api.smsforms.api import TouchformsError
 
+from corehq.messaging.fcm_util import HQ_FCM_UTIL
 
 @contextmanager
 def no_op_context_manager():
@@ -514,7 +515,68 @@ class FCMNotificationContent(Content):
     def render_subject_and_message(self, subject, message, recipient):
         renderer = self.get_template_renderer(recipient)
         return renderer.render(subject), renderer.render(message)
+    
+    def build_fcm_data_field(self, recipient):
+        data = None
+        if self.action:
+            data = {
+                'action': self.action,
+                'username': recipient.raw_username,
+                'domain': recipient.domain,
+                'created_at': datetime.now(timezone.utc).isoformat()
+            }
+        return data
 
     def send(self, recipient, logged_event, phone_entry=None):
-        # TODO
-        pass
+        domain_obj = Domain.get_by_name(logged_event.domain)
+
+        logged_subevent = logged_event.create_subevent_from_contact_and_content(
+            recipient,
+            self,
+            case_id=self.case.case_id if self.case else None,
+        )
+        subject = message = data = None
+
+        if self.message_type == self.MESSAGE_TYPE_NOTIFICATION:
+            if not (self.subject or self.message):
+                logged_subevent.error(MessagingEvent.ERROR_NO_MESSAGE)
+                return
+
+            subject = self.get_translation_from_message_dict(
+                domain_obj,
+                self.subject,
+                recipient.get_language_code()
+            )
+
+            message = self.get_translation_from_message_dict(
+                domain_obj,
+                self.message,
+                recipient.get_language_code()
+            )
+
+            try:
+                subject, message = self.render_subject_and_message(subject, message, recipient)
+            except Exception:
+                logged_subevent.error(MessagingEvent.ERROR_CANNOT_RENDER_MESSAGE)
+                return
+        else:
+            if not self.action:
+                logged_subevent.error(MessagingEvent.ERROR_NO_MESSAGE)
+                return
+            data = self.build_fcm_data_field(recipient)
+
+        try:
+            devices_fcm_token = self.get_recipient_devices_fcm_tokens(recipient)
+        except FCMTokenValidationException as e:
+            logged_subevent.error(e.error_type, additional_error_text=e.additional_text)
+            return
+
+        HQ_FCM_UTIL.send_to_multiple_devices(registration_tokens=devices_fcm_token, title=subject, body=message,
+                                             data=data)
+        logged_subevent.completed()
+
+    def get_recipient_devices_fcm_tokens(self, recipient):
+        devices_fcm_token = recipient.get_devices_fcm_token()
+        if not devices_fcm_token:
+            raise FCMTokenValidationException(MessagingEvent.ERROR_NO_FCM_TOKENS)
+        return devices_fcm_token

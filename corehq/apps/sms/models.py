@@ -1060,6 +1060,7 @@ class MessagingEvent(models.Model, MessagingStatusMixin):
     ERROR_TRIAL_EMAIL_LIMIT_REACHED = 'TRIAL_EMAIL_LIMIT_REACHED'
     ERROR_EMAIL_BOUNCED = 'EMAIL_BOUNCED'
     ERROR_EMAIL_GATEWAY = 'EMAIL_GATEWAY_ERROR'
+    ERROR_NO_FCM_TOKENS = 'NO_FCM_TOKENS'
 
     ERROR_MESSAGES = {
         ERROR_NO_RECIPIENT:
@@ -1115,6 +1116,7 @@ class MessagingEvent(models.Model, MessagingStatusMixin):
                 "sending reminder emails on a Trial plan has been reached."),
         ERROR_EMAIL_BOUNCED: gettext_noop("Email Bounced"),
         ERROR_EMAIL_GATEWAY: gettext_noop("Email Gateway Error"),
+        ERROR_NO_FCM_TOKENS: gettext_noop("No FCM tokens found for recipient.")
     }
 
     domain = models.CharField(max_length=126, null=False, db_index=True)
