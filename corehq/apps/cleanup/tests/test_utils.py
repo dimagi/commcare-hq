@@ -105,7 +105,7 @@ class TestHardDeleteSQLObjectsBeforeCutoff(TestCase):
 
         counts = hard_delete_sql_objects_before_cutoff(self.cutoff)
 
-        self.assertEqual(counts, {'AutomaticUpdateRule': 1, 'AlertSchedule': 1})
+        self.assertEqual(counts, {'data_interfaces.AutomaticUpdateRule': 1, 'scheduling.AlertSchedule': 1})
 
     def setUp(self):
         self.domain = 'test_hard_delete_sql_objects_before_cutoff'

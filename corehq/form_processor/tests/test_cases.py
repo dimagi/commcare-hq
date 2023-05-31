@@ -439,14 +439,13 @@ class TestHardDeleteCasesBeforeCutoff(TestCase):
         fetched_case = CommCareCase.objects.get_case(case.case_id)
         self.assertIsNotNone(fetched_case)
 
-    def test_returns_deleted_count(self):
-        expected_count = 5
-        for _ in range(expected_count):
+    def test_returns_deleted_counts(self):
+        for _ in range(5):
             create_case(self.domain, deleted_on=datetime(2020, 1, 1, 12, 29), save=True)
 
-        count = CommCareCase.objects.hard_delete_cases_before_cutoff(self.cutoff)
+        counts = CommCareCase.objects.hard_delete_cases_before_cutoff(self.cutoff)
 
-        self.assertEqual(count, expected_count)
+        self.assertEqual(counts, {'form_processor.CaseTransaction': 5, 'form_processor.CommCareCase': 5})
 
     def setUp(self):
         self.domain = 'test_hard_delete_cases_before_cutoff'

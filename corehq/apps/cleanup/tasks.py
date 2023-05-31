@@ -37,14 +37,16 @@ def permanently_delete_eligible_data():
     couch doc was marked as deleted.
     """
     cutoff_date = get_cutoff_date_for_data_deletion()
-    form_count = XFormInstance.objects.hard_delete_forms_before_cutoff(cutoff_date)
-    case_count = CommCareCase.objects.hard_delete_cases_before_cutoff(cutoff_date)
+    form_counts = XFormInstance.objects.hard_delete_forms_before_cutoff(cutoff_date)
+    case_counts = CommCareCase.objects.hard_delete_cases_before_cutoff(cutoff_date)
     sql_obj_counts = hard_delete_sql_objects_before_cutoff(cutoff_date)
     couch_doc_counts = hard_delete_couch_docs_before_cutoff(cutoff_date)
 
     logger.info("'permanently_delete_eligible_data' ran with the following results:\n")
-    logger.info(f"{form_count} XFormInstance objects were deleted.")
-    logger.info(f"{case_count} CommCareCase objects were deleted.")
+    for table, count in form_counts.items():
+        logger.info(f"{count} {table} objects were deleted.")
+    for table, count in case_counts.items():
+        logger.info(f"{count} {table} objects were deleted.")
     for table, count in sql_obj_counts.items():
         logger.info(f"{count} {table} objects were deleted.")
     for doc_type, count in couch_doc_counts.items():

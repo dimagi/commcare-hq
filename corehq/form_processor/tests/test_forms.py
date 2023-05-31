@@ -408,14 +408,14 @@ class TestHardDeleteFormsBeforeCutoff(TestCase):
         fetched_form = XFormInstance.objects.get_form(form.form_id)
         self.assertIsNotNone(fetched_form)
 
-    def test_returns_deleted_count(self):
+    def test_returns_deleted_counts(self):
         expected_count = 5
         for _ in range(expected_count):
             create_form_for_test(self.domain, deleted_on=datetime(2020, 1, 1, 12, 29))
 
-        count = XFormInstance.objects.hard_delete_forms_before_cutoff(self.cutoff)
+        counts = XFormInstance.objects.hard_delete_forms_before_cutoff(self.cutoff)
 
-        self.assertEqual(count, expected_count)
+        self.assertEqual(counts, {'form_processor.XFormInstance': 5})
 
     def setUp(self):
         self.domain = 'test_hard_delete_forms_before_cutoff'
