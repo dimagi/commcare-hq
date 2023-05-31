@@ -164,7 +164,6 @@ class TestNavigationEventAuditResource(APIResourceTest):
 
         params = {'users': users_filter}
         list_endpoint = f'{self.list_endpoint}?{urlencode(params, True)}'
-        print("list end point is", list_endpoint)
         response = self._assert_auth_get_resource(list_endpoint)
         self.assertEqual(response.status_code, 200)
 
@@ -185,7 +184,6 @@ class TestNavigationEventAuditResource(APIResourceTest):
             'local_date.lt': date2,
         }
         list_endpoint = f'{self.list_endpoint}?{urlencode(params)}'
-        print("date listendpoint", list_endpoint)
         response = self._assert_auth_get_resource(list_endpoint)
         self.assertEqual(response.status_code, 200)
 
