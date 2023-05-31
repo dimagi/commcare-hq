@@ -574,16 +574,16 @@ class TestCaseSearchLookups(BaseCaseSearchTest):
         timezone = pytz.timezone('Asia/Seoul')
         # user input: last_modified < '2023-06-04'
         self.assertEqual('2023-06-03T15:00:00',
-                         adjust_input_date_by_timezone('2023-06-04', timezone, '<'))
+                         adjust_input_date_by_timezone(date(2023, 6, 4), timezone, '<'))
         # user input: last_modified > '2023-06-04'
-        self.assertEqual('2023-06-04T15:00:000',
-                         adjust_input_date_by_timezone('2023-06-04', timezone, '>'))
+        self.assertEqual('2023-06-04T15:00:00',
+                         adjust_input_date_by_timezone(date(2023, 6, 4), timezone, '>'))
         # user input: last_modified <= '2023-06-04'
         self.assertEqual('2023-06-04T15:00:00',
-                         adjust_input_date_by_timezone('2023-06-04', timezone, '<='))
+                         adjust_input_date_by_timezone(date(2023, 6, 4), timezone, '<='))
         # user input: last_modified >= '2023-06-04'
         self.assertEqual('2023-06-03T15:00:00',
-                         adjust_input_date_by_timezone('2023-06-04', timezone, '>='))
+                         adjust_input_date_by_timezone(date(2023, 6, 4), timezone, '>='))
 
     def test_user_input_backwards_timezone_adjustment(self):
         """
@@ -612,13 +612,13 @@ class TestCaseSearchLookups(BaseCaseSearchTest):
         timezone = pytz.timezone('US/Hawaii')
         # user input: last_modified > '2023-06-03'
         self.assertEqual('2023-06-04T10:00:00',
-                         adjust_input_date_by_timezone('2023-06-03', timezone, '>'))
+                         adjust_input_date_by_timezone(date(2023, 6, 3), timezone, '>'))
         # user input: last_modified > '2023-06-03'
         self.assertEqual('2023-06-03T10:00:00',
-                         adjust_input_date_by_timezone('2023-06-03', timezone, '<'))
+                         adjust_input_date_by_timezone(date(2023, 6, 3), timezone, '<'))
         # user input: last_modified <= '2023-06-03'
         self.assertEqual('2023-06-03T10:00:00',
-                         adjust_input_date_by_timezone('2023-06-03', timezone, '>='))
+                         adjust_input_date_by_timezone(date(2023, 6, 3), timezone, '>='))
         # user input: last_modified >= '2023-06-04'
         self.assertEqual('2023-06-04T10:00:00',
-                         adjust_input_date_by_timezone('2023-06-04', timezone, '<='))
+                         adjust_input_date_by_timezone(date(2023, 6, 3), timezone, '<='))
