@@ -124,7 +124,8 @@ class CaseTileHelper(object):
             # The right thing to do would be to reference the app_strings.txt I think
             "prefix": escape(
                 column.header.get(default_lang, "")
-            )
+            ),
+            "format": column.format
         }
         if column.enum and column.format != "enum" and column.format != "conditional-enum":
             raise SuiteError(
