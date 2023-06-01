@@ -42,15 +42,15 @@
       {% if request|toggle_enabled:'CASE_LIST_TILE' %}
         <div class="row">
           <div class="col-sm-6">
-            <select data-bind="value: caseTileTemplate" class="form-control">
-              <option value="no">{% trans "Don't Use Case Tiles" %}</option>
-              <option value="yes">{% trans "Use Case Tiles" %}</option>
-            </select>
+            <label>
+              {% trans "Template" %}
+            </label>
+            <select data-bind="options:caseTileTemplateOptions, value:caseTileTemplate" class="form-control"></select>
           </div>
         </div>
       {% endif %}
       {% if request|toggle_enabled:'SHOW_PERSIST_CASE_CONTEXT_SETTING' %}
-        <div data-bind="visible: caseTileTemplate() == 'no'">
+        <div data-bind="visible: !caseTileTemplate()">
           <div class="checkbox">
             <label>
               <input type="checkbox" data-bind="checked: persistCaseContext">
@@ -65,7 +65,7 @@
           </div>
         </div>
       {% endif %}
-      <div data-bind="visible: caseTileTemplate() == 'yes' || hqImport('hqwebapp/js/toggles').toggleEnabled('CASE_LIST_CUSTOM_XML')">
+      <div data-bind="visible: caseTileTemplate() || hqImport('hqwebapp/js/toggles').toggleEnabled('CASE_LIST_CUSTOM_XML')">
         <div class="checkbox">
           <label>
             <input type="checkbox" data-bind="checked: persistTileOnForms">

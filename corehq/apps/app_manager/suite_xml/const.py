@@ -5,4 +5,5 @@ FIELD_TYPE_PROPERTY = 'property'
 FIELD_TYPE_LEDGER = 'ledger'
 FIELD_TYPE_SCHEDULE = 'schedule'
 
+ALL_CASE_TILE_TEMPLATES = ['person_simple']
 CASE_TILE_TEMPLATE_NAME_PERSON_SIMPLE = 'person_simple'
