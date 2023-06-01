@@ -979,6 +979,7 @@ class MessagingEvent(models.Model, MessagingStatusMixin):
     CONTENT_API_SMS = 'API'
     CONTENT_CHAT_SMS = 'CHT'
     CONTENT_EMAIL = 'EML'
+    CONTENT_FCM_Notification = 'FCM'
 
     CONTENT_CHOICES = (
         (CONTENT_NONE, gettext_noop('None')),
@@ -991,6 +992,7 @@ class MessagingEvent(models.Model, MessagingStatusMixin):
         (CONTENT_API_SMS, gettext_noop('Message Sent Via API')),
         (CONTENT_CHAT_SMS, gettext_noop('Message Sent Via Chat')),
         (CONTENT_EMAIL, gettext_noop('Email')),
+        (CONTENT_FCM_Notification, gettext_noop('FCM Push Notification')),
     )
 
     CONTENT_TYPE_SLUGS = {
@@ -1004,6 +1006,7 @@ class MessagingEvent(models.Model, MessagingStatusMixin):
         CONTENT_API_SMS: "api-sms",
         CONTENT_CHAT_SMS: "chat-sms",
         CONTENT_EMAIL: "email",
+        CONTENT_FCM_Notification: 'fcm-notification',
     }
 
     RECIPIENT_CASE = 'CAS'
@@ -1304,7 +1307,8 @@ class MessagingEvent(models.Model, MessagingStatusMixin):
             SMSContent,
             SMSSurveyContent,
             EmailContent,
-            CustomContent
+            CustomContent,
+            FCMNotificationContent,
         )
 
         if isinstance(content, (SMSContent, CustomContent)):
@@ -1315,6 +1319,8 @@ class MessagingEvent(models.Model, MessagingStatusMixin):
             return cls.CONTENT_SMS_SURVEY, content.app_id, content.form_unique_id, form_name
         elif isinstance(content, EmailContent):
             return cls.CONTENT_EMAIL, None, None, None
+        elif isinstance(content, FCMNotificationContent):
+            return cls.CONTENT_FCM_Notification, None, None, None
         else:
             return cls.CONTENT_NONE, None, None, None
 
