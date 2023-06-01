@@ -623,7 +623,6 @@ class TestFormWorkflow(SimpleTestCase, TestXmlMixin):
             xpath='true()', form_id=m1f0.unique_id, form_module_id=m1.unique_id,
         )]
         suite_xml = factory.app.create_suite()
-        print(suite_xml.decode())
 
         # m2f0 links to m1f0 (child of m0-f0) - automatic linking
         expected = """
@@ -651,7 +650,6 @@ class TestFormWorkflow(SimpleTestCase, TestXmlMixin):
         )]
 
         suite_xml = factory.app.create_suite()
-
         expected = """
         <partial>
           <stack>
