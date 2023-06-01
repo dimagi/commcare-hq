@@ -147,6 +147,7 @@ django==3.2.19
     #   django-user-agents
     #   djangorestframework
     #   jsonfield
+    #   sphinxcontrib-django
 django-appconf==1.0.5
     # via
     #   django-compressor
@@ -445,6 +446,8 @@ ply==3.11
     #   stone
 polib==1.1.1
     # via -r base-requirements.in
+pprintpp==0.4.0
+    # via sphinxcontrib-django
 prometheus-client==0.14.1
     # via -r base-requirements.in
 prompt-toolkit==3.0.36
@@ -664,6 +667,7 @@ sphinx==6.2.1
     #   -r docs-requirements.in
     #   myst-parser
     #   sphinx-rtd-theme
+    #   sphinxcontrib-django
     #   sphinxcontrib-jquery
 sphinx-rtd-theme==1.2.0
     # via -r docs-requirements.in
@@ -671,7 +675,7 @@ sphinxcontrib-applehelp==1.0.2
     # via sphinx
 sphinxcontrib-devhelp==1.0.2
     # via sphinx
-sphinxcontrib-django==0.5.1
+sphinxcontrib-django==2.3
     # via -r docs-requirements.in
 sphinxcontrib-htmlhelp==2.0.0
     # via sphinx
