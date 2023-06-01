@@ -2,7 +2,6 @@ from datetime import datetime
 
 from django.core.management import BaseCommand
 
-from corehq.apps.case_search.models import DomainsNotInCaseSearchIndex
 from corehq.apps.es import CaseES, CaseSearchES
 from corehq.pillows.case_search import CaseSearchReindexerFactory, domain_needs_search_index
 
@@ -16,23 +15,19 @@ class Command(BaseCommand):
         parser.add_argument('domain')
 
     def handle(self, domain, **options):
-        if not DomainsNotInCaseSearchIndex.objects.filter(domain=domain).exists():
-            self.stdout.write(f'\nDomain {domain} is already on Case Search Index\n\n')
-        else:
-            self.print_summary([domain])
-            self.stdout.write('\n\n')
-            confirm = input(f'\nActually migrate "{domain}"? [y/n] ')
-            if not confirm == 'y':
-                self.stdout.write('\nAborting migration\n\n')
-                return
+        self.print_summary([domain])
+        self.stdout.write('\n\n')
+        confirm = input(f'\nActually migrate "{domain}"? [y/n] ')
+        if not confirm == 'y':
+            self.stdout.write('\nAborting migration\n\n')
+            return
 
-            self.migrate_domain(domain)
+        self.migrate_domain(domain)
 
     def migrate_domain(self, domain):
         time_started = datetime.utcnow()
         self.stdout.write(f"Migrating {domain}...\n")
         domain_needs_search_index.clear(domain)
-        DomainsNotInCaseSearchIndex.objects.filter(domain=domain).delete()
         CaseSearchReindexerFactory(domain=domain).build().reindex()
         task_time = datetime.utcnow() - time_started
         self.stdout.write(f'\nDone...\ntook {task_time.seconds} seconds\n\n\n\n')

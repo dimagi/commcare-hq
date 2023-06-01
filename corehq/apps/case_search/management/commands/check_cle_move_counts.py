@@ -2,7 +2,6 @@ from datetime import datetime
 
 from django.core.management import BaseCommand
 
-from corehq.apps.case_search.models import DomainsNotInCaseSearchIndex
 from corehq.apps.domain.models import Domain
 from corehq.apps.es import CaseES, CaseSearchES
 from dimagi.utils.couch.database import iter_docs
@@ -23,7 +22,5 @@ class Command(BaseCommand):
             total_case_search = CaseSearchES().domain(domain_obj.name).count()
             difference = total_case_es - total_case_search
 
-            if (difference >= 100
-                    and not DomainsNotInCaseSearchIndex.objects.filter(domain=domain_obj.name)):
+            if difference >= 100:
                 self.stdout.write(f"{domain_obj.name}\t{difference}\t{total_case_es}\t{total_case_search}")
-                DomainsNotInCaseSearchIndex.objects.create(domain=domain_obj.name, estimated_size=difference)
