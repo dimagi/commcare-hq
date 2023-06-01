@@ -109,8 +109,23 @@ class CaseListExplorerColumns(BaseSimpleFilter):
         context.update({
             'initial_value': json.dumps(initial_values),
             'column_suggestions': json.dumps(self.get_column_suggestions()),
+            'chevron_label': self.chevron_label,
+            'column_one_label': self.column_one_label,
+            'column_two_label': self.column_two_label,
         })
         return context
+
+    @property
+    def chevron_label(self):
+        return gettext_lazy("Edit Columns")
+
+    @property
+    def column_one_label(self):
+        return gettext_lazy("Property")
+
+    @property
+    def column_two_label(self):
+        return gettext_lazy("Label")
 
     def get_column_suggestions(self):
         case_properties = get_flattened_case_properties(self.domain, include_parent_properties=False)
@@ -133,6 +148,23 @@ class CaseListExplorerColumns(BaseSimpleFilter):
             } for prop_name in ret]
 
         return ret
+
+
+class SensitiveCaseProperties(CaseListExplorerColumns):
+    slug = "sensitive_properties"
+    label = gettext_lazy("De-identify case properties")
+    template = "reports/filters/explorer_columns.html"
+    DEFAULT_COLUMNS = [
+        {'name': 'case_name', 'label': 'case_name'},
+    ]
+
+    @property
+    def chevron_label(self):
+        return gettext_lazy("Sensitive Properties")
+
+    @property
+    def column_two_label(self):
+        return gettext_lazy("Replacement Value")
 
 
 def get_flattened_case_properties(domain, include_parent_properties=False):

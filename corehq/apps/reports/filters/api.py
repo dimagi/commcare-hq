@@ -2,8 +2,11 @@
 API endpoints for filter options
 """
 import logging
+import json
 
 from django.views.generic import View
+from django.http import JsonResponse, HttpResponseBadRequest
+from django.views.decorators.http import require_POST
 
 from braces.views import JSONResponseMixin
 from memoized import memoized
@@ -23,6 +26,7 @@ from corehq.apps.reports.filters.controllers import (
 )
 from corehq.apps.users.analytics import get_search_users_in_domain_es_query
 from corehq.elastic import ESError
+from corehq.apps.hqcase.case_helper import CaseHelper
 
 logger = logging.getLogger(__name__)
 
@@ -197,3 +201,28 @@ class DeviceLogUsers(DeviceLogFilter):
 
 class DeviceLogIds(DeviceLogFilter):
     field = 'device_id'
+
+
+@require_POST
+@location_safe
+def copy_cases(request, domain, *args, **kwargs):
+    body = json.loads(request.body)
+    case_ids = body['case_ids']
+    if not case_ids:
+        return HttpResponseBadRequest("Missing case ids")
+
+    new_owner = body['owner_id']
+    if not new_owner:
+        return HttpResponseBadRequest("Missing new owner id")
+
+    props = {prop['name']: prop['label'] for prop in body.get('sensitive_properties', [])}
+    try:
+        _, _ = CaseHelper(domain=domain).copy_cases(
+            domain=domain,
+            case_ids=case_ids,
+            to_owner=new_owner,
+            replace_props=props,
+        )
+        return JsonResponse({})
+    except Exception as e:
+        return HttpResponseBadRequest(str(e))

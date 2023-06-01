@@ -15,7 +15,7 @@
             <span id="panel-chevron">
               <i class="fa fa-chevron-down"></i>
             </span>
-            {% trans "Edit Columns" %}
+            {{ chevron_label }}
             <small>(</small><span data-bind="foreach: properties"><!--ko if: $index() != 0 && name() !=='' -->, <!--/ko--><small data-bind="text: name"></small></span><small>)</small>
           </a>
 
@@ -26,8 +26,8 @@
           <table class="table table-condensed">
             <thead>
             <th>&nbsp;</th>
-            <th>{% trans "Property" %}</th>
-            <th>{% trans "Label" %}</th>
+            <th>{{ column_one_label }}</th>
+            <th>{{ column_two_label }}</th>
             <th>&nbsp;</th>
             </thead>
             <tbody data-bind="foreach: properties, sortableList: properties">
