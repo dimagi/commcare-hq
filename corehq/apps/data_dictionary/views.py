@@ -2,6 +2,7 @@ import io
 import itertools
 import json
 from collections import defaultdict
+from operator import attrgetter
 
 from django.contrib import messages
 from django.core.exceptions import ValidationError
@@ -61,7 +62,7 @@ def data_dictionary_json(request, domain, case_type_name=None):
     fhir_resource_prop_by_case_prop = {}
     queryset = CaseType.objects.filter(domain=domain).prefetch_related(
         Prefetch('groups', queryset=CasePropertyGroup.objects.order_by('index')),
-        Prefetch('properties', queryset=CaseProperty.objects.order_by('index')),
+        Prefetch('properties', queryset=CaseProperty.objects.order_by('group_obj_id', 'index')),
         Prefetch('properties__allowed_values', queryset=CasePropertyAllowedValue.objects.order_by('allowed_value'))
     )
     if toggles.FHIR_INTEGRATION.enabled(domain):
@@ -76,44 +77,33 @@ def data_dictionary_json(request, domain, case_type_name=None):
             "groups": [],
             "properties": [],
         }
+        grouped_properties = {
+            group: [{
+                "description": prop.description,
+                "label": prop.label,
+                "fhir_resource_prop_path": fhir_resource_prop_by_case_prop.get(prop),
+                "name": prop.name,
+                "data_type": prop.data_type,
+                "deprecated": prop.deprecated,
+                "allowed_values": {av.allowed_value: av.description for av in prop.allowed_values.all()},
+            } for prop in props] for group, props in itertools.groupby(
+                case_type.properties.all(),
+                key=attrgetter('group_obj_id')
+            )
+        }
         for group in case_type.groups.all():
-            group_ret = {
+            p["groups"].append({
                 "id": group.id,
                 "name": group.name,
                 "description": group.description,
                 "deprecated": group.deprecated,
-                "properties": []
-            }
-
-            group_properties = sorted(
-                [prop for prop in case_type.properties.all() if prop.group_name == group.name],
-                key=lambda _prop: _prop.index
-            )
-            for prop in group_properties:
-                group_ret['properties'].append({
-                    "description": prop.description,
-                    "label": prop.label,
-                    "fhir_resource_prop_path": fhir_resource_prop_by_case_prop.get(prop),
-                    "name": prop.name,
-                    "data_type": prop.data_type,
-                    "deprecated": prop.deprecated,
-                    "allowed_values": {av.allowed_value: av.description for av in prop.allowed_values.all()},
-                })
-
-            p["groups"].append(group_ret)
+                "properties": grouped_properties.get(group.id, [])
+            })
 
         # Aggregate properties that dont have a group
         p["groups"].append({
             "name": "",
-            "properties": [{
-                    "description": prop.description,
-                    "label": prop.label,
-                    "fhir_resource_prop_path": fhir_resource_prop_by_case_prop.get(prop),
-                    "name": prop.name,
-                    "data_type": prop.data_type,
-                    "deprecated": prop.deprecated,
-                    "allowed_values": {av.allowed_value: av.description for av in prop.allowed_values.all()},
-            } for prop in case_type.properties.all() if not prop.group]
+            "properties": grouped_properties.get(None, [])
         })
         props.append(p)
     return JsonResponse({'case_types': props})
@@ -365,7 +355,7 @@ class DataDictionaryView(BaseProjectDataView):
     @use_jquery_ui
     @method_decorator(toggles.DATA_DICTIONARY.required_decorator())
     @method_decorator(require_permission(HqPermissions.edit_data_dict,
-                        view_only_permission=HqPermissions.view_data_dict))
+                                         view_only_permission=HqPermissions.view_data_dict))
     def dispatch(self, request, *args, **kwargs):
         return super(DataDictionaryView, self).dispatch(request, *args, **kwargs)
 
