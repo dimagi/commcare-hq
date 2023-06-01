@@ -55,7 +55,7 @@ def get_events_errors(response: dict) -> dict:
     return {str(match.full_path): match.value for match in matches}
 
 
-def diagnose_error(error: str) -> str:
+def get_diagnosis_message(error: str) -> str:
     for error_msg in ERROR_DIAGNOSIS.keys():
         if error_msg.lower() in error.lower():
             return ERROR_DIAGNOSIS[error_msg]
