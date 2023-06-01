@@ -1,7 +1,8 @@
 from datetime import datetime
 
+from django.core.validators import MaxLengthValidator
 from django.db import models
-from django.utils.translation import gettext as _
+from django.utils.translation import gettext as _, gettext_lazy
 
 from dimagi.utils.couch import CriticalSection
 from dimagi.utils.parsing import ISO_DATE_FORMAT
@@ -47,8 +48,23 @@ class CasePropertyGroup(models.Model):
         related_query_name='group'
     )
     name = models.CharField(max_length=255, default=None)
-    description = models.TextField(default='', blank=True)
+    # use initially added text field with custom validations instead of CharField with max_length
+    # to avoid truncating longer descriptions
+    description = models.TextField(default='', blank=True, validators=[
+        MaxLengthValidator(255, message=_("Group description should be less than 255 characters"))])
     index = models.IntegerField(default=0, blank=True)
+    deprecated = models.BooleanField(default=False)
+
+    class Meta(object):
+        unique_together = ('case_type', 'name')
+
+    def unique_error_message(self, model_class, unique_check):
+        if model_class == type(self) and unique_check == ('case_type', 'name'):
+            return gettext_lazy('Group "{}" already exists for case type "{}"'.format(
+                self.name, self.case_type.name
+            ))
+        else:
+            return super().unique_error_message(model_class, unique_check)
 
 
 class CaseProperty(models.Model):
@@ -72,7 +88,10 @@ class CaseProperty(models.Model):
     )
     name = models.CharField(max_length=255, default=None)
     label = models.CharField(max_length=255, default='', blank=True)
-    description = models.TextField(default='', blank=True)
+    # use initially added text field with custom validations instead of CharField with max_length
+    # to avoid truncating longer descriptions
+    description = models.TextField(default='', blank=True, validators=[
+        MaxLengthValidator(255, message=_("Property description should be less than 255 characters"))])
     deprecated = models.BooleanField(default=False)
     data_type = models.CharField(
         choices=DataType.choices,
