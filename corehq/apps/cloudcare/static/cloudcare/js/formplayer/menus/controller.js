@@ -109,7 +109,13 @@ hqDefine("cloudcare/js/formplayer/menus/controller", function () {
         var enablePrintOption = !menuResponse.queryKey;
         var sidebarEnabled = toggles.toggleEnabled('SPLIT_SCREEN_CASE_SEARCH');
 
-        if (menuListView) {
+        if (sidebarEnabled && !appPreview && menuResponse.type === "query") {
+            var menuData = menusUtils.getMenuData(menuResponse);
+            menuData.title = "temporary title";
+            menuData["sidebarEnabled"] = true;
+            menuData.headers = [];
+            FormplayerFrontend.regions.getRegion('main').show(views.CaseListView(menuData));
+        } else if (menuListView) {
             FormplayerFrontend.regions.getRegion('main').show(menuListView);
         }
         if (menuResponse.persistentCaseTile && !appPreview) {
@@ -121,8 +127,10 @@ hqDefine("cloudcare/js/formplayer/menus/controller", function () {
         if (sidebarEnabled && !appPreview && menuResponse.type === "entities" && queryResponse != null)  {
             var queryCollection = new Backbone.Collection(queryResponse.displays);
             FormplayerFrontend.regions.getRegion('sidebar').show(QueryListView({collection: queryCollection, title: menuResponse.title, description: menuResponse.description,  sidebarEnabled: true}).render());
+        } else if (sidebarEnabled && !appPreview && menuResponse.type === "query") {
+            FormplayerFrontend.regions.getRegion('sidebar').show(QueryListView({collection: menuResponse, title: menuResponse.title, description: menuResponse.description, sidebarEnabled: true}).render());
         } else {
-            FormplayerFrontend.regions.getRegion('sidebar').empty();
+                FormplayerFrontend.regions.getRegion('sidebar').empty();
         }
 
         if (menuResponse.breadcrumbs) {
