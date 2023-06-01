@@ -40,6 +40,17 @@ hqDefine("events/js/new_event", [
             'use strict';
             var self = {};
 
+            // Disable the submit button unless attendance takers are present
+            var submitBtn = $('input[type="submit"]');
+            var attendanceTakers = $(id_attendance_takers);
+
+            var initialAttendanceTakers = initialData.attendance_takers;
+            submitBtn.prop('disabled', !initialAttendanceTakers || initialAttendanceTakers.length == 0);
+            attendanceTakers.on('change', function() {
+                var attendanceTakersLength = attendanceTakers.val().length
+                submitBtn.prop('disabled', attendanceTakersLength === 0);
+            });
+
             self.name = ko.observable(initialData.name);
             self.startDate = ko.observable(initialData.start_date);
             self.endDate = ko.observable(initialData.end_date);
