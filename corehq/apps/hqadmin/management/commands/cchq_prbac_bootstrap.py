@@ -212,6 +212,10 @@ class Command(BaseCommand):
         Role(slug=privileges.EXPORT_OWNERSHIP,
              name='Allow exports to have ownership',
              description='Allow exports to have ownership'),
+        Role(slug=privileges.FILTERED_BULK_USER_DOWNLOAD,
+             name='Bulk user management features',
+             description='For mobile users, enables bulk deletion page and bulk lookup page. '
+                         'For web users, enables filtered download page.')
     ]
 
     BOOTSTRAP_PLANS = [

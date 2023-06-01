@@ -2964,14 +2964,14 @@ msgid "Fetching your location..."
 msgstr ""
 
 #: corehq/apps/cloudcare/static/cloudcare/js/formplayer/menus/views.js
-#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/sessions/views.js
-msgid "Page <%-num%>"
-msgstr ""
-
-#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/menus/views.js
 msgid ""
 "You have selected more than the maximum selection limit of <%= value %> . "
 "Please uncheck some values to continue."
+msgstr ""
+
+#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/menus/views.js
+#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/sessions/views.js
+msgid "Page <%-num%>"
 msgstr ""
 
 #: corehq/apps/cloudcare/static/cloudcare/js/formplayer/menus/views/query.js
@@ -4174,6 +4174,10 @@ msgid "Gateway Timeout. Please contact CommCare HQ Support."
 msgstr "Caducó el Portal. Por favor contacte al Soporte de CommCare HQ."
 
 #: corehq/apps/reports/static/reports/js/reports.async.js
+msgid "Your search term was too long. Please provide a shorter search filter"
+msgstr ""
+
+#: corehq/apps/reports/static/reports/js/reports.async.js
 msgid "We were unsuccessful loading the report:"
 msgstr "No pudimos cargar el reporte:"
 
@@ -4995,10 +4999,8 @@ msgid "Failed to schedule task to import from OpenMRS."
 msgstr ""
 
 #: corehq/motech/repeaters/static/repeaters/js/repeat_record_report.js
-#, fuzzy
-#| msgid "Failed to re-process"
 msgid "Failed to fetch attempts"
-msgstr "Reproceso fallido"
+msgstr ""
 
 #: corehq/motech/repeaters/static/repeaters/js/repeat_record_report.js
 msgid "Failed to fetch payload"
