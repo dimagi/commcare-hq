@@ -25,6 +25,11 @@ class DevicesLimitExceeded(FCMUtilException):
         super().__init__(f"Max devices allowed is {MAX_DEVICES_ALLOWED_MULTICAST}! Please execute in batches.")
 
 
+class EmptyData(FCMUtilException):
+    def __init__(self):
+        super().__init__("One of the fields from 'title, body, data' is required!")
+
+
 class FCMUtil:
     def __init__(self, app_name, creds_path=settings.FCM_CREDS_PATH):
         creds = credentials.Certificate(creds_path)
@@ -37,33 +42,45 @@ class FCMUtil:
             body=body,
         )
 
-    def send_to_single_device(self, registration_token, title, body, data=None):
+    @staticmethod
+    def check_for_empty_notification(title, body, data):
+        if not (title or body or data):
+            raise EmptyData()
+
+    def send_to_single_device(self, registration_token, title='', body='', data=None):
         """
         Sends message to a single device.
         https://firebase.google.com/docs/cloud-messaging/send-message#send-messages-to-specific-devices
+        Pass only data to send notification of type 'Data Messages'.
+        https://firebase.google.com/docs/cloud-messaging/concept-options
         """
+        self.check_for_empty_notification(title, body, data)
         message = messaging.Message(
-            notification=self._build_notification(title, body),
             token=registration_token,
             data=data
         )
+        if title or body:
+            message.notification = self._build_notification(title, body)
         response = messaging.send(message, app=self.app)
-        # print(response)
         return response
 
-    def send_to_multiple_devices(self, registration_tokens, title, body, data=None):
+    def send_to_multiple_devices(self, registration_tokens, title='', body='', data=None):
         """
         Sends message to multiple devices.
         https://firebase.google.com/docs/cloud-messaging/send-message#send-messages-to-multiple-devices
+        Pass only data to send notification of type 'Data Messages'.
+        https://firebase.google.com/docs/cloud-messaging/concept-options
         """
         assert isinstance(registration_tokens, list)
         if len(registration_tokens) > MAX_DEVICES_ALLOWED_MULTICAST:
             raise DevicesLimitExceeded()
+        self.check_for_empty_notification(title, body, data)
         message = messaging.MulticastMessage(
-            notification=self._build_notification(title, body),
             tokens=registration_tokens,
             data=data
         )
+        if title or body:
+            message.notification = self._build_notification(title, body)
         response = messaging.send_multicast(message, app=self.app)
         return response
 
