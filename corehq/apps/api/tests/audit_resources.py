@@ -260,6 +260,24 @@ class TestNavigationEventAuditResource(APIResourceTest):
 
         self.assertEqual(expected_next_url, response_next_url)
 
+    def test_response_provides_total_count(self):
+        limit = 1
+        params = {'limit': limit}
+
+        list_endpoint = f'{self.list_endpoint}?{urlencode(params)}'
+        response = self._assert_auth_get_resource(list_endpoint)
+        self.assertEqual(response.status_code, 200)
+        response_total_count = json.loads(response.content)['meta']['total_count']
+        self.assertEqual(len(self.domain1_audits.expected_response_objects),
+                        response_total_count)
+
+        params['local_timezone'] = 'UTC'
+        list_endpoint = f'{self.list_endpoint}?{urlencode(params)}'
+        response = self._assert_auth_get_resource(list_endpoint)
+        self.assertEqual(response.status_code, 200)
+        response_total_count = json.loads(response.content)['meta']['total_count']
+        self.assertEqual(2, response_total_count)
+
     def test_query_includes_users_in_only_specified_domain(self):
         results = self.resource.cursor_query(self.domain1_audits.domain, self.domain1_audits.timezone)
         for result in results:

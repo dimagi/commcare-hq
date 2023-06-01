@@ -1181,8 +1181,8 @@ class NavigationEventAuditResource(HqBaseResource, Resource):
 
         queryset = queryset.annotate(UTC_start_time=Min('event_date'), UTC_end_time=Max('event_date'))
 
-        cls.count = queryset.count()
         with override_settings(USE_TZ=True):
+            cls.count = queryset.count()
             # TruncDate ignores tzinfo if the queryset is not evaluated within overridden USE_TZ setting
             return list(queryset[:params['limit']])
 
