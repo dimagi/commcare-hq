@@ -1100,9 +1100,11 @@ class NavigationEventAuditResource(HqBaseResource, Resource):
 
     def alter_list_data_to_serialize(self, request, data):
         data['meta']['local_date_timezone'] = self.local_timezone.zone
+        data['meta']['total_count'] = self.count
+
         params = request.GET.copy()  # Makes params mutable for creating next_url below
 
-        if data['meta']['total_count'] >= data['meta']['limit']:
+        if data['meta']['total_count'] > data['meta']['limit']:
             last_object = data['objects'][-1]
             cursor = {
                 'cursor_local_date': last_object.data['local_date'],
@@ -1179,6 +1181,7 @@ class NavigationEventAuditResource(HqBaseResource, Resource):
 
         queryset = queryset.annotate(UTC_start_time=Min('event_date'), UTC_end_time=Max('event_date'))
 
+        cls.count = queryset.count()
         with override_settings(USE_TZ=True):
             # TruncDate ignores tzinfo if the queryset is not evaluated within overridden USE_TZ setting
             return list(queryset[:params['limit']])
