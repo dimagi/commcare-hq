@@ -1600,35 +1600,3 @@ class FilterValueEncoder(DjangoJSONEncoder):
         if isinstance(obj, DateSpan):
             return str(obj)
         return super(FilterValueEncoder, self).default(obj)
-
-
-class ReportComparisonException(models.Model):
-    date_created = models.DateTimeField(auto_now_add=True)
-    domain = models.TextField()
-    control_report_config_id = models.TextField()
-    candidate_report_config_id = models.TextField()
-    filter_values = models.JSONField(encoder=FilterValueEncoder)
-    exception = models.TextField()
-    notes = models.TextField(blank=True)
-
-
-class ReportComparisonDiff(models.Model):
-    date_created = models.DateTimeField(auto_now_add=True)
-    domain = models.TextField()
-    control_report_config_id = models.TextField()
-    candidate_report_config_id = models.TextField()
-    filter_values = models.JSONField(encoder=FilterValueEncoder)
-    control = models.JSONField()
-    candidate = models.JSONField()
-    diff = models.JSONField()
-    notes = models.TextField(blank=True)
-
-
-class ReportComparisonTiming(models.Model):
-    date_created = models.DateTimeField(auto_now_add=True)
-    domain = models.TextField()
-    control_report_config_id = models.TextField()
-    candidate_report_config_id = models.TextField()
-    filter_values = models.JSONField(encoder=FilterValueEncoder)
-    control_duration = models.DecimalField(max_digits=10, decimal_places=3)
-    candidate_duration = models.DecimalField(max_digits=10, decimal_places=3)
