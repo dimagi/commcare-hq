@@ -33,6 +33,7 @@ from django.http import Http404
 from corehq.apps.formplayer_api.smsforms.api import TouchformsError
 
 from corehq.messaging.fcm_util import HQ_FCM_UTIL
+from corehq.apps.users.models import CommCareUser
 
 @contextmanager
 def no_op_context_manager():
@@ -499,7 +500,6 @@ class FCMNotificationContent(Content):
     message = old_jsonfield.JSONField(default=dict)
     action = models.CharField(null=True, choices=ACTION_CHOICES, max_length=25)
     message_type = models.CharField(choices=MESSAGE_TYPES, max_length=25)
-    
 
     def create_copy(self):
         """
@@ -515,7 +515,7 @@ class FCMNotificationContent(Content):
     def render_subject_and_message(self, subject, message, recipient):
         renderer = self.get_template_renderer(recipient)
         return renderer.render(subject), renderer.render(message)
-    
+
     def build_fcm_data_field(self, recipient):
         data = None
         if self.action:
@@ -536,6 +536,14 @@ class FCMNotificationContent(Content):
             case_id=self.case.case_id if self.case else None,
         )
         subject = message = data = None
+
+        if not HQ_FCM_UTIL:
+            logged_subevent.error(MessagingEvent.ERROR_FCM_NOT_AVAILABLE)
+            return
+
+        if not isinstance(recipient, CommCareUser):
+            logged_subevent.error(MessagingEvent.ERROR_FCM_UNSUPPORTED_RECIPIENT)
+            return
 
         if self.message_type == self.MESSAGE_TYPE_NOTIFICATION:
             if not (self.subject or self.message):

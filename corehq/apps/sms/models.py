@@ -1064,6 +1064,8 @@ class MessagingEvent(models.Model, MessagingStatusMixin):
     ERROR_EMAIL_BOUNCED = 'EMAIL_BOUNCED'
     ERROR_EMAIL_GATEWAY = 'EMAIL_GATEWAY_ERROR'
     ERROR_NO_FCM_TOKENS = 'NO_FCM_TOKENS'
+    ERROR_FCM_NOT_AVAILABLE = 'FCM_NOT_AVAILABLE'
+    ERROR_FCM_UNSUPPORTED_RECIPIENT = 'FCM_UNSUPPORTED_RECIPIENT'
 
     ERROR_MESSAGES = {
         ERROR_NO_RECIPIENT:
@@ -1119,7 +1121,9 @@ class MessagingEvent(models.Model, MessagingStatusMixin):
                 "sending reminder emails on a Trial plan has been reached."),
         ERROR_EMAIL_BOUNCED: gettext_noop("Email Bounced"),
         ERROR_EMAIL_GATEWAY: gettext_noop("Email Gateway Error"),
-        ERROR_NO_FCM_TOKENS: gettext_noop("No FCM tokens found for recipient.")
+        ERROR_NO_FCM_TOKENS: gettext_noop("No FCM tokens found for recipient."),
+        ERROR_FCM_NOT_AVAILABLE: gettext_noop("FCM not available on this environment."),
+        ERROR_FCM_UNSUPPORTED_RECIPIENT: gettext_noop("FCM is supported for only CommCare User."),
     }
 
     domain = models.CharField(max_length=126, null=False, db_index=True)
