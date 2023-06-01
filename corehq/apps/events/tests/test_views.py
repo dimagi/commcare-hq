@@ -67,7 +67,7 @@ class BaseEventViewTestClass(TestCase):
             is_admin=False,
         )
         cls.mobile_worker = CommCareUser.create(
-            cls.domain.name, "UserX", "123", None, None, email="user_x@email.com"
+            cls.domain, "UserX", "123", None, None, email="user_x@email.com"
         )
         role = cls.attendance_coordinator_role()
         cls.role_webuser.set_role(cls.domain, role.get_qualified_id())
