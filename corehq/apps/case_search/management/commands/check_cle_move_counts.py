@@ -21,9 +21,9 @@ class Command(BaseCommand):
                 continue
             total_case_es = CaseES().domain(domain_obj.name).count()
             total_case_search = CaseSearchES().domain(domain_obj.name).count()
+            difference = total_case_es - total_case_search
 
-            if (total_case_es > total_case_search
+            if (difference >= 100
                     and not DomainsNotInCaseSearchIndex.objects.filter(domain=domain_obj.name)):
-                difference = total_case_es - total_case_search
                 self.stdout.write(f"{domain_obj.name}\t{difference}")
                 DomainsNotInCaseSearchIndex.objects.create(domain=domain_obj.name, estimated_size=difference)
