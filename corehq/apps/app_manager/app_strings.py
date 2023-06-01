@@ -66,6 +66,12 @@ def _create_custom_app_strings(app, lang, for_default=False, build_profile_id=No
 
     yield id_strings.current_language(), lang
 
+    for id, custom_assertion in enumerate(app.custom_assertions):
+        yield (
+            id_strings.custom_assertion_locale(id),
+            clean_trans(custom_assertion.text, langs)
+        )
+
     for module in app.get_modules():
         yield from _create_module_details_app_strings(module, langs)
 
@@ -73,6 +79,12 @@ def _create_custom_app_strings(app, lang, for_default=False, build_profile_id=No
             id_strings.module_locale(module),
             _maybe_add_index(clean_trans(module.name, langs), app)
         )
+
+        for id, custom_assertion in enumerate(module.custom_assertions):
+            yield (
+                id_strings.custom_assertion_locale(id, module),
+                clean_trans(custom_assertion.text, langs)
+            )
 
         yield from _create_icon_audio_app_strings(
             module,
@@ -187,7 +199,7 @@ def _create_module_details_app_strings(module, langs):
         # To list app strings for properties used as sorting properties only
         if detail.sort_elements:
             sort_only, sort_columns = get_sort_and_sort_only_columns(
-                detail.get_columns(),
+                list(detail.get_columns()),  # evaluate generator
                 detail.sort_elements,
             )
             for field, sort_element, order in sort_only:
@@ -463,7 +475,7 @@ def _create_forms_app_strings(
 
         for id, custom_assertion in enumerate(form.custom_assertions):
             yield (
-                id_strings.custom_assertion_locale(module, form, id),
+                id_strings.custom_assertion_locale(id, module, form),
                 clean_trans(custom_assertion.text, langs)
             )
 

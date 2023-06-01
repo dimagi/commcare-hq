@@ -1,5 +1,6 @@
 import re
 from collections import defaultdict
+import json
 
 from django.utils.functional import cached_property
 from django.utils.translation import gettext as _
@@ -57,9 +58,16 @@ def get_case_search_results_from_request(domain, app_id, couch_user, request_dic
 def get_case_search_results(domain, case_types, criteria,
                             app_id=None, couch_user=None, registry_slug=None,
                             custom_related_case_property=None, include_all_related_cases=None):
-
     helper = _get_helper(couch_user, domain, case_types, registry_slug)
 
+    cases = get_primary_case_search_results(helper, domain, case_types, criteria)
+    if app_id:
+        cases.extend(get_and_tag_related_cases(helper, app_id, case_types, cases,
+            custom_related_case_property, include_all_related_cases))
+    return cases
+
+
+def get_primary_case_search_results(helper, domain, case_types, criteria):
     builder = CaseSearchQueryBuilder(domain, case_types, helper.query_domains)
     try:
         search_es = builder.build_query(criteria)
@@ -81,9 +89,6 @@ def get_case_search_results(domain, case_types, criteria,
         raise
 
     cases = [helper.wrap_case(hit, include_score=True) for hit in hits]
-    if app_id:
-        cases.extend(get_and_tag_related_cases(helper, app_id, case_types, cases,
-            custom_related_case_property, include_all_related_cases))
     return cases
 
 
@@ -110,9 +115,9 @@ class _QueryHelper:
     def wrap_case(self, es_hit, include_score=False):
         return wrap_case_search_hit(es_hit, include_score=include_score)
 
-    def get_all_related_live_cases(self, cases):
+    def get_all_related_live_cases(self, initial_cases):
         from casexml.apps.phone.data_providers.case.livequery import get_all_related_live_cases
-        case_ids = {case.case_id for case in cases}
+        case_ids = {case.case_id for case in initial_cases}
         return get_all_related_live_cases(self.domain, case_ids)
 
 
@@ -131,8 +136,11 @@ class _RegistryQueryHelper:
         case.case_json[COMMCARE_PROJECT] = case.domain
         return case
 
-    def get_all_related_live_cases(self, cases):
-        return self.registry_helper.get_multi_domain_case_hierarchy(self.couch_user, cases)
+    def get_all_related_live_cases(self, initial_cases):
+        all_cases = self.registry_helper.get_multi_domain_case_hierarchy(self.couch_user, initial_cases)
+        initial_case_ids = {case.case_id for case in initial_cases}
+        return list(case for case in all_cases if case.case_id not in initial_case_ids)
+
 
 class CaseSearchQueryBuilder:
     """Compiles the case search object for the view"""
@@ -226,8 +234,15 @@ class CaseSearchQueryBuilder:
 
         value = self._remove_ignored_patterns(criteria.key, criteria.value)
         fuzzy = criteria.key in self._fuzzy_properties
+        if fuzzy and criteria.has_multiple_terms:
+            raise CaseFilterError(
+                _("Fuzzy search is not supported with multiple values"),
+                criteria.key
+            )
         if criteria.is_ancestor_query:
             query = f'{criteria.key} = "{value}"'
+            if isinstance(value, list):
+                query = f"""{criteria.key} = unwrap-list('{json.dumps(value)}')"""
             return build_filter_from_xpath(self.query_domains, query, fuzzy=fuzzy)
         elif criteria.is_index_query:
             return reverse_index_case_query(value, criteria.index_query_identifier)
@@ -279,19 +294,19 @@ def get_and_tag_related_cases(helper, app_id, case_types, cases,
     if custom_related_case_property:
         expanded_case_results.extend(get_expanded_case_results(helper, custom_related_case_property, cases))
 
-    results = expanded_case_results
+    unfiltered_results = expanded_case_results
     top_level_cases = cases + expanded_case_results
-
     related_cases = get_related_cases_result(helper, app, case_types, top_level_cases, include_all_related_cases)
     if related_cases:
-        results.extend(related_cases)
-    for case in related_cases:
-        _tag_is_related_case(case)
-
+        unfiltered_results.extend(related_cases)
     initial_case_ids = {case.case_id for case in cases}
-    return list({
-        case.case_id: case for case in results if case.case_id not in initial_case_ids
+    results = list({
+        case.case_id: case for case in unfiltered_results if case.case_id not in initial_case_ids
     }.values())
+    for case in results:
+        _tag_is_related_case(case)
+    return results
+
 
 
 def get_related_cases_result(helper, app, case_types, source_cases, include_all_related_cases):
@@ -426,6 +441,6 @@ def _get_case_search_cases(helper, case_ids):
     results = helper.get_base_queryset().case_ids(case_ids).run().hits
     return [helper.wrap_case(result) for result in results]
 
-
+# Warning: '_tag_is_related_case' may cause the relevant user-defined properties to be overwritten.
 def _tag_is_related_case(case):
     case.case_json[IS_RELATED_CASE] = "true"

@@ -282,7 +282,6 @@ class MultiSelectSelectParentFirstTests(SimpleTestCase, TestXmlMixin):
 
     @patch('corehq.apps.app_manager.models.validate_xform', return_value=None)
     @patch('corehq.apps.app_manager.helpers.validators.domain_has_privilege', return_value=True)
-    @patch('corehq.apps.builds.models.BuildSpec.supports_j2me', return_value=False)
     def test_select_parent_first_parent_not_allowed(self, *args):
         self.module.parent_select.active = True
         self.module.parent_select.module_id = self.other_module.unique_id
@@ -359,6 +358,7 @@ class MultiSelectChildModuleDatumIDTests(SimpleTestCase, SuiteMixin):
         # m1 is a child of m0 and uses the same case type, this is where the tests focus
         # m2 is a standalone module of the same case type
         # m3 is a standalone module of another case type
+        # m4 is a child of m2 and uses multi-select
 
         self.factory = AppFactory(domain="multiple-referrals-child-test")
 
@@ -375,6 +375,11 @@ class MultiSelectChildModuleDatumIDTests(SimpleTestCase, SuiteMixin):
 
         self.m3, m3f0 = self.factory.new_basic_module('m3', self.OTHER_CASE_TYPE)
         m3f0.requires = 'case'
+
+        self.m4, self.m4f0 = self.factory.new_basic_module(
+            'child-multi', self.MAIN_CASE_TYPE, parent_module=self.m2)
+        self.m4f0.requires = 'case'
+        self.m4.case_details.short.multi_select = True
 
         self._render_suite.reset_cache(self)
 
@@ -496,9 +501,43 @@ class MultiSelectChildModuleDatumIDTests(SimpleTestCase, SuiteMixin):
         ])
         self.assert_form_datums(self.m1f0, 'case_id')
 
+    def test_multi_select_as_child_with_parent_select(self):
+        # parent select from parent module to child (seems weird)
+        self.set_parent_select(self.m2, self.m4)
+
+        self.assert_module_datums(self.m2.id, [
+            ('instance-datum', 'parent_selected_cases'),
+            ('datum', 'case_id'),
+        ])
+
+        self.assert_module_datums(self.m4.id, [
+            ('instance-datum', 'parent_selected_cases'),
+        ])
+
+    @patch("corehq.apps.app_manager.suite_xml.post_process.remote_requests."
+           "case_search_sync_cases_on_form_entry_enabled_for_domain")
+    @patch(
+        "corehq.apps.app_manager.suite_xml.sections.entries."
+        "case_search_sync_cases_on_form_entry_enabled_for_domain")
+    def test_multi_select_as_child_with_parent_select_case_search(self, mock1, mock2):
+        # parent select from parent module to child (seems weird)
+        self.set_parent_select(self.m2, self.m4)
+
+        self.m4.search_config.properties = [CaseSearchProperty(
+            name='name',
+            label={'en': 'Name'}
+        )]
+        self.assert_module_datums(self.m2.id, [
+            ('instance-datum', 'parent_selected_cases'),
+            ('datum', 'case_id'),
+        ])
+
+        self.assert_module_datums(self.m4.id, [
+            ('instance-datum', 'parent_selected_cases'),
+        ])
+
 
 @patch('corehq.apps.app_manager.helpers.validators.domain_has_privilege', return_value=True)
-@patch('corehq.apps.builds.models.BuildSpec.supports_j2me', return_value=False)
 @patch('corehq.util.view_utils.get_url_base', new=lambda: "https://www.example.com")
 @patch.object(Application, 'enable_practice_users', return_value=False)
 @patch_validate_xform()
@@ -617,20 +656,3 @@ class MultiSelectEndOfFormNavTests(SimpleTestCase, TestXmlMixin):
             self.factory.app.create_suite(),
             "./entry[2]/stack",
         )
-
-    def test_eof_nav_form_link_multi_to_single_validate(self, *args):
-        single_form = self.single_loner.get_form(0)
-        multi_form = self.multi_loner.get_form(0)
-
-        multi_form.post_form_workflow = WORKFLOW_FORM
-        multi_form.form_links = [FormLink(
-            form_id=single_form.unique_id,
-            form_module_id=self.single_loner.unique_id,
-            xpath="true()",
-        )]
-        self.assertIn({'type': 'multi select form links',
-                       'form_type': 'module_form',
-                       'module': {'id': 1, 'name': {'en': 'Multi Loner module'},
-                                  'unique_id': 'Multi Loner_module'},
-                       'form': {'id': 0, 'name': {'en': 'Multi Loner form 0'}, 'unique_id': 'Multi Loner_form_0'}
-                       }, self.factory.app.validate_app())

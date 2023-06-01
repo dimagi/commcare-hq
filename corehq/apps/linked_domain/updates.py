@@ -20,6 +20,7 @@ from corehq.apps.custom_data_fields.models import (
     Field,
 )
 from corehq.apps.data_dictionary.models import (
+    CasePropertyGroup,
     CaseType,
     CaseProperty
 )
@@ -105,7 +106,7 @@ from corehq.apps.userreports.util import (
 )
 from corehq.apps.users.models import UserRole, HqPermissions
 from corehq.apps.users.views.mobile import UserFieldsView
-from corehq.toggles import NAMESPACE_DOMAIN
+from corehq.toggles import NAMESPACE_DOMAIN, EMBEDDED_TABLEAU
 from corehq.toggles.shortcuts import set_toggle
 
 
@@ -266,6 +267,11 @@ def update_user_roles(domain_link):
         if role.upstream_id:
             local_roles_by_upstream_id[role.upstream_id] = role
 
+    is_embedded_tableau_enabled = EMBEDDED_TABLEAU.enabled(domain_link.linked_domain)
+    if is_embedded_tableau_enabled:
+        visualizations_for_linked_domain = TableauVisualization.objects.filter(
+            domain=domain_link.linked_domain)
+
     # Update downstream roles based on upstream roles
     for role_def in master_results:
         role = local_roles_by_upstream_id.get(role_def['_id']) or local_roles_by_name.get(role_def['name'])
@@ -280,6 +286,9 @@ def update_user_roles(domain_link):
         role.save()
 
         permissions = HqPermissions.wrap(role_def["permissions"])
+        if is_embedded_tableau_enabled:
+            permissions.view_tableau_list = _get_new_tableau_report_permissions(
+                visualizations_for_linked_domain, permissions, role.permissions)
         role.set_permissions(permissions.to_list())
 
     # Update assignable_by ids - must be done after main update to guarantee all local roles have ids
@@ -315,7 +324,7 @@ def update_data_dictionary(domain_link):
     else:
         master_results = local_get_data_dictionary(domain_link.master_domain)
 
-    # Start from an empty set of CaseTypes and CaseProperties in the linked domain.
+    # Start from an empty set of CaseTypes, CasePropertyGroups and CaseProperties in the linked domain.
     CaseType.objects.filter(domain=domain_link.linked_domain).delete()
 
     # Create CaseType and CaseProperty as necessary
@@ -325,15 +334,26 @@ def update_data_dictionary(domain_link):
         case_type_obj.fully_generated = case_type_desc['fully_generated']
         case_type_obj.save()
 
-        for case_property_name, case_property_desc in case_type_desc['properties'].items():
-            case_property_obj = CaseProperty.get_or_create(case_property_name,
-                                                           case_type_obj.name,
-                                                           domain_link.linked_domain)
-            case_property_obj.description = case_property_desc['description']
-            case_property_obj.deprecated = case_property_desc['deprecated']
-            case_property_obj.data_type = case_property_desc['data_type']
-            case_property_obj.group = case_property_desc['group']
-            case_property_obj.save()
+        for group_name, group_desc in case_type_desc['groups'].items():
+            if group_name:
+                group_obj, created = CasePropertyGroup.objects.get_or_create(
+                    name=group_name,
+                    case_type=case_type_obj,
+                    description=group_desc['description'],
+                    index=group_desc['index']
+                )
+
+            for case_property_name, case_property_desc in group_desc['properties'].items():
+                case_property_obj = CaseProperty.get_or_create(case_property_name,
+                                                            case_type_obj.name,
+                                                            domain_link.linked_domain)
+                case_property_obj.description = case_property_desc['description']
+                case_property_obj.deprecated = case_property_desc['deprecated']
+                case_property_obj.data_type = case_property_desc['data_type']
+                if group_name:
+                    case_property_obj.group = group_name
+                    case_property_obj.group_obj = group_obj
+                case_property_obj.save()
 
 
 def update_tableau_server_and_visualizations(domain_link):
@@ -543,3 +563,15 @@ def _convert_reports_permissions(domain_link, master_results):
                 new_report_perms.append(get_ucr_class_name(linked_id))
 
         role_def['permissions']['view_report_list'] = new_report_perms
+
+
+def _get_new_tableau_report_permissions(downstream_domain_visualizations, upstream_permissions,
+                                        original_downstream_permissions):
+    new_downstream_view_tableau_list = []
+    for viz in downstream_domain_visualizations:
+        upstream_viz_enabled = viz.upstream_id and viz.upstream_id in upstream_permissions.view_tableau_list
+        no_upstream_viz_and_viz_enabled_downstream = (not viz.upstream_id
+            and str(viz.id) in original_downstream_permissions.view_tableau_list)
+        if upstream_viz_enabled or no_upstream_viz_and_viz_enabled_downstream:
+            new_downstream_view_tableau_list.append(str(viz.id))
+    return new_downstream_view_tableau_list

@@ -3,8 +3,6 @@ import json
 import re
 import time
 
-from braces.views import JsonRequestResponseMixin
-from couchdbkit import ResourceNotFound
 from django.contrib import messages
 from django.contrib.humanize.templatetags.humanize import naturaltime
 from django.core.exceptions import ValidationError
@@ -23,16 +21,21 @@ from django.utils.translation import gettext as _
 from django.utils.translation import gettext_noop, override
 from django.views.decorators.http import require_GET, require_POST
 from django.views.generic import TemplateView, View
+
+from braces.views import JsonRequestResponseMixin
+from couchdbkit import ResourceNotFound
 from django_prbac.exceptions import PermissionDenied
 from django_prbac.utils import has_privilege
 from memoized import memoized
 
 from casexml.apps.phone.models import SyncLogSQL
-from corehq.apps.events.models import AttendanceTrackingConfig
-from corehq.apps.events.tasks import get_case_block_for_user
-from corehq.apps.hqcase.utils import submit_case_blocks
-from corehq.apps.events.models import get_attendee_case_type
-from corehq import privileges
+from couchexport.models import Format
+from couchexport.writers import Excel2007ExportWriter
+from soil import DownloadBase
+from soil.exceptions import TaskFailedError
+from soil.util import get_download_context
+
+from corehq import privileges, toggles
 from corehq.apps.accounting.async_handlers import Select2BillingInfoHandler
 from corehq.apps.accounting.decorators import requires_privilege_with_fallback
 from corehq.apps.accounting.models import (
@@ -48,13 +51,20 @@ from corehq.apps.custom_data_fields.models import (
     CUSTOM_DATA_FIELD_PREFIX,
     PROFILE_SLUG,
 )
-from corehq.apps.domain.models import SMSAccountConfirmationSettings
-from corehq.apps.sms.api import send_sms
-from corehq.apps.domain.utils import guess_domain_language_for_sms
-from corehq.apps.domain.decorators import domain_admin_required, login_and_domain_required
+from corehq.apps.domain.decorators import (
+    domain_admin_required,
+    login_and_domain_required,
+)
 from corehq.apps.domain.extension_points import has_custom_clean_password
+from corehq.apps.domain.models import SMSAccountConfirmationSettings
+from corehq.apps.domain.utils import guess_domain_language_for_sms
 from corehq.apps.domain.views.base import DomainViewMixin
 from corehq.apps.es import FormES
+from corehq.apps.events.models import (
+    get_attendee_case_type,
+    mobile_worker_attendees_enabled,
+)
+from corehq.apps.events.tasks import create_attendee_for_user
 from corehq.apps.groups.models import Group
 from corehq.apps.hqwebapp.async_handler import AsyncHandlerMixin
 from corehq.apps.hqwebapp.crispy import make_form_readonly
@@ -68,15 +78,21 @@ from corehq.apps.locations.permissions import (
 )
 from corehq.apps.ota.utils import demo_restore_date_created, turn_off_demo_mode
 from corehq.apps.registration.forms import (
-    MobileWorkerAccountConfirmationBySMSForm, MobileWorkerAccountConfirmationForm
+    MobileWorkerAccountConfirmationBySMSForm,
+    MobileWorkerAccountConfirmationForm,
 )
+from corehq.apps.sms.api import send_sms
 from corehq.apps.sms.verify import initiate_sms_verification_workflow
 from corehq.apps.users.account_confirmation import (
-    send_account_confirmation_if_necessary, send_account_confirmation_sms_if_necessary,
+    send_account_confirmation_if_necessary,
+    send_account_confirmation_sms_if_necessary,
 )
 from corehq.apps.users.analytics import get_search_users_in_domain_es_query
 from corehq.apps.users.audit.change_messages import UserChangeMessage
-from corehq.apps.users.bulk_download import get_domains_from_user_filters, load_memoizer
+from corehq.apps.users.bulk_download import (
+    get_domains_from_user_filters,
+    load_memoizer,
+)
 from corehq.apps.users.dbaccessors import get_user_docs_by_username
 from corehq.apps.users.decorators import (
     require_can_edit_commcare_users,
@@ -99,7 +115,7 @@ from corehq.apps.users.models import (
     CommCareUser,
     CouchUser,
     DeactivateMobileWorkerTrigger,
-    check_and_send_limit_email
+    check_and_send_limit_email,
 )
 from corehq.apps.users.models_role import UserRole
 from corehq.apps.users.tasks import (
@@ -119,16 +135,16 @@ from corehq.apps.users.views import (
     BaseEditUserView,
     BaseManageWebUserView,
     BaseUploadUser,
-    UserUploadJobPollView,
     BaseUserSettingsView,
+    UserUploadJobPollView,
     get_domain_languages,
 )
+from corehq.apps.users.views.utils import get_locations_with_orphaned_cases
 from corehq.const import (
     USER_CHANGE_VIA_BULK_IMPORTER,
     USER_CHANGE_VIA_WEB,
     USER_DATE_FORMAT,
 )
-from corehq import toggles
 from corehq.motech.utils import b64_aes_decrypt
 from corehq.pillows.utils import MOBILE_USER_TYPE, WEB_USER_TYPE
 from corehq.util import get_document_or_404
@@ -140,14 +156,9 @@ from corehq.util.workbook_json.excel import (
     WorksheetNotFound,
     get_workbook,
 )
-from couchexport.models import Format
-from couchexport.writers import Excel2007ExportWriter
-from soil import DownloadBase
-from soil.exceptions import TaskFailedError
-from soil.util import get_download_context
-from .custom_data_fields import UserFieldsView
+
 from ..utils import log_user_groups_change
-from corehq.apps.users.views.utils import get_locations_with_single_user
+from .custom_data_fields import UserFieldsView
 
 BULK_MOBILE_HELP_SITE = ("https://confluence.dimagi.com/display/commcarepublic"
                          "/Create+and+Manage+CommCare+Mobile+Workers#Createand"
@@ -200,7 +211,6 @@ class EditCommCareUserView(BaseEditUserView):
             'edit_user_form_title': self.edit_user_form_title,
             'strong_mobile_passwords': self.request.project.strong_mobile_passwords,
             'has_any_sync_logs': self.has_any_sync_logs,
-            'token': self.backup_token,
         })
         return context
 
@@ -302,7 +312,7 @@ class EditCommCareUserView(BaseEditUserView):
             ),
             'demo_restore_date': naturaltime(demo_restore_date_created(self.editable_user)),
             'group_names': [g.name for g in self.groups],
-            'locations_with_single_user': get_locations_with_single_user(
+            'locations_with_single_user': get_locations_with_orphaned_cases(
                 self.domain,
                 self.editable_user.assigned_location_ids,
                 self.editable_user.user_id
@@ -521,8 +531,11 @@ def toggle_demo_mode(request, domain, user_id):
             )
         )
     else:
-        from corehq.apps.app_manager.views.utils import unset_practice_mode_configured_apps, \
-            get_practice_mode_configured_apps
+        from corehq.apps.app_manager.views.utils import (
+            get_practice_mode_configured_apps,
+            unset_practice_mode_configured_apps,
+        )
+
         # if the user is being used as practice user on any apps, check/ask for confirmation
         apps = get_practice_mode_configured_apps(domain)
         confirm_turn_off = True if (request.POST.get('confirm_turn_off', 'no')) == 'yes' else False
@@ -556,7 +569,9 @@ class ConfirmTurnOffDemoModeView(BaseManageCommCareUserView):
 
     @property
     def page_context(self):
-        from corehq.apps.app_manager.views.utils import get_practice_mode_configured_apps
+        from corehq.apps.app_manager.views.utils import (
+            get_practice_mode_configured_apps,
+        )
         user_id = self.kwargs.pop('couch_user_id')
         user = CommCareUser.get_by_user_id(user_id, self.domain)
         practice_apps = get_practice_mode_configured_apps(self.domain, user_id)
@@ -762,7 +777,12 @@ class MobileWorkerListView(JSONResponseMixin, BaseUserSettingsView):
                 errors=', '.join(all_errors)
             )}
         couch_user = self._build_commcare_user()
-        self.create_commcare_attendee_case_for_user(mobile_worker_couch_user=couch_user)
+        if (
+            domain_has_privilege(self.domain, privileges.ATTENDANCE_TRACKING)
+            and toggles.ATTENDANCE_TRACKING.enabled(self.domain)
+            and mobile_worker_attendees_enabled(self.domain)
+        ):
+            self.create_attendee_for_user(couch_user)
 
         if self.new_mobile_worker_form.cleaned_data['send_account_confirmation_email']:
             send_account_confirmation_if_necessary(couch_user)
@@ -778,27 +798,16 @@ class MobileWorkerListView(JSONResponseMixin, BaseUserSettingsView):
             'user_id': couch_user.userID,
         }
 
-    def create_commcare_attendee_case_for_user(self, mobile_worker_couch_user):
-        """Creates a case for the this user to be used for attendance tracking"""
-        has_privilege = domain_has_privilege(self.domain, privileges.ATTENDANCE_TRACKING)
-        # This toggle is temporary and will be removed once the feature is released
-        toggle_enabled = toggles.ATTENDANCE_TRACKING.enabled(self.domain)
-
-        if has_privilege and toggle_enabled:
-            if AttendanceTrackingConfig.mobile_workers_can_be_attendees(domain=self.domain):
-                attendee_case_type = get_attendee_case_type(self.domain)
-                created_by_user_id = self.couch_user.user_id
-                new_case_block = get_case_block_for_user(
-                    mobile_worker_couch_user,
-                    created_by_user_id,
-                    attendee_case_type
-                )
-                return submit_case_blocks(
-                    [new_case_block.as_text()],
-                    domain=self.domain,
-                    user_id=created_by_user_id,
-                    device_id='corehq.apps.users.views.mobile.users.create_commcare_attendee_case_for_user',
-                )
+    def create_attendee_for_user(self, commcare_user):
+        """Creates a case for commcare_user to be used for attendance tracking"""
+        create_attendee_for_user(
+            commcare_user,
+            case_type=get_attendee_case_type(self.domain),
+            domain=self.domain,
+            xform_user_id=self.couch_user.user_id,
+            xform_device_id='MobileWorkerListView.'
+                            'create_attendee_for_commcare_user',
+        )
 
     def _build_commcare_user(self):
         username = self.new_mobile_worker_form.cleaned_data['username']
@@ -824,7 +833,7 @@ class MobileWorkerListView(JSONResponseMixin, BaseUserSettingsView):
             last_name=last_name,
             metadata=self.custom_data.get_data_to_save(),
             is_account_confirmed=is_account_confirmed,
-            location=SQLLocation.objects.get(location_id=location_id) if location_id else None,
+            location=SQLLocation.objects.get(domain=self.domain, location_id=location_id) if location_id else None,
             role_id=role_id
         )
 
@@ -1341,6 +1350,60 @@ class DeleteCommCareUsers(BaseManageCommCareUserView, UsernameUploadMixin):
             messages.success(request, f"{deleted_count} user(s) deleted.")
 
 
+@method_decorator([toggles.CLEAR_MOBILE_WORKER_DATA.required_decorator()], name='dispatch')
+class ClearCommCareUsers(DeleteCommCareUsers):
+    urlname = 'clear_commcare_users'
+    page_title = gettext_noop('Bulk Clear')
+    template_name = 'users/bulk_clear.html'
+
+    def post(self, request, *args, **kwargs):
+        usernames = self._get_usernames(request)
+        if not usernames:
+            return self.get(request, *args, **kwargs)
+
+        user_docs_by_id = {doc['_id']: doc for doc in get_user_docs_by_username(usernames)}
+        usernames_not_found = self._get_usernames_not_found(request, user_docs_by_id, usernames)
+
+        if usernames_not_found:
+            messages.error(request, _("""
+                No users cleared. Please address the above issue(s) and re-upload your updated file.
+            """))
+        else:
+            self._clear_users_data(request, user_docs_by_id)
+
+        return self.get(request, *args, **kwargs)
+
+    def _clear_users_data(self, request, user_docs_by_id):
+        from corehq.apps.users.model_log import UserModelAction
+        from corehq.apps.hqwebapp.tasks import send_mail_async
+        from django.conf import settings
+
+        cleared_count = 0
+        for user_id, doc in user_docs_by_id.items():
+            user = CommCareUser.wrap(doc)
+            user.delete_user_data()
+
+            log_user_change(
+                by_domain=self.domain,
+                for_domain=self.domain,
+                couch_user=user,
+                changed_by_user=request.couch_user,
+                changed_via="web",
+                action=UserModelAction.CLEAR
+            )
+
+            cleared_count += 1
+        if cleared_count:
+            messages.success(request, f"{cleared_count} user(s) cleared.")
+
+        send_mail_async.delay(
+            subject=f"Mobile Worker Clearing Complete - {self.domain}",
+            message=f"The mobile workers have been cleared successfully for the project '{self.domain}'.",
+            from_email=settings.DEFAULT_FROM_EMAIL,
+            recipient_list=[self.request.couch_user.get_email()],
+        )
+
+
 class CommCareUsersLookup(BaseManageCommCareUserView, UsernameUploadMixin):
     urlname = 'commcare_users_lookup'
     page_title = gettext_noop('Mobile Workers Bulk Lookup')
@@ -1403,9 +1466,9 @@ def _count_users(request, domain, user_type):
         raise AssertionError(f"Invalid user type for _count_users: {user_type}")
 
     from corehq.apps.users.dbaccessors import (
+        count_invitations_by_filters,
         count_mobile_users_by_filters,
         count_web_users_by_filters,
-        count_invitations_by_filters,
     )
     form = UserFilterForm(request.GET, domain=domain, couch_user=request.couch_user, user_type=user_type)
 

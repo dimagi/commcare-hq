@@ -1,18 +1,17 @@
 import json
 from contextlib import contextmanager
-from functools import wraps
 from datetime import datetime
+from functools import wraps
 from inspect import isclass
 
 from nose.plugins.attrib import attr
 from nose.tools import nottest
 
 from pillowtop.es_utils import initialize_index_and_mapping
-from pillowtop.tests.utils import TEST_INDEX_INFO
+from pillowtop.tests.utils import get_pillow_doc_adapter
 
 from corehq.apps.es.client import ElasticMultiplexAdapter
 from corehq.apps.es.migration_operations import CreateIndex
-from corehq.elastic import get_es_new
 from corehq.tests.util.warnings import filter_warnings
 from corehq.util.elastic import ensure_index_deleted
 from corehq.util.es.elasticsearch import NotFoundError
@@ -53,14 +52,14 @@ class ElasticTestMixin(object):
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
-        cls._es_instance = get_es_new()
+        cls.test_adapter = get_pillow_doc_adapter()
         # TODO: make individual test[ case]s warning-safe and remove this
         with ignore_index_settings_key_warning:
-            initialize_index_and_mapping(TEST_INDEX_INFO)
+            initialize_index_and_mapping(cls.test_adapter)
 
     @classmethod
     def tearDownClass(cls):
-        ensure_index_deleted(TEST_INDEX_INFO.index)
+        ensure_index_deleted(cls.test_adapter.index_name)
         super().tearDownClass()
 
     def validate_query(self, query):
@@ -69,12 +68,12 @@ class ElasticTestMixin(object):
         # only query portion can be validated using ES validate API
         query = {'query': query.pop('query', {})}
         # TODO: expose validate_query in document adapter
-        validation = self._es_instance.indices.validate_query(
-            body=query,
-            index=TEST_INDEX_INFO.index,
+        validation = manager.index_validate_query(
+            query=query,
+            index=self.test_adapter.index_name,
             params={'explain': 'true'},
         )
-        self.assertTrue(validation['valid'], validation)
+        self.assertTrue(validation)
 
     def checkQuery(self, query, expected_json, is_raw_query=False, validate_query=True):
         self.maxDiff = None
@@ -97,7 +96,7 @@ class ElasticTestMixin(object):
 
 
 @nottest
-def es_test(test=None, requires=[], setup_class=False):
+def es_test(test=None, requires=None, setup_class=False):
     """Decorator for Elasticsearch tests.
     The decorator sets the ``es_test`` nose attribute and optionally performs
     index setup/cleanup before and after the test(s).

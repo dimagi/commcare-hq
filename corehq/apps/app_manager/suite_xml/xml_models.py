@@ -619,6 +619,7 @@ class MenuMixin(XmlObject):
     relevant = XPathField('@relevant')
     style = StringField('@style')
     commands = NodeListField('command', Command)
+    assertions = NodeListField('assertions/assert', Assertion)
 
 
 class Menu(MenuMixin, DisplayNode, IdNode):
@@ -636,7 +637,7 @@ class LocalizedMenu(MenuMixin, TextOrDisplay, IdNode):
 
 
 class AbstractTemplate(XmlObject):
-    form = StringField('@form', choices=['image', 'phone', 'address'])
+    form = StringField('@form', choices=['image', 'phone', 'address', 'markdown'])
     width = IntegerField('@width')
     text = NodeField('text', Text)
 

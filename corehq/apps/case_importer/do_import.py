@@ -528,12 +528,15 @@ class _CaseImportRow(object):
         return self.external_id
 
     def _get_caseblock_kwargs(self):
-        return {
+        kwargs = {
             'update': self.fields_to_update,
             'index': self._get_parent_index(),
-            'date_opened': self._get_date_opened() or CaseBlock.undefined,
-            'external_id': self._get_external_id() or CaseBlock.undefined,
         }
+        if date_opened := self._get_date_opened():
+            kwargs['date_opened'] = date_opened
+        if external_id := self._get_external_id():
+            kwargs['external_id'] = external_id
+        return kwargs
 
     def get_create_caseblock(self):
         return CaseBlock(

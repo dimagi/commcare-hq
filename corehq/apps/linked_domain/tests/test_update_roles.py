@@ -8,8 +8,10 @@ from corehq.apps.linked_domain.models import DomainLink
 from corehq.apps.linked_domain.tests.test_linked_apps import BaseLinkedDomainTest
 from corehq.apps.linked_domain.updates import update_user_roles
 from corehq.apps.linked_domain.util import _clean_json
+from corehq.apps.reports.models import TableauServer, TableauVisualization
 from corehq.apps.userreports.util import get_ucr_class_name
 from corehq.apps.users.models import HqPermissions, UserRole
+from corehq.util.test_utils import flag_enabled
 
 
 class TestUpdateRoles(BaseLinkedDomainTest):
@@ -84,6 +86,60 @@ class TestUpdateRoles(BaseLinkedDomainTest):
         self.assertIsNotNone(roles.get('other_test'))
         self.assertTrue(roles['other_test'].permissions.edit_web_users)
         self.assertEqual(roles['other_test'].upstream_id, self.other_role.get_id)
+
+    @flag_enabled('EMBEDDED_TABLEAU')
+    def test_tableau_report_permissions(self):
+        self.assertEqual([], UserRole.objects.get_by_domain(self.linked_domain))
+
+        server = TableauServer.objects.create(
+            domain=self.domain,
+            server_type='server',
+            server_name='my_server',
+            target_site='my_site',
+        )
+
+        upstream_viz_1 = TableauVisualization.objects.create(
+            domain=self.domain,
+            server=server,
+        )
+
+        upstream_viz_2 = TableauVisualization.objects.create(
+            domain=self.domain,
+            server=server,
+        )
+
+        downstream_viz_1 = TableauVisualization.objects.create(
+            domain=self.linked_domain,
+            upstream_id=upstream_viz_1.id,
+            server=server,
+        )
+        downstream_viz_2 = TableauVisualization.objects.create(
+            domain=self.linked_domain,
+            upstream_id=upstream_viz_2.id,
+            server=server,
+        )
+        downstream_viz_3 = TableauVisualization.objects.create(
+            domain=self.linked_domain,
+            upstream_id=None,
+            server=server,
+        )
+
+        self.upstream_tableau_role = UserRole.create(self.domain,
+                                   'tableau_test',
+                                   HqPermissions(view_tableau_list=[str(upstream_viz_1.id)]))
+        # Downstream role
+        UserRole.create(
+            self.linked_domain, 'tableau_test', HqPermissions(
+                view_tableau_list=[str(downstream_viz_1.id), str(downstream_viz_2.id), str(downstream_viz_3.id)]),
+            upstream_id=self.upstream_tableau_role.get_id
+        )
+
+        update_user_roles(self.domain_link)
+        roles = {r.name: r for r in UserRole.objects.get_by_domain(self.linked_domain)}
+        # viz_1 should be included because it's linked upstream viz was in upstream role's permission list, and
+        # viz_3 should be included because it's in the downstream role's permission list and isn't linked upstream
+        self.assertListEqual([str(downstream_viz_1.id), str(downstream_viz_3.id)],
+                             roles['tableau_test'].permissions.view_tableau_list)
 
 
 class TestUpdateRolesRemote(TestCase):

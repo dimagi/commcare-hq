@@ -12,7 +12,7 @@ from corehq.apps.app_manager.tests.util import (
 
 
 @patch_get_xform_resource_overrides()
-class SuiteAssertionsTest(SimpleTestCase, SuiteMixin):
+class DefaultSuiteAssertionsTest(SimpleTestCase, SuiteMixin):
     file_path = ('data', 'suite')
 
     def test_case_assertions(self, *args):
@@ -21,40 +21,78 @@ class SuiteAssertionsTest(SimpleTestCase, SuiteMixin):
     def test_no_case_assertions(self, *args):
         self._test_generic_suite('app_no_case_sharing', 'suite-no-case-sharing')
 
-    def test_custom_assertions(self, *args):
-        factory = AppFactory()
-        module, form = factory.new_basic_module('m0', 'case1')
 
-        tests = ["foo = 'bar' and baz = 'buzz'", "count(instance('casedb')/casedb/case[@case_type='friend']) > 0"]
+@patch_get_xform_resource_overrides()
+class CustomSuiteAssertionsTest(SimpleTestCase, TestXmlMixin):
+    def setUp(self):
+        self._assertion_0 = "foo = 'bar' and baz = 'buzz'"
+        self._assertion_1 = "count(instance('casedb')/casedb/case[@case_type='friend']) > 0"
+        self._custom_assertions = [
+            CustomAssertion(test=self._assertion_0, text={'en': "en-0", "fr": "fr-0"}),
+            CustomAssertion(test=self._assertion_1, text={'en': "en-1", "fr": "fr-1"}),
+        ]
 
-        form.custom_assertions = [
-            CustomAssertion(test=test, text={'en': "en-{}".format(id), "fr": "fr-{}".format(id)})
-            for id, test in enumerate(tests)
-        ]
-        assertions_xml = [
-            """
-                <assert test="{test}">
-                    <text>
-                        <locale id="custom_assertion.m0.f0.{id}"/>
-                    </text>
-                </assert>
-            """.format(test=test, id=id) for id, test in enumerate(tests)
-        ]
-        self.assertXmlPartialEqual(
-            """
+    def _get_expected_xml(self, entity_code):
+        return f"""
             <partial>
                 <assertions>
-                    {assertions}
+                    <assert test="{self._assertion_0}">
+                        <text>
+                            <locale id="custom_assertion.{entity_code}.0"/>
+                        </text>
+                    </assert>
+                    <assert test="{self._assertion_1}">
+                        <text>
+                            <locale id="custom_assertion.{entity_code}.1"/>
+                        </text>
+                    </assert>
                 </assertions>
             </partial>
-            """.format(assertions="".join(assertions_xml)),
+        """
+
+    def _assert_translations(self, app, entity_code):
+        en_app_strings = commcare_translations.loads(app.create_app_strings('en'))
+        self.assertEqual(en_app_strings[f'custom_assertion.{entity_code}.0'], "en-0")
+        self.assertEqual(en_app_strings[f'custom_assertion.{entity_code}.1'], "en-1")
+        fr_app_strings = commcare_translations.loads(app.create_app_strings('fr'))
+        self.assertEqual(fr_app_strings[f'custom_assertion.{entity_code}.0'], "fr-0")
+        self.assertEqual(fr_app_strings[f'custom_assertion.{entity_code}.1'], "fr-1")
+
+    def test_custom_form_assertions(self, *args):
+        factory = AppFactory()
+        module, form = factory.new_basic_module('m0', 'case1')
+        form.custom_assertions = self._custom_assertions
+        self.assertXmlPartialEqual(
+            self._get_expected_xml('m0.f0'),
             factory.app.create_suite(),
             "entry/assertions"
         )
+        self._assert_translations(factory.app, 'm0.f0')
 
-        en_app_strings = commcare_translations.loads(module.get_app().create_app_strings('en'))
-        self.assertEqual(en_app_strings['custom_assertion.m0.f0.0'], "en-0")
-        self.assertEqual(en_app_strings['custom_assertion.m0.f0.1'], "en-1")
-        fr_app_strings = commcare_translations.loads(module.get_app().create_app_strings('fr'))
-        self.assertEqual(fr_app_strings['custom_assertion.m0.f0.0'], "fr-0")
-        self.assertEqual(fr_app_strings['custom_assertion.m0.f0.1'], "fr-1")
+    def test_custom_module_assertions(self, *args):
+        factory = AppFactory()
+        module, form = factory.new_basic_module('m0', 'case1')
+        module.custom_assertions = self._custom_assertions
+        suite = factory.app.create_suite()
+        self.assertXmlPartialEqual(
+            self._get_expected_xml('m0'),
+            suite,
+            "menu[@id='m0']/assertions"
+        )
+        self._assert_translations(factory.app, 'm0')
+        self.assertXmlPartialEqual(
+            """<partial><instance id="casedb" src="jr://instance/casedb"/></partial>""",
+            suite,
+            "entry/instance"
+        )
+
+    def test_custom_app_assertions(self, *args):
+        factory = AppFactory()
+        module, form = factory.new_basic_module('m0', 'case1')
+        factory.app.custom_assertions = self._custom_assertions
+        self.assertXmlPartialEqual(
+            self._get_expected_xml('root'),
+            factory.app.create_suite(),
+            "menu[@id='root']/assertions"
+        )
+        self._assert_translations(factory.app, 'root')

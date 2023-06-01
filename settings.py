@@ -35,7 +35,7 @@ DISABLE_RANDOM_TOGGLES = UNIT_TESTING
 # Setting to declare always_enabled/always_disabled toggle states for domains
 #   declaring toggles here avoids toggle lookups from cache for all requests.
 #   Example format
-#   STATIC_TOGGLES_STATES = {
+#   STATIC_TOGGLE_STATES = {
 #     'toggle_slug': {
 #         'always_enabled': ['domain1', 'domain2],
 #         'always_disabled': ['domain4', 'domain3],
@@ -314,6 +314,7 @@ HQ_APPS = (
     'corehq.apps.mobile_auth',
     'corehq.apps.sms',
     'corehq.apps.events',
+    'corehq.apps.geospatial',
     'corehq.apps.smsforms',
     'corehq.apps.sso',
     'corehq.apps.ivr',
@@ -525,7 +526,6 @@ USER_REPORTING_METADATA_BATCH_SCHEDULE = {'timedelta': {'minutes': 5}}
 
 
 BASE_ADDRESS = 'localhost:8000'
-J2ME_ADDRESS = ''
 
 PAGINATOR_OBJECTS_PER_PAGE = 15
 PAGINATOR_MAX_PAGE_LINKS = 5
@@ -1033,6 +1033,9 @@ DATA_UPLOAD_MAX_MEMORY_SIZE = None
 # consider migrating to `DATA_UPLOAD_MAX_MEMORY_SIZE` which is universally applied
 MAX_UPLOAD_SIZE = 10 * 1024 * 1024
 
+# Size limit on attachment other than the xml form.
+MAX_UPLOAD_SIZE_ATTACHMENT = 15 * 1024 * 1024
+
 # Exports use a lot of fields to define columns. See: https://dimagi-dev.atlassian.net/browse/HI-365
 DATA_UPLOAD_MAX_NUMBER_FIELDS = 5000
 
@@ -1045,8 +1048,6 @@ ASYNC_INDICATORS_TO_QUEUE = 10000
 ASYNC_INDICATOR_QUEUE_TIMES = None
 DAYS_TO_KEEP_DEVICE_LOGS = 60
 NO_DEVICE_LOG_ENVS = list(ICDS_ENVS) + ['production']
-
-UCR_COMPARISONS = {}
 
 MAX_RULE_UPDATES_IN_ONE_RUN = 10000
 RULE_UPDATE_HOUR = 0
@@ -1235,6 +1236,7 @@ TEMPLATES = [
                 'corehq.util.context_processors.status_page',
                 'corehq.util.context_processors.sentry',
                 'corehq.util.context_processors.bootstrap5',
+                'corehq.util.context_processors.js_privileges',
             ],
             'debug': DEBUG,
             'loaders': [

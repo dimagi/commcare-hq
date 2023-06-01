@@ -72,6 +72,11 @@
     margin-top: 5px;
   }
 
+  .dropdown-menu .dropdown-divider {
+  margin-top: 0px;
+  margin-bottom: 0px;
+  }
+
   .nav-settings-bar .dropdown-toggle-with-icon.nav-link::after {
     display: none;
   }

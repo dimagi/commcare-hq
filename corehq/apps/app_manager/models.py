@@ -114,6 +114,7 @@ from corehq.apps.app_manager.helpers.validators import (
     ShadowModuleValidator,
 )
 from corehq.apps.app_manager.suite_xml import xml_models as suite_models
+from corehq.apps.app_manager.suite_xml.const import CASE_TILE_TEMPLATE_NAME_PERSON_SIMPLE
 from corehq.apps.app_manager.suite_xml.generator import (
     MediaSuiteGenerator,
     SuiteGenerator,
@@ -356,7 +357,6 @@ class ConditionalCaseUpdate(DocumentSchema):
 
 
 class UpdateCaseAction(FormAction):
-    # TODO: migrate from dict(property_name: question_path) to dict(property_name: ConditionalCaseUpdate)
     update = SchemaDictProperty(ConditionalCaseUpdate)
 
 
@@ -1954,7 +1954,7 @@ class Detail(IndexedSchema, CaseListLookupMixin):
     max_select_value = IntegerProperty(default=100)
 
     # If True, use case tiles in the case list
-    use_case_tiles = BooleanProperty()
+    case_tile_template = StringProperty(exclude_if_none=True)
     # If given, use this string for the case tile markup instead of the default temaplte
     custom_xml = StringProperty(exclude_if_none=True)
 
@@ -2012,7 +2012,7 @@ class Detail(IndexedSchema, CaseListLookupMixin):
         """
         Return True if configured to persist a case tile on forms
         """
-        return self.persist_tile_on_forms and (self.use_case_tiles or self.custom_xml)
+        return self.persist_tile_on_forms and (self.case_tile_template or self.custom_xml)
 
     def overwrite_attrs(self, src_detail, attrs):
         """
@@ -2022,7 +2022,7 @@ class Detail(IndexedSchema, CaseListLookupMixin):
         This method is relevant only for short details.
         """
         case_tile_configuration_list = [
-            'use_case_tiles',
+            'case_tile_template',
             'persist_tile_on_forms',
             'persistent_case_tile_from_module',
             'pull_down_tile',
@@ -2035,6 +2035,14 @@ class Detail(IndexedSchema, CaseListLookupMixin):
                     setattr(self, ele, getattr(src_detail, ele))
             else:
                 setattr(self, attr, getattr(src_detail, attr))
+
+    @classmethod
+    def wrap(cls, data):
+        if 'use_case_tiles' in data:
+            if data.get('use_case_tiles'):
+                data['case_tile_template'] = CASE_TILE_TEMPLATE_NAME_PERSON_SIMPLE
+            del data['use_case_tiles']
+        return super(Detail, cls).wrap(data)
 
 
 class CaseList(IndexedSchema, NavMenuItemMediaMixin):
@@ -3989,22 +3997,13 @@ class ApplicationBase(LazyBlobDoc, SnapshotMixin,
     # make copies of itself, delete a copy of itself, and revert back to an earlier copy of itself.
     copy_of = StringProperty()
     version = IntegerProperty()
-    short_url = StringProperty()
     short_odk_url = StringProperty()
     short_odk_media_url = StringProperty()
     _meta_fields = ['_id', '_rev', 'domain', 'copy_of', 'version',
-                    'short_url', 'short_odk_url', 'short_odk_media_url']
+                    'short_odk_url', 'short_odk_media_url']
 
     # this is the supported way of specifying which commcare build to use
     build_spec = SchemaProperty(BuildSpec)
-    platform = StringProperty(
-        choices=["nokia/s40", "nokia/s60", "winmo", "generic"],
-        default="nokia/s40"
-    )
-    text_input = StringProperty(
-        choices=['roman', 'native', 'custom-keys', 'qwerty'],
-        default="roman"
-    )
 
     # The following properties should only appear on saved builds
     # built_with stores a record of CommCare build used in a saved app
@@ -4073,8 +4072,6 @@ class ApplicationBase(LazyBlobDoc, SnapshotMixin,
 
     build_profiles = SchemaDictProperty(BuildProfile)
     practice_mobile_worker_id = StringProperty()
-
-    use_j2me_endpoint = BooleanProperty(default=False)
 
     # use commcare_flavor to avoid checking for none
     target_commcare_flavor = StringProperty(
@@ -4308,15 +4305,6 @@ class ApplicationBase(LazyBlobDoc, SnapshotMixin,
         else:
             return shortened_url
 
-    def get_short_url(self, build_profile_id=None):
-        if not build_profile_id:
-            if not self.short_url:
-                self.short_url = self.generate_shortened_url('download_jad')
-                self.save()
-            return self.short_url
-        else:
-            return self.generate_shortened_url('download_jad', build_profile_id)
-
     def get_short_odk_url(self, with_media=False, build_profile_id=None):
         if not build_profile_id:
             if with_media:
@@ -4351,7 +4339,7 @@ class ApplicationBase(LazyBlobDoc, SnapshotMixin,
         else:
             copy = deepcopy(self.to_json())
             bad_keys = ('_id', '_rev', '_attachments', 'external_blobs',
-                        'short_url', 'short_odk_url', 'short_odk_media_url', 'recipients')
+                        'short_odk_url', 'short_odk_media_url', 'recipients')
 
             for bad_key in bad_keys:
                 if bad_key in copy:
@@ -4803,12 +4791,6 @@ class Application(ApplicationBase, ApplicationMediaMixin, ApplicationIntegration
                 }
             # assert that it gets explicitly set once per loop
             del setting_value
-
-        if self.case_sharing:
-            app_profile['properties']['server-tether'] = {
-                'force': True,
-                'value': 'sync',
-            }
 
         logo_refs = [logo_name for logo_name in self.logo_refs if logo_name in ANDROID_LOGO_PROPERTY_MAPPING]
         if logo_refs and domain_has_privilege(self.domain, privileges.COMMCARE_LOGO_UPLOADER):

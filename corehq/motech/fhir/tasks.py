@@ -207,29 +207,40 @@ def claim_service_request(requests, service_request, case_id, attempt=0):
 
 
 def build_case_block(resource_type, resource, suggested_case_id):
+    """
+    Returns a `CaseBlock` to create or update a case corresponding to a
+    FHIR resource.
+
+    :param resource_type: A FHIRResourceType
+    :param resource: A dict
+    :param suggested_case_id: Used if `resource` doesn't correspond to a
+        case already.
+    :return: A CaseBlock
+    """
     domain = resource_type.domain
     case_type = resource_type.case_type.name
     owner_id = resource_type.import_config.owner_id
     case = None
 
+    caseblock_kwargs = get_caseblock_kwargs(resource_type, resource)
+    if 'id' in resource:
+        external_id = resource['id']
+        caseblock_kwargs['external_id'] = external_id
+    else:
+        external_id = None
     case_id = get_case_id_or_none(resource)
-    external_id = resource['id'] if 'id' in resource else CaseBlock.undefined
     if case_id:
         case = get_case_by_id(domain, case_id)
         # If we have a case_id we can be pretty sure we can get a case
         # ... unless it's been deleted. If so, fall back on external_id.
-    if case is None and external_id != CaseBlock.undefined:
-        # external_id will almost always be set.
+    if case is None and external_id:
         case = get_case_by_external_id(domain, external_id, case_type)
 
-    caseblock_kwargs = get_caseblock_kwargs(resource_type, resource)
     return CaseBlock(
         create=case is None,
         case_id=case.case_id if case else suggested_case_id,
         owner_id=owner_id,
         case_type=case_type,
-        date_opened=CaseBlock.undefined,
-        external_id=external_id,
         **caseblock_kwargs,
     )
 

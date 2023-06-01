@@ -14,16 +14,19 @@
       <div class="alert alert-warning">
         <p>
           {% blocktrans %}
-            The user is the only one that is assigned to the following locations with cases:
+            The user is the only assigned user who can view cases in the following locations:
           {% endblocktrans %}
         </p>
         {% for location, case_count in locations_with_single_user.items %}
           <ul>
-            <li>{{ location }}: {{ case_count }}</li>
+            <li>{{ location }} ({{ case_count }})</li>
           </ul>
         {% endfor %}
-        Moving the user's location may result in no user having jurisdiction in one or more
-        of these locations.
+        <p>
+          Depending on your application's case sharing configuration, changing one or more of these
+          locations may result in some cases not being visible to any user until a new user is assigned
+          to those locations.
+        </p>
       </div>
     {% else %}
       <div class="alert alert-info">

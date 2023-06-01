@@ -3,7 +3,6 @@ from django.test import TestCase
 from corehq.apps.app_manager.tests.app_factory import AppFactory
 from corehq.apps.es.apps import app_adapter
 from corehq.apps.es.tests.utils import es_test
-from corehq.pillows.application import transform_app_for_es
 
 
 @es_test(requires=[app_adapter], setup_class=True)
@@ -33,15 +32,6 @@ class TestFromPythonInApplication(TestCase):
 
     def test_from_python_raises_for_other_objects(self):
         self.assertRaises(TypeError, app_adapter.from_python, set)
-
-    def test_from_python_is_same_as_transform_app_for_es(self):
-        # this test can be safely removed when transform_app_for_es is removed
-        app_id, app = app_adapter.from_python(self.app)
-        app['_id'] = app_id
-        app_transformed_dict = transform_app_for_es(self.app.to_json())
-        app_transformed_dict.pop('@indexed_on')
-        app.pop('@indexed_on')
-        self.assertEqual(app_transformed_dict, app)
 
     def test_index_can_handle_app_dicts(self):
         app_dict = self.app.to_json()

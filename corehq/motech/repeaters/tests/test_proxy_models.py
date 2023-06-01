@@ -5,7 +5,6 @@ from django.test import TestCase
 from corehq.motech.dhis2.repeaters import Dhis2EntityRepeater
 from corehq.motech.models import ConnectionSettings
 from corehq.motech.openmrs.repeaters import OpenmrsRepeater
-from corehq.motech.repeaters.dbaccessors import delete_all_repeaters
 from corehq.motech.repeaters.expression.repeaters import (
     CaseExpressionRepeater,
 )
@@ -35,10 +34,6 @@ class RepeaterProxyTests(TestCase):
             "format": 'case_json',
         }
         super().setUp()
-
-    def tearDown(self):
-        delete_all_repeaters()
-        return super().tearDown()
 
 
 class TestRepeaterCreatesCorrectRepeaterObjects(RepeaterProxyTests):

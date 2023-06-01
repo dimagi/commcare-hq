@@ -17,7 +17,6 @@ from corehq.apps.change_feed.consumer.feed import (
 from corehq.apps.sms.models import SMS
 from corehq.apps.es.sms import sms_adapter
 from corehq.form_processor.backends.sql.dbaccessors import ReindexAccessor
-from corehq.pillows.mappings.sms_mapping import SMS_INDEX_INFO
 from corehq.util.doc_processor.sql import SqlDocumentProvider
 
 
@@ -68,7 +67,7 @@ class SmsReindexerFactory(ReindexerFactory):
     ]
 
     def build(self):
-        iteration_key = f"SmsToElasticsearchPillow_{SMS_INDEX_INFO.index}_reindexer"
+        iteration_key = f"SmsToElasticsearchPillow_{sms_adapter.index_name}_reindexer"
         reindex_accessor = SMSReindexAccessor()
         doc_provider = SqlDocumentProvider(iteration_key, reindex_accessor)
         return ResumableBulkElasticPillowReindexer(

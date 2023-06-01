@@ -7,10 +7,34 @@
 {% block page_content %}
   {% include 'case_importer/partials/help_message.html' %}
 
+  {% initial_page_data 'is_bulk_import' is_bulk_import %}
+  {% if is_bulk_import %}
+    <div class="alert alert-warning">
+      {% blocktrans %}
+      <p>
+        <i class="fa fa-warning"></i>
+        A bulk case import for multiple case types has been detected. This is because every sheet name in
+        the Excel file matches a case type in the project. If this is incorrect, then please rename at least
+        one Excel sheet so that not all sheet names match case types in the project.
+      </p>
+      <p>
+        Documentation for bulk case imports can be found on our
+        <a
+          href="https://confluence.dimagi.com/display/commcarepublic/Updating+Cases+-+Update+multiple+case+types+in+a+single+Excel+import"
+          target="_blank">
+          help page for this feature.
+        </a>
+      </p>
+      {% endblocktrans %}
+    </div>
+  {% endif %}
+
   <form class="form-horizontal form-report"
         action="{% url "excel_fields" domain %}"
-        method="post">
+        method="post"
+        id="field_form">
     {% csrf_token %}
+    <input type="hidden" name="is_bulk_import" value="{{is_bulk_import}}" />
 
     <fieldset>
       <legend>{% trans "Case Type to Update/Create" %}</legend>
@@ -19,7 +43,7 @@
           {% trans "Case type" %}
         </label>
         <div class="col-sm-6">
-          <select class="form-control hqwebapp-select2" name="case_type" id="case_type">
+          <select class="form-control hqwebapp-select2" name="case_type" id="case_type" {% if is_bulk_import %}disabled="disabled"{% endif %}>
             <option disabled>{% trans "Used in existing applications:" %}</option>
             {% for case_type in case_types_from_apps %}
               <option value="{{case_type|escape}}">{{case_type|escape}}</option>
@@ -41,7 +65,7 @@
           {% trans "Excel column" %}
         </label>
         <div class="col-sm-6">
-          <select class="form-control hqwebapp-select2" name="search_column" id="search_column">
+          <select class="form-control hqwebapp-select2" name="search_column" id="search_column" {% if is_bulk_import %}disabled="disabled"{% endif %}>
             {% for column in columns %}
               <option value="{{column|escape}}">
                 {{column|escape}}
@@ -64,7 +88,8 @@
                                            }, {
                                                id: 'external_id',
                                                text: '{% trans_html_attr 'External ID' %}',
-                                           }]"></select-toggle>
+                                           }],
+                                           disabled: {{ is_bulk_import|JSON }}"></select-toggle>
         </div>
       </div>
 
@@ -82,6 +107,16 @@
         </div>
       </div>
     </fieldset>
+
+    {% if is_bulk_import %}
+      <div class="alert alert-warning">
+        <p>
+          {% blocktrans %}
+            Selecting a case type, excel column, or corresponding case field is disabled when doing a bulk case import.
+          {% endblocktrans %}
+        </p>
+      </div>
+    {% endif %}
 
     <div class="form-actions">
       <div class="col-sm-offset-3">

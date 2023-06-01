@@ -110,7 +110,7 @@ class EntryInstances(PostProcessor):
         self.require_instances(entry, instances=all_instances, instance_ids=unknown_instance_ids)
 
     def _get_all_xpaths_for_entry(self, entry):
-        relevance_by_menu, menu_by_command = self._get_menu_relevance_mapping()
+        xpaths_by_menu, menu_by_command = self._get_menu_xpaths()
         details_by_id = self._get_detail_mapping()
         detail_ids = set()
         xpaths = set()
@@ -146,8 +146,8 @@ class EntryInstances(PostProcessor):
         entry_id = entry.command.id
         if entry_id in menu_by_command:
             menu_id = menu_by_command[entry_id]
-            relevances = relevance_by_menu[menu_id]
-            xpaths.update(relevances)
+            menu_xpaths = xpaths_by_menu[menu_id]
+            xpaths.update(menu_xpaths)
 
         for detail in details:
             xpaths.update(detail.get_all_xpaths())
@@ -164,18 +164,20 @@ class EntryInstances(PostProcessor):
         return {detail.id: detail for detail in self.suite.details}
 
     @memoized
-    def _get_menu_relevance_mapping(self):
-        relevance_by_menu = defaultdict(list)
+    def _get_menu_xpaths(self):
+        xpaths_by_menu = defaultdict(list)
         menu_by_command = {}
         for menu in self.suite.menus:
             for command in menu.commands:
                 menu_by_command[command.id] = menu.id
                 if command.relevant:
-                    relevance_by_menu[menu.id].append(command.relevant)
+                    xpaths_by_menu[menu.id].append(command.relevant)
             if menu.relevant:
-                relevance_by_menu[menu.id].append(menu.relevant)
+                xpaths_by_menu[menu.id].append(menu.relevant)
+            for assertion in menu.assertions:
+                xpaths_by_menu[menu.id].append(assertion.test)
 
-        return relevance_by_menu, menu_by_command
+        return xpaths_by_menu, menu_by_command
 
     def _get_custom_instances(self, entry, known_instances, required_instances):
         if entry.command.id not in self._form_module_by_command_id:
@@ -235,7 +237,7 @@ class EntryInstances(PostProcessor):
         used = {(instance.id, instance.src) for instance in entry.instances}
         instance_order_updated = EntryInstances.update_instance_order(entry)
         for instance in instances:
-            if instance.src in EntryInstances.IGNORED_INSTANCES:
+            if instance.src in EntryInstances.IGNORED_INSTANCES:  # ignore legacy instances
                 continue
             if (instance.id, instance.src) not in used:
                 entry.instances.append(
@@ -283,6 +285,9 @@ def get_instance_factory(instance_name):
         scheme, _ = instance_name.split(':', 1)
     except ValueError:
         scheme = instance_name
+        # hack for selected cases
+        if "selected_cases" in instance_name:
+            scheme = "selected_cases"
 
     return _factory_map.get(scheme, null_factory)
 
@@ -308,9 +313,7 @@ INSTANCE_KWARGS_BY_ID = {
     'ledgerdb': dict(id='ledgerdb', src='jr://instance/ledgerdb'),
     'casedb': dict(id='casedb', src='jr://instance/casedb'),
     'commcaresession': dict(id='commcaresession', src='jr://instance/session'),
-    'registry': dict(id='registry', src='jr://instance/remote'),
-    'selected_cases': dict(id='selected_cases', src='jr://instance/selected-entities'),
-    'search_selected_cases': dict(id='search_selected_cases', src='jr://instance/selected-entities'),
+    'registry': dict(id='registry', src='jr://instance/remote/registry'),
 }
 
 
@@ -328,12 +331,22 @@ def generic_fixture_instances(app, instance_name):
 
 @register_factory('search-input')
 def search_input_instances(app, instance_name):
-    return Instance(id=instance_name, src='jr://instance/search-input')
+    try:
+        _, query_datum_id = instance_name.split(':', 1)
+        src = f'jr://instance/search-input/{query_datum_id}'
+    except ValueError:
+        src = 'jr://instance/search-input'  # legacy instance
+    return Instance(id=instance_name, src=src)
+
+
+@register_factory('selected_cases')
+def selected_cases_instances(app, instance_name):
+    return Instance(id=instance_name, src=f'jr://instance/selected-entities/{instance_name}')
 
 
 @register_factory('results')
 def remote_instances(app, instance_name):
-    return Instance(id=instance_name, src='jr://instance/remote')
+    return Instance(id=instance_name, src=f'jr://instance/remote/{instance_name}')
 
 
 @register_factory('commcare')
@@ -393,7 +406,7 @@ def get_all_instances_referenced_in_xpaths(app, xpaths):
     return instances, unknown_instance_ids
 
 
-instance_re = re.compile(r"""instance\(['"]([\w\-:]+)['"]\)""", re.UNICODE)
+instance_re = re.compile(r"""instance\(\s*['"]([\w\-:]+)['"]\s*\)""", re.UNICODE)
 
 
 def get_instance_names(xpath):

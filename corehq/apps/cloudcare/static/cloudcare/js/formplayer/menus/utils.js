@@ -144,7 +144,11 @@ hqDefine("cloudcare/js/formplayer/menus/utils", function () {
                 props.name = menuResponse.breadcrumbs[menuResponse.breadcrumbs.length - 1];
             }
             kissmetrics.track.event('Case Search', props);
-            urlObject.setQueryData({}, false, false);
+            urlObject.setQueryData({
+                inputs: {},
+                execute: false,
+                forceManualSearch: false,
+            });
             return QueryView(menuData);
         } else if (menuResponse.type === "entities") {
             var searchText = urlObject.search;
@@ -173,11 +177,7 @@ hqDefine("cloudcare/js/formplayer/menus/utils", function () {
                     return views.CaseListView(menuData);
                 }
             } else {
-                if (menuResponse.numEntitiesPerRow > 1) {
-                    return views.GridCaseTileListView(menuData);
-                } else {
-                    return views.CaseTileListView(menuData);
-                }
+                return views.CaseTileListView(menuData);
             }
         }
     };

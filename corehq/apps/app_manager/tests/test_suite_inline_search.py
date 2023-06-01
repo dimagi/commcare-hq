@@ -100,6 +100,7 @@ class InlineSearchSuiteTest(SimpleTestCase, SuiteMixin):
             </command>
             <instance id="casedb" src="jr://instance/casedb"/>
             <instance id="commcaresession" src="jr://instance/session"/>
+            <instance id="results:inline" src="jr://instance/remote/results:inline"/>
             <session>
                 <query url="http://localhost:8000/a/test_domain/phone/search/123/"
                     storage-instance="{RESULTS_INSTANCE_INLINE}" template="case" default_search="false">
@@ -142,6 +143,7 @@ class InlineSearchSuiteTest(SimpleTestCase, SuiteMixin):
                 <locale id="case_lists.m0"/>
               </text>
             </command>
+            <instance id="results:inline" src="jr://instance/remote/results:inline"/>
             <session>
                 <query url="http://localhost:8000/a/test_domain/phone/search/123/"
                     storage-instance="{RESULTS_INSTANCE_INLINE}" template="case" default_search="false">
@@ -194,7 +196,8 @@ class InlineSearchSuiteTest(SimpleTestCase, SuiteMixin):
               </text>
             </command>
             <instance id="casedb" src="jr://instance/casedb"/>
-            <instance id="selected_cases" src="jr://instance/selected-entities"/>
+            <instance id="results:inline" src="jr://instance/remote/results:inline"/>
+            <instance id="selected_cases" src="jr://instance/selected-entities/selected_cases"/>
             <session>
                 <query url="http://localhost:8000/a/test_domain/phone/search/123/"
                     storage-instance="{RESULTS_INSTANCE_INLINE}"
@@ -387,6 +390,7 @@ class InlineSearchSuiteTest(SimpleTestCase, SuiteMixin):
             </command>
             <instance id="casedb" src="jr://instance/casedb"/>
             <instance id="commcaresession" src="jr://instance/session"/>
+            <instance id="results:inline" src="jr://instance/remote/results:inline"/>
             <session>
               <datum id="case_id_case"
                 nodeset="instance('casedb')/casedb/case[@case_type='case'][@status='open']"
@@ -556,6 +560,7 @@ class InlineSearchChildModuleTest(SimpleTestCase, SuiteMixin):
             </command>
             <instance id="casedb" src="jr://instance/casedb"/>
             <instance id="commcaresession" src="jr://instance/session"/>
+            <instance id="results:inline" src="jr://instance/remote/results:inline"/>
             <session>
               <datum id="case_id" nodeset="instance('casedb')/casedb/case[@case_type='case'][@status='open']"
                 value="./@case_id" detail-select="m0_case_short"/>

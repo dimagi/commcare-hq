@@ -5,8 +5,6 @@ from corehq.apps.es.tests.utils import es_test
 
 import pytz
 
-from corehq.pillows.mappings.xform_mapping import XFORM_ALIAS
-from corehq.pillows.mappings.case_mapping import CASE_ES_ALIAS
 from corehq.apps.es.client import manager
 from corehq.apps.es.cases import case_adapter
 from corehq.apps.es.forms import form_adapter
@@ -26,7 +24,6 @@ class FormExportInstanceTests(TestCase):
         self._purge_indices()
         manager.index_create(self.forms.index_name)
         manager.index_put_mapping(self.forms.index_name, self.forms.type, self.forms.mapping)
-        manager.index_put_alias(self.forms.index_name, XFORM_ALIAS)
 
     def tearDown(self):
         self._purge_indices()
@@ -74,7 +71,6 @@ class CaseExportInstanceTests(TestCase):
         self._purge_indices()
         manager.index_create(self.cases.index_name)
         manager.index_put_mapping(self.cases.index_name, self.cases.type, self.cases.mapping)
-        manager.index_put_alias(self.cases.index_name, CASE_ES_ALIAS)
 
         filter_patcher = patch.object(CaseExportInstance, 'get_filters', lambda self: [])
         filter_patcher.start()

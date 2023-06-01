@@ -12,6 +12,7 @@ from corehq.apps.app_manager.dbaccessors import get_case_types_from_apps
 from corehq.apps.data_dictionary.models import (
     CaseProperty,
     CasePropertyAllowedValue,
+    CasePropertyGroup,
     CaseType,
 )
 from corehq.motech.fhir.utils import update_fhir_resource_property
@@ -23,9 +24,9 @@ class OldExportsEnabledException(Exception):
 
 
 def generate_data_dictionary(domain):
-    properties = _get_all_case_properties(domain)
-    _create_properties_for_case_types(domain, properties)
-    CaseType.objects.filter(domain=domain, name__in=list(properties)).update(fully_generated=True)
+    case_type_to_properties = _get_all_case_properties(domain)
+    _create_properties_for_case_types(domain, case_type_to_properties)
+    CaseType.objects.filter(domain=domain, name__in=list(case_type_to_properties)).update(fully_generated=True)
     return True
 
 
@@ -187,12 +188,16 @@ def save_case_property(name, case_type, domain=None, data_type=None,
     prop = CaseProperty.get_or_create(
         name=name, case_type=case_type, domain=domain
     )
-    if data_type:
-        prop.data_type = data_type
+    prop.data_type = data_type if data_type else ""
     if description is not None:
         prop.description = description
-    if group:
+    if group is not None:
         prop.group = group
+        # Allow properties to have no group
+        if group:
+            prop.group_obj, created = CasePropertyGroup.objects.get_or_create(name=group, case_type=prop.case_type)
+        else:
+            prop.group_obj = None
     if deprecated is not None:
         prop.deprecated = deprecated
     if label is not None:

@@ -52,7 +52,10 @@ def main():
     parser.add_argument("--no-test", action="store_true",
         help="Build Vellum, but do not run tests (mutually exclusive with --no-make).")
     parser.add_argument("--push", action="store_true",
-        help="Push the result to HQ if everything else succeeds.")
+        help="Push changes to Github if everything else succeeds. Note "
+            "that it is not possible to push directly to master, so a "
+            "pull request must be created to update Vellum. Instructions "
+            "will be printed if this option is used on master.")
     parser.add_argument("--target", default='vellum',
         help="Directory within corehq/apps/app_manager/static/app_manager/js/ to place "
             "built Vellum. Defaults to 'vellum'.")
@@ -118,7 +121,7 @@ def build_vellum(path, branch, test=True):
     stderr = byte_stream(sys.stderr)
     sh.make(_cwd=path, _out=stdout, _err=stderr, *make_args)
 
-    return str(git("rev-parse", "HEAD"))
+    return git("rev-parse", "HEAD").strip()
 
 
 def get_old_vellum_rev(path):
@@ -177,10 +180,17 @@ def update_hq(path, branch, base_branch, vellum_dir, vellum_rev, push, target):
     if code != 0:
         sys.exit(code)
 
-    if push:
+    if branch == "master":
+        print("\nCannot push directly to master. A pull request is required.")
+        print("The steps will involve something like\n")
+        print("  git checkout -b update-vellum master")
+        print("  git branch -f master origin/master")
+        print("  git push origin update-vellum")
+        print("\nThen PR the new 'update-vellum' branch on Github.\n")
+    elif push:
+        assert branch != "master"
         print("Pushing HQ origin/{}".format(branch))
-        opts = () if branch == "master" else ["-f"]
-        get_git(path, foreground=True).push("origin", branch, *opts)
+        get_git(path, foreground=True).push("origin", branch, "-f")
 
     print_vellum_changes(old_vellum_rev, vellum_dir)
 

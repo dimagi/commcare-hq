@@ -959,6 +959,7 @@ class UserRepeaterTest(TestCase, DomainSubscriptionMixin):
                 'groups': [],
                 'phone_numbers': [],
                 'email': '',
+                'eulas': '[]',
                 'resource_uri': '/a/user-repeater/api/v0.5/user/{}/'.format(user._id),
             }
         )
@@ -1120,10 +1121,6 @@ class TestRepeaterDeleted(BaseRepeaterTest):
         self.post_xml(self.xform_xml, self.domain)
 
     def tearDown(self):
-        self.repeater.delete()
-        # Making sure that SQL repeater are deleted after retire is called.
-        Repeater.all_objects.all().delete()
-        self.connx.delete()
         FormProcessorTestUtils.delete_all_cases_forms_ledgers(self.domain)
         delete_all_repeat_records()
         super().tearDown()

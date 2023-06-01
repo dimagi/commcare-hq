@@ -5,6 +5,7 @@ from django.test import TestCase
 
 from corehq.motech.repeaters.const import RECORD_PENDING_STATE
 from corehq.motech.repeaters.dbaccessors import (
+    get_cancelled_repeat_record_count,
     get_domains_that_have_repeat_records,
     get_failure_repeat_record_count,
     get_overdue_repeat_record_count,
@@ -66,6 +67,22 @@ class TestRepeatRecordDBAccessors(TestCase):
             next_check=before - timedelta(minutes=10),
             payload_id=cls.payload_id_2,
         )
+        cancelled = RepeatRecord(
+            domain=cls.domain,
+            succeeded=False,
+            cancelled=True,
+            repeater_id=cls.repeater_id,
+            next_check=before,
+            payload_id=cls.payload_id_2,
+        )
+        empty = RepeatRecord(
+            domain=cls.domain,
+            succeeded=True,
+            cancelled=True,
+            repeater_id=cls.repeater_id,
+            next_check=before,
+            payload_id=cls.payload_id_2,
+        )
         other_id = RepeatRecord(
             domain=cls.domain,
             succeeded=False,
@@ -80,6 +97,8 @@ class TestRepeatRecordDBAccessors(TestCase):
             success,
             pending,
             overdue,
+            cancelled,
+            empty,
             other_id,
         ]
 
@@ -98,11 +117,15 @@ class TestRepeatRecordDBAccessors(TestCase):
 
     def test_get_success_repeat_record_count(self):
         count = get_success_repeat_record_count(self.domain, self.repeater_id)
-        self.assertEqual(count, 1)
+        self.assertEqual(count, 2)  # Empty records are included
 
     def test_get_failure_repeat_record_count(self):
         count = get_failure_repeat_record_count(self.domain, self.repeater_id)
         self.assertEqual(count, 2)
+
+    def test_get_cancelled_repeat_record_count(self):
+        count = get_cancelled_repeat_record_count(self.domain, self.repeater_id)
+        self.assertEqual(count, 1)  # Empty records are not included
 
     def test_get_repeat_record_count_with_state_and_no_repeater(self):
         count = get_repeat_record_count(self.domain, state=RECORD_PENDING_STATE)
@@ -150,7 +173,7 @@ class TestRepeatRecordDBAccessors(TestCase):
 
     def test_get_all_repeat_records_by_domain_with_repeater_id(self):
         records = list(iter_repeat_records_by_domain(self.domain, repeater_id=self.repeater_id))
-        self.assertEqual(len(records), 5)
+        self.assertEqual(len(records), 7)
 
     def test_get_all_repeat_records_by_domain(self):
         records = list(iter_repeat_records_by_domain(self.domain))
@@ -159,11 +182,11 @@ class TestRepeatRecordDBAccessors(TestCase):
     def test_get_repeat_records_by_payload_id(self):
         id_1_records = list(get_repeat_records_by_payload_id(self.domain, self.payload_id_1))
         self.assertEqual(len(id_1_records), 2)
-        self.assertItemsEqual([r._id for r in id_1_records], [r._id for r in self.records[0:2]])
+        self.assertItemsEqual([r._id for r in id_1_records], [r._id for r in self.records[:2]])
 
         id_2_records = list(get_repeat_records_by_payload_id(self.domain, self.payload_id_2))
-        self.assertEqual(len(id_2_records), 4)
-        self.assertItemsEqual([r._id for r in id_2_records], [r._id for r in self.records[2:6]])
+        self.assertEqual(len(id_2_records), 6)
+        self.assertItemsEqual([r._id for r in id_2_records], [r._id for r in self.records[2:]])
 
 
 class TestOtherDBAccessors(TestCase):
