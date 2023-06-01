@@ -22,8 +22,8 @@ class Command(BaseCommand):
             total_case_es = CaseES().domain(domain_obj.name).count()
             total_case_search = CaseSearchES().domain(domain_obj.name).count()
 
-            if (total_case_es != total_case_search
+            if (total_case_es > total_case_search
                     and not DomainsNotInCaseSearchIndex.objects.filter(domain=domain_obj.name)):
                 difference = total_case_es - total_case_search
-                self.stdout.write(f"mismatch found:\t\t{domain_obj.name}\t{difference}")
+                self.stdout.write(f"{domain_obj.name}\t{difference}")
                 DomainsNotInCaseSearchIndex.objects.create(domain=domain_obj.name, estimated_size=difference)
