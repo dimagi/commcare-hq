@@ -25,5 +25,5 @@ class Command(BaseCommand):
 
             if (difference >= 100
                     and not DomainsNotInCaseSearchIndex.objects.filter(domain=domain_obj.name)):
-                self.stdout.write(f"{domain_obj.name}\t{difference}")
+                self.stdout.write(f"{domain_obj.name}\t{difference}\t{total_case_es}\t{total_case_search}")
                 DomainsNotInCaseSearchIndex.objects.create(domain=domain_obj.name, estimated_size=difference)
