@@ -354,7 +354,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
         initialize: function (options) {
             const self = this;
             self.styles = options.styles;
-            self.hasNoItems = options.collection.length === 0;
+            self.hasNoItems = options.collection.length === 0 || options.sidebarEnabled;
             self.redoLast = options.redoLast;
             if (sessionStorage.selectedValues !== undefined) {
                 const parsedSelectedValues = JSON.parse(sessionStorage.selectedValues)[sessionStorage.queryKey];
