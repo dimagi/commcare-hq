@@ -72,7 +72,8 @@ class EventForm(forms.Form):
     )
     attendance_takers = forms.MultipleChoiceField(
         label=_("Attendance Takers"),
-        required=False,
+        required=True,
+        help_text="Please choose at least one Attendance Taker"
     )
 
     def __init__(self, *args, **kwargs):
