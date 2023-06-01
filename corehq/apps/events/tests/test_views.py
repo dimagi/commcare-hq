@@ -24,7 +24,7 @@ from ..views import (
     AttendeeDeleteView,
     EventEditView
 )
-
+from corehq.apps.users.models import CommCareUser
 
 class BaseEventViewTestClass(TestCase):
 
@@ -65,6 +65,9 @@ class BaseEventViewTestClass(TestCase):
             None,
             None,
             is_admin=False,
+        )
+        cls.mobile_worker = CommCareUser.create(
+            cls.domain.name, "UserX", "123", None, None, email="user_x@email.com"
         )
         role = cls.attendance_coordinator_role()
         cls.role_webuser.set_role(cls.domain, role.get_qualified_id())
@@ -274,7 +277,6 @@ class TestEventsCreateView(BaseEventViewTestClass):
 
     def _event_data(self):
         timestamp = datetime.utcnow().date()
-
         return {
             'name': 'test-event',
             'start_date': timestamp,
@@ -282,6 +284,7 @@ class TestEventsCreateView(BaseEventViewTestClass):
             'attendance_target': 10,
             'sameday_reg': True,
             'track_each_day': False,
+            'attendance_takers': [self.mobile_worker.user_id],
         }
 
 
