@@ -1,4 +1,3 @@
-import os
 from unittest.mock import patch, Mock
 from datetime import datetime
 import pytz
@@ -14,7 +13,7 @@ from corehq.apps.reports.util import get_user_id_from_form, datespan_from_beginn
 from corehq.form_processor.exceptions import XFormNotFound
 from corehq.form_processor.models import XFormInstance
 from corehq.form_processor.utils import TestFormMetadata
-from corehq.util.test_utils import TestFileMixin, get_form_ready_to_save
+from corehq.util.test_utils import get_form_ready_to_save
 from corehq.apps.reports.standard.cases.utils import get_user_type
 from corehq.apps.data_interfaces.deduplication import DEDUPE_XMLNS
 from corehq.apps.domain.models import Domain
