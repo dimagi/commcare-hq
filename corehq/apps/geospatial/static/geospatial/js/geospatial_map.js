@@ -60,7 +60,6 @@ hqDefine("geospatial/js/geospatial_map", [
             }
 
             self.removeAllMarkers = function() {
-                console.log("Markers before: ", markers);
                 markers.forEach(marker => {
                     marker.remove();
                 })
@@ -68,11 +67,9 @@ hqDefine("geospatial/js/geospatial_map", [
             }
 
             self.addCaseMarkersToMap = function (cases) {
-                console.log("Current state of markeers: ", markers);
                 const markerColor = "#00FF00";
                 cases.forEach(element => {
                     let coordinates = element.coordinates;
-                    console.log("element: ", element);
                     if (coordinates && coordinates.lat && coordinates.lng) {
                         self.addMarker(coordinates, markerColor);
                     }
