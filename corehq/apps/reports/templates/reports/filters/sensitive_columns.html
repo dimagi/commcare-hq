@@ -15,7 +15,7 @@
             <span id="panel-chevron">
               <i class="fa fa-chevron-down"></i>
             </span>
-            {% trans "Edit Columns" %}
+            {% trans "Sensitive Properties" %}
             <small>(</small><span data-bind="foreach: properties"><!--ko if: $index() != 0 && name() !=='' -->, <!--/ko--><small data-bind="text: name"></small></span><small>)</small>
           </a>
 
@@ -27,7 +27,7 @@
             <thead>
             <th>&nbsp;</th>
             <th>{% trans "Property" %}</th>
-            <th>{% trans "Label" %}</th>
+            <th>{% trans "Sensitivity" %}</th>
             <th>&nbsp;</th>
             </thead>
             <tbody data-bind="foreach: properties, sortableList: properties">
@@ -48,7 +48,12 @@
               </td>
               <td>
                 <div class="has-feedback">
-                  <input type="text" class="form-control" data-bind="value: label"/>
+                  <select class="form-control" data-bind="
+                                                options: {{ property_label_options }},
+                                                optionsText: 'name',
+                                                optionsValue: 'type',
+                                                value: label,
+                                                "/>
                 </div>
               </td>
               <td>

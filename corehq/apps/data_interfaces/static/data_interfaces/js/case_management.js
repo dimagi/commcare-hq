@@ -162,7 +162,7 @@ hqDefine("data_interfaces/js/case_management",[
                     return;
                 }
                 $(form).find("[type='submit']").disableButton();
-                var sensitiveProperties = self.getReportParamsObject().sensitive_properties;
+                var sensitiveProperties = JSON.parse(self.getReportParamsObject().sensitive_properties);
 
                 $.ajax({
                     url: initialPageData.reverse("copy_cases"),
@@ -170,10 +170,14 @@ hqDefine("data_interfaces/js/case_management",[
                     data: JSON.stringify({
                         case_ids: self.selectedCases(),
                         owner_id: newOwner,
-                        sensitive_properties: JSON.parse(sensitiveProperties)
+                        sensitive_properties: sensitiveProperties
                     }),
                     contentType: "application/json",
-                    success: updateCaseRowCopy(self.selectedCases(), newOwner, ownerType),
+                    success: function (response) {
+                        updateCaseRowCopy(self.selectedCases(), newOwner, ownerType)();
+                        var message = gettext("Successfully copied " + response.copied_cases + " case(s).")
+                        hqImport('hqwebapp/js/alert_user').alert_user(message, "success");
+                    },
                     error: function (response) {
                         self.clearCaseSelection();
                         hqImport('hqwebapp/js/alert_user').alert_user(response.responseText, "danger");

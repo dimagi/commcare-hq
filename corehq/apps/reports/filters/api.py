@@ -7,6 +7,7 @@ import json
 from django.views.generic import View
 from django.http import JsonResponse, HttpResponseBadRequest
 from django.views.decorators.http import require_POST
+from django.utils.translation import gettext_lazy as _
 
 from braces.views import JSONResponseMixin
 from memoized import memoized
@@ -215,14 +216,18 @@ def copy_cases(request, domain, *args, **kwargs):
     if not new_owner:
         return HttpResponseBadRequest("Missing new owner id")
 
-    props = {prop['name']: prop['label'] for prop in body.get('sensitive_properties', [])}
+    censor_data = {prop['name']: prop['label'] for prop in body.get('sensitive_properties', [])}
+
     try:
-        _, _ = CaseHelper(domain=domain).copy_cases(
+        copied_count = CaseHelper(domain=domain).copy_cases(
             domain=domain,
             case_ids=case_ids,
             to_owner=new_owner,
-            replace_props=props,
+            censor_data=censor_data,
+            count_only=True,
         )
-        return JsonResponse({})
+        return JsonResponse({
+            'copied_cases': copied_count,
+        })
     except Exception as e:
-        return HttpResponseBadRequest(str(e))
+        return HttpResponseBadRequest(_(str(e)))

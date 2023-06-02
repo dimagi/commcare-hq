@@ -3,7 +3,7 @@ from dataclasses import dataclass
 
 from corehq.apps.users.models import CouchUser
 from corehq.form_processor.models.cases import CommCareCase
-from corehq.apps.hqcase.utils import submit_case_blocks
+from corehq.apps.hqcase.utils import submit_case_blocks, get_censored_case_data
 from casexml.apps.case.mock import CaseBlock
 
 from .api.updates import BaseJsonCaseChange, handle_case_update
@@ -168,7 +168,14 @@ class CaseHelper:
         )
 
     @classmethod
-    def copy_cases(cls, domain, case_ids, to_owner, replace_props=None):
+    def copy_cases(
+        cls,
+        domain,
+        case_ids,
+        to_owner,
+        censor_data=None,
+        count_only=False
+    ):
         """
         Copies the cases governed by 'case_ids' to the respective 'to_owner'
         and replacing the relevant case properties with the specified 'replace_props'
@@ -178,10 +185,13 @@ class CaseHelper:
                 domain: the domain string
                 case_ids: case ids of the cases to copy
                 to_owner: the owner to copy the cases to
-                replace_props: the properties to be replaced specified as a dict
+                censor_data: the attributes/properties to be censored, specified as a dict.
+                    The keys corresponding to the property/attribute and the value specifies
+                    the type of censored data, i.e. number or date
+                count_only: specifies whether to return only the number of copied cases.
 
             Returns:
-                Tuple with the copied case ids and their original counterparts
+                The copied cases. If `count_only` is True only the count will be returned.
         """
         if not to_owner:
             raise Exception('Must copy cases to valid new owner')
@@ -230,18 +240,17 @@ class CaseHelper:
             if _case.case_id in processed_cases:
                 return
 
-            case_name = _case.name
-            if replace_props:
-                case_name = replace_props.get('case_name', _case.name)
-
+            censored_attributes, censored_properties = get_censored_case_data(_case, censor_data)
             case_block = CaseBlock(
                 create=True,
                 case_id=uuid.uuid4().hex,
                 owner_id=to_owner,
+                case_name=censored_attributes.get('case_name', _case.name),
                 case_type=_case.type,
-                case_name=case_name,
-                update=cls._get_case_properties_with_replacements(_case, replace_props),
+                update={**_case.case_json, **censored_properties},
                 index=_get_new_index_map(_case),
+                external_id=censored_attributes.get('external_id', _case.external_id),
+                date_opened=censored_attributes.get('date_opened', _case.opened_on),
             )
 
             copied_cases_case_blocks.append(case_block.as_text())
@@ -254,22 +263,14 @@ class CaseHelper:
                 raise Exception("Cannot copy case to self")
             _process_case(c)
 
-        return submit_case_blocks(
+        _, cases = submit_case_blocks(
             case_blocks=copied_cases_case_blocks,
             domain=domain,
         )
-
-    @classmethod
-    def _get_case_properties_with_replacements(cls, case, replacement_properties):
-        """
-        Returns a map of the provided case's properties with the relevant properties
-        replaced as specified in replacement_properties
-        """
-        if replacement_properties is None:
-            return {**case.case_json}
-
-        relevant_replace_props = {k: v for k, v in replacement_properties.items() if k in case.case_json}
-        return {**case.case_json, **relevant_replace_props}
+        if count_only:
+            return len(cases)
+        else:
+            return cases
 
     @staticmethod
     def _clean_serialized_case(case_data):

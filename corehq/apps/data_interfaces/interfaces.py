@@ -167,7 +167,6 @@ class CaseCopyInterface(CaseReassignmentInterface):
         return [
             'corehq.apps.reports.filters.users.SelectMobileWorkerFilter',
             'corehq.apps.reports.filters.select.MultiCaseTypeFilter',
-            'corehq.apps.reports.filters.select.SelectOpenCloseFilter',
             'corehq.apps.reports.standard.cases.filters.CaseSearchFilter',
             'corehq.apps.reports.standard.cases.filters.SensitiveCaseProperties',
         ]

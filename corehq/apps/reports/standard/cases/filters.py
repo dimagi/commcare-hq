@@ -4,6 +4,7 @@ from collections import Counter
 from django.utils.safestring import mark_safe
 from django.utils.translation import gettext_lazy
 from django.utils.functional import lazy
+from couchexport.deid import deid_date, deid_ID
 
 from corehq.apps.app_manager.app_schemas.case_properties import (
     all_case_properties_by_domain,
@@ -109,23 +110,8 @@ class CaseListExplorerColumns(BaseSimpleFilter):
         context.update({
             'initial_value': json.dumps(initial_values),
             'column_suggestions': json.dumps(self.get_column_suggestions()),
-            'chevron_label': self.chevron_label,
-            'column_one_label': self.column_one_label,
-            'column_two_label': self.column_two_label,
         })
         return context
-
-    @property
-    def chevron_label(self):
-        return gettext_lazy("Edit Columns")
-
-    @property
-    def column_one_label(self):
-        return gettext_lazy("Property")
-
-    @property
-    def column_two_label(self):
-        return gettext_lazy("Label")
 
     def get_column_suggestions(self):
         case_properties = get_flattened_case_properties(self.domain, include_parent_properties=False)
@@ -139,7 +125,6 @@ class CaseListExplorerColumns(BaseSimpleFilter):
     def get_value(cls, request, domain):
         value = super(CaseListExplorerColumns, cls).get_value(request, domain)
         ret = json.loads(value or "[]")
-
         # convert legacy list of strings to list of dicts
         if ret and type(ret[0]) == str:
             ret = [{
@@ -152,19 +137,38 @@ class CaseListExplorerColumns(BaseSimpleFilter):
 
 class SensitiveCaseProperties(CaseListExplorerColumns):
     slug = "sensitive_properties"
-    label = gettext_lazy("De-identify case properties")
-    template = "reports/filters/explorer_columns.html"
-    DEFAULT_COLUMNS = [
-        {'name': 'case_name', 'label': 'case_name'},
+    label = gettext_lazy("De-identify options")
+    template = "reports/filters/sensitive_columns.html"
+    EXCLUDE_PROPERTIES = [
+        '@case_id', '@case_type', '@owner_id', '@status', 'closed_on', 'last_modified'
     ]
 
     @property
-    def chevron_label(self):
-        return gettext_lazy("Sensitive Properties")
+    def filter_context(self):
+        context = super(SensitiveCaseProperties, self).filter_context
+        initial_values = self.get_value(self.request, self.domain)
+
+        context.update({
+            'initial_value': json.dumps(initial_values),
+            'column_suggestions': json.dumps(self.get_column_suggestions()),
+            'property_label_options': self.property_label_options
+        })
+        return context
 
     @property
-    def column_two_label(self):
-        return gettext_lazy("Replacement Value")
+    def property_label_options(self):
+        return [
+            {'type': deid_ID.__name__, 'name': gettext_lazy('Sensitive ID')},
+            {'type': deid_date.__name__, 'name': gettext_lazy('Sensitive Date')},
+        ]
+
+    def get_column_suggestions(self):
+        case_properties = get_flattened_case_properties(self.domain, include_parent_properties=False)
+        special_properties = [
+            {'name': prop, 'case_type': None, 'meta_type': 'info'}
+            for prop in SPECIAL_CASE_PROPERTIES if prop not in self.EXCLUDE_PROPERTIES
+        ]
+        return case_properties + special_properties
 
 
 def get_flattened_case_properties(domain, include_parent_properties=False):
