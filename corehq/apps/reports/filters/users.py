@@ -209,11 +209,11 @@ class ExpandedMobileWorkerFilter(BaseMultipleOptionFilter):
         group_ids = emwf.selected_group_ids(mobile_user_and_group_slugs)
     """
     location_search_help = mark_safe_lazy(gettext_lazy(  # nosec: no user input
+        'When searching by location, put your location name in quotes to show only exact matches. '
+        'To more easily find a location, you may specify multiple levels by separating with a "/". '
+        'For example, "Massachusetts/Suffolk/Boston". '
         '<a href="https://confluence.dimagi.com/display/commcarepublic/Search+for+Locations"'
-        'target="_blank">Advanced Search:</a> '
-        'Put your location name in quotes to show only exact matches. To more '
-        'easily find a location, you may specify multiple levels by separating '
-        'with a "/". For example, "Massachusetts/Suffolk/Boston"'
+        'target="_blank">Learn more</a>.'
     ))
 
     slug = "emw"
