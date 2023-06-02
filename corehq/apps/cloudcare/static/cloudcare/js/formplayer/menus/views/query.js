@@ -192,6 +192,7 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
                 value: value,
                 errorMessage: this.errorMessage,
                 itemsetChoicesDict: itemsetChoicesDict,
+                contentTag: this.parentView.options.sidebarEnabled ? "div" : "td",
             };
         },
 
