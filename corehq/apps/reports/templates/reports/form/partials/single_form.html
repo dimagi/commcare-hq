@@ -232,7 +232,7 @@
           </form>
         {% endif %}
         {% if is_archived %}
-          <div style="display: inline-block;">
+          <form>
             <span class="hq-help-template"
                   data-title="{% trans "Deleting Forms" %}"
                   data-content="{% trans "This is a permanent action that cannot be undone." %}"
@@ -242,7 +242,7 @@
               <i class="fa fa-trash"></i>
               {% trans 'Delete this form' %}
             </button>
-          </div>
+          </form>
         {% endif %}
 
       {% endif %}
