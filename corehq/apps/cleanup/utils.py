@@ -84,6 +84,9 @@ def migrate_to_deleted_on(db_cls, old_field, should_audit=False):
 
 def hard_delete_sql_objects_before_cutoff(cutoff):
     """
+    NOTE: this method is currently not in use, but will be used by the periodic
+    task ``permanently_delete_eligible_data`` in the near future.
+
     Permanently deletes SQL objects with deleted_on set to a datetime earlier
     than the specified cutoff datetime
     :param cutoff: datetime used to obtain objects to be hard deleted
@@ -107,6 +110,9 @@ def hard_delete_sql_objects_before_cutoff(cutoff):
 
 def hard_delete_couch_docs_before_cutoff(cutoff):
     """
+    NOTE: this method is currently not in use, but will be used by the periodic
+    task ``permanently_delete_eligible_data`` in the near future.
+
     Permanently deletes couch objects with deleted_on set to a datetime earlier
     than the specified cutoff datetime
     :param cutoff: datetime used to obtain couch docs to be hard deleted

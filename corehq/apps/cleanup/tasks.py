@@ -13,14 +13,10 @@ from corehq.apps.cleanup.dbaccessors import (
     find_ucr_tables_for_deleted_domains,
 )
 from corehq.apps.cleanup.tests.util import is_monday
-from corehq.apps.cleanup.utils import (
-    get_cutoff_date_for_data_deletion,
-    hard_delete_couch_docs_before_cutoff,
-    hard_delete_sql_objects_before_cutoff,
-)
+from corehq.apps.cleanup.utils import get_cutoff_date_for_data_deletion
 from corehq.apps.domain.models import Domain
 from corehq.apps.hqwebapp.tasks import mail_admins_async
-from corehq.form_processor.models import CommCareCase, XFormInstance
+from corehq.form_processor.models import XFormInstance
 
 UNDEFINED_XMLNS_LOG_DIR = settings.LOG_HOME
 
@@ -33,24 +29,13 @@ def permanently_delete_eligible_data():
     Permanently delete database objects that are eligible for hard deletion.
     To be eligible means to have a ``deleted_on`` field with a value less than
     the cutoff date returned from ``get_cutoff_date_for_data_deletion``.
-    For Couch documents, a DeletedCouchDoc SQL table is used to store when the
-    couch doc was marked as deleted.
     """
     cutoff_date = get_cutoff_date_for_data_deletion()
     form_counts = XFormInstance.objects.hard_delete_forms_before_cutoff(cutoff_date)
-    case_counts = CommCareCase.objects.hard_delete_cases_before_cutoff(cutoff_date)
-    sql_obj_counts = hard_delete_sql_objects_before_cutoff(cutoff_date)
-    couch_doc_counts = hard_delete_couch_docs_before_cutoff(cutoff_date)
 
     logger.info("'permanently_delete_eligible_data' ran with the following results:\n")
     for table, count in form_counts.items():
         logger.info(f"{count} {table} objects were deleted.")
-    for table, count in case_counts.items():
-        logger.info(f"{count} {table} objects were deleted.")
-    for table, count in sql_obj_counts.items():
-        logger.info(f"{count} {table} objects were deleted.")
-    for doc_type, count in couch_doc_counts.items():
-        logger.info(f"{count} {doc_type} documents were deleted.")
 
 
 @periodic_task(run_every=crontab(minute=0, hour=0), queue=getattr(settings, 'CELERY_PERIODIC_QUEUE', 'celery'))

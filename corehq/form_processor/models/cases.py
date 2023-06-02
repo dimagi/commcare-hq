@@ -293,6 +293,9 @@ class CommCareCaseManager(RequireDBManager):
 
     def hard_delete_cases_before_cutoff(self, cutoff):
         """
+        NOTE: this method is currently not in use, but will be used by the
+        periodic task ``permanently_delete_eligible_data`` in the near future.
+
         Permanently deletes cases with deleted_on set to a datetime earlier than
         the specified cutoff datetime
         :param cutoff: datetime used to obtain the cases to be hard deleted
