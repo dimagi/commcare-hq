@@ -63,14 +63,36 @@
                   {% if dynamic_properties_table %}
                     {% include "reports/partials/case_property_table.html" with rows=dynamic_properties_table %}
                   {% elif dd_properties_tables %}
-                    {% for table in dd_properties_tables %}
-                      <div class="property-table-row">
-                        <div class="property-table-container">
-                          {% if table.name %}<div class="table-tab">{{ table.name }}</div>{% endif %}
-                          {% include "reports/partials/case_property_table.html" with rows=table.rows %}
-                        </div>
+                    {% if show_expand_collapse_buttons %}
+                      <div class="pull-right btn-grp" role="group">
+                        <button class="btn btn-sm btn-default" type="button" id="expand-all-accordion-btn">Expand All</button>
+                        <button class="btn btn-sm btn-default" type="button" id="collapse-all-accordion-btn">Collapse All</button>
                       </div>
-                    {% endfor %}
+                    {% endif %}
+                    <div class="panel-group" id="case-properties-accordion">
+                      {% for table in dd_properties_tables %}
+                        <div class="panel panel-appmanager" id="property-table-{{ forloop.counter }}-parent">
+                          {% if table.name is not None %}
+                            <div class="panel-heading">
+                              <h4 class="panel-title">
+                                <a data-toggle="collapse"
+                                   data-parent="#property-table-{{ forloop.counter }}-parent"
+                                   href="#property-table-{{ forloop.counter }}"
+                                   class="collapse in">
+                                  <i class="fa fa-angle-double-down"></i>
+                                  {{ table.name }}
+                                </a>
+                              </h4>
+                            </div>
+                          {% endif %}
+                          <div class="panel-collapse collapse in" id="property-table-{{ forloop.counter }}">
+                            <div class="panel-body">
+                              {% include "reports/partials/case_property_table.html" with rows=table.rows %}
+                            </div>
+                          </div>
+                        </div>
+                      {% endfor %}
+                    </div>
                   {% else %}
                     <div class="well clearfix col-lg-10 col-md-12 col-sm-12">
                       <a target="_blank" class="pull-right"

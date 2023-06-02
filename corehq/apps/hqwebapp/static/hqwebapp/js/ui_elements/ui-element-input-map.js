@@ -1,9 +1,11 @@
 hqDefine('hqwebapp/js/ui_elements/ui-element-input-map', [
     'jquery',
+    'underscore',
     'hqwebapp/js/main',
     'DOMPurify/dist/purify.min',
 ], function (
     $,
+    _,
     hqMain,
     DOMPurify
 ) {
@@ -83,8 +85,8 @@ hqDefine('hqwebapp/js/ui_elements/ui-element-input-map', [
                     });
 
                 }
-                mapKey = DOMPurify.sanitize(mapKey);
-                mapVal = DOMPurify.sanitize(mapVal);
+                mapKey = _.escape(DOMPurify.sanitize(mapKey));
+                mapVal = _.escape(DOMPurify.sanitize(mapVal));
                 if (mapKey && !mapKey.trim()) {
                     mapKey = `"<span style="white-space: pre;">${mapKey}</span>"`;
                 }

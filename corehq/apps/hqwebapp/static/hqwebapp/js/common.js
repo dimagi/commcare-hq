@@ -1,4 +1,4 @@
-hqDefine("hqwebapp/js/bootstrap3/common", [
+hqDefine("hqwebapp/js/common", [
     'jquery',
     'knockout',
     'ko.mapping',

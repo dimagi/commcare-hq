@@ -1317,20 +1317,47 @@ def create_document_adapter(cls, index_name, type_, *, secondary=None):
     """Creates and returns a document adapter instance for the parameters
     provided.
 
+    One thing to note here is that the behaviour of the function can be altered with django settings.
+    If ES_<app_name>_INDEX_SWAPPED is set to True, then primary index will act as secondary index and vice versa.
+    This will be ignored if ES_<app_name>_INDEX_MULTIPLEXED is set to True
+
+    The function would return multiplexed adapter only in one case
+    - ES_<app name>_INDEX_MULTIPLEXED is True
+    - Secondary index is provided.
+
+    And the indexes would only be swapped if
+    - ES_<app_name>_INDEX_MULTIPLEXED is set to True
+    - ES_<app_name>_INDEX_SWAPPED is set to True
+    - secondary index is provided
+
     :param cls: an ``ElasticDocumentAdapter`` subclass
     :param index_name: the name of the index that the adapter interacts with
     :param type_: the index ``_type`` for the adapter's mapping.
     :param secondary: the name of the secondary index in a multiplexing
-        configuration. If an index name is provided, the returned adapter will
-        be an instance of ``ElasticMultiplexAdapter``.  If ``None`` (the
-        default), the returned adapter will be an instance of ``cls``.
+        configuration.
+        If an index name is provided and ES_<app name>_INDEX_MULTIPLEXED is set to True,
+        then returned adapter will be an instance of ``ElasticMultiplexAdapter``.
+        If ``None`` (the default), the returned adapter will be an instance of ``cls``.
+        ES_<app name>_INDEX_MULTIPLEXED will be ignored in this case.
     :returns: a document adapter instance.
     """
 
+    def index_multiplexed(cls):
+        key = f"ES_{cls.canonical_name.upper()}_INDEX_MULTIPLEXED"
+        return getattr(settings, key)
+
+    def index_swapped(cls):
+        key = f"ES_{cls.canonical_name.upper()}_INDEX_SWAPPED"
+        return getattr(settings, key)
+
     doc_adapter = cls(index_runtime_name(index_name), type_)
-    if secondary is not None:
+
+    if secondary is not None and index_multiplexed(cls):
         secondary_adapter = cls(index_runtime_name(secondary), type_)
-        doc_adapter = ElasticMultiplexAdapter(doc_adapter, secondary_adapter)
+        if index_swapped(cls):
+            doc_adapter = ElasticMultiplexAdapter(secondary_adapter, doc_adapter)
+        else:
+            doc_adapter = ElasticMultiplexAdapter(doc_adapter, secondary_adapter)
 
     return doc_adapter
 
