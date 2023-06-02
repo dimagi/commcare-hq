@@ -14,6 +14,17 @@ hqDefine("events/js/new_event", [
     locationsWidgets
 ) {
     $(function () {
+        const ATTENDEE_PROPS = {
+            selectableHeaderTitle: gettext('Possible Attendees'),
+            selectedHeaderTitle: gettext('Expected Attendees'),
+            searchItemTitle: gettext('Search Attendees'),
+        };
+        const ATTENDANCE_TAKER_PROPS = {
+            selectableHeaderTitle: gettext('Possible Attendance Takers'),
+            selectedHeaderTitle: gettext('Selected Attendance Takers'),
+            searchItemTitle: gettext('Search Attendance Takers'),
+        };
+
         $("#id_start_date").datepicker({
             dateFormat: "yy-mm-dd",
             minDate: 0,
@@ -24,17 +35,9 @@ hqDefine("events/js/new_event", [
             minDate: 0,
         });
 
-        multiselectUtils.createFullMultiselectWidget('id_expected_attendees', {
-            selectableHeaderTitle: gettext('Possible Attendees'),
-            selectedHeaderTitle: gettext('Expected Attendees'),
-            searchItemTitle: gettext('Search Attendees'),
-        });
+        multiselectUtils.createFullMultiselectWidget('id_expected_attendees', ATTENDEE_PROPS);
 
-        multiselectUtils.createFullMultiselectWidget('id_attendance_takers', {
-            selectableHeaderTitle: gettext('Possible Attendance Takers'),
-            selectedHeaderTitle: gettext('Selected Attendance Takers'),
-            searchItemTitle: gettext('Search Attendance Takers'),
-        });
+        multiselectUtils.createFullMultiselectWidget('id_attendance_takers', ATTENDANCE_TAKER_PROPS);
 
         function eventViewModel(initialData) {
             'use strict';
