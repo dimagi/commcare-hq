@@ -224,11 +224,13 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             });
         },
 
-        className: "formplayer-request",
+        className: "formplayer-request case-row",
 
         attributes: function () {
+            let modelId = this.model.get('id');
             return {
                 "tabindex": "0",
+                "id": `row-${modelId}`
             };
         },
 
@@ -239,17 +241,17 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
                 $(e.target).is('a')                                                 // actual link, as in markdown
             )) {
                 e.preventDefault();
-                let model_id = this.model.get('id');
+                let modelId = this.model.get('id');
                 if (!this.model.collection.hasDetails) {
                     if (this.isMultiSelect) {
                         let action = this.isChecked() ? constants.MULTI_SELECT_ADD : constants.MULTI_SELECT_REMOVE;
-                        FormplayerFrontend.trigger("multiSelect:updateCases", action, [model_id]);
+                        FormplayerFrontend.trigger("multiSelect:updateCases", action, [modelId]);
                     } else {
-                        FormplayerFrontend.trigger("menu:select", model_id);
+                        FormplayerFrontend.trigger("menu:select", modelId);
                     }
                     return;
                 }
-                FormplayerFrontend.trigger("menu:show:detail", model_id, 0, this.isMultiSelect);
+                FormplayerFrontend.trigger("menu:show:detail", modelId, 0, this.isMultiSelect);
             }
         },
 
@@ -511,9 +513,19 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
                             popupText += "<b>" + headerSanitized + ":</b> " + valueSanitized + "<br>";
                         }
                     });
+                    const rowId = `row-${model.id}`;
                     L.marker(latLng)
                         .addTo(addressMap)
-                        .bindPopup(popupText);
+                        .bindPopup(popupText)
+                        .on('click', () => {
+                            console.log(rowId);
+
+                            $(`.case-row[id!='${rowId}']`).css("border-style", "none");
+
+                            $(`#${rowId}`)
+                                .css("border-style", "solid")
+                                .css("border-colo", "#004ebc");
+                        });
 
                     return latLng;
                 }
