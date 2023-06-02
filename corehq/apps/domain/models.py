@@ -302,7 +302,7 @@ class Domain(QuickCachedDocumentMixin, BlobMixin, Document, SnapshotMixin):
 
     name = StringProperty()
     is_active = BooleanProperty()
-    date_created = DateTimeProperty()
+    date_created = DateTimeProperty()  # expected to be a naive datetime specified in UTC
     default_timezone = StringProperty(default=getattr(settings, "TIME_ZONE", "UTC"))
     default_geocoder_location = DictProperty()
     case_sharing = BooleanProperty(default=False)

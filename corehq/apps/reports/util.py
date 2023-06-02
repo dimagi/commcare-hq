@@ -344,9 +344,15 @@ def numcell(text, value=None, convert='int', raw=None):
 
 
 def datespan_from_beginning(domain_object, timezone):
-    startdate = domain_object.date_created
-    now = datetime.utcnow()
-    datespan = DateSpan(startdate, now, timezone=timezone)
+    # Start and end dates must be naive (no timezone) to work with DateSpan
+    startdate = domain_object.date_created  # full time in UTC
+    localized_start = startdate.astimezone(timezone)
+    localized_start = datetime(year=localized_start.year, month=localized_start.month, day=localized_start.day)
+
+    now = datetime.now(tz=timezone)
+    localized_end = datetime(year=now.year, month=now.month, day=now.day)
+
+    datespan = DateSpan(localized_start, localized_end, timezone=timezone)
     datespan.is_default = True
     return datespan
 

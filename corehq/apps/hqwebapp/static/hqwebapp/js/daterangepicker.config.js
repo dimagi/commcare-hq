@@ -12,16 +12,6 @@ hqDefine("hqwebapp/js/daterangepicker.config", [
 ) {
     'use strict';
 
-    var getLocalDate = function (date) {
-        /**
-         * This fixes an issue with daterangepicker where a date is passed in
-         * then converted to the browser's local timezone. So if you are in
-         * EST that means the date shows up as the day before.
-         */
-        var _date = new Date(date);
-        _date.setMinutes(_date.getMinutes() + _date.getTimezoneOffset());
-        return _date;
-    };
     $.fn.getDateRangeSeparator = function () {
         return ' to ';
     };
@@ -52,8 +42,8 @@ hqDefine("hqwebapp/js/daterangepicker.config", [
         };
         var hasStartAndEndDate = !_.isEmpty(startdate) && !_.isEmpty(enddate);
         if (hasStartAndEndDate) {
-            config.startDate = getLocalDate(startdate);
-            config.endDate = getLocalDate(enddate);
+            config.startDate = new Date(startdate);
+            config.endDate = new Date(enddate);
         }
 
         $(this).daterangepicker(config);
