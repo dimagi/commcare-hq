@@ -252,6 +252,8 @@ def get_case_value(case: CommCareCase, value: str):
             A tuple containing the value on whether that value is a property on the case.
             If no value is found `(None, None)` is returned
     """
+    if not value:
+        return None, None
 
     if value in SPECIAL_CASE_PROPERTIES_MAP:
         return SPECIAL_CASE_PROPERTIES_MAP[value].value_getter(case.to_json()), False
@@ -260,15 +262,16 @@ def get_case_value(case: CommCareCase, value: str):
     return None, None
 
 
-def get_censored_case_data(case: CommCareCase, censor_data: dict) -> dict:
+def get_censored_case_data(case: CommCareCase, censor_data: dict):
     """
     This function is used to get censored data on a case.
 
         Parameters:
             - case: the case to censor the data for
             - censor_data: a dictionary containing as key the data to sensor and value the
-                        method to use to censor the data. Two methods are currently supported,
-                        i.e. deid_ID and deid_date.
+                        transform method as a string to use to censor the data.
+                        Two transforms are currently supported, namely `deid_ID` and `deid_date`.
+                        An invalid transform will result in a blank value.
 
         Returns:
             A tuple containing the censored attrs and properties as dictionaries respectively
@@ -277,20 +280,22 @@ def get_censored_case_data(case: CommCareCase, censor_data: dict) -> dict:
     attrs = {}
     props = {}
 
-    for k, v in censor_data.items():
-        case_value, is_case_property = get_case_value(case, k)
+    if censor_data:
+        for k, v in censor_data.items():
+            case_value, is_case_property = get_case_value(case, k)
 
-        if not case_value:
-            continue
+            if not case_value:
+                continue
 
-        if v == deid_date.__name__:
-            censored_value = deid_date(case_value, None, key=case.case_id)
-        if v == deid_ID.__name__:
-            censored_value = deid_ID(case_value, None)
+            censored_value = ''
+            if v == deid_date.__name__:
+                censored_value = deid_date(case_value, None, key=case.case_id)
+            if v == deid_ID.__name__:
+                censored_value = deid_ID(case_value, None)
 
-        if is_case_property:
-            props[k] = censored_value
-        else:
-            attrs[k] = censored_value
+            if is_case_property:
+                props[k] = censored_value
+            else:
+                attrs[k] = censored_value
 
     return attrs, props

@@ -198,7 +198,7 @@ class CaseHelper:
 
         original_cases = CommCareCase.objects.get_cases(case_ids=case_ids, domain=domain)
         if not any(original_cases):
-            return None, []
+            return []
 
         processed_cases = {}
         copied_cases_case_blocks = []
@@ -267,6 +267,7 @@ class CaseHelper:
             case_blocks=copied_cases_case_blocks,
             domain=domain,
         )
+
         if count_only:
             return len(cases)
         else:

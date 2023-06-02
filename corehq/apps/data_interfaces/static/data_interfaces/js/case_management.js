@@ -166,7 +166,7 @@ hqDefine("data_interfaces/js/case_management",[
 
                 $.ajax({
                     url: initialPageData.reverse("copy_cases"),
-                    type: 'post',
+                    type: 'POST',
                     data: JSON.stringify({
                         case_ids: self.selectedCases(),
                         owner_id: newOwner,
@@ -180,7 +180,7 @@ hqDefine("data_interfaces/js/case_management",[
                     },
                     error: function (response) {
                         self.clearCaseSelection();
-                        hqImport('hqwebapp/js/alert_user').alert_user(response.responseText, "danger");
+                        hqImport('hqwebapp/js/alert_user').alert_user(response.responseJSON.error, "danger");
                     }
                 });
             }

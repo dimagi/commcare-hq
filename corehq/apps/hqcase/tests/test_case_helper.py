@@ -3,7 +3,7 @@ import uuid
 from contextlib import contextmanager
 
 from django.test import TestCase
-
+from couchexport.deid import deid_ID
 from casexml.apps.case.const import CASE_INDEX_CHILD
 from casexml.apps.case.mock import CaseFactory, CaseIndex, CaseStructure
 
@@ -317,17 +317,16 @@ class CaseHelperTests(TestCase):
 class TestCaseCopy(TestCase):
 
     def test_no_cases_to_copy(self):
-        form, cases = CaseHelper(domain=DOMAIN).copy_cases(
+        cases = CaseHelper(domain=DOMAIN).copy_cases(
             domain=DOMAIN,
             case_ids=[],
             to_owner='new owner'
         )
-        self.assertEqual(form, None)
         self.assertEqual(cases, [])
 
     def test_copy_case_to_blank_owner(self):
         with self.assertRaises(Exception) as context:
-            _, cases = CaseHelper(domain=DOMAIN).copy_cases(
+            _ = CaseHelper(domain=DOMAIN).copy_cases(
                 domain=DOMAIN,
                 case_ids=[],
                 to_owner=''
@@ -337,7 +336,7 @@ class TestCaseCopy(TestCase):
     def test_copy_case_to_same_owner(self):
         with get_mother_case(owner_id='owner_id') as case:
             with self.assertRaises(Exception) as context:
-                _, cases = CaseHelper(domain=DOMAIN).copy_cases(
+                _ = CaseHelper(domain=DOMAIN).copy_cases(
                     domain=DOMAIN,
                     case_ids=[case.case_id],
                     to_owner=case.owner_id
@@ -350,7 +349,7 @@ class TestCaseCopy(TestCase):
         }
 
         with get_mother_case('owner_id', update=properties) as case:
-            _, cases = CaseHelper(domain=DOMAIN).copy_cases(
+            cases = CaseHelper(domain=DOMAIN).copy_cases(
                 domain=DOMAIN,
                 case_ids=[case.case_id],
                 to_owner='new_owner_id'
@@ -364,21 +363,23 @@ class TestCaseCopy(TestCase):
         }
 
         with get_mother_case('owner_id', update=properties) as case:
-            _, cases = CaseHelper(domain=DOMAIN).copy_cases(
+            cases = CaseHelper(domain=DOMAIN).copy_cases(
                 domain=DOMAIN,
                 case_ids=[case.case_id],
                 to_owner='new_owner_id',
-                replace_props={
-                    'age': 'secret'
+                censor_data={
+                    'age': self.id_transform,
+                    'case_name': self.id_transform,
                 }
             )
+            self.assertTrue(cases[0].name != case.name)
+            self.assertTrue(cases[0].case_json['age'] != case.case_json['age'])
         self.assertEqual(cases[0].owner_id, 'new_owner_id')
-        self.assertEqual(cases[0].case_json['age'], 'secret')
 
     def test_indices_copied(self):
         with get_child_case() as case:
             parent_case_id = case.get_indices()[0].referenced_id
-            _, cases = CaseHelper(domain=DOMAIN).copy_cases(
+            cases = CaseHelper(domain=DOMAIN).copy_cases(
                 domain=DOMAIN,
                 case_ids=[case.case_id, parent_case_id],
                 to_owner='new_owner_id',
@@ -396,7 +397,7 @@ class TestCaseCopy(TestCase):
 
     def test_indices_not_copied_if_not_in_case_list(self):
         with get_child_case() as case:
-            _, cases = CaseHelper(domain=DOMAIN).copy_cases(
+            cases = CaseHelper(domain=DOMAIN).copy_cases(
                 domain=DOMAIN,
                 case_ids=[case.case_id],
                 to_owner='new_owner_id',
@@ -404,6 +405,10 @@ class TestCaseCopy(TestCase):
         self.assertEqual(len(cases), 1)
         self.assertEqual(cases[0].owner_id, 'new_owner_id')
         self.assertEqual(cases[0].get_indices(), [])
+
+    @property
+    def id_transform(self):
+        return deid_ID.__name__
 
 
 @contextmanager

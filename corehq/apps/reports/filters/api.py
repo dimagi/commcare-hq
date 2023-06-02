@@ -16,6 +16,8 @@ from dimagi.utils.logging import notify_exception
 from phonelog.models import DeviceReportEntry
 
 from corehq.apps.domain.decorators import LoginAndDomainMixin
+from corehq.apps.users.decorators import require_permission
+from corehq.apps.users.models import HqPermissions
 from corehq.apps.locations.permissions import location_safe
 from corehq.apps.reports.const import DEFAULT_PAGE_LIMIT
 from corehq.apps.reports.filters.controllers import (
@@ -205,16 +207,18 @@ class DeviceLogIds(DeviceLogFilter):
 
 
 @require_POST
+@require_permission(HqPermissions.edit_data)
 @location_safe
 def copy_cases(request, domain, *args, **kwargs):
     body = json.loads(request.body)
-    case_ids = body['case_ids']
-    if not case_ids:
-        return HttpResponseBadRequest("Missing case ids")
 
-    new_owner = body['owner_id']
+    case_ids = body.get('case_ids')
+    if not case_ids:
+        return JsonResponse({'error': _("Missing case ids")}, status=400)
+
+    new_owner = body.get('owner_id')
     if not new_owner:
-        return HttpResponseBadRequest("Missing new owner id")
+        return JsonResponse({'error': _("Missing new owner id")}, status=400)
 
     censor_data = {prop['name']: prop['label'] for prop in body.get('sensitive_properties', [])}
 
@@ -230,4 +234,4 @@ def copy_cases(request, domain, *args, **kwargs):
             'copied_cases': copied_count,
         })
     except Exception as e:
-        return HttpResponseBadRequest(_(str(e)))
+        return JsonResponse({'error': _(str(e))}, status=400)
