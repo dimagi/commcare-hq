@@ -47,18 +47,18 @@ hqDefine("data_interfaces/js/case_management",[
             }
         };
 
-        var updateCaseRow = function (caseId, ownerId, ownerType) {
+        var updateCaseRowReassign = function (caseId, ownerId, ownerType) {
             return function () {
-                var $checkbox = $('#data-interfaces-reassign-cases input[data-caseid="' + caseId + '"].selected-commcare-case'),
-                    username = $('#reassign_owner_select').data().select2.data().text,
+                var $checkbox = $('#data-interfaces-reassign-cases input[data-caseid="' + caseId + '"].selected-commcare-case');
+                var $row = $checkbox.closest("tr");
+                var username = $('#reassign_owner_select').data().select2.data().text,
                     dateMessage = (self.onToday) ? '<span title="0"></span>' :
                         '<span class="label label-warning" title="0">Out of range of filter. Will ' +
-                                        'not appear on page refresh.</span>';
+                                    'not appear on page refresh.</span>';
                 $checkbox.data('owner', ownerId);
                 $checkbox.data('ownertype', ownerType);
 
-                var $row = $checkbox.closest("tr"),
-                    groupLabel = '';
+                var groupLabel = '';
 
                 if (ownerType === 'group') {
                     groupLabel = ' <span class="label label-inverse" title="' + username + '">group</span>';
@@ -67,7 +67,26 @@ hqDefine("data_interfaces/js/case_management",[
                 $row.find('td:nth-child(4)').html(username + groupLabel + ' <span class="label label-info" title="' + username +
                                                 '">updated</span>');
                 $row.find('td:nth-child(5)').html('Today ' + dateMessage);
+
+                var dateMessage = (self.onToday) ? '<span title="0"></span>' :
+                        '<span class="label label-info" title="0">Case copied</span>';
+                $row.find('td:nth-child(5)').html('Today ' + dateMessage);
                 $checkbox.prop("checked", false).change();
+            };
+        };
+
+        var updateCaseRowCopy = function (caseIds, ownerId, ownerType) {
+            return function () {
+                var caseIdsArr = caseIds.slice();
+                for (var i = 0 ; i < caseIdsArr.length ; i++) {
+                    var caseId = caseIdsArr[i];
+                    var $checkbox = $('#data-interfaces-reassign-cases input[data-caseid="' + caseId + '"].selected-commcare-case');
+                    var $row = $checkbox.closest("tr");
+                    var dateMessage = (self.onToday) ? '<span title="0"></span>' :
+                            '<span class="label label-info" title="0">Case copied</span>';
+                    $row.find('td:nth-child(5)').html('Today ' + dateMessage);
+                    $checkbox.prop("checked", false).change();
+                };
             };
         };
 
@@ -106,15 +125,61 @@ hqDefine("data_interfaces/js/case_management",[
         };
 
         self.updateAllMatches = function (ownerId) {
-            var report = standardHqReport.getStandardHQReport();
-            var params = new URLSearchParams(report.getReportParams());
-            var paramsObject = Object.fromEntries(params.entries());
+            var paramsObject = self.getReportParamsObject();
             paramsObject['new_owner_id'] = ownerId;
             var bulkReassignUrl = window.location.href.replace("data/edit", "data/edit/bulk");
             $.postGo(
                 bulkReassignUrl,
                 paramsObject
             );
+        };
+
+        self.onSubmit = function (form) {
+            if (initialPageData.get("action") === "copy") {
+                self.copyCases(form);
+            } else {
+                self.updateCaseOwners(form);
+            }
+        }
+
+        self.copyCases = function (form) {
+            var newOwner = $(form).find('#reassign_owner_select').val(),
+                $modal = $('#caseManagementStatusModal'),
+                ownerType = getOwnerType(newOwner);
+
+            if (newOwner.includes('__')) {
+                // groups and users have different number of characters before the id
+                // users are u__id and groups are sg__id
+                newOwner = newOwner.slice(newOwner.indexOf('__') + 2);
+            }
+
+            if (_.isEmpty(newOwner)) {
+                $modal.find('.modal-body').text("Please select an owner");
+                $modal.modal('show');
+            } else {
+                if (self.selectAllMatches()) {
+                    self.updateAllMatches(newOwner);
+                    return;
+                }
+                $(form).find("[type='submit']").disableButton();
+                var sensitiveProperties = self.getReportParamsObject().sensitive_properties;
+
+                $.ajax({
+                    url: initialPageData.reverse("copy_cases"),
+                    type: 'post',
+                    data: JSON.stringify({
+                        case_ids: self.selectedCases(),
+                        owner_id: newOwner,
+                        sensitive_properties: JSON.parse(sensitiveProperties)
+                    }),
+                    contentType: "application/json",
+                    success: updateCaseRowCopy(self.selectedCases(), newOwner, ownerType),
+                    error: function (response) {
+                        self.clearCaseSelection();
+                        hqImport('hqwebapp/js/alert_user').alert_user(response.responseText, "danger");
+                    }
+                });
+            }
         };
 
         self.updateCaseOwners = function (form) {
@@ -153,17 +218,23 @@ hqDefine("data_interfaces/js/case_management",[
                         url: self.receiverUrl,
                         type: 'post',
                         data: xform,
-                        success: updateCaseRow(caseId, newOwner, ownerType),
+                        success: updateCaseRowReassign(caseId, newOwner, ownerType),
                     });
 
                 }
             }
         };
 
+        self.getReportParamsObject = function () {
+            var report = standardHqReport.getStandardHQReport();
+            var params = new URLSearchParams(report.getReportParams());
+            return Object.fromEntries(params.entries());
+        }
+
         return self;
     };
 
-    ko.bindingHandlers.caseReassignmentForm = {
+    ko.bindingHandlers.caseActionForm = {
         update: function (element, valueAccessor) {
             var value = valueAccessor()();
             var $element = $(element);
