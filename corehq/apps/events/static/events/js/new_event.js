@@ -77,6 +77,37 @@ hqDefine("events/js/new_event", [
                 return false;
             });
 
+            self.locationId.subscribe(function (newLocation) {
+                function rebuildList (elementId, data) {
+                    const $expectedList = $(`#${elementId}`);
+                    $expectedList.empty();
+                    for (const item of data) {
+                        $expectedList.append(
+                            `<option value="${item.id}">${item.name}</option>`
+                        );
+                    }
+                };
+
+                $.ajax({
+                    url: initialPageData.reverse('get_attendees_and_attendance_takers'),
+                    method: 'GET',
+                    data: {
+                        'location_id': newLocation,
+                    },
+                    success: function (data) {
+                        $("#attendance-list-error").addClass("hidden");
+
+                        rebuildList("id_expected_attendees", data.attendees);
+                        rebuildList("id_attendance_takers", data.attendance_takers);
+                        multiselectUtils.rebuildMultiselect('id_expected_attendees', ATTENDEE_PROPS);
+                        multiselectUtils.rebuildMultiselect('id_attendance_takers', ATTENDANCE_TAKER_PROPS);
+                    },
+                    error: function (error) {
+                        $("#attendance-list-error").removeClass("hidden");
+                    },
+                });
+            });
+
             return self;
         }
 
