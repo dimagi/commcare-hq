@@ -56,7 +56,11 @@ def get_events_errors(response: dict) -> dict:
 
 
 def get_diagnosis_message(error: str) -> str:
-    for error_msg in ERROR_DIAGNOSIS.keys():
-        if error_msg.lower() in error.lower():
-            return ERROR_DIAGNOSIS[error_msg]
-    return _('No diagnosis available for this error.')
+    diagnosis_message = [
+        v for k, v in ERROR_DIAGNOSIS.items() if k.lower() in error.lower()
+    ]
+    return (
+        diagnosis_message[0]
+        if diagnosis_message
+        else _('No diagnosis available for this error.')
+    )
