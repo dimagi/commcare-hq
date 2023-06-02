@@ -32,6 +32,8 @@ class Command(AppMigrationCommandBase):
             detail_pair = module.get('case_details')
             if detail_pair:
                 short_detail, long_detail = detail_pair['short'], detail_pair['long']
-                app_was_changed = app_was_changed or _migrate_detail(short_detail) or _migrate_detail(long_detail)
+                app_was_changed_short = _migrate_detail(short_detail)
+                app_was_changed_long = _migrate_detail(long_detail)
+                app_was_changed = app_was_changed or app_was_changed_short or app_was_changed_long
         if app_was_changed:
             return app
