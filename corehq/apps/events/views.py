@@ -226,10 +226,13 @@ class EventEditView(EventCreateView):
     @use_multiselect
     @use_jquery_ui
     def dispatch(self, request, *args, **kwargs):
-        self.event_obj = Event.objects.get(
-            domain=self.domain,
-            event_id=kwargs['event_id'],
-        )
+        try:
+            self.event_obj = Event.objects.get(
+                domain=self.domain,
+                event_id=kwargs['event_id'],
+            )
+        except Event.DoesNotExist:
+            raise Http404()
         return super().dispatch(request, *args, **kwargs)
 
     @property

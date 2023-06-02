@@ -72,7 +72,8 @@ class EventForm(forms.Form):
     )
     attendance_takers = forms.MultipleChoiceField(
         label=_("Attendance Takers"),
-        required=False,
+        required=True,
+        help_text="Please choose at least one Attendance Taker"
     )
 
     def __init__(self, *args, **kwargs):
@@ -249,7 +250,7 @@ class EventForm(forms.Form):
             )
         else:
             users = get_all_commcare_users_by_domain(self.domain)
-        return [(u.user_id, u.username) for u in users]
+        return [(u.user_id, u.raw_username) for u in users]
 
 
 class NewAttendeeForm(forms.Form):
