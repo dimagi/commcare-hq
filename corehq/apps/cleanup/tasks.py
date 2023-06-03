@@ -24,18 +24,20 @@ logger = logging.getLogger(__name__)
 
 
 @periodic_task(run_every=crontab(minute=0, hour=0), queue=getattr(settings, 'CELERY_PERIODIC_QUEUE', 'celery'))
-def permanently_delete_eligible_data():
+def permanently_delete_eligible_data(dry_run=True):
     """
     Permanently delete database objects that are eligible for hard deletion.
     To be eligible means to have a ``deleted_on`` field with a value less than
     the cutoff date returned from ``get_cutoff_date_for_data_deletion``.
+    :param dry_run: if True, no changes will be committed to the database
     """
+    dry_run_tag = '[DRY RUN] ' if dry_run else ''
     cutoff_date = get_cutoff_date_for_data_deletion()
-    form_counts = XFormInstance.objects.hard_delete_forms_before_cutoff(cutoff_date)
+    form_counts = XFormInstance.objects.hard_delete_forms_before_cutoff(cutoff_date, dry_run=dry_run)
 
-    logger.info("'permanently_delete_eligible_data' ran with the following results:\n")
+    logger.info(f"{dry_run_tag}'permanently_delete_eligible_data' ran with the following results:\n")
     for table, count in form_counts.items():
-        logger.info(f"{count} {table} objects were deleted.")
+        logger.info(f"{dry_run_tag}{count} {table} objects were deleted.")
 
 
 @periodic_task(run_every=crontab(minute=0, hour=0), queue=getattr(settings, 'CELERY_PERIODIC_QUEUE', 'celery'))

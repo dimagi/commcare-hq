@@ -19,7 +19,7 @@ class TestPermanentlyDeleteEligibleData(TestCase):
         before_cutoff = datetime(2020, 1, 1, 12, 29)
         form = create_form_for_test(self.domain, deleted_on=before_cutoff)
 
-        permanently_delete_eligible_data()
+        permanently_delete_eligible_data(dry_run=False)
 
         with self.assertRaises(XFormNotFound):
             XFormInstance.objects.get_form(form.form_id)
@@ -27,9 +27,17 @@ class TestPermanentlyDeleteEligibleData(TestCase):
     def test_does_not_delete_data(self):
         form = create_form_for_test(self.domain, deleted_on=self.cutoff)
 
-        permanently_delete_eligible_data()
+        permanently_delete_eligible_data(dry_run=False)
 
         self.assertIsNotNone(XFormInstance.objects.get_form(form.form_id))
+
+    def test_does_not_delete_data_if_in_dry_run_mode(self):
+        before_cutoff = datetime(2020, 1, 1, 12, 29)
+        form = create_form_for_test(self.domain, deleted_on=before_cutoff)
+
+        permanently_delete_eligible_data(dry_run=True)
+
+        XFormInstance.objects.get_form(form.form_id)
 
     def setUp(self):
         self.domain = 'test_permanently_delete_eligible_data'

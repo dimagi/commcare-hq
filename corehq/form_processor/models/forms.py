@@ -193,17 +193,22 @@ class XFormInstanceManager(RequireDBManager):
             )
         return result
 
-    def hard_delete_forms_before_cutoff(self, cutoff):
+    def hard_delete_forms_before_cutoff(self, cutoff, dry_run=True):
         """
         Permanently deletes forms with deleted_on set to a datetime earlier than
         the specified cutoff datetime
         :param cutoff: datetime used to obtain the forms to be hard deleted
+        :param dry_run: if True, no changes will be committed to the database
+        and this method is effectively read-only
         :return: dictionary of count of deleted objects per table
         """
         counts = {}
         for db_name in get_db_aliases_for_partitioned_query():
             queryset = self.using(db_name).filter(deleted_on__lt=cutoff)
-            deleted_counts = queryset.delete()[1]
+            if dry_run:
+                deleted_counts = {'form_processor.XFormInstance': queryset.count()}
+            else:
+                deleted_counts = queryset.delete()[1]
             counts.update(deleted_counts)
         return counts
 
