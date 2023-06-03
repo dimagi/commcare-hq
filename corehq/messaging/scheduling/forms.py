@@ -185,6 +185,17 @@ class ContentForm(Form):
         required=False,
         label=gettext_lazy("Intervals"),
     )
+    fcm_message_type = ChoiceField(
+        required=False,
+        choices=FCMNotificationContent.MESSAGE_TYPES,
+        initial=FCMNotificationContent.MESSAGE_TYPE_NOTIFICATION,
+        label=''
+    )
+    fcm_action = ChoiceField(
+        required=False,
+        label=gettext_lazy("Action on Notification"),
+        choices=FCMNotificationContent.ACTION_CHOICES,
+    )
 
     def __init__(self, *args, **kwargs):
         if 'schedule_form' not in kwargs:
@@ -198,14 +209,15 @@ class ContentForm(Form):
         self.fields['app_and_form_unique_id'].choices = [('', '')] + self.schedule_form.form_choices
 
     def clean_subject(self):
-        if self.schedule_form.cleaned_data.get('content') != ScheduleForm.CONTENT_EMAIL:
+        if self.schedule_form.cleaned_data.get('content') not in (ScheduleForm.CONTENT_EMAIL,
+                                                                  ScheduleForm.CONTENT_FCM_NOTIFICATION):
             return None
 
         return self._clean_message_field('subject')
 
     def clean_message(self):
         if self.schedule_form.cleaned_data.get('content') not in (ScheduleForm.CONTENT_SMS,
-                ScheduleForm.CONTENT_EMAIL):
+                ScheduleForm.CONTENT_EMAIL, ScheduleForm.CONTENT_FCM_NOTIFICATION):
             return None
 
         return self._clean_message_field('message')
@@ -334,11 +346,31 @@ class ContentForm(Form):
             return CustomContent(
                 custom_content_id=self.cleaned_data['custom_sms_content_id']
             )
+        elif self.schedule_form.cleaned_data['content'] == ScheduleForm.CONTENT_FCM_NOTIFICATION:
+            return FCMNotificationContent(
+                subject=self.cleaned_data['subject'],
+                message=self.cleaned_data['message'],
+                action=self.cleaned_data['fcm_action'],
+                message_type=self.cleaned_data['fcm_message_type'],
+            )
         else:
             raise ValueError("Unexpected value for content: '%s'" % self.schedule_form.cleaned_data['content'])
 
     def get_layout_fields(self):
         return [
+            hqcrispy.B3MultiField(
+                _('Message type'),
+                crispy.Field(
+                    'fcm_message_type',
+                    data_bind='value: fcm_message_type',
+                ),
+                data_bind="visible: $root.content() === '%s'" % ScheduleForm.CONTENT_FCM_NOTIFICATION,
+            ),
+            crispy.Div(
+                crispy.Field('fcm_action'),
+                data_bind="visible: $root.content() === '%s' && fcm_message_type() === '%s'"
+                          % (ScheduleForm.CONTENT_FCM_NOTIFICATION, FCMNotificationContent.MESSAGE_TYPE_DATA),
+            ),
             hqcrispy.B3MultiField(
                 _("Subject"),
                 crispy.Field(
@@ -349,7 +381,10 @@ class ContentForm(Form):
                     crispy.Div(template='scheduling/partials/message_configuration.html'),
                     data_bind='with: subject',
                 ),
-                data_bind="visible: $root.content() === '%s'" % ScheduleForm.CONTENT_EMAIL,
+                data_bind="visible: $root.content() === '%s' || ($root.content() === '%s' "
+                          "&& fcm_message_type() === '%s')" %
+                          (ScheduleForm.CONTENT_EMAIL, ScheduleForm.CONTENT_FCM_NOTIFICATION,
+                           FCMNotificationContent.MESSAGE_TYPE_NOTIFICATION)
             ),
             hqcrispy.B3MultiField(
                 _("Message"),
@@ -362,8 +397,10 @@ class ContentForm(Form):
                     data_bind='with: message',
                 ),
                 data_bind=(
-                    "visible: $root.content() === '%s' || $root.content() === '%s' || $root.content() === '%s'" %
-                    (ScheduleForm.CONTENT_SMS, ScheduleForm.CONTENT_EMAIL, ScheduleForm.CONTENT_SMS_CALLBACK)
+                    "visible: $root.content() === '%s' || $root.content() === '%s' || $root.content() === '%s' "
+                    "|| ($root.content() === '%s' && fcm_message_type() === '%s')" %
+                    (ScheduleForm.CONTENT_SMS, ScheduleForm.CONTENT_EMAIL, ScheduleForm.CONTENT_SMS_CALLBACK,
+                     ScheduleForm.CONTENT_FCM_NOTIFICATION, FCMNotificationContent.MESSAGE_TYPE_NOTIFICATION)
                 ),
             ),
             crispy.Div(
@@ -471,6 +508,11 @@ class ContentForm(Form):
         elif isinstance(content, SMSCallbackContent):
             result['message'] = content.message
             result['sms_callback_intervals'] = ', '.join(str(i) for i in content.reminder_intervals)
+        elif isinstance(content, FCMNotificationContent):
+            result['subject'] = content.subject
+            result['message'] = content.message
+            result['fcm_action'] = content.action
+            result['fcm_message_type'] = content.message_type
         else:
             raise TypeError("Unexpected content type: %s" % type(content))
 
