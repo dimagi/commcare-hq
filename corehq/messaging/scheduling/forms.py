@@ -60,12 +60,13 @@ from corehq.messaging.scheduling.models import (
     CustomContent,
     IVRSurveyContent,
     SMSCallbackContent,
+    FCMNotificationContent,
 )
 from corehq.messaging.scheduling.scheduling_partitioned.models import ScheduleInstance, CaseScheduleInstanceMixin
 from corehq.toggles import EXTENSION_CASES_SYNC_ENABLED
 from couchdbkit import ResourceNotFound
 from langcodes import get_name as get_language_name
-
+from corehq.messaging.fcm_util import HQ_FCM_UTIL
 
 def validate_time(value):
     error = ValidationError(_("Please enter a valid 24-hour time in the format HH:MM"))
@@ -943,6 +944,7 @@ class ScheduleForm(Form):
     CONTENT_IVR_SURVEY = 'ivr_survey'
     CONTENT_SMS_CALLBACK = 'sms_callback'
     CONTENT_CUSTOM_SMS = 'custom_sms'
+    CONTENT_FCM_NOTIFICATION = 'fcm_notification'
 
     YES = 'Y'
     NO = 'N'
@@ -1330,6 +1332,8 @@ class ScheduleForm(Form):
                 content.include_case_updates_in_partial_submissions
         elif isinstance(content, SMSCallbackContent):
             initial['content'] = self.CONTENT_SMS_CALLBACK
+        elif isinstance(content, FCMNotificationContent):
+            initial['content'] = self.CONTENT_FCM_NOTIFICATION
         else:
             raise TypeError("Unexpected content type: %s" % type(content))
 
@@ -2872,6 +2876,10 @@ class ConditionalAlertScheduleForm(ScheduleForm):
         ):
             self.fields['content'].choices += [
                 (self.CONTENT_CUSTOM_SMS, _("Custom SMS")),
+            ]
+        if HQ_FCM_UTIL:
+            self.fields['content'].choices += [
+                (self.CONTENT_FCM_NOTIFICATION, _("Push Notification"))
             ]
 
     @property
