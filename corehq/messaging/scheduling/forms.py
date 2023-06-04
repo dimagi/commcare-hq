@@ -131,6 +131,12 @@ class ContentForm(Form):
     # names in the HTML are prefixed with "content-"
     prefix = 'content'
 
+    fcm_message_type = ChoiceField(
+        required=False,
+        choices=FCMNotificationContent.MESSAGE_TYPES,
+        initial=FCMNotificationContent.MESSAGE_TYPE_NOTIFICATION,
+        label=''
+    )
     subject = CharField(
         required=False,
         widget=HiddenInput,
@@ -185,12 +191,6 @@ class ContentForm(Form):
         required=False,
         label=gettext_lazy("Intervals"),
     )
-    fcm_message_type = ChoiceField(
-        required=False,
-        choices=FCMNotificationContent.MESSAGE_TYPES,
-        initial=FCMNotificationContent.MESSAGE_TYPE_NOTIFICATION,
-        label=''
-    )
     fcm_action = ChoiceField(
         required=False,
         label=gettext_lazy("Action on Notification"),
@@ -209,15 +209,22 @@ class ContentForm(Form):
         self.fields['app_and_form_unique_id'].choices = [('', '')] + self.schedule_form.form_choices
 
     def clean_subject(self):
-        if self.schedule_form.cleaned_data.get('content') not in (ScheduleForm.CONTENT_EMAIL,
-                                                                  ScheduleForm.CONTENT_FCM_NOTIFICATION):
+        if (self.schedule_form.cleaned_data.get('content') == ScheduleForm.CONTENT_FCM_NOTIFICATION
+                and self.cleaned_data['fcm_message_type'] == FCMNotificationContent.MESSAGE_TYPE_NOTIFICATION):
+            return self._clean_message_field('subject')
+
+        if self.schedule_form.cleaned_data.get('content') != ScheduleForm.CONTENT_EMAIL:
             return None
 
         return self._clean_message_field('subject')
 
     def clean_message(self):
+        if (self.schedule_form.cleaned_data.get('content') == ScheduleForm.CONTENT_FCM_NOTIFICATION
+                and self.cleaned_data['fcm_message_type'] == FCMNotificationContent.MESSAGE_TYPE_NOTIFICATION):
+            return self._clean_message_field('message')
+
         if self.schedule_form.cleaned_data.get('content') not in (ScheduleForm.CONTENT_SMS,
-                ScheduleForm.CONTENT_EMAIL, ScheduleForm.CONTENT_FCM_NOTIFICATION):
+                                                                  ScheduleForm.CONTENT_EMAIL):
             return None
 
         return self._clean_message_field('message')
@@ -235,6 +242,24 @@ class ContentForm(Form):
             raise ValidationError(_("Please fill out at least one translation"))
 
         return cleaned_value
+
+    def clean_fcm_message_type(self):
+        if self.schedule_form.cleaned_data.get('content') != ScheduleForm.CONTENT_FCM_NOTIFICATION:
+            return None
+
+        value = self.cleaned_data.get('fcm_message_type')
+        if not value:
+            raise ValidationError(_("This field is required"))
+        return value
+
+    def clean_fcm_action(self):
+        if self.schedule_form.cleaned_data.get('content') != ScheduleForm.CONTENT_FCM_NOTIFICATION:
+            return None
+
+        value = self.cleaned_data.get('fcm_action')
+        if self.cleaned_data['fcm_message_type'] == FCMNotificationContent.MESSAGE_TYPE_DATA and not value:
+            raise ValidationError(_("This field is required"))
+        return value
 
     def clean_app_and_form_unique_id(self):
         if self.schedule_form.cleaned_data.get('content') != ScheduleForm.CONTENT_SMS_SURVEY:
