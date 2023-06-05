@@ -37,6 +37,8 @@ from ..views import (
 )
 from corehq.apps.users.models import CommCareUser
 
+
+@es_test(requires=[user_adapter], setup_class=True)
 class BaseEventViewTestClass(TestCase):
 
     domain = 'test-domain'
@@ -80,6 +82,8 @@ class BaseEventViewTestClass(TestCase):
         cls.mobile_worker = CommCareUser.create(
             cls.domain, "UserX", "123", None, None, email="user_x@email.com"
         )
+        user_adapter.index(cls.mobile_worker, refresh=True)
+
         role = cls.attendance_coordinator_role()
         cls.role_webuser.set_role(cls.domain, role.get_qualified_id())
         cls.role_webuser.save()
@@ -446,7 +450,7 @@ class TestAttendeesDeleteView(BaseEventViewTestClass):
             )
 
 
-@es_test(requires=[user_adapter, case_search_adapter], setup_class=True)
+@es_test(requires=[case_search_adapter], setup_class=True)
 class TestGetAttendeesAndAttendanceTakersView(BaseEventViewTestClass):
 
     urlname = 'get_attendees_and_attendance_takers'
