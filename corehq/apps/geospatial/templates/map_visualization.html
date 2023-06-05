@@ -1,10 +1,7 @@
-{% extends "hqwebapp/bootstrap3/base_section.html" %}
-{% load i18n %}
+{% extends "reports/tabular.html" %}
 {% load hq_shared_tags %}
 
-{% block page_title %}
-  {{ current_page.title }}
-{% endblock %}
-
-{% block page_content %}
+{% block reportcontent %}
+<!-- This is used to get the data from report_context -->
+<div class="map-data" data-context="{% html_attr context %}"></div>
 {% endblock %}

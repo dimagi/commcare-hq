@@ -51,37 +51,6 @@ from corehq.util.workbook_reading.datamodels import Cell
 FHIR_RESOURCE_TYPE_MAPPING_SHEET = "fhir_mapping"
 ALLOWED_VALUES_SHEET_SUFFIX = "-vl"
 
-data_dictionary_rebuild_rate_limiter = RateLimiter(
-    feature_key='data_dictionary_rebuilds_per_user',
-    get_rate_limits=lambda scope: get_dynamic_rate_definition(
-        'data_dictionary_rebuilds_per_user',
-        default=RateDefinition(
-            per_hour=3,
-            per_minute=2,
-            per_second=1,
-        )
-    ).get_rate_limits(scope),
-)
-
-@login_and_domain_required
-@toggles.DATA_DICTIONARY.required_decorator()
-@require_permission(HqPermissions.edit_data_dict)
-def generate_data_dictionary(request, domain):
-    if data_dictionary_rebuild_rate_limiter.allow_usage(domain):
-        data_dictionary_rebuild_rate_limiter.report_usage(domain)
-        try:
-            util.generate_data_dictionary(domain)
-        except util.OldExportsEnabledException:
-            return JsonResponse({
-                "failed": "Data Dictionary requires access to new exports"
-            }, status=400)
-
-        return JsonResponse({"status": "success"})
-    else:
-        return JsonResponse({
-            "failed": "Rate limit exceeded. Please try again later."
-        }, status=429)
-
 
 @login_and_domain_required
 @toggles.DATA_DICTIONARY.required_decorator()
@@ -112,7 +81,7 @@ def data_dictionary_json(request, domain, case_type_name=None):
                 "fhir_resource_prop_path": fhir_resource_prop_by_case_prop.get(prop),
                 "name": prop.name,
                 "data_type": prop.data_type,
-                "group": prop.group,
+                "group": prop.group_name,
                 "deprecated": prop.deprecated,
                 "allowed_values": {av.allowed_value: av.description for av in prop.allowed_values.all()},
             })
@@ -242,7 +211,7 @@ def _generate_data_for_export(domain, export_fhir_data):
         prop_dict = {
             _('Case Property'): case_prop.name,
             _('Label'): case_prop.label,
-            _('Group'): case_prop.group,
+            _('Group'): case_prop.group_name,
             _('Data Type'): case_prop.get_data_type_display() if case_prop.data_type else '',
             _('Description'): case_prop.description,
             _('Deprecated'): case_prop.deprecated
