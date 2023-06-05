@@ -182,6 +182,10 @@ class ProjectReportParametersMixin(object):
         return self.default_case_type or self.request_params.get('case_type', '')
 
     @property
+    def case_types(self):
+        return [_f for _f in self.request.GET.getlist('case_type') if _f]
+
+    @property
     def case_status(self):
         from corehq.apps.reports.filters.select import SelectOpenCloseFilter
         return self.request_params.get(SelectOpenCloseFilter.slug, '')
