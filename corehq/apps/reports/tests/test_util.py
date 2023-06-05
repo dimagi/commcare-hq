@@ -37,7 +37,7 @@ class TestDateSpanFromBeginning(SimpleTestCase):
         start_time = datetime(year=2020, month=4, day=5)
 
         domain = Domain(date_created=start_time)
-        # for some reason, pytz represents GMT+1 as 1 hour BEHIND GMT.
+        # POSIX timezones represent GMT+1 as 1 hour BEHIND GMT.
         datespan = datespan_from_beginning(domain, pytz.timezone('Etc/GMT+1'))
 
         self.assertEqual(datespan.startdate, datetime(year=2020, month=4, day=4))
