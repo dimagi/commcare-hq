@@ -55,10 +55,17 @@ hqDefine("app_manager/js/details/screen", function () {
         self.containsSearchConfiguration = options.containsSearchConfiguration;
         self.containsCustomXMLConfiguration = options.containsCustomXMLConfiguration;
         self.allowsTabs = options.allowsTabs;
+        self.caseTileTemplateOptions = [[null, "Don't Use Case Tiles"]].concat(options.caseTileTemplateOptions);
+        self.caseTileTemplateOptions = self.caseTileTemplateOptions.map(function (templateOption) {
+            return {templateValue: templateOption[0], templateName: templateOption[1]};
+        });
+        self.caseTileTemplate = ko.observable(spec[self.columnKey].case_tile_template);
         self.caseTileFields = options.caseTileFields;
-        self.caseTileTemplate = ko.observable(spec[self.columnKey].case_tile_template ? "yes" : "no");
+        self.caseTileFieldsForTemplate = ko.computed(function () {
+            return self.caseTileFields[self.caseTileTemplate()];
+        });
         self.showCaseTileColumn = ko.computed(function () {
-            return self.caseTileTemplate() === "yes" && hqImport('hqwebapp/js/toggles').toggleEnabled('CASE_LIST_TILE');
+            return self.caseTileTemplate() && hqImport('hqwebapp/js/toggles').toggleEnabled('CASE_LIST_TILE');
         });
         self.persistCaseContext = ko.observable(spec[self.columnKey].persist_case_context || false);
         self.persistentCaseContextXML = ko.observable(spec[self.columnKey].persistent_case_context_xml || 'case_name');
@@ -333,7 +340,7 @@ hqDefine("app_manager/js/details/screen", function () {
                 }
             ));
 
-            data.caseTileTemplate = self.caseTileTemplate() === "yes" ? "person_simple" : null;
+            data.caseTileTemplate = self.caseTileTemplate();
             data.persistCaseContext = self.persistCaseContext();
             data.persistentCaseContextXML = self.persistentCaseContextXML();
             data.persistTileOnForms = self.persistTileOnForms();
