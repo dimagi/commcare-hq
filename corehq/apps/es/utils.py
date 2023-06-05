@@ -4,6 +4,7 @@ from datetime import datetime, timedelta, timezone
 
 from django.conf import settings
 from django.core.management.base import CommandError
+from django.db.backends.base.creation import TEST_DATABASE_PREFIX
 
 from corehq.apps.es.exceptions import TaskError, TaskMissing
 from corehq.util.es.elasticsearch import SerializationError
@@ -181,3 +182,10 @@ def sorted_mapping(mapping):
 def mapping_sort_key(item):
     key, value = item
     return 1 if key == "properties" else 0, key, value
+
+
+def index_runtime_name(name):
+    # transform the name if testing
+    if settings.UNIT_TESTING and not name.startswith(TEST_DATABASE_PREFIX):
+        return f"{TEST_DATABASE_PREFIX}{name}"
+    return name
