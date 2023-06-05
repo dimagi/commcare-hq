@@ -1,7 +1,6 @@
 /* eslint-env mocha sinon */
 /* global Backbone */
 
-
 describe('Split Screen Case Search', function () {
     const API = hqImport("cloudcare/js/formplayer/menus/api"),
         Controller = hqImport('cloudcare/js/formplayer/menus/controller'),
