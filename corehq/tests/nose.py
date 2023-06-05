@@ -297,11 +297,12 @@ class HqdbContext(DatabaseContext):
 
         self.blob_db.close()
 
+        self.delete_elastic_indexes()
+
         if self.skip_teardown_for_reuse_db:
             return
 
         self.delete_couch_databases()
-        self.delete_elastic_indexes()
         self.clear_redis()
 
         # HACK clean up leaked database connections
