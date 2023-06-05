@@ -1,4 +1,5 @@
 import datetime
+import json
 
 from django.utils.dateparse import parse_date
 from django.utils.translation import gettext as _
@@ -109,3 +110,11 @@ def date_add(node, context):
         raise XPathFunctionException(str(e), serialize(node))
 
     return result.strftime(ISO_DATE_FORMAT)
+
+
+def unwrap_list(node, context):
+    assert node.name == 'unwrap-list'
+    confirm_args_count(node, 1)
+
+    value = node.args[0]
+    return json.loads(value)
