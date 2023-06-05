@@ -363,7 +363,9 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             } else {
                 self.selectedCaseIds = [];
             }
-            const appPreview = FormplayerFrontend.currentUser.displayOptions.singleAppMode;
+            const user = FormplayerFrontend.currentUser;
+            const displayOptions = user.displayOptions
+            const appPreview = displayOptions.singleAppMode;
             const addressFieldPresent = !!_.find(this.styles, function (style) { return style.displayFormat === constants.FORMAT_ADDRESS; });
 
             self.showMap = addressFieldPresent && !appPreview && !self.hasNoItems
