@@ -354,6 +354,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             self.styles = options.styles;
             self.hasNoItems = options.collection.length === 0 || options.sidebarEnabled;
             self.redoLast = options.redoLast;
+            self.actions = options.sidebarEnabled ? [] : this.options.actions;
             if (sessionStorage.selectedValues !== undefined) {
                 const parsedSelectedValues = JSON.parse(sessionStorage.selectedValues)[sessionStorage.queryKey];
                 self.selectedCaseIds = parsedSelectedValues !== undefined && parsedSelectedValues !== '' ? parsedSelectedValues.split(',') : [];
@@ -455,7 +456,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
                 title: this.options.title,
                 headers: this.options.headers,
                 widthHints: this.options.widthHints,
-                actions: this.options.actions,
+                actions: this.actions,
                 currentPage: this.options.currentPage,
                 endPage: paginateItems.endPage,
                 pageCount: paginateItems.pageCount,

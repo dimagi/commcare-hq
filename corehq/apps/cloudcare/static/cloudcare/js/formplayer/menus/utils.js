@@ -160,6 +160,9 @@ hqDefine("cloudcare/js/formplayer/menus/utils", function () {
             if (searchText) {
                 event = "Searched Case List";
             }
+            if (menuResponse.queryResponse != null) {
+                menuData.sidebarEnabled = true;
+            }
             var eventData = {
                 domain: FormplayerFrontend.getChannel().request("currentUser").domain,
                 name: menuResponse.title,
