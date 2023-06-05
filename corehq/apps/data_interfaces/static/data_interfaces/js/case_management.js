@@ -67,15 +67,11 @@ hqDefine("data_interfaces/js/case_management",[
                 $row.find('td:nth-child(4)').html(username + groupLabel + ' <span class="label label-info" title="' + username +
                                                 '">updated</span>');
                 $row.find('td:nth-child(5)').html('Today ' + dateMessage);
-
-                var dateMessage = (self.onToday) ? '<span title="0"></span>' :
-                        '<span class="label label-info" title="0">Case copied</span>';
-                $row.find('td:nth-child(5)').html('Today ' + dateMessage);
                 $checkbox.prop("checked", false).change();
             };
         };
 
-        var updateCaseRowCopy = function (caseIds, ownerId, ownerType) {
+        var updateCaseRowCopy = function (caseIds) {
             return function () {
                 var caseIdsArr = caseIds.slice();
                 for (var i = 0 ; i < caseIdsArr.length ; i++) {
@@ -83,10 +79,10 @@ hqDefine("data_interfaces/js/case_management",[
                     var $checkbox = $('#data-interfaces-reassign-cases input[data-caseid="' + caseId + '"].selected-commcare-case');
                     var $row = $checkbox.closest("tr");
                     var dateMessage = (self.onToday) ? '<span title="0"></span>' :
-                            '<span class="label label-info" title="0">Case copied</span>';
+                        '<span class="label label-info" title="0">Case copied</span>';
                     $row.find('td:nth-child(5)').html('Today ' + dateMessage);
                     $checkbox.prop("checked", false).change();
-                };
+                }
             };
         };
 
@@ -140,12 +136,11 @@ hqDefine("data_interfaces/js/case_management",[
             } else {
                 self.updateCaseOwners(form);
             }
-        }
+        };
 
         self.copyCases = function (form) {
             var newOwner = $(form).find('#reassign_owner_select').val(),
-                $modal = $('#caseManagementStatusModal'),
-                ownerType = getOwnerType(newOwner);
+                $modal = $('#caseManagementStatusModal');
 
             if (newOwner.includes('__')) {
                 // groups and users have different number of characters before the id
@@ -170,18 +165,18 @@ hqDefine("data_interfaces/js/case_management",[
                     data: JSON.stringify({
                         case_ids: self.selectedCases(),
                         owner_id: newOwner,
-                        sensitive_properties: sensitiveProperties
+                        sensitive_properties: sensitiveProperties,
                     }),
                     contentType: "application/json",
                     success: function (response) {
-                        updateCaseRowCopy(self.selectedCases(), newOwner, ownerType)();
-                        var message = gettext("Successfully copied " + response.copied_cases + " case(s).")
+                        updateCaseRowCopy(self.selectedCases())();
+                        var message = gettext("Successfully copied " + response.copied_cases + " case(s).");
                         hqImport('hqwebapp/js/alert_user').alert_user(message, "success");
                     },
                     error: function (response) {
                         self.clearCaseSelection();
                         hqImport('hqwebapp/js/alert_user').alert_user(response.responseJSON.error, "danger");
-                    }
+                    },
                 });
             }
         };
@@ -233,7 +228,7 @@ hqDefine("data_interfaces/js/case_management",[
             var report = standardHqReport.getStandardHQReport();
             var params = new URLSearchParams(report.getReportParams());
             return Object.fromEntries(params.entries());
-        }
+        };
 
         return self;
     };

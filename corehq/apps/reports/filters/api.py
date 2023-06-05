@@ -5,7 +5,7 @@ import logging
 import json
 
 from django.views.generic import View
-from django.http import JsonResponse, HttpResponseBadRequest
+from django.http import JsonResponse
 from django.views.decorators.http import require_POST
 from django.utils.translation import gettext_lazy as _
 
