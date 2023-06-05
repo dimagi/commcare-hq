@@ -6,15 +6,17 @@ hqDefine("geospatial/js/geospatial_map", [
     initialPageData,
 ) {
     $(function () {
+        const defaultMarkerColor = "#808080"; // Gray
+        const selectedMarkerColor = "#00FF00"; // Green
         var map;
         var cases = [];
         var userFilteredCases = [];
+        var caseMarkers = {};
 
         var loadMapBox = function (centerCoordinates) {
             'use strict';
 
             var self = {};
-            var markers = [];
             mapboxgl.accessToken = initialPageData.get('mapbox_access_token');
 
             if (!centerCoordinates) {
@@ -72,6 +74,20 @@ hqDefine("geospatial/js/geospatial_map", [
                 }
             });
 
+            function changeCaseMarkerColor(selectedCase, newColor) {
+                const caseId = selectedCase.case_id;
+                const caseMarker = Object.entries(caseMarkers).find(([key]) => key === caseId);
+                if (caseMarker) {
+                    const [caseId, marker] = caseMarker;
+                    let element = marker.getElement();
+                    let svg = element.getElementsByTagName("svg")[0];
+                    let path = svg.getElementsByTagName("path")[0];
+                    path.setAttribute("fill", newColor);
+                } else {
+                    console.error("No marker was found to be associated with a case!");
+                }
+            };
+
             function filterCasesInPolygon(polygonGeometry) {
                 userFilteredCases = [];
                 cases.filter(function (currCase) {
@@ -79,10 +95,13 @@ hqDefine("geospatial/js/geospatial_map", [
                     var point = turf.point(coordinates);
                     var caseIsInsidePolygon = turf.booleanPointInPolygon(point, polygonGeometry);
                     if (caseIsInsidePolygon) {
-                        userFilteredCases.push(currCase)
-                    };
+                        userFilteredCases.push(currCase);
+                        changeCaseMarkerColor(currCase, selectedMarkerColor);
+                    } else {
+                        changeCaseMarkerColor(currCase, defaultMarkerColor)
+                    }
                 });
-                console.log(userFilteredCases);
+                console.log("Filtered Cases: ", userFilteredCases);
             }
 
             // We should consider refactoring and splitting the below out to a new JS file
@@ -92,24 +111,35 @@ hqDefine("geospatial/js/geospatial_map", [
                 return map;
             }
 
-            self.removeAllMarkers = function() {
+            function getCaseMarkers() {
+                return Object.values(caseMarkers);
+            }
+
+            self.clearMap = function() {
+                // Clear filtered cases
+                userFilteredCases = [];
+                // Remove markers
+                let markers = getCaseMarkers();
                 markers.forEach(marker => {
                     marker.remove();
                 })
-                markers = []
+                // Clear caseMarker
+                caseMarkers = {};
             }
 
             self.addCaseMarkersToMap = function () {
-                const markerColor = "#00FF00";
+                const markerColor = defaultMarkerColor;
+
                 cases.forEach(element => {
                     let coordinates = element.coordinates;
                     if (coordinates && coordinates.lat && coordinates.lng) {
-                        self.addMarker(coordinates, markerColor);
+                        self.addMarker(element, markerColor);
                     }
                 });
             };
 
-            self.addMarker = function (coordinates, color) {
+            self.addMarker = function (currCase, color) {
+                let coordinates = currCase.coordinates;
                 // Create the marker
                 const marker = new mapboxgl.Marker({ color: color, draggable: false });
                 marker.setLngLat(coordinates);
@@ -117,7 +147,8 @@ hqDefine("geospatial/js/geospatial_map", [
                 // Add the marker to the map
                 marker.addTo(map);
                 // We need to keep track of current markers
-                markers.push(marker);
+
+                caseMarkers[currCase.case_id] = marker;
             };
 
             function moveMarkerToClickedCoordinate(coordinates) {
@@ -152,7 +183,7 @@ hqDefine("geospatial/js/geospatial_map", [
 
             if ($data.length && map) {
                 var caseData = $data.data("context");
-                map.removeAllMarkers();
+                map.clearMap();
                 cases = caseData.cases
                 map.addCaseMarkersToMap();
             }
