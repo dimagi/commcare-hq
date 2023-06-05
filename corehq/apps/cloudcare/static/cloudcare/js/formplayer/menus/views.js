@@ -355,8 +355,10 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
         initialize: function (options) {
             const self = this;
             self.styles = options.styles;
-            self.hasNoItems = options.collection.length === 0;
+            self.hasNoItems = options.collection.length === 0 || options.triggerEmptyCaseList;
+            self.headers = options.triggerEmptyCaseList ? [] : this.options.headers;
             self.redoLast = options.redoLast;
+            self.actions = options.sidebarEnabled ? [] : this.options.actions;
             if (sessionStorage.selectedValues !== undefined) {
                 const parsedSelectedValues = JSON.parse(sessionStorage.selectedValues)[sessionStorage.queryKey];
                 self.selectedCaseIds = parsedSelectedValues !== undefined && parsedSelectedValues !== '' ? parsedSelectedValues.split(',') : [];
@@ -565,9 +567,9 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             return {
                 startPage: paginateItems.startPage,
                 title: this.options.title,
-                headers: this.options.headers,
+                headers: this.headers,
                 widthHints: this.options.widthHints,
-                actions: this.options.actions,
+                actions: this.actions,
                 currentPage: this.options.currentPage,
                 endPage: paginateItems.endPage,
                 pageCount: paginateItems.pageCount,
