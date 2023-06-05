@@ -1,148 +1,102 @@
+from django.test import TestCase
+from corehq.apps.linked_domain.models import DomainLink
 from corehq.apps.fixtures.models import (
     LookupTable,
     LookupTableRow,
     TypeField,
     Field,
 )
-from corehq.apps.fixtures.utils import clear_fixture_cache
 from corehq.apps.linked_domain.exceptions import UnsupportedActionError
-from corehq.apps.linked_domain.tests.test_linked_apps import BaseLinkedDomainTest
 from corehq.apps.linked_domain.updates import update_fixture
 
 
-class TestUpdateFixtures(BaseLinkedDomainTest):
-    @classmethod
-    def setUpClass(cls):
-        super().setUpClass()
-        cls.table = LookupTable(
-            domain=cls.domain,
-            tag='moons',
-            is_global=True,
-            fields=[
-                TypeField(name="name"),
-                TypeField(name="planet"),
-            ],
-        )
-        cls.table.save()
+class TestUpdateFixturesReal(TestCase):
+    def test_update_creates_new_synced_fixture(self):
+        self._create_table(self.upstream_domain, 'test-table', ['col_1'], [{'col_1': 'one'}, {'col_1': 'two'}])
+
+        update_fixture(self.link, 'test-table')
+
+        created_table = LookupTable.objects.by_domain_tag(self.downstream_domain, 'test-table')
+        self.assertEqual(created_table.tag, 'test-table')
+        self.assertTrue(created_table.is_synced)
+        self.assertColumnsEqual(created_table, ['col_1'])
+        self.assertTableFieldsEqual(created_table, [{'col_1': 'one'}, {'col_1': 'two'}])
+
+    def test_syncs_existing_fixture(self):
+        upstream_cols = ['col_1']
+        downstream_cols = ['col_2']
+        upstream_rows = [{'col_1': 'one'}]
+        downstream_rows = [{'col_2': 'two'}]
+        self._create_table(self.upstream_domain, 'test-table', upstream_cols, upstream_rows)
+        self._create_table(self.downstream_domain, 'test-table', downstream_cols, downstream_rows, is_synced=True)
+
+        update_fixture(self.link, 'test-table')
+
+        created_table = LookupTable.objects.by_domain_tag(self.downstream_domain, 'test-table')
+        self.assertColumnsEqual(created_table, upstream_cols)
+        self.assertTableFieldsEqual(created_table, upstream_rows)
+
+    def test_update_raises_error_on_unsynced_duplicate_name(self):
+        self._create_table(self.upstream_domain, 'test-table', ['col_1'], [])
+        self._create_table(self.downstream_domain, 'test-table', ['col_2'], [], is_synced=False)
+
+        with self.assertRaisesMessage(UnsupportedActionError,
+                'Failed to push Lookup Table "test-table" due to matching (same Table ID) unlinked Lookup Table'
+                ' in the downstream project space. Please edit the Lookup Table to resolve the matching or click'
+                ' "Push & Overwrite" to overwrite and link them.'):
+            update_fixture(self.link, 'test-table')
+
+    def test_produces_pull_message(self):
+        self._create_table(self.upstream_domain, 'test-table', ['col_1'], [])
+        self._create_table(self.downstream_domain, 'test-table', ['col_2'], [], is_synced=False)
+
+        with self.assertRaisesMessage(UnsupportedActionError,
+                'Failed to sync Lookup Table "test-table" due to matching (same Table ID) unlinked Lookup Table'
+                ' in the downstream project space. Please edit the Lookup Table to resolve the matching or click'
+                ' "Sync & Overwrite" to overwrite and link them.'):
+            update_fixture(self.link, 'test-table', is_pull=True)
+
+    def test_force_update_overwrites_conflicting_duplicate_name(self):
+        upstream_cols = ['col_1']
+        downstream_cols = ['col_2']
+        upstream_rows = [{'col_1': 'one'}]
+        downstream_rows = [{'col_2': 'two'}]
+        self._create_table(self.upstream_domain, 'test-table', upstream_cols, upstream_rows)
+        self._create_table(self.downstream_domain, 'test-table', downstream_cols, downstream_rows)
+
+        update_fixture(self.link, 'test-table', overwrite=True)
+
+        created_table = LookupTable.objects.by_domain_tag(self.downstream_domain, 'test-table')
+        self.assertColumnsEqual(created_table, upstream_cols)
+        self.assertTableFieldsEqual(created_table, upstream_rows)
+
+    def test_syncing_local_table_raises_error(self):
+        self._create_table(self.upstream_domain, 'test-table', ['col_1'], [], is_global=False)
+
+        with self.assertRaisesMessage(UnsupportedActionError, "Found non-global lookup table 'test-table'"):
+            update_fixture(self.link, 'test-table')
 
     def setUp(self):
-        # Reset table content for each test
-        for item in [
-            LookupTableRow(
-                domain=self.domain,
-                table_id=self.table.id,
-                fields={
-                    'name': [Field(value='Io')],
-                    'planet': [Field(value='Jupiter')],
-                },
-                sort_key=0,
-            ),
-            LookupTableRow(
-                domain=self.domain,
-                table_id=self.table.id,
-                fields={
-                    'name': [Field(value='Europa')],
-                    'planet': [Field(value='Jupiter')],
-                },
-                sort_key=1,
-            ),
-            LookupTableRow(
-                domain=self.domain,
-                table_id=self.table.id,
-                fields={
-                    'name': [Field(value='Callisto')],
-                    'planet': [Field(value='Jupiter')],
-                },
-                sort_key=2,
-            ),
-        ]:
-            item.save()
+        self.downstream_domain = 'downstream'
+        self.upstream_domain = 'upstream'
+        self.link = DomainLink(linked_domain=self.downstream_domain, master_domain=self.upstream_domain)
 
-    def test_update_fixture(self):
-        self.assertFalse(LookupTable.objects.by_domain(self.linked_domain).count())
+    def _create_table(self, domain, tag, col_names, rows, is_global=True, is_synced=False):
+        columns = [TypeField(name=col_name) for col_name in col_names]
+        table = LookupTable.objects.create(
+            domain=domain, tag=tag, fields=columns, is_global=is_global, is_synced=is_synced)
 
-        # Update linked domain
-        update_fixture(self.domain_link, self.table.tag)
+        for i, row in enumerate(rows):
+            fields = {key: [Field(value=val)] for (key, val) in row.items()}
+            LookupTableRow.objects.create(domain=domain, table_id=table.id, fields=fields, sort_key=i)
 
-        # Linked domain should now have master domain's table and rows
-        linked_types = LookupTable.objects.by_domain(self.linked_domain)
-        self.assertEqual({'moons'}, {t.tag for t in linked_types})
-        self.assertEqual({self.linked_domain}, {t.domain for t in linked_types})
-        items = list(LookupTableRow.objects.iter_rows(self.linked_domain, table_id=linked_types[0].id))
-        self.assertEqual({self.linked_domain}, {i.domain for i in items})
-        self.assertEqual({linked_types[0].id}, {i.table_id for i in items})
-        self.assertEqual([
-            'Callisto', 'Europa', 'Io', 'Jupiter', 'Jupiter', 'Jupiter',
-        ], sorted([
-            i.fields[field_name][0].value for i in items for field_name in i.fields.keys()
-        ]))
+        return table
 
-        # Master domain's table and rows should be untouched
-        master_types = LookupTable.objects.by_domain(self.domain)
-        self.assertEqual({'moons'}, {t.tag for t in master_types})
-        self.assertEqual({self.domain}, {t.domain for t in master_types})
-        master_items = list(LookupTableRow.objects.iter_rows(self.domain, table_id=master_types[0].id))
-        self.assertEqual([
-            'Callisto', 'Europa', 'Io', 'Jupiter', 'Jupiter', 'Jupiter',
-        ], sorted([
-            i.fields[field_name][0].value
-            for i in master_items
-            for field_name in i.fields.keys()
-        ]))
+    def assertColumnsEqual(self, table, expected_column_names):
+        cols = [col.name for col in table.fields]
+        self.assertEqual(cols, expected_column_names)
 
-        # Update rows in master table and re-update linked domain
-        master_items[-1].delete()       # Callisto
-        LookupTableRow(
-            domain=self.domain,
-            table_id=self.table.id,
-            fields={
-                'name': [Field(value='Thalassa')],
-                'planet': [Field(value='Neptune')],
-            },
-            sort_key=0,
-        ).save()
-        LookupTableRow(
-            domain=self.domain,
-            table_id=self.table.id,
-            fields={
-                'name': [Field(value='Naiad')],
-                'planet': [Field(value='Neptune')],
-            },
-            sort_key=1,
-        ).save()
-        clear_fixture_cache(self.domain)
-        update_fixture(self.domain_link, self.table.tag)
-
-        # Linked domain should still have one table, with the new rows
-        linked_types = LookupTable.objects.by_domain(self.linked_domain)
-        self.assertEqual(1, len(linked_types))
-        self.assertEqual('moons', linked_types[0].tag)
-        items = list(LookupTableRow.objects.iter_rows(self.linked_domain, table_id=linked_types[0].id))
-        self.assertEqual(4, len(items))
-        self.assertEqual([
-            'Europa', 'Io', 'Jupiter', 'Jupiter', 'Naiad', 'Neptune', 'Neptune', 'Thalassa',
-        ], sorted([
-            i.fields[field_name][0].value for i in items for field_name in i.fields.keys()
-        ]))
-        # Linked SQL rows should have been deleted
-        rows = LookupTableRow.objects.filter(table_id=linked_types[0].id)
-        self.assertEqual(
-            ['Europa', 'Io', 'Jupiter', 'Jupiter', 'Naiad', 'Neptune', 'Neptune', 'Thalassa'],
-            sorted(field[0].value for i in rows for field in i.fields.values()),
-        )
-
-    def test_update_global_only(self):
-        other_table = LookupTable(
-            domain=self.domain,
-            tag='jellyfish',
-            is_global=False,
-            fields=[
-                TypeField(name="genus"),
-                TypeField(name="species"),
-            ],
-        )
-        other_table.save()
-        clear_fixture_cache(self.domain)
-
-        with self.assertRaises(UnsupportedActionError):
-            update_fixture(self.domain_link, 'jellyfish')
+    def assertTableFieldsEqual(self, table, expected_field_values):
+        rows = LookupTableRow.objects.filter(domain=table.domain, table_id=table.id)
+        field_values = [row.fields_without_attributes for row in rows]
+        self.assertListEqual(field_values, expected_field_values)
