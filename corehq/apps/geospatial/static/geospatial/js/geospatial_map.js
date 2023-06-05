@@ -16,6 +16,7 @@ hqDefine("geospatial/js/geospatial_map", [
             'use strict';
 
             var self = {};
+            let clickedMarker;
             mapboxgl.accessToken = initialPageData.get('mapbox_access_token');
 
             if (!centerCoordinates) {
@@ -42,10 +43,6 @@ hqDefine("geospatial/js/geospatial_map", [
             });
 
             map.addControl(draw);
-
-            function getCoordinates(event) {
-                return event.lngLat;
-            };
 
             map.on("draw.update", function(e) {
                 var selectedFeatures = e.features;
@@ -77,6 +74,10 @@ hqDefine("geospatial/js/geospatial_map", [
                 }
             });
 
+            function getCoordinates(event) {
+                return event.lngLat;
+            };
+
             function changeCaseMarkerColor(selectedCase, newColor) {
                 let marker = selectedCase.marker;
                 let element = marker.getElement();
@@ -101,7 +102,22 @@ hqDefine("geospatial/js/geospatial_map", [
             }
 
             // We should consider refactoring and splitting the below out to a new JS file
-            let clickedMarker;
+            function moveMarkerToClickedCoordinate(coordinates) {
+                if (clickedMarker != null) {
+                    clickedMarker.remove();
+                }
+                if (draw.getMode() === 'draw_polygon') {
+                    // It's weird moving the marker around with the ploygon
+                    return;
+                }
+                clickedMarker = new mapboxgl.Marker({color: "FF0000", draggable: true});
+                clickedMarker.setLngLat(coordinates);
+                clickedMarker.addTo(map);
+            }
+
+            self.getMapboxDrawInstance = function() {
+                return draw;
+            }
 
             self.getMapboxInstance = function() {
                 return map;
@@ -140,19 +156,6 @@ hqDefine("geospatial/js/geospatial_map", [
 
                 currCase.marker = marker;
             };
-
-            function moveMarkerToClickedCoordinate(coordinates) {
-                if (clickedMarker != null) {
-                    clickedMarker.remove();
-                }
-                if (draw.getMode() === 'draw_polygon') {
-                    // It's weird moving the marker around with the ploygon
-                    return;
-                }
-                clickedMarker = new mapboxgl.Marker({color: "FF0000", draggable: true});
-                clickedMarker.setLngLat(coordinates);
-                clickedMarker.addTo(map);
-            }
 
             // Handle click events here
             map.on('click', (event) => {
