@@ -15,10 +15,19 @@ describe('Render a case list', function () {
     });
 
     describe('#getMenuView', function () {
-        let server;
+        let FormplayerFrontend = hqImport("cloudcare/js/formplayer/app"),
+            server,
+            user;
         beforeEach(function () {
             server = sinon.useFakeXMLHttpRequest();
             sinon.stub(Backbone.history, 'getFragment').callsFake(sinon.spy());
+
+            user = FormplayerFrontend.getChannel().request('currentUser');
+            user.displayOptions = {
+                singleAppMode: false,
+            };
+
+            hqImport("cloudcare/js/formplayer/apps/api").primeApps(user.restoreAs, new Backbone.Collection());
         });
 
         afterEach(function () {
