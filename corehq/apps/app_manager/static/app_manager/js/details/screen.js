@@ -55,7 +55,7 @@ hqDefine("app_manager/js/details/screen", function () {
         self.containsSearchConfiguration = options.containsSearchConfiguration;
         self.containsCustomXMLConfiguration = options.containsCustomXMLConfiguration;
         self.allowsTabs = options.allowsTabs;
-        self.caseTileTemplateOptions = [[null, "Don't Use Case Tiles"]].concat(options.caseTileTemplateOptions);
+        self.caseTileTemplateOptions = [[null, gettext("Don't Use Case Tiles")]].concat(options.caseTileTemplateOptions);
         self.caseTileTemplateOptions = self.caseTileTemplateOptions.map(function (templateOption) {
             return {templateValue: templateOption[0], templateName: templateOption[1]};
         });
