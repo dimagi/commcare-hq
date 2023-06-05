@@ -11,7 +11,6 @@ hqDefine("geospatial/js/geospatial_map", [
         var map;
         var cases = [];
         var userFilteredCases = [];
-        var caseMarkers = {};
 
         var loadMapBox = function (centerCoordinates) {
             'use strict';
@@ -49,51 +48,49 @@ hqDefine("geospatial/js/geospatial_map", [
             };
 
             map.on("draw.update", function(e) {
-                var selectedFeature = e.features[0];
+                var selectedFeatures = e.features;
+
+                // Check if any features are selected
+                if (!selectedFeatures.length) {
+                    return;
+                }
+                var selectedFeature = selectedFeatures[0];
+
                 if (selectedFeature.geometry.type == 'Polygon') {
-                    // Filter for selected cases when dragging a polygon
-                    var polygon = selectedFeature.geometry;
-                    filterCasesInPolygon(polygon);
+                    filterCasesInPolygon(selectedFeature);
                 }
             });
 
             map.on('draw.selectionchange', function(e) {
                 // See https://github.com/mapbox/mapbox-gl-draw/blob/main/docs/API.md#drawselectionchange
                 var selectedFeatures = e.features;
-
+                if (!selectedFeatures.length) {
+                    return;
+                }
                 // Check if any features are selected
-                if (selectedFeatures.length > 0) {
-                    var selectedFeature = selectedFeatures[0];
-                    // Update this logic if we need to support case filtering by selecting multiple polygons
+                var selectedFeature = selectedFeatures[0];
+                // Update this logic if we need to support case filtering by selecting multiple polygons
 
-                    if (selectedFeature.geometry.type == 'Polygon') {
-                        // Now that we know we selected a polygon, we need to check which markers are inside
-                        var polygon = selectedFeature.geometry;
-                        filterCasesInPolygon(polygon);
-                    }
+                if (selectedFeature.geometry.type == 'Polygon') {
+                    // Now that we know we selected a polygon, we need to check which markers are inside
+                    filterCasesInPolygon(selectedFeature);
                 }
             });
 
             function changeCaseMarkerColor(selectedCase, newColor) {
-                const caseId = selectedCase.case_id;
-                const caseMarker = Object.entries(caseMarkers).find(([key]) => key === caseId);
-                if (caseMarker) {
-                    const [caseId, marker] = caseMarker;
-                    let element = marker.getElement();
-                    let svg = element.getElementsByTagName("svg")[0];
-                    let path = svg.getElementsByTagName("path")[0];
-                    path.setAttribute("fill", newColor);
-                } else {
-                    console.error("No marker was found to be associated with a case!");
-                }
+                let marker = selectedCase.marker;
+                let element = marker.getElement();
+                let svg = element.getElementsByTagName("svg")[0];
+                let path = svg.getElementsByTagName("path")[0];
+                path.setAttribute("fill", newColor);
             };
 
-            function filterCasesInPolygon(polygonGeometry) {
+            function filterCasesInPolygon(polygonFeature) {
                 userFilteredCases = [];
                 cases.filter(function (currCase) {
                     var coordinates = [currCase.coordinates.lng, currCase.coordinates.lat];
                     var point = turf.point(coordinates);
-                    var caseIsInsidePolygon = turf.booleanPointInPolygon(point, polygonGeometry);
+                    var caseIsInsidePolygon = turf.booleanPointInPolygon(point, polygonFeature.geometry);
                     if (caseIsInsidePolygon) {
                         userFilteredCases.push(currCase);
                         changeCaseMarkerColor(currCase, selectedMarkerColor);
@@ -101,7 +98,6 @@ hqDefine("geospatial/js/geospatial_map", [
                         changeCaseMarkerColor(currCase, defaultMarkerColor)
                     }
                 });
-                console.log("Filtered Cases: ", userFilteredCases);
             }
 
             // We should consider refactoring and splitting the below out to a new JS file
@@ -111,29 +107,23 @@ hqDefine("geospatial/js/geospatial_map", [
                 return map;
             }
 
-            function getCaseMarkers() {
-                return Object.values(caseMarkers);
-            }
-
             self.clearMap = function() {
                 // Clear filtered cases
                 userFilteredCases = [];
                 // Remove markers
-                let markers = getCaseMarkers();
-                markers.forEach(marker => {
-                    marker.remove();
+                cases.forEach(currCase => {
+                    if (currCase.marker) {
+                        currCase.marker.remove();
+                    }
                 })
-                // Clear caseMarker
-                caseMarkers = {};
+                cases = [];
             }
 
             self.addCaseMarkersToMap = function () {
-                const markerColor = defaultMarkerColor;
-
                 cases.forEach(element => {
                     let coordinates = element.coordinates;
                     if (coordinates && coordinates.lat && coordinates.lng) {
-                        self.addMarker(element, markerColor);
+                        self.addMarker(element, defaultMarkerColor);
                     }
                 });
             };
@@ -148,7 +138,7 @@ hqDefine("geospatial/js/geospatial_map", [
                 marker.addTo(map);
                 // We need to keep track of current markers
 
-                caseMarkers[currCase.case_id] = marker;
+                currCase.marker = marker;
             };
 
             function moveMarkerToClickedCoordinate(coordinates) {
