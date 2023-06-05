@@ -363,8 +363,10 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             } else {
                 self.selectedCaseIds = [];
             }
+            const appPreview = FormplayerFrontend.currentUser.displayOptions.singleAppMode;
+            const addressFieldPresent = !!_.find(this.styles, function (style) { return style.displayFormat === constants.FORMAT_ADDRESS; });
 
-            self.showMap = !!_.find(this.styles, function (style) { return style.displayFormat === constants.FORMAT_ADDRESS; });
+            self.showMap = addressFieldPresent && !appPreview && !self.hasNoItems
         },
 
         ui: CaseListViewUI(),
@@ -487,12 +489,11 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
 
         columnStyle: function () {
             const self = this;
-            let mapColumn = "";
-            if (self.showMap && !self.hasNoItems) {
-                mapColumn = "[map] 300px";
+            if (self.showMap) {
+                return "display: grid;grid-template-columns: [tiles] auto [map] 300px;grid-template-rows: auto";
+            } else {
+                return"display: grid;grid-template-columns: [tiles] 100%;grid-template-rows: auto";
             }
-            return "display: grid;grid-template-columns: [tiles] auto " + mapColumn
-                + " ;grid-template-rows: auto";
         },
 
         addAddressPin: function (geocoder, addressMap, headers, model, addressIndex) {
@@ -551,7 +552,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
 
         onAttach() {
             const self = this;
-            if (self.showMap && !self.hasNoItems) {
+            if (self.showMap) {
                 self.loadMap();
             }
         },
