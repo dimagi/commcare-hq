@@ -164,15 +164,36 @@ hqDefine("geospatial/js/geospatial_map", [
             return self;
         };
 
+        var exportGeoJson = function(drawInstance) {
+            // Credit to https://gist.github.com/danswick/36796153bd86ce982a59043cbe0ac8f7
+            var exportButton = $("#btnExport");
+            var data = drawInstance.getAll();
+
+            if (data.features.length) {
+                // Stringify the GeoJson
+                var convertedData = 'text/json;charset=utf-8,' + encodeURIComponent(JSON.stringify(data));
+
+                // Create export
+                exportButton.attr('href', 'data:' + convertedData);
+                exportButton.attr('download','data.geojson');
+            }
+        };
 
         $(document).ajaxComplete(function () {
             // This fires everytime an ajax request is completed
             var mapDiv = $('#geospatial-map');
             var $data = $(".map-data");
+            var exportButton = $("#btnExport");
 
             if (mapDiv.length && !map) {
                 map = loadMapBox();
             }
+
+            exportButton.click(function(e) {
+                if (map) {
+                    exportGeoJson(map.getMapboxDrawInstance());
+                }
+            });
 
             if ($data.length && map) {
                 var caseData = $data.data("context");
