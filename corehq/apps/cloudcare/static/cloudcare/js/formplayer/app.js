@@ -116,7 +116,6 @@ hqDefine("cloudcare/js/formplayer/app", function () {
 
     FormplayerFrontend.on('clearBreadcrumbs', function () {
         $('#persistent-case-tile').html("");
-        $('#sidebar-region').html("");
     });
 
     FormplayerFrontend.on('clearForm', function () {
@@ -130,6 +129,7 @@ hqDefine("cloudcare/js/formplayer/app", function () {
 
     FormplayerFrontend.getChannel().reply('clearMenu', function () {
         $('#menu-region').html("");
+        $('#sidebar-region').html("");
     });
 
     $(document).on("ajaxStart", function () {
