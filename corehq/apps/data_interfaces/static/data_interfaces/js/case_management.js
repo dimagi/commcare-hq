@@ -5,7 +5,8 @@ hqDefine("data_interfaces/js/case_management",[
     'case/js/casexml',
     'hqwebapp/js/initial_page_data',
     'reports/js/standard_hq_report',
-], function ($, _, ko, casexmlModule, initialPageData, standardHqReport) {
+    'hqwebapp/js/alert_user',
+], function ($, _, ko, casexmlModule, initialPageData, standardHqReport, alert_user) {
     var caseManagement = function (o) {
         'use strict';
         var self = {};
@@ -171,11 +172,11 @@ hqDefine("data_interfaces/js/case_management",[
                     success: function (response) {
                         updateCaseRowCopy(self.selectedCases())();
                         var message = gettext("Successfully copied " + response.copied_cases + " case(s).");
-                        hqImport('hqwebapp/js/alert_user').alert_user(message, "success");
+                        alert_user.alert_user(message, "success");
                     },
                     error: function (response) {
                         self.clearCaseSelection();
-                        hqImport('hqwebapp/js/alert_user').alert_user(response.responseJSON.error, "danger");
+                        alert_user.alert_user(response.responseJSON.error, "danger");
                     },
                 });
             }
