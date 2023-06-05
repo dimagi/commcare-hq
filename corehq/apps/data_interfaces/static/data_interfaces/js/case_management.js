@@ -270,15 +270,22 @@ hqDefine("data_interfaces/js/case_management",[
                 $(interfaceSelector).koApplyBindings(caseManagementModel);
             }
 
+            var caseAction = initialPageData.get('action');
+            var placeholderText = "Search for users";
+            if (caseAction != 'copy') {
+                placeholderText = placeholderText + " or groups";
+            };
+
             var $select = $('#reassign_owner_select');
             if ($select.length) {
                 $select.select2({
-                    placeholder: gettext("Search for users or groups"),
+                    placeholder: gettext(placeholderText),
                     ajax: {
-                        url: initialPageData.reverse("reassign_case_options"),
+                        url: initialPageData.reverse("case_action_options"),
                         data: function (params) {
                             return {
                                 q: params.term,
+                                action: caseAction,
                             };
                         },
                         dataType: 'json',

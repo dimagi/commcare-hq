@@ -24,7 +24,7 @@ from corehq.apps.reports.filters.controllers import (
     CaseListFilterOptionsController,
     EmwfOptionsController,
     MobileWorkersOptionsController,
-    ReassignCaseOptionsController,
+    CaseListActionOptionsController,
     EnterpriseUserOptionsController,
 )
 from corehq.apps.users.analytics import get_search_users_in_domain_es_query
@@ -126,11 +126,11 @@ class CaseListFilterOptions(EmwfOptionsView):
 
 
 @location_safe
-class ReassignCaseOptions(CaseListFilterOptions):
+class CaseListActionOptions(CaseListFilterOptions):
     @property
     @memoized
     def options_controller(self):
-        return ReassignCaseOptionsController(self.request, self.domain, self.search)
+        return CaseListActionOptionsController(self.request, self.domain, self.search)
 
 
 class EnterpriseUserOptions(EmwfOptionsView):
