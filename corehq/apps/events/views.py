@@ -537,16 +537,14 @@ def paginated_attendees(request, domain):
 @require_permission(HqPermissions.manage_attendance_tracking)
 def get_attendees_and_attendance_takers(request, domain):
     location_id = request.GET.get('location_id', None)
+    attendance_takers_filters = {'user_active_status': True}
     if location_id:
         attendees = AttendeeModel.objects.by_location_id(domain=domain, location_id=location_id)
-        attendance_takers = get_mobile_users_by_filters(
-            domain,
-            {'location_id': location_id}
-        )
+        attendance_takers_filters['location_id'] = location_id
     else:
         attendees = AttendeeModel.objects.by_domain(domain=domain)
-        attendance_takers = get_all_commcare_users_by_domain(domain)
 
+    attendance_takers = get_mobile_users_by_filters(domain, attendance_takers_filters)
     attendees_list = [
         {'id': attendee.case_id, 'name': attendee.name}
         for attendee in attendees
