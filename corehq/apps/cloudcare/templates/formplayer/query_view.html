@@ -4,12 +4,14 @@
 <script type="text/template" id="query-view-list-template">
   <form>
     <% if (sidebarEnabled) {%>
-      <button class="btn btn-default" type="button" id="query-clear-button">
-        <div>{% trans "Clear" %}</div>
-      </button>
-      <button class="btn btn-primary" type="submit" id="query-submit-button">
-        <div>{% trans "Submit" %}</div>
-      </button>
+      <div class="query-button-container">
+        <button class="btn btn-default" type="button" id="query-clear-button">
+          <div>{% trans "Clear" %}</div>
+        </button>
+        <button class="btn btn-primary" type="submit" id="query-submit-button">
+          <div>{% trans "Submit" %}</div>
+        </button>
+      </div>
     <% } %>
     <% if (title.length > 0 && !sidebarEnabled) {%>
       <h2 tabindex="0"><%- title %></h2>

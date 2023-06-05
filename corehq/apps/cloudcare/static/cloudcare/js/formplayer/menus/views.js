@@ -4,6 +4,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
     const kissmetrics = hqImport("analytix/js/kissmetrix"),
         constants = hqImport("cloudcare/js/formplayer/constants"),
         FormplayerFrontend = hqImport("cloudcare/js/formplayer/app"),
+        initialPageData = hqImport("hqwebapp/js/initial_page_data"),
         toggles = hqImport("hqwebapp/js/toggles"),
         utils = hqImport("cloudcare/js/formplayer/utils/utils");
 
@@ -354,14 +355,22 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
         initialize: function (options) {
             const self = this;
             self.styles = options.styles;
-            self.hasNoItems = options.collection.length === 0 || options.sidebarEnabled;
+            self.hasNoItems = options.collection.length === 0 || options.triggerEmptyCaseList;
+            self.headers = options.triggerEmptyCaseList ? [] : this.options.headers;
             self.redoLast = options.redoLast;
+            self.actions = options.sidebarEnabled ? [] : this.options.actions;
             if (sessionStorage.selectedValues !== undefined) {
                 const parsedSelectedValues = JSON.parse(sessionStorage.selectedValues)[sessionStorage.queryKey];
                 self.selectedCaseIds = parsedSelectedValues !== undefined && parsedSelectedValues !== '' ? parsedSelectedValues.split(',') : [];
             } else {
                 self.selectedCaseIds = [];
             }
+            const user = FormplayerFrontend.currentUser;
+            const displayOptions = user.displayOptions
+            const appPreview = displayOptions.singleAppMode;
+            const addressFieldPresent = !!_.find(this.styles, function (style) { return style.displayFormat === constants.FORMAT_ADDRESS; });
+
+            self.showMap = addressFieldPresent && !appPreview && !self.hasNoItems
         },
 
         ui: CaseListViewUI(),
@@ -482,15 +491,85 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             }
         },
 
+        columnStyle: function () {
+            const self = this;
+            if (self.showMap) {
+                return "display: grid;grid-template-columns: [tiles] auto [map] 300px;grid-template-rows: auto";
+            } else {
+                return"display: grid;grid-template-columns: [tiles] 100%;grid-template-rows: auto";
+            }
+        },
+
+        addAddressPin: function (geocoder, addressMap, headers, model, addressIndex) {
+            const coordinates = model.attributes.data[addressIndex];
+            if (coordinates) {
+                let latLng = coordinates.split(" ").slice(0,2);
+                if (latLng.length > 1) {
+                    let popupText = "";
+                    headers.forEach((header, index) => {
+                        if (header) {
+                            const valueSanitized = DOMPurify.sanitize(model.attributes.data[index]);
+                            const headerSanitized = DOMPurify.sanitize(header);
+                            popupText += "<b>" + headerSanitized + ":</b> " + valueSanitized + "<br>";
+                        }
+                    });
+                    L.marker(latLng)
+                        .addTo(addressMap)
+                        .bindPopup(popupText);
+
+                    return latLng;
+                }
+            }
+            return null;
+        },
+
+        loadMap: function () {
+            const token = initialPageData.get("mapbox_access_token");
+
+            try {
+                const lat = 30;
+                const lon = 15;
+                const zoom = 3;
+                const addressMap = L.map('module-case-list-map').setView([lat, lon], zoom);
+                L.tileLayer('https://api.mapbox.com/styles/v1/{id}/tiles/{z}/{x}/{y}?access_token=' + token, {
+                    id: 'mapbox/streets-v11',
+                    attribution: '© <a href="https://www.mapbox.com/about/maps/">Mapbox</a> ©' +
+                             ' <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+                    tileSize: 512,
+                    zoomOffset: -1,
+                }).addTo(addressMap);
+
+                const addressIndex = _.findIndex(this.styles, function (style) { return style.displayFormat === constants.FORMAT_ADDRESS; });
+                L.mapbox.accessToken = token;
+                const mapbox = L.mapbox;
+                const geocoder = mapbox.geocoder('mapbox.places');
+
+                const latLons = this.options.collection.models
+                    .map(model => this.addAddressPin(geocoder, addressMap, this.options.headers, model, addressIndex))
+                    .filter(latLon => latLon);
+                addressMap.fitBounds(latLons, {maxZoom: 8});
+
+            } catch (error) {
+                console.error(error);
+            }
+        },
+
+        onAttach() {
+            const self = this;
+            if (self.showMap) {
+                self.loadMap();
+            }
+        },
+
         templateContext: function () {
             const paginateItems = utils.paginateOptions(this.options.currentPage, this.options.pageCount);
             const casesPerPage = parseInt($.cookie("cases-per-page-limit")) || 10;
             return {
                 startPage: paginateItems.startPage,
                 title: this.options.title,
-                headers: this.options.headers,
+                headers: this.headers,
                 widthHints: this.options.widthHints,
-                actions: this.options.actions,
+                actions: this.actions,
                 currentPage: this.options.currentPage,
                 endPage: paginateItems.endPage,
                 pageCount: paginateItems.pageCount,
@@ -505,6 +584,9 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
                 sortIndices: this.options.sortIndices,
                 selectedCaseIds: this.selectedCaseIds,
                 isMultiSelect: false,
+                showMap: this.showMap,
+                columnStyle: this.columnStyle(),
+
                 columnSortable: function (index) {
                     return this.sortIndices.indexOf(index) > -1;
                 },
