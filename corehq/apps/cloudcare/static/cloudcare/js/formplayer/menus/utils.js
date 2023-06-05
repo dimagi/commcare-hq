@@ -108,8 +108,8 @@ hqDefine("cloudcare/js/formplayer/menus/utils", function () {
         FormplayerFrontend.regions.getRegion('formMenu').show(formMenuView);
     };
 
-    var getMenuView = function (menuResponse) {
-        var menuData = {                    // TODO: make this more concise
+    var getMenuData = function (menuResponse) {
+        return {                    // TODO: make this more concise
             collection: menuResponse,
             title: menuResponse.title,
             headers: menuResponse.headers,
@@ -130,7 +130,11 @@ hqDefine("cloudcare/js/formplayer/menus/utils", function () {
             sortIndices: menuResponse.sortIndices,
             isMultiSelect: menuResponse.multiSelect,
             multiSelectMaxSelectValue: menuResponse.maxSelectValue,
-        };
+        }
+    };
+
+    var getMenuView = function (menuResponse) {
+        var menuData = getMenuData(menuResponse);
         var urlObject = utils.currentUrlToObject();
 
         sessionStorage.queryKey = menuResponse.queryKey;
@@ -188,6 +192,7 @@ hqDefine("cloudcare/js/formplayer/menus/utils", function () {
 
     return {
         getMenuView: getMenuView,
+        getMenuData: getMenuData,
         handleLocationRequest: handleLocationRequest,
         showBreadcrumbs: showBreadcrumbs,
         showFormMenu: showFormMenu,

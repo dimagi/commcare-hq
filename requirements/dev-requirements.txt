@@ -117,6 +117,8 @@ defusedxml==0.7.1
     # via
     #   -r base-requirements.in
     #   oic
+dependency-metrics==0.1.1
+    # via -r dev-requirements.in
 deprecated==1.2.10
     # via
     #   jwcrypto
@@ -261,7 +263,7 @@ gevent==21.8.0
     #   git-build-branch
 ghdiff==0.4
     # via -r base-requirements.in
-git-build-branch==0.1.14
+git-build-branch==0.1.15
     # via -r dev-requirements.in
 gnureadline==8.0.0
     # via -r dev-requirements.in
@@ -330,8 +332,6 @@ jmespath==0.10.0
     # via
     #   boto3
     #   botocore
-json-delta==2.0
-    # via -r base-requirements.in
 jsonfield==2.1.1
     # via
     #   -r base-requirements.in
@@ -353,8 +353,6 @@ kafka-python==1.4.7
     # via -r base-requirements.in
 kombu==5.2.4
     # via celery
-laboratory==0.2.0
-    # via -r base-requirements.in
 looseversion==1.0.3
     # via -r base-requirements.in
 lxml==4.9.1
@@ -573,6 +571,7 @@ requests==2.28.2
     #   -r base-requirements.in
     #   cloudant
     #   datadog
+    #   dependency-metrics
     #   django-oauth-toolkit
     #   dropbox
     #   google-api-core
@@ -606,6 +605,7 @@ sentry-sdk==1.19.1
 sh==2.0.3
     # via
     #   -r base-requirements.in
+    #   dependency-metrics
     #   git-build-branch
 shapely==2.0.1
     # via
