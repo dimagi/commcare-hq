@@ -10,12 +10,6 @@ MAX_DEVICES_ALLOWED_MULTICAST = 500
 HQ_FCM_UTIL = None
 
 
-def is_fcm_available():
-    if not settings.FCM_CREDS_PATH:
-        return False
-    return os.path.isfile(settings.FCM_CREDS_PATH)
-
-
 class FCMUtilException(Exception):
     pass
 
@@ -31,8 +25,8 @@ class EmptyData(FCMUtilException):
 
 
 class FCMUtil:
-    def __init__(self, app_name, creds_path=settings.FCM_CREDS_PATH):
-        creds = credentials.Certificate(creds_path)
+    def __init__(self, app_name, fcm_creds=settings.FCM_CREDS):
+        creds = credentials.Certificate(fcm_creds)
         self.app = initialize_app(credential=creds, name=app_name)
 
     @staticmethod
@@ -85,7 +79,5 @@ class FCMUtil:
         return response
 
 
-if not is_fcm_available():
-    logger.warning("Firebase Cloud Messaging is not available for this HQ environment!")
-else:
+if settings.FCM_CREDS:
     HQ_FCM_UTIL = FCMUtil(app_name='hq_fcm')

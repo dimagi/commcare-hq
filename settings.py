@@ -1117,6 +1117,9 @@ IGNORE_ALL_DEMO_USER_SUBMISSIONS = False
 USE_PHONE_ENTRIES = True
 COMMCARE_ANALYTICS_HOST = ""
 
+# FCM Server creds used for sending FCM Push Notifications
+FCM_CREDS = None
+
 try:
     # try to see if there's an environmental variable set for local_settings
     custom_settings = os.environ.get('CUSTOMSETTINGS', None)
@@ -2058,6 +2061,3 @@ GOOGLE_SHEETS_API_NAME = "sheets"
 GOOGLE_SHEETS_API_VERSION = "v4"
 
 DAYS_KEEP_GSHEET_STATUS = 14
-
-# FCM Credentials file path for Push Notifications
-FCM_CREDS_PATH = os.environ.get('FCM_CREDS_PATH')
