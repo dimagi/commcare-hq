@@ -57,4 +57,64 @@ describe('Split Screen Case Search', function () {
     afterEach(function () {
         sandbox.restore();
     });
+
+    it('should show sidebar when using split screen case search', function () {
+        Controller.showMenu(splitScreenCaseListView);
+
+        assert.isTrue(getRegion.calledWith(REGIONS.sidebar));
+        assert.isTrue(_.some(stubs.show.getCalls(), call => call.thisValue.region === REGIONS.sidebar));
+        assert.isFalse(_.some(stubs.empty.getCalls(), call => call.thisValue.region === REGIONS.sidebar));
+    });
+
+    it('should empty sidebar if in app preview', function () {
+        FormplayerFrontend.currentUser.displayOptions.singleAppMode = true;
+        Controller.showMenu(splitScreenCaseListView);
+
+        assert.isTrue(getRegion.calledWith(REGIONS.sidebar));
+        assert.isTrue(_.some(stubs.empty.getCalls(), call => call.thisValue.region === REGIONS.sidebar));
+        assert.isFalse(_.some(stubs.show.getCalls(), call => call.thisValue.region === REGIONS.sidebar));
+    });
+
+    it('should empty sidebar if response type not entities', function () {
+        splitScreenCaseListView.type = '';
+        Controller.showMenu(splitScreenCaseListView);
+
+        assert.isTrue(getRegion.calledWith(REGIONS.sidebar));
+        assert.isTrue(_.some(stubs.empty.getCalls(), call => call.thisValue.region === REGIONS.sidebar));
+        assert.isFalse(_.some(stubs.show.getCalls(), call => call.thisValue.region === REGIONS.sidebar));
+    });
+
+    it('should empty sidebar if no queryResponse present', function () {
+        delete splitScreenCaseListView.queryResponse;
+        Controller.showMenu(splitScreenCaseListView);
+
+        assert.isTrue(getRegion.calledWith(REGIONS.sidebar));
+        assert.isTrue(_.some(stubs.empty.getCalls(), call => call.thisValue.region === REGIONS.sidebar));
+        assert.isFalse(_.some(stubs.show.getCalls(), call => call.thisValue.region === REGIONS.sidebar));
+    });
+
+    it('should empty sidebar if feature flag disabled', function () {
+        stubs.sidebarEnabled.returns(false);
+        Controller.showMenu(splitScreenCaseListView);
+
+        assert.isTrue(getRegion.calledWith(REGIONS.sidebar));
+        assert.isTrue(_.some(stubs.empty.getCalls(), call => call.thisValue.region === REGIONS.sidebar));
+        assert.isFalse(_.some(stubs.show.getCalls(), call => call.thisValue.region === REGIONS.sidebar));
+    });
+
+    it('should show empty case list in split screen when response type query', function () {
+        splitScreenCaseListView.type = 'query';
+        Controller.showMenu(splitScreenCaseListView);
+
+        assert.isTrue(getRegion.calledWith(REGIONS.main));
+        assert.isTrue(_.some(stubs.show.getCalls(), call => call.thisValue.region === REGIONS.main));
+        assert.isFalse(_.some(stubs.show.getCalls(), call => call.thisValue.region === REGIONS.sidebar));
+    });
+
+    it('should clear sidebar on menu:select', function () {
+        const clearSidebar = sandbox.spy(currentUrl, 'clearSidebar');
+        FormplayerFrontend.trigger("menu:select", 0);
+
+        assert.isTrue(clearSidebar.calledOnce);
+    });
 });
