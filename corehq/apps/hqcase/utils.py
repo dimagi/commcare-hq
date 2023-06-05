@@ -8,7 +8,9 @@ from django.utils.translation import gettext_lazy
 from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.util import property_changed_in_action
 from dimagi.utils.parsing import json_format_datetime
+from couchexport.deid import deid_date, deid_ID
 
+from corehq.apps.case_search.const import SPECIAL_CASE_PROPERTIES_MAP
 from corehq.apps.es import filters
 from corehq.apps.es.cases import CaseES
 from corehq.apps.receiverwrapper.util import submit_form_locally
@@ -238,3 +240,62 @@ def get_last_non_blank_value(case, case_property):
             property_changed_info = None
         if property_changed_info and property_changed_info.new_value:
             return property_changed_info.new_value
+
+
+def get_case_value(case: CommCareCase, value: str):
+    """
+    Returns the value of a case and whether it's a property on the case.
+        Parameters:
+            - case: the relevant case
+            - value: the value you want from the case
+        Returns:
+            A tuple containing the value on whether that value is a property on the case.
+            If no value is found `(None, None)` is returned
+    """
+    if not value:
+        return None, None
+
+    if value in SPECIAL_CASE_PROPERTIES_MAP:
+        return SPECIAL_CASE_PROPERTIES_MAP[value].value_getter(case.to_json()), False
+    elif value in case.case_json:
+        return case.case_json.get(value, None), True
+    return None, None
+
+
+def get_censored_case_data(case: CommCareCase, censor_data: dict):
+    """
+    This function is used to get censored data on a case.
+
+        Parameters:
+            - case: the case to censor the data for
+            - censor_data: a dictionary containing as key the data to sensor and value the
+                        transform method as a string to use to censor the data.
+                        Two transforms are currently supported, namely `deid_ID` and `deid_date`.
+                        An invalid transform will result in a blank value.
+
+        Returns:
+            A tuple containing the censored attrs and properties as dictionaries respectively
+
+    """
+    attrs = {}
+    props = {}
+
+    if censor_data:
+        for k, v in censor_data.items():
+            case_value, is_case_property = get_case_value(case, k)
+
+            if not case_value:
+                continue
+
+            censored_value = ''
+            if v == deid_date.__name__:
+                censored_value = deid_date(case_value, None, key=case.case_id)
+            if v == deid_ID.__name__:
+                censored_value = deid_ID(case_value, None)
+
+            if is_case_property:
+                props[k] = censored_value
+            else:
+                attrs[k] = censored_value
+
+    return attrs, props
