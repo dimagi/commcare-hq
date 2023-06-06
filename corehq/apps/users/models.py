@@ -560,7 +560,7 @@ class _AuthorizableMixin(IsMemberOfMixin):
 
     # I'm not sure this is the correct place for this, as it turns a generic module
     #  into one that knows about ERM specifics. It might make more sense to move this into
-    #  into the domain membership module, as that module knows about specific permissions.
+    #  the domain membership module, as that module knows about specific permissions.
     # However, because this class is the barrier between the user and domain membership,
     # exposing new functionality on domain membership wouldn't change the problem.
     # An alternate solution would be to expose this functionality directly on the WebUser class, instead.

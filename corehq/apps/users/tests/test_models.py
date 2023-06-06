@@ -247,7 +247,7 @@ class HQPermissionsTests(SimpleTestCase):
         permissions = HqPermissions(edit_commcare_users=True, view_commcare_users=False)
         permissions.normalize()
 
-        self.assertTrue(permissions.edit_commcare_users)
+        self.assertTrue(permissions.view_commcare_users)
 
     def test_normalize_edit_group_implies_view_group(self):
         permissions = HqPermissions(edit_groups=True, view_groups=False)

@@ -254,11 +254,11 @@ def update_fixture(domain_link, tag):
 
 def update_user_roles(domain_link):
     if domain_link.is_remote:
-        master_results = remote_get_user_roles(domain_link)
+        upstream_roles = remote_get_user_roles(domain_link)
     else:
-        master_results = local_get_user_roles(domain_link.master_domain)
+        upstream_roles = local_get_user_roles(domain_link.master_domain)
 
-    _convert_reports_permissions(domain_link, master_results)
+    _convert_reports_permissions(domain_link, upstream_roles)
 
     downstream_roles = UserRole.objects.get_by_domain(domain_link.linked_domain, include_archived=True)
     downstream_roles_by_upstream_id = {}
@@ -274,7 +274,7 @@ def update_user_roles(domain_link):
     successful_updates = []
 
     # Update downstream roles based on upstream roles
-    for upstream_role_def in master_results:
+    for upstream_role_def in upstream_roles:
         role, conflicting_role = _get_matching_downstream_role(upstream_role_def, downstream_roles)
 
         if conflicting_role:

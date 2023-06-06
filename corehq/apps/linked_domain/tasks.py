@@ -95,10 +95,10 @@ class ReleaseManager:
                 attr[fmt][domain].extend(msgs)
 
     def get_error_domain_count(self):
-        return sum([1 for errors in self.errors_by_domain['html'].values() if errors != []])
+        return sum(1 for errors in self.errors_by_domain['html'].values() if errors != [])
 
     def get_success_domain_count(self):
-        return sum([1 for successes in self.successes_by_domain['html'].values() if successes != []])
+        return sum(1 for successes in self.successes_by_domain['html'].values() if successes != [])
 
     def _get_errors(self, domain, html=True):
         return self.errors_by_domain['html' if html else 'text'][domain]
@@ -271,10 +271,6 @@ def release_domain(upstream_domain, downstream_domain, username, models, build_a
 @task(queue='linked_domain_queue')
 def send_linked_domain_release_email(results, upstream_domain, username, models, downstream_domains):
     manager = ReleaseManager(upstream_domain, username)
-
-    # # chord sends a list of results only if there were multiple tasks
-    # if len(downstream_domains) == 1:
-    #     results = [results]
 
     for result in results:
         (successes, errors) = result
