@@ -56,8 +56,6 @@ from corehq.apps.app_manager.models import (
     AdvancedModule,
     CaseListForm,
     CaseSearch,
-    CaseSearchAgainLabel,
-    CaseSearchLabel,
     CaseSearchProperty,
     DefaultCaseSearchProperty,
     DeleteModuleRecord,
@@ -78,8 +76,7 @@ from corehq.apps.app_manager.models import (
     get_all_mobile_filter_configs,
     get_auto_filter_configurations, ConditionalCaseUpdate,
 )
-from corehq.apps.app_manager.suite_xml.const import CASE_TILE_TEMPLATE_NAME_PERSON_SIMPLE
-from corehq.apps.app_manager.suite_xml.features.case_tiles import case_tile_template_config
+from corehq.apps.app_manager.suite_xml.features.case_tiles import case_tile_template_config, CaseTileTemplates
 from corehq.apps.app_manager.suite_xml.features.mobile_ucr import (
     get_uuids_by_instance_id,
 )
@@ -235,7 +232,9 @@ def _get_shared_module_view_context(request, app, module, case_property_builder,
             'has_lookup_tables': bool([i for i in item_lists if i['fixture_type'] == LOOKUP_TABLE_FIXTURE]),
             'has_mobile_ucr': bool([i for i in item_lists if i['fixture_type'] == REPORT_FIXTURE]),
             'default_value_expression_enabled': app.enable_default_value_expression,
-            'case_tile_fields': case_tile_template_config(CASE_TILE_TEMPLATE_NAME_PERSON_SIMPLE).fields,
+            'case_tile_template_options': CaseTileTemplates.choices,
+            'case_tile_fields': {template[0]: case_tile_template_config(template[0]).fields
+                                 for template in CaseTileTemplates.choices},
             'search_config': {
                 'search_properties':
                     module.search_config.properties if module_offers_search(module) else [],
