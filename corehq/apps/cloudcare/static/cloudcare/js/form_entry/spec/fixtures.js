@@ -22,6 +22,8 @@ hqDefine("cloudcare/js/form_entry/spec/fixtures", function () {
             "control": 1,
             "help": null,
             "help_image": null,
+            "help_audio": null,
+            "help_video": null,
             "hint": null,
             "output": null,
             "add-choice": null
@@ -49,6 +51,8 @@ hqDefine("cloudcare/js/form_entry/spec/fixtures", function () {
             "control": 2,
             "help": null,
             "help_image": null,
+            "help_audio": null,
+            "help_video": null,
             "hint": null,
             "output": null,
             "add-choice": null
@@ -76,6 +80,8 @@ hqDefine("cloudcare/js/form_entry/spec/fixtures", function () {
             "control": 9,
             "help": null,
             "help_image": null,
+            "help_audio": null,
+            "help_video": null,
             "hint": null,
             "output": null,
             "add-choice": null
@@ -120,6 +126,8 @@ hqDefine("cloudcare/js/form_entry/spec/fixtures", function () {
                     "relevant": 1,
                     "help": null,
                     "help_image": null,
+                    "help_audio": null,
+                    "help_video": null,
                     "answer": null,
                     "datatype": "str",
                     "style": {},

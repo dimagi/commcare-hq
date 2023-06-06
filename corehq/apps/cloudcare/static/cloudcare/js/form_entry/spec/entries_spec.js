@@ -36,6 +36,8 @@ describe('Entries', function () {
             "relevant": 1,
             "help": null,
             "help_image": null,
+            "help_audio": null,
+            "help_video": null,
             "answer": null,
             "datatype": "int",
             "style": {},
