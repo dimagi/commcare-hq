@@ -5,6 +5,8 @@ from django.http import Http404, HttpResponse
 from django.utils.translation import gettext as _
 
 from corehq import toggles
+from corehq import privileges
+from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.domain.decorators import (
     login_and_domain_required,
     redirect_for_login_or_domain,
@@ -182,7 +184,7 @@ def require_can_use_filtered_user_download(view_func):
 
 
 def can_use_filtered_user_download(domain):
-    if toggles.FILTERED_BULK_USER_DOWNLOAD.enabled(domain):
+    if domain_has_privilege(domain, privileges.FILTERED_BULK_USER_DOWNLOAD):
         return True
     if toggles.DOMAIN_PERMISSIONS_MIRROR.enabled(domain):
         return True

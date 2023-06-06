@@ -31,9 +31,9 @@ class CaseTileTemplateConfig:
 
 
 @memoized
-def case_tile_template_config():
+def case_tile_template_config(template):
     with open(
-        TILE_DIR / "person_simple.json",
+        TILE_DIR / (template + '.json'),
         encoding='utf-8'
     ) as f:
         data = json.loads(f.read())
@@ -59,7 +59,7 @@ class CaseTileHelper(object):
         """
         # Get template context
         context = self._get_base_context()
-        for template_field in case_tile_template_config().fields:
+        for template_field in case_tile_template_config(self.detail.case_tile_template).fields:
             column = self._get_matched_detail_column(template_field)
             context[template_field] = self._get_column_context(column)
 
@@ -121,7 +121,8 @@ class CaseTileHelper(object):
             # The right thing to do would be to reference the app_strings.txt I think
             "prefix": escape(
                 column.header.get(default_lang, "")
-            )
+            ),
+            "format": column.format
         }
         if column.enum and column.format != "enum" and column.format != "conditional-enum":
             raise SuiteError(
@@ -156,5 +157,5 @@ class CaseTileHelper(object):
         Return a string suitable for building a case tile detail node
         through `String.format`.
         """
-        with open(case_tile_template_config().filepath, encoding='utf-8') as f:
+        with open(case_tile_template_config(self.detail.case_tile_template).filepath, encoding='utf-8') as f:
             return f.read()

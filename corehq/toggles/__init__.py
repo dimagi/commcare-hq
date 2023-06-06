@@ -1590,18 +1590,6 @@ ENABLE_ALL_ADD_ONS = StaticToggle(
     [NAMESPACE_DOMAIN]
 )
 
-FILTERED_BULK_USER_DOWNLOAD = StaticToggle(
-    'filtered_bulk_user_download',
-    "Bulk user management features",
-    TAG_SOLUTIONS_OPEN,
-    [NAMESPACE_DOMAIN],
-    help_link='https://confluence.dimagi.com/display/saas/Bulk+User+Management',
-    description="""
-        For mobile users, enables bulk deletion page and bulk lookup page.
-        For web users, enables filtered download page.
-    """
-)
-
 BULK_UPLOAD_DATE_OPENED = StaticToggle(
     'bulk_upload_date_opened',
     "Allow updating of the date_opened field with the bulk uploader",
@@ -1621,15 +1609,6 @@ CUSTOM_ICON_BADGES = StaticToggle(
     'Custom Icon Badges for modules and forms',
     TAG_SOLUTIONS_LIMITED,
     namespaces=[NAMESPACE_DOMAIN],
-)
-
-COMPARE_UCR_REPORTS = DynamicallyPredictablyRandomToggle(
-    'compare_ucr_reports',
-    'Compare UCR reports against other reports or against other databases.',
-    TAG_CUSTOM,
-    namespaces=[NAMESPACE_OTHER],
-    default_randomness=0.001,  # 1 in 1000
-    description='Reports for comparison must be listed in settings.UCR_COMPARISONS.'
 )
 
 MULTI_MASTER_LINKED_DOMAINS = StaticToggle(
@@ -2525,4 +2504,18 @@ FORCE_ANNUAL_TOS = StaticToggle(
     "USH Specific toggle that forces users to agree to terms of service annually.",
     TAG_CUSTOM,
     namespaces=[NAMESPACE_DOMAIN],
+)
+
+FILTERED_BULK_USER_DOWNLOAD = FrozenPrivilegeToggle(
+    privileges.FILTERED_BULK_USER_DOWNLOAD,
+    'filtered_bulk_user_download',
+    label='Bulk user management features',
+    tag=TAG_SOLUTIONS_OPEN,
+    namespaces=[NAMESPACE_DOMAIN],
+    description="""
+        For mobile users, enables bulk deletion page and bulk lookup page.
+        For web users, enables filtered download page.
+    """,
+    # TODO: Move to public wiki
+    help_link='https://confluence.dimagi.com/display/saas/Bulk+User+Management'
 )

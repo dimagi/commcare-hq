@@ -856,6 +856,30 @@ ELASTICSEARCH_MAJOR_VERSION = 2
 # If elasticsearch queries take more than this, they result in timeout errors
 ES_SEARCH_TIMEOUT = 30
 
+# The variables should be used while reindexing an index.
+# When the variables are set to true the data will be written to both primary and secondary indexes.
+
+ES_APPS_INDEX_MULTIPLEXED = False
+ES_CASE_SEARCH_INDEX_MULTIPLEXED = False
+ES_CASES_INDEX_MULTIPLEXED = False
+ES_DOMAINS_INDEX_MULTIPLEXED = False
+ES_FORMS_INDEX_MULTIPLEXED = False
+ES_GROUPS_INDEX_MULTIPLEXED = False
+ES_SMS_INDEX_MULTIPLEXED = False
+ES_USERS_INDEX_MULTIPLEXED = False
+
+
+# Setting the variable to True would mean that the primary index would become secondary and vice-versa
+# This should only be set to True after successfully running and verifying migration command on a particular index.
+ES_APPS_INDEX_SWAPPED = False
+ES_CASE_SEARCH_INDEX_SWAPPED = False
+ES_CASES_INDEX_SWAPPED = False
+ES_DOMAINS_INDEX_SWAPPED = False
+ES_FORMS_INDEX_SWAPPED = False
+ES_GROUPS_INDEX_SWAPPED = False
+ES_SMS_INDEX_SWAPPED = False
+ES_USERS_INDEX_SWAPPED = False
+
 BITLY_OAUTH_TOKEN = None
 
 OAUTH2_PROVIDER_ACCESS_TOKEN_MODEL = 'oauth2_provider.AccessToken'
@@ -1048,8 +1072,6 @@ ASYNC_INDICATORS_TO_QUEUE = 10000
 ASYNC_INDICATOR_QUEUE_TIMES = None
 DAYS_TO_KEEP_DEVICE_LOGS = 60
 NO_DEVICE_LOG_ENVS = list(ICDS_ENVS) + ['production']
-
-UCR_COMPARISONS = {}
 
 MAX_RULE_UPDATES_IN_ONE_RUN = 10000
 RULE_UPDATE_HOUR = 0

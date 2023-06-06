@@ -9717,6 +9717,7 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/toggle_diff_modal.html
+#: corehq/apps/cloudcare/templates/formplayer/case_list.html
 #: corehq/apps/export/templates/export/partials/new_customize_export_templates.html
 msgid "Select All"
 msgstr ""
@@ -9753,7 +9754,6 @@ msgstr ""
 
 #: corehq/apps/app_manager/templatetags/xforms_extras.py
 #: corehq/motech/repeaters/const.py
-#: corehq/motech/repeaters/templates/repeaters/partials/attempt_history.html
 #: corehq/motech/repeaters/views/repeat_record_display.py
 msgid "Empty"
 msgstr ""
@@ -10733,17 +10733,21 @@ msgid ""
 "\n"
 "      <p>\n"
 "        <i class=\"fa fa-warning\"></i>\n"
-"        A bulk case import for multiple case types has been detected. For "
-"bulk case imports:\n"
+"        A bulk case import for multiple case types has been detected. This "
+"is because every sheet name in\n"
+"        the Excel file matches a case type in the project. If this is "
+"incorrect, then please rename at least\n"
+"        one Excel sheet so that not all sheet names match case types in the "
+"project.\n"
 "      </p>\n"
-"      <ul>\n"
-"        <li>Excel mapping is disabled.</li>\n"
-"        <li>New cases for new case types cannot be created.</li>\n"
-"      </ul>\n"
 "      <p>\n"
-"        If this is incorrect, then please rename the Excel sheets so that "
-"they do not share the same\n"
-"        name as the case types in the project.\n"
+"        Documentation for bulk case imports can be found on our\n"
+"        <a\n"
+"          href=\"https://confluence.dimagi.com/display/commcarepublic/"
+"Updating+Cases+-+Update+multiple+case+types+in+a+single+Excel+import\"\n"
+"          target=\"_blank\">\n"
+"          help page for this feature.\n"
+"        </a>\n"
 "      </p>\n"
 "      "
 msgstr ""
@@ -10783,6 +10787,14 @@ msgstr ""
 
 #: corehq/apps/case_importer/templates/case_importer/excel_config.html
 msgid "Create new records if there is no matching case"
+msgstr ""
+
+#: corehq/apps/case_importer/templates/case_importer/excel_config.html
+msgid ""
+"\n"
+"            Selecting a case type, excel column, or corresponding case field "
+"is disabled when doing a bulk case import.\n"
+"          "
 msgstr ""
 
 #: corehq/apps/case_importer/templates/case_importer/excel_config.html
@@ -10901,7 +10913,6 @@ msgstr ""
 #: corehq/apps/case_importer/templates/case_importer/partials/ko_import_history.html
 #: corehq/apps/linked_domain/templates/linked_domain/partials/pull_content.html
 #: corehq/messaging/scheduling/views.py corehq/motech/generic_inbound/models.py
-#: corehq/motech/repeaters/templates/repeaters/partials/attempt_history.html
 #: corehq/motech/repeaters/templates/repeaters/repeaters.html
 #: corehq/motech/repeaters/views/repeat_record_display.py
 msgid "Success"
@@ -10913,7 +10924,6 @@ msgstr ""
 
 #: corehq/apps/case_importer/templates/case_importer/partials/ko_import_history.html
 #: corehq/apps/reports/filters/select.py corehq/motech/repeaters/const.py
-#: corehq/motech/repeaters/templates/repeaters/partials/attempt_history.html
 #: corehq/motech/repeaters/views/repeat_record_display.py
 msgid "Failed"
 msgstr ""
@@ -11518,6 +11528,10 @@ msgid "Next Error"
 msgstr ""
 
 #: corehq/apps/cloudcare/templates/form_entry/templates.html
+msgid "Show help dialog"
+msgstr ""
+
+#: corehq/apps/cloudcare/templates/form_entry/templates.html
 msgid "A response is required for this question."
 msgstr ""
 
@@ -11618,6 +11632,10 @@ msgstr ""
 #: corehq/apps/cloudcare/templates/formplayer/grid_view.html
 #: corehq/messaging/scheduling/forms.py
 msgid "Start"
+msgstr ""
+
+#: corehq/apps/cloudcare/templates/formplayer/menu_list.html
+msgid "Dropdown toggle"
 msgstr ""
 
 #: corehq/apps/cloudcare/templates/formplayer/menu_list.html
@@ -12374,16 +12392,6 @@ msgstr ""
 
 #: corehq/apps/data_dictionary/templates/data_dictionary/base.html
 msgid "Add Case Property Group"
-msgstr ""
-
-#: corehq/apps/data_dictionary/templates/data_dictionary/base.html
-#, python-format
-msgid ""
-"\n"
-"          Missing properties or case types? <a href=\"%(refresh_url)s\" "
-"target=\"_blank\">Click to sync</a>\n"
-"          (opens in a new tab, may be slow...)\n"
-"          "
 msgstr ""
 
 #: corehq/apps/data_dictionary/templates/data_dictionary/base.html
@@ -13357,8 +13365,8 @@ msgstr ""
 #: corehq/apps/data_interfaces/templates/data_interfaces/partials/case_rule_criteria.html
 #: corehq/apps/domain/forms.py
 #: corehq/apps/domain/templates/domain/manage_releases_by_location.html
-#: corehq/apps/events/forms.py corehq/apps/hqwebapp/doc_info.py
-#: corehq/apps/locations/forms.py
+#: corehq/apps/events/forms.py corehq/apps/events/views.py
+#: corehq/apps/hqwebapp/doc_info.py corehq/apps/locations/forms.py
 #: corehq/apps/locations/templates/locations/manage/location.html
 #: corehq/apps/locations/templates/locations/manage/locations.html
 #: corehq/apps/locations/views.py corehq/apps/reports/commtrack/standard.py
@@ -14145,7 +14153,6 @@ msgid "HIPAA compliant"
 msgstr ""
 
 #: corehq/apps/domain/forms.py corehq/apps/settings/views.py
-#: corehq/apps/users/templates/users/edit_commcare_user.html
 msgid "Two Factor Authentication"
 msgstr ""
 
@@ -14609,6 +14616,26 @@ msgid ""
 "\n"
 "              This will slow down submissions but prevent case search data "
 "from going stale.\n"
+"            "
+msgstr ""
+
+#: corehq/apps/domain/templates/domain/admin/case_search.html
+msgid "Sync Cases On Form Entry"
+msgstr ""
+
+#: corehq/apps/domain/templates/domain/admin/case_search.html
+msgid ""
+"\n"
+"                Update local case data immediately before entering a web "
+"apps form.\n"
+"              "
+msgstr ""
+
+#: corehq/apps/domain/templates/domain/admin/case_search.html
+msgid ""
+"\n"
+"              This will slow down form entry, but will prevent stale case "
+"data from populating the form.\n"
 "            "
 msgstr ""
 
@@ -17527,6 +17554,11 @@ msgstr ""
 
 #: corehq/apps/events/forms.py
 msgid "You cannot specify the end date in the past"
+msgstr ""
+
+#: corehq/apps/events/forms.py corehq/apps/locations/forms.py
+#: corehq/apps/users/forms.py
+msgid "All Locations"
 msgstr ""
 
 #: corehq/apps/events/forms.py corehq/apps/users/forms.py
@@ -24427,10 +24459,6 @@ msgstr ""
 msgid "Active / Archived"
 msgstr ""
 
-#: corehq/apps/locations/forms.py corehq/apps/users/forms.py
-msgid "All Locations"
-msgstr ""
-
 #: corehq/apps/locations/forms.py corehq/apps/locations/views.py
 msgid "Filter and Download Locations"
 msgstr ""
@@ -25010,8 +25038,7 @@ msgstr ""
 #: corehq/ex-submodules/casexml/apps/case/templates/case/partials/repeat_records.html
 #: corehq/messaging/smsbackends/http/forms.py corehq/motech/forms.py
 #: corehq/motech/generic_inbound/templates/generic_inbound/api_edit.html
-#: corehq/motech/generic_inbound/views.py
-#: corehq/motech/repeaters/views/repeat_records.py corehq/motech/views.py
+#: corehq/motech/generic_inbound/views.py corehq/motech/views.py
 msgid "URL"
 msgstr ""
 
@@ -27555,7 +27582,6 @@ msgid "Successful"
 msgstr ""
 
 #: corehq/apps/reports/filters/select.py corehq/motech/repeaters/const.py
-#: corehq/motech/repeaters/templates/repeaters/partials/attempt_history.html
 #: corehq/motech/repeaters/templates/repeaters/repeaters.html
 #: corehq/motech/repeaters/views/repeat_record_display.py
 msgid "Cancelled"
@@ -35412,6 +35438,10 @@ msgid "Auto-Deactivation Settings"
 msgstr ""
 
 #: corehq/apps/users/forms.py
+msgid "This location does not exist"
+msgstr ""
+
+#: corehq/apps/users/forms.py
 msgid "Edit Group Membership"
 msgstr ""
 
@@ -35911,11 +35941,6 @@ msgstr ""
 
 #: corehq/apps/users/templates/users/edit_commcare_user.html
 msgid "User Location"
-msgstr ""
-
-#: corehq/apps/users/templates/users/edit_commcare_user.html
-#: corehq/apps/users/templates/users/edit_web_user.html
-msgid "Backup Token"
 msgstr ""
 
 #: corehq/apps/users/templates/users/edit_commcare_user.html
@@ -40615,7 +40640,7 @@ msgid "Python dictionary"
 msgstr ""
 
 #: corehq/motech/repeaters/templates/repeaters/partials/attempt_history.html
-msgid "Unsent"
+msgid "No attempts exist for this record."
 msgstr ""
 
 #: corehq/motech/repeaters/templates/repeaters/partials/repeater_row.html
@@ -40768,7 +40793,7 @@ msgid "Unable to generate url for record"
 msgstr ""
 
 #: corehq/motech/repeaters/views/repeat_records.py
-msgid "Last sent date"
+msgid "Remote Service"
 msgstr ""
 
 #: corehq/motech/repeaters/views/repeat_records.py
@@ -40780,11 +40805,11 @@ msgid "Delivery Attempts"
 msgstr ""
 
 #: corehq/motech/repeaters/views/repeat_records.py
-msgid "View payload"
+msgid "View Responses"
 msgstr ""
 
 #: corehq/motech/repeaters/views/repeat_records.py
-msgid "Cancel or Requeue payload"
+msgid "Cancel or Requeue"
 msgstr ""
 
 #: corehq/motech/repeaters/views/repeaters.py
