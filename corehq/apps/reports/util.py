@@ -4,6 +4,7 @@ import math
 import warnings
 from collections import defaultdict, namedtuple
 from datetime import datetime
+import pytz
 
 from django.conf import settings
 from django.core.cache import cache
@@ -345,7 +346,8 @@ def numcell(text, value=None, convert='int', raw=None):
 
 def datespan_from_beginning(domain_object, timezone):
     # Start and end dates must be naive (no timezone) to work with DateSpan
-    startdate = domain_object.date_created  # full time in UTC
+    # domain creation time is expected to be a naive date in UTC
+    startdate = pytz.utc.localize(domain_object.date_created)
     localized_start = startdate.astimezone(timezone)
     localized_start = datetime(year=localized_start.year, month=localized_start.month, day=localized_start.day)
 
