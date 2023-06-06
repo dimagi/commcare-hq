@@ -186,33 +186,23 @@ hqDefine("geospatial/js/geospatial_map", [
             'use strict';
             var self = {};
             var mapboxinstance = map.getMapboxInstance();
-            var polygons = [];
             self.btnExportDisabled = ko.observable(true);
 
             var mapHasPolygons = function() {
-                return polygons.length;
+                var drawnFeatures = map.getMapboxDrawInstance().getAll().features;
+                if (!drawnFeatures.length) {
+                    return false;
+                }
+                return drawnFeatures.some(function(feature) {
+                    return feature.geometry.type === "Polygon";
+                })
             };
 
-            function removeId(id) {
-                var index = polygons.indexOf(id); // Find the index of the specified ID
-                polygons.splice(index, 1); // Remove the ID from the array
-              }
-
             mapboxinstance.on('draw.delete', function(e) {
-                e.features.forEach((feature) => {
-                    if (feature.geometry.type == "Polygon") {
-                        removeId(feature.id);
-                    }
-                });
                 self.btnExportDisabled(!mapHasPolygons());
             });
 
             mapboxinstance.on('draw.create', function(e) {
-                e.features.forEach((feature) => {
-                    if (feature.geometry.type == "Polygon") {
-                        polygons.push(feature.id)
-                    }
-                });
                 self.btnExportDisabled(!mapHasPolygons());
             });
 
