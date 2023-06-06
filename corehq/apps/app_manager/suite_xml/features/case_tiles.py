@@ -47,10 +47,11 @@ def case_tile_template_config(template):
 
 
 class CaseTileHelper(object):
-    def __init__(self, app, module, detail, detail_type, build_profile_id):
+    def __init__(self, app, module, detail, detail_id, detail_type, build_profile_id):
         self.app = app
         self.module = module
         self.detail = detail
+        self.detail_id = detail_id
         self.detail_type = detail_type
         self.cols_by_tile_field = {col.case_tile_field: col for col in self.detail.columns}
         self.build_profile_id = build_profile_id
@@ -76,11 +77,8 @@ class CaseTileHelper(object):
         # Add case search action if needed
         if module_offers_search(self.module) and not module_uses_inline_search(self.module):
             from corehq.apps.app_manager.suite_xml.sections.details import DetailContributor
-            in_search = module_loads_registry_case(self.module)
             detail.actions.append(
-                DetailContributor.get_case_search_action(self.module,
-                                                         self.build_profile_id,
-                                                         in_search=in_search)
+                DetailContributor.get_case_search_action(self.module, self.build_profile_id, self.detail_id)
             )
 
         return detail
