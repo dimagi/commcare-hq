@@ -219,10 +219,11 @@
             <div class="modal-content">
               <div class="modal-body">
                 <p class="webapp-markdown-output" tabindex="0" align="left" data-bind="html: help"></p>
-                  <img class="img-responsive" data-bind="
-                         attr: { src: mediaSrc($data.help_image()) },
-                         visible: mediaSrc($data.help_image())
-                         " />
+                <div class="widget-multimedia" data-bind="
+                    template: {
+                      name: 'widget-help-multimedia-ko-template',
+                      data: $data
+                    } "></div>
               </div>
               <div class="modal-footer">
                 <button class="btn btn-default help-modal-close" data-dismiss="modal">{% trans "Close" %}</button>
@@ -325,6 +326,22 @@
     {% trans "Your browser does not support audio" %}
   </audio>
   <video controls="controls" data-bind="visible: caption_video, attr: { src: mediaSrc($data.caption_video()) }">
+    {% trans "Your browser does not support video" %}
+  </video>
+</script>
+
+<script type="text/html" id="widget-help-multimedia-ko-template">
+  <img class="img-responsive" data-bind="
+      attr: { src: mediaSrc($data.help_image()) },
+      visible: mediaSrc($data.help_image())" />
+  <audio controls="controls" data-bind="
+      visible: help_audio,
+      attr: { src: mediaSrc($data.help_audio()) }">
+    {% trans "Your browser does not support audio" %}
+  </audio>
+  <video controls="controls" data-bind="
+      visible: help_video,
+      attr: { src: mediaSrc($data.help_video()) }">
     {% trans "Your browser does not support video" %}
   </video>
 </script>
