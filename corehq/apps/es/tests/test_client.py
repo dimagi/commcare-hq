@@ -32,6 +32,7 @@ from ..client import (
     BulkActionItem,
     ElasticMultiplexAdapter,
     Tombstone,
+    create_document_adapter,
     get_client,
     manager,
     _elastic_hosts,
@@ -2014,6 +2015,62 @@ class TestTombstone(SimpleTestCase):
             {Tombstone.PROPERTY_NAME: True},
             Tombstone.create_document(),
         )
+
+
+@es_test
+@override_settings(ES_FOR_TEST_INDEX_MULTIPLEXED=False)
+@override_settings(ES_FOR_TEST_INDEX_SWAPPED=False)
+class TestCreateDocumentAdapter(SimpleTestCase):
+
+    def test_create_document_adapter_returns_doc_adapter(self):
+        test_adapter = create_document_adapter(
+            TestDocumentAdapter,
+            "some-primary",
+            "test_doc",
+        )
+        self.assertEqual(type(test_adapter), TestDocumentAdapter)
+
+    def test_returns_doc_adapter_without_multiplexed_setting(self):
+        test_adapter = create_document_adapter(
+            TestDocumentAdapter,
+            "some-primary",
+            "test_doc",
+            secondary="some-secondary",
+        )
+        self.assertEqual(type(test_adapter), TestDocumentAdapter)
+
+    @override_settings(ES_FOR_TEST_INDEX_MULTIPLEXED=True)
+    def test_returns_multiplexer_adapter_with_multiplexed_setting(self):
+        test_adapter = create_document_adapter(
+            TestDocumentAdapter,
+            "some-primary",
+            "test_doc",
+            secondary="some-secondary",
+        )
+        self.assertEqual(type(test_adapter), ElasticMultiplexAdapter)
+
+    @override_settings(ES_FOR_TEST_INDEX_MULTIPLEXED=True)
+    @override_settings(ES_FOR_TEST_INDEX_SWAPPED=True)
+    def test_returns_multiplexer_with_swapped_indexes(self):
+        test_adapter = create_document_adapter(
+            TestDocumentAdapter,
+            "some-primary",
+            "test_doc",
+            secondary="some-secondary",
+        )
+        self.assertEqual(type(test_adapter), ElasticMultiplexAdapter)
+        self.assertEqual(test_adapter.primary.index_name, "test_some-secondary")
+        self.assertEqual(test_adapter.secondary.index_name, "test_some-primary")
+
+    @override_settings(ES_FOR_TEST_INDEX_MULTIPLEXED=True)
+    @override_settings(ES_FOR_TEST_INDEX_SWAPPED=True)
+    def test_settings_have_no_effect_if_secondary_is_None(self):
+        test_adapter = create_document_adapter(
+            TestDocumentAdapter,
+            "some-primary",
+            "test_doc",
+        )
+        self.assertEqual(type(test_adapter), TestDocumentAdapter)
 
 
 class OneshotIterable:
