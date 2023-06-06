@@ -406,6 +406,7 @@ class SuiteCaseTilesTest(SimpleTestCase, SuiteMixin):
         form.xmlns = 'http://id_m0-f0'
         form.requires = 'case'
 
+        # case list detail
         self.assertXmlPartialEqual(
             """
             <partial>
@@ -428,4 +429,28 @@ class SuiteCaseTilesTest(SimpleTestCase, SuiteMixin):
             app.create_suite(),
             # action[1] is the reg from case list action hard-coded into the default template
             "detail[@id='m0_case_short']/action[2]",
+        )
+
+        # case search detail
+        self.assertXmlPartialEqual(
+            """
+            <partial>
+              <action redo_last="true" auto_launch="false()">
+                <display>
+                  <text>
+                    <locale id="case_search.m0.again"/>
+                  </text>
+                </display>
+                <stack>
+                  <push>
+                    <mark/>
+                    <command value="'search_command.m0'"/>
+                  </push>
+                </stack>
+              </action>
+            </partial>
+            """,
+            app.create_suite(),
+            # action[1] is the reg from case list action hard-coded into the default template
+            "detail[@id='m0_search_short']/action[2]",
         )
