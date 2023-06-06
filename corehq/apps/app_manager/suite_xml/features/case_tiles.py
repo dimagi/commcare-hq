@@ -1,5 +1,7 @@
 import json
 from dataclasses import dataclass
+from django.db import models
+from django.utils.translation import gettext_lazy as _
 from eulxml.xmlmap.core import load_xmlobject_from_string
 from memoized import memoized
 from pathlib import Path
@@ -17,6 +19,10 @@ from corehq.apps.app_manager.util import (
 
 
 TILE_DIR = Path(__file__).parent.parent / "case_tile_templates"
+
+
+class CaseTileTemplates(models.TextChoices):
+    PERSON_SIMPLE = ("person_simple", _("Person Simple"))
 
 
 @dataclass
