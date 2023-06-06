@@ -108,9 +108,10 @@ class DetailContributor(SectionContributor):
                             include_sort=detail_type.endswith('short'),
                         )  # list of DetailColumnInfo named tuples
                     if detail_column_infos:
+                        detail_id = id_strings.detail(module, detail_type)
                         if detail.case_tile_template:
                             helper = CaseTileHelper(self.app, module, detail,
-                                                    detail_type, self.build_profile_id)
+                                                    detail_id, detail_type, self.build_profile_id)
                             elements.append(helper.build_case_tile_detail())
                         else:
                             print_template_path = None
@@ -124,7 +125,7 @@ class DetailContributor(SectionContributor):
                                 detail,
                                 detail_column_infos,
                                 tabs=list(detail.get_tabs()),
-                                id=id_strings.detail(module, detail_type),
+                                id=detail_id,
                                 title=title,
                                 print_template=print_template_path,
                             )
