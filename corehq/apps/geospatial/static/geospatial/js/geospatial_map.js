@@ -169,6 +169,8 @@ hqDefine("geospatial/js/geospatial_map", [
 
         var exportGeoJson = function(drawInstance) {
             // Credit to https://gist.github.com/danswick/36796153bd86ce982a59043cbe0ac8f7
+            // I could not get this to work using knockout.js. It did set the attributes, but a download wasn't
+            // triggered
             var exportButton = $("#btnExport");
             var data = drawInstance.getAll();
 
