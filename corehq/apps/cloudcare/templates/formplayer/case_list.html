@@ -17,50 +17,58 @@
       </div>
     </div>
 
-    <% if (useTiles) { %>
-      <% if (isMultiSelect && !hasNoItems) { %>
-        <input type="checkbox" id="select-all-tile-checkbox"/>
-        <label id="select-all-tile-checkbox-label" for="select-all-tile-checkbox">{% trans "Select All" %}</label>
-      <% } %>
-      <section class="js-case-container clearfix list-cell-container-style"></section>
-    <% } else { %>
-    <div class="module-case-list-table-container">
-      <table class="table module-table module-table-case-list">
-        <thead>
-        <tr>
+    <div style="<%- columnStyle %>">
+      <div id="module-case-list-column-next-to-map">
+        <% if (useTiles) { %>
           <% if (isMultiSelect && !hasNoItems) { %>
-          <th class="module-case-list-header"><input type="checkbox" id="select-all-checkbox"/></th>
+            <input type="checkbox" id="select-all-tile-checkbox"/>
+            <label id="select-all-tile-checkbox-label" for="select-all-tile-checkbox">{% trans "Select All" %}</label>
           <% } %>
-          <% _.each(headers, function(header, index) { %>
-            <% if (columnVisible(index)) { %>
-              <% if (columnSortable(index)) { %>
-                <th class="module-case-list-header header-clickable formplayer-request" data-id="<%- index %>"> <%- header %></th>
-              <% } else { %>
-                <th class="module-case-list-header" data-id="<%- index %>"> <%- header %></th>
-              <% } %>
-            <% } %>
-          <% }); %>
-        </tr>
-        </thead>
-          <% if (hasNoItems) { %>
-          <tbody>
-          <tr>
-            <td class="module-case-list-column module-case-list-column-empty" colspan="<%-headers.length%>">
-              <% if (noItemsText === null) {%>
-                <div class="alert alert-info">{% trans "List is empty." %}</div>
-              <% } else { %>
-                <div class="alert alert-info"><%- noItemsText %></div>
-              <% } %>
-            </td>
-          </tr>
-          </tbody>
-          <% } %>
-          <tbody class="wrapper js-case-container">
-          </tbody>
-        </table>
-      </div>
-    <% } %>
+          <section  class="js-case-container clearfix list-cell-container-style"></section>
+        <% } else { %>
+        <div class="module-case-list-table-container">
+          <table class="table module-table module-table-case-list">
 
+              <thead>
+                <tr>
+                  <% if (isMultiSelect && !hasNoItems) { %>
+                    <th class="module-case-list-header"><input type="checkbox" id="select-all-checkbox"/></th>
+                  <% } %>
+                  <%  _.each(headers, function(header, index) { %>
+                    <% if (columnVisible(index)) { %>
+                      <% if (columnSortable(index)) { %>
+                        <th class="module-case-list-header header-clickable formplayer-request" data-id="<%- index %>"> <%- header %></th>
+                      <% } else { %>
+                        <th class="module-case-list-header" data-id="<%- index %>"> <%- header %></th>
+                      <% } %>
+                    <% } %>
+                  <% }); %>
+                </tr>
+              </thead>
+
+            <% if (hasNoItems) { %>
+            <tbody>
+            <tr>
+              <td class="module-case-list-column module-case-list-column-empty" colspan="<%-headers.length%>">
+                <% if (noItemsText === null) { %>
+                  <div class="alert alert-info">{% trans "List is empty." %}</div>
+                <% } else { %>
+                  <div class="alert alert-info"><%- noItemsText %></div>
+                <% } %>
+              </td>
+            </tr>
+            </tbody>
+            <% } %>
+            <tbody class="wrapper js-case-container">
+            </tbody>
+          </table>
+        </div>
+        <% } %>
+      </div>
+      <% if (showMap) { %>
+        <div id="module-case-list-map" class="map"></div>
+      <% } %>
+    </div>
     <% if (actions || isMultiSelect) { %>
     <div class="case-list-actions">
       <% if (isMultiSelect) { %>
