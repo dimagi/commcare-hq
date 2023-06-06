@@ -1,9 +1,11 @@
 hqDefine("geospatial/js/geospatial_map", [
     "jquery",
     "hqwebapp/js/initial_page_data",
+    "knockout",
 ], function (
     $,
     initialPageData,
+    ko
 ) {
     $(function () {
         const defaultMarkerColor = "#808080"; // Gray
@@ -64,6 +66,8 @@ hqDefine("geospatial/js/geospatial_map", [
                 if (!selectedFeatures.length) {
                     return;
                 }
+                // mapControls().btnExportDisabled(draw.getSelected().features.length);
+
                 // Check if any features are selected
                 var selectedFeature = selectedFeatures[0];
                 // Update this logic if we need to support case filtering by selecting multiple polygons
@@ -179,17 +183,25 @@ hqDefine("geospatial/js/geospatial_map", [
             }
         };
 
+        var mapControlsModel = function () {
+            'use strict';
+            var self = {};
+
+            self.btnExportDisabled = ko.observable(true);
+            return self;
+        }
+
         $(document).ajaxComplete(function () {
             // This fires everytime an ajax request is completed
             var mapDiv = $('#geospatial-map');
             var $data = $(".map-data");
-            var exportButton = $("#btnExport");
+            var $exportButton = $("#btnExport");
 
             if (mapDiv.length && !map) {
                 map = loadMapBox();
             }
 
-            exportButton.click(function(e) {
+            $exportButton.click(function(e) {
                 if (map) {
                     exportGeoJson(map.getMapboxDrawInstance());
                 }
@@ -200,6 +212,10 @@ hqDefine("geospatial/js/geospatial_map", [
                 map.clearMap();
                 cases = caseData.cases
                 map.addCaseMarkersToMap();
+            }
+
+            if ($exportButton.length) {
+                $exportButton.koApplyBindings(mapControlsModel());
             }
         });
     });

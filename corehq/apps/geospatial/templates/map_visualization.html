@@ -4,10 +4,10 @@
 
 {% block reportcontent %}
 <!-- This is used to get the data from report_context -->
-<div class="row well">
-    <a id="btnExport" class="btn btn-default" style="margin: 1em">{% trans 'Export Polygon as GeoJson' %}</a>
+<div class="panel panel-default">
+    <a id="btnExport" class="btn btn-default" style="margin: 1em" data-bind="disabled: btnExportDisabled">
+        {% trans 'Export Polygon as GeoJson' %}
+    </a>
 </div>
-<div class="row">
-    <div class="map-data" data-context="{% html_attr context %}"></div>
-</div>
+<div class="map-data" data-context="{% html_attr context %}"></div>
 {% endblock %}
