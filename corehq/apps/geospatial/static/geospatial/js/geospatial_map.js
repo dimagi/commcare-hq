@@ -66,7 +66,6 @@ hqDefine("geospatial/js/geospatial_map", [
                 if (!selectedFeatures.length) {
                     return;
                 }
-                // mapControls().btnExportDisabled(draw.getSelected().features.length);
 
                 // Check if any features are selected
                 var selectedFeature = selectedFeatures[0];
@@ -186,8 +185,37 @@ hqDefine("geospatial/js/geospatial_map", [
         var mapControlsModel = function () {
             'use strict';
             var self = {};
-
+            var mapboxinstance = map.getMapboxInstance();
+            var polygons = [];
             self.btnExportDisabled = ko.observable(true);
+
+            var mapHasPolygons = function() {
+                return polygons.length;
+            };
+
+            function removeId(id) {
+                var index = polygons.indexOf(id); // Find the index of the specified ID
+                polygons.splice(index, 1); // Remove the ID from the array
+              }
+
+            mapboxinstance.on('draw.delete', function(e) {
+                e.features.forEach((feature) => {
+                    if (feature.geometry.type == "Polygon") {
+                        removeId(feature.id);
+                    }
+                });
+                self.btnExportDisabled(!mapHasPolygons());
+            });
+
+            mapboxinstance.on('draw.create', function(e) {
+                e.features.forEach((feature) => {
+                    if (feature.geometry.type == "Polygon") {
+                        polygons.push(feature.id)
+                    }
+                });
+                self.btnExportDisabled(!mapHasPolygons());
+            });
+
             return self;
         }
 
