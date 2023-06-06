@@ -1320,7 +1320,7 @@ def create_document_adapter(cls, index_name, type_, *, secondary=None):
 
     One thing to note here is that the behaviour of the function can be altered with django settings.
     If ES_<app_name>_INDEX_SWAPPED is set to True, then primary index will act as secondary index and vice versa.
-    This will be ignored if ES_<app_name>_INDEX_MULTIPLEXED is set to True
+    ES_<app_name>_INDEX_SWAPPED will be ignored if ES_<app_name>_INDEX_MULTIPLEXED is set to False
 
     The function would return multiplexed adapter only in one case
     - ES_<app name>_INDEX_MULTIPLEXED is True

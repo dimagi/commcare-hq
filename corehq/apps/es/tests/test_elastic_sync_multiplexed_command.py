@@ -20,13 +20,12 @@ INDEX_CNAME = 'test_reindex'
 
 def mutiplexed_adapter_with_overriden_settings():
     with override_settings(ES_FOR_TEST_INDEX_MULTIPLEXED=True):
-        test_adapter = create_document_adapter(
+        return create_document_adapter(
             TestDocumentAdapter,
             "test_reindex-primary",
             "test_doc",
             secondary="test_reindex-secondary",
         )
-    return test_adapter
 
 
 adapter_cname_map = {
