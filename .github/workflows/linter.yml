@@ -5,6 +5,7 @@ on:
   # but only for the main branch
   push:
     branches:
+      - investigation/separate-eslinter
 
   pull_request:
     branches:
