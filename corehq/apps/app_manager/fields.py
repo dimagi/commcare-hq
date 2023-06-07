@@ -710,8 +710,12 @@ class ApplicationDataRMIHelper(object):
             )
         if self.as_dict:
             apps_by_type = self._map_chosen_by_choice_as_dict(apps_by_type)
-        import json
-        print(f"json.dumps(list(get_case_types_for_domain(self.domain))) {json.dumps(list(get_case_types_for_domain(self.domain)))}")
+        all_cases = sorted(list(get_case_types_for_domain(self.domain)))
+        if len(all_cases) > 0:
+            #all_cases = ["All Case Types"] + all_cases
+            all_cases = ["commcare-all-case-types"] + all_cases
+        print(
+            f"json.dumps(list(get_case_types_for_domain(self.domain))) {all_cases}")
         response = AppCaseRMIResponse(
             app_types=self._get_app_type_choices_for_cases(
                 has_unknown_case_types=bool(case_types_by_app.get(self.UNKNOWN_SOURCE))
@@ -719,7 +723,7 @@ class ApplicationDataRMIHelper(object):
             apps_by_type=apps_by_type,
             case_types_by_app=case_types_by_app,
             placeholders=self.case_placeholders,
-            case_types_for_domain=json.dumps(list(get_case_types_for_domain(self.domain)))
+            case_types_for_domain=all_cases
         )
         if self.as_dict:
             response = response._asdict()

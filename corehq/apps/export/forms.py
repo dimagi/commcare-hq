@@ -74,7 +74,7 @@ class CreateExportTagForm(forms.Form):
         ]
     )
     app_type = forms.CharField(widget=forms.Select(choices=[]))
-    application = forms.CharField(widget=forms.Select(choices=[]))
+    application = forms.CharField(widget=forms.Select(choices=[]), required=False)
 
     # Form export fields
     module = forms.CharField(required=False, widget=forms.Select(choices=[]))
@@ -149,10 +149,7 @@ class CreateExportTagForm(forms.Form):
                     crispy.Field(
                         'case_type',
                         placeholder=_("Select Case Type"),
-                        data_bind='''
-                            value: caseType,
-                            disable: !application(),
-                        ''',
+                        data_bind="value: caseType",
                     ),
                     data_bind="visible: isCaseModel()",
                 ),

@@ -886,7 +886,8 @@ def get_app_data_drilldown_values(request, domain):
 def submit_app_data_drilldown_form(request, domain):
     if json.loads(request.POST.get('is_deid')):
         raise Http404()
-
+    import ipdb
+    ipdb.set_trace()
     model_type = request.POST.get('model_type')
     is_odata = json.loads(request.POST.get('is_odata'))
     permissions = ExportsPermissionsManager(model_type, domain, request.couch_user)
@@ -903,6 +904,7 @@ def submit_app_data_drilldown_form(request, domain):
         form_data
     )
     if not create_form.is_valid():
+        print(f"errors {create_form.errors}")
         return json_response({
             'success': False,
             'error': _("The form did not validate."),

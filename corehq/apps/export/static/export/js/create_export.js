@@ -112,6 +112,12 @@ hqDefine("export/js/create_export", [
             self.selectedFormName(newValue.is_user_registration ? gettext('User Registration') : newValue.name);
         });
 
+        self.caseType.subscribe(function (newValue) {
+            // Trigger the computation of disableSubmit computed observable
+            // by updating its dependencies
+            self.disableSubmit.notifySubscribers();
+          });
+
         // Behavior related to initializing the drilldown form
         var drilldownDefaults = {
             model_type: '',
@@ -171,9 +177,11 @@ hqDefine("export/js/create_export", [
             self.hasNoCaseTypes(false);
             self.setModules();
             self.setForms();
-            self.setCaseTypes();
+            //self.setCaseTypes();
+            self.setCaseTypes(self._all_case_types);
         });
         self.application.subscribe(function (newValue) {
+            console.log("inside application subscribe")
             if (newValue) {
                 if (self.modelType() === 'form') {
                     var moduleChoices = self._modules_by_app[newValue];
@@ -182,7 +190,7 @@ hqDefine("export/js/create_export", [
                     self.setForms();
                 } else {
                     debugger
-                    var caseTypeChoices = self._case_types_by_app;
+                    var caseTypeChoices = self._all_case_types;
                     self.setCaseTypes(caseTypeChoices);
                     self.hasNoCaseTypes(_.isEmpty(caseTypeChoices));
                 }
@@ -227,6 +235,7 @@ hqDefine("export/js/create_export", [
 
         // Behavior related to validating and resetting the drilldown form
         self.isValid = ko.computed(function () {
+            return true;
             return self.modelType()
                 && self.appType()
                 && self.application()
@@ -243,7 +252,8 @@ hqDefine("export/js/create_export", [
             self.setApps(self._apps_by_type.all || []);
             self.setModules();
             self.setForms();
-            self.setCaseTypes();
+            //self.setCaseTypes();
+            self.setCaseTypes(self._all_case_types);
             self.selectedAppData({});
             self.selectedFormData({});
             self.hasNoCaseTypes(false);
@@ -255,6 +265,9 @@ hqDefine("export/js/create_export", [
             return !self.showNoAppsError() && !self.drilldownLoadError();
         });
         self.disableSubmit = ko.computed(function () {
+            console.log("inside disable submit");
+            console.log("self.isValid() " + self.isValid());
+            return false;
             return !self.isValid() || self.isSubmitting();
         });
 
@@ -328,17 +341,22 @@ hqDefine("export/js/create_export", [
                     self._apps_by_type = data.apps_by_type || {};
                     self._modules_by_app = data.modules_by_app || {};
                     self._forms_by_app_by_module = data.forms_by_app_by_module || {};
-                    console.log("data.case_types_for_domain " + data.case_types_for_domain);
-                    console.log("data.case_types_by_app " + data.case_types_by_app);
-                    console.log("data.case_types_by_app len" + data.case_types_by_app.length);
-                    console.log("data.case_types_by_app data" + JSON.stringify(data.case_types_by_app));
-                    self._case_types_by_app = data.case_types_for_domain || {};
+                    //console.log("data.case_types_for_domain " + data.case_types_for_domain);
+                    //console.log("data.case_types_by_app " + data.case_types_by_app);
+                    //console.log("data.case_types_by_app len" + data.case_types_by_app.length);
+                    //console.log("data.case_types_by_app data" + JSON.stringify(data.case_types_by_app));
+                    self._all_case_types = data.case_types_for_domain || {};
+
+                    var caseTypeChoices = self._case_types_all;
+                    self.setCaseTypes(caseTypeChoices);
+                    self.hasNoCaseTypes(_.isEmpty(caseTypeChoices));
 
                     self.setAppTypes();
                     self.setApps(data.apps_by_type[self.appType()]);
                     self.setModules();
                     self.setForms();
-                    self.setCaseTypes();
+                    //self.setCaseTypes();
+                    self.setCaseTypes(self._all_case_types);
                 }
                 self.isLoaded(true);
             },
