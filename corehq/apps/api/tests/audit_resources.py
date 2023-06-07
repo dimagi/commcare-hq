@@ -283,20 +283,27 @@ class TestNavigationEventAuditResource(APIResourceTest):
         self.assertEqual(2, response_total_count)
 
     def test_query_includes_users_in_only_specified_domain(self):
-        results = self.resource.cursor_query(self.domain1_audits.domain, self.domain1_audits.timezone)
+        params = v0_5.NavigationEventAuditResourceParams()
+        params.local_timezone = self.domain1_audits.timezone
+        results = self.resource.cursor_query(self.domain1_audits.domain, params)
         for result in results:
             self.assertTrue(result['user'] in self.domain1_audits.users)
 
-        results = self.resource.cursor_query(self.domain2_audits.domain, self.domain2_audits.timezone)
+        params.local_timezone = self.domain2_audits.timezone
+        results = self.resource.cursor_query(self.domain2_audits.domain, params)
         for result in results:
             self.assertTrue(result['user'] in self.domain2_audits.users)
 
     def test_query_first_last_action_time_for_each_user(self):
-        results = self.resource.cursor_query(self.domain1_audits.domain, self.domain1_audits.timezone)
+        params = v0_5.NavigationEventAuditResourceParams()
+        params.local_timezone = self.domain1_audits.timezone
+        results = self.resource.cursor_query(self.domain1_audits.domain, params)
         self.assertListEqual(results, self.domain1_audits.expected_query_result)
 
     def test_query_ordered_by_local_date_and_user(self):
-        results = self.resource.cursor_query(self.domain1_audits.domain, self.domain1_audits.timezone)
+        params = v0_5.NavigationEventAuditResourceParams()
+        params.local_timezone = self.domain1_audits.timezone
+        results = self.resource.cursor_query(self.domain1_audits.domain, params)
         filtered_results = [(result['local_date'], result['user']) for result in results]
 
         self.assertListEqual(filtered_results, sorted(filtered_results))
@@ -304,7 +311,9 @@ class TestNavigationEventAuditResource(APIResourceTest):
     def test_query_unique_local_date_and_user_pairs(self):
         #Query results should not have two entries with the same local date and user
 
-        results = self.resource.cursor_query(self.domain1_audits.domain, self.domain1_audits.timezone)
+        params = v0_5.NavigationEventAuditResourceParams()
+        params.local_timezone = self.domain1_audits.timezone
+        results = self.resource.cursor_query(self.domain1_audits.domain, params)
         seen_user_local_dates = {}
         for result in results:
             user = result['user']
@@ -317,16 +326,17 @@ class TestNavigationEventAuditResource(APIResourceTest):
             seen_user_local_dates[user].add(local_date)
 
     def test_query_filter_by_user(self):
-        params = {'users': [self.username1]}
+        params = v0_5.NavigationEventAuditResourceParams()
+        params.users = [self.username1]
+        params.local_timezone = self.domain1_audits.timezone
 
         results = self.resource.cursor_query(
             self.domain1_audits.domain,
-            self.domain1_audits.timezone,
             params=params,
         )
         expected_results = [
             item for item in self.domain1_audits.expected_query_result
-            if item['user'] in params['users']
+            if item['user'] in params.users
         ]
 
         self.assertListEqual(expected_results, results)
@@ -334,14 +344,17 @@ class TestNavigationEventAuditResource(APIResourceTest):
     def test_query_filter_by_local_date(self):
         date1 = date(2023, 5, 1)
         date2 = date(2023, 5, 2)
-        params = {
+
+        params = v0_5.NavigationEventAuditResourceParams()
+        local_date_params = {
             'local_date.gte': date(2023, 5, 1).isoformat(),
             'local_date.lt': date(2023, 5, 2).isoformat()
         }
 
+        params.local_date = local_date_params
+        params.local_timezone = self.domain1_audits.timezone
         results = self.resource.cursor_query(
             self.domain1_audits.domain,
-            self.domain1_audits.timezone,
             params=params
         )
         expected_results = [
@@ -352,12 +365,12 @@ class TestNavigationEventAuditResource(APIResourceTest):
         self.assertListEqual(expected_results, results)
 
     def test_query_cursor_pagination_returns_items_after_cursor(self):
-        params = {
-            'cursor_local_date': date(2023, 5, 1),
-            'cursor_user': self.username1
-        }
+        params = v0_5.NavigationEventAuditResourceParams()
+        params.cursor_local_date = date(2023, 5, 1)
+        params.cursor_user = self.username1
+        params.local_timezone = self.domain1_audits.timezone
 
-        results = self.resource.cursor_query(self.domain1_audits.domain, self.domain1_audits.timezone, params)
+        results = self.resource.cursor_query(self.domain1_audits.domain, params)
         expected_results = [
             {
                 'user': self.username2,
@@ -382,26 +395,24 @@ class TestNavigationEventAuditResource(APIResourceTest):
         self.assertListEqual(expected_results, results)
 
     def test_query_cursor_pagination_page_size(self):
-        params = {
-            'cursor_local_date': date(2023, 5, 1),
-            'cursor_user': self.username1
-        }
+        params = v0_5.NavigationEventAuditResourceParams()
+        params.cursor_local_date = date(2023, 5, 1)
+        params.cursor_user = self.username1
+        params.local_timezone = self.domain1_audits.timezone
 
-        params['limit'] = 2
+        params.limit = 2
         results = self.resource.cursor_query(
             self.domain1_audits.domain,
-            self.domain1_audits.timezone,
             params=params,
         )
-        self.assertEqual(len(results), params['limit'])
+        self.assertEqual(len(results), params.limit)
 
-        params['limit'] = 3
+        params.limit = 3
         results = self.resource.cursor_query(
             self.domain1_audits.domain,
-            self.domain1_audits.timezone,
             params=params,
         )
-        self.assertEqual(len(results), params['limit'])
+        self.assertEqual(len(results), params.limit)
 
     def _daterange(start_datetime, end_datetime):
         for n in range(int((end_datetime - start_datetime).total_seconds() // 3600) + 1):
