@@ -1168,7 +1168,7 @@ class NavigationEventAuditResource(HqBaseResource, Resource):
             return response
 
     def alter_list_data_to_serialize(self, request, data):
-        data['meta']['local_date_timezone'] = self.local_timezone.zone
+        data['meta']['local_date_timezone'] = self.api_params.local_timezone.zone
         data['meta']['total_count'] = self.count
 
         params = request.GET.copy()  # Makes params mutable for creating next_url below
@@ -1191,7 +1191,7 @@ class NavigationEventAuditResource(HqBaseResource, Resource):
 
     def obj_get_list(self, bundle, **kwargs):
         domain = kwargs['domain']
-        params = self._process_params(domain, bundle.request.GET)
+        self.api_params = self._process_params(domain, bundle.request.GET)
 
         results = self.cursor_query(domain, self.local_timezone, params)
         return list(map(self.to_obj, results))
