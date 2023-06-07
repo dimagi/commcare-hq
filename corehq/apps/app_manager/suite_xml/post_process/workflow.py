@@ -418,7 +418,7 @@ class EndOfFormNavigationWorkflow(object):
 
         if target_module.root_module_id:
             root_module = self.helper.app.get_module_by_unique_id(target_module.root_module_id)
-            frame_children = prepend_parent_frame_children(self.helper, frame_children, root_module)
+            frame_children = prepend_parent_frame_children(self.helper, frame_children, root_module, link.datums, form)
 
         return StackFrameMeta(link.xpath, list(frame_children), current_session=source_form_datums)
 
@@ -433,10 +433,15 @@ class EndOfFormNavigationWorkflow(object):
                 )
 
 
-def prepend_parent_frame_children(helper, frame_children, parent_module):
+def prepend_parent_frame_children(helper, frame_children, parent_module, manual_values=None, form=None):
     # Note: this fn is roughly equivalent to just passing include_root_module
     # to get_frame_children in the first place, but that gives the wrong order
     parent_frame_children = helper.get_frame_children(parent_module)
+    if manual_values:
+        parent_frame_children = list(
+            _get_datums_matched_to_manual_values(parent_frame_children, manual_values, form)
+        )
+
     parent_ids = {parent.id for parent in parent_frame_children}
     return parent_frame_children + [
         child for child in frame_children
