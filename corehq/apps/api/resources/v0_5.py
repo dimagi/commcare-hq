@@ -1122,6 +1122,13 @@ class NavigationEventAuditResourceParams:
         self.cursor_local_date = cursor_params.get('cursor_local_date')
         self.cursor_user = cursor_params.get('cursor_user')
 
+    def process_local_timezone(self, domain):
+        if self.local_timezone is None:
+            self.local_timezone = Domain.get_by_name(domain).get_default_timezone()
+        elif isinstance(self.local_timezone, str):
+            self.local_timezone = pytz.timezone(self.local_timezone)
+
+
 class NavigationEventAuditResource(HqBaseResource, Resource):
     local_date = fields.DateField(attribute='local_date', readonly=True)
     UTC_start_time = fields.DateTimeField(attribute='UTC_start_time', readonly=True)
@@ -1196,6 +1203,7 @@ class NavigationEventAuditResource(HqBaseResource, Resource):
             api_params.process_limit(self._meta.limit, self._meta.max_limit)
         if api_params.cursor:
             api_params.process_cursor()
+        api_params.process_local_timezone(domain)
 
         processed_params = {}
 
@@ -1204,12 +1212,6 @@ class NavigationEventAuditResource(HqBaseResource, Resource):
             if param == 'users':
                 val = params.getlist(param)
             processed_params[param] = val
-
-
-        if 'local_timezone' in processed_params:
-            self.local_timezone = pytz.timezone(processed_params['local_timezone'])
-        else:
-            self.local_timezone = Domain.get_by_name(domain).get_default_timezone()
 
         return api_params
 
