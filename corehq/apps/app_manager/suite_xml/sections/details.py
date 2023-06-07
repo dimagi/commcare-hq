@@ -108,9 +108,10 @@ class DetailContributor(SectionContributor):
                             include_sort=detail_type.endswith('short'),
                         )  # list of DetailColumnInfo named tuples
                     if detail_column_infos:
+                        detail_id = id_strings.detail(module, detail_type)
                         if detail.case_tile_template:
                             helper = CaseTileHelper(self.app, module, detail,
-                                                    detail_type, self.build_profile_id)
+                                                    detail_id, detail_type, self.build_profile_id)
                             elements.append(helper.build_case_tile_detail())
                         else:
                             print_template_path = None
@@ -124,7 +125,7 @@ class DetailContributor(SectionContributor):
                                 detail,
                                 detail_column_infos,
                                 tabs=list(detail.get_tabs()),
-                                id=id_strings.detail(module, detail_type),
+                                id=detail_id,
                                 title=title,
                                 print_template=print_template_path,
                             )
@@ -237,9 +238,7 @@ class DetailContributor(SectionContributor):
                     # don't add search again action in split screen
                     if not (toggles.SPLIT_SCREEN_CASE_SEARCH.enabled(self.app.domain) and in_search):
                         d.actions.append(
-                            DetailContributor.get_case_search_action(module,
-                                                                    self.build_profile_id,
-                                                                    in_search=in_search)
+                            DetailContributor.get_case_search_action(module, self.build_profile_id, id)
                         )
 
             try:
@@ -367,7 +366,8 @@ class DetailContributor(SectionContributor):
         return action
 
     @staticmethod
-    def get_case_search_action(module, build_profile_id, in_search=False):
+    def get_case_search_action(module, build_profile_id, detail_id):
+        in_search = module_loads_registry_case(module) or "search" in detail_id
         action_kwargs = DetailContributor._get_action_kwargs(module, in_search)
         if in_search:
             search_label = module.search_config.search_again_label

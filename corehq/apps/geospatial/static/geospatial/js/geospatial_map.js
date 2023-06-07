@@ -6,11 +6,16 @@ hqDefine("geospatial/js/geospatial_map", [
     initialPageData,
 ) {
     $(function () {
+        const defaultMarkerColor = "#808080"; // Gray
+        const selectedMarkerColor = "#00FF00"; // Green
+        var map;
+        var cases = [];
+        var userFilteredCases = [];
+
         var loadMapBox = function (centerCoordinates) {
             'use strict';
 
             var self = {};
-            var markers = [];
             mapboxgl.accessToken = initialPageData.get('mapbox_access_token');
 
             if (!centerCoordinates) {
@@ -35,21 +40,64 @@ hqDefine("geospatial/js/geospatial_map", [
                     trash: true
                 },
             });
-            map.addControl(draw);
 
-            map.on('draw.create', updateArea);
-            map.on('draw.delete', updateArea);
-            map.on('draw.update', updateArea);
+            map.addControl(draw);
 
             function getCoordinates(event) {
                 return event.lngLat;
             };
 
-            function updateArea(e) {
-                const data = draw.getAll();
-                const area = turf.area(data);
-                // Restrict the area to 2 decimal points.
-                const rounded_area = Math.round(area * 100) / 100;
+            map.on("draw.update", function(e) {
+                var selectedFeatures = e.features;
+
+                // Check if any features are selected
+                if (!selectedFeatures.length) {
+                    return;
+                }
+                var selectedFeature = selectedFeatures[0];
+
+                if (selectedFeature.geometry.type == 'Polygon') {
+                    filterCasesInPolygon(selectedFeature);
+                }
+            });
+
+            map.on('draw.selectionchange', function(e) {
+                // See https://github.com/mapbox/mapbox-gl-draw/blob/main/docs/API.md#drawselectionchange
+                var selectedFeatures = e.features;
+                if (!selectedFeatures.length) {
+                    return;
+                }
+                // Check if any features are selected
+                var selectedFeature = selectedFeatures[0];
+                // Update this logic if we need to support case filtering by selecting multiple polygons
+
+                if (selectedFeature.geometry.type == 'Polygon') {
+                    // Now that we know we selected a polygon, we need to check which markers are inside
+                    filterCasesInPolygon(selectedFeature);
+                }
+            });
+
+            function changeCaseMarkerColor(selectedCase, newColor) {
+                let marker = selectedCase.marker;
+                let element = marker.getElement();
+                let svg = element.getElementsByTagName("svg")[0];
+                let path = svg.getElementsByTagName("path")[0];
+                path.setAttribute("fill", newColor);
+            };
+
+            function filterCasesInPolygon(polygonFeature) {
+                userFilteredCases = [];
+                cases.filter(function (currCase) {
+                    var coordinates = [currCase.coordinates.lng, currCase.coordinates.lat];
+                    var point = turf.point(coordinates);
+                    var caseIsInsidePolygon = turf.booleanPointInPolygon(point, polygonFeature.geometry);
+                    if (caseIsInsidePolygon) {
+                        userFilteredCases.push(currCase);
+                        changeCaseMarkerColor(currCase, selectedMarkerColor);
+                    } else {
+                        changeCaseMarkerColor(currCase, defaultMarkerColor)
+                    }
+                });
             }
 
             // We should consider refactoring and splitting the below out to a new JS file
@@ -59,33 +107,39 @@ hqDefine("geospatial/js/geospatial_map", [
                 return map;
             }
 
-            self.removeAllMarkers = function() {
-                console.log("Markers before: ", markers);
-                markers.forEach(marker => {
-                    marker.remove();
+            self.clearMap = function() {
+                // Clear filtered cases
+                userFilteredCases = [];
+                // Remove markers
+                cases.forEach(currCase => {
+                    if (currCase.marker) {
+                        currCase.marker.remove();
+                    }
                 })
-                markers = []
+                cases = [];
             }
 
-            self.addCaseMarkersToMap = function (cases) {
-                console.log("Current state of markeers: ", markers);
-                const markerColor = "#00FF00";
+            self.addCaseMarkersToMap = function () {
                 cases.forEach(element => {
                     let coordinates = element.coordinates;
-                    console.log("element: ", element);
                     if (coordinates && coordinates.lat && coordinates.lng) {
-                        self.addMarker(coordinates, markerColor);
+                        self.addMarker(element, defaultMarkerColor);
                     }
                 });
             };
 
-            self.addMarker = function (coordinates, color) {
-                const marker = new mapboxgl.Marker({color: color, draggable: false});
+            self.addMarker = function (currCase, color) {
+                let coordinates = currCase.coordinates;
+                // Create the marker
+                const marker = new mapboxgl.Marker({ color: color, draggable: false });
                 marker.setLngLat(coordinates);
+
+                // Add the marker to the map
                 marker.addTo(map);
                 // We need to keep track of current markers
-                markers.push(marker);
-            }
+
+                currCase.marker = marker;
+            };
 
             function moveMarkerToClickedCoordinate(coordinates) {
                 if (clickedMarker != null) {
@@ -103,12 +157,10 @@ hqDefine("geospatial/js/geospatial_map", [
             // Handle click events here
             map.on('click', (event) => {
                 let coordinates = getCoordinates(event);
-                moveMarkerToClickedCoordinate(coordinates);
             });
             return self;
         };
 
-        var map;
 
         $(document).ajaxComplete(function () {
             // This fires everytime an ajax request is completed
@@ -121,8 +173,9 @@ hqDefine("geospatial/js/geospatial_map", [
 
             if ($data.length && map) {
                 var caseData = $data.data("context");
-                map.removeAllMarkers();
-                map.addCaseMarkersToMap(caseData.cases)
+                map.clearMap();
+                cases = caseData.cases
+                map.addCaseMarkersToMap();
             }
         });
     });
