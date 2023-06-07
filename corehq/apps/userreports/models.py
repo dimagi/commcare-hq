@@ -9,6 +9,7 @@ from corehq import toggles
 from datetime import datetime, timedelta
 from uuid import UUID
 
+from celery.states import FAILURE
 from django.conf import settings
 from django.contrib.postgres.fields import ArrayField
 from django.core.serializers.json import DjangoJSONEncoder
@@ -265,8 +266,7 @@ class DataSourceBuildInformation(DocumentSchema):
         rebuild_tasks = sorted(iter_tasks(), key=lambda t: t['started'])
         if rebuild_tasks:
             # Return True if the last task failed, otherwise return False.
-            # See https://docs.celeryq.dev/en/stable/reference/celery.result.html#celery.result.AsyncResult.state
-            return rebuild_tasks[-1]['state'] == 'FAILURE'
+            return rebuild_tasks[-1]['state'] == FAILURE
 
         # The rebuild is not finished and the task is not found. It must
         # have died.
