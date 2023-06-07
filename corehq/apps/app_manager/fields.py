@@ -20,7 +20,7 @@ from corehq.apps.registry.models import DataRegistry
 from corehq.apps.registry.utils import get_data_registry_dropdown_options
 from corehq.apps.hqwebapp import crispy as hqcrispy
 from corehq.apps.reports.analytics.esaccessors import (
-    get_case_types_for_domain_es,
+    get_case_types_for_domain_es, get_case_types_for_domain,
 )
 from corehq.apps.userreports.app_manager.data_source_meta import (
     DATA_SOURCE_TYPE_CASE,
@@ -624,72 +624,95 @@ class ApplicationDataRMIHelper(object):
             response = response._asdict()
         return response
 
-    def _get_cases_for_apps(self, apps_by_type, as_dict=True, include_any_app=False):
-        used_case_types = set()
+    def _get_cases_in_domain(self, apps_by_type, as_dict=True, include_any_app=False):
+        #used_case_types = set()
         case_types_by_app = collections.defaultdict(list)
-        for app_type, apps in apps_by_type.items():
-            for app_choice in apps:
-                if app_choice.id not in [self.UNKNOWN_SOURCE, self.ALL_SOURCES]:
-                    app = get_app(self.domain, app_choice.id)
-                    case_types = []
-                    if hasattr(app, 'modules'):
-                        # Add regular case types
-                        case_types = set([
-                            module.case_type
-                            for module in app.modules if module.case_type
-                        ])
+        # for app_type, apps in apps_by_type.items():
+        #     for app_choice in apps:
+        #         if app_choice.id not in [self.UNKNOWN_SOURCE, self.ALL_SOURCES]:
+        #             app = get_app(self.domain, app_choice.id)
+        #             case_types = []
+        #             if hasattr(app, 'modules'):
+        #                 # Add regular case types
+        #                 case_types = set([
+        #                     module.case_type
+        #                     for module in app.modules if module.case_type
+        #                 ])
+        #
+        #                 # Add user case if any module uses it
+        #                 if any([module.uses_usercase() for module in app.modules]):
+        #                     case_types.add(USERCASE_TYPE)
+        #
+        #                 used_case_types = used_case_types.union(case_types)
+        #                 case_types = [RMIDataChoice(
+        #                     id=c,
+        #                     text=c,
+        #                     data=app_choice.data
+        #                 ) for c in case_types]
+        #                 if as_dict:
+        #                     case_types = [c._asdict() for c in case_types]
+        #             case_types_by_app[app_choice.id] = case_types
 
-                        # Add user case if any module uses it
-                        if any([module.uses_usercase() for module in app.modules]):
-                            case_types.add(USERCASE_TYPE)
-
-                        used_case_types = used_case_types.union(case_types)
-                        case_types = [RMIDataChoice(
-                            id=c,
-                            text=c,
-                            data=app_choice.data
-                        ) for c in case_types]
-                        if as_dict:
-                            case_types = [c._asdict() for c in case_types]
-                    case_types_by_app[app_choice.id] = case_types
-
-        all_case_types = get_case_types_for_domain_es(self.domain)
-        unknown_case_types = all_case_types.difference(used_case_types)
-        unknown_case_types = [RMIDataChoice(
-            id=c,
-            text=c,
-            data={
-                'unknown': True,
-            }
-        ) for c in unknown_case_types]
+        #all_case_types = get_case_types_for_domain_es(self.domain)
+        #unknown_case_types = all_case_types.difference(used_case_types)
+        # unknown_case_types = [RMIDataChoice(
+        #     id=c,
+        #     text=c,
+        #     data={
+        #         'unknown': True,
+        #     }
+        # ) for c in unknown_case_types]
 
         # Add all case types, along with "Select All" placeholder choice to
         # the "Any Application" application placeholder
-        all_case_types = []
-        if include_any_app:
-            all_case_types = used_case_types
-            all_case_types = [RMIDataChoice(
-                id=c,
-                text=c,
+        #all_case_types = []
+        all_case_types_name = get_case_types_for_domain(self.domain)
+        # if include_any_app:
+        #     all_case_types = used_case_types
+        #     all_case_types = [RMIDataChoice(
+        #         id=c,
+        #         text=c,
+        #         data={
+        #             'unknown': True
+        #         }
+        #     ) for c in used_case_types]
+        #     all_case_types.insert(
+        #         0,
+        #         RMIDataChoice(
+        #             id=ALL_CASE_TYPE_EXPORT,
+        #             text=_('All Case Types'),
+        #             data={
+        #                 'unknown': True
+        #             }
+        #         )
+        #     )
+
+        all_case_types = [RMIDataChoice(
+            id=case_type,
+            text=case_type,
+            data={
+                'unknown': True
+            }
+        ) for case_type in all_case_types_name]
+
+        all_case_types.insert(
+            0,
+            RMIDataChoice(
+                id=ALL_CASE_TYPE_EXPORT,
+                text=_('All Case Types'),
                 data={
                     'unknown': True
                 }
-            ) for c in used_case_types]
-            all_case_types.insert(
-                0,
-                RMIDataChoice(
-                    id=ALL_CASE_TYPE_EXPORT,
-                    text=_('All Case Types'),
-                    data={
-                        'unknown': True
-                    }
-                )
             )
+        )
+
 
         if as_dict:
-            unknown_case_types = [c._asdict() for c in unknown_case_types]
+            #unknown_case_types = [c._asdict() for c in unknown_case_types]
             all_case_types = [c._asdict() for c in all_case_types]
-        case_types_by_app[self.UNKNOWN_SOURCE] = unknown_case_types
+        #case_types_by_app[self.UNKNOWN_SOURCE] = unknown_case_types
+        #case_types_by_app[self.ALL_SOURCES] = all_case_types
+
         case_types_by_app[self.ALL_SOURCES] = all_case_types
 
         return case_types_by_app
@@ -702,7 +725,8 @@ class ApplicationDataRMIHelper(object):
         :param include_any_app: A boolean on whether to include the "Any Application" option.
         """
         apps_by_type = self._get_applications_by_type(as_dict=False, include_any_app=include_any_app)
-        case_types_by_app = self._get_cases_for_apps(apps_by_type, self.as_dict, include_any_app=include_any_app)
+        case_types_by_app = self._get_cases_in_domain(apps_by_type, self.as_dict, include_any_app=include_any_app)
+        print(case_types_by_app)
         # If there are Unknown case types, ensure that there exists an Unknown Application
         if case_types_by_app.get(self.UNKNOWN_SOURCE) and not apps_by_type[self.APP_TYPE_UNKNOWN]:
             apps_by_type[self.APP_TYPE_UNKNOWN].append(
