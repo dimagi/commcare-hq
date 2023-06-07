@@ -66,5 +66,6 @@ jobs:
       - name: Run eslint
         uses: mrdivyansh/eslint-action@v1.0.7
         with:
+          repo-token: ${{secrets.GITHUB_TOKEN}}
           eslint-rc: .eslintrc.js
           execute-on-files: ${{ steps.javascript-files.outputs.javascript-file-names }}
