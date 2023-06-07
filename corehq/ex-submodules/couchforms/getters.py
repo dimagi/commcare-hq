@@ -76,19 +76,19 @@ def _valid_instance_file_extension(file):
     return _valid_file_extension(file.name, ['xml'])
 
 
+def _valid_file_extension(filename, valid_extensions):
+    if "." not in filename:
+        return False
+    file_extension = filename.rsplit(".", 1)[-1]
+    return file_extension in valid_extensions
+
+
 def _valid_attachment_file(file):
     return _valid_attachment_file_extension(file) or _valid_attachment_file_mimetype(file)
 
 
 def _valid_attachment_file_extension(file):
     return _valid_file_extension(file.name, VALID_ATTACHMENT_FILE_EXTENSIONS)
-
-
-def _valid_file_extension(filename, valid_extensions):
-    if "." not in filename:
-        return False
-    file_extension = filename.rsplit(".", 1)[-1]
-    return file_extension in valid_extensions
 
 
 def _valid_attachment_file_mimetype(file):
