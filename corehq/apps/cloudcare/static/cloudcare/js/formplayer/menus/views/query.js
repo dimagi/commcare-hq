@@ -192,6 +192,7 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
                 value: value,
                 errorMessage: this.errorMessage,
                 itemsetChoicesDict: itemsetChoicesDict,
+                contentTag: this.parentView.options.sidebarEnabled ? "div" : "td",
             };
         },
 
@@ -450,10 +451,12 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
         },
 
         templateContext: function () {
-            var description = md.render(this.options.collection.description.trim());
+            var description = this.options.collection.description === undefined ?
+                "" : md.render(this.options.collection.description.trim());
             return {
                 title: this.options.title.trim(),
                 description: DOMPurify.sanitize(description),
+                sidebarEnabled: this.options.sidebarEnabled,
             };
         },
 
