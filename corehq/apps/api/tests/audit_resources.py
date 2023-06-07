@@ -196,9 +196,13 @@ class TestNavigationEventAuditResource(APIResourceTest):
         self.assertEqual(result_objects, expected_result_objects)
 
     def test_request_with_cursor_param(self):
-        params = {
+        cursor = {
             'cursor_user': self.username1,
             'cursor_local_date': date(2023, 5, 1).isoformat()
+        }
+        encoded_cursor = b64encode(urlencode(cursor).encode('utf-8'))
+        params = {
+            'cursor': encoded_cursor,
         }
         list_endpoint = f'{self.list_endpoint}?{urlencode(params)}'
         response = self._assert_auth_get_resource(list_endpoint)
