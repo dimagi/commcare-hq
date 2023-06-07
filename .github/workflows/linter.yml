@@ -62,16 +62,8 @@ jobs:
       - name: Install Node.js dependencies
         run: yarn install --frozen-lockfile
 
-#      - name: Run flake8
-#        uses: wearerequired/lint-action@v2
-#        with:
-#          flake8: true
-#          flake8_auto_fix: false
-#          flake8_args: ${{ steps.python-files.outputs.python-file-names }}
-
       - name: Run eslint
       - uses: mrdivyansh/eslint-action@v1.0.7
         with:
-#          repo-token: ${{ secrets.GITHUB_TOKEN }}
           eslint-rc: .eslintrc.js
           execute-on-files: ${{ steps.javascript-files.outputs.javascript-file-names }}
