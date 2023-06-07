@@ -1074,11 +1074,26 @@ class NavigationEventAuditResourceParams:
 
     def __post_init__(self, raw_params=None):
         if raw_params:
+            self._validate_keys(raw_params)
+
             self._set_compound_keys(raw_params)
             self.users = raw_params.getlist('users')
             self.limit = raw_params.get('limit')
             self.local_timezone = raw_params.get('local_timezone')
             self.cursor = raw_params.get('cursor')
+
+    def _validate_keys(self, params):
+        valid_keys = {'users', 'limit', 'local_timezone', 'cursor', 'format', 'local_date'}
+        standardized_keys = set()
+
+        for key in params.keys():
+            if '.' in key:
+                key, qualifier = key.split('.', maxsplit=1)
+            standardized_keys.add(key)
+
+        invalid_keys = standardized_keys - valid_keys
+        if invalid_keys:
+            raise ValueError(f"Invalid parameter(s): {', '.join(invalid_keys)}")
 
     def _set_compound_keys(self, params):
         local_date = {}
