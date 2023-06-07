@@ -1923,6 +1923,8 @@ class CaseTileGroupConfig(DocumentSchema):
     xpath_function = StringProperty()
     # number of rows of the tile to use for the group header
     header_rows = IntegerProperty(default=1)
+    extra_datum_function = StringProperty(default="./index/parent")
+    extra_datum_case_type = StringProperty()
 
 
 class Detail(IndexedSchema, CaseListLookupMixin):

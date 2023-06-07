@@ -120,7 +120,7 @@ def get_add_case_preloads_case_id_xpath(module, form):
     from corehq.apps.app_manager.suite_xml.sections.entries import EntriesHelper
     if 'open_case' in form.active_actions():
         return CaseIDXPath(session_var(form.session_var_for_action('open_case')))
-    elif module.root_module_id or module.parent_select.active:
+    elif module.root_module_id or module.parent_select.active or module.has_grouped_tiles():
         # We could always get the var name from the datums but there's a performance cost
         # If the above conditions don't apply then it should always be 'case_id'
         var_name = EntriesHelper(module.get_app()).get_case_session_var_for_form(form)
