@@ -13,7 +13,6 @@ from corehq.apps.app_manager import id_strings
 from corehq.apps.app_manager.exceptions import SuiteError
 from corehq.apps.app_manager.suite_xml.xml_models import Detail, XPathVariable
 from corehq.apps.app_manager.util import (
-    module_loads_registry_case,
     module_offers_search,
     module_uses_inline_search,
 )
@@ -24,6 +23,7 @@ TILE_DIR = Path(__file__).parent.parent / "case_tile_templates"
 
 class CaseTileTemplates(models.TextChoices):
     PERSON_SIMPLE = ("person_simple", _("Person Simple"))
+    ONE_ONE_TWO = ("one_one_two", _("One one two"))
 
 
 @dataclass
