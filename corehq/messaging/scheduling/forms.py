@@ -2787,6 +2787,15 @@ class ConditionalAlertScheduleForm(ScheduleForm):
 
     use_case = 'conditional_alert'
 
+    FCM_SUPPORTED_RECIPIENT_TYPES = [
+        ScheduleInstance.RECIPIENT_TYPE_MOBILE_WORKER,
+        ScheduleInstance.RECIPIENT_TYPE_LOCATION,
+        CaseScheduleInstanceMixin.RECIPIENT_TYPE_CASE_OWNER,
+        CaseScheduleInstanceMixin.RECIPIENT_TYPE_LAST_SUBMITTING_USER,
+        CaseScheduleInstanceMixin.RECIPIENT_TYPE_CASE_PROPERTY_USER,
+        CaseScheduleInstanceMixin.RECIPIENT_TYPE_CUSTOM,
+    ]
+
     # start_date is defined on the superclass but cleaning it in this subclass
     # depends on start_date_type, which depends on send_frequency
     field_order = [
@@ -3539,6 +3548,16 @@ class ConditionalAlertScheduleForm(ScheduleForm):
         if CaseScheduleInstanceMixin.RECIPIENT_TYPE_CASE_PROPERTY_EMAIL in recipient_types:
             if self.cleaned_data.get('content') != self.CONTENT_EMAIL:
                 raise ValidationError(_("Email case property can only be used with Email content"))
+
+        if self.cleaned_data.get('content') == self.CONTENT_FCM_NOTIFICATION:
+            recipient_types_choices = dict(self.fields['recipient_types'].choices)
+            unsupported_recipient_types = [recipient_types_choices[recipient_type]
+                                           for recipient_type in recipient_types
+                                           if recipient_type not in self.FCM_SUPPORTED_RECIPIENT_TYPES]
+            unsupported_recipient_types_str = ', '.join(unsupported_recipient_types)
+            if unsupported_recipient_types:
+                raise ValidationError(_("'{}' recipient types are not supported for Push Notifications"
+                                        .format(unsupported_recipient_types_str)))
 
     def distill_start_offset(self):
         send_frequency = self.cleaned_data.get('send_frequency')
