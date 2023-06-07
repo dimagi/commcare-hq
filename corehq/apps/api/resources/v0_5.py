@@ -1105,6 +1105,17 @@ class NavigationEventAuditResourceParams:
 
         self.local_date = local_date
 
+    def process_limit(self, default_limit, max_limit):
+        try:
+            self.limit = int(self.limit) or default_limit
+            if self.limit < 0:
+                raise ValueError
+        except (ValueError, TypeError):
+            raise BadRequest(_('limit must be a positive integer.'))
+
+        if self.limit > max_limit:
+            raise BadRequest(_('Limit may not exceed {}.').format(max_limit))
+
     def process_cursor(self):
         cursor_params_string = b64decode(self.cursor).decode('utf-8')
         cursor_params = QueryDict(cursor_params_string, mutable=True)
@@ -1181,6 +1192,8 @@ class NavigationEventAuditResource(HqBaseResource, Resource):
     def _process_params(self, domain, params):
         api_params = NavigationEventAuditResourceParams(raw_params=params)
 
+        if api_params.limit:
+            api_params.process_limit(self._meta.limit, self._meta.max_limit)
         if api_params.cursor:
             api_params.process_cursor()
 
@@ -1192,8 +1205,6 @@ class NavigationEventAuditResource(HqBaseResource, Resource):
                 val = params.getlist(param)
             processed_params[param] = val
 
-            if param == 'limit':
-                processed_params['limit'] = self._process_limit(val)
 
         if 'local_timezone' in processed_params:
             self.local_timezone = pytz.timezone(processed_params['local_timezone'])
@@ -1201,18 +1212,6 @@ class NavigationEventAuditResource(HqBaseResource, Resource):
             self.local_timezone = Domain.get_by_name(domain).get_default_timezone()
 
         return api_params
-
-    def _process_limit(self, limit):
-        try:
-            limit = int(limit) or self._meta.limit
-            if limit < 0:
-                raise ValueError
-        except (ValueError, TypeError):
-            raise BadRequest(_('limit must be a positive integer.'))
-
-        if limit > self._meta.max_limit:
-            raise BadRequest(_('Limit may not exceed {}.').format(self._meta.max_limit))
-        return limit
 
     @classmethod
     def cursor_query(cls, domain: str, local_timezone: pytz.tzinfo.DstTzInfo, params: dict = {}) -> list:
