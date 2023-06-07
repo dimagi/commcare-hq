@@ -352,6 +352,10 @@ msgid "Unknown menu"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/details/screen.js
+msgid "Don't Use Case Tiles"
+msgstr ""
+
+#: corehq/apps/app_manager/static/app_manager/js/details/screen.js
 msgid "You have unsaved detail screen configurations."
 msgstr "Vous avez des configurations d'écran de détail non enregistrées."
 

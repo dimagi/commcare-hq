@@ -3658,6 +3658,7 @@ msgstr ""
 
 #: corehq/apps/app_manager/add_ons.py
 #: corehq/apps/app_manager/templates/app_manager/form_view.html
+#: corehq/reports.py
 msgid "Case Management"
 msgstr "Gestion des dossiers"
 
@@ -5346,6 +5347,10 @@ msgstr ""
 msgid ""
 "Adds a red asterisk to denote mandatory questions in a form. This setting "
 "only works in mobile."
+msgstr ""
+
+#: corehq/apps/app_manager/suite_xml/features/case_tiles.py
+msgid "Person Simple"
 msgstr ""
 
 #: corehq/apps/app_manager/suite_xml/features/scheduler.py
@@ -8074,12 +8079,10 @@ msgid "Custom Case List XML"
 msgstr "Liste de dossier personnalisée XML"
 
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/case_list.html
-msgid "Don't Use Case Tiles"
-msgstr "N'utiliser pas des Plaques des Dossiers."
-
-#: corehq/apps/app_manager/templates/app_manager/partials/modules/case_list.html
-msgid "Use Case Tiles"
-msgstr "Utiliser les Plaques des Dossiers"
+#, fuzzy
+#| msgid "Chat Template"
+msgid "Case Tile Template"
+msgstr "Modèle de conversation"
 
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/case_list.html
 msgid ""
@@ -11771,6 +11774,10 @@ msgstr ""
 msgid "Search has too many results. Please try a more specific search."
 msgstr ""
 
+#: corehq/apps/case_search/utils.py
+msgid "Fuzzy search is not supported with multiple values"
+msgstr ""
+
 #: corehq/apps/case_search/views.py corehq/apps/dashboard/views.py
 #: corehq/apps/data_interfaces/interfaces.py
 #: corehq/apps/data_interfaces/views.py
@@ -11788,6 +11795,11 @@ msgstr "Données"
 #: corehq/tabs/tabclasses.py
 msgid "Case Search"
 msgstr "Recherche de dossier"
+
+#: corehq/apps/case_search/xpath_functions/ancestor_functions.py
+#, python-brace-format
+msgid "{node.name} is not supported with ancestor-exists"
+msgstr ""
 
 #: corehq/apps/case_search/xpath_functions/ancestor_functions.py
 #: corehq/apps/case_search/xpath_functions/subcase_functions.py
@@ -18454,6 +18466,14 @@ msgstr ""
 msgid "Event has not yet started"
 msgstr ""
 
+#: corehq/apps/events/templates/new_event.html
+msgid ""
+"\n"
+"      There was a problem fetching the list of attendees and attendance "
+"takers. Please try again.\n"
+"      "
+msgstr ""
+
 #: corehq/apps/events/views.py
 #: corehq/apps/users/templates/users/roles_and_permissions.html
 #: corehq/privileges.py corehq/tabs/tabclasses.py
@@ -21120,13 +21140,11 @@ msgstr ""
 msgid "File has been uploaded successfully and is queued for processing."
 msgstr ""
 
-#: corehq/apps/geospatial/views.py corehq/tabs/tabclasses.py
-msgid "Geospatial"
-msgstr ""
-
-#: corehq/apps/geospatial/views.py corehq/tabs/tabclasses.py
-msgid "Map Visualization"
-msgstr ""
+#: corehq/apps/geospatial/reports.py
+#, fuzzy
+#| msgid "Case Management"
+msgid "Case Management Map"
+msgstr "Gestion des dossiers"
 
 #: corehq/apps/groups/templates/groups/all_groups.html
 #: corehq/apps/reports/filters/users.py
@@ -36790,10 +36808,8 @@ msgid "Auto-Deactivation Settings"
 msgstr ""
 
 #: corehq/apps/users/forms.py
-#, fuzzy
-#| msgid "Error! The selected form does not exist."
 msgid "This location does not exist"
-msgstr "Erreur! Le formulaire sélectionné n'existe pas"
+msgstr ""
 
 #: corehq/apps/users/forms.py
 msgid "Edit Group Membership"
@@ -41105,6 +41121,32 @@ msgstr ""
 msgid "Use date that dataValues are sent"
 msgstr ""
 
+#: corehq/motech/dhis2/const.py
+msgid ""
+"It could be that CommCare HQ is sending data faster than DHIS2 can handle. "
+"If possible, try increasing the resources on your DHIS2 instance. The "
+"ability to send data from CommCare HQ slower is coming soon."
+msgstr ""
+
+#: corehq/motech/dhis2/const.py
+msgid ""
+"This Event’s Program has multiple stages. You will need to update the "
+"configuration to specify which program stage the Event’s data belongs to. "
+"(See the “programStage” property in the data forwarder’s configuration.)"
+msgstr ""
+
+#: corehq/motech/dhis2/const.py
+msgid ""
+"An event for this program stage has already been submitted. It could be that "
+"the new event is for a different program stage. You will need to update the "
+"configuration to specify the correct program stage for this submission. (See "
+"the “programStage” property in the data forwarder’s configuration.)"
+msgstr ""
+
+#: corehq/motech/dhis2/const.py
+msgid "The DHIS2 server is currently not accepting connections."
+msgstr ""
+
 #: corehq/motech/dhis2/entities_helpers.py
 #, python-brace-format
 msgid "{n} tracked entity instances were found for case {case}"
@@ -41312,6 +41354,12 @@ msgstr ""
 #: corehq/motech/dhis2/forms.py
 msgid "Please map CommCare values to DHIS2 data elements."
 msgstr ""
+
+#: corehq/motech/dhis2/parse_response.py
+#, fuzzy
+#| msgid "Form filtering is disabled for this form"
+msgid "No diagnosis available for this error"
+msgstr "Le filtrage est désactivé pour ce formulaire"
 
 #: corehq/motech/dhis2/repeaters.py corehq/motech/dhis2/views.py
 msgid "Forward Forms to DHIS2 as Anonymous Events"
@@ -42090,6 +42138,12 @@ msgstr ""
 msgid "No attempts exist for this record."
 msgstr ""
 
+#: corehq/motech/repeaters/templates/repeaters/partials/attempt_history.html
+#, fuzzy
+#| msgid "diagnosed_ari"
+msgid "Diagnosis:"
+msgstr "diagnostiqué_ari"
+
 #: corehq/motech/repeaters/templates/repeaters/partials/repeater_row.html
 msgid "View records"
 msgstr ""
@@ -42242,30 +42296,24 @@ msgid "Unable to generate url for record"
 msgstr "Impossible de générer un url pour le dossier"
 
 #: corehq/motech/repeaters/views/repeat_records.py
-#, fuzzy
-#| msgid "Service"
 msgid "Remote Service"
-msgstr "Service"
+msgstr ""
 
 #: corehq/motech/repeaters/views/repeat_records.py
 msgid "Retry Date"
 msgstr "Réessayer date"
 
 #: corehq/motech/repeaters/views/repeat_records.py
-#, fuzzy
-#| msgid "Delivered"
 msgid "Delivery Attempts"
-msgstr "Délivré"
+msgstr "Tentatives de livraison"
 
 #: corehq/motech/repeaters/views/repeat_records.py
 msgid "View Responses"
 msgstr ""
 
 #: corehq/motech/repeaters/views/repeat_records.py
-#, fuzzy
-#| msgid "Cancel or Requeue payload"
 msgid "Cancel or Requeue"
-msgstr "Annuler ou recharger la charge utile"
+msgstr ""
 
 #: corehq/motech/repeaters/views/repeaters.py
 msgid "Forward Data"
@@ -42605,6 +42653,12 @@ msgstr ""
 msgid "Allow exports to have ownership"
 msgstr ""
 
+#: corehq/privileges.py
+#, fuzzy
+#| msgid "Bulk User Management"
+msgid "Bulk user management features"
+msgstr "Gestion en masse des utilisateurs"
+
 #: corehq/reports.py
 msgid "Report Builder Reports"
 msgstr "Rapports de l'Éditeur de Rapports"
@@ -42885,11 +42939,7 @@ msgid "Manage Attendance Tracking Events"
 msgstr ""
 
 #: corehq/tabs/tabclasses.py
-msgid "View Map"
-msgstr ""
-
-#: corehq/tabs/tabclasses.py
-msgid "Visually view and manage cases on a map"
+msgid "Geospatial"
 msgstr ""
 
 #: corehq/trans_override.py
@@ -43813,8 +43863,8 @@ msgstr "Le Score à la Fonctionnalité"
 msgid "Enter valid JSON"
 msgstr "Saisir un JSON valide"
 
-#~ msgid "Last sent date"
-#~ msgstr "Dernière date d'envoie "
+#~ msgid "Don't Use Case Tiles"
+#~ msgstr "N'utiliser pas des Plaques des Dossiers."
 
-#~ msgid "View payload"
-#~ msgstr "Afficher la charge utile"
+#~ msgid "Use Case Tiles"
+#~ msgstr "Utiliser les Plaques des Dossiers"
