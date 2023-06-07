@@ -5,7 +5,7 @@ on:
   # but only for the main branch
   push:
     branches:
-      - investigation/separate-eslinter
+      - investigation/separate-eslinter-pr-test
 
   pull_request:
     branches:
