@@ -1193,7 +1193,7 @@ class NavigationEventAuditResource(HqBaseResource, Resource):
         domain = kwargs['domain']
         self.api_params = self._process_params(domain, bundle.request.GET)
 
-        results = self.cursor_query(domain, self.local_timezone, params)
+        results = self.cursor_query(domain, self.api_params)
         return list(map(self.to_obj, results))
 
     def _process_params(self, domain, params):
@@ -1208,13 +1208,13 @@ class NavigationEventAuditResource(HqBaseResource, Resource):
         return api_params
 
     @classmethod
-    def cursor_query(cls, domain: str, local_timezone: pytz.tzinfo.DstTzInfo, params: dict = {}) -> list:
-        if 'limit' not in params:
-            params['limit'] = cls._meta.limit
-        queryset = cls._query(domain, local_timezone, params)
+    def cursor_query(cls, domain: str, params: NavigationEventAuditResourceParams) -> list:
+        if not params.limit:
+            params.limit = cls._meta.limit
+        queryset = cls._query(domain, params)
 
-        cursor_local_date = params.get('cursor_local_date')
-        cursor_user = params.get('cursor_user')
+        cursor_local_date = params.cursor_local_date
+        cursor_user = params.cursor_user
 
         if cursor_local_date and cursor_user:
             queryset = queryset.filter(
@@ -1227,18 +1227,18 @@ class NavigationEventAuditResource(HqBaseResource, Resource):
         with override_settings(USE_TZ=True):
             cls.count = queryset.count()
             # TruncDate ignores tzinfo if the queryset is not evaluated within overridden USE_TZ setting
-            return list(queryset[:params['limit']])
+            return list(queryset[:params.limit])
 
     @classmethod
-    def _query(cls, domain: str, local_timezone: pytz.tzinfo.DstTzInfo, params: dict = {}):
+    def _query(cls, domain: str, params: NavigationEventAuditResourceParams):
         queryset = NavigationEventAudit.objects.filter(domain=domain)
-        if 'users' in params:
-            queryset = queryset.filter(user__in=params['users'])
+        if params.users:
+            queryset = queryset.filter(user__in=params.users)
 
         local_date_filter = cls._get_compound_filter('local_date', params)
 
         results = (queryset
-                .annotate(local_date=TruncDate('event_date', tzinfo=local_timezone))
+                .annotate(local_date=TruncDate('event_date', tzinfo=params.local_timezone))
                 .filter(local_date_filter)
                 .values('local_date', 'user'))
 
