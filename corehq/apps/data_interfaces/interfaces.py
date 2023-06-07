@@ -141,6 +141,7 @@ class CaseReassignmentInterface(CaseListMixin, BulkDataInterface):
         )
 
 
+
 class FormManagementMode(object):
     """
         Simple container for bulk form archive/restore mode and messages
@@ -153,7 +154,7 @@ class FormManagementMode(object):
 
     def __init__(self, mode, validate=False):
         if mode == self.RESTORE_MODE:
-            self.mode_name = self.RESTORE_MODE
+             self.mode_name = self.RESTORE_MODE
             self.button_text = _("Restore selected Forms")
             self.button_class = _("btn-primary")
             self.status_page_title = _("Restore Forms Status")

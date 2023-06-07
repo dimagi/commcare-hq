@@ -10,8 +10,10 @@ hqDefine("data_interfaces/js/archive_forms", function () {
         toggleButton(selectedCount);
     }
 
-    function toggleButton(count) {
-        if (count) {
+    function toggleButton(count){
+
+
+        if (count ) {
             $("#submitForms").prop('disabled', false);
         }
         else {
