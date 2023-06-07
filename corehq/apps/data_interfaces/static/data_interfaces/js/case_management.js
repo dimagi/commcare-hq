@@ -52,10 +52,10 @@ hqDefine("data_interfaces/js/case_management",[
             return function () {
                 var $checkbox = $('#data-interfaces-reassign-cases input[data-caseid="' + caseId + '"].selected-commcare-case');
                 var $row = $checkbox.closest("tr");
+                var labelMessage = gettext("Out of range of filter. Will not appear on page refresh.");
                 var username = $('#reassign_owner_select').data().select2.data().text,
                     dateMessage = (self.onToday) ? '<span title="0"></span>' :
-                        '<span class="label label-warning" title="0">Out of range of filter. Will ' +
-                                    'not appear on page refresh.</span>';
+                        '<span class="label label-warning" title="0">' + labelMessage + '</span>';
                 $checkbox.data('owner', ownerId);
                 $checkbox.data('ownertype', ownerType);
 
@@ -65,8 +65,9 @@ hqDefine("data_interfaces/js/case_management",[
                     groupLabel = ' <span class="label label-inverse" title="' + username + '">group</span>';
                 }
 
+                var labelText = gettext("updated");
                 $row.find('td:nth-child(4)').html(username + groupLabel + ' <span class="label label-info" title="' + username +
-                                                '">updated</span>');
+                                                '">' + labelText + '</span>');
                 $row.find('td:nth-child(5)').html('Today ' + dateMessage);
                 $checkbox.prop("checked", false).change();
             };
@@ -79,8 +80,9 @@ hqDefine("data_interfaces/js/case_management",[
                     var caseId = caseIdsArr[i];
                     var $checkbox = $('#data-interfaces-reassign-cases input[data-caseid="' + caseId + '"].selected-commcare-case');
                     var $row = $checkbox.closest("tr");
+                    var labelMessage = gettext("Case copied");
                     var dateMessage = (self.onToday) ? '<span title="0"></span>' :
-                        '<span class="label label-info" title="0">Case copied</span>';
+                        '<span class="label label-info" title="0">' + labelMessage +'</span>';
                     $row.find('td:nth-child(5)').html('Today ' + dateMessage);
                     $checkbox.prop("checked", false).change();
                 }
@@ -271,9 +273,10 @@ hqDefine("data_interfaces/js/case_management",[
             }
 
             var caseAction = initialPageData.get('action');
-            var placeholderText = "Search for users";
-            if (caseAction != 'copy') {
-                placeholderText = placeholderText + " or groups";
+            if (caseAction == 'copy') {
+                var placeholderText = gettext("Search for users");
+            } else {
+                var placeholderText = gettext("Search for users or groups");
             };
 
             var $select = $('#reassign_owner_select');
