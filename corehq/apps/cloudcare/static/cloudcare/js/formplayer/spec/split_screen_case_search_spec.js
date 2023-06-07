@@ -6,25 +6,21 @@ describe('Split Screen Case Search', function () {
         Controller = hqImport('cloudcare/js/formplayer/menus/controller'),
         FakeFormplayer = hqImport("cloudcare/js/formplayer/spec/fake_formplayer"),
         FormplayerFrontend = hqImport('cloudcare/js/formplayer/app'),
+        splitScreenCaseListResponse = hqImport('cloudcare/js/formplayer/spec/fixtures/split_screen_case_list'),
         Toggles = hqImport('hqwebapp/js/toggles'),
-        Utils = hqImport('cloudcare/js/formplayer/utils/utils'),
-        stubs = {};
+        Utils = hqImport('cloudcare/js/formplayer/utils/utils');
 
-    const REGIONS = {
-        main: 'main',
-        sidebar: 'sidebar',
-    };
+    const currentUrl = new Utils.CloudcareUrl({appId: 'abc123'}),
+        sandbox = sinon.sandbox.create(),
+        stubs = {},
+        REGIONS = {
+            main: 'main',
+            sidebar: 'sidebar',
+        };
 
-    let splitScreenCaseListView,
-        sandbox,
-        currentUrl,
-        getRegion;
+    let getRegion;
 
-    beforeEach(function () {
-        splitScreenCaseListView = hqImport('cloudcare/js/formplayer/spec/fixtures/split_screen_case_list');
-        sandbox = sinon.sandbox.create();
-
-        currentUrl = new Utils.CloudcareUrl({appId: 'abc123'});
+    before(function () {
         sandbox.stub(Utils, 'currentUrlToObject').callsFake(function () {
             return currentUrl;
         });
@@ -48,19 +44,20 @@ describe('Split Screen Case Search', function () {
             addRegions: function () { return; },
         };
         getRegion = sandbox.spy(FormplayerFrontend.regions, 'getRegion');
+        stubs.sidebarEnabled = sandbox.stub(Toggles, 'toggleEnabled').withArgs('SPLIT_SCREEN_CASE_SEARCH');
+    });
 
+    beforeEach(function () {
         FormplayerFrontend.currentUser.displayOptions.singleAppMode = false;
-        stubs.sidebarEnabled = sandbox.stub(Toggles, 'toggleEnabled')
-            .withArgs('SPLIT_SCREEN_CASE_SEARCH')
-            .returns(true);
+        stubs.sidebarEnabled.returns(true);
     });
 
     afterEach(function () {
-        sandbox.restore();
+        sandbox.resetHistory();
     });
 
     it('should show sidebar when using split screen case search', function () {
-        Controller.showMenu(splitScreenCaseListView);
+        Controller.showMenu(splitScreenCaseListResponse);
 
         assert.isTrue(getRegion.calledWith(REGIONS.sidebar));
         assert.isTrue(_.some(stubs.show.getCalls(), call => call.thisValue.region === REGIONS.sidebar));
@@ -68,23 +65,23 @@ describe('Split Screen Case Search', function () {
 
     it('should empty sidebar if in app preview', function () {
         FormplayerFrontend.currentUser.displayOptions.singleAppMode = true;
-        Controller.showMenu(splitScreenCaseListView);
+        Controller.showMenu(splitScreenCaseListResponse);
 
         assert.isTrue(getRegion.calledWith(REGIONS.sidebar));
         assert.isTrue(_.some(stubs.empty.getCalls(), call => call.thisValue.region === REGIONS.sidebar));
     });
 
     it('should empty sidebar if response type not entities', function () {
-        splitScreenCaseListView.type = '';
-        Controller.showMenu(splitScreenCaseListView);
+        splitScreenCaseListResponse.type = '';
+        Controller.showMenu(splitScreenCaseListResponse);
 
         assert.isTrue(getRegion.calledWith(REGIONS.sidebar));
         assert.isTrue(_.some(stubs.empty.getCalls(), call => call.thisValue.region === REGIONS.sidebar));
     });
 
     it('should empty sidebar if no queryResponse present', function () {
-        delete splitScreenCaseListView.queryResponse;
-        Controller.showMenu(splitScreenCaseListView);
+        delete splitScreenCaseListResponse.queryResponse;
+        Controller.showMenu(splitScreenCaseListResponse);
 
         assert.isTrue(getRegion.calledWith(REGIONS.sidebar));
         assert.isTrue(_.some(stubs.empty.getCalls(), call => call.thisValue.region === REGIONS.sidebar));
@@ -92,15 +89,15 @@ describe('Split Screen Case Search', function () {
 
     it('should empty sidebar if feature flag disabled', function () {
         stubs.sidebarEnabled.returns(false);
-        Controller.showMenu(splitScreenCaseListView);
+        Controller.showMenu(splitScreenCaseListResponse);
 
         assert.isTrue(getRegion.calledWith(REGIONS.sidebar));
         assert.isTrue(_.some(stubs.empty.getCalls(), call => call.thisValue.region === REGIONS.sidebar));
     });
 
     it('should show case list area in split screen when response type query', function () {
-        splitScreenCaseListView.type = 'query';
-        Controller.showMenu(splitScreenCaseListView);
+        splitScreenCaseListResponse.type = 'query';
+        Controller.showMenu(splitScreenCaseListResponse);
 
         assert.isTrue(getRegion.calledWith(REGIONS.main));
         assert.isTrue(_.some(stubs.show.getCalls(), call => call.thisValue.region === REGIONS.main));
