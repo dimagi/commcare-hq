@@ -1918,6 +1918,13 @@ class CaseListLookupMixin(DocumentSchema):
     lookup_field_template = StringProperty(exclude_if_none=True)
 
 
+class TileGroupConfig(DocumentSchema):
+    # e.g. "./index/parent"
+    xpath_function = StringProperty()
+    # number of rows of the tile to use for the group header
+    header_rows = IntegerProperty(default=1)
+
+
 class Detail(IndexedSchema, CaseListLookupMixin):
     """
     Full configuration for a case selection screen
@@ -1956,6 +1963,8 @@ class Detail(IndexedSchema, CaseListLookupMixin):
     case_tile_template = StringProperty(exclude_if_none=True)
     # If given, use this string for the case tile markup instead of the default temaplte
     custom_xml = StringProperty(exclude_if_none=True)
+    # Case tile grouping configuration
+    group_config = SchemaProperty(TileGroupConfig)
 
     persist_tile_on_forms = BooleanProperty()
     # use case tile context persisted over forms from another module
