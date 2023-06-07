@@ -61,7 +61,7 @@ from corehq.apps.app_manager.suite_xml.xml_models import (
     Template,
     Text,
     TextXPath,
-    XPathVariable,
+    XPathVariable, TileGroup,
 )
 from corehq.apps.app_manager.util import (
     create_temp_sort_column,
