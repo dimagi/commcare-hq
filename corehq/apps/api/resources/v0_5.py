@@ -1,7 +1,7 @@
 import json
 from base64 import b64decode, b64encode
 from collections import namedtuple
-from dataclasses import dataclass, field, InitVar
+from dataclasses import asdict, dataclass, field, InitVar
 import functools
 import pytz
 from urllib.parse import urlencode
@@ -1249,7 +1249,7 @@ class NavigationEventAuditResource(HqBaseResource, Resource):
     @classmethod
     def _get_compound_filter(cls, key, params):
         compound_filter = Q()
-        for key, val in params.items():
+        for key, val in asdict(params)[key].items():
             if '.' in key and key.split('.')[0] in cls.COMPOUND_FILTERS:
                 prefix, qualifier = key.split('.', maxsplit=1)
                 filter_obj = cls.COMPOUND_FILTERS[prefix](qualifier, val)
