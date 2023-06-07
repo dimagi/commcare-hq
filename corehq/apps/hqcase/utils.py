@@ -244,13 +244,13 @@ def get_last_non_blank_value(case, case_property):
 
 def get_case_value(case: CommCareCase, value: str):
     """
-    Returns the value of a case and whether it's a property on the case.
-        Parameters:
-            - case: the relevant case
-            - value: the value you want from the case
-        Returns:
-            A tuple containing the value on whether that value is a property on the case.
-            If no value is found `(None, None)` is returned
+    Returns the case's `value` and whether it's a property on the case (as opposed to attribute).
+
+    :param case: the relevant case
+    :param value: the value you want from the case
+
+    :return: A tuple containing the value on whether that value is a property on the case.
+             If no value is found `(None, None)` is returned
     """
     if not value:
         return None, None
@@ -264,17 +264,16 @@ def get_case_value(case: CommCareCase, value: str):
 
 def get_censored_case_data(case: CommCareCase, censor_data: dict):
     """
-    This function is used to get censored data on a case.
+    This function is used to get the data on the specified case, but with the `censor_data `
+    properties censored.
 
-        Parameters:
-            - case: the case to censor the data for
-            - censor_data: a dictionary containing as key the data to sensor and value the
+    :param case: the case to censor the data for
+    :param censor_data: a dictionary containing as key the datum name to sensor and value the
                         transform method as a string to use to censor the data.
                         Two transforms are currently supported, namely `deid_ID` and `deid_date`.
                         An invalid transform will result in a blank value.
 
-        Returns:
-            A tuple containing the censored attrs and properties as dictionaries respectively
+    :return: A tuple containing the censored attrs and properties as dictionaries respectively
 
     """
     attrs = {}

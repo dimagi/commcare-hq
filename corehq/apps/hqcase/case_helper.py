@@ -181,17 +181,15 @@ class CaseHelper:
         and replacing the relevant case properties with the specified 'replace_props'
         on the copied cases (useful for hiding sensitive data).
 
-            Parameters:
-                domain: the domain string
-                case_ids: case ids of the cases to copy
-                to_owner: the owner to copy the cases to
-                censor_data: the attributes/properties to be censored, specified as a dict.
-                    The keys corresponding to the property/attribute and the value specifies
-                    the type of censored data, i.e. number or date
-                count_only: specifies whether to return only the number of copied cases.
+        :param domain: the domain string
+        :param case_ids: case ids of the cases to copy
+        :param to_owner: the owner to copy the cases to
+        :param censor_data: the attributes/properties to be censored, specified as a dict.
+                The keys corresponding to the property/attribute and the value specifies
+                the type of censored data, i.e. number or date
+        :param count_only: specifies whether to return only the number of copied cases.
 
-            Returns:
-                The copied cases. If `count_only` is True only the count will be returned.
+        :return: The copied cases. If `count_only` is True only the count will be returned.
         """
         if not to_owner:
             raise Exception('Must copy cases to valid new owner')
