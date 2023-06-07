@@ -117,7 +117,7 @@ class SuiteCaseTilesTest(SimpleTestCase, SuiteMixin):
 
         module = app.add_module(Module.new_module('Untitled Module', None))
         module.case_type = 'patient'
-        module.case_details.short.case_tile_template = CASE_TILE_TEMPLATE_NAME_PERSON_SIMPLE
+        module.case_details.short.case_tile_template = CaseTileTemplates.PERSON_SIMPLE
         module.case_details.short.use_case_tiles = True
         self._add_columns_for_case_details(module)
 
