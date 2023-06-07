@@ -4,20 +4,6 @@
             <locale id="{title_text_id}"/>
         </text>
     </title>
-    <action>
-        <display>
-            <text>
-                <locale id="forms.m0f0"/>
-            </text>
-            <media image="jr://media/plus.png"/>
-        </display>
-        <stack>
-            <push>
-                <command value="'m0-f0'"/>
-                <datum id="case_id_new_rec_child_0" value="uuid()"/>
-            </push>
-        </stack>
-    </action>
 
     <field>
         <style
