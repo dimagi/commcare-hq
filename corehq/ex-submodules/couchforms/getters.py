@@ -73,10 +73,7 @@ def get_instance_and_attachment(request):
 
 
 def _valid_instance_file_extension(file):
-    if "." not in file.name:
-        return False
-    file_extension = file.name.rsplit(".", 1)[-1]
-    return file_extension == 'xml'
+    return _valid_file_extension(file.name, ['xml'])
 
 
 def _valid_attachment_file(file):
@@ -84,10 +81,14 @@ def _valid_attachment_file(file):
 
 
 def _valid_attachment_file_extension(file):
-    if "." not in file.name:
+    return _valid_file_extension(file.name, VALID_ATTACHMENT_FILE_EXTENSIONS)
+
+
+def _valid_file_extension(filename, valid_extensions):
+    if "." not in filename:
         return False
-    file_extension = file.name.rsplit(".", 1)[-1]
-    return file_extension in VALID_ATTACHMENT_FILE_EXTENSIONS
+    file_extension = filename.rsplit(".", 1)[-1]
+    return file_extension in valid_extensions
 
 
 def _valid_attachment_file_mimetype(file):
