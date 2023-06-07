@@ -56,8 +56,22 @@ describe('Split Screen Case Search', function () {
         sandbox.resetHistory();
     });
 
-    it('should show sidebar when using split screen case search', function () {
+    it('should show sidebar and main regions when using split screen case search', function () {
         Controller.showMenu(splitScreenCaseListResponse);
+
+        assert.isTrue(getRegion.calledWith(REGIONS.sidebar));
+        assert.isTrue(_.some(stubs.show.getCalls(), call => call.thisValue.region === REGIONS.sidebar));
+
+        assert.isTrue(getRegion.calledWith(REGIONS.main));
+        assert.isTrue(_.some(stubs.show.getCalls(), call => call.thisValue.region === REGIONS.main));
+    });
+
+    it('should show sidebar and main regions even when response type query', function () {
+        const responseWithTypeQuery = _.extend({}, splitScreenCaseListResponse, {'type': 'query'});
+        Controller.showMenu(responseWithTypeQuery);
+
+        assert.isTrue(getRegion.calledWith(REGIONS.main));
+        assert.isTrue(_.some(stubs.show.getCalls(), call => call.thisValue.region === REGIONS.main));
 
         assert.isTrue(getRegion.calledWith(REGIONS.sidebar));
         assert.isTrue(_.some(stubs.show.getCalls(), call => call.thisValue.region === REGIONS.sidebar));
@@ -71,17 +85,17 @@ describe('Split Screen Case Search', function () {
         assert.isTrue(_.some(stubs.empty.getCalls(), call => call.thisValue.region === REGIONS.sidebar));
     });
 
-    it('should empty sidebar if response type not entities', function () {
-        splitScreenCaseListResponse.type = '';
-        Controller.showMenu(splitScreenCaseListResponse);
+    it('should empty sidebar if response type neither entities nor query', function () {
+        const responseWithTypeEmpty = _.extend({}, splitScreenCaseListResponse, {'type': ''});
+        Controller.showMenu(responseWithTypeEmpty);
 
         assert.isTrue(getRegion.calledWith(REGIONS.sidebar));
         assert.isTrue(_.some(stubs.empty.getCalls(), call => call.thisValue.region === REGIONS.sidebar));
     });
 
     it('should empty sidebar if no queryResponse present', function () {
-        delete splitScreenCaseListResponse.queryResponse;
-        Controller.showMenu(splitScreenCaseListResponse);
+        const responseWithoutQueryResponse = _.omit(splitScreenCaseListResponse, 'queryResponse');
+        Controller.showMenu(responseWithoutQueryResponse);
 
         assert.isTrue(getRegion.calledWith(REGIONS.sidebar));
         assert.isTrue(_.some(stubs.empty.getCalls(), call => call.thisValue.region === REGIONS.sidebar));
@@ -93,17 +107,6 @@ describe('Split Screen Case Search', function () {
 
         assert.isTrue(getRegion.calledWith(REGIONS.sidebar));
         assert.isTrue(_.some(stubs.empty.getCalls(), call => call.thisValue.region === REGIONS.sidebar));
-    });
-
-    it('should show case list area in split screen when response type query', function () {
-        splitScreenCaseListResponse.type = 'query';
-        Controller.showMenu(splitScreenCaseListResponse);
-
-        assert.isTrue(getRegion.calledWith(REGIONS.main));
-        assert.isTrue(_.some(stubs.show.getCalls(), call => call.thisValue.region === REGIONS.main));
-
-        assert.isTrue(getRegion.calledWith(REGIONS.sidebar));
-        assert.isTrue(_.some(stubs.show.getCalls(), call => call.thisValue.region === REGIONS.sidebar));
     });
 
     it('should clear sidebar on menu:select', function () {
