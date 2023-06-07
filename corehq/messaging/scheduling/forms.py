@@ -131,6 +131,9 @@ class ContentForm(Form):
     # names in the HTML are prefixed with "content-"
     prefix = 'content'
 
+    FCM_SUBJECT_MAX_LENGTH = 255
+    FCM_MESSAGE_MAX_LENGTH = 2048
+
     fcm_message_type = ChoiceField(
         required=False,
         choices=FCMNotificationContent.MESSAGE_TYPES,
@@ -211,7 +214,8 @@ class ContentForm(Form):
     def clean_subject(self):
         if (self.schedule_form.cleaned_data.get('content') == ScheduleForm.CONTENT_FCM_NOTIFICATION
                 and self.cleaned_data['fcm_message_type'] == FCMNotificationContent.MESSAGE_TYPE_NOTIFICATION):
-            return self._clean_message_field('subject')
+            cleaned_value = self._clean_message_field('subject')
+            return self._validate_fcm_message_length(cleaned_value, self.FCM_SUBJECT_MAX_LENGTH)
 
         if self.schedule_form.cleaned_data.get('content') != ScheduleForm.CONTENT_EMAIL:
             return None
@@ -221,7 +225,8 @@ class ContentForm(Form):
     def clean_message(self):
         if (self.schedule_form.cleaned_data.get('content') == ScheduleForm.CONTENT_FCM_NOTIFICATION
                 and self.cleaned_data['fcm_message_type'] == FCMNotificationContent.MESSAGE_TYPE_NOTIFICATION):
-            return self._clean_message_field('message')
+            cleaned_value = self._clean_message_field('message')
+            return self._validate_fcm_message_length(cleaned_value, self.FCM_MESSAGE_MAX_LENGTH)
 
         if self.schedule_form.cleaned_data.get('content') not in (ScheduleForm.CONTENT_SMS,
                                                                   ScheduleForm.CONTENT_EMAIL):
@@ -242,6 +247,14 @@ class ContentForm(Form):
             raise ValidationError(_("Please fill out at least one translation"))
 
         return cleaned_value
+
+    @staticmethod
+    def _validate_fcm_message_length(value, max_length):
+        for data in value.values():
+            if len(data) > max_length:
+                raise ValidationError(_('This field must be less than {} characters'
+                                        .format(max_length + 1)))
+        return value
 
     def clean_fcm_message_type(self):
         if self.schedule_form.cleaned_data.get('content') != ScheduleForm.CONTENT_FCM_NOTIFICATION:
