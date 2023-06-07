@@ -406,6 +406,15 @@ class EntriesHelper(object):
                 requires_selection=False,
                 action=None  # Unused (and could be actions['usercase_update'] or actions['usercase_preload'])
             ))
+
+        xpath_function = form.get_module().case_details.short.case_tile_group.xpath_function
+        if form.form_type == 'module_form' and xpath_function:
+            datums.append(FormDatumMeta(
+                datum=SessionDatum(id="case_id", function=xpath_function),
+                case_type=None,
+                requires_selection=False,
+                action=None
+            ))
         return datums
 
     @staticmethod

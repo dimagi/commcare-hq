@@ -2346,6 +2346,14 @@ class ModuleBase(IndexedSchema, ModuleMediaMixin, NavMenuItemMediaMixin, Comment
             return self.case_details.short.multi_select
         return False
 
+    def has_grouped_tiles(self):
+        if hasattr(self, 'case_details'):
+            return (
+                self.case_details.short.case_tile_template
+                and self.case_details.short.case_tile_group.xpath_function
+            )
+        return False
+
     def is_auto_select(self):
         if self.is_multi_select and hasattr(self, 'case_details'):
             return self.case_details.short.auto_select

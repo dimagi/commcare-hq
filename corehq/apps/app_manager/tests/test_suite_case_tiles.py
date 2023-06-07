@@ -470,7 +470,6 @@ class SuiteCaseTilesTest(SimpleTestCase, SuiteMixin):
         form.xmlns = 'http://id_m0-f0'
         form.requires = 'case'
 
-        # case list detail
         self.assertXmlPartialEqual(
             """
             <partial>
@@ -479,4 +478,38 @@ class SuiteCaseTilesTest(SimpleTestCase, SuiteMixin):
             """,
             app.create_suite(),
             "detail[@id='m0_case_short']/group",
+        )
+
+    def test_entry_datum_with_case_tile_grouping(self, *args):
+        app = Application.new_app('domain', 'Untitled Application')
+
+        module = app.add_module(Module.new_module('Untitled Module', None))
+        module.case_type = 'child'
+        module.case_details.short.case_tile_template = CaseTileTemplates.PERSON_SIMPLE.value
+        self._add_columns_for_case_details(module)
+        module.case_details.short.case_tile_group = CaseTileGroupConfig(xpath_function="./index/parent")
+
+        module.assign_references()
+
+        form = app.new_form(0, "Untitled Form", None)
+        form.xmlns = 'http://id_m0-f0'
+        form.requires = 'case'
+
+        suite = app.create_suite()
+        self.assertXmlPartialEqual(
+            """
+            <partial>
+              <session>
+                <datum 
+                    detail-confirm="m0_case_long" 
+                    detail-select="m0_case_short" 
+                    id="case_id_child" 
+                    nodeset="instance('casedb')/casedb/case[@case_type='child'][@status='open']" 
+                    value="./@case_id"/>
+                <datum function="./index/parent" id="case_id"/>
+              </session>
+            </partial>
+            """,
+            suite,
+            "entry[1]/session",
         )
