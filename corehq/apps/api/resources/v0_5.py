@@ -1205,14 +1205,6 @@ class NavigationEventAuditResource(HqBaseResource, Resource):
             api_params.process_cursor()
         api_params.process_local_timezone(domain)
 
-        processed_params = {}
-
-        for param in params:
-            val = params.get(param)
-            if param == 'users':
-                val = params.getlist(param)
-            processed_params[param] = val
-
         return api_params
 
     @classmethod
