@@ -1105,6 +1105,11 @@ class NavigationEventAuditResourceParams:
 
         self.local_date = local_date
 
+    def process_cursor(self):
+        cursor_params_string = b64decode(self.cursor).decode('utf-8')
+        cursor_params = QueryDict(cursor_params_string, mutable=True)
+        self.cursor_local_date = cursor_params.get('cursor_local_date')
+        self.cursor_user = cursor_params.get('cursor_user')
 
 class NavigationEventAuditResource(HqBaseResource, Resource):
     local_date = fields.DateField(attribute='local_date', readonly=True)
@@ -1176,6 +1181,9 @@ class NavigationEventAuditResource(HqBaseResource, Resource):
     def _process_params(self, domain, params):
         api_params = NavigationEventAuditResourceParams(raw_params=params)
 
+        if api_params.cursor:
+            api_params.process_cursor()
+
         processed_params = {}
 
         for param in params:
@@ -1186,12 +1194,6 @@ class NavigationEventAuditResource(HqBaseResource, Resource):
 
             if param == 'limit':
                 processed_params['limit'] = self._process_limit(val)
-
-            if param == 'cursor':
-                cursor_params_string = b64decode(params['cursor']).decode('utf-8')
-                cursor_params = QueryDict(cursor_params_string, mutable=True)
-                processed_params['cursor_local_date'] = cursor_params.get('cursor_local_date')
-                processed_params['cursor_user'] = cursor_params.get('cursor_user')
 
         if 'local_timezone' in processed_params:
             self.local_timezone = pytz.timezone(processed_params['local_timezone'])
