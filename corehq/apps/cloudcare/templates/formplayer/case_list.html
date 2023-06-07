@@ -6,6 +6,7 @@
 
     <div aria-label="<%- title %>" tabindex="0" class="page-header menu-header"><h1 class="page-title"><%- title %></h1></div>
 
+    {% if not request|toggle_enabled:"SPLIT_SCREEN_CASE_SEARCH" %}
     <div class="module-search-container">
       <div class="input-group input-group-lg">
         <input type="text" class="form-control" placeholder="Search" id="searchText">
@@ -16,6 +17,7 @@
         </div>
       </div>
     </div>
+    {% endif %}
 
     <div style="<%- columnStyle %>">
       <div id="module-case-list-column-next-to-map">
@@ -28,7 +30,6 @@
         <% } else { %>
         <div class="module-case-list-table-container">
           <table class="table module-table module-table-case-list">
-
               <thead>
                 <tr>
                   <% if (isMultiSelect && !hasNoItems) { %>
@@ -50,7 +51,7 @@
             <tbody>
             <tr>
               <td class="module-case-list-column module-case-list-column-empty" colspan="<%-headers.length%>">
-                <% if (noItemsText === null) { %>
+                <% if (noItemsText == null) { %>
                   <div class="alert alert-info">{% trans "List is empty." %}</div>
                 <% } else { %>
                   <div class="alert alert-info"><%- noItemsText %></div>
