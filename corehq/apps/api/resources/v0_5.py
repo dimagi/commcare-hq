@@ -1072,6 +1072,24 @@ class NavigationEventAuditResourceParams:
     cursor_local_date: str = None
     cursor_user: str = None
 
+    def __post_init__(self, raw_params=None):
+        if raw_params:
+            self._set_compound_keys(raw_params)
+            self.users = raw_params.getlist('users')
+            self.limit = raw_params.get('limit')
+            self.local_timezone = raw_params.get('local_timezone')
+            self.cursor = raw_params.get('cursor')
+
+    def _set_compound_keys(self, params):
+        local_date = {}
+        for key in params.keys():
+            if '.' in key:
+                prefix, qualifier = key.split('.', maxsplit=1)
+                if prefix == 'local_date':
+                    local_date[key] = params.get(key)
+
+        self.local_date = local_date
+
 
 class NavigationEventAuditResource(HqBaseResource, Resource):
     local_date = fields.DateField(attribute='local_date', readonly=True)
@@ -1141,6 +1159,8 @@ class NavigationEventAuditResource(HqBaseResource, Resource):
         return list(map(self.to_obj, results))
 
     def _process_params(self, domain, params):
+        api_params = NavigationEventAuditResourceParams(raw_params=params)
+
         processed_params = {}
 
         for param in params:
@@ -1163,7 +1183,7 @@ class NavigationEventAuditResource(HqBaseResource, Resource):
         else:
             self.local_timezone = Domain.get_by_name(domain).get_default_timezone()
 
-        return processed_params
+        return api_params
 
     def _process_limit(self, limit):
         try:
