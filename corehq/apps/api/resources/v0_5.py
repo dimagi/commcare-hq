@@ -1,6 +1,7 @@
 import json
 from base64 import b64decode, b64encode
 from collections import namedtuple
+from dataclasses import dataclass, field, InitVar
 import functools
 import pytz
 from urllib.parse import urlencode
@@ -1058,6 +1059,18 @@ class ODataFormResource(BaseODataResource):
             url(r"^(?P<resource_name>{})/(?P<config_id>[\w\d_.-]+)/feed".format(
                 self._meta.resource_name), self.wrap_view('dispatch_list')),
         ]
+
+
+@dataclass
+class NavigationEventAuditResourceParams:
+    raw_params: InitVar = None
+    users: list[str] = field(default_factory=list)
+    limit: int = None
+    local_timezone: str = None
+    cursor: str = None
+    local_date: dict[str:str] = field(default_factory=dict)
+    cursor_local_date: str = None
+    cursor_user: str = None
 
 
 class NavigationEventAuditResource(HqBaseResource, Resource):
