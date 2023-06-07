@@ -142,6 +142,20 @@ class SubmissionTest(BaseSubmissionTest):
             f'</message></OpenRosaResponse>'
         )
 
+    def test_submission_with_only_mobile_supported_content_types(self):
+        image = SimpleUploadedFile("image.abc", b"fake image", content_type="application/octet-stream")
+        response = self._submit('simple_form.xml', attachments={
+            "image.png": image,
+        })
+        self.assertEqual(response.status_code, 201)
+
+    def test_submission_with_only_formplayer_supported_content_types(self):
+        image = SimpleUploadedFile("image.abc", b"fake image", content_type="application/pdf")
+        response = self._submit('simple_form.xml', attachments={
+            "image.png": image,
+        })
+        self.assertEqual(response.status_code, 201)
+
     def test_valid_attachment_file_extension_with_valid_mimetype(self):
         image = SimpleUploadedFile("image.png", b"fake image", content_type="image/png")
         response = self._submit('simple_form.xml', attachments={
