@@ -13,7 +13,6 @@ from corehq.apps.app_manager.suite_xml.features.case_tiles import CaseTileTempla
 from corehq.apps.app_manager.tests.app_factory import AppFactory
 from corehq.apps.app_manager.tests.util import (
     SuiteMixin,
-    TestXmlMixin,
     patch_get_xform_resource_overrides,
 )
 from corehq.util.test_utils import flag_enabled
@@ -117,7 +116,7 @@ class SuiteCaseTilesTest(SimpleTestCase, SuiteMixin):
 
         module = app.add_module(Module.new_module('Untitled Module', None))
         module.case_type = 'patient'
-        module.case_details.short.case_tile_template = CASE_TILE_TEMPLATE_NAME_PERSON_SIMPLE
+        module.case_details.short.case_tile_template = CaseTileTemplates.PERSON_SIMPLE
         module.case_details.short.use_case_tiles = True
         self._add_columns_for_case_details(module)
 
