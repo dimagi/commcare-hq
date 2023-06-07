@@ -5,11 +5,9 @@ import re
 from ast import literal_eval
 from collections import namedtuple
 from copy import copy, deepcopy
-from corehq import toggles
 from datetime import datetime, timedelta
 from uuid import UUID
 
-from celery.states import FAILURE
 from django.conf import settings
 from django.contrib.postgres.fields import ArrayField
 from django.core.serializers.json import DjangoJSONEncoder
@@ -19,11 +17,11 @@ from django.utils.translation import gettext as _
 
 import requests
 import yaml
+from celery.states import FAILURE
 from couchdbkit.exceptions import BadValueError
 from django_bulk_update.helper import bulk_update as bulk_update_helper
 from jsonpath_ng.ext import parser
 from memoized import memoized
-from corehq.apps.domain.models import AllowedUCRExpressionSettings
 
 from dimagi.ext.couchdbkit import (
     BooleanProperty,
@@ -47,10 +45,12 @@ from dimagi.utils.couch.undo import is_deleted
 from dimagi.utils.dates import DateSpan
 from dimagi.utils.modules import to_function
 
+from corehq import toggles
 from corehq.apps.cachehq.mixins import (
     CachedCouchDocumentMixin,
     QuickCachedDocumentMixin,
 )
+from corehq.apps.domain.models import AllowedUCRExpressionSettings
 from corehq.apps.registry.helper import DataRegistryHelper
 from corehq.apps.userreports.app_manager.data_source_meta import (
     REPORT_BUILDER_DATA_SOURCE_TYPE_VALUES,
@@ -949,7 +949,9 @@ class ReportConfiguration(QuickCachedDocumentMixin, Document):
     @property
     @memoized
     def cached_data_source(self):
-        from corehq.apps.userreports.reports.data_source import ConfigurableReportDataSource
+        from corehq.apps.userreports.reports.data_source import (
+            ConfigurableReportDataSource,
+        )
         return ConfigurableReportDataSource.from_spec(self).data_source
 
     @property
@@ -1006,7 +1008,9 @@ class ReportConfiguration(QuickCachedDocumentMixin, Document):
         return langs
 
     def validate(self, required=True):
-        from corehq.apps.userreports.reports.data_source import ConfigurableReportDataSource
+        from corehq.apps.userreports.reports.data_source import (
+            ConfigurableReportDataSource,
+        )
 
         def _check_for_duplicates(supposedly_unique_list, error_msg):
             # http://stackoverflow.com/questions/9835762/find-and-list-duplicates-in-python-list
