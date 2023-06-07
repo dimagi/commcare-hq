@@ -26,11 +26,11 @@ def validate_routing_request(request_json):
                 "type": "object",
                 "properties": {
                     "lon": {
-                        "type": "string",
+                        "type": ["string", "number"],
                         "description": "longitude"
                     },
                     "lat": {
-                        "type": "string",
+                        "type": ["string", "number"],
                         "description": "latitude"
                     },
                     "id": {
