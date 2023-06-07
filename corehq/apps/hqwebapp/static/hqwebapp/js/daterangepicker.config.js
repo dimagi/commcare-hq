@@ -12,33 +12,23 @@ hqDefine("hqwebapp/js/daterangepicker.config", [
 ) {
     'use strict';
 
-    var getLocalDate = function (date) {
-        /**
-         * This fixes an issue with daterangepicker where a date is passed in
-         * then converted to the browser's local timezone. So if you are in
-         * EST that means the date shows up as the day before.
-         */
-        var _date = new Date(date);
-        _date.setMinutes(_date.getMinutes() + _date.getTimezoneOffset());
-        return _date;
-    };
     $.fn.getDateRangeSeparator = function () {
         return ' to ';
     };
     $.fn.createDateRangePicker = function (
-        range_labels, separator, startdate, enddate
+        rangeLabels, separator, startdate, enddate
     ) {
         var ranges = {};
-        ranges[range_labels.last_7_days] = [
+        ranges[rangeLabels.last_7_days] = [
             moment().subtract('7', 'days').startOf('days'),
         ];
 
-        ranges[range_labels.last_month] = [
+        ranges[rangeLabels.last_month] = [
             moment().subtract('1', 'months').startOf('month'),
             moment().subtract('1', 'months').endOf('month'),
         ];
 
-        ranges[range_labels.last_30_days] = [
+        ranges[rangeLabels.last_30_days] = [
             moment().subtract('30', 'days').startOf('days'),
         ];
         var config = {
@@ -52,8 +42,8 @@ hqDefine("hqwebapp/js/daterangepicker.config", [
         };
         var hasStartAndEndDate = !_.isEmpty(startdate) && !_.isEmpty(enddate);
         if (hasStartAndEndDate) {
-            config.startDate = getLocalDate(startdate);
-            config.endDate = getLocalDate(enddate);
+            config.startDate = new Date(startdate);
+            config.endDate = new Date(enddate);
         }
 
         $(this).daterangepicker(config);
@@ -70,12 +60,12 @@ hqDefine("hqwebapp/js/daterangepicker.config", [
                 $el.val(gettext("Show All Dates")).change();
 
                 // Clear startdate and enddate filters
-                var filter_id = $(this)[0].getAttribute("name");
-                var filter_id_start = filter_id + "-start";
-                var filter_id_end = filter_id + "-end";
-                if (document.getElementById(filter_id_start) && document.getElementById(filter_id_end)) {
-                    document.getElementById(filter_id_start).setAttribute("value", "");
-                    document.getElementById(filter_id_end).setAttribute("value", "");
+                var filterId = $(this)[0].getAttribute("name");
+                var filterIdStart = filterId + "-start";
+                var filterIdEnd = filterId + "-end";
+                if (document.getElementById(filterIdStart) && document.getElementById(filterIdEnd)) {
+                    document.getElementById(filterIdStart).setAttribute("value", "");
+                    document.getElementById(filterIdEnd).setAttribute("value", "");
                 }
             });
         }

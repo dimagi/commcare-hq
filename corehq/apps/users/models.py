@@ -112,6 +112,7 @@ COMMCARE_USER = 'commcare'
 MAX_WEB_USER_LOGIN_ATTEMPTS = 5
 MAX_COMMCARE_USER_LOGIN_ATTEMPTS = 500
 
+EULA_CURRENT_VERSION = '3.0'  # Set this to the most up to date version of the eula
 
 
 def _add_to_list(list, obj, default):
@@ -711,7 +712,7 @@ class DjangoUserMixin(DocumentSchema):
 
 
 class EulaMixin(DocumentSchema):
-    CURRENT_VERSION = '3.0'  # Set this to the most up to date version of the eula
+    CURRENT_VERSION = EULA_CURRENT_VERSION
     eulas = SchemaListProperty(LicenseAgreement)
 
     @classmethod

@@ -20,6 +20,7 @@ from corehq.apps.custom_data_fields.models import (
     Field,
 )
 from corehq.apps.data_dictionary.models import (
+    CasePropertyGroup,
     CaseType,
     CaseProperty
 )
@@ -323,7 +324,7 @@ def update_data_dictionary(domain_link):
     else:
         master_results = local_get_data_dictionary(domain_link.master_domain)
 
-    # Start from an empty set of CaseTypes and CaseProperties in the linked domain.
+    # Start from an empty set of CaseTypes, CasePropertyGroups and CaseProperties in the linked domain.
     CaseType.objects.filter(domain=domain_link.linked_domain).delete()
 
     # Create CaseType and CaseProperty as necessary
@@ -333,15 +334,26 @@ def update_data_dictionary(domain_link):
         case_type_obj.fully_generated = case_type_desc['fully_generated']
         case_type_obj.save()
 
-        for case_property_name, case_property_desc in case_type_desc['properties'].items():
-            case_property_obj = CaseProperty.get_or_create(case_property_name,
-                                                           case_type_obj.name,
-                                                           domain_link.linked_domain)
-            case_property_obj.description = case_property_desc['description']
-            case_property_obj.deprecated = case_property_desc['deprecated']
-            case_property_obj.data_type = case_property_desc['data_type']
-            case_property_obj.group = case_property_desc['group']
-            case_property_obj.save()
+        for group_name, group_desc in case_type_desc['groups'].items():
+            if group_name:
+                group_obj, created = CasePropertyGroup.objects.get_or_create(
+                    name=group_name,
+                    case_type=case_type_obj,
+                    description=group_desc['description'],
+                    index=group_desc['index']
+                )
+
+            for case_property_name, case_property_desc in group_desc['properties'].items():
+                case_property_obj = CaseProperty.get_or_create(case_property_name,
+                                                            case_type_obj.name,
+                                                            domain_link.linked_domain)
+                case_property_obj.description = case_property_desc['description']
+                case_property_obj.deprecated = case_property_desc['deprecated']
+                case_property_obj.data_type = case_property_desc['data_type']
+                if group_name:
+                    case_property_obj.group = group_name
+                    case_property_obj.group_obj = group_obj
+                case_property_obj.save()
 
 
 def update_tableau_server_and_visualizations(domain_link):

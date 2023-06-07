@@ -14,6 +14,10 @@ from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import HqPermissions
 from corehq.apps.users.views import BaseUserSettingsView
 from corehq.util.jqueryrmi import JSONResponseMixin, allow_remote_invocation
+from corehq.apps.users.dbaccessors import (
+    get_all_commcare_users_by_domain,
+    get_mobile_users_by_filters
+)
 from .exceptions import AttendeeTrackedException
 from soil.util import expose_cached_download, get_download_context
 from soil.exceptions import TaskFailedError
@@ -30,9 +34,9 @@ from .models import (
     AttendeeModel,
     Event,
     get_attendee_case_type,
-    get_paginated_attendees,
     mobile_worker_attendees_enabled,
 )
+from .es import get_paginated_attendees
 from .tasks import (
     close_mobile_worker_attendee_cases,
     sync_mobile_worker_attendees,
@@ -83,10 +87,12 @@ class EventsView(BaseEventView, CRUDPaginatedViewMixin):
             _("Name"),
             _("Start date"),
             _("End date"),
+            _("Location"),
             _("Attendance Target"),
             _("Status"),
             _("Total attendance"),
             _("Total attendance takers"),
+            _("Attendees"),
         ]
 
     @property
@@ -135,6 +141,7 @@ class EventsView(BaseEventView, CRUDPaginatedViewMixin):
             # dates are not serializable for django templates
             'start_date': str(event.start_date),
             'end_date': str(event.end_date) if event.end_date else '-',
+            'location': event.location.name if event.location else '',
             'is_editable': event.status in (EVENT_NOT_STARTED, EVENT_IN_PROGRESS),
             'show_attendance': event.status != EVENT_NOT_STARTED,
             'target_attendance': event.attendance_target,
@@ -195,6 +202,7 @@ class EventCreateView(BaseEventView):
             domain=self.domain,
             start_date=event_data['start_date'],
             end_date=event_data['end_date'],
+            location_id=event_data['location_id'] or None,
             attendance_target=event_data['attendance_target'],
             sameday_reg=event_data['sameday_reg'],
             track_each_day=event_data['track_each_day'],
@@ -222,10 +230,13 @@ class EventEditView(EventCreateView):
     @use_multiselect
     @use_jquery_ui
     def dispatch(self, request, *args, **kwargs):
-        self.event_obj = Event.objects.get(
-            domain=self.domain,
-            event_id=kwargs['event_id'],
-        )
+        try:
+            self.event_obj = Event.objects.get(
+                domain=self.domain,
+                event_id=kwargs['event_id'],
+            )
+        except Event.DoesNotExist:
+            raise Http404()
         return super().dispatch(request, *args, **kwargs)
 
     @property
@@ -253,6 +264,7 @@ class EventEditView(EventCreateView):
         event.name = event_update_data['name']
         event.start_date = event_update_data['start_date']
         event.end_date = event_update_data['end_date']
+        event.location_id = event_update_data['location_id']
         event.attendance_target = event_update_data['attendance_target']
         event.sameday_reg = event_update_data['sameday_reg']
         event.track_each_day = event_update_data['track_each_day']
@@ -517,4 +529,32 @@ def paginated_attendees(request, domain):
     return JsonResponse({
         'attendees': [{'case_id': c.case_id, 'name': c.name} for c in cases],
         'total': total,
+    })
+
+
+@require_GET
+@login_and_domain_required
+@require_permission(HqPermissions.manage_attendance_tracking)
+def get_attendees_and_attendance_takers(request, domain):
+    location_id = request.GET.get('location_id', None)
+    attendance_takers_filters = {'user_active_status': True}
+    if location_id:
+        attendees = AttendeeModel.objects.by_location_id(domain=domain, location_id=location_id)
+        attendance_takers_filters['location_id'] = location_id
+    else:
+        attendees = AttendeeModel.objects.by_domain(domain=domain)
+
+    attendance_takers = get_mobile_users_by_filters(domain, attendance_takers_filters)
+    attendees_list = [
+        {'id': attendee.case_id, 'name': attendee.name}
+        for attendee in attendees
+    ]
+    attendance_takers_list = [
+        {'id': attendance_taker.user_id, 'name': attendance_taker.raw_username}
+        for attendance_taker in attendance_takers
+    ]
+
+    return JsonResponse({
+        'attendees': attendees_list,
+        'attendance_takers': attendance_takers_list
     })

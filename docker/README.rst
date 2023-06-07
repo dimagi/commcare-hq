@@ -7,12 +7,9 @@ Initial setup
 Linux
 ~~~~~
 
-1. Install `Docker`_. You should `manage Docker as a non-root user`_.
+Install `Docker`_. You should `manage Docker as a non-root user`_.
 
-2. Install `Docker Compose`_. (You can install it in a virtualenv with
-   ``$ pip install docker-compose``.)
-
-OS X
+MacOS
 ~~~~
 
 Install `Docker Desktop`_. It is available for Mac with Intel, and Mac

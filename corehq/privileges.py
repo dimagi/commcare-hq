@@ -107,6 +107,8 @@ EXPORT_MULTISORT = 'export_multisort'
 
 EXPORT_OWNERSHIP = 'export_ownership'
 
+FILTERED_BULK_USER_DOWNLOAD = 'filtered_bulk_user_download'
+
 MAX_PRIVILEGES = [
     LOOKUP_TABLES,
     API_ACCESS,
@@ -163,7 +165,8 @@ MAX_PRIVILEGES = [
     LOCATION_SAFE_CASE_IMPORTS,
     FORM_CASE_IDS_CASE_IMPORTER,
     EXPORT_MULTISORT,
-    EXPORT_OWNERSHIP
+    EXPORT_OWNERSHIP,
+    FILTERED_BULK_USER_DOWNLOAD
 ]
 
 # These are special privileges related to their own rates in a SoftwarePlanVersion
@@ -236,4 +239,5 @@ class Titles(object):
             FORM_CASE_IDS_CASE_IMPORTER: _("Download buttons for Form- and Case IDs on Case Importer"),
             EXPORT_MULTISORT: _("Sort multiple rows in exports simultaneously"),
             EXPORT_OWNERSHIP: _("Allow exports to have ownership"),
+            FILTERED_BULK_USER_DOWNLOAD: _("Bulk user management features")
         }.get(privilege, privilege)

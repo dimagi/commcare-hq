@@ -108,10 +108,19 @@ class DateSpan(object):
     """
     A useful class for representing a date span
     """
+    # Both startdate and enddate are intended to be provided as naive datetimes (without timezones).
+    # They will be interpreted as being in the timezone provided
     startdate = None
     enddate = None
     format = None
     inclusive = True
+    # is_default signifies whether or not this date span is the default for a given field
+    # TODO: Handle this in a different way. This is not directly used by this class, and the idea of a 'default'
+    #  for a datespan makes no sense in the context of the scope of this class.
+    # It's the consumers of the class that care about whether or not a given datespan is default information
+    #  and they can track that separately.
+    # Finally, it's error-prone -- the initial dates are either default or not, but you can freely change
+    #  those dates without changing this property.
     is_default = False
     _max_days = None
 

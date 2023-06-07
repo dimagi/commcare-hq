@@ -255,10 +255,6 @@ msgid "Display Condition"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/details/column.js
-msgid "Markdown"
-msgstr ""
-
-#: corehq/apps/app_manager/static/app_manager/js/details/column.js
 msgid "Oct 31, "
 msgstr ""
 
@@ -444,6 +440,10 @@ msgstr "संपूर्ण पता "
 
 #: corehq/apps/app_manager/static/app_manager/js/details/utils.js
 msgid "Distance from current location"
+msgstr ""
+
+#: corehq/apps/app_manager/static/app_manager/js/details/utils.js
+msgid "Markdown"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/details/utils.js
@@ -2826,14 +2826,14 @@ msgid "Fetching your location..."
 msgstr ""
 
 #: corehq/apps/cloudcare/static/cloudcare/js/formplayer/menus/views.js
-#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/sessions/views.js
-msgid "Page <%-num%>"
-msgstr ""
-
-#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/menus/views.js
 msgid ""
 "You have selected more than the maximum selection limit of <%= value %> . "
 "Please uncheck some values to continue."
+msgstr ""
+
+#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/menus/views.js
+#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/sessions/views.js
+msgid "Page <%-num%>"
 msgstr ""
 
 #: corehq/apps/cloudcare/static/cloudcare/js/formplayer/menus/views/query.js
@@ -3997,6 +3997,10 @@ msgid "Gateway Timeout. Please contact CommCare HQ Support."
 msgstr ""
 
 #: corehq/apps/reports/static/reports/js/reports.async.js
+msgid "Your search term was too long. Please provide a shorter search filter"
+msgstr ""
+
+#: corehq/apps/reports/static/reports/js/reports.async.js
 msgid "We were unsuccessful loading the report:"
 msgstr ""
 
@@ -4792,6 +4796,10 @@ msgstr ""
 
 #: corehq/motech/openmrs/static/openmrs/js/openmrs_importers.js
 msgid "Failed to schedule task to import from OpenMRS."
+msgstr ""
+
+#: corehq/motech/repeaters/static/repeaters/js/repeat_record_report.js
+msgid "Failed to fetch attempts"
 msgstr ""
 
 #: corehq/motech/repeaters/static/repeaters/js/repeat_record_report.js
