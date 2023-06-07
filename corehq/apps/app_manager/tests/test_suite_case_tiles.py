@@ -13,7 +13,6 @@ from corehq.apps.app_manager.suite_xml.features.case_tiles import CaseTileTempla
 from corehq.apps.app_manager.tests.app_factory import AppFactory
 from corehq.apps.app_manager.tests.util import (
     SuiteMixin,
-    TestXmlMixin,
     patch_get_xform_resource_overrides,
 )
 from corehq.util.test_utils import flag_enabled
