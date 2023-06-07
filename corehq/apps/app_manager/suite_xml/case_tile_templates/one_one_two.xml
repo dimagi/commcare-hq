@@ -65,7 +65,7 @@
             <text>
             </text>
         </header>
-        <template>
+        <template form="{top[format]}">
             <text>
                 <xpath function="{top[xpath_function]}">
                     {top[variables]}
@@ -83,7 +83,7 @@
             <text>
             </text>
         </header>
-        <template>
+        <template form="{bottom_left[format]}">
             <text>
                 <xpath function="{bottom_left[xpath_function]}">
                     {bottom_left[variables]}
@@ -106,7 +106,7 @@
             <text>
             </text>
         </header>
-        <template>
+        <template form="{bottom_right[format]}">
             <text>
                 <xpath function="{bottom_right[xpath_function]}">
                     {bottom_right[variables]}
