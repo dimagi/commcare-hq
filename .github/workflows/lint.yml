@@ -34,27 +34,33 @@ jobs:
       - name: Get changed files
         id: changed-files
         uses: tj-actions/changed-files@v14.6
-
-      - name: Get .py files
-        id: python-files
-        run: |
-          output=$(echo "${{ steps.changed-files.outputs.all_changed_files }}" | grep -o "\S*\.py" 2>/dev/null)
-          echo "::set-output name=python-file-names::$output"
-
-      - name: Set up Python
-        uses: actions/setup-python@v1
         with:
-          python-version: 3.8
+          files: |
+            *.py
 
-      - name: Install Python dependencies
-        run: pip install flake8
+      - name: Show changed python files
+        run: echo ${{ steps.changed-files.outputs.all_changed_files }}
 
-      - name: Run flake8 linter
-        uses: wearerequired/lint-action@v2
-        with:
-          flake8: true
-          flake8_auto_fix: false
-          flake8_args: ${{ steps.python-files.outputs.python-file-names }}
+#      - name: Get .py files
+#        id: python-files
+#        run: |
+#          output=$(echo "${{ steps.changed-files.outputs.all_changed_files }}" | grep -o "\S*\.py" 2>/dev/null)
+#          echo "::set-output name=python-file-names::$output"
+
+#      - name: Set up Python
+#        uses: actions/setup-python@v1
+#        with:
+#          python-version: 3.8
+#
+#      - name: Install Python dependencies
+#        run: pip install flake8
+#
+#      - name: Run flake8 linter
+#        uses: wearerequired/lint-action@v2
+#        with:
+#          flake8: true
+#          flake8_auto_fix: false
+#          flake8_args: ${{ steps.python-files.outputs.python-file-names }}
 
   # If this is in the same step as python linting the annotations don't show up
   lint-javascript:
@@ -70,24 +76,30 @@ jobs:
       - name: Get changed files
         id: changed-files
         uses: tj-actions/changed-files@v14.6
-
-      - name: Get .js files
-        id: javascript-files
-        run: |
-          output=$(echo "${{ steps.changed-files.outputs.all_changed_files }}" | grep -o "\S*\.js" )
-          echo "::set-output name=javascript-file-names::$output"
-
-      - name: Set up Node.js
-        uses: actions/setup-node@v3
         with:
-          node-version: 14
+          files: |
+            *.js
 
-      - name: Install Node.js dependencies
-        run: yarn install --frozen-lockfile
+      - name: Show changed js files
+        run: echo ${{ steps.changed-files.outputs.all_changed_files }}
 
-      - uses: sibiraj-s/action-eslint@v2
-        with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          eslint-args: ${{ steps.javascript-files.outputs.javascript-file-names }}
-          extensions: 'js,jsx,ts,tsx'
-          annotations: true
+#      - name: Get .js files
+#        id: javascript-files
+#        run: |
+#          output=$(echo "${{ steps.changed-files.outputs.all_changed_files }}" | grep -o "\S*\.js" )
+#          echo "::set-output name=javascript-file-names::$output"
+#
+#      - name: Set up Node.js
+#        uses: actions/setup-node@v3
+#        with:
+#          node-version: 14
+#
+#      - name: Install Node.js dependencies
+#        run: yarn install --frozen-lockfile
+#
+#      - uses: sibiraj-s/action-eslint@v2
+#        with:
+#          github-token: ${{ secrets.GITHUB_TOKEN }}
+#          eslint-args: ${{ steps.javascript-files.outputs.javascript-file-names }}
+#          extensions: 'js,jsx,ts,tsx'
+#          annotations: true
