@@ -73,8 +73,10 @@ jobs:
 #          eslint_auto_fix: false
 #          eslint_args: ${{ steps.javascript-files.outputs.javascript-file-names }}
 
-      - uses: reviewdog/action-eslint@v1
+      - uses: a-b-r-o-w-n/eslint-action@v2
         with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          reporter: github-pr-review # Change reporter.
-          eslint_flags: ${{ steps.javascript-files.outputs.javascript-file-names }}
+          repo-token: "${{ secrets.GITHUB_TOKEN }}"
+          files: ${{ steps.javascript-files.outputs.javascript-file-names }}
+          extensions: ".js,.ts"
+          working-directory: "./my-package"
+          quiet: "false"
