@@ -1,9 +1,7 @@
 import re
-from datetime import datetime
+from unittest.mock import MagicMock, patch
 
 from django.test import SimpleTestCase
-
-from unittest.mock import MagicMock, patch
 
 from corehq.apps.app_manager import util as util
 from corehq.apps.app_manager.app_schemas.casedb_schema import get_casedb_schema, get_registry_schema
@@ -11,10 +9,9 @@ from corehq.apps.app_manager.app_schemas.session_schema import (
     get_session_schema,
 )
 from corehq.apps.app_manager.const import USERCASE_TYPE
-from corehq.apps.app_manager.models import ConditionalCaseUpdate
+from corehq.apps.app_manager.models import ConditionalCaseUpdate, CaseTileGroupConfig
+from corehq.apps.app_manager.suite_xml.features.case_tiles import CaseTileTemplates
 from corehq.apps.app_manager.tests.app_factory import AppFactory
-from corehq.util.test_utils import flag_enabled
-
 
 patches = [
     patch('corehq.apps.app_manager.app_schemas.casedb_schema.get_case_property_description_dict',
@@ -710,3 +707,92 @@ class RegistrySchemaTest(BaseSchemaTest):
             },
             'related': None,
         })
+
+
+@combined_patches
+class CaseTileGroupingSchemaTest(BaseSchemaTest):
+    def test_case_tile_grouping(self):
+        factory = AppFactory(domain="grouped-tiles")
+        module, form = factory.new_basic_module('basic', 'mother')
+        factory.form_requires_case(form, 'mother', update={
+            'parent_prop': '/data/name'
+        })
+        factory.form_opens_case(form, "child", is_subcase=True)
+        # module.assign_references()
+
+        other_module, other_form = factory.new_basic_module('another', 'child')
+        factory.form_requires_case(other_form, 'child', update={
+            'child_prop': '/data/name'
+        })
+        other_module.assign_references()
+
+        other_module.case_details.short.case_tile_template = CaseTileTemplates.PERSON_SIMPLE.value
+        other_module.case_details.short.case_tile_group = CaseTileGroupConfig(
+            xpath_function="./index/parent",
+            parent_case_type="parent"
+        )
+
+        self.maxDiff = None
+        print(get_session_schema(other_form)["structure"])
+        schema = get_casedb_schema(other_form)
+        import json
+        print(json.dumps(schema["subsets"], indent=2))
+        self.assertEqual(get_session_schema(other_form)["structure"], {
+            "data": {
+                "merge": True,
+                "structure": {
+                    "case_id_child": {
+                        "reference": {
+                            "hashtag": "#case",
+                            "source": "casedb",
+                            "subset": "case",
+                            "key": "@case_id",
+                        },
+                    },
+                    "case_id": {
+                        "reference": {
+                            "hashtag": "#case:parent",
+                            "source": "casedb",
+                            "subset": "case:parent",
+                            "key": "@case_id",
+                        },
+                    },
+                },
+            },
+        })
+
+        self.assertEqual(schema["subsets"], [
+            {
+                'id': 'case',
+                'name': 'child',
+                'structure': {
+                    'child_prop': {"description": ""},
+                    'case_name': {"description": ""},
+                },
+                "related": {
+                    "parent": {
+                        "hashtag": "#case/parent",
+                        "subset": "parent",
+                        "key": "@case_id",
+                    }
+                },
+            },
+            {
+                'id': 'parent',
+                'name': 'parent (mother)',
+                'structure': {
+                    'parent_prop': {"description": ""},
+                    'case_name': {"description": ""},
+                },
+                'related': None,
+            },
+            {
+                'id': 'case:parent',
+                'name': 'parent (mother)',
+                'structure': {
+                    'parent_prop': {"description": ""},
+                    'case_name': {"description": ""},
+                },
+                'related': None,
+            }
+        ])

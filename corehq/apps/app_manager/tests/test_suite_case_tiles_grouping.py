@@ -1,5 +1,3 @@
-from uuid import uuid4
-
 from django.test import SimpleTestCase
 
 from corehq.apps.app_manager.models import (
@@ -273,8 +271,8 @@ class SuiteCaseTilesGroupingTest(SimpleTestCase, SuiteMixin):
         """Case hierarchy: household -> mother -> child
         Modules:
             household
-            mother
-                child (parent select = mother)
+            mother (case tile grouping)
+                child (manual case filter to only show cases of the household)
         """
         factory = AppFactory(domain="grouped-tiles")
         household_module, household_form = factory.new_basic_module('household', 'household')
@@ -333,7 +331,6 @@ class SuiteCaseTilesGroupingTest(SimpleTestCase, SuiteMixin):
             suite,
             "entry[3]/session",
         )
-
 
     def assertDetailGroup(self, suite_xml, detail_id, header_rows=1):
         self.assertXmlPartialEqual(

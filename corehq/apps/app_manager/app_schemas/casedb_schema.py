@@ -14,12 +14,16 @@ def get_casedb_schema(form):
     """Get case database schema definition for vellum to display as an external data source.
 
     This lists all case types and their properties for the given app.
+
+    See See Vellum/src/datasources.js
     """
     app = form.get_app()
 
     subsets = []
+    base_subsets = []
     if form.requires_case() and not form.get_module().search_config.data_registry:
-        subsets.extend(_get_case_schema_subsets(app, form.get_module().case_type))
+        base_subsets = _get_case_schema_subsets(app, form.get_module().case_type)
+    subsets.extend(base_subsets)
 
     parent_select = getattr(form.get_module(), 'parent_select', None)
     if parent_select and parent_select.active and parent_select.relationship is None:
@@ -29,6 +33,11 @@ def get_casedb_schema(form):
         source = clean_trans(parent_module.name, app.langs)
         subsets.extend(_get_case_schema_subsets(app, parent_module.case_type, source=source))
 
+    if form.get_module().has_grouped_tiles():
+        # duplicate parent schema with a different ID
+        parent_subset = base_subsets[1].copy()  # 2nd subset is parent
+        parent_subset['id'] = 'case:parent'
+        subsets.append(parent_subset)
 
     if is_usercase_in_use(app.domain):
         subsets.append({

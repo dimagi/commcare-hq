@@ -1,6 +1,6 @@
 from django.utils.text import slugify
 
-from corehq.apps.app_manager.const import USERCASE_TYPE
+from corehq.apps.app_manager.const import USERCASE_TYPE, LOAD_TILE_GROUP_CASE_ID
 from corehq.apps.app_manager.suite_xml.xml_models import InstanceDatum
 from corehq.apps.app_manager.templatetags.xforms_extras import clean_trans
 from corehq.apps.app_manager.util import is_usercase_in_use
@@ -8,6 +8,8 @@ from corehq.apps.app_manager.util import is_usercase_in_use
 
 def get_session_schema(form):
     """Get form session schema definition
+
+    See Vellum/src/datasources.js
     """
     from corehq.apps.app_manager.suite_xml.sections.entries import EntriesHelper
     app = form.get_app()
@@ -46,11 +48,16 @@ def get_session_schema(form):
         data_registry = module.search_config.data_registry if module else None
         if i == 0:
             # always add the datum for this module
-            data_structure[datum.id] = _get_structure(datum, data_registry)
+            source = None
+            if not datum.requires_selection and datum.action == LOAD_TILE_GROUP_CASE_ID:
+                source = "parent"
+            data_structure[datum.id] = _get_structure(datum, data_registry, source=source)
         else:
             if module and module_id in unrelated_parents:
                 source = clean_trans(module.name, app.langs)  # ensure that this structure reference is unique
                 data_structure[datum.id] = _get_structure(datum, data_registry, source)
+            elif datum.module_id == form.get_module().unique_id and datum.requires_selection:
+                data_structure[datum.id] = _get_structure(datum, data_registry)
 
     if data_structure:
         structure["data"] = {

@@ -106,8 +106,8 @@ class FormDatumMeta:
             datum = f"<InstanceDatum(id={self.id})>"
         else:
             datum = f"<SessionDatum(id={self.id})>"
-        return 'FormDatumMeta(datum={}, case_type={}, requires_selection={}, action={})'.format(
-            datum, self.case_type, self.requires_selection, self.action
+        return 'FormDatumMeta(datum={}, case_type={}, requires_selection={}, action={}, module_id={})'.format(
+            datum, self.case_type, self.requires_selection, self.action, self.module_id
         )
 
 
