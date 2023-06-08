@@ -11,8 +11,8 @@ hqDefine("cloudcare/js/config", [
     initialPageData,
     hqMain
 ) {
-    $(function () {
-        var makeDB = function (list) {
+    $(function (){
+         var makeDB = function (list) {
             /* turn a list into a dict indexed by each object's _id */
             var db = {};
             list.sort(function (a, b) {return a.name > b.name;});
@@ -22,7 +22,7 @@ hqDefine("cloudcare/js/config", [
             }
             db._sorted = list;
             return db;
-        };
+        }
         var access = initialPageData.get('access');
         var appDB = makeDB(initialPageData.get('apps'));
         var groupDB = makeDB(initialPageData.get('groups'));
