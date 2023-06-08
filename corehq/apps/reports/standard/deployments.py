@@ -555,6 +555,10 @@ class ApplicationErrorReport(GenericTabularReport, ProjectReport):
 
     @classmethod
     def show_in_navigation(cls, domain=None, project=None, user=None):
+        return cls.has_access(domain, user)
+
+    @classmethod
+    def has_access(cls, domain=None, user=None):
         domain_access = (
             domain_has_privilege(domain, privileges.APPLICATION_ERROR_REPORT)
             if domain else False

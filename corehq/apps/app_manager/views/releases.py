@@ -175,7 +175,7 @@ def paginate_releases(request, domain, app_id):
             for app in apps
         ]
 
-    if ApplicationErrorReport.show_in_navigation(domain, None, request.couch_user):
+    if ApplicationErrorReport.has_access(domain, request.couch_user):
         versions = [app['version'] for app in saved_apps]
         num_errors_dict = _get_error_counts(domain, app_id, versions)
         for app in saved_apps:
@@ -219,7 +219,7 @@ def get_releases_context(request, domain, app_id):
         'can_edit_apps': request.couch_user.can_edit_apps(),
         'can_view_app_diff': (domain_has_privilege(domain, privileges.VIEW_APP_DIFF)
                               or request.user.is_superuser),
-        'has_application_error_report_access': ApplicationErrorReport.show_in_navigation(domain, None, request.couch_user)
+        'has_application_error_report_access': ApplicationErrorReport.has_access(domain, request.couch_user)
     }
     if not app.is_remote_app():
         context.update({
