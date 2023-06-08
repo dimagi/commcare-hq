@@ -22,7 +22,7 @@ env:
 
 jobs:
   lint-python:
-    name: Run Python linter
+    name: Lint Python
     runs-on: ubuntu-latest
 
     steps:
@@ -56,8 +56,9 @@ jobs:
           flake8_auto_fix: false
           flake8_args: ${{ steps.python-files.outputs.python-file-names }}
 
-  javascript-linters:
-    name: Run ESlint
+  # If this is in the same step as python linting the annotations don't show up
+  lint-javascript:
+    name: Lint Javascript
     runs-on: ubuntu-latest
 
     steps:
