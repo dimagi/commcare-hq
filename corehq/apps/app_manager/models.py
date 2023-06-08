@@ -1923,8 +1923,8 @@ class CaseTileGroupConfig(DocumentSchema):
     xpath_function = StringProperty()
     # number of rows of the tile to use for the group header
     header_rows = IntegerProperty(default=1)
-    extra_datum_function = StringProperty(default="./index/parent")
-    extra_datum_case_type = StringProperty()
+    add_parent_case_datum = BooleanProperty(default=True)
+    parent_case_type = StringProperty()
 
 
 class Detail(IndexedSchema, CaseListLookupMixin):
@@ -2356,7 +2356,7 @@ class ModuleBase(IndexedSchema, ModuleMediaMixin, NavMenuItemMediaMixin, Comment
             return (
                 self.case_details.short.case_tile_template
                 and self.case_details.short.case_tile_group.xpath_function
-                and (not check_extra_datum or self.case_details.short.case_tile_group.extra_datum_function)
+                and (not check_extra_datum or self.case_details.short.case_tile_group.add_parent_case_datum)
             )
         return False
 

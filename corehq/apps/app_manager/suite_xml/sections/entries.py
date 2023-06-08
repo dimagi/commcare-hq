@@ -405,7 +405,7 @@ class EntriesHelper(object):
         entry.assertions.append(assertion)
 
     @staticmethod
-    def get_extra_case_id_datums(form):
+    def get_extra_case_id_datums(form, existing_datums=None):
         datums = []
         actions = form.active_actions()
         if form.form_type == 'module_form' and actions_use_usercase(actions):
@@ -417,12 +417,13 @@ class EntriesHelper(object):
                 action=None  # Unused (and could be actions['usercase_update'] or actions['usercase_preload'])
             ))
 
-        if form.form_type == 'module_form' and form.get_module().has_grouped_tiles():
+        if form.form_type == 'module_form' and form.get_module().has_grouped_tiles() and existing_datums:
             # add a datum to load the parent case ID
             group = form.get_module().case_details.short.case_tile_group
+            xpath = CaseIDXPath(session_var(existing_datums[-1].datum.id))
             datums.append(FormDatumMeta(
-                datum=SessionDatum(id="case_id", function=group.extra_datum_function),
-                case_type=group.extra_datum_case_type,  # needed for other places
+                datum=SessionDatum(id="case_id", function=xpath.case().parent_id()),
+                case_type=group.parent_case_type,  # needed for other places
                 requires_selection=False,
                 action=LOAD_TILE_GROUP_CASE_ID
             ))
@@ -480,7 +481,7 @@ class EntriesHelper(object):
 
         if form:
             datums.extend(EntriesHelper.get_new_case_id_datums_meta(form))
-            datums.extend(EntriesHelper.get_extra_case_id_datums(form))
+            datums.extend(EntriesHelper.get_extra_case_id_datums(form, datums))
 
         return self.add_parent_datums(datums, module)
 
