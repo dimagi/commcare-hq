@@ -10,9 +10,9 @@ hqDefine('cloudcare/js/utils', [
     HMACCallout,
     constants
 ) {
-    if (!String.prototype.startsWith) {
+    if (!String.prototype.startsWith ) {
         String.prototype.startsWith = function (searchString, position) {
-            position = position || 0;
+            position = position || 0
             return this.indexOf(searchString, position) === position;
         };
     }
