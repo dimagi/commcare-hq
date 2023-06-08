@@ -31,29 +31,29 @@ jobs:
         with:
           fetch-depth: 0
 
-#      - name: Get changed files
-#        id: changed-files
-#        uses: tj-actions/changed-files@v14.6
-#
-#      - name: Get .py files
-#        id: python-files
-#        run: |
-#          output=$(echo "${{ steps.changed-files.outputs.all_changed_files }}" | grep -o "\S*\.py")
-#          echo "::set-output name=python-file-names::$output"
-#
-#      - name: Get .js files
-#        id: javascript-files
-#        run: |
-#          output=$(echo "${{ steps.changed-files.outputs.all_changed_files }}" | grep -o "\S*\.js")
-#          echo "::set-output name=javascript-file-names::$output"
+      - name: Get changed files
+        id: changed-files
+        uses: tj-actions/changed-files@v14.6
 
-#      - name: Set up Python
-#        uses: actions/setup-python@v1
-#        with:
-#          python-version: 3.8
-#
-#      - name: Install Python dependencies
-#        run: pip install flake8
+      - name: Get .py files
+        id: python-files
+        run: |
+          output=$(echo "${{ steps.changed-files.outputs.all_changed_files }}" | grep -o "\S*\.py")
+          echo "::set-output name=python-file-names::$output"
+
+      - name: Get .js files
+        id: javascript-files
+        run: |
+          output=$(echo "${{ steps.changed-files.outputs.all_changed_files }}" | grep -o "\S*\.js")
+          echo "::set-output name=javascript-file-names::$output"
+
+      - name: Set up Python
+        uses: actions/setup-python@v1
+        with:
+          python-version: 3.8
+
+      - name: Install Python dependencies
+        run: pip install flake8
 
       - name: Set up Node.js
         uses: actions/setup-node@v3
@@ -63,26 +63,16 @@ jobs:
       - name: Install Node.js dependencies
         run: yarn install --frozen-lockfile
 
-#      - name: Run flake8 linter
-#        uses: wearerequired/lint-action@v2
-#        with:
-#          flake8: true
-#          flake8_auto_fix: false
-#          flake8_args: ${{ steps.python-files.outputs.python-file-names }}
-#          eslint: true
-#          eslint_auto_fix: false
-#          eslint_args: ${{ steps.javascript-files.outputs.javascript-file-names }}
+      - name: Run flake8 linter
+        uses: wearerequired/lint-action@v2
+        with:
+          flake8: true
+          flake8_auto_fix: false
+          flake8_args: ${{ steps.python-files.outputs.python-file-names }}
 
-#      - uses: a-b-r-o-w-n/eslint-action@v2
-#        with:
-#          repo-token: "${{ secrets.GITHUB_TOKEN }}"
-#          files: "${{ steps.javascript-files.outputs.javascript-file-names }}"
-#          extensions: ".js,.ts"
-#          quiet: "false"
-#
       - uses: sibiraj-s/action-eslint@v2
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
-          eslint-args: ${{ steps.javascript-files.outputs.javascript-file-names }}
+#          eslint-args: ${{ steps.javascript-files.outputs.javascript-file-names }}
           extensions: 'js,jsx,ts,tsx'
           annotations: true
