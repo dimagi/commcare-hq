@@ -55,13 +55,13 @@ jobs:
 #      - name: Install Python dependencies
 #        run: pip install flake8
 
-      - name: Set up Node.js
-        uses: actions/setup-node@v3
-        with:
-          node-version: 16
-
-      - name: Install Node.js dependencies
-        run: yarn install --frozen-lockfile
+#      - name: Set up Node.js
+#        uses: actions/setup-node@v3
+#        with:
+#          node-version: 14
+#
+#      - name: Install Node.js dependencies
+#        run: yarn install --frozen-lockfile
 
 #      - name: Run flake8 linter
 #        uses: wearerequired/lint-action@v2
@@ -73,11 +73,7 @@ jobs:
 #          eslint_auto_fix: false
 #          eslint_args: ${{ steps.javascript-files.outputs.javascript-file-names }}
 
-      - name: Check node version
-        run: node -v
-
-      - name: Run eslint
-        uses: tinovyatkin/action-eslint@v1
+      - uses: reviewdog/action-eslint@v1
         with:
-          repo-token: ${{secrets.GITHUB_TOKEN}}
-          check-name: eslint
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          reporter: github-pr-review # Change reporter.
