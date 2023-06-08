@@ -30,6 +30,8 @@ AUTO_SELECT_LOCATION = 'location'
 AUTO_SELECT_RAW = 'raw'
 AUTO_SELECT_USERCASE = 'usercase'
 
+LOAD_TILE_GROUP_CASE_ID = "load_tile_group_case_id"
+
 RETURN_TO = 'return_to'
 
 AMPLIFIES_YES = 'yes'
