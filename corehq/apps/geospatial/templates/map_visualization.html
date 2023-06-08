@@ -1,7 +1,13 @@
 {% extends "reports/tabular.html" %}
 {% load hq_shared_tags %}
+{% load i18n %}
 
 {% block reportcontent %}
 <!-- This is used to get the data from report_context -->
+<div class="panel panel-default">
+    <a id="btnExport" class="btn btn-default" style="margin: 1em" data-bind="attr: { disabled: btnExportDisabled }">
+        {% trans 'Export Polygons as GeoJson' %}
+    </a>
+</div>
 <div class="map-data" data-context="{% html_attr context %}"></div>
 {% endblock %}
