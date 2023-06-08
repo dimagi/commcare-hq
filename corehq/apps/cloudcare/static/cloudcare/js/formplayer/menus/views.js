@@ -518,13 +518,10 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
                         .addTo(addressMap)
                         .bindPopup(popupText)
                         .on('click', () => {
-                            console.log(rowId);
-
-                            $(`.case-row[id!='${rowId}']`).css("border-style", "none");
-
+                            $(`.case-row[id!='${rowId}']`)
+                                .removeClass("highlighted-case")
                             $(`#${rowId}`)
-                                .css("border-style", "solid")
-                                .css("border-colo", "#004ebc");
+                                .addClass("highlighted-case")
                         });
 
                     return latLng;
