@@ -14,6 +14,7 @@ modules.  See ``update_refs`` and ``rename_other_id``, both inner functions in `
 on matching parent and child datums.
 
 """
+import re
 from collections import defaultdict
 
 import attr
@@ -1076,14 +1077,15 @@ def _update_refs(datums, old_id, new_id):
     because the case referred to by "parent_id" in the child module has the ID
     "case_id" in the parent module.
     """
-    old = session_var(old_id)
+    old = re.escape(session_var(old_id))
     new = session_var(new_id)
 
     for datum in datums:
         for prop in ['nodeset', 'function']:
             xpath = getattr(datum, prop, None)
             if xpath:
-                setattr(datum, prop, xpath.replace(old, new))
+                sub = re.sub(f"{old}([^\\w_])", rf"{new}\1", xpath)
+                setattr(datum, prop, sub)
 
 
 def _get_datums_by_case_tag(datums):
