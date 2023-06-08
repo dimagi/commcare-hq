@@ -88,14 +88,16 @@ hqDefine("geospatial/js/geospatial_map", [
             function filterCasesInPolygon(polygonFeature) {
                 userFilteredCases = [];
                 cases.filter(function (currCase) {
-                    var coordinates = [currCase.coordinates.lng, currCase.coordinates.lat];
-                    var point = turf.point(coordinates);
-                    var caseIsInsidePolygon = turf.booleanPointInPolygon(point, polygonFeature.geometry);
-                    if (caseIsInsidePolygon) {
-                        userFilteredCases.push(currCase);
-                        changeCaseMarkerColor(currCase, selectedMarkerColor);
-                    } else {
-                        changeCaseMarkerColor(currCase, defaultMarkerColor)
+                    if (currCase.coordinates) {
+                        var coordinates = [currCase.coordinates.lng, currCase.coordinates.lat];
+                        var point = turf.point(coordinates);
+                        var caseIsInsidePolygon = turf.booleanPointInPolygon(point, polygonFeature.geometry);
+                        if (caseIsInsidePolygon) {
+                            userFilteredCases.push(currCase);
+                            changeCaseMarkerColor(currCase, selectedMarkerColor);
+                        } else {
+                            changeCaseMarkerColor(currCase, defaultMarkerColor)
+                        }
                     }
                 });
             }
