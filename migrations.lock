@@ -1067,6 +1067,7 @@ userreports
  0017_index_cleanup
  0018_ucrexpression
  0019_ucrexpression_upstream_id
+ 0020_delete_ucr_comparison_models
 users
  0001_add_location_permission
  0002_domainrequest
