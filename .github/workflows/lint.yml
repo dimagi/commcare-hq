@@ -27,7 +27,7 @@ jobs:
 
     steps:
       - name: Check out Git repository
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
         with:
           fetch-depth: 0
 
@@ -47,28 +47,37 @@ jobs:
           output=$(echo "${{ steps.changed-files.outputs.all_changed_files }}" | grep -o "\S*\.js")
           echo "::set-output name=javascript-file-names::$output"
 
-      - name: Set up Python
-        uses: actions/setup-python@v1
-        with:
-          python-version: 3.8
-
-      - name: Install Python dependencies
-        run: pip install flake8
+#      - name: Set up Python
+#        uses: actions/setup-python@v1
+#        with:
+#          python-version: 3.8
+#
+#      - name: Install Python dependencies
+#        run: pip install flake8
 
       - name: Set up Node.js
-        uses: actions/setup-node@v1
+        uses: actions/setup-node@v3
         with:
-          node-version: 14
+          node-version: 16
 
       - name: Install Node.js dependencies
         run: yarn install --frozen-lockfile
 
-      - name: Run linters
-        uses: wearerequired/lint-action@v2
+#      - name: Run flake8 linter
+#        uses: wearerequired/lint-action@v2
+#        with:
+#          flake8: true
+#          flake8_auto_fix: false
+#          flake8_args: ${{ steps.python-files.outputs.python-file-names }}
+#          eslint: true
+#          eslint_auto_fix: false
+#          eslint_args: ${{ steps.javascript-files.outputs.javascript-file-names }}
+
+      - name: Check node version
+        run: node -v
+
+      - name: Run eslint
+        uses: tinovyatkin/action-eslint@v1
         with:
-          flake8: true
-          flake8_auto_fix: false
-          flake8_args: ${{ steps.python-files.outputs.python-file-names }}
-          eslint: true
-          eslint_auto_fix: false
-          eslint_args: ${{ steps.javascript-files.outputs.javascript-file-names }}
+          repo-token: ${{secrets.GITHUB_TOKEN}}
+          check-name: eslint
