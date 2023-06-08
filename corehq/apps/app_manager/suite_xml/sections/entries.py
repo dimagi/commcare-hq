@@ -141,13 +141,14 @@ class EntriesHelper(object):
         """Get all datum meta for the form that represent a case ID
         """
         datums = self.get_datums_meta_for_form_generic(form)
-        def extra_filter(_): return True
+        def extra_filter(_): return False
 
         if form.get_module().has_grouped_tiles():
             def extra_filter(datum): return datum.action == LOAD_TILE_GROUP_CASE_ID
+
         return [
             datum for datum in datums
-            if datum.case_type or datum.requires_selection or extra_filter(datum)
+            if datum.case_type and (datum.requires_selection or extra_filter(datum))
         ]
 
     def get_datums_meta_for_form_generic(self, form, module=None):
