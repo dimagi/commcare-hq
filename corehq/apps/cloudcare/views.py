@@ -12,6 +12,7 @@ from django.http import (
     HttpResponseRedirect,
     JsonResponse,
 )
+
 from django.shortcuts import render
 from django.template.loader import render_to_string
 from django.urls import reverse
@@ -89,7 +90,7 @@ from xml2json.lib import xml2json
 
 
 @require_cloudcare_access
-def default(request, domain):
+def default(request, domain ):
     return HttpResponseRedirect(reverse('formplayer_main', args=[domain]))
 
 
