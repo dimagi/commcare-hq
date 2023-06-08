@@ -31,21 +31,21 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Get changed files
-        id: changed-files
-        uses: tj-actions/changed-files@v14.6
-
-      - name: Get .py files
-        id: python-files
-        run: |
-          output=$(echo "${{ steps.changed-files.outputs.all_changed_files }}" | grep -o "\S*\.py")
-          echo "::set-output name=python-file-names::$output"
-
-      - name: Get .js files
-        id: javascript-files
-        run: |
-          output=$(echo "${{ steps.changed-files.outputs.all_changed_files }}" | grep -o "\S*\.js")
-          echo "::set-output name=javascript-file-names::$output"
+#      - name: Get changed files
+#        id: changed-files
+#        uses: tj-actions/changed-files@v14.6
+#
+#      - name: Get .py files
+#        id: python-files
+#        run: |
+#          output=$(echo "${{ steps.changed-files.outputs.all_changed_files }}" | grep -o "\S*\.py")
+#          echo "::set-output name=python-file-names::$output"
+#
+#      - name: Get .js files
+#        id: javascript-files
+#        run: |
+#          output=$(echo "${{ steps.changed-files.outputs.all_changed_files }}" | grep -o "\S*\.js")
+#          echo "::set-output name=javascript-file-names::$output"
 
 #      - name: Set up Python
 #        uses: actions/setup-python@v1
