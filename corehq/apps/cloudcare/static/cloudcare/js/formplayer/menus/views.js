@@ -505,19 +505,14 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             if (coordinates) {
                 let latLng = coordinates.split(" ").slice(0,2);
                 if (latLng.length > 1) {
-                    let popupText = "";
-                    headers.forEach((header, index) => {
-                        if (header) {
-                            const valueSanitized = DOMPurify.sanitize(model.attributes.data[index]);
-                            const headerSanitized = DOMPurify.sanitize(header);
-                            popupText += "<b>" + headerSanitized + ":</b> " + valueSanitized + "<br>";
-                        }
-                    });
                     const rowId = `row-${model.id}`;
                     L.marker(latLng)
                         .addTo(addressMap)
-                        .bindPopup(popupText)
                         .on('click', () => {
+                            // tiles
+                            $(`.list-cell-wrapper-style[id!='${rowId}']`)
+                                .removeClass("highlighted-case")
+                            // rows
                             $(`.case-row[id!='${rowId}']`)
                                 .removeClass("highlighted-case")
                             $(`#${rowId}`)
@@ -664,7 +659,6 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
         const caseTileStyles = {};
         caseTileStyles.cellLayoutStyle = buildCellLayout(tiles, prefix);
         caseTileStyles.cellGridStyle = buildCellGridStyle(numRows, numColumns, useUniformUnits, prefix);
-        caseTileStyles.cellWrapperStyle = $("#cell-wrapper-style-template").html();
         caseTileStyles.cellContainerStyle = buildCellContainerStyle(numEntitiesPerRow);
         return caseTileStyles;
     };
