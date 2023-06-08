@@ -47,6 +47,7 @@ class CreateIndex(BaseElasticOperation):
             ``mapping._meta.comment`` property.
         """
         super().__init__(self.run, self.reverse_run)
+        self._original_name = name
         self.name = index_runtime_name(name)
         self.type = type_
         self.mapping = mapping
@@ -61,7 +62,7 @@ class CreateIndex(BaseElasticOperation):
         mapping = {k: v for k, v in self.mapping.items() if k != "_meta"}
         return (
             self.__class__.__qualname__,
-            [self.name, self.type, mapping, self.analysis, self.settings_key],
+            [self._original_name, self.type, mapping, self.analysis, self.settings_key],
             kwargs,
         )
 
@@ -78,7 +79,7 @@ class CreateIndex(BaseElasticOperation):
         manager.index_configure_for_standard_ops(self.name)
 
     def reverse_run(self, *args, **kw):
-        DeleteIndex(self.name).run(*args, **kw)
+        DeleteIndex(self._original_name).run(*args, **kw)
 
     def describe(self):
         return f"Create Elasticsearch index {self.name!r}"
@@ -127,6 +128,7 @@ class DeleteIndex(BaseElasticOperation):
             ``None`` (the default), the operation is irreversible.
         """
         super().__init__(self.run, self.reverse_run if reverse_params else None)
+        self._original_name = name
         self.name = index_runtime_name(name)
         if reverse_params:
             type_, mapping, analysis, settings_key = reverse_params
@@ -146,7 +148,7 @@ class DeleteIndex(BaseElasticOperation):
             )
         return (
             self.__class__.__qualname__,
-            [self.name],
+            [self._original_name],
             kwargs,
         )
 
@@ -157,7 +159,7 @@ class DeleteIndex(BaseElasticOperation):
 
     def reverse_run(self, *args, **kw):
         create_kw = {
-            "name": self.name,
+            "name": self._original_name,
             "type_": self.reverse_type,
             "mapping": self.reverse_mapping,
             "analysis": self.reverse_analysis,
@@ -216,6 +218,7 @@ class UpdateIndexMapping(BaseElasticOperation):
             disable printing the mapping diff.
         """
         super().__init__(self.run)
+        self._original_name = name
         self.name = index_runtime_name(name)
         self.type = type_
         self.properties = properties
@@ -231,7 +234,7 @@ class UpdateIndexMapping(BaseElasticOperation):
             kwargs["print_diff"] = False
         return (
             self.__class__.__qualname__,
-            [self.name, self.type, self.properties],
+            [self._original_name, self.type, self.properties],
             kwargs,
         )
 
