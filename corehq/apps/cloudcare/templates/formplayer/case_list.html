@@ -101,7 +101,7 @@
       <% if (styles[index].displayFormat === 'Image') { %>
         <td class="module-case-list-column"><img class="module-icon" src="<%- resolveUri(datum) %>"/></td>
       <% } else if (styles[index].displayFormat === 'Markdown') { %>
-        <td class="module-case-list-column"><%= renderMarkdown(datum) %></td>
+        <td class="module-case-list-column webapp-markdown-output"><%= renderMarkdown(datum) %></td>
       <% } else if (styles[index].displayFormat === 'Graph') { %>
         <td class="module-case-list-column"><iframe srcdoc="<%- datum %>" height="300" width="300"></iframe></td>
       <% } else { %>
@@ -128,7 +128,7 @@
       <% } else if(styles[index].widthHint === 0) { %>
       <div style="display:none;"><%- datum %></div>
       <% } else { %>
-      <div><%= renderMarkdown(datum) %></div>
+      <div class="webapp-markdown-output"><%= renderMarkdown(datum) %></div>
       <% } %>
     </div>
     <% }); %>
