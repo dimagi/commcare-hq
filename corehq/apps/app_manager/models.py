@@ -2348,11 +2348,15 @@ class ModuleBase(IndexedSchema, ModuleMediaMixin, NavMenuItemMediaMixin, Comment
             return self.case_details.short.multi_select
         return False
 
-    def has_grouped_tiles(self):
+    def has_grouped_tiles(self, check_extra_datum=True):
+        """
+        :param check_extra_datum: Also check that the extra datum function is set
+        """
         if hasattr(self, 'case_details'):
             return (
                 self.case_details.short.case_tile_template
                 and self.case_details.short.case_tile_group.xpath_function
+                and (not check_extra_datum or self.case_details.short.case_tile_group.extra_datum_function)
             )
         return False
 

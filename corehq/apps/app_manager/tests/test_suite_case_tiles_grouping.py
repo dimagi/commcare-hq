@@ -27,7 +27,9 @@ class SuiteCaseTilesGroupingTest(SimpleTestCase, SuiteMixin):
         module.case_type = 'patient'
         module.case_details.short.case_tile_template = CaseTileTemplates.PERSON_SIMPLE.value
         add_columns_for_case_details(module)
-        module.case_details.short.case_tile_group = CaseTileGroupConfig(xpath_function="./index/parent")
+        module.case_details.short.case_tile_group = CaseTileGroupConfig(
+            xpath_function="./index/parent", header_rows=3
+        )
 
         module.assign_references()
 
@@ -35,15 +37,7 @@ class SuiteCaseTilesGroupingTest(SimpleTestCase, SuiteMixin):
         form.xmlns = 'http://id_m0-f0'
         form.requires = 'case'
 
-        self.assertXmlPartialEqual(
-            """
-            <partial>
-               <group function="./index/parent" grid-header-rows="1"/>
-            </partial>
-            """,
-            app.create_suite(),
-            "detail[@id='m0_case_short']/group",
-        )
+        self.assertDetailGroup(app.create_suite(), "m0_case_short", 3)
 
     def test_entry_datum_with_case_tile_grouping(self, *args):
         app = Application.new_app('domain', 'Untitled Application')
@@ -61,6 +55,7 @@ class SuiteCaseTilesGroupingTest(SimpleTestCase, SuiteMixin):
         form.requires = 'case'
 
         suite = app.create_suite()
+
         self.assertXmlPartialEqual(
             """
             <partial>
@@ -208,3 +203,80 @@ class SuiteCaseTilesGroupingTest(SimpleTestCase, SuiteMixin):
            </partial>
            """
         self.assertXmlPartialEqual(expected, child_form.render_xform(), xpath)
+
+    def test_entry_datum_with_case_tile_grouping_parent_modules(self, *args):
+        """Case hierarchy: household -> mother -> child
+        Modules:
+            household
+            mother
+                child (parent select = mother)
+        """
+        factory = AppFactory(domain="grouped-tiles")
+        household_module, household_form = factory.new_basic_module('household', 'household')
+        factory.form_requires_case(household_form, 'household')
+
+        mother_module, mother_form = factory.new_basic_module('mother', 'mother')
+        factory.form_requires_case(mother_form, 'mother')
+
+        child_module, child_form = factory.new_basic_module('child', 'child', parent_module=mother_module)
+        factory.form_requires_case(child_form, 'child', parent_case_type='mother')
+
+        mother_module.case_details.short.case_tile_template = CaseTileTemplates.PERSON_SIMPLE.value
+        add_columns_for_case_details(mother_module)
+        mother_module.case_details.short.case_tile_group = CaseTileGroupConfig(
+            xpath_function="./index/parent",
+            extra_datum_function=None
+        )
+
+        suite = factory.app.create_suite()
+        self.assertDetailGroup(suite, "m1_case_short")
+        self.assertXmlPartialEqual(
+            """
+            <partial>
+              <session>
+                <datum
+                    detail-confirm="m1_case_long"
+                    detail-select="m1_case_short"
+                    id="case_id"
+                    nodeset="instance('casedb')/casedb/case[@case_type='mother'][@status='open']"
+                    value="./@case_id"/>
+              </session>
+            </partial>
+            """,
+            suite,
+            "entry[2]/session",
+        )
+
+        self.assertXmlPartialEqual(
+            """
+            <partial>
+              <session>
+                <datum
+                    detail-select="m1_case_short"
+                    id="case_id"
+                    nodeset="instance('casedb')/casedb/case[@case_type='mother'][@status='open']"
+                    value="./@case_id"/>
+
+                <datum
+                    detail-confirm="m2_case_long"
+                    detail-select="m2_case_short"
+                    id="case_id_child"
+                    nodeset="instance('casedb')/casedb/case[@case_type='child'][@status='open'][index/parent=instance('commcaresession')/session/data/case_id]"
+                    value="./@case_id"/>
+              </session>
+            </partial>
+            """,
+            suite,
+            "entry[3]/session",
+        )
+
+    def assertDetailGroup(self, suite_xml, detail_id, header_rows=1):
+        self.assertXmlPartialEqual(
+            f"""
+            <partial>
+               <group function="./index/parent" grid-header-rows="{header_rows}"/>
+            </partial>
+            """,
+            suite_xml,
+            f"detail[@id='{detail_id}']/group",
+        )
