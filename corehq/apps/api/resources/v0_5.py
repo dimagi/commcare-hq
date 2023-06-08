@@ -1195,6 +1195,7 @@ class NavigationEventAuditResource(HqBaseResource, Resource):
         local_date_filter = cls._get_compound_filter('local_date', params)
 
         results = (queryset
+                .exclude(user__isnull=True)
                 .annotate(local_date=TruncDate('event_date', tzinfo=local_timezone))
                 .filter(local_date_filter)
                 .values('local_date', 'user'))
