@@ -8,6 +8,27 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
         toggles = hqImport("hqwebapp/js/toggles"),
         utils = hqImport("cloudcare/js/formplayer/utils/utils");
 
+    const locationIcon = L.divIcon({
+        className: 'custom-div-icon',
+        html: "<div style='background-color:#0b3fc3;' class='marker-pin'></div>",
+        iconSize: [30, 42],
+        iconAnchor: [15, 42]
+    });
+
+    const selectedLocationIcon = L.divIcon({
+        className: 'custom-div-icon',
+        html: "<div style='background-color:#c39b0b;' class='marker-pin'></div>",
+        iconSize: [30, 42],
+        iconAnchor: [15, 42]
+    });
+
+    const homeLocationIcon = L.divIcon({
+        className: 'custom-div-icon',
+        html: "<div style='background-color:#c30b82;' class='marker-pin'></div>",
+        iconSize: [30, 42],
+        iconAnchor: [15, 42]
+    });
+
     const MenuView = Marionette.View.extend({
         tagName: function () {
             if (this.model.collection.layoutStyle === 'grid') {
@@ -506,17 +527,19 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
                 let latLng = coordinates.split(" ").slice(0,2);
                 if (latLng.length > 1) {
                     const rowId = `row-${model.id}`;
-                    L.marker(latLng)
+                    const marker = L.marker(latLng, {icon: locationIcon});
+                    marker
                         .addTo(addressMap)
                         .on('click', () => {
                             // tiles
                             $(`.list-cell-wrapper-style[id!='${rowId}']`)
-                                .removeClass("highlighted-case")
+                                .removeClass("highlighted-case");
                             // rows
                             $(`.case-row[id!='${rowId}']`)
-                                .removeClass("highlighted-case")
+                                .removeClass("highlighted-case");
                             $(`#${rowId}`)
-                                .addClass("highlighted-case")
+                                .addClass("highlighted-case");
+                            marker.setIcon(selectedLocationIcon);
                         });
 
                     return latLng;
@@ -543,13 +566,50 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
 
                 const addressIndex = _.findIndex(this.styles, function (style) { return style.displayFormat === constants.FORMAT_ADDRESS; });
                 L.mapbox.accessToken = token;
-                const mapbox = L.mapbox;
-                const geocoder = mapbox.geocoder('mapbox.places');
 
-                const latLons = this.options.collection.models
-                    .map(model => this.addAddressPin(geocoder, addressMap, this.options.headers, model, addressIndex))
-                    .filter(latLon => latLon);
-                addressMap.fitBounds(latLons, {maxZoom: 8});
+                const latLons = []
+                const markers = []
+                this.options.collection.models
+                    .forEach(model => {
+                        const coordinates = model.attributes.data[addressIndex];
+                        if (coordinates) {
+                            let latLng = coordinates.split(" ").slice(0,2);
+                            if (latLng.length > 1) {
+                                const rowId = `row-${model.id}`;
+                                const marker = L.marker(latLng, {icon: locationIcon});
+                                markers.push(marker);
+                                marker
+                                    .addTo(addressMap)
+                                    .on('click', () => {
+                                        // tiles
+                                        $(`.list-cell-wrapper-style[id!='${rowId}']`)
+                                            .removeClass("highlighted-case");
+                                        // rows
+                                        $(`.case-row[id!='${rowId}']`)
+                                            .removeClass("highlighted-case");
+                                        $(`#${rowId}`)
+                                            .addClass("highlighted-case");
+                                        markers.forEach(m => m.setIcon(locationIcon));
+                                        marker.setIcon(selectedLocationIcon);
+                                    });
+                                latLons.push(latLng);
+                            }
+                        }
+                    });
+
+                navigator.geolocation.getCurrentPosition(
+                    success => {
+                        const coords = success.coords;
+                        const homeLatLng = [coords.latitude, coords.longitude];
+
+                        L.marker(homeLatLng, { icon: homeLocationIcon })
+                            .addTo(addressMap);
+                        latLons.push(homeLatLng);
+                        addressMap.fitBounds(latLons, {maxZoom: 8});
+                    }, () => {
+                        addressMap.fitBounds(latLons, {maxZoom: 8});
+                    }
+                );
 
             } catch (error) {
                 console.error(error);
