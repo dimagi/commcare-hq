@@ -10,13 +10,14 @@ from dimagi.ext.couchdbkit import (
     StringProperty,
 )
 
+
 from corehq.apps.app_manager.models import Application
 from corehq.apps.cachehq.mixins import QuickCachedDocumentMixin
 from corehq.apps.groups.models import Group
 
 
 class ApplicationAccess(models.Model):
-    domain = models.CharField(max_length=255, null=False, unique=True)
+     domain = models.CharField(max_length=255, null=False, unique=True)
     restrict = models.BooleanField(default=False)
 
     def save(self, force_insert=False, force_update=False, using=DEFAULT_DB_ALIAS, update_fields=None):

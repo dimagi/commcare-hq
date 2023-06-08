@@ -11,8 +11,8 @@ hqDefine("dashboard/js/dashboard", [
     _,
     initialPageData
 ) {
-    var tileModel = function (options) {
-        var self = {};
+    var tileModel =  function (options) {
+        var self = {}
         self.title = options.title;
         self.slug = options.slug;
         self.icon = options.icon;
