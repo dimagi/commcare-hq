@@ -24,9 +24,6 @@ def get_auth_methods(request):
     if not health_id:
         error_msg = "Missing required parameter: health_id"
         return generate_invalid_req_response(error_msg)
-    if check_for_existing_abha_number(request.user.domain, health_id):
-        return generate_invalid_req_response(ERROR_MESSAGES[ABHA_IN_USE_ERROR_CODE],
-                                             error_code=ABHA_IN_USE_ERROR_CODE)
     resp = abdm_util.search_by_health_id(health_id)
     auth_methods = resp.get("authMethods")
     resp = {"auth_methods": auth_methods}
@@ -76,6 +73,11 @@ def confirm_with_aadhaar_otp(request):
 @required_request_params(["health_id"])
 def search_health_id(request):
     health_id = request.data.get("health_id")
+    existing_check_on_hq = request.data.get("existing_check_on_hq", True)
+    if existing_check_on_hq:
+        if check_for_existing_abha_number(request.user.domain, health_id):
+            return generate_invalid_req_response(ERROR_MESSAGES[ABHA_IN_USE_ERROR_CODE],
+                                                 error_code=ABHA_IN_USE_ERROR_CODE)
     resp = abdm_util.search_by_health_id(health_id)
     return parse_response(resp)
 
