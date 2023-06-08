@@ -38,13 +38,13 @@ jobs:
       - name: Get .py files
         id: python-files
         run: |
-          output=$(echo "${{ steps.changed-files.outputs.all_changed_files }}" | grep -o "\S*\.py")
+          output=$(echo "${{ steps.changed-files.outputs.all_changed_files }}" | grep -o "\S*\.py" 2>/dev/null)
           echo "::set-output name=python-file-names::$output"
 
       - name: Get .js files
         id: javascript-files
         run: |
-          output=$(echo "${{ steps.changed-files.outputs.all_changed_files }}" | grep -o "\S*\.js")
+          output=$(echo "${{ steps.changed-files.outputs.all_changed_files }}" | grep -o "\S*\.js" 2>/dev/null)
           echo "::set-output name=javascript-file-names::$output"
 
       - name: Set up Python
