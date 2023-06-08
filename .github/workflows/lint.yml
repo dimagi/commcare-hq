@@ -39,7 +39,11 @@ jobs:
         id: python-files
         run: |
           output=$(echo "${{ steps.changed-files.outputs.all_changed_files }}" | grep -o "\S*\.py" 2>/dev/null)
-          echo "::set-output name=python-file-names::$output"
+          if [[ -n "$output" ]]; then
+              echo "::set-output name=python-file-names::$output"
+          else
+              echo "::set-output name=python-file-names::''"
+          fi
 
       - name: Get .js files
         id: javascript-files
