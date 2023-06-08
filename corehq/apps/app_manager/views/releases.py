@@ -174,7 +174,12 @@ def paginate_releases(request, domain, app_id):
             for app in apps
         ]
 
-    if toggles.APPLICATION_ERROR_REPORT.enabled(request.couch_user.username):
+    application_error_report_access = (
+        domain_has_privilege(domain, privileges.APPLICATION_ERROR_REPORT)
+        or request.couch_user.is_superuser
+        or request.couch_user.is_dimagi
+    )
+    if application_error_report_access:
         versions = [app['version'] for app in saved_apps]
         num_errors_dict = _get_error_counts(domain, app_id, versions)
         for app in saved_apps:
