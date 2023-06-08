@@ -99,6 +99,7 @@ from corehq.toggles import toggles_enabled_for_request
 from corehq.util.timezones.conversions import ServerTime
 from corehq.util.timezones.utils import get_timezone_for_user
 from corehq.util.view_utils import reverse
+from corehq.apps.reports.standard.deployments import ApplicationErrorReport
 
 
 def _get_error_counts(domain, app_id, version_numbers):
@@ -174,12 +175,7 @@ def paginate_releases(request, domain, app_id):
             for app in apps
         ]
 
-    application_error_report_access = (
-        domain_has_privilege(domain, privileges.APPLICATION_ERROR_REPORT)
-        or request.couch_user.is_superuser
-        or request.couch_user.is_dimagi
-    )
-    if application_error_report_access:
+    if ApplicationErrorReport.show_in_navigation(domain, None, request.couch_user):
         versions = [app['version'] for app in saved_apps]
         num_errors_dict = _get_error_counts(domain, app_id, versions)
         for app in saved_apps:
@@ -222,7 +218,8 @@ def get_releases_context(request, domain, app_id):
         'full_name': request.couch_user.full_name,
         'can_edit_apps': request.couch_user.can_edit_apps(),
         'can_view_app_diff': (domain_has_privilege(domain, privileges.VIEW_APP_DIFF)
-                              or request.user.is_superuser)
+                              or request.user.is_superuser),
+        'has_application_error_report_access': ApplicationErrorReport.show_in_navigation(domain, None, request.couch_user)
     }
     if not app.is_remote_app():
         context.update({
