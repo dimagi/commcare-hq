@@ -14,6 +14,7 @@ class CaseType(models.Model):
     name = models.CharField(max_length=255, default=None)
     description = models.TextField(default='', blank=True)
     fully_generated = models.BooleanField(default=False)
+    is_deprecated = models.BooleanField(default=False)
 
     class Meta(object):
         unique_together = ('domain', 'name')
