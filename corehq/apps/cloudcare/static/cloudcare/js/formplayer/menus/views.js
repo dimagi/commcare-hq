@@ -521,33 +521,6 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             }
         },
 
-        addAddressPin: function (geocoder, addressMap, headers, model, addressIndex) {
-            const coordinates = model.attributes.data[addressIndex];
-            if (coordinates) {
-                let latLng = coordinates.split(" ").slice(0,2);
-                if (latLng.length > 1) {
-                    const rowId = `row-${model.id}`;
-                    const marker = L.marker(latLng, {icon: locationIcon});
-                    marker
-                        .addTo(addressMap)
-                        .on('click', () => {
-                            // tiles
-                            $(`.list-cell-wrapper-style[id!='${rowId}']`)
-                                .removeClass("highlighted-case");
-                            // rows
-                            $(`.case-row[id!='${rowId}']`)
-                                .removeClass("highlighted-case");
-                            $(`#${rowId}`)
-                                .addClass("highlighted-case");
-                            marker.setIcon(selectedLocationIcon);
-                        });
-
-                    return latLng;
-                }
-            }
-            return null;
-        },
-
         loadMap: function () {
             const token = initialPageData.get("mapbox_access_token");
 
@@ -591,6 +564,10 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
                                             .addClass("highlighted-case");
                                         markers.forEach(m => m.setIcon(locationIcon));
                                         marker.setIcon(selectedLocationIcon);
+
+                                        $([document.documentElement, document.body]).animate({
+                                            scrollTop: $(`#${rowId}`).offset().top
+                                        }, 500);
                                     });
                                 latLons.push(latLng);
                             }
