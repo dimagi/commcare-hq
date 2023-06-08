@@ -81,8 +81,6 @@ class SuiteCaseTilesGroupingTest(SimpleTestCase, SuiteMixin):
 
     def test_entry_datum_with_case_tile_grouping_parent_select(self, *args):
         factory = AppFactory(domain="grouped-tiles")
-        app_id = uuid4().hex
-        factory.app._id = app_id
         module, form = factory.new_basic_module('basic', 'child')
         factory.form_requires_case(form, 'child')
         form.source = self.get_xml('original_form').decode('utf-8')
@@ -145,3 +143,68 @@ class SuiteCaseTilesGroupingTest(SimpleTestCase, SuiteMixin):
         </partial>
         """
         self.assertXmlPartialEqual(expected, form.render_xform(), xpath)
+
+    def test_entry_datum_with_case_tile_grouping_child_modules(self, *args):
+        """Case hierarchy: household -> mother -> child
+        Modules:
+            mother
+            household
+                child (parent select = mother)
+        """
+        factory = AppFactory(domain="grouped-tiles")
+        mother_module, mother_form = factory.new_basic_module('mother', 'mother')
+        factory.form_requires_case(mother_form, 'mother')
+
+        household_module, household_form = factory.new_basic_module('household', 'household')
+        factory.form_requires_case(household_form, 'household')
+
+        child_module, child_form = factory.new_basic_module('child', 'child', parent_module=household_module)
+        factory.form_requires_case(child_form, 'child', parent_case_type='mother')
+        child_form.source = self.get_xml('original_form').decode('utf-8')
+
+        child_module.case_details.short.case_tile_template = CaseTileTemplates.PERSON_SIMPLE.value
+        add_columns_for_case_details(child_module)
+        child_module.case_details.short.case_tile_group = CaseTileGroupConfig(
+            xpath_function="./index/parent",
+            extra_datum_case_type="mother"
+        )
+
+        suite = factory.app.create_suite()
+        self.assertXmlPartialEqual(
+            """
+            <partial>
+              <session>
+                <datum
+                    detail-select="m0_case_short"
+                    id="parent_id"
+                    nodeset="instance('casedb')/casedb/case[@case_type='mother'][@status='open']"
+                    value="./@case_id"/>
+
+                <datum
+                    detail-confirm="m2_case_long"
+                    detail-select="m2_case_short"
+                    id="case_id_child"
+                    nodeset="instance('casedb')/casedb/case[@case_type='child'][@status='open'][index/parent=instance('commcaresession')/session/data/parent_id]"
+                    value="./@case_id"/>
+
+                <datum function="./index/parent" id="case_id_mother"/>
+              </session>
+            </partial>
+            """,
+            suite,
+            "entry[3]/session",
+        )
+
+        child_form.actions.update_case = UpdateCaseAction(
+            update={'question1': ConditionalCaseUpdate(question_path='/data/question1')})
+        child_form.actions.update_case.condition.type = 'always'
+        xpath = './{h}head/{w3x}model/{w3x}bind[@nodeset="/data/case/@case_id"]'.format(
+            h='{http://www.w3.org/1999/xhtml}', w3x='{http://www.w3.org/2002/xforms}',
+        )
+        expected = """
+           <partial>
+             <ns0:bind xmlns:ns0="http://www.w3.org/2002/xforms" nodeset="/data/case/@case_id"
+               calculate="instance('commcaresession')/session/data/case_id_mother"/>
+           </partial>
+           """
+        self.assertXmlPartialEqual(expected, child_form.render_xform(), xpath)
