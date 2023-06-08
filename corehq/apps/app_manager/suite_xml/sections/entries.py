@@ -15,14 +15,22 @@ on matching parent and child datums.
 
 """
 from collections import defaultdict
-from itertools import zip_longest
 
 import attr
 from django.utils.translation import gettext as _
 from memoized import memoized
 
 from corehq.apps.app_manager import id_strings
-from corehq.apps.app_manager.const import USERCASE_ID, USERCASE_TYPE, LOAD_TILE_GROUP_CASE_ID
+from corehq.apps.app_manager.const import (
+    USERCASE_ID,
+    USERCASE_TYPE,
+    LOAD_TILE_GROUP_CASE_ID,
+    AUTO_SELECT_USER,
+    AUTO_SELECT_CASE,
+    AUTO_SELECT_FIXTURE,
+    AUTO_SELECT_RAW,
+    AUTO_SELECT_USERCASE
+)
 from corehq.apps.app_manager.exceptions import (
     FormNotFoundException,
     ParentModuleReferenceError,
@@ -671,8 +679,6 @@ class EntriesHelper(object):
 
     @staticmethod
     def get_auto_select_datums_and_assertions(action, auto_select, form):
-        from corehq.apps.app_manager.models import AUTO_SELECT_USER, AUTO_SELECT_CASE, \
-            AUTO_SELECT_FIXTURE, AUTO_SELECT_RAW, AUTO_SELECT_USERCASE
         if auto_select.mode == AUTO_SELECT_USER:
             return EntriesHelper.get_userdata_autoselect(
                 auto_select.value_key,
