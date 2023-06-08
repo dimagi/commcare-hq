@@ -78,5 +78,4 @@ jobs:
           repo-token: "${{ secrets.GITHUB_TOKEN }}"
           files: ${{ steps.javascript-files.outputs.javascript-file-names }}
           extensions: ".js,.ts"
-          working-directory: "./my-package"
           quiet: "false"
