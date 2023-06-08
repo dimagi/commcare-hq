@@ -73,9 +73,16 @@ jobs:
 #          eslint_auto_fix: false
 #          eslint_args: ${{ steps.javascript-files.outputs.javascript-file-names }}
 
-      - uses: a-b-r-o-w-n/eslint-action@v2
+#      - uses: a-b-r-o-w-n/eslint-action@v2
+#        with:
+#          repo-token: "${{ secrets.GITHUB_TOKEN }}"
+#          files: "${{ steps.javascript-files.outputs.javascript-file-names }}"
+#          extensions: ".js,.ts"
+#          quiet: "false"
+#
+      - uses: sibiraj-s/action-eslint@v2
         with:
-          repo-token: "${{ secrets.GITHUB_TOKEN }}"
-          files: "${{ steps.javascript-files.outputs.javascript-file-names }}"
-          extensions: ".js,.ts"
-          quiet: "false"
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          eslint-args: ${{ steps.javascript-files.outputs.javascript-file-names }}
+          extensions: 'js,jsx,ts,tsx'
+          annotations: true
