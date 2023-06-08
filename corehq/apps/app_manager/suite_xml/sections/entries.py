@@ -1081,6 +1081,8 @@ def _update_refs(datums, old_id, new_id):
     new = session_var(new_id)
 
     for datum in datums:
+        if datum.id == old_id:
+            continue
         for prop in ['nodeset', 'function']:
             xpath = getattr(datum, prop, None)
             if xpath:
