@@ -44,7 +44,7 @@ jobs:
       - name: Get .js files
         id: javascript-files
         run: |
-          output=$(echo "${{ steps.changed-files.outputs.all_changed_files }}" | grep -o "\S*\.js" 2>/dev/null)
+          output=$(echo "${{ steps.changed-files.outputs.all_changed_files }}" | grep -o "\S*\.js" )
           echo "::set-output name=javascript-file-names::$output"
 
       - name: Set up Python
@@ -73,6 +73,6 @@ jobs:
       - uses: sibiraj-s/action-eslint@v2
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
-#          eslint-args: ${{ steps.javascript-files.outputs.javascript-file-names }}
+          eslint-args: ${{ steps.javascript-files.outputs.javascript-file-names }}
           extensions: 'js,jsx,ts,tsx'
           annotations: true
