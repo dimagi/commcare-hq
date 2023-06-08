@@ -55,13 +55,13 @@ jobs:
 #      - name: Install Python dependencies
 #        run: pip install flake8
 
-#      - name: Set up Node.js
-#        uses: actions/setup-node@v3
-#        with:
-#          node-version: 14
-#
-#      - name: Install Node.js dependencies
-#        run: yarn install --frozen-lockfile
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 14
+
+      - name: Install Node.js dependencies
+        run: yarn install --frozen-lockfile
 
 #      - name: Run flake8 linter
 #        uses: wearerequired/lint-action@v2
