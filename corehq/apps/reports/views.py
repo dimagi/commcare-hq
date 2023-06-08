@@ -1970,11 +1970,15 @@ def get_or_create_filter_hash(request, domain):
     query_id = request.POST.get('query_id')
     query_string = request.POST.get('params')
     not_found = False
+    max_input_limit = 10000
 
     if query_string:
-        query, created = QueryStringHash.objects.get_or_create(query_string=query_string, domain=domain)
-        query_id = query.query_id.hex
-        query.save()  # Updates the 'last_accessed' field
+        if len(query_string) > max_input_limit:
+            not_found = True
+        else:
+            query, created = QueryStringHash.objects.get_or_create(query_string=query_string, domain=domain)
+            query_id = query.query_id.hex
+            query.save()  # Updates the 'last_accessed' field
     elif query_id:
         try:
             query = QueryStringHash.objects.filter(query_id=query_id, domain=domain)
