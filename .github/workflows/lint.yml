@@ -108,6 +108,9 @@ jobs:
             js_files=$(echo "${{ steps.changed-files.outputs.all_changed_files }}" | grep -o "\S*\.js" )
           fi
 
+          echo $js_file_present
+          echo $js_files
+
           echo "::set-output name=javascript-file-present::$js_file_present"
           echo "::set-output name=javascript-file-names::$js_files"
 
