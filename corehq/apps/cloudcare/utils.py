@@ -9,8 +9,9 @@ def should_show_preview_app(request, app, username):
     return not app.is_remote_app()
 
 
+
 def _webapps_url(domain, app_id, selections):
-    url = reverse('formplayer_main', args=[domain])
+     url = reverse('formplayer_main', args=[domain])
     query_dict = {
         'appId': app_id,
         'selections': selections,
