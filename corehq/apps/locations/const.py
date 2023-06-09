@@ -21,7 +21,7 @@ LOCATION_SHEET_HEADERS_OPTIONAL = OrderedDict([
 ])
 
 LOCATION_SHEET_HEADERS = OrderedDict(
-    list(LOCATION_SHEET_HEADERS_BASE.items()) + list(LOCATION_SHEET_HEADERS_OPTIONAL.items())
+                                       list(LOCATION_SHEET_HEADERS_BASE.items()) + list(LOCATION_SHEET_HEADERS_OPTIONAL.items())
 )
 
 LOCATION_TYPE_SHEET_HEADERS = OrderedDict([
