@@ -174,7 +174,7 @@
           <span data-bind="text: menu_item_label()"></span>
           <!--/ko-->
           <span data-bind="if: !built_with.signed()">{% trans "Unsigned Jar" %}</span>
-          {% if request|toggle_enabled:"APPLICATION_ERROR_REPORT" %}
+          {% if has_application_error_report_access %}
             | <a class="release-error-report-link" data-bind="text: numErrorsText,
                               attr: {href: $root.app_error_url('{{ app.id }}', version())}"></a>
           {% endif %}
