@@ -219,16 +219,20 @@ def get_module_search_command_rows(langs, module, domain):
     if not module_offers_search(module) or not toggles.USH_CASE_CLAIM_UPDATES.enabled(domain):
         return []
 
-    return [
+    rows = [
         ('search_label', 'list')
         + tuple(module.search_config.search_label.label.get(lang, '') for lang in langs),
-        ('search_again_label', 'list')
-        + tuple(module.search_config.search_again_label.label.get(lang, '') for lang in langs),
         ('title_label', 'list')
         + tuple(module.search_config.title_label.get(lang, '') for lang in langs),
         ('description', 'list')
         + tuple(module.search_config.description.get(lang, '') for lang in langs),
     ]
+    if not toggles.SPLIT_SCREEN_CASE_SEARCH.enabled(domain):
+        rows.append(
+            ('search_again_label', 'list')
+            + tuple(module.search_config.search_again_label.label.get(lang, '') for lang in langs),
+        )
+    return rows
 
 
 def get_case_search_rows(langs, module, domain):
