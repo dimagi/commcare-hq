@@ -26,7 +26,7 @@ class SuiteCaseTilesGroupingTest(SimpleTestCase, SuiteMixin):
         module.case_details.short.case_tile_template = CaseTileTemplates.PERSON_SIMPLE.value
         add_columns_for_case_details(module)
         module.case_details.short.case_tile_group = CaseTileGroupConfig(
-            xpath_function="./index/parent", header_rows=3
+            index_identifier="parent", header_rows=3
         )
 
         module.assign_references()
@@ -35,7 +35,7 @@ class SuiteCaseTilesGroupingTest(SimpleTestCase, SuiteMixin):
         form.xmlns = 'http://id_m0-f0'
         form.requires = 'case'
 
-        self.assertDetailGroup(app.create_suite(), "m0_case_short", 3)
+        self.assertDetailGroup(app.create_suite(), "m0_case_short", header_rows=3)
 
     def test_entry_datum_with_case_tile_grouping(self, *args):
         app = Application.new_app('domain', 'Untitled Application')
@@ -44,7 +44,7 @@ class SuiteCaseTilesGroupingTest(SimpleTestCase, SuiteMixin):
         module.case_type = 'child'
         module.case_details.short.case_tile_template = CaseTileTemplates.PERSON_SIMPLE.value
         add_columns_for_case_details(module)
-        module.case_details.short.case_tile_group = CaseTileGroupConfig(xpath_function="./index/parent")
+        module.case_details.short.case_tile_group = CaseTileGroupConfig(index_identifier="parent")
 
         module.assign_references()
 
@@ -90,7 +90,7 @@ class SuiteCaseTilesGroupingTest(SimpleTestCase, SuiteMixin):
         module.case_details.short.case_tile_template = CaseTileTemplates.PERSON_SIMPLE.value
         add_columns_for_case_details(module)
         module.case_details.short.case_tile_group = CaseTileGroupConfig(
-            xpath_function="./index/parent",
+            index_identifier="parent",
             parent_case_type="parent"
         )
 
@@ -158,7 +158,7 @@ class SuiteCaseTilesGroupingTest(SimpleTestCase, SuiteMixin):
         child_module.case_details.short.case_tile_template = CaseTileTemplates.PERSON_SIMPLE.value
         add_columns_for_case_details(child_module)
         child_module.case_details.short.case_tile_group = CaseTileGroupConfig(
-            xpath_function="./index/parent",
+            index_identifier="parent",
             parent_case_type="mother"
         )
 
@@ -222,7 +222,7 @@ class SuiteCaseTilesGroupingTest(SimpleTestCase, SuiteMixin):
         mother_module.case_details.short.case_tile_template = CaseTileTemplates.PERSON_SIMPLE.value
         add_columns_for_case_details(mother_module)
         mother_module.case_details.short.case_tile_group = CaseTileGroupConfig(
-            xpath_function="./index/parent", add_parent_case_datum=False
+            index_identifier="parent", add_parent_case_datum=False
         )
 
         suite = factory.app.create_suite()
@@ -289,12 +289,12 @@ class SuiteCaseTilesGroupingTest(SimpleTestCase, SuiteMixin):
         mother_module.case_details.short.case_tile_template = CaseTileTemplates.PERSON_SIMPLE.value
         add_columns_for_case_details(mother_module)
         mother_module.case_details.short.case_tile_group = CaseTileGroupConfig(
-            xpath_function="./index/parent",
+            index_identifier="host",
             parent_case_type="household"
         )
 
         suite = factory.app.create_suite()
-        self.assertDetailGroup(suite, "m1_case_short")
+        self.assertDetailGroup(suite, "m1_case_short", index_identifier="host")
         self.assertXmlPartialEqual(
             """
             <partial>
@@ -305,7 +305,7 @@ class SuiteCaseTilesGroupingTest(SimpleTestCase, SuiteMixin):
                     id="case_id_mother"
                     nodeset="instance('casedb')/casedb/case[@case_type='mother'][@status='open']"
                     value="./@case_id"/>
-                <datum function="instance('casedb')/casedb/case[@case_id=instance('commcaresession')/session/data/case_id_mother]/index/parent" id="case_id"/>
+                <datum function="instance('casedb')/casedb/case[@case_id=instance('commcaresession')/session/data/case_id_mother]/index/host" id="case_id"/>
               </session>
             </partial>
             """,
@@ -317,7 +317,7 @@ class SuiteCaseTilesGroupingTest(SimpleTestCase, SuiteMixin):
             f"""
             <partial>
               <session>
-                <datum function="instance('casedb')/casedb/case[@case_id=instance('commcaresession')/session/data/case_id_mother]/index/parent" id="case_id"/>
+                <datum function="instance('casedb')/casedb/case[@case_id=instance('commcaresession')/session/data/case_id_mother]/index/host" id="case_id"/>
 
                 <datum
                     detail-confirm="m2_case_long"
@@ -332,11 +332,11 @@ class SuiteCaseTilesGroupingTest(SimpleTestCase, SuiteMixin):
             "entry[3]/session",
         )
 
-    def assertDetailGroup(self, suite_xml, detail_id, header_rows=1):
+    def assertDetailGroup(self, suite_xml, detail_id, index_identifier="parent", header_rows=1):
         self.assertXmlPartialEqual(
             f"""
             <partial>
-               <group function="./index/parent" grid-header-rows="{header_rows}"/>
+               <group function="./index/{index_identifier}" grid-header-rows="{header_rows}"/>
             </partial>
             """,
             suite_xml,

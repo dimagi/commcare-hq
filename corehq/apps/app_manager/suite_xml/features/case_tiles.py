@@ -84,7 +84,7 @@ class CaseTileHelper(object):
         if self.module.has_grouped_tiles(check_extra_datum=False):
             # TODO: check CC version for app
             detail.tile_group = TileGroup(
-                function=self.detail.case_tile_group.xpath_function,
+                function=f"./index/{self.detail.case_tile_group.index_identifier}",
                 grid_header_rows=self.detail.case_tile_group.header_rows
             )
 

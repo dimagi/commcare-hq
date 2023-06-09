@@ -1744,7 +1744,7 @@ class Form(IndexedFormBase, FormMediaMixin, NavMenuItemMediaMixin):
     @memoized
     def get_contributed_case_relationships(self):
         case_relationships_by_child_type = defaultdict(set)
-        parent_case_type = self.get_module().case_type
+        parent_case_type = self.get_module().case_type  # TODO: does this change if using grouping?
         for subcase in self.actions.subcases:
             child_case_type = subcase.case_type
             if child_case_type != parent_case_type and (
@@ -1920,7 +1920,7 @@ class CaseListLookupMixin(DocumentSchema):
 
 class CaseTileGroupConfig(DocumentSchema):
     # e.g. "./index/parent"
-    xpath_function = StringProperty()
+    index_identifier = StringProperty()
     # number of rows of the tile to use for the group header
     header_rows = IntegerProperty(default=1)
     add_parent_case_datum = BooleanProperty(default=True)
@@ -2355,7 +2355,7 @@ class ModuleBase(IndexedSchema, ModuleMediaMixin, NavMenuItemMediaMixin, Comment
         if hasattr(self, 'case_details'):
             return (
                 self.case_details.short.case_tile_template
-                and self.case_details.short.case_tile_group.xpath_function
+                and self.case_details.short.case_tile_group.index_identifier
                 and (not check_extra_datum or self.case_details.short.case_tile_group.add_parent_case_datum)
             )
         return False

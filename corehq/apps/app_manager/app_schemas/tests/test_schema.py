@@ -718,25 +718,19 @@ class CaseTileGroupingSchemaTest(BaseSchemaTest):
             'parent_prop': '/data/name'
         })
         factory.form_opens_case(form, "child", is_subcase=True)
-        # module.assign_references()
 
         other_module, other_form = factory.new_basic_module('another', 'child')
         factory.form_requires_case(other_form, 'child', update={
             'child_prop': '/data/name'
         })
-        other_module.assign_references()
 
         other_module.case_details.short.case_tile_template = CaseTileTemplates.PERSON_SIMPLE.value
         other_module.case_details.short.case_tile_group = CaseTileGroupConfig(
-            xpath_function="./index/parent",
-            parent_case_type="parent"
+            index_identifier="parent",
+            parent_case_type="mother"
         )
 
-        self.maxDiff = None
-        print(get_session_schema(other_form)["structure"])
         schema = get_casedb_schema(other_form)
-        import json
-        print(json.dumps(schema["subsets"], indent=2))
         self.assertEqual(get_session_schema(other_form)["structure"], {
             "data": {
                 "merge": True,

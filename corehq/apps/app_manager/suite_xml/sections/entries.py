@@ -424,7 +424,7 @@ class EntriesHelper(object):
             group = form.get_module().case_details.short.case_tile_group
             xpath = CaseIDXPath(session_var(existing_datums[-1].datum.id))
             datums.append(FormDatumMeta(
-                datum=SessionDatum(id="case_id", function=xpath.case().parent_id()),
+                datum=SessionDatum(id="case_id", function=xpath.case().index_id(group.index_identifier)),
                 case_type=group.parent_case_type,  # needed for other places
                 requires_selection=False,
                 action=LOAD_TILE_GROUP_CASE_ID
