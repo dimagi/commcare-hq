@@ -1,0 +1,5 @@
+{
+    "slug": "three_column",
+    "filename": "three_column.xml",
+    "fields": ["left", "middle", "right"]
+}
