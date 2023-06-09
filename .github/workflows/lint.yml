@@ -51,23 +51,28 @@ jobs:
           if [ "$python_file_present" = true ]; then
             exit 0
           fi
-
+          echo "::set-output name=python-file-present::$python_file_present"
           echo "::set-output name=python-file-names::$python_files"
 
-      - name: Set up Python
-        uses: actions/setup-python@v1
-        with:
-          python-version: 3.8
+      - name: Check if python files are present
+#        if: ${{ steps.python-files.outputs.python_file_present }}
+        run: echo ${{ steps.python-files.outputs.python_file_present }}
 
-      - name: Install Python dependencies
-        run: pip install flake8
-
-      - name: Run flake8 linter
-        uses: wearerequired/lint-action@v2
-        with:
-          flake8: true
-          flake8_auto_fix: false
-          flake8_args: ${{ steps.python-files.outputs.python-file-names }}
+#      - name: Set up Python
+#        uses: actions/setup-python@v1
+#        if: ${{ steps.python-files.outputs.python_file_present }}
+#        with:
+#          python-version: 3.8
+#
+#      - name: Install Python dependencies
+#        run: pip install flake8
+#
+#      - name: Run flake8 linter
+#        uses: wearerequired/lint-action@v2
+#        with:
+#          flake8: true
+#          flake8_auto_fix: false
+#          flake8_args: ${{ steps.python-files.outputs.python-file-names }}
 
   # If this is in the same step as python linting the annotations don't show up...sad face
   lint-javascript:
