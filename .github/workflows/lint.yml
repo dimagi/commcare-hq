@@ -38,37 +38,31 @@ jobs:
         id: python-files
         run: |
           filenames=$(echo "${{ steps.changed-files.outputs.all_changed_files }}")
-
           python_file_present=false
           for filename in $filenames; do
             extension="${filename##*.}"
+
             if [[ "$extension" == "py" ]]; then
               python_file_present=true
               break
             fi
           done
 
-          echo "::set-output name=python-files-present::$python_file_present"
-
-          if $python_file_present ; then
-            python_files=$(echo "${{ steps.changed-files.outputs.all_changed_files }}" | grep -o "\S*\.py")
-            echo "::set-output name=python-file-names::$python_files"
-          else
-            echo "::set-output name=python-file-names::"
+          if [ "$python_file_present" = true ]; then
+            exit 0
           fi
 
+          echo "::set-output name=python-file-names::$python_files"
+
       - name: Set up Python
-        if: ${{ steps.python-files.output.python-files-present }}
         uses: actions/setup-python@v1
         with:
           python-version: 3.8
 
       - name: Install Python dependencies
-        if: ${{ steps.python-files.output.python-files-present }}
         run: pip install flake8
 
       - name: Run flake8 linter
-        if: ${{ steps.python-files.output.python-files-present }}
         uses: wearerequired/lint-action@v2
         with:
           flake8: true
