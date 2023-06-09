@@ -20,7 +20,10 @@
     <!-- ko foreach: caseTypes -->
     <li data-bind="css: { active: $data.name == $root.activeCaseType() }">
       {# navigation handle by URL hash #}
-      <a data-bind="text: $data.name, attr: {href: $data.url}"></a>
+      <a data-bind="attr: {href: $data.url}">
+        <span data-bind="text: $data.name" style="display: inline-block"></span>
+        <span data-bind="visible: $data.deprecated" class="label label-warning">{% trans "deprecated" %}</span>
+      </a>
     </li>
     <!-- /ko -->
     {% if not request.is_view_only %}
@@ -109,15 +112,26 @@
 {% block page_content %}
   {% registerurl 'data_dictionary_json' domain %}
   {% registerurl 'update_case_property' domain %}
+  {% registerurl 'deprecate_or_restore_case_type' domain '---' %}
   {% initial_page_data 'typeChoices' question_types %}
   {% initial_page_data 'fhirResourceTypes' fhir_resource_types %}
   {% initial_page_data 'read_only_mode' request.is_view_only %}
+  <div id="deprecate-case-type-error" class="alert alert-danger hidden">
+    <p>
+      {% blocktrans %}
+        There was an error deprecating the case type. Please try again.
+      {% endblocktrans %}
+    </p>
+  </div>
   {% if not request.is_view_only %}
     <div data-bind="saveButton: saveButton, visible: $root.activeCaseType()"></div>
   {% endif %}
   <div class="row">
     <div class="col-md-12">
-      <h3 data-bind="text: $root.activeCaseType()"></h3>
+      <div>
+        <h3 data-bind="text: $root.activeCaseType()" style="display: inline-block;"></h3>
+        <span data-bind="visible: $root.isActiveCaseTypeDeprecated()" class="label label-warning" style="display: inline-block;">{% trans "deprecated" %}</span>
+      </div>
       {% if fhir_integration_enabled %}
         <div id="fhir-resource-type-form" class="form-inline" data-bind="visible: fhirResourceTypes().length">
           {% trans "FHIR Resource Type" %}
@@ -149,6 +163,14 @@
           <i class="fa fa-cloud-upload"></i>
           {% trans "Import from Excel" %}
         </a>
+      <a class="btn btn-default" href="#" data-bind="openModal: 'deprecate-case-type', visible: !$root.isActiveCaseTypeDeprecated()">
+        <i class="fa fa-archive"></i>
+        {% trans "Deprecate Case Type" %}
+      </a>
+      <button class="btn btn-default" data-bind="click: restoreCaseType, visible: $root.isActiveCaseTypeDeprecated()">
+        <i class="fa fa-undo"></i>
+        {% trans "Restore Case Type" %}
+      </button>
       {% endif %}
       <div  data-bind="visible: $root.activeCaseType()">
         <button data-bind="click: $root.showDeprecated, visible: !showAll()" class="btn btn-default pull-right">{% trans "Show Deprecated Properties" %}</button>
@@ -281,4 +303,50 @@
       {% endif %}
     </div>
   </div>
+
+  <!-- modal for deprecating case type -->
+  <script type="text/html" id="deprecate-case-type">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <button type="button" class="close" data-dismiss="modal">
+            <span aria-hidden="true">&times;</span>
+          </button>
+          <h4 class="modal-title">
+            {% trans "Deprecate" %}
+            '<span data-bind="text: $root.activeCaseType()"></span>'
+            {% trans "Case Type" %}
+          </h4>
+        </div>
+        <div class="modal-body">
+          {% blocktrans %}
+            <p>
+              There are a total of
+              <strong>
+                <span data-bind="text: activeCaseTypeAppCount()"></span> application(s)
+              </strong>
+              that are currently using this case type.
+            </p>
+            <p>
+              Deprecating this case type will have the following effects:
+            </p>
+            <ul>
+              <li>This case type will not be available from the report's filtering menu.</li>
+              <li>New exports cannot be created with this case type.</li>
+              <li>Case imports cannot be done for cases with this case type.</li>
+              <li>New automatic rules cannot be created with this case type.</li>
+            </ul>
+            <p>
+              <!-- TODO: Add help documentation link -->
+              For more information on deprecated case types, see the <a target="_blank" href="">following documentation</a>.
+            </p>
+          {% endblocktrans %}
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-default" data-dismiss="modal">{% trans "Cancel" %}</button>
+          <button type="button" class="btn btn-primary" data-dismiss="modal" data-bind="click: $root.deprecateCaseType">{% trans "Confirm" %}</button>
+        </div>
+      </div>
+    </div>
+  </script>
 {% endblock %}
