@@ -12,7 +12,7 @@ hqDefine("reports/js/reports.async", ['hqwebapp/js/alert_user'], function (alert
         self.reportRequest = null;
         self.queryIdRequest = null;
         self.loaderClass = '.report-loading';
-        self.maxInputLimit = 5000;
+        self.maxInputLimit = 4500;
 
         self.humanReadableErrors = {
             400: gettext("Please check your Internet connection!"),
@@ -60,9 +60,9 @@ hqDefine("reports/js/reports.async", ['hqwebapp/js/alert_user'], function (alert
             self.filterForm.submit(function () {
                 var params = hqImport('reports/js/reports.util').urlSerialize(this);
                 if (self.isCaseListRelated(pathName)) {
-                    var userInput = this.search_xpath ? this.search_xpath.value :
-                        this.search_query ? this.search_query.value : '';
-                    if (userInput.length > self.maxInputLimit) {
+                    var url = window.location.href.replace(self.standardReport.urlRoot,
+                        self.standardReport.urlRoot + 'async/') + "?" + "&" + params
+                    if (url.length > self.maxInputLimit) {
                         alertUser.alert_user(self.humanReadableErrors['maxInputError'], "danger");
                     } else {
                         self.getQueryId(params, false, true, pathName);
@@ -235,12 +235,10 @@ hqDefine("reports/js/reports.async", ['hqwebapp/js/alert_user'], function (alert
         });
 
         self.loadingIssueModal.on('hide hide.bs.modal', function () {
-            if (self.issueAttempts > 0) {
-                self.hqLoading = $(self.loaderClass);
-                self.hqLoading.find('.js-loading-spinner').addClass('hide');
-                self.hqLoading.find('h4').text(gettext('We were unsuccessful loading the report:'))
-                    .attr('style', 'margin-bottom: 10px;');
-            }
+            self.hqLoading = $(self.loaderClass);
+            self.hqLoading.find('.js-loading-spinner').addClass('hide');
+            self.hqLoading.find('h4').text(gettext('We were unsuccessful loading the report:'))
+                .attr('style', 'margin-bottom: 10px;');
         });
 
         return self;
