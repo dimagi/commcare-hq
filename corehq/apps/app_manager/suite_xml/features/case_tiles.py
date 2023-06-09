@@ -22,6 +22,7 @@ TILE_DIR = Path(__file__).parent.parent / "case_tile_templates"
 
 class CaseTileTemplates(models.TextChoices):
     PERSON_SIMPLE = ("person_simple", _("Person Simple"))
+    THREE_COLUMNS = ("three_columns", _("Three Columns"))
     ONE_ONE_TWO = ("one_one_two", _("One one two"))
 
 
