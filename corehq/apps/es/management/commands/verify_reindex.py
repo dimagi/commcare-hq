@@ -12,7 +12,7 @@ class Command(BaseCommand):
 
     The log should be extracted from elasticsearch logs. It can be done using commcare cloud.
     ```
-    cchq <env> run-shell-command elasticsearch "cat /opt/data/elasticsearch*/logs/*es.log | grep <task_id>"
+    cchq <env> run-shell-command elasticsearch "cat /opt/data/elasticsearch*/logs/*es.log | grep '<task_id>.*ReindexResponse'"
     ```
 
     If the above command fail to yeild any output then
@@ -20,7 +20,7 @@ class Command(BaseCommand):
 
     So running this command should look something like
 
-    ./manage.py verify_reindex --eslog '[2023-05-23 08:59:37,648][INFO] [tasks] 29216 finished with response ReindexResponse[took=1.8s,updated=0,created=1111,batches=2,versionConflicts=0,noops=0,retries=0,throttledUntil=0s,indexing_failures=[],search_failures=[]]'
+    ./manage.py verify_reindex --eslog '[2023-05-23 08:59:37,648][INFO    ] [tasks] 29216 finished with response ReindexResponse[took=1.8s,updated=0,created=1111,batches=2,versionConflicts=0,noops=0,retries=0,throttledUntil=0s,indexing_failures=[],search_failures=[]]'
     """) # noqa E501
 
     def create_parser(self, prog_name, subcommand, **kwargs):
@@ -45,24 +45,10 @@ class Command(BaseCommand):
             print("Reindex Successful -")
 
     def _assert_valid_log_string(self, log_string):
-        invalid_string = False
-        task_id = self._parse_task_id(log_string)
-        try:
-            int(task_id)
-        except ValueError:
-            invalid_string = True
         if "ReindexResponse[" not in log_string:
-            invalid_string = True
-        if invalid_string:
             raise ValueError("""Invalid log string provided. The log string should be of format - \
-                '[2023-05-23 08:59:37,648][INFO] [tasks] 29216 finished with response ReindexResponse[took=1.8s,updated=0,created=1111,batches=2,versionConflicts=0,noops=0,retries=0,throttledUntil=0s,indexing_failures=[],search_failures=[]]'
+                '[2023-05-23 08:59:37,648][INFO   ] [tasks] 29216 finished with response ReindexResponse[took=1.8s,updated=0,created=1111,batches=2,versionConflicts=0,noops=0,retries=0,throttledUntil=0s,indexing_failures=[],search_failures=[]]'
             """) # noqa E501
-
-    def _parse_task_id(self, log_string):
-        task_id_start = log_string.find("tasks] ") + len("tasks] ")
-        task_id_end = log_string.find(" finished")
-        task_id = log_string[task_id_start:task_id_end]
-        return task_id
 
     def _parse_reindex_response(self, log_string):
         response_start = log_string.find("ReindexResponse[") + len("ReindexResponse[")
