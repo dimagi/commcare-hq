@@ -12,7 +12,6 @@ from corehq.apps.app_manager.dbaccessors import (
 )
 
 
-
 def require_cloudcare_access_ex():
     """
     Decorator for cloudcare users. Should require either access web apps
@@ -20,7 +19,7 @@ def require_cloudcare_access_ex():
     """
     def decorator(view_func):
         @wraps(view_func)
-        def  _inner(request, domain, *args, **kwargs):
+        def _inner(request, domain, *args, **kwargs):
             if toggles.DISABLE_WEB_APPS.enabled_for_request(request):
 
                 apps_in_domain = get_apps_in_domain(domain)
