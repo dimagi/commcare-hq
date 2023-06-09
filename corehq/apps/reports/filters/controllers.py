@@ -259,17 +259,20 @@ class CaseListFilterOptionsController(EmwfOptionsController):
         return self.group_es_query(query, group_type="case_sharing").count()
 
 
-class ReassignCaseOptionsController(CaseListFilterOptionsController):
+class CaseListActionOptionsController(CaseListFilterOptionsController):
 
     @property
     def data_sources(self):
         """
         Includes case-sharing groups but not reporting groups
         """
+        from corehq.apps.data_interfaces.interfaces import CaseCopyInterface
+
         sources = []
-        if self.request.can_access_all_locations:
-            sources.append((self.get_sharing_groups_size, self.get_sharing_groups))
-        sources.append((self.get_locations_size, self.get_locations))
+        if self.request.GET.get('action') != CaseCopyInterface.action:
+            if self.request.can_access_all_locations:
+                sources.append((self.get_sharing_groups_size, self.get_sharing_groups))
+            sources.append((self.get_locations_size, self.get_locations))
         sources.append((self.get_active_users_size, self.get_active_users))
         return sources
 
