@@ -14,13 +14,14 @@ from couchforms.exceptions import (
     AttachmentSizeTooLarge,
 )
 from dimagi.utils.parsing import string_to_utc_datetime
-from dimagi.utils.web import get_ip, get_site_domain
+from dimagi.utils.web import get_ip, get_site_domain, IP_RE
 
 
 __all__ = ['get_path', 'get_instance_and_attachment',
            'get_location', 'get_received_on', 'get_date_header',
            'get_submit_ip', 'get_last_sync_token', 'get_openrosa_headers']
 
+COMMCAREHQ_ORIGIN_IP = 'HTTP_X_COMMCAREHQ_ORIGIN_IP'
 
 def get_path(request):
     return request.path
@@ -148,6 +149,13 @@ def get_date_header(request):
 
 
 def get_submit_ip(request):
+    from corehq.apps.ota.decorators import ORIGIN_TOKEN_HEADER, _test_token_valid
+    x_commcarehq_origin_ip = request.META.get(COMMCAREHQ_ORIGIN_IP, None)
+    origin_token = request.META.get(ORIGIN_TOKEN_HEADER, None)
+    if x_commcarehq_origin_ip:
+        is_ip_address = IP_RE.match(x_commcarehq_origin_ip)
+        if is_ip_address and _test_token_valid(origin_token):
+            return x_commcarehq_origin_ip
     return get_ip(request)
 
 
