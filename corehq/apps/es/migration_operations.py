@@ -10,6 +10,7 @@ from django.core.management.color import color_style
 from django.db.migrations import RunPython
 
 from corehq.apps.es.index.settings import render_index_tuning_settings
+from corehq.apps.es.utils import index_runtime_name
 
 log = logging.getLogger(__name__)
 
@@ -36,6 +37,7 @@ class CreateIndex(BaseElasticOperation):
         """CreateIndex operation.
 
         :param name: the name of the index to be created.
+            value of ``TEST_DATABASE_PREFIX`` will be appended to index names for testing environment
         :param type_: the index ``_type`` for the mapping.
         :param mapping: the mapping to apply to the new index.
         :param analysis: the analysis configuration to apply to the new index
@@ -45,7 +47,7 @@ class CreateIndex(BaseElasticOperation):
             ``mapping._meta.comment`` property.
         """
         super().__init__(self.run, self.reverse_run)
-        self.name = name
+        self.name = index_runtime_name(name)
         self.type = type_
         self.mapping = mapping
         self.analysis = analysis
@@ -119,12 +121,13 @@ class DeleteIndex(BaseElasticOperation):
         """DeleteIndex operation.
 
         :param name: the name of the index to be deleted.
+            value of ``TEST_DATABASE_PREFIX`` will be appended to index names for testing environment
         :param reverse_params: an iterable of four items containing ``(type,
             mapping, analysis, settings_key)`` for reversing the migration. If
             ``None`` (the default), the operation is irreversible.
         """
         super().__init__(self.run, self.reverse_run if reverse_params else None)
-        self.name = name
+        self.name = index_runtime_name(name)
         if reverse_params:
             type_, mapping, analysis, settings_key = reverse_params
             self.reverse_type = type_
@@ -201,6 +204,7 @@ class UpdateIndexMapping(BaseElasticOperation):
         """UpdateIndexMapping operation.
 
         :param name: the name of the index.
+            value of ``TEST_DATABASE_PREFIX`` will be appended to index names for testing environment
         :param type_: the index ``_type`` for the mapping.
         :param properties: the ``properties`` portion of an index mapping to
             apply to the index.
@@ -212,7 +216,7 @@ class UpdateIndexMapping(BaseElasticOperation):
             disable printing the mapping diff.
         """
         super().__init__(self.run)
-        self.name = name
+        self.name = index_runtime_name(name)
         self.type = type_
         self.properties = properties
         self.comment = comment
