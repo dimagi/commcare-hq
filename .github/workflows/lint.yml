@@ -38,35 +38,38 @@ jobs:
         id: python-files
         run: |
           filenames=$(echo "${{ steps.changed-files.outputs.all_changed_files }}")
-          python_file_present=false
+
+          python_file_present="false"
           for filename in $filenames; do
             extension="${filename##*.}"
 
             if [[ "$extension" == "py" ]]; then
-              python_file_present=true
+              python_file_present="true"
               break
             fi
           done
 
-          echo "::set-output name=python-file-present::${{ '$python_file_present' }}"
+          echo $python_file_present
+
+          echo "::set-output name=python-file-present::$python_file_present"
           echo "::set-output name=python-file-names::$python_files"
 
       - name: Check if python files are present
-        if: ${{ steps.python-files.outputs.python_file_present == 'true' }}
-        run: echo "I'm running because apparently there's some .py files around here..."
+#        if: ${{ steps.python-files.outputs.python_file_present == 'true' }}
+        run: echo ${{ steps.python-files.outputs.python-file-present }}
 
       - name: Set up Python
         uses: actions/setup-python@v1
-        if: ${{ steps.python-files.outputs.python_file_present == 'true' }}
+        if: ${{ steps.python-files.outputs.python-file-present == 'true' }}
         with:
           python-version: 3.8
 
       - name: Install Python dependencies
-        if: ${{ steps.python-files.outputs.python_file_present == 'true' }}
+        if: ${{ steps.python-files.outputs.python-file-present == 'true' }}
         run: pip install flake8
 
       - name: Run flake8 linter
-        if: ${{ steps.python-files.outputs.python_file_present == 'true' }}
+        if: ${{ steps.python-files.outputs.python-file-present == 'true' }}
         uses: wearerequired/lint-action@v2
         with:
           flake8: true
