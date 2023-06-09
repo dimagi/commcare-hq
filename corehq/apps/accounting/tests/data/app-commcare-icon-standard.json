@@ -175,7 +175,7 @@
                    "persist_tile_on_forms": null,
                    "custom_xml": null,
                    "lookup_name": null,
-                   "use_case_tiles": null,
+                   "case_tile_template": null,
                    "lookup_extras": [
                    ],
                    "columns": [
@@ -199,7 +199,7 @@
                    "persist_tile_on_forms": null,
                    "custom_xml": null,
                    "lookup_name": null,
-                   "use_case_tiles": null,
+                   "case_tile_template": null,
                    "lookup_extras": [
                    ],
                    "columns": [
@@ -539,7 +539,7 @@
                    "custom_xml": null,
                    "lookup_extras": [
                    ],
-                   "use_case_tiles": null,
+                   "case_tile_template": null,
                    "pull_down_tile": null,
                    "columns": [
                        {
@@ -592,7 +592,7 @@
                    "custom_xml": null,
                    "lookup_extras": [
                    ],
-                   "use_case_tiles": null,
+                   "case_tile_template": null,
                    "pull_down_tile": null,
                    "columns": [
                        {
@@ -690,7 +690,7 @@
                    "persist_tile_on_forms": null,
                    "custom_xml": null,
                    "lookup_name": null,
-                   "use_case_tiles": null,
+                   "case_tile_template": null,
                    "lookup_extras": [
                    ],
                    "columns": [
@@ -714,7 +714,7 @@
                    "persist_tile_on_forms": null,
                    "custom_xml": null,
                    "lookup_name": null,
-                   "use_case_tiles": null,
+                   "case_tile_template": null,
                    "lookup_extras": [
                    ],
                    "columns": [
@@ -1054,7 +1054,7 @@
                    "custom_xml": null,
                    "lookup_extras": [
                    ],
-                   "use_case_tiles": null,
+                   "case_tile_template": null,
                    "pull_down_tile": null,
                    "columns": [
                        {
@@ -1107,7 +1107,7 @@
                    "custom_xml": null,
                    "lookup_extras": [
                    ],
-                   "use_case_tiles": null,
+                   "case_tile_template": null,
                    "pull_down_tile": null,
                    "columns": [
                        {

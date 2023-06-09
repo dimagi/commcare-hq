@@ -13,8 +13,9 @@
 # Rowena Luk <rluk@dimagi.com>, 2021
 # Dimagi Dev <devops@dimagi.com>, 2021
 # Ismaïla Diene <idiene@dimagi.com>, 2022
-# Aissetou Sawadogo <ais107@hotmail.com>, 2022
-# Tyler Wymer <twymer@dimagi.com>, 2022
+# Tyler Wymer <twymer@dimagi.com>, 2023
+# Aissetou Sawadogo <ais107@hotmail.com>, 2023
+# Ayla Reith <areith@dimagi.com>, 2023
 #
 #, fuzzy
 msgid ""
@@ -22,7 +23,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "PO-Revision-Date: 2017-07-19 15:34+0000\n"
-"Last-Translator: Tyler Wymer <twymer@dimagi.com>, 2022\n"
+"Last-Translator: Ayla Reith <areith@dimagi.com>, 2023\n"
 "Language-Team: French (https://app.transifex.com/dimagi/teams/9388/fr/)\n"
 "Language: fr\n"
 "MIME-Version: 1.0\n"
@@ -266,10 +267,6 @@ msgid "Display Condition"
 msgstr "Condition d'affichage"
 
 #: corehq/apps/app_manager/static/app_manager/js/details/column.js
-msgid "Markdown"
-msgstr ""
-
-#: corehq/apps/app_manager/static/app_manager/js/details/column.js
 msgid "Oct 31, "
 msgstr ""
 
@@ -354,6 +351,10 @@ msgstr "Parent"
 #: corehq/apps/app_manager/static/app_manager/js/details/parent_select.js
 msgid "Unknown menu"
 msgstr ""
+
+#: corehq/apps/app_manager/static/app_manager/js/details/screen.js
+msgid "Don't Use Case Tiles"
+msgstr "N'utiliser pas des Plaques des Dossiers."
 
 #: corehq/apps/app_manager/static/app_manager/js/details/screen.js
 msgid "You have unsaved detail screen configurations."
@@ -460,6 +461,10 @@ msgstr "Adresse"
 #: corehq/apps/app_manager/static/app_manager/js/details/utils.js
 msgid "Distance from current location"
 msgstr "Distance de votre localisation actuelle"
+
+#: corehq/apps/app_manager/static/app_manager/js/details/utils.js
+msgid "Markdown"
+msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/details/utils.js
 msgid "Picture"
@@ -2860,14 +2865,14 @@ msgid "Fetching your location..."
 msgstr ""
 
 #: corehq/apps/cloudcare/static/cloudcare/js/formplayer/menus/views.js
-#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/sessions/views.js
-msgid "Page <%-num%>"
-msgstr ""
-
-#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/menus/views.js
 msgid ""
 "You have selected more than the maximum selection limit of <%= value %> . "
 "Please uncheck some values to continue."
+msgstr ""
+
+#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/menus/views.js
+#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/sessions/views.js
+msgid "Page <%-num%>"
 msgstr ""
 
 #: corehq/apps/cloudcare/static/cloudcare/js/formplayer/menus/views/query.js
@@ -4042,6 +4047,10 @@ msgid "Gateway Timeout. Please contact CommCare HQ Support."
 msgstr ""
 
 #: corehq/apps/reports/static/reports/js/reports.async.js
+msgid "Your search term was too long. Please provide a shorter search filter"
+msgstr ""
+
+#: corehq/apps/reports/static/reports/js/reports.async.js
 msgid "We were unsuccessful loading the report:"
 msgstr ""
 
@@ -4846,6 +4855,10 @@ msgid "Failed to schedule task to import from OpenMRS."
 msgstr ""
 
 #: corehq/motech/repeaters/static/repeaters/js/repeat_record_report.js
+msgid "Failed to fetch attempts"
+msgstr ""
+
+#: corehq/motech/repeaters/static/repeaters/js/repeat_record_report.js
 msgid "Failed to fetch payload"
 msgstr ""
 
@@ -4859,7 +4872,7 @@ msgstr ""
 
 #: corehq/motech/static/motech/js/connection_settings_detail.js
 msgid "Username"
-msgstr ""
+msgstr "Nom d'utilisateur"
 
 #: corehq/motech/static/motech/js/connection_settings_detail.js
 msgid "Client ID"
@@ -4867,11 +4880,11 @@ msgstr ""
 
 #: corehq/motech/static/motech/js/connection_settings_detail.js
 msgid "Client Secret"
-msgstr ""
+msgstr "Secret client"
 
 #: corehq/motech/static/motech/js/connection_settings_detail.js
 msgid "API Key"
-msgstr ""
+msgstr "Clé API"
 
 #: corehq/motech/static/motech/js/connection_settings_detail.js
 msgid "Success! Response is: "

@@ -17,16 +17,16 @@
                     <td>
                         <div>
                             <strong>Attempt #{{ attempt_number }}</strong> -
-                            {% if attempt.state == 'SUCCESS' %}
-                                <i class="fa fa-check"></i> {% trans "Success" %}
-                            {% elif attempt.state == 'EMPTY' %}
-                                <i class="fa fa-check"></i> {% trans "Empty" %}
-                            {% elif attempt.state == 'CANCELLED' %}
-                                <i class="fa fa-remove"></i> {% trans "Cancelled" %}
+                            {% if attempt.state == 'SUCCESS' or attempt.state == 'EMPTY' %}
+                                <br/><i class="fa fa-check"></i>
                             {% elif attempt.state == 'FAIL' or attempt.state == 'CANCELLED' %}
-                                <i class="fa fa-exclamation-triangle"></i> {% trans "Failed" %}
+                                <br/><i class="fa fa-exclamation-triangle"></i>
                             {% elif attempt.state == 'PENDING' %}
-                                <i class="fa fa-spinner"></i> {% trans "Unsent" %}
+                                <br/><i class="fa fa-spinner"></i>
+                            {% endif %}
+                            {% if attempt.state == 'PENDING' %}
+                            {% elif attempt.state == 'EMPTY' %}({{ attempt.created_at }})
+                            {% else %}{{ attempt.created_at }}
                             {% endif %}
                             {% if attempt.message %}
                                 <div class="well record-attempt" style="font-family: monospace;">
@@ -48,13 +48,15 @@
             {% endif %}
 
             <!-- DHIS2 specific errors -->
-            {% for error in dhis2_errors %}
+            {% for error, diagnosis in dhis2_errors %}
                 <tr>
                     <td>
                         <div>
                             <strong>DHIS2 Error #{{ forloop.counter }}</strong>
                             <div class="well" style="font-family: monospace;">
-                                {{ error }}
+                                {{ error }}<br/><br/>
+                                <strong>{% trans 'Diagnosis:' %}</strong>
+                                {{ diagnosis }}
                             </div>
                         </div>
                     </td>

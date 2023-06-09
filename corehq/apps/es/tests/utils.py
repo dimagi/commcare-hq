@@ -96,7 +96,7 @@ class ElasticTestMixin(object):
 
 
 @nottest
-def es_test(test=None, requires=[], setup_class=False):
+def es_test(test=None, requires=None, setup_class=False):
     """Decorator for Elasticsearch tests.
     The decorator sets the ``es_test`` nose attribute and optionally performs
     index setup/cleanup before and after the test(s).
@@ -335,6 +335,8 @@ class TestDocumentAdapter(ElasticDocumentAdapter):
     """An ``ElasticDocumentAdapter`` implementation for Elasticsearch actions
     involving ``TestDoc`` model objects.
     """
+
+    canonical_name = 'for_test'
 
     mapping = {
         "properties": {

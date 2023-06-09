@@ -75,6 +75,7 @@ from corehq.motech.repeaters.views import (
     DomainForwardingRepeatRecords,
     SQLRepeatRecordReport,
 )
+from corehq.apps.geospatial.reports import CaseManagementMap
 
 from . import toggles
 
@@ -338,5 +339,11 @@ DOMAIN_REPORTS = (
 USER_MANAGEMENT_REPORTS = (
     (_("User Management"), (
         UserHistoryReport,
+    )),
+)
+
+GEOSPATIAL_MAP = (
+    (_("Case Management"), (
+        CaseManagementMap,
     )),
 )

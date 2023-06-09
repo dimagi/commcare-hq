@@ -3,7 +3,6 @@ import csv
 import io
 from collections import defaultdict
 from datetime import datetime
-from functools import partial
 
 from django.contrib import messages
 from django.http import (
@@ -249,8 +248,11 @@ class CaseDataView(BaseProjectReportSectionView):
         }
         if dynamic_data:
             if toggles.DD_CASE_DATA.enabled_for_request(self.request):
-                context['dd_properties_tables'] = _get_dd_tables(
-                    self.domain, self.case_instance.type, dynamic_data, timezone)
+                dd_properties_tables = _get_dd_tables(self.domain, self.case_instance.type,
+                                                      dynamic_data, timezone)
+                context['dd_properties_tables'] = dd_properties_tables
+                context['show_expand_collapse_buttons'] = len(
+                    [table.get('name') for table in dd_properties_tables if table.get('name') is not None]) > 1
             else:
                 definition = {
                     "layout": list(chunked([
@@ -293,7 +295,7 @@ def _get_dd_props_by_group(domain, case_type):
             case_type__name=case_type,
             deprecated=False,
     ):
-        ret[prop.group].append(prop)
+        ret[prop.group_name].append(prop)
 
     uncategorized = ret.pop('', None)
     for group, props in sorted(ret.items()):

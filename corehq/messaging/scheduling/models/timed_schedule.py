@@ -4,16 +4,19 @@ import json
 import random
 import re
 from copy import deepcopy
+
+from django.db import models, transaction
+
 from corehq.apps.data_interfaces.utils import property_references_parent
 from corehq.messaging.scheduling.exceptions import InvalidMonthlyScheduleConfiguration
 from corehq.messaging.scheduling.models.abstract import Schedule, Event, Broadcast, Content
 from corehq.messaging.scheduling import util
+from corehq.sql_db.util import create_unique_index_name
 from corehq.util.timezones.conversions import UserTime
 from datetime import timedelta, datetime, date, time
 from dateutil.parser import parse
 from dateutil.relativedelta import relativedelta
 from memoized import memoized
-from django.db import models, transaction
 
 
 class TimedSchedule(Schedule):
@@ -50,6 +53,15 @@ class TimedSchedule(Schedule):
     # here. But the framework should handle a schedule with mixed event types or
     # mixed content types.
     event_type = models.CharField(max_length=50, default=EVENT_SPECIFIC_TIME)
+
+    class Meta:
+        indexes = [
+            models.Index(fields=['deleted_on'],
+                         name=create_unique_index_name('scheduling',
+                                                       'timedschedule',
+                                                       ['deleted_on']),
+                         condition=models.Q(deleted_on__isnull=False))
+        ]
 
     def get_schedule_revision(self, case=None):
         """
@@ -651,12 +663,23 @@ class ScheduledBroadcast(Broadcast):
     schedule = models.ForeignKey('scheduling.TimedSchedule', on_delete=models.CASCADE)
     start_date = models.DateField()
 
+    class Meta:
+        indexes = [
+            models.Index(fields=['deleted_on'],
+                         name=create_unique_index_name('scheduling',
+                                                       'scheduledbroadcast',
+                                                       ['deleted_on']),
+                         condition=models.Q(deleted_on__isnull=False))
+        ]
+
     def soft_delete(self):
         from corehq.messaging.scheduling.tasks import delete_timed_schedule_instances
 
         with transaction.atomic():
             self.deleted = True
+            self.deleted_on = datetime.utcnow()
             self.save()
             self.schedule.deleted = True
+            self.schedule.deleted_on = datetime.utcnow()
             self.schedule.save()
             delete_timed_schedule_instances.delay(self.schedule_id.hex)

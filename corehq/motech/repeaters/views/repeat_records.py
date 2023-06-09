@@ -1,4 +1,5 @@
 import json
+import re
 
 from django.http import (
     Http404,
@@ -36,7 +37,7 @@ from corehq.form_processor.exceptions import XFormNotFound
 from corehq.motech.utils import pformat_json
 from corehq.util.xml_utils import indent_xml
 from corehq.motech.dhis2.repeaters import Dhis2EntityRepeater
-from corehq.motech.dhis2.parse_response import get_errors
+from corehq.motech.dhis2.parse_response import get_errors, get_diagnosis_message
 from corehq.motech.models import RequestLog
 
 from ..const import RECORD_CANCELLED_STATE
@@ -189,8 +190,7 @@ class BaseRepeatRecordReport(GenericTabularReport):
         row = [
             checkbox,
             display.state,
-            display.url,
-            display.last_checked,
+            display.remote_service,
             display.next_attempt_at,
             self._make_view_attempts_button(record.record_id),
             self._make_view_payload_button(record.record_id),
@@ -222,13 +222,12 @@ class BaseRepeatRecordReport(GenericTabularReport):
                 sortable=False, span=3
             ),
             DataTablesColumn(_('Status')),
-            DataTablesColumn(_('URL')),
-            DataTablesColumn(_('Last sent date')),
+            DataTablesColumn(_('Remote Service')),
             DataTablesColumn(_('Retry Date')),
+            DataTablesColumn(_('Delivery Attempts')),
             DataTablesColumn(_('View Responses')),
-            DataTablesColumn(_('View payload')),
             DataTablesColumn(_('Resend')),
-            DataTablesColumn(_('Cancel or Requeue payload'))
+            DataTablesColumn(_('Cancel or Requeue'))
         ]
         if toggles.SUPPORT.enabled_for_request(self.request):
             columns.insert(2, DataTablesColumn(_('Payload ID')))
@@ -324,9 +323,17 @@ class RepeatRecordView(View):
         if toggles.DHIS2_INTEGRATION.enabled(domain) and isinstance(record.repeater, Dhis2EntityRepeater):
             logs = RequestLog.objects.filter(domain=domain, payload_id=record.payload_id)
             for log in logs:
-                resp_body = json.loads(log.response_body)
-                log_errors = [error for error in get_errors(resp_body).values()]
-                dhis2_errors += log_errors
+                try:
+                    resp_body = json.loads(log.response_body)
+                    log_errors = [
+                        (error, get_diagnosis_message(error)) for error in get_errors(resp_body).values()
+                    ]
+                    dhis2_errors += log_errors
+                except json.JSONDecodeError:
+                    # If it's not JSON, then we might be dealing with an HTML string, so remove HTML tags
+                    tag_remove_regex = re.compile('<.*?>')
+                    cleaned_log = re.sub(tag_remove_regex, '', log.response_body)
+                    dhis2_errors.append((cleaned_log, get_diagnosis_message(cleaned_log)))
 
         attempt_html = render_to_string(
             'repeaters/partials/attempt_history.html',

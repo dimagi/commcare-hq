@@ -1,5 +1,7 @@
 import json
 from dataclasses import dataclass
+from django.db import models
+from django.utils.translation import gettext_lazy as _
 from eulxml.xmlmap.core import load_xmlobject_from_string
 from memoized import memoized
 from pathlib import Path
@@ -10,13 +12,17 @@ from corehq.apps.app_manager import id_strings
 from corehq.apps.app_manager.exceptions import SuiteError
 from corehq.apps.app_manager.suite_xml.xml_models import Detail, XPathVariable
 from corehq.apps.app_manager.util import (
-    module_loads_registry_case,
     module_offers_search,
     module_uses_inline_search,
 )
 
 
 TILE_DIR = Path(__file__).parent.parent / "case_tile_templates"
+
+
+class CaseTileTemplates(models.TextChoices):
+    PERSON_SIMPLE = ("person_simple", _("Person Simple"))
+    ONE_ONE_TWO = ("one_one_two", _("One one two"))
 
 
 @dataclass
@@ -31,9 +37,9 @@ class CaseTileTemplateConfig:
 
 
 @memoized
-def case_tile_template_config():
+def case_tile_template_config(template):
     with open(
-        TILE_DIR / "person_simple.json",
+        TILE_DIR / (template + '.json'),
         encoding='utf-8'
     ) as f:
         data = json.loads(f.read())
@@ -41,10 +47,11 @@ def case_tile_template_config():
 
 
 class CaseTileHelper(object):
-    def __init__(self, app, module, detail, detail_type, build_profile_id):
+    def __init__(self, app, module, detail, detail_id, detail_type, build_profile_id):
         self.app = app
         self.module = module
         self.detail = detail
+        self.detail_id = detail_id
         self.detail_type = detail_type
         self.cols_by_tile_field = {col.case_tile_field: col for col in self.detail.columns}
         self.build_profile_id = build_profile_id
@@ -59,7 +66,7 @@ class CaseTileHelper(object):
         """
         # Get template context
         context = self._get_base_context()
-        for template_field in case_tile_template_config().fields:
+        for template_field in case_tile_template_config(self.detail.case_tile_template).fields:
             column = self._get_matched_detail_column(template_field)
             context[template_field] = self._get_column_context(column)
 
@@ -70,11 +77,8 @@ class CaseTileHelper(object):
         # Add case search action if needed
         if module_offers_search(self.module) and not module_uses_inline_search(self.module):
             from corehq.apps.app_manager.suite_xml.sections.details import DetailContributor
-            in_search = module_loads_registry_case(self.module)
             detail.actions.append(
-                DetailContributor.get_case_search_action(self.module,
-                                                         self.build_profile_id,
-                                                         in_search=in_search)
+                DetailContributor.get_case_search_action(self.module, self.build_profile_id, self.detail_id)
             )
 
         return detail
@@ -121,7 +125,8 @@ class CaseTileHelper(object):
             # The right thing to do would be to reference the app_strings.txt I think
             "prefix": escape(
                 column.header.get(default_lang, "")
-            )
+            ),
+            "format": column.format
         }
         if column.enum and column.format != "enum" and column.format != "conditional-enum":
             raise SuiteError(
@@ -156,5 +161,5 @@ class CaseTileHelper(object):
         Return a string suitable for building a case tile detail node
         through `String.format`.
         """
-        with open(case_tile_template_config().filepath, encoding='utf-8') as f:
+        with open(case_tile_template_config(self.detail.case_tile_template).filepath, encoding='utf-8') as f:
             return f.read()

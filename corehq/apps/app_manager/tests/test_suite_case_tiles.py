@@ -9,10 +9,10 @@ from corehq.apps.app_manager.models import (
     MappingItem,
     Module,
 )
+from corehq.apps.app_manager.suite_xml.features.case_tiles import CaseTileTemplates
 from corehq.apps.app_manager.tests.app_factory import AppFactory
 from corehq.apps.app_manager.tests.util import (
     SuiteMixin,
-    TestXmlMixin,
     patch_get_xform_resource_overrides,
 )
 from corehq.util.test_utils import flag_enabled
@@ -54,7 +54,7 @@ class SuiteCaseTilesTest(SimpleTestCase, SuiteMixin):
                 header={'en': 'd'},
                 model='case',
                 field='d',
-                format='plain',
+                format='address',
                 case_tile_field='bottom_left'
             ),
             DetailColumn(
@@ -96,7 +96,7 @@ class SuiteCaseTilesTest(SimpleTestCase, SuiteMixin):
 
         module = app.add_module(Module.new_module('Untitled Module', None))
         module.case_type = 'patient'
-        module.case_details.short.use_case_tiles = True
+        module.case_details.short.case_tile_template = CaseTileTemplates.PERSON_SIMPLE.value
         module.case_details.short.persist_tile_on_forms = True
         module.case_details.short.pull_down_tile = True
         self._add_columns_for_case_details(module)
@@ -111,11 +111,30 @@ class SuiteCaseTilesTest(SimpleTestCase, SuiteMixin):
             "./entry/session"
         )
 
+    def test_case_tile_format_propagated(self, *args):
+        app = Application.new_app('domain', 'Untitled Application')
+
+        module = app.add_module(Module.new_module('Untitled Module', None))
+        module.case_type = 'patient'
+        module.case_details.short.case_tile_template = CaseTileTemplates.PERSON_SIMPLE.value
+        module.case_details.short.use_case_tiles = True
+        self._add_columns_for_case_details(module)
+
+        form = app.new_form(0, "Untitled Form", None)
+        form.xmlns = 'http://id_m0-f0'
+        form.requires = 'case'
+
+        self.assertXmlPartialEqual(
+            self.get_xml('case_tile_template_format'),
+            app.create_suite(),
+            "./detail[@id='m0_case_short']/field[5]/template"
+        )
+
     def test_inline_case_detail_from_another_module(self, *args):
         factory = AppFactory()
         module0, form0 = factory.new_advanced_module("m0", "person")
         factory.form_requires_case(form0, "person")
-        module0.case_details.short.use_case_tiles = True
+        module0.case_details.short.case_tile_template = CaseTileTemplates.PERSON_SIMPLE.value
         self._add_columns_for_case_details(module0)
 
         module1, form1 = factory.new_advanced_module("m1", "person")
@@ -130,11 +149,11 @@ class SuiteCaseTilesTest(SimpleTestCase, SuiteMixin):
         self.ensure_module_session_datum_xml(factory, '', 'detail-persistent="m0_case_short"')
 
         # configured to use other module's persistent case tile that has custom xml
-        module0.case_details.short.use_case_tiles = False
+        module0.case_details.short.case_tile_template = None
         module0.case_details.short.custom_xml = '<detail id="m0_case_short"></detail>'
         self.ensure_module_session_datum_xml(factory, '', 'detail-persistent="m0_case_short"')
         module0.case_details.short.custom_xml = ''
-        module0.case_details.short.use_case_tiles = True
+        module0.case_details.short.case_tile_template = CaseTileTemplates.PERSON_SIMPLE.value
 
         # configured to use pull down tile from the other module
         module1.case_details.short.pull_down_tile = True
@@ -143,7 +162,7 @@ class SuiteCaseTilesTest(SimpleTestCase, SuiteMixin):
 
         # set to use persistent case tile of its own as well but it would still
         # persists case tiles and detail inline from another module
-        module1.case_details.short.use_case_tiles = True
+        module1.case_details.short.case_tile_template = CaseTileTemplates.PERSON_SIMPLE.value
         module1.case_details.short.persist_tile_on_forms = True
         self._add_columns_for_case_details(module1)
         self.ensure_module_session_datum_xml(factory, 'detail-inline="m0_case_long"',
@@ -152,20 +171,20 @@ class SuiteCaseTilesTest(SimpleTestCase, SuiteMixin):
         # set to use case tile from a module that does not support case tiles anymore
         # and has own persistent case tile as well
         # So now detail inline from its own details
-        module0.case_details.short.use_case_tiles = False
+        module0.case_details.short.case_tile_template = None
         self.ensure_module_session_datum_xml(factory, 'detail-inline="m1_case_long"',
                                              'detail-persistent="m1_case_short"')
 
         # set to use case tile from a module that does not support case tiles anymore
         # and does not have its own persistent case tile as well
-        module1.case_details.short.use_case_tiles = False
+        module1.case_details.short.case_tile_template = None
         self.ensure_module_session_datum_xml(factory, '', '')
 
     def test_persistent_case_tiles_from_another_module(self, *args):
         factory = AppFactory()
         module0, form0 = factory.new_advanced_module("m0", "person")
         factory.form_requires_case(form0, "person")
-        module0.case_details.short.use_case_tiles = True
+        module0.case_details.short.case_tile_template = CaseTileTemplates.PERSON_SIMPLE.value
         self._add_columns_for_case_details(module0)
 
         module1, form1 = factory.new_advanced_module("m1", "person")
@@ -180,27 +199,27 @@ class SuiteCaseTilesTest(SimpleTestCase, SuiteMixin):
         self.ensure_module_session_datum_xml(factory, '', 'detail-persistent="m0_case_short"')
 
         # configured to use other module's persistent case tile that has custom xml
-        module0.case_details.short.use_case_tiles = False
+        module0.case_details.short.case_tile_template = None
         module0.case_details.short.custom_xml = '<detail id="m0_case_short"></detail>'
         self.ensure_module_session_datum_xml(factory, '', 'detail-persistent="m0_case_short"')
         module0.case_details.short.custom_xml = ''
-        module0.case_details.short.use_case_tiles = True
+        module0.case_details.short.case_tile_template = CaseTileTemplates.PERSON_SIMPLE.value
 
         # set to use persistent case tile of its own as well but it would still
         # persists case tiles from another module
-        module1.case_details.short.use_case_tiles = True
+        module1.case_details.short.case_tile_template = CaseTileTemplates.PERSON_SIMPLE.value
         module1.case_details.short.persist_tile_on_forms = True
         self._add_columns_for_case_details(module1)
         self.ensure_module_session_datum_xml(factory, '', 'detail-persistent="m0_case_short"')
 
         # set to use case tile from a module that does not support case tiles anymore
         # and has own persistent case tile as well
-        module0.case_details.short.use_case_tiles = False
+        module0.case_details.short.case_tile_template = None
         self.ensure_module_session_datum_xml(factory, '', 'detail-persistent="m1_case_short"')
 
         # set to use case tile from a module that does not support case tiles anymore
         # and does not have its own persistent case tile as well
-        module1.case_details.short.use_case_tiles = False
+        module1.case_details.short.case_tile_template = None
         self.ensure_module_session_datum_xml(factory, '', '')
 
     def test_persistent_case_tiles_in_advanced_forms(self, *args):
@@ -334,7 +353,7 @@ class SuiteCaseTilesTest(SimpleTestCase, SuiteMixin):
         module, form = factory.new_advanced_module("my_module", "person")
         factory.form_requires_case(form, "person")
         module.case_details.short.custom_xml = '<detail id="m0_case_short"></detail>'
-        module.case_details.short.use_case_tiles = True
+        module.case_details.short.case_tile_template = CaseTileTemplates.PERSON_SIMPLE.value
         module.case_details.short.persist_tile_on_forms = True
         module.case_details.short.persist_case_context = True
         suite = factory.app.create_suite()
@@ -371,7 +390,7 @@ class SuiteCaseTilesTest(SimpleTestCase, SuiteMixin):
 
         module = app.add_module(Module.new_module('Untitled Module', None))
         module.case_type = 'patient'
-        module.case_details.short.use_case_tiles = True
+        module.case_details.short.case_tile_template = CaseTileTemplates.PERSON_SIMPLE.value
         self._add_columns_for_case_details(module)
 
         module.search_config = CaseSearch(
@@ -386,6 +405,7 @@ class SuiteCaseTilesTest(SimpleTestCase, SuiteMixin):
         form.xmlns = 'http://id_m0-f0'
         form.requires = 'case'
 
+        # case list detail
         self.assertXmlPartialEqual(
             """
             <partial>
@@ -408,4 +428,28 @@ class SuiteCaseTilesTest(SimpleTestCase, SuiteMixin):
             app.create_suite(),
             # action[1] is the reg from case list action hard-coded into the default template
             "detail[@id='m0_case_short']/action[2]",
+        )
+
+        # case search detail
+        self.assertXmlPartialEqual(
+            """
+            <partial>
+              <action redo_last="true" auto_launch="false()">
+                <display>
+                  <text>
+                    <locale id="case_search.m0.again"/>
+                  </text>
+                </display>
+                <stack>
+                  <push>
+                    <mark/>
+                    <command value="'search_command.m0'"/>
+                  </push>
+                </stack>
+              </action>
+            </partial>
+            """,
+            app.create_suite(),
+            # action[1] is the reg from case list action hard-coded into the default template
+            "detail[@id='m0_search_short']/action[2]",
         )
