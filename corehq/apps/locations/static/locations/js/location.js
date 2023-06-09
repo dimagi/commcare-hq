@@ -31,7 +31,7 @@ hqDefine("locations/js/location", [
     };
     var TEMPLATE_STRINGS = {
         new_user_success: _.template(gettext("User <%- name %> added successfully. " +
-                                             "A validation message has been sent to the phone number provided.")),
+                                             "A validation message has been sent to the phone number provided.    ")),
     };
 
     $(function () {
