@@ -21,7 +21,7 @@ hqDefine("locations/js/location", [
     locationModels,
     locationTreeModel
 )
-     var insert_new_user = function( user ) {
+    var insert_new_user = function( user ) {
         var $select = $('#id_users-selected_ids');
         // Add the newly created user to the users that are already at the location.
         var currentUsers = $select.select2('data');
