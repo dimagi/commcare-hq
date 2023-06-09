@@ -24,6 +24,7 @@ from corehq.apps.users.models import HqPermissions
 from corehq.toggles import CASE_API_V0_6
 from corehq.util.es.elasticsearch import NotFoundError
 from corehq.util.view_utils import reverse
+from corehq.apps.data_dictionary.util import is_case_type_deprecated
 
 from .api.core import SubmissionError, UserError, serialize_case, serialize_es_case
 from .api.get_list import get_list
@@ -134,7 +135,7 @@ def _get_bulk_cases(request, case_ids=None, external_ids=None):
 def _get_single_case(request, case_id):
     try:
         case = case_search_adapter.get(case_id)
-        if case['domain'] != request.domain:
+        if case['domain'] != request.domain or is_case_type_deprecated(request.domain, case['type']):
             raise NotFoundError()
     except NotFoundError:
         return JsonResponse({'error': f"Case '{case_id}' not found"}, status=404)

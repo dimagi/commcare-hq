@@ -4,6 +4,7 @@ from dataclasses import dataclass, field
 from corehq.apps.es.case_search import CaseSearchES, case_search_adapter
 from corehq.apps.hqcase.api.core import UserError, serialize_es_case
 from corehq.apps.hqcase.api.get_list import MAX_PAGE_SIZE
+from corehq.apps.data_dictionary.util import get_data_dict_deprecated_case_types
 
 
 @dataclass
@@ -76,9 +77,12 @@ def _prepare_result(domain, es_results, doc_ids, es_id_field, serialized_id_fiel
         missing_ids.append(doc_id)
         return _get_error_doc(doc_id)
 
+    deprecated_case_types = get_data_dict_deprecated_case_types(domain)
     missing_ids = []
-    results_by_id = {res[es_id_field]: res for res in es_results if res['domain'] == domain}
-
+    results_by_id = {
+        res[es_id_field]: res for res in es_results
+        if res['domain'] == domain and res['type'] not in deprecated_case_types
+    }
     final_results = [_get_doc(doc_id) for doc_id in doc_ids]
 
     total = len(doc_ids)
