@@ -6,7 +6,7 @@ from eulxml.xpath.ast import Step
 
 from corehq.apps.case_search.dsl_utils import unwrap_value
 from corehq.apps.case_search.exceptions import CaseFilterError, XPathFunctionException
-from corehq.apps.case_search.xpath_functions.value_functions import _value_to_date
+from corehq.apps.case_search.xpath_functions.value_functions import value_to_date
 from corehq.apps.case_search.const import RANGE_OP_MAPPING, EQ, NEQ
 from corehq.apps.es import filters
 from corehq.apps.es.case_search import case_property_query, case_property_range_query
@@ -27,7 +27,7 @@ def property_comparison_query(context, case_property_name_raw, op, value_raw, no
     is_user_input = False
     try:
         # this might be inconsistent in daylight savings situations
-        value = adjust_input_date_by_timezone(_value_to_date(node, value),
+        value = adjust_input_date_by_timezone(value_to_date(node, value),
                                               get_timezone_for_domain(context.domain), op)
         is_user_input = True
     except (XPathFunctionException, AssertionError):

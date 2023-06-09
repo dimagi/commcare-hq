@@ -546,79 +546,88 @@ class TestCaseSearchLookups(BaseCaseSearchTest):
             ['c5', 'c6', 'c2']
         )
 
-    def test_user_input_forward_timezone_adjustment(self):
-        """
-        Project timezone is UTC+0900 (Asia/Seoul)
 
-        Scenario 1:
+class TestForwardTimezoneAdjustment(TestCase):
+
+    def setUp(self):
+        self.timezone = pytz.timezone('Asia/Seoul')  # UTC+0900
+        super(TestForwardTimezoneAdjustment, self).setUp()
+
+    def test_user_input_forward_timezone_adjustment_1(self):
+        """Scenario 1:
         User input: last_modified < "2023-06-04"
         A case with last_modified displayed as 2023-06-04 is actually 2023-06-03T20:00:00 in ES
-        Input modified to be last_modified < "2023-06-03T15:00:00" to exclude above case
-
-        Scenario 2:
-        User input: last_modified > "2023-06-04"
-        A case with last_modified displayed as 2023-06-05 is actually 2023-06-04T20:00:00 in ES
-        Input modified to be last_modified > "2023-06-04T15:00:00" to include above case
-
-        Scenario 3:
-        User input: last_modified <= "2023-06-04"
-        A case with last_modified displayed as 2023-06-05 is actually 2023-06-04T20:00:00 in ES
-        Input modified to be last_modified <= "2023-06-04T15:00:00" to exclude above case
-
-        Scenario 4:
-        User input: last_modified >= "2023-06-04"
-        A case with last_modified displayed as 2023-06-04 is actually 2023-06-03T20:00:00 in ES
-        Input modified to be last_modified >= "2023-06-03T15:00:00" to include above case
-        """
-
-        timezone = pytz.timezone('Asia/Seoul')
+        Input modified to be last_modified < "2023-06-03T15:00:00" to exclude above case"""
         # user input: last_modified < '2023-06-04'
         self.assertEqual('2023-06-03T15:00:00',
-                         adjust_input_date_by_timezone(date(2023, 6, 4), timezone, '<'))
+                         adjust_input_date_by_timezone(date(2023, 6, 4), self.timezone, '<'))
+
+    def test_user_input_forward_timezone_adjustment_2(self):
+        """Scenario 2:
+        User input: last_modified > "2023-06-04"
+        A case with last_modified displayed as 2023-06-05 is actually 2023-06-04T20:00:00 in ES
+        Input modified to be last_modified > "2023-06-04T15:00:00" to include above case"""
         # user input: last_modified > '2023-06-04'
         self.assertEqual('2023-06-04T15:00:00',
-                         adjust_input_date_by_timezone(date(2023, 6, 4), timezone, '>'))
+                         adjust_input_date_by_timezone(date(2023, 6, 4), self.timezone, '>'))
+
+    def test_user_input_forward_timezone_adjustment_3(self):
+        """Scenario 3:
+        User input: last_modified <= "2023-06-04"
+        A case with last_modified displayed as 2023-06-05 is actually 2023-06-04T20:00:00 in ES
+        Input modified to be last_modified <= "2023-06-04T15:00:00" to exclude above case"""
         # user input: last_modified <= '2023-06-04'
         self.assertEqual('2023-06-04T15:00:00',
-                         adjust_input_date_by_timezone(date(2023, 6, 4), timezone, '<='))
+                         adjust_input_date_by_timezone(date(2023, 6, 4), self.timezone, '<='))
+
+    def test_user_input_forward_timezone_adjustment_4(self):
+        """Scenario 4:
+        User input: last_modified >= "2023-06-04"
+        A case with last_modified displayed as 2023-06-04 is actually 2023-06-03T20:00:00 in ES
+        Input modified to be last_modified >= "2023-06-03T15:00:00" to include above case"""
         # user input: last_modified >= '2023-06-04'
         self.assertEqual('2023-06-03T15:00:00',
-                         adjust_input_date_by_timezone(date(2023, 6, 4), timezone, '>='))
+                         adjust_input_date_by_timezone(date(2023, 6, 4), self.timezone, '>='))
 
-    def test_user_input_backwards_timezone_adjustment(self):
-        """
-        Project timezone is UTC-1000 hours (US/Hawaii)
 
-        Scenario 1:
+class TestBackwardTimezoneAdjustment(TestCase):
+
+    def setUp(self):
+        self.timezone = pytz.timezone('US/Hawaii')  # UTC-1000
+        super(TestBackwardTimezoneAdjustment, self).setUp()
+
+    def test_user_input_backwards_timezone_adjustment_1(self):
+        """Scenario 1:
         User input = last_modified > "2023-06-03"
         A case with last_modified displayed as 2023-06-03 is actually 2023-06-04T05:00:00 in ES
-        Input modified to be last_modified > "2023-06-04T10:00:00" to exclude above case
+        Input modified to be last_modified > "2023-06-04T10:00:00" to exclude above case"""
+        # user input: last_modified > '2023-06-03'
+        self.assertEqual('2023-06-04T10:00:00',
+                         adjust_input_date_by_timezone(date(2023, 6, 3), self.timezone, '>'))
 
-        Scenario 2:
+    def test_user_input_backwards_timezone_adjustment_2(self):
+        """Scenario 2:
         User input = last_modified < "2023-06-03"
         A case with last_modified displayed as 2023-06-02 is actually 2023-06-03T05:00:00 in ES
-        Input modified to be last_modified > "2023-06-03T10:00:00" to include above case
+        Input modified to be last_modified > "2023-06-03T10:00:00" to include above case"""
+        # user input: last_modified > '2023-06-03'
+        self.assertEqual('2023-06-03T10:00:00',
+                         adjust_input_date_by_timezone(date(2023, 6, 3), self.timezone, '<'))
 
-        Scenario 3:
+    def test_user_input_backwards_timezone_adjustment_3(self):
+        """Scenario 3:
         User input = last_modified >= "2023-06-03"
         A case with last_modified displayed as 2023-06-02 is actually 2023-06-03T05:00:00 in ES
-        Input modified to be last_modified > "2023-06-03T10:00:00" to exclude above case
-
-        Scenario 4:
-        User input = last_modified <= "2023-06-03"
-        A case with last_modified displayed as 2023-06-03 is actually 2023-06-04T05:00:00 in ES
-        Input modified to be last_modified >= "2023-06-04T10:00:00" to include above case
-        """
-        timezone = pytz.timezone('US/Hawaii')
-        # user input: last_modified > '2023-06-03'
-        self.assertEqual('2023-06-04T10:00:00',
-                         adjust_input_date_by_timezone(date(2023, 6, 3), timezone, '>'))
-        # user input: last_modified > '2023-06-03'
-        self.assertEqual('2023-06-03T10:00:00',
-                         adjust_input_date_by_timezone(date(2023, 6, 3), timezone, '<'))
+        Input modified to be last_modified > "2023-06-03T10:00:00" to exclude above case"""
         # user input: last_modified <= '2023-06-03'
         self.assertEqual('2023-06-03T10:00:00',
-                         adjust_input_date_by_timezone(date(2023, 6, 3), timezone, '>='))
+                         adjust_input_date_by_timezone(date(2023, 6, 3), self.timezone, '>='))
+
+    def test_user_input_backwards_timezone_adjustment_4(self):
+        """Scenario 4:
+        User input = last_modified <= "2023-06-03"
+        A case with last_modified displayed as 2023-06-03 is actually 2023-06-04T05:00:00 in ES
+        Input modified to be last_modified >= "2023-06-04T10:00:00" to include above case"""
         # user input: last_modified >= '2023-06-04'
         self.assertEqual('2023-06-04T10:00:00',
-                         adjust_input_date_by_timezone(date(2023, 6, 3), timezone, '<='))
+                         adjust_input_date_by_timezone(date(2023, 6, 3), self.timezone, '<='))
