@@ -5,29 +5,39 @@
   // hqModules.js uses `typeof define` and `define.amd` to determine whether or not to use RequireJS, but
   // this fails for form designer, which currently uses RequireJS for vellum but not for the surrounding page.
   window.USE_REQUIREJS = {{ requirejs_main|BOOL }};
+  window.USE_BOOTSTRAP5 = {{ use_bootstrap5|BOOL }};
 </script>
 
 {% if requirejs_main %}
   <script src="{% static 'requirejs/require.js' %}"></script>
   <script src="{% static 'hqwebapp/js/hqModules.js' %}"></script>
   {# Do not compress these, which are re-written during depeloy #}
-  <script src="{% static 'hqwebapp/js/requirejs_config.js' %}"></script>
+  {% if use_bootstrap5 %}
+    <script src="{% static 'hqwebapp/js/bootstrap5/requirejs_config.js' %}"></script>
+  {% else %}
+    <script src="{% static 'hqwebapp/js/bootstrap3/requirejs_config.js' %}"></script>
+  {% endif %}
   <script src="{% static 'hqwebapp/js/resource_versions.js' %}"></script>
   <script>
     requirejs.config({
-      deps: ['knockout', 'ko.mapping'],
-      callback: function (ko, mapping) {
+      deps: [
+          'knockout',
+          'ko.mapping',
+          {% if use_bootstrap5 %}'es6!bootstrap5_loader'{% else %}'bootstrap'{% endif %},
+      ],
+      callback: function (ko, mapping{% if use_bootstrap5 %}, bootstrap5{% endif %}) {
         ko.mapping = mapping;
+        {% if use_bootstrap5 %}window.bootstrap5 = bootstrap5;{% endif %}
       }
     });
     requirejs([
-      'hqwebapp/js/common',
+        {% if use_bootstrap5 %}'hqwebapp/js/bootstrap5/common'{% else %}'hqwebapp/js/bootstrap3/common'{% endif %},
     ], function() {
       {% if BASE_MAIN %}
         {# This code is relevant for running HQ, but not for tests #}
         requirejs(['hqwebapp/js/django'], function () {
           requirejs([
-            'hqwebapp/js/base_main',
+            {% if use_bootstrap5 %}'hqwebapp/js/bootstrap5/base_main'{% else %}'hqwebapp/js/bootstrap3/base_main'{% endif %},
           ], function () {
       {% endif %}
             requirejs(['{{ requirejs_main }}'], function () {
