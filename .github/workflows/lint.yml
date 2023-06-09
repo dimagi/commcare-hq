@@ -92,18 +92,37 @@ jobs:
       - name: Get .js files
         id: javascript-files
         run: |
-          output=$(echo "${{ steps.changed-files.outputs.all_changed_files }}" | grep -o "\S*\.js" )
-          echo "::set-output name=javascript-file-names::$output"
+          filenames=$(echo "${{ steps.changed-files.outputs.all_changed_files }}")
+
+          $js_file_present="false"
+          for filename in $filenames; do
+            extension="${filename##*.}"
+
+            if [[ "$extension" == "js" ]]; then
+              js_file_present="true"
+              break
+            fi
+          done
+
+          if [ "$js_file_present" = "true" ]; then
+            js_files=$(echo "${{ steps.changed-files.outputs.all_changed_files }}" | grep -o "\S*\.js" )
+          fi
+
+          echo "::set-output name=javascript-file-present::$js_file_present"
+          echo "::set-output name=javascript-file-names::$js_files"
 
       - name: Set up Node.js
+        if: ${{ steps.python-files.outputs.javascript-file-present == 'true' }}
         uses: actions/setup-node@v3
         with:
           node-version: 14
 
       - name: Install Node.js dependencies
+        if: ${{ steps.python-files.outputs.javascript-file-present == 'true' }}
         run: yarn install --frozen-lockfile
 
       - uses: sibiraj-s/action-eslint@v2
+        if: ${{ steps.python-files.outputs.javascript-file-present == 'true' }}
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           eslint-args: ${{ steps.javascript-files.outputs.javascript-file-names }}
