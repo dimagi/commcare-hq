@@ -94,7 +94,7 @@ jobs:
         run: |
           filenames=$(echo "${{ steps.changed-files.outputs.all_changed_files }}")
 
-          $js_file_present="false"
+          js_file_present="false"
           for filename in $filenames; do
             extension="${filename##*.}"
 
