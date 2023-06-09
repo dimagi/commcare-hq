@@ -162,7 +162,7 @@ hqDefine('custom_data_fields/js/custom_data_fields', [
     }
 
     function CustomDataFieldsModel(options) {
-        assertProperties.assertRequired(options, [ 'custom_fields', 'custom_fields_profiles']);
+        assertProperties.assertRequired(options, ['custom_fields', 'custom_fields_profiles']);
 
         var self = {};
         self.data_fields = ko.observableArray();
