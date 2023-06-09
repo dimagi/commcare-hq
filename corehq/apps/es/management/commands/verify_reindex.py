@@ -1,18 +1,19 @@
 import argparse
 import re
 from textwrap import dedent
+from django.conf import settings
 
 from django.core.management.base import BaseCommand
 
 
 class Command(BaseCommand):
-    help = dedent("""\
+    help = dedent(f"""\
     Verify if a reindex process is completed in a ElasticSearch 2 cluster.
     The command parses the logs for reindex and provides detailed information of the process.
 
     The log should be extracted from elasticsearch logs. It can be done using commcare cloud.
     ```
-    cchq <env> run-shell-command elasticsearch "cat /opt/data/elasticsearch*/logs/*es.log | grep '<task_id>.*ReindexResponse'"
+    cchq {settings.SERVER_ENVIRONMENT} run-shell-command elasticsearch "cat /opt/data/elasticsearch*/logs/*es.log | grep '<task_id>.*ReindexResponse'"
     ```
 
     If the above command fail to yeild any output then

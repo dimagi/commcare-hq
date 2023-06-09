@@ -1,5 +1,6 @@
 import logging
 from datetime import datetime, timedelta
+from django.conf import settings
 
 from django.core.management.base import BaseCommand, CommandError
 
@@ -67,8 +68,8 @@ class ESSyncUtil:
         print("\n\n")
         logger.info("You can use commcare-cloud to extract reindex logs from cluster")
         print("\n\t"
-            + "cchq <env> run-shell-command elasticsearch \"cat /opt/data/elasticsearch*/logs/*es.log"
-            + f" | grep '{task_id}.*ReindexResponse'\""
+            + f"cchq {settings.SERVER_ENVIRONMENT} run-shell-command elasticsearch "
+            + f"\"grep '{task_id}.*ReindexResponse' opt/data/elasticsearch*/logs/*es.log\""
             + "\n\n")
 
     def _get_source_destination_indexes(self, adapter):
