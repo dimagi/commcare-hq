@@ -48,9 +48,7 @@ jobs:
             fi
           done
 
-          if [ "$python_file_present" = true ]; then
-            exit 0
-          fi
+          echo $python_file_present
           echo "::set-output name=python-file-present::$python_file_present"
           echo "::set-output name=python-file-names::$python_files"
 
