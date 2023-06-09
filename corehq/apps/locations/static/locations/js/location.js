@@ -20,7 +20,7 @@ hqDefine("locations/js/location", [
     googleAnalytics,
     locationModels,
     locationTreeModel
-)
+) {
     var insert_new_user = function( user ) {
         var $select = $('#id_users-selected_ids');
         // Add the newly created user to the users that are already at the location.
