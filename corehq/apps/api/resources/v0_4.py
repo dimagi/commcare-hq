@@ -76,6 +76,7 @@ class XFormInstanceResource(SimpleSortableResourceMixin, HqBaseResource, DomainS
     form = fields.DictField(attribute='form_data')
     type = fields.CharField(attribute='type')
     version = fields.CharField(attribute='version')
+    submit_ip = fields.CharField(attribute='submit_ip')
     uiversion = fields.CharField(attribute='uiversion', blank=True, null=True)
     metadata = fields.DictField(attribute='metadata', blank=True, null=True)
     received_on = fields.CharField(attribute="received_on")
