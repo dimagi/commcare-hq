@@ -5,6 +5,7 @@
     "description": "CommCare HQ Javascript Libraries",
     "private": true,
     "dependencies": {
+        "@babel/standalone": "^7.21.4",
         "@mapbox/mapbox-gl-geocoder": "5.0.1",
         "@mapbox/mapbox-gl-draw": "1.4.1",
         "At.js": "millerdev/At.js#master",
@@ -12,6 +13,7 @@
         "DOMPurify": "npm:dompurify#2.3.6",
         "ace-builds": "1.3.3",
         "autotrack": "2.4.1",
+        "babel-plugin-transform-modules-requirejs-babel": "^0.1.0",
         "backbone": "npm:backbone#~1.3.2",
         "backbone.marionette": "4.1.3",
         "backbone.radio": "^2.0.0",
@@ -73,6 +75,7 @@
         "perfect-scrollbar": "1.5.0",
         "quicksearch": "DeuxHuitHuit/quicksearch#2.2.1",
         "requirejs": "2.3.6",
+        "requirejs-babel7": "^1.3.2",
         "select2": "4.1.0-rc.0",
         "topojson": "3.0.2",
         "uglify-js": "3",
