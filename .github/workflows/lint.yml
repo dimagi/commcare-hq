@@ -48,7 +48,7 @@ jobs:
             fi
           done
 
-          echo "{python-file-present}=$python_file_present" >> $GITHUB_OUTPUT
+          echo "{python-file-present}=${{ '$python_file_present' }}" >> $GITHUB_OUTPUT
           echo "{python-file-names}=$python_files" >> $GITHUB_OUTPUT
 
       - name: Check if python files are present
