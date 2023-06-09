@@ -1064,7 +1064,7 @@ class NavigationEventAuditResource(HqBaseResource, Resource):
     local_date = fields.DateField(attribute='local_date', readonly=True)
     UTC_start_time = fields.DateTimeField(attribute='UTC_start_time', readonly=True)
     UTC_end_time = fields.DateTimeField(attribute='UTC_end_time', readonly=True)
-    user = fields.CharField(attribute='user', readonly=True, null=True)
+    user = fields.CharField(attribute='user', readonly=True)
 
     class Meta:
         authentication = RequirePermissionAuthentication(HqPermissions.view_web_users)
@@ -1195,6 +1195,7 @@ class NavigationEventAuditResource(HqBaseResource, Resource):
         local_date_filter = cls._get_compound_filter('local_date', params)
 
         results = (queryset
+                .exclude(user__isnull=True)
                 .annotate(local_date=TruncDate('event_date', tzinfo=local_timezone))
                 .filter(local_date_filter)
                 .values('local_date', 'user'))
