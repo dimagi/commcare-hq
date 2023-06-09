@@ -73,6 +73,41 @@ body {
   height: 100%;
 }
 
+.marker-pin {
+  width: 30px;
+  height: 30px;
+  border-radius: 50% 50% 50% 0;
+  background: #c30b82;
+  position: absolute;
+  transform: rotate(-45deg);
+  left: 50%;
+  top: 50%;
+  margin: -15px 0 0 -15px;
+}
+// to draw white circle
+.marker-pin::after {
+    content: '';
+    width: 24px;
+    height: 24px;
+    margin: 3px 0 0 3px;
+    background: #fff;
+    position: absolute;
+    border-radius: 50%;
+ }
+
+.list-cell-wrapper-style {
+  border: 1px solid white;
+  border-collapse: collapse;
+  vertical-align: top;
+  background-color: #f2f2f1;
+  container-type: inline-size;
+}
+
+.highlighted-case {
+  border-style: solid;
+  border-color: #004ebc;
+}
+
 @media print {
   * {
     visibility: collapse;
