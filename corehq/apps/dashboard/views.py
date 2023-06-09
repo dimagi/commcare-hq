@@ -39,9 +39,10 @@ from corehq.apps.users.views import DefaultProjectUserSettingsView
 from corehq.util.context_processors import commcare_hq_names
 
 
+
 def _get_tile(request, slug):
     try:
-        tile = [t for t in _get_default_tiles(request) if t.slug == slug][0]
+         tile = [t for t in _get_default_tiles(request) if t.slug == slug][0]
     except IndexError:
         raise Http404()
 
