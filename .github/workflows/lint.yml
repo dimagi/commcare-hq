@@ -115,17 +115,17 @@ jobs:
           echo "::set-output name=javascript-file-names::$js_files"
 
       - name: Set up Node.js
-        if: ${{ steps.python-files.outputs.javascript-file-present == 'true' }}
+        if: ${{ steps.javascript-files.outputs.javascript-file-present == 'true' }}
         uses: actions/setup-node@v3
         with:
           node-version: 14
 
       - name: Install Node.js dependencies
-        if: ${{ steps.python-files.outputs.javascript-file-present == 'true' }}
+        if: ${{ steps.javascript-files.outputs.javascript-file-present == 'true' }}
         run: yarn install --frozen-lockfile
 
       - uses: sibiraj-s/action-eslint@v2
-        if: ${{ steps.python-files.outputs.javascript-file-present == 'true' }}
+        if: ${{ steps.javascript-files.outputs.javascript-file-present == 'true' }}
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           eslint-args: ${{ steps.javascript-files.outputs.javascript-file-names }}
