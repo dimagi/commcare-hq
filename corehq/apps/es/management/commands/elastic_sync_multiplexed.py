@@ -1,3 +1,4 @@
+import logging
 from datetime import datetime, timedelta
 
 from django.core.management.base import BaseCommand, CommandError
@@ -5,11 +6,14 @@ from django.core.management.base import BaseCommand, CommandError
 from corehq.apps.es.client import ElasticMultiplexAdapter, get_client
 from corehq.apps.es.client import manager as es_manager
 from corehq.apps.es.exceptions import IndexNotMultiplexedException, TaskMissing
+from corehq.apps.es.index.settings import render_index_tuning_settings
 from corehq.apps.es.transient_util import (
     doc_adapter_from_cname,
     iter_index_cnames,
 )
 from corehq.apps.es.utils import check_task_progress
+
+logger = logging.getLogger('elastic_sync_multiplexed')
 
 
 class ESSyncUtil:
@@ -32,31 +36,65 @@ class ESSyncUtil:
             raise IndexNotMultiplexedException("""Index not multiplexed!
             Sync can only be run on multiplexed indices""")
 
-        self.source, self.dest = self._get_source_destination_indexes(adapter)
+        source_index, destination_index = self._get_source_destination_indexes(adapter)
 
-        task_id = es_manager.reindex(self.source, self.dest)
+        logger.info(f"Preparing index {destination_index} for reindex")
+        self._prepare_index_for_reindex(destination_index)
 
+        logger.info("Starting ReIndex process")
+        task_info = es_manager.reindex(source_index, destination_index)
+        logger.info(f"Copying docs from index {source_index} to index {destination_index}")
+        task_id = task_info.split(':')[1]
+        print("\n\n\n")
+        logger.info("-----------------IMPORTANT-----------------")
+        logger.info(f"TASK ID - {task_id}")
+        logger.info("-------------------------------------------")
+        logger.info("Save this Task Id, You will need it later for verifying your reindex process")
+        print("\n\n\n")
         # This would display progress untill reindex process is completed
-        check_task_progress(task_id)
+        check_task_progress(task_info)
 
+        print("\n\n")
         self.perform_cleanup(adapter)
+
+        logger.info("Preparing Index for normal use")
+        self._prepare_index_for_normal_usage(adapter.secondary)
+        print("\n\n")
+
+        self._get_source_destination_doc_count(adapter)
+
+        logger.info(f"Verify this reindex process from elasticsearch logs using task id - {task_id}")
+        print("\n\n")
+        logger.info("You can use commcare-cloud to extract reindex logs from cluster")
+        print("\n\t"
+            + "cchq <env> run-shell-command elasticsearch \"cat /opt/data/elasticsearch*/logs/*es.log"
+            + f" | grep '{task_id}.*ReindexResponse'\""
+            + "\n\n")
 
     def _get_source_destination_indexes(self, adapter):
         return adapter.primary.index_name, adapter.secondary.index_name
 
+    def _prepare_index_for_reindex(self, index_name):
+        es_manager.index_configure_for_reindex(index_name)
+        es_manager.index_set_replicas(index_name, 0)
+
+    def _prepare_index_for_normal_usage(self, secondary_adapter):
+        tuning_settings = render_index_tuning_settings(secondary_adapter.settings_key)
+        es_manager.index_set_replicas(secondary_adapter.index_name, tuning_settings['number_of_replicas'])
+        es_manager.index_configure_for_standard_ops(secondary_adapter.index_name)
+
+    def _get_source_destination_doc_count(self, adapter):
+        es_manager.index_refresh(adapter.primary.index_name)
+        es_manager.index_refresh(adapter.secondary.index_name)
+        primary_count = adapter.count({})
+        secondary_count = adapter.secondary.count({})
+        print(f"Doc Count In Old Index '{adapter.primary.index_name}' - {primary_count}")
+        print(f"Doc Count In New Index '{adapter.secondary.index_name}' - {secondary_count}\n\n")
+
     def perform_cleanup(self, adapter):
-        print("\nPerforming Cleanup:")
-
-        print("\nDeleting Tombstones")
+        logger.info("Performing required cleanup!")
+        logger.info("Deleting Tombstones")
         adapter.secondary.delete_tombstones()
-
-        print("\nMarking Index eligible to upgrade to primary")
-        self.mark_primary_eligible()
-
-    def mark_primary_eligible(self):
-        # Would be used to mark the secondary index eligible to be primary.
-        # This would be implemented when supporting models are created.
-        pass
 
     def cancel_reindex(self, task_id):
         try:
@@ -68,8 +106,8 @@ class ESSyncUtil:
         running_duration_seconds = task_info['running_time_in_nanos'] / 10**9
         duration = timedelta(running_duration_seconds)
 
-        print(f"Reindex task {task_id} cancelled!")
-        print(f"Task was started at {start_time} and ran for {duration}")
+        logger.info(f"Reindex task {task_id} cancelled!")
+        logger.info(f"Task was started at {start_time} and ran for {duration}")
 
     def reindex_status(self, task_id):
         check_task_progress(task_id, just_once=True)
