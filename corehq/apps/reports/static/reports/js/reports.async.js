@@ -1,4 +1,4 @@
-hqDefine("reports/js/reports.async", function () {
+hqDefine("reports/js/reports.async", ['hqwebapp/js/alert_user'], function (alertUser) {
     return function (o) {
         'use strict';
         var self = {};
@@ -63,12 +63,7 @@ hqDefine("reports/js/reports.async", function () {
                     var userInput = this.search_xpath ? this.search_xpath.value :
                         this.search_query ? this.search_query.value : '';
                     if (userInput.length > self.maxInputLimit) {
-                        self.loadingIssueModal.find('.report-error-status').html(self.humanReadableErrors['maxInputError']);
-                        if (self.issueAttempts > 0) {
-                            self.loadingIssueModal.find('.btn-primary').button('fail');
-                        }
-                        self.issueAttempts += 1;
-                        self.loadingIssueModal.modal('show');
+                        alertUser.alert_user(self.humanReadableErrors['maxInputError'], "danger");
                     } else {
                         self.getQueryId(params, false, true, pathName);
                     }
@@ -240,12 +235,13 @@ hqDefine("reports/js/reports.async", function () {
         });
 
         self.loadingIssueModal.on('hide hide.bs.modal', function () {
-            if (self.issueAttempts > 0) {
-                self.hqLoading = $(self.loaderClass);
-                self.hqLoading.find('.js-loading-spinner').addClass('hide');
-                self.hqLoading.find('h4').text(gettext('We were unsuccessful loading the report:'))
-                    .attr('style', 'margin-bottom: 10px;');
-            }
+            console.log("error modal cancelled")
+            //if (self.issueAttempts > 0) {
+            self.hqLoading = $(self.loaderClass);
+            self.hqLoading.find('.js-loading-spinner').addClass('hide');
+            self.hqLoading.find('h4').text(gettext('We were unsuccessful loading the report:'))
+                .attr('style', 'margin-bottom: 10px;');
+            //}
         });
 
         return self;
