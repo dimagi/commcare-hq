@@ -48,7 +48,9 @@ jobs:
             fi
           done
 
-          echo "::set-output name=python-file-present::${{ toJSON($python_file_present) }}"
+          echo ${{ toJSON(python_file_present) }}
+
+          echo "::set-output name=python-file-present::${{ toJSON(python_file_present) }}"
           echo "::set-output name=python-file-names::$python_files"
 
       - name: Check if python files are present
