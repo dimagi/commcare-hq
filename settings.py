@@ -870,7 +870,7 @@ ES_USERS_INDEX_MULTIPLEXED = False
 
 
 # Setting the variable to True would mean that the primary index would become secondary and vice-versa
-# This should only be set to True after successfully running and verifying migration command on a particular index. 
+# This should only be set to True after successfully running and verifying migration command on a particular index.
 ES_APPS_INDEX_SWAPPED = False
 ES_CASE_SEARCH_INDEX_SWAPPED = False
 ES_CASES_INDEX_SWAPPED = False
