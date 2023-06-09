@@ -53,8 +53,8 @@ jobs:
           echo "::set-output name=python-file-names::$python_files"
 
       - name: Check if python files are present
-#        if: ${{ steps.python-files.outputs.python_file_present }}
-        run: echo ${{ steps.python-files.outputs.python_file_present }}
+        if: ${{ steps.python-files.outputs.python_file_present }}
+        run: echo "I'm running because apparently there's some .py files around here..."
 
 #      - name: Set up Python
 #        uses: actions/setup-python@v1
