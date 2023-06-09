@@ -62,6 +62,21 @@
   </p>
 
   <div id="build-errors-wrapper"></div>
+  <div class="alert alert-warning hidden" id="deprecated-case-types-warning">
+    <p>
+      <i class="fa fa-warning"></i>
+      {% blocktrans %}
+        The new application build contains the following deprecated case types:
+      {% endblocktrans %}
+    </p>
+    <ul id="deprecated-case-types-list"></ul>
+    <p>
+      <!-- TODO: Add help documentation -->
+      {% blocktrans %}
+        For more information on deprecated case types, see the following <a target="_blank" href="">documentation</a>.
+      {% endblocktrans %}
+    </p>
+  </div>
 
   <div class="row">
     <div class="col-md-3 col-md-offset-9">
