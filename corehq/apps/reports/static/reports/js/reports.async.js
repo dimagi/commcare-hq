@@ -235,12 +235,13 @@ hqDefine("reports/js/reports.async", ['hqwebapp/js/alert_user'], function (alert
         });
 
         self.loadingIssueModal.on('hide hide.bs.modal', function () {
-            if (self.issueAttempts > 0) {
-                self.hqLoading = $(self.loaderClass);
-                self.hqLoading.find('.js-loading-spinner').addClass('hide');
-                self.hqLoading.find('h4').text(gettext('We were unsuccessful loading the report:'))
-                    .attr('style', 'margin-bottom: 10px;');
-            }
+            console.log("error modal cancelled")
+            //if (self.issueAttempts > 0) {
+            self.hqLoading = $(self.loaderClass);
+            self.hqLoading.find('.js-loading-spinner').addClass('hide');
+            self.hqLoading.find('h4').text(gettext('We were unsuccessful loading the report:'))
+                .attr('style', 'margin-bottom: 10px;');
+            //}
         });
 
         return self;
