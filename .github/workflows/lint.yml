@@ -50,7 +50,7 @@ jobs:
           done
 
           if [ "$python_file_present" = "true" ]; then
-            python_files=$(echo "${{ steps.changed-files.outputs.all_changed_files }}" | grep -o "\S*\.js" )
+            python_files=$(echo "${{ steps.changed-files.outputs.all_changed_files }}" | grep -o "\S*\.py" )
           fi
 
           echo "::set-output name=python-file-present::$python_file_present"
