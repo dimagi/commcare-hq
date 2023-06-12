@@ -375,6 +375,7 @@ es
  0001_bootstrap_es_indexes
  0002_add_tombstones
  0003_add_assigned_location_ids
+ 0004_make_new_indexes
 events
  0001_add_events_model
  0002_attendancetrackingconfig
