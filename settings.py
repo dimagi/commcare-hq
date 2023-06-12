@@ -1141,6 +1141,9 @@ IGNORE_ALL_DEMO_USER_SUBMISSIONS = False
 USE_PHONE_ENTRIES = True
 COMMCARE_ANALYTICS_HOST = ""
 
+# FCM Server creds used for sending FCM Push Notifications
+FCM_CREDS = None
+
 try:
     # try to see if there's an environmental variable set for local_settings
     custom_settings = os.environ.get('CUSTOMSETTINGS', None)
