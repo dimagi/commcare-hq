@@ -27,6 +27,7 @@ from text_unidecode import unidecode
 
 from corehq.apps.formplayer_api.utils import get_formplayer_url
 from corehq.util.metrics import metrics_counter
+from couchforms.const import VALID_ATTACHMENT_FILE_EXTENSION_MAP
 from dimagi.utils.logging import notify_error, notify_exception
 from dimagi.utils.web import get_url_base, json_response
 
@@ -209,6 +210,7 @@ class FormplayerMain(View):
             "environment": WEB_APPS_ENVIRONMENT,
             "integrations": integration_contexts(domain),
             "has_geocoder_privs": has_geocoder_privs(domain),
+            "valid_multimedia_extensions_map": VALID_ATTACHMENT_FILE_EXTENSION_MAP,
         }
         return set_cookie(
             render(request, "cloudcare/formplayer_home.html", context)
@@ -280,6 +282,7 @@ class FormplayerPreviewSingleApp(View):
             "environment": WEB_APPS_ENVIRONMENT,
             "integrations": integration_contexts(domain),
             "has_geocoder_privs": has_geocoder_privs(domain),
+            "valid_multimedia_extensions_map": VALID_ATTACHMENT_FILE_EXTENSION_MAP,
         }
         return render(request, "cloudcare/formplayer_home.html", context)
 
@@ -299,6 +302,7 @@ class PreviewAppView(TemplateView):
             "environment": PREVIEW_APP_ENVIRONMENT,
             "integrations": integration_contexts(request.domain),
             "has_geocoder_privs": has_geocoder_privs(request.domain),
+            "valid_multimedia_extensions_map": VALID_ATTACHMENT_FILE_EXTENSION_MAP,
         })
 
 
