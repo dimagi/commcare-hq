@@ -72,7 +72,8 @@ class EventForm(forms.Form):
     )
     attendance_takers = forms.MultipleChoiceField(
         label=_("Attendance Takers"),
-        required=False,
+        required=True,
+        help_text="Please choose at least one Attendance Taker"
     )
 
     def __init__(self, *args, **kwargs):
@@ -242,13 +243,10 @@ class EventForm(forms.Form):
         return [(m.case_id, m.name) for m in models]
 
     def _get_possible_attendance_takers_ids(self):
+        attendance_takers_filters = {'user_active_status': True}
         if self.event and self.event.location_id:
-            users = get_mobile_users_by_filters(
-                self.domain,
-                {'location_id': self.event.location_id},
-            )
-        else:
-            users = get_all_commcare_users_by_domain(self.domain)
+            attendance_takers_filters['location_id'] = self.event.location_id
+        users = get_mobile_users_by_filters(self.domain, attendance_takers_filters)
         return [(u.user_id, u.raw_username) for u in users]
 
 
