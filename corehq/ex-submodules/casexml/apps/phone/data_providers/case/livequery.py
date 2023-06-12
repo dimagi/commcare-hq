@@ -363,7 +363,7 @@ def batch_cases(accessor, case_ids):
     track_load = case_load_counter("livequery_restore", accessor.domain)
     ids = iter(case_ids)
     while True:
-        next_ids = take(1000, ids)
+        next_ids = take(10000, ids)
         if not next_ids:
             break
         track_load(len(next_ids))
