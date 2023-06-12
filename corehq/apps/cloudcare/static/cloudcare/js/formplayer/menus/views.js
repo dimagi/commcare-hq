@@ -8,6 +8,8 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
         toggles = hqImport("hqwebapp/js/toggles"),
         utils = hqImport("cloudcare/js/formplayer/utils/utils");
 
+
+
     const MenuView = Marionette.View.extend({
         tagName: function () {
             if (this.model.collection.layoutStyle === 'grid') {
@@ -224,11 +226,13 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             });
         },
 
-        className: "formplayer-request",
+        className: "formplayer-request case-row",
 
         attributes: function () {
+            let modelId = this.model.get('id');
             return {
                 "tabindex": "0",
+                "id": `row-${modelId}`
             };
         },
 
@@ -239,17 +243,17 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
                 $(e.target).is('a')                                                 // actual link, as in markdown
             )) {
                 e.preventDefault();
-                let model_id = this.model.get('id');
+                let modelId = this.model.get('id');
                 if (!this.model.collection.hasDetails) {
                     if (this.isMultiSelect) {
                         let action = this.isChecked() ? constants.MULTI_SELECT_ADD : constants.MULTI_SELECT_REMOVE;
-                        FormplayerFrontend.trigger("multiSelect:updateCases", action, [model_id]);
+                        FormplayerFrontend.trigger("multiSelect:updateCases", action, [modelId]);
                     } else {
-                        FormplayerFrontend.trigger("menu:select", model_id);
+                        FormplayerFrontend.trigger("menu:select", modelId);
                     }
                     return;
                 }
-                FormplayerFrontend.trigger("menu:show:detail", model_id, 0, this.isMultiSelect);
+                FormplayerFrontend.trigger("menu:show:detail", modelId, 0, this.isMultiSelect);
             }
         },
 
@@ -499,31 +503,39 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             }
         },
 
-        addAddressPin: function (geocoder, addressMap, headers, model, addressIndex) {
-            const coordinates = model.attributes.data[addressIndex];
-            if (coordinates) {
-                let latLng = coordinates.split(" ").slice(0,2);
-                if (latLng.length > 1) {
-                    let popupText = "";
-                    headers.forEach((header, index) => {
-                        if (header) {
-                            const valueSanitized = DOMPurify.sanitize(model.attributes.data[index]);
-                            const headerSanitized = DOMPurify.sanitize(header);
-                            popupText += "<b>" + headerSanitized + ":</b> " + valueSanitized + "<br>";
-                        }
-                    });
-                    L.marker(latLng)
-                        .addTo(addressMap)
-                        .bindPopup(popupText);
-
-                    return latLng;
-                }
-            }
-            return null;
-        },
-
         loadMap: function () {
             const token = initialPageData.get("mapbox_access_token");
+
+            // const locationIcon = L.divIcon({
+            //     className: 'custom-div-icon',
+            //     html: "<div style='background-color:#0b3fc3;' class='marker-pin'></div>",
+            //     iconSize: [30, 42],
+            //     iconAnchor: [15, 42]
+            // });
+
+            const locationIcon = L.divIcon({
+                html: '<i class="fa fa-map-marker fa-4x"></i>',
+                iconSize: [12, 12],
+                className: 'myDivIcon'
+            });
+
+            const selectedLocationIcon = L.divIcon({
+                html: '<i class="fa fa-star  fa-4x"></i>',
+                iconSize: [12, 12],
+                className: 'myDivIcon'
+            });
+
+            // const homeLocationIcon = L.divIcon({
+            //     className: 'custom-div-icon',
+            //     html: "<div style='background-color:#c30b82;' class='marker-pin'></div>",
+            //     iconSize: [30, 42],
+            //     iconAnchor: [15, 42]
+            // });
+            const homeLocationIcon = L.divIcon({
+                html: '<i class="fa fa-street-view fa-4x"></i>',
+                iconSize: [12, 12],
+                className: 'myDivIcon'
+            });
 
             try {
                 const lat = 30;
@@ -540,13 +552,55 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
 
                 const addressIndex = _.findIndex(this.styles, function (style) { return style.displayFormat === constants.FORMAT_ADDRESS; });
                 L.mapbox.accessToken = token;
-                const mapbox = L.mapbox;
-                const geocoder = mapbox.geocoder('mapbox.places');
 
-                const latLons = this.options.collection.models
-                    .map(model => this.addAddressPin(geocoder, addressMap, this.options.headers, model, addressIndex))
-                    .filter(latLon => latLon);
-                addressMap.fitBounds(latLons, {maxZoom: 8});
+                const latLons = []
+                const markers = []
+                this.options.collection.models
+                    .forEach(model => {
+                        const coordinates = model.attributes.data[addressIndex];
+                        if (coordinates) {
+                            let latLng = coordinates.split(" ").slice(0,2);
+                            if (latLng.length > 1) {
+                                const rowId = `row-${model.id}`;
+                                const marker = L.marker(latLng, {icon: locationIcon});
+                                markers.push(marker);
+                                marker
+                                    .addTo(addressMap)
+                                    .on('click', () => {
+                                        // tiles
+                                        $(`.list-cell-wrapper-style[id!='${rowId}']`)
+                                            .removeClass("highlighted-case");
+                                        // rows
+                                        $(`.case-row[id!='${rowId}']`)
+                                            .removeClass("highlighted-case");
+                                        $(`#${rowId}`)
+                                            .addClass("highlighted-case");
+                                        markers.forEach(m => m.setIcon(locationIcon));
+                                        marker.setIcon(selectedLocationIcon);
+
+                                        $([document.documentElement, document.body]).animate({
+                                            scrollTop: $(`#${rowId}`).offset().top
+                                        }, 500);
+                                    });
+                                latLons.push(latLng);
+                            }
+                        }
+                    });
+
+                navigator.geolocation.getCurrentPosition(
+                    success => {
+                        const coords = success.coords;
+                        const homeLatLng = [coords.latitude, coords.longitude];
+
+                        L.marker(homeLatLng, { icon: homeLocationIcon })
+                            .bindPopup("Your location")
+                            .addTo(addressMap);
+                        latLons.push(homeLatLng);
+                        addressMap.fitBounds(latLons, {maxZoom: 8});
+                    }, () => {
+                        addressMap.fitBounds(latLons, {maxZoom: 8});
+                    }
+                );
 
             } catch (error) {
                 console.error(error);
@@ -656,7 +710,6 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
         const caseTileStyles = {};
         caseTileStyles.cellLayoutStyle = buildCellLayout(tiles, prefix);
         caseTileStyles.cellGridStyle = buildCellGridStyle(numRows, numColumns, useUniformUnits, prefix);
-        caseTileStyles.cellWrapperStyle = $("#cell-wrapper-style-template").html();
         caseTileStyles.cellContainerStyle = buildCellContainerStyle(numEntitiesPerRow);
         return caseTileStyles;
     };
