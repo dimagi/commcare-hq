@@ -13,7 +13,7 @@ class Command(BaseCommand):
 
     The log should be extracted from elasticsearch logs. It can be done using commcare cloud.
     ```
-    cchq {settings.SERVER_ENVIRONMENT} run-shell-command elasticsearch "cat /opt/data/elasticsearch*/logs/*es.log | grep '<task_id>.*ReindexResponse'"
+    cchq {settings.SERVER_ENVIRONMENT} run-shell-command elasticsearch "grep '<task_id>.*ReindexResponse' /opt/data/elasticsearch*/logs/*es.log"
     ```
 
     If the above command fail to yeild any output then
