@@ -115,7 +115,6 @@ hqDefine("app_manager/js/modules/module_view", function () {
                 );
                 return;
             }
-            console.log(deprecatedCaseTypes, value);
             if (deprecatedCaseTypes.includes(value)) {
                 showCaseTypeDeprecatedWarning();
             } else {
