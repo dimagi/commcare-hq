@@ -2,8 +2,12 @@
 API endpoints for filter options
 """
 import logging
+import json
 
 from django.views.generic import View
+from django.http import JsonResponse
+from django.views.decorators.http import require_POST
+from django.utils.translation import gettext_lazy as _
 
 from braces.views import JSONResponseMixin
 from memoized import memoized
@@ -12,17 +16,20 @@ from dimagi.utils.logging import notify_exception
 from phonelog.models import DeviceReportEntry
 
 from corehq.apps.domain.decorators import LoginAndDomainMixin
+from corehq.apps.users.decorators import require_permission
+from corehq.apps.users.models import HqPermissions
 from corehq.apps.locations.permissions import location_safe
 from corehq.apps.reports.const import DEFAULT_PAGE_LIMIT
 from corehq.apps.reports.filters.controllers import (
     CaseListFilterOptionsController,
     EmwfOptionsController,
     MobileWorkersOptionsController,
-    ReassignCaseOptionsController,
+    CaseListActionOptionsController,
     EnterpriseUserOptionsController,
 )
 from corehq.apps.users.analytics import get_search_users_in_domain_es_query
 from corehq.elastic import ESError
+from corehq.apps.hqcase.case_helper import CaseHelper
 
 logger = logging.getLogger(__name__)
 
@@ -119,11 +126,11 @@ class CaseListFilterOptions(EmwfOptionsView):
 
 
 @location_safe
-class ReassignCaseOptions(CaseListFilterOptions):
+class CaseListActionOptions(CaseListFilterOptions):
     @property
     @memoized
     def options_controller(self):
-        return ReassignCaseOptionsController(self.request, self.domain, self.search)
+        return CaseListActionOptionsController(self.request, self.domain, self.search)
 
 
 class EnterpriseUserOptions(EmwfOptionsView):
@@ -197,3 +204,34 @@ class DeviceLogUsers(DeviceLogFilter):
 
 class DeviceLogIds(DeviceLogFilter):
     field = 'device_id'
+
+
+@require_POST
+@require_permission(HqPermissions.edit_data)
+@location_safe
+def copy_cases(request, domain, *args, **kwargs):
+    body = json.loads(request.body)
+
+    case_ids = body.get('case_ids')
+    if not case_ids:
+        return JsonResponse({'error': _("Missing case ids")}, status=400)
+
+    new_owner = body.get('owner_id')
+    if not new_owner:
+        return JsonResponse({'error': _("Missing new owner id")}, status=400)
+
+    censor_data = {prop['name']: prop['label'] for prop in body.get('sensitive_properties', [])}
+
+    try:
+        copied_count = CaseHelper(domain=domain).copy_cases(
+            domain=domain,
+            case_ids=case_ids,
+            to_owner=new_owner,
+            censor_data=censor_data,
+            count_only=True,
+        )
+        return JsonResponse({
+            'copied_cases': copied_count,
+        })
+    except Exception as e:
+        return JsonResponse({'error': _(str(e))}, status=400)
