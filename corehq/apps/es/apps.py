@@ -54,6 +54,7 @@ app_adapter = create_document_adapter(
     ElasticApp,
     "hqapps_2020-02-26",
     "app",
+    secondary='apps-20230524',
 )
 
 
