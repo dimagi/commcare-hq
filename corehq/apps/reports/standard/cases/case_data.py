@@ -273,7 +273,6 @@ def _get_dd_tables(domain, case_type, dynamic_data, timezone):
         ]))
         for group, props in dd_props_by_group
     ]
-
     props_in_dd = set(prop.name for _, prop_group in dd_props_by_group
                       for prop in prop_group)
     unrecognized = set(dynamic_data.keys()) - props_in_dd
@@ -313,7 +312,7 @@ def _table_definition(props):
                 name=label or prop_name,
                 description=description,
                 has_history=True
-            ) for prop_name, label, description in sorted(props)
+            ) for prop_name, label, description in props
         ], DYNAMIC_CASE_PROPERTIES_COLUMNS))
     }
 
