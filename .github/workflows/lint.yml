@@ -1,0 +1,121 @@
+name: Lint
+
+on:
+  # Trigger the workflow on push or pull request,
+  # but only for the main branch
+  push:
+    branches:
+      - investigation/lint-action
+
+  pull_request:
+    branches:
+      - investigation/lint-action
+
+permissions:
+  checks: write
+  contents: write
+
+env:
+  BRANCH_NAME: ${{ github.head_ref }}
+  BASE_NAME: ${{ github.base_ref }}
+
+jobs:
+  lint-python:
+    name: Lint Python
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out Git repository
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - name: Get changed files
+        id: changed-files
+        uses: tj-actions/changed-files@v14.6
+
+      - name: Get .py files
+        id: python-files
+        run: |
+          filenames=$(echo "${{ steps.changed-files.outputs.all_changed_files }}")
+          python_file_present="false"
+          for filename in $filenames; do
+            extension="${filename##*.}"
+            if [[ "$extension" == "py" ]]; then
+              python_file_present="true"
+              break
+            fi
+          done
+          if [ "$python_file_present" = "true" ]; then
+            python_files=$(echo "${{ steps.changed-files.outputs.all_changed_files }}" | grep -o "\S*\.py" )
+          fi
+          echo "::set-output name=python-file-present::$python_file_present"
+          echo "::set-output name=python-file-names::$python_files"
+      - name: Set up Python
+        uses: actions/setup-python@v1
+        if: ${{ steps.python-files.outputs.python-file-present == 'true' }}
+        with:
+          python-version: 3.8
+
+      - name: Install Python dependencies
+        if: ${{ steps.python-files.outputs.python-file-present == 'true' }}
+        run: pip install flake8
+
+      - name: Run flake8 linter
+        if: ${{ steps.python-files.outputs.python-file-present == 'true' }}
+        uses: wearerequired/lint-action@v2
+        with:
+          flake8: true
+          flake8_auto_fix: false
+          flake8_args: ${{ steps.python-files.outputs.python-file-names }}
+
+  # If this is in the same step as python linting the annotations don't show up...sad face
+  lint-javascript:
+    name: Lint Javascript
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out Git repository
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - name: Get changed files
+        id: changed-files
+        uses: tj-actions/changed-files@v14.6
+
+      - name: Get .js files
+        id: javascript-files
+        run: |
+          filenames=$(echo "${{ steps.changed-files.outputs.all_changed_files }}")
+          js_file_present="false"
+          for filename in $filenames; do
+            extension="${filename##*.}"
+            if [[ "$extension" == "js" ]]; then
+              js_file_present="true"
+              break
+            fi
+          done
+          if [ "$js_file_present" = "true" ]; then
+            js_files=$(echo "${{ steps.changed-files.outputs.all_changed_files }}" | grep -o "\S*\.js" )
+          fi
+          echo $js_file_present
+          echo $js_files
+          echo "::set-output name=javascript-file-present::$js_file_present"
+          echo "::set-output name=javascript-file-names::$js_files"
+      - name: Set up Node.js
+        if: ${{ steps.javascript-files.outputs.javascript-file-present == 'true' }}
+        uses: actions/setup-node@v3
+        with:
+          node-version: 14
+
+      - name: Install Node.js dependencies
+        if: ${{ steps.javascript-files.outputs.javascript-file-present == 'true' }}
+        run: yarn install --frozen-lockfile
+
+      - uses: sibiraj-s/action-eslint@v2
+        if: ${{ steps.javascript-files.outputs.javascript-file-present == 'true' }}
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          eslint-args: ${{ steps.javascript-files.outputs.javascript-file-names }}
+          annotations: true
