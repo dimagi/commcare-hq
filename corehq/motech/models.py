@@ -6,6 +6,7 @@ from django.db import models
 from django.utils.functional import cached_property
 from django.utils.translation import gettext as _
 
+import architect
 import attr
 import jsonfield
 
@@ -276,6 +277,13 @@ class ConnectionSettings(models.Model):
         self.save()
 
 
+@architect.install(
+    'partition',
+    type='range',
+    subtype='date',
+    constraint='month',
+    column='timestamp',
+)
 class RequestLog(models.Model):
     """
     Store API requests and responses to analyse errors and keep an audit trail
@@ -300,7 +308,7 @@ class RequestLog(models.Model):
     response_body = models.TextField(blank=True, null=True)
 
     class Meta:
-        db_table = 'dhis2_jsonapilog'
+        db_table = 'motech_requestlog'
 
     @staticmethod
     def log(level: int, log_entry: RequestLogEntry):
