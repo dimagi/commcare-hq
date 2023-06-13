@@ -1922,7 +1922,7 @@ class CaseTileGroupConfig(DocumentSchema):
     # e.g. "./index/parent"
     index_identifier = StringProperty()
     # number of rows of the tile to use for the group header
-    header_rows = IntegerProperty(default=1)
+    header_rows = IntegerProperty(default=2)
 
 
 class Detail(IndexedSchema, CaseListLookupMixin):

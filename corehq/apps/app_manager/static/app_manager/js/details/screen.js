@@ -71,6 +71,11 @@ hqDefine("app_manager/js/details/screen", function () {
         });
         self.persistCaseContext = ko.observable(detail.persist_case_context || false);
         self.persistentCaseContextXML = ko.observable(detail.persistent_case_context_xml || 'case_name');
+
+        self.caseTileGrouped = ko.observable(detail.case_tile_group.index_identifier || false);
+        self.caseTileGroupBy = ko.observable(detail.case_tile_group.index_identifier);
+        self.caseTileGroupHeaderRows = ko.observable(detail.case_tile_group.header_rows);
+
         self.customVariablesViewModel = {
             enabled: hqImport('hqwebapp/js/toggles').toggleEnabled('CASE_LIST_CUSTOM_VARIABLES'),
             xml: ko.observable(detail.custom_variables || ""),
@@ -188,27 +193,17 @@ hqDefine("app_manager/js/details/screen", function () {
                 self.save();
             },
         });
-        self.on('change', function () {
-            self.saveButton.fire('change');
-        });
-        self.caseTileTemplate.subscribe(function () {
-            self.saveButton.fire('change');
-        });
-        self.persistCaseContext.subscribe(function () {
-            self.saveButton.fire('change');
-        });
-        self.persistentCaseContextXML.subscribe(function () {
-            self.saveButton.fire('change');
-        });
-        self.persistTileOnForms.subscribe(function () {
-            self.saveButton.fire('change');
-        });
-        self.persistentCaseTileFromModule.subscribe(function () {
-            self.saveButton.fire('change');
-        });
-        self.enableTilePullDown.subscribe(function () {
-            self.saveButton.fire('change');
-        });
+        let saveButtonFire = () => self.saveButton.fire('change');
+        self.on('change', saveButtonFire);
+        self.caseTileTemplate.subscribe(saveButtonFire);
+        self.persistCaseContext.subscribe(saveButtonFire);
+        self.persistentCaseContextXML.subscribe(saveButtonFire);
+        self.persistTileOnForms.subscribe(saveButtonFire);
+        self.persistentCaseTileFromModule.subscribe(saveButtonFire);
+        self.enableTilePullDown.subscribe(saveButtonFire);
+        self.caseTileGrouped.subscribe(saveButtonFire);
+        self.caseTileGroupBy.subscribe(saveButtonFire);
+        self.caseTileGroupHeaderRows.subscribe(saveButtonFire);
         self.columns.subscribe(function (changes) {
             self.saveButton.fire('change');
 
