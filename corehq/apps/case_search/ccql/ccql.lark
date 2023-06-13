@@ -1,0 +1,31 @@
+?start: b_expr+
+
+?b_expr: expression (BOP expression)*
+?expression: c_expr
+            |group
+            |function
+
+c_expr: term OP term
+?term: NAME|literal|ancestor|function
+?group: "(" b_expr+ ")"
+ancestor: NAME ("/" NAME)+
+function: NAME "(" [args] ")"
+
+args: arg ("," arg)*
+?arg: NAME|literal|b_expr
+
+?literal: STRING|INT|FLOAT
+
+BOP.1: "and"i|"or"i
+OP: ">"|">="|"<"|"<="|"="|"!="
+NAME: LETTER ("_"|"-"|LETTER|DIGIT)*
+STRING: ("\""|"'") _STRING_ESC_INNER ("'"|"\"")
+
+%import common._STRING_ESC_INNER
+%import common.FLOAT
+%import common.INT
+%import common.DIGIT
+%import common.LETTER
+
+%import common.WS
+%ignore WS
