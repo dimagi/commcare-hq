@@ -559,7 +559,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
                                         marker.setIcon(selectedLocationIcon);
 
                                         $([document.documentElement, document.body]).animate({
-                                            scrollTop: $(`#${rowId}`).offset().top
+                                            scrollTop: $(`#${rowId}`).offset().top - 50
                                         }, 500);
                                     });
                                 latLons.push(latLng);
