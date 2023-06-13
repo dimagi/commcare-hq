@@ -44,12 +44,7 @@
         <tbody data-bind="foreach: paginatedRules">
           <tr>
             <td>
-              <!-- ko if: upstream_id() && !$root.unlockLinkedData() -->
-                <a data-bind="attr: {href: view_url}"><strong data-bind="text: name"></strong></a>
-              <!-- /ko -->
-              <!-- ko ifnot: upstream_id() && !$root.unlockLinkedData() -->
-                  <a data-bind="attr: {href: edit_url}"><strong data-bind="text: name"></strong></a>
-              <!-- /ko -->
+              <a data-bind="attr: {href: url}"><strong data-bind="text: name"></strong></a>
             </td>
             <td data-bind="text: case_type"></td>
             <td>
