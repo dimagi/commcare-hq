@@ -74,7 +74,7 @@ from corehq.apps.app_manager.models import (
     SortElement,
     UpdateCaseAction,
     get_all_mobile_filter_configs,
-    get_auto_filter_configurations, ConditionalCaseUpdate,
+    get_auto_filter_configurations, ConditionalCaseUpdate, CaseTileGroupConfig,
 )
 from corehq.apps.app_manager.suite_xml.features.case_tiles import case_tile_template_config, CaseTileTemplates
 from corehq.apps.app_manager.suite_xml.features.mobile_ucr import (
@@ -1348,6 +1348,13 @@ def _update_short_details(detail, short, params, lang):
         _set_if_not_none('persistTileOnForms', 'persist_tile_on_forms')
         _set_if_not_none('persistentCaseTileFromModule', 'persistent_case_tile_from_module')
         _set_if_not_none('enableTilePullDown', 'pull_down_tile')
+
+        case_tile_group = params.get('case_tile_group', None)
+        if case_tile_group is not None:
+            detail.short.case_tile_group = CaseTileGroupConfig(
+                index_identifier=case_tile_group['index_identifier'],
+                header_rows=int(case_tile_group['header_rows'])
+            )
 
         case_list_lookup = params.get("case_list_lookup", None)
         if case_list_lookup is not None:

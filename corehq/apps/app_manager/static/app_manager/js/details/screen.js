@@ -343,6 +343,11 @@ hqDefine("app_manager/js/details/screen", function () {
             data.persistTileOnForms = self.persistTileOnForms();
             data.persistentCaseTileFromModule = self.persistentCaseTileFromModule();
             data.enableTilePullDown = self.persistTileOnForms() ? self.enableTilePullDown() : false;
+            
+            data.case_tile_group = JSON.stringify({
+                index_identifier: self.caseTileGrouped() ? self.caseTileGroupBy() : null,
+                header_rows: self.caseTileGroupHeaderRows()
+            });
 
             if (self.containsParentConfiguration) {
                 var parentSelect;
