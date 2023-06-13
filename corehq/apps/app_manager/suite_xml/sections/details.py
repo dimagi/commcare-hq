@@ -108,9 +108,10 @@ class DetailContributor(SectionContributor):
                             include_sort=detail_type.endswith('short'),
                         )  # list of DetailColumnInfo named tuples
                     if detail_column_infos:
-                        if detail.use_case_tiles:
+                        detail_id = id_strings.detail(module, detail_type)
+                        if detail.case_tile_template:
                             helper = CaseTileHelper(self.app, module, detail,
-                                                    detail_type, self.build_profile_id)
+                                                    detail_id, detail_type, self.build_profile_id)
                             elements.append(helper.build_case_tile_detail())
                         else:
                             print_template_path = None
@@ -124,7 +125,7 @@ class DetailContributor(SectionContributor):
                                 detail,
                                 detail_column_infos,
                                 tabs=list(detail.get_tabs()),
-                                id=id_strings.detail(module, detail_type),
+                                id=detail_id,
                                 title=title,
                                 print_template=print_template_path,
                             )
@@ -134,7 +135,7 @@ class DetailContributor(SectionContributor):
                     # add the persist case context if needed and if
                     # case tiles are present and have their own persistent block
                     if (detail.persist_case_context and
-                            not (detail.use_case_tiles and detail.persist_tile_on_forms)):
+                            not (detail.case_tile_template and detail.persist_tile_on_forms)):
                         d = self._get_persistent_case_context_detail(module, detail.persistent_case_context_xml)
                         elements.append(d)
 
@@ -233,11 +234,8 @@ class DetailContributor(SectionContributor):
                         d.actions.append(self._get_case_list_form_action(module))
 
                 if module_offers_search(module) and not module_uses_inline_search(module):
-                    in_search = module_loads_registry_case(module) or "search" in id
                     d.actions.append(
-                        DetailContributor.get_case_search_action(module,
-                                                                 self.build_profile_id,
-                                                                 in_search=in_search)
+                        DetailContributor.get_case_search_action(module, self.build_profile_id, id)
                     )
 
             try:
@@ -365,7 +363,8 @@ class DetailContributor(SectionContributor):
         return action
 
     @staticmethod
-    def get_case_search_action(module, build_profile_id, in_search=False):
+    def get_case_search_action(module, build_profile_id, detail_id):
+        in_search = module_loads_registry_case(module) or "search" in detail_id
         action_kwargs = DetailContributor._get_action_kwargs(module, in_search)
         if in_search:
             search_label = module.search_config.search_again_label

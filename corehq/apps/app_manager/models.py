@@ -83,7 +83,6 @@ from corehq.apps.app_manager.dbaccessors import (
     get_latest_released_app_doc,
     wrap_app,
 )
-from corehq.apps.app_manager.detail_screen import PropertyXpathGenerator
 from corehq.apps.app_manager.exceptions import (
     AppEditingError,
     FormNotFoundException,
@@ -114,6 +113,7 @@ from corehq.apps.app_manager.helpers.validators import (
     ShadowModuleValidator,
 )
 from corehq.apps.app_manager.suite_xml import xml_models as suite_models
+from corehq.apps.app_manager.suite_xml.features.case_tiles import CaseTileTemplates
 from corehq.apps.app_manager.suite_xml.generator import (
     MediaSuiteGenerator,
     SuiteGenerator,
@@ -1953,7 +1953,7 @@ class Detail(IndexedSchema, CaseListLookupMixin):
     max_select_value = IntegerProperty(default=100)
 
     # If True, use case tiles in the case list
-    use_case_tiles = BooleanProperty()
+    case_tile_template = StringProperty(exclude_if_none=True)
     # If given, use this string for the case tile markup instead of the default temaplte
     custom_xml = StringProperty(exclude_if_none=True)
 
@@ -2011,7 +2011,7 @@ class Detail(IndexedSchema, CaseListLookupMixin):
         """
         Return True if configured to persist a case tile on forms
         """
-        return self.persist_tile_on_forms and (self.use_case_tiles or self.custom_xml)
+        return self.persist_tile_on_forms and (self.case_tile_template or self.custom_xml)
 
     def overwrite_attrs(self, src_detail, attrs):
         """
@@ -2021,7 +2021,7 @@ class Detail(IndexedSchema, CaseListLookupMixin):
         This method is relevant only for short details.
         """
         case_tile_configuration_list = [
-            'use_case_tiles',
+            'case_tile_template',
             'persist_tile_on_forms',
             'persistent_case_tile_from_module',
             'pull_down_tile',
@@ -2034,6 +2034,14 @@ class Detail(IndexedSchema, CaseListLookupMixin):
                     setattr(self, ele, getattr(src_detail, ele))
             else:
                 setattr(self, attr, getattr(src_detail, attr))
+
+    @classmethod
+    def wrap(cls, data):
+        if 'use_case_tiles' in data:
+            if data.get('use_case_tiles'):
+                data['case_tile_template'] = CaseTileTemplates.PERSON_SIMPLE.value
+            del data['use_case_tiles']
+        return super(Detail, cls).wrap(data)
 
 
 class CaseList(IndexedSchema, NavMenuItemMediaMixin):

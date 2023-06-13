@@ -7,9 +7,7 @@ Initial setup
 Linux
 ~~~~~
 
-1. Install `Docker`_. You should `manage Docker as a non-root user`_.
-
-2. Install `Docker Compose`_: ``sudo apt install docker-compose-plugin``
+Install `Docker`_. You should `manage Docker as a non-root user`_.
 
 MacOS
 ~~~~
