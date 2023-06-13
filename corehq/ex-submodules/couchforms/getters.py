@@ -20,6 +20,7 @@ __all__ = ['get_path', 'get_instance_and_attachment',
            'get_location', 'get_received_on', 'get_date_header',
            'get_submit_ip', 'get_last_sync_token', 'get_openrosa_headers']
 
+# Header that formplayer adds to request to store user ip address on form submission
 COMMCAREHQ_ORIGIN_IP = 'HTTP_X_COMMCAREHQ_ORIGIN_IP'
 
 def get_path(request):
