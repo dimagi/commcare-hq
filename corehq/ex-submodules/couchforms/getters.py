@@ -124,12 +124,12 @@ def get_date_header(request):
 
 
 def get_submit_ip(request):
-    from corehq.apps.ota.decorators import ORIGIN_TOKEN_HEADER, _test_token_valid
+    from corehq.apps.ota.decorators import ORIGIN_TOKEN_HEADER, validate_origin_token
     x_commcarehq_origin_ip = request.META.get(COMMCAREHQ_ORIGIN_IP, None)
     origin_token = request.META.get(ORIGIN_TOKEN_HEADER, None)
     if x_commcarehq_origin_ip:
         is_ip_address = IP_RE.match(x_commcarehq_origin_ip)
-        if is_ip_address and _test_token_valid(origin_token):
+        if is_ip_address and validate_origin_token(origin_token):
             return x_commcarehq_origin_ip
     return get_ip(request)
 
