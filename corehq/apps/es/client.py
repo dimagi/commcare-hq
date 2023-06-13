@@ -1324,7 +1324,7 @@ def create_document_adapter(cls, index_name, type_, *, secondary=None):
     - ES_<app name>_INDEX_MULTIPLEXED is True
     - Secondary index is provided.
 
-    The indexes would only be swapped only if
+    The indexes would be swapped only if
     - ES_<app_name>_INDEX_SWAPPED is set to True
     - secondary index is provided
 
