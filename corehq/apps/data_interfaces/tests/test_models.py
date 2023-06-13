@@ -246,8 +246,8 @@ class AutomaticUpdateRuleTests(SimpleTestCase):
         self.addCleanup(action_patcher.stop)
 
 
-def create_dict_mock(klass, data):
+def create_dict_mock(class_, data):
     '''Create an empty object of the given class whose `to_dict` method returns the specified data'''
-    obj = klass()
+    obj = class_()
     patch.object(obj, 'to_dict', lambda: data).start()
     return obj
