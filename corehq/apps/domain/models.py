@@ -302,7 +302,9 @@ class Domain(QuickCachedDocumentMixin, BlobMixin, Document, SnapshotMixin):
 
     name = StringProperty()
     is_active = BooleanProperty()
-    date_created = DateTimeProperty()
+    # date_created is expected to be a naive datetime specified in UTC
+    # Defaulting to a lambda rather than utcnow directly to make freezegun function. Not ideal
+    date_created = DateTimeProperty(default=lambda: datetime.utcnow())
     default_timezone = StringProperty(default=getattr(settings, "TIME_ZONE", "UTC"))
     default_geocoder_location = DictProperty()
     case_sharing = BooleanProperty(default=False)

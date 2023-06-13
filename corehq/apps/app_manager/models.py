@@ -83,7 +83,6 @@ from corehq.apps.app_manager.dbaccessors import (
     get_latest_released_app_doc,
     wrap_app,
 )
-from corehq.apps.app_manager.detail_screen import PropertyXpathGenerator
 from corehq.apps.app_manager.exceptions import (
     AppEditingError,
     FormNotFoundException,

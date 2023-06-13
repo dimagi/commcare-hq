@@ -335,6 +335,10 @@ msgid "Unknown menu"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/details/screen.js
+msgid "Don't Use Case Tiles"
+msgstr ""
+
+#: corehq/apps/app_manager/static/app_manager/js/details/screen.js
 msgid "You have unsaved detail screen configurations."
 msgstr ""
 
@@ -2822,14 +2826,14 @@ msgid "Fetching your location..."
 msgstr ""
 
 #: corehq/apps/cloudcare/static/cloudcare/js/formplayer/menus/views.js
-#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/sessions/views.js
-msgid "Page <%-num%>"
-msgstr ""
-
-#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/menus/views.js
 msgid ""
 "You have selected more than the maximum selection limit of <%= value %> . "
 "Please uncheck some values to continue."
+msgstr ""
+
+#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/menus/views.js
+#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/sessions/views.js
+msgid "Page <%-num%>"
 msgstr ""
 
 #: corehq/apps/cloudcare/static/cloudcare/js/formplayer/menus/views/query.js
@@ -3990,6 +3994,10 @@ msgstr ""
 
 #: corehq/apps/reports/static/reports/js/reports.async.js
 msgid "Gateway Timeout. Please contact CommCare HQ Support."
+msgstr ""
+
+#: corehq/apps/reports/static/reports/js/reports.async.js
+msgid "Your search term was too long. Please provide a shorter search filter"
 msgstr ""
 
 #: corehq/apps/reports/static/reports/js/reports.async.js

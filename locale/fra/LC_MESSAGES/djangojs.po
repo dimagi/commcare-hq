@@ -15,6 +15,7 @@
 # Ismaïla Diene <idiene@dimagi.com>, 2022
 # Tyler Wymer <twymer@dimagi.com>, 2023
 # Aissetou Sawadogo <ais107@hotmail.com>, 2023
+# Ayla Reith <areith@dimagi.com>, 2023
 #
 #, fuzzy
 msgid ""
@@ -22,7 +23,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "PO-Revision-Date: 2017-07-19 15:34+0000\n"
-"Last-Translator: Aissetou Sawadogo <ais107@hotmail.com>, 2023\n"
+"Last-Translator: Ayla Reith <areith@dimagi.com>, 2023\n"
 "Language-Team: French (https://app.transifex.com/dimagi/teams/9388/fr/)\n"
 "Language: fr\n"
 "MIME-Version: 1.0\n"
@@ -350,6 +351,10 @@ msgstr "Parent"
 #: corehq/apps/app_manager/static/app_manager/js/details/parent_select.js
 msgid "Unknown menu"
 msgstr ""
+
+#: corehq/apps/app_manager/static/app_manager/js/details/screen.js
+msgid "Don't Use Case Tiles"
+msgstr "N'utiliser pas des Plaques des Dossiers."
 
 #: corehq/apps/app_manager/static/app_manager/js/details/screen.js
 msgid "You have unsaved detail screen configurations."
@@ -2860,14 +2865,14 @@ msgid "Fetching your location..."
 msgstr ""
 
 #: corehq/apps/cloudcare/static/cloudcare/js/formplayer/menus/views.js
-#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/sessions/views.js
-msgid "Page <%-num%>"
-msgstr ""
-
-#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/menus/views.js
 msgid ""
 "You have selected more than the maximum selection limit of <%= value %> . "
 "Please uncheck some values to continue."
+msgstr ""
+
+#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/menus/views.js
+#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/sessions/views.js
+msgid "Page <%-num%>"
 msgstr ""
 
 #: corehq/apps/cloudcare/static/cloudcare/js/formplayer/menus/views/query.js
@@ -4039,6 +4044,10 @@ msgstr ""
 
 #: corehq/apps/reports/static/reports/js/reports.async.js
 msgid "Gateway Timeout. Please contact CommCare HQ Support."
+msgstr ""
+
+#: corehq/apps/reports/static/reports/js/reports.async.js
+msgid "Your search term was too long. Please provide a shorter search filter"
 msgstr ""
 
 #: corehq/apps/reports/static/reports/js/reports.async.js

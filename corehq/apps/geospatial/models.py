@@ -1,9 +1,11 @@
-from shapely.geometry import Point
-import geopandas as gpd
-from geopy.distance import great_circle
 from dataclasses import dataclass
 
+import geopandas as gpd
+from geopy.distance import great_circle
+from shapely.geometry import Point
+
 from .exceptions import InvalidCoordinate, InvalidDistributionParam
+
 
 @dataclass
 class GeoObject:
