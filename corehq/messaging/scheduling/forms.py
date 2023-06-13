@@ -3552,7 +3552,7 @@ class ConditionalAlertScheduleForm(ScheduleForm):
 
         if self.cleaned_data.get('content') == self.CONTENT_FCM_NOTIFICATION:
             recipient_types_choices = dict(self.fields['recipient_types'].choices)
-            unsupported_recipient_types = [recipient_types_choices[recipient_type]
+            unsupported_recipient_types = [str(recipient_types_choices[recipient_type])
                                            for recipient_type in recipient_types
                                            if recipient_type not in self.FCM_SUPPORTED_RECIPIENT_TYPES]
             unsupported_recipient_types_str = ', '.join(unsupported_recipient_types)
