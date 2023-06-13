@@ -502,39 +502,20 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             }
         },
 
+        fontAwesomeIcon: function (iconName) {
+            return L.divIcon({
+                html: `<i class='fa ${iconName} fa-4x'></i>`,
+                iconSize: [12, 12],
+                className: 'myDivIcon'
+            });
+        },
+
         loadMap: function () {
             const token = initialPageData.get("mapbox_access_token");
 
-            // const locationIcon = L.divIcon({
-            //     className: 'custom-div-icon',
-            //     html: "<div style='background-color:#0b3fc3;' class='marker-pin'></div>",
-            //     iconSize: [30, 42],
-            //     iconAnchor: [15, 42]
-            // });
-
-            const locationIcon = L.divIcon({
-                html: '<i class="fa fa-map-marker fa-4x"></i>',
-                iconSize: [12, 12],
-                className: 'myDivIcon'
-            });
-
-            const selectedLocationIcon = L.divIcon({
-                html: '<i class="fa fa-star  fa-4x"></i>',
-                iconSize: [12, 12],
-                className: 'myDivIcon'
-            });
-
-            // const homeLocationIcon = L.divIcon({
-            //     className: 'custom-div-icon',
-            //     html: "<div style='background-color:#c30b82;' class='marker-pin'></div>",
-            //     iconSize: [30, 42],
-            //     iconAnchor: [15, 42]
-            // });
-            const homeLocationIcon = L.divIcon({
-                html: '<i class="fa fa-street-view fa-4x"></i>',
-                iconSize: [12, 12],
-                className: 'myDivIcon'
-            });
+            const locationIcon = this.fontAwesomeIcon("fa-map-marker");
+            const selectedLocationIcon = this.fontAwesomeIcon("fa-star");
+            const homeLocationIcon = this.fontAwesomeIcon("fa-street-view");
 
             try {
                 const lat = 30;
