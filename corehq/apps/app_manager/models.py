@@ -1918,6 +1918,13 @@ class CaseListLookupMixin(DocumentSchema):
     lookup_field_template = StringProperty(exclude_if_none=True)
 
 
+class CaseTileGroupConfig(DocumentSchema):
+    # e.g. "./index/parent"
+    index_identifier = StringProperty()
+    # number of rows of the tile to use for the group header
+    header_rows = IntegerProperty(default=1)
+
+
 class Detail(IndexedSchema, CaseListLookupMixin):
     """
     Full configuration for a case selection screen
@@ -1962,6 +1969,7 @@ class Detail(IndexedSchema, CaseListLookupMixin):
     persistent_case_tile_from_module = StringProperty(exclude_if_none=True)
     # If True, the in form tile can be pulled down to reveal all the case details.
     pull_down_tile = BooleanProperty()
+    case_tile_group = SchemaProperty(CaseTileGroupConfig)
 
     print_template = DictProperty()
 
@@ -2345,6 +2353,13 @@ class ModuleBase(IndexedSchema, ModuleMediaMixin, NavMenuItemMediaMixin, Comment
     @property
     def max_select_value(self):
         return self.case_details.short.max_select_value
+
+    def has_grouped_tiles(self):
+        return (
+            hasattr(self, 'case_details')
+            and self.case_details.short.case_tile_template
+            and self.case_details.short.case_tile_group.index_identifier
+        )
 
     def default_name(self, app=None):
         if not app:
