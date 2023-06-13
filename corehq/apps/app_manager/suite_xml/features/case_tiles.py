@@ -82,7 +82,6 @@ class CaseTileHelper(object):
             )
 
         if self.module.has_grouped_tiles():
-            # TODO: check CC version for app
             detail.tile_group = TileGroup(
                 function=f"./index/{self.detail.case_tile_group.index_identifier}",
                 header_rows=self.detail.case_tile_group.header_rows
