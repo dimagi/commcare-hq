@@ -10,8 +10,8 @@ class Command(AppMigrationCommandBase):
 
     include_builds = True
     include_linked_apps = True
-    DOMAIN_LIST_FILENAME = 'add_case_tile_template_field.txt'
-    DOMAIN_PROGRESS_NUMBER_FILENAME = 'add_case_tile_template_field.txt'
+    DOMAIN_LIST_FILENAME = 'add_case_tile_template_field_domain.txt'
+    DOMAIN_PROGRESS_NUMBER_FILENAME = 'add_case_tile_template_field_progress.txt'
     chunk_size = 1
 
     def get_domains(self):
