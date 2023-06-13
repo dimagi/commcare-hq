@@ -97,6 +97,7 @@
         </style>
         <header>
             <text>
+                <xpath function="here()"/>
             </text>
         </header>
         <template form="{bottom_right[format]}">

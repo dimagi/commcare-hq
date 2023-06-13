@@ -567,21 +567,14 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
                         }
                     });
 
-                navigator.geolocation.getCurrentPosition(
-                    success => {
-                        const coords = success.coords;
-                        const homeLatLng = [coords.latitude, coords.longitude];
-
-                        L.marker(homeLatLng, { icon: homeLocationIcon })
-                            .bindPopup("Your location")
-                            .addTo(addressMap);
-                        latLons.push(homeLatLng);
-                        addressMap.fitBounds(latLons, {maxZoom: 8});
-                    }, () => {
-                        addressMap.fitBounds(latLons, {maxZoom: 8});
-                    }
-                );
-
+                if (sessionStorage.locationLat) {
+                    const homeLatLng = [sessionStorage.locationLat, sessionStorage.locationLon];``
+                    L.marker(homeLatLng, { icon: homeLocationIcon })
+                        .bindPopup("Your location")
+                        .addTo(addressMap);
+                    latLons.push(homeLatLng);
+                }
+                addressMap.fitBounds(latLons, {maxZoom: 8});
             } catch (error) {
                 console.error(error);
             }
