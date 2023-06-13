@@ -2,10 +2,12 @@ hqDefine("geospatial/js/geospatial_map", [
     "jquery",
     "hqwebapp/js/initial_page_data",
     "knockout",
+    "hqwebapp/js/alert_user",
 ], function (
     $,
     initialPageData,
-    ko
+    ko,
+    alert_user
 ) {
     $(function () {
         const defaultMarkerColor = "#808080"; // Gray
@@ -19,7 +21,8 @@ hqDefine("geospatial/js/geospatial_map", [
 
             var self = {};
             let clickedMarker;
-            mapboxgl.accessToken = initialPageData.get('mapbox_access_token');
+//            mapboxgl.accessToken = initialPageData.get('mapbox_access_token');
+            mapboxgl.accessToken = 'pk.eyJ1Ijoic21pdHRpZWMiLCJhIjoiY2xpOGVzdWIxMXJtczNobndzbzI2ajVwbSJ9.HK2WrNNjEg7khoQ3RrxgYQ';
 
             if (!centerCoordinates) {
                 centerCoordinates = [-91.874, 42.76]; // should be domain specific
@@ -230,10 +233,18 @@ hqDefine("geospatial/js/geospatial_map", [
             });
 
             if ($data.length && map) {
-                var caseData = $data.data("context");
+                var contextData = $data.data("context");
                 map.clearMap();
-                cases = caseData.cases
+                cases = contextData.cases
                 map.addCaseMarkersToMap();
+
+                if (contextData.invalid_geo_cases_report_link) {
+                    var missingCasesLink = contextData.invalid_geo_cases_report_link;
+                    var missingCasesLinkTag = "<a href=" + missingCasesLink + ">" + gettext("View here") + "</a>"
+                    var message = gettext("There are case(s) missing geolocation data.");
+
+                    alert_user.alert_user(message + " " + missingCasesLinkTag, "warning");
+                }
             }
 
             if ($exportButton.length) {

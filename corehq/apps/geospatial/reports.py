@@ -1,15 +1,18 @@
 from django.conf import settings
 from django.urls import reverse
 from django.utils.translation import gettext_noop
+from urllib.parse import quote
 
 from corehq.apps.geospatial.dispatchers import CaseManagementMapDispatcher
 from corehq.apps.reports.standard import ProjectReport
 from corehq.apps.reports.standard.cases.basic import CaseListMixin
 from corehq.apps.reports.standard.cases.data_sources import CaseDisplayES
+from corehq.apps.reports.standard.cases.case_list_explorer import CaseListExplorer
+from corehq.apps.geospatial.const import GEO_POINT_CASE_PROPERTY
 
 
 def _get_geo_location(case):
-    geo_point = case['case_json'].get('commcare_gps_point')
+    geo_point = case['case_json'].get(GEO_POINT_CASE_PROPERTY)
     if not geo_point:
         return
     try:
@@ -42,22 +45,48 @@ class CaseManagementMap(ProjectReport, CaseListMixin):
     @property
     def report_context(self):
         cases = []
+        invalid_geo_cases_count = 0
         for row in self.es_results['hits'].get('hits', []):
             es_case = self.get_case(row)
             display = CaseDisplayES(es_case, self.timezone, self.individual)
+
+            coordinates = _get_geo_location(es_case)
+            if coordinates is None:
+                invalid_geo_cases_count += 1
+                continue
             # We should consider passing in a "center_coordinates" fields to center the map
             # to the relavent
             case = {
                 "case_id": display.case_id,
                 "case_type": display.case_type,
                 "name": display.case_name,
-                "coordinates": _get_geo_location(es_case)
+                "coordinates": coordinates
             }
             cases.append(case)
+
+        invalid_cases_link = self._invalid_geo_cases_report_link if invalid_geo_cases_count else ''
+
         return dict(
-            context={"cases": cases},
+            context={
+                "cases": cases,
+                "invalid_geo_cases_report_link": invalid_cases_link,
+            },
         )
 
     @property
     def default_report_url(self):
         return reverse('geospatial_default', args=[self.request.project.name])
+
+    @property
+    def _invalid_geo_cases_report_link(self):
+        cle = CaseListExplorer(self.request, domain=self.domain)
+        query_params = "search_xpath={search_xpath}".format(
+            search_xpath=quote(f"{GEO_POINT_CASE_PROPERTY} = ''"),
+        )
+        if self.case_type:
+            query_params = f"{query_params}&case_type={self.case_type}"
+
+        return "{resource}?{query_params}".format(
+            resource=cle.get_url(self.domain),
+            query_params=query_params,
+        )
