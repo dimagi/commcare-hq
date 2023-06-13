@@ -1352,11 +1352,10 @@ def create_document_adapter(cls, index_name, type_, *, secondary=None):
 
     doc_adapter = cls(index_runtime_name(index_name), type_)
 
-
     if secondary is None:
         return doc_adapter
 
-    secondary_adapter = cls(runtime_name(secondary), type_)
+    secondary_adapter = cls(index_runtime_name(secondary), type_)
 
     if index_multiplexed(cls) and index_swapped(cls):
         doc_adapter = ElasticMultiplexAdapter(secondary_adapter, doc_adapter)
