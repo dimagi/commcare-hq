@@ -2790,6 +2790,7 @@ class ConditionalAlertScheduleForm(ScheduleForm):
     FCM_SUPPORTED_RECIPIENT_TYPES = [
         ScheduleInstance.RECIPIENT_TYPE_MOBILE_WORKER,
         ScheduleInstance.RECIPIENT_TYPE_LOCATION,
+        ScheduleInstance.RECIPIENT_TYPE_USER_GROUP,
         CaseScheduleInstanceMixin.RECIPIENT_TYPE_CASE_OWNER,
         CaseScheduleInstanceMixin.RECIPIENT_TYPE_LAST_SUBMITTING_USER,
         CaseScheduleInstanceMixin.RECIPIENT_TYPE_CASE_PROPERTY_USER,
