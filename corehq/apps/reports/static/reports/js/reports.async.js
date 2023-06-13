@@ -1,4 +1,4 @@
-hqDefine("reports/js/reports.async", ['hqwebapp/js/alert_user'], function (alertUser) {
+hqDefine("reports/js/reports.async", function () {
     return function (o) {
         'use strict';
         var self = {};
@@ -61,9 +61,9 @@ hqDefine("reports/js/reports.async", ['hqwebapp/js/alert_user'], function (alert
                 var params = hqImport('reports/js/reports.util').urlSerialize(this);
                 if (self.isCaseListRelated(pathName)) {
                     var url = window.location.href.replace(self.standardReport.urlRoot,
-                        self.standardReport.urlRoot + 'async/') + "?" + "&" + params
+                        self.standardReport.urlRoot + 'async/') + "?" + "&" + params;
                     if (url.length > self.maxInputLimit) {
-                        alertUser.alert_user(self.humanReadableErrors['maxInputError'], "danger");
+                        hqImport('hqwebapp/js/alert_user').alert_user(self.humanReadableErrors['maxInputError'], "danger");
                     } else {
                         self.getQueryId(params, false, true, pathName);
                     }
