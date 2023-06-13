@@ -12,6 +12,7 @@ from corehq.project_limits.rate_limiter import (
 )
 from corehq.project_limits.shortcuts import get_standard_ratio_rate_definition
 from corehq.toggles import API_THROTTLE_WHITELIST
+from corehq.util.metrics import metrics_counter
 
 
 api_rate_limiter = RateLimiter(
@@ -42,7 +43,10 @@ class HQThrottle(BaseThrottle):
         if API_THROTTLE_WHITELIST.enabled(identifier.username):
             return False
 
-        return not api_rate_limiter.allow_usage(identifier.domain)
+        allowed = api_rate_limiter.allow_usage(identifier.domain)
+        if not allowed:
+            metrics_counter('commcare.api.rate_limited', tags={'domain': identifier.domain})
+        return not allowed
 
 
     def accessed(self, identifier, **kwargs):
