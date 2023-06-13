@@ -441,6 +441,9 @@ class AutomaticUpdateRule(models.Model):
         return self.get_action_definition().schedule
 
     def to_json(self):
+        '''
+        This method returns a dictionary of the surface-level properties of the update rule
+        '''
         simple_fields = [
             "domain",
             "name",
@@ -461,6 +464,10 @@ class AutomaticUpdateRule(models.Model):
         return data
 
     def to_dict(self):
+        '''
+        This method returns a dictionary of the full automatic update rule, including any child properties.
+        This provides all the necessary data to reconstruct the rule.
+        '''
         criteria_set = self.caserulecriteria_set.all()
         action_set = self.caseruleaction_set.all()
 

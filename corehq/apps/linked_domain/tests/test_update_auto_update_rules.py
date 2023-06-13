@@ -24,13 +24,10 @@ class TestSyncAutoUpdateRules(TestCase):
         cls.downstream_domain = 'downstream_domain'
 
         cls.upstream_domain_obj = create_domain(cls.upstream_domain)
-        cls.downstream_domain_obj = create_domain(cls.downstream_domain)
+        cls.addClassCleanup(cls.upstream_domain_obj.delete)
 
-    @classmethod
-    def tearDownClass(cls):
-        cls.downstream_domain_obj.delete()
-        cls.upstream_domain_obj.delete()
-        super().tearDownClass()
+        cls.downstream_domain_obj = create_domain(cls.downstream_domain)
+        cls.addClassCleanup(cls.downstream_domain_obj.delete)
 
     def setUp(self):
         super().setUp()

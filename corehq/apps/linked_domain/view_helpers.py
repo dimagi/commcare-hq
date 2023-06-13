@@ -138,9 +138,9 @@ def get_upstream_and_downstream_ucr_expressions(domain):
 
 
 def get_upstream_and_downstream_update_rules(domain, upstream_link):
-    upstream_list = get_rules_for_domain(domain)
-    downstream_list = get_rules_for_domain(upstream_link.master_domain) if upstream_link else {}
-    return upstream_list, downstream_list
+    upstream_rules = get_rules_for_domain(domain)
+    downstream_rules = get_rules_for_domain(upstream_link.master_domain) if upstream_link else {}
+    return upstream_rules, downstream_rules
 
 
 def build_app_view_model(app, last_update=None):
