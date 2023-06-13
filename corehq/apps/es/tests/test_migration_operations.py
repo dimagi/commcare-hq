@@ -239,7 +239,7 @@ class TestCreateIndex(BaseCase):
         )
 
     def test_deconstruct(self):
-        args = ["test", "test", {}, {}, "test"]
+        args = ["test_test", "test", {}, {}, "test"]
         operation = CreateIndex(*args)
         self.assertEqual(
             operation.deconstruct(),
@@ -247,7 +247,7 @@ class TestCreateIndex(BaseCase):
         )
 
     def test_deconstruct_omits_mapping__meta(self):
-        name, type_, analysis, settings_key = ("test", "test", {}, "test")
+        name, type_, analysis, settings_key = ("test_test", "test", {}, "test")
         mapping = {
             "top_level": True,
             "_meta": {"key": "value"},
@@ -269,7 +269,7 @@ class TestCreateIndex(BaseCase):
         )
 
     def test_deconstruct_with_comment(self):
-        args = ["test", "test", {}, {}, "test", "this is the comment"]
+        args = ["test_test", "test", {}, {}, "test", "this is the comment"]
         operation = CreateIndex(*args)
         self.assertEqual(
             operation.deconstruct(),
@@ -398,7 +398,7 @@ class TestDeleteIndex(BaseCase):
         )
 
     def test_deconstruct(self):
-        name = "name"
+        name = "test_name"
         operation = DeleteIndex(name)
         self.assertEqual(
             operation.deconstruct(),
@@ -406,7 +406,7 @@ class TestDeleteIndex(BaseCase):
         )
 
     def test_deconstruct_with_reverse_params(self):
-        name = "name"
+        name = "test_name"
         reverse_params = ("type", {}, {}, "settings_key")
         operation = DeleteIndex(name, reverse_params)
         self.assertEqual(
@@ -603,7 +603,7 @@ class TestUpdateIndexMapping(BaseCase):
         self.assertEqual("", stream.getvalue())
 
     def test_fails_if_index_does_not_exist(self):
-        index = "missing"
+        index = "test_missing"
         migration = TestMigration(UpdateIndexMapping(index, self.type, {}))
         self.assertIndexDoesNotExist(index)
         with self.assertRaises(NotFoundError):
@@ -630,7 +630,7 @@ class TestUpdateIndexMapping(BaseCase):
         )
 
     def test_deconstruct(self):
-        args = ["name", "type", {}]
+        args = ["test_name", "type", {}]
         operation = UpdateIndexMapping(*args)
         self.assertEqual(
             operation.deconstruct(),
@@ -638,7 +638,7 @@ class TestUpdateIndexMapping(BaseCase):
         )
 
     def test_deconstruct_with_comment(self):
-        args = ["name", "type", {}, "this is the comment"]
+        args = ["test_name", "type", {}, "this is the comment"]
         operation = UpdateIndexMapping(*args)
         self.assertEqual(
             operation.deconstruct(),
@@ -650,7 +650,7 @@ class TestUpdateIndexMapping(BaseCase):
         )
 
     def test_deconstruct_no_print_diff(self):
-        args = ["name", "type", {}]
+        args = ["test_name", "type", {}]
         operation = UpdateIndexMapping(*args, print_diff=False)
         self.assertEqual(
             operation.deconstruct(),
