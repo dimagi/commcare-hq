@@ -5,7 +5,6 @@ import logging
 from enum import Enum
 from functools import cached_property
 
-from django.db.backends.base.creation import TEST_DATABASE_PREFIX
 from django.conf import settings
 
 from memoized import memoized
@@ -31,7 +30,7 @@ from .const import (
 )
 from .exceptions import ESError, ESShardFailure, TaskError, TaskMissing
 from .index.analysis import DEFAULT_ANALYSIS
-from .utils import ElasticJSONSerializer
+from .utils import ElasticJSONSerializer, index_runtime_name
 
 log = logging.getLogger(__name__)
 
@@ -432,7 +431,7 @@ class ElasticDocumentAdapter(BaseAdapter):
         :param type_: the index ``_type`` for the mapping
         """
         super().__init__()
-        self.index_name = index_name
+        self.index_name = index_runtime_name(index_name)
         self.type = type_
 
     def export_adapter(self):
@@ -1342,9 +1341,6 @@ def create_document_adapter(cls, index_name, type_, *, secondary=None):
         ES_<app name>_INDEX_MULTIPLEXED will be ignored if secondary is None.
     :returns: a document adapter instance.
     """
-    def runtime_name(name):
-        # transform the name if testing
-        return f"{TEST_DATABASE_PREFIX}{name}" if settings.UNIT_TESTING else name
 
     def index_multiplexed(cls):
         key = f"ES_{cls.canonical_name.upper()}_INDEX_MULTIPLEXED"
@@ -1354,12 +1350,12 @@ def create_document_adapter(cls, index_name, type_, *, secondary=None):
         key = f"ES_{cls.canonical_name.upper()}_INDEX_SWAPPED"
         return getattr(settings, key)
 
-    doc_adapter = cls(runtime_name(index_name), type_)
+    doc_adapter = cls(index_runtime_name(index_name), type_)
 
     if secondary is None:
         return doc_adapter
 
-    secondary_adapter = cls(runtime_name(secondary), type_)
+    secondary_adapter = cls(index_runtime_name(secondary), type_)
 
     if index_multiplexed(cls) and index_swapped(cls):
         doc_adapter = ElasticMultiplexAdapter(secondary_adapter, doc_adapter)
