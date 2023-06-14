@@ -21,9 +21,10 @@ from crispy_forms.layout import Fieldset, Layout, Submit
 from django_countries.data import COUNTRIES
 from memoized import memoized
 
-from casexml.apps.phone.models import loadtest_users_enabled
 from dimagi.utils.dates import get_date_from_month_and_year_string
 
+from corehq import privileges
+from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.analytics.tasks import set_analytics_opt_out
 from corehq.apps.app_manager.models import validate_lang
 from corehq.apps.custom_data_fields.edit_entity import CustomDataEditor
@@ -1502,7 +1503,10 @@ class CommCareUserFormSet(object):
         self.request_user = request_user
         self.request = request
         self.data = data
-        self.loadtest_users_enabled = loadtest_users_enabled(domain)
+        self.loadtest_users_enabled = domain_has_privilege(
+            domain,
+            privileges.LOADTEST_USERS,
+        )
 
     @property
     @memoized

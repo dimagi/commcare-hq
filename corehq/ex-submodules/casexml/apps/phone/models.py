@@ -78,7 +78,7 @@ class OTARestoreUser(object):
         """
         # This method is called by `RestoreState.get_safe_loadtest_factor()`,
         # which sets guard rails by checking the user's case load.
-        if loadtest_users_enabled(self.domain):
+        if domain_has_privilege(self.domain, privileges.LOADTEST_USERS):
             return self._loadtest_factor or 1
         return 1
 
@@ -1021,10 +1021,6 @@ ShortIndex = namedtuple(
     'ShortIndex',
     ['case_id', 'identifier', 'referenced_id', 'relationship'],
 )
-
-
-def loadtest_users_enabled(domain: str) -> bool:
-    return domain_has_privilege(domain, privileges.LOADTEST_USERS)
 
 
 def _domain_has_legacy_toggle_set():
