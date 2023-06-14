@@ -1,7 +1,7 @@
 from django.conf import settings
 from django.urls import reverse
 from django.utils.translation import gettext_noop
-from urllib.parse import quote
+from django.http import QueryDict
 
 from corehq.apps.geospatial.dispatchers import CaseManagementMapDispatcher
 from corehq.apps.reports.standard import ProjectReport
@@ -79,14 +79,15 @@ class CaseManagementMap(ProjectReport, CaseListMixin):
 
     @property
     def _invalid_geo_cases_report_link(self):
-        cle = CaseListExplorer(self.request, domain=self.domain)
-        query_params = "search_xpath={search_xpath}".format(
-            search_xpath=quote(f"{GEO_POINT_CASE_PROPERTY} = ''"),
-        )
+        q = QueryDict(mutable=True)
+        q['search_xpath'] = f"{GEO_POINT_CASE_PROPERTY} = ''"
+
         if self.case_type:
-            query_params = f"{query_params}&case_type={self.case_type}"
+            q['case_type'] = self.case_type
+
+        cle = CaseListExplorer(self.request, domain=self.domain)
 
         return "{resource}?{query_params}".format(
             resource=cle.get_url(self.domain),
-            query_params=query_params,
+            query_params=q.urlencode(),
         )
