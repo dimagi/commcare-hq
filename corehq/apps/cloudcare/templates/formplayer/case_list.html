@@ -25,6 +25,8 @@
           <% if (isMultiSelect && !hasNoItems) { %>
             <input type="checkbox" id="select-all-tile-checkbox"/>
             <label id="select-all-tile-checkbox-label" for="select-all-tile-checkbox">{% trans "Select All" %}</label>
+          <% } else if (hasNoItems) { %>
+            {% include 'formplayer/no_items_text.html' %}
           <% } %>
           <section  class="js-case-container clearfix list-cell-container-style"></section>
         <% } else { %>
@@ -48,17 +50,7 @@
               </thead>
 
             <% if (hasNoItems) { %>
-            <tbody>
-            <tr>
-              <td class="module-case-list-column module-case-list-column-empty" colspan="<%-headers.length%>">
-                <% if (noItemsText == null) { %>
-                  <div class="alert alert-info">{% trans "List is empty." %}</div>
-                <% } else { %>
-                  <div class="alert alert-info"><%- noItemsText %></div>
-                <% } %>
-              </td>
-            </tr>
-            </tbody>
+              {% include 'formplayer/no_items_text.html' %}
             <% } %>
             <tbody class="wrapper js-case-container">
             </tbody>
