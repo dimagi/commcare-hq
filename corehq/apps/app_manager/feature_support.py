@@ -217,13 +217,13 @@ class CommCareFeatureSupportMixin(object):
         )
 
     @property
+    def supports_menu_instances(self):
+        return self._require_minimum_version('2.54')
+
+    @property
     def supports_module_assertions(self):
         # form-level assertions have been supported longer
         return (
             toggles.CUSTOM_ASSERTIONS.enabled(self.domain)
             and self._require_minimum_version('2.54')
         )
-
-    @property
-    def supports_menu_instances(self):
-        return self._require_minimum_version('2.54')
