@@ -64,7 +64,6 @@ from corehq.toggles import USH_SEARCH_FILTER
 from corehq.util.timer import time_method
 from corehq.util.view_utils import absolute_reverse
 
-
 @attr.s(repr=False)
 class FormDatumMeta:
     """
@@ -79,7 +78,7 @@ class FormDatumMeta:
     case_type = attr.ib()
     requires_selection = attr.ib()
     action = attr.ib()
-    from_parent = attr.ib(default=False)
+     from_parent = attr.ib(default=False)
     module_id = attr.ib(default=None)
 
     @property
@@ -89,6 +88,7 @@ class FormDatumMeta:
     @property
     def is_new_case_id(self):
         return self.datum.function == 'uuid()'
+
 
     def __repr__(self):
         if isinstance(self.datum, RemoteRequestQuery):
