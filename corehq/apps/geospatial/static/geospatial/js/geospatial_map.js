@@ -21,8 +21,7 @@ hqDefine("geospatial/js/geospatial_map", [
 
             var self = {};
             let clickedMarker;
-//            mapboxgl.accessToken = initialPageData.get('mapbox_access_token');
-            mapboxgl.accessToken = 'pk.eyJ1Ijoic21pdHRpZWMiLCJhIjoiY2xpOGVzdWIxMXJtczNobndzbzI2ajVwbSJ9.HK2WrNNjEg7khoQ3RrxgYQ';
+            mapboxgl.accessToken = initialPageData.get('mapbox_access_token');
 
             if (!centerCoordinates) {
                 centerCoordinates = [-91.874, 42.76]; // should be domain specific
