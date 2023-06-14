@@ -54,7 +54,7 @@ class Command(BaseCommand):
         # delete DomainsNotInCaseSearchIndex for zero-case domains
         DomainsNotInCaseSearchIndex.objects.filter(estimated_size__lte=0).all().delete()
 
-        for tracker in DomainsNotInCaseSearchIndex.objects.all():
+        for tracker in DomainsNotInCaseSearchIndex.objects.order_by('estimated_size').all():
             self.stdout.write(f"\n\nSyncing {tracker.domain}'s with {tracker.estimated_size} cases...")
             domain_needs_search_index.clear(tracker.domain)
             DomainsNotInCaseSearchIndex.objects.filter(domain=tracker.domain).delete()
