@@ -167,7 +167,7 @@ def _get_or_create_report_link(domain_link, report, datasource):
     return new_report
 
 
-def update_linked_ucr(domain_link, report_id, overwrite=False):
+def update_linked_ucr(domain_link, report_id, is_pull=False, overwrite=False):
     linked_report = ReportConfiguration.get(report_id)
     linked_datasource = linked_report.config
 
