@@ -183,7 +183,7 @@ The following linked project spaces received content:
         if not feature_flag.enabled(domain_link.linked_domain):
             return self._error_tuple(_("Feature flag for {} is not enabled").format(model['name']))
 
-        return self._release_model(domain_link, model, user, is_pull=False, overwrite=overwrite)
+        return self._release_model(domain_link, model, user, overwrite=overwrite)
 
     def _release_keyword(self, domain_link, model, user_id, overwrite=False):
         upstream_id = model['detail']['keyword_id']

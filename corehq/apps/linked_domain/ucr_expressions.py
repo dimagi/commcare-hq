@@ -33,7 +33,7 @@ def create_linked_ucr_expression(domain_link, ucr_expression_id):
     return ucr_expression.id
 
 
-def update_linked_ucr_expression(domain_link, ucr_expression_id, overwrite=False):
+def update_linked_ucr_expression(domain_link, ucr_expression_id, is_pull=False, overwrite=False):
     try:
         linked_ucr_expression = UCRExpression.objects.get(id=ucr_expression_id)
     except UCRExpression.DoesNotExist:
