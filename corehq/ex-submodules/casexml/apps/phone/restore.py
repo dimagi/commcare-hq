@@ -313,7 +313,7 @@ class RestoreParams(object):
         return self.device_id and self.device_id.startswith("WebAppsLogin")
 
     def __repr__(self):
-        return "RestoreParams(sync_log_id='{}', version={}, app='{}', device_id='{}'".format(
+        return "RestoreParams(sync_log_id='{}', version={}, app='{}', device_id='{}')".format(
             self.sync_log_id,
             self.version,
             self.app,
