@@ -141,6 +141,7 @@ app_manager
  0024_applicationreleaselog_info
  0025_migrate_to_search_filter_flag
  0026_conditional_case_update_deleted_apps
+ 0027_add_case_tile_template_field
 auditcare
  0001_sqlmodels
  0002_uniques
@@ -373,6 +374,7 @@ es
  0001_bootstrap_es_indexes
  0002_add_tombstones
  0003_add_assigned_location_ids
+ 0004_make_new_indexes
 events
  0001_add_events_model
  0002_attendancetrackingconfig
