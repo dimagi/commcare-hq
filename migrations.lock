@@ -141,6 +141,7 @@ app_manager
  0024_applicationreleaselog_info
  0025_migrate_to_search_filter_flag
  0026_conditional_case_update_deleted_apps
+ 0027_add_case_tile_template_field
 auditcare
  0001_sqlmodels
  0002_uniques
