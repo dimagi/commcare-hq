@@ -866,38 +866,6 @@ class SimplifiedSyncLog(AbstractSyncLog):
         _get_logger().debug('index tree before update: {}'.format(self.index_tree))
         _get_logger().debug('extension index tree before update: {}'.format(self.extension_index_tree))
 
-        class CaseUpdate(object):
-
-            def __init__(self, case_id, owner_ids_on_phone):
-                self.case_id = case_id
-                self.owner_ids_on_phone = owner_ids_on_phone
-                self.was_live_previously = True
-                self.final_owner_id = None
-                self.is_closed = None
-                self.indices_to_add = []
-                self.indices_to_delete = []
-
-            @property
-            def extension_indices_to_add(self):
-                return [index for index in self.indices_to_add
-                        if index.relationship == const.CASE_INDEX_EXTENSION]
-
-            def has_extension_indices_to_add(self):
-                return len(self.extension_indices_to_add) > 0
-
-            @property
-            def is_live(self):
-                """returns whether an update is live for a specifc set of owner_ids"""
-                if self.is_closed:
-                    return False
-                elif self.final_owner_id is None:
-                    # we likely didn't touch owner_id so just default to whatever it was previously
-                    return self.was_live_previously
-                else:
-                    return self.final_owner_id in self.owner_ids_on_phone
-
-        ShortIndex = namedtuple('ShortIndex', ['case_id', 'identifier', 'referenced_id', 'relationship'])
-
         # this is a variable used via closures in the function below
         owner_id_map = {}
 
@@ -1042,6 +1010,47 @@ class SimplifiedSyncLog(AbstractSyncLog):
             if dependent_case_id in self.dependent_case_ids_on_phone:
                 # this will be a no-op if the case cannot be purged due to dependencies
                 self.purge(dependent_case_id)
+
+
+class CaseUpdate:
+
+    def __init__(self, case_id, owner_ids_on_phone):
+        self.case_id = case_id
+        self.owner_ids_on_phone = owner_ids_on_phone
+        self.was_live_previously = True
+        self.final_owner_id = None
+        self.is_closed = None
+        self.indices_to_add = []
+        self.indices_to_delete = []
+
+    @property
+    def extension_indices_to_add(self):
+        return [index for index in self.indices_to_add
+                if index.relationship == const.CASE_INDEX_EXTENSION]
+
+    def has_extension_indices_to_add(self):
+        return len(self.extension_indices_to_add) > 0
+
+    @property
+    def is_live(self):
+        """
+        Returns whether an update is live for a specific set of
+        owner_ids.
+        """
+        if self.is_closed:
+            return False
+        elif self.final_owner_id is None:
+            # we likely didn't touch owner_id so just default to
+            # whatever it was previously
+            return self.was_live_previously
+        else:
+            return self.final_owner_id in self.owner_ids_on_phone
+
+
+ShortIndex = namedtuple(
+    'ShortIndex',
+    ['case_id', 'identifier', 'referenced_id', 'relationship'],
+)
 
 
 def loadtest_users_enabled(domain: str) -> bool:
