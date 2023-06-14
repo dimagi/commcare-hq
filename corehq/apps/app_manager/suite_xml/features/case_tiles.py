@@ -81,7 +81,7 @@ class CaseTileHelper(object):
                 DetailContributor.get_case_search_action(self.module, self.build_profile_id, self.detail_id)
             )
 
-        DetailContributor.add_no_items_text(self.app, detail, self.detail_type, self.module)
+        DetailContributor.add_no_items_text_to_detail(detail, self.app, self.detail_type, self.module)
 
         return detail
 
