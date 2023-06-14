@@ -294,10 +294,10 @@ def get_live_case_ids_and_indices(domain, owned_ids, timing_context):
         exclude = set(chain.from_iterable(seen_ix[id] for id in next_ids))
         with timing_context("get_related_indices({} cases, {} seen)".format(len(next_ids), len(exclude))):
             related = get_related_indices(list(next_ids), exclude)
-            related_not_deleted = filter_deleted_indices(related)
             if not related:
                 break
 
+            related_not_deleted = filter_deleted_indices(related)
             update_open_and_deleted_ids(related_not_deleted)
             next_ids = {classify(index, next_ids)
                         for index in related_not_deleted
