@@ -57,7 +57,7 @@ from corehq.apps.userreports.models import (
     ReportMeta,
     UCRExpression,
 )
-from corehq.util.test_utils import flag_enabled
+from corehq.util.test_utils import flag_enabled, privilege_enabled
 
 
 def _create_report(domain, title="report", upstream_id=None, should_save=True, app_id=None):
@@ -503,7 +503,7 @@ class TestBuildFeatureFlagViewModels(TestCase):
 
         self.assertEqual(expected_view_models, view_models)
 
-    @flag_enabled('DATA_DICTIONARY')
+    @privilege_enabled('DATA_DICTIONARY')
     def test_build_feature_flag_view_models_returns_data_dictionary(self):
         expected_view_models = [
             {
@@ -702,8 +702,8 @@ class TestBuildViewModelsFromDataModels(BaseLinkedDomainTest):
         )
         self.assertEqual(0, len(view_models))
 
+    @privilege_enabled('DATA_DICTIONARY')
     @flag_enabled('SYNC_SEARCH_CASE_CLAIM')
-    @flag_enabled('DATA_DICTIONARY')
     @flag_enabled('WIDGET_DIALER')
     @flag_enabled('GAEN_OTP_SERVER')
     @flag_enabled('HMAC_CALLOUT')
@@ -714,8 +714,8 @@ class TestBuildViewModelsFromDataModels(BaseLinkedDomainTest):
         expected_length = len(DOMAIN_LEVEL_DATA_MODELS) + len(FEATURE_FLAG_DATA_MODELS)
         self.assertEqual(expected_length, len(view_models))
 
+    @privilege_enabled('DATA_DICTIONARY')
     @flag_enabled('SYNC_SEARCH_CASE_CLAIM')
-    @flag_enabled('DATA_DICTIONARY')
     @flag_enabled('WIDGET_DIALER')
     @flag_enabled('GAEN_OTP_SERVER')
     @flag_enabled('HMAC_CALLOUT')

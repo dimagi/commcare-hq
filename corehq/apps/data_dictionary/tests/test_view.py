@@ -9,10 +9,10 @@ from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.users.models import WebUser, HqPermissions
 from corehq.apps.users.models_role import UserRole
 
-from corehq.util.test_utils import flag_enabled
+from corehq.util.test_utils import privilege_enabled
 
 
-@flag_enabled('DATA_DICTIONARY')
+@privilege_enabled('DATA_DICTIONARY')
 class UpdateCasePropertyViewTest(TestCase):
     domain_name = uuid.uuid4().hex
 
@@ -148,7 +148,7 @@ class UpdateCasePropertyViewTest(TestCase):
         self._assert_allowed_values(prop, prop_payload)
 
 
-@flag_enabled('DATA_DICTIONARY')
+@privilege_enabled('DATA_DICTIONARY')
 class DataDictionaryViewTest(TestCase):
     domain_name = uuid.uuid4().hex
 
