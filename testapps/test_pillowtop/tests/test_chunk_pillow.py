@@ -14,7 +14,7 @@ from pillowtop.pillow.interface import ConstructedPillow
 from pillowtop.processors.sample import ChunkedCountProcessor
 
 
-class ChunkedPorcessingTest(TestCase):
+class ChunkedProcessingTest(TestCase):
 
     def _produce_changes(self, count):
         for i in range(count):
