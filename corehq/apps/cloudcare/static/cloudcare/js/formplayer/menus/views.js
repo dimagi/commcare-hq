@@ -513,11 +513,11 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
         loadMap: function () {
             const token = initialPageData.get("mapbox_access_token");
 
-            const locationIcon = this.fontAwesomeIcon("fa-map-marker");
-            const selectedLocationIcon = this.fontAwesomeIcon("fa-star");
-            const homeLocationIcon = this.fontAwesomeIcon("fa-street-view");
-
             try {
+                const locationIcon = this.fontAwesomeIcon("fa-map-marker");
+                const selectedLocationIcon = this.fontAwesomeIcon("fa-star");
+                const homeLocationIcon = this.fontAwesomeIcon("fa-street-view");
+
                 const lat = 30;
                 const lon = 15;
                 const zoom = 3;
