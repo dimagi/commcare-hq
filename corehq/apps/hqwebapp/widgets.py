@@ -147,6 +147,7 @@ class SelectToggle(forms.Select):
         attrs = attrs or {}
         self.params['value'] = attrs.get('ko_value', '')
         super(SelectToggle, self).__init__(choices=choices, attrs=attrs)
+        self.attrs['disabled'] = attrs.get('disabled', 'false')
 
     def render(self, name, value, attrs=None, renderer=None):
         return '''
@@ -154,12 +155,14 @@ class SelectToggle(forms.Select):
                             params="name: '{name}',
                                     id: '{id}',
                                     value: {value},
+                                    disabled: {disabled},
                                     options: {options}"></select-toggle>
         '''.format(
             apply_bindings="true" if self.apply_bindings else "false",
             name=name,
             id=html_attr(attrs.get('id', '')),
             value=html_attr(self.params['value'] or '"{}"'.format(html_attr(value))),
+            disabled=html_attr(self.attrs['disabled']),
             options=html_attr(json.dumps(
                 [{'id': c[0], 'text': c[1]} for c in self.choices],
                 cls=CommCareJSONEncoder
