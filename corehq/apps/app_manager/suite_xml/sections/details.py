@@ -195,9 +195,7 @@ class DetailContributor(SectionContributor):
             if detail.lookup_enabled and detail.lookup_action:
                 d.lookup = self._get_lookup_element(detail, module)
 
-            # Add no items text
-            if detail_type.endswith('short') and self.app.supports_empty_case_list_text:
-                d.no_items_text = Text(locale_id=id_strings.no_items_text_detail(module))
+            self.add_no_items_text(self.app, d, detail_type, module)
 
             # Add variables
             variables = list(
@@ -515,6 +513,10 @@ class DetailContributor(SectionContributor):
         d.fields = fields
         return d
 
+    @staticmethod
+    def add_no_items_text(app, detail, detail_type, module):
+        if detail_type.endswith('short') and app.supports_empty_case_list_text:
+            detail.no_items_text = Text(locale_id=id_strings.no_items_text_detail(module))
 
 class DetailsHelper(object):
 
