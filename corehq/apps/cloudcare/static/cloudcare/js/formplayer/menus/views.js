@@ -506,7 +506,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             return L.divIcon({
                 html: `<i class='fa ${iconName} fa-4x'></i>`,
                 iconSize: [12, 12],
-                className: 'myDivIcon'
+                className: 'marker-pin'
             });
         },
 
@@ -559,6 +559,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
                                         marker.setIcon(selectedLocationIcon);
 
                                         $([document.documentElement, document.body]).animate({
+                                            // -50 Stay clear of the breadcrumbs
                                             scrollTop: $(`#${rowId}`).offset().top - 50
                                         }, 500);
                                     });
@@ -568,9 +569,9 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
                     });
 
                 if (sessionStorage.locationLat) {
-                    const homeLatLng = [sessionStorage.locationLat, sessionStorage.locationLon];``
+                    const homeLatLng = [sessionStorage.locationLat, sessionStorage.locationLon];
                     L.marker(homeLatLng, { icon: homeLocationIcon })
-                        .bindPopup("Your location")
+                        .bindPopup(gettext("Your location"))
                         .addTo(addressMap);
                     latLons.push(homeLatLng);
                 }
