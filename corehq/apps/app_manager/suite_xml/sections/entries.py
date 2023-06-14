@@ -395,7 +395,7 @@ class EntriesHelper(object):
         entry.assertions.append(assertion)
 
     @staticmethod
-    def get_extra_case_id_datums(form):
+    def get_extra_case_id_datums(form, case_datum):
         datums = []
         actions = form.active_actions()
         if form.form_type == 'module_form' and actions_use_usercase(actions):
@@ -405,6 +405,18 @@ class EntriesHelper(object):
                 case_type=USERCASE_TYPE,
                 requires_selection=False,
                 action=None  # Unused (and could be actions['usercase_update'] or actions['usercase_preload'])
+            ))
+        if case_datum and form.get_module().has_grouped_tiles():
+            # add a datum for the parent case ids
+            case_datum_id = case_datum.datum.id
+            index_identifier = form.get_module().case_details.short.case_tile_group.index_identifier
+            predicate = "selected(join(' ', instance('selected_cases')/results/value), @case_id)"
+            func = f"join(' ', instance('casedb')/casedb/case[{predicate}]/index/{index_identifier})"
+            datums.append(FormDatumMeta(
+                datum=SessionDatum(id=f"{case_datum_id}_parent_ids", function=func),
+                case_type=None,
+                requires_selection=False,
+                action=None
             ))
         return datums
 
@@ -458,9 +470,10 @@ class EntriesHelper(object):
         if not form or form.requires_case():
             datums.extend(self.get_datum_meta_module(module, use_filter=True))
 
+        case_datum = datums[-1] if datums else None
         if form:
             datums.extend(EntriesHelper.get_new_case_id_datums_meta(form))
-            datums.extend(EntriesHelper.get_extra_case_id_datums(form))
+            datums.extend(EntriesHelper.get_extra_case_id_datums(form, case_datum))
 
         return self.add_parent_datums(datums, module)
 
