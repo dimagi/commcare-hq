@@ -776,8 +776,6 @@ class SimplifiedSyncLog(AbstractSyncLog):
         deleted_indices = self.index_tree.indices.pop(to_remove, {})
         deleted_indices.update(self.extension_index_tree.indices.pop(to_remove, {}))
 
-        self._validate_case_removal(to_remove, all_to_remove, deleted_indices, checked_case_id, xform_id)
-
         try:
             self.case_ids_on_phone.remove(to_remove)
         except KeyError:
@@ -798,21 +796,6 @@ class SimplifiedSyncLog(AbstractSyncLog):
 
         if to_remove in self.dependent_case_ids_on_phone:
             self.dependent_case_ids_on_phone.remove(to_remove)
-
-    def _validate_case_removal(self, case_to_remove, all_to_remove,
-                               deleted_indices, checked_case_id, xform_id):
-        """Traverse immediate outgoing indices. Validate that these are also candidates for removal."""
-        if case_to_remove == checked_case_id:
-            return
-
-        # Logging removed temporarily: https://github.com/dimagi/commcare-hq/pull/16259#issuecomment-303176217
-        # for index in deleted_indices.values():
-        #     if xform_id and not _domain_has_legacy_toggle_set():
-        #         # unblocking http://manage.dimagi.com/default.asp?185850
-        #         _assert = soft_assert(send_to_ops=False, log_to_file=True, exponential_backoff=True,
-        #                               fail_if_debug=True)
-        #         _assert(index in (all_to_remove | set([checked_case_id])),
-        #                 "expected {} in {} but wasn't".format(index, all_to_remove))
 
     def _add_primary_case(self, case_id):
         self.case_ids_on_phone.add(case_id)
