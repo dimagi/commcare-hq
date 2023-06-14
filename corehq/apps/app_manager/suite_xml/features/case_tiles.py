@@ -57,6 +57,7 @@ class CaseTileHelper(object):
         self.build_profile_id = build_profile_id
 
     def build_case_tile_detail(self):
+        from corehq.apps.app_manager.suite_xml.sections.details import DetailContributor
         """
         Return a Detail node from an apps.app_manager.models.Detail that is
         configured to use case tiles.
@@ -76,10 +77,11 @@ class CaseTileHelper(object):
 
         # Add case search action if needed
         if module_offers_search(self.module) and not module_uses_inline_search(self.module):
-            from corehq.apps.app_manager.suite_xml.sections.details import DetailContributor
             detail.actions.append(
                 DetailContributor.get_case_search_action(self.module, self.build_profile_id, self.detail_id)
             )
+
+        DetailContributor.add_no_items_text(self.app, detail, self.detail_type, self.module)
 
         return detail
 
