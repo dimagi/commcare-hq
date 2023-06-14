@@ -154,6 +154,16 @@ class CaseCopyInterface(CaseReassignmentInterface):
     action_text = gettext_lazy("Copy")
 
     @property
+    @memoized
+    def es_results(self):
+        query = self._build_query()
+        owner_id = self.request.GET.get('individual')
+        if owner_id:
+            query = query.owner(owner_id)
+
+        return query.run().raw
+
+    @property
     def template_context(self):
         context = super(CaseReassignmentInterface, self).template_context
         context.update({
