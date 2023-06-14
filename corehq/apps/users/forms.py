@@ -1,6 +1,8 @@
 import datetime
 import json
 import re
+import secrets
+import string
 
 from django import forms
 from django.conf import settings
@@ -126,17 +128,11 @@ def wrapped_language_validation(value):
 
 
 def generate_strong_password():
-    import random
-    import string
-    possible = string.punctuation + string.ascii_lowercase + string.ascii_uppercase + string.digits
-    password = ''
-    password += random.choice(string.punctuation)
-    password += random.choice(string.ascii_lowercase)
-    password += random.choice(string.ascii_uppercase)
-    password += random.choice(string.digits)
-    password += ''.join(random.choice(possible) for i in range(random.randrange(6, 11)))
-
-    return ''.join(random.sample(password, len(password)))
+    # https://docs.python.org/3/library/secrets.html#recipes-and-best-practices
+    length = 12
+    possible = string.punctuation + string.ascii_letters + string.digits
+    password = ''.join(secrets.choice(possible) for __ in range(length))
+    return password
 
 
 class LanguageField(forms.CharField):
