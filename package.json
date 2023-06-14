@@ -58,6 +58,7 @@
         "jquery.rmi": "dimagi/jquery.rmi#8c34f32817",
         "jsdiff": "components/jsdiff#~3.2.0",
         "knockout": "3.5.1",
+        "knockout-sortable": "1.2.2",
         "knockout-validation": "Knockout-Contrib/Knockout-Validation#2.0.4",
         "leaflet": "0.7.7",
         "less": "3.10.3",

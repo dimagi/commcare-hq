@@ -442,6 +442,18 @@ hqDefine('app_manager/js/releases/releases', function () {
         self.revertSavedApp = function (savedApp) {
             $.postGo(self.reverse('revert_to_copy'), {build_id: savedApp.id()});
         };
+        self.handleDeprecatedCaseTypesWarning = function(depCaseTypes) {
+            if (depCaseTypes && depCaseTypes.length) {
+                $('#deprecated-case-types-warning').removeClass('hidden');
+                let $depCaseTypesList = $('#deprecated-case-types-list');
+                $depCaseTypesList.empty();
+                for (const caseType of depCaseTypes) {
+                    $depCaseTypesList.append(`<li>${caseType}</li>`);
+                }
+            } else {
+                $('#deprecated-case-types-warning').addClass('hidden');
+            }
+        };
         self.makeNewBuild = function () {
             if (self.buildState() === 'pending') {
                 return false;
@@ -480,6 +492,7 @@ hqDefine('app_manager/js/releases/releases', function () {
                 url: self.reverse('save_copy'),
                 success: function (data) {
                     $('#build-errors-wrapper').html(data.error_html);
+                    self.handleDeprecatedCaseTypesWarning(data.deprecated_case_types);
                     if (data.saved_app) {
                         var app = savedAppModel(data.saved_app, self);
                         self.savedApps.unshift(app);

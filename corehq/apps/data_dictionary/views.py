@@ -2,6 +2,7 @@ import io
 import itertools
 import json
 from collections import defaultdict
+from operator import attrgetter
 
 from django.contrib import messages
 from django.core.exceptions import ValidationError
@@ -23,9 +24,10 @@ from corehq.apps.data_dictionary import util
 from corehq.apps.data_dictionary.models import (
     CaseProperty,
     CasePropertyAllowedValue,
+    CasePropertyGroup,
     CaseType,
 )
-from corehq.apps.data_dictionary.util import save_case_property
+from corehq.apps.data_dictionary.util import save_case_property, save_case_property_group
 from corehq.apps.domain.decorators import login_and_domain_required
 from corehq.apps.hqwebapp.decorators import use_jquery_ui
 from corehq.apps.hqwebapp.utils import get_bulk_upload_form
@@ -47,6 +49,7 @@ from corehq.project_limits.rate_limiter import (
 from corehq.util.files import file_extention_from_filename
 from corehq.util.workbook_reading import open_any_workbook
 from corehq.util.workbook_reading.datamodels import Cell
+from corehq.apps.app_manager.dbaccessors import get_case_type_app_count
 
 FHIR_RESOURCE_TYPE_MAPPING_SHEET = "fhir_mapping"
 ALLOWED_VALUES_SHEET_SUFFIX = "-vl"
@@ -59,7 +62,8 @@ def data_dictionary_json(request, domain, case_type_name=None):
     fhir_resource_type_name_by_case_type = {}
     fhir_resource_prop_by_case_prop = {}
     queryset = CaseType.objects.filter(domain=domain).prefetch_related(
-        Prefetch('properties', queryset=CaseProperty.objects.order_by('name')),
+        Prefetch('groups', queryset=CasePropertyGroup.objects.order_by('index')),
+        Prefetch('properties', queryset=CaseProperty.objects.order_by('group_obj_id', 'index')),
         Prefetch('properties__allowed_values', queryset=CasePropertyAllowedValue.objects.order_by('allowed_value'))
     )
     if toggles.FHIR_INTEGRATION.enabled(domain):
@@ -67,24 +71,48 @@ def data_dictionary_json(request, domain, case_type_name=None):
             domain)
     if case_type_name:
         queryset = queryset.filter(name=case_type_name)
+
+    case_type_app_count = get_case_type_app_count(domain)
     for case_type in queryset:
+        app_count = 0
+        if case_type.name in case_type_app_count:
+            app_count = case_type_app_count[case_type.name]
         p = {
             "name": case_type.name,
             "fhir_resource_type": fhir_resource_type_name_by_case_type.get(case_type),
+            "is_deprecated": case_type.is_deprecated,
+            "app_count": app_count,
+            "groups": [],
             "properties": [],
         }
-        for prop in case_type.properties.all():
-            p['properties'].append({
+        grouped_properties = {
+            group: [{
                 "description": prop.description,
                 "label": prop.label,
-                "index": prop.index,
                 "fhir_resource_prop_path": fhir_resource_prop_by_case_prop.get(prop),
                 "name": prop.name,
                 "data_type": prop.data_type,
-                "group": prop.group_name,
                 "deprecated": prop.deprecated,
                 "allowed_values": {av.allowed_value: av.description for av in prop.allowed_values.all()},
+            } for prop in props] for group, props in itertools.groupby(
+                case_type.properties.all(),
+                key=attrgetter('group_obj_id')
+            )
+        }
+        for group in case_type.groups.all():
+            p["groups"].append({
+                "id": group.id,
+                "name": group.name,
+                "description": group.description,
+                "deprecated": group.deprecated,
+                "properties": grouped_properties.get(group.id, [])
             })
+
+        # Aggregate properties that dont have a group
+        p["groups"].append({
+            "name": "",
+            "properties": grouped_properties.get(None, [])
+        })
         props.append(p)
     return JsonResponse({'case_types': props})
 
@@ -107,6 +135,18 @@ def create_case_type(request, domain):
     return HttpResponseRedirect(f"{url}#{name}")
 
 
+@login_and_domain_required
+@toggles.DATA_DICTIONARY.required_decorator()
+@require_permission(HqPermissions.edit_data_dict)
+def deprecate_or_restore_case_type(request, domain, case_type_name):
+    is_deprecated = request.POST.get("is_deprecated", 'false') == 'true'
+    case_type_obj = CaseType.objects.get(domain=domain, name=case_type_name)
+    case_type_obj.is_deprecated = is_deprecated
+    case_type_obj.save()
+
+    return JsonResponse({'status': 'success'})
+
+
 # atomic decorator is a performance optimization for looped saves
 # as per http://stackoverflow.com/questions/3395236/aggregating-saves-in-django#comment38715164_3397586
 @atomic
@@ -118,10 +158,25 @@ def update_case_property(request, domain):
     errors = []
     update_fhir_resources = toggles.FHIR_INTEGRATION.enabled(domain)
     property_list = json.loads(request.POST.get('properties'))
+    group_list = json.loads(request.POST.get('groups'))
 
     if update_fhir_resources:
         errors, fhir_resource_type_obj = _update_fhir_resource_type(request, domain)
     if not errors:
+        for group in group_list:
+            case_type = group.get("caseType")
+            id = group.get("id")
+            name = group.get("name")
+            index = group.get("index")
+            description = group.get("description")
+            deprecated = group.get("deprecated")
+
+            if name:
+                error = save_case_property_group(id, name, case_type, domain, description, index, deprecated)
+
+            if error:
+                errors.append(error)
+
         for property in property_list:
             case_type = property.get('caseType')
             name = property.get('name')
@@ -320,7 +375,7 @@ class DataDictionaryView(BaseProjectDataView):
     @use_jquery_ui
     @method_decorator(toggles.DATA_DICTIONARY.required_decorator())
     @method_decorator(require_permission(HqPermissions.edit_data_dict,
-                        view_only_permission=HqPermissions.view_data_dict))
+                                         view_only_permission=HqPermissions.view_data_dict))
     def dispatch(self, request, *args, **kwargs):
         return super(DataDictionaryView, self).dispatch(request, *args, **kwargs)
 
