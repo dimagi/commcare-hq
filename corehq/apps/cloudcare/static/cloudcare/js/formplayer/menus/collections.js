@@ -54,6 +54,7 @@ hqDefine("cloudcare/js/formplayer/menus/collections", function () {
             'multiSelect',
             'maxSelectValue',
             'hasDetails',
+            'queryResponse',
         ],
 
         commandProperties: [
