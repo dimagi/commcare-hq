@@ -743,6 +743,7 @@ reminders
  0001_initial
 repeaters
  0001_adjust_auth_field_format_squashed_0015_drop_connection_settings_fk (15 squashed migrations)
+ 0002_repeaters_db
 reports
  0001_initial
  0002_auto_20171121_1803
