@@ -266,11 +266,7 @@ def get_live_case_ids_and_indices(domain, owned_ids, timing_context):
         open_ids.update(case_ids)
 
     def filter_deleted_indices(related):
-        live_related = []
-        for index in related:
-            if index.referenced_id:
-                live_related.append(index)
-        return live_related
+        return [index for index in related if index.referenced_id]
 
     IGNORE = object()
     debug = logging.getLogger(__name__).debug
