@@ -79,20 +79,31 @@ def get_mobile_worker_max_username_length(domain):
     return min(128 - len(cc_user_domain(domain)) - 1, 80)
 
 
-def clean_mobile_worker_username(domain, username, name_too_long_message=None,
-        name_reserved_message=None, name_exists_message=None):
+def clean_mobile_worker_username(
+    domain,
+    username,
+    name_too_long_message=None,
+    name_reserved_message=None,
+    name_exists_message=None,
+):
 
     max_username_length = get_mobile_worker_max_username_length(domain)
 
     if len(username) > max_username_length:
-        raise forms.ValidationError(name_too_long_message
-            or _('Username %(username)s is too long.  Must be under %(max_length)s characters.')
-            % {'username': username, 'max_length': max_username_length})
+        raise forms.ValidationError(
+            name_too_long_message
+            or _(
+                'Username %(username)s is too long.  Must be under '
+                '%(max_length)s characters.'
+            ) % {'username': username, 'max_length': max_username_length}
+        )
 
     if username in UNALLOWED_MOBILE_WORKER_NAMES:
-        raise forms.ValidationError(name_reserved_message
+        raise forms.ValidationError(
+            name_reserved_message
             or _('The username "%(username)s" is reserved for CommCare.')
-            % {'username': username})
+            % {'username': username}
+        )
 
     username = format_username(username, domain)
     validate_username(username)
@@ -101,8 +112,9 @@ def clean_mobile_worker_username(domain, username, name_too_long_message=None,
     if exists.exists:
         if exists.is_deleted:
             raise forms.ValidationError(_('This username was used previously.'))
-        raise forms.ValidationError(name_exists_message
-            or _('This Mobile Worker already exists.'))
+        raise forms.ValidationError(
+            name_exists_message or _('This Mobile Worker already exists.')
+        )
 
     return username
 
@@ -940,18 +952,25 @@ class NewMobileWorkerForm(forms.Form):
                                 <!-- /ko -->
                             </p>
                         '''.format(
-                            suggested=_("This password is automatically generated. Please copy it or create "
-                                "your own. It will not be shown again."),
+                            suggested=_(
+                                "This password is automatically generated. "
+                                "Please copy it or create your own. It will "
+                                "not be shown again."
+                            ),
                             strong=_("Good Job! Your password is strong!"),
                             almost=_("Your password is almost strong enough! Try adding numbers or symbols!"),
                             weak=_("Your password is too weak! Try adding numbers or symbols!"),
                             custom_warning=_(settings.CUSTOM_PASSWORD_STRENGTH_MESSAGE),
-                            disabled_email=_("Setting a password is disabled. "
-                                            "The user will set their own password on "
-                                            "confirming their account email."),
-                            disabled_phone=_("Setting a password is disabled. "
-                                            "The user will set their own password on confirming "
-                                            "their account phone number."),
+                            disabled_email=_(
+                                "Setting a password is disabled. The user "
+                                "will set their own password on confirming "
+                                "their account email."
+                            ),
+                            disabled_phone=_(
+                                "Setting a password is disabled. The user "
+                                "will set their own password on confirming "
+                                "their account phone number."
+                            ),
                             short=_("Password must have at least {password_length} characters."
                                     ).format(password_length=settings.MINIMUM_PASSWORD_LENGTH)
                         )),
