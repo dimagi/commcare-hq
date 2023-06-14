@@ -2703,8 +2703,8 @@ msgstr ""
 
 #: corehq/apps/cloudcare/static/cloudcare/js/form_entry/entries.js
 msgid ""
-"The file you selected exceeds the size limit of 3MB. Please select a file "
-"that is smaller than 3MB."
+"The file you selected exceeds the size limit of 4MB. Please select a file "
+"that is smaller than 4MB."
 msgstr ""
 
 #: corehq/apps/cloudcare/static/cloudcare/js/form_entry/entries.js

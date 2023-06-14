@@ -5107,7 +5107,7 @@ msgid "Person Simple"
 msgstr ""
 
 #: corehq/apps/app_manager/suite_xml/features/case_tiles.py
-msgid "One one two"
+msgid "Title row, subtitle row, third row with two cells, and map"
 msgstr ""
 
 #: corehq/apps/app_manager/suite_xml/features/scheduler.py
@@ -20544,6 +20544,10 @@ msgstr ""
 
 #: corehq/apps/geospatial/reports.py
 msgid "Case Management Map"
+msgstr ""
+
+#: corehq/apps/geospatial/templates/map_visualization.html
+msgid "Export Polygons as GeoJson"
 msgstr ""
 
 #: corehq/apps/groups/templates/groups/all_groups.html
@@ -41468,6 +41472,12 @@ msgstr ""
 #: corehq/privileges.py
 msgid "Bulk user management features"
 msgstr ""
+
+#: corehq/privileges.py
+#, fuzzy
+#| msgid "Application Version"
+msgid "Application error report"
+msgstr "Versão da Aplicação"
 
 #: corehq/reports.py
 msgid "Report Builder Reports"
