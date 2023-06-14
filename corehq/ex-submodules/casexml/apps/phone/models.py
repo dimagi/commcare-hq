@@ -981,19 +981,6 @@ class SimplifiedSyncLog(AbstractSyncLog):
             self.rev_before_last_submitted = self._rev
         return made_changes
 
-    def purge_dependent_cases(self):
-        """
-        Attempt to purge any dependent cases from the sync log.
-        """
-        # this is done when migrating from old formats or during initial sync
-        # to purge non-relevant dependencies
-        for dependent_case_id in list(self.dependent_case_ids_on_phone):
-            # need this additional check since the case might have already been purged/remove
-            # as a result of purging the child case
-            if dependent_case_id in self.dependent_case_ids_on_phone:
-                # this will be a no-op if the case cannot be purged due to dependencies
-                self.purge(dependent_case_id)
-
 
 class CaseUpdate:
 
