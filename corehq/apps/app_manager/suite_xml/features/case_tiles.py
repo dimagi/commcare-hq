@@ -11,7 +11,7 @@ from xml.sax.saxutils import escape
 from corehq import toggles
 from corehq.apps.app_manager import id_strings
 from corehq.apps.app_manager.exceptions import SuiteError
-from corehq.apps.app_manager.suite_xml.xml_models import Detail, XPathVariable
+from corehq.apps.app_manager.suite_xml.xml_models import Detail, XPathVariable, TileGroup
 from corehq.apps.app_manager.util import (
     module_offers_search,
     module_uses_inline_search,
@@ -85,6 +85,12 @@ class CaseTileHelper(object):
                 )
 
         DetailContributor.add_no_items_text(self.app, detail, self.detail_type, self.module)
+
+        if self.module.has_grouped_tiles():
+            detail.tile_group = TileGroup(
+                function=f"string(./index/{self.detail.case_tile_group.index_identifier})",
+                header_rows=self.detail.case_tile_group.header_rows
+            )
 
         return detail
 
