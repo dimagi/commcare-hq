@@ -1,8 +1,7 @@
 from django.test import SimpleTestCase
 
 from corehq.apps.app_manager.models import (
-    Application,
-    Module, CaseTileGroupConfig, )
+    CaseTileGroupConfig, )
 from corehq.apps.app_manager.suite_xml.features.case_tiles import CaseTileTemplates
 from corehq.apps.app_manager.tests.app_factory import AppFactory
 from corehq.apps.app_manager.tests.test_suite_case_tiles import add_columns_for_case_details

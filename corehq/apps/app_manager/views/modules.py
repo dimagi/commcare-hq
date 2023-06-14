@@ -2,7 +2,6 @@ import json
 import logging
 from collections import OrderedDict
 from functools import partial
-from looseversion import LooseVersion
 
 from django.contrib import messages
 from django.http import (
@@ -13,19 +12,15 @@ from django.http import (
 )
 from django.template.loader import render_to_string
 from django.urls import reverse
-from django.utils.safestring import mark_safe
 from django.utils.html import format_html
-from django.utils.translation import gettext_lazy
+from django.utils.safestring import mark_safe
 from django.utils.translation import gettext as _
+from django.utils.translation import gettext_lazy
 from django.views import View
 from django.views.decorators.http import require_GET
 from django_prbac.utils import has_privilege
-
+from looseversion import LooseVersion
 from lxml import etree
-
-from corehq.apps.registry.utils import get_data_registry_dropdown_options
-from dimagi.utils.logging import notify_exception
-from dimagi.utils.web import json_request, json_response
 
 from corehq import privileges, toggles
 from corehq.apps.accounting.utils import domain_has_privilege
@@ -91,7 +86,6 @@ from corehq.apps.app_manager.util import (
 )
 from corehq.apps.app_manager.views.media_utils import (
     handle_media_edits,
-    process_media_attribute,
 )
 from corehq.apps.app_manager.views.utils import (
     back_to_main,
@@ -121,17 +115,18 @@ from corehq.apps.hqmedia.models import (
 )
 from corehq.apps.hqmedia.views import ProcessDetailPrintTemplateUploadView
 from corehq.apps.hqwebapp.decorators import waf_allow
+from corehq.apps.registry.utils import get_data_registry_dropdown_options
 from corehq.apps.reports.analytics.esaccessors import (
     get_case_types_for_domain_es
 )
 from corehq.apps.reports.daterange import get_simple_dateranges
-from corehq.toggles import toggles_enabled_for_request
+from corehq.apps.userreports.dbaccessors import get_report_and_registry_report_configs_for_domain
 from corehq.apps.userreports.models import (
-    RegistryReportConfiguration,
-    ReportConfiguration,
     StaticReportConfiguration,
 )
-from corehq.apps.userreports.dbaccessors import get_report_and_registry_report_configs_for_domain
+from corehq.toggles import toggles_enabled_for_request
+from dimagi.utils.logging import notify_exception
+from dimagi.utils.web import json_request, json_response
 
 logger = logging.getLogger(__name__)
 
