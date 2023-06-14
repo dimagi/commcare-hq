@@ -219,6 +219,9 @@ class Command(BaseCommand):
         Role(slug=privileges.APPLICATION_ERROR_REPORT,
              name='Application error report',
              description='Show Application Error Report'),
+        Role(slug=privileges.DATA_DICTIONARY,
+             name='Data dictionary',
+             description='Project level data dictionary of cases'),
     ]
 
     BOOTSTRAP_PLANS = [
