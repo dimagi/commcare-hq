@@ -395,7 +395,7 @@ class EntriesHelper(object):
         entry.assertions.append(assertion)
 
     @staticmethod
-    def get_extra_case_id_datums(form, case_datum):
+    def get_extra_case_id_datums(form, case_datum=None):
         datums = []
         actions = form.active_actions()
         if form.form_type == 'module_form' and actions_use_usercase(actions):
