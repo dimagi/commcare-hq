@@ -42,8 +42,8 @@ elasticsearch2>=2.0.0,<3.0.0  # we will be deprecating support for ES2 soon
 elasticsearch5>=5.0.0,<6.0.0  # ES5 support is currently in development
 ethiopian-date-converter
 eulxml
-geopandas
-geopy
+geopandas  # SolTech - Geospatial library for Geospatial feature
+geopy  # SolTech - Geocoding library for Geospatial feature
 gevent
 ghdiff
 google-api-python-client==2.32.0
@@ -97,7 +97,7 @@ requests
 schema
 sentry-sdk
 sh
-shapely
+shapely  # SolTech - Planar geometric manipulation library for Geospatial feature
 # Package has an unfixed issue https://github.com/danthedeckie/simpleeval/issues/90 Can use that once https://github.com/danthedeckie/simpleeval/pull/91 is merged
 simpleeval @ git+https://github.com/dimagi/simpleeval.git@d85c5a9f972c0f0416a1716bb06d1a3ebc83e7ec
 simplejson
