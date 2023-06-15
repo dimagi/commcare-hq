@@ -12,6 +12,7 @@ hqDefine('hqwebapp/js/base_ace', [
     var self = {};
     self.editor = [];
 
+    ace.config.set('basePath', 'ace-builds/src-min-noconflict/ace');
     ace.require("ace/mode/json");
     ace.require("ace/mode/xml");
     ace.require("ace/ext/searchbox");
