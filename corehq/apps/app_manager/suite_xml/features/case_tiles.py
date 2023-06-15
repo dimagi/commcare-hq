@@ -123,7 +123,6 @@ class CaseTileHelper(object):
         }
 
     def _get_column_context(self, column):
-        from corehq.apps.app_manager.detail_screen import get_column_generator
         default_lang = self.app.default_language if not self.build_profile_id \
             else self.app.build_profiles[self.build_profile_id].langs[0]
         xpath_function = self._get_xpath_function(column)
