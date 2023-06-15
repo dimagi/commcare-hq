@@ -123,12 +123,7 @@ class CaseTileHelper(object):
         from corehq.apps.app_manager.detail_screen import get_column_generator
         default_lang = self.app.default_language if not self.build_profile_id \
             else self.app.build_profiles[self.build_profile_id].langs[0]
-        if column.useXpathExpression:
-            xpath_function = escape(column.field, {'"': '&quot;'})
-        else:
-            xpath_function = escape(get_column_generator(
-                self.app, self.module, self.detail, column).xpath_function,
-                {'"': '&quot;'})
+        xpath_function = self._get_xpath_function(column)
         context = {
             "xpath_function": xpath_function,
             "locale_id": id_strings.detail_column_header_locale(
@@ -153,6 +148,16 @@ class CaseTileHelper(object):
         if column.format == "enum" or column.format == 'conditional-enum':
             context["variables"] = self._get_enum_variables(column)
         return context
+
+    def _get_xpath_function(self, column):
+        from corehq.apps.app_manager.detail_screen import get_column_generator
+        if column.useXpathExpression:
+            xpath_function = escape(column.field, {'"': '&quot;'})
+        else:
+            xpath_function = escape(get_column_generator(
+                self.app, self.module, self.detail, column).xpath_function,
+                {'"': '&quot;'})
+        return xpath_function
 
     def _get_enum_variables(self, column):
         variables = []
