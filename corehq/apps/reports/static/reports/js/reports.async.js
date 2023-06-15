@@ -237,7 +237,7 @@ hqDefine("reports/js/reports.async", function () {
         self.loadingIssueModal.on('hide hide.bs.modal', function () {
             self.hqLoading = $(self.loaderClass);
             self.hqLoading.find('.js-loading-spinner').addClass('hide');
-            self.hqLoading.find('h4').text(gettext('We were unsuccessful loading the report:'));
+            self.hqLoading.find('h4').text(gettext('We were unsuccessful loading the report:'))
                 .attr('style', 'margin-bottom: 10px;');
         });
 
