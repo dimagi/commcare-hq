@@ -110,8 +110,8 @@ class DetailContributor(SectionContributor):
                     if detail_column_infos:
                         detail_id = id_strings.detail(module, detail_type)
                         if detail.case_tile_template:
-                            helper = CaseTileHelper(self.app, module, detail,
-                                                    detail_id, detail_type, self.build_profile_id)
+                            helper = CaseTileHelper(self.app, module, detail, detail_id,
+                                                detail_type, self.build_profile_id, detail_column_infos)
                             elements.append(helper.build_case_tile_detail())
                         else:
                             print_template_path = None

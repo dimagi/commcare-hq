@@ -47,7 +47,8 @@ def case_tile_template_config(template):
 
 
 class CaseTileHelper(object):
-    def __init__(self, app, module, detail, detail_id, detail_type, build_profile_id):
+    def __init__(self, app, module, detail, detail_id, detail_type,
+                build_profile_id, detail_column_infos):
         self.app = app
         self.module = module
         self.detail = detail
@@ -55,6 +56,7 @@ class CaseTileHelper(object):
         self.detail_type = detail_type
         self.cols_by_tile_field = {col.case_tile_field: col for col in self.detail.columns}
         self.build_profile_id = build_profile_id
+        self.detail_column_infos = detail_column_infos
 
     def build_case_tile_detail(self):
         """
@@ -80,6 +82,17 @@ class CaseTileHelper(object):
             detail.actions.append(
                 DetailContributor.get_case_search_action(self.module, self.build_profile_id, self.detail_id)
             )
+
+        for column_info in self.detail_column_infos:
+            # column_info is an instance of DetailColumnInfo named tuple. It has the following properties:
+            #   column_info.column: an instance of app_manager.models.DetailColumn
+            #   column_info.sort_element: an instance of app_manager.models.SortElement
+            #   column_info.order: an integer
+            from corehq.apps.app_manager.detail_screen import get_column_generator
+            fields = get_column_generator(
+                self.app, self.module, self.detail,
+                detail_type=self.detail_type, *column_info
+            ).fields
 
         return detail
 
