@@ -32,6 +32,7 @@ from corehq.util.timezones.conversions import PhoneTime
 from .data_sources import CaseDisplayES
 
 
+
 class CaseListMixin(ElasticProjectInspectionReport, ProjectReportParametersMixin):
     fields = [
         'corehq.apps.reports.filters.case_list.CaseListFilter',
