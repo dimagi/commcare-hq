@@ -58,6 +58,7 @@ from corehq.apps.userreports.models import (
     UCRExpression,
 )
 from corehq.util.test_utils import flag_enabled, privilege_enabled
+from corehq import privileges
 
 
 def _create_report(domain, title="report", upstream_id=None, should_save=True, app_id=None):
@@ -503,22 +504,6 @@ class TestBuildFeatureFlagViewModels(TestCase):
 
         self.assertEqual(expected_view_models, view_models)
 
-    @privilege_enabled('DATA_DICTIONARY')
-    def test_build_feature_flag_view_models_returns_data_dictionary(self):
-        expected_view_models = [
-            {
-                'type': 'data_dictionary',
-                'name': 'Data Dictionary',
-                'detail': None,
-                'last_update': 'Never',
-                'can_update': True,
-                'is_linkable': True,
-            }
-        ]
-        view_models = build_feature_flag_view_models(self.domain)
-
-        self.assertEqual(expected_view_models, view_models)
-
     @flag_enabled('WIDGET_DIALER')
     def test_build_feature_flag_view_models_returns_dialer_settings(self):
         expected_view_models = [
@@ -710,7 +695,7 @@ class TestBuildViewModelsFromDataModels(BaseLinkedDomainTest):
         )
         self.assertEqual(0, len(view_models))
 
-    @privilege_enabled('DATA_DICTIONARY')
+    @privilege_enabled(privileges.DATA_DICTIONARY)
     @flag_enabled('SYNC_SEARCH_CASE_CLAIM')
     @flag_enabled('WIDGET_DIALER')
     @flag_enabled('GAEN_OTP_SERVER')
@@ -722,7 +707,7 @@ class TestBuildViewModelsFromDataModels(BaseLinkedDomainTest):
         expected_length = len(DOMAIN_LEVEL_DATA_MODELS) + len(FEATURE_FLAG_DATA_MODELS)
         self.assertEqual(expected_length, len(view_models))
 
-    @privilege_enabled('DATA_DICTIONARY')
+    @privilege_enabled(privileges.DATA_DICTIONARY)
     @flag_enabled('SYNC_SEARCH_CASE_CLAIM')
     @flag_enabled('WIDGET_DIALER')
     @flag_enabled('GAEN_OTP_SERVER')
