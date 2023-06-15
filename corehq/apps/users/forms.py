@@ -68,6 +68,7 @@ from .util import cc_user_domain, format_username, log_user_change
 from ..hqwebapp.signals import clear_login_attempts
 
 UNALLOWED_MOBILE_WORKER_NAMES = ('admin', 'demo_user')
+STRONG_PASSWORD_LEN = 12
 
 
 def get_mobile_worker_max_username_length(domain):
@@ -129,9 +130,17 @@ def wrapped_language_validation(value):
 
 def generate_strong_password():
     # https://docs.python.org/3/library/secrets.html#recipes-and-best-practices
-    length = 12
     possible = string.punctuation + string.ascii_letters + string.digits
-    password = ''.join(secrets.choice(possible) for __ in range(length))
+    while True:
+        password = ''.join(secrets.choice(possible)
+                           for __ in range(STRONG_PASSWORD_LEN))
+        if (
+            any(c.islower() for c in password)
+            and any(c.isupper() for c in password)
+            and any(c.isdigit() for c in password)
+            and any(c in string.punctuation for c in password)
+        ):
+            break
     return password
 
 
