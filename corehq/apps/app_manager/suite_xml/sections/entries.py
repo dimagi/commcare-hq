@@ -411,10 +411,14 @@ class EntriesHelper(object):
             case_datum_id = case_datum.datum.id
             index_identifier = form.get_module().case_details.short.case_tile_group.index_identifier
             if isinstance(case_datum.datum, InstanceDatum):
+                """
+                distinct-values(instance('casedb')/casedb/case[selected(join(' ', instance('selected_cases')/results/value), @case_id)]/index/parent)
+                
+                """
                 predicate = f"selected(join(' ', instance('{case_datum_id}')/results/value), @case_id)"
             else:
                 predicate = f"@case_id = instance('commcaresession')/session/data/{case_datum_id}"
-            func = f"join(' ', instance('casedb')/casedb/case[{predicate}]/index/{index_identifier})"
+            func = f"join(' ', distinct-values(instance('casedb')/casedb/case[{predicate}]/index/{index_identifier}))"
             datums.append(FormDatumMeta(
                 datum=SessionDatum(id=f"{case_datum_id}_parent_ids", function=func),
                 case_type=None,
