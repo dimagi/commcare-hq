@@ -23,7 +23,7 @@ from corehq.apps.app_manager.dbaccessors import (
     get_latest_released_app_doc,
     get_latest_released_app_version,
     get_latest_released_app_versions_by_app_id,
-    get_case_type_app_count,
+    get_case_type_app_module_count,
     get_case_types_for_app_build,
 )
 from corehq.apps.app_manager.models import Application, Module, RemoteApp, LinkedApplication
@@ -327,8 +327,8 @@ class TestAppGetters(TestCase):
             self.app_id: 4,
         })
 
-    def test_get_case_type_app_count(self):
-        res = get_case_type_app_count(self.domain)
+    def test_get_case_type_app_module_count(self):
+        res = get_case_type_app_module_count(self.domain)
         self.assertEqual(res, {'bar': 1})
 
     def test_get_case_types_for_app_build(self):

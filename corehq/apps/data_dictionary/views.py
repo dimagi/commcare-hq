@@ -47,7 +47,7 @@ from corehq.project_limits.rate_limiter import (
 from corehq.util.files import file_extention_from_filename
 from corehq.util.workbook_reading import open_any_workbook
 from corehq.util.workbook_reading.datamodels import Cell
-from corehq.apps.app_manager.dbaccessors import get_case_type_app_count
+from corehq.apps.app_manager.dbaccessors import get_case_type_app_module_count
 
 FHIR_RESOURCE_TYPE_MAPPING_SHEET = "fhir_mapping"
 ALLOWED_VALUES_SHEET_SUFFIX = "-vl"
@@ -69,16 +69,14 @@ def data_dictionary_json(request, domain, case_type_name=None):
     if case_type_name:
         queryset = queryset.filter(name=case_type_name)
 
-    case_type_app_count = get_case_type_app_count(domain)
+    case_type_app_module_count = get_case_type_app_module_count(domain)
     for case_type in queryset:
-        app_count = 0
-        if case_type.name in case_type_app_count:
-            app_count = case_type_app_count[case_type.name]
+        module_count = case_type_app_module_count.get(case_type.name, 0)
         p = {
             "name": case_type.name,
             "fhir_resource_type": fhir_resource_type_name_by_case_type.get(case_type),
             "is_deprecated": case_type.is_deprecated,
-            "app_count": app_count,
+            "module_count": module_count,
             "properties": [],
         }
         for prop in case_type.properties.all():

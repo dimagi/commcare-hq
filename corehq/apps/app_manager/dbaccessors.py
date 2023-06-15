@@ -535,14 +535,16 @@ def get_case_types_from_apps(domain):
     return (case_types.union(save_to_case_updates) - {''})
 
 
-def get_case_type_app_count(domain):
+def get_case_type_app_module_count(domain):
     """
     Gets the case types of modules in applications in the domain, returning
-    how many applications are associated with each case type.
-    :returns: A list of case types as the key and the number of associated apps as the value
+    how many application modules are associated with each case type.
+    :returns: A list of case types as the key and the number of associated modules as the value
     """
     q = _get_case_types_from_apps_query(domain)
     case_types = q.run().aggregations.modules.case_types.counts_by_bucket()
+    if '' in case_types:
+        del case_types['']
     return case_types
 
 

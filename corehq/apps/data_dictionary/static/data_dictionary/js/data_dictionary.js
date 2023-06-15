@@ -22,11 +22,11 @@ hqDefine("data_dictionary/js/data_dictionary", [
     DOMPurify,
     toggles
 ) {
-    var caseType = function (name, fhirResourceType, deprecated, appCount) {
+    var caseType = function (name, fhirResourceType, deprecated, moduleCount) {
         var self = {};
         self.name = name || gettext("No Name");
         self.deprecated = deprecated;
-        self.appCount = appCount;  // The number of applications using this case type
+        self.appCount = moduleCount;  // The number of application modules using this case type
         self.url = "#" + name;
         self.fhirResourceType = ko.observable(fhirResourceType);
         self.properties = ko.observableArray();
@@ -193,7 +193,7 @@ hqDefine("data_dictionary/js/data_dictionary", [
                             caseTypeData.name,
                             caseTypeData.fhir_resource_type,
                             caseTypeData.is_deprecated,
-                            caseTypeData.app_count
+                            caseTypeData.module_count,
                         );
                         var groupDict = _.groupBy(caseTypeData.properties, function (prop) {return prop.group;});
                         caseTypeObj.init(groupDict, changeSaveButton);
@@ -234,7 +234,7 @@ hqDefine("data_dictionary/js/data_dictionary", [
             return false;
         };
 
-        self.activeCaseTypeAppCount = function () {
+        self.activeCaseTypeModuleCount = function () {
             const activeCaseType = self.getActiveCaseType();
             if (activeCaseType) {
                 return activeCaseType.appCount;
