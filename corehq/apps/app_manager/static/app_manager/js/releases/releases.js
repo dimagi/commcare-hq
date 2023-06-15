@@ -245,6 +245,7 @@ hqDefine('app_manager/js/releases/releases', function () {
         self.upstreamBriefsById = _.indexBy(self.options.upstreamBriefs, '_id');
         self.upstreamUrl = self.options.upstreamUrl;
         self.showReleaseOperations = ko.observable(true);
+        self.depCaseTypes = ko.observableArray();
 
         self.download_modal = $(self.options.download_modal_id);
         self.async_downloader = asyncDownloader(self.download_modal);
@@ -444,14 +445,9 @@ hqDefine('app_manager/js/releases/releases', function () {
         };
         self.handleDeprecatedCaseTypesWarning = function(depCaseTypes) {
             if (depCaseTypes && depCaseTypes.length) {
-                $('#deprecated-case-types-warning').removeClass('hidden');
-                let $depCaseTypesList = $('#deprecated-case-types-list');
-                $depCaseTypesList.empty();
-                for (const caseType of depCaseTypes) {
-                    $depCaseTypesList.append(`<li>${caseType}</li>`);
-                }
+                self.depCaseTypes(depCaseTypes);
             } else {
-                $('#deprecated-case-types-warning').addClass('hidden');
+                self.depCaseTypes([]);
             }
         };
         self.makeNewBuild = function () {
