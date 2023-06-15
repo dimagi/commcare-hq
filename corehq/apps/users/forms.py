@@ -1,6 +1,8 @@
 import datetime
 import json
 import re
+import secrets
+import string
 
 from django import forms
 from django.conf import settings
@@ -67,6 +69,7 @@ from .util import cc_user_domain, format_username, log_user_change
 from ..hqwebapp.signals import clear_login_attempts
 
 UNALLOWED_MOBILE_WORKER_NAMES = ('admin', 'demo_user')
+STRONG_PASSWORD_LEN = 12
 
 
 def get_mobile_worker_max_username_length(domain):
@@ -134,22 +137,26 @@ def wrapped_language_validation(value):
     try:
         validate_lang(value)
     except ValueError:
-        raise forms.ValidationError("%s is not a valid language code! Please "
-                                    "enter a valid two or three digit code." % value)
+        raise forms.ValidationError(_(
+            "{code} is not a valid language code. Please enter a valid "
+            "ISO-639 two- or three-digit code."
+        ).format({'code': value}))
 
 
 def generate_strong_password():
-    import random
-    import string
-    possible = string.punctuation + string.ascii_lowercase + string.ascii_uppercase + string.digits
-    password = ''
-    password += random.choice(string.punctuation)
-    password += random.choice(string.ascii_lowercase)
-    password += random.choice(string.ascii_uppercase)
-    password += random.choice(string.digits)
-    password += ''.join(random.choice(possible) for i in range(random.randrange(6, 11)))
-
-    return ''.join(random.sample(password, len(password)))
+    # https://docs.python.org/3/library/secrets.html#recipes-and-best-practices
+    possible = string.punctuation + string.ascii_letters + string.digits
+    while True:
+        password = ''.join(secrets.choice(possible)
+                           for __ in range(STRONG_PASSWORD_LEN))
+        if (
+            any(c.islower() for c in password)
+            and any(c.isupper() for c in password)
+            and any(c.isdigit() for c in password)
+            and any(c in string.punctuation for c in password)
+        ):
+            break
+    return password
 
 
 class LanguageField(forms.CharField):
