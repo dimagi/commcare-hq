@@ -137,8 +137,10 @@ def wrapped_language_validation(value):
     try:
         validate_lang(value)
     except ValueError:
-        raise forms.ValidationError("%s is not a valid language code! Please "
-                                    "enter a valid two or three digit code." % value)
+        raise forms.ValidationError(_(
+            "{code} is not a valid language code. Please enter a valid "
+            "ISO-639 two- or three-digit code."
+        ).format({'code': value}))
 
 
 def generate_strong_password():
