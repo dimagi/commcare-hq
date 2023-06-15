@@ -852,6 +852,7 @@ class ExtensionCasesSyncTokenUpdates(BaseSyncTest):
         """
         case_type = 'case'
         host = CaseStructure(case_id='host', attrs={'create': True})
+        parent = CaseStructure(case_id='parent', attrs={'create': True})
         extension = CaseStructure(
             case_id='extension',
             attrs={'create': True, 'owner_id': '-'},
@@ -861,7 +862,7 @@ class ExtensionCasesSyncTokenUpdates(BaseSyncTest):
                 relationship='extension',
                 related_type=case_type,
             ), CaseIndex(
-                CaseStructure(case_id=host.case_id, attrs={'create': False}),
+                parent,
                 identifier='child',
                 relationship='child',
                 related_type=case_type,
@@ -870,7 +871,7 @@ class ExtensionCasesSyncTokenUpdates(BaseSyncTest):
         self.device.post_changes(extension)
         sync_log = self.device.last_sync.get_log()
         self.assertDictEqual(sync_log.index_tree.indices,
-                             {extension.case_id: {'child': host.case_id}})
+                             {extension.case_id: {'child': parent.case_id}})
         self.assertDictEqual(sync_log.extension_index_tree.indices,
                              {extension.case_id: {'host': host.case_id}})
 
