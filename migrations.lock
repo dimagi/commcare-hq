@@ -284,6 +284,7 @@ data_dictionary
  0011_casepropertygroup
  0012_populate_case_property_groups
  0013_auto_20230529_1614
+ 0014_casetype_is_deprecated
 data_interfaces
  0001_initial
  0002_remove_exists_option
