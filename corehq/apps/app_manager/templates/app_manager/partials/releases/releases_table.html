@@ -62,14 +62,16 @@
   </p>
 
   <div id="build-errors-wrapper"></div>
-  <div class="alert alert-warning hidden" id="deprecated-case-types-warning">
+  <div class="alert alert-warning" data-bind="visible: depCaseTypes().length" id="deprecated-case-types-warning">
     <p>
       <i class="fa fa-warning"></i>
       {% blocktrans %}
         The new application build contains the following deprecated case types:
       {% endblocktrans %}
     </p>
-    <ul id="deprecated-case-types-list"></ul>
+    <ul id="deprecated-case-types-list" data-bind="foreach: depCaseTypes">
+      <li data-bind="text: $data"></li>
+    </ul>
     <p>
       <!-- TODO: Add help documentation -->
       {% blocktrans %}
