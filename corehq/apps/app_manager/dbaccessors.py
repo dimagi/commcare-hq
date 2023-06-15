@@ -14,8 +14,7 @@ from corehq.apps.es.aggregations import NestedAggregation, TermsAggregation
 from corehq.util.quickcache import quickcache
 from quickcache.django_quickcache import tiered_django_cache
 from corehq.toggles import VELLUM_SAVE_TO_CASE
-from corehq.apps.es.apps import app_id as app_id_filter
-from corehq.apps.es import filters
+from corehq.apps.es import apps as app_es
 
 
 AppBuildVersion = namedtuple('AppBuildVersion', ['app_id', 'build_id', 'version', 'comment'])
@@ -510,21 +509,16 @@ def _get_save_to_case_updates(domain):
     return save_to_case_updates
 
 
-def _get_case_types_from_apps_query(domain, is_build=False, app_id=None):
+def _get_case_types_from_apps_query(domain, is_build=False):
     case_types_agg = NestedAggregation('modules', 'modules').aggregation(
         TermsAggregation('case_types', 'modules.case_type.exact'))
-    q = (
+    return (
         AppES()
         .domain(domain)
         .is_build(is_build)
         .size(0)
         .aggregation(case_types_agg)
     )
-    if app_id:
-        q = q.filter(
-            filters.AND(app_id_filter(app_id))
-        )
-    return q
 
 
 def get_case_types_from_apps(domain):
@@ -557,7 +551,11 @@ def get_case_types_for_app_build(domain, app_id):
     Gets the case types of modules for a specific application in the domain.
     :returns: A set of case_types
     """
-    q = _get_case_types_from_apps_query(domain, True, app_id)
+    q = _get_case_types_from_apps_query(domain, is_build=True)
+    if app_id:
+        q = q.filter(
+            app_es.app_id(app_id)
+        )
     case_types = set(q.run().aggregations.modules.case_types.keys)
     return case_types - {''}
 
