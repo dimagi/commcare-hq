@@ -104,6 +104,10 @@ class CaseTileHelper(object):
             if populated_xpath_function in xpath_to_field:
                 field.sort_node = xpath_to_field.pop(populated_xpath_function).sort_node
 
+        #detail.fields contains only display properties. This adds fields for sort-only properties.
+        for field in xpath_to_field.values():
+            detail.fields.append(field)
+
         return detail
 
     def _get_matched_detail_column(self, case_tile_field):
