@@ -7,9 +7,9 @@ hqDefine('hqwebapp/js/base_ace', [
     $,
     _,
     ko,
-    ace,
+    ace
 ) {
-
+    var self = {};
     self.editor = [];
 
     ace.require("ace/mode/json");
