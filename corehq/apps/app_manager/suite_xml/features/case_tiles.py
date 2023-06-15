@@ -83,30 +83,31 @@ class CaseTileHelper(object):
                 DetailContributor.get_case_search_action(self.module, self.build_profile_id, self.detail_id)
             )
 
-        xpath_to_field = {}
-        for column_info in self.detail_column_infos:
-            # column_info is an instance of DetailColumnInfo named tuple. It has the following properties:
-            #   column_info.column: an instance of app_manager.models.DetailColumn
-            #   column_info.sort_element: an instance of app_manager.models.SortElement
-            #   column_info.order: an integer
-            from corehq.apps.app_manager.detail_screen import get_column_generator
-            fields = get_column_generator(
-                self.app, self.module, self.detail,
-                detail_type=self.detail_type, *column_info
-            ).fields
-            for field in fields:
-                if field.sort_node:
-                    xpath_func = self._get_xpath_function(column_info.column)
-                    xpath_to_field[xpath_func] = field
+        if self.detail.case_tile_template != CaseTileTemplates.PERSON_SIMPLE.value:
+            xpath_to_field = {}
+            for column_info in self.detail_column_infos:
+                # column_info is an instance of DetailColumnInfo named tuple. It has the following properties:
+                #   column_info.column: an instance of app_manager.models.DetailColumn
+                #   column_info.sort_element: an instance of app_manager.models.SortElement
+                #   column_info.order: an integer
+                from corehq.apps.app_manager.detail_screen import get_column_generator
+                fields = get_column_generator(
+                    self.app, self.module, self.detail,
+                    detail_type=self.detail_type, *column_info
+                ).fields
+                for field in fields:
+                    if field.sort_node:
+                        xpath_func = self._get_xpath_function(column_info.column)
+                        xpath_to_field[xpath_func] = field
 
-        for field in detail.fields:
-            populated_xpath_function = field.template.text.xpath_function
-            if populated_xpath_function in xpath_to_field:
-                field.sort_node = xpath_to_field.pop(populated_xpath_function).sort_node
+            for field in detail.fields:
+                populated_xpath_function = field.template.text.xpath_function
+                if populated_xpath_function in xpath_to_field:
+                    field.sort_node = xpath_to_field.pop(populated_xpath_function).sort_node
 
-        #detail.fields contains only display properties. This adds fields for sort-only properties.
-        for field in xpath_to_field.values():
-            detail.fields.append(field)
+            #detail.fields contains only display properties. This adds fields for sort-only properties.
+            for field in xpath_to_field.values():
+                detail.fields.append(field)
 
         return detail
 
