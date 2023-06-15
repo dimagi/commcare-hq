@@ -83,22 +83,10 @@ class CaseTileHelper(object):
                 DetailContributor.get_case_search_action(self.module, self.build_profile_id, self.detail_id)
             )
 
+        # Add sort to field or field containing sort if needed. Excludes legacy tile template to preserve behavior
+        # of existing apps using this template.
         if self.detail.case_tile_template != CaseTileTemplates.PERSON_SIMPLE.value:
-            xpath_to_field = {}
-            for column_info in self.detail_column_infos:
-                # column_info is an instance of DetailColumnInfo named tuple. It has the following properties:
-                #   column_info.column: an instance of app_manager.models.DetailColumn
-                #   column_info.sort_element: an instance of app_manager.models.SortElement
-                #   column_info.order: an integer
-                from corehq.apps.app_manager.detail_screen import get_column_generator
-                fields = get_column_generator(
-                    self.app, self.module, self.detail,
-                    detail_type=self.detail_type, *column_info
-                ).fields
-                for field in fields:
-                    if field.sort_node:
-                        xpath_func = self._get_xpath_function(column_info.column)
-                        xpath_to_field[xpath_func] = field
+            xpath_to_field = self._get_xpath_mapped_to_field_containing_sort()
 
             for field in detail.fields:
                 populated_xpath_function = field.template.text.xpath_function
@@ -196,3 +184,21 @@ class CaseTileHelper(object):
         """
         with open(case_tile_template_config(self.detail.case_tile_template).filepath, encoding='utf-8') as f:
             return f.read()
+
+    def _get_xpath_mapped_to_field_containing_sort(self):
+        xpath_to_field = {}
+        for column_info in self.detail_column_infos:
+            # column_info is an instance of DetailColumnInfo named tuple. It has the following properties:
+            #   column_info.column: an instance of app_manager.models.DetailColumn
+            #   column_info.sort_element: an instance of app_manager.models.SortElement
+            #   column_info.order: an integer
+            from corehq.apps.app_manager.detail_screen import get_column_generator
+            fields = get_column_generator(
+                self.app, self.module, self.detail,
+                detail_type=self.detail_type, *column_info
+            ).fields
+            for field in fields:
+                if field.sort_node:
+                    xpath_func = self._get_xpath_function(column_info.column)
+                    xpath_to_field[xpath_func] = field
+        return xpath_to_field
