@@ -37,3 +37,4 @@ jobs:
           VALIDATE_PYTHON_FLAKE8: true
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           IGNORE_GITIGNORED_FILES: true
+          LINTER_RULES_PATH: /
