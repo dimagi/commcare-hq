@@ -99,6 +99,11 @@ class CaseTileHelper(object):
                     xpath_func = self._get_xpath_function(column_info.column)
                     xpath_to_field[xpath_func] = field
 
+        for field in detail.fields:
+            populated_xpath_function = field.template.text.xpath_function
+            if populated_xpath_function in xpath_to_field:
+                field.sort_node = xpath_to_field.pop(populated_xpath_function).sort_node
+
         return detail
 
     def _get_matched_detail_column(self, case_tile_field):
