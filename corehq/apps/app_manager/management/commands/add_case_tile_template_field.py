@@ -1,5 +1,5 @@
 from corehq.apps.app_manager.management.commands.helpers import AppMigrationCommandBase
-from corehq.apps.app_manager.suite_xml.const import CASE_TILE_TEMPLATE_NAME_PERSON_SIMPLE
+from corehq.apps.app_manager.suite_xml.features.case_tiles import CaseTileTemplates
 from corehq.toggles import CASE_LIST_TILE
 
 
@@ -23,7 +23,7 @@ class Command(AppMigrationCommandBase):
         def _migrate_detail(detail):
             if detail and (detail.get('use_case_tiles') is not None):
                 if detail['use_case_tiles']:
-                    detail['case_tile_template'] = CASE_TILE_TEMPLATE_NAME_PERSON_SIMPLE
+                    detail['case_tile_template'] = CaseTileTemplates.PERSON_SIMPLE.value
                 del detail['use_case_tiles']
                 return True
             return False
