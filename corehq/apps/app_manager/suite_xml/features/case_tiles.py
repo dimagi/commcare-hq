@@ -10,7 +10,7 @@ from xml.sax.saxutils import escape
 
 from corehq.apps.app_manager import id_strings
 from corehq.apps.app_manager.exceptions import SuiteError
-from corehq.apps.app_manager.suite_xml.xml_models import Detail, XPathVariable
+from corehq.apps.app_manager.suite_xml.xml_models import Detail, XPathVariable, TileGroup
 from corehq.apps.app_manager.util import (
     module_offers_search,
     module_uses_inline_search,
@@ -81,6 +81,12 @@ class CaseTileHelper(object):
         if module_offers_search(self.module) and not module_uses_inline_search(self.module):
             detail.actions.append(
                 DetailContributor.get_case_search_action(self.module, self.build_profile_id, self.detail_id)
+            )
+
+        if self.module.has_grouped_tiles():
+            detail.tile_group = TileGroup(
+                function=f"string(./index/{self.detail.case_tile_group.index_identifier})",
+                header_rows=self.detail.case_tile_group.header_rows
             )
 
         # Add sort to field or field containing sort if needed. Excludes legacy tile template to preserve behavior
