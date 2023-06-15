@@ -83,6 +83,7 @@ class CaseTileHelper(object):
                 DetailContributor.get_case_search_action(self.module, self.build_profile_id, self.detail_id)
             )
 
+        xpath_to_field = {}
         for column_info in self.detail_column_infos:
             # column_info is an instance of DetailColumnInfo named tuple. It has the following properties:
             #   column_info.column: an instance of app_manager.models.DetailColumn
@@ -93,6 +94,10 @@ class CaseTileHelper(object):
                 self.app, self.module, self.detail,
                 detail_type=self.detail_type, *column_info
             ).fields
+            for field in fields:
+                if field.sort_node:
+                    xpath_func = self._get_xpath_function(column_info.column)
+                    xpath_to_field[xpath_func] = field
 
         return detail
 
