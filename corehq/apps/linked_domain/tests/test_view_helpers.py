@@ -644,6 +644,14 @@ class TestBuildDomainLevelViewModels(SimpleTestCase):
                 'can_update': True,
                 'is_linkable': True,
             },
+            {
+                'type': 'data_dictionary',
+                'name': 'Data Dictionary',
+                'detail': None,
+                'last_update': 'Never',
+                'can_update': True,
+                'is_linkable': True,
+            },
         ]
 
         view_models = build_domain_level_view_models()
