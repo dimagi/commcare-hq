@@ -6,7 +6,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('data_dictionary', '0012_populate_case_property_groups'),
+        ('data_dictionary', '0013_auto_20230529_1614'),
     ]
 
     operations = [
