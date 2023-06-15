@@ -594,6 +594,7 @@ linked_domain
  0019_update_remote_base_url_help_text
  0020_auto_20211102_1501
  0021_alter_domainlinkhistory_model
+ 0022_alter_domainlinkhistory_model
 locations
  0001_initial
  0002_auto_20160420_2105
