@@ -1,27 +1,14 @@
 import logging
-import os
 
 from django.conf import settings
 from firebase_admin import messaging, credentials, initialize_app
+
+from corehq.messaging.fcm.exceptions import DevicesLimitExceeded, EmptyData
 
 logger = logging.getLogger(__name__)
 
 MAX_DEVICES_ALLOWED_MULTICAST = 500
 HQ_FCM_UTIL = None
-
-
-class FCMUtilException(Exception):
-    pass
-
-
-class DevicesLimitExceeded(FCMUtilException):
-    def __init__(self):
-        super().__init__(f"Max devices allowed is {MAX_DEVICES_ALLOWED_MULTICAST}! Please execute in batches.")
-
-
-class EmptyData(FCMUtilException):
-    def __init__(self):
-        super().__init__("One of the fields from 'title, body, data' is required!")
 
 
 class FCMUtil:
@@ -67,7 +54,8 @@ class FCMUtil:
         """
         assert isinstance(registration_tokens, list)
         if len(registration_tokens) > MAX_DEVICES_ALLOWED_MULTICAST:
-            raise DevicesLimitExceeded()
+            raise DevicesLimitExceeded(message=f"Max devices allowed is {MAX_DEVICES_ALLOWED_MULTICAST}!"
+                                               f" Please execute in batches.")
         self.check_for_empty_notification(title, body, data)
         message = messaging.MulticastMessage(
             tokens=registration_tokens,

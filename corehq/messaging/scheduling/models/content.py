@@ -5,7 +5,7 @@ from datetime import datetime, timezone
 
 from django.core.exceptions import ValidationError
 from django.core.validators import validate_email
-from django.utils.translation import gettext as _, gettext_lazy
+from django.utils.translation import gettext as _
 
 from corehq import toggles
 from corehq.apps.accounting.utils import domain_is_on_trial
@@ -32,7 +32,7 @@ from django.db import models
 from django.http import Http404
 from corehq.apps.formplayer_api.smsforms.api import TouchformsError
 
-from corehq.messaging.fcm_util import HQ_FCM_UTIL
+from corehq.messaging.fcm.utils import HQ_FCM_UTIL
 from corehq.apps.users.models import CommCareUser
 
 @contextmanager
