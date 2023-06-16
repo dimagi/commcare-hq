@@ -104,7 +104,10 @@
       <div class="container case-tile-container">
         <div id="persistent-case-tile" class="print-container"></div>
       </div>
-      <div id="menu-region" class="container print-container"></div>
+      <div class="container flex-container">
+        <div id="sidebar-region" class="container print-container flex-child flex-child-sidebar"></div>
+        <div id="menu-region" class="container print-container flex-child flex-child-menu"></div>
+      </div>
       <section id="webforms" data-bind="
                 template: {
                     name: 'form-fullform-ko-template',
