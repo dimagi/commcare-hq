@@ -1,5 +1,5 @@
 {
-    "slug": "clinic_and_unit",
-    "filename": "clinic_and_unit.xml",
+    "slug": "parent_and_child",
+    "filename": "parent_and_child.xml",
     "fields": ["parent_case_header", "map", "subcase_header", "subcase_top_right", "subcase_details"]
 }
