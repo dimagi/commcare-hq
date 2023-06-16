@@ -12,13 +12,12 @@ from django.http.response import Http404, HttpResponse, JsonResponse
 from django.shortcuts import render
 from django.template.loader import render_to_string
 from django.utils.decorators import method_decorator
+from django.utils.safestring import mark_safe
 from django.utils.translation import gettext as _
 from django.utils.translation import gettext_lazy
-from django.utils.safestring import mark_safe
 from django.views.decorators.cache import cache_control
 from django.views.generic import View
 
-import ghdiff
 from couchdbkit import NoResultFound, ResourceNotFound
 from django_prbac.decorators import requires_privilege
 from django_prbac.utils import has_privilege
@@ -90,16 +89,17 @@ from corehq.apps.es import queries
 from corehq.apps.es.apps import AppES, build_comment, version
 from corehq.apps.hqwebapp.views import BasePageView
 from corehq.apps.locations.permissions import location_safe
+from corehq.apps.reports.standard.deployments import ApplicationErrorReport
 from corehq.apps.sms.views import get_sms_autocomplete_context
 from corehq.apps.userreports.exceptions import ReportConfigurationNotFoundError
 from corehq.apps.users.models import CommCareUser, CouchUser
 from corehq.apps.users.util import cached_user_id_to_user_display
 from corehq.const import USER_DATETIME_FORMAT
 from corehq.toggles import toggles_enabled_for_request
+from corehq.util import ghdiff
 from corehq.util.timezones.conversions import ServerTime
 from corehq.util.timezones.utils import get_timezone_for_user
 from corehq.util.view_utils import reverse
-from corehq.apps.reports.standard.deployments import ApplicationErrorReport
 
 
 def _get_error_counts(domain, app_id, version_numbers):

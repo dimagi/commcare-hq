@@ -1,6 +1,6 @@
 from django.utils.translation import gettext as _
 
-import ghdiff
+from corehq.util import ghdiff
 from memoized import memoized
 
 from corehq.apps.translations.app_translations.download import (
