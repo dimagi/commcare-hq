@@ -1293,14 +1293,6 @@ CUSTOM_ASSERTIONS = StaticToggle(
     help_link="https://confluence.dimagi.com/display/saas/User+defined+assert+blocks",
 )
 
-APPLICATION_ERROR_REPORT = StaticToggle(
-    'application_error_report',
-    'Show Application Error Report',
-    TAG_SOLUTIONS_OPEN,
-    help_link='https://confluence.dimagi.com/display/saas/Show+Application+Error+Report+Feature+Flag',
-    namespaces=[NAMESPACE_USER],
-)
-
 OPENMRS_INTEGRATION = StaticToggle(
     'openmrs_integration',
     'Enable OpenMRS integration',
@@ -2524,6 +2516,16 @@ FILTERED_BULK_USER_DOWNLOAD = FrozenPrivilegeToggle(
         For mobile users, enables bulk deletion page and bulk lookup page.
         For web users, enables filtered download page.
     """,
+    help_link='https://confluence.dimagi.com/display/commcarepublic/Bulk+User+Management'
+)
+
+APPLICATION_ERROR_REPORT = FrozenPrivilegeToggle(
+    privileges.APPLICATION_ERROR_REPORT,
+    'application_error_report',
+    label='Show Application Error Report',
+    tag=TAG_SOLUTIONS_OPEN,
+    namespaces=[NAMESPACE_DOMAIN],
+    description="Show Application Error Report.",
     # TODO: Move to public wiki
-    help_link='https://confluence.dimagi.com/display/saas/Bulk+User+Management'
+    help_link='https://confluence.dimagi.com/display/saas/Show+Application+Error+Report+Feature+Flag'
 )

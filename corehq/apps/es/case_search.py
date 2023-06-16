@@ -15,7 +15,7 @@ from datetime import datetime
 from warnings import warn
 
 from django.conf import settings
-from django.utils.dateparse import parse_date
+from django.utils.dateparse import parse_date, parse_datetime
 from memoized import memoized
 
 from corehq.apps.case_search.const import (
@@ -277,7 +277,7 @@ def case_property_starts_with(case_property_name, value):
     )
 
 
-def case_property_range_query(case_property_name, gt=None, gte=None, lt=None, lte=None):
+def case_property_range_query(case_property_name, gt=None, gte=None, lt=None, lte=None, is_user_input=False):
     """Returns cases where case property `key` fall into the range provided.
 
     """
@@ -295,9 +295,10 @@ def case_property_range_query(case_property_name, gt=None, gte=None, lt=None, lt
 
     # if its a date, use it
     # date range
+    parse = parse_datetime if is_user_input else parse_date
     kwargs = {
-        key: parse_date(value) for key, value in kwargs.items()
-        if value is not None and parse_date(value) is not None
+        key: parse(value) for key, value in kwargs.items()
+        if value is not None and parse(value) is not None
     }
     if not kwargs:
         raise TypeError()       # Neither a date nor number was passed in

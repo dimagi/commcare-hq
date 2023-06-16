@@ -113,7 +113,6 @@ from corehq.apps.app_manager.helpers.validators import (
     ShadowModuleValidator,
 )
 from corehq.apps.app_manager.suite_xml import xml_models as suite_models
-from corehq.apps.app_manager.suite_xml.features.case_tiles import CaseTileTemplates
 from corehq.apps.app_manager.suite_xml.generator import (
     MediaSuiteGenerator,
     SuiteGenerator,
@@ -2034,14 +2033,6 @@ class Detail(IndexedSchema, CaseListLookupMixin):
                     setattr(self, ele, getattr(src_detail, ele))
             else:
                 setattr(self, attr, getattr(src_detail, attr))
-
-    @classmethod
-    def wrap(cls, data):
-        if 'use_case_tiles' in data:
-            if data.get('use_case_tiles'):
-                data['case_tile_template'] = CaseTileTemplates.PERSON_SIMPLE.value
-            del data['use_case_tiles']
-        return super(Detail, cls).wrap(data)
 
 
 class CaseList(IndexedSchema, NavMenuItemMediaMixin):

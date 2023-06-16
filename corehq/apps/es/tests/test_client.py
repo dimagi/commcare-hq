@@ -2038,6 +2038,7 @@ class TestCreateDocumentAdapter(SimpleTestCase):
             secondary="some-secondary",
         )
         self.assertEqual(type(test_adapter), TestDocumentAdapter)
+        self.assertEqual(test_adapter.index_name, 'test_some-primary')
 
     @override_settings(ES_FOR_TEST_INDEX_MULTIPLEXED=True)
     def test_returns_multiplexer_adapter_with_multiplexed_setting(self):
@@ -2048,6 +2049,8 @@ class TestCreateDocumentAdapter(SimpleTestCase):
             secondary="some-secondary",
         )
         self.assertEqual(type(test_adapter), ElasticMultiplexAdapter)
+        self.assertEqual(test_adapter.index_name, 'test_some-primary')
+        self.assertEqual(test_adapter.secondary.index_name, 'test_some-secondary')
 
     @override_settings(ES_FOR_TEST_INDEX_MULTIPLEXED=True)
     @override_settings(ES_FOR_TEST_INDEX_SWAPPED=True)
@@ -2061,6 +2064,18 @@ class TestCreateDocumentAdapter(SimpleTestCase):
         self.assertEqual(type(test_adapter), ElasticMultiplexAdapter)
         self.assertEqual(test_adapter.primary.index_name, "test_some-secondary")
         self.assertEqual(test_adapter.secondary.index_name, "test_some-primary")
+
+    @override_settings(ES_FOR_TEST_INDEX_MULTIPLEXED=False)
+    @override_settings(ES_FOR_TEST_INDEX_SWAPPED=True)
+    def test_returns_doc_adapater_with_secondary_index(self):
+        test_adapter = create_document_adapter(
+            TestDocumentAdapter,
+            "some-primary",
+            "test_doc",
+            secondary="some-secondary",
+        )
+        self.assertEqual(type(test_adapter), TestDocumentAdapter)
+        self.assertEqual(test_adapter.index_name, "test_some-secondary")
 
     @override_settings(ES_FOR_TEST_INDEX_MULTIPLEXED=True)
     @override_settings(ES_FOR_TEST_INDEX_SWAPPED=True)
