@@ -18,10 +18,11 @@ class FCMUtil:
 
     @staticmethod
     def _build_notification(title, body):
-        return messaging.Notification(
-            title=title,
-            body=body,
-        )
+        if title or body:
+            return messaging.Notification(
+                title=title,
+                body=body,
+            )
 
     @staticmethod
     def check_for_empty_notification(title, body, data):
@@ -38,10 +39,9 @@ class FCMUtil:
         self.check_for_empty_notification(title, body, data)
         message = messaging.Message(
             token=registration_token,
-            data=data
+            data=data,
+            notification=self._build_notification(title, body)
         )
-        if title or body:
-            message.notification = self._build_notification(title, body)
         response = messaging.send(message, app=self.app)
         return response
 
@@ -59,10 +59,9 @@ class FCMUtil:
         self.check_for_empty_notification(title, body, data)
         message = messaging.MulticastMessage(
             tokens=registration_tokens,
-            data=data
+            data=data,
+            notification=self._build_notification(title, body)
         )
-        if title or body:
-            message.notification = self._build_notification(title, body)
         response = messaging.send_multicast(message, app=self.app)
         return response
 
