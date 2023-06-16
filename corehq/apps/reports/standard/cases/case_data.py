@@ -297,7 +297,7 @@ def _get_dd_props_by_group(domain, case_type):
         ret[prop.group_name].append(prop)
 
     uncategorized = ret.pop('', None)
-    for group, props in sorted(ret.items()):
+    for group, props in ret.items():
         yield (group, props)
 
     if uncategorized:
