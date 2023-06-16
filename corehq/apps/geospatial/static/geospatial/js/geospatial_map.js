@@ -243,10 +243,17 @@ hqDefine("geospatial/js/geospatial_map", [
                     var message = gettext("There are case(s) missing geolocation data.");
 
                     alert_user.alert_user(message + " " + missingCasesLinkTag, "warning");
+
+                    var $bannerAlert = $("#message-alerts");
+                    if ($bannerAlert.children().length > 1) {
+                        // Remove the initial banner, since it contains the old link
+                        $bannerAlert.children()[0].remove();
+                    }
                 }
             }
 
             if ($exportButton.length) {
+                ko.cleanNode($exportButton[0]);
                 $exportButton.koApplyBindings(mapControlsModel());
             }
         });
