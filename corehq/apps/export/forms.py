@@ -439,10 +439,10 @@ class DashboardFeedFilterForm(forms.Form):
         """
         # Confirm that either form filter data or case filter data but not both has been submitted.
         assert (
-            (self.cleaned_data['emwf_form_filter'] is not None) !=
-            (self.cleaned_data['emwf_case_filter'] is not None)
+            (self.cleaned_data['emwf_form_filter'] is not None)
+            != (self.cleaned_data['emwf_case_filter'] is not None)
         )
-        assert(export_type == 'form' or export_type == 'case')
+        assert (export_type == 'form' or export_type == 'case')
         if export_type == 'form':
             filters = self._to_form_export_instance_filters(can_access_all_locations, accessible_location_ids)
         else:
@@ -472,8 +472,8 @@ class DashboardFeedFilterForm(forms.Form):
             can_access_all_locations=can_access_all_locations,
             accessible_location_ids=accessible_location_ids,
             sharing_groups=CaseListFilter.selected_sharing_group_ids(emwf_selections),
-            show_all_data=CaseListFilter.show_all_data(emwf_selections) or
-            CaseListFilter.no_filters_selected(emwf_selections),
+            show_all_data=CaseListFilter.show_all_data(emwf_selections)
+            or CaseListFilter.no_filters_selected(emwf_selections),
             show_project_data=CaseListFilter.show_project_data(emwf_selections),
         )
 
@@ -506,16 +506,16 @@ class DashboardFeedFilterForm(forms.Form):
         if export_instance_filters:
             date_period = export_instance_filters.date_period
             selected_items = (
-                export_instance_filters.users +
-                export_instance_filters.reporting_groups +
-                export_instance_filters.locations +
-                export_instance_filters.user_types
+                export_instance_filters.users
+                + export_instance_filters.reporting_groups
+                + export_instance_filters.locations
+                + export_instance_filters.user_types
             )
             if isinstance(export_instance_filters, CaseExportInstanceFilters):
                 selected_items += (
-                    export_instance_filters.sharing_groups +
-                    (["all_data"] if export_instance_filters.show_all_data else []) +
-                    (["project_data"] if export_instance_filters.show_project_data else [])
+                    export_instance_filters.sharing_groups
+                    + (["all_data"] if export_instance_filters.show_all_data else [])
+                    + (["project_data"] if export_instance_filters.show_project_data else [])
                 )
 
             emwf_utils_class = CaseListFilterUtils if export_type is CaseExportInstance else \
