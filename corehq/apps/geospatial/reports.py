@@ -78,6 +78,7 @@ class CaseManagementMap(ProjectReport, CaseListMixin):
 
     @property
     def _invalid_geo_cases_report_link(self):
+        # Copy the set of filters to pre-populate the Case List Explorer page's filters
         query = self.request.GET.copy()
         if 'search_query' in query:
             query.pop('search_query')
