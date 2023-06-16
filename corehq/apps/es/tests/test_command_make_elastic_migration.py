@@ -37,7 +37,7 @@ class TestMakeElasticMigrationCommand(TestCase):
             operation, = migration.operations
             self.assertEqual({}, changes)
             self.assertIsInstance(operation, CreateIndex)
-            self.assertEqual("groups-20221228", operation.name)
+            self.assertEqual("test_groups-20221228", operation.name)
 
         with patch.object(Command, "write_migration_files", test_changes):
             call_command("make_elastic_migration", "-c", "groups")
@@ -51,7 +51,7 @@ class TestMakeElasticMigrationCommand(TestCase):
             self.assertIsInstance(operation, DeleteIndex)
             self.assertEqual(index_name, operation.name)
 
-        index_name = "trashme"
+        index_name = "test_trashme"
         with patch.object(Command, "write_migration_files", test_changes):
             call_command("make_elastic_migration", "-d", index_name)
 
@@ -76,10 +76,10 @@ class TestMakeElasticMigrationCommand(TestCase):
             self.assertEqual({}, changes)
             operations = sorted(migration.operations, key=sort_ops)
             create_1, create_2, delete_1, delete_2, update_1, update_2 = operations
-            self.assertEqual(create_1.name, "groups-20221228")
-            self.assertEqual(create_2.name, "sms-custom")
-            self.assertEqual(delete_1.name, "trashme_1")
-            self.assertEqual(delete_2.name, "trashme_2")
+            self.assertEqual(create_1.name, "test_groups-20221228")
+            self.assertEqual(create_2.name, "test_sms-custom")
+            self.assertEqual(delete_1.name, "test_trashme_1")
+            self.assertEqual(delete_2.name, "test_trashme_2")
             self.assertEqual(update_1.name, case_search.case_search_adapter.index_name)
             self.assertEqual(
                 update_1.properties,
@@ -114,17 +114,17 @@ class TestMakeElasticMigrationCommand(TestCase):
             call_command("make_elastic_migration", "-d", "trashme", "-n", "in-valid")
 
     def test_build_migration(self):
-        creates = [(groups.group_adapter, "groups-custom")]
+        creates = [(groups.group_adapter, "test_groups-custom")]
         updates = [(groups.group_adapter, {"domain": {"type": "string"}})]
-        deletes = ["trashme"]
+        deletes = ["test_trashme"]
         command = Command()
         command.empty = False
         migration = command.build_migration(creates, updates, deletes)
         create_op, delete_op, update_op = sorted(migration.operations, key=sort_ops)
         self.assertIsInstance(create_op, CreateIndex)
-        self.assertEqual(create_op.name, "groups-custom")
+        self.assertEqual(create_op.name, "test_groups-custom")
         self.assertIsInstance(delete_op, DeleteIndex)
-        self.assertEqual(delete_op.name, "trashme")
+        self.assertEqual(delete_op.name, "test_trashme")
         self.assertIsInstance(update_op, UpdateIndexMapping)
         self.assertEqual(update_op.name, groups.group_adapter.index_name)
         self.assertEqual(update_op.properties, {"domain": {"type": "string"}})
