@@ -1,5 +1,6 @@
 {
     "slug": "person_simple",
     "filename": "person_simple.xml",
-    "fields": ["header", "top_left", "sex", "bottom_left", "date"]
+    "fields": ["header", "top_left", "sex", "bottom_left", "date"],
+    "preview": "something else"
 }

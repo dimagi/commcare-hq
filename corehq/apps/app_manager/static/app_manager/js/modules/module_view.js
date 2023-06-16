@@ -33,6 +33,7 @@ hqDefine("app_manager/js/modules/module_view", function () {
                     allCaseModules: initial_page_data('all_case_modules'),
                     caseTileTemplateOptions: options.case_tile_template_options,
                     caseTileFields: options.case_tile_fields,
+                    caseTilePreviews: options.case_tile_previews,
                     childCaseTypes: detail.subcase_types,
                     fixture_columns_by_type: options.fixture_columns_by_type || {},
                     parentSelect: detail.parent_select,

@@ -30,6 +30,7 @@ class CaseTileTemplateConfig:
     slug: str
     filename: str
     fields: List[str]
+    preview: str
 
     @property
     def filepath(self):

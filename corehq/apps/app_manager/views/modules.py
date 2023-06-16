@@ -235,6 +235,9 @@ def _get_shared_module_view_context(request, app, module, case_property_builder,
             'case_tile_template_options': CaseTileTemplates.choices,
             'case_tile_fields': {template[0]: case_tile_template_config(template[0]).fields
                                  for template in CaseTileTemplates.choices},
+            # TODO: send one item with all config?
+            'case_tile_previews': {template[0]: case_tile_template_config(template[0]).preview
+                                 for template in CaseTileTemplates.choices},
             'search_config': {
                 'search_properties':
                     module.search_config.properties if module_offers_search(module) else [],

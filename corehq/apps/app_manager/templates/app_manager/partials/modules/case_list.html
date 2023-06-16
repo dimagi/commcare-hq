@@ -47,6 +47,12 @@
             </label>
             <select data-bind="options:caseTileTemplateOptions, optionsText: 'templateName', optionsValue: 'templateValue', value:caseTileTemplate" class="form-control"></select>
           </div>
+          <div class="col-sm-6" data-bind="visible: caseTilePreviewForTemplate">
+            <label>
+              {% trans "Preview" %}
+            </label>
+            <div data-bind="html: caseTilePreviewForTemplate"></div>
+          </div>
         </div>
       {% endif %}
       {% if request|toggle_enabled:'SHOW_PERSIST_CASE_CONTEXT_SETTING' %}
