@@ -834,9 +834,8 @@ class DeviceIdLastUsed(DocumentSchema):
         return all(getattr(self, p) == getattr(other, p) for p in self.properties())
 
     def update_fcm_token(self, fcm_token, fcm_token_timestamp):
-        if fcm_token and fcm_token_timestamp:
-            self.fcm_token = fcm_token
-            self.fcm_token_timestamp = fcm_token_timestamp
+        self.fcm_token = fcm_token
+        self.fcm_token_timestamp = fcm_token_timestamp
 
 
 class LastSubmission(DocumentSchema):
@@ -2314,8 +2313,8 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
         """
         when = when or datetime.utcnow()
         device = self.get_device(device_id)
+        save_user = False
         if device:
-            device.update_fcm_token(fcm_token, fcm_token_timestamp)
             do_update = False
             if when.date() > device.last_used.date():
                 do_update = True
@@ -2338,15 +2337,19 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
                 self.last_device = DeviceIdLastUsed.wrap(self.get_last_used_device().to_json())
                 meta = self.last_device.get_last_used_app_meta()
                 self.last_device.app_meta = [meta] if meta else []
-                return True
+                save_user = True
+            if fcm_token and fcm_token_timestamp:
+                device.update_fcm_token(fcm_token, fcm_token_timestamp)
+                save_user = True
         else:
             device = DeviceIdLastUsed(device_id=device_id, last_used=when)
-            device.update_fcm_token(fcm_token, fcm_token_timestamp)
+            if fcm_token and fcm_token_timestamp:
+                device.update_fcm_token(fcm_token, fcm_token_timestamp)
             device.update_meta(commcare_version, device_app_meta)
             self.devices.append(device)
             self.last_device = device
-            return True
-        return False
+            save_user = True
+        return save_user
 
     def get_last_used_device(self):
         if not self.devices:
