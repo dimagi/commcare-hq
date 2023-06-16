@@ -121,7 +121,7 @@ class CreateExportTagForm(forms.Form):
                     ),
                     data_bind="visible: showAppType()",
                 ),
-                crispy.Div(  # Case export fields
+                crispy.Div(
                     crispy.Field(
                         'application',
                         placeholder=_("Select Application"),
