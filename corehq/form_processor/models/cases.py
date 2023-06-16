@@ -1158,7 +1158,7 @@ class CommCareCaseIndex(PartitionedModel, models.Model, SaveStateMixin):
             "identifier='{i.identifier}', "
             "referenced_type='{i.referenced_type}', "
             "referenced_id='{i.referenced_id}', "
-            "relationship='{i.relationship})"
+            "relationship='{i.relationship}')"
         ).format(i=self)
 
     class Meta(object):
