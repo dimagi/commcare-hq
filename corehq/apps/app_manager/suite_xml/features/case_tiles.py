@@ -39,11 +39,14 @@ class CaseTileTemplateConfig:
 
 @memoized
 def case_tile_template_config(template):
-    with open(
-        TILE_DIR / (template + '.json'),
-        encoding='utf-8'
-    ) as f:
-        data = json.loads(f.read())
+    try:
+        with open(
+            TILE_DIR / (template + '.json'),
+            encoding='utf-8'
+        ) as f:
+            data = json.loads(f.read())
+    except FileNotFoundError:
+        data = {}   # TODO: this doesn't have required properties
     return CaseTileTemplateConfig(**data)
 
 
