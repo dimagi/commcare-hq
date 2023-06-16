@@ -1,7 +1,6 @@
 from django.conf import settings
 from django.urls import reverse
 from django.utils.translation import gettext_noop
-from django.http import QueryDict
 
 from corehq.apps.geospatial.dispatchers import CaseManagementMapDispatcher
 from corehq.apps.reports.standard import ProjectReport

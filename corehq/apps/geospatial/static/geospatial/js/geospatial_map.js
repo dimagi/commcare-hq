@@ -33,7 +33,7 @@ hqDefine("geospatial/js/geospatial_map", [
                 center: centerCoordinates, // starting position [lng, lat]
                 zoom: 12,
                 attribution: '© <a href="https://www.mapbox.com/about/maps/">Mapbox</a> ©' +
-                             ' <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+                             ' <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>',
             });
 
             const draw = new MapboxDraw({
@@ -42,13 +42,13 @@ hqDefine("geospatial/js/geospatial_map", [
                 boxSelect: true, // enables box selection
                 controls: {
                     polygon: true,
-                    trash: true
+                    trash: true,
                 },
             });
 
             map.addControl(draw);
 
-            map.on("draw.update", function(e) {
+            map.on("draw.update", function (e) {
                 var selectedFeatures = e.features;
 
                 // Check if any features are selected
@@ -57,12 +57,12 @@ hqDefine("geospatial/js/geospatial_map", [
                 }
                 var selectedFeature = selectedFeatures[0];
 
-                if (selectedFeature.geometry.type == 'Polygon') {
+                if (selectedFeature.geometry.type === 'Polygon') {
                     filterCasesInPolygon(selectedFeature);
                 }
             });
 
-            map.on('draw.selectionchange', function(e) {
+            map.on('draw.selectionchange', function (e) {
                 // See https://github.com/mapbox/mapbox-gl-draw/blob/main/docs/API.md#drawselectionchange
                 var selectedFeatures = e.features;
                 if (!selectedFeatures.length) {
@@ -73,7 +73,7 @@ hqDefine("geospatial/js/geospatial_map", [
                 var selectedFeature = selectedFeatures[0];
                 // Update this logic if we need to support case filtering by selecting multiple polygons
 
-                if (selectedFeature.geometry.type == 'Polygon') {
+                if (selectedFeature.geometry.type === 'Polygon') {
                     // Now that we know we selected a polygon, we need to check which markers are inside
                     filterCasesInPolygon(selectedFeature);
                 }
@@ -81,7 +81,7 @@ hqDefine("geospatial/js/geospatial_map", [
 
             function getCoordinates(event) {
                 return event.lngLat;
-            };
+            }
 
             function changeCaseMarkerColor(selectedCase, newColor) {
                 let marker = selectedCase.marker;
@@ -89,7 +89,7 @@ hqDefine("geospatial/js/geospatial_map", [
                 let svg = element.getElementsByTagName("svg")[0];
                 let path = svg.getElementsByTagName("path")[0];
                 path.setAttribute("fill", newColor);
-            };
+            }
 
             function filterCasesInPolygon(polygonFeature) {
                 userFilteredCases = [];
@@ -102,7 +102,7 @@ hqDefine("geospatial/js/geospatial_map", [
                             userFilteredCases.push(currCase);
                             changeCaseMarkerColor(currCase, selectedMarkerColor);
                         } else {
-                            changeCaseMarkerColor(currCase, defaultMarkerColor)
+                            changeCaseMarkerColor(currCase, defaultMarkerColor);
                         }
                     }
                 });
@@ -110,7 +110,7 @@ hqDefine("geospatial/js/geospatial_map", [
 
             // We should consider refactoring and splitting the below out to a new JS file
             function moveMarkerToClickedCoordinate(coordinates) {
-                if (clickedMarker != null) {
+                if (clickedMarker !== null) {
                     clickedMarker.remove();
                 }
                 if (draw.getMode() === 'draw_polygon') {
@@ -122,15 +122,15 @@ hqDefine("geospatial/js/geospatial_map", [
                 clickedMarker.addTo(map);
             }
 
-            self.getMapboxDrawInstance = function() {
+            self.getMapboxDrawInstance = function () {
                 return draw;
-            }
+            };
 
-            self.getMapboxInstance = function() {
+            self.getMapboxInstance = function () {
                 return map;
-            }
+            };
 
-            self.clearMap = function() {
+            self.clearMap = function () {
                 // Clear filtered cases
                 userFilteredCases = [];
                 // Remove markers
@@ -138,9 +138,9 @@ hqDefine("geospatial/js/geospatial_map", [
                     if (currCase.marker) {
                         currCase.marker.remove();
                     }
-                })
+                });
                 cases = [];
-            }
+            };
 
             self.addCaseMarkersToMap = function () {
                 cases.forEach(element => {
@@ -171,7 +171,7 @@ hqDefine("geospatial/js/geospatial_map", [
             return self;
         };
 
-        var exportGeoJson = function(drawInstance) {
+        var exportGeoJson = function (drawInstance) {
             // Credit to https://gist.github.com/danswick/36796153bd86ce982a59043cbe0ac8f7
             // I could not get this to work using knockout.js. It did set the attributes, but a download wasn't
             // triggered
@@ -194,26 +194,26 @@ hqDefine("geospatial/js/geospatial_map", [
             var mapboxinstance = map.getMapboxInstance();
             self.btnExportDisabled = ko.observable(true);
 
-            var mapHasPolygons = function() {
+            var mapHasPolygons = function () {
                 var drawnFeatures = map.getMapboxDrawInstance().getAll().features;
                 if (!drawnFeatures.length) {
                     return false;
                 }
-                return drawnFeatures.some(function(feature) {
+                return drawnFeatures.some(function (feature) {
                     return feature.geometry.type === "Polygon";
-                })
+                });
             };
 
-            mapboxinstance.on('draw.delete', function(e) {
+            mapboxinstance.on('draw.delete', function () {
                 self.btnExportDisabled(!mapHasPolygons());
             });
 
-            mapboxinstance.on('draw.create', function(e) {
+            mapboxinstance.on('draw.create', function () {
                 self.btnExportDisabled(!mapHasPolygons());
             });
 
             return self;
-        }
+        };
 
         $(document).ajaxComplete(function () {
             // This fires everytime an ajax request is completed
@@ -225,7 +225,7 @@ hqDefine("geospatial/js/geospatial_map", [
                 map = loadMapBox();
             }
 
-            $exportButton.click(function(e) {
+            $exportButton.click(function () {
                 if (map) {
                     exportGeoJson(map.getMapboxDrawInstance());
                 }
@@ -234,12 +234,12 @@ hqDefine("geospatial/js/geospatial_map", [
             if ($data.length && map) {
                 var contextData = $data.data("context");
                 map.clearMap();
-                cases = contextData.cases
+                cases = contextData.cases;
                 map.addCaseMarkersToMap();
 
                 if (contextData.invalid_geo_cases_report_link) {
                     var missingCasesLink = contextData.invalid_geo_cases_report_link;
-                    var missingCasesLinkTag = "<a href=" + missingCasesLink + ">" + gettext("View here") + "</a>"
+                    var missingCasesLinkTag = "<a href=" + missingCasesLink + ">" + gettext("View here") + "</a>";
                     var message = gettext("There are case(s) missing geolocation data.");
 
                     alert_user.alert_user(message + " " + missingCasesLinkTag, "warning");
