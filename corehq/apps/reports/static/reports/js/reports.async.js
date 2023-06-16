@@ -150,7 +150,9 @@ hqDefine("reports/js/reports.async", function () {
                         loadFilters(data);
                     }
                     self.issueAttempts = 0;
-                    self.loadingIssueModal.modal('hide');
+                    if ($('loadingIssueModal').hasClass('show')) {
+                        self.loadingIssueModal.modal('hide');
+                    }
                     self.hqLoading = $(self.loaderClass);
                     self.reportContent.html(data.report);
                     hqImport('reports/js/charts/main').init();
