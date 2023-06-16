@@ -10,3 +10,8 @@ class DevicesLimitExceeded(FCMUtilException):
 class EmptyData(FCMUtilException):
     def __init__(self):
         super().__init__("One of the fields from 'title, body, data' is required!")
+
+
+class FCMNotSetup(FCMUtilException):
+    def __init__(self):
+        super().__init__("FCM is not setup on this environment!")

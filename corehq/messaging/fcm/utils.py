@@ -3,18 +3,22 @@ import logging
 from django.conf import settings
 from firebase_admin import messaging, credentials, initialize_app
 
-from corehq.messaging.fcm.exceptions import DevicesLimitExceeded, EmptyData
+from corehq.messaging.fcm.exceptions import DevicesLimitExceeded, EmptyData, FCMNotSetup
 
 logger = logging.getLogger(__name__)
 
 MAX_DEVICES_ALLOWED_MULTICAST = 500
-HQ_FCM_UTIL = None
+
+if settings.FCM_CREDS:
+    creds = credentials.Certificate(settings.FCM_CREDS)
+    default_app = initialize_app(credential=creds, name='hq_fcm')
 
 
 class FCMUtil:
-    def __init__(self, app_name, fcm_creds=settings.FCM_CREDS):
-        creds = credentials.Certificate(fcm_creds)
-        self.app = initialize_app(credential=creds, name=app_name)
+    def __init__(self):
+        if not settings.FCM_CREDS:
+            raise FCMNotSetup()
+        self.app = default_app
 
     @staticmethod
     def _build_notification(title, body):
@@ -64,7 +68,3 @@ class FCMUtil:
         )
         response = messaging.send_multicast(message, app=self.app)
         return response
-
-
-if settings.FCM_CREDS:
-    HQ_FCM_UTIL = FCMUtil(app_name='hq_fcm')

@@ -32,8 +32,9 @@ from django.db import models
 from django.http import Http404
 from corehq.apps.formplayer_api.smsforms.api import TouchformsError
 
-from corehq.messaging.fcm.utils import HQ_FCM_UTIL
+from corehq.messaging.fcm.utils import FCMUtil
 from corehq.apps.users.models import CommCareUser
+
 
 @contextmanager
 def no_op_context_manager():
@@ -537,7 +538,7 @@ class FCMNotificationContent(Content):
         )
         subject = message = data = None
 
-        if not HQ_FCM_UTIL:
+        if not settings.FCM_CREDS:
             logged_subevent.error(MessagingEvent.ERROR_FCM_NOT_AVAILABLE)
             return
 
@@ -579,7 +580,7 @@ class FCMNotificationContent(Content):
             logged_subevent.error(e.error_type, additional_error_text=e.additional_text)
             return
 
-        HQ_FCM_UTIL.send_to_multiple_devices(registration_tokens=devices_fcm_token, title=subject, body=message,
+        FCMUtil().send_to_multiple_devices(registration_tokens=devices_fcm_token, title=subject, body=message,
                                              data=data)
         logged_subevent.completed()
 

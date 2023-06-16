@@ -66,7 +66,7 @@ from corehq.messaging.scheduling.scheduling_partitioned.models import ScheduleIn
 from corehq.toggles import EXTENSION_CASES_SYNC_ENABLED
 from couchdbkit import ResourceNotFound
 from langcodes import get_name as get_language_name
-from corehq.messaging.fcm.utils import HQ_FCM_UTIL
+
 
 def validate_time(value):
     error = ValidationError(_("Please enter a valid 24-hour time in the format HH:MM"))
@@ -2967,7 +2967,7 @@ class ConditionalAlertScheduleForm(ScheduleForm):
             self.fields['content'].choices += [
                 (self.CONTENT_CUSTOM_SMS, _("Custom SMS")),
             ]
-        if HQ_FCM_UTIL:
+        if settings.FCM_CREDS:
             self.fields['content'].choices += [
                 (self.CONTENT_FCM_NOTIFICATION, _("Push Notification"))
             ]
