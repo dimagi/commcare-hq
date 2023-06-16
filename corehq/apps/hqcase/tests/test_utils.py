@@ -7,7 +7,7 @@ from couchexport.deid import deid_date, deid_ID
 
 from corehq.apps.hqcase.utils import (
     get_case_value,
-    get_censored_case_data,
+    get_deidentified_data,
 )
 
 DOMAIN = 'test-domain'
@@ -55,7 +55,7 @@ class TestGetCensoredCaseData(TestCase):
 
     def test_no_censor_data_provided(self):
         with get_case() as case:
-            censored_attrs, censored_props = get_censored_case_data(case, {})
+            censored_attrs, censored_props = get_deidentified_data(case, {})
 
         self.assertTrue(censored_attrs == censored_props == {})
 
@@ -72,7 +72,7 @@ class TestGetCensoredCaseData(TestCase):
             'captain': self.id_transform,
         }
         with get_case(update=properties, **attrs) as case:
-            censored_attrs, censored_props = get_censored_case_data(case, censor_data)
+            censored_attrs, censored_props = get_deidentified_data(case, censor_data)
 
         self.assertTrue(properties['captain'] != censored_props['captain'])
         self.assertTrue(attrs['date_opened'] != censored_attrs['date_opened'])
@@ -82,7 +82,7 @@ class TestGetCensoredCaseData(TestCase):
             'captain': self.id_transform,
         }
         with get_case() as case:
-            censored_attrs, censored_props = get_censored_case_data(case, censor_data)
+            censored_attrs, censored_props = get_deidentified_data(case, censor_data)
 
         self.assertTrue(censored_attrs == censored_props == {})
 
@@ -94,7 +94,7 @@ class TestGetCensoredCaseData(TestCase):
             'captain': self.invalid_transform,
         }
         with get_case(update=properties) as case:
-            censored_attrs, censored_props = get_censored_case_data(case, censor_data)
+            censored_attrs, censored_props = get_deidentified_data(case, censor_data)
 
         self.assertTrue(censored_attrs == {})
         self.assertTrue(censored_props['captain'] == '')

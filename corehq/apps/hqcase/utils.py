@@ -262,7 +262,7 @@ def get_case_value(case: CommCareCase, value: str):
     return None, None
 
 
-def get_censored_case_data(case: CommCareCase, censor_data: dict):
+def get_deidentified_data(case: CommCareCase, censor_data: dict):
     """
     This function is used to get the data on the specified case, but with the `censor_data `
     properties censored.

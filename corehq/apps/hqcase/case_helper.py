@@ -3,7 +3,7 @@ from dataclasses import dataclass
 
 from corehq.apps.users.models import CouchUser
 from corehq.form_processor.models.cases import CommCareCase
-from corehq.apps.hqcase.utils import submit_case_blocks, get_censored_case_data
+from corehq.apps.hqcase.utils import submit_case_blocks, get_deidentified_data
 from casexml.apps.case.mock import CaseBlock
 
 from .api.updates import BaseJsonCaseChange, handle_case_update
@@ -238,7 +238,7 @@ class CaseHelper:
             if _case.case_id in processed_cases:
                 return
 
-            censored_attributes, censored_properties = get_censored_case_data(_case, censor_data)
+            censored_attributes, censored_properties = get_deidentified_data(_case, censor_data)
             case_block = CaseBlock(
                 create=True,
                 case_id=uuid.uuid4().hex,
