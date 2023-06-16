@@ -111,6 +111,8 @@ FILTERED_BULK_USER_DOWNLOAD = 'filtered_bulk_user_download'
 
 APPLICATION_ERROR_REPORT = 'application_error_report'
 
+DATA_DICTIONARY = 'data_dictionary'
+
 MAX_PRIVILEGES = [
     LOOKUP_TABLES,
     API_ACCESS,
@@ -170,6 +172,7 @@ MAX_PRIVILEGES = [
     EXPORT_OWNERSHIP,
     FILTERED_BULK_USER_DOWNLOAD,
     APPLICATION_ERROR_REPORT,
+    DATA_DICTIONARY,
 ]
 
 # These are special privileges related to their own rates in a SoftwarePlanVersion
@@ -244,4 +247,5 @@ class Titles(object):
             EXPORT_OWNERSHIP: _("Allow exports to have ownership"),
             FILTERED_BULK_USER_DOWNLOAD: _("Bulk user management features"),
             APPLICATION_ERROR_REPORT: _("Application error report"),
+            DATA_DICTIONARY: _("Project level data dictionary of cases"),
         }.get(privilege, privilege)
