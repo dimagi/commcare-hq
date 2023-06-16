@@ -121,15 +121,12 @@ class CreateExportTagForm(forms.Form):
                     ),
                     data_bind="visible: showAppType()",
                 ),
-                crispy.Div(  # Case export fields
+                crispy.Div(  # Form export fields
                     crispy.Field(
                         'application',
                         placeholder=_("Select Application"),
                         data_bind="value: application",
                     ),
-                    data_bind="visible: isFormModel()",
-                ),
-                crispy.Div(  # Form export fields
                     crispy.Field(
                         'module',
                         placeholder=_("Select Menu"),
