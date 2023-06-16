@@ -471,8 +471,7 @@ class AddSavedReportConfigView(View):
             # in case a non-admin user maliciously tries to edit another user's config
             # or an admin edits a non-shared report in some way
             assert config.owner_id == self.user_id or (
-                self.user.is_domain_admin(self.domain) and
-                config.is_shared_on_domain()
+                self.user.is_domain_admin(self.domain) and config.is_shared_on_domain()
             )
         else:
             config.domain = self.domain
@@ -576,8 +575,7 @@ def delete_config(request, domain, config_id):
 
 def _can_delete_saved_report(report, user, domain):
     return domain == report.domain and user._id == report.owner_id or (
-        user.is_domain_admin(domain) and
-        report.is_shared_on_domain()
+        user.is_domain_admin(domain) and report.is_shared_on_domain()
     )
 
 
@@ -785,11 +783,11 @@ class ScheduledReportsView(BaseProjectReportSectionView):
         form.fields['recipient_emails'].choices = [(e, e) for e in web_user_emails]
 
         form.fields['hour'].help_text = _("This scheduled report's timezone is %s (UTC%s)") % \
-                                        (Domain.get_by_name(self.domain)['default_timezone'],
-                                        get_timezone_difference(self.domain))
+                                         (Domain.get_by_name(self.domain)['default_timezone'],
+                                          get_timezone_difference(self.domain))
         form.fields['stop_hour'].help_text = _("This scheduled report's timezone is %s (UTC%s)") % \
-                                        (Domain.get_by_name(self.domain)['default_timezone'],
-                                        get_timezone_difference(self.domain))
+                                              (Domain.get_by_name(self.domain)['default_timezone'],
+                                               get_timezone_difference(self.domain))
         return form
 
     @property
@@ -1515,7 +1513,7 @@ def case_form_data(request, domain, case_id, xform_id):
 @require_GET
 def download_form(request, domain, instance_id):
     instance = get_form_or_404(domain, instance_id)
-    assert(domain == instance.domain)
+    assert (domain == instance.domain)
 
     response = HttpResponse(content_type='application/xml')
     response.write(instance.get_xml())
@@ -1761,7 +1759,8 @@ def export_report(request, domain, export_hash, format):
             return HttpResponseNotFound(_("We don't support this format"))
 
 
-@require_permission(HqPermissions.view_report, 'corehq.apps.reports.standard.project_health.ProjectHealthDashboard')
+@require_permission(HqPermissions.view_report,
+                    'corehq.apps.reports.standard.project_health.ProjectHealthDashboard')
 def project_health_user_details(request, domain, user_id):
     # todo: move to project_health.py? goes with project health dashboard.
     user = get_document_or_404(CommCareUser, domain, user_id)
