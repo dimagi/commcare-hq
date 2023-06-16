@@ -216,7 +216,7 @@ def get_live_case_ids_and_indices(domain, owned_ids, timing_context):
             # hosts_by_extension since both are live and therefore this index
             # will not need to be traversed in other liveness calculations.
         elif relationship == EXTENSION:
-            if sub_id in open_ids and not extension_is_child(sub_id, ref_id):
+            if sub_id in open_ids and sub_id not in children_by_parent[ref_id]:
                 # A case that is both a child and an extension is not an
                 # extension.
                 if ref_id in live_ids:
@@ -273,17 +273,10 @@ def get_live_case_ids_and_indices(domain, owned_ids, timing_context):
     def filter_deleted_indices(related):
         return [index for index in related if index.referenced_id]
 
-    def extension_is_child(extension_id, host_id):
-        if host_id in children_by_parent:
-            return extension_id in children_by_parent[host_id]
-
-        indices = get_reverse_indices(host_id)
-        child_ids = {
-            index.case_id for index in indices
-            if index.relationship_id == CommCareCaseIndex.CHILD
-        }
-        children_by_parent[host_id] = child_ids
-        return extension_id in child_ids
+    def populate_children_by_parent(related):
+        for index in related:
+            if index.relationship == CommCareCaseIndex.CHILD:
+                children_by_parent[index.referenced_id].add(index.case_id)
 
     IGNORE = object()
     debug = logging.getLogger(__name__).debug
@@ -294,7 +287,7 @@ def get_live_case_ids_and_indices(domain, owned_ids, timing_context):
     extensions_by_host = defaultdict(set)  # host_id -> (open) extension_ids
     hosts_by_extension = defaultdict(set)  # (open) extension_id -> host_ids
     parents_by_child = defaultdict(set)    # child_id -> parent_ids
-    children_by_parent = {}
+    children_by_parent = defaultdict(set)  # parent_id -> (open) child_id
     indices = defaultdict(list)  # case_id -> list of CommCareCaseIndex-like, used as a cache for later
     seen_ix = defaultdict(set)   # case_id -> set of '<index.case_id> <index.identifier>'
 
@@ -302,7 +295,6 @@ def get_live_case_ids_and_indices(domain, owned_ids, timing_context):
     owned_ids = set(owned_ids)  # owned, open case ids (may be extensions)
     open_ids = set(owned_ids)
     get_related_indices = partial(CommCareCaseIndex.objects.get_related_indices, domain)
-    get_reverse_indices = partial(CommCareCaseIndex.objects.get_reverse_indices, domain)
     while next_ids:
         exclude = set(chain.from_iterable(seen_ix[id] for id in next_ids))
         with timing_context("get_related_indices({} cases, {} seen)".format(len(next_ids), len(exclude))):
@@ -316,6 +308,7 @@ def get_live_case_ids_and_indices(domain, owned_ids, timing_context):
                 indices[index.case_id].append(index)
 
             related_not_deleted = filter_deleted_indices(related)
+            populate_children_by_parent(related_not_deleted)
             update_open_and_deleted_ids(related_not_deleted)
             next_ids = {classify(index, next_ids)
                         for index in related_not_deleted
