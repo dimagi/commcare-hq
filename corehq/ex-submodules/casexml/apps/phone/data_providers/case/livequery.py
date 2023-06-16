@@ -273,6 +273,12 @@ def get_live_case_ids_and_indices(domain, owned_ids, timing_context):
                 case_ids.remove(case_id)
         open_ids.update(case_ids)
 
+    def populate_indices(related):
+        # add all indices to `indices` so that they are included in the
+        # restore
+        for index in related:
+            indices[index.case_id].append(index)
+
     def filter_deleted_indices(related):
         return [index for index in related if index.referenced_id]
 
@@ -305,11 +311,7 @@ def get_live_case_ids_and_indices(domain, owned_ids, timing_context):
             if not related:
                 break
 
-            # add all indices to `indices` so that they are included in
-            # the restore
-            for index in related:
-                indices[index.case_id].append(index)
-
+            populate_indices(related)
             related_not_deleted = filter_deleted_indices(related)
             populate_children_by_parent(related_not_deleted)
             update_open_and_deleted_ids(related_not_deleted)
