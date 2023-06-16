@@ -32,7 +32,7 @@ from memoized import memoized
 from corehq import toggles
 from corehq.apps.app_manager import id_strings
 from corehq.apps.app_manager.const import RETURN_TO
-from corehq.apps.app_manager.exceptions import SuiteError, SuiteValidationError
+from corehq.apps.app_manager.exceptions import SuiteValidationError
 from corehq.apps.app_manager.id_strings import callout_header_locale
 from corehq.apps.app_manager.suite_xml.const import FIELD_TYPE_LEDGER
 from corehq.apps.app_manager.suite_xml.contributors import SectionContributor
@@ -195,9 +195,7 @@ class DetailContributor(SectionContributor):
             if detail.lookup_enabled and detail.lookup_action:
                 d.lookup = self._get_lookup_element(detail, module)
 
-            # Add no items text
-            if detail_type.endswith('short') and self.app.supports_empty_case_list_text:
-                d.no_items_text = Text(locale_id=id_strings.no_items_text_detail(module))
+            self.add_no_items_text_to_detail(d, self.app, detail_type, module)
 
             # Add variables
             variables = list(
@@ -514,6 +512,11 @@ class DetailContributor(SectionContributor):
                         sort_node='')]
         d.fields = fields
         return d
+
+    @staticmethod
+    def add_no_items_text_to_detail(detail, app, detail_type, module):
+        if detail_type.endswith('short') and app.supports_empty_case_list_text:
+            detail.no_items_text = Text(locale_id=id_strings.no_items_text_detail(module))
 
 
 class DetailsHelper(object):
