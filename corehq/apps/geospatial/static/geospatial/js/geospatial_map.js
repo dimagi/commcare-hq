@@ -253,7 +253,7 @@ hqDefine("geospatial/js/geospatial_map", [
             }
 
             if ($exportButton.length) {
-                ko.cleanNode($exportButton[0]);
+                ko.cleanNode($exportButton);
                 $exportButton.koApplyBindings(mapControlsModel());
             }
         });
