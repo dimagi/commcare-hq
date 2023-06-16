@@ -75,7 +75,7 @@ class TestElasticSyncMultiplexedCommand(SimpleTestCase):
     @patch('corehq.apps.es.management.commands.elastic_sync_multiplexed.ESSyncUtil.perform_cleanup')
     @patch('corehq.apps.es.management.commands.elastic_sync_multiplexed.es_manager.reindex')
     def test_pass_multiplexed_index_raise_no_errors(self, sync_mock, cleanup_mock, _):
-        sync_mock.return_value = "task_key"
+        sync_mock.return_value = "task_key:123"
         call_command(COMMAND_NAME, 'start', INDEX_CNAME)
 
     @patch("corehq.apps.es.utils.TASK_POLL_DELAY", 0)
