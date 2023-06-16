@@ -53,7 +53,6 @@ from corehq.apps.app_manager.decorators import (
 from corehq.apps.app_manager.exceptions import (
     AppValidationError,
     BuildConflictException,
-    ModuleIdMissingException,
     PracticeUserException,
     XFormValidationFailed,
 )
@@ -77,7 +76,6 @@ from corehq.apps.app_manager.views.utils import (
     get_langs,
     report_build_time,
 )
-from corehq.apps.builds.models import CommCareBuildConfig
 from corehq.apps.domain.dbaccessors import get_doc_count_in_domain_by_class
 from corehq.apps.domain.decorators import (
     LoginAndDomainMixin,
@@ -265,8 +263,10 @@ def current_app_version(request, domain, app_id):
 def release_build(request, domain, app_id, saved_app_id):
     is_released = request.POST.get('is_released') == 'true'
     if not is_released:
-        if (LatestEnabledBuildProfiles.objects.filter(build_id=saved_app_id, active=True).exists() or
-                AppReleaseByLocation.objects.filter(build_id=saved_app_id, active=True).exists()):
+        if (
+            LatestEnabledBuildProfiles.objects.filter(build_id=saved_app_id, active=True).exists()
+            or AppReleaseByLocation.objects.filter(build_id=saved_app_id, active=True).exists()
+        ):
             return json_response({'error': _('Please disable any enabled profiles/location restriction '
                                              'to un-release this build.')})
     ajax = request.POST.get('ajax') == 'true'
@@ -650,6 +650,7 @@ class LanguageProfilesView(View):
                 id = profile.get('id')
                 if not id:
                     id = uuid.uuid4().hex
+
                 def practice_user_id():
                     if not app.enable_practice_users:
                         return ''
