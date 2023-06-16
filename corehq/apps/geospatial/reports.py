@@ -79,15 +79,14 @@ class CaseManagementMap(ProjectReport, CaseListMixin):
 
     @property
     def _invalid_geo_cases_report_link(self):
-        q = QueryDict(mutable=True)
-        q['search_xpath'] = f"{GEO_POINT_CASE_PROPERTY} = ''"
+        query = self.request.GET.copy()
+        if 'search_query' in query:
+            query.pop('search_query')
 
-        if self.case_type:
-            q['case_type'] = self.case_type
-
+        query['search_xpath'] = f"{GEO_POINT_CASE_PROPERTY} = ''"
         cle = CaseListExplorer(self.request, domain=self.domain)
 
         return "{resource}?{query_params}".format(
             resource=cle.get_url(self.domain),
-            query_params=q.urlencode(),
+            query_params=query.urlencode(),
         )
