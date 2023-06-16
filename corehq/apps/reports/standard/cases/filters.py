@@ -32,6 +32,7 @@ class CaseSearchFilter(BaseSimpleFilter):
 
     @property
     def help_inline(self):
+        from corehq import toggles
         cle_link = "#todoCLE"
         if toggles.CASE_LIST_EXPLORER.enabled(self.domain):
             from corehq.apps.reports.standard.cases.case_list_explorer import CaseListExplorer
