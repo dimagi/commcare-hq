@@ -206,7 +206,12 @@ class EntryInstances(PostProcessor):
             if existing:
                 if existing.src != instance.src:
                     raise DuplicateInstanceIdError(
-                        _("Duplicate custom instance in {}: {}").format(entry.command.id, instance.id))
+                        _("Conflicting instance declarations in {entry_id} for {instance_id}:"
+                          "{src_1} != {src_2}").format(
+                              entry_id=entry.command.id,
+                              instance_id=instance.id,
+                              src_1=instance.src,
+                              src_2=existing.src))
 
                 # we already have this one, so we can ignore it
                 custom_instances.discard(instance)
