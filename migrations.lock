@@ -955,6 +955,7 @@ sql_accessors
  0066_drop_unused_function
  0067_livequery_sql
  0067_livequery_sql_include_deleted_indices
+ 0067_livequery_sql_include_child_indices
 sql_proxy_accessors
  0001_initial
  0002_add_sync_functions
