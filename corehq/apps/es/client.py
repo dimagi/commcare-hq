@@ -431,7 +431,7 @@ class ElasticDocumentAdapter(BaseAdapter):
         :param type_: the index ``_type`` for the mapping
         """
         super().__init__()
-        self.index_name = index_name
+        self.index_name = index_runtime_name(index_name)
         self.type = type_
 
     def export_adapter(self):
