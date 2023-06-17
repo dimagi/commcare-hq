@@ -587,6 +587,8 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
                 isMultiSelect: false,
                 showMap: this.showMap,
                 columnStyle: this.columnStyle(),
+                sidebarEnabled: this.options.sidebarEnabled,
+                triggerEmptyCaseList: this.options.triggerEmptyCaseList,
 
                 columnSortable: function (index) {
                     return this.sortIndices.indexOf(index) > -1;
