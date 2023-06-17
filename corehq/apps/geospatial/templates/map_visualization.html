@@ -4,10 +4,20 @@
 
 {% block reportcontent %}
 <!-- This is used to get the data from report_context -->
-<div class="panel panel-default">
-    <a id="btnExport" class="btn btn-default" style="margin: 1em" data-bind="attr: { disabled: btnExportDisabled }">
-        {% trans 'Export Polygons as GeoJson' %}
+<div class="row panel" id="mapControls">
+    <label for="saved-polygons" class="control-label col-sm-2 col-md-4 col-lg-2">
+    {% trans "Filter by Saved Area" %}</label>
+    <div class="controls col-sm-3 col-md-8 col-lg-6">
+        <select id="saved-polygons"
+                class="form-control"
+                data-bind="select2: savedPolygons,
+                        value: selectedPolygon,
+                        ">
+        </select>
+    </div>
+    <a id="btnExport" class="col-sm-3 btn btn-default" style="float:right; margin-right:1em" data-bind="attr: { disabled: btnExportDisabled }">
+        {% trans 'Save Drawn Area' %}
     </a>
 </div>
-<div class="map-data" data-context="{% html_attr context %}"></div>
+<div class="map-data row" style="margin-top:1em" data-context="{% html_attr context %}"></div>
 {% endblock %}
