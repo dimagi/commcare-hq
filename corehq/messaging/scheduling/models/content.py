@@ -518,7 +518,7 @@ class FCMNotificationContent(Content):
         return renderer.render(subject), renderer.render(message)
 
     def build_fcm_data_field(self, recipient):
-        data = None
+        data = {}
         if self.action:
             data = {
                 'action': self.action,
@@ -551,16 +551,17 @@ class FCMNotificationContent(Content):
                 logged_subevent.error(MessagingEvent.ERROR_NO_MESSAGE)
                 return
 
+            recipient_language_code = recipient.get_language_code()
             subject = self.get_translation_from_message_dict(
                 domain_obj,
                 self.subject,
-                recipient.get_language_code()
+                recipient_language_code
             )
 
             message = self.get_translation_from_message_dict(
                 domain_obj,
                 self.message,
-                recipient.get_language_code()
+                recipient_language_code
             )
 
             try:
