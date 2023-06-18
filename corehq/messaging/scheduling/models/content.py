@@ -575,17 +575,17 @@ class FCMNotificationContent(Content):
             data = self.build_fcm_data_field(recipient)
 
         try:
-            devices_fcm_token = self.get_recipient_devices_fcm_tokens(recipient)
+            devices_fcm_tokens = self.get_recipient_devices_fcm_tokens(recipient)
         except FCMTokenValidationException as e:
             logged_subevent.error(e.error_type, additional_error_text=e.additional_text)
             return
 
-        FCMUtil().send_to_multiple_devices(registration_tokens=devices_fcm_token, title=subject, body=message,
-                                             data=data)
+        FCMUtil().send_to_multiple_devices(registration_tokens=devices_fcm_tokens, title=subject, body=message,
+                                           data=data)
         logged_subevent.completed()
 
     def get_recipient_devices_fcm_tokens(self, recipient):
-        devices_fcm_token = recipient.get_devices_fcm_token()
-        if not devices_fcm_token:
+        devices_fcm_tokens = recipient.get_devices_fcm_tokens()
+        if not devices_fcm_tokens:
             raise FCMTokenValidationException(MessagingEvent.ERROR_NO_FCM_TOKENS)
-        return devices_fcm_token
+        return devices_fcm_tokens

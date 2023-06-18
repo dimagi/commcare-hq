@@ -2362,9 +2362,7 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
             if device.device_id == device_id:
                 return device
 
-    def get_devices_fcm_token(self):
-        if not self.devices:
-            return None
+    def get_devices_fcm_tokens(self):
         return [device.fcm_token for device in self.devices if device.fcm_token]
 
 
