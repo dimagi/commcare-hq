@@ -252,8 +252,7 @@ class ContentForm(Form):
     def _validate_fcm_message_length(value, max_length):
         for data in value.values():
             if len(data) > max_length:
-                raise ValidationError(_('This field must be less than {} characters'
-                                        .format(max_length + 1)))
+                raise ValidationError(_('This field must not exceed {} characters'.format(max_length)))
         return value
 
     def clean_fcm_message_type(self):
@@ -3555,10 +3554,9 @@ class ConditionalAlertScheduleForm(ScheduleForm):
             unsupported_recipient_types = [str(recipient_types_choices[recipient_type])
                                            for recipient_type in recipient_types
                                            if recipient_type not in self.FCM_SUPPORTED_RECIPIENT_TYPES]
-            unsupported_recipient_types_str = ', '.join(unsupported_recipient_types)
             if unsupported_recipient_types:
                 raise ValidationError(_("'{}' recipient types are not supported for Push Notifications"
-                                        .format(unsupported_recipient_types_str)))
+                                        .format(', '.join(unsupported_recipient_types))))
 
     def distill_start_offset(self):
         send_frequency = self.cleaned_data.get('send_frequency')
