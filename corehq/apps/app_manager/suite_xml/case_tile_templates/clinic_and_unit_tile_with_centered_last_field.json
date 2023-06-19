@@ -1,5 +1,0 @@
-{
-    "slug": "clinic_and_unit_tile_with_centered_last_field",
-    "filename": "clinic_and_unit_tile_with_centered_last_field.xml",
-    "fields": ["header", "map", "top_left", "top_right", "middle", "bottom"]
-}

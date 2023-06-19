@@ -24,8 +24,8 @@ class CaseTileTemplates(models.TextChoices):
     PERSON_SIMPLE = ("person_simple", _("Person Simple"))
     ONE_ONE_TWO = ("one_one_two", _("Title row, subtitle row, third row with two cells, and map"))
     ONE_TWO_ONE = ("one_two_one", _("Title row, second row with two cells, third row, and map"))
-    CLINIC_AND_UNIT_TILE_WITH_CENTERED_LAST_FIELD = ("clinic_and_unit_tile_with_centered_last_field",
-                                                     _("Clinic and unit tile with centered last field"))
+    ONE_TWO_ONE_ONE = ("one_two_one_one", _("Title row, second row with two cells, third and "
+                                            "fourth rows, and map"))
 
 
 @dataclass
