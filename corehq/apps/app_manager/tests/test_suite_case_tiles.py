@@ -384,6 +384,28 @@ class SuiteCaseTilesTest(SimpleTestCase, SuiteMixin):
         with self.assertRaises(SuiteValidationError):
             factory.app.create_suite()
 
+    @flag_enabled('CASE_LIST_TILE')
+    @flag_enabled('USH_EMPTY_CASE_LIST_TEXT')
+    def test_case_tile_no_items_text(self, *args):
+        factory = AppFactory(build_version='2.54.0')
+        factory.new_basic_module("my_module", "person")
+
+        suite = factory.app.create_suite()
+
+        self.assertXmlPartialEqual(
+            """
+            <partial>
+                <no_items_text>
+                    <text>
+                        <locale id="m0_no_items_text"/>
+                    </text>
+                </no_items_text>
+            </partial>
+            """,
+            suite,
+            "detail[@id='m0_case_short']/no_items_text[1]",
+        )
+
     @flag_enabled("USH_CASE_CLAIM_UPDATES")
     def test_case_tile_with_case_search(self, *args):
         app = Application.new_app('domain', 'Untitled Application')
