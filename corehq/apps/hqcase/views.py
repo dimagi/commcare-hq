@@ -27,6 +27,7 @@ from corehq.util.es.elasticsearch import NotFoundError
 from corehq.util.view_utils import reverse
 from corehq.apps.locations.permissions import user_can_access_case
 from corehq.apps.locations.permissions import location_safe
+from corehq.apps.data_dictionary.util import is_case_type_deprecated
 
 from .api.core import SubmissionError, UserError, serialize_case, serialize_es_case
 from .api.get_list import get_list
@@ -135,7 +136,7 @@ def _get_bulk_cases(request, case_ids=None, external_ids=None):
 def _get_single_case(request, case_id):
     try:
         case = case_search_adapter.get(case_id)
-        if case['domain'] != request.domain:
+        if case['domain'] != request.domain or is_case_type_deprecated(request.domain, case['type']):
             raise NotFoundError()
         if not user_can_access_case(request.domain, request.couch_user, case, es_case=True):
             raise PermissionDenied()
