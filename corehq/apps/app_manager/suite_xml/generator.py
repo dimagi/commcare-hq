@@ -13,7 +13,7 @@ from corehq.apps.app_manager.suite_xml.post_process.endpoints import (
     EndpointsHelper,
 )
 from corehq.apps.app_manager.suite_xml.post_process.instances import (
-    EntryInstances,
+    InstancesHelper,
 )
 from corehq.apps.app_manager.suite_xml.post_process.menu import (
     GridMenuHelper,
@@ -113,7 +113,7 @@ class SuiteGenerator(object):
         if self.app.custom_assertions:
             RootMenuAssertionsHelper(self.suite, self.app, self.modules).update_suite()
 
-        EntryInstances(self.suite, self.app, self.modules).update_suite()
+        InstancesHelper(self.suite, self.app, self.modules).update_suite()
         ResourceOverrideHelper(self.suite, self.app, self.modules).update_suite()
         return self.suite.serializeDocument(pretty=True)
 
