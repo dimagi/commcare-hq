@@ -191,6 +191,8 @@ class CaseHelper:
 
         :return: The copied cases. If `count_only` is True only the count will be returned.
         """
+        from corehq.apps.hqcase.utils import CASEBLOCK_CHUNKSIZE
+
         if not to_owner:
             raise Exception('Must copy cases to valid new owner')
 
@@ -216,7 +218,7 @@ class CaseHelper:
                     ))
                 except StopIteration:
                     return {}
-                referenced_case_block = _process_case(original_parent_case)
+                referenced_case_block = _create_case_block(original_parent_case)
                 _identifier_index['case_id'] = referenced_case_block.case_id
             return (
                 _identifier_index['case_type'],
@@ -234,7 +236,7 @@ class CaseHelper:
                     new_case_index[identifier] = identifier_index
             return new_case_index
 
-        def _process_case(_case):
+        def _create_case_block(_case):
             if _case.case_id in processed_cases:
                 return
 
@@ -256,20 +258,33 @@ class CaseHelper:
 
             return case_block
 
+        case_blocks = []
+        copied_cases = []
+
         for c in original_cases:
             if c.owner_id == to_owner:
                 raise Exception("Cannot copy case to self")
-            _process_case(c)
 
-        _, cases = submit_case_blocks(
-            case_blocks=copied_cases_case_blocks,
-            domain=domain,
-        )
+            case_blocks.append(_create_case_block(c))
+            if len(case_blocks) >= CASEBLOCK_CHUNKSIZE:
+                _, cases = submit_case_blocks(
+                    case_blocks=copied_cases_case_blocks,
+                    domain=domain,
+                )
+                copied_cases.extend(cases)
+                case_blocks = []
+
+        if case_blocks:
+            _, cases = submit_case_blocks(
+                case_blocks=copied_cases_case_blocks,
+                domain=domain,
+            )
+            copied_cases.extend(cases)
 
         if count_only:
-            return len(cases)
+            return len(copied_cases)
         else:
-            return cases
+            return copied_cases
 
     @staticmethod
     def _clean_serialized_case(case_data):
