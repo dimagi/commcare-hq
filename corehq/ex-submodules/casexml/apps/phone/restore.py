@@ -151,7 +151,7 @@ class RestoreContent(object):
             self._write_to_file(fileobj)
             fileobj.seek(0)
             return fileobj
-        except:
+        except:  # noqa
             fileobj.close()
             raise
 
@@ -584,8 +584,10 @@ class RestoreConfig(object):
                 payload = self.get_payload()
             response = payload.get_http_response()
         except RestoreException as e:
-            logger.exception("%s error during restore submitted by %s: %s" %
-                              (type(e).__name__, self.restore_user.username, str(e)))
+            logger.exception(
+                "%s error during restore submitted by %s: %s" %
+                (type(e).__name__, self.restore_user.username, str(e))
+            )
             is_async = False
             response = get_simple_response_xml(
                 str(e),
@@ -653,7 +655,7 @@ class RestoreConfig(object):
             else:
                 fileobj.seek(0)
                 response = RestoreResponse(fileobj)
-        except:
+        except:  # noqa
             fileobj.close()
             raise
         return response
