@@ -8,7 +8,9 @@ migrator = RawSQLMigration(('corehq', 'sql_accessors', 'sql_templates'), {})
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('sql_accessors', '0067_livequery_sql'),
+        ('sql_accessors', '0067_livequery_sql_include_deleted_indices'),
     ]
 
-    operations = []
+    operations = [
+        migrator.get_migration('get_related_indices.sql'),
+    ]
