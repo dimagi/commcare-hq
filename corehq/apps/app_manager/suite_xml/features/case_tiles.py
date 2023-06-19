@@ -23,7 +23,7 @@ TILE_DIR = Path(__file__).parent.parent / "case_tile_templates"
 class CaseTileTemplates(models.TextChoices):
     PERSON_SIMPLE = ("person_simple", _("Person Simple"))
     ONE_ONE_TWO = ("one_one_two", _("Title row, subtitle row, third row with two cells, and map"))
-    PARENT_AND_CHILD = ("parent_and_child", _("Parent and Child"))
+    ONE_TWO_ONE = ("one_two_one", _("Title row, second row with two cells, third row, and map"))
     CLINIC_AND_UNIT_TILE_WITH_CENTERED_LAST_FIELD = ("clinic_and_unit_tile_with_centered_last_field",
                                                      _("Clinic and unit tile with centered last field"))
 
