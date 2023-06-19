@@ -13,6 +13,7 @@ from corehq.apps.es import cases as case_es
 from corehq.apps.reports.standard.cases.utils import (
     query_location_restricted_cases,
 )
+from corehq.apps.data_dictionary.util import get_data_dict_deprecated_case_types
 from dimagi.utils.parsing import FALSE_STRINGS
 from .core import UserError, serialize_es_case
 
@@ -85,6 +86,12 @@ def get_list(domain, couch_user, params):
 
     if not couch_user.has_permission(domain, 'access_all_locations'):
         query = query_location_restricted_cases(query, domain, couch_user)
+
+    # Cases with deprecated case types should not be returned
+    deprecated_case_types = get_data_dict_deprecated_case_types(domain)
+    query = query.filter(
+        filters.NOT(filters.term('type.exact', deprecated_case_types))
+    )
 
     es_result = query.run()
     hits = es_result.hits
