@@ -253,7 +253,7 @@ def get_registry_case_sources(domain):
 def get_dropdown_options(domain, all_sources, registry_permission_checker):
     registry_options = get_data_registry_dropdown_options(domain, permission_checker=registry_permission_checker)
     registry_options += [{'slug': '', 'name': ''}]
-    return{
+    return {
         "app": {
             "true": [{"text": source['name'], "value": app_id} for app_id, source in all_sources.items()],
             "false": [{"text": '--------', "value": ''}],
@@ -452,12 +452,14 @@ class ApplicationDataRMIHelper(object):
     @property
     @memoized
     def _deleted_app_forms(self):
-        return [f for f in self._all_forms if f.get('has_app', False) and f.get('app_deleted') and not f.get('show_xmlns', False)]
+        return [f for f in self._all_forms if
+                f.get('has_app', False) and f.get('app_deleted') and not f.get('show_xmlns', False)]
 
     @property
     @memoized
     def _available_app_forms(self):
-        return [f for f in self._all_forms if f.get('has_app', False) and not f.get('app_deleted') and not f.get('show_xmlns', False)]
+        return [f for f in self._all_forms if
+                f.get('has_app', False) and not f.get('app_deleted') and not f.get('show_xmlns', False)]
 
     @property
     @memoized
@@ -497,11 +499,13 @@ class ApplicationDataRMIHelper(object):
             (self.APP_TYPE_ALL, self._available_app_forms),
             (self.APP_TYPE_UNKNOWN, self._unknown_forms)
         )
-        _app_fmt = lambda c: (c[0], [RMIDataChoice(
-            f['app']['id'] if f.get('has_app', False) else self.UNKNOWN_SOURCE,
-            f['app']['name'] if f.get('has_app', False) else _("Unknown Application"),
-            f
-        ) for f in c[1]])
+
+        def _app_fmt(c):
+            return (c[0], [RMIDataChoice(
+                f['app']['id'] if f.get('has_app', False) else self.UNKNOWN_SOURCE,
+                f['app']['name'] if f.get('has_app', False) else _("Unknown Application"),
+                f
+            ) for f in c[1]])
         apps_by_type = list(map(_app_fmt, apps_by_type))
         apps_by_type = dict(apps_by_type)
         apps_by_type = self._get_unique_choices(apps_by_type)
