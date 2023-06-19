@@ -32,7 +32,7 @@ from memoized import memoized
 from corehq import toggles
 from corehq.apps.app_manager import id_strings
 from corehq.apps.app_manager.const import RETURN_TO
-from corehq.apps.app_manager.exceptions import SuiteError, SuiteValidationError
+from corehq.apps.app_manager.exceptions import SuiteValidationError
 from corehq.apps.app_manager.id_strings import callout_header_locale
 from corehq.apps.app_manager.suite_xml.const import FIELD_TYPE_LEDGER
 from corehq.apps.app_manager.suite_xml.contributors import SectionContributor
@@ -108,9 +108,10 @@ class DetailContributor(SectionContributor):
                             include_sort=detail_type.endswith('short'),
                         )  # list of DetailColumnInfo named tuples
                     if detail_column_infos:
+                        detail_id = id_strings.detail(module, detail_type)
                         if detail.case_tile_template:
                             helper = CaseTileHelper(self.app, module, detail,
-                                                    detail_type, self.build_profile_id)
+                                                    detail_id, detail_type, self.build_profile_id)
                             elements.append(helper.build_case_tile_detail())
                         else:
                             print_template_path = None
@@ -124,7 +125,7 @@ class DetailContributor(SectionContributor):
                                 detail,
                                 detail_column_infos,
                                 tabs=list(detail.get_tabs()),
-                                id=id_strings.detail(module, detail_type),
+                                id=detail_id,
                                 title=title,
                                 print_template=print_template_path,
                             )
@@ -194,9 +195,7 @@ class DetailContributor(SectionContributor):
             if detail.lookup_enabled and detail.lookup_action:
                 d.lookup = self._get_lookup_element(detail, module)
 
-            # Add no items text
-            if detail_type.endswith('short') and self.app.supports_empty_case_list_text:
-                d.no_items_text = Text(locale_id=id_strings.no_items_text_detail(module))
+            self.add_no_items_text_to_detail(d, self.app, detail_type, module)
 
             # Add variables
             variables = list(
@@ -237,9 +236,7 @@ class DetailContributor(SectionContributor):
                     # don't add search again action in split screen
                     if not (toggles.SPLIT_SCREEN_CASE_SEARCH.enabled(self.app.domain) and in_search):
                         d.actions.append(
-                            DetailContributor.get_case_search_action(module,
-                                                                    self.build_profile_id,
-                                                                    in_search=in_search)
+                            DetailContributor.get_case_search_action(module, self.build_profile_id, id)
                         )
 
             try:
@@ -367,7 +364,8 @@ class DetailContributor(SectionContributor):
         return action
 
     @staticmethod
-    def get_case_search_action(module, build_profile_id, in_search=False):
+    def get_case_search_action(module, build_profile_id, detail_id):
+        in_search = module_loads_registry_case(module) or "search" in detail_id
         action_kwargs = DetailContributor._get_action_kwargs(module, in_search)
         if in_search:
             search_label = module.search_config.search_again_label
@@ -517,6 +515,11 @@ class DetailContributor(SectionContributor):
                         sort_node='')]
         d.fields = fields
         return d
+
+    @staticmethod
+    def add_no_items_text_to_detail(detail, app, detail_type, module):
+        if detail_type.endswith('short') and app.supports_empty_case_list_text:
+            detail.no_items_text = Text(locale_id=id_strings.no_items_text_detail(module))
 
 
 class DetailsHelper(object):

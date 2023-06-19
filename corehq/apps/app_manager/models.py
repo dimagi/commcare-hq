@@ -83,7 +83,6 @@ from corehq.apps.app_manager.dbaccessors import (
     get_latest_released_app_doc,
     wrap_app,
 )
-from corehq.apps.app_manager.detail_screen import PropertyXpathGenerator
 from corehq.apps.app_manager.exceptions import (
     AppEditingError,
     FormNotFoundException,
@@ -114,7 +113,6 @@ from corehq.apps.app_manager.helpers.validators import (
     ShadowModuleValidator,
 )
 from corehq.apps.app_manager.suite_xml import xml_models as suite_models
-from corehq.apps.app_manager.suite_xml.const import CASE_TILE_TEMPLATE_NAME_PERSON_SIMPLE
 from corehq.apps.app_manager.suite_xml.generator import (
     MediaSuiteGenerator,
     SuiteGenerator,
@@ -2035,14 +2033,6 @@ class Detail(IndexedSchema, CaseListLookupMixin):
                     setattr(self, ele, getattr(src_detail, ele))
             else:
                 setattr(self, attr, getattr(src_detail, attr))
-
-    @classmethod
-    def wrap(cls, data):
-        if 'use_case_tiles' in data:
-            if data.get('use_case_tiles'):
-                data['case_tile_template'] = CASE_TILE_TEMPLATE_NAME_PERSON_SIMPLE
-            del data['use_case_tiles']
-        return super(Detail, cls).wrap(data)
 
 
 class CaseList(IndexedSchema, NavMenuItemMediaMixin):
