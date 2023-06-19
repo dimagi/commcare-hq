@@ -2966,7 +2966,8 @@ class ConditionalAlertScheduleForm(ScheduleForm):
             self.fields['content'].choices += [
                 (self.CONTENT_CUSTOM_SMS, _("Custom SMS")),
             ]
-        if settings.FCM_CREDS:
+
+        if settings.FCM_CREDS or self.initial.get('content') == self.CONTENT_FCM_NOTIFICATION:
             self.fields['content'].choices += [
                 (self.CONTENT_FCM_NOTIFICATION, _("Push Notification"))
             ]
