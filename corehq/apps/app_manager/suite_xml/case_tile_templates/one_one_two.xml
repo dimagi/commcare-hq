@@ -27,13 +27,6 @@
           </xpath>
         </text>
       </template>
-        <sort type="string" order="-2" direction="ascending">
-            <text>
-          <xpath function="{title[xpath_function]}">
-            {title[variables]}
-          </xpath>
-            </text>
-        </sort>
     </field>
 
     <field>
