@@ -38,7 +38,8 @@ from corehq.apps.userreports.reports.builder.forms import (
     RegistryCaseDataSourceHelper,
 )
 from corehq.apps.userreports.tests.utils import get_simple_xform, get_sample_registry_data_source
-from corehq.util.test_utils import flag_enabled
+from corehq.util.test_utils import privilege_enabled
+from corehq import privileges
 
 
 class ReportBuilderDBTest(TestCase):
@@ -142,7 +143,7 @@ class DataSourceBuilderTest(ReportBuilderDBTest):
         self.assertEqual('first_name', first_name_prop.get_id())
         self.assertEqual('first name', first_name_prop.get_text())
 
-    @flag_enabled('SHOW_OWNER_LOCATION_PROPERTY_IN_REPORT_BUILDER')
+    @privilege_enabled(privileges.SHOW_OWNER_LOCATION_PROPERTY_IN_REPORT_BUILDER)
     def test_owner_as_location(self):
         builder = ApplicationCaseDataSourceHelper(self.domain, self.app, DATA_SOURCE_TYPE_CASE, self.case_type)
 
