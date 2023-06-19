@@ -53,6 +53,7 @@ sms_adapter = create_document_adapter(
     ElasticSMS,
     "smslogs_2020-01-28",
     "sms",
+    secondary='sms-20230524',
 )
 
 
