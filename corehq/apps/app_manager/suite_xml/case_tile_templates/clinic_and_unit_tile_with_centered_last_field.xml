@@ -60,7 +60,7 @@
 
     <field>
     <style horz-align="left" vert-align="center" font-size="medium">
-      <grid grid-height="1" grid-width="4" grid-x="9" grid-y="1"/>
+      <grid grid-height="1" grid-width="4" grid-x="8" grid-y="1"/>
       </style>
     <header>
       <text>
