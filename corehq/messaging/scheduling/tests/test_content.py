@@ -262,7 +262,7 @@ class TestContent(TestCase):
     def test_fcm_content_data_field_action_absent(self):
         fcm_content = FCMNotificationContent()
         data = fcm_content.build_fcm_data_field(self.mobile_user)
-        self.assertEqual(data, None)
+        self.assertEqual(data, {})
 
     def test_fcm_content_data_field_action_present(self):
         fcm_content = FCMNotificationContent(action='SYNC')
