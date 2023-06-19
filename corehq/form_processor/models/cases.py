@@ -504,7 +504,7 @@ class CommCareCase(PartitionedModel, models.Model, RedisLockableMixIn,
         """Includes non-live indices"""
         found = [i for i in self.indices if i.identifier == index_id]
         if found:
-            assert(len(found) == 1)
+            assert len(found) == 1
             return found[0]
         return None
 
