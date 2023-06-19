@@ -1,13 +1,13 @@
 <detail id="{detail_id}">
   <title>
     <text>
-        <locale id="{title_text_id}"/>
+      <locale id="{title_text_id}"/>
     </text>
   </title>
 
   <field>
     <style horz-align="left" vert-align="center" font-size="medium">
-        <grid grid-height="1" grid-width="12" grid-x="0" grid-y="0"/>
+      <grid grid-height="1" grid-width="12" grid-x="0" grid-y="0"/>
     </style>
     <header>
       <text>
@@ -42,7 +42,7 @@
 
   <field>
     <style horz-align="left" vert-align="center" font-size="medium">
-        <grid grid-height="1" grid-width="7" grid-x="0" grid-y="1"/>
+      <grid grid-height="1" grid-width="7" grid-x="0" grid-y="1"/>
     </style>
     <header>
       <text>
@@ -93,4 +93,5 @@
       </text>
     </template>
   </field>
+
 </detail>

@@ -8,7 +8,7 @@
   <field>
     <style horz-align="left" vert-align="center" font-size="medium">
       <grid grid-height="1" grid-width="12" grid-x="0" grid-y="0"/>
-      </style>
+    </style>
     <header>
       <text>
         <locale id="{top_left[locale_id]}"/>
@@ -17,7 +17,7 @@
     <template form="{top_left[format]}">
       <text>
         <xpath function="{top_left[xpath_function]}">
-        {top_left[variables]}
+          {top_left[variables]}
         </xpath>
       </text>
     </template>
@@ -26,7 +26,7 @@
   <field>
     <style horz-align="left" vert-align="center" font-size="medium">
       <grid grid-height="1" grid-width="6" grid-x="6" grid-y="0"/>
-      </style>
+    </style>
     <header>
       <text>
       </text>
@@ -43,7 +43,7 @@
   <field>
     <style horz-align="left" vert-align="center" font-size="medium">
       <grid grid-height="1" grid-width="7" grid-x="0" grid-y="1"/>
-      </style>
+    </style>
     <header>
       <text>
         <locale id="{upper_left[locale_id]}"/>
@@ -58,10 +58,10 @@
     </template>
   </field>
 
-    <field>
+  <field>
     <style horz-align="left" vert-align="center" font-size="medium">
       <grid grid-height="1" grid-width="4" grid-x="8" grid-y="1"/>
-      </style>
+    </style>
     <header>
       <text>
         <locale id="{right[locale_id]}"/>
@@ -80,7 +80,7 @@
   <field>
     <style horz-align="left" vert-align="center" font-size="medium">
       <grid grid-height="1" grid-width="12" grid-x="0" grid-y="2"/>
-      </style>
+    </style>
     <header>
       <text>
         <locale id="{lower_left[locale_id]}"/>
@@ -95,10 +95,10 @@
     </template>
   </field>
 
-    <field>
+  <field>
     <style horz-align="center" vert-align="center" font-size="medium">
       <grid grid-height="1" grid-width="12" grid-x="0" grid-y="3"/>
-      </style>
+    </style>
     <header>
       <text>
         <locale id="{bottom_center[locale_id]}"/>
