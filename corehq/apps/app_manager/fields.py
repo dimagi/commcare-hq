@@ -31,6 +31,7 @@ from corehq.apps.userreports.dbaccessors import get_datasources_for_domain
 from corehq.toggles import AGGREGATE_UCRS
 from corehq.util.soft_assert import soft_assert
 from corehq.apps.export.const import ALL_CASE_TYPE_EXPORT
+from corehq.apps.data_dictionary.util import get_data_dict_deprecated_case_types
 
 DataSource = collections.namedtuple('DataSource', ['application', 'source_type', 'source', 'registry_slug'])
 RMIDataChoice = collections.namedtuple('RMIDataChoice', ['id', 'text', 'data'])
@@ -627,6 +628,7 @@ class ApplicationDataRMIHelper(object):
     def _get_cases_for_apps(self, apps_by_type, as_dict=True, include_any_app=False):
         used_case_types = set()
         case_types_by_app = collections.defaultdict(list)
+        deprecated_case_types = get_data_dict_deprecated_case_types(self.domain)
         for app_type, apps in apps_by_type.items():
             for app_choice in apps:
                 if app_choice.id not in [self.UNKNOWN_SOURCE, self.ALL_SOURCES]:
@@ -643,6 +645,7 @@ class ApplicationDataRMIHelper(object):
                         if any([module.uses_usercase() for module in app.modules]):
                             case_types.add(USERCASE_TYPE)
 
+                        case_types = case_types - deprecated_case_types
                         used_case_types = used_case_types.union(case_types)
                         case_types = [RMIDataChoice(
                             id=c,
