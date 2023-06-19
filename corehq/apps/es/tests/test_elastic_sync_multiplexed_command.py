@@ -1,7 +1,7 @@
 from unittest.mock import patch
 
 from django.core.management import CommandError, call_command
-from django.test import SimpleTestCase
+from django.test import SimpleTestCase, override_settings
 from corehq.apps.es.exceptions import IndexNotMultiplexedException
 
 from corehq.apps.es.client import (
@@ -17,15 +17,19 @@ from corehq.apps.es.tests.utils import (
 COMMAND_NAME = 'elastic_sync_multiplexed'
 INDEX_CNAME = 'test_reindex'
 
-test_adapter = create_document_adapter(
-    TestDocumentAdapter,
-    "reindex-primary",
-    "test_doc",
-    secondary="reindex-secondary",
-)
+
+def mutiplexed_adapter_with_overriden_settings():
+    with override_settings(ES_FOR_TEST_INDEX_MULTIPLEXED=True):
+        return create_document_adapter(
+            TestDocumentAdapter,
+            "test_reindex-primary",
+            "test_doc",
+            secondary="test_reindex-secondary",
+        )
+
 
 adapter_cname_map = {
-    INDEX_CNAME: test_adapter,
+    INDEX_CNAME: mutiplexed_adapter_with_overriden_settings(),
 }
 
 
@@ -37,7 +41,7 @@ def mock_iter_index_cnames():
     return list(adapter_cname_map)
 
 
-@es_test(requires=[test_adapter])
+@es_test(requires=[mutiplexed_adapter_with_overriden_settings()])
 @patch(
     "corehq.apps.es.management.commands.elastic_sync_multiplexed.doc_adapter_from_cname",
     mock_doc_adapter_from_cname,
@@ -51,7 +55,7 @@ class TestElasticSyncMultiplexedCommand(SimpleTestCase):
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
-        cls.adapter = test_adapter
+        cls.adapter = mutiplexed_adapter_with_overriden_settings()
 
     def test_invalid_index_canonical_raises(self):
         with self.assertRaises(CommandError):
@@ -71,7 +75,7 @@ class TestElasticSyncMultiplexedCommand(SimpleTestCase):
     @patch('corehq.apps.es.management.commands.elastic_sync_multiplexed.ESSyncUtil.perform_cleanup')
     @patch('corehq.apps.es.management.commands.elastic_sync_multiplexed.es_manager.reindex')
     def test_pass_multiplexed_index_raise_no_errors(self, sync_mock, cleanup_mock, _):
-        sync_mock.return_value = "task_key"
+        sync_mock.return_value = "task_key:123"
         call_command(COMMAND_NAME, 'start', INDEX_CNAME)
 
     @patch("corehq.apps.es.utils.TASK_POLL_DELAY", 0)
