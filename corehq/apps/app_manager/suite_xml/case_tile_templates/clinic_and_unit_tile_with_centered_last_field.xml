@@ -11,13 +11,13 @@
     </style>
     <header>
       <text>
-        <locale id="{top_left[locale_id]}"/>
+        <locale id="{header[locale_id]}"/>
       </text>
     </header>
-    <template form="{top_left[format]}">
+    <template form="{header[format]}">
       <text>
-        <xpath function="{top_left[xpath_function]}">
-          {top_left[variables]}
+        <xpath function="{header[xpath_function]}">
+          {header[variables]}
         </xpath>
       </text>
     </template>
@@ -46,13 +46,13 @@
     </style>
     <header>
       <text>
-        <locale id="{upper_left[locale_id]}"/>
+        <locale id="{top_left[locale_id]}"/>
       </text>
     </header>
-    <template form="{upper_left[format]}">
+    <template form="{top_left[format]}">
       <text>
-        <xpath function="{upper_left[xpath_function]}">
-          {upper_left[variables]}
+        <xpath function="{top_left[xpath_function]}">
+          {top_left[variables]}
         </xpath>
       </text>
     </template>
@@ -64,13 +64,13 @@
     </style>
     <header>
       <text>
-        <locale id="{right[locale_id]}"/>
+        <locale id="{top_right[locale_id]}"/>
       </text>
     </header>
-    <template form="{right[format]}">
+    <template form="{top_right[format]}">
       <text>
-        <xpath function="{right[xpath_function]}">
-          {right[variables]}
+        <xpath function="{top_right[xpath_function]}">
+          {top_right[variables]}
         </xpath>
       </text>
     </template>
@@ -83,13 +83,13 @@
     </style>
     <header>
       <text>
-        <locale id="{lower_left[locale_id]}"/>
+        <locale id="{middle[locale_id]}"/>
       </text>
     </header>
-    <template form="{lower_left[format]}">
+    <template form="{middle[format]}">
       <text>
-        <xpath function="{lower_left[xpath_function]}">
-          {lower_left[variables]}
+        <xpath function="{middle[xpath_function]}">
+          {middle[variables]}
         </xpath>
       </text>
     </template>
@@ -101,13 +101,13 @@
     </style>
     <header>
       <text>
-        <locale id="{bottom_center[locale_id]}"/>
+        <locale id="{bottom[locale_id]}"/>
       </text>
     </header>
-    <template form="{bottom_center[format]}">
+    <template form="{bottom[format]}">
       <text>
-        <xpath function="{bottom_center[xpath_function]}">
-          {bottom_center[variables]}
+        <xpath function="{bottom[xpath_function]}">
+          {bottom[variables]}
         </xpath>
       </text>
     </template>

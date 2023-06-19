@@ -11,13 +11,13 @@
     </style>
     <header>
       <text>
-        <locale id="{parent_case_header[locale_id]}"/>
+        <locale id="{header[locale_id]}"/>
       </text>
     </header>
-    <template form="{parent_case_header[format]}">
+    <template form="{header[format]}">
       <text>
-        <xpath function="{parent_case_header[xpath_function]}">
-          {parent_case_header[variables]}
+        <xpath function="{header[xpath_function]}">
+          {header[variables]}
         </xpath>
       </text>
     </template>
@@ -46,13 +46,13 @@
     </style>
     <header>
       <text>
-        <locale id="{subcase_header[locale_id]}"/>
+        <locale id="{top_left[locale_id]}"/>
       </text>
     </header>
-    <template form="{subcase_header[format]}">
+    <template form="{top_left[format]}">
       <text>
-        <xpath function="{subcase_header[xpath_function]}">
-          {subcase_header[variables]}
+        <xpath function="{top_left[xpath_function]}">
+          {top_left[variables]}
         </xpath>
       </text>
     </template>
@@ -64,13 +64,13 @@
     </style>
     <header>
       <text>
-        <locale id="{subcase_top_right[locale_id]}"/>
+        <locale id="{top_right[locale_id]}"/>
       </text>
     </header>
-    <template form="{subcase_top_right[format]}">
+    <template form="{top_right[format]}">
       <text>
-        <xpath function="{subcase_top_right[xpath_function]}">
-          {subcase_top_right[variables]}
+        <xpath function="{top_right[xpath_function]}">
+          {top_right[variables]}
         </xpath>
       </text>
     </template>
@@ -82,13 +82,13 @@
     </style>
     <header>
       <text>
-        <locale id="{subcase_details[locale_id]}"/>
+        <locale id="{bottom[locale_id]}"/>
       </text>
     </header>
-    <template form="{subcase_details[format]}">
+    <template form="{bottom[format]}">
       <text>
-        <xpath function="{subcase_details[xpath_function]}">
-          {subcase_details[variables]}
+        <xpath function="{bottom[xpath_function]}">
+          {bottom[variables]}
         </xpath>
       </text>
     </template>

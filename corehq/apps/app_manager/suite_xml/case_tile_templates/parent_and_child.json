@@ -1,5 +1,5 @@
 {
     "slug": "parent_and_child",
     "filename": "parent_and_child.xml",
-    "fields": ["parent_case_header", "map", "subcase_header", "subcase_top_right", "subcase_details"]
+    "fields": ["header", "map", "top_left", "top_right", "bottom"]
 }
