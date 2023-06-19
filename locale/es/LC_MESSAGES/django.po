@@ -3502,10 +3502,8 @@ msgid "You do not have permission to view this feed."
 msgstr ""
 
 #: corehq/apps/api/resources/v0_5.py
-#, fuzzy
-#| msgid "Please enter a positive number"
 msgid "limit must be a positive integer."
-msgstr "Por favor ingrese un número positivo"
+msgstr ""
 
 #: corehq/apps/api/resources/v0_5.py
 msgid "Limit may not exceed {}."
@@ -5455,10 +5453,8 @@ msgid "Person Simple"
 msgstr ""
 
 #: corehq/apps/app_manager/suite_xml/features/case_tiles.py
-#, fuzzy
-#| msgid "One Month"
-msgid "One one two"
-msgstr "Un Mes"
+msgid "Title row, subtitle row, third row with two cells, and map"
+msgstr ""
 
 #: corehq/apps/app_manager/suite_xml/features/scheduler.py
 #, python-brace-format
@@ -21239,6 +21235,10 @@ msgstr ""
 msgid "Case Management Map"
 msgstr ""
 
+#: corehq/apps/geospatial/templates/map_visualization.html
+msgid "Export Polygons as GeoJson"
+msgstr ""
+
 #: corehq/apps/groups/templates/groups/all_groups.html
 #: corehq/apps/reports/filters/users.py
 #: corehq/apps/reports/templates/reports/project_health/user_details.html
@@ -35612,10 +35612,8 @@ msgstr ""
 
 #: corehq/apps/userreports/templates/userreports/edit_data_source.html
 #: corehq/apps/userreports/templates/userreports/partials/build_in_progress_warning.html
-#, fuzzy
-#| msgid "Location configuration updated successfully"
 msgid "Populating your report did not complete successfully."
-msgstr "Configuración de ubicación actualizada exitosamente"
+msgstr ""
 
 #: corehq/apps/userreports/templates/userreports/edit_data_source.html
 msgid "Please note that this datasource is being rebuilt."
@@ -42709,6 +42707,12 @@ msgstr ""
 #: corehq/privileges.py
 msgid "Bulk user management features"
 msgstr ""
+
+#: corehq/privileges.py
+#, fuzzy
+#| msgid "Application Error Report"
+msgid "Application error report"
+msgstr "Reporte de Error de Aplicación"
 
 #: corehq/reports.py
 msgid "Report Builder Reports"
