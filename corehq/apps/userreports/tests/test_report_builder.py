@@ -80,7 +80,12 @@ class DataSourceBuilderTest(ReportBuilderDBTest):
             ApplicationCaseDataSourceHelper(self.domain, self.app, 'form', self.form.unique_id)
 
     def test_builder_for_forms(self):
-        builder = ApplicationFormDataSourceHelper(self.domain, self.app, DATA_SOURCE_TYPE_FORM, self.form.unique_id)
+        builder = ApplicationFormDataSourceHelper(
+            self.domain,
+            self.app,
+            DATA_SOURCE_TYPE_FORM,
+            self.form.unique_id
+        )
         self.assertEqual('XFormInstance', builder.source_doc_type)
         expected_filter = {
             "type": "and",
@@ -149,7 +154,9 @@ class DataSourceBuilderTest(ReportBuilderDBTest):
 
         self.assertTrue(COMPUTED_OWNER_LOCATION_PROPERTY_ID in builder.data_source_properties)
         self.assertTrue(COMPUTED_OWNER_LOCATION_WITH_DESENDANTS_PROPERTY_ID in builder.data_source_properties)
-        self.assertTrue(COMPUTED_OWNER_LOCATION_ARCHIVED_WITH_DESCENDANTS_PROPERTY_ID in builder.data_source_properties)
+        self.assertTrue(
+            COMPUTED_OWNER_LOCATION_ARCHIVED_WITH_DESCENDANTS_PROPERTY_ID in builder.data_source_properties
+        )
 
         owner_location_prop = builder.data_source_properties[COMPUTED_OWNER_LOCATION_PROPERTY_ID]
         self.assertEqual(COMPUTED_OWNER_LOCATION_PROPERTY_ID, owner_location_prop.get_id())
