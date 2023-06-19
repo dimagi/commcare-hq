@@ -1010,7 +1010,7 @@ class CaseUpdate:
         return [
             index for index in self.indices_to_add if (
                 index.relationship == const.CASE_INDEX_EXTENSION
-                and not index.referenced_id in parent_ids
+                and index.referenced_id not in parent_ids
             )
         ]
 
