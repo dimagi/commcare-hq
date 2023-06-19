@@ -151,59 +151,92 @@
         </a>
       {% endif %}
       <div  data-bind="visible: $root.activeCaseType()">
-        <button data-bind="click: $root.showDeprecated, visible: !showAll()" class="btn btn-default pull-right">{% trans "Show Deprecated Properties" %}</button>
-        <button data-bind="click: $root.hideDeprecated, visible: showAll" class="btn btn-default pull-right">{% trans "Hide Deprecated Properties" %}</button>
-        <table id="data-dictionary-table" class="table">
-          <thead>
-          <th></th>
-          <th>{% trans "Case Property" %}</th>
-          <th>{% trans "Data Type" %}</th>
-          <th>{% trans "Description" %}</th>
+        <button data-bind="click: $root.showDeprecated, visible: !showAll()" class="btn btn-default pull-right">{% trans "Show Deprecated" %}</button>
+        <button data-bind="click: $root.hideDeprecated, visible: showAll" class="btn btn-default pull-right">{% trans "Hide Deprecated" %}</button>
+        <div id="data-dictionary-table">
+          <div class="table-row table-header">
+          <div class="row-item-small"></div>
+          <div class="row-item">{% trans "Case Property" %}</div>
+          <div class="row-item">{% trans "Data Type" %}</div>
+          <div class="row-item">{% trans "Description" %}</div>
           {% if fhir_integration_enabled %}
-            <th>{% trans "FHIR Resource Property Path" %}</th>
+            <div class="row-item">{% trans "FHIR Resource Property Path" %}</div>
           {% endif %}
-          <th>{% include "data_dictionary/partials/valid_values_th_content.html" %}</th>
+          <div class="row-item">{% include "data_dictionary/partials/valid_values_th_content.html" %}</div>
           {% if not request.is_view_only %}
-            <th></th>
+            <div class="row-item-small"></div>
           {% endif %}
-          </thead>
-          <tbody data-bind="sortable: casePropertyList">
-          <!-- ko if: isGroup -->
-          <tr class="active">
-            <td><i class="fa" data-bind="css: { 'fa-plus-square': !expanded(), 'fa-minus-square': expanded() }, click: $root.toggleGroup"></i></td>
-            <td data-bind="text: name ? name : 'No Group'"></td>
-            <td>{% trans "Case Property Group" %}</td>
-            <td></td>
-            <td></td>
-            {% if not request.is_view_only %}
-              <td></td>
-            {% endif %}
+          </div>
+          <div data-bind="sortable: { data: caseGroupList, connectClass: 'groups', options: { handle: 'i.sortable-handle' } }">
+          <div>
+          <div class="group-deprecated" data-bind="visible: showGroupPropertyTransferWarning" style="display: none;">
+            <b data-bind="text: name()"></b>
+            {% trans "group's properties will be moved to" %}
+            <b>{% trans "No Group" %}</b>
+          </div>
+          <div class="table-row group" data-bind="css: { 'group-deprecated': toBeDeprecated() }, visible: !deprecated || $root.showAll()">
+            <div class="row-item-small">
+              {% if not request.is_view_only %}
+              <i class="sortable-handle fa fa-arrows-v"></i>
+              {% endif %}
+              <i class="fa ms-2"
+                data-bind="css: { 'fa-plus-square': !expanded(), 'fa-minus-square': expanded() }, click: toggleExpanded"></i>
+            </div>
+            <div class="row-item">
+              <!-- ko if: name() == '' -->
+              <span>{% trans 'No Group' %}</span>
+              <!-- /ko -->
+              <!-- ko if: name() !== '' -->
+              <input class="form-control" data-bind="value: name,
+                            attr: {'placeholder': name}" id="group-name" />
+              <!-- /ko -->
+            </div>
+            <div class="row-item">{% trans "Case Property Group" %}</div>
+            <div class="row-item">
+              <!-- ko if: name() !== ''-->
+              <textarea class="form-control vertical-resize" data-bind="
+                    value: $data.description,
+                    rows: 1"
+                    placeholder='{% trans "Click here to add a description" %}'></textarea>
+              <!-- /ko -->
+            </div>
             {% if fhir_integration_enabled %}
-              <td></td>
+              <div class="row-item"></div>
             {% endif %}
-          </tr>
-          <!-- /ko -->
-          <!-- ko if: !isGroup -->
-          <tr data-bind="visible: expanded() && (!deprecated() || $root.showAll()), attr: {'data-order': _sortableOrder}">
-            <td>
+            <div class="row-item"></div>
+            {% if not request.is_view_only %}
+            <div class="row-item-small">
+              <!-- ko if: name() !== '' && !toBeDeprecated() -->
+              <button title="{% trans_html_attr 'Deprecate Group' %}"  data-bind="click: deprecateGroup" class="fa fa-archive"></button>
+              <!-- /ko -->
+              <!-- ko if: name() !== '' && toBeDeprecated() -->
+              <button title="{% trans_html_attr 'Restore Group' %}" data-bind="click: restoreGroup" class="fa fa-undo"></button>
+              <!-- /ko -->
+            </div>
+            {% endif %}
+          </div>
+          <div data-bind="sortable: { data: properties, connectClass: 'properties', options: { handle: 'i.sortable-handle' } }, visible: expanded() && (!deprecated || $root.showAll())">
+            <div class="table-row" data-bind="visible: expanded() && (!deprecated() || $root.showAll())">
+              <div class="row-item-small">
               {% if not request.is_view_only %}
                 <i class="sortable-handle fa fa-arrows-v"></i>
               {% endif %}
-            </td>
-            <td class="main-form">
+              </div>
+              <div class="row-item">
+                <div class="w-100">
                 <span data-bind="text: name"></span>
-
-                <div class="row" style="margin-top: 16px;">
-                  <label class="col-xs-1" for="prop-label" style="padding: 8px 0;">Label </label>
-                  <span class="col-xs-8">
+                <div class="row mt-3">
+                  <label class="col-xs-2 py-2" for="prop-label">Label </label>
+                  <span class="col-xs-9">
                     <input class="form-control"
                           data-bind="value: $data.label, attr: {'placeholder': 'Click here to add Label'}"
                           id="prop-label"
                     />
                   </span>
                 </div>
-            </td>
-            <td class="main-form">
+                </div>
+              </div>
+              <div class="row-item main-form">
               <select class="form-control"
                       data-bind="
                                   options: $root.availableDataTypes,
@@ -212,16 +245,15 @@
                                   optionsValue: 'value',
                                   value: dataType,
                               "></select>
-            </td>
-            <td class="main-form">
+              </div>
+              <div class="row-item main-form">
                               <textarea class="form-control vertical-resize" data-bind="
                                 value: $data.description,
-                                rows: 1,
-                                placeholder: '{% trans "Click here to add a description" %}',
-                              "></textarea>
-            </td>
+                                rows: 1"
+                                placeholder='{% trans "Click here to add a description" %}'></textarea>
+              </div>
             {% if fhir_integration_enabled %}
-              <td class="fhir-path">
+              <div class="row-item fhir-path">
                 <input class="form-control" data-bind="value: $data.fhirResourcePropPath, disable: removeFHIRResourcePropertyPath"></input>
                 <!-- ko if: fhirResourcePropPath() && !removeFHIRResourcePropertyPath() -->
                 <button title="{% trans_html_attr 'Remove Path' %}" data-bind="click: removePath" class="fa fa-close"></button>
@@ -229,30 +261,31 @@
                 <!-- ko if: removeFHIRResourcePropertyPath() -->
                 <button title="{% trans_html_attr 'Restore Path' %}" data-bind="click: restorePath" class="fa fa-undo"></button>
                 <!-- /ko -->
-              </td>
+              </div>
             {% endif %}
-            <td>
+            <div class="row-item">
               <div data-bind="visible: canHaveAllowedValues()">
                 <div data-bind="jqueryElement: $allowedValues"></div>
               </div>
               <div data-bind="visible: dataType() === 'date'" class="help-block">
                 {% trans "YYYY-MM-DD" %}
               </div>
-            </td>
+            </div>
             {% if not request.is_view_only %}
-              <td>
+              <div class="row-item-small">
                 <!-- ko if: !deprecated() -->
                 <button title="{% trans_html_attr 'Deprecate Property' %}"  data-bind="click: deprecateProperty" class="fa fa-archive"></button>
                 <!-- /ko -->
                 <!-- ko if: deprecated() -->
                 <button title="{% trans_html_attr 'Restore Property' %}" data-bind="click: restoreProperty" class="fa fa-undo"></button>
                 <!-- /ko -->
-              </td>
+              </div>
             {% endif %}
-          </tr>
-          <!-- /ko -->
-          </tbody>
-        </table>
+            </div>
+          </div>
+          </div>
+          </div>
+        </div>
         {% if not request.is_view_only %}
           <form class="form-inline">
             <input class="form-control" placeholder="Case Property" data-bind="value: newPropertyName">

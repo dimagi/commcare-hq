@@ -215,7 +215,10 @@ class Command(BaseCommand):
         Role(slug=privileges.FILTERED_BULK_USER_DOWNLOAD,
              name='Bulk user management features',
              description='For mobile users, enables bulk deletion page and bulk lookup page. '
-                         'For web users, enables filtered download page.')
+                         'For web users, enables filtered download page.'),
+        Role(slug=privileges.APPLICATION_ERROR_REPORT,
+             name='Application error report',
+             description='Show Application Error Report'),
     ]
 
     BOOTSTRAP_PLANS = [

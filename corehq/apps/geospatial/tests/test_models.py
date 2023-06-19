@@ -1,14 +1,11 @@
-from shapely.geometry import Point
 from contextlib import contextmanager
 
 from django.test import SimpleTestCase
 
-from ..models import (
-    GeoObject,
-    Objective,
-    ObjectiveAllocator
-)
+from shapely.geometry import Point
+
 from ..exceptions import InvalidCoordinate, InvalidDistributionParam
+from ..models import GeoObject, Objective, ObjectiveAllocator
 
 
 class TestGeoObject(SimpleTestCase):
