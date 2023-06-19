@@ -23,9 +23,11 @@ hqDefine("data_dictionary/js/data_dictionary", [
     DOMPurify,
     toggles
 ) {
-    var caseType = function (name, fhirResourceType) {
+    var caseType = function (name, fhirResourceType, deprecated, moduleCount) {
         var self = {};
         self.name = name || gettext("No Name");
+        self.deprecated = deprecated;
+        self.appCount = moduleCount;  // The number of application modules using this case type
         self.url = "#" + name;
         self.fhirResourceType = ko.observable(fhirResourceType);
         self.groups = ko.observableArray();
@@ -227,7 +229,12 @@ hqDefine("data_dictionary/js/data_dictionary", [
             $.getJSON(dataUrl)
                 .done(function (data) {
                     _.each(data.case_types, function (caseTypeData) {
-                        var caseTypeObj = caseType(caseTypeData.name, caseTypeData.fhir_resource_type);
+                        var caseTypeObj = caseType(
+                            caseTypeData.name,
+                            caseTypeData.fhir_resource_type,
+                            caseTypeData.is_deprecated,
+                            caseTypeData.module_count,
+                        );
                         caseTypeObj.init(caseTypeData.groups, changeSaveButton);
                         self.caseTypes.push(caseTypeObj);
                     });
@@ -256,6 +263,53 @@ hqDefine("data_dictionary/js/data_dictionary", [
                 }
             }
             return [];
+        };
+
+        self.isActiveCaseTypeDeprecated = function () {
+            const activeCaseType = self.getActiveCaseType();
+            if (activeCaseType) {
+                return activeCaseType.deprecated;
+            }
+            return false;
+        };
+
+        self.activeCaseTypeModuleCount = function () {
+            const activeCaseType = self.getActiveCaseType();
+            if (activeCaseType) {
+                return activeCaseType.appCount;
+            }
+            return 0;
+        };
+
+        self.deprecateCaseType = function () {
+            self.deprecateOrRestoreCaseType(true);
+        };
+
+        self.restoreCaseType = function () {
+            self.deprecateOrRestoreCaseType(false);
+        };
+
+        self.deprecateOrRestoreCaseType = function (shouldDeprecate) {
+            let activeCaseType = self.getActiveCaseType();
+            if (!activeCaseType) {
+                return;
+            }
+
+            activeCaseType.deprecated = shouldDeprecate;
+            $("#deprecate-case-type-error").addClass("hidden");
+            $.ajax({
+                url: initialPageData.reverse('deprecate_or_restore_case_type', activeCaseType.name),
+                method: 'POST',
+                data: {
+                    'is_deprecated': shouldDeprecate
+                },
+                success: function () {
+                    window.location.reload(true);
+                },
+                error: function (error) {
+                    $("#deprecate-case-type-error").removeClass("hidden");
+                }
+            });
         };
 
         self.goToCaseType = function (caseType) {
