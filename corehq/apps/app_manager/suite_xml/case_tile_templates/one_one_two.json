@@ -2,5 +2,5 @@
     "slug": "one_one_two",
     "filename": "one_one_two.xml",
     "fields": ["title", "top", "bottom_left", "bottom_right", "map"],
-    "preview": "<div style='display: grid;grid-template-columns: repeat(13, 1fr) min-content 5px;grid-template-rows: repeat(3, auto) min-content 5px;'><div style='grid-area: 1 / 1 / 2 / 13;border: 2px blue dotted;padding: 3px;margin: 2px;' class='case-tile-preview-mapping'>title</div><div style='grid-area: 2 / 1 / 3 / 13;border: 2px blue dotted;padding: 3px;margin: 2px;' class='case-tile-preview-mapping'>subtitle</div><div style='grid-area: 3 / 1 / 4 / 7;border: 2px blue dotted;padding: 3px;margin: 2px;' class='case-tile-preview-mapping'>left</div><div style='grid-area: 3 / 7 / 4 / 13;border: 2px blue dotted;padding: 3px;margin: 2px;' class='case-tile-preview-mapping'>right</div> </div>"
+    "preview": "<div style='display: grid;grid-template-columns: repeat(13, 1fr) min-content 5px;grid-template-rows: repeat(3, auto) min-content 5px;'><div style='grid-area: 1 / 1 / 2 / 13;' class='case-tile-preview-mapping'>title</div><div style='grid-area: 2 / 1 / 3 / 13;' class='case-tile-preview-mapping'>subtitle</div><div style='grid-area: 3 / 1 / 4 / 7;' class='case-tile-preview-mapping'>left</div><div style='grid-area: 3 / 7 / 4 / 13;' class='case-tile-preview-mapping'>right</div> </div>"
 }
