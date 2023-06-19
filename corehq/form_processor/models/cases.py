@@ -1152,14 +1152,14 @@ class CommCareCaseIndex(PartitionedModel, models.Model, SaveStateMixin):
 
     def __str__(self):
         return (
-            "CaseIndex("
-            "case_id='{i.case_id}', "
-            "domain='{i.domain}', "
-            "identifier='{i.identifier}', "
-            "referenced_type='{i.referenced_type}', "
-            "referenced_id='{i.referenced_id}', "
-            "relationship='{i.relationship}')"
-        ).format(i=self)
+            'CaseIndex('
+            f'case_id={self.case_id!r}, '
+            f'domain={self.domain!r}, '
+            f'identifier={self.identifier!r}, '
+            f'referenced_type={self.referenced_type!r}, '
+            f'referenced_id={self.referenced_id!r}, '
+            f'relationship={self.relationship!r})'
+        )
 
     class Meta(object):
         index_together = [
