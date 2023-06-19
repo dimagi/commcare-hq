@@ -1,0 +1,96 @@
+<detail id="{detail_id}">
+  <title>
+    <text>
+        <locale id="{title_text_id}"/>
+    </text>
+  </title>
+
+  <field>
+    <style horz-align="left" vert-align="center" font-size="medium">
+        <grid grid-height="1" grid-width="12" grid-x="0" grid-y="0"/>
+    </style>
+    <header>
+      <text>
+        <locale id="{parent_case_header[locale_id]}"/>
+      </text>
+    </header>
+    <template form="{parent_case_header[format]}">
+      <text>
+        <xpath function="{parent_case_header[xpath_function]}">
+          {parent_case_header[variables]}
+        </xpath>
+      </text>
+    </template>
+  </field>
+
+  <field>
+    <style horz-align="left" vert-align="center" font-size="medium">
+      <grid grid-height="1" grid-width="6" grid-x="6" grid-y="0"/>
+    </style>
+    <header>
+      <text>
+      </text>
+    </header>
+    <template form="address" width="0">
+      <text>
+        <xpath function="{map[xpath_function]}">
+          {map[variables]}
+        </xpath>
+      </text>
+    </template>
+  </field>
+
+  <field>
+    <style horz-align="left" vert-align="center" font-size="medium">
+        <grid grid-height="1" grid-width="7" grid-x="0" grid-y="1"/>
+    </style>
+    <header>
+      <text>
+        <locale id="{subcase_header[locale_id]}"/>
+      </text>
+    </header>
+    <template form="{subcase_header[format]}">
+      <text>
+        <xpath function="{subcase_header[xpath_function]}">
+          {subcase_header[variables]}
+        </xpath>
+      </text>
+    </template>
+  </field>
+
+  <field>
+    <style horz-align="left" vert-align="center" font-size="medium">
+      <grid grid-height="1" grid-width="4" grid-x="9" grid-y="1"/>
+    </style>
+    <header>
+      <text>
+        <locale id="{subcase_top_right[locale_id]}"/>
+      </text>
+    </header>
+    <template form="{subcase_top_right[format]}">
+      <text>
+        <xpath function="{subcase_top_right[xpath_function]}">
+          {subcase_top_right[variables]}
+        </xpath>
+      </text>
+    </template>
+  </field>
+
+  <field>
+    <style horz-align="left" vert-align="center" font-size="medium">
+      <grid grid-height="1" grid-width="12" grid-x="0" grid-y="2"/>
+    </style>
+    <header>
+      <text>
+        <locale id="{subcase_details[locale_id]}"/>
+      </text>
+    </header>
+    <template form="{subcase_details[format]}">
+      <text>
+        <xpath function="{subcase_details[xpath_function]}">
+          {subcase_details[variables]}
+        </xpath>
+      </text>
+    </template>
+  </field>
+</detail>
