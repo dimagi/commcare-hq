@@ -6,7 +6,7 @@
 
     <div aria-label="<%- title %>" tabindex="0" class="page-header menu-header"><h1 class="page-title"><%- title %></h1></div>
 
-    {% if not request|toggle_enabled:"SPLIT_SCREEN_CASE_SEARCH" %}
+    <% if (!sidebarEnabled || triggerEmptyCaseList) { %>
     <div class="module-search-container">
       <div class="input-group input-group-lg">
         <input type="text" class="form-control" placeholder="Search" id="searchText">
@@ -17,7 +17,7 @@
         </div>
       </div>
     </div>
-    {% endif %}
+    <% } %>
 
     <div style="<%- columnStyle %>">
       <div id="module-case-list-column-next-to-map">
