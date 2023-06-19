@@ -50,11 +50,12 @@ class TestContent(TestCase):
         cls.sms_translations = get_or_create_sms_translations(cls.domain)
         cls.sms_translations.set_translations('es', {})
         cls.sms_translations.save()
-        cls.mobile_user = CommCareUser.create(cls.domain, 'mobile', 'abc', None, None, device_id='test_dev')
+        cls.mobile_user = CommCareUser.create(cls.domain, 'test-mobile', 'abc', None, None, device_id='test_dev')
 
     @classmethod
     def tearDownClass(cls):
         cls.sms_translations.delete()
+        cls.domain_obj.delete()
         super(TestContent, cls).tearDownClass()
 
     @override_settings(AVAILABLE_CUSTOM_SCHEDULING_CONTENT=AVAILABLE_CUSTOM_SCHEDULING_CONTENT)
