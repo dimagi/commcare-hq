@@ -1,5 +1,7 @@
 import json
 from dataclasses import dataclass
+from django.db import models
+from django.utils.translation import gettext_lazy as _
 from eulxml.xmlmap.core import load_xmlobject_from_string
 from memoized import memoized
 from pathlib import Path
@@ -10,13 +12,17 @@ from corehq.apps.app_manager import id_strings
 from corehq.apps.app_manager.exceptions import SuiteError
 from corehq.apps.app_manager.suite_xml.xml_models import Detail, XPathVariable
 from corehq.apps.app_manager.util import (
-    module_loads_registry_case,
     module_offers_search,
     module_uses_inline_search,
 )
 
 
 TILE_DIR = Path(__file__).parent.parent / "case_tile_templates"
+
+
+class CaseTileTemplates(models.TextChoices):
+    PERSON_SIMPLE = ("person_simple", _("Person Simple"))
+    ONE_ONE_TWO = ("one_one_two", _("Title row, subtitle row, third row with two cells, and map"))
 
 
 @dataclass
@@ -41,15 +47,17 @@ def case_tile_template_config(template):
 
 
 class CaseTileHelper(object):
-    def __init__(self, app, module, detail, detail_type, build_profile_id):
+    def __init__(self, app, module, detail, detail_id, detail_type, build_profile_id):
         self.app = app
         self.module = module
         self.detail = detail
+        self.detail_id = detail_id
         self.detail_type = detail_type
         self.cols_by_tile_field = {col.case_tile_field: col for col in self.detail.columns}
         self.build_profile_id = build_profile_id
 
     def build_case_tile_detail(self):
+        from corehq.apps.app_manager.suite_xml.sections.details import DetailContributor
         """
         Return a Detail node from an apps.app_manager.models.Detail that is
         configured to use case tiles.
@@ -69,13 +77,11 @@ class CaseTileHelper(object):
 
         # Add case search action if needed
         if module_offers_search(self.module) and not module_uses_inline_search(self.module):
-            from corehq.apps.app_manager.suite_xml.sections.details import DetailContributor
-            in_search = module_loads_registry_case(self.module)
             detail.actions.append(
-                DetailContributor.get_case_search_action(self.module,
-                                                         self.build_profile_id,
-                                                         in_search=in_search)
+                DetailContributor.get_case_search_action(self.module, self.build_profile_id, self.detail_id)
             )
+
+        DetailContributor.add_no_items_text_to_detail(detail, self.app, self.detail_type, self.module)
 
         return detail
 
@@ -121,7 +127,8 @@ class CaseTileHelper(object):
             # The right thing to do would be to reference the app_strings.txt I think
             "prefix": escape(
                 column.header.get(default_lang, "")
-            )
+            ),
+            "format": column.format
         }
         if column.enum and column.format != "enum" and column.format != "conditional-enum":
             raise SuiteError(

@@ -25,7 +25,6 @@ services:
     extends:
       file: hq-compose.yml
       service: couch
-    command: ["--with-haproxy", "--with-admin-party-please", "-n", "1"]
     ports:
       - "5984:5984"
 
