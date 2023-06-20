@@ -296,7 +296,7 @@ hqDefine("data_dictionary/js/data_dictionary", [
             }
 
             activeCaseType.deprecated = shouldDeprecate;
-            $("#deprecate-case-type-error").addClass("hidden");
+            $("#deprecate-case-type-error").hide();
             $.ajax({
                 url: initialPageData.reverse('deprecate_or_restore_case_type', activeCaseType.name),
                 method: 'POST',
@@ -307,7 +307,7 @@ hqDefine("data_dictionary/js/data_dictionary", [
                     window.location.reload(true);
                 },
                 error: function (error) {
-                    $("#deprecate-case-type-error").removeClass("hidden");
+                    $("#deprecate-case-type-error").show();
                 }
             });
         };
