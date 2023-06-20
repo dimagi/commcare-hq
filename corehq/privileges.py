@@ -111,6 +111,8 @@ FILTERED_BULK_USER_DOWNLOAD = 'filtered_bulk_user_download'
 
 APPLICATION_ERROR_REPORT = 'application_error_report'
 
+DATA_DICTIONARY = 'data_dictionary'
+
 SHOW_OWNER_LOCATION_PROPERTY_IN_REPORT_BUILDER = 'show_owner_location_property_in_report_builder'
 
 MAX_PRIVILEGES = [
@@ -172,6 +174,7 @@ MAX_PRIVILEGES = [
     EXPORT_OWNERSHIP,
     FILTERED_BULK_USER_DOWNLOAD,
     APPLICATION_ERROR_REPORT,
+    DATA_DICTIONARY,
     SHOW_OWNER_LOCATION_PROPERTY_IN_REPORT_BUILDER,
 ]
 
@@ -247,6 +250,7 @@ class Titles(object):
             EXPORT_OWNERSHIP: _("Allow exports to have ownership"),
             FILTERED_BULK_USER_DOWNLOAD: _("Bulk user management features"),
             APPLICATION_ERROR_REPORT: _("Application error report"),
+            DATA_DICTIONARY: _("Project level data dictionary of cases"),
             SHOW_OWNER_LOCATION_PROPERTY_IN_REPORT_BUILDER: _(
                 "Show an additional 'Owner (Location)' property in report builder reports."
             ),
