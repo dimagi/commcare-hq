@@ -161,7 +161,7 @@ django-prbac==1.0.1
     # via -r base-requirements.in
 django-recaptcha==3.0.0
     # via -r base-requirements.in
-django-redis==4.12.1
+django-redis==5.3.0
     # via -r base-requirements.in
 django-redis-sessions==0.6.2
     # via -r base-requirements.in
