@@ -227,6 +227,6 @@ class CommCareFeatureSupportMixin(object):
     @property
     def supports_grouped_case_tiles(self):
         return (
-            toggles.CASE_LIST_TILE.enabled(self.domain),
-            self._require_minimum_version('2.54')
+            toggles.CASE_LIST_TILE.enabled(self.domain)
+            and self._require_minimum_version('2.54')
         )
