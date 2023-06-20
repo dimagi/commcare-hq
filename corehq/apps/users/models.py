@@ -2338,7 +2338,8 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
                 meta = self.last_device.get_last_used_app_meta()
                 self.last_device.app_meta = [meta] if meta else []
                 save_user = True
-            if fcm_token and fcm_token_timestamp:
+            if fcm_token and fcm_token_timestamp and (not device.fcm_token_timestamp
+                                                      or fcm_token_timestamp > device.fcm_token_timestamp):
                 device.update_fcm_token(fcm_token, fcm_token_timestamp)
                 save_user = True
         else:
