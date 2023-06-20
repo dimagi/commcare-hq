@@ -2,7 +2,7 @@ from corehq.apps.app_manager.dbaccessors import wrap_app
 from corehq.apps.app_manager.management.commands.helpers import (
     AppMigrationCommandBase,
 )
-
+from corehq.toggles import SYNC_SEARCH_CASE_CLAIM
 
 class Command(AppMigrationCommandBase):
     help = """
@@ -16,6 +16,8 @@ class Command(AppMigrationCommandBase):
     chunk_size = 5
     DOMAIN_LIST_FILENAME = 'fix_unwrappable_apps-domains.txt'
     DOMAIN_PROGRESS_NUMBER_FILENAME = 'fix_unwrappable_apps-progress.txt'
+    include_builds = True
+    include_linked_apps = True
 
     def migrate_app(self, app_doc):
         changed = False
@@ -39,3 +41,6 @@ class Command(AppMigrationCommandBase):
 
         if changed:
             return app_doc
+
+    def get_domains(self):
+        return SYNC_SEARCH_CASE_CLAIM.get_enabled_domains()
