@@ -3,6 +3,8 @@ from nose.tools import assert_raises_regex
 from testil import assert_raises
 from unittest.mock import patch
 
+from corehq.apps.es.utils import index_runtime_name
+
 from .utils import TestDocumentAdapter, es_test, es_test_attr, temporary_index
 from ..client import manager
 
@@ -136,13 +138,13 @@ def test_index_state_with_function_decorator():
 
 def assert_index_exists(adapter):
     indexes = list(manager.get_indices())
-    assert adapter.index_name in indexes, \
+    assert index_runtime_name(adapter.index_name) in indexes, \
         f"AssertionError: {adapter.index_name!r} not found in {indexes!r}"
 
 
 def assert_not_index_exists(adapter):
     indexes = list(manager.get_indices())
-    assert adapter.index_name not in indexes, \
+    assert index_runtime_name(adapter.index_name) not in indexes, \
         f"AssertionError: {adapter.index_name!r} unexpectedly found in {indexes!r}"
 
 

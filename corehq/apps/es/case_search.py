@@ -183,6 +183,7 @@ case_search_adapter = create_document_adapter(
     ElasticCaseSearch,
     getattr(settings, "ES_CASE_SEARCH_INDEX_NAME", "case_search_2018-05-29"),
     case_adapter.type,
+    secondary='case-search-20230524',
 )
 
 
