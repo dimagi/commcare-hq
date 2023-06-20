@@ -57,7 +57,7 @@
     </div>
   </<%- contentTag %>>
   <<%- contentTag %>
-    class="<% if (contentTag === 'td') { %>col-sm-6 <% } %>query-input-group
+    class="<% if (contentTag === 'td') { %>col-sm-6 <% } else { %>input-group-sm <% } %>query-input-group
            <% if (errorMessage) { %> has-error<% } %>">
 
     <% if (input == "select1") { %>
