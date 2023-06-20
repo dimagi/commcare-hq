@@ -50,7 +50,7 @@ class TestContent(TestCase):
         cls.sms_translations = get_or_create_sms_translations(cls.domain)
         cls.sms_translations.set_translations('es', {})
         cls.sms_translations.save()
-        cls.mobile_user = CommCareUser.create(cls.domain, 'test-mobile', 'abc', None, None, device_id='test_dev')
+        cls.mobile_user = CommCareUser.create(cls.domain, 'mobile', 'abc', None, None, device_id='test_dev')
 
     @classmethod
     def tearDownClass(cls):
@@ -268,7 +268,6 @@ class TestContent(TestCase):
     def test_fcm_content_data_field_action_present(self):
         fcm_content = FCMNotificationContent(action='SYNC')
         data = fcm_content.build_fcm_data_field(self.mobile_user)
-        self.assertIsNotNone(data)
         self.assertEqual(data['action'], 'SYNC')
         self.assertEqual(data['domain'], self.mobile_user.domain)
         self.assertEqual(data['username'], self.mobile_user.raw_username)
