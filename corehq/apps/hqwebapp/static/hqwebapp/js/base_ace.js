@@ -3,16 +3,18 @@ hqDefine('hqwebapp/js/base_ace', [
     'underscore',
     'knockout',
     'ace-builds/src-min-noconflict/ace',
+    'hqwebapp/js/initial_page_data',
 ], function (
     $,
     _,
     ko,
-    ace
+    ace,
+    initialPageData
 ) {
     var self = {};
     self.editor = [];
 
-    ace.config.set('basePath', 'ace-builds/src-min-noconflict/ace');
+    ace.config.set('basePath', initialPageData.get('ace_base_path'));
     ace.require("ace/mode/json");
     ace.require("ace/mode/xml");
     ace.require("ace/ext/searchbox");
