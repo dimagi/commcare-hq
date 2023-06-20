@@ -1,10 +1,10 @@
 /* eslint-env mocha sinon */
-/* global Backbone */
+/* global Backbone, Marionette */
 
 describe('Split Screen Case Search', function () {
     const API = hqImport("cloudcare/js/formplayer/menus/api"),
         Controller = hqImport('cloudcare/js/formplayer/menus/controller'),
-        FakeFormplayer = hqImport("cloudcare/js/formplayer/spec/fake_formplayer"),
+        FakeFormplayer = hqImport('cloudcare/js/formplayer/spec/fake_formplayer'),
         FormplayerFrontend = hqImport('cloudcare/js/formplayer/app'),
         splitScreenCaseListResponse = hqImport('cloudcare/js/formplayer/spec/fixtures/split_screen_case_list'),
         Toggles = hqImport('hqwebapp/js/toggles'),
@@ -21,6 +21,7 @@ describe('Split Screen Case Search', function () {
     let getRegion;
 
     before(function () {
+        sandbox.stub(Marionette.CollectionView.prototype, 'render').returns();
         sandbox.stub(Utils, 'currentUrlToObject').callsFake(function () {
             return currentUrl;
         });
@@ -31,7 +32,7 @@ describe('Split Screen Case Search', function () {
         });
         sandbox.stub(API, 'queryFormplayer').callsFake(FakeFormplayer.queryFormplayer);
 
-        stubs.show = sandbox.stub().returns({ render: function () { return; } });
+        stubs.show = sandbox.stub().callsFake(function () { return; });
         stubs.empty = sandbox.stub().callsFake(function () { return; });
         FormplayerFrontend.regions = {
             getRegion: function (region) {
@@ -54,6 +55,10 @@ describe('Split Screen Case Search', function () {
 
     afterEach(function () {
         sandbox.resetHistory();
+    });
+
+    after(function () {
+        sandbox.restore();
     });
 
     it('should show sidebar and main regions when using split screen case search', function () {
