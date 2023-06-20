@@ -5110,6 +5110,14 @@ msgstr ""
 msgid "Title row, subtitle row, third row with two cells, and map"
 msgstr ""
 
+#: corehq/apps/app_manager/suite_xml/features/case_tiles.py
+msgid "Title row, second row with two cells, third row, and map"
+msgstr ""
+
+#: corehq/apps/app_manager/suite_xml/features/case_tiles.py
+msgid "Title row, second row with two cells, third and fourth rows, and map"
+msgstr ""
+
 #: corehq/apps/app_manager/suite_xml/features/scheduler.py
 #, python-brace-format
 msgid "There is no schedule for form {form_id}"
@@ -11701,6 +11709,7 @@ msgid "Clear"
 msgstr ""
 
 #: corehq/apps/cloudcare/templates/formplayer/case_list.html
+#: corehq/apps/cloudcare/templates/formplayer/no_items_text.html
 msgid "List is empty."
 msgstr ""
 
@@ -12422,6 +12431,14 @@ msgid "Visit CommCare's knowledge base"
 msgstr ""
 
 #: corehq/apps/data_dictionary/models.py
+msgid "Group description should be less than 255 characters"
+msgstr ""
+
+#: corehq/apps/data_dictionary/models.py
+msgid "Group \"{}\" already exists for case type \"{}\""
+msgstr ""
+
+#: corehq/apps/data_dictionary/models.py
 msgid "Number"
 msgstr ""
 
@@ -12435,6 +12452,10 @@ msgstr ""
 
 #: corehq/apps/data_dictionary/models.py
 msgid "No Type Currently Selected"
+msgstr ""
+
+#: corehq/apps/data_dictionary/models.py
+msgid "Property description should be less than 255 characters"
 msgstr ""
 
 #: corehq/apps/data_dictionary/models.py
@@ -12475,14 +12496,11 @@ msgid "Import from Excel"
 msgstr ""
 
 #: corehq/apps/data_dictionary/templates/data_dictionary/base.html
-#: corehq/apps/export/templates/export/dialogs/process_deprecated_properties.html
-#: corehq/apps/export/templates/export/partials/new_customize_export_templates.html
-msgid "Show Deprecated Properties"
+msgid "Show Deprecated"
 msgstr ""
 
 #: corehq/apps/data_dictionary/templates/data_dictionary/base.html
-#: corehq/apps/export/templates/export/partials/new_customize_export_templates.html
-msgid "Hide Deprecated Properties"
+msgid "Hide Deprecated"
 msgstr ""
 
 #: corehq/apps/data_dictionary/templates/data_dictionary/base.html
@@ -12493,6 +12511,16 @@ msgstr ""
 #: corehq/apps/data_dictionary/templates/data_dictionary/base.html
 msgid "FHIR Resource Property Path"
 msgstr ""
+
+#: corehq/apps/data_dictionary/templates/data_dictionary/base.html
+msgid "group's properties will be moved to"
+msgstr ""
+
+#: corehq/apps/data_dictionary/templates/data_dictionary/base.html
+#, fuzzy
+#| msgid "Group"
+msgid "No Group"
+msgstr "Grupo"
 
 #: corehq/apps/data_dictionary/templates/data_dictionary/base.html
 msgid "Case Property Group"
@@ -12521,6 +12549,10 @@ msgstr ""
 
 #: corehq/apps/data_dictionary/templates/data_dictionary/partials/valid_values_th_content.html
 msgid "Valid Values &amp; Formats"
+msgstr ""
+
+#: corehq/apps/data_dictionary/util.py
+msgid "Case Property Group must have a name"
 msgstr ""
 
 #: corehq/apps/data_dictionary/util.py
@@ -18767,6 +18799,11 @@ msgid "Process"
 msgstr ""
 
 #: corehq/apps/export/templates/export/dialogs/process_deprecated_properties.html
+#: corehq/apps/export/templates/export/partials/new_customize_export_templates.html
+msgid "Show Deprecated Properties"
+msgstr ""
+
+#: corehq/apps/export/templates/export/dialogs/process_deprecated_properties.html
 msgid ""
 "\n"
 "            In order to show you your deprecated properties, we need to "
@@ -19220,6 +19257,10 @@ msgstr ""
 
 #: corehq/apps/export/templates/export/partials/new_customize_export_templates.html
 msgid "Hide Deleted Properties"
+msgstr ""
+
+#: corehq/apps/export/templates/export/partials/new_customize_export_templates.html
+msgid "Hide Deprecated Properties"
 msgstr ""
 
 #: corehq/apps/export/templates/export/partials/new_customize_export_templates.html
@@ -35522,6 +35563,13 @@ msgid "Invalid Deactivation Date format (expects MM-YYYY)."
 msgstr ""
 
 #: corehq/apps/users/forms.py
+#, python-brace-format
+msgid ""
+"{code} is not a valid language code. Please enter a valid ISO-639 two- or "
+"three-digit code."
+msgstr ""
+
+#: corehq/apps/users/forms.py
 msgid "Please enter a valid two or three digit language code."
 msgstr ""
 
@@ -41474,10 +41522,8 @@ msgid "Bulk user management features"
 msgstr ""
 
 #: corehq/privileges.py
-#, fuzzy
-#| msgid "Application Version"
 msgid "Application error report"
-msgstr "Versão da Aplicação"
+msgstr ""
 
 #: corehq/reports.py
 msgid "Report Builder Reports"
