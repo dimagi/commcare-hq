@@ -60,6 +60,7 @@ from corehq.messaging.scheduling.models import (
     CustomContent,
     IVRSurveyContent,
     SMSCallbackContent,
+    FCMNotificationContent,
 )
 from corehq.messaging.scheduling.scheduling_partitioned.models import ScheduleInstance, CaseScheduleInstanceMixin
 from corehq.toggles import EXTENSION_CASES_SYNC_ENABLED
@@ -130,6 +131,15 @@ class ContentForm(Form):
     # names in the HTML are prefixed with "content-"
     prefix = 'content'
 
+    FCM_SUBJECT_MAX_LENGTH = 255
+    FCM_MESSAGE_MAX_LENGTH = 2048
+
+    fcm_message_type = ChoiceField(
+        required=False,
+        choices=FCMNotificationContent.MESSAGE_TYPES,
+        initial=FCMNotificationContent.MESSAGE_TYPE_NOTIFICATION,
+        label=''
+    )
     subject = CharField(
         required=False,
         widget=HiddenInput,
@@ -184,6 +194,11 @@ class ContentForm(Form):
         required=False,
         label=gettext_lazy("Intervals"),
     )
+    fcm_action = ChoiceField(
+        required=False,
+        label=gettext_lazy("Action on Notification"),
+        choices=FCMNotificationContent.ACTION_CHOICES,
+    )
 
     def __init__(self, *args, **kwargs):
         if 'schedule_form' not in kwargs:
@@ -197,14 +212,24 @@ class ContentForm(Form):
         self.fields['app_and_form_unique_id'].choices = [('', '')] + self.schedule_form.form_choices
 
     def clean_subject(self):
+        if (self.schedule_form.cleaned_data.get('content') == ScheduleForm.CONTENT_FCM_NOTIFICATION
+                and self.cleaned_data['fcm_message_type'] == FCMNotificationContent.MESSAGE_TYPE_NOTIFICATION):
+            cleaned_value = self._clean_message_field('subject')
+            return self._validate_fcm_message_length(cleaned_value, self.FCM_SUBJECT_MAX_LENGTH)
+
         if self.schedule_form.cleaned_data.get('content') != ScheduleForm.CONTENT_EMAIL:
             return None
 
         return self._clean_message_field('subject')
 
     def clean_message(self):
+        if (self.schedule_form.cleaned_data.get('content') == ScheduleForm.CONTENT_FCM_NOTIFICATION
+                and self.cleaned_data['fcm_message_type'] == FCMNotificationContent.MESSAGE_TYPE_NOTIFICATION):
+            cleaned_value = self._clean_message_field('message')
+            return self._validate_fcm_message_length(cleaned_value, self.FCM_MESSAGE_MAX_LENGTH)
+
         if self.schedule_form.cleaned_data.get('content') not in (ScheduleForm.CONTENT_SMS,
-                ScheduleForm.CONTENT_EMAIL):
+                                                                  ScheduleForm.CONTENT_EMAIL):
             return None
 
         return self._clean_message_field('message')
@@ -222,6 +247,31 @@ class ContentForm(Form):
             raise ValidationError(_("Please fill out at least one translation"))
 
         return cleaned_value
+
+    @staticmethod
+    def _validate_fcm_message_length(value, max_length):
+        for data in value.values():
+            if len(data) > max_length:
+                raise ValidationError(_('This field must not exceed {} characters'.format(max_length)))
+        return value
+
+    def clean_fcm_message_type(self):
+        if self.schedule_form.cleaned_data.get('content') != ScheduleForm.CONTENT_FCM_NOTIFICATION:
+            return None
+
+        value = self.cleaned_data.get('fcm_message_type')
+        if not value:
+            raise ValidationError(_("This field is required"))
+        return value
+
+    def clean_fcm_action(self):
+        if self.schedule_form.cleaned_data.get('content') != ScheduleForm.CONTENT_FCM_NOTIFICATION:
+            return None
+
+        value = self.cleaned_data.get('fcm_action')
+        if self.cleaned_data['fcm_message_type'] == FCMNotificationContent.MESSAGE_TYPE_DATA and not value:
+            raise ValidationError(_("This field is required"))
+        return value
 
     def clean_app_and_form_unique_id(self):
         if self.schedule_form.cleaned_data.get('content') != ScheduleForm.CONTENT_SMS_SURVEY:
@@ -333,11 +383,31 @@ class ContentForm(Form):
             return CustomContent(
                 custom_content_id=self.cleaned_data['custom_sms_content_id']
             )
+        elif self.schedule_form.cleaned_data['content'] == ScheduleForm.CONTENT_FCM_NOTIFICATION:
+            return FCMNotificationContent(
+                subject=self.cleaned_data['subject'],
+                message=self.cleaned_data['message'],
+                action=self.cleaned_data['fcm_action'],
+                message_type=self.cleaned_data['fcm_message_type'],
+            )
         else:
             raise ValueError("Unexpected value for content: '%s'" % self.schedule_form.cleaned_data['content'])
 
     def get_layout_fields(self):
         return [
+            hqcrispy.B3MultiField(
+                _('Message type'),
+                crispy.Field(
+                    'fcm_message_type',
+                    data_bind='value: fcm_message_type',
+                ),
+                data_bind="visible: $root.content() === '%s'" % ScheduleForm.CONTENT_FCM_NOTIFICATION,
+            ),
+            crispy.Div(
+                crispy.Field('fcm_action'),
+                data_bind="visible: $root.content() === '%s' && fcm_message_type() === '%s'"
+                          % (ScheduleForm.CONTENT_FCM_NOTIFICATION, FCMNotificationContent.MESSAGE_TYPE_DATA),
+            ),
             hqcrispy.B3MultiField(
                 _("Subject"),
                 crispy.Field(
@@ -348,7 +418,10 @@ class ContentForm(Form):
                     crispy.Div(template='scheduling/partials/message_configuration.html'),
                     data_bind='with: subject',
                 ),
-                data_bind="visible: $root.content() === '%s'" % ScheduleForm.CONTENT_EMAIL,
+                data_bind="visible: $root.content() === '%s' || ($root.content() === '%s' "
+                          "&& fcm_message_type() === '%s')" %
+                          (ScheduleForm.CONTENT_EMAIL, ScheduleForm.CONTENT_FCM_NOTIFICATION,
+                           FCMNotificationContent.MESSAGE_TYPE_NOTIFICATION)
             ),
             hqcrispy.B3MultiField(
                 _("Message"),
@@ -361,8 +434,10 @@ class ContentForm(Form):
                     data_bind='with: message',
                 ),
                 data_bind=(
-                    "visible: $root.content() === '%s' || $root.content() === '%s' || $root.content() === '%s'" %
-                    (ScheduleForm.CONTENT_SMS, ScheduleForm.CONTENT_EMAIL, ScheduleForm.CONTENT_SMS_CALLBACK)
+                    "visible: $root.content() === '%s' || $root.content() === '%s' || $root.content() === '%s' "
+                    "|| ($root.content() === '%s' && fcm_message_type() === '%s')" %
+                    (ScheduleForm.CONTENT_SMS, ScheduleForm.CONTENT_EMAIL, ScheduleForm.CONTENT_SMS_CALLBACK,
+                     ScheduleForm.CONTENT_FCM_NOTIFICATION, FCMNotificationContent.MESSAGE_TYPE_NOTIFICATION)
                 ),
             ),
             crispy.Div(
@@ -470,6 +545,11 @@ class ContentForm(Form):
         elif isinstance(content, SMSCallbackContent):
             result['message'] = content.message
             result['sms_callback_intervals'] = ', '.join(str(i) for i in content.reminder_intervals)
+        elif isinstance(content, FCMNotificationContent):
+            result['subject'] = content.subject
+            result['message'] = content.message
+            result['fcm_action'] = content.action
+            result['fcm_message_type'] = content.message_type
         else:
             raise TypeError("Unexpected content type: %s" % type(content))
 
@@ -943,6 +1023,7 @@ class ScheduleForm(Form):
     CONTENT_IVR_SURVEY = 'ivr_survey'
     CONTENT_SMS_CALLBACK = 'sms_callback'
     CONTENT_CUSTOM_SMS = 'custom_sms'
+    CONTENT_FCM_NOTIFICATION = 'fcm_notification'
 
     YES = 'Y'
     NO = 'N'
@@ -1330,6 +1411,8 @@ class ScheduleForm(Form):
                 content.include_case_updates_in_partial_submissions
         elif isinstance(content, SMSCallbackContent):
             initial['content'] = self.CONTENT_SMS_CALLBACK
+        elif isinstance(content, FCMNotificationContent):
+            initial['content'] = self.CONTENT_FCM_NOTIFICATION
         else:
             raise TypeError("Unexpected content type: %s" % type(content))
 
@@ -2703,6 +2786,16 @@ class ConditionalAlertScheduleForm(ScheduleForm):
 
     use_case = 'conditional_alert'
 
+    FCM_SUPPORTED_RECIPIENT_TYPES = [
+        ScheduleInstance.RECIPIENT_TYPE_MOBILE_WORKER,
+        ScheduleInstance.RECIPIENT_TYPE_LOCATION,
+        ScheduleInstance.RECIPIENT_TYPE_USER_GROUP,
+        CaseScheduleInstanceMixin.RECIPIENT_TYPE_CASE_OWNER,
+        CaseScheduleInstanceMixin.RECIPIENT_TYPE_LAST_SUBMITTING_USER,
+        CaseScheduleInstanceMixin.RECIPIENT_TYPE_CASE_PROPERTY_USER,
+        CaseScheduleInstanceMixin.RECIPIENT_TYPE_CUSTOM,
+    ]
+
     # start_date is defined on the superclass but cleaning it in this subclass
     # depends on start_date_type, which depends on send_frequency
     field_order = [
@@ -2872,6 +2965,11 @@ class ConditionalAlertScheduleForm(ScheduleForm):
         ):
             self.fields['content'].choices += [
                 (self.CONTENT_CUSTOM_SMS, _("Custom SMS")),
+            ]
+
+        if settings.FCM_CREDS or self.initial.get('content') == self.CONTENT_FCM_NOTIFICATION:
+            self.fields['content'].choices += [
+                (self.CONTENT_FCM_NOTIFICATION, _("Push Notification"))
             ]
 
     @property
@@ -3451,6 +3549,15 @@ class ConditionalAlertScheduleForm(ScheduleForm):
         if CaseScheduleInstanceMixin.RECIPIENT_TYPE_CASE_PROPERTY_EMAIL in recipient_types:
             if self.cleaned_data.get('content') != self.CONTENT_EMAIL:
                 raise ValidationError(_("Email case property can only be used with Email content"))
+
+        if self.cleaned_data.get('content') == self.CONTENT_FCM_NOTIFICATION:
+            recipient_types_choices = dict(self.fields['recipient_types'].choices)
+            unsupported_recipient_types = [str(recipient_types_choices[recipient_type])
+                                           for recipient_type in recipient_types
+                                           if recipient_type not in self.FCM_SUPPORTED_RECIPIENT_TYPES]
+            if unsupported_recipient_types:
+                raise ValidationError(_("'{}' recipient types are not supported for Push Notifications"
+                                        .format(', '.join(unsupported_recipient_types))))
 
     def distill_start_offset(self):
         send_frequency = self.cleaned_data.get('send_frequency')
