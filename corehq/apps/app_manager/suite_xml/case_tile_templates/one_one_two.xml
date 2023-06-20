@@ -97,7 +97,6 @@
     </style>
     <header>
       <text>
-        <xpath function="here()"/> <!-- Without this sessionStorage.locationLat will not be populated -->
       </text>
     </header>
     <template form="{bottom_right[format]}">
@@ -122,6 +121,7 @@
     </style>
     <header>
       <text>
+        <xpath function="here()"/> <!-- Without this sessionStorage.locationLat will not be populated -->
       </text>
     </header>
     <template form="address" width="0">
