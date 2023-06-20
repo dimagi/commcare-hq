@@ -589,7 +589,6 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
                 columnStyle: this.columnStyle(),
                 sidebarEnabled: this.options.sidebarEnabled,
                 triggerEmptyCaseList: this.options.triggerEmptyCaseList,
-                splitScreenVisible: this.options.sidebarEnabled || this.options.triggerEmptyCaseList,
 
                 columnSortable: function (index) {
                     return this.sortIndices.indexOf(index) > -1;
