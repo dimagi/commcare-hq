@@ -531,6 +531,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
                 }).addTo(addressMap);
 
                 const addressIndex = _.findIndex(this.styles, function (style) { return style.displayFormat === constants.FORMAT_ADDRESS; });
+                const popupIndex = _.findIndex(this.styles, function (style) { return style.displayFormat === constants.FORMAT_ADDRESS_POPUP; });
                 L.mapbox.accessToken = token;
 
                 const latLons = []
@@ -542,10 +543,12 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
                             let latLng = coordinates.split(" ").slice(0,2);
                             if (latLng.length > 1) {
                                 const rowId = `row-${model.id}`;
+                                const popupText = DOMPurify.sanitize(model.attributes.data[popupIndex]);
                                 const marker = L.marker(latLng, {icon: locationIcon});
                                 markers.push(marker);
                                 marker
                                     .addTo(addressMap)
+                                    .bindPopup(popupText)
                                     .on('click', () => {
                                         // tiles
                                         $(`.list-cell-wrapper-style[id!='${rowId}']`)

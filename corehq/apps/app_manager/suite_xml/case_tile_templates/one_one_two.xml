@@ -131,5 +131,28 @@
       </text>
     </template>
   </field>
+  <field>
+    <style
+        horz-align="left"
+        vert-align="center"
+        font-size="medium">
+      <grid
+          grid-height="1"
+          grid-width="5"
+          grid-x="6"
+          grid-y="2"/>
+    </style>
+    <header>
+      <text>
+      </text>
+    </header>
+    <template form="address_popup" width="0">
+      <text>
+        <xpath function="{map_marker[xpath_function]}">
+          {map_marker[variables]}
+        </xpath>
+      </text>
+    </template>
+  </field>
 
 </detail>
