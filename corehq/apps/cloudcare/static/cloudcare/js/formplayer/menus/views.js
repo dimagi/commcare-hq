@@ -354,7 +354,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
 
         initialize: function (options) {
             const self = this;
-            var sidebarNoItemsText = "Please perform a search.";
+            var sidebarNoItemsText = gettext("Please perform a search.");
             self.styles = options.styles;
             self.hasNoItems = options.collection.length === 0 || options.triggerEmptyCaseList;
             self.noItemsText = options.triggerEmptyCaseList ? sidebarNoItemsText : this.options.collection.noItemsText;
