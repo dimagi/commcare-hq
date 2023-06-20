@@ -58,8 +58,6 @@ cffi==1.14.3
     #   cryptography
     #   csiphash
     #   pynacl
-chardet==3.0.4
-    # via ghdiff
 charset-normalizer==3.1.0
     # via requests
 click==8.0.3
@@ -262,8 +260,6 @@ gevent==21.8.0
     #   -r base-requirements.in
     #   django-websocket-redis
     #   git-build-branch
-ghdiff==0.4
-    # via -r base-requirements.in
 git-build-branch==0.1.15
     # via -r dev-requirements.in
 gnureadline==8.1.2
@@ -636,7 +632,6 @@ six==1.16.0
     #   ethiopian-date-converter
     #   eulxml
     #   fixture
-    #   ghdiff
     #   google-auth
     #   google-auth-httplib2
     #   isodate

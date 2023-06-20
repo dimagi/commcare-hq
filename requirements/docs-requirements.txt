@@ -50,8 +50,6 @@ cffi==1.14.3
     #   cryptography
     #   csiphash
     #   pynacl
-chardet==3.0.4
-    # via ghdiff
 charset-normalizer==3.1.0
     # via requests
 click==8.1.3
@@ -220,8 +218,6 @@ gevent==21.8.0
     # via
     #   -r base-requirements.in
     #   django-websocket-redis
-ghdiff==0.4
-    # via -r base-requirements.in
 google-api-core==2.5.0
     # via google-api-python-client
 google-api-python-client==2.32.0
@@ -518,7 +514,6 @@ six==1.16.0
     #   dropbox
     #   ethiopian-date-converter
     #   eulxml
-    #   ghdiff
     #   google-auth
     #   google-auth-httplib2
     #   jsonfield
