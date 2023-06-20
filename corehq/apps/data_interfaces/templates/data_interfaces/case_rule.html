@@ -9,12 +9,13 @@
   {% initial_page_data 'actions_initial' actions_form.current_values %}
   {% initial_page_data 'all_case_properties' all_case_properties %}
   {% initial_page_data 'read_only_mode' read_only_mode %}
+  {% initial_page_data 'requires_sysadmin' requires_sysadmin %}
 
   {% include 'data_interfaces/partials/case_rule_criteria.html' with form=criteria_form %}
   {% include 'data_interfaces/partials/case_rule_actions.html' with form=actions_form %}
 
   <div id="rule-definition">
-    {% if read_only_mode %}
+    {% if requires_sysadmin %}
       <p class="alert alert-warning">
         {% trans "NOTE: A system administrator is required to edit this rule." %}
       </p>
