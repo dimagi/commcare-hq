@@ -239,7 +239,7 @@
 
     {# for get demo and get trial forms #}
     {% initial_page_data 'number_utils_script' 'intl-tel-input/build/js/utils.js'|static %}
-    {% initial_page_data 'ace_base_path' 'ace-builds/src-min-noconflict/ace'|static %}
+    {% initial_page_data 'ace_base_path' 'ace-builds/src-min-noconflict'|static %}
 
     {% if demo_workflow_ab_v2 %}
       {% analytics_ab_test 'kissmetrics.demo_workflow_ab_v2' demo_workflow_ab_v2 %}
