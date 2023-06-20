@@ -9,7 +9,7 @@ from corehq.apps.users.models import (
     DomainMembership,
     WebUser,
 )
-from corehq.util.test_utils import flag_enabled
+from corehq.util.test_utils import flag_enabled, privilege_enabled
 
 
 class TestCaseListExplorer(TestCase):
@@ -35,6 +35,7 @@ class TestCaseListExplorer(TestCase):
         cls.domain.delete()
 
     @flag_enabled('CASE_LIST_EXPLORER')
+    @privilege_enabled('CASE_LIST_EXPLORER')
     def test_with_explorer_columns_legacy(self):
         legacy_columns = ['@case_type', 'case_name', 'last_modified']
         get_query_dict = QueryDict('', mutable=True)
@@ -59,6 +60,7 @@ class TestCaseListExplorer(TestCase):
             self.assertIn(column, header_prop_names)
 
     @flag_enabled('CASE_LIST_EXPLORER')
+    @privilege_enabled('CASE_LIST_EXPLORER')
     def test_with_explorer_columns(self):
         columns = [
             {'name': '@case_type', 'label': '@case_type'},
