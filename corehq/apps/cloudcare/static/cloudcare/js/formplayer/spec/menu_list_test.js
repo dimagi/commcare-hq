@@ -9,6 +9,7 @@ describe('Render a case list', function () {
             "toggles_dict",
             {
                 CHANGE_FORM_LANGUAGE: false,
+                SPLIT_SCREEN_CASE_SEARCH: true,
             }
         );
         sinon.stub(Utils, 'getCurrentQueryInputs').callsFake(function () { return {}; });
