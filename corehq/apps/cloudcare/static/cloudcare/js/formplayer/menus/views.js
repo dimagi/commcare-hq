@@ -358,8 +358,10 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
 
         initialize: function (options) {
             const self = this;
+            var sidebarNoItemsText = gettext("Please perform a search.");
             self.styles = options.styles;
             self.hasNoItems = options.collection.length === 0 || options.triggerEmptyCaseList;
+            self.noItemsText = options.triggerEmptyCaseList ? sidebarNoItemsText : this.options.collection.noItemsText;
             self.headers = options.triggerEmptyCaseList ? [] : this.options.headers;
             self.redoLast = options.redoLast;
             if (sessionStorage.selectedValues !== undefined) {
@@ -608,12 +610,15 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
                 templateName: "case-list-template",
                 useTiles: false,
                 hasNoItems: this.hasNoItems,
-                noItemsText: this.options.collection.noItemsText,
+                noItemsText: this.noItemsText,
                 sortIndices: this.options.sortIndices,
                 selectedCaseIds: this.selectedCaseIds,
                 isMultiSelect: false,
                 showMap: this.showMap,
                 columnStyle: this.columnStyle(),
+                sidebarEnabled: this.options.sidebarEnabled,
+                triggerEmptyCaseList: this.options.triggerEmptyCaseList,
+                splitScreenVisible: this.options.sidebarEnabled || this.options.triggerEmptyCaseList,
 
                 columnSortable: function (index) {
                     return this.sortIndices.indexOf(index) > -1;
