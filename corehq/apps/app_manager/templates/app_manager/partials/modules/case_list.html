@@ -66,6 +66,32 @@
         </div>
       {% endif %}
       <div data-bind="visible: caseTileTemplate() || hqImport('hqwebapp/js/toggles').toggleEnabled('CASE_LIST_CUSTOM_XML')">
+        {% if app.supports_grouped_case_tiles %}
+        <div class="checkbox">
+          <label>
+            <input type="checkbox" data-bind="checked: caseTileGrouped">
+            {% trans "Show case tiles grouped by parent case" %}
+          </label>
+        </div>
+        <div class="form-horizontal" data-bind="visible: caseTileGrouped">
+          <div class="form-group">
+              <label for="id_case_tile_group_by" class="col-xs-6 col-sm-4 col-md-4 col-lg-2 control-label">
+                {% trans "Parent case index name" %}
+              </label>
+              <div class="col-xs-6 col-sm-2 col-md-2 col-lg-2 controls">
+                <input class="form-control" type="text" data-bind="value: caseTileGroupBy" id="id_case_tile_group_by" placeholder="e.g. parent" />
+              </div>
+          </div>
+          <div class="form-group">
+              <label for="id_case_tile_header_rows" class="col-xs-6 col-sm-4 col-md-4 col-lg-2 control-label">
+                {% trans "Case tile header rows" %}
+              </label>
+              <div class="col-xs-6 col-sm-2 col-md-2 col-lg-2 controls">
+                <input class="form-control" type="text" data-bind="value: caseTileGroupHeaderRows" id="id_case_tile_header_rows" placeholder="e.g. 2" />
+              </div>
+          </div>
+        </div>
+        {% endif %}
         <div class="checkbox">
           <label>
             <input type="checkbox" data-bind="checked: persistTileOnForms">
