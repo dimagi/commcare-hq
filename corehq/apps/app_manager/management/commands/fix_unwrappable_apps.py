@@ -1,8 +1,6 @@
 from corehq.apps.app_manager.dbaccessors import wrap_app
 from corehq.apps.app_manager.management.commands.helpers import (
     AppMigrationCommandBase,
-    get_all_app_ids,
-    get_deleted_app_ids,
 )
 
 
@@ -41,7 +39,3 @@ class Command(AppMigrationCommandBase):
 
         if changed:
             return app_doc
-
-    def get_app_ids(self, domain=None):
-        return (list(get_deleted_app_ids(domain))
-                + list(get_all_app_ids(domain=domain, include_builds=True)))
