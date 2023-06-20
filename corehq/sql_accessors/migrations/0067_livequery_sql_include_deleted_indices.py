@@ -11,4 +11,6 @@ class Migration(migrations.Migration):
         ('sql_accessors', '0067_livequery_sql'),
     ]
 
-    operations = []
+    operations = [
+        migrator.get_migration('get_related_indices.sql'),
+    ]
