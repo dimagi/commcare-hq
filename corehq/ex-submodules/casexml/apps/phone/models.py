@@ -945,7 +945,7 @@ class SimplifiedSyncLog(AbstractSyncLog):
                 made_changes = True
 
             for update in non_live_updates_by_case_id[case_id]:
-                if update.extension_indices_to_add:
+                if update.has_extension_indices_to_add():
                     # non-live cases with extension indices should be added and processed
                     self.case_ids_on_phone.add(update.case_id)
                     for index in update.indices_to_add:
@@ -995,24 +995,11 @@ class CaseUpdate:
 
     @property
     def extension_indices_to_add(self):
-        # According to commcare-core, and
-        # casexml/apps/phone/data_providers/case/livequery.py::
-        #
-        #     def is_extension(case_id):
-        #         # A case that is both a child and an extension is not
-        #         # an extension.
-        #
-        # More info: https://dimagi-dev.atlassian.net/browse/SC-1725
-        parent_ids = {
-            index.referenced_id for index in self.indices_to_add
-            if index.relationship == const.CASE_INDEX_CHILD
-        }
-        return [
-            index for index in self.indices_to_add if (
-                index.relationship == const.CASE_INDEX_EXTENSION
-                and index.referenced_id not in parent_ids
-            )
-        ]
+        return [index for index in self.indices_to_add
+                if index.relationship == const.CASE_INDEX_EXTENSION]
+
+    def has_extension_indices_to_add(self):
+        return len(self.extension_indices_to_add) > 0
 
     @property
     def is_live(self):
