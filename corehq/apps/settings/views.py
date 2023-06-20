@@ -36,6 +36,7 @@ from dimagi.utils.web import json_response
 
 from corehq import toggles
 from corehq.apps.domain.decorators import (
+    active_domains_required,
     login_and_domain_required,
     login_required,
     require_superuser,
@@ -372,6 +373,7 @@ class TwoFactorProfileView(BaseMyAccountView, ProfileView):
     template_name = 'two_factor/profile/profile.html'
     page_title = gettext_lazy("Two Factor Authentication")
 
+    @method_decorator(active_domains_required)
     @method_decorator(login_required)
     def dispatch(self, request, *args, **kwargs):
         # this is only here to add the login_required decorator
@@ -412,6 +414,7 @@ class TwoFactorSetupView(BaseMyAccountView, SetupView):
         ('validation', HQDeviceValidationForm),
     )
 
+    @method_decorator(active_domains_required)
     @method_decorator(login_required)
     def dispatch(self, request, *args, **kwargs):
         # this is only here to add the login_required decorator

@@ -23,9 +23,7 @@ properties are identified only by number. A typical field might be called ``case
 both its position and its case property, but a calculation would be called ``case_calculated_property_1``.
 
 """
-import os
 from collections import defaultdict, namedtuple
-from xml.sax.saxutils import escape
 
 from eulxml.xmlmap.core import load_xmlobject_from_string
 from lxml import etree
@@ -34,10 +32,11 @@ from memoized import memoized
 from corehq import toggles
 from corehq.apps.app_manager import id_strings
 from corehq.apps.app_manager.const import RETURN_TO
-from corehq.apps.app_manager.exceptions import SuiteError, SuiteValidationError
+from corehq.apps.app_manager.exceptions import SuiteValidationError
 from corehq.apps.app_manager.id_strings import callout_header_locale
 from corehq.apps.app_manager.suite_xml.const import FIELD_TYPE_LEDGER
 from corehq.apps.app_manager.suite_xml.contributors import SectionContributor
+from corehq.apps.app_manager.suite_xml.features.case_tiles import CaseTileHelper
 from corehq.apps.app_manager.suite_xml.features.scheduler import (
     schedule_detail_variables,
 )
@@ -109,9 +108,10 @@ class DetailContributor(SectionContributor):
                             include_sort=detail_type.endswith('short'),
                         )  # list of DetailColumnInfo named tuples
                     if detail_column_infos:
-                        if detail.use_case_tiles:
+                        detail_id = id_strings.detail(module, detail_type)
+                        if detail.case_tile_template:
                             helper = CaseTileHelper(self.app, module, detail,
-                                                    detail_type, self.build_profile_id)
+                                                    detail_id, detail_type, self.build_profile_id)
                             elements.append(helper.build_case_tile_detail())
                         else:
                             print_template_path = None
@@ -125,7 +125,7 @@ class DetailContributor(SectionContributor):
                                 detail,
                                 detail_column_infos,
                                 tabs=list(detail.get_tabs()),
-                                id=id_strings.detail(module, detail_type),
+                                id=detail_id,
                                 title=title,
                                 print_template=print_template_path,
                             )
@@ -135,7 +135,7 @@ class DetailContributor(SectionContributor):
                     # add the persist case context if needed and if
                     # case tiles are present and have their own persistent block
                     if (detail.persist_case_context and
-                            not (detail.use_case_tiles and detail.persist_tile_on_forms)):
+                            not (detail.case_tile_template and detail.persist_tile_on_forms)):
                         d = self._get_persistent_case_context_detail(module, detail.persistent_case_context_xml)
                         elements.append(d)
 
@@ -195,9 +195,7 @@ class DetailContributor(SectionContributor):
             if detail.lookup_enabled and detail.lookup_action:
                 d.lookup = self._get_lookup_element(detail, module)
 
-            # Add no items text
-            if detail_type.endswith('short') and self.app.supports_empty_case_list_text:
-                d.no_items_text = Text(locale_id=id_strings.no_items_text_detail(module))
+            self.add_no_items_text_to_detail(d, self.app, detail_type, module)
 
             # Add variables
             variables = list(
@@ -234,11 +232,8 @@ class DetailContributor(SectionContributor):
                         d.actions.append(self._get_case_list_form_action(module))
 
                 if module_offers_search(module) and not module_uses_inline_search(module):
-                    in_search = module_loads_registry_case(module) or "search" in id
                     d.actions.append(
-                        DetailContributor.get_case_search_action(module,
-                                                                 self.build_profile_id,
-                                                                 in_search=in_search)
+                        DetailContributor.get_case_search_action(module, self.build_profile_id, id)
                     )
 
             try:
@@ -366,7 +361,8 @@ class DetailContributor(SectionContributor):
         return action
 
     @staticmethod
-    def get_case_search_action(module, build_profile_id, in_search=False):
+    def get_case_search_action(module, build_profile_id, detail_id):
+        in_search = module_loads_registry_case(module) or "search" in detail_id
         action_kwargs = DetailContributor._get_action_kwargs(module, in_search)
         if in_search:
             search_label = module.search_config.search_again_label
@@ -517,6 +513,11 @@ class DetailContributor(SectionContributor):
         d.fields = fields
         return d
 
+    @staticmethod
+    def add_no_items_text_to_detail(detail, app, detail_type, module):
+        if detail_type.endswith('short') and app.supports_empty_case_list_text:
+            detail.no_items_text = Text(locale_id=id_strings.no_items_text_detail(module))
+
 
 class DetailsHelper(object):
 
@@ -653,127 +654,3 @@ def get_detail_column_infos_for_tabs_with_sorting(detail):
             ])
 
     return columns
-
-
-class CaseTileHelper(object):
-    tile_fields = ["header", "top_left", "sex", "bottom_left", "date"]
-
-    def __init__(self, app, module, detail, detail_type, build_profile_id):
-        self.app = app
-        self.module = module
-        self.detail = detail
-        self.detail_type = detail_type
-        self.cols_by_tile_field = {col.case_tile_field: col for col in self.detail.columns}
-        self.build_profile_id = build_profile_id
-
-    def build_case_tile_detail(self):
-        """
-        Return a Detail node from an apps.app_manager.models.Detail that is
-        configured to use case tiles.
-
-        This method does so by injecting the appropriate strings into a template
-        string.
-        """
-        # Get template context
-        context = self._get_base_context()
-        for template_field in self.tile_fields:
-            column = self._get_matched_detail_column(template_field)
-            context[template_field] = self._get_column_context(column)
-
-        # Populate the template
-        detail_as_string = self._case_tile_template_string.format(**context)
-        detail = load_xmlobject_from_string(detail_as_string, xmlclass=Detail)
-
-        # Add case search action if needed
-        if module_offers_search(self.module) and not module_uses_inline_search(self.module):
-            in_search = module_loads_registry_case(self.module)
-            detail.actions.append(
-                DetailContributor.get_case_search_action(self.module,
-                                                         self.build_profile_id,
-                                                         in_search=in_search)
-            )
-
-        return detail
-
-    def _get_matched_detail_column(self, case_tile_field):
-        """
-        Get the detail column that should populate the given case tile field
-        """
-        column = self.cols_by_tile_field.get(case_tile_field, None)
-        if column is None:
-            raise SuiteError(
-                'No column was mapped to the "{}" case tile field'.format(
-                    case_tile_field
-                )
-            )
-        return column
-
-    def _get_base_context(self):
-        """
-        Get the basic context variables for interpolation into the
-        case tile detail template string
-        """
-        return {
-            "detail_id": id_strings.detail(self.module, self.detail_type),
-            "title_text_id": id_strings.detail_title_locale(self.detail_type),
-        }
-
-    def _get_column_context(self, column):
-        from corehq.apps.app_manager.detail_screen import get_column_generator
-        default_lang = self.app.default_language if not self.build_profile_id \
-            else self.app.build_profiles[self.build_profile_id].langs[0]
-        if column.useXpathExpression:
-            xpath_function = escape(column.field, {'"': '&quot;'})
-        else:
-            xpath_function = escape(get_column_generator(
-                self.app, self.module, self.detail, column).xpath_function,
-                {'"': '&quot;'})
-        context = {
-            "xpath_function": xpath_function,
-            "locale_id": id_strings.detail_column_header_locale(
-                self.module, self.detail_type, column,
-            ),
-            # Just using default language for now
-            # The right thing to do would be to reference the app_strings.txt I think
-            "prefix": escape(
-                column.header.get(default_lang, "")
-            )
-        }
-        if column.enum and column.format != "enum" and column.format != "conditional-enum":
-            raise SuiteError(
-                'Expected case tile field "{}" to be an id mapping with keys {}.'.format(
-                    column.case_tile_field,
-                    ", ".join(['"{}"'.format(i.key) for i in column.enum])
-                )
-            )
-
-        context['variables'] = ''
-        if column.format == "enum" or column.format == 'conditional-enum':
-            context["variables"] = self._get_enum_variables(column)
-        return context
-
-    def _get_enum_variables(self, column):
-        variables = []
-        for i, mapping in enumerate(column.enum):
-            variables.append(
-                XPathVariable(
-                    name=mapping.key_as_variable,
-                    locale_id=id_strings.detail_column_enum_variable(
-                        self.module, self.detail_type, column, mapping.key_as_variable
-                    )
-                ).serialize()
-            )
-        return ''.join([bytes(variable).decode('utf-8') for variable in variables])
-
-    @property
-    @memoized
-    def _case_tile_template_string(self):
-        """
-        Return a string suitable for building a case tile detail node
-        through `String.format`.
-        """
-        with open(
-            os.path.join(os.path.dirname(os.path.dirname(__file__)), "case_tile_templates", "tdh.txt"),
-            encoding='utf-8'
-        ) as f:
-            return f.read()

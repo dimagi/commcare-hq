@@ -50,8 +50,6 @@ cffi==1.14.3
     #   cryptography
     #   csiphash
     #   pynacl
-chardet==3.0.4
-    # via ghdiff
 charset-normalizer==3.1.0
     # via requests
 click==8.1.3
@@ -82,6 +80,7 @@ cryptography==39.0.1
     # via
     #   jwcrypto
     #   oic
+    #   pyopenssl
 csiphash==0.0.5
     # via -r base-requirements.in
 datadog==0.39.0
@@ -105,7 +104,7 @@ diff-match-patch==20230430
     # via -r base-requirements.in
 dimagi-memoized==1.1.3
     # via -r base-requirements.in
-django==3.2.18
+django==3.2.19
     # via
     #   -r base-requirements.in
     #   django-appconf
@@ -125,6 +124,7 @@ django==3.2.18
     #   django-user-agents
     #   djangorestframework
     #   jsonfield
+    #   sphinxcontrib-django
 django-appconf==1.0.5
     # via
     #   django-compressor
@@ -218,8 +218,6 @@ gevent==21.8.0
     # via
     #   -r base-requirements.in
     #   django-websocket-redis
-ghdiff==0.4
-    # via -r base-requirements.in
 google-api-core==2.5.0
     # via google-api-python-client
 google-api-python-client==2.32.0
@@ -277,8 +275,6 @@ jmespath==0.10.0
     # via
     #   boto3
     #   botocore
-json-delta==2.0
-    # via -r base-requirements.in
 jsonfield==2.1.1
     # via
     #   -r base-requirements.in
@@ -299,8 +295,6 @@ kafka-python==1.4.7
     # via -r base-requirements.in
 kombu==5.2.4
     # via celery
-laboratory==0.2.0
-    # via -r base-requirements.in
 looseversion==1.0.3
     # via -r base-requirements.in
 lxml==4.9.1
@@ -366,6 +360,8 @@ ply==3.11
     #   stone
 polib==1.1.1
     # via -r base-requirements.in
+pprintpp==0.4.0
+    # via sphinxcontrib-django
 prometheus-client==0.14.1
     # via -r base-requirements.in
 prompt-toolkit==3.0.36
@@ -377,7 +373,7 @@ protobuf==3.18.3
     #   googleapis-common-protos
 psycogreen==1.0.2
     # via -r base-requirements.in
-psycopg2==2.8.6
+psycopg2==2.9.6
     # via -r base-requirements.in
 py-kissmetrics==1.1.0
     # via -r base-requirements.in
@@ -408,6 +404,8 @@ pyjwt==2.4.0
     #   twilio
 pynacl==1.5.0
     # via pygithub
+pyopenssl==23.2.0
+    # via -r docs-requirements.in
 pyparsing==2.4.7
     # via httplib2
 pyphonetics==0.5.3
@@ -426,7 +424,7 @@ python-dateutil==2.8.2
     #   pandas
 python-imap==1.0.0
     # via -r base-requirements.in
-python-magic==0.4.22
+python-magic==0.4.27
     # via -r base-requirements.in
 python-mimeparse==1.6.0
     # via django-tastypie
@@ -516,7 +514,6 @@ six==1.16.0
     #   dropbox
     #   ethiopian-date-converter
     #   eulxml
-    #   ghdiff
     #   google-auth
     #   google-auth-httplib2
     #   jsonfield
@@ -536,19 +533,20 @@ socketpool==0.5.3
     # via -r base-requirements.in
 sortedcontainers==2.3.0
     # via intervaltree
-sphinx==6.1.3
+sphinx==6.2.1
     # via
     #   -r docs-requirements.in
     #   myst-parser
     #   sphinx-rtd-theme
+    #   sphinxcontrib-django
     #   sphinxcontrib-jquery
-sphinx-rtd-theme==1.2.0
+sphinx-rtd-theme==1.2.1
     # via -r docs-requirements.in
 sphinxcontrib-applehelp==1.0.2
     # via sphinx
 sphinxcontrib-devhelp==1.0.2
     # via sphinx
-sphinxcontrib-django==0.5.1
+sphinxcontrib-django==2.3
     # via -r docs-requirements.in
 sphinxcontrib-htmlhelp==2.0.0
     # via sphinx

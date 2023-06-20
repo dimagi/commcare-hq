@@ -82,16 +82,9 @@
       <td class="col-sm-3 form-group" data-bind="css: {'has-error': showWarning}"></td>
       <!--/ko-->
       <!--/ko-->
-      <!-- ko if: $parent.showCaseTileColumn() -->
+      <!-- ko if: $parent.showCaseTileColumn() && $parent.caseTileFieldsForTemplate() -->
       <td class="col-sm-2">
-        <select class="form-control" data-bind="value: case_tile_field">
-          <option value=""></option>
-          <option value="header">header</option>
-          <option value="top_left">top_left</option>
-          <option value="bottom_left">bottom_left</option>
-          <option value="sex">sex</option>
-          <option value="date">date</option>
-        </select>
+        <select class="form-control" data-bind="value: case_tile_field, options: $parent.caseTileFieldsForTemplate"></select>
       </td>
       <!-- /ko -->
       <td class="col-sm-1 text-center">

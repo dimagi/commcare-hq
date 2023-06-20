@@ -4,7 +4,6 @@ on:
     branches:
     - master
     - hotfix-deploy
-    - ap/sql-repeater/phase-2
   schedule:
     # see corehq/apps/hqadmin/management/commands/static_analysis.py
     - cron: '47 12 * * *'
@@ -31,7 +30,7 @@ jobs:
     - name: Docker info
       run: |
         docker version
-        docker-compose version
+        docker compose version
     - name: Docker login
       env:
         TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}

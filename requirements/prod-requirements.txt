@@ -52,8 +52,6 @@ cffi==1.14.3
     #   cryptography
     #   csiphash
     #   pynacl
-chardet==3.0.4
-    # via ghdiff
 charset-normalizer==3.1.0
     # via requests
 click==8.1.3
@@ -110,7 +108,7 @@ diff-match-patch==20230430
     # via -r base-requirements.in
 dimagi-memoized==1.1.3
     # via -r base-requirements.in
-django==3.2.18
+django==3.2.19
     # via
     #   -r base-requirements.in
     #   django-appconf
@@ -219,8 +217,6 @@ gevent==21.8.0
     # via
     #   -r base-requirements.in
     #   django-websocket-redis
-ghdiff==0.4
-    # via -r base-requirements.in
 google-api-core==2.5.0
     # via google-api-python-client
 google-api-python-client==2.32.0
@@ -282,8 +278,6 @@ jmespath==0.10.0
     # via
     #   boto3
     #   botocore
-json-delta==2.0
-    # via -r base-requirements.in
 jsonfield==2.1.1
     # via
     #   -r base-requirements.in
@@ -304,8 +298,6 @@ kafka-python==1.4.7
     # via -r base-requirements.in
 kombu==5.2.4
     # via celery
-laboratory==0.2.0
-    # via -r base-requirements.in
 looseversion==1.0.3
     # via -r base-requirements.in
 lxml==4.9.1
@@ -387,7 +379,7 @@ protobuf==3.18.3
     #   googleapis-common-protos
 psycogreen==1.0.2
     # via -r base-requirements.in
-psycopg2==2.8.6
+psycopg2==2.9.6
     # via -r base-requirements.in
 ptyprocess==0.7.0
     # via pexpect
@@ -447,7 +439,7 @@ python-dateutil==2.8.2
     #   pandas
 python-imap==1.0.0
     # via -r base-requirements.in
-python-magic==0.4.22
+python-magic==0.4.27
     # via -r base-requirements.in
 python-mimeparse==1.6.0
     # via django-tastypie
@@ -539,7 +531,6 @@ six==1.16.0
     #   dropbox
     #   ethiopian-date-converter
     #   eulxml
-    #   ghdiff
     #   google-auth
     #   google-auth-httplib2
     #   isodate
@@ -581,7 +572,7 @@ text-unidecode==1.3
     # via -r base-requirements.in
 toposort==1.7
     # via -r base-requirements.in
-tornado==6.1
+tornado==6.3.2
     # via flower
 traitlets==5.1.1
     # via

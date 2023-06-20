@@ -63,6 +63,7 @@ class TestNavigationEventAuditResource(APIResourceTest):
         for single_datetime in cls._daterange(datetime(2023, 5, 2, 0), datetime(2023, 5, 2, 23)):
             cls.domain1_audits.create_event(cls.username1, single_datetime)
             cls.domain1_audits.create_event(cls.username2, single_datetime)
+            cls.domain1_audits.create_event(None, single_datetime)
 
         for single_datetime in cls._daterange(datetime(2023, 6, 1, 0), datetime(2023, 6, 1, 23)):
             cls.domain2_audits.create_event(cls.username3, single_datetime)

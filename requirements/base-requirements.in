@@ -42,10 +42,9 @@ elasticsearch2>=2.0.0,<3.0.0  # we will be deprecating support for ES2 soon
 elasticsearch5>=5.0.0,<6.0.0  # ES5 support is currently in development
 ethiopian-date-converter
 eulxml
-geopandas
-geopy
+geopandas  # SolTech - Geospatial library for Geospatial feature
+geopy  # SolTech - Geocoding library for Geospatial feature
 gevent
-ghdiff
 google-api-python-client==2.32.0
 google-auth-httplib2==0.1.0
 google-auth-oauthlib==0.4.6
@@ -55,7 +54,6 @@ hiredis
 httpagentparser
 iso8601
 Jinja2
-json-delta
 jsonfield
 jsonobject-couchdbkit
 jsonobject>=2.0.0
@@ -64,7 +62,6 @@ jsonobject>=2.0.0
 jsonpath-ng @ https://github.com/kaapstorm/python-jsonpath-rw/raw/wherenot+find_or_create/wheel/jsonpath_ng-1.5.2.2-py3-none-any.whl
 jsonschema
 kafka-python
-laboratory
 looseversion
 lxml
 markdown
@@ -77,7 +74,7 @@ Pillow
 polib
 prometheus-client
 psycogreen
-psycopg2>=2.8.4  # Python 3.8 support
+psycopg2
 py-KISSmetrics
 pycryptodome>=3.6.6  # security update
 PyGithub
@@ -99,7 +96,7 @@ requests
 schema
 sentry-sdk
 sh
-shapely
+shapely  # SolTech - Planar geometric manipulation library for Geospatial feature
 # Package has an unfixed issue https://github.com/danthedeckie/simpleeval/issues/90 Can use that once https://github.com/danthedeckie/simpleeval/pull/91 is merged
 simpleeval @ git+https://github.com/dimagi/simpleeval.git@d85c5a9f972c0f0416a1716bb06d1a3ebc83e7ec
 simplejson
