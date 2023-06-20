@@ -571,7 +571,7 @@ class FCMNotificationContent(Content):
                 return
         else:
             if not self.action:
-                logged_subevent.error(MessagingEvent.ERROR_NO_MESSAGE)
+                logged_subevent.error(MessagingEvent.ERROR_FCM_NO_ACTION)
                 return
             data = self.build_fcm_data_field(recipient)
 
