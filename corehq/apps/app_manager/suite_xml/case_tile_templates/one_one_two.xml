@@ -121,12 +121,11 @@
     </style>
     <header>
       <text>
-        <xpath function="here()"/> <!-- Without this sessionStorage.locationLat will not be populated -->
       </text>
     </header>
     <template form="address" width="0">
       <text>
-        <xpath function="{map[xpath_function]}">
+        <xpath function="concat({map[xpath_function]}, if(here(), '', ''))"> <!-- Without the here() call sessionStorage.locationLat will not be populated -->
           {map[variables]}
         </xpath>
       </text>
