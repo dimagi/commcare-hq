@@ -179,7 +179,7 @@ hqDefine("cloudcare/js/form_entry/form_ui", function () {
         var mapping = {
             caption: {
                 update: function (options) {
-                    return options.data ? DOMPurify.sanitize(options.data.replace(/\n/g, '<br/>')) : null;
+                    return options.data ? _.escape(DOMPurify.sanitize(options.data)).replace(/\n/g, '<br/>') : null;
                 },
             },
             caption_markdown: {
