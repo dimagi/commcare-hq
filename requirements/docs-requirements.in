@@ -6,4 +6,6 @@ Sphinx
 sphinxcontrib-django
 sphinx-rtd-theme
 
+pyOpenSSL # CI builds fail without OpenSSL
+
 urllib3<=1.26.12  # fix doc tests AssertionError: Current app already created
