@@ -28,7 +28,9 @@ beaker==1.11.0
 billiard==3.6.4.0
     # via celery
 boto3==1.24.96
-    # via -r base-requirements.in
+    # via
+    #   -r base-requirements.in
+    #   django-ses
 botocore==1.27.96
     # via
     #   boto3
@@ -119,6 +121,7 @@ django==3.2.19
     #   django-prbac
     #   django-recaptcha
     #   django-redis
+    #   django-ses
     #   django-statici18n
     #   django-two-factor-auth
     #   django-user-agents
@@ -172,6 +175,8 @@ django-recaptcha==3.0.0
 django-redis==4.12.1
     # via -r base-requirements.in
 django-redis-sessions==0.6.2
+    # via -r base-requirements.in
+django-ses==3.1.2
     # via -r base-requirements.in
 django-statici18n==1.9.0
     # via -r base-requirements.in
@@ -433,6 +438,7 @@ pytz==2022.1
     #   babel
     #   celery
     #   django
+    #   django-ses
     #   djangorestframework
     #   pandas
     #   twilio
