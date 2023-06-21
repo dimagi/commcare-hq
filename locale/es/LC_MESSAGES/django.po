@@ -5486,7 +5486,10 @@ msgstr ""
 "Su aplicación tiene múltiples formularios con la misma abreviatura de agenda"
 
 #: corehq/apps/app_manager/suite_xml/post_process/instances.py
-msgid "Duplicate custom instance in {}: {}"
+#, python-brace-format
+msgid ""
+"Conflicting instance declarations in {entry_id} for {instance_id}:{src_1} != "
+"{src_2}"
 msgstr ""
 
 #: corehq/apps/app_manager/suite_xml/sections/entries.py
@@ -12966,10 +12969,8 @@ msgid "Group description should be less than 255 characters"
 msgstr ""
 
 #: corehq/apps/data_dictionary/models.py
-#, fuzzy
-#| msgid "Group already has node for lang: {0}"
 msgid "Group \"{}\" already exists for case type \"{}\""
-msgstr "El grupo ya tiene un nodo para el idioma: {0}"
+msgstr ""
 
 #: corehq/apps/data_dictionary/models.py
 msgid "Number"
@@ -13029,16 +13030,12 @@ msgid "Import from Excel"
 msgstr "Importar desde Excel"
 
 #: corehq/apps/data_dictionary/templates/data_dictionary/base.html
-#, fuzzy
-#| msgid "Show Deprecated Properties"
 msgid "Show Deprecated"
-msgstr "Mostrar Propiedades Obsoletas"
+msgstr ""
 
 #: corehq/apps/data_dictionary/templates/data_dictionary/base.html
-#, fuzzy
-#| msgid "Hide Deprecated Properties"
 msgid "Hide Deprecated"
-msgstr "Ocultar Propiedades Obsoletas"
+msgstr ""
 
 #: corehq/apps/data_dictionary/templates/data_dictionary/base.html
 #: corehq/apps/data_dictionary/views.py
@@ -13050,16 +13047,12 @@ msgid "FHIR Resource Property Path"
 msgstr ""
 
 #: corehq/apps/data_dictionary/templates/data_dictionary/base.html
-#, fuzzy
-#| msgid "No properties will be saved"
 msgid "group's properties will be moved to"
-msgstr "No se guardará ninguna propiedad"
+msgstr ""
 
 #: corehq/apps/data_dictionary/templates/data_dictionary/base.html
-#, fuzzy
-#| msgid "Group"
 msgid "No Group"
-msgstr "Grupo"
+msgstr ""
 
 #: corehq/apps/data_dictionary/templates/data_dictionary/base.html
 msgid "Case Property Group"
@@ -13091,10 +13084,8 @@ msgid "Valid Values &amp; Formats"
 msgstr ""
 
 #: corehq/apps/data_dictionary/util.py
-#, fuzzy
-#| msgid "Case Property Group"
 msgid "Case Property Group must have a name"
-msgstr "Grupo de Propiedad del Caso"
+msgstr ""
 
 #: corehq/apps/data_dictionary/util.py
 msgid "Case property must have a name"
@@ -36740,12 +36731,11 @@ msgid "Invalid Deactivation Date format (expects MM-YYYY)."
 msgstr ""
 
 #: corehq/apps/users/forms.py
-#, fuzzy, python-brace-format
-#| msgid "Please enter a valid two or three digit language code."
+#, python-brace-format
 msgid ""
 "{code} is not a valid language code. Please enter a valid ISO-639 two- or "
 "three-digit code."
-msgstr "Por favor ingrese un código de idioma válido de dos o tres dígitos."
+msgstr ""
 
 #: corehq/apps/users/forms.py
 msgid "Please enter a valid two or three digit language code."
@@ -42769,6 +42759,11 @@ msgstr ""
 
 #: corehq/privileges.py
 msgid "Application error report"
+msgstr ""
+
+#: corehq/privileges.py
+msgid ""
+"Show an additional 'Owner (Location)' property in report builder reports."
 msgstr ""
 
 #: corehq/reports.py
