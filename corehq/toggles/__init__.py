@@ -2347,6 +2347,15 @@ GEOSPATIAL = StaticToggle(
 
 )
 
+FCM_NOTIFICATION = StaticToggle(
+    'fcm_notification',
+    'Allows access to FCM Push Notifications',
+    TAG_CUSTOM,
+    namespaces=[NAMESPACE_DOMAIN],
+    description='Push Notification option will be available in content for '
+                'Conditional Alerts in Messaging.'
+)
+
 
 class FrozenPrivilegeToggle(StaticToggle):
     """
