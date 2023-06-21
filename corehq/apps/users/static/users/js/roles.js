@@ -3,8 +3,9 @@ hqDefine('users/js/roles',[
     'underscore',
     'knockout',
     'hqwebapp/js/toggles',
+    'hqwebapp/js/privileges',
     'hqwebapp/js/alert_user',
-], function ($, _, ko, toggles, alertUser) {
+], function ($, _, ko, toggles, privileges, alertUser) {
     let selectPermissionModel = function (id, permissionModel, text) {
         /*
         Function to build the view model for permissions that aren't simple booleans. The data is
@@ -232,7 +233,7 @@ hqDefine('users/js/roles',[
                         allowCheckboxPermission: self.permissions.edit_users_in_locations,
                     },
                     {
-                        showOption: toggles.toggleEnabled("DATA_DICTIONARY"),
+                        showOption: privileges.hasPrivilege('data_dictionary'),
                         editPermission: self.permissions.edit_data_dict,
                         viewPermission: self.permissions.view_data_dict,
                         text: gettext("<strong>Data Dictionary</strong> &mdash; manage case properties within CommCare HQ"),
