@@ -517,6 +517,12 @@ class Address(HideShortColumn):
     template_width = 0
 
 
+@register_format_type('address_popup')
+class AddressPopup(HideShortColumn):
+    template_form = 'address_popup'
+    template_width = 0
+
+
 @register_format_type('picture')
 class Picture(FormattedDetailColumn):
     template_form = 'image'
