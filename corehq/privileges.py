@@ -111,6 +111,8 @@ FILTERED_BULK_USER_DOWNLOAD = 'filtered_bulk_user_download'
 
 APPLICATION_ERROR_REPORT = 'application_error_report'
 
+SHOW_OWNER_LOCATION_PROPERTY_IN_REPORT_BUILDER = 'show_owner_location_property_in_report_builder'
+
 CASE_COPY = 'case_copy'
 
 MAX_PRIVILEGES = [
@@ -172,6 +174,7 @@ MAX_PRIVILEGES = [
     EXPORT_OWNERSHIP,
     FILTERED_BULK_USER_DOWNLOAD,
     APPLICATION_ERROR_REPORT,
+    SHOW_OWNER_LOCATION_PROPERTY_IN_REPORT_BUILDER,
     CASE_COPY,
 ]
 
@@ -247,5 +250,8 @@ class Titles(object):
             EXPORT_OWNERSHIP: _("Allow exports to have ownership"),
             FILTERED_BULK_USER_DOWNLOAD: _("Bulk user management features"),
             APPLICATION_ERROR_REPORT: _("Application error report"),
+            SHOW_OWNER_LOCATION_PROPERTY_IN_REPORT_BUILDER: _(
+                "Show an additional 'Owner (Location)' property in report builder reports."
+            ),
             CASE_COPY: _("Allow case copy from one user to another"),
         }.get(privilege, privilege)
