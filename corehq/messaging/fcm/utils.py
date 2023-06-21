@@ -57,6 +57,7 @@ class FCMUtil:
         https://firebase.google.com/docs/cloud-messaging/send-message#send-messages-to-multiple-devices
         Pass only data to send notification of type 'Data Messages'.
         https://firebase.google.com/docs/cloud-messaging/concept-options
+        This returns a batch response with format as 'Batch Response' available in
         """
         assert isinstance(registration_tokens, list)
         if len(registration_tokens) > MAX_DEVICES_ALLOWED_MULTICAST:
@@ -70,3 +71,44 @@ class FCMUtil:
         )
         response = messaging.send_multicast(message, app=self.app)
         return response
+
+
+def parse_multicast_batch_response(multicast_response, registration_tokens):
+    """
+    Parses the multicast batch response to a json format as below for easier usage.
+    {
+        'success_count': <integer>
+        'failure_count': <integer>
+        'success_responses':[
+            {
+                'token': <fcm_device_token>
+                'message_id': <message_id>
+            }
+        ]
+        'failure_responses':[
+            {
+                'token': <fcm_device_token>
+                'exception':<fcm exception that occurred>
+            }
+        ]
+    }
+    'registration_tokens' parameter list have same order as the one sent to 'send_to_multiple_devices'
+    """
+    parsed_response = {
+        'success_count': multicast_response.success_count,
+        'failure_count': multicast_response.failure_count,
+        'success_responses': [],
+        'failure_responses': []
+    }
+    for idx, resp in enumerate(multicast_response.responses):
+        if resp.success:
+            parsed_response['success_responses'].append({
+                'token': registration_tokens[idx],
+                'message_id': resp.message_id
+            })
+        else:
+            parsed_response['failure_responses'].append({
+                'token': registration_tokens[idx],
+                'exception': resp.exception
+            })
+    return parsed_response

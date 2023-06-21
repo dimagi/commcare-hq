@@ -32,7 +32,7 @@ from django.db import models
 from django.http import Http404
 from corehq.apps.formplayer_api.smsforms.api import TouchformsError
 
-from corehq.messaging.fcm.utils import FCMUtil
+from corehq.messaging.fcm.utils import FCMUtil, parse_multicast_batch_response
 from corehq.apps.users.models import CommCareUser
 
 
@@ -581,8 +581,14 @@ class FCMNotificationContent(Content):
             logged_subevent.error(e.error_type, additional_error_text=e.additional_text)
             return
 
-        FCMUtil().send_to_multiple_devices(registration_tokens=devices_fcm_tokens, title=subject, body=message,
-                                           data=data)
+        result = FCMUtil().send_to_multiple_devices(registration_tokens=devices_fcm_tokens, title=subject,
+                                                    body=message, data=data)
+        if result.failure_count == len(devices_fcm_tokens):
+            parsed_result = parse_multicast_batch_response(result, devices_fcm_tokens)
+            logged_subevent.error(MessagingEvent.ERROR_FCM_NOTIFICATION_FAILURE,
+                                  additional_error_text=str(parsed_result['failure_responses']))
+            return
+
         logged_subevent.completed()
 
     def get_recipient_devices_fcm_tokens(self, recipient):
