@@ -20,7 +20,8 @@ class Command(BaseCommand):
             '--project',
             action='store',
             dest='domain',
-            help='Specify a specific project to run data a integrity check and re-sync on.'
+            help='Specify a specific project to run a data integrity check '
+                 '(verify case counts in both indices) and re-sync.'
         )
 
     def handle(self, **options):
