@@ -80,8 +80,8 @@ class TestAggregations(ElasticTestMixin, SimpleTestCase):
                 FilterAggregation('closed', filters.term('closed', True))
             ),
             FiltersAggregation('total_by_status')
-                .add_filter('closed', filters.term('closed', True))
-                .add_filter('open', filters.term('closed', False))
+            .add_filter('closed', filters.term('closed', True))
+            .add_filter('open', filters.term('closed', False))
         ])
         self.checkQuery(query, json_output)
 
@@ -383,8 +383,7 @@ class TestAggregations(ElasticTestMixin, SimpleTestCase):
                     "buckets": [{
                         "key": 1454284800000,
                         "doc_count": 8
-                    },
-                    {
+                    }, {
                         "key": 1464284800000,
                         "doc_count": 3
                     }]
