@@ -69,8 +69,8 @@ hqDefine("cloudcare/js/form_entry/utils", function () {
     /**
      * Sets a div to be a mapbox geocoder input
      * @param {(string|string[])} divId - Div ID for the Mapbox input
-     * @param {Object} itemCallback - function to call back after new search
-     * @param {Object} clearCallBack - function to call back after clearing the input
+     * @param {function} itemCallback - function to call back after new search
+     * @param {function} clearCallBack - function to call back after clearing the input
      * @param {Object} initialPageData - initial_page_data object
      * @param {function|undefined} inputOnKeyDown - inputOnKeyDown function (optional)
      */
@@ -80,12 +80,12 @@ hqDefine("cloudcare/js/form_entry/utils", function () {
             accessToken: initialPageData.get("mapbox_access_token"),
             types: 'address',
             enableEventLogging: false,
-            getItemValue: itemCallback,
         });
         if (defaultGeocoderLocation.coordinates) {
             geocoder.setProximity(defaultGeocoderLocation.coordinates);
         }
         geocoder.on('clear', clearCallBack);
+        geocoder.on('result', (item) => itemCallback(item.result));
         geocoder.addTo('#' + divId);
         const divEl = $("#" + divId);
         const liveRegionEl = $("#" + divId + "-sr[role='region']");
