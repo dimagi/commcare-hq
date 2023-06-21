@@ -170,11 +170,7 @@ hqDefine("geospatial/js/geospatial_map", [
             return self;
         };
 
-        var exportGeoJson = function(drawInstance, mapControlsModelInstance) {
-            // Credit to https://gist.github.com/danswick/36796153bd86ce982a59043cbe0ac8f7
-            // I could not get this to work using knockout.js. It did set the attributes, but a download wasn't
-            // triggered
-            var exportButton = $("#btnExport");
+        var saveGeoJson = function(drawInstance, mapControlsModelInstance) {
             var data = drawInstance.getAll();
 
             if (data.features.length) {
@@ -218,6 +214,7 @@ hqDefine("geospatial/js/geospatial_map", [
             'use strict';
             var self = {};
             var mapboxinstance = map.getMapboxInstance();
+            self.btnSaveDisabled = ko.observable(true);
             self.btnExportDisabled = ko.observable(true);
 
             // initial saved polygons
@@ -260,6 +257,7 @@ hqDefine("geospatial/js/geospatial_map", [
                 );
                 // Mark as active polygon
                 self.activePolygon(self.selectedPolygon());
+                self.btnExportDisabled(false);
             });
 
             var mapHasPolygons = function() {
@@ -273,12 +271,24 @@ hqDefine("geospatial/js/geospatial_map", [
             };
 
             mapboxinstance.on('draw.delete', function(e) {
-                self.btnExportDisabled(!mapHasPolygons());
+                self.btnSaveDisabled(!mapHasPolygons());
             });
 
             mapboxinstance.on('draw.create', function(e) {
-                self.btnExportDisabled(!mapHasPolygons());
+                self.btnSaveDisabled(!mapHasPolygons());
             });
+
+            self.exportGeoJson = function(){
+                var exportButton = $("#btnExportDrawnArea");
+                var selectedPolygon = self.savedPolygons().find(
+                    function (o) { return o.id === self.selectedPolygon(); }
+                );
+                if (selectedPolygon) {
+                    var convertedData = 'text/json;charset=utf-8,' + encodeURIComponent(JSON.stringify(selectedPolygon.geoJson));
+                    exportButton.attr('href', 'data:' + convertedData);
+                    exportButton.attr('download','data.geojson');
+                }
+            }
 
             return self;
         }
@@ -291,7 +301,8 @@ hqDefine("geospatial/js/geospatial_map", [
             }
             var mapDiv = $('#geospatial-map');
             var $data = $(".map-data");
-            var $exportButton = $("#btnExport");
+            var $exportDrawnArea = $("#btnExportDrawnArea");
+            var $saveDrawnArea = $("#btnSaveDrawnArea");
             var $mapControlDiv = $("#mapControls");
 
             if (mapDiv.length && !map) {
@@ -311,9 +322,14 @@ hqDefine("geospatial/js/geospatial_map", [
                 $mapControlDiv.koApplyBindings(mapControlsModelInstance);
             }
 
-            $exportButton.click(function(e) {
+            $saveDrawnArea.click(function(e) {
                 if (map) {
-                    exportGeoJson(map.getMapboxDrawInstance(), mapControlsModelInstance);
+                    saveGeoJson(map.getMapboxDrawInstance(), mapControlsModelInstance);
+                }
+            });
+            $exportDrawnArea.click(function(e) {
+                if (map) {
+                    mapControlsModelInstance.exportGeoJson()
                 }
             });
         });
