@@ -542,6 +542,10 @@ class FCMNotificationContent(Content):
             logged_subevent.error(MessagingEvent.ERROR_FCM_NOT_AVAILABLE)
             return
 
+        if not toggles.FCM_NOTIFICATION.enabled(logged_event.domain):
+            logged_subevent.error(MessagingEvent.ERROR_FCM_DOMAIN_NOT_ENABLED)
+            return
+
         if not isinstance(recipient, CommCareUser):
             logged_subevent.error(MessagingEvent.ERROR_FCM_UNSUPPORTED_RECIPIENT)
             return
