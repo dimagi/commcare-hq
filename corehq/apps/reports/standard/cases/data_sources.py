@@ -374,8 +374,10 @@ class CaseDisplaySQL(CaseDisplayBase):
 class SafeCaseDisplay(object):
     """Show formatted properties if they are used in XML, otherwise show the property directly from the case
     """
-    def __init__(self, case, timezone, override_user_id=None):
+    def __init__(self, case, timezone=None, override_user_id=None):
         self.case = case
+        if timezone is None:
+            timezone = pytz.UTC
         self.display = CaseDisplaySQL(self.case, timezone, override_user_id)
 
     def get(self, name):
