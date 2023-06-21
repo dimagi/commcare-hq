@@ -461,6 +461,17 @@ class TestAggregations(ElasticTestMixin, SimpleTestCase):
         )
         self.checkQuery(query, json_output)
 
+    def test_terms_aggregation_does_not_accept_zero_size(self):
+        error_message = "Aggregation size must be greater than 0"
+        with self.assertRaisesMessage(AssertionError, error_message):
+            HQESQuery('cases').aggregation(
+                TermsAggregation('name', 'name').order('sort_field').size(0)
+            )
+        with self.assertRaisesMessage(AssertionError, error_message):
+            HQESQuery('cases').aggregation(
+                TermsAggregation('name', 'name', 0).order('sort_field')
+            )
+
 
 @es_test(requires=[form_adapter], setup_class=True)
 class TestDateHistogram(SimpleTestCase):
