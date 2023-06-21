@@ -128,17 +128,24 @@ class HeartbeatTests(TestCase):
         self.assertFalse(heartbeat_contains_force_logs())
 
     def test_heartbeat_update_fcm_token(self):
-        device = CommCareUser.get(self.user.get_id).get_device('123123')
-        device.fcm_token = 'token-101'
-        device.fcm_token_timestamp = datetime.utcnow()
+        # device = CommCareUser.get(self.user.get_id).get_device('123123')
+
+        self._do_request(
+            self.user,
+            device_id='3',
+            fcm_token='token-101'
+        )
+
+        device = CommCareUser.get(self.user.get_id).get_device('3')
+        self.assertEqual(device.fcm_token, 'token-101')
 
         updated_fcm_token = 'token-102'
         self._do_request(
             self.user,
-            device_id='123123',
+            device_id='3',
             fcm_token=updated_fcm_token
         )
-        updated_device = CommCareUser.get(self.user.get_id).get_device('123123')
+        updated_device = CommCareUser.get(self.user.get_id).get_device('3')
         self.assertEqual(updated_device.fcm_token, updated_fcm_token)
         self.assertIsNotNone(updated_device.fcm_token_timestamp)
         self.assertGreater(updated_device.fcm_token_timestamp, device.fcm_token_timestamp)
