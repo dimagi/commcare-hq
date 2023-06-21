@@ -23,7 +23,6 @@ from corehq.apps.case_search.const import (
     IDENTIFIER,
     INDEXED_ON,
     INDICES_PATH,
-    IS_RELATED_CASE,
     REFERENCED_ID,
     RELEVANCE_SCORE,
     SPECIAL_CASE_PROPERTIES_MAP,
