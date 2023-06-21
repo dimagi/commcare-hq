@@ -281,7 +281,7 @@ hqDefine("geospatial/js/geospatial_map", [
             self.exportGeoJson = function(){
                 var exportButton = $("#btnExportDrawnArea");
                 var selectedPolygon = self.savedPolygons().find(
-                    function (o) { return o.id == self.selectedPolygon(); }
+                    function (o) { return o.id === self.selectedPolygon(); }
                 );
                 if (selectedPolygon) {
                     var convertedData = 'text/json;charset=utf-8,' + encodeURIComponent(JSON.stringify(selectedPolygon.geoJson));
