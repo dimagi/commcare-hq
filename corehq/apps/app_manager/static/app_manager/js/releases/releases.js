@@ -245,6 +245,7 @@ hqDefine('app_manager/js/releases/releases', function () {
         self.upstreamBriefsById = _.indexBy(self.options.upstreamBriefs, '_id');
         self.upstreamUrl = self.options.upstreamUrl;
         self.showReleaseOperations = ko.observable(true);
+        self.depCaseTypes = ko.observableArray();
 
         self.download_modal = $(self.options.download_modal_id);
         self.async_downloader = asyncDownloader(self.download_modal);
@@ -442,6 +443,13 @@ hqDefine('app_manager/js/releases/releases', function () {
         self.revertSavedApp = function (savedApp) {
             $.postGo(self.reverse('revert_to_copy'), {build_id: savedApp.id()});
         };
+        self.handleDeprecatedCaseTypesWarning = function(depCaseTypes) {
+            if (depCaseTypes && depCaseTypes.length) {
+                self.depCaseTypes(depCaseTypes);
+            } else {
+                self.depCaseTypes([]);
+            }
+        };
         self.makeNewBuild = function () {
             if (self.buildState() === 'pending') {
                 return false;
@@ -480,6 +488,7 @@ hqDefine('app_manager/js/releases/releases', function () {
                 url: self.reverse('save_copy'),
                 success: function (data) {
                     $('#build-errors-wrapper').html(data.error_html);
+                    self.handleDeprecatedCaseTypesWarning(data.deprecated_case_types);
                     if (data.saved_app) {
                         var app = savedAppModel(data.saved_app, self);
                         self.savedApps.unshift(app);
