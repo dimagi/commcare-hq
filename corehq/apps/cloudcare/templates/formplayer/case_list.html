@@ -6,6 +6,7 @@
 
     <div aria-label="<%- title %>" tabindex="0" class="page-header menu-header"><h1 class="page-title"><%- title %></h1></div>
 
+    <% if (!sidebarEnabled) { %>
     <div class="module-search-container">
       <div class="input-group input-group-lg">
         <input type="text" class="form-control" placeholder="Search" id="searchText">
@@ -16,6 +17,7 @@
         </div>
       </div>
     </div>
+    <% } %>
 
     <div style="<%- columnStyle %>">
       <div id="module-case-list-column-next-to-map">
@@ -30,7 +32,6 @@
         <% } else { %>
         <div class="module-case-list-table-container">
           <table class="table module-table module-table-case-list">
-
               <thead>
                 <tr>
                   <% if (isMultiSelect && !hasNoItems) { %>
