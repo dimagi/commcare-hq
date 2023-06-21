@@ -144,7 +144,8 @@ def _get_location_case_counts(domain, location_ids):
         CaseES()
         .domain(domain)
         .owner(location_ids)
-        .aggregation(TermsAggregation('by_location', 'owner_id').size(0))
+        .aggregation(TermsAggregation('by_location', 'owner_id'))
+        .size(0)
     ).run()
     counts = query.aggregations.by_location.counts_by_bucket()
 
