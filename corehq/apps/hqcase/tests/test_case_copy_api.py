@@ -3,6 +3,7 @@ import json
 
 from django.test import TestCase
 from django.urls import reverse
+from django_prbac.exceptions import PermissionDenied
 
 from casexml.apps.case.mock import CaseBlock
 
@@ -17,6 +18,8 @@ from corehq.apps.es.tests.utils import (
 from corehq.apps.hqcase.utils import submit_case_blocks
 from corehq.apps.users.models import HqPermissions, UserRole, WebUser
 from corehq.form_processor.tests.utils import FormProcessorTestUtils
+from corehq.util.test_utils import privilege_enabled
+from corehq import privileges
 
 
 @es_test(requires=[case_search_adapter], setup_class=True)
@@ -65,22 +68,29 @@ class TestCaseCopyAPI(TestCase):
             external_id=external_id,
         )
 
-    def test_missing_permissions(self):
+    def test_missing_user_permissions(self):
         WebUser.create(self.domain, 'invalid', 'password', None, None)
         self.client.login(username='invalid', password='password')
         res = self.make_post({})
         self.assertEqual(res.status_code, 403)
 
+    def test_missing_domain_permissions(self):
+        with self.assertRaises(PermissionDenied):
+            self.make_post({})
+
+    @privilege_enabled(privileges.CASE_COPY)
     def test_missing_case_ids(self):
         res = self.make_post({'case_ids': []})
         self.assertEqual(res.status_code, 400)
         self.assertEqual(json.loads(res.content)['error'], "Missing case ids")
 
+    @privilege_enabled(privileges.CASE_COPY)
     def test_missing_owner_id(self):
         res = self.make_post({'case_ids': self.case_ids, 'owner_id': ''})
         self.assertEqual(res.status_code, 400)
         self.assertEqual(json.loads(res.content)['error'], "Missing new owner id")
 
+    @privilege_enabled(privileges.CASE_COPY)
     def test_case_is_copied_to_new_owner(self):
         new_owner_id = 'new_owner_id'
 

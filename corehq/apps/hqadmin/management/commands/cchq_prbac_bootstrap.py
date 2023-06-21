@@ -219,6 +219,9 @@ class Command(BaseCommand):
         Role(slug=privileges.APPLICATION_ERROR_REPORT,
              name='Application error report',
              description='Show Application Error Report'),
+        Role(slug=privileges.CASE_COPY,
+             name='Allow Case Copy',
+             description='Allow case copy from one user to another'),
     ]
 
     BOOTSTRAP_PLANS = [
