@@ -3523,6 +3523,14 @@ msgstr "ID Confidencial"
 msgid "Sensitive Date"
 msgstr "Fecha Confidencial"
 
+#: corehq/apps/geospatial/static/geospatial/js/geospatial_map.js
+msgid "View here"
+msgstr ""
+
+#: corehq/apps/geospatial/static/geospatial/js/geospatial_map.js
+msgid "There are case(s) missing geolocation data."
+msgstr ""
+
 #: corehq/apps/groups/static/groups/js/group_members.js
 msgid "Edit Group Information"
 msgstr ""
