@@ -89,6 +89,7 @@ from corehq.util.timezones.conversions import ServerTime
 from corehq.util.timezones.utils import get_timezone_for_user
 from corehq.util.view_utils import reverse as reverse_with_params
 from corehq.util.workbook_json.excel import WorkbookJSONError, get_workbook
+from corehq.apps.data_dictionary.util import is_case_type_deprecated
 
 from ..users.decorators import require_permission
 from ..users.models import HqPermissions
@@ -716,6 +717,7 @@ class AutomaticUpdateRuleListView(DataInterfaceSection):
             'id': rule.pk,
             'name': rule.name,
             'case_type': rule.case_type,
+            'is_case_type_deprecated': is_case_type_deprecated(self.domain, rule.case_type),
             'active': rule.active,
             'last_run': self._convert_to_user_time(rule.last_run),
             'edit_url': reverse(self.edit_url_name, args=[self.domain, rule.pk]),
@@ -1038,6 +1040,7 @@ class DeduplicationRuleListView(DataInterfaceSection, CRUDPaginatedViewMixin):
             'id': rule.pk,
             'name': rule.name,
             'case_type': rule.case_type,
+            'is_case_type_deprecated': is_case_type_deprecated(self.domain, rule.case_type),
             'active': rule.active,
             'last_run': (ServerTime(rule.last_run)
                          .user_time(get_timezone_for_user(None, self.domain))
