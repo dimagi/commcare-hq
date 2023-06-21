@@ -63,7 +63,7 @@ from corehq.messaging.scheduling.models import (
     FCMNotificationContent,
 )
 from corehq.messaging.scheduling.scheduling_partitioned.models import ScheduleInstance, CaseScheduleInstanceMixin
-from corehq.toggles import EXTENSION_CASES_SYNC_ENABLED
+from corehq.toggles import EXTENSION_CASES_SYNC_ENABLED, FCM_NOTIFICATION
 from couchdbkit import ResourceNotFound
 from langcodes import get_name as get_language_name
 
@@ -2970,7 +2970,10 @@ class ConditionalAlertScheduleForm(ScheduleForm):
                 (self.CONTENT_CUSTOM_SMS, _("Custom SMS")),
             ]
 
-        if settings.FCM_CREDS or self.initial.get('content') == self.CONTENT_FCM_NOTIFICATION:
+        if (
+            self.initial.get('content') == self.CONTENT_FCM_NOTIFICATION
+            or (FCM_NOTIFICATION.enabled(self.domain) and settings.FCM_CREDS)
+        ):
             self.fields['content'].choices += [
                 (self.CONTENT_FCM_NOTIFICATION, _("Push Notification"))
             ]
