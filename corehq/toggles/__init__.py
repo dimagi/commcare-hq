@@ -954,6 +954,46 @@ USH_CASE_CLAIM_UPDATES = StaticToggle(
     parent_toggles=[SYNC_SEARCH_CASE_CLAIM]
 )
 
+GEOCODER_MY_LOCATION_BUTTON = StaticToggle(
+    "geocoder_my_location_button",
+    "USH: Add button to geocoder to populate search with the user's current location",
+    TAG_RELEASE,
+    namespaces=[NAMESPACE_DOMAIN],
+    description="""
+    When enabled this will add a small button to the geocoder widget that, when pressed, and if
+    the user grants permission, will perform a reverse geocoding query based on the user's reported location.
+    The result will be used to populate the search field of the geocoder widget.
+
+    This is intended as a temporary toggle and will likely get rolled into the "USH_CASE_CLAIM_UPDATES" toggle.
+    """,
+    parent_toggles=[USH_CASE_CLAIM_UPDATES],
+)
+
+GEOCODER_AUTOLOAD_USER_LOCATION = StaticToggle(
+    "geocoder_autoload_user_location",
+    "USH: Auto-load the geocoder widget with the user's current location",
+    TAG_CUSTOM,
+    namespaces=[NAMESPACE_DOMAIN],
+    description="""
+    When enabled, and if the user grants permissions, the geocoder widget will automatically do a reverse
+    geocoding query using the user's reported location The result will be used to populate the search field
+    of the geocoder widget.
+    """,
+    parent_toggles=[USH_CASE_CLAIM_UPDATES],
+)
+
+GEOCODER_USER_PROXIMITY = StaticToggle(
+    "geocoder_user_proximity",
+    "USH: Set the geocoder widget's proximity based on the user's location.",
+    TAG_CUSTOM,
+    namespaces=[NAMESPACE_DOMAIN],
+    description="""
+    This has the effect of getting search results that are closer to the user's location. This will override
+    the domains default proximity setting ("Default project location").
+    """,
+    parent_toggles=[USH_CASE_CLAIM_UPDATES],
+)
+
 USH_SEARCH_FILTER = StaticToggle(
     'case_search_filter',
     "USH Specific toggle to use Search Filter in case search options.",
