@@ -73,15 +73,32 @@ hqDefine("cloudcare/js/form_entry/utils", function () {
      * @param {function} clearCallBack - function to call back after clearing the input
      * @param {Object} initialPageData - initial_page_data object
      * @param {function|undefined} inputOnKeyDown - inputOnKeyDown function (optional)
+     * @param {boolean} showGeolocationButton - show geolocation button. Defaults to false. (optional)
+     * @param {boolean} geolocateOnLoad - geolocate the user's location on load. Defaults to false. (optional)
+     * @param {boolean} setProximity - set proximity to user's location. Defaults to false. (optional)
      */
-    module.renderMapboxInput = function (divId, itemCallback, clearCallBack, initialPageData, inputOnKeyDown) {
+    module.renderMapboxInput = function (
+        divId,
+        itemCallback,
+        clearCallBack,
+        initialPageData,
+        inputOnKeyDown,
+        showGeolocationButton= false,
+        geolocateOnLoad = false,
+        setProximity = false
+    ) {
         var defaultGeocoderLocation = initialPageData.get('default_geocoder_location') || {};
         var geocoder = new MapboxGeocoder({
             accessToken: initialPageData.get("mapbox_access_token"),
             types: 'address',
             enableEventLogging: false,
+            enableGeolocation: showGeolocationButton,
         });
-        if (defaultGeocoderLocation.coordinates) {
+        if (setProximity && geocoder.geolocation.isSupport()) {
+            geocoder.geolocation.getCurrentPosition().then(function (position) {
+                geocoder.setProximity(position.coords);
+            });
+        } else if (defaultGeocoderLocation.coordinates) {
             geocoder.setProximity(defaultGeocoderLocation.coordinates);
         }
         geocoder.on('clear', clearCallBack);
@@ -112,6 +129,10 @@ hqDefine("cloudcare/js/form_entry/utils", function () {
                 liveRegionEl.html("<p>" + items.features[0].place_name + "</p>");
             }
         });
+        
+        if (geolocateOnLoad) {
+            geocoder._geolocateUser();
+        }
     };
 
     /**
