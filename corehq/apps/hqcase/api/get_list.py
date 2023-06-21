@@ -21,6 +21,7 @@ DEFAULT_PAGE_SIZE = 20
 MAX_PAGE_SIZE = 5000
 INDEXED_AFTER = 'indexed_on.gte'
 LAST_CASE_ID = 'last_case_id'
+INCLUDE_DEPRECATED = 'include_deprecated'
 
 
 def _to_boolean(val):
@@ -87,11 +88,13 @@ def get_list(domain, couch_user, params):
     if not couch_user.has_permission(domain, 'access_all_locations'):
         query = query_location_restricted_cases(query, domain, couch_user)
 
-    # Cases with deprecated case types should not be returned
-    deprecated_case_types = get_data_dict_deprecated_case_types(domain)
-    query = query.filter(
-        filters.NOT(filters.term('type.exact', deprecated_case_types))
-    )
+    # Cases with deprecated case types should not be returned if the flag is not specified
+    include_deprecated = params.pop(INCLUDE_DEPRECATED, False)
+    if not include_deprecated:
+        deprecated_case_types = get_data_dict_deprecated_case_types(domain)
+        query = query.filter(
+            filters.NOT(filters.term('type.exact', deprecated_case_types))
+        )
 
     es_result = query.run()
     hits = es_result.hits
