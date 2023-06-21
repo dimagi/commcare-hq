@@ -1,6 +1,10 @@
+import uuid
 from dataclasses import dataclass
 
 from corehq.apps.users.models import CouchUser
+from corehq.form_processor.models.cases import CommCareCase
+from corehq.apps.hqcase.utils import submit_case_blocks, get_deidentified_data
+from casexml.apps.case.mock import CaseBlock
 
 from .api.updates import BaseJsonCaseChange, handle_case_update
 
@@ -162,6 +166,125 @@ class CaseHelper:
             device_id=device_id,
             is_creation=False,
         )
+
+    @classmethod
+    def copy_cases(
+        cls,
+        domain,
+        case_ids,
+        to_owner,
+        censor_data=None,
+        count_only=False
+    ):
+        """
+        Copies the cases governed by 'case_ids' to the respective 'to_owner'
+        and replacing the relevant case properties with the specified 'replace_props'
+        on the copied cases (useful for hiding sensitive data).
+
+        :param domain: the domain string
+        :param case_ids: case ids of the cases to copy
+        :param to_owner: the owner to copy the cases to
+        :param censor_data: the attributes/properties to be censored, specified as a dict.
+                The keys corresponding to the property/attribute and the value specifies
+                the type of censored data, i.e. number or date
+        :param count_only: specifies whether to return only the number of copied cases.
+
+        :return: The copied cases. If `count_only` is True only the count will be returned.
+        """
+        from corehq.apps.hqcase.utils import CASEBLOCK_CHUNKSIZE
+
+        if not to_owner:
+            raise Exception('Must copy cases to valid new owner')
+
+        original_cases = CommCareCase.objects.get_cases(case_ids=case_ids, domain=domain)
+        if not any(original_cases):
+            return [] if not count_only else 0
+
+        processed_cases = {}
+        copied_cases_case_blocks = []
+
+        def _get_new_identifier_index(case_identifier_index):
+            _identifier_index = {**case_identifier_index}
+            original_referenced_id = _identifier_index['case_id']
+
+            # We need the copied case's case_id for the new index
+            if original_referenced_id in processed_cases:
+                _identifier_index['case_id'] = processed_cases[original_referenced_id].case_id
+            else:
+                # Need to process the referenced case first to get the case_id of the copied case
+                try:
+                    original_parent_case = next((
+                        orig_case for orig_case in original_cases if orig_case.case_id == original_referenced_id
+                    ))
+                except StopIteration:
+                    return {}
+                referenced_case_block = _create_case_block(original_parent_case)
+                _identifier_index['case_id'] = referenced_case_block.case_id
+            return (
+                _identifier_index['case_type'],
+                _identifier_index['case_id'],
+                _identifier_index['relationship'],
+            )
+
+        def _get_new_index_map(_case):
+            new_case_index = {}
+            for identifier in _case.get_index_map():
+                identifier_index = _get_new_identifier_index(
+                    _case.get_index_map()[identifier]
+                )
+                if identifier_index:
+                    new_case_index[identifier] = identifier_index
+            return new_case_index
+
+        def _create_case_block(_case):
+            if _case.case_id in processed_cases:
+                return
+
+            censored_attributes, censored_properties = get_deidentified_data(_case, censor_data)
+            case_block = CaseBlock(
+                create=True,
+                case_id=uuid.uuid4().hex,
+                owner_id=to_owner,
+                case_name=censored_attributes.get('case_name', _case.name),
+                case_type=_case.type,
+                update={**_case.case_json, **censored_properties},
+                index=_get_new_index_map(_case),
+                external_id=censored_attributes.get('external_id', _case.external_id),
+                date_opened=censored_attributes.get('date_opened', _case.opened_on),
+            )
+
+            copied_cases_case_blocks.append(case_block.as_text())
+            processed_cases[_case.case_id] = case_block
+
+            return case_block
+
+        case_blocks = []
+        copied_cases = []
+
+        for c in original_cases:
+            if c.owner_id == to_owner:
+                raise Exception("Cannot copy case to self")
+
+            case_blocks.append(_create_case_block(c))
+            if len(case_blocks) >= CASEBLOCK_CHUNKSIZE:
+                _, cases = submit_case_blocks(
+                    case_blocks=copied_cases_case_blocks,
+                    domain=domain,
+                )
+                copied_cases.extend(cases)
+                case_blocks = []
+
+        if case_blocks:
+            _, cases = submit_case_blocks(
+                case_blocks=copied_cases_case_blocks,
+                domain=domain,
+            )
+            copied_cases.extend(cases)
+
+        if count_only:
+            return len(copied_cases)
+        else:
+            return copied_cases
 
     @staticmethod
     def _clean_serialized_case(case_data):
