@@ -634,16 +634,17 @@ class ApplicationDataRMIHelper(object):
             }
         ) for case_type in all_case_type_names]
 
-        all_case_type_objs.insert(
-            0,
-            RMIDataChoice(
-                id=ALL_CASE_TYPE_EXPORT,
-                text=_('All Case Types'),
-                data={
-                    'unknown': True
-                }
+        if len(all_case_type_names) > 1:
+            all_case_type_objs.insert(
+                0,
+                RMIDataChoice(
+                    id=ALL_CASE_TYPE_EXPORT,
+                    text=_('All Case Types'),
+                    data={
+                        'unknown': True
+                    }
+                )
             )
-        )
 
         if as_dict:
             all_case_type_objs = [c._asdict() for c in all_case_type_objs]
