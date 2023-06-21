@@ -139,7 +139,7 @@ class ProjectReportParametersMixin(object):
                 if self.include_inactive:
                     cc_users += CommCareUser.by_domain(self.domain, is_active=False)
                 ids = [ccu._id for ccu in cc_users]
-                cache.set(cache_str, ids, 24*60*60)
+                cache.set(cache_str, ids, 24 * 60 * 60)
         return ids
 
     @property
