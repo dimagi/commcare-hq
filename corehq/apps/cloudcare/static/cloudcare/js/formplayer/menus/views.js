@@ -707,8 +707,6 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             const caseTileStyles = buildCaseTileStyles(options.tiles, numRows, numColumns,
                 numEntitiesPerRow, useUniformUnits, 'list');
 
-            const gridPolyfillPath = FormplayerFrontend.getChannel().request('gridPolyfillPath');
-
             $("#list-cell-layout-style").html(caseTileStyles.cellLayoutStyle).data("css-polyfilled", false);
             $("#list-cell-grid-style").html(caseTileStyles.cellGridStyle).data("css-polyfilled", false);
             // If we have multiple cases per line, need to generate the outer grid style as well
@@ -716,8 +714,6 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
                 $("#list-cell-wrapper-style").html(caseTileStyles.cellWrapperStyle).data("css-polyfilled", false);
                 $("#list-cell-container-style").html(caseTileStyles.cellContainerStyle).data("css-polyfilled", false);
             }
-
-            $.getScript(gridPolyfillPath);
 
             registerContinueListener(this, options);
         },
