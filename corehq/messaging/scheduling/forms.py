@@ -3557,6 +3557,13 @@ class ConditionalAlertScheduleForm(ScheduleForm):
                 raise ValidationError(_("Email case property can only be used with Email content"))
 
         if self.cleaned_data.get('content') == self.CONTENT_FCM_NOTIFICATION:
+            if not settings.FCM_CREDS:
+                raise ValidationError(_("Push Notifications is no longer available on this environment."
+                                        " Please contact Administrator."))
+            if not FCM_NOTIFICATION.enabled(self.domain):
+                raise ValidationError(_("Push Notifications is not available for your project."
+                                        " Please contact Administrator."))
+
             recipient_types_choices = dict(self.fields['recipient_types'].choices)
             unsupported_recipient_types = {str(recipient_types_choices[recipient_type])
                                            for recipient_type in recipient_types
