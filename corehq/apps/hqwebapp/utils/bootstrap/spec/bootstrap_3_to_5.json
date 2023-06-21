@@ -1,0 +1,23 @@
+{
+    "direct_css_renames": {
+        "pull-left": "float-start",
+        "pull-right": "float-end",
+        "text-right": "text-end",
+        "img-responsive": "img-fluid",
+        "btn-xs": "btn-sm",
+        "btn-default": "btn-outline-secondary",
+        "inline-block": "d-linline-block"
+    },
+    "numbered_css_renames": {
+        "col-xs-<num>": "col-<num>"
+    },
+    "data_attribute_renames": {
+        "data-toggle": "data-bs-toggle",
+        "data-target": "data-bs-target",
+        "data-dismiss": "data-bs-dismiss"
+    },
+    "flagged_css_changes": [
+        "page-header",
+        "dl-horizontal"
+    ]
+}
