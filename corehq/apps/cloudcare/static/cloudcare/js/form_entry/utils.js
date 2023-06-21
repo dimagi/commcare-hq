@@ -101,7 +101,7 @@ hqDefine("cloudcare/js/form_entry/utils", function () {
         if (setProximity && geocoder.geolocation.isSupport()) {
             geocoder.geolocation.getCurrentPosition().then(function (position) {
                 geocoder.setProximity(position.coords);
-            });
+            }).catch(error => console.log("Unable to set geocoder proximity: ", error.message));
         } else if (defaultGeocoderLocation.coordinates) {
             geocoder.setProximity(defaultGeocoderLocation.coordinates);
         }
