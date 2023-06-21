@@ -1,7 +1,8 @@
 /*global MapboxGeocoder*/
 hqDefine("cloudcare/js/form_entry/utils", function () {
     var errors = hqImport("cloudcare/js/form_entry/errors"),
-        formEntryConst = hqImport("cloudcare/js/form_entry/const");
+        formEntryConst = hqImport("cloudcare/js/form_entry/const"),
+        toggles = hqImport("hqwebapp/js/toggles");
 
     var module = {
         resourceMap: undefined,
@@ -87,6 +88,9 @@ hqDefine("cloudcare/js/form_entry/utils", function () {
         geolocateOnLoad = false,
         setProximity = false
     ) {
+        showGeolocationButton = showGeolocationButton || toggles.toggleEnabled('GEOCODER_MY_LOCATION_BUTTON');
+        geolocateOnLoad = geolocateOnLoad || toggles.toggleEnabled('GEOCODER_AUTOLOAD_USER_LOCATION');
+        setProximity = setProximity || toggles.toggleEnabled('GEOCODER_USER_PROXIMITY');
         var defaultGeocoderLocation = initialPageData.get('default_geocoder_location') || {};
         var geocoder = new MapboxGeocoder({
             accessToken: initialPageData.get("mapbox_access_token"),
