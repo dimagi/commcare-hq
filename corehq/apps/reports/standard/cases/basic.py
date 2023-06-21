@@ -24,10 +24,8 @@ from corehq.apps.reports.standard.cases.utils import (
     query_location_restricted_cases,
 )
 from corehq.apps.reports.standard.inspect import ProjectInspectionReport
-from corehq.const import USER_DATETIME_FORMAT_WITH_SEC
 from corehq.elastic import ESError
 from corehq.toggles import CASE_LIST_EXPLORER
-from corehq.util.timezones.conversions import PhoneTime
 
 from .data_sources import CaseDisplayES
 
@@ -129,7 +127,9 @@ class CaseListMixin(ElasticProjectInspectionReport, ProjectReportParametersMixin
             raise ValueError("Case object is not in search result %s" % row)
 
         if case_dict['domain'] != self.domain:
-            raise Exception("case.domain != self.domain; %r and %r, respectively" % (case_dict['domain'], self.domain))
+            raise Exception(
+                "case.domain != self.domain; %r and %r, respectively" % (case_dict['domain'], self.domain)
+            )
 
         return case_dict
 
@@ -184,7 +184,7 @@ class CaseListReport(CaseListMixin, ProjectInspectionReport, ReportDataSource):
         if self.can_upgrade_to_case_list_explorer:
             messages.warning(
                 self.request,
-                'Hey Dimagi User! Have you tried out the <a href="https://confluence.dimagi.com/display/saas/Case+List+Explorer" target="_blank">Case List Explorer</a> yet? It might be just what you are looking for!',
+                'Hey Dimagi User! Have you tried out the <a href="https://confluence.dimagi.com/display/saas/Case+List+Explorer" target="_blank">Case List Explorer</a> yet? It might be just what you are looking for!',  # noqa: E501
                 extra_tags='html',
             )
         return super(CaseListReport, self).view_response

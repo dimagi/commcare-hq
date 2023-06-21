@@ -1,5 +1,4 @@
 import datetime
-import hashlib
 import logging
 
 from django.urls import reverse
@@ -9,7 +8,6 @@ from django.utils.translation import gettext_noop as _
 from jsonobject.exceptions import BadValueError
 
 import phonelog.reports as phonelog
-from dimagi.utils.modules import to_function
 
 from corehq import privileges
 from corehq.apps.accounting.interface import (
