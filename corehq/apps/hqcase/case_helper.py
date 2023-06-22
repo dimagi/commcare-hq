@@ -9,6 +9,7 @@ from casexml.apps.case.mock import CaseBlock
 from .api.updates import BaseJsonCaseChange, handle_case_update
 from corehq.apps.users.util import SYSTEM_USER_ID
 
+
 class CaseHelper:
     """
     CaseHelper aims to offer a simple interface for simple operations on
