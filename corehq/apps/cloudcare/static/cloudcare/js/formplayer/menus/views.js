@@ -274,13 +274,13 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
 
         templateContext: function () {
             const appId = utils.currentUrlToObject().appId,
-                md = window.markdownit();
+                  md = window.markdownit();
             return {
                 data: this.options.model.get('data'),
                 styles: this.options.styles,
                 isMultiSelect: this.options.isMultiSelect,
                 renderMarkdown: function (datum) {
-                    return md.render(DOMPurify.sanitize(datum || ""));
+                    return md.render(DOMPurify.sanitize(datum || "")).replaceAll("\n", "<br>");
                 },
                 resolveUri: function (uri) {
                     return FormplayerFrontend.getChannel().request('resourceMap', uri, appId);
