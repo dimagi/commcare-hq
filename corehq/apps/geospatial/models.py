@@ -117,3 +117,48 @@ class ObjectiveAllocator:
                 gdf.drop(closest_user_id, inplace=True)
 
         return user_assignment
+
+    def group_objectives(self):
+        """
+        Group objectives that are closest together, within the constraints of `max_distance` and `max_assignable`.
+        Returns a 2D list containing all the objectives groups.
+        [['obj_a', 'obj_b']]
+
+        At least one of the constraints has to be non-null, otherwise will simply return the list of objective ids.
+        """
+        if not self.objectives:
+            return []
+        if not self.max_distance and not self.max_assignable:
+            return [[obj.id for obj in self.objectives]]
+
+        self.objectives.sort(key=lambda x: (x.lat, x.lon))
+
+        bins = []
+        current_bin = [self.objectives[0].id]
+        bins.append(current_bin)
+
+        for i in range(1, len(self.objectives)):
+            current_objective = self.objectives[i]
+            previous_object = self.objectives[i - 1]
+
+            distance = great_circle(
+                (current_objective.lat, current_objective.lon),
+                (previous_object.lat, previous_object.lon)
+            ).kilometers
+
+            # One of the constraints might be null, so we need to do the appropriate constraints check based
+            # on which constraints are non-null
+            if self.max_distance and self.max_assignable:
+                constraints_met = distance <= self.max_distance and len(current_bin) <= self.max_assignable
+            elif self.max_distance:
+                constraints_met = distance <= self.max_distance
+            else:
+                constraints_met = len(current_bin) <= self.max_assignable
+
+            if constraints_met:
+                current_bin.append(current_objective.id)
+            else:
+                current_bin = [current_objective.id]
+                bins.append(current_bin)
+
+        return bins
