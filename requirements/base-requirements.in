@@ -66,6 +66,7 @@ looseversion
 lxml
 markdown
 oic
+ortools  # Used in Geospatial features to solve routing problems - SolTech
 openpyxl
 packaging
 phonenumberslite
@@ -114,4 +115,3 @@ twilio
 werkzeug
 xlrd
 xlwt
-ortools
