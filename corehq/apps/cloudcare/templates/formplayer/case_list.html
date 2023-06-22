@@ -127,6 +127,49 @@
   </div>
 </script>
 
+<script type="text/template" id="case-tile-grouped-view-item-template">
+  <% if (isMultiSelect) { %>
+    <div class="select-row-checkbox-div">
+      <input type="checkbox" class="select-row-checkbox"/>
+    </div>
+  <% } %>
+
+    <div class="<%- prefix %>-cell-grid-style">
+      <% _.each(headerData, function(datum, index) { %>
+        <div class="<%- prefix %>-grid-style-<%- index %> box" >
+          <% if (styles[index].displayFormat === 'Image') {
+          if(resolveUri(datum)) { %>
+            <img class="module-icon" style="max-width:100%; max-height:100%;" src="<%- resolveUri(datum) %>"/>
+          <% } %>
+          <% } else if(styles[index].widthHint === 0) { %>
+            <div style="display:none;"><%- datum %></div>
+          <% } else { %>
+            <div class="webapp-markdown-output"><%= renderMarkdown(datum) %></div>
+          <% } %>
+        </div>
+      <% }); %>
+    </div>
+
+    <% _.each(indexedRowDataList, function(indexedRowData) { %>
+      <div class="<%- prefix %>-cell-grid-style">
+        <% for (let index in indexedRowData) { %>
+          <% let datum = indexedRowData[index]; %>
+          <div class="<%- prefix %>-grid-style-<%- index %> box">
+            <% if (styles[index].displayFormat === 'Image') {
+              if(resolveUri(datum)) { %>
+                <img class="module-icon" style="max-width:100%; max-height:100%;" src="<%- resolveUri(datum) %>"/>
+              <% } %>
+              <% } else if(styles[index].widthHint === 0) { %>
+                <div style="display:none;"><%- datum %></div>
+              <% } else { %>
+                <div class="webapp-markdown-output"><%= renderMarkdown(datum) %></div>
+            <% } %>
+          </div>
+        <% } %>
+      </div>
+    <% }); %>
+</script>
+
 <script type="text/template" id="cell-layout-style-template">
   <% _.each(models, function(model){ %>
   .<%- model.id %> {
