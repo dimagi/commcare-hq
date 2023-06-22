@@ -36,7 +36,7 @@ hqDefine("app_manager/js/details/utils", function () {
             value: "address",
             label: gettext('Address'),
         }, {
-            value: "address_popup",
+            value: "address-popup",
             label: gettext('Address Popup'),
         }, {
             value: "distance",

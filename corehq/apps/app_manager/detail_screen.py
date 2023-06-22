@@ -517,9 +517,9 @@ class Address(HideShortColumn):
     template_width = 0
 
 
-@register_format_type('address_popup')
+@register_format_type('address-popup')
 class AddressPopup(HideShortColumn):
-    template_form = 'address_popup'
+    template_form = 'address-popup'
     template_width = 0
 
 
