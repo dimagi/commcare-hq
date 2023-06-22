@@ -533,8 +533,9 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
                 const addressIndex = _.findIndex(this.styles, function (style) { return style.displayFormat === constants.FORMAT_ADDRESS; });
                 const popupIndex = _.findIndex(this.styles, function (style) { return style.displayFormat === constants.FORMAT_ADDRESS_POPUP; });
                 L.mapbox.accessToken = token;
+                md = window.markdownit();
 
-                const latLons = []
+                const latLngs = []
                 const markers = []
                 this.options.collection.models
                     .forEach(model => {
@@ -543,7 +544,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
                             let latLng = coordinates.split(" ").slice(0,2);
                             if (latLng.length > 1) {
                                 const rowId = `row-${model.id}`;
-                                const popupText = DOMPurify.sanitize(model.attributes.data[popupIndex]);
+                                const popupText = md.render(DOMPurify.sanitize(model.attributes.data[popupIndex]));
                                 const marker = L.marker(latLng, {icon: locationIcon});
                                 markers.push(marker);
                                 marker
@@ -566,7 +567,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
                                             scrollTop: $(`#${rowId}`).offset().top - 50
                                         }, 500);
                                     });
-                                latLons.push(latLng);
+                                latLngs.push(latLng);
                             }
                         }
                     });
@@ -576,9 +577,9 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
                     L.marker(homeLatLng, { icon: homeLocationIcon })
                         .bindPopup(gettext("Your location"))
                         .addTo(addressMap);
-                    latLons.push(homeLatLng);
+                    latLngs.push(homeLatLng);
                 }
-                addressMap.fitBounds(latLons, {maxZoom: 8});
+                addressMap.fitBounds(latLngs, {maxZoom: 8});
             } catch (error) {
                 console.error(error);
             }
