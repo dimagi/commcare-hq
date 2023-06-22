@@ -134,5 +134,11 @@ describe('Split Screen Case Search', function () {
 
             assert.isTrue(clearSidebar.calledOnce);
         });
+
+        it('should clear sidebar on navigateHome', function () {
+            FormplayerFrontend.trigger('navigateHome');
+
+            assert.isTrue(clearSidebar.calledOnce);
+        });
     });
 });
