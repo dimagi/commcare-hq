@@ -65,7 +65,7 @@
           </div>
         </div>
       {% endif %}
-      <div data-bind="visible: caseTileTemplate() || hqImport('hqwebapp/js/toggles').toggleEnabled('CASE_LIST_CUSTOM_XML')">
+      <div data-bind="visible: caseTileTemplate()">
         {% if app.supports_grouped_case_tiles %}
         <div class="checkbox">
           <label>
