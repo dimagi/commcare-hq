@@ -23,7 +23,6 @@ from corehq.apps.case_search.const import (
     IDENTIFIER,
     INDEXED_ON,
     INDICES_PATH,
-    IS_RELATED_CASE,
     REFERENCED_ID,
     RELEVANCE_SCORE,
     SPECIAL_CASE_PROPERTIES_MAP,
@@ -183,6 +182,7 @@ case_search_adapter = create_document_adapter(
     ElasticCaseSearch,
     getattr(settings, "ES_CASE_SEARCH_INDEX_NAME", "case_search_2018-05-29"),
     case_adapter.type,
+    secondary='case-search-20230524',
 )
 
 

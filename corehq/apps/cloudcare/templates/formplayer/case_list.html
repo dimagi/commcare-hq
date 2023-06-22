@@ -6,6 +6,7 @@
 
     <div aria-label="<%- title %>" tabindex="0" class="page-header menu-header"><h1 class="page-title"><%- title %></h1></div>
 
+    <% if (!sidebarEnabled) { %>
     <div class="module-search-container">
       <div class="input-group input-group-lg">
         <input type="text" class="form-control" placeholder="Search" id="searchText">
@@ -16,6 +17,7 @@
         </div>
       </div>
     </div>
+    <% } %>
 
     <div style="<%- columnStyle %>">
       <div id="module-case-list-column-next-to-map">
@@ -30,7 +32,6 @@
         <% } else { %>
         <div class="module-case-list-table-container">
           <table class="table module-table module-table-case-list">
-
               <thead>
                 <tr>
                   <% if (isMultiSelect && !hasNoItems) { %>
@@ -86,20 +87,20 @@
 
 <script type="text/template" id="case-view-item-template">
   <% if (isMultiSelect) { %>
-  <td class="module-case-list-column-checkbox"><input type="checkbox" class="select-row-checkbox"/></td>
+    <td class="module-case-list-column-checkbox"><input type="checkbox" class="select-row-checkbox"/></td>
   <% } %>
   <% _.each(data, function(datum, index) { %>
-  <% if (!(styles[index].widthHint === 0)) { %>
-  <% if (styles[index].displayFormat === 'Image') { %>
-  <td class="module-case-list-column"><img class="module-icon" src="<%- resolveUri(datum) %>"/></td>
-  <% } else if (styles[index].displayFormat === 'Markdown') { %>
-  <td class="module-case-list-column webapp-markdown-output"><%= renderMarkdown(datum) %></td>
-  <% } else if (styles[index].displayFormat === 'Graph') { %>
-  <td class="module-case-list-column"><iframe srcdoc="<%- datum %>" height="300" width="300"></iframe></td>
-  <% } else { %>
-  <td class="module-case-list-column"><%- datum %></td>
-  <% } %>
-  <% } %>
+    <% if (!(styles[index].widthHint === 0)) { %>
+      <% if (styles[index].displayFormat === 'Image') { %>
+        <td class="module-case-list-column"><img class="module-icon" src="<%- resolveUri(datum) %>"/></td>
+      <% } else if (styles[index].displayFormat === 'Markdown') { %>
+        <td class="module-case-list-column webapp-markdown-output"><%= renderMarkdown(datum) %></td>
+      <% } else if (styles[index].displayFormat === 'Graph') { %>
+        <td class="module-case-list-column"><iframe srcdoc="<%- datum %>" height="300" width="300"></iframe></td>
+      <% } else { %>
+        <td class="module-case-list-column"><%- datum %></td>
+      <% } %>
+    <% } %>
   <% }); %>
 </script>
 
@@ -205,21 +206,6 @@
   .group-row{
     background-color: white;
     width: 95%;
-  }
-</script>
-
-<script type="text/template" id="cell-wrapper-style-template">
-  .list-cell-wrapper-style {
-  border: 1px solid white;
-  border-collapse: collapse;
-  vertical-align: top;
-  background-color: #f2f2f1;
-  container-type: inline-size;
-  display:flex;
-  }
-  .case-tile-group{
-    margin: 10px 10px 10px;
-    padding: 10px 0;
   }
 </script>
 

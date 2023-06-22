@@ -108,8 +108,8 @@ hqDefine("cloudcare/js/formplayer/menus/utils", function () {
         FormplayerFrontend.regions.getRegion('formMenu').show(formMenuView);
     };
 
-    var getMenuView = function (menuResponse) {
-        var menuData = {                    // TODO: make this more concise
+    var getMenuData = function (menuResponse) {
+        return {                    // TODO: make this more concise
             collection: menuResponse,
             title: menuResponse.title,
             headers: menuResponse.headers,
@@ -130,7 +130,27 @@ hqDefine("cloudcare/js/formplayer/menus/utils", function () {
             sortIndices: menuResponse.sortIndices,
             isMultiSelect: menuResponse.multiSelect,
             multiSelectMaxSelectValue: menuResponse.maxSelectValue,
-        };
+        }
+    };
+
+    var getCaseListView = function(menuResponse) {
+        if (menuResponse.tiles === null || menuResponse.tiles === undefined) {
+            if (menuResponse.multiSelect) {
+                return views.MultiSelectCaseListView;
+            } else {
+                return views.CaseListView;
+            }
+        } else {
+            if (menuResponse.groupHeaderRows >= 0) {
+                return views.CaseTileGroupedListView;
+            } else {
+                return views.CaseTileListView;
+            }
+        }
+    }
+
+    var getMenuView = function (menuResponse) {
+        var menuData = getMenuData(menuResponse);
         var urlObject = utils.currentUrlToObject();
 
         sessionStorage.queryKey = menuResponse.queryKey;
@@ -156,6 +176,9 @@ hqDefine("cloudcare/js/formplayer/menus/utils", function () {
             if (searchText) {
                 event = "Searched Case List";
             }
+            if (menuResponse.queryResponse != null) {
+                menuData.sidebarEnabled = true;
+            }
             var eventData = {
                 domain: FormplayerFrontend.getChannel().request("currentUser").domain,
                 name: menuResponse.title,
@@ -170,24 +193,15 @@ hqDefine("cloudcare/js/formplayer/menus/utils", function () {
                     'Split Screen Case Search': toggles.toggleEnabled('SPLIT_SCREEN_CASE_SEARCH'),
                 });
             }
-            if (menuResponse.tiles === null || menuResponse.tiles === undefined) {
-                if (menuData.isMultiSelect) {
-                    return views.MultiSelectCaseListView(menuData);
-                } else {
-                    return views.CaseListView(menuData);
-                }
-            } else {
-                if (menuResponse.groupHeaderRows >= 0) {
-                    return views.CaseTileGroupedListView(menuData);
-                } else {
-                    return views.CaseTileListView(menuData);
-                }
-            }
+            var caseListView = getCaseListView(menuResponse);
+            return caseListView(menuData);
         }
     };
 
     return {
         getMenuView: getMenuView,
+        getMenuData: getMenuData,
+        getCaseListView: getCaseListView,
         handleLocationRequest: handleLocationRequest,
         showBreadcrumbs: showBreadcrumbs,
         showFormMenu: showFormMenu,

@@ -5086,7 +5086,10 @@ msgid "Your app has multiple forms with the same schedule abbreviation"
 msgstr ""
 
 #: corehq/apps/app_manager/suite_xml/post_process/instances.py
-msgid "Duplicate custom instance in {}: {}"
+#, python-brace-format
+msgid ""
+"Conflicting instance declarations in {entry_id} for {instance_id}:{src_1} != "
+"{src_2}"
 msgstr ""
 
 #: corehq/apps/app_manager/suite_xml/sections/entries.py
@@ -41286,6 +41289,11 @@ msgstr ""
 
 #: corehq/privileges.py
 msgid "Application error report"
+msgstr ""
+
+#: corehq/privileges.py
+msgid ""
+"Show an additional 'Owner (Location)' property in report builder reports."
 msgstr ""
 
 #: corehq/reports.py
