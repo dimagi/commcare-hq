@@ -9,13 +9,14 @@
 #
 # All configuration values have a default; values that are commented out
 # serve to show the default.
-
-import sys, os
+import os
+import sys
 
 sys.path.insert(0, os.path.abspath('..'))
-from manage import init_hq_python_path, run_patches
 
-import settings
+import settings  # noqa: E402
+from manage import init_hq_python_path, run_patches  # noqa: E402
+
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "settings")
 # this avoids having to import corehq.util.log.HQRequestFilter which has a chained dependency
 # to OpenSSL
@@ -42,7 +43,6 @@ source_suffix = ['.rst', '.md']
 # coming with Sphinx (named 'sphinx.ext.*') or your custom ones.
 extensions = [
     'myst_parser',
-    'sphinx.ext.autodoc',
     'sphinx.ext.viewcode',
     'sphinxcontrib_django',
     'sphinx_rtd_theme',
@@ -86,10 +86,7 @@ latex_elements = {
 
 # Grouping the document tree into LaTeX files. List of tuples
 # (source start file, target name, title, author, documentclass [howto/manual]).
-latex_documents = [
-  ('index', 'CommCareHQ.tex', 'CommCareHQ Documentation',
-   'Dimagi', 'manual'),
-]
+latex_documents = [('index', 'CommCareHQ.tex', 'CommCareHQ Documentation', 'Dimagi', 'manual'), ]
 
 # -- Options for manual page output --------------------------------------------
 
@@ -105,8 +102,6 @@ man_pages = [
 # Grouping the document tree into Texinfo files. List of tuples
 # (source start file, target name, title, author,
 #  dir menu entry, description, category)
-texinfo_documents = [
-  ('index', 'CommCareHQ', 'CommCareHQ Documentation',
+texinfo_documents = [('index', 'CommCareHQ', 'CommCareHQ Documentation',
    'Dimagi', 'CommCareHQ', 'One line description of project.',
-   'Miscellaneous'),
-]
+   'Miscellaneous'), ]

@@ -4,8 +4,11 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
     const kissmetrics = hqImport("analytix/js/kissmetrix"),
         constants = hqImport("cloudcare/js/formplayer/constants"),
         FormplayerFrontend = hqImport("cloudcare/js/formplayer/app"),
+        initialPageData = hqImport("hqwebapp/js/initial_page_data"),
         toggles = hqImport("hqwebapp/js/toggles"),
         utils = hqImport("cloudcare/js/formplayer/utils/utils");
+
+
 
     const MenuView = Marionette.View.extend({
         tagName: function () {
@@ -223,11 +226,13 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             });
         },
 
-        className: "formplayer-request",
+        className: "formplayer-request case-row",
 
         attributes: function () {
+            let modelId = this.model.get('id');
             return {
                 "tabindex": "0",
+                "id": `row-${modelId}`
             };
         },
 
@@ -238,17 +243,17 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
                 $(e.target).is('a')                                                 // actual link, as in markdown
             )) {
                 e.preventDefault();
-                let model_id = this.model.get('id');
+                let modelId = this.model.get('id');
                 if (!this.model.collection.hasDetails) {
                     if (this.isMultiSelect) {
                         let action = this.isChecked() ? constants.MULTI_SELECT_ADD : constants.MULTI_SELECT_REMOVE;
-                        FormplayerFrontend.trigger("multiSelect:updateCases", action, [model_id]);
+                        FormplayerFrontend.trigger("multiSelect:updateCases", action, [modelId]);
                     } else {
-                        FormplayerFrontend.trigger("menu:select", model_id);
+                        FormplayerFrontend.trigger("menu:select", modelId);
                     }
                     return;
                 }
-                FormplayerFrontend.trigger("menu:show:detail", model_id, 0, this.isMultiSelect);
+                FormplayerFrontend.trigger("menu:show:detail", modelId, 0, this.isMultiSelect);
             }
         },
 
@@ -353,8 +358,11 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
 
         initialize: function (options) {
             const self = this;
+            var sidebarNoItemsText = gettext("Please perform a search.");
             self.styles = options.styles;
-            self.hasNoItems = options.collection.length === 0;
+            self.hasNoItems = options.collection.length === 0 || options.triggerEmptyCaseList;
+            self.noItemsText = options.triggerEmptyCaseList ? sidebarNoItemsText : this.options.collection.noItemsText;
+            self.headers = options.triggerEmptyCaseList ? [] : this.options.headers;
             self.redoLast = options.redoLast;
             if (sessionStorage.selectedValues !== undefined) {
                 const parsedSelectedValues = JSON.parse(sessionStorage.selectedValues)[sessionStorage.queryKey];
@@ -362,6 +370,12 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             } else {
                 self.selectedCaseIds = [];
             }
+            const user = FormplayerFrontend.currentUser;
+            const displayOptions = user.displayOptions
+            const appPreview = displayOptions.singleAppMode;
+            const addressFieldPresent = !!_.find(this.styles, function (style) { return style.displayFormat === constants.FORMAT_ADDRESS; });
+
+            self.showMap = addressFieldPresent && !appPreview && !self.hasNoItems
         },
 
         ui: CaseListViewUI(),
@@ -482,13 +496,108 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             }
         },
 
+        columnStyle: function () {
+            const self = this;
+            if (self.showMap) {
+                return "display: grid;grid-template-columns: [tiles] auto [map] 300px;grid-template-rows: auto";
+            } else {
+                return"display: grid;grid-template-columns: [tiles] 100%;grid-template-rows: auto";
+            }
+        },
+
+        fontAwesomeIcon: function (iconName) {
+            return L.divIcon({
+                html: `<i class='fa ${iconName} fa-4x'></i>`,
+                iconSize: [12, 12],
+                className: 'marker-pin'
+            });
+        },
+
+        loadMap: function () {
+            const token = initialPageData.get("mapbox_access_token");
+
+            try {
+                const locationIcon = this.fontAwesomeIcon("fa-map-marker");
+                const selectedLocationIcon = this.fontAwesomeIcon("fa-star");
+                const homeLocationIcon = this.fontAwesomeIcon("fa-street-view");
+
+                const lat = 30;
+                const lon = 15;
+                const zoom = 3;
+                const addressMap = L.map('module-case-list-map').setView([lat, lon], zoom);
+                L.tileLayer('https://api.mapbox.com/styles/v1/{id}/tiles/{z}/{x}/{y}?access_token=' + token, {
+                    id: 'mapbox/streets-v11',
+                    attribution: '© <a href="https://www.mapbox.com/about/maps/">Mapbox</a> ©' +
+                             ' <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+                    tileSize: 512,
+                    zoomOffset: -1,
+                }).addTo(addressMap);
+
+                const addressIndex = _.findIndex(this.styles, function (style) { return style.displayFormat === constants.FORMAT_ADDRESS; });
+                L.mapbox.accessToken = token;
+
+                const latLons = []
+                const markers = []
+                this.options.collection.models
+                    .forEach(model => {
+                        const coordinates = model.attributes.data[addressIndex];
+                        if (coordinates) {
+                            let latLng = coordinates.split(" ").slice(0,2);
+                            if (latLng.length > 1) {
+                                const rowId = `row-${model.id}`;
+                                const marker = L.marker(latLng, {icon: locationIcon});
+                                markers.push(marker);
+                                marker
+                                    .addTo(addressMap)
+                                    .on('click', () => {
+                                        // tiles
+                                        $(`.list-cell-wrapper-style[id!='${rowId}']`)
+                                            .removeClass("highlighted-case");
+                                        // rows
+                                        $(`.case-row[id!='${rowId}']`)
+                                            .removeClass("highlighted-case");
+                                        $(`#${rowId}`)
+                                            .addClass("highlighted-case");
+                                        markers.forEach(m => m.setIcon(locationIcon));
+                                        marker.setIcon(selectedLocationIcon);
+
+                                        $([document.documentElement, document.body]).animate({
+                                            // -50 Stay clear of the breadcrumbs
+                                            scrollTop: $(`#${rowId}`).offset().top - 50
+                                        }, 500);
+                                    });
+                                latLons.push(latLng);
+                            }
+                        }
+                    });
+
+                if (sessionStorage.locationLat) {
+                    const homeLatLng = [sessionStorage.locationLat, sessionStorage.locationLon];
+                    L.marker(homeLatLng, { icon: homeLocationIcon })
+                        .bindPopup(gettext("Your location"))
+                        .addTo(addressMap);
+                    latLons.push(homeLatLng);
+                }
+                addressMap.fitBounds(latLons, {maxZoom: 8});
+            } catch (error) {
+                console.error(error);
+            }
+        },
+
+        onAttach() {
+            const self = this;
+            if (self.showMap) {
+                self.loadMap();
+            }
+        },
+
         templateContext: function () {
             const paginateItems = utils.paginateOptions(this.options.currentPage, this.options.pageCount);
             const casesPerPage = parseInt($.cookie("cases-per-page-limit")) || 10;
             return {
                 startPage: paginateItems.startPage,
                 title: this.options.title,
-                headers: this.options.headers,
+                headers: this.headers,
                 widthHints: this.options.widthHints,
                 actions: this.options.actions,
                 currentPage: this.options.currentPage,
@@ -501,10 +610,15 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
                 templateName: "case-list-template",
                 useTiles: false,
                 hasNoItems: this.hasNoItems,
-                noItemsText: this.options.collection.noItemsText,
+                noItemsText: this.noItemsText,
                 sortIndices: this.options.sortIndices,
                 selectedCaseIds: this.selectedCaseIds,
                 isMultiSelect: false,
+                showMap: this.showMap,
+                columnStyle: this.columnStyle(),
+                sidebarEnabled: this.options.sidebarEnabled,
+                triggerEmptyCaseList: this.options.triggerEmptyCaseList,
+
                 columnSortable: function (index) {
                     return this.sortIndices.indexOf(index) > -1;
                 },
@@ -575,7 +689,6 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
         const caseTileStyles = {};
         caseTileStyles.cellLayoutStyle = buildCellLayout(tiles, prefix);
         caseTileStyles.cellGridStyle = buildCellGridStyle(numRows, numColumns, useUniformUnits, prefix);
-        caseTileStyles.cellWrapperStyle = $("#cell-wrapper-style-template").html();
         caseTileStyles.cellContainerStyle = buildCellContainerStyle(numEntitiesPerRow);
         return caseTileStyles;
     };
