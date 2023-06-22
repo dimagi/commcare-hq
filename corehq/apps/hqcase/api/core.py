@@ -1,6 +1,7 @@
 from datetime import datetime
 from dimagi.utils.parsing import json_format_datetime
 from corehq.apps.case_search.const import SPECIAL_CASE_PROPERTIES
+from corehq.apps.data_dictionary.util import is_case_type_deprecated
 
 
 def serialize_case(case):
@@ -51,6 +52,7 @@ def serialize_es_case(case_doc):
         "indexed_on": case_doc['@indexed_on'],
         "closed": case_doc['closed'],
         "date_closed": case_doc['closed_on'],
+        "is_deprecated": is_case_type_deprecated(case_doc['domain'], case_doc['type']),
         "properties": {
             prop['key']: prop['value']
             for prop in case_doc['case_properties']

@@ -87,6 +87,7 @@ from corehq.motech.repeaters.views.repeat_record_display import (
 from corehq.util.timezones.conversions import ServerTime
 from corehq.util.timezones.utils import get_timezone_for_user
 from corehq.util.view_utils import absolute_reverse, get_case_or_404, reverse
+from corehq.apps.data_dictionary.util import is_case_type_deprecated
 
 from .basic import CaseListReport
 from .utils import get_user_type
@@ -235,6 +236,7 @@ class CaseDataView(BaseProjectReportSectionView):
             "show_case_rebuild": toggles.SUPPORT.enabled(self.request.user.username),
             "can_edit_data": can_edit_data,
             "is_usercase": self.case_instance.type == USERCASE_TYPE,
+            "is_case_type_deprecated": is_case_type_deprecated(self.domain, self.case_instance.type),
 
             "default_properties_as_table": default_properties,
             "dynamic_properties": dynamic_data,
