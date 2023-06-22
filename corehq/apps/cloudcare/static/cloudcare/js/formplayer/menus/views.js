@@ -722,6 +722,10 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
         },
     });
 
+    const CaseTileGroupedListView = CaseTileListView.extend({
+
+    });
+
     const CaseListDetailView = CaseListView.extend({
         template: _.template($("#case-view-list-detail-template").html() || ""),
         childView: CaseViewUnclickable,
@@ -945,6 +949,9 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
         },
         CaseTileListView: function (options) {
             return new CaseTileListView(options);
+        },
+        CaseTileGroupedListView: function (options) {
+            return new CaseTileGroupedListView(options);
         },
         DetailListView: function (options) {
             return new DetailListView(options);
