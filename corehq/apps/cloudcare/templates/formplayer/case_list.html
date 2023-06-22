@@ -134,6 +134,7 @@
     </div>
   <% } %>
 
+  <div class = "group-data">
     <div class="<%- prefix %>-cell-grid-style">
       <% _.each(headerData, function(datum, index) { %>
         <div class="<%- prefix %>-grid-style-<%- index %> box" >
@@ -170,6 +171,7 @@
       </div>
     <% }); %>
   </div>
+  </div>
 </script>
 
 <script type="text/template" id="cell-layout-style-template">
@@ -191,6 +193,9 @@
   justify-items: left;
   padding: 10px 20px 0 20px;
   }
+  .group-data{
+    flex-grow: 1
+  }
   .group-rows{
     display:flex;
     flex-direction: column;
@@ -210,6 +215,7 @@
   vertical-align: top;
   background-color: #f2f2f1;
   container-type: inline-size;
+  display:flex;
   }
 </script>
 
