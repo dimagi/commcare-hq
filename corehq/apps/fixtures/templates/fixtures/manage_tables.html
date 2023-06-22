@@ -39,18 +39,18 @@
           <i class="fa fa-cloud-download"></i> {% trans "Download Lookup Tables" %}
         </a>
         <!-- ko if: hasLinkedModels -->
-        <span data-bind="ifnot: unlockLinkedData">
-          <button class="btn btn-primary" data-toggle="modal" data-target="#edit-warning-modal">
-            <i class="fa fa-link"></i>
-            {% trans 'Unlock Linked Tables For Me' %}
-          </button>
-        </span>
-        <span data-bind="if: unlockLinkedData">
-          <button class="btn btn-primary" data-bind="click: toggleLinkedLock">
-            <i class="fa fa-link"></i>
-            {% trans "Lock Linked Tables For Me" %}
-          </button>
-        </span>
+          <!-- ko ifnot: unlockLinkedData -->
+            <button class="btn btn-primary" data-toggle="modal" data-target="#edit-warning-modal">
+              <i class="fa fa-link"></i>
+              {% trans 'Unlock Linked Tables For Me' %}
+            </button>
+          <!-- /ko -->
+          <!-- ko if: unlockLinkedData -->
+            <button class="btn btn-primary" data-bind="click: toggleLinkedLock">
+              <i class="fa fa-link"></i>
+              {% trans "Lock Linked Tables For Me" %}
+            </button>
+          <!-- /ko -->
         <!-- /ko -->
       </p>
     </div>
@@ -91,10 +91,8 @@
           <td>
             <!-- ko if: !is_synced() || $parent.unlockLinkedData() -->
             <button class="btn btn-default" data-bind="click: startEditing, visible: saveState() === 'saved'">
-              <span>
-                <i class="fa fa-edit"></i>
-                {% trans "Edit" %}
-              </span>
+              <i class="fa fa-edit"></i>
+              {% trans "Edit" %}
             </button>
             <button class="btn btn-danger" data-bind="click: $root.removeDataType">
               <i class="fa fa-trash"></i>
@@ -103,10 +101,8 @@
             <!-- /ko -->
             <!-- ko ifnot: !is_synced() || $parent.unlockLinkedData() -->
             <button class="btn btn-default" data-bind="click: startViewing, visible: saveState() === 'saved'">
-              <span>
-                <i class="fa fa-eye"></i>
-                {% trans "View" %}
-              </span>
+              <i class="fa fa-eye"></i>
+              {% trans "View" %}
             </button>
             <!-- /ko -->
             <button class="btn btn-default disabled" data-bind="visible: saveState() === 'saving'">
@@ -121,9 +117,9 @@
           </td>
           {% if is_managed_by_upstream_domain %}
           <td>
-            <span data-bind="if: is_synced">
+            <!-- ko if: is_synced-->
               <i class="icon fa fa-link"></i>
-            </span>
+            <!-- /ko -->
           </td>
           {% endif %}
         </tr>

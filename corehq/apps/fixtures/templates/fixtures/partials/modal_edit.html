@@ -13,10 +13,18 @@
                 </h3>
             </div>
             <div class="modal-body">
-                <p>Linked Tables are tables that are controlled by a separate project space linked to this project.
-                    Click here to learn more.</p>
-                <p>Changes made to Linked Tables may be overwritten by the next updates from the linked project space,
-                    and may also affect solutions on this project space.</p>
+                <p>
+                    {% blocktrans trimmed %}
+                    Linked Tables are tables that are controlled by a separate project space linked to this project.
+                    Click <a target="_blank" href="https://confluence.dimagi.com/display/commcarepublic/Enterprise+Release+Management">here</a> to learn more.
+                    {% endblocktrans %}
+                </p>
+                <p>
+                    {% blocktrans trimmed %}
+                    Changes made to Linked Tables may be overwritten by the next updates from the linked project space,
+                    and may also affect solutions on this project space.
+                    {% endblocktrans %}
+                </p>
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-danger" data-dismiss="modal" data-bind="click: $root.toggleLinkedLock">{% trans "Unlock" %}</button>
