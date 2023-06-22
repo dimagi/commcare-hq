@@ -1,39 +1,56 @@
-import jsonfield as old_jsonfield
 from contextlib import contextmanager
 from copy import deepcopy
 from datetime import datetime, timezone
 
+from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.core.validators import validate_email
+from django.db import models
+from django.http import Http404
 from django.utils.translation import gettext as _
+
+import jsonfield as old_jsonfield
+from memoized import memoized
+
+from dimagi.utils.modules import to_function
 
 from corehq import toggles
 from corehq.apps.accounting.utils import domain_is_on_trial
-from corehq.apps.app_manager.dbaccessors import get_app, get_latest_released_app
+from corehq.apps.app_manager.dbaccessors import (
+    get_app,
+    get_latest_released_app,
+)
 from corehq.apps.app_manager.exceptions import FormNotFoundException
 from corehq.apps.domain.models import Domain
-from corehq.apps.hqwebapp.tasks import send_mail_async
-from corehq.apps.smsforms.app import start_session
-from corehq.apps.smsforms.tasks import send_first_message
-from corehq.apps.smsforms.util import form_requires_input, critical_section_for_smsforms_sessions
-from corehq.form_processor.utils import is_commcarecase
-from corehq.messaging.scheduling.exceptions import EmailValidationException, FCMTokenValidationException
-from corehq.messaging.scheduling.models.abstract import Content
-from corehq.apps.reminders.models import EmailUsage
-from corehq.apps.sms.models import MessagingEvent, PhoneNumber, PhoneBlacklist, Email
-from corehq.apps.sms.util import touchforms_error_is_config_error, get_formplayer_exception
-from corehq.apps.smsforms.models import SQLXFormsSession
-from memoized import memoized
-
-from corehq.util.metrics import metrics_counter
-from dimagi.utils.modules import to_function
-from django.conf import settings
-from django.db import models
-from django.http import Http404
 from corehq.apps.formplayer_api.smsforms.api import TouchformsError
-
-from corehq.messaging.fcm.utils import FCMUtil
+from corehq.apps.hqwebapp.tasks import send_mail_async
+from corehq.apps.reminders.models import EmailUsage
+from corehq.apps.sms.models import (
+    Email,
+    MessagingEvent,
+    PhoneBlacklist,
+    PhoneNumber,
+)
+from corehq.apps.sms.util import (
+    get_formplayer_exception,
+    touchforms_error_is_config_error,
+)
+from corehq.apps.smsforms.app import start_session
+from corehq.apps.smsforms.models import SQLXFormsSession
+from corehq.apps.smsforms.tasks import send_first_message
+from corehq.apps.smsforms.util import (
+    critical_section_for_smsforms_sessions,
+    form_requires_input,
+)
 from corehq.apps.users.models import CommCareUser
+from corehq.form_processor.utils import is_commcarecase
+from corehq.messaging.fcm.utils import FCMUtil
+from corehq.messaging.scheduling.exceptions import (
+    EmailValidationException,
+    FCMTokenValidationException,
+)
+from corehq.messaging.scheduling.models.abstract import Content
+from corehq.util.metrics import metrics_counter
 
 
 @contextmanager
