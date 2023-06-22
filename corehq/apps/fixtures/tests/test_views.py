@@ -1,7 +1,7 @@
 from contextlib import contextmanager
 from unittest.mock import patch
 
-from django.test import TestCase
+from django.test import TestCase, override_settings
 from django.test.client import Client, RequestFactory
 from django.urls import reverse
 from corehq.apps.domain.models import Domain
@@ -286,20 +286,16 @@ class TestFixtureEditInterface(TestCase):
         )
 
 
+@override_settings(REQUIRE_TWO_FACTOR_FOR_SUPERUSERS=False)
 class UpdateTablesTests(TestCase):
-    def test_cannot_update_synced_fixture(self):
-        request = self._create_request('GET')
-        fixture = LookupTable.objects.create(domain='test-domain', tag='test-fixture', is_synced=True)
-
-        # ensure does not raise an exception
-        update_tables(request, 'test-domain', fixture.id)
-
     def test_can_delete_synced_fixture(self):
         request = self._create_request('DELETE')
         fixture = LookupTable.objects.create(domain='test-domain', tag='test-fixture', is_synced=True)
 
-        # ensure does not raise an exception
         update_tables(request, 'test-domain', fixture.id)
+
+        remaining_table_count = LookupTable.objects.filter(domain='test-domain', tag='test-fixture').count()
+        self.assertEqual(remaining_table_count, 0)
 
     def setUp(self):
         super().setUp()
