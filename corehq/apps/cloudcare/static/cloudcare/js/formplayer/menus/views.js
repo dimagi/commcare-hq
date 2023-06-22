@@ -869,6 +869,21 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
         print: function () {
             window.print();
         },
+        onRender: function() {
+            const self = this;
+            $.getJSON('/langcodes/langs.json', function (mapping) {
+              self.children.each(function (languageOptionView) {
+                var lang = languageOptionView.$el.find('.lang').attr('id');
+                var matchingLanguage = mapping.find(function (language) {
+                  return language.code === lang;
+                });
+                // Replace language code with the full name
+                if (matchingLanguage) {
+                  languageOptionView.$el.find('.lang').text(matchingLanguage.name);
+                }
+              });
+            });
+        },
     });
 
     const DetailView = Marionette.View.extend({
