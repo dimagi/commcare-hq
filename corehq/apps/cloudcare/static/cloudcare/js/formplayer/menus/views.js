@@ -752,6 +752,13 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
                 }
             }
         },
+
+        childViewOptions: function (model) {
+            const dict = CaseTileGroupedListView.__super__.childViewOptions.apply(this, arguments);
+            dict.groupHeaderRows = this.options.collection.groupHeaderRows
+            dict.groupModelsList = this.groupedModels[model.get("groupKey")]
+            return dict;
+        },
     });
 
     const CaseListDetailView = CaseListView.extend({
