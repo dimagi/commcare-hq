@@ -151,26 +151,26 @@
       <% }); %>
     </div>
 
-  <div class="group-rows">
-    <% _.each(indexedRowDataList, function(indexedRowData) { %>
-      <div class="<%- prefix %>-cell-grid-style group-row">
-        <% for (let index in indexedRowData) { %>
-          <% let datum = indexedRowData[index]; %>
-          <div class="<%- prefix %>-grid-style-<%- index %> box">
-            <% if (styles[index].displayFormat === 'Image') {
-              if(resolveUri(datum)) { %>
-                <img class="module-icon" style="max-width:100%; max-height:100%;" src="<%- resolveUri(datum) %>"/>
+    <div class="group-rows">
+      <% _.each(indexedRowDataList, function(indexedRowData) { %>
+        <div class="<%- prefix %>-cell-grid-style group-row">
+          <% for (let index in indexedRowData) { %>
+            <% let datum = indexedRowData[index]; %>
+            <div class="<%- prefix %>-grid-style-<%- index %> box">
+              <% if (styles[index].displayFormat === 'Image') {
+                if(resolveUri(datum)) { %>
+                  <img class="module-icon" style="max-width:100%; max-height:100%;" src="<%- resolveUri(datum) %>"/>
+                <% } %>
+                <% } else if(styles[index].widthHint === 0) { %>
+                  <div style="display:none;"><%- datum %></div>
+                <% } else { %>
+                  <div class="webapp-markdown-output"><%= renderMarkdown(datum) %></div>
               <% } %>
-              <% } else if(styles[index].widthHint === 0) { %>
-                <div style="display:none;"><%- datum %></div>
-              <% } else { %>
-                <div class="webapp-markdown-output"><%= renderMarkdown(datum) %></div>
-            <% } %>
-          </div>
-        <% } %>
-      </div>
-    <% }); %>
-  </div>
+            </div>
+          <% } %>
+        </div>
+      <% }); %>
+    </div>
   </div>
 </script>
 
@@ -197,14 +197,14 @@
     flex-grow: 1
   }
   .group-rows{
-    display:flex;
+    display: flex;
     flex-direction: column;
     gap: 10px;
     align-items: center;
   }
   .group-row{
     background-color: white;
-    width:95%;
+    width: 95%;
   }
 </script>
 
