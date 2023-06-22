@@ -12,7 +12,8 @@ from corehq.apps.sms.forms import (
 )
 from corehq.apps.sms.models import MessagingEvent
 from corehq.apps.users.models import CommCareUser
-from corehq.messaging.scheduling.exceptions import EmailValidationException, FCMTokenValidationException
+from corehq.messaging.fcm.exceptions import FCMTokenValidationException
+from corehq.messaging.scheduling.exceptions import EmailValidationException
 from corehq.messaging.scheduling.models import (
     Content as AbstractContent,
     CustomContent,

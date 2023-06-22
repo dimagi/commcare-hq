@@ -44,11 +44,9 @@ from corehq.apps.smsforms.util import (
 )
 from corehq.apps.users.models import CommCareUser
 from corehq.form_processor.utils import is_commcarecase
+from corehq.messaging.fcm.exceptions import FCMTokenValidationException
 from corehq.messaging.fcm.utils import FCMUtil
-from corehq.messaging.scheduling.exceptions import (
-    EmailValidationException,
-    FCMTokenValidationException,
-)
+from corehq.messaging.scheduling.exceptions import EmailValidationException
 from corehq.messaging.scheduling.models.abstract import Content
 from corehq.util.metrics import metrics_counter
 

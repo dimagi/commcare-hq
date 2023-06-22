@@ -18,3 +18,9 @@ class EmptyData(FCMUtilException):
 class FCMNotSetup(FCMUtilException):
     def __init__(self):
         super().__init__(_("FCM is not setup on this environment!"))
+
+
+class FCMTokenValidationException(Exception):
+    def __init__(self, error_type, additional_text=None):
+        self.error_type = error_type
+        self.additional_text = additional_text
