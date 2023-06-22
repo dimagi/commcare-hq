@@ -3,7 +3,7 @@ name: Lint Code Base
 
 on:
   pull_request:
-    branches: [ master ]
+    branches: [ super-linter/disable-errors ]
 
 jobs:
   build:

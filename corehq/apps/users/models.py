@@ -131,12 +131,14 @@ def _get_default(list):
     return list[0] if list else None
 
 
-class PermissionInfo(namedtuple("Permission", "name, allow")):
+
+class PermissionInfo( namedtuple("Permission", "name, allow")):
     """Data class that represents a single permission.
     Some permissions can be parameterized to restrict access to only specific items
     instead of ALL items.
     """
     ALLOW_ALL = "*"
+
 
     def __new__(cls, name, allow=ALLOW_ALL):
         allow = allow if allow == cls.ALLOW_ALL else tuple(allow)
@@ -147,6 +149,7 @@ class PermissionInfo(namedtuple("Permission", "name, allow")):
     @property
     def allow_all(self):
         return self.allow == self.ALLOW_ALL
+
 
     @property
     def allowed_items(self):
