@@ -1,5 +1,5 @@
 {
     "slug": "one_one_two",
     "filename": "one_one_two.xml",
-    "fields": ["title", "top", "bottom_left", "bottom_right", "map", "map_marker"]
+    "fields": ["title", "top", "bottom_left", "bottom_right", "map", "map_popup"]
 }

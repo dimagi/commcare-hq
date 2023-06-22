@@ -148,8 +148,8 @@
     </header>
     <template form="address-popup" width="0">
       <text>
-        <xpath function="{map_marker[xpath_function]}">
-          {map_marker[variables]}
+        <xpath function="{map_popup[xpath_function]}">
+          {map_popup[variables]}
         </xpath>
       </text>
     </template>
