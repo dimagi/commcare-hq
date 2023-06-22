@@ -734,6 +734,24 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
 
     const CaseTileGroupedListView = CaseTileListView.extend({
         childView: CaseTileGroupedView,
+
+        initialize: function () {
+            CaseTileGroupedListView.__super__.initialize.apply(this, arguments);
+
+            this.groupedModels = {};
+            let clonedModels = this.options.collection.models.map((model) => model.clone());
+            for (let model of clonedModels){
+                let groupKey = model.get("groupKey")
+                if (!(groupKey in this.groupedModels)) {
+                    this.groupedModels[groupKey] = [model];
+                } else {
+                    // Only one childView will be created per group.The model for the first child
+                    // is used so subsequent models in the group need to be removed.
+                    this.options.collection.remove(model)
+                    this.groupedModels[groupKey].push(model);
+                }
+            }
+        },
     });
 
     const CaseListDetailView = CaseListView.extend({
