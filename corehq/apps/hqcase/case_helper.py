@@ -7,7 +7,7 @@ from corehq.apps.hqcase.utils import submit_case_blocks, get_deidentified_data
 from casexml.apps.case.mock import CaseBlock
 
 from .api.updates import BaseJsonCaseChange, handle_case_update
-
+from corehq.apps.users.util import SYSTEM_USER_ID
 
 class CaseHelper:
     """
@@ -251,6 +251,7 @@ class CaseHelper:
                 index=_get_new_index_map(_case),
                 external_id=censored_attributes.get('external_id', _case.external_id),
                 date_opened=censored_attributes.get('date_opened', _case.opened_on),
+                user_id=SYSTEM_USER_ID,
             )
 
             copied_cases_case_blocks.append(case_block.as_text())
