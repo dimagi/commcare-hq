@@ -302,6 +302,16 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
         },
     });
 
+    const CaseTileGroupedView = CaseTileView.extend({
+        tagName: "div",
+        className: "formplayer-request list-cell-wrapper-style",
+        template: _.template($("#case-tile-grouped-view-item-template").html() || ""),
+        templateContext: function () {
+            const dict = CaseTileGroupedView.__super__.templateContext.apply(this, arguments);
+            return dict;
+        },
+    });
+
     const PersistentCaseTileView = CaseTileView.extend({
         className: "formplayer-request",
         rowClick: function (e) {
@@ -723,7 +733,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
     });
 
     const CaseTileGroupedListView = CaseTileListView.extend({
-
+        childView: CaseTileGroupedView,
     });
 
     const CaseListDetailView = CaseListView.extend({
