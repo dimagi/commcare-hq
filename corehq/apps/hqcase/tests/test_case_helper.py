@@ -10,6 +10,7 @@ from casexml.apps.case.mock import CaseFactory, CaseIndex, CaseStructure
 from corehq.apps.users.models import CommCareUser
 from corehq.form_processor.models import CommCareCase
 from corehq.util.test_utils import generate_cases
+from corehq.apps.users.util import SYSTEM_USER_ID
 
 from ..api.core import UserError, serialize_case
 from ..case_helper import CaseHelper
@@ -356,6 +357,7 @@ class TestCaseCopy(TestCase):
             )
         self.assertEqual(cases[0].owner_id, 'new_owner_id')
         self.assertEqual(cases[0].case_json['family_name'], 'Nature')
+        self.assertEqual(cases[0].opened_by, SYSTEM_USER_ID)
 
     def test_copy_case_with_sensitive_properties(self):
         properties = {
