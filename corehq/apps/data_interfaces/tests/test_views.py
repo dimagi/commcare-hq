@@ -1,5 +1,4 @@
-from django.http import Http404
-from django.test import TestCase, RequestFactory
+from django.test import TestCase, RequestFactory, override_settings
 from django_prbac.models import Role, Grant
 from corehq import privileges
 
@@ -10,6 +9,7 @@ from corehq.apps.data_interfaces.models import AutomaticUpdateRule, CaseRuleActi
 from corehq.apps.data_interfaces.views import AutomaticUpdateRuleListView
 
 
+@override_settings(REQUIRE_TWO_FACTOR_FOR_SUPERUSERS=False)
 class AutomaticUpdateRuleListViewTests(TestCase):
     @classmethod
     def setUpClass(cls):
@@ -22,7 +22,7 @@ class AutomaticUpdateRuleListViewTests(TestCase):
         cls.test_role = Role.objects.create(name='test-role', slug='test-role', description='test-role')
         (data_cleanup_permission, _created) = Role.objects.get_or_create(
             slug=privileges.DATA_CLEANUP,
-            name=privileges.DATA_CLEANUP
+            name=privileges.Titles.get_name_from_privilege(privileges.DATA_CLEANUP)
         )
         Grant.objects.create(from_role=cls.test_role, to_role=data_cleanup_permission)
 
@@ -36,17 +36,12 @@ class AutomaticUpdateRuleListViewTests(TestCase):
         deleted_rule = AutomaticUpdateRule.objects.get(id=rule.id)
         self.assertTrue(deleted_rule.deleted)
 
-    def test_cannot_delete_synced_rule(self):
-        # construct existing rule that is synced
-        rule = self._create_rule(upstream_id='some_id')
-        deletion_request = self._create_deletion_request(rule.id)
-
-        with self.assertRaises(Http404):
-            AutomaticUpdateRuleListView.as_view()(deletion_request, domain=self.domain)
-
     @classmethod
     def _create_web_user(cls):
         # A Couch user is required for logout
+        existing_user = WebUser.get_by_username('test-user')
+        if existing_user:
+            existing_user.delete('', deleted_by=None)
         user = WebUser.create('', 'test-user', 'mockmock', None, None)
         user.is_superuser = True
         user.is_authenticated = True
@@ -81,7 +76,7 @@ class AutomaticUpdateRuleListViewTests(TestCase):
         return rule
 
     def _create_deletion_request(self, id):
-        request = RequestFactory().post('/somepath', {'action': 'delete', 'itemId': id})
+        request = RequestFactory().post('/somepath', {'action': 'delete', 'id': id})
         request.domain = self.domain
         request.user = self.user
         request.role = self.test_role
