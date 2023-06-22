@@ -242,11 +242,13 @@ class CaseHelper:
                 return
 
             censored_attributes, censored_properties = get_deidentified_data(_case, censor_data)
+            case_name = censored_attributes.get('case_name') or censored_attributes.get('name')
+
             case_block = CaseBlock(
                 create=True,
                 case_id=uuid.uuid4().hex,
                 owner_id=to_owner,
-                case_name=censored_attributes.get('case_name', _case.name),
+                case_name=case_name or _case.name,
                 case_type=_case.type,
                 update={**_case.case_json, **censored_properties},
                 index=_get_new_index_map(_case),
