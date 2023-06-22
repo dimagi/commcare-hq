@@ -54,6 +54,7 @@ describe('Split Screen Case Search', function () {
     });
 
     afterEach(function () {
+        getRegion.reset();
         sandbox.resetHistory();
     });
 
@@ -80,6 +81,15 @@ describe('Split Screen Case Search', function () {
 
         assert.isTrue(getRegion.calledWith(REGIONS.sidebar));
         assert.isTrue(_.some(stubs.show.getCalls(), call => call.thisValue.region === REGIONS.sidebar));
+    });
+
+    it('should set sidebarEnabled and triggerEmptyCaseList when response type query', function () {
+        const responseWithTypeQuery = _.extend({}, splitScreenCaseListResponse, {'type': 'query'});
+        Controller.showMenu(responseWithTypeQuery);
+
+        const showMain = _.find(stubs.show.getCalls(), call => call.thisValue.region === REGIONS.main);
+        assert.isTrue(showMain.args[0].options.sidebarEnabled);
+        assert.isTrue(showMain.args[0].options.triggerEmptyCaseList);
     });
 
     it('should empty sidebar if in app preview', function () {
