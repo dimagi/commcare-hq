@@ -304,7 +304,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
 
     const CaseTileGroupedView = CaseTileView.extend({
         tagName: "div",
-        className: "formplayer-request list-cell-wrapper-style",
+        className: "formplayer-request list-cell-wrapper-style case-tile-group",
         template: _.template($("#case-tile-grouped-view-item-template").html() || ""),
         templateContext: function () {
             const dict = CaseTileGroupedView.__super__.templateContext.apply(this, arguments);
