@@ -9,7 +9,7 @@ from dimagi.utils.web import json_response
 from corehq import toggles
 from corehq.apps.domain.views.base import BaseDomainView
 from corehq.apps.geospatial.reports import CaseManagementMap
-from .constants import POLYGON_COLLECTION_GEOJSON_SCHEMA
+from .const import POLYGON_COLLECTION_GEOJSON_SCHEMA
 from .models import GeoPolygon
 
 
@@ -21,6 +21,9 @@ class GeoPolygonView(BaseDomainView):
     urlname = 'geo_polygon'
 
     @method_decorator(toggles.GEOSPATIAL.required_decorator())
+    def dispatch(self, request, *args, **kwargs):
+        return super(GeoPolygonView, self).dispatch(request, *args, **kwargs)
+
     def get(self, request, *args, **kwargs):
         try:
             polygon_id = int(request.GET.get('polygon_id', None))
@@ -33,7 +36,6 @@ class GeoPolygonView(BaseDomainView):
             raise Http404()
         return json_response(polygon.geo_json)
 
-    @method_decorator(toggles.GEOSPATIAL.required_decorator())
     def post(self, request, *args, **kwargs):
         try:
             geo_json = json.loads(request.body).get('geo_json', None)
@@ -49,7 +51,7 @@ class GeoPolygonView(BaseDomainView):
             jsonschema.validate(geo_json, POLYGON_COLLECTION_GEOJSON_SCHEMA)
         except jsonschema.exceptions.ValidationError:
             raise HttpResponseBadRequest(
-                'Invalid GeoJSON, geo_json must be a FeatureColellection of Polygons'
+                'Invalid GeoJSON, geo_json must be a FeatureCollection of Polygons'
             )
         # Drop ids since they are specific to the Mapbox draw event
         for feature in geo_json["features"]:

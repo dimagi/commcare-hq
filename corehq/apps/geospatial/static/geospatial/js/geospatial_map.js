@@ -176,7 +176,7 @@ hqDefine("geospatial/js/geospatial_map", [
             var data = drawInstance.getAll();
 
             if (data.features.length) {
-                let name = window.prompt("Name of the Area");
+                let name = window.prompt(gettext("Name of the Area"));
                 data['name'] = name;
 
                 $.ajax({

@@ -7,7 +7,7 @@
 <div class="row panel" id="mapControls">
     <label for="saved-polygons" class="control-label col-sm-2 col-md-4 col-lg-2">
     {% trans "Filter by Saved Area" %}</label>
-    <div class="controls col-sm-3 col-md-8 col-lg-6">
+    <div class="controls col-sm-2 col-md-8 col-lg-6">
         <select id="saved-polygons"
                 class="form-control"
                 data-bind="select2: savedPolygons,
@@ -15,11 +15,11 @@
                         ">
         </select>
     </div>
-    <a id="btnExportDrawnArea" class="col-sm-1 btn btn-default" style="float:right; margin-right:1em" data-bind="attr: { disabled: btnExportDisabled }">
-        {% trans 'Export Drawn Area' %}
+    <a id="btnExportDrawnArea" class="col-sm-2 btn btn-default" style="float:right; margin-right:1em" data-bind="attr: { disabled: btnExportDisabled }">
+        {% trans 'Export Area' %}
     </a>
-    <a id="btnSaveDrawnArea" class="col-sm-1 btn btn-default" style="float:right; margin-right:1em" data-bind="attr: { disabled: btnSaveDisabled }">
-        {% trans 'Save Drawn Area' %}
+    <a id="btnSaveDrawnArea" class="col-sm-2 btn btn-default" style="float:right; margin-right:1em" data-bind="attr: { disabled: btnSaveDisabled }">
+        {% trans 'Save Area' %}
     </a>
 </div>
 <div class="map-data row" style="margin-top:1em" data-context="{% html_attr context %}"></div>
