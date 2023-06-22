@@ -65,8 +65,8 @@
           </div>
         </div>
       {% endif %}
+      {% if app.supports_grouped_case_tiles %}
       <div data-bind="visible: caseTileTemplate()">
-        {% if app.supports_grouped_case_tiles %}
         <div class="checkbox">
           <label>
             <input type="checkbox" data-bind="checked: caseTileGrouped">
@@ -91,7 +91,9 @@
               </div>
           </div>
         </div>
-        {% endif %}
+      </div>
+      {% endif %}
+      <div data-bind="visible: caseTileTemplate() || hqImport('hqwebapp/js/toggles').toggleEnabled('CASE_LIST_CUSTOM_XML')">
         <div class="checkbox">
           <label>
             <input type="checkbox" data-bind="checked: persistTileOnForms">
