@@ -27,6 +27,7 @@ class CaseTileTemplates(models.TextChoices):
     ONE_TWO_ONE = ("one_two_one", _("Title row, second row with two cells, third row, and map"))
     ONE_TWO_ONE_ONE = ("one_two_one_one", _("Title row, second row with two cells, third and "
                                             "fourth rows, and map"))
+    THREE_COLUMNS = ("three_columns", _("Three Columns"))
 
 
 @dataclass
