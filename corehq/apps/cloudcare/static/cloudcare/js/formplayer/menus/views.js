@@ -308,7 +308,25 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
         template: _.template($("#case-tile-grouped-view-item-template").html() || ""),
         templateContext: function () {
             const dict = CaseTileGroupedView.__super__.templateContext.apply(this, arguments);
+            dict['groupHeaderRows'] = this.options.groupHeaderRows;
+            dict['headerData'] = this.options.model.get('data').slice(0, this.options.groupHeaderRows);
+            dict['indexedRowDataList'] = this.getIndexedRowDataList();
+
             return dict;
+        },
+
+        getIndexedRowDataList: function () {
+            let indexedRowDataList = [];
+            for (let model of this.options.groupModelsList) {
+                let indexedRowData = {};
+                    rowData = model.get('data').slice(this.options.groupHeaderRows);
+                for (let [i, val] of rowData.entries()) {
+                    let offsetIndex = i + this.options.groupHeaderRows;
+                    indexedRowData[offsetIndex] = val;
+                }
+                indexedRowDataList.push(indexedRowData);
+            };
+            return indexedRowDataList;
         },
     });
 
