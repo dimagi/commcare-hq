@@ -150,8 +150,9 @@
       <% }); %>
     </div>
 
+  <div class="group-rows">
     <% _.each(indexedRowDataList, function(indexedRowData) { %>
-      <div class="<%- prefix %>-cell-grid-style">
+      <div class="<%- prefix %>-cell-grid-style group-row">
         <% for (let index in indexedRowData) { %>
           <% let datum = indexedRowData[index]; %>
           <div class="<%- prefix %>-grid-style-<%- index %> box">
@@ -168,6 +169,7 @@
         <% } %>
       </div>
     <% }); %>
+  </div>
 </script>
 
 <script type="text/template" id="cell-layout-style-template">
@@ -188,6 +190,16 @@
   color: #685c53;
   justify-items: left;
   padding: 10px 20px 0 20px;
+  }
+  .group-rows{
+    display:flex;
+    flex-direction: column;
+    gap: 10px;
+    align-items: center;
+  }
+  .group-row{
+    background-color: white;
+    width:95%;
   }
 </script>
 
