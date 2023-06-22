@@ -94,6 +94,8 @@ accounting
  0072_export_multisort_priv
  0073_export_ownership_priv
  0074_filtered_bulk_user_download_priv
+ 0075_application_error_report_priv
+ 0076_location_owner_in_report_builder_priv
 admin
  0001_initial
  0002_logentry_remove_auto_add
@@ -140,6 +142,7 @@ app_manager
  0024_applicationreleaselog_info
  0025_migrate_to_search_filter_flag
  0026_conditional_case_update_deleted_apps
+ 0027_add_case_tile_template_field
 auditcare
  0001_sqlmodels
  0002_uniques
@@ -279,6 +282,7 @@ data_dictionary
  0010_caseproperty_index
  0011_casepropertygroup
  0012_populate_case_property_groups
+ 0013_auto_20230529_1614
 data_interfaces
  0001_initial
  0002_remove_exists_option
@@ -372,6 +376,7 @@ es
  0001_bootstrap_es_indexes
  0002_add_tombstones
  0003_add_assigned_location_ids
+ 0004_make_new_indexes
 events
  0001_add_events_model
  0002_attendancetrackingconfig
@@ -736,6 +741,7 @@ reminders
  0001_initial
 repeaters
  0001_adjust_auth_field_format_squashed_0015_drop_connection_settings_fk (15 squashed migrations)
+ 0002_repeaters_db
 reports
  0001_initial
  0002_auto_20171121_1803

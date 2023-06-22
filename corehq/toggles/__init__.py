@@ -68,7 +68,7 @@ TAG_SAAS_CONDITIONAL = Tag(
     name='SaaS - Conditional Use',
     css_class='primary',
     description="When enabled, “SaaS - Conditional Use” feature flags will be fully supported by the SaaS team. "
-                "Please confirm with the SaaS Product team before enabling “SaaS - Conditional Use” flags for an external "
+                "Please confirm with the SaaS Product team before enabling “SaaS - Conditional Use” flags for an external "  # noqa: E501
                 "customer."
 )
 TAG_SOLUTIONS = Tag(
@@ -81,15 +81,15 @@ TAG_SOLUTIONS_OPEN = Tag(
     name='Solutions - Open Use',
     css_class='info',
     description="These features are only available for our services projects. This may affect support and "
-                "pricing when the project is transitioned to a subscription. Open Use Solutions Feature Flags can be "
+                "pricing when the project is transitioned to a subscription. Open Use Solutions Feature Flags can be "  # noqa: E501
                 "enabled by GS."
 )
 TAG_SOLUTIONS_CONDITIONAL = Tag(
     name='Solutions - Conditional Use',
     css_class='info',
     description="These features are only available for our services projects. This may affect support and "
-                "pricing when the project is transitioned to a subscription. Conditional Use Solutions Feature Flags can be "
-                "complicated and should be enabled by GS only after ensuring your partners have the proper training materials."
+                "pricing when the project is transitioned to a subscription. Conditional Use Solutions Feature Flags can be "  # noqa: E501
+                "complicated and should be enabled by GS only after ensuring your partners have the proper training materials."  # noqa: E501
 )
 TAG_SOLUTIONS_LIMITED = Tag(
     name='Solutions - Limited Use',
@@ -111,11 +111,11 @@ TAG_INTERNAL = Tag(
 # Order roughly corresponds to how much we want you to use it
 ALL_TAG_GROUPS = [TAG_SOLUTIONS, TAG_PRODUCT, TAG_CUSTOM, TAG_INTERNAL, TAG_RELEASE, TAG_DEPRECATED]
 ALL_TAGS = [
-               TAG_SOLUTIONS_OPEN,
-               TAG_SOLUTIONS_CONDITIONAL,
-               TAG_SOLUTIONS_LIMITED,
-               TAG_SAAS_CONDITIONAL,
-           ] + ALL_TAG_GROUPS
+    TAG_SOLUTIONS_OPEN,
+    TAG_SOLUTIONS_CONDITIONAL,
+    TAG_SOLUTIONS_LIMITED,
+    TAG_SAAS_CONDITIONAL,
+] + ALL_TAG_GROUPS
 
 
 class StaticToggle(object):
@@ -194,7 +194,7 @@ class StaticToggle(object):
 
         domain_enabled_after = self.enabled_for_new_domains_after
         if (domain_enabled_after is not None and NAMESPACE_DOMAIN in self.namespaces
-            and was_domain_created_after(item, domain_enabled_after)):
+                and was_domain_created_after(item, domain_enabled_after)):
             return True
 
         user_enabled_after = self.enabled_for_new_users_after
@@ -206,21 +206,21 @@ class StaticToggle(object):
 
     def enabled_for_request(self, request):
         return (
-                   None in self.namespaces
-                   and hasattr(request, 'user')
-                   and self.enabled(request.user.username, namespace=None)
-               ) or (
-                   NAMESPACE_DOMAIN in self.namespaces
-                   and hasattr(request, 'domain')
-                   and self.enabled(request.domain, namespace=NAMESPACE_DOMAIN)
-               ) or (
-                   NAMESPACE_EMAIL_DOMAIN in self.namespaces
-                   and hasattr(request, 'user')
-                   and self.enabled(
-                   request.user.email or request.user.username,
-                   namespace=NAMESPACE_EMAIL_DOMAIN
-               )
-               )
+            None in self.namespaces
+            and hasattr(request, 'user')
+            and self.enabled(request.user.username, namespace=None)
+        ) or (
+            NAMESPACE_DOMAIN in self.namespaces
+            and hasattr(request, 'domain')
+            and self.enabled(request.domain, namespace=NAMESPACE_DOMAIN)
+        ) or (
+            NAMESPACE_EMAIL_DOMAIN in self.namespaces
+            and hasattr(request, 'user')
+            and self.enabled(
+                request.user.email or request.user.username,
+                namespace=NAMESPACE_EMAIL_DOMAIN
+            )
+        )
 
     def set(self, item, enabled, namespace=None):
         if namespace == NAMESPACE_USER:
@@ -292,9 +292,9 @@ def was_domain_created_after(domain, checkpoint):
     from corehq.apps.domain.models import Domain
     domain_obj = Domain.get_by_name(domain)
     return (
-        domain_obj is not None and
-        domain_obj.date_created is not None and
-        domain_obj.date_created > checkpoint
+        domain_obj is not None
+        and domain_obj.date_created is not None
+        and domain_obj.date_created > checkpoint
     )
 
 
@@ -308,9 +308,9 @@ def was_user_created_after(username, checkpoint):
     from corehq.apps.users.models import WebUser
     user = WebUser.get_by_username(username)
     return (
-        user is not None and
-        user.created_on is not None and
-        user.created_on > checkpoint
+        user is not None
+        and user.created_on is not None
+        and user.created_on > checkpoint
     )
 
 
@@ -448,6 +448,7 @@ class FeatureRelease(DynamicallyPredictablyRandomToggle):
     an 'owner' to indicate the member of the team responsible for releasing this feature.
     This will be displayed on the UI when editing the toggle.
     """
+
     def __init__(
         self,
         slug,
@@ -860,7 +861,7 @@ SYNC_ALL_LOCATIONS = StaticToggle(
     TAG_DEPRECATED,
     [NAMESPACE_DOMAIN],
     description="Do not turn this feature flag. It is only used for providing compatability for old projects. "
-                "We are actively trying to remove projects from this list. This functionality is now possible by using the "
+                "We are actively trying to remove projects from this list. This functionality is now possible by using the "  # noqa: E501
                 "Advanced Settings on the Organization Levels page and setting the Level to Expand From option.",
 )
 
@@ -933,7 +934,7 @@ USH_CASE_LIST_MULTI_SELECT = StaticToggle(
     'USH: Allow selecting multiple cases from the case list',
     TAG_CUSTOM,
     namespaces=[NAMESPACE_DOMAIN],
-    help_link='https://confluence.dimagi.com/display/saas/USH%3A+Allow+selecting+multiple+cases+from+the+case+list',
+    help_link='https://confluence.dimagi.com/display/saas/USH%3A+Allow+selecting+multiple+cases+from+the+case+list',  # noqa: E501
     description="""
     Allows user to select multiple cases and load them all into the form.
     """
@@ -951,6 +952,46 @@ USH_CASE_CLAIM_UPDATES = StaticToggle(
     and other options in Webapps Case Search.
     """,
     parent_toggles=[SYNC_SEARCH_CASE_CLAIM]
+)
+
+GEOCODER_MY_LOCATION_BUTTON = StaticToggle(
+    "geocoder_my_location_button",
+    "USH: Add button to geocoder to populate search with the user's current location",
+    TAG_RELEASE,
+    namespaces=[NAMESPACE_DOMAIN],
+    description="""
+    When enabled this will add a small button to the geocoder widget that, when pressed, and if
+    the user grants permission, will perform a reverse geocoding query based on the user's reported location.
+    The result will be used to populate the search field of the geocoder widget.
+
+    This is intended as a temporary toggle and will likely get rolled into the "USH_CASE_CLAIM_UPDATES" toggle.
+    """,
+    parent_toggles=[USH_CASE_CLAIM_UPDATES],
+)
+
+GEOCODER_AUTOLOAD_USER_LOCATION = StaticToggle(
+    "geocoder_autoload_user_location",
+    "USH: Auto-load the geocoder widget with the user's current location",
+    TAG_CUSTOM,
+    namespaces=[NAMESPACE_DOMAIN],
+    description="""
+    When enabled, and if the user grants permissions, the geocoder widget will automatically do a reverse
+    geocoding query using the user's reported location The result will be used to populate the search field
+    of the geocoder widget.
+    """,
+    parent_toggles=[USH_CASE_CLAIM_UPDATES],
+)
+
+GEOCODER_USER_PROXIMITY = StaticToggle(
+    "geocoder_user_proximity",
+    "USH: Set the geocoder widget's proximity based on the user's location.",
+    TAG_CUSTOM,
+    namespaces=[NAMESPACE_DOMAIN],
+    description="""
+    This has the effect of getting search results that are closer to the user's location. This will override
+    the domains default proximity setting ("Default project location").
+    """,
+    parent_toggles=[USH_CASE_CLAIM_UPDATES],
 )
 
 USH_SEARCH_FILTER = StaticToggle(
@@ -1136,7 +1177,7 @@ SECURE_SESSION_TIMEOUT = StaticToggle(
     "USH: Allow domain to override default length of inactivity timeout",
     TAG_CUSTOM,
     [NAMESPACE_DOMAIN],
-    help_link="https://confluence.dimagi.com/display/saas/Allow+domain+to+override+default+length+of+inactivity+timeout",
+    help_link="https://confluence.dimagi.com/display/saas/Allow+domain+to+override+default+length+of+inactivity+timeout",  # noqa: E501
 )
 
 # not referenced in code directly but passed through to vellum
@@ -1293,14 +1334,6 @@ CUSTOM_ASSERTIONS = StaticToggle(
     help_link="https://confluence.dimagi.com/display/saas/User+defined+assert+blocks",
 )
 
-APPLICATION_ERROR_REPORT = StaticToggle(
-    'application_error_report',
-    'Show Application Error Report',
-    TAG_SOLUTIONS_OPEN,
-    help_link='https://confluence.dimagi.com/display/saas/Show+Application+Error+Report+Feature+Flag',
-    namespaces=[NAMESPACE_USER],
-)
-
 OPENMRS_INTEGRATION = StaticToggle(
     'openmrs_integration',
     'Enable OpenMRS integration',
@@ -1432,15 +1465,6 @@ UNLIMITED_REPORT_BUILDER_REPORTS = StaticToggle(
     'Allow unlimited reports created in report builder',
     TAG_INTERNAL,
     [NAMESPACE_DOMAIN]
-)
-
-SHOW_OWNER_LOCATION_PROPERTY_IN_REPORT_BUILDER = StaticToggle(
-    'show_owner_location_property_in_report_builder',
-    'Show an additional "Owner (Location)" property in report builder reports.',
-    TAG_SOLUTIONS_OPEN,
-    [NAMESPACE_DOMAIN],
-    help_link='https://confluence.dimagi.com/display/saas/Enable+creation+of+report+builder+reports+that+are+location+safe',
-    description='This can be used to create report builder reports that are location-safe.'
 )
 
 SHOW_IDS_IN_REPORT_BUILDER = StaticToggle(
@@ -1931,7 +1955,7 @@ HMAC_CALLOUT = StaticToggle(
     'USH: Enable signed messaging url callouts in cloudcare',
     TAG_CUSTOM,
     namespaces=[NAMESPACE_DOMAIN],
-    help_link="https://confluence.dimagi.com/display/saas/COVID%3A+Enable+signed+messaging+url+callouts+in+cloudcare",
+    help_link="https://confluence.dimagi.com/display/saas/COVID%3A+Enable+signed+messaging+url+callouts+in+cloudcare",  # noqa: E501
 )
 
 GAEN_OTP_SERVER = StaticToggle(
@@ -2151,7 +2175,7 @@ FOLLOWUP_FORMS_AS_CASE_LIST_FORM = StaticToggle(
     'child modules that use Parent Child Selection',
     TAG_CUSTOM,
     namespaces=[NAMESPACE_DOMAIN],
-    help_link="https://confluence.dimagi.com/pages/viewpage.action?spaceKey=USH&title=Add+Form+to+Bottom+of++Case+List",
+    help_link="https://confluence.dimagi.com/pages/viewpage.action?spaceKey=USH&title=Add+Form+to+Bottom+of++Case+List",  # noqa: E501
 )
 
 
@@ -2186,7 +2210,7 @@ CASE_IMPORT_DATA_DICTIONARY_VALIDATION = StaticToggle(
     'USH: Validate data per data dictionary definitions during case import',
     TAG_CUSTOM,
     namespaces=[NAMESPACE_DOMAIN],
-    help_link="https://confluence.dimagi.com/display/saas/Validate+data+per+data+dictionary+definitions+during+case+import",
+    help_link="https://confluence.dimagi.com/display/saas/Validate+data+per+data+dictionary+definitions+during+case+import",  # noqa: E501
 )
 
 DO_NOT_REPUBLISH_DOCS = StaticToggle(
@@ -2272,7 +2296,7 @@ SMS_USE_LATEST_DEV_APP = FeatureRelease(
 
 VIEW_FORM_ATTACHMENT = StaticToggle(
     'view_form_attachments',
-    'Allow users on the domain to view form attachments without having to have the report Submit History permission.',
+    'Allow users on the domain to view form attachments without having to have the report Submit History permission.',  # noqa: E501
     TAG_CUSTOM,
     namespaces=[NAMESPACE_DOMAIN],
 )
@@ -2342,6 +2366,7 @@ def _handle_attendance_tracking_role(domain, is_enabled):
     else:
         archive_attendance_coordinator_role_for_domain(domain)
 
+
 ATTENDANCE_TRACKING = StaticToggle(
     'attendance_tracking',
     'Allows access to the attendance tracking page',
@@ -2361,6 +2386,7 @@ GEOSPATIAL = StaticToggle(
                 'and assigning cases on a map.'
 
 )
+
 
 class FrozenPrivilegeToggle(StaticToggle):
     """
@@ -2524,6 +2550,26 @@ FILTERED_BULK_USER_DOWNLOAD = FrozenPrivilegeToggle(
         For mobile users, enables bulk deletion page and bulk lookup page.
         For web users, enables filtered download page.
     """,
+    help_link='https://confluence.dimagi.com/display/commcarepublic/Bulk+User+Management'
+)
+
+APPLICATION_ERROR_REPORT = FrozenPrivilegeToggle(
+    privileges.APPLICATION_ERROR_REPORT,
+    'application_error_report',
+    label='Show Application Error Report',
+    tag=TAG_SOLUTIONS_OPEN,
+    namespaces=[NAMESPACE_DOMAIN],
+    description="Show Application Error Report.",
     # TODO: Move to public wiki
-    help_link='https://confluence.dimagi.com/display/saas/Bulk+User+Management'
+    help_link='https://confluence.dimagi.com/display/saas/Show+Application+Error+Report+Feature+Flag'
+)
+
+SHOW_OWNER_LOCATION_PROPERTY_IN_REPORT_BUILDER = FrozenPrivilegeToggle(
+    privileges.SHOW_OWNER_LOCATION_PROPERTY_IN_REPORT_BUILDER,
+    'show_owner_location_property_in_report_builder',
+    label='Show an additional "Owner (Location)" property in report builder reports.',
+    tag=TAG_SOLUTIONS_OPEN,
+    namespaces=[NAMESPACE_DOMAIN],
+    help_link='https://confluence.dimagi.com/display/saas/Enable+creation+of+report+builder+reports+that+are+location+safe',  # noqa: E501
+    description='This can be used to create report builder reports that are location-safe.'
 )

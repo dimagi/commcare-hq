@@ -2,10 +2,12 @@ hqDefine("geospatial/js/geospatial_map", [
     "jquery",
     "hqwebapp/js/initial_page_data",
     "knockout",
+    "hqwebapp/js/alert_user",
 ], function (
     $,
     initialPageData,
-    ko
+    ko,
+    alert_user
 ) {
     $(function () {
         const defaultMarkerColor = "#808080"; // Gray
@@ -26,7 +28,7 @@ hqDefine("geospatial/js/geospatial_map", [
                         userFilteredCases.push(currCase);
                         changeCaseMarkerColor(currCase, selectedMarkerColor);
                     } else {
-                        changeCaseMarkerColor(currCase, defaultMarkerColor)
+                        changeCaseMarkerColor(currCase, defaultMarkerColor);
                     }
                 }
             });
@@ -57,7 +59,7 @@ hqDefine("geospatial/js/geospatial_map", [
                 center: centerCoordinates, // starting position [lng, lat]
                 zoom: 12,
                 attribution: '© <a href="https://www.mapbox.com/about/maps/">Mapbox</a> ©' +
-                             ' <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+                             ' <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>',
             });
 
             const draw = new MapboxDraw({
@@ -66,13 +68,13 @@ hqDefine("geospatial/js/geospatial_map", [
                 boxSelect: true, // enables box selection
                 controls: {
                     polygon: true,
-                    trash: true
+                    trash: true,
                 },
             });
 
             map.addControl(draw);
 
-            map.on("draw.update", function(e) {
+            map.on("draw.update", function (e) {
                 var selectedFeatures = e.features;
 
                 // Check if any features are selected
@@ -81,12 +83,12 @@ hqDefine("geospatial/js/geospatial_map", [
                 }
                 var selectedFeature = selectedFeatures[0];
 
-                if (selectedFeature.geometry.type == 'Polygon') {
+                if (selectedFeature.geometry.type === 'Polygon') {
                     filterCasesInPolygon(selectedFeature);
                 }
             });
 
-            map.on('draw.selectionchange', function(e) {
+            map.on('draw.selectionchange', function (e) {
                 // See https://github.com/mapbox/mapbox-gl-draw/blob/main/docs/API.md#drawselectionchange
                 var selectedFeatures = e.features;
                 if (!selectedFeatures.length) {
@@ -97,7 +99,7 @@ hqDefine("geospatial/js/geospatial_map", [
                 var selectedFeature = selectedFeatures[0];
                 // Update this logic if we need to support case filtering by selecting multiple polygons
 
-                if (selectedFeature.geometry.type == 'Polygon') {
+                if (selectedFeature.geometry.type === 'Polygon') {
                     // Now that we know we selected a polygon, we need to check which markers are inside
                     filterCasesInPolygon(selectedFeature);
                 }
@@ -105,11 +107,11 @@ hqDefine("geospatial/js/geospatial_map", [
 
             function getCoordinates(event) {
                 return event.lngLat;
-            };
+            }
 
             // We should consider refactoring and splitting the below out to a new JS file
             function moveMarkerToClickedCoordinate(coordinates) {
-                if (clickedMarker != null) {
+                if (clickedMarker !== null) {
                     clickedMarker.remove();
                 }
                 if (draw.getMode() === 'draw_polygon') {
@@ -121,15 +123,15 @@ hqDefine("geospatial/js/geospatial_map", [
                 clickedMarker.addTo(map);
             }
 
-            self.getMapboxDrawInstance = function() {
+            self.getMapboxDrawInstance = function () {
                 return draw;
-            }
+            };
 
-            self.getMapboxInstance = function() {
+            self.getMapboxInstance = function () {
                 return map;
-            }
+            };
 
-            self.clearMap = function() {
+            self.clearMap = function () {
                 // Clear filtered cases
                 userFilteredCases = [];
                 // Remove markers
@@ -137,9 +139,9 @@ hqDefine("geospatial/js/geospatial_map", [
                     if (currCase.marker) {
                         currCase.marker.remove();
                     }
-                })
+                });
                 cases = [];
-            }
+            };
 
             self.addCaseMarkersToMap = function () {
                 cases.forEach(element => {
@@ -170,7 +172,7 @@ hqDefine("geospatial/js/geospatial_map", [
             return self;
         };
 
-        var saveGeoJson = function(drawInstance, mapControlsModelInstance) {
+        var saveGeoJson = function (drawInstance, mapControlsModelInstance) {
             var data = drawInstance.getAll();
 
             if (data.features.length) {
@@ -196,7 +198,6 @@ hqDefine("geospatial/js/geospatial_map", [
                         );
                         // redraw using mapControlsModelInstance
                         mapControlsModelInstance.selectedPolygon(ret.id);
-                        alert('saved!');
                     }
                 });
             }
@@ -258,30 +259,31 @@ hqDefine("geospatial/js/geospatial_map", [
                 // Mark as active polygon
                 self.activePolygon(self.selectedPolygon());
                 self.btnExportDisabled(false);
+                self.btnSaveDisabled(true);
             });
 
-            var mapHasPolygons = function() {
+            var mapHasPolygons = function () {
                 var drawnFeatures = map.getMapboxDrawInstance().getAll().features;
                 if (!drawnFeatures.length) {
                     return false;
                 }
-                return drawnFeatures.some(function(feature) {
+                return drawnFeatures.some(function (feature) {
                     return feature.geometry.type === "Polygon";
-                })
+                });
             };
 
-            mapboxinstance.on('draw.delete', function(e) {
+            mapboxinstance.on('draw.delete', function () {
                 self.btnSaveDisabled(!mapHasPolygons());
             });
 
-            mapboxinstance.on('draw.create', function(e) {
+            mapboxinstance.on('draw.create', function () {
                 self.btnSaveDisabled(!mapHasPolygons());
             });
 
             self.exportGeoJson = function(){
                 var exportButton = $("#btnExportDrawnArea");
                 var selectedPolygon = self.savedPolygons().find(
-                    function (o) { return o.id === self.selectedPolygon(); }
+                    function (o) { return o.id == self.selectedPolygon(); }
                 );
                 if (selectedPolygon) {
                     var convertedData = 'text/json;charset=utf-8,' + encodeURIComponent(JSON.stringify(selectedPolygon.geoJson));
@@ -291,7 +293,7 @@ hqDefine("geospatial/js/geospatial_map", [
             }
 
             return self;
-        }
+        };
 
 
         $(document).ajaxComplete(function (event, xhr, settings) {
@@ -312,13 +314,28 @@ hqDefine("geospatial/js/geospatial_map", [
             var mapControlsModelInstance = mapControlsModel();
 
             if ($data.length && map) {
-                var caseData = $data.data("context");
+                var contextData = $data.data("context");
                 map.clearMap();
-                cases = caseData.cases
+                cases = contextData.cases;
                 map.addCaseMarkersToMap();
+
+                if (contextData.invalid_geo_cases_report_link) {
+                    var missingCasesLink = contextData.invalid_geo_cases_report_link;
+                    var missingCasesLinkTag = "<a href=" + missingCasesLink + ">" + gettext("View here") + "</a>";
+                    var message = gettext("There are case(s) missing geolocation data.");
+
+                    alert_user.alert_user(message + " " + missingCasesLinkTag, "warning");
+
+                    var $bannerAlert = $("#message-alerts");
+                    if ($bannerAlert.children().length > 1) {
+                        // Remove the initial banner, since it contains the old link
+                        $bannerAlert.children()[0].remove();
+                    }
+                }
             }
 
             if ($mapControlDiv.length) {
+                ko.cleanNode($mapControlDiv);
                 $mapControlDiv.koApplyBindings(mapControlsModelInstance);
             }
 

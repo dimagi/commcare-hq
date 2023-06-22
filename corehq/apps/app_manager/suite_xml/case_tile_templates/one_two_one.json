@@ -1,0 +1,5 @@
+{
+    "slug": "one_two_one",
+    "filename": "one_two_one.xml",
+    "fields": ["header", "map", "top_left", "top_right", "bottom"]
+}
