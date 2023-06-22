@@ -4,6 +4,7 @@ from corehq.apps.app_manager.management.commands.helpers import (
 )
 from corehq.toggles import SYNC_SEARCH_CASE_CLAIM
 
+
 class Command(AppMigrationCommandBase):
     help = """
     Short-lived command from 2023-03-02 to fix unwrappable apps caused by
@@ -13,7 +14,7 @@ class Command(AppMigrationCommandBase):
     https://dimagi-dev.atlassian.net/jira/servicedesk/projects/SUPPORT/queues/custom/125/SUPPORT-16128
     https://dimagi-dev.atlassian.net/browse/SUPPORT-16045
     """
-    chunk_size = 5
+    chunk_size = 1
     DOMAIN_LIST_FILENAME = 'fix_unwrappable_apps-domains.txt'
     DOMAIN_PROGRESS_NUMBER_FILENAME = 'fix_unwrappable_apps-progress.txt'
     include_builds = True
