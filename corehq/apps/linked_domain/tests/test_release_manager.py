@@ -38,7 +38,6 @@ from corehq.apps.userreports.tests.utils import (
 from corehq.apps.users.models import WebUser
 from corehq.util.test_utils import flag_enabled
 
-
 class BaseReleaseManagerTest(BaseLinkedAppsTest):
 
     @classmethod
@@ -95,17 +94,6 @@ class TestReleaseManager(BaseReleaseManagerTest):
         self._assert_release([
             self._linked_data_view_model(MODEL_CASE_SEARCH),
         ], error="Feature flag for Case Search Settings is not enabled")
-
-    @flag_enabled('DATA_DICTIONARY')
-    def test_data_dictionary_on(self):
-        self._assert_release([
-            self._linked_data_view_model(MODEL_DATA_DICTIONARY),
-        ])
-
-    def test_data_dictionary_off(self):
-        self._assert_release([
-            self._linked_data_view_model(MODEL_DATA_DICTIONARY),
-        ], error="Feature flag for Data Dictionary is not enabled")
 
     @flag_enabled('WIDGET_DIALER')
     def test_widget_dialer_on(self):
