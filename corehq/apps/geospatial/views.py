@@ -1,5 +1,6 @@
 import json
 import jsonschema
+from requests.exceptions import HTTPError
 from django.utils.decorators import method_decorator
 from django.urls import reverse
 
@@ -38,7 +39,7 @@ class MapboxOptimizationV2(BaseDomainView):
             return json_response(
                 {"poll_url": reverse("mapbox_routing_status", args=[self.domain, poll_id])}
             )
-        except jsonschema.exceptions.ValidationError as e:
+        except (jsonschema.exceptions.ValidationError, HTTPError) as e:
             return HttpResponseBadRequest(str(e))
 
     @method_decorator(toggles.GEOSPATIAL.required_decorator())
@@ -48,4 +49,5 @@ class MapboxOptimizationV2(BaseDomainView):
 
 
 def mapbox_routing_status(request, domain, poll_id):
+    # Todo; handle HTTPErrors
     return routing_status(poll_id)

@@ -108,22 +108,22 @@ def routing_status(poll_id):
         f"https://api.mapbox.com/optimized-trips/v2/{poll_id}"
         f"?access_token={settings.MAPBOX_ACCESS_TOKEN}"
     )
+    # Todo; handle error responses
     response.raise_for_status()
     if response.status_code != 200:
         return False
 
     mapping_dict = {}
-    if response.status_code == 200:
-        # Parse solution
-        # https://docs.mapbox.com/api/navigation/optimization/#solution-document
-        result = json.loads(response.content)
-        for route in result["routes"]:
-            user_id = route["vehicle"]
-            location_ids = []
-            for stop in route["stops"]:
-                location_ids.append(stop["location"])
-            # First and last stops are user's own location
-            location_ids.pop(0)
-            location_ids.pop(-1)
-            mapping_dict[user_id] = location_ids
-        return mapping_dict
+    # Parse solution
+    # https://docs.mapbox.com/api/navigation/optimization/#solution-document
+    result = json.loads(response.content)
+    for route in result["routes"]:
+        user_id = route["vehicle"]
+        location_ids = []
+        for stop in route["stops"]:
+            location_ids.append(stop["location"])
+        # First and last stops are user's own location
+        location_ids.pop(0)
+        location_ids.pop(-1)
+        mapping_dict[user_id] = location_ids
+    return mapping_dict

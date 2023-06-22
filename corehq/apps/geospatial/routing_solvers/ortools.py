@@ -162,5 +162,4 @@ class ORToolsRoadNetworkSolver(ORToolsRadialDistanceSolver):
 
         response = requests.get(url, params=params)
         response.raise_for_status()
-        print(response.json()['distances'])
         return response.json()['distances']
