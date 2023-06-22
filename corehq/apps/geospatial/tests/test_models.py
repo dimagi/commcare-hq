@@ -64,6 +64,7 @@ class TestObjectiveAllocator(SimpleTestCase):
         cls.far_user_id = 'user_2'
         cls.close_objective_id = 'obj_a'
         cls.far_objective_id = 'obj_b'
+        cls.furthest_objective_id = 'obj_c'
 
         cls.test_users = [
             GeoObject(cls.close_user_id, 1, 1),
@@ -71,11 +72,12 @@ class TestObjectiveAllocator(SimpleTestCase):
         ]
         cls.test_objectives = [
             Objective(cls.close_objective_id, 1.01, 1.01),
-            Objective(cls.far_objective_id, 10, 10)
+            Objective(cls.far_objective_id, 10, 10),
+            Objective(cls.furthest_objective_id, 10.1, 10),
         ]
 
     @contextmanager
-    def _create_objective_allocator(self, max_distance, max_assignable):
+    def _create_objective_allocator(self, max_distance=None, max_assignable=None):
         yield ObjectiveAllocator(
             self.test_users,
             self.test_objectives,
@@ -86,7 +88,7 @@ class TestObjectiveAllocator(SimpleTestCase):
     def test_valid_create(self):
         with self._create_objective_allocator(max_distance=10, max_assignable=2) as objective_allocator:
             self.assertEqual(len(objective_allocator.users), 2)
-            self.assertEqual(len(objective_allocator.objectives), 2)
+            self.assertEqual(len(objective_allocator.objectives), 3)
             self.assertEqual(objective_allocator.max_distance, 10)
             self.assertEqual(objective_allocator.max_assignable, 2)
 
@@ -120,5 +122,30 @@ class TestObjectiveAllocator(SimpleTestCase):
             objective_allocator.allocate_objectives()
             unassigned = objective_allocator.get_unassigned_objectives()
 
-        self.assertEqual(len(unassigned), 1)
-        self.assertEqual(unassigned[0], self.far_objective_id)
+        self.assertEqual(len(unassigned), 2)
+        self.assertEqual(unassigned, [self.far_objective_id, self.furthest_objective_id])
+
+    def test_group_objectives_success(self):
+        with self._create_objective_allocator(max_distance=50, max_assignable=3) as objective_allocator:
+            bins = objective_allocator.group_objectives()
+
+        self.assertEqual(
+            bins,
+            [[self.close_objective_id], [self.far_objective_id, self.furthest_objective_id]]
+        )
+
+    def test_group_objectives_no_params(self):
+        with self._create_objective_allocator() as objective_allocator:
+            bins = objective_allocator.group_objectives()
+
+        self.assertEqual(
+            bins,
+            [[self.close_objective_id, self.far_objective_id, self.furthest_objective_id]]
+        )
+
+    def test_group_objectives_empty(self):
+        with self._create_objective_allocator(max_distance=50, max_assignable=3) as objective_allocator:
+            objective_allocator.objectives = None
+            bins = objective_allocator.group_objectives()
+
+        self.assertEqual(len(bins), 0)
