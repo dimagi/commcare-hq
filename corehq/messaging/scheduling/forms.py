@@ -212,16 +212,24 @@ class ContentForm(Form):
         self.fields['app_and_form_unique_id'].choices = [('', '')] + self.schedule_form.form_choices
 
     def clean_subject(self):
-        if self.schedule_form.cleaned_data.get('content') not in (ScheduleForm.CONTENT_EMAIL,
-                                                                  ScheduleForm.CONTENT_FCM_NOTIFICATION):
+        if (self.schedule_form.cleaned_data.get('content') == ScheduleForm.CONTENT_FCM_NOTIFICATION
+                and self.cleaned_data['fcm_message_type'] == FCMNotificationContent.MESSAGE_TYPE_NOTIFICATION):
+            cleaned_value = self._clean_message_field('subject')
+            return self._validate_fcm_message_length(cleaned_value, self.FCM_SUBJECT_MAX_LENGTH)
+
+        if self.schedule_form.cleaned_data.get('content') not in ScheduleForm.CONTENT_EMAIL:
             return None
 
         return self._clean_message_field('subject')
 
     def clean_message(self):
+        if (self.schedule_form.cleaned_data.get('content') == ScheduleForm.CONTENT_FCM_NOTIFICATION
+                and self.cleaned_data['fcm_message_type'] == FCMNotificationContent.MESSAGE_TYPE_NOTIFICATION):
+            cleaned_value = self._clean_message_field('message')
+            return self._validate_fcm_message_length(cleaned_value, self.FCM_MESSAGE_MAX_LENGTH)
+
         if self.schedule_form.cleaned_data.get('content') not in (ScheduleForm.CONTENT_SMS,
-                                                                  ScheduleForm.CONTENT_EMAIL,
-                                                                  ScheduleForm.CONTENT_FCM_NOTIFICATION):
+                                                                  ScheduleForm.CONTENT_EMAIL):
             return None
 
         return self._clean_message_field('message')
@@ -241,10 +249,11 @@ class ContentForm(Form):
         return cleaned_value
 
     @staticmethod
-    def _validate_fcm_field_length(value, max_length):
+    def _validate_fcm_message_length(value, max_length):
         for data in value.values():
             if len(data) > max_length:
-                return ValidationError(_('This field must not exceed {} characters'.format(max_length)))
+                raise ValidationError(_('This field must not exceed {} characters'.format(max_length)))
+        return value
 
     def clean_fcm_message_type(self):
         if self.schedule_form.cleaned_data.get('content') != ScheduleForm.CONTENT_FCM_NOTIFICATION:
@@ -347,17 +356,6 @@ class ContentForm(Form):
 
         raise NotImplementedError("SMS / Callback is no longer supported")
 
-    def clean(self):
-        if (self.schedule_form.cleaned_data.get('content') == ScheduleForm.CONTENT_FCM_NOTIFICATION
-                and self.cleaned_data['fcm_message_type'] == FCMNotificationContent.MESSAGE_TYPE_NOTIFICATION):
-            error_subject = self._validate_fcm_field_length(self.cleaned_data['subject'],
-                                                            self.FCM_SUBJECT_MAX_LENGTH)
-            if error_subject is not None:
-                self.add_error('subject', error_subject)
-            error_message = self._validate_fcm_field_length(self.cleaned_data['message'],
-                                                            self.FCM_MESSAGE_MAX_LENGTH)
-            if error_message is not None:
-                self.add_error('message', error_message)
 
     def distill_content(self):
         if self.schedule_form.cleaned_data['content'] == ScheduleForm.CONTENT_SMS:
