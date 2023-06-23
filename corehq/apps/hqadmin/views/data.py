@@ -116,7 +116,7 @@ def check_form_for_errors(form, form_doc):
 
 @require_superuser
 def download_blob(request):
-    """Pairs with the upload_file management command"""
+    """Pairs with the get_download_url utility and command"""
     key = request.GET.get("key")
     try:
         meta = BlobMeta.objects.partitioned_get(partition_value=key, key=key)
