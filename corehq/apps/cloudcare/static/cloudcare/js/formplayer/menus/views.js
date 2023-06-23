@@ -313,7 +313,9 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
         templateContext: function () {
             const dict = CaseTileGroupedView.__super__.templateContext.apply(this, arguments);
             dict['groupHeaderRows'] = this.options.groupHeaderRows;
-            dict['headerData'] = this.options.model.get('data').slice(0, this.options.groupHeaderRows);
+            dict['headerData'] = this.options.model.get('data').filter((_, i) => {
+                return this.options.headerRowIndices.includes(i);
+            });
             dict['indexedRowDataList'] = this.getIndexedRowDataList();
 
             return dict;
@@ -323,7 +325,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             let indexedRowDataList = [];
             for (let model of this.options.groupModelsList) {
                 let indexedRowData = {};
-                    rowData = model.get('data').slice(this.options.groupHeaderRows);
+                    rowData = model.get('data').filter((_, i) => !this.options.headerRowIndices.includes(i));
                 for (let [i, val] of rowData.entries()) {
                     let offsetIndex = i + this.options.groupHeaderRows;
                     indexedRowData[offsetIndex] = val;
@@ -802,12 +804,19 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
                     this.groupedModels[groupKey].push(model);
                 }
             }
+            let groupHeaderRows = this.options.collection.groupHeaderRows;
+            // select the indices of the tile fields that are part of the header rows
+            this.headerRowIndices = this.options.collection.tiles
+                .map((tile, index) => ({tile: tile, index: index}))
+                .filter((tile) => tile.tile.gridY < groupHeaderRows)
+                .map((tile) => tile.index);
         },
 
         childViewOptions: function (model) {
             const dict = CaseTileGroupedListView.__super__.childViewOptions.apply(this, arguments);
             dict.groupHeaderRows = this.options.collection.groupHeaderRows
             dict.groupModelsList = this.groupedModels[model.get("groupKey")]
+            dict.headerRowIndices = this.headerRowIndices;
             return dict;
         },
     });
