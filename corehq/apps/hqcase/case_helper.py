@@ -7,6 +7,7 @@ from corehq.apps.hqcase.utils import submit_case_blocks, get_deidentified_data
 from casexml.apps.case.mock import CaseBlock
 
 from .api.updates import BaseJsonCaseChange, handle_case_update
+from corehq.apps.users.util import SYSTEM_USER_ID
 
 
 class CaseHelper:
@@ -241,16 +242,19 @@ class CaseHelper:
                 return
 
             censored_attributes, censored_properties = get_deidentified_data(_case, censor_data)
+            case_name = censored_attributes.get('case_name') or censored_attributes.get('name')
+
             case_block = CaseBlock(
                 create=True,
                 case_id=uuid.uuid4().hex,
                 owner_id=to_owner,
-                case_name=censored_attributes.get('case_name', _case.name),
+                case_name=case_name or _case.name,
                 case_type=_case.type,
                 update={**_case.case_json, **censored_properties},
                 index=_get_new_index_map(_case),
                 external_id=censored_attributes.get('external_id', _case.external_id),
                 date_opened=censored_attributes.get('date_opened', _case.opened_on),
+                user_id=SYSTEM_USER_ID,
             )
 
             copied_cases_case_blocks.append(case_block.as_text())
