@@ -162,8 +162,6 @@
                 if(resolveUri(datum)) { %>
                   <img class="module-icon" style="max-width:100%; max-height:100%;" src="<%- resolveUri(datum) %>"/>
                 <% } %>
-                <% } else if(styles[index].widthHint === 0) { %>
-                  <div style="display:none;"><%- datum %></div>
                 <% } else { %>
                   <div class="webapp-markdown-output"><%= renderMarkdown(datum) %></div>
               <% } %>

@@ -329,7 +329,9 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
                     rowData = model.get('data').filter((_, i) => !this.options.headerRowIndices.includes(i));
                 for (let [i, val] of rowData.entries()) {
                     let offsetIndex = i + rowDatumIndexOffset;
-                    indexedRowData[offsetIndex] = val;
+                    if (this.options.styles[offsetIndex].widthHint!==0){
+                        indexedRowData[offsetIndex] = val;
+                    }
                 }
                 if (Object.keys(indexedRowData).length !== 0){
                     indexedRowDataList.push(indexedRowData);
