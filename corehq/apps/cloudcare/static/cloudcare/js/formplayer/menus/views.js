@@ -323,11 +323,12 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
 
         getIndexedRowDataList: function () {
             let indexedRowDataList = [];
+            const rowDatumIndexOffset = Math.max(...this.options.headerRowIndices) + 1
             for (let model of this.options.groupModelsList) {
                 let indexedRowData = {};
                     rowData = model.get('data').filter((_, i) => !this.options.headerRowIndices.includes(i));
                 for (let [i, val] of rowData.entries()) {
-                    let offsetIndex = i + this.options.groupHeaderRows;
+                    let offsetIndex = i + rowDatumIndexOffset;
                     indexedRowData[offsetIndex] = val;
                 }
                 indexedRowDataList.push(indexedRowData);
