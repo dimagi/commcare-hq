@@ -10,6 +10,7 @@ from corehq.apps.app_manager.tests.util import patch_validate_xform, get_simple_
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.users.models import CommCareUser
 from corehq.apps.users.tasks import process_reporting_metadata_staging
+from corehq.toggles import FCM_NOTIFICATION, NAMESPACE_DOMAIN
 from ..models import DeviceLogRequest
 
 
@@ -66,6 +67,7 @@ class HeartbeatTests(TestCase):
         return resp
 
     def test_heartbeat(self):
+        FCM_NOTIFICATION.set(self.domain_obj, True, NAMESPACE_DOMAIN)
         fcm_token = 'token-101'
         self._do_request(
             self.user,
@@ -128,6 +130,7 @@ class HeartbeatTests(TestCase):
         self.assertFalse(heartbeat_contains_force_logs())
 
     def test_heartbeat_update_fcm_token(self):
+        FCM_NOTIFICATION.set(self.domain_obj, True, NAMESPACE_DOMAIN)
         self._do_request(
             self.user,
             device_id='3',
@@ -147,3 +150,14 @@ class HeartbeatTests(TestCase):
         self.assertEqual(updated_device.fcm_token, updated_fcm_token)
         self.assertIsNotNone(updated_device.fcm_token_timestamp)
         self.assertGreater(updated_device.fcm_token_timestamp, device.fcm_token_timestamp)
+
+    def test_heartbeat_update_fcm_token_disabled_domain(self):
+        FCM_NOTIFICATION.set(self.domain_obj, False, NAMESPACE_DOMAIN)
+        self._do_request(
+            self.user,
+            device_id='4',
+            fcm_token='token-101'
+        )
+        device = CommCareUser.get(self.user.get_id).get_device('4')
+        self.assertIsNone(device.fcm_token)
+        self.assertIsNone(device.fcm_token_timestamp)
