@@ -811,7 +811,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             // select the indices of the tile fields that are part of the header rows
             this.headerRowIndices = this.options.collection.tiles
                 .map((tile, index) => ({tile: tile, index: index}))
-                .filter((tile) => tile.tile.gridY < groupHeaderRows)
+                .filter((tile) => tile.tile && tile.tile.gridY < groupHeaderRows)
                 .map((tile) => tile.index);
         },
 
