@@ -379,7 +379,9 @@ def update_user_reporting_data(app_build_id, app_id, build_profile_id, couch_use
     num_unsent_forms = _safe_int(request.GET.get('num_unsent_forms', ''))
     num_quarantined_forms = _safe_int(request.GET.get('num_quarantined_forms', ''))
     commcare_version = request.GET.get('cc_version', '')
-    fcm_token = request.GET.get('fcm_token', '')
+    fcm_token = ''
+    if toggles.FCM_NOTIFICATION.enabled(request.domain):
+        fcm_token = request.GET.get('fcm_token', '')
     # if mobile cannot determine app version it sends -1
     if app_version == -1:
         app_version = None
