@@ -293,15 +293,15 @@ def _get_dd_props_by_group(domain, case_type):
             case_type__domain=domain,
             case_type__name=case_type,
             deprecated=False,
-    ):
+    ).select_related('group_obj').order_by('group_obj__index', 'index'):
         ret[prop.group_name].append(prop)
 
     uncategorized = ret.pop('', None)
     for group, props in ret.items():
-        yield (group, props)
+        yield group, props
 
     if uncategorized:
-        yield (_('Uncategorized') if ret else None, uncategorized)
+        yield _('Uncategorized') if ret else None, uncategorized
 
 
 def _table_definition(props):
