@@ -331,7 +331,9 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
                     let offsetIndex = i + rowDatumIndexOffset;
                     indexedRowData[offsetIndex] = val;
                 }
-                indexedRowDataList.push(indexedRowData);
+                if (Object.keys(indexedRowData).length !== 0){
+                    indexedRowDataList.push(indexedRowData);
+                }
             };
             return indexedRowDataList;
         },
