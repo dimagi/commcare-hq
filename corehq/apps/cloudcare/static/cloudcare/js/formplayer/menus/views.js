@@ -306,6 +306,34 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
         },
     });
 
+    const CaseTileGroupedView = CaseTileView.extend({
+        tagName: "div",
+        className: "formplayer-request list-cell-wrapper-style case-tile-group",
+        template: _.template($("#case-tile-grouped-view-item-template").html() || ""),
+        templateContext: function () {
+            const dict = CaseTileGroupedView.__super__.templateContext.apply(this, arguments);
+            dict['groupHeaderRows'] = this.options.groupHeaderRows;
+            dict['headerData'] = this.options.model.get('data').slice(0, this.options.groupHeaderRows);
+            dict['indexedRowDataList'] = this.getIndexedRowDataList();
+
+            return dict;
+        },
+
+        getIndexedRowDataList: function () {
+            let indexedRowDataList = [];
+            for (let model of this.options.groupModelsList) {
+                let indexedRowData = {};
+                    rowData = model.get('data').slice(this.options.groupHeaderRows);
+                for (let [i, val] of rowData.entries()) {
+                    let offsetIndex = i + this.options.groupHeaderRows;
+                    indexedRowData[offsetIndex] = val;
+                }
+                indexedRowDataList.push(indexedRowData);
+            };
+            return indexedRowDataList;
+        },
+    });
+
     const PersistentCaseTileView = CaseTileView.extend({
         className: "formplayer-request",
         rowClick: function (e) {
@@ -755,6 +783,35 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
         },
     });
 
+    const CaseTileGroupedListView = CaseTileListView.extend({
+        childView: CaseTileGroupedView,
+
+        initialize: function () {
+            CaseTileGroupedListView.__super__.initialize.apply(this, arguments);
+
+            this.groupedModels = {};
+            let clonedModels = this.options.collection.models.map((model) => model.clone());
+            for (let model of clonedModels){
+                let groupKey = model.get("groupKey")
+                if (!(groupKey in this.groupedModels)) {
+                    this.groupedModels[groupKey] = [model];
+                } else {
+                    // Only one childView will be created per group.The model for the first child
+                    // is used so subsequent models in the group need to be removed.
+                    this.options.collection.remove(model)
+                    this.groupedModels[groupKey].push(model);
+                }
+            }
+        },
+
+        childViewOptions: function (model) {
+            const dict = CaseTileGroupedListView.__super__.childViewOptions.apply(this, arguments);
+            dict.groupHeaderRows = this.options.collection.groupHeaderRows
+            dict.groupModelsList = this.groupedModels[model.get("groupKey")]
+            return dict;
+        },
+    });
+
     const CaseListDetailView = CaseListView.extend({
         template: _.template($("#case-view-list-detail-template").html() || ""),
         childView: CaseViewUnclickable,
@@ -993,6 +1050,9 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
         },
         CaseTileListView: function (options) {
             return new CaseTileListView(options);
+        },
+        CaseTileGroupedListView: function (options) {
+            return new CaseTileGroupedListView(options);
         },
         DetailListView: function (options) {
             return new DetailListView(options);
