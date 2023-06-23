@@ -11,7 +11,6 @@ from corehq.apps.app_manager.xpath import (
     LocationXpath,
     UsercaseXPath,
     XPath,
-    dot_interpolate,
 )
 from corehq.apps.hqmedia.models import CommCareMultimedia
 
