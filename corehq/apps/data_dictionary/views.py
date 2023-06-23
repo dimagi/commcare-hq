@@ -49,13 +49,16 @@ from corehq.project_limits.rate_limiter import (
 from corehq.util.files import file_extention_from_filename
 from corehq.util.workbook_reading import open_any_workbook
 from corehq.util.workbook_reading.datamodels import Cell
+from corehq.apps.app_manager.dbaccessors import get_case_type_app_module_count
+from corehq.apps.accounting.decorators import requires_privilege_with_fallback, requires_privilege
+from corehq import privileges
 
 FHIR_RESOURCE_TYPE_MAPPING_SHEET = "fhir_mapping"
 ALLOWED_VALUES_SHEET_SUFFIX = "-vl"
 
 
 @login_and_domain_required
-@toggles.DATA_DICTIONARY.required_decorator()
+@requires_privilege_with_fallback(privileges.DATA_DICTIONARY)
 def data_dictionary_json(request, domain, case_type_name=None):
     props = []
     fhir_resource_type_name_by_case_type = {}
@@ -70,11 +73,16 @@ def data_dictionary_json(request, domain, case_type_name=None):
             domain)
     if case_type_name:
         queryset = queryset.filter(name=case_type_name)
+
+    case_type_app_module_count = get_case_type_app_module_count(domain)
     for case_type in queryset:
+        module_count = case_type_app_module_count.get(case_type.name, 0)
         p = {
             "name": case_type.name,
             "fhir_resource_type": fhir_resource_type_name_by_case_type.get(case_type),
             "groups": [],
+            "is_deprecated": case_type.is_deprecated,
+            "module_count": module_count,
             "properties": [],
         }
         grouped_properties = {
@@ -110,7 +118,7 @@ def data_dictionary_json(request, domain, case_type_name=None):
 
 
 @login_and_domain_required
-@toggles.DATA_DICTIONARY.required_decorator()
+@requires_privilege_with_fallback(privileges.DATA_DICTIONARY)
 @require_permission(HqPermissions.edit_data_dict)
 def create_case_type(request, domain):
     name = request.POST.get("name")
@@ -127,11 +135,23 @@ def create_case_type(request, domain):
     return HttpResponseRedirect(f"{url}#{name}")
 
 
+@login_and_domain_required
+@toggles.DATA_DICTIONARY.required_decorator()
+@require_permission(HqPermissions.edit_data_dict)
+def deprecate_or_restore_case_type(request, domain, case_type_name):
+    is_deprecated = request.POST.get("is_deprecated", 'false') == 'true'
+    case_type_obj = CaseType.objects.get(domain=domain, name=case_type_name)
+    case_type_obj.is_deprecated = is_deprecated
+    case_type_obj.save()
+
+    return JsonResponse({'status': 'success'})
+
+
 # atomic decorator is a performance optimization for looped saves
 # as per http://stackoverflow.com/questions/3395236/aggregating-saves-in-django#comment38715164_3397586
 @atomic
 @login_and_domain_required
-@toggles.DATA_DICTIONARY.required_decorator()
+@requires_privilege_with_fallback(privileges.DATA_DICTIONARY)
 @require_permission(HqPermissions.edit_data_dict)
 def update_case_property(request, domain):
     fhir_resource_type_obj = None
@@ -202,7 +222,7 @@ def _update_fhir_resource_type(request, domain):
 
 
 @login_and_domain_required
-@toggles.DATA_DICTIONARY.required_decorator()
+@requires_privilege_with_fallback(privileges.DATA_DICTIONARY)
 def update_case_property_description(request, domain):
     case_type = request.POST.get('caseType')
     name = request.POST.get('name')
@@ -353,7 +373,7 @@ class DataDictionaryView(BaseProjectDataView):
 
     @method_decorator(login_and_domain_required)
     @use_jquery_ui
-    @method_decorator(toggles.DATA_DICTIONARY.required_decorator())
+    @method_decorator(requires_privilege_with_fallback(privileges.DATA_DICTIONARY))
     @method_decorator(require_permission(HqPermissions.edit_data_dict,
                                          view_only_permission=HqPermissions.view_data_dict))
     def dispatch(self, request, *args, **kwargs):
@@ -383,7 +403,7 @@ class UploadDataDictionaryView(BaseProjectDataView):
 
     @method_decorator(login_and_domain_required)
     @use_jquery_ui
-    @method_decorator(toggles.DATA_DICTIONARY.required_decorator())
+    @method_decorator(requires_privilege(privileges.DATA_DICTIONARY))
     @method_decorator(require_permission(HqPermissions.edit_data_dict))
     def dispatch(self, request, *args, **kwargs):
         return super(UploadDataDictionaryView, self).dispatch(request, *args, **kwargs)
