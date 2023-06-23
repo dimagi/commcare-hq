@@ -385,6 +385,7 @@ DOMAIN_DELETE_OPERATIONS = [
     ModelDeletion('export', 'EmailExportWhenDoneRequest', 'domain'),
     ModelDeletion('export', 'LedgerSectionEntry', 'domain'),
     CustomDeletion('export', _delete_data_files, []),
+    ModelDeletion('geospatial', 'GeoPolygon', 'domain'),
     ModelDeletion('locations', 'LocationFixtureConfiguration', 'domain'),
     ModelDeletion('ota', 'MobileRecoveryMeasure', 'domain'),
     ModelDeletion('ota', 'SerialIdBucket', 'domain'),
