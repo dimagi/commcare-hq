@@ -31,7 +31,7 @@
       <text>
       </text>
     </header>
-    <template form="address" width="0">
+    <template form="{map[format]}" width="0">
       <text>
         <xpath function="concat({map[xpath_function]}, if(here(), '', ''))"> <!-- Without the here() call sessionStorage.locationLat will not be populated -->
           {map[variables]}
