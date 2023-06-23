@@ -146,7 +146,7 @@
       <text>
       </text>
     </header>
-    <template form="address-popup" width="0">
+    <template form="{map_popup[format]}" width="0">
       <text>
         <xpath function="{map_popup[xpath_function]}">
           {map_popup[variables]}
