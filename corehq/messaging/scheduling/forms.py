@@ -217,7 +217,7 @@ class ContentForm(Form):
             cleaned_value = self._clean_message_field('subject')
             return self._validate_fcm_message_length(cleaned_value, self.FCM_SUBJECT_MAX_LENGTH)
 
-        if self.schedule_form.cleaned_data.get('content') not in ScheduleForm.CONTENT_EMAIL:
+        if self.schedule_form.cleaned_data.get('content') != ScheduleForm.CONTENT_EMAIL:
             return None
 
         return self._clean_message_field('subject')
