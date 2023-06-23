@@ -149,11 +149,11 @@ class ObjectiveAllocator:
             # One of the constraints might be null, so we need to do the appropriate constraints check based
             # on which constraints are non-null
             if self.max_distance and self.max_assignable:
-                constraints_met = distance <= self.max_distance and len(current_bin) <= self.max_assignable
+                constraints_met = distance <= self.max_distance and len(current_bin) < self.max_assignable
             elif self.max_distance:
                 constraints_met = distance <= self.max_distance
             else:
-                constraints_met = len(current_bin) <= self.max_assignable
+                constraints_met = len(current_bin) < self.max_assignable
 
             if constraints_met:
                 current_bin.append(current_objective.id)
