@@ -1,7 +1,8 @@
-/*global Backbone, DOMPurify */
+/*global Backbone */
 
 hqDefine("cloudcare/js/formplayer/menus/controller", function () {
     var constants = hqImport("cloudcare/js/formplayer/constants"),
+        cloudcareUtils = hqImport("cloudcare/js/utils"),
         FormplayerFrontend = hqImport("cloudcare/js/formplayer/app"),
         formplayerUtils = hqImport("cloudcare/js/formplayer/utils/utils"),
         menusUtils = hqImport("cloudcare/js/formplayer/menus/utils"),
@@ -225,7 +226,7 @@ hqDefine("cloudcare/js/formplayer/menus/controller", function () {
             obj.style = styles[i];
             obj.id = i;
             if (obj.style.displayFormat === 'Markdown') {
-                obj.html = DOMPurify.sanitize(md.render(details[i]));
+                obj.html = cloudcareUtils.renderMarkdown(details[i]);
             }
             detailModel.push(obj);
         }
