@@ -8,7 +8,6 @@ from pathlib import Path
 from typing import List
 from xml.sax.saxutils import escape
 
-from corehq import toggles
 from corehq.apps.app_manager import id_strings
 from corehq.apps.app_manager.exceptions import SuiteError
 from corehq.apps.app_manager.suite_xml.xml_models import Detail, XPathVariable
@@ -81,7 +80,6 @@ class CaseTileHelper(object):
 
         # Add case search action if needed
         if module_offers_search(self.module) and not module_uses_inline_search(self.module):
-            from corehq.apps.app_manager.suite_xml.sections.details import DetailContributor
             if (case_search_action := DetailContributor.get_case_search_action(
                 self.module,
                 self.build_profile_id,
