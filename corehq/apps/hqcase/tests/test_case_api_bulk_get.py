@@ -22,6 +22,7 @@ from corehq.util.test_utils import (
     flag_enabled,
     privilege_enabled,
 )
+from corehq.apps.data_dictionary.models import CaseType
 
 
 @es_test(requires=[case_search_adapter], setup_class=True)
@@ -41,10 +42,11 @@ class TestCaseAPIBulkGet(TestCase):
             cls.domain, 'edit-data', permissions=HqPermissions(edit_data=True, access_api=True)
         )
         cls.web_user = WebUser.create(cls.domain, 'netflix', 'password', None, None, role_id=role.get_id)
+        cls.deprecated_case_type = 'person'
         case_blocks = [
             cls._make_case_block('Vera Menchik', external_id='vera'),
             cls._make_case_block('Nona Gaprindashvili', external_id='nona'),
-            cls._make_case_block('Maia Chiburdanidze', external_id='maia'),
+            cls._make_case_block('Maia Chiburdanidze', case_type=cls.deprecated_case_type, external_id='maia'),
         ]
         case_search_es_setup(cls.domain, case_blocks)
         cls.case_ids = [b.case_id for b in case_blocks]
@@ -55,6 +57,9 @@ class TestCaseAPIBulkGet(TestCase):
         populate_case_search_index([case])
         cls.other_domain_case_id = case.case_id
 
+        cls.case_type_obj = CaseType(domain=cls.domain, name=cls.deprecated_case_type)
+        cls.case_type_obj.save()
+
     def setUp(self):
         self.client.login(username='netflix', password='password')
 
@@ -64,13 +69,14 @@ class TestCaseAPIBulkGet(TestCase):
         cls.domain_obj.delete()
         FormProcessorTestUtils.delete_all_cases(cls.domain)
         FormProcessorTestUtils.delete_all_xforms(cls.domain)
+        cls.case_type_obj.delete()
         super().tearDownClass()
 
     @classmethod
-    def _make_case_block(cls, name, external_id=None):
+    def _make_case_block(cls, name, case_type='player', external_id=None):
         return CaseBlock(
             case_id=str(uuid.uuid4()),
-            case_type='player',
+            case_type=case_type,
             case_name=name,
             external_id=external_id,
         )
@@ -84,6 +90,13 @@ class TestCaseAPIBulkGet(TestCase):
         res = self.client.get(reverse('case_api', args=(self.domain, 'fake_id')))
         self.assertEqual(res.status_code, 404)
         self.assertEqual(res.json()['error'], "Case 'fake_id' not found")
+
+    def test_get_single_case_deprecated(self):
+        self.case_type_obj.is_deprecated = True
+        self.case_type_obj.save()
+
+        res = self.client.get(reverse('case_api', args=(self.domain, self.case_ids[2])))
+        self.assertEqual(res.status_code, 404)
 
     def test_get_single_case_on_other_domain(self):
         res = self.client.get(reverse('case_api', args=(self.domain, self.other_domain_case_id)))
@@ -103,6 +116,13 @@ class TestCaseAPIBulkGet(TestCase):
         case_ids = ['missing1', self.case_ids[1], 'missing2']
         result = self._call_get_api_check_results(case_ids, matching=1, missing=2)
         self.assertEqual(result['cases'][0]['error'], 'not found')
+        self.assertEqual(result['cases'][2]['error'], 'not found')
+
+    def test_bulk_get_deprecated(self):
+        self.case_type_obj.is_deprecated = True
+        self.case_type_obj.save()
+
+        result = self._call_get_api_check_results(self.case_ids, matching=2, missing=1)
         self.assertEqual(result['cases'][2]['error'], 'not found')
 
     def test_bulk_get_duplicate(self):
