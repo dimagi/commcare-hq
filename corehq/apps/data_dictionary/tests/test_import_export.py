@@ -13,10 +13,11 @@ from corehq.apps.data_dictionary.views import (
     ExportDataDictionaryView, UploadDataDictionaryView, ALLOWED_VALUES_SHEET_SUFFIX)
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.users.models import WebUser
-from corehq.util.test_utils import flag_enabled, TestFileMixin
+from corehq.util.test_utils import TestFileMixin, privilege_enabled
+from corehq import privileges
 
 
-@flag_enabled('DATA_DICTIONARY')
+@privilege_enabled(privileges.DATA_DICTIONARY)
 class DataDictionaryImportTest(TestCase, TestFileMixin):
     domain_name = uuid.uuid4().hex
     file_path = ('data',)
@@ -85,7 +86,7 @@ class DataDictionaryImportTest(TestCase, TestFileMixin):
         self.assertEqual(expected_errors, received_errors)
 
 
-@flag_enabled('DATA_DICTIONARY')
+@privilege_enabled(privileges.DATA_DICTIONARY)
 class DataDictionaryExportTest(TestCase):
     domain_name = uuid.uuid4().hex
 
