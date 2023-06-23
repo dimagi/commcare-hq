@@ -71,20 +71,17 @@ class TestCaseData(TestCase):
         'description': '', 'value': '---', 'has_history': True}, {'expr': 'prop4', 'name': 'prop4',
         'description': '', 'value': '---', 'has_history': True}]]}]
         """
-        idx = 0
-        for group_data in result:
+        for group_data, expected_group_data in zip(result, expected_result):
             group_name_actual = group_data.get("name")
-            group_name_expected = expected_result[idx].get("name")
+            group_name_expected = expected_group_data.get("name")
             self.assertEqual(group_name_expected, group_name_actual)
             rows_actual = group_data.get("rows")[0]
             props_actual = [prop.get("name") for prop in rows_actual]
             if group_name_actual == "Unrecognized":
                 # Ordering of properties in unrecognized group is not user defined
-                self.assertEqual(set(expected_result[idx].get("properties")), set(props_actual))
+                self.assertEqual(set(expected_group_data.get("properties")), set(props_actual))
             else:
-                self.assertEqual(expected_result[idx].get("properties"), props_actual)
-            idx += 1
-        self.assertEqual(idx, len(expected_result))
+                self.assertEqual(expected_group_data.get("properties"), props_actual)
 
     def _create_case_property(self, prop_name, group=None):
         case_type_obj = CaseType.get_or_create(self.domain, self.case_type)
