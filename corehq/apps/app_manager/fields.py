@@ -27,6 +27,7 @@ from corehq.apps.userreports.app_manager.data_source_meta import (
 from corehq.apps.userreports.dbaccessors import get_datasources_for_domain
 from corehq.toggles import AGGREGATE_UCRS
 from corehq.apps.export.const import ALL_CASE_TYPE_EXPORT
+from corehq.apps.data_dictionary.util import get_data_dict_deprecated_case_types
 
 DataSource = collections.namedtuple('DataSource', ['application', 'source_type', 'source', 'registry_slug'])
 RMIDataChoice = collections.namedtuple('RMIDataChoice', ['id', 'text', 'data'])
