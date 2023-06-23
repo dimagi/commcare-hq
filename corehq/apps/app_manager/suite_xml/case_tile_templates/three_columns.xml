@@ -1,0 +1,100 @@
+<detail id="{detail_id}">
+    <title>
+      <text>
+        <locale id="{title_text_id}"/>
+      </text>
+    </title>
+    <field>
+      <style
+          horz-align="left"
+          vert-align="center"
+          font-size="medium">
+        <grid
+            grid-height="3"
+            grid-width="4"
+            grid-x="0"
+            grid-y="0" />
+       </style>
+      <header>
+        <text>
+          <locale id="{left[locale_id]}"/>
+        </text>
+      </header>
+      <template form="{left[format]}">
+        <text>
+          <xpath function="{left[xpath_function]}">
+            {left[variables]}
+          </xpath>
+        </text>
+      </template>
+      <sort type="string" order="-2" direction="ascending">
+        <text>
+          <xpath function="{left[xpath_function]}">
+            {left[variables]}
+          </xpath>
+        </text>
+      </sort>
+    </field>
+    <field>
+      <style
+          horz-align="left"
+          vert-align="center"
+          font-size="medium">
+        <grid
+            grid-height="3"
+            grid-width="4"
+            grid-x="4"
+            grid-y="0" />
+       </style>
+      <header>
+        <text>
+          <locale id="{middle[locale_id]}"/>
+        </text>
+      </header>
+      <template form="{middle[format]}">
+        <text>
+          <xpath function="{middle[xpath_function]}">
+            {middle[variables]}
+          </xpath>
+        </text>
+      </template>
+      <sort type="string" order="-2" direction="ascending">
+        <text>
+          <xpath function="{middle[xpath_function]}">
+            {middle[variables]}
+          </xpath>
+        </text>
+      </sort>
+    </field>
+    <field>
+      <style
+          horz-align="left"
+          vert-align="center"
+          font-size="medium">
+        <grid
+            grid-height="3"
+            grid-width="4"
+            grid-x="8"
+            grid-y="0" />
+       </style>
+      <header>
+        <text>
+          <locale id="{right[locale_id]}"/>
+        </text>
+      </header>
+      <template form="{right[format]}">
+        <text>
+          <xpath function="{right[xpath_function]}">
+            {right[variables]}
+          </xpath>
+        </text>
+      </template>
+      <sort type="string" order="-2" direction="ascending">
+        <text>
+          <xpath function="{right[xpath_function]}">
+            {right[variables]}
+          </xpath>
+        </text>
+      </sort>
+    </field>
+  </detail>
