@@ -545,28 +545,30 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
                             if (latLng.length > 1) {
                                 const rowId = `row-${model.id}`;
                                 const popupText = md.render(DOMPurify.sanitize(model.attributes.data[popupIndex]));
-                                const marker = L.marker(latLng, {icon: locationIcon});
+                                let marker = L.marker(latLng, {icon: locationIcon});
                                 markers.push(marker);
-                                marker
-                                    .addTo(addressMap)
-                                    .bindPopup(popupText)
-                                    .on('click', () => {
-                                        // tiles
-                                        $(`.list-cell-wrapper-style[id!='${rowId}']`)
-                                            .removeClass("highlighted-case");
-                                        // rows
-                                        $(`.case-row[id!='${rowId}']`)
-                                            .removeClass("highlighted-case");
-                                        $(`#${rowId}`)
-                                            .addClass("highlighted-case");
-                                        markers.forEach(m => m.setIcon(locationIcon));
-                                        marker.setIcon(selectedLocationIcon);
+                                marker = marker.addTo(addressMap)
+                                if (popupIndex >= 0) {
+                                    marker = marker.bindPopup(popupText)
+                                }
 
-                                        $([document.documentElement, document.body]).animate({
-                                            // -50 Stay clear of the breadcrumbs
-                                            scrollTop: $(`#${rowId}`).offset().top - 50
-                                        }, 500);
-                                    });
+                                marker.on('click', () => {
+                                    // tiles
+                                    $(`.list-cell-wrapper-style[id!='${rowId}']`)
+                                        .removeClass("highlighted-case");
+                                    // rows
+                                    $(`.case-row[id!='${rowId}']`)
+                                        .removeClass("highlighted-case");
+                                    $(`#${rowId}`)
+                                        .addClass("highlighted-case");
+                                    markers.forEach(m => m.setIcon(locationIcon));
+                                    marker.setIcon(selectedLocationIcon);
+
+                                    $([document.documentElement, document.body]).animate({
+                                        // -50 Stay clear of the breadcrumbs
+                                        scrollTop: $(`#${rowId}`).offset().top - 50
+                                    }, 500);
+                                });
                                 latLngs.push(latLng);
                             }
                         }
