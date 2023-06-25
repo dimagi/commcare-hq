@@ -229,6 +229,23 @@ class ElasticManageAdapter(BaseAdapter):
             self._validate_single_index(index)
         self._es.indices.refresh(",".join(indices), expand_wildcards="none")
 
+    def indices_info(self):
+        """Retrieve meta information about all the indices in the cluster.
+
+        :returns: ``dict`` A dict with index name in keys and index meta information
+        """
+        indices_info = self._es.cat.indices(format='json', bytes='b')
+        filtered_indices_info = {}
+        for info in indices_info:
+            filtered_indices_info[info['index']] = {
+                'health': info['health'],
+                'primary_shards': info['pri'],
+                'replica_shards': info['rep'],
+                'doc_count': info['docs.count'],
+                'size_on_disk': info['store.size'],  # in bytes
+            }
+        return filtered_indices_info
+
     def index_flush(self, index):
         """Flush an index.
 
