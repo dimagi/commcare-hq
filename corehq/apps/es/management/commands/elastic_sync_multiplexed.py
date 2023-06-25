@@ -140,6 +140,11 @@ class Command(BaseCommand):
     ```bash
     ./manage.py elastic_sync_multiplexed start <index_cname>
     ```
+
+    ```bash
+    ./manage.py elastic_sync_multiplexed cleanup <index_cname>
+    ```
+
     <index_cname> is the hq cannoical name for an index like forms, cases
 
     ```bash
@@ -191,10 +196,20 @@ class Command(BaseCommand):
             help="""Cancels an ongoing reindex process""",
         )
 
+        clean_up_cmd = subparsers.add_parser("cleanup")
+        clean_up_cmd.set_defaults(func=self.es_helper.perform_cleanup)
+        clean_up_cmd.add_argument(
+            'index_cname',
+            choices=INDEXES,
+            help="""Cannonical Name of the index where tombstones will be cleared""",
+        )
+
     def handle(self, **options):
         sub_cmd = options['sub_command']
         cmd_func = options.get('func')
         if sub_cmd == 'start':
             cmd_func(options['index_cname'])
+        if sub_cmd == 'cleanup':
+            cmd_func(doc_adapter_from_cname(options['index_cname']))
         else:
             cmd_func(options['task_id'])
