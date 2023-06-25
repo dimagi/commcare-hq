@@ -1,8 +1,8 @@
 import logging
 import time
 from datetime import datetime, timedelta
-from django.conf import settings
 
+from django.conf import settings
 from django.core.management.base import BaseCommand, CommandError
 
 from corehq.apps.es.client import ElasticMultiplexAdapter, get_client
@@ -77,8 +77,11 @@ class ESSyncUtil:
         return adapter.primary.index_name, adapter.secondary.index_name
 
     def _prepare_index_for_reindex(self, index_name):
+        es_manager.cluster_routing(enabled=True)
         es_manager.index_configure_for_reindex(index_name)
         es_manager.index_set_replicas(index_name, 0)
+        self._wait_for_index_to_get_healthy(index_name, sleep_time=5)
+        es_manager.cluster_routing(enabled=False)
 
     def _wait_for_index_to_get_healthy(self, index_name, sleep_time=0):
         for i in range(10):
@@ -91,9 +94,12 @@ class ESSyncUtil:
             time.sleep(sleep_time)
 
     def _prepare_index_for_normal_usage(self, secondary_adapter):
+        es_manager.cluster_routing(enabled=True)
         tuning_settings = render_index_tuning_settings(secondary_adapter.settings_key)
         es_manager.index_set_replicas(secondary_adapter.index_name, tuning_settings['number_of_replicas'])
         es_manager.index_configure_for_standard_ops(secondary_adapter.index_name)
+        self._wait_for_index_to_get_healthy(secondary_adapter.index_name, sleep_time=5)
+        es_manager.cluster_routing(enabled=True)
 
     def _get_source_destination_doc_count(self, adapter):
         es_manager.index_refresh(adapter.primary.index_name)
