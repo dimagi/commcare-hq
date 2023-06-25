@@ -111,8 +111,12 @@ class ESSyncUtil:
 
     def perform_cleanup(self, adapter):
         logger.info("Performing required cleanup!")
-        logger.info("Deleting Tombstones")
-        adapter.secondary.delete_tombstones()
+        if isinstance(adapter, ElasticMultiplexAdapter):
+            logger.info("Deleting Tombstones From Secondary Index")
+            adapter.secondary.delete_tombstones()
+        else:
+            logger.info("Deleting Tombstones From Primary Index")
+            adapter.delete_tombstones()
 
     def cancel_reindex(self, task_id):
         try:
