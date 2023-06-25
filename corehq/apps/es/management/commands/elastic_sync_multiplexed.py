@@ -1,4 +1,5 @@
 import logging
+import time
 from datetime import datetime, timedelta
 from django.conf import settings
 
@@ -78,6 +79,16 @@ class ESSyncUtil:
     def _prepare_index_for_reindex(self, index_name):
         es_manager.index_configure_for_reindex(index_name)
         es_manager.index_set_replicas(index_name, 0)
+
+    def _wait_for_index_to_get_healthy(self, index_name, sleep_time=0):
+        for i in range(10):
+            health = es_manager.cluster_health(index=index_name)
+            status = health["status"]
+            if status == "green":
+                break
+
+            print(f"\tWaiting for index status to be green. Current status: '{status}'")
+            time.sleep(sleep_time)
 
     def _prepare_index_for_normal_usage(self, secondary_adapter):
         tuning_settings = render_index_tuning_settings(secondary_adapter.settings_key)
