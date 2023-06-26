@@ -46,7 +46,7 @@ hqDefine("app_manager/js/details/utils", function () {
         if (hqImport('hqwebapp/js/toggles').toggleEnabled('CASE_LIST_TILE')) {
             formats.push({
             value: "address-popup",
-            label: gettext('Address Popup'),
+            label: gettext('Address Popup (WebApp only)'),
             });
         }
 
