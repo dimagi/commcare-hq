@@ -151,6 +151,9 @@ hqDefine('users/js/roles',[
                         });
                     });
                 };
+                self.isEditable = ko.computed(function () {
+                    return root.allowEdit && (!self.upstream_id() || root.unlockLinkedRoles());
+                });
                 self.reportPermissions.filteredSpecific = filterSpecific(self.reportPermissions);
                 self.tableauPermissions.filteredSpecific = filterSpecific(self.tableauPermissions);
                 self.manageRegistryPermission.filteredSpecific = filterSpecific(self.manageRegistryPermission);
@@ -377,38 +380,6 @@ hqDefine('users/js/roles',[
                         allowCheckboxPermission: null,
                     },
                     {
-                        showOption: root.ermPrivilege,
-                        editPermission: self.permissions.access_release_management,
-                        viewPermission: null,
-                        text: gettext("<strong>Enterprise Release Management</strong> &mdash; access the Linked Project Spaces feature"),
-                        showEditCheckbox: true,
-                        editCheckboxLabel: "edit-release-management-checkbox",
-                        showViewCheckbox: false,
-                        viewCheckboxLabel: "view-release-management-checkbox",
-                        screenReaderEditAndViewText: null,
-                        screenReaderViewOnlyText: null,
-                        showAllowCheckbox: false,
-                        allowCheckboxText: null,
-                        allowCheckboxId: null,
-                        allowCheckboxPermission: null,
-                    },
-                    {
-                        showOption: root.mrmPrivilege,
-                        editPermission: self.permissions.access_release_management,
-                        viewPermission: null,
-                        text: gettext("<strong>Multi-Environment Release Management</strong> &mdash; access the Linked Project Spaces feature"),
-                        showEditCheckbox: true,
-                        editCheckboxLabel: "edit-release-management-checkbox",
-                        showViewCheckbox: false,
-                        viewCheckboxLabel: "view-release-management-checkbox",
-                        screenReaderEditAndViewText: null,
-                        screenReaderViewOnlyText: null,
-                        showAllowCheckbox: false,
-                        allowCheckboxText: null,
-                        allowCheckboxId: null,
-                        allowCheckboxPermission: null,
-                    },
-                    {
                         showOption: root.attendanceTrackingPrivilege,
                         editPermission: self.permissions.manage_attendance_tracking,
                         viewPermission: null,
@@ -427,6 +398,26 @@ hqDefine('users/js/roles',[
                 ];
 
                 var hasEmbeddedTableau = toggles.toggleEnabled("EMBEDDED_TABLEAU");
+
+                const linkedTitle = root.ermPrivilege ?
+                    gettext("Enterprise Release Management") : gettext("Multi-Environment Release Management");
+                self.erm = {
+                    'title': linkedTitle,
+                    'visible': root.ermPrivilege || root.mrmPrivilege,
+                    'access_release_management': {
+                        text: gettext('Linked Project Spaces'),
+                        checkboxLabel: "erm-checkbox",
+                        checkboxPermission: self.permissions.access_release_management,
+                        checkboxText: gettext("Allow role to configure linked project spaces"),
+                    },
+                    'edit_linked_configs': {
+                        text: gettext("Linked Configurations"),
+                        checkboxLabel: "erm-edit-linked-checkbox",
+                        checkboxPermission: self.permissions.edit_linked_configurations,
+                        checkboxText: gettext("Allow role to edit linked configurations on this project space"),
+                    },
+                };
+
                 self.reports = [
                     {
                         visibilityRestraint: self.permissions.access_all_locations,
@@ -557,6 +548,8 @@ hqDefine('users/js/roles',[
         self.ermPrivilege = o.ermPrivilege;
         self.mrmPrivilege = o.mrmPrivilege;
         self.attendanceTrackingPrivilege = o.attendanceTrackingPrivilege;
+        self.unlockLinkedRoles = ko.observable(false);
+        self.canEditLinkedData = o.canEditLinkedData;
 
         self.userRoles = ko.observableArray(ko.utils.arrayMap(o.userRoles, function (userRole) {
             return UserRole.wrap(userRole);
@@ -564,6 +557,14 @@ hqDefine('users/js/roles',[
         self.roleBeingEdited = ko.observable();
         self.roleBeingDeleted = ko.observable();
         self.defaultRole = UserRole.wrap(o.defaultRole);
+
+        self.hasLinkedRoles = ko.computed(function () {
+            return self.userRoles().some(element => element.upstream_id());
+        });
+
+        self.toggleLinkedRoles = function () {
+            self.unlockLinkedRoles(!self.unlockLinkedRoles());
+        };
 
         self.addOrReplaceRole = function (role) {
             var newRole = UserRole.wrap(role);
@@ -675,10 +676,13 @@ hqDefine('users/js/roles',[
     };
 
     return {
-        initUserRoles: function ($element, o) {
+        initUserRoles: function ($element, $modal, $infoBar, o) {
+            const viewModel = RolesViewModel(o);
             $element.each(function () {
-                $element.koApplyBindings(RolesViewModel(o));
+                $element.koApplyBindings(viewModel);
             });
+            $modal.koApplyBindings(viewModel);
+            $infoBar.koApplyBindings(viewModel);
         },
     };
 });
