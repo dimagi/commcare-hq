@@ -24,7 +24,9 @@ from .client import ElasticDocumentAdapter, create_document_adapter
 from .es_query import HQESQuery
 from .index.settings import IndexSettingsKey
 
-HQ_FORMS_INDEX_CANONICAL_NAME = 'forms'
+HQ_FORMS_INDEX_CANONICAL_NAME = "forms"
+HQ_FORMS_INDEX_NAME = getattr(settings, "ES_XFORM_INDEX_NAME", "xforms_2016-07-07")
+HQ_FORMS_SECONDARY_INDEX_NAME = "forms-20230524"
 
 
 class FormES(HQESQuery):
@@ -163,9 +165,9 @@ class ElasticForm(ElasticDocumentAdapter):
 
 form_adapter = create_document_adapter(
     ElasticForm,
-    getattr(settings, "ES_XFORM_INDEX_NAME", "xforms_2016-07-07"),
+    HQ_FORMS_INDEX_NAME,
     "xform",
-    secondary='forms-20230524',
+    secondary=HQ_FORMS_SECONDARY_INDEX_NAME,
 )
 
 

@@ -20,7 +20,9 @@ from .es_query import HQESQuery
 from .index.analysis import COMMA_ANALYSIS
 from .index.settings import IndexSettingsKey
 
-HQ_DOMAINS_INDEX_CANONICAL_NAME = 'domains'
+HQ_DOMAINS_INDEX_CANONICAL_NAME = "domains"
+HQ_DOMAINS_INDEX_NAME = "hqdomains_2021-03-08"
+HQ_DOMAINS_SECONDARY_INDEX_NAME = "domains-20230524"
 
 
 class DomainES(HQESQuery):
@@ -86,9 +88,9 @@ class ElasticDomain(ElasticDocumentAdapter):
 
 domain_adapter = create_document_adapter(
     ElasticDomain,
-    "hqdomains_2021-03-08",
+    HQ_DOMAINS_INDEX_NAME,
     "hqdomain",
-    secondary='domains-20230524',
+    secondary=HQ_DOMAINS_SECONDARY_INDEX_NAME,
 )
 
 

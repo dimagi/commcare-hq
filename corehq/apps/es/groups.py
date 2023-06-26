@@ -20,7 +20,9 @@ from .client import ElasticDocumentAdapter, create_document_adapter
 from .es_query import HQESQuery
 from .index.settings import IndexSettingsKey
 
-HQ_GROUPS_INDEX_CANONICAL_NAME = 'groups'
+HQ_GROUPS_INDEX_CANONICAL_NAME = "groups"
+HQ_GROUPS_INDEX_NAME = "hqgroups_2017-05-29"
+HQ_GROUPS_SECONDARY_INDEX_NAME = "groups-20230524"
 
 
 class GroupES(HQESQuery):
@@ -54,9 +56,9 @@ class ElasticGroup(ElasticDocumentAdapter):
 
 group_adapter = create_document_adapter(
     ElasticGroup,
-    "hqgroups_2017-05-29",
+    HQ_GROUPS_INDEX_NAME,
     "group",
-    secondary='groups-20230524',
+    secondary=HQ_GROUPS_SECONDARY_INDEX_NAME,
 )
 
 

@@ -28,7 +28,9 @@ from .client import ElasticDocumentAdapter, create_document_adapter
 from .es_query import HQESQuery
 from .index.settings import IndexSettingsKey
 
-HQ_USERS_INDEX_CANONICAL_NAME = 'users'
+HQ_USERS_INDEX_CANONICAL_NAME = "users"
+HQ_USERS_INDEX_NAME = "hqusers_2017-09-07"
+HQ_USERS_SECONDARY_INDEX_NAME = "users-20230524"
 
 
 class UserES(HQESQuery):
@@ -113,9 +115,9 @@ class ElasticUser(ElasticDocumentAdapter):
 
 user_adapter = create_document_adapter(
     ElasticUser,
-    "hqusers_2017-09-07",
+    HQ_USERS_INDEX_NAME,
     "user",
-    secondary='users-20230524',
+    secondary=HQ_USERS_SECONDARY_INDEX_NAME,
 )
 
 

@@ -44,6 +44,8 @@ PROPERTY_VALUE = '{}.{}'.format(CASE_PROPERTIES_PATH, VALUE)
 PROPERTY_VALUE_EXACT = '{}.{}.exact'.format(CASE_PROPERTIES_PATH, VALUE)
 
 HQ_CASE_SEARCH_INDEX_CANONICAL_NAME = "case_search"
+HQ_CASE_SEARCH_INDEX_NAME = getattr(settings, "ES_CASE_SEARCH_INDEX_NAME", "case_search_2018-05-29")
+HQ_CASE_SEARCH_SECONDARY_INDEX_NAME = "case-search-20230524"
 
 
 class CaseSearchES(CaseES):
@@ -180,9 +182,9 @@ class ElasticCaseSearch(ElasticDocumentAdapter):
 
 case_search_adapter = create_document_adapter(
     ElasticCaseSearch,
-    getattr(settings, "ES_CASE_SEARCH_INDEX_NAME", "case_search_2018-05-29"),
+    HQ_CASE_SEARCH_INDEX_NAME,
     case_adapter.type,
-    secondary='case-search-20230524',
+    secondary=HQ_CASE_SEARCH_SECONDARY_INDEX_NAME,
 )
 
 

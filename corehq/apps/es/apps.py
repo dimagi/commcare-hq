@@ -12,7 +12,9 @@ from .es_query import HQESQuery
 from .index.settings import IndexSettingsKey
 
 
-HQ_APPS_INDEX_CANONICAL_NAME = 'apps'
+HQ_APPS_INDEX_CANONICAL_NAME = "apps"
+HQ_APPS_INDEX_NAME = "hqapps_2020-02-26"
+HQ_APPS_SECONDARY_INDEX_NAME = "apps-20230524"
 
 
 class AppES(HQESQuery):
@@ -52,9 +54,9 @@ class ElasticApp(ElasticDocumentAdapter):
 
 app_adapter = create_document_adapter(
     ElasticApp,
-    "hqapps_2020-02-26",
+    HQ_APPS_INDEX_NAME,
     "app",
-    secondary='apps-20230524',
+    secondary=HQ_APPS_SECONDARY_INDEX_NAME,
 )
 
 

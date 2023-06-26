@@ -24,7 +24,9 @@ from .client import ElasticDocumentAdapter, create_document_adapter
 from .es_query import HQESQuery
 from .index.settings import IndexSettingsKey
 
-HQ_CASES_INDEX_CANONICAL_NAME = 'cases'
+HQ_CASES_INDEX_CANONICAL_NAME = "cases"
+HQ_CASES_INDEX_NAME = "hqcases_2016-03-04"
+HQ_CASES_SECONDARY_INDEX_NAME = "cases-20230524"
 
 
 class CaseES(HQESQuery):
@@ -88,9 +90,9 @@ class ElasticCase(ElasticDocumentAdapter):
 
 case_adapter = create_document_adapter(
     ElasticCase,
-    "hqcases_2016-03-04",
+    HQ_CASES_INDEX_NAME,
     "case",
-    secondary='cases-20230524',
+    secondary=HQ_CASES_SECONDARY_INDEX_NAME,
 )
 
 
