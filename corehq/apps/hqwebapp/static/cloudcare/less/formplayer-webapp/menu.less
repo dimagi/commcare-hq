@@ -8,11 +8,14 @@
   .box-shadow(0 0 10px 2px rgba(0,0,0,.1));
   margin-bottom: 2rem;
 
+  .white-border {
+    border: 1px solid white;
+  }
+
   #module-case-list-map {
     height: calc(~"100vh - 65px");
     position: sticky !important; // Has to be important so the leaflet code does not set it to relative
     top: 50px; // based on the height of the crumbs bar
-    border: 1px solid white;
 
     .marker-pin {
       text-align: center;

@@ -3,6 +3,7 @@
 hqDefine("cloudcare/js/formplayer/menus/views", function () {
     const kissmetrics = hqImport("analytix/js/kissmetrix"),
         constants = hqImport("cloudcare/js/formplayer/constants"),
+        ko = hqImport("knockout"),
         FormplayerFrontend = hqImport("cloudcare/js/formplayer/app"),
         initialPageData = hqImport("hqwebapp/js/initial_page_data"),
         toggles = hqImport("hqwebapp/js/toggles"),
@@ -615,6 +616,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
                 selectedCaseIds: this.selectedCaseIds,
                 isMultiSelect: false,
                 showMap: this.showMap,
+                useTilesKo: ko.observable(this.useTiles),
                 columnStyle: this.columnStyle(),
                 sidebarEnabled: this.options.sidebarEnabled,
                 triggerEmptyCaseList: this.options.triggerEmptyCaseList,
@@ -737,6 +739,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
         templateContext: function () {
             const dict = CaseTileListView.__super__.templateContext.apply(this, arguments);
             dict.useTiles = true;
+            dict.useTilesKo(true);
             dict.isMultiSelect = this.options.isMultiSelect;
             return dict;
         },
