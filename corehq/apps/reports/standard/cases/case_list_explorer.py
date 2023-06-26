@@ -69,6 +69,28 @@ class CaseListExplorer(CaseListReport):
         if xpath:
             try:
                 query = query.xpath_query(self.domain, xpath)
+                from eulxml.xpath import parse as parse_xpath
+                from corehq.apps.case_search.xpath_functions.ancestor_functions import is_ancestor_comparison
+                from corehq.apps.case_search.exceptions import TooManyRelatedCasesError
+                # from corehq.apps.case_search.const import MAX_RELATED_CASES
+                from django.utils.translation import gettext
+                from eulxml.xpath import serialize
+                from eulxml.xpath.ast import BinaryExpression
+                REDUCED_MAX_RELATED_CASES = 10000  # for testing purposes
+                node = parse_xpath(xpath)
+                # maybe I could move this as a separate function into ancestor_functions.py...
+                # avoid all these imports
+                if (is_ancestor_comparison(node) or 'ancestor-exists' in xpath) \
+                   and query.count() > REDUCED_MAX_RELATED_CASES:
+                    try:
+                        query = BinaryExpression(node.left.right, node.op, node.right)
+                    except AttributeError:
+                        ancestor_path_node, ancestor_case_filter_node = node.args
+                        query = ancestor_case_filter_node
+                    raise TooManyRelatedCasesError(
+                        gettext("The related case lookup you are trying to perform would return too many cases"),
+                        serialize(query)
+                    )
             except CaseFilterError as e:
                 track_workflow(self.request.couch_user.username, f"{self.name}: Query Error")
 
