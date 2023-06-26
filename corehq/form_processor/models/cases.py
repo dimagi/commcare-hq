@@ -29,6 +29,11 @@ from corehq.sql_db.util import (
     get_db_aliases_for_partitioned_query,
     split_list_by_db_partition,
 )
+from corehq.toggles import (
+    ALIGN_ON_CHILDEXTENSION_CASES,
+    NAMESPACE_DOMAIN,
+    USE_GET_RELATED_INDICES_BAD,
+)
 from corehq.util.json import CommCareJSONEncoder
 
 from ..exceptions import (
@@ -978,8 +983,16 @@ class CommCareCaseIndexManager(RequireDBManager):
         assert isinstance(case_ids, list), case_ids
         if not case_ids:
             return []
+
+        if ALIGN_ON_CHILDEXTENSION_CASES.enabled(domain, NAMESPACE_DOMAIN):
+            query = 'SELECT * FROM get_related_indices_incl(%s, %s, %s)'
+        elif USE_GET_RELATED_INDICES_BAD.enabled(domain, NAMESPACE_DOMAIN):
+            query = 'SELECT * FROM get_related_indices_bad(%s, %s, %s)'
+        else:
+            query = 'SELECT * FROM get_related_indices(%s, %s, %s)'
+
         return list(self.plproxy_raw(
-            'SELECT * FROM get_related_indices(%s, %s, %s)',
+            query,
             [domain, case_ids, list(exclude_indices)],
         ))
 
