@@ -2034,6 +2034,7 @@ class Detail(IndexedSchema, CaseListLookupMixin):
             'pull_down_tile',
             'persist_case_context',
             'persistent_case_context_xml',
+            'case_tile_group',
         ]
         for attr in attrs:
             if attr == "case_tile_configuration":
