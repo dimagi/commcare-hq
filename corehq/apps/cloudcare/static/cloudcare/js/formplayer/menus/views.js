@@ -565,6 +565,8 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
                                             // -50 Stay clear of the breadcrumbs
                                             scrollTop: $(`#${rowId}`).offset().top - 50
                                         }, 500);
+
+                                        addressMap.panTo(latLng);
                                     });
                                 latLons.push(latLng);
                             }
