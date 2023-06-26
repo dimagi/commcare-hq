@@ -100,6 +100,9 @@ def get_health_card_png(request):
 @required_request_params(["health_id"])
 def get_existence_by_health_id(request):
     health_id = request.data.get("health_id")
+    if check_for_existing_abha_number(request.user.domain, health_id):
+        return generate_invalid_req_response(ERROR_MESSAGES[ABHA_IN_USE_ERROR_CODE],
+                                             error_code=ABHA_IN_USE_ERROR_CODE)
     resp = abdm_util.exists_by_health_id(health_id)
     if "status" in resp:
         resp = {"health_id": health_id, "exists": resp.get("status")}
