@@ -5,9 +5,14 @@ from datetime import datetime, timedelta
 from django.conf import settings
 from django.core.management.base import BaseCommand, CommandError
 
+import corehq.apps.es.const as es_consts
 from corehq.apps.es.client import ElasticMultiplexAdapter, get_client
 from corehq.apps.es.client import manager as es_manager
-from corehq.apps.es.exceptions import IndexNotMultiplexedException, TaskMissing
+from corehq.apps.es.exceptions import (
+    IndexMultiplexedException,
+    IndexNotMultiplexedException,
+    TaskMissing,
+)
 from corehq.apps.es.index.settings import render_index_tuning_settings
 from corehq.apps.es.transient_util import (
     doc_adapter_from_cname,
@@ -134,6 +139,43 @@ class ESSyncUtil:
     def reindex_status(self, task_id):
         check_task_progress(task_id, just_once=True)
 
+    def delete_index(self, cname):
+        """Deletes the older index after reindexing
+
+        This should be used during the reindex process to delete the older index.
+        The function assumes that reindex process is successful, multiplexes is turned off
+        and indexes have been swapped.
+
+        """
+        adapter = doc_adapter_from_cname(cname)
+        older_index = getattr(es_consts, f"HQ_{cname.upper()}_INDEX_NAME")
+        current_index = getattr(es_consts, f"HQ_{cname.upper()}_SECONDARY_INDEX_NAME")
+        if isinstance(adapter, ElasticMultiplexAdapter):
+            raise IndexMultiplexedException(f"""A multiplexed index cannot be deleted.
+            Make sure you have set ES_{cname.upper()}_INDEX_MULTIPLEXED to False """)
+
+        assert adapter.index_name == current_index, f"""Indexes not swapped yet.
+        Make sure after reindexing set ES_{cname.upper()}_INDEX_SWAPPED to True"""
+
+        older_doc_adapter = adapter.__class__(older_index, adapter.type)
+
+        older_index_count = older_doc_adapter.count({})
+        newer_index_count = adapter.count({})
+
+        print(f"Docs in older index - {older_index_count}")
+        print(f"Docs in newer index - {newer_index_count}")
+
+        print("\nDocs in new index should be greater than or equals to in older index")
+
+        print(f"Are you sure you want to delete the older index - {older_index}?")
+        print("WARNING: - This step can't be un-done.")
+        proceed = input("Enter y/Y to continue, any other key to cancel\n")
+        if proceed.upper() != "Y":
+            raise CommandError("Exiting Index Deletion Process")
+        print(f"Deleting Index - {older_index}")
+
+        es_manager.index_delete(older_index)
+
 
 class Command(BaseCommand):
     """
@@ -208,12 +250,20 @@ class Command(BaseCommand):
             help="""Cannonical Name of the index where tombstones will be cleared""",
         )
 
+        delete_index_cmd = subparsers.add_parser("delete")
+        delete_index_cmd.set_defaults(func=self.es_helper.delete_index)
+        delete_index_cmd.add_argument(
+            'index_cname',
+            choices=INDEXES,
+            help="""Cannonical Name of the index whose older index should be deleted""",
+        )
+
     def handle(self, **options):
         sub_cmd = options['sub_command']
         cmd_func = options.get('func')
-        if sub_cmd == 'start':
+        if sub_cmd == 'start' or sub_cmd == "delete":
             cmd_func(options['index_cname'])
-        if sub_cmd == 'cleanup':
+        elif sub_cmd == 'cleanup':
             cmd_func(doc_adapter_from_cname(options['index_cname']))
         else:
             cmd_func(options['task_id'])
