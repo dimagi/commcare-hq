@@ -8,7 +8,7 @@ from django.contrib import messages
 from django.core.exceptions import ValidationError
 from django.db.models.query import Prefetch
 from django.db.transaction import atomic
-from django.http import HttpResponse, JsonResponse, HttpResponseRedirect
+from django.http import HttpResponse, HttpResponseRedirect, JsonResponse
 from django.shortcuts import redirect
 from django.urls import reverse
 from django.utils.decorators import method_decorator
@@ -18,39 +18,38 @@ from django.views.generic import View
 from couchexport.models import Format
 from couchexport.writers import Excel2007ExportWriter
 
-from corehq import toggles
+from corehq import privileges, toggles
+from corehq.apps.accounting.decorators import (
+    requires_privilege,
+    requires_privilege_with_fallback,
+)
+from corehq.apps.app_manager.dbaccessors import get_case_type_app_module_count
 from corehq.apps.case_importer.tracking.filestorage import make_temp_file
-from corehq.apps.data_dictionary import util
 from corehq.apps.data_dictionary.models import (
     CaseProperty,
     CasePropertyAllowedValue,
     CasePropertyGroup,
     CaseType,
 )
-from corehq.apps.data_dictionary.util import save_case_property, save_case_property_group
+from corehq.apps.data_dictionary.util import (
+    save_case_property,
+    save_case_property_group,
+)
 from corehq.apps.domain.decorators import login_and_domain_required
 from corehq.apps.hqwebapp.decorators import use_jquery_ui
 from corehq.apps.hqwebapp.utils import get_bulk_upload_form
 from corehq.apps.settings.views import BaseProjectDataView
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import HqPermissions
-
 from corehq.motech.fhir.utils import (
     load_fhir_resource_mappings,
+    load_fhir_resource_types,
     remove_fhir_resource_type,
     update_fhir_resource_type,
-    load_fhir_resource_types,
-)
-from corehq.project_limits.rate_limiter import (
-    RateDefinition,
-    RateLimiter,
-    get_dynamic_rate_definition,
 )
 from corehq.util.files import file_extention_from_filename
 from corehq.util.workbook_reading import open_any_workbook
 from corehq.util.workbook_reading.datamodels import Cell
-from corehq.apps.accounting.decorators import requires_privilege_with_fallback, requires_privilege
-from corehq import privileges
 
 FHIR_RESOURCE_TYPE_MAPPING_SHEET = "fhir_mapping"
 ALLOWED_VALUES_SHEET_SUFFIX = "-vl"
@@ -72,11 +71,16 @@ def data_dictionary_json(request, domain, case_type_name=None):
             domain)
     if case_type_name:
         queryset = queryset.filter(name=case_type_name)
+
+    case_type_app_module_count = get_case_type_app_module_count(domain)
     for case_type in queryset:
+        module_count = case_type_app_module_count.get(case_type.name, 0)
         p = {
             "name": case_type.name,
             "fhir_resource_type": fhir_resource_type_name_by_case_type.get(case_type),
             "groups": [],
+            "is_deprecated": case_type.is_deprecated,
+            "module_count": module_count,
             "properties": [],
         }
         grouped_properties = {
@@ -127,6 +131,18 @@ def create_case_type(request, domain):
     })
     url = reverse(DataDictionaryView.urlname, args=[domain])
     return HttpResponseRedirect(f"{url}#{name}")
+
+
+@login_and_domain_required
+@toggles.DATA_DICTIONARY.required_decorator()
+@require_permission(HqPermissions.edit_data_dict)
+def deprecate_or_restore_case_type(request, domain, case_type_name):
+    is_deprecated = request.POST.get("is_deprecated", 'false') == 'true'
+    case_type_obj = CaseType.objects.get(domain=domain, name=case_type_name)
+    case_type_obj.is_deprecated = is_deprecated
+    case_type_obj.save()
+
+    return JsonResponse({'status': 'success'})
 
 
 # atomic decorator is a performance optimization for looped saves
@@ -454,7 +470,7 @@ def _process_bulk_upload(bulk_file, domain):
                         continue
                     if row_len < 3:
                         # if missing value or description, fill in "blank"
-                        row += [Cell(value='') for _ in range(3 - row_len)]
+                        row += [Cell(value='') for __ in range(3 - row_len)]
                     row = [cell.value if cell.value is not None else '' for cell in row]
                     prop_name, allowed_value, description = [str(val) for val in row[0:3]]
                     if allowed_value and not prop_name:
