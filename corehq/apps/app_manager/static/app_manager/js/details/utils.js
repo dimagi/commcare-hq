@@ -43,6 +43,13 @@ hqDefine("app_manager/js/details/utils", function () {
             label: gettext('Markdown'),
         }];
 
+        if (hqImport('hqwebapp/js/toggles').toggleEnabled('CASE_LIST_TILE')) {
+            formats.push({
+            value: "address-popup",
+            label: gettext('Address Popup'),
+            });
+        }
+
         if (hqImport('hqwebapp/js/toggles').toggleEnabled('MM_CASE_PROPERTIES')) {
             formats.push({
                 value: "picture",
