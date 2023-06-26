@@ -106,6 +106,23 @@
     export CPPFLAGS="-I/opt/homebrew/opt/openssl@1.1/include"
   ```
 
+- `pip install xmlsec` gives `ImportError`
+
+  Due to issues with recent versions of `libxmlsec1` (v1.3 and after) `pip install xmlsec` is currently broken.
+  This is a workaround. This solution also assumes your `homebrew` version is greater than `4.0.13`*:
+
+1. run `brew unlink libxmlsec1`
+2. overwrite the contents of `/opt/homebrew/opt/libxmlsec1/.brew/libxmlsec1.rb` with
+    [this formula](https://raw.githubusercontent.com/Homebrew/homebrew-core/7f35e6ede954326a10949891af2dba47bbe1fc17/Formula/libxmlsec1.rb).
+3. install that formula (`brew install /opt/homebrew/opt/libxmlsec1/.brew/libxmlsec1.rb`)
+4. run `pip install xmlsec`
+
+(*)The path to `libxmlsec1.rb` might differ on older versions of homebrew
+
+If it still won't install, this [answer](https://stackoverflow.com/questions/76005401/cant-install-xmlsec-via-pip)
+and [thread](https://github.com/xmlsec/python-xmlsec/issues/254) are good starting points for further diagnosing the issue.
+
+
 ### M1 Issues
 
 - `gevent` may present errors when installing with Python <3.9. For this reason, you should avoid using an older version of Python unless it is required.
@@ -173,7 +190,7 @@ Now that you have Elasticsearch running you will need to install the necessary p
 3. Verify the plugin was correctly installed
 
     ```shell
-    $ curl "localhost:9200/_cat/plugins?s=component&h=component,version
+    $ curl "localhost:9200/_cat/plugins?s=component&h=component,version"
     analysis-phonetic 2.4.6
     ```
 
