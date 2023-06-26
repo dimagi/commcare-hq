@@ -96,7 +96,8 @@ accounting
  0074_filtered_bulk_user_download_priv
  0075_application_error_report_priv
  0076_location_owner_in_report_builder_priv
- 0077_data_dictionary_priv
+ 0077_copy_cases_priv
+ 0078_data_dictionary_priv
 admin
  0001_initial
  0002_logentry_remove_auto_add
