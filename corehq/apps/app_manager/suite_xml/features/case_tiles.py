@@ -90,9 +90,8 @@ class CaseTileHelper(object):
         # of existing apps using this template.
         if self.detail.case_tile_template != CaseTileTemplates.PERSON_SIMPLE.value:
             xpath_to_field = self._get_xpath_mapped_to_field_containing_sort()
-
             for field in detail.fields:
-                populated_xpath_function = field.template.text.xpath_function
+                populated_xpath_function = self._escape_xpath_function(field.template.text.xpath_function)
                 if populated_xpath_function in xpath_to_field:
                     field.sort_node = xpath_to_field.pop(populated_xpath_function).sort_node
 
@@ -159,12 +158,15 @@ class CaseTileHelper(object):
     def _get_xpath_function(self, column):
         from corehq.apps.app_manager.detail_screen import get_column_generator
         if column.useXpathExpression:
-            xpath_function = escape(column.field, {'"': '&quot;'})
+            xpath_function = self._escape_xpath_function(column.field)
         else:
-            xpath_function = escape(get_column_generator(
-                self.app, self.module, self.detail, column).xpath_function,
-                {'"': '&quot;'})
+            xpath_function = self._escape_xpath_function(get_column_generator(
+                self.app, self.module, self.detail, column).xpath_function)
         return xpath_function
+
+    @staticmethod
+    def _escape_xpath_function(xpath_function):
+        return escape(xpath_function, {'"': '&quot;'})
 
     def _get_enum_variables(self, column):
         variables = []
