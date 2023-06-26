@@ -246,3 +246,41 @@ class DataDictionaryViewTest(TestCase):
         self.client.login(username='no_data_dict@ex.com', password='foobar')
         response = self.client.get(self.url)
         self.assertEqual(response.status_code, 403)
+
+
+@flag_enabled('DATA_DICTIONARY')
+class TestDeprecateOrRestoreCaseTypeView(TestCase):
+
+    urlname = 'deprecate_or_restore_case_type'
+    domain = 'test-domain'
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.domain_obj = create_domain(cls.domain)
+        cls.admin_webuser = WebUser.create(cls.domain, 'test', 'foobar', None, None, is_admin=True)
+        cls.case_type_name = 'caseType'
+        cls.case_type_obj = CaseType(name=cls.case_type_name, domain=cls.domain)
+        cls.case_type_obj.save()
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.case_type_obj.delete()
+        cls.admin_webuser.delete(cls.domain, None)
+        cls.domain_obj.delete()
+        return super().tearDownClass()
+
+    def setUp(self):
+        self.endpoint = reverse(self.urlname, args=(self.domain, self.case_type_obj.name))
+        self.client = Client()
+        self.client.login(username='test', password='foobar')
+
+    def test_deprecate_case_type(self):
+        response = self.client.post(self.endpoint, {'is_deprecated': 'true'})
+
+        self.assertEqual(response.status_code, 200)
+        json = response.json()
+        self.assertEqual(json, {'status': 'success'})
+
+        case_type_obj = CaseType.objects.get(name=self.case_type_name)
+        self.assertTrue(case_type_obj.is_deprecated)
