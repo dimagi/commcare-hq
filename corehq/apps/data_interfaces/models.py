@@ -470,6 +470,16 @@ class AutomaticUpdateRule(models.Model):
         data['id'] = self.id
         return data
 
+    def to_dict(self):
+        criteria_set = self.caserulecriteria_set.all()
+        action_set = self.caseruleaction_set.all()
+
+        return {
+            'rule': self.to_json(),
+            'criteria': [criteria.to_dict() for criteria in criteria_set],
+            'actions': [action.to_dict() for action in action_set],
+        }
+
 
 class CaseRuleCriteria(models.Model):
     rule = models.ForeignKey('AutomaticUpdateRule', on_delete=models.PROTECT)
@@ -513,6 +523,19 @@ class CaseRuleCriteria(models.Model):
             self.ucr_filter_definition = value
         else:
             raise ValueError("Unexpected type found: %s" % type(value))
+
+    def to_dict(self):
+        return {
+            'match_property_definition':
+                self.match_property_definition.to_dict() if self.match_property_definition is not None else None,
+            'custom_match_definition':
+                self.custom_match_definition.to_dict() if self.custom_match_definition is not None else None,
+            'location_filter_definition':
+                self.location_filter_definition.to_dict() if self.location_filter_definition is not None else None,
+            'ucr_filter_definition':
+                self.ucr_filter_definition.to_dict() if self.ucr_filter_definition is not None else None,
+            'closed_parent_definition': self.closed_parent_definition is not None,
+        }
 
 
 class CaseRuleCriteriaDefinition(models.Model):
@@ -648,6 +671,13 @@ class MatchPropertyDefinition(CaseRuleCriteriaDefinition):
             self.MATCH_REGEX: self.check_regex,
         }.get(self.match_type)(case, now)
 
+    def to_dict(self):
+        return {
+            'property_name': self.property_name,
+            'property_value': self.property_value,
+            'match_type': self.match_type,
+        }
+
 
 class CustomMatchDefinition(CaseRuleCriteriaDefinition):
     name = models.CharField(max_length=126)
@@ -663,6 +693,11 @@ class CustomMatchDefinition(CaseRuleCriteriaDefinition):
             raise ValueError("Unable to resolve '%s'" % custom_function_path)
 
         return custom_function(case, now)
+
+    def to_dict(self):
+        return {
+            'name': self.name
+        }
 
 
 class ClosedParentDefinition(CaseRuleCriteriaDefinition):
@@ -716,6 +751,12 @@ class LocationFilterDefinition(CaseRuleCriteriaDefinition):
 
         return False
 
+    def to_dict(self):
+        return {
+            'location_id': self.location_id,
+            'include_child_locations': self.include_child_locations,
+        }
+
 
 class UCRFilterDefinition(CaseRuleCriteriaDefinition):
     configured_filter = models.JSONField()
@@ -729,6 +770,11 @@ class UCRFilterDefinition(CaseRuleCriteriaDefinition):
         case_json = case.to_json()
         parsed_filter = self._parsed_filter(domain=case.domain)
         return parsed_filter(case_json, EvaluationContext(case_json))
+
+    def to_dict(self):
+        return {
+            'configured_filter': self.configured_filter,
+        }
 
 
 class CaseRuleAction(models.Model):
@@ -769,6 +815,20 @@ class CaseRuleAction(models.Model):
             self.case_deduplication_action_definition = value
         else:
             raise ValueError("Unexpected type found: %s" % type(value))
+
+    def to_dict(self):
+        return {
+            'update_case_definition':
+                self.update_case_definition.to_dict() if self.update_case_definition is not None else None,
+            'custom_action_definition':
+                self.custom_action_definition.to_dict() if self.custom_action_definition is not None else None,
+            'create_schedule_instance_definition':
+                self.create_schedule_instance_definition.to_dict()
+                if self.create_schedule_instance_definition is not None else None,
+            'case_deduplication_action_definition':
+                self.case_deduplication_action_definition.to_dict()
+                if self.case_deduplication_action_definition is not None else None,
+        }
 
 
 class CaseRuleActionResult(object):
@@ -977,6 +1037,12 @@ class UpdateCaseDefinition(BaseUpdateCaseDefinition):
             num_related_updates=num_related_updates,
         )
 
+    def to_dict(self):
+        return {
+            'properties_to_update': self.properties_to_update,
+            'close_case': self.close_case,
+        }
+
 
 class CustomActionDefinition(CaseRuleActionDefinition):
     name = models.CharField(max_length=126)
@@ -992,6 +1058,11 @@ class CustomActionDefinition(CaseRuleActionDefinition):
             raise ValueError("Unable to resolve '%s'" % custom_function_path)
 
         return custom_function(case, rule)
+
+    def to_dict(self):
+        return {
+            'name': self.name,
+        }
 
 
 class CaseDeduplicationMatchTypeChoices:
@@ -1131,6 +1202,13 @@ class CaseDeduplicationActionDefinition(BaseUpdateCaseDefinition):
         return [
             (case_id, case_properties, False) for case_id, case_properties in cases_to_update.items()
         ]
+
+    def to_dict(self):
+        return {
+            'match_type': self.match_type,
+            'case_properties': self.case_properties,
+            'include_closed': self.include_closed,
+        }
 
 
 class CaseDuplicate(models.Model):
@@ -1498,6 +1576,15 @@ class CreateScheduleInstanceActionDefinition(CaseRuleActionDefinition):
             raise ValueError("Expected CreateScheduleInstanceActionDefinition.SchedulerModuleInfo")
 
         self.scheduler_module_info = info.to_json()
+
+    def to_dict(self):
+        return {
+            'recipients': self.recipients,
+            'reset_case_property_name': self.reset_case_property_name,
+            'start_date_case_property': self.start_date_case_property,
+            'specific_start_date': self.specific_start_date,
+            'scheduler_module_info': self.scheduler_module_info,
+        }
 
 
 class CaseRuleSubmission(models.Model):

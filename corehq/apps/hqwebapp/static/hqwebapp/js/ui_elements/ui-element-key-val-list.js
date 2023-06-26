@@ -26,8 +26,11 @@ hqDefine('hqwebapp/js/ui_elements/ui-element-key-val-list', [
         this.max_display = maxDisplay;
 
         this.$edit_view = $('<div class="well well-sm" />');
-        this.$noedit_view = $('<div />');
+        this.$edit_view.appendTo(this.ui);
+
         this.$formatted_view = $('<input type="hidden" />');
+        this.$formatted_view.appendTo(this.ui);
+
         this.$modal_trigger = $('<a class="btn btn-default enum-edit" href="#' + this.modal_id + '" ' +
             'data-toggle="modal" />').html('<i class="fa fa-pencil"></i> ' + gettext('Edit'));
 
@@ -50,6 +53,8 @@ hqDefine('hqwebapp/js/ui_elements/ui-element-key-val-list', [
         $modalContent.append($modal_form);
         $modalDialog.append($modalContent);
         $enumModal.append($modalDialog);
+
+        this.$editInstructions = $('<span>' + gettext('Click <strong>Edit</strong> to Add Values' + '</span>'));
 
 
         $('#hq-content').append($enumModal);
@@ -82,31 +87,37 @@ hqDefine('hqwebapp/js/ui_elements/ui-element-key-val-list', [
     KeyValList.prototype = {
         val: function (original_pairs, translated_pairs) {
             if (original_pairs === undefined) {
+                // this function is being invoked as a getter, just return the current value
                 return this.value;
             } else {
                 var $modal_fields = $('#' + this.modal_id + ' form fieldset');
                 $modal_fields.text('');
-                this.$noedit_view.text('');
-                this.$edit_view.html(gettext('Click <strong>Edit</strong> to Add Values'));
 
                 this.value = original_pairs;
                 if (translated_pairs !== undefined) {
                     this.translated_value = translated_pairs;
                 }
                 this.$formatted_view.val(JSON.stringify(this.value));
-                if (!_.isEmpty(this.value)) {
-                    this.$edit_view.text('');
+
+                this.$editInstructions.detach();
+                this.$edit_view.text(''); // Clear the view to prepare for new items
+
+                if (_.isEmpty(this.value)) {
+                    if (this.edit) {
+                        this.$editInstructions.appendTo(this.$edit_view);
+                    }
+
+                    return;
                 }
+
                 let i = 0;
                 for (var key in this.value) {
                     $modal_fields.append(uiInputMap.new(true, this.placeholders).val(key, this.value[key], this.translated_value[key]).ui);
                     if (this.max_display === undefined || i < this.max_display) {
                         let createUiInputMapView = () => uiInputMap.new(true, this.placeholders).val(key, this.value[key], this.translated_value[key]).setEdit(false).$noedit_view;
-                        this.$noedit_view.append(createUiInputMapView());
                         this.$edit_view.append(createUiInputMapView());
                     } else if (i === this.max_display) {
                         let ellipsis = '<div><strong>&hellip;</strong></div>';
-                        this.$noedit_view.append(ellipsis);
                         this.$edit_view.append(ellipsis);
                     }
                     i++;
@@ -115,17 +126,18 @@ hqDefine('hqwebapp/js/ui_elements/ui-element-key-val-list', [
 
         },
         setEdit: function (edit) {
-            this.edit = edit;
-            this.$edit_view.detach();
-            this.$noedit_view.detach();
-            this.$modal_trigger.detach();
-            if (this.edit) {
-                this.$edit_view.appendTo(this.ui);
+            if (edit) {
                 this.$modal_trigger.appendTo(this.ui);
-                this.$formatted_view.appendTo(this.ui);
+                if (this.$edit_view.text() === '') {
+                    this.$editInstructions.appendTo(this.$edit_view);
+                }
             } else {
-                this.$noedit_view.appendTo(this.ui);
+                this.$modal_trigger.detach();
+                this.$editInstructions.detach();
             }
+
+            this.edit = edit;
+
             return this;
         },
     };

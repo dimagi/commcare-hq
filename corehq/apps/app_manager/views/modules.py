@@ -124,6 +124,7 @@ from corehq.apps.hqwebapp.decorators import waf_allow
 from corehq.apps.reports.analytics.esaccessors import (
     get_case_types_for_domain_es
 )
+from corehq.apps.data_dictionary.util import get_data_dict_deprecated_case_types
 from corehq.apps.reports.daterange import get_simple_dateranges
 from corehq.toggles import toggles_enabled_for_request
 from corehq.apps.userreports.models import (
@@ -1653,7 +1654,8 @@ class ExistingCaseTypesView(LoginAndDomainMixin, View):
 
     def get(self, request, domain):
         return JsonResponse({
-            'existing_case_types': list(get_case_types_for_domain_es(domain))
+            'existing_case_types': list(get_case_types_for_domain_es(domain)),
+            'deprecated_case_types': list(get_data_dict_deprecated_case_types(domain))
         })
 
 
