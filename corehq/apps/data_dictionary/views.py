@@ -452,7 +452,7 @@ def _process_bulk_upload(bulk_file, domain):
                         continue
                     if row_len < 3:
                         # if missing value or description, fill in "blank"
-                        row += [Cell(value='') for _ in range(3 - row_len)]
+                        row += [Cell(value='') for __ in range(3 - row_len)]
                     row = [cell.value if cell.value is not None else '' for cell in row]
                     prop_name, allowed_value, description = [str(val) for val in row[0:3]]
                     if allowed_value and not prop_name:
