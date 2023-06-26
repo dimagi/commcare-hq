@@ -16,13 +16,14 @@ from django_countries import Countries
 
 from . import filters
 from .client import ElasticDocumentAdapter, create_document_adapter
+from .const import (
+    HQ_DOMAINS_INDEX_CANONICAL_NAME,
+    HQ_DOMAINS_INDEX_NAME,
+    HQ_DOMAINS_SECONDARY_INDEX_NAME,
+)
 from .es_query import HQESQuery
 from .index.analysis import COMMA_ANALYSIS
 from .index.settings import IndexSettingsKey
-
-HQ_DOMAINS_INDEX_CANONICAL_NAME = "domains"
-HQ_DOMAINS_INDEX_NAME = "hqdomains_2021-03-08"
-HQ_DOMAINS_SECONDARY_INDEX_NAME = "domains-20230524"
 
 
 class DomainES(HQESQuery):

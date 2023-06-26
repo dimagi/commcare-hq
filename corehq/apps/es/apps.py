@@ -8,13 +8,13 @@ from dimagi.utils.parsing import json_format_datetime
 
 from . import filters, queries
 from .client import ElasticDocumentAdapter, create_document_adapter
+from .const import (
+    HQ_APPS_INDEX_CANONICAL_NAME,
+    HQ_APPS_INDEX_NAME,
+    HQ_APPS_SECONDARY_INDEX_NAME,
+)
 from .es_query import HQESQuery
 from .index.settings import IndexSettingsKey
-
-
-HQ_APPS_INDEX_CANONICAL_NAME = "apps"
-HQ_APPS_INDEX_NAME = "hqapps_2020-02-26"
-HQ_APPS_SECONDARY_INDEX_NAME = "apps-20230524"
 
 
 class AppES(HQESQuery):

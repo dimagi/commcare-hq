@@ -5,8 +5,6 @@ FormES
 from copy import copy
 from datetime import datetime
 
-from django.conf import settings
-
 from jsonobject.exceptions import BadValueError
 
 from casexml.apps.case.exceptions import PhoneDateValueError
@@ -15,18 +13,19 @@ from casexml.apps.case.xml.parser import (
     case_update_from_block,
 )
 from couchforms.geopoint import GeoPoint
+from dimagi.utils.parsing import json_format_datetime
 
 from corehq.apps.es.mappings.const import NULL_VALUE
-from dimagi.utils.parsing import json_format_datetime
 
 from . import filters
 from .client import ElasticDocumentAdapter, create_document_adapter
+from .const import (
+    HQ_FORMS_INDEX_CANONICAL_NAME,
+    HQ_FORMS_INDEX_NAME,
+    HQ_FORMS_SECONDARY_INDEX_NAME,
+)
 from .es_query import HQESQuery
 from .index.settings import IndexSettingsKey
-
-HQ_FORMS_INDEX_CANONICAL_NAME = "forms"
-HQ_FORMS_INDEX_NAME = getattr(settings, "ES_XFORM_INDEX_NAME", "xforms_2016-07-07")
-HQ_FORMS_SECONDARY_INDEX_NAME = "forms-20230524"
 
 
 class FormES(HQESQuery):
