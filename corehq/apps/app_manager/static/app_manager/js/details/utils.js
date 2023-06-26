@@ -36,19 +36,15 @@ hqDefine("app_manager/js/details/utils", function () {
             value: "address",
             label: gettext('Address'),
         }, {
+            value: "address-popup",
+            label: gettext('Address Popup (WebApp only)'),
+        }, {
             value: "distance",
             label: gettext('Distance from current location'),
         }, {
             value: "markdown",
             label: gettext('Markdown'),
         }];
-
-        if (hqImport('hqwebapp/js/toggles').toggleEnabled('CASE_LIST_TILE')) {
-            formats.push({
-            value: "address-popup",
-            label: gettext('Address Popup (WebApp only)'),
-            });
-        }
 
         if (hqImport('hqwebapp/js/toggles').toggleEnabled('MM_CASE_PROPERTIES')) {
             formats.push({
