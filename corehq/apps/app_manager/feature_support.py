@@ -227,3 +227,10 @@ class CommCareFeatureSupportMixin(object):
             toggles.CUSTOM_ASSERTIONS.enabled(self.domain)
             and self._require_minimum_version('2.54')
         )
+
+    @property
+    def supports_grouped_case_tiles(self):
+        return (
+            toggles.CASE_LIST_TILE.enabled(self.domain)
+            and self._require_minimum_version('2.54')
+        )
