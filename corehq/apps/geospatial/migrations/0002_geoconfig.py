@@ -16,7 +16,7 @@ class Migration(migrations.Migration):
                 ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
                 ('domain', models.CharField(max_length=256)),
                 ('location_data_source', models.CharField(default='custom_user_property', max_length=126)),
-                ('custom_user_property_name', models.CharField(default='commcare_gps_point', max_length=256)),
+                ('user_location_property_name', models.CharField(default='commcare_gps_point', max_length=256)),
                 ('case_location_property_name', models.CharField(default='commcare_gps_point', max_length=256)),
             ],
         ),

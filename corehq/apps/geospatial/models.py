@@ -143,5 +143,5 @@ class GeoConfig(models.Model):
 
     domain = models.CharField(max_length=256)
     location_data_source = models.CharField(max_length=126, default=CUSTOM_USER_PROPERTY)
-    custom_user_property_name = models.CharField(max_length=256, default=GEO_POINT_CASE_PROPERTY)
+    user_location_property_name = models.CharField(max_length=256, default=GEO_POINT_CASE_PROPERTY)
     case_location_property_name = models.CharField(max_length=256, default=GEO_POINT_CASE_PROPERTY)

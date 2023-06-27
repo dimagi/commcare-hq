@@ -82,6 +82,6 @@ class GeospatialConfigForm(forms.Form):
     def compute_initial(config):
         return {
             'location_source_option': config.location_data_source,
-            'custom_user_field_name': config.custom_user_property_name,
+            'custom_user_field_name': config.user_location_property_name,
             'geo_case_property_name': config.case_location_property_name,
         }

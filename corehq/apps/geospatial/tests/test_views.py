@@ -67,7 +67,7 @@ class GeoConfigViewTestClass(TestCase):
         config = GeoConfig.objects.get(domain=self.domain)
 
         self.assertTrue(config.location_data_source == GeoConfig.CUSTOM_USER_PROPERTY)
-        self.assertEqual(config.custom_user_property_name, 'some_user_field')
+        self.assertEqual(config.user_location_property_name, 'some_user_field')
         self.assertEqual(config.case_location_property_name, 'some_case_prop')
 
     @flag_enabled('GEOSPATIAL')
@@ -81,7 +81,7 @@ class GeoConfigViewTestClass(TestCase):
         config = GeoConfig.objects.get(domain=self.domain)
 
         self.assertTrue(config.location_data_source == GeoConfig.ASSIGNED_LOCATION)
-        self.assertEqual(config.custom_user_property_name, GEO_POINT_CASE_PROPERTY)
+        self.assertEqual(config.user_location_property_name, GEO_POINT_CASE_PROPERTY)
 
     @flag_enabled('GEOSPATIAL')
     def test_config_update(self):
@@ -93,7 +93,7 @@ class GeoConfigViewTestClass(TestCase):
             )
         )
         config = GeoConfig.objects.get(domain=self.domain)
-        self.assertEqual(config.custom_user_property_name, 'some_user_field')
+        self.assertEqual(config.user_location_property_name, 'some_user_field')
 
         self._make_post(
             self.construct_data(
@@ -103,7 +103,7 @@ class GeoConfigViewTestClass(TestCase):
             )
         )
         config = GeoConfig.objects.get(domain=self.domain)
-        self.assertEqual(config.custom_user_property_name, 'some_other_name')
+        self.assertEqual(config.user_location_property_name, 'some_other_name')
 
     @flag_enabled('GEOSPATIAL')
     def test_config_update_does_not_update_user_prop(self):
@@ -115,7 +115,7 @@ class GeoConfigViewTestClass(TestCase):
             )
         )
         config = GeoConfig.objects.get(domain=self.domain)
-        self.assertEqual(config.custom_user_property_name, 'original_field_name')
+        self.assertEqual(config.user_location_property_name, 'original_field_name')
 
         self._make_post(
             self.construct_data(
@@ -125,4 +125,4 @@ class GeoConfigViewTestClass(TestCase):
             )
         )
         config = GeoConfig.objects.get(domain=self.domain)
-        self.assertEqual(config.custom_user_property_name, 'original_field_name')
+        self.assertEqual(config.user_location_property_name, 'original_field_name')

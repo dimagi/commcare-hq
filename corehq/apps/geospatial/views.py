@@ -96,7 +96,7 @@ class GeospatialConfigPage(BaseDomainView):
             'form': self.settings_form,
             'config': {
                 'location_data_source': config.location_data_source,
-                'custom_user_property_name': config.custom_user_property_name,
+                'user_location_property_name': config.user_location_property_name,
                 'case_location_property_name': config.case_location_property_name,
             }
         }
@@ -127,7 +127,7 @@ class GeospatialConfigPage(BaseDomainView):
         config.case_location_property_name = form.cleaned_data['geo_case_property_name']
 
         if config.location_data_source == GeoConfig.CUSTOM_USER_PROPERTY:
-            config.custom_user_property_name = form.cleaned_data['custom_user_field_name']
+            config.user_location_property_name = form.cleaned_data['custom_user_field_name']
 
         config.save()
 
