@@ -193,9 +193,9 @@ class ESSyncUtil:
             ])
             total_size += int(meta['size_on_disk'])
         self._print_table(index_size_rows, output=stdout)
-        recommended_disk = total_size + (total_size * .2)  # 20% more that what is used
+        recommended_disk = total_size * 1.2  # 20% more that what is used
         print("\n\n")
-        print(f"Additional disk size required for the reindex {self._format_bytes(recommended_disk)}")
+        print(f"Minimum free disk space recommended before starting the reindex: {self._format_bytes(recommended_disk)}")
 
     def _get_index_name_cname_map(self):
         return {adapter.index_name: cname for cname, adapter in CANONICAL_NAME_ADAPTER_MAP.items()}
