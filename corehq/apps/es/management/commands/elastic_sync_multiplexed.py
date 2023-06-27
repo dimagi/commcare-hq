@@ -87,10 +87,10 @@ class ESSyncUtil:
         es_manager.cluster_routing(enabled=True)
         es_manager.index_configure_for_reindex(index_name)
         es_manager.index_set_replicas(index_name, 0)
-        self._wait_for_index_to_get_healthy(index_name, sleep_time=5)
+        self._wait_for_index_to_get_healthy(index_name)
         es_manager.cluster_routing(enabled=False)
 
-    def _wait_for_index_to_get_healthy(self, index_name, sleep_time=0):
+    def _wait_for_index_to_get_healthy(self, index_name):
         for i in range(10):
             health = es_manager.cluster_health(index=index_name)
             status = health["status"]
@@ -98,14 +98,14 @@ class ESSyncUtil:
                 break
 
             print(f"\tWaiting for index status to be green. Current status: '{status}'")
-            time.sleep(max(sleep_time, min(2 ** i, 30)))
+            time.sleep(min(2 ** i, 30))
 
     def _prepare_index_for_normal_usage(self, secondary_adapter):
         es_manager.cluster_routing(enabled=True)
         tuning_settings = render_index_tuning_settings(secondary_adapter.settings_key)
         es_manager.index_set_replicas(secondary_adapter.index_name, tuning_settings['number_of_replicas'])
         es_manager.index_configure_for_standard_ops(secondary_adapter.index_name)
-        self._wait_for_index_to_get_healthy(secondary_adapter.index_name, sleep_time=5)
+        self._wait_for_index_to_get_healthy(secondary_adapter.index_name)
         es_manager.cluster_routing(enabled=True)
 
     def _get_source_destination_doc_count(self, adapter):
