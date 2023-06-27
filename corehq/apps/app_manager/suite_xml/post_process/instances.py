@@ -191,12 +191,6 @@ class EntryInstances(PostProcessor):
                 Instance(id=instance.instance_id, src=instance.instance_path)
                 for instance in form.custom_instances
             )
-        if entry.queries:
-            custom_instances.extend([
-                Instance(id=prop.itemset.instance_id, src=prop.itemset.instance_uri)
-                for prop in module.search_config.properties
-                if prop.itemset.instance_id
-            ])
 
         # sorted list to prevent intermittent test failures
         custom_instances = set(sorted(custom_instances, key=lambda i: i.id))
@@ -206,7 +200,7 @@ class EntryInstances(PostProcessor):
             if existing:
                 if existing.src != instance.src:
                     raise DuplicateInstanceIdError(
-                        _("Conflicting instance declarations in {entry_id} for {instance_id}:"
+                        _("Conflicting instance declarations in {entry_id} for {instance_id}: "
                           "{src_1} != {src_2}").format(
                               entry_id=entry.command.id,
                               instance_id=instance.id,
