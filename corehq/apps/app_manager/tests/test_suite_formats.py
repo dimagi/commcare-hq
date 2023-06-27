@@ -268,7 +268,7 @@ class SuiteFormatsTest(SimpleTestCase, TestXmlMixin):
 
         address_template = """
             <partial>
-              <template form="address" width="0">
+              <template form="address">
                 <text>
                   <xpath function="address"/>
                 </text>
@@ -284,7 +284,7 @@ class SuiteFormatsTest(SimpleTestCase, TestXmlMixin):
 
         address_popup_template = """
             <partial>
-              <template form="address-popup" width="0">
+              <template form="address-popup">
                 <text>
                   <xpath function="address"/>
                 </text>
