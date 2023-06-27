@@ -142,7 +142,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
     };
     // use the field alignment from xml template only if valid
     const getValidFieldAlignment = function (alignment) {
-        return constants.ALLOWED_FIELD_ALIGNMENTS.includes(alignment) ? alignment : 'auto';
+        return constants.ALLOWED_FIELD_ALIGNMENTS.includes(alignment) ? alignment : 'start';
     };
     // generate the case tile's style block and insert
     const buildCellLayout = function (tiles, styles, prefix) {
