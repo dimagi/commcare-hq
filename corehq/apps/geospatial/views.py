@@ -1,6 +1,7 @@
 import json
 import jsonschema
 
+from django.urls import reverse
 from django.http import HttpResponseRedirect, Http404, HttpResponseBadRequest
 from django.utils.decorators import method_decorator
 from django.utils.translation import gettext_lazy as _
@@ -9,6 +10,7 @@ from dimagi.utils.web import json_response
 from corehq import toggles
 from corehq.apps.domain.views.base import BaseDomainView
 from corehq.apps.geospatial.reports import CaseManagementMap
+from corehq.apps.geospatial.forms import GeospatialConfigForm
 from .const import POLYGON_COLLECTION_GEOJSON_SCHEMA
 from .models import GeoPolygon
 
@@ -65,3 +67,34 @@ class GeoPolygonView(BaseDomainView):
         return json_response({
             'id': geo_polygon.id,
         })
+
+
+class GeospatialConfigPage(BaseDomainView):
+    urlname = "geospatial_settings"
+    section_name = _("Configuration Settings")
+    template_name = "geospatial/settings.html"
+
+    @method_decorator(toggles.GEOSPATIAL.required_decorator())
+    def dispatch(self, request, *args, **kwargs):
+        return super(GeospatialConfigPage, self).dispatch(request, *args, **kwargs)
+
+    @property
+    def section_url(self):
+        return reverse(GeospatialConfigPage.urlname, args=(self.domain,))
+
+    @property
+    def page_context(self):
+        return {
+            'form': self.settings_form,
+        }
+
+    @property
+    def settings_form(self):
+        if self.request.method == 'POST':
+            return GeospatialConfigForm(self.request.POST)
+        return GeospatialConfigForm()
+
+    def post(self, request, *args, **kwargs):
+        form = self.settings_form
+        # Todo
+        return self.get(request, *args, **kwargs)
