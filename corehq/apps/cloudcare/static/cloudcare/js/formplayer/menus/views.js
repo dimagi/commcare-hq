@@ -695,7 +695,10 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
         const caseTileStyles = {};
         caseTileStyles.cellLayoutStyle = buildCellLayout(tiles, styles, prefix);
         caseTileStyles.cellGridStyle = buildCellGridStyle(numRows, numColumns, useUniformUnits, prefix);
-        caseTileStyles.cellContainerStyle = buildCellContainerStyle(numEntitiesPerRow);
+        if (numEntitiesPerRow > 1) {
+            caseTileStyles.cellContainerStyle = buildCellContainerStyle(numEntitiesPerRow);
+            caseTileStyles.cellWrapperStyle = $("#cell-wrapper-style-template");
+        }
         return caseTileStyles;
     };
 
