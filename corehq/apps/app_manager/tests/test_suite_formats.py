@@ -242,3 +242,58 @@ class SuiteFormatsTest(SimpleTestCase, TestXmlMixin):
             app_strings['m0.case_short.case_age_1.enum.k{key1_varname}'.format(key1_varname=key1_varname,)],
             'jr://icons/10-year-old.png'
         )
+
+    def test_case_detail_address_popup(self, *args):
+        app = Application.new_app('domain', 'Untitled Application')
+
+        module = app.add_module(Module.new_module('Unititled Module', None))
+        module.case_type = 'patient'
+
+        module.case_details.short.columns = [
+            DetailColumn(
+                header={'en': 'Address'},
+                model='case',
+                field="address",
+                format='address',
+            ),
+            DetailColumn(
+                header={'en': 'Address Popup'},
+                model='case',
+                field="address",
+                format='address-popup',
+            ),
+        ]
+
+        suite = app.create_suite()
+
+        address_template = """
+            <partial>
+              <template form="address">
+                <text>
+                  <xpath function="address"/>
+                </text>
+              </template>
+            </partial>
+            """
+        # check correct suite is generated
+        self.assertXmlPartialEqual(
+            address_template,
+            suite,
+            './detail[@id="m0_case_short"]/field[1]/template'
+        )
+
+        address_popup_template = """
+            <partial>
+              <template form="address-popup">
+                <text>
+                  <xpath function="address"/>
+                </text>
+              </template>
+            </partial>
+            """
+        # check correct suite is generated
+        self.assertXmlPartialEqual(
+            address_popup_template,
+            suite,
+            './detail[@id="m0_case_short"]/field[2]/template'
+        )

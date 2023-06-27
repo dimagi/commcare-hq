@@ -534,51 +534,59 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
                 }).addTo(addressMap);
 
                 const addressIndex = _.findIndex(this.styles, function (style) { return style.displayFormat === constants.FORMAT_ADDRESS; });
+                const popupIndex = _.findIndex(this.styles, function (style) { return style.displayFormat === constants.FORMAT_ADDRESS_POPUP; });
                 L.mapbox.accessToken = token;
+                md = window.markdownit();
 
-                const latLons = []
+                const allCoordinates = []
                 const markers = []
                 this.options.collection.models
                     .forEach(model => {
-                        const coordinates = model.attributes.data[addressIndex];
-                        if (coordinates) {
-                            let latLng = coordinates.split(" ").slice(0,2);
-                            if (latLng.length > 1) {
+                        const addressCoordinates = model.attributes.data[addressIndex];
+                        if (addressCoordinates) {
+                            let markerCoordinates = addressCoordinates.split(" ").slice(0,2);
+                            if (markerCoordinates.length > 1) {
                                 const rowId = `row-${model.id}`;
-                                const marker = L.marker(latLng, {icon: locationIcon});
+                                const popupText = md.render(DOMPurify.sanitize(model.attributes.data[popupIndex]));
+                                let marker = L.marker(markerCoordinates, {icon: locationIcon});
                                 markers.push(marker);
-                                marker
-                                    .addTo(addressMap)
-                                    .on('click', () => {
-                                        // tiles
-                                        $(`.list-cell-wrapper-style[id!='${rowId}']`)
-                                            .removeClass("highlighted-case");
-                                        // rows
-                                        $(`.case-row[id!='${rowId}']`)
-                                            .removeClass("highlighted-case");
-                                        $(`#${rowId}`)
-                                            .addClass("highlighted-case");
-                                        markers.forEach(m => m.setIcon(locationIcon));
-                                        marker.setIcon(selectedLocationIcon);
+                                marker = marker.addTo(addressMap)
+                                if (popupIndex >= 0) {
+                                    marker = marker.bindPopup(popupText)
+                                }
 
-                                        $([document.documentElement, document.body]).animate({
-                                            // -50 Stay clear of the breadcrumbs
-                                            scrollTop: $(`#${rowId}`).offset().top - 50
-                                        }, 500);
-                                    });
-                                latLons.push(latLng);
+                                marker.on('click', () => {
+                                    // tiles
+                                    $(`.list-cell-wrapper-style[id!='${rowId}']`)
+                                        .removeClass("highlighted-case");
+                                    // rows
+                                    $(`.case-row[id!='${rowId}']`)
+                                        .removeClass("highlighted-case");
+                                    $(`#${rowId}`)
+                                        .addClass("highlighted-case");
+                                    markers.forEach(m => m.setIcon(locationIcon));
+                                    marker.setIcon(selectedLocationIcon);
+
+                                    $([document.documentElement, document.body]).animate({
+                                        // -50 Stay clear of the breadcrumbs
+                                        scrollTop: $(`#${rowId}`).offset().top - 50
+                                    }, 500);
+
+                                    addressMap.panTo(markerCoordinates);
+                                });
+                                allCoordinates.push(markerCoordinates);
                             }
                         }
                     });
 
                 if (sessionStorage.locationLat) {
-                    const homeLatLng = [sessionStorage.locationLat, sessionStorage.locationLon];
-                    L.marker(homeLatLng, { icon: homeLocationIcon })
+                    const homeCoordinates = [sessionStorage.locationLat, sessionStorage.locationLon];
+                    L.marker(homeCoordinates, { icon: homeLocationIcon })
                         .bindPopup(gettext("Your location"))
                         .addTo(addressMap);
-                    latLons.push(homeLatLng);
+                    allCoordinates.push(homeCoordinates);
                 }
-                addressMap.fitBounds(latLons, {maxZoom: 8});
+                addressMap.fitBounds(allCoordinates, {maxZoom: 8});
             } catch (error) {
                 console.error(error);
             }
