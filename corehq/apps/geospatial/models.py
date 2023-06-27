@@ -6,6 +6,7 @@ from geopy.distance import great_circle
 from shapely.geometry import Point
 
 from .exceptions import InvalidCoordinate, InvalidDistributionParam
+from corehq.apps.geospatial.const import GEO_POINT_CASE_PROPERTY
 
 
 @dataclass
@@ -128,3 +129,19 @@ class GeoPolygon(models.Model):
     name = models.CharField(max_length=256)
     geo_json = models.JSONField(default=dict)
     domain = models.CharField(max_length=256, db_index=True)
+
+
+class GeoConfig(models.Model):
+
+    CUSTOM_USER_PROPERTY = 'custom_user_property'
+    ASSIGNED_LOCATION = 'assigned_location'
+
+    VALID_LOCATION_SOURCES = [
+        CUSTOM_USER_PROPERTY,
+        ASSIGNED_LOCATION,
+    ]
+
+    domain = models.CharField(max_length=256)
+    location_data_source = models.CharField(max_length=126, default=CUSTOM_USER_PROPERTY)
+    custom_user_property_name = models.CharField(max_length=256, default=GEO_POINT_CASE_PROPERTY)
+    case_location_property_name = models.CharField(max_length=256, default=GEO_POINT_CASE_PROPERTY)

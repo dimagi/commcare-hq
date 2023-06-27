@@ -533,6 +533,7 @@ generic_inbound
  0006_backend_external_response
 geospatial
  0001_create_geopolygon
+ 0002_geoconfig
 hqadmin
  0001_initial
  0002_vcmmigrationaudit
