@@ -65,7 +65,19 @@ hqDefine("app_manager/js/details/screen", function () {
             return (self.caseTileTemplateConfigs[self.caseTileTemplate()] || {}).fields;
         });
         self.caseTilePreviewForTemplate = ko.computed(function () {
-            return (self.caseTileTemplateConfigs[self.caseTileTemplate()] || {}).preview;
+            const grid = (self.caseTileTemplateConfigs[self.caseTileTemplate()] || {}).grid;
+            if (!grid) {
+                return "";
+            }
+            return "<div class='case-tile-preview'>" + _.map(grid, (values, fieldName) => {
+                return _.template("<div style='grid-area: <%= rowStart %> / <%= columnStart %> / <%= rowEnd %> / <%= columnEnd %>;' class='case-tile-preview-mapping'><%= field %></div>")({
+                    rowStart: values.y + 1,
+                    columnStart: values.x + 1,
+                    rowEnd: values.y + values.height + 1,
+                    columnEnd: values.x + values.width + 1,
+                    field: fieldName,
+                });
+            }).join("") + "</div>";
         });
         self.showCaseTileColumn = ko.computed(function () {
             return self.caseTileTemplate() && hqImport('hqwebapp/js/toggles').toggleEnabled('CASE_LIST_TILE');

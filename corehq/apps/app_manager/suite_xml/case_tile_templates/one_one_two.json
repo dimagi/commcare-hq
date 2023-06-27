@@ -2,5 +2,10 @@
     "slug": "one_one_two",
     "filename": "one_one_two.xml",
     "fields": ["title", "top", "bottom_left", "bottom_right", "map"],
-    "preview": "<div class='case-tile-preview'><div style='grid-area: 1 / 1 / 2 / 13;' class='case-tile-preview-mapping'>title</div><div style='grid-area: 2 / 1 / 3 / 13;' class='case-tile-preview-mapping'>subtitle</div><div style='grid-area: 3 / 1 / 4 / 7;' class='case-tile-preview-mapping'>left</div><div style='grid-area: 3 / 7 / 4 / 13;' class='case-tile-preview-mapping'>right</div> </div>"
+    "grid": {
+        "title": {"x": 0, "y": 0, "width": 5, "height": 1},
+        "top": {"x": 0, "y": 1, "width": 5, "height": 1},
+        "bottom_left": {"x": 0, "y": 2, "width": 5, "height": 1},
+        "bottom_right": {"x": 6, "y": 2, "width": 5, "height": 1}
+    }
 }

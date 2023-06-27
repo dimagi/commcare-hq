@@ -5,7 +5,7 @@ from django.utils.translation import gettext_lazy as _
 from eulxml.xmlmap.core import load_xmlobject_from_string
 from memoized import memoized
 from pathlib import Path
-from typing import List
+from typing import List, Dict
 from xml.sax.saxutils import escape
 
 from corehq import toggles
@@ -34,7 +34,7 @@ class CaseTileTemplateConfig:
     slug: str
     filename: str
     fields: List[str]
-    preview: str
+    grid: Dict[str, Dict[str, int]]
 
     @property
     def filepath(self):
