@@ -137,13 +137,6 @@ class CaseTileHelper(object):
             ),
             "format": column.format
         }
-        if column.enum and column.format != "enum" and column.format != "conditional-enum":
-            raise SuiteError(
-                'Expected case tile field "{}" to be an id mapping with keys {}.'.format(
-                    column.case_tile_field,
-                    ", ".join(['"{}"'.format(i.key) for i in column.enum])
-                )
-            )
 
         context['variables'] = ''
         if column.format == "enum" or column.format == 'conditional-enum':
