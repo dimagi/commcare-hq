@@ -40,8 +40,22 @@
   }
 
   .case-tile-group{
-    margin: 10px 10px 10px;
+    margin: 10px;
     padding: 10px 0;
+
+    .group-data{
+      flex-grow: 1
+    }
+    .group-rows{
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      align-items: center;
+    }
+    .group-row{
+      background-color: white;
+      width: 95%;
+    }
   }
 }
 
