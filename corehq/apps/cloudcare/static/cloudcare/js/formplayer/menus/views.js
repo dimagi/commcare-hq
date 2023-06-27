@@ -313,9 +313,14 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
         templateContext: function () {
             const dict = CaseTileGroupedView.__super__.templateContext.apply(this, arguments);
             dict['groupHeaderRows'] = this.options.groupHeaderRows;
-            dict['headerData'] = this.options.model.get('data').filter((_, i) => {
-                return this.options.headerRowIndices.includes(i);
-            });
+
+            const data = this.options.model.get('data');
+            const headerRowIndices = this.options.headerRowIndices;
+            dict['indexedHeaderData'] = headerRowIndices.reduce((acc, index) => {
+                acc[index] = data[index];
+                return acc;
+            }, {});
+
             dict['indexedRowDataList'] = this.getIndexedRowDataList();
 
             return dict;

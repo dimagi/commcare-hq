@@ -137,7 +137,7 @@
 
   <div class="group-data">
     <div class="<%- prefix %>-cell-grid-style">
-      <% _.each(headerData, function(datum, index) { %>
+      <% for (let [index, datum] of Object.entries(indexedHeaderData)) { %>
         <div class="<%- prefix %>-grid-style-<%- index %> box" >
           <% if (styles[index].displayFormat === 'Image') {
           if(resolveUri(datum)) { %>
@@ -149,7 +149,7 @@
             <div class="webapp-markdown-output"><%= renderMarkdown(datum) %></div>
           <% } %>
         </div>
-      <% }); %>
+      <% }; %>
     </div>
 
     <div class="group-rows">
