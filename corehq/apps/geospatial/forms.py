@@ -1,17 +1,16 @@
+from django.core.exceptions import ValidationError
 from corehq.apps.hqwebapp import crispy as hqcrispy
 from crispy_forms import layout as crispy
 from crispy_forms.bootstrap import StrictButton
 
 from django.utils.translation import gettext_lazy as _
 from django import forms
+from corehq.apps.geospatial.models import GeoConfig
 
-
-LOCATION_MODEL = "location_model"
-USER_MODEL = "user_model"
 
 LOCATION_SOURCE_OPTIONS = [
-    (USER_MODEL, _("Custom user field")),
-    (LOCATION_MODEL, _("User's assigned location")),
+    (GeoConfig.CUSTOM_USER_PROPERTY, _("Custom user field")),
+    (GeoConfig.ASSIGNED_LOCATION, _("User's assigned location")),
 ]
 
 
@@ -34,6 +33,9 @@ class GeospatialConfigForm(forms.Form):
     )
 
     def __init__(self, *args, **kwargs):
+        if kwargs.get('config'):
+            kwargs['initial'] = self.compute_initial(kwargs.pop('config'))
+
         super().__init__(*args, **kwargs)
 
         self.helper = hqcrispy.HQFormHelper()
@@ -61,3 +63,25 @@ class GeospatialConfigForm(forms.Form):
                 )
             )
         )
+
+    def clean(self):
+        data = self.cleaned_data
+
+        if data['location_source_option'] not in GeoConfig.VALID_LOCATION_SOURCES:
+            raise ValidationError(_("Invalid location source"))
+
+        if data['location_source_option'] == GeoConfig.CUSTOM_USER_PROPERTY and not data['custom_user_field_name']:
+            raise ValidationError(_("Custom user field name required"))
+
+        if not data['geo_case_property_name']:
+            raise ValidationError(_("Case property name required"))
+
+        return data
+
+    @staticmethod
+    def compute_initial(config):
+        return {
+            'location_source_option': config.location_data_source,
+            'custom_user_field_name': config.custom_user_property_name,
+            'geo_case_property_name': config.case_location_property_name,
+        }

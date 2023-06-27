@@ -12,7 +12,7 @@ from corehq.apps.domain.views.base import BaseDomainView
 from corehq.apps.geospatial.reports import CaseManagementMap
 from corehq.apps.geospatial.forms import GeospatialConfigForm
 from .const import POLYGON_COLLECTION_GEOJSON_SCHEMA
-from .models import GeoPolygon
+from .models import GeoPolygon, GeoConfig
 
 
 def geospatial_default(request, *args, **kwargs):
@@ -84,17 +84,45 @@ class GeospatialConfigPage(BaseDomainView):
 
     @property
     def page_context(self):
+        config = self.config
+
         return {
             'form': self.settings_form,
+            'config': {
+                'location_data_source': config.location_data_source,
+                'custom_user_property_name': config.custom_user_property_name,
+                'case_location_property_name': config.case_location_property_name,
+            }
         }
 
     @property
     def settings_form(self):
         if self.request.method == 'POST':
             return GeospatialConfigForm(self.request.POST)
-        return GeospatialConfigForm()
+        return GeospatialConfigForm(config=self.config)
+
+    @property
+    def config(self):
+        try:
+            obj = GeoConfig.objects.get(domain=self.domain)
+        except GeoConfig.DoesNotExist:
+            obj = GeoConfig()
+            obj.domain = self.domain
+        return obj
 
     def post(self, request, *args, **kwargs):
         form = self.settings_form
-        # Todo
+
+        if not form.is_valid():
+            return self.get(request, *args, **kwargs)
+
+        config = self.config
+        config.location_data_source = form.cleaned_data['location_source_option']
+        config.case_location_property_name = form.cleaned_data['geo_case_property_name']
+
+        if config.location_data_source == GeoConfig.CUSTOM_USER_PROPERTY:
+            config.custom_user_property_name = form.cleaned_data['custom_user_field_name']
+
+        config.save()
+
         return self.get(request, *args, **kwargs)
