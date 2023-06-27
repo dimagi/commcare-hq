@@ -306,6 +306,45 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
         },
     });
 
+    const CaseTileGroupedView = CaseTileView.extend({
+        tagName: "div",
+        className: "formplayer-request list-cell-wrapper-style case-tile-group",
+        template: _.template($("#case-tile-grouped-view-item-template").html() || ""),
+        templateContext: function () {
+            const dict = CaseTileGroupedView.__super__.templateContext.apply(this, arguments);
+            dict['groupHeaderRows'] = this.options.groupHeaderRows;
+
+            const data = this.options.model.get('data');
+            const headerRowIndices = this.options.headerRowIndices;
+            dict['indexedHeaderData'] = headerRowIndices.reduce((acc, index) => {
+                acc[index] = data[index];
+                return acc;
+            }, {});
+
+            dict['indexedRowDataList'] = this.getIndexedRowDataList();
+
+            return dict;
+        },
+
+        getIndexedRowDataList: function () {
+            let indexedRowDataList = [];
+            for (let model of this.options.groupModelsList) {
+                let indexedRowData = model.get('data')
+                .reduce((acc, data, i) => {
+                    if (!this.options.headerRowIndices.includes(i) &&
+                        this.options.styles[i].widthHint!==0) {
+                        acc[i] = data;
+                    }
+                    return acc;
+                }, {});
+                if (Object.keys(indexedRowData).length !== 0) {
+                    indexedRowDataList.push(indexedRowData);
+                }
+            };
+            return indexedRowDataList;
+        },
+    });
+
     const PersistentCaseTileView = CaseTileView.extend({
         className: "formplayer-request",
         rowClick: function (e) {
@@ -759,6 +798,40 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
         },
     });
 
+    const CaseTileGroupedListView = CaseTileListView.extend({
+        childView: CaseTileGroupedView,
+
+        initialize: function () {
+            CaseTileGroupedListView.__super__.initialize.apply(this, arguments);
+
+            let clonedModels = this.options.collection.models.map((model) => model.clone());
+            this.groupedModels = _.groupBy(clonedModels, (model) => model.get("groupKey"));
+            for (let groupKey in this.groupedModels) {
+                let models = this.groupedModels[groupKey];
+                if (models.length > 1) {
+                    // Only one childView will be created per group.
+                    // The model for the first child is used, so subsequent models in the group need to be removed.
+                    this.options.collection.remove(models.slice(1));
+                }
+            }
+
+            let groupHeaderRows = this.options.collection.groupHeaderRows;
+            // select the indices of the tile fields that are part of the header rows
+            this.headerRowIndices = this.options.collection.tiles
+                .map((tile, index) => ({tile: tile, index: index}))
+                .filter((tile) => tile.tile && tile.tile.gridY < groupHeaderRows)
+                .map((tile) => tile.index);
+        },
+
+        childViewOptions: function (model) {
+            const dict = CaseTileGroupedListView.__super__.childViewOptions.apply(this, arguments);
+            dict.groupHeaderRows = this.options.collection.groupHeaderRows
+            dict.groupModelsList = this.groupedModels[model.get("groupKey")]
+            dict.headerRowIndices = this.headerRowIndices;
+            return dict;
+        },
+    });
+
     const CaseListDetailView = CaseListView.extend({
         template: _.template($("#case-view-list-detail-template").html() || ""),
         childView: CaseViewUnclickable,
@@ -997,6 +1070,9 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
         },
         CaseTileListView: function (options) {
             return new CaseTileListView(options);
+        },
+        CaseTileGroupedListView: function (options) {
+            return new CaseTileGroupedListView(options);
         },
         DetailListView: function (options) {
             return new DetailListView(options);
