@@ -96,7 +96,7 @@ class ESSyncUtil:
                 break
 
             print(f"\tWaiting for index status to be green. Current status: '{status}'")
-            time.sleep(sleep_time)
+            time.sleep(max(sleep_time, min(2 ** i, 30)))
 
     def _prepare_index_for_normal_usage(self, secondary_adapter):
         es_manager.cluster_routing(enabled=True)
