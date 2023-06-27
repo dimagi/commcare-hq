@@ -181,27 +181,43 @@ class Command(BaseCommand):
     """
     ES sync management command. It can be used to manage reindex processes on HQ indices.
     The command requires the index to be multiplexed before the reindex is started.
-    This management command currently supports three subcommands
+    This management command currently supports following subcommands
 
-    ```bash
-    ./manage.py elastic_sync_multiplexed start <index_cname>
-    ```
+    For starting a reindex -
+        ```bash
+        ./manage.py elastic_sync_multiplexed start <index_cname>
+        ```
 
-    ```bash
-    ./manage.py elastic_sync_multiplexed cleanup <index_cname>
-    ```
+        You can also specify batch size for the reindex command -
+
+        ```bash
+        ./manage.py elastic_sync_multiplexed start <index_cname> --batch_size <batch size>
+        ```
+
+    For removing tombstones from a index -
+        ```bash
+        ./manage.py elastic_sync_multiplexed cleanup <index_cname>
+        ```
+
+    For deleting an older CommcareHQ index after reindex is done.
+        ```bash
+        ./manage.py elastic_sync_multiplexed delete <index_cname>
+        ```
 
     <index_cname> is the hq cannoical name for an index like forms, cases
 
-    ```bash
-    ./manage.py elastic_sync_multiplexed cancel <task_id>
-    ```
+    For cancelling an ongoing reindex -
+        ```bash
+        ./manage.py elastic_sync_multiplexed cancel <task_id>
+        ```
 
-    ```bash
-    ./manage.py elastic_sync_multiplexed status <task_id>
-    ```
+    For getting status of existing reindex
+        ```bash
+        ./manage.py elastic_sync_multiplexed status <task_id>
+        ```
 
-    <task_id> is the reindex operation id that would be printed by start command
+    <task_id> is the reindex operation id that would be printed by start command.
+    It would look like 'XDke_N9TQQCGqL-aEQNR7Q:1808229'
 
     """
 
