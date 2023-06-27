@@ -66,7 +66,7 @@ hqDefine("app_manager/js/details/screen", function () {
         });
         self.caseTilePreviews = options.caseTilePreviews;
         self.caseTilePreviewForTemplate = ko.computed(function () {
-            return self.caseTilePreviews[self.caseTileTemplate()];
+            return self.caseTilePreviews[self.caseTileTemplate()] || "";
         });
         self.showCaseTileColumn = ko.computed(function () {
             return self.caseTileTemplate() && hqImport('hqwebapp/js/toggles').toggleEnabled('CASE_LIST_TILE');
