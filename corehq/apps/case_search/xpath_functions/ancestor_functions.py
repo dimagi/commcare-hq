@@ -1,5 +1,5 @@
 from django.utils.translation import gettext
-from eulxml.xpath import serialize, parse
+from eulxml.xpath import serialize
 from eulxml.xpath.ast import BinaryExpression, FunctionCall, Step
 
 from corehq.apps.case_search.const import OPERATOR_MAPPING, EQ
@@ -148,11 +148,9 @@ def _get_case_ids_from_ast_filter(context, filter_node):
         return es_query.scroll_ids()
 
 
-def is_ancestor_query_below_limit(query, xpath):
-    node = parse(xpath)
+def is_ancestor_query_below_limit(query, node):
     REDUCED_MAX_RELATED_CASES = 5000  # for testing purposes
-    if (is_ancestor_comparison(node) or 'ancestor-exists' in xpath) \
-       and query.count() > REDUCED_MAX_RELATED_CASES:
+    if query.count() > REDUCED_MAX_RELATED_CASES:
         try:
             query = BinaryExpression(node.left.right, node.op, node.right)
         except AttributeError:
