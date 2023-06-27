@@ -387,7 +387,7 @@ class ElasticManageAdapter(BaseAdapter):
         elif "*" in index:
             raise ValueError(f"refusing to operate with index wildcards: {index}")
 
-    def reindex(self, source, dest, wait_for_completion=False, refresh=False):
+    def reindex(self, source, dest, wait_for_completion=False, refresh=False, batch_size=1000):
         """
         Starts the reindex process in elastic search cluster
 
@@ -405,6 +405,7 @@ class ElasticManageAdapter(BaseAdapter):
         reindex_body = {
             "source": {
                 "index": source,
+                "size": batch_size,
             },
             "dest": {
                 "index": dest,
