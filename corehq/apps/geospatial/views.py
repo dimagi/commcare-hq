@@ -71,8 +71,10 @@ class GeoPolygonView(BaseDomainView):
 
 class GeospatialConfigPage(BaseDomainView):
     urlname = "geospatial_settings"
-    section_name = _("Configuration Settings")
     template_name = "geospatial/settings.html"
+
+    page_name = _("Configuration Settings")
+    section_name = _("Geospatial")
 
     @method_decorator(toggles.GEOSPATIAL.required_decorator())
     def dispatch(self, request, *args, **kwargs):
@@ -80,7 +82,11 @@ class GeospatialConfigPage(BaseDomainView):
 
     @property
     def section_url(self):
-        return reverse(GeospatialConfigPage.urlname, args=(self.domain,))
+        return reverse(self.urlname, args=(self.domain,))
+
+    @property
+    def page_url(self):
+        return reverse(self.urlname, args=(self.domain,))
 
     @property
     def page_context(self):
