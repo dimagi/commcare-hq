@@ -272,8 +272,14 @@
   margin-bottom: -10px;
 }
 
-.case-tile-preview-mapping {
-    border: 2px blue dotted;
-    padding: 3px;
-    margin: 2px;
+.case-tile-preview {
+    display: grid;
+    grid-template-columns: repeat(13, 1fr) min-content 5px;
+    grid-template-rows: repeat(3, auto) min-content 5px;
+
+    .case-tile-preview-mapping {
+        border: 1px @cc-light-cool-accent-low dotted;
+        padding: 3px;
+        margin: 2px;
+    }
 }
