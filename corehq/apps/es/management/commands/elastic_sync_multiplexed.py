@@ -35,7 +35,7 @@ class ESSyncUtil:
     def __init__(self):
         self.es = get_client()
 
-    def start_reindex(self, cname):
+    def start_reindex(self, cname, reindex_batch_size=1000):
 
         adapter = doc_adapter_from_cname(cname)
 
@@ -49,7 +49,7 @@ class ESSyncUtil:
         self._prepare_index_for_reindex(destination_index)
 
         logger.info("Starting ReIndex process")
-        task_info = es_manager.reindex(source_index, destination_index)
+        task_info = es_manager.reindex(source_index, destination_index, batch_size=reindex_batch_size)
         logger.info(f"Copying docs from index {source_index} to index {destination_index}")
         task_id = task_info.split(':')[1]
         print("\n\n\n")
@@ -224,6 +224,12 @@ class Command(BaseCommand):
             choices=INDEXES,
             help="""Cannonical Name of the index that need to be synced""",
         )
+        start_cmd.add_argument(
+            '--batch_size',
+            type=int,
+            default=1000,  # This is default batch size used by ES for reindex
+            help="Reindex batch size"
+        )
 
         # Get ReIndex Process Status
         status_cmd = subparsers.add_parser("status")
@@ -261,7 +267,9 @@ class Command(BaseCommand):
     def handle(self, **options):
         sub_cmd = options['sub_command']
         cmd_func = options.get('func')
-        if sub_cmd == 'start' or sub_cmd == "delete":
+        if sub_cmd == 'start':
+            cmd_func(options['index_cname'], options['batch_size'])
+        elif sub_cmd == 'delete':
             cmd_func(options['index_cname'])
         elif sub_cmd == 'cleanup':
             cmd_func(doc_adapter_from_cname(options['index_cname']))
