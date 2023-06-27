@@ -1553,15 +1553,6 @@ EMWF_WORKER_ACTIVITY_REPORT = StaticToggle(
     ),
 )
 
-DATA_DICTIONARY = StaticToggle(
-    'data_dictionary',
-    'Project level data dictionary of cases',
-    TAG_SOLUTIONS_OPEN,
-    [NAMESPACE_DOMAIN],
-    description='Available in the Data section, shows the names of all properties of each case type.',
-    help_link='https://confluence.dimagi.com/display/GS/Data+Dictionary+for+Case+Properties',
-)
-
 DD_CASE_DATA = StaticToggle(
     'dd_case_data',
     'Data Dictionary Case Data Page',
@@ -2571,6 +2562,17 @@ APPLICATION_ERROR_REPORT = FrozenPrivilegeToggle(
     description="Show Application Error Report.",
     # TODO: Move to public wiki
     help_link='https://confluence.dimagi.com/display/saas/Show+Application+Error+Report+Feature+Flag'
+)
+
+DATA_DICTIONARY = FrozenPrivilegeToggle(
+    privileges.DATA_DICTIONARY,
+    'data_dictionary',
+    label='Project level data dictionary of cases',
+    tag=TAG_SOLUTIONS_OPEN,
+    namespaces=[NAMESPACE_DOMAIN],
+    description='Project level data dictionary of cases',
+    # TODO: Move to public wiki
+    help_link='https://confluence.dimagi.com/display/GS/Data+Dictionary+for+Case+Properties'
 )
 
 SHOW_OWNER_LOCATION_PROPERTY_IN_REPORT_BUILDER = FrozenPrivilegeToggle(
