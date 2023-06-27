@@ -274,8 +274,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
         },
 
         templateContext: function () {
-            const appId = formplayerUtils.currentUrlToObject().appId,
-                  md = window.markdownit();
+            const appId = formplayerUtils.currentUrlToObject().appId;
             return {
                 data: this.options.model.get('data'),
                 styles: this.options.styles,
