@@ -7,6 +7,7 @@ from rest_framework.permissions import IsAuthenticated
 
 from custom.abdm.auth import ABDMUserAuthentication
 from custom.abdm.milestone_one.utils import abha_verification_util as abdm_util
+from custom.abdm.milestone_one.utils.abha_verification_util import get_account_information
 from custom.abdm.milestone_one.utils.decorators import required_request_params
 from custom.abdm.milestone_one.utils.response_util import (
     generate_invalid_req_response,
@@ -51,6 +52,7 @@ def confirm_with_mobile_otp(request):
     resp = abdm_util.confirm_with_mobile_otp(otp, txn_id)
     if "token" in resp:
         resp = {"status": "success", "txnId": txn_id, "user_token": resp.get("token")}
+        resp.update(get_account_information(resp.get("user_token")))
     return parse_response(resp)
 
 
@@ -64,6 +66,7 @@ def confirm_with_aadhaar_otp(request):
     resp = abdm_util.confirm_with_aadhaar_otp(otp, txn_id)
     if "token" in resp:
         resp = {"status": "success", "txnId": txn_id, "user_token": resp.get("token")}
+        resp.update(get_account_information(resp.get("user_token")))
     return parse_response(resp)
 
 
