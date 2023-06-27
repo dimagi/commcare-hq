@@ -67,8 +67,7 @@ hqDefine('app_manager/js/details/screen_config', function () {
                     allowsTabs: columnType === 'long',
                     allowsEmptyColumns: columnType === 'long',
                     caseTileTemplateOptions: spec.caseTileTemplateOptions,
-                    caseTileFields: spec.caseTileFields,
-                    caseTilePreviews: spec.caseTilePreviews,
+                    caseTileTemplateConfigs: spec.caseTileTemplateConfigs,
                 }
             );
             self.screens.push(screen);

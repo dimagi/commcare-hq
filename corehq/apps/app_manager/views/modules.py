@@ -1,5 +1,6 @@
 import json
 import logging
+from dataclasses import asdict
 from collections import OrderedDict
 from functools import partial
 from looseversion import LooseVersion
@@ -233,11 +234,8 @@ def _get_shared_module_view_context(request, app, module, case_property_builder,
             'has_mobile_ucr': bool([i for i in item_lists if i['fixture_type'] == REPORT_FIXTURE]),
             'default_value_expression_enabled': app.enable_default_value_expression,
             'case_tile_template_options': CaseTileTemplates.choices,
-            'case_tile_fields': {template[0]: case_tile_template_config(template[0]).fields
-                                 for template in CaseTileTemplates.choices},
-            # TODO: send one item with all config?
-            'case_tile_previews': {template[0]: case_tile_template_config(template[0]).preview
-                                 for template in CaseTileTemplates.choices},
+            'case_tile_template_configs': {template[0]: asdict(case_tile_template_config(template[0]))
+                                           for template in CaseTileTemplates.choices},
             'search_config': {
                 'search_properties':
                     module.search_config.properties if module_offers_search(module) else [],
