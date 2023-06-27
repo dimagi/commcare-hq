@@ -514,7 +514,13 @@ class ModuleDetailValidatorMixin(object):
 
     __invalid_tile_configuration_type: str = "invalid tile configuration"
 
-    def _validate_fields_with_format(self, format_value, format_display, columns, errors):
+    def _validate_fields_with_format(
+        self,
+        format_value: str,
+        format_display: str,
+        columns: list,
+        errors: list
+    ):
         fields_with_address_format = [c.case_tile_field for c in columns if c.format == format_value]
         if len(fields_with_address_format) > 1:
             fields_with_address_format_str = '"' + '", "'.join(fields_with_address_format) + '"'
