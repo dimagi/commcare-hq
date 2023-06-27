@@ -171,10 +171,10 @@ class ExportListHelper(object):
         # Calls self.get_saved_exports and formats each item using self.fmt_export_data
         brief_exports = sorted(self.get_saved_exports(), key=lambda x: x['name'])
         if domain_has_privilege(self.domain, EXPORT_OWNERSHIP):
-            def _can_view(e, user_id):
-                if not hasattr(e, 'owner_id'):
+            def _can_view(export, user_id):
+                if 'owner_id' not in export:
                     return True
-                return e['sharing'] != SharingOption.PRIVATE or e['owner_id'] == user_id
+                return export['sharing'] != SharingOption.PRIVATE or export['owner_id'] == user_id
 
             brief_exports = [
                 export for export in brief_exports
@@ -570,7 +570,6 @@ def get_exports_page(request, domain):
         is_deid=json.loads(request.GET.get('is_deid')),
         is_odata=json.loads(request.GET.get('is_odata'))
     )
-
     helper = ExportListHelper.from_request(request)
     page = int(request.GET.get('page', 1))
     limit = int(request.GET.get('limit', 5))
