@@ -4,6 +4,7 @@ from datetime import datetime, timedelta
 
 from django.conf import settings
 from django.core.management.base import BaseCommand, CommandError
+from corehq.apps.es import CANONICAL_NAME_ADAPTER_MAP
 
 import corehq.apps.es.const as es_consts
 from corehq.apps.es.client import ElasticMultiplexAdapter, get_client
@@ -19,6 +20,7 @@ from corehq.apps.es.transient_util import (
     iter_index_cnames,
 )
 from corehq.apps.es.utils import check_task_progress
+from corehq.util.markup import SimpleTableWriter, TableRowFormatter
 
 logger = logging.getLogger('elastic_sync_multiplexed')
 
@@ -175,6 +177,45 @@ class ESSyncUtil:
         print(f"Deleting Index - {older_index}")
 
         es_manager.index_delete(older_index)
+
+    def estimate_disk_space_for_reindex(self, stdout=None):
+        indices_info = es_manager.indices_info()
+        index_cname_map = self._get_index_name_cname_map()
+        index_size_rows = []
+        total_size = 0
+        for index_name in index_cname_map.keys():
+            meta = indices_info[index_name]
+            index_size_rows.append([
+                index_cname_map[index_name],
+                index_name,
+                self._format_bytes(int(meta['size_on_disk'])),
+                meta['doc_count']
+            ])
+            total_size += int(meta['size_on_disk'])
+        self._print_table(index_size_rows, output=stdout)
+        recommended_disk = total_size + (total_size * .2)  # 20% more that what is used
+        print("\n\n")
+        print(f"Additional disk size required for the reindex {self._format_bytes(recommended_disk)}")
+
+    def _get_index_name_cname_map(self):
+        return {adapter.index_name: cname for cname, adapter in CANONICAL_NAME_ADAPTER_MAP.items()}
+
+    def _format_bytes(self, size):
+        units = ['B', 'KB', 'MB', 'GB', 'TB']
+        index = 0
+
+        while size >= 1024 and index < len(units) - 1:
+            size /= 1024
+            index += 1
+        return '{:.2f} {}'.format(size, units[index])
+
+    def _print_table(self, rows, output):
+        row_formatter = TableRowFormatter(
+            [20, 30, 20, 30]
+        )
+        SimpleTableWriter(output=output, row_formatter=row_formatter).write_table(
+            ["Index CName", "Index Name", "Size on Disk", "Doc Count"], rows=rows
+        )
 
 
 class Command(BaseCommand):
