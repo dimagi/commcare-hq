@@ -4,6 +4,7 @@ from django.utils.translation import gettext_lazy as _
 from memoized import memoized
 
 from corehq.apps.analytics.tasks import track_workflow
+from corehq.apps.case_search.xpath_functions.ancestor_functions import is_ancestor_query_below_limit
 from corehq.apps.case_search.const import (
     CASE_COMPUTED_METADATA,
     SPECIAL_CASE_PROPERTIES_MAP,
@@ -69,6 +70,7 @@ class CaseListExplorer(CaseListReport):
         if xpath:
             try:
                 query = query.xpath_query(self.domain, xpath)
+                is_ancestor_query_below_limit(query, xpath)
             except CaseFilterError as e:
                 track_workflow(self.request.couch_user.username, f"{self.name}: Query Error")
 
