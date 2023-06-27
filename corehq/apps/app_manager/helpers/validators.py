@@ -511,6 +511,17 @@ class ModuleBaseValidator(object):
 
 
 class ModuleDetailValidatorMixin(object):
+    def _validate_fields_with_format(self, format_value, format_display, columns, errors):
+        fields_with_address_format = [c.case_tile_field for c in columns if c.format == format_value]
+        if len(fields_with_address_format) > 1:
+            fields_with_address_format_str = '"' + '", "'.join(fields_with_address_format) + '"'
+            errors.append({
+                'type': "invalid tile configuration",
+                'module': self.get_module_info(),
+                'reason': _('Format "{}" can only be used once but is used by multiple fields: {}'
+                            .format(format_display, fields_with_address_format_str))
+            })
+
     '''
     Validation logic common to basic and shadow modules, which both have detail configuration.
     '''
@@ -552,6 +563,9 @@ class ModuleDetailValidatorMixin(object):
                             'module': self.get_module_info(),
                             'reason': _('A case property must be assigned to the "{}" tile field.'.format(field))
                         })
+            self._validate_fields_with_format('address', 'Address', detail.columns, errors)
+            self._validate_fields_with_format('address_popup', 'Address Popup', detail.columns, errors)
+
             if detail.has_persistent_tile() and self.module.report_context_tile:
                 errors.append({
                     'type': "invalid tile configuration",
