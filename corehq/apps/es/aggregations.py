@@ -215,6 +215,7 @@ class TermsAggregation(Aggregation):
     def __init__(self, name, field, size=None, missing=None):
         assert re.match(r'\w+$', name), \
             "Names must be valid python variable names, was {}".format(name)
+        assert size is None or size > 0, "Aggregation size must be greater than 0"
         self.name = name
         self.body = {
             "field": field,
@@ -237,6 +238,7 @@ class TermsAggregation(Aggregation):
         return query
 
     def size(self, size):
+        assert size is None or size > 0, "Aggregation size must be greater than 0"
         query = deepcopy(self)
         query.body['size'] = size
         return query
