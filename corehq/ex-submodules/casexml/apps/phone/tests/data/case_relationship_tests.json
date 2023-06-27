@@ -964,6 +964,21 @@
         "outcome": [
             "L", "B", "C", "D", "E"
         ]
+    },
+    {
+        "name": "extension_and_child_relationship",
+        "owned": [
+            "parent"
+        ],
+        "subcases": [
+            ["child_and_extension", "parent"]
+        ],
+        "extensions": [
+            ["child_and_extension", "parent"]
+        ],
+        "outcome": [
+            "parent"
+        ]
     }
 
 ]
