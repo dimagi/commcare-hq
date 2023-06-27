@@ -1,0 +1,16 @@
+{% load i18n %}
+{% load hq_shared_tags %}
+
+
+            <div class="form-group">
+               <label class="control-label {% css_label_class %}">
+                {% trans 'Do Selection on Session Endpoint' %}
+                <span class="hq-help-template"
+                      data-title="{% trans 'Do Selection on Session Endpoint' %}"
+                      data-content="{% blocktrans %}Select a case on the case list using an argument to the session endpoint.{% endblocktrans %}"></span>
+              </label>
+              <div id="session-endpoints-enable-selection" class="{% css_field_class %} checkbox" data-since-version="2.51">
+                 <input type="checkbox" data-bind="checked: {{ observable }}" />
+                 <input type="hidden" name="{{ observable }}" data-bind="value: {{ observable }}"/>
+              </div>
+            </div>

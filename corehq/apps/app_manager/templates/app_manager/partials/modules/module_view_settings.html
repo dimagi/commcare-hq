@@ -251,6 +251,7 @@
 
             {% if session_endpoints_enabled %}
               {% include "app_manager/partials/session_endpoints.html" with module_or_form=module %}
+              {% include "app_manager/partials/session_endpoints_enable_selection.html" with observable="session_endpoints_enable_selection" %}
             {% endif %}
 
             {% if request|toggle_enabled:'USH_EMPTY_CASE_LIST_TEXT' %}

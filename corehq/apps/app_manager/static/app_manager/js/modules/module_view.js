@@ -141,6 +141,13 @@ hqDefine("app_manager/js/modules/module_view", function () {
             });
         }
 
+        var $sessionEndpointsEnableSelection = $('#session-endpoints-enable-selection');
+        if ($sessionEndpointsEnableSelection.length) {
+            $sessionEndpointsEnableSelection.koApplyBindings({
+                session_endpoints_enable_selection: ko.observable(moduleBrief.session_endpoints_enable_selection),
+            });
+        }
+
         // Registration in case list
         if ($('#case-list-form').length) {
             var caseListFormModel = function (originalFormId, formOptions, postFormWorkflow) {
