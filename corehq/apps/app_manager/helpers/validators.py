@@ -564,7 +564,7 @@ class ModuleDetailValidatorMixin(object):
                             'reason': _('A case property must be assigned to the "{}" tile field.'.format(field))
                         })
             self._validate_fields_with_format('address', 'Address', detail.columns, errors)
-            self._validate_fields_with_format('address_popup', 'Address Popup', detail.columns, errors)
+            self._validate_fields_with_format('address-popup', 'Address Popup', detail.columns, errors)
 
             if detail.has_persistent_tile() and self.module.report_context_tile:
                 errors.append({
