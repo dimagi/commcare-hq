@@ -24,12 +24,12 @@ class GeospatialConfigForm(forms.Form):
     custom_user_field_name = forms.CharField(
         label=_("Custom user field name"),
         required=False,
-        help_text=_("The the name of the custom user field which stores the user's geo-location data."),
+        help_text=_("The name of the user field which stores the users' geo-location data."),
     )
     geo_case_property_name = forms.CharField(
         label=_("Fetch case location data from property"),
         required=True,
-        help_text=_("The name of the case property storing the geo-location data of the case."),
+        help_text=_("The name of the case property storing the geo-location data of your cases."),
     )
 
     def __init__(self, *args, **kwargs):
