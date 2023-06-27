@@ -260,6 +260,11 @@ class Command(BaseCommand):
     <task_id> is the reindex operation id that would be printed by start command.
     It would look like 'XDke_N9TQQCGqL-aEQNR7Q:1808229'
 
+    For getting estimated disk space required for reindex operations -
+        ```bash
+        ./manage.py elastic_sync_multiplexed estimated_size_for_reindex
+        ```
+
     """
 
     help = ("Reindex management command to sync Multiplexed HQ indices")
@@ -321,6 +326,9 @@ class Command(BaseCommand):
             help="""Cannonical Name of the index whose older index should be deleted""",
         )
 
+        estimate_size_cmd = subparsers.add_parser("estimated_size_for_reindex")
+        estimate_size_cmd.set_defaults(func=self.es_helper.estimate_disk_space_for_reindex)
+
     def handle(self, **options):
         sub_cmd = options['sub_command']
         cmd_func = options.get('func')
@@ -330,5 +338,7 @@ class Command(BaseCommand):
             cmd_func(options['index_cname'])
         elif sub_cmd == 'cleanup':
             cmd_func(doc_adapter_from_cname(options['index_cname']))
-        else:
+        elif sub_cmd == 'cancel' or sub_cmd == 'status':
             cmd_func(options['task_id'])
+        elif sub_cmd == 'estimated_size_for_reindex':
+            cmd_func(stdout=self.stdout)
