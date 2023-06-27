@@ -538,17 +538,17 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
                 L.mapbox.accessToken = token;
                 md = window.markdownit();
 
-                const latLngs = []
+                const coordinates = []
                 const markers = []
                 this.options.collection.models
                     .forEach(model => {
                         const coordinates = model.attributes.data[addressIndex];
                         if (coordinates) {
-                            let latLng = coordinates.split(" ").slice(0,2);
-                            if (latLng.length > 1) {
+                            let markerCoordinates = coordinates.split(" ").slice(0,2);
+                            if (markerCoordinates.length > 1) {
                                 const rowId = `row-${model.id}`;
                                 const popupText = md.render(DOMPurify.sanitize(model.attributes.data[popupIndex]));
-                                let marker = L.marker(latLng, {icon: locationIcon});
+                                let marker = L.marker(markerCoordinates, {icon: locationIcon});
                                 markers.push(marker);
                                 marker = marker.addTo(addressMap)
                                 if (popupIndex >= 0) {
@@ -572,21 +572,21 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
                                         scrollTop: $(`#${rowId}`).offset().top - 50
                                     }, 500);
 
-                                    addressMap.panTo(latLng);
+                                    addressMap.panTo(markerCoordinates);
                                 });
-                                latLngs.push(latLng);
+                                coordinates.push(markerCoordinates);
                             }
                         }
                     });
 
                 if (sessionStorage.locationLat) {
-                    const homeLatLng = [sessionStorage.locationLat, sessionStorage.locationLon];
-                    L.marker(homeLatLng, { icon: homeLocationIcon })
+                    const homeCoordinates = [sessionStorage.locationLat, sessionStorage.locationLon];
+                    L.marker(homeCoordinates, { icon: homeLocationIcon })
                         .bindPopup(gettext("Your location"))
                         .addTo(addressMap);
-                    latLngs.push(homeLatLng);
+                    coordinates.push(homeCoordinates);
                 }
-                addressMap.fitBounds(latLngs, {maxZoom: 8});
+                addressMap.fitBounds(coordinates, {maxZoom: 8});
             } catch (error) {
                 console.error(error);
             }

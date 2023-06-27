@@ -24,9 +24,6 @@
   </field>
 
   <field>
-    <style horz-align="left" vert-align="center" font-size="medium">
-      <grid grid-height="1" grid-width="6" grid-x="6" grid-y="0"/>
-    </style>
     <header>
       <text>
       </text>
@@ -41,16 +38,6 @@
   </field>
 
   <field>
-    <style
-        horz-align="left"
-        vert-align="center"
-        font-size="medium">
-      <grid
-          grid-height="1"
-          grid-width="5"
-          grid-x="6"
-          grid-y="2"/>
-    </style>
     <header>
       <text>
       </text>
