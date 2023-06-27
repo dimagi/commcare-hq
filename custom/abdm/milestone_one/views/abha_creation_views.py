@@ -9,6 +9,7 @@ from custom.abdm.auth import ABDMUserAuthentication
 from custom.abdm.milestone_one.utils import abha_creation_util as abdm_util
 from custom.abdm.milestone_one.utils.decorators import required_request_params
 from custom.abdm.milestone_one.utils.response_util import parse_response
+from custom.abdm.utils import check_for_existing_abha_number
 
 
 @api_view(["POST"])
@@ -56,4 +57,6 @@ def verify_mobile_otp(request):
         resp = abdm_util.create_health_id(txn_id, health_id)
         resp["user_token"] = resp.pop("token")
         resp.pop("refreshToken")
+        resp["exists_on_abdm"] = not resp.pop("new")
+        resp["exists_on_hq"] = check_for_existing_abha_number(request.user.domain, health_id)
     return parse_response(resp)
