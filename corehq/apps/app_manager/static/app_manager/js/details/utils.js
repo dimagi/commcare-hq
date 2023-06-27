@@ -43,7 +43,7 @@ hqDefine("app_manager/js/details/utils", function () {
             label: gettext('Markdown'),
         }];
 
-        if (hqImport('hqwebapp/js/toggles').toggleEnabled('CASE_LIST_TILE')) {
+        if (hqImport('hqwebapp/js/toggles').toggleEnabled('CASE_LIST_MAP')) {
             formats.push({
             value: "address-popup",
             label: gettext('Address Popup (Web Apps only)'),
