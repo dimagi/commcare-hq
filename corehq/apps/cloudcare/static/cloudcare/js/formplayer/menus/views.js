@@ -538,13 +538,13 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
                 L.mapbox.accessToken = token;
                 md = window.markdownit();
 
-                const coordinates = []
+                const allCoordinates = []
                 const markers = []
                 this.options.collection.models
                     .forEach(model => {
-                        const coordinates = model.attributes.data[addressIndex];
-                        if (coordinates) {
-                            let markerCoordinates = coordinates.split(" ").slice(0,2);
+                        const addressCoordinates = model.attributes.data[addressIndex];
+                        if (addressCoordinates) {
+                            let markerCoordinates = addressCoordinates.split(" ").slice(0,2);
                             if (markerCoordinates.length > 1) {
                                 const rowId = `row-${model.id}`;
                                 const popupText = md.render(DOMPurify.sanitize(model.attributes.data[popupIndex]));
@@ -574,7 +574,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
 
                                     addressMap.panTo(markerCoordinates);
                                 });
-                                coordinates.push(markerCoordinates);
+                                allCoordinates.push(markerCoordinates);
                             }
                         }
                     });
@@ -584,9 +584,9 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
                     L.marker(homeCoordinates, { icon: homeLocationIcon })
                         .bindPopup(gettext("Your location"))
                         .addTo(addressMap);
-                    coordinates.push(homeCoordinates);
+                    allCoordinates.push(homeCoordinates);
                 }
-                addressMap.fitBounds(coordinates, {maxZoom: 8});
+                addressMap.fitBounds(allCoordinates, {maxZoom: 8});
             } catch (error) {
                 console.error(error);
             }
