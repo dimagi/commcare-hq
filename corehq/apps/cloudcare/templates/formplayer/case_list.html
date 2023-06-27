@@ -59,7 +59,7 @@
         <% } %>
       </div>
       <% if (showMap) { %>
-        <div id="module-case-list-map" class="map"></div>
+        <div id="module-case-list-map" class="map <% if (useTiles) { %> white-border<% } %>"></div>
       <% } %>
     </div>
     <% if (actions || isMultiSelect) { %>
