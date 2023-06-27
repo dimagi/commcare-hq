@@ -72,7 +72,7 @@ hqDefine("app_manager/js/details/screen", function () {
         self.persistCaseContext = ko.observable(detail.persist_case_context || false);
         self.persistentCaseContextXML = ko.observable(detail.persistent_case_context_xml || 'case_name');
 
-        self.caseTileGrouped = ko.observable(detail.case_tile_group.index_identifier || false);
+        self.caseTileGrouped = ko.observable(!!detail.case_tile_group.index_identifier || false);
         self.caseTileGroupBy = ko.observable(detail.case_tile_group.index_identifier);
         self.caseTileGroupHeaderRows = ko.observable(detail.case_tile_group.header_rows);
 
