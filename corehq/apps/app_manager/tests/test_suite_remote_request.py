@@ -3,6 +3,7 @@ from unittest.mock import patch
 from uuid import uuid4
 
 from corehq.apps.app_manager.const import REGISTRY_WORKFLOW_SMART_LINK
+from corehq.apps.app_manager.exceptions import UnknownInstanceError
 from corehq.apps.app_manager.models import (
     AdvancedModule,
     Application,
@@ -718,18 +719,29 @@ class RemoteRequestSuiteTest(SimpleTestCase, SuiteMixin):
             "./remote-request[1]/instance[@id='item-list:states']",
         )
 
-    def test_prompt_itemset_mobile_report_legacy(self):
-        self._test_prompt_itemset_mobile_report('abcdef')
-
-    def test_prompt_itemset_mobile_report(self):
-        self._test_prompt_itemset_mobile_report('commcare-reports:abcdef')
-
-    @flag_enabled('MOBILE_UCR')
-    def _test_prompt_itemset_mobile_report(self, instance_id):
+    def test_prompt_itemset_unrecognized_instance(self):
+        instance_id = 'abcdef'
         self.module.search_config.properties[0].input_ = 'select1'
         self.module.search_config.properties[0].itemset = Itemset(
             instance_id=instance_id,
-            instance_uri="jr://fixture/commcare-reports:abcdef",
+            # The instance ID here should be prefixed with
+            # commcare-reports: or item-list:
+            nodeset=f"instance('{instance_id}')/rows/row",
+            label='name',
+            value='id',
+            sort='id',
+        )
+        with self.assertRaises(UnknownInstanceError):
+            suite = self.app.create_suite()
+
+    @flag_enabled('MOBILE_UCR')
+    def test_prompt_itemset_mobile_report(self):
+        instance_id = 'commcare-reports:abcdef'
+        self.module.search_config.properties[0].input_ = 'select1'
+        self.module.search_config.properties[0].itemset = Itemset(
+            instance_id=instance_id,
+            # This will be generated automatically
+            # instance_uri="jr://fixture/commcare-reports:abcdef",
             nodeset=f"instance('{instance_id}')/rows/row",
             label='name',
             value='id',
