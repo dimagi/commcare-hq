@@ -169,8 +169,8 @@ class ESSyncUtil:
 
         print(f"Are you sure you want to delete the older index - {older_index}?")
         print("WARNING: - This step can't be un-done.")
-        proceed = input("Enter y/Y to continue, any other key to cancel\n")
-        if proceed.upper() != "Y":
+        user_confirmation = input(f"Enter '{cname}' to continue, any other key to cancel\n")
+        if user_confirmation != cname:
             raise CommandError("Exiting Index Deletion Process")
         print(f"Deleting Index - {older_index}")
 
