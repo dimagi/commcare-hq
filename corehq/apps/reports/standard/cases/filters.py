@@ -140,7 +140,7 @@ class SensitiveCaseProperties(CaseListExplorerColumns):
     label = gettext_lazy("De-identify options")
     template = "reports/filters/sensitive_columns.html"
     EXCLUDE_PROPERTIES = [
-        '@case_id', '@case_type', '@owner_id', '@status', 'closed_on', 'last_modified'
+        '@case_id', '@case_type', '@owner_id', '@status', 'closed_on', 'last_modified', 'date_opened'
     ]
 
     @property
