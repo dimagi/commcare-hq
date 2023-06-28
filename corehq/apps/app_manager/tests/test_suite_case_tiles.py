@@ -109,6 +109,7 @@ def add_columns_for_one_one_two_case_details(_module):
         ),
     ]
 
+
 @patch_get_xform_resource_overrides()
 class SuiteCaseTilesTest(SimpleTestCase, SuiteMixin):
     file_path = ('data', 'suite')
