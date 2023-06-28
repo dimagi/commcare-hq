@@ -521,13 +521,13 @@ class ModuleDetailValidatorMixin(object):
         columns: list,
         errors: list
     ):
-        fields_with_address_format = [c.case_tile_field for c in columns if c.format == format_value]
+        fields_with_address_format = [c.field for c in columns if c.format == format_value]
         if len(fields_with_address_format) > 1:
             fields_with_address_format_str = '"' + '", "'.join(fields_with_address_format) + '"'
             errors.append({
                 'type': self.__invalid_tile_configuration_type,
                 'module': self.get_module_info(),
-                'reason': _('Format "{}" can only be used once but is used by multiple fields: {}'
+                'reason': _('Format "{}" can only be used once but is used by multiple properties: {}'
                             .format(format_display, fields_with_address_format_str))
             })
 
