@@ -7,7 +7,8 @@ from corehq.apps.app_manager.models import (
     CaseSearchProperty,
     DetailColumn,
     MappingItem,
-    Module
+    Module,
+    SortElement,
 )
 from corehq.apps.app_manager.suite_xml.features.case_tiles import CaseTileTemplates
 from corehq.apps.app_manager.tests.app_factory import AppFactory
@@ -58,6 +59,53 @@ def add_columns_for_case_details(_module):
             field='e',
             format='date',
             case_tile_field='date'
+        ),
+    ]
+
+
+def add_columns_for_one_one_two_case_details(_module):
+    _module.case_details.short.columns = [
+        DetailColumn(
+            header={'en': 'a'},
+            model='case',
+            field='a',
+            format='plain',
+            case_tile_field='title'
+        ),
+        DetailColumn(
+            header={'en': 'b'},
+            model='case',
+            field='b',
+            format='plain',
+            case_tile_field='top'
+        ),
+        DetailColumn(
+            header={'en': 'c'},
+            model='case',
+            field='c',
+            format='address',
+            case_tile_field='bottom_left'
+        ),
+        DetailColumn(
+            header={'en': 'd'},
+            model='case',
+            field='d',
+            format='date',
+            case_tile_field='bottom_right'
+        ),
+        DetailColumn(
+            header={'en': 'e'},
+            model='case',
+            field='e',
+            format='address',
+            case_tile_field='map'
+        ),
+        DetailColumn(
+            header={'en': 'e'},
+            model='case',
+            field='e',
+            format='address-popup',
+            case_tile_field='map_popup'
         ),
     ]
 
@@ -474,4 +522,59 @@ class SuiteCaseTilesTest(SimpleTestCase, SuiteMixin):
             app.create_suite(),
             # action[1] is the reg from case list action hard-coded into the default template
             "detail[@id='m0_search_short']/action[2]",
+        )
+
+    def test_case_tile_with_sorting(self, *args):
+        factory = AppFactory()
+        module, form = factory.new_basic_module("my_module", "person")
+        module.case_details.short.case_tile_template = CaseTileTemplates.ONE_ONE_TWO.value
+        module.case_details.short.display = 'short'
+        add_columns_for_one_one_two_case_details(module)
+        sort_elements = [
+            SortElement(field='b', direction='ascending', type='plain'),
+            SortElement(field='a', direction='ascending', type='plain')
+        ]
+        module.case_details.short.sort_elements.extend(sort_elements)
+        suite = factory.app.create_suite()
+
+        self.assertXmlPartialEqual(
+            """
+            <partial>
+                <sort direction="ascending" order="2" type="string">
+                    <text>
+                        <xpath function="a"/>
+                    </text>
+                </sort>
+            </partial>
+            """,
+            suite,
+            './detail[@id="m0_case_short"]/field[1]/sort',
+        )
+
+        self.assertXmlPartialEqual(
+            """
+            <partial>
+                <sort direction="ascending" order="1" type="string">
+                    <text>
+                        <xpath function="b"/>
+                    </text>
+                </sort>
+            </partial>
+            """,
+            suite,
+            './detail[@id="m0_case_short"]/field[2]/sort',
+        )
+
+        self.assertXmlPartialEqual(
+            """
+            <partial>
+                <sort type="string">
+                    <text>
+                        <xpath function="d"/>
+                    </text>
+                </sort>
+            </partial>
+            """,
+            suite,
+            './detail[@id="m0_case_short"]/field[4]/sort',
         )

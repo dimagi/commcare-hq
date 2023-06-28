@@ -110,8 +110,8 @@ class DetailContributor(SectionContributor):
                     if detail_column_infos:
                         detail_id = id_strings.detail(module, detail_type)
                         if detail.case_tile_template:
-                            helper = CaseTileHelper(self.app, module, detail,
-                                                    detail_id, detail_type, self.build_profile_id)
+                            helper = CaseTileHelper(self.app, module, detail, detail_id,
+                                                detail_type, self.build_profile_id, detail_column_infos)
                             elements.append(helper.build_case_tile_detail())
                         else:
                             print_template_path = None
@@ -208,10 +208,7 @@ class DetailContributor(SectionContributor):
             if end is None:
                 end = len(detail_column_infos)
             for column_info in detail_column_infos[start:end]:
-                # column_info is an instance of DetailColumnInfo named tuple. It has the following properties:
-                #   column_info.column: an instance of app_manager.models.DetailColumn
-                #   column_info.sort_element: an instance of app_manager.models.SortElement
-                #   column_info.order: an integer
+                # column_info is an instance of DetailColumnInfo named tuple.
                 fields = get_column_generator(
                     self.app, module, detail, parent_tab_nodeset=nodeset,
                     detail_type=detail_type, *column_info
@@ -602,6 +599,10 @@ def get_default_sort_elements(detail):
 
 # This is not intended to be a widely used format
 # just a packaging of column info into a form most convenient for rendering
+# It has the following properties:
+#   column_info.column: an instance of app_manager.models.DetailColumn
+#   column_info.sort_element: an instance of app_manager.models.SortElement
+#   column_info.order: an integer
 DetailColumnInfo = namedtuple('DetailColumnInfo', 'column sort_element order')
 
 
