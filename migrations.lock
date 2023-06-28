@@ -259,6 +259,8 @@ custom_data_fields
  0004_rename_tables
  0005_customdatafieldsprofile
  0006_auto_20200924_1753
+ 0007_custom_data_fields_erm_support
+ 0008_custom_data_fields_upstream_ids
 data_analytics
  0001_squashed_0004_auto_20150810_1710
  0002_maltrow_threshold
@@ -426,6 +428,7 @@ fixtures
  0005_sqllookuptablemodels (3 squashed migrations)
  0008_sqllookuptables
  0009_remove_lookuptablerowowner_couch_id
+ 0010_lookuptable_is_synced
 form_processor
  0001_initial
  0002_xformattachmentsql
@@ -598,6 +601,7 @@ linked_domain
  0019_update_remote_base_url_help_text
  0020_auto_20211102_1501
  0021_alter_domainlinkhistory_model
+ 0022_alter_domainlinkhistory_model
 locations
  0001_initial
  0002_auto_20160420_2105
