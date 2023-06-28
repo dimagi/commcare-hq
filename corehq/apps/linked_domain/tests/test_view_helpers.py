@@ -357,6 +357,7 @@ class TestBuildIndividualViewModels(TestCase):
             'last_update': None,
             'can_update': True,
             'is_linkable': True,
+            'overwritable': True,
         }
 
         actual_view_model = build_app_view_model(app)
@@ -381,6 +382,7 @@ class TestBuildIndividualViewModels(TestCase):
             'last_update': None,
             'can_update': True,
             'is_linkable': True,
+            'overwritable': False,
         }
         actual_view_model = build_fixture_view_model(fixture)
         self.assertEqual(expected_view_model, actual_view_model)
@@ -405,6 +407,7 @@ class TestBuildIndividualViewModels(TestCase):
             'last_update': None,
             'can_update': True,
             'is_linkable': True,
+            'overwritable': True,
         }
 
         actual_view_model = build_report_view_model(report)
@@ -431,6 +434,7 @@ class TestBuildIndividualViewModels(TestCase):
             'last_update': None,
             'can_update': True,
             'is_linkable': True,
+            'overwritable': True,
         }
 
         actual_view_model = build_keyword_view_model(keyword)
@@ -455,6 +459,7 @@ class TestBuildIndividualViewModels(TestCase):
             'last_update': None,
             'can_update': True,
             'is_linkable': False,
+            'overwritable': True,
         }
 
         actual_view_model = build_keyword_view_model(keyword)
@@ -471,6 +476,7 @@ class TestBuildIndividualViewModels(TestCase):
             'last_update': None,
             'can_update': True,
             'is_linkable': True,
+            'overwritable': True,
         }
 
         actual_view_model = build_ucr_expression_view_model(ucr_expression)
@@ -517,6 +523,7 @@ class TestBuildFeatureFlagViewModels(TestCase):
                 'last_update': 'Never',
                 'can_update': True,
                 'is_linkable': True,
+                'overwritable': True,
             }
         ]
         view_models = build_feature_flag_view_models(self.domain)
@@ -533,6 +540,7 @@ class TestBuildFeatureFlagViewModels(TestCase):
                 'last_update': 'Never',
                 'can_update': True,
                 'is_linkable': True,
+                'overwritable': True,
             }
         ]
         view_models = build_feature_flag_view_models(self.domain)
@@ -549,6 +557,7 @@ class TestBuildFeatureFlagViewModels(TestCase):
                 'last_update': 'Never',
                 'can_update': True,
                 'is_linkable': True,
+                'overwritable': True,
             }
         ]
         view_models = build_feature_flag_view_models(self.domain)
@@ -565,6 +574,7 @@ class TestBuildFeatureFlagViewModels(TestCase):
                 'last_update': 'Never',
                 'can_update': True,
                 'is_linkable': True,
+                'overwritable': True,
             }
         ]
         view_models = build_feature_flag_view_models(self.domain)
@@ -581,6 +591,7 @@ class TestBuildFeatureFlagViewModels(TestCase):
                 'last_update': 'Never',
                 'can_update': True,
                 'is_linkable': True,
+                'overwritable': True,
             }
         ]
         view_models = build_feature_flag_view_models(self.domain)
@@ -597,6 +608,7 @@ class TestBuildFeatureFlagViewModels(TestCase):
                 'last_update': 'Never',
                 'can_update': True,
                 'is_linkable': True,
+                'overwritable': True,
             }
         ]
         view_models = build_feature_flag_view_models(self.domain)
@@ -613,6 +625,7 @@ class TestBuildFeatureFlagViewModels(TestCase):
                 'last_update': 'Never',
                 'can_update': True,
                 'is_linkable': True,
+                'overwritable': True,
             }
         ]
         view_models = build_feature_flag_view_models(self.domain)
@@ -631,6 +644,7 @@ class TestBuildDomainLevelViewModels(SimpleTestCase):
                 'last_update': 'Never',
                 'can_update': True,
                 'is_linkable': True,
+                'overwritable': True,
             },
             {
                 'type': 'custom_location_data',
@@ -639,6 +653,7 @@ class TestBuildDomainLevelViewModels(SimpleTestCase):
                 'last_update': 'Never',
                 'can_update': True,
                 'is_linkable': True,
+                'overwritable': True,
             },
             {
                 'type': 'roles',
@@ -647,6 +662,7 @@ class TestBuildDomainLevelViewModels(SimpleTestCase):
                 'last_update': 'Never',
                 'can_update': True,
                 'is_linkable': True,
+                'overwritable': True,
             },
             {
                 'type': 'previews',
@@ -655,6 +671,7 @@ class TestBuildDomainLevelViewModels(SimpleTestCase):
                 'last_update': 'Never',
                 'can_update': True,
                 'is_linkable': True,
+                'overwritable': True,
             },
             {
                 'type': 'auto_update_rules',
@@ -663,6 +680,7 @@ class TestBuildDomainLevelViewModels(SimpleTestCase):
                 'last_update': 'Never',
                 'can_update': True,
                 'is_linkable': True,
+                'overwritable': True,
             },
         ]
 
@@ -689,6 +707,7 @@ class TestBuildSuperuserViewModels(SimpleTestCase):
                 'last_update': 'Never',
                 'can_update': True,
                 'is_linkable': True,
+                'overwritable': True,
             },
         ]
 
