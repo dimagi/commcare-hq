@@ -1,3 +1,5 @@
 `page-header` has been dropped
-replace with:
-#tbd
+
+styles can be applied with utilities
+
+See: https://getbootstrap.com/docs/5.3/utilities/text/
