@@ -10,7 +10,7 @@ from xml.sax.saxutils import escape
 
 from corehq.apps.app_manager import id_strings
 from corehq.apps.app_manager.exceptions import SuiteError
-from corehq.apps.app_manager.suite_xml.xml_models import Detail, XPathVariable
+from corehq.apps.app_manager.suite_xml.xml_models import Detail, XPathVariable, TileGroup
 from corehq.apps.app_manager.util import (
     module_offers_search,
     module_uses_inline_search,
@@ -23,6 +23,9 @@ TILE_DIR = Path(__file__).parent.parent / "case_tile_templates"
 class CaseTileTemplates(models.TextChoices):
     PERSON_SIMPLE = ("person_simple", _("Person Simple"))
     ONE_ONE_TWO = ("one_one_two", _("Title row, subtitle row, third row with two cells, and map"))
+    ONE_TWO_ONE = ("one_two_one", _("Title row, second row with two cells, third row, and map"))
+    ONE_TWO_ONE_ONE = ("one_two_one_one", _("Title row, second row with two cells, third and "
+                                            "fourth rows, and map"))
 
 
 @dataclass
@@ -57,6 +60,7 @@ class CaseTileHelper(object):
         self.build_profile_id = build_profile_id
 
     def build_case_tile_detail(self):
+        from corehq.apps.app_manager.suite_xml.sections.details import DetailContributor
         """
         Return a Detail node from an apps.app_manager.models.Detail that is
         configured to use case tiles.
@@ -76,9 +80,19 @@ class CaseTileHelper(object):
 
         # Add case search action if needed
         if module_offers_search(self.module) and not module_uses_inline_search(self.module):
-            from corehq.apps.app_manager.suite_xml.sections.details import DetailContributor
-            detail.actions.append(
-                DetailContributor.get_case_search_action(self.module, self.build_profile_id, self.detail_id)
+            if (case_search_action := DetailContributor.get_case_search_action(
+                self.module,
+                self.build_profile_id,
+                self.detail_id
+            )) is not None:
+                detail.actions.append(case_search_action)
+
+        DetailContributor.add_no_items_text_to_detail(detail, self.app, self.detail_type, self.module)
+
+        if self.module.has_grouped_tiles():
+            detail.tile_group = TileGroup(
+                function=f"string(./index/{self.detail.case_tile_group.index_identifier})",
+                header_rows=self.detail.case_tile_group.header_rows
             )
 
         return detail
@@ -128,16 +142,9 @@ class CaseTileHelper(object):
             ),
             "format": column.format
         }
-        if column.enum and column.format != "enum" and column.format != "conditional-enum":
-            raise SuiteError(
-                'Expected case tile field "{}" to be an id mapping with keys {}.'.format(
-                    column.case_tile_field,
-                    ", ".join(['"{}"'.format(i.key) for i in column.enum])
-                )
-            )
 
         context['variables'] = ''
-        if column.format == "enum" or column.format == 'conditional-enum':
+        if column.format in ["enum", "conditional-enum", "enum-image"]:
             context["variables"] = self._get_enum_variables(column)
         return context
 

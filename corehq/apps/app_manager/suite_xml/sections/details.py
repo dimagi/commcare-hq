@@ -12,8 +12,8 @@ supported for one of these, e.g., actions only get added to the short detail.
 The detail element can be nested. HQ never nests short details, but it nests long details to produce tabbed case
 details. Each tab has its own ``<detail>`` element.
 
-The bulk of detail configuration is in the display properties, called "fields" and sometimes "columns" in the code. Each
-field has a good deal of configuration, and the code transforms them into named tuples while processing them.
+The bulk of detail configuration is in the display properties, called "fields" and sometimes "columns" in the code.
+Each field has a good deal of configuration, and the code transforms them into named tuples while processing them.
 Each field has a format, one of about a dozen options. Formats are typically either UI-based, such as formatting a
 phone number to display as a link, or calculation-based, such as configuring a property to display differently when
 it's "late", i.e., is too far past some reference date.
@@ -32,7 +32,7 @@ from memoized import memoized
 from corehq import toggles
 from corehq.apps.app_manager import id_strings
 from corehq.apps.app_manager.const import RETURN_TO
-from corehq.apps.app_manager.exceptions import SuiteError, SuiteValidationError
+from corehq.apps.app_manager.exceptions import SuiteValidationError
 from corehq.apps.app_manager.id_strings import callout_header_locale
 from corehq.apps.app_manager.suite_xml.const import FIELD_TYPE_LEDGER
 from corehq.apps.app_manager.suite_xml.contributors import SectionContributor
@@ -134,8 +134,8 @@ class DetailContributor(SectionContributor):
 
                     # add the persist case context if needed and if
                     # case tiles are present and have their own persistent block
-                    if (detail.persist_case_context and
-                            not (detail.case_tile_template and detail.persist_tile_on_forms)):
+                    if (detail.persist_case_context
+                            and not (detail.case_tile_template and detail.persist_tile_on_forms)):
                         d = self._get_persistent_case_context_detail(module, detail.persistent_case_context_xml)
                         elements.append(d)
 
@@ -195,9 +195,7 @@ class DetailContributor(SectionContributor):
             if detail.lookup_enabled and detail.lookup_action:
                 d.lookup = self._get_lookup_element(detail, module)
 
-            # Add no items text
-            if detail_type.endswith('short') and self.app.supports_empty_case_list_text:
-                d.no_items_text = Text(locale_id=id_strings.no_items_text_detail(module))
+            self.add_no_items_text_to_detail(d, self.app, detail_type, module)
 
             # Add variables
             variables = list(
@@ -234,9 +232,12 @@ class DetailContributor(SectionContributor):
                         d.actions.append(self._get_case_list_form_action(module))
 
                 if module_offers_search(module) and not module_uses_inline_search(module):
-                    d.actions.append(
-                        DetailContributor.get_case_search_action(module, self.build_profile_id, id)
-                    )
+                    if (case_search_action := DetailContributor.get_case_search_action(
+                        module,
+                        self.build_profile_id,
+                        id
+                    )) is not None:
+                        d.actions.append(case_search_action)
 
             try:
                 if not self.app.enable_multi_sort:
@@ -365,6 +366,11 @@ class DetailContributor(SectionContributor):
     @staticmethod
     def get_case_search_action(module, build_profile_id, detail_id):
         in_search = module_loads_registry_case(module) or "search" in detail_id
+
+        # don't add search again action in split screen
+        if in_search and toggles.SPLIT_SCREEN_CASE_SEARCH.enabled(module.get_app().domain):
+            return None
+
         action_kwargs = DetailContributor._get_action_kwargs(module, in_search)
         if in_search:
             search_label = module.search_config.search_again_label
@@ -491,7 +497,7 @@ class DetailContributor(SectionContributor):
                 ),
                 header=Header(text=Text()),
                 template=Template(text=Text(xpath=TextXPath(
-                    function="concat($message, ' ', format-date(date(instance('commcare-reports:index')/report_index/reports/@last_update), '%e/%n/%Y'))",
+                    function="concat($message, ' ', format-date(date(instance('commcare-reports:index')/report_index/reports/@last_update), '%e/%n/%Y'))",  # noqa: E501
                     variables=[XPathVariable(name='message', locale_id=id_strings.reports_last_updated_on())],
                 ))),
             )]
@@ -514,6 +520,11 @@ class DetailContributor(SectionContributor):
                         sort_node='')]
         d.fields = fields
         return d
+
+    @staticmethod
+    def add_no_items_text_to_detail(detail, app, detail_type, module):
+        if detail_type.endswith('short') and app.supports_empty_case_list_text:
+            detail.no_items_text = Text(locale_id=id_strings.no_items_text_detail(module))
 
 
 class DetailsHelper(object):

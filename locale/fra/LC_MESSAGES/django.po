@@ -3520,10 +3520,8 @@ msgid "You do not have permission to view this feed."
 msgstr ""
 
 #: corehq/apps/api/resources/v0_5.py
-#, fuzzy
-#| msgid "Please enter a positive number"
 msgid "limit must be a positive integer."
-msgstr "Veuillez saisir un chiffre positif"
+msgstr ""
 
 #: corehq/apps/api/resources/v0_5.py
 msgid "Limit may not exceed {}."
@@ -5364,10 +5362,16 @@ msgid "Person Simple"
 msgstr ""
 
 #: corehq/apps/app_manager/suite_xml/features/case_tiles.py
-#, fuzzy
-#| msgid "One Month"
-msgid "One one two"
-msgstr "Un mois"
+msgid "Title row, subtitle row, third row with two cells, and map"
+msgstr ""
+
+#: corehq/apps/app_manager/suite_xml/features/case_tiles.py
+msgid "Title row, second row with two cells, third row, and map"
+msgstr ""
+
+#: corehq/apps/app_manager/suite_xml/features/case_tiles.py
+msgid "Title row, second row with two cells, third and fourth rows, and map"
+msgstr ""
 
 #: corehq/apps/app_manager/suite_xml/features/scheduler.py
 #, python-brace-format
@@ -5393,7 +5397,10 @@ msgstr ""
 "calendrier"
 
 #: corehq/apps/app_manager/suite_xml/post_process/instances.py
-msgid "Duplicate custom instance in {}: {}"
+#, python-brace-format
+msgid ""
+"Conflicting instance declarations in {entry_id} for {instance_id}:{src_1} != "
+"{src_2}"
 msgstr ""
 
 #: corehq/apps/app_manager/suite_xml/sections/entries.py
@@ -12144,6 +12151,7 @@ msgid "Clear"
 msgstr "Effacer"
 
 #: corehq/apps/cloudcare/templates/formplayer/case_list.html
+#: corehq/apps/cloudcare/templates/formplayer/no_items_text.html
 msgid "List is empty."
 msgstr "La liste est vide."
 
@@ -12869,6 +12877,14 @@ msgid "Visit CommCare's knowledge base"
 msgstr "Visiter la base de connaissance de CommCare"
 
 #: corehq/apps/data_dictionary/models.py
+msgid "Group description should be less than 255 characters"
+msgstr ""
+
+#: corehq/apps/data_dictionary/models.py
+msgid "Group \"{}\" already exists for case type \"{}\""
+msgstr ""
+
+#: corehq/apps/data_dictionary/models.py
 msgid "Number"
 msgstr "Nombre"
 
@@ -12882,6 +12898,10 @@ msgstr "GPS"
 
 #: corehq/apps/data_dictionary/models.py
 msgid "No Type Currently Selected"
+msgstr ""
+
+#: corehq/apps/data_dictionary/models.py
+msgid "Property description should be less than 255 characters"
 msgstr ""
 
 #: corehq/apps/data_dictionary/models.py
@@ -12922,15 +12942,12 @@ msgid "Import from Excel"
 msgstr "Importer à partir d'Excel"
 
 #: corehq/apps/data_dictionary/templates/data_dictionary/base.html
-#: corehq/apps/export/templates/export/dialogs/process_deprecated_properties.html
-#: corehq/apps/export/templates/export/partials/new_customize_export_templates.html
-msgid "Show Deprecated Properties"
-msgstr "Afficher les propriétés obsolètes"
+msgid "Show Deprecated"
+msgstr ""
 
 #: corehq/apps/data_dictionary/templates/data_dictionary/base.html
-#: corehq/apps/export/templates/export/partials/new_customize_export_templates.html
-msgid "Hide Deprecated Properties"
-msgstr "Masquer les propriétés obsolètes"
+msgid "Hide Deprecated"
+msgstr ""
 
 #: corehq/apps/data_dictionary/templates/data_dictionary/base.html
 #: corehq/apps/data_dictionary/views.py
@@ -12939,6 +12956,14 @@ msgstr "Type de données"
 
 #: corehq/apps/data_dictionary/templates/data_dictionary/base.html
 msgid "FHIR Resource Property Path"
+msgstr ""
+
+#: corehq/apps/data_dictionary/templates/data_dictionary/base.html
+msgid "group's properties will be moved to"
+msgstr ""
+
+#: corehq/apps/data_dictionary/templates/data_dictionary/base.html
+msgid "No Group"
 msgstr ""
 
 #: corehq/apps/data_dictionary/templates/data_dictionary/base.html
@@ -12968,6 +12993,10 @@ msgstr ""
 
 #: corehq/apps/data_dictionary/templates/data_dictionary/partials/valid_values_th_content.html
 msgid "Valid Values &amp; Formats"
+msgstr ""
+
+#: corehq/apps/data_dictionary/util.py
+msgid "Case Property Group must have a name"
 msgstr ""
 
 #: corehq/apps/data_dictionary/util.py
@@ -19388,6 +19417,11 @@ msgid "Process"
 msgstr "Processus"
 
 #: corehq/apps/export/templates/export/dialogs/process_deprecated_properties.html
+#: corehq/apps/export/templates/export/partials/new_customize_export_templates.html
+msgid "Show Deprecated Properties"
+msgstr "Afficher les propriétés obsolètes"
+
+#: corehq/apps/export/templates/export/dialogs/process_deprecated_properties.html
 msgid ""
 "\n"
 "            In order to show you your deprecated properties, we need to "
@@ -19844,6 +19878,10 @@ msgstr "Masquer les questions supprimées"
 #: corehq/apps/export/templates/export/partials/new_customize_export_templates.html
 msgid "Hide Deleted Properties"
 msgstr "Masquer les propriétés supprimées"
+
+#: corehq/apps/export/templates/export/partials/new_customize_export_templates.html
+msgid "Hide Deprecated Properties"
+msgstr "Masquer les propriétés obsolètes"
 
 #: corehq/apps/export/templates/export/partials/new_customize_export_templates.html
 msgid "Use question labels"
@@ -21156,6 +21194,10 @@ msgstr ""
 
 #: corehq/apps/geospatial/reports.py
 msgid "Case Management Map"
+msgstr ""
+
+#: corehq/apps/geospatial/templates/map_visualization.html
+msgid "Export Polygons as GeoJson"
 msgstr ""
 
 #: corehq/apps/groups/templates/groups/all_groups.html
@@ -35591,10 +35633,8 @@ msgstr ""
 
 #: corehq/apps/userreports/templates/userreports/edit_data_source.html
 #: corehq/apps/userreports/templates/userreports/partials/build_in_progress_warning.html
-#, fuzzy
-#| msgid "Location configuration updated successfully"
 msgid "Populating your report did not complete successfully."
-msgstr "Configuration de site mise à jour avec succès"
+msgstr ""
 
 #: corehq/apps/userreports/templates/userreports/edit_data_source.html
 msgid "Please note that this datasource is being rebuilt."
@@ -36650,6 +36690,13 @@ msgstr "Cet utilisateur mobile existe déjà."
 
 #: corehq/apps/users/forms.py
 msgid "Invalid Deactivation Date format (expects MM-YYYY)."
+msgstr ""
+
+#: corehq/apps/users/forms.py
+#, python-brace-format
+msgid ""
+"{code} is not a valid language code. Please enter a valid ISO-639 two- or "
+"three-digit code."
 msgstr ""
 
 #: corehq/apps/users/forms.py
@@ -42674,6 +42721,15 @@ msgstr ""
 
 #: corehq/privileges.py
 msgid "Bulk user management features"
+msgstr ""
+
+#: corehq/privileges.py
+msgid "Application error report"
+msgstr ""
+
+#: corehq/privileges.py
+msgid ""
+"Show an additional 'Owner (Location)' property in report builder reports."
 msgstr ""
 
 #: corehq/reports.py
