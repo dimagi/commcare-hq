@@ -8,7 +8,7 @@ from django.contrib import messages
 from django.core.exceptions import ValidationError
 from django.db.models.query import Prefetch
 from django.db.transaction import atomic
-from django.http import HttpResponse, JsonResponse, HttpResponseRedirect
+from django.http import HttpResponse, HttpResponseRedirect, JsonResponse
 from django.shortcuts import redirect
 from django.urls import reverse
 from django.utils.decorators import method_decorator
@@ -18,33 +18,34 @@ from django.views.generic import View
 from couchexport.models import Format
 from couchexport.writers import Excel2007ExportWriter
 
-from corehq import toggles
+from corehq import privileges, toggles
+from corehq.apps.accounting.decorators import (
+    requires_privilege,
+    requires_privilege_with_fallback,
+)
+from corehq.apps.app_manager.dbaccessors import get_case_type_app_module_count
 from corehq.apps.case_importer.tracking.filestorage import make_temp_file
-from corehq.apps.data_dictionary import util
 from corehq.apps.data_dictionary.models import (
     CaseProperty,
     CasePropertyAllowedValue,
     CasePropertyGroup,
     CaseType,
 )
-from corehq.apps.data_dictionary.util import save_case_property, save_case_property_group
+from corehq.apps.data_dictionary.util import (
+    save_case_property,
+    save_case_property_group,
+)
 from corehq.apps.domain.decorators import login_and_domain_required
 from corehq.apps.hqwebapp.decorators import use_jquery_ui
 from corehq.apps.hqwebapp.utils import get_bulk_upload_form
 from corehq.apps.settings.views import BaseProjectDataView
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import HqPermissions
-
 from corehq.motech.fhir.utils import (
     load_fhir_resource_mappings,
+    load_fhir_resource_types,
     remove_fhir_resource_type,
     update_fhir_resource_type,
-    load_fhir_resource_types,
-)
-from corehq.project_limits.rate_limiter import (
-    RateDefinition,
-    RateLimiter,
-    get_dynamic_rate_definition,
 )
 from corehq.util.files import file_extention_from_filename
 from corehq.util.workbook_reading import open_any_workbook
@@ -472,7 +473,7 @@ def _process_bulk_upload(bulk_file, domain):
                         continue
                     if row_len < 3:
                         # if missing value or description, fill in "blank"
-                        row += [Cell(value='') for _ in range(3 - row_len)]
+                        row += [Cell(value='') for __ in range(3 - row_len)]
                     row = [cell.value if cell.value is not None else '' for cell in row]
                     prop_name, allowed_value, description = [str(val) for val in row[0:3]]
                     if allowed_value and not prop_name:
