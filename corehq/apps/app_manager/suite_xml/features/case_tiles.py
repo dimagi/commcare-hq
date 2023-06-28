@@ -86,16 +86,18 @@ class CaseTileHelper(object):
                 DetailContributor.get_case_search_action(self.module, self.build_profile_id, self.detail_id)
             )
 
-        # Add sort to field or field containing sort if needed. Excludes legacy tile template to preserve behavior
-        # of existing apps using this template.
+        # Add sort if needed. Excludes legacy tile template to
+        # preserve behavior of existing apps using this template.
         if self.detail.case_tile_template != CaseTileTemplates.PERSON_SIMPLE.value:
             xpath_to_field = self._get_xpath_mapped_to_field_containing_sort()
             for field in detail.fields:
                 populated_xpath_function = self._escape_xpath_function(field.template.text.xpath_function)
                 if populated_xpath_function in xpath_to_field:
+                    # Adds sort element to the field
                     field.sort_node = xpath_to_field.pop(populated_xpath_function).sort_node
 
-            #detail.fields contains only display properties. This adds fields for sort-only properties.
+            # detail.fields contains only display properties, not sort-only properties.
+            # This adds to detail, hidden fields that contain sort elements.
             for field in xpath_to_field.values():
                 detail.fields.append(field)
 
