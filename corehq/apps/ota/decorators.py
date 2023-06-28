@@ -31,7 +31,7 @@ def require_mobile_access(fn):
     def _inner(request, domain, *args, **kwargs):
         origin_token = request.META.get(ORIGIN_TOKEN_HEADER, None)
         if origin_token:
-            if _test_token_valid(origin_token):
+            if validate_origin_token(origin_token):
                 return fn(request, domain, *args, **kwargs)
             else:
                 auth_logger.info(
@@ -48,7 +48,11 @@ def require_mobile_access(fn):
     return _inner
 
 
-def _test_token_valid(origin_token):
+def validate_origin_token(origin_token):
+    """
+    This checks that the origin token passed in is a valid one set in redis
+    by Formplayer.
+    """
     client = get_redis_client().client.get_client()
     test_result = client.get("%s%s" % (ORIGIN_TOKEN_SLUG, origin_token))
     if test_result:

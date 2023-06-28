@@ -2,12 +2,13 @@ import io
 import itertools
 import json
 from collections import defaultdict
+from operator import attrgetter
 
 from django.contrib import messages
 from django.core.exceptions import ValidationError
 from django.db.models.query import Prefetch
 from django.db.transaction import atomic
-from django.http import HttpResponse, JsonResponse, HttpResponseRedirect
+from django.http import HttpResponse, HttpResponseRedirect, JsonResponse
 from django.shortcuts import redirect
 from django.urls import reverse
 from django.utils.decorators import method_decorator
@@ -19,30 +20,27 @@ from couchexport.writers import Excel2007ExportWriter
 
 from corehq import toggles
 from corehq.apps.case_importer.tracking.filestorage import make_temp_file
-from corehq.apps.data_dictionary import util
 from corehq.apps.data_dictionary.models import (
     CaseProperty,
     CasePropertyAllowedValue,
+    CasePropertyGroup,
     CaseType,
 )
-from corehq.apps.data_dictionary.util import save_case_property
+from corehq.apps.data_dictionary.util import (
+    save_case_property,
+    save_case_property_group,
+)
 from corehq.apps.domain.decorators import login_and_domain_required
 from corehq.apps.hqwebapp.decorators import use_jquery_ui
 from corehq.apps.hqwebapp.utils import get_bulk_upload_form
 from corehq.apps.settings.views import BaseProjectDataView
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import HqPermissions
-
 from corehq.motech.fhir.utils import (
     load_fhir_resource_mappings,
+    load_fhir_resource_types,
     remove_fhir_resource_type,
     update_fhir_resource_type,
-    load_fhir_resource_types,
-)
-from corehq.project_limits.rate_limiter import (
-    RateDefinition,
-    RateLimiter,
-    get_dynamic_rate_definition,
 )
 from corehq.util.files import file_extention_from_filename
 from corehq.util.workbook_reading import open_any_workbook
@@ -50,38 +48,6 @@ from corehq.util.workbook_reading.datamodels import Cell
 
 FHIR_RESOURCE_TYPE_MAPPING_SHEET = "fhir_mapping"
 ALLOWED_VALUES_SHEET_SUFFIX = "-vl"
-
-data_dictionary_rebuild_rate_limiter = RateLimiter(
-    feature_key='data_dictionary_rebuilds_per_user',
-    get_rate_limits=lambda scope: get_dynamic_rate_definition(
-        'data_dictionary_rebuilds_per_user',
-        default=RateDefinition(
-            per_hour=3,
-            per_minute=2,
-            per_second=1,
-        )
-    ).get_rate_limits(scope),
-)
-
-
-@login_and_domain_required
-@toggles.DATA_DICTIONARY.required_decorator()
-@require_permission(HqPermissions.edit_data_dict)
-def generate_data_dictionary(request, domain):
-    if data_dictionary_rebuild_rate_limiter.allow_usage(domain):
-        data_dictionary_rebuild_rate_limiter.report_usage(domain)
-        try:
-            util.generate_data_dictionary(domain)
-        except util.OldExportsEnabledException:
-            return JsonResponse({
-                "failed": "Data Dictionary requires access to new exports"
-            }, status=400)
-
-        return JsonResponse({"status": "success"})
-    else:
-        return JsonResponse({
-            "failed": "Rate limit exceeded. Please try again later."
-        }, status=429)
 
 
 @login_and_domain_required
@@ -91,7 +57,8 @@ def data_dictionary_json(request, domain, case_type_name=None):
     fhir_resource_type_name_by_case_type = {}
     fhir_resource_prop_by_case_prop = {}
     queryset = CaseType.objects.filter(domain=domain).prefetch_related(
-        Prefetch('properties', queryset=CaseProperty.objects.order_by('name')),
+        Prefetch('groups', queryset=CasePropertyGroup.objects.order_by('index')),
+        Prefetch('properties', queryset=CaseProperty.objects.order_by('group_obj_id', 'index')),
         Prefetch('properties__allowed_values', queryset=CasePropertyAllowedValue.objects.order_by('allowed_value'))
     )
     if toggles.FHIR_INTEGRATION.enabled(domain):
@@ -103,20 +70,37 @@ def data_dictionary_json(request, domain, case_type_name=None):
         p = {
             "name": case_type.name,
             "fhir_resource_type": fhir_resource_type_name_by_case_type.get(case_type),
+            "groups": [],
             "properties": [],
         }
-        for prop in case_type.properties.all():
-            p['properties'].append({
+        grouped_properties = {
+            group: [{
                 "description": prop.description,
                 "label": prop.label,
-                "index": prop.index,
                 "fhir_resource_prop_path": fhir_resource_prop_by_case_prop.get(prop),
                 "name": prop.name,
                 "data_type": prop.data_type,
-                "group": prop.group_name,
                 "deprecated": prop.deprecated,
                 "allowed_values": {av.allowed_value: av.description for av in prop.allowed_values.all()},
+            } for prop in props] for group, props in itertools.groupby(
+                case_type.properties.all(),
+                key=attrgetter('group_obj_id')
+            )
+        }
+        for group in case_type.groups.all():
+            p["groups"].append({
+                "id": group.id,
+                "name": group.name,
+                "description": group.description,
+                "deprecated": group.deprecated,
+                "properties": grouped_properties.get(group.id, [])
             })
+
+        # Aggregate properties that dont have a group
+        p["groups"].append({
+            "name": "",
+            "properties": grouped_properties.get(None, [])
+        })
         props.append(p)
     return JsonResponse({'case_types': props})
 
@@ -150,10 +134,25 @@ def update_case_property(request, domain):
     errors = []
     update_fhir_resources = toggles.FHIR_INTEGRATION.enabled(domain)
     property_list = json.loads(request.POST.get('properties'))
+    group_list = json.loads(request.POST.get('groups'))
 
     if update_fhir_resources:
         errors, fhir_resource_type_obj = _update_fhir_resource_type(request, domain)
     if not errors:
+        for group in group_list:
+            case_type = group.get("caseType")
+            id = group.get("id")
+            name = group.get("name")
+            index = group.get("index")
+            description = group.get("description")
+            deprecated = group.get("deprecated")
+
+            if name:
+                error = save_case_property_group(id, name, case_type, domain, description, index, deprecated)
+
+            if error:
+                errors.append(error)
+
         for property in property_list:
             case_type = property.get('caseType')
             name = property.get('name')
@@ -352,7 +351,7 @@ class DataDictionaryView(BaseProjectDataView):
     @use_jquery_ui
     @method_decorator(toggles.DATA_DICTIONARY.required_decorator())
     @method_decorator(require_permission(HqPermissions.edit_data_dict,
-                        view_only_permission=HqPermissions.view_data_dict))
+                                         view_only_permission=HqPermissions.view_data_dict))
     def dispatch(self, request, *args, **kwargs):
         return super(DataDictionaryView, self).dispatch(request, *args, **kwargs)
 
@@ -449,7 +448,7 @@ def _process_bulk_upload(bulk_file, domain):
                         continue
                     if row_len < 3:
                         # if missing value or description, fill in "blank"
-                        row += [Cell(value='') for _ in range(3 - row_len)]
+                        row += [Cell(value='') for __ in range(3 - row_len)]
                     row = [cell.value if cell.value is not None else '' for cell in row]
                     prop_name, allowed_value, description = [str(val) for val in row[0:3]]
                     if allowed_value and not prop_name:

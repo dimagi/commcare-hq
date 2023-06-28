@@ -15,7 +15,6 @@ on matching parent and child datums.
 
 """
 from collections import defaultdict
-from itertools import zip_longest
 
 import attr
 from django.utils.translation import gettext as _
@@ -395,7 +394,7 @@ class EntriesHelper(object):
         entry.assertions.append(assertion)
 
     @staticmethod
-    def get_extra_case_id_datums(form):
+    def get_extra_case_id_datums(form, case_datum=None):
         datums = []
         actions = form.active_actions()
         if form.form_type == 'module_form' and actions_use_usercase(actions):
@@ -405,6 +404,24 @@ class EntriesHelper(object):
                 case_type=USERCASE_TYPE,
                 requires_selection=False,
                 action=None  # Unused (and could be actions['usercase_update'] or actions['usercase_preload'])
+            ))
+        if case_datum and form.get_module().has_grouped_tiles():
+            # add a datum for the parent case ids
+            case_datum_id = case_datum.datum.id
+            index_identifier = form.get_module().case_details.short.case_tile_group.index_identifier
+            if isinstance(case_datum.datum, InstanceDatum):
+                """
+                distinct-values(instance('casedb')/casedb/case[selected(join(' ', instance('selected_cases')/results/value), @case_id)]/index/parent)
+                """
+                predicate = f"selected(join(' ', instance('{case_datum_id}')/results/value), @case_id)"
+            else:
+                predicate = f"@case_id = instance('commcaresession')/session/data/{case_datum_id}"
+            func = f"join(' ', distinct-values(instance('casedb')/casedb/case[{predicate}]/index/{index_identifier}))"
+            datums.append(FormDatumMeta(
+                datum=SessionDatum(id=f"{case_datum_id}_parent_ids", function=func),
+                case_type=None,
+                requires_selection=False,
+                action=None
             ))
         return datums
 
@@ -458,9 +475,10 @@ class EntriesHelper(object):
         if not form or form.requires_case():
             datums.extend(self.get_datum_meta_module(module, use_filter=True))
 
+        case_datum = datums[-1] if datums else None
         if form:
             datums.extend(EntriesHelper.get_new_case_id_datums_meta(form))
-            datums.extend(EntriesHelper.get_extra_case_id_datums(form))
+            datums.extend(EntriesHelper.get_extra_case_id_datums(form, case_datum))
 
         return self.add_parent_datums(datums, module)
 
@@ -987,8 +1005,8 @@ class EntriesHelper(object):
     def _get_module_for_persistent_context(self, module_unique_id):
         module_for_persistent_context = self.app.get_module_by_unique_id(module_unique_id)
         if (module_for_persistent_context and
-                (module_for_persistent_context.case_details.short.use_case_tiles or
-                 module_for_persistent_context.case_details.short.custom_xml
+                (module_for_persistent_context.case_details.short.case_tile_template
+                 or module_for_persistent_context.case_details.short.custom_xml
                  )):
             return module_for_persistent_context
 

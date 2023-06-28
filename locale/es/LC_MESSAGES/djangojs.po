@@ -346,6 +346,10 @@ msgid "Unknown menu"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/details/screen.js
+msgid "Don't Use Case Tiles"
+msgstr "No Usar Fichas de Caso"
+
+#: corehq/apps/app_manager/static/app_manager/js/details/screen.js
 msgid "You have unsaved detail screen configurations."
 msgstr "Tiene configuraciones de detalle de pantalla sin guardar"
 
@@ -2799,8 +2803,8 @@ msgstr ""
 
 #: corehq/apps/cloudcare/static/cloudcare/js/form_entry/entries.js
 msgid ""
-"The file you selected exceeds the size limit of 3MB. Please select a file "
-"that is smaller than 3MB."
+"The file you selected exceeds the size limit of 4MB. Please select a file "
+"that is smaller than 4MB."
 msgstr ""
 
 #: corehq/apps/cloudcare/static/cloudcare/js/form_entry/entries.js
@@ -2964,14 +2968,14 @@ msgid "Fetching your location..."
 msgstr ""
 
 #: corehq/apps/cloudcare/static/cloudcare/js/formplayer/menus/views.js
-#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/sessions/views.js
-msgid "Page <%-num%>"
-msgstr ""
-
-#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/menus/views.js
 msgid ""
 "You have selected more than the maximum selection limit of <%= value %> . "
 "Please uncheck some values to continue."
+msgstr ""
+
+#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/menus/views.js
+#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/sessions/views.js
+msgid "Page <%-num%>"
 msgstr ""
 
 #: corehq/apps/cloudcare/static/cloudcare/js/formplayer/menus/views/query.js
@@ -3518,6 +3522,14 @@ msgstr "ID Confidencial"
 #: corehq/apps/export/static/export/js/models.js
 msgid "Sensitive Date"
 msgstr "Fecha Confidencial"
+
+#: corehq/apps/geospatial/static/geospatial/js/geospatial_map.js
+msgid "View here"
+msgstr ""
+
+#: corehq/apps/geospatial/static/geospatial/js/geospatial_map.js
+msgid "There are case(s) missing geolocation data."
+msgstr ""
 
 #: corehq/apps/groups/static/groups/js/group_members.js
 msgid "Edit Group Information"
@@ -4172,6 +4184,10 @@ msgstr ""
 #: corehq/apps/reports/static/reports/js/reports.async.js
 msgid "Gateway Timeout. Please contact CommCare HQ Support."
 msgstr "Caducó el Portal. Por favor contacte al Soporte de CommCare HQ."
+
+#: corehq/apps/reports/static/reports/js/reports.async.js
+msgid "Your search term was too long. Please provide a shorter search filter"
+msgstr ""
 
 #: corehq/apps/reports/static/reports/js/reports.async.js
 msgid "We were unsuccessful loading the report:"
@@ -4995,10 +5011,8 @@ msgid "Failed to schedule task to import from OpenMRS."
 msgstr ""
 
 #: corehq/motech/repeaters/static/repeaters/js/repeat_record_report.js
-#, fuzzy
-#| msgid "Failed to re-process"
 msgid "Failed to fetch attempts"
-msgstr "Reproceso fallido"
+msgstr ""
 
 #: corehq/motech/repeaters/static/repeaters/js/repeat_record_report.js
 msgid "Failed to fetch payload"

@@ -6,6 +6,7 @@
 
     <div aria-label="<%- title %>" tabindex="0" class="page-header menu-header"><h1 class="page-title"><%- title %></h1></div>
 
+    <% if (!sidebarEnabled) { %>
     <div class="module-search-container">
       <div class="input-group input-group-lg">
         <input type="text" class="form-control" placeholder="Search" id="searchText">
@@ -16,49 +17,51 @@
         </div>
       </div>
     </div>
-
-    <% if (useGrid) { %>
-    <section class="js-case-container clearfix list-cell-container-style"></section>
-    <% } else { %>
-    <div class="module-case-list-table-container">
-      <table class="table module-table module-table-case-list">
-        <% if(!useTiles) { %>
-        <thead>
-        <tr>
-          <% if (isMultiSelect && !hasNoItems) { %>
-          <th class="module-case-list-header"><input type="checkbox" id="select-all-checkbox"/></th>
-          <% } %>
-          <% _.each(headers, function(header, index) { %>
-          <% if (columnVisible(index)) { %>
-          <% if (columnSortable(index)) { %>
-          <th class="module-case-list-header header-clickable formplayer-request" data-id="<%- index %>"> <%- header %></th>
-          <% } else { %>
-          <th class="module-case-list-header" data-id="<%- index %>"> <%- header %></th>
-          <% } %>
-          <% } %>
-          <% }); %>
-        </tr>
-        </thead>
-        <% } %>
-        <% if (hasNoItems) { %>
-        <tbody>
-        <tr>
-          <td class="module-case-list-column module-case-list-column-empty" colspan="<%-headers.length%>">
-            <% if (noItemsText === null) {%>
-              <div class="alert alert-info">{% trans "List is empty." %}</div>
-            <% } else { %>
-              <div class="alert alert-info"><%- noItemsText %></div>
-            <% } %>
-          </td>
-        </tr>
-        </tbody>
-        <% } %>
-        <tbody class="wrapper js-case-container">
-        </tbody>
-      </table>
-    </div>
     <% } %>
 
+    <div style="<%- columnStyle %>">
+      <div id="module-case-list-column-next-to-map">
+        <% if (useTiles) { %>
+          <% if (hasNoItems) { %>
+            {% include 'formplayer/no_items_text.html' %}
+          <% } else if (isMultiSelect) { %>
+            <input type="checkbox" id="select-all-tile-checkbox"/>
+            <label id="select-all-tile-checkbox-label" for="select-all-tile-checkbox">{% trans "Select All" %}</label>
+          <% } %>
+          <section  class="js-case-container clearfix list-cell-container-style"></section>
+        <% } else { %>
+        <div class="module-case-list-table-container">
+          <table class="table module-table module-table-case-list">
+              <thead>
+                <tr>
+                  <% if (isMultiSelect && !hasNoItems) { %>
+                    <th class="module-case-list-header"><input type="checkbox" id="select-all-checkbox"/></th>
+                  <% } %>
+                  <%  _.each(headers, function(header, index) { %>
+                    <% if (columnVisible(index)) { %>
+                      <% if (columnSortable(index)) { %>
+                        <th class="module-case-list-header header-clickable formplayer-request" data-id="<%- index %>"> <%- header %></th>
+                      <% } else { %>
+                        <th class="module-case-list-header" data-id="<%- index %>"> <%- header %></th>
+                      <% } %>
+                    <% } %>
+                  <% }); %>
+                </tr>
+              </thead>
+
+            <% if (hasNoItems) { %>
+              {% include 'formplayer/no_items_text.html' %}
+            <% } %>
+            <tbody class="wrapper js-case-container">
+            </tbody>
+          </table>
+        </div>
+        <% } %>
+      </div>
+      <% if (showMap) { %>
+        <div id="module-case-list-map" class="map <% if (useTiles) { %> white-border<% } %>"></div>
+      <% } %>
+    </div>
     <% if (actions || isMultiSelect) { %>
     <div class="case-list-actions">
       <% if (isMultiSelect) { %>
@@ -84,24 +87,30 @@
 
 <script type="text/template" id="case-view-item-template">
   <% if (isMultiSelect) { %>
-  <td class="module-case-list-column-checkbox"><input type="checkbox" class="select-row-checkbox"/></td>
+    <td class="module-case-list-column-checkbox"><input type="checkbox" class="select-row-checkbox"/></td>
   <% } %>
   <% _.each(data, function(datum, index) { %>
-  <% if (!(styles[index].widthHint === 0)) { %>
-  <% if (styles[index].displayFormat === 'Image') { %>
-  <td class="module-case-list-column"><img class="module-icon" src="<%- resolveUri(datum) %>"/></td>
-  <% } else if (styles[index].displayFormat === 'Markdown') { %>
-  <td class="module-case-list-column"><%= renderMarkdown(datum) %></td>
-  <% } else if (styles[index].displayFormat === 'Graph') { %>
-  <td class="module-case-list-column"><iframe srcdoc="<%- datum %>" height="300" width="300"></iframe></td>
-  <% } else { %>
-  <td class="module-case-list-column"><%- datum %></td>
-  <% } %>
-  <% } %>
+    <% if (!(styles[index].widthHint === 0)) { %>
+      <% if (styles[index].displayFormat === 'Image') { %>
+        <td class="module-case-list-column"><img class="module-icon" src="<%- resolveUri(datum) %>"/></td>
+      <% } else if (styles[index].displayFormat === 'Markdown') { %>
+        <td class="module-case-list-column webapp-markdown-output"><%= renderMarkdown(datum) %></td>
+      <% } else if (styles[index].displayFormat === 'Graph') { %>
+        <td class="module-case-list-column"><iframe srcdoc="<%- datum %>" height="300" width="300"></iframe></td>
+      <% } else { %>
+        <td class="module-case-list-column"><%- datum %></td>
+      <% } %>
+    <% } %>
   <% }); %>
 </script>
 
 <script type="text/template" id="case-tile-view-item-template">
+    <% if (isMultiSelect) { %>
+      <div class="select-row-checkbox-div">
+        <input type="checkbox" class="select-row-checkbox"/>
+      </div>
+    <% } %>
+
   <div class="<%- prefix %>-cell-grid-style">
     <% _.each(data, function(datum, index) { %>
     <div class="<%- prefix %>-grid-style-<%- index %> box">
@@ -112,10 +121,55 @@
       <% } else if(styles[index].widthHint === 0) { %>
       <div style="display:none;"><%- datum %></div>
       <% } else { %>
-      <div><%= renderMarkdown(datum) %></div>
+      <div class="webapp-markdown-output"><%= renderMarkdown(datum) %></div>
       <% } %>
     </div>
     <% }); %>
+  </div>
+</script>
+
+<script type="text/template" id="case-tile-grouped-view-item-template">
+  <% if (isMultiSelect) { %>
+    <div class="select-row-checkbox-div">
+      <input type="checkbox" class="select-row-checkbox"/>
+    </div>
+  <% } %>
+
+  <div class="group-data">
+    <div class="<%- prefix %>-cell-grid-style">
+      <% for (let [index, datum] of Object.entries(indexedHeaderData)) { %>
+        <div class="<%- prefix %>-grid-style-<%- index %> box" >
+          <% if (styles[index].displayFormat === 'Image') {
+          if(resolveUri(datum)) { %>
+            <img class="module-icon" style="max-width:100%; max-height:100%;" src="<%- resolveUri(datum) %>"/>
+          <% } %>
+          <% } else if(styles[index].widthHint === 0) { %>
+            <div style="display:none;"><%- datum %></div>
+          <% } else { %>
+            <div class="webapp-markdown-output"><%= renderMarkdown(datum) %></div>
+          <% } %>
+        </div>
+      <% }; %>
+    </div>
+
+    <div class="group-rows">
+      <% _.each(indexedRowDataList, function(indexedRowData) { %>
+        <div class="<%- prefix %>-cell-grid-style group-row">
+          <% for (let index in indexedRowData) { %>
+            <% let datum = indexedRowData[index]; %>
+            <div class="<%- prefix %>-grid-style-<%- index %> box">
+              <% if (styles[index].displayFormat === 'Image') {
+                if(resolveUri(datum)) { %>
+                  <img class="module-icon" style="max-width:100%; max-height:100%;" src="<%- resolveUri(datum) %>"/>
+                <% } %>
+                <% } else { %>
+                  <div class="webapp-markdown-output"><%= renderMarkdown(datum) %></div>
+              <% } %>
+            </div>
+          <% } %>
+        </div>
+      <% }); %>
+    </div>
   </div>
 </script>
 
@@ -137,16 +191,6 @@
   color: #685c53;
   justify-items: left;
   padding: 10px 20px 0 20px;
-  }
-</script>
-
-<script type="text/template" id="cell-wrapper-style-template">
-  .list-cell-wrapper-style {
-  border: 1px solid white;
-  border-collapse: collapse;
-  vertical-align: top;
-  background-color: #f2f2f1;
-  container-type: inline-size;
   }
 </script>
 

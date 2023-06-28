@@ -1,5 +1,7 @@
 import json
 from dataclasses import dataclass
+from django.db import models
+from django.utils.translation import gettext_lazy as _
 from eulxml.xmlmap.core import load_xmlobject_from_string
 from memoized import memoized
 from pathlib import Path
@@ -8,15 +10,22 @@ from xml.sax.saxutils import escape
 
 from corehq.apps.app_manager import id_strings
 from corehq.apps.app_manager.exceptions import SuiteError
-from corehq.apps.app_manager.suite_xml.xml_models import Detail, XPathVariable
+from corehq.apps.app_manager.suite_xml.xml_models import Detail, XPathVariable, TileGroup
 from corehq.apps.app_manager.util import (
-    module_loads_registry_case,
     module_offers_search,
     module_uses_inline_search,
 )
 
 
 TILE_DIR = Path(__file__).parent.parent / "case_tile_templates"
+
+
+class CaseTileTemplates(models.TextChoices):
+    PERSON_SIMPLE = ("person_simple", _("Person Simple"))
+    ONE_ONE_TWO = ("one_one_two", _("Title row, subtitle row, third row with two cells, and map"))
+    ONE_TWO_ONE = ("one_two_one", _("Title row, second row with two cells, third row, and map"))
+    ONE_TWO_ONE_ONE = ("one_two_one_one", _("Title row, second row with two cells, third and "
+                                            "fourth rows, and map"))
 
 
 @dataclass
@@ -31,9 +40,9 @@ class CaseTileTemplateConfig:
 
 
 @memoized
-def case_tile_template_config():
+def case_tile_template_config(template):
     with open(
-        TILE_DIR / "person_simple.json",
+        TILE_DIR / (template + '.json'),
         encoding='utf-8'
     ) as f:
         data = json.loads(f.read())
@@ -41,15 +50,17 @@ def case_tile_template_config():
 
 
 class CaseTileHelper(object):
-    def __init__(self, app, module, detail, detail_type, build_profile_id):
+    def __init__(self, app, module, detail, detail_id, detail_type, build_profile_id):
         self.app = app
         self.module = module
         self.detail = detail
+        self.detail_id = detail_id
         self.detail_type = detail_type
         self.cols_by_tile_field = {col.case_tile_field: col for col in self.detail.columns}
         self.build_profile_id = build_profile_id
 
     def build_case_tile_detail(self):
+        from corehq.apps.app_manager.suite_xml.sections.details import DetailContributor
         """
         Return a Detail node from an apps.app_manager.models.Detail that is
         configured to use case tiles.
@@ -59,7 +70,7 @@ class CaseTileHelper(object):
         """
         # Get template context
         context = self._get_base_context()
-        for template_field in case_tile_template_config().fields:
+        for template_field in case_tile_template_config(self.detail.case_tile_template).fields:
             column = self._get_matched_detail_column(template_field)
             context[template_field] = self._get_column_context(column)
 
@@ -69,12 +80,19 @@ class CaseTileHelper(object):
 
         # Add case search action if needed
         if module_offers_search(self.module) and not module_uses_inline_search(self.module):
-            from corehq.apps.app_manager.suite_xml.sections.details import DetailContributor
-            in_search = module_loads_registry_case(self.module)
-            detail.actions.append(
-                DetailContributor.get_case_search_action(self.module,
-                                                         self.build_profile_id,
-                                                         in_search=in_search)
+            if (case_search_action := DetailContributor.get_case_search_action(
+                self.module,
+                self.build_profile_id,
+                self.detail_id
+            )) is not None:
+                detail.actions.append(case_search_action)
+
+        DetailContributor.add_no_items_text_to_detail(detail, self.app, self.detail_type, self.module)
+
+        if self.module.has_grouped_tiles():
+            detail.tile_group = TileGroup(
+                function=f"string(./index/{self.detail.case_tile_group.index_identifier})",
+                header_rows=self.detail.case_tile_group.header_rows
             )
 
         return detail
@@ -121,18 +139,12 @@ class CaseTileHelper(object):
             # The right thing to do would be to reference the app_strings.txt I think
             "prefix": escape(
                 column.header.get(default_lang, "")
-            )
+            ),
+            "format": column.format
         }
-        if column.enum and column.format != "enum" and column.format != "conditional-enum":
-            raise SuiteError(
-                'Expected case tile field "{}" to be an id mapping with keys {}.'.format(
-                    column.case_tile_field,
-                    ", ".join(['"{}"'.format(i.key) for i in column.enum])
-                )
-            )
 
         context['variables'] = ''
-        if column.format == "enum" or column.format == 'conditional-enum':
+        if column.format in ["enum", "conditional-enum", "enum-image"]:
             context["variables"] = self._get_enum_variables(column)
         return context
 
@@ -156,5 +168,5 @@ class CaseTileHelper(object):
         Return a string suitable for building a case tile detail node
         through `String.format`.
         """
-        with open(case_tile_template_config().filepath, encoding='utf-8') as f:
+        with open(case_tile_template_config(self.detail.case_tile_template).filepath, encoding='utf-8') as f:
             return f.read()

@@ -9,16 +9,26 @@ describe('Render a case list', function () {
             "toggles_dict",
             {
                 CHANGE_FORM_LANGUAGE: false,
+                SPLIT_SCREEN_CASE_SEARCH: false,
             }
         );
         sinon.stub(Utils, 'getCurrentQueryInputs').callsFake(function () { return {}; });
     });
 
     describe('#getMenuView', function () {
-        let server;
+        let FormplayerFrontend = hqImport("cloudcare/js/formplayer/app"),
+            server,
+            user;
         beforeEach(function () {
             server = sinon.useFakeXMLHttpRequest();
             sinon.stub(Backbone.history, 'getFragment').callsFake(sinon.spy());
+
+            user = FormplayerFrontend.getChannel().request('currentUser');
+            user.displayOptions = {
+                singleAppMode: false,
+            };
+
+            hqImport("cloudcare/js/formplayer/apps/api").primeApps(user.restoreAs, new Backbone.Collection());
         });
 
         afterEach(function () {
@@ -30,7 +40,6 @@ describe('Render a case list', function () {
         it('Should parse a case list response to a CaseListView', function () {
             let view = getMenuView(hqImport("cloudcare/js/formplayer/spec/fixtures/case_list"));
             assert.isFalse(view.templateContext().useTiles);
-            assert.isFalse(view.templateContext().useGrid);
         });
 
         it('Should parse a menu list response to a MenuListView', function () {
@@ -41,13 +50,11 @@ describe('Render a case list', function () {
         it('Should parse a case list response with tiles to a CaseTileListView', function () {
             let view = getMenuView(hqImport("cloudcare/js/formplayer/spec/fixtures/case_tile_list"));
             assert.isTrue(view.templateContext().useTiles);
-            assert.isFalse(view.templateContext().useGrid);
         });
 
         it('Should parse a case grid response with tiles to a GridCaseTileListView', function () {
             let view = getMenuView(hqImport("cloudcare/js/formplayer/spec/fixtures/case_grid_list"));
             assert.isTrue(view.templateContext().useTiles);
-            assert.isTrue(view.templateContext().useGrid);
         });
     });
 

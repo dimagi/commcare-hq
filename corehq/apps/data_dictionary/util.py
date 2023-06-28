@@ -175,6 +175,35 @@ def get_deprecated_fields(domain, case_type_name):
     return deprecated_fields
 
 
+def save_case_property_group(id, name, case_type, domain, description, index, deprecated):
+    """
+    Takes a case property group to update and returns an error if there was one
+    """
+    if not name:
+        return gettext('Case Property Group must have a name')
+
+    case_type_obj = CaseType.objects.get(domain=domain, name=case_type)
+    if id is not None:
+        group_obj = CasePropertyGroup.objects.get(id=id, case_type=case_type_obj)
+    else:
+        group_obj = CasePropertyGroup(case_type=case_type_obj)
+
+    group_obj.name = name
+    if description is not None:
+        group_obj.description = description
+    if index is not None:
+        group_obj.index = index
+    if deprecated is not None:
+        group_obj.deprecated = deprecated
+
+    try:
+        group_obj.full_clean(validate_unique=True)
+    except ValidationError as e:
+        return str(e)
+
+    group_obj.save()
+
+
 def save_case_property(name, case_type, domain=None, data_type=None,
                        description=None, label=None, group=None, deprecated=None,
                        fhir_resource_prop_path=None, fhir_resource_type=None, remove_path=False,
@@ -188,13 +217,16 @@ def save_case_property(name, case_type, domain=None, data_type=None,
     prop = CaseProperty.get_or_create(
         name=name, case_type=case_type, domain=domain
     )
-    if data_type:
-        prop.data_type = data_type
+    prop.data_type = data_type if data_type else ""
     if description is not None:
         prop.description = description
-    if group:
+    if group is not None:
         prop.group = group
-        prop.group_obj, created = CasePropertyGroup.objects.get_or_create(name=group, case_type=prop.case_type)
+        # Allow properties to have no group
+        if group:
+            prop.group_obj, created = CasePropertyGroup.objects.get_or_create(name=group, case_type=prop.case_type)
+        else:
+            prop.group_obj = None
     if deprecated is not None:
         prop.deprecated = deprecated
     if label is not None:

@@ -61,7 +61,6 @@ from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.app_manager import (
     app_strings,
     commcare_settings,
-    current_builds,
     id_strings,
     remote_app,
 )
@@ -83,7 +82,6 @@ from corehq.apps.app_manager.dbaccessors import (
     get_latest_released_app_doc,
     wrap_app,
 )
-from corehq.apps.app_manager.detail_screen import PropertyXpathGenerator
 from corehq.apps.app_manager.exceptions import (
     AppEditingError,
     FormNotFoundException,
@@ -94,7 +92,6 @@ from corehq.apps.app_manager.exceptions import (
     VersioningError,
     XFormException,
     XFormValidationError,
-    XFormValidationFailed,
     ModuleIdMissingException,
     AppValidationError,
 )
@@ -1918,6 +1915,13 @@ class CaseListLookupMixin(DocumentSchema):
     lookup_field_template = StringProperty(exclude_if_none=True)
 
 
+class CaseTileGroupConfig(DocumentSchema):
+    # e.g. "./index/parent"
+    index_identifier = StringProperty()
+    # number of rows of the tile to use for the group header
+    header_rows = IntegerProperty(default=2)
+
+
 class Detail(IndexedSchema, CaseListLookupMixin):
     """
     Full configuration for a case selection screen
@@ -1953,7 +1957,7 @@ class Detail(IndexedSchema, CaseListLookupMixin):
     max_select_value = IntegerProperty(default=100)
 
     # If True, use case tiles in the case list
-    use_case_tiles = BooleanProperty()
+    case_tile_template = StringProperty(exclude_if_none=True)
     # If given, use this string for the case tile markup instead of the default temaplte
     custom_xml = StringProperty(exclude_if_none=True)
 
@@ -1962,6 +1966,7 @@ class Detail(IndexedSchema, CaseListLookupMixin):
     persistent_case_tile_from_module = StringProperty(exclude_if_none=True)
     # If True, the in form tile can be pulled down to reveal all the case details.
     pull_down_tile = BooleanProperty()
+    case_tile_group = SchemaProperty(CaseTileGroupConfig)
 
     print_template = DictProperty()
 
@@ -2011,7 +2016,7 @@ class Detail(IndexedSchema, CaseListLookupMixin):
         """
         Return True if configured to persist a case tile on forms
         """
-        return self.persist_tile_on_forms and (self.use_case_tiles or self.custom_xml)
+        return self.persist_tile_on_forms and (self.case_tile_template or self.custom_xml)
 
     def overwrite_attrs(self, src_detail, attrs):
         """
@@ -2021,12 +2026,13 @@ class Detail(IndexedSchema, CaseListLookupMixin):
         This method is relevant only for short details.
         """
         case_tile_configuration_list = [
-            'use_case_tiles',
+            'case_tile_template',
             'persist_tile_on_forms',
             'persistent_case_tile_from_module',
             'pull_down_tile',
             'persist_case_context',
             'persistent_case_context_xml',
+            'case_tile_group',
         ]
         for attr in attrs:
             if attr == "case_tile_configuration":
@@ -2337,6 +2343,13 @@ class ModuleBase(IndexedSchema, ModuleMediaMixin, NavMenuItemMediaMixin, Comment
     @property
     def max_select_value(self):
         return self.case_details.short.max_select_value
+
+    def has_grouped_tiles(self):
+        return (
+            hasattr(self, 'case_details')
+            and self.case_details.short.case_tile_template
+            and self.case_details.short.case_tile_group.index_identifier
+        )
 
     def default_name(self, app=None):
         if not app:

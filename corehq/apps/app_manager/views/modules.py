@@ -2,7 +2,6 @@ import json
 import logging
 from collections import OrderedDict
 from functools import partial
-from looseversion import LooseVersion
 
 from django.contrib import messages
 from django.http import (
@@ -13,19 +12,15 @@ from django.http import (
 )
 from django.template.loader import render_to_string
 from django.urls import reverse
-from django.utils.safestring import mark_safe
 from django.utils.html import format_html
-from django.utils.translation import gettext_lazy
+from django.utils.safestring import mark_safe
 from django.utils.translation import gettext as _
+from django.utils.translation import gettext_lazy
 from django.views import View
 from django.views.decorators.http import require_GET
 from django_prbac.utils import has_privilege
-
+from looseversion import LooseVersion
 from lxml import etree
-
-from corehq.apps.registry.utils import get_data_registry_dropdown_options
-from dimagi.utils.logging import notify_exception
-from dimagi.utils.web import json_request, json_response
 
 from corehq import privileges, toggles
 from corehq.apps.accounting.utils import domain_has_privilege
@@ -56,8 +51,6 @@ from corehq.apps.app_manager.models import (
     AdvancedModule,
     CaseListForm,
     CaseSearch,
-    CaseSearchAgainLabel,
-    CaseSearchLabel,
     CaseSearchProperty,
     DefaultCaseSearchProperty,
     DeleteModuleRecord,
@@ -76,9 +69,9 @@ from corehq.apps.app_manager.models import (
     SortElement,
     UpdateCaseAction,
     get_all_mobile_filter_configs,
-    get_auto_filter_configurations, ConditionalCaseUpdate,
+    get_auto_filter_configurations, ConditionalCaseUpdate, CaseTileGroupConfig,
 )
-from corehq.apps.app_manager.suite_xml.features.case_tiles import case_tile_template_config
+from corehq.apps.app_manager.suite_xml.features.case_tiles import case_tile_template_config, CaseTileTemplates
 from corehq.apps.app_manager.suite_xml.features.mobile_ucr import (
     get_uuids_by_instance_id,
 )
@@ -93,7 +86,6 @@ from corehq.apps.app_manager.util import (
 )
 from corehq.apps.app_manager.views.media_utils import (
     handle_media_edits,
-    process_media_attribute,
 )
 from corehq.apps.app_manager.views.utils import (
     back_to_main,
@@ -123,17 +115,18 @@ from corehq.apps.hqmedia.models import (
 )
 from corehq.apps.hqmedia.views import ProcessDetailPrintTemplateUploadView
 from corehq.apps.hqwebapp.decorators import waf_allow
+from corehq.apps.registry.utils import get_data_registry_dropdown_options
 from corehq.apps.reports.analytics.esaccessors import (
     get_case_types_for_domain_es
 )
 from corehq.apps.reports.daterange import get_simple_dateranges
-from corehq.toggles import toggles_enabled_for_request
+from corehq.apps.userreports.dbaccessors import get_report_and_registry_report_configs_for_domain
 from corehq.apps.userreports.models import (
-    RegistryReportConfiguration,
-    ReportConfiguration,
     StaticReportConfiguration,
 )
-from corehq.apps.userreports.dbaccessors import get_report_and_registry_report_configs_for_domain
+from corehq.toggles import toggles_enabled_for_request
+from dimagi.utils.logging import notify_exception
+from dimagi.utils.web import json_request, json_response
 
 logger = logging.getLogger(__name__)
 
@@ -234,7 +227,9 @@ def _get_shared_module_view_context(request, app, module, case_property_builder,
             'has_lookup_tables': bool([i for i in item_lists if i['fixture_type'] == LOOKUP_TABLE_FIXTURE]),
             'has_mobile_ucr': bool([i for i in item_lists if i['fixture_type'] == REPORT_FIXTURE]),
             'default_value_expression_enabled': app.enable_default_value_expression,
-            'case_tile_fields': case_tile_template_config().fields,
+            'case_tile_template_options': CaseTileTemplates.choices,
+            'case_tile_fields': {template[0]: case_tile_template_config(template[0]).fields
+                                 for template in CaseTileTemplates.choices},
             'search_config': {
                 'search_properties':
                     module.search_config.properties if module_offers_search(module) else [],
@@ -369,7 +364,10 @@ def _get_report_module_context(app, module):
         {'slug': f.slug, 'description': f.short_description} for f in get_auto_filter_configurations()
 
     ]
-    from corehq.apps.app_manager.suite_xml.features.mobile_ucr import get_column_xpath_client_template, get_data_path
+    from corehq.apps.app_manager.suite_xml.features.mobile_ucr import (
+        get_column_xpath_client_template,
+        get_data_path
+    )
     data_path_placeholders = {}
     for r in module.report_configs:
         data_path_placeholders[r.report_id] = {}
@@ -1134,22 +1132,13 @@ def edit_module_detail_screens(request, domain, app_id, module_unique_id):
     parent_select = params.get('parent_select', None)
     fixture_select = params.get('fixture_select', None)
     sort_elements = params.get('sort_elements', None)
-    persist_case_context = params.get('persistCaseContext', None)
-    persistent_case_context_xml = params.get('persistentCaseContextXML', None)
-    use_case_tiles = params.get('useCaseTiles', None)
-    persist_tile_on_forms = params.get("persistTileOnForms", None)
-    persistent_case_tile_from_module = params.get("persistentCaseTileFromModule", None)
-    pull_down_tile = params.get("enableTilePullDown", None)
     print_template = params.get('printTemplate', None)
-    case_list_lookup = params.get("case_list_lookup", None)
     search_properties = params.get("search_properties")
     custom_variables = {
         'short': params.get("short_custom_variables", None),
         'long': params.get("long_custom_variables", None)
     }
-    multi_select = params.get('multi_select', None)
-    auto_select = params.get('auto_select', None)
-    max_select_value = params.get('max_select_value') or MULTI_SELECT_MAX_SELECT_VALUE
+
     app = get_app(domain, app_id)
 
     try:
@@ -1167,24 +1156,7 @@ def edit_module_detail_screens(request, domain, app_id, module_unique_id):
             return HttpResponseBadRequest(format_html("Unknown detail type '{}'", detail_type))
 
     lang = request.COOKIES.get('lang', app.langs[0])
-    if short is not None:
-        detail.short.columns = list(map(DetailColumn.from_json, short))
-        detail.short.multi_select = multi_select
-        detail.short.auto_select = auto_select
-        detail.short.max_select_value = max_select_value
-        if persist_case_context is not None:
-            detail.short.persist_case_context = persist_case_context
-            detail.short.persistent_case_context_xml = persistent_case_context_xml
-        if use_case_tiles is not None:
-            detail.short.use_case_tiles = use_case_tiles
-        if persist_tile_on_forms is not None:
-            detail.short.persist_tile_on_forms = persist_tile_on_forms
-        if persistent_case_tile_from_module is not None:
-            detail.short.persistent_case_tile_from_module = persistent_case_tile_from_module
-        if pull_down_tile is not None:
-            detail.short.pull_down_tile = pull_down_tile
-        if case_list_lookup is not None:
-            _save_case_list_lookup_params(detail.short, case_list_lookup, lang)
+    _update_short_details(detail, short, params, lang)
 
     if long_ is not None:
         detail.long.columns = list(map(DetailColumn.from_json, long_))
@@ -1352,6 +1324,53 @@ def edit_module_detail_screens(request, domain, app_id, module_unique_id):
     resp = {}
     app.save(resp)
     return JsonResponse(resp)
+
+
+def _update_short_details(detail, short, params, lang):
+    if short is not None:
+        detail.short.columns = list(map(DetailColumn.from_json, short))
+        detail.short.multi_select = params.get('multi_select', None)
+        detail.short.auto_select = params.get('auto_select', None)
+        detail.short.max_select_value = params.get('max_select_value') or MULTI_SELECT_MAX_SELECT_VALUE
+        persist_case_context = params.get('persistCaseContext', None)
+        if persist_case_context is not None:
+            detail.short.persist_case_context = persist_case_context
+            detail.short.persistent_case_context_xml = params.get('persistentCaseContextXML', None)
+
+        def _set_if_not_none(param_name, attribute_name=None):
+            value = params.get(param_name, None)
+            if value is not None:
+                setattr(detail.short, attribute_name or param_name, value)
+
+        _set_if_not_none('caseTileTemplate', 'case_tile_template')
+        _set_if_not_none('persistTileOnForms', 'persist_tile_on_forms')
+        _set_if_not_none('persistentCaseTileFromModule', 'persistent_case_tile_from_module')
+        _set_if_not_none('enableTilePullDown', 'pull_down_tile')
+
+        case_tile_group = params.get('case_tile_group', None)
+        if case_tile_group is not None:
+            detail.short.case_tile_group = CaseTileGroupConfig(
+                index_identifier=case_tile_group['index_identifier'],
+                header_rows=int(case_tile_group['header_rows'])
+            )
+
+        case_list_lookup = params.get("case_list_lookup", None)
+        if case_list_lookup is not None:
+            _save_case_list_lookup_params(detail.short, case_list_lookup, lang)
+
+
+def _save_case_list_lookup_params(short, case_list_lookup, lang):
+    short.lookup_enabled = case_list_lookup.get("lookup_enabled", short.lookup_enabled)
+    short.lookup_autolaunch = case_list_lookup.get("lookup_autolaunch", short.lookup_autolaunch)
+    short.lookup_action = case_list_lookup.get("lookup_action", short.lookup_action)
+    short.lookup_name = case_list_lookup.get("lookup_name", short.lookup_name)
+    short.lookup_extras = case_list_lookup.get("lookup_extras", short.lookup_extras)
+    short.lookup_responses = case_list_lookup.get("lookup_responses", short.lookup_responses)
+    short.lookup_image = case_list_lookup.get("lookup_image", short.lookup_image)
+    short.lookup_display_results = case_list_lookup.get("lookup_display_results", short.lookup_display_results)
+    if "lookup_field_header" in case_list_lookup:
+        short.lookup_field_header[lang] = case_list_lookup["lookup_field_header"]
+    short.lookup_field_template = case_list_lookup.get("lookup_field_template", short.lookup_field_template)
 
 
 @no_conflict_require_POST
@@ -1613,20 +1632,6 @@ def _init_biometrics_identify_module(app, lang, enroll_form_id):
         condition=FormActionCondition(type='always'))
 
     module.case_type = 'person'
-
-
-def _save_case_list_lookup_params(short, case_list_lookup, lang):
-    short.lookup_enabled = case_list_lookup.get("lookup_enabled", short.lookup_enabled)
-    short.lookup_autolaunch = case_list_lookup.get("lookup_autolaunch", short.lookup_autolaunch)
-    short.lookup_action = case_list_lookup.get("lookup_action", short.lookup_action)
-    short.lookup_name = case_list_lookup.get("lookup_name", short.lookup_name)
-    short.lookup_extras = case_list_lookup.get("lookup_extras", short.lookup_extras)
-    short.lookup_responses = case_list_lookup.get("lookup_responses", short.lookup_responses)
-    short.lookup_image = case_list_lookup.get("lookup_image", short.lookup_image)
-    short.lookup_display_results = case_list_lookup.get("lookup_display_results", short.lookup_display_results)
-    if "lookup_field_header" in case_list_lookup:
-        short.lookup_field_header[lang] = case_list_lookup["lookup_field_header"]
-    short.lookup_field_template = case_list_lookup.get("lookup_field_template", short.lookup_field_template)
 
 
 @require_GET

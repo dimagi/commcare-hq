@@ -60,7 +60,7 @@ class TestRequireJS(SimpleTestCase):
             if line:
                 match = re.search(r'^\s*hqDefine\([\'"]([^\'"]*)[\'"]', line)
                 if match:
-                    module = match.group(1)
+                    module = match.group(1).replace('es6!', '')
                     if not filename.endswith(module + ".js"):
                         errors.append("Module {} defined in file {}".format(module, filename))
 

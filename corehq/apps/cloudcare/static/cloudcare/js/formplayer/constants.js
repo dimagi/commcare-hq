@@ -19,5 +19,8 @@ hqDefine("cloudcare/js/formplayer/constants", function () {
         MULTI_SELECT_ADD: 'add',
         MULTI_SELECT_REMOVE: 'remove',
         MULTI_SELECT_MAX_SELECT_VALUE: 100,
+
+        FORMAT_ADDRESS: "Address",
+        FORMAT_ADDRESS_POPUP: "AddressPopup",
     };
 });

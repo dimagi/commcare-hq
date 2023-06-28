@@ -121,7 +121,7 @@
                     "pull_down_tile": null,
                     "sort_elements": [],
                     "tabs": [],
-                    "use_case_tiles": null
+                    "case_tile_template": null
                 },
                 "short": {
                     "columns": [
@@ -173,7 +173,7 @@
                     "pull_down_tile": null,
                     "sort_elements": [],
                     "tabs": [],
-                    "use_case_tiles": null
+                    "case_tile_template": null
                 }
             },
             "case_list": {
@@ -662,7 +662,7 @@
                     "pull_down_tile": null,
                     "sort_elements": [],
                     "tabs": [],
-                    "use_case_tiles": null
+                    "case_tile_template": null
                 },
                 "short": {
                     "columns": [],
@@ -689,7 +689,7 @@
                     "pull_down_tile": null,
                     "sort_elements": [],
                     "tabs": [],
-                    "use_case_tiles": null
+                    "case_tile_template": null
                 }
             },
             "referral_list": {
@@ -777,7 +777,7 @@
                     "pull_down_tile": null,
                     "sort_elements": [],
                     "tabs": [],
-                    "use_case_tiles": null
+                    "case_tile_template": null
                 },
                 "short": {
                     "columns": [
@@ -827,7 +827,7 @@
                     "pull_down_tile": false,
                     "sort_elements": [],
                     "tabs": [],
-                    "use_case_tiles": false
+                    "case_tile_template": null
                 }
             },
             "case_list": {
@@ -1068,7 +1068,7 @@
                     "pull_down_tile": null,
                     "sort_elements": [],
                     "tabs": [],
-                    "use_case_tiles": null
+                    "case_tile_template": null
                 },
                 "short": {
                     "columns": [],
@@ -1095,7 +1095,7 @@
                     "pull_down_tile": null,
                     "sort_elements": [],
                     "tabs": [],
-                    "use_case_tiles": null
+                    "case_tile_template": null
                 }
             },
             "referral_list": {
@@ -1183,7 +1183,7 @@
                     "pull_down_tile": null,
                     "sort_elements": [],
                     "tabs": [],
-                    "use_case_tiles": null
+                    "case_tile_template": null
                 },
                 "short": {
                     "columns": [
@@ -1235,7 +1235,7 @@
                     "pull_down_tile": null,
                     "sort_elements": [],
                     "tabs": [],
-                    "use_case_tiles": null
+                    "case_tile_template": null
                 }
             },
             "case_list": {
@@ -1476,7 +1476,7 @@
                     "pull_down_tile": null,
                     "sort_elements": [],
                     "tabs": [],
-                    "use_case_tiles": null
+                    "case_tile_template": null
                 },
                 "short": {
                     "columns": [],
@@ -1503,7 +1503,7 @@
                     "pull_down_tile": null,
                     "sort_elements": [],
                     "tabs": [],
-                    "use_case_tiles": null
+                    "case_tile_template": null
                 }
             },
             "referral_list": {
