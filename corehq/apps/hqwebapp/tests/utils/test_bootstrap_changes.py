@@ -6,6 +6,7 @@ from corehq.apps.hqwebapp.utils.bootstrap.changes import (
     make_data_attribute_renames,
     flag_changed_css_classes,
     flag_stateful_button_changes_bootstrap5,
+    flag_changed_javascript_plugins,
 )
 
 
@@ -52,3 +53,11 @@ def test_flag_stateful_button_changes_bootstrap5():
     line = """        <button data-loading-text="foo>\n"""
     flags = flag_stateful_button_changes_bootstrap5(line)
     eq(flags, ['You are using stateful buttons here, which are no longer supported in Bootstrap 5.'])
+
+
+def test_flag_changed_javascript_plugins_bootstrap5():
+    line = """                        modal.modal('show');\n"""
+    flags = flag_changed_javascript_plugins(
+        line, get_spec('bootstrap_3_to_5')
+    )
+    eq(flags, ['`modal` has been restructured since the removal of jQuery\n'])
