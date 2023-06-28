@@ -588,7 +588,7 @@ def handle_shadow_child_modules(app, shadow_parent):
     return changes
 
 
-def set_session_endpoint(module_or_form, raw_endpoint_id, app):
+def get_cleaned_session_endpoint_id(module_or_form, raw_endpoint_id, app):
     raw_endpoint_id = raw_endpoint_id.strip()
     cleaned_id = slugify(raw_endpoint_id)
     if cleaned_id != raw_endpoint_id:
@@ -601,7 +601,11 @@ def set_session_endpoint(module_or_form, raw_endpoint_id, app):
         raise AppMisconfigurationError(_(
             "Session endpoint IDs must be unique. '{endpoint_id}' is already in-use"
         ).format(endpoint_id=cleaned_id))
+    return cleaned_id
 
+
+def set_session_endpoint(module_or_form, raw_endpoint_id, app):
+    cleaned_id = get_cleaned_session_endpoint_id(module_or_form, raw_endpoint_id, app)
     module_or_form.session_endpoint_id = cleaned_id
 
 
