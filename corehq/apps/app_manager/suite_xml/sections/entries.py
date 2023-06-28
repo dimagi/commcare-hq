@@ -15,7 +15,6 @@ on matching parent and child datums.
 
 """
 from collections import defaultdict
-from itertools import zip_longest
 
 import attr
 from django.utils.translation import gettext as _
@@ -413,7 +412,6 @@ class EntriesHelper(object):
             if isinstance(case_datum.datum, InstanceDatum):
                 """
                 distinct-values(instance('casedb')/casedb/case[selected(join(' ', instance('selected_cases')/results/value), @case_id)]/index/parent)
-                
                 """
                 predicate = f"selected(join(' ', instance('{case_datum_id}')/results/value), @case_id)"
             else:

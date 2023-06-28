@@ -61,7 +61,6 @@ from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.app_manager import (
     app_strings,
     commcare_settings,
-    current_builds,
     id_strings,
     remote_app,
 )
@@ -93,7 +92,6 @@ from corehq.apps.app_manager.exceptions import (
     VersioningError,
     XFormException,
     XFormValidationError,
-    XFormValidationFailed,
     ModuleIdMissingException,
     AppValidationError,
 )
