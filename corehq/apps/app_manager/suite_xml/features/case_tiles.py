@@ -86,21 +86,7 @@ class CaseTileHelper(object):
                 DetailContributor.get_case_search_action(self.module, self.build_profile_id, self.detail_id)
             )
 
-        # Add sort if needed. Excludes legacy tile template to
-        # preserve behavior of existing apps using this template.
-        if self.detail.case_tile_template != CaseTileTemplates.PERSON_SIMPLE.value:
-            xpath_to_field = self._get_xpath_mapped_to_field_containing_sort()
-            for field in detail.fields:
-                populated_xpath_function = self._escape_xpath_function(field.template.text.xpath_function)
-                if populated_xpath_function in xpath_to_field:
-                    # Adds sort element to the field
-                    field.sort_node = xpath_to_field.pop(populated_xpath_function).sort_node
-
-            # detail.fields contains only display properties, not sort-only properties.
-            # This adds to detail, hidden fields that contain sort elements.
-            for field in xpath_to_field.values():
-                detail.fields.append(field)
-
+        self._populate_sort_elements_in_detail(detail)
         DetailContributor.add_no_items_text_to_detail(detail, self.app, self.detail_type, self.module)
 
         return detail
@@ -192,6 +178,21 @@ class CaseTileHelper(object):
         """
         with open(case_tile_template_config(self.detail.case_tile_template).filepath, encoding='utf-8') as f:
             return f.read()
+
+    def _populate_sort_elements_in_detail(self, detail):
+        #  Excludes legacy tile template to preserve behavior of existing apps using this template.
+        if self.detail.case_tile_template != CaseTileTemplates.PERSON_SIMPLE.value:
+            xpath_to_field = self._get_xpath_mapped_to_field_containing_sort()
+            for field in detail.fields:
+                populated_xpath_function = self._escape_xpath_function(field.template.text.xpath_function)
+                if populated_xpath_function in xpath_to_field:
+                    # Adds sort element to the field
+                    field.sort_node = xpath_to_field.pop(populated_xpath_function).sort_node
+
+            # detail.fields contains only display properties, not sort-only properties.
+            # This adds to detail, hidden fields that contain sort elements.
+            for field in xpath_to_field.values():
+                detail.fields.append(field)
 
     def _get_xpath_mapped_to_field_containing_sort(self):
         xpath_to_field = {}
