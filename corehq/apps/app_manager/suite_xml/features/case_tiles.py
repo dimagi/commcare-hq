@@ -95,17 +95,18 @@ class CaseTileHelper(object):
                 header_rows=self.detail.case_tile_group.header_rows
             )
 
-        # Add sort to field or field containing sort if needed. Excludes legacy tile template to preserve behavior
-        # of existing apps using this template.
+        # Add sort if needed. Excludes legacy tile template to
+        # preserve behavior of existing apps using this template.
         if self.detail.case_tile_template != CaseTileTemplates.PERSON_SIMPLE.value:
             xpath_to_field = self._get_xpath_mapped_to_field_containing_sort()
-
             for field in detail.fields:
-                populated_xpath_function = field.template.text.xpath_function
+                populated_xpath_function = self._escape_xpath_function(field.template.text.xpath_function)
                 if populated_xpath_function in xpath_to_field:
+                    # Adds sort element to the field
                     field.sort_node = xpath_to_field.pop(populated_xpath_function).sort_node
 
-            #detail.fields contains only display properties. This adds fields for sort-only properties.
+            # detail.fields contains only display properties, not sort-only properties.
+            # This adds to detail, hidden fields that contain sort elements.
             for field in xpath_to_field.values():
                 detail.fields.append(field)
 
@@ -161,12 +162,15 @@ class CaseTileHelper(object):
     def _get_xpath_function(self, column):
         from corehq.apps.app_manager.detail_screen import get_column_generator
         if column.useXpathExpression:
-            xpath_function = escape(column.field, {'"': '&quot;'})
+            xpath_function = self._escape_xpath_function(column.field)
         else:
-            xpath_function = escape(get_column_generator(
-                self.app, self.module, self.detail, column).xpath_function,
-                {'"': '&quot;'})
+            xpath_function = self._escape_xpath_function(get_column_generator(
+                self.app, self.module, self.detail, column).xpath_function)
         return xpath_function
+
+    @staticmethod
+    def _escape_xpath_function(xpath_function):
+        return escape(xpath_function, {'"': '&quot;'})
 
     def _get_enum_variables(self, column):
         variables = []
@@ -194,10 +198,7 @@ class CaseTileHelper(object):
     def _get_xpath_mapped_to_field_containing_sort(self):
         xpath_to_field = {}
         for column_info in self.detail_column_infos:
-            # column_info is an instance of DetailColumnInfo named tuple. It has the following properties:
-            #   column_info.column: an instance of app_manager.models.DetailColumn
-            #   column_info.sort_element: an instance of app_manager.models.SortElement
-            #   column_info.order: an integer
+            # column_info is an instance of DetailColumnInfo named tuple.
             from corehq.apps.app_manager.detail_screen import get_column_generator
             fields = get_column_generator(
                 self.app, self.module, self.detail,

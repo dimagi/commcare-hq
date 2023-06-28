@@ -529,7 +529,6 @@ class SuiteCaseTilesTest(SimpleTestCase, SuiteMixin):
         module.case_details.short.sort_elements.extend(sort_elements)
         suite = factory.app.create_suite()
 
-        template_xpath = './detail[@id="m0_case_short"]/field[1]/sort'
         self.assertXmlPartialEqual(
             """
             <partial>
@@ -541,10 +540,9 @@ class SuiteCaseTilesTest(SimpleTestCase, SuiteMixin):
             </partial>
             """,
             suite,
-            template_xpath,
+            './detail[@id="m0_case_short"]/field[1]/sort',
         )
 
-        template_xpath = './detail[@id="m0_case_short"]/field[2]/sort'
         self.assertXmlPartialEqual(
             """
             <partial>
@@ -556,10 +554,9 @@ class SuiteCaseTilesTest(SimpleTestCase, SuiteMixin):
             </partial>
             """,
             suite,
-            template_xpath,
+            './detail[@id="m0_case_short"]/field[2]/sort',
         )
 
-        template_xpath = './detail[@id="m0_case_short"]/field[4]/sort'
         self.assertXmlPartialEqual(
             """
             <partial>
@@ -571,5 +568,5 @@ class SuiteCaseTilesTest(SimpleTestCase, SuiteMixin):
             </partial>
             """,
             suite,
-            template_xpath,
+            './detail[@id="m0_case_short"]/field[4]/sort',
         )
