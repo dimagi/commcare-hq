@@ -133,7 +133,7 @@ hqDefine("cloudcare/js/form_entry/utils", function () {
                 liveRegionEl.html("<p>" + items.features[0].place_name + "</p>");
             }
         });
-        
+
         if (geolocateOnLoad) {
             geocoder._geolocateUser();
         }
