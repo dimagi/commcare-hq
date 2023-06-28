@@ -80,8 +80,8 @@ class TestAggregations(ElasticTestMixin, SimpleTestCase):
                 FilterAggregation('closed', filters.term('closed', True))
             ),
             FiltersAggregation('total_by_status')
-                .add_filter('closed', filters.term('closed', True))
-                .add_filter('open', filters.term('closed', False))
+            .add_filter('closed', filters.term('closed', True))
+            .add_filter('open', filters.term('closed', False))
         ])
         self.checkQuery(query, json_output)
 
@@ -383,8 +383,7 @@ class TestAggregations(ElasticTestMixin, SimpleTestCase):
                     "buckets": [{
                         "key": 1454284800000,
                         "doc_count": 8
-                    },
-                    {
+                    }, {
                         "key": 1464284800000,
                         "doc_count": 3
                     }]
@@ -460,6 +459,17 @@ class TestAggregations(ElasticTestMixin, SimpleTestCase):
             TermsAggregation('name', 'name').order('sort_field')
         )
         self.checkQuery(query, json_output)
+
+    def test_terms_aggregation_does_not_accept_zero_size(self):
+        error_message = "Aggregation size must be greater than 0"
+        with self.assertRaisesMessage(AssertionError, error_message):
+            HQESQuery('cases').aggregation(
+                TermsAggregation('name', 'name').order('sort_field').size(0)
+            )
+        with self.assertRaisesMessage(AssertionError, error_message):
+            HQESQuery('cases').aggregation(
+                TermsAggregation('name', 'name', 0).order('sort_field')
+            )
 
 
 @es_test(requires=[form_adapter], setup_class=True)
