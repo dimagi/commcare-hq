@@ -43,7 +43,7 @@ class KafkaProcessor(PillowProcessor):
             self._producer.send_change(topic, change.metadata)
 
             # soft deletion
-            if change.metadata.is_deletion:
+            if change.metadata.is_deletion and doc_type is not None:
                 deleted_on = change.metadata.original_publication_datetime
                 _create_deleted_couch_doc(change.id, doc_type, deleted_on)
 
