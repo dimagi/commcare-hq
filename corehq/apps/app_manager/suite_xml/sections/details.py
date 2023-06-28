@@ -12,8 +12,8 @@ supported for one of these, e.g., actions only get added to the short detail.
 The detail element can be nested. HQ never nests short details, but it nests long details to produce tabbed case
 details. Each tab has its own ``<detail>`` element.
 
-The bulk of detail configuration is in the display properties, called "fields" and sometimes "columns" in the code. Each
-field has a good deal of configuration, and the code transforms them into named tuples while processing them.
+The bulk of detail configuration is in the display properties, called "fields" and sometimes "columns" in the code.
+Each field has a good deal of configuration, and the code transforms them into named tuples while processing them.
 Each field has a format, one of about a dozen options. Formats are typically either UI-based, such as formatting a
 phone number to display as a link, or calculation-based, such as configuring a property to display differently when
 it's "late", i.e., is too far past some reference date.
@@ -134,8 +134,8 @@ class DetailContributor(SectionContributor):
 
                     # add the persist case context if needed and if
                     # case tiles are present and have their own persistent block
-                    if (detail.persist_case_context and
-                            not (detail.case_tile_template and detail.persist_tile_on_forms)):
+                    if (detail.persist_case_context
+                            and not (detail.case_tile_template and detail.persist_tile_on_forms)):
                         d = self._get_persistent_case_context_detail(module, detail.persistent_case_context_xml)
                         elements.append(d)
 
@@ -497,7 +497,7 @@ class DetailContributor(SectionContributor):
                 ),
                 header=Header(text=Text()),
                 template=Template(text=Text(xpath=TextXPath(
-                    function="concat($message, ' ', format-date(date(instance('commcare-reports:index')/report_index/reports/@last_update), '%e/%n/%Y'))",
+                    function="concat($message, ' ', format-date(date(instance('commcare-reports:index')/report_index/reports/@last_update), '%e/%n/%Y'))",  # noqa: E501
                     variables=[XPathVariable(name='message', locale_id=id_strings.reports_last_updated_on())],
                 ))),
             )]
