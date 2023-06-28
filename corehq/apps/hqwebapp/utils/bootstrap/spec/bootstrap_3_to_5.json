@@ -89,6 +89,9 @@
     "flagged_js_plugins": [
         "affix",
         "button",
-        "modal"
+        "modal",
+        "popover",
+        "tab",
+        "tooltip"
     ]
 }

@@ -61,4 +61,9 @@ def test_flag_changed_javascript_plugins_bootstrap5():
     flags = flag_changed_javascript_plugins(
         line, get_spec('bootstrap_3_to_5')
     )
-    eq(flags, ['`modal` has been restructured since the removal of jQuery\n'])
+    eq(flags, ['The `modal` plugin has been restructured since the removal of jQuery.\n\n'
+               'There is now a new way of triggering modal events and interacting with '
+               'modals in javascript.\n\nPlease feel free to update this help text as '
+               'you find common replacements/restructuring\nfor our usage of this plugin. '
+               'Thanks!\n\nOld docs: https://getbootstrap.com/docs/3.4/javascript/#modals\n'
+               'New docs: https://getbootstrap.com/docs/5.3/components/modal/#via-javascript\n'])
