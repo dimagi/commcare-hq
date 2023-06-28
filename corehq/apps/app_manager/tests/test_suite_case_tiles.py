@@ -7,7 +7,7 @@ from corehq.apps.app_manager.models import (
     CaseSearchProperty,
     DetailColumn,
     MappingItem,
-    Module
+    Module,
     SortElement,
 )
 from corehq.apps.app_manager.suite_xml.features.case_tiles import CaseTileTemplates
@@ -63,49 +63,55 @@ def add_columns_for_case_details(_module):
     ]
 
 
+def add_columns_for_one_one_two_case_details(_module):
+    _module.case_details.short.columns = [
+        DetailColumn(
+            header={'en': 'a'},
+            model='case',
+            field='a',
+            format='plain',
+            case_tile_field='title'
+        ),
+        DetailColumn(
+            header={'en': 'b'},
+            model='case',
+            field='b',
+            format='plain',
+            case_tile_field='top'
+        ),
+        DetailColumn(
+            header={'en': 'c'},
+            model='case',
+            field='c',
+            format='address',
+            case_tile_field='bottom_left'
+        ),
+        DetailColumn(
+            header={'en': 'd'},
+            model='case',
+            field='d',
+            format='date',
+            case_tile_field='bottom_right'
+        ),
+        DetailColumn(
+            header={'en': 'e'},
+            model='case',
+            field='e',
+            format='address',
+            case_tile_field='map'
+        ),
+        DetailColumn(
+            header={'en': 'e'},
+            model='case',
+            field='e',
+            format='address-popup',
+            case_tile_field='map_popup'
+        ),
+    ]
+
 @patch_get_xform_resource_overrides()
 class SuiteCaseTilesTest(SimpleTestCase, SuiteMixin):
     file_path = ('data', 'suite')
-
-    @staticmethod
-    def _add_columns_for_one_one_two_case_details(_module):
-        _module.case_details.short.columns = [
-            DetailColumn(
-                header={'en': 'a'},
-                model='case',
-                field='a',
-                format='plain',
-                case_tile_field='title'
-            ),
-            DetailColumn(
-                header={'en': 'b'},
-                model='case',
-                field='b',
-                format='plain',
-                case_tile_field='top'
-            ),
-            DetailColumn(
-                header={'en': 'c'},
-                model='case',
-                field='c',
-                format='address',
-                case_tile_field='bottom_left'
-            ),
-            DetailColumn(
-                header={'en': 'd'},
-                model='case',
-                field='d',
-                format='date',
-                case_tile_field='bottom_right'
-            ),
-            DetailColumn(
-                header={'en': 'e'},
-                model='case',
-                field='e',
-                format='address',
-                case_tile_field='map'
-            ),
-        ]
 
     def ensure_module_session_datum_xml(self, factory, detail_inline_attr, detail_persistent_attr):
         suite = factory.app.create_suite()
@@ -522,7 +528,7 @@ class SuiteCaseTilesTest(SimpleTestCase, SuiteMixin):
         module, form = factory.new_basic_module("my_module", "person")
         module.case_details.short.case_tile_template = CaseTileTemplates.ONE_ONE_TWO.value
         module.case_details.short.display = 'short'
-        self._add_columns_for_one_one_two_case_details(module)
+        add_columns_for_one_one_two_case_details(module)
         sort_elements = [
             SortElement(field='b', direction='ascending', type='plain'),
             SortElement(field='a', direction='ascending', type='plain')
