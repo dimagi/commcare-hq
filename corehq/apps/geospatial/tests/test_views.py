@@ -12,7 +12,7 @@ from corehq.apps.geospatial.const import GEO_POINT_CASE_PROPERTY
 class GeoConfigViewTestClass(TestCase):
 
     domain = 'test-domain'
-    username = 'zeus'
+    username = 'zeusy'
     password = 'nyx'
 
     @classmethod
@@ -44,9 +44,9 @@ class GeoConfigViewTestClass(TestCase):
     @staticmethod
     def construct_data(source, case_property, user_property=None):
         return {
-            'location_source_option': source,
-            'geo_case_property_name': case_property,
-            'custom_user_field_name': user_property or '',
+            'location_data_source': source,
+            'case_location_property_name': case_property,
+            'user_location_property_name': user_property or '',
         }
 
     def test_feature_flag_not_enabled(self):

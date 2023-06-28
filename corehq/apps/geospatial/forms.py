@@ -5,6 +5,7 @@ from crispy_forms.bootstrap import StrictButton
 
 from django.utils.translation import gettext_lazy as _
 from django import forms
+from django.forms.models import model_to_dict
 from corehq.apps.geospatial.models import GeoConfig
 
 
@@ -14,28 +15,33 @@ LOCATION_SOURCE_OPTIONS = [
 ]
 
 
-class GeospatialConfigForm(forms.Form):
+class GeospatialConfigForm(forms.ModelForm):
 
-    location_source_option = forms.CharField(
+    class Meta:
+        model = GeoConfig
+        fields = [
+            "location_data_source",
+            "user_location_property_name",
+            "case_location_property_name"
+        ]
+
+    location_data_source = forms.CharField(
         label=_("Fetch user location data from"),
         widget=forms.Select(choices=LOCATION_SOURCE_OPTIONS),
         required=False,
     )
-    custom_user_field_name = forms.CharField(
+    user_location_property_name = forms.CharField(
         label=_("Custom user field name"),
         required=False,
         help_text=_("The name of the user field which stores the users' geo-location data."),
     )
-    geo_case_property_name = forms.CharField(
+    case_location_property_name = forms.CharField(
         label=_("Fetch case location data from property"),
         required=True,
         help_text=_("The name of the case property storing the geo-location data of your cases."),
     )
 
     def __init__(self, *args, **kwargs):
-        if kwargs.get('config'):
-            kwargs['initial'] = self.compute_initial(kwargs.pop('config'))
-
         super().__init__(*args, **kwargs)
 
         self.helper = hqcrispy.HQFormHelper()
@@ -43,15 +49,15 @@ class GeospatialConfigForm(forms.Form):
             crispy.Layout(
                 crispy.Fieldset(
                     _("Configure Geospatial Settings"),
-                    crispy.Field('location_source_option', data_bind="value: locationSourceOption"),
+                    crispy.Field('location_data_source', data_bind="value: locationSourceOption"),
                     crispy.Div(
                         crispy.Field(
-                            'custom_user_field_name',
+                            'user_location_property_name',
                             data_bind="value: customUserFieldName"
                         ),
                         data_bind="visible: showCustomField"
                     ),
-                    crispy.Field('geo_case_property_name', data_bind="value: geoCasePropertyName"),
+                    crispy.Field('case_location_property_name', data_bind="value: geoCasePropertyName"),
                 ),
                 hqcrispy.FormActions(
                     StrictButton(
@@ -67,21 +73,20 @@ class GeospatialConfigForm(forms.Form):
     def clean(self):
         data = self.cleaned_data
 
-        if data['location_source_option'] not in GeoConfig.VALID_LOCATION_SOURCES:
+        if data['location_data_source'] not in GeoConfig.VALID_LOCATION_SOURCES:
             raise ValidationError(_("Invalid location source"))
 
-        if data['location_source_option'] == GeoConfig.CUSTOM_USER_PROPERTY and not data['custom_user_field_name']:
+        if (
+            data['location_data_source'] == GeoConfig.CUSTOM_USER_PROPERTY and  # noqa: W504
+            not data['user_location_property_name']
+        ):
             raise ValidationError(_("Custom user field name required"))
 
-        if not data['geo_case_property_name']:
+        if data['location_data_source'] == GeoConfig.ASSIGNED_LOCATION:
+            # Reset incase user changed it before changing location_data_source
+            data['user_location_property_name'] = self.instance.user_location_property_name
+
+        if not data['case_location_property_name']:
             raise ValidationError(_("Case property name required"))
 
         return data
-
-    @staticmethod
-    def compute_initial(config):
-        return {
-            'location_source_option': config.location_data_source,
-            'custom_user_field_name': config.user_location_property_name,
-            'geo_case_property_name': config.case_location_property_name,
-        }
