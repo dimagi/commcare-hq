@@ -700,7 +700,7 @@ CASE_LIST_CUSTOM_VARIABLES = StaticToggle(
 
 CASE_LIST_TILE = StaticToggle(
     'case_list_tile',
-    'REC: Allow configuration of the REC case list tile',
+    'Allow configuration of the case list tile templates',
     TAG_CUSTOM,
     [NAMESPACE_DOMAIN],
     help_link='https://confluence.dimagi.com/pages/viewpage.action?'
