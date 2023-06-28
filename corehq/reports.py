@@ -1,5 +1,4 @@
 import datetime
-import hashlib
 import logging
 
 from django.urls import reverse
@@ -9,7 +8,6 @@ from django.utils.translation import gettext_noop as _
 from jsonobject.exceptions import BadValueError
 
 import phonelog.reports as phonelog
-from dimagi.utils.modules import to_function
 
 from corehq import privileges
 from corehq.apps.accounting.interface import (
@@ -27,6 +25,7 @@ from corehq.apps.case_importer.base import ImportCases
 from corehq.apps.data_interfaces.interfaces import (
     BulkFormManagementInterface,
     CaseReassignmentInterface,
+    CaseCopyInterface,
 )
 from corehq.apps.domain.dbaccessors import get_doc_ids_in_domain_by_class
 from corehq.apps.fixtures.interface import (
@@ -269,13 +268,19 @@ def get_report_builder_count(domain):
     return len(report_builder_reports)
 
 
-EDIT_DATA_INTERFACES = (
-    (gettext_lazy('Edit Data'), (
-        CaseReassignmentInterface,
-        ImportCases,
-        BulkFormManagementInterface,
-    )),
-)
+def EDIT_DATA_INTERFACES(domain_obj):
+    from corehq.apps.accounting.utils import domain_has_privilege
+    reports = [CaseReassignmentInterface]
+
+    if domain_has_privilege(domain_obj.name, privileges.CASE_COPY):
+        reports.append(CaseCopyInterface)
+
+    reports.extend([ImportCases, BulkFormManagementInterface])
+
+    return (
+        (gettext_lazy('Edit Data'), reports),
+    )
+
 
 FIXTURE_INTERFACES = (
     (_('Lookup Tables'), (
