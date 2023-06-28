@@ -11825,6 +11825,7 @@ msgstr "Incorporación de Consulta Personalizada"
 
 #: corehq/apps/case_search/templates/case_search/case_search.html
 #: corehq/apps/cloudcare/templates/form_entry/templates.html
+#: corehq/apps/cloudcare/templates/formplayer/query_view.html
 #: corehq/apps/domain/forms.py
 #: corehq/apps/domain/templates/domain/manage_releases_by_app_profile.html
 #: corehq/apps/reports/filters/simple.py
@@ -21277,9 +21278,27 @@ msgstr ""
 msgid "Case Management Map"
 msgstr ""
 
-#: corehq/apps/geospatial/templates/map_visualization.html
-msgid "Export Polygons as GeoJson"
+#: corehq/apps/geospatial/reports.py corehq/tabs/tabclasses.py
+msgid "Geospatial"
 msgstr ""
+
+#: corehq/apps/geospatial/templates/map_visualization.html
+#, fuzzy
+#| msgid "Filter Logs by Username"
+msgid "Filter by Saved Area"
+msgstr "Filtrar Registros por Nombre de Usuario"
+
+#: corehq/apps/geospatial/templates/map_visualization.html
+#, fuzzy
+#| msgid "Export Data"
+msgid "Export Area"
+msgstr "Exportar Datos"
+
+#: corehq/apps/geospatial/templates/map_visualization.html
+#, fuzzy
+#| msgid "Save"
+msgid "Save Area"
+msgstr "Guardar"
 
 #: corehq/apps/groups/templates/groups/all_groups.html
 #: corehq/apps/reports/filters/users.py
@@ -32726,6 +32745,12 @@ msgid "Message Sent Via Chat"
 msgstr "Mensaje Enviado Vïa Chat"
 
 #: corehq/apps/sms/models.py
+#, fuzzy
+#| msgid "Notifications"
+msgid "FCM Push Notification"
+msgstr "Notificaciones"
+
+#: corehq/apps/sms/models.py
 msgid "User Group"
 msgstr "Grupo de Usuario"
 
@@ -32860,6 +32885,32 @@ msgstr ""
 
 #: corehq/apps/sms/models.py
 msgid "Email Gateway Error"
+msgstr ""
+
+#: corehq/apps/sms/models.py
+msgid "No FCM tokens found for recipient."
+msgstr ""
+
+#: corehq/apps/sms/models.py
+msgid "FCM not available on this environment."
+msgstr ""
+
+#: corehq/apps/sms/models.py
+#, fuzzy
+#| msgid "Reset Password for Mobile Worker"
+msgid "FCM is supported for Mobile Workers only."
+msgstr "Reinicie Contraseña para Usuario Móvil"
+
+#: corehq/apps/sms/models.py
+msgid "No action selected for the FCM Data message type."
+msgstr ""
+
+#: corehq/apps/sms/models.py
+msgid "Failure while sending FCM notifications to the devices."
+msgstr ""
+
+#: corehq/apps/sms/models.py
+msgid "Domain is not enabled for FCM Push Notifications"
 msgstr ""
 
 #: corehq/apps/sms/templates/sms/backend_map.html
@@ -39478,6 +39529,18 @@ msgstr ""
 msgid "Click to export your [case data]({})."
 msgstr ""
 
+#: corehq/messaging/fcm/exceptions.py
+msgid "One of the fields from 'title, body, data' is required!"
+msgstr ""
+
+#: corehq/messaging/fcm/exceptions.py
+msgid "FCM is not setup on this environment!"
+msgstr ""
+
+#: corehq/messaging/fcm/utils.py
+msgid "Max devices allowed is {}! Please execute in batches."
+msgstr ""
+
 #: corehq/messaging/scheduling/forms.py
 msgid "Please enter a valid 24-hour time in the format HH:MM"
 msgstr ""
@@ -39507,7 +39570,17 @@ msgid "Intervals"
 msgstr ""
 
 #: corehq/messaging/scheduling/forms.py
+#, fuzzy
+#| msgid "Notifications"
+msgid "Action on Notification"
+msgstr "Notificaciones"
+
+#: corehq/messaging/scheduling/forms.py
 msgid "Please fill out at least one translation"
+msgstr ""
+
+#: corehq/messaging/scheduling/forms.py
+msgid "This field must not exceed {} characters"
 msgstr ""
 
 #: corehq/messaging/scheduling/forms.py
@@ -39523,6 +39596,12 @@ msgid ""
 "Reminder intervals must add up to less than {} based on the current survey "
 "expiration"
 msgstr ""
+
+#: corehq/messaging/scheduling/forms.py
+#, fuzzy
+#| msgid "Message Type"
+msgid "Message type"
+msgstr "Tipo de Mensaje"
 
 #: corehq/messaging/scheduling/forms.py
 msgid "Expire After"
@@ -39994,6 +40073,12 @@ msgid "Custom SMS"
 msgstr ""
 
 #: corehq/messaging/scheduling/forms.py
+#, fuzzy
+#| msgid "Notifications"
+msgid "Push Notification"
+msgstr "Notificaciones"
+
+#: corehq/messaging/scheduling/forms.py
 msgid "The time from case property"
 msgstr ""
 
@@ -40126,10 +40211,48 @@ msgid "Email case property can only be used with Email content"
 msgstr ""
 
 #: corehq/messaging/scheduling/forms.py
+#, fuzzy
+#| msgid ""
+#| "There is a configuration error with this survey. Please contact your "
+#| "administrator."
+msgid ""
+"Push Notifications is no longer available on this environment. Please "
+"contact Administrator."
+msgstr ""
+"Hay un error de configuración con esta encuesta. Por favor contacte a su "
+"administrador."
+
+#: corehq/messaging/scheduling/forms.py
+msgid ""
+"Push Notifications is not available for your project. Please contact "
+"Administrator."
+msgstr ""
+
+#: corehq/messaging/scheduling/forms.py
+msgid "'{}' recipient types are not supported for Push Notifications"
+msgstr ""
+
+#: corehq/messaging/scheduling/forms.py
 msgid ""
 "An instance of the schedule will be created for each open case matching all "
 "filter criteria below."
 msgstr ""
+
+#: corehq/messaging/scheduling/models/content.py
+msgid "Background Sync"
+msgstr ""
+
+#: corehq/messaging/scheduling/models/content.py
+#, fuzzy
+#| msgid "Display Blanks"
+msgid "Display Messages"
+msgstr "Mostrar Espacios en Blanco"
+
+#: corehq/messaging/scheduling/models/content.py
+#, fuzzy
+#| msgid "Date of Message"
+msgid "Data Messages"
+msgstr "Fecha del Mensaje"
 
 #: corehq/messaging/scheduling/templates/scheduling/broadcasts_list.html
 msgid "Add Broadcast"
@@ -43043,10 +43166,6 @@ msgstr ""
 
 #: corehq/tabs/tabclasses.py
 msgid "Manage Attendance Tracking Events"
-msgstr ""
-
-#: corehq/tabs/tabclasses.py
-msgid "Geospatial"
 msgstr ""
 
 #: corehq/trans_override.py

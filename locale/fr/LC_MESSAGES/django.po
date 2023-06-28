@@ -11211,6 +11211,7 @@ msgstr ""
 
 #: corehq/apps/case_search/templates/case_search/case_search.html
 #: corehq/apps/cloudcare/templates/form_entry/templates.html
+#: corehq/apps/cloudcare/templates/formplayer/query_view.html
 #: corehq/apps/domain/forms.py
 #: corehq/apps/domain/templates/domain/manage_releases_by_app_profile.html
 #: corehq/apps/reports/filters/simple.py
@@ -20446,8 +20447,20 @@ msgstr ""
 msgid "Case Management Map"
 msgstr ""
 
+#: corehq/apps/geospatial/reports.py corehq/tabs/tabclasses.py
+msgid "Geospatial"
+msgstr ""
+
 #: corehq/apps/geospatial/templates/map_visualization.html
-msgid "Export Polygons as GeoJson"
+msgid "Filter by Saved Area"
+msgstr ""
+
+#: corehq/apps/geospatial/templates/map_visualization.html
+msgid "Export Area"
+msgstr ""
+
+#: corehq/apps/geospatial/templates/map_visualization.html
+msgid "Save Area"
 msgstr ""
 
 #: corehq/apps/groups/templates/groups/all_groups.html
@@ -31453,6 +31466,10 @@ msgid "Message Sent Via Chat"
 msgstr ""
 
 #: corehq/apps/sms/models.py
+msgid "FCM Push Notification"
+msgstr ""
+
+#: corehq/apps/sms/models.py
 msgid "User Group"
 msgstr ""
 
@@ -31579,6 +31596,30 @@ msgstr ""
 
 #: corehq/apps/sms/models.py
 msgid "Email Gateway Error"
+msgstr ""
+
+#: corehq/apps/sms/models.py
+msgid "No FCM tokens found for recipient."
+msgstr ""
+
+#: corehq/apps/sms/models.py
+msgid "FCM not available on this environment."
+msgstr ""
+
+#: corehq/apps/sms/models.py
+msgid "FCM is supported for Mobile Workers only."
+msgstr ""
+
+#: corehq/apps/sms/models.py
+msgid "No action selected for the FCM Data message type."
+msgstr ""
+
+#: corehq/apps/sms/models.py
+msgid "Failure while sending FCM notifications to the devices."
+msgstr ""
+
+#: corehq/apps/sms/models.py
+msgid "Domain is not enabled for FCM Push Notifications"
 msgstr ""
 
 #: corehq/apps/sms/templates/sms/backend_map.html
@@ -38006,6 +38047,18 @@ msgstr ""
 msgid "Click to export your [case data]({})."
 msgstr ""
 
+#: corehq/messaging/fcm/exceptions.py
+msgid "One of the fields from 'title, body, data' is required!"
+msgstr ""
+
+#: corehq/messaging/fcm/exceptions.py
+msgid "FCM is not setup on this environment!"
+msgstr ""
+
+#: corehq/messaging/fcm/utils.py
+msgid "Max devices allowed is {}! Please execute in batches."
+msgstr ""
+
 #: corehq/messaging/scheduling/forms.py
 msgid "Please enter a valid 24-hour time in the format HH:MM"
 msgstr ""
@@ -38035,7 +38088,15 @@ msgid "Intervals"
 msgstr ""
 
 #: corehq/messaging/scheduling/forms.py
+msgid "Action on Notification"
+msgstr ""
+
+#: corehq/messaging/scheduling/forms.py
 msgid "Please fill out at least one translation"
+msgstr ""
+
+#: corehq/messaging/scheduling/forms.py
+msgid "This field must not exceed {} characters"
 msgstr ""
 
 #: corehq/messaging/scheduling/forms.py
@@ -38050,6 +38111,10 @@ msgstr ""
 msgid ""
 "Reminder intervals must add up to less than {} based on the current survey "
 "expiration"
+msgstr ""
+
+#: corehq/messaging/scheduling/forms.py
+msgid "Message type"
 msgstr ""
 
 #: corehq/messaging/scheduling/forms.py
@@ -38522,6 +38587,10 @@ msgid "Custom SMS"
 msgstr ""
 
 #: corehq/messaging/scheduling/forms.py
+msgid "Push Notification"
+msgstr ""
+
+#: corehq/messaging/scheduling/forms.py
 msgid "The time from case property"
 msgstr ""
 
@@ -38655,8 +38724,36 @@ msgstr ""
 
 #: corehq/messaging/scheduling/forms.py
 msgid ""
+"Push Notifications is no longer available on this environment. Please "
+"contact Administrator."
+msgstr ""
+
+#: corehq/messaging/scheduling/forms.py
+msgid ""
+"Push Notifications is not available for your project. Please contact "
+"Administrator."
+msgstr ""
+
+#: corehq/messaging/scheduling/forms.py
+msgid "'{}' recipient types are not supported for Push Notifications"
+msgstr ""
+
+#: corehq/messaging/scheduling/forms.py
+msgid ""
 "An instance of the schedule will be created for each open case matching all "
 "filter criteria below."
+msgstr ""
+
+#: corehq/messaging/scheduling/models/content.py
+msgid "Background Sync"
+msgstr ""
+
+#: corehq/messaging/scheduling/models/content.py
+msgid "Display Messages"
+msgstr ""
+
+#: corehq/messaging/scheduling/models/content.py
+msgid "Data Messages"
 msgstr ""
 
 #: corehq/messaging/scheduling/templates/scheduling/broadcasts_list.html
@@ -41559,10 +41656,6 @@ msgstr ""
 
 #: corehq/tabs/tabclasses.py
 msgid "Manage Attendance Tracking Events"
-msgstr ""
-
-#: corehq/tabs/tabclasses.py
-msgid "Geospatial"
 msgstr ""
 
 #: corehq/trans_override.py
