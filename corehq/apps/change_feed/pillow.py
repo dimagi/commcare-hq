@@ -45,7 +45,7 @@ class KafkaProcessor(PillowProcessor):
             # soft deletion
             if change.metadata.is_deletion:
                 deleted_on = change.metadata.original_publication_datetime
-                self._create_deleted_couch_doc(change.id, doc_type, deleted_on)
+                _create_deleted_couch_doc(change.id, doc_type, deleted_on)
 
 
 def get_default_couch_db_change_feed_pillow(pillow_id, **kwargs):
