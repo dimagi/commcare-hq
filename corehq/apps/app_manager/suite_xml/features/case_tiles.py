@@ -194,10 +194,7 @@ class CaseTileHelper(object):
     def _get_xpath_mapped_to_field_containing_sort(self):
         xpath_to_field = {}
         for column_info in self.detail_column_infos:
-            # column_info is an instance of DetailColumnInfo named tuple. It has the following properties:
-            #   column_info.column: an instance of app_manager.models.DetailColumn
-            #   column_info.sort_element: an instance of app_manager.models.SortElement
-            #   column_info.order: an integer
+            # column_info is an instance of DetailColumnInfo named tuple.
             from corehq.apps.app_manager.detail_screen import get_column_generator
             fields = get_column_generator(
                 self.app, self.module, self.detail,
