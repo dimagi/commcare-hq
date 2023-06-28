@@ -248,7 +248,7 @@ class DataDictionaryViewTest(TestCase):
         self.assertEqual(response.status_code, 403)
 
 
-@flag_enabled('DATA_DICTIONARY')
+@privilege_enabled('DATA_DICTIONARY')
 class TestDeprecateOrRestoreCaseTypeView(TestCase):
 
     urlname = 'deprecate_or_restore_case_type'
