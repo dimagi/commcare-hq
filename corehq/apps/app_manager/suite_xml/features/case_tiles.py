@@ -138,7 +138,7 @@ class CaseTileHelper(object):
         }
 
         context['variables'] = ''
-        if column.format == "enum" or column.format == 'conditional-enum':
+        if column.format in ["enum", "conditional-enum", "enum-image"]:
             context["variables"] = self._get_enum_variables(column)
         return context
 
