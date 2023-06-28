@@ -88,7 +88,7 @@
     ],
     "flagged_js_plugins": [
         "affix",
-        "modal",
-        "button"
+        "button",
+        "modal"
     ]
 }

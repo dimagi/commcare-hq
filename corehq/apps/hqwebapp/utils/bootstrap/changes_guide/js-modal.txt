@@ -1,0 +1,1 @@
+`modal` has been restructured since the removal of jQuery

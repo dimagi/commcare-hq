@@ -37,6 +37,10 @@ def _get_direct_css_regex(css_class):
     return r"([\n \"\'}])(" + css_class + r")([\n \"\'{])"
 
 
+def _get_plugin_regex(js_plugin):
+    return r"(\.)(" + js_plugin + r")(\([\"\'])"
+
+
 def _do_rename(line, change_map, regex_fn, replacement_fn):
     renames = []
     for css_class in change_map.keys():
@@ -90,6 +94,15 @@ def flag_changed_css_classes(line, spec):
         regex = _get_direct_css_regex(css_class)
         if re.search(regex, line):
             flags.append(_get_change_guide(css_class))
+    return flags
+
+
+def flag_changed_javascript_plugins(line, spec):
+    flags = []
+    for plugin in spec['flagged_js_plugins']:
+        regex = _get_plugin_regex(plugin)
+        if re.search(regex, line):
+            flags.append(_get_change_guide(f"js-{plugin}"))
     return flags
 
 
