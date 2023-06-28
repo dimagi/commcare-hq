@@ -625,7 +625,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
                         .addTo(addressMap);
                     allCoordinates.push(homeCoordinates);
                 }
-                addressMap.fitBounds(allCoordinates, {maxZoom: 8});
+                addressMap.fitBounds(allCoordinates, {maxZoom: 14});
             } catch (error) {
                 console.error(error);
             }
