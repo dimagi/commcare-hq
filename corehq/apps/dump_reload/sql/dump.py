@@ -208,6 +208,7 @@ APP_LABELS_WITH_FILTER_KWARGS_TO_DUMP = defaultdict(list)
     FilteredModelIteratorBuilder('domain.AppReleaseModeSetting', SimpleFilter('domain')),
     FilteredModelIteratorBuilder('events.Event', SimpleFilter('domain')),
     FilteredModelIteratorBuilder('events.AttendanceTrackingConfig', SimpleFilter('domain')),
+    FilteredModelIteratorBuilder('geospatial.GeoConfig', SimpleFilter('domain')),
 ]]
 
 
