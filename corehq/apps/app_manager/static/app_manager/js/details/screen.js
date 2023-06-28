@@ -42,6 +42,8 @@ hqDefine("app_manager/js/details/screen", function () {
         // as the name of the key in the data object that is sent to the
         // server on save.
         self.columnKey = options.columnKey;
+        let detail = spec[self.columnKey];
+
         // Not all screenModel instances will handle sorting, parent selection,
         // and filtering. E.g The "Case Detail" tab only handles the module's
         // "long" case details. These flags will make sure this instance
@@ -59,7 +61,7 @@ hqDefine("app_manager/js/details/screen", function () {
         self.caseTileTemplateOptions = self.caseTileTemplateOptions.map(function (templateOption) {
             return {templateValue: templateOption[0], templateName: templateOption[1]};
         });
-        self.caseTileTemplate = ko.observable(spec[self.columnKey].case_tile_template);
+        self.caseTileTemplate = ko.observable(detail.case_tile_template);
         self.caseTileTemplateConfigs = options.caseTileTemplateConfigs;
         self.caseTileFieldsForTemplate = ko.computed(function () {
             return (self.caseTileTemplateConfigs[self.caseTileTemplate()] || {}).fields;
@@ -82,33 +84,38 @@ hqDefine("app_manager/js/details/screen", function () {
         self.showCaseTileColumn = ko.computed(function () {
             return self.caseTileTemplate() && hqImport('hqwebapp/js/toggles').toggleEnabled('CASE_LIST_TILE');
         });
-        self.persistCaseContext = ko.observable(spec[self.columnKey].persist_case_context || false);
-        self.persistentCaseContextXML = ko.observable(spec[self.columnKey].persistent_case_context_xml || 'case_name');
+        self.persistCaseContext = ko.observable(detail.persist_case_context || false);
+        self.persistentCaseContextXML = ko.observable(detail.persistent_case_context_xml || 'case_name');
+
+        self.caseTileGrouped = ko.observable(!!detail.case_tile_group.index_identifier || false);
+        self.caseTileGroupBy = ko.observable(detail.case_tile_group.index_identifier);
+        self.caseTileGroupHeaderRows = ko.observable(detail.case_tile_group.header_rows);
+
         self.customVariablesViewModel = {
             enabled: hqImport('hqwebapp/js/toggles').toggleEnabled('CASE_LIST_CUSTOM_VARIABLES'),
-            xml: ko.observable(spec[self.columnKey].custom_variables || ""),
+            xml: ko.observable(detail.custom_variables || ""),
         };
         self.customVariablesViewModel.xml.subscribe(function () {
             self.fireChange();
         });
-        self.multiSelectEnabled = ko.observable(spec[self.columnKey].multi_select);
+        self.multiSelectEnabled = ko.observable(detail.multi_select);
         self.multiSelectEnabled.subscribe(function () {
             self.autoSelectEnabled(self.multiSelectEnabled() && self.autoSelectEnabled());
             self.fireChange();
         });
-        self.maxSelectValue = ko.observable(spec[self.columnKey].max_select_value);
+        self.maxSelectValue = ko.observable(detail.max_select_value);
         self.maxSelectValue.subscribe(function () {
             self.fireChange();
         });
-        self.autoSelectEnabled = ko.observable(spec[self.columnKey].auto_select);
+        self.autoSelectEnabled = ko.observable(detail.auto_select);
         self.autoSelectEnabled.subscribe(function () {
             self.fireChange();
         });
-        self.persistTileOnForms = ko.observable(spec[self.columnKey].persist_tile_on_forms || false);
-        self.enableTilePullDown = ko.observable(spec[self.columnKey].pull_down_tile || false);
+        self.persistTileOnForms = ko.observable(detail.persist_tile_on_forms || false);
+        self.enableTilePullDown = ko.observable(detail.pull_down_tile || false);
         self.allowsEmptyColumns = options.allowsEmptyColumns;
         self.persistentCaseTileFromModule = (
-            ko.observable(spec[self.columnKey].persistent_case_tile_from_module || ""));
+            ko.observable(detail.persistent_case_tile_from_module || ""));
         self.fireChange = function () {
             self.fire('change');
         };
@@ -157,9 +164,9 @@ hqDefine("app_manager/js/details/screen", function () {
             return column;
         };
 
-        columns = spec[self.columnKey].columns;
+        columns = detail.columns;
         // Inject tabs into the columns list:
-        var tabs = spec[self.columnKey].tabs || [];
+        var tabs = detail.tabs || [];
         for (i = 0; i < tabs.length; i++) {
             columns.splice(
                 tabs[i].starting_index + i,
@@ -201,27 +208,17 @@ hqDefine("app_manager/js/details/screen", function () {
                 self.save();
             },
         });
-        self.on('change', function () {
-            self.saveButton.fire('change');
-        });
-        self.caseTileTemplate.subscribe(function () {
-            self.saveButton.fire('change');
-        });
-        self.persistCaseContext.subscribe(function () {
-            self.saveButton.fire('change');
-        });
-        self.persistentCaseContextXML.subscribe(function () {
-            self.saveButton.fire('change');
-        });
-        self.persistTileOnForms.subscribe(function () {
-            self.saveButton.fire('change');
-        });
-        self.persistentCaseTileFromModule.subscribe(function () {
-            self.saveButton.fire('change');
-        });
-        self.enableTilePullDown.subscribe(function () {
-            self.saveButton.fire('change');
-        });
+        let saveButtonFire = () => self.saveButton.fire('change');
+        self.on('change', saveButtonFire);
+        self.caseTileTemplate.subscribe(saveButtonFire);
+        self.persistCaseContext.subscribe(saveButtonFire);
+        self.persistentCaseContextXML.subscribe(saveButtonFire);
+        self.persistTileOnForms.subscribe(saveButtonFire);
+        self.persistentCaseTileFromModule.subscribe(saveButtonFire);
+        self.enableTilePullDown.subscribe(saveButtonFire);
+        self.caseTileGrouped.subscribe(saveButtonFire);
+        self.caseTileGroupBy.subscribe(saveButtonFire);
+        self.caseTileGroupHeaderRows.subscribe(saveButtonFire);
         self.columns.subscribe(function (changes) {
             self.saveButton.fire('change');
 
@@ -361,6 +358,11 @@ hqDefine("app_manager/js/details/screen", function () {
             data.persistTileOnForms = self.persistTileOnForms();
             data.persistentCaseTileFromModule = self.persistentCaseTileFromModule();
             data.enableTilePullDown = self.persistTileOnForms() ? self.enableTilePullDown() : false;
+            
+            data.case_tile_group = JSON.stringify({
+                index_identifier: self.caseTileGrouped() ? self.caseTileGroupBy() : null,
+                header_rows: self.caseTileGroupHeaderRows()
+            });
 
             if (self.containsParentConfiguration) {
                 var parentSelect;
