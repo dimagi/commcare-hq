@@ -6,7 +6,8 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
         FormplayerFrontend = hqImport("cloudcare/js/formplayer/app"),
         initialPageData = hqImport("hqwebapp/js/initial_page_data"),
         toggles = hqImport("hqwebapp/js/toggles"),
-        utils = hqImport("cloudcare/js/formplayer/utils/utils");
+        formplayerUtils = hqImport("cloudcare/js/formplayer/utils/utils"),
+        cloudcareUtils = hqImport("cloudcare/js/utils");
 
 
 
@@ -91,7 +92,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             const imageUri = this.options.model.get('imageUri');
             const audioUri = this.options.model.get('audioUri');
             const navState = this.options.model.get('navigationState');
-            const appId = utils.currentUrlToObject().appId;
+            const appId = formplayerUtils.currentUrlToObject().appId;
             return {
                 navState: navState,
                 imageUrl: imageUri ? FormplayerFrontend.getChannel().request('resourceMap', imageUri, appId) : "",
@@ -273,14 +274,13 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
         },
 
         templateContext: function () {
-            const appId = utils.currentUrlToObject().appId,
-                md = window.markdownit();
+            const appId = formplayerUtils.currentUrlToObject().appId;
             return {
                 data: this.options.model.get('data'),
                 styles: this.options.styles,
                 isMultiSelect: this.options.isMultiSelect,
                 renderMarkdown: function (datum) {
-                    return md.render(DOMPurify.sanitize(datum || ""));
+                    return cloudcareUtils.renderMarkdown(datum);
                 },
                 resolveUri: function (uri) {
                     return FormplayerFrontend.getChannel().request('resourceMap', uri, appId);
@@ -420,7 +420,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
         paginationGoAction: function (e) {
             e.preventDefault();
             const goText = Number(this.ui.paginationGoText.val());
-            const pageNo = utils.paginationGoPageNumber(goText, this.options.pageCount);
+            const pageNo = formplayerUtils.paginationGoPageNumber(goText, this.options.pageCount);
             FormplayerFrontend.trigger("menu:paginate", pageNo - 1, this.selectedCaseIds);
             kissmetrics.track.event("Accessibility Tracking - Pagination Go To Page Interaction");
         },
@@ -592,7 +592,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
         },
 
         templateContext: function () {
-            const paginateItems = utils.paginateOptions(this.options.currentPage, this.options.pageCount);
+            const paginateItems = formplayerUtils.paginateOptions(this.options.currentPage, this.options.pageCount);
             const casesPerPage = parseInt($.cookie("cases-per-page-limit")) || 10;
             return {
                 startPage: paginateItems.startPage,
@@ -877,7 +877,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
         className: "",
         template: _.template($("#detail-view-item-template").html() || ""),
         templateContext: function () {
-            const appId = utils.currentUrlToObject().appId;
+            const appId = formplayerUtils.currentUrlToObject().appId;
             return {
                 resolveUri: function (uri) {
                     return FormplayerFrontend.getChannel().request('resourceMap', uri, appId);
