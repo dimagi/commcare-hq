@@ -2386,6 +2386,30 @@ FCM_NOTIFICATION = StaticToggle(
 )
 
 
+ALIGN_ON_CHILDEXTENSION_CASES = FeatureRelease(
+    slug='align_on_childextension_cases',
+    label=(
+        'Align with commcare-core on how to treat cases that are both child '
+        'and extension cases of the same parent/host.'
+    ),
+    tag=TAG_INTERNAL,
+    namespaces=[NAMESPACE_DOMAIN],
+    owner='Norman Hooper'
+)
+
+
+USE_GET_RELATED_INDICES_BAD = FeatureRelease(
+    slug='use_get_related_indices_bad',
+    label=(
+        'FOR PERFORMANCE TESTING ONLY. DO NOT USE IN PRODUCTION. Uses the '
+        'get_related_indices_bad SQL function, which has poor performance.'
+    ),
+    tag=TAG_INTERNAL,
+    namespaces=[NAMESPACE_DOMAIN],
+    owner='Norman Hooper'
+)
+
+
 class FrozenPrivilegeToggle(StaticToggle):
     """
     A special toggle to represent a legacy toggle that should't be
