@@ -1,5 +1,5 @@
 import json
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field as dataclass_field
 from django.db import models
 from django.utils.translation import gettext_lazy as _
 from eulxml.xmlmap.core import load_xmlobject_from_string
@@ -32,8 +32,8 @@ class CaseTileTemplates(models.TextChoices):
 class CaseTileTemplateConfig:
     slug: str = ''
     filename: str = ''
-    fields: List[str] = field(default_factory=lambda: [])
-    grid: Dict[str, Dict[str, int]] = field(default_factory=lambda: {})
+    fields: List[str] = dataclass_field(default_factory=lambda: [])
+    grid: Dict[str, Dict[str, int]] = dataclass_field(default_factory=lambda: {})
 
     @property
     def filepath(self):
