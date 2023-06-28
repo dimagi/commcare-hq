@@ -273,7 +273,6 @@ def _get_dd_tables(domain, case_type, dynamic_data, timezone):
         ]))
         for group, props in dd_props_by_group
     ]
-
     props_in_dd = set(prop.name for _, prop_group in dd_props_by_group
                       for prop in prop_group)
     unrecognized = set(dynamic_data.keys()) - props_in_dd
@@ -294,15 +293,15 @@ def _get_dd_props_by_group(domain, case_type):
             case_type__domain=domain,
             case_type__name=case_type,
             deprecated=False,
-    ):
+    ).select_related('group_obj').order_by('group_obj__index', 'index'):
         ret[prop.group_name].append(prop)
 
     uncategorized = ret.pop('', None)
-    for group, props in sorted(ret.items()):
-        yield (group, props)
+    for group, props in ret.items():
+        yield group, props
 
     if uncategorized:
-        yield (_('Uncategorized') if ret else None, uncategorized)
+        yield _('Uncategorized') if ret else None, uncategorized
 
 
 def _table_definition(props):
@@ -313,7 +312,7 @@ def _table_definition(props):
                 name=label or prop_name,
                 description=description,
                 has_history=True
-            ) for prop_name, label, description in sorted(props)
+            ) for prop_name, label, description in props
         ], DYNAMIC_CASE_PROPERTIES_COLUMNS))
     }
 
