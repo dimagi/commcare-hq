@@ -82,9 +82,12 @@ class CaseTileHelper(object):
 
         # Add case search action if needed
         if module_offers_search(self.module) and not module_uses_inline_search(self.module):
-            detail.actions.append(
-                DetailContributor.get_case_search_action(self.module, self.build_profile_id, self.detail_id)
-            )
+            if (case_search_action := DetailContributor.get_case_search_action(
+                self.module,
+                self.build_profile_id,
+                self.detail_id
+            )) is not None:
+                detail.actions.append(case_search_action)
 
         if self.module.has_grouped_tiles():
             detail.tile_group = TileGroup(
@@ -149,16 +152,9 @@ class CaseTileHelper(object):
             ),
             "format": column.format
         }
-        if column.enum and column.format != "enum" and column.format != "conditional-enum":
-            raise SuiteError(
-                'Expected case tile field "{}" to be an id mapping with keys {}.'.format(
-                    column.case_tile_field,
-                    ", ".join(['"{}"'.format(i.key) for i in column.enum])
-                )
-            )
 
         context['variables'] = ''
-        if column.format == "enum" or column.format == 'conditional-enum':
+        if column.format in ["enum", "conditional-enum", "enum-image"]:
             context["variables"] = self._get_enum_variables(column)
         return context
 

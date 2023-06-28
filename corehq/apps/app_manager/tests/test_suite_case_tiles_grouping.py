@@ -35,13 +35,13 @@ class SuiteCaseTilesGroupingTest(SimpleTestCase, SuiteMixin):
             """
             <partial>
               <session>
-                <datum 
+                <datum
                     detail-confirm="m0_case_long"
                     detail-select="m0_case_short"
                     id="case_id"
                     nodeset="instance('casedb')/casedb/case[@case_type='patient'][@status='open']"
                     value="./@case_id" />
-                <datum 
+                <datum
                     function="join(' ', distinct-values(instance('casedb')/casedb/case[@case_id = instance('commcaresession')/session/data/case_id]/index/parent))"
                     id="case_id_parent_ids" />
               </session>
@@ -71,14 +71,14 @@ class SuiteCaseTilesGroupingTest(SimpleTestCase, SuiteMixin):
             """
             <partial>
               <session>
-                <instance-datum 
+                <instance-datum
                     detail-confirm="m0_case_long"
                     detail-select="m0_case_short"
                     id="selected_cases"
                     nodeset="instance('casedb')/casedb/case[@case_type='patient'][@status='open']"
                     max-select-value="100"
                     value="./@case_id" />
-                <datum 
+                <datum
                     function="join(' ', distinct-values(instance('casedb')/casedb/case[selected(join(' ', instance('selected_cases')/results/value), @case_id)]/index/parent))"
                     id="selected_cases_parent_ids" />
               </session>

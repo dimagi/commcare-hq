@@ -543,6 +543,15 @@ class TestElasticManageAdapter(AdapterWithIndexTestCase):
         with self.assertRaises(ValueError):
             self.adapter.indices_refresh(self.index)  # string is invalid
 
+    def test_indices_info(self):
+        # Test will guard against any API change in es.cat.indices output format in future ES versions
+        with temporary_index(test_adapter.index_name, test_adapter.type, test_adapter.mapping):
+            indices_details = self.adapter.indices_info()
+        index_detail = indices_details[test_adapter.index_name]
+        info_keys = set(index_detail.keys())
+        expected_keys = set(['health', 'primary_shards', 'replica_shards', 'doc_count', 'size_on_disk'])
+        self.assertEqual(info_keys, expected_keys)
+
     def test_index_flush(self):
         self.adapter.index_create(self.index)
         flush_index = self.adapter._es.indices.flush  # keep a reference

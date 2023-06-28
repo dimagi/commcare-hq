@@ -232,9 +232,12 @@ class DetailContributor(SectionContributor):
                         d.actions.append(self._get_case_list_form_action(module))
 
                 if module_offers_search(module) and not module_uses_inline_search(module):
-                    d.actions.append(
-                        DetailContributor.get_case_search_action(module, self.build_profile_id, id)
-                    )
+                    if (case_search_action := DetailContributor.get_case_search_action(
+                        module,
+                        self.build_profile_id,
+                        id
+                    )) is not None:
+                        d.actions.append(case_search_action)
 
             try:
                 if not self.app.enable_multi_sort:
@@ -363,6 +366,11 @@ class DetailContributor(SectionContributor):
     @staticmethod
     def get_case_search_action(module, build_profile_id, detail_id):
         in_search = module_loads_registry_case(module) or "search" in detail_id
+
+        # don't add search again action in split screen
+        if in_search and toggles.SPLIT_SCREEN_CASE_SEARCH.enabled(module.get_app().domain):
+            return None
+
         action_kwargs = DetailContributor._get_action_kwargs(module, in_search)
         if in_search:
             search_label = module.search_config.search_again_label
