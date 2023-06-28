@@ -205,5 +205,16 @@ class CaseTileHelper(object):
             for field in fields:
                 if field.sort_node:
                     xpath_func = self._get_xpath_function(column_info.column)
+                    # Handling this for safety, but there likely isn't a use case that would reach this state.
+                    if xpath_func in xpath_to_field:
+                        field = self._compare_fields_by_order(xpath_to_field[xpath_func], field)
                     xpath_to_field[xpath_func] = field
         return xpath_to_field
+
+    @staticmethod
+    def _compare_fields_by_order(initial_field, incoming_field):
+        if incoming_field.sort_node.order is None:
+            return initial_field
+        elif initial_field.sort_node.order is None:
+            return incoming_field
+        return min(initial_field, incoming_field, key=lambda field: field.sort_node.order)
