@@ -25,6 +25,10 @@ patches = [
     patch(
         'corehq.apps.app_manager.app_schemas.case_properties.domain_has_privilege',
         MagicMock(return_value=False)),
+    patch(
+        'corehq.apps.app_manager.app_schemas.casedb_schema.domain_has_privilege',
+        MagicMock(return_value=False)
+    ),
 ]
 
 
@@ -33,7 +37,6 @@ def combined_patches(fn):
     for patch_ in patches:
         res = patch_(res)
     return res
-
 
 class BaseSchemaTest(SimpleTestCase):
     def setUp(self):
