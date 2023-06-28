@@ -8,7 +8,6 @@ from pathlib import Path
 from typing import List
 from xml.sax.saxutils import escape
 
-from corehq import toggles
 from corehq.apps.app_manager import id_strings
 from corehq.apps.app_manager.exceptions import SuiteError
 from corehq.apps.app_manager.suite_xml.xml_models import Detail, XPathVariable, TileGroup
@@ -81,11 +80,12 @@ class CaseTileHelper(object):
 
         # Add case search action if needed
         if module_offers_search(self.module) and not module_uses_inline_search(self.module):
-            # don't add search again action in split screen
-            if not toggles.SPLIT_SCREEN_CASE_SEARCH.enabled(self.app.domain):
-                detail.actions.append(
-                    DetailContributor.get_case_search_action(self.module, self.build_profile_id, self.detail_id)
-                )
+            if (case_search_action := DetailContributor.get_case_search_action(
+                self.module,
+                self.build_profile_id,
+                self.detail_id
+            )) is not None:
+                detail.actions.append(case_search_action)
 
         DetailContributor.add_no_items_text_to_detail(detail, self.app, self.detail_type, self.module)
 
