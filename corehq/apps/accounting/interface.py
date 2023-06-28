@@ -1025,8 +1025,8 @@ class CustomerInvoiceInterface(InvoiceInterfaceBase):
                 contact_info.postal_code,
                 contact_info.country,
                 invoice.account.salesforce_account_id or "--",
-                invoice.date_start,
-                invoice.date_end,
+                format_datatables_data(invoice.date_start, sort_key=invoice.data_start.isoformat()),
+                format_datatables_data(invoice.date_end, sort_key=invoice.data_end.isoformat()),
                 invoice.date_due if invoice.date_due else "None",
             ]
 
