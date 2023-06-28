@@ -365,7 +365,10 @@ def _get_report_module_context(app, module):
         {'slug': f.slug, 'description': f.short_description} for f in get_auto_filter_configurations()
 
     ]
-    from corehq.apps.app_manager.suite_xml.features.mobile_ucr import get_column_xpath_client_template, get_data_path
+    from corehq.apps.app_manager.suite_xml.features.mobile_ucr import (
+        get_column_xpath_client_template,
+        get_data_path
+    )
     data_path_placeholders = {}
     for r in module.report_configs:
         data_path_placeholders[r.report_id] = {}
