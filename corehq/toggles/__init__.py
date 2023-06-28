@@ -709,7 +709,7 @@ CASE_LIST_TILE = StaticToggle(
 
 CASE_LIST_MAP = StaticToggle(
     'case_list_map',
-    'Allow use of a map in the case list',
+    'USH: Allow use of a map in the case list in Web Apps',
     TAG_CUSTOM,
     [NAMESPACE_DOMAIN],
     help_link='https://confluence.dimagi.com/pages/viewpage.action?'
