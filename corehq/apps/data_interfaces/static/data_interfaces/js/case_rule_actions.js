@@ -1,7 +1,7 @@
 hqDefine("data_interfaces/js/case_rule_actions", [
     'jquery',
     'knockout',
-    'hqwebapp/js/initial_page_data'
+    'hqwebapp/js/initial_page_data',
 ], function (
     $,
     ko,
