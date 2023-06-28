@@ -459,6 +459,10 @@ msgid "Address"
 msgstr "Adresse"
 
 #: corehq/apps/app_manager/static/app_manager/js/details/utils.js
+msgid "Address Popup (Web Apps only)"
+msgstr ""
+
+#: corehq/apps/app_manager/static/app_manager/js/details/utils.js
 msgid "Distance from current location"
 msgstr "Distance de votre localisation actuelle"
 
@@ -2865,9 +2869,19 @@ msgid "Fetching your location..."
 msgstr ""
 
 #: corehq/apps/cloudcare/static/cloudcare/js/formplayer/menus/views.js
+#, fuzzy
+#| msgid "Please specify an email."
+msgid "Please perform a search."
+msgstr "Veuillez spécifier une adresse mail."
+
+#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/menus/views.js
 msgid ""
 "You have selected more than the maximum selection limit of <%= value %> . "
 "Please uncheck some values to continue."
+msgstr ""
+
+#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/menus/views.js
+msgid "Your location"
 msgstr ""
 
 #: corehq/apps/cloudcare/static/cloudcare/js/formplayer/menus/views.js
@@ -3414,6 +3428,10 @@ msgstr "Identifiant sensible"
 #: corehq/apps/export/static/export/js/models.js
 msgid "Sensitive Date"
 msgstr "Date sensible"
+
+#: corehq/apps/geospatial/static/geospatial/js/geospatial_map.js
+msgid "Name of the Area"
+msgstr ""
 
 #: corehq/apps/geospatial/static/geospatial/js/geospatial_map.js
 msgid "View here"
