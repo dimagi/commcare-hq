@@ -323,16 +323,13 @@ class ExportListHelper(object):
         Return a dictionary containing details about an emailed export file.
         This will eventually be passed to an Angular controller.
         """
+        cutoff_datetime = datetime.utcnow() - timedelta(days=settings.SAVED_EXPORT_ACCESS_CUTOFF)
         return {
             'fileId': fileId,
             'size': filesizeformat(size),
             'lastUpdated': naturaltime(last_updated),
             'lastAccessed': naturaltime(last_accessed),
-            'showExpiredWarning': (
-                last_accessed and
-                last_accessed <
-                (datetime.utcnow() - timedelta(days=settings.SAVED_EXPORT_ACCESS_CUTOFF))
-            ),
+            'showExpiredWarning': (last_accessed and last_accessed < cutoff_datetime),
             'downloadUrl': download_url,
         }
 
