@@ -106,7 +106,7 @@ from corehq.messaging.scheduling.views import (
 from corehq.motech.dhis2.views import DataSetMapListView
 from corehq.motech.openmrs.views import OpenmrsImporterView
 from corehq.motech.views import ConnectionSettingsListView, MotechLogListView
-from corehq.privileges import DAILY_SAVED_EXPORT, EXCEL_DASHBOARD, DATA_DICTIONARY
+from corehq.privileges import DAILY_SAVED_EXPORT, EXCEL_DASHBOARD, DATA_DICT
 from corehq.tabs.uitab import UITab
 from corehq.tabs.utils import dropdown_dict, sidebar_to_dropdown
 
@@ -661,7 +661,7 @@ class ProjectDataTab(UITab):
             self.domain,
             get_permission_name(HqPermissions.view_data_dict)
         )
-        if domain_has_privilege(self.domain, DATA_DICTIONARY) and has_view_data_dict_permission:
+        if domain_has_privilege(self.domain, DATA_DICT) and has_view_data_dict_permission:
             items.append([_('Data Dictionary'),
                           [{'title': 'Data Dictionary',
                             'url': reverse('data_dictionary', args=[self.domain])}]])

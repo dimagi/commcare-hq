@@ -2515,9 +2515,9 @@ APPLICATION_ERROR_REPORT = FrozenPrivilegeToggle(
     help_link='https://confluence.dimagi.com/display/saas/Show+Application+Error+Report+Feature+Flag'
 )
 
-DATA_DICTIONARY = FrozenPrivilegeToggle(
-    privileges.DATA_DICTIONARY,
-    'data_dictionary',
+DATA_DICT = FrozenPrivilegeToggle(
+    privileges.DATA_DICT,
+    'data_dict',
     label='Project level data dictionary of cases',
     tag=TAG_SOLUTIONS_OPEN,
     namespaces=[NAMESPACE_DOMAIN],

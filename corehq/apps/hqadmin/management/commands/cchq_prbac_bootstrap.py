@@ -223,7 +223,7 @@ class Command(BaseCommand):
         Role(slug=privileges.APPLICATION_ERROR_REPORT,
              name='Application error report',
              description='Show Application Error Report'),
-        Role(slug=privileges.DATA_DICTIONARY,
+        Role(slug=privileges.DATA_DICT,
              name='Data dictionary',
              description='Project level data dictionary of cases'),
         Role(slug=privileges.SHOW_OWNER_LOCATION_PROPERTY_IN_REPORT_BUILDER,

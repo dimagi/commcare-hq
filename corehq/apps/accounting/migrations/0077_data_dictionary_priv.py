@@ -2,7 +2,7 @@ from django.core.management import call_command
 from django.db import migrations
 
 from corehq.apps.accounting.models import SoftwarePlanEdition
-from corehq.privileges import DATA_DICTIONARY
+from corehq.privileges import DATA_DICT
 from corehq.util.django_migrations import skip_on_fresh_install
 
 
@@ -19,7 +19,7 @@ def _grandfather_data_dictionary_priv(apps, schema_editor):
     ))
     call_command(
         'cchq_prbac_grandfather_privs',
-        DATA_DICTIONARY,
+        DATA_DICT,
         skip_edition=skip_editions,
         noinput=True,
     )

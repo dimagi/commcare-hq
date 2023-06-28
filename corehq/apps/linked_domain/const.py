@@ -12,7 +12,7 @@ MODEL_USER_DATA = 'custom_user_data'
 MODEL_CASE_SEARCH = 'case_search_data'
 MODEL_APP = 'app'
 MODEL_REPORT = 'report'
-MODEL_DATA_DICTIONARY = 'data_dictionary'
+MODEL_DATA_DICT = 'data_dict'
 MODEL_DIALER_SETTINGS = 'dialer_settings'
 MODEL_OTP_SETTINGS = 'otp_settings'
 MODEL_HMAC_CALLOUT_SETTINGS = 'hmac_callout_settings'
@@ -35,7 +35,7 @@ DOMAIN_LEVEL_DATA_MODELS = [
     (MODEL_ROLES, gettext_lazy('User Roles')),
     (MODEL_PREVIEWS, gettext_lazy('Feature Previews')),
     (MODEL_AUTO_UPDATE_RULES, gettext_lazy('Automatic Update Rules')),
-    (MODEL_DATA_DICTIONARY, gettext_lazy('Data Dictionary')),
+    (MODEL_DATA_DICT, gettext_lazy('Data Dictionary')),
 ]
 
 SUPERUSER_DATA_MODELS = [

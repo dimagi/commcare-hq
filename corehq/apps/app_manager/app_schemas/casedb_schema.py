@@ -9,7 +9,7 @@ from corehq.apps.app_manager.templatetags.xforms_extras import clean_trans
 from corehq.apps.app_manager.util import is_usercase_in_use
 from corehq.apps.data_dictionary.util import get_case_property_description_dict
 from corehq.apps.accounting.utils import domain_has_privilege
-from corehq.privileges import DATA_DICTIONARY
+from corehq.privileges import DATA_DICT
 
 
 def get_casedb_schema(form):
@@ -77,7 +77,7 @@ def _get_case_schema_subsets(app, base_case_type, hashtag='#case/', source=None)
     builder = ParentCasePropertyBuilder.for_app(app, ['case_name'], include_parent_properties=False)
     related = builder.get_parent_type_map(None)
     map = builder.get_properties_by_case_type()
-    if domain_has_privilege(app.domain, DATA_DICTIONARY):
+    if domain_has_privilege(app.domain, DATA_DICT):
         descriptions_dict = get_case_property_description_dict(app.domain)
     else:
         descriptions_dict = {}

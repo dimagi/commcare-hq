@@ -7,7 +7,7 @@ from corehq.util.log import with_progress_bar
 from corehq.apps.users.permissions import EXPORT_PERMISSIONS
 from corehq.apps.users.models import RolePermission, HqPermissions
 from corehq.apps.users.models_role import Permission, UserRole
-from corehq.toggles import DATA_DICTIONARY, DATA_FILE_DOWNLOAD
+from corehq.toggles import DATA_DICT, DATA_FILE_DOWNLOAD
 from corehq.apps.accounting.utils import get_domains_with_privilege
 
 
@@ -30,7 +30,7 @@ class Command(BaseCommand):
 
 def get_user_role_ids_to_migrate():
     # Need to get domains with privilege and those with the toggle still enabled
-    data_dict_domains = get_domains_with_privilege(DATA_DICTIONARY.slug) + DATA_DICTIONARY.get_enabled_domains()
+    data_dict_domains = get_domains_with_privilege(DATA_DICT.slug) + DATA_DICT.get_enabled_domains()
 
     return (UserRole.objects
         .filter(domain__in=data_dict_domains)

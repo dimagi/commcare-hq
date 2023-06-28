@@ -380,7 +380,7 @@ class ParentCasePropertyBuilder(object):
         Data sources for this are (limited to):
         - the app given
         - all other case sharing apps if app.case_sharing
-        - the Data Dictionary case properties if domain has DATA_DICTIONARY privilege
+        - the Data Dictionary case properties if domain has DATA_DICT privilege
         - the `defaults` passed in to the class
         - the `per_type_defaults` for usercases and call center cases, if applicable
 
@@ -400,7 +400,7 @@ class ParentCasePropertyBuilder(object):
 
         _zip_update(case_properties_by_case_type, get_per_type_defaults(self.domain))
 
-        if domain_has_privilege(self.domain, privileges.DATA_DICTIONARY):
+        if domain_has_privilege(self.domain, privileges.DATA_DICT):
             _zip_update(case_properties_by_case_type,
                         get_data_dict_props_by_case_type(self.domain, self.exclude_deprecated_properties))
 

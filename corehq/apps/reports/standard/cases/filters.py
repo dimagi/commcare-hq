@@ -143,7 +143,7 @@ def get_flattened_case_properties(domain, include_parent_properties=False):
     )
     property_counts = Counter(item for sublist in all_properties_by_type.values() for item in sublist)
 
-    if domain_has_privilege(domain, privileges.DATA_DICTIONARY):
+    if domain_has_privilege(domain, privileges.DATA_DICT):
         prop_labels = get_case_property_label_dict(domain)
         all_properties = [
             {
