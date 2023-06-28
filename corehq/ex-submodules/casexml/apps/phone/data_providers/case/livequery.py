@@ -5,6 +5,9 @@ Example case graphs with outcomes:
    a   <--ext-- d(owned) >> a b d
        <--ext-- b
 
+   a(owned)    <--chi-- e >> a
+               <--ext-- e
+
    e(owned)    --ext--> a(closed) >> a b e
                --ext--> b
 
@@ -26,13 +29,20 @@ from collections import defaultdict
 from functools import partial, wraps
 from itertools import chain, islice
 
+from casexml.apps.case.const import CASE_INDEX_CHILD as CHILD
 from casexml.apps.case.const import CASE_INDEX_EXTENSION as EXTENSION
 from casexml.apps.phone.const import ASYNC_RETRY_AFTER
 from casexml.apps.phone.tasks import ASYNC_RESTORE_SENT
 
 from corehq.form_processor.models import CommCareCase, CommCareCaseIndex
 from corehq.sql_db.routers import read_from_plproxy_standbys
-from corehq.toggles import LIVEQUERY_READ_FROM_STANDBYS, NAMESPACE_USER
+from corehq.toggles import (
+    ALIGN_ON_CHILDEXTENSION_CASES,
+    LIVEQUERY_READ_FROM_STANDBYS,
+    NAMESPACE_DOMAIN,
+    NAMESPACE_USER,
+    USE_GET_RELATED_INDICES_BAD,
+)
 from corehq.util.metrics import metrics_counter, metrics_histogram
 from corehq.util.metrics.load_counters import case_load_counter
 from corehq.util.timer import TimingContext
@@ -131,6 +141,7 @@ def get_all_related_live_cases(domain, case_ids):
 
 
 def get_live_case_ids_and_indices(domain, owned_ids, timing_context):
+
     def index_key(index):
         return '{} {}'.format(index.case_id, index.identifier)
 
@@ -213,7 +224,9 @@ def get_live_case_ids_and_indices(domain, owned_ids, timing_context):
             # hosts_by_extension since both are live and therefore this index
             # will not need to be traversed in other liveness calculations.
         elif relationship == EXTENSION:
-            if sub_id in open_ids:
+            if sub_id in open_ids and sub_id not in children_by_parent[ref_id]:
+                # A case that is both a child and an extension is not an
+                # extension.
                 if ref_id in live_ids:
                     # sub is open and is the extension of a live case
                     enliven(sub_id)
@@ -224,7 +237,7 @@ def get_live_case_ids_and_indices(domain, owned_ids, timing_context):
                     extensions_by_host[ref_id].add(sub_id)
                     hosts_by_extension[sub_id].add(ref_id)
             else:
-                return IGNORE  # closed extension
+                return IGNORE  # closed extension or extension is child
         elif sub_id in owned_ids:
             # sub is owned and available (open and not an extension case)
             enliven(sub_id)
@@ -274,8 +287,18 @@ def get_live_case_ids_and_indices(domain, owned_ids, timing_context):
     def filter_deleted_indices(related):
         return [index for index in related if index.referenced_id]
 
+    def populate_children_by_parent(related):
+        if query_returns_child_indices:
+            for index in related:
+                if index.relationship == CHILD:
+                    children_by_parent[index.referenced_id].add(index.case_id)
+
     IGNORE = object()
     debug = logging.getLogger(__name__).debug
+    query_returns_child_indices = (
+        ALIGN_ON_CHILDEXTENSION_CASES.enabled(domain, NAMESPACE_DOMAIN)
+        or USE_GET_RELATED_INDICES_BAD.enabled(domain, NAMESPACE_DOMAIN)
+    )
 
     # case graph data structures
     live_ids = set()
@@ -283,6 +306,7 @@ def get_live_case_ids_and_indices(domain, owned_ids, timing_context):
     extensions_by_host = defaultdict(set)  # host_id -> (open) extension_ids
     hosts_by_extension = defaultdict(set)  # (open) extension_id -> host_ids
     parents_by_child = defaultdict(set)    # child_id -> parent_ids
+    children_by_parent = defaultdict(set)  # parent_id -> (open) child_id
     indices = defaultdict(list)  # case_id -> list of CommCareCaseIndex-like, used as a cache for later
     seen_ix = defaultdict(set)   # case_id -> set of '<index.case_id> <index.identifier>'
 
@@ -299,6 +323,7 @@ def get_live_case_ids_and_indices(domain, owned_ids, timing_context):
 
             populate_indices(related)
             related_not_deleted = filter_deleted_indices(related)
+            populate_children_by_parent(related_not_deleted)
             update_open_and_deleted_ids(related_not_deleted)
             next_ids = {classify(index, next_ids)
                         for index in related_not_deleted
