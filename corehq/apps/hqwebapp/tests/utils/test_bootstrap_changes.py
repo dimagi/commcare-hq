@@ -15,8 +15,9 @@ def test_make_direct_css_renames_bootstrap5():
     final_line, renames = make_direct_css_renames(
         line, get_spec('bootstrap_3_to_5')
     )
-    eq(final_line, """        <button class="btn-sm btn btn-outline-secondary context-right btn-sm" id="prepaid-snooze"></button>\n""")
-    eq(renames, ['renamed btn-xs to btn-sm', 'renamed btn-default to btn-outline-secondary'])
+    eq(final_line, '        <button class="btn-sm btn btn-outline-primary '
+                   'context-right btn-sm" id="prepaid-snooze"></button>\n')
+    eq(renames, ['renamed btn-default to btn-outline-primary', 'renamed btn-xs to btn-sm'])
 
 
 def test_make_numbered_css_renames_bootstrap5():
@@ -24,8 +25,8 @@ def test_make_numbered_css_renames_bootstrap5():
     final_line, renames = make_numbered_css_renames(
         line, get_spec('bootstrap_3_to_5')
     )
-    eq(final_line, """        <div class="col-6">\n""")
-    eq(renames, ['renamed col-xs-<num> to col-<num>'])
+    eq(final_line, """        <div class="col-sm-6">\n""")
+    eq(renames, ['renamed col-xs-<num> to col-sm-<num>'])
 
 
 def test_make_data_attribute_renames_bootstrap5():
@@ -42,11 +43,11 @@ def test_flag_changed_css_classes_bootstrap5():
     flags = flag_changed_css_classes(
         line, get_spec('bootstrap_3_to_5')
     )
-    eq(flags, ['`dl-horizontal` has been dropped.\nInstead, use `.row` on '
-               '`<dl>` and use grid column classes (or mixins) on its `<dt>` '
-               'and `<dd>` children.\n\nFor example:\n```\n<dl class="dl-horizontal">\n    '
-               '<dt>foo</dt>\n    <dd>foo</dd>\n</dl>\n```\nbecomes\n```\n<dl class="row">\n    '
-               '<dt class="col-3">foo</dt>\n    <dd class="col-9">foo</dd>\n</dl>\n```'])
+    eq(flags, ['`dl-horizontal` has been dropped.\nInstead, use `.row` on `<dl>` and use grid '
+               'column classes (or mixins) on its `<dt>` and `<dd>` children.\n\nPreviously:\n```\n'
+               '<dl class="dl-horizontal">\n    <dt>foo</dt>\n    <dd>foo</dd>\n</dl>\n```\n\nNow:'
+               '\n```\n<dl class="row">\n    <dt class="col-3">foo</dt>\n    '
+               '<dd class="col-9">foo</dd>\n</dl>\n```\n'])
 
 
 def test_flag_stateful_button_changes_bootstrap5():
