@@ -13,7 +13,7 @@ from corehq.util.test_utils import privilege_enabled
 from corehq import privileges
 
 
-@privilege_enabled(privileges.DATA_DICTIONARY)
+@privilege_enabled(privileges.DATA_DICT)
 class UpdateCasePropertyViewTest(TestCase):
     domain_name = uuid.uuid4().hex
 
@@ -198,7 +198,7 @@ class UpdateCasePropertyViewTest(TestCase):
         self.assertIsNone(prop.group_obj)
 
 
-@privilege_enabled(privileges.DATA_DICTIONARY)
+@privilege_enabled(privileges.DATA_DICT)
 class DataDictionaryViewTest(TestCase):
     domain_name = uuid.uuid4().hex
 

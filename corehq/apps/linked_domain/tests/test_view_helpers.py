@@ -695,7 +695,7 @@ class TestBuildViewModelsFromDataModels(BaseLinkedDomainTest):
         )
         self.assertEqual(0, len(view_models))
 
-    @privilege_enabled(privileges.DATA_DICTIONARY)
+    @privilege_enabled(privileges.DATA_DICT)
     @flag_enabled('SYNC_SEARCH_CASE_CLAIM')
     @flag_enabled('WIDGET_DIALER')
     @flag_enabled('GAEN_OTP_SERVER')
@@ -707,7 +707,7 @@ class TestBuildViewModelsFromDataModels(BaseLinkedDomainTest):
         expected_length = len(DOMAIN_LEVEL_DATA_MODELS) + len(FEATURE_FLAG_DATA_MODELS)
         self.assertEqual(expected_length, len(view_models))
 
-    @privilege_enabled(privileges.DATA_DICTIONARY)
+    @privilege_enabled(privileges.DATA_DICT)
     @flag_enabled('SYNC_SEARCH_CASE_CLAIM')
     @flag_enabled('WIDGET_DIALER')
     @flag_enabled('GAEN_OTP_SERVER')

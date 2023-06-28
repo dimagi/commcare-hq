@@ -30,7 +30,7 @@ class TestMigrationQuery(TestCase):
         )
         patcher2 = patch(
             ('corehq.apps.users.management.commands.add_data_dict_permissions'
-             '.DATA_DICTIONARY.get_enabled_domains'),
+             '.DATA_DICT.get_enabled_domains'),
             return_value=[]
         )
         patcher3 = patch(

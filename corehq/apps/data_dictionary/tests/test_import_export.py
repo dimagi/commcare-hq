@@ -17,7 +17,7 @@ from corehq.util.test_utils import TestFileMixin, privilege_enabled
 from corehq import privileges
 
 
-@privilege_enabled(privileges.DATA_DICTIONARY)
+@privilege_enabled(privileges.DATA_DICT)
 class DataDictionaryImportTest(TestCase, TestFileMixin):
     domain_name = uuid.uuid4().hex
     file_path = ('data',)
@@ -86,7 +86,7 @@ class DataDictionaryImportTest(TestCase, TestFileMixin):
         self.assertEqual(expected_errors, received_errors)
 
 
-@privilege_enabled(privileges.DATA_DICTIONARY)
+@privilege_enabled(privileges.DATA_DICT)
 class DataDictionaryExportTest(TestCase):
     domain_name = uuid.uuid4().hex
 
