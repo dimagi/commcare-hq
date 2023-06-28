@@ -414,7 +414,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             const appPreview = displayOptions.singleAppMode;
             const addressFieldPresent = !!_.find(this.styles, function (style) { return style.displayFormat === constants.FORMAT_ADDRESS; });
 
-            self.showMap = addressFieldPresent && !appPreview && !self.hasNoItems
+            self.showMap = addressFieldPresent && !appPreview && !self.hasNoItems && toggles.toggleEnabled('CASE_LIST_MAP')
         },
 
         ui: CaseListViewUI(),
