@@ -141,8 +141,12 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
         return rowStart + " / " + colStart + " / " +
             rowEnd + " / " + colEnd;
     };
+    // use the field alignment from xml template only if valid
+    const getValidFieldAlignment = function (alignment) {
+        return constants.ALLOWED_FIELD_ALIGNMENTS.includes(alignment) ? alignment : 'start';
+    };
     // generate the case tile's style block and insert
-    const buildCellLayout = function (tiles, prefix) {
+    const buildCellLayout = function (tiles, styles, prefix) {
         const tileModels = _.chain(tiles || [])
             .map(function (tile, idx) {
                 if (tile === null || tile === undefined) {
@@ -152,6 +156,8 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
                     id: prefix + '-grid-style-' + idx,
                     gridStyle: getGridAttributes(tile),
                     fontStyle: tile.fontSize,
+                    verticalAlign: getValidFieldAlignment(styles[idx].verticalAlign),
+                    horizontalAlign: getValidFieldAlignment(styles[idx].horizontalAlign),
                 };
             })
             .filter(function (tile) {
@@ -732,11 +738,14 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
     // - shape and size of the tile's layout grid
     // - the tile's visual style and its outer boundary
     // - layout of the case tiles on the outer, visible grid
-    const buildCaseTileStyles = function (tiles, numRows, numColumns, numEntitiesPerRow, useUniformUnits, prefix) {
+    const buildCaseTileStyles = function (tiles, styles, numRows, numColumns, numEntitiesPerRow, useUniformUnits, prefix) {
         const caseTileStyles = {};
-        caseTileStyles.cellLayoutStyle = buildCellLayout(tiles, prefix);
+        caseTileStyles.cellLayoutStyle = buildCellLayout(tiles, styles, prefix);
         caseTileStyles.cellGridStyle = buildCellGridStyle(numRows, numColumns, useUniformUnits, prefix);
-        caseTileStyles.cellContainerStyle = buildCellContainerStyle(numEntitiesPerRow);
+        if (numEntitiesPerRow > 1) {
+            caseTileStyles.cellContainerStyle = buildCellContainerStyle(numEntitiesPerRow);
+            caseTileStyles.cellWrapperStyle = $("#cell-wrapper-style-template");
+        }
         return caseTileStyles;
     };
 
@@ -756,7 +765,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             const numColumns = options.maxWidth;
             const useUniformUnits = options.useUniformUnits;
 
-            const caseTileStyles = buildCaseTileStyles(options.tiles, numRows, numColumns,
+            const caseTileStyles = buildCaseTileStyles(options.tiles, options.styles, numRows, numColumns,
                 numEntitiesPerRow, useUniformUnits, 'list');
 
             $("#list-cell-layout-style").html(caseTileStyles.cellLayoutStyle).data("css-polyfilled", false);
