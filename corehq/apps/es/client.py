@@ -395,6 +395,10 @@ class ElasticManageAdapter(BaseAdapter):
         :param dest: ``str`` name of the destination index
         :param wait_for_completion: ``bool`` would block the request until reindex is complete
         :param refresh: ``bool`` refreshes index
+        :param batch_size: ``int`` The size of the scroll batch used by the reindex process. larger
+                           batches may process more quickly but risk errors if the documents are too
+                           large. 1000 is the recommended maximum and elasticsearch default,
+                           and can be reduced if you encounter scroll timeouts.
 
         :returns: None if wait_for_completion is True else would return task_id of reindex task
         """
