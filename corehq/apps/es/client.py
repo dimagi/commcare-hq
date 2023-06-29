@@ -387,7 +387,8 @@ class ElasticManageAdapter(BaseAdapter):
         elif "*" in index:
             raise ValueError(f"refusing to operate with index wildcards: {index}")
 
-    def reindex(self, source, dest, wait_for_completion=False, refresh=False, batch_size=1000):
+    def reindex(self, source, dest, wait_for_completion=False,
+                refresh=False, batch_size=1000, purge_ids=False):
         """
         Starts the reindex process in elastic search cluster
 
@@ -399,6 +400,10 @@ class ElasticManageAdapter(BaseAdapter):
                            batches may process more quickly but risk errors if the documents are too
                            large. 1000 is the recommended maximum and elasticsearch default,
                            and can be reduced if you encounter scroll timeouts.
+        :param purge_ids: ``bool`` adds an inline script to remove the _id field from documents source.
+                          these cause errors on reindexing the doc, but the script slows down the reindex
+                          substantially, so it is only recommended to enable this if you have run into
+                          the specific error it is designed to resolve.
 
         :returns: None if wait_for_completion is True else would return task_id of reindex task
         """
@@ -418,6 +423,9 @@ class ElasticManageAdapter(BaseAdapter):
             },
             "conflicts": "proceed"
         }
+        if purge_ids:
+            reindex_body["script"] = {"inline": "if (ctx._source._id) {ctx._source.remove('_id')}"}
+
         reindex_info = self._es.reindex(
             reindex_body,
             wait_for_completion=wait_for_completion,
