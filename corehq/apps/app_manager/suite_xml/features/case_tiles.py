@@ -8,8 +8,11 @@ from pathlib import Path
 from typing import List
 from xml.sax.saxutils import escape
 
+from corehq import toggles
+
 from corehq.apps.app_manager import id_strings
 from corehq.apps.app_manager.exceptions import SuiteError
+from corehq.apps.app_manager.suite_xml.sections.entries import EntriesHelper
 from corehq.apps.app_manager.suite_xml.xml_models import Detail, XPathVariable, TileGroup
 from corehq.apps.app_manager.util import (
     module_offers_search,
@@ -50,8 +53,8 @@ def case_tile_template_config(template):
 
 
 class CaseTileHelper(object):
-    def __init__(self, app, module, detail, detail_id, detail_type,
-                build_profile_id, detail_column_infos):
+    def __init__(self, app, module, detail, detail_id, detail_type, build_profile_id, detail_column_infos,
+                 entries_helper: EntriesHelper):
         self.app = app
         self.module = module
         self.detail = detail
@@ -60,6 +63,7 @@ class CaseTileHelper(object):
         self.cols_by_tile_field = {col.case_tile_field: col for col in self.detail.columns}
         self.build_profile_id = build_profile_id
         self.detail_column_infos = detail_column_infos
+        self.entries_helper: EntriesHelper = entries_helper
 
     def build_case_tile_detail(self):
         from corehq.apps.app_manager.suite_xml.sections.details import DetailContributor
@@ -79,6 +83,18 @@ class CaseTileHelper(object):
         # Populate the template
         detail_as_string = self._case_tile_template_string.format(**context)
         detail = load_xmlobject_from_string(detail_as_string, xmlclass=Detail)
+
+        # Case registration
+        if self.module.case_list_form.form_id:
+            from corehq.apps.app_manager.views.modules import get_parent_select_followup_forms
+            form = self.app.get_form(self.module.case_list_form.form_id)
+            if toggles.FOLLOWUP_FORMS_AS_CASE_LIST_FORM.enabled(self.app.domain):
+                valid_forms = [f.unique_id for f in get_parent_select_followup_forms(self.app, self.module)]
+            else:
+                valid_forms = []
+            if form.is_registration_form(self.module.case_type) or form.unique_id in valid_forms:
+                detail.actions.append(DetailContributor.get_case_list_form_action(
+                    self.module, self.app, self.build_profile_id, self.entries_helper))
 
         # Add case search action if needed
         if module_offers_search(self.module) and not module_uses_inline_search(self.module):

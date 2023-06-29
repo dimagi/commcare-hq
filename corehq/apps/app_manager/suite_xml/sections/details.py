@@ -110,8 +110,8 @@ class DetailContributor(SectionContributor):
                     if detail_column_infos:
                         detail_id = id_strings.detail(module, detail_type)
                         if detail.case_tile_template:
-                            helper = CaseTileHelper(self.app, module, detail, detail_id,
-                                                detail_type, self.build_profile_id, detail_column_infos)
+                            helper = CaseTileHelper(self.app, module, detail, detail_id, detail_type,
+                                self.build_profile_id, detail_column_infos, self.entries_helper)
                             elements.append(helper.build_case_tile_detail())
                         else:
                             print_template_path = None
@@ -226,7 +226,8 @@ class DetailContributor(SectionContributor):
                     else:
                         valid_forms = []
                     if form.is_registration_form(module.case_type) or form.unique_id in valid_forms:
-                        d.actions.append(self._get_case_list_form_action(module))
+                        d.actions.append(DetailContributor.get_case_list_form_action(
+                            module, self.app, self.build_profile_id, self.entries_helper))
 
                 if module_offers_search(module) and not module_uses_inline_search(module):
                     if (case_search_action := DetailContributor.get_case_search_action(
@@ -299,18 +300,19 @@ class DetailContributor(SectionContributor):
             field=field,
         )
 
-    def _get_case_list_form_action(self, module):
+    @staticmethod
+    def get_case_list_form_action(module, app, build_profile_id, entries_helper):
         """
         Returns registration/followup form action
         """
-        form = self.app.get_form(module.case_list_form.form_id)
+        form = app.get_form(module.case_list_form.form_id)
 
-        if self.app.enable_localized_menu_media:
+        if app.enable_localized_menu_media:
             case_list_form = module.case_list_form
             action = LocalizedAction(
                 menu_locale_id=id_strings.case_list_form_locale(module),
-                media_image=case_list_form.uses_image(build_profile_id=self.build_profile_id),
-                media_audio=case_list_form.uses_audio(build_profile_id=self.build_profile_id),
+                media_image=case_list_form.uses_image(build_profile_id=build_profile_id),
+                media_audio=case_list_form.uses_audio(build_profile_id=build_profile_id),
                 image_locale_id=id_strings.case_list_form_icon_locale(module),
                 audio_locale_id=id_strings.case_list_form_audio_locale(module),
                 stack=Stack(),
@@ -327,16 +329,16 @@ class DetailContributor(SectionContributor):
             )
 
         action_relevant = module.case_list_form.relevancy_expression
-        if toggles.FOLLOWUP_FORMS_AS_CASE_LIST_FORM.enabled(self.app.domain) and action_relevant:
+        if toggles.FOLLOWUP_FORMS_AS_CASE_LIST_FORM.enabled(app.domain) and action_relevant:
             action.relevant = action_relevant
 
         frame = PushFrame()
         frame.add_command(XPath.string(id_strings.form_command(form)))
 
-        target_form_dm = self.entries_helper.get_datums_meta_for_form_generic(form)
+        target_form_dm = entries_helper.get_datums_meta_for_form_generic(form)
         source_form_dm = []
         if len(module.forms):
-            source_form_dm = self.entries_helper.get_datums_meta_for_form_generic(module.get_form(0))
+            source_form_dm = entries_helper.get_datums_meta_for_form_generic(module.get_form(0))
         for target_meta in target_form_dm:
             if target_meta.requires_selection:
                 # This is true for registration forms where the case being created is a subcase
