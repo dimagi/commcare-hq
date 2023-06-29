@@ -120,7 +120,7 @@ def download_blob(request):
     key = request.GET.get("key")
     try:
         meta = BlobMeta.objects.partitioned_get(partition_value=key, key=key)
-    except BlobMeta.DoesNotExist as e:
+    except BlobMeta.DoesNotExist:
         raise Http404()
     blob = get_blob_db().get(meta=meta)
     return get_download_response(
