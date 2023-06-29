@@ -1,4 +1,7 @@
 from datetime import datetime
+
+from django.db import IntegrityError
+
 from dimagi.ext.couchdbkit import DateTimeProperty, Document, StringProperty
 
 from corehq.apps.cleanup.models import DeletedCouchDoc
@@ -10,6 +13,27 @@ class DeleteRecord(Document):
     base_doc = 'DeleteRecord'
     domain = StringProperty()
     datetime = DateTimeProperty()
+
+    def save(self):
+        """Save the doc
+
+        A `DeletedCouchDoc` record is created for this `DeleteRecord`
+        (if one does not already exist), which means it will be deleted
+        automatically sometime later. Automatic `DeleteRecord` cleanup
+        will happen around the same time that the deleted document that
+        it references is also permanently deleted.
+        """
+        result = super().save()
+        try:
+            DeletedCouchDoc.objects.create(
+                doc_id=self._id,
+                doc_type=self.doc_type,
+                deleted_on=datetime.utcnow(),
+            )
+        except IntegrityError as err:
+            if "duplicate key" not in str(err):
+                raise
+        return result
 
 
 class DeleteDocRecord(DeleteRecord):
