@@ -317,16 +317,11 @@ def _get_owner_ids(domain, data, case_db):
 
         for index in data_item.indices.values():
             index_case_id = index.get_id(case_db)
-            valid_case_id = False
             if index_case_id in case_db.real_case_ids:
                 case_ids.append(index_case_id)
-                valid_case_id = True
-            try:
+            else:
                 case_owner_id = case_db.get_owner_id(index_case_id)
                 owner_ids.append(case_owner_id)
-            except UserError as e:
-                if not valid_case_id:
-                    raise e
 
     case_owner_ids = (
         CaseSearchES()
