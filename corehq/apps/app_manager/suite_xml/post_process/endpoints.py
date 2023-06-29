@@ -75,7 +75,7 @@ class EndpointsHelper(PostProcessor):
             stack=stack,
         )
 
-    def get_argument_ids(self, frame_children, form, add_last_selection_datum):
+    def get_argument_ids(self, frame_children, form = None, add_last_selection_datum = True):
 
         def should_include(child, add_selection_datum):
             if not isinstance(child, WorkflowDatumMeta):
