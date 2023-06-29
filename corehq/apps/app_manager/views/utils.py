@@ -608,6 +608,10 @@ def set_session_endpoint(module_or_form, raw_endpoint_id, app):
     cleaned_id = get_cleaned_session_endpoint_id(module_or_form, raw_endpoint_id, app)
     module_or_form.session_endpoint_id = cleaned_id
 
+def set_case_list_session_endpoint(module, raw_endpoint_id, app):
+    cleaned_id = get_cleaned_session_endpoint_id(module, raw_endpoint_id, app)
+    module.case_list_session_endpoint_id = cleaned_id
+
 
 def _is_duplicate_endpoint_id(new_id, old_id, app):
     if not new_id or new_id == old_id:

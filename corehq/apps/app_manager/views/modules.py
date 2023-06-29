@@ -103,6 +103,7 @@ from corehq.apps.app_manager.views.utils import (
     handle_custom_icon_edits,
     handle_shadow_child_modules,
     set_session_endpoint,
+    set_case_list_session_endpoint
 )
 from corehq.apps.app_manager.xform import CaseError
 from corehq.apps.app_manager.xpath_validator import validate_xpath
@@ -626,6 +627,7 @@ def edit_module_attr(request, domain, app_id, module_unique_id, attr):
         "use_default_image_for_all": None,
         "use_default_audio_for_all": None,
         "session_endpoint_id": None,
+        "case_list_session_endpoint_id": None,
         'custom_assertions': None,
     }
 
@@ -770,6 +772,10 @@ def edit_module_attr(request, domain, app_id, module_unique_id, attr):
     if should_edit('session_endpoint_id'):
         raw_endpoint_id = request.POST['session_endpoint_id']
         set_session_endpoint(module, raw_endpoint_id, app)
+
+    if should_edit('case_list_session_endpoint_id'):
+        raw_endpoint_id = request.POST['case_list_session_endpoint_id']
+        set_case_list_session_endpoint(module, raw_endpoint_id, app)
 
     if should_edit('custom_assertions'):
         module.custom_assertions = validate_custom_assertions(

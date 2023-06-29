@@ -2224,6 +2224,7 @@ class ModuleBase(IndexedSchema, ModuleMediaMixin, NavMenuItemMediaMixin, Comment
     auto_select_case = BooleanProperty(default=False)
     is_training_module = BooleanProperty(default=False)
     session_endpoint_id = StringProperty(exclude_if_none=True)  # See toggles.SESSION_ENDPOINTS
+    case_list_session_endpoint_id = StringProperty(exclude_if_none=True)
     custom_assertions = SchemaListProperty(CustomAssertion)
 
     def __init__(self, *args, **kwargs):
