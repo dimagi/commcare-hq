@@ -1,6 +1,8 @@
 from datetime import datetime
 from dimagi.ext.couchdbkit import *
 
+from corehq.apps.cleanup.models import DeletedCouchDoc
+
 DELETED_SUFFIX = '-Deleted'
 
 
@@ -66,6 +68,10 @@ def get_deleted_doc_type(document_class_or_instance):
 
 
 def undo_delete(document, save=True):
+    DeletedCouchDoc.objects.filter(
+        doc_type=document['doc_type'],
+        doc_id=document['_id'],
+    ).delete()
     document.doc_type = remove_deleted_doc_type_suffix(document['doc_type'])
     if save:
         document.save()
