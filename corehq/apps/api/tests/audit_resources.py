@@ -353,8 +353,8 @@ class TestNavigationEventAuditResource(APIResourceTest):
 
         params = self.base_params(domain=self.domain1_audits.domain)
         local_date_params = {
-            'local_date.gte': date(2023, 5, 1).isoformat(),
-            'local_date.lt': date(2023, 5, 2).isoformat()
+            'gte': date(2023, 5, 1).isoformat(),
+            'lt': date(2023, 5, 2).isoformat()
         }
 
         params.local_date = local_date_params

@@ -1111,7 +1111,7 @@ class NavigationEventAuditResourceParams:
             if '.' in key:
                 prefix, qualifier = key.split('.', maxsplit=1)
                 if prefix == 'local_date':
-                    local_date[key] = params.get(key)
+                    local_date[qualifier] = params.get(key)
 
         self.local_date = local_date
 
@@ -1248,11 +1248,10 @@ class NavigationEventAuditResource(HqBaseResource, Resource):
         return results
 
     @classmethod
-    def _get_compound_filter(cls, key, params):
+    def _get_compound_filter(cls, param_field_name: str, params: NavigationEventAuditResourceParams):
         compound_filter = Q()
-        for key, val in getattr(params, key).items():
-            if '.' in key and key.split('.')[0] in cls.COMPOUND_FILTERS:
-                prefix, qualifier = key.split('.', maxsplit=1)
-                filter_obj = cls.COMPOUND_FILTERS[prefix](qualifier, val)
+        if param_field_name in cls.COMPOUND_FILTERS:
+            for qualifier, val in getattr(params, param_field_name).items():
+                filter_obj = cls.COMPOUND_FILTERS[param_field_name](qualifier, val)
                 compound_filter &= Q(**filter_obj)
         return compound_filter
