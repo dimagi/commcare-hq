@@ -78,6 +78,25 @@ class SessionEndpointTests(SimpleTestCase, TestXmlMixin):
             "./remote-request",
         )
 
+    def test_case_list_module_case_list_session_endpoint_id(self):
+        self.module.case_list_session_endpoint_id = 'case_list'
+        self.factory.form_requires_case(self.form, case_type=self.parent_case_type)
+        self.assertXmlPartialEqual(
+            """
+           <partial>
+                <endpoint id="case_list">
+                    <stack>                
+                        <push>
+                            <command value="'m0'"/>
+                        </push>
+                    </stack>
+                </endpoint>
+            </partial>
+            """,
+            self.factory.app.create_suite(),
+            "./endpoint",
+        )
+
     def test_registration_form_session_endpoint_id(self):
         self.form.session_endpoint_id = 'my_form'
         self.factory.form_opens_case(self.form, case_type=self.parent_case_type)
@@ -190,6 +209,49 @@ class SessionEndpointTests(SimpleTestCase, TestXmlMixin):
             ),
             suite,
             "./remote-request[2]",
+        )
+
+    def test_child_case_list_module_case_list_session_endpoint_id(self):
+        self.child_module.case_list_session_endpoint_id = 'child_case_list'
+        self.factory.form_requires_case(
+            self.child_module_form,
+            case_type=self.child_case_type,
+            parent_case_type=self.parent_case_type
+        )
+        with patch('corehq.util.view_utils.get_url_base') as get_url_base_patch:
+            get_url_base_patch.return_value = 'https://www.example.com'
+            suite = self.factory.app.create_suite()
+
+        self.assertXmlPartialEqual(
+            """
+            <partial>
+                <endpoint id="child_case_list">
+                    <argument id="parent_id"/>
+                    <stack>
+                        <push>
+                            <datum id="parent_id" value="$parent_id"/>
+                            <command value="'claim_command.child_case_list.parent_id'"/>
+                        </push>                    
+                        <push>
+                            <command value="'m0'"/>
+                            <command value="'m1'"/>
+                            <datum id="parent_id" value="$parent_id"/>                            
+                        </push>
+                    </stack>
+                </endpoint>
+            </partial>
+            """,
+            suite,
+            "./endpoint",
+        )
+
+        self.assertXmlPartialEqual(
+            self.get_xml("session_endpoint_remote_request").decode('utf-8').format(
+                datum_id="parent_id",
+                endpoint_id="child_case_list",
+            ),
+            suite,
+            "./remote-request",
         )
 
     def test_child_module_form_session_endpoint_id(self):
