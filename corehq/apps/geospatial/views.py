@@ -95,11 +95,8 @@ class GeospatialConfigPage(BaseDomainView):
             'form': self.settings_form,
             'config': model_to_dict(
                 self.config,
-                fields=[
-                    'location_data_source',
-                    'user_location_property_name',
-                    'case_location_property_name',
-                ])
+                fields=GeospatialConfigForm.Meta.fields
+            )
         }
 
     @property
