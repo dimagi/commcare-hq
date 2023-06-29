@@ -306,20 +306,28 @@ def _get_owner_ids(domain, data, case_db):
     owner_ids = []
     case_ids = []
     for data_item in data:
-        if data_item.is_new_case:
+        if data_item.owner_id:
             owner_ids.append(data_item.owner_id)
-        else:
+        try:
             case_id = data_item.get_case_id(case_db)
             case_ids.append(case_id)
+        except UserError as e:
+            # If we don't have an owner_id, we have to have a valid case_id
+            if not data_item.owner_id:
+                raise e
 
-        for name, index in data_item.indices.items():
+        for index in data_item.indices.values():
             index_case_id = index.get_id(case_db)
-
+            valid_case_id = False
             if index_case_id in case_db.real_case_ids:
                 case_ids.append(index_case_id)
-            else:
+                valid_case_id = True
+            try:
                 case_owner_id = case_db.get_owner_id(index_case_id)
                 owner_ids.append(case_owner_id)
+            except UserError as e:
+                if not valid_case_id:
+                    raise e
 
     case_owner_ids = (
         CaseSearchES()
