@@ -37,7 +37,7 @@ class ESSyncUtil:
     def __init__(self):
         self.es = get_client()
 
-    def start_reindex(self, cname, reindex_batch_size=1000):
+    def start_reindex(self, cname, reindex_batch_size=1000, purge_ids=False):
 
         adapter = doc_adapter_from_cname(cname)
 
@@ -51,7 +51,10 @@ class ESSyncUtil:
         self._prepare_index_for_reindex(destination_index)
 
         logger.info("Starting ReIndex process")
-        task_info = es_manager.reindex(source_index, destination_index, batch_size=reindex_batch_size)
+        task_info = es_manager.reindex(
+            source_index, destination_index,
+            batch_size=reindex_batch_size, purge_ids=purge_ids
+        )
         logger.info(f"Copying docs from index {source_index} to index {destination_index}")
         task_id = task_info.split(':')[1]
         print("\n\n\n")
@@ -235,6 +238,15 @@ class Command(BaseCommand):
         ./manage.py elastic_sync_multiplexed start <index_cname> --batch_size <batch size>
         ```
 
+        If reindex fails with `MapperParsingException[Field [_id] is a metadata field
+        and cannot be added inside a document.Use the index API request parameters.]`
+
+        The error can be fixed by
+
+        ```
+        ./manage.py elastic_sync_multiplexed start <index_cname> --purge-ids
+        ```
+
     For removing tombstones from a index -
         ```bash
         ./manage.py elastic_sync_multiplexed cleanup <index_cname>
@@ -293,6 +305,14 @@ class Command(BaseCommand):
             help="Reindex batch size"
         )
 
+        start_cmd.add_argument(
+            "--purge-ids",
+            action="store_true",
+            default=False,
+            help="Add reindex script to remove ids from doc source. This slows down the reindex substantially,"
+                 "but is necessary if existings docs contain _ids in the source, as it is now a reserved property."
+        )
+
         # Get ReIndex Process Status
         status_cmd = subparsers.add_parser("status")
         status_cmd.set_defaults(func=self.es_helper.reindex_status)
@@ -333,7 +353,7 @@ class Command(BaseCommand):
         sub_cmd = options['sub_command']
         cmd_func = options.get('func')
         if sub_cmd == 'start':
-            cmd_func(options['index_cname'], options['batch_size'])
+            cmd_func(options['index_cname'], options['batch_size'], options['purge_ids'])
         elif sub_cmd == 'delete':
             cmd_func(options['index_cname'])
         elif sub_cmd == 'cleanup':
