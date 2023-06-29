@@ -208,7 +208,7 @@ fiona==1.9.3
     # via geopandas
 firebase-admin==6.1.0
     # via -r base-requirements.in
-flower @ git+https://github.com/mher/flower@a4fc7c97d897a3172d1058d5269115eb88d811de
+flower==2.0.0
     # via -r prod-requirements.in
 future==0.18.3
     # via pyjwkest
