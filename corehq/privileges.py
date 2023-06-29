@@ -109,6 +109,10 @@ EXPORT_OWNERSHIP = 'export_ownership'
 
 FILTERED_BULK_USER_DOWNLOAD = 'filtered_bulk_user_download'
 
+APPLICATION_ERROR_REPORT = 'application_error_report'
+
+SHOW_OWNER_LOCATION_PROPERTY_IN_REPORT_BUILDER = 'show_owner_location_property_in_report_builder'
+
 MAX_PRIVILEGES = [
     LOOKUP_TABLES,
     API_ACCESS,
@@ -166,7 +170,9 @@ MAX_PRIVILEGES = [
     FORM_CASE_IDS_CASE_IMPORTER,
     EXPORT_MULTISORT,
     EXPORT_OWNERSHIP,
-    FILTERED_BULK_USER_DOWNLOAD
+    FILTERED_BULK_USER_DOWNLOAD,
+    APPLICATION_ERROR_REPORT,
+    SHOW_OWNER_LOCATION_PROPERTY_IN_REPORT_BUILDER,
 ]
 
 # These are special privileges related to their own rates in a SoftwarePlanVersion
@@ -239,5 +245,9 @@ class Titles(object):
             FORM_CASE_IDS_CASE_IMPORTER: _("Download buttons for Form- and Case IDs on Case Importer"),
             EXPORT_MULTISORT: _("Sort multiple rows in exports simultaneously"),
             EXPORT_OWNERSHIP: _("Allow exports to have ownership"),
-            FILTERED_BULK_USER_DOWNLOAD: _("Bulk user management features")
+            FILTERED_BULK_USER_DOWNLOAD: _("Bulk user management features"),
+            APPLICATION_ERROR_REPORT: _("Application error report"),
+            SHOW_OWNER_LOCATION_PROPERTY_IN_REPORT_BUILDER: _(
+                "Show an additional 'Owner (Location)' property in report builder reports."
+            ),
         }.get(privilege, privilege)

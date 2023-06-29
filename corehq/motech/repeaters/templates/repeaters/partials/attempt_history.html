@@ -48,13 +48,15 @@
             {% endif %}
 
             <!-- DHIS2 specific errors -->
-            {% for error in dhis2_errors %}
+            {% for error, diagnosis in dhis2_errors %}
                 <tr>
                     <td>
                         <div>
                             <strong>DHIS2 Error #{{ forloop.counter }}</strong>
                             <div class="well" style="font-family: monospace;">
-                                {{ error }}
+                                {{ error }}<br/><br/>
+                                <strong>{% trans 'Diagnosis:' %}</strong>
+                                {{ diagnosis }}
                             </div>
                         </div>
                     </td>

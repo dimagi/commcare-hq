@@ -94,6 +94,8 @@ accounting
  0072_export_multisort_priv
  0073_export_ownership_priv
  0074_filtered_bulk_user_download_priv
+ 0075_application_error_report_priv
+ 0076_location_owner_in_report_builder_priv
 admin
  0001_initial
  0002_logentry_remove_auto_add
@@ -140,6 +142,7 @@ app_manager
  0024_applicationreleaselog_info
  0025_migrate_to_search_filter_flag
  0026_conditional_case_update_deleted_apps
+ 0027_add_case_tile_template_field
 auditcare
  0001_sqlmodels
  0002_uniques
@@ -279,6 +282,7 @@ data_dictionary
  0010_caseproperty_index
  0011_casepropertygroup
  0012_populate_case_property_groups
+ 0013_auto_20230529_1614
 data_interfaces
  0001_initial
  0002_remove_exists_option
@@ -372,6 +376,7 @@ es
  0001_bootstrap_es_indexes
  0002_add_tombstones
  0003_add_assigned_location_ids
+ 0004_make_new_indexes
 events
  0001_add_events_model
  0002_attendancetrackingconfig
@@ -527,7 +532,7 @@ generic_inbound
  0005_remove_requestlog_unused_fields
  0006_backend_external_response
 geospatial
- (no migrations)
+ 0001_create_geopolygon
 hqadmin
  0001_initial
  0002_vcmmigrationaudit
@@ -736,6 +741,7 @@ reminders
  0001_initial
 repeaters
  0001_adjust_auth_field_format_squashed_0015_drop_connection_settings_fk (15 squashed migrations)
+ 0002_repeaters_db
 reports
  0001_initial
  0002_auto_20171121_1803
@@ -780,6 +786,7 @@ scheduling
  0023_add_remaining_content_models
  0024_app_id
  0025_schedule_and_broadcast_deleted_on
+ 0026_add_model_fcm_notification_content
 scheduling_partitioned
  0001_initial
  0002_case_schedule_instances
@@ -851,6 +858,7 @@ sms
  0054_messagingsubevent_domain
  0055_messagingsubevent_index_domain_date_id
  0056_backfill_sms_event_date
+ 0057_fcm_content_type_messaging_events
 smsbillables
  0001_initial
  0002_bootstrap
@@ -1066,6 +1074,7 @@ userreports
  0017_index_cleanup
  0018_ucrexpression
  0019_ucrexpression_upstream_id
+ 0020_delete_ucr_comparison_models
 users
  0001_add_location_permission
  0002_domainrequest
@@ -1124,6 +1133,7 @@ users
  0050_add_manage_attendance_tracking_permission
  0051_add_attendance_tracking_privilege
  0052_hqapikey_last_used
+ 0053_userreportingmetadatastaging_fcm_token
 util
  0001_initial
  0002_complaintbouncemeta_permanentbouncemeta_transientbounceemail

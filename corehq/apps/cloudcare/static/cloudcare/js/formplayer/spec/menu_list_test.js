@@ -9,16 +9,26 @@ describe('Render a case list', function () {
             "toggles_dict",
             {
                 CHANGE_FORM_LANGUAGE: false,
+                SPLIT_SCREEN_CASE_SEARCH: false,
             }
         );
         sinon.stub(Utils, 'getCurrentQueryInputs').callsFake(function () { return {}; });
     });
 
     describe('#getMenuView', function () {
-        let server;
+        let FormplayerFrontend = hqImport("cloudcare/js/formplayer/app"),
+            server,
+            user;
         beforeEach(function () {
             server = sinon.useFakeXMLHttpRequest();
             sinon.stub(Backbone.history, 'getFragment').callsFake(sinon.spy());
+
+            user = FormplayerFrontend.getChannel().request('currentUser');
+            user.displayOptions = {
+                singleAppMode: false,
+            };
+
+            hqImport("cloudcare/js/formplayer/apps/api").primeApps(user.restoreAs, new Backbone.Collection());
         });
 
         afterEach(function () {
