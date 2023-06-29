@@ -46,6 +46,8 @@ class CaseReassignmentInterface(CaseListMixin, BulkDataInterface):
     name = gettext_noop("Reassign Cases")
     slug = "reassign_cases"
     report_template_path = 'data_interfaces/interfaces/case_management.html'
+    action = "reassign"
+    action_text = gettext_lazy("Reassign")
 
     @property
     @memoized
@@ -60,6 +62,8 @@ class CaseReassignmentInterface(CaseListMixin, BulkDataInterface):
         context = super(CaseReassignmentInterface, self).template_context
         context.update({
             "total_cases": self.total_records,
+            "action": self.action,
+            "action_text": self.action_text,
         })
         return context
 
@@ -139,6 +143,43 @@ class CaseReassignmentInterface(CaseListMixin, BulkDataInterface):
                 args=[self.domain, task_ref.download_id]
             )
         )
+
+
+@location_safe
+class CaseCopyInterface(CaseReassignmentInterface):
+    name = gettext_noop("Copy Cases")
+    slug = "copy_cases"
+    report_template_path = 'data_interfaces/interfaces/case_management.html'
+    action = "copy"
+    action_text = gettext_lazy("Copy")
+
+    @property
+    @memoized
+    def es_results(self):
+        query = self._build_query()
+        owner_id = self.request.GET.get('individual')
+        if owner_id:
+            query = query.owner(owner_id)
+
+        return query.run().raw
+
+    @property
+    def template_context(self):
+        context = super(CaseReassignmentInterface, self).template_context
+        context.update({
+            "action": self.action,
+            "action_text": self.action_text,
+        })
+        return context
+
+    @property
+    def fields(self):
+        return [
+            'corehq.apps.reports.filters.users.SelectMobileWorkerFilter',
+            'corehq.apps.reports.filters.select.MultiCaseTypeFilter',
+            'corehq.apps.reports.standard.cases.filters.CaseSearchFilter',
+            'corehq.apps.reports.standard.cases.filters.SensitiveCaseProperties',
+        ]
 
 
 class FormManagementMode(object):
