@@ -253,6 +253,22 @@ class TestCaseAPIPermissions(TestCase):
             json = response.json()
             self.assertEqual(json['case']['properties'], self.test_case_property)
 
+    def test_case_api_update_new_owner_no_permission(self):
+        with get_web_user(
+            self.domain,
+            self.user_location,
+            self.location_restricted_permissions,
+            self.client,
+        ):
+            case_update = {
+                'case_id': self.case_mapping['user_case'],
+                'owner_id': self.restricted_location.location_id,
+                'properties': self.test_case_property
+            }
+            url = reverse('case_api', args=(self.domain,))
+            response = self.client.put(url, case_update, content_type='application/json')
+            self.assertEqual(response.status_code, 403)
+
     def test_case_api_create_successful(self):
         with get_web_user(
             self.domain,
