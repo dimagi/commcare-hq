@@ -600,13 +600,23 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
             var fetchingPrompts = FormplayerFrontend.getChannel().request("app:select:menus", urlObject);
             $.when(fetchingPrompts).done(function (response) {
                 // Update models based on response
-                _.each(response.models, function (responseModel, i) {
-                    self.collection.models[i].set({
-                        error: responseModel.get('error'),
-                        required: responseModel.get('required'),
-                        required_msg: responseModel.get('required_msg'),
-                    });
+                if (response.queryResponse != null) {
+                    _.each(response.queryResponse.displays, function (responseModel, i) {
+                        self.collection.models[i].set({
+                            error: responseModel.error,
+                            required: responseModel.required,
+                            required_msg: responseModel.required_msg,
+                        });
                 });
+                } else {
+                    _.each(response.models, function (responseModel, i) {
+                        self.collection.models[i].set({
+                            error: responseModel.get('error'),
+                            required: responseModel.get('required'),
+                            required_msg: responseModel.get('required_msg'),
+                        });
+                    });
+                }
                 promise.resolve(response);
 
             });
