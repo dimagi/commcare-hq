@@ -1,7 +1,8 @@
 import json
 from base64 import b64decode, b64encode
 from collections import namedtuple
-from dataclasses import dataclass, field, InitVar
+import dataclasses
+from dataclasses import dataclass, InitVar
 import functools
 import pytz
 from urllib.parse import urlencode
@@ -42,7 +43,6 @@ from corehq.apps.api.odata.views import (
     raise_odata_permissions_issues,
 )
 from corehq.apps.api.resources.auth import (
-    AdminAuthentication,
     LoginAuthentication,
     ODataAuthentication,
     RequirePermissionAuthentication,
@@ -176,7 +176,10 @@ class BulkUserResource(HqBaseResource, DomainSpecificResourceMixin):
                 raise BadRequest('{0} is not a valid field'.format(field))
 
         params = bundle.request.GET
-        param = lambda p: params.get(p, None)
+
+        def param(p):
+            return params.get(p, None)
+
         fields = list(self.fields)
         fields.remove('id')
         fields.append('_id')
@@ -318,7 +321,6 @@ class AdminWebUserResource(v0_1.UserResource):
         resource_name = 'web-user'
 
 
-
 class GroupResource(v0_4.GroupResource):
 
     class Meta(v0_4.GroupResource.Meta):
@@ -340,7 +342,8 @@ class GroupResource(v0_4.GroupResource):
         (BSD licensed) and modified to pass the kwargs to `obj_create` and support only create method
         """
         request = convert_post_to_patch(request)
-        deserialized = self.deserialize(request, request.body, format=request.META.get('CONTENT_TYPE', 'application/json'))
+        deserialized = self.deserialize(request, request.body,
+                                        format=request.META.get('CONTENT_TYPE', 'application/json'))
 
         collection_name = self._meta.collection_name
         if collection_name not in deserialized:
@@ -371,7 +374,8 @@ class GroupResource(v0_4.GroupResource):
         Exactly copied from https://github.com/toastdriven/django-tastypie/blob/v0.9.14/tastypie/resources.py#L1314
         (BSD licensed) and modified to catch Exception and not returning traceback
         """
-        deserialized = self.deserialize(request, request.body, format=request.META.get('CONTENT_TYPE', 'application/json'))
+        deserialized = self.deserialize(request, request.body,
+                                        format=request.META.get('CONTENT_TYPE', 'application/json'))
         deserialized = self.alter_deserialized_detail_data(request, deserialized)
         bundle = self.build_bundle(data=dict_strip_unicode_keys(deserialized), request=request)
         try:
@@ -383,7 +387,8 @@ class GroupResource(v0_4.GroupResource):
             else:
                 updated_bundle = self.full_dehydrate(updated_bundle)
                 updated_bundle = self.alter_detail_data_to_serialize(request, updated_bundle)
-                return self.create_response(request, updated_bundle, response_class=http.HttpCreated, location=location)
+                return self.create_response(request, updated_bundle, response_class=http.HttpCreated,
+                                            location=location)
         except AssertionError as e:
             bundle.data['error_message'] = str(e)
             return self.create_response(request, bundle, response_class=http.HttpBadRequest)
@@ -884,6 +889,7 @@ class DomainForms(Resource):
             results.append(Form(form_xmlns=form.xmlns, form_name=form_name))
         return results
 
+
 # Zapier requires id and name; case_type has no obvious id, placeholder inserted instead.
 CaseType = namedtuple('CaseType', 'case_type placeholder')
 CaseType.__new__.__defaults__ = ('', '')
@@ -1068,11 +1074,11 @@ class NavigationEventAuditResourceParams:
     max_limit: InitVar
     raw_params: InitVar = None
 
-    users: list[str] = field(default_factory=list)
+    users: list[str] = dataclasses.field(default_factory=list)
     limit: int = None
     local_timezone: str = None
     cursor: str = None
-    local_date: dict[str:str] = field(default_factory=dict)
+    local_date: dict[str:str] = dataclasses.field(default_factory=dict)
     cursor_local_date: str = None
     cursor_user: str = None
 
