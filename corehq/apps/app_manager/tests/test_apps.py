@@ -1,6 +1,7 @@
 import json
 import os
 import uuid
+from datetime import datetime
 
 from django.test import TestCase
 
@@ -32,7 +33,7 @@ from corehq.apps.app_manager.tests.util import (
 from corehq.apps.app_manager.util import add_odk_profile_after_build
 from corehq.apps.app_manager.views.apps import load_app_from_slug
 from corehq.apps.app_manager.views.utils import update_linked_app
-from corehq.apps.builds.models import BuildSpec
+from corehq.apps.cleanup.models import DeletedCouchDoc
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.linked_domain.applications import link_app
 from corehq.apps.userreports.tests.utils import get_sample_report_config
@@ -114,6 +115,19 @@ class AppManagerTest(TestCase, TestXmlMixin):
         self.assertEqual(len(self.app.modules), 3)
         for module in self.app.get_modules():
             self.assertEqual(len(module.forms), 3)
+
+    def test_undo_delete_app_removes_deleted_couch_doc_record(self):
+        rec = self.app.delete_app()
+        self.app.save()
+        obj = DeletedCouchDoc.objects.create(
+            doc_id=self.app._id,
+            doc_type=self.app.doc_type,
+            deleted_on=datetime.utcnow(),
+        )
+        assert obj.doc_type.endswith("-Deleted"), obj.doc_type
+        rec.undo()
+        with self.assertRaises(DeletedCouchDoc.DoesNotExist):
+            DeletedCouchDoc.objects.get(doc_id=self.app._id, doc_type=self.app.doc_type)
 
     def testDeleteForm(self):
         self.app.delete_form(self.app.modules[0].unique_id,

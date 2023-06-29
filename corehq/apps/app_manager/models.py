@@ -149,6 +149,7 @@ from corehq.apps.builds.models import (
     BuildSpec,
 )
 from corehq.apps.builds.utils import get_default_build_spec
+from corehq.apps.cleanup.models import DeletedCouchDoc
 from corehq.apps.domain.models import Domain
 from corehq.apps.hqmedia.models import (
     ApplicationMediaMixin,
@@ -5676,6 +5677,10 @@ class DeleteApplicationRecord(DeleteRecord):
 
     def undo(self):
         app = ApplicationBase.get(self.app_id)
+        DeletedCouchDoc.objects.filter(
+            doc_id=app._id,
+            doc_type=app.doc_type,
+        ).delete()
         app.doc_type = app.get_doc_type()
         app.save(increment_version=False)
 
