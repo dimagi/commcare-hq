@@ -592,7 +592,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
                             let markerCoordinates = addressCoordinates.split(" ").slice(0,2);
                             if (markerCoordinates.length > 1) {
                                 const rowId = `row-${model.id}`;
-                                const popupText = md.render(DOMPurify.sanitize(model.attributes.data[popupIndex]));
+                                const popupText = cloudcareUtils.renderMarkdown(model.attributes.data[popupIndex]);
                                 let marker = L.marker(markerCoordinates, {icon: locationIcon});
                                 markers.push(marker);
                                 marker = marker.addTo(addressMap)
