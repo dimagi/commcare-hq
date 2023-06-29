@@ -5,7 +5,6 @@ from django.core.exceptions import PermissionDenied
 
 import jsonobject
 from jsonobject.exceptions import BadValueError
-from memoized import memoized
 
 from casexml.apps.case.mock import CaseBlock, IndexAttrs
 
