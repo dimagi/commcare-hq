@@ -9,8 +9,6 @@ from django.core.management.base import BaseCommand, CommandError
 from django.template.loader import render_to_string
 from django.utils.translation import ugettext_lazy as _
 
-from toggle.shortcuts import set_toggle
-
 import settings
 from corehq.apps.export.dbaccessors import _get_export_instance
 from corehq.apps.export.models import ExportInstance
@@ -18,7 +16,7 @@ from corehq.apps.hqwebapp.tasks import send_html_email_async
 from corehq.apps.saved_reports.models import ReportConfig, ReportNotification
 from corehq.apps.users.models import CouchUser, DomainMembership, WebUser
 from corehq.const import USER_CHANGE_VIA_CLONE
-from corehq.toggles import all_toggles_by_name, toggles_enabled_for_user
+from corehq.toggles import all_toggles_by_name, toggles_enabled_for_user, set_toggle
 from corehq.util.bounced_email_manager import EMAIL_REGEX_VALIDATION
 
 logger = logging.getLogger(__name__)
