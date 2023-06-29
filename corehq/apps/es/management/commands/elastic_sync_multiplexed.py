@@ -80,7 +80,7 @@ class ESSyncUtil:
         logger.info("You can use commcare-cloud to extract reindex logs from cluster")
         print("\n\t"
             + f"cchq {settings.SERVER_ENVIRONMENT} run-shell-command elasticsearch "
-            + f"\"grep '{task_id}.*ReindexResponse' opt/data/elasticsearch*/logs/*es.log\""
+            + f"\"grep '{task_id}.*ReindexResponse' /opt/data/elasticsearch*/logs/*es.log\""
             + "\n\n")
 
     def _get_source_destination_indexes(self, adapter):
