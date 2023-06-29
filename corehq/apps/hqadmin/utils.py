@@ -182,10 +182,13 @@ def unset_password(user):
 
 def get_download_url(content, name, content_type=None, timeout=24 * 60):
     """Upload file to blob storage for subsequent download"""
+    if timeout > 60 * 24 * 90:  # 90 days
+        # change/remove me if you need to exceed this limit
+        raise AssertionError(f"{timeout // 60 // 24} days seems like a long time")
     unique_id = str(uuid.uuid4())
     get_blob_db().put(
         content,
-        domain=unique_id,
+        domain='__system__',
         parent_id=unique_id,
         type_code=CODES.tempfile,
         key=unique_id,
