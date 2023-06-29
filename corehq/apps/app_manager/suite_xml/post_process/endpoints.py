@@ -37,18 +37,13 @@ class EndpointsHelper(PostProcessor):
     def update_suite(self):
         for module in self.modules:
             if module.session_endpoint_id:
-                self.suite.endpoints.append(self._make_session_endpoint(module))
+                self.suite.endpoints.append(self._make_session_endpoint(module.session_endpoint_id, module))
             if module.module_type != "shadow":
                 for form in module.get_suite_forms():
                     if form.session_endpoint_id:
-                        self.suite.endpoints.append(self._make_session_endpoint(module, form))
+                        self.suite.endpoints.append(self._make_session_endpoint(form.session_endpoint_id, module, form))
 
-    def _make_session_endpoint(self, module, form=None):
-        if form is not None:
-            endpoint_id = form.session_endpoint_id
-        else:
-            endpoint_id = module.session_endpoint_id
-
+    def _make_session_endpoint(self, endpoint_id, module, form=None):
         stack = Stack()
         children = self.get_frame_children(module, form)
         argument_ids = self.get_argument_ids(children, form)
