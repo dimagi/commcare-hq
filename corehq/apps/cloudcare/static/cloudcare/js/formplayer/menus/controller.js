@@ -9,6 +9,7 @@ hqDefine("cloudcare/js/formplayer/menus/controller", function () {
         views = hqImport("cloudcare/js/formplayer/menus/views"),
         toggles = hqImport("hqwebapp/js/toggles"),
         QueryListView = hqImport("cloudcare/js/formplayer/menus/views/query"),
+        Collection = hqImport("cloudcare/js/formplayer/menus/collections"),
         md = window.markdownit();
     var selectMenu = function (options) {
 
@@ -126,7 +127,7 @@ hqDefine("cloudcare/js/formplayer/menus/controller", function () {
         }
         var queryResponse = menuResponse.queryResponse;
         if (sidebarEnabled && !appPreview && menuResponse.type === "entities" && queryResponse != null)  {
-            var queryCollection = new Backbone.Collection(queryResponse.displays);
+            var queryCollection = new Collection(queryResponse.displays);
             FormplayerFrontend.regions.getRegion('sidebar').show(QueryListView({collection: queryCollection, title: menuResponse.title, description: menuResponse.description,  sidebarEnabled: true}).render());
         } else if (sidebarEnabled && !appPreview && menuResponse.type === "query") {
             FormplayerFrontend.regions.getRegion('sidebar').show(QueryListView({collection: menuResponse, title: menuResponse.title, description: menuResponse.description, sidebarEnabled: true}).render());
