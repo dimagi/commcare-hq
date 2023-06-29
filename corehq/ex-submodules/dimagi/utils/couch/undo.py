@@ -1,5 +1,5 @@
 from datetime import datetime
-from dimagi.ext.couchdbkit import *
+from dimagi.ext.couchdbkit import DateTimeProperty, Document, StringProperty
 
 from corehq.apps.cleanup.models import DeletedCouchDoc
 
