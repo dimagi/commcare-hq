@@ -140,6 +140,7 @@ class HandleShadowChildModulesTest(TestCase):
             "excluded_form_ids",
             "shadow_module_version",
             "session_endpoint_id",
+            "case_list_session_endpoint_id",
         ]
         required_properties = {
             prop
@@ -161,6 +162,7 @@ class HandleShadowChildModulesTest(TestCase):
             "case_type",
             "unique_id",
             "session_endpoint_id",
+            "case_list_session_endpoint_id",
             "custom_assertions",
         ]
         required_properties = {
