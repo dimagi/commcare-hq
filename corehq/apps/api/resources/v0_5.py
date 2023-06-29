@@ -1063,7 +1063,11 @@ class ODataFormResource(BaseODataResource):
 
 @dataclass
 class NavigationEventAuditResourceParams:
+    domain: InitVar
+    default_limit: InitVar
+    max_limit: InitVar
     raw_params: InitVar = None
+
     users: list[str] = field(default_factory=list)
     limit: int = None
     local_timezone: str = None
@@ -1072,7 +1076,7 @@ class NavigationEventAuditResourceParams:
     cursor_local_date: str = None
     cursor_user: str = None
 
-    def __post_init__(self, raw_params=None):
+    def __post_init__(self, domain, default_limit, max_limit, raw_params=None):
         if raw_params:
             self._validate_keys(raw_params)
 
@@ -1081,6 +1085,12 @@ class NavigationEventAuditResourceParams:
             self.limit = raw_params.get('limit')
             self.local_timezone = raw_params.get('local_timezone')
             self.cursor = raw_params.get('cursor')
+
+        if self.limit:
+            self._process_limit(default_limit, max_limit)
+        if self.cursor:
+            self._process_cursor()
+        self._process_local_timezone(domain)
 
     def _validate_keys(self, params):
         valid_keys = {'users', 'limit', 'local_timezone', 'cursor', 'format', 'local_date'}
@@ -1105,7 +1115,7 @@ class NavigationEventAuditResourceParams:
 
         self.local_date = local_date
 
-    def process_limit(self, default_limit, max_limit):
+    def _process_limit(self, default_limit, max_limit):
         try:
             self.limit = int(self.limit) or default_limit
             if self.limit < 0:
@@ -1116,13 +1126,13 @@ class NavigationEventAuditResourceParams:
         if self.limit > max_limit:
             raise BadRequest(_('Limit may not exceed {}.').format(max_limit))
 
-    def process_cursor(self):
+    def _process_cursor(self):
         cursor_params_string = b64decode(self.cursor).decode('utf-8')
         cursor_params = QueryDict(cursor_params_string, mutable=True)
         self.cursor_local_date = cursor_params.get('cursor_local_date')
         self.cursor_user = cursor_params.get('cursor_user')
 
-    def process_local_timezone(self, domain):
+    def _process_local_timezone(self, domain):
         if self.local_timezone is None:
             self.local_timezone = Domain.get_by_name(domain).get_default_timezone()
         elif isinstance(self.local_timezone, str):
@@ -1191,21 +1201,11 @@ class NavigationEventAuditResource(HqBaseResource, Resource):
 
     def obj_get_list(self, bundle, **kwargs):
         domain = kwargs['domain']
-        self.api_params = self._process_params(domain, bundle.request.GET)
-
+        self.api_params = NavigationEventAuditResourceParams(raw_params=bundle.request.GET, domain=domain,
+                                                             default_limit=self._meta.limit,
+                                                             max_limit=self._meta.max_limit)
         results = self.cursor_query(domain, self.api_params)
         return list(map(self.to_obj, results))
-
-    def _process_params(self, domain, params):
-        api_params = NavigationEventAuditResourceParams(raw_params=params)
-
-        if api_params.limit:
-            api_params.process_limit(self._meta.limit, self._meta.max_limit)
-        if api_params.cursor:
-            api_params.process_cursor()
-        api_params.process_local_timezone(domain)
-
-        return api_params
 
     @classmethod
     def cursor_query(cls, domain: str, params: NavigationEventAuditResourceParams) -> list:
