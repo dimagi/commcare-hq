@@ -1,3 +1,5 @@
+from unittest.mock import patch
+
 from django.core.cache import cache
 from django.core.exceptions import ValidationError
 from django.test import TestCase
@@ -5,6 +7,7 @@ from django.test.testcases import SimpleTestCase
 from django.utils.safestring import SafeData
 
 from corehq.apps.domain.shortcuts import create_domain
+from corehq.apps.locations.models import LocationType, SQLLocation
 from corehq.apps.users.models import CommCareUser, UserHistory
 from corehq.apps.users.util import (
     SYSTEM_USER_ID,
@@ -17,10 +20,11 @@ from corehq.apps.users.util import (
     user_id_to_username,
     username_to_user_id,
 )
+from corehq.apps.users.views.utils import (
+    _get_locations_with_orphaned_cases,
+    get_user_location_info,
+)
 from corehq.const import USER_CHANGE_VIA_AUTO_DEACTIVATE
-from unittest.mock import patch
-from corehq.apps.locations.models import LocationType, SQLLocation
-from corehq.apps.users.views.utils import _get_locations_with_orphaned_cases, get_user_location_info
 
 
 class TestUsernameToUserID(TestCase):

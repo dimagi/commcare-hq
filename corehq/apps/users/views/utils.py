@@ -1,7 +1,13 @@
-from itertools import chain
-from django.utils.translation import gettext as _
 from collections import defaultdict
+from itertools import chain
 
+from django.utils.translation import gettext as _
+
+from corehq.apps.api.es import flatten_list
+from corehq.apps.es import filters
+from corehq.apps.es.aggregations import TermsAggregation
+from corehq.apps.es.cases import CaseES
+from corehq.apps.es.users import UserES
 from corehq.apps.groups.models import Group
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.users.audit.change_messages import UserChangeMessage
@@ -12,11 +18,6 @@ from corehq.apps.users.models import (
 )
 from corehq.apps.users.util import log_user_change
 from corehq.const import USER_CHANGE_VIA_WEB
-from corehq.apps.es.cases import CaseES
-from corehq.apps.es.aggregations import TermsAggregation
-from corehq.apps.es.users import UserES
-from corehq.apps.es import filters
-from corehq.apps.api.es import flatten_list
 
 
 def get_editable_role_choices(domain, couch_user, allow_admin_role):
