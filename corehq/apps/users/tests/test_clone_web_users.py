@@ -3,9 +3,6 @@ from unittest.mock import patch
 from django.contrib.auth.models import User
 from django.test import TestCase
 
-from toggle.models import Toggle
-from toggle.shortcuts import toggle_enabled
-
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.export.dbaccessors import _get_export_instance
 from corehq.apps.export.models import ExportInstance, FormExportInstance
@@ -19,7 +16,7 @@ from corehq.apps.users.management.commands.clone_web_users import (
 )
 from corehq.apps.users.models import WebUser
 from corehq.const import USER_CHANGE_VIA_CLONE
-from corehq.toggles import NAMESPACE_USER, TAG_INTERNAL, StaticToggle
+from corehq.toggles import NAMESPACE_USER, TAG_INTERNAL, StaticToggle, toggle_enabled, Toggle
 
 TEST_TOGGLE = StaticToggle(
     'test_toggle',
