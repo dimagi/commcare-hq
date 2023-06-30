@@ -654,7 +654,6 @@ class RemoteRequestSuiteTest(SimpleTestCase, SuiteMixin):
         self.module.search_config.properties[0].input_ = 'select1'
         self.module.search_config.properties[0].itemset = Itemset(
             instance_id='states',
-            instance_uri="jr://fixture/item-list:states",
             nodeset="instance('item-list:states')/state_list/state[@state_name = 'Uttar Pradesh']",
             label='name',
             value='id',
@@ -683,7 +682,6 @@ class RemoteRequestSuiteTest(SimpleTestCase, SuiteMixin):
         self.module.search_config.properties[0].input_ = 'select1'
         self.module.search_config.properties[0].itemset = Itemset(
             instance_id='states',
-            instance_uri="jr://fixture/item-list:states",
             nodeset="instance('item-list:states')/state_list/state[@state_name = 'Uttar Pradesh']",
             label='name',
             value='id',
@@ -740,8 +738,6 @@ class RemoteRequestSuiteTest(SimpleTestCase, SuiteMixin):
         self.module.search_config.properties[0].input_ = 'select1'
         self.module.search_config.properties[0].itemset = Itemset(
             instance_id=instance_id,
-            # This will be generated automatically
-            # instance_uri="jr://fixture/commcare-reports:abcdef",
             nodeset=f"instance('{instance_id}')/rows/row",
             label='name',
             value='id',

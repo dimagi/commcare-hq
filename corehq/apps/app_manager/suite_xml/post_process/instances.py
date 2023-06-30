@@ -52,11 +52,7 @@ Other instances use a namespaced convention: "type:sub-type". For example:
 
 Custom instances
 ----------------
-There are two places in app builder where users can define custom instances:
-
-* in a form using the 'CUSTOM_INSTANCES' plugin
-* in 'Lookup Table Selection' case search properties under 'Advanced Lookup Table Options'
-
+App builders can define custom instances in a form using the 'CUSTOM_INSTANCES' plugin
 """
 import html
 import re

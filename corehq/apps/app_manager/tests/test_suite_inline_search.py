@@ -320,7 +320,6 @@ class InlineSearchSuiteTest(SimpleTestCase, SuiteMixin):
         instance_id = "commcare-reports:123abc"
         self.module.search_config.properties[0].itemset = Itemset(
             instance_id=instance_id,
-            instance_uri="jr://fixture/commcare-reports:abcdef",
             nodeset=f"instance('{instance_id}')/rows/row",
             label='name',
             value='id',

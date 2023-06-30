@@ -215,8 +215,6 @@ class SuiteInstanceTests(SimpleTestCase, SuiteMixin):
             properties=[
                 CaseSearchProperty(name='name', label={'en': 'Name'}, input_="select1", itemset=Itemset(
                     instance_id=instance_id,
-                    # This will be generated automatically
-                    # instance_uri="jr://fixture/custom_fixture",
                     nodeset=f"instance('{instance_id}')/rows/row",
                     label='name',
                     value='id',
