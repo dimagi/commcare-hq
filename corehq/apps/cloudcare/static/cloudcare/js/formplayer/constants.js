@@ -14,6 +14,8 @@ hqDefine("cloudcare/js/formplayer/constants", function () {
             GRID: 'grid',
             LIST: 'list',
         },
+        ALLOWED_FIELD_ALIGNMENTS: ['start', 'end', 'center', 'left', 'right'],
+
         DEFAULT_INCOMPLETE_FORMS_PAGE_SIZE: 10,
 
         MULTI_SELECT_ADD: 'add',
