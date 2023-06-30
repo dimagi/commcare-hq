@@ -2056,10 +2056,7 @@ class CaseList(IndexedSchema, NavMenuItemMediaMixin):
 
 class Itemset(DocumentSchema):
     instance_id = StringProperty(exclude_if_none=True)
-    instance_uri = StringProperty(exclude_if_none=True)
-
     nodeset = StringProperty(exclude_if_none=True)
-
     label = StringProperty(exclude_if_none=True)
     value = StringProperty(exclude_if_none=True)
     sort = StringProperty(exclude_if_none=True)

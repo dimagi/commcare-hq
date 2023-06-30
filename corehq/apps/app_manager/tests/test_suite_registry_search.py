@@ -65,7 +65,7 @@ class RemoteRequestSuiteTest(SimpleTestCase, SuiteMixin):
             properties=[
                 CaseSearchProperty(name='name', label={'en': 'Name'}),
                 CaseSearchProperty(name='favorite_color', label={'en': 'Favorite Color'}, itemset=Itemset(
-                    instance_id='item-list:colors', instance_uri='jr://fixture/item-list:colors',
+                    instance_id='item-list:colors',
                     nodeset="instance('item-list:colors')/colors_list/colors",
                     label='name', sort='name', value='value'),
                 )
@@ -296,8 +296,6 @@ class RemoteRequestSuiteTest(SimpleTestCase, SuiteMixin):
         instance_id = "commcare-reports:123abc"
         self.module.search_config.properties[0].itemset = Itemset(
             instance_id=instance_id,
-            # This will be generated automatically
-            # instance_uri="jr://fixture/commcare-reports:abcdef",
             nodeset=f"instance('{instance_id}')/rows/row",
             label='name',
             value='id',
@@ -363,7 +361,7 @@ class RegistrySuiteShadowModuleTest(SimpleTestCase, SuiteMixin):
             properties=[
                 CaseSearchProperty(name='name', label={'en': 'Name'}),
                 CaseSearchProperty(name='favorite_color', label={'en': 'Favorite Color'}, itemset=Itemset(
-                    instance_id='item-list:colors', instance_uri='jr://fixture/item-list:colors',
+                    instance_id='item-list:colors',
                     nodeset="instance('item-list:colors')/colors_list/colors",
                     label='name', sort='name', value='value'),
                 )
@@ -389,7 +387,7 @@ class RegistrySuiteShadowModuleTest(SimpleTestCase, SuiteMixin):
             properties=[
                 CaseSearchProperty(name='name', label={'en': 'Name'}),
                 CaseSearchProperty(name='favorite_color', label={'en': 'Texture'}, itemset=Itemset(
-                    instance_id='item-list:textures', instance_uri='jr://fixture/item-list:textures',
+                    instance_id='item-list:textures',
                     nodeset="instance('item-list:textures')/textures_list/textures",
                     label='name', sort='name', value='value'),
                 )
