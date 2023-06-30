@@ -567,9 +567,9 @@ class WireInvoiceInterface(InvoiceInterfaceBase):
                 contact_info.state_province_region,
                 contact_info.postal_code,
                 contact_info.country,
-                invoice.date_start,
-                invoice.date_end,
-                invoice.date_due,
+                format_datatables_data(invoice.date_start, invoice.date_start),
+                format_datatables_data(invoice.date_end, invoice.date_end),
+                format_datatables_data(invoice.date_due, invoice.date_due),
                 get_exportable_column(invoice.subtotal),
                 get_exportable_column(invoice.balance),
                 "Paid" if invoice.is_paid else "Not paid",
@@ -745,9 +745,9 @@ class InvoiceInterface(InvoiceInterfaceBase):
                 contact_info.country,
                 invoice.subscription.account.salesforce_account_id or "--",
                 invoice.subscription.salesforce_contract_id or "--",
-                invoice.date_start,
-                invoice.date_end,
-                invoice.date_due if invoice.date_due else "None",
+                format_datatables_data(invoice.date_start, invoice.date_start),
+                format_datatables_data(invoice.date_end, invoice.date_end),
+                format_datatables_data(invoice.date_due if invoice.date_due else "None", invoice.date_due),
             ]
 
             plan_subtotal, plan_deduction = get_subtotal_and_deduction(
@@ -1025,9 +1025,9 @@ class CustomerInvoiceInterface(InvoiceInterfaceBase):
                 contact_info.postal_code,
                 contact_info.country,
                 invoice.account.salesforce_account_id or "--",
-                invoice.date_start,
-                invoice.date_end,
-                invoice.date_due if invoice.date_due else "None",
+                format_datatables_data(invoice.date_start, invoice.date_start),
+                format_datatables_data(invoice.date_end, invoice.date_end),
+                format_datatables_data(invoice.date_due if invoice.date_due else "None", invoice.date_due),
             ]
 
             plan_subtotal, plan_deduction = get_subtotal_and_deduction(
