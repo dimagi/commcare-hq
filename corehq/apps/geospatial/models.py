@@ -1,9 +1,12 @@
-from shapely.geometry import Point
-import geopandas as gpd
-from geopy.distance import great_circle
+from django.db import models
 from dataclasses import dataclass
 
+import geopandas as gpd
+from geopy.distance import great_circle
+from shapely.geometry import Point
+
 from .exceptions import InvalidCoordinate, InvalidDistributionParam
+
 
 @dataclass
 class GeoObject:
@@ -115,3 +118,13 @@ class ObjectiveAllocator:
                 gdf.drop(closest_user_id, inplace=True)
 
         return user_assignment
+
+
+class GeoPolygon(models.Model):
+    """
+    A GeoJSON file representing a polygon shape
+    """
+
+    name = models.CharField(max_length=256)
+    geo_json = models.JSONField(default=dict)
+    domain = models.CharField(max_length=256, db_index=True)

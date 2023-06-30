@@ -71,8 +71,8 @@ COUCH_DATABASES = {
         # for production this ought to be set to true on your configured couch instance
         'COUCH_HTTPS': False,
         'COUCH_SERVER_ROOT': 'couch:5984',  # 6984 for https couch
-        'COUCH_USERNAME': '',
-        'COUCH_PASSWORD': '',
+        'COUCH_USERNAME': 'admin',
+        'COUCH_PASSWORD': 'commcarehq',
         'COUCH_DATABASE_NAME': 'commcarehq'
     }
 }

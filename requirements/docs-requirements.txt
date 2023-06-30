@@ -37,6 +37,8 @@ botocore==1.27.96
     #   s3transfer
 bytecode==0.14.2
     # via ddtrace
+cachecontrol==0.12.11
+    # via firebase-admin
 cachetools==5.0.0
     # via google-auth
 cattrs==23.1.1
@@ -56,8 +58,6 @@ cffi==1.14.3
     #   cryptography
     #   csiphash
     #   pynacl
-chardet==3.0.4
-    # via ghdiff
 charset-normalizer==3.1.0
     # via requests
 click==8.1.3
@@ -88,6 +88,8 @@ cryptography==39.0.1
     # via
     #   jwcrypto
     #   oic
+    #   pyjwt
+    #   pyopenssl
 csiphash==0.0.5
     # via -r base-requirements.in
 datadog==0.39.0
@@ -134,6 +136,7 @@ django==3.2.19
     #   django-user-agents
     #   djangorestframework
     #   jsonfield
+    #   sphinxcontrib-django
 django-appconf==1.0.5
     # via
     #   django-compressor
@@ -219,6 +222,8 @@ exceptiongroup==1.1.1
     # via cattrs
 fiona==1.9.3
     # via geopandas
+firebase-admin==6.1.0
+    # via -r base-requirements.in
 future==0.18.3
     # via pyjwkest
 geographiclib==2.0
@@ -231,31 +236,58 @@ gevent==21.8.0
     # via
     #   -r base-requirements.in
     #   django-websocket-redis
-ghdiff==0.4
-    # via -r base-requirements.in
-google-api-core==2.5.0
-    # via google-api-python-client
+google-api-core[grpc]==2.11.0
+    # via
+    #   firebase-admin
+    #   google-api-python-client
+    #   google-cloud-core
+    #   google-cloud-firestore
+    #   google-cloud-storage
 google-api-python-client==2.32.0
-    # via -r base-requirements.in
-google-auth==2.6.0
+    # via
+    #   -r base-requirements.in
+    #   firebase-admin
+google-auth==2.18.1
     # via
     #   google-api-core
     #   google-api-python-client
     #   google-auth-httplib2
     #   google-auth-oauthlib
+    #   google-cloud-core
+    #   google-cloud-storage
 google-auth-httplib2==0.1.0
     # via
     #   -r base-requirements.in
     #   google-api-python-client
 google-auth-oauthlib==0.4.6
     # via -r base-requirements.in
-googleapis-common-protos==1.54.0
-    # via google-api-core
+google-cloud-core==2.3.2
+    # via
+    #   google-cloud-firestore
+    #   google-cloud-storage
+google-cloud-firestore==2.11.1
+    # via firebase-admin
+google-cloud-storage==2.9.0
+    # via firebase-admin
+google-crc32c==1.5.0
+    # via google-resumable-media
+google-resumable-media==2.5.0
+    # via google-cloud-storage
+googleapis-common-protos==1.59.0
+    # via
+    #   google-api-core
+    #   grpcio-status
 greenlet==1.1.2
     # via
     #   -r base-requirements.in
     #   django-websocket-redis
     #   gevent
+grpcio==1.54.2
+    # via
+    #   google-api-core
+    #   grpcio-status
+grpcio-status==1.54.2
+    # via google-api-core
 gunicorn==20.0.4
     # via -r base-requirements.in
 hiredis==2.0.0
@@ -336,6 +368,8 @@ mdit-py-plugins==0.3.4
     # via myst-parser
 mdurl==0.1.2
     # via markdown-it-py
+msgpack==1.0.5
+    # via cachecontrol
 munch==2.5.0
     # via fiona
 myst-parser==0.19.1
@@ -379,16 +413,23 @@ ply==3.11
     #   stone
 polib==1.1.1
     # via -r base-requirements.in
+pprintpp==0.4.0
+    # via sphinxcontrib-django
 prometheus-client==0.14.1
     # via -r base-requirements.in
 prompt-toolkit==3.0.36
     # via click-repl
-protobuf==3.18.3
+proto-plus==1.22.2
+    # via google-cloud-firestore
+protobuf==4.23.1
     # via
     #   ddsketch
     #   ddtrace
     #   google-api-core
+    #   google-cloud-firestore
     #   googleapis-common-protos
+    #   grpcio-status
+    #   proto-plus
 psycogreen==1.0.2
     # via -r base-requirements.in
 psycopg2==2.9.6
@@ -415,13 +456,16 @@ pygments==2.14.0
     # via sphinx
 pyjwkest==1.4.2
     # via oic
-pyjwt==2.4.0
+pyjwt[crypto]==2.7.0
     # via
     #   -r base-requirements.in
+    #   firebase-admin
     #   pygithub
     #   twilio
 pynacl==1.5.0
     # via pygithub
+pyopenssl==23.2.0
+    # via -r docs-requirements.in
 pyparsing==2.4.7
     # via httplib2
 pyphonetics==0.5.3
@@ -477,11 +521,13 @@ reportlab==3.6.9
 requests==2.28.2
     # via
     #   -r base-requirements.in
+    #   cachecontrol
     #   cloudant
     #   datadog
     #   django-oauth-toolkit
     #   dropbox
     #   google-api-core
+    #   google-cloud-storage
     #   oic
     #   pygithub
     #   pyjwkest
@@ -532,7 +578,6 @@ six==1.16.0
     #   dropbox
     #   ethiopian-date-converter
     #   eulxml
-    #   ghdiff
     #   google-auth
     #   google-auth-httplib2
     #   jsonfield
@@ -549,19 +594,22 @@ snowballstemmer==2.1.0
     # via sphinx
 socketpool==0.5.3
     # via -r base-requirements.in
-sphinx==6.1.3
+sortedcontainers==2.3.0
+    # via intervaltree
+sphinx==6.2.1
     # via
     #   -r docs-requirements.in
     #   myst-parser
     #   sphinx-rtd-theme
+    #   sphinxcontrib-django
     #   sphinxcontrib-jquery
-sphinx-rtd-theme==1.2.0
+sphinx-rtd-theme==1.2.1
     # via -r docs-requirements.in
 sphinxcontrib-applehelp==1.0.2
     # via sphinx
 sphinxcontrib-devhelp==1.0.2
     # via sphinx
-sphinxcontrib-django==0.5.1
+sphinxcontrib-django==2.3
     # via -r docs-requirements.in
 sphinxcontrib-htmlhelp==2.0.0
     # via sphinx
@@ -622,6 +670,7 @@ urllib3==1.26.12
     #   botocore
     #   elasticsearch2
     #   elasticsearch5
+    #   google-auth
     #   py-kissmetrics
     #   requests
     #   sentry-sdk
