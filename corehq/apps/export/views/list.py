@@ -164,6 +164,13 @@ class ExportListHelper(object):
             return CreateExportTagForm(self.permissions.has_form_export_permissions,
                                        self.permissions.has_case_export_permissions)
 
+    def _can_view_export(self, export):
+        if 'owner_id' not in export:
+            return True
+        is_not_private = export['sharing'] != SharingOption.PRIVATE
+        is_owner = export['owner_id'] == self.request.couch_user.user_id
+        return is_not_private or is_owner
+
     def get_exports_page(self, page, limit, my_exports=False):
         if not self._priv_check():
             raise Http404
@@ -171,14 +178,9 @@ class ExportListHelper(object):
         # Calls self.get_saved_exports and formats each item using self.fmt_export_data
         brief_exports = sorted(self.get_saved_exports(), key=lambda x: x['name'])
         if domain_has_privilege(self.domain, EXPORT_OWNERSHIP):
-            def _can_view(export, user_id):
-                if 'owner_id' not in export:
-                    return True
-                return export['sharing'] != SharingOption.PRIVATE or export['owner_id'] == user_id
-
             brief_exports = [
                 export for export in brief_exports
-                if _can_view(export, self.request.couch_user.user_id)
+                if self._can_view_export(export)
                 and ('owner_id' in export and export['owner_id'] == self.request.couch_user.user_id) == my_exports
             ]
 
