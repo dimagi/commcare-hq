@@ -126,7 +126,6 @@ hqDefine("app_manager/js/details/case_claim", function () {
                     'optionsLabel': gettext("Mobile UCR Options"),
                     'tableLabel': gettext("Mobile UCR Report"),
                     'selectLabel': gettext("Select a Report..."),
-                    'advancedLabel': gettext("Advanced Mobile UCR Options"),
                 };
             }
             else {
@@ -136,7 +135,6 @@ hqDefine("app_manager/js/details/case_claim", function () {
                     'optionsLabel': gettext("Lookup Table Options"),
                     'tableLabel': gettext("Lookup Table"),
                     'selectLabel': gettext("Select a Lookup Table..."),
-                    'advancedLabel': gettext("Advanced Lookup Table Options"),
                 };
             }
         });
