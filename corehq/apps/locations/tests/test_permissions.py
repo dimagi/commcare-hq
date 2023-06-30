@@ -244,7 +244,6 @@ class TestAccessRestrictions(LocationHierarchyTestCase):
         self.assertFalse(user_can_access_case(self.domain, self.suffolk_user, self.case))
 
 
-
 class TestLocationExport(LocationHierarchyTestCase):
     domain = 'test-location-export'
     location_type_names = ['state', 'county', 'city']
