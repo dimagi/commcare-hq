@@ -3,9 +3,9 @@
     "filename": "one_one_two.xml",
     "fields": ["title", "top", "bottom_left", "bottom_right", "map", "map_popup"],
     "grid": {
-        "title": {"x": 0, "y": 0, "width": 5, "height": 1},
-        "top": {"x": 0, "y": 1, "width": 5, "height": 1},
-        "bottom_left": {"x": 0, "y": 2, "width": 5, "height": 1},
-        "bottom_right": {"x": 6, "y": 2, "width": 5, "height": 1}
+        "title": {"x": 0, "y": 0, "width": 5, "height": 1, "horz-align": "left", "vert-align": "center"},
+        "top": {"x": 0, "y": 1, "width": 5, "height": 1, "horz-align": "left", "vert-align": "center"},
+        "bottom_left": {"x": 0, "y": 2, "width": 5, "height": 1, "horz-align": "left", "vert-align": "center"},
+        "bottom_right": {"x": 6, "y": 2, "width": 5, "height": 1, "horz-align": "left", "vert-align": "center"}
     }
 }
