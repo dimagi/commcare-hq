@@ -22,7 +22,6 @@ hqDefine("app_manager/js/details/case_claim", function () {
     var itemsetModel = function (options, saveButton) {
         options = _.defaults(options, {
             'instance_id': '',
-            'instance_uri': '',
             'nodeset': null,
             'label': '',
             'value': '',
@@ -41,7 +40,6 @@ hqDefine("app_manager/js/details/case_claim", function () {
                         return item.id === value;
                     });
                     if (itemList && itemList.length === 1) {
-                        self.instance_uri(itemList[0]['uri']);
                         self.nodeset(itemsetValue(itemList[0]));
                     }
                     else {
@@ -73,7 +71,7 @@ hqDefine("app_manager/js/details/case_claim", function () {
             return false;
         });
         subscribeToSave(self,
-            ['nodeset', 'label', 'value', 'sort', 'instance_uri'], saveButton);
+            ['nodeset', 'label', 'value', 'sort'], saveButton);
 
         return self;
     };
