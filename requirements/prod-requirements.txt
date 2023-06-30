@@ -19,6 +19,8 @@ async-timeout==4.0.2
 attrs==21.4.0
     # via
     #   -r base-requirements.in
+    #   cattrs
+    #   ddtrace
     #   fiona
     #   jsonschema
 backcall==0.2.0
@@ -35,10 +37,14 @@ botocore==1.27.96
     # via
     #   boto3
     #   s3transfer
+bytecode==0.14.2
+    # via ddtrace
 cachecontrol==0.12.11
     # via firebase-admin
 cachetools==5.0.0
     # via google-auth
+cattrs==23.1.1
+    # via ddtrace
 celery==5.2.7
     # via
     #   -r base-requirements.in
@@ -93,7 +99,9 @@ csiphash==0.0.5
     # via -r base-requirements.in
 datadog==0.39.0
     # via -r base-requirements.in
-ddtrace==0.44.0
+ddsketch==2.0.4
+    # via ddtrace
+ddtrace==1.13.4
     # via -r base-requirements.in
 decorator==4.0.11
     # via
@@ -108,6 +116,7 @@ defusedxml==0.7.1
 deprecated==1.2.10
     # via
     #   jwcrypto
+    #   opentelemetry-api
     #   pygithub
 diff-match-patch==20230430
     # via -r base-requirements.in
@@ -201,12 +210,16 @@ elasticsearch2==2.5.1
     # via -r base-requirements.in
 elasticsearch5==5.5.6
     # via -r base-requirements.in
+envier==0.4.0
+    # via ddtrace
 et-xmlfile==1.0.1
     # via openpyxl
 ethiopian-date-converter==0.1.5
     # via -r base-requirements.in
 eulxml==1.1.3
     # via -r base-requirements.in
+exceptiongroup==1.1.1
+    # via cattrs
 executing==0.8.3
     # via stack-data
 fiona==1.9.3
@@ -301,8 +314,7 @@ importlib-metadata==6.0.0
     # via
     #   fiona
     #   markdown
-intervaltree==3.1.0
-    # via ddtrace
+    #   opentelemetry-api
 ipython==8.10.0
     # via -r prod-requirements.in
 iso8601==1.1.0
@@ -330,7 +342,9 @@ jsonobject-couchdbkit==1.0.1
 jsonpath-ng @ https://github.com/kaapstorm/python-jsonpath-rw/raw/wherenot+find_or_create/wheel/jsonpath_ng-1.5.2.2-py3-none-any.whl
     # via -r base-requirements.in
 jsonschema==4.17.3
-    # via -r base-requirements.in
+    # via
+    #   -r base-requirements.in
+    #   ddtrace
 jwcrypto==1.4
     # via django-oauth-toolkit
 kafka-python==1.4.7
@@ -378,9 +392,12 @@ openpyxl==3.0.9
     # via
     #   -r base-requirements.in
     #   commcaretranslationchecker
+opentelemetry-api==1.18.0
+    # via ddtrace
 packaging==23.0
     # via
     #   -r base-requirements.in
+    #   ddtrace
     #   geopandas
 pandas==2.0.1
     # via geopandas
@@ -417,6 +434,7 @@ proto-plus==1.22.2
     # via google-cloud-firestore
 protobuf==4.23.1
     # via
+    #   ddsketch
     #   ddtrace
     #   google-api-core
     #   google-cloud-firestore
@@ -573,6 +591,8 @@ six==1.16.0
     #   -r base-requirements.in
     #   asttokens
     #   click-repl
+    #   ddsketch
+    #   ddtrace
     #   django-braces
     #   django-oauth-toolkit
     #   django-statici18n
@@ -594,11 +614,8 @@ six==1.16.0
     #   pyzxcvbn
     #   quickcache
     #   stone
-    #   tenacity
 socketpool==0.5.3
     # via -r base-requirements.in
-sortedcontainers==2.3.0
-    # via intervaltree
 sqlagg==0.17.2
     # via -r base-requirements.in
 sqlalchemy==1.3.19
@@ -616,7 +633,7 @@ stripe==4.1.0
     # via -r base-requirements.in
 suds-py3==1.4.5.0
     # via -r base-requirements.in
-tenacity==6.2.0
+tenacity==8.2.2
     # via ddtrace
 text-unidecode==1.3
     # via -r base-requirements.in
@@ -636,6 +653,9 @@ twilio==7.12.0
     # via -r base-requirements.in
 typing-extensions==4.1.1
     # via
+    #   bytecode
+    #   cattrs
+    #   ddtrace
     #   django-countries
     #   oic
     #   qrcode
@@ -677,6 +697,8 @@ xlwt==1.3.0
     # via -r base-requirements.in
 xmlsec==1.3.12
     # via python3-saml
+xmltodict==0.13.0
+    # via ddtrace
 zipp==3.7.0
     # via importlib-metadata
 zope-event==4.5.0
@@ -692,5 +714,6 @@ setuptools==67.3.2
     #   django-websocket-redis
     #   gevent
     #   gunicorn
+    #   opentelemetry-api
     #   zope-event
     #   zope-interface
