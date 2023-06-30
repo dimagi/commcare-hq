@@ -151,7 +151,7 @@ def _get_location_case_counts(domain, location_ids):
     return counts
 
 
-def get_locations_with_orphaned_cases(domain, location_ids, user_id):
+def _get_locations_with_orphaned_cases(domain, location_ids, user_id):
     """
     Takes a list of location IDs and returns all the given location IDs
     where the user ID is the only one that has cases there. Also searched through descendant locations
@@ -184,4 +184,22 @@ def get_locations_with_orphaned_cases(domain, location_ids, user_id):
     return {
         loc.get_path_display(): case_count_per_loc[loc.location_id] for loc in all_locs
         if loc.location_id in case_count_per_loc
+    }
+
+
+def get_user_location_info(domain, user_location_ids, user_id):
+    shared_locations = _get_location_ids_with_other_users(
+        domain,
+        user_location_ids,
+        user_id
+    )
+
+    orphaned_case_count_per_location = _get_locations_with_orphaned_cases(
+        domain,
+        user_location_ids,
+        user_id
+    )
+    return {
+        'orphaned_case_count_per_location': orphaned_case_count_per_location,
+        'shared_locations': shared_locations,
     }

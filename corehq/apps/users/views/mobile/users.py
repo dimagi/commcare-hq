@@ -139,7 +139,7 @@ from corehq.apps.users.views import (
     UserUploadJobPollView,
     get_domain_languages,
 )
-from corehq.apps.users.views.utils import get_locations_with_orphaned_cases
+from corehq.apps.users.views.utils import get_user_location_info
 from corehq.const import (
     USER_CHANGE_VIA_BULK_IMPORTER,
     USER_CHANGE_VIA_WEB,
@@ -293,6 +293,12 @@ class EditCommCareUserView(BaseEditUserView):
             make_form_readonly(self.form_user_update.user_form)
             make_form_readonly(self.form_user_update.custom_data.form)
 
+        location_info = get_user_location_info(
+            domain=self.domain,
+            user_location_ids=self.editable_user.assigned_location_ids,
+            user_id=self.editable_user.user_id
+        )
+
         context = {
             'are_groups': bool(len(self.all_groups)),
             'groups_url': reverse('all_groups', args=[self.domain]),
@@ -312,11 +318,7 @@ class EditCommCareUserView(BaseEditUserView):
             ),
             'demo_restore_date': naturaltime(demo_restore_date_created(self.editable_user)),
             'group_names': [g.name for g in self.groups],
-            'locations_with_single_user': get_locations_with_orphaned_cases(
-                self.domain,
-                self.editable_user.assigned_location_ids,
-                self.editable_user.user_id
-            )
+            'location_info': location_info
         }
         if self.commtrack_form.errors:
             messages.error(self.request, _(

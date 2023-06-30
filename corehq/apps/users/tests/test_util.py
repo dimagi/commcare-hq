@@ -20,7 +20,7 @@ from corehq.apps.users.util import (
 from corehq.const import USER_CHANGE_VIA_AUTO_DEACTIVATE
 from unittest.mock import patch
 from corehq.apps.locations.models import LocationType, SQLLocation
-from corehq.apps.users.views.utils import get_locations_with_orphaned_cases
+from corehq.apps.users.views.utils import _get_locations_with_orphaned_cases, get_user_location_info
 
 
 class TestUsernameToUserID(TestCase):
@@ -318,7 +318,7 @@ class TestGetLocationsWithOrphanedCases(TestCase):
         return_value={'123', '456'}
     )
     def test_no_locations(self, _):
-        locations = get_locations_with_orphaned_cases(self.domain, self.location_ids, self.user_id)
+        locations = _get_locations_with_orphaned_cases(self.domain, self.location_ids, self.user_id)
         self.assertEqual(len(locations), 0)
 
     @patch(
@@ -330,5 +330,18 @@ class TestGetLocationsWithOrphanedCases(TestCase):
         return_value={'123': 1, '789': 3}
     )
     def test_with_locations(self, _, __):
-        locations = get_locations_with_orphaned_cases(self.domain, self.location_ids, self.user_id)
+        locations = _get_locations_with_orphaned_cases(self.domain, self.location_ids, self.user_id)
         self.assertEqual(locations, {'Brazil': 1, 'Brazil/Rio': 3})
+
+    @patch(
+        'corehq.apps.users.views.utils._get_location_ids_with_other_users',
+        return_value={'456'}
+    )
+    @patch(
+        'corehq.apps.users.views.utils._get_location_case_counts',
+        return_value={'123': 1, '789': 3}
+    )
+    def test_get_user_location_info(self, _, __):
+        location_info = get_user_location_info(self.domain, self.location_ids, self.user_id)
+        self.assertEqual(location_info['orphaned_case_count_per_location'], {'Brazil': 1, 'Brazil/Rio': 3})
+        self.assertEqual(location_info['shared_locations'], {'456'})
