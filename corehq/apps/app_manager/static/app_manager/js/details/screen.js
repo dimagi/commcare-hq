@@ -72,11 +72,24 @@ hqDefine("app_manager/js/details/screen", function () {
                 return "";
             }
             return "<div class='case-tile-preview'>" + _.map(grid, (values, fieldName) => {
-                return _.template("<div style='grid-area: <%= rowStart %> / <%= columnStart %> / <%= rowEnd %> / <%= columnEnd %>;' class='case-tile-preview-mapping'><%= field %></div>")({
+                return _.template(`<div class='case-tile-preview-mapping'
+                                        style='
+                                            grid-area: <%= rowStart %> / <%= columnStart %> / <%= rowEnd %> / <%= columnEnd %>;
+                                        '>
+                                          <div style='
+                                            justify-self: <%= horzAlign %>;
+                                            text-align: <%= horzAlign %>;
+                                            align-self: <%= vertAlign %>;
+                                          '>
+                                            <%= field %>
+                                          </div>
+                                        </div>`)({
                     rowStart: values.y + 1,
                     columnStart: values.x + 1,
                     rowEnd: values.y + values.height + 1,
                     columnEnd: values.x + values.width + 1,
+                    horzAlign: values["horz-align"],
+                    vertAlign: values["vert-align"],
                     field: fieldName,
                 });
             }).join("") + "</div>";
