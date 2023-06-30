@@ -301,8 +301,8 @@ hqDefine("app_manager/js/details/case_claim", function () {
         // init with blank string to avoid triggering save button
         var appearance = searchProperty.appearance || "";
         if (searchProperty.input_ === "select1" || searchProperty.input_ === "select") {
-            var uri = searchProperty.itemset.instance_uri;
-            if (uri !== null && uri.includes("commcare-reports")) {
+            var instance_id = searchProperty.itemset.instance_id;
+            if (instance_id !== null && instance_id.includes("commcare-reports")) {
                 appearance = "report_fixture";
             } else {
                 appearance = "lookup_table_fixture";
