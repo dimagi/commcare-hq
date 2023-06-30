@@ -234,7 +234,7 @@ hqDefine('cloudcare/js/utils', [
 
     function renderMarkdown(text) {
         const md = window.markdownit();
-        return md.render(DOMPurify.sanitize(text || "")).replaceAll("\n", "<br>");
+        return md.render(DOMPurify.sanitize(text || "").replaceAll("&#10;", "\n"));
     };
 
     function chainedRenderer(matcher, transform, target) {
