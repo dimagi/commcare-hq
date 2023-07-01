@@ -225,12 +225,11 @@ class SuiteInstanceTests(SimpleTestCase, SuiteMixin):
         self._test_search_prompt_itemset_instance(shadow_module)
 
     def _test_search_prompt_itemset_instance(self, module):
-        instance_id = "123"
+        instance_id = "item-list:123"
         module.search_config = CaseSearch(
             properties=[
                 CaseSearchProperty(name='name', label={'en': 'Name'}, input_="select1", itemset=Itemset(
                     instance_id=instance_id,
-                    instance_uri="jr://fixture/custom_fixture",
                     nodeset=f"instance('{instance_id}')/rows/row",
                     label='name',
                     value='id',
@@ -243,7 +242,7 @@ class SuiteInstanceTests(SimpleTestCase, SuiteMixin):
 
         expected_instance = f"""
                 <partial>
-                  <instance id="{instance_id}" src="jr://fixture/custom_fixture"/>
+                  <instance id="{instance_id}" src="jr://fixture/item-list:123"/>
                 </partial>
                 """
         self.assertXmlPartialEqual(
