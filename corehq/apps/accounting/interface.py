@@ -747,7 +747,8 @@ class InvoiceInterface(InvoiceInterfaceBase):
                 invoice.subscription.salesforce_contract_id or "--",
                 format_datatables_data(invoice.date_start, invoice.date_start),
                 format_datatables_data(invoice.date_end, invoice.date_end),
-                format_datatables_data(invoice.date_due if invoice.date_due else "None", invoice.date_due),
+                format_datatables_data(invoice.date_due if invoice.date_due else "None",
+                                       invoice.date_due if invoice.date_due else "None"),
             ]
 
             plan_subtotal, plan_deduction = get_subtotal_and_deduction(
@@ -1027,7 +1028,8 @@ class CustomerInvoiceInterface(InvoiceInterfaceBase):
                 invoice.account.salesforce_account_id or "--",
                 format_datatables_data(invoice.date_start, invoice.date_start),
                 format_datatables_data(invoice.date_end, invoice.date_end),
-                format_datatables_data(invoice.date_due if invoice.date_due else "None", invoice.date_due),
+                format_datatables_data(invoice.date_due if invoice.date_due else "None",
+                                       invoice.date_due if invoice.date_due else "None"),
             ]
 
             plan_subtotal, plan_deduction = get_subtotal_and_deduction(
