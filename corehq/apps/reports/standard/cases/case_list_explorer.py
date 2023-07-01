@@ -1,9 +1,14 @@
 from django.utils.html import escape
 from django.utils.translation import gettext_lazy as _
+from eulxml.xpath import parse as parse_xpath
 
 from memoized import memoized
 
 from corehq.apps.analytics.tasks import track_workflow
+from corehq.apps.case_search.xpath_functions.ancestor_functions import (
+    is_ancestor_comparison,
+    is_ancestor_query_below_limit,
+)
 from corehq.apps.case_search.const import (
     CASE_COMPUTED_METADATA,
     SPECIAL_CASE_PROPERTIES_MAP,
@@ -69,6 +74,9 @@ class CaseListExplorer(CaseListReport):
         if xpath:
             try:
                 query = query.xpath_query(self.domain, xpath)
+                node = parse_xpath(xpath)
+                if is_ancestor_comparison(node) or 'ancestor-exists' in xpath:
+                    is_ancestor_query_below_limit(query, node)
             except CaseFilterError as e:
                 track_workflow(self.request.couch_user.username, f"{self.name}: Query Error")
 
