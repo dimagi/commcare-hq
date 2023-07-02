@@ -297,7 +297,10 @@ class TestUpdateProfiles(TestCase):
         }
         update_json = {'UserFields': user_fields_definition}
 
-        update_custom_data_models_impl(update_json, 'test-domain', overwrite=True)
+        with patch.object(
+                CustomDataFieldsProfile, 'has_users_assigned', new_callable=PropertyMock) as mock_users_assigned:
+            mock_users_assigned.return_value = False
+            update_custom_data_models_impl(update_json, 'test-domain', overwrite=True)
 
         updated_definition = CustomDataFieldsDefinition.objects.get(domain='test-domain', field_type='UserFields')
         profiles = updated_definition.get_profiles()
