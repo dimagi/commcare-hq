@@ -11,7 +11,7 @@ class FieldTests(SimpleTestCase):
             choices=['yes', 'no'],
             regex=None,
             regex_msg=None,
-            is_synced=False
+            upstream_id='12345'
         )
 
         self.assertEqual(field.to_dict(), {
@@ -21,5 +21,5 @@ class FieldTests(SimpleTestCase):
             'choices': ['yes', 'no'],
             'regex': None,
             'regex_msg': None,
-            'is_synced': False
+            'upstream_id': '12345'
         })

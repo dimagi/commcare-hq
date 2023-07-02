@@ -51,6 +51,13 @@ class TestUpdateCustomDataFields(BaseLinkedDomainTest):
         )
         cls.fish_profile.save()
 
+        # This test does not assign users to the profile, so mock this property out to avoid hitting elasticsearch
+        patcher = patch.object(CustomDataFieldsProfile, 'has_users_assigned', new_callable=PropertyMock)
+        mock_users_assigned = patcher.start()
+        mock_users_assigned.return_value = False
+
+        cls.addClassCleanup(patcher.stop)
+
     @classmethod
     def tearDownClass(cls):
         cls.definition.delete()
