@@ -18,6 +18,7 @@ from corehq.apps.app_manager.const import (
     AUTO_SELECT_RAW,
     AUTO_SELECT_USER,
     CALCULATED_SORT_FIELD_RX,
+    MOBILE_UCR_VERSION_1,
     WORKFLOW_FORM,
     WORKFLOW_MODULE,
     WORKFLOW_PARENT_MODULE,
@@ -43,11 +44,11 @@ from corehq.apps.app_manager.util import (
     app_callout_templates,
     module_case_hierarchy_has_circular_reference,
     module_loads_registry_case,
+    module_uses_inline_search,
     module_uses_smart_links,
     split_path,
     xpath_references_case,
     xpath_references_usercase,
-    module_uses_inline_search,
 )
 from corehq.apps.app_manager.xform import parse_xml as _parse_xml
 from corehq.apps.app_manager.xpath import LocationXpath, interpolate_xpath
@@ -281,6 +282,7 @@ class ApplicationValidator(ApplicationBaseValidator):
 class ModuleBaseValidator(object):
     def __init__(self, module):
         self.module = module
+        self.app = module.get_app()
 
     def get_module_info(self):
         return {
@@ -336,8 +338,10 @@ class ModuleBaseValidator(object):
 
         errors.extend(self.validate_smart_links())
 
+        errors.extend(self.validate_search_config())
+
         if self.module.root_module_id:
-            root_module = self.module.get_app().get_module_by_unique_id(self.module.root_module_id)
+            root_module = self.app.get_module_by_unique_id(self.module.root_module_id)
             if root_module and module_uses_inline_search(root_module):
                 errors.append({
                     'type': 'inline search as parent module',
@@ -354,18 +358,17 @@ class ModuleBaseValidator(object):
             return []
 
         errors = []
-        app = self.module.get_app()
         try:
-            form = app.get_form(self.module.case_list_form.form_id)
+            form = self.app.get_form(self.module.case_list_form.form_id)
         except FormNotFoundException:
             errors.append({
                 'type': 'case list form missing',
                 'module': self.get_module_info()
             })
         else:
-            if toggles.FOLLOWUP_FORMS_AS_CASE_LIST_FORM.enabled(app.domain):
+            if toggles.FOLLOWUP_FORMS_AS_CASE_LIST_FORM.enabled(self.app.domain):
                 from corehq.apps.app_manager.views.modules import get_parent_select_followup_forms
-                valid_forms = [f.unique_id for f in get_parent_select_followup_forms(app, self.module)]
+                valid_forms = [f.unique_id for f in get_parent_select_followup_forms(self.app, self.module)]
                 if form.unique_id not in valid_forms and not form.is_registration_form(self.module.case_type):
                     errors.append({
                         'type': 'invalid case list followup form',
@@ -400,15 +403,14 @@ class ModuleBaseValidator(object):
         if not hasattr(self.module, 'parent_select') or not self.module.parent_select.active:
             return []
 
-        app = self.module.get_app()
         errors = []
 
         if self.module.parent_select.relationship == 'parent':
             from corehq.apps.app_manager.views.modules import get_modules_with_parent_case_type
-            valid_modules = get_modules_with_parent_case_type(app, self.module)
+            valid_modules = get_modules_with_parent_case_type(self.app, self.module)
         else:
             from corehq.apps.app_manager.views.modules import get_all_case_modules
-            valid_modules = get_all_case_modules(app, self.module)
+            valid_modules = get_all_case_modules(self.app, self.module)
         valid_module_ids = [info['unique_id'] for info in valid_modules]
         if self.module.parent_select.module_id not in valid_module_ids:
             errors.append({
@@ -508,6 +510,29 @@ class ModuleBaseValidator(object):
                         'module': self.get_module_info(),
                         'column': column,
                     }
+
+    def validate_search_config(self):
+        search_config = getattr(self.module, 'search_config', None)
+        if search_config:
+            for prop in search_config.properties:
+                if prop.itemset.instance_id:
+                    scheme = prop.itemset.instance_id.split(':', 1)[0]
+                    is_mobile_ucr = scheme == 'commcare-reports'
+                    is_lookup_table = scheme == 'item-list'
+                    if not (is_mobile_ucr or is_lookup_table):
+                        yield {
+                            'type': 'case search nodeset invalid',
+                            'module': self.get_module_info(),
+                            'property': prop.name,
+                            'message': _('It must reference a lookup table or mobile report.'),
+                        }
+                    if is_mobile_ucr and self.app.mobile_ucr_restore_version == MOBILE_UCR_VERSION_1:
+                        yield {
+                            'type': 'case search nodeset invalid',
+                            'module': self.get_module_info(),
+                            'property': prop.name,
+                            'message': _('This feature is compatible with only version 2 of Mobile UCR'),
+                        }
 
 
 class ModuleDetailValidatorMixin(object):
