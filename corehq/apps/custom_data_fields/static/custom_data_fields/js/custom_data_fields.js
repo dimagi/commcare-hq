@@ -38,7 +38,6 @@ hqDefine('custom_data_fields/js/custom_data_fields', [
         self.choices = ko.observableArray(options.choices.map(function (choice) {
             return Choice(choice);
         }));
-        self.validationMode = ko.observable(options.choices.length ? 'choice' : 'regex');
         self.validationMode = ko.observable();
         if (options.choices.length) {
             self.validationMode('choice');

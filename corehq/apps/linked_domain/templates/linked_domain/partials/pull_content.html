@@ -64,10 +64,10 @@
               <button class="btn btn-default disabled" data-bind="visible: showSpinner">
                 <i class="fa fa-spinner"></i>
               </button>
-              <button class="btn btn-success disabled" data-bind="visible: hasSuccess, click: resetStatus">
+              <button class="btn btn-success" data-bind="visible: hasSuccess, click: resetStatus">
                 <i class="fa fa-check"></i> {% trans "Success" %}
               </button>
-              <button class="btn btn-danger disabled" data-bind="visible: error, click: resetStatus">
+              <button class="btn btn-danger" data-bind="visible: error, click: resetStatus">
                 <i class="fa fa-times"></i> {% trans "Error" %}
               </button>
               <span class="help-block" data-bind="visible: error, text: error"></span>

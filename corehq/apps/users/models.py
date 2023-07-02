@@ -291,7 +291,7 @@ class HqPermissions(DocumentSchema):
         left_dict = {info.name: info.allow for info in left.to_list()}
         right_dict = {info.name: info.allow for info in right.to_list()}
 
-        all_names = set(left_dict.keys()).union(right_dict.keys())
+        all_names = set(left_dict.keys()) | right_dict.keys()
 
         diffs = []
 

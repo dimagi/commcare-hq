@@ -39,24 +39,22 @@
 
     <p class="pull-right ko-template" id="lock-container" data-bind="if: hasLinkedData">
       <!-- ko if: allowEdit -->
-        <span data-bind="ifnot: unlockLinkedData">
+        <!-- ko ifnot: unlockLinkedData -->
           <button class="btn btn-primary" data-toggle="modal" data-target="#edit-warning-modal">
             <i class="fa fa-link"></i>
             {% trans 'Unlock Linked Fields For Me' %}
           </button>
-        </span>
-        <span data-bind="if: unlockLinkedData">
+        <!-- /ko -->
+        <!-- ko if: unlockLinkedData -->
           <button class="btn btn-primary" data-bind="click: toggleLinkedLock">
             <i class="fa fa-link"></i>
             {% trans 'Lock Linked Fields For Me' %}
           </button>
-        </span>
+        <!-- /ko -->
       <!-- /ko -->
       <!-- ko ifnot: allowEdit -->
-        <span>
-          <i class="fa fa-link"></i>
-          Contains Linked Roles
-        </span>
+        <i class="fa fa-link"></i>
+        Contains Linked Roles
       <!-- /ko -->
       <span class="hq-help-template"
           data-placement="left"

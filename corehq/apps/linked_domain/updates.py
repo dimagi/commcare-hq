@@ -250,7 +250,7 @@ def update_profiles(definition, upstream_profiles, is_pull=False, overwrite=Fals
         if not overwrite:
             action = _('sync') if is_pull else _('push')
             overwrite_action = _('Sync & Overwrite') if is_pull else _('Push & Overwrite')
-            quoted_conflicts = ','.join(['"{}"'.format(name) for name in conflicting_profile_names])
+            quoted_conflicts = ', '.join(['"{}"'.format(name) for name in conflicting_profile_names])
             raise DomainLinkError(_(
                 f'Failed to {action} the following Custom User Data Fields Profiles due to matching'
                 f' (same User Profile) unlinked Custom User Data Fields Profiles in this downstream project space:'
@@ -327,7 +327,8 @@ def update_fixture(domain_link, tag, is_pull=False, overwrite=False):
 
     master_data_type = master_results["data_type"]
     if not master_data_type.is_global:
-        raise UnsupportedActionError(_("Found non-global lookup table '{}'.").format(master_data_type.tag))
+        raise UnsupportedActionError(_("Found non-global lookup table '{table}'.").format(
+            table=master_data_type.tag))
 
     # Update data type
     try:
@@ -339,10 +340,10 @@ def update_fixture(domain_link, tag, is_pull=False, overwrite=False):
             action = _('sync') if is_pull else _('push')
             overwrite_action = _('Sync & Overwrite') if is_pull else _('Push & Overwrite')
             raise UnsupportedActionError(
-                _('Failed to {} Lookup Table "{}" due to matching (same Table ID) unlinked Lookup Table in the'
-                  ' downstream project space. Please edit the Lookup Table to resolve the matching'
-                  ' or click "{}" to overwrite and link them.')
-                .format(action, linked_data_type.tag, overwrite_action)
+                _('Failed to {sync_action} Lookup Table "{table}" due to matching (same Table ID) unlinked Lookup'
+                  ' Table in the downstream project space. Please edit the Lookup Table to resolve the matching'
+                  ' or click "{overwrite_btn}" to overwrite and link them.')
+                .format(sync_action=action, table=linked_data_type.tag, overwrite_btn=overwrite_action)
             )
         is_existing_table = True
     except LookupTable.DoesNotExist:
@@ -433,18 +434,18 @@ def update_user_roles(domain_link, is_pull=False, overwrite=False):
         if failed_default_updates:
             conflicting_names = ', '.join(['"{}"'.format(name) for name in failed_default_updates])
             error_messages.append(_(
-                'Failed to {} the following default roles due to matching (same name but different permissions)'
-                ' unlinked roles in this downstream project space: {}.'
-                ' Please edit the roles to resolve the matching or click "{}"'
+                'Failed to {sync_action} the following default roles due to matching (same name but different'
+                ' permissions) unlinked roles in this downstream project space: {conflicting_role_names}.'
+                ' Please edit the roles to resolve the matching or click "{overwrite_btn}"'
                 ' to overwrite and link the matching ones.'
-            ).format(action, conflicting_names, overwrite_action))
+            ).format(sync_action=action, conflicting_role_names=conflicting_names, overwrite_btn=overwrite_action))
         if failed_custom_updates:
             conflicting_names = ', '.join(['"{}"'.format(name) for name in failed_custom_updates])
             error_messages.append(_(
-                'Failed to {} the following custom roles due to matching (same name) unlinked roles in this'
-                ' downstream project space: {}. Please edit the roles to resolve the matching or click'
-                ' "{}" to overwrite and link the matching ones.'
-            ).format(action, conflicting_names, overwrite_action))
+                'Failed to {sync_action} the following custom roles due to matching (same name) unlinked roles in'
+                ' this downstream project space: {conflicting_role_names}. Please edit the roles to resolve the'
+                ' matching or click "{overwrite_btn}" to overwrite and link the matching ones.'
+            ).format(sync_action=action, conflicting_role_names=conflicting_names, overwrite_btn=overwrite_action))
         raise UnsupportedActionError('\n'.join(error_messages))
 
     # Update assignable_by ids - must be done after main update to guarantee all local roles have ids
