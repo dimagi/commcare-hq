@@ -46,8 +46,10 @@ class FixtureUpdateTests(TestCase):
         with self.assertRaises(UnsupportedActionError) as cm:
             update_fixture(self.link, 'test-fixture')
 
-        self.assertEqual(str(cm.exception), "Existing lookup table found for 'test-fixture'. "
-            "Please remove this table before trying to sync again")
+        self.assertEqual(str(cm.exception), 'Failed to push Lookup Table "test-fixture" due to matching '
+                         '(same Table ID) unlinked Lookup Table in the downstream project space.'
+                         ' Please edit the Lookup Table to resolve the matching or click "Push & Overwrite"'
+                         ' to overwrite and link them.')
 
     def test_previously_synced_fixtures_are_overwritten(self):
         self._create_table(self.upstream_domain, 'test-fixture', ['new_header'], [['new_value']])
