@@ -27,7 +27,6 @@
         "calendars": "kbwood/calendars#2.1.2",
         "clipboard": "1.5.15",
         "crypto-js": "4.0.0",
-        "css-grid-polyfill-binaries": "FremyCompany/css-grid-polyfill-binaries#1.1.2",
         "d3": "3.5.17",
         "datamaps": "0.5.9",
         "datatables-bootstrap3": "Jowin/Datatables-Bootstrap3",
