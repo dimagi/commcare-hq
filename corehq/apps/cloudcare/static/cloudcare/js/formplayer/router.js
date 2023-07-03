@@ -199,12 +199,13 @@ hqDefine("cloudcare/js/formplayer/router", function () {
         API.listMenus();
     });
 
-    FormplayerFrontend.on("menu:query", function (queryDict, selectValuesByKeys = false) {
+    FormplayerFrontend.on("menu:query", function (queryDict, selectValuesByKeys = false, forceManualSearch = false) {
         var urlObject = utils.currentUrlToObject();
         urlObject.setQueryData({
             inputs: queryDict,
             execute: true,
             selectValuesByKeys: selectValuesByKeys,
+            forceManualSearch: forceManualSearch,
         });
         utils.setUrlToObject(urlObject);
         API.listMenus();
