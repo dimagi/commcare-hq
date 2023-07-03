@@ -227,12 +227,17 @@ def merge_fields(downstream_fields, upstream_fields, field_type, is_pull=False, 
         action = _('sync') if is_pull else _('push')
         overwrite_action = _('Sync & Overwrite') if is_pull else _('Push & Overwrite')
 
-        raise DomainLinkError(
-            f'Failed to {action} the following {field_name} due to matching (same {property_name})'
-            f' unlinked {field_name} in this downstream project space: {quoted_conflicts}.'
-            f' Please edit the {field_name} to resolve the matching or click "{overwrite_action}"'
-            ' to overwrite and link the matching ones.'
-        )
+        raise DomainLinkError(_(
+            'Failed to {sync_action} the following {field_name} due to matching (same {property_name})'
+            ' unlinked {field_name} in this downstream project space: {conflicts}.'
+            ' Please edit the {field_name} to resolve the matching or click "{overwrite_btn}"'
+            ' to overwrite and link the matching ones.').format(
+                sync_action=action,
+                field_name=field_name,
+                property_name=property_name,
+                conflicts=quoted_conflicts,
+                overwrite_btn=overwrite_action
+        ))
 
     unique_local_fields = [field for field in local_fields if field.slug not in conflicting_slugs]
 
@@ -252,10 +257,14 @@ def update_profiles(definition, upstream_profiles, is_pull=False, overwrite=Fals
             overwrite_action = _('Sync & Overwrite') if is_pull else _('Push & Overwrite')
             quoted_conflicts = ', '.join(['"{}"'.format(name) for name in conflicting_profile_names])
             raise DomainLinkError(_(
-                f'Failed to {action} the following Custom User Data Fields Profiles due to matching'
-                f' (same User Profile) unlinked Custom User Data Fields Profiles in this downstream project space:'
-                f' {quoted_conflicts}. Please edit the Custom User Data Fields Profiles to resolve the matching or'
-                f' click "{overwrite_action}" to overwrite and link the matching ones.'))
+                'Failed to {sync_action} the following Custom User Data Fields Profiles due to matching'
+                ' (same User Profile) unlinked Custom User Data Fields Profiles in this downstream project space:'
+                ' {conflicts}. Please edit the Custom User Data Fields Profiles to resolve the matching or'
+                ' click "{overwrite_btn}" to overwrite and link the matching ones.').format(
+                    sync_action=action,
+                    conflicts=quoted_conflicts,
+                    overwrite_btn=overwrite_action
+            ))
         else:
             # If none of these conflicting profiles have assigned users, then delete them
             # so that the upstream profiles can overwrite them
@@ -264,9 +273,9 @@ def update_profiles(definition, upstream_profiles, is_pull=False, overwrite=Fals
                 profile for profile in downstream_profiles if profile.name in conflicting_profile_names]
             profiles_in_use = [profile.name for profile in conflicting_profiles if profile.has_users_assigned]
             if profiles_in_use:
-                raise DomainLinkError(
-                    'Cannot overwrite profiles, as the following profiles are still in use: '
-                    f'{", ".join(profiles_in_use)}'
+                raise DomainLinkError(_(
+                    'Cannot overwrite profiles, as the following profiles are still in use: {profiles}').format(
+                        profiles=", ".join(profiles_in_use))
                 )
             for profile in conflicting_profiles:
                 profile.delete()
