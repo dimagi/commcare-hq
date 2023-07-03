@@ -91,7 +91,6 @@ from corehq.apps.app_manager.util import (
 )
 from corehq.apps.app_manager.views.media_utils import (
     handle_media_edits,
-    process_media_attribute,
 )
 from corehq.apps.app_manager.views.utils import (
     back_to_main,
@@ -128,8 +127,6 @@ from corehq.apps.reports.analytics.esaccessors import (
 from corehq.apps.reports.daterange import get_simple_dateranges
 from corehq.toggles import toggles_enabled_for_request
 from corehq.apps.userreports.models import (
-    RegistryReportConfiguration,
-    ReportConfiguration,
     StaticReportConfiguration,
 )
 from corehq.apps.userreports.dbaccessors import get_report_and_registry_report_configs_for_domain
@@ -370,7 +367,10 @@ def _get_report_module_context(app, module):
         {'slug': f.slug, 'description': f.short_description} for f in get_auto_filter_configurations()
 
     ]
-    from corehq.apps.app_manager.suite_xml.features.mobile_ucr import get_column_xpath_client_template, get_data_path
+    from corehq.apps.app_manager.suite_xml.features.mobile_ucr import (
+        get_column_xpath_client_template,
+        get_data_path,
+    )
     data_path_placeholders = {}
     for r in module.report_configs:
         data_path_placeholders[r.report_id] = {}
@@ -486,8 +486,8 @@ def _case_list_form_options(app, module, lang=None):
         'post_form_workflow': f.post_form_workflow,
         'is_registration_form': True,
     } for f in reg_forms})
-    if (hasattr(module, 'parent_select') and  # AdvancedModule doesn't have parent_select
-            toggles.FOLLOWUP_FORMS_AS_CASE_LIST_FORM and module.parent_select.active):
+    if (hasattr(module, 'parent_select')  # AdvancedModule doesn't have parent_select
+            and toggles.FOLLOWUP_FORMS_AS_CASE_LIST_FORM and module.parent_select.active):
         followup_forms = get_parent_select_followup_forms(app, module)
         if followup_forms:
             options.update({f.unique_id: {

@@ -148,7 +148,7 @@ def validate_langs(request, existing_langs):
     # assert that no lang is renamed to an already existing lang
     for old, new in rename.items():
         if old != new:
-            assert(new not in existing_langs)
+            assert (new not in existing_langs)
 
     return (langs, rename)
 
@@ -607,6 +607,7 @@ def get_cleaned_session_endpoint_id(module_or_form, raw_endpoint_id, app):
 def set_session_endpoint(module_or_form, raw_endpoint_id, app):
     cleaned_id = get_cleaned_session_endpoint_id(module_or_form, raw_endpoint_id, app)
     module_or_form.session_endpoint_id = cleaned_id
+
 
 def set_case_list_session_endpoint(module, raw_endpoint_id, app):
     cleaned_id = get_cleaned_session_endpoint_id(module, raw_endpoint_id, app)

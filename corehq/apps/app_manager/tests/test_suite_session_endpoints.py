@@ -85,7 +85,7 @@ class SessionEndpointTests(SimpleTestCase, TestXmlMixin):
             """
            <partial>
                 <endpoint id="case_list">
-                    <stack>                
+                    <stack>
                         <push>
                             <command value="'m0'"/>
                         </push>
@@ -231,11 +231,11 @@ class SessionEndpointTests(SimpleTestCase, TestXmlMixin):
                         <push>
                             <datum id="parent_id" value="$parent_id"/>
                             <command value="'claim_command.child_case_list.parent_id'"/>
-                        </push>                    
+                        </push>
                         <push>
                             <command value="'m0'"/>
                             <command value="'m1'"/>
-                            <datum id="parent_id" value="$parent_id"/>                            
+                            <datum id="parent_id" value="$parent_id"/>
                         </push>
                     </stack>
                 </endpoint>

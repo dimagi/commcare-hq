@@ -39,11 +39,13 @@ class EndpointsHelper(PostProcessor):
             if module.session_endpoint_id:
                 self.suite.endpoints.append(self._make_session_endpoint(module.session_endpoint_id, module))
             if module.case_list_session_endpoint_id:
-                self.suite.endpoints.append(self._make_session_endpoint(module.case_list_session_endpoint_id, module, None, False))
+                self.suite.endpoints.append(self._make_session_endpoint(
+                    module.case_list_session_endpoint_id, module, None, False))
             if module.module_type != "shadow":
                 for form in module.get_suite_forms():
                     if form.session_endpoint_id:
-                        self.suite.endpoints.append(self._make_session_endpoint(form.session_endpoint_id, module, form))
+                        self.suite.endpoints.append(self._make_session_endpoint(
+                            form.session_endpoint_id, module, form))
 
     def _make_session_endpoint(self, endpoint_id, module, form=None, should_add_last_selection_datum=True):
         stack = Stack()
@@ -55,7 +57,7 @@ class EndpointsHelper(PostProcessor):
         non_computed_argument_ids = [
             child.id for child in children
             if isinstance(child, WorkflowDatumMeta) and child.requires_selection
-               and (should_add_last_selection_datum or child != children[-1])
+            and (should_add_last_selection_datum or child != children[-1])
         ]
         for arg_id in non_computed_argument_ids:
             self._add_claim_frame(stack, arg_id, endpoint_id)
@@ -75,7 +77,7 @@ class EndpointsHelper(PostProcessor):
             stack=stack,
         )
 
-    def get_argument_ids(self, frame_children, form = None, should_add_last_selection_datum = True):
+    def get_argument_ids(self, frame_children, form=None, should_add_last_selection_datum=True):
 
         def should_include(child, add_selection_datum):
             if not isinstance(child, WorkflowDatumMeta):
