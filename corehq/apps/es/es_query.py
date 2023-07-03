@@ -410,6 +410,7 @@ class ESQuery(object):
 
     def sort(self, field, desc=False, reset_sort=True):
         """Order the results by field."""
+        assert field != '_id', "Cannot sort on reserved _id field"
         sort_field = {
             field: {'order': 'desc' if desc else 'asc'}
         }
@@ -533,12 +534,11 @@ class ESQuerySet(object):
 
     def __init__(self, raw, query):
         if 'error' in raw:
-            msg = ("ElasticSearch Error\n{error}\nIndex: {index}"
-                   "\nQuery: {query}").format(
-                       error=raw['error'],
-                       index=query.index,
-                       query=query.dumps(pretty=True),
-                    )
+            msg = f"""ElasticSearch Error
+                {raw['error']}
+                Index: {query.index}"
+                Query: {query.dumps(pretty=True)}"""
+
             raise ESError(msg)
         self.raw = raw
         self.query = query
