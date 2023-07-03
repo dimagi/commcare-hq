@@ -219,15 +219,8 @@ class DetailContributor(SectionContributor):
             # Add actions
             if detail_type.endswith('short') and not module.put_in_root:
                 if module.case_list_form.form_id:
-                    from corehq.apps.app_manager.views.modules import get_parent_select_followup_forms
-                    form = self.app.get_form(module.case_list_form.form_id)
-                    if toggles.FOLLOWUP_FORMS_AS_CASE_LIST_FORM.enabled(self.app.domain):
-                        valid_forms = [f.unique_id for f in get_parent_select_followup_forms(self.app, module)]
-                    else:
-                        valid_forms = []
-                    if form.is_registration_form(module.case_type) or form.unique_id in valid_forms:
-                        d.actions.append(DetailContributor.get_case_list_form_action(
-                            module, self.app, self.build_profile_id, self.entries_helper))
+                    DetailContributor.add_register_action(
+                        self.app, module, d.actions, self.build_profile_id, self.entries_helper)
 
                 if module_offers_search(module) and not module_uses_inline_search(module):
                     if (case_search_action := DetailContributor.get_case_search_action(
@@ -299,6 +292,18 @@ class DetailContributor(SectionContributor):
             responses=[Response(**r) for r in detail.lookup_responses],
             field=field,
         )
+
+    @staticmethod
+    def add_register_action(app, module, actions, build_profile_id, entries_helper):
+        from corehq.apps.app_manager.views.modules import get_parent_select_followup_forms
+        form = app.get_form(module.case_list_form.form_id)
+        if toggles.FOLLOWUP_FORMS_AS_CASE_LIST_FORM.enabled(app.domain):
+            valid_forms = [f.unique_id for f in get_parent_select_followup_forms(app, module)]
+        else:
+            valid_forms = []
+        if form.is_registration_form(module.case_type) or form.unique_id in valid_forms:
+            actions.append(DetailContributor.get_case_list_form_action(
+                module, app, build_profile_id, entries_helper))
 
     @staticmethod
     def get_case_list_form_action(module, app, build_profile_id, entries_helper):

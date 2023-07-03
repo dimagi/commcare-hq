@@ -86,15 +86,8 @@ class CaseTileHelper(object):
 
         # Case registration
         if self.module.case_list_form.form_id:
-            from corehq.apps.app_manager.views.modules import get_parent_select_followup_forms
-            form = self.app.get_form(self.module.case_list_form.form_id)
-            if toggles.FOLLOWUP_FORMS_AS_CASE_LIST_FORM.enabled(self.app.domain):
-                valid_forms = [f.unique_id for f in get_parent_select_followup_forms(self.app, self.module)]
-            else:
-                valid_forms = []
-            if form.is_registration_form(self.module.case_type) or form.unique_id in valid_forms:
-                detail.actions.append(DetailContributor.get_case_list_form_action(
-                    self.module, self.app, self.build_profile_id, self.entries_helper))
+            DetailContributor.add_register_action(
+                self.app, self.module, detail.actions, self.build_profile_id, self.entries_helper)
 
         # Add case search action if needed
         if module_offers_search(self.module) and not module_uses_inline_search(self.module):
