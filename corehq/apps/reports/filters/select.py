@@ -22,6 +22,7 @@ from corehq.motech.repeaters.const import (
     RECORD_SUCCESS_STATE,
 )
 from corehq.motech.repeaters.models import Repeater
+from corehq.apps.data_dictionary.util import get_data_dict_deprecated_case_types
 
 
 class GroupFilterMixin(object):
@@ -72,9 +73,16 @@ class CaseTypeMixin(object):
 
     @property
     def options(self):
-        case_types = sorted(get_case_types_for_domain(self.domain))
-        return [(case, "%s" % case) for case in case_types
-                if case != USER_LOCATION_OWNER_MAP_TYPE]
+        case_types = sorted(get_case_types_for_domain(self.domain, include_deprecated=True))
+        dep_case_types = get_data_dict_deprecated_case_types(self.domain)
+        all_case_types = [
+            f"{case} (deprecated)" if case in dep_case_types else case
+            for case in case_types
+        ]
+        return [
+            (case, "%s" % case) for case in all_case_types
+            if case != USER_LOCATION_OWNER_MAP_TYPE
+        ]
 
 
 class CaseTypeFilter(CaseTypeMixin, BaseSingleOptionFilter):
