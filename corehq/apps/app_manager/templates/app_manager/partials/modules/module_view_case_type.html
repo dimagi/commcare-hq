@@ -19,9 +19,12 @@
   </label>
   <div class="{% css_field_class %}">
     <input class="code form-control" type="text" id="case_type" name="case_type" value="{{ module.case_type }}" />
+    <span class="help-block" id="case_type_deprecated_warning" style="display: none;">
+      {% trans "This case type has been deprecated in the Data Dictionary." %}
+    </span>
     <span class="help-block" id="case_type_error" style="display: none;">
-            {% trans "Case types can only include the characters a-z, 0-9, '-' and '_'" %}
-        </span>
+      {% trans "Case types can only include the characters a-z, 0-9, '-' and '_'" %}
+    </span>
     <span class="help-block" id="case_type_changed_warning" style="display: none;">
             {% blocktrans with case_type=module.case_type %}
               You have cases associated with the {{ case_type }} Case Type.
