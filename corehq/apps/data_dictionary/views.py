@@ -145,6 +145,9 @@ def deprecate_or_restore_case_type(request, domain, case_type_name):
     case_type_obj.is_deprecated = is_deprecated
     case_type_obj.save()
 
+    CaseProperty.objects.filter(case_type=case_type_obj).update(deprecated=is_deprecated)
+    CasePropertyGroup.objects.filter(case_type=case_type_obj).update(deprecated=is_deprecated)
+
     return JsonResponse({'status': 'success'})
 
 
