@@ -8,7 +8,7 @@ from corehq.apps.app_manager.models import (
     DetailColumn,
     MappingItem,
     Module,
-    SortElement, CaseListForm,
+    SortElement,
 )
 from corehq.apps.app_manager.suite_xml.features.case_tiles import CaseTileTemplates
 from corehq.apps.app_manager.tests.app_factory import AppFactory

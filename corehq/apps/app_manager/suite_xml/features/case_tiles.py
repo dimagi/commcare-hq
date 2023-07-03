@@ -8,8 +8,6 @@ from pathlib import Path
 from typing import List
 from xml.sax.saxutils import escape
 
-from corehq import toggles
-
 from corehq.apps.app_manager import id_strings
 from corehq.apps.app_manager.exceptions import SuiteError
 from corehq.apps.app_manager.suite_xml.sections.entries import EntriesHelper
