@@ -1,6 +1,8 @@
 import json
 from base64 import b64decode, b64encode
 from collections import namedtuple
+import dataclasses
+from dataclasses import dataclass, InitVar
 import functools
 import pytz
 from urllib.parse import urlencode
@@ -41,7 +43,6 @@ from corehq.apps.api.odata.views import (
     raise_odata_permissions_issues,
 )
 from corehq.apps.api.resources.auth import (
-    AdminAuthentication,
     LoginAuthentication,
     ODataAuthentication,
     RequirePermissionAuthentication,
@@ -175,7 +176,10 @@ class BulkUserResource(HqBaseResource, DomainSpecificResourceMixin):
                 raise BadRequest('{0} is not a valid field'.format(field))
 
         params = bundle.request.GET
-        param = lambda p: params.get(p, None)
+
+        def param(p):
+            return params.get(p, None)
+
         fields = list(self.fields)
         fields.remove('id')
         fields.append('_id')
@@ -317,7 +321,6 @@ class AdminWebUserResource(v0_1.UserResource):
         resource_name = 'web-user'
 
 
-
 class GroupResource(v0_4.GroupResource):
 
     class Meta(v0_4.GroupResource.Meta):
@@ -339,7 +342,8 @@ class GroupResource(v0_4.GroupResource):
         (BSD licensed) and modified to pass the kwargs to `obj_create` and support only create method
         """
         request = convert_post_to_patch(request)
-        deserialized = self.deserialize(request, request.body, format=request.META.get('CONTENT_TYPE', 'application/json'))
+        deserialized = self.deserialize(request, request.body,
+                                        format=request.META.get('CONTENT_TYPE', 'application/json'))
 
         collection_name = self._meta.collection_name
         if collection_name not in deserialized:
@@ -370,7 +374,8 @@ class GroupResource(v0_4.GroupResource):
         Exactly copied from https://github.com/toastdriven/django-tastypie/blob/v0.9.14/tastypie/resources.py#L1314
         (BSD licensed) and modified to catch Exception and not returning traceback
         """
-        deserialized = self.deserialize(request, request.body, format=request.META.get('CONTENT_TYPE', 'application/json'))
+        deserialized = self.deserialize(request, request.body,
+                                        format=request.META.get('CONTENT_TYPE', 'application/json'))
         deserialized = self.alter_deserialized_detail_data(request, deserialized)
         bundle = self.build_bundle(data=dict_strip_unicode_keys(deserialized), request=request)
         try:
@@ -382,7 +387,8 @@ class GroupResource(v0_4.GroupResource):
             else:
                 updated_bundle = self.full_dehydrate(updated_bundle)
                 updated_bundle = self.alter_detail_data_to_serialize(request, updated_bundle)
-                return self.create_response(request, updated_bundle, response_class=http.HttpCreated, location=location)
+                return self.create_response(request, updated_bundle, response_class=http.HttpCreated,
+                                            location=location)
         except AssertionError as e:
             bundle.data['error_message'] = str(e)
             return self.create_response(request, bundle, response_class=http.HttpBadRequest)
@@ -883,6 +889,7 @@ class DomainForms(Resource):
             results.append(Form(form_xmlns=form.xmlns, form_name=form_name))
         return results
 
+
 # Zapier requires id and name; case_type has no obvious id, placeholder inserted instead.
 CaseType = namedtuple('CaseType', 'case_type placeholder')
 CaseType.__new__.__defaults__ = ('', '')
@@ -1060,6 +1067,84 @@ class ODataFormResource(BaseODataResource):
         ]
 
 
+@dataclass
+class NavigationEventAuditResourceParams:
+    domain: InitVar
+    default_limit: InitVar
+    max_limit: InitVar
+    raw_params: InitVar = None
+
+    users: list[str] = dataclasses.field(default_factory=list)
+    limit: int = None
+    local_timezone: str = None
+    cursor: str = None
+    local_date: dict[str:str] = dataclasses.field(default_factory=dict)
+    cursor_local_date: str = None
+    cursor_user: str = None
+
+    def __post_init__(self, domain, default_limit, max_limit, raw_params=None):
+        if raw_params:
+            self._validate_keys(raw_params)
+
+            self._set_compound_keys(raw_params)
+            self.users = raw_params.getlist('users')
+            self.limit = raw_params.get('limit')
+            self.local_timezone = raw_params.get('local_timezone')
+            self.cursor = raw_params.get('cursor')
+
+        if self.limit:
+            self._process_limit(default_limit, max_limit)
+        if self.cursor:
+            self._process_cursor()
+        self._process_local_timezone(domain)
+
+    def _validate_keys(self, params):
+        valid_keys = {'users', 'limit', 'local_timezone', 'cursor', 'format', 'local_date'}
+        standardized_keys = set()
+
+        for key in params.keys():
+            if '.' in key:
+                key, qualifier = key.split('.', maxsplit=1)
+            standardized_keys.add(key)
+
+        invalid_keys = standardized_keys - valid_keys
+        if invalid_keys:
+            raise ValueError(f"Invalid parameter(s): {', '.join(invalid_keys)}")
+
+    def _set_compound_keys(self, params):
+        local_date = {}
+        for key in params.keys():
+            if '.' in key:
+                prefix, qualifier = key.split('.', maxsplit=1)
+                if prefix == 'local_date':
+                    local_date[qualifier] = params.get(key)
+
+        self.local_date = local_date
+
+    def _process_limit(self, default_limit, max_limit):
+        try:
+            self.limit = int(self.limit) or default_limit
+            if self.limit < 0:
+                raise ValueError
+        except (ValueError, TypeError):
+            raise BadRequest(_('limit must be a positive integer.'))
+
+        if self.limit > max_limit:
+            raise BadRequest(_('Limit may not exceed {}.').format(max_limit))
+
+    def _process_cursor(self):
+        cursor_params_string = b64decode(self.cursor).decode('utf-8')
+        cursor_params = QueryDict(cursor_params_string, mutable=True)
+        self.cursor_local_date = cursor_params.get('cursor_local_date')
+        self.cursor_user = cursor_params.get('cursor_user')
+
+    def _process_local_timezone(self, domain):
+        if self.local_timezone is None:
+            self.local_timezone = Domain.get_by_name(domain).get_default_timezone()
+        elif isinstance(self.local_timezone, str):
+            self.local_timezone = pytz.timezone(self.local_timezone)
+
+
 class NavigationEventAuditResource(HqBaseResource, Resource):
     local_date = fields.DateField(attribute='local_date', readonly=True)
     UTC_start_time = fields.DateTimeField(attribute='UTC_start_time', readonly=True)
@@ -1099,7 +1184,7 @@ class NavigationEventAuditResource(HqBaseResource, Resource):
             return response
 
     def alter_list_data_to_serialize(self, request, data):
-        data['meta']['local_date_timezone'] = self.local_timezone.zone
+        data['meta']['local_date_timezone'] = self.api_params.local_timezone.zone
         data['meta']['total_count'] = self.count
 
         params = request.GET.copy()  # Makes params mutable for creating next_url below
@@ -1122,56 +1207,20 @@ class NavigationEventAuditResource(HqBaseResource, Resource):
 
     def obj_get_list(self, bundle, **kwargs):
         domain = kwargs['domain']
-        params = self._process_params(domain, bundle.request.GET)
-
-        results = self.cursor_query(domain, self.local_timezone, params)
+        self.api_params = NavigationEventAuditResourceParams(raw_params=bundle.request.GET, domain=domain,
+                                                             default_limit=self._meta.limit,
+                                                             max_limit=self._meta.max_limit)
+        results = self.cursor_query(domain, self.api_params)
         return list(map(self.to_obj, results))
 
-    def _process_params(self, domain, params):
-        processed_params = {}
-
-        for param in params:
-            val = params.get(param)
-            if param == 'users':
-                val = params.getlist(param)
-            processed_params[param] = val
-
-            if param == 'limit':
-                processed_params['limit'] = self._process_limit(val)
-
-            if param == 'cursor':
-                cursor_params_string = b64decode(params['cursor']).decode('utf-8')
-                cursor_params = QueryDict(cursor_params_string, mutable=True)
-                processed_params['cursor_local_date'] = cursor_params.get('cursor_local_date')
-                processed_params['cursor_user'] = cursor_params.get('cursor_user')
-
-        if 'local_timezone' in processed_params:
-            self.local_timezone = pytz.timezone(processed_params['local_timezone'])
-        else:
-            self.local_timezone = Domain.get_by_name(domain).get_default_timezone()
-
-        return processed_params
-
-    def _process_limit(self, limit):
-        try:
-            limit = int(limit) or self._meta.limit
-            if limit < 0:
-                raise ValueError
-        except (ValueError, TypeError):
-            raise BadRequest(_('limit must be a positive integer.'))
-
-        if limit > self._meta.max_limit:
-            raise BadRequest(_('Limit may not exceed {}.').format(self._meta.max_limit))
-        return limit
-
     @classmethod
-    def cursor_query(cls, domain: str, local_timezone: pytz.tzinfo.DstTzInfo, params: dict = {}) -> list:
-        if 'limit' not in params:
-            params['limit'] = cls._meta.limit
-        queryset = cls._query(domain, local_timezone, params)
+    def cursor_query(cls, domain: str, params: NavigationEventAuditResourceParams) -> list:
+        if not params.limit:
+            params.limit = cls._meta.limit
+        queryset = cls._query(domain, params)
 
-        cursor_local_date = params.get('cursor_local_date')
-        cursor_user = params.get('cursor_user')
+        cursor_local_date = params.cursor_local_date
+        cursor_user = params.cursor_user
 
         if cursor_local_date and cursor_user:
             queryset = queryset.filter(
@@ -1184,19 +1233,19 @@ class NavigationEventAuditResource(HqBaseResource, Resource):
         with override_settings(USE_TZ=True):
             cls.count = queryset.count()
             # TruncDate ignores tzinfo if the queryset is not evaluated within overridden USE_TZ setting
-            return list(queryset[:params['limit']])
+            return list(queryset[:params.limit])
 
     @classmethod
-    def _query(cls, domain: str, local_timezone: pytz.tzinfo.DstTzInfo, params: dict = {}):
+    def _query(cls, domain: str, params: NavigationEventAuditResourceParams):
         queryset = NavigationEventAudit.objects.filter(domain=domain)
-        if 'users' in params:
-            queryset = queryset.filter(user__in=params['users'])
+        if params.users:
+            queryset = queryset.filter(user__in=params.users)
 
         local_date_filter = cls._get_compound_filter('local_date', params)
 
         results = (queryset
                 .exclude(user__isnull=True)
-                .annotate(local_date=TruncDate('event_date', tzinfo=local_timezone))
+                .annotate(local_date=TruncDate('event_date', tzinfo=params.local_timezone))
                 .filter(local_date_filter)
                 .values('local_date', 'user'))
 
@@ -1205,11 +1254,10 @@ class NavigationEventAuditResource(HqBaseResource, Resource):
         return results
 
     @classmethod
-    def _get_compound_filter(cls, key, params):
+    def _get_compound_filter(cls, param_field_name: str, params: NavigationEventAuditResourceParams):
         compound_filter = Q()
-        for key, val in params.items():
-            if '.' in key and key.split('.')[0] in cls.COMPOUND_FILTERS:
-                prefix, qualifier = key.split('.', maxsplit=1)
-                filter_obj = cls.COMPOUND_FILTERS[prefix](qualifier, val)
+        if param_field_name in cls.COMPOUND_FILTERS:
+            for qualifier, val in getattr(params, param_field_name).items():
+                filter_obj = cls.COMPOUND_FILTERS[param_field_name](qualifier, val)
                 compound_filter &= Q(**filter_obj)
         return compound_filter
