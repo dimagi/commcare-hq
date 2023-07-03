@@ -262,6 +262,9 @@ class TestDeprecateOrRestoreCaseTypeView(TestCase):
         cls.case_type_obj = CaseType(name=cls.case_type_name, domain=cls.domain)
         cls.case_type_obj.save()
 
+        CaseProperty(case_type=cls.case_type_obj, name='property').save()
+        CasePropertyGroup(case_type=cls.case_type_obj, name='group').save()
+
     @classmethod
     def tearDownClass(cls):
         cls.case_type_obj.delete()
@@ -274,12 +277,35 @@ class TestDeprecateOrRestoreCaseTypeView(TestCase):
         self.client = Client()
         self.client.login(username='test', password='foobar')
 
+    def _update_deprecate_state(self, is_deprecated):
+        case_type_obj = CaseType.objects.get(name=self.case_type_name)
+        case_type_obj.is_deprecated = is_deprecated
+        case_type_obj.save()
+        CaseProperty.objects.filter(case_type=case_type_obj).update(deprecated=is_deprecated)
+        CasePropertyGroup.objects.filter(case_type=case_type_obj).update(deprecated=is_deprecated)
+
     def test_deprecate_case_type(self):
         response = self.client.post(self.endpoint, {'is_deprecated': 'true'})
-
         self.assertEqual(response.status_code, 200)
-        json = response.json()
-        self.assertEqual(json, {'status': 'success'})
-
+        self.assertEqual(response.json(), {'status': 'success'})
         case_type_obj = CaseType.objects.get(name=self.case_type_name)
         self.assertTrue(case_type_obj.is_deprecated)
+
+        case_prop_count = CaseProperty.objects.filter(case_type=case_type_obj, deprecated=False).count()
+        self.assertEqual(case_prop_count, 0)
+        case_prop_group_count = CasePropertyGroup.objects.filter(case_type=case_type_obj, deprecated=False).count()
+        self.assertEqual(case_prop_group_count, 0)
+
+    def test_restore_case_type(self):
+        self._update_deprecate_state(is_deprecated=True)
+
+        response = self.client.post(self.endpoint, {'is_deprecated': 'false'})
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json(), {'status': 'success'})
+        case_type_obj = CaseType.objects.get(name=self.case_type_name)
+        self.assertFalse(case_type_obj.is_deprecated)
+
+        case_prop_count = CaseProperty.objects.filter(case_type=case_type_obj, deprecated=True).count()
+        self.assertEqual(case_prop_count, 0)
+        case_prop_group_count = CasePropertyGroup.objects.filter(case_type=case_type_obj, deprecated=True).count()
+        self.assertEqual(case_prop_group_count, 0)
