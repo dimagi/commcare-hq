@@ -32,6 +32,7 @@ class CaseListExplorer(CaseListReport):
     name = _('Case List Explorer')
     slug = 'case_list_explorer'
     search_class = CaseSearchES
+    description = _("Use Case List Explorer to run deep searches on your cases by case properties.  ")
 
     exportable = True
     exportable_all = True
