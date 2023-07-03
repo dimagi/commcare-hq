@@ -1593,7 +1593,6 @@ class Form(IndexedFormBase, FormMediaMixin, NavMenuItemMediaMixin):
 
     @memoized
     def get_action_type(self):
-
         if self.actions.close_case.condition.is_active():
             return 'close'
         elif self.actions.open_case.condition.is_active() or self.actions.subcases:
@@ -2362,7 +2361,7 @@ class ModuleBase(IndexedSchema, ModuleMediaMixin, NavMenuItemMediaMixin, Comment
         _rename_key(self.name, old_lang, new_lang)
         for form in self.get_forms():
             form.rename_lang(old_lang, new_lang)
-        for _, detail, _ in self.get_details():
+        for __, detail, __ in self.get_details():
             detail.rename_lang(old_lang, new_lang)
 
     def get_form_by_unique_id(self, unique_id):
@@ -4067,7 +4066,11 @@ class ApplicationBase(LazyBlobDoc, SnapshotMixin,
     vellum_case_management = BooleanProperty(default=True)
 
     # legacy property; kept around to be able to identify (deprecated) v1 apps
-    application_version = StringProperty(default=const.APP_V2, choices=[const.APP_V1, const.APP_V2], required=False)
+    application_version = StringProperty(
+        default=const.APP_V2,
+        choices=[const.APP_V1, const.APP_V2],
+        required=False,
+    )
     last_modified = DateTimeProperty()
 
     def assert_app_v2(self):
