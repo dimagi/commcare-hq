@@ -115,6 +115,14 @@ class TestCaseListAPI(TestCase):
         self.assertEqual(res['matching_records'], 2)
         self.assertNotIn('next', res)
 
+        query_dict = QueryDict('include_deprecated=True')
+        res = get_list(self.domain, self.couch_user, query_dict)
+        self.assertEqual(res['matching_records'], 7)
+
+        query_dict = QueryDict('include_deprecated=False')
+        res = get_list(self.domain, self.couch_user, query_dict)
+        self.assertEqual(res['matching_records'], 2)
+
 
 @generate_cases([
     ("", ['good_guys', 'bad_guys', 'mattie', 'rooster', 'laboeuf', 'chaney', 'ned']),
