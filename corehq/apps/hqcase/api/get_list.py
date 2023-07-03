@@ -1,7 +1,6 @@
 from base64 import b64decode, b64encode
 
 from django.http import QueryDict
-from django.utils.http import urlencode
 
 from corehq.apps.api.util import make_date_filter
 from corehq.apps.case_search.filter_dsl import (
