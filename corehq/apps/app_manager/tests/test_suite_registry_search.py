@@ -65,7 +65,7 @@ class RemoteRequestSuiteTest(SimpleTestCase, SuiteMixin):
             properties=[
                 CaseSearchProperty(name='name', label={'en': 'Name'}),
                 CaseSearchProperty(name='favorite_color', label={'en': 'Favorite Color'}, itemset=Itemset(
-                    instance_id='item-list:colors', instance_uri='jr://fixture/item-list:colors',
+                    instance_id='item-list:colors',
                     nodeset="instance('item-list:colors')/colors_list/colors",
                     label='name', sort='name', value='value'),
                 )
@@ -293,10 +293,9 @@ class RemoteRequestSuiteTest(SimpleTestCase, SuiteMixin):
     @flag_enabled('MOBILE_UCR')
     def test_prompt_itemset_mobile_report(self):
         self.module.search_config.properties[0].input_ = 'select1'
-        instance_id = "123abc"
+        instance_id = "commcare-reports:123abc"
         self.module.search_config.properties[0].itemset = Itemset(
             instance_id=instance_id,
-            instance_uri="jr://fixture/commcare-reports:abcdef",
             nodeset=f"instance('{instance_id}')/rows/row",
             label='name',
             value='id',
@@ -323,7 +322,7 @@ class RemoteRequestSuiteTest(SimpleTestCase, SuiteMixin):
 
         expected_instance = f"""
                 <partial>
-                  <instance id="{instance_id}" src="jr://fixture/commcare-reports:abcdef"/>
+                  <instance id="{instance_id}" src="jr://fixture/commcare-reports:123abc"/>
                 </partial>
                 """
         self.assertXmlPartialEqual(
@@ -362,7 +361,7 @@ class RegistrySuiteShadowModuleTest(SimpleTestCase, SuiteMixin):
             properties=[
                 CaseSearchProperty(name='name', label={'en': 'Name'}),
                 CaseSearchProperty(name='favorite_color', label={'en': 'Favorite Color'}, itemset=Itemset(
-                    instance_id='item-list:colors', instance_uri='jr://fixture/item-list:colors',
+                    instance_id='item-list:colors',
                     nodeset="instance('item-list:colors')/colors_list/colors",
                     label='name', sort='name', value='value'),
                 )
@@ -388,7 +387,7 @@ class RegistrySuiteShadowModuleTest(SimpleTestCase, SuiteMixin):
             properties=[
                 CaseSearchProperty(name='name', label={'en': 'Name'}),
                 CaseSearchProperty(name='favorite_color', label={'en': 'Texture'}, itemset=Itemset(
-                    instance_id='item-list:textures', instance_uri='jr://fixture/item-list:textures',
+                    instance_id='item-list:textures',
                     nodeset="instance('item-list:textures')/textures_list/textures",
                     label='name', sort='name', value='value'),
                 )
