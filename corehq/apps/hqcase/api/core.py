@@ -21,6 +21,7 @@ def serialize_case(case):
         "indexed_on": _isoformat(datetime.utcnow()),
         "closed": case.closed,
         "date_closed": _isoformat(case.closed_on),
+        "is_deprecated": is_case_type_deprecated(case.domain, case.type),
         "properties": dict(case.dynamic_case_properties()),
         "indices": {
             index.identifier: {
