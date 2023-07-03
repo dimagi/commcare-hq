@@ -126,7 +126,7 @@ def _get_query(domain, params):
              .domain(domain)
              .size(page_size)
              .sort("@indexed_on")
-             .sort("_id", reset_sort=False))
+             .sort("_uid", reset_sort=False))
     for key, val in params.lists():
         if len(val) == 1:
             query = query.filter(_get_filter(domain, key, val[0]))
