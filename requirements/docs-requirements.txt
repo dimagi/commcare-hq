@@ -341,7 +341,7 @@ mako==1.2.2
     #   oic
 markdown==3.4.1
     # via -r base-requirements.in
-markdown-it-py==2.2.0
+markdown-it-py==3.0.0
     # via
     #   mdit-py-plugins
     #   myst-parser
@@ -350,7 +350,7 @@ markupsafe==2.1.2
     #   jinja2
     #   mako
     #   werkzeug
-mdit-py-plugins==0.3.4
+mdit-py-plugins==0.4.0
     # via myst-parser
 mdurl==0.1.2
     # via markdown-it-py
@@ -358,7 +358,7 @@ msgpack==1.0.5
     # via cachecontrol
 munch==2.5.0
     # via fiona
-myst-parser==0.19.1
+myst-parser==2.0.0
     # via -r docs-requirements.in
 numpy==1.24.3
     # via
