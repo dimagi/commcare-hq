@@ -31,6 +31,16 @@
       <div id="tabbed-content-container">
         <div class="row">
           <div class="col-sm-12">
+            {% if is_case_type_deprecated %}
+              <div class="alert alert-warning">
+                <!-- TODO: Add help documentation link -->
+                <p>
+                  {% blocktrans %}
+                    This case uses a deprecated case type. See the <a target="_blank" href="">help documentation</a> for more information.
+                  {% endblocktrans %}
+                </p>
+              </div>
+            {% endif %}
             {% include "reports/partials/case_property_table.html" with rows=default_properties_as_table %}
           </div>
         </div>
