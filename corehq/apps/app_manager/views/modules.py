@@ -1044,7 +1044,7 @@ def _update_search_properties(module, search_properties, lang='en'):
 
     def _get_itemset(prop):
         fixture_props = json.loads(prop['fixture'])
-        keys = {'instance_uri', 'instance_id', 'nodeset', 'label', 'value', 'sort'}
+        keys = {'instance_id', 'nodeset', 'label', 'value', 'sort'}
         missing = [key for key in keys if not fixture_props.get(key)]
         if missing:
             raise CaseSearchConfigError(_("""
