@@ -261,6 +261,10 @@ class TestESQuery(ElasticTestMixin, SimpleTestCase):
         ]
         self.checkQuery(query.sort('timeStart', reset_sort=False), json_output)
 
+    def test_sort_raises_on__id_field(self):
+        with self.assertRaisesMessage(AssertionError, "Cannot sort on reserved _id field"):
+            HQESQuery('forms').sort('_id')
+
     def test_exclude_source(self):
         json_output = {
             "query": {

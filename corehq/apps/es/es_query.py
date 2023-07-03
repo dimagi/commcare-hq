@@ -410,6 +410,7 @@ class ESQuery(object):
 
     def sort(self, field, desc=False, reset_sort=True):
         """Order the results by field."""
+        assert field != '_id', "Cannot sort on reserved _id field"
         sort_field = {
             field: {'order': 'desc' if desc else 'asc'}
         }
