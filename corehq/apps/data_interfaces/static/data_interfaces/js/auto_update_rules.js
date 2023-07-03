@@ -95,6 +95,23 @@ hqDefine("data_interfaces/js/auto_update_rules", [
             self.rules.valueHasMutated();
         };
 
+        self.modalModel = ko.observable();
+        self.setModalModel = function (model) {
+            self.modalModel(model);
+        };
+
+        self.has_linked_data = initialPageData.get('has_linked_data');
+        self.allowEdit = initialPageData.get('can_edit_linked_data');
+
+        self.unlockLinkedData = ko.observable(false);
+        self.toggleLinkedLock = function () {
+            self.unlockLinkedData(!self.unlockLinkedData());
+        };
+
+        self.hasLinkedModels = ko.pureComputed(function () {
+            return self.rules().some(rule => rule.upstream_id());
+        });
+
         return self;
     };
 
@@ -139,6 +156,7 @@ hqDefine("data_interfaces/js/auto_update_rules", [
         var rules = initialPageData.get('rules');
         var ruleListViewModel = RuleListViewModel(rules);
         $("#ko-tabs-update-rules").koApplyBindings(ruleListViewModel);
+        $("#edit-warning-modal").koApplyBindings(ruleListViewModel);
 
         var ruleRuns = initialPageData.get('rule_runs');
         var ruleRunHistoryViewModel = RuleRunHistoryViewModel(ruleRuns);
