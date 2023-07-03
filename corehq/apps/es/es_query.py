@@ -539,7 +539,7 @@ class ESQuerySet(object):
                        error=raw['error'],
                        index=query.index,
                        query=query.dumps(pretty=True),
-                    )
+            )
             raise ESError(msg)
         self.raw = raw
         self.query = query
