@@ -11,7 +11,6 @@ import types
 import uuid
 from collections import Counter, OrderedDict, defaultdict, namedtuple
 from copy import deepcopy
-from looseversion import LooseVersion
 from functools import wraps
 from io import open
 from itertools import chain
@@ -27,13 +26,13 @@ from django.core.exceptions import ValidationError
 from django.db import DEFAULT_DB_ALIAS, models
 from django.template.loader import render_to_string
 from django.urls import reverse
-from django.utils.translation import override
 from django.utils.translation import gettext as _
-from django.utils.translation import gettext_lazy
+from django.utils.translation import gettext_lazy, override
 
 from couchdbkit import ResourceNotFound
 from couchdbkit.exceptions import BadValueError
 from jsonpath_ng import jsonpath, parse
+from looseversion import LooseVersion
 from lxml import etree
 from memoized import memoized
 
@@ -61,6 +60,7 @@ from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.app_manager import (
     app_strings,
     commcare_settings,
+    const,
     id_strings,
     remote_app,
 )
@@ -69,7 +69,6 @@ from corehq.apps.app_manager.app_schemas.case_properties import (
     get_usercase_properties,
 )
 from corehq.apps.app_manager.commcare_settings import check_condition
-from corehq.apps.app_manager import const
 from corehq.apps.app_manager.dbaccessors import (
     domain_has_apps,
     get_app,
@@ -83,16 +82,16 @@ from corehq.apps.app_manager.dbaccessors import (
 )
 from corehq.apps.app_manager.exceptions import (
     AppEditingError,
+    AppValidationError,
     FormNotFoundException,
     IncompatibleFormTypeException,
+    ModuleIdMissingException,
     ModuleNotFoundException,
     RearrangeError,
     ScheduleError,
     VersioningError,
     XFormException,
     XFormValidationError,
-    ModuleIdMissingException,
-    AppValidationError,
 )
 from corehq.apps.app_manager.feature_support import CommCareFeatureSupportMixin
 from corehq.apps.app_manager.helpers.validators import (
@@ -116,11 +115,14 @@ from corehq.apps.app_manager.suite_xml.generator import (
 )
 from corehq.apps.app_manager.suite_xml.post_process.remote_requests import (
     RESULTS_INSTANCE,
-    RESULTS_INSTANCE_INLINE
+    RESULTS_INSTANCE_INLINE,
 )
 from corehq.apps.app_manager.suite_xml.utils import get_select_chain
 from corehq.apps.app_manager.tasks import prune_auto_generated_builds
-from corehq.apps.app_manager.templatetags.xforms_extras import clean_trans, trans
+from corehq.apps.app_manager.templatetags.xforms_extras import (
+    clean_trans,
+    trans,
+)
 from corehq.apps.app_manager.util import (
     actions_use_usercase,
     expire_get_latest_app_release_by_location_cache,
@@ -131,22 +133,23 @@ from corehq.apps.app_manager.util import (
     get_latest_enabled_versions_per_profile,
     is_remote_app,
     is_usercase_in_use,
+    module_loads_registry_case,
     module_offers_search,
+    module_uses_inline_search,
     save_xform,
     update_form_unique_ids,
     update_report_module_ids,
-    module_loads_registry_case,
-    module_uses_inline_search,
 )
 from corehq.apps.app_manager.xform import XForm
 from corehq.apps.app_manager.xform import parse_xml as _parse_xml
 from corehq.apps.app_manager.xform import validate_xform
-from corehq.apps.app_manager.xpath import dot_interpolate, interpolate_xpath, CaseClaimXpath
-from corehq.apps.appstore.models import SnapshotMixin
-from corehq.apps.builds.models import (
-    BuildRecord,
-    BuildSpec,
+from corehq.apps.app_manager.xpath import (
+    CaseClaimXpath,
+    dot_interpolate,
+    interpolate_xpath,
 )
+from corehq.apps.appstore.models import SnapshotMixin
+from corehq.apps.builds.models import BuildRecord, BuildSpec
 from corehq.apps.builds.utils import get_default_build_spec
 from corehq.apps.domain.models import Domain
 from corehq.apps.hqmedia.models import (
