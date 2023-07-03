@@ -85,18 +85,30 @@ hqDefine("cloudcare/js/formplayer/menus/utils", function () {
         FormplayerFrontend.regions.getRegion('breadcrumb').show(breadcrumbView);
     };
 
-    var showFormMenu = function (langs, enableLanguageMenu) {
+    var showFormMenu = function (langs) {
         var langModels,
             langCollection;
 
         FormplayerFrontend.regions.addRegions({
             formMenu: "#form-menu",
         });
-        if (langs && enableLanguageMenu) {
-            langModels = _.map(langs, function (lang) {
-                return {
-                    lang: lang,
-                };
+        if (langs) {
+            $.getJSON('/langcodes/langs.json', function (mapping) {
+                langModels = _.map(langs, function (lang) {
+                    var matchingLanguage = mapping.find(function (language) {
+                        return language.code === lang;
+                    });
+                    return {
+                        lang_code: lang,
+                        lang_label: matchingLanguage ? matchingLanguage.name : lang,
+                    };
+                });
+
+                langCollection = new Backbone.Collection(langModels);
+                var formMenuView = views.FormMenuView({
+                    collection: langCollection,
+                });
+                FormplayerFrontend.regions.getRegion('formMenu').show(formMenuView);
             });
             langCollection = new Backbone.Collection(langModels);
         } else {
