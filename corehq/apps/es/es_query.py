@@ -410,6 +410,7 @@ class ESQuery(object):
 
     def sort(self, field, desc=False, reset_sort=True):
         """Order the results by field."""
+        assert field != '_id', "Cannot sort on reserved _id field"
         sort_field = {
             field: {'order': 'desc' if desc else 'asc'}
         }
@@ -538,7 +539,7 @@ class ESQuerySet(object):
                        error=raw['error'],
                        index=query.index,
                        query=query.dumps(pretty=True),
-                    )
+            )
             raise ESError(msg)
         self.raw = raw
         self.query = query
