@@ -85,14 +85,14 @@ hqDefine("cloudcare/js/formplayer/menus/utils", function () {
         FormplayerFrontend.regions.getRegion('breadcrumb').show(breadcrumbView);
     };
 
-    var showFormMenu = function (langs, enableLanguageMenu) {
+    var showFormMenu = function (langs) {
         var langModels,
             langCollection;
 
         FormplayerFrontend.regions.addRegions({
             formMenu: "#form-menu",
         });
-        if (langs && enableLanguageMenu) {
+        if (langs) {
             langModels = _.map(langs, function (lang) {
                 return {
                     lang: lang,
