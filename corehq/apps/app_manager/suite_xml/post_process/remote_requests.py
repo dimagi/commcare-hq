@@ -476,18 +476,24 @@ class RemoteRequestsHelper(PostProcessor):
                 self.suite.remote_requests.extend(
                     self.get_endpoint_contributions(module, None, module.session_endpoint_id,
                                                     detail_section_elements))
+
+            if module.case_list_session_endpoint_id:
+                self.suite.remote_requests.extend(
+                    self.get_endpoint_contributions(module, None, module.case_list_session_endpoint_id,
+                                                    detail_section_elements, False))
+
             for form in module.get_forms():
                 if form.session_endpoint_id:
                     self.suite.remote_requests.extend(
                         self.get_endpoint_contributions(module, form, form.session_endpoint_id,
                                                         detail_section_elements))
 
-    def get_endpoint_contributions(self, module, form, endpoint_id, detail_section_elements):
+    def get_endpoint_contributions(self, module, form, endpoint_id, detail_section_elements, add_last_selection_datum=True):
         helper = EndpointsHelper(self.suite, self.app, [module])
         children = helper.get_frame_children(module, form)
         elements = []
         for child in children:
-            if isinstance(child, WorkflowDatumMeta) and child.requires_selection:
+            if isinstance(child, WorkflowDatumMeta) and child.requires_selection and (add_last_selection_datum or child != children[-1]):
                 elements.append(SessionEndpointRemoteRequestFactory(
                     self.suite, module, detail_section_elements, endpoint_id, child.id).build_remote_request(),
                 )
