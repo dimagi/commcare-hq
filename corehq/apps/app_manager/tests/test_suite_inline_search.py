@@ -16,7 +16,7 @@ from corehq.apps.app_manager.models import (
     ShadowModule,
 )
 from corehq.apps.app_manager.suite_xml.post_process.remote_requests import (
-    RESULTS_INSTANCE, RESULTS_INSTANCE_INLINE,
+    RESULTS_INSTANCE_INLINE,
 )
 from corehq.apps.app_manager.tests.app_factory import AppFactory
 from corehq.apps.app_manager.tests.util import (

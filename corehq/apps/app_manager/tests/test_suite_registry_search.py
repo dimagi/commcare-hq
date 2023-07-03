@@ -21,8 +21,10 @@ from corehq.apps.app_manager.models import (
     ParentSelect,
     ShadowModule,
 )
-from corehq.apps.app_manager.suite_xml.post_process.remote_requests import RESULTS_INSTANCE, \
-    RESULTS_INSTANCE_INLINE
+from corehq.apps.app_manager.suite_xml.post_process.remote_requests import (
+    RESULTS_INSTANCE,
+    RESULTS_INSTANCE_INLINE,
+)
 from corehq.apps.app_manager.tests.app_factory import AppFactory
 from corehq.apps.app_manager.tests.util import (
     SuiteMixin,
@@ -129,7 +131,8 @@ class RemoteRequestSuiteTest(SimpleTestCase, SuiteMixin):
                 </itemset>
               </prompt>
             </query>
-            <datum id="case_id" nodeset="instance('results')/results/case[@case_type='case'][@status='open'][not(commcare_is_related_case=true())]"
+            <datum id="case_id"
+                nodeset="instance('results')/results/case[@case_type='case'][@status='open'][not(commcare_is_related_case=true())]"
                 value="./@case_id" detail-select="m0_case_short" detail-confirm="m0_case_long"/>
             <query url="http://localhost:8000/a/test_domain/phone/case_fixture/123/"
                 storage-instance="registry" template="case" default_search="true">
@@ -139,7 +142,7 @@ class RemoteRequestSuiteTest(SimpleTestCase, SuiteMixin):
               <data key="case_id" ref="instance('commcaresession')/session/data/case_id"/>
             </query>
           </session>
-        </partial>"""
+        </partial>"""  # noqa: E501
         self.assertXmlPartialEqual(expected_entry_query, suite, "./entry[1]/session")
 
         # assert that session instance is added to the entry

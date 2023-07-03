@@ -11,7 +11,9 @@ from corehq.apps.app_manager.models import (
     Itemset,
     ShadowModule,
 )
-from corehq.apps.app_manager.suite_xml.post_process.instances import get_instance_names
+from corehq.apps.app_manager.suite_xml.post_process.instances import (
+    get_instance_names,
+)
 from corehq.apps.app_manager.tests.app_factory import AppFactory
 from corehq.apps.app_manager.tests.util import (
     SuiteMixin,
@@ -113,13 +115,16 @@ class SuiteInstanceTests(SimpleTestCase, SuiteMixin):
                                        self.factory.app.create_suite(), "entry/instance")
 
             configuration_mock_obj.sync_hierarchical_fixture = False
-            self.assertXmlPartialEqual(flat_fixture_format_xml, self.factory.app.create_suite(), "entry/instance")
+            self.assertXmlPartialEqual(flat_fixture_format_xml,
+                                       self.factory.app.create_suite(), "entry/instance")
 
             configuration_mock_obj.sync_flat_fixture = False
-            self.assertXmlPartialEqual(hierarchical_fixture_format_xml, self.factory.app.create_suite(), "entry/instance")
+            self.assertXmlPartialEqual(hierarchical_fixture_format_xml,
+                                       self.factory.app.create_suite(), "entry/instance")
 
             configuration_mock_obj.sync_hierarchical_fixture = True
-            self.assertXmlPartialEqual(hierarchical_fixture_format_xml, self.factory.app.create_suite(), "entry/instance")
+            self.assertXmlPartialEqual(hierarchical_fixture_format_xml,
+                                       self.factory.app.create_suite(), "entry/instance")
 
         # To ensure for new domains or domains adding locations now come on flat fixture
         configuration_mock_obj.sync_hierarchical_fixture = True  # default value

@@ -1,6 +1,7 @@
-from django.test import SimpleTestCase
 from unittest.mock import patch
 from uuid import uuid4
+
+from django.test import SimpleTestCase
 
 from corehq.apps.app_manager.const import REGISTRY_WORKFLOW_SMART_LINK
 from corehq.apps.app_manager.exceptions import UnknownInstanceError
@@ -13,23 +14,26 @@ from corehq.apps.app_manager.models import (
     CaseSearchLabel,
     CaseSearchProperty,
     DefaultCaseSearchProperty,
+    DetailColumn,
     Itemset,
-    Module, DetailColumn, ShadowModule,
+    Module,
+    ShadowModule,
 )
-from corehq.apps.app_manager.suite_xml.sections.details import (
-    AUTO_LAUNCH_EXPRESSIONS,
-    DetailContributor
-)
-from corehq.apps.app_manager.suite_xml.sections.entries import EntriesContributor
 from corehq.apps.app_manager.suite_xml.generator import SuiteGenerator
 from corehq.apps.app_manager.suite_xml.post_process.remote_requests import (
     RESULTS_INSTANCE,
     RemoteRequestFactory,
 )
+from corehq.apps.app_manager.suite_xml.sections.details import (
+    AUTO_LAUNCH_EXPRESSIONS,
+    DetailContributor,
+)
+from corehq.apps.app_manager.suite_xml.sections.entries import (
+    EntriesContributor,
+)
 from corehq.apps.app_manager.tests.app_factory import AppFactory
 from corehq.apps.app_manager.tests.util import (
     SuiteMixin,
-    TestXmlMixin,
     parse_normalize,
     patch_get_xform_resource_overrides,
 )
@@ -730,7 +734,7 @@ class RemoteRequestSuiteTest(SimpleTestCase, SuiteMixin):
             sort='id',
         )
         with self.assertRaises(UnknownInstanceError):
-            suite = self.app.create_suite()
+            self.app.create_suite()
 
     @flag_enabled('MOBILE_UCR')
     def test_prompt_itemset_mobile_report(self):
