@@ -62,9 +62,37 @@ hqDefine("app_manager/js/details/screen", function () {
             return {templateValue: templateOption[0], templateName: templateOption[1]};
         });
         self.caseTileTemplate = ko.observable(detail.case_tile_template);
-        self.caseTileFields = options.caseTileFields;
+        self.caseTileTemplateConfigs = options.caseTileTemplateConfigs;
         self.caseTileFieldsForTemplate = ko.computed(function () {
-            return self.caseTileFields[self.caseTileTemplate()];
+            return (self.caseTileTemplateConfigs[self.caseTileTemplate()] || {}).fields;
+        });
+        self.caseTilePreviewForTemplate = ko.computed(function () {
+            const grid = (self.caseTileTemplateConfigs[self.caseTileTemplate()] || {}).grid;
+            if (!grid) {
+                return "";
+            }
+            return "<div class='case-tile-preview'>" + _.map(grid, (values, fieldName) => {
+                return _.template(`<div class='case-tile-preview-mapping'
+                                        style='
+                                            grid-area: <%= rowStart %> / <%= columnStart %> / <%= rowEnd %> / <%= columnEnd %>;
+                                        '>
+                                          <div style='
+                                            justify-self: <%= horzAlign %>;
+                                            text-align: <%= horzAlign %>;
+                                            align-self: <%= vertAlign %>;
+                                          '>
+                                            <%= field %>
+                                          </div>
+                                        </div>`)({
+                    rowStart: values.y + 1,
+                    columnStart: values.x + 1,
+                    rowEnd: values.y + values.height + 1,
+                    columnEnd: values.x + values.width + 1,
+                    horzAlign: values["horz-align"],
+                    vertAlign: values["vert-align"],
+                    field: fieldName,
+                });
+            }).join("") + "</div>";
         });
         self.showCaseTileColumn = ko.computed(function () {
             return self.caseTileTemplate() && hqImport('hqwebapp/js/toggles').toggleEnabled('CASE_LIST_TILE');
