@@ -8,7 +8,7 @@ from corehq.apps.app_manager.models import (
     DetailColumn,
     MappingItem,
     Module,
-    SortElement,
+    SortElement, CaseListForm,
 )
 from corehq.apps.app_manager.suite_xml.features.case_tiles import CaseTileTemplates
 from corehq.apps.app_manager.tests.app_factory import AppFactory
@@ -577,4 +577,42 @@ class SuiteCaseTilesTest(SimpleTestCase, SuiteMixin):
             """,
             suite,
             './detail[@id="m0_case_short"]/field[4]/sort',
+        )
+
+    def test_case_tile_with_register_from_case_list(self, *args):
+        factory = AppFactory()
+        module, form = factory.new_basic_module("my_module", "person")
+        module.case_details.short.case_tile_template = CaseTileTemplates.ONE_ONE_TWO.value
+        module.case_details.short.display = 'short'
+        add_columns_for_one_one_two_case_details(module)
+
+        reg_form = factory.new_form(module)
+        reg_form.actions.open_case.condition.type = 'always'
+
+        module.case_list_form.form_id = str(reg_form.get_unique_id())
+        module.case_list_form.label = {"en": "Add new patient"}
+
+        suite = factory.app.create_suite()
+
+        self.assertXmlPartialEqual(
+            """
+            <partial>
+                <action>
+                    <display>
+                        <text>
+                            <locale id="case_list_form.m0"/>
+                        </text>
+                    </display>
+                <stack>
+                    <push>
+                        <command value="'m0-f1'"/>
+                        <datum id="case_id_new_person_0" value="uuid()"/>
+                        <datum id="return_to" value="'m0'"/>
+                    </push>
+                </stack>
+              </action>
+            </partial>
+            """,
+            suite,
+            "detail[@id='m0_case_short']/action[1]",
         )
