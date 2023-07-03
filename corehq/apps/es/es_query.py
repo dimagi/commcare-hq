@@ -534,12 +534,11 @@ class ESQuerySet(object):
 
     def __init__(self, raw, query):
         if 'error' in raw:
-            msg = ("ElasticSearch Error\n{error}\nIndex: {index}"
-                   "\nQuery: {query}").format(
-                       error=raw['error'],
-                       index=query.index,
-                       query=query.dumps(pretty=True),
-            )
+            msg = f"""ElasticSearch Error
+                {raw['error']}
+                Index: {query.index}"
+                Query: {query.dumps(pretty=True)}"""
+
             raise ESError(msg)
         self.raw = raw
         self.query = query
