@@ -45,17 +45,17 @@ class EndpointsHelper(PostProcessor):
                     if form.session_endpoint_id:
                         self.suite.endpoints.append(self._make_session_endpoint(form.session_endpoint_id, module, form))
 
-    def _make_session_endpoint(self, endpoint_id, module, form=None, add_last_selection_datum=True):
+    def _make_session_endpoint(self, endpoint_id, module, form=None, should_add_last_selection_datum=True):
         stack = Stack()
         children = self.get_frame_children(module, form)
-        argument_ids = self.get_argument_ids(children, form, add_last_selection_datum)
+        argument_ids = self.get_argument_ids(children, form, should_add_last_selection_datum)
 
         # Add a claim request for each endpoint argument.
         # This assumes that all arguments are case ids.
         non_computed_argument_ids = [
             child.id for child in children
             if isinstance(child, WorkflowDatumMeta) and child.requires_selection
-               and (add_last_selection_datum or child != children[-1])
+               and (should_add_last_selection_datum or child != children[-1])
         ]
         for arg_id in non_computed_argument_ids:
             self._add_claim_frame(stack, arg_id, endpoint_id)
@@ -75,7 +75,7 @@ class EndpointsHelper(PostProcessor):
             stack=stack,
         )
 
-    def get_argument_ids(self, frame_children, form = None, add_last_selection_datum = True):
+    def get_argument_ids(self, frame_children, form = None, should_add_last_selection_datum = True):
 
         def should_include(child, add_selection_datum):
             if not isinstance(child, WorkflowDatumMeta):
@@ -88,7 +88,7 @@ class EndpointsHelper(PostProcessor):
 
         return [
             child.id for child in frame_children
-            if should_include(child, add_last_selection_datum or child != frame_children[-1])
+            if should_include(child, should_add_last_selection_datum or child != frame_children[-1])
         ]
 
     def _add_claim_frame(self, stack, arg_id, endpoint_id):
