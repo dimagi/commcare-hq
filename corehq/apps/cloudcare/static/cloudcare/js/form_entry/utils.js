@@ -129,7 +129,7 @@ hqDefine("cloudcare/js/form_entry/utils", function () {
         // This populates the "region" html node with the first option, so that it is read by
         // screen readers on focus.
         geocoder.on('results', (items) => {
-            if (items && items.features) {
+            if (items && !_.isEmpty(items.features)) {
                 liveRegionEl.html("<p>" + items.features[0].place_name + "</p>");
             }
         });
