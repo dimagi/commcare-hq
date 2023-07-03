@@ -233,8 +233,8 @@ hqDefine('cloudcare/js/utils', [
     };
 
     function renderMarkdown(text) {
-        const md = window.markdownit();
-        return md.render(DOMPurify.sanitize(text || "")).replaceAll("\n", "<br>");
+        const md = window.markdownit().set({ breaks: true });
+        return md.render(DOMPurify.sanitize(text || "").replaceAll("&#10;", "\n"));
     };
 
     function chainedRenderer(matcher, transform, target) {
