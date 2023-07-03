@@ -93,10 +93,22 @@ hqDefine("cloudcare/js/formplayer/menus/utils", function () {
             formMenu: "#form-menu",
         });
         if (langs) {
-            langModels = _.map(langs, function (lang) {
-                return {
-                    lang: lang,
-                };
+            $.getJSON('/langcodes/langs.json', function (mapping) {
+                langModels = _.map(langs, function (lang) {
+                    var matchingLanguage = mapping.find(function (language) {
+                        return language.code === lang;
+                    });
+                    return {
+                        lang_code: lang,
+                        lang_label: matchingLanguage ? matchingLanguage.name : lang,
+                    };
+                });
+
+                langCollection = new Backbone.Collection(langModels);
+                var formMenuView = views.FormMenuView({
+                    collection: langCollection,
+                });
+                FormplayerFrontend.regions.getRegion('formMenu').show(formMenuView);
             });
             langCollection = new Backbone.Collection(langModels);
         } else {
