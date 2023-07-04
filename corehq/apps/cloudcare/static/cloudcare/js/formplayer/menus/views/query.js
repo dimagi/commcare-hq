@@ -448,6 +448,9 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
                     break;
                 }
             }
+
+            // force manual search in split screen case search for workflow compatibility
+            this.forceManualSearch = this.options.sidebarEnabled;
         },
 
         templateContext: function () {
@@ -528,7 +531,11 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
             e.preventDefault();
 
             self.validateAllFields().done(function () {
-                FormplayerFrontend.trigger("menu:query", self.getAnswers(), self.selectValuesByKeys);
+                FormplayerFrontend.trigger(
+                    "menu:query",
+                    self.getAnswers(),
+                    self.selectValuesByKeys,
+                    self.forceManualSearch);
             });
         },
 
