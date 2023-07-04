@@ -646,6 +646,10 @@ def validate_custom_assertions(custom_assertions_string, existing_assertions, la
     assertions = json.loads(custom_assertions_string)
     try:  # validate that custom assertions can be added into the XML
         for assertion in assertions:
+            if (len(assertion['test']) == 0):
+                raise AppMisconfigurationError(_("Custom assertions must not be blank."))
+            if (len(assertion['text']) == 0):
+                raise AppMisconfigurationError(_("Please add a message for assertion."))
             etree.fromstring(
                 '<assertion test="{test}"><text><locale id="abc.def"/>{text}</text></assertion>'.format(
                     **assertion
