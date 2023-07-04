@@ -5,6 +5,7 @@ hqDefine("cloudcare/js/formplayer/spec/main", [
     hqMocha
 ) {
     hqRequire([
+        "cloudcare/js/formplayer/spec/case_list_pagination_spec",
         "cloudcare/js/formplayer/spec/debugger_spec",
         "cloudcare/js/formplayer/spec/hq_events_spec",
         "cloudcare/js/formplayer/spec/integration_spec",
