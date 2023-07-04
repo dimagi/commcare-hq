@@ -416,7 +416,7 @@ class EntriesHelper(object):
                 predicate = f"selected(join(' ', instance('{case_datum_id}')/results/value), @case_id)"
             else:
                 predicate = f"@case_id = instance('commcaresession')/session/data/{case_datum_id}"
-            func = f"join(' ', distinct-values(instance('casedb')/casedb/case[{predicate}]/index/{index_identifier}))"
+            func = f"coalesce(join(' ', distinct-values(instance('casedb')/casedb/case[{predicate}]/index/{index_identifier})),'')"
             datums.append(FormDatumMeta(
                 datum=SessionDatum(id=f"{case_datum_id}_parent_ids", function=func),
                 case_type=None,
