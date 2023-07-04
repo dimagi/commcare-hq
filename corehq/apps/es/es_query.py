@@ -88,6 +88,7 @@ Language
 import json
 from collections import namedtuple
 from copy import deepcopy
+import textwrap
 
 from memoized import memoized
 
@@ -534,10 +535,10 @@ class ESQuerySet(object):
 
     def __init__(self, raw, query):
         if 'error' in raw:
-            msg = f"""ElasticSearch Error
+            msg = textwrap.dedent(f"""ElasticSearch Error
                 {raw['error']}
-                Index: {query.index}"
-                Query: {query.dumps(pretty=True)}"""
+                Index: {query.index}
+                Query: {query.dumps(pretty=True)}""")
 
             raise ESError(msg)
         self.raw = raw
