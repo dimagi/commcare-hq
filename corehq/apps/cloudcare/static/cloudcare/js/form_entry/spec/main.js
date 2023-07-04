@@ -5,6 +5,7 @@ hqDefine("cloudcare/js/form_entry/spec/main", [
     hqMocha
 ) {
     hqRequire([
+        "cloudcare/js/form_entry/spec/integration_spec",
         "cloudcare/js/form_entry/spec/utils_spec",
     ], function () {
         hqMocha.run();
