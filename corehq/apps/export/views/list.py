@@ -14,6 +14,8 @@ from django.utils.translation import gettext as _
 from django.utils.translation import gettext_lazy, gettext_noop
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_GET, require_POST
+from django.contrib import messages
+from django.core.cache import cache
 
 from couchdbkit import ResourceNotFound
 from memoized import memoized
@@ -83,8 +85,8 @@ from corehq.apps.users.permissions import (
 from corehq.privileges import DAILY_SAVED_EXPORT, EXPORT_OWNERSHIP, EXCEL_DASHBOARD, ODATA_FEED
 from corehq.util.download import get_download_response
 from corehq.util.view_utils import absolute_reverse
-from django.contrib import messages
-from django.core.cache import cache
+from corehq.apps.data_dictionary.util import is_case_type_deprecated
+
 
 mark_safe_lazy = lazy(mark_safe, str)  # TODO: replace with library function
 
@@ -431,6 +433,7 @@ class CaseExportListHelper(ExportListHelper):
         data = super(CaseExportListHelper, self).fmt_export_data(export)
         data.update({
             'case_type': export.case_type,
+            'is_case_type_deprecated': is_case_type_deprecated(export.domain, export.case_type)
         })
         return data
 
