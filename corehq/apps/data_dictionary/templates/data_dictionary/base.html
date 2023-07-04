@@ -346,9 +346,10 @@
             <span aria-hidden="true">&times;</span>
           </button>
           <h4 class="modal-title">
-            {% trans "Deprecate" %}
-            '<span data-bind="text: $root.activeCaseType()"></span>'
-            {% trans "Case Type" %}
+            {% blocktrans %}
+              Deprecate
+              '<span data-bind="text: $root.activeCaseType()"></span>'
+              Case Type
           </h4>
         </div>
         <div class="modal-body">
