@@ -267,18 +267,12 @@ hqDefine("data_dictionary/js/data_dictionary", [
 
         self.isActiveCaseTypeDeprecated = function () {
             const activeCaseType = self.getActiveCaseType();
-            if (activeCaseType) {
-                return activeCaseType.deprecated;
-            }
-            return false;
+            return (activeCaseType) ? activeCaseType.deprecated : false;
         };
 
         self.activeCaseTypeModuleCount = function () {
             const activeCaseType = self.getActiveCaseType();
-            if (activeCaseType) {
-                return activeCaseType.appCount;
-            }
-            return 0;
+            return (activeCaseType) ? activeCaseType.appCount : 0;
         };
 
         self.deprecateCaseType = function () {
