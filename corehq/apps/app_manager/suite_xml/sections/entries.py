@@ -17,8 +17,9 @@ modules.  See ``update_refs`` and ``rename_other_id``, both inner functions in `
 """
 from collections import defaultdict
 
-import attr
 from django.utils.translation import gettext as _
+
+import attr
 from memoized import memoized
 
 from corehq.apps.app_manager import id_strings
@@ -28,31 +29,11 @@ from corehq.apps.app_manager.exceptions import (
     ParentModuleReferenceError,
     SuiteValidationError,
 )
-from corehq.apps.app_manager.suite_xml.contributors import (
-    SuiteContributorByModule,
-)
-from corehq.apps.app_manager.suite_xml.utils import (
-    get_form_locale_id,
-    get_select_chain_meta,
-    get_ordered_case_types,
-)
-from corehq.apps.app_manager.suite_xml.xml_models import (
-    SessionDatum,
-    RemoteRequestQuery,
-    QueryData,
-    InstanceDatum,
-    LocaleArgument,
-    Text,
-    Assertion,
-    Command,
-    LocalizedCommand,
-    Entry,
-)
 from corehq.apps.app_manager.util import (
     actions_use_usercase,
     module_loads_registry_case,
-    module_uses_inline_search,
     module_offers_search,
+    module_uses_inline_search,
 )
 from corehq.apps.app_manager.xform import (
     autoset_owner_id_for_advanced_action,
@@ -69,11 +50,32 @@ from corehq.apps.app_manager.xpath import (
     session_var,
 )
 from corehq.apps.case_search.const import EXCLUDE_RELATED_CASES_FILTER
-from corehq.apps.case_search.models import CASE_SEARCH_REGISTRY_ID_KEY, \
-    case_search_sync_cases_on_form_entry_enabled_for_domain
+from corehq.apps.case_search.models import (
+    CASE_SEARCH_REGISTRY_ID_KEY,
+    case_search_sync_cases_on_form_entry_enabled_for_domain,
+)
 from corehq.toggles import USH_SEARCH_FILTER
 from corehq.util.timer import time_method
 from corehq.util.view_utils import absolute_reverse
+
+from ..contributors import SuiteContributorByModule
+from ..utils import (
+    get_form_locale_id,
+    get_ordered_case_types,
+    get_select_chain_meta,
+)
+from ..xml_models import (
+    Assertion,
+    Command,
+    Entry,
+    InstanceDatum,
+    LocaleArgument,
+    LocalizedCommand,
+    QueryData,
+    RemoteRequestQuery,
+    SessionDatum,
+    Text,
+)
 
 
 @attr.s(repr=False)
@@ -122,7 +124,7 @@ class EntriesContributor(SuiteContributorByModule):
 class EntriesHelper(object):
 
     def __init__(self, app, modules=None, build_profile_id=None):
-        from corehq.apps.app_manager.suite_xml.sections.details import DetailsHelper
+        from ..sections.details import DetailsHelper
         self.app = app
         self.modules = modules or list(app.get_modules())
         self.build_profile_id = build_profile_id
@@ -241,19 +243,20 @@ class EntriesHelper(object):
 
     def entry_for_module(self, module):
         # avoid circular dependency
-        from corehq.apps.app_manager.models import Module, AdvancedModule
+        from corehq.apps.app_manager.models import AdvancedModule, Module
         results = []
         for form in module.get_suite_forms():
             e = Entry()
             e.form = form.xmlns
 
             if module.report_context_tile:
-                from corehq.apps.app_manager.suite_xml.features.mobile_ucr import get_report_context_tile_datum
+                from ..features.mobile_ucr import get_report_context_tile_datum
                 e.datums.append(get_report_context_tile_datum())
             if form.requires_case() and self.include_post_in_entry(module.get_or_create_unique_id()):
                 case_session_var = self.get_case_session_var_for_form(form)
-                from corehq.apps.app_manager.suite_xml.post_process.remote_requests import (
-                    RemoteRequestFactory, RESULTS_INSTANCE_INLINE
+                from ..post_process.remote_requests import (
+                    RESULTS_INSTANCE_INLINE,
+                    RemoteRequestFactory,
                 )
                 storage_instance = RESULTS_INSTANCE_INLINE if module_uses_inline_search(module) \
                     else 'casedb'
@@ -651,8 +654,10 @@ class EntriesHelper(object):
         workflow and put the query directly in the entry.
         The case details is then populated with data from the results of the query.
         """
-        from corehq.apps.app_manager.suite_xml.post_process.remote_requests import (
-            RemoteRequestFactory, RESULTS_INSTANCE_INLINE, RESULTS_INSTANCE
+        from ..post_process.remote_requests import (
+            RESULTS_INSTANCE,
+            RESULTS_INSTANCE_INLINE,
+            RemoteRequestFactory,
         )
         storage_instance = RESULTS_INSTANCE_INLINE if uses_inline_search else RESULTS_INSTANCE
         factory = RemoteRequestFactory(None, module, [], storage_instance=storage_instance)
@@ -664,7 +669,7 @@ class EntriesHelper(object):
         the user selected is in the user's casedb so we have to get the data directly from HQ before
         entering the form. This data is then available in the 'registry' instance (``instance('registry')``)
         """
-        from corehq.apps.app_manager.suite_xml.post_process.remote_requests import REGISTRY_INSTANCE
+        from ..post_process.remote_requests import REGISTRY_INSTANCE
 
         case_ids_expressions = {session_var(datum.id)} | set(module.search_config.additional_registry_cases)
         data = [
@@ -694,8 +699,13 @@ class EntriesHelper(object):
 
     @staticmethod
     def get_auto_select_datums_and_assertions(action, auto_select, form):
-        from corehq.apps.app_manager.const import AUTO_SELECT_USER, AUTO_SELECT_CASE, \
-            AUTO_SELECT_FIXTURE, AUTO_SELECT_RAW, AUTO_SELECT_USERCASE
+        from corehq.apps.app_manager.const import (
+            AUTO_SELECT_CASE,
+            AUTO_SELECT_FIXTURE,
+            AUTO_SELECT_RAW,
+            AUTO_SELECT_USER,
+            AUTO_SELECT_USERCASE,
+        )
         if auto_select.mode == AUTO_SELECT_USER:
             return EntriesHelper.get_userdata_autoselect(
                 auto_select.value_key,
@@ -836,7 +846,9 @@ class EntriesHelper(object):
                 if module_id == module.unique_id:
                     return module
 
-                from corehq.apps.app_manager.models import ModuleNotFoundException
+                from corehq.apps.app_manager.models import (
+                    ModuleNotFoundException,
+                )
                 try:
                     target = module.get_app().get_module_by_unique_id(module_id,
                              error=_("Could not find target module used by form '{}'").format(form.default_name()))
