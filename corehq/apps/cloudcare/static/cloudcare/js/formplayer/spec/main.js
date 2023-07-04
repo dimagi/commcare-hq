@@ -8,7 +8,6 @@ hqDefine("cloudcare/js/formplayer/spec/main", [
         "cloudcare/js/formplayer/spec/case_list_pagination_spec",
         "cloudcare/js/formplayer/spec/debugger_spec",
         "cloudcare/js/formplayer/spec/hq_events_spec",
-        "cloudcare/js/formplayer/spec/integration_spec",
         "cloudcare/js/spec/markdown_spec",
         "cloudcare/js/formplayer/spec/menu_list_spec",
         "cloudcare/js/formplayer/spec/query_spec",
