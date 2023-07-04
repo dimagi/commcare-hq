@@ -85,40 +85,32 @@ hqDefine("cloudcare/js/formplayer/menus/utils", function () {
         FormplayerFrontend.regions.getRegion('breadcrumb').show(breadcrumbView);
     };
 
-    var showFormMenu = function (langs) {
-        var langModels,
-            langCollection;
+    var showFormMenu = function (langs, lang_code_name_mapping) {
+      var langModels,
+          langCollection;
 
-        FormplayerFrontend.regions.addRegions({
-            formMenu: "#form-menu",
-        });
-        if (langs) {
-            $.getJSON('/langcodes/langs.json', function (mapping) {
-                langModels = _.map(langs, function (lang) {
-                    var matchingLanguage = mapping.find(function (language) {
-                        return language.code === lang;
-                    });
-                    return {
-                        lang_code: lang,
-                        lang_label: matchingLanguage ? matchingLanguage.name : lang,
-                    };
-                });
+      FormplayerFrontend.regions.addRegions({
+        formMenu: "#form-menu",
+      });
 
-                langCollection = new Backbone.Collection(langModels);
-                var formMenuView = views.FormMenuView({
-                    collection: langCollection,
-                });
-                FormplayerFrontend.regions.getRegion('formMenu').show(formMenuView);
-            });
-            langCollection = new Backbone.Collection(langModels);
-        } else {
-            langCollection = null;
-        }
-        var formMenuView = views.FormMenuView({
-            collection: langCollection,
+      if (langs) {
+        langModels = _.map(langs, function (lang) {
+          var matchingLanguage = lang_code_name_mapping[lang];
+          return {
+            lang_code: lang,
+            lang_label: matchingLanguage ? matchingLanguage : lang,
+          };
         });
-        FormplayerFrontend.regions.getRegion('formMenu').show(formMenuView);
+        langCollection = new Backbone.Collection(langModels);
+      } else {
+        langCollection = null;
+      }
+      var formMenuView = views.FormMenuView({
+        collection: langCollection,
+      });
+      FormplayerFrontend.regions.getRegion('formMenu').show(formMenuView);
     };
+
 
     var getMenuData = function (menuResponse) {
         return {                    // TODO: make this more concise

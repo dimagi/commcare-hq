@@ -8,6 +8,7 @@ hqDefine("cloudcare/js/formplayer/menus/controller", function () {
         views = hqImport("cloudcare/js/formplayer/menus/views"),
         toggles = hqImport("hqwebapp/js/toggles"),
         QueryListView = hqImport("cloudcare/js/formplayer/menus/views/query"),
+        initialPageData = hqImport("hqwebapp/js/initial_page_data").get,
         md = window.markdownit();
     var selectMenu = function (options) {
 
@@ -135,7 +136,11 @@ hqDefine("cloudcare/js/formplayer/menus/controller", function () {
         if (menuResponse.breadcrumbs) {
             menusUtils.showBreadcrumbs(menuResponse.breadcrumbs);
             if (!appPreview && ((menuResponse.langs && menuResponse.langs.length > 1) || enablePrintOption)) {
-                menusUtils.showFormMenu(menuResponse.langs);
+                appId = formplayerUtils.currentUrlToObject().appId;
+                var matchingObject = initialPageData('apps').find(function(obj) {
+                    return obj._id === appId;
+                });
+                menusUtils.showFormMenu(menuResponse.langs, matchingObject.lang_code_name_mapping);
             }
         } else {
             FormplayerFrontend.regions.getRegion('breadcrumb').empty();
