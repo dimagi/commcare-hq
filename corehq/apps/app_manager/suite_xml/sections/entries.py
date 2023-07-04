@@ -286,7 +286,7 @@ class EntriesHelper(object):
                 self.app.commtrack_enabled and
                 session_var('supply_point_id') in getattr(form, 'source', "")
             ):
-                from corehq.apps.app_manager.models import AUTO_SELECT_LOCATION
+                from corehq.apps.app_manager.const import AUTO_SELECT_LOCATION
                 datum, assertions = EntriesHelper.get_userdata_autoselect(
                     'commtrack-supply-point',
                     'supply_point_id',
@@ -677,7 +677,7 @@ class EntriesHelper(object):
 
     @staticmethod
     def get_auto_select_datums_and_assertions(action, auto_select, form):
-        from corehq.apps.app_manager.models import AUTO_SELECT_USER, AUTO_SELECT_CASE, \
+        from corehq.apps.app_manager.const import AUTO_SELECT_USER, AUTO_SELECT_CASE, \
             AUTO_SELECT_FIXTURE, AUTO_SELECT_RAW, AUTO_SELECT_USERCASE
         if auto_select.mode == AUTO_SELECT_USER:
             return EntriesHelper.get_userdata_autoselect(
