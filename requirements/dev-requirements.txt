@@ -41,6 +41,8 @@ botocore==1.27.96
     #   s3transfer
 build==0.8.0
     # via pip-tools
+cachecontrol==0.12.11
+    # via firebase-admin
 cachetools==5.0.0
     # via google-auth
 celery==5.2.7
@@ -98,6 +100,7 @@ cryptography==39.0.1
     # via
     #   jwcrypto
     #   oic
+    #   pyjwt
     #   pyopenssl
 csiphash==0.0.5
     # via -r base-requirements.in
@@ -237,6 +240,8 @@ faker==18.6.1
     # via -r test-requirements.in
 fiona==1.9.3
     # via geopandas
+firebase-admin==6.1.0
+    # via -r base-requirements.in
 fixture==1.5.11
     # via -r dev-requirements.in
 flake8==3.9.2
@@ -264,29 +269,58 @@ git-build-branch==0.1.15
     # via -r dev-requirements.in
 gnureadline==8.1.2
     # via -r dev-requirements.in
-google-api-core==2.5.0
-    # via google-api-python-client
+google-api-core[grpc]==2.11.0
+    # via
+    #   firebase-admin
+    #   google-api-python-client
+    #   google-cloud-core
+    #   google-cloud-firestore
+    #   google-cloud-storage
 google-api-python-client==2.32.0
-    # via -r base-requirements.in
-google-auth==2.6.0
+    # via
+    #   -r base-requirements.in
+    #   firebase-admin
+google-auth==2.18.1
     # via
     #   google-api-core
     #   google-api-python-client
     #   google-auth-httplib2
     #   google-auth-oauthlib
+    #   google-cloud-core
+    #   google-cloud-storage
 google-auth-httplib2==0.1.0
     # via
     #   -r base-requirements.in
     #   google-api-python-client
 google-auth-oauthlib==0.4.6
     # via -r base-requirements.in
-googleapis-common-protos==1.54.0
-    # via google-api-core
+google-cloud-core==2.3.2
+    # via
+    #   google-cloud-firestore
+    #   google-cloud-storage
+google-cloud-firestore==2.11.1
+    # via firebase-admin
+google-cloud-storage==2.9.0
+    # via firebase-admin
+google-crc32c==1.5.0
+    # via google-resumable-media
+google-resumable-media==2.5.0
+    # via google-cloud-storage
+googleapis-common-protos==1.59.0
+    # via
+    #   google-api-core
+    #   grpcio-status
 greenlet==1.1.2
     # via
     #   -r base-requirements.in
     #   django-websocket-redis
     #   gevent
+grpcio==1.54.2
+    # via
+    #   google-api-core
+    #   grpcio-status
+grpcio-status==1.54.2
+    # via google-api-core
 gunicorn==20.0.4
     # via -r base-requirements.in
 hiredis==2.0.0
@@ -383,6 +417,8 @@ mdit-py-plugins==0.3.5
     # via myst-parser
 mdurl==0.1.2
     # via markdown-it-py
+msgpack==1.0.5
+    # via cachecontrol
 munch==2.5.0
     # via fiona
 myst-parser==0.19.1
@@ -450,11 +486,16 @@ prompt-toolkit==3.0.36
     # via
     #   click-repl
     #   ipython
-protobuf==3.18.3
+proto-plus==1.22.2
+    # via google-cloud-firestore
+protobuf==4.23.1
     # via
     #   ddtrace
     #   google-api-core
+    #   google-cloud-firestore
     #   googleapis-common-protos
+    #   grpcio-status
+    #   proto-plus
 psutil==5.8.0
     # via -r dev-requirements.in
 psycogreen==1.0.2
@@ -495,9 +536,10 @@ pygments==2.14.0
     #   sphinx
 pyjwkest==1.4.2
     # via oic
-pyjwt==2.4.0
+pyjwt[crypto]==2.7.0
     # via
     #   -r base-requirements.in
+    #   firebase-admin
     #   pygithub
     #   twilio
 pynacl==1.5.0
@@ -570,12 +612,14 @@ reportlab==3.6.9
 requests==2.28.2
     # via
     #   -r base-requirements.in
+    #   cachecontrol
     #   cloudant
     #   datadog
     #   dependency-metrics
     #   django-oauth-toolkit
     #   dropbox
     #   google-api-core
+    #   google-cloud-storage
     #   oic
     #   pygithub
     #   pyjwkest
@@ -745,6 +789,7 @@ urllib3==1.26.12
     #   botocore
     #   elasticsearch2
     #   elasticsearch5
+    #   google-auth
     #   py-kissmetrics
     #   requests
     #   sentry-sdk

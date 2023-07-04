@@ -1,4 +1,4 @@
-/* global moment, NProgress */
+/* global DOMPurify, moment, NProgress */
 hqDefine('cloudcare/js/utils', [
     'jquery',
     'hqwebapp/js/initial_page_data',
@@ -232,6 +232,11 @@ hqDefine('cloudcare/js/utils', [
         });
     };
 
+    function renderMarkdown(text) {
+        const md = window.markdownit();
+        return md.render(DOMPurify.sanitize(text || "")).replaceAll("\n", "<br>");
+    };
+
     function chainedRenderer(matcher, transform, target) {
         return function (tokens, idx, options, env, self) {
             var hIndex = tokens[idx].attrIndex('href');
@@ -438,6 +443,7 @@ hqDefine('cloudcare/js/utils', [
         initTimePicker: initTimePicker,
         getFormUrl: getFormUrl,
         getSubmitUrl: getSubmitUrl,
+        renderMarkdown: renderMarkdown,
         showError: showError,
         showWarning: showWarning,
         showHTMLError: showHTMLError,

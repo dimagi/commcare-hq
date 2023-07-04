@@ -946,6 +946,8 @@ LESS_B3_PATHS = {
     'mixins': '../../../hqwebapp/less/_hq/includes/mixins',
 }
 
+BOOTSTRAP_MIGRATION_LOGS_DIR = None
+
 USER_AGENTS_CACHE = 'default'
 
 # Invoicing
@@ -1140,6 +1142,9 @@ IGNORE_ALL_DEMO_USER_SUBMISSIONS = False
 # so HQ does not try to keep them up to date
 USE_PHONE_ENTRIES = True
 COMMCARE_ANALYTICS_HOST = ""
+
+# FCM Server creds used for sending FCM Push Notifications
+FCM_CREDS = None
 
 try:
     # try to see if there's an environmental variable set for local_settings
