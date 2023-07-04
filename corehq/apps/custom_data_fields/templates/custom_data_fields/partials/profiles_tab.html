@@ -17,25 +17,34 @@
           {% trans "Fields" %}
         </th>
         <th class="col-sm-1">{% trans "Delete" %}</th>
+        <!-- ko if: $root.hasLinkedData -->
+        <th>
+          {# Linked #}
+        </th>
+        <!-- /ko -->
       </tr>
     </thead>
     <tbody data-bind="foreach: profiles">
       <tr>
         <td>
           <input class="form-control" type="hidden" data-bind="value: id"/>
-          <input class="form-control" type="text" data-bind="value: name"/>
+          <input class="form-control" type="text" data-bind="value: name, enable: isEditable"/>
         </td>
         <td data-bind="jqueryElement: $fields"></td>
         <td>
           <a type="button"
              class="btn btn-danger"
              data-toggle="modal"
-             href="#delete-confirm-modal"
-             data-bind="click: $root.setModalModel"
+             data-bind="click: $root.setModalModel, attr: { 'href': deleteLink, 'disabled': !isEditable() }"
           >
             <i class="fa fa-times"></i> {% trans "Delete" %}
           </a>
         </td>
+        <!-- ko if: $root.hasLinkedData -->
+        <td data-bind="if: upstream_id">
+          <i class="fa fa-link"></i>
+        </td>
+        <!-- /ko -->
       </tr>
     </tbody>
   </table>
