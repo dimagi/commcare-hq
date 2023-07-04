@@ -1191,6 +1191,12 @@ if callable(COMPRESS_OFFLINE):
 SESSION_COOKIE_SECURE = CSRF_COOKIE_SECURE = SECURE_COOKIES = not DEBUG
 SESSION_COOKIE_HTTPONLY = CSRF_COOKIE_HTTPONLY = True
 
+# This is commented because it is not required now. We don't need to instrument all the services rn on staging.
+# The below lines can be uncommented when we need to turn on app level tracing on any env.
+# if SERVER_ENVIRONMENT == 'staging':
+#     from ddtrace import patch_all
+#     patch_all()
+
 
 if UNIT_TESTING:
     # COMPRESS_COMPILERS overrides COMPRESS_ENABLED = False, so must be
