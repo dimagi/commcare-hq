@@ -1,11 +1,21 @@
 'use strict';
-/* global Backbone */
 /* eslint-env mocha */
-hqDefine("cloudcare/js/formplayer/spec/integration_spec", function () {
+hqDefine("cloudcare/js/formplayer/spec/integration_spec", [
+    "underscore",
+    "backbone",
+    "sinon/pkg/sinon",
+    "cloudcare/js/formplayer/app",
+    "cloudcare/js/formplayer/users/models",
+    "cloudcare/js/formplayer/utils/utils",
+], function (
+    _,
+    Backbone,
+    sinon,
+    FormplayerFrontend,
+    UsersModels,
+    Utils
+) {
     describe('FormplayerFrontend Integration', function () {
-        let FormplayerFrontend = hqImport("cloudcare/js/formplayer/app"),
-            UsersModels = hqImport("cloudcare/js/formplayer/users/models");
-
         describe('Start up', function () {
             let options,
                 server;
@@ -54,7 +64,7 @@ hqDefine("cloudcare/js/formplayer/spec/integration_spec", function () {
                 FormplayerFrontend.start(newOptions);
 
                 user = UsersModels.getCurrentUser();
-                hqImport("cloudcare/js/formplayer/utils/utils").saveDisplayOptions(user.displayOptions);
+                Utils.saveDisplayOptions(user.displayOptions);
 
                 // New session, but old options
                 FormplayerFrontend.start(options);
