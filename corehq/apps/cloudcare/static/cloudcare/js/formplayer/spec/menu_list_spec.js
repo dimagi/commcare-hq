@@ -1,14 +1,35 @@
 'use strict';
-/* global Backbone */
 /* eslint-env mocha */
-hqDefine("cloudcare/js/formplayer/spec/menu_list_spec", function () {
+hqDefine("cloudcare/js/formplayer/spec/menu_list_spec", [
+    "sinon/pkg/sinon",
+    "backbone",
+    "hqwebapp/js/initial_page_data",
+    "cloudcare/js/formplayer/app",
+    "cloudcare/js/formplayer/apps/api",
+    "cloudcare/js/formplayer/menus/utils",
+    "cloudcare/js/formplayer/spec/fixtures/case_list",
+    "cloudcare/js/formplayer/spec/fixtures/case_grid_list",
+    "cloudcare/js/formplayer/spec/fixtures/case_tile_list",
+    "cloudcare/js/formplayer/spec/fixtures/menu_list",
+    "cloudcare/js/formplayer/utils/utils",
+    "cloudcare/js/formplayer/users/models",
+], function (
+    sinon,
+    Backbone,
+    initialPageData,
+    FormplayerFrontend,
+    AppsAPI,
+    MenusUtils,
+    CaseListFixture,
+    CaseGridListFixture,
+    CaseTileListFixture,
+    MenuListFixture,
+    Utils,
+    UsersModels
+) {
     describe('Render a case list', function () {
-        let MenuListFixture = hqImport("cloudcare/js/formplayer/spec/fixtures/menu_list"),
-            Utils = hqImport("cloudcare/js/formplayer/utils/utils"),
-            UsersModels = hqImport("cloudcare/js/formplayer/users/models");
-
         before(function () {
-            hqImport("hqwebapp/js/initial_page_data").register(
+            initialPageData.register(
                 "toggles_dict",
                 {
                     SPLIT_SCREEN_CASE_SEARCH: false,
@@ -20,12 +41,11 @@ hqDefine("cloudcare/js/formplayer/spec/menu_list_spec", function () {
         });
 
         after(function () {
-            hqImport("hqwebapp/js/initial_page_data").unregister("toggles_dict");
+            initialPageData.unregister("toggles_dict");
         });
 
         describe('#getMenuView', function () {
-            let FormplayerFrontend = hqImport("cloudcare/js/formplayer/app"),
-                server,
+            let server,
                 user;
             beforeEach(function () {
                 server = sinon.useFakeXMLHttpRequest();
@@ -42,9 +62,9 @@ hqDefine("cloudcare/js/formplayer/spec/menu_list_spec", function () {
                 Backbone.history.getFragment.restore();
             });
 
-            let getMenuView = hqImport("cloudcare/js/formplayer/menus/utils").getMenuView;
+            let getMenuView = MenusUtils.getMenuView;
             it('Should parse a case list response to a CaseListView', function () {
-                let view = getMenuView(hqImport("cloudcare/js/formplayer/spec/fixtures/case_list"));
+                let view = getMenuView(CaseListFixture);
                 assert.isFalse(view.templateContext().useTiles);
             });
 
@@ -54,26 +74,25 @@ hqDefine("cloudcare/js/formplayer/spec/menu_list_spec", function () {
             });
 
             it('Should parse a case list response with tiles to a CaseTileListView', function () {
-                let view = getMenuView(hqImport("cloudcare/js/formplayer/spec/fixtures/case_tile_list"));
+                let view = getMenuView(CaseTileListFixture);
                 assert.isTrue(view.templateContext().useTiles);
             });
 
             it('Should parse a case grid response with tiles to a GridCaseTileListView', function () {
-                let view = getMenuView(hqImport("cloudcare/js/formplayer/spec/fixtures/case_grid_list"));
+                let view = getMenuView(CaseGridListFixture);
                 assert.isTrue(view.templateContext().useTiles);
             });
         });
 
         describe('#getMenus', function () {
-            let FormplayerFrontend = hqImport("cloudcare/js/formplayer/app"),
-                server,
+            let server,
                 clock,
                 user,
                 requests,
                 currentView;
 
             before(function () {
-                hqImport("hqwebapp/js/initial_page_data").register("apps", [{
+                initialPageData.register("apps", [{
                     "_id": "abc123",
                 }]);
             });
@@ -109,7 +128,7 @@ hqDefine("cloudcare/js/formplayer/spec/menu_list_spec", function () {
                 user.restoreAs = '';
                 user.displayOptions = {};
 
-                hqImport("cloudcare/js/formplayer/apps/api").primeApps(user.restoreAs, []);
+                AppsAPI.primeApps(user.restoreAs, []);
             });
 
             afterEach(function () {
