@@ -5,6 +5,7 @@ hqDefine("cloudcare/js/formplayer/layout/views/settings", [
     'backbone.marionette',
     'cloudcare/js/formplayer/app',
     'cloudcare/js/formplayer/apps/api',
+    'cloudcare/js/formplayer/users/models',
     'cloudcare/js/formplayer/utils/utils',
     'bootstrap-switch/dist/js/bootstrap-switch', // bootstrapSwitch
 ], function (
@@ -13,6 +14,7 @@ hqDefine("cloudcare/js/formplayer/layout/views/settings", [
     Marionette,
     FormplayerFrontend,
     AppsAPI,
+    UsersModels,
     Utils
 ) {
     var slugs = {
@@ -30,7 +32,7 @@ hqDefine("cloudcare/js/formplayer/layout/views/settings", [
         template: _.template($("#lang-setting-template").html() || ""),
         tagName: 'tr',
         initialize: function () {
-            this.currentUser = FormplayerFrontend.getChannel().request('currentUser');
+            this.currentUser = UsersModels.getCurrentUser();
         },
         ui: {
             language: '.js-lang',
@@ -60,7 +62,7 @@ hqDefine("cloudcare/js/formplayer/layout/views/settings", [
         template: _.template($("#display-setting-template").html() || ""),
         tagName: 'tr',
         initialize: function () {
-            this.currentUser = FormplayerFrontend.getChannel().request('currentUser');
+            this.currentUser = UsersModels.getCurrentUser();
         },
         ui: {
             oneQuestionPerScreen: '.js-one-question-per-screen',

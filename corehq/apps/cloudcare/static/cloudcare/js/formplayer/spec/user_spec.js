@@ -29,7 +29,6 @@ hqDefine("cloudcare/js/formplayer/spec/user_spec", function () {
                 model.username = 'web@gmail.com';
                 assert.equal(model.getDisplayUsername(), 'web@gmail.com');
             });
-
         });
 
         describe('Utils', function () {

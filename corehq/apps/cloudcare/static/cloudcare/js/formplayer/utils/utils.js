@@ -6,13 +6,15 @@ hqDefine("cloudcare/js/formplayer/utils/utils", [
     'DOMPurify/dist/purify.min',
     'hqwebapp/js/initial_page_data',
     'hqwebapp/js/toggles',
+    "cloudcare/js/formplayer/users/models",
 ], function (
     $,
     _,
     Backbone,
     DOMPurify,
     initialPageData,
-    toggles
+    toggles,
+    UsersModels
 ) {
     var Utils = {};
 
@@ -138,15 +140,13 @@ hqDefine("cloudcare/js/formplayer/utils/utils", [
 
     Utils.getDisplayOptionsKey = function () {
         var defer = $.Deferred();
-        hqRequire(["cloudcare/js/formplayer/app"], function (FormplayerFrontend) {
-            var user = FormplayerFrontend.getChannel().request('currentUser');
-            defer.resolve([
-                user.environment,
-                user.domain,
-                user.username,
-                'displayOptions',
-            ].join(':'));
-        });
+        var user = UsersModels.getCurrentUser();
+        defer.resolve([
+            user.environment,
+            user.domain,
+            user.username,
+            'displayOptions',
+        ].join(':'));
         return defer.promise();
     };
 

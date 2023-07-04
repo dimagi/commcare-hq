@@ -3,7 +3,8 @@
 /* eslint-env mocha */
 hqDefine("cloudcare/js/formplayer/spec/integration_spec", function () {
     describe('FormplayerFrontend Integration', function () {
-        let FormplayerFrontend = hqImport("cloudcare/js/formplayer/app");
+        let FormplayerFrontend = hqImport("cloudcare/js/formplayer/app"),
+            UsersModels = hqImport("cloudcare/js/formplayer/users/models");
 
         describe('Start up', function () {
             let options,
@@ -38,7 +39,7 @@ hqDefine("cloudcare/js/formplayer/spec/integration_spec", function () {
             it('should start the formplayer frontend app', function () {
                 FormplayerFrontend.start(options);
 
-                let user = FormplayerFrontend.getChannel().request('currentUser');
+                let user = UsersModels.getCurrentUser();
                 assert.equal(user.username, options.username);
                 assert.equal(user.domain, options.domain);
             });
@@ -52,12 +53,12 @@ hqDefine("cloudcare/js/formplayer/spec/integration_spec", function () {
 
                 FormplayerFrontend.start(newOptions);
 
-                user = FormplayerFrontend.getChannel().request('currentUser');
+                user = UsersModels.getCurrentUser();
                 hqImport("cloudcare/js/formplayer/utils/utils").saveDisplayOptions(user.displayOptions);
 
                 // New session, but old options
                 FormplayerFrontend.start(options);
-                user = FormplayerFrontend.getChannel().request('currentUser');
+                user = UsersModels.getCurrentUser();
 
                 assert.deepEqual(user.displayOptions, {
                     phoneMode: undefined, // we don't store this option
