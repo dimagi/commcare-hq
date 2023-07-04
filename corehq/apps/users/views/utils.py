@@ -18,6 +18,7 @@ from corehq.apps.users.models import (
 )
 from corehq.apps.users.util import log_user_change
 from corehq.const import USER_CHANGE_VIA_WEB
+from corehq.util.quickcache import quickcache
 
 
 def get_editable_role_choices(domain, couch_user, allow_admin_role):
@@ -118,6 +119,7 @@ def log_commcare_user_locations_changes(request, user, old_location_id, old_assi
         )
 
 
+@quickcache(['domain', 'location_ids', 'user_id_to_exclude'], timeout=10)
 def _get_location_ids_with_other_users(domain, location_ids, user_id_to_exclude):
     """
     Gets all the location ids where a `CommCareUser` is assigned to one of the `location_ids`.

@@ -464,14 +464,14 @@ def delete_commcare_user(request, domain, user_id):
     if not _can_edit_workers_location(request.couch_user, user):
         raise PermissionDenied()
 
-    user_location = SQLLocation.objects.get_or_None(location_id=user.user_location_id, user_id=user._id)
-    if (user.user_location_id and user_location):
+    user_location_id = user.user_location_id
+    if (user_location_id and SQLLocation.objects.get_or_None(location_id=user_location_id, user_id=user._id)):
         messages.error(request, _("This is a location user. You must delete the "
                        "corresponding location before you can delete this user."))
         return HttpResponseRedirect(reverse(EditCommCareUserView.urlname, args=[domain, user_id]))
     user.retire(request.domain, deleted_by=request.couch_user, deleted_via=USER_CHANGE_VIA_WEB)
-    messages.success(request, """User %s has been deleted. All their submissions and cases will be permanently
-        deleted in the next few minutes" % user.username""")
+    messages.success(request, _("""User %s has been deleted. All their submissions and cases will be permanently
+        deleted in the next few minutes""") % user.username)
     return HttpResponseRedirect(reverse(MobileWorkerListView.urlname, args=[domain]))
 
 
@@ -771,7 +771,7 @@ class MobileWorkerListView(JSONResponseMixin, BaseUserSettingsView):
 
         self.request.POST = form_data
 
-        if not self.new_mobile_worker_form.is_valid() and self.custom_data.is_valid():
+        if not (self.new_mobile_worker_form.is_valid() or self.custom_data.is_valid()):
             all_errors = [e for errors in self.new_mobile_worker_form.errors.values() for e in errors]
             all_errors += [e for errors in self.custom_data.errors.values() for e in errors]
             return {'error': _("Forms did not validate: {errors}").format(
