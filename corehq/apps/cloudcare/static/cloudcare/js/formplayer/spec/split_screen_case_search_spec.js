@@ -28,14 +28,6 @@ hqDefine("cloudcare/js/formplayer/spec/split_screen_case_search_spec", [
     UsersModels
 ) {
     describe('Split Screen Case Search', function () {
-        const API = hqImport("cloudcare/js/formplayer/menus/api"),
-            Controller = hqImport('cloudcare/js/formplayer/menus/controller'),
-            FakeFormplayer = hqImport('cloudcare/js/formplayer/spec/fake_formplayer'),
-            FormplayerFrontend = hqImport('cloudcare/js/formplayer/app'),
-            splitScreenCaseListResponse = hqImport('cloudcare/js/formplayer/spec/fixtures/split_screen_case_list'),
-            Toggles = hqImport('hqwebapp/js/toggles'),
-            Utils = hqImport('cloudcare/js/formplayer/utils/utils');
-
         const currentUrl = new Utils.CloudcareUrl({ appId: 'abc123' }),
             sandbox = sinon.sandbox.create(),
             stubs = {};

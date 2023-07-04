@@ -10,6 +10,7 @@ hqDefine("cloudcare/js/formplayer/spec/main", [
         "cloudcare/js/formplayer/spec/menu_list_spec",
         "cloudcare/js/formplayer/spec/query_spec",
         "cloudcare/js/formplayer/spec/session_middleware_spec",
+        "cloudcare/js/formplayer/spec/split_screen_case_search_spec",
         "cloudcare/js/formplayer/spec/user_spec",
         "cloudcare/js/formplayer/spec/utils_spec",
         "cloudcare/js/spec/utils_spec",
