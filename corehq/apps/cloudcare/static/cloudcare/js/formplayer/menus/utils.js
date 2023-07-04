@@ -7,6 +7,7 @@ hqDefine("cloudcare/js/formplayer/menus/utils", [
     'cloudcare/js/formplayer/constants',
     'cloudcare/js/formplayer/layout/views/progress_bar',
     'cloudcare/js/formplayer/menus/views/query',
+    'cloudcare/js/formplayer/users/models',
     'cloudcare/js/formplayer/utils/utils',
     'cloudcare/js/formplayer/menus/views',
 ], function (
@@ -18,6 +19,7 @@ hqDefine("cloudcare/js/formplayer/menus/utils", [
     constants,
     ProgressBar,
     view,
+    UsersModels,
     utils,
     views
 ) {
@@ -189,7 +191,7 @@ hqDefine("cloudcare/js/formplayer/menus/utils", [
             return views.MenuListView(menuData);
         } else if (menuResponse.type === constants.QUERY) {
             var props = {
-                domain: FormplayerFrontend.getChannel().request('currentUser').domain,
+                domain: UsersModels.getCurrentUser().domain,
             };
             if (menuResponse.breadcrumbs && menuResponse.breadcrumbs.length) {
                 props.name = menuResponse.breadcrumbs[menuResponse.breadcrumbs.length - 1];
@@ -211,7 +213,7 @@ hqDefine("cloudcare/js/formplayer/menus/utils", [
                 menuData.sidebarEnabled = true;
             }
             var eventData = {
-                domain: FormplayerFrontend.getChannel().request("currentUser").domain,
+                domain: UsersModels.getCurrentUser().domain,
                 name: menuResponse.title,
             };
             var fields = _.pick(utils.getCurrentQueryInputs(), function (v) { return !!v; });
