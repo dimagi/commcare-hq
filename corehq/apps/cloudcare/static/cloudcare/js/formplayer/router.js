@@ -10,6 +10,7 @@ hqDefine("cloudcare/js/formplayer/router", [
     'cloudcare/js/formplayer/menus/controller',
     'cloudcare/js/formplayer/sessions/controller',
     'cloudcare/js/formplayer/users/controller',
+    'cloudcare/js/formplayer/users/models',
     'marionette.approuter/lib/marionette.approuter.min',    // for Marionette.AppRouter
     'cloudcare/js/formplayer/sessions/api',     // for getSession
 ], function (
@@ -24,6 +25,7 @@ hqDefine("cloudcare/js/formplayer/router", [
     menusController,
     sessionsController,
     usersController,
+    usersModels,
     AppRouter
 ) {
     var params = {
@@ -49,7 +51,7 @@ hqDefine("cloudcare/js/formplayer/router", [
             appsController.listApps();
         },
         singleApp: function (appId) {
-            var user = FormplayerFrontend.getChannel().request('currentUser');
+            var user = usersModels.getCurrentUser();
             FormplayerFrontend.regions.getRegion('breadcrumb').empty();
             user.previewAppId = appId;
             appsController.singleApp(appId);
