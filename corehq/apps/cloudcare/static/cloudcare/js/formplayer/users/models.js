@@ -46,10 +46,6 @@ hqDefine("cloudcare/js/formplayer/users/models", [
 
     return {
         User: User,
-        // TODO: deprecate
-        CurrentUser: function () {
-            return getCurrentUser();
-        },
         getCurrentUser: getCurrentUser,
     };
 });

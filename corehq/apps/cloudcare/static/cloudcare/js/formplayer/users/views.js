@@ -6,6 +6,7 @@ hqDefine("cloudcare/js/formplayer/users/views", [
     'hqwebapp/js/toggles',
     'cloudcare/js/formplayer/app',
     'cloudcare/js/formplayer/utils/utils',
+    'cloudcare/js/formplayer/users/models',
     'cloudcare/js/formplayer/users/utils',
 ], function (
     $,
@@ -15,6 +16,7 @@ hqDefine("cloudcare/js/formplayer/users/views", [
     toggles,
     FormplayerFrontend,
     formplayerUtils,
+    usersModels,
     usersUtils
 ) {
     /**
@@ -44,7 +46,7 @@ hqDefine("cloudcare/js/formplayer/users/views", [
             var message = _.template(template)({
                 restoreAs: this.model.restoreAs,
                 username: this.model.getDisplayUsername(),
-                domain: FormplayerFrontend.getChannel().request('currentUser').domain,
+                domain: usersModels.getCurrentUser().domain,
             });
             return {
                 message: message,
@@ -87,7 +89,7 @@ hqDefine("cloudcare/js/formplayer/users/views", [
                     usersUtils.Users.logInAsUser(this.model.get('username'));
                     FormplayerFrontend.regions.getRegion('restoreAsBanner').show(
                         new RestoreAsBanner({
-                            model: FormplayerFrontend.getChannel().request('currentUser'),
+                            model: usersModels.getCurrentUser(),
                         })
                     );
                     var loginAsNextOptions = FormplayerFrontend.getChannel().request('getLoginAsNextOptions');

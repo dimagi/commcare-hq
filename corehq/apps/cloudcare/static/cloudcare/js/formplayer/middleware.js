@@ -2,10 +2,12 @@ hqDefine("cloudcare/js/formplayer/middleware", [
     'jquery',
     'underscore',
     'cloudcare/js/formplayer/app',
+    'cloudcare/js/formplayer/users/models',
 ], function (
     $,
     _,
-    FormplayerFrontend
+    FormplayerFrontend,
+    UsersModels
 ) {
     var clearFormMiddleware = function () {
         FormplayerFrontend.trigger("clearForm");
@@ -22,7 +24,7 @@ hqDefine("cloudcare/js/formplayer/middleware", [
     };
     var setScrollableMaxHeight = function () {
         var maxHeight,
-            user = FormplayerFrontend.getChannel().request('currentUser'),
+            user = UsersModels.getCurrentUser(),
             restoreAsBannerHeight = 0;
 
         if (user.restoreAs) {
