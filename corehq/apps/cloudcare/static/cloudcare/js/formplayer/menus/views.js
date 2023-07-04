@@ -9,6 +9,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
     'analytix/js/kissmetrix',
     'cloudcare/js/formplayer/constants',
     'cloudcare/js/formplayer/app',
+    'cloudcare/js/formplayer/users/models',
     'cloudcare/js/formplayer/utils/utils',
     'cloudcare/js/markdown',
     'cloudcare/js/utils',
@@ -23,6 +24,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
     kissmetrics,
     constants,
     FormplayerFrontend,
+    UsersModels,
     formplayerUtils,
     markdown,
     cloudcareUtils,
@@ -131,7 +133,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
             return _.template($(id).html() || "");
         },
         templateContext: function () {
-            const environment = FormplayerFrontend.getChannel().request('currentUser').environment;
+            const environment = UsersModels.getCurrentUser().environment;
             return {
                 title: this.options.title,
                 isAppPreview: environment === constants.PREVIEW_APP_ENVIRONMENT,
@@ -668,7 +670,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
             } else {
                 self.selectedCaseIds = [];
             }
-            const user = FormplayerFrontend.currentUser;
+            const user = UsersModels.getCurrentUser();
             const displayOptions = user.displayOptions;
             const appPreview = displayOptions.singleAppMode;
             const addressFieldPresent = !!_.find(this.styles, function (style) { return style.displayFormat === constants.FORMAT_ADDRESS; });

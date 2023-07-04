@@ -119,13 +119,6 @@ hqDefine("cloudcare/js/formplayer/app", [
         }
     });
 
-    FormplayerFrontend.getChannel().reply('currentUser', function () {
-        if (!FormplayerFrontend.currentUser) {
-            FormplayerFrontend.currentUser = UsersModels.CurrentUser();
-        }
-        return FormplayerFrontend.currentUser;
-    });
-
     FormplayerFrontend.getChannel().reply('lastRecordedLocation', function () {
         if (!sessionStorage.locationLat) {
             return null;
@@ -204,7 +197,7 @@ hqDefine("cloudcare/js/formplayer/app", [
 
         data.onLoading = CloudcareUtils.formplayerLoading;
         data.onLoadingComplete = CloudcareUtils.formplayerLoadingComplete;
-        var user = FormplayerFrontend.getChannel().request('currentUser');
+        var user = UsersModels.getCurrentUser();
         data.xform_url = user.formplayer_url;
         data.domain = user.domain;
         data.username = user.username;
@@ -312,7 +305,7 @@ hqDefine("cloudcare/js/formplayer/app", [
     });
 
     FormplayerFrontend.on("start", function (model, options) {
-        var user = FormplayerFrontend.getChannel().request('currentUser'),
+        var user = UsersModels.getCurrentUser();
             self = this;
         user.username = options.username;
         user.domain = options.domain;
@@ -437,7 +430,7 @@ hqDefine("cloudcare/js/formplayer/app", [
         hqRequire(["cloudcare/js/debugger/debugger"], function (Debugger) {
             var CloudCareDebugger = Debugger.CloudCareDebuggerMenu,
                 TabIDs = Debugger.TabIDs,
-                user = FormplayerFrontend.getChannel().request('currentUser'),
+                user = UsersModels.getCurrentUser(),
                 cloudCareDebugger,
                 $debug = $('#cloudcare-debugger');
 
@@ -468,7 +461,7 @@ hqDefine("cloudcare/js/formplayer/app", [
     FormplayerFrontend.getChannel().reply('getCurrentAppId', function () {
         // First attempt to grab app id from URL
         var urlObject = FormplayerUtils.currentUrlToObject(),
-            user = FormplayerFrontend.getChannel().request('currentUser'),
+            user = UsersModels.getCurrentUser(),
             appId;
 
         appId = urlObject.appId;
@@ -529,7 +522,7 @@ hqDefine("cloudcare/js/formplayer/app", [
     });
 
     FormplayerFrontend.on("sync", function () {
-        var user = FormplayerFrontend.getChannel().request('currentUser'),
+        var user = UsersModels.getCurrentUser(),
             username = user.username,
             domain = user.domain,
             formplayerUrl = user.formplayer_url,
@@ -618,7 +611,7 @@ hqDefine("cloudcare/js/formplayer/app", [
 
 
     FormplayerFrontend.on('setVersionInfo', function (versionInfo) {
-        var user = FormplayerFrontend.getChannel().request('currentUser');
+        var user = UsersModels.getCurrentUser();
         $("#version-info").text(versionInfo || '');
         if (versionInfo) {
             user.set('versionInfo',  versionInfo);
@@ -638,7 +631,7 @@ hqDefine("cloudcare/js/formplayer/app", [
         if (!appId) {
             throw new Error('Attempt to refresh application for null appId');
         }
-        var user = FormplayerFrontend.getChannel().request('currentUser'),
+        var user = UsersModels.getCurrentUser(),
             formplayerUrl = user.formplayer_url,
             resp,
             options = {
@@ -674,7 +667,7 @@ hqDefine("cloudcare/js/formplayer/app", [
      * current user. Returns the ajax promise.
      */
     FormplayerFrontend.getChannel().reply('breakLocks', function () {
-        var user = FormplayerFrontend.getChannel().request('currentUser'),
+        var user = UsersModels.getCurrentUser(),
             formplayerUrl = user.formplayer_url,
             resp,
             options = {
@@ -703,7 +696,7 @@ hqDefine("cloudcare/js/formplayer/app", [
      * current user. Returns the ajax promise.
      */
     FormplayerFrontend.getChannel().reply('clearUserData', function () {
-        var user = FormplayerFrontend.getChannel().request('currentUser'),
+        var user = UsersModels.getCurrentUser(),
             formplayerUrl = user.formplayer_url,
             resp,
             options = {
@@ -731,7 +724,7 @@ hqDefine("cloudcare/js/formplayer/app", [
 
         var urlObject = FormplayerUtils.currentUrlToObject(),
             appId,
-            currentUser = FormplayerFrontend.getChannel().request('currentUser');
+            currentUser = UsersModels.getCurrentUser();
         urlObject.clearExceptApp();
         FormplayerFrontend.regions.getRegion('sidebar').empty();
         FormplayerFrontend.regions.getRegion('breadcrumb').empty();

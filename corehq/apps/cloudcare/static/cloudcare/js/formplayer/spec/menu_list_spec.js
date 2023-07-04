@@ -4,7 +4,8 @@
 hqDefine("cloudcare/js/formplayer/spec/menu_list_spec", function () {
     describe('Render a case list', function () {
         let MenuListFixture = hqImport("cloudcare/js/formplayer/spec/fixtures/menu_list"),
-            Utils = hqImport("cloudcare/js/formplayer/utils/utils");
+            Utils = hqImport("cloudcare/js/formplayer/utils/utils"),
+            UsersModels = hqImport("cloudcare/js/formplayer/users/models");
 
         before(function () {
             hqImport("hqwebapp/js/initial_page_data").register(
@@ -30,7 +31,7 @@ hqDefine("cloudcare/js/formplayer/spec/menu_list_spec", function () {
                 server = sinon.useFakeXMLHttpRequest();
                 sinon.stub(Backbone.history, 'getFragment').callsFake(sinon.spy());
 
-                user = FormplayerFrontend.getChannel().request('currentUser');
+                user = UsersModels.getCurrentUser();
                 user.displayOptions = {
                     singleAppMode: false,
                 };
@@ -101,7 +102,7 @@ hqDefine("cloudcare/js/formplayer/spec/menu_list_spec", function () {
                 server.onCreate = function (xhr) {
                     requests.push(xhr);
                 };
-                user = FormplayerFrontend.getChannel().request('currentUser');
+                user = UsersModels.getCurrentUser();
                 user.domain = 'test-domain';
                 user.username = 'test-username';
                 user.formplayer_url = 'url';
