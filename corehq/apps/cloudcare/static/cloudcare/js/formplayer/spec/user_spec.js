@@ -1,12 +1,14 @@
 'use strict';
 /* eslint-env mocha */
 hqDefine("cloudcare/js/formplayer/spec/user_spec", [
+    "underscore",
     "sinon/pkg/sinon",
     "cloudcare/js/formplayer/app",
     "cloudcare/js/formplayer/users/collections",
     "cloudcare/js/formplayer/users/models",
     "cloudcare/js/formplayer/users/utils",
 ], function (
+    _,
     sinon,
     FormplayerFrontend,
     UsersCollections,
@@ -26,6 +28,50 @@ hqDefine("cloudcare/js/formplayer/spec/user_spec", [
                     collection.fetch();
                 };
                 assert.throws(instantiate, /without domain/);
+            });
+        });
+
+        describe('Display Options', function () {
+            let options;
+            beforeEach(function () {
+                options = {
+                    username: 'batman',
+                    domain: 'domain',
+                    apps: [],
+                };
+            });
+
+            it('should initialize user', function () {
+                UsersModels.setCurrentUser(options);
+
+                let user = UsersModels.getCurrentUser();
+                assert.equal(user.username, options.username);
+                assert.equal(user.domain, options.domain);
+            });
+
+            it('should correctly restore display options', function () {
+                let newOptions = _.clone(options),
+                    user;
+                newOptions.phoneMode = true;
+                newOptions.oneQuestionPerScreen = true;
+                newOptions.language = 'sindarin';
+
+                UsersModels.setCurrentUser(newOptions);
+
+                user = UsersModels.getCurrentUser();
+                UsersModels.saveDisplayOptions(user.displayOptions);
+
+                // New session, but old options
+                UsersModels.setCurrentUser(options);
+                user = UsersModels.getCurrentUser();
+
+                assert.deepEqual(user.displayOptions, {
+                    phoneMode: undefined, // we don't store this option
+                    singleAppMode: undefined,
+                    landingPageAppMode: undefined,
+                    oneQuestionPerScreen: true,
+                    language: 'sindarin',
+                });
             });
         });
 
