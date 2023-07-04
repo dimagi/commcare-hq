@@ -86,39 +86,40 @@ hqDefine("cloudcare/js/formplayer/menus/utils", function () {
     };
 
     var showFormMenu = function (langs) {
-        var langModels,
-            langCollection;
+      var langModels,
+          langCollection;
 
-        FormplayerFrontend.regions.addRegions({
-            formMenu: "#form-menu",
-        });
-        if (langs) {
-            $.getJSON('/langcodes/langs.json', function (mapping) {
-                langModels = _.map(langs, function (lang) {
-                    var matchingLanguage = mapping.find(function (language) {
-                        return language.code === lang;
-                    });
-                    return {
-                        lang_code: lang,
-                        lang_label: matchingLanguage ? matchingLanguage.name : lang,
-                    };
-                });
+      FormplayerFrontend.regions.addRegions({
+        formMenu: "#form-menu",
+      });
 
-                langCollection = new Backbone.Collection(langModels);
-                var formMenuView = views.FormMenuView({
-                    collection: langCollection,
-                });
-                FormplayerFrontend.regions.getRegion('formMenu').show(formMenuView);
+      if (langs) {
+        $.ajax({
+          url: '/langcodes/langs.json',
+          dataType: 'json',
+          async: false,
+          success: function (mapping) {
+            langModels = _.map(langs, function (lang) {
+              var matchingLanguage = mapping.find(function (language) {
+                return language.code === lang;
+              });
+              return {
+                lang_code: lang,
+                lang_label: matchingLanguage ? matchingLanguage.name : lang,
+              };
             });
             langCollection = new Backbone.Collection(langModels);
-        } else {
-            langCollection = null;
-        }
-        var formMenuView = views.FormMenuView({
-            collection: langCollection,
+          }
         });
-        FormplayerFrontend.regions.getRegion('formMenu').show(formMenuView);
+      } else {
+        langCollection = null;
+      }
+      var formMenuView = views.FormMenuView({
+        collection: langCollection,
+      });
+      FormplayerFrontend.regions.getRegion('formMenu').show(formMenuView);
     };
+
 
     var getMenuData = function (menuResponse) {
         return {                    // TODO: make this more concise
