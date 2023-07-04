@@ -346,9 +346,11 @@
             <span aria-hidden="true">&times;</span>
           </button>
           <h4 class="modal-title">
-            {% trans "Deprecate" %}
-            '<span data-bind="text: $root.activeCaseType()"></span>'
-            {% trans "Case Type" %}
+            {% blocktrans %}
+              Deprecate
+              '<span data-bind="text: $root.activeCaseType()"></span>'
+              Case Type
+            {% endblocktrans %}
           </h4>
         </div>
         <div class="modal-body">
@@ -364,7 +366,7 @@
               Deprecating this case type will have the following effects:
             </p>
             <ul>
-              <li>This case type will not be available from the report's filtering menu.</li>
+              <li>This case type will not be available from the reports filtering menu.</li>
               <li>All case properties/groups for this case type will be deprecated.</li>
               <li>New exports cannot be created with this case type.</li>
               <li>Case imports cannot be done for cases with this case type.</li>
