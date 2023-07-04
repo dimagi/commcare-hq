@@ -10,9 +10,10 @@ such as the session schema generator for form builder and the UI for form linkin
 When forms work with multiple datums, they need to be named in a way that is predictable for app builders, who
 reference them inside forms. This is most relevant to the "select parent first" feature and to parent/child
 modules.  See ``update_refs`` and ``rename_other_id``, both inner functions in ``add_parent_datums``, plus
-`this comment <https://github.com/dimagi/commcare-hq/blob/c9fa01d1ccbb73d8f07fefbe56a0bbe1dbe231f8/corehq/apps/app_manager/suite_xml/sections/entries.py#L966-L971>`_
-on matching parent and child datums.
+`this comment`_ on matching parent and child datums.
 
+
+.. _this comment: https://github.com/dimagi/commcare-hq/blob/c9fa01d1ccbb73d8f07fefbe56a0bbe1dbe231f8/corehq/apps/app_manager/suite_xml/sections/entries.py#L966-L971  # noqa
 """
 from collections import defaultdict
 
@@ -35,7 +36,18 @@ from corehq.apps.app_manager.suite_xml.utils import (
     get_select_chain_meta,
     get_ordered_case_types,
 )
-from corehq.apps.app_manager.suite_xml.xml_models import *
+from corehq.apps.app_manager.suite_xml.xml_models import (
+    SessionDatum,
+    RemoteRequestQuery,
+    QueryData,
+    InstanceDatum,
+    LocaleArgument,
+    Text,
+    Assertion,
+    Command,
+    LocalizedCommand,
+    Entry,
+)
 from corehq.apps.app_manager.util import (
     actions_use_usercase,
     module_loads_registry_case,
@@ -283,8 +295,8 @@ class EntriesHelper(object):
             EntriesHelper.add_custom_assertions(e, form)
 
             if (
-                self.app.commtrack_enabled and
-                session_var('supply_point_id') in getattr(form, 'source', "")
+                self.app.commtrack_enabled
+                and session_var('supply_point_id') in getattr(form, 'source', "")
             ):
                 from corehq.apps.app_manager.const import AUTO_SELECT_LOCATION
                 datum, assertions = EntriesHelper.get_userdata_autoselect(
@@ -410,13 +422,18 @@ class EntriesHelper(object):
             case_datum_id = case_datum.datum.id
             index_identifier = form.get_module().case_details.short.case_tile_group.index_identifier
             if isinstance(case_datum.datum, InstanceDatum):
-                """
-                distinct-values(instance('casedb')/casedb/case[selected(join(' ', instance('selected_cases')/results/value), @case_id)]/index/parent)
-                """
+                # distinct-values(instance('casedb')/casedb/case[selected(
+                #     join(' ', instance('selected_cases')/results/value),
+                #     @case_id
+                # )]/index/parent)
                 predicate = f"selected(join(' ', instance('{case_datum_id}')/results/value), @case_id)"
             else:
                 predicate = f"@case_id = instance('commcaresession')/session/data/{case_datum_id}"
-            func = f"join(' ', distinct-values(instance('casedb')/casedb/case[{predicate}]/index/{index_identifier}))"
+            func = (
+                "join(' ', distinct-values(instance('casedb')/casedb/case["
+                f"{predicate}"
+                f"]/index/{index_identifier}))"
+            )
             datums.append(FormDatumMeta(
                 datum=SessionDatum(id=f"{case_datum_id}_parent_ids", function=func),
                 case_type=None,
@@ -738,8 +755,10 @@ class EntriesHelper(object):
         datums = []
         load_case_from_fixture = action.load_case_from_fixture
 
-        if (load_case_from_fixture.arbitrary_datum_id and
-                load_case_from_fixture.arbitrary_datum_function):
+        if (
+            load_case_from_fixture.arbitrary_datum_id
+            and load_case_from_fixture.arbitrary_datum_function
+        ):
             datums.append(FormDatumMeta(
                 SessionDatum(
                     id=load_case_from_fixture.arbitrary_datum_id,
@@ -1004,10 +1023,12 @@ class EntriesHelper(object):
 
     def _get_module_for_persistent_context(self, module_unique_id):
         module_for_persistent_context = self.app.get_module_by_unique_id(module_unique_id)
-        if (module_for_persistent_context and
-                (module_for_persistent_context.case_details.short.case_tile_template
-                 or module_for_persistent_context.case_details.short.custom_xml
-                 )):
+        if (
+            module_for_persistent_context and (
+                module_for_persistent_context.case_details.short.case_tile_template
+                or module_for_persistent_context.case_details.short.custom_xml
+            )
+        ):
             return module_for_persistent_context
 
     def get_detail_persistent_attr(self, module, detail_type="case_short"):
