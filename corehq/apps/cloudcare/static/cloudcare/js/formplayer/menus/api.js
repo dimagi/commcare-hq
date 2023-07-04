@@ -13,6 +13,7 @@ hqDefine("cloudcare/js/formplayer/menus/api", [
     'cloudcare/js/form_entry/utils',
     'cloudcare/js/formplayer/app',
     'cloudcare/js/formplayer/apps/api',
+    'cloudcare/js/formplayer/users/models',
     'cloudcare/js/formplayer/utils/utils',
     'cloudcare/js/formplayer/layout/views/progress_bar',
 ], function (
@@ -26,12 +27,13 @@ hqDefine("cloudcare/js/formplayer/menus/api", [
     formEntryUtils,
     FormplayerFrontend,
     AppsAPI,
+    UsersModels,
     formplayerUtils,
     ProgressBar
 ) {
     var API = {
         queryFormplayer: function (params, route) {
-            var user = FormplayerFrontend.getChannel().request('currentUser'),
+            var user = UsersModels.getCurrentUser(),
                 lastRecordedLocation = FormplayerFrontend.getChannel().request('lastRecordedLocation'),
                 timezoneOffsetMillis = (new Date()).getTimezoneOffset() * 60 * 1000 * -1,
                 tzFromBrowser = Intl.DateTimeFormat().resolvedOptions().timeZone,
@@ -220,7 +222,7 @@ hqDefine("cloudcare/js/formplayer/menus/api", [
         });
         FormplayerFrontend.regions.getRegion('loadingProgress').show(progressView);
 
-        var user = FormplayerFrontend.getChannel().request('currentUser');
+        var user = UsersModels.getCurrentUser();
         if (options.forceLoginAs && !user.restoreAs) {
             // Workflow requires a mobile user, likely because we're trying to access
             // a session endpoint as a web user. If user isn't logged in as, send them
@@ -242,7 +244,7 @@ hqDefine("cloudcare/js/formplayer/menus/api", [
 
     FormplayerFrontend.getChannel().reply("entity:get:details", function (options, isPersistent, isShortDetail, isRefreshCaseSearch) {
         options.isPersistent = isPersistent;
-        options.preview = FormplayerFrontend.currentUser.displayOptions.singleAppMode;
+        options.preview = UsersModels.getCurrentUser().displayOptions.singleAppMode;
         options.isShortDetail = isShortDetail;
         options.isRefreshCaseSearch = isRefreshCaseSearch;
         return API.queryFormplayer(options, 'get_details');

@@ -8,6 +8,7 @@ hqDefine("cloudcare/js/formplayer/apps/controller", [
     'cloudcare/js/formplayer/layout/views/settings',
     'cloudcare/js/formplayer/apps/api',
     'cloudcare/js/formplayer/apps/views',
+    'cloudcare/js/formplayer/users/models',
 ], function (
     $,
     Backbone,
@@ -16,7 +17,8 @@ hqDefine("cloudcare/js/formplayer/apps/controller", [
     FormplayerFrontend,
     settingsViews,
     AppsAPI,
-    views
+    views,
+    UsersModels
 ) {
     return {
         listApps: function () {
@@ -54,7 +56,7 @@ hqDefine("cloudcare/js/formplayer/apps/controller", [
             });
         },
         listSettings: function () {
-            var currentUser = FormplayerFrontend.getChannel().request('currentUser'),
+            var currentUser = UsersModels.getCurrentUser(),
                 slugs = settingsViews.slugs,
                 settings = [],
                 collection,
