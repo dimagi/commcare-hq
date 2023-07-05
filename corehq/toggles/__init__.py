@@ -707,6 +707,15 @@ CASE_LIST_TILE = StaticToggle(
               'spaceKey=saas&title=Allow+Configuration+of+Case+List+Tiles',
 )
 
+CASE_LIST_MAP = StaticToggle(
+    'case_list_map',
+    'USH: Allow use of a map in the case list in Web Apps',
+    TAG_CUSTOM,
+    [NAMESPACE_DOMAIN],
+    help_link='https://confluence.dimagi.com/pages/viewpage.action?'
+              'spaceKey=saas&title=Allow+Configuration+of+Case+List+Tiles',
+)
+
 SHOW_PERSIST_CASE_CONTEXT_SETTING = StaticToggle(
     'show_persist_case_context_setting',
     'Allow toggling the persistent case context tile',
@@ -2385,6 +2394,15 @@ GEOSPATIAL = StaticToggle(
     description='Additional views will be added allowing for visually viewing '
                 'and assigning cases on a map.'
 
+)
+
+FCM_NOTIFICATION = StaticToggle(
+    'fcm_notification',
+    'Allows access to FCM Push Notifications',
+    TAG_CUSTOM,
+    namespaces=[NAMESPACE_DOMAIN],
+    description='Push Notification option will be available in content for '
+                'Conditional Alerts in Messaging.'
 )
 
 
