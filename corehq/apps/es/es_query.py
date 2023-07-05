@@ -535,10 +535,11 @@ class ESQuerySet(object):
 
     def __init__(self, raw, query):
         if 'error' in raw:
-            msg = textwrap.dedent(f"""ElasticSearch Error
+            msg = textwrap.dedent(f"""
+                ElasticSearch Error
                 {raw['error']}
                 Index: {query.index}
-                Query: {query.dumps(pretty=True)}""")
+                Query: {query.dumps(pretty=True)}""").lstrip()
 
             raise ESError(msg)
         self.raw = raw
