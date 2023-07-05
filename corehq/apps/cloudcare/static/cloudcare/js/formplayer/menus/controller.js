@@ -1,7 +1,8 @@
-/*global Backbone, DOMPurify */
+/*global Backbone */
 
 hqDefine("cloudcare/js/formplayer/menus/controller", function () {
     var constants = hqImport("cloudcare/js/formplayer/constants"),
+        cloudcareUtils = hqImport("cloudcare/js/utils"),
         FormplayerFrontend = hqImport("cloudcare/js/formplayer/app"),
         formplayerUtils = hqImport("cloudcare/js/formplayer/utils/utils"),
         menusUtils = hqImport("cloudcare/js/formplayer/menus/utils"),
@@ -9,6 +10,7 @@ hqDefine("cloudcare/js/formplayer/menus/controller", function () {
         toggles = hqImport("hqwebapp/js/toggles"),
         QueryListView = hqImport("cloudcare/js/formplayer/menus/views/query"),
         initialPageData = hqImport("hqwebapp/js/initial_page_data").get,
+        Collection = hqImport("cloudcare/js/formplayer/menus/collections"),
         md = window.markdownit();
     var selectMenu = function (options) {
 
@@ -125,7 +127,7 @@ hqDefine("cloudcare/js/formplayer/menus/controller", function () {
         }
         var queryResponse = menuResponse.queryResponse;
         if (sidebarEnabled && !appPreview && menuResponse.type === "entities" && queryResponse != null)  {
-            var queryCollection = new Backbone.Collection(queryResponse.displays);
+            var queryCollection = new Collection(queryResponse.displays);
             FormplayerFrontend.regions.getRegion('sidebar').show(QueryListView({collection: queryCollection, title: menuResponse.title, description: menuResponse.description,  sidebarEnabled: true}).render());
         } else if (sidebarEnabled && !appPreview && menuResponse.type === "query") {
             FormplayerFrontend.regions.getRegion('sidebar').show(QueryListView({collection: menuResponse, title: menuResponse.title, description: menuResponse.description, sidebarEnabled: true}).render());
@@ -230,7 +232,7 @@ hqDefine("cloudcare/js/formplayer/menus/controller", function () {
             obj.style = styles[i];
             obj.id = i;
             if (obj.style.displayFormat === 'Markdown') {
-                obj.html = DOMPurify.sanitize(md.render(details[i]));
+                obj.html = cloudcareUtils.renderMarkdown(details[i]);
             }
             detailModel.push(obj);
         }

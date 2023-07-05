@@ -6,7 +6,8 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
         FormplayerFrontend = hqImport("cloudcare/js/formplayer/app"),
         initialPageData = hqImport("hqwebapp/js/initial_page_data"),
         toggles = hqImport("hqwebapp/js/toggles"),
-        utils = hqImport("cloudcare/js/formplayer/utils/utils");
+        formplayerUtils = hqImport("cloudcare/js/formplayer/utils/utils"),
+        cloudcareUtils = hqImport("cloudcare/js/utils");
 
 
 
@@ -91,7 +92,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             const imageUri = this.options.model.get('imageUri');
             const audioUri = this.options.model.get('audioUri');
             const navState = this.options.model.get('navigationState');
-            const appId = utils.currentUrlToObject().appId;
+            const appId = formplayerUtils.currentUrlToObject().appId;
             return {
                 navState: navState,
                 imageUrl: imageUri ? FormplayerFrontend.getChannel().request('resourceMap', imageUri, appId) : "",
@@ -273,14 +274,13 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
         },
 
         templateContext: function () {
-            const appId = utils.currentUrlToObject().appId,
-                md = window.markdownit();
+            const appId = formplayerUtils.currentUrlToObject().appId;
             return {
                 data: this.options.model.get('data'),
                 styles: this.options.styles,
                 isMultiSelect: this.options.isMultiSelect,
                 renderMarkdown: function (datum) {
-                    return md.render(DOMPurify.sanitize(datum || ""));
+                    return cloudcareUtils.renderMarkdown(datum);
                 },
                 resolveUri: function (uri) {
                     return FormplayerFrontend.getChannel().request('resourceMap', uri, appId);
@@ -303,6 +303,45 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             const dict = CaseTileView.__super__.templateContext.apply(this, arguments);
             dict['prefix'] = this.options.prefix;
             return dict;
+        },
+    });
+
+    const CaseTileGroupedView = CaseTileView.extend({
+        tagName: "div",
+        className: "formplayer-request list-cell-wrapper-style case-tile-group",
+        template: _.template($("#case-tile-grouped-view-item-template").html() || ""),
+        templateContext: function () {
+            const dict = CaseTileGroupedView.__super__.templateContext.apply(this, arguments);
+            dict['groupHeaderRows'] = this.options.groupHeaderRows;
+
+            const data = this.options.model.get('data');
+            const headerRowIndices = this.options.headerRowIndices;
+            dict['indexedHeaderData'] = headerRowIndices.reduce((acc, index) => {
+                acc[index] = data[index];
+                return acc;
+            }, {});
+
+            dict['indexedRowDataList'] = this.getIndexedRowDataList();
+
+            return dict;
+        },
+
+        getIndexedRowDataList: function () {
+            let indexedRowDataList = [];
+            for (let model of this.options.groupModelsList) {
+                let indexedRowData = model.get('data')
+                .reduce((acc, data, i) => {
+                    if (!this.options.headerRowIndices.includes(i) &&
+                        this.options.styles[i].widthHint!==0) {
+                        acc[i] = data;
+                    }
+                    return acc;
+                }, {});
+                if (Object.keys(indexedRowData).length !== 0) {
+                    indexedRowDataList.push(indexedRowData);
+                }
+            };
+            return indexedRowDataList;
         },
     });
 
@@ -375,7 +414,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             const appPreview = displayOptions.singleAppMode;
             const addressFieldPresent = !!_.find(this.styles, function (style) { return style.displayFormat === constants.FORMAT_ADDRESS; });
 
-            self.showMap = addressFieldPresent && !appPreview && !self.hasNoItems
+            self.showMap = addressFieldPresent && !appPreview && !self.hasNoItems && toggles.toggleEnabled('CASE_LIST_MAP')
         },
 
         ui: CaseListViewUI(),
@@ -420,7 +459,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
         paginationGoAction: function (e) {
             e.preventDefault();
             const goText = Number(this.ui.paginationGoText.val());
-            const pageNo = utils.paginationGoPageNumber(goText, this.options.pageCount);
+            const pageNo = formplayerUtils.paginationGoPageNumber(goText, this.options.pageCount);
             FormplayerFrontend.trigger("menu:paginate", pageNo - 1, this.selectedCaseIds);
             kissmetrics.track.event("Accessibility Tracking - Pagination Go To Page Interaction");
         },
@@ -534,51 +573,59 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
                 }).addTo(addressMap);
 
                 const addressIndex = _.findIndex(this.styles, function (style) { return style.displayFormat === constants.FORMAT_ADDRESS; });
+                const popupIndex = _.findIndex(this.styles, function (style) { return style.displayFormat === constants.FORMAT_ADDRESS_POPUP; });
                 L.mapbox.accessToken = token;
+                md = window.markdownit();
 
-                const latLons = []
+                const allCoordinates = []
                 const markers = []
                 this.options.collection.models
                     .forEach(model => {
-                        const coordinates = model.attributes.data[addressIndex];
-                        if (coordinates) {
-                            let latLng = coordinates.split(" ").slice(0,2);
-                            if (latLng.length > 1) {
+                        const addressCoordinates = model.attributes.data[addressIndex];
+                        if (addressCoordinates) {
+                            let markerCoordinates = addressCoordinates.split(" ").slice(0,2);
+                            if (markerCoordinates.length > 1) {
                                 const rowId = `row-${model.id}`;
-                                const marker = L.marker(latLng, {icon: locationIcon});
+                                const popupText = cloudcareUtils.renderMarkdown(model.attributes.data[popupIndex]);
+                                let marker = L.marker(markerCoordinates, {icon: locationIcon});
                                 markers.push(marker);
-                                marker
-                                    .addTo(addressMap)
-                                    .on('click', () => {
-                                        // tiles
-                                        $(`.list-cell-wrapper-style[id!='${rowId}']`)
-                                            .removeClass("highlighted-case");
-                                        // rows
-                                        $(`.case-row[id!='${rowId}']`)
-                                            .removeClass("highlighted-case");
-                                        $(`#${rowId}`)
-                                            .addClass("highlighted-case");
-                                        markers.forEach(m => m.setIcon(locationIcon));
-                                        marker.setIcon(selectedLocationIcon);
+                                marker = marker.addTo(addressMap)
+                                if (popupIndex >= 0) {
+                                    marker = marker.bindPopup(popupText)
+                                }
 
-                                        $([document.documentElement, document.body]).animate({
-                                            // -50 Stay clear of the breadcrumbs
-                                            scrollTop: $(`#${rowId}`).offset().top - 50
-                                        }, 500);
-                                    });
-                                latLons.push(latLng);
+                                marker.on('click', () => {
+                                    // tiles
+                                    $(`.list-cell-wrapper-style[id!='${rowId}']`)
+                                        .removeClass("highlighted-case");
+                                    // rows
+                                    $(`.case-row[id!='${rowId}']`)
+                                        .removeClass("highlighted-case");
+                                    $(`#${rowId}`)
+                                        .addClass("highlighted-case");
+                                    markers.forEach(m => m.setIcon(locationIcon));
+                                    marker.setIcon(selectedLocationIcon);
+
+                                    $([document.documentElement, document.body]).animate({
+                                        // -50 Stay clear of the breadcrumbs
+                                        scrollTop: $(`#${rowId}`).offset().top - 50
+                                    }, 500);
+
+                                    addressMap.panTo(markerCoordinates);
+                                });
+                                allCoordinates.push(markerCoordinates);
                             }
                         }
                     });
 
                 if (sessionStorage.locationLat) {
-                    const homeLatLng = [sessionStorage.locationLat, sessionStorage.locationLon];
-                    L.marker(homeLatLng, { icon: homeLocationIcon })
+                    const homeCoordinates = [sessionStorage.locationLat, sessionStorage.locationLon];
+                    L.marker(homeCoordinates, { icon: homeLocationIcon })
                         .bindPopup(gettext("Your location"))
                         .addTo(addressMap);
-                    latLons.push(homeLatLng);
+                    allCoordinates.push(homeCoordinates);
                 }
-                addressMap.fitBounds(latLons, {maxZoom: 8});
+                addressMap.fitBounds(allCoordinates, {maxZoom: 14});
             } catch (error) {
                 console.error(error);
             }
@@ -592,7 +639,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
         },
 
         templateContext: function () {
-            const paginateItems = utils.paginateOptions(this.options.currentPage, this.options.pageCount);
+            const paginateItems = formplayerUtils.paginateOptions(this.options.currentPage, this.options.pageCount);
             const casesPerPage = parseInt($.cookie("cases-per-page-limit")) || 10;
             return {
                 startPage: paginateItems.startPage,
@@ -755,6 +802,40 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
         },
     });
 
+    const CaseTileGroupedListView = CaseTileListView.extend({
+        childView: CaseTileGroupedView,
+
+        initialize: function () {
+            CaseTileGroupedListView.__super__.initialize.apply(this, arguments);
+
+            let clonedModels = this.options.collection.models.map((model) => model.clone());
+            this.groupedModels = _.groupBy(clonedModels, (model) => model.get("groupKey"));
+            for (let groupKey in this.groupedModels) {
+                let models = this.groupedModels[groupKey];
+                if (models.length > 1) {
+                    // Only one childView will be created per group.
+                    // The model for the first child is used, so subsequent models in the group need to be removed.
+                    this.options.collection.remove(models.slice(1));
+                }
+            }
+
+            let groupHeaderRows = this.options.collection.groupHeaderRows;
+            // select the indices of the tile fields that are part of the header rows
+            this.headerRowIndices = this.options.collection.tiles
+                .map((tile, index) => ({tile: tile, index: index}))
+                .filter((tile) => tile.tile && tile.tile.gridY < groupHeaderRows)
+                .map((tile) => tile.index);
+        },
+
+        childViewOptions: function (model) {
+            const dict = CaseTileGroupedListView.__super__.childViewOptions.apply(this, arguments);
+            dict.groupHeaderRows = this.options.collection.groupHeaderRows
+            dict.groupModelsList = this.groupedModels[model.get("groupKey")]
+            dict.headerRowIndices = this.headerRowIndices;
+            return dict;
+        },
+    });
+
     const CaseListDetailView = CaseListView.extend({
         template: _.template($("#case-view-list-detail-template").html() || ""),
         childView: CaseViewUnclickable,
@@ -877,7 +958,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
         className: "",
         template: _.template($("#detail-view-item-template").html() || ""),
         templateContext: function () {
-            const appId = utils.currentUrlToObject().appId;
+            const appId = formplayerUtils.currentUrlToObject().appId;
             return {
                 resolveUri: function (uri) {
                     return FormplayerFrontend.getChannel().request('resourceMap', uri, appId);
@@ -978,6 +1059,9 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
         },
         CaseTileListView: function (options) {
             return new CaseTileListView(options);
+        },
+        CaseTileGroupedListView: function (options) {
+            return new CaseTileGroupedListView(options);
         },
         DetailListView: function (options) {
             return new DetailListView(options);
