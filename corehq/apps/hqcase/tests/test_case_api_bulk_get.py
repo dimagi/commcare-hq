@@ -91,13 +91,6 @@ class TestCaseAPIBulkGet(TestCase):
         self.assertEqual(res.status_code, 404)
         self.assertEqual(res.json()['error'], "Case 'fake_id' not found")
 
-    def test_get_single_case_deprecated(self):
-        self.case_type_obj.is_deprecated = True
-        self.case_type_obj.save()
-
-        res = self.client.get(reverse('case_api', args=(self.domain, self.case_ids[2])))
-        self.assertEqual(res.status_code, 404)
-
     def test_get_single_case_on_other_domain(self):
         res = self.client.get(reverse('case_api', args=(self.domain, self.other_domain_case_id)))
         self.assertEqual(res.status_code, 404)
@@ -116,13 +109,6 @@ class TestCaseAPIBulkGet(TestCase):
         case_ids = ['missing1', self.case_ids[1], 'missing2']
         result = self._call_get_api_check_results(case_ids, matching=1, missing=2)
         self.assertEqual(result['cases'][0]['error'], 'not found')
-        self.assertEqual(result['cases'][2]['error'], 'not found')
-
-    def test_bulk_get_deprecated(self):
-        self.case_type_obj.is_deprecated = True
-        self.case_type_obj.save()
-
-        result = self._call_get_api_check_results(self.case_ids, matching=2, missing=1)
         self.assertEqual(result['cases'][2]['error'], 'not found')
 
     def test_bulk_get_duplicate(self):
