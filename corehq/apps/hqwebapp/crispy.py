@@ -51,12 +51,12 @@ class TextField(OldField):
         self.text = text
         super(TextField, self).__init__(field_name, *args, **kwargs)
 
-    def render(self, form, form_style, context, template_pack=None):
+    def render(self, form, context, template_pack=None, **kwargs):
         template_pack = template_pack or get_template_pack()
         context.update({
             'field_text': self.text,
         })
-        return super(TextField, self).render(form, form_style, context, template_pack=template_pack)
+        return super(TextField, self).render(form, context, template_pack=template_pack, **kwargs)
 
 
 class ErrorsOnlyField(OldField):
@@ -74,12 +74,12 @@ class FormActions(OriginalFormActions):
     """
     template = 'hqwebapp/crispy/form_actions.html'
 
-    def render(self, form, form_style, context, template_pack=None):
+    def render(self, form, context, template_pack=None, **kwargs):
         template_pack = template_pack or get_template_pack()
         fields_html = ''
         for field in self.fields:
             fields_html += render_field(
-                field, form, form_style, context,
+                field, form, context,
                 template_pack=template_pack,
             )
         fields_html = mark_safe(fields_html)  # nosec: just concatenated safe fields
@@ -107,13 +107,13 @@ class Field(OldField):
             self.is_static = kwargs.pop('is_static')
         super(Field, self).__init__(*args, **kwargs)
 
-    def render(self, form, form_style, context, template_pack=None):
+    def render(self, form, context, template_pack=None, **kwargs):
         template_pack = template_pack or get_template_pack()
         offsets = _get_offsets(context)
         context.update({
             'offsets': offsets,
         })
-        return super(Field, self).render(form, form_style, context, template_pack)
+        return super(Field, self).render(form, context, template_pack, **kwargs)
 
 
 class StaticField(LayoutObject):
@@ -123,7 +123,7 @@ class StaticField(LayoutObject):
         self.field_label = field_label
         self.field_value = field_value
 
-    def render(self, form, form_style, context, template_pack=None):
+    def render(self, form, context, template_pack=None, **kwargs):
         template_pack = template_pack or get_template_pack()
         context.update({
             'field_label': self.field_label,
@@ -138,7 +138,7 @@ class FormStepNumber(LayoutObject):
     def __init__(self, step_num, total_steps):
         self.step_label = gettext("Step {} of {}".format(step_num, total_steps))
 
-    def render(self, form, form_style, context, template_pack=None):
+    def render(self, form, context, template_pack=None, **kwargs):
         context.update({
             'step_label': self.step_label,
         })
@@ -152,7 +152,7 @@ class ValidationMessage(LayoutObject):
     def __init__(self, ko_observable):
         self.ko_observable = ko_observable
 
-    def render(self, form, form_style, context, template_pack=None):
+    def render(self, form, context, template_pack=None, **kwargs):
         context.update({
             'ko_observable': self.ko_observable,
         })
@@ -190,7 +190,7 @@ class B3MultiField(LayoutObject):
         self.help_bubble_text = kwargs.pop('help_bubble_text', '')
         self.flat_attrs = flatatt(kwargs)
 
-    def render(self, form, form_style, context, template_pack=None):
+    def render(self, form, context, template_pack=None, **kwargs):
         template_pack = template_pack or get_template_pack()
 
         errors = self._get_errors(form, self.fields)
@@ -199,7 +199,7 @@ class B3MultiField(LayoutObject):
 
         html = ''
         for field in self.fields:
-            html += render_field(field, form, form_style, context, template_pack=template_pack)
+            html += render_field(field, form, context, template_pack=template_pack, **kwargs)
         html = mark_safe(html)  # nosec: this is joining together fields which themselves are safe
 
         context.update({
@@ -255,7 +255,7 @@ class CrispyTemplate(object):
         self.template = template
         self.context = context
 
-    def render(self, form, form_style, context, template_pack=None):
+    def render(self, form, context, template_pack=None, **kwargs):
         context.update(self.context)
         return render_to_string(self.template, context.flatten())
 
@@ -269,10 +269,10 @@ class FieldWithExtras(OldField):
         }
         super(FieldWithExtras, self).__init__(*args, **kwargs)
 
-    def render(self, form, form_style, context, template_pack=None):
+    def render(self, form, context, template_pack=None, **kwargs):
         template_pack = template_pack or get_template_pack()
         context.update(self.extras)
-        return super(FieldWithExtras, self).render(form, form_style, context, template_pack=template_pack)
+        return super(FieldWithExtras, self).render(form, context, template_pack=template_pack, **kwargs)
 
 
 class FieldWithHelpBubble(FieldWithExtras):
@@ -315,7 +315,7 @@ class LinkButton(LayoutObject):
             else:
                 self.attrs['class'] = kwargs.pop('css_class')
 
-    def render(self, form, form_style, context, template_pack=None):
+    def render(self, form, context, template_pack=None, **kwargs):
         context.update({
             'button_text': self.button_text,
             'button_url': self.button_url,
@@ -331,7 +331,7 @@ class B3TextField(OldField):
         super(B3TextField, self).__init__(field_name, *args, **kwargs)
         self.template = 'hqwebapp/crispy/text_field.html'
 
-    def render(self, form, form_style, context, template_pack=None):
+    def render(self, form, context, template_pack=None, **kwargs):
         context.update({
             'field_text': self.text,
         })
@@ -340,9 +340,9 @@ class B3TextField(OldField):
 
         html = ''
         for field in self.fields:
-            html += render_field(field, form, form_style, context,
+            html += render_field(field, form, context,
                                  template=self.template, attrs=self.attrs,
-                                 template_pack=template_pack)
+                                 template_pack=template_pack, **kwargs)
         return html
 
 
