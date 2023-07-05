@@ -277,9 +277,11 @@ class CommCareCaseManager(RequireDBManager):
             publish_case_saved(case)
         return undeleted_count
 
-    def hard_delete_cases(self, domain, case_ids):
+    def hard_delete_cases(self, domain, case_ids, *, publish_changes=True):
         """Permanently delete cases in domain
 
+        :param publish_changes: Flag for change feed publication.
+            Documents in Elasticsearch will not be deleted if this is false.
         :returns: Number of deleted cases.
         """
         assert isinstance(case_ids, list), type(case_ids)
@@ -287,7 +289,8 @@ class CommCareCaseManager(RequireDBManager):
             cursor.execute('SELECT hard_delete_cases(%s, %s)', [domain, case_ids])
             deleted_count = sum(row[0] for row in cursor)
 
-        self.publish_deleted_cases(domain, case_ids)
+        if publish_changes:
+            self.publish_deleted_cases(domain, case_ids)
 
         return deleted_count
 

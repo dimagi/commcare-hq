@@ -188,7 +188,7 @@ def delete_all_cases(domain_name):
     logger.info('Deleting cases...')
     case_ids = iter_ids(CommCareCase, 'case_id', domain_name)
     for chunk in chunked(case_ids, 1000, list):
-        CommCareCase.objects.hard_delete_cases(domain_name, chunk)
+        CommCareCase.objects.hard_delete_cases(domain_name, chunk, publish_changes=False)
     logger.info('Deleting cases complete.')
 
 
@@ -196,7 +196,7 @@ def delete_all_forms(domain_name):
     logger.info('Deleting forms...')
     form_ids = iter_ids(XFormInstance, 'form_id', domain_name)
     for chunk in chunked(form_ids, 1000, list):
-        XFormInstance.objects.hard_delete_forms(domain_name, chunk)
+        XFormInstance.objects.hard_delete_forms(domain_name, chunk, publish_changes=False)
     logger.info('Deleting forms complete.')
 
 
