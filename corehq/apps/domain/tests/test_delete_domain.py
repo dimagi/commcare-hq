@@ -63,6 +63,8 @@ from corehq.apps.data_interfaces.models import (
 )
 from corehq.apps.domain.deletion import DOMAIN_DELETE_OPERATIONS
 from corehq.apps.domain.models import Domain, TransferDomainRequest
+from corehq.apps.es import case_adapter, case_search_adapter, form_adapter
+from corehq.apps.es.tests.utils import es_test
 from corehq.apps.export.models.new import DataFile, EmailExportWhenDoneRequest
 from corehq.apps.fixtures.models import (
     LookupTable,
@@ -135,6 +137,9 @@ from corehq.motech.repeaters.models import (
     SQLRepeatRecordAttempt,
 )
 from settings import HQ_ACCOUNT_ROOT
+
+from .. import deletion as mod
+from .test_utils import delete_es_docs_patch, suspend
 
 
 class TestDeleteDomain(TestCase):
@@ -1131,6 +1136,55 @@ class HardDeleteFormsAndCasesInDomainTests(TestCase):
         for domain in [self.deleted_domain, self.extra_deleted_domain, self.domain_in_use]:
             self._cleanup_forms_and_cases(domain.name)
         super().tearDown()
+
+
+class TestDeleteElasticFormsAndCases(TestCase):
+
+    @es_test(requires=[form_adapter])
+    @suspend(delete_es_docs_patch)
+    def test_delete_all_forms_deletes_es_documents(self):
+        forms = [create_form_for_test(self.domain.name) for i in range(3)]
+        form_ids = [f.form_id for f in forms]
+        other_form = create_form_for_test(self.other_domain.name)
+        self.addCleanup(XFormInstance.objects.hard_delete_forms, self.domain.name, form_ids)
+        self.addCleanup(XFormInstance.objects.hard_delete_forms, self.other_domain.name, [other_form.form_id])
+        form_adapter.bulk_index(forms + [other_form], refresh=True)
+
+        mod.delete_all_forms(self.domain.name)
+
+        self.assertFalse(form_adapter.exists(form_ids[0]))
+        self.assertFalse(form_adapter.exists(form_ids[1]))
+        self.assertFalse(form_adapter.exists(form_ids[2]))
+        self.assertTrue(form_adapter.exists(other_form.form_id))
+
+    @es_test(requires=[case_adapter, case_search_adapter])
+    @suspend(delete_es_docs_patch)
+    def test_delete_all_cases_deletes_es_documents(self):
+        case1 = create_case(self.domain.name, save=True)
+        case2 = create_case(self.other_domain.name, save=True)
+        self.addCleanup(CommCareCase.objects.hard_delete_cases, self.domain.name, [case1.case_id])
+        self.addCleanup(CommCareCase.objects.hard_delete_cases, self.other_domain.name, [case2.case_id])
+        case_adapter.bulk_index([case1, case2], refresh=True)
+        case_search_adapter.bulk_index([case1, case2], refresh=True)
+
+        mod.delete_all_cases(self.domain.name)
+
+        self.assertFalse(case_adapter.exists(case1.case_id))
+        self.assertFalse(case_search_adapter.exists(case1.case_id))
+        self.assertTrue(case_adapter.exists(case2.case_id))
+        self.assertTrue(case_search_adapter.exists(case2.case_id))
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+
+        cls.domain = Domain(name='test')
+        cls.domain.save()
+        cls.addClassCleanup(ensure_deleted, cls.domain)
+
+        cls.other_domain = Domain(name='other')
+        cls.other_domain.save()
+        cls.addClassCleanup(ensure_deleted, cls.other_domain)
 
 
 def ensure_deleted(domain):
