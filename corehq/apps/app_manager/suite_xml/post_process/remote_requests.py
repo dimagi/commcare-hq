@@ -188,6 +188,11 @@ class RemoteRequestFactory(object):
             text=Text(locale_id=id_strings.case_search_title_translation(self.module))
         )
 
+    def build_results_title(self):
+        return Display(
+            text=Text(locale_id=id_strings.case_list_title_translation(self.module))
+        )
+
     def build_description(self):
         return Display(
             text=Text(locale_id=id_strings.case_search_description_locale(self.module))
@@ -214,6 +219,7 @@ class RemoteRequestFactory(object):
                 data=self._remote_request_query_datums,
                 prompts=self.build_query_prompts(),
                 default_search=self.module.search_config.default_search,
+                results_title=self.build_results_title() if self.module.search_config.command_label != {} else None,
             )
         ]
 
