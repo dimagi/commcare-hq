@@ -12,9 +12,11 @@ class Command(AppMigrationCommandBase):
         offending_module = ""
 
         for module in app_doc['modules']:
-            uses_person_simple = 'case_tile_template' in module['case_details']['short'] \
-                                 and module['case_details']['short']['case_tile_template'] == 'person_simple'
-            defines_registration_action = module['case_list_form']['form_id']
+            uses_person_simple = 'case_details' in module and 'short' in module['case_details'] \
+                and 'case_tile_template' in module['case_details']['short'] \
+                and module['case_details']['short']['case_tile_template'] == 'person_simple'
+            defines_registration_action = 'case_list_form' in module \
+                and module['case_list_form']['form_id']
 
             if defines_registration_action and uses_person_simple:
                 with_person_simple_and_registration_action = True
