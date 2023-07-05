@@ -8,7 +8,7 @@ from crispy_forms.bootstrap import AccordionGroup
 from crispy_forms.bootstrap import FormActions as OriginalFormActions
 from crispy_forms.bootstrap import InlineField
 from crispy_forms.helper import FormHelper
-from crispy_forms.layout import Field as OldField
+from crispy_forms.layout import Field
 from crispy_forms.layout import LayoutObject
 from crispy_forms.utils import flatatt, get_template_pack, render_field
 
@@ -36,11 +36,11 @@ class HQModalFormHelper(FormHelper):
     field_class = 'col-xs-12 col-sm-9 col-md-9 col-lg-6'
 
 
-class HiddenFieldWithErrors(OldField):
+class HiddenFieldWithErrors(Field):
     template = "hqwebapp/crispy/field/hidden_with_errors.html"
 
 
-class TextField(OldField):
+class TextField(Field):
     """
     Layout object.
     Contains text specified in place of the field's normal input.
@@ -59,7 +59,7 @@ class TextField(OldField):
         return super(TextField, self).render(form, context, template_pack=template_pack, **kwargs)
 
 
-class ErrorsOnlyField(OldField):
+class ErrorsOnlyField(Field):
     template = 'hqwebapp/crispy/field/errors_only_field.html'
 
 
@@ -198,7 +198,7 @@ class B3MultiField(LayoutObject):
     def _get_errors(self, form, fields):
         errors = []
         for field in fields:
-            if isinstance(field, OldField) or issubclass(field.__class__, OldField):
+            if isinstance(field, Field) or issubclass(field.__class__, Field):
                 fname = field.fields[0]
                 if fname not in form.fields:
                     continue
@@ -236,7 +236,7 @@ class CrispyTemplate(object):
         return render_to_string(self.template, context.flatten())
 
 
-class FieldWithExtras(OldField):
+class FieldWithExtras(Field):
     extra_context = None
 
     def __init__(self, *args, **kwargs):
@@ -300,7 +300,7 @@ class LinkButton(LayoutObject):
         return render_to_string(self.template, context.flatten())
 
 
-class B3TextField(OldField):
+class B3TextField(Field):
 
     def __init__(self, field_name, text, *args, **kwargs):
         self.text = text
@@ -326,7 +326,7 @@ class FieldsetAccordionGroup(AccordionGroup):
     template = "hqwebapp/crispy/accordion_group.html"
 
 
-class RadioSelect(OldField):
+class RadioSelect(Field):
     template = "hqwebapp/crispy/radioselect.html"
 
 
