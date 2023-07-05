@@ -260,7 +260,7 @@ class CrispyTemplate(object):
         return render_to_string(self.template, context.flatten())
 
 
-class FieldWithExtras(Field):
+class FieldWithExtras(OldField):
     extra_context = None
 
     def __init__(self, *args, **kwargs):
@@ -350,7 +350,7 @@ class FieldsetAccordionGroup(AccordionGroup):
     template = "hqwebapp/crispy/accordion_group.html"
 
 
-class RadioSelect(Field):
+class RadioSelect(OldField):
     template = "hqwebapp/crispy/radioselect.html"
 
 
