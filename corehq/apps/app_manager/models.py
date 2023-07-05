@@ -11,7 +11,6 @@ import types
 import uuid
 from collections import Counter, OrderedDict, defaultdict, namedtuple
 from copy import deepcopy
-from looseversion import LooseVersion
 from functools import wraps
 from io import open
 from itertools import chain
@@ -27,13 +26,13 @@ from django.core.exceptions import ValidationError
 from django.db import DEFAULT_DB_ALIAS, models
 from django.template.loader import render_to_string
 from django.urls import reverse
-from django.utils.translation import override
 from django.utils.translation import gettext as _
-from django.utils.translation import gettext_lazy
+from django.utils.translation import gettext_lazy, override
 
 from couchdbkit import ResourceNotFound
 from couchdbkit.exceptions import BadValueError
 from jsonpath_ng import jsonpath, parse
+from looseversion import LooseVersion
 from lxml import etree
 from memoized import memoized
 
@@ -61,6 +60,7 @@ from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.app_manager import (
     app_strings,
     commcare_settings,
+    const,
     id_strings,
     remote_app,
 )
@@ -69,8 +69,6 @@ from corehq.apps.app_manager.app_schemas.case_properties import (
     get_usercase_properties,
 )
 from corehq.apps.app_manager.commcare_settings import check_condition
-from corehq.apps.app_manager.const import *
-from corehq.apps.app_manager.const import UPDATE_MODE_ALWAYS, UPDATE_MODE_EDIT, USERCASE_TYPE
 from corehq.apps.app_manager.dbaccessors import (
     domain_has_apps,
     get_app,
@@ -84,16 +82,16 @@ from corehq.apps.app_manager.dbaccessors import (
 )
 from corehq.apps.app_manager.exceptions import (
     AppEditingError,
+    AppValidationError,
     FormNotFoundException,
     IncompatibleFormTypeException,
+    ModuleIdMissingException,
     ModuleNotFoundException,
     RearrangeError,
     ScheduleError,
     VersioningError,
     XFormException,
     XFormValidationError,
-    ModuleIdMissingException,
-    AppValidationError,
 )
 from corehq.apps.app_manager.feature_support import CommCareFeatureSupportMixin
 from corehq.apps.app_manager.helpers.validators import (
@@ -117,11 +115,14 @@ from corehq.apps.app_manager.suite_xml.generator import (
 )
 from corehq.apps.app_manager.suite_xml.post_process.remote_requests import (
     RESULTS_INSTANCE,
-    RESULTS_INSTANCE_INLINE
+    RESULTS_INSTANCE_INLINE,
 )
 from corehq.apps.app_manager.suite_xml.utils import get_select_chain
 from corehq.apps.app_manager.tasks import prune_auto_generated_builds
-from corehq.apps.app_manager.templatetags.xforms_extras import clean_trans, trans
+from corehq.apps.app_manager.templatetags.xforms_extras import (
+    clean_trans,
+    trans,
+)
 from corehq.apps.app_manager.util import (
     actions_use_usercase,
     expire_get_latest_app_release_by_location_cache,
@@ -132,22 +133,23 @@ from corehq.apps.app_manager.util import (
     get_latest_enabled_versions_per_profile,
     is_remote_app,
     is_usercase_in_use,
+    module_loads_registry_case,
     module_offers_search,
+    module_uses_inline_search,
     save_xform,
     update_form_unique_ids,
     update_report_module_ids,
-    module_loads_registry_case,
-    module_uses_inline_search,
 )
 from corehq.apps.app_manager.xform import XForm
 from corehq.apps.app_manager.xform import parse_xml as _parse_xml
 from corehq.apps.app_manager.xform import validate_xform
-from corehq.apps.app_manager.xpath import dot_interpolate, interpolate_xpath, CaseClaimXpath
-from corehq.apps.appstore.models import SnapshotMixin
-from corehq.apps.builds.models import (
-    BuildRecord,
-    BuildSpec,
+from corehq.apps.app_manager.xpath import (
+    CaseClaimXpath,
+    dot_interpolate,
+    interpolate_xpath,
 )
+from corehq.apps.appstore.models import SnapshotMixin
+from corehq.apps.builds.models import BuildRecord, BuildSpec
 from corehq.apps.builds.utils import get_default_build_spec
 from corehq.apps.domain.models import Domain
 from corehq.apps.hqmedia.models import (
@@ -348,8 +350,8 @@ class FormAction(DocumentSchema):
 class ConditionalCaseUpdate(DocumentSchema):
     question_path = StringProperty()
     update_mode = StringProperty(
-        choices=[UPDATE_MODE_ALWAYS, UPDATE_MODE_EDIT],
-        default=UPDATE_MODE_ALWAYS
+        choices=[const.UPDATE_MODE_ALWAYS, const.UPDATE_MODE_EDIT],
+        default=const.UPDATE_MODE_ALWAYS
     )
 
 
@@ -493,11 +495,11 @@ class AutoSelectCase(DocumentSchema):
                         xpath expression.
 
     """
-    mode = StringProperty(choices=[AUTO_SELECT_USER,
-                                   AUTO_SELECT_FIXTURE,
-                                   AUTO_SELECT_CASE,
-                                   AUTO_SELECT_USERCASE,
-                                   AUTO_SELECT_RAW])
+    mode = StringProperty(choices=[const.AUTO_SELECT_USER,
+                                   const.AUTO_SELECT_FIXTURE,
+                                   const.AUTO_SELECT_CASE,
+                                   const.AUTO_SELECT_USERCASE,
+                                   const.AUTO_SELECT_RAW])
     value_source = StringProperty()
     value_key = StringProperty(required=True)
 
@@ -652,11 +654,11 @@ class AdvancedFormActions(DocumentSchema):
             'by_tag': {},
             'by_parent_tag': {},
             'by_auto_select_mode': {
-                AUTO_SELECT_USER: [],
-                AUTO_SELECT_CASE: [],
-                AUTO_SELECT_FIXTURE: [],
-                AUTO_SELECT_USERCASE: [],
-                AUTO_SELECT_RAW: [],
+                const.AUTO_SELECT_USER: [],
+                const.AUTO_SELECT_CASE: [],
+                const.AUTO_SELECT_FIXTURE: [],
+                const.AUTO_SELECT_USERCASE: [],
+                const.AUTO_SELECT_RAW: [],
             }
         }
 
@@ -1022,11 +1024,11 @@ class FormBase(DocumentSchema):
         lambda self: "cache-%s-%s-validation" % (self.get_app().get_id, self.unique_id)
     )
     post_form_workflow = StringProperty(
-        default=WORKFLOW_DEFAULT,
-        choices=ALL_WORKFLOWS
+        default=const.WORKFLOW_DEFAULT,
+        choices=const.ALL_WORKFLOWS
     )
     post_form_workflow_fallback = StringProperty(
-        choices=WORKFLOW_FALLBACK_OPTIONS,
+        choices=const.WORKFLOW_FALLBACK_OPTIONS,
         default=None,
     )
     auto_gps_capture = BooleanProperty(default=False)
@@ -1237,7 +1239,7 @@ class FormBase(DocumentSchema):
 
         def format_key(key, path):
             if valid_paths.get(path) == "upload":
-                return "{}{}".format(ATTACHMENT_PREFIX, key)
+                return "{}{}".format(const.ATTACHMENT_PREFIX, key)
             return key
         return format_key
 
@@ -1594,7 +1596,6 @@ class Form(IndexedFormBase, FormMediaMixin, NavMenuItemMediaMixin):
 
     @memoized
     def get_action_type(self):
-
         if self.actions.close_case.condition.is_active():
             return 'close'
         elif self.actions.open_case.condition.is_active() or self.actions.subcases:
@@ -1698,7 +1699,7 @@ class Form(IndexedFormBase, FormMediaMixin, NavMenuItemMediaMixin):
         return {
             case_type: {
                 format_key(*item) for item in self.actions.update_case.update.items()},
-            USERCASE_TYPE: {
+            const.USERCASE_TYPE: {
                 format_key(*item) for item in self.actions.usercase_update.update.items()}
         }
 
@@ -2205,8 +2206,8 @@ class CaseListForm(NavMenuItemMediaMixin):
     form_id = FormIdProperty('modules[*].case_list_form.form_id')
     label = DictProperty()
     post_form_workflow = StringProperty(
-        default=WORKFLOW_DEFAULT,
-        choices=REGISTRATION_FORM_WORFLOWS,
+        default=const.WORKFLOW_DEFAULT,
+        choices=const.REGISTRATION_FORM_WORFLOWS,
     )
     relevancy_expression = StringProperty(exclude_if_none=True)
 
@@ -2363,7 +2364,7 @@ class ModuleBase(IndexedSchema, ModuleMediaMixin, NavMenuItemMediaMixin, Comment
         _rename_key(self.name, old_lang, new_lang)
         for form in self.get_forms():
             form.rename_lang(old_lang, new_lang)
-        for _, detail, _ in self.get_details():
+        for __, detail, __ in self.get_details():
             detail.rename_lang(old_lang, new_lang)
 
     def get_form_by_unique_id(self, unique_id):
@@ -2717,9 +2718,9 @@ class AdvancedForm(IndexedFormBase, FormMediaMixin, NavMenuItemMediaMixin):
 
     def uses_usercase(self):
         return (
-            self.uses_case_type(USERCASE_TYPE)
+            self.uses_case_type(const.USERCASE_TYPE)
             or any(action for action in self.actions.load_update_cases
-                   if action.auto_select and action.auto_select.mode == AUTO_SELECT_USERCASE)
+                   if action.auto_select and action.auto_select.mode == const.AUTO_SELECT_USERCASE)
         )
 
     def all_other_forms_require_a_case(self):
@@ -3182,7 +3183,7 @@ class AdvancedModule(ModuleBase):
     def uses_usercase(self):
         """Return True if this module has any forms that use the usercase.
         """
-        return self._uses_case_type(USERCASE_TYPE)
+        return self._uses_case_type(const.USERCASE_TYPE)
 
     @property
     def additional_case_types(self):
@@ -3468,7 +3469,7 @@ class CustomMonthFilter(ReportAppFilter):
     )
     # DateSpan to return i.t.o. number of months to go back
     period = IntegerProperty(
-        default=DEFAULT_MONTH_FILTER_PERIOD_LENGTH,
+        default=const.DEFAULT_MONTH_FILTER_PERIOD_LENGTH,
         validators=(is_gte(0),)
     )
 
@@ -3476,7 +3477,7 @@ class CustomMonthFilter(ReportAppFilter):
     def wrap(cls, doc):
         doc['start_of_month'] = int(doc['start_of_month'])
         if 'period' in doc:
-            doc['period'] = int(doc['period'] or DEFAULT_MONTH_FILTER_PERIOD_LENGTH)
+            doc['period'] = int(doc['period'] or const.DEFAULT_MONTH_FILTER_PERIOD_LENGTH)
         return super(CustomMonthFilter, cls).wrap(doc)
 
     def get_filter_value(self, user, ui_filter):
@@ -4041,12 +4042,12 @@ class ApplicationBase(LazyBlobDoc, SnapshotMixin,
 
     # metadata for data platform
     amplifies_workers = StringProperty(
-        choices=[AMPLIFIES_YES, AMPLIFIES_NO, AMPLIFIES_NOT_SET],
-        default=AMPLIFIES_NOT_SET
+        choices=[const.AMPLIFIES_YES, const.AMPLIFIES_NO, const.AMPLIFIES_NOT_SET],
+        default=const.AMPLIFIES_NOT_SET
     )
     amplifies_project = StringProperty(
-        choices=[AMPLIFIES_YES, AMPLIFIES_NO, AMPLIFIES_NOT_SET],
-        default=AMPLIFIES_NOT_SET
+        choices=[const.AMPLIFIES_YES, const.AMPLIFIES_NO, const.AMPLIFIES_NOT_SET],
+        default=const.AMPLIFIES_NOT_SET
     )
     minimum_use_threshold = StringProperty(
         default='15'
@@ -4068,11 +4069,15 @@ class ApplicationBase(LazyBlobDoc, SnapshotMixin,
     vellum_case_management = BooleanProperty(default=True)
 
     # legacy property; kept around to be able to identify (deprecated) v1 apps
-    application_version = StringProperty(default=APP_V2, choices=[APP_V1, APP_V2], required=False)
+    application_version = StringProperty(
+        default=const.APP_V2,
+        choices=[const.APP_V1, const.APP_V2],
+        required=False,
+    )
     last_modified = DateTimeProperty()
 
     def assert_app_v2(self):
-        assert self.application_version == APP_V2
+        assert self.application_version == const.APP_V2
 
     build_profiles = SchemaDictProperty(BuildProfile)
     practice_mobile_worker_id = StringProperty()
@@ -4080,17 +4085,17 @@ class ApplicationBase(LazyBlobDoc, SnapshotMixin,
     # use commcare_flavor to avoid checking for none
     target_commcare_flavor = StringProperty(
         default='none',
-        choices=['none', TARGET_COMMCARE, TARGET_COMMCARE_LTS]
+        choices=['none', const.TARGET_COMMCARE, const.TARGET_COMMCARE_LTS]
     )
 
     # Whether or not the Application has had any forms submitted against it
     has_submissions = BooleanProperty(default=False)
 
     mobile_ucr_restore_version = StringProperty(
-        default=MOBILE_UCR_VERSION_1, choices=MOBILE_UCR_VERSIONS, required=False
+        default=const.MOBILE_UCR_VERSION_1, choices=const.MOBILE_UCR_VERSIONS, required=False
     )
     location_fixture_restore = StringProperty(
-        default=DEFAULT_LOCATION_FIXTURE_OPTION, choices=LOCATION_FIXTURE_OPTIONS,
+        default=const.DEFAULT_LOCATION_FIXTURE_OPTION, choices=const.LOCATION_FIXTURE_OPTIONS,
         required=False
     )
 
@@ -4820,8 +4825,8 @@ class Application(ApplicationBase, ApplicationMediaMixin, ApplicationIntegration
         apk_heartbeat_url = self.heartbeat_url(build_profile_id)
         locale = self.get_build_langs(build_profile_id)[0]
         target_package_id = {
-            TARGET_COMMCARE: 'org.commcare.dalvik',
-            TARGET_COMMCARE_LTS: 'org.commcare.lts',
+            const.TARGET_COMMCARE: 'org.commcare.dalvik',
+            const.TARGET_COMMCARE_LTS: 'org.commcare.lts',
         }.get(commcare_flavor)
         return render_to_string('app_manager/profile.xml', {
             'is_odk': is_odk,
@@ -5254,7 +5259,7 @@ class Application(ApplicationBase, ApplicationMediaMixin, ApplicationIntegration
     def get_case_types(self):
         extra_types = set()
         if is_usercase_in_use(self.domain):
-            extra_types.add(USERCASE_TYPE)
+            extra_types.add(const.USERCASE_TYPE)
 
         return set(chain(*[m.get_case_types() for m in self.get_modules()])) | extra_types
 
