@@ -152,12 +152,13 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
                 if (tile === null || tile === undefined) {
                     return null;
                 }
+                const style = styles[idx] || {};
                 return {
                     id: prefix + '-grid-style-' + idx,
                     gridStyle: getGridAttributes(tile),
                     fontStyle: tile.fontSize,
-                    verticalAlign: getValidFieldAlignment(styles[idx].verticalAlign),
-                    horizontalAlign: getValidFieldAlignment(styles[idx].horizontalAlign),
+                    verticalAlign: getValidFieldAlignment(style.verticalAlign),
+                    horizontalAlign: getValidFieldAlignment(style.horizontalAlign),
                 };
             })
             .filter(function (tile) {
