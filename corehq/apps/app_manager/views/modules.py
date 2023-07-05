@@ -202,6 +202,7 @@ def _get_shared_module_view_context(request, app, module, case_property_builder,
     '''
     item_lists = item_lists_by_app(app, module) if app.enable_search_prompt_appearance else []
     case_types = set(module.search_config.additional_case_types) | {module.case_type}
+    case_list_map_enabled = toggles.CASE_LIST_MAP.enabled(app.domain)
     context = {
         'details': _get_module_details_context(request, app, module, case_property_builder),
         'case_list_form_options': _case_list_form_options(app, module, lang),
@@ -228,9 +229,11 @@ def _get_shared_module_view_context(request, app, module, case_property_builder,
             'has_lookup_tables': bool([i for i in item_lists if i['fixture_type'] == LOOKUP_TABLE_FIXTURE]),
             'has_mobile_ucr': bool([i for i in item_lists if i['fixture_type'] == REPORT_FIXTURE]),
             'default_value_expression_enabled': app.enable_default_value_expression,
-            'case_tile_template_options': CaseTileTemplates.choices,
+            'case_tile_template_options': [template for template in CaseTileTemplates.choices
+                                           if case_list_map_enabled or ', and map' not in template[1]],
             'case_tile_template_configs': {template[0]: asdict(case_tile_template_config(template[0]))
-                                           for template in CaseTileTemplates.choices},
+                                           for template in CaseTileTemplates.choices
+                                           if case_list_map_enabled or ', and map' not in template[1]},
             'search_config': {
                 'search_properties':
                     module.search_config.properties if module_offers_search(module) else [],
