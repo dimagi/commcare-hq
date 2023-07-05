@@ -92,30 +92,6 @@ class FormActions(OriginalFormActions):
         })
 
 
-class Field(OldField):
-    """Overrides the logic behind choosing the offset class for the field to
-    actually be responsive (col-lg-offset-*, col-md-offset-*, etc). Also includes
-    support for static controls.
-    todo since we forked crispy forms, this class is no longer necessary.
-    http://manage.dimagi.com/default.asp?186372
-    """
-    template = 'hqwebapp/crispy/field.html'
-
-    def __init__(self, *args, **kwargs):
-        self.is_static = False
-        if 'is_static' in kwargs:
-            self.is_static = kwargs.pop('is_static')
-        super(Field, self).__init__(*args, **kwargs)
-
-    def render(self, form, context, template_pack=None, **kwargs):
-        template_pack = template_pack or get_template_pack()
-        offsets = _get_offsets(context)
-        context.update({
-            'offsets': offsets,
-        })
-        return super(Field, self).render(form, context, template_pack, **kwargs)
-
-
 class StaticField(LayoutObject):
     template = 'hqwebapp/crispy/static_field.html'
 
