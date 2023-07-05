@@ -287,7 +287,8 @@ data_dictionary
  0011_casepropertygroup
  0012_populate_case_property_groups
  0013_auto_20230529_1614
- 0014_casetype_is_deprecated
+ 0014_auto_20230705_2007
+ 0015_casetype_is_deprecated
 data_interfaces
  0001_initial
  0002_remove_exists_option
@@ -795,6 +796,7 @@ scheduling
  0023_add_remaining_content_models
  0024_app_id
  0025_schedule_and_broadcast_deleted_on
+ 0026_add_model_fcm_notification_content
 scheduling_partitioned
  0001_initial
  0002_case_schedule_instances
@@ -866,6 +868,7 @@ sms
  0054_messagingsubevent_domain
  0055_messagingsubevent_index_domain_date_id
  0056_backfill_sms_event_date
+ 0057_fcm_content_type_messaging_events
 smsbillables
  0001_initial
  0002_bootstrap
@@ -1140,6 +1143,7 @@ users
  0050_add_manage_attendance_tracking_permission
  0051_add_attendance_tracking_privilege
  0052_hqapikey_last_used
+ 0053_userreportingmetadatastaging_fcm_token
 util
  0001_initial
  0002_complaintbouncemeta_permanentbouncemeta_transientbounceemail
