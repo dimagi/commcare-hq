@@ -25,6 +25,7 @@ from corehq.apps.app_manager.dbaccessors import (
     get_latest_released_app_versions_by_app_id,
     get_case_type_app_module_count,
     get_case_types_for_app_build,
+    get_case_types_from_apps,
 )
 from corehq.apps.app_manager.models import Application, Module, RemoteApp, LinkedApplication
 from corehq.apps.app_manager.tests.app_factory import AppFactory
@@ -268,7 +269,12 @@ class TestAppGetters(TestCase):
         app.save()  # app is v5
         cls.app_id = app._id
 
-        app_adapter.bulk_index([app, cls.v2_build, cls.v4_build], refresh=True)
+        factory = AppFactory(cls.domain, name='other_app')
+        factory.new_basic_module("case", "case")
+        other_app = factory.app
+        other_app.save()
+
+        app_adapter.bulk_index([app, cls.v2_build, cls.v4_build, other_app], refresh=True)
 
     @classmethod
     def tearDownClass(cls):
@@ -329,8 +335,12 @@ class TestAppGetters(TestCase):
 
     def test_get_case_type_app_module_count(self):
         res = get_case_type_app_module_count(self.domain)
-        self.assertEqual(res, {'bar': 1})
+        self.assertEqual(res, {'bar': 1, 'case': 1})
 
     def test_get_case_types_for_app_build(self):
         res = get_case_types_for_app_build(self.domain, self.app_id)
         self.assertEqual(res, {'bar'})
+
+    def test_get_case_types_from_apps(self):
+        res = get_case_types_from_apps(self.domain)
+        self.assertEqual(res, {'bar', 'case'})
