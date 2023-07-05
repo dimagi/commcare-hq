@@ -4,6 +4,10 @@
 
 {% requirejs_main "linked_domain/js/domain_links" %}
 
+{% block additional_initial_page_data %}
+{% initial_analytics_data 'appcues.linked_status' linked_status %}
+{% endblock %}
+
 {% block page_content %}
   {% initial_page_data 'view_data' view_data %}
   {% registerurl 'linked_domain:domain_link_rmi' domain %}
