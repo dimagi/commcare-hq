@@ -25,3 +25,6 @@ The `name.json` metadata file contains the following properties:
    * `height`
    * `horz-align`
    * `vert-align`
+
+`CaseTileTemplates` defines the choices in the config dropdown. If a template supports maps the description should contain
+", and map".
