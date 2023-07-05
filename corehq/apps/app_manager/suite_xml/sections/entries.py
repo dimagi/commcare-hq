@@ -13,8 +13,8 @@ modules.  See ``update_refs`` and ``rename_other_id``, both inner functions in `
 `this comment`_ on matching parent and child datums.
 
 
-.. _this comment: https://github.com/dimagi/commcare-hq/blob/c9fa01d1ccbb73d8f07fefbe56a0bbe1dbe231f8/corehq/apps/app_manager/suite_xml/sections/entries.py#L966-L971  # noqa
-"""
+.. _this comment: https://github.com/dimagi/commcare-hq/blob/c9fa01d1ccbb73d8f07fefbe56a0bbe1dbe231f8/corehq/apps/app_manager/suite_xml/sections/entries.py#L966-L971
+"""  # noqa
 from collections import defaultdict
 
 from django.utils.translation import gettext as _
