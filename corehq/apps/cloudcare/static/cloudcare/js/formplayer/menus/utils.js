@@ -85,28 +85,41 @@ hqDefine("cloudcare/js/formplayer/menus/utils", function () {
         FormplayerFrontend.regions.getRegion('breadcrumb').show(breadcrumbView);
     };
 
-    var showFormMenu = function (langs, enableLanguageMenu) {
-        var langModels,
-            langCollection;
+    var showFormMenu = function (langs) {
+      var langModels,
+          langCollection;
 
-        FormplayerFrontend.regions.addRegions({
-            formMenu: "#form-menu",
-        });
-        if (langs && enableLanguageMenu) {
+      FormplayerFrontend.regions.addRegions({
+        formMenu: "#form-menu",
+      });
+
+      if (langs) {
+        $.ajax({
+          url: '/langcodes/langs.json',
+          dataType: 'json',
+          async: false,
+          success: function (mapping) {
             langModels = _.map(langs, function (lang) {
-                return {
-                    lang: lang,
-                };
+              var matchingLanguage = mapping.find(function (language) {
+                return language.code === lang;
+              });
+              return {
+                lang_code: lang,
+                lang_label: matchingLanguage ? matchingLanguage.name : lang,
+              };
             });
             langCollection = new Backbone.Collection(langModels);
-        } else {
-            langCollection = null;
-        }
-        var formMenuView = views.FormMenuView({
-            collection: langCollection,
+          }
         });
-        FormplayerFrontend.regions.getRegion('formMenu').show(formMenuView);
+      } else {
+        langCollection = null;
+      }
+      var formMenuView = views.FormMenuView({
+        collection: langCollection,
+      });
+      FormplayerFrontend.regions.getRegion('formMenu').show(formMenuView);
     };
+
 
     var getMenuData = function (menuResponse) {
         return {                    // TODO: make this more concise
