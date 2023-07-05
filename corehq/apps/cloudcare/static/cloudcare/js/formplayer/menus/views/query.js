@@ -528,7 +528,12 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
             e.preventDefault();
 
             self.validateAllFields().done(function () {
-                FormplayerFrontend.trigger("menu:query", self.getAnswers(), self.selectValuesByKeys);
+                FormplayerFrontend.trigger(
+                    "menu:query",
+                    self.getAnswers(),
+                    self.selectValuesByKeys,
+                    self.options.sidebarEnabled
+                );
             });
         },
 
