@@ -3741,6 +3741,11 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/app_manager/helpers/validators.py
+msgid ""
+"Format \"{}\" can only be used once but is used by multiple properties: {}"
+msgstr ""
+
+#: corehq/apps/app_manager/helpers/validators.py
 msgid "Case tiles may only be used for the case list (not the case details)."
 msgstr ""
 
@@ -7727,6 +7732,18 @@ msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/case_list.html
 msgid "Case property to show"
+msgstr ""
+
+#: corehq/apps/app_manager/templates/app_manager/partials/modules/case_list.html
+msgid "Show case tiles grouped by parent case"
+msgstr ""
+
+#: corehq/apps/app_manager/templates/app_manager/partials/modules/case_list.html
+msgid "Parent case index name"
+msgstr ""
+
+#: corehq/apps/app_manager/templates/app_manager/partials/modules/case_list.html
+msgid "Case tile header rows"
 msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/case_list.html
@@ -17590,6 +17607,10 @@ msgstr ""
 
 #: corehq/apps/events/forms.py
 msgid "Attendance Takers"
+msgstr ""
+
+#: corehq/apps/events/forms.py
+msgid "Please choose at least one Attendance Taker"
 msgstr ""
 
 #: corehq/apps/events/forms.py
