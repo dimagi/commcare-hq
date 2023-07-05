@@ -61,7 +61,6 @@ from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.app_manager import (
     app_strings,
     commcare_settings,
-    current_builds,
     id_strings,
     remote_app,
 )
@@ -93,7 +92,6 @@ from corehq.apps.app_manager.exceptions import (
     VersioningError,
     XFormException,
     XFormValidationError,
-    XFormValidationFailed,
     ModuleIdMissingException,
     AppValidationError,
 )
@@ -209,6 +207,7 @@ def jsonpath_update(datum_context, value):
     parent = jsonpath.Parent().find(datum_context)[0]
     parent.value[field] = value
 
+
 # store a list of references to form ID's so that
 # when an app is copied we can update the references
 # with the new values
@@ -281,9 +280,9 @@ class IndexedSchema(DocumentSchema):
 
         def __call__(self, instance):
             items = getattr(instance, self.attr)
-            l = len(items)
+            length = len(items)
             for i, item in enumerate(items):
-                yield item.with_id(i % l, instance)
+                yield item.with_id(i % length, instance)
 
         def __get__(self, instance, owner):
             # thanks, http://metapython.blogspot.com/2010/11/python-instance-methods-how-are-they.html
@@ -742,7 +741,7 @@ class CachedStringProperty(object):
 
     @classmethod
     def set(cls, key, value):
-        cache.set(key, value, 7*24*60*60)  # cache for 7 days
+        cache.set(key, value, 7 * 24 * 60 * 60)  # cache for 7 days
 
 
 class ScheduleVisit(IndexedSchema):
@@ -1598,8 +1597,7 @@ class Form(IndexedFormBase, FormMediaMixin, NavMenuItemMediaMixin):
 
         if self.actions.close_case.condition.is_active():
             return 'close'
-        elif (self.actions.open_case.condition.is_active() or
-                self.actions.subcases):
+        elif self.actions.open_case.condition.is_active() or self.actions.subcases:
             return 'open'
         elif self.actions.update_case.condition.is_active():
             return 'update'
@@ -1747,9 +1745,9 @@ class Form(IndexedFormBase, FormMediaMixin, NavMenuItemMediaMixin):
         for subcase in self.actions.subcases:
             child_case_type = subcase.case_type
             if child_case_type != parent_case_type and (
-                    self.actions.open_case.is_active() or
-                    self.actions.update_case.is_active() or
-                    self.actions.close_case.is_active()):
+                    self.actions.open_case.is_active()
+                    or self.actions.update_case.is_active()
+                    or self.actions.close_case.is_active()):
                 case_relationships_by_child_type[child_case_type].add(
                     (parent_case_type, subcase.reference_id or 'parent'))
         return case_relationships_by_child_type
@@ -1917,6 +1915,13 @@ class CaseListLookupMixin(DocumentSchema):
     lookup_field_template = StringProperty(exclude_if_none=True)
 
 
+class CaseTileGroupConfig(DocumentSchema):
+    # e.g. "./index/parent"
+    index_identifier = StringProperty()
+    # number of rows of the tile to use for the group header
+    header_rows = IntegerProperty(default=2)
+
+
 class Detail(IndexedSchema, CaseListLookupMixin):
     """
     Full configuration for a case selection screen
@@ -1961,6 +1966,7 @@ class Detail(IndexedSchema, CaseListLookupMixin):
     persistent_case_tile_from_module = StringProperty(exclude_if_none=True)
     # If True, the in form tile can be pulled down to reveal all the case details.
     pull_down_tile = BooleanProperty()
+    case_tile_group = SchemaProperty(CaseTileGroupConfig)
 
     print_template = DictProperty()
 
@@ -2026,6 +2032,7 @@ class Detail(IndexedSchema, CaseListLookupMixin):
             'pull_down_tile',
             'persist_case_context',
             'persistent_case_context_xml',
+            'case_tile_group',
         ]
         for attr in attrs:
             if attr == "case_tile_configuration":
@@ -2121,7 +2128,6 @@ class CaseSearch(DocumentSchema):
     title_label = LabelProperty(default={})
     description = LabelProperty(default={})
     include_all_related_cases = BooleanProperty(default=False)
-
 
     # case property referencing another case's ID
     custom_related_case_property = StringProperty(exclude_if_none=True)
@@ -2224,6 +2230,7 @@ class ModuleBase(IndexedSchema, ModuleMediaMixin, NavMenuItemMediaMixin, Comment
     auto_select_case = BooleanProperty(default=False)
     is_training_module = BooleanProperty(default=False)
     session_endpoint_id = StringProperty(exclude_if_none=True)  # See toggles.SESSION_ENDPOINTS
+    case_list_session_endpoint_id = StringProperty(exclude_if_none=True)
     custom_assertions = SchemaListProperty(CustomAssertion)
 
     def __init__(self, *args, **kwargs):
@@ -2336,6 +2343,13 @@ class ModuleBase(IndexedSchema, ModuleMediaMixin, NavMenuItemMediaMixin, Comment
     @property
     def max_select_value(self):
         return self.case_details.short.max_select_value
+
+    def has_grouped_tiles(self):
+        return (
+            hasattr(self, 'case_details')
+            and self.case_details.short.case_tile_template
+            and self.case_details.short.case_tile_group.index_identifier
+        )
 
     def default_name(self, app=None):
         if not app:
@@ -3065,7 +3079,7 @@ class AdvancedModule(ModuleBase):
                     name_update=open.name_update,
                     open_condition=open.condition,
                     case_properties=update.update if update else {},
-                    )
+                )
                 new_form.actions.open_cases.append(base_action)
             elif update or preload or close:
                 base_action = LoadUpdateAction(
@@ -3097,7 +3111,7 @@ class AdvancedModule(ModuleBase):
                 for i, subcase in enumerate(subcases):
                     open_subcase_action = AdvancedOpenCaseAction(
                         case_type=subcase.case_type,
-                        case_tag='open_{0}_{1}'.format(subcase.case_type, i+1),
+                        case_tag='open_{0}_{1}'.format(subcase.case_type, i + 1),
                         name_update=subcase.name_update,
                         open_condition=subcase.condition,
                         case_properties=subcase.case_properties,
@@ -3859,7 +3873,7 @@ class LazyBlobDoc(BlobMixin):
     def __attachment_cache_key(self, name):
         return 'lazy_attachment/{id}/{name}'.format(id=self.get_id, name=name)
 
-    def __set_cached_attachment(self, name, content, timeout=60*10):
+    def __set_cached_attachment(self, name, content, timeout=60 * 10):
         cache.set(self.__attachment_cache_key(name), content, timeout=timeout)
         self._LAZY_ATTACHMENTS_CACHE[name] = content
 
@@ -3912,7 +3926,7 @@ class LazyBlobDoc(BlobMixin):
                     if hasattr(e, 'response'):
                         del e.response
                     content = e
-                    self.__set_cached_attachment(name, content, timeout=60*5)
+                    self.__set_cached_attachment(name, content, timeout=60 * 5)
                     raise
                 else:
                     self.__set_cached_attachment(name, content)
@@ -4145,8 +4159,8 @@ class ApplicationBase(LazyBlobDoc, SnapshotMixin,
         """
         This looks really similar to get_latest_app, not sure why tim added
         """
-        doc = (get_latest_released_app_doc(self.domain, self._id) or
-               get_latest_build_doc(self.domain, self._id))
+        doc = (get_latest_released_app_doc(self.domain, self._id)
+               or get_latest_build_doc(self.domain, self._id))
         return self.__class__.wrap(doc) if doc else None
 
     def set_admin_password(self, raw_password):
@@ -4857,8 +4871,8 @@ class Application(ApplicationBase, ApplicationMediaMixin, ApplicationIntegration
     @memoized
     def enable_practice_users(self):
         return (
-            self.supports_practice_users and
-            domain_has_privilege(self.domain, privileges.PRACTICE_MOBILE_WORKERS)
+            self.supports_practice_users
+            and domain_has_privilege(self.domain, privileges.PRACTICE_MOBILE_WORKERS)
         )
 
     @property
@@ -4913,7 +4927,8 @@ class Application(ApplicationBase, ApplicationMediaMixin, ApplicationIntegration
     @time_method()
     def _make_language_files(self, prefix, build_profile_id):
         return {
-            "{}{}/app_strings.txt".format(prefix, lang): self.create_app_strings(lang, build_profile_id).encode('utf-8')
+            "{}{}/app_strings.txt".format(prefix, lang):
+                self.create_app_strings(lang, build_profile_id).encode('utf-8')
             for lang in ['default'] + self.get_build_langs(build_profile_id)
         }
 

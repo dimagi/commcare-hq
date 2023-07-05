@@ -1,8 +1,9 @@
 /* global DOMPurify, mdAnchorRender */
 hqDefine("cloudcare/js/form_entry/form_ui", function () {
-    var constants = hqImport("cloudcare/js/form_entry/const"),
+    var cloudcareUtils = hqImport("cloudcare/js/utils");
+        constants = hqImport("cloudcare/js/form_entry/const"),
         entries = hqImport("cloudcare/js/form_entry/entries"),
-        utils = hqImport("cloudcare/js/form_entry/utils");
+        formEntryUtils = hqImport("cloudcare/js/form_entry/utils");
     var md = window.markdownit();
     var groupNum = 0;
 
@@ -39,7 +40,7 @@ hqDefine("cloudcare/js/form_entry/form_ui", function () {
         ko.bindingHandlers.renderMarkdown = {
             update: function (element, valueAccessor) {
                 var value = ko.unwrap(valueAccessor());
-                value = md.render(value || '');
+                value = cloudcareUtils.renderMarkdown(value || '');
                 $(element).html(value);
             },
         };
@@ -203,7 +204,7 @@ hqDefine("cloudcare/js/form_entry/form_ui", function () {
                     if (options.target.pendingAnswer &&
                             options.target.pendingAnswer() !== constants.NO_PENDING_ANSWER) {
                         // There is a request in progress
-                        if (options.target.entry.templateType === "file" || utils.answersEqual(options.data.answer, options.target.pendingAnswer())) {
+                        if (options.target.entry.templateType === "file" || formEntryUtils.answersEqual(options.data.answer, options.target.pendingAnswer())) {
                             // We can now mark it as not dirty
                             options.data.answer = _.clone(options.target.pendingAnswer());
                             options.target.pendingAnswer(constants.NO_PENDING_ANSWER);
@@ -583,7 +584,7 @@ hqDefine("cloudcare/js/form_entry/form_ui", function () {
         self.fromJS(json);
         self.parent = parent;
         // Grab the containing pubsub so questions can interact with other questions on the same form.
-        const container = utils.getBroadcastContainer(self);
+        const container = formEntryUtils.getBroadcastContainer(self);
         self.broadcastPubSub = (container) ? container.pubsub : new ko.subscribable();
         self.error = ko.observable(null);
         self.serverError = ko.observable(null);
@@ -651,8 +652,8 @@ hqDefine("cloudcare/js/form_entry/form_ui", function () {
         self.onchange = self.triggerAnswer;
 
         self.mediaSrc = function (resourceType) {
-            if (!resourceType || !_.isFunction(utils.resourceMap)) { return ''; }
-            return utils.resourceMap(resourceType);
+            if (!resourceType || !_.isFunction(formEntryUtils.resourceMap)) { return ''; }
+            return formEntryUtils.resourceMap(resourceType);
         };
 
         self.navigateTo = function () {
