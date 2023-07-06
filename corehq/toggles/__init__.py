@@ -2522,8 +2522,7 @@ DATA_DICT = FrozenPrivilegeToggle(
     tag=TAG_SOLUTIONS_OPEN,
     namespaces=[NAMESPACE_DOMAIN],
     description='Project level data dictionary of cases',
-    # TODO: Move to public wiki
-    help_link='https://confluence.dimagi.com/display/GS/Data+Dictionary+for+Case+Properties'
+    help_link='https://confluence.dimagi.com/display/commcarepublic/Data+Dictionary'
 )
 
 SHOW_OWNER_LOCATION_PROPERTY_IN_REPORT_BUILDER = FrozenPrivilegeToggle(
