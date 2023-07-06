@@ -93,9 +93,8 @@ from corehq.apps.locations.permissions import location_safe
 from corehq.apps.sms.event_handlers import handle_email_messaging_subevent
 from corehq.apps.users.event_handlers import handle_email_invite_message
 from corehq.apps.users.landing_pages import get_redirect_url
-from corehq.apps.users.models import CouchUser, Invitation
+from corehq.apps.users.models import CouchUser, Invitation, is_option_enabled
 from corehq.apps.users.util import format_username, is_dimagi_email
-from corehq.toggles import CLOUDCARE_LATEST_BUILD
 from corehq.util.context_processors import commcare_hq_names
 from corehq.util.email_event_utils import handle_email_sns_event
 from corehq.util.metrics import create_metrics_event, metrics_counter, metrics_gauge
@@ -528,19 +527,24 @@ def logout(req, default_domain_redirect='domain_login'):
         return HttpResponseRedirect(reverse('login'))
 
 
-# ping_response powers the ping_login and ping_session views, both tiny views used in user inactivity and
-# session expiration handling.ping_session extends the user's current session, while ping_login does not.
-# This difference is controlled in SelectiveSessionMiddleware, which makes ping_login bypass sessions.
+# ping_response powers the ping_login and ping_session views, both tiny
+# views used in user inactivity and session expiration handling.
+# ping_session extends the user's current session, while ping_login does
+# not. This difference is controlled in SelectiveSessionMiddleware,
+# which makes ping_login bypass sessions.
 @location_safe
 @two_factor_exempt
 def ping_response(request):
     current_build_id = request.GET.get('selected_app_id', '')
     domain = request.GET.get('domain', '')
     new_app_version_available = False
-    # Do not show popup to users who have use_latest_build_cloudcare ff enabled
-    latest_build_ff_enabled = (CLOUDCARE_LATEST_BUILD.enabled(domain)
-                or CLOUDCARE_LATEST_BUILD.enabled(request.user.username))
-    if current_build_id and domain and not latest_build_ff_enabled:
+    # Do not show popup to users who have use_latest_build_cloudcare enabled
+    latest_build_enabled = is_option_enabled(
+        'use_latest_build_cloudcare',
+        username=request.user.username,
+        domain_name=domain,
+    )
+    if current_build_id and domain and not latest_build_enabled:
         app = get_app_cached(domain, current_build_id)
         app_id = app['copy_of'] if app['copy_of'] else app['_id']
         latest_build_id = get_latest_released_build_id(domain, app_id)

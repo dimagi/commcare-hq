@@ -78,7 +78,7 @@ from corehq.apps.hqwebapp.templatetags.hq_shared_tags import can_use_restore_as
 from corehq.apps.locations.permissions import location_safe
 from corehq.apps.reports.formdetails import readable
 from corehq.apps.users.decorators import require_can_login_as
-from corehq.apps.users.models import CouchUser
+from corehq.apps.users.models import CouchUser, is_option_enabled
 from corehq.apps.users.util import format_username
 from corehq.apps.users.views import BaseUserSettingsView
 from corehq.apps.integration.util import integration_contexts
@@ -216,14 +216,14 @@ class FormplayerMain(View):
 
 
 def _fetch_build(domain, username, app_id):
-    if (toggles.CLOUDCARE_LATEST_BUILD.enabled(domain) or toggles.CLOUDCARE_LATEST_BUILD.enabled(username)):
+    if is_option_enabled('use_latest_build_cloudcare', username, domain):
         return get_latest_build_doc(domain, app_id)
     else:
         return get_latest_released_app_doc(domain, app_id)
 
 
 def _fetch_build_id(domain, username, app_id):
-    if (toggles.CLOUDCARE_LATEST_BUILD.enabled(domain) or toggles.CLOUDCARE_LATEST_BUILD.enabled(username)):
+    if is_option_enabled('use_latest_build_cloudcare', username, domain):
         return get_latest_build_id(domain, app_id)
     else:
         return get_latest_released_build_id(domain, app_id)

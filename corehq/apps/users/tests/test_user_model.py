@@ -3,16 +3,22 @@ from datetime import datetime, timedelta
 from django.test import SimpleTestCase, TestCase
 
 from corehq.apps.custom_data_fields.models import (
+    PROFILE_SLUG,
     CustomDataFieldsDefinition,
     CustomDataFieldsProfile,
     Field,
-    PROFILE_SLUG,
+)
+from corehq.apps.domain.shortcuts import create_domain
+from corehq.apps.users.models import (
+    CommCareUser,
+    CouchUser,
+    DeviceAppMeta,
+    UserOptionToggles,
+    WebUser,
+    is_option_enabled,
 )
 from corehq.apps.users.models_role import UserRole
-from corehq.apps.users.role_utils import UserRolePresets
 from corehq.apps.users.views.mobile.custom_data_fields import UserFieldsView
-from corehq.apps.domain.shortcuts import create_domain
-from corehq.apps.users.models import CommCareUser, DeviceAppMeta, WebUser, CouchUser
 from corehq.form_processor.tests.utils import FormProcessorTestUtils
 from corehq.form_processor.utils import (
     TestFormMetadata,
@@ -376,3 +382,131 @@ class TestWebUserRoles(TestCommCareUserRoles):
 
         self.check_role(user, self.role1, self.domain)
         self.check_role(user, self.role2, self.domain2)
+
+
+class TestIsOptionEnabled(TestCase):
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+
+        cls.honinbo = create_domain('honinbo')
+        cls.addClassCleanup(cls.honinbo.get_db().delete_doc, cls.honinbo)
+
+        cls.shusai = WebUser.create(
+            domain='honinbo',
+            username='shusai',
+            password='***',
+            created_by=None,
+            created_via=None,
+        )
+        cls.addClassCleanup(cls.shusai.delete, None, None)
+
+        cls.go_seigen = WebUser.create(
+            domain=None,
+            username='go_seigen',
+            password='***',
+            created_by=None,
+            created_via=None,
+        )
+        cls.addClassCleanup(cls.go_seigen.delete, None, None)
+
+    def test_not_enabled(self):
+        self.assertFalse(is_option_enabled(
+            'use_latest_build_cloudcare',
+            username='shusai',
+            domain_name='honinbo',
+        ))
+
+    def test_only_user_enabled(self):
+        options = UserOptionToggles.objects.create(
+            user=self.shusai.get_django_user(),
+            use_latest_build_cloudcare=True,
+        )
+        self.addCleanup(options.delete)
+
+        self.assertTrue(is_option_enabled(
+            'use_latest_build_cloudcare',
+            username='shusai',
+            domain_name='honinbo',
+        ))
+
+    def test_only_domain_enabled(self):
+        from corehq.apps.domain.models import DomainOptionToggles
+
+        options = DomainOptionToggles.objects.create(
+            domain='honinbo',
+            use_latest_build_cloudcare=True,
+        )
+        self.addCleanup(options.delete)
+
+        self.assertTrue(is_option_enabled(
+            'use_latest_build_cloudcare',
+            username='shusai',
+            domain_name='honinbo',
+        ))
+
+    def test_user_domain_enabled(self):
+        from corehq.apps.domain.models import DomainOptionToggles
+
+        user_options = UserOptionToggles.objects.create(
+            user=self.shusai.get_django_user(),
+            use_latest_build_cloudcare=True,
+        )
+        self.addCleanup(user_options.delete)
+        domain_options = DomainOptionToggles.objects.create(
+            domain='honinbo',
+            use_latest_build_cloudcare=True,
+        )
+        self.addCleanup(domain_options.delete)
+
+        self.assertTrue(is_option_enabled(
+            'use_latest_build_cloudcare',
+            username='shusai',
+            domain_name='honinbo',
+        ))
+
+    def test_user_disabled(self):
+        options = UserOptionToggles.objects.create(
+            user=self.shusai.get_django_user(),
+            use_latest_build_cloudcare=False,
+        )
+        self.addCleanup(options.delete)
+
+        self.assertFalse(is_option_enabled(
+            'use_latest_build_cloudcare',
+            username='shusai',
+            domain_name='honinbo',
+        ))
+
+    def test_invalid_option(self):
+        options = UserOptionToggles.objects.create(
+            user=self.shusai.get_django_user(),
+            use_latest_build_cloudcare=True,
+        )
+        self.addCleanup(options.delete)
+
+        self.assertFalse(is_option_enabled(
+            'not_an_option',
+            username='shusai',
+            domain_name='honinbo',
+        ))
+
+    def test_bad_username(self):
+        with self.assertRaises(AssertionError):
+            is_option_enabled(
+                'use_latest_build_cloudcare',
+                username='magnus.carlsen',
+            )
+
+    def test_bad_domain(self):
+        self.assertFalse(is_option_enabled(
+            'use_latest_build_cloudcare',
+            domain_name='chess',
+        ))
+
+    def test_no_username_or_domain(self):
+        with self.assertRaises(AssertionError):
+            is_option_enabled(
+                'use_latest_build_cloudcare',
+            )

@@ -3003,6 +3003,36 @@ class UserOptionToggles(models.Model):
     use_latest_build_cloudcare = models.BooleanField(default=False)
 
 
+def is_option_enabled(option, username=None, domain_name=None):
+    """
+    Returns whether an option is enabled for a user or their domain.
+
+    Returns False if the option does not exist.
+    """
+    assert username or domain_name, 'username and/or domain_name required'
+
+    if username:
+        couch_user = CouchUser.get_by_username(username)
+        assert couch_user, f'User {username} not found'
+        django_user = couch_user.get_django_user()
+        try:
+            options = django_user.option_toggles
+            return getattr(options, option, False)
+        except User.option_toggles.RelatedObjectDoesNotExist:
+            pass
+
+    if domain_name:
+        from corehq.apps.domain.models import DomainOptionToggles
+
+        try:
+            options = DomainOptionToggles.objects.get(domain=domain_name)
+            return getattr(options, option, False)
+        except DomainOptionToggles.DoesNotExist:
+            pass
+
+    return False
+
+
 class ApiKeyManager(models.Manager):
     def get_queryset(self):
         return super().get_queryset()\
