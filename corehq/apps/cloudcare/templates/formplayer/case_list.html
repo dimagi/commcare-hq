@@ -25,8 +25,10 @@
           <% if (hasNoItems) { %>
             {% include 'formplayer/no_items_text.html' %}
           <% } else if (isMultiSelect) { %>
-            <input type="checkbox" id="select-all-tile-checkbox"/>
-            <label id="select-all-tile-checkbox-label" for="select-all-tile-checkbox">{% trans "Select All" %}</label>
+            <div id="select-all-tile-wrapper">
+              <input type="checkbox" id="select-all-tile-checkbox"/>
+              <label id="select-all-tile-checkbox-label" for="select-all-tile-checkbox">{% trans "Select All" %}</label>
+            </div>
           <% } %>
           <section  class="js-case-container clearfix list-cell-container-style"></section>
         <% } else { %>
@@ -125,6 +127,51 @@
       <% } %>
     </div>
     <% }); %>
+  </div>
+</script>
+
+<script type="text/template" id="case-tile-grouped-view-item-template">
+  <% if (isMultiSelect) { %>
+    <div class="select-row-checkbox-div">
+      <input type="checkbox" class="select-row-checkbox"/>
+    </div>
+  <% } %>
+
+  <div class="group-data">
+    <div class="<%- prefix %>-cell-grid-style">
+      <% for (let [index, datum] of Object.entries(indexedHeaderData)) { %>
+        <div class="<%- prefix %>-grid-style-<%- index %> box" >
+          <% if (styles[index].displayFormat === 'Image') {
+          if(resolveUri(datum)) { %>
+            <img class="module-icon" style="max-width:100%; max-height:100%;" src="<%- resolveUri(datum) %>"/>
+          <% } %>
+          <% } else if(styles[index].widthHint === 0) { %>
+            <div style="display:none;"><%- datum %></div>
+          <% } else { %>
+            <div class="webapp-markdown-output"><%= renderMarkdown(datum) %></div>
+          <% } %>
+        </div>
+      <% }; %>
+    </div>
+
+    <div class="group-rows">
+      <% _.each(indexedRowDataList, function(indexedRowData) { %>
+        <div class="<%- prefix %>-cell-grid-style group-row">
+          <% for (let index in indexedRowData) { %>
+            <% let datum = indexedRowData[index]; %>
+            <div class="<%- prefix %>-grid-style-<%- index %> box">
+              <% if (styles[index].displayFormat === 'Image') {
+                if(resolveUri(datum)) { %>
+                  <img class="module-icon" style="max-width:100%; max-height:100%;" src="<%- resolveUri(datum) %>"/>
+                <% } %>
+                <% } else { %>
+                  <div class="webapp-markdown-output"><%= renderMarkdown(datum) %></div>
+              <% } %>
+            </div>
+          <% } %>
+        </div>
+      <% }); %>
+    </div>
   </div>
 </script>
 
