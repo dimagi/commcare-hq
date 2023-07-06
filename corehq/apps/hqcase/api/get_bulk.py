@@ -97,7 +97,7 @@ def _prepare_result(domain, es_results, doc_ids, es_id_field, serialized_id_fiel
     missing_ids = []
     results_by_id = {
         res[es_id_field]: res for res in es_results
-        if res['domain'] == domain and res['type']
+        if res['domain'] == domain
     }
     final_results = [_get_doc(doc_id) for doc_id in doc_ids]
 

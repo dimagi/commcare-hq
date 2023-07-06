@@ -112,7 +112,7 @@ class TestCaseListAPI(TestCase):
 
         query_dict = QueryDict('')
         res = get_list(self.domain, self.couch_user, query_dict)
-        self.assertEqual(res['matching_records'], 2)
+        self.assertEqual(res['matching_records'], 7)
         self.assertNotIn('next', res)
 
         query_dict = QueryDict('include_deprecated=True')
