@@ -1,12 +1,7 @@
 import json
 import re
-from corehq.apps.data_interfaces.forms import CaseRuleCriteriaForm, validate_case_property_name
-from corehq.apps.data_interfaces.models import CreateScheduleInstanceActionDefinition
-from corehq.apps.groups.models import Group
-from crispy_forms import layout as crispy
-from crispy_forms import bootstrap as twbscrispy
 from datetime import datetime, timedelta
-from dateutil import parser
+
 from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.db import transaction
@@ -14,58 +9,90 @@ from django.forms.fields import (
     BooleanField,
     CharField,
     ChoiceField,
-    MultipleChoiceField,
     IntegerField,
+    MultipleChoiceField,
 )
 from django.forms.forms import Form
 from django.forms.formsets import BaseFormSet, formset_factory
-from django.forms.widgets import CheckboxSelectMultiple, HiddenInput, Select, SelectMultiple
+from django.forms.widgets import (
+    CheckboxSelectMultiple,
+    HiddenInput,
+    Select,
+    SelectMultiple,
+)
 from django.utils.functional import cached_property
+from django.utils.translation import gettext as _
+from django.utils.translation import gettext_lazy
+
+from couchdbkit import ResourceNotFound
+from crispy_forms import bootstrap as twbscrispy
+from crispy_forms import layout as crispy
+from dateutil import parser
+from langcodes import get_name as get_language_name
 from memoized import memoized
 
-from corehq.apps.hqwebapp.crispy import HQFormHelper
 from dimagi.utils.django.fields import TrimmedCharField
-from django.utils.translation import gettext as _, gettext_lazy
-from corehq.apps.app_manager.dbaccessors import get_app, get_latest_released_app
+
+from corehq.apps.app_manager.dbaccessors import (
+    get_app,
+    get_latest_released_app,
+)
 from corehq.apps.app_manager.exceptions import FormNotFoundException
 from corehq.apps.app_manager.models import AdvancedForm
 from corehq.apps.casegroups.models import CommCareCaseGroup
+from corehq.apps.data_interfaces.forms import (
+    CaseRuleCriteriaForm,
+    validate_case_property_name,
+)
+from corehq.apps.data_interfaces.models import (
+    CreateScheduleInstanceActionDefinition,
+)
+from corehq.apps.groups.models import Group
 from corehq.apps.hqwebapp import crispy as hqcrispy
-from corehq.apps.locations.models import SQLLocation, LocationType
-from corehq.apps.reminders.util import get_form_list, get_combined_id, split_combined_id
-from corehq.apps.sms.util import get_or_create_sms_translations
+from corehq.apps.hqwebapp.crispy import HQFormHelper
+from corehq.apps.locations.models import LocationType, SQLLocation
+from corehq.apps.reminders.util import (
+    get_combined_id,
+    get_form_list,
+    split_combined_id,
+)
 from corehq.apps.reports.filters.users import ExpandedMobileWorkerFilter
+from corehq.apps.sms.util import get_or_create_sms_translations
 from corehq.apps.smsforms.models import SQLXFormsSession
 from corehq.apps.users.models import CommCareUser
 from corehq.form_processor.models import CommCareCase
 from corehq.messaging.scheduling.const import (
-    VISIT_WINDOW_START,
-    VISIT_WINDOW_END,
     VISIT_WINDOW_DUE_DATE,
+    VISIT_WINDOW_END,
+    VISIT_WINDOW_START,
 )
-from corehq.messaging.scheduling.exceptions import ImmediateMessageEditAttempt, UnsupportedScheduleError
+from corehq.messaging.scheduling.exceptions import (
+    ImmediateMessageEditAttempt,
+    UnsupportedScheduleError,
+)
 from corehq.messaging.scheduling.models import (
-    Schedule,
-    AlertSchedule,
     AlertEvent,
-    TimedSchedule,
-    TimedEvent,
-    RandomTimedEvent,
+    AlertSchedule,
     CasePropertyTimedEvent,
-    ImmediateBroadcast,
-    ScheduledBroadcast,
-    SMSContent,
-    EmailContent,
-    SMSSurveyContent,
     CustomContent,
-    IVRSurveyContent,
-    SMSCallbackContent,
+    EmailContent,
     FCMNotificationContent,
+    ImmediateBroadcast,
+    IVRSurveyContent,
+    RandomTimedEvent,
+    Schedule,
+    ScheduledBroadcast,
+    SMSCallbackContent,
+    SMSContent,
+    SMSSurveyContent,
+    TimedEvent,
+    TimedSchedule,
 )
-from corehq.messaging.scheduling.scheduling_partitioned.models import ScheduleInstance, CaseScheduleInstanceMixin
+from corehq.messaging.scheduling.scheduling_partitioned.models import (
+    CaseScheduleInstanceMixin,
+    ScheduleInstance,
+)
 from corehq.toggles import EXTENSION_CASES_SYNC_ENABLED, FCM_NOTIFICATION
-from couchdbkit import ResourceNotFound
-from langcodes import get_name as get_language_name
 
 
 def validate_time(value):
@@ -356,7 +383,6 @@ class ContentForm(Form):
 
         raise NotImplementedError("SMS / Callback is no longer supported")
 
-
     def distill_content(self):
         if self.schedule_form.cleaned_data['content'] == ScheduleForm.CONTENT_SMS:
             return SMSContent(
@@ -375,10 +401,10 @@ class ContentForm(Form):
                 form_unique_id=form_unique_id,
                 expire_after=self.cleaned_data['survey_expiration_in_hours'] * 60,
                 reminder_intervals=self.cleaned_data['survey_reminder_intervals'],
-                submit_partially_completed_forms=
-                    self.schedule_form.cleaned_data['submit_partially_completed_forms'],
-                include_case_updates_in_partial_submissions=
-                    self.schedule_form.cleaned_data['include_case_updates_in_partial_submissions']
+                submit_partially_completed_forms=self.schedule_form.cleaned_data[
+                    'submit_partially_completed_forms'],
+                include_case_updates_in_partial_submissions=self.schedule_form.cleaned_data[
+                    'include_case_updates_in_partial_submissions']
             )
         elif self.schedule_form.cleaned_data['content'] == ScheduleForm.CONTENT_CUSTOM_SMS:
             return CustomContent(
@@ -620,8 +646,8 @@ class CustomEventForm(ContentForm):
 
     def clean_time(self):
         if (
-            not self.schedule_form.cleaned_data_uses_timed_schedule() or
-            self.schedule_form.cleaned_data.get('send_time_type') not in [
+            not self.schedule_form.cleaned_data_uses_timed_schedule()
+            or self.schedule_form.cleaned_data.get('send_time_type') not in [
                 TimedSchedule.EVENT_SPECIFIC_TIME, TimedSchedule.EVENT_RANDOM_TIME
             ]
         ):
@@ -631,8 +657,8 @@ class CustomEventForm(ContentForm):
 
     def clean_window_length(self):
         if (
-            not self.schedule_form.cleaned_data_uses_timed_schedule() or
-            self.schedule_form.cleaned_data.get('send_time_type') != TimedSchedule.EVENT_RANDOM_TIME
+            not self.schedule_form.cleaned_data_uses_timed_schedule()
+            or self.schedule_form.cleaned_data.get('send_time_type') != TimedSchedule.EVENT_RANDOM_TIME
         ):
             return None
 
@@ -645,8 +671,8 @@ class CustomEventForm(ContentForm):
 
     def clean_case_property_name(self):
         if (
-            not self.schedule_form.cleaned_data_uses_timed_schedule() or
-            self.schedule_form.cleaned_data.get('send_time_type') != TimedSchedule.EVENT_CASE_PROPERTY_TIME
+            not self.schedule_form.cleaned_data_uses_timed_schedule()
+            or self.schedule_form.cleaned_data.get('send_time_type') != TimedSchedule.EVENT_CASE_PROPERTY_TIME
         ):
             return None
 
@@ -844,9 +870,9 @@ class BaseCustomEventFormSet(BaseFormSet):
         for form in custom_event_forms:
             if prev_form:
                 if send_time_type in (TimedSchedule.EVENT_SPECIFIC_TIME, TimedSchedule.EVENT_RANDOM_TIME):
-                    if(
-                        (form.cleaned_data['day'], form.cleaned_data['time']) <
-                        (prev_form.cleaned_data['day'], prev_form.cleaned_data['time'])
+                    if (
+                        (form.cleaned_data['day'], form.cleaned_data['time'])
+                        < (prev_form.cleaned_data['day'], prev_form.cleaned_data['time'])
                     ):
                         form.add_error(
                             'time',
@@ -885,8 +911,8 @@ class BaseCustomEventFormSet(BaseFormSet):
         for form in custom_event_forms:
             if prev_form:
                 prev_window_end_time = (
-                    datetime(2000, 1, 1) +
-                    timedelta(
+                    datetime(2000, 1, 1)
+                    + timedelta(
                         days=prev_form.cleaned_data['day'],
                         hours=prev_form.cleaned_data['time'].hour,
                         minutes=prev_form.cleaned_data['time'].minute + prev_form.cleaned_data['window_length']
@@ -894,8 +920,8 @@ class BaseCustomEventFormSet(BaseFormSet):
                 )
 
                 curr_window_start_time = (
-                    datetime(2000, 1, 1) +
-                    timedelta(
+                    datetime(2000, 1, 1)
+                    + timedelta(
                         days=form.cleaned_data['day'],
                         hours=form.cleaned_data['time'].hour,
                         minutes=form.cleaned_data['time'].minute
@@ -929,8 +955,8 @@ class BaseCustomEventFormSet(BaseFormSet):
         for form in custom_event_forms:
             if prev_form:
                 prev_time = (
-                    datetime(2000, 1, 1) +
-                    timedelta(
+                    datetime(2000, 1, 1)
+                    + timedelta(
                         days=prev_form.cleaned_data['day'],
                         hours=prev_form.cleaned_data['time'].hour,
                         minutes=prev_form.cleaned_data['time'].minute
@@ -938,8 +964,8 @@ class BaseCustomEventFormSet(BaseFormSet):
                 )
 
                 curr_time = (
-                    datetime(2000, 1, 1) +
-                    timedelta(
+                    datetime(2000, 1, 1)
+                    + timedelta(
                         days=form.cleaned_data['day'],
                         hours=form.cleaned_data['time'].hour,
                         minutes=form.cleaned_data['time'].minute
@@ -995,10 +1021,10 @@ class BaseCustomEventFormSet(BaseFormSet):
         elif schedule_form.cleaned_data_uses_timed_schedule():
             # Use short-circuiting to only continue validating if the previous
             # validation passes
-            (self.validate_timed_schedule_order(schedule_form, non_deleted_forms) and
-             self.validate_random_timed_events_do_not_overlap(schedule_form, non_deleted_forms) and
-             self.validate_timed_schedule_min_tick(schedule_form, non_deleted_forms) and
-             self.validate_repeat_every_on_schedule_form(schedule_form, non_deleted_forms))
+            (self.validate_timed_schedule_order(schedule_form, non_deleted_forms)
+             and self.validate_random_timed_events_do_not_overlap(schedule_form, non_deleted_forms)
+             and self.validate_timed_schedule_min_tick(schedule_form, non_deleted_forms)
+             and self.validate_repeat_every_on_schedule_form(schedule_form, non_deleted_forms))
         else:
             raise ValueError("Unexpected schedule type")
 
@@ -1255,8 +1281,8 @@ class ScheduleForm(Form):
     def update_send_frequency_choices(self, initial_value):
         def filter_function(two_tuple):
             if (
-                not self.allow_custom_immediate_schedule and
-                two_tuple[0] == self.SEND_CUSTOM_IMMEDIATE
+                not self.allow_custom_immediate_schedule
+                and two_tuple[0] == self.SEND_CUSTOM_IMMEDIATE
             ):
                 return False
 
@@ -1270,7 +1296,8 @@ class ScheduleForm(Form):
 
             return True
 
-        self.fields['send_frequency'].choices = list(filter(filter_function, self.fields['send_frequency'].choices))
+        self.fields['send_frequency'].choices = list(filter(filter_function,
+                                                            self.fields['send_frequency'].choices))
 
     def set_default_language_code_choices(self):
         choices = [
@@ -1501,7 +1528,7 @@ class ScheduleForm(Form):
             app_id, form_unique_id = split_combined_id(app_and_form_unique_id)
             app = get_app(self.domain, app_id)
             form = app.get_form(form_unique_id)
-        except:
+        except Exception:
             raise ValidationError(error_msg)
 
         return form, app
@@ -1603,8 +1630,8 @@ class ScheduleForm(Form):
 
     def add_additional_content_types(self):
         if (
-            self.can_use_sms_surveys or
-            (self.initial_schedule and self.initial_schedule.memoized_uses_sms_survey)
+            self.can_use_sms_surveys
+            or (self.initial_schedule and self.initial_schedule.memoized_uses_sms_survey)
         ):
             self.fields['content'].choices += [
                 (self.CONTENT_SMS_SURVEY, _("SMS Survey")),
@@ -2279,9 +2306,9 @@ class ScheduleForm(Form):
 
     def clean_send_time(self):
         if (
-            self.cleaned_data_uses_custom_event_definitions() or
-            self.cleaned_data_uses_alert_schedule() or
-            self.cleaned_data.get('send_time_type') not in [
+            self.cleaned_data_uses_custom_event_definitions()
+            or self.cleaned_data_uses_alert_schedule()
+            or self.cleaned_data.get('send_time_type') not in [
                 TimedSchedule.EVENT_SPECIFIC_TIME, TimedSchedule.EVENT_RANDOM_TIME
             ]
         ):
@@ -2291,9 +2318,9 @@ class ScheduleForm(Form):
 
     def clean_window_length(self):
         if (
-            self.cleaned_data_uses_custom_event_definitions() or
-            self.cleaned_data_uses_alert_schedule() or
-            self.cleaned_data.get('send_time_type') != TimedSchedule.EVENT_RANDOM_TIME
+            self.cleaned_data_uses_custom_event_definitions()
+            or self.cleaned_data_uses_alert_schedule()
+            or self.cleaned_data.get('send_time_type') != TimedSchedule.EVENT_RANDOM_TIME
         ):
             return None
 
@@ -2321,8 +2348,8 @@ class ScheduleForm(Form):
 
     def clean_repeat_every(self):
         if (
-            self.cleaned_data_uses_alert_schedule() or
-            self.cleaned_data.get('repeat') != self.REPEAT_EVERY_N
+            self.cleaned_data_uses_alert_schedule()
+            or self.cleaned_data.get('repeat') != self.REPEAT_EVERY_N
         ):
             return None
 
@@ -2330,8 +2357,8 @@ class ScheduleForm(Form):
 
     def clean_stop_type(self):
         if (
-            self.cleaned_data_uses_alert_schedule() or
-            self.cleaned_data.get('repeat') == self.REPEAT_NO
+            self.cleaned_data_uses_alert_schedule()
+            or self.cleaned_data.get('repeat') == self.REPEAT_NO
         ):
             return None
 
@@ -2343,9 +2370,9 @@ class ScheduleForm(Form):
 
     def clean_occurrences(self):
         if (
-            self.cleaned_data_uses_alert_schedule() or
-            self.cleaned_data.get('repeat') == self.REPEAT_NO or
-            self.cleaned_data.get('stop_type') != self.STOP_AFTER_OCCURRENCES
+            self.cleaned_data_uses_alert_schedule()
+            or self.cleaned_data.get('repeat') == self.REPEAT_NO
+            or self.cleaned_data.get('stop_type') != self.STOP_AFTER_OCCURRENCES
         ):
             return None
 
@@ -2376,8 +2403,8 @@ class ScheduleForm(Form):
                 value = json.loads(value)
             except Exception:
                 raise ValidationError(err)
-            if (not isinstance(value, list) or not value or
-                    any(not isinstance(v, str) for v in value)):
+            if (not isinstance(value, list) or not value
+                    or any(not isinstance(v, str) for v in value)):
                 raise ValidationError(err)
         else:
             value = [value]
@@ -2388,13 +2415,13 @@ class ScheduleForm(Form):
         form_data = self.cleaned_data
         return (
             [(ScheduleInstance.RECIPIENT_TYPE_MOBILE_WORKER, user_id)
-             for user_id in form_data['user_recipients']] +
-            [(ScheduleInstance.RECIPIENT_TYPE_USER_GROUP, group_id)
-             for group_id in form_data['user_group_recipients']] +
-            [(ScheduleInstance.RECIPIENT_TYPE_LOCATION, location_id)
-             for location_id in form_data['user_organization_recipients']] +
-            [(ScheduleInstance.RECIPIENT_TYPE_CASE_GROUP, case_group_id)
-             for case_group_id in form_data['case_group_recipients']]
+             for user_id in form_data['user_recipients']]
+            + [(ScheduleInstance.RECIPIENT_TYPE_USER_GROUP, group_id)
+               for group_id in form_data['user_group_recipients']]
+            + [(ScheduleInstance.RECIPIENT_TYPE_LOCATION, location_id)
+               for location_id in form_data['user_organization_recipients']]
+            + [(ScheduleInstance.RECIPIENT_TYPE_CASE_GROUP, case_group_id)
+               for case_group_id in form_data['case_group_recipients']]
         )
 
     def distill_total_iterations(self):
@@ -2425,8 +2452,8 @@ class ScheduleForm(Form):
             'active': form_data['active'],
             'default_language_code': self.distill_default_language_code(),
             'include_descendant_locations': (
-                ScheduleInstance.RECIPIENT_TYPE_LOCATION in form_data['recipient_types'] and
-                form_data['include_descendant_locations']
+                ScheduleInstance.RECIPIENT_TYPE_LOCATION in form_data['recipient_types']
+                and form_data['include_descendant_locations']
             ),
             'location_type_filter': form_data['location_types'],
             'use_utc_as_default_timezone': form_data['use_utc_as_default_timezone'],
@@ -2850,8 +2877,8 @@ class ConditionalAlertScheduleForm(ScheduleForm):
     custom_recipient = ChoiceField(
         required=False,
         choices=(
-            [('', '')] +
-            [(k, v[1]) for k, v in settings.AVAILABLE_CUSTOM_SCHEDULING_RECIPIENTS.items()]
+            [('', '')]
+            + [(k, v[1]) for k, v in settings.AVAILABLE_CUSTOM_SCHEDULING_RECIPIENTS.items()]
         )
     )
 
@@ -2961,8 +2988,8 @@ class ConditionalAlertScheduleForm(ScheduleForm):
         super(ConditionalAlertScheduleForm, self).add_additional_content_types()
 
         if (
-            self.is_system_admin or
-            self.initial.get('content') == self.CONTENT_CUSTOM_SMS
+            self.is_system_admin
+            or self.initial.get('content') == self.CONTENT_CUSTOM_SMS
         ):
             self.fields['content'].choices += [
                 (self.CONTENT_CUSTOM_SMS, _("Custom SMS")),
@@ -2985,7 +3012,7 @@ class ConditionalAlertScheduleForm(ScheduleForm):
         app_id, form_unique_id = split_combined_id(value)
         try:
             form, app = self.get_latest_released_form_and_app(app_id, form_unique_id)
-        except:
+        except Exception:
             return {}
 
         return {'id': value, 'text': form.full_path_name}
@@ -3007,19 +3034,19 @@ class ConditionalAlertScheduleForm(ScheduleForm):
     @cached_property
     def requires_system_admin_to_edit(self):
         return (
-            CaseScheduleInstanceMixin.RECIPIENT_TYPE_CUSTOM in self.initial.get('recipient_types', []) or
-            self.initial.get('content') == self.CONTENT_CUSTOM_SMS or
-            self.initial.get('start_date_type') == self.START_DATE_FROM_VISIT_SCHEDULER or
-            self.initial.get('capture_custom_metadata_item') == self.YES
+            CaseScheduleInstanceMixin.RECIPIENT_TYPE_CUSTOM in self.initial.get('recipient_types', [])
+            or self.initial.get('content') == self.CONTENT_CUSTOM_SMS
+            or self.initial.get('start_date_type') == self.START_DATE_FROM_VISIT_SCHEDULER
+            or self.initial.get('capture_custom_metadata_item') == self.YES
         )
 
     @cached_property
     def requires_system_admin_to_save(self):
         return (
-            CaseScheduleInstanceMixin.RECIPIENT_TYPE_CUSTOM in self.cleaned_data['recipient_types'] or
-            self.cleaned_data['content'] == self.CONTENT_CUSTOM_SMS or
-            self.cleaned_data['start_date_type'] == self.START_DATE_FROM_VISIT_SCHEDULER or
-            self.cleaned_data['capture_custom_metadata_item'] == self.YES
+            CaseScheduleInstanceMixin.RECIPIENT_TYPE_CUSTOM in self.cleaned_data['recipient_types']
+            or self.cleaned_data['content'] == self.CONTENT_CUSTOM_SMS
+            or self.cleaned_data['start_date_type'] == self.START_DATE_FROM_VISIT_SCHEDULER
+            or self.cleaned_data['capture_custom_metadata_item'] == self.YES
         )
 
     def update_send_time_type_choices(self):
@@ -3040,8 +3067,8 @@ class ConditionalAlertScheduleForm(ScheduleForm):
         new_choices.extend(self.fields['recipient_types'].choices)
 
         if (
-            self.is_system_admin or
-            CaseScheduleInstanceMixin.RECIPIENT_TYPE_CUSTOM in self.initial.get('recipient_types', [])
+            self.is_system_admin
+            or CaseScheduleInstanceMixin.RECIPIENT_TYPE_CUSTOM in self.initial.get('recipient_types', [])
         ):
             new_choices.extend([
                 (CaseScheduleInstanceMixin.RECIPIENT_TYPE_CUSTOM, _("Custom Recipient")),
@@ -3051,8 +3078,8 @@ class ConditionalAlertScheduleForm(ScheduleForm):
 
     def update_start_date_type_choices(self):
         if (
-            self.is_system_admin or
-            self.initial.get('start_date_type') == self.START_DATE_FROM_VISIT_SCHEDULER
+            self.is_system_admin
+            or self.initial.get('start_date_type') == self.START_DATE_FROM_VISIT_SCHEDULER
         ):
             self.fields['start_date_type'].choices += [
                 (self.START_DATE_FROM_VISIT_SCHEDULER, _("A date from a visit scheduler")),
@@ -3081,8 +3108,8 @@ class ConditionalAlertScheduleForm(ScheduleForm):
 
     def add_initial_for_custom_metadata(self, result):
         if (
-            isinstance(self.initial_schedule.custom_metadata, dict) and
-            len(self.initial_schedule.custom_metadata) > 0
+            isinstance(self.initial_schedule.custom_metadata, dict)
+            and len(self.initial_schedule.custom_metadata) > 0
         ):
             result['capture_custom_metadata_item'] = self.YES
             for name, value in self.initial_schedule.custom_metadata.items():
@@ -3127,8 +3154,8 @@ class ConditionalAlertScheduleForm(ScheduleForm):
         if self.initial_schedule:
             schedule = self.initial_schedule
             if (
-                isinstance(schedule, TimedSchedule) and
-                result.get('start_date_type') != self.START_DATE_SPECIFIC_DATE
+                isinstance(schedule, TimedSchedule)
+                and result.get('start_date_type') != self.START_DATE_SPECIFIC_DATE
             ):
                 if schedule.start_offset == 0:
                     result['start_offset_type'] = self.START_OFFSET_ZERO
@@ -3234,17 +3261,20 @@ class ConditionalAlertScheduleForm(ScheduleForm):
                 _("Custom Recipient"),
                 twbscrispy.InlineField('custom_recipient'),
                 get_system_admin_label(),
-                data_bind="visible: recipientTypeSelected('%s')" % CaseScheduleInstanceMixin.RECIPIENT_TYPE_CUSTOM,
+                data_bind="visible: recipientTypeSelected('%s')" %
+                          CaseScheduleInstanceMixin.RECIPIENT_TYPE_CUSTOM,
             ),
-             hqcrispy.B3MultiField(
+            hqcrispy.B3MultiField(
                 _("Username Case Property"),
                 twbscrispy.InlineField('username_case_property'),
-                data_bind="visible: recipientTypeSelected('%s')" % CaseScheduleInstanceMixin.RECIPIENT_TYPE_CASE_PROPERTY_USER,
+                data_bind="visible: recipientTypeSelected('%s')" %
+                          CaseScheduleInstanceMixin.RECIPIENT_TYPE_CASE_PROPERTY_USER,
             ),
             hqcrispy.B3MultiField(
                 _("Email Case Property"),
                 twbscrispy.InlineField('email_case_property'),
-                data_bind="visible: recipientTypeSelected('%s')" % CaseScheduleInstanceMixin.RECIPIENT_TYPE_CASE_PROPERTY_EMAIL,
+                data_bind="visible: recipientTypeSelected('%s')" %
+                          CaseScheduleInstanceMixin.RECIPIENT_TYPE_CASE_PROPERTY_EMAIL,
             ),
         ])
         return result
@@ -3298,8 +3328,8 @@ class ConditionalAlertScheduleForm(ScheduleForm):
         ])
 
         if (
-            self.is_system_admin or
-            self.initial.get('capture_custom_metadata_item') == self.YES
+            self.is_system_admin
+            or self.initial.get('capture_custom_metadata_item') == self.YES
         ):
             result.extend([
                 hqcrispy.B3MultiField(
@@ -3327,8 +3357,8 @@ class ConditionalAlertScheduleForm(ScheduleForm):
 
     def clean_start_offset_type(self):
         if (
-            self.cleaned_data.get('send_frequency') not in (self.SEND_DAILY, self.SEND_CUSTOM_DAILY) or
-            self.cleaned_data.get('start_date_type') == self.START_DATE_SPECIFIC_DATE
+            self.cleaned_data.get('send_frequency') not in (self.SEND_DAILY, self.SEND_CUSTOM_DAILY)
+            or self.cleaned_data.get('start_date_type') == self.START_DATE_SPECIFIC_DATE
         ):
             return None
 
@@ -3338,8 +3368,8 @@ class ConditionalAlertScheduleForm(ScheduleForm):
             raise ValidationError(_("This field is required"))
 
         if (
-            value == self.START_OFFSET_NEGATIVE and
-            self.cleaned_data.get('start_date_type') == self.START_DATE_RULE_TRIGGER
+            value == self.START_OFFSET_NEGATIVE
+            and self.cleaned_data.get('start_date_type') == self.START_DATE_RULE_TRIGGER
         ):
             raise ValidationError(_("You may not start sending before the day that the rule triggers."))
 
@@ -3347,9 +3377,9 @@ class ConditionalAlertScheduleForm(ScheduleForm):
 
     def clean_start_offset(self):
         if (
-            self.cleaned_data.get('send_frequency') not in (self.SEND_DAILY, self.SEND_CUSTOM_DAILY) or
-            self.cleaned_data.get('start_date_type') == self.START_DATE_SPECIFIC_DATE or
-            self.cleaned_data.get('start_offset_type') == self.START_OFFSET_ZERO
+            self.cleaned_data.get('send_frequency') not in (self.SEND_DAILY, self.SEND_CUSTOM_DAILY)
+            or self.cleaned_data.get('start_date_type') == self.START_DATE_SPECIFIC_DATE
+            or self.cleaned_data.get('start_offset_type') == self.START_OFFSET_ZERO
         ):
             return None
 
@@ -3373,8 +3403,8 @@ class ConditionalAlertScheduleForm(ScheduleForm):
 
     def clean_start_day_of_week(self):
         if (
-            self.cleaned_data.get('send_frequency') != self.SEND_WEEKLY or
-            self.cleaned_data.get('start_date_type') == self.START_DATE_SPECIFIC_DATE
+            self.cleaned_data.get('send_frequency') != self.SEND_WEEKLY
+            or self.cleaned_data.get('start_date_type') == self.START_DATE_SPECIFIC_DATE
         ):
             return None
 
@@ -3406,9 +3436,9 @@ class ConditionalAlertScheduleForm(ScheduleForm):
     def clean_reset_case_property_enabled(self):
         value = self.cleaned_data['reset_case_property_enabled']
         if (
-            value == self.YES and
-            not self.cleaned_data_uses_alert_schedule() and
-            self.cleaned_data.get('start_date_type') != self.START_DATE_RULE_TRIGGER
+            value == self.YES
+            and not self.cleaned_data_uses_alert_schedule()
+            and self.cleaned_data.get('start_date_type') != self.START_DATE_RULE_TRIGGER
         ):
             raise ValidationError(
                 _("This option can only be enabled when the schedule's start date is set automatically.")
@@ -3441,8 +3471,8 @@ class ConditionalAlertScheduleForm(ScheduleForm):
 
     def clean_start_date_case_property(self):
         if (
-            self.cleaned_data_uses_alert_schedule() or
-            self.cleaned_data.get('start_date_type') != self.START_DATE_CASE_PROPERTY
+            self.cleaned_data_uses_alert_schedule()
+            or self.cleaned_data.get('start_date_type') != self.START_DATE_CASE_PROPERTY
         ):
             return None
 
@@ -3453,9 +3483,9 @@ class ConditionalAlertScheduleForm(ScheduleForm):
 
     def clean_send_time_case_property_name(self):
         if (
-            self.cleaned_data_uses_custom_event_definitions() or
-            self.cleaned_data_uses_alert_schedule() or
-            self.cleaned_data.get('send_time_type') != TimedSchedule.EVENT_CASE_PROPERTY_TIME
+            self.cleaned_data_uses_custom_event_definitions()
+            or self.cleaned_data_uses_alert_schedule()
+            or self.cleaned_data.get('send_time_type') != TimedSchedule.EVENT_CASE_PROPERTY_TIME
         ):
             return None
 
@@ -3576,9 +3606,9 @@ class ConditionalAlertScheduleForm(ScheduleForm):
         start_date_type = self.cleaned_data.get('start_date_type')
 
         if (
-            send_frequency in (self.SEND_DAILY, self.SEND_CUSTOM_DAILY) and
-            start_date_type != self.START_DATE_SPECIFIC_DATE and
-            start_offset_type in (self.START_OFFSET_NEGATIVE, self.START_OFFSET_POSITIVE)
+            send_frequency in (self.SEND_DAILY, self.SEND_CUSTOM_DAILY)
+            and start_date_type != self.START_DATE_SPECIFIC_DATE
+            and start_offset_type in (self.START_OFFSET_NEGATIVE, self.START_OFFSET_POSITIVE)
         ):
             start_offset = self.cleaned_data.get('start_offset')
 
