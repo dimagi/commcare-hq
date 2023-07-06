@@ -1157,3 +1157,11 @@ class AppReleaseModeSetting(models.Model):
     def get_settings(domain):
         domain_obj, created = AppReleaseModeSetting.objects.get_or_create(domain=domain)
         return domain_obj
+
+
+class DomainOptionToggles(models.Model):
+    """
+    Additional option toggles for a domain
+    """
+    domain = models.CharField(max_length=126, primary_key=True)
+    use_latest_build_cloudcare = models.BooleanField(default=False)

@@ -2991,6 +2991,18 @@ class UserReportingMetadataStaging(models.Model):
         unique_together = ('domain', 'user_id', 'app_id')
 
 
+class UserOptionToggles(models.Model):
+    """
+    Additional option toggles for a user
+    """
+    user = models.OneToOneField(
+        User,
+        related_name='option_toggles',
+        on_delete=models.CASCADE,
+    )
+    use_latest_build_cloudcare = models.BooleanField(default=False)
+
+
 class ApiKeyManager(models.Manager):
     def get_queryset(self):
         return super().get_queryset()\

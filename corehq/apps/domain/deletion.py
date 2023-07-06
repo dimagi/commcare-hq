@@ -450,6 +450,7 @@ DOMAIN_DELETE_OPERATIONS = [
     ModelDeletion('domain', 'AppReleaseModeSetting', 'domain'),
     ModelDeletion('events', 'Event', 'domain'),
     ModelDeletion('events', 'AttendanceTrackingConfig', 'domain'),
+    ModelDeletion('domain', 'DomainOptionToggles', 'domain'),
 ]
 
 
