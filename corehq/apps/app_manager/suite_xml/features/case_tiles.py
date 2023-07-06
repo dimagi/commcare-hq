@@ -83,7 +83,12 @@ class CaseTileHelper(object):
         detail = load_xmlobject_from_string(detail_as_string, xmlclass=Detail)
 
         # Case registration
-        if self.module.case_list_form.form_id:
+        # The Person simple template already defines a registration action. Since it is used in production
+        # it would be a lot of trouble to change it. So if this template is used we will not add another
+        # registration action.
+        uses_person_simple = self.module.case_details.short.case_tile_template and \
+            self.module.case_details.short.case_tile_template == CaseTileTemplates.PERSON_SIMPLE.value
+        if not uses_person_simple and self.module.case_list_form and self.module.case_list_form.form_id:
             DetailContributor.add_register_action(
                 self.app, self.module, detail.actions, self.build_profile_id, self.entries_helper)
 

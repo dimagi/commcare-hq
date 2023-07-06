@@ -49,7 +49,7 @@ class AppMigrationCommandBase(BaseCommand):
     Base class for commands that want to migrate apps.
     """
     chunk_size = 100
-    include_builds = False
+    include_builds = True
     include_linked_apps = False
 
     options = {}
