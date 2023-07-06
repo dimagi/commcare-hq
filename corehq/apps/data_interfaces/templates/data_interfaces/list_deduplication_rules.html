@@ -37,7 +37,10 @@
         <strong data-bind="text: name"></strong>
       </a>
     </td>
-    <td data-bind="text: case_type"></td>
+    <td>
+      <span data-bind="text: case_type" style="display: inline-block;"></span>
+      <span class="label label-warning" data-bind="visible: is_case_type_deprecated" style="display: inline-block;">{% trans "deprecated" %}</span>
+    </td>
     <td>
       <span class="label label-success" data-bind="visible: active">{% trans "Active" %}</span>
       <span class="label label-danger" data-bind="visible: !active">{% trans "Inactive" %}</span>
