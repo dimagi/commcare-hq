@@ -48,10 +48,7 @@ class CasePropertyGroup(models.Model):
         related_query_name='group'
     )
     name = models.CharField(max_length=255, default=None)
-    # use initially added text field with custom validations instead of CharField with max_length
-    # to avoid truncating longer descriptions
-    description = models.TextField(default='', blank=True, validators=[
-        MaxLengthValidator(255, message=_("Group description should be less than 255 characters"))])
+    description = models.TextField(default='', blank=True)
     index = models.IntegerField(default=0, blank=True)
     deprecated = models.BooleanField(default=False)
 
@@ -88,10 +85,7 @@ class CaseProperty(models.Model):
     )
     name = models.CharField(max_length=255, default=None)
     label = models.CharField(max_length=255, default='', blank=True)
-    # use initially added text field with custom validations instead of CharField with max_length
-    # to avoid truncating longer descriptions
-    description = models.TextField(default='', blank=True, validators=[
-        MaxLengthValidator(255, message=_("Property description should be less than 255 characters"))])
+    description = models.TextField(default='', blank=True)
     deprecated = models.BooleanField(default=False)
     data_type = models.CharField(
         choices=DataType.choices,

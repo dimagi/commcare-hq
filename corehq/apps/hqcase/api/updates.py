@@ -5,7 +5,6 @@ from django.core.exceptions import PermissionDenied
 
 import jsonobject
 from jsonobject.exceptions import BadValueError
-from memoized import memoized
 
 from casexml.apps.case.mock import CaseBlock, IndexAttrs
 
@@ -306,15 +305,14 @@ def _get_owner_ids(domain, data, case_db):
     owner_ids = []
     case_ids = []
     for data_item in data:
-        if data_item.is_new_case:
+        if data_item.owner_id:
             owner_ids.append(data_item.owner_id)
-        else:
+        if not data_item.is_new_case:
             case_id = data_item.get_case_id(case_db)
             case_ids.append(case_id)
 
-        for name, index in data_item.indices.items():
+        for index in data_item.indices.values():
             index_case_id = index.get_id(case_db)
-
             if index_case_id in case_db.real_case_ids:
                 case_ids.append(index_case_id)
             else:

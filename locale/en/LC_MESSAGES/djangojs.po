@@ -439,15 +439,15 @@ msgid "Address"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/details/utils.js
-msgid "Address Popup (Web Apps only)"
-msgstr ""
-
-#: corehq/apps/app_manager/static/app_manager/js/details/utils.js
 msgid "Distance from current location"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/details/utils.js
 msgid "Markdown"
+msgstr ""
+
+#: corehq/apps/app_manager/static/app_manager/js/details/utils.js
+msgid "Address Popup (Web Apps only)"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/details/utils.js

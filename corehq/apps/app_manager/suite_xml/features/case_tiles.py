@@ -1,11 +1,11 @@
 import json
-from dataclasses import dataclass
+from dataclasses import dataclass, field as dataclass_field
 from django.db import models
 from django.utils.translation import gettext_lazy as _
 from eulxml.xmlmap.core import load_xmlobject_from_string
 from memoized import memoized
 from pathlib import Path
-from typing import List
+from typing import List, Dict
 from xml.sax.saxutils import escape
 
 from corehq.apps.app_manager import id_strings
@@ -30,9 +30,10 @@ class CaseTileTemplates(models.TextChoices):
 
 @dataclass
 class CaseTileTemplateConfig:
-    slug: str
-    filename: str
-    fields: List[str]
+    slug: str = ''
+    filename: str = ''
+    fields: List[str] = dataclass_field(default_factory=lambda: [])
+    grid: Dict[str, Dict[str, int]] = dataclass_field(default_factory=lambda: {})
 
     @property
     def filepath(self):
@@ -41,11 +42,14 @@ class CaseTileTemplateConfig:
 
 @memoized
 def case_tile_template_config(template):
-    with open(
-        TILE_DIR / (template + '.json'),
-        encoding='utf-8'
-    ) as f:
-        data = json.loads(f.read())
+    try:
+        with open(
+            TILE_DIR / (template + '.json'),
+            encoding='utf-8'
+        ) as f:
+            data = json.loads(f.read())
+    except FileNotFoundError:
+        data = {}
     return CaseTileTemplateConfig(**data)
 
 
