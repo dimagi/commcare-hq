@@ -2573,15 +2573,14 @@ APPLICATION_ERROR_REPORT = FrozenPrivilegeToggle(
     help_link='https://confluence.dimagi.com/display/saas/Show+Application+Error+Report+Feature+Flag'
 )
 
-DATA_DICT = FrozenPrivilegeToggle(
-    privileges.DATA_DICT,
-    'data_dict',
+DATA_DICTIONARY = FrozenPrivilegeToggle(
+    privileges.DATA_DICTIONARY,
+    'data_dictionary',
     label='Project level data dictionary of cases',
     tag=TAG_SOLUTIONS_OPEN,
     namespaces=[NAMESPACE_DOMAIN],
     description='Project level data dictionary of cases',
-    # TODO: Move to public wiki
-    help_link='https://confluence.dimagi.com/display/GS/Data+Dictionary+for+Case+Properties'
+    help_link='https://confluence.dimagi.com/display/commcarepublic/Data+Dictionary'
 )
 
 SHOW_OWNER_LOCATION_PROPERTY_IN_REPORT_BUILDER = FrozenPrivilegeToggle(

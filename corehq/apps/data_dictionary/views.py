@@ -59,7 +59,7 @@ ALLOWED_VALUES_SHEET_SUFFIX = "-vl"
 
 
 @login_and_domain_required
-@requires_privilege_with_fallback(privileges.DATA_DICT)
+@requires_privilege_with_fallback(privileges.DATA_DICTIONARY)
 def data_dictionary_json(request, domain, case_type_name=None):
     props = []
     fhir_resource_type_name_by_case_type = {}
@@ -119,7 +119,7 @@ def data_dictionary_json(request, domain, case_type_name=None):
 
 
 @login_and_domain_required
-@requires_privilege_with_fallback(privileges.DATA_DICT)
+@requires_privilege_with_fallback(privileges.DATA_DICTIONARY)
 @require_permission(HqPermissions.edit_data_dict)
 def create_case_type(request, domain):
     name = request.POST.get("name")
@@ -155,7 +155,7 @@ def deprecate_or_restore_case_type(request, domain, case_type_name):
 # as per http://stackoverflow.com/questions/3395236/aggregating-saves-in-django#comment38715164_3397586
 @atomic
 @login_and_domain_required
-@requires_privilege_with_fallback(privileges.DATA_DICT)
+@requires_privilege_with_fallback(privileges.DATA_DICTIONARY)
 @require_permission(HqPermissions.edit_data_dict)
 def update_case_property(request, domain):
     fhir_resource_type_obj = None
@@ -226,7 +226,7 @@ def _update_fhir_resource_type(request, domain):
 
 
 @login_and_domain_required
-@requires_privilege_with_fallback(privileges.DATA_DICT)
+@requires_privilege_with_fallback(privileges.DATA_DICTIONARY)
 def update_case_property_description(request, domain):
     case_type = request.POST.get('caseType')
     name = request.POST.get('name')
@@ -377,7 +377,7 @@ class DataDictionaryView(BaseProjectDataView):
 
     @method_decorator(login_and_domain_required)
     @use_jquery_ui
-    @method_decorator(requires_privilege_with_fallback(privileges.DATA_DICT))
+    @method_decorator(requires_privilege_with_fallback(privileges.DATA_DICTIONARY))
     @method_decorator(require_permission(HqPermissions.edit_data_dict,
                                          view_only_permission=HqPermissions.view_data_dict))
     def dispatch(self, request, *args, **kwargs):
@@ -407,7 +407,7 @@ class UploadDataDictionaryView(BaseProjectDataView):
 
     @method_decorator(login_and_domain_required)
     @use_jquery_ui
-    @method_decorator(requires_privilege(privileges.DATA_DICT))
+    @method_decorator(requires_privilege(privileges.DATA_DICTIONARY))
     @method_decorator(require_permission(HqPermissions.edit_data_dict))
     def dispatch(self, request, *args, **kwargs):
         return super(UploadDataDictionaryView, self).dispatch(request, *args, **kwargs)
