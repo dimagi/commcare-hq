@@ -13,13 +13,13 @@ hqDefine("geospatial/js/geospatial_map", [
         const defaultMarkerColor = "#808080"; // Gray
         const selectedMarkerColor = "#00FF00"; // Green
         var map;
-        var cases = [];
+        var cases = {};
         var userFilteredCases = [];
         var saveGeoJSONUrl = initialPageData.reverse('geo_polygon');
 
         function filterCasesInPolygon(polygonFeature) {
             userFilteredCases = [];
-            cases.filter(function (currCase) {
+            _.values(cases).filter(function (currCase) {
                 if (currCase.coordinates) {
                     var coordinates = [currCase.coordinates.lng, currCase.coordinates.lat];
                     var point = turf.point(coordinates);
@@ -135,16 +135,16 @@ hqDefine("geospatial/js/geospatial_map", [
                 // Clear filtered cases
                 userFilteredCases = [];
                 // Remove markers
-                cases.forEach(currCase => {
+                _.each(cases, function(currCase) {
                     if (currCase.marker) {
                         currCase.marker.remove();
                     }
                 });
-                cases = [];
+                cases = {};
             };
 
             self.addCaseMarkersToMap = function () {
-                cases.forEach(element => {
+                _.each(cases, function(element) {
                     let coordinates = element.coordinates;
                     if (coordinates && coordinates.lat && coordinates.lng) {
                         self.addMarker(element, defaultMarkerColor);
@@ -316,7 +316,9 @@ hqDefine("geospatial/js/geospatial_map", [
             if ($data.length && map) {
                 var contextData = $data.data("context");
                 map.clearMap();
-                cases = contextData.cases;
+                cases = _.object(_.map(contextData.cases, function(item) {
+                   return [item.case_id, item]
+                }));
                 map.addCaseMarkersToMap();
 
                 if (contextData.invalid_geo_cases_report_link) {
