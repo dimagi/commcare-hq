@@ -22,7 +22,6 @@ hqDefine("app_manager/js/details/case_claim", function () {
     var itemsetModel = function (options, saveButton) {
         options = _.defaults(options, {
             'instance_id': '',
-            'instance_uri': '',
             'nodeset': null,
             'label': '',
             'value': '',
@@ -41,7 +40,6 @@ hqDefine("app_manager/js/details/case_claim", function () {
                         return item.id === value;
                     });
                     if (itemList && itemList.length === 1) {
-                        self.instance_uri(itemList[0]['uri']);
                         self.nodeset(itemsetValue(itemList[0]));
                     }
                     else {
@@ -73,7 +71,7 @@ hqDefine("app_manager/js/details/case_claim", function () {
             return false;
         });
         subscribeToSave(self,
-            ['nodeset', 'label', 'value', 'sort', 'instance_uri'], saveButton);
+            ['nodeset', 'label', 'value', 'sort'], saveButton);
 
         return self;
     };
@@ -128,7 +126,6 @@ hqDefine("app_manager/js/details/case_claim", function () {
                     'optionsLabel': gettext("Mobile UCR Options"),
                     'tableLabel': gettext("Mobile UCR Report"),
                     'selectLabel': gettext("Select a Report..."),
-                    'advancedLabel': gettext("Advanced Mobile UCR Options"),
                 };
             }
             else {
@@ -138,7 +135,6 @@ hqDefine("app_manager/js/details/case_claim", function () {
                     'optionsLabel': gettext("Lookup Table Options"),
                     'tableLabel': gettext("Lookup Table"),
                     'selectLabel': gettext("Select a Lookup Table..."),
-                    'advancedLabel': gettext("Advanced Lookup Table Options"),
                 };
             }
         });
@@ -301,8 +297,8 @@ hqDefine("app_manager/js/details/case_claim", function () {
         // init with blank string to avoid triggering save button
         var appearance = searchProperty.appearance || "";
         if (searchProperty.input_ === "select1" || searchProperty.input_ === "select") {
-            var uri = searchProperty.itemset.instance_uri;
-            if (uri !== null && uri.includes("commcare-reports")) {
+            var instance_id = searchProperty.itemset.instance_id;
+            if (instance_id !== null && instance_id.includes("commcare-reports")) {
                 appearance = "report_fixture";
             } else {
                 appearance = "lookup_table_fixture";
