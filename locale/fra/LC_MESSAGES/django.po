@@ -4031,6 +4031,11 @@ msgstr ""
 "pageId=38276915"
 
 #: corehq/apps/app_manager/helpers/validators.py
+msgid ""
+"Format \"{}\" can only be used once but is used by multiple properties: {}"
+msgstr ""
+
+#: corehq/apps/app_manager/helpers/validators.py
 msgid "Case tiles may only be used for the case list (not the case details)."
 msgstr ""
 "Les Plaques des dossiers peuvent être seulement utilisées pour la liste des "
@@ -8116,6 +8121,22 @@ msgstr ""
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/case_list.html
 msgid "Case property to show"
 msgstr "Propriété de dossier à afficher"
+
+#: corehq/apps/app_manager/templates/app_manager/partials/modules/case_list.html
+msgid "Show case tiles grouped by parent case"
+msgstr ""
+
+#: corehq/apps/app_manager/templates/app_manager/partials/modules/case_list.html
+#, fuzzy
+#| msgid "Parent case is closed"
+msgid "Parent case index name"
+msgstr "Le dossier parent est fermé"
+
+#: corehq/apps/app_manager/templates/app_manager/partials/modules/case_list.html
+#, fuzzy
+#| msgid "Case Filters"
+msgid "Case tile header rows"
+msgstr "Filtres de dossiers"
 
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/case_list.html
 msgid "Use this case list tile persistently in forms"
@@ -18294,6 +18315,12 @@ msgid "Attendance Takers"
 msgstr ""
 
 #: corehq/apps/events/forms.py
+#, fuzzy
+#| msgid "Please specify at least one action."
+msgid "Please choose at least one Attendance Taker"
+msgstr "Veuillez spécifier au moins une action."
+
+#: corehq/apps/events/forms.py
 #, python-brace-format
 msgid "{self.title_prefix} Attendance Tracking Event"
 msgstr ""
@@ -21202,22 +21229,16 @@ msgid "Geospatial"
 msgstr ""
 
 #: corehq/apps/geospatial/templates/map_visualization.html
-#, fuzzy
-#| msgid "Filter Logs by Username"
 msgid "Filter by Saved Area"
-msgstr "Filtrer les journaux par nom d'utilisateur"
+msgstr ""
 
 #: corehq/apps/geospatial/templates/map_visualization.html
-#, fuzzy
-#| msgid "Export Data"
 msgid "Export Area"
-msgstr "Exporter des données"
+msgstr ""
 
 #: corehq/apps/geospatial/templates/map_visualization.html
-#, fuzzy
-#| msgid "Save"
 msgid "Save Area"
-msgstr "Enregistrer"
+msgstr ""
 
 #: corehq/apps/groups/templates/groups/all_groups.html
 #: corehq/apps/reports/filters/users.py
@@ -32717,10 +32738,8 @@ msgid "Message Sent Via Chat"
 msgstr "Message envoyé via chat"
 
 #: corehq/apps/sms/models.py
-#, fuzzy
-#| msgid "Notifications"
 msgid "FCM Push Notification"
-msgstr "Notifications"
+msgstr ""
 
 #: corehq/apps/sms/models.py
 msgid "User Group"
@@ -32870,10 +32889,8 @@ msgid "FCM not available on this environment."
 msgstr ""
 
 #: corehq/apps/sms/models.py
-#, fuzzy
-#| msgid "Reset Password for Mobile Worker"
 msgid "FCM is supported for Mobile Workers only."
-msgstr "Réinitialiser le mot de passe pour l'utilisateur mobile "
+msgstr ""
 
 #: corehq/apps/sms/models.py
 msgid "No action selected for the FCM Data message type."
@@ -39536,10 +39553,8 @@ msgid "Intervals"
 msgstr ""
 
 #: corehq/messaging/scheduling/forms.py
-#, fuzzy
-#| msgid "Notifications"
 msgid "Action on Notification"
-msgstr "Notifications"
+msgstr ""
 
 #: corehq/messaging/scheduling/forms.py
 msgid "Please fill out at least one translation"
@@ -39564,10 +39579,8 @@ msgid ""
 msgstr ""
 
 #: corehq/messaging/scheduling/forms.py
-#, fuzzy
-#| msgid "Message Type"
 msgid "Message type"
-msgstr "Type de Message"
+msgstr ""
 
 #: corehq/messaging/scheduling/forms.py
 msgid "Expire After"
@@ -40039,10 +40052,8 @@ msgid "Custom SMS"
 msgstr ""
 
 #: corehq/messaging/scheduling/forms.py
-#, fuzzy
-#| msgid "Notifications"
 msgid "Push Notification"
-msgstr "Notifications"
+msgstr ""
 
 #: corehq/messaging/scheduling/forms.py
 msgid "The time from case property"
@@ -40177,16 +40188,10 @@ msgid "Email case property can only be used with Email content"
 msgstr ""
 
 #: corehq/messaging/scheduling/forms.py
-#, fuzzy
-#| msgid ""
-#| "There is a configuration error with this survey. Please contact your "
-#| "administrator."
 msgid ""
 "Push Notifications is no longer available on this environment. Please "
 "contact Administrator."
 msgstr ""
-"Il y a une erreur de configuration pour cette enquête. Veuillez contacter "
-"votre administrateur."
 
 #: corehq/messaging/scheduling/forms.py
 msgid ""
@@ -40209,16 +40214,12 @@ msgid "Background Sync"
 msgstr ""
 
 #: corehq/messaging/scheduling/models/content.py
-#, fuzzy
-#| msgid "Display Blanks"
 msgid "Display Messages"
-msgstr "Affiche des vides"
+msgstr ""
 
 #: corehq/messaging/scheduling/models/content.py
-#, fuzzy
-#| msgid "Date of Message"
 msgid "Data Messages"
-msgstr "Date du message"
+msgstr ""
 
 #: corehq/messaging/scheduling/templates/scheduling/broadcasts_list.html
 msgid "Add Broadcast"

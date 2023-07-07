@@ -451,15 +451,15 @@ msgid "Address"
 msgstr "Dirección"
 
 #: corehq/apps/app_manager/static/app_manager/js/details/utils.js
-msgid "Address Popup (Web Apps only)"
-msgstr ""
-
-#: corehq/apps/app_manager/static/app_manager/js/details/utils.js
 msgid "Distance from current location"
 msgstr "Distancia de la ubicación actual"
 
 #: corehq/apps/app_manager/static/app_manager/js/details/utils.js
 msgid "Markdown"
+msgstr ""
+
+#: corehq/apps/app_manager/static/app_manager/js/details/utils.js
+msgid "Address Popup (Web Apps only)"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/details/utils.js
@@ -2972,10 +2972,8 @@ msgid "Fetching your location..."
 msgstr ""
 
 #: corehq/apps/cloudcare/static/cloudcare/js/formplayer/menus/views.js
-#, fuzzy
-#| msgid "Please specify an email."
 msgid "Please perform a search."
-msgstr "Por favor especifique un correo electrónico."
+msgstr ""
 
 #: corehq/apps/cloudcare/static/cloudcare/js/formplayer/menus/views.js
 msgid ""

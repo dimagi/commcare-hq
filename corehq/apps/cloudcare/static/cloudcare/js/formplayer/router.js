@@ -199,13 +199,18 @@ hqDefine("cloudcare/js/formplayer/router", function () {
         API.listMenus();
     });
 
-    FormplayerFrontend.on("menu:query", function (queryDict, selectValuesByKeys = false) {
+    FormplayerFrontend.on("menu:query", function (queryDict, selectValuesByKeys = false, sidebarEnabled) {
         var urlObject = utils.currentUrlToObject();
-        urlObject.setQueryData({
-            inputs: queryDict,
-            execute: true,
-            selectValuesByKeys: selectValuesByKeys,
-        });
+        var queryObject = _.extend(
+            {
+                inputs: queryDict,
+                execute: true,
+                selectValuesByKeys,
+            },
+            // force manual search in split screen case search for workflow compatibility
+            sidebarEnabled ? { forceManualSearch: true } : {}
+        );
+        urlObject.setQueryData(queryObject);
         utils.setUrlToObject(urlObject);
         API.listMenus();
     });
