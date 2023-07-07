@@ -331,9 +331,6 @@ hqDefine("cloudcare/js/formplayer/utils/utils", function () {
             this.sessionId = null;
         };
 
-        this.clearSidebar = function () {
-            $('#sidebar-region').html("");
-        };
     };
 
     Utils.CloudcareUrl.prototype.toJson = function () {
