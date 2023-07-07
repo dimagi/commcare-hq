@@ -46,6 +46,14 @@ hqDefine("cloudcare/js/formplayer/app", function () {
         });
 
         FormplayerFrontend.regions = new RegionContainer();
+        let sidebar = FormplayerFrontend.regions.getRegion('sidebar');
+        sidebar.on('show', function () {
+            $('#menu-container .flex-container').addClass('full-width');
+        });
+        sidebar.on('hide empty', function (region) {
+            $('#menu-container .flex-container').removeClass('full-width');
+        });
+
         hqRequire(["cloudcare/js/formplayer/router"], function (Router) {
             FormplayerFrontend.router = Router.start();
         });
