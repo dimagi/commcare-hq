@@ -7,7 +7,7 @@ from memoized import memoized
 from corehq.apps.analytics.tasks import track_workflow
 from corehq.apps.case_search.xpath_functions.ancestor_functions import (
     is_ancestor_comparison,
-    is_ancestor_query_below_limit,
+    validate_ancestor_query_limit,
 )
 from corehq.apps.case_search.const import (
     CASE_COMPUTED_METADATA,
@@ -75,7 +75,7 @@ class CaseListExplorer(CaseListReport):
                 query = query.xpath_query(self.domain, xpath)
                 node = parse_xpath(xpath)
                 if is_ancestor_comparison(node) or 'ancestor-exists' in xpath:
-                    is_ancestor_query_below_limit(query, node)
+                    validate_ancestor_query_limit(query, node)
             except CaseFilterError as e:
                 track_workflow(self.request.couch_user.username, f"{self.name}: Query Error")
 
