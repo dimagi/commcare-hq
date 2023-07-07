@@ -771,7 +771,7 @@ class MobileWorkerListView(JSONResponseMixin, BaseUserSettingsView):
 
         self.request.POST = form_data
 
-        if not (self.new_mobile_worker_form.is_valid() or self.custom_data.is_valid()):
+        if not (self.new_mobile_worker_form.is_valid() and self.custom_data.is_valid()):
             all_errors = [e for errors in self.new_mobile_worker_form.errors.values() for e in errors]
             all_errors += [e for errors in self.custom_data.errors.values() for e in errors]
             return {'error': _("Forms did not validate: {errors}").format(
