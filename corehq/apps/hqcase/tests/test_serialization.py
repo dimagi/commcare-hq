@@ -95,7 +95,6 @@ class TestAPISerialization(TestCase):
                 "indexed_on": "2021-02-18T11:02:00.000000Z",
                 "closed": False,
                 "date_closed": None,
-                "is_deprecated": False,
                 "properties": {
                     "winner": "Harmon",
                     'accuracy': '84.3',

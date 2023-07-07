@@ -47,6 +47,13 @@ def _make_date_filter(date_filter):
     return _exception_converter
 
 
+def _include_deprecated_filter(domain, include_deprecated):
+    if _to_boolean(include_deprecated):
+        return filters.match_all()
+    deprecated_case_types = get_data_dict_deprecated_case_types(domain)
+    return filters.NOT(filters.term('type.exact', deprecated_case_types))
+
+
 def _index_filter(identifier, case_id):
     return case_search.reverse_index_case_query(case_id, identifier)
 
@@ -57,6 +64,7 @@ SIMPLE_FILTERS = {
     'owner_id': case_es.owner,
     'case_name': case_es.case_name,
     'closed': lambda val: case_es.is_closed(_to_boolean(val)),
+    INCLUDE_DEPRECATED: _include_deprecated_filter,
 }
 
 # Compound filters take the form `prefix.qualifier=value`
@@ -77,24 +85,15 @@ def get_list(domain, couch_user, params):
         params_string = b64decode(params['cursor']).decode('utf-8')
         params = QueryDict(params_string, mutable=True)
         # QueryDict.pop() returns a list
-        include_deprecated = params.pop(INCLUDE_DEPRECATED, ['False'])[0].lower().capitalize() == 'True'
         last_date = params.pop(INDEXED_AFTER, [None])[0]
         last_id = params.pop(LAST_CASE_ID, [None])[0]
         query = _get_cursor_query(domain, params, last_date, last_id)
     else:
         params = params.copy()  # Makes params mutable for pagination below
-        include_deprecated = params.pop(INCLUDE_DEPRECATED, ['False'])[0].lower().capitalize() == 'True'
         query = _get_query(domain, params)
 
     if not couch_user.has_permission(domain, 'access_all_locations'):
         query = query_location_restricted_cases(query, domain, couch_user)
-
-    # Cases with deprecated case types should not be returned if the flag is not specified
-    if not include_deprecated:
-        deprecated_case_types = get_data_dict_deprecated_case_types(domain)
-        query = query.filter(
-            filters.NOT(filters.term('type.exact', deprecated_case_types))
-        )
 
     es_result = query.run()
     hits = es_result.hits
@@ -149,10 +148,12 @@ def _get_query(domain, params):
 
 def _get_filter(domain, key, val):
     if key == 'limit':
-        pass
+        return filters.match_all()
     elif key == 'query':
         return _get_query_filter(domain, val)
     elif key in SIMPLE_FILTERS:
+        if key == INCLUDE_DEPRECATED:
+            return SIMPLE_FILTERS[key](domain, val)
         return SIMPLE_FILTERS[key](val)
     elif '.' in key and key.split(".")[0] in COMPOUND_FILTERS:
         prefix, qualifier = key.split(".", maxsplit=1)
