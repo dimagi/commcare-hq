@@ -1505,13 +1505,6 @@ OVERRIDE_EXPANDED_COLUMN_LIMIT_IN_REPORT_BUILDER = StaticToggle(
     [NAMESPACE_DOMAIN],
 )
 
-CLOUDCARE_LATEST_BUILD = StaticToggle(
-    'use_latest_build_cloudcare',
-    'Uses latest build for Web Apps instead of latest published',
-    TAG_SOLUTIONS_OPEN,
-    [NAMESPACE_DOMAIN, NAMESPACE_USER]
-)
-
 CAUTIOUS_MULTIMEDIA = StaticToggle(
     'cautious_multimedia',
     'More cautious handling of multimedia: do not delete multimedia files, add logging, etc.',
