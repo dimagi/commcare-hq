@@ -128,13 +128,16 @@ class SuiteInstanceTests(SimpleTestCase, SuiteMixin):
                                        self.factory.app.create_suite(), "entry/instance")
 
             configuration_mock_obj.sync_hierarchical_fixture = False
-            self.assertXmlPartialEqual(flat_fixture_format_xml, self.factory.app.create_suite(), "entry/instance")
+            self.assertXmlPartialEqual(flat_fixture_format_xml,
+                                       self.factory.app.create_suite(), "entry/instance")
 
             configuration_mock_obj.sync_flat_fixture = False
-            self.assertXmlPartialEqual(hierarchical_fixture_format_xml, self.factory.app.create_suite(), "entry/instance")
+            self.assertXmlPartialEqual(hierarchical_fixture_format_xml,
+                                       self.factory.app.create_suite(), "entry/instance")
 
             configuration_mock_obj.sync_hierarchical_fixture = True
-            self.assertXmlPartialEqual(hierarchical_fixture_format_xml, self.factory.app.create_suite(), "entry/instance")
+            self.assertXmlPartialEqual(hierarchical_fixture_format_xml,
+                                       self.factory.app.create_suite(), "entry/instance")
 
         # To ensure for new domains or domains adding locations now come on flat fixture
         configuration_mock_obj.sync_hierarchical_fixture = True  # default value
@@ -225,12 +228,11 @@ class SuiteInstanceTests(SimpleTestCase, SuiteMixin):
         self._test_search_prompt_itemset_instance(shadow_module)
 
     def _test_search_prompt_itemset_instance(self, module):
-        instance_id = "123"
+        instance_id = "item-list:123"
         module.search_config = CaseSearch(
             properties=[
                 CaseSearchProperty(name='name', label={'en': 'Name'}, input_="select1", itemset=Itemset(
                     instance_id=instance_id,
-                    instance_uri="jr://fixture/custom_fixture",
                     nodeset=f"instance('{instance_id}')/rows/row",
                     label='name',
                     value='id',
@@ -243,7 +245,7 @@ class SuiteInstanceTests(SimpleTestCase, SuiteMixin):
 
         expected_instance = f"""
                 <partial>
-                  <instance id="{instance_id}" src="jr://fixture/custom_fixture"/>
+                  <instance id="{instance_id}" src="jr://fixture/item-list:123"/>
                 </partial>
                 """
         self.assertXmlPartialEqual(
