@@ -12,6 +12,7 @@ from corehq.apps.es import cases as case_es
 from corehq.apps.reports.standard.cases.utils import (
     query_location_restricted_cases,
 )
+from corehq.apps.data_dictionary.util import get_data_dict_deprecated_case_types
 from dimagi.utils.parsing import FALSE_STRINGS
 from .core import UserError, serialize_es_case
 
@@ -19,6 +20,7 @@ DEFAULT_PAGE_SIZE = 20
 MAX_PAGE_SIZE = 5000
 INDEXED_AFTER = 'indexed_on.gte'
 LAST_CASE_ID = 'last_case_id'
+INCLUDE_DEPRECATED = 'include_deprecated'
 
 
 def _to_boolean(val):
@@ -75,15 +77,24 @@ def get_list(domain, couch_user, params):
         params_string = b64decode(params['cursor']).decode('utf-8')
         params = QueryDict(params_string, mutable=True)
         # QueryDict.pop() returns a list
+        include_deprecated = params.pop(INCLUDE_DEPRECATED, ['False'])[0].lower().capitalize() == 'True'
         last_date = params.pop(INDEXED_AFTER, [None])[0]
         last_id = params.pop(LAST_CASE_ID, [None])[0]
         query = _get_cursor_query(domain, params, last_date, last_id)
     else:
         params = params.copy()  # Makes params mutable for pagination below
+        include_deprecated = params.pop(INCLUDE_DEPRECATED, ['False'])[0].lower().capitalize() == 'True'
         query = _get_query(domain, params)
 
     if not couch_user.has_permission(domain, 'access_all_locations'):
         query = query_location_restricted_cases(query, domain, couch_user)
+
+    # Cases with deprecated case types should not be returned if the flag is not specified
+    if not include_deprecated:
+        deprecated_case_types = get_data_dict_deprecated_case_types(domain)
+        query = query.filter(
+            filters.NOT(filters.term('type.exact', deprecated_case_types))
+        )
 
     es_result = query.run()
     hits = es_result.hits
