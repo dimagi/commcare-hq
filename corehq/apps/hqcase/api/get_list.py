@@ -138,9 +138,7 @@ def _get_query(domain, params):
              .sort("_uid", reset_sort=False))
     for key, val in params.lists():
         if len(val) == 1:
-            filter = _get_filter(domain, key, val[0])
-            if filter:
-                query = query.filter(filter)
+            query = query.filter(_get_filter(domain, key, val[0]))
         else:
             # e.g. key='owner_id', val=['abc123', 'def456']
             filter_list = [_get_filter(domain, key, v) for v in val]
@@ -150,7 +148,7 @@ def _get_query(domain, params):
 
 def _get_filter(domain, key, val):
     if key == 'limit':
-        pass
+        return filters.match_all()
     elif key == 'query':
         return _get_query_filter(domain, val)
     elif key in SIMPLE_FILTERS:
