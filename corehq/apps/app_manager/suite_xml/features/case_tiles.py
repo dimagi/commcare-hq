@@ -27,9 +27,6 @@ class CaseTileTemplates(models.TextChoices):
                                             "fourth rows, and map"))
 
 
-CASE_TILE_TEMPLATES_WITHOUT_MAP = [CaseTileTemplates.PERSON_SIMPLE]
-
-
 @dataclass
 class CaseTileTemplateConfig:
     slug: str = ''
