@@ -47,9 +47,9 @@ def _make_date_filter(date_filter):
     return _exception_converter
 
 
-def _make_include_deprecated_filter(domain, include_deprecated):
-    if include_deprecated:
-        return None
+def _include_deprecated_filter(domain, include_deprecated):
+    if _to_boolean(include_deprecated):
+        return filters.match_all()
     deprecated_case_types = get_data_dict_deprecated_case_types(domain)
     return filters.NOT(filters.term('type.exact', deprecated_case_types))
 
@@ -64,7 +64,7 @@ SIMPLE_FILTERS = {
     'owner_id': case_es.owner,
     'case_name': case_es.case_name,
     'closed': lambda val: case_es.is_closed(_to_boolean(val)),
-    INCLUDE_DEPRECATED: lambda domain, val: _make_include_deprecated_filter(domain, _to_boolean(val))
+    INCLUDE_DEPRECATED: _include_deprecated_filter,
 }
 
 # Compound filters take the form `prefix.qualifier=value`
