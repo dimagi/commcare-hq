@@ -45,12 +45,12 @@ hqDefine("events/js/new_event", [
 
             // Disable the submit button unless attendance takers are present
             var submitBtn = $('input[id="submit-id-submit_btn"]');
-            var attendanceTakers = $(id_attendance_takers);
+            var attendanceTakers = $('#id_attendance_takers');
 
             var initialAttendanceTakers = initialData.attendance_takers;
-            submitBtn.prop('disabled', !initialAttendanceTakers || initialAttendanceTakers.length == 0);
-            attendanceTakers.on('change', function() {
-                var attendanceTakersLength = attendanceTakers.val().length
+            submitBtn.prop('disabled', !initialAttendanceTakers || initialAttendanceTakers.length === 0);
+            attendanceTakers.on('change', function () {
+                var attendanceTakersLength = attendanceTakers.val().length;
                 submitBtn.prop('disabled', attendanceTakersLength === 0);
             });
 

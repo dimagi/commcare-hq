@@ -622,7 +622,7 @@ class DomainLinkHistoryReport(GenericTabularReport):
     def _make_user_cell(self, record):
         doc_info = get_doc_info_by_id(self.domain, record.user_id)
         user = WebUser.get_by_user_id(record.user_id)
-        if self.domain not in user.get_domains() and 'link' in doc_info:
+        if user and self.domain not in user.get_domains() and 'link' in doc_info:
             doc_info['link'] = None
 
         return pretty_doc_info(doc_info)

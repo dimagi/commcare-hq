@@ -286,6 +286,11 @@ def get_data_dict_case_types(domain):
     return set(case_types)
 
 
+def get_data_dict_deprecated_case_types(domain):
+    case_types = CaseType.objects.filter(domain=domain, is_deprecated=True).values_list('name', flat=True)
+    return set(case_types)
+
+
 def fields_to_validate(domain, case_type_name):
     filter_kwargs = {
         'case_type__domain': domain,
@@ -303,3 +308,11 @@ def get_gps_properties(domain, case_type):
         case_type__name=case_type,
         data_type=CaseProperty.DataType.GPS,
     ).values_list('name', flat=True))
+
+
+def is_case_type_deprecated(domain, case_type):
+    try:
+        case_type_obj = CaseType.objects.get(domain=domain, name=case_type)
+        return case_type_obj.is_deprecated
+    except CaseType.DoesNotExist:
+        return False
