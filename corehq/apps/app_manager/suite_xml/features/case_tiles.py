@@ -16,7 +16,6 @@ from corehq.apps.app_manager.util import (
     module_uses_inline_search,
 )
 
-
 TILE_DIR = Path(__file__).parent.parent / "case_tile_templates"
 
 
@@ -26,6 +25,9 @@ class CaseTileTemplates(models.TextChoices):
     ONE_TWO_ONE = ("one_two_one", _("Title row, second row with two cells, third row, and map"))
     ONE_TWO_ONE_ONE = ("one_two_one_one", _("Title row, second row with two cells, third and "
                                             "fourth rows, and map"))
+
+
+CASE_TILE_TEMPLATES_WITHOUT_MAP = [CaseTileTemplates.PERSON_SIMPLE]
 
 
 @dataclass
@@ -55,7 +57,7 @@ def case_tile_template_config(template):
 
 class CaseTileHelper(object):
     def __init__(self, app, module, detail, detail_id, detail_type,
-                build_profile_id, detail_column_infos):
+                 build_profile_id, detail_column_infos):
         self.app = app
         self.module = module
         self.detail = detail

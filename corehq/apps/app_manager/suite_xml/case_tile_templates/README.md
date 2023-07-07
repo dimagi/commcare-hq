@@ -26,5 +26,5 @@ The `name.json` metadata file contains the following properties:
    * `horz-align`
    * `vert-align`
 
-`CaseTileTemplates` defines the choices in the config dropdown. If a template supports maps the description should contain
-", and map".
+`CaseTileTemplates` defines the choices in the config dropdown. If a template does not supports maps, it should be
+added to `CASE_TILE_TEMPLATES_WITHOUT_MAP`.

@@ -72,7 +72,10 @@ from corehq.apps.app_manager.models import (
     get_all_mobile_filter_configs,
     get_auto_filter_configurations, ConditionalCaseUpdate, CaseTileGroupConfig,
 )
-from corehq.apps.app_manager.suite_xml.features.case_tiles import case_tile_template_config, CaseTileTemplates
+from corehq.apps.app_manager.suite_xml.features.case_tiles import (
+    case_tile_template_config,
+    CaseTileTemplates,
+    CASE_TILE_TEMPLATES_WITHOUT_MAP)
 from corehq.apps.app_manager.suite_xml.features.mobile_ucr import (
     get_uuids_by_instance_id,
 )
@@ -231,10 +234,12 @@ def _get_shared_module_view_context(request, app, module, case_property_builder,
             'has_mobile_ucr': bool([i for i in item_lists if i['fixture_type'] == REPORT_FIXTURE]),
             'default_value_expression_enabled': app.enable_default_value_expression,
             'case_tile_template_options': [template for template in CaseTileTemplates.choices
-                                           if case_list_map_enabled or ', and map' not in template[1]],
+                                           if case_list_map_enabled
+                                           or template[0] in CASE_TILE_TEMPLATES_WITHOUT_MAP],
             'case_tile_template_configs': {template[0]: asdict(case_tile_template_config(template[0]))
                                            for template in CaseTileTemplates.choices
-                                           if case_list_map_enabled or ', and map' not in template[1]},
+                                           if case_list_map_enabled
+                                           or template[0] in CASE_TILE_TEMPLATES_WITHOUT_MAP},
             'search_config': {
                 'search_properties':
                     module.search_config.properties if module_offers_search(module) else [],
