@@ -16,6 +16,7 @@ from corehq.apps.app_manager.util import (
     module_uses_inline_search,
 )
 
+
 TILE_DIR = Path(__file__).parent.parent / "case_tile_templates"
 
 
@@ -54,7 +55,7 @@ def case_tile_template_config(template):
 
 class CaseTileHelper(object):
     def __init__(self, app, module, detail, detail_id, detail_type,
-                 build_profile_id, detail_column_infos):
+                build_profile_id, detail_column_infos):
         self.app = app
         self.module = module
         self.detail = detail

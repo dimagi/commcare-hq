@@ -208,9 +208,7 @@ def _get_shared_module_view_context(request, app, module, case_property_builder,
         [(template, asdict(case_tile_template_config(template[0]))) for template in CaseTileTemplates.choices]
     case_tile_template_option_to_configs_filtered = \
         [option_to_config for option_to_config in case_tile_template_option_to_configs
-         if case_list_map_enabled or 'map' in option_to_config[1]['fields']]
-
-
+         if case_list_map_enabled or 'map' not in option_to_config[1]['fields']]
 
     context = {
         'details': _get_module_details_context(request, app, module, case_property_builder),
