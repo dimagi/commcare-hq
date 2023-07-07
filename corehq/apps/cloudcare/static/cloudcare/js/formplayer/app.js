@@ -722,7 +722,7 @@ hqDefine("cloudcare/js/formplayer/app", function () {
             appId,
             currentUser = FormplayerFrontend.getChannel().request('currentUser');
         urlObject.clearExceptApp();
-        urlObject.clearSidebar();
+        FormplayerFrontend.regions.getRegion('sidebar').empty();
         FormplayerFrontend.regions.getRegion('breadcrumb').empty();
         if (currentUser.displayOptions.singleAppMode) {
             appId = FormplayerFrontend.getChannel().request('getCurrentAppId');
