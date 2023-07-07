@@ -157,7 +157,7 @@ hqDefine("cloudcare/js/formplayer/router", function () {
             });
         } else {
             urlObject.addSelection(index);
-            urlObject.clearSidebar();
+            FormplayerFrontend.regions.getRegion('sidebar').empty();
         }
         utils.setUrlToObject(urlObject);
         API.listMenus();
