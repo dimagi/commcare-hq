@@ -162,7 +162,8 @@ class AppMigrationCommandBase(BaseCommand):
         return app_doc
 
     def get_app_ids(self, domain=None):
-        return get_all_app_ids(domain=domain, include_builds=self.include_builds)
+        return (list(get_deleted_app_ids(domain))
+                + list(get_all_app_ids(domain=domain, include_builds=True)))
 
     def get_domains(self):
         return None

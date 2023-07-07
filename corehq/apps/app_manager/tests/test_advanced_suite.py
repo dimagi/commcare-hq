@@ -1,11 +1,13 @@
 from django.test import SimpleTestCase
 
-from corehq.apps.app_manager.models import (
+from corehq.apps.app_manager.const import (
     AUTO_SELECT_CASE,
     AUTO_SELECT_FIXTURE,
     AUTO_SELECT_RAW,
     AUTO_SELECT_USER,
     AUTO_SELECT_USERCASE,
+)
+from corehq.apps.app_manager.models import (
     AdvancedModule,
     Application,
     ArbitraryDatum,

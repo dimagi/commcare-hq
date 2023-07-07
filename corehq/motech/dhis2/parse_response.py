@@ -1,8 +1,10 @@
 from operator import eq
 
 from jsonpath_ng import Child, Fields, Slice, Where, Root
+from django.utils.translation import gettext_lazy as _
 
 from corehq.motech.openmrs.jsonpath import Cmp
+from .const import ERROR_DIAGNOSIS
 
 
 def get_errors(response: dict) -> dict:
@@ -51,3 +53,11 @@ def get_events_errors(response: dict) -> dict:
     ), Fields("description"))
     matches = jsonpath_expr.find(response)
     return {str(match.full_path): match.value for match in matches}
+
+
+def get_diagnosis_message(error: str) -> str:
+    error_lower = error.lower()
+    try:
+        return next(v for k, v in ERROR_DIAGNOSIS.items() if k.lower() in error_lower)
+    except StopIteration:
+        return _('No diagnosis available for this error')

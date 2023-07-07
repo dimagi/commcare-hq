@@ -1,26 +1,67 @@
 {% load i18n %}
 
-<ul class="list-unstyled">
-{% for attempt_number, attempt in record.get_numbered_attempts %}
-    <li><strong>Attempt #{{ attempt_number }}</strong>
-    {% if attempt.state == 'SUCCESS' %}
-        <br/><i class="fa fa-check"></i> {% trans "Success" %}
-    {% elif attempt.state == 'EMPTY' %}
-        <br/><i class="fa fa-check"></i> {% trans "Empty" %}
-    {% elif attempt.state == 'FAIL' or attempt.state == 'CANCELLED' %}
-        <br/><i class="fa fa-exclamation-triangle"></i> {% trans "Failed" %}
-    {% elif attempt.state == 'PENDING' %}
-        <br/><i class="fa fa-spinner"></i> {% trans "Unsent" %}
-    {% endif %}
-    {% if attempt.message %}
-        <a href="#" class="toggle-next-attempt">…</a>
-        <div class="well record-attempt" style="display: none; font-family: monospace;">
-            {{ attempt.message }}
-        </div>
-    {% endif %}
-    {% if attempt.state == 'CANCELLED' %}
-        <br/><i class="fa fa-remove"></i> {% trans "Cancelled" %}
-    {% endif %}
-    </li>
-{% endfor %}
-</ul>
+<tr class='attempt-row' id="{{ record_id }}">
+    <td colspan="10">
+        <table style="width:100%;">
+            {% if not has_attempts %}
+                <tr>
+                    <td>
+                        <div>
+                            {% trans 'No attempts exist for this record.' %}
+                        </div>
+                    </td>
+                </tr>
+            {% endif %}
+            {% for attempt_number, attempt in record.get_numbered_attempts %}
+                <tr>
+                    <td>
+                        <div>
+                            <strong>Attempt #{{ attempt_number }}</strong> -
+                            {% if attempt.state == 'SUCCESS' or attempt.state == 'EMPTY' %}
+                                <br/><i class="fa fa-check"></i>
+                            {% elif attempt.state == 'FAIL' or attempt.state == 'CANCELLED' %}
+                                <br/><i class="fa fa-exclamation-triangle"></i>
+                            {% elif attempt.state == 'PENDING' %}
+                                <br/><i class="fa fa-spinner"></i>
+                            {% endif %}
+                            {% if attempt.state == 'PENDING' %}
+                            {% elif attempt.state == 'EMPTY' %}({{ attempt.created_at }})
+                            {% else %}{{ attempt.created_at }}
+                            {% endif %}
+                            {% if attempt.message %}
+                                <div class="well record-attempt" style="font-family: monospace;">
+                                    {{ attempt.message }}
+                                </div>
+                            {% endif %}
+                        </div>
+                    </td>
+                </tr>
+            {% endfor %}
+
+            <!-- Visual separation between attempts and DHIS2 errors -->
+            {% if has_dhis2_errors %}
+                <tr>
+                    <td>
+                        <hr/>
+                    </td>
+                </tr>
+            {% endif %}
+
+            <!-- DHIS2 specific errors -->
+            {% for error, diagnosis in dhis2_errors %}
+                <tr>
+                    <td>
+                        <div>
+                            <strong>DHIS2 Error #{{ forloop.counter }}</strong>
+                            <div class="well" style="font-family: monospace;">
+                                {{ error }}<br/><br/>
+                                <strong>{% trans 'Diagnosis:' %}</strong>
+                                {{ diagnosis }}
+                            </div>
+                        </div>
+                    </td>
+                </tr>
+            {% endfor %}
+        </table>
+    </td>
+</tr>

@@ -22,15 +22,11 @@ from dimagi.utils.logging import notify_exception
 from pillowtop.dao.couch import ID_CHUNK_SIZE
 from soil.util import expose_download, get_download_file_path
 
-from corehq import toggles
 from corehq.apps.celery import periodic_task, task
 from corehq.apps.change_feed.data_sources import (
     get_document_store_for_doc_type,
 )
-from corehq.apps.reports.util import (
-    DatatablesParams,
-    send_report_download_email,
-)
+from corehq.apps.reports.util import send_report_download_email
 from corehq.apps.userreports.const import (
     ASYNC_INDICATOR_CHUNK_SIZE,
     ASYNC_INDICATOR_MAX_RETRIES,
@@ -43,13 +39,9 @@ from corehq.apps.userreports.exceptions import (
 )
 from corehq.apps.userreports.models import (
     AsyncIndicator,
-    get_report_config,
     id_is_static,
 )
 from corehq.apps.userreports.rebuild import DataSourceResumeHelper
-from corehq.apps.userreports.reports.data_source import (
-    ConfigurableReportDataSource,
-)
 from corehq.apps.userreports.specs import EvaluationContext
 from corehq.apps.userreports.util import (
     get_async_indicator_modify_lock_key,
@@ -206,77 +198,6 @@ def _iteratively_build_table(config, resume_helper=None, in_place=False, limit=-
                 if config.meta.build.initiated == current_config.meta.build.initiated:
                     current_config.meta.build.finished = True
             current_config.save()
-
-
-@task(serializer='pickle', queue=UCR_CELERY_QUEUE)
-def compare_ucr_dbs(domain, report_config_id, filter_values, sort_column=None, sort_order=None, params=None):
-    if report_config_id not in settings.UCR_COMPARISONS:
-        return
-
-    control_report, unused = get_report_config(report_config_id, domain)
-    candidate_report = None
-
-    new_report_config_id = settings.UCR_COMPARISONS.get(report_config_id)
-    if new_report_config_id is not None:
-        # a report is configured to be compared against
-        candidate_report, unused = get_report_config(new_report_config_id, domain)
-        _compare_ucr_reports(
-            domain, control_report, candidate_report, filter_values, sort_column, sort_order, params)
-    else:
-        # no report is configured. Assume we should try mirrored engine_ids
-        # report_config.config is a DataSourceConfiguration
-        for engine_id in control_report.config.mirrored_engine_ids:
-            _compare_ucr_reports(
-                domain, control_report, control_report, filter_values, sort_column,
-                sort_order, params, candidate_engine_id=engine_id)
-
-
-def _compare_ucr_reports(domain, control_report, candidate_report, filter_values, sort_column, sort_order, params,
-                         candidate_engine_id=None):
-    from corehq.apps.userreports.laboratory.experiment import UCRExperiment
-
-    def _run_report(spec, engine_id=None):
-        data_source = ConfigurableReportDataSource.from_spec(spec, include_prefilters=True)
-        if engine_id:
-            data_source.data_source.override_engine_id(engine_id)
-        data_source.set_filter_values(filter_values)
-        if sort_column:
-            data_source.set_order_by(
-                [(data_source.top_level_columns[int(sort_column)].column_id, sort_order.upper())]
-            )
-
-        if params:
-            datatables_params = DatatablesParams.from_request_dict(params)
-            start = datatables_params.start
-            limit = datatables_params.count
-        else:
-            start, limit = None, None
-        page = list(data_source.get_data(start=start, limit=limit))
-        total_records = data_source.get_total_records()
-        json_response = {
-            'aaData': page,
-            "iTotalRecords": total_records,
-        }
-        total_row = data_source.get_total_row() if data_source.has_total_row else None
-        if total_row is not None:
-            json_response["total_row"] = total_row
-        return json_response
-
-    experiment_context = {
-        "domain": domain,
-        "report_config_id": control_report._id,
-        "new_report_config_id": candidate_report._id,
-        "filter_values": filter_values,
-    }
-    experiment = UCRExperiment(name="UCR DB Experiment", context=experiment_context)
-    with experiment.control() as c:
-        c.record(_run_report(control_report))
-
-    with experiment.candidate() as c:
-        c.record(_run_report(candidate_report, candidate_engine_id))
-
-    objects = experiment.run()
-    return objects
 
 
 @task(serializer='pickle', queue=UCR_CELERY_QUEUE, ignore_result=True)

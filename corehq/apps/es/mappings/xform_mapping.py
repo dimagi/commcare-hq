@@ -7,7 +7,7 @@ XFORM_MAPPING = {
         "created": "2013-08-13"
     },
     "date_detection": False,
-    "date_formats": DATE_FORMATS_ARR,  # for parsing the explicitly defined dates
+    "date_formats": DATE_FORMATS_ARR,
     "dynamic": False,
     "properties": {
         "#export_tag": {
@@ -45,19 +45,12 @@ XFORM_MAPPING = {
         },
         "domain": {
             "fields": {
-                "domain": {
-                    "index": "analyzed",
-                    "type": "string"
-                },
                 "exact": {
-                    # exact is full text string match - hyphens get parsed in standard
-                    # analyzer
-                    # in queries you can access by domain.exact
                     "index": "not_analyzed",
                     "type": "string"
                 }
             },
-            "type": "multi_field"
+            "type": "string"
         },
         "external_blobs": {
             "dynamic": False,
@@ -202,13 +195,9 @@ XFORM_MAPPING = {
                 "exact": {
                     "index": "not_analyzed",
                     "type": "string"
-                },
-                "xmlns": {
-                    "index": "analyzed",
-                    "type": "string"
                 }
             },
-            "type": "multi_field"
+            "type": "string"
         },
         Tombstone.PROPERTY_NAME: {
             "type": "boolean"

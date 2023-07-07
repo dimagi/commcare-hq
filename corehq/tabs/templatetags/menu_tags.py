@@ -97,15 +97,17 @@ class MainMenuNode(template.Node):
         except DomainMembershipError:
             role_version = None
 
+        from corehq.apps.hqwebapp.utils.bootstrap import get_bootstrap_version, BOOTSTRAP_5
+        bootstrap_version = get_bootstrap_version()
+
         context.dicts[0]['active_tab'] = active_tab
         flat = context.flatten()
         flat.update({
             'tabs': visible_tabs,
-            'role_version': role_version
+            'role_version': role_version,
+            'use_bootstrap5': bootstrap_version == BOOTSTRAP_5,
         })
-
-        from corehq.apps.hqwebapp.utils.bootstrap import get_bootstrap_version
-        return render_to_string(f"tabs/{get_bootstrap_version()}/menu_main.html", flat)
+        return render_to_string(f"tabs/{bootstrap_version}/menu_main.html", flat)
 
 
 @register.tag(name="format_main_menu")

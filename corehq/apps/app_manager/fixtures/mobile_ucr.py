@@ -34,8 +34,6 @@ from corehq.apps.userreports.reports.data_source import (
     ConfigurableReportDataSource,
 )
 from corehq.apps.userreports.reports.filters.factory import ReportFilterFactory
-from corehq.apps.userreports.tasks import compare_ucr_dbs
-from corehq.toggles import COMPARE_UCR_REPORTS, NAMESPACE_OTHER
 from corehq.util.timezones.conversions import ServerTime
 from corehq.util.timezones.utils import get_timezone_for_user
 from corehq.util.xml_utils import serialize
@@ -432,10 +430,6 @@ def generate_rows_and_filters(report_data_cache, report_config, restore_user, ro
         row_to_element,
     )
     filters_elem = _get_filters_elem(defer_filters, filter_options_by_field, restore_user._couch_user)
-
-    if (report_config.report_id in settings.UCR_COMPARISONS and
-        COMPARE_UCR_REPORTS.enabled(uuid.uuid4().hex, NAMESPACE_OTHER)):
-        compare_ucr_dbs.delay(domain, report_config.report_id, filter_values)
 
     return row_elements, filters_elem
 

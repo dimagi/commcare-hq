@@ -41,6 +41,7 @@ hqDefine("cloudcare/js/formplayer/app", function () {
                 breadcrumb: "#breadcrumb-region",
                 persistentCaseTile: "#persistent-case-tile",
                 restoreAsBanner: '#restore-as-region',
+                sidebar: '#sidebar-region',
             },
         });
 
@@ -128,6 +129,7 @@ hqDefine("cloudcare/js/formplayer/app", function () {
 
     FormplayerFrontend.getChannel().reply('clearMenu', function () {
         $('#menu-region').html("");
+        $('#sidebar-region').html("");
     });
 
     $(document).on("ajaxStart", function () {
@@ -712,6 +714,7 @@ hqDefine("cloudcare/js/formplayer/app", function () {
             appId,
             currentUser = FormplayerFrontend.getChannel().request('currentUser');
         urlObject.clearExceptApp();
+        urlObject.clearSidebar();
         FormplayerFrontend.regions.getRegion('breadcrumb').empty();
         if (currentUser.displayOptions.singleAppMode) {
             appId = FormplayerFrontend.getChannel().request('getCurrentAppId');

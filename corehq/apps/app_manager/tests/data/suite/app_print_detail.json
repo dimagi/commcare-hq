@@ -152,7 +152,7 @@
           },
           "lookup_name": null,
           "lookup_autolaunch": false,
-          "use_case_tiles": null,
+          "case_tile_template": null,
           "lookup_action": null,
           "display": "short"
         },
@@ -192,7 +192,7 @@
           },
           "lookup_name": null,
           "lookup_autolaunch": false,
-          "use_case_tiles": null,
+          "case_tile_template": null,
           "lookup_action": null,
           "display": "long"
         }
@@ -504,7 +504,7 @@
           },
           "lookup_name": null,
           "lookup_autolaunch": false,
-          "use_case_tiles": null,
+          "case_tile_template": null,
           "lookup_action": null,
           "display": "short"
         },
@@ -577,7 +577,7 @@
           },
           "lookup_name": null,
           "lookup_autolaunch": false,
-          "use_case_tiles": null,
+          "case_tile_template": null,
           "lookup_action": null,
           "display": "long"
         }
@@ -664,7 +664,7 @@
           },
           "lookup_name": null,
           "lookup_autolaunch": false,
-          "use_case_tiles": null,
+          "case_tile_template": null,
           "lookup_action": null,
           "display": "short"
         },
@@ -704,7 +704,7 @@
           },
           "lookup_name": null,
           "lookup_autolaunch": false,
-          "use_case_tiles": null,
+          "case_tile_template": null,
           "lookup_action": null,
           "display": "long"
         }
@@ -1199,7 +1199,7 @@
           },
           "lookup_name": null,
           "lookup_autolaunch": false,
-          "use_case_tiles": null,
+          "case_tile_template": null,
           "lookup_action": null,
           "display": "short"
         },
@@ -1280,7 +1280,7 @@
           },
           "lookup_name": null,
           "lookup_autolaunch": false,
-          "use_case_tiles": null,
+          "case_tile_template": null,
           "lookup_action": null,
           "display": "long"
         }
