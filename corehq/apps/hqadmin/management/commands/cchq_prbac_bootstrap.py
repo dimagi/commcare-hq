@@ -226,6 +226,9 @@ class Command(BaseCommand):
         Role(slug=privileges.SHOW_OWNER_LOCATION_PROPERTY_IN_REPORT_BUILDER,
              name='Additional "Owner (Location)" property in report builder reports.',
              description='Show an additional "Owner (Location)" property in report builder reports.'),
+        Role(slug=privileges.CASE_COPY,
+             name='Allow Case Copy',
+             description='Allow case copy from one user to another'),
     ]
 
     BOOTSTRAP_PLANS = [
