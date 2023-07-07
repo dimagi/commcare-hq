@@ -125,6 +125,13 @@ hqDefine("cloudcare/js/formplayer/menus/controller", function () {
         } else {
             FormplayerFrontend.regions.getRegion('persistentCaseTile').empty();
         }
+
+        if (sidebarEnabled && _.contains(['query', 'entities'], menuResponse.type)) {
+            $('#menu-container .flex-container').addClass('full-width');
+        } else {
+            $('#menu-container .flex-container').removeClass('full-width');
+        }
+
         var queryResponse = menuResponse.queryResponse;
         if (sidebarEnabled && menuResponse.type === "entities" && queryResponse != null)  {
             var queryCollection = new Collection(queryResponse.displays);
