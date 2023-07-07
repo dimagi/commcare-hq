@@ -128,11 +128,25 @@ hqDefine("cloudcare/js/formplayer/menus/controller", function () {
         var queryResponse = menuResponse.queryResponse;
         if (sidebarEnabled && menuResponse.type === "entities" && queryResponse != null)  {
             var queryCollection = new Collection(queryResponse.displays);
-            FormplayerFrontend.regions.getRegion('sidebar').show(QueryListView({collection: queryCollection, title: menuResponse.title, description: menuResponse.description,  sidebarEnabled: true}).render());
+            FormplayerFrontend.regions.getRegion('sidebar').show(
+                QueryListView({
+                    collection: queryCollection,
+                    title: menuResponse.title,
+                    description: menuResponse.description,
+                    sidebarEnabled: true,
+                }).render()
+            );
         } else if (sidebarEnabled && menuResponse.type === "query") {
-            FormplayerFrontend.regions.getRegion('sidebar').show(QueryListView({collection: menuResponse, title: menuResponse.title, description: menuResponse.description, sidebarEnabled: true}).render());
+            FormplayerFrontend.regions.getRegion('sidebar').show(
+                QueryListView({
+                    collection: menuResponse,
+                    title: menuResponse.title,
+                    description: menuResponse.description,
+                    sidebarEnabled: true,
+                }).render()
+            );
         } else {
-                FormplayerFrontend.regions.getRegion('sidebar').empty();
+            FormplayerFrontend.regions.getRegion('sidebar').empty();
         }
 
         if (menuResponse.breadcrumbs) {
