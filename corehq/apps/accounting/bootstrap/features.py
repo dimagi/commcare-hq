@@ -108,6 +108,7 @@ pro_v1 = standard_v1 + [
     privileges.ATTENDANCE_TRACKING,
     privileges.REGEX_FIELD_VALIDATION,
     privileges.EXPORT_OWNERSHIP,
+    privileges.CASE_COPY,
 ]
 
 
