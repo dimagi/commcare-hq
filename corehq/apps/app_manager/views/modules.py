@@ -1,5 +1,6 @@
 import json
 import logging
+from dataclasses import asdict
 from collections import OrderedDict
 from functools import partial
 
@@ -97,6 +98,7 @@ from corehq.apps.app_manager.views.utils import (
     handle_custom_icon_edits,
     handle_shadow_child_modules,
     set_session_endpoint,
+    set_case_list_session_endpoint
 )
 from corehq.apps.app_manager.xform import CaseError
 from corehq.apps.app_manager.xpath_validator import validate_xpath
@@ -228,8 +230,8 @@ def _get_shared_module_view_context(request, app, module, case_property_builder,
             'has_mobile_ucr': bool([i for i in item_lists if i['fixture_type'] == REPORT_FIXTURE]),
             'default_value_expression_enabled': app.enable_default_value_expression,
             'case_tile_template_options': CaseTileTemplates.choices,
-            'case_tile_fields': {template[0]: case_tile_template_config(template[0]).fields
-                                 for template in CaseTileTemplates.choices},
+            'case_tile_template_configs': {template[0]: asdict(case_tile_template_config(template[0]))
+                                           for template in CaseTileTemplates.choices},
             'search_config': {
                 'search_properties':
                     module.search_config.properties if module_offers_search(module) else [],
@@ -483,8 +485,8 @@ def _case_list_form_options(app, module, lang=None):
         'post_form_workflow': f.post_form_workflow,
         'is_registration_form': True,
     } for f in reg_forms})
-    if (hasattr(module, 'parent_select') and  # AdvancedModule doesn't have parent_select
-            toggles.FOLLOWUP_FORMS_AS_CASE_LIST_FORM and module.parent_select.active):
+    if (hasattr(module, 'parent_select')   # AdvancedModule doesn't have parent_select
+            and toggles.FOLLOWUP_FORMS_AS_CASE_LIST_FORM and module.parent_select.active):
         followup_forms = get_parent_select_followup_forms(app, module)
         if followup_forms:
             options.update({f.unique_id: {
@@ -624,6 +626,7 @@ def edit_module_attr(request, domain, app_id, module_unique_id, attr):
         "use_default_image_for_all": None,
         "use_default_audio_for_all": None,
         "session_endpoint_id": None,
+        "case_list_session_endpoint_id": None,
         'custom_assertions': None,
     }
 
@@ -768,6 +771,10 @@ def edit_module_attr(request, domain, app_id, module_unique_id, attr):
     if should_edit('session_endpoint_id'):
         raw_endpoint_id = request.POST['session_endpoint_id']
         set_session_endpoint(module, raw_endpoint_id, app)
+
+    if should_edit('case_list_session_endpoint_id'):
+        raw_endpoint_id = request.POST['case_list_session_endpoint_id']
+        set_case_list_session_endpoint(module, raw_endpoint_id, app)
 
     if should_edit('custom_assertions'):
         module.custom_assertions = validate_custom_assertions(
