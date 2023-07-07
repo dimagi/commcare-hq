@@ -109,9 +109,9 @@ hqDefine("cloudcare/js/formplayer/menus/controller", function () {
         var appPreview = FormplayerFrontend.currentUser.displayOptions.singleAppMode;
         var changeFormLanguage = toggles.toggleEnabled('CHANGE_FORM_LANGUAGE');
         var enablePrintOption = !menuResponse.queryKey;
-        var sidebarEnabled = toggles.toggleEnabled('SPLIT_SCREEN_CASE_SEARCH');
+        var sidebarEnabled = toggles.toggleEnabled('SPLIT_SCREEN_CASE_SEARCH') && !appPreview;
 
-        if (sidebarEnabled && !appPreview && menuResponse.type === "query") {
+        if (sidebarEnabled && menuResponse.type === "query") {
             var menuData = menusUtils.getMenuData(menuResponse);
             menuData["triggerEmptyCaseList"] = true;
             menuData["sidebarEnabled"] = true;
@@ -126,10 +126,10 @@ hqDefine("cloudcare/js/formplayer/menus/controller", function () {
             FormplayerFrontend.regions.getRegion('persistentCaseTile').empty();
         }
         var queryResponse = menuResponse.queryResponse;
-        if (sidebarEnabled && !appPreview && menuResponse.type === "entities" && queryResponse != null)  {
+        if (sidebarEnabled && menuResponse.type === "entities" && queryResponse != null)  {
             var queryCollection = new Collection(queryResponse.displays);
             FormplayerFrontend.regions.getRegion('sidebar').show(QueryListView({collection: queryCollection, title: menuResponse.title, description: menuResponse.description,  sidebarEnabled: true}).render());
-        } else if (sidebarEnabled && !appPreview && menuResponse.type === "query") {
+        } else if (sidebarEnabled && menuResponse.type === "query") {
             FormplayerFrontend.regions.getRegion('sidebar').show(QueryListView({collection: menuResponse, title: menuResponse.title, description: menuResponse.description, sidebarEnabled: true}).render());
         } else {
                 FormplayerFrontend.regions.getRegion('sidebar').empty();
