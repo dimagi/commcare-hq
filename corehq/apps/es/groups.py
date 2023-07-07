@@ -56,6 +56,7 @@ group_adapter = create_document_adapter(
     ElasticGroup,
     "hqgroups_2017-05-29",
     "group",
+    secondary='groups-20230524',
 )
 
 

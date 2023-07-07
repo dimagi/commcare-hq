@@ -90,6 +90,7 @@ case_adapter = create_document_adapter(
     ElasticCase,
     "hqcases_2016-03-04",
     "case",
+    secondary='cases-20230524',
 )
 
 

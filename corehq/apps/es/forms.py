@@ -165,6 +165,7 @@ form_adapter = create_document_adapter(
     ElasticForm,
     getattr(settings, "ES_XFORM_INDEX_NAME", "xforms_2016-07-07"),
     "xform",
+    secondary='forms-20230524',
 )
 
 

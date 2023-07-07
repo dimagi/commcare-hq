@@ -115,6 +115,7 @@ user_adapter = create_document_adapter(
     ElasticUser,
     "hqusers_2017-09-07",
     "user",
+    secondary='users-20230524',
 )
 
 

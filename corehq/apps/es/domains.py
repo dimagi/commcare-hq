@@ -88,6 +88,7 @@ domain_adapter = create_document_adapter(
     ElasticDomain,
     "hqdomains_2021-03-08",
     "hqdomain",
+    secondary='domains-20230524',
 )
 
 
