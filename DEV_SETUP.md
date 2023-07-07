@@ -163,12 +163,15 @@ NOTE: Developers on Mac OS have additional prerequisites. See the [Supplementary
 
     If you have an M1 chip and are using a Rosetta-based install of Postgres and run into problems with psycopg2, see [this solution](https://github.com/psycopg/psycopg2/issues/1216#issuecomment-767892042).
 
-##### A note on `xmlsec`
+##### Notes on `xmlsec`
 
 `xmlsec` is a `pip` dependency that will require some non-`pip`-installable
 packages. The above notes should have covered these requirements for linux and
 macOS, but if you are on a different platform or still experiencing issues,
 please see [`xmlsec`'s install notes](https://pypi.org/project/xmlsec/).
+
+If you encounter issues installing `xmlsec` on a M1 mac, you can try following a workaround
+outlined in the Mac setup [Supplementary Guide](https://github.com/dimagi/commcare-hq/blob/master/DEV_SETUP_MAC.md).
 
 
 ## Downloading & Running CommCare HQ

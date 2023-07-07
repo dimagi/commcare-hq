@@ -229,7 +229,8 @@ def _delete_data_files(domain_name):
 def _delete_sms_content_events_schedules(domain_name):
     models = [
         'SMSContent', 'EmailContent', 'SMSSurveyContent',
-        'IVRSurveyContent', 'SMSCallbackContent', 'CustomContent'
+        'IVRSurveyContent', 'SMSCallbackContent', 'CustomContent',
+        'FCMNotificationContent'
     ]
     filters = [
         'alertevent__schedule__domain',
@@ -366,7 +367,7 @@ DOMAIN_DELETE_OPERATIONS = [
     ModelDeletion('linked_domain', 'DomainLink', 'linked_domain', ['DomainLinkHistory']),
     CustomDeletion('scheduling', _delete_sms_content_events_schedules, [
         'SMSContent', 'EmailContent', 'SMSSurveyContent',
-        'IVRSurveyContent', 'SMSCallbackContent', 'CustomContent'
+        'IVRSurveyContent', 'SMSCallbackContent', 'CustomContent', 'FCMNotificationContent'
     ]),
     ModelDeletion('scheduling', 'MigratedReminder', 'broadcast__domain'),
     ModelDeletion('scheduling', 'AlertEvent', 'schedule__domain'),
@@ -385,6 +386,7 @@ DOMAIN_DELETE_OPERATIONS = [
     ModelDeletion('export', 'EmailExportWhenDoneRequest', 'domain'),
     ModelDeletion('export', 'LedgerSectionEntry', 'domain'),
     CustomDeletion('export', _delete_data_files, []),
+    ModelDeletion('geospatial', 'GeoPolygon', 'domain'),
     ModelDeletion('locations', 'LocationFixtureConfiguration', 'domain'),
     ModelDeletion('ota', 'MobileRecoveryMeasure', 'domain'),
     ModelDeletion('ota', 'SerialIdBucket', 'domain'),
