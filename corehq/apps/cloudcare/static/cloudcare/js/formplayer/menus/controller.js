@@ -109,9 +109,9 @@ hqDefine("cloudcare/js/formplayer/menus/controller", function () {
         var menuListView = menusUtils.getMenuView(menuResponse);
         var appPreview = FormplayerFrontend.currentUser.displayOptions.singleAppMode;
         var enablePrintOption = !menuResponse.queryKey;
-        var sidebarEnabled = toggles.toggleEnabled('SPLIT_SCREEN_CASE_SEARCH');
+        var sidebarEnabled = toggles.toggleEnabled('SPLIT_SCREEN_CASE_SEARCH') && !appPreview;
 
-        if (sidebarEnabled && !appPreview && menuResponse.type === "query") {
+        if (sidebarEnabled && menuResponse.type === "query") {
             var menuData = menusUtils.getMenuData(menuResponse);
             menuData["triggerEmptyCaseList"] = true;
             menuData["sidebarEnabled"] = true;
@@ -125,14 +125,29 @@ hqDefine("cloudcare/js/formplayer/menus/controller", function () {
         } else {
             FormplayerFrontend.regions.getRegion('persistentCaseTile').empty();
         }
+
         var queryResponse = menuResponse.queryResponse;
-        if (sidebarEnabled && !appPreview && menuResponse.type === "entities" && queryResponse != null)  {
+        if (sidebarEnabled && menuResponse.type === "entities" && queryResponse != null)  {
             var queryCollection = new Collection(queryResponse.displays);
-            FormplayerFrontend.regions.getRegion('sidebar').show(QueryListView({collection: queryCollection, title: menuResponse.title, description: menuResponse.description,  sidebarEnabled: true}).render());
-        } else if (sidebarEnabled && !appPreview && menuResponse.type === "query") {
-            FormplayerFrontend.regions.getRegion('sidebar').show(QueryListView({collection: menuResponse, title: menuResponse.title, description: menuResponse.description, sidebarEnabled: true}).render());
+            FormplayerFrontend.regions.getRegion('sidebar').show(
+                QueryListView({
+                    collection: queryCollection,
+                    title: menuResponse.title,
+                    description: menuResponse.description,
+                    sidebarEnabled: true,
+                }).render()
+            );
+        } else if (sidebarEnabled && menuResponse.type === "query") {
+            FormplayerFrontend.regions.getRegion('sidebar').show(
+                QueryListView({
+                    collection: menuResponse,
+                    title: menuResponse.title,
+                    description: menuResponse.description,
+                    sidebarEnabled: true,
+                }).render()
+            );
         } else {
-                FormplayerFrontend.regions.getRegion('sidebar').empty();
+            FormplayerFrontend.regions.getRegion('sidebar').empty();
         }
 
         if (menuResponse.breadcrumbs) {

@@ -12,7 +12,6 @@ hqDefine("cloudcare/js/formplayer/spec/split_screen_case_search_spec", function 
 
         const currentUrl = new Utils.CloudcareUrl({ appId: 'abc123' }),
             sandbox = sinon.sandbox.create(),
-            clearSidebar = sandbox.spy(currentUrl, 'clearSidebar'),
             stubs = {},
             REGIONS = {
                 main: 'main',
@@ -56,7 +55,6 @@ hqDefine("cloudcare/js/formplayer/spec/split_screen_case_search_spec", function 
 
         afterEach(function () {
             getRegion.reset();
-            clearSidebar.reset();
             sandbox.resetHistory();
         });
 
@@ -130,15 +128,15 @@ hqDefine("cloudcare/js/formplayer/spec/split_screen_case_search_spec", function 
 
         describe('FormplayerFrontend actions', function () {
             it('should clear sidebar on menu:select', function () {
+                assert.isFalse(getRegion('sidbar').empty.called);
                 FormplayerFrontend.trigger('menu:select', 0);
-
-                assert.isTrue(clearSidebar.calledOnce);
+                assert.isTrue(getRegion('sidbar').empty.called);
             });
 
             it('should clear sidebar on navigateHome', function () {
+                assert.isFalse(getRegion('sidbar').empty.called);
                 FormplayerFrontend.trigger('navigateHome');
-
-                assert.isTrue(clearSidebar.calledOnce);
+                assert.isTrue(getRegion('sidbar').empty.called);
             });
         });
     });
