@@ -71,6 +71,7 @@ from corehq.apps.accounting.utils import (
     is_downgrade,
     log_accounting_error,
 )
+from corehq.apps.accounting.utils.subscription import is_domain_enterprise
 from corehq.apps.app_manager.const import (
     AMPLIFIES_NO,
     AMPLIFIES_NOT_SET,
@@ -436,6 +437,18 @@ class DomainGlobalSettingsForm(forms.Form):
         )
     )
 
+    use_latest_build_cloudcare = BooleanField(
+        label=gettext_lazy("Use latest build for Web Apps"),
+        required=False,
+        help_text=gettext_lazy(
+            """
+            By default Web Apps will have the latest published build of an app.
+            Check this box to give all users the latest build of an app in Web
+            Apps regardless of whether it is published.
+            """
+        )
+    )
+
     def __init__(self, *args, **kwargs):
         self.project = kwargs.pop('domain', None)
         self.domain = self.project.name
@@ -445,6 +458,7 @@ class DomainGlobalSettingsForm(forms.Form):
         self.helper[5] = twbscrispy.PrependedText('delete_logo', '')
         self.helper[6] = twbscrispy.PrependedText('call_center_enabled', '')
         self.helper[14] = twbscrispy.PrependedText('release_mode_visibility', '')
+        self.helper[15] = twbscrispy.PrependedText('use_latest_build_cloudcare', '')
         self.helper.all().wrap_together(crispy.Fieldset, _('Edit Basic Information'))
         self.helper.layout.append(
             hqcrispy.FormActions(
@@ -460,6 +474,9 @@ class DomainGlobalSettingsForm(forms.Form):
         if not self.can_use_custom_logo:
             del self.fields['logo']
             del self.fields['delete_logo']
+
+        if not is_domain_enterprise(self.domain):
+            del self.fields['use_latest_build_cloudcare']
 
         if self.project:
             if not self.project.call_center_config.enabled:

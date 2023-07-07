@@ -27,6 +27,7 @@ from dimagi.utils.dates import get_date_from_month_and_year_string
 
 from corehq import privileges
 from corehq.apps.accounting.utils import domain_has_privilege
+from corehq.apps.accounting.utils.subscription import is_domain_enterprise
 from corehq.apps.analytics.tasks import set_analytics_opt_out
 from corehq.apps.app_manager.models import validate_lang
 from corehq.apps.custom_data_fields.edit_entity import CustomDataEditor
@@ -43,6 +44,7 @@ from corehq.apps.enterprise.models import (
 )
 from corehq.apps.hqwebapp import crispy as hqcrispy
 from corehq.apps.hqwebapp.crispy import HQModalFormHelper
+from corehq.apps.hqwebapp.signals import clear_login_attempts
 from corehq.apps.hqwebapp.utils.translation import format_html_lazy
 from corehq.apps.hqwebapp.widgets import Select2Ajax, SelectToggle
 from corehq.apps.locations.models import SQLLocation
@@ -60,13 +62,20 @@ from corehq.apps.sso.utils.request_helpers import is_request_using_sso
 from corehq.apps.user_importer.helpers import UserChangeLogger
 from corehq.const import LOADTEST_HARD_LIMIT, USER_CHANGE_VIA_WEB
 from corehq.pillows.utils import MOBILE_USER_TYPE, WEB_USER_TYPE
-from corehq.toggles import TWO_STAGE_USER_PROVISIONING, TWO_STAGE_USER_PROVISIONING_BY_SMS
+from corehq.toggles import (
+    TWO_STAGE_USER_PROVISIONING,
+    TWO_STAGE_USER_PROVISIONING_BY_SMS,
+)
 
 from .audit.change_messages import UserChangeMessage
 from .dbaccessors import user_exists
-from .models import DeactivateMobileWorkerTrigger, UserRole, CouchUser
+from .models import (
+    CouchUser,
+    DeactivateMobileWorkerTrigger,
+    UserOptionToggles,
+    UserRole,
+)
 from .util import cc_user_domain, format_username, log_user_change
-from ..hqwebapp.signals import clear_login_attempts
 
 UNALLOWED_MOBILE_WORKER_NAMES = ('admin', 'demo_user')
 STRONG_PASSWORD_LEN = 12
@@ -336,6 +345,18 @@ class UpdateMyAccountInfoForm(BaseUpdateUserForm, BaseUserInfoForm):
         ),
     )
 
+    use_latest_build_cloudcare = forms.BooleanField(
+        required=False,
+        label=gettext_lazy("Use latest build for Web Apps"),
+        help_text=gettext_lazy(
+            """
+            By default Web Apps will have the latest published build of an app.
+            Check this box to give yourself the latest build of an app in Web
+            Apps regardless of whether it is published.
+            """
+        ),
+    )
+
     def __init__(self, *args, **kwargs):
         from corehq.apps.settings.views import ApiKeyView
         self.user = kwargs['existing_user']
@@ -384,6 +405,10 @@ class UpdateMyAccountInfoForm(BaseUpdateUserForm, BaseUserInfoForm):
         if self.set_analytics_enabled:
             basic_fields.append(twbscrispy.PrependedText('analytics_enabled', ''),)
 
+        self.show_use_latest_build_cloudcare = self.user.is_dimagi
+        if not self.show_use_latest_build_cloudcare:
+            del self.fields['use_latest_build_cloudcare']
+
         self.new_helper.layout = crispy.Layout(
             crispy.Fieldset(
                 gettext_lazy("Basic"),
@@ -392,6 +417,7 @@ class UpdateMyAccountInfoForm(BaseUpdateUserForm, BaseUserInfoForm):
             (hqcrispy.FieldsetAccordionGroup if self.collapse_other_options else crispy.Fieldset)(
                 gettext_lazy("Other Options"),
                 hqcrispy.Field('language'),
+                twbscrispy.PrependedText('use_latest_build_cloudcare', ''),
                 crispy.Div(hqcrispy.StaticField(
                     gettext_lazy('API Key'),
                     format_html_lazy(
@@ -426,10 +452,17 @@ class UpdateMyAccountInfoForm(BaseUpdateUserForm, BaseUserInfoForm):
         return result
 
     def update_user(self, save=True, **kwargs):
-        if save and self.set_analytics_enabled:
-            analytics_enabled = self.cleaned_data['analytics_enabled']
-            if self.user.analytics_enabled != analytics_enabled:
-                set_analytics_opt_out(self.user, analytics_enabled)
+        if save:
+            if self.set_analytics_enabled:
+                analytics_enabled = self.cleaned_data['analytics_enabled']
+                if self.user.analytics_enabled != analytics_enabled:
+                    set_analytics_opt_out(self.user, analytics_enabled)
+            if self.show_use_latest_build_cloudcare:
+                option = self.cleaned_data['use_latest_build_cloudcare']
+                UserOptionToggles.objects.update_or_create(
+                    user=self.user.get_django_user(),
+                    defaults={'use_latest_build_cloudcare': option},
+                )
         return super(UpdateMyAccountInfoForm, self).update_user(save=save, **kwargs)
 
 
@@ -452,6 +485,18 @@ class UpdateCommCareUserInfoForm(BaseUserInfoForm, UpdateUserRoleForm):
         )
     )
 
+    use_latest_build_cloudcare = forms.BooleanField(
+        required=False,
+        label=gettext_lazy("Use latest build for Web Apps"),
+        help_text=gettext_lazy(
+            """
+            By default Web Apps will have the latest published build of an app.
+            Check this box to give this user the latest build of an app in Web
+            Apps regardless of whether it is published.
+            """
+        ),
+    )
+
     def __init__(self, *args, **kwargs):
         super(UpdateCommCareUserInfoForm, self).__init__(*args, **kwargs)
         self.show_deactivate_after_date = EnterpriseMobileWorkerSettings.is_domain_using_custom_deactivation(
@@ -467,6 +512,13 @@ class UpdateCommCareUserInfoForm(BaseUserInfoForm, UpdateUserRoleForm):
         else:
             del self.fields['deactivate_after_date']
 
+        self.show_use_latest_build_cloudcare = (
+            self.domain and is_domain_enterprise(self.domain)
+        )
+        if not self.show_use_latest_build_cloudcare:
+            del self.fields['use_latest_build_cloudcare']
+        # TODO: Use crispy layout to move checkbox label
+
     def clean_deactivate_after_date(self):
         return clean_deactivate_after_date(self.cleaned_data['deactivate_after_date'])
 
@@ -481,6 +533,12 @@ class UpdateCommCareUserInfoForm(BaseUserInfoForm, UpdateUserRoleForm):
                 self.domain,
                 self.existing_user.user_id,
                 self.cleaned_data['deactivate_after_date']
+            )
+        if self.show_use_latest_build_cloudcare:
+            option = self.cleaned_data['use_latest_build_cloudcare']
+            UserOptionToggles.objects.update_or_create(
+                user=self.existing_user.get_django_user(),
+                defaults={'use_latest_build_cloudcare': option},
             )
         return super().update_user(**kwargs)
 
