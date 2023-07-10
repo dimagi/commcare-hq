@@ -7,7 +7,9 @@ from corehq.apps.reports.standard import ProjectReport
 from corehq.apps.reports.standard.cases.basic import CaseListMixin
 from corehq.apps.reports.standard.cases.data_sources import CaseDisplayES
 from corehq.apps.reports.standard.cases.case_list_explorer import CaseListExplorer
-from corehq.apps.geospatial.const import GEO_POINT_CASE_PROPERTY
+from .const import GEO_POINT_CASE_PROPERTY
+from .models import GeoPolygon
+
 
 
 def _get_geo_location(case):
@@ -31,6 +33,7 @@ class CaseManagementMap(ProjectReport, CaseListMixin):
     report_template_path = "map_visualization.html"
 
     dispatcher = CaseManagementMapDispatcher
+    section_name = gettext_noop("Geospatial")
 
     @property
     def template_context(self):
@@ -38,7 +41,12 @@ class CaseManagementMap(ProjectReport, CaseListMixin):
         context = super(CaseManagementMap, self).template_context
         context.update({
             'mapbox_access_token': settings.MAPBOX_ACCESS_TOKEN,
+            'saved_polygons': [
+                {'id': p.id, 'name': p.name, 'geo_json': p.geo_json}
+                for p in GeoPolygon.objects.filter(domain=self.domain).all()
+            ]
         })
+
         return context
 
     @property

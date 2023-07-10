@@ -27,6 +27,8 @@
 
 {% block additional_initial_page_data %}
     {% initial_page_data "mapbox_access_token" mapbox_access_token %}
+    {% initial_page_data "saved_polygons" saved_polygons %}
+    {% registerurl 'geo_polygon' domain %}
 {% endblock %}
 
 {% block page_content %}{{ block.super }}

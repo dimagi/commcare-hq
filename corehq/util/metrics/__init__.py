@@ -336,10 +336,9 @@ def _get_metrics_provider():
 
 
 def _global_setup():
-    if settings.UNIT_TESTING or settings.DEBUG or 'ddtrace.contrib.django' not in settings.INSTALLED_APPS:
+    if settings.UNIT_TESTING or settings.SERVER_ENVIRONMENT != 'staging':
         try:
             from ddtrace import tracer
             tracer.enabled = False
-            tracer.log.disabled = True
         except ImportError:
             pass

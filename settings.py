@@ -946,6 +946,8 @@ LESS_B3_PATHS = {
     'mixins': '../../../hqwebapp/less/_hq/includes/mixins',
 }
 
+BOOTSTRAP_MIGRATION_LOGS_DIR = None
+
 USER_AGENTS_CACHE = 'default'
 
 # Invoicing
@@ -1141,6 +1143,9 @@ IGNORE_ALL_DEMO_USER_SUBMISSIONS = False
 USE_PHONE_ENTRIES = True
 COMMCARE_ANALYTICS_HOST = ""
 
+# FCM Server creds used for sending FCM Push Notifications
+FCM_CREDS = None
+
 try:
     # try to see if there's an environmental variable set for local_settings
     custom_settings = os.environ.get('CUSTOMSETTINGS', None)
@@ -1185,6 +1190,12 @@ if callable(COMPRESS_OFFLINE):
 # Should you someday need to do so, use the lambda/if callable pattern above
 SESSION_COOKIE_SECURE = CSRF_COOKIE_SECURE = SECURE_COOKIES = not DEBUG
 SESSION_COOKIE_HTTPONLY = CSRF_COOKIE_HTTPONLY = True
+
+# This is commented because it is not required now. We don't need to instrument all the services rn on staging.
+# The below lines can be uncommented when we need to turn on app level tracing on any env.
+# if SERVER_ENVIRONMENT == 'staging':
+#     from ddtrace import patch_all
+#     patch_all()
 
 
 if UNIT_TESTING:
