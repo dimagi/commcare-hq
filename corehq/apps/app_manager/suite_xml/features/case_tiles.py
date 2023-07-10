@@ -32,7 +32,7 @@ class CaseTileTemplates(models.TextChoices):
 class CaseTileTemplateConfig:
     slug: str = ''
     filename: str = ''
-    has_map: str = ''
+    has_map: bool = ''
     fields: List[str] = dataclass_field(default_factory=lambda: [])
     grid: Dict[str, Dict[str, int]] = dataclass_field(default_factory=lambda: {})
 
