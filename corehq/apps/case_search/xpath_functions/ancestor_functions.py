@@ -142,13 +142,22 @@ def _get_case_ids_from_ast_filter(context, filter_node):
     else:
         from corehq.apps.case_search.filter_dsl import build_filter_from_ast
         es_filter = build_filter_from_ast(filter_node, context)
-
         es_query = CaseSearchES().domain(context.domain).filter(es_filter)
-        if es_query.count() > MAX_RELATED_CASES:
-            new_query = serialize(filter_node)
-            raise TooManyRelatedCasesError(
-                gettext("The related case lookup you are trying to perform would return too many cases"),
-                new_query
-            )
-
+        validate_ancestor_query_limit(es_query, filter_node)
         return es_query.scroll_ids()
+
+
+def validate_ancestor_query_limit(query, node):
+    if query.count() > MAX_RELATED_CASES:
+        try:
+            search_term = BinaryExpression(node.left.right, node.op, node.right)
+        except AttributeError:
+            if hasattr(node, 'args'):
+                ancestor_path_node, ancestor_case_filter_node = node.args
+                search_term = ancestor_case_filter_node
+            else:
+                search_term = node
+        raise TooManyRelatedCasesError(
+            gettext("The related case lookup you are trying to perform would return too many cases"),
+            serialize(search_term)
+        )
