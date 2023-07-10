@@ -128,15 +128,15 @@ hqDefine("cloudcare/js/formplayer/spec/split_screen_case_search_spec", function 
 
         describe('FormplayerFrontend actions', function () {
             it('should clear sidebar on menu:select', function () {
-                assert.isFalse(getRegion('sidbar').empty.called);
+                assert.isFalse(_.some(stubs.empty.getCalls(), call => call.thisValue.region === REGIONS.sidebar));
                 FormplayerFrontend.trigger('menu:select', 0);
-                assert.isTrue(getRegion('sidbar').empty.called);
+                assert.isTrue(_.some(stubs.empty.getCalls(), call => call.thisValue.region === REGIONS.sidebar));
             });
 
             it('should clear sidebar on navigateHome', function () {
-                assert.isFalse(getRegion('sidbar').empty.called);
+                assert.isFalse(_.some(stubs.empty.getCalls(), call => call.thisValue.region === REGIONS.sidebar));
                 FormplayerFrontend.trigger('navigateHome');
-                assert.isTrue(getRegion('sidbar').empty.called);
+                assert.isTrue(_.some(stubs.empty.getCalls(), call => call.thisValue.region === REGIONS.sidebar));
             });
         });
     });
