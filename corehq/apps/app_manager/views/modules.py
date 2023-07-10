@@ -204,11 +204,13 @@ def _get_shared_module_view_context(request, app, module, case_property_builder,
     item_lists = item_lists_by_app(app, module) if app.enable_search_prompt_appearance else []
     case_types = set(module.search_config.additional_case_types) | {module.case_type}
     case_list_map_enabled = toggles.CASE_LIST_MAP.enabled(app.domain)
-    case_tile_template_option_to_configs = \
-        [(template, asdict(case_tile_template_config(template[0]))) for template in CaseTileTemplates.choices]
-    case_tile_template_option_to_configs_filtered = \
-        [option_to_config for option_to_config in case_tile_template_option_to_configs
-         if case_list_map_enabled or not option_to_config[1]['has_map']]
+    case_tile_template_option_to_configs = [
+        (template, asdict(case_tile_template_config(template[0]))) for template in CaseTileTemplates.choices
+    ]
+    case_tile_template_option_to_configs_filtered = [
+        option_to_config for option_to_config in case_tile_template_option_to_configs
+        if case_list_map_enabled or not option_to_config[1]['has_map']
+    ]
 
     context = {
         'details': _get_module_details_context(request, app, module, case_property_builder),
