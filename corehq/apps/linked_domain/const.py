@@ -19,6 +19,7 @@ MODEL_HMAC_CALLOUT_SETTINGS = 'hmac_callout_settings'
 MODEL_KEYWORD = 'keyword'
 MODEL_TABLEAU_SERVER_AND_VISUALIZATIONS = 'tableau_server_and_visualizations'
 MODEL_AUTO_UPDATE_RULES = 'auto_update_rules'
+MODEL_AUTO_UPDATE_RULE = 'auto_update_rule'
 MODEL_UCR_EXPRESSION = 'ucr_expression'
 
 INDIVIDUAL_DATA_MODELS = [
@@ -27,6 +28,7 @@ INDIVIDUAL_DATA_MODELS = [
     (MODEL_REPORT, gettext_lazy('Report')),
     (MODEL_KEYWORD, gettext_lazy('Keyword')),
     (MODEL_UCR_EXPRESSION, gettext_lazy('Data Expressions and Filters')),
+    (MODEL_AUTO_UPDATE_RULE, gettext_lazy("Automatic Update Rule")),
 ]
 
 DOMAIN_LEVEL_DATA_MODELS = [
