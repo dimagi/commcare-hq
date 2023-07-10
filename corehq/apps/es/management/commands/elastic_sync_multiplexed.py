@@ -153,8 +153,7 @@ class ESSyncUtil:
 
         """
         adapter = doc_adapter_from_cname(cname)
-        older_index = getattr(es_consts, f"HQ_{cname.upper()}_INDEX_NAME")
-        current_index = getattr(es_consts, f"HQ_{cname.upper()}_SECONDARY_INDEX_NAME")
+        current_index, older_index = self._get_current_and_older_index_name(cname)
         if isinstance(adapter, ElasticMultiplexAdapter):
             raise IndexMultiplexedException(f"""A multiplexed index cannot be deleted.
             Make sure you have set ES_{cname.upper()}_INDEX_MULTIPLEXED to False """)
