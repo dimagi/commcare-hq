@@ -1031,7 +1031,13 @@ hqDefine("cloudcare/js/form_entry/entries", function () {
                 let lon = self.rawAnswer().length ? self.rawAnswer()[1] : self.DEFAULT.lon;
                 let zoom = self.rawAnswer().length ? self.DEFAULT.anszoom : self.DEFAULT.zoom;
 
-                self.map = L.map(self.entryId).setView([lat, lon], zoom);
+                self.map = L.map(self.entryId, {
+                    zoomControl: false,
+                }).setView([lat, lon], zoom);
+                L.control.zoom({
+                    position: 'bottomright'
+                }).addTo(self.map);
+
                 L.tileLayer('https://api.mapbox.com/styles/v1/{id}/tiles/{z}/{x}/{y}?access_token='
                             + token, {
                     id: 'mapbox/streets-v11',
