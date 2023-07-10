@@ -32,6 +32,7 @@ from corehq.apps.integration.models import (
 from corehq.apps.fixtures.models import LookupTable, LookupTableRow
 from corehq.apps.fixtures.utils import clear_fixture_cache
 from corehq.apps.linked_domain.const import (
+    MODEL_AUTO_UPDATE_RULE,
     MODEL_AUTO_UPDATE_RULES,
     MODEL_CASE_SEARCH,
     MODEL_FIXTURE,
@@ -50,7 +51,7 @@ from corehq.apps.linked_domain.const import (
     MODEL_HMAC_CALLOUT_SETTINGS,
     MODEL_TABLEAU_SERVER_AND_VISUALIZATIONS,
 )
-from corehq.apps.linked_domain.exceptions import UnsupportedActionError
+from corehq.apps.linked_domain.exceptions import DomainLinkError, UnsupportedActionError
 from corehq.apps.linked_domain.local_accessors import \
     get_enabled_previews as local_enabled_previews
 from corehq.apps.linked_domain.local_accessors import \
@@ -73,6 +74,8 @@ from corehq.apps.linked_domain.local_accessors import \
     get_hmac_callout_settings as local_get_hmac_callout_settings
 from corehq.apps.linked_domain.local_accessors import \
     get_auto_update_rules as local_get_auto_update_rules
+from corehq.apps.linked_domain.local_accessors import \
+    get_auto_update_rule as local_get_auto_update_rule
 from corehq.apps.linked_domain.remote_accessors import \
     get_case_search_config as remote_get_case_search_config
 from corehq.apps.linked_domain.remote_accessors import \
@@ -107,11 +110,16 @@ from corehq.apps.userreports.util import (
 from corehq.apps.users.models import UserRole, HqPermissions
 from corehq.apps.users.views.mobile import UserFieldsView
 from corehq.toggles import NAMESPACE_DOMAIN, EMBEDDED_TABLEAU
+from corehq.apps.users.views.mobile.custom_data_fields import CUSTOM_USER_DATA_FIELD_TYPE
+from corehq.toggles import NAMESPACE_DOMAIN
 from corehq.toggles.shortcuts import set_toggle
+
+from corehq.apps.users.role_utils import UserRolePresets
 
 
 def update_model_type(domain_link, model_type, model_detail=None):
     update_fn = {
+        MODEL_AUTO_UPDATE_RULE: update_auto_update_rule,
         MODEL_AUTO_UPDATE_RULES: update_auto_update_rules,
         MODEL_FIXTURE: update_fixture,
         MODEL_FLAGS: update_toggles,
@@ -171,37 +179,98 @@ def update_previews(domain_link):
 
 def update_custom_data_models(domain_link, limit_types=None):
     if domain_link.is_remote:
-        master_results = remote_custom_data_models(domain_link, limit_types)
+        upstream_results = remote_custom_data_models(domain_link, limit_types)
     else:
-        master_results = local_custom_data_models(domain_link.master_domain, limit_types)
+        upstream_results = local_custom_data_models(domain_link.master_domain, limit_types)
 
-    for field_type, data in master_results.items():
-        field_definitions = data.get('fields', [])
-        model = CustomDataFieldsDefinition.get_or_create(domain_link.linked_domain, field_type)
-        model.set_fields([
-            Field(
-                slug=field_def['slug'],
-                is_required=field_def['is_required'],
-                label=field_def['label'],
-                choices=field_def['choices'],
-                regex=field_def['regex'],
-                regex_msg=field_def['regex_msg'],
-            ) for field_def in field_definitions
-        ])
+    update_custom_data_models_impl(upstream_results, domain_link.linked_domain)
+
+
+def update_custom_data_models_impl(upstream_results, downstream_domain):
+    for field_type, data in upstream_results.items():
+        upstream_field_definitions = data.get('fields', [])
+        model = CustomDataFieldsDefinition.get_or_create(downstream_domain, field_type)
+        merged_fields = merge_fields(model.get_fields(), upstream_field_definitions)
+        model.set_fields(merged_fields)
         model.save()
 
-        old_profiles = {profile.name: profile for profile in model.get_profiles()}
-        for profile in data.get('profiles'):
-            old_profile = old_profiles.get(profile['name'], None)
-            if old_profile:
-                old_profile.fields = profile['fields']
-                old_profile.save()
-            else:
-                CustomDataFieldsProfile(
-                    name=profile['name'],
-                    definition=model,
-                    fields=profile['fields'],
-                ).save()
+        if field_type == CUSTOM_USER_DATA_FIELD_TYPE:
+            # Profiles are only currently used by custom user data
+            update_profiles(model, data.get('profiles', []))
+
+
+def merge_fields(downstream_fields, upstream_fields):
+    managed_fields = [create_local_field(field_def) for field_def in upstream_fields]
+    local_fields = [field for field in downstream_fields if not field.upstream_id]
+
+    local_slugs = [field.slug for field in local_fields]
+    conflicting_slugs = [field.slug for field in managed_fields if field.slug in local_slugs]
+    if conflicting_slugs:
+        raise DomainLinkError(
+            f'Cannot update custom fields due to the following field conflicts: '
+            f'{", ".join(conflicting_slugs)}'
+        )
+
+    return managed_fields + local_fields
+
+
+# TODO: Make this whole thing a transaction
+def update_profiles(definition, upstream_profiles):
+    downstream_profiles = definition.get_profiles()
+    unsynced_profile_names = [profile.name for profile in downstream_profiles if not profile.upstream_id]
+    conflicting_profile_names = [
+        profile['name'] for profile in upstream_profiles if profile['name'] in unsynced_profile_names
+    ]
+    if conflicting_profile_names:
+        raise DomainLinkError(
+            'Cannot update custom fields due to the following profile conflicts: '
+            f'{", ".join(conflicting_profile_names)}'
+        )
+
+    existing_managed_profiles = {profile.name: profile for profile in downstream_profiles if profile.upstream_id}
+
+    for profile in upstream_profiles:
+        existing_profile = existing_managed_profiles.pop(profile['name'], None)
+        if existing_profile:
+            existing_profile.fields = profile['fields']
+            existing_profile.save()
+        else:
+            new_profile = create_synced_profile(profile, definition)
+            new_profile.save()
+
+    # What is left in existing_managed_profiles must be deleted
+    for profile in existing_managed_profiles.values():
+        # do not delete profiles that are in use, as it would be disruptive
+        # it's possible that it might be better to create an error message
+        #  pointing to the specific users that are using the profile,
+        #  and allow the operator to either unassign that profile from those users,
+        #  or make the profile local to the domain
+        if not profile.has_users_assigned:
+            profile.delete()
+
+    # Likely need to check for validity after the merge;
+    # A synced field could have been removed, and local profiles may still depend on that synced field
+
+
+def create_local_field(upstream_field_definition):
+    return Field(
+        slug=upstream_field_definition['slug'],
+        is_required=upstream_field_definition['is_required'],
+        label=upstream_field_definition['label'],
+        choices=upstream_field_definition['choices'],
+        regex=upstream_field_definition['regex'],
+        regex_msg=upstream_field_definition['regex_msg'],
+        upstream_id=upstream_field_definition['id'],
+    )
+
+
+def create_synced_profile(upstream_profile, definition):
+    return CustomDataFieldsProfile(
+        name=upstream_profile['name'],
+        definition=definition,
+        fields=upstream_profile['fields'],
+        upstream_id=upstream_profile['id'],
+    )
 
 
 def update_fixture(domain_link, tag):
@@ -220,14 +289,22 @@ def update_fixture(domain_link, tag):
     try:
         linked_data_type = LookupTable.objects.by_domain_tag(
             domain_link.linked_domain, master_data_type.tag)
+
+        if not linked_data_type.is_synced:
+            # if local data exists, but it was not created through syncing, reject the sync request
+            raise UnsupportedActionError(_("Existing lookup table found for '{}'. "
+                "Please remove this table before trying to sync again").format(
+                    linked_data_type.tag))
         is_existing_table = True
     except LookupTable.DoesNotExist:
         linked_data_type = LookupTable(domain=domain_link.linked_domain)
         is_existing_table = False
+
     for field in LookupTable._meta.fields:
         if field.attname not in ["id", "domain"]:
             value = getattr(master_data_type, field.attname)
             setattr(linked_data_type, field.attname, value)
+    linked_data_type.is_synced = True
     linked_data_type.save()
 
     # Re-create relevant data items
@@ -253,54 +330,100 @@ def update_fixture(domain_link, tag):
 
 def update_user_roles(domain_link):
     if domain_link.is_remote:
-        master_results = remote_get_user_roles(domain_link)
+        upstream_roles = remote_get_user_roles(domain_link)
     else:
-        master_results = local_get_user_roles(domain_link.master_domain)
+        upstream_roles = local_get_user_roles(domain_link.master_domain)
 
-    _convert_reports_permissions(domain_link, master_results)
+    _convert_reports_permissions(domain_link, upstream_roles)
 
-    local_roles = UserRole.objects.get_by_domain(domain_link.linked_domain, include_archived=True)
-    local_roles_by_name = {}
-    local_roles_by_upstream_id = {}
-    for role in local_roles:
-        local_roles_by_name[role.name] = role
+    downstream_roles = UserRole.objects.get_by_domain(domain_link.linked_domain, include_archived=True)
+    downstream_roles_by_upstream_id = {}
+    for role in downstream_roles:
         if role.upstream_id:
-            local_roles_by_upstream_id[role.upstream_id] = role
+            downstream_roles_by_upstream_id[role.upstream_id] = role
 
     is_embedded_tableau_enabled = EMBEDDED_TABLEAU.enabled(domain_link.linked_domain)
     if is_embedded_tableau_enabled:
         visualizations_for_linked_domain = TableauVisualization.objects.filter(
             domain=domain_link.linked_domain)
+    failed_updates = []
+    successful_updates = []
 
     # Update downstream roles based on upstream roles
-    for role_def in master_results:
-        role = local_roles_by_upstream_id.get(role_def['_id']) or local_roles_by_name.get(role_def['name'])
+    for upstream_role_def in upstream_roles:
+        role, conflicting_role = _get_matching_downstream_role(upstream_role_def, downstream_roles)
+
+        if conflicting_role:
+            failed_updates.append(upstream_role_def)
+            continue
+
         if not role:
             role = UserRole(domain=domain_link.linked_domain)
-        local_roles_by_upstream_id[role_def['_id']] = role
-        role.upstream_id = role_def['_id']
 
-        role.name = role_def["name"]
-        role.default_landing_page = role_def["default_landing_page"]
-        role.is_non_admin_editable = role_def["is_non_admin_editable"]
-        role.save()
+        downstream_roles_by_upstream_id[upstream_role_def['_id']] = role
 
-        permissions = HqPermissions.wrap(role_def["permissions"])
+        _copy_role_attributes(upstream_role_def, role)
+        permissions = HqPermissions.wrap(upstream_role_def["permissions"])
         if is_embedded_tableau_enabled:
             permissions.view_tableau_list = _get_new_tableau_report_permissions(
                 visualizations_for_linked_domain, permissions, role.permissions)
+        role.save()
         role.set_permissions(permissions.to_list())
 
+        successful_updates.append(upstream_role_def)
+
     # Update assignable_by ids - must be done after main update to guarantee all local roles have ids
-    for role_def in master_results:
-        local_role = local_roles_by_upstream_id[role_def['_id']]
+    for upstream_role_def in successful_updates:
+        downstream_role = downstream_roles_by_upstream_id[upstream_role_def['_id']]
         assignable_by = []
-        if role_def["assignable_by"]:
+        if upstream_role_def["assignable_by"]:
             assignable_by = [
-                local_roles_by_upstream_id[role_id].id
-                for role_id in role_def["assignable_by"]
+                downstream_roles_by_upstream_id[role_id].id
+                for role_id in upstream_role_def["assignable_by"]
             ]
-        local_role.set_assignable_by(assignable_by)
+        downstream_role.set_assignable_by(assignable_by)
+
+    if failed_updates:
+        conflicting_role_names = ', '.join(['"{}"'.format(role['name']) for role in failed_updates])
+        error_msg = _('Failed to sync the following roles due to a conflict: {}.'
+            ' Please remove or rename these roles before syncing again').format(conflicting_role_names)
+        raise UnsupportedActionError(error_msg)
+
+
+def _get_matching_downstream_role(upstream_role_json, downstream_roles):
+    matching_role = None
+    conflicting_role = None
+
+    for downstream_role in downstream_roles:
+        if upstream_role_json['_id'] == downstream_role.upstream_id:
+            matching_role = downstream_role
+        elif upstream_role_json['name'] == downstream_role.name:
+            if _is_default_built_in_role(upstream_role_json, downstream_role):
+                matching_role = downstream_role
+            else:
+                conflicting_role = downstream_role
+
+    return (matching_role, conflicting_role)
+
+
+def _is_default_built_in_role(upstream_role_json, downstream_role):
+    initial_role_names = UserRolePresets.INITIAL_ROLES.keys()
+    if downstream_role.name not in initial_role_names:
+        return False
+
+    default_permissions = UserRolePresets.INITIAL_ROLES[downstream_role.name]()
+    upstream_permissions = HqPermissions.wrap(upstream_role_json['permissions'])
+    if (upstream_permissions == downstream_role.permissions == default_permissions):
+        return True
+
+    return False
+
+
+def _copy_role_attributes(source_role_json, dest_role):
+    dest_role.name = source_role_json['name']
+    dest_role.default_landing_page = source_role_json['default_landing_page']
+    dest_role.is_non_admin_editable = source_role_json['is_non_admin_editable']
+    dest_role.upstream_id = source_role_json['_id']
 
 
 def update_case_search_config(domain_link):
@@ -441,6 +564,106 @@ def update_hmac_callout_settings(domain_link):
     model.save()
 
 
+def update_auto_update_rule(domain_link, id):
+    upstream_rule_definition = local_get_auto_update_rule(domain_link.master_domain, id)
+    downstream_rule = get_or_create_downstream_rule(domain_link.linked_domain, upstream_rule_definition)
+    _update_rule(downstream_rule, upstream_rule_definition)
+
+
+def get_or_create_downstream_rule(domain, upstream_definition):
+    try:
+        downstream_rule = AutomaticUpdateRule.objects.get(
+            upstream_id=upstream_definition['rule']['id'],
+            domain=domain,
+            deleted=False
+        )
+    except AutomaticUpdateRule.DoesNotExist:
+        downstream_rule = AutomaticUpdateRule(
+            domain=domain,
+            active=upstream_definition['rule']['active'],
+            workflow=AutomaticUpdateRule.WORKFLOW_CASE_UPDATE,
+            upstream_id=upstream_definition['rule']['id']
+        )
+
+    return downstream_rule
+
+
+def _update_rule(rule, definition):
+    with transaction.atomic():
+        _update_rule_properties(rule, definition['rule'])
+
+        rule.delete_criteria()
+        rule.delete_actions()
+
+        _create_rule_criteria(rule, definition['criteria'])
+        _create_rule_actions(rule, definition['actions'])
+
+
+def _update_rule_properties(rule, definition):
+    rule.name = definition['name']
+    rule.case_type = definition['case_type']
+    rule.filter_on_server_modified = definition['filter_on_server_modified']
+    rule.server_modified_boundary = definition['server_modified_boundary']
+    rule.active = definition['active']
+    rule.save()
+
+
+def _create_rule_criteria(rule, criteria_definition):
+    # Largely from data_interfaces/forms.py - save_criteria()
+    for criteria in criteria_definition:
+        definition = None
+
+        if criteria['match_property_definition']:
+            definition = MatchPropertyDefinition.objects.create(
+                property_name=criteria['match_property_definition']['property_name'],
+                property_value=criteria['match_property_definition']['property_value'],
+                match_type=criteria['match_property_definition']['match_type'],
+            )
+        elif criteria['custom_match_definition']:
+            definition = CustomMatchDefinition.objects.create(
+                name=criteria['custom_match_definition']['name'],
+            )
+        elif criteria['closed_parent_definition']:
+            definition = ClosedParentDefinition.objects.create()
+        elif criteria['location_filter_definition']:
+            definition = LocationFilterDefinition.objects.create(
+                location_id=criteria['location_filter_definition']['location_id'],
+                include_child_locations=criteria['location_filter_definition']['include_child_locations'],
+            )
+
+        new_criteria = CaseRuleCriteria(rule=rule)
+        new_criteria.definition = definition
+        new_criteria.save()
+
+
+def _create_rule_actions(rule, action_definition):
+    # Largely from data_interfacees/forms.py - save_actions()
+    for action in action_definition:
+        definition = None
+
+        if action['update_case_definition']:
+            definition = UpdateCaseDefinition(close_case=action['update_case_definition']['close_case'])
+            properties = []
+            for propertyItem in action['update_case_definition']['properties_to_update']:
+                properties.append(
+                    UpdateCaseDefinition.PropertyDefinition(
+                        name=propertyItem['name'],
+                        value_type=propertyItem['value_type'],
+                        value=propertyItem['value'],
+                    )
+                )
+            definition.set_properties_to_update(properties)
+            definition.save()
+        elif action['custom_action_definition']:
+            definition = CustomActionDefinition.objects.create(
+                name=action['custom_action_definition']['name'],
+            )
+
+        action = CaseRuleAction(rule=rule)
+        action.definition = definition
+        action.save()
+
+
 def update_auto_update_rules(domain_link):
     if domain_link.is_remote:
         upstream_rules = remote_get_auto_update_rules(domain_link)
@@ -454,17 +677,11 @@ def update_auto_update_rules(domain_link):
     )
 
     for upstream_rule_def in upstream_rules:
-        # Grab local rule by upstream ID (preferred) or by name
+        # Grab local rule by upstream ID
         try:
             downstream_rule = downstream_rules.get(upstream_id=upstream_rule_def['rule']['id'])
         except AutomaticUpdateRule.DoesNotExist:
-            try:
-                downstream_rule = downstream_rules.get(name=upstream_rule_def['rule']['name'])
-            except AutomaticUpdateRule.MultipleObjectsReturned:
-                # If there are multiple rules with the same name, overwrite the first.
-                downstream_rule = downstream_rules.filter(name=upstream_rule_def['rule']['name']).first()
-            except AutomaticUpdateRule.DoesNotExist:
-                downstream_rule = None
+            downstream_rule = None
 
         # If no corresponding local rule, make a new rule
         if not downstream_rule:
@@ -475,70 +692,7 @@ def update_auto_update_rules(domain_link):
                 upstream_id=upstream_rule_def['rule']['id']
             )
 
-        # Copy all the contents from old rule to new rule
-        with transaction.atomic():
-
-            downstream_rule.name = upstream_rule_def['rule']['name']
-            downstream_rule.case_type = upstream_rule_def['rule']['case_type']
-            downstream_rule.filter_on_server_modified = upstream_rule_def['rule']['filter_on_server_modified']
-            downstream_rule.server_modified_boundary = upstream_rule_def['rule']['server_modified_boundary']
-            downstream_rule.active = upstream_rule_def['rule']['active']
-            downstream_rule.save()
-
-            downstream_rule.delete_criteria()
-            downstream_rule.delete_actions()
-
-            # Largely from data_interfaces/forms.py - save_criteria()
-            for criteria in upstream_rule_def['criteria']:
-                definition = None
-
-                if criteria['match_property_definition']:
-                    definition = MatchPropertyDefinition.objects.create(
-                        property_name=criteria['match_property_definition']['property_name'],
-                        property_value=criteria['match_property_definition']['property_value'],
-                        match_type=criteria['match_property_definition']['match_type'],
-                    )
-                elif criteria['custom_match_definition']:
-                    definition = CustomMatchDefinition.objects.create(
-                        name=criteria['custom_match_definition']['name'],
-                    )
-                elif criteria['closed_parent_definition']:
-                    definition = ClosedParentDefinition.objects.create()
-                elif criteria['location_filter_definition']:
-                    definition = LocationFilterDefinition.objects.create(
-                        location_id=criteria['location_filter_definition']['location_id'],
-                        include_child_locations=criteria['location_filter_definition']['include_child_locations'],
-                    )
-
-                new_criteria = CaseRuleCriteria(rule=downstream_rule)
-                new_criteria.definition = definition
-                new_criteria.save()
-
-            # Largely from data_interfacees/forms.py - save_actions()
-            for action in upstream_rule_def['actions']:
-                definition = None
-
-                if action['update_case_definition']:
-                    definition = UpdateCaseDefinition(close_case=action['update_case_definition']['close_case'])
-                    properties = []
-                    for propertyItem in action['update_case_definition']['properties_to_update']:
-                        properties.append(
-                            UpdateCaseDefinition.PropertyDefinition(
-                                name=propertyItem['name'],
-                                value_type=propertyItem['value_type'],
-                                value=propertyItem['value'],
-                            )
-                        )
-                    definition.set_properties_to_update(properties)
-                    definition.save()
-                elif action['custom_action_definition']:
-                    definition = CustomActionDefinition.objects.create(
-                        name=action['custom_action_definition']['name'],
-                    )
-
-                action = CaseRuleAction(rule=downstream_rule)
-                action.definition = definition
-                action.save()
+        _update_rule(downstream_rule, upstream_rule_def)
 
 
 def _convert_reports_permissions(domain_link, master_results):
