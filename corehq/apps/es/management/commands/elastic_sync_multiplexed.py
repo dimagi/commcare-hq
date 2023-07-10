@@ -181,6 +181,16 @@ class ESSyncUtil:
 
         es_manager.index_delete(older_index)
 
+    def _get_current_and_older_index_name(cls, cname):
+        """
+        Returns a tuple of current index name and older index name related to the given cname.
+        Older index refers to the source index during reindex process
+        Current index refers to the destination index
+        """
+        current_index = getattr(es_consts, f"HQ_{cname.upper()}_SECONDARY_INDEX_NAME")
+        older_index = getattr(es_consts, f"HQ_{cname.upper()}_INDEX_NAME")
+        return (current_index, older_index)
+
     def estimate_disk_space_for_reindex(self, stdout=None):
         indices_info = es_manager.indices_info()
         index_cname_map = self._get_index_name_cname_map()
