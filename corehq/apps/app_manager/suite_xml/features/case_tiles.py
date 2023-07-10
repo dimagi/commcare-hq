@@ -56,7 +56,7 @@ def case_tile_template_config(template):
 
 class CaseTileHelper(object):
     def __init__(self, app, module, detail, detail_id, detail_type, build_profile_id, detail_column_infos,
-                 entries_helper: EntriesHelper):
+                 entries_helper):
         self.app = app
         self.module = module
         self.detail = detail
