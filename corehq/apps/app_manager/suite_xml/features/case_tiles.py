@@ -65,7 +65,7 @@ class CaseTileHelper(object):
         self.cols_by_tile_field = {col.case_tile_field: col for col in self.detail.columns}
         self.build_profile_id = build_profile_id
         self.detail_column_infos = detail_column_infos
-        self.entries_helper: EntriesHelper = entries_helper
+        self.entries_helper = entries_helper
 
     def build_case_tile_detail(self):
         from corehq.apps.app_manager.suite_xml.sections.details import DetailContributor
