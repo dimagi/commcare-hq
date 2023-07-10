@@ -21,6 +21,8 @@ from corehq.apps.es.transient_util import (
 )
 from corehq.apps.es.utils import check_task_progress
 from corehq.util.markup import SimpleTableWriter, TableRowFormatter
+from pillowtop.checkpoints.manager import KafkaPillowCheckpoint
+from pillowtop.utils import get_all_pillow_instances
 
 logger = logging.getLogger('elastic_sync_multiplexed')
 
@@ -318,6 +320,11 @@ class Command(BaseCommand):
         ./manage.py elastic_sync_multiplexed estimated_size_for_reindex
         ```
 
+    For copying checkpoints from source index checkpoint ids to destination index checkpoint ids-
+        ```bash
+        ./manage.py elastic_sync_multiplexed copy_checkpoints <index_cname>
+        ```
+
     """
 
     help = ("Reindex management command to sync Multiplexed HQ indices")
@@ -390,6 +397,15 @@ class Command(BaseCommand):
         estimate_size_cmd = subparsers.add_parser("estimated_size_for_reindex")
         estimate_size_cmd.set_defaults(func=self.es_helper.estimate_disk_space_for_reindex)
 
+        # Copy checkpoints
+        copy_checkpoint_cmd = subparsers.add_parser("copy_checkpoints")
+        copy_checkpoint_cmd.set_defaults(func=self.es_helper.set_checkpoints_for_new_index)
+        copy_checkpoint_cmd.add_argument(
+            'index_cname',
+            choices=INDEXES,
+            help="""Cannonical Name of the index whose checkpoints are to be copied""",
+        )
+
     def handle(self, **options):
         sub_cmd = options['sub_command']
         cmd_func = options.get('func')
@@ -403,3 +419,5 @@ class Command(BaseCommand):
             cmd_func(options['task_id'])
         elif sub_cmd == 'estimated_size_for_reindex':
             cmd_func(stdout=self.stdout)
+        elif sub_cmd == 'copy_checkpoints':
+            cmd_func(options['index_cname'])
