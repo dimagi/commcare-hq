@@ -10,6 +10,7 @@ import sys
 
 from sentry_sdk import configure_scope
 
+from corehq.apps.receiverwrapper.rate_limiter import case_pillow_lag_gauge_limiter
 from corehq.util.metrics import metrics_counter, metrics_gauge
 from corehq.util.metrics.const import MPM_MAX
 from corehq.util.timer import TimingContext
@@ -375,13 +376,16 @@ class PillowBase(metaclass=ABCMeta):
 
             metrics_counter(metric, tags=metric_tags)
 
+            topic_tag = _topic_for_ddog(
+                TopicPartition(change.topic, change.partition)
+                if change.partition is not None else change.topic
+            )
             change_lag = (datetime.utcnow() - change.metadata.publish_timestamp).total_seconds()
+
+            case_pillow_lag_gauge_limiter.report(topic_tag, change_lag)
             metrics_gauge('commcare.change_feed.change_lag', change_lag, tags={
                 'pillow_name': self.get_name(),
-                'topic': _topic_for_ddog(
-                    TopicPartition(change.topic, change.partition)
-                    if change.partition is not None else change.topic
-                ),
+                'topic': topic_tag,
             }, multiprocess_mode=MPM_MAX)
 
             if processing_time:
