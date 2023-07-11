@@ -46,7 +46,6 @@ from .util import (
     fetchall_as_namedtuple,
     sort_with_id_list,
 )
-from corehq.apps.receiverwrapper.rate_limiter import case_pillow_lag_gauge_limiter
 
 DEFAULT_PARENT_IDENTIFIER = 'parent'
 
@@ -283,6 +282,7 @@ class CommCareCaseManager(RequireDBManager):
 
         :returns: Number of deleted cases.
         """
+        from corehq.apps.receiverwrapper.rate_limiter import case_pillow_lag_gauge_limiter
         assert isinstance(case_ids, list), type(case_ids)
         case_pillow_lag_gauge_limiter.wait()
         with self.model.get_plproxy_cursor() as cursor:
