@@ -1625,12 +1625,19 @@ hqDefine("reports/js/maps_utils", function () {
 
     // initialize leaflet map
     function initMap($div, layers, default_pos, default_zoom) {
-        var map = L.map($div.attr('id'), {trackResize: false}).setView(default_pos, default_zoom);
+        var map = L.map($div.attr('id'), {
+            trackResize: false,
+            zoomControl: false,
+        }).setView(default_pos, default_zoom);
         initLayers(map, layers);
 
         new ZoomToFitControl().addTo(map);
         new ToggleTableControl().addTo(map);
         L.control.scale().addTo(map);
+
+        L.control.zoom({
+            position: 'bottomleft'
+        }).addTo(map);
 
         return map;
     }
