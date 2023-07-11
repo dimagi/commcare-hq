@@ -362,6 +362,7 @@ domain
  0012_operatorcalllimitsettings
  0013_accountconfirmationsettings_squashed_0016_alter_smsaccountconfirmationsettings_project_name (4 squashed migrations)
  0014_appreleasemodesetting
+ 0015_domain_latest_build_in_web_apps
 domain_migration_flags
  0001_initial
  0002_migrate_data_from_tzmigration
@@ -1135,6 +1136,7 @@ users
  0051_add_attendance_tracking_privilege
  0052_hqapikey_last_used
  0053_userreportingmetadatastaging_fcm_token
+ 0054_user_latest_build_in_web_apps
 util
  0001_initial
  0002_complaintbouncemeta_permanentbouncemeta_transientbounceemail
