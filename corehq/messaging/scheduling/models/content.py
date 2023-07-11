@@ -75,7 +75,7 @@ class SMSContent(Content):
         renderer = self.get_template_renderer(recipient)
         try:
             return renderer.render(message)
-        except:
+        except Exception:
             logged_subevent.error(MessagingEvent.ERROR_CANNOT_RENDER_MESSAGE)
             return None
 
@@ -147,7 +147,7 @@ class EmailContent(Content):
 
         try:
             subject, message = self.render_subject_and_message(subject, message, recipient)
-        except:
+        except Exception:
             logged_subevent.error(MessagingEvent.ERROR_CANNOT_RENDER_MESSAGE)
             return
 
@@ -268,8 +268,8 @@ class SMSSurveyContent(Content):
         # is a user we only allow them to fill out the survey as the user contact, and
         # not the user case contact.
         phone_entry_or_number = (
-            phone_entry or
-            self.get_two_way_entry_or_phone_number(
+            phone_entry
+            or self.get_two_way_entry_or_phone_number(
                 recipient, try_usercase=False, domain_for_toggles=logged_event.domain)
         )
 
@@ -363,7 +363,7 @@ class SMSSurveyContent(Content):
 
             # Reraise the exception so that the framework retries it again later
             raise
-        except:
+        except Exception:
             logged_subevent.error(MessagingEvent.ERROR_TOUCHFORMS_ERROR)
             # Reraise the exception so that the framework retries it again later
             raise
