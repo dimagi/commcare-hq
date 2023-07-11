@@ -10,7 +10,6 @@ import sys
 
 from sentry_sdk import configure_scope
 
-from corehq.apps.receiverwrapper.rate_limiter import case_pillow_lag_gauge_limiter
 from corehq.util.metrics import metrics_counter, metrics_gauge
 from corehq.util.metrics.const import MPM_MAX
 from corehq.util.timer import TimingContext
@@ -363,6 +362,8 @@ class PillowBase(metaclass=ABCMeta):
 
     def __record_change_metric_in_datadog(self, metric, change, processing_time=None,
                                           add_case_type_tag=False):
+        from corehq.apps.receiverwrapper.rate_limiter import case_pillow_lag_gauge_limiter
+
         if change.metadata is not None:
             metric_tags = {
                 'datasource': change.metadata.data_source_name,
