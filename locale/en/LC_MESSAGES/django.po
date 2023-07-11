@@ -7747,11 +7747,11 @@ msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/case_list.html
 msgid "Use this case list tile persistently in forms"
-msgstr ""
+msgstr "Use this menus case list tile persistently in forms"
 
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/case_list.html
 msgid "Use persistent case tile from menu"
-msgstr ""
+msgstr "Use persistent case tile from other menu (overrides previous checkbox)"
 
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/case_list.html
 msgid "Embed case details in case tile pull-down"
