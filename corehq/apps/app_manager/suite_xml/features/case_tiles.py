@@ -10,6 +10,7 @@ from xml.sax.saxutils import escape
 
 from corehq.apps.app_manager import id_strings
 from corehq.apps.app_manager.exceptions import SuiteError
+from corehq.apps.app_manager.suite_xml.sections.entries import EntriesHelper
 from corehq.apps.app_manager.suite_xml.xml_models import Detail, XPathVariable, TileGroup
 from corehq.apps.app_manager.util import (
     module_offers_search,
@@ -55,8 +56,8 @@ def case_tile_template_config(template):
 
 
 class CaseTileHelper(object):
-    def __init__(self, app, module, detail, detail_id, detail_type,
-                build_profile_id, detail_column_infos):
+    def __init__(self, app, module, detail, detail_id, detail_type, build_profile_id, detail_column_infos,
+                 entries_helper):
         self.app = app
         self.module = module
         self.detail = detail
@@ -65,6 +66,7 @@ class CaseTileHelper(object):
         self.cols_by_tile_field = {col.case_tile_field: col for col in self.detail.columns}
         self.build_profile_id = build_profile_id
         self.detail_column_infos = detail_column_infos
+        self.entries_helper = entries_helper
 
     def build_case_tile_detail(self):
         from corehq.apps.app_manager.suite_xml.sections.details import DetailContributor
@@ -84,6 +86,16 @@ class CaseTileHelper(object):
         # Populate the template
         detail_as_string = self._case_tile_template_string.format(**context)
         detail = load_xmlobject_from_string(detail_as_string, xmlclass=Detail)
+
+        # Case registration
+        # The Person simple template already defines a registration action. Since it is used in production
+        # it would be a lot of trouble to change it. So if this template is used we will not add another
+        # registration action.
+        uses_person_simple = self.detail.case_tile_template and \
+            self.detail.case_tile_template == CaseTileTemplates.PERSON_SIMPLE.value
+        if not uses_person_simple and self.module.case_list_form and self.module.case_list_form.form_id:
+            DetailContributor.add_register_action(
+                self.app, self.module, detail.actions, self.build_profile_id, self.entries_helper)
 
         # Add case search action if needed
         if module_offers_search(self.module) and not module_uses_inline_search(self.module):
