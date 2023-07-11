@@ -914,6 +914,9 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, EulaMixin):
 
     reporting_metadata = SchemaProperty(ReportingMetadata)
 
+    # User gets the latest build in Web Apps instead of the published build
+    latest_build_in_web_apps = BooleanProperty(default=False)
+
     _user = None
 
     can_assign_superuser = BooleanProperty(default=False)

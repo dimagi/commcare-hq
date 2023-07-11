@@ -119,6 +119,15 @@ LICENSE_LINKS = {
     'cc-nc-nd': 'http://creativecommons.org/licenses/by-nc-nd/4.0',
 }
 
+LATEST_BUILD_USER = 'user'
+LATEST_BUILD_ALWAYS = 'always'
+LATEST_BUILD_NEVER = 'never'
+LATEST_BUILD_CHOICES = {
+    LATEST_BUILD_USER: _('If enabled for the user'),
+    LATEST_BUILD_ALWAYS: _('Always'),
+    LATEST_BUILD_NEVER: _('Never'),
+}
+
 
 def cached_property(method):
     def find_cached(self):
@@ -446,6 +455,12 @@ class Domain(QuickCachedDocumentMixin, BlobMixin, Document, SnapshotMixin):
     default_mobile_ucr_sync_interval = IntegerProperty()
 
     ga_opt_out = BooleanProperty(default=False)
+
+    # Users get the latest build in Web Apps instead of the published build
+    latest_build_in_web_apps = StringProperty(
+        choices=LATEST_BUILD_CHOICES,
+        default=LATEST_BUILD_USER,
+    )
 
     @classmethod
     def wrap(cls, data):
