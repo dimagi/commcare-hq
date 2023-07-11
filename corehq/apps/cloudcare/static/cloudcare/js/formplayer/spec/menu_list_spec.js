@@ -69,7 +69,7 @@ hqDefine("cloudcare/js/formplayer/spec/menu_list_spec", function () {
 
             before(function () {
                 hqImport("hqwebapp/js/initial_page_data").register("apps", [{
-                    "_id": "my-app-id",
+                    "_id": "abc123",
                 }]);
             });
 
