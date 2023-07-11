@@ -1629,14 +1629,17 @@ hqDefine("reports/js/maps_utils", function () {
             trackResize: false,
             zoomControl: false,
         }).setView(default_pos, default_zoom);
-        L.control.zoom({
-            position: 'bottomright'
-        }).addTo(map);
         initLayers(map, layers);
 
         new ZoomToFitControl().addTo(map);
         new ToggleTableControl().addTo(map);
         L.control.scale().addTo(map);
+
+        // Moving all the zoom controls to the bottom right for consistency.
+        // Could not test this instance because of other issues.
+        L.control.zoom({
+            position: 'bottomright'
+        }).addTo(map);
 
         return map;
     }
