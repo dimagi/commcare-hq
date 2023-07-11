@@ -9,6 +9,8 @@ from corehq.apps.data_dictionary.tests.utils import setup_data_dictionary
 from corehq.apps.data_dictionary.util import (
     generate_data_dictionary,
     get_values_hints_dict,
+    is_case_type_deprecated,
+    get_data_dict_deprecated_case_types
 )
 
 
@@ -94,6 +96,20 @@ class GenerateDictionaryTest(TestCase):
 class MiscUtilTest(TestCase):
     domain = uuid.uuid4().hex
 
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.case_type_name = 'caseType'
+        cls.deprecated_case_type_name = 'depCaseType'
+        cls.case_type_obj = CaseType(name=cls.case_type_name, domain=cls.domain)
+        cls.case_type_obj.save()
+        cls.dep_case_type_obj = CaseType(
+            name=cls.deprecated_case_type_name,
+            domain=cls.domain,
+            is_deprecated=True
+        )
+        cls.dep_case_type_obj.save()
+
     def tearDown(self):
         CaseType.objects.filter(domain=self.domain).delete()
 
@@ -126,3 +142,14 @@ class MiscUtilTest(TestCase):
         for prop_name, _ in prop_list:
             self.assertTrue(prop_name in values_hints)
             self.assertEqual(sorted(values_hints[prop_name]), sorted(av_dict[prop_name]))
+
+    def test_is_case_type_deprecated(self):
+        is_deprecated = is_case_type_deprecated(self.domain, self.deprecated_case_type_name)
+        self.assertTrue(is_deprecated)
+        is_deprecated = is_case_type_deprecated(self.domain, '1234')
+        self.assertFalse(is_deprecated)
+
+    def test_get_data_dict_deprecated_case_types(self):
+        deprecated_case_types = get_data_dict_deprecated_case_types(self.domain)
+        self.assertEqual(len(deprecated_case_types), 1)
+        self.assertEqual(deprecated_case_types, {self.deprecated_case_type_name})
