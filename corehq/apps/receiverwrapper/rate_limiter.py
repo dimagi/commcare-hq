@@ -2,6 +2,7 @@ import time
 
 from django.conf import settings
 
+from corehq.project_limits.gauge_limiter import GaugeLimiter, Gauge
 from corehq.project_limits.rate_limiter import (
     PerUserRateDefinition,
     RateDefinition,
@@ -76,6 +77,17 @@ global_case_rate_limiter = RateLimiter(
             per_second=300,
         )
     ).get_rate_limits(),
+)
+
+
+def get_case_topic_partitions():
+    return ()
+
+
+case_pillow_lag_gauge_limiter = GaugeLimiter(
+    gauge=Gauge(scopes=get_case_topic_partitions(), timeout=24 * 60 * 60),
+    max_threshold=5 * 60,
+    avg_threshold=2 * 60,
 )
 
 
