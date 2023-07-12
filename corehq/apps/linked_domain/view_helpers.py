@@ -165,6 +165,7 @@ def build_fixture_view_model(fixture, last_update=None):
         detail=FixtureLinkDetail(tag=fixture.tag).to_json(),
         last_update=last_update,
         can_update=fixture.is_global,
+        is_overwritable=False
     )
 
 
@@ -271,7 +272,8 @@ def build_superuser_view_models(ignore_models=None):
     return view_models
 
 
-def build_linked_data_view_model(model_type, name, detail, last_update=None, can_update=True, is_linkable=True):
+def build_linked_data_view_model(model_type, name, detail,
+        last_update=None, can_update=True, is_linkable=True, is_overwritable=True):
     return {
         'type': model_type,
         'name': name,
@@ -279,6 +281,7 @@ def build_linked_data_view_model(model_type, name, detail, last_update=None, can
         'last_update': last_update,
         'can_update': can_update,
         'is_linkable': is_linkable,
+        'overwritable': is_overwritable
     }
 
 
