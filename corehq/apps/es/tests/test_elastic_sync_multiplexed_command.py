@@ -241,6 +241,7 @@ class TestCopyCheckpointsBeforeIndexSwap(TestCase):
             with self.assertRaises(IndexAlreadySwappedException):
                 ESSyncUtil().set_checkpoints_for_new_index('cases')
 
+    @override_settings(ES_CASES_INDEX_MULTIPLEXED=True)
     def test_set_checkpoints_for_new_index(self):
 
         secondary_case_index = 'cases_secondary'
@@ -275,6 +276,9 @@ class TestCopyCheckpointsBeforeIndexSwap(TestCase):
             with patch(
                 'corehq.apps.es.management.commands.elastic_sync_multiplexed.get_all_pillow_instances',
                 return_value=[case_pillow]
+            ), patch(
+                'corehq.apps.es.management.commands.elastic_sync_multiplexed.doc_adapter_from_cname',
+                return_value=patched_case_adapter
             ):
                 ESSyncUtil().set_checkpoints_for_new_index('cases')
 
