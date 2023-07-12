@@ -46,6 +46,28 @@ def mock_iter_index_cnames():
     return list(adapter_cname_map)
 
 
+def _get_patched_adapter(adapter, multiplex_index, swap_index, secondary=None):
+    """
+    Since adapter are initialized while Django boots up, so overriding settings won't
+    return the required adapter config for test. This function would create the adapter with required
+    overridden settings.
+    """
+    cname = adapter.canonical_name
+    multiplex_setting_key = f"ES_{cname.upper()}_INDEX_MULTIPLEXED"
+    swap_setting_key = f"ES_{cname.upper()}_INDEX_SWAPPED"
+    adapter_cls = adapter.__class__
+    if isinstance(adapter, ElasticMultiplexAdapter):
+        adapter_cls = adapter.primary.__class__
+    # strip of test_ from index names because create_document_adapter will append it again for tests
+    index_name = adapter.index_name[5:] if adapter.index_name.startswith('test_') else adapter.index_name
+    with override_settings(**{multiplex_setting_key: multiplex_index, swap_setting_key: swap_index}):
+        patched_adapter = create_document_adapter(
+            adapter_cls, index_name,
+            adapter.type, secondary=secondary
+        )
+    return patched_adapter
+
+
 @es_test(requires=[mutiplexed_adapter_with_overriden_settings()])
 @patch(
     "corehq.apps.es.management.commands.elastic_sync_multiplexed.doc_adapter_from_cname",
@@ -121,13 +143,13 @@ class TestESSyncUtil(SimpleTestCase):
 
     @patch('corehq.apps.es.management.commands.elastic_sync_multiplexed.doc_adapter_from_cname')
     def test_delete_index_fails_on_multiplexed_index(self, adapter_patch):
-        adapter_patch.return_value = self._get_patched_adapter(app_adapter, True, False, secondary='app_secondary')
+        adapter_patch.return_value = _get_patched_adapter(app_adapter, True, False, secondary='app_secondary')
         with self.assertRaises(IndexMultiplexedException):
             ESSyncUtil().delete_index(HQ_APPS_INDEX_CANONICAL_NAME)
 
     @patch('corehq.apps.es.management.commands.elastic_sync_multiplexed.doc_adapter_from_cname')
     def test_delete_index_raises_if_index_not_swapped(self, adapter_patch):
-        adapter_patch.return_value = self._get_patched_adapter(
+        adapter_patch.return_value = _get_patched_adapter(
             app_adapter, False, False, secondary='app_secondary'
         )
         with self.assertRaises(AssertionError):
@@ -146,7 +168,7 @@ class TestESSyncUtil(SimpleTestCase):
     def test_delete_index_fails_for_incorrect_user_input(self, adapter_patch, input_patch):
         secondary_index_name = 'test_apps_secondary'
         # This will return adapter with ``secondary_index_name`` because swapped is set to True
-        patched_adapter = self._get_patched_adapter(app_adapter, False, True, secondary=secondary_index_name[5:])
+        patched_adapter = _get_patched_adapter(app_adapter, False, True, secondary=secondary_index_name[5:])
         adapter_patch.return_value = patched_adapter
         input_patch.return_value = 'N'
         self._setup_indexes([app_adapter.index_name, secondary_index_name])
@@ -168,34 +190,13 @@ class TestESSyncUtil(SimpleTestCase):
     def test_delete_index_deletes_the_older_index(self, adapter_patch, input_patch):
         secondary_index_name = 'test_apps_secondary'
         # This will return adapter with ``secondary_index_name`` because swapped is set to True
-        patched_adapter = self._get_patched_adapter(app_adapter, False, True, secondary=secondary_index_name[5:])
+        patched_adapter = _get_patched_adapter(app_adapter, False, True, secondary=secondary_index_name[5:])
         adapter_patch.return_value = patched_adapter
         self._setup_indexes([app_adapter.index_name, secondary_index_name])
         self.addCleanup(self._delete_indexes, [secondary_index_name])
 
         ESSyncUtil().delete_index(HQ_APPS_INDEX_CANONICAL_NAME)
         self.assertFalse(manager.index_exists(app_adapter.index_name))
-
-    def _get_patched_adapter(self, adapter, multiplex_index, swap_index, secondary=None):
-        """
-        Since adapter are initialized while Django boots up, so overriding settings won't
-        return the required adapter config for test. This function would create the adapter with required
-        overridden settings.
-        """
-        cname = adapter.canonical_name
-        multiplex_setting_key = f"ES_{cname.upper()}_INDEX_MULTIPLEXED"
-        swap_setting_key = f"ES_{cname.upper()}_INDEX_SWAPPED"
-        adapter_cls = app_adapter.__class__
-        if isinstance(app_adapter, ElasticMultiplexAdapter):
-            adapter_cls = app_adapter.primary.__class__
-        # strip of test_ from index names because create_document_adapter will append it again for tests
-        index_name = adapter.index_name[5:] if adapter.index_name.startswith('test_') else adapter.index_name
-        with override_settings(**{multiplex_setting_key: multiplex_index, swap_setting_key: swap_index}):
-            patched_adapter = create_document_adapter(
-                adapter_cls, index_name,
-                adapter.type, secondary=secondary
-            )
-        return patched_adapter
 
     def _setup_indexes(self, indexes):
         for index in indexes:
