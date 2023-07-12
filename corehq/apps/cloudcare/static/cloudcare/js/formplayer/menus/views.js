@@ -582,7 +582,6 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
                 const addressIndex = _.findIndex(this.styles, function (style) { return style.displayFormat === constants.FORMAT_ADDRESS; });
                 const popupIndex = _.findIndex(this.styles, function (style) { return style.displayFormat === constants.FORMAT_ADDRESS_POPUP; });
                 L.mapbox.accessToken = token;
-                md = window.markdownit();
 
                 const allCoordinates = []
                 const markers = []
