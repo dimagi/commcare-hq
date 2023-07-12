@@ -38,7 +38,12 @@ hqDefine('custom_data_fields/js/custom_data_fields', [
         self.choices = ko.observableArray(options.choices.map(function (choice) {
             return Choice(choice);
         }));
-        self.validationMode = ko.observable(options.choices.length ? 'choice' : 'regex');
+        self.validationMode = ko.observable();
+        if (options.choices.length) {
+            self.validationMode('choice');
+        } else if (options.regex) {
+            self.validationMode('regex');
+        }
         self.regex = ko.observable(options.regex);
         self.regex_msg = ko.observable(options.regex_msg);
         self.upstream_id = options.upstream_id;
@@ -162,7 +167,8 @@ hqDefine('custom_data_fields/js/custom_data_fields', [
     }
 
     function CustomDataFieldsModel(options) {
-        assertProperties.assertRequired(options, ['custom_fields', 'custom_fields_profiles']);
+        assertProperties.assertRequired(options,
+            [ 'custom_fields', 'custom_fields_profiles', 'can_edit_linked_data']);
 
         var self = {};
         self.data_fields = ko.observableArray();
@@ -188,6 +194,8 @@ hqDefine('custom_data_fields/js/custom_data_fields', [
             const hasLinkedProfiles = self.profiles().some(profile => profile.upstream_id);
             return hasLinkedProfiles;
         });
+
+        self.allowEdit = options.can_edit_linked_data;
 
         self.addField = function () {
             self.data_fields.push(Field({
@@ -277,6 +285,11 @@ hqDefine('custom_data_fields/js/custom_data_fields', [
             customField.choices.subscribe(function () {
                 $("#save-custom-fields").prop("disabled", false);
             });
+            // NOTE: There must be a better way to do this.
+            // The save button's state should likely be included and controlled by the view model
+            customField.validationMode.subscribe(function () {
+                $("#save-custom-fields").prop("disabled", false);
+            });
         });
         _.each(options.custom_fields_profiles, function (profile) {
             self.profiles.push(Profile(profile, self));
@@ -289,6 +302,7 @@ hqDefine('custom_data_fields/js/custom_data_fields', [
         var customDataFieldsModel = CustomDataFieldsModel({
             custom_fields: initialPageData.get('custom_fields'),
             custom_fields_profiles: initialPageData.get('custom_fields_profiles'),
+            can_edit_linked_data: initialPageData.get('can_edit_linked_data'),
         });
         customDataFieldsModel.data_fields.subscribe(function () {
             $("#save-custom-fields").prop("disabled", false);
