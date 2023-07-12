@@ -156,7 +156,9 @@ hqDefine("data_dictionary/js/data_dictionary", [
         self.fhirResourceType = ko.observable();
         self.removefhirResourceType = ko.observable(false);
         self.newPropertyName = ko.observable();
+        self.newPropertyNameUnique = ko.observable(true);
         self.newGroupName = ko.observable();
+        self.newGroupNameUnique = ko.observable(true);
         self.caseGroupList = ko.observableArray();
         self.showAll = ko.observable(false);
         self.availableDataTypes = typeChoices;
@@ -319,6 +321,40 @@ hqDefine("data_dictionary/js/data_dictionary", [
             self.caseGroupList(self.activeCaseTypeData());
             self.saveButton.setState('saved');
         };
+
+        self.newPropertyName.subscribe(function(newValue) {
+            if (!newValue) {
+                self.newPropertyNameUnique(true);
+                return;
+            }
+
+            const newValueFormatted = newValue.toLowerCase().trim();
+            const activeCaseTypeData = self.activeCaseTypeData();
+            for (const group of activeCaseTypeData) {
+                if (group.properties().some(v => v.name.toLowerCase() === newValueFormatted)) {
+                    self.newPropertyNameUnique(false);
+                    return;
+                }
+            }
+            self.newPropertyNameUnique(true);
+        });
+
+        self.newGroupName.subscribe(function(newValue) {
+            if (!newValue) {
+                self.newGroupNameUnique(true);
+                return;
+            }
+
+            const newValueFormatted = newValue.toLowerCase().trim();
+            const activeCaseTypeData = self.activeCaseTypeData();
+            for (const group of activeCaseTypeData) {
+                if (group.name().toLowerCase() === newValueFormatted) {
+                    self.newGroupNameUnique(false);
+                    return;
+                }
+            }
+            self.newGroupNameUnique(true);
+        });
 
         self.newCaseProperty = function () {
             if (_.isString(self.newPropertyName()) && self.newPropertyName().trim()) {
