@@ -27,9 +27,32 @@ considered for review or re-review
 - Any automated feedback (label bot, lint bot, etc) is addressed
 - Any previous developer feedback is addressed
 
-Before submitting a PR, review our `Guide to Authoring Pull Requests`_.  
+
+
+When opening a PR, please review our `Guide to Authoring Pull Requests`_.  
 You may also be interested in the `Developers category`_ of the `CommCare Forum`_ 
 if you have questions or need feedback.
+
+Useful Tools
+------------
+Here are some tools widely used by CommCareHQ developers
+
+flake8
+    Flake8 is run on all PRs automatically. You can run it locally to ensure your
+    code meets those standards before opening a PR.
+
+pylint
+    It requires some configuration, but this is the most comprehensive python linter
+    out there and can provide some useful feedback.
+
+isort
+    This will organize the imports in the file you're editing according to the
+    ``.isort.cfg`` in the root of the repository.  See how to run this from within
+    your editor `here <https://github.com/pycqa/isort/wiki/isort-Plugins>`_
+
+./manage.py show_urls
+    Provided by ``django-extensions``, this outputs a list of all URL paths used in the
+    project. Pipe the output to ``grep`` to easily find what view handles a particular URL.
 
 CommCare Enhancement Proposals
 ------------------------------

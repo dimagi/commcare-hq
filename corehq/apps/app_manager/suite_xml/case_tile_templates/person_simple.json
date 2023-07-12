@@ -1,5 +1,14 @@
 {
     "slug": "person_simple",
     "filename": "person_simple.xml",
-    "fields": ["header", "top_left", "sex", "bottom_left", "date"]
+    "has_map": false,
+    "fields": ["header", "top_left", "sex", "bottom_left", "date"],
+    "grid": {
+        "[image]": {"x": 0, "y": 0, "width": 2, "height": 3, "horz-align": "center", "vert-align": "center"},
+        "header": {"x": 2, "y": 0, "width": 10, "height": 1, "horz-align": "left", "vert-align": "center"},
+        "top_left": {"x": 2, "y": 1, "width": 5, "height": 1, "horz-align": "left", "vert-align": "center"},
+        "sex": {"x": 7, "y": 1, "width": 5, "height": 1, "horz-align": "left", "vert-align": "center"},
+        "bottom_left": {"x": 2, "y": 2, "width": 5, "height": 1, "horz-align": "left", "vert-align": "center"},
+        "date": {"x": 7, "y": 2, "width": 5, "height": 1, "horz-align": "left", "vert-align": "center"}
+    }
 }
