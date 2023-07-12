@@ -1,17 +1,13 @@
 import json
 import logging
 import os
-import pytz
 import re
 import sys
 import traceback
 import uuid
 from datetime import datetime
 from urllib.parse import urlparse
-from oauth2_provider.models import get_application_model
 
-import httpagentparser
-import requests
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
@@ -39,24 +35,39 @@ from django.template.response import TemplateResponse
 from django.urls import resolve
 from django.utils import html
 from django.utils.decorators import method_decorator
+from django.utils.translation import activate
 from django.utils.translation import gettext as _
-from django.utils.translation import gettext_noop, activate
+from django.utils.translation import gettext_noop
 from django.views.decorators.clickjacking import xframe_options_sameorigin
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.debug import sensitive_post_parameters
 from django.views.decorators.http import require_GET, require_POST
 from django.views.generic import TemplateView
 from django.views.generic.base import View
+
+import httpagentparser
+import pytz
 from memoized import memoized
+from no_exceptions.exceptions import Http403
+from oauth2_provider.models import get_application_model
 from sentry_sdk import last_event_id
 from two_factor.views import LoginView
 
-from corehq.apps.accounting.decorators import (
-    always_allow_project_access,
-)
+from dimagi.utils.couch.cache.cache_core import get_redis_default_cache
+from dimagi.utils.django.email import COMMCARE_MESSAGE_ID_HEADER
+from dimagi.utils.django.request import mutable_querydict
+from dimagi.utils.logging import notify_error, notify_exception
+from dimagi.utils.web import get_url_base
+from soil import DownloadBase
+from soil import views as soil_views
+
+from corehq.apps.accounting.decorators import always_allow_project_access
 from corehq.apps.accounting.models import Subscription
 from corehq.apps.analytics import ab_tests
-from corehq.apps.app_manager.dbaccessors import get_app_cached, get_latest_released_build_id
+from corehq.apps.app_manager.dbaccessors import (
+    get_app_cached,
+    get_latest_released_build_id,
+)
 from corehq.apps.domain.decorators import (
     login_and_domain_required,
     require_superuser,
@@ -84,37 +95,34 @@ from corehq.apps.hqwebapp.forms import (
     CloudCareAuthenticationForm,
     EmailAuthenticationForm,
     HQAuthenticationTokenForm,
-    HQBackupTokenForm
+    HQBackupTokenForm,
 )
-from corehq.apps.hqwebapp.models import HQOauthApplication
 from corehq.apps.hqwebapp.login_utils import get_custom_login_page
+from corehq.apps.hqwebapp.models import HQOauthApplication
 from corehq.apps.hqwebapp.utils import get_environment_friendly_name
 from corehq.apps.locations.permissions import location_safe
 from corehq.apps.sms.event_handlers import handle_email_messaging_subevent
+from corehq.apps.sso.models import IdentityProvider
+from corehq.apps.sso.utils.domain_helpers import is_domain_using_sso
+from corehq.apps.sso.utils.request_helpers import is_request_using_sso
 from corehq.apps.users.event_handlers import handle_email_invite_message
 from corehq.apps.users.landing_pages import get_redirect_url
 from corehq.apps.users.models import CouchUser, Invitation
 from corehq.apps.users.util import format_username, is_dimagi_email
-from corehq.toggles import CLOUDCARE_LATEST_BUILD
 from corehq.util.context_processors import commcare_hq_names
 from corehq.util.email_event_utils import handle_email_sns_event
-from corehq.util.metrics import create_metrics_event, metrics_counter, metrics_gauge
-from corehq.util.metrics.const import TAG_UNKNOWN, MPM_MAX
+from corehq.util.metrics import (
+    create_metrics_event,
+    metrics_counter,
+    metrics_gauge,
+)
+from corehq.util.metrics.const import MPM_MAX, TAG_UNKNOWN
 from corehq.util.metrics.utils import sanitize_url
-from corehq.util.public_only_requests.public_only_requests import get_public_only_session
+from corehq.util.public_only_requests.public_only_requests import (
+    get_public_only_session,
+)
 from corehq.util.timezones.conversions import ServerTime, UserTime
 from corehq.util.view_utils import reverse
-from corehq.apps.sso.models import IdentityProvider
-from corehq.apps.sso.utils.request_helpers import is_request_using_sso
-from corehq.apps.sso.utils.domain_helpers import is_domain_using_sso
-from dimagi.utils.couch.cache.cache_core import get_redis_default_cache
-from dimagi.utils.django.email import COMMCARE_MESSAGE_ID_HEADER
-from dimagi.utils.django.request import mutable_querydict
-from dimagi.utils.logging import notify_exception, notify_error
-from dimagi.utils.web import get_url_base
-from no_exceptions.exceptions import Http403
-from soil import DownloadBase
-from soil import views as soil_views
 
 
 def is_deploy_in_progress():
@@ -132,6 +140,42 @@ def format_traceback_the_way_python_does(type, exc, tb):
     """
     tb = ''.join(traceback.format_tb(tb))
     return f'Traceback (most recent call last):\n{tb}{type.__name__}: {exc}'
+
+
+def use_latest_build_in_web_apps(domain_name, username):
+    """
+    Returns ``True`` if the given domain is set to give users the latest
+    build in Web Apps always (instead of the published build), or if the
+    option is up to each user, and is enabled for the given user.
+
+    This feature requires an Enterprise Plan subscription, or a Dimagi
+    user.
+    """
+    def is_enterprise_plan():
+        from corehq.apps.accounting.models import (
+            SoftwarePlanEdition,
+            Subscription,
+        )
+
+        subscription = Subscription.get_active_subscription_by_domain(domain_name)
+        return (
+            subscription
+            and subscription.plan_version.plan.edition
+                    == SoftwarePlanEdition.ENTERPRISE
+        )
+
+    if settings.ENTERPRISE_MODE or is_enterprise_plan():
+        domain_obj = Domain.get_by_name(domain_name)
+        if domain_obj.latest_build_in_web_apps == 'never':
+            return False
+        if domain_obj.latest_build_in_web_apps == 'always':
+            return True
+        user = CouchUser.get_by_username(username)
+        return user.latest_build_in_web_apps
+
+    # If the domain is not enterprise, a Dimagi user can override
+    user = CouchUser.get_by_username(username)
+    return user.is_dimagi and user.latest_build_in_web_apps
 
 
 def server_error(request, template_name='500.html', exception=None):
@@ -528,19 +572,23 @@ def logout(req, default_domain_redirect='domain_login'):
         return HttpResponseRedirect(reverse('login'))
 
 
-# ping_response powers the ping_login and ping_session views, both tiny views used in user inactivity and
-# session expiration handling.ping_session extends the user's current session, while ping_login does not.
-# This difference is controlled in SelectiveSessionMiddleware, which makes ping_login bypass sessions.
+# ping_response powers the ping_login and ping_session views, both tiny
+# views used in user inactivity and session expiration handling.
+# ping_session extends the user's current session, while ping_login does
+# not. This difference is controlled in SelectiveSessionMiddleware,
+# which makes ping_login bypass sessions.
 @location_safe
 @two_factor_exempt
 def ping_response(request):
     current_build_id = request.GET.get('selected_app_id', '')
     domain = request.GET.get('domain', '')
     new_app_version_available = False
-    # Do not show popup to users who have use_latest_build_cloudcare ff enabled
-    latest_build_ff_enabled = (CLOUDCARE_LATEST_BUILD.enabled(domain)
-                or CLOUDCARE_LATEST_BUILD.enabled(request.user.username))
-    if current_build_id and domain and not latest_build_ff_enabled:
+    # Do not show popup to users who have use_latest_build_cloudcare enabled
+    use_latest_build = use_latest_build_in_web_apps(
+        domain_name=domain,
+        username=request.user.username,
+    )
+    if current_build_id and domain and not use_latest_build:
         app = get_app_cached(domain, current_build_id)
         app_id = app['copy_of'] if app['copy_of'] else app['_id']
         latest_build_id = get_latest_released_build_id(domain, app_id)

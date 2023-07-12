@@ -75,6 +75,7 @@ from corehq.apps.hqwebapp.decorators import (
     waf_allow,
 )
 from corehq.apps.hqwebapp.templatetags.hq_shared_tags import can_use_restore_as
+from corehq.apps.hqwebapp.views import use_latest_build_in_web_apps
 from corehq.apps.locations.permissions import location_safe
 from corehq.apps.reports.formdetails import readable
 from corehq.apps.users.decorators import require_can_login_as
@@ -216,14 +217,14 @@ class FormplayerMain(View):
 
 
 def _fetch_build(domain, username, app_id):
-    if (toggles.CLOUDCARE_LATEST_BUILD.enabled(domain) or toggles.CLOUDCARE_LATEST_BUILD.enabled(username)):
+    if use_latest_build_in_web_apps(domain, username):
         return get_latest_build_doc(domain, app_id)
     else:
         return get_latest_released_app_doc(domain, app_id)
 
 
 def _fetch_build_id(domain, username, app_id):
-    if (toggles.CLOUDCARE_LATEST_BUILD.enabled(domain) or toggles.CLOUDCARE_LATEST_BUILD.enabled(username)):
+    if use_latest_build_in_web_apps(domain, username):
         return get_latest_build_id(domain, app_id)
     else:
         return get_latest_released_build_id(domain, app_id)

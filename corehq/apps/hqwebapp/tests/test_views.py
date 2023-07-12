@@ -1,12 +1,21 @@
 from django.test import TestCase
 from django.urls import reverse
 
-from corehq.apps.domain.models import Domain
+from corehq.apps.accounting.models import SoftwarePlanEdition
+from corehq.apps.accounting.tests.utils import DomainSubscriptionMixin
+from corehq.apps.domain.models import (
+    LATEST_BUILD_ALWAYS,
+    LATEST_BUILD_NEVER,
+    LATEST_BUILD_USER,
+    Domain,
+)
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.domain.tests.test_views import BaseAutocompleteTest
-from corehq.apps.hqwebapp.models import MaintenanceAlert
 from corehq.apps.users.dbaccessors import delete_all_users
 from corehq.apps.users.models import CommCareUser, WebUser
+
+from ..models import MaintenanceAlert
+from ..views import use_latest_build_in_web_apps
 
 
 class TestEmailAuthenticationFormAutocomplete(BaseAutocompleteTest):
@@ -190,3 +199,104 @@ class TestMaintenanceAlertsView(TestCase):
         self.client.post(reverse('alerts'), {'command': 'deactivate', 'alert_id': alert.id})
         alert = MaintenanceAlert.objects.get(id=alert.id)
         self.assertFalse(alert.active)
+
+
+class TestUseLatestBuild(TestCase, DomainSubscriptionMixin):
+
+    domain = 'test-use-latest-build'
+    username = 'test-user@dimagi.com'
+
+    def setUp(self):
+        self.domain_obj = create_domain(self.domain)
+        self.setup_subscription(self.domain, SoftwarePlanEdition.ENTERPRISE)
+        self.user = WebUser.create(
+            self.domain,
+            self.username,
+            password='***',
+            created_by=None,
+            created_via=None,
+        )
+
+    def tearDown(self):
+        self.teardown_subscriptions()
+        self.domain_obj.delete()
+        delete_all_users()
+
+    def test_domain_never(self):
+        self.domain_obj.latest_build_in_web_apps = LATEST_BUILD_NEVER
+        self.domain_obj.save()
+
+        self.assertFalse(use_latest_build_in_web_apps(self.domain, self.username))
+
+    def test_domain_always(self):
+        self.domain_obj.latest_build_in_web_apps = LATEST_BUILD_ALWAYS
+        self.domain_obj.save()
+
+        self.assertTrue(use_latest_build_in_web_apps(self.domain, self.username))
+
+    def test_domain_user_user_enabled(self):
+        self.domain_obj.latest_build_in_web_apps = LATEST_BUILD_USER
+        self.domain_obj.save()
+        self.user.latest_build_in_web_apps = True
+        self.user.save()
+
+        self.assertTrue(use_latest_build_in_web_apps(self.domain, self.username))
+
+    def test_domain_user_user_disabled(self):
+        self.domain_obj.latest_build_in_web_apps = LATEST_BUILD_USER
+        self.domain_obj.save()
+        self.user.latest_build_in_web_apps = False
+        self.user.save()
+
+        self.assertFalse(use_latest_build_in_web_apps(self.domain, self.username))
+
+    def test_domain_default_user_enabled(self):
+        self.user.latest_build_in_web_apps = True
+        self.user.save()
+
+        self.assertTrue(use_latest_build_in_web_apps(self.domain, self.username))
+
+    def test_domain_default_user_disabled(self):
+        self.user.latest_build_in_web_apps = False
+        self.user.save()
+
+        self.assertFalse(use_latest_build_in_web_apps(self.domain, self.username))
+
+    def test_domain_default_user_default(self):
+        self.assertFalse(use_latest_build_in_web_apps(self.domain, self.username))
+
+    def test_no_subscription(self):
+        domain = 'another-domain'
+        username = 'test-user@another-domain.commcarehq.org'
+
+        domain_obj = create_domain(domain)
+        self.addCleanup(domain_obj.delete)
+        user = CommCareUser.create(
+            domain,
+            username,
+            password='***',
+            created_by=None,
+            created_via=None,
+        )
+        user.latest_build_in_web_apps = True
+        user.save()
+
+        self.assertFalse(use_latest_build_in_web_apps(domain, username))
+
+    def test_no_subscription_dimagi_user(self):
+        domain = 'another-domain'
+        username = 'another-user@dimagi.com'
+
+        domain_obj = create_domain(domain)
+        self.addCleanup(domain_obj.delete)
+        user = WebUser.create(
+            domain,
+            username,
+            password='***',
+            created_by=None,
+            created_via=None,
+        )
+        user.latest_build_in_web_apps = True
+        user.save()
+
+        self.assertTrue(use_latest_build_in_web_apps(domain, username))
