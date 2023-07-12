@@ -10,6 +10,7 @@ import corehq.apps.es.const as es_consts
 from corehq.apps.es.client import ElasticMultiplexAdapter, get_client
 from corehq.apps.es.client import manager as es_manager
 from corehq.apps.es.exceptions import (
+    IndexAlreadySwappedException,
     IndexMultiplexedException,
     IndexNotMultiplexedException,
     TaskMissing,
@@ -208,8 +209,11 @@ class ESSyncUtil:
 
         current_index_name, older_index_name = self._get_current_and_older_index_name(cname)
 
-        assert adapter.index_name != older_index_name, f"""Current index does not match the source index.
-        Make sure that ES_{cname.upper()}_INDEX_SWAPPED is set to False"""
+        if getattr(settings, f'ES_{cname.upper()}_INDEX_SWAPPED'):
+            raise IndexAlreadySwappedException(
+                f"""Checkpoints can only be copied before swapping indexes.
+                Make sure you have set ES_{cname.upper()}_INDEX_SWAPPED to False."""
+            )
 
         all_pillows = get_all_pillow_instances()
         for pillow in all_pillows:
