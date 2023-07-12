@@ -1,16 +1,20 @@
 from unittest.mock import patch
+import uuid
 
 from django.core.management import CommandError, call_command
-from django.test import SimpleTestCase, override_settings
+from django.test import SimpleTestCase, TestCase, override_settings
+from corehq.pillows.case import get_case_pillow
 
-from corehq.apps.es import app_adapter
+from corehq.apps.es import app_adapter, case_adapter, case_search_adapter
 from corehq.apps.es.client import (
     ElasticMultiplexAdapter,
     create_document_adapter,
     manager,
 )
+import corehq.apps.es.const as es_consts
 from corehq.apps.es.const import HQ_APPS_INDEX_CANONICAL_NAME
 from corehq.apps.es.exceptions import (
+    IndexAlreadySwappedException,
     IndexMultiplexedException,
     IndexNotMultiplexedException,
 )
@@ -18,6 +22,8 @@ from corehq.apps.es.management.commands.elastic_sync_multiplexed import (
     ESSyncUtil,
 )
 from corehq.apps.es.tests.utils import TestDoc, TestDocumentAdapter, es_test
+from corehq.util.test_utils import create_and_save_a_case
+from testapps.test_pillowtop.utils import process_pillow_changes
 
 COMMAND_NAME = 'elastic_sync_multiplexed'
 INDEX_CNAME = 'test_reindex'
@@ -205,3 +211,84 @@ class TestESSyncUtil(SimpleTestCase):
     def _delete_indexes(self, indexes):
         for index in indexes:
             manager.index_delete(index)
+
+
+@es_test(
+    requires=[
+        _get_patched_adapter(case_adapter, True, False, 'test_cases_secondary'),
+        _get_patched_adapter(case_search_adapter, True, False, 'test_casesearch_secondary')
+    ],
+    setup_class=True
+)
+class TestCopyCheckpointsBeforeIndexSwap(TestCase):
+
+    def test_set_checkpoints_for_new_index_raises_on_non_multiplexed_index(self):
+        patched_case_adapter = _get_patched_adapter(case_adapter, False, False)
+        with patch(
+            'corehq.apps.es.management.commands.elastic_sync_multiplexed.doc_adapter_from_cname',
+            return_value=patched_case_adapter
+        ):
+            with self.assertRaises(IndexNotMultiplexedException):
+                ESSyncUtil().set_checkpoints_for_new_index('cases')
+
+    @override_settings(ES_CASES_INDEX_SWAPPED=True)
+    def test_set_checkpoints_for_new_index_raises_swapped_multiplexed_index(self):
+        patched_case_adapter = _get_patched_adapter(case_adapter, True, True, 'second-index')
+        with patch(
+            'corehq.apps.es.management.commands.elastic_sync_multiplexed.doc_adapter_from_cname',
+            return_value=patched_case_adapter
+        ):
+            with self.assertRaises(IndexAlreadySwappedException):
+                ESSyncUtil().set_checkpoints_for_new_index('cases')
+
+    def test_set_checkpoints_for_new_index(self):
+
+        secondary_case_index = 'cases_secondary'
+
+        # Use patched case adapter with only multiplexer turned on
+        patched_case_adapter = _get_patched_adapter(case_adapter, True, False, secondary_case_index)
+        with (
+            patch.object(es_consts, 'HQ_CASES_SECONDARY_INDEX_NAME', secondary_case_index),
+            patch('corehq.pillows.case.case_adapter', patched_case_adapter)
+        ):
+
+            domain = 'test_checkpoint_copy'
+
+            # Create a case pillow using the patched case adapter
+            case_pillow = get_case_pillow(skip_ucr=True)
+
+            # Save initial checkpoints
+            initial_checkpoints = case_pillow.checkpoint.get_current_sequence_as_dict()
+
+            # Save a case and propogate the changes to the pillow
+            with process_pillow_changes(case_pillow):
+                with process_pillow_changes('DefaultChangeFeedPillow'):
+                    create_and_save_a_case(domain, case_id=uuid.uuid4().hex, case_name='test case')
+
+            # Save the checkpoints after case is processed
+            updated_checkpoints = case_pillow.checkpoint.get_current_sequence_as_dict()
+
+            # After processing the form,  the checkpoints should have been updated
+            self.assertNotEqual(initial_checkpoints, updated_checkpoints)
+
+            # Call the utility to set checkpoints for new index.
+            with patch(
+                'corehq.apps.es.management.commands.elastic_sync_multiplexed.get_all_pillow_instances',
+                return_value=[case_pillow]
+            ):
+                ESSyncUtil().set_checkpoints_for_new_index('cases')
+
+        # Swap indexes and patch adapter to return multiplexed adapter
+        # with secondary index as main index
+        patched_case_adapter = _get_patched_adapter(case_adapter, True, True, secondary_case_index)
+        with (
+            patch.object(es_consts, 'HQ_CASES_SECONDARY_INDEX_NAME', secondary_case_index),
+            patch('corehq.pillows.case.case_adapter', patched_case_adapter)
+        ):
+            case_pillow = get_case_pillow(skip_ucr=True)
+
+            # Save checkpoints for the new index
+            new_index_checkpoints = case_pillow.checkpoint.get_current_sequence_as_dict()
+
+        # Checkpoints for new index should match the checkpoints from previous index
+        self.assertEqual(updated_checkpoints, new_index_checkpoints)
