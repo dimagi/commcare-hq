@@ -76,8 +76,9 @@ class TestUpdateRoles(TestCase):
         self._create_user_role(self.downstream_domain, name='test', upstream_id=None)
 
         with self.assertRaisesMessage(UnsupportedActionError,
-                'Failed to sync the following roles due to a conflict: "test".'
-                ' Please remove or rename these roles before syncing again'):
+                'Failed to push the following custom roles due to matching (same name) unlinked roles in this'
+                ' downstream project space: "test". Please edit the roles to resolve the matching or click'
+                ' "Push & Overwrite" to overwrite and link the matching ones.'):
             update_user_roles(self.domain_link)
 
     def test_cannot_sync_name_change_if_name_is_taken(self):
@@ -86,9 +87,24 @@ class TestUpdateRoles(TestCase):
         self._create_user_role(self.downstream_domain, name='new_name', upstream_id=None)
 
         with self.assertRaisesMessage(UnsupportedActionError,
-                'Failed to sync the following roles due to a conflict: "new_name".'
-                ' Please remove or rename these roles before syncing again'):
+                'Failed to push the following custom roles due to matching (same name) unlinked roles in this'
+                ' downstream project space: "new_name". Please edit the roles to resolve the matching or click'
+                ' "Push & Overwrite" to overwrite and link the matching ones.'):
             update_user_roles(self.domain_link)
+
+    def test_can_overwrite_matching_names(self):
+        upstream_permissions = HqPermissions(view_reports=True)
+        downstream_permissions = HqPermissions(view_reports=False)
+
+        self._create_user_role(self.upstream_domain, name='test', permissions=upstream_permissions)
+        self._create_user_role(self.downstream_domain, name='test',
+                               permissions=downstream_permissions, upstream_id=None)
+
+        update_user_roles(self.domain_link, overwrite=True)
+
+        downstream_roles = UserRole.objects.by_domain_and_name(self.downstream_domain, 'test')
+        self.assertEqual(len(downstream_roles), 1)
+        self.assertEqual(downstream_roles[0].permissions, upstream_permissions)
 
     # TODO: Determine whether this should be turned into a parameterized test for all built-in roles
     def test_syncing_built_in_roles_turns_them_into_linked_roles(self):
@@ -115,7 +131,11 @@ class TestUpdateRoles(TestCase):
         self._create_user_role(self.upstream_domain, name=role_name, permissions=modified_permissions)
         self._create_user_role(self.downstream_domain, name=role_name, permissions=built_in_permissions)
 
-        with self.assertRaises(UnsupportedActionError):
+        with self.assertRaisesMessage(UnsupportedActionError,
+                'Failed to push the following default roles due to matching (same name but different permissions)'
+                ' unlinked roles in this downstream project space: "App Editor".'
+                ' Please edit the roles to resolve the matching or click "Push & Overwrite"'
+                ' to overwrite and link the matching ones.'):
             update_user_roles(self.domain_link)
 
     def test_built_in_roles_raise_conflict_if_downstream_changed(self):
@@ -131,18 +151,22 @@ class TestUpdateRoles(TestCase):
         with self.assertRaises(UnsupportedActionError):
             update_user_roles(self.domain_link)
 
-    def test_built_in_roles_raise_conflict_if_not_default(self):
+    def test_built_in_roles_are_linked_if_they_match(self):
         role_name = UserRolePresets.APP_EDITOR
         built_in_permissions = UserRolePresets.INITIAL_ROLES[role_name]()
 
+        # Permissions can differ from the built-in permissions, provided they still match
         modified_permissions = self._copy_permissions(built_in_permissions)
         modified_permissions.edit_web_users = not built_in_permissions.edit_web_users
 
-        self._create_user_role(self.upstream_domain, name=role_name, permissions=modified_permissions)
+        upstream_role = self._create_user_role(
+            self.upstream_domain, name=role_name, permissions=modified_permissions)
         self._create_user_role(self.downstream_domain, name=role_name, permissions=modified_permissions)
 
-        with self.assertRaises(UnsupportedActionError):
-            update_user_roles(self.domain_link)
+        update_user_roles(self.domain_link)
+
+        roles = {r.name: r for r in UserRole.objects.get_by_domain(self.downstream_domain)}
+        self.assertEqual(roles[role_name].upstream_id, upstream_role.get_id)
 
     def test_conflicts_are_reported_in_bulk(self):
         self._create_user_role(self.upstream_domain, name='Role1')
@@ -152,9 +176,49 @@ class TestUpdateRoles(TestCase):
         self._create_user_role(self.downstream_domain, name='Role2')
 
         with self.assertRaisesMessage(UnsupportedActionError,
-                'Failed to sync the following roles due to a conflict: "Role1", "Role2".'
-                ' Please remove or rename these roles before syncing again'):
+                'Failed to push the following custom roles due to matching (same name) unlinked roles in this'
+                ' downstream project space: "Role1", "Role2". Please edit the roles to resolve the matching or'
+                ' click "Push & Overwrite" to overwrite and link the matching ones.'):
             update_user_roles(self.domain_link)
+
+    def test_default_and_custom_errors_are_reported_together(self):
+        self._create_user_role(self.upstream_domain, name=UserRolePresets.APP_EDITOR,
+                               permissions=HqPermissions(view_reports=True))
+        self._create_user_role(self.upstream_domain, name='CustomRole')
+
+        self._create_user_role(self.downstream_domain, name=UserRolePresets.APP_EDITOR,
+                               permissions=HqPermissions(view_reports=False))
+        self._create_user_role(self.downstream_domain, name='CustomRole')
+
+        with self.assertRaisesMessage(UnsupportedActionError,
+                'Failed to push the following default roles due to matching (same name but different permissions)'
+                ' unlinked roles in this downstream project space: "App Editor".'
+                ' Please edit the roles to resolve the matching or click "Push & Overwrite"'
+                ' to overwrite and link the matching ones.\n'
+                'Failed to push the following custom roles due to matching (same name) unlinked roles in this'
+                ' downstream project space: "CustomRole". Please edit the roles to resolve the matching or click'
+                ' "Push & Overwrite" to overwrite and link the matching ones.'):
+            update_user_roles(self.domain_link)
+
+    def test_error_message_indicates_push(self):
+        self._create_user_role(self.upstream_domain, name='Test')
+        self._create_user_role(self.downstream_domain, name='Test')
+
+        with self.assertRaisesMessage(UnsupportedActionError,
+                'Failed to push the following custom roles due to matching (same name) unlinked roles in this'
+                ' downstream project space: "Test". Please edit the roles to resolve the matching or click'
+                ' "Push & Overwrite" to overwrite and link the matching ones.'):
+            update_user_roles(self.domain_link, is_pull=False)
+
+    def test_error_message_indicates_pull(self):
+        self._create_user_role(self.upstream_domain, name='Test')
+        self._create_user_role(self.downstream_domain, name='Test')
+
+        with self.assertRaisesMessage(UnsupportedActionError,
+                'Failed to sync the following custom roles due to matching (same name) unlinked roles in this'
+                ' downstream project space: "Test". Please edit the roles to resolve the matching or click'
+                ' "Sync & Overwrite" to overwrite and link the matching ones.'):
+            update_user_roles(self.domain_link, is_pull=True)
 
     @flag_enabled('EMBEDDED_TABLEAU')
     def test_tableau_report_permissions(self):
@@ -207,6 +271,59 @@ class TestUpdateRoles(TestCase):
         # viz_3 should be included because it's in the downstream role's permission list and isn't linked upstream
         self.assertListEqual([str(downstream_viz_1.id), str(downstream_viz_3.id)],
                              roles['tableau_test'].permissions.view_tableau_list)
+
+    def test_when_synced_role_with_name_change_conflicts_with_local_role_conflict_is_raised(self):
+        renamed_role = self._create_user_role(self.upstream_domain, name='LocalRoleName')
+        # The previously synced role
+        self._create_user_role(self.downstream_domain, name='SyncedRole', upstream_id=renamed_role.get_id)
+        # A local role with a conflicting name
+        self._create_user_role(self.downstream_domain, name='LocalRoleName')
+
+        with self.assertRaises(UnsupportedActionError):
+            update_user_roles(self.domain_link)
+
+    def test_force_pushing_a_name_change_conflict_appends_an_identifier_to_synced_role(self):
+        renamed_role = self._create_user_role(self.upstream_domain, name='LocalRoleName')
+        # The previously synced role
+        self._create_user_role(self.downstream_domain, name='SyncedRole', upstream_id=renamed_role.get_id)
+        # A local role with a conflicting name
+        self._create_user_role(self.downstream_domain, name='LocalRoleName')
+
+        update_user_roles(self.domain_link, overwrite=True)
+
+        roles = {r.name: r for r in UserRole.objects.get_by_domain(self.downstream_domain)}
+        # Verify that the local role was not linked
+        self.assertIsNone(roles['LocalRoleName'].upstream_id)
+        # Verify that the synced role was renamed
+        self.assertFalse('SyncedRole' in roles.keys())
+        updated_role = roles['LocalRoleName(1)']
+        self.assertEqual(updated_role.upstream_id, renamed_role.get_id)
+
+    def test_renaming_continues_until_an_avaialable_integer_is_found(self):
+        renamed_role = self._create_user_role(self.upstream_domain, name='LocalRoleName')
+        self._create_user_role(self.downstream_domain, name='SyncedRole', upstream_id=renamed_role.get_id)
+        self._create_user_role(self.downstream_domain, 'LocalRoleName')
+        self._create_user_role(self.downstream_domain, 'LocalRoleName(1)')
+        self._create_user_role(self.downstream_domain, 'LocalRoleName(2)')
+
+        update_user_roles(self.domain_link, overwrite=True)
+
+        roles = {r.name: r for r in UserRole.objects.get_by_domain(self.downstream_domain)}
+        update_role = roles['LocalRoleName(3)']
+        self.assertEqual(update_role.upstream_id, renamed_role.get_id)
+
+    def test_errors_prevent_any_successful_updates(self):
+        self._create_user_role(self.upstream_domain, name='SuccessRole')
+        self._create_user_role(self.upstream_domain, name='ConflictRole')
+
+        self._create_user_role(self.downstream_domain, name='ConflictRole')
+
+        with self.assertRaises(UnsupportedActionError):
+            update_user_roles(self.domain_link)
+
+        roles = {r.name: r for r in UserRole.objects.get_by_domain(self.downstream_domain)}
+        self.assertFalse('SuccessRole' in roles.keys())
+        self.assertIsNone(roles['ConflictRole'].upstream_id)
 
     def _create_user_role(self, domain, name='test', permissions=None, assignable_by_ids=None, **kwargs):
         if not permissions:

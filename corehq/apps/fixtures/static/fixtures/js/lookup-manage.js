@@ -276,6 +276,8 @@ hqDefine("fixtures/js/lookup-manage", [
             return self.data_types().some(element => element.is_synced() && !element._destroy);
         });
 
+        self.allowEdit = options.can_edit_linked_data;
+
         self.setModalModel = function (dataType) {
             self.modalModel(dataType);
         };
@@ -418,6 +420,7 @@ hqDefine("fixtures/js/lookup-manage", [
     var el = $('#fixtures-ui');
     var app = appModel({
         data_types: initialPageData.get('data_types'),
+        can_edit_linked_data: initialPageData.get('can_edit_linked_data'),
     });
     el.koApplyBindings(app);
     $('#fixture-upload').koApplyBindings(app);
