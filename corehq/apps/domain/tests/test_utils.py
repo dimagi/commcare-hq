@@ -226,8 +226,9 @@ def patch_domain_deletion():
     Without this, every test that deletes a domain would need to be
     decorated with `@es_test`.
     """
+    # Use __enter__ and __exit__ to start/stop so patch.stopall() does not stop it.
     assert settings.UNIT_TESTING
-    delete_es_docs_patch.start()
+    delete_es_docs_patch.__enter__()
 
 
 @contextmanager
@@ -246,8 +247,8 @@ def suspend(patch_obj):
             ...  # do thing with ES docs deletion
     """
     assert settings.UNIT_TESTING
-    patch_obj.stop()
+    patch_obj.__exit__(None, None, None)
     try:
         yield
     finally:
-        patch_obj.start()
+        patch_obj.__enter__()
