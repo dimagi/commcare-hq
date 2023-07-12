@@ -513,7 +513,8 @@
       </td>
     {% if model_type == "case" %}
       <td>
-        <h4 data-bind="text: case_type"></h4>
+        <h4 data-bind="text: case_type" style="display: inline-block;"></h4>
+        <span data-bind="visible: is_case_type_deprecated" class="label label-warning" style="display: inline-block;">{% trans "deprecated" %}</span>
       </td>
     {% endif %}
 
