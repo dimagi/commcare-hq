@@ -154,7 +154,9 @@ hqDefine("data_dictionary/js/data_dictionary", [
         self.fhirResourceType = ko.observable();
         self.removefhirResourceType = ko.observable(false);
         self.newPropertyName = ko.observable();
+        self.newPropertyNameUnique = ko.observable(true);
         self.newGroupName = ko.observable();
+        self.newGroupNameUnique = ko.observable(true);
         self.caseGroupList = ko.observableArray();
         self.showAll = ko.observable(false);
         self.availableDataTypes = typeChoices;
