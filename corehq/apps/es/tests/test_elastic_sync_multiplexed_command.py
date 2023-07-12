@@ -1,17 +1,16 @@
-from unittest.mock import patch
 import uuid
+from unittest.mock import patch
 
 from django.core.management import CommandError, call_command
 from django.test import SimpleTestCase, TestCase, override_settings
-from corehq.pillows.case import get_case_pillow
 
+import corehq.apps.es.const as es_consts
 from corehq.apps.es import app_adapter, case_adapter, case_search_adapter
 from corehq.apps.es.client import (
     ElasticMultiplexAdapter,
     create_document_adapter,
     manager,
 )
-import corehq.apps.es.const as es_consts
 from corehq.apps.es.const import HQ_APPS_INDEX_CANONICAL_NAME
 from corehq.apps.es.exceptions import (
     IndexAlreadySwappedException,
@@ -22,6 +21,7 @@ from corehq.apps.es.management.commands.elastic_sync_multiplexed import (
     ESSyncUtil,
 )
 from corehq.apps.es.tests.utils import TestDoc, TestDocumentAdapter, es_test
+from corehq.pillows.case import get_case_pillow
 from corehq.util.test_utils import create_and_save_a_case
 from testapps.test_pillowtop.utils import process_pillow_changes
 
