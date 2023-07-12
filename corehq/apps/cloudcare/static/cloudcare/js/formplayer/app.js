@@ -98,14 +98,6 @@ hqDefine("cloudcare/js/formplayer/app", function () {
         }
     });
 
-    FormplayerFrontend.getChannel().reply('gridPolyfillPath', function (path) {
-        if (path) {
-            FormplayerFrontend.gridPolyfillPath = path;
-        } else {
-            return FormplayerFrontend.gridPolyfillPath;
-        }
-    });
-
     FormplayerFrontend.getChannel().reply('currentUser', function () {
         if (!FormplayerFrontend.currentUser) {
             FormplayerFrontend.currentUser = UsersModels.CurrentUser();
@@ -332,7 +324,6 @@ hqDefine("cloudcare/js/formplayer/app", function () {
                 language: options.language,
             });
 
-            FormplayerFrontend.getChannel().request('gridPolyfillPath', options.gridPolyfillPath);
             $.when(
                 FormplayerFrontend.getChannel().request("appselect:apps"),
                 FormplayerFrontend.xsrfRequest
