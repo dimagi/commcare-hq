@@ -23,3 +23,7 @@ class IndexNotMultiplexedException(Exception):
 
 class IndexMultiplexedException(Exception):
     pass
+
+
+class IndexAlreadySwappedException(Exception):
+    pass
