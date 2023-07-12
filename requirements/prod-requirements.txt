@@ -86,9 +86,10 @@ commcaretranslationchecker==0.9.7
     # via -r base-requirements.in
 contextlib2==21.6.0
     # via schema
-cryptography==39.0.1
+cryptography==41.0.2
     # via
     #   -r prod-requirements.in
+    #   -r sso-requirements.in
     #   jwcrypto
     #   oic
     #   pyjwt
@@ -476,7 +477,7 @@ pyjwt[crypto]==2.7.0
     #   twilio
 pynacl==1.5.0
     # via pygithub
-pyopenssl==23.0.0
+pyopenssl==23.2.0
     # via
     #   -r prod-requirements.in
     #   -r sso-requirements.in
