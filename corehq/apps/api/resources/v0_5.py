@@ -3,7 +3,7 @@ from base64 import b64decode, b64encode
 from collections import namedtuple
 import dataclasses
 from dataclasses import dataclass, InitVar
-from datetime import datetime
+from datetime import datetime, timedelta
 import functools
 import pytz
 from urllib.parse import urlencode
@@ -1267,6 +1267,16 @@ class NavigationEventAuditResource(HqBaseResource, Resource):
         queryset = NavigationEventAudit.objects.filter(domain=domain)
         if params.users:
             queryset = queryset.filter(user__in=params.users)
+
+        # Initial approximate filtering for performance. The largest time difference between local timezone and UTC
+        # is <24 hours so items outside that bound will not be within the eventual local_date grouping.
+        approx_time_offset = timedelta(hours=24)
+        if params.UTC_start_time_start:
+            offset_UTC_start_time_start = params.UTC_start_time_start - approx_time_offset
+            queryset = queryset.filter(event_date__gte=offset_UTC_start_time_start)
+        if params.UTC_start_time_end:
+            offset_UTC_start_time_end = params.UTC_start_time_end + approx_time_offset
+            queryset = queryset.filter(event_date__lte=offset_UTC_start_time_end)
 
         local_date_filter = cls._get_compound_filter('local_date', params)
 
