@@ -244,7 +244,8 @@ class TestNavigationEventAuditResource(APIResourceTest):
     def test_response_provides_next(self):
         cursor = {
             'cursor_user': self.username1,
-            'cursor_local_date': date(2023, 5, 1).isoformat()
+            'cursor_local_date': date(2023, 5, 1).isoformat(),
+            'local_date.lte': date(2023, 5, 2).isoformat()
         }
         encoded_cursor = b64encode(urlencode(cursor).encode('utf-8'))
         params = {
@@ -258,13 +259,14 @@ class TestNavigationEventAuditResource(APIResourceTest):
         response_next_url = json.loads(response.content)['meta']['next']
 
         expected_cursor = {
-            'cursor_local_date': date(2023, 5, 1).isoformat(),
             'cursor_user': self.username2,
+            'cursor_local_date': date(2023, 5, 1).isoformat(),
+            'local_date.lte': date(2023, 5, 2).isoformat()
         }
         encoded_expected_cursor = b64encode(urlencode(expected_cursor).encode('utf-8'))
         expected_next_params = {
-            'limit': 1,
-            'cursor': encoded_expected_cursor
+            'cursor': encoded_expected_cursor,
+            'limit': 1
         }
         expected_next_url = f'?{urlencode(expected_next_params)}'
 

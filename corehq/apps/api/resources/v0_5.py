@@ -1187,17 +1187,25 @@ class NavigationEventAuditResource(HqBaseResource, Resource):
         data['meta']['local_date_timezone'] = self.api_params.local_timezone.zone
         data['meta']['total_count'] = self.count
 
-        params = request.GET.copy()  # Makes params mutable for creating next_url below
-
         if data['meta']['total_count'] > data['meta']['limit']:
+            params = request.GET.copy()  # Makes params mutable for creating next_url below
+            limit = params.get('limit')
+            if 'cursor' in params:
+                params_string = b64decode(params['cursor']).decode('utf-8')
+                cursor_params = QueryDict(params_string, mutable=True)
+            else:
+                cursor_params = QueryDict(mutable=True)
+
             last_object = data['objects'][-1]
-            cursor = {
-                'cursor_local_date': last_object.data['local_date'],
-                'cursor_user': last_object.data['user'],
-            }
-            encoded_cursor = b64encode(urlencode(cursor).encode('utf-8'))
-            params['cursor'] = encoded_cursor
-            next_url = f'?{urlencode(params)}'
+            cursor_params['cursor_local_date'] = last_object.data['local_date']
+            cursor_params['cursor_user'] = last_object.data['user']
+            encoded_cursor = b64encode(urlencode(cursor_params).encode('utf-8'))
+
+            # limit needs to directly be in request for tastypie to process it for pagination
+            next_params = {
+                'limit': limit,
+                'cursor': encoded_cursor}
+            next_url = f'?{urlencode(next_params)}'
             data['meta']['next'] = next_url
         return data
 
