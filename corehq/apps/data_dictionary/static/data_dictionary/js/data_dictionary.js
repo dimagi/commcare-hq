@@ -274,38 +274,34 @@ hqDefine("data_dictionary/js/data_dictionary", [
             self.saveButton.setState('saved');
         };
 
-        self.newPropertyName.subscribe(function(newValue) {
-            if (!newValue) {
-                self.newPropertyNameUnique(true);
-                return;
+        self.newPropertyNameUnique = ko.computed(function() {
+            if (!self.newPropertyName()) {
+                return true;
             }
 
-            const newValueFormatted = newValue.toLowerCase().trim();
+            const propertyNameFormatted = self.newPropertyName().toLowerCase().trim();
             const activeCaseTypeData = self.activeCaseTypeData();
             for (const group of activeCaseTypeData) {
-                if (group.properties().some(v => v.name.toLowerCase() === newValueFormatted)) {
-                    self.newPropertyNameUnique(false);
-                    return;
+                if (group.properties().some(v => v.name.toLowerCase() === propertyNameFormatted)) {
+                    return false;
                 }
             }
-            self.newPropertyNameUnique(true);
+            return true;
         });
 
-        self.newGroupName.subscribe(function(newValue) {
-            if (!newValue) {
-                self.newGroupNameUnique(true);
-                return;
+        self.newGroupNameUnique = ko.computed(function() {
+            if (!self.newGroupName()) {
+                return true;
             }
 
-            const newValueFormatted = newValue.toLowerCase().trim();
+            const groupNameFormatted = self.newGroupName().toLowerCase().trim();
             const activeCaseTypeData = self.activeCaseTypeData();
             for (const group of activeCaseTypeData) {
-                if (group.name().toLowerCase() === newValueFormatted) {
-                    self.newGroupNameUnique(false);
-                    return;
+                if (group.name().toLowerCase() === groupNameFormatted) {
+                    return false;
                 }
             }
-            self.newGroupNameUnique(true);
+            return true;
         });
 
         self.newCaseProperty = function () {
