@@ -1190,10 +1190,9 @@ class NavigationEventAuditResource(HqBaseResource, Resource):
         data['meta']['total_count'] = self.count
 
         if data['meta']['total_count'] > data['meta']['limit']:
-            params = request.GET.copy()  # Makes params mutable for creating next_url below
-            limit = params.get('limit')
-            if 'cursor' in params:
-                params_string = b64decode(params['cursor']).decode('utf-8')
+            original_params = request.GET.copy()  # Makes params mutable for creating next_url below
+            if 'cursor' in original_params:
+                params_string = b64decode(original_params['cursor']).decode('utf-8')
                 cursor_params = QueryDict(params_string, mutable=True)
             else:
                 cursor_params = QueryDict(mutable=True)
@@ -1203,10 +1202,12 @@ class NavigationEventAuditResource(HqBaseResource, Resource):
             cursor_params['cursor_user'] = last_object.data['user']
             encoded_cursor = b64encode(urlencode(cursor_params).encode('utf-8'))
 
+            next_params = {'cursor': encoded_cursor}
             # limit needs to directly be in request for tastypie to process it for pagination
-            next_params = {
-                'limit': limit,
-                'cursor': encoded_cursor}
+            limit = original_params.get('limit')
+            if limit:
+                next_params['limit'] = limit
+
             next_url = f'?{urlencode(next_params)}'
             data['meta']['next'] = next_url
         return data
