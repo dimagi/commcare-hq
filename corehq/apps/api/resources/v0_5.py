@@ -1197,7 +1197,7 @@ class NavigationEventAuditResource(HqBaseResource, Resource):
             }
             encoded_cursor = b64encode(urlencode(cursor).encode('utf-8'))
             params['cursor'] = encoded_cursor
-            next_url = '{}?{}'.format(request.path, params.urlencode())
+            next_url = f'?{urlencode(params)}'
             data['meta']['next'] = next_url
         return data
 

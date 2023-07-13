@@ -266,7 +266,7 @@ class TestNavigationEventAuditResource(APIResourceTest):
             'limit': 1,
             'cursor': encoded_expected_cursor
         }
-        expected_next_url = f'{self.list_endpoint}?{urlencode(expected_next_params)}'
+        expected_next_url = f'?{urlencode(expected_next_params)}'
 
         self.assertEqual(expected_next_url, response_next_url)
 
