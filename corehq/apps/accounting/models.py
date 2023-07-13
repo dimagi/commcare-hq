@@ -122,10 +122,12 @@ class InvoicingPlan(object):
 class FeatureType(object):
     USER = "User"
     SMS = "SMS"
+    WEB_USER = "Web User"
 
     CHOICES = (
         (USER, USER),
         (SMS, SMS),
+        (WEB_USER, WEB_USER)
     )
 
 
