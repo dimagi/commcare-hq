@@ -89,8 +89,9 @@ contextlib2==21.6.0
     # via schema
 coverage==7.1.0
     # via -r test-requirements.in
-cryptography==39.0.1
+cryptography==41.0.2
     # via
+    #   -r sso-requirements.in
     #   jwcrypto
     #   oic
     #   pyjwt
@@ -471,7 +472,7 @@ pyjwt[crypto]==2.7.0
     #   twilio
 pynacl==1.5.0
     # via pygithub
-pyopenssl==23.0.0
+pyopenssl==23.2.0
     # via -r sso-requirements.in
 pyparsing==3.0.7
     # via httplib2
