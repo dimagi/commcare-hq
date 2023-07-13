@@ -1084,18 +1084,19 @@ class NavigationEventAuditResourceParams:
 
     def __post_init__(self, domain, default_limit, max_limit, raw_params=None):
         if raw_params:
+            self.cursor = raw_params.get('cursor')
+            self.limit = raw_params.get('limit')
             self._validate_keys(raw_params)
+            if self.cursor:
+                raw_params = self._process_cursor()
+                self._validate_keys(raw_params)
 
             self._set_compound_keys(raw_params)
             self.users = raw_params.getlist('users')
-            self.limit = raw_params.get('limit')
             self.local_timezone = raw_params.get('local_timezone')
-            self.cursor = raw_params.get('cursor')
 
         if self.limit:
             self._process_limit(default_limit, max_limit)
-        if self.cursor:
-            self._process_cursor()
         self._process_local_timezone(domain)
 
     def _validate_keys(self, params):
@@ -1135,8 +1136,9 @@ class NavigationEventAuditResourceParams:
     def _process_cursor(self):
         cursor_params_string = b64decode(self.cursor).decode('utf-8')
         cursor_params = QueryDict(cursor_params_string, mutable=True)
-        self.cursor_local_date = cursor_params.get('cursor_local_date')
-        self.cursor_user = cursor_params.get('cursor_user')
+        self.cursor_local_date = cursor_params.pop('cursor_local_date', [None])[0]
+        self.cursor_user = cursor_params.pop('cursor_user', [None])[0]
+        return cursor_params
 
     def _process_local_timezone(self, domain):
         if self.local_timezone is None:

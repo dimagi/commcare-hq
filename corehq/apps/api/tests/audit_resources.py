@@ -204,7 +204,8 @@ class TestNavigationEventAuditResource(APIResourceTest):
     def test_request_with_cursor_param(self):
         cursor = {
             'cursor_user': self.username1,
-            'cursor_local_date': date(2023, 5, 1).isoformat()
+            'cursor_local_date': date(2023, 5, 1).isoformat(),
+            'local_date.lt': date(2023, 5, 2).isoformat()
         }
         encoded_cursor = b64encode(urlencode(cursor).encode('utf-8'))
         params = {
@@ -223,20 +224,6 @@ class TestNavigationEventAuditResource(APIResourceTest):
                 'UTC_start_time': datetime(2023, 5, 2, 0, tzinfo=pytz.timezone('UTC')).isoformat(),
                 'UTC_end_time': datetime(2023, 5, 2, 6, tzinfo=pytz.timezone('UTC')).isoformat()
             },
-            {
-                'user': self.username1,
-                'user_id': self.user1._id,
-                'local_date': date(2023, 5, 2).isoformat(),
-                'UTC_start_time': datetime(2023, 5, 2, 7, tzinfo=pytz.timezone('UTC')).isoformat(),
-                'UTC_end_time': datetime(2023, 5, 2, 23, tzinfo=pytz.timezone('UTC')).isoformat()
-            },
-            {
-                'user': self.username2,
-                'user_id': self.user2._id,
-                'local_date': date(2023, 5, 2).isoformat(),
-                'UTC_start_time': datetime(2023, 5, 2, 7, tzinfo=pytz.timezone('UTC')).isoformat(),
-                'UTC_end_time': datetime(2023, 5, 2, 23, tzinfo=pytz.timezone('UTC')).isoformat()
-            }
         ]
 
         self.assertEqual(result_objects, expected_result_objects)
