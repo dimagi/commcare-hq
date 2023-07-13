@@ -54,6 +54,7 @@ from corehq.apps.api.util import (
     get_obj,
     django_date_filter,
     make_date_filter,
+    parse_str_to_date,
 )
 from corehq.apps.app_manager.models import Application
 from corehq.apps.domain.models import Domain
@@ -1081,6 +1082,7 @@ class NavigationEventAuditResourceParams:
     local_date: dict[str:str] = dataclasses.field(default_factory=dict)
     cursor_local_date: str = None
     cursor_user: str = None
+    UTC_start_time_start: str = None
 
     def __post_init__(self, domain, default_limit, max_limit, raw_params=None):
         if raw_params:
@@ -1094,13 +1096,15 @@ class NavigationEventAuditResourceParams:
             self._set_compound_keys(raw_params)
             self.users = raw_params.getlist('users')
             self.local_timezone = raw_params.get('local_timezone')
+            self.UTC_start_time_start = raw_params.get('UTC_start_time_start')
 
         if self.limit:
             self._process_limit(default_limit, max_limit)
         self._process_local_timezone(domain)
 
     def _validate_keys(self, params):
-        valid_keys = {'users', 'limit', 'local_timezone', 'cursor', 'format', 'local_date'}
+        valid_keys = {'users', 'limit', 'local_timezone', 'cursor', 'format', 'local_date',
+                    'UTC_start_time_start'}
         standardized_keys = set()
 
         for key in params.keys():
@@ -1240,6 +1244,10 @@ class NavigationEventAuditResource(HqBaseResource, Resource):
             )
 
         queryset = queryset.annotate(UTC_start_time=Min('event_date'), UTC_end_time=Max('event_date'))
+
+        if params.UTC_start_time_start:
+            UTC_start_time_start = parse_str_to_date(params.UTC_start_time_start)
+            queryset = queryset.filter(UTC_start_time__gte=UTC_start_time_start)
 
         with override_settings(USE_TZ=True):
             cls.count = queryset.count()
