@@ -1083,6 +1083,7 @@ class NavigationEventAuditResourceParams:
     cursor_local_date: str = None
     cursor_user: str = None
     UTC_start_time_start: str = None
+    UTC_start_time_end: str = None
 
     def __post_init__(self, domain, default_limit, max_limit, raw_params=None):
         if raw_params:
@@ -1097,6 +1098,7 @@ class NavigationEventAuditResourceParams:
             self.users = raw_params.getlist('users')
             self.local_timezone = raw_params.get('local_timezone')
             self.UTC_start_time_start = raw_params.get('UTC_start_time_start')
+            self.UTC_start_time_end = raw_params.get('UTC_start_time_end')
 
         if self.limit:
             self._process_limit(default_limit, max_limit)
@@ -1104,7 +1106,7 @@ class NavigationEventAuditResourceParams:
 
     def _validate_keys(self, params):
         valid_keys = {'users', 'limit', 'local_timezone', 'cursor', 'format', 'local_date',
-                    'UTC_start_time_start'}
+                    'UTC_start_time_start', 'UTC_start_time_end'}
         standardized_keys = set()
 
         for key in params.keys():
@@ -1248,6 +1250,9 @@ class NavigationEventAuditResource(HqBaseResource, Resource):
         if params.UTC_start_time_start:
             UTC_start_time_start = parse_str_to_date(params.UTC_start_time_start)
             queryset = queryset.filter(UTC_start_time__gte=UTC_start_time_start)
+        if params.UTC_start_time_end:
+            UTC_start_time_end = parse_str_to_date(params.UTC_start_time_end)
+            queryset = queryset.filter(UTC_end_time__lte=UTC_start_time_end)
 
         with override_settings(USE_TZ=True):
             cls.count = queryset.count()

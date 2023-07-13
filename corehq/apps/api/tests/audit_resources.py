@@ -219,6 +219,24 @@ class TestNavigationEventAuditResource(APIResourceTest):
 
         self.assertEqual(result_objects, expected_result_objects)
 
+    def test_request_with_UTC_start_time_end_param(self):
+        end_date = datetime(2023, 5, 2, 6, tzinfo=pytz.timezone('UTC')).isoformat()
+
+        params = {
+            'UTC_start_time_end': end_date,
+        }
+        list_endpoint = f'{self.list_endpoint}?{urlencode(params)}'
+        response = self._assert_auth_get_resource(list_endpoint)
+        self.assertEqual(response.status_code, 200)
+
+        result_objects = json.loads(response.content)['objects']
+        expected_result_objects = [
+            item for item in self.domain1_audits.expected_response_objects if
+            (item['UTC_start_time'] <= end_date)
+        ]
+
+        self.assertEqual(result_objects, expected_result_objects)
+
     def test_request_with_cursor_param(self):
         cursor = {
             'cursor_user': self.username1,
@@ -393,6 +411,21 @@ class TestNavigationEventAuditResource(APIResourceTest):
 
         self.assertListEqual(expected_results, results)
 
+    def test_query_filter_by_UTC_start_time_end(self):
+        end_date = datetime(2023, 5, 2, 6, tzinfo=pytz.timezone('UTC'))
+        params = self.base_params(domain=self.domain1_audits.domain)
+        params.UTC_start_time_end = end_date.isoformat()
+        params.local_timezone = self.domain1_audits.timezone
+        results = self.resource.cursor_query(
+            self.domain1_audits.domain,
+            params=params
+        )
+        expected_results = [
+            item for item in self.domain1_audits.expected_query_result if
+            (item['UTC_end_time'] <= end_date)
+        ]
+
+        self.assertListEqual(expected_results, results)
 
     def test_query_cursor_pagination_returns_items_after_cursor(self):
         params = self.base_params(domain=self.domain1_audits.domain)
