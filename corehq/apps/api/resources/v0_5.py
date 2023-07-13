@@ -3,6 +3,7 @@ from base64 import b64decode, b64encode
 from collections import namedtuple
 import dataclasses
 from dataclasses import dataclass, InitVar
+from datetime import datetime
 import functools
 import pytz
 from urllib.parse import urlencode
@@ -1082,8 +1083,8 @@ class NavigationEventAuditResourceParams:
     local_date: dict[str:str] = dataclasses.field(default_factory=dict)
     cursor_local_date: str = None
     cursor_user: str = None
-    UTC_start_time_start: str = None
-    UTC_start_time_end: str = None
+    UTC_start_time_start: datetime = None
+    UTC_start_time_end: datetime = None
 
     def __post_init__(self, domain, default_limit, max_limit, raw_params=None):
         if raw_params:
@@ -1102,6 +1103,10 @@ class NavigationEventAuditResourceParams:
 
         if self.limit:
             self._process_limit(default_limit, max_limit)
+        if self.UTC_start_time_start:
+            self.UTC_start_time_start = parse_str_to_date(self.UTC_start_time_start)
+        if self.UTC_start_time_end:
+            self.UTC_start_time_end = parse_str_to_date(self.UTC_start_time_end)
         self._process_local_timezone(domain)
 
     def _validate_keys(self, params):
@@ -1248,11 +1253,9 @@ class NavigationEventAuditResource(HqBaseResource, Resource):
         queryset = queryset.annotate(UTC_start_time=Min('event_date'), UTC_end_time=Max('event_date'))
 
         if params.UTC_start_time_start:
-            UTC_start_time_start = parse_str_to_date(params.UTC_start_time_start)
-            queryset = queryset.filter(UTC_start_time__gte=UTC_start_time_start)
+            queryset = queryset.filter(UTC_start_time__gte=params.UTC_start_time_start)
         if params.UTC_start_time_end:
-            UTC_start_time_end = parse_str_to_date(params.UTC_start_time_end)
-            queryset = queryset.filter(UTC_end_time__lte=UTC_start_time_end)
+            queryset = queryset.filter(UTC_end_time__lte=params.UTC_start_time_end)
 
         with override_settings(USE_TZ=True):
             cls.count = queryset.count()

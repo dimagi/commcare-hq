@@ -398,7 +398,7 @@ class TestNavigationEventAuditResource(APIResourceTest):
     def test_query_filter_by_UTC_start_time_start(self):
         start_date = datetime(2023, 5, 2, 1, tzinfo=pytz.timezone('UTC'))
         params = self.base_params(domain=self.domain1_audits.domain)
-        params.UTC_start_time_start = start_date.isoformat()
+        params.UTC_start_time_start = start_date
         params.local_timezone = self.domain1_audits.timezone
         results = self.resource.cursor_query(
             self.domain1_audits.domain,
@@ -414,7 +414,7 @@ class TestNavigationEventAuditResource(APIResourceTest):
     def test_query_filter_by_UTC_start_time_end(self):
         end_date = datetime(2023, 5, 2, 6, tzinfo=pytz.timezone('UTC'))
         params = self.base_params(domain=self.domain1_audits.domain)
-        params.UTC_start_time_end = end_date.isoformat()
+        params.UTC_start_time_end = end_date
         params.local_timezone = self.domain1_audits.timezone
         results = self.resource.cursor_query(
             self.domain1_audits.domain,
