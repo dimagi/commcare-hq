@@ -98,6 +98,9 @@ from corehq.util import ghdiff
 from corehq.util.timezones.conversions import ServerTime
 from corehq.util.timezones.utils import get_timezone_for_user
 from corehq.util.view_utils import reverse
+from corehq.apps.app_manager.dbaccessors import get_case_types_for_app_build
+from corehq.apps.data_dictionary.util import get_data_dict_deprecated_case_types
+from corehq.apps.reports.standard.deployments import ApplicationErrorReport
 
 
 def _get_error_counts(domain, app_id, version_numbers):
@@ -358,8 +361,13 @@ def save_copy(request, domain, app_id):
         get_timezone_for_user(request.couch_user, domain)
     )
 
+    # Check if build is using any deprecated case types
+    case_types = get_case_types_for_app_build(domain, app_id)
+    deprecated_case_types = get_data_dict_deprecated_case_types(domain)
+    used_deprecated_case_types = case_types.intersection(deprecated_case_types)
     return JsonResponse({
         "saved_app": copy_json,
+        "deprecated_case_types": list(used_deprecated_case_types),
         "error_html": "",
     })
 
