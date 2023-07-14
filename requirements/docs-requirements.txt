@@ -232,7 +232,7 @@ geopandas==0.12.2
     # via -r base-requirements.in
 geopy==2.3.0
     # via -r base-requirements.in
-gevent==21.8.0
+gevent==23.7.0
     # via
     #   -r base-requirements.in
     #   django-websocket-redis
@@ -277,7 +277,7 @@ googleapis-common-protos==1.59.0
     # via
     #   google-api-core
     #   grpcio-status
-greenlet==1.1.2
+greenlet==2.0.2
     # via
     #   -r base-requirements.in
     #   django-websocket-redis
@@ -702,7 +702,6 @@ zope-interface==5.4.0
 setuptools==67.3.2
     # via
     #   django-websocket-redis
-    #   gevent
     #   gunicorn
     #   opentelemetry-api
     #   zope-event
