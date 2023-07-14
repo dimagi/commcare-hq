@@ -201,10 +201,47 @@ class TestNavigationEventAuditResource(APIResourceTest):
 
         self.assertEqual(result_objects, expected_result_objects)
 
+    def test_request_with_UTC_start_time_start_param(self):
+        start_date = datetime(2023, 5, 2, 1, tzinfo=pytz.timezone('UTC')).isoformat()
+
+        params = {
+            'UTC_start_time_start': start_date,
+        }
+        list_endpoint = f'{self.list_endpoint}?{urlencode(params)}'
+        response = self._assert_auth_get_resource(list_endpoint)
+        self.assertEqual(response.status_code, 200)
+
+        result_objects = json.loads(response.content)['objects']
+        expected_result_objects = [
+            item for item in self.domain1_audits.expected_response_objects if
+            (item['UTC_start_time'] >= start_date)
+        ]
+
+        self.assertEqual(result_objects, expected_result_objects)
+
+    def test_request_with_UTC_start_time_end_param(self):
+        end_date = datetime(2023, 5, 2, 6, tzinfo=pytz.timezone('UTC')).isoformat()
+
+        params = {
+            'UTC_start_time_end': end_date,
+        }
+        list_endpoint = f'{self.list_endpoint}?{urlencode(params)}'
+        response = self._assert_auth_get_resource(list_endpoint)
+        self.assertEqual(response.status_code, 200)
+
+        result_objects = json.loads(response.content)['objects']
+        expected_result_objects = [
+            item for item in self.domain1_audits.expected_response_objects if
+            (item['UTC_start_time'] <= end_date)
+        ]
+
+        self.assertEqual(result_objects, expected_result_objects)
+
     def test_request_with_cursor_param(self):
         cursor = {
             'cursor_user': self.username1,
-            'cursor_local_date': date(2023, 5, 1).isoformat()
+            'cursor_local_date': date(2023, 5, 1).isoformat(),
+            'local_date.lt': date(2023, 5, 2).isoformat()
         }
         encoded_cursor = b64encode(urlencode(cursor).encode('utf-8'))
         params = {
@@ -223,20 +260,6 @@ class TestNavigationEventAuditResource(APIResourceTest):
                 'UTC_start_time': datetime(2023, 5, 2, 0, tzinfo=pytz.timezone('UTC')).isoformat(),
                 'UTC_end_time': datetime(2023, 5, 2, 6, tzinfo=pytz.timezone('UTC')).isoformat()
             },
-            {
-                'user': self.username1,
-                'user_id': self.user1._id,
-                'local_date': date(2023, 5, 2).isoformat(),
-                'UTC_start_time': datetime(2023, 5, 2, 7, tzinfo=pytz.timezone('UTC')).isoformat(),
-                'UTC_end_time': datetime(2023, 5, 2, 23, tzinfo=pytz.timezone('UTC')).isoformat()
-            },
-            {
-                'user': self.username2,
-                'user_id': self.user2._id,
-                'local_date': date(2023, 5, 2).isoformat(),
-                'UTC_start_time': datetime(2023, 5, 2, 7, tzinfo=pytz.timezone('UTC')).isoformat(),
-                'UTC_end_time': datetime(2023, 5, 2, 23, tzinfo=pytz.timezone('UTC')).isoformat()
-            }
         ]
 
         self.assertEqual(result_objects, expected_result_objects)
@@ -244,7 +267,8 @@ class TestNavigationEventAuditResource(APIResourceTest):
     def test_response_provides_next(self):
         cursor = {
             'cursor_user': self.username1,
-            'cursor_local_date': date(2023, 5, 1).isoformat()
+            'cursor_local_date': date(2023, 5, 1).isoformat(),
+            'local_date.lte': date(2023, 5, 2).isoformat()
         }
         encoded_cursor = b64encode(urlencode(cursor).encode('utf-8'))
         params = {
@@ -258,15 +282,16 @@ class TestNavigationEventAuditResource(APIResourceTest):
         response_next_url = json.loads(response.content)['meta']['next']
 
         expected_cursor = {
-            'cursor_local_date': date(2023, 5, 1).isoformat(),
             'cursor_user': self.username2,
+            'cursor_local_date': date(2023, 5, 1).isoformat(),
+            'local_date.lte': date(2023, 5, 2).isoformat()
         }
         encoded_expected_cursor = b64encode(urlencode(expected_cursor).encode('utf-8'))
         expected_next_params = {
-            'limit': 1,
-            'cursor': encoded_expected_cursor
+            'cursor': encoded_expected_cursor,
+            'limit': 1
         }
-        expected_next_url = f'{self.list_endpoint}?{urlencode(expected_next_params)}'
+        expected_next_url = f'?{urlencode(expected_next_params)}'
 
         self.assertEqual(expected_next_url, response_next_url)
 
@@ -366,6 +391,38 @@ class TestNavigationEventAuditResource(APIResourceTest):
         expected_results = [
             item for item in self.domain1_audits.expected_query_result if
             (item['local_date'] >= date1 and item['local_date'] < date2)
+        ]
+
+        self.assertListEqual(expected_results, results)
+
+    def test_query_filter_by_UTC_start_time_start(self):
+        start_date = datetime(2023, 5, 2, 1, tzinfo=pytz.timezone('UTC'))
+        params = self.base_params(domain=self.domain1_audits.domain)
+        params.UTC_start_time_start = start_date
+        params.local_timezone = self.domain1_audits.timezone
+        results = self.resource.cursor_query(
+            self.domain1_audits.domain,
+            params=params
+        )
+        expected_results = [
+            item for item in self.domain1_audits.expected_query_result if
+            (item['UTC_start_time'] >= start_date)
+        ]
+
+        self.assertListEqual(expected_results, results)
+
+    def test_query_filter_by_UTC_start_time_end(self):
+        end_date = datetime(2023, 5, 2, 6, tzinfo=pytz.timezone('UTC'))
+        params = self.base_params(domain=self.domain1_audits.domain)
+        params.UTC_start_time_end = end_date
+        params.local_timezone = self.domain1_audits.timezone
+        results = self.resource.cursor_query(
+            self.domain1_audits.domain,
+            params=params
+        )
+        expected_results = [
+            item for item in self.domain1_audits.expected_query_result if
+            (item['UTC_end_time'] <= end_date)
         ]
 
         self.assertListEqual(expected_results, results)
