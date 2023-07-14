@@ -495,8 +495,9 @@ def _case_list_form_options(app, module, lang=None):
         'post_form_workflow': f.post_form_workflow,
         'is_registration_form': True,
     } for f in reg_forms})
-    if (hasattr(module, 'parent_select')   # AdvancedModule doesn't have parent_select
-            and toggles.FOLLOWUP_FORMS_AS_CASE_LIST_FORM and module.parent_select.active):
+    if (hasattr(module, 'parent_select')  # AdvancedModule doesn't have parent_select
+            and toggles.FOLLOWUP_FORMS_AS_CASE_LIST_FORM
+            and module.parent_select.active):
         followup_forms = get_parent_select_followup_forms(app, module)
         if followup_forms:
             options.update({f.unique_id: {
@@ -1060,7 +1061,7 @@ def _update_search_properties(module, search_properties, lang='en'):
 
     def _get_itemset(prop):
         fixture_props = json.loads(prop['fixture'])
-        keys = {'instance_uri', 'instance_id', 'nodeset', 'label', 'value', 'sort'}
+        keys = {'instance_id', 'nodeset', 'label', 'value', 'sort'}
         missing = [key for key in keys if not fixture_props.get(key)]
         if missing:
             raise CaseSearchConfigError(_("""
