@@ -265,12 +265,33 @@ class TestNavigationEventAuditResource(APIResourceTest):
         self.assertEqual(result_objects, expected_result_objects)
 
     def test_response_provides_next(self):
-        cursor = {
-            'cursor_user': self.username1,
-            'cursor_local_date': date(2023, 5, 1).isoformat(),
-            'local_date.lte': date(2023, 5, 2).isoformat()
+        local_date_filter = date(2023, 5, 2).isoformat()
+
+        # Tests initial request without a cursor
+        params = {
+            'limit': 1,
+            'local_date.lte': local_date_filter
         }
-        encoded_cursor = b64encode(urlencode(cursor).encode('utf-8'))
+        list_endpoint = f'{self.list_endpoint}?{urlencode(params)}'
+        response = self._assert_auth_get_resource(list_endpoint)
+        self.assertEqual(response.status_code, 200)
+        response_next_url = json.loads(response.content)['meta']['next']
+
+        expected_page_zero_cursor = {
+            'local_date.lte': local_date_filter,
+            'cursor_local_date': date(2023, 5, 1).isoformat(),
+            'cursor_user': self.username1
+        }
+        encoded_expected_cursor = b64encode(urlencode(expected_page_zero_cursor).encode('utf-8'))
+        expected_next_params = {
+            'cursor': encoded_expected_cursor,
+            'limit': 1
+        }
+        expected_next_url = f'?{urlencode(expected_next_params)}'
+        self.assertEqual(expected_next_url, response_next_url)
+
+        # Tests follow-up request using previously returned cursor
+        encoded_cursor = b64encode(urlencode(expected_page_zero_cursor).encode('utf-8'))
         params = {
             'limit': 1,
             'cursor': encoded_cursor,
@@ -278,21 +299,19 @@ class TestNavigationEventAuditResource(APIResourceTest):
         list_endpoint = f'{self.list_endpoint}?{urlencode(params)}'
         response = self._assert_auth_get_resource(list_endpoint)
         self.assertEqual(response.status_code, 200)
-
         response_next_url = json.loads(response.content)['meta']['next']
 
-        expected_cursor = {
-            'cursor_user': self.username2,
+        expected_page_one_cursor = {
+            'local_date.lte': local_date_filter,
             'cursor_local_date': date(2023, 5, 1).isoformat(),
-            'local_date.lte': date(2023, 5, 2).isoformat()
+            'cursor_user': self.username2
         }
-        encoded_expected_cursor = b64encode(urlencode(expected_cursor).encode('utf-8'))
+        encoded_expected_cursor = b64encode(urlencode(expected_page_one_cursor).encode('utf-8'))
         expected_next_params = {
             'cursor': encoded_expected_cursor,
             'limit': 1
         }
         expected_next_url = f'?{urlencode(expected_next_params)}'
-
         self.assertEqual(expected_next_url, response_next_url)
 
     def test_response_provides_total_count(self):

@@ -1206,7 +1206,8 @@ class NavigationEventAuditResource(HqBaseResource, Resource):
                 params_string = b64decode(original_params['cursor']).decode('utf-8')
                 cursor_params = QueryDict(params_string, mutable=True)
             else:
-                cursor_params = QueryDict(mutable=True)
+                cursor_params = original_params.copy()
+                cursor_params.pop('limit', None)
 
             last_object = data['objects'][-1]
             cursor_params['cursor_local_date'] = last_object.data['local_date']
