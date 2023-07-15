@@ -292,3 +292,23 @@ class HQPermissionsTests(SimpleTestCase):
         permissions.normalize(previous=old_permissions)
 
         self.assertTrue(permissions.edit_linked_configurations)
+
+    def test_diff_returns_an_empty_list_for_matching_permissions(self):
+        left = HqPermissions(edit_apps=True, view_apps=True)
+        right = HqPermissions(edit_apps=True, view_apps=True)
+        self.assertEqual(HqPermissions.diff(left, right), [])
+
+    def test_diff_builds_array_of_mismatched_permission_names(self):
+        left = HqPermissions(view_report_list=['report1'])
+        right = HqPermissions(view_report_list=['report2'])
+        self.assertEqual(HqPermissions.diff(left, right), ['view_reports'])
+
+    def test_diff_includes_missing_permissions_from_left(self):
+        left = HqPermissions()
+        right = HqPermissions(view_reports=True)
+        self.assertEqual(HqPermissions.diff(left, right), ['view_reports'])
+
+    def test_diff_includes_missing_permissions_from_right(self):
+        left = HqPermissions(view_reports=True)
+        right = HqPermissions()
+        self.assertEqual(HqPermissions.diff(left, right), ['view_reports'])
