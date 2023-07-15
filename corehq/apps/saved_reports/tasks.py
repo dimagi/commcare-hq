@@ -1,5 +1,6 @@
 import re
 from datetime import datetime, timedelta
+from urllib.parse import unquote
 
 from django.conf import settings
 from django.http import HttpRequest
@@ -146,21 +147,32 @@ def send_email_report(self, recipient_emails, domain, report_slug, report_type,
     config.owner_id = user_id
     config.domain = domain
 
-    config.start_date = request_data['datespan'].startdate.date()
-    if request_data['datespan'].enddate:
-        config.date_range = 'range'
-        config.end_date = request_data['datespan'].enddate.date()
-    else:
-        config.date_range = 'since'
-
     GET = dict(six.iterlists(request_data['GET']))
     exclude = ['startdate', 'enddate', 'subject', 'send_to_owner', 'notes', 'recipient_emails']
     filters = {}
     for field in GET:
+        if field == 'params':
+            params = unquote(GET.get(field)[0])
+            params = params.split('&')
+            for param in params:
+                field, value = tuple(param.split('=', 1))
+                filters[field] = value
         if field not in exclude:
             filters[field] = GET.get(field)
 
     config.filters = filters
+
+    if 'startdate' in config.filters:
+        config.start_date = datetime.strptime(config.filters['startdate'], '%Y-%m-%d').date()
+    else:
+        config.start_date = request_data['datespan'].startdate.date()
+    if request_data['datespan'].enddate:
+        config.date_range = 'range'
+        config.end_date = request_data['datespan'].enddate.date()
+        if 'enddate' in config.filters:
+            config.end_date = datetime.strptime(config.filters['enddate'], '%Y-%m-%d').date()
+    else:
+        config.date_range = 'since'
 
     subject = cleaned_data['subject'] or _("Email report from CommCare HQ")
 
