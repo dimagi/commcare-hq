@@ -12,6 +12,7 @@ from corehq.apps.es import cases as case_es
 from corehq.apps.reports.standard.cases.utils import (
     query_location_restricted_cases,
 )
+from corehq.apps.data_dictionary.util import get_data_dict_deprecated_case_types
 from dimagi.utils.parsing import FALSE_STRINGS
 from .core import UserError, serialize_es_case
 
@@ -19,6 +20,7 @@ DEFAULT_PAGE_SIZE = 20
 MAX_PAGE_SIZE = 5000
 INDEXED_AFTER = 'indexed_on.gte'
 LAST_CASE_ID = 'last_case_id'
+INCLUDE_DEPRECATED = 'include_deprecated'
 
 
 def _to_boolean(val):
@@ -45,6 +47,13 @@ def _make_date_filter(date_filter):
     return _exception_converter
 
 
+def _include_deprecated_filter(domain, include_deprecated):
+    if _to_boolean(include_deprecated):
+        return filters.match_all()
+    deprecated_case_types = get_data_dict_deprecated_case_types(domain)
+    return filters.NOT(filters.term('type.exact', deprecated_case_types))
+
+
 def _index_filter(identifier, case_id):
     return case_search.reverse_index_case_query(case_id, identifier)
 
@@ -55,6 +64,7 @@ SIMPLE_FILTERS = {
     'owner_id': case_es.owner,
     'case_name': case_es.case_name,
     'closed': lambda val: case_es.is_closed(_to_boolean(val)),
+    INCLUDE_DEPRECATED: _include_deprecated_filter,
 }
 
 # Compound filters take the form `prefix.qualifier=value`
@@ -138,10 +148,12 @@ def _get_query(domain, params):
 
 def _get_filter(domain, key, val):
     if key == 'limit':
-        pass
+        return filters.match_all()
     elif key == 'query':
         return _get_query_filter(domain, val)
     elif key in SIMPLE_FILTERS:
+        if key == INCLUDE_DEPRECATED:
+            return SIMPLE_FILTERS[key](domain, val)
         return SIMPLE_FILTERS[key](val)
     elif '.' in key and key.split(".")[0] in COMPOUND_FILTERS:
         prefix, qualifier = key.split(".", maxsplit=1)
