@@ -29,6 +29,7 @@ hqDefine("data_interfaces/js/auto_update_rules", [
         var self = {};
 
         self.has_linked_data = initialPageData.get('has_linked_data');
+        self.allowEdit = initialPageData.get('can_edit_linked_data');
         self.unlockLinkedData = ko.observable(false);
 
         self.toggleLinkedLock = function () {
@@ -123,7 +124,6 @@ hqDefine("data_interfaces/js/auto_update_rules", [
         self.setModalModel = function (model) {
             self.modalModel(model);
         };
-
 
         return self;
     };
