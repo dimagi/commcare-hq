@@ -1,8 +1,10 @@
 from django.test import TestCase
-from corehq.apps.domain.models import Domain
 
-from corehq.apps.users.models import CommCareUser, DomainMembership
+from nose.tools import assert_equal
+
+from corehq.apps.domain.models import Domain
 from corehq.apps.users.dbaccessors import delete_all_users
+from corehq.apps.users.models import CommCareUser, DomainMembership, WebUser
 
 DOMAIN = 'fixture-test'
 
@@ -28,3 +30,13 @@ class OtaRestoreUserTest(TestCase):
 
     def test_get_commtrack_location_id(self):
         self.assertEqual(self.restore_user.get_commtrack_location_id(), '1')
+
+
+def test_user_types():
+    for user, expected_type in [
+            (WebUser(), 'web'),
+            (CommCareUser(domain=DOMAIN), 'commcare'),
+            (CommCareUser(domain=DOMAIN, is_demo_user=True), 'demo'),
+    ]:
+        user_type = user.to_ota_restore_user(DOMAIN).user_session_data['user_type']
+        yield assert_equal, user_type, expected_type

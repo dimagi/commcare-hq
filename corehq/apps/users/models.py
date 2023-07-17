@@ -1086,10 +1086,9 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, EulaMixin):
 
         session_data = self.metadata
 
+        session_data[COMMCARE_USER_TYPE_KEY] = self._get_user_type()
         if self.is_commcare_user() and self.is_demo_user:
-            session_data.update({
-                COMMCARE_USER_TYPE_KEY: COMMCARE_USER_TYPE_DEMO
-            })
+            session_data[COMMCARE_USER_TYPE_KEY] = COMMCARE_USER_TYPE_DEMO
 
         if COMMCARE_PROJECT not in session_data:
             session_data[COMMCARE_PROJECT] = domain
