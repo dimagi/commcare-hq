@@ -36,7 +36,6 @@ def test_user_types():
     for user, expected_type in [
             (WebUser(), 'web'),
             (CommCareUser(domain=DOMAIN), 'commcare'),
-            (CommCareUser(domain=DOMAIN, is_demo_user=True), 'demo'),
     ]:
-        user_type = user.to_ota_restore_user(DOMAIN).user_session_data['user_type']
+        user_type = user.to_ota_restore_user(DOMAIN).user_session_data['commcare_user_type']
         yield assert_equal, user_type, expected_type
