@@ -893,13 +893,7 @@ hqDefine("cloudcare/js/form_entry/entries", function () {
             return { file: self.file() };
         };
         self.file = ko.observable();
-        // corresponds to SUPPORTED_FILE_EXTS var in Formplayer, a list of valid file extensions
-        // any changes made here should also be made in Formplayer
-        self.extensionsMap = {
-            "image/*,.pdf": ["jpg", "jpeg", "png", "pdf"],
-            "audio/*": ["3ga","mp3", "wav", "amr", "qcp","ogg"],
-            "video/*": ["3gpp", "3gp", "3gp2", "3g2", "mp4","mpg4", "mpeg4", "m4v", "mpg", "mpeg"],
-        };
+        self.extensionsMap = initialPageData.get("valid_multimedia_extensions_map");
     }
     FileEntry.prototype = Object.create(EntrySingleAnswer.prototype);
     FileEntry.prototype.constructor = EntrySingleAnswer;
