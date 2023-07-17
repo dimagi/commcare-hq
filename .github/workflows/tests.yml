@@ -9,7 +9,7 @@ on:
     - cron: '47 12 * * *'
 jobs:
   tests:
-    runs-on: buildjet-4vcpu-ubuntu-2204
+    runs-on: ${{matrix.runs-on}}
     timeout-minutes: 60
     strategy:
       fail-fast: false
@@ -19,6 +19,12 @@ jobs:
         - {TEST: python, NOSE_DIVIDED_WE_RUN: '6a'}
         - {TEST: python, NOSE_DIVIDED_WE_RUN: 'bf'}
         - {TEST: python-sharded-and-javascript}
+        runs-on:
+          - buildjet-2vcpu-ubuntu-2204
+          - buildjet-4vcpu-ubuntu-2204
+          - buildjet-8vcpu-ubuntu-2204
+          - buildjet-16vcpu-ubuntu-2204
+
     env:
       DATADOG_API_KEY: ${{ secrets.DATADOG_API_KEY }}
       DATADOG_APP_KEY: ${{ secrets.DATADOG_APP_KEY }}
