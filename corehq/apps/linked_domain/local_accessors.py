@@ -103,6 +103,7 @@ def get_data_dictionary(domain):
             'domain': domain,
             'description': case_type_obj.description,
             'fully_generated': case_type_obj.fully_generated,
+            'is_deprecated': case_type_obj.is_deprecated,
             'groups': {},
         }
         case_properties = (CaseProperty.objects
