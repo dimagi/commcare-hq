@@ -115,11 +115,9 @@ hqDefine('hqwebapp/js/ui_elements/ui-element-key-val-list', [
                     $modal_fields.append(uiInputMap.new(true, this.placeholders).val(key, this.value[key], this.translated_value[key]).ui);
                     if (this.max_display === undefined || i < this.max_display) {
                         let createUiInputMapView = () => uiInputMap.new(true, this.placeholders).val(key, this.value[key], this.translated_value[key]).setEdit(false).$noedit_view;
-                        this.$noedit_view.append(createUiInputMapView());
                         this.$edit_view.append(createUiInputMapView());
                     } else if (i === this.max_display) {
                         let ellipsis = '<div><strong>&hellip;</strong></div>';
-                        this.$noedit_view.append(ellipsis);
                         this.$edit_view.append(ellipsis);
                     }
                     i++;
