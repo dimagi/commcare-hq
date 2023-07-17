@@ -62,6 +62,8 @@ from corehq.apps.data_interfaces.models import (
     DomainCaseRuleRun,
 )
 from corehq.apps.domain.deletion import DOMAIN_DELETE_OPERATIONS
+from corehq.apps.domain.management.commands.delete_domain import Command as DeleteDomainCommand
+from corehq.apps.domain.management.commands.delete_domain_sms_email_log import Command as DeleteDomainSmsCommand
 from corehq.apps.domain.models import Domain, TransferDomainRequest
 from corehq.apps.es import case_adapter, case_search_adapter, form_adapter
 from corehq.apps.es.tests.utils import es_test
@@ -144,7 +146,12 @@ from .test_utils import delete_es_docs_patch, suspend
 
 class TestDeleteDomain(TestCase):
 
-    def _create_data(self, domain_name, i):
+    domain_name_1 = 'domain_to_delete'
+    domain_name_2 = 'domain_to_keep'
+
+    def _create_data(self, domain_name, i, sms_domain_name=None):
+        if not sms_domain_name:
+            sms_domain_name = domain_name
         product = Product(domain=domain_name, name='test-{}'.format(i))
         product.save()
 
@@ -176,6 +183,17 @@ class TestDeleteDomain(TestCase):
             content_type=MessagingEvent.CONTENT_SMS,
             status=MessagingEvent.STATUS_COMPLETED
         )
+        second_sub_event = MessagingSubEvent.objects.create(
+            parent=event,
+            domain=domain_name,
+            date=datetime.utcnow(),
+            recipient_type=MessagingEvent.RECIPIENT_CASE,
+            content_type=MessagingEvent.CONTENT_SMS,
+            status=MessagingEvent.STATUS_COMPLETED
+        )
+
+        SMS.objects.create(domain=sms_domain_name, messaging_subevent_id=second_sub_event.pk)
+
         backend = SQLMobileBackend.objects.create(domain=domain_name, is_global=False)
         SQLMobileBackendMapping.objects.create(
             domain=domain_name,
@@ -187,7 +205,7 @@ class TestDeleteDomain(TestCase):
 
     def setUp(self):
         super(TestDeleteDomain, self).setUp()
-        self.domain = Domain(name="test", is_active=True)
+        self.domain = Domain(name=self.domain_name_1, is_active=True)
         self.domain.save()
         self.addCleanup(ensure_deleted, self.domain)
         self.domain.convert_to_commtrack()
@@ -198,25 +216,25 @@ class TestDeleteDomain(TestCase):
             date_start=date.today() - relativedelta(days=1),
         )
 
-        self.domain2 = Domain(name="test2", is_active=True)
+        self.domain2 = Domain(name=self.domain_name_2, is_active=True)
         self.domain2.save()
         self.addCleanup(ensure_deleted, self.domain2)
         self.domain2.convert_to_commtrack()
 
         LocationType.objects.create(
-            domain='test',
+            domain=self.domain_name_1,
             name='facility',
         )
         LocationType.objects.create(
-            domain='test2',
+            domain=self.domain_name_2,
             name='facility',
         )
         LocationType.objects.create(
-            domain='test',
+            domain=self.domain_name_1,
             name='facility2',
         )
         LocationType.objects.create(
-            domain='test2',
+            domain=self.domain_name_2,
             name='facility2',
         )
 
@@ -225,27 +243,43 @@ class TestDeleteDomain(TestCase):
         self.assertEqual(SQLProduct.objects.filter(domain=domain).count(), number)
         self.assertEqual(LocationType.objects.filter(domain=domain).count(), number)
 
-        self.assertEqual(SMS.objects.filter(domain=domain).count(), number)
+        self.assertEqual(SMS.objects.filter(domain=domain).count(), number * 2)
         self.assertEqual(Call.objects.filter(domain=domain).count(), number)
         self.assertEqual(SQLLastReadMessage.objects.filter(domain=domain).count(), number)
         self.assertEqual(ExpectedCallback.objects.filter(domain=domain).count(), number)
         self.assertEqual(PhoneNumber.objects.filter(domain=domain).count(), number)
         self.assertEqual(MessagingEvent.objects.filter(domain=domain).count(), number)
-        self.assertEqual(MessagingSubEvent.objects.filter(domain=domain).count(), number)
+        self.assertEqual(MessagingSubEvent.objects.filter(domain=domain).count(), number * 2)
         self.assertEqual(SQLMobileBackend.objects.filter(domain=domain).count(), number)
         self.assertEqual(SQLMobileBackendMapping.objects.filter(domain=domain).count(), number)
         self.assertEqual(MobileBackendInvitation.objects.filter(domain=domain).count(), number)
 
     def test_sql_objects_deletion(self):
         for i in range(2):
-            self._create_data('test', i)
-            self._create_data('test2', i)
+            self._create_data(self.domain_name_1, i)
+            self._create_data(self.domain_name_2, i)
 
-        self._assert_sql_counts('test', 2)
-        self._assert_sql_counts('test2', 2)
+        self._assert_sql_counts(self.domain_name_1, 2)
+        self._assert_sql_counts(self.domain_name_2, 2)
         self.domain.delete()
-        self._assert_sql_counts('test', 0)
-        self._assert_sql_counts('test2', 2)
+        self._assert_sql_counts(self.domain_name_1, 0)
+        self._assert_sql_counts(self.domain_name_2, 2)
+
+    def test_cross_over_messages(self):
+        for i in range(2):
+            self._create_data(self.domain_name_1, i, self.domain_name_2)
+            self._create_data(self.domain_name_2, i, self.domain_name_1)
+
+        self._assert_sql_counts(self.domain_name_1, 2)
+        self._assert_sql_counts(self.domain_name_2, 2)
+
+        DeleteDomainSmsCommand().handle(self.domain_name_1, noinput=True)
+        DeleteDomainSmsCommand().handle(self.domain_name_2, noinput=True)
+        DeleteDomainCommand().handle(self.domain_name_1, noinput=True)
+        DeleteDomainCommand().handle(self.domain_name_2, noinput=True)
+
+        self._assert_sql_counts(self.domain_name_1, 0)
+        self._assert_sql_counts(self.domain_name_2, 0)
 
     def test_active_subscription_terminated(self):
         self.domain.delete()
@@ -430,7 +464,7 @@ class TestDeleteDomain(TestCase):
             location = make_location(
                 domain=domain_name,
                 site_code='testcode',
-                name='test',
+                name=self.domain_name_1,
                 location_type='facility'
             )
             location.save()
@@ -440,7 +474,7 @@ class TestDeleteDomain(TestCase):
                 LatestEnabledBuildProfiles.objects.create(domain=domain_name, app_id='123', build_id='456',
                                                           version=10)
             GlobalAppConfig.objects.create(domain=domain_name, app_id='123')
-            ResourceOverride.objects.create(domain=domain_name, app_id='123', root_name='test',
+            ResourceOverride.objects.create(domain=domain_name, app_id='123', root_name=self.domain_name_1,
                                             pre_id='456', post_id='789')
             self._assert_app_manager_counts(domain_name, 1)
 
@@ -1178,7 +1212,7 @@ class TestDeleteElasticFormsAndCases(TestCase):
     def setUpClass(cls):
         super().setUpClass()
 
-        cls.domain = Domain(name='test')
+        cls.domain = Domain(name="domain_to_delete")
         cls.domain.save()
         cls.addClassCleanup(ensure_deleted, cls.domain)
 
