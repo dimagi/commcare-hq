@@ -418,7 +418,7 @@ class Repeater(RepeaterSuperProxy):
         if fire_synchronously:
             # Prime the cache to prevent unnecessary lookup. Only do this for synchronous repeaters
             # to prevent serializing the repeater in the celery task payload
-            RepeatRecord.repeater.fget.get_cache(repeat_record)[()] = self
+            repeat_record.__dict__["repeater"] = self
         repeat_record.attempt_forward_now(fire_synchronously=fire_synchronously)
         return repeat_record
 
@@ -985,7 +985,7 @@ class RepeaterIdProperty(StringProperty):
 
     def __set__(self, instance, value):
         super().__set__(instance, value)
-        type(instance).repeater.fget.reset_cache(instance)
+        instance.__dict__.pop("repeater", None)
 
 
 class RepeatRecord(SyncCouchToSQLMixin, Document):
@@ -1049,8 +1049,7 @@ class RepeatRecord(SyncCouchToSQLMixin, Document):
             )]
         return self
 
-    @property
-    @memoized
+    @cached_property
     def repeater(self):
         try:
             return Repeater.objects.get(id=self.repeater_id)
