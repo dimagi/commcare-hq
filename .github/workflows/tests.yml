@@ -9,7 +9,7 @@ on:
     - cron: '47 12 * * *'
 jobs:
   tests:
-    runs-on: ubuntu-22.04
+    runs-on: buildjet-4vcpu-ubuntu-2204
     timeout-minutes: 60
     strategy:
       fail-fast: false
