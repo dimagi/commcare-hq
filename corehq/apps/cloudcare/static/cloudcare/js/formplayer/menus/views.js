@@ -545,9 +545,9 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
         columnStyle: function () {
             const self = this;
             if (self.showMap) {
-                return "display: grid;grid-template-columns: [tiles] auto [map] 300px;grid-template-rows: auto";
+                return "display: grid;grid-template-columns: [tiles] 7fr [map] 5fr;grid-template-rows: auto";
             } else {
-                return"display: grid;grid-template-columns: [tiles] 100%;grid-template-rows: auto";
+                return "display: grid;grid-template-columns: [tiles] 100%;grid-template-rows: auto";
             }
         },
 
@@ -555,7 +555,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             return L.divIcon({
                 html: `<i class='fa ${iconName} fa-4x'></i>`,
                 iconSize: [12, 12],
-                className: 'marker-pin'
+                className: 'marker-pin',
             });
         },
 
