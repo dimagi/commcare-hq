@@ -96,6 +96,8 @@ accounting
  0074_filtered_bulk_user_download_priv
  0075_application_error_report_priv
  0076_location_owner_in_report_builder_priv
+ 0077_add_web_user_feature
+ 0078_auto_20230718_2201
 admin
  0001_initial
  0002_logentry_remove_auto_add
