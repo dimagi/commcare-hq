@@ -114,15 +114,18 @@ def add_columns_for_one_one_two_case_details(_module):
 class SuiteCaseTilesTest(SimpleTestCase, SuiteMixin):
     file_path = ('data', 'suite')
 
-    # Keeps the number of columns in parity with what mobile can handle
+    # Keeps the number of columns in parity with what mobile allows
     def test_case_tile_column_count(self):
         for choice in CaseTileTemplates.choices:
             template_name = choice[0]
-            fields = case_tile_template_config(template_name).fields
-            if len(fields) > 12:
-                message = "Number of fields in Case Tile Template '{}' " \
-                    "exceeds the limit of 12".format(template_name)
-                raise AssertionError(message)
+            template_grid = case_tile_template_config(template_name).grid
+
+            for field in template_grid.values():
+                absWidth = field.get('x') + field.get('width')
+                if absWidth > 12:
+                    message = "Number of columns in template '{}' " \
+                        "exceeds the limit of 12".format(template_name)
+                    raise AssertionError(message)
 
     def ensure_module_session_datum_xml(self, factory, detail_inline_attr, detail_persistent_attr):
         suite = factory.app.create_suite()
