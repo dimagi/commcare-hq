@@ -156,7 +156,11 @@ def send_email_report(self, recipient_emails, domain, report_slug, report_type,
             params = params.split('&')
             for param in params:
                 field, value = tuple(param.split('=', 1))
-                filters[field] = value
+                if field in filters:
+                    filters[field] = filters[field] + [value] if isinstance(filters[field], list) \
+                        else [filters[field]] + [value]
+                else:
+                    filters[field] = value
         if field not in exclude:
             filters[field] = GET.get(field)
 
