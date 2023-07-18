@@ -12,7 +12,7 @@ MOCK_REDIS_CACHE = None
 
 try:
     REDIS_CACHE = cache.caches['redis']
-except:
+except InvalidCacheBackendError:
     REDIS_CACHE = None
 
 DEBUG_TRACE = False
