@@ -298,6 +298,11 @@ def _delete_demo_user_restores(domain_name):
 # We use raw queries instead of ORM because Django queryset delete needs to
 # fetch objects into memory to send signals and handle cascades. It makes deletion very slow
 # if we have a millions of rows in stock data tables.
+SMS_DELETE_OPERATIONS = [
+    ModelDeletion('sms', 'SMS', 'domain'),
+    ModelDeletion('sms', 'Email', 'domain'),
+]
+
 DOMAIN_DELETE_OPERATIONS = [
     DjangoUserRelatedModelDeletion('otp_static', 'StaticDevice', 'user__username', ['StaticToken']),
     DjangoUserRelatedModelDeletion('otp_totp', 'TOTPDevice', 'user__username'),
@@ -310,8 +315,7 @@ DOMAIN_DELETE_OPERATIONS = [
     ModelDeletion('domain', 'AllowedUCRExpressionSettings', 'domain'),
     ModelDeletion('domain_migration_flags', 'DomainMigrationProgress', 'domain'),
     ModelDeletion('sms', 'DailyOutboundSMSLimitReached', 'domain'),
-    ModelDeletion('sms', 'SMS', 'domain'),
-    ModelDeletion('sms', 'Email', 'domain'),
+] + SMS_DELETE_OPERATIONS + [
     ModelDeletion('sms', 'SQLLastReadMessage', 'domain'),
     ModelDeletion('sms', 'ExpectedCallback', 'domain'),
     ModelDeletion('ivr', 'Call', 'domain'),
@@ -473,4 +477,9 @@ DOMAIN_DELETE_OPERATIONS = [
 
 def apply_deletion_operations(domain_name):
     for op in DOMAIN_DELETE_OPERATIONS:
+        op.execute(domain_name)
+
+
+def apply_sms_deletion_operations(domain_name):
+    for op in SMS_DELETE_OPERATIONS:
         op.execute(domain_name)
