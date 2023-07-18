@@ -221,7 +221,10 @@ hqDefine('export/js/models', [
 
         // We've already built the schema and now the user is clicking the button to refresh the page
         if (this.buildSchemaProgress() === 100) {
-            window.location.reload(false);
+            // This param will let us know to automatically enable the filter after the page refreshes
+            let pageUrl = new URL(window.location.href);
+            pageUrl.searchParams.append('delete_filter_enabled', 'True');
+            window.location.href = pageUrl;
             return;
         }
 
@@ -545,10 +548,12 @@ hqDefine('export/js/models', [
      */
     var TableConfiguration = function (tableJSON) {
         var self = this;
+        const urlParams = new URLSearchParams(window.location.search);
         // Whether or not to show advanced columns in the UI
         self.showAdvanced = ko.observable(false);
-        self.showDeleted = ko.observable(false);
-        self.showDeprecated = ko.observable(false);
+        self.showDeleted = ko.observable(urlParams.get('delete_filter_enabled') === 'True');
+
+        self.showDeprecated = ko.observable(urlParams.get('load_deprecated') === 'True');
         ko.mapping.fromJS(tableJSON, TableConfiguration.mapping, self);
     };
 

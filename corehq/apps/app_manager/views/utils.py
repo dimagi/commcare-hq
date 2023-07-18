@@ -148,7 +148,7 @@ def validate_langs(request, existing_langs):
     # assert that no lang is renamed to an already existing lang
     for old, new in rename.items():
         if old != new:
-            assert(new not in existing_langs)
+            assert (new not in existing_langs)
 
     return (langs, rename)
 
@@ -588,7 +588,7 @@ def handle_shadow_child_modules(app, shadow_parent):
     return changes
 
 
-def set_session_endpoint(module_or_form, raw_endpoint_id, app):
+def get_cleaned_session_endpoint_id(module_or_form, raw_endpoint_id, app):
     raw_endpoint_id = raw_endpoint_id.strip()
     cleaned_id = slugify(raw_endpoint_id)
     if cleaned_id != raw_endpoint_id:
@@ -601,8 +601,17 @@ def set_session_endpoint(module_or_form, raw_endpoint_id, app):
         raise AppMisconfigurationError(_(
             "Session endpoint IDs must be unique. '{endpoint_id}' is already in-use"
         ).format(endpoint_id=cleaned_id))
+    return cleaned_id
 
+
+def set_session_endpoint(module_or_form, raw_endpoint_id, app):
+    cleaned_id = get_cleaned_session_endpoint_id(module_or_form, raw_endpoint_id, app)
     module_or_form.session_endpoint_id = cleaned_id
+
+
+def set_case_list_session_endpoint(module, raw_endpoint_id, app):
+    cleaned_id = get_cleaned_session_endpoint_id(module, raw_endpoint_id, app)
+    module.case_list_session_endpoint_id = cleaned_id
 
 
 def _is_duplicate_endpoint_id(new_id, old_id, app):
@@ -646,6 +655,10 @@ def validate_custom_assertions(custom_assertions_string, existing_assertions, la
     assertions = json.loads(custom_assertions_string)
     try:  # validate that custom assertions can be added into the XML
         for assertion in assertions:
+            if (len(assertion['test']) == 0):
+                raise AppMisconfigurationError(_("Custom assertions must not be blank."))
+            if (len(assertion['text']) == 0):
+                raise AppMisconfigurationError(_("Please add a message for assertion."))
             etree.fromstring(
                 '<assertion test="{test}"><text><locale id="abc.def"/>{text}</text></assertion>'.format(
                     **assertion

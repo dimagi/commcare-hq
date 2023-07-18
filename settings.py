@@ -856,6 +856,30 @@ ELASTICSEARCH_MAJOR_VERSION = 2
 # If elasticsearch queries take more than this, they result in timeout errors
 ES_SEARCH_TIMEOUT = 30
 
+# The variables should be used while reindexing an index.
+# When the variables are set to true the data will be written to both primary and secondary indexes.
+
+ES_APPS_INDEX_MULTIPLEXED = False
+ES_CASE_SEARCH_INDEX_MULTIPLEXED = False
+ES_CASES_INDEX_MULTIPLEXED = False
+ES_DOMAINS_INDEX_MULTIPLEXED = False
+ES_FORMS_INDEX_MULTIPLEXED = False
+ES_GROUPS_INDEX_MULTIPLEXED = False
+ES_SMS_INDEX_MULTIPLEXED = False
+ES_USERS_INDEX_MULTIPLEXED = False
+
+
+# Setting the variable to True would mean that the primary index would become secondary and vice-versa
+# This should only be set to True after successfully running and verifying migration command on a particular index. 
+ES_APPS_INDEX_SWAPPED = False
+ES_CASE_SEARCH_INDEX_SWAPPED = False
+ES_CASES_INDEX_SWAPPED = False
+ES_DOMAINS_INDEX_SWAPPED = False
+ES_FORMS_INDEX_SWAPPED = False
+ES_GROUPS_INDEX_SWAPPED = False
+ES_SMS_INDEX_SWAPPED = False
+ES_USERS_INDEX_SWAPPED = False
+
 BITLY_OAUTH_TOKEN = None
 
 OAUTH2_PROVIDER_ACCESS_TOKEN_MODEL = 'oauth2_provider.AccessToken'
@@ -921,6 +945,8 @@ LESS_B3_PATHS = {
     'variables': '../../../hqwebapp/less/_hq/includes/variables',
     'mixins': '../../../hqwebapp/less/_hq/includes/mixins',
 }
+
+BOOTSTRAP_MIGRATION_LOGS_DIR = None
 
 USER_AGENTS_CACHE = 'default'
 
@@ -1117,6 +1143,9 @@ IGNORE_ALL_DEMO_USER_SUBMISSIONS = False
 USE_PHONE_ENTRIES = True
 COMMCARE_ANALYTICS_HOST = ""
 
+# FCM Server creds used for sending FCM Push Notifications
+FCM_CREDS = None
+
 try:
     # try to see if there's an environmental variable set for local_settings
     custom_settings = os.environ.get('CUSTOMSETTINGS', None)
@@ -1161,6 +1190,12 @@ if callable(COMPRESS_OFFLINE):
 # Should you someday need to do so, use the lambda/if callable pattern above
 SESSION_COOKIE_SECURE = CSRF_COOKIE_SECURE = SECURE_COOKIES = not DEBUG
 SESSION_COOKIE_HTTPONLY = CSRF_COOKIE_HTTPONLY = True
+
+# This is commented because it is not required now. We don't need to instrument all the services rn on staging.
+# The below lines can be uncommented when we need to turn on app level tracing on any env.
+# if SERVER_ENVIRONMENT == 'staging':
+#     from ddtrace import patch_all
+#     patch_all()
 
 
 if UNIT_TESTING:

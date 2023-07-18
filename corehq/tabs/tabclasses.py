@@ -41,7 +41,8 @@ from corehq.apps.events.views import (
     AttendeesListView,
     EventsView,
 )
-from corehq.apps.geospatial.views import MapView
+from corehq.apps.geospatial.dispatchers import CaseManagementMapDispatcher
+
 from corehq.apps.hqadmin.reports import (
     DeployHistoryReport,
     DeviceLogSoftAssertReport,
@@ -2509,8 +2510,7 @@ class AttendanceTrackingTab(UITab):
 
 class GeospatialTab(UITab):
     title = gettext_noop("Geospatial")
-    view = MapView.urlname
-    _is_viewable = False
+    view = 'geospatial_default'
 
     url_prefix_formats = (
         '/a/{domain}/settings/geospatial',
@@ -2518,16 +2518,12 @@ class GeospatialTab(UITab):
 
     @property
     def sidebar_items(self):
-        items = [
-            (_("Map Visualization"), [
-                {
-                    'title': _("View Map"),
-                    'url': reverse(MapView.urlname, args=(self.domain,)),
-                    'description': _('Visually view and manage cases on a map')
-                }
-            ])
-        ]
+        items = CaseManagementMapDispatcher.navigation_sections(request=self._request, domain=self.domain)
         return items
+
+    @property
+    def _is_viewable(self):
+        return toggles.GEOSPATIAL.enabled(self.domain)
 
 
 def _get_repeat_record_report(domain):
