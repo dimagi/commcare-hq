@@ -1090,10 +1090,9 @@ class NavigationEventAuditResourceParams:
         if raw_params:
             self.cursor = raw_params.get('cursor')
             self.limit = raw_params.get('limit')
-            self._validate_keys(raw_params)
             if self.cursor:
                 raw_params = self._process_cursor()
-                self._validate_keys(raw_params)
+            self._validate_keys(raw_params)
 
             self._set_compound_keys(raw_params)
             self.users = raw_params.getlist('users')
