@@ -1089,12 +1089,12 @@ class NavigationEventAuditResourceParams:
     def __post_init__(self, domain, default_limit, max_limit, raw_params=None):
         if raw_params:
             self.cursor = raw_params.get('cursor')
-            self.limit = raw_params.get('limit')
             if self.cursor:
                 raw_params = self._process_cursor()
             self._validate_keys(raw_params)
 
             self._set_compound_keys(raw_params)
+            self.limit = raw_params.get('limit')
             self.users = raw_params.getlist('users')
             self.local_timezone = raw_params.get('local_timezone')
             self.UTC_start_time_start = raw_params.get('UTC_start_time_start')
@@ -1199,25 +1199,22 @@ class NavigationEventAuditResource(HqBaseResource, Resource):
         data['meta']['local_date_timezone'] = self.api_params.local_timezone.zone
         data['meta']['total_count'] = self.count
 
-        if data['meta']['total_count'] > data['meta']['limit']:
-            original_params = request.GET
-            if 'cursor' in original_params:
-                params_string = b64decode(original_params['cursor']).decode('utf-8')
-                cursor_params = QueryDict(params_string, mutable=True)
-            else:
-                cursor_params = original_params.copy()
-                cursor_params.pop('limit', None)
+        original_params = request.GET
+        if 'cursor' in original_params:
+            params_string = b64decode(original_params['cursor']).decode('utf-8')
+            cursor_params = QueryDict(params_string, mutable=True)
+            if 'limit' in cursor_params:
+                data['meta']['limit'] = int(cursor_params['limit'])
+        else:
+            cursor_params = original_params.copy()
 
+        if data['meta']['total_count'] > data['meta']['limit']:
             last_object = data['objects'][-1]
             cursor_params['cursor_local_date'] = last_object.data['local_date']
             cursor_params['cursor_user'] = last_object.data['user']
             encoded_cursor = b64encode(urlencode(cursor_params).encode('utf-8'))
 
             next_params = {'cursor': encoded_cursor}
-            # limit needs to directly be in request for tastypie to process it for pagination
-            limit = original_params.get('limit')
-            if limit:
-                next_params['limit'] = limit
 
             next_url = f'?{urlencode(next_params)}'
             data['meta']['next'] = next_url

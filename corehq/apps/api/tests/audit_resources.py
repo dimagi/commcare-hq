@@ -278,6 +278,7 @@ class TestNavigationEventAuditResource(APIResourceTest):
         response_next_url = json.loads(response.content)['meta']['next']
 
         expected_page_zero_cursor = {
+            'limit': 1,
             'local_date.lte': local_date_filter,
             'cursor_local_date': date(2023, 5, 1).isoformat(),
             'cursor_user': self.username1
@@ -285,7 +286,6 @@ class TestNavigationEventAuditResource(APIResourceTest):
         encoded_expected_cursor = b64encode(urlencode(expected_page_zero_cursor).encode('utf-8'))
         expected_next_params = {
             'cursor': encoded_expected_cursor,
-            'limit': 1
         }
         expected_next_url = f'?{urlencode(expected_next_params)}'
         self.assertEqual(expected_next_url, response_next_url)
@@ -302,6 +302,7 @@ class TestNavigationEventAuditResource(APIResourceTest):
         response_next_url = json.loads(response.content)['meta']['next']
 
         expected_page_one_cursor = {
+            'limit': 1,
             'local_date.lte': local_date_filter,
             'cursor_local_date': date(2023, 5, 1).isoformat(),
             'cursor_user': self.username2
@@ -309,7 +310,6 @@ class TestNavigationEventAuditResource(APIResourceTest):
         encoded_expected_cursor = b64encode(urlencode(expected_page_one_cursor).encode('utf-8'))
         expected_next_params = {
             'cursor': encoded_expected_cursor,
-            'limit': 1
         }
         expected_next_url = f'?{urlencode(expected_next_params)}'
         self.assertEqual(expected_next_url, response_next_url)
