@@ -121,8 +121,8 @@ class SuiteCaseTilesTest(SimpleTestCase, SuiteMixin):
             template_grid = case_tile_template_config(template_name).grid
 
             for field in template_grid.values():
-                absWidth = field.get('x') + field.get('width')
-                if absWidth > 12:
+                absolute_width = field.get('x') + field.get('width')
+                if absolute_width > 12:
                     message = "Number of columns in template '{}' " \
                         "exceeds the limit of 12".format(template_name)
                     raise AssertionError(message)
