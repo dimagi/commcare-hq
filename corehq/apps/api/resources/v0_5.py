@@ -1200,7 +1200,7 @@ class NavigationEventAuditResource(HqBaseResource, Resource):
         data['meta']['total_count'] = self.count
 
         if data['meta']['total_count'] > data['meta']['limit']:
-            original_params = request.GET.copy()  # Makes params mutable for creating next_url below
+            original_params = request.GET
             if 'cursor' in original_params:
                 params_string = b64decode(original_params['cursor']).decode('utf-8')
                 cursor_params = QueryDict(params_string, mutable=True)
