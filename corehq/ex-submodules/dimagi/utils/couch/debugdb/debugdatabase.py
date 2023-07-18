@@ -1,7 +1,7 @@
 __author__ = 'dmyung'
 from datetime import datetime
 from couchdbkit import Database
-from dimagi.utils.couch.debugdb import tidy_stacktrace, SQL_WARNING_THRESHOLD, process_key, ms_from_timedelta
+from dimagi.utils.couch.debugdb import tidy_stacktrace, SQL_WARNING_THRESHOLD, ms_from_timedelta
 
 #taken from the django debug toolbar sql panel
 import traceback

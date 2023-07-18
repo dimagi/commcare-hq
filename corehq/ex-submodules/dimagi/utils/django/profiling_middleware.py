@@ -68,18 +68,18 @@ class ProfileMiddleware(MiddlewareMixin):
         sum = 0
 
         for s in stats_str:
-            fields = words_re.split(s);
+            fields = words_re.split(s)
             if len(fields) == 7:
                 time = float(fields[2])
                 sum += time
                 file = fields[6].split(":")[0]
 
-                if not file in mystats:
+                if file not in mystats:
                     mystats[file] = 0
                 mystats[file] += time
 
                 group = self.get_group(file)
-                if not group in mygroups:
+                if group not in mygroups:
                     mygroups[ group ] = 0
                 mygroups[ group ] += time
 
