@@ -104,7 +104,7 @@ class DebugViewResults64(ViewResults):
         for key in self._dynamic_keys:
             try:
                 delattr(self, key)
-            except:
+            except AttributeError:
                 pass
         self._dynamic_keys = []
 
@@ -170,7 +170,7 @@ class DebugViewResults57(ViewResults):
         for key in self._dynamic_keys:
             try:
                 delattr(self, key)
-            except:
+            except AttributeError:
                 pass
         self._dynamic_keys = []
 
