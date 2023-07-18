@@ -73,7 +73,7 @@ from corehq.apps.hqwebapp.templatetags.proptable_tags import (
     get_display_data,
 )
 from corehq.apps.hqwebapp.view_permissions import user_can_view_reports
-from corehq.apps.hqwebapp.views import CRUDPaginatedViewMixin
+from corehq.apps.hqwebapp.views import CRUDPaginatedViewMixin, no_permissions
 from corehq.apps.locations.permissions import (
     can_edit_form_location,
     conditionally_location_safe,
@@ -166,7 +166,6 @@ def _can_view_form_attachment():
         def _inner(request, domain, *args, **kwargs):
             if VIEW_FORM_ATTACHMENT.enabled(domain):
                 return view_func(request, domain, *args, **kwargs)
-
             try:
                 response = require_form_view_permission(view_func)(request, domain, *args, **kwargs)
             except PermissionDenied:
@@ -180,8 +179,19 @@ def _can_view_form_attachment():
 can_view_form_attachment = _can_view_form_attachment()
 
 
-@location_safe
+def location_restricted_access(view_func):
+    def _inner(request, domain, *args, **kwargs):
+        location_restricted_user = not request.couch_user.has_permission(domain, 'access_all_locations')
+        if not location_restricted_user or (
+                location_restricted_user and toggles.LOCATION_RESTRICTED_SCHEDULED_REPORTS.enabled(domain)):
+            return view_func(request, domain, *args, **kwargs)
+        return no_permissions(request)
+    return _inner
+
+
 @login_and_domain_required
+@location_safe
+@location_restricted_access
 def reports_home(request, domain):
     if user_can_view_reports(request.project, request.couch_user):
         return HttpResponseRedirect(reverse(MySavedReportsView.urlname, args=[domain]))
@@ -219,6 +229,7 @@ class MySavedReportsView(BaseProjectReportSectionView):
     @use_jquery_ui
     @use_datatables
     @use_daterangepicker
+    @method_decorator(location_restricted_access)
     def dispatch(self, request, *args, **kwargs):
         return super(MySavedReportsView, self).dispatch(request, *args, **kwargs)
 
@@ -555,9 +566,10 @@ def _can_email_report(report_slug, request, dispatcher_class, domain):
     return dispatcher.permissions_check(report_name, request, domain)
 
 
-@location_safe
 @login_and_domain_required
 @require_http_methods(['DELETE'])
+@location_safe
+@location_restricted_access
 def delete_config(request, domain, config_id):
     ReportConfig.shared_on_domain.clear(ReportConfig, domain)
 
@@ -671,6 +683,7 @@ class ScheduledReportsView(BaseProjectReportSectionView):
     @method_decorator(require_permission(HqPermissions.download_reports))
     @use_multiselect
     @use_jquery_ui
+    @method_decorator(location_restricted_access)
     def dispatch(self, request, *args, **kwargs):
         return super(ScheduledReportsView, self).dispatch(request, *args, **kwargs)
 
@@ -915,9 +928,10 @@ class ReportNotificationUnsubscribeView(TemplateView):
         return self.get(request, *args, **kwargs)
 
 
-@location_safe
 @login_and_domain_required
 @require_POST
+@location_safe
+@location_restricted_access
 def delete_scheduled_report(request, domain, scheduled_report_id):
     user = request.couch_user
     delete_count = request.POST.get("bulkDeleteCount")
@@ -968,8 +982,9 @@ def _can_delete_scheduled_report(report, user, domain):
     return user._id == report.owner_id or user.is_domain_admin(domain)
 
 
-@location_safe
 @login_and_domain_required
+@location_safe
+@location_restricted_access
 def send_test_scheduled_report(request, domain, scheduled_report_id):
     if not _can_send_test_report(scheduled_report_id, request.couch_user, domain):
         raise Http404()
@@ -1138,6 +1153,8 @@ def render_full_report_notification(request, content, email=None, report_notific
 
 
 @login_and_domain_required
+@location_safe
+@location_restricted_access
 def view_scheduled_report(request, domain, scheduled_report_id):
     report_text = get_scheduled_report_response(request.couch_user, domain, scheduled_report_id, email=False)[0]
     return render_full_report_notification(request, report_text)
