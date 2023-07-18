@@ -82,7 +82,7 @@ hqDefine("cloudcare/js/formplayer/menus/collections", function () {
                 this.appId = urlObject.appId;
                 updateUrl = true;
             }
-            if (response.selections) {
+            if (response.selections || response.selections === null) {
                 urlObject.setSelections(response.selections);
                 updateUrl = true;
             }
