@@ -220,7 +220,7 @@ class TestNavigationEventAuditResource(APIResourceTest):
         self.assertEqual(result_objects, expected_result_objects)
 
     def test_request_with_UTC_start_time_end_param(self):
-        end_datetime = datetime(2023, 5, 2, 6, tzinfo=pytz.timezone('UTC')).isoformat()
+        end_datetime = datetime(2023, 5, 2, 1, tzinfo=pytz.timezone('UTC')).isoformat()
 
         params = {
             'UTC_start_time_end': end_datetime,

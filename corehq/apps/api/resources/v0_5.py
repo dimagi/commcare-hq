@@ -1252,7 +1252,7 @@ class NavigationEventAuditResource(HqBaseResource, Resource):
         if params.UTC_start_time_start:
             queryset = queryset.filter(UTC_start_time__gte=params.UTC_start_time_start)
         if params.UTC_start_time_end:
-            queryset = queryset.filter(UTC_end_time__lte=params.UTC_start_time_end)
+            queryset = queryset.filter(UTC_start_time__lte=params.UTC_start_time_end)
 
         with override_settings(USE_TZ=True):
             cls.count = queryset.count()
