@@ -4,6 +4,7 @@ from operator import attrgetter
 
 from django.core.exceptions import ValidationError
 from django.utils.translation import gettext
+from django.utils.translation import gettext_lazy as _
 
 from corehq.apps.app_manager.app_schemas.case_properties import (
     all_case_properties_by_domain,
@@ -303,3 +304,41 @@ def get_gps_properties(domain, case_type):
         case_type__name=case_type,
         data_type=CaseProperty.DataType.GPS,
     ).values_list('name', flat=True))
+
+
+def get_column_headings(row, valid_values, case_type=None):
+    column_headings = []
+    errors = []
+    for index, cell in enumerate(row, start=1):
+        if not cell.value:
+            if case_type:
+                errors.append(
+                    _("Column {} in case type {} has an empty header").format(index, case_type)
+                )
+            else:
+                errors.append(
+                    _("Column {} has an empty header").format(index)
+                )
+            continue
+
+        cell_value = cell.value.lower()
+        if cell_value in valid_values:
+            column_headings.append(valid_values[cell_value])
+        else:
+            if case_type:
+                errors.append(
+                    _("Invalid column \"{}\" in case type {}").format(cell.value, case_type)
+                )
+            else:
+                errors.append(
+                    _("Invalid column \"{}\"").format(cell.value)
+                )
+    return column_headings, errors
+
+
+def row_to_dict(row, column_headings, default_val=None):
+    row_vals = defaultdict(lambda: default_val)
+    for index, cell in enumerate(row):
+        column_name = column_headings[index]
+        row_vals[column_name] = cell.value if cell.value else default_val
+    return row_vals
