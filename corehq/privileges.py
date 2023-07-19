@@ -115,6 +115,8 @@ DATA_DICTIONARY = 'data_dictionary'
 
 SHOW_OWNER_LOCATION_PROPERTY_IN_REPORT_BUILDER = 'show_owner_location_property_in_report_builder'
 
+CASE_COPY = 'case_copy'
+
 MAX_PRIVILEGES = [
     LOOKUP_TABLES,
     API_ACCESS,
@@ -176,6 +178,7 @@ MAX_PRIVILEGES = [
     APPLICATION_ERROR_REPORT,
     DATA_DICTIONARY,
     SHOW_OWNER_LOCATION_PROPERTY_IN_REPORT_BUILDER,
+    CASE_COPY,
 ]
 
 # These are special privileges related to their own rates in a SoftwarePlanVersion
@@ -254,4 +257,5 @@ class Titles(object):
             SHOW_OWNER_LOCATION_PROPERTY_IN_REPORT_BUILDER: _(
                 "Show an additional 'Owner (Location)' property in report builder reports."
             ),
+            CASE_COPY: _("Allow case copy from one user to another"),
         }.get(privilege, privilege)
