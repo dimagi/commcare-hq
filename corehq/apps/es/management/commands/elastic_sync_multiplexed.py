@@ -344,6 +344,10 @@ class Command(BaseCommand):
         ./manage.py elastic_sync_multiplexed copy_checkpoints <index_cname>
         ```
 
+    If replicas are not set during the time of reindex, they can be set on secondary index by
+        ```bash
+        ./manage.py elastic_sync_multiplexed set_replicas <index_cname>
+        ```
     """
 
     help = ("Reindex management command to sync Multiplexed HQ indices")
@@ -440,6 +444,15 @@ class Command(BaseCommand):
             help="""Cannonical Name of the index whose checkpoints are to be copied""",
         )
 
+        # Set replicas for secondary index
+        set_replicas_cmd = subparsers.add_parser("set_replicas")
+        set_replicas_cmd.set_defaults(func=self.es_helper.set_replicas_for_secondary_index)
+        set_replicas_cmd.add_argument(
+            'index_cname',
+            choices=INDEXES,
+            help="""Cannonical Name of the index whose replicas are to be set"""
+        )
+
     def handle(self, **options):
         sub_cmd = options['sub_command']
         cmd_func = options.get('func')
@@ -459,3 +472,5 @@ class Command(BaseCommand):
             cmd_func(stdout=self.stdout)
         elif sub_cmd == 'copy_checkpoints':
             cmd_func(options['index_cname'])
+        elif sub_cmd == 'set_replicas':
+            cmd_func(options["index_cname"])
