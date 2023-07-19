@@ -40,7 +40,8 @@ class ESSyncUtil:
     def __init__(self):
         self.es = get_client()
 
-    def start_reindex(self, cname, reindex_batch_size=1000, purge_ids=False, requests_per_second=None):
+    def start_reindex(self, cname, reindex_batch_size=1000,
+                      purge_ids=False, requests_per_second=None, with_no_replicas=False):
 
         adapter = doc_adapter_from_cname(cname)
 
@@ -73,9 +74,10 @@ class ESSyncUtil:
         print("\n\n")
         self.perform_cleanup(adapter)
 
-        logger.info("Preparing Index for normal use")
-        self._prepare_index_for_normal_usage(adapter.secondary)
-        print("\n\n")
+        if not with_no_replicas:
+            logger.info("Preparing Index for normal use")
+            self._prepare_index_for_normal_usage(adapter.secondary)
+            print("\n\n")
 
         self._get_source_destination_doc_count(adapter)
 
@@ -374,6 +376,13 @@ class Command(BaseCommand):
                     index operations by padding each batch with a wait time"""
         )
 
+        start_cmd.add_argument(
+            "--with-no-replicas",
+            action="store_true",
+            default=False,
+            help="Replica shards will not be created for the destination index during reindex."
+        )
+
         # Get ReIndex Process Status
         status_cmd = subparsers.add_parser("status")
         status_cmd.set_defaults(func=self.es_helper.reindex_status)
@@ -425,7 +434,8 @@ class Command(BaseCommand):
         if sub_cmd == 'start':
             cmd_func(
                 options['index_cname'], options['batch_size'],
-                options['purge_ids'], options['requests_per_second']
+                options['purge_ids'], options['requests_per_second'],
+                options['with_no_replicas']
             )
         elif sub_cmd == 'delete':
             cmd_func(options['index_cname'])
