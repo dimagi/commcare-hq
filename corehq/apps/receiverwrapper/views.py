@@ -1,9 +1,11 @@
+import inspect
 import os
 import logging
 
 from django.http import HttpResponse, HttpResponseBadRequest, HttpResponseForbidden
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
+from django.core.cache import cache
 
 import couchforms
 from casexml.apps.case.xform import get_case_updates, is_device_report
@@ -61,9 +63,37 @@ PROFILE_LIMIT = os.getenv('COMMCARE_PROFILE_SUBMISSION_LIMIT')
 PROFILE_LIMIT = int(PROFILE_LIMIT) if PROFILE_LIMIT is not None else 1
 
 
+def _audit_request_auth_errors(user_id, authenticated):
+    errors = []
+    cache_key = f"form_submission_audit:{user_id}"
+    if cache.get(cache_key):
+        return errors
+
+    def check_invalid_request():
+        stack = inspect.stack()
+        function_names = [frame.function for frame in stack if not inspect.isbuiltin(frame.function)]
+        if post_api.__name__ not in function_names and authenticated is True:
+            errors.append(f"Request not made from {post_api.__name__} handler for authenticated user")
+
+    check_invalid_request()
+
+    if errors:
+        # Set cache expiry of 30 days
+        cache.set(cache_key, True, 30 * 24 * 60 * 60)
+
+    return errors
+
+
 @profile_dump('commcare_receiverwapper_process_form.prof', probability=PROFILE_PROBABILITY, limit=PROFILE_LIMIT)
 def _process_form(request, domain, app_id, user_id, authenticated,
                   auth_cls=AuthContext):
+
+    request_errors = _audit_request_auth_errors(user_id, authenticated)
+
+    if request_errors:
+        message = f"Restricted access by user {request.user} with id {user_id} \
+        and app_id {app_id}. Error details: {', '.join(request_errors)}"
+        notify_exception(request, message=message)
 
     if rate_limit_submission(domain):
         return HttpTooManyRequests()
