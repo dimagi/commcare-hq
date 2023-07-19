@@ -40,7 +40,7 @@ class ESSyncUtil:
     def __init__(self):
         self.es = get_client()
 
-    def start_reindex(self, cname, reindex_batch_size=1000, purge_ids=False):
+    def start_reindex(self, cname, reindex_batch_size=1000, purge_ids=False, requests_per_second=None):
 
         adapter = doc_adapter_from_cname(cname)
 
@@ -56,7 +56,8 @@ class ESSyncUtil:
         logger.info("Starting ReIndex process")
         task_info = es_manager.reindex(
             source_index, destination_index,
-            batch_size=reindex_batch_size, purge_ids=purge_ids
+            batch_size=reindex_batch_size, purge_ids=purge_ids,
+            requests_per_second=requests_per_second
         )
         logger.info(f"Copying docs from index {source_index} to index {destination_index}")
         task_id = task_info.split(':')[1]
