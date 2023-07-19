@@ -15,6 +15,32 @@ hqDefine("geospatial/js/geospatial_map", [
         var map;
         var cases = [];
         var userFilteredCases = [];
+        var saveGeoJSONUrl = initialPageData.reverse('geo_polygon');
+
+        function filterCasesInPolygon(polygonFeature) {
+            userFilteredCases = [];
+            cases.filter(function (currCase) {
+                if (currCase.coordinates) {
+                    var coordinates = [currCase.coordinates.lng, currCase.coordinates.lat];
+                    var point = turf.point(coordinates);
+                    var caseIsInsidePolygon = turf.booleanPointInPolygon(point, polygonFeature.geometry);
+                    if (caseIsInsidePolygon) {
+                        userFilteredCases.push(currCase);
+                        changeCaseMarkerColor(currCase, selectedMarkerColor);
+                    } else {
+                        changeCaseMarkerColor(currCase, defaultMarkerColor);
+                    }
+                }
+            });
+        }
+
+        function changeCaseMarkerColor(selectedCase, newColor) {
+            let marker = selectedCase.marker;
+            let element = marker.getElement();
+            let svg = element.getElementsByTagName("svg")[0];
+            let path = svg.getElementsByTagName("path")[0];
+            path.setAttribute("fill", newColor);
+        };
 
         var loadMapBox = function (centerCoordinates) {
             'use strict';
@@ -83,31 +109,6 @@ hqDefine("geospatial/js/geospatial_map", [
                 return event.lngLat;
             }
 
-            function changeCaseMarkerColor(selectedCase, newColor) {
-                let marker = selectedCase.marker;
-                let element = marker.getElement();
-                let svg = element.getElementsByTagName("svg")[0];
-                let path = svg.getElementsByTagName("path")[0];
-                path.setAttribute("fill", newColor);
-            }
-
-            function filterCasesInPolygon(polygonFeature) {
-                userFilteredCases = [];
-                cases.filter(function (currCase) {
-                    if (currCase.coordinates) {
-                        var coordinates = [currCase.coordinates.lng, currCase.coordinates.lat];
-                        var point = turf.point(coordinates);
-                        var caseIsInsidePolygon = turf.booleanPointInPolygon(point, polygonFeature.geometry);
-                        if (caseIsInsidePolygon) {
-                            userFilteredCases.push(currCase);
-                            changeCaseMarkerColor(currCase, selectedMarkerColor);
-                        } else {
-                            changeCaseMarkerColor(currCase, defaultMarkerColor);
-                        }
-                    }
-                });
-            }
-
             // We should consider refactoring and splitting the below out to a new JS file
             function moveMarkerToClickedCoordinate(coordinates) {
                 if (clickedMarker !== null) {
@@ -171,28 +172,95 @@ hqDefine("geospatial/js/geospatial_map", [
             return self;
         };
 
-        var exportGeoJson = function (drawInstance) {
-            // Credit to https://gist.github.com/danswick/36796153bd86ce982a59043cbe0ac8f7
-            // I could not get this to work using knockout.js. It did set the attributes, but a download wasn't
-            // triggered
-            var exportButton = $("#btnExport");
+        var saveGeoJson = function (drawInstance, mapControlsModelInstance) {
             var data = drawInstance.getAll();
 
             if (data.features.length) {
-                // Stringify the GeoJson
-                var convertedData = 'text/json;charset=utf-8,' + encodeURIComponent(JSON.stringify(data));
+                let name = window.prompt(gettext("Name of the Area"));
+                data['name'] = name;
 
-                // Create export
-                exportButton.attr('href', 'data:' + convertedData);
-                exportButton.attr('download','data.geojson');
+                $.ajax({
+                    type: 'post',
+                    url: saveGeoJSONUrl,
+                    dataType: 'json',
+                    data: JSON.stringify({'geo_json': data}),
+                    contentType: "application/json; charset=utf-8",
+                    success: function (ret) {
+                        delete data.name;
+                        // delete drawn area
+                        drawInstance.deleteAll();
+                        mapControlsModelInstance.savedPolygons.push(
+                            savedPolygon({
+                                name: name,
+                                id: ret.id,
+                                geo_json: data
+                            })
+                        );
+                        // redraw using mapControlsModelInstance
+                        mapControlsModelInstance.selectedPolygon(ret.id);
+                    }
+                });
             }
         };
+
+        function savedPolygon(polygon) {
+            var self = {};
+            self.text = polygon.name;
+            self.id = polygon.id;
+            self.geoJson = polygon.geo_json;
+            return self;
+        }
 
         var mapControlsModel = function () {
             'use strict';
             var self = {};
             var mapboxinstance = map.getMapboxInstance();
+            self.btnSaveDisabled = ko.observable(true);
             self.btnExportDisabled = ko.observable(true);
+
+            // initial saved polygons
+            self.savedPolygons = ko.observableArray();
+            _.each(initialPageData.get('saved_polygons'), function (polygon) {
+                self.savedPolygons.push(savedPolygon(polygon));
+            });
+            // Keep track of the Polygon selected by the user
+            self.selectedPolygon = ko.observable();
+            // Keep track of the Polygon displayed
+            self.activePolygon = ko.observable();
+
+            // On selection, add the polygon to the map
+            self.selectedPolygon.subscribe(function (value) {
+                var polygonObj = self.savedPolygons().find(
+                    function (o) { return o.id == self.selectedPolygon(); }
+                );
+                // Clear existing polygon
+                if (self.activePolygon()) {
+                    mapboxinstance.removeLayer(self.activePolygon());
+                    mapboxinstance.removeSource(self.activePolygon());
+                }
+                // Add selected polygon
+                mapboxinstance.addSource(
+                    String(polygonObj.id),
+                    {'type': 'geojson', 'data':polygonObj.geoJson}
+                );
+                mapboxinstance.addLayer({
+                    'id': String(polygonObj.id),
+                    'type': 'fill',
+                    'source': String(polygonObj.id),
+                    'layout': {},
+                    'paint': {
+                        'fill-color': '#0080ff',
+                        'fill-opacity': 0.5
+                    }
+                });
+                polygonObj.geoJson.features.forEach(
+                    filterCasesInPolygon
+                );
+                // Mark as active polygon
+                self.activePolygon(self.selectedPolygon());
+                self.btnExportDisabled(false);
+                self.btnSaveDisabled(true);
+            });
 
             var mapHasPolygons = function () {
                 var drawnFeatures = map.getMapboxDrawInstance().getAll().features;
@@ -205,31 +273,45 @@ hqDefine("geospatial/js/geospatial_map", [
             };
 
             mapboxinstance.on('draw.delete', function () {
-                self.btnExportDisabled(!mapHasPolygons());
+                self.btnSaveDisabled(!mapHasPolygons());
             });
 
             mapboxinstance.on('draw.create', function () {
-                self.btnExportDisabled(!mapHasPolygons());
+                self.btnSaveDisabled(!mapHasPolygons());
             });
+
+            self.exportGeoJson = function(){
+                var exportButton = $("#btnExportDrawnArea");
+                var selectedPolygon = self.savedPolygons().find(
+                    function (o) { return o.id == self.selectedPolygon(); }
+                );
+                if (selectedPolygon) {
+                    var convertedData = 'text/json;charset=utf-8,' + encodeURIComponent(JSON.stringify(selectedPolygon.geoJson));
+                    exportButton.attr('href', 'data:' + convertedData);
+                    exportButton.attr('download','data.geojson');
+                }
+            }
 
             return self;
         };
 
-        $(document).ajaxComplete(function () {
-            // This fires everytime an ajax request is completed
+
+        $(document).ajaxComplete(function (event, xhr, settings) {
+            // This indicates that the report data is fetched
+            if (!settings.url.includes('geospatial/async/case_management_map/')) {
+                return;
+            }
             var mapDiv = $('#geospatial-map');
             var $data = $(".map-data");
-            var $exportButton = $("#btnExport");
+            var $exportDrawnArea = $("#btnExportDrawnArea");
+            var $saveDrawnArea = $("#btnSaveDrawnArea");
+            var $mapControlDiv = $("#mapControls");
 
             if (mapDiv.length && !map) {
                 map = loadMapBox();
             }
 
-            $exportButton.click(function () {
-                if (map) {
-                    exportGeoJson(map.getMapboxDrawInstance());
-                }
-            });
+            var mapControlsModelInstance = mapControlsModel();
 
             if ($data.length && map) {
                 var contextData = $data.data("context");
@@ -252,10 +334,21 @@ hqDefine("geospatial/js/geospatial_map", [
                 }
             }
 
-            if ($exportButton.length) {
-                ko.cleanNode($exportButton);
-                $exportButton.koApplyBindings(mapControlsModel());
+            if ($mapControlDiv.length) {
+                ko.cleanNode($mapControlDiv);
+                $mapControlDiv.koApplyBindings(mapControlsModelInstance);
             }
+
+            $saveDrawnArea.click(function(e) {
+                if (map) {
+                    saveGeoJson(map.getMapboxDrawInstance(), mapControlsModelInstance);
+                }
+            });
+            $exportDrawnArea.click(function(e) {
+                if (map) {
+                    mapControlsModelInstance.exportGeoJson()
+                }
+            });
         });
     });
 });

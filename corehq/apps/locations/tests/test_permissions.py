@@ -76,7 +76,7 @@ class TestNewFormEditRestrictions(LocationHierarchyTestCase):
         self.assertCannotEdit(self.locationless_web_user, self.cambridge_form)
         self.assertCannotEdit(self.locationless_web_user, self.boston_form)
 
-    #### The rest of this class is helper methods and setup ####
+    # The rest of this class is helper methods and setup
 
     @classmethod
     def make_web_user(cls, location):
@@ -184,8 +184,7 @@ class TestAccessRestrictions(LocationHierarchyTestCase):
     def _assert_edit_location_gives_status(self, location, status_code):
         location_id = self.locations[location].location_id
         url = reverse(EditLocationView.urlname, args=[self.domain, location_id])
-        noop = lambda *args, **kwargs: HttpResponse()
-        with mock.patch.object(EditLocationView, 'get', noop):
+        with mock.patch.object(EditLocationView, 'get', lambda *args, **kwargs: HttpResponse()):
             self._assert_url_returns_status(url, status_code)
 
     def test_can_edit_child_location(self):
@@ -219,7 +218,10 @@ class TestAccessRestrictions(LocationHierarchyTestCase):
         ):
             self._assert_url_returns_status(url, status_code)
 
-    @mock.patch('corehq.apps.users.views.mobile.users.get_locations_with_orphaned_cases', return_value={})
+    @mock.patch(
+        'corehq.apps.users.views.mobile.users.get_user_location_info',
+        return_value={'orphaned_case_count_per_location': {}, 'shared_locations': {}}
+    )
     def test_can_edit_worker(self, _):
         self._assert_edit_user_gives_status(self.boston_worker, 200)
 
