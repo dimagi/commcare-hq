@@ -43,7 +43,8 @@ class BaseReportFilter(object):
     @property
     def is_disabled(self):
         """
-            If necessary, determine whether to show this filter based on the results of surrounding (related) filters.
+        If necessary, determine whether to show this filter based on the
+        results of surrounding (related) filters.
         """
         return False
 

@@ -250,11 +250,13 @@ class ExpandedMobileWorkerFilter(BaseMultipleOptionFilter):
 
     @staticmethod
     def selected_reporting_group_ids(mobile_user_and_group_slugs):
-        return [g[3:] for g in mobile_user_and_group_slugs if g.startswith("g__")]
+        return [grp[3:] for grp in mobile_user_and_group_slugs
+                if grp.startswith("g__")]
 
     @staticmethod
     def selected_location_ids(mobile_user_and_group_slugs):
-        return [l[3:] for l in mobile_user_and_group_slugs if l.startswith("l__")]
+        return [loc[3:] for loc in mobile_user_and_group_slugs
+                if loc.startswith("l__")]
 
     @staticmethod
     def show_all_mobile_workers(mobile_user_and_group_slugs):

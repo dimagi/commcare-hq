@@ -34,7 +34,12 @@ from corehq.const import MISSING_APP_ID
 from corehq.toggles import SUPPORT
 
 
-class ProjectInspectionReport(ProjectInspectionReportParamsMixin, GenericTabularReport, ProjectReport, ProjectReportParametersMixin):
+class ProjectInspectionReport(
+    ProjectInspectionReportParamsMixin,
+    GenericTabularReport,
+    ProjectReport,
+    ProjectReportParametersMixin
+):
     """
         Base class for this reporting section
     """
