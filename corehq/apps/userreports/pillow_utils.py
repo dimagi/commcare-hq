@@ -10,7 +10,7 @@ from corehq.util.soft_assert import soft_assert
 from pillowtop.logger import pillow_logging
 
 
-def _is_datasource_active(adapter):
+def _is_datasource_deactivated(adapter):
     """
     Tries to fetch a fresh copy of datasource from couchdb to know whether it is deactivated.
     If it does not exist then it assumed to be deactivated
@@ -19,7 +19,7 @@ def _is_datasource_active(adapter):
         config_id = adapter.config._id
         config = adapter.config.get(config_id)
     except ResourceNotFound:
-        return False
+        return True
     return config.is_deactivated
 
 
@@ -32,7 +32,7 @@ def rebuild_sql_tables(adapters):
         else:
             all_adapters.append(adapter)
     for adapter in all_adapters:
-        if not _is_datasource_active(adapter):
+        if not _is_datasource_deactivated(adapter):
             tables_by_engine[adapter.engine_id][adapter.get_table().name] = adapter
         else:
             pillow_logging.info(
