@@ -4,13 +4,17 @@ from unittest.mock import patch
 from django.test import TestCase
 from django.utils.translation import gettext
 
+from corehq.util.workbook_reading.datamodels import Cell
+
 from corehq.apps.data_dictionary.models import CaseProperty, CaseType
 from corehq.apps.data_dictionary.tests.utils import setup_data_dictionary
 from corehq.apps.data_dictionary.util import (
     generate_data_dictionary,
     get_values_hints_dict,
     is_case_type_deprecated,
-    get_data_dict_deprecated_case_types
+    get_data_dict_deprecated_case_types,
+    get_column_headings,
+    row_to_dict,
 )
 
 
@@ -110,6 +114,16 @@ class MiscUtilTest(TestCase):
         )
         cls.dep_case_type_obj.save()
 
+        cls.invalid_col = 'barr'
+        cls.invalid_header_row = [Cell('Foo'), Cell(cls.invalid_col), Cell('Test Column'), Cell(None)]
+        cls.valid_header_row = [Cell('Foo'), Cell('Bar'), Cell('Test Column')]
+        cls.row = [Cell('a'), Cell('b')]
+        cls.valid_values = {
+            'foo': 'col_1',
+            'bar': 'col_2',
+            'test column': 'col_3',
+        }
+
     def tearDown(self):
         CaseType.objects.filter(domain=self.domain).delete()
 
@@ -153,3 +167,25 @@ class MiscUtilTest(TestCase):
         deprecated_case_types = get_data_dict_deprecated_case_types(self.domain)
         self.assertEqual(len(deprecated_case_types), 1)
         self.assertEqual(deprecated_case_types, {self.deprecated_case_type_name})
+
+    def test_get_column_headings(self):
+        case_type = 'case'
+        expected_errors = [
+            f"Invalid column \"{self.invalid_col}\" in case type {case_type}",
+            f"Column 4 in case type {case_type} has an empty header"
+        ]
+        column_headings, errors = get_column_headings(self.invalid_header_row, self.valid_values, case_type)
+        self.assertEqual(column_headings, ['col_1', 'col_3'])
+        self.assertEqual(errors, expected_errors)
+
+    def test_row_to_dict(self):
+        case_type = 'case'
+        column_headings, _ = get_column_headings(self.valid_header_row, self.valid_values, case_type)
+        row_vals = row_to_dict(self.row, column_headings, default_val='empty')
+        expected_output = {
+            'col_1': 'a',
+            'col_2': 'b',
+            'col_3': 'empty',
+        }
+        for key, val in expected_output.items():
+            self.assertEqual(row_vals[key], val)

@@ -29,6 +29,8 @@ from corehq.apps.data_dictionary.models import (
 from corehq.apps.data_dictionary.util import (
     save_case_property,
     save_case_property_group,
+    get_column_headings,
+    row_to_dict,
 )
 from corehq.apps.domain.decorators import login_and_domain_required
 from corehq.apps.hqwebapp.decorators import use_jquery_ui
@@ -49,6 +51,24 @@ from corehq.apps.app_manager.dbaccessors import get_case_type_app_module_count
 
 FHIR_RESOURCE_TYPE_MAPPING_SHEET = "fhir_mapping"
 ALLOWED_VALUES_SHEET_SUFFIX = "-vl"
+COLUMN_MAPPING = {
+    'case property': 'name',
+    'label': 'label',
+    'group': 'group',
+    'data type': 'data_type_display',
+    'description': 'description',
+    'deprecated': 'deprecated',
+}
+COLUMN_MAPPING_VL = {
+    'case property': 'prop_name',
+    'valid value': 'allowed_value',
+    'valid value description': 'description',
+}
+COLUMN_MAPPING_FHIR = {
+    'case type': 'case_type',
+    'fhir resource property': 'fhir_resource_type',
+    'remove resource property(y)': 'remove_resource_type',
+}
 
 
 @login_and_domain_required
@@ -445,11 +465,7 @@ def _process_bulk_upload(bulk_file, domain):
     errors = []
     import_fhir_data = toggles.FHIR_INTEGRATION.enabled(domain)
     fhir_resource_type_by_case_type = {}
-    expected_columns_in_prop_sheet = 5
     data_type_map = {t.label: t.value for t in CaseProperty.DataType}
-
-    if import_fhir_data:
-        expected_columns_in_prop_sheet = 7
 
     worksheets = []
     allowed_value_info = {}
@@ -458,29 +474,42 @@ def _process_bulk_upload(bulk_file, domain):
     missing_valid_values = set()
     with open_any_workbook(filename) as workbook:
         for worksheet in workbook.worksheets:
-            if worksheet.title.endswith(ALLOWED_VALUES_SHEET_SUFFIX):
-                case_type = worksheet.title[:-len(ALLOWED_VALUES_SHEET_SUFFIX)]
-                allowed_value_info[case_type] = defaultdict(dict)
-                prop_row_info[case_type] = defaultdict(list)
-                for (i, row) in enumerate(itertools.islice(worksheet.iter_rows(), 1, None), start=2):
-                    row_len = len(row)
-                    if row_len < 1:
-                        # simply ignore any fully blank rows
-                        continue
-                    if row_len < 3:
-                        # if missing value or description, fill in "blank"
-                        row += [Cell(value='') for __ in range(3 - row_len)]
-                    row = [cell.value if cell.value is not None else '' for cell in row]
-                    prop_name, allowed_value, description = [str(val) for val in row[0:3]]
-                    if allowed_value and not prop_name:
-                        msg_format = _('Error in valid values for case type {}, row {}: missing case property')
-                        msg_val = msg_format.format(case_type, i)
-                        errors.append(msg_val)
-                    else:
-                        allowed_value_info[case_type][prop_name][allowed_value] = description
-                        prop_row_info[case_type][prop_name].append(i)
-            else:
+            if not worksheet.title.endswith(ALLOWED_VALUES_SHEET_SUFFIX):
                 worksheets.append(worksheet)
+                continue
+
+            case_type = worksheet.title[:-len(ALLOWED_VALUES_SHEET_SUFFIX)]
+            allowed_value_info[case_type] = defaultdict(dict)
+            prop_row_info[case_type] = defaultdict(list)
+            column_headings = []
+            for (i, row) in enumerate(itertools.islice(worksheet.iter_rows(), 0, None), start=1):
+                if i == 1:
+                    column_headings, heading_errors = get_column_headings(
+                        row, valid_values=COLUMN_MAPPING_VL, case_type=case_type)
+                    if 'prop_name' not in column_headings:
+                        heading_errors.append(
+                            _("Missing case property column header for case type {}").format(case_type)
+                        )
+                    if len(heading_errors):
+                        errors.extend(heading_errors)
+                        break
+                    continue
+
+                # Simply ignore any fully blank rows
+                if len(row) < 1:
+                    continue
+
+                row_vals = row_to_dict(row, column_headings, default_val='')
+                (allowed_value, prop_name, description) = (
+                    row_vals['allowed_value'], row_vals['prop_name'], row_vals['description'])
+
+                if allowed_value and not prop_name:
+                    msg_format = _('Error in valid values for case type {}, row {}: missing case property')
+                    msg_val = msg_format.format(case_type, i)
+                    errors.append(msg_val)
+                else:
+                    allowed_value_info[case_type][prop_name][allowed_value] = description
+                    prop_row_info[case_type][prop_name].append(i)
 
         for worksheet in worksheets:
             if worksheet.title == FHIR_RESOURCE_TYPE_MAPPING_SHEET:
@@ -490,40 +519,55 @@ def _process_bulk_upload(bulk_file, domain):
                     errors.extend(_errors)
                 continue
             case_type = worksheet.title
-            for (i, row) in enumerate(itertools.islice(worksheet.iter_rows(), 1, None), start=2):
-                if len(row) < expected_columns_in_prop_sheet:
-                    error = _('Not enough columns')
-                else:
-                    error, fhir_resource_prop_path, fhir_resource_type, remove_path = None, None, None, None
-                    (
-                        name,
-                        label,
-                        group,
-                        data_type_display,
-                        description,
-                        deprecated
-                    ) = [cell.value for cell in row[:6]]
-                    # Fall back to value from file if data_type_display is not found in the map.
-                    # This allows existing error path to report accurately the value that isn't found,
-                    # and also has a side-effect of allowing older files (pre change to export
-                    # display values) to import successfully.
-                    data_type = data_type_map.get(data_type_display, data_type_display)
-                    seen_props[case_type].add(name)
-                    if import_fhir_data:
-                        fhir_resource_prop_path, remove_path = row[5:]
-                        remove_path = remove_path == 'Y' if remove_path else False
-                        fhir_resource_type = fhir_resource_type_by_case_type.get(case_type)
-                        if fhir_resource_prop_path and not fhir_resource_type:
-                            error = _('Could not find resource type for {}').format(case_type)
-                    if not error:
-                        if case_type in allowed_value_info:
-                            allowed_values = allowed_value_info[case_type][name]
-                        else:
-                            allowed_values = None
-                            missing_valid_values.add(case_type)
-                        error = save_case_property(name, case_type, domain, data_type, description, label, group,
-                                                   deprecated, fhir_resource_prop_path, fhir_resource_type,
-                                                   remove_path, allowed_values)
+
+            column_headings = []
+            for (i, row) in enumerate(itertools.islice(worksheet.iter_rows(), 0, None), start=1):
+                # Heading row
+                if i == 1:
+                    column_headings, heading_errors = get_column_headings(
+                        row, valid_values=COLUMN_MAPPING, case_type=case_type)
+                    if 'name' not in column_headings:
+                        heading_errors.append(
+                            _("Missing case property column header for case type {}").format(case_type)
+                        )
+
+                    if len(heading_errors):
+                        errors.extend(heading_errors)
+                        break
+                    continue
+
+                # Simply ignore any fully blank rows
+                if len(row) < 1:
+                    continue
+
+                row_vals = row_to_dict(row, column_headings)
+
+                error, fhir_resource_prop_path, fhir_resource_type, remove_path = None, None, None, None
+                (name, description, label, group, deprecated, data_type_display) = (
+                    row_vals['name'], row_vals['description'], row_vals['label'], row_vals['group'],
+                    row_vals['deprecated'], row_vals['data_type_display'])
+
+                # Fall back to value from file if data_type_display is not found in the map.
+                # This allows existing error path to report accurately the value that isn't found,
+                # and also has a side-effect of allowing older files (pre change to export
+                # display values) to import successfully.
+                data_type = data_type_map.get(data_type_display, data_type_display)
+                seen_props[case_type].add(name)
+                if import_fhir_data:
+                    fhir_resource_prop_path, remove_path = row[5:]
+                    remove_path = remove_path.lower() == 'y' if remove_path else False
+                    fhir_resource_type = fhir_resource_type_by_case_type.get(case_type)
+                    if fhir_resource_prop_path and not fhir_resource_type:
+                        error = _('Could not find resource type for {}').format(case_type)
+                if not error:
+                    if case_type in allowed_value_info:
+                        allowed_values = allowed_value_info[case_type][name]
+                    else:
+                        allowed_values = None
+                        missing_valid_values.add(case_type)
+                    error = save_case_property(name, case_type, domain, data_type, description,
+                                               label, group, deprecated, fhir_resource_prop_path,
+                                               fhir_resource_type, remove_path, allowed_values)
                 if error:
                     errors.append(_('Error in case type {}, row {}: {}').format(case_type, i, error))
 
@@ -545,12 +589,23 @@ def _process_bulk_upload(bulk_file, domain):
 def _process_fhir_resource_type_mapping_sheet(domain, worksheet):
     errors = []
     fhir_resource_type_by_case_type = {}
-    for (i, row) in enumerate(itertools.islice(worksheet.iter_rows(), 1, None)):
+    for (i, row) in enumerate(itertools.islice(worksheet.iter_rows(), 0, None)):
+        if i == 0:
+            column_headings, heading_errors = get_column_headings(
+                case_type=None, row=row, valid_values=COLUMN_MAPPING_FHIR)
+            if len(heading_errors):
+                errors.extend(heading_errors)
+                break
+            continue
+
         if len(row) < 3:
             errors.append(_('Not enough columns in {} sheet').format(FHIR_RESOURCE_TYPE_MAPPING_SHEET))
         else:
-            case_type, fhir_resource_type, remove_resource_type = [cell.value for cell in row[:3]]
-            remove_resource_type = remove_resource_type == 'Y' if remove_resource_type else False
+            row_vals = row_to_dict(row, column_headings)
+            (case_type, remove_resource_type, fhir_resource_type) = (
+                row_vals['case_type'], row_vals['remove_resource_type'], row_vals['fhir_resource_type'])
+
+            remove_resource_type = remove_resource_type.lower() == 'y' if remove_resource_type else False
             if remove_resource_type:
                 remove_fhir_resource_type(domain, case_type)
                 continue
