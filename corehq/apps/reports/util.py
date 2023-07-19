@@ -4,6 +4,7 @@ import math
 import warnings
 from collections import defaultdict, namedtuple
 from datetime import datetime
+import pytz
 
 from django.conf import settings
 from django.core.cache import cache
@@ -54,7 +55,7 @@ def get_all_users_by_domain(domain=None, group=None, user_ids=None,
                             user_filter=None, simplified=False, CommCareUser=None, include_inactive=False):
     """
         WHEN THERE ARE A LOT OF USERS, THIS IS AN EXPENSIVE OPERATION.
-        Returns a list of CommCare Users based on domain, group, and user 
+        Returns a list of CommCare Users based on domain, group, and user
         filter (demo_user, admin, registered, unknown)
     """
     def _create_temp_user(user_id):
@@ -79,9 +80,9 @@ def get_all_users_by_domain(domain=None, group=None, user_ids=None,
             users = []
             for id in user_ids:
                 user = CommCareUser.get_by_user_id(id)
-                if not user and (user_filter[HQUserType.ADMIN].show or
-                      user_filter[HQUserType.DEMO_USER].show or
-                      user_filter[HQUserType.UNKNOWN].show):
+                if not user and (user_filter[HQUserType.ADMIN].show
+                      or user_filter[HQUserType.DEMO_USER].show
+                      or user_filter[HQUserType.UNKNOWN].show):
                     user = _create_temp_user(id)
                 if user:
                     users.append(user)
@@ -103,10 +104,10 @@ def get_all_users_by_domain(domain=None, group=None, user_ids=None,
             if user_id in registered_users_by_id and user_filter[HQUserType.ACTIVE].show:
                 user = registered_users_by_id[user_id]
                 users.append(user)
-            elif (user_id not in registered_users_by_id and
-                 (user_filter[HQUserType.ADMIN].show or
-                  user_filter[HQUserType.DEMO_USER].show or
-                  user_filter[HQUserType.UNKNOWN].show)):
+            elif (user_id not in registered_users_by_id
+                 and (user_filter[HQUserType.ADMIN].show
+                 or user_filter[HQUserType.DEMO_USER].show
+                 or user_filter[HQUserType.UNKNOWN].show)):
                 user = _create_temp_user(user_id)
                 if user:
                     users.append(user)
@@ -261,8 +262,8 @@ def get_possible_reports(domain_name):
     from corehq.apps.reports.dispatcher import (ProjectReportDispatcher, CustomProjectReportDispatcher)
 
     # todo: exports should be its own permission at some point?
-    report_map = (ProjectReportDispatcher().get_reports(domain_name) +
-                  CustomProjectReportDispatcher().get_reports(domain_name))
+    report_map = (ProjectReportDispatcher().get_reports(domain_name)
+                  + CustomProjectReportDispatcher().get_reports(domain_name))
     reports = []
     domain_obj = Domain.get_by_name(domain_name)
     for heading, models in report_map:
@@ -344,9 +345,16 @@ def numcell(text, value=None, convert='int', raw=None):
 
 
 def datespan_from_beginning(domain_object, timezone):
-    startdate = domain_object.date_created
-    now = datetime.utcnow()
-    datespan = DateSpan(startdate, now, timezone=timezone)
+    # Start and end dates must be naive (no timezone) to work with DateSpan
+    # domain creation time is expected to be a naive date in UTC
+    startdate = pytz.utc.localize(domain_object.date_created)
+    localized_start = startdate.astimezone(timezone)
+    localized_start = datetime(year=localized_start.year, month=localized_start.month, day=localized_start.day)
+
+    now = datetime.now(tz=timezone)
+    localized_end = datetime(year=now.year, month=now.month, day=now.day)
+
+    datespan = DateSpan(localized_start, localized_end, timezone=timezone)
     datespan.is_default = True
     return datespan
 

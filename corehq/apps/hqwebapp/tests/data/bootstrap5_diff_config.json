@@ -21,6 +21,12 @@
   ],
   "apps/hqwebapp/static/hqwebapp": [
     {
+      "directories": ["js/bootstrap3/", "js/bootstrap5/"],
+      "file_type": "javascript",
+      "label": "javascript/hqwebapp",
+      "compare_all_files": true
+    },
+    {
       "directories": ["less/", "scss/"],
       "file_type": "stylesheet",
       "label": "stylesheets",
@@ -36,6 +42,7 @@
         ["includes/variables.less", "_variables.scss"],
         ["includes/variables.less", "_variables_bootstrap3.scss"],
         ["includes/mixins.less", "_mixins.scss"],
+        ["ace_cle.less", "_ace_cle.scss"],
         ["alerts.less", "_alert.scss"],
         ["appcues.less", "_appcues.scss"],
         ["backgrounds.less", "_backgrounds.scss"],

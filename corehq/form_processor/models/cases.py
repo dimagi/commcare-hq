@@ -277,9 +277,11 @@ class CommCareCaseManager(RequireDBManager):
             publish_case_saved(case)
         return undeleted_count
 
-    def hard_delete_cases(self, domain, case_ids):
+    def hard_delete_cases(self, domain, case_ids, *, publish_changes=True):
         """Permanently delete cases in domain
 
+        :param publish_changes: Flag for change feed publication.
+            Documents in Elasticsearch will not be deleted if this is false.
         :returns: Number of deleted cases.
         """
         assert isinstance(case_ids, list), type(case_ids)
@@ -287,7 +289,8 @@ class CommCareCaseManager(RequireDBManager):
             cursor.execute('SELECT hard_delete_cases(%s, %s)', [domain, case_ids])
             deleted_count = sum(row[0] for row in cursor)
 
-        self.publish_deleted_cases(domain, case_ids)
+        if publish_changes:
+            self.publish_deleted_cases(domain, case_ids)
 
         return deleted_count
 
@@ -504,7 +507,7 @@ class CommCareCase(PartitionedModel, models.Model, RedisLockableMixIn,
         """Includes non-live indices"""
         found = [i for i in self.indices if i.identifier == index_id]
         if found:
-            assert(len(found) == 1)
+            assert len(found) == 1
             return found[0]
         return None
 
@@ -1152,14 +1155,14 @@ class CommCareCaseIndex(PartitionedModel, models.Model, SaveStateMixin):
 
     def __str__(self):
         return (
-            "CaseIndex("
-            "case_id='{i.case_id}', "
-            "domain='{i.domain}', "
-            "identifier='{i.identifier}', "
-            "referenced_type='{i.referenced_type}', "
-            "referenced_id='{i.referenced_id}', "
-            "relationship='{i.relationship})"
-        ).format(i=self)
+            'CaseIndex('
+            f'case_id={self.case_id!r}, '
+            f'domain={self.domain!r}, '
+            f'identifier={self.identifier!r}, '
+            f'referenced_type={self.referenced_type!r}, '
+            f'referenced_id={self.referenced_id!r}, '
+            f'relationship={self.relationship!r})'
+        )
 
     class Meta(object):
         index_together = [

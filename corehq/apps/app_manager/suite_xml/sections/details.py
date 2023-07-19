@@ -12,8 +12,8 @@ supported for one of these, e.g., actions only get added to the short detail.
 The detail element can be nested. HQ never nests short details, but it nests long details to produce tabbed case
 details. Each tab has its own ``<detail>`` element.
 
-The bulk of detail configuration is in the display properties, called "fields" and sometimes "columns" in the code. Each
-field has a good deal of configuration, and the code transforms them into named tuples while processing them.
+The bulk of detail configuration is in the display properties, called "fields" and sometimes "columns" in the code.
+Each field has a good deal of configuration, and the code transforms them into named tuples while processing them.
 Each field has a format, one of about a dozen options. Formats are typically either UI-based, such as formatting a
 phone number to display as a link, or calculation-based, such as configuring a property to display differently when
 it's "late", i.e., is too far past some reference date.
@@ -32,7 +32,7 @@ from memoized import memoized
 from corehq import toggles
 from corehq.apps.app_manager import id_strings
 from corehq.apps.app_manager.const import RETURN_TO
-from corehq.apps.app_manager.exceptions import SuiteError, SuiteValidationError
+from corehq.apps.app_manager.exceptions import SuiteValidationError
 from corehq.apps.app_manager.id_strings import callout_header_locale
 from corehq.apps.app_manager.suite_xml.const import FIELD_TYPE_LEDGER
 from corehq.apps.app_manager.suite_xml.contributors import SectionContributor
@@ -108,9 +108,10 @@ class DetailContributor(SectionContributor):
                             include_sort=detail_type.endswith('short'),
                         )  # list of DetailColumnInfo named tuples
                     if detail_column_infos:
+                        detail_id = id_strings.detail(module, detail_type)
                         if detail.case_tile_template:
-                            helper = CaseTileHelper(self.app, module, detail,
-                                                    detail_type, self.build_profile_id)
+                            helper = CaseTileHelper(self.app, module, detail, detail_id, detail_type,
+                                self.build_profile_id, detail_column_infos, self.entries_helper)
                             elements.append(helper.build_case_tile_detail())
                         else:
                             print_template_path = None
@@ -124,7 +125,7 @@ class DetailContributor(SectionContributor):
                                 detail,
                                 detail_column_infos,
                                 tabs=list(detail.get_tabs()),
-                                id=id_strings.detail(module, detail_type),
+                                id=detail_id,
                                 title=title,
                                 print_template=print_template_path,
                             )
@@ -133,8 +134,8 @@ class DetailContributor(SectionContributor):
 
                     # add the persist case context if needed and if
                     # case tiles are present and have their own persistent block
-                    if (detail.persist_case_context and
-                            not (detail.case_tile_template and detail.persist_tile_on_forms)):
+                    if (detail.persist_case_context
+                            and not (detail.case_tile_template and detail.persist_tile_on_forms)):
                         d = self._get_persistent_case_context_detail(module, detail.persistent_case_context_xml)
                         elements.append(d)
 
@@ -194,9 +195,7 @@ class DetailContributor(SectionContributor):
             if detail.lookup_enabled and detail.lookup_action:
                 d.lookup = self._get_lookup_element(detail, module)
 
-            # Add no items text
-            if detail_type.endswith('short') and self.app.supports_empty_case_list_text:
-                d.no_items_text = Text(locale_id=id_strings.no_items_text_detail(module))
+            self.add_no_items_text_to_detail(d, self.app, detail_type, module)
 
             # Add variables
             variables = list(
@@ -209,10 +208,7 @@ class DetailContributor(SectionContributor):
             if end is None:
                 end = len(detail_column_infos)
             for column_info in detail_column_infos[start:end]:
-                # column_info is an instance of DetailColumnInfo named tuple. It has the following properties:
-                #   column_info.column: an instance of app_manager.models.DetailColumn
-                #   column_info.sort_element: an instance of app_manager.models.SortElement
-                #   column_info.order: an integer
+                # column_info is an instance of DetailColumnInfo named tuple.
                 fields = get_column_generator(
                     self.app, module, detail, parent_tab_nodeset=nodeset,
                     detail_type=detail_type, *column_info
@@ -223,22 +219,16 @@ class DetailContributor(SectionContributor):
             # Add actions
             if detail_type.endswith('short') and not module.put_in_root:
                 if module.case_list_form.form_id:
-                    from corehq.apps.app_manager.views.modules import get_parent_select_followup_forms
-                    form = self.app.get_form(module.case_list_form.form_id)
-                    if toggles.FOLLOWUP_FORMS_AS_CASE_LIST_FORM.enabled(self.app.domain):
-                        valid_forms = [f.unique_id for f in get_parent_select_followup_forms(self.app, module)]
-                    else:
-                        valid_forms = []
-                    if form.is_registration_form(module.case_type) or form.unique_id in valid_forms:
-                        d.actions.append(self._get_case_list_form_action(module))
+                    DetailContributor.add_register_action(
+                        self.app, module, d.actions, self.build_profile_id, self.entries_helper)
 
                 if module_offers_search(module) and not module_uses_inline_search(module):
-                    in_search = module_loads_registry_case(module) or "search" in id
-                    d.actions.append(
-                        DetailContributor.get_case_search_action(module,
-                                                                 self.build_profile_id,
-                                                                 in_search=in_search)
-                    )
+                    if (case_search_action := DetailContributor.get_case_search_action(
+                        module,
+                        self.build_profile_id,
+                        id
+                    )) is not None:
+                        d.actions.append(case_search_action)
 
             try:
                 if not self.app.enable_multi_sort:
@@ -303,18 +293,31 @@ class DetailContributor(SectionContributor):
             field=field,
         )
 
-    def _get_case_list_form_action(self, module):
+    @staticmethod
+    def add_register_action(app, module, actions, build_profile_id, entries_helper):
+        from corehq.apps.app_manager.views.modules import get_parent_select_followup_forms
+        form = app.get_form(module.case_list_form.form_id)
+        if toggles.FOLLOWUP_FORMS_AS_CASE_LIST_FORM.enabled(app.domain):
+            valid_forms = [f.unique_id for f in get_parent_select_followup_forms(app, module)]
+        else:
+            valid_forms = []
+        if form.is_registration_form(module.case_type) or form.unique_id in valid_forms:
+            actions.append(DetailContributor.get_case_list_form_action(
+                module, app, build_profile_id, entries_helper))
+
+    @staticmethod
+    def get_case_list_form_action(module, app, build_profile_id, entries_helper):
         """
         Returns registration/followup form action
         """
-        form = self.app.get_form(module.case_list_form.form_id)
+        form = app.get_form(module.case_list_form.form_id)
 
-        if self.app.enable_localized_menu_media:
+        if app.enable_localized_menu_media:
             case_list_form = module.case_list_form
             action = LocalizedAction(
                 menu_locale_id=id_strings.case_list_form_locale(module),
-                media_image=case_list_form.uses_image(build_profile_id=self.build_profile_id),
-                media_audio=case_list_form.uses_audio(build_profile_id=self.build_profile_id),
+                media_image=case_list_form.uses_image(build_profile_id=build_profile_id),
+                media_audio=case_list_form.uses_audio(build_profile_id=build_profile_id),
                 image_locale_id=id_strings.case_list_form_icon_locale(module),
                 audio_locale_id=id_strings.case_list_form_audio_locale(module),
                 stack=Stack(),
@@ -331,16 +334,16 @@ class DetailContributor(SectionContributor):
             )
 
         action_relevant = module.case_list_form.relevancy_expression
-        if toggles.FOLLOWUP_FORMS_AS_CASE_LIST_FORM.enabled(self.app.domain) and action_relevant:
+        if toggles.FOLLOWUP_FORMS_AS_CASE_LIST_FORM.enabled(app.domain) and action_relevant:
             action.relevant = action_relevant
 
         frame = PushFrame()
         frame.add_command(XPath.string(id_strings.form_command(form)))
 
-        target_form_dm = self.entries_helper.get_datums_meta_for_form_generic(form)
+        target_form_dm = entries_helper.get_datums_meta_for_form_generic(form)
         source_form_dm = []
         if len(module.forms):
-            source_form_dm = self.entries_helper.get_datums_meta_for_form_generic(module.get_form(0))
+            source_form_dm = entries_helper.get_datums_meta_for_form_generic(module.get_form(0))
         for target_meta in target_form_dm:
             if target_meta.requires_selection:
                 # This is true for registration forms where the case being created is a subcase
@@ -365,7 +368,13 @@ class DetailContributor(SectionContributor):
         return action
 
     @staticmethod
-    def get_case_search_action(module, build_profile_id, in_search=False):
+    def get_case_search_action(module, build_profile_id, detail_id):
+        in_search = module_loads_registry_case(module) or "search" in detail_id
+
+        # don't add search again action in split screen
+        if in_search and toggles.SPLIT_SCREEN_CASE_SEARCH.enabled(module.get_app().domain):
+            return None
+
         action_kwargs = DetailContributor._get_action_kwargs(module, in_search)
         if in_search:
             search_label = module.search_config.search_again_label
@@ -492,7 +501,7 @@ class DetailContributor(SectionContributor):
                 ),
                 header=Header(text=Text()),
                 template=Template(text=Text(xpath=TextXPath(
-                    function="concat($message, ' ', format-date(date(instance('commcare-reports:index')/report_index/reports/@last_update), '%e/%n/%Y'))",
+                    function="concat($message, ' ', format-date(date(instance('commcare-reports:index')/report_index/reports/@last_update), '%e/%n/%Y'))",  # noqa: E501
                     variables=[XPathVariable(name='message', locale_id=id_strings.reports_last_updated_on())],
                 ))),
             )]
@@ -515,6 +524,11 @@ class DetailContributor(SectionContributor):
                         sort_node='')]
         d.fields = fields
         return d
+
+    @staticmethod
+    def add_no_items_text_to_detail(detail, app, detail_type, module):
+        if detail_type.endswith('short') and app.supports_empty_case_list_text:
+            detail.no_items_text = Text(locale_id=id_strings.no_items_text_detail(module))
 
 
 class DetailsHelper(object):
@@ -592,6 +606,10 @@ def get_default_sort_elements(detail):
 
 # This is not intended to be a widely used format
 # just a packaging of column info into a form most convenient for rendering
+# It has the following properties:
+#   column_info.column: an instance of app_manager.models.DetailColumn
+#   column_info.sort_element: an instance of app_manager.models.SortElement
+#   column_info.order: an integer
 DetailColumnInfo = namedtuple('DetailColumnInfo', 'column sort_element order')
 
 

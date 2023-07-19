@@ -15,7 +15,7 @@
   <% } else if (style.displayFormat === 'Phone') { %>
   <td><a href="tel:<%- data %>"><%- data %></a></td>
   <% } else if (style.displayFormat === 'Markdown' && html) { %>
-  <td><%= html %></td>
+  <td class="webapp-markdown-output"><%= html %></td>
   <% } else { %>
   <td><%- data %></td>
   <% } %>

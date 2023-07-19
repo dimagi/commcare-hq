@@ -41,7 +41,8 @@ from corehq.apps.events.views import (
     AttendeesListView,
     EventsView,
 )
-from corehq.apps.geospatial.views import MapView
+from corehq.apps.geospatial.dispatchers import CaseManagementMapDispatcher
+
 from corehq.apps.hqadmin.reports import (
     DeployHistoryReport,
     DeviceLogSoftAssertReport,
@@ -108,6 +109,7 @@ from corehq.motech.views import ConnectionSettingsListView, MotechLogListView
 from corehq.privileges import DAILY_SAVED_EXPORT, EXCEL_DASHBOARD
 from corehq.tabs.uitab import UITab
 from corehq.tabs.utils import dropdown_dict, sidebar_to_dropdown
+from corehq.apps.geospatial.views import GeospatialConfigPage
 
 
 class ProjectReportsTab(UITab):
@@ -2509,25 +2511,31 @@ class AttendanceTrackingTab(UITab):
 
 class GeospatialTab(UITab):
     title = gettext_noop("Geospatial")
-    view = MapView.urlname
-    _is_viewable = False
+    view = 'geospatial_default'
 
     url_prefix_formats = (
-        '/a/{domain}/settings/geospatial',
+        '/a/{domain}/geospatial',
     )
 
     @property
     def sidebar_items(self):
         items = [
-            (_("Map Visualization"), [
+            (_("Settings"), [
                 {
-                    'title': _("View Map"),
-                    'url': reverse(MapView.urlname, args=(self.domain,)),
-                    'description': _('Visually view and manage cases on a map')
-                }
-            ])
+                    'title': _("Configure geospatial settings"),
+                    'url': reverse(GeospatialConfigPage.urlname, args=(self.domain,)),
+                },
+            ]),
         ]
+        items.extend(
+            CaseManagementMapDispatcher.navigation_sections(request=self._request, domain=self.domain)
+        )
+
         return items
+
+    @property
+    def _is_viewable(self):
+        return toggles.GEOSPATIAL.enabled(self.domain)
 
 
 def _get_repeat_record_report(domain):

@@ -119,13 +119,6 @@ class SearchCriteria:
                 self.key
             )
 
-        if self.is_ancestor_query:
-            non_missing = self.clone_without_blanks()
-            if non_missing.has_multiple_terms:
-                raise CaseFilterError(
-                    _("Multiple values are only supported for simple text and range searches"),
-                    self.key
-                )
 
     def _validate_daterange(self):
         if not self.is_daterange:
