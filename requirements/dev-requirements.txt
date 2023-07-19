@@ -265,9 +265,7 @@ flaky==3.7.0
 freezegun==1.1.0
     # via -r test-requirements.in
 future==0.18.3
-    # via
-    #   pyjwkest
-    #   radon
+    # via pyjwkest
 geographiclib==2.0
     # via geopy
 geopandas==0.12.2
@@ -616,7 +614,7 @@ qrcode==7.4.2
     #   django-two-factor-auth
 quickcache==0.5.4
     # via -r base-requirements.in
-radon==5.1.0
+radon==6.0.1
     # via -r test-requirements.in
 rcssmin==1.1.0
     # via django-compressor
