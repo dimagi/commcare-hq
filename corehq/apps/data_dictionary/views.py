@@ -63,6 +63,11 @@ COLUMN_MAPPING_VL = {
     'valid value': 'allowed_value',
     'valid value description': 'description',
 }
+COLUMN_MAPPING_FHIR = {
+    'case type': 'case_type',
+    'fhir resource property': 'fhir_resource_type',
+    'remove resource property(y)': 'remove_resource_type',
+}
 
 
 @login_and_domain_required
@@ -563,12 +568,23 @@ def _process_bulk_upload(bulk_file, domain):
 def _process_fhir_resource_type_mapping_sheet(domain, worksheet):
     errors = []
     fhir_resource_type_by_case_type = {}
-    for (i, row) in enumerate(itertools.islice(worksheet.iter_rows(), 1, None)):
+    for (i, row) in enumerate(itertools.islice(worksheet.iter_rows(), 0, None)):
+        if i == 0:
+            column_headings, heading_errors = get_column_headings(
+                case_type=None, row=row, valid_values=COLUMN_MAPPING_FHIR)
+            if len(heading_errors):
+                errors.extend(heading_errors)
+                break
+            continue
+
         if len(row) < 3:
             errors.append(_('Not enough columns in {} sheet').format(FHIR_RESOURCE_TYPE_MAPPING_SHEET))
         else:
-            case_type, fhir_resource_type, remove_resource_type = [cell.value for cell in row[:3]]
-            remove_resource_type = remove_resource_type == 'Y' if remove_resource_type else False
+            row_vals = row_to_dict(row, column_headings)
+            (case_type, remove_resource_type, fhir_resource_type) = (
+                row_vals['case_type'], row_vals['remove_resource_type'], row_vals['fhir_resource_type'])
+
+            remove_resource_type = remove_resource_type.lower() == 'y' if remove_resource_type else False
             if remove_resource_type:
                 remove_fhir_resource_type(domain, case_type)
                 continue
