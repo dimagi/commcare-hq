@@ -24,10 +24,8 @@ from corehq.apps.reports.standard.cases.utils import (
     query_location_restricted_cases,
 )
 from corehq.apps.reports.standard.inspect import ProjectInspectionReport
-from corehq.const import USER_DATETIME_FORMAT_WITH_SEC
 from corehq.elastic import ESError
 from corehq.toggles import CASE_LIST_EXPLORER
-from corehq.util.timezones.conversions import PhoneTime
 
 from .data_sources import CaseDisplayES
 
