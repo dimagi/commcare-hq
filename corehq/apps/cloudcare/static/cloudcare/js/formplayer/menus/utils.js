@@ -178,6 +178,7 @@ hqDefine("cloudcare/js/formplayer/menus/utils", function () {
             }
             if (menuResponse.queryResponse != null) {
                 menuData.sidebarEnabled = true;
+                menuData.title = menuResponse.queryResponse.resultsTitle;
             }
             var eventData = {
                 domain: FormplayerFrontend.getChannel().request("currentUser").domain,
