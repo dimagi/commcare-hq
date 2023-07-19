@@ -3,11 +3,12 @@
 {% load i18n %}
 
 {% block reportcontent %}
+
 <!-- This is used to get the data from report_context -->
 <div class="row panel" id="mapControls">
-    <label for="saved-polygons" class="control-label col-sm-2 col-md-4 col-lg-2">
+    <label for="saved-polygons" class="control-label col-sm-2 col-md-2 col-lg-2">
     {% trans "Filter by Saved Area" %}</label>
-    <div class="controls col-sm-2 col-md-8 col-lg-6">
+    <div class="controls col-sm-2 col-md-2 col-lg-2">
         <select id="saved-polygons"
                 class="form-control"
                 data-bind="select2: savedPolygons,
@@ -23,4 +24,12 @@
     </a>
 </div>
 <div class="map-data row" style="margin-top:1em" data-context="{% html_attr context %}"></div>
+
+
+<script type="text/html" id="select-case">
+    <div class="form-check">
+      <input type="checkbox" class="form-check-input" data-bind="checked: isSelected, attr: {id: selectCssId}">
+      <label class="form-check-label" data-bind="text: $data.case.name, attr: {for: selectCssId}"></label>
+    </div>
+</script>
 {% endblock %}

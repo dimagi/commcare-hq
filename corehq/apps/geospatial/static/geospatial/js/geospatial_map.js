@@ -17,6 +17,20 @@ hqDefine("geospatial/js/geospatial_map", [
         var userFilteredCases = [];
         var saveGeoJSONUrl = initialPageData.reverse('geo_polygon');
 
+        function caseModel(case_obj) {
+            'use strict';
+            var self = {};
+            self.case = case_obj;
+            self.selectCssId = "select" + case_obj.case_id;
+            self.isSelected = ko.observable(false);
+
+            self.isSelected.subscribe( function (value) {
+                var color = self.isSelected() ? selectedMarkerColor : defaultMarkerColor;
+                changeCaseMarkerColor(self.case, color);
+            });
+            return self;
+        };
+
         function filterCasesInPolygon(polygonFeature) {
             userFilteredCases = [];
             _.values(cases).filter(function (currCase) {
@@ -158,11 +172,42 @@ hqDefine("geospatial/js/geospatial_map", [
                 const marker = new mapboxgl.Marker({ color: color, draggable: false });
                 marker.setLngLat(coordinates);
 
+
                 // Add the marker to the map
                 marker.addTo(map);
                 // We need to keep track of current markers
 
                 currCase.marker = marker;
+
+                var popupDiv = document.createElement("div");
+                popupDiv.setAttribute("data-bind", "template: 'select-case'");
+
+                var popup = new mapboxgl.Popup({ offset: 25, anchor: "bottom" })
+                    .setLngLat(coordinates)
+                    .setDOMContent(popupDiv)
+                currCase.popup = popup;
+
+                marker.setPopup(popup);
+
+                const markerDiv = marker.getElement();
+                // Show popup on hover
+                markerDiv.addEventListener('mouseenter', () => marker.togglePopup());
+
+                // Hide popup if mouse leaves marker and popup
+                var addLeaveEvent = function(divOne, divTwo) {
+                    divOne.addEventListener('mouseleave', function () {
+                        setTimeout(function(){
+                            if (!$(divTwo).is(':hover')) {
+                                // mouse left devTwo as well
+                                marker.togglePopup();
+                            }
+                        }, 100);
+                    });
+                }
+                addLeaveEvent(markerDiv, popupDiv);
+                addLeaveEvent(popupDiv, markerDiv);
+
+                $(popupDiv).koApplyBindings(new caseModel(currCase));
             };
 
             // Handle click events here
@@ -316,6 +361,7 @@ hqDefine("geospatial/js/geospatial_map", [
             if ($data.length && map) {
                 var contextData = $data.data("context");
                 map.clearMap();
+                // Index by case_id
                 cases = _.object(_.map(contextData.cases, function(item) {
                    return [item.case_id, item]
                 }));
