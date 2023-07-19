@@ -180,6 +180,9 @@ hqDefine("cloudcare/js/formplayer/menus/utils", function () {
                 menuData.sidebarEnabled = true;
                 menuData.title = menuResponse.queryResponse.resultsTitle;
             }
+            if (toggles.toggleEnabled('SPLIT_SCREEN_CASE_SEARCH')) {
+                menuData.title = menuResponse.resultsTitle;
+            }
             var eventData = {
                 domain: FormplayerFrontend.getChannel().request("currentUser").domain,
                 name: menuResponse.title,

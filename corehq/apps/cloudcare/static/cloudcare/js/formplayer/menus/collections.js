@@ -56,6 +56,7 @@ hqDefine("cloudcare/js/formplayer/menus/collections", function () {
             'hasDetails',
             'groupHeaderRows',
             'queryResponse',
+            'resultsTitle'
         ],
 
         commandProperties: [
