@@ -1,6 +1,7 @@
 import re
 
 import attr
+from django.conf import settings
 from django.contrib.postgres.fields import ArrayField
 from django.db import models
 from django.forms import model_to_dict
@@ -118,13 +119,6 @@ class SearchCriteria:
                 self.key
             )
 
-        if self.is_ancestor_query:
-            non_missing = self.clone_without_blanks()
-            if non_missing.has_multiple_terms:
-                raise CaseFilterError(
-                    _("Multiple values are only supported for simple text and range searches"),
-                    self.key
-                )
 
     def _validate_daterange(self):
         if not self.is_daterange:
@@ -257,6 +251,7 @@ class CaseSearchConfig(models.Model):
     )
     enabled = models.BooleanField(blank=False, null=False, default=False)
     synchronous_web_apps = models.BooleanField(blank=False, null=False, default=False)
+    sync_cases_on_form_entry = models.BooleanField(blank=False, null=False, default=False)
     fuzzy_properties = models.ManyToManyField(FuzzyProperties)
     ignore_patterns = models.ManyToManyField(IgnorePatterns)
 
@@ -287,6 +282,7 @@ class CaseSearchConfig(models.Model):
             return None
 
         config.synchronous_web_apps = json_def['synchronous_web_apps']
+        config.sync_cases_on_form_entry = json_def['sync_cases_on_form_entry']
         config.ignore_patterns.all().delete()
         config.fuzzy_properties.all().delete()
         config.save()
@@ -331,6 +327,14 @@ def case_search_synchronous_web_apps_for_domain(domain):
     return False
 
 
+@quickcache(['domain'], timeout=24 * 60 * 60, memoize_timeout=60)
+def case_search_sync_cases_on_form_entry_enabled_for_domain(domain):
+    if settings.UNIT_TESTING:
+        return False  # override with .tests.util.commtrack_enabled
+    config = CaseSearchConfig.objects.get_or_none(pk=domain, enabled=True)
+    return config.sync_cases_on_form_entry if config else False
+
+
 def enable_case_search(domain):
     from corehq.apps.case_search.tasks import reindex_case_search_for_domain
 
@@ -340,6 +344,7 @@ def enable_case_search(domain):
         config.save()
         case_search_enabled_for_domain.clear(domain)
         reindex_case_search_for_domain.delay(domain)
+        case_search_sync_cases_on_form_entry_enabled_for_domain.clear(domain)
     return config
 
 
@@ -358,6 +363,7 @@ def disable_case_search(domain):
         config.save()
         case_search_enabled_for_domain.clear(domain)
         delete_case_search_cases_for_domain.delay(domain)
+        case_search_sync_cases_on_form_entry_enabled_for_domain.clear(domain)
     return config
 
 

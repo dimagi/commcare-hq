@@ -20,6 +20,7 @@ from corehq.apps.custom_data_fields.models import (
     Field,
 )
 from corehq.apps.data_dictionary.models import (
+    CasePropertyGroup,
     CaseType,
     CaseProperty
 )
@@ -49,7 +50,7 @@ from corehq.apps.linked_domain.const import (
     MODEL_HMAC_CALLOUT_SETTINGS,
     MODEL_TABLEAU_SERVER_AND_VISUALIZATIONS,
 )
-from corehq.apps.linked_domain.exceptions import UnsupportedActionError
+from corehq.apps.linked_domain.exceptions import DomainLinkError, UnsupportedActionError
 from corehq.apps.linked_domain.local_accessors import \
     get_enabled_previews as local_enabled_previews
 from corehq.apps.linked_domain.local_accessors import \
@@ -106,6 +107,8 @@ from corehq.apps.userreports.util import (
 from corehq.apps.users.models import UserRole, HqPermissions
 from corehq.apps.users.views.mobile import UserFieldsView
 from corehq.toggles import NAMESPACE_DOMAIN, EMBEDDED_TABLEAU
+from corehq.apps.users.views.mobile.custom_data_fields import CUSTOM_USER_DATA_FIELD_TYPE
+from corehq.toggles import NAMESPACE_DOMAIN
 from corehq.toggles.shortcuts import set_toggle
 
 from corehq.apps.users.role_utils import UserRolePresets
@@ -172,37 +175,98 @@ def update_previews(domain_link):
 
 def update_custom_data_models(domain_link, limit_types=None):
     if domain_link.is_remote:
-        master_results = remote_custom_data_models(domain_link, limit_types)
+        upstream_results = remote_custom_data_models(domain_link, limit_types)
     else:
-        master_results = local_custom_data_models(domain_link.master_domain, limit_types)
+        upstream_results = local_custom_data_models(domain_link.master_domain, limit_types)
 
-    for field_type, data in master_results.items():
-        field_definitions = data.get('fields', [])
-        model = CustomDataFieldsDefinition.get_or_create(domain_link.linked_domain, field_type)
-        model.set_fields([
-            Field(
-                slug=field_def['slug'],
-                is_required=field_def['is_required'],
-                label=field_def['label'],
-                choices=field_def['choices'],
-                regex=field_def['regex'],
-                regex_msg=field_def['regex_msg'],
-            ) for field_def in field_definitions
-        ])
+    update_custom_data_models_impl(upstream_results, domain_link.linked_domain)
+
+
+def update_custom_data_models_impl(upstream_results, downstream_domain):
+    for field_type, data in upstream_results.items():
+        upstream_field_definitions = data.get('fields', [])
+        model = CustomDataFieldsDefinition.get_or_create(downstream_domain, field_type)
+        merged_fields = merge_fields(model.get_fields(), upstream_field_definitions)
+        model.set_fields(merged_fields)
         model.save()
 
-        old_profiles = {profile.name: profile for profile in model.get_profiles()}
-        for profile in data.get('profiles'):
-            old_profile = old_profiles.get(profile['name'], None)
-            if old_profile:
-                old_profile.fields = profile['fields']
-                old_profile.save()
-            else:
-                CustomDataFieldsProfile(
-                    name=profile['name'],
-                    definition=model,
-                    fields=profile['fields'],
-                ).save()
+        if field_type == CUSTOM_USER_DATA_FIELD_TYPE:
+            # Profiles are only currently used by custom user data
+            update_profiles(model, data.get('profiles', []))
+
+
+def merge_fields(downstream_fields, upstream_fields):
+    managed_fields = [create_local_field(field_def) for field_def in upstream_fields]
+    local_fields = [field for field in downstream_fields if not field.upstream_id]
+
+    local_slugs = [field.slug for field in local_fields]
+    conflicting_slugs = [field.slug for field in managed_fields if field.slug in local_slugs]
+    if conflicting_slugs:
+        raise DomainLinkError(
+            f'Cannot update custom fields due to the following field conflicts: '
+            f'{", ".join(conflicting_slugs)}'
+        )
+
+    return managed_fields + local_fields
+
+
+# TODO: Make this whole thing a transaction
+def update_profiles(definition, upstream_profiles):
+    downstream_profiles = definition.get_profiles()
+    unsynced_profile_names = [profile.name for profile in downstream_profiles if not profile.upstream_id]
+    conflicting_profile_names = [
+        profile['name'] for profile in upstream_profiles if profile['name'] in unsynced_profile_names
+    ]
+    if conflicting_profile_names:
+        raise DomainLinkError(
+            'Cannot update custom fields due to the following profile conflicts: '
+            f'{", ".join(conflicting_profile_names)}'
+        )
+
+    existing_managed_profiles = {profile.name: profile for profile in downstream_profiles if profile.upstream_id}
+
+    for profile in upstream_profiles:
+        existing_profile = existing_managed_profiles.pop(profile['name'], None)
+        if existing_profile:
+            existing_profile.fields = profile['fields']
+            existing_profile.save()
+        else:
+            new_profile = create_synced_profile(profile, definition)
+            new_profile.save()
+
+    # What is left in existing_managed_profiles must be deleted
+    for profile in existing_managed_profiles.values():
+        # do not delete profiles that are in use, as it would be disruptive
+        # it's possible that it might be better to create an error message
+        #  pointing to the specific users that are using the profile,
+        #  and allow the operator to either unassign that profile from those users,
+        #  or make the profile local to the domain
+        if not profile.has_users_assigned:
+            profile.delete()
+
+    # Likely need to check for validity after the merge;
+    # A synced field could have been removed, and local profiles may still depend on that synced field
+
+
+def create_local_field(upstream_field_definition):
+    return Field(
+        slug=upstream_field_definition['slug'],
+        is_required=upstream_field_definition['is_required'],
+        label=upstream_field_definition['label'],
+        choices=upstream_field_definition['choices'],
+        regex=upstream_field_definition['regex'],
+        regex_msg=upstream_field_definition['regex_msg'],
+        upstream_id=upstream_field_definition['id'],
+    )
+
+
+def create_synced_profile(upstream_profile, definition):
+    return CustomDataFieldsProfile(
+        name=upstream_profile['name'],
+        definition=definition,
+        fields=upstream_profile['fields'],
+        upstream_id=upstream_profile['id'],
+    )
 
 
 def update_fixture(domain_link, tag):
@@ -371,7 +435,7 @@ def update_data_dictionary(domain_link):
     else:
         master_results = local_get_data_dictionary(domain_link.master_domain)
 
-    # Start from an empty set of CaseTypes and CaseProperties in the linked domain.
+    # Start from an empty set of CaseTypes, CasePropertyGroups and CaseProperties in the linked domain.
     CaseType.objects.filter(domain=domain_link.linked_domain).delete()
 
     # Create CaseType and CaseProperty as necessary
@@ -381,15 +445,26 @@ def update_data_dictionary(domain_link):
         case_type_obj.fully_generated = case_type_desc['fully_generated']
         case_type_obj.save()
 
-        for case_property_name, case_property_desc in case_type_desc['properties'].items():
-            case_property_obj = CaseProperty.get_or_create(case_property_name,
-                                                           case_type_obj.name,
-                                                           domain_link.linked_domain)
-            case_property_obj.description = case_property_desc['description']
-            case_property_obj.deprecated = case_property_desc['deprecated']
-            case_property_obj.data_type = case_property_desc['data_type']
-            case_property_obj.group = case_property_desc['group']
-            case_property_obj.save()
+        for group_name, group_desc in case_type_desc['groups'].items():
+            if group_name:
+                group_obj, created = CasePropertyGroup.objects.get_or_create(
+                    name=group_name,
+                    case_type=case_type_obj,
+                    description=group_desc['description'],
+                    index=group_desc['index']
+                )
+
+            for case_property_name, case_property_desc in group_desc['properties'].items():
+                case_property_obj = CaseProperty.get_or_create(case_property_name,
+                                                            case_type_obj.name,
+                                                            domain_link.linked_domain)
+                case_property_obj.description = case_property_desc['description']
+                case_property_obj.deprecated = case_property_desc['deprecated']
+                case_property_obj.data_type = case_property_desc['data_type']
+                if group_name:
+                    case_property_obj.group = group_name
+                    case_property_obj.group_obj = group_obj
+                case_property_obj.save()
 
 
 def update_tableau_server_and_visualizations(domain_link):

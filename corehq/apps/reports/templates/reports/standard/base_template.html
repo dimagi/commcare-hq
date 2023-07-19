@@ -22,6 +22,8 @@
   {% endcompress %}
   {% include 'reports/partials/filters_js.html' %}
   {% include 'reports/partials/graphs/charts_js.html' %}
+
+  <script src='https://unpkg.com/@turf/turf@6/turf.min.js'></script>
   {% compress js %}
     <script src="{% static 'case/js/cheapxml.js' %}"></script>
     <script src="{% static 'case/js/casexml.js' %}"></script>
@@ -39,7 +41,6 @@
 
 {% block stylesheets %}
   {{ block.super }}
-
   {% compress css %}
     <link type="text/less"
           rel="stylesheet"

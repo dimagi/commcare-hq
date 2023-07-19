@@ -271,21 +271,21 @@ locally:
 -  To stop using the CDN, comment out `resource_versions.js in
    hqwebapp/base.html <https://github.com/dimagi/commcare-hq/pull/18116/files#diff-1ecb20ffccb745a5c0fc279837215a25R433>`__.
    Note that this will still fetch a few files, such as ``hqModules.js``
-   and ``requirejs_config.js``, from the CDN. To turn off the CDN
+   and ``{bootstrap_version}/requirejs_config.js``, from the CDN. To turn off the CDN
    entirely, comment out all of the code that manipulates
    ``resource_versions`` in
    `build_requirejs <https://github.com/dimagi/commcare-hq/blob/master/corehq/apps/hqwebapp/management/commands/build_requirejs.py>`__.
 -  To mimic the entire build process locally:
 
    -  Collect static files: ``manage.py collectstatic --noinput`` This
-      is necessary if you’ve made any changes to ``requirejs.yml`` or
-      ``requirejs_config.js``, since the build script pulls these files
+      is necessary if you’ve made any changes to ``{bootstrap_version}/requirejs.yml`` or
+      ``{bootstrap_version}/requirejs_config.js``, since the build script pulls these files
       from ``staticfiles``, not ``corehq``.
    -  Compile translation files: ``manage.py compilejsi18n``
    -  Run the build script: ``manage.py build_requirejs --local``
 
       -  This will **overwrite** your local versions of
-         ``requirejs_config.js`` and ``resource_versions.js``, so be
+         ``{bootstrap_version}/requirejs_config.js`` and ``resource_versions.js``, so be
          cautious running it if you have uncommitted changes.
       -  This will also copy the generated bundle files from
          ``staticfiles`` back into ``corehq``.

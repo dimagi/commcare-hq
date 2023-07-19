@@ -236,6 +236,9 @@ def _get_branches_merged_into_autostaging(cwd=None):
         #   unknown revision or path not in the working tree.
         git.fetch()
         return _get_branches_merged_into_autostaging(cwd=cwd)
+
+    # sh returning string from command git.log(...)
+    branches = pipe.strip().split("\n")
     CommitBranchPair = namedtuple('CommitBranchPair', ['commit', 'branch'])
     return sorted(
         (CommitBranchPair(
@@ -244,7 +247,7 @@ def _get_branches_merged_into_autostaging(cwd=None):
             .replace("Merge branch '", '')
             .replace("' into autostaging", '')
             .split(' ')[1:]
-        ) for line in pipe),
+        ) for line in branches),
         key=lambda pair: pair.branch
     )
 
@@ -256,9 +259,10 @@ def _get_submodules():
     """
     import sh
     git = sh.git.bake(_tty_out=False)
+    submodules = git.submodule().strip().split("\n")
     return [
         line.strip()[1:].split()[1]
-        for line in git.submodule()
+        for line in submodules
     ]
 
 

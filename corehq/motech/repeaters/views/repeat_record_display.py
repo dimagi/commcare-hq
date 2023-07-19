@@ -11,6 +11,8 @@ from corehq.motech.repeaters.const import (
 )
 from corehq.util.timezones.conversions import ServerTime
 
+MISSING_VALUE = '---'
+
 
 class RepeatRecordDisplay:
     def __init__(self, record, timezone, date_format="%Y-%m-%d %H:%M"):
@@ -38,12 +40,14 @@ class RepeatRecordDisplay:
             return _('Unable to generate url for record')
 
     @property
-    def state(self):
-        return format_html('<span class="label label-{}">{}</span>', *_get_state_tuple(self.record))
+    def remote_service(self):
+        if self.record.repeater:
+            return str(self.record.repeater)
+        return MISSING_VALUE
 
     @property
-    def attempts(self):
-        return render_to_string('repeaters/partials/attempt_history.html', {'record': self.record})
+    def state(self):
+        return format_html('<span class="label label-{}">{}</span>', *_get_state_tuple(self.record))
 
     def _format_date(self, date):
         if not date:

@@ -1085,7 +1085,16 @@ class BulkAppTranslationDownloadTest(SimpleTestCase, TestXmlMixin):
         app = AppFactory.case_claim_app_factory().app
         self.assertEqual(get_module_search_command_rows(app.langs, app.modules[0], app.domain),
                          [('search_label', 'list', 'Find a Mother'),
-                          ('search_again_label', 'list', 'Find Another Mother'),
+                          ('title_label', 'list', 'Find a Mom'),
+                          ('description', 'list', 'More information'),
+                          ('search_again_label', 'list', 'Find Another Mother')])
+
+    @flag_enabled('USH_CASE_CLAIM_UPDATES')
+    @flag_enabled('SPLIT_SCREEN_CASE_SEARCH')
+    def test_module_split_screen_case_search_rows(self):
+        app = AppFactory.case_claim_app_factory().app
+        self.assertEqual(get_module_search_command_rows(app.langs, app.modules[0], app.domain),
+                         [('search_label', 'list', 'Find a Mother'),
                           ('title_label', 'list', 'Find a Mom'),
                           ('description', 'list', 'More information')])
 

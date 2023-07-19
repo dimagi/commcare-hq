@@ -12,6 +12,7 @@ from .views import (
     ConvertMobileWorkerAttendeesView,
     MobileWorkerAttendeeSatusView,
     poll_mobile_worker_attendee_progress,
+    get_attendees_and_attendance_takers
 )
 
 urlpatterns = [
@@ -35,4 +36,6 @@ urlpatterns = [
     url(r'^attendees/convert_users/status/poll/(?P<download_id>(?:dl-)?[0-9a-fA-Z]{25,32})/$',
         poll_mobile_worker_attendee_progress,
         name='poll_mobile_worker_attendee_progress'),
+    url(r'^attendees/get_attendees_and_attendance_takers/$', get_attendees_and_attendance_takers,
+        name='get_attendees_and_attendance_takers'),
 ]
