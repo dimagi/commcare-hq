@@ -7,9 +7,10 @@ from corehq.apps.app_manager.models import (
     CaseSearchProperty,
     DetailColumn,
     MappingItem,
-    Module
+    Module,
+    SortElement,
 )
-from corehq.apps.app_manager.suite_xml.features.case_tiles import CaseTileTemplates
+from corehq.apps.app_manager.suite_xml.features.case_tiles import CaseTileTemplates, case_tile_template_config
 from corehq.apps.app_manager.tests.app_factory import AppFactory
 from corehq.apps.app_manager.tests.util import (
     SuiteMixin,
@@ -62,9 +63,69 @@ def add_columns_for_case_details(_module):
     ]
 
 
+def add_columns_for_one_one_two_case_details(_module):
+    _module.case_details.short.columns = [
+        DetailColumn(
+            header={'en': 'a'},
+            model='case',
+            field='a',
+            format='plain',
+            case_tile_field='title'
+        ),
+        DetailColumn(
+            header={'en': 'b'},
+            model='case',
+            field='b',
+            format='plain',
+            case_tile_field='top'
+        ),
+        DetailColumn(
+            header={'en': 'c'},
+            model='case',
+            field='c',
+            format='address',
+            case_tile_field='bottom_left'
+        ),
+        DetailColumn(
+            header={'en': 'd'},
+            model='case',
+            field='d',
+            format='date',
+            case_tile_field='bottom_right'
+        ),
+        DetailColumn(
+            header={'en': 'e'},
+            model='case',
+            field='e',
+            format='address',
+            case_tile_field='map'
+        ),
+        DetailColumn(
+            header={'en': 'e'},
+            model='case',
+            field='e',
+            format='address-popup',
+            case_tile_field='map_popup'
+        ),
+    ]
+
+
 @patch_get_xform_resource_overrides()
 class SuiteCaseTilesTest(SimpleTestCase, SuiteMixin):
     file_path = ('data', 'suite')
+
+    # Keeps the number of columns in parity with what mobile allows
+    def test_case_tile_column_count(self):
+        for choice in CaseTileTemplates.choices:
+            template_name = choice[0]
+            template_grid = case_tile_template_config(template_name).grid
+
+            for field in template_grid.values():
+                absolute_width = field.get('x') + field.get('width')
+                if absolute_width > 12:
+                    message = "Number of columns in template '{}' " \
+                        "exceeds the limit of 12".format(template_name)
+                    raise AssertionError(message)
 
     def ensure_module_session_datum_xml(self, factory, detail_inline_attr, detail_persistent_attr):
         suite = factory.app.create_suite()
@@ -474,4 +535,135 @@ class SuiteCaseTilesTest(SimpleTestCase, SuiteMixin):
             app.create_suite(),
             # action[1] is the reg from case list action hard-coded into the default template
             "detail[@id='m0_search_short']/action[2]",
+        )
+
+    def test_case_tile_with_sorting(self, *args):
+        factory = AppFactory()
+        module, form = factory.new_basic_module("my_module", "person")
+        module.case_details.short.case_tile_template = CaseTileTemplates.ONE_ONE_TWO.value
+        module.case_details.short.display = 'short'
+        add_columns_for_one_one_two_case_details(module)
+        sort_elements = [
+            SortElement(field='b', direction='ascending', type='plain'),
+            SortElement(field='a', direction='ascending', type='plain')
+        ]
+        module.case_details.short.sort_elements.extend(sort_elements)
+        suite = factory.app.create_suite()
+
+        self.assertXmlPartialEqual(
+            """
+            <partial>
+                <sort direction="ascending" order="2" type="string">
+                    <text>
+                        <xpath function="a"/>
+                    </text>
+                </sort>
+            </partial>
+            """,
+            suite,
+            './detail[@id="m0_case_short"]/field[1]/sort',
+        )
+
+        self.assertXmlPartialEqual(
+            """
+            <partial>
+                <sort direction="ascending" order="1" type="string">
+                    <text>
+                        <xpath function="b"/>
+                    </text>
+                </sort>
+            </partial>
+            """,
+            suite,
+            './detail[@id="m0_case_short"]/field[2]/sort',
+        )
+
+        self.assertXmlPartialEqual(
+            """
+            <partial>
+                <sort type="string">
+                    <text>
+                        <xpath function="d"/>
+                    </text>
+                </sort>
+            </partial>
+            """,
+            suite,
+            './detail[@id="m0_case_short"]/field[4]/sort',
+        )
+
+    def test_case_tile_with_register_from_case_list(self, *args):
+        factory = AppFactory()
+        module, form = factory.new_basic_module("my_module", "person")
+        module.case_details.short.case_tile_template = CaseTileTemplates.ONE_ONE_TWO.value
+        module.case_details.short.display = 'short'
+        add_columns_for_one_one_two_case_details(module)
+
+        reg_form = factory.new_form(module)
+        reg_form.actions.open_case.condition.type = 'always'
+
+        module.case_list_form.form_id = str(reg_form.get_unique_id())
+        module.case_list_form.label = {"en": "Add new patient"}
+
+        suite = factory.app.create_suite()
+
+        self.assertXmlPartialEqual(
+            """
+            <partial>
+                <action>
+                    <display>
+                        <text>
+                            <locale id="case_list_form.m0"/>
+                        </text>
+                    </display>
+                    <stack>
+                        <push>
+                            <command value="'m0-f1'"/>
+                            <datum id="case_id_new_person_0" value="uuid()"/>
+                            <datum id="return_to" value="'m0'"/>
+                        </push>
+                    </stack>
+                </action>
+            </partial>
+            """,
+            suite,
+            "detail[@id='m0_case_short']/action[1]",
+        )
+
+    def test_case_tile_without_register_from_case_list_because_of_person_simple(self, *args):
+        factory = AppFactory()
+        module, form = factory.new_basic_module("my_module", "person")
+        module.case_details.short.case_tile_template = CaseTileTemplates.PERSON_SIMPLE.value
+        module.case_details.short.display = 'short'
+        add_columns_for_case_details(module)
+
+        reg_form = factory.new_form(module)
+        reg_form.actions.open_case.condition.type = 'always'
+
+        module.case_list_form.form_id = str(reg_form.get_unique_id())
+        module.case_list_form.label = {"en": "Add new patient"}
+
+        suite = factory.app.create_suite()
+
+        self.assertXmlPartialEqual(
+            """
+            <partial>
+                <action>
+                    <display>
+                        <text>
+                            <locale id="forms.m0f0"/>
+                        </text>
+                        <media image="jr://media/plus.png"/>
+                    </display>
+                    <stack>
+                        <push>
+                            <command value="'m0-f0'"/>
+                            <datum id="case_id_new_rec_child_0" value="uuid()"/>
+                        </push>
+                    </stack>
+                </action>
+            </partial>
+            """,
+            suite,
+            "detail[@id='m0_case_short']/action[1]",
         )

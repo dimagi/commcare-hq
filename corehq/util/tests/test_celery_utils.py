@@ -41,21 +41,70 @@ def test_run_periodic_task_again():
         eq(run_again, expected)
 
     now = datetime.utcnow()
-    nowfun = lambda : now
+    def nowfun(): return now
     all_hours = list(range(0, 24))
     all_hours_except_now = list(set(all_hours) - {now.hour})
-    one_scond = timedelta(seconds=1)
-    one_second_ago = now - one_scond
+    one_second = timedelta(seconds=1)
+    one_second_ago = now - one_second
     run_every_minute = crontab(nowfun=nowfun)
     tests = [
-        ('cron_already_triggered', run_every_minute, now - timedelta(minutes=2), one_scond, False),
-        ('cron_enough_time', run_every_minute, one_second_ago, one_scond, True),
-        ('cron_not_enough_time', run_every_minute, one_second_ago, timedelta(seconds=70), False),
-        ('cron_inside_window', crontab(hour=now.hour, nowfun=nowfun), one_second_ago, one_scond, True),
-        ('cron_outside_window', crontab(hour=all_hours_except_now, nowfun=nowfun), one_second_ago, one_scond, False),
+        # (
+        #   name,
+        #   run_every,
+        #   last_run,
+        #   duration,
+        #   expected
+        # ),
+        (
+            'cron_already_triggered',
+            run_every_minute,
+            now - timedelta(minutes=2),
+            one_second,
+            False
+        ),
+        (
+            'cron_enough_time',
+            run_every_minute,
+            one_second_ago,
+            one_second,
+            True
+        ),
+        (
+            'cron_not_enough_time',
+            run_every_minute,
+            one_second_ago,
+            timedelta(seconds=70),
+            False
+        ),
+        (
+            'cron_inside_window',
+            crontab(hour=now.hour, nowfun=nowfun),
+            one_second_ago,
+            one_second,
+            True
+        ),
+        (
+            'cron_outside_window',
+            crontab(hour=all_hours_except_now, nowfun=nowfun),
+            one_second_ago,
+            one_second,
+            False
+        ),
 
-        ('repeat_enough_time', timedelta(minutes=1), now - timedelta(seconds=30), timedelta(seconds=20), True),
-        ('repeat_not_enough_time', timedelta(minutes=1), now - timedelta(seconds=30), timedelta(seconds=40), False),
+        (
+            'repeat_enough_time',
+            timedelta(minutes=1),
+            now - timedelta(seconds=30),
+            timedelta(seconds=20),
+            True
+        ),
+        (
+            'repeat_not_enough_time',
+            timedelta(minutes=1),
+            now - timedelta(seconds=30),
+            timedelta(seconds=40),
+            False
+        ),
     ]
 
     for name, run_every, last_run, duration, expected in tests:

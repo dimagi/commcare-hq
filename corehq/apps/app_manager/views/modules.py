@@ -1,5 +1,6 @@
 import json
 import logging
+from dataclasses import asdict
 from collections import OrderedDict
 from functools import partial
 
@@ -97,6 +98,7 @@ from corehq.apps.app_manager.views.utils import (
     handle_custom_icon_edits,
     handle_shadow_child_modules,
     set_session_endpoint,
+    set_case_list_session_endpoint
 )
 from corehq.apps.app_manager.xform import CaseError
 from corehq.apps.app_manager.xpath_validator import validate_xpath
@@ -201,6 +203,15 @@ def _get_shared_module_view_context(request, app, module, case_property_builder,
     '''
     item_lists = item_lists_by_app(app, module) if app.enable_search_prompt_appearance else []
     case_types = set(module.search_config.additional_case_types) | {module.case_type}
+    case_list_map_enabled = toggles.CASE_LIST_MAP.enabled(app.domain)
+    case_tile_template_option_to_configs = [
+        (template, asdict(case_tile_template_config(template[0]))) for template in CaseTileTemplates.choices
+    ]
+    case_tile_template_option_to_configs_filtered = [
+        option_to_config for option_to_config in case_tile_template_option_to_configs
+        if case_list_map_enabled or not option_to_config[1]['has_map']
+    ]
+
     context = {
         'details': _get_module_details_context(request, app, module, case_property_builder),
         'case_list_form_options': _case_list_form_options(app, module, lang),
@@ -227,9 +238,10 @@ def _get_shared_module_view_context(request, app, module, case_property_builder,
             'has_lookup_tables': bool([i for i in item_lists if i['fixture_type'] == LOOKUP_TABLE_FIXTURE]),
             'has_mobile_ucr': bool([i for i in item_lists if i['fixture_type'] == REPORT_FIXTURE]),
             'default_value_expression_enabled': app.enable_default_value_expression,
-            'case_tile_template_options': CaseTileTemplates.choices,
-            'case_tile_fields': {template[0]: case_tile_template_config(template[0]).fields
-                                 for template in CaseTileTemplates.choices},
+            'case_tile_template_options':
+                [option_to_config[0] for option_to_config in case_tile_template_option_to_configs_filtered],
+            'case_tile_template_configs': {option_to_config[0][0]: option_to_config[1]
+                                           for option_to_config in case_tile_template_option_to_configs_filtered},
             'search_config': {
                 'search_properties':
                     module.search_config.properties if module_offers_search(module) else [],
@@ -483,8 +495,9 @@ def _case_list_form_options(app, module, lang=None):
         'post_form_workflow': f.post_form_workflow,
         'is_registration_form': True,
     } for f in reg_forms})
-    if (hasattr(module, 'parent_select') and  # AdvancedModule doesn't have parent_select
-            toggles.FOLLOWUP_FORMS_AS_CASE_LIST_FORM and module.parent_select.active):
+    if (hasattr(module, 'parent_select')  # AdvancedModule doesn't have parent_select
+            and toggles.FOLLOWUP_FORMS_AS_CASE_LIST_FORM
+            and module.parent_select.active):
         followup_forms = get_parent_select_followup_forms(app, module)
         if followup_forms:
             options.update({f.unique_id: {
@@ -624,6 +637,7 @@ def edit_module_attr(request, domain, app_id, module_unique_id, attr):
         "use_default_image_for_all": None,
         "use_default_audio_for_all": None,
         "session_endpoint_id": None,
+        "case_list_session_endpoint_id": None,
         'custom_assertions': None,
     }
 
@@ -768,6 +782,10 @@ def edit_module_attr(request, domain, app_id, module_unique_id, attr):
     if should_edit('session_endpoint_id'):
         raw_endpoint_id = request.POST['session_endpoint_id']
         set_session_endpoint(module, raw_endpoint_id, app)
+
+    if should_edit('case_list_session_endpoint_id'):
+        raw_endpoint_id = request.POST['case_list_session_endpoint_id']
+        set_case_list_session_endpoint(module, raw_endpoint_id, app)
 
     if should_edit('custom_assertions'):
         module.custom_assertions = validate_custom_assertions(
@@ -1043,7 +1061,7 @@ def _update_search_properties(module, search_properties, lang='en'):
 
     def _get_itemset(prop):
         fixture_props = json.loads(prop['fixture'])
-        keys = {'instance_uri', 'instance_id', 'nodeset', 'label', 'value', 'sort'}
+        keys = {'instance_id', 'nodeset', 'label', 'value', 'sort'}
         missing = [key for key in keys if not fixture_props.get(key)]
         if missing:
             raise CaseSearchConfigError(_("""

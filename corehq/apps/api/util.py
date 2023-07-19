@@ -85,17 +85,22 @@ def make_date_filter(date_filter):
     def filter_fn(param, val):
         if param not in ['gt', 'gte', 'lt', 'lte']:
             raise ValueError(_("'{param}' is not a valid type of date range.").format(param=param))
-        try:
-            # If it's only a date, don't turn it into a datetime
-            val = datetime.datetime.strptime(val, '%Y-%m-%d').date()
-        except ValueError:
-            try:
-                val = parse(val)
-            except ValueError:
-                raise ValueError(_("Cannot parse datetime '{val}'").format(val=val))
+        val = parse_str_to_date(val)
         return date_filter(**{param: val})
 
     return filter_fn
+
+
+def parse_str_to_date(val):
+    try:
+        # If it's only a date, don't turn it into a datetime
+        val = datetime.datetime.strptime(val, '%Y-%m-%d').date()
+    except ValueError:
+        try:
+            val = parse(val)
+        except ValueError:
+            raise ValueError(_("Cannot parse datetime '{val}'").format(val=val))
+    return val
 
 
 def django_date_filter(field_name, gt=None, gte=None, lt=None, lte=None):
