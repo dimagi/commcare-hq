@@ -112,6 +112,7 @@ class ESSyncUtil:
     def _prepare_index_for_normal_usage(self, secondary_adapter):
         es_manager.cluster_routing(enabled=True)
         tuning_settings = render_index_tuning_settings(secondary_adapter.settings_key)
+        logger.info(f"Setting replica count to {tuning_settings['number_of_replicas']}")
         es_manager.index_set_replicas(secondary_adapter.index_name, tuning_settings['number_of_replicas'])
         es_manager.index_configure_for_standard_ops(secondary_adapter.index_name)
         self._wait_for_index_to_get_healthy(secondary_adapter.index_name)
@@ -269,6 +270,17 @@ class ESSyncUtil:
         SimpleTableWriter(output=output, row_formatter=row_formatter).write_table(
             ["Index CName", "Index Name", "Size on Disk", "Doc Count"], rows=rows
         )
+
+    def set_replicas_for_secondary_index(self, cname):
+        adapter = doc_adapter_from_cname(cname)
+
+        if not getattr(settings, f'ES_{cname.upper()}_INDEX_MULTIPLEXED'):
+            raise IndexNotMultiplexedException("""This command supports setting replicas
+                                               only in secondary index of multiplexed Indices.""")
+        if getattr(settings, f'ES_{cname.upper()}_INDEX_SWAPPED'):
+            raise IndexAlreadySwappedException("Replicas can only be set before swapping indexes.")
+        self._prepare_index_for_normal_usage(adapter.secondary)
+        logger.info(f"Successfully set replicas for index {adapter.secondary.index_name}")
 
 
 class Command(BaseCommand):
