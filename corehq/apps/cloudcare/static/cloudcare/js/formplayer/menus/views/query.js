@@ -9,8 +9,7 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
         formEntryUtils = hqImport("cloudcare/js/form_entry/utils"),
         FormplayerFrontend = hqImport("cloudcare/js/formplayer/app"),
         formplayerUtils = hqImport("cloudcare/js/formplayer/utils/utils"),
-        initialPageData = hqImport("hqwebapp/js/initial_page_data"),
-        md = window.markdownit();
+        initialPageData = hqImport("hqwebapp/js/initial_page_data");
 
     var separator = " to ",
         serverSeparator = "__",

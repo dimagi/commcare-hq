@@ -893,13 +893,7 @@ hqDefine("cloudcare/js/form_entry/entries", function () {
             return { file: self.file() };
         };
         self.file = ko.observable();
-        // corresponds to SUPPORTED_FILE_EXTS var in Formplayer, a list of valid file extensions
-        // any changes made here should also be made in Formplayer
-        self.extensionsMap = {
-            "image/*,.pdf": ["jpg", "jpeg", "png", "pdf"],
-            "audio/*": ["3ga","mp3", "wav", "amr", "qcp","ogg"],
-            "video/*": ["3gpp", "3gp", "3gp2", "3g2", "mp4","mpg4", "mpeg4", "m4v", "mpg", "mpeg"],
-        };
+        self.extensionsMap = initialPageData.get("valid_multimedia_extensions_map");
     }
     FileEntry.prototype = Object.create(EntrySingleAnswer.prototype);
     FileEntry.prototype.constructor = EntrySingleAnswer;
@@ -1031,7 +1025,13 @@ hqDefine("cloudcare/js/form_entry/entries", function () {
                 let lon = self.rawAnswer().length ? self.rawAnswer()[1] : self.DEFAULT.lon;
                 let zoom = self.rawAnswer().length ? self.DEFAULT.anszoom : self.DEFAULT.zoom;
 
-                self.map = L.map(self.entryId).setView([lat, lon], zoom);
+                self.map = L.map(self.entryId, {
+                    zoomControl: false,
+                }).setView([lat, lon], zoom);
+                L.control.zoom({
+                    position: 'bottomright'
+                }).addTo(self.map);
+
                 L.tileLayer('https://api.mapbox.com/styles/v1/{id}/tiles/{z}/{x}/{y}?access_token='
                             + token, {
                     id: 'mapbox/streets-v11',
