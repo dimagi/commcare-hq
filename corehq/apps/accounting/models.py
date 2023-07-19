@@ -426,6 +426,9 @@ class BillingAccount(ValidateModelMixin, models.Model):
         default=list
     )
 
+    bill_web_user = models.BooleanField(default=False)
+
+
     class Meta(object):
         app_label = 'accounting'
 
