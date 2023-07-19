@@ -29,6 +29,8 @@ from corehq.apps.data_dictionary.models import (
 from corehq.apps.data_dictionary.util import (
     save_case_property,
     save_case_property_group,
+    get_column_headings,
+    row_to_dict,
 )
 from corehq.apps.domain.decorators import login_and_domain_required
 from corehq.apps.hqwebapp.decorators import use_jquery_ui
@@ -48,6 +50,11 @@ from corehq.util.workbook_reading.datamodels import Cell
 
 FHIR_RESOURCE_TYPE_MAPPING_SHEET = "fhir_mapping"
 ALLOWED_VALUES_SHEET_SUFFIX = "-vl"
+COLUMN_MAPPING_VL = {
+    'case property': 'prop_name',
+    'valid value': 'allowed_value',
+    'valid value description': 'description',
+}
 
 
 @login_and_domain_required
@@ -437,29 +444,42 @@ def _process_bulk_upload(bulk_file, domain):
     missing_valid_values = set()
     with open_any_workbook(filename) as workbook:
         for worksheet in workbook.worksheets:
-            if worksheet.title.endswith(ALLOWED_VALUES_SHEET_SUFFIX):
-                case_type = worksheet.title[:-len(ALLOWED_VALUES_SHEET_SUFFIX)]
-                allowed_value_info[case_type] = defaultdict(dict)
-                prop_row_info[case_type] = defaultdict(list)
-                for (i, row) in enumerate(itertools.islice(worksheet.iter_rows(), 1, None), start=2):
-                    row_len = len(row)
-                    if row_len < 1:
-                        # simply ignore any fully blank rows
-                        continue
-                    if row_len < 3:
-                        # if missing value or description, fill in "blank"
-                        row += [Cell(value='') for __ in range(3 - row_len)]
-                    row = [cell.value if cell.value is not None else '' for cell in row]
-                    prop_name, allowed_value, description = [str(val) for val in row[0:3]]
-                    if allowed_value and not prop_name:
-                        msg_format = _('Error in valid values for case type {}, row {}: missing case property')
-                        msg_val = msg_format.format(case_type, i)
-                        errors.append(msg_val)
-                    else:
-                        allowed_value_info[case_type][prop_name][allowed_value] = description
-                        prop_row_info[case_type][prop_name].append(i)
-            else:
+            if not worksheet.title.endswith(ALLOWED_VALUES_SHEET_SUFFIX):
                 worksheets.append(worksheet)
+                continue
+
+            case_type = worksheet.title[:-len(ALLOWED_VALUES_SHEET_SUFFIX)]
+            allowed_value_info[case_type] = defaultdict(dict)
+            prop_row_info[case_type] = defaultdict(list)
+            column_headings = []
+            for (i, row) in enumerate(itertools.islice(worksheet.iter_rows(), 0, None), start=1):
+                if i == 1:
+                    column_headings, heading_errors = get_column_headings(
+                        row, valid_values=COLUMN_MAPPING_VL, case_type=case_type)
+                    if 'prop_name' not in column_headings:
+                        heading_errors.append(
+                            _("Missing case property column header for case type {}").format(case_type)
+                        )
+                    if len(heading_errors):
+                        errors.extend(heading_errors)
+                        break
+                    continue
+
+                # Simply ignore any fully blank rows
+                if len(row) < 1:
+                    continue
+
+                row_vals = row_to_dict(row, column_headings, default_val='')
+                (allowed_value, prop_name, description) = (
+                    row_vals['allowed_value'], row_vals['prop_name'], row_vals['description'])
+
+                if allowed_value and not prop_name:
+                    msg_format = _('Error in valid values for case type {}, row {}: missing case property')
+                    msg_val = msg_format.format(case_type, i)
+                    errors.append(msg_val)
+                else:
+                    allowed_value_info[case_type][prop_name][allowed_value] = description
+                    prop_row_info[case_type][prop_name].append(i)
 
         for worksheet in worksheets:
             if worksheet.title == FHIR_RESOURCE_TYPE_MAPPING_SHEET:
