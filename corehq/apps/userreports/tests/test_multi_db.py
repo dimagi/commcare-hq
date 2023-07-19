@@ -170,7 +170,7 @@ class UCRMultiDBTest(TestCase):
 
         with (
             patch('pillowtop.models.KafkaCheckpoint.get_or_create_for_checkpoint_id'),
-            patch('corehq.apps.userreports.pillow_utils._is_datasource_deactivated', return_value=False)
+            patch('corehq.apps.userreports.pillow_utils._is_datasource_active', return_value=True)
         ):
             pillow = get_case_pillow(ucr_configs=[ds3])
         sample_doc, _ = get_sample_doc_and_indicators()
