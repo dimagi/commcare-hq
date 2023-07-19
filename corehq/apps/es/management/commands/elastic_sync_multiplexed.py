@@ -78,6 +78,12 @@ class ESSyncUtil:
             logger.info("Preparing Index for normal use")
             self._prepare_index_for_normal_usage(adapter.secondary)
             print("\n\n")
+        else:
+            logger.info(f"Replicas are not being set for index {destination_index}")
+            logger.info("You can manually set them by running")
+            print("\n\n")
+            print(f"\t./manage.py elastic_sync_multiplexed set_replicas {cname}")
+            print("\n\n")
 
         self._get_source_destination_doc_count(adapter)
 
