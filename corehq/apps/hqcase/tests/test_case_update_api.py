@@ -140,6 +140,16 @@ class TestCaseAPI(TestCase):
         self.assertEqual(res.status_code, 400)
         self.assertEqual(res.json()['error'], "'bad_property' is not a valid field.")
 
+    def test_empty_case_type(self):
+        res = self._create_case({
+            'case_type': '',
+            'case_name': 'Elizabeth Harmon',
+            'owner_id': 'methuen_home',
+        }).json()
+        case = CommCareCase.objects.get_case(res['case']['case_id'], self.domain)
+        self.assertEqual(case.name, 'Elizabeth Harmon')
+        self.assertEqual(case.type, '')
+
     def test_no_required_updates(self):
         case = self._make_case()
 

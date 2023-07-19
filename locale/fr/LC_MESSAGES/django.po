@@ -469,9 +469,7 @@ msgstr ""
 msgid "Request Quote"
 msgstr ""
 
-#: corehq/apps/accounting/forms.py
-#: corehq/apps/cloudcare/templates/formplayer/query_view.html
-#: corehq/apps/commtrack/forms.py
+#: corehq/apps/accounting/forms.py corehq/apps/commtrack/forms.py
 #: corehq/apps/hqwebapp/templates/hqwebapp/partials/form_list_form.html
 #: corehq/apps/translations/forms.py
 msgid "Submit"
@@ -962,6 +960,7 @@ msgstr ""
 #: corehq/apps/reminders/templates/reminders/keyword_list.html
 #: corehq/apps/reports/forms.py
 #: corehq/apps/reports/templates/reports/async/default.html
+#: corehq/apps/reports/templates/reports/form/partials/single_form.html
 #: corehq/apps/reports/templates/reports/notification_unsubscribe.html
 #: corehq/apps/reports/templates/reports/partials/bulk_modal.html
 #: corehq/apps/reports/templates/reports/partials/data_corrections_modal.html
@@ -6599,6 +6598,7 @@ msgstr ""
 #: corehq/apps/programs/templates/programs/manage/programs.html
 #: corehq/apps/reminders/templates/reminders/keyword_list.html
 #: corehq/apps/reports/filters/users.py
+#: corehq/apps/reports/templates/reports/form/partials/single_form.html
 #: corehq/apps/reports/templates/reports/partials/scheduled_reports_table.html
 #: corehq/apps/reports/templates/reports/reports_home.html
 #: corehq/apps/reports/templates/reports/tableau_visualization.html
@@ -9461,6 +9461,17 @@ msgid ""
 "                                    CommCare at this position."
 msgstr ""
 
+#: corehq/apps/app_manager/templates/app_manager/partials/session_endpoints.html
+msgid "Case List Session Endpoint ID"
+msgstr ""
+
+#: corehq/apps/app_manager/templates/app_manager/partials/session_endpoints.html
+msgid ""
+"A session endpoint ID to navigate to this\n"
+"                                        case list without doing selection on "
+"the case list."
+msgstr ""
+
 #: corehq/apps/app_manager/templates/app_manager/partials/settings/add_ons.html
 msgid ""
 "\n"
@@ -10338,6 +10349,14 @@ msgstr ""
 #: corehq/apps/app_manager/views/utils.py
 #, python-brace-format
 msgid "Session endpoint IDs must be unique. '{endpoint_id}' is already in-use"
+msgstr ""
+
+#: corehq/apps/app_manager/views/utils.py
+msgid "Custom assertions must not be blank."
+msgstr ""
+
+#: corehq/apps/app_manager/views/utils.py
+msgid "Please add a message for assertion."
 msgstr ""
 
 #: corehq/apps/app_manager/views/utils.py
@@ -12354,10 +12373,6 @@ msgid "Visit CommCare's knowledge base"
 msgstr ""
 
 #: corehq/apps/data_dictionary/models.py
-msgid "Group description should be less than 255 characters"
-msgstr ""
-
-#: corehq/apps/data_dictionary/models.py
 msgid "Group \"{}\" already exists for case type \"{}\""
 msgstr ""
 
@@ -12375,10 +12390,6 @@ msgstr ""
 
 #: corehq/apps/data_dictionary/models.py
 msgid "No Type Currently Selected"
-msgstr ""
-
-#: corehq/apps/data_dictionary/models.py
-msgid "Property description should be less than 255 characters"
 msgstr ""
 
 #: corehq/apps/data_dictionary/models.py
@@ -29252,6 +29263,18 @@ msgid "Resave this form"
 msgstr ""
 
 #: corehq/apps/reports/templates/reports/form/partials/single_form.html
+msgid "Deleting Forms"
+msgstr ""
+
+#: corehq/apps/reports/templates/reports/form/partials/single_form.html
+msgid "This is a permanent action that cannot be undone."
+msgstr ""
+
+#: corehq/apps/reports/templates/reports/form/partials/single_form.html
+msgid "Delete this form"
+msgstr ""
+
+#: corehq/apps/reports/templates/reports/form/partials/single_form.html
 msgid "Unknown/Deleted Case"
 msgstr ""
 
@@ -29265,6 +29288,26 @@ msgstr ""
 
 #: corehq/apps/reports/templates/reports/form/partials/single_form.html
 msgid "Copy XML to clipboard"
+msgstr ""
+
+#: corehq/apps/reports/templates/reports/form/partials/single_form.html
+msgid "Permanently Delete Form"
+msgstr ""
+
+#: corehq/apps/reports/templates/reports/form/partials/single_form.html
+msgid ""
+"\n"
+"              It is important you read the entire message below thoroughly "
+"before completing this action.\n"
+"            "
+msgstr ""
+
+#: corehq/apps/reports/templates/reports/form/partials/single_form.html
+msgid ""
+"\n"
+"              Once deleted, you will not be able to recover this form. Are "
+"you sure you want to delete this form?\n"
+"            "
 msgstr ""
 
 #: corehq/apps/reports/templates/reports/form/partials/single_form_tree.html
@@ -30093,6 +30136,11 @@ msgstr ""
 
 #: corehq/apps/reports/views.py
 msgid "Undo"
+msgstr ""
+
+#: corehq/apps/reports/views.py
+#, python-brace-format
+msgid "Cannot delete form {instance_id} because it is not archived."
 msgstr ""
 
 #: corehq/apps/reports/views.py
@@ -37438,6 +37486,14 @@ msgstr ""
 msgid ""
 "This is a location user. You must delete the corresponding location before "
 "you can delete this user."
+msgstr ""
+
+#: corehq/apps/users/views/mobile/users.py
+#, python-format
+msgid ""
+"User %s has been deleted. All their submissions and cases will be "
+"permanently\n"
+"        deleted in the next few minutes"
 msgstr ""
 
 #: corehq/apps/users/views/mobile/users.py

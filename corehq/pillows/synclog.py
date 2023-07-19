@@ -127,7 +127,8 @@ def mark_last_synclog(domain, user, app_id, build_id, sync_date, latest_build_da
         # sync_date could be null if this is called from a heartbeat request
         local_save |= update_last_sync(user, app_id, sync_date, version)
     if version:
-        local_save |= update_latest_builds(user, app_id, latest_build_date, version, build_profile_id=build_profile_id)
+        local_save |= update_latest_builds(user, app_id, latest_build_date, version,
+                                           build_profile_id=build_profile_id)
 
     if device_id:
         local_save |= update_device_meta(user, device_id, commcare_version=commcare_version,

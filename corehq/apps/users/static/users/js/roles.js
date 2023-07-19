@@ -364,7 +364,7 @@ hqDefine('users/js/roles',[
                         showOption: root.ExportOwnershipEnabled,
                         editPermission: self.permissions.edit_shared_exports,
                         viewPermission: null,
-                        text: gettext("<strong>Shared Exports</strong> &mdash; access and edit the content and structure of shared exports"),
+                        text: gettext("<strong>Manage Shared Exports</strong> &mdash; access and edit the content and structure of shared exports"),
                         showEditCheckbox: true,
                         editCheckboxLabel: "edit-shared-exports-checkbox",
                         showViewCheckbox: false,

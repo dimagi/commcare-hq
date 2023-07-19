@@ -109,7 +109,11 @@ from corehq.motech.views import ConnectionSettingsListView, MotechLogListView
 from corehq.privileges import DAILY_SAVED_EXPORT, EXCEL_DASHBOARD, DATA_DICTIONARY
 from corehq.tabs.uitab import UITab
 from corehq.tabs.utils import dropdown_dict, sidebar_to_dropdown
+<<<<<<< HEAD
 from corehq.apps.users.models import HqPermissions
+=======
+from corehq.apps.geospatial.views import GeospatialConfigPage
+>>>>>>> master
 
 
 class ProjectReportsTab(UITab):
@@ -2517,12 +2521,23 @@ class GeospatialTab(UITab):
     view = 'geospatial_default'
 
     url_prefix_formats = (
-        '/a/{domain}/settings/geospatial',
+        '/a/{domain}/geospatial',
     )
 
     @property
     def sidebar_items(self):
-        items = CaseManagementMapDispatcher.navigation_sections(request=self._request, domain=self.domain)
+        items = [
+            (_("Settings"), [
+                {
+                    'title': _("Configure geospatial settings"),
+                    'url': reverse(GeospatialConfigPage.urlname, args=(self.domain,)),
+                },
+            ]),
+        ]
+        items.extend(
+            CaseManagementMapDispatcher.navigation_sections(request=self._request, domain=self.domain)
+        )
+
         return items
 
     @property

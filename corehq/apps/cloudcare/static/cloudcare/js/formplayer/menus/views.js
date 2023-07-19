@@ -141,17 +141,24 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
         return rowStart + " / " + colStart + " / " +
             rowEnd + " / " + colEnd;
     };
+    // use the field alignment from xml template only if valid
+    const getValidFieldAlignment = function (alignment) {
+        return constants.ALLOWED_FIELD_ALIGNMENTS.includes(alignment) ? alignment : 'start';
+    };
     // generate the case tile's style block and insert
-    const buildCellLayout = function (tiles, prefix) {
+    const buildCellLayout = function (tiles, styles, prefix) {
         const tileModels = _.chain(tiles || [])
             .map(function (tile, idx) {
                 if (tile === null || tile === undefined) {
                     return null;
                 }
+                const style = styles[idx] || {};
                 return {
                     id: prefix + '-grid-style-' + idx,
                     gridStyle: getGridAttributes(tile),
                     fontStyle: tile.fontSize,
+                    verticalAlign: getValidFieldAlignment(style.verticalAlign),
+                    horizontalAlign: getValidFieldAlignment(style.horizontalAlign),
                 };
             })
             .filter(function (tile) {
@@ -563,7 +570,15 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
                 const lat = 30;
                 const lon = 15;
                 const zoom = 3;
-                const addressMap = L.map('module-case-list-map').setView([lat, lon], zoom);
+                const addressMap = L.map(
+                    'module-case-list-map', {
+                        zoomControl: false,
+                    }).setView([lat, lon], zoom);
+
+                L.control.zoom({
+                    position: 'bottomright'
+                }).addTo(addressMap);
+
                 L.tileLayer('https://api.mapbox.com/styles/v1/{id}/tiles/{z}/{x}/{y}?access_token=' + token, {
                     id: 'mapbox/streets-v11',
                     attribution: '© <a href="https://www.mapbox.com/about/maps/">Mapbox</a> ©' +
@@ -575,7 +590,6 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
                 const addressIndex = _.findIndex(this.styles, function (style) { return style.displayFormat === constants.FORMAT_ADDRESS; });
                 const popupIndex = _.findIndex(this.styles, function (style) { return style.displayFormat === constants.FORMAT_ADDRESS_POPUP; });
                 L.mapbox.accessToken = token;
-                md = window.markdownit();
 
                 const allCoordinates = []
                 const markers = []
@@ -732,11 +746,14 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
     // - shape and size of the tile's layout grid
     // - the tile's visual style and its outer boundary
     // - layout of the case tiles on the outer, visible grid
-    const buildCaseTileStyles = function (tiles, numRows, numColumns, numEntitiesPerRow, useUniformUnits, prefix) {
+    const buildCaseTileStyles = function (tiles, styles, numRows, numColumns, numEntitiesPerRow, useUniformUnits, prefix) {
         const caseTileStyles = {};
-        caseTileStyles.cellLayoutStyle = buildCellLayout(tiles, prefix);
+        caseTileStyles.cellLayoutStyle = buildCellLayout(tiles, styles, prefix);
         caseTileStyles.cellGridStyle = buildCellGridStyle(numRows, numColumns, useUniformUnits, prefix);
-        caseTileStyles.cellContainerStyle = buildCellContainerStyle(numEntitiesPerRow);
+        if (numEntitiesPerRow > 1) {
+            caseTileStyles.cellContainerStyle = buildCellContainerStyle(numEntitiesPerRow);
+            caseTileStyles.cellWrapperStyle = $("#cell-wrapper-style-template");
+        }
         return caseTileStyles;
     };
 
@@ -756,7 +773,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             const numColumns = options.maxWidth;
             const useUniformUnits = options.useUniformUnits;
 
-            const caseTileStyles = buildCaseTileStyles(options.tiles, numRows, numColumns,
+            const caseTileStyles = buildCaseTileStyles(options.tiles, options.styles, numRows, numColumns,
                 numEntitiesPerRow, useUniformUnits, 'list');
 
             const gridPolyfillPath = FormplayerFrontend.getChannel().request('gridPolyfillPath');
