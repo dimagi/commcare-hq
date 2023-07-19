@@ -1191,6 +1191,12 @@ if callable(COMPRESS_OFFLINE):
 SESSION_COOKIE_SECURE = CSRF_COOKIE_SECURE = SECURE_COOKIES = not DEBUG
 SESSION_COOKIE_HTTPONLY = CSRF_COOKIE_HTTPONLY = True
 
+# This is commented because it is not required now. We don't need to instrument all the services rn on staging.
+# The below lines can be uncommented when we need to turn on app level tracing on any env.
+# if SERVER_ENVIRONMENT == 'staging':
+#     from ddtrace import patch_all
+#     patch_all()
+
 
 if UNIT_TESTING:
     # COMPRESS_COMPILERS overrides COMPRESS_ENABLED = False, so must be
@@ -2019,15 +2025,6 @@ if 'locmem' not in CACHES:
     CACHES['locmem'] = {'BACKEND': 'django.core.cache.backends.locmem.LocMemCache'}
 if 'dummy' not in CACHES:
     CACHES['dummy'] = {'BACKEND': 'django.core.cache.backends.dummy.DummyCache'}
-
-# Make django_redis use pickle.DEFAULT_PROTOCOL by default.
-# Remove after upgrading django_redis to a version that does that.
-# See also corehq.tests.test_pickle.test_django_redis_protocol
-from pickle import DEFAULT_PROTOCOL as _protocol
-for _value in CACHES.values():
-    if _value.get("BACKEND", "").startswith("django_redis"):
-        _value.setdefault("OPTIONS", {}).setdefault("PICKLE_VERSION", _protocol)
-del _value, _protocol
 
 
 REST_FRAMEWORK = {

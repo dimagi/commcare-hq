@@ -9,8 +9,7 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
         formEntryUtils = hqImport("cloudcare/js/form_entry/utils"),
         FormplayerFrontend = hqImport("cloudcare/js/formplayer/app"),
         formplayerUtils = hqImport("cloudcare/js/formplayer/utils/utils"),
-        initialPageData = hqImport("hqwebapp/js/initial_page_data"),
-        md = window.markdownit();
+        initialPageData = hqImport("hqwebapp/js/initial_page_data");
 
     var separator = " to ",
         serverSeparator = "__",
@@ -528,7 +527,12 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
             e.preventDefault();
 
             self.validateAllFields().done(function () {
-                FormplayerFrontend.trigger("menu:query", self.getAnswers(), self.selectValuesByKeys);
+                FormplayerFrontend.trigger(
+                    "menu:query",
+                    self.getAnswers(),
+                    self.selectValuesByKeys,
+                    self.options.sidebarEnabled
+                );
             });
         },
 

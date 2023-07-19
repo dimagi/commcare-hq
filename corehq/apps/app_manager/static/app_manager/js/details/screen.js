@@ -61,7 +61,7 @@ hqDefine("app_manager/js/details/screen", function () {
         self.caseTileTemplateOptions = self.caseTileTemplateOptions.map(function (templateOption) {
             return {templateValue: templateOption[0], templateName: templateOption[1]};
         });
-        self.caseTileTemplate = ko.observable(detail.case_tile_template);
+        self.caseTileTemplate = ko.observable(detail.case_tile_template || null);
         self.caseTileTemplateConfigs = options.caseTileTemplateConfigs;
         self.caseTileFieldsForTemplate = ko.computed(function () {
             return (self.caseTileTemplateConfigs[self.caseTileTemplate()] || {}).fields;

@@ -513,9 +513,7 @@ msgstr "Sélectionnez différents plans"
 msgid "Request Quote"
 msgstr "Requête de devis"
 
-#: corehq/apps/accounting/forms.py
-#: corehq/apps/cloudcare/templates/formplayer/query_view.html
-#: corehq/apps/commtrack/forms.py
+#: corehq/apps/accounting/forms.py corehq/apps/commtrack/forms.py
 #: corehq/apps/hqwebapp/templates/hqwebapp/partials/form_list_form.html
 #: corehq/apps/translations/forms.py
 msgid "Submit"
@@ -1080,6 +1078,7 @@ msgstr ""
 #: corehq/apps/reminders/templates/reminders/keyword_list.html
 #: corehq/apps/reports/forms.py
 #: corehq/apps/reports/templates/reports/async/default.html
+#: corehq/apps/reports/templates/reports/form/partials/single_form.html
 #: corehq/apps/reports/templates/reports/notification_unsubscribe.html
 #: corehq/apps/reports/templates/reports/partials/bulk_modal.html
 #: corehq/apps/reports/templates/reports/partials/data_corrections_modal.html
@@ -4031,6 +4030,11 @@ msgstr ""
 "pageId=38276915"
 
 #: corehq/apps/app_manager/helpers/validators.py
+msgid ""
+"Format \"{}\" can only be used once but is used by multiple properties: {}"
+msgstr ""
+
+#: corehq/apps/app_manager/helpers/validators.py
 msgid "Case tiles may only be used for the case list (not the case details)."
 msgstr ""
 "Les Plaques des dossiers peuvent être seulement utilisées pour la liste des "
@@ -6949,6 +6953,7 @@ msgstr ""
 #: corehq/apps/programs/templates/programs/manage/programs.html
 #: corehq/apps/reminders/templates/reminders/keyword_list.html
 #: corehq/apps/reports/filters/users.py
+#: corehq/apps/reports/templates/reports/form/partials/single_form.html
 #: corehq/apps/reports/templates/reports/partials/scheduled_reports_table.html
 #: corehq/apps/reports/templates/reports/reports_home.html
 #: corehq/apps/reports/templates/reports/tableau_visualization.html
@@ -8116,6 +8121,18 @@ msgstr ""
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/case_list.html
 msgid "Case property to show"
 msgstr "Propriété de dossier à afficher"
+
+#: corehq/apps/app_manager/templates/app_manager/partials/modules/case_list.html
+msgid "Show case tiles grouped by parent case"
+msgstr ""
+
+#: corehq/apps/app_manager/templates/app_manager/partials/modules/case_list.html
+msgid "Parent case index name"
+msgstr ""
+
+#: corehq/apps/app_manager/templates/app_manager/partials/modules/case_list.html
+msgid "Case tile header rows"
+msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/case_list.html
 msgid "Use this case list tile persistently in forms"
@@ -9895,6 +9912,17 @@ msgid ""
 "                                    CommCare at this position."
 msgstr ""
 
+#: corehq/apps/app_manager/templates/app_manager/partials/session_endpoints.html
+msgid "Case List Session Endpoint ID"
+msgstr ""
+
+#: corehq/apps/app_manager/templates/app_manager/partials/session_endpoints.html
+msgid ""
+"A session endpoint ID to navigate to this\n"
+"                                        case list without doing selection on "
+"the case list."
+msgstr ""
+
 #: corehq/apps/app_manager/templates/app_manager/partials/settings/add_ons.html
 msgid ""
 "\n"
@@ -10801,6 +10829,16 @@ msgstr ""
 #, python-brace-format
 msgid "Session endpoint IDs must be unique. '{endpoint_id}' is already in-use"
 msgstr ""
+
+#: corehq/apps/app_manager/views/utils.py
+msgid "Custom assertions must not be blank."
+msgstr ""
+
+#: corehq/apps/app_manager/views/utils.py
+#, fuzzy
+#| msgid "Please add at least one visit"
+msgid "Please add a message for assertion."
+msgstr "Veuillez ajouter au moins une visite"
 
 #: corehq/apps/app_manager/views/utils.py
 msgid "There was an issue with your custom assertions: {}"
@@ -12878,10 +12916,6 @@ msgid "Visit CommCare's knowledge base"
 msgstr "Visiter la base de connaissance de CommCare"
 
 #: corehq/apps/data_dictionary/models.py
-msgid "Group description should be less than 255 characters"
-msgstr ""
-
-#: corehq/apps/data_dictionary/models.py
 msgid "Group \"{}\" already exists for case type \"{}\""
 msgstr ""
 
@@ -12899,10 +12933,6 @@ msgstr "GPS"
 
 #: corehq/apps/data_dictionary/models.py
 msgid "No Type Currently Selected"
-msgstr ""
-
-#: corehq/apps/data_dictionary/models.py
-msgid "Property description should be less than 255 characters"
 msgstr ""
 
 #: corehq/apps/data_dictionary/models.py
@@ -18294,6 +18324,10 @@ msgid "Attendance Takers"
 msgstr ""
 
 #: corehq/apps/events/forms.py
+msgid "Please choose at least one Attendance Taker"
+msgstr ""
+
+#: corehq/apps/events/forms.py
 #, python-brace-format
 msgid "{self.title_prefix} Attendance Tracking Event"
 msgstr ""
@@ -21202,22 +21236,16 @@ msgid "Geospatial"
 msgstr ""
 
 #: corehq/apps/geospatial/templates/map_visualization.html
-#, fuzzy
-#| msgid "Filter Logs by Username"
 msgid "Filter by Saved Area"
-msgstr "Filtrer les journaux par nom d'utilisateur"
+msgstr ""
 
 #: corehq/apps/geospatial/templates/map_visualization.html
-#, fuzzy
-#| msgid "Export Data"
 msgid "Export Area"
-msgstr "Exporter des données"
+msgstr ""
 
 #: corehq/apps/geospatial/templates/map_visualization.html
-#, fuzzy
-#| msgid "Save"
 msgid "Save Area"
-msgstr "Enregistrer"
+msgstr ""
 
 #: corehq/apps/groups/templates/groups/all_groups.html
 #: corehq/apps/reports/filters/users.py
@@ -30366,6 +30394,22 @@ msgid "Resave this form"
 msgstr "Réenregistrer ce formulaire"
 
 #: corehq/apps/reports/templates/reports/form/partials/single_form.html
+#, fuzzy
+#| msgid "Delete Form"
+msgid "Deleting Forms"
+msgstr "Supprimer le formulaire"
+
+#: corehq/apps/reports/templates/reports/form/partials/single_form.html
+msgid "This is a permanent action that cannot be undone."
+msgstr ""
+
+#: corehq/apps/reports/templates/reports/form/partials/single_form.html
+#, fuzzy
+#| msgid "Restore this form"
+msgid "Delete this form"
+msgstr "Restaurer ce formulaire"
+
+#: corehq/apps/reports/templates/reports/form/partials/single_form.html
 msgid "Unknown/Deleted Case"
 msgstr "Dossier inconnu / supprimé"
 
@@ -30380,6 +30424,28 @@ msgstr "Ouvrir XML dans une nouvelle fenêtre"
 #: corehq/apps/reports/templates/reports/form/partials/single_form.html
 msgid "Copy XML to clipboard"
 msgstr "Copier XML au clipboard"
+
+#: corehq/apps/reports/templates/reports/form/partials/single_form.html
+#, fuzzy
+#| msgid "Delete Form"
+msgid "Permanently Delete Form"
+msgstr "Supprimer le formulaire"
+
+#: corehq/apps/reports/templates/reports/form/partials/single_form.html
+msgid ""
+"\n"
+"              It is important you read the entire message below thoroughly "
+"before completing this action.\n"
+"            "
+msgstr ""
+
+#: corehq/apps/reports/templates/reports/form/partials/single_form.html
+msgid ""
+"\n"
+"              Once deleted, you will not be able to recover this form. Are "
+"you sure you want to delete this form?\n"
+"            "
+msgstr ""
 
 #: corehq/apps/reports/templates/reports/form/partials/single_form_tree.html
 msgid "Hidden Values (Form Calculations)"
@@ -31220,6 +31286,11 @@ msgstr ""
 #: corehq/apps/reports/views.py
 msgid "Undo"
 msgstr "Annuler"
+
+#: corehq/apps/reports/views.py
+#, python-brace-format
+msgid "Cannot delete form {instance_id} because it is not archived."
+msgstr ""
 
 #: corehq/apps/reports/views.py
 msgid "{} (this case)"
@@ -32717,10 +32788,8 @@ msgid "Message Sent Via Chat"
 msgstr "Message envoyé via chat"
 
 #: corehq/apps/sms/models.py
-#, fuzzy
-#| msgid "Notifications"
 msgid "FCM Push Notification"
-msgstr "Notifications"
+msgstr ""
 
 #: corehq/apps/sms/models.py
 msgid "User Group"
@@ -32870,10 +32939,8 @@ msgid "FCM not available on this environment."
 msgstr ""
 
 #: corehq/apps/sms/models.py
-#, fuzzy
-#| msgid "Reset Password for Mobile Worker"
 msgid "FCM is supported for Mobile Workers only."
-msgstr "Réinitialiser le mot de passe pour l'utilisateur mobile "
+msgstr ""
 
 #: corehq/apps/sms/models.py
 msgid "No action selected for the FCM Data message type."
@@ -38822,6 +38889,14 @@ msgstr ""
 "avant de pouvoir supprimer cet utilisateur."
 
 #: corehq/apps/users/views/mobile/users.py
+#, python-format
+msgid ""
+"User %s has been deleted. All their submissions and cases will be "
+"permanently\n"
+"        deleted in the next few minutes"
+msgstr ""
+
+#: corehq/apps/users/views/mobile/users.py
 msgid "User is already in Demo mode!"
 msgstr "L'utilisateur est déjà en mode de démonstration!"
 
@@ -39536,10 +39611,8 @@ msgid "Intervals"
 msgstr ""
 
 #: corehq/messaging/scheduling/forms.py
-#, fuzzy
-#| msgid "Notifications"
 msgid "Action on Notification"
-msgstr "Notifications"
+msgstr ""
 
 #: corehq/messaging/scheduling/forms.py
 msgid "Please fill out at least one translation"
@@ -39564,10 +39637,8 @@ msgid ""
 msgstr ""
 
 #: corehq/messaging/scheduling/forms.py
-#, fuzzy
-#| msgid "Message Type"
 msgid "Message type"
-msgstr "Type de Message"
+msgstr ""
 
 #: corehq/messaging/scheduling/forms.py
 msgid "Expire After"
@@ -40039,10 +40110,8 @@ msgid "Custom SMS"
 msgstr ""
 
 #: corehq/messaging/scheduling/forms.py
-#, fuzzy
-#| msgid "Notifications"
 msgid "Push Notification"
-msgstr "Notifications"
+msgstr ""
 
 #: corehq/messaging/scheduling/forms.py
 msgid "The time from case property"
@@ -40177,16 +40246,10 @@ msgid "Email case property can only be used with Email content"
 msgstr ""
 
 #: corehq/messaging/scheduling/forms.py
-#, fuzzy
-#| msgid ""
-#| "There is a configuration error with this survey. Please contact your "
-#| "administrator."
 msgid ""
 "Push Notifications is no longer available on this environment. Please "
 "contact Administrator."
 msgstr ""
-"Il y a une erreur de configuration pour cette enquête. Veuillez contacter "
-"votre administrateur."
 
 #: corehq/messaging/scheduling/forms.py
 msgid ""
@@ -40209,16 +40272,12 @@ msgid "Background Sync"
 msgstr ""
 
 #: corehq/messaging/scheduling/models/content.py
-#, fuzzy
-#| msgid "Display Blanks"
 msgid "Display Messages"
-msgstr "Affiche des vides"
+msgstr ""
 
 #: corehq/messaging/scheduling/models/content.py
-#, fuzzy
-#| msgid "Date of Message"
 msgid "Data Messages"
-msgstr "Date du message"
+msgstr ""
 
 #: corehq/messaging/scheduling/templates/scheduling/broadcasts_list.html
 msgid "Add Broadcast"

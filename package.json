@@ -116,11 +116,13 @@
         "moment-timezone": "^0.5.35",
         "qs": "^6.9.7",
         "set-value": "^4.0.1",
+        "tough-cookie": "^4.1.3",
         "yargs-parser": "^18.1.3",
         "underscore.string": "^3.3.5",
         "ansi-regex": "^5.0.1",
         "json-schema": "^0.4.0",
-        "nanoid": "^3.1.31"
+        "nanoid": "^3.1.31",
+        "word-wrap": "@aashutoshrathi/word-wrap"
     },
     "scripts": {
         "postinstall": "yarn run -s build:modernizr",
