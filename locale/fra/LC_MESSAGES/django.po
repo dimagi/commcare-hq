@@ -513,9 +513,7 @@ msgstr "Sélectionnez différents plans"
 msgid "Request Quote"
 msgstr "Requête de devis"
 
-#: corehq/apps/accounting/forms.py
-#: corehq/apps/cloudcare/templates/formplayer/query_view.html
-#: corehq/apps/commtrack/forms.py
+#: corehq/apps/accounting/forms.py corehq/apps/commtrack/forms.py
 #: corehq/apps/hqwebapp/templates/hqwebapp/partials/form_list_form.html
 #: corehq/apps/translations/forms.py
 msgid "Submit"
@@ -1080,6 +1078,7 @@ msgstr ""
 #: corehq/apps/reminders/templates/reminders/keyword_list.html
 #: corehq/apps/reports/forms.py
 #: corehq/apps/reports/templates/reports/async/default.html
+#: corehq/apps/reports/templates/reports/form/partials/single_form.html
 #: corehq/apps/reports/templates/reports/notification_unsubscribe.html
 #: corehq/apps/reports/templates/reports/partials/bulk_modal.html
 #: corehq/apps/reports/templates/reports/partials/data_corrections_modal.html
@@ -4031,6 +4030,11 @@ msgstr ""
 "pageId=38276915"
 
 #: corehq/apps/app_manager/helpers/validators.py
+msgid ""
+"Format \"{}\" can only be used once but is used by multiple properties: {}"
+msgstr ""
+
+#: corehq/apps/app_manager/helpers/validators.py
 msgid "Case tiles may only be used for the case list (not the case details)."
 msgstr ""
 "Les Plaques des dossiers peuvent être seulement utilisées pour la liste des "
@@ -5397,7 +5401,10 @@ msgstr ""
 "calendrier"
 
 #: corehq/apps/app_manager/suite_xml/post_process/instances.py
-msgid "Duplicate custom instance in {}: {}"
+#, python-brace-format
+msgid ""
+"Conflicting instance declarations in {entry_id} for {instance_id}:{src_1} != "
+"{src_2}"
 msgstr ""
 
 #: corehq/apps/app_manager/suite_xml/sections/entries.py
@@ -6946,6 +6953,7 @@ msgstr ""
 #: corehq/apps/programs/templates/programs/manage/programs.html
 #: corehq/apps/reminders/templates/reminders/keyword_list.html
 #: corehq/apps/reports/filters/users.py
+#: corehq/apps/reports/templates/reports/form/partials/single_form.html
 #: corehq/apps/reports/templates/reports/partials/scheduled_reports_table.html
 #: corehq/apps/reports/templates/reports/reports_home.html
 #: corehq/apps/reports/templates/reports/tableau_visualization.html
@@ -8113,6 +8121,18 @@ msgstr ""
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/case_list.html
 msgid "Case property to show"
 msgstr "Propriété de dossier à afficher"
+
+#: corehq/apps/app_manager/templates/app_manager/partials/modules/case_list.html
+msgid "Show case tiles grouped by parent case"
+msgstr ""
+
+#: corehq/apps/app_manager/templates/app_manager/partials/modules/case_list.html
+msgid "Parent case index name"
+msgstr ""
+
+#: corehq/apps/app_manager/templates/app_manager/partials/modules/case_list.html
+msgid "Case tile header rows"
+msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/case_list.html
 msgid "Use this case list tile persistently in forms"
@@ -9892,6 +9912,17 @@ msgid ""
 "                                    CommCare at this position."
 msgstr ""
 
+#: corehq/apps/app_manager/templates/app_manager/partials/session_endpoints.html
+msgid "Case List Session Endpoint ID"
+msgstr ""
+
+#: corehq/apps/app_manager/templates/app_manager/partials/session_endpoints.html
+msgid ""
+"A session endpoint ID to navigate to this\n"
+"                                        case list without doing selection on "
+"the case list."
+msgstr ""
+
 #: corehq/apps/app_manager/templates/app_manager/partials/settings/add_ons.html
 msgid ""
 "\n"
@@ -10798,6 +10829,16 @@ msgstr ""
 #, python-brace-format
 msgid "Session endpoint IDs must be unique. '{endpoint_id}' is already in-use"
 msgstr ""
+
+#: corehq/apps/app_manager/views/utils.py
+msgid "Custom assertions must not be blank."
+msgstr ""
+
+#: corehq/apps/app_manager/views/utils.py
+#, fuzzy
+#| msgid "Please add at least one visit"
+msgid "Please add a message for assertion."
+msgstr "Veuillez ajouter au moins une visite"
 
 #: corehq/apps/app_manager/views/utils.py
 msgid "There was an issue with your custom assertions: {}"
@@ -11733,6 +11774,7 @@ msgstr "Ajout de requête personnalisée"
 
 #: corehq/apps/case_search/templates/case_search/case_search.html
 #: corehq/apps/cloudcare/templates/form_entry/templates.html
+#: corehq/apps/cloudcare/templates/formplayer/query_view.html
 #: corehq/apps/domain/forms.py
 #: corehq/apps/domain/templates/domain/manage_releases_by_app_profile.html
 #: corehq/apps/reports/filters/simple.py
@@ -12874,14 +12916,8 @@ msgid "Visit CommCare's knowledge base"
 msgstr "Visiter la base de connaissance de CommCare"
 
 #: corehq/apps/data_dictionary/models.py
-msgid "Group description should be less than 255 characters"
-msgstr ""
-
-#: corehq/apps/data_dictionary/models.py
-#, fuzzy
-#| msgid "Group already has node for lang: {0}"
 msgid "Group \"{}\" already exists for case type \"{}\""
-msgstr "Le groupe a déjà node for lang: {0}"
+msgstr ""
 
 #: corehq/apps/data_dictionary/models.py
 msgid "Number"
@@ -12897,10 +12933,6 @@ msgstr "GPS"
 
 #: corehq/apps/data_dictionary/models.py
 msgid "No Type Currently Selected"
-msgstr ""
-
-#: corehq/apps/data_dictionary/models.py
-msgid "Property description should be less than 255 characters"
 msgstr ""
 
 #: corehq/apps/data_dictionary/models.py
@@ -12941,16 +12973,12 @@ msgid "Import from Excel"
 msgstr "Importer à partir d'Excel"
 
 #: corehq/apps/data_dictionary/templates/data_dictionary/base.html
-#, fuzzy
-#| msgid "Show Deprecated Properties"
 msgid "Show Deprecated"
-msgstr "Afficher les propriétés obsolètes"
+msgstr ""
 
 #: corehq/apps/data_dictionary/templates/data_dictionary/base.html
-#, fuzzy
-#| msgid "Hide Deprecated Properties"
 msgid "Hide Deprecated"
-msgstr "Masquer les propriétés obsolètes"
+msgstr ""
 
 #: corehq/apps/data_dictionary/templates/data_dictionary/base.html
 #: corehq/apps/data_dictionary/views.py
@@ -12962,16 +12990,12 @@ msgid "FHIR Resource Property Path"
 msgstr ""
 
 #: corehq/apps/data_dictionary/templates/data_dictionary/base.html
-#, fuzzy
-#| msgid "No properties will be saved"
 msgid "group's properties will be moved to"
-msgstr "Aucune propriété ne sera enregistrée"
+msgstr ""
 
 #: corehq/apps/data_dictionary/templates/data_dictionary/base.html
-#, fuzzy
-#| msgid "Group"
 msgid "No Group"
-msgstr "Groupe"
+msgstr ""
 
 #: corehq/apps/data_dictionary/templates/data_dictionary/base.html
 msgid "Case Property Group"
@@ -13003,10 +13027,8 @@ msgid "Valid Values &amp; Formats"
 msgstr ""
 
 #: corehq/apps/data_dictionary/util.py
-#, fuzzy
-#| msgid "Case Property Group"
 msgid "Case Property Group must have a name"
-msgstr "Groupe de propriété de dossier"
+msgstr ""
 
 #: corehq/apps/data_dictionary/util.py
 msgid "Case property must have a name"
@@ -18302,6 +18324,10 @@ msgid "Attendance Takers"
 msgstr ""
 
 #: corehq/apps/events/forms.py
+msgid "Please choose at least one Attendance Taker"
+msgstr ""
+
+#: corehq/apps/events/forms.py
 #, python-brace-format
 msgid "{self.title_prefix} Attendance Tracking Event"
 msgstr ""
@@ -21205,8 +21231,20 @@ msgstr ""
 msgid "Case Management Map"
 msgstr ""
 
+#: corehq/apps/geospatial/reports.py corehq/tabs/tabclasses.py
+msgid "Geospatial"
+msgstr ""
+
 #: corehq/apps/geospatial/templates/map_visualization.html
-msgid "Export Polygons as GeoJson"
+msgid "Filter by Saved Area"
+msgstr ""
+
+#: corehq/apps/geospatial/templates/map_visualization.html
+msgid "Export Area"
+msgstr ""
+
+#: corehq/apps/geospatial/templates/map_visualization.html
+msgid "Save Area"
 msgstr ""
 
 #: corehq/apps/groups/templates/groups/all_groups.html
@@ -30356,6 +30394,22 @@ msgid "Resave this form"
 msgstr "Réenregistrer ce formulaire"
 
 #: corehq/apps/reports/templates/reports/form/partials/single_form.html
+#, fuzzy
+#| msgid "Delete Form"
+msgid "Deleting Forms"
+msgstr "Supprimer le formulaire"
+
+#: corehq/apps/reports/templates/reports/form/partials/single_form.html
+msgid "This is a permanent action that cannot be undone."
+msgstr ""
+
+#: corehq/apps/reports/templates/reports/form/partials/single_form.html
+#, fuzzy
+#| msgid "Restore this form"
+msgid "Delete this form"
+msgstr "Restaurer ce formulaire"
+
+#: corehq/apps/reports/templates/reports/form/partials/single_form.html
 msgid "Unknown/Deleted Case"
 msgstr "Dossier inconnu / supprimé"
 
@@ -30370,6 +30424,28 @@ msgstr "Ouvrir XML dans une nouvelle fenêtre"
 #: corehq/apps/reports/templates/reports/form/partials/single_form.html
 msgid "Copy XML to clipboard"
 msgstr "Copier XML au clipboard"
+
+#: corehq/apps/reports/templates/reports/form/partials/single_form.html
+#, fuzzy
+#| msgid "Delete Form"
+msgid "Permanently Delete Form"
+msgstr "Supprimer le formulaire"
+
+#: corehq/apps/reports/templates/reports/form/partials/single_form.html
+msgid ""
+"\n"
+"              It is important you read the entire message below thoroughly "
+"before completing this action.\n"
+"            "
+msgstr ""
+
+#: corehq/apps/reports/templates/reports/form/partials/single_form.html
+msgid ""
+"\n"
+"              Once deleted, you will not be able to recover this form. Are "
+"you sure you want to delete this form?\n"
+"            "
+msgstr ""
 
 #: corehq/apps/reports/templates/reports/form/partials/single_form_tree.html
 msgid "Hidden Values (Form Calculations)"
@@ -31210,6 +31286,11 @@ msgstr ""
 #: corehq/apps/reports/views.py
 msgid "Undo"
 msgstr "Annuler"
+
+#: corehq/apps/reports/views.py
+#, python-brace-format
+msgid "Cannot delete form {instance_id} because it is not archived."
+msgstr ""
 
 #: corehq/apps/reports/views.py
 msgid "{} (this case)"
@@ -32707,6 +32788,10 @@ msgid "Message Sent Via Chat"
 msgstr "Message envoyé via chat"
 
 #: corehq/apps/sms/models.py
+msgid "FCM Push Notification"
+msgstr ""
+
+#: corehq/apps/sms/models.py
 msgid "User Group"
 msgstr "Groupe d'utilisateurs"
 
@@ -32843,6 +32928,30 @@ msgstr ""
 
 #: corehq/apps/sms/models.py
 msgid "Email Gateway Error"
+msgstr ""
+
+#: corehq/apps/sms/models.py
+msgid "No FCM tokens found for recipient."
+msgstr ""
+
+#: corehq/apps/sms/models.py
+msgid "FCM not available on this environment."
+msgstr ""
+
+#: corehq/apps/sms/models.py
+msgid "FCM is supported for Mobile Workers only."
+msgstr ""
+
+#: corehq/apps/sms/models.py
+msgid "No action selected for the FCM Data message type."
+msgstr ""
+
+#: corehq/apps/sms/models.py
+msgid "Failure while sending FCM notifications to the devices."
+msgstr ""
+
+#: corehq/apps/sms/models.py
+msgid "Domain is not enabled for FCM Push Notifications"
 msgstr ""
 
 #: corehq/apps/sms/templates/sms/backend_map.html
@@ -36702,13 +36811,11 @@ msgid "Invalid Deactivation Date format (expects MM-YYYY)."
 msgstr ""
 
 #: corehq/apps/users/forms.py
-#, fuzzy, python-brace-format
-#| msgid "Please enter a valid two or three digit language code."
+#, python-brace-format
 msgid ""
 "{code} is not a valid language code. Please enter a valid ISO-639 two- or "
 "three-digit code."
 msgstr ""
-"Veuillez saisir un code de langue valide composé de deux ou trois caractères"
 
 #: corehq/apps/users/forms.py
 msgid "Please enter a valid two or three digit language code."
@@ -38782,6 +38889,14 @@ msgstr ""
 "avant de pouvoir supprimer cet utilisateur."
 
 #: corehq/apps/users/views/mobile/users.py
+#, python-format
+msgid ""
+"User %s has been deleted. All their submissions and cases will be "
+"permanently\n"
+"        deleted in the next few minutes"
+msgstr ""
+
+#: corehq/apps/users/views/mobile/users.py
 msgid "User is already in Demo mode!"
 msgstr "L'utilisateur est déjà en mode de démonstration!"
 
@@ -39455,6 +39570,18 @@ msgstr ""
 msgid "Click to export your [case data]({})."
 msgstr ""
 
+#: corehq/messaging/fcm/exceptions.py
+msgid "One of the fields from 'title, body, data' is required!"
+msgstr ""
+
+#: corehq/messaging/fcm/exceptions.py
+msgid "FCM is not setup on this environment!"
+msgstr ""
+
+#: corehq/messaging/fcm/utils.py
+msgid "Max devices allowed is {}! Please execute in batches."
+msgstr ""
+
 #: corehq/messaging/scheduling/forms.py
 msgid "Please enter a valid 24-hour time in the format HH:MM"
 msgstr ""
@@ -39484,7 +39611,15 @@ msgid "Intervals"
 msgstr ""
 
 #: corehq/messaging/scheduling/forms.py
+msgid "Action on Notification"
+msgstr ""
+
+#: corehq/messaging/scheduling/forms.py
 msgid "Please fill out at least one translation"
+msgstr ""
+
+#: corehq/messaging/scheduling/forms.py
+msgid "This field must not exceed {} characters"
 msgstr ""
 
 #: corehq/messaging/scheduling/forms.py
@@ -39499,6 +39634,10 @@ msgstr ""
 msgid ""
 "Reminder intervals must add up to less than {} based on the current survey "
 "expiration"
+msgstr ""
+
+#: corehq/messaging/scheduling/forms.py
+msgid "Message type"
 msgstr ""
 
 #: corehq/messaging/scheduling/forms.py
@@ -39971,6 +40110,10 @@ msgid "Custom SMS"
 msgstr ""
 
 #: corehq/messaging/scheduling/forms.py
+msgid "Push Notification"
+msgstr ""
+
+#: corehq/messaging/scheduling/forms.py
 msgid "The time from case property"
 msgstr ""
 
@@ -40104,8 +40247,36 @@ msgstr ""
 
 #: corehq/messaging/scheduling/forms.py
 msgid ""
+"Push Notifications is no longer available on this environment. Please "
+"contact Administrator."
+msgstr ""
+
+#: corehq/messaging/scheduling/forms.py
+msgid ""
+"Push Notifications is not available for your project. Please contact "
+"Administrator."
+msgstr ""
+
+#: corehq/messaging/scheduling/forms.py
+msgid "'{}' recipient types are not supported for Push Notifications"
+msgstr ""
+
+#: corehq/messaging/scheduling/forms.py
+msgid ""
 "An instance of the schedule will be created for each open case matching all "
 "filter criteria below."
+msgstr ""
+
+#: corehq/messaging/scheduling/models/content.py
+msgid "Background Sync"
+msgstr ""
+
+#: corehq/messaging/scheduling/models/content.py
+msgid "Display Messages"
+msgstr ""
+
+#: corehq/messaging/scheduling/models/content.py
+msgid "Data Messages"
 msgstr ""
 
 #: corehq/messaging/scheduling/templates/scheduling/broadcasts_list.html
@@ -42738,6 +42909,11 @@ msgstr ""
 msgid "Application error report"
 msgstr ""
 
+#: corehq/privileges.py
+msgid ""
+"Show an additional 'Owner (Location)' property in report builder reports."
+msgstr ""
+
 #: corehq/reports.py
 msgid "Report Builder Reports"
 msgstr "Rapports de l'Éditeur de Rapports"
@@ -43015,10 +43191,6 @@ msgstr ""
 
 #: corehq/tabs/tabclasses.py
 msgid "Manage Attendance Tracking Events"
-msgstr ""
-
-#: corehq/tabs/tabclasses.py
-msgid "Geospatial"
 msgstr ""
 
 #: corehq/trans_override.py

@@ -34,10 +34,10 @@
                 data-bind="
                   html: ko.utils.unwrapObservable($data.caption_markdown) || caption(),
                 "></span>
-          <button class="btn btn-xs btn-danger del pull-right" href="#" data-bind="
+          <button class="btn btn-danger del pull-right" href="#" data-bind="
                       visible: isRepetition,
                       click: deleteRepeat
-                  ">{% trans "Delete repeat" %}</button>
+                  "><i class="fa fa-remove"></i></button>
         </legend>
       </div>
       <div data-bind="if: collapsible">
@@ -48,10 +48,10 @@
         </div>
         <span class="caption" data-bind="html: caption(), attr: {id: captionId()}"></span><!-- Markdown interferes with header styling -->
         <i class="fa fa-warning text-danger pull-right" data-bind="visible: hasError() && !showChildren()"></i>
-        <button class="btn btn-xs btn-danger del pull-right" href="#" data-bind="
+        <button class="btn btn-danger del pull-right" href="#" data-bind="
                     visible: isRepetition,
                     click: deleteRepeat
-                ">{% trans "Delete repeat" %}</button>
+                "><i class="fa fa-remove"></i></button>
       </div>
       <span class="ix"></span>
     </fieldset>
@@ -310,9 +310,12 @@
       </div>
     </div>
     <div class="panel-footer">
-      <button class="btn btn-default btn-xs add" href="#"
-              data-bind="click: newRepeat, text: getTranslation('repeat.dialog.add.new', '{% trans_html_attr 'Add new repeat' %}')"
-              id="repeat-add-new" />
+      <button class="btn btn-default add" href="#"
+              data-bind="click: newRepeat"
+              id="repeat-add-new">
+              <i class="fa fa-plus"></i>
+              <!-- ko text: getTranslation('repeat.dialog.add.new', '{% trans_html_attr 'Add new repeat' %}') --><!-- /ko -->
+      </button>
     </div>
   </div>
 </script>

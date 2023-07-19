@@ -289,18 +289,28 @@
         {% if not request.is_view_only %}
           <form class="form-inline">
             <input class="form-control" placeholder="Case Property" data-bind="value: newPropertyName">
-            <button class="btn btn-default" data-bind="click: $root.newCaseProperty">
+            <button class="btn btn-default" data-bind="click: $root.newCaseProperty, enable: newPropertyNameUnique()">
               <i class="fa fa-plus"></i>
               {% trans "Add Case Property" %}
             </button>
+            <div class="help-block">
+              <span class="text-danger" data-bind="visible: !newPropertyNameUnique()">
+                {% trans "A case property with this name already exists." %}
+              </span>
+            </div>
           </form>
           <br />
           <form class="form-inline">
             <input class="form-control" placeholder="Group Name" data-bind="value: newGroupName">
-            <button class="btn btn-default" data-bind="click: $root.newGroup">
+            <button class="btn btn-default" data-bind="click: $root.newGroup, enable: newGroupNameUnique()">
               <i class="fa fa-plus"></i>
               {% trans "Add Case Property Group" %}
             </button>
+            <div class="help-block">
+              <span class="text-danger" data-bind="visible: !newGroupNameUnique()">
+                {% trans "A case property group with this name already exists." %}
+              </span>
+            </div>
           </form>
         {% endif %}
       </div>

@@ -41,10 +41,19 @@ hqDefine("cloudcare/js/formplayer/app", function () {
                 breadcrumb: "#breadcrumb-region",
                 persistentCaseTile: "#persistent-case-tile",
                 restoreAsBanner: '#restore-as-region',
+                sidebar: '#sidebar-region',
             },
         });
 
         FormplayerFrontend.regions = new RegionContainer();
+        let sidebar = FormplayerFrontend.regions.getRegion('sidebar');
+        sidebar.on('show', function () {
+            $('#menu-container .flex-container').addClass('full-width');
+        });
+        sidebar.on('hide empty', function (region) {
+            $('#menu-container .flex-container').removeClass('full-width');
+        });
+
         hqRequire(["cloudcare/js/formplayer/router"], function (Router) {
             FormplayerFrontend.router = Router.start();
         });
@@ -128,6 +137,7 @@ hqDefine("cloudcare/js/formplayer/app", function () {
 
     FormplayerFrontend.getChannel().reply('clearMenu', function () {
         $('#menu-region').html("");
+        $('#sidebar-region').html("");
     });
 
     $(document).on("ajaxStart", function () {
@@ -712,6 +722,7 @@ hqDefine("cloudcare/js/formplayer/app", function () {
             appId,
             currentUser = FormplayerFrontend.getChannel().request('currentUser');
         urlObject.clearExceptApp();
+        FormplayerFrontend.regions.getRegion('sidebar').empty();
         FormplayerFrontend.regions.getRegion('breadcrumb').empty();
         if (currentUser.displayOptions.singleAppMode) {
             appId = FormplayerFrontend.getChannel().request('getCurrentAppId');
