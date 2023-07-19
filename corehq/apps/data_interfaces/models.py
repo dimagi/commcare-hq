@@ -345,8 +345,9 @@ class AutomaticUpdateRule(models.Model):
         if case.type != self.case_type:
             return False
 
-        case_not_modified_since = not(self.filter_on_server_modified
-            and (case.server_modified_on > (now - timedelta(days=self.server_modified_boundary))))
+        if self.filter_on_server_modified and \
+           (case.server_modified_on > (now - timedelta(days=self.server_modified_boundary))):
+            return False
 
         def _evaluate_criteria(criteria):
             try:
