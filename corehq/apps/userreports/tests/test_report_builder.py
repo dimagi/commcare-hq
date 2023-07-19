@@ -146,7 +146,7 @@ class DataSourceBuilderTest(ReportBuilderDBTest):
         self.assertEqual('first_name', first_name_prop.get_id())
         self.assertEqual('first name', first_name_prop.get_text())
 
-    @patch('corehq.apps.userreports.reports.builder.forms.domain_has_privilege', return_value=True)
+    @patch('corehq.apps.userreports.reports.builder.forms.domain_has_privilege_from_toggle', return_value=True)
     def test_owner_as_location(self, *args):
         builder = ApplicationCaseDataSourceHelper(self.domain, self.app, DATA_SOURCE_TYPE_CASE, self.case_type)
 
