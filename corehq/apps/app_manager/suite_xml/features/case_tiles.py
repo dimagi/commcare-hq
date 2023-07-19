@@ -1,16 +1,17 @@
 import json
-from dataclasses import dataclass
+from dataclasses import dataclass, field as dataclass_field
 from django.db import models
 from django.utils.translation import gettext_lazy as _
 from eulxml.xmlmap.core import load_xmlobject_from_string
 from memoized import memoized
 from pathlib import Path
-from typing import List
+from typing import List, Dict
 from xml.sax.saxutils import escape
 
 from corehq.apps.app_manager import id_strings
 from corehq.apps.app_manager.exceptions import SuiteError
-from corehq.apps.app_manager.suite_xml.xml_models import Detail, XPathVariable
+from corehq.apps.app_manager.suite_xml.sections.entries import EntriesHelper
+from corehq.apps.app_manager.suite_xml.xml_models import Detail, XPathVariable, TileGroup
 from corehq.apps.app_manager.util import (
     module_offers_search,
     module_uses_inline_search,
@@ -26,13 +27,16 @@ class CaseTileTemplates(models.TextChoices):
     ONE_TWO_ONE = ("one_two_one", _("Title row, second row with two cells, third row, and map"))
     ONE_TWO_ONE_ONE = ("one_two_one_one", _("Title row, second row with two cells, third and "
                                             "fourth rows, and map"))
-
+    ONE_3X_TWO_4X_ONE_2X = ("one_3X_two_4X_one_2X", _("Three upper rows, four rows with two cells, two lower rows "
+                                                    "and map"))
 
 @dataclass
 class CaseTileTemplateConfig:
-    slug: str
-    filename: str
-    fields: List[str]
+    slug: str = ''
+    filename: str = ''
+    has_map: bool = ''
+    fields: List[str] = dataclass_field(default_factory=lambda: [])
+    grid: Dict[str, Dict[str, int]] = dataclass_field(default_factory=lambda: {})
 
     @property
     def filepath(self):
@@ -41,16 +45,20 @@ class CaseTileTemplateConfig:
 
 @memoized
 def case_tile_template_config(template):
-    with open(
-        TILE_DIR / (template + '.json'),
-        encoding='utf-8'
-    ) as f:
-        data = json.loads(f.read())
+    try:
+        with open(
+            TILE_DIR / (template + '.json'),
+            encoding='utf-8'
+        ) as f:
+            data = json.loads(f.read())
+    except FileNotFoundError:
+        data = {}
     return CaseTileTemplateConfig(**data)
 
 
 class CaseTileHelper(object):
-    def __init__(self, app, module, detail, detail_id, detail_type, build_profile_id):
+    def __init__(self, app, module, detail, detail_id, detail_type, build_profile_id, detail_column_infos,
+                 entries_helper):
         self.app = app
         self.module = module
         self.detail = detail
@@ -58,6 +66,8 @@ class CaseTileHelper(object):
         self.detail_type = detail_type
         self.cols_by_tile_field = {col.case_tile_field: col for col in self.detail.columns}
         self.build_profile_id = build_profile_id
+        self.detail_column_infos = detail_column_infos
+        self.entries_helper = entries_helper
 
     def build_case_tile_detail(self):
         from corehq.apps.app_manager.suite_xml.sections.details import DetailContributor
@@ -78,13 +88,33 @@ class CaseTileHelper(object):
         detail_as_string = self._case_tile_template_string.format(**context)
         detail = load_xmlobject_from_string(detail_as_string, xmlclass=Detail)
 
+        # Case registration
+        # The Person simple template already defines a registration action. Since it is used in production
+        # it would be a lot of trouble to change it. So if this template is used we will not add another
+        # registration action.
+        uses_person_simple = self.detail.case_tile_template and \
+            self.detail.case_tile_template == CaseTileTemplates.PERSON_SIMPLE.value
+        if not uses_person_simple and self.module.case_list_form and self.module.case_list_form.form_id:
+            DetailContributor.add_register_action(
+                self.app, self.module, detail.actions, self.build_profile_id, self.entries_helper)
+
         # Add case search action if needed
         if module_offers_search(self.module) and not module_uses_inline_search(self.module):
-            detail.actions.append(
-                DetailContributor.get_case_search_action(self.module, self.build_profile_id, self.detail_id)
-            )
+            if (case_search_action := DetailContributor.get_case_search_action(
+                self.module,
+                self.build_profile_id,
+                self.detail_id
+            )) is not None:
+                detail.actions.append(case_search_action)
 
+        self._populate_sort_elements_in_detail(detail)
         DetailContributor.add_no_items_text_to_detail(detail, self.app, self.detail_type, self.module)
+
+        if self.module.has_grouped_tiles():
+            detail.tile_group = TileGroup(
+                function=f"string(./index/{self.detail.case_tile_group.index_identifier})",
+                header_rows=self.detail.case_tile_group.header_rows
+            )
 
         return detail
 
@@ -112,15 +142,9 @@ class CaseTileHelper(object):
         }
 
     def _get_column_context(self, column):
-        from corehq.apps.app_manager.detail_screen import get_column_generator
         default_lang = self.app.default_language if not self.build_profile_id \
             else self.app.build_profiles[self.build_profile_id].langs[0]
-        if column.useXpathExpression:
-            xpath_function = escape(column.field, {'"': '&quot;'})
-        else:
-            xpath_function = escape(get_column_generator(
-                self.app, self.module, self.detail, column).xpath_function,
-                {'"': '&quot;'})
+        xpath_function = self._get_xpath_function(column)
         context = {
             "xpath_function": xpath_function,
             "locale_id": id_strings.detail_column_header_locale(
@@ -133,18 +157,24 @@ class CaseTileHelper(object):
             ),
             "format": column.format
         }
-        if column.enum and column.format != "enum" and column.format != "conditional-enum":
-            raise SuiteError(
-                'Expected case tile field "{}" to be an id mapping with keys {}.'.format(
-                    column.case_tile_field,
-                    ", ".join(['"{}"'.format(i.key) for i in column.enum])
-                )
-            )
 
         context['variables'] = ''
-        if column.format == "enum" or column.format == 'conditional-enum':
+        if column.format in ["enum", "conditional-enum", "enum-image"]:
             context["variables"] = self._get_enum_variables(column)
         return context
+
+    def _get_xpath_function(self, column):
+        from corehq.apps.app_manager.detail_screen import get_column_generator
+        if column.useXpathExpression:
+            xpath_function = self._escape_xpath_function(column.field)
+        else:
+            xpath_function = self._escape_xpath_function(get_column_generator(
+                self.app, self.module, self.detail, column).xpath_function)
+        return xpath_function
+
+    @staticmethod
+    def _escape_xpath_function(xpath_function):
+        return escape(xpath_function, {'"': '&quot;'})
 
     def _get_enum_variables(self, column):
         variables = []
@@ -168,3 +198,44 @@ class CaseTileHelper(object):
         """
         with open(case_tile_template_config(self.detail.case_tile_template).filepath, encoding='utf-8') as f:
             return f.read()
+
+    def _populate_sort_elements_in_detail(self, detail):
+        #  Excludes legacy tile template to preserve behavior of existing apps using this template.
+        if self.detail.case_tile_template != CaseTileTemplates.PERSON_SIMPLE.value:
+            xpath_to_field = self._get_xpath_mapped_to_field_containing_sort()
+            for field in detail.fields:
+                populated_xpath_function = self._escape_xpath_function(field.template.text.xpath_function)
+                if populated_xpath_function in xpath_to_field:
+                    # Adds sort element to the field
+                    field.sort_node = xpath_to_field.pop(populated_xpath_function).sort_node
+
+            # detail.fields contains only display properties, not sort-only properties.
+            # This adds to detail, hidden fields that contain sort elements.
+            for field in xpath_to_field.values():
+                detail.fields.append(field)
+
+    def _get_xpath_mapped_to_field_containing_sort(self):
+        xpath_to_field = {}
+        for column_info in self.detail_column_infos:
+            # column_info is an instance of DetailColumnInfo named tuple.
+            from corehq.apps.app_manager.detail_screen import get_column_generator
+            fields = get_column_generator(
+                self.app, self.module, self.detail,
+                detail_type=self.detail_type, *column_info
+            ).fields
+            for field in fields:
+                if field.sort_node:
+                    xpath_func = self._get_xpath_function(column_info.column)
+                    # Handling this for safety, but there likely isn't a use case that would reach this state.
+                    if xpath_func in xpath_to_field:
+                        field = self._compare_fields_by_order(xpath_to_field[xpath_func], field)
+                    xpath_to_field[xpath_func] = field
+        return xpath_to_field
+
+    @staticmethod
+    def _compare_fields_by_order(initial_field, incoming_field):
+        if incoming_field.sort_node.order is None:
+            return initial_field
+        elif initial_field.sort_node.order is None:
+            return incoming_field
+        return min(initial_field, incoming_field, key=lambda field: field.sort_node.order)

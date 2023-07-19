@@ -14,16 +14,17 @@ from copy import deepcopy
 from datetime import datetime
 from warnings import warn
 
-from django.conf import settings
 from django.utils.dateparse import parse_date, parse_datetime
+
 from memoized import memoized
+
+from dimagi.utils.parsing import json_format_datetime
 
 from corehq.apps.case_search.const import (
     CASE_PROPERTIES_PATH,
     IDENTIFIER,
     INDEXED_ON,
     INDICES_PATH,
-    IS_RELATED_CASE,
     REFERENCED_ID,
     RELEVANCE_SCORE,
     SPECIAL_CASE_PROPERTIES_MAP,
@@ -32,19 +33,21 @@ from corehq.apps.case_search.const import (
 )
 from corehq.apps.es.cases import CaseES, owner
 from corehq.util.dates import iso_string_to_datetime
-from dimagi.utils.parsing import json_format_datetime
 
 from . import filters, queries
 from .cases import case_adapter
 from .client import ElasticDocumentAdapter, create_document_adapter
+from .const import (
+    HQ_CASE_SEARCH_INDEX_CANONICAL_NAME,
+    HQ_CASE_SEARCH_INDEX_NAME,
+    HQ_CASE_SEARCH_SECONDARY_INDEX_NAME,
+)
 from .index.analysis import PHONETIC_ANALYSIS
 from .index.settings import IndexSettingsKey
 
 PROPERTY_KEY = "{}.key.exact".format(CASE_PROPERTIES_PATH)
 PROPERTY_VALUE = '{}.{}'.format(CASE_PROPERTIES_PATH, VALUE)
 PROPERTY_VALUE_EXACT = '{}.{}.exact'.format(CASE_PROPERTIES_PATH, VALUE)
-
-HQ_CASE_SEARCH_INDEX_CANONICAL_NAME = "case_search"
 
 
 class CaseSearchES(CaseES):
@@ -181,8 +184,9 @@ class ElasticCaseSearch(ElasticDocumentAdapter):
 
 case_search_adapter = create_document_adapter(
     ElasticCaseSearch,
-    getattr(settings, "ES_CASE_SEARCH_INDEX_NAME", "case_search_2018-05-29"),
+    HQ_CASE_SEARCH_INDEX_NAME,
     case_adapter.type,
+    secondary=HQ_CASE_SEARCH_SECONDARY_INDEX_NAME,
 )
 
 

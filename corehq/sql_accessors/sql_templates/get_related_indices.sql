@@ -23,13 +23,14 @@ BEGIN
 
     UNION
 
-    -- open extension and child cases
+    -- open extension cases
     SELECT DISTINCT form_processor_commcarecaseindexsql.*
     FROM form_processor_commcarecaseindexsql
     JOIN form_processor_commcarecasesql USING (domain, case_id)
     JOIN case_ids ON cid = referenced_id -- referenced_id points to host
     WHERE domain = domain_name
         AND case_id || ' ' || identifier  NOT IN (SELECT xid FROM exclude_indices)
+        AND relationship_id = 2 -- is extension case
         AND NOT closed
         AND NOT deleted;
 END;

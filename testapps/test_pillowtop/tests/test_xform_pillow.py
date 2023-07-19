@@ -173,7 +173,7 @@ class XFormPillowTest(TestCase):
         UserReportingMetadataStaging.add_heartbeat(
             self.domain, self.user._id, self.metadata.app_id,
             '123', sync_date, 'heartbeat_device_id',
-            230, 2, 10, 'CommCare 2.28', 'en'
+            230, 2, 10, 'CommCare 2.28', 'en', 'acegi'
         )
 
         self.assertEqual(UserReportingMetadataStaging.objects.count(), 1)
@@ -188,6 +188,7 @@ class XFormPillowTest(TestCase):
         self.assertEqual(ccuser.reporting_metadata.last_syncs[0].sync_date, sync_date)
         self.assertEqual(ccuser.reporting_metadata.last_sync_for_user.sync_date, sync_date)
         self.assertEqual(ccuser.last_device.device_id, 'heartbeat_device_id')
+        self.assertEqual(ccuser.last_device.fcm_token, 'acegi')
         app_meta = ccuser.last_device.get_last_used_app_meta()
         self.assertEqual(app_meta.num_unsent_forms, 2)
         self.assertEqual(app_meta.num_quarantined_forms, 10)
