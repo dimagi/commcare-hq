@@ -109,11 +109,8 @@ from corehq.motech.views import ConnectionSettingsListView, MotechLogListView
 from corehq.privileges import DAILY_SAVED_EXPORT, EXCEL_DASHBOARD, DATA_DICTIONARY
 from corehq.tabs.uitab import UITab
 from corehq.tabs.utils import dropdown_dict, sidebar_to_dropdown
-<<<<<<< HEAD
 from corehq.apps.users.models import HqPermissions
-=======
 from corehq.apps.geospatial.views import GeospatialConfigPage
->>>>>>> master
 
 
 class ProjectReportsTab(UITab):
