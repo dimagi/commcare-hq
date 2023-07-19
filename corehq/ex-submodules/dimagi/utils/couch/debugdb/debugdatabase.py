@@ -227,8 +227,6 @@ class DebugViewResults57(ViewResults):
 
 if couchdbkit.version_info < (0, 6, 0):
     DebugViewResults = DebugViewResults57
-
-    couchdbkit.client.ViewResults = DebugViewResults57
 else:
     DebugViewResults = DebugViewResults64
 
