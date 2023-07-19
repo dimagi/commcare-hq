@@ -366,6 +366,14 @@ class Command(BaseCommand):
                  "but is necessary if existings docs contain _ids in the source, as it is now a reserved property."
         )
 
+        start_cmd.add_argument(
+            "--requests_per_second",
+            default=None,
+            type=int,
+            help="""throttles rate at which reindex issues batches of
+                    index operations by padding each batch with a wait time"""
+        )
+
         # Get ReIndex Process Status
         status_cmd = subparsers.add_parser("status")
         status_cmd.set_defaults(func=self.es_helper.reindex_status)
@@ -415,7 +423,10 @@ class Command(BaseCommand):
         sub_cmd = options['sub_command']
         cmd_func = options.get('func')
         if sub_cmd == 'start':
-            cmd_func(options['index_cname'], options['batch_size'], options['purge_ids'])
+            cmd_func(
+                options['index_cname'], options['batch_size'],
+                options['purge_ids'], options['requests_per_second']
+            )
         elif sub_cmd == 'delete':
             cmd_func(options['index_cname'])
         elif sub_cmd == 'cleanup':
