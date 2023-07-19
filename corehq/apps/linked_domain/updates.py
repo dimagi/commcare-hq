@@ -109,6 +109,8 @@ from corehq.apps.users.views.mobile import UserFieldsView
 from corehq.toggles import NAMESPACE_DOMAIN, EMBEDDED_TABLEAU
 from corehq.toggles.shortcuts import set_toggle
 
+from corehq.apps.users.role_utils import UserRolePresets
+
 
 def update_model_type(domain_link, model_type, model_detail=None):
     update_fn = {
@@ -253,54 +255,100 @@ def update_fixture(domain_link, tag):
 
 def update_user_roles(domain_link):
     if domain_link.is_remote:
-        master_results = remote_get_user_roles(domain_link)
+        upstream_roles = remote_get_user_roles(domain_link)
     else:
-        master_results = local_get_user_roles(domain_link.master_domain)
+        upstream_roles = local_get_user_roles(domain_link.master_domain)
 
-    _convert_reports_permissions(domain_link, master_results)
+    _convert_reports_permissions(domain_link, upstream_roles)
 
-    local_roles = UserRole.objects.get_by_domain(domain_link.linked_domain, include_archived=True)
-    local_roles_by_name = {}
-    local_roles_by_upstream_id = {}
-    for role in local_roles:
-        local_roles_by_name[role.name] = role
+    downstream_roles = UserRole.objects.get_by_domain(domain_link.linked_domain, include_archived=True)
+    downstream_roles_by_upstream_id = {}
+    for role in downstream_roles:
         if role.upstream_id:
-            local_roles_by_upstream_id[role.upstream_id] = role
+            downstream_roles_by_upstream_id[role.upstream_id] = role
 
     is_embedded_tableau_enabled = EMBEDDED_TABLEAU.enabled(domain_link.linked_domain)
     if is_embedded_tableau_enabled:
         visualizations_for_linked_domain = TableauVisualization.objects.filter(
             domain=domain_link.linked_domain)
+    failed_updates = []
+    successful_updates = []
 
     # Update downstream roles based on upstream roles
-    for role_def in master_results:
-        role = local_roles_by_upstream_id.get(role_def['_id']) or local_roles_by_name.get(role_def['name'])
+    for upstream_role_def in upstream_roles:
+        role, conflicting_role = _get_matching_downstream_role(upstream_role_def, downstream_roles)
+
+        if conflicting_role:
+            failed_updates.append(upstream_role_def)
+            continue
+
         if not role:
             role = UserRole(domain=domain_link.linked_domain)
-        local_roles_by_upstream_id[role_def['_id']] = role
-        role.upstream_id = role_def['_id']
 
-        role.name = role_def["name"]
-        role.default_landing_page = role_def["default_landing_page"]
-        role.is_non_admin_editable = role_def["is_non_admin_editable"]
-        role.save()
+        downstream_roles_by_upstream_id[upstream_role_def['_id']] = role
 
-        permissions = HqPermissions.wrap(role_def["permissions"])
+        _copy_role_attributes(upstream_role_def, role)
+        permissions = HqPermissions.wrap(upstream_role_def["permissions"])
         if is_embedded_tableau_enabled:
             permissions.view_tableau_list = _get_new_tableau_report_permissions(
                 visualizations_for_linked_domain, permissions, role.permissions)
+        role.save()
         role.set_permissions(permissions.to_list())
 
+        successful_updates.append(upstream_role_def)
+
     # Update assignable_by ids - must be done after main update to guarantee all local roles have ids
-    for role_def in master_results:
-        local_role = local_roles_by_upstream_id[role_def['_id']]
+    for upstream_role_def in successful_updates:
+        downstream_role = downstream_roles_by_upstream_id[upstream_role_def['_id']]
         assignable_by = []
-        if role_def["assignable_by"]:
+        if upstream_role_def["assignable_by"]:
             assignable_by = [
-                local_roles_by_upstream_id[role_id].id
-                for role_id in role_def["assignable_by"]
+                downstream_roles_by_upstream_id[role_id].id
+                for role_id in upstream_role_def["assignable_by"]
             ]
-        local_role.set_assignable_by(assignable_by)
+        downstream_role.set_assignable_by(assignable_by)
+
+    if failed_updates:
+        conflicting_role_names = ', '.join(['"{}"'.format(role['name']) for role in failed_updates])
+        error_msg = _('Failed to sync the following roles due to a conflict: {}.'
+            ' Please remove or rename these roles before syncing again').format(conflicting_role_names)
+        raise UnsupportedActionError(error_msg)
+
+
+def _get_matching_downstream_role(upstream_role_json, downstream_roles):
+    matching_role = None
+    conflicting_role = None
+
+    for downstream_role in downstream_roles:
+        if upstream_role_json['_id'] == downstream_role.upstream_id:
+            matching_role = downstream_role
+        elif upstream_role_json['name'] == downstream_role.name:
+            if _is_default_built_in_role(upstream_role_json, downstream_role):
+                matching_role = downstream_role
+            else:
+                conflicting_role = downstream_role
+
+    return (matching_role, conflicting_role)
+
+
+def _is_default_built_in_role(upstream_role_json, downstream_role):
+    initial_role_names = UserRolePresets.INITIAL_ROLES.keys()
+    if downstream_role.name not in initial_role_names:
+        return False
+
+    default_permissions = UserRolePresets.INITIAL_ROLES[downstream_role.name]()
+    upstream_permissions = HqPermissions.wrap(upstream_role_json['permissions'])
+    if (upstream_permissions == downstream_role.permissions == default_permissions):
+        return True
+
+    return False
+
+
+def _copy_role_attributes(source_role_json, dest_role):
+    dest_role.name = source_role_json['name']
+    dest_role.default_landing_page = source_role_json['default_landing_page']
+    dest_role.is_non_admin_editable = source_role_json['is_non_admin_editable']
+    dest_role.upstream_id = source_role_json['_id']
 
 
 def update_case_search_config(domain_link):
