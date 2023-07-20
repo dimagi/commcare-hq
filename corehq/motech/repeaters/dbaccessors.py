@@ -258,14 +258,13 @@ def get_domains_that_have_repeat_records():
 @unit_testing_only
 def delete_all_repeat_records():
     from .models import RepeatRecord
-    results = RepeatRecord.get_db().view('repeaters/repeat_records', reduce=False).all()
-    for result in results:
-        try:
-            repeat_record = RepeatRecord.get(result['id'])
-        except Exception:
-            pass
-        else:
-            repeat_record.delete()
+    db = RepeatRecord.get_db()
+    results = db.view(
+        'repeaters/repeat_records_by_payload_id',
+        reduce=False,
+        include_docs=True,
+    ).all()
+    db.bulk_delete([r["doc"] for r in results], empty_on_delete=False)
 
 
 @unit_testing_only
