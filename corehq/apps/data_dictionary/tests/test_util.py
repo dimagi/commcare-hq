@@ -14,7 +14,7 @@ from corehq.apps.data_dictionary.util import (
     is_case_type_deprecated,
     get_data_dict_deprecated_case_types,
     get_column_headings,
-    row_to_dict,
+    map_row_values_to_column_names,
 )
 
 
@@ -171,17 +171,19 @@ class MiscUtilTest(TestCase):
     def test_get_column_headings(self):
         case_type = 'case'
         expected_errors = [
-            f"Invalid column \"{self.invalid_col}\" in case type {case_type}",
-            f"Column 4 in case type {case_type} has an empty header"
+            f"Invalid column \"{self.invalid_col}\" in case type \"{case_type}\". "
+            "Valid column names are: Foo, Bar, Test Column",
+            f"Column 4 in case type \"{case_type}\" has an empty header",
+            f"Missing \"Case Property\" column header for case type \"{case_type}\"",
         ]
-        column_headings, errors = get_column_headings(self.invalid_header_row, self.valid_values, case_type)
+        column_headings, errors = get_column_headings(
+            self.invalid_header_row, self.valid_values, case_type, case_prop_name='Prop')
         self.assertEqual(column_headings, ['col_1', 'col_3'])
         self.assertEqual(errors, expected_errors)
 
-    def test_row_to_dict(self):
-        case_type = 'case'
-        column_headings, _ = get_column_headings(self.valid_header_row, self.valid_values, case_type)
-        row_vals = row_to_dict(self.row, column_headings, default_val='empty')
+    def test_map_row_values_to_column_names(self):
+        column_headings, _ = get_column_headings(self.valid_header_row, self.valid_values)
+        row_vals = map_row_values_to_column_names(self.row, column_headings, default_val='empty')
         expected_output = {
             'col_1': 'a',
             'col_2': 'b',
