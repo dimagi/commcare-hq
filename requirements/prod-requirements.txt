@@ -465,7 +465,7 @@ pycryptodomex==3.14.1
     #   pyjwkest
 pygithub==1.55
     # via -r base-requirements.in
-pygments==2.11.2
+pygments==2.15.0
     # via ipython
 pyjwkest==1.4.2
     # via oic
