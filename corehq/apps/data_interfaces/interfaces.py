@@ -50,10 +50,13 @@ class CaseReassignmentInterface(CaseListMixin, BulkDataInterface):
     @property
     @memoized
     def es_results(self):
+        return self._es_query.run().raw
+
+    @property
+    def _es_query(self):
         query = self._build_query()
         # FB 183468: Don't allow user cases to be reassigned
-        query = query.NOT(case_es.case_type(USERCASE_TYPE))
-        return query.run().raw
+        return query.NOT(case_es.case_type(USERCASE_TYPE))
 
     @property
     def template_context(self):
@@ -119,9 +122,8 @@ class CaseReassignmentInterface(CaseListMixin, BulkDataInterface):
 
         # If we use self.es_results we're limited to the pagination set on the
         # UI by the user
-        es_results = self._build_query()\
+        es_results = self._es_query\
             .size(self.total_records)\
-            .NOT(case_es.case_type(USERCASE_TYPE))\
             .run().raw
 
         case_ids = [
