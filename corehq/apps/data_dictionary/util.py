@@ -345,9 +345,10 @@ def get_column_headings(row, valid_values, case_type=None, case_prop_name=None):
     return column_headings, errors
 
 
-def row_to_dict(row, column_headings, default_val=None):
+def map_row_values_to_column_names(row, column_headings, default_val=None):
     row_vals = defaultdict(lambda: default_val)
     for index, cell in enumerate(row):
         column_name = column_headings[index]
-        row_vals[column_name] = cell.value if cell.value else default_val
+        cell_val = '' if cell.value is None else str(cell.value)
+        row_vals[column_name] = cell_val
     return row_vals
