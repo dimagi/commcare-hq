@@ -43,14 +43,15 @@ class BaseRepeatRecordCouchToSQLTest(TestCase):
             include_app_id_param=False,
         )
 
-    def create_repeat_record(self, unwrap_doc=True):
+    def create_repeat_record(self, unwrap_doc=True, repeater=None):
         def data(**extra):
             return {
                 'domain': repeater.domain,
                 'payload_id': payload_id,
                 **extra,
             }
-        repeater = self.repeater1
+        if repeater is None:
+            repeater = self.repeater1
         now = datetime.utcnow().replace(microsecond=0)
         payload_id = uuid4().hex
         obj = SQLRepeatRecord(repeater_id=repeater.id, registered_at=now, **data())
@@ -249,6 +250,18 @@ class TestRepeatRecordCouchToSQLMigration(BaseRepeatRecordCouchToSQLTest):
         ):
             call_command('populate_repeatrecords', log_path=log.path)
             assert not log.content, log.content  # doc should have been implicitly ignored (already migrated)
+
+    def test_migrate_domain(self):
+        with patch.object(self.repeater2, "domain", "other"), templog() as log:
+            docs = {}
+            for repeater in [self.repeater1, self.repeater2]:
+                doc, obj = self.create_repeat_record(unwrap_doc=False, repeater=repeater)
+                doc.save(sync_to_sql=False)
+                docs[repeater.domain] = doc
+
+            call_command('populate_repeatrecords', domains=["other"], log_path=log.path)
+            self.assertIn(f'Created model for RepeatRecord with id {docs["other"]._id}\n', log.content)
+            self.assertNotIn(docs["test"]._id, log.content)
 
     def diff(self, doc, obj):
         return do_diff(Command, doc, obj)

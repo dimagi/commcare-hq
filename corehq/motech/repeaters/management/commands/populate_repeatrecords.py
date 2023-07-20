@@ -78,31 +78,51 @@ class Command(PopulateSQLCommand):
         return {d["_id"] for d in docs if d["repeater_id"] not in existing_ids}
 
     def _get_couch_doc_count_for_type(self):
-        from ...models import RepeatRecord
-        result = RepeatRecord.get_db().view(
-            'repeaters/repeat_records',
-            include_docs=False,
-            reduce=True,
-            descending=True,
-        ).one()
-        if not result:
-            return 0
-        # repeaters/repeat_records's map emits twice per doc, so its count is doubled
-        # repeaters/repeat_records_by_payload_id has no reduce, so cannot be used
-        assert result['value'] % 2 == 0, result['value']
-        return int(result['value'] / 2)
+        return count_docs()
 
     def _get_all_couch_docs_for_model(self, chunk_size):
-        from ...models import RepeatRecord
-        # repeaters/repeat_records_by_payload_id's map emits once per document
-        for result in paginate_view(
-            RepeatRecord.get_db(),
-            'repeaters/repeat_records_by_payload_id',
-            chunk_size=chunk_size,
-            include_docs=True,
-            reduce=False,
-        ):
-            yield result['doc']
+        yield from iter_docs(chunk_size)
+
+    def _get_couch_doc_count_for_domains(self, domains):
+        def count_domain_docs(domain):
+            return count_docs(startkey=[domain], endkey=[domain, {}])
+        return sum(count_domain_docs(d) for d in domains)
+
+    def _iter_couch_docs_for_domains(self, domains, chunk_size):
+        def iter_domain_docs(domain):
+            return iter_docs(chunk_size, startkey=[domain], endkey=[domain, {}])
+        for domain in domains:
+            yield from iter_domain_docs(domain)
+
+
+def count_docs(**params):
+    from ...models import RepeatRecord
+    result = RepeatRecord.get_db().view(
+        'repeaters/repeat_records',
+        include_docs=False,
+        reduce=True,
+        **params,
+    ).one()
+    if not result:
+        return 0
+    # repeaters/repeat_records's map emits twice per doc, so its count is doubled
+    # repeaters/repeat_records_by_payload_id has no reduce, so cannot be used
+    assert result['value'] % 2 == 0, result['value']
+    return int(result['value'] / 2)
+
+
+def iter_docs(chunk_size, **params):
+    from ...models import RepeatRecord
+    # repeaters/repeat_records_by_payload_id's map emits once per document
+    for result in paginate_view(
+        RepeatRecord.get_db(),
+        'repeaters/repeat_records_by_payload_id',
+        chunk_size=chunk_size,
+        include_docs=True,
+        reduce=False,
+        **params,
+    ):
+        yield result['doc']
 
 
 def get_state(doc):
