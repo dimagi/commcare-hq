@@ -117,11 +117,17 @@ class CaseReassignmentInterface(CaseListMixin, BulkDataInterface):
                 _("An owner_id needs to be specified to bulk reassign cases")
             )
 
+        # If we use self.es_results we're limited to the pagination set on the
+        # UI by the user
+        es_results = self._build_query()\
+            .size(self.total_records)\
+            .NOT(case_es.case_type(USERCASE_TYPE))\
+            .run().raw
+
         case_ids = [
             self.get_case(row)['_id']
-            for row in self.es_results['hits'].get('hits', [])
+            for row in es_results['hits'].get('hits', [])
         ]
-
         task_ref = expose_cached_download(
             payload=case_ids, expiry=60 * 60, file_extension=None
         )
