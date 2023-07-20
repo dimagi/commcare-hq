@@ -12,19 +12,6 @@ from .models import GeoPolygon
 
 
 
-def _get_geo_location(case):
-    geo_point = case['case_json'].get(GEO_POINT_CASE_PROPERTY)
-    if not geo_point:
-        return
-    try:
-        # Update if we need altitude and accuracy
-        lat, lon, _alt, _acc = geo_point.split(" ")
-        return {"lat": float(lat), "lng": float(lon)}
-    except ValueError:
-        # Invalid coordinates
-        return None
-
-
 class CaseManagementMap(ProjectReport, CaseListMixin):
     name = gettext_noop("Case Management Map")
     slug = "case_management_map"
@@ -53,6 +40,24 @@ class CaseManagementMap(ProjectReport, CaseListMixin):
     def report_context(self):
         cases = []
         invalid_geo_cases_count = 0
+
+        def _get_geo_location(case):
+            geo_point = case.get(GEO_POINT_CASE_PROPERTY)
+            if not geo_point:
+                return
+            try:
+                # Try standard format first https://confluence.dimagi.com/display/commcarepublic/Using+GPS+Data
+                # Update if we need altitude and accuracy
+                lat, lon, _alt, _acc = geo_point.split(" ")
+                return {"lat": float(lat), "lng": float(lon)}
+            except ValueError:
+                # also accept lat/lng only tuples
+                lat, lon = geo_point.split(" ")
+                return {"lat": float(lat), "lng": float(lon)}
+            except ValueError:
+                # Invalid coordinates
+                return None
+
         for row in self.es_results['hits'].get('hits', []):
             es_case = self.get_case(row)
             display = CaseDisplayES(es_case, self.timezone, self.individual)
