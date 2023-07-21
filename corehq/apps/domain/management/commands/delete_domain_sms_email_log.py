@@ -1,5 +1,5 @@
 from corehq.apps.domain.deletion import apply_sms_deletion_operations
-from corehq.apps.domain.management.commands.delete_domain_base import DomainBaseCommand
+from corehq.apps.domain.delete_domain_base import DomainBaseCommand
 
 
 class Command(DomainBaseCommand):

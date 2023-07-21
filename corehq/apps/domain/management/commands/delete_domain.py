@@ -1,4 +1,4 @@
-from corehq.apps.domain.management.commands.delete_domain_base import DomainBaseCommand
+from corehq.apps.domain.delete_domain_base import DomainBaseCommand
 
 
 class Command(DomainBaseCommand):
