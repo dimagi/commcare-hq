@@ -47,10 +47,11 @@ hqDefine('app_manager/js/modules/shadow_module_settings', function () {
                 return self;
             };
 
-            var sourceModuleFormModel = function (uniqueId, name) {
+            var sourceModuleFormModel = function (uniqueId, name, sessionEndpointId) {
                 return {
                     uniqueId: uniqueId,
                     name: name,
+                    sessionEndpointId: sessionEndpointId,
                 };
             };
 
@@ -62,7 +63,8 @@ hqDefine('app_manager/js/modules/shadow_module_settings', function () {
                 sourceModule = sourceModuleModel(mod.unique_id, mod.name, mod.root_module_id);
                 for (var j = 0; j < mod.forms.length; j++) {
                     var form = mod.forms[j];
-                    var sourceModuleForm = sourceModuleFormModel(form.unique_id, form.name);
+                    const generatedSessionEndpoint = `${mod.session_endpoint_id}_${form.session_endpoint_id}`
+                    var sourceModuleForm = sourceModuleFormModel(form.unique_id, form.name, generatedSessionEndpoint);
                     sourceModule.forms.push(sourceModuleForm);
                     if (excludedFormIds.indexOf(form.unique_id) === -1) {
                         self.includedFormIds.push(form.unique_id);

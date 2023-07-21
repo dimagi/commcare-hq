@@ -335,7 +335,12 @@ def _get_shadow_module_view_context(app, module, lang=None):
             'unique_id': mod.unique_id,
             'name': trans(mod.name, langs),
             'root_module_id': mod.root_module_id,
-            'forms': [{'unique_id': f.unique_id, 'name': trans(f.name, langs)} for f in mod.get_forms()]
+            'session_endpoint_id': mod.session_endpoint_id,
+            'forms': [{
+                'unique_id': f.unique_id,
+                'name': trans(f.name, langs),
+                'session_endpoint_id': f.session_endpoint_id
+            } for f in mod.get_forms()]
         }
 
     return {
