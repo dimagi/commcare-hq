@@ -260,17 +260,11 @@ class SuiteInstanceTests(SimpleTestCase, SuiteMixin):
         self.module, self.form = factory.new_basic_module('m0', 'case1')
         self.module.module_filter = "instance('locations')/locations/"
         factory.new_form(self.module)
-        # two forms, two entries, two instances
-        self.assertXmlPartialEqual(
-            """
-            <partial>
-                <instance id='locations' src='jr://fixture/locations' />
-                <instance id='locations' src='jr://fixture/locations' />
-            </partial>
-            """,
-            factory.app.create_suite(),
-            "entry/instance"
-        )
+
+        suite = factory.app.create_suite()
+        instance_xml = "<partial><instance id='locations' src='jr://fixture/locations' /></partial>"
+        self.assertXmlPartialEqual(instance_xml, suite, "entry/command[@id='m0-f0']/../instance")
+        self.assertXmlPartialEqual(instance_xml, suite, "entry/command[@id='m0-f1']/../instance")
 
 
 @generate_cases([
