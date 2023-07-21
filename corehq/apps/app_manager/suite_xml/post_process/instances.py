@@ -164,16 +164,19 @@ class InstancesHelper(PostProcessor):
 
     @cached_property
     def _menu_xpaths_by_command(self):
-        xpaths_by_command = defaultdict(set)
+        # multiple menus can have the same ID - merge them first
+        xpaths_by_menu_id = defaultdict(set)
         for menu in self.suite.menus:
-            menu_xpaths = set()
             if menu.relevant:
-                menu_xpaths.add(menu.relevant)
+                xpaths_by_menu_id[menu.id].add(menu.relevant)
             for assertion in menu.assertions:
-                menu_xpaths.add(assertion.test)
-            for command in menu.commands:
-                xpaths_by_command[command.id] = menu_xpaths
-        return xpaths_by_command
+                xpaths_by_menu_id[menu.id].add(assertion.test)
+
+        return defaultdict(set, {
+            command.id: xpaths_by_menu_id[menu.id]
+            for menu in self.suite.menus
+            for command in menu.commands
+        })
 
     @cached_property
     def _relevancy_xpaths_by_command(self):
