@@ -41,9 +41,16 @@ def property_comparison_query(context, case_property_name_raw, op, value_raw, no
             query = filters.NOT(query)
         return query
     else:
+        op_value_dict = {RANGE_OP_MAPPING[op]: value}
+        return _case_property_range_query(case_property_name, op_value_dict, node,
+                                          is_user_input)
+
+
+def _case_property_range_query(case_property_name: str, op_value_dict, node,
+                               is_user_input: bool = False):
         try:
             return case_property_range_query(case_property_name, is_user_input=is_user_input,
-                                             **{RANGE_OP_MAPPING[op]: value})
+                                             **op_value_dict)
         except (TypeError, ValueError):
             raise CaseFilterError(
                 gettext("The right hand side of a comparison must be a number or date. "
