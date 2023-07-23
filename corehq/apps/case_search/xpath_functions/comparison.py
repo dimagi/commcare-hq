@@ -61,7 +61,7 @@ def _case_property_range_query(case_property_name: str, op_value_dict, node,
 
 def _create_timezone_adjusted_datetime_query(case_property_name, op, value, node, timezone):
     utc_datetime_value = adjust_input_date_by_timezone(value_to_date(node, value), timezone, op)
-    op_val_dict = {RANGE_OP_MAPPING[op]: utc_datetime_value}
+    op_val_dict = {RANGE_OP_MAPPING[op]: utc_datetime_value.isoformat()}
     return _case_property_range_query(case_property_name, op_val_dict, node, is_user_input=True)
 
 
@@ -69,4 +69,4 @@ def adjust_input_date_by_timezone(date, timezone, op):
     date = datetime.combine(date, datetime.min.time())
     if op == '>' or op == '<=':
         date += timedelta(days=1)
-    return UserTime(date, tzinfo=timezone).server_time().done().isoformat()
+    return UserTime(date, tzinfo=timezone).server_time().done()
