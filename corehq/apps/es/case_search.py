@@ -281,7 +281,7 @@ def case_property_starts_with(case_property_name, value):
     )
 
 
-def case_property_range_query(case_property_name, gt=None, gte=None, lt=None, lte=None, is_user_input=False):
+def case_property_range_query(case_property_name, gt=None, gte=None, lt=None, lte=None):
     """Returns cases where case property `key` fall into the range provided.
 
     """

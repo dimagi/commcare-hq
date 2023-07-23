@@ -46,11 +46,9 @@ def _create_query(context, case_property_name, op, value, node):
         return _case_property_range_query(case_property_name, op_value_dict, node)
 
 
-def _case_property_range_query(case_property_name: str, op_value_dict, node,
-                               is_user_input: bool = False):
+def _case_property_range_query(case_property_name: str, op_value_dict, node):
         try:
-            return case_property_range_query(case_property_name, is_user_input=is_user_input,
-                                             **op_value_dict)
+            return case_property_range_query(case_property_name, **op_value_dict)
         except (TypeError, ValueError):
             raise CaseFilterError(
                 gettext("The right hand side of a comparison must be a number or date. "
@@ -68,13 +66,13 @@ def _create_timezone_adjusted_datetime_query(case_property_name, op, value, node
             RANGE_OP_MAPPING[">="]: day_start_datetime,
             RANGE_OP_MAPPING["<="]: day_end_datetime,
         }
-        query = _case_property_range_query(case_property_name, op_value_dict, node, is_user_input=True)
+        query = _case_property_range_query(case_property_name, op_value_dict, node)
         if op == NEQ:
             query = filters.NOT(query)
         return query
     else:
         op_value_dict = {RANGE_OP_MAPPING[op]: utc_equivalent_datetime_value.isoformat()}
-        return _case_property_range_query(case_property_name, op_value_dict, node, is_user_input=True)
+        return _case_property_range_query(case_property_name, op_value_dict, node)
 
 
 def adjust_input_date_by_timezone(date, timezone, op):
