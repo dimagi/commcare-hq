@@ -28,13 +28,16 @@ def property_comparison_query(context, case_property_name_raw, op, value_raw, no
     if case_property_name in SPECIAL_CASE_PROPERTIES:
         try:
             # this might be inconsistent in daylight savings situations
-            value = adjust_input_date_by_timezone(value_to_date(node, value),
-                                                get_timezone_for_domain(context.domain), op)
-            is_user_input = True
+            timezone = get_timezone_for_domain(context.domain)
+            return _create_timezone_adjusted_datetime_query(case_property_name, op, value, node, timezone)
         except (XPathFunctionException, AssertionError):
             # AssertionError is caused by tests that use domains without
             # a valid timezone (in get_timezeone_for_domain)
             pass
+    return _create_query(context, case_property_name, op, value, node, is_user_input)
+
+
+def _create_query(context, case_property_name, op, value, node, is_user_input):
     if op in [EQ, NEQ]:
         query = case_property_query(case_property_name, value, fuzzy=context.fuzzy)
         if op == NEQ:
@@ -42,8 +45,7 @@ def property_comparison_query(context, case_property_name_raw, op, value_raw, no
         return query
     else:
         op_value_dict = {RANGE_OP_MAPPING[op]: value}
-        return _case_property_range_query(case_property_name, op_value_dict, node,
-                                          is_user_input)
+        return _case_property_range_query(case_property_name, op_value_dict, node, is_user_input)
 
 
 def _case_property_range_query(case_property_name: str, op_value_dict, node,
@@ -57,6 +59,12 @@ def _case_property_range_query(case_property_name: str, op_value_dict, node,
                   "Dates must be surrounded in quotation marks"),
                 serialize(node),
             )
+
+
+def _create_timezone_adjusted_datetime_query(case_property_name, op, value, node, timezone):
+    utc_datetime_value = adjust_input_date_by_timezone(value_to_date(node, value), timezone, op)
+    op_val_dict = {RANGE_OP_MAPPING[op]: utc_datetime_value}
+    return _case_property_range_query(case_property_name, op_val_dict, node, is_user_input=True)
 
 
 def adjust_input_date_by_timezone(date, timezone, op):
