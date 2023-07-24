@@ -15,7 +15,7 @@ def _add_web_user_feature(apps, schema_editor):
 
 class Migration(migrations.Migration):
     dependencies = [
-        ('accounting', '0076_location_owner_in_report_builder_priv'),
+        ('accounting', '0077_case_list_explorer_priv'),
     ]
 
     operations = [
