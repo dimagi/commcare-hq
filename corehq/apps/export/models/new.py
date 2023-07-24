@@ -1724,16 +1724,27 @@ class ExportDataSchema(Document):
         return current_schema
 
     @classmethod
-    def generate_schema_from_builds(cls, domain, app_id, identifier, force_rebuild=False,
-            only_process_current_builds=False, task=None):
-        """Builds a schema from Application builds for a given identifier
+    def generate_schema_from_builds(
+        cls,
+        domain,
+        app_id,
+        identifier,
+        force_rebuild=False,
+        only_process_current_builds=False,
+        task=None,
+    ):
+        """
+        Builds a schema from Application builds for a given identifier
 
         :param domain: The domain that the export belongs to
-        :param app_id: The app_id that the export belongs to (or None if export is not associated with an app.
-        :param identifier: The unique identifier of the schema being exported.
-            case_type for Case Exports and xmlns for Form Exports
-        :param only_process_current_builds: Only process the current apps, not any builds. This
-            means that deleted items may not be present in the schema since past builds have not been
+        :param app_id: The app_id that the export belongs to or None if
+            the export is not associated with an app.
+        :param identifier: The unique identifier of the schema being
+            exported: case_type for Case Exports and xmlns for Form
+            Exports
+        :param only_process_current_builds: Only process the current
+            apps, not any builds. This means that deleted items may not
+            be present in the schema since past builds have not been
             processed.
         :param task: A celery task to update the progress of the build
         :returns: Returns a ExportDataSchema instance
