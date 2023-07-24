@@ -48,6 +48,7 @@ from corehq.apps.app_manager.dbaccessors import (
     get_app_ids_in_domain,
     get_built_app_ids_with_submissions_for_app_id,
     get_built_app_ids_with_submissions_for_app_ids_and_versions,
+    get_case_types_from_apps,
     get_latest_app_ids_and_versions,
 )
 from corehq.apps.app_manager.models import (
@@ -57,8 +58,10 @@ from corehq.apps.app_manager.models import (
     OpenSubCaseAction,
     RemoteApp,
 )
+from corehq.apps.data_dictionary.util import get_deprecated_fields
 from corehq.apps.domain.models import Domain
 from corehq.apps.export.const import (
+    ALL_CASE_TYPE_EXPORT,
     CASE_ATTRIBUTES,
     CASE_CLOSE_TO_BOOLEAN,
     CASE_CREATE_ELEMENTS,
@@ -83,7 +86,6 @@ from corehq.apps.export.const import (
     UNKNOWN_INFERRED_FROM,
     USER_DEFINED_SPLIT_TYPES,
     SharingOption,
-    ALL_CASE_TYPE_EXPORT,
 )
 from corehq.apps.export.dbaccessors import (
     get_case_inferred_schema,
@@ -94,7 +96,7 @@ from corehq.apps.export.dbaccessors import (
 from corehq.apps.export.esaccessors import (
     get_case_export_base_query,
     get_form_export_base_query,
-    get_sms_export_base_query
+    get_sms_export_base_query,
 )
 from corehq.apps.export.utils import is_occurrence_deleted
 from corehq.apps.locations.models import SQLLocation
@@ -113,12 +115,9 @@ from corehq.blobs.models import BlobMeta
 from corehq.blobs.util import random_url_id
 from corehq.form_processor.interfaces.dbaccessors import LedgerAccessors
 from corehq.util.global_request import get_request_domain
+from corehq.util.html_utils import strip_tags
 from corehq.util.timezones.utils import get_timezone_for_domain
 from corehq.util.view_utils import absolute_reverse
-from corehq.util.html_utils import strip_tags
-from corehq.apps.data_dictionary.util import get_deprecated_fields
-from corehq.apps.app_manager.dbaccessors import get_case_types_from_apps
-
 
 DAILY_SAVED_EXPORT_ATTACHMENT_NAME = "payload"
 
@@ -973,15 +972,15 @@ class ExportInstance(BlobMixin, Document):
 
     def _insert_system_properties(self, domain, export_type, table):
         from corehq.apps.export.system_properties import (
-            ROW_NUMBER_COLUMN,
-            TOP_MAIN_FORM_TABLE_PROPERTIES,
-            BOTTOM_MAIN_FORM_TABLE_PROPERTIES,
-            TOP_MAIN_CASE_TABLE_PROPERTIES,
             BOTTOM_MAIN_CASE_TABLE_PROPERTIES,
+            BOTTOM_MAIN_FORM_TABLE_PROPERTIES,
             CASE_HISTORY_PROPERTIES,
             PARENT_CASE_TABLE_PROPERTIES,
-            STOCK_COLUMN,
+            ROW_NUMBER_COLUMN,
             SMS_TABLE_PROPERTIES,
+            STOCK_COLUMN,
+            TOP_MAIN_CASE_TABLE_PROPERTIES,
+            TOP_MAIN_FORM_TABLE_PROPERTIES,
         )
 
         nested_repeat_count = len([node for node in table.path if node.is_repeat])
