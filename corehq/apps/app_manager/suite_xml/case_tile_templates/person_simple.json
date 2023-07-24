@@ -1,6 +1,7 @@
 {
     "slug": "person_simple",
     "filename": "person_simple.xml",
+    "has_map": false,
     "fields": ["header", "top_left", "sex", "bottom_left", "date"],
     "grid": {
         "[image]": {"x": 0, "y": 0, "width": 2, "height": 3, "horz-align": "center", "vert-align": "center"},

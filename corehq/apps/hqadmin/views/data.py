@@ -12,7 +12,7 @@ from corehq.apps.hqwebapp.doc_lookup import (
     get_db_from_db_name,
     lookup_id_in_databases,
 )
-from corehq.blobs import get_blob_db
+from corehq.blobs import CODES, get_blob_db
 from corehq.blobs.models import BlobMeta
 from corehq.form_processor.models import XFormInstance
 from corehq.util.download import get_download_response
@@ -119,7 +119,12 @@ def download_blob(request):
     """Pairs with the get_download_url utility and command"""
     key = request.GET.get("key")
     try:
-        meta = BlobMeta.objects.partitioned_get(partition_value=key, key=key)
+        meta = BlobMeta.objects.partitioned_get(
+            domain='__system__',
+            type_code=CODES.tempfile,
+            partition_value=key,
+            key=key,
+        )
     except BlobMeta.DoesNotExist:
         raise Http404()
     blob = get_blob_db().get(meta=meta)
