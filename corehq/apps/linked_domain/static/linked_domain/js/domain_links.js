@@ -257,15 +257,21 @@ hqDefine("linked_domain/js/domain_links", [
 
     var PushContentViewModel = function (data) {
         var self = {};
+
+        self.PUSH_TYPE_NONE = '';
+        self.PUSH_TYPE_NORMAL = 'push';
+        self.PUSH_TYPE_OVERWRITE = 'overwrite';
+
         self.parent = data.parent;
         self.domainsToPush = ko.observableArray();
         self.modelsToPush = ko.observableArray();
         self.buildAppsOnPush = ko.observable(false);
-        self.pushInProgress = ko.observable(false);
+        self.pushType = ko.observable(self.PUSH_TYPE_NONE);
         self.shouldShowSelectedERMDomain = ko.observable(false);
         self.shouldShowSelectedMRMDomain = ko.observable(false);
-        self.enablePushButton = ko.computed(function () {
-            return self.domainsToPush().length && self.modelsToPush().length && !self.pushInProgress();
+        self.enablePushButton = ko.pureComputed(function () {
+            return self.domainsToPush().length && self.modelsToPush().length &&
+                self.pushType() === self.PUSH_TYPE_NONE;
         });
         self.containsLiteAndFullLinks = ko.computed(function () {
             if (!self.parent.hasFullAccess) {
@@ -387,7 +393,7 @@ hqDefine("linked_domain/js/domain_links", [
         });
 
         self.pushContentFn = function (overwrite) {
-            self.pushInProgress(true);
+            self.pushType(overwrite ? self.PUSH_TYPE_OVERWRITE : self.PUSH_TYPE_NORMAL);
             _private.RMI("create_release", {
                 models: _.map(self.modelsToPush(), JSON.parse),
                 linked_domains: self.domainsToPush(),
@@ -395,10 +401,10 @@ hqDefine("linked_domain/js/domain_links", [
                 overwrite: overwrite,
             }).done(function (data) {
                 alertUser.alert_user(data.message, data.success ? 'success' : 'danger');
-                self.pushInProgress(false);
+                self.pushType(self.PUSH_TYPE_NONE);
             }).fail(function () {
                 alertUser.alert_user(gettext('Something unexpected happened.\nPlease try again, or report an issue if the problem persists.'), 'danger');
-                self.pushInProgress(false);
+                self.pushType(self.PUSH_TYPE_NONE);
             });
         };
 
