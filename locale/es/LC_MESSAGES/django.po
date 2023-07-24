@@ -2984,6 +2984,7 @@ msgstr ""
 #: corehq/apps/data_interfaces/templates/data_interfaces/case_rule.html
 #: corehq/apps/data_interfaces/templates/data_interfaces/edit_deduplication_rule.html
 #: corehq/apps/fixtures/templates/fixtures/partials/edit_table_modal.html
+#: corehq/apps/geospatial/forms.py
 #: corehq/apps/groups/templates/groups/group_members.html
 #: corehq/apps/hqwebapp/templates/hqwebapp/oauth_application_registration_form.html
 #: corehq/apps/locations/templates/locations/location_types.html
@@ -4021,6 +4022,14 @@ msgstr ""
 "jerárquica usted debe usar la vista previa de la función \"Cálculos "
 "Personalizados en la Lista de Casos\". Para más información vea: https://"
 "confluence.dimagi.com/pages/viewpage.action?pageId=38276915"
+
+#: corehq/apps/app_manager/helpers/validators.py
+msgid "It must reference a lookup table or mobile report."
+msgstr ""
+
+#: corehq/apps/app_manager/helpers/validators.py
+msgid "This feature is compatible with only version 2 of Mobile UCR"
+msgstr ""
 
 #: corehq/apps/app_manager/helpers/validators.py
 msgid ""
@@ -5468,6 +5477,10 @@ msgstr ""
 msgid "Title row, second row with two cells, third and fourth rows, and map"
 msgstr ""
 
+#: corehq/apps/app_manager/suite_xml/features/case_tiles.py
+msgid "Three upper rows, four rows with two cells, two lower rows and map"
+msgstr ""
+
 #: corehq/apps/app_manager/suite_xml/features/scheduler.py
 #, python-brace-format
 msgid "There is no schedule for form {form_id}"
@@ -5492,8 +5505,8 @@ msgstr ""
 #: corehq/apps/app_manager/suite_xml/post_process/instances.py
 #, python-brace-format
 msgid ""
-"Conflicting instance declarations in {entry_id} for {instance_id}:{src_1} != "
-"{src_2}"
+"Conflicting instance declarations in {entry_id} for {instance_id}: {src_1} !"
+"= {src_2}"
 msgstr ""
 
 #: corehq/apps/app_manager/suite_xml/sections/entries.py
@@ -6962,6 +6975,17 @@ msgid ""
 "                can <a href=\"%(domain_url)s\">change your subscription</a>, "
 "or\n"
 "                remove the feature as follows.\n"
+"              "
+msgstr ""
+
+#: corehq/apps/app_manager/templates/app_manager/partials/build_errors.html
+#, python-format
+msgid ""
+"\n"
+"                <a href=\"%(module_url)s\">%(module_name)s</a> has a case "
+"search property\n"
+"                <code>%(property)s</code> that references an invalid "
+"instance.\n"
 "              "
 msgstr ""
 
@@ -8973,6 +8997,14 @@ msgid "Sort Field"
 msgstr "Clasificar Campo"
 
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/case_search_property.html
+msgid "Instance Nodeset"
+msgstr ""
+
+#: corehq/apps/app_manager/templates/app_manager/partials/modules/case_search_property.html
+msgid "This refers to data other than selected report/lookup-table."
+msgstr ""
+
+#: corehq/apps/app_manager/templates/app_manager/partials/modules/case_search_property.html
 #: corehq/apps/reminders/forms.py
 msgid "Advanced Options"
 msgstr "Opciones Avanzadas"
@@ -9001,18 +9033,6 @@ msgstr "Condición de Validación"
 #: corehq/apps/custom_data_fields/templates/custom_data_fields/partials/fields_tab.html
 msgid "Validation Message"
 msgstr "Mensaje de Validación"
-
-#: corehq/apps/app_manager/templates/app_manager/partials/modules/case_search_property.html
-msgid "Instance URI"
-msgstr "URI de Ejemplo"
-
-#: corehq/apps/app_manager/templates/app_manager/partials/modules/case_search_property.html
-msgid "Instance Nodeset"
-msgstr ""
-
-#: corehq/apps/app_manager/templates/app_manager/partials/modules/case_search_property.html
-msgid "This refers to data other than selected report/lookup-table."
-msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/case_search_property.html
 #: corehq/apps/cloudcare/templates/formplayer/settings_view.html
@@ -10926,10 +10946,8 @@ msgid "Custom assertions must not be blank."
 msgstr ""
 
 #: corehq/apps/app_manager/views/utils.py
-#, fuzzy
-#| msgid "Please add at least one visit"
 msgid "Please add a message for assertion."
-msgstr "Por favor agregue por lo menos una visita"
+msgstr ""
 
 #: corehq/apps/app_manager/views/utils.py
 msgid "There was an issue with your custom assertions: {}"
@@ -12178,10 +12196,6 @@ msgid "The 'disable_web_apps' feature flag is turned on."
 msgstr ""
 
 #: corehq/apps/cloudcare/templates/form_entry/templates.html
-msgid "Delete repeat"
-msgstr ""
-
-#: corehq/apps/cloudcare/templates/form_entry/templates.html
 msgid "Question Group"
 msgstr ""
 
@@ -13103,8 +13117,16 @@ msgid "Add Case Property"
 msgstr "Agregar Propiedad del Caso"
 
 #: corehq/apps/data_dictionary/templates/data_dictionary/base.html
+msgid "A case property with this name already exists."
+msgstr ""
+
+#: corehq/apps/data_dictionary/templates/data_dictionary/base.html
 msgid "Add Case Property Group"
 msgstr "Agregar Grupo de Propiedad del Caso"
+
+#: corehq/apps/data_dictionary/templates/data_dictionary/base.html
+msgid "A case property group with this name already exists."
+msgstr ""
 
 #: corehq/apps/data_dictionary/templates/data_dictionary/base.html
 msgid "Add a new Case Type"
@@ -21308,11 +21330,51 @@ msgstr ""
 msgid "File has been uploaded successfully and is queued for processing."
 msgstr ""
 
+#: corehq/apps/geospatial/forms.py
+#, fuzzy
+#| msgid "Custom Suite File"
+msgid "Custom user field"
+msgstr "Archivo Suite Personalizado"
+
+#: corehq/apps/geospatial/forms.py
+#, fuzzy
+#| msgid "The user's assigned location"
+msgid "User's assigned location"
+msgstr "La ubicación asignada del usuario"
+
+#: corehq/apps/geospatial/forms.py
+msgid "Fetch mobile worker location data from custom field"
+msgstr ""
+
+#: corehq/apps/geospatial/forms.py
+msgid ""
+"The name of the mobile worker custom field which stores the users' geo-"
+"location data."
+msgstr ""
+
+#: corehq/apps/geospatial/forms.py
+#, fuzzy
+#| msgid "the date in case property"
+msgid "Fetch case location data from property"
+msgstr "La fecha en la propiedad del caso"
+
+#: corehq/apps/geospatial/forms.py
+msgid ""
+"The name of the case property storing the geo-location data of your cases."
+msgstr ""
+
+#: corehq/apps/geospatial/forms.py
+#, fuzzy
+#| msgid "Consumption Settings"
+msgid "Configure Geospatial Settings"
+msgstr "Configuraciones de Consumo"
+
 #: corehq/apps/geospatial/reports.py
 msgid "Case Management Map"
 msgstr ""
 
-#: corehq/apps/geospatial/reports.py corehq/tabs/tabclasses.py
+#: corehq/apps/geospatial/reports.py corehq/apps/geospatial/views.py
+#: corehq/tabs/tabclasses.py
 msgid "Geospatial"
 msgstr ""
 
@@ -21327,6 +21389,12 @@ msgstr ""
 #: corehq/apps/geospatial/templates/map_visualization.html
 msgid "Save Area"
 msgstr ""
+
+#: corehq/apps/geospatial/views.py
+#, fuzzy
+#| msgid "Consumption Settings"
+msgid "Configuration Settings"
+msgstr "Configuraciones de Consumo"
 
 #: corehq/apps/groups/templates/groups/all_groups.html
 #: corehq/apps/reports/filters/users.py
@@ -30428,20 +30496,16 @@ msgid "Resave this form"
 msgstr "Guardar de nuevo este formulario"
 
 #: corehq/apps/reports/templates/reports/form/partials/single_form.html
-#, fuzzy
-#| msgid "Delete Form"
 msgid "Deleting Forms"
-msgstr "Elimine el Formulario"
+msgstr ""
 
 #: corehq/apps/reports/templates/reports/form/partials/single_form.html
 msgid "This is a permanent action that cannot be undone."
 msgstr ""
 
 #: corehq/apps/reports/templates/reports/form/partials/single_form.html
-#, fuzzy
-#| msgid "Restore this form"
 msgid "Delete this form"
-msgstr "Restaure este formulario"
+msgstr ""
 
 #: corehq/apps/reports/templates/reports/form/partials/single_form.html
 msgid "Unknown/Deleted Case"
@@ -30460,10 +30524,8 @@ msgid "Copy XML to clipboard"
 msgstr "Copiar XML al portapapeles"
 
 #: corehq/apps/reports/templates/reports/form/partials/single_form.html
-#, fuzzy
-#| msgid "Delete Form"
 msgid "Permanently Delete Form"
-msgstr "Elimine el Formulario"
+msgstr ""
 
 #: corehq/apps/reports/templates/reports/form/partials/single_form.html
 msgid ""
@@ -38499,8 +38561,10 @@ msgid "Roles"
 msgstr "Roles"
 
 #: corehq/apps/users/templates/users/roles_and_permissions.html
-msgid "Shared Exports"
-msgstr ""
+#, fuzzy
+#| msgid "Daily Saved Exports"
+msgid "Manage Shared Exports"
+msgstr "Exportaciones Guardadas Diariamente"
 
 #: corehq/apps/users/templates/users/roles_and_permissions.html
 msgid "Apps"
@@ -43227,6 +43291,12 @@ msgstr ""
 msgid "Manage Attendance Tracking Events"
 msgstr ""
 
+#: corehq/tabs/tabclasses.py
+#, fuzzy
+#| msgid "Consumption Settings"
+msgid "Configure geospatial settings"
+msgstr "Configuraciones de Consumo"
+
 #: corehq/trans_override.py
 msgid "Token generator"
 msgstr ""
@@ -44112,3 +44182,6 @@ msgstr ""
 #: manage.py
 msgid "Enter valid JSON"
 msgstr ""
+
+#~ msgid "Instance URI"
+#~ msgstr "URI de Ejemplo"
