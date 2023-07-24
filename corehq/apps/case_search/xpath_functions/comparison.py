@@ -25,7 +25,10 @@ def property_comparison_query(context, case_property_name_raw, op, value_raw, no
     value = unwrap_value(value_raw, context)
     if case_property_name in SPECIAL_CASE_PROPERTIES:
         try:
-            timezone = get_timezone_for_domain(context.domain)
+            domain = context.domain
+            if isinstance(domain, set):
+                domain = list(domain)
+            timezone = get_timezone_for_domain(domain)
             return _create_timezone_adjusted_datetime_query(case_property_name, op, value, node, timezone)
         except (XPathFunctionException, AssertionError):
             # AssertionError is caused by tests that use domains without
