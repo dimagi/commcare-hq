@@ -128,7 +128,8 @@ class CaseListMixin(ElasticProjectInspectionReport, ProjectReportParametersMixin
 
         if case_dict['domain'] != self.domain:
             raise Exception(
-                "case.domain != self.domain; %r and %r, respectively" % (case_dict['domain'], self.domain)
+                f"case.domain != self.domain; {case_dict['domain']!r} and "
+                f"{self.domain!r}, respectively"
             )
 
         return case_dict
@@ -184,7 +185,12 @@ class CaseListReport(CaseListMixin, ProjectInspectionReport, ReportDataSource):
         if self.can_upgrade_to_case_list_explorer:
             messages.warning(
                 self.request,
-                'Hey Dimagi User! Have you tried out the <a href="https://confluence.dimagi.com/display/saas/Case+List+Explorer" target="_blank">Case List Explorer</a> yet? It might be just what you are looking for!',  # noqa: E501
+
+                'Hey Dimagi User! Have you tried out the <a href="https://'
+                'confluence.dimagi.com/display/saas/Case+List+Explorer" '
+                'target="_blank">Case List Explorer</a> yet? It might be just '
+                'what you are looking for!',
+
                 extra_tags='html',
             )
         return super(CaseListReport, self).view_response

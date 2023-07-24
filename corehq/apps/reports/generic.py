@@ -142,7 +142,10 @@ class GenericReportView(object):
     show_time_notice = False
     is_admin_report = False
     special_notice = None
-    override_permissions_check = False # whether to ignore the permissions check that's done when rendering the report
+
+    # whether to ignore the permissions check that's done when rendering
+    # the report
+    override_permissions_check = False
 
     report_title = None
     report_subtitles = []
@@ -159,13 +162,11 @@ class GenericReportView(object):
 
     def __init__(self, request, base_context=None, domain=None, **kwargs):
         if not self.name or not self.section_name or self.slug is None or not self.dispatcher:
-            raise NotImplementedError("Missing a required parameter: (name: %(name)s, section_name: %(section_name)s,"
-            " slug: %(slug)s, dispatcher: %(dispatcher)s" % dict(
-                name=self.name,
-                section_name=self.section_name,
-                slug=self.slug,
-                dispatcher=self.dispatcher
-            ))
+            raise NotImplementedError(
+                f'Missing a required parameter: (name: {self.name}, '
+                f'section_name: {self.section_name}, slug: {self.slug}, '
+                f'dispatcher: {self.dispatcher}'
+            )
 
         from corehq.apps.reports.dispatcher import ReportDispatcher
         if isinstance(self.dispatcher, ReportDispatcher):
@@ -181,13 +182,18 @@ class GenericReportView(object):
         self.override_template = "reports/async/email_report.html"
 
     def __str__(self):
-        return "%(klass)s report named '%(name)s' with slug '%(slug)s' in section '%(section)s'.%(desc)s%(fields)s" % dict(
-            klass=self.__class__.__name__,
-            name=self.name,
-            slug=self.slug,
-            section=self.section_name,
-            desc="\n   Report Description: %s" % self.description if self.description else "",
-            fields="\n   Report Fields: \n     -%s" % "\n     -".join(self.fields) if self.fields else ""
+        if self.fields:
+            field_lines = "\n     -".join(self.fields)
+            fields = f"\n   Report Fields: \n     -{field_lines}"
+        else:
+            fields = ""
+        if self.description:
+            desc = f"\n   Report Description: {self.description}"
+        else:
+            desc = ""
+        return (
+            f"{self.__class__.__name__} report named '{self.name}' with slug "
+            f"'{self.slug}' in section '{self.section_name}'.{desc}{fields}"
         )
 
     def __getstate__(self):

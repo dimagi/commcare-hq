@@ -7,6 +7,64 @@
   background-color: white;
   .box-shadow(0 0 10px 2px rgba(0,0,0,.1));
   margin-bottom: 2rem;
+
+  .white-border {
+    border: 1px solid white;
+  }
+
+  #module-case-list-map {
+    height: calc(~"100vh - 65px");
+    position: sticky !important; // Has to be important so the leaflet code does not set it to relative
+    top: 50px; // based on the height of the crumbs bar
+
+    .marker-pin {
+      text-align: center;
+      /* Horizontally center the text (icon) */
+      line-height: 12px;
+      /* Vertically center the text (icon) */
+      color: @call-to-action-hi;
+      text-shadow: -1px 0 @call-to-action-low, 0 1px @call-to-action-low, 1px 0 @call-to-action-low, 0 -1px @call-to-action-low;
+    }
+  }
+
+  #module-case-list-column-next-to-map {
+    // Horizontal scroll bar on table will disappear without this.
+    overflow-x: scroll;
+  }
+
+  .list-cell-wrapper-style {
+    border: 1px solid white;
+    border-collapse: collapse;
+    vertical-align: top;
+    background-color: @cc-bg;
+    container-type: inline-size;
+  }
+
+  .highlighted-case {
+    border-style: solid;
+    border-color: @cc-brand-mid;
+  }
+
+  .case-tile-group{
+    margin: 10px;
+    padding: 10px 0;
+
+    .group-data{
+      flex-grow: 1;
+      display: flex;
+      flex-direction: column;
+    }
+    .group-rows{
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      align-items: center;
+    }
+    .group-row{
+      background-color: white;
+      width: 95%;
+    }
+  }
 }
 
 #menu-region .module-menu-container {

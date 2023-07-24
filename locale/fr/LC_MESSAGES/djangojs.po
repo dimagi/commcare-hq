@@ -221,10 +221,6 @@ msgid "Select a Report..."
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/details/case_claim.js
-msgid "Advanced Mobile UCR Options"
-msgstr ""
-
-#: corehq/apps/app_manager/static/app_manager/js/details/case_claim.js
 msgid "Lookup Table Options"
 msgstr ""
 
@@ -236,10 +232,6 @@ msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/details/case_claim.js
 msgid "Select a Lookup Table..."
-msgstr ""
-
-#: corehq/apps/app_manager/static/app_manager/js/details/case_claim.js
-msgid "Advanced Lookup Table Options"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/details/column.js
@@ -445,6 +437,10 @@ msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/details/utils.js
 msgid "Markdown"
+msgstr ""
+
+#: corehq/apps/app_manager/static/app_manager/js/details/utils.js
+msgid "Address Popup (Web Apps only)"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/details/utils.js
@@ -2827,9 +2823,17 @@ msgid "Fetching your location..."
 msgstr ""
 
 #: corehq/apps/cloudcare/static/cloudcare/js/formplayer/menus/views.js
+msgid "Please perform a search."
+msgstr ""
+
+#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/menus/views.js
 msgid ""
 "You have selected more than the maximum selection limit of <%= value %> . "
 "Please uncheck some values to continue."
+msgstr ""
+
+#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/menus/views.js
+msgid "Your location"
 msgstr ""
 
 #: corehq/apps/cloudcare/static/cloudcare/js/formplayer/menus/views.js
@@ -3375,6 +3379,18 @@ msgstr ""
 
 #: corehq/apps/export/static/export/js/models.js
 msgid "Sensitive Date"
+msgstr ""
+
+#: corehq/apps/geospatial/static/geospatial/js/geospatial_map.js
+msgid "Name of the Area"
+msgstr ""
+
+#: corehq/apps/geospatial/static/geospatial/js/geospatial_map.js
+msgid "View here"
+msgstr ""
+
+#: corehq/apps/geospatial/static/geospatial/js/geospatial_map.js
+msgid "There are case(s) missing geolocation data."
 msgstr ""
 
 #: corehq/apps/groups/static/groups/js/group_members.js
@@ -4480,8 +4496,8 @@ msgstr ""
 
 #: corehq/apps/users/static/users/js/roles.js
 msgid ""
-"<strong>Shared Exports</strong> &mdash; access and edit the content and "
-"structure of shared exports"
+"<strong>Manage Shared Exports</strong> &mdash; access and edit the content "
+"and structure of shared exports"
 msgstr ""
 
 #: corehq/apps/users/static/users/js/roles.js

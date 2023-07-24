@@ -38,7 +38,8 @@ class TestMigrationQuery(TestCase):
         self.role = UserRole(domain=self.domain, name="role1")
         self.role.save()
         self.addCleanup(self.role.delete)
-        self.addCleanup(patch.stopall)
+        self.addCleanup(patcher1.stop)
+        self.addCleanup(patcher2.stop)
 
     def test_role_has_edit_data_permission(self):
         self.role.rolepermission_set.set([
