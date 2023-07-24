@@ -113,6 +113,8 @@ APPLICATION_ERROR_REPORT = 'application_error_report'
 
 SHOW_OWNER_LOCATION_PROPERTY_IN_REPORT_BUILDER = 'show_owner_location_property_in_report_builder'
 
+CASE_LIST_EXPLORER = 'case_list_explorer'
+
 CASE_COPY = 'case_copy'
 
 MAX_PRIVILEGES = [
@@ -175,6 +177,7 @@ MAX_PRIVILEGES = [
     FILTERED_BULK_USER_DOWNLOAD,
     APPLICATION_ERROR_REPORT,
     SHOW_OWNER_LOCATION_PROPERTY_IN_REPORT_BUILDER,
+    CASE_LIST_EXPLORER,
     CASE_COPY,
 ]
 
@@ -253,5 +256,6 @@ class Titles(object):
             SHOW_OWNER_LOCATION_PROPERTY_IN_REPORT_BUILDER: _(
                 "Show an additional 'Owner (Location)' property in report builder reports."
             ),
+            CASE_LIST_EXPLORER: _("Case List Explorer"),
             CASE_COPY: _("Allow case copy from one user to another"),
         }.get(privilege, privilege)
