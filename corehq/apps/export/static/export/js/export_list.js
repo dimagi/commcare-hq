@@ -65,6 +65,7 @@ hqDefine("export/js/export_list", [
             'type',
         ], [
             'case_type',
+            'is_case_type_deprecated',
             'isAutoRebuildEnabled',
             'isDailySaved',
             'isFeed',
