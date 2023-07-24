@@ -19,6 +19,7 @@ from couchdbkit import (
     SchemaListProperty,
     SchemaProperty,
 )
+from jsonobject.exceptions import BadValueError
 from memoized import memoized
 
 from casexml.apps.case.const import DEFAULT_CASE_INDEX_IDENTIFIERS
@@ -1912,7 +1913,15 @@ class ExportDataSchema(Document):
                     and app_doc.get('copy_of')):
                 continue
 
-            app = Application.wrap(app_doc)
+            try:
+                app = Application.wrap(app_doc)
+            except BadValueError as err:
+                logging.exception(
+                    f"Bad definition for Application {app_doc['_id']}",
+                    exc_info=err,
+                )
+                continue
+
             try:
                 schema = cls._process_app_build(
                     schema,
