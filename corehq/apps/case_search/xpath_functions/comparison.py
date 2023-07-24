@@ -25,7 +25,6 @@ def property_comparison_query(context, case_property_name_raw, op, value_raw, no
     value = unwrap_value(value_raw, context)
     if case_property_name in SPECIAL_CASE_PROPERTIES:
         try:
-            # this might be inconsistent in daylight savings situations
             timezone = get_timezone_for_domain(context.domain)
             return _create_timezone_adjusted_datetime_query(case_property_name, op, value, node, timezone)
         except (XPathFunctionException, AssertionError):
@@ -58,6 +57,11 @@ def _case_property_range_query(case_property_name: str, op_value_dict, node):
 
 
 def _create_timezone_adjusted_datetime_query(case_property_name, op, value, node, timezone):
+    """
+    Given a date, it gets the equivalent starting time of that date in UTC. i.e 2023-06-05
+    in Asia/Seoul timezone begins at 2023-06-04T20:00:00 UTC.
+    This might be inconsistent in daylight savings situations.
+    """
     utc_equivalent_datetime_value = adjust_input_date_by_timezone(value_to_date(node, value), timezone, op)
     if op in [EQ, NEQ]:
         day_start_datetime = utc_equivalent_datetime_value.isoformat()
