@@ -1,12 +1,26 @@
 from collections import defaultdict
 
 from corehq.apps.userreports.exceptions import StaleRebuildError, TableRebuildError
+from couchdbkit import ResourceNotFound
 from corehq.apps.userreports.rebuild import migrate_tables, get_tables_rebuild_migrate, get_table_diffs
 from corehq.apps.userreports.sql import get_metadata
 from corehq.apps.userreports.tasks import rebuild_indicators
 from corehq.sql_db.connections import connection_manager
 from corehq.util.soft_assert import soft_assert
 from pillowtop.logger import pillow_logging
+
+
+def _is_datasource_active(adapter):
+    """
+    Tries to fetch a fresh copy of datasource from couchdb to know whether it is active.
+    If it does not exist then it assumed to be deactivated
+    """
+    try:
+        config_id = adapter.config._id
+        config = adapter.config.get(config_id)
+    except ResourceNotFound:
+        return False
+    return not config.is_deactivated
 
 
 def rebuild_sql_tables(adapters):
@@ -18,7 +32,15 @@ def rebuild_sql_tables(adapters):
         else:
             all_adapters.append(adapter)
     for adapter in all_adapters:
-        tables_by_engine[adapter.engine_id][adapter.get_table().name] = adapter
+        if _is_datasource_active(adapter):
+            tables_by_engine[adapter.engine_id][adapter.get_table().name] = adapter
+        else:
+            pillow_logging.info(
+                f"""[rebuild] Tried to rebuild deactivated data source.
+                Id - {adapter.config._id}
+                Domain {adapter.config.domain}.
+                Skipping."""
+            )
 
     _assert = soft_assert(notify_admins=True)
     _notify_rebuild = lambda msg, obj: _assert(False, msg, obj)
