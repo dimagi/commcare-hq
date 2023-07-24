@@ -9,6 +9,7 @@ from django_prbac.exceptions import PermissionDenied
 from corehq import privileges
 from corehq.apps.accounting.models import DefaultProductPlan
 from corehq.const import USER_DATE_FORMAT
+from corehq.toggles import domain_has_privilege_from_toggle
 
 
 def requires_privilege_with_fallback(slug, **assignment):
@@ -38,6 +39,12 @@ def requires_privilege_with_fallback(slug, **assignment):
                     }
                     request.is_domain_admin = (hasattr(request, 'couch_user') and
                                                request.couch_user.is_domain_admin(request.domain))
+
+                if (
+                    hasattr(request, 'domain')
+                    and domain_has_privilege_from_toggle(slug, request.domain)
+                ):
+                    return fn(request, *args, **kwargs)
 
                 return requires_privilege(slug, **assignment)(fn)(
                     request, *args, **kwargs
