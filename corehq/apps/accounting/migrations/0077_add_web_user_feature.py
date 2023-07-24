@@ -22,7 +22,6 @@ def _grandfather_basic_privs(apps, schema_editor):
 def _add_web_user_feature(apps, schema_editor):
     Feature = apps.get_model('accounting', 'Feature')
     web_user_feature = Feature.objects.create(name='Web User', feature_type='Web User')
-    web_user_feature.save()
     features = [web_user_feature]
     feature_rates = _ensure_feature_rates(BOOTSTRAP_CONFIG['feature_rates'], features, None, True, apps)
     for feature_rate in feature_rates:
