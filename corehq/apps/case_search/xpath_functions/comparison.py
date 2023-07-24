@@ -80,7 +80,7 @@ def _create_timezone_adjusted_datetime_query(case_property_name, op, value, node
 
 
 def adjust_input_date_by_timezone(date, timezone, op):
-    date = datetime.combine(date, datetime.min.time())
+    date = datetime(date.year, date.month, date.day)
     if op == '>' or op == '<=':
         date += timedelta(days=1)
     return UserTime(date, tzinfo=timezone).server_time().done()
