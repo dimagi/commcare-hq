@@ -10,7 +10,7 @@ from corehq.apps.app_manager.models import (
     Module,
     SortElement,
 )
-from corehq.apps.app_manager.suite_xml.features.case_tiles import CaseTileTemplates
+from corehq.apps.app_manager.suite_xml.features.case_tiles import CaseTileTemplates, case_tile_template_config
 from corehq.apps.app_manager.tests.app_factory import AppFactory
 from corehq.apps.app_manager.tests.util import (
     SuiteMixin,
@@ -113,6 +113,19 @@ def add_columns_for_one_one_two_case_details(_module):
 @patch_get_xform_resource_overrides()
 class SuiteCaseTilesTest(SimpleTestCase, SuiteMixin):
     file_path = ('data', 'suite')
+
+    # Keeps the number of columns in parity with what mobile allows
+    def test_case_tile_column_count(self):
+        for choice in CaseTileTemplates.choices:
+            template_name = choice[0]
+            template_grid = case_tile_template_config(template_name).grid
+
+            for field in template_grid.values():
+                absolute_width = field.get('x') + field.get('width')
+                if absolute_width > 12:
+                    message = "Number of columns in template '{}' " \
+                        "exceeds the limit of 12".format(template_name)
+                    raise AssertionError(message)
 
     def ensure_module_session_datum_xml(self, factory, detail_inline_attr, detail_persistent_attr):
         suite = factory.app.create_suite()

@@ -545,7 +545,7 @@ class CaseRuleCriteriaTest(BaseCaseRuleTest):
             set_case_property_directly(case, 'def', '456x')
             _save_case(self.domain, case)
             case = CommCareCase.objects.get_case(case.case_id, self.domain)
-            self.assertTrue(rule.criteria_match(case, datetime(2022, 4, 15)))  # Notice assert True instead
+            self.assertTrue(rule.criteria_match(case, datetime(2022, 4, 15)))
 
             case.server_modified_on = datetime(2022, 4, 1)
             set_case_property_directly(case, 'abc', '123x')
@@ -555,6 +555,15 @@ class CaseRuleCriteriaTest(BaseCaseRuleTest):
             self.assertTrue(rule.criteria_match(case, datetime(2022, 4, 15)))
 
             case.server_modified_on = datetime(2022, 4, 14)
+            set_case_property_directly(case, 'abc', '123x')
+            set_case_property_directly(case, 'def', '456x')
+            _save_case(self.domain, case)
+            case = CommCareCase.objects.get_case(case.case_id, self.domain)
+            self.assertFalse(rule.criteria_match(case, datetime(2022, 4, 15)))
+
+            rule.filter_on_server_modified = False
+            rule.server_modified_boundary = None
+            rule.save()
             set_case_property_directly(case, 'abc', '123x')
             set_case_property_directly(case, 'def', '456x')
             _save_case(self.domain, case)
