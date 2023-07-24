@@ -19,10 +19,6 @@ from corehq.motech.fhir.utils import update_fhir_resource_property
 from corehq.util.quickcache import quickcache
 
 
-class OldExportsEnabledException(Exception):
-    pass
-
-
 def generate_data_dictionary(domain):
     case_type_to_properties = _get_all_case_properties(domain)
     _create_properties_for_case_types(domain, case_type_to_properties)
