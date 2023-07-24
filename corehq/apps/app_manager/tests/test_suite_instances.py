@@ -279,8 +279,8 @@ class SuiteInstanceTests(SimpleTestCase, SuiteMixin):
 
         suite = factory.app.create_suite()
         instance_xml = "<partial><instance id='locations' src='jr://fixture/locations' /></partial>"
-        self.assertXmlPartialEqual(instance_xml, suite, "entry/command[@id='m0-f0']/..instance")
-        self.assertXmlPartialEqual(instance_xml, suite, "entry/command[@id='m1-f0']/..instance")
+        self.assertXmlPartialEqual(instance_xml, suite, "entry/command[@id='m0-f0']/../instance")
+        self.assertXmlPartialEqual(instance_xml, suite, "entry/command[@id='m1-f0']/../instance")
 
 
 @generate_cases([
