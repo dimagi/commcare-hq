@@ -25,22 +25,24 @@
           <% if (hasNoItems) { %>
             {% include 'formplayer/no_items_text.html' %}
           <% } else { %>
-            <div id="select-all-tile-wrapper">
+            <div id="case-list-search-controls">
+              <div>
               <% if (isMultiSelect) { %>
                 <input type="checkbox" id="select-all-tile-checkbox"/>
                 <label id="select-all-tile-checkbox-label" for="select-all-tile-checkbox">{% trans "Select All" %}</label>
               <% } %>
-            </div>
-            <div class="dropdown">
-              <button class="btn" data-toggle="dropdown"> <span> {% trans "Sort By" %} </span><i class="fa fa-sort"></i>
-              </button>
-              <ul class="dropdown-menu">
-                <%  _.each(headers, function(header, index) { %>
-                  <% if (columnSortable(index)) { %>
-                  <li class="header-clickable formplayer-request" data-id="<%- index %>"><a> <%- header %></a></li>
-                  <% } %>
-                <% }); %>
-              </ul>
+              </div>
+              <div class="dropdown">
+                <button class="btn" data-toggle="dropdown"> <span> {% trans "Sort By" %} </span><i class="fa fa-sort"></i>
+                </button>
+                <ul class="dropdown-menu">
+                  <%  _.each(headers, function(header, index) { %>
+                    <% if (columnSortable(index)) { %>
+                    <li class="header-clickable formplayer-request" data-id="<%- index %>"><a> <%- header %></a></li>
+                    <% } %>
+                  <% }); %>
+                </ul>
+              </div>
             </div>
           <% } %>
           <section  class="js-case-container clearfix list-cell-container-style"></section>
