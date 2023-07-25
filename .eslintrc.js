@@ -37,7 +37,6 @@ module.exports = {
         "d3": false,
     },
 
-
     // http://eslint.org/docs/rules/
     // http://eslint.org/docs/user-guide/configuring#configuring-rules
     "rules": {
