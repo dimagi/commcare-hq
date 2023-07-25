@@ -38,7 +38,8 @@ module.exports = {
     },
     "ignorePatterns": [
         ".github/*",
-        ".eslintrc.js"
+        ".eslintrc.js",
+        "Gruntfile.js"
     ],
 
     // http://eslint.org/docs/rules/
