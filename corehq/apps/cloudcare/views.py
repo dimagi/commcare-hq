@@ -595,13 +595,19 @@ def session_endpoint(request, domain, app_id, endpoint_id):
     if force_login_as and not can_use_restore_as(request):
         return _fail(_("This user cannot access this link."))
 
-    cloudcare_state = json.dumps({
-        "appId": build_id,
-        "endpointId": endpoint_id,
-        "endpointArgs": {
-            urllib.parse.quote_plus(key): urllib.parse.quote_plus(value)
-            for key, value in request.GET.items()
-        },
-        "forceLoginAs": force_login_as,
-    })
+    if endpoint_id == "smartlink-home":
+        cloudcare_state = json.dumps({
+            "appId": build_id,
+            "forceLoginAs": force_login_as,
+        })
+    else:
+        cloudcare_state = json.dumps({
+            "appId": build_id,
+            "endpointId": endpoint_id,
+            "endpointArgs": {
+                urllib.parse.quote_plus(key): urllib.parse.quote_plus(value)
+                for key, value in request.GET.items()
+            },
+            "forceLoginAs": force_login_as,
+        })
     return HttpResponseRedirect(reverse(FormplayerMain.urlname, args=[domain]) + "#" + cloudcare_state)
