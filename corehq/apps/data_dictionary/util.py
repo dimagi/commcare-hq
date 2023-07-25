@@ -20,10 +20,6 @@ from corehq.motech.fhir.utils import update_fhir_resource_property
 from corehq.util.quickcache import quickcache
 
 
-class OldExportsEnabledException(Exception):
-    pass
-
-
 def generate_data_dictionary(domain):
     case_type_to_properties = _get_all_case_properties(domain)
     _create_properties_for_case_types(domain, case_type_to_properties)
@@ -50,11 +46,7 @@ def _get_all_case_properties(domain):
             if len(item.path) > 1:
                 continue
 
-            if item.tag:
-                name = item.tag
-            else:
-                name = item.path[-1].name
-
+            name = item.tag if item.tag else item.path[-1].name
             if '/' not in name:
                 # Filter out index and parent properties as some are stored as parent/prop in item.path
                 properties.add(name)
