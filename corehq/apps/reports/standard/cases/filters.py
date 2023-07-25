@@ -11,6 +11,7 @@ from corehq.apps.app_manager.app_schemas.case_properties import (
 from corehq.apps.case_search.const import (
     CASE_COMPUTED_METADATA,
     SPECIAL_CASE_PROPERTIES,
+    DOCS_LINK_CASE_LIST_EXPLORER,
 )
 from corehq.apps.data_dictionary.util import get_case_property_label_dict
 from corehq.apps.data_interfaces.models import AutomaticUpdateRule
@@ -33,7 +34,7 @@ class CaseSearchFilter(BaseSimpleFilter):
     @property
     def help_inline(self):
         from corehq import toggles
-        cle_link = "#todoCLE"
+        cle_link = DOCS_LINK_CASE_LIST_EXPLORER
         if toggles.CASE_LIST_EXPLORER.enabled(self.domain):
             from corehq.apps.reports.standard.cases.case_list_explorer import CaseListExplorer
             cle_link = CaseListExplorer.get_url(domain=self.domain)
