@@ -383,6 +383,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             'click @ui.paginators': 'paginateAction',
             'click @ui.paginationGoButton': 'paginationGoAction',
             'click @ui.columnHeader': 'columnSortAction',
+            'keypress @ui.columnHeader': 'columnSortAction',
             'change @ui.casesPerPageLimit': 'onPerPageLimitChange',
             'keypress @ui.searchTextBox': 'searchTextKeyAction',
             'keypress @ui.paginationGoTextBox': 'paginationGoKeyAction',
@@ -488,8 +489,10 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
         },
 
         columnSortAction: function (e) {
-            const columnSelection = $(e.currentTarget).data("id") + 1;
-            FormplayerFrontend.trigger("menu:sort", columnSelection);
+            if (e.type === 'click' || (e.type === 'keypress' && e.keyCode === 13)) {
+                const columnSelection = $(e.currentTarget).data("id") + 1;
+                FormplayerFrontend.trigger("menu:sort", columnSelection);
+            }
         },
 
         _allCaseIds: function () {

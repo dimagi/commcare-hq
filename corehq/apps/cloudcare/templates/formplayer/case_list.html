@@ -33,19 +33,20 @@
                 <% } %>
               </div>
               <div class="dropdown">
-                <button class="btn" data-toggle="dropdown"> <span> {% trans "Sort By" %} </span><i class="fa fa-sort"></i>
+                <button class="btn" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                  <span> {% trans "Sort By" %} </span><i class="fa fa-sort" aria-hidden="true"></i>
                 </button>
-                <ul class="dropdown-menu dropdown-menu-right">
+                <ul class="dropdown-menu dropdown-menu-right" role="menu" aria-labelledby="case-list-sort-by">
                   <%  _.each(headers, function(header, index) { %>
                     <% if (columnSortable(index)) { %>
-                    <li class="header-clickable formplayer-request" data-id="<%- index %>"><a> <%- header %></a></li>
+                    <li tabindex="0" class="header-clickable formplayer-request" data-id="<%- index %>" role="menuitem"><a> <%- header %></a></li>
                     <% } %>
                   <% }); %>
                 </ul>
               </div>
             </div>
           <% } %>
-          <section  class="js-case-container clearfix list-cell-container-style"></section>
+          <section class="js-case-container clearfix list-cell-container-style"></section>
         <% } else { %>
         <div class="module-case-list-table-container">
           <table class="table module-table module-table-case-list">
