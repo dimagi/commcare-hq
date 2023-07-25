@@ -272,6 +272,36 @@ hqDefine("data_dictionary/js/data_dictionary", [
             self.saveButton.setState('saved');
         };
 
+        self.newPropertyNameUnique = ko.computed(function() {
+            if (!self.newPropertyName()) {
+                return true;
+            }
+
+            const propertyNameFormatted = self.newPropertyName().toLowerCase().trim();
+            const activeCaseTypeData = self.activeCaseTypeData();
+            for (const group of activeCaseTypeData) {
+                if (group.properties().some(v => v.name.toLowerCase() === propertyNameFormatted)) {
+                    return false;
+                }
+            }
+            return true;
+        });
+
+        self.newGroupNameUnique = ko.computed(function() {
+            if (!self.newGroupName()) {
+                return true;
+            }
+
+            const groupNameFormatted = self.newGroupName().toLowerCase().trim();
+            const activeCaseTypeData = self.activeCaseTypeData();
+            for (const group of activeCaseTypeData) {
+                if (group.name().toLowerCase() === groupNameFormatted) {
+                    return false;
+                }
+            }
+            return true;
+        });
+
         self.newCaseProperty = function () {
             if (_.isString(self.newPropertyName()) && self.newPropertyName().trim()) {
                 let lastGroup = self.caseGroupList()[self.caseGroupList().length - 1];

@@ -243,7 +243,8 @@ class CaseActivityReport(WorkerMonitoringCaseReportTableBase):
         landmarks_param = landmarks_param if isinstance(landmarks_param, list) else []
         landmarks_param = [param for param in landmarks_param if isinstance(param, int)]
         landmarks = landmarks_param if landmarks_param else self._default_landmarks
-        return [('landmark_' + str(idx), datetime.timedelta(days=l)) for idx, l in enumerate(landmarks)]
+        return [('landmark_' + str(i), datetime.timedelta(days=lmk))
+                for i, lmk in enumerate(landmarks)]
 
     _default_milestone = 120
 
