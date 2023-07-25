@@ -31,8 +31,7 @@ class Command(BaseCommand):
 
         self.stdout.write("\n\n\n\nPROJECTS ONLY FF -------------------------------------------------------\n")
         for domain in domains_only_ff:
-            edition = Subscription.visible_objects.filter(is_active=True).filter(
-                subscriber__domain=domain).first().plan_version.plan.edition
+            edition = get_edition(domain, pro_domains, advanced_domains, enterprise_domains)
             self.stdout.write(f"{domain}\t{edition}")
 
         self.stdout.write("\n\n\n\nNEW PROJECTS -------------------------------------------------------\n")
