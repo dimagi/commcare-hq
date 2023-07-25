@@ -24,10 +24,12 @@
         <% if (useTiles) { %>
           <% if (hasNoItems) { %>
             {% include 'formplayer/no_items_text.html' %}
-          <% } else if (isMultiSelect) { %>
+          <% } else { %>
             <div id="select-all-tile-wrapper">
-              <input type="checkbox" id="select-all-tile-checkbox"/>
-              <label id="select-all-tile-checkbox-label" for="select-all-tile-checkbox">{% trans "Select All" %}</label>
+              <% if (isMultiSelect) { %>
+                <input type="checkbox" id="select-all-tile-checkbox"/>
+                <label id="select-all-tile-checkbox-label" for="select-all-tile-checkbox">{% trans "Select All" %}</label>
+              <% } %>
             </div>
           <% } %>
           <section  class="js-case-container clearfix list-cell-container-style"></section>
