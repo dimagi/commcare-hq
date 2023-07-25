@@ -101,7 +101,7 @@ jobs:
         if: ${{ steps.python-files.outputs.python-file-present == 'true' }}
         run: pip install flake8
 
-      - name: Run flake8 linter
+      - name: Run linters
         if: ${{ steps.python-files.outputs.python-file-present == 'true' }}
         uses: wearerequired/lint-action@v2
         with:

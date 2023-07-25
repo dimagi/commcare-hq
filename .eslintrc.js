@@ -36,6 +36,10 @@ module.exports = {
         "nv": false,
         "d3": false,
     },
+    "ignorePatterns": [
+        ".github/*",
+        ".eslintrc.js"
+    ],
 
     // http://eslint.org/docs/rules/
     // http://eslint.org/docs/user-guide/configuring#configuring-rules
