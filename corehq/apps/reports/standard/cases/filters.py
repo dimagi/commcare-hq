@@ -5,6 +5,7 @@ from django.utils.safestring import mark_safe
 from django.utils.translation import gettext_lazy, gettext
 from django.utils.functional import lazy
 
+from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.app_manager.app_schemas.case_properties import (
     all_case_properties_by_domain,
 )
@@ -19,7 +20,7 @@ from corehq.apps.reports.filters.base import (
     BaseSimpleFilter,
     BaseSingleOptionFilter,
 )
-from corehq import toggles
+from corehq import toggles, privileges
 
 # TODO: Replace with library method
 
@@ -35,7 +36,8 @@ class CaseSearchFilter(BaseSimpleFilter):
     def help_inline(self):
         from corehq import toggles
         cle_link = DOCS_LINK_CASE_LIST_EXPLORER
-        if toggles.CASE_LIST_EXPLORER.enabled(self.domain):
+        if (domain_has_privilege(self.domain, privileges.CASE_LIST_EXPLORER)
+                or toggles.CASE_LIST_EXPLORER.enabled(self.domain)):
             from corehq.apps.reports.standard.cases.case_list_explorer import CaseListExplorer
             cle_link = CaseListExplorer.get_url(domain=self.domain)
         return mark_safe(gettext(  # nosec: no user input
