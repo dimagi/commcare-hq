@@ -15,6 +15,7 @@ from corehq.apps.reports.datatables import (
     DataTablesColumn,
     DataTablesColumnGroup,
     DataTablesHeader,
+    DTSortType,
 )
 from corehq.apps.reports.generic import GenericTabularReport
 from corehq.apps.reports.util import format_datatables_data
@@ -518,9 +519,9 @@ class WireInvoiceInterface(InvoiceInterfaceBase):
             DataTablesColumn("Postal Code"),
             DataTablesColumn("Country"),
             DataTablesColumnGroup("Statement Period",
-                                  DataTablesColumn("Start"),
-                                  DataTablesColumn("End")),
-            DataTablesColumn("Date Due"),
+                                  DataTablesColumn("Start", sort_type=DTSortType.DATE),
+                                  DataTablesColumn("End", sort_type=DTSortType.DATE)),
+            DataTablesColumn("Date Due", sort_type=DTSortType.DATE),
             DataTablesColumn("Total"),
             DataTablesColumn("Amount Due"),
             DataTablesColumn("Payment Status"),
@@ -674,9 +675,9 @@ class InvoiceInterface(InvoiceInterfaceBase):
             DataTablesColumn("Salesforce Account ID"),
             DataTablesColumn("Salesforce Contract ID"),
             DataTablesColumnGroup("Statement Period",
-                                  DataTablesColumn("Start"),
-                                  DataTablesColumn("End")),
-            DataTablesColumn("Date Due"),
+                                  DataTablesColumn("Start", sort_type=DTSortType.DATE),
+                                  DataTablesColumn("End", sort_type=DTSortType.DATE)),
+            DataTablesColumn("Date Due", sort_type=DTSortType.DATE),
             DataTablesColumn("Plan Cost"),
             DataTablesColumn("Plan Credits"),
             DataTablesColumn("SMS Cost"),
@@ -746,7 +747,7 @@ class InvoiceInterface(InvoiceInterfaceBase):
                 invoice.subscription.salesforce_contract_id or "--",
                 invoice.date_start,
                 invoice.date_end,
-                invoice.date_due if invoice.date_due else "None",
+                invoice.date_due,
             ]
 
             plan_subtotal, plan_deduction = get_subtotal_and_deduction(
@@ -968,9 +969,9 @@ class CustomerInvoiceInterface(InvoiceInterfaceBase):
             DataTablesColumn("Country"),
             DataTablesColumn("Salesforce Account ID"),
             DataTablesColumnGroup("Statement Period",
-                                  DataTablesColumn("Start"),
-                                  DataTablesColumn("End")),
-            DataTablesColumn("Date Due"),
+                                  DataTablesColumn("Start", sort_type=DTSortType.DATE),
+                                  DataTablesColumn("End", sort_type=DTSortType.DATE)),
+            DataTablesColumn("Date Due", sort_type=DTSortType.DATE),
             DataTablesColumn("Plan Cost"),
             DataTablesColumn("Plan Credits"),
             DataTablesColumn("SMS Cost"),
@@ -1026,7 +1027,7 @@ class CustomerInvoiceInterface(InvoiceInterfaceBase):
                 invoice.account.salesforce_account_id or "--",
                 invoice.date_start,
                 invoice.date_end,
-                invoice.date_due if invoice.date_due else "None",
+                invoice.date_due,
             ]
 
             plan_subtotal, plan_deduction = get_subtotal_and_deduction(
