@@ -110,16 +110,10 @@ jobs:
         run: pip install flake8
 
       - name: Run python linter
-        if: ${{ steps.python-files.outputs.python-file-present == 'true' }}
-        uses: wearerequired/lint-action@v2
+        uses: panda0603/lint-action@1.6.3
         with:
           flake8: true
           flake8_auto_fix: false
           flake8_args: ${{ steps.python-files.outputs.python-file-names }}
-
-      - name: Run javascript linter
-        if: ${{ steps.javascript-files.outputs.javascript-file-present == 'true' }}
-        uses: panda0603/lint-action@1.6.3
-        with:
           eslint: true
           eslint_args: ${{ steps.javascript-files.outputs.javascript-file-names }}
