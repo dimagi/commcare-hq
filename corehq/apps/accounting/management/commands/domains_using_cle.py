@@ -50,7 +50,11 @@ def get_edition(domain, pro, advanced, enterprise):
     if domain in enterprise:
         edition = "enterprise"
     if edition is None:
-        edition = Subscription.visible_objects.filter(is_active=True).filter(
+        sub = Subscription.visible_objects.filter(is_active=True).filter(
             subscriber__domain=domain
-        ).first().plan_version.plan.edition
+        ).first()
+        if sub:
+            edition = sub.plan_version.plan.edition
+        else:
+            edition = "unknown"
     return edition
