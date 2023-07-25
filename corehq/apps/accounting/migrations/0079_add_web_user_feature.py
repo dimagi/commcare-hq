@@ -4,9 +4,10 @@ from corehq.apps.accounting.bootstrap.utils import _ensure_feature_rates
 from corehq.apps.accounting.bootstrap.config.web_user_feature_rate import BOOTSTRAP_CONFIG
 from corehq.apps.accounting.models import FeatureType
 
+
 def _add_web_user_feature(apps, schema_editor):
     Feature = apps.get_model('accounting', 'Feature')
-    web_user_feature = Feature.objects.create(name=FeatureType.WEB_USER, feature_type=FeatureType.WEB_USER)
+    web_user_feature, _ = Feature.objects.get_or_create(name=FeatureType.WEB_USER, feature_type=FeatureType.WEB_USER)
     features = [web_user_feature]
     feature_rates = _ensure_feature_rates(BOOTSTRAP_CONFIG['feature_rates'], features, None, True, apps)
     for feature_rate in feature_rates:
