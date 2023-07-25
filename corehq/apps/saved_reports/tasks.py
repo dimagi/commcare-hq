@@ -202,20 +202,21 @@ def create_config_for_email(report_type, report_slug, user_id, domain, request_d
                 else:
                     filters[field] = value
         if field not in exclude:
-            filters[field] = GET.get(field)
+            filters[field] = GET.get(field) or filters[field]
 
     config.filters = filters
 
-    if 'startdate' in config.filters:
-        config.start_date = datetime.strptime(config.filters['startdate'], '%Y-%m-%d').date()
-    else:
-        config.start_date = request_data['datespan'].startdate.date()
-    if request_data['datespan'].enddate:
-        config.date_range = 'range'
-        config.end_date = request_data['datespan'].enddate.date()
-        if 'enddate' in config.filters:
-            config.end_date = datetime.strptime(config.filters['enddate'], '%Y-%m-%d').date()
-    else:
-        config.date_range = 'since'
+    if report_slug != 'case_list_explorer':
+        if 'startdate' in config.filters:
+            config.start_date = datetime.strptime(config.filters['startdate'], '%Y-%m-%d').date()
+        else:
+            config.start_date = request_data['datespan'].startdate.date()
+        if request_data['datespan'].enddate:
+            config.date_range = 'range'
+            config.end_date = request_data['datespan'].enddate.date()
+            if 'enddate' in config.filters:
+                config.end_date = datetime.strptime(config.filters['enddate'], '%Y-%m-%d').date()
+        else:
+            config.date_range = 'since'
 
     return config
