@@ -26,7 +26,7 @@ hqDefine("app_manager/js/details/case_claim", function () {
             'label': '',
             'value': '',
             'sort': '',
-        });
+        })
         var self = ko.mapping.fromJS(options);
 
         self.lookupTableNodeset = ko.pureComputed({

@@ -31,6 +31,7 @@ def domain_has_apps(domain):
     return len(results) > 0
 
 
+
 def get_latest_released_app_doc(domain, app_id):
     """Get the latest starred build for the application"""
     from .models import Application
