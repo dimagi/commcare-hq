@@ -37,7 +37,7 @@
               <ul class="dropdown-menu">
                 <%  _.each(headers, function(header, index) { %>
                   <% if (columnSortable(index)) { %>
-                  <li><a> <%- header %></a></li>
+                  <li class="header-clickable formplayer-request" data-id="<%- index %>"><a> <%- header %></a></li>
                   <% } %>
                 <% }); %>
               </ul>
