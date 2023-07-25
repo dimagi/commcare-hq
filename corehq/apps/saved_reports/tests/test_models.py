@@ -1,11 +1,15 @@
+from datetime import datetime, timedelta
+from django.http.request import QueryDict
 from django.conf import settings
 from django.test import SimpleTestCase, TestCase
 from smtplib import SMTPSenderRefused
+from dimagi.utils.dates import DateSpan
 from dimagi.utils.django.email import LARGE_FILE_SIZE_ERROR_CODE
 from unittest.mock import create_autospec, patch, PropertyMock, ANY
 from corehq.apps.reports import views
 from corehq.apps.users.models import CouchUser, WebUser
 from corehq.apps.saved_reports import models
+from corehq.apps.saved_reports.tasks import create_config_for_email
 from ..models import ReportNotification, ReportConfig
 
 
@@ -21,6 +25,51 @@ class TestReportConfig(TestCase):
         )
         self.config.save()
         self.assertFalse(self.config.is_shared_on_domain())
+
+    def test_report_config_contents(self):
+        self.domain = 'test-domain'
+        self.user_id = 'nothing'
+        self.report_slug = 'case_list_explorer'
+        self.report_type = 'project_report'
+
+        GET = {'send_to_owner': 'true',
+               'subject': 'Case List Explorer',
+               'getReportRenderUrl':
+                   '/a/test-domain/reports/undefined/case_list_explorer/?search_xpath=case_name%3D%22EXAMPLEXPATH'
+                   '%22&explorer_columns=%5B%7B%22name%22%3A%22%40case_type%22%2C%22label%22%3A%22%40case_type'
+                   '%22%7D%2C%7B%22name%22%3A%22case_name%22%2C%22label%22%3A%22case_name%22%7D%2C%7B%22name'
+                   '%22%3A%22last_modified%22%2C%22label%22%3A%22last_modified'
+                   '%22%7D%5D&case_list_filter=project_data&case_type=&is_open=',
+               'params':
+                   'search_xpath=case_name%3D%22EXAMPLEXPATH%22&explorer_columns=%5B%7B%22name'
+                   '%22%3A%22%40case_type%22%2C%22label%22%3A%22%40case_type%22%7D%2C%7B%22name'
+                   '%22%3A%22case_name%22%2C%22label%22%3A%22case_name%22%7D%2C%7B%22name'
+                   '%22%3A%22last_modified%22%2C%22label%22%3A%22last_modified'
+                   '%22%7D%5D&case_list_filter=project_data&case_type=&is_open='
+               }
+        GET_dict = QueryDict('', mutable=True)
+        GET_dict.update(GET)
+        test_date = datetime(2023, 7, 25)
+
+        self.request_data = {
+            'GET': GET_dict,
+            'META': {'QUERY_STRING': '', 'PATH_INFO': '/a/test-domain/reports/email_onceoff/case_list_explorer/'},
+            'datespan': DateSpan(
+                startdate=test_date - timedelta(days=30),
+                enddate=test_date
+            ),
+            'couch_user': self.user_id,
+            'can_access_all_locations': True
+        }
+
+        config = create_config_for_email(self.report_type, self.report_slug, self.user_id,
+                                         self.domain, self.request_data)
+
+        self.assertEqual(config.filters.get('search_xpath'), 'case_name="EXAMPLEXPATH"')
+        self.assertEqual(config.filters.get('explorer_columns'),
+                         '[{"name":"@case_type","label":"@case_type"},'
+                         '{"name":"case_name","label":"case_name"},'
+                         '{"name":"last_modified","label":"last_modified"}]')
 
 
 class TestReportNotification(SimpleTestCase):
