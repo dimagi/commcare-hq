@@ -18,7 +18,7 @@ from corehq.apps.es.tests.utils import (
 from corehq.apps.hqcase.utils import submit_case_blocks
 from corehq.apps.users.models import HqPermissions, UserRole, WebUser
 from corehq.form_processor.tests.utils import FormProcessorTestUtils
-from corehq.util.test_utils import privilege_enabled
+from corehq.util.test_utils import privilege_enabled, flag_enabled
 from corehq import privileges
 
 
@@ -68,28 +68,33 @@ class TestCaseCopyAPI(TestCase):
             external_id=external_id,
         )
 
+    @flag_enabled('COPY_CASES')
     def test_missing_user_permissions(self):
         WebUser.create(self.domain, 'invalid', 'password', None, None)
         self.client.login(username='invalid', password='password')
         res = self.make_post({})
         self.assertEqual(res.status_code, 403)
 
+    @flag_enabled('COPY_CASES')
     def test_missing_domain_permissions(self):
         with self.assertRaises(PermissionDenied):
             self.make_post({})
 
+    @flag_enabled('COPY_CASES')
     @privilege_enabled(privileges.CASE_COPY)
     def test_missing_case_ids(self):
         res = self.make_post({'case_ids': []})
         self.assertEqual(res.status_code, 400)
         self.assertEqual(json.loads(res.content)['error'], "Missing case ids")
 
+    @flag_enabled('COPY_CASES')
     @privilege_enabled(privileges.CASE_COPY)
     def test_missing_owner_id(self):
         res = self.make_post({'case_ids': self.case_ids, 'owner_id': ''})
         self.assertEqual(res.status_code, 400)
         self.assertEqual(json.loads(res.content)['error'], "Missing new owner id")
 
+    @flag_enabled('COPY_CASES')
     @privilege_enabled(privileges.CASE_COPY)
     def test_case_is_copied_to_new_owner(self):
         new_owner_id = 'new_owner_id'

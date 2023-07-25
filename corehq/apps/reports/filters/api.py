@@ -31,7 +31,7 @@ from corehq.apps.users.analytics import get_search_users_in_domain_es_query
 from corehq.elastic import ESError
 from corehq.apps.hqcase.case_helper import CaseHelper
 from django_prbac.decorators import requires_privilege
-from corehq import privileges
+from corehq import privileges, toggles
 from corehq.apps.accounting.utils import domain_has_privilege
 
 logger = logging.getLogger(__name__)
@@ -216,6 +216,7 @@ class DeviceLogIds(DeviceLogFilter):
 
 
 @require_POST
+@toggles.COPY_CASES.required_decorator()
 @require_permission(HqPermissions.edit_data)
 @requires_privilege(privileges.CASE_COPY)
 @location_safe

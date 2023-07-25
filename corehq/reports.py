@@ -272,7 +272,10 @@ def EDIT_DATA_INTERFACES(domain_obj):
     from corehq.apps.accounting.utils import domain_has_privilege
     reports = [CaseReassignmentInterface]
 
-    if domain_has_privilege(domain_obj.name, privileges.CASE_COPY):
+    if (
+        toggles.COPY_CASES.enabled(domain_obj.name) and
+        domain_has_privilege(domain_obj.name, privileges.CASE_COPY)
+    ):
         reports.append(CaseCopyInterface)
 
     reports.extend([ImportCases, BulkFormManagementInterface])
