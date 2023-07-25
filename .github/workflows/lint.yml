@@ -3,13 +3,13 @@ name: Lint
 on:
   # Trigger the workflow on push or pull request,
   # but only for the main branch
-  push:
-    branches:
-      - investigation/lint-action
+#  push:
+#    branches:
+#      - cs/revisit-lint-action
 
   pull_request:
     branches:
-      - investigation/lint-action
+      - master
 
 permissions:
   checks: write
