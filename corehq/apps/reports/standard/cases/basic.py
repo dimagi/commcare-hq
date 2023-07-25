@@ -7,7 +7,6 @@ from corehq.util.es.elasticsearch import TransportError
 from memoized import memoized
 
 from corehq.apps.es import cases as case_es
-from corehq.apps.es.utils import track_es_report_load
 from corehq.apps.locations.permissions import location_safe
 from corehq.apps.reports.api import ReportDataSource
 from corehq.apps.reports.datatables import DataTablesColumn, DataTablesHeader
@@ -83,7 +82,6 @@ class CaseListMixin(ElasticProjectInspectionReport, ProjectReportParametersMixin
             or EMWF.selected_group_ids(mobile_user_and_group_slugs)
             or EMWF.selected_location_ids(mobile_user_and_group_slugs)
         ):
-            track_es_report_load(self.domain, self.slug, len(self.case_owners))
             case_owner_filters.append(case_es.owner(self.case_owners))
 
         query = query.OR(*case_owner_filters)
