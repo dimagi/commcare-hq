@@ -24,6 +24,7 @@ from corehq.apps.accounting.models import (
     UNLIMITED_FEATURE_USAGE,
     BillingAccount,
     BillingRecord,
+    BillingAccountWebUserHistory,
     CreditLine,
     CustomerBillingRecord,
     CustomerInvoice,
@@ -537,6 +538,7 @@ class LineItemFactory(object):
             return {
                 FeatureType.SMS: SmsLineItemFactory,
                 FeatureType.USER: UserLineItemFactory,
+                FeatureType.WEB_USER: WebUserLineItemFactory,
             }[feature_type]
         except KeyError:
             raise LineItemError("No line item factory exists for the feature type '%s" % feature_type)
@@ -719,9 +721,8 @@ class UserLineItemFactory(FeatureLineItemFactory):
             )
         return non_prorated_unit_cost
 
-    @property
     @memoized
-    def quantity(self):
+    def _quantity_by_class(self, cls):
         # Iterate through all months in the invoice date range to aggregate total users into one line item
         dates = self.all_month_ends_in_invoice()
         excess_users = 0
@@ -729,9 +730,9 @@ class UserLineItemFactory(FeatureLineItemFactory):
             total_users = 0
             for domain in self.subscribed_domains:
                 try:
-                    history = DomainUserHistory.objects.get(domain=domain, record_date=date)
+                    history = cls.objects.get(domain=domain, record_date=date)
                     total_users += history.num_users
-                except DomainUserHistory.DoesNotExist:
+                except cls.DoesNotExist:
                     if not deleted_domain_exists(domain):
                         # this checks to see if the domain still exists
                         # before raising an error. If it was deleted the
@@ -739,6 +740,10 @@ class UserLineItemFactory(FeatureLineItemFactory):
                         raise
             excess_users += max(total_users - self.rate.monthly_limit, 0)
         return excess_users
+
+    @property
+    def quantity(self):
+        return self._quantity_by_class(DomainUserHistory)
 
     def all_month_ends_in_invoice(self):
         _, month_end = get_first_last_days(self.invoice.date_end.year, self.invoice.date_end.month)
@@ -748,8 +753,7 @@ class UserLineItemFactory(FeatureLineItemFactory):
             _, month_end = get_previous_month_date_range(month_end)
         return dates
 
-    @property
-    def unit_description(self):
+    def _unit_description_by_user_type(self, user_type):
         prorated_notice = ""
         if self.is_prorated:
             prorated_notice = _(" (Prorated for {date_range})").format(
@@ -760,16 +764,31 @@ class UserLineItemFactory(FeatureLineItemFactory):
             )
         if self.quantity > 0:
             return ngettext(
-                "Per-user fee exceeding limit of {monthly_limit} user "
+                "Per-{user} fee exceeding limit of {monthly_limit} {user} "
                 "with plan above.{prorated_notice}",
-                "Per-user fee exceeding limit of {monthly_limit} users "
+                "Per-{user} fee exceeding limit of {monthly_limit} {user}s "
                 "with plan above.{prorated_notice}",
                 self.rate.monthly_limit
             ).format(
                 monthly_limit=self.rate.monthly_limit,
                 prorated_notice=prorated_notice,
+                user=user_type
             )
 
+    @property
+    def unit_description(self):
+        return self._unit_description_by_user_type("mobile user")
+
+
+class WebUserLineItemFactory(UserLineItemFactory):
+
+    @property
+    def quantity(self):
+        return super()._quantity_by_class(BillingAccountWebUserHistory)
+
+    @property
+    def unit_description(self):
+        return super()._unit_description_by_user_type("web user")
 
 class SmsLineItemFactory(FeatureLineItemFactory):
 
