@@ -87,6 +87,10 @@ jobs:
         with:
           node-version: 14
 
+      - name: Output js files for linting
+        if: ${{ steps.javascript-files.outputs.javascript-file-present == 'true' }}
+        run: echo ${{ steps.javascript-files.outputs.javascript-file-names }}
+
       - name: Install Node.js dependencies
         if: ${{ steps.javascript-files.outputs.javascript-file-present == 'true' }}
         run: yarn install --frozen-lockfile
