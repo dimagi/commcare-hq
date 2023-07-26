@@ -109,10 +109,10 @@ jobs:
         run: pip install flake8
 
       - name: Run python linter
-        uses: panda0603/lint-action@1.6.3
+        uses: wearerequired/lint-action@v1
         with:
           github_token: ${{ secrets.github_token }}
-#          eslint: true
-#          eslint_args: ${{ steps.changed-files.outputs.all_changed_files }}
+          eslint: true
+          eslint_args: ${{ steps.changed-files.outputs.all_changed_files }}
           flake8: true
           flake8_args: ${{ steps.changed-files.outputs.all_changed_files }}
