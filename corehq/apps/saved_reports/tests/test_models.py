@@ -27,10 +27,10 @@ class TestReportConfig(TestCase):
         self.assertFalse(self.config.is_shared_on_domain())
 
     def test_report_config_contents(self):
-        self.domain = 'test-domain'
-        self.user_id = 'nothing'
-        self.report_slug = 'case_list_explorer'
-        self.report_type = 'project_report'
+        domain = 'test-domain'
+        user_id = 'nothing'
+        report_slug = 'case_list_explorer'
+        report_type = 'project_report'
 
         GET = {'send_to_owner': 'true',
                'subject': 'Case List Explorer',
@@ -51,22 +51,22 @@ class TestReportConfig(TestCase):
         GET_dict.update(GET)
         test_date = datetime(2023, 7, 25)
 
-        self.request_data = {
+        request_data = {
             'GET': GET_dict,
             'META': {'QUERY_STRING': '', 'PATH_INFO': '/a/test-domain/reports/email_onceoff/case_list_explorer/'},
             'datespan': DateSpan(
                 startdate=test_date - timedelta(days=30),
                 enddate=test_date
             ),
-            'couch_user': self.user_id,
+            'couch_user': user_id,
             'can_access_all_locations': True
         }
 
-        config = create_config_for_email(self.report_type, self.report_slug, self.user_id,
-                                         self.domain, self.request_data)
+        self.config = create_config_for_email(report_type, report_slug, user_id, domain, request_data)
+        self.config.save()
 
-        self.assertEqual(config.filters.get('search_xpath'), 'case_name="EXAMPLEXPATH"')
-        self.assertEqual(config.filters.get('explorer_columns'),
+        self.assertEqual(self.config.filters.get('search_xpath'), 'case_name="EXAMPLEXPATH"')
+        self.assertEqual(self.config.filters.get('explorer_columns'),
                          '[{"name":"@case_type","label":"@case_type"},'
                          '{"name":"case_name","label":"case_name"},'
                          '{"name":"last_modified","label":"last_modified"}]')
