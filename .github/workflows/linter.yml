@@ -1,32 +1,71 @@
----
-name: Lint Code Base
+name: Lint
 
 on:
   pull_request:
-    branches: [ master ]
+    branches:
+      - master
+
+permissions:
+  checks: write
+  contents: write
 
 jobs:
-  build:
-    name: Lint Code Base
+  lint-python:
+    name: Lint Python
     runs-on: ubuntu-latest
 
-    permissions:
-      contents: read
-      packages: read
-      statuses: write
-
     steps:
-      - name: Checkout Code
+      - name: Check out Git repository
         uses: actions/checkout@v3
         with:
           fetch-depth: 0
 
-      - name: Lint Code Base
-        uses: super-linter/super-linter@v5
-        env:
-          VALIDATE_ALL_CODEBASE: false
-          VALIDATE_JAVASCRIPT_ES: true
-          VALIDATE_PYTHON_FLAKE8: true
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          IGNORE_GITIGNORED_FILES: true
-          LINTER_RULES_PATH: /
+      - name: Check changed py files
+        id: changed-files
+        uses: tj-actions/changed-files@v24
+        with:
+          files: |
+            **/*.py
+
+      - name: Set up Python
+        uses: actions/setup-python@v1
+        if: ${{ steps.changed-files.outputs.all_changed_files }}
+        with:
+          python-version: 3.8
+
+      - name: Install Python dependencies
+        if: ${{ steps.changed-files.outputs.all_changed_files }}
+        run: pip install flake8
+
+      - name: Run flake8 linter
+        if: ${{ steps.changed-files.outputs.all_changed_files }}
+        uses: wearerequired/lint-action@v2
+        with:
+          flake8: true
+          flake8_auto_fix: false
+          flake8_args: ${{ steps.changed-files.outputs.all_changed_files }}
+          continue_on_error: false
+
+  # If this is in the same step as python linting the annotations don't show up
+  lint-javascript:
+    name: Lint Javascript
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out Git repository
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 14
+
+      - name: Install Node.js dependencies
+        run: yarn install --frozen-lockfile
+
+      - uses: sibiraj-s/action-eslint@v2
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          annotations: true
