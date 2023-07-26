@@ -114,10 +114,8 @@ jobs:
         with:
           github_token: ${{ secrets.github_token }}
           flake8: true
-          flake8_auto_fix: false
           flake8_extensions: py
           flake8_args: ${{ steps.changed-files.outputs.all_changed_files }}
           eslint: true
-          eslint_auto_fix: false
           eslint_extensions: js
           eslint_args: ${{ steps.changed-files.outputs.all_changed_files }}
