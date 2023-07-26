@@ -216,7 +216,7 @@ class RemoteRequestFactory(object):
                 data=self._remote_request_query_datums,
                 prompts=self.build_query_prompts(),
                 default_search=self.module.search_config.default_search,
-                results_title=self.build_results_title() if self.module.search_config.command_label != {} else None,
+                results_title=self.build_results_title(),
             )
         ]
 
