@@ -224,8 +224,7 @@ def create_metrics_event(title: str, text: str, alert_type: str = ALERT_INFO,
         metrics_logger.exception('Error creating metrics event', e)
 
 
-def metrics_histogram_timer(metric: str, timing_buckets: Iterable[int], tags: Dict[str, str] = None,
-                            bucket_tag: str = 'duration', callback: Callable = None):
+class metrics_histogram_timer(TimingContext):
     """
     Create a context manager that times and reports to the metric providers as a histogram
 
@@ -235,7 +234,7 @@ def metrics_histogram_timer(metric: str, timing_buckets: Iterable[int], tags: Di
 
         timer = metrics_histogram_timer('commcare.some.special.metric', tags={
             'type': type,
-        ], timing_buckets=(.001, .01, .1, 1, 10, 100))
+        }, timing_buckets=(.001, .01, .1, 1, 10, 100))
         with timer:
             some_special_thing()
 
@@ -248,34 +247,37 @@ def metrics_histogram_timer(metric: str, timing_buckets: Iterable[int], tags: Di
     :param timing_buckets: sequence of numbers representing time thresholds, in seconds
     :param bucket_tag: The name of the bucket tag to use (if used by the underlying provider)
     :param callback: a callable which will be called when exiting the context manager with a single argument
-                     of the timer duratio
+                     of the timer duration
     :return: A context manager that will perform the specified timing
              and send the specified metric
-
     """
-    timer = TimingContext()
-    original_stop = timer.stop
 
-    def new_stop(name=None):
-        original_stop(name)
-        if callback:
-            callback(timer.duration)
+    def __init__(self, metric: str, timing_buckets: Iterable[int], tags: Dict[str, str] = None,
+                 bucket_tag: str = 'duration', callback: Callable = None):
+        super().__init__()
+        self._metric = metric
+        self._timing_buckets = timing_buckets
+        self._tags = tags
+        self._bucket_tag = bucket_tag
+        self._callback = callback
+
+    def stop(self, name=None):
+        super().stop(name)
+        if self._callback:
+            self._callback(self.duration)
         metrics_histogram(
-            metric, timer.duration,
-            bucket_tag=bucket_tag, buckets=timing_buckets, bucket_unit='s',
-            tags=tags
+            self._metric, self.duration,
+            bucket_tag=self._bucket_tag, buckets=self._timing_buckets, bucket_unit='s',
+            tags=self._tags
         )
-        timer_name = metric
-        if metric.startswith('commcare.'):
-            timer_name = ".".join(metric.split('.')[1:])  # remove the 'commcare.' prefix
+        timer_name = self._metric
+        if self._metric.startswith('commcare.'):
+            timer_name = ".".join(self._metric.split('.')[1:])  # remove the 'commcare.' prefix
         add_breadcrumb(
             category="timing",
-            message=f"{timer_name}: {timer.duration:0.3f}",
+            message=f"{timer_name}: {self.duration:0.3f}",
             level="info",
         )
-
-    timer.stop = new_stop
-    return timer
 
 
 class metrics_track_errors(ContextDecorator):
