@@ -296,7 +296,18 @@ hqDefine('users/js/roles',[
                         allowCheckboxPermission: null,
                     },
                     {
-                        showOption: true,
+                        // Since disabling "Full Organization Access" automatically disables "Access APIs"
+                        // and we never want "Access APIs" without "Full Organization Access",
+                        // we hide "Access APIs" when "Full Organization Access" is disabled.
+                        // If "Access APIs" is checked though, even if "Full Organization Access" isn't
+                        // we always want to show it.
+                        // One can no longer make this combination happen in the UI,
+                        // but for the small number of existing roles that have this combination
+                        // we want it to be displayed.
+                        // Unchecking "Access APIs" in this situation will then make the option disappear.
+                        showOption: ko.pureComputed(function() {
+                            return self.permissions.access_all_locations() || self.permissions.access_api();
+                        }),
                         editPermission: self.permissions.access_api,
                         viewPermission: null,
                         text: gettext("<strong>Access APIs</strong> &mdash; use CommCare HQ APIs to read and update data. Specific APIs may require additional permissions."),
@@ -497,6 +508,12 @@ hqDefine('users/js/roles',[
                         }
                     ),
                 ];
+                // Automatically disable "Access APIs" when "Full Organization Access" is disabled
+                self.permissions.access_all_locations.subscribe(() => {
+                    if(!self.permissions.access_all_locations() && self.permissions.access_api()) {
+                        self.permissions.access_api(false);
+                    }
+                });
 
                 self.validate = function () {
                     self.registryPermissions.forEach((perm) => {
