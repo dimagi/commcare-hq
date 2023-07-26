@@ -30,7 +30,7 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Get changed python files
+      - name: Get changed files
         id: changed-files
         uses: tj-actions/changed-files@v14.6
 
@@ -87,9 +87,8 @@ jobs:
         with:
           node-version: 14
 
-#      - name: Output python files for linting
-#        if: ${{ steps.python-files.outputs.python-file-present == 'true' }}
-#        run: echo ${{ steps.python-files.outputs.python-file-names }}
+      - name: Output python files for linting
+        run: echo ${{ steps.changed-files.outputs.all_changed_files }}
 #
 #      - name: Output js files for linting
 #        if: ${{ steps.javascript-files.outputs.javascript-file-present == 'true' }}
