@@ -122,7 +122,7 @@ class TestFilterDsl(ElasticTestMixin, SimpleTestCase):
                             "range": {
                                 "case_properties.value.date": {
                                     "gte": "2023-01-10T08:00:00",
-                                    "lte": "2023-01-11T08:00:00"
+                                    "lt": "2023-01-11T08:00:00"
                                 }
                             }
                         }
