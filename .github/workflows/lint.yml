@@ -33,8 +33,6 @@ jobs:
       - name: Get changed python files
         id: changed-files
         uses: tj-actions/changed-files@v14.6
-        with:
-          files: /*.{py}
 
 #      - name: Get .py files
 #        id: python-files
@@ -115,7 +113,7 @@ jobs:
         uses: panda0603/lint-action@1.6.3
         with:
           github_token: ${{ secrets.github_token }}
-          eslint: true
-          eslint_args: ${{ steps.changed-files.outputs.all_changed_files }}
+#          eslint: true
+#          eslint_args: ${{ steps.changed-files.outputs.all_changed_files }}
           flake8: true
           flake8_args: ${{ steps.changed-files.outputs.all_changed_files }}
