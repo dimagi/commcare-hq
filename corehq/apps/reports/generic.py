@@ -116,6 +116,7 @@ class GenericReportView(object):
 
     # not required
     description = None  # Human-readable description of the report
+    documentation_link = None  # Link to docs page if available
     report_template_path = None
     report_partial_path = None
 
@@ -460,6 +461,7 @@ class GenericReportView(object):
             report=dict(
                 title=self.rendered_report_title,
                 description=self.description,
+                documentation_link=self.documentation_link,
                 section_name=self.section_name,
                 slug=self.slug,
                 sub_slug=None,

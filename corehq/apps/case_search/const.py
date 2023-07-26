@@ -83,3 +83,5 @@ EQ = "="
 NEQ = "!="
 COMPARISON_OPERATORS = [EQ, NEQ] + list(RANGE_OP_MAPPING.keys())
 ALL_OPERATORS = COMPARISON_OPERATORS + list(OPERATOR_MAPPING.keys())
+
+DOCS_LINK_CASE_LIST_EXPLORER = "https://confluence.dimagi.com/display/commcarepublic/Case+List+Explorer"
