@@ -487,6 +487,9 @@ class StackJump(XmlObject):
 class Argument(IdNode):
     ROOT_NAME = 'argument'
 
+    instance_id = StringField('@instance-id')
+    instance_src = StringField('@instance-src')
+
 
 class SessionEndpoint(IdNode):
     ROOT_NAME = 'endpoint'
