@@ -3,6 +3,7 @@ import re
 ROOT = 'root'
 
 
+
 def _format_to_regex(pattern):
     r"""
     convert a format string with %s and %d to a regex
