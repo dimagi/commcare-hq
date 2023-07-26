@@ -245,7 +245,6 @@ class metrics_histogram_timer(TimingContext):
     :param metric: Name of the metric (must start with 'commcare.')
     :param tags: metric tags to include
     :param timing_buckets: sequence of numbers representing time thresholds, in seconds
-    :param bucket_tag: The name of the bucket tag to use (if used by the underlying provider)
     :param callback: a callable which will be called when exiting the context manager with a single argument
                      of the timer duration
     :return: A context manager that will perform the specified timing
@@ -253,12 +252,11 @@ class metrics_histogram_timer(TimingContext):
     """
 
     def __init__(self, metric: str, timing_buckets: Iterable[int], tags: Dict[str, str] = None,
-                 bucket_tag: str = 'duration', callback: Callable = None):
+                 callback: Callable = None):
         super().__init__()
         self._metric = metric
         self._timing_buckets = timing_buckets
         self._tags = tags
-        self._bucket_tag = bucket_tag
         self._callback = callback
 
     def stop(self, name=None):
@@ -266,9 +264,8 @@ class metrics_histogram_timer(TimingContext):
         if self._callback:
             self._callback(self.duration)
         metrics_histogram(
-            self._metric, self.duration,
-            bucket_tag=self._bucket_tag, buckets=self._timing_buckets, bucket_unit='s',
-            tags=self._tags
+            self._metric, self.duration, bucket_tag='duration',
+            buckets=self._timing_buckets, bucket_unit='s', tags=self._tags
         )
         timer_name = self._metric
         if self._metric.startswith('commcare.'):
