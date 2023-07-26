@@ -5,6 +5,7 @@ hqDefine("domain/js/internal_calculations", [
     $,
     initialPageData
 ) {
+
     function load_calculation($calc_group) {
         var $calc_btn = $calc_group.find('.load-calc-btn');
         var $calc_error = $calc_group.find('.calc-error');
