@@ -11,9 +11,10 @@ hqDefine('domain/js/case_search', [
     initialPageData,
     hqMain
 ) {
-    var module = {};
 
-    var propertyModel = function (name) {
+    var module = {}
+
+    var propertyModel = function(name) {
         var self = {};
         self.name = ko.observable(name);
         return self;
