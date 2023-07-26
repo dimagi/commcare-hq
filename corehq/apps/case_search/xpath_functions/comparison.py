@@ -71,8 +71,8 @@ def _create_timezone_adjusted_datetime_query(case_property_name, op, value, node
     """
     utc_equivalent_datetime_value = adjust_input_date_by_timezone(value_to_date(node, value), timezone, op)
     if op in [EQ, NEQ]:
-        day_start_datetime = utc_equivalent_datetime_value.isoformat()
-        day_end_datetime = (utc_equivalent_datetime_value + timedelta(days=1)).isoformat()
+        day_start_datetime = utc_equivalent_datetime_value
+        day_end_datetime = (utc_equivalent_datetime_value + timedelta(days=1))
         op_value_dict = {
             RANGE_OP_MAPPING[">="]: day_start_datetime,
             RANGE_OP_MAPPING["<"]: day_end_datetime,
@@ -82,7 +82,7 @@ def _create_timezone_adjusted_datetime_query(case_property_name, op, value, node
             query = filters.NOT(query)
         return query
     else:
-        op_value_dict = {RANGE_OP_MAPPING[op]: utc_equivalent_datetime_value.isoformat()}
+        op_value_dict = {RANGE_OP_MAPPING[op]: utc_equivalent_datetime_value}
         return _case_property_range_query(case_property_name, op_value_dict, node)
 
 
