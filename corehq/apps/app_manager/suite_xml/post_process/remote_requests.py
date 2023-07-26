@@ -187,7 +187,7 @@ class RemoteRequestFactory(object):
 
     def build_results_title(self):
         return Display(
-            text=Text(locale_id=id_strings.case_list_title_translation(self.module))
+            text=Text(locale_id=id_strings.case_search_locale(self.module))
         )
 
     def build_description(self):
