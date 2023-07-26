@@ -457,6 +457,13 @@ def get_all_tableau_groups(domain, session=None):
     return _group_json_to_tuples(group_json)
 
 
+def allowed_tableau_groups_for_domain(domain):
+    '''
+    Returns a list of the Tableau groups that have been approved in the project settings.
+    '''
+    return TableauServer.objects.get(domain=domain).allowed_tableau_groups
+
+
 def get_tableau_groups_for_user(domain, username):
     '''
     Returns a list of Tableau groups that the given user belongs to.

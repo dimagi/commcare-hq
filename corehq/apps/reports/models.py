@@ -237,6 +237,18 @@ class TableauConnectedApp(models.Model):
         )
         return token
 
+    @classmethod
+    def is_server_setup(cls, domain):
+        try:
+            server = TableauServer.objects.get(domain=domain)
+        except TableauServer.DoesNotExist:
+            return False
+        try:
+            if server.server_name and cls.objects.get(server=server):
+                return True
+        except TableauConnectedApp.DoesNotExist:
+            pass
+        return False
 
 class TableauUser(models.Model):
     server = models.ForeignKey(TableauServer, on_delete=models.CASCADE)
