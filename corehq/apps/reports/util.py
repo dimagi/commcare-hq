@@ -551,6 +551,7 @@ def update_tableau_user(domain, username, role=None, groups=[], session=None):
     if role:
         user.role = role
     user.save()
+    groups = filter(lambda group: group.name in allowed_tableau_groups_for_domain(domain), groups)
     _update_user_remote(session, user, groups)
 
 
