@@ -226,7 +226,8 @@ def create_metrics_event(title: str, text: str, alert_type: str = ALERT_INFO,
 
 class metrics_histogram_timer(TimingContext):
     """
-    Create a context manager that times and reports to the metric providers as a histogram
+    Create a context manager that times and reports to the metric providers as a histogram.
+    If the block raises an exception, that will be logged as well.
 
     Example Usage:
 
@@ -258,6 +259,7 @@ class metrics_histogram_timer(TimingContext):
         self._timing_buckets = timing_buckets
         self._tags = tags
         self._callback = callback
+        self._errored = False
 
     def stop(self, name=None):
         super().stop(name)
@@ -267,6 +269,8 @@ class metrics_histogram_timer(TimingContext):
             self._metric, self.duration, bucket_tag='duration',
             buckets=self._timing_buckets, bucket_unit='s', tags=self._tags
         )
+        if self._errored:
+            metrics_counter(self._metric, tags={**self._tags, 'duration': 'error'})
         timer_name = self._metric
         if self._metric.startswith('commcare.'):
             timer_name = ".".join(self._metric.split('.')[1:])  # remove the 'commcare.' prefix
@@ -275,6 +279,10 @@ class metrics_histogram_timer(TimingContext):
             message=f"{timer_name}: {self.duration:0.3f}",
             level="info",
         )
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        self._errored = exc_type is not None
+        super().__exit__(exc_type, exc_val, exc_tb)  # this calls self.stop
 
 
 class metrics_track_errors(ContextDecorator):
