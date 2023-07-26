@@ -82,7 +82,7 @@ jobs:
 #          echo "::set-output name=javascript-file-names::$js_files"
 
       - name: Set up Node.js
-        if: ${{ steps.javascript-files.outputs.javascript-file-present == 'true' }}
+#        if: ${{ steps.javascript-files.outputs.javascript-file-present == 'true' }}
         uses: actions/setup-node@v3
         with:
           node-version: 14
@@ -96,17 +96,17 @@ jobs:
 #        run: echo ${{ steps.javascript-files.outputs.javascript-file-names }}
 
       - name: Install Node.js dependencies
-        if: ${{ steps.javascript-files.outputs.javascript-file-present == 'true' }}
+#        if: ${{ steps.javascript-files.outputs.javascript-file-present == 'true' }}
         run: yarn install --frozen-lockfile
 
       - name: Set up Python
         uses: actions/setup-python@v1
-        if: ${{ steps.python-files.outputs.python-file-present == 'true' }}
+#        if: ${{ steps.python-files.outputs.python-file-present == 'true' }}
         with:
           python-version: 3.8
 
       - name: Install Python dependencies
-        if: ${{ steps.python-files.outputs.python-file-present == 'true' }}
+#        if: ${{ steps.python-files.outputs.python-file-present == 'true' }}
         run: pip install flake8
 
       - name: Run python linter
