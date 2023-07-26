@@ -30,9 +30,11 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Get changed files
+      - name: Get changed python files
         id: changed-files
         uses: tj-actions/changed-files@v14.6
+        with:
+          files: /*.{py}
 
 #      - name: Get .py files
 #        id: python-files
@@ -114,8 +116,6 @@ jobs:
         with:
           github_token: ${{ secrets.github_token }}
           eslint: true
-          eslint_extensions: js
           eslint_args: ${{ steps.changed-files.outputs.all_changed_files }}
           flake8: true
-          flake8_extensions: py
           flake8_args: ${{ steps.changed-files.outputs.all_changed_files }}
