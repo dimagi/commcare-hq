@@ -10,9 +10,9 @@ hqDefine('app_manager/js/app_manager_media', function () {
 
         self.enabled = ko.observable(
             o.ref.use_default_media ? self.isDefaultLanguage : true
-        );
+        )
         self.ref = ko.observable(new MenuMediaReference(o.ref));
-        self.refHasPath = ko.computed(function () {
+        self.refHasPath = ko.computed(function() {
             return self.ref().path.length > 0;
         });
         self.objectMap = ko.observable(o.objectMap);
