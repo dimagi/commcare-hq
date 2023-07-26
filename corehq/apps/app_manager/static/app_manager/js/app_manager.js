@@ -6,9 +6,10 @@ hqDefine('app_manager/js/app_manager', function () {
     _private.appendedPageTitle = "";
     _private.prependedPageTitle = "";
 
-    module.setCommcareVersion = function (version) {
+    module.setCommcareVersion = function(version) {
         module.commcareVersion(version);
-    };
+    }
+
 
     module.setAppendedPageTitle = function (appendedPageTitle) {
         _private.appendedPageTitle = appendedPageTitle;
