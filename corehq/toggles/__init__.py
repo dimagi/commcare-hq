@@ -2494,7 +2494,7 @@ CASE_LIST_EXPLORER = FrozenPrivilegeToggle(
     tag=TAG_SOLUTIONS_OPEN,
     namespaces=[NAMESPACE_DOMAIN],
     save_fn=_ensure_search_index_is_enabled,
-    help_link='#todo',
+    help_link='https://confluence.dimagi.com/display/commcarepublic/Case+List+Explorer',
 )
 
 
