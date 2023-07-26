@@ -1,5 +1,6 @@
 from datetime import datetime, timedelta
 
+from django.db import models
 from django.utils.translation import gettext
 from eulxml.xpath import serialize
 from eulxml.xpath.ast import Step
@@ -7,9 +8,10 @@ from eulxml.xpath.ast import Step
 from corehq.apps.case_search.dsl_utils import unwrap_value
 from corehq.apps.case_search.exceptions import CaseFilterError, XPathFunctionException
 from corehq.apps.case_search.xpath_functions.value_functions import value_to_date
-from corehq.apps.case_search.const import RANGE_OP_MAPPING, EQ, NEQ, SPECIAL_CASE_PROPERTIES
+from corehq.apps.case_search.const import RANGE_OP_MAPPING, EQ, NEQ, SPECIAL_CASE_PROPERTIES_MAP
 from corehq.apps.es import filters
 from corehq.apps.es.case_search import case_property_query, case_property_range_query
+from corehq.form_processor.models import CommCareCase
 from corehq.util.timezones.utils import get_timezone_for_domain
 from corehq.util.timezones.conversions import UserTime
 
@@ -23,14 +25,16 @@ def property_comparison_query(context, case_property_name_raw, op, value_raw, no
 
     case_property_name = serialize(case_property_name_raw)
     value = unwrap_value(value_raw, context)
-    if case_property_name in SPECIAL_CASE_PROPERTIES:
+    if (case_property_name in SPECIAL_CASE_PROPERTIES_MAP.keys()
+        and isinstance(SPECIAL_CASE_PROPERTIES_MAP[case_property_name].field_getter(CommCareCase),
+                    models.DateTimeField)):
         try:
             domain = context.domain
             if isinstance(domain, set):
                 domain = list(domain)
             timezone = get_timezone_for_domain(domain)
             return _create_timezone_adjusted_datetime_query(case_property_name, op, value, node, timezone)
-        except (XPathFunctionException, AssertionError):
+        except (AssertionError):
             # AssertionError is caused by tests that use domains without
             # a valid timezone (in get_timezeone_for_domain)
             pass
