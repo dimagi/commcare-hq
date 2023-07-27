@@ -335,50 +335,57 @@ hqDefine("geospatial/js/geospatial_map", [
             return self;
         };
 
+        var missingGPSModel = function(cases) {
+            this.casesWithoutGPS = ko.observable(cases);
+        };
+        var missingGPSModelInstance = new missingGPSModel([]);
 
         $(document).ajaxComplete(function (event, xhr, settings) {
             // This indicates that the report data is fetched
-            if (!settings.url.includes('geospatial/async/case_management_map/')) {
+            const isAfterDataLoad = settings.url.includes('geospatial/json/case_management_map/');
+            if (!isAfterDataLoad) {
                 return;
             }
+            // Hide the data-table rows but not the pagination bar
+            $('.dataTables_scroll').hide();
+
             var mapDiv = $('#geospatial-map');
-            var $data = $(".map-data");
             var $exportDrawnArea = $("#btnExportDrawnArea");
             var $saveDrawnArea = $("#btnSaveDrawnArea");
             var $mapControlDiv = $("#mapControls");
 
-            if (mapDiv.length && !map) {
-                map = loadMapBox();
-            }
+            map = loadMapBox();
 
             var mapControlsModelInstance = mapControlsModel();
 
-            if ($data.length && map) {
-                var contextData = $data.data("context");
+            if (xhr.responseJSON.aaData.length && map) {
                 map.clearMap();
+                var casesWithGPS = xhr.responseJSON.aaData.filter(function(item) {
+                    return item[1] != null;
+                })
                 // Index by case_id
-                var rawCases = _.object(_.map(contextData.cases, function(item) {
-                   return [item.case_id, item]
-                }));
-                map.addCaseMarkersToMap(rawCases);
-
-                if (contextData.invalid_geo_cases_report_link) {
-                    var missingCasesLink = contextData.invalid_geo_cases_report_link;
-                    var missingCasesLinkTag = "<a href=" + missingCasesLink + ">" + gettext("View here") + "</a>";
-                    var message = gettext("There are case(s) missing geolocation data.");
-
-                    alert_user.alert_user(message + " " + missingCasesLinkTag, "warning");
-
-                    var $bannerAlert = $("#message-alerts");
-                    if ($bannerAlert.children().length > 1) {
-                        // Remove the initial banner, since it contains the old link
-                        $bannerAlert.children()[0].remove();
+                var casesById = _.object(_.map(casesWithGPS, function(item) {
+                    if (item[1]) {
+                        return [item[0], {'coordinates': item[1], 'link': item[2]}];
                     }
+                }));
+                map.addCaseMarkersToMap(casesById);
+
+                var $missingCasesDiv = $("#missing-gps-cases");
+                var casesWithoutGPS = xhr.responseJSON.aaData.filter(function(item) {
+                    return item[1] == null;
+                });
+                var casesWithoutGPS = _.map(casesWithoutGPS, function (item) {return {"link": item[2]};});
+                // Don't re-apply if this is the next page of the pagination
+                if (ko.dataFor($missingCasesDiv[0]) === undefined) {
+                    $missingCasesDiv.koApplyBindings(missingGPSModelInstance);
+                    missingGPSModelInstance.casesWithoutGPS(casesWithoutGPS);
                 }
+                missingGPSModelInstance.casesWithoutGPS(casesWithoutGPS);
             }
 
             if ($mapControlDiv.length) {
-                ko.cleanNode($mapControlDiv);
+                ko.cleanNode($mapControlDiv[0]);
                 $mapControlDiv.koApplyBindings(mapControlsModelInstance);
             }
 
