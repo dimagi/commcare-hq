@@ -25,6 +25,11 @@
              default_search="false"
              storage-instance="results"
              template="case">
+        <results-title>
+          <text>
+            <locale id="case_search.{module_id}"/>
+          </text>
+        </results-title>
         <title>
           <text>
             <locale id="case_search.{module_id}.inputs"/>

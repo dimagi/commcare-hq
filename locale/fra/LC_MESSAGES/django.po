@@ -21250,16 +21250,12 @@ msgid "File has been uploaded successfully and is queued for processing."
 msgstr ""
 
 #: corehq/apps/geospatial/forms.py
-#, fuzzy
-#| msgid "Custom filter"
 msgid "Custom user field"
-msgstr "Peronnaliser le filtre"
+msgstr ""
 
 #: corehq/apps/geospatial/forms.py
-#, fuzzy
-#| msgid "The user's assigned location"
 msgid "User's assigned location"
-msgstr "Le site assigné de l'utilisateur"
+msgstr ""
 
 #: corehq/apps/geospatial/forms.py
 msgid "Fetch mobile worker location data from custom field"
@@ -21272,10 +21268,8 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/geospatial/forms.py
-#, fuzzy
-#| msgid "the date in case property"
 msgid "Fetch case location data from property"
-msgstr "la date dans la propriété de dossier"
+msgstr ""
 
 #: corehq/apps/geospatial/forms.py
 msgid ""
@@ -21283,10 +21277,8 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/geospatial/forms.py
-#, fuzzy
-#| msgid "Consumption Settings"
 msgid "Configure Geospatial Settings"
-msgstr "Paramètres de consommation"
+msgstr ""
 
 #: corehq/apps/geospatial/reports.py
 msgid "Case Management Map"
@@ -21310,10 +21302,8 @@ msgid "Save Area"
 msgstr ""
 
 #: corehq/apps/geospatial/views.py
-#, fuzzy
-#| msgid "Consumption Settings"
 msgid "Configuration Settings"
-msgstr "Paramètres de consommation"
+msgstr ""
 
 #: corehq/apps/groups/templates/groups/all_groups.html
 #: corehq/apps/reports/filters/users.py
@@ -29176,6 +29166,7 @@ msgid "unknown product"
 msgstr "produit inconnu"
 
 #: corehq/apps/reports/standard/cases/case_list_explorer.py
+#: corehq/privileges.py
 msgid "Case List Explorer"
 msgstr ""
 
@@ -38524,10 +38515,8 @@ msgid "Roles"
 msgstr "Rôles"
 
 #: corehq/apps/users/templates/users/roles_and_permissions.html
-#, fuzzy
-#| msgid "Daily Saved Exports"
 msgid "Manage Shared Exports"
-msgstr "Exports Sauvegardés Quotidiens"
+msgstr ""
 
 #: corehq/apps/users/templates/users/roles_and_permissions.html
 msgid "Apps"
@@ -43258,10 +43247,8 @@ msgid "Manage Attendance Tracking Events"
 msgstr ""
 
 #: corehq/tabs/tabclasses.py
-#, fuzzy
-#| msgid "Consumption Settings"
 msgid "Configure geospatial settings"
-msgstr "Paramètres de consommation"
+msgstr ""
 
 #: corehq/trans_override.py
 msgid "Token generator"
