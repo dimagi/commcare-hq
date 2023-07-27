@@ -48,7 +48,7 @@ from corehq.util.workbook_reading import (
 )
 from corehq.util.workbook_reading import open_any_workbook
 from corehq.apps.app_manager.dbaccessors import get_case_types_from_apps
-from corehq.apps.data_dictionary.util import get_data_dict_case_types
+from corehq.apps.data_dictionary.util import get_data_dict_case_types, get_data_dict_deprecated_case_types
 
 require_can_edit_data = require_permission(HqPermissions.edit_data)
 
@@ -212,6 +212,12 @@ def _process_file_and_get_upload(uploaded_file_handle, request, domain, max_colu
             'Your project does not use cases yet. To import cases from Excel, '
             'you must first create an application with a case list.'
         ))
+
+    # Remove deprecated case types as options. We only do that here as we don't want to remove
+    # deprecated case types when determing if the import is a bulk case import
+    data_dict_deprecated_case_types = get_data_dict_deprecated_case_types(domain)
+    case_types_from_apps = set(case_types_from_apps) - data_dict_deprecated_case_types
+    unrecognized_case_types = set(unrecognized_case_types) - data_dict_deprecated_case_types
 
     error_messages = custom_case_upload_file_operations(domain=domain, case_upload=case_upload)
     if error_messages:
