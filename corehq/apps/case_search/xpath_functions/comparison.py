@@ -59,7 +59,7 @@ def _case_property_range_query(case_property_name: str, op_value_dict, node):
                 serialize(node),
             )
         except ValueError as e:
-            raise CaseFilterError(gettext(str(e)), serialize(node))
+            raise CaseFilterError(str(e), serialize(node))
 
 def _create_timezone_adjusted_datetime_query(case_property_name, op, value, node, timezone):
     """

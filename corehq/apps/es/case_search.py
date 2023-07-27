@@ -15,6 +15,7 @@ from datetime import date, datetime
 from warnings import warn
 
 from django.utils.dateparse import parse_date, parse_datetime
+from django.utils.translation import gettext
 
 from memoized import memoized
 
@@ -320,21 +321,21 @@ def _parse_date_or_datetime(value):
     parsed_datetime = _parse_datetime(value)
     if parsed_datetime is not None:
         return parsed_datetime
-    raise ValueError(f"{value} is not a correctly formatted date or datetime")
+    raise ValueError(gettext(f"{value} is not a correctly formatted date or datetime."))
 
 
 def _parse_date(value):
     try:
         return parse_date(value)
-    except ValueError as e:
-        raise ValueError(f"{value} is invalid. {str(e)}")
+    except ValueError:
+        raise ValueError(gettext(f"{value} is an invalid date."))
 
 
 def _parse_datetime(value):
     try:
         return parse_datetime(value)
-    except ValueError as e:
-        raise ValueError(f"{value} is invalid. {str(e)}")
+    except ValueError:
+        raise ValueError(gettext(f"{value} is an invalid datetime."))
 
 
 def reverse_index_case_query(case_ids, identifier=None):
