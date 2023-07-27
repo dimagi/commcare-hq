@@ -20508,10 +20508,8 @@ msgid "Custom user field"
 msgstr ""
 
 #: corehq/apps/geospatial/forms.py
-#, fuzzy
-#| msgid "Workers at Location"
 msgid "User's assigned location"
-msgstr "Casos IRA Tratados"
+msgstr ""
 
 #: corehq/apps/geospatial/forms.py
 msgid "Fetch mobile worker location data from custom field"
@@ -28104,6 +28102,7 @@ msgid "unknown product"
 msgstr ""
 
 #: corehq/apps/reports/standard/cases/case_list_explorer.py
+#: corehq/privileges.py
 msgid "Case List Explorer"
 msgstr ""
 

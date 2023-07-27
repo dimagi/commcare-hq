@@ -1074,14 +1074,6 @@ def _ensure_search_index_is_enabled(domain, enabled):
         reindex_case_search_for_domain.delay(domain)
 
 
-CASE_LIST_EXPLORER = StaticToggle(
-    'case_list_explorer',
-    'Show the case list explorer report',
-    TAG_SOLUTIONS_OPEN,
-    namespaces=[NAMESPACE_DOMAIN],
-    save_fn=_ensure_search_index_is_enabled,
-)
-
 EXPLORE_CASE_DATA = StaticToggle(
     'explore_case_data',
     'Show the Explore Case Data report (in dev)',
@@ -2484,6 +2476,18 @@ VIEW_APP_CHANGES = FrozenPrivilegeToggle(
     [NAMESPACE_DOMAIN, NAMESPACE_USER],
     help_link="https://confluence.dimagi.com/display/saas/Viewing+App+Changes+between+versions",
 )
+
+
+CASE_LIST_EXPLORER = FrozenPrivilegeToggle(
+    privileges.CASE_LIST_EXPLORER,
+    'case_list_explorer',
+    label='Show the case list explorer report',
+    tag=TAG_SOLUTIONS_OPEN,
+    namespaces=[NAMESPACE_DOMAIN],
+    save_fn=_ensure_search_index_is_enabled,
+    help_link='https://confluence.dimagi.com/display/commcarepublic/Case+List+Explorer',
+)
+
 
 DATA_FILE_DOWNLOAD = FrozenPrivilegeToggle(
     privileges.DATA_FILE_DOWNLOAD,
