@@ -6,7 +6,7 @@ hqDefine("reports/js/filters/case_list_explorer", ['jquery', 'underscore', 'knoc
         var self = this;
         self.currentCaseType = ko.observable('');
         $('#report_filter_case_type').on('change', function (e) {
-            self.currentCaseType(e.val);
+            self.currentCaseType(e.currentTarget.value);
         });
 
         self.suggestedProperties = ko.computed(function () {
