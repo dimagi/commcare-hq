@@ -300,9 +300,9 @@ def case_property_range_query(case_property_name, gt=None, gte=None, lt=None, lt
     # if its a date or datetime, use it
     # date range
     kwargs = {
-        key: value if isinstance(value, (date, datetime)) else (_parse_date(value) or _parse_datetime(value))
+        key: value if isinstance(value, (date, datetime)) else _parse_date_or_datetime(value)
         for key, value in kwargs.items()
-        if value is not None and (_parse_date(value) or _parse_datetime(value))
+        if value is not None
     }
     if not kwargs:
         raise TypeError()       # Neither a date nor number was passed in
@@ -311,6 +311,16 @@ def case_property_range_query(case_property_name, gt=None, gte=None, lt=None, lt
         case_property_name,
         queries.date_range("{}.{}.date".format(CASE_PROPERTIES_PATH, VALUE), **kwargs)
     )
+
+
+def _parse_date_or_datetime(value):
+    parsed_date = _parse_date(value)
+    if parsed_date is not None:
+        return parsed_date
+    parsed_datetime = _parse_datetime(value)
+    if parsed_datetime is not None:
+        return parsed_datetime
+    raise ValueError(f"{value} is not a correctly formatted date or datetime")
 
 
 def _parse_date(value):
@@ -322,7 +332,7 @@ def _parse_date(value):
 
 def _parse_datetime(value):
     try:
-        return _parse_datetime(value)
+        return parse_datetime(value)
     except ValueError as e:
         raise ValueError(f"{value} is invalid. {str(e)}")
 
