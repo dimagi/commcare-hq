@@ -470,6 +470,8 @@ def generate_line_items(invoice, subscription):
         feature_factory_class = FeatureLineItemFactory.get_factory_by_feature_type(
             feature_rate.feature.feature_type
         )
+        if feature_factory_class == WebUserLineItemFactory and not subscription.account.bill_web_user:
+            continue
         feature_factory = feature_factory_class(subscription, feature_rate, invoice)
         feature_factory.create()
 
@@ -721,8 +723,9 @@ class UserLineItemFactory(FeatureLineItemFactory):
             )
         return non_prorated_unit_cost
 
+    @property
     @memoized
-    def _quantity_by_class(self, cls):
+    def quantity(self):
         # Iterate through all months in the invoice date range to aggregate total users into one line item
         dates = self.all_month_ends_in_invoice()
         excess_users = 0
@@ -730,9 +733,9 @@ class UserLineItemFactory(FeatureLineItemFactory):
             total_users = 0
             for domain in self.subscribed_domains:
                 try:
-                    history = cls.objects.get(domain=domain, record_date=date)
+                    history = DomainUserHistory.objects.get(domain=domain, record_date=date)
                     total_users += history.num_users
-                except cls.DoesNotExist:
+                except DomainUserHistory.DoesNotExist:
                     if not deleted_domain_exists(domain):
                         # this checks to see if the domain still exists
                         # before raising an error. If it was deleted the
@@ -740,10 +743,6 @@ class UserLineItemFactory(FeatureLineItemFactory):
                         raise
             excess_users += max(total_users - self.rate.monthly_limit, 0)
         return excess_users
-
-    @property
-    def quantity(self):
-        return self._quantity_by_class(DomainUserHistory)
 
     def all_month_ends_in_invoice(self):
         _, month_end = get_first_last_days(self.invoice.date_end.year, self.invoice.date_end.month)
@@ -783,8 +782,21 @@ class UserLineItemFactory(FeatureLineItemFactory):
 class WebUserLineItemFactory(UserLineItemFactory):
 
     @property
+    @memoized
     def quantity(self):
-        return super()._quantity_by_class(BillingAccountWebUserHistory)
+        # Iterate through all months in the invoice date range to aggregate total users into one line item
+        dates = self.all_month_ends_in_invoice()
+        excess_users = 0
+        for date in dates:
+            total_users = 0
+            try:
+                history = BillingAccountWebUserHistory.objects.get(
+                    billing_account=self.subscription.account, record_date=date)
+                total_users += history.num_users
+            except BillingAccountWebUserHistory.DoesNotExist:
+                raise
+            excess_users += max(total_users - self.rate.monthly_limit, 0)
+        return excess_users
 
     @property
     def unit_description(self):
