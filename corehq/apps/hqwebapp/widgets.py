@@ -35,6 +35,7 @@ class BootstrapCheckboxInput(CheckboxInput):
         if value not in ('', True, False, None):
             # Only add the 'value' attribute if a value is non-empty.
             final_attrs['value'] = force_str(value)
+        final_attrs['class'] = 'bootstrapcheckboxinput'
         return format_html(
             '<label class="checkbox"><input{} /> {}</label>',
             mark_safe(flatatt(final_attrs)),  # nosec: trusting the user to sanitize attributes
