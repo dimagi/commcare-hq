@@ -142,7 +142,7 @@ def js_toggles(request):
     }
 
 
-def js_privileges(request):
+def plan_details(request):
     domain = None
     if getattr(request, 'project', None):
         domain = request.project.name
