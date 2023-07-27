@@ -43,6 +43,7 @@ hqDefine('analytix/js/appcues', [
                 domain: _get("domain"),
                 isDimagi: _get("userIsDimagi"),
                 instance: _get("instance"),
+                softwarePlanEdition: _get("softwarePlanEdition"),
             });
         });
     });

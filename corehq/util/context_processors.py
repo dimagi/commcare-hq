@@ -155,6 +155,7 @@ def plan_details(request):
     plan_version = Subscription.get_subscribed_plan_by_domain(domain)
     return {
         'privileges': list(get_privileges(plan_version)),
+        'software_plan_edition': plan_version.plan.edition,
     }
 
 
