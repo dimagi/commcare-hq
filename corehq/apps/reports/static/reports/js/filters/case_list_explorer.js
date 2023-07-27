@@ -38,9 +38,13 @@ hqDefine("reports/js/filters/case_list_explorer", ['jquery', 'underscore', 'knoc
         self.label = ko.observable(label).trimmed();
 
         self._value = function () {
-            return _.find($parent.allSuggestions, function (prop) {
+            const valueList = _.filter($parent.allSuggestions, function (prop) {
                 return prop.name === self.name();
             });
+            if (valueList.length === 1) {
+                return valueList[0];
+            }
+            return null;
         };
 
         self.meta_type = ko.computed(() => {
@@ -52,9 +56,11 @@ hqDefine("reports/js/filters/case_list_explorer", ['jquery', 'underscore', 'knoc
         });
 
         self.name.subscribe(() => {
-            var value = self._value();
-            if (value) {
-                self.label(value.label || self.name());
+            const value = self._value();
+            if (value && value.label) {
+                self.label(value.label);
+            } else if (self.name()) {
+                self.label(self.name());
             }
         });
 
