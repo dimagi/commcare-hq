@@ -12,11 +12,15 @@ from django.views.decorators.http import require_POST
 from dimagi.utils.logging import notify_error
 from dimagi.utils.web import json_response
 
+from corehq.apps.app_manager.dbaccessors import get_case_types_from_apps
 from corehq.apps.app_manager.helpers.validators import validate_property
 from corehq.apps.case_importer import base
 from corehq.apps.case_importer import util as importer_util
 from corehq.apps.case_importer.base import location_safe_case_imports_enabled
-from corehq.apps.case_importer.const import MAX_CASE_IMPORTER_COLUMNS, ALL_CASE_TYPE_IMPORT
+from corehq.apps.case_importer.const import (
+    ALL_CASE_TYPE_IMPORT,
+    MAX_CASE_IMPORTER_COLUMNS,
+)
 from corehq.apps.case_importer.exceptions import (
     CustomImporterError,
     ImporterError,
@@ -30,7 +34,14 @@ from corehq.apps.case_importer.suggested_fields import (
     get_suggested_case_fields,
 )
 from corehq.apps.case_importer.tracking.case_upload_tracker import CaseUpload
-from corehq.apps.case_importer.util import get_importer_error_message, RESERVED_FIELDS
+from corehq.apps.case_importer.util import (
+    RESERVED_FIELDS,
+    get_importer_error_message,
+)
+from corehq.apps.data_dictionary.util import (
+    get_data_dict_case_types,
+    get_data_dict_deprecated_case_types,
+)
 from corehq.apps.domain.decorators import api_auth
 from corehq.apps.hqwebapp.decorators import waf_allow
 from corehq.apps.locations.permissions import conditionally_location_safe
@@ -44,11 +55,9 @@ from corehq.util.view_utils import absolute_reverse
 from corehq.util.workbook_reading import (
     SpreadsheetFileExtError,
     SpreadsheetFileInvalidError,
+    open_any_workbook,
     valid_extensions,
 )
-from corehq.util.workbook_reading import open_any_workbook
-from corehq.apps.app_manager.dbaccessors import get_case_types_from_apps
-from corehq.apps.data_dictionary.util import get_data_dict_case_types, get_data_dict_deprecated_case_types
 
 require_can_edit_data = require_permission(HqPermissions.edit_data)
 
