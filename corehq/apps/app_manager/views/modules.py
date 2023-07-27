@@ -98,7 +98,8 @@ from corehq.apps.app_manager.views.utils import (
     handle_custom_icon_edits,
     handle_shadow_child_modules,
     set_session_endpoint,
-    set_case_list_session_endpoint
+    set_case_list_session_endpoint,
+    set_shadow_module_and_form_session_endpoint
 )
 from corehq.apps.app_manager.xform import CaseError
 from corehq.apps.app_manager.xpath_validator import validate_xpath
@@ -349,6 +350,7 @@ def _get_shadow_module_view_context(app, module, lang=None):
             'modules': [get_mod_dict(m) for m in app.modules if m.module_type in ['basic', 'advanced']],
             'source_module_id': module.source_module_id,
             'excluded_form_ids': module.excluded_form_ids,
+            'form_session_endpoint_mappings': module.form_session_endpoint_mapping,
             'shadow_module_version': module.shadow_module_version,
         },
     }
@@ -635,6 +637,7 @@ def edit_module_attr(request, domain, app_id, module_unique_id, attr):
         "source_module_id": None,
         "task_list": ('task_list-show', 'task_list-label'),
         "excl_form_ids": None,
+        "form_session_endpoint_mappings": None,
         "display_style": None,
         "custom_icon_form": None,
         "custom_icon_text_body": None,
@@ -784,7 +787,13 @@ def edit_module_attr(request, domain, app_id, module_unique_id, attr):
         excl.remove('0')  # Placeholder value to make sure excl_form_ids is POSTed when no forms are excluded
         module.excluded_form_ids = excl
 
-    if should_edit('session_endpoint_id'):
+    if should_edit('form_session_endpoint_mappings') and isinstance(module, ShadowModule):
+        raw_endpoint_id = request.POST['session_endpoint_id']
+        mappings = request.POST.getlist('form_session_endpoint_mappings')
+        set_shadow_module_and_form_session_endpoint(
+            module, raw_endpoint_id, [json.loads(m) for m in mappings], app)
+
+    elif should_edit('session_endpoint_id'):
         raw_endpoint_id = request.POST['session_endpoint_id']
         set_session_endpoint(module, raw_endpoint_id, app)
 

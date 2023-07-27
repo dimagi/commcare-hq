@@ -5,7 +5,7 @@ hqDefine('app_manager/js/modules/shadow_module_settings', function () {
         /**
          * Returns a Knockout view model based on the modules and forms given in modules
          */
-        ShadowModule: function (modules, selectedModuleId, excludedFormIds, shadowModuleVersion) {
+        ShadowModule: function (modules, selectedModuleId, excludedFormIds, formSessionEndpointMappings, shadowModuleVersion) {
             var self = this;
             self.modules = ko.observableArray();
             self.shadowModuleVersion = shadowModuleVersion;
@@ -36,6 +36,17 @@ hqDefine('app_manager/js/modules/shadow_module_settings', function () {
                 return _.map(exclForms, function (form) { return form.uniqueId; });
             });
 
+            self.formSessionEndpointIds = ko.pureComputed(function () {
+                // return _.map(self.sourceForms(), form => ko.pureComputed(`${form.uniqueId}:${form.sessionEndpointId()}`));
+                return _.map(self.sourceForms(), function(form) {
+                  return ko.pureComputed(function() {
+                    // return `${form.uniqueId}:${form.sessionEndpointId()}`;
+                    return JSON.stringify({form_id: form.uniqueId, session_endpoint_id: form.sessionEndpointId()});
+                  });
+                });
+                // return _.map(self.sourceForms(), form => ({form_id: form.uniqueId, session_endpoint_id: form.sessionEndpointId}));
+            });
+
             var sourceModuleModel = function (uniqueId, name, rootId) {
                 var self = {};
 
@@ -51,7 +62,7 @@ hqDefine('app_manager/js/modules/shadow_module_settings', function () {
                 return {
                     uniqueId: uniqueId,
                     name: name,
-                    sessionEndpointId: sessionEndpointId,
+                    sessionEndpointId: ko.observable(sessionEndpointId),
                 };
             };
 
@@ -62,9 +73,14 @@ hqDefine('app_manager/js/modules/shadow_module_settings', function () {
                 var mod = modules[i];
                 sourceModule = sourceModuleModel(mod.unique_id, mod.name, mod.root_module_id);
                 for (var j = 0; j < mod.forms.length; j++) {
-                    var form = mod.forms[j];
-                    const generatedSessionEndpoint = `${mod.session_endpoint_id}_${form.session_endpoint_id}`
-                    var sourceModuleForm = sourceModuleFormModel(form.unique_id, form.name, generatedSessionEndpoint);
+                    const form = mod.forms[j];
+                    let formSessionEndpointId = "";
+                    const mapping = _.find(formSessionEndpointMappings, m => m.form_id === form.unique_id)
+                    if (mapping) {
+                        formSessionEndpointId = mapping.session_endpoint_id
+                    }
+                    const sourceModuleForm =
+                        sourceModuleFormModel(form.unique_id, form.name, formSessionEndpointId);
                     sourceModule.forms.push(sourceModuleForm);
                     if (excludedFormIds.indexOf(form.unique_id) === -1) {
                         self.includedFormIds.push(form.unique_id);

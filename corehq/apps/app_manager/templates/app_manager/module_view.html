@@ -156,7 +156,12 @@
                type="checkbox"
                data-bind="value: uniqueId, checked: $parent.includedFormIds"/>
         <span data-bind="text: name"></span>
-        (Session Endpoint Id: <span data-bind="text: sessionEndpointId"></span>)
+        {% if session_endpoints_enabled %}
+          <label>
+            <span>Session Endpoint Id:</span>
+            <input name="form_session_endpoint_ids" data-bind="textInput: sessionEndpointId"/>
+          </label>
+        {% endif %}
       </label>
     </div>
   </script>
