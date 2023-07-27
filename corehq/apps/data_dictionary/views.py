@@ -133,7 +133,7 @@ def create_case_type(request, domain):
 @toggles.DATA_DICTIONARY.required_decorator()
 @require_permission(HqPermissions.edit_data_dict)
 def deprecate_or_restore_case_type(request, domain, case_type_name):
-    is_deprecated = request.POST.get("is_deprecated", 'false') == 'true'
+    is_deprecated = request.POST.get("is_deprecated") == 'true'
     case_type_obj = CaseType.objects.get(domain=domain, name=case_type_name)
     case_type_obj.is_deprecated = is_deprecated
     case_type_obj.save()
