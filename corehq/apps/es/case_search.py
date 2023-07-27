@@ -281,7 +281,7 @@ def case_property_starts_with(case_property_name, value):
     )
 
 
-def case_property_range_query(case_property_name, gt=None, gte=None, lt=None, lte=None, is_user_input=False):
+def case_property_range_query(case_property_name, gt=None, gte=None, lt=None, lte=None):
     """Returns cases where case property `key` fall into the range provided.
 
     """
@@ -297,12 +297,12 @@ def case_property_range_query(case_property_name, gt=None, gte=None, lt=None, lt
     except ValueError:
         pass
 
-    # if its a date, use it
+    # if its a date or datetime, use it
     # date range
-    parse = parse_datetime if is_user_input else parse_date
     kwargs = {
-        key: parse(value) for key, value in kwargs.items()
-        if value is not None and parse(value) is not None
+        key: parse_date(value) if parse_date(value) else parse_datetime(value)
+        for key, value in kwargs.items()
+        if value is not None and (parse_date(value) or parse_datetime(value))
     }
     if not kwargs:
         raise TypeError()       # Neither a date nor number was passed in
