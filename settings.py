@@ -190,6 +190,7 @@ AUTHENTICATION_BACKENDS = [
     'django.contrib.auth.backends.ModelBackend',
     'corehq.apps.domain.auth.ApiKeyFallbackBackend',
     'corehq.apps.sso.backends.SsoBackend',
+    'corehq.apps.domain.auth.ConnectIDAuthBackend'
 ]
 
 PASSWORD_HASHERS = (
@@ -898,6 +899,7 @@ OAUTH2_PROVIDER = {
     'SCOPES': {
         'access_apis': 'Access API data on all your CommCare projects',
         'reports:view': 'Allow users to view and download all report data',
+        'sync': 'Allow access to mobile sync and submit endpoints'
     },
     'REFRESH_TOKEN_EXPIRE_SECONDS': 60 * 60 * 24 * 15,  # 15 days
 }
@@ -2082,3 +2084,5 @@ GOOGLE_SHEETS_API_NAME = "sheets"
 GOOGLE_SHEETS_API_VERSION = "v4"
 
 DAYS_KEEP_GSHEET_STATUS = 14
+
+CONNECTID_USERINFO_URL = 'http://localhost:8080/o/userinfo'
