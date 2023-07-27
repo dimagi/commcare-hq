@@ -18,4 +18,13 @@
        style="display: none;">
     {% trans "Updates Available to Publish" %}
   </div>
+  {% if linked_name and linked_version %}
+  <div id="js-linked-status"
+       class="appnav-name-linked"
+  >
+    {% blocktrans with name=linked_name version=linked_version %}
+    Linked from {{ name }} | V{{version}}
+    {% endblocktrans %}
+  </div>
+  {% endif %}
 </div>
