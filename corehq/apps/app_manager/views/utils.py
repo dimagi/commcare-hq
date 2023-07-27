@@ -676,14 +676,7 @@ def _duplicate_endpoint_ids(new_session_endpoint_id, new_form_session_endpoint_i
                 for m in module.form_session_endpoint_mapping:
                     all_endpoint_ids.append(m.session_endpoint_id)
 
-    seen = set()
-    duplicates = set()
-
-    for endpoint_id in all_endpoint_ids:
-        if endpoint_id in seen:
-            duplicates.add(endpoint_id)
-        else:
-            seen.add(endpoint_id)
+    duplicates = [k for k, v in Counter(all_endpoint_ids).items() if v > 1]
 
     return duplicates
 
