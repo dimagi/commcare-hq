@@ -294,7 +294,7 @@ def case_property_range_query(case_property_name, gt=None, gte=None, lt=None, lt
             case_property_name,
             queries.range_query("{}.{}.numeric".format(CASE_PROPERTIES_PATH, VALUE), **kwargs)
         )
-    except ValueError:
+    except (TypeError, ValueError):
         pass
 
     # if its a date or datetime, use it
