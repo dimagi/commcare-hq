@@ -20,7 +20,53 @@
 {% block page_content %}
   {% initial_page_data 'custom_fields' custom_fields %}
   {% initial_page_data 'custom_fields_profiles' custom_fields_profiles %}
+  {% initial_page_data 'can_edit_linked_data' can_edit_linked_data %}
   {% initial_page_data 'can_view_regex_field_validation' can_view_regex_field_validation %}
+
+    <p class="pull-right ko-template" id="lock-container" data-bind="if: hasLinkedData">
+      <span data-bind="ifnot: unlockLinkedData">
+        <button class="btn btn-default" data-toggle="modal" data-target="#edit-warning-modal">
+          <i class="fa fa-link"></i>
+          {% trans 'Unlock Linked Fields For Me' %}
+        </button>
+      </span>
+      <span data-bind="if: unlockLinkedData">
+        <button class="btn btn-default" data-bind="click: toggleLinkedLock">
+          <i class="fa fa-link"></i>
+          {% trans 'Lock Linked Fields For Me' %}
+        </button>
+      </span>
+
+    <p class="pull-right ko-template" id="lock-container" data-bind="if: hasLinkedData">
+      <!-- ko if: allowEdit -->
+        <!-- ko ifnot: unlockLinkedData -->
+          <button class="btn btn-primary" data-toggle="modal" data-target="#edit-warning-modal">
+            <i class="fa fa-link"></i>
+            {% trans 'Unlock Linked Fields For Me' %}
+          </button>
+        <!-- /ko -->
+        <!-- ko if: unlockLinkedData -->
+          <button class="btn btn-primary" data-bind="click: toggleLinkedLock">
+            <i class="fa fa-link"></i>
+            {% trans 'Lock Linked Fields For Me' %}
+          </button>
+        <!-- /ko -->
+      <!-- /ko -->
+      <!-- ko ifnot: allowEdit -->
+        <i class="fa fa-link"></i>
+        Contains Linked Roles
+      <!-- /ko -->
+      <span class="hq-help-template"
+          data-placement="left"
+          data-title="{% trans 'Linked Configurations' %}"
+          data-content="
+            {% blocktrans %}
+              Linked configurations are controlled from a separate, linked project space.
+                <a href='https://confluence.dimagi.com/display/commcarepublic/Enterprise+Release+Management' target='_blank'>Learn more</a>.
+            {% endblocktrans %}">
+      </span>
+    </p>
+
   <form id="custom-fields-form"
         action="."
         method="POST"
@@ -70,5 +116,6 @@
     </div>
 
     {% include 'custom_data_fields/partials/modal_delete.html' %}
+    {% include 'custom_data_fields/partials/modal_edit.html' %}
   </form>
 {% endblock %}
