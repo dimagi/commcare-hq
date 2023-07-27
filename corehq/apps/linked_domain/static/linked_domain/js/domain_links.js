@@ -293,7 +293,7 @@ hqDefine("linked_domain/js/domain_links", [
                 let shouldDisable = false;
                 if (self.shouldShowSelectedERMDomain()) {
                     // disable if not full access
-                    shouldDisable = !self.parent.domainLinksByName[option.value].hasFullAccess;
+                    shouldDisable = !self.parent.domainLinksByName()[option.value].hasFullAccess;
                 } else if (self.shouldShowSelectedMRMDomain()) {
                     shouldDisable = true;
                 }
