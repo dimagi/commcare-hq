@@ -21331,16 +21331,12 @@ msgid "File has been uploaded successfully and is queued for processing."
 msgstr ""
 
 #: corehq/apps/geospatial/forms.py
-#, fuzzy
-#| msgid "Custom Suite File"
 msgid "Custom user field"
-msgstr "Archivo Suite Personalizado"
+msgstr ""
 
 #: corehq/apps/geospatial/forms.py
-#, fuzzy
-#| msgid "The user's assigned location"
 msgid "User's assigned location"
-msgstr "La ubicación asignada del usuario"
+msgstr ""
 
 #: corehq/apps/geospatial/forms.py
 msgid "Fetch mobile worker location data from custom field"
@@ -21353,10 +21349,8 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/geospatial/forms.py
-#, fuzzy
-#| msgid "the date in case property"
 msgid "Fetch case location data from property"
-msgstr "La fecha en la propiedad del caso"
+msgstr ""
 
 #: corehq/apps/geospatial/forms.py
 msgid ""
@@ -21364,10 +21358,8 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/geospatial/forms.py
-#, fuzzy
-#| msgid "Consumption Settings"
 msgid "Configure Geospatial Settings"
-msgstr "Configuraciones de Consumo"
+msgstr ""
 
 #: corehq/apps/geospatial/reports.py
 msgid "Case Management Map"
@@ -21391,10 +21383,8 @@ msgid "Save Area"
 msgstr ""
 
 #: corehq/apps/geospatial/views.py
-#, fuzzy
-#| msgid "Consumption Settings"
 msgid "Configuration Settings"
-msgstr "Configuraciones de Consumo"
+msgstr ""
 
 #: corehq/apps/groups/templates/groups/all_groups.html
 #: corehq/apps/reports/filters/users.py
@@ -29215,6 +29205,7 @@ msgid "unknown product"
 msgstr "producto desconocido"
 
 #: corehq/apps/reports/standard/cases/case_list_explorer.py
+#: corehq/privileges.py
 msgid "Case List Explorer"
 msgstr ""
 
@@ -38561,10 +38552,8 @@ msgid "Roles"
 msgstr "Roles"
 
 #: corehq/apps/users/templates/users/roles_and_permissions.html
-#, fuzzy
-#| msgid "Daily Saved Exports"
 msgid "Manage Shared Exports"
-msgstr "Exportaciones Guardadas Diariamente"
+msgstr ""
 
 #: corehq/apps/users/templates/users/roles_and_permissions.html
 msgid "Apps"
@@ -43292,10 +43281,8 @@ msgid "Manage Attendance Tracking Events"
 msgstr ""
 
 #: corehq/tabs/tabclasses.py
-#, fuzzy
-#| msgid "Consumption Settings"
 msgid "Configure geospatial settings"
-msgstr "Configuraciones de Consumo"
+msgstr ""
 
 #: corehq/trans_override.py
 msgid "Token generator"
@@ -44182,6 +44169,3 @@ msgstr ""
 #: manage.py
 msgid "Enter valid JSON"
 msgstr ""
-
-#~ msgid "Instance URI"
-#~ msgstr "URI de Ejemplo"
