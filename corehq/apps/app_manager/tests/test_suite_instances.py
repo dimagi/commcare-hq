@@ -260,17 +260,27 @@ class SuiteInstanceTests(SimpleTestCase, SuiteMixin):
         self.module, self.form = factory.new_basic_module('m0', 'case1')
         self.module.module_filter = "instance('locations')/locations/"
         factory.new_form(self.module)
-        # two forms, two entries, two instances
-        self.assertXmlPartialEqual(
-            """
-            <partial>
-                <instance id='locations' src='jr://fixture/locations' />
-                <instance id='locations' src='jr://fixture/locations' />
-            </partial>
-            """,
-            factory.app.create_suite(),
-            "entry/instance"
-        )
+
+        suite = factory.app.create_suite()
+        instance_xml = "<partial><instance id='locations' src='jr://fixture/locations' /></partial>"
+        self.assertXmlPartialEqual(instance_xml, suite, "entry/command[@id='m0-f0']/../instance")
+        self.assertXmlPartialEqual(instance_xml, suite, "entry/command[@id='m0-f1']/../instance")
+
+    def test_module_filter_instances_on_all_forms_merged_modules(self):
+        # instances from module filters result in instance declarations in all forms in the module
+        # and if two modules are display_in_root, then on forms in the other module too
+        factory = AppFactory(build_version='2.20.0')  # enable_module_filtering
+        self.m0, self.m0f0 = factory.new_basic_module('m0', 'case1')
+        self.m0.put_in_root = True
+
+        self.m1, self.m1f0 = factory.new_basic_module('m1', 'case1')
+        self.m1.module_filter = "instance('locations')/locations/"
+        self.m1.put_in_root = True
+
+        suite = factory.app.create_suite()
+        instance_xml = "<partial><instance id='locations' src='jr://fixture/locations' /></partial>"
+        self.assertXmlPartialEqual(instance_xml, suite, "entry/command[@id='m0-f0']/../instance")
+        self.assertXmlPartialEqual(instance_xml, suite, "entry/command[@id='m1-f0']/../instance")
 
 
 @generate_cases([

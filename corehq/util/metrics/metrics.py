@@ -26,13 +26,13 @@ def _enforce_prefix(name, prefix):
 
 def _validate_tag_names(tag_names):
     tag_names = set(tag_names or [])
-    for l in tag_names:
-        if not METRIC_TAG_NAME_RE.match(l):
-            raise ValueError('Invalid metric tag name: ' + l)
-        if RESERVED_METRIC_TAG_NAME_RE.match(l):
-            raise ValueError('Reserved metric tag name: ' + l)
-        if l in RESERVED_METRIC_TAG_NAMES:
-            raise ValueError('Reserved metric tag name: ' + l)
+    for tag_name in tag_names:
+        if not METRIC_TAG_NAME_RE.match(tag_name):
+            raise ValueError('Invalid metric tag name: ' + tag_name)
+        if RESERVED_METRIC_TAG_NAME_RE.match(tag_name):
+            raise ValueError('Reserved metric tag name: ' + tag_name)
+        if tag_name in RESERVED_METRIC_TAG_NAMES:
+            raise ValueError('Reserved metric tag name: ' + tag_name)
     return tag_names
 
 

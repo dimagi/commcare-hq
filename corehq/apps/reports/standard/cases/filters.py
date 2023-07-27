@@ -2,15 +2,17 @@ import json
 from collections import Counter
 
 from django.utils.safestring import mark_safe
-from django.utils.translation import gettext_lazy
+from django.utils.translation import gettext_lazy, gettext
 from django.utils.functional import lazy
 
+from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.app_manager.app_schemas.case_properties import (
     all_case_properties_by_domain,
 )
 from corehq.apps.case_search.const import (
     CASE_COMPUTED_METADATA,
     SPECIAL_CASE_PROPERTIES,
+    DOCS_LINK_CASE_LIST_EXPLORER,
 )
 from corehq.apps.data_dictionary.util import get_case_property_label_dict
 from corehq.apps.data_interfaces.models import AutomaticUpdateRule
@@ -18,20 +20,32 @@ from corehq.apps.reports.filters.base import (
     BaseSimpleFilter,
     BaseSingleOptionFilter,
 )
-from corehq import toggles
+from corehq import toggles, privileges
 
 # TODO: Replace with library method
+
+
 mark_safe_lazy = lazy(mark_safe, str)
 
 
 class CaseSearchFilter(BaseSimpleFilter):
     slug = 'search_query'
     label = gettext_lazy("Search")
-    help_inline = mark_safe_lazy(gettext_lazy(  # nosec: no user input
-        'Search any text, or use a targeted query. For more info see the '
-        '<a href="https://wiki.commcarehq.org/display/commcarepublic/'
-        'Advanced+Case+Search" target="_blank">Case Search</a> help page'
-    ))
+
+    @property
+    def help_inline(self):
+        from corehq import toggles
+        cle_link = DOCS_LINK_CASE_LIST_EXPLORER
+        if (domain_has_privilege(self.domain, privileges.CASE_LIST_EXPLORER)
+                or toggles.CASE_LIST_EXPLORER.enabled(self.domain)):
+            from corehq.apps.reports.standard.cases.case_list_explorer import CaseListExplorer
+            cle_link = CaseListExplorer.get_url(domain=self.domain)
+        return mark_safe(gettext(  # nosec: no user input
+            'Enter <a href="https://wiki.commcarehq.org/display/commcarepublic/'
+            'Advanced+Case+Search" target="_blank">targeted queries</a> to search across '
+            'all specific columns of this report. For deeper searches by case properties use the '
+            '<a href="{}">Case List Explorer</a>.'
+        ).format(cle_link))
 
 
 class DuplicateCaseRuleFilter(BaseSingleOptionFilter):
