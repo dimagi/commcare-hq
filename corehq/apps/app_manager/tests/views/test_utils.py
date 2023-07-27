@@ -161,5 +161,18 @@ class TestUtils(SimpleTestCase):
             )
         )
 
+    def test_set_shadow_module_and_form_session_endpoint_empty_form_session_id_ignored(self):
+        app, _, shadow_module, _ = self.create_fixtures()
+
+        set_shadow_module_and_form_session_endpoint(
+            shadow_module,
+            self.new_endpoint,
+            [{"form_id": self.form_unique_id, "session_endpoint_id": ""}],
+            app
+        )
+
+        self.assertEqual(shadow_module.session_endpoint_id, self.new_endpoint)
+        self.assertEqual(shadow_module.form_session_endpoints, [])
+
     # with child and shadow child
     # Update shadow child,

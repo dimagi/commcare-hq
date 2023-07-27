@@ -48,11 +48,11 @@ class EndpointsHelper(PostProcessor):
                             form.session_endpoint_id, module, form))
             elif module.session_endpoint_id:
                 for form in module.get_suite_forms():
-                    mapping = next(
+                    endpoint = next(
                         (m for m in module.form_session_endpoints if m.form_id == form.unique_id), None)
-                    if mapping:
+                    if endpoint:
                         self.suite.endpoints.append(self._make_session_endpoint(
-                            mapping.session_endpoint_id, module, form))
+                            endpoint.session_endpoint_id, module, form))
 
 
     def _make_session_endpoint(self, endpoint_id, module, form=None, should_add_last_selection_datum=True):
