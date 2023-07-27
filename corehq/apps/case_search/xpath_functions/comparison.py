@@ -29,10 +29,7 @@ def property_comparison_query(context, case_property_name_raw, op, value_raw, no
         and isinstance(SPECIAL_CASE_PROPERTIES_MAP[case_property_name].field_getter(CommCareCase),
                     models.DateTimeField)):
         try:
-            domain = context.domain
-            if isinstance(domain, set):
-                domain = list(domain)
-            timezone = get_timezone_for_domain(domain)
+            timezone = get_timezone_for_domain(context.request_domain)
             return _create_timezone_adjusted_datetime_query(case_property_name, op, value, node, timezone)
         except (AssertionError):
             # AssertionError is caused by tests that use domains without
