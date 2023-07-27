@@ -1,6 +1,6 @@
 import json
 import time
-from collections import defaultdict
+from collections import Counter, defaultdict
 from contextlib import contextmanager
 from copy import deepcopy
 from functools import partial, wraps
@@ -619,13 +619,13 @@ def set_session_endpoint(module_or_form, raw_endpoint_id, app):
 def set_shadow_module_and_form_session_endpoint(
     shadow_module,
     raw_endpoint_id,
-    form_session_endpoint_mapping,
+    form_session_endpoints,
     app
 ):
     cleaned_module_session_endpoint_id = \
         get_cleaned_session_endpoint_id(raw_endpoint_id)
     cleaned_form_session_endpoint_ids = \
-        [get_cleaned_session_endpoint_id(m['session_endpoint_id']) for m in form_session_endpoint_mapping]
+        [get_cleaned_session_endpoint_id(m['session_endpoint_id']) for m in form_session_endpoints]
 
     duplicate_ids = _duplicate_endpoint_ids(
         cleaned_module_session_endpoint_id, cleaned_form_session_endpoint_ids, shadow_module.unique_id, app)
@@ -637,9 +637,9 @@ def set_shadow_module_and_form_session_endpoint(
         ).format(duplicates=duplicates))
 
     shadow_module.session_endpoint_id = raw_endpoint_id
-    shadow_module.form_session_endpoint_mapping = [
+    shadow_module.form_session_endpoints = [
         ShadowFormMapping(form_id=m['form_id'], session_endpoint_id=m['session_endpoint_id'])
-        for m in form_session_endpoint_mapping
+        for m in form_session_endpoints
     ]
 
 
@@ -658,23 +658,32 @@ def _is_duplicate_endpoint_id(new_id, old_id, app):
         for form in module.get_suite_forms():
             all_endpoint_ids.append(form.session_endpoint_id)
         if module.module_type == "shadow":
-            for m in module.form_session_endpoint_mapping:
+            for m in module.form_session_endpoints:
                 all_endpoint_ids.append(m.session_endpoint_id)
 
     return new_id in all_endpoint_ids
 
 
 def _duplicate_endpoint_ids(new_session_endpoint_id, new_form_session_endpoint_ids, module_id, app):
-    all_endpoint_ids = [new_session_endpoint_id] + new_form_session_endpoint_ids
+    all_endpoint_ids = []
+
+    def append_endpoint(endpoint_id):
+        if endpoint_id and endpoint_id != '':
+            all_endpoint_ids.append(endpoint_id)
+
+    append_endpoint(new_session_endpoint_id)
+    for endpoint in new_form_session_endpoint_ids:
+        append_endpoint(endpoint)
 
     for module in app.modules:
         if module.unique_id != module_id:
-            all_endpoint_ids.append(module.session_endpoint_id)
-            for form in module.get_suite_forms():
-                all_endpoint_ids.append(form.session_endpoint_id)
-            if module.module_type == "shadow":
-                for m in module.form_session_endpoint_mapping:
-                    all_endpoint_ids.append(m.session_endpoint_id)
+            append_endpoint(module.session_endpoint_id)
+            if module.module_type != "shadow":
+                for form in module.get_suite_forms():
+                    append_endpoint(form.session_endpoint_id)
+            else:
+                for m in module.form_session_endpoints:
+                    append_endpoint(m.session_endpoint_id)
 
     duplicates = [k for k, v in Counter(all_endpoint_ids).items() if v > 1]
 

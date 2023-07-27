@@ -40,7 +40,7 @@ class TestUtils(SimpleTestCase):
         shadow_module = ShadowModule(
             unique_id="shadow_module",
             session_endpoint_id=self.shadow_module_session_endpoint_id,
-            form_session_endpoint_mapping=[
+            form_session_endpoints=[
                 ShadowFormMapping(
                     form_id=self.form_unique_id,
                     session_endpoint_id=self.shadow_form_session_endpoint_id)
@@ -160,3 +160,6 @@ class TestUtils(SimpleTestCase):
                 app
             )
         )
+
+    # with child and shadow child
+    # Update shadow child,
