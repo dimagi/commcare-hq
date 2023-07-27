@@ -300,9 +300,9 @@ def case_property_range_query(case_property_name, gt=None, gte=None, lt=None, lt
     # if its a date or datetime, use it
     # date range
     kwargs = {
-        key: value if isinstance(value, (date, datetime)) else (parse_date(value) or parse_datetime(value))
+        key: value if isinstance(value, (date, datetime)) else (_parse_date(value) or _parse_datetime(value))
         for key, value in kwargs.items()
-        if value is not None and (parse_date(value) or parse_datetime(value))
+        if value is not None and (_parse_date(value) or _parse_datetime(value))
     }
     if not kwargs:
         raise TypeError()       # Neither a date nor number was passed in
@@ -311,6 +311,20 @@ def case_property_range_query(case_property_name, gt=None, gte=None, lt=None, lt
         case_property_name,
         queries.date_range("{}.{}.date".format(CASE_PROPERTIES_PATH, VALUE), **kwargs)
     )
+
+
+def _parse_date(value):
+    try:
+        return parse_date(value)
+    except ValueError as e:
+        raise ValueError(f"{value} is invalid. {str(e)}")
+
+
+def _parse_datetime(value):
+    try:
+        return _parse_datetime(value)
+    except ValueError as e:
+        raise ValueError(f"{value} is invalid. {str(e)}")
 
 
 def reverse_index_case_query(case_ids, identifier=None):

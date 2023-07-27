@@ -55,13 +55,14 @@ def _create_query(context, case_property_name, op, value, node):
 def _case_property_range_query(case_property_name: str, op_value_dict, node):
         try:
             return case_property_range_query(case_property_name, **op_value_dict)
-        except (TypeError, ValueError):
+        except TypeError:
             raise CaseFilterError(
                 gettext("The right hand side of a comparison must be a number or date. "
                   "Dates must be surrounded in quotation marks"),
                 serialize(node),
             )
-
+        except ValueError as e:
+            raise CaseFilterError(gettext(str(e)), serialize(node))
 
 def _create_timezone_adjusted_datetime_query(case_property_name, op, value, node, timezone):
     """
