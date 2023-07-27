@@ -1,6 +1,4 @@
-from corehq.const import SERVER_DATETIME_FORMAT
 from corehq.util.timezones.conversions import PhoneTime, ServerTime
-from corehq.util.timezones.utils import get_timezone
 
 
 def report_date_to_json(date, timezone, date_format, is_phonetime=True):

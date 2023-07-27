@@ -10,6 +10,7 @@ import corehq.apps.es.const as es_consts
 from corehq.apps.es.client import ElasticMultiplexAdapter, get_client
 from corehq.apps.es.client import manager as es_manager
 from corehq.apps.es.exceptions import (
+    IndexAlreadySwappedException,
     IndexMultiplexedException,
     IndexNotMultiplexedException,
     TaskMissing,
@@ -21,6 +22,8 @@ from corehq.apps.es.transient_util import (
 )
 from corehq.apps.es.utils import check_task_progress
 from corehq.util.markup import SimpleTableWriter, TableRowFormatter
+from pillowtop.checkpoints.manager import KafkaPillowCheckpoint
+from pillowtop.utils import get_all_pillow_instances
 
 logger = logging.getLogger('elastic_sync_multiplexed')
 
@@ -37,7 +40,8 @@ class ESSyncUtil:
     def __init__(self):
         self.es = get_client()
 
-    def start_reindex(self, cname, reindex_batch_size=1000, purge_ids=False):
+    def start_reindex(self, cname, reindex_batch_size=1000,
+                      purge_ids=False, requests_per_second=None, with_no_replicas=False):
 
         adapter = doc_adapter_from_cname(cname)
 
@@ -53,7 +57,8 @@ class ESSyncUtil:
         logger.info("Starting ReIndex process")
         task_info = es_manager.reindex(
             source_index, destination_index,
-            batch_size=reindex_batch_size, purge_ids=purge_ids
+            batch_size=reindex_batch_size, purge_ids=purge_ids,
+            requests_per_second=requests_per_second
         )
         logger.info(f"Copying docs from index {source_index} to index {destination_index}")
         task_id = task_info.split(':')[1]
@@ -69,9 +74,16 @@ class ESSyncUtil:
         print("\n\n")
         self.perform_cleanup(adapter)
 
-        logger.info("Preparing Index for normal use")
-        self._prepare_index_for_normal_usage(adapter.secondary)
-        print("\n\n")
+        if not with_no_replicas:
+            logger.info("Preparing Index for normal use")
+            self._prepare_index_for_normal_usage(adapter.secondary)
+            print("\n\n")
+        else:
+            logger.info(f"Replicas are not being set for index {destination_index}")
+            logger.info("You can manually set them by running")
+            print("\n\n")
+            print(f"\t./manage.py elastic_sync_multiplexed set_replicas {cname}")
+            print("\n\n")
 
         self._get_source_destination_doc_count(adapter)
 
@@ -80,7 +92,7 @@ class ESSyncUtil:
         logger.info("You can use commcare-cloud to extract reindex logs from cluster")
         print("\n\t"
             + f"cchq {settings.SERVER_ENVIRONMENT} run-shell-command elasticsearch "
-            + f"\"grep '{task_id}.*ReindexResponse' /opt/data/elasticsearch*/logs/*es.log\""
+            + f"\"grep '{task_id}.*ReindexResponse' /opt/data/elasticsearch*/logs/*.log\""
             + "\n\n")
 
     def _get_source_destination_indexes(self, adapter):
@@ -106,6 +118,7 @@ class ESSyncUtil:
     def _prepare_index_for_normal_usage(self, secondary_adapter):
         es_manager.cluster_routing(enabled=True)
         tuning_settings = render_index_tuning_settings(secondary_adapter.settings_key)
+        logger.info(f"Setting replica count to {tuning_settings['number_of_replicas']}")
         es_manager.index_set_replicas(secondary_adapter.index_name, tuning_settings['number_of_replicas'])
         es_manager.index_configure_for_standard_ops(secondary_adapter.index_name)
         self._wait_for_index_to_get_healthy(secondary_adapter.index_name)
@@ -153,8 +166,7 @@ class ESSyncUtil:
 
         """
         adapter = doc_adapter_from_cname(cname)
-        older_index = getattr(es_consts, f"HQ_{cname.upper()}_INDEX_NAME")
-        current_index = getattr(es_consts, f"HQ_{cname.upper()}_SECONDARY_INDEX_NAME")
+        current_index, older_index = self._get_current_and_older_index_name(cname)
         if isinstance(adapter, ElasticMultiplexAdapter):
             raise IndexMultiplexedException(f"""A multiplexed index cannot be deleted.
             Make sure you have set ES_{cname.upper()}_INDEX_MULTIPLEXED to False """)
@@ -180,6 +192,51 @@ class ESSyncUtil:
         print(f"Deleting Index - {older_index}")
 
         es_manager.index_delete(older_index)
+
+    def _get_current_and_older_index_name(cls, cname):
+        """
+        Returns a tuple of current index name and older index name related to the given cname.
+        Older index refers to the source index during reindex process
+        Current index refers to the destination index
+        """
+        current_index = getattr(es_consts, f"HQ_{cname.upper()}_SECONDARY_INDEX_NAME")
+        older_index = getattr(es_consts, f"HQ_{cname.upper()}_INDEX_NAME")
+        return (current_index, older_index)
+
+    def set_checkpoints_for_new_index(self, cname):
+        """
+        Takes in an index cname and create new checkpoint for all the pillows that use the older index name
+        for that cname.
+        Can only be performed when indexes are still multiplexed and not swapped.
+        When we swap the indexes, the primary index changes which updates the checkpoint names.
+        We should stop the pillows and copy the checkpoint to the new checkpoint ids, swap the indexes
+        and then start the pillows.
+        """
+        adapter = doc_adapter_from_cname(cname)
+        if not isinstance(adapter, ElasticMultiplexAdapter):
+            raise IndexNotMultiplexedException(f"""Checkpoints can be copied on multiplexed indexes.
+                Make sure you have set ES_{cname.upper()}_INDEX_MULTIPLEXED to True """)
+
+        current_index_name, older_index_name = self._get_current_and_older_index_name(cname)
+
+        if getattr(settings, f'ES_{cname.upper()}_INDEX_SWAPPED'):
+            raise IndexAlreadySwappedException(
+                f"""Checkpoints can only be copied before swapping indexes.
+                Make sure you have set ES_{cname.upper()}_INDEX_SWAPPED to False."""
+            )
+
+        all_pillows = get_all_pillow_instances()
+        for pillow in all_pillows:
+            old_checkpoint_id = pillow.checkpoint.checkpoint_id
+            if older_index_name in old_checkpoint_id:
+                new_checkpoint_id = old_checkpoint_id.replace(older_index_name, current_index_name)
+                print(f"Copying checkpoints of Checkpoint ID -  [{old_checkpoint_id}] to [{new_checkpoint_id}]")
+                self._copy_checkpoints(pillow, new_checkpoint_id)
+
+    def _copy_checkpoints(self, pillow, new_checkpoint_id):
+        last_known_checkpoint = pillow.checkpoint.get_current_sequence_as_dict()
+        new_checkpoint = KafkaPillowCheckpoint(new_checkpoint_id, topics=pillow.topics)
+        new_checkpoint.update_to(last_known_checkpoint)
 
     def estimate_disk_space_for_reindex(self, stdout=None):
         indices_info = es_manager.indices_info()
@@ -219,6 +276,17 @@ class ESSyncUtil:
         SimpleTableWriter(output=output, row_formatter=row_formatter).write_table(
             ["Index CName", "Index Name", "Size on Disk", "Doc Count"], rows=rows
         )
+
+    def set_replicas_for_secondary_index(self, cname):
+        adapter = doc_adapter_from_cname(cname)
+
+        if not getattr(settings, f'ES_{cname.upper()}_INDEX_MULTIPLEXED'):
+            raise IndexNotMultiplexedException("""This command supports setting replicas
+                                               only in secondary index of multiplexed Indices.""")
+        if getattr(settings, f'ES_{cname.upper()}_INDEX_SWAPPED'):
+            raise IndexAlreadySwappedException("Replicas can only be set before swapping indexes.")
+        self._prepare_index_for_normal_usage(adapter.secondary)
+        logger.info(f"Successfully set replicas for index {adapter.secondary.index_name}")
 
 
 class Command(BaseCommand):
@@ -277,6 +345,15 @@ class Command(BaseCommand):
         ./manage.py elastic_sync_multiplexed estimated_size_for_reindex
         ```
 
+    For copying checkpoints from source index checkpoint ids to destination index checkpoint ids-
+        ```bash
+        ./manage.py elastic_sync_multiplexed copy_checkpoints <index_cname>
+        ```
+
+    If replicas are not set during the time of reindex, they can be set on secondary index by
+        ```bash
+        ./manage.py elastic_sync_multiplexed set_replicas <index_cname>
+        ```
     """
 
     help = ("Reindex management command to sync Multiplexed HQ indices")
@@ -311,6 +388,21 @@ class Command(BaseCommand):
             default=False,
             help="Add reindex script to remove ids from doc source. This slows down the reindex substantially,"
                  "but is necessary if existings docs contain _ids in the source, as it is now a reserved property."
+        )
+
+        start_cmd.add_argument(
+            "--requests_per_second",
+            default=None,
+            type=int,
+            help="""throttles rate at which reindex issues batches of
+                    index operations by padding each batch with a wait time"""
+        )
+
+        start_cmd.add_argument(
+            "--with-no-replicas",
+            action="store_true",
+            default=False,
+            help="Replica shards will not be created for the destination index during reindex."
         )
 
         # Get ReIndex Process Status
@@ -349,11 +441,33 @@ class Command(BaseCommand):
         estimate_size_cmd = subparsers.add_parser("estimated_size_for_reindex")
         estimate_size_cmd.set_defaults(func=self.es_helper.estimate_disk_space_for_reindex)
 
+        # Copy checkpoints
+        copy_checkpoint_cmd = subparsers.add_parser("copy_checkpoints")
+        copy_checkpoint_cmd.set_defaults(func=self.es_helper.set_checkpoints_for_new_index)
+        copy_checkpoint_cmd.add_argument(
+            'index_cname',
+            choices=INDEXES,
+            help="""Cannonical Name of the index whose checkpoints are to be copied""",
+        )
+
+        # Set replicas for secondary index
+        set_replicas_cmd = subparsers.add_parser("set_replicas")
+        set_replicas_cmd.set_defaults(func=self.es_helper.set_replicas_for_secondary_index)
+        set_replicas_cmd.add_argument(
+            'index_cname',
+            choices=INDEXES,
+            help="""Cannonical Name of the index whose replicas are to be set"""
+        )
+
     def handle(self, **options):
         sub_cmd = options['sub_command']
         cmd_func = options.get('func')
         if sub_cmd == 'start':
-            cmd_func(options['index_cname'], options['batch_size'], options['purge_ids'])
+            cmd_func(
+                options['index_cname'], options['batch_size'],
+                options['purge_ids'], options['requests_per_second'],
+                options['with_no_replicas']
+            )
         elif sub_cmd == 'delete':
             cmd_func(options['index_cname'])
         elif sub_cmd == 'cleanup':
@@ -362,3 +476,7 @@ class Command(BaseCommand):
             cmd_func(options['task_id'])
         elif sub_cmd == 'estimated_size_for_reindex':
             cmd_func(stdout=self.stdout)
+        elif sub_cmd == 'copy_checkpoints':
+            cmd_func(options['index_cname'])
+        elif sub_cmd == 'set_replicas':
+            cmd_func(options["index_cname"])
