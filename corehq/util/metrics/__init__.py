@@ -121,6 +121,7 @@ from dimagi.utils.logging import notify_exception
 from dimagi.utils.modules import to_function
 
 from corehq.apps.celery import periodic_task
+from corehq.util.quickcache import quickcache
 from corehq.util.timer import TimingContext
 
 from .const import ALERT_INFO, COMMON_TAGS, MPM_ALL
@@ -311,6 +312,33 @@ class metrics_track_errors(ContextDecorator):
             metrics_counter(self.succeeded_name)
         else:
             metrics_counter(self.failed_name)
+
+
+def limit_domains(domain_name):
+    """Return the domain name if it's among a privileged set that get tagged individually
+
+    Else return __other__.  This is used to limit the number of tag combinations sent to datadog.
+    """
+    if not settings.IS_SAAS_ENVIRONMENT:
+        return domain_name
+    if domain_name and domain_name in _domains_to_tag():
+        return domain_name
+    return '__other__'
+
+
+@quickcache([], timeout=24 * 60 * 60)
+def _domains_to_tag():
+    # Only tag big projects individually
+    # I expect this implementation may need to evolve
+    from corehq.apps.accounting import models
+    return set(models.Subscription.visible_objects.filter(
+        is_active=True,
+        plan_version__plan__edition=models.SoftwarePlanEdition.ENTERPRISE,
+        service_type__in=[models.SubscriptionType.IMPLEMENTATION, models.SubscriptionType.SANDBOX],
+    ).values_list(
+        'subscriber__domain',
+        flat=True
+    ))
 
 
 def push_metrics():
