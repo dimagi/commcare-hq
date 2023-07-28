@@ -13,10 +13,11 @@ from corehq.apps.data_dictionary.views import (
     ExportDataDictionaryView, UploadDataDictionaryView, ALLOWED_VALUES_SHEET_SUFFIX)
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.users.models import WebUser
-from corehq.util.test_utils import flag_enabled, TestFileMixin
+from corehq.util.test_utils import TestFileMixin, privilege_enabled
+from corehq import privileges
 
 
-@flag_enabled('DATA_DICTIONARY')
+@privilege_enabled(privileges.DATA_DICTIONARY)
 class DataDictionaryImportTest(TestCase, TestFileMixin):
     domain_name = uuid.uuid4().hex
     file_path = ('data',)
@@ -72,11 +73,13 @@ class DataDictionaryImportTest(TestCase, TestFileMixin):
         messages = list(response.context['messages'])
         self.assertEqual(len(messages), 1)
         expected_errors = {
-            'Error in valid values for case type caseType1, row 4: missing case property',
-            'Error in case type caseType1, row 4: Unable to save valid values longer than 255 characters',
-            'Missing valid values sheet for case type caseType2',
-            'Error in valid values for case type caseType1, nonexistent property listed (mistake), row(s): 5, 6',
-            "Error in case type caseType1, row 5: {'data_type': [\"Value 'Nonsense' is not a valid choice.\"]}"
+            'Error in valid values for case type \"caseType1\", row 4: missing case property',
+            'Error in case type \"caseType1\", row 4: Unable to save valid values longer than 255 characters',
+            'Missing valid \"caseType2-vl\" multi-choice sheet for case type \"caseType2\"',
+            'Error in valid values for case type \"caseType1\", '
+            'nonexistent property listed (mistake), row(s): 5, 6',
+            "Error in case type \"caseType1\", row 5: "
+            "{'data_type': [\"Value 'Nonsense' is not a valid choice.\"]}"
 
         }
         message_str = str(messages[0])
@@ -85,7 +88,7 @@ class DataDictionaryImportTest(TestCase, TestFileMixin):
         self.assertEqual(expected_errors, received_errors)
 
 
-@flag_enabled('DATA_DICTIONARY')
+@privilege_enabled(privileges.DATA_DICTIONARY)
 class DataDictionaryExportTest(TestCase):
     domain_name = uuid.uuid4().hex
 
