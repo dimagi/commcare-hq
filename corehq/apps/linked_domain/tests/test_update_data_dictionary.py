@@ -115,6 +115,7 @@ class TestUpdateDataDictionary(BaseLinkedDomainTest):
                 'domain': domain,
                 'description': description,
                 'fully_generated': True,
+                'is_deprecated': False,
                 'groups': groups
             }
 
