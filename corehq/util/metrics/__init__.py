@@ -271,7 +271,7 @@ class metrics_histogram_timer(TimingContext):
             buckets=self._timing_buckets, bucket_unit='s', tags=self._tags
         )
         if self._errored:
-            metrics_counter(self._metric, tags={**self._tags, 'duration': 'error'})
+            metrics_counter(f'{self._metric}.error', tags=self._tags)
         timer_name = self._metric
         if self._metric.startswith('commcare.'):
             timer_name = ".".join(self._metric.split('.')[1:])  # remove the 'commcare.' prefix
