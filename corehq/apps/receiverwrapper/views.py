@@ -23,6 +23,7 @@ from corehq.apps.domain.auth import (
     DIGEST,
     NOAUTH,
     API_KEY,
+    OAUTH2,
     determine_authtype_from_request,
 )
 from corehq.apps.domain.decorators import (
@@ -31,6 +32,7 @@ from corehq.apps.domain.decorators import (
     login_or_basic_ex,
     login_or_digest_ex,
     login_or_api_key_ex,
+    login_or_oauth2_ex,
     two_factor_exempt,
 )
 from corehq.apps.locations.permissions import location_safe
@@ -347,6 +349,21 @@ def _secure_post_basic(request, domain, app_id=None):
     )
 
 
+@handle_401_response
+@login_or_oauth2_ex(allow_cc_users=True, oauth_scopes=['sync'])
+@two_factor_exempt
+@set_request_duration_reporting_threshold(60)
+def _secure_post_oauth2(request, domain, app_id=None):
+    """only ever called from secure post"""
+    return _process_form(
+        request=request,
+        domain=domain,
+        app_id=app_id,
+        user_id=request.couch_user.get_id,
+        authenticated=True,
+    )
+
+
 @login_or_api_key_ex()
 @require_permission(HqPermissions.edit_data)
 @require_permission(HqPermissions.access_api)
@@ -374,6 +391,7 @@ def secure_post(request, domain, app_id=None):
         BASIC: _secure_post_basic,
         NOAUTH: _noauth_post,
         API_KEY: _secure_post_api_key,
+        OAUTH2: _secure_post_oauth2,
     }
 
     if request.GET.get('authtype'):
