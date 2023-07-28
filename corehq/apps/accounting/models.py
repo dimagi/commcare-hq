@@ -122,10 +122,12 @@ class InvoicingPlan(object):
 class FeatureType(object):
     USER = "User"
     SMS = "SMS"
+    WEB_USER = "Web User"
 
     CHOICES = (
         (USER, USER),
         (SMS, SMS),
+        (WEB_USER, WEB_USER)
     )
 
 
@@ -423,6 +425,9 @@ class BillingAccount(ValidateModelMixin, models.Model):
         null=True,
         default=list
     )
+
+    bill_web_user = models.BooleanField(default=False)
+
 
     class Meta(object):
         app_label = 'accounting'
