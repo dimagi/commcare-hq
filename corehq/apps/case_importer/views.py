@@ -171,6 +171,18 @@ def _process_single_sheet(case_upload):
         return _process_spreadsheet_columns(spreadsheet, MAX_CASE_IMPORTER_COLUMNS)
 
 
+def _is_bulk_import(domain, case_types_from_apps, unrecognized_case_types, worksheet_titles):
+    '''
+    It is a bulk import if every sheet name is a case type in the project space.
+    This does introduce the limitation that new cases for new case types cannot be bulk imported
+    unless they are first added to an application or the Data Dictionary.
+    '''
+    data_dict_case_types = get_data_dict_case_types(domain)
+    all_case_types = set(case_types_from_apps + unrecognized_case_types) | data_dict_case_types
+    is_bulk_import = len(set(worksheet_titles) - all_case_types) == 0
+    return is_bulk_import
+
+
 def _process_file_and_get_upload(uploaded_file_handle, request, domain, max_columns=None):
     extension = os.path.splitext(uploaded_file_handle.name)[1][1:].strip().lower()
 
@@ -199,12 +211,13 @@ def _process_file_and_get_upload(uploaded_file_handle, request, domain, max_colu
     unrecognized_case_types = sorted([t for t in get_case_types_for_domain_es(domain)
                                       if t not in case_types_from_apps])
 
-    # It is a bulk import if every sheet name is a case type in the project space.
-    # This does introduce the limitation that new cases for new case types cannot be bulk imported
-    # unless they are first added to an application or the Data Dictionary
-    data_dict_case_types = get_data_dict_case_types(domain)
-    all_case_types = set(case_types_from_apps + unrecognized_case_types) | data_dict_case_types
-    is_bulk_import = len(set(worksheet_titles) - all_case_types) == 0
+    if len(case_types_from_apps) == 0 and len(unrecognized_case_types) == 0:
+        raise ImporterError(_(
+            'Your project does not use cases yet. To import cases from Excel, '
+            'you must first create an application with a case list.'
+        ))
+
+    is_bulk_import = _is_bulk_import(domain, case_types_from_apps, unrecognized_case_types, worksheet_titles)
     columns = []
     try:
         if is_bulk_import:
@@ -216,14 +229,6 @@ def _process_file_and_get_upload(uploaded_file_handle, request, domain, max_colu
     except ImporterError as e:
         raise ImporterError(e) from e
 
-    if len(case_types_from_apps) == 0 and len(unrecognized_case_types) == 0:
-        raise ImporterError(_(
-            'Your project does not use cases yet. To import cases from Excel, '
-            'you must first create an application with a case list.'
-        ))
-
-    # Remove deprecated case types as options. We only do that here as we don't want to remove
-    # deprecated case types when determing if the import is a bulk case import
     data_dict_deprecated_case_types = get_data_dict_deprecated_case_types(domain)
     deprecated_case_types_used = []
     if is_bulk_import:
