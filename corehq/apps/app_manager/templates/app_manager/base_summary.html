@@ -36,7 +36,7 @@
       <div id="hq-sidebar" class="appmanager-sidebar col-hq-sidebar nav-hq-sidebar appsummary-sidebar" role="navigation">
 
         <nav class="ko-template">
-          {% include 'app_manager/partials/appnav_menu_header.html' with domain=domain app_id=app_id app_name=app_name releases_active=True %}
+          {% include 'app_manager/partials/appnav_menu_header.html' with domain=domain app_id=app_id app_name=app_name releases_active=True linked_name=linked_name linked_version=linked_version %}
 
           {% include 'app_manager/partials/appnav_menu_langs.html' with app_langs=app_langs langs=langs %}
 
