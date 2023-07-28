@@ -225,8 +225,14 @@ def _process_file_and_get_upload(uploaded_file_handle, request, domain, max_colu
     # Remove deprecated case types as options. We only do that here as we don't want to remove
     # deprecated case types when determing if the import is a bulk case import
     data_dict_deprecated_case_types = get_data_dict_deprecated_case_types(domain)
-    case_types_from_apps = set(case_types_from_apps) - data_dict_deprecated_case_types
-    unrecognized_case_types = set(unrecognized_case_types) - data_dict_deprecated_case_types
+    deprecated_case_types_used = []
+    if is_bulk_import:
+        deprecated_case_types_used = set(worksheet_titles).intersection(data_dict_deprecated_case_types)
+    else:
+        # Remove deprecated case types as options. We only do that here as we don't want to remove
+        # deprecated case types when determing if the import is a bulk case import
+        case_types_from_apps = set(case_types_from_apps) - data_dict_deprecated_case_types
+        unrecognized_case_types = set(unrecognized_case_types) - data_dict_deprecated_case_types
 
     error_messages = custom_case_upload_file_operations(domain=domain, case_upload=case_upload)
     if error_messages:
@@ -238,7 +244,8 @@ def _process_file_and_get_upload(uploaded_file_handle, request, domain, max_colu
         'case_types_from_apps': [ALL_CASE_TYPE_IMPORT] if is_bulk_import else case_types_from_apps,
         'domain': domain,
         'slug': base.ImportCases.slug,
-        'is_bulk_import': is_bulk_import
+        'is_bulk_import': is_bulk_import,
+        'deprecated_case_types_used': deprecated_case_types_used,
     }
     return case_upload, context
 
