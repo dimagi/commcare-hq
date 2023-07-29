@@ -98,7 +98,7 @@ class TestABHAVerification(APITestCase):
         self.assertEqual(self.invalid_req_msg, response.json().get("message"))
 
     @override_settings(ABDM_CLIENT_ID='id', ABDM_CLIENT_SECRET='secret', ABDM_GATEWAY_URL='http://url.tld',
-                       ABDM_BASE_URL='http://base.tld')
+                       ABDM_ABHA_URL='http://base.tld')
     @patch('custom.abdm.milestone_one.utils.abha_verification_util.requests.post')
     def test_get_health_card_success(self, post_mock):
         post_mock.return_value = Mock()

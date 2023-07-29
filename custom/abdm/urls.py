@@ -6,6 +6,7 @@ from custom.abdm.milestone_one.views import (
 )
 from custom.abdm.hiu.urls import hiu_urls
 
+# TODO (M1 Refactor) Move both to the respective module
 abha_creation_urls = [
     path('api/generate_aadhaar_otp', abha_creation_views.generate_aadhaar_otp, name='generate_aadhaar_otp'),
     path('api/generate_mobile_otp', abha_creation_views.generate_mobile_otp, name='generate_mobile_otp'),
