@@ -1,12 +1,14 @@
 from django.conf import settings
 from django.urls import reverse
 from django.utils.translation import gettext_noop
+from jsonobject.exceptions import BadValueError
 
 from corehq.apps.geospatial.dispatchers import CaseManagementMapDispatcher
 from corehq.apps.reports.standard import ProjectReport
 from corehq.apps.reports.standard.cases.basic import CaseListMixin
 from corehq.apps.reports.standard.cases.data_sources import CaseDisplayES
 from corehq.apps.reports.standard.cases.case_list_explorer import CaseListExplorer
+from couchforms.geopoint import GeoPoint
 from .const import GEO_POINT_CASE_PROPERTY
 from .models import GeoPolygon
 
@@ -45,17 +47,11 @@ class CaseManagementMap(ProjectReport, CaseListMixin):
             geo_point = case.get(GEO_POINT_CASE_PROPERTY)
             if not geo_point:
                 return
+
             try:
-                # Try standard format first https://confluence.dimagi.com/display/commcarepublic/Using+GPS+Data
-                # Update if we need altitude and accuracy
-                lat, lon, _alt, _acc = geo_point.split(" ")
-                return {"lat": float(lat), "lng": float(lon)}
-            except ValueError:
-                # also accept lat/lng only tuples
-                lat, lon = geo_point.split(" ")
-                return {"lat": float(lat), "lng": float(lon)}
-            except ValueError:
-                # Invalid coordinates
+                geo_point = GeoPoint.from_string(geo_point, flexible=True)
+                return {"lat": geo_point.latitude, "lng": geo_point.longitude}
+            except BadValueError:
                 return None
 
         for row in self.es_results['hits'].get('hits', []):
