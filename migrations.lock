@@ -96,6 +96,7 @@ accounting
  0074_filtered_bulk_user_download_priv
  0075_application_error_report_priv
  0076_location_owner_in_report_builder_priv
+ 0077_case_list_explorer_priv
 admin
  0001_initial
  0002_logentry_remove_auto_add
@@ -534,6 +535,7 @@ generic_inbound
  0006_backend_external_response
 geospatial
  0001_create_geopolygon
+ 0002_geoconfig
 hqadmin
  0001_initial
  0002_vcmmigrationaudit

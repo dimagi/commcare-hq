@@ -539,6 +539,7 @@ class RemoteRequestQuery(OrderedXmlObject, XmlObject):
     data = NodeListField('data', QueryData)
     prompts = NodeListField('prompt', QueryPrompt)
     default_search = BooleanField("@default_search")
+    results_title = NodeField('results-title', DisplayNode)
 
     @property
     def id(self):
@@ -620,6 +621,7 @@ class MenuMixin(XmlObject):
     style = StringField('@style')
     commands = NodeListField('command', Command)
     assertions = NodeListField('assertions/assert', Assertion)
+    instances = NodeListField('instance', Instance)
 
 
 class Menu(MenuMixin, DisplayNode, IdNode):
