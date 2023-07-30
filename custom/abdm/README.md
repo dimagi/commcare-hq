@@ -21,8 +21,9 @@ When HQ system is installed, following entries should be added in `localsettings
 ```commandline
 ABDM_CLIENT_ID = '<Actual client ID>'
 ABDM_CLIENT_SECRET = '<Actual client secret>'
-ABDM_BASE_URL = "https://healthidsbx.abdm.gov.in/api/"
-ABDM_GATEWAY_URL = "https://dev.abdm.gov.in/gateway/v0.5/sessions"
+ABDM_ABHA_URL = "https://healthidsbx.abdm.gov.in/api/"
+ABDM_GATEWAY_URL = "https://dev.abdm.gov.in/gateway"
+X_CM_ID = "sbx"
 ```
 
 Projects that need to use the ABDM APIs, and therefore receive the token in restore response, should enable `restore_add_abdm_token` feature flag.

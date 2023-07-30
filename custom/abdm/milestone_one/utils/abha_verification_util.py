@@ -37,7 +37,7 @@ def get_account_information(x_token):
     headers = {"Content-Type": "application/json; charset=UTF-8"}
     token = get_access_token()
     headers.update({"Authorization": "Bearer {}".format(token), "X-Token": f"Bearer {x_token}"})
-    resp = requests.get(url=settings.ABDM_BASE_URL + ACCOUNT_INFORMATION_URL, headers=headers)
+    resp = requests.get(url=settings.ABDM_ABHA_URL + ACCOUNT_INFORMATION_URL, headers=headers)
     return resp.json()
 
 
@@ -50,7 +50,7 @@ def get_health_card_png(user_token):
     headers = {"Content-Type": "application/json; charset=UTF-8"}
     token = get_access_token()
     headers.update({"Authorization": "Bearer {}".format(token), "X-Token": f"Bearer {user_token}"})
-    resp = requests.get(url=settings.ABDM_BASE_URL + HEALTH_CARD_PNG_FORMAT, headers=headers, stream=True)
+    resp = requests.get(url=settings.ABDM_ABHA_URL + HEALTH_CARD_PNG_FORMAT, headers=headers, stream=True)
     if resp.status_code == 200:
         return {"health_card": base64.b64encode(resp.content)}
     return {"error": "Image could not be downloaded"}
