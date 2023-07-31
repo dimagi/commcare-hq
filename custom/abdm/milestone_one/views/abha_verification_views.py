@@ -14,7 +14,7 @@ from custom.abdm.milestone_one.utils.response_util import (
     parse_response,
 )
 from custom.abdm.utils import check_for_existing_abha_number
-from custom.abdm.const import ABHA_IN_USE_ERROR_CODE, ERROR_MESSAGES
+from custom.abdm.milestone_one.const import ABHA_IN_USE_ERROR_CODE, ERROR_MESSAGES
 
 
 @api_view(["GET"])
