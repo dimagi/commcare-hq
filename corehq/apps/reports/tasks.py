@@ -21,6 +21,7 @@ from corehq.apps.es import AppES, DomainES, FormES, filters
 from corehq.apps.es.apps import app_adapter
 from corehq.apps.es.domains import domain_adapter
 from corehq.apps.export.const import MAX_MULTIMEDIA_EXPORT_SIZE
+from corehq.apps.reports.models import QueryStringHash
 from corehq.apps.reports.util import send_report_download_email
 from corehq.blobs import CODES, get_blob_db
 from corehq.const import ONE_DAY
@@ -460,3 +461,10 @@ def _extract_form_attachment_info(form, properties):
             })
 
     return form_info
+
+
+@periodic_task(run_every=crontab(minute=0, hour=1, day_of_week='sun'), queue='background_queue')
+def delete_old_query_hash():
+    query_hashes = QueryStringHash.objects.filter(last_accessed__lte=datetime.utcnow() - timedelta(days=365))
+    for query in query_hashes:
+        query.delete()

@@ -282,6 +282,9 @@ class Repeater(RepeaterSuperProxy):
 
     _has_config = False
 
+    def __str__(self):
+        return self.name or self.connection_settings.name
+
     def _get_connection_settings(self, id_):
         return ConnectionSettings.objects.get(id=id_, domain=self.domain)
 

@@ -37,6 +37,10 @@ body {
   padding-left: 0;
 }
 
+#content-container {
+  background: transparent;
+}
+
 .case-tile-container {
   background: transparent !important;
   > div {
@@ -45,6 +49,28 @@ body {
     display: grid;
     container-type: inline-size;
   }
+}
+
+#select-all-tile-wrapper {
+  background-color: @cc-bg;
+  border: 1px solid white;
+}
+
+#select-all-tile-checkbox {
+  margin-top: 10px;
+  margin-bottom: 10px;
+  margin-left: 10px;
+  margin-right: 10px;
+}
+
+#select-all-tile-checkbox-label {
+  font-weight: normal;
+}
+
+.select-row-checkbox-div {
+  padding-top: 10px;
+  padding-left: 10px;
+  float: left;
 }
 
 @media print {
@@ -75,14 +101,5 @@ body {
 
   video {
     border: 1px solid #ddd;
-  }
-}
-
-#query-description {
-  a {
-    color: @cc-brand-mid;
-  }
-  a:hover {
-    color: @cc-brand-low;
   }
 }

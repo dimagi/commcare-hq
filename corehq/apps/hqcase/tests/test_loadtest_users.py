@@ -10,7 +10,6 @@ from casexml.apps.case.tests.util import (
     extract_caseblocks_from_xml,
 )
 from casexml.apps.case.xml import V2
-from casexml.apps.phone.models import loadtest_users_enabled
 from casexml.apps.phone.restore import (
     RestoreConfig,
     RestoreParams,
@@ -52,9 +51,6 @@ class LoadtestUserTest(TestCase, DomainSubscriptionMixin):
     def tearDownClass(cls):
         cls.domain.delete()
         super(LoadtestUserTest, cls).tearDownClass()
-
-    def test_loadtest_users_enabled(self):
-        self.assertTrue(loadtest_users_enabled(DOMAIN))
 
     def test_no_factor_set(self):
         self.user.loadtest_factor = None

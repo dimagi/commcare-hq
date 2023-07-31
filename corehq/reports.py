@@ -74,6 +74,7 @@ from corehq.motech.repeaters.views import (
     DomainForwardingRepeatRecords,
     SQLRepeatRecordReport,
 )
+from corehq.apps.geospatial.reports import CaseManagementMap
 
 from . import toggles
 
@@ -98,7 +99,11 @@ def REPORTS(project):
     inspect_reports = [
         inspect.SubmitHistory, CaseListReport,
     ]
-    if toggles.CASE_LIST_EXPLORER.enabled(project.name):
+
+    from corehq.apps.accounting.utils import domain_has_privilege
+
+    domain_can_access_case_list_explorer = domain_has_privilege(project.name, privileges.CASE_LIST_EXPLORER)
+    if toggles.CASE_LIST_EXPLORER.enabled(project.name) or domain_can_access_case_list_explorer:
         inspect_reports.append(CaseListExplorer)
 
     if toggles.CASE_DEDUPE.enabled(project.name):
@@ -129,7 +134,6 @@ def REPORTS(project):
 
     reports = list(_get_report_builder_reports(project)) + reports
 
-    from corehq.apps.accounting.utils import domain_has_privilege
     messaging_reports = []
 
     project_can_use_sms = domain_has_privilege(project.name, privileges.OUTBOUND_SMS)
@@ -336,5 +340,11 @@ DOMAIN_REPORTS = (
 USER_MANAGEMENT_REPORTS = (
     (_("User Management"), (
         UserHistoryReport,
+    )),
+)
+
+GEOSPATIAL_MAP = (
+    (_("Case Management"), (
+        CaseManagementMap,
     )),
 )

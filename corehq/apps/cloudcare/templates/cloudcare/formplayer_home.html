@@ -79,6 +79,7 @@
   {% initial_page_data 'hmac_api_key' integrations.hmac_api_key %}
   {% initial_page_data 'hmac_hashed_secret' integrations.hmac_hashed_secret %}
   {% initial_page_data 'sentry' sentry %}
+  {% initial_page_data 'valid_multimedia_extensions_map' valid_multimedia_extensions_map %}
   {% registerurl 'list_case_exports' request.domain %}
   {% registerurl 'list_form_exports' request.domain %}
   {% registerurl 'case_data' request.domain '---' %}
@@ -103,7 +104,10 @@
       <div class="container case-tile-container">
         <div id="persistent-case-tile" class="print-container"></div>
       </div>
-      <div id="menu-region" class="container print-container"></div>
+      <div id="content-container" class="container flex-container">
+        <div id="sidebar-region" class="container print-container flex-child flex-child-sidebar"></div>
+        <div id="menu-region" class="container print-container flex-child flex-child-menu"></div>
+      </div>
       <section id="webforms" data-bind="
                 template: {
                     name: 'form-fullform-ko-template',

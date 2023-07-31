@@ -139,7 +139,7 @@ from corehq.apps.users.views import (
     UserUploadJobPollView,
     get_domain_languages,
 )
-from corehq.apps.users.views.utils import get_locations_with_orphaned_cases
+from corehq.apps.users.views.utils import get_user_location_info
 from corehq.const import (
     USER_CHANGE_VIA_BULK_IMPORTER,
     USER_CHANGE_VIA_WEB,
@@ -293,6 +293,16 @@ class EditCommCareUserView(BaseEditUserView):
             make_form_readonly(self.form_user_update.user_form)
             make_form_readonly(self.form_user_update.custom_data.form)
 
+        location_info = get_user_location_info(
+            domain=self.domain,
+            user_location_ids=self.editable_user.assigned_location_ids,
+            user_id=self.editable_user.user_id
+        )
+
+        can_edit_groups = self.request.couch_user.has_permission(self.domain, 'edit_groups')
+        can_access_all_locations = self.request.couch_user.has_permission(self.domain, 'access_all_locations')
+        locations_present = users_have_locations(self.domain)
+        request_has_locations_privilege = has_privilege(self.request, privileges.LOCATIONS)
         context = {
             'are_groups': bool(len(self.all_groups)),
             'groups_url': reverse('all_groups', args=[self.domain]),
@@ -302,21 +312,11 @@ class EditCommCareUserView(BaseEditUserView):
             'data_fields_form': self.form_user_update.custom_data.form,
             'can_use_inbound_sms': domain_has_privilege(self.domain, privileges.INBOUND_SMS),
             'show_deactivate_after_date': self.form_user_update.user_form.show_deactivate_after_date,
-            'can_create_groups': (
-                self.request.couch_user.has_permission(self.domain, 'edit_groups') and
-                self.request.couch_user.has_permission(self.domain, 'access_all_locations')
-            ),
-            'needs_to_downgrade_locations': (
-                users_have_locations(self.domain) and
-                not has_privilege(self.request, privileges.LOCATIONS)
-            ),
+            'can_create_groups': can_edit_groups and can_access_all_locations,
+            'needs_to_downgrade_locations': locations_present and not request_has_locations_privilege,
             'demo_restore_date': naturaltime(demo_restore_date_created(self.editable_user)),
             'group_names': [g.name for g in self.groups],
-            'locations_with_single_user': get_locations_with_orphaned_cases(
-                self.domain,
-                self.editable_user.assigned_location_ids,
-                self.editable_user.user_id
-            )
+            'location_info': location_info
         }
         if self.commtrack_form.errors:
             messages.error(self.request, _(
@@ -402,6 +402,7 @@ class ConfirmBillingAccountForExtraUsersView(BaseUserSettingsView, AsyncHandlerM
     async_handlers = [
         Select2BillingInfoHandler,
     ]
+
     @property
     @memoized
     def account(self):
@@ -462,14 +463,15 @@ def delete_commcare_user(request, domain, user_id):
     user = CommCareUser.get_by_user_id(user_id, domain)
     if not _can_edit_workers_location(request.couch_user, user):
         raise PermissionDenied()
-    if (user.user_location_id and
-            SQLLocation.objects.get_or_None(location_id=user.user_location_id,
-                                            user_id=user._id)):
+
+    user_location_id = user.user_location_id
+    if (user_location_id and SQLLocation.objects.get_or_None(location_id=user_location_id, user_id=user._id)):
         messages.error(request, _("This is a location user. You must delete the "
                        "corresponding location before you can delete this user."))
         return HttpResponseRedirect(reverse(EditCommCareUserView.urlname, args=[domain, user_id]))
     user.retire(request.domain, deleted_by=request.couch_user, deleted_via=USER_CHANGE_VIA_WEB)
-    messages.success(request, "User %s has been deleted. All their submissions and cases will be permanently deleted in the next few minutes" % user.username)
+    messages.success(request, _("""User %s has been deleted. All their submissions and cases will be permanently
+        deleted in the next few minutes""") % user.username)
     return HttpResponseRedirect(reverse(MobileWorkerListView.urlname, args=[domain]))
 
 
@@ -752,7 +754,6 @@ class MobileWorkerListView(JSONResponseMixin, BaseUserSettingsView):
         else:
             return {'success': _('Username {} is available').format(username)}
 
-
     @allow_remote_invocation
     def create_mobile_worker(self, in_data):
         if self.request.is_view_only:
@@ -769,8 +770,8 @@ class MobileWorkerListView(JSONResponseMixin, BaseUserSettingsView):
             }
 
         self.request.POST = form_data
-        is_valid = lambda: self.new_mobile_worker_form.is_valid() and self.custom_data.is_valid()
-        if not is_valid():
+
+        if not (self.new_mobile_worker_form.is_valid() and self.custom_data.is_valid()):
             all_errors = [e for errors in self.new_mobile_worker_form.errors.values() for e in errors]
             all_errors += [e for errors in self.custom_data.errors.values() for e in errors]
             return {'error': _("Forms did not validate: {errors}").format(
@@ -833,7 +834,7 @@ class MobileWorkerListView(JSONResponseMixin, BaseUserSettingsView):
             last_name=last_name,
             metadata=self.custom_data.get_data_to_save(),
             is_account_confirmed=is_account_confirmed,
-            location=SQLLocation.objects.get(location_id=location_id) if location_id else None,
+            location=SQLLocation.objects.get(domain=self.domain, location_id=location_id) if location_id else None,
             role_id=role_id
         )
 

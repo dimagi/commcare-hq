@@ -157,7 +157,7 @@
           "custom_xml": null,
           "lookup_enabled": false,
           "pull_down_tile": null,
-          "use_case_tiles": null,
+          "case_tile_template": null,
           "lookup_extras": [
 
           ],
@@ -241,7 +241,7 @@
           "custom_xml": null,
           "lookup_enabled": false,
           "pull_down_tile": null,
-          "use_case_tiles": null,
+          "case_tile_template": null,
           "lookup_extras": [
 
           ],
@@ -678,7 +678,7 @@
           "custom_xml": null,
           "lookup_enabled": false,
           "pull_down_tile": null,
-          "use_case_tiles": null,
+          "case_tile_template": null,
           "lookup_extras": [
 
           ],
@@ -706,7 +706,7 @@
           "custom_xml": null,
           "lookup_enabled": false,
           "pull_down_tile": null,
-          "use_case_tiles": null,
+          "case_tile_template": null,
           "lookup_extras": [
 
           ],

@@ -34,10 +34,10 @@
                 data-bind="
                   html: ko.utils.unwrapObservable($data.caption_markdown) || caption(),
                 "></span>
-          <button class="btn btn-xs btn-danger del pull-right" href="#" data-bind="
+          <button class="btn btn-danger del pull-right" href="#" data-bind="
                       visible: isRepetition,
                       click: deleteRepeat
-                  ">{% trans "Delete repeat" %}</button>
+                  "><i class="fa fa-remove"></i></button>
         </legend>
       </div>
       <div data-bind="if: collapsible">
@@ -48,10 +48,10 @@
         </div>
         <span class="caption" data-bind="html: caption(), attr: {id: captionId()}"></span><!-- Markdown interferes with header styling -->
         <i class="fa fa-warning text-danger pull-right" data-bind="visible: hasError() && !showChildren()"></i>
-        <button class="btn btn-xs btn-danger del pull-right" href="#" data-bind="
+        <button class="btn btn-danger del pull-right" href="#" data-bind="
                     visible: isRepetition,
                     click: deleteRepeat
-                ">{% trans "Delete repeat" %}</button>
+                "><i class="fa fa-remove"></i></button>
       </div>
       <span class="ix"></span>
     </fieldset>
@@ -202,17 +202,28 @@
             }
         ">
     <label class="caption control-label" data-bind="css: labelWidth, attr: {'for': entry.entryId}">
-      <div>
+      <div data-bind="css: {'row': help()}">
+        <span class="webapp-markdown-output" tabindex="0"
+              data-bind="
+                html: ko.utils.unwrapObservable($data.caption_markdown) || caption(),
+                css: {'col-md-11' : help()}"></span>
         <!-- ko if: help() -->
         <a
-          class="help-text-trigger"
+          class="help-text-trigger col-md-1"
           role="button"
+          href="javascript:void(0)"
+          title="{% trans "Show help dialog" %}"
         ><i class="fa fa-question-circle"></i></a>
         <div class="modal fade" role="dialog">
           <div class="modal-dialog">
             <div class="modal-content">
               <div class="modal-body">
-                <p class="webapp-markdown-output" align="left" data-bind="html: help"></p>
+                <p class="webapp-markdown-output" tabindex="0" align="left" data-bind="html: help"></p>
+                <div class="widget-multimedia" data-bind="
+                    template: {
+                      name: 'widget-help-multimedia-ko-template',
+                      data: $data
+                    } "></div>
               </div>
               <div class="modal-footer">
                 <button class="btn btn-default help-modal-close" data-dismiss="modal">{% trans "Close" %}</button>
@@ -221,7 +232,6 @@
           </div>
         </div>
         <!-- /ko -->
-        <span class="webapp-markdown-output" tabindex="0" data-bind="html: ko.utils.unwrapObservable($data.caption_markdown) || caption()"></span>
       </div>
       <i class="hint-text" data-bind="text: ko.utils.unwrapObservable($data.hint)"></i>
       <!-- ko if: required() -->
@@ -300,9 +310,12 @@
       </div>
     </div>
     <div class="panel-footer">
-      <button class="btn btn-default btn-xs add" href="#"
-              data-bind="click: newRepeat, text: getTranslation('repeat.dialog.add.new', '{% trans_html_attr 'Add new repeat' %}')"
-              id="repeat-add-new" />
+      <button class="btn btn-default add" href="#"
+              data-bind="click: newRepeat"
+              id="repeat-add-new">
+              <i class="fa fa-plus"></i>
+              <!-- ko text: getTranslation('repeat.dialog.add.new', '{% trans_html_attr 'Add new repeat' %}') --><!-- /ko -->
+      </button>
     </div>
   </div>
 </script>
@@ -316,6 +329,22 @@
     {% trans "Your browser does not support audio" %}
   </audio>
   <video controls="controls" data-bind="visible: caption_video, attr: { src: mediaSrc($data.caption_video()) }">
+    {% trans "Your browser does not support video" %}
+  </video>
+</script>
+
+<script type="text/html" id="widget-help-multimedia-ko-template">
+  <img class="img-responsive" data-bind="
+      attr: { src: mediaSrc($data.help_image()) },
+      visible: mediaSrc($data.help_image())" />
+  <audio controls="controls" data-bind="
+      visible: help_audio,
+      attr: { src: mediaSrc($data.help_audio()) }">
+    {% trans "Your browser does not support audio" %}
+  </audio>
+  <video controls="controls" data-bind="
+      visible: help_video,
+      attr: { src: mediaSrc($data.help_video()) }">
     {% trans "Your browser does not support video" %}
   </video>
 </script>

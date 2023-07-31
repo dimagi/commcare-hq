@@ -163,12 +163,15 @@ NOTE: Developers on Mac OS have additional prerequisites. See the [Supplementary
 
     If you have an M1 chip and are using a Rosetta-based install of Postgres and run into problems with psycopg2, see [this solution](https://github.com/psycopg/psycopg2/issues/1216#issuecomment-767892042).
 
-##### A note on `xmlsec`
+##### Notes on `xmlsec`
 
 `xmlsec` is a `pip` dependency that will require some non-`pip`-installable
 packages. The above notes should have covered these requirements for linux and
 macOS, but if you are on a different platform or still experiencing issues,
 please see [`xmlsec`'s install notes](https://pypi.org/project/xmlsec/).
+
+If you encounter issues installing `xmlsec` on a M1 mac, you can try following a workaround
+outlined in the Mac setup [Supplementary Guide](https://github.com/dimagi/commcare-hq/blob/master/DEV_SETUP_MAC.md).
 
 
 ## Downloading & Running CommCare HQ
@@ -629,11 +632,11 @@ $ node --version
 v16.19.1
 ```
 
-On a clean Ubuntu 18.04 LTS install, the packaged nodejs version is v8. The
-easiest way to get onto the current nodejs v14 is
+On a clean Ubuntu 22.04 LTS install, the packaged nodejs version is expected to be v12. The
+easiest way to get onto the current nodejs v16 is
 
 ```sh
-curl -sL https://deb.nodesource.com/setup_14.x | sudo -E bash -
+curl -sL https://deb.nodesource.com/setup_16.x | sudo -E bash -
 sudo apt install -y nodejs
 ```
 
