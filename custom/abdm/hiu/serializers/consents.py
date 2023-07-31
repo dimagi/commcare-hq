@@ -6,7 +6,7 @@ from custom.abdm.const import (
     GATEWAY_CONSENT_STATUS_CHOICES,
     HI_TYPES,
 )
-from custom.abdm.hiu.models import HIUConsentRequest
+from custom.abdm.hiu.models import HIUConsentArtefact, HIUConsentRequest
 from custom.abdm.hiu.serializers.base import (
     GatewayCareContextSerializer,
     GatewayErrorSerializer,
@@ -51,6 +51,12 @@ class HIUGenerateConsentSerializer(serializers.Serializer):
 class HIUConsentRequestSerializer(serializers.ModelSerializer):
     class Meta:
         model = HIUConsentRequest
+        exclude = ('gateway_request_id', )
+
+
+class HIUConsentArtefactSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = HIUConsentArtefact
         exclude = ('gateway_request_id', )
 
 
