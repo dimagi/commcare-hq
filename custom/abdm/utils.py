@@ -52,7 +52,8 @@ class GatewayRequestHelper:
     @staticmethod
     def json_from_response(resp):
         resp_json = {}
-        if 'application/json' in resp.headers.get('content-type'):
+        content_type = resp.headers.get('content-type')
+        if content_type and 'application/json' in content_type:
             try:
                 resp_json = resp.json()
             except ValueError:
