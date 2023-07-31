@@ -1,5 +1,7 @@
 import requests
 from django.db import transaction
+from django.db.models import Q
+from rest_framework import viewsets
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.status import HTTP_201_CREATED, HTTP_202_ACCEPTED
@@ -25,6 +27,7 @@ from custom.abdm.hiu.serializers.consents import (
     GatewayConsentRequestOnFetchSerializer,
     GatewayConsentRequestOnInitSerializer,
     HIUGenerateConsentSerializer,
+    HIUConsentArtefactSerializer,
     HIUConsentRequestSerializer,
 )
 from custom.abdm.hiu.views.base import HIUBaseView, HIUGatewayBaseView
@@ -33,6 +36,7 @@ from custom.abdm.milestone_one.utils.abha_verification_util import (
 )
 from custom.abdm.utils import (
     GatewayRequestHelper,
+    StandardResultsSetPagination,
 )
 
 
@@ -180,3 +184,51 @@ class GatewayConsentRequestOnFetch(HIUGatewayBaseView):
         consent_request = consent_artefact.consent_request
         consent_request.update_user_amendable_details(consent_artefact.details['permission'],
                                                       consent_artefact.details['hiTypes'])
+
+
+class ConsentFetch(HIUBaseView, viewsets.ReadOnlyModelViewSet):
+    serializer_class = HIUConsentRequestSerializer
+    pagination_class = StandardResultsSetPagination
+    authentication_classes = [ABDMUserAuthentication]
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        queryset = HIUConsentRequest.objects.all().order_by('-date_created')
+        request_params = self.request.query_params
+        abha_id = request_params.get('abha_id')
+        status = request_params.get('status')
+        search = request_params.get('search')
+        from_date = request_params.get('from_date')
+        to_date = request_params.get('to_date')
+        if abha_id:
+            queryset = queryset.filter(details__patient__id=abha_id)
+        if status:
+            queryset = queryset.filter(status=status)
+        if from_date:
+            queryset = queryset.filter(health_info_to_date__date__gte=from_date)
+        if to_date:
+            queryset = queryset.filter(health_info_from_date__date__lte=to_date)
+        if search:
+            queryset = queryset.filter(Q(status__icontains=search) | Q(health_info_types__icontains=search))
+        return queryset
+
+
+class ConsentArtefactFetch(HIUBaseView, viewsets.ReadOnlyModelViewSet):
+    serializer_class = HIUConsentArtefactSerializer
+    pagination_class = StandardResultsSetPagination
+    authentication_classes = [ABDMUserAuthentication]
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        queryset = HIUConsentArtefact.objects.all().order_by('-date_created')
+        request_params = self.request.query_params
+        consent_request_id = request_params.get('consent_request_id')
+        status = request_params.get('status')
+        search = request_params.get('search')
+        if consent_request_id:
+            queryset = queryset.filter(consent_request=consent_request_id)
+        if status:
+            queryset = queryset.filter(status=status)
+        if search:
+            queryset = queryset.filter(details__hip__name__icontains=search)
+        return queryset

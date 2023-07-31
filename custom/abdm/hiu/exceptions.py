@@ -6,6 +6,7 @@ from custom.abdm.exceptions import ABDMErrorResponseFormatter
 HIU_ERROR_MESSAGES = {
     4400: "Required attributes not provided or Request information is not as expected",
     4401: "Unauthorized request",
+    4404: "Resource not found",
     4405: "Method not allowed",
     4500: "Unknown error occurred",
     4503: "Gateway Service down",
