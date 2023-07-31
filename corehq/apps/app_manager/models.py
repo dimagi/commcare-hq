@@ -2199,7 +2199,7 @@ class DetailPair(DocumentSchema):
         return self
 
 
-class ShadowFormMapping(DocumentSchema):
+class ShadowFormEndpoint(DocumentSchema):
     form_id = StringProperty()
     session_endpoint_id = StringProperty()  # See toggles.SESSION_ENDPOINTS
 
@@ -3689,7 +3689,7 @@ class ShadowModule(ModuleBase, ModuleDetailsMixin):
     source_module_id = StringProperty()
     forms = []
     excluded_form_ids = SchemaListProperty()
-    form_session_endpoints = SchemaListProperty(ShadowFormMapping)
+    form_session_endpoints = SchemaListProperty(ShadowFormEndpoint)
     case_details = SchemaProperty(DetailPair)
     ref_details = SchemaProperty(DetailPair)
     case_list = SchemaProperty(CaseList)

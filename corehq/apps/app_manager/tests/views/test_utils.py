@@ -4,7 +4,7 @@ from corehq.apps.app_manager.models import (
     AdvancedModule,
     Application,
     Form,
-    ShadowFormMapping,
+    ShadowFormEndpoint,
     ShadowModule
 )
 from corehq.apps.app_manager.views.utils import (
@@ -41,7 +41,7 @@ class TestUtils(SimpleTestCase):
             unique_id="shadow_module",
             session_endpoint_id=self.shadow_module_session_endpoint_id,
             form_session_endpoints=[
-                ShadowFormMapping(
+                ShadowFormEndpoint(
                     form_id=self.form_unique_id,
                     session_endpoint_id=self.shadow_form_session_endpoint_id)
             ]

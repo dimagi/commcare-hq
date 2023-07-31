@@ -34,7 +34,7 @@ from corehq.apps.app_manager.models import (
     Application,
     CustomAssertion,
     CustomIcon,
-    ShadowFormMapping,
+    ShadowFormEndpoint,
     ShadowModule,
     enable_usercase_if_necessary,
 )
@@ -638,7 +638,7 @@ def set_shadow_module_and_form_session_endpoint(
 
     shadow_module.session_endpoint_id = raw_endpoint_id
     shadow_module.form_session_endpoints = [
-        ShadowFormMapping(form_id=m['form_id'], session_endpoint_id=m['session_endpoint_id'])
+        ShadowFormEndpoint(form_id=m['form_id'], session_endpoint_id=m['session_endpoint_id'])
         for m in form_session_endpoints if m['session_endpoint_id'] and m['session_endpoint_id'] != ""
     ]
 
