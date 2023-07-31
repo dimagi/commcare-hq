@@ -190,10 +190,12 @@ class CaseSearchQueryBuilder:
             if not criteria.is_empty:
                 if criteria.has_multiple_terms:
                     for value in criteria.value:
-                        search_es = search_es.filter(build_filter_from_xpath(self.query_domains, value))
+                        search_es = search_es.filter(build_filter_from_xpath(self.query_domains, value,
+                                                                             request_domain=self.request_domain))
                     return search_es
                 else:
-                    return search_es.filter(build_filter_from_xpath(self.query_domains, criteria.value))
+                    return search_es.filter(build_filter_from_xpath(self.query_domains, criteria.value,
+                                                                    request_domain=self.request_domain))
         elif criteria.key == 'owner_id':
             if not criteria.is_empty:
                 return search_es.filter(case_search.owner(criteria.value))
@@ -223,7 +225,8 @@ class CaseSearchQueryBuilder:
             return case_property_missing(criteria.key)
 
         if criteria.is_ancestor_query:
-            missing_filter = build_filter_from_xpath(self.query_domains, f'{criteria.key} = ""')
+            missing_filter = build_filter_from_xpath(self.query_domains, f'{criteria.key} = ""',
+                                                     request_domain=self.request_domain)
         else:
             missing_filter = case_property_missing(criteria.key)
         return filters.OR(self._get_query(criteria), missing_filter)
@@ -243,7 +246,8 @@ class CaseSearchQueryBuilder:
             query = f'{criteria.key} = "{value}"'
             if isinstance(value, list):
                 query = f"""{criteria.key} = unwrap-list('{json.dumps(value)}')"""
-            return build_filter_from_xpath(self.query_domains, query, fuzzy=fuzzy)
+            return build_filter_from_xpath(self.query_domains, query, fuzzy=fuzzy,
+                                           request_domain=self.request_domain)
         elif criteria.is_index_query:
             return reverse_index_case_query(value, criteria.index_query_identifier)
         else:
