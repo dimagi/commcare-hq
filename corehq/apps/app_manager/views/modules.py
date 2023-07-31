@@ -787,7 +787,8 @@ def edit_module_attr(request, domain, app_id, module_unique_id, attr):
         excl.remove('0')  # Placeholder value to make sure excl_form_ids is POSTed when no forms are excluded
         module.excluded_form_ids = excl
 
-    if should_edit('form_session_endpoints') and isinstance(module, ShadowModule):
+    if should_edit('form_session_endpoints') or \
+            should_edit('session_endpoint_id') and isinstance(module, ShadowModule):
         raw_endpoint_id = request.POST['session_endpoint_id']
         mappings = request.POST.getlist('form_session_endpoints')
         set_shadow_module_and_form_session_endpoint(
@@ -1249,8 +1250,8 @@ def edit_module_detail_screens(request, domain, app_id, module_unique_id):
         module.fixture_select = FixtureSelect.wrap(fixture_select)
     if search_properties is not None:
         if (
-                search_properties.get('properties') is not None
-                or search_properties.get('default_properties') is not None
+            search_properties.get('properties') is not None
+            or search_properties.get('default_properties') is not None
         ):
             title_label = module.search_config.title_label
             title_label[lang] = search_properties.get('title_label', '')
