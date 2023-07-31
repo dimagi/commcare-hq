@@ -1,12 +1,12 @@
 /* globals hqDefine, ko, _ */
 hqDefine('app_manager/js/modules/shadow_module_settings', function () {
-    var module = {
+    const module = {
 
         /**
          * Returns a Knockout view model based on the modules and forms given in modules
          */
         ShadowModule: function (modules, selectedModuleId, excludedFormIds, formSessionEndpointMappings, shadowModuleVersion) {
-            var self = this;
+            const self = this;
             self.modules = ko.observableArray();
             self.shadowModuleVersion = shadowModuleVersion;
             self.selectedModuleId = ko.observable(selectedModuleId);
@@ -30,25 +30,22 @@ hqDefine('app_manager/js/modules/shadow_module_settings', function () {
             });
             self.includedFormIds = ko.observableArray();
             self.excludedFormIds = ko.pureComputed(function () {
-                var exclForms = _.filter(self.sourceForms(), function (form) {
+                const exclForms = _.filter(self.sourceForms(), function (form) {
                     return self.includedFormIds().indexOf(form.uniqueId) === -1;
                 });
                 return _.map(exclForms, function (form) { return form.uniqueId; });
             });
 
             self.formSessionEndpointIds = ko.pureComputed(function () {
-                // return _.map(self.sourceForms(), form => ko.pureComputed(`${form.uniqueId}:${form.sessionEndpointId()}`));
                 return _.map(self.sourceForms(), function(form) {
                   return ko.pureComputed(function() {
-                    // return `${form.uniqueId}:${form.sessionEndpointId()}`;
                     return JSON.stringify({form_id: form.uniqueId, session_endpoint_id: form.sessionEndpointId()});
                   });
                 });
-                // return _.map(self.sourceForms(), form => ({form_id: form.uniqueId, session_endpoint_id: form.sessionEndpointId}));
             });
 
-            var sourceModuleModel = function (uniqueId, name, rootId) {
-                var self = {};
+            const sourceModuleModel = function (uniqueId, name, rootId) {
+                const self = {};
 
                 self.uniqueId = uniqueId;
                 self.name = name;
@@ -58,7 +55,7 @@ hqDefine('app_manager/js/modules/shadow_module_settings', function () {
                 return self;
             };
 
-            var sourceModuleFormModel = function (uniqueId, name, sessionEndpointId) {
+            const sourceModuleFormModel = function (uniqueId, name, sessionEndpointId) {
                 return {
                     uniqueId: uniqueId,
                     name: name,
@@ -66,13 +63,13 @@ hqDefine('app_manager/js/modules/shadow_module_settings', function () {
                 };
             };
 
-            var sourceModule = sourceModuleModel('', 'None');
+            let sourceModule = sourceModuleModel('', 'None');
             self.modules.push(sourceModule);
             modules = _.sortBy(modules, function (m) { return m.name; });
-            for (var i = 0; i < modules.length; i++) {
-                var mod = modules[i];
+            for (let i = 0; i < modules.length; i++) {
+                const mod = modules[i];
                 sourceModule = sourceModuleModel(mod.unique_id, mod.name, mod.root_module_id);
-                for (var j = 0; j < mod.forms.length; j++) {
+                for (let j = 0; j < mod.forms.length; j++) {
                     const form = mod.forms[j];
                     let formSessionEndpointId = "";
                     const mapping = _.find(formSessionEndpointMappings, m => m.form_id === form.unique_id)
