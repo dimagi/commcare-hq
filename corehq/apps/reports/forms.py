@@ -300,12 +300,6 @@ class TableauServerForm(forms.Form):
         kwargs['initial'] = self.initial_data
         super(TableauServerForm, self).__init__(data, *args, **kwargs)
 
-        if user_syncing_config['user_syncing_enabled'] and user_syncing_config.get('server_reachable'):
-            self._setup_tableau_groups_allowed_field(kwargs, user_syncing_config)
-            self.add_allowed_tableau_groups_field = True
-        else:
-            self.add_allowed_tableau_groups_field = False
-
         self.helper = HQFormHelper()
         self.helper.form_method = 'POST'
         self.helper.layout = crispy.Layout(
@@ -326,11 +320,16 @@ class TableauServerForm(forms.Form):
             )
         )
 
-        if self.add_allowed_tableau_groups_field:
-            self.helper.layout.insert(
+        if user_syncing_config['user_syncing_enabled'] and user_syncing_config.get('server_reachable'):
+            self._setup_tableau_groups_allowed_field(kwargs, user_syncing_config)
+            self.add_allowed_tableau_groups_field = bool(self.fields['tableau_groups_allowed'].choices)
+            if self.add_allowed_tableau_groups_field:
+                self.helper.layout.insert(
                 -1,
                 'tableau_groups_allowed',
             )
+        else:
+            self.add_allowed_tableau_groups_field = False
 
     def _setup_tableau_groups_allowed_field(self, kwargs, user_syncing_config):
         self.all_tableau_groups = user_syncing_config['all_tableau_groups']

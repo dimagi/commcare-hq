@@ -1800,6 +1800,8 @@ class TableauUserForm(forms.Form):
             if group.name in user_group_names:
                 # Pre-choose groups that the user already belongs to
                 self.fields['groups'].initial.append(i)
+        if not self.fields['groups'].choices:
+            del self.fields['groups']
 
         self.helper = FormHelper()
 
