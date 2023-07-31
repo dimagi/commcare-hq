@@ -206,17 +206,16 @@ def create_config_for_email(report_type, report_slug, user_id, domain, request_d
 
     config.filters = filters
 
-    if report_slug != 'case_list_explorer':
-        if 'startdate' in config.filters:
-            config.start_date = datetime.strptime(config.filters['startdate'], '%Y-%m-%d').date()
-        else:
-            config.start_date = request_data['datespan'].startdate.date()
-        if request_data['datespan'].enddate:
+    if 'startdate' in config.filters and report_slug != 'project_health':
+        config.start_date = datetime.strptime(config.filters['startdate'], '%Y-%m-%d').date()
+        if 'enddate' in config.filters:
             config.date_range = 'range'
-            config.end_date = request_data['datespan'].enddate.date()
-            if 'enddate' in config.filters:
-                config.end_date = datetime.strptime(config.filters['enddate'], '%Y-%m-%d').date()
+            config.end_date = datetime.strptime(config.filters['enddate'], '%Y-%m-%d').date()
         else:
             config.date_range = 'since'
+
+    print(config.start_date)
+    print(config.end_date)
+    print(config.date_range)
 
     return config

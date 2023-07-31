@@ -49,15 +49,10 @@ class TestReportConfig(TestCase):
                }
         GET_dict = QueryDict('', mutable=True)
         GET_dict.update(GET)
-        test_date = datetime(2023, 7, 25)
 
         request_data = {
             'GET': GET_dict,
             'META': {'QUERY_STRING': '', 'PATH_INFO': '/a/test-domain/reports/email_onceoff/case_list_explorer/'},
-            'datespan': DateSpan(
-                startdate=test_date - timedelta(days=30),
-                enddate=test_date
-            ),
             'couch_user': user_id,
             'can_access_all_locations': True
         }
