@@ -833,7 +833,9 @@ def calculate_web_users_in_all_billing_accounts(today=None):
     today = today or datetime.date.today()
     for account in BillingAccount.objects.all():
         record_date = today - relativedelta(days=1)
-        domains = account.get_domains()
+        # Get history of web user in account even for no longer activated domain
+        # thus we can get calculate old web user history
+        domains = account.get_domains(active_only=False)
         web_user_in_account = set()
         for domain in domains:
             [web_user_in_account.add(id) for id in WebUser.ids_by_domain(domain)]
