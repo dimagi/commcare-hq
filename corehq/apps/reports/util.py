@@ -604,7 +604,7 @@ def sync_tableau_users_on_domains(domains):
             if tableau_user_name not in web_users_names:
                 _delete_user_local(session, tableau_user_name)
 
-    def _sync_tableau_users_with_remote(session):
+    def _sync_tableau_users_with_remote(session, domains):
         # Setup
         def _get_HQ_group_users(session):
             remote_HQ_group_id = _get_hq_group_id(session)
@@ -616,11 +616,19 @@ def sync_tableau_users_on_domains(domains):
             return remote_HQ_group_users
 
         all_remote_users = {username.lower(): value for username, value in session.get_users_on_site().items()}
-        local_users = TableauUser.objects.filter(server=session.tableau_connected_app.server)
+        all_local_users = TableauUser.objects.filter(server__in=TableauServer.objects.filter(domain__in=domains))
+        distinct_local_users = all_local_users.distinct('username')
+        if len(distinct_local_users) < len(all_local_users):
+            notify_exception(None, message='Duplicate usernames found when syncing domains.',
+                details={
+                    'domains': domains,
+                    'duplicate_users': [user.username for user in all_local_users.difference(distinct_local_users)]
+                }
+            )
         remote_HQ_group_users = _get_HQ_group_users(session)
 
         # Add/delete/update remote users to match with local reality
-        for local_user in local_users:
+        for local_user in distinct_local_users:
             local_tableau_username = tableau_username(local_user.username).lower()
             if local_tableau_username not in all_remote_users:
                 _add_tableau_user_remote(session, local_user, local_user.role)
@@ -635,16 +643,23 @@ def sync_tableau_users_on_domains(domains):
                 )
 
         # Remove any remote users that don't exist locally
-        local_users_usernames = [tableau_username(user.username).lower() for user in local_users]
+        local_users_usernames = [tableau_username(user.username).lower() for user in distinct_local_users]
         for remote_user in remote_HQ_group_users:
             if remote_user['name'].lower() not in local_users_usernames:
                 _delete_user_remote(session, remote_user['id'])
 
-    session = TableauAPISession.create_session_for_domain(domain)
-    # Sync the web users on HQ with the TableauUser model
-    _sync_tableau_users_with_hq(session, domain)
+    for domain in domains:
+        # Sync the web users on HQ with the TableauUser model
+        _sync_tableau_users_with_hq(
+            TableauAPISession.create_session_for_domain(domain),
+            domain
+        )
+
     # Sync the TableauUser model with Tableau users on the remote Tableau instance
-    _sync_tableau_users_with_remote(session)
+    _sync_tableau_users_with_remote(
+        TableauAPISession.create_session_for_domain(domains[0]),  # Can use a session for any of the domains
+        domains
+    )
 
 
 def is_hq_user(tableau_username):
