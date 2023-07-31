@@ -8,6 +8,7 @@ from corehq.apps.app_manager.models import (
     ShadowModule
 )
 from corehq.apps.app_manager.views.utils import (
+    _is_duplicate_endpoint_id,
     get_cleaned_session_endpoint_id,
     get_cleaned_and_deduplicated_session_endpoint_id,
     set_shadow_module_and_form_session_endpoint
@@ -52,6 +53,30 @@ class TestUtils(SimpleTestCase):
         )
 
         return app, normal_module, shadow_module, form
+
+    def test_is_duplicate_endpoint_id_no_change_false(self):
+        app, _, _, _ = self.create_fixtures()
+        is_duplicate = _is_duplicate_endpoint_id(
+            self.normal_module_session_endpoint_id, self.normal_module_session_endpoint_id, app)
+        self.assertFalse(is_duplicate)
+
+    def test_is_duplicate_endpoint_id_same_as_other_module_false(self):
+        app, _, _, _ = self.create_fixtures()
+        is_duplicate = _is_duplicate_endpoint_id(
+            self.shadow_module_session_endpoint_id, self.normal_module_session_endpoint_id, app)
+        self.assertTrue(is_duplicate)
+
+    def test_is_duplicate_endpoint_id_same_as_form_false(self):
+        app, _, _, _ = self.create_fixtures()
+        is_duplicate = _is_duplicate_endpoint_id(
+            self.form_session_endpoint_id, self.normal_module_session_endpoint_id, app)
+        self.assertTrue(is_duplicate)
+
+    def test_is_duplicate_endpoint_id_same_as_shadow_form_false(self):
+        app, _, _, _ = self.create_fixtures()
+        is_duplicate = _is_duplicate_endpoint_id(
+            self.shadow_form_session_endpoint_id, self.normal_module_session_endpoint_id, app)
+        self.assertTrue(is_duplicate)
 
     def test_get_cleaned_session_endpoint_id(self):
 

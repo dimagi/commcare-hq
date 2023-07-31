@@ -652,16 +652,8 @@ def _is_duplicate_endpoint_id(new_id, old_id, app):
     if not new_id or new_id == old_id:
         return False
 
-    all_endpoint_ids = []
-    for module in app.modules:
-        all_endpoint_ids.append(module.session_endpoint_id)
-        for form in module.get_suite_forms():
-            all_endpoint_ids.append(form.session_endpoint_id)
-        if module.module_type == "shadow":
-            for m in module.form_session_endpoints:
-                all_endpoint_ids.append(m.session_endpoint_id)
-
-    return new_id in all_endpoint_ids
+    duplicates = _duplicate_endpoint_ids(new_id, [], None, app)
+    return len(duplicates) > 0
 
 
 def _duplicate_endpoint_ids(new_session_endpoint_id, new_form_session_endpoint_ids, module_id, app):
