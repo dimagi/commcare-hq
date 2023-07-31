@@ -186,7 +186,7 @@ class TestUtils(SimpleTestCase):
             )
         )
 
-    def test_set_shadow_module_and_form_session_endpoint_empty_form_session_id_ignored(self):
+    def test_set_shadow_module_and_form_session_endpoint_empty_form_endpoint_id_ignored(self):
         app, _, shadow_module, _ = self.create_fixtures()
 
         set_shadow_module_and_form_session_endpoint(
@@ -199,5 +199,44 @@ class TestUtils(SimpleTestCase):
         self.assertEqual(shadow_module.session_endpoint_id, self.new_endpoint)
         self.assertEqual(shadow_module.form_session_endpoints, [])
 
-    # with child and shadow child
-    # Update shadow child,
+    def test_set_shadow_module_and_form_session_endpoint_form_endpoint_id_ok(self):
+        app, _, shadow_module, _ = self.create_fixtures()
+
+        set_shadow_module_and_form_session_endpoint(
+            shadow_module,
+            self.shadow_module_session_endpoint_id,
+            [{"form_id": self.form_unique_id, "session_endpoint_id": self.new_endpoint}],
+            app
+        )
+
+        self.assertEqual(shadow_module.session_endpoint_id, self.shadow_module_session_endpoint_id)
+        self.assertEqual(
+            shadow_module.form_session_endpoints,
+            [ShadowFormEndpoint(form_id=self.form_unique_id, session_endpoint_id=self.new_endpoint)])
+
+    def test_set_shadow_module_and_form_session_endpoint_used_twice(self):
+        app, _, shadow_module, _ = self.create_fixtures()
+        self.assertRaises(
+            AppMisconfigurationError,
+            lambda: set_shadow_module_and_form_session_endpoint(
+                shadow_module,
+                self.new_endpoint,
+                [{"form_id": self.form_unique_id, "session_endpoint_id": self.new_endpoint}],
+                app
+            )
+        )
+
+    def test_set_shadow_module_and_form_session_endpoint_used_twice_in_forms(self):
+        app, _, shadow_module, _ = self.create_fixtures()
+        self.assertRaises(
+            AppMisconfigurationError,
+            lambda: set_shadow_module_and_form_session_endpoint(
+                shadow_module,
+                self.shadow_module_session_endpoint_id,
+                [
+                    {"form_id": self.form_unique_id, "session_endpoint_id": self.new_endpoint},
+                    {"form_id": self.form_unique_id, "session_endpoint_id": self.new_endpoint}
+                ],
+                app
+            )
+        )

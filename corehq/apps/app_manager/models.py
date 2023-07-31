@@ -2201,7 +2201,13 @@ class DetailPair(DocumentSchema):
 
 class ShadowFormEndpoint(DocumentSchema):
     form_id = StringProperty()
-    session_endpoint_id = StringProperty()  # See toggles.SESSION_ENDPOINTS
+    session_endpoint_id = StringProperty()
+
+    def __eq__(self, other):
+        if not isinstance(other, ShadowFormEndpoint):
+            return False
+
+        return self.form_id == other.form_id and self.session_endpoint_id == other.session_endpoint_id
 
 
 class CaseListForm(NavMenuItemMediaMixin):
