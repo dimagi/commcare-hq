@@ -53,7 +53,7 @@ from corehq.apps.reports.models import TableauUser
 from corehq.apps.reports.util import (
     TableauGroupTuple,
     get_all_tableau_groups,
-    allowed_tableau_groups_for_domain,
+    get_allowed_tableau_groups_for_domain,
     get_tableau_groups_for_user,
     update_tableau_user,
 )
@@ -1788,9 +1788,10 @@ class TableauUserForm(forms.Form):
         self.domain = kwargs.pop('domain', None)
         self.username = kwargs.pop('username', None)
         super(TableauUserForm, self).__init__(*args, **kwargs)
+
         self.allowed_tableau_groups = [
             TableauGroupTuple(group.name, group.id) for group in get_all_tableau_groups(self.domain)
-            if group.name in allowed_tableau_groups_for_domain(self.domain)]
+            if group.name in get_allowed_tableau_groups_for_domain(self.domain)]
         user_group_names = [group.name for group in get_tableau_groups_for_user(self.domain, self.username)]
         self.fields['groups'].initial = []
         for i, group in enumerate(self.allowed_tableau_groups):
