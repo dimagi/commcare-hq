@@ -10,14 +10,14 @@
     {% crispy commtrack.update_form %}
   </fieldset>
   {% if not request.is_view_only %}
-    {% if location_info.orphaned_case_count_per_location %}
+    {% if warning_banner_info and warning_banner_info.orphaned_case_count_per_location %}
       <div class="alert alert-warning">
         <p>
           {% blocktrans %}
             The user is the only assigned user who can view cases in the following locations:
           {% endblocktrans %}
         </p>
-        {% for location, case_count in location_info.orphaned_case_count_per_location.items %}
+        {% for location, case_count in warning_banner_info.orphaned_case_count_per_location.items %}
           <ul>
             <li>{{ location }} ({{ case_count }})</li>
           </ul>
