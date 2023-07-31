@@ -69,7 +69,7 @@ def dot_interpolate(string, replacement):
     return new
 
 
-def _validate_case_reference(string, module, form, interpolate_dots=True):
+def _ensure_no_case_references(string, module, form, interpolate_dots=True):
     bad_references = [
         '#case' in string,
         '#parent' in string,
@@ -88,7 +88,7 @@ def interpolate_xpath(string, case_xpath=None, fixture_xpath=None, module=None, 
     Replace xpath shortcuts with full value.
     """
     if case_xpath is None:
-        _validate_case_reference(string, module, form, interpolate_dots)
+        _ensure_no_case_references(string, module, form, interpolate_dots)
 
     replacements = {
         '#user': UsercaseXPath().case(),
