@@ -3,14 +3,20 @@ from rest_framework import serializers
 from custom.abdm.const import (
     CONSENT_PURPOSES,
     CONSENT_PURPOSES_REF_URI,
+    GATEWAY_CONSENT_STATUS_CHOICES,
     HI_TYPES,
 )
 from custom.abdm.hiu.models import HIUConsentRequest
 from custom.abdm.hiu.serializers.base import (
     GatewayCareContextSerializer,
+    GatewayErrorSerializer,
     GatewayIdSerializer,
+    GatewayNotificationSerializer,
     GatewayPermissionSerializer,
+    GatewayPurposeSerializer,
+    GatewayRequestBaseSerializer,
     GatewayRequesterSerializer,
+    GatewayResponseReferenceSerializer,
 )
 from custom.abdm.utils import past_date_validator, future_date_validator
 
@@ -46,3 +52,39 @@ class HIUConsentRequestSerializer(serializers.ModelSerializer):
     class Meta:
         model = HIUConsentRequest
         exclude = ('gateway_request_id', )
+
+
+class GatewayConsentRequestOnInitSerializer(GatewayRequestBaseSerializer):
+    consentRequest = GatewayIdSerializer(required=False)
+    error = GatewayErrorSerializer(required=False, allow_null=True)
+    resp = GatewayResponseReferenceSerializer()
+
+
+class GatewayConsentRequestNotifySerializer(GatewayRequestBaseSerializer):
+    notification = GatewayNotificationSerializer()
+
+
+class GatewayConsentRequestOnFetchSerializer(GatewayRequestBaseSerializer):
+    class ConsentSerializer(serializers.Serializer):
+
+        class ConsentDetailSerializer(serializers.Serializer):
+            schemaVersion = serializers.CharField(required=False)
+            consentId = serializers.UUIDField()
+            createdAt = serializers.DateTimeField()
+            patient = GatewayIdSerializer()
+            careContexts = serializers.ListField(child=GatewayCareContextSerializer(), min_length=1)
+            purpose = GatewayPurposeSerializer()
+            hip = GatewayIdSerializer()
+            hiu = GatewayIdSerializer()
+            consentManager = GatewayIdSerializer()
+            requester = GatewayRequesterSerializer()
+            hiTypes = serializers.ListField(child=serializers.ChoiceField(choices=HI_TYPES), min_length=1)
+            permission = GatewayPermissionSerializer()
+
+        status = serializers.ChoiceField(choices=GATEWAY_CONSENT_STATUS_CHOICES)
+        consentDetail = ConsentDetailSerializer()
+        signature = serializers.CharField()
+
+    consent = ConsentSerializer(required=False)
+    error = GatewayErrorSerializer(required=False, allow_null=True)
+    resp = GatewayResponseReferenceSerializer()
