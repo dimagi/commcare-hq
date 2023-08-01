@@ -841,7 +841,7 @@ def render_static(request, template, page_name):
     """
     Takes an html file and renders it Commcare HQ's styling
     """
-    return render(request, "hqwebapp/blank.html",
+    return render(request, "hqwebapp/bootstrap3/blank.html",
                   {'tmpl': template, 'page_name': page_name})
 
 
