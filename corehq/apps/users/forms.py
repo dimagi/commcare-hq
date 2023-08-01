@@ -1793,6 +1793,7 @@ class TableauUserForm(forms.Form):
             TableauGroupTuple(group.name, group.id) for group in get_all_tableau_groups(self.domain)
             if group.name in get_allowed_tableau_groups_for_domain(self.domain)]
         user_group_names = [group.name for group in get_tableau_groups_for_user(self.domain, self.username)]
+        self.fields['groups'].choices = []
         self.fields['groups'].initial = []
         for i, group in enumerate(self.allowed_tableau_groups):
             # Add a choice for each tableau group on the server

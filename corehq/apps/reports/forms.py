@@ -299,6 +299,7 @@ class TableauServerForm(forms.Form):
         self.domain = kwargs.pop('domain')
         kwargs['initial'] = self.initial_data
         super(TableauServerForm, self).__init__(data, *args, **kwargs)
+        self.fields['tableau_groups_allowed'].choices = []
 
         self.helper = HQFormHelper()
         self.helper.form_method = 'POST'
