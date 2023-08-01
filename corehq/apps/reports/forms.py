@@ -326,8 +326,8 @@ class TableauServerForm(forms.Form):
             self.add_allowed_tableau_groups_field = bool(self.fields['tableau_groups_allowed'].choices)
             if self.add_allowed_tableau_groups_field:
                 self.helper.layout.insert(
-                -1,
-                'tableau_groups_allowed',
+                    -1,
+                    'tableau_groups_allowed',
             )
         else:
             self.add_allowed_tableau_groups_field = False
