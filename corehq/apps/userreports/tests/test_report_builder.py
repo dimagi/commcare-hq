@@ -147,7 +147,7 @@ class DataSourceBuilderTest(ReportBuilderDBTest):
         self.assertEqual('first_name', first_name_prop.get_id())
         self.assertEqual('first name', first_name_prop.get_text())
 
-    @flag_enabled('SHOW_IDS_IN_REPORT_BUILDER')
+    @flag_enabled('SHOW_OWNER_LOCATION_PROPERTY_IN_REPORT_BUILDER_TOGGLE')
     def test_owner_as_location(self, *args):
         builder = ApplicationCaseDataSourceHelper(self.domain, self.app, DATA_SOURCE_TYPE_CASE, self.case_type)
 
