@@ -3,7 +3,8 @@
 module.exports = function(grunt) {
     var headless = require('mocha-headless-chrome'),
         _ = require('lodash'),
-        colors = require('colors');
+        colors = require('colors'),
+        fs = require('fs');
 
     // use localhost unless we're running on travis
     var BASE_ADDRESS = process.env.WEB_TEST_PORT_8000_TCP_ADDR || 'localhost',
@@ -84,6 +85,12 @@ module.exports = function(grunt) {
         headless.runner(runner_options).then(function (data) {
             if (data.result.failures.length) {
                 failures[currentApp] = data.result.failures;
+            }
+            if (grunt.option('coverage')) {
+                var coverageDir = './coverage-js/',
+                    filePath = coverageDir + currentApp.replace(/\//g, '-') + '.json';
+                if (!fs.existsSync(coverageDir)) { fs.mkdir(coverageDir, err => console.log(err)); }
+                fs.writeFile(filePath, JSON.stringify(data.coverage), {flag: 'w+'}, err => console.log(err));
             }
             finishedTests.push(currentApp);
             runTest(
