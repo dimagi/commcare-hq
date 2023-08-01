@@ -1373,7 +1373,7 @@ def log_email_event(request, secret):
 class OauthApplicationRegistration(BasePageView):
     urlname = 'oauth_application_registration'
     page_title = "Oauth Application Registration"
-    template_name = "hqwebapp/oauth_application_registration_form.html"
+    template_name = "hqwebapp/bootstrap3/oauth_application_registration_form.html"
 
     @property
     def page_url(self):
