@@ -1814,6 +1814,14 @@ class TableauServerView(BaseProjectReportSectionView):
         )
 
     def get_user_syncing_config(self):
+        '''
+        returns a dict --
+            {
+                'user_syncing_enabled': Bool; is FF enabled
+                'all_tableau_groups': List or None; all tableau groups on linked Tableau site
+                'server_reachable': Bool or None; could Tableau Server be reached
+            }
+        '''
         user_syncing_config = {}
         user_syncing_config['user_syncing_enabled'] = TABLEAU_USER_SYNCING.enabled(self.domain)
         if user_syncing_config['user_syncing_enabled']:
