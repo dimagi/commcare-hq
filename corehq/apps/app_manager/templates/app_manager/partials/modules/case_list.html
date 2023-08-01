@@ -144,9 +144,10 @@
         </div>
       </div>
 
-      <div><!-- TODO: tie visibility to "Use Case Tiles" dropdown selection -->
+      <div data-bind="visible: showCaseTileConfigColumns()">
         <!-- TODO: this is some kind of temporary -->
-        <button class="btn btn-default btn-xs pull-right" data-bind="click: resetCaseTilePreview">
+        <button class="btn btn-default btn-xs pull-right"
+                data-bind="click: resetCaseTilePreview">
             <i class="fa fa-magic"></i>
             Reset Grid
         </button>

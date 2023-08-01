@@ -57,7 +57,7 @@ hqDefine("app_manager/js/details/screen", function () {
         self.containsSearchConfiguration = options.containsSearchConfiguration;
         self.containsCustomXMLConfiguration = options.containsCustomXMLConfiguration;
         self.allowsTabs = options.allowsTabs;
-        self.caseTileTemplateOptions = [[null, gettext("Don't Use Case Tiles")]].concat(options.caseTileTemplateOptions);
+        self.caseTileTemplateOptions = [[null, gettext("Don't Use Case Tiles")], ["custom", gettext("Manually configure Case Tiles")]].concat(options.caseTileTemplateOptions);
         self.caseTileTemplateOptions = self.caseTileTemplateOptions.map(function (templateOption) {
             return {templateValue: templateOption[0], templateName: templateOption[1]};
         });
@@ -94,8 +94,14 @@ hqDefine("app_manager/js/details/screen", function () {
                 });
             }).join("") + "</div>";
         });
+        self.showCaseTileConfigColumns = ko.computed(function () {
+            const template = self.caseTileTemplate()
+            return template === "custom";
+        });
         self.showCaseTileColumn = ko.computed(function () {
-            return self.caseTileTemplate() && hqImport('hqwebapp/js/toggles').toggleEnabled('CASE_LIST_TILE');
+            const featureFlag = hqImport('hqwebapp/js/toggles').toggleEnabled('CASE_LIST_TILE')
+            const caseTileTemplate = self.caseTileTemplate() && self.caseTileTemplate() !== "tile_config";
+            return caseTileTemplate && featureFlag;
         });
         self.persistCaseContext = ko.observable(detail.persist_case_context || false);
         self.persistentCaseContextXML = ko.observable(detail.persistent_case_context_xml || 'case_name');

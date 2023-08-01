@@ -45,9 +45,9 @@ hqDefine("app_manager/js/details/column", function () {
         self.original.case_tile_field = ko.utils.unwrapObservable(self.original.case_tile_field) || "";
         self.case_tile_field = ko.observable(self.original.case_tile_field);
 
-        self.tileRowStart = ko.observable();
+        self.tileRowStart = ko.observable(1);
         self.tileRowOptions = [""].concat(_.range(1, 4));
-        self.tileColumnStart = ko.observable();
+        self.tileColumnStart = ko.observable(1);
         self.tileColumnOptions = [""].concat(_.range(1, 13));
         self.tileWidth = ko.observable(3);
         self.tileWidthOptions = ko.computed(function () {
@@ -379,6 +379,10 @@ hqDefine("app_manager/js/details/column", function () {
             column.format = self.format.val();
             column.date_format = self.date_extra.val();
             column.enum = self.enum_extra.getItems();
+            column.gridX = self.tileColumnStart();
+            column.gridY = self.tileRowStart();
+            column.heigth = self.tileHeight();
+            column.width = self.tileWidth();
             column.graph_configuration = self.format.val() === "graph" ? self.graph_extra.val() : null;
             column.late_flag = parseInt(self.late_flag_extra.val(), 10);
             column.time_ago_interval = parseFloat(self.time_ago_extra.val());
