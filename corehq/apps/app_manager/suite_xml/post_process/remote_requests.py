@@ -338,7 +338,8 @@ class RemoteRequestFactory(object):
             if prop.validations:
                 kwargs['validations'] = [
                     Validation(
-                        test=interpolate_xpath(validation.test),
+                        # don't interpolate dots since "." is a valid reference here
+                        test=interpolate_xpath(validation.test, interpolate_dots=False),
                         text=[Text(
                             locale_id=id_strings.search_property_validation_text(self.module, prop.name, i)
                         )] if validation.has_text else [],
