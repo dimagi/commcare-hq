@@ -89,8 +89,13 @@ module.exports = function(grunt) {
             if (grunt.option('coverage')) {
                 var coverageDir = './coverage-js/',
                     filePath = coverageDir + currentApp.replace(/\//g, '-') + '.json';
-                if (!fs.existsSync(coverageDir)) { fs.mkdir(coverageDir, err => console.log(err)); }
-                fs.writeFile(filePath, JSON.stringify(data.coverage), {flag: 'w+'}, err => console.log(err));
+                if (!fs.existsSync(coverageDir)) {
+                    fs.mkdir(coverageDir, error =>
+                        error && grunt.log.write(error));
+                }
+                fs.writeFile(filePath, JSON.stringify(data.coverage), {flag: 'w+'}, error =>
+                    error && grunt.log.write(error)
+                );
             }
             finishedTests.push(currentApp);
             runTest(
