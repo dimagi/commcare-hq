@@ -570,7 +570,7 @@ def login_new_window(request):
 def domain_login_new_window(request):
     template = ('hqwebapp/iframe_sso_login_success.html'
                 if is_request_using_sso(request)
-                else 'hqwebapp/iframe_close_window.html')
+                else 'hqwebapp/bootstrap3/iframe_close_window.html')
     return TemplateView.as_view(template_name=template)(request)
 
 
