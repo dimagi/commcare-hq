@@ -9,29 +9,16 @@ on:
     - cron: '47 12 * * *'
 jobs:
   tests:
+    runs-on: buildjet-2vcpu-ubuntu-2204
     timeout-minutes: 60
     strategy:
       fail-fast: false
       matrix:
-        TEST:
-          - python
-          - python-sharded-and-javascript
-        NOSE_DIVIDED_WE_RUN:
-          - 05
-          - 6a
-          - bf
-          - ''
-        runs-on:
-          - buildjet-2vcpu-ubuntu-2204
-          - buildjet-4vcpu-ubuntu-2204
-          - buildjet-8vcpu-ubuntu-2204
-          - buildjet-16vcpu-ubuntu-2204
-        exclude:
-          - {TEST: python-sharded-and-javascript, NOSE_DIVIDED_WE_RUN: '05'}
-          - {TEST: python-sharded-and-javascript, NOSE_DIVIDED_WE_RUN: '6a'}
-          - {TEST: python-sharded-and-javascript, NOSE_DIVIDED_WE_RUN: 'bf'}
-          - {TEST: python, NOSE_DIVIDED_WE_RUN: ''}
-    runs-on: ${{matrix.runs-on}}
+        include:
+        - {TEST: python, NOSE_DIVIDED_WE_RUN: '05'}
+        - {TEST: python, NOSE_DIVIDED_WE_RUN: '6a'}
+        - {TEST: python, NOSE_DIVIDED_WE_RUN: 'bf'}
+        - {TEST: python-sharded-and-javascript}
     env:
       DATADOG_API_KEY: ${{ secrets.DATADOG_API_KEY }}
       DATADOG_APP_KEY: ${{ secrets.DATADOG_APP_KEY }}
