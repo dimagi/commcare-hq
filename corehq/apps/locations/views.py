@@ -308,7 +308,8 @@ class LocationTypesView(BaseDomainView):
         return {
             'location_types': self._location_types,
             'commtrack_enabled': self.domain_object.commtrack_enabled,
-            'suggest_orphan_case_alerts_setting': self._suggest_orphan_case_alerts_setting
+            'suggest_orphan_case_alerts_setting': self._suggest_orphan_case_alerts_setting,
+            'project_settings_url': reverse('domain_settings_default', args=[self.domain])
         }
 
     @property

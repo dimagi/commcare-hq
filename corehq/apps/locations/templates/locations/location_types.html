@@ -8,6 +8,7 @@
   {% initial_page_data 'location_types' location_types %}
   {% initial_page_data 'commtrack_enabled' commtrack_enabled %}
   {% initial_page_data 'suggest_orphan_case_alerts_setting' suggest_orphan_case_alerts_setting %}
+  {% initial_page_data 'project_settings_url' project_settings_url %}
   <div class="row">
     <div class="col-sm-8">
       <h2>{% trans "Organization Levels" %}</h2>
@@ -29,15 +30,8 @@
       {% blocktrans %}
         If you have multiple organization levels and at least one can own cases,
         consider enabling the
-      {% endblocktrans %}
-      <a href="{% url 'domain_settings_default' domain %}">
-        {% blocktrans %}
-          Orphan Case Alerts on Edit Mobile Workers Page project setting
-        {% endblocktrans %}
-      </a>
-      {% blocktrans %}
-        to alert users about potentially creating orphan cases
-        when modifying cases or locations.
+        <a href="{{ project_settings_url }}"> Orphan Case Alerts on Edit Mobile Workers Page project setting </a>
+        to alert users about potentially creating orphan cases when modifying cases or locations.
       {% endblocktrans %}
     </div>
 
