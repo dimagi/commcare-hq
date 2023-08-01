@@ -3,6 +3,7 @@ from base64 import b64decode, b64encode
 from collections import namedtuple
 import dataclasses
 from dataclasses import dataclass, InitVar
+from datetime import datetime, timedelta
 import functools
 import pytz
 from urllib.parse import urlencode
@@ -54,6 +55,7 @@ from corehq.apps.api.util import (
     get_obj,
     django_date_filter,
     make_date_filter,
+    parse_str_to_date,
 )
 from corehq.apps.app_manager.models import Application
 from corehq.apps.domain.models import Domain
@@ -1081,25 +1083,34 @@ class NavigationEventAuditResourceParams:
     local_date: dict[str:str] = dataclasses.field(default_factory=dict)
     cursor_local_date: str = None
     cursor_user: str = None
+    UTC_start_time_start: datetime = None
+    UTC_start_time_end: datetime = None
 
     def __post_init__(self, domain, default_limit, max_limit, raw_params=None):
         if raw_params:
+            self.cursor = raw_params.get('cursor')
+            if self.cursor:
+                raw_params = self._process_cursor()
             self._validate_keys(raw_params)
 
             self._set_compound_keys(raw_params)
-            self.users = raw_params.getlist('users')
             self.limit = raw_params.get('limit')
+            self.users = raw_params.getlist('users')
             self.local_timezone = raw_params.get('local_timezone')
-            self.cursor = raw_params.get('cursor')
+            self.UTC_start_time_start = raw_params.get('UTC_start_time_start')
+            self.UTC_start_time_end = raw_params.get('UTC_start_time_end')
 
         if self.limit:
             self._process_limit(default_limit, max_limit)
-        if self.cursor:
-            self._process_cursor()
+        if self.UTC_start_time_start:
+            self.UTC_start_time_start = parse_str_to_date(self.UTC_start_time_start)
+        if self.UTC_start_time_end:
+            self.UTC_start_time_end = parse_str_to_date(self.UTC_start_time_end)
         self._process_local_timezone(domain)
 
     def _validate_keys(self, params):
-        valid_keys = {'users', 'limit', 'local_timezone', 'cursor', 'format', 'local_date'}
+        valid_keys = {'users', 'limit', 'local_timezone', 'cursor', 'format', 'local_date',
+                    'UTC_start_time_start', 'UTC_start_time_end'}
         standardized_keys = set()
 
         for key in params.keys():
@@ -1135,8 +1146,9 @@ class NavigationEventAuditResourceParams:
     def _process_cursor(self):
         cursor_params_string = b64decode(self.cursor).decode('utf-8')
         cursor_params = QueryDict(cursor_params_string, mutable=True)
-        self.cursor_local_date = cursor_params.get('cursor_local_date')
-        self.cursor_user = cursor_params.get('cursor_user')
+        self.cursor_local_date = cursor_params.pop('cursor_local_date', [None])[0]
+        self.cursor_user = cursor_params.pop('cursor_user', [None])[0]
+        return cursor_params
 
     def _process_local_timezone(self, domain):
         if self.local_timezone is None:
@@ -1187,17 +1199,24 @@ class NavigationEventAuditResource(HqBaseResource, Resource):
         data['meta']['local_date_timezone'] = self.api_params.local_timezone.zone
         data['meta']['total_count'] = self.count
 
-        params = request.GET.copy()  # Makes params mutable for creating next_url below
+        original_params = request.GET
+        if 'cursor' in original_params:
+            params_string = b64decode(original_params['cursor']).decode('utf-8')
+            cursor_params = QueryDict(params_string, mutable=True)
+            if 'limit' in cursor_params:
+                data['meta']['limit'] = int(cursor_params['limit'])
+        else:
+            cursor_params = original_params.copy()
 
         if data['meta']['total_count'] > data['meta']['limit']:
             last_object = data['objects'][-1]
-            cursor = {
-                'cursor_local_date': last_object.data['local_date'],
-                'cursor_user': last_object.data['user'],
-            }
-            encoded_cursor = b64encode(urlencode(cursor).encode('utf-8'))
-            params['cursor'] = encoded_cursor
-            next_url = '{}?{}'.format(request.path, params.urlencode())
+            cursor_params['cursor_local_date'] = last_object.data['local_date']
+            cursor_params['cursor_user'] = last_object.data['user']
+            encoded_cursor = b64encode(urlencode(cursor_params).encode('utf-8'))
+
+            next_params = {'cursor': encoded_cursor}
+
+            next_url = f'?{urlencode(next_params)}'
             data['meta']['next'] = next_url
         return data
 
@@ -1230,6 +1249,11 @@ class NavigationEventAuditResource(HqBaseResource, Resource):
 
         queryset = queryset.annotate(UTC_start_time=Min('event_date'), UTC_end_time=Max('event_date'))
 
+        if params.UTC_start_time_start:
+            queryset = queryset.filter(UTC_start_time__gte=params.UTC_start_time_start)
+        if params.UTC_start_time_end:
+            queryset = queryset.filter(UTC_start_time__lte=params.UTC_start_time_end)
+
         with override_settings(USE_TZ=True):
             cls.count = queryset.count()
             # TruncDate ignores tzinfo if the queryset is not evaluated within overridden USE_TZ setting
@@ -1240,6 +1264,16 @@ class NavigationEventAuditResource(HqBaseResource, Resource):
         queryset = NavigationEventAudit.objects.filter(domain=domain)
         if params.users:
             queryset = queryset.filter(user__in=params.users)
+
+        # Initial approximate filtering for performance. The largest time difference between local timezone and UTC
+        # is <24 hours so items outside that bound will not be within the eventual local_date grouping.
+        approx_time_offset = timedelta(hours=24)
+        if params.UTC_start_time_start:
+            offset_UTC_start_time_start = params.UTC_start_time_start - approx_time_offset
+            queryset = queryset.filter(event_date__gte=offset_UTC_start_time_start)
+        if params.UTC_start_time_end:
+            offset_UTC_start_time_end = params.UTC_start_time_end + approx_time_offset
+            queryset = queryset.filter(event_date__lte=offset_UTC_start_time_end)
 
         local_date_filter = cls._get_compound_filter('local_date', params)
 

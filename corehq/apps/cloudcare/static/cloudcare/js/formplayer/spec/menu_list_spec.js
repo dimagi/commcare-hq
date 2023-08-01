@@ -28,8 +28,6 @@ hqDefine("cloudcare/js/formplayer/spec/menu_list_spec", function () {
                 user.displayOptions = {
                     singleAppMode: false,
                 };
-
-                hqImport("cloudcare/js/formplayer/apps/api").primeApps(user.restoreAs, new Backbone.Collection());
             });
 
             afterEach(function () {
@@ -104,7 +102,7 @@ hqDefine("cloudcare/js/formplayer/spec/menu_list_spec", function () {
                 user.restoreAs = '';
                 user.displayOptions = {};
 
-                hqImport("cloudcare/js/formplayer/apps/api").primeApps(user.restoreAs, new Backbone.Collection());
+                hqImport("cloudcare/js/formplayer/apps/api").primeApps(user.restoreAs, []);
             });
 
             afterEach(function () {

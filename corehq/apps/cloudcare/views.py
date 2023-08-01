@@ -27,6 +27,7 @@ from text_unidecode import unidecode
 
 from corehq.apps.formplayer_api.utils import get_formplayer_url
 from corehq.util.metrics import metrics_counter
+from couchforms.const import VALID_ATTACHMENT_FILE_EXTENSION_MAP
 from dimagi.utils.logging import notify_error, notify_exception
 from dimagi.utils.web import get_url_base, json_response
 
@@ -211,6 +212,7 @@ class FormplayerMain(View):
             "environment": WEB_APPS_ENVIRONMENT,
             "integrations": integration_contexts(domain),
             "has_geocoder_privs": has_geocoder_privs(domain),
+            "valid_multimedia_extensions_map": VALID_ATTACHMENT_FILE_EXTENSION_MAP,
         }
 
         langs_by_code = {}
@@ -295,6 +297,7 @@ class FormplayerPreviewSingleApp(View):
             "environment": WEB_APPS_ENVIRONMENT,
             "integrations": integration_contexts(domain),
             "has_geocoder_privs": has_geocoder_privs(domain),
+            "valid_multimedia_extensions_map": VALID_ATTACHMENT_FILE_EXTENSION_MAP,
         }
         return render(request, "cloudcare/formplayer_home.html", context)
 
@@ -314,6 +317,7 @@ class PreviewAppView(TemplateView):
             "environment": PREVIEW_APP_ENVIRONMENT,
             "integrations": integration_contexts(request.domain),
             "has_geocoder_privs": has_geocoder_privs(request.domain),
+            "valid_multimedia_extensions_map": VALID_ATTACHMENT_FILE_EXTENSION_MAP,
         })
 
 
@@ -578,7 +582,7 @@ def _message_to_sentry_thread_topic(message):
 @require_cloudcare_access
 @requires_privilege_for_commcare_user(privileges.CLOUDCARE)
 @location_safe
-def session_endpoint(request, domain, app_id, endpoint_id):
+def session_endpoint(request, domain, app_id, endpoint_id=None):
     def _fail(error):
         messages.error(request, error)
         return HttpResponseRedirect(reverse(FormplayerMain.urlname, args=[domain]))
@@ -606,13 +610,14 @@ def session_endpoint(request, domain, app_id, endpoint_id):
     if force_login_as and not can_use_restore_as(request):
         return _fail(_("This user cannot access this link."))
 
-    cloudcare_state = json.dumps({
-        "appId": build_id,
-        "endpointId": endpoint_id,
-        "endpointArgs": {
-            urllib.parse.quote_plus(key): urllib.parse.quote_plus(value)
-            for key, value in request.GET.items()
-        },
-        "forceLoginAs": force_login_as,
-    })
+    state = {"appId": build_id, "forceLoginAs": force_login_as}
+    if endpoint_id is not None:
+        state.update({
+            "endpointId": endpoint_id,
+            "endpointArgs": {
+                urllib.parse.quote_plus(key): urllib.parse.quote_plus(value)
+                for key, value in request.GET.items()
+            }
+        })
+    cloudcare_state = json.dumps(state)
     return HttpResponseRedirect(reverse(FormplayerMain.urlname, args=[domain]) + "#" + cloudcare_state)

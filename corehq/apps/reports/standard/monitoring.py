@@ -24,7 +24,6 @@ from corehq.apps.es.aggregations import (
     MissingAggregation,
     TermsAggregation,
 )
-from corehq.apps.es.utils import track_es_report_load
 from corehq.apps.locations.permissions import (
     conditionally_location_safe,
     location_safe,
@@ -243,7 +242,8 @@ class CaseActivityReport(WorkerMonitoringCaseReportTableBase):
         landmarks_param = landmarks_param if isinstance(landmarks_param, list) else []
         landmarks_param = [param for param in landmarks_param if isinstance(param, int)]
         landmarks = landmarks_param if landmarks_param else self._default_landmarks
-        return [('landmark_' + str(idx), datetime.timedelta(days=l)) for idx, l in enumerate(landmarks)]
+        return [('landmark_' + str(i), datetime.timedelta(days=lmk))
+                for i, lmk in enumerate(landmarks)]
 
     _default_milestone = 120
 
@@ -388,7 +388,6 @@ class CaseActivityReport(WorkerMonitoringCaseReportTableBase):
 
     @property
     def rows(self):
-        track_es_report_load(self.domain, self.slug, len(self.paginated_user_ids))
         es_results = self.es_queryset(
             user_ids=self.paginated_user_ids,
             size=self.pagination.start + self.pagination.count
@@ -715,11 +714,9 @@ class SubmissionsByFormReport(WorkerMonitoringFormReportTableBase,
                     USER_QUERY_LIMIT,
                 )
             )
-        selected_users = self.selected_simplified_users
-        track_es_report_load(self.domain, self.slug, len(self.selected_simplified_users))
 
         totals = [0] * (len(self.all_relevant_forms) + 1)
-        for simplified_user in selected_users:
+        for simplified_user in self.selected_simplified_users:
             row = []
             if self.all_relevant_forms:
                 for form in self.all_relevant_forms.values():
@@ -923,7 +920,6 @@ class DailyFormStatsReport(WorkerMonitoringReportTableBase, CompletionOrSubmissi
         else:
             users = self.users_by_username(order)
 
-        track_es_report_load(self.domain, self.slug, len(users))
         # Todo; this hits ES seperately for each user
         #   should instead aggregate by user in one ES query
         rows = [self.get_row(user) for user in users]
@@ -1054,8 +1050,6 @@ class FormCompletionTimeReport(WorkerMonitoringFormReportTableBase, DatespanMixi
         app_id = self.selected_form_data['app_id']
         xmlns = self.selected_form_data['xmlns']
 
-        track_es_report_load(self.domain, self.slug, len(self.users))
-
         data_map = get_form_duration_stats_by_user(
             self.domain,
             app_id,
@@ -1138,7 +1132,6 @@ class FormCompletionVsSubmissionTrendsReport(WorkerMonitoringFormReportTableBase
             user_map = {user.user_id: user
                         for user in users if user.user_id}
             user_ids = [user.user_id for user in users if user.user_id]
-            track_es_report_load(self.domain, self.slug, len(self.user_ids))
 
             xmlnss = []
             app_ids = []
@@ -1800,7 +1793,6 @@ class WorkerActivityReport(WorkerMonitoringCaseReportTableBase, DatespanMixin):
         if self.view_by_groups:
             rows = self._rows_by_group(report_data)
         else:
-            track_es_report_load(self.domain, self.slug, len(self.users_to_iterate))
             rows = self._rows_by_user(report_data, self.users_to_iterate)
 
         self.total_row = self._format_total_row(self._total_row(rows, report_data, self.users_to_iterate))

@@ -84,7 +84,7 @@ commcaretranslationchecker==0.9.7
     # via -r base-requirements.in
 contextlib2==21.6.0
     # via schema
-cryptography==39.0.1
+cryptography==41.0.2
     # via
     #   jwcrypto
     #   oic
@@ -181,7 +181,7 @@ django-prbac==1.0.1
     # via -r base-requirements.in
 django-recaptcha==3.0.0
     # via -r base-requirements.in
-django-redis==4.12.1
+django-redis==5.3.0
     # via -r base-requirements.in
 django-redis-sessions==0.6.2
     # via -r base-requirements.in

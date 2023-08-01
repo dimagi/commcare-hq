@@ -251,6 +251,9 @@
 
             {% if session_endpoints_enabled %}
               {% include "app_manager/partials/session_endpoints.html" with module_or_form=module %}
+              {% if not module.is_surveys %}
+                {% include "app_manager/partials/case_list_session_endpoint.html" with module=module %}
+              {% endif %}
             {% endif %}
 
             {% if request|toggle_enabled:'USH_EMPTY_CASE_LIST_TEXT' %}

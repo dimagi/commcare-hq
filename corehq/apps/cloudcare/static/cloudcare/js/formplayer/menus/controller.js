@@ -115,6 +115,7 @@ hqDefine("cloudcare/js/formplayer/menus/controller", function () {
             var menuData = menusUtils.getMenuData(menuResponse);
             menuData["triggerEmptyCaseList"] = true;
             menuData["sidebarEnabled"] = true;
+            menuData["title"] = menuResponse.resultsTitle;
             var caseListView = menusUtils.getCaseListView(menuResponse)
             FormplayerFrontend.regions.getRegion('main').show(caseListView(menuData));
         } else if (menuListView) {
@@ -268,8 +269,8 @@ hqDefine("cloudcare/js/formplayer/menus/controller", function () {
         var numRows = detailObject.maxHeight;
         var numColumns = detailObject.maxWidth;
         var useUniformUnits = detailObject.useUniformUnits || false;
-        var caseTileStyles = views.buildCaseTileStyles(detailObject.tiles, numRows, numColumns,
-            numEntitiesPerRow, useUniformUnits, 'persistent');
+        var caseTileStyles = views.buildCaseTileStyles(detailObject.tiles, detailObject.styles, numRows,
+            numColumns, numEntitiesPerRow, useUniformUnits, 'persistent');
         // Style the positioning of the elements within a tile (IE element 1 at grid position 1 / 2 / 4 / 3
         $("#persistent-cell-layout-style").html(caseTileStyles.cellLayoutStyle).data("css-polyfilled", false);
         // Style the grid (IE each tile has 6 rows, 12 columns)

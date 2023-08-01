@@ -317,6 +317,9 @@ hqDefine("reports/js/config.dataTables.bootstrap", [
 
     function convertDate(k) {
         var m = k.match(/title="*(.+)"/);
+        if (m[1] === "None") {
+            return null;
+        }
         return new Date(m[1]);
     }
 
