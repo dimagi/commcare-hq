@@ -856,7 +856,7 @@ def bsd_license(request):
 class BasePageView(TemplateView):
     urlname = None  # name of the view used in urls
     page_title = None  # what shows up in the <title>
-    template_name = 'hqwebapp/base_page.html'
+    template_name = 'hqwebapp/bootstrap3/base_page.html'
 
     @property
     def page_name(self):
