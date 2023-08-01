@@ -658,10 +658,18 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
         templateContext: function () {
             const paginateItems = formplayerUtils.paginateOptions(this.options.currentPage, this.options.pageCount);
             const casesPerPage = parseInt($.cookie("cases-per-page-limit")) || 10;
+            const boldSortedCharIcon = (header) => {
+                const header_words = header.trim().split(' ');
+                const lastChar = header_words.pop();
+
+                return lastChar === "Λ" || lastChar === "V"
+                  ? `${header_words.join(' ')} <b>${lastChar}</b>`
+                  : header;
+              };
             return {
                 startPage: paginateItems.startPage,
                 title: this.options.title,
-                headers: this.headers,
+                headers: this.headers.map(boldSortedCharIcon),
                 widthHints: this.options.widthHints,
                 actions: this.options.actions,
                 currentPage: this.options.currentPage,

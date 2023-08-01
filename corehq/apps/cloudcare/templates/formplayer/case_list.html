@@ -39,16 +39,7 @@
                 <ul class="dropdown-menu dropdown-menu-right" role="menu" aria-labelledby="case-list-sort-by">
                   <%  _.each(headers, function(header, index) { %>
                     <% if (columnSortable(index)) { %>
-                    <li tabindex="0" class="header-clickable formplayer-request" data-id="<%- index %>" role="menuitem"><a>
-                      <% var words = header.trim().split(' '); %>
-                      <% var lastWord = words[words.length - 1]; %>
-                      <% if (lastWord === "Λ" || lastWord === "V") { %>
-                        <% var remainingWords = words.slice(0, -1).join(' '); %>
-                        <%= remainingWords %> <strong><%= lastWord %></strong>
-                      <% } else { %>
-                        <%= header %>
-                      <% } %>
-                    </a></li>
+                    <li tabindex="0" class="header-clickable formplayer-request" data-id="<%- index %>" role="menuitem"><a><%= header %></a></li>
                     <% } %>
                   <% }); %>
                 </ul>
@@ -67,9 +58,9 @@
                   <%  _.each(headers, function(header, index) { %>
                     <% if (columnVisible(index)) { %>
                       <% if (columnSortable(index)) { %>
-                        <th class="module-case-list-header header-clickable formplayer-request" data-id="<%- index %>"> <%- header %></th>
+                        <th class="module-case-list-header header-clickable formplayer-request" data-id="<%- index %>"> <%= header %></th>
                       <% } else { %>
-                        <th class="module-case-list-header" data-id="<%- index %>"> <%- header %></th>
+                        <th class="module-case-list-header" data-id="<%- index %>"> <%= header %></th>
                       <% } %>
                     <% } %>
                   <% }); %>
@@ -242,7 +233,7 @@
         <tr>
           <% _.each(headers, function(header, index) { %>
           <% if (!(styles[index].widthHint === 0)) { %>
-          <th class="module-case-list-header"> <%- header %></th>
+          <th class="module-case-list-header"> <%= header %></th>
           <% } %>
           <% }); %>
         </tr>
