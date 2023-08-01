@@ -3,46 +3,56 @@
 {% if field.is_hidden %}
     {{ field }}
 {% else %}
-    <{% if tag %}{{ tag }}{% else %}div{% endif %}
-        id="div_{{ field.auto_id }}" 
-        class="form-group{% if wrapper_class %} {{ wrapper_class }}{% endif %}{% if form_show_errors%}{% if field.errors %} error has-error{% endif %}{% endif %}{% if field.css_classes %} {{ field.css_classes }}{% endif %}"
-    >
-        {% if field.label and not field|is_checkbox and form_show_labels %}
-            <div class="control-label {{ label_class }} {% if field.field.required %}requiredField{% endif %}">
-                <label for="{{ field.id_for_label }}" class="inner-control-label">
-                    {{ field.label }}{% if field.field.required %}<span class="asteriskField">*</span>{% endif %}
-                </label>
-                {% include 'hqwebapp/crispy/help_bubble.html' %}
+    {% if field|is_checkbox %}
+        <div class="form-group">
+        {% if label_class %}
+            <div class="controls {% for offset in bootstrap_checkbox_offsets %}{{ offset }} {% endfor %}{{ field_class }}">
+        {% endif %}
+    {% endif %}
+    <{% if tag %}{{ tag }}{% else %}div{% endif %} id="div_{{ field.auto_id }}" {% if not field|is_checkbox %}class="form-group{% else %}class="checkbox{% endif %}{% if wrapper_class %} {{ wrapper_class }}{% endif %}{% if form_show_errors%}{% if field.errors %} has-error{% endif %}{% endif %}{% if field.css_classes %} {{ field.css_classes }}{% endif %}">
+          {% if field.label and not field|is_checkbox and form_show_labels %}
+            <div class="control-label {{ label_class }}{% if field.field.required %} requiredField{% endif %}">
+              <label {% if field.id_for_label and not field|is_radioselect %}for="{{ field.id_for_label }}" {% endif %} class="inner-control-label">
+                {{ field.label }}{% if field.field.required %}<span class="asteriskField">*</span>{% endif %}
+              </label>
+              {% include 'hqwebapp/crispy/help_bubble.html' %}
             </div>
         {% endif %}
 
         {% if field|is_checkboxselectmultiple %}
-            {% include 'bootstrap/layout/checkboxselectmultiple.html' %}
-        {% endif %}
-
-        {% if field|is_checkbox and help_bubble_text %}
-            <label class="control-label {{ label_class }}">
-                {% include 'hqwebapp/crispy/help_bubble.html' %}
-            </label>
+            {% include 'bootstrap3to5/layout/bootstrap3/checkboxselectmultiple.html' %}
         {% endif %}
 
         {% if field|is_radioselect %}
-            {% include 'bootstrap/layout/radioselect.html' %}
+            {% include 'bootstrap3to5/layout/bootstrap3/radioselect.html' %}
         {% endif %}
 
         {% if not field|is_checkboxselectmultiple and not field|is_radioselect %}
-            <div class="controls {{ field_class }}">
-                {% if field|is_checkbox and form_show_labels %}
-                    <label for="{{ field.id_for_label }}" class="checkbox {% if field.field.required %}requiredField{% endif %}">
+            {% if field|is_checkbox and form_show_labels %}
+                <div class="{% if field.field.required %} requiredField{% endif %}">
+                  <label for="{{ field.id_for_label }}" class="inner-control-label">
+                      {% crispy_field field %}
+                      {{ field.label }}{% if field.field.required %}<span class="asteriskField">*</span>{% endif %}
+                  </label>
+                  {% include 'hqwebapp/crispy/help_bubble.html' %}
+                </div>
+                {% include 'bootstrap3to5/layout/help_text_and_errors.html' %}
+            {% else %}
+                <div class="controls {{ field_class }}">
+                    {% if field|is_multivalue %}
                         {% crispy_field field %}
-                        {{ field.label }}
-                        {% include 'bootstrap3/layout/help_text_and_errors.html' %}
-                    </label>
-                {% else %}
-                    {% crispy_field field %}
-                    {% include 'bootstrap3/layout/help_text_and_errors.html' %}
-                {% endif %}
-            </div>
+                    {% else %}
+                        {% crispy_field field 'class' 'form-control' %}
+                    {% endif %}
+                    {% include 'bootstrap3to5/layout/help_text_and_errors.html' %}
+                </div>
+            {% endif %}
         {% endif %}
     </{% if tag %}{{ tag }}{% else %}div{% endif %}>
+    {% if field|is_checkbox %}
+        {% if label_class %}
+            </div>
+        {% endif %}
+        </div>
+    {% endif %}
 {% endif %}

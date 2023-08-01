@@ -1,7 +1,7 @@
 {% load crispy_forms_filters %}
 {% load l10n %}
 <div class="form-group">
-{% include 'bootstrap3/layout/field_errors_block.html' %}
+{% include 'bootstrap3to5/layout/field_errors_block.html' %}
 <ul class="form-control radio-select {{ css_class }}">
   <li>
     <input class="radio-select_close" type="radio" name="{{ field.html_name }}" id="id_{{ field.html_name }}_close" value=""/>
@@ -32,5 +32,5 @@
     <label class="radio-select_expandLabel" for="id_{{ field.html_name }}_opener"></label>
   </li>
 </ul>
-{% include 'bootstrap3/layout/help_text.html' %}
+{% include 'bootstrap3to5/layout/help_text.html' %}
 </div>
