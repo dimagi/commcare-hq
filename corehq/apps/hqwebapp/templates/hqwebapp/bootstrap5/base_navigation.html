@@ -128,7 +128,7 @@
 {% block modals %}
   {% if domain and not enterprise_mode %}
     {% if show_overdue_invoice_modal %}
-      {% include 'hqwebapp/downgrade_modal.html' %}
+      {% include 'hqwebapp/bootstrap3/downgrade_modal.html' %}
     {% elif show_prepaid_modal %}
       {% include 'hqwebapp/prepaid_modal.html' %}
     {% endif %}
