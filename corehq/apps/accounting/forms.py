@@ -164,7 +164,7 @@ class BillingAccountBasicForm(forms.Form):
         label="Bill Web User",
         required=False,
         initial=False,
-        help_text="Make sure this billing account have subscription with Web User Feature"
+        help_text="Include Web Users in invoice (requires a subscription with Web User Feature)"
     )
 
     def __init__(self, account, *args, **kwargs):
@@ -272,8 +272,7 @@ class BillingAccountBasicForm(forms.Form):
                 ),
                 hqcrispy.B3MultiField(
                     "Bill Web Users",
-                    hqcrispy.MultiInlineField('bill_web_user',
-                                 databind="checked: bill_web_user")
+                    hqcrispy.MultiInlineField('bill_web_user'),
                 ),
             ])
         self.helper.layout = crispy.Layout(
