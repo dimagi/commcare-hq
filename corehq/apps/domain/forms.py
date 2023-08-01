@@ -437,7 +437,7 @@ class DomainGlobalSettingsForm(forms.Form):
     )
 
     orphan_case_alerts_warning = BooleanField(
-        label=gettext_lazy("Orphan Case Alerts on Mobile Worker Edit Page"),
+        label=gettext_lazy("Show Orphan Case Alerts on Mobile Worker Edit Page"),
         required=False,
         help_text=gettext_lazy(
             """
