@@ -2398,6 +2398,15 @@ GEOSPATIAL = StaticToggle(
 
 )
 
+COMMCARE_CONNECT = StaticToggle(
+    'commcare_connect',
+    'Enable CommCare Connect features',
+    tag=TAG_INTERNAL,
+    namespaces=[NAMESPACE_DOMAIN],
+    description='More details to come',
+
+)
+
 FCM_NOTIFICATION = StaticToggle(
     'fcm_notification',
     'Allows access to FCM Push Notifications',
@@ -2406,7 +2415,6 @@ FCM_NOTIFICATION = StaticToggle(
     description='Push Notification option will be available in content for '
                 'Conditional Alerts in Messaging.'
 )
-
 
 class FrozenPrivilegeToggle(StaticToggle):
     """
