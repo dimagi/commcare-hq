@@ -1,5 +1,5 @@
 /*
-    To use, include this file on a page that also includes hqwebapp/rollout_modal.html
+    To use, include this file on a page that also includes hqwebapp/bootstrap3/rollout_modal.html
 */
 hqDefine("hqwebapp/js/rollout_modal", [
     'jquery',
