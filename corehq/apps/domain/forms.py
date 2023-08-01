@@ -442,9 +442,9 @@ class DomainGlobalSettingsForm(forms.Form):
         help_text=gettext_lazy(
             """
             Displays a warning message on the mobile worker location edit page
-            for locations that owns cases and only one assigned mobile worker.
+            about locations that owns cases and only have one assigned mobile worker.
             This helps prevent situations where cases are being orphaned by moving
-            the only assigned mobile worker out of its location.
+            the only assigned mobile worker out of the location owning that cases.
             """
         )
     )
