@@ -2390,6 +2390,15 @@ GEOSPATIAL = StaticToggle(
 
 )
 
+COMMCARE_CONNECT = StaticToggle(
+    'commcare_connect',
+    'Enable CommCare Connect features',
+    tag=TAG_INTERNAL,
+    namespaces=[NAMESPACE_DOMAIN],
+    description='More details to come',
+
+)
+
 FCM_NOTIFICATION = StaticToggle(
     'fcm_notification',
     'Allows access to FCM Push Notifications',
@@ -2397,6 +2406,15 @@ FCM_NOTIFICATION = StaticToggle(
     namespaces=[NAMESPACE_DOMAIN],
     description='Push Notification option will be available in content for '
                 'Conditional Alerts in Messaging.'
+)
+
+LOCATION_RESTRICTED_SCHEDULED_REPORTS = StaticToggle(
+    'location_restricted_scheduled_reports',
+    'Allows access to report scheduling views for location restricted users',
+    TAG_CUSTOM,
+    namespaces=[NAMESPACE_DOMAIN],
+    description='Provides access to views for resport scheduling '
+                'such as schedule creation and deletion.'
 )
 
 
