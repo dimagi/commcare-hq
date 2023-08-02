@@ -3,6 +3,9 @@ import json
 import re
 import time
 
+import requests
+
+from django.conf import settings
 from django.contrib import messages
 from django.contrib.humanize.templatetags.humanize import naturaltime
 from django.core.exceptions import ValidationError
@@ -19,6 +22,7 @@ from django.urls import reverse
 from django.utils.decorators import method_decorator
 from django.utils.translation import gettext as _
 from django.utils.translation import gettext_noop, override
+from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_GET, require_POST
 from django.views.generic import TemplateView, View
 
@@ -54,6 +58,7 @@ from corehq.apps.custom_data_fields.models import (
 from corehq.apps.domain.decorators import (
     domain_admin_required,
     login_and_domain_required,
+    login_or_basic_ex,
 )
 from corehq.apps.domain.extension_points import has_custom_clean_password
 from corehq.apps.domain.models import SMSAccountConfirmationSettings
@@ -116,6 +121,7 @@ from corehq.apps.users.models import (
     CouchUser,
     DeactivateMobileWorkerTrigger,
     check_and_send_limit_email,
+    ConnectIDUserLink
 )
 from corehq.apps.users.models_role import UserRole
 from corehq.apps.users.tasks import (
@@ -1655,3 +1661,15 @@ class CommCareUserConfirmAccountBySMSView(CommCareUserConfirmAccountView):
         if hours_elapsed <= settings_obj.confirmation_link_expiry_time:
             return True
         return False
+
+@csrf_exempt
+@require_POST
+@login_or_basic_ex(allow_cc_users=True)
+def link_connectid_user(request, domain):
+    token = request.POST["token"]
+    user_info = f"{settings.CONNECTID_USERINFO_URL}"
+    user = requests.get(user_info, headers={"AUTHORIZATION": f"Bearer {token}"})
+    connectid_username = user.json().get("sub")
+    link = ConnectIDUserLink(connectid_username=connectid_username, commcare_user=request.user, domain=request.domain)
+    link.save()
+    return HttpResponse()
