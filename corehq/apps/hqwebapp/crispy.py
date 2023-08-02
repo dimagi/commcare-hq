@@ -93,7 +93,7 @@ class FormActions(OriginalFormActions):
 
 
 class StaticField(LayoutObject):
-    template = 'hqwebapp/crispy/bootstrap3/static_field.html'
+    template = 'hqwebapp/crispy/static_field.html'
 
     def __init__(self, field_label, field_value):
         self.field_label = field_label
