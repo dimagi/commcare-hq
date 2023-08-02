@@ -224,7 +224,7 @@ class SyncSQLToCouchMixin(object):
         Should return a list of SubModelSpec tuples, one for each SchemaListProperty
         in the couch class. Should be identical in the couch and sql mixins.
         """
-        return []
+        return cls._migration_get_couch_model_class()._migration_get_submodels()
 
     @classmethod
     def _migration_get_custom_sql_to_couch_functions(cls):
