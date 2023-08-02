@@ -64,7 +64,7 @@ from corehq.apps.app_manager.models import (
     app_template_dir,
 )
 from corehq.apps.app_manager.models import import_app as import_app_util
-from corehq.apps.app_manager.models import load_app_template
+from corehq.apps.app_manager.models import load_app_template, LinkedApplication
 from corehq.apps.app_manager.tasks import update_linked_app_and_notify_task
 from corehq.apps.app_manager.util import (
     app_doc_types,
@@ -380,11 +380,14 @@ def get_apps_base_context(request, domain, app):
     else:
         timezone = None
 
+    linked_name = app.get_master_name() if isinstance(app, LinkedApplication) else ''
+
     context = {
         'lang': lang,
         'langs': langs,
         'domain': domain,
         'app': app,
+        'linked_name': linked_name,
         'app_subset': {
             'commcare_minor_release': app.commcare_minor_release,
             'doc_type': app.get_doc_type(),
