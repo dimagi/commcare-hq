@@ -150,7 +150,7 @@ def edited_classes(context, label_class, field_class):
 
 
 class B3MultiField(LayoutObject):
-    template = 'hqwebapp/crispy/multi_field.html'
+    template = 'hqwebapp/crispy/bootstrap3/multi_field.html'
 
     # Because fields will be passed as-is to the HTML,
     # care should be taken to ensure they escape user input appropriately
