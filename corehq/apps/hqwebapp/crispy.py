@@ -256,7 +256,7 @@ class FieldWithHelpBubble(FieldWithExtras):
 
     Provide the help text using the `help_bubble_text` kwarg.
     """
-    template = "hqwebapp/crispy/bootstrap3/field_with_help_bubble.html"
+    template = "hqwebapp/crispy/field_with_help_bubble.html"
     extra_context = ['help_bubble_text']
 
 
