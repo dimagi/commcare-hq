@@ -112,6 +112,7 @@ COMMCARE_USER = 'commcare'
 MAX_WEB_USER_LOGIN_ATTEMPTS = 5
 MAX_COMMCARE_USER_LOGIN_ATTEMPTS = 500
 
+EULA_CURRENT_VERSION = '3.0'  # Set this to the most up to date version of the eula
 
 
 def _add_to_list(list, obj, default):
@@ -285,6 +286,23 @@ class HqPermissions(DocumentSchema):
             name for name, value in HqPermissions.properties().items()
             if isinstance(value, BooleanProperty)
         }
+
+    @classmethod
+    def diff(cls, left, right):
+        left_dict = {info.name: info.allow for info in left.to_list()}
+        right_dict = {info.name: info.allow for info in right.to_list()}
+
+        all_names = set(left_dict.keys()) | right_dict.keys()
+
+        diffs = []
+
+        for name in all_names:
+            if (name not in left_dict
+                    or name not in right_dict
+                    or left_dict[name] != right_dict[name]):
+                diffs.append(name)
+
+        return diffs
 
     def to_list(self) -> List[PermissionInfo]:
         """Returns a list of Permission objects for those permissions that are enabled."""
@@ -729,7 +747,7 @@ class DjangoUserMixin(DocumentSchema):
 
 
 class EulaMixin(DocumentSchema):
-    CURRENT_VERSION = '3.0'  # Set this to the most up to date version of the eula
+    CURRENT_VERSION = EULA_CURRENT_VERSION
     eulas = SchemaListProperty(LicenseAgreement)
 
     @classmethod
@@ -821,6 +839,8 @@ class DeviceIdLastUsed(DocumentSchema):
     last_used = DateTimeProperty()
     commcare_version = StringProperty()
     app_meta = SchemaListProperty(DeviceAppMeta)
+    fcm_token = StringProperty()
+    fcm_token_timestamp = DateTimeProperty()
 
     def update_meta(self, commcare_version=None, app_meta=None):
         if commcare_version:
@@ -847,6 +867,10 @@ class DeviceIdLastUsed(DocumentSchema):
 
     def __eq__(self, other):
         return all(getattr(self, p) == getattr(other, p) for p in self.properties())
+
+    def update_fcm_token(self, fcm_token, fcm_token_timestamp):
+        self.fcm_token = fcm_token
+        self.fcm_token_timestamp = fcm_token_timestamp
 
 
 class LastSubmission(DocumentSchema):
@@ -2314,7 +2338,8 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
         case = self.get_usercase()
         return case.case_id if case else None
 
-    def update_device_id_last_used(self, device_id, when=None, commcare_version=None, device_app_meta=None):
+    def update_device_id_last_used(self, device_id, when=None, commcare_version=None, device_app_meta=None,
+                                   fcm_token=None, fcm_token_timestamp=None):
         """
         Sets the last_used date for the device to be the current time
         Does NOT save the user object.
@@ -2322,8 +2347,8 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
         :returns: True if user was updated and needs to be saved
         """
         when = when or datetime.utcnow()
-
         device = self.get_device(device_id)
+        save_user = False
         if device:
             do_update = False
             if when.date() > device.last_used.date():
@@ -2347,14 +2372,20 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
                 self.last_device = DeviceIdLastUsed.wrap(self.get_last_used_device().to_json())
                 meta = self.last_device.get_last_used_app_meta()
                 self.last_device.app_meta = [meta] if meta else []
-                return True
+                save_user = True
+            if fcm_token and fcm_token_timestamp:
+                if not device.fcm_token_timestamp or fcm_token_timestamp > device.fcm_token_timestamp:
+                    device.update_fcm_token(fcm_token, fcm_token_timestamp)
+                    save_user = True
         else:
             device = DeviceIdLastUsed(device_id=device_id, last_used=when)
+            if fcm_token and fcm_token_timestamp:
+                device.update_fcm_token(fcm_token, fcm_token_timestamp)
             device.update_meta(commcare_version, device_app_meta)
             self.devices.append(device)
             self.last_device = device
-            return True
-        return False
+            save_user = True
+        return save_user
 
     def get_last_used_device(self):
         if not self.devices:
@@ -2366,6 +2397,9 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
         for device in self.devices:
             if device.device_id == device_id:
                 return device
+
+    def get_devices_fcm_tokens(self):
+        return [device.fcm_token for device in self.devices if device.fcm_token]
 
 
 def update_fixture_status_for_users(user_ids, fixture_type):
@@ -2837,6 +2871,7 @@ class UserReportingMetadataStaging(models.Model):
     commcare_version = models.TextField(null=True)
     build_profile_id = models.TextField(null=True)
     last_heartbeat = models.DateTimeField(null=True)
+    fcm_token = models.TextField(null=True)
 
     @classmethod
     def add_submission(cls, domain, user_id, app_id, build_id, version, metadata, received_on):
@@ -2903,7 +2938,7 @@ class UserReportingMetadataStaging(models.Model):
     @classmethod
     def add_heartbeat(cls, domain, user_id, app_id, build_id, sync_date, device_id,
                       app_version, num_unsent_forms, num_quarantined_forms,
-                      commcare_version, build_profile_id):
+                      commcare_version, build_profile_id, fcm_token):
         params = {
             'domain': domain,
             'user_id': user_id,
@@ -2916,6 +2951,7 @@ class UserReportingMetadataStaging(models.Model):
             'num_quarantined_forms': num_quarantined_forms,
             'commcare_version': commcare_version,
             'build_profile_id': build_profile_id,
+            'fcm_token': fcm_token
         }
         with connection.cursor() as cursor:
             cursor.execute(f"""
@@ -2924,13 +2960,13 @@ class UserReportingMetadataStaging(models.Model):
                     build_id,
                     sync_date, device_id,
                     app_version, num_unsent_forms, num_quarantined_forms,
-                    commcare_version, build_profile_id, last_heartbeat
+                    commcare_version, build_profile_id, last_heartbeat, fcm_token
                 ) VALUES (
                     %(domain)s, %(user_id)s, %(app_id)s, CLOCK_TIMESTAMP(), CLOCK_TIMESTAMP(),
                     %(build_id)s,
                     %(sync_date)s, %(device_id)s,
                     %(app_version)s, %(num_unsent_forms)s, %(num_quarantined_forms)s,
-                    %(commcare_version)s, %(build_profile_id)s, CLOCK_TIMESTAMP()
+                    %(commcare_version)s, %(build_profile_id)s, CLOCK_TIMESTAMP(), %(fcm_token)s
                 )
                 ON CONFLICT (domain, user_id, app_id)
                 DO UPDATE SET
@@ -2943,7 +2979,8 @@ class UserReportingMetadataStaging(models.Model):
                     num_quarantined_forms = EXCLUDED.num_quarantined_forms,
                     commcare_version = EXCLUDED.commcare_version,
                     build_profile_id = EXCLUDED.build_profile_id,
-                    last_heartbeat = CLOCK_TIMESTAMP()
+                    last_heartbeat = CLOCK_TIMESTAMP(),
+                    fcm_token = EXCLUDED.fcm_token
                 WHERE staging.last_heartbeat is NULL or EXCLUDED.last_heartbeat > staging.last_heartbeat
                 """, params)
 
@@ -2980,7 +3017,7 @@ class UserReportingMetadataStaging(models.Model):
                 self.domain, user, self.app_id, self.build_id,
                 self.sync_date, latest_build_date, self.device_id, device_app_meta,
                 commcare_version=self.commcare_version, build_profile_id=self.build_profile_id,
-                save_user=False
+                fcm_token=self.fcm_token, fcm_token_timestamp=self.last_heartbeat, save_user=False
             )
         if save:
             user.save(fire_signals=False)

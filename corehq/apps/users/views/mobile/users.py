@@ -833,7 +833,7 @@ class MobileWorkerListView(JSONResponseMixin, BaseUserSettingsView):
             last_name=last_name,
             metadata=self.custom_data.get_data_to_save(),
             is_account_confirmed=is_account_confirmed,
-            location=SQLLocation.objects.get(location_id=location_id) if location_id else None,
+            location=SQLLocation.objects.get(domain=self.domain, location_id=location_id) if location_id else None,
             role_id=role_id
         )
 

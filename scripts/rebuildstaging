@@ -59,13 +59,13 @@ args=''
 [[ $verbose = 'y' ]] && args="$args -v"
 [[ -z "$no_push" || $no_push != 'y' ]] && args="$args --push"
 
-if [[ $deploy = 'y' && $no_push != 'y' ]]
-then
-    rebuildstaging $args && {
+if rebuildstaging $args ; then
+    if [[ $deploy = 'y' && $no_push != 'y' ]]; then
         which commcare-cloud \
         && commcare-cloud --control staging deploy --quiet \
         || echo 'Could not auto-deploy for you. Run `commcare-cloud --control staging deploy` to deploy.'
-    }
+    fi
 else
-    rebuildstaging $args
+    echo "You can edit the branch build configuration here:"
+    echo "  https://github.com/dimagi/staging-branches/blob/main/commcare-hq-staging.yml"
 fi

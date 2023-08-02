@@ -562,8 +562,6 @@ class TestFormWorkflow(SimpleTestCase, TestXmlMixin):
         self.assertXmlPartialEqual(expected, suite_xml, "./entry[1]/stack")
 
     def test_form_links_other_child_module(self):
-        # This test demonstrates current behavior that I believe to be flawed
-
         factory = AppFactory(build_version='2.9.0')
         m0, m0f0 = factory.new_basic_module('parent', 'mother')
         factory.form_opens_case(m0f0)
@@ -610,6 +608,62 @@ class TestFormWorkflow(SimpleTestCase, TestXmlMixin):
         </partial>
         """
         self.assertXmlPartialEqual(expected, suite_xml, "./entry[4]/stack")
+
+    def test_form_links_other_child_module_manual_linking(self):
+        factory = AppFactory(build_version='2.9.0')
+        m0, m0f0 = factory.new_basic_module('parent', 'mother')
+        factory.form_requires_case(m0f0)
+        m1, m1f0 = factory.new_basic_module('child', 'baby', parent_module=m0)
+        factory.form_requires_case(m1f0)
+
+        m2, m2f0 = factory.new_basic_module('other_module', 'baby')
+        factory.form_opens_case(m2f0, 'baby')
+        m2f0.post_form_workflow = WORKFLOW_FORM
+        m2f0.form_links = [FormLink(
+            xpath='true()', form_id=m1f0.unique_id, form_module_id=m1.unique_id,
+        )]
+        suite_xml = factory.app.create_suite()
+
+        # m2f0 links to m1f0 (child of m0-f0) - automatic linking
+        expected = """
+        <partial>
+          <stack>
+            <create if="true()">
+              <command value="'m0'"/>
+              <datum id="case_id" value="instance('commcaresession')/session/data/case_id"/>
+              <command value="'m1'"/>
+              <datum id="case_id_baby" value="instance('commcaresession')/session/data/case_id_new_baby_0"/>
+              <command value="'m1-f0'"/>
+            </create>
+          </stack>
+        </partial>
+        """
+        self.assertXmlPartialEqual(expected, suite_xml, "./entry[3]/stack")
+
+        # set manual links
+        m2f0.form_links = [FormLink(
+            xpath='true()', form_id=m1f0.unique_id, form_module_id=m1.unique_id,
+            datums=[
+                FormDatum(name="case_id", xpath="xpath1"),
+                FormDatum(name="case_id_baby", xpath="xpath2"),
+            ]
+        )]
+
+        suite_xml = factory.app.create_suite()
+        expected = """
+        <partial>
+          <stack>
+            <create if="true()">
+              <command value="'m0'"/>
+              <datum id="case_id" value="xpath1"/>
+              <command value="'m1'"/>
+              <datum id="case_id_baby" value="xpath2"/>
+              <command value="'m1-f0'"/>
+            </create>
+          </stack>
+        </partial>
+        """
+        self.assertXmlPartialEqual(expected, suite_xml, "./entry[3]/stack")
 
     def _build_workflow_app(self, mode):
         factory = AppFactory(build_version='2.9.0')

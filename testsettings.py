@@ -10,6 +10,11 @@ if os.environ.get('ELASTICSEARCH_MAJOR_VERSION'):
 # timeout faster in tests
 ES_SEARCH_TIMEOUT = 5
 
+# Default multiplexed value for_test adapter
+ES_FOR_TEST_INDEX_MULTIPLEXED = False
+ES_FOR_TEST_INDEX_SWAPPED = False
+
+
 # note: the only reason these are prepended to INSTALLED_APPS is because of
 # a weird travis issue with kafka. if for any reason this order causes problems
 # it can be reverted whenever that's figured out.
@@ -127,3 +132,6 @@ METRICS_PROVIDERS = [
 ]
 
 FORMPLAYER_INTERNAL_AUTH_KEY = "abc123"
+
+# A workaround to test the messaging framework. See: https://stackoverflow.com/a/60218100
+MESSAGE_STORAGE = 'django.contrib.messages.storage.cookie.CookieStorage'

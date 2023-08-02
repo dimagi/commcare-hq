@@ -31,8 +31,6 @@ from corehq.apps.users.models import (
 from corehq.apps.users.views import _delete_user_role, _update_role_from_view
 from corehq.apps.users.views.mobile.users import MobileWorkerListView
 from corehq.const import USER_CHANGE_VIA_WEB
-from corehq.toggles import FILTERED_BULK_USER_DOWNLOAD, NAMESPACE_DOMAIN
-from corehq.toggles.shortcuts import set_toggle
 from corehq.util.test_utils import (
     flag_enabled,
     generate_cases,
@@ -341,6 +339,7 @@ class TestDeletePhoneNumberView(TestCase):
 
 
 @es_test(requires=[user_adapter], setup_class=True)
+@patch('corehq.apps.users.decorators.can_use_filtered_user_download', return_value=True)
 class TestCountWebUsers(TestCase):
 
     view = 'count_web_users'
@@ -351,8 +350,6 @@ class TestCountWebUsers(TestCase):
 
         cls.domain = 'test'
         cls.domain_obj = create_domain(cls.domain)
-
-        set_toggle(FILTERED_BULK_USER_DOWNLOAD.slug, cls.domain, True, namespace=NAMESPACE_DOMAIN)
 
         location_type = LocationType(domain=cls.domain, name='phony')
         location_type.save()
@@ -399,7 +396,7 @@ class TestCountWebUsers(TestCase):
         cls.domain_obj.delete()
         super().tearDownClass()
 
-    def test_admin_user_sees_all_web_users(self):
+    def test_admin_user_sees_all_web_users(self, _):
         self.client.login(
             username=self.admin_user.username,
             password='badpassword',
@@ -407,7 +404,7 @@ class TestCountWebUsers(TestCase):
         result = self.client.get(reverse(self.view, kwargs={'domain': self.domain}))
         self.assertEqual(json.loads(result.content)['user_count'], 2)
 
-    def test_admin_location_user_sees_all_web_users(self):
+    def test_admin_location_user_sees_all_web_users(self, _):
         self.client.login(
             username=self.admin_user_with_location.username,
             password='badpassword',

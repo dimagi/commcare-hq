@@ -5,7 +5,6 @@ from corehq.apps.data_dictionary.views import (
     ExportDataDictionaryView,
     UploadDataDictionaryView,
     data_dictionary_json,
-    generate_data_dictionary,
     update_case_property,
     update_case_property_description,
     create_case_type
@@ -13,7 +12,6 @@ from corehq.apps.data_dictionary.views import (
 from corehq.apps.hqwebapp.decorators import waf_allow
 
 urlpatterns = [
-    url(r"^generate/$", generate_data_dictionary, name='generate_data_dictionary'),
     url(r"^json/$", data_dictionary_json, name='data_dictionary_json'),
     url(r"^json/?(?P<case_type_name>\w+)/?$", data_dictionary_json, name='case_type_dictionary_json'),
     url(r"^create_case_type/$", create_case_type, name='create_case_type'),

@@ -10,7 +10,9 @@ hqDefine("reports/js/reports.async", function () {
         self.standardReport = o.standardReport;
         self.filterRequest = null;
         self.reportRequest = null;
+        self.queryIdRequest = null;
         self.loaderClass = '.report-loading';
+        self.maxInputLimit = 4500;
 
         self.humanReadableErrors = {
             400: gettext("Please check your Internet connection!"),
@@ -26,6 +28,7 @@ hqDefine("reports/js/reports.async", function () {
             503: gettext("CommCare HQ is experiencing server difficulties. We're working quickly to resolve it." +
                 " Thank you for your patience. We are extremely sorry."),
             504: gettext("Gateway Timeout. Please contact CommCare HQ Support."),
+            'maxInputError': gettext("Your search term was too long. Please provide a shorter search filter"),
         };
 
         var loadFilters = function (data) {
@@ -42,8 +45,13 @@ hqDefine("reports/js/reports.async", function () {
 
         self.init = function () {
             self.reportContent.attr('style', 'position: relative;');
-
-            self.updateReport(true, window.location.search.substr(1), self.standardReport.filterSet);
+            var initParams = window.location.search.substr(1);
+            var pathName = window.location.pathname;
+            if (initParams && self.isCaseListRelated(pathName)) {
+                self.getQueryId(initParams, true, self.standardReport.filterSet, pathName);
+            } else {
+                self.updateReport(true, initParams, self.standardReport.filterSet);
+            }
 
             // only update the report if there are actually filters set
             if (!self.standardReport.needsFilters) {
@@ -51,10 +59,55 @@ hqDefine("reports/js/reports.async", function () {
             }
             self.filterForm.submit(function () {
                 var params = hqImport('reports/js/reports.util').urlSerialize(this);
-                history.pushState(null,window.location.title, window.location.pathname + '?' + params);
-                self.updateFilters(params);
-                self.updateReport(false, params, true);
+                if (self.isCaseListRelated(pathName)) {
+                    var url = window.location.href.replace(self.standardReport.urlRoot,
+                        self.standardReport.urlRoot + 'async/') + "?" + "&" + params;
+                    if (url.length > self.maxInputLimit) {
+                        hqImport('hqwebapp/js/alert_user').alert_user(self.humanReadableErrors['maxInputError'], "danger");
+                    } else {
+                        self.getQueryId(params, false, true, pathName);
+                    }
+                } else {
+                    self.updateFilters(params);
+                    self.updateReport(false, params, true);
+                    history.pushState(null,window.location.title, window.location.pathname + '?' + params);
+                }
                 return false;
+            });
+        };
+
+        self.isCaseListRelated = function (pathName) {
+            return pathName.includes('case_list');
+        };
+
+        self.getQueryId = function (params, initialLoad, setFilters, pathName) {
+            // This only applies to Case List and Case List Explorer filter queries
+            var queryId;
+            if (params.includes('query_id=')) {
+                queryId = params.replace('query_id=', '');
+                params = '';
+            } else {
+                queryId = '';
+            }
+            self.queryIdRequest = $.ajax({
+                url: pathName.replace(self.standardReport.urlRoot, self.standardReport.urlRoot + 'get_or_create_hash/'),
+                type: 'POST',
+                dataType: 'json',
+                data: {
+                    'query_id': queryId,
+                    'params': params,
+                },
+                success: function (data) {
+                    self.queryIdRequest = null;
+                    if (data.not_found) {
+                        // no corresponding filter config found - redirect to the landing page
+                        window.location.href = window.location.href.split('?')[0];
+                    } else {
+                        if (!initialLoad) { self.updateFilters(data.query_string); }
+                        self.updateReport(initialLoad, data.query_string, setFilters);
+                        history.pushState(null, window.location.title, pathName + '?query_id=' + data.query_id);
+                    }
+                },
             });
         };
 
@@ -68,9 +121,9 @@ hqDefine("reports/js/reports.async", function () {
             });
         };
 
-        self.updateReport = function (initial_load, params, setFilters) {
+        self.updateReport = function (initialLoad, params, setFilters) {
             var process_filters = "";
-            if (initial_load) {
+            if (initialLoad) {
                 process_filters = "hq_filters=true&";
                 if (self.standardReport.loadDatespanFromCookie()) {
                     process_filters = process_filters +
@@ -97,7 +150,9 @@ hqDefine("reports/js/reports.async", function () {
                         loadFilters(data);
                     }
                     self.issueAttempts = 0;
-                    self.loadingIssueModal.modal('hide');
+                    if ($('loadingIssueModal').hasClass('show')) {
+                        self.loadingIssueModal.modal('hide');
+                    }
                     self.hqLoading = $(self.loaderClass);
                     self.reportContent.html(data.report);
                     hqImport('reports/js/charts/main').init();
@@ -117,7 +172,7 @@ hqDefine("reports/js/reports.async", function () {
                     $('.loading-backdrop').fadeOut();
                     self.hqLoading.fadeOut();
 
-                    if (!initial_load || !self.standardReport.needsFilters) {
+                    if (!initialLoad || !self.standardReport.needsFilters) {
                         self.standardReport.filterSubmitButton
                             .button('reset');
                         setTimeout(function () {
@@ -171,18 +226,21 @@ hqDefine("reports/js/reports.async", function () {
             });
         };
 
-        self.loadingIssueModal.on('click', '.try-again', function () {
+        $(document).on('click', '.try-again', function () {
             self.loadingIssueModal.find('.btn-primary').button('loading');
-            self.updateReport(true, window.location.search.substr(1));
+            if (self.isCaseListRelated(window.location.pathname)) {
+                self.getQueryId(window.location.search.substr(1), true, true, window.location.pathname);
+            }
+            else {
+                self.updateReport(true, window.location.search.substr(1));
+            }
         });
 
         self.loadingIssueModal.on('hide hide.bs.modal', function () {
-            if (self.issueAttempts > 0) {
-                self.hqLoading = $(self.loaderClass);
-                self.hqLoading.find('.js-loading-spinner').addClass('hide');
-                self.hqLoading.find('h4').text(gettext('We were unsuccessful loading the report:'))
-                    .attr('style', 'margin-bottom: 10px;');
-            }
+            self.hqLoading = $(self.loaderClass);
+            self.hqLoading.find('.js-loading-spinner').addClass('hide');
+            self.hqLoading.find('h4').text(gettext('We were unsuccessful loading the report:'))
+                .attr('style', 'margin-bottom: 10px;');
         });
 
         return self;

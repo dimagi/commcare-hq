@@ -58,9 +58,3 @@ class RepeaterTestCase(TestCase):
         self.assertEqual(display.next_attempt_at, self.next_check_str)
         self.assertEqual(display.url, self.url)
         self.assertEqual(display.state, '<span class="label label-success">Success</span>')
-        self.assertHTMLEqual(display.attempts, """
-            <ul class="list-unstyled">
-                <li><strong>Attempt #1</strong>
-                    <br/><i class="fa fa-check"></i> Success
-                </li>
-            </ul>""")
