@@ -1,6 +1,6 @@
 /* eslint-env mocha */
 hqDefine("hqwebapp/spec/inactivity_spec", [
-    'hqwebapp/js/inactivity',
+    'hqwebapp/js/bootstrap3/inactivity',
 ], function (
     module
 ) {
