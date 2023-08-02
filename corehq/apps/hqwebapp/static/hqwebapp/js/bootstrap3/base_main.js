@@ -3,7 +3,7 @@ hqDefine("hqwebapp/js/bootstrap3/base_main", [
     'hqwebapp/js/prepaid_modal',
     'hqwebapp/js/hq.helpers',
     'hqwebapp/js/layout',
-    'hqwebapp/js/hq-bug-report',
+    'hqwebapp/js/bootstrap3/hq-bug-report',
     'hqwebapp/js/bootstrap3/sticky_tabs',
     'hqwebapp/js/main',
     'hqwebapp/js/inactivity',
