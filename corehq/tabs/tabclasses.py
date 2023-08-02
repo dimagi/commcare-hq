@@ -1,6 +1,7 @@
 from django.conf import settings
 from django.http import Http404
 from django.urls import reverse
+from django.utils.functional import cached_property
 from django.utils.html import format_html, strip_tags
 from django.utils.translation import gettext as _
 from django.utils.translation import gettext_lazy, gettext_noop
@@ -30,6 +31,7 @@ from corehq.apps.app_manager.dbaccessors import (
 )
 from corehq.apps.app_manager.util import is_remote_app
 from corehq.apps.builds.views import EditMenuView
+from corehq.apps.data_dictionary.views import DataDictionaryView
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.views.internal import ProjectLimitsView
 from corehq.apps.domain.views.releases import ManageReleasesByLocation
@@ -84,6 +86,7 @@ from corehq.apps.translations.integrations.transifex.utils import (
 )
 from corehq.apps.userreports.util import has_report_builder_access
 from corehq.apps.users.decorators import get_permission_name
+from corehq.apps.users.models import HqPermissions
 from corehq.apps.users.permissions import (
     can_download_data_files,
     can_view_sms_exports,
@@ -158,7 +161,6 @@ class ProjectReportsTab(UITab):
             'icon': 'icon-tasks fa fa-tasks',
             'show_in_dropdown': True,
         }]
-        from corehq.apps.users.models import HqPermissions
         is_ucr_toggle_enabled = (
             toggles.USER_CONFIGURABLE_REPORTS.enabled(
                 self.domain, namespace=toggles.NAMESPACE_DOMAIN
@@ -657,15 +659,11 @@ class ProjectDataTab(UITab):
             items.extend(FixtureInterfaceDispatcher.navigation_sections(
                 request=self._request, domain=self.domain))
 
-        from corehq.apps.users.models import HqPermissions
-        has_view_data_dict_permission = self.couch_user.has_permission(
-            self.domain,
-            get_permission_name(HqPermissions.view_data_dict)
-        )
-        if toggles.DATA_DICTIONARY.enabled(self.domain) and has_view_data_dict_permission:
-            items.append([_('Data Dictionary'),
-                          [{'title': 'Data Dictionary',
-                            'url': reverse('data_dictionary', args=[self.domain])}]])
+        if self._can_view_data_dictionary:
+            items.append([DataDictionaryView.page_title, [{
+                'title': DataDictionaryView.page_title,
+                'url': reverse(DataDictionaryView.urlname, args=[self.domain]),
+            }]])
 
         if toggles.UCR_EXPRESSION_REGISTRY.enabled(self.domain):
             from corehq.apps.userreports.views import UCRExpressionListView
@@ -681,6 +679,14 @@ class ProjectDataTab(UITab):
                 ]
             )
         return items
+
+    @cached_property
+    def _can_view_data_dictionary(self):
+        has_view_data_dict_permission = self.couch_user.has_permission(
+            self.domain,
+            get_permission_name(HqPermissions.view_data_dict)
+        )
+        return toggles.DATA_DICTIONARY.enabled(self.domain) and has_view_data_dict_permission
 
     def _get_export_data_views(self):
         export_data_views = []
@@ -988,6 +994,11 @@ class ProjectDataTab(UITab):
             items.append(dropdown_dict(
                 _(CommCareAnalyticsListView.page_title),
                 url=reverse(CommCareAnalyticsListView.urlname, args=(self.domain,))
+            ))
+        if self._can_view_data_dictionary:
+            items.append(dropdown_dict(
+                DataDictionaryView.page_title,
+                url=reverse(DataDictionaryView.urlname, args=[self.domain]),
             ))
 
         if items:
