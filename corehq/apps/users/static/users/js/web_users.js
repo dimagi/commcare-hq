@@ -10,7 +10,7 @@ hqDefine("users/js/web_users",[
     "hqwebapp/js/initial_page_data",
     "users/js/web_users_list",
     'hqwebapp/js/components.ko',    // pagination and search box widgets
-    'hqwebapp/js/knockout_bindings.ko', // for modals
+    'hqwebapp/js/bootstrap3/knockout_bindings.ko', // for modals
 ], function ($, ko, _, moment, assertProperties, initialPageData, webUsersList) {
 
     /* Web Users panel */

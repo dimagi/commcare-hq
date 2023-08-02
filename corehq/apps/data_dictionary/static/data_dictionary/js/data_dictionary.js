@@ -8,7 +8,7 @@ hqDefine("data_dictionary/js/data_dictionary", [
     "hqwebapp/js/ui_elements/ui-element-key-val-list",
     "DOMPurify/dist/purify.min",
     "hqwebapp/js/toggles",
-    "hqwebapp/js/knockout_bindings.ko",
+    "hqwebapp/js/bootstrap3/knockout_bindings.ko",
     "data_interfaces/js/make_read_only",
     'hqwebapp/js/select2_knockout_bindings.ko',
     'knockout-sortable/build/knockout-sortable',
