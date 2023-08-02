@@ -62,6 +62,7 @@ def get_custom_data_models(domain, limit_types=None):
         if model:
             fields[field_view.field_type]['fields'] = [
                 {
+                    'id': field.id,
                     'slug': field.slug,
                     'is_required': field.is_required,
                     'label': field.label,
@@ -162,6 +163,19 @@ def get_hmac_callout_settings(domain):
     }
 
 
+def rule_to_dict(rule):
+    rule_data = rule.to_dict()
+    del rule_data['rule']['last_run']
+    del rule_data['rule']['locked_for_editing']
+
+    return rule_data
+
+
+def get_auto_update_rule(domain, id):
+    rule = AutomaticUpdateRule.objects.get(id=id)
+    return rule_to_dict(rule)
+
+
 def get_auto_update_rules(domain):
     rules = AutomaticUpdateRule.by_domain(
         domain,
@@ -170,45 +184,4 @@ def get_auto_update_rules(domain):
         active_only=False
     )
 
-    data = []
-    for rule in rules:
-        criterias = rule.caserulecriteria_set.all()
-        actions = rule.caseruleaction_set.all()
-
-        rule_data = {
-            "rule": rule.to_json(),
-
-            "criteria": [
-                {
-                    "match_property_definition": {
-                        "property_name": case_rule_criter.match_property_definition.property_name,
-                        "property_value": case_rule_criter.match_property_definition.property_value,
-                        "match_type": case_rule_criter.match_property_definition.match_type
-                    } if case_rule_criter.match_property_definition is not None else None,
-                    "custom_match_definition": {
-                        "name": case_rule_criter.custom_match_definition.name,
-                    } if case_rule_criter.custom_match_definition is not None else None,
-                    "closed_parent_definition": case_rule_criter.closed_parent_definition is not None
-                } for case_rule_criter in criterias
-            ],
-
-            "actions": [
-                {
-                    "update_case_definition": {
-                        "properties_to_update": case_rule_action.update_case_definition.properties_to_update,
-                        "close_case": case_rule_action.update_case_definition.close_case
-                    } if case_rule_action.update_case_definition is not None else None,
-                    "custom_action_definition": {
-                        "name": case_rule_action.custom_action_definition.name
-                    } if case_rule_action.custom_action_definition is not None else None,
-                } for case_rule_action in actions
-            ]
-        }
-
-        # Delete unnecessary data for running rules
-        del rule_data['rule']['last_run']
-        del rule_data['rule']['locked_for_editing']
-
-        data.append(rule_data)
-
-    return data
+    return [rule_to_dict(rule) for rule in rules]
