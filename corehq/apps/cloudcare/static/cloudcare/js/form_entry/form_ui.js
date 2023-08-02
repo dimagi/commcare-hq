@@ -188,6 +188,11 @@ hqDefine("cloudcare/js/form_entry/form_ui", function () {
         var mapping = {
             caption: {
                 update: function (options) {
+                    let parentForm = getParentForm(self);
+                    let oqps = parentForm.displayOptions.oneQuestionPerScreen != undefined && parentForm.displayOptions.oneQuestionPerScreen();
+                    if (!oqps) {
+                        return null;
+                    }
                     return options.data ? DOMPurify.sanitize(options.data.replace(/\n/g, '<br/>')) : null;
                 },
             },
@@ -611,6 +616,13 @@ hqDefine("cloudcare/js/form_entry/form_ui", function () {
         // until the question has received a response from the server.
         self.pendingAnswer = ko.observable(constants.NO_PENDING_ANSWER);
         self.pendingAnswer.subscribe(function () { self.hasAnswered = true; });
+        self.form = function () {
+            var parent = self.parent;
+            while (parent.type && parent.type() !== null) {
+                parent = parent.parent;
+            }
+            return parent;
+        };
         self.dirty = ko.computed(function () {
             return self.pendingAnswer() !== constants.NO_PENDING_ANSWER;
         });
@@ -669,7 +681,7 @@ hqDefine("cloudcare/js/form_entry/form_ui", function () {
             $('html, body').animate({
                 scrollTop: $(el).offset().top - 60,
             });
-            getParentForm(self).currentJumpPoint = self;
+            self.form().currentJumpPoint = self;
             el.fadeOut(200).fadeIn(200).fadeOut(200).fadeIn(200);
         };
     }
