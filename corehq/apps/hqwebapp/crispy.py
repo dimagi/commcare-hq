@@ -327,7 +327,7 @@ class FieldsetAccordionGroup(AccordionGroup):
 
 
 class RadioSelect(Field):
-    template = "hqwebapp/crispy/bootstrap3/radioselect.html"
+    template = "hqwebapp/crispy/radioselect.html"
 
 
 def make_form_readonly(form):
