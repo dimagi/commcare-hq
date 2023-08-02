@@ -305,7 +305,7 @@ class B3TextField(Field):
     def __init__(self, field_name, text, *args, **kwargs):
         self.text = text
         super(B3TextField, self).__init__(field_name, *args, **kwargs)
-        self.template = 'hqwebapp/crispy/text_field.html'
+        self.template = 'hqwebapp/crispy/bootstrap3/text_field.html'
 
     def render(self, form, context, template_pack=None, **kwargs):
         context.update({
