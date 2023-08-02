@@ -585,15 +585,23 @@ def _get_hq_group_id(session):
 
 @periodic_task(run_every=crontab(minute=0, hour='*/1'), queue='background_queue')
 def sync_all_tableau_users():
+    domains_grouped_by_server = {}  # Looks like {(server name, tableau site): [domains]...}
     for domain in TABLEAU_USER_SYNCING.get_enabled_domains():
-        logger.info(f"Syncing Tableau users on domain: {domain}.")
+        server = TableauServer.objects.get(domain=domain)
+        server_details = (server.server_name, server.target_site)
+        if server_details in domains_grouped_by_server:
+            domains_grouped_by_server[server_details].append(domain)
+        else:
+            domains_grouped_by_server[server_details] = [domain]
+    for list_of_domains_for_server in domains_grouped_by_server.values():
+        logger.info(f"Syncing Tableau users on domains: {list_of_domains_for_server}.")
         try:
-            sync_tableau_users_on_domain(domain)
+            sync_tableau_users_on_domains(list_of_domains_for_server)
         except (TableauAPIError, TableauConnectedApp.DoesNotExist) as e:
             _notify_tableau_exception(e, domain)
 
 
-def sync_tableau_users_on_domain(domain):
+def sync_tableau_users_on_domains(domains):
     def _sync_tableau_users_with_hq(session, domain):
         tableau_user_names = [tableau_user.username for tableau_user in TableauUser.objects.filter(
             server=TableauServer.objects.get(domain=domain)
@@ -608,7 +616,7 @@ def sync_tableau_users_on_domain(domain):
             if tableau_user_name not in web_users_names:
                 _delete_user_local(session, tableau_user_name)
 
-    def _sync_tableau_users_with_remote(session):
+    def _sync_tableau_users_with_remote(session, domains):
         # Setup
         def _get_HQ_group_users(session):
             remote_HQ_group_id = _get_hq_group_id(session)
@@ -620,11 +628,19 @@ def sync_tableau_users_on_domain(domain):
             return remote_HQ_group_users
 
         all_remote_users = {username.lower(): value for username, value in session.get_users_on_site().items()}
-        local_users = TableauUser.objects.filter(server=session.tableau_connected_app.server)
+        all_local_users = TableauUser.objects.filter(server__in=TableauServer.objects.filter(domain__in=domains))
+        distinct_local_users = all_local_users.distinct('username')
+        if len(distinct_local_users) < len(all_local_users):
+            notify_exception(None, message='Duplicate usernames found when syncing domains.',
+                details={
+                    'domains': domains,
+                    'duplicate_users': [user.username for user in all_local_users.difference(distinct_local_users)]
+                }
+            )
         remote_HQ_group_users = _get_HQ_group_users(session)
 
         # Add/delete/update remote users to match with local reality
-        for local_user in local_users:
+        for local_user in distinct_local_users:
             local_tableau_username = tableau_username(local_user.username).lower()
             if local_tableau_username not in all_remote_users:
                 _add_tableau_user_remote(session, local_user, local_user.role)
@@ -640,16 +656,23 @@ def sync_tableau_users_on_domain(domain):
                 )
 
         # Remove any remote users that don't exist locally
-        local_users_usernames = [tableau_username(user.username).lower() for user in local_users]
+        local_users_usernames = [tableau_username(user.username).lower() for user in distinct_local_users]
         for remote_user in remote_HQ_group_users:
             if remote_user['name'].lower() not in local_users_usernames:
                 _delete_user_remote(session, remote_user['id'])
 
-    session = TableauAPISession.create_session_for_domain(domain)
-    # Sync the web users on HQ with the TableauUser model
-    _sync_tableau_users_with_hq(session, domain)
+    for domain in domains:
+        # Sync the web users on HQ with the TableauUser model
+        _sync_tableau_users_with_hq(
+            TableauAPISession.create_session_for_domain(domain),
+            domain
+        )
+
     # Sync the TableauUser model with Tableau users on the remote Tableau instance
-    _sync_tableau_users_with_remote(session)
+    _sync_tableau_users_with_remote(
+        TableauAPISession.create_session_for_domain(domains[0]),  # Can use a session for any of the domains
+        domains
+    )
 
 
 def is_hq_user(tableau_username):
