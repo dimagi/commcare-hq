@@ -271,7 +271,7 @@ class FieldWithAddons(FieldWithExtras):
 
     See the Bootstrap docs for addon examples.
     """
-    template = "hqwebapp/crispy/bootstrap3/field_with_addons.html"
+    template = "hqwebapp/crispy/field_with_addons.html"
     extra_context = ['pre_addon', 'post_addon']
 
 
