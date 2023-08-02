@@ -86,7 +86,7 @@ commcaretranslationchecker==0.9.7
     # via -r base-requirements.in
 contextlib2==21.6.0
     # via schema
-cryptography==41.0.2
+cryptography==41.0.3
     # via
     #   -r prod-requirements.in
     #   -r sso-requirements.in
