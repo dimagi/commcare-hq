@@ -41,7 +41,7 @@ class DeleteDocRecord(DeleteRecord):
 
     def undo(self):
         doc = self.get_doc()
-        undo_delete(doc)
+        undo_delete(self, doc)
 
 
 class UndoableDocument(Document):
@@ -91,10 +91,10 @@ def get_deleted_doc_type(document_class_or_instance):
     return '{}{}'.format(base_name, DELETED_SUFFIX)
 
 
-def undo_delete(document, save=True):
+def undo_delete(delete_record, document, save=True):
     DeletedCouchDoc.objects.filter(
-        doc_type=document['doc_type'],
-        doc_id=document['_id'],
+        doc_type=delete_record['doc_type'],
+        doc_id=delete_record['_id'],
     ).delete()
     document.doc_type = remove_deleted_doc_type_suffix(document['doc_type'])
     if save:
