@@ -29,7 +29,7 @@ from corehq.apps.app_manager.dbaccessors import (
     domain_has_apps,
     get_brief_apps_in_domain,
 )
-from corehq.apps.app_manager.util import is_remote_app
+from corehq.apps.app_manager.util import is_remote_app, is_linked_app
 from corehq.apps.builds.views import EditMenuView
 from corehq.apps.data_dictionary.views import DataDictionaryView
 from corehq.apps.domain.models import Domain
@@ -1023,10 +1023,16 @@ class ApplicationsTab(UITab):
 
     @classmethod
     def make_app_title(cls, app):
+        app_type = ''
+        if is_remote_app(app):
+            app_type = _('Remote')
+        elif is_linked_app(app):
+            app_type = _('Linked')
+
         return format_html(
             '{}{}',
             strip_tags(app.name) or _('(Untitled)'),
-            ' (Remote)' if is_remote_app(app) else '',
+            f' ({app_type})' if app_type else ''
         )
 
     @property
