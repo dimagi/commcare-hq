@@ -576,7 +576,7 @@ def domain_login_new_window(request):
 
 @login_and_domain_required
 @track_domain_request(calculated_prop='cp_n_downloads_custom_exports')
-def retrieve_download(req, domain, download_id, template="hqwebapp/includes/file_download.html"):
+def retrieve_download(req, domain, download_id, template="hqwebapp/includes/bootstrap3/file_download.html"):
     next_url = req.GET.get('next', reverse('my_project_settings', args=[domain]))
     return soil_views.retrieve_download(req, download_id, template,
                                         extra_context={'domain': domain, 'next_url': next_url})
