@@ -573,14 +573,11 @@ def _get_hq_group_id(session):
 
 @periodic_task(run_every=crontab(minute=0, hour='*/1'), queue='background_queue')
 def sync_all_tableau_users():
-    domains_grouped_by_server = {}  # Looks like {(server name, tableau site): [domains]...}
+    domains_grouped_by_server = defaultdict(list)  # Looks like {(server name, tableau site): [domains]...}
     for domain in TABLEAU_USER_SYNCING.get_enabled_domains():
         server = TableauServer.objects.get(domain=domain)
         server_details = (server.server_name, server.target_site)
-        if server_details in domains_grouped_by_server:
-            domains_grouped_by_server[server_details].append(domain)
-        else:
-            domains_grouped_by_server[server_details] = [domain]
+        domains_grouped_by_server[server_details].append(domain)
     for list_of_domains_for_server in domains_grouped_by_server.values():
         logger.info(f"Syncing Tableau users on domains: {list_of_domains_for_server}.")
         try:
@@ -616,7 +613,7 @@ def sync_tableau_users_on_domains(domains):
             return remote_HQ_group_users
 
         all_remote_users = {username.lower(): value for username, value in session.get_users_on_site().items()}
-        all_local_users = TableauUser.objects.filter(server__in=TableauServer.objects.filter(domain__in=domains))
+        all_local_users = TableauUser.objects.filter(server__domain__in=domains)
         distinct_local_users = all_local_users.distinct('username')
         if len(distinct_local_users) < len(all_local_users):
             notify_exception(None, message='Duplicate usernames found when syncing domains.',
