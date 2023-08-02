@@ -244,6 +244,7 @@ hqDefine("app_manager/js/modules/module_view", function () {
                 shadowOptions.modules,
                 shadowOptions.source_module_id,
                 shadowOptions.excluded_form_ids,
+                shadowOptions.form_session_endpoints,
                 shadowOptions.shadow_module_version
             ));
         } else if (moduleType === 'advanced') {
