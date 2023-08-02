@@ -16,11 +16,6 @@
     <instance id="results" src="jr://instance/remote/results"/>
     <session>
       <query default_search="false" storage-instance="results" template="case" url="https://www.example.com/a/test_domain/phone/search/{app_id}/">
-        <results-title>
-          <text>
-            <locale id="case_search.m1"/>
-          </text>
-        </results-title>
         <title>
           <text>
             <locale id="case_search.m1.inputs"/>
