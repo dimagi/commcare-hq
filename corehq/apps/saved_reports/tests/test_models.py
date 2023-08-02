@@ -15,18 +15,9 @@ from ..models import ReportNotification, ReportConfig
 
 class TestReportConfig(TestCase):
 
-    def tearDown(self) -> None:
-        self.config.delete()
-
-    def test_report_is_shared_on_domain(self):
-        domain = 'test_domain'
-        self.config = ReportConfig(
-            domain=domain,
-        )
-        self.config.save()
-        self.assertFalse(self.config.is_shared_on_domain())
-
-    def test_report_config_contents(self):
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
         domain = 'test-domain'
         user_id = 'nothing'
         report_slug = 'case_list_explorer'
@@ -49,22 +40,46 @@ class TestReportConfig(TestCase):
                }
         GET_dict = QueryDict('', mutable=True)
         GET_dict.update(GET)
+        test_date = datetime(2023, 7, 25)
 
         request_data = {
             'GET': GET_dict,
             'META': {'QUERY_STRING': '', 'PATH_INFO': '/a/test-domain/reports/email_onceoff/case_list_explorer/'},
+            'datespan': DateSpan(
+                startdate=test_date - timedelta(days=30),
+                enddate=test_date
+            ),
             'couch_user': user_id,
             'can_access_all_locations': True
         }
 
-        self.config = create_config_for_email(report_type, report_slug, user_id, domain, request_data)
-        self.config.save()
+        cls.config = create_config_for_email(report_type, report_slug, user_id, domain, request_data)
+        cls.config.save()
 
+    @classmethod
+    def tearDownClass(cls):
+        cls.config.delete()
+        super().tearDownClass()
+
+    def test_report_is_shared_on_domain(self):
+        domain = 'test_domain'
+        self.config = ReportConfig(
+            domain=domain,
+        )
+        self.config.save()
+        self.assertFalse(self.config.is_shared_on_domain())
+        self.config.delete()
+
+    def test_report_config_contents(self):
         self.assertEqual(self.config.filters.get('search_xpath'), 'case_name="EXAMPLEXPATH"')
         self.assertEqual(self.config.filters.get('explorer_columns'),
                          '[{"name":"@case_type","label":"@case_type"},'
                          '{"name":"case_name","label":"case_name"},'
                          '{"name":"last_modified","label":"last_modified"}]')
+
+    def test_report_config_does_not_have_datespan_if_not_in_params(self):
+        self.assertEqual(self.config.filters.get('startdate'), None)
+        self.assertEqual(self.config.filters.get('enddate'), None)
 
 
 class TestReportNotification(SimpleTestCase):
