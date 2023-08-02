@@ -323,7 +323,7 @@ class B3TextField(Field):
 
 
 class FieldsetAccordionGroup(AccordionGroup):
-    template = "hqwebapp/crispy/accordion_group.html"
+    template = "hqwebapp/crispy/bootstrap3/accordion_group.html"
 
 
 class RadioSelect(Field):
