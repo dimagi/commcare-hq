@@ -271,7 +271,8 @@ def build_superuser_view_models(ignore_models=None):
     return view_models
 
 
-def build_linked_data_view_model(model_type, name, detail, last_update=None, can_update=True, is_linkable=True):
+def build_linked_data_view_model(model_type, name, detail,
+        last_update=None, can_update=True, is_linkable=True):
     return {
         'type': model_type,
         'name': name,

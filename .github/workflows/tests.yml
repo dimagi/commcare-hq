@@ -5,6 +5,8 @@ on:
     - master
     - hotfix-deploy
     - ap/sql-repeater/phase-2
+    - mjr/erm-update-rules
+    - mjr/erm-fixtures
     - mjr/erm-custom-roles
     - mjr/erm-roles
   schedule:

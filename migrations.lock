@@ -415,6 +415,7 @@ fixtures
  0005_sqllookuptablemodels (3 squashed migrations)
  0008_sqllookuptables
  0009_remove_lookuptablerowowner_couch_id
+ 0010_lookuptable_is_synced
 form_processor
  0001_initial
  0002_xformattachmentsql
