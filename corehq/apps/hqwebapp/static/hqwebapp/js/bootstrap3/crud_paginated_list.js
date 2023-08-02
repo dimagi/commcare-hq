@@ -1,5 +1,5 @@
 // side effects: defines knockout bindings that are used in hqwebapp/partials/pagination.html
-hqDefine("hqwebapp/js/crud_paginated_list", [
+hqDefine("hqwebapp/js/bootstrap3/crud_paginated_list", [
     "jquery",
     "knockout",
     "underscore",
