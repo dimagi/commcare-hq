@@ -195,12 +195,12 @@ def create_config_for_email(report_type, report_slug, user_id, domain, request_d
             params = unquote(GET.get(field)[0])
             params = params.split('&')
             for param in params:
-                field, value = tuple(param.split('=', 1))
-                if field in filters:
-                    filters[field] = filters[field] + [value] if isinstance(filters[field], list) \
-                        else [filters[field]] + [value]
+                key, value = tuple(param.split('=', 1))
+                if key in filters:
+                    filters[key] = filters[key] + [value] if isinstance(filters[key], list) \
+                        else [filters[key]] + [value]
                 else:
-                    filters[field] = value
+                    filters[key] = value
         if field not in exclude:
             filters[field] = GET.get(field) or filters[field]
 
@@ -213,9 +213,5 @@ def create_config_for_email(report_type, report_slug, user_id, domain, request_d
             config.end_date = datetime.strptime(config.filters['enddate'], '%Y-%m-%d').date()
         else:
             config.date_range = 'since'
-
-    print(config.start_date)
-    print(config.end_date)
-    print(config.date_range)
 
     return config
