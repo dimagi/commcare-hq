@@ -1046,8 +1046,6 @@ USH_USERCASES_FOR_WEB_USERS = StaticToggle(
     TAG_CUSTOM,
     help_link='https://confluence.dimagi.com/display/saas/USH%3A+Enable+Web+User+Usercase+Creation',
     namespaces=[NAMESPACE_DOMAIN],
-    description="""
-    Toggle to enable the creation of usercases for web users."""
 )
 
 WEBAPPS_STICKY_SEARCH = StaticToggle(
@@ -1056,6 +1054,13 @@ WEBAPPS_STICKY_SEARCH = StaticToggle(
     TAG_CUSTOM,
     namespaces=[NAMESPACE_DOMAIN],
     help_link='https://confluence.dimagi.com/display/saas/COVID%3A+Web+Apps+Sticky+Search',
+)
+
+HIDE_SYNC_BUTTON = StaticToggle(
+    "hide_sync_button",
+    "USH: Hide Sync Button in Web Apps",
+    TAG_CUSTOM,
+    namespaces=[NAMESPACE_DOMAIN],
 )
 
 
