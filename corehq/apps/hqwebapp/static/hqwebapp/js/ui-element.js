@@ -33,7 +33,7 @@ hqDefine('hqwebapp/js/ui-element', function () {
     };
 
     module.key_value_mapping = function (options) {
-        return hqImport('hqwebapp/js/ui_elements/ui-element-key-val-mapping').new(options);
+        return hqImport('hqwebapp/js/ui_elements/bootstrap3/ui-element-key-val-mapping').new(options);
     };
 
     module.serialize = function (obj) {
