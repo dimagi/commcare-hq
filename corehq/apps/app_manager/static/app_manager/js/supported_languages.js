@@ -4,7 +4,7 @@ hqDefine('app_manager/js/supported_languages',[
     "knockout",
     "underscore",
     "hqwebapp/js/initial_page_data",
-    "hqwebapp/js/main",
+    "hqwebapp/js/bootstrap3/main",
     "hqwebapp/js/bootstrap3/knockout_bindings.ko",
 ], function ($, ko, _, initialPageData, hqMain) {
     function Language(langcode, languages) {

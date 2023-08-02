@@ -28,7 +28,7 @@ hqDefine('app_manager/js/visit_scheduler', function () {
             self.saveButton.fire('change');
         };
 
-        self.saveButton = hqImport("hqwebapp/js/main").initSaveButton({
+        self.saveButton = hqImport("hqwebapp/js/bootstrap3/main").initSaveButton({
             unsavedMessage: "You have unchanged schedule settings",
             save: function () {
                 self.saveButton.ajax({
@@ -108,7 +108,7 @@ hqDefine('app_manager/js/visit_scheduler', function () {
         self.questions = params.questions;
         self.save_url = params.save_url;
 
-        self.saveButton = hqImport("hqwebapp/js/main").initSaveButton({
+        self.saveButton = hqImport("hqwebapp/js/bootstrap3/main").initSaveButton({
             unsavedMessage: "You have unsaved schedule settings",
             save: function () {
                 var isValid = self.validate();

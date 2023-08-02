@@ -1,7 +1,7 @@
 hqDefine('hqwebapp/js/ui_elements/ui-element-select', [
     'jquery',
     'underscore',
-    'hqwebapp/js/main',
+    'hqwebapp/js/bootstrap3/main',
 ], function (
     $,
     _,

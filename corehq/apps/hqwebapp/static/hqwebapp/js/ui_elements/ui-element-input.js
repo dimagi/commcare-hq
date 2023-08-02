@@ -1,6 +1,6 @@
 hqDefine('hqwebapp/js/ui_elements/ui-element-input', [
     'jquery',
-    'hqwebapp/js/main',
+    'hqwebapp/js/bootstrap3/main',
     'hqwebapp/js/ui_elements/ui-element-langcode-button',
 ], function (
     $,

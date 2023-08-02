@@ -1,4 +1,4 @@
-hqDefine('hqwebapp/js/main', [
+hqDefine('hqwebapp/js/bootstrap5/main', [
     "jquery",
     "knockout",
     "underscore",

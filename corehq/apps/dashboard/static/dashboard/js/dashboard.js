@@ -4,7 +4,7 @@ hqDefine("dashboard/js/dashboard", [
     'underscore',
     'hqwebapp/js/initial_page_data',
     'hqwebapp/js/components.ko',    // pagination widget
-    'hqwebapp/js/main',     // post-link function
+    'hqwebapp/js/bootstrap3/main',     // post-link function
 ], function (
     $,
     ko,
