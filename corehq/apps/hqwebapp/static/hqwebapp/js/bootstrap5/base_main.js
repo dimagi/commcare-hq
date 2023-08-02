@@ -1,5 +1,5 @@
 hqDefine("hqwebapp/js/bootstrap5/base_main", [
-    'hqwebapp/js/downgrade_modal',
+    'hqwebapp/js/bootstrap5/downgrade_modal',
     'hqwebapp/js/bootstrap3/prepaid_modal',
     'hqwebapp/js/hq.helpers',
     'hqwebapp/js/layout',
