@@ -170,8 +170,7 @@ class SyncCouchToSQLMixin(object):
         self._migration_sync_to_sql(sql_object)
         return sql_object
 
-    def save(self, *args, **kwargs):
-        sync_to_sql = kwargs.pop('sync_to_sql', True)
+    def save(self, *args, sync_to_sql=True, **kwargs):
         super(SyncCouchToSQLMixin, self).save(*args, **kwargs)
         if sync_to_sql:
             try:
@@ -185,8 +184,7 @@ class SyncCouchToSQLMixin(object):
                     message='Could not sync %s SQL object from %s %s' % (sql_class_name,
                         couch_class_name, self._id))
 
-    def delete(self, *args, **kwargs):
-        sync_to_sql = kwargs.pop('sync_to_sql', True)
+    def delete(self, sync_to_sql=True, *args, **kwargs):
         if sync_to_sql:
             sql_object = self._migration_get_sql_object()
             if sql_object is not None:
@@ -288,8 +286,7 @@ class SyncSQLToCouchMixin(object):
         couch_object = self._migration_get_or_create_couch_object()
         self._migration_sync_to_couch(couch_object)
 
-    def save(self, *args, **kwargs):
-        sync_to_couch = kwargs.pop('sync_to_couch', True)
+    def save(self, *args, sync_to_couch=True, **kwargs):
         super(SyncSQLToCouchMixin, self).save(*args, **kwargs)
         if sync_to_couch and sync_to_couch_enabled(self.__class__):
             try:
@@ -303,8 +300,7 @@ class SyncSQLToCouchMixin(object):
                     message='Could not sync %s Couch object from %s %s' % (couch_class_name,
                         sql_class_name, self.pk))
 
-    def delete(self, *args, **kwargs):
-        sync_to_couch = kwargs.pop('sync_to_couch', True)
+    def delete(self, *args, sync_to_couch=True, **kwargs):
         if sync_to_couch and sync_to_couch_enabled(self.__class__):
             couch_object = self._migration_get_couch_object()
             if couch_object is not None:
