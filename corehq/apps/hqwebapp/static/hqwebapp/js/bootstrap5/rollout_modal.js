@@ -1,7 +1,7 @@
 /*
     To use, include this file on a page that also includes hqwebapp/bootstrap3/rollout_modal.html
 */
-hqDefine("hqwebapp/js/rollout_modal", [
+hqDefine("hqwebapp/js/bootstrap5/rollout_modal", [
     'jquery',
     'hqwebapp/js/alert_user',
     'hqwebapp/js/initial_page_data',
