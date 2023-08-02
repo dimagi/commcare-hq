@@ -1271,7 +1271,7 @@ TEMPLATES = [
                 'corehq.util.context_processors.status_page',
                 'corehq.util.context_processors.sentry',
                 'corehq.util.context_processors.bootstrap5',
-                'corehq.util.context_processors.js_privileges',
+                'corehq.util.context_processors.plan_details',
             ],
             'debug': DEBUG,
             'loaders': [
