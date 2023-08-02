@@ -208,7 +208,7 @@
     {% if EULA_COMPLIANCE %}
       {% if request.couch_user and not request.couch_user.is_eula_signed %}
         {% registerurl 'agree_to_eula' %}
-        {% include 'hqwebapp/includes/modal_eula.html' %}
+        {% include 'hqwebapp/includes/bootstrap3/modal_eula.html' %}
       {% endif %}
     {% endif %}
 
