@@ -45,9 +45,9 @@ hqDefine("app_manager/js/details/column", function () {
         self.original.case_tile_field = ko.utils.unwrapObservable(self.original.case_tile_field) || "";
         self.case_tile_field = ko.observable(self.original.case_tile_field);
 
-        self.tileRowStart = ko.observable(self.original.gridY || 1);
+        self.tileRowStart = ko.observable(self.original.grid_y || 1);
         self.tileRowOptions = [""].concat(_.range(1, 4));
-        self.tileColumnStart = ko.observable(self.original.gridX || 1);
+        self.tileColumnStart = ko.observable(self.original.grid_x || 1);
         self.tileColumnOptions = [""].concat(_.range(1, 13));
         self.tileWidth = ko.observable(self.original.width || 3);
         self.tileWidthOptions = ko.computed(function () {
@@ -379,8 +379,8 @@ hqDefine("app_manager/js/details/column", function () {
             column.format = self.format.val();
             column.date_format = self.date_extra.val();
             column.enum = self.enum_extra.getItems();
-            column.gridX = self.tileColumnStart();
-            column.gridY = self.tileRowStart();
+            column.grid_x = self.tileColumnStart();
+            column.grid_y = self.tileRowStart();
             column.height = self.tileHeight();
             column.width = self.tileWidth();
             column.graph_configuration = self.format.val() === "graph" ? self.graph_extra.val() : null;

@@ -1823,8 +1823,8 @@ class DetailColumn(IndexedSchema):
     useXpathExpression = BooleanProperty(default=False)
     format = StringProperty(exclude_if_none=True)
 
-    gridX = IntegerProperty(exclude_if_none=True)
-    gridY = IntegerProperty(exclude_if_none=True)
+    grid_x = IntegerProperty(exclude_if_none=True)
+    grid_y = IntegerProperty(exclude_if_none=True)
     width = IntegerProperty(exclude_if_none=True)
     height = IntegerProperty(exclude_if_none=True)
 
