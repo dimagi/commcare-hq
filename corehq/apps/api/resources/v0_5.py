@@ -96,6 +96,7 @@ from corehq.apps.users.dbaccessors import (
 )
 from corehq.apps.users.models import (
     CommCareUser,
+    ConnectIDUserLink,
     CouchUser,
     HqPermissions,
     WebUser,
@@ -232,11 +233,14 @@ class CommCareUserResource(v0_1.CommCareUserResource):
         except ValidationError as e:
             raise BadRequest(e.message)
 
+        if not (bundle.data.get('password') or bundle.data.get('connect_username')):
+            raise BadRequest(_('Password or connect username required'))
+
         try:
             bundle.obj = CommCareUser.create(
                 domain=kwargs['domain'],
                 username=username,
-                password=bundle.data['password'],
+                password=bundle.data.get('password'),
                 created_by=bundle.request.couch_user,
                 created_via=USER_CHANGE_VIA_API,
                 email=bundle.data.get('email', '').lower(),
@@ -258,6 +262,8 @@ class CommCareUserResource(v0_1.CommCareUserResource):
             else:
                 django_user.delete()
             raise
+        if bundle.data.get('connect_username'):
+            ConnectIDUserLink.objects.create(domain=bundle.request.domain, connect_username=bundle.data['connect_username'], commcare_user=bundle.obj.get_django_user())
         return bundle
 
     def obj_update(self, bundle, **kwargs):
