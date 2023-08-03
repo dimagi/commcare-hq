@@ -34,6 +34,7 @@ hqDefine("cloudcare/js/form_entry/const", function () {
         TIME_12_HOUR: '12-hour',
         ETHIOPIAN: 'ethiopian',
         SIGNATURE: 'signature',
+        PER_ROW: '-per-row',
 
         // Note it's important to differentiate these two
         NO_PENDING_ANSWER: undefined,
@@ -93,5 +94,8 @@ hqDefine("cloudcare/js/form_entry/const", function () {
         FLOAT_LENGTH_LIMIT: 15,
         FLOAT_VALUE_LIMIT: +("9".repeat(14)),
         FILE_PREFIX: "C:\\fakepath\\",
+
+        // Boostrap
+        GRID_COLUMNS: 12,
     };
 });

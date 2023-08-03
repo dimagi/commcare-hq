@@ -595,7 +595,6 @@ hqDefine("cloudcare/js/form_entry/form_ui", function () {
         self.throttle = 200;
         self.controlWidth = constants.CONTROL_WIDTH;
         self.labelWidth = constants.LABEL_WIDTH;
-
         // If the question has ever been answered, set this to true.
         self.hasAnswered = false;
 
@@ -733,6 +732,12 @@ hqDefine("cloudcare/js/form_entry/form_ui", function () {
      */
     Question.prototype.stylesContains = function (pattern) {
         return this.stylesContaining(pattern).length > 0;
+    };
+
+    Question.prototype.setWidths = function () {
+        let perRowPattern = new RegExp(`\\d+${constants.PER_ROW}(\\s|$)`);
+        let perRowStyle = (this.stylesContains(perRowPattern)) ? this.stylesContaining(perRowPattern)[0] : null;
+        const numPerRow = perRowStyle !== null ? parseInt(perRowStyle.split("-")[0], 10) : null;
     };
 
     return {
