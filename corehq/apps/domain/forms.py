@@ -660,7 +660,7 @@ class DomainGlobalSettingsForm(forms.Form):
             setting_obj.save()
 
     def _save_orphan_case_alerts_setting(self, domain):
-        domain.orphan_case_alerts_warning = self.cleaned_data.get("orphan_case_alerts_warning")
+        domain.orphan_case_alerts_warning = self.cleaned_data.get("orphan_case_alerts_warning", False)
 
     def save(self, request, domain):
         domain.hr_name = self.cleaned_data['hr_name']
