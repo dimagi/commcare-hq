@@ -193,6 +193,7 @@
 
 
 <script type="text/html" id="question-fullform-ko-template">
+  <div data-bind="class:questionTileWidth">
   <!-- ko if: datatype() !== 'info' -->
   <div class="q form-group" data-bind="
             css: {
@@ -295,6 +296,7 @@
     </div>
   </div>
   <!-- /ko -->
+  </div>
 </script>
 
 <script type="text/html" id="repeat-juncture-fullform-ko-template">
