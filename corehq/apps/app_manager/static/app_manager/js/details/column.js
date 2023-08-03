@@ -45,15 +45,15 @@ hqDefine("app_manager/js/details/column", function () {
         self.original.case_tile_field = ko.utils.unwrapObservable(self.original.case_tile_field) || "";
         self.case_tile_field = ko.observable(self.original.case_tile_field);
 
-        self.tileRowStart = ko.observable(1);
+        self.tileRowStart = ko.observable(self.original.gridY || 1);
         self.tileRowOptions = [""].concat(_.range(1, 4));
-        self.tileColumnStart = ko.observable(1);
+        self.tileColumnStart = ko.observable(self.original.gridX || 1);
         self.tileColumnOptions = [""].concat(_.range(1, 13));
-        self.tileWidth = ko.observable(3);
+        self.tileWidth = ko.observable(self.original.width || 3);
         self.tileWidthOptions = ko.computed(function () {
             return _.range(1, 14 - (self.tileColumnStart() || 1));
         });
-        self.tileHeight = ko.observable(1);
+        self.tileHeight = ko.observable(self.original.height || 1);
         self.tileHeightOptions = ko.computed(function () {
             return _.range(1, 5 - (self.tileRowStart() || 1));
         });
