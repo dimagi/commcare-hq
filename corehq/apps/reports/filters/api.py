@@ -239,15 +239,14 @@ def copy_cases(request, domain, *args, **kwargs):
     censor_data = {prop['name']: prop['label'] for prop in body.get('sensitive_properties', [])}
 
     try:
-        copied_count = _copy_cases(
+        copied_cases = _copy_cases(
             domain=domain,
             case_ids=case_ids,
             to_owner=new_owner,
             censor_data=censor_data,
-            count_only=True,
         )
         return JsonResponse({
-            'copied_cases': copied_count,
+            'copied_cases': len(copied_cases),
         })
     except Exception as e:
         return JsonResponse({'error': _(str(e))}, status=400)
@@ -258,7 +257,6 @@ def _copy_cases(
     case_ids,
     to_owner,
     censor_data=None,
-    count_only=False
 ):
     """
     Copies the cases governed by ``case_ids`` to the respective
@@ -273,11 +271,7 @@ def _copy_cases(
         specified as a dict. The keys corresponding to the
         property/attribute and the value specifies the type of censored
         data, i.e. number or date
-    :param count_only: specifies whether to return only the number
-        of copied cases.
-
-    :return: The copied cases. If `count_only` is True only the count
-        will be returned.
+    :returns: The copied cases
     """
     from corehq.apps.hqcase.utils import CASEBLOCK_CHUNKSIZE
 
@@ -286,7 +280,7 @@ def _copy_cases(
 
     original_cases = CommCareCase.objects.get_cases(case_ids=case_ids, domain=domain)
     if not any(original_cases):
-        return [] if not count_only else 0
+        return []
 
     processed_cases = {}
     copied_cases_case_blocks = []
@@ -374,7 +368,4 @@ def _copy_cases(
         )
         copied_cases.extend(cases)
 
-    if count_only:
-        return len(copied_cases)
-    else:
-        return copied_cases
+    return copied_cases
