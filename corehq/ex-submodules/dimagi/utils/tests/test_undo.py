@@ -5,7 +5,7 @@ from dimagi.ext.couchdbkit import Document
 from dimagi.utils.couch.undo import DeleteRecord, get_deleted_doc_type, undo_delete
 
 from corehq.apps.cleanup.models import DeletedCouchDoc
-
+from corehq.apps.groups.models import DeleteGroupRecord
 
 class TestDocument(Document):
     pass
@@ -42,15 +42,16 @@ class TestDeleteAndUndo(TestCase):
             'doc_type': 'TestDocument-Deleted',
             'domain': 'test',
         })
-        DeletedCouchDoc.objects.create(
+        rec = DeleteGroupRecord(
             doc_id=doc["_id"],
-            doc_type=doc["doc_type"],
-            deleted_on=datetime.utcnow(),
+            datetime=datetime.utcnow(),
         )
-
-        undo_delete(doc, save=False)
+        rec.save()
+        params = {'doc_id': rec._id, 'doc_type': rec.doc_type}
+        assert DeletedCouchDoc.objects.get(**params)
+        undo_delete(rec, doc, save=False)
         with self.assertRaises(DeletedCouchDoc.DoesNotExist):
-            DeletedCouchDoc.objects.get(doc_id=doc["_id"])
+            DeletedCouchDoc.objects.get(**params)
 
     def test_delete_record_cleans_up_after_itself(self):
         rec = DeleteRecord(doc_id="980023a6852643a19b87f2142b0c3ce1")

@@ -123,10 +123,11 @@ class GroupTest(TestCase):
         group.save()
         rec = group.soft_delete()
         assert group.doc_type.endswith("-Deleted")
-        assert DeletedCouchDoc.objects.get(doc_id=rec._id, doc_type=rec.doc_type)
+        params = {'doc_id': rec._id, 'doc_type': rec.doc_type}
+        assert DeletedCouchDoc.objects.get(**params)
         rec.undo()
         with self.assertRaises(DeletedCouchDoc.DoesNotExist):
-            DeletedCouchDoc.objects.get(doc_id=rec._id, doc_type=rec.doc_type)
+            DeletedCouchDoc.objects.get(**params)
 
 
 class TestDeleteAllGroups(TestCase):

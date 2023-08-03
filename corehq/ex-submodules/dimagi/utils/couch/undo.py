@@ -93,8 +93,8 @@ def get_deleted_doc_type(document_class_or_instance):
 
 def undo_delete(delete_record, document, save=True):
     DeletedCouchDoc.objects.filter(
-        doc_type=delete_record['doc_type'],
-        doc_id=delete_record['_id'],
+        doc_id=delete_record._id,
+        doc_type=delete_record.doc_type,
     ).delete()
     document.doc_type = remove_deleted_doc_type_suffix(document['doc_type'])
     if save:

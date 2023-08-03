@@ -125,9 +125,11 @@ class AppManagerTest(TestCase, TestXmlMixin):
             deleted_on=datetime.utcnow(),
         )
         assert obj.doc_type.endswith("-Deleted"), obj.doc_type
+        params = {'doc_id': rec._id, 'doc_type': rec.doc_type}
+        assert DeletedCouchDoc.objects.get(**params)
         rec.undo()
         with self.assertRaises(DeletedCouchDoc.DoesNotExist):
-            DeletedCouchDoc.objects.get(doc_id=rec._id, doc_type=rec.doc_type)
+            DeletedCouchDoc.objects.get(**params)
 
     def testDeleteForm(self):
         self.app.delete_form(self.app.modules[0].unique_id,
@@ -139,10 +141,11 @@ class AppManagerTest(TestCase, TestXmlMixin):
     def test_undo_delete_form_removes_deleted_couch_doc_record(self):
         form = self.app.modules[0].forms[0]
         rec = self.app.delete_form(self.app.modules[0].unique_id, form.unique_id)
-        assert DeletedCouchDoc.objects.get(doc_id=rec._id, doc_type=rec.doc_type)
+        params = {'doc_id': rec._id, 'doc_type': rec.doc_type}
+        assert DeletedCouchDoc.objects.get(**params)
         rec.undo()
         with self.assertRaises(DeletedCouchDoc.DoesNotExist):
-            DeletedCouchDoc.objects.get(doc_id=rec._id, doc_type=rec.doc_type)
+            DeletedCouchDoc.objects.get(**params)
 
     def testDeleteModule(self):
         self.app.delete_module(self.app.modules[0].unique_id)
@@ -151,10 +154,11 @@ class AppManagerTest(TestCase, TestXmlMixin):
     def test_undo_delete_module_removes_deleted_couch_doc_record(self):
         module = self.app.modules[0]
         rec = self.app.delete_module(module.unique_id)
-        assert DeletedCouchDoc.objects.get(doc_id=rec._id, doc_type=rec.doc_type)
+        params = {'doc_id': rec._id, 'doc_type': rec.doc_type}
+        assert DeletedCouchDoc.objects.get(**params)
         rec.undo()
         with self.assertRaises(DeletedCouchDoc.DoesNotExist):
-            DeletedCouchDoc.objects.get(doc_id=rec._id, doc_type=rec.doc_type)
+            DeletedCouchDoc.objects.get(**params)
 
     def assertModuleOrder(self, actual_modules, expected_modules):
         self.assertEqual([m.name['en'] for m in actual_modules],

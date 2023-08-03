@@ -144,10 +144,11 @@ class TestDomainMemberships(TestCase):
     def test_undo_delete_domain_membership_removes_deleted_couch_doc_record(self):
         rec = self.webuser.delete_domain_membership(self.domain, create_record=True)
         self.webuser.save()
-        assert DeletedCouchDoc.objects.get(doc_id=rec._id, doc_type=rec.doc_type)
+        params = {'doc_id': rec._id, 'doc_type': rec.doc_type}
+        assert DeletedCouchDoc.objects.get(**params)
         rec.undo()
         with self.assertRaises(DeletedCouchDoc.DoesNotExist):
-            DeletedCouchDoc.objects.get(doc_id=rec._id, doc_type=rec.doc_type)
+            DeletedCouchDoc.objects.get(**params)
 
     def testTransferMembership(self):
         self.webuser.transfer_domain_membership(self.domain, self.webuser2)
