@@ -593,8 +593,7 @@ hqDefine("cloudcare/js/form_entry/form_ui", function () {
             self.domain_meta = parseMeta(json.datatype, json.style);
         }
         self.throttle = 200;
-        self.controlWidth = constants.CONTROL_WIDTH;
-        self.labelWidth = constants.LABEL_WIDTH;
+        self.setWidths();
         // If the question has ever been answered, set this to true.
         self.hasAnswered = false;
 
@@ -735,9 +734,13 @@ hqDefine("cloudcare/js/form_entry/form_ui", function () {
     };
 
     Question.prototype.setWidths = function () {
-        let perRowPattern = new RegExp(`\\d+${constants.PER_ROW}(\\s|$)`);
-        let perRowStyle = (this.stylesContains(perRowPattern)) ? this.stylesContaining(perRowPattern)[0] : null;
+        const perRowPattern = new RegExp(`\\d+${constants.PER_ROW}(\\s|$)`);
+        const perRowStyle = (this.stylesContains(perRowPattern)) ? this.stylesContaining(perRowPattern)[0] : null;
         const numPerRow = perRowStyle !== null ? parseInt(perRowStyle.split("-")[0], 10) : null;
+
+        this.controlWidth = numPerRow !== null ? constants.FULL_WIDTH : constants.CONTROL_WIDTH;
+        this.labelWidth = numPerRow !== null ? constants.FULL_WIDTH : constants.LABEL_WIDTH;
+        this.questionTileWidth = numPerRow !== null ? `col-sm-${constants.GRID_COLUMNS / numPerRow}` : constants.FULL_WIDTH;
     };
 
     return {

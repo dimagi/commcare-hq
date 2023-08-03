@@ -47,6 +47,7 @@ hqDefine("cloudcare/js/form_entry/const", function () {
         BLOCK_NONE: 'block-none',
         BLOCK_SUBMIT: 'block-submit',
         BLOCK_ALL: 'block-all',
+        FULL_WIDTH: 'col-sm-12',
 
         // XForm Navigation
         QUESTIONS_FOR_INDEX: 'questions_for_index',
