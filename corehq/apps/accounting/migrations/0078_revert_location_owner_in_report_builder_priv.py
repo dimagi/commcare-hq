@@ -6,6 +6,7 @@ from corehq import privileges
 from corehq.apps.accounting.utils import get_granted_privs_for_grantee, get_all_roles_by_slug
 
 ADVANCED_PLAN_ROLE_SLUG = 'advanced_plan_v0'
+ENTERPRISE_PLAN_ROLE_SLUG = 'enterprise_plan_v0'
 
 
 @skip_on_fresh_install
@@ -18,26 +19,31 @@ def _remove_privilege_from_plan(apps, schema_editor):
 
 
 @skip_on_fresh_install
-def _grant_privilege_to_advanced_plan(*args, **kwargs):
-    # This adds the removed privilege back to the Advanced plan
-    # and is modelled after the ensure_grants function.
-    advanced_plan_privileges = get_granted_privs_for_grantee()[ADVANCED_PLAN_ROLE_SLUG]
+def _grant_privilege_to_plans(*args, **kwargs):
+    # This adds the removed privilege back to the Advanced and
+    # Enterprise plans and is modelled after the ensure_grants function.
+    priv_role = Role(
+        slug=privileges.SHOW_OWNER_LOCATION_PROPERTY_IN_REPORT_BUILDER,
+        name='Additional "Owner (Location)" property in report builder reports.',
+        description='Show an additional "Owner (Location)" property in report builder reports.'
+    )
+    priv_role.save()
 
-    if privileges.SHOW_OWNER_LOCATION_PROPERTY_IN_REPORT_BUILDER not in advanced_plan_privileges:
-        advanced_plan_role = get_all_roles_by_slug()[ADVANCED_PLAN_ROLE_SLUG]
-        priv_role = Role(
-            slug=privileges.SHOW_OWNER_LOCATION_PROPERTY_IN_REPORT_BUILDER,
-            name='Application error report',
-            description='Show Application Error Report'
-        )
-        priv_role.save()
+    grants_to_create = []
+    for grantee_slug in [ADVANCED_PLAN_ROLE_SLUG, ENTERPRISE_PLAN_ROLE_SLUG]:
+        grantee_privileges = get_granted_privs_for_grantee()[grantee_slug]
+
+        if privileges.SHOW_OWNER_LOCATION_PROPERTY_IN_REPORT_BUILDER not in grantee_privileges:
+            grantee_role = get_all_roles_by_slug()[grantee_slug]
+            grants_to_create.append(
+                Grant(
+                    from_role=grantee_role,
+                    to_role=priv_role,
+                )
+            )
+    if grants_to_create:
         Role.get_cache().clear()
-
-        # Grant the privilege to the advanced_plan
-        Grant.objects.create(
-            from_role=advanced_plan_role,
-            to_role=priv_role,
-        )
+        Grant.objects.bulk_create(grants_to_create)
 
 
 class Migration(migrations.Migration):
@@ -49,6 +55,6 @@ class Migration(migrations.Migration):
     operations = [
         migrations.RunPython(
             _remove_privilege_from_plan,
-            reverse_code=_grant_privilege_to_advanced_plan,
+            reverse_code=_grant_privilege_to_plans,
         ),
     ]
