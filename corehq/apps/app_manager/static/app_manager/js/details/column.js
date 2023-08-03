@@ -11,20 +11,20 @@
  * is responsible for creating the tab "columns" and injecting them into itself.
  */
 hqDefine("app_manager/js/details/column", function () {
-    var uiElement = hqImport('hqwebapp/js/ui-element');
+    const uiElement = hqImport('hqwebapp/js/ui-element');
 
     return function (col, screen) {
         /*
             column properties: model, field, header, format
             column extras: enum, late_flag
         */
-        var self = {};
+        const self = {};
         hqImport("hqwebapp/js/main").eventize(self);
         self.original = JSON.parse(JSON.stringify(col));
 
         // Set defaults for normal (non-tab) column attributes
-        var Utils = hqImport('app_manager/js/details/utils');
-        var defaults = {
+        const Utils = hqImport('app_manager/js/details/utils');
+        const defaults = {
             calc_xpath: ".",
             enum: [],
             field: "",
@@ -68,7 +68,7 @@ hqDefine("app_manager/js/details/column", function () {
         });
         self.tileContent = ko.observable();
         self.setTileContent = function () {
-            var content = self.header.val();
+            let content = self.header.val();
             if (content) {
                 content += ": ";
             }
@@ -83,7 +83,7 @@ hqDefine("app_manager/js/details/column", function () {
         };
 
         // Set up tab defaults
-        var tabDefaults = {
+        const tabDefaults = {
             isTab: false,
             hasNodeset: false,
             nodeset: "",
@@ -106,7 +106,7 @@ hqDefine("app_manager/js/details/column", function () {
             value: "case",
         }]).val(self.original.model);
 
-        var icon = Utils.isAttachmentProperty(self.original.field) ? 'fa fa-paperclip' : null;
+        const icon = Utils.isAttachmentProperty(self.original.field) ? 'fa fa-paperclip' : null;
         self.field = undefined;
         if (self.original.hasAutocomplete) {
             self.field = uiElement.select();
@@ -124,7 +124,7 @@ hqDefine("app_manager/js/details/column", function () {
         });
 
         (function () {
-            var i,
+            let i,
                 lang,
                 visibleVal = "",
                 invisibleVal = "";
@@ -186,7 +186,7 @@ hqDefine("app_manager/js/details/column", function () {
         }, self);
 
         // Add the graphing option if self is a graph so self we can set the value to graph
-        var menuOptions = Utils.getFieldFormats();
+        let menuOptions = Utils.getFieldFormats();
         if (self.original.format === "graph") {
             menuOptions = menuOptions.concat([{
                 value: "graph",
@@ -195,9 +195,9 @@ hqDefine("app_manager/js/details/column", function () {
         }
 
         if (self.useXpathExpression) {
-            var menuOptionsToRemove = ['picture', 'audio'];
-            for (var i = 0; i < menuOptionsToRemove.length; i++) {
-                for (var j = 0; j < menuOptions.length; j++) {
+            const menuOptionsToRemove = ['picture', 'audio'];
+            for (let i = 0; i < menuOptionsToRemove.length; i++) {
+                for (let j = 0; j < menuOptions.length; j++) {
                     if (
                         menuOptions[j].value !== self.original.format
                         && menuOptions[j].value === menuOptionsToRemove[i]
@@ -211,7 +211,7 @@ hqDefine("app_manager/js/details/column", function () {
         self.format = uiElement.select(menuOptions).val(self.original.format || null);
 
         (function () {
-            var o = {
+            const o = {
                 lang: self.lang,
                 langs: self.screen.langs,
                 module_id: self.screen.config.module_id,
@@ -223,7 +223,7 @@ hqDefine("app_manager/js/details/column", function () {
             };
             self.enum_extra = uiElement.key_value_mapping(o);
         }());
-        var graphConfigurationUiElement = hqImport('app_manager/js/details/graph_config').graphConfigurationUiElement;
+        const graphConfigurationUiElement = hqImport('app_manager/js/details/graph_config').graphConfigurationUiElement;
         self.graph_extra = graphConfigurationUiElement({
             childCaseTypes: self.screen.childCaseTypes,
             fixtures: self.screen.fixtures,
@@ -236,7 +236,7 @@ hqDefine("app_manager/js/details/column", function () {
             self.graph_extra.setName(self.header.val());
         });
 
-        var yyyy = new Date().getFullYear(),
+        const yyyy = new Date().getFullYear(),
             yy = String(yyyy).substring(2);
         self.date_extra = uiElement.select([{
             label: '31/10/' + yy,
@@ -377,7 +377,7 @@ hqDefine("app_manager/js/details/column", function () {
             hqImport('analytix/js/google').track.event('Case List Config', 'Display Format', event.target.value);
         });
         self.serialize = function () {
-            var column = self.original;
+            const column = self.original;
             column.field = self.field.val();
             column.header[self.lang] = self.header.val();
             column.format = self.format.val();
@@ -395,7 +395,7 @@ hqDefine("app_manager/js/details/column", function () {
             column.case_tile_field = self.case_tile_field();
             if (self.isTab) {
                 // Note: starting_index is added by screenModel.serialize
-                var tab = {
+                let tab = {
                     header: column.header,
                     isTab: true,
                     starting_index: self.starting_index,
@@ -417,7 +417,7 @@ hqDefine("app_manager/js/details/column", function () {
             self.grip = grip;
         };
         self.copyCallback = function () {
-            var column = self.serialize();
+            const column = self.serialize();
             // add a marker self self is copied for self purpose
             return JSON.stringify({
                 type: 'detail-screen-config:Column',
