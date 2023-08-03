@@ -85,16 +85,15 @@ class CaseTileHelper(object):
 
             for column_info in self.detail_column_infos:
                 # column_info is an instance of DetailColumnInfo named tuple.
+                style = Style(grid_x=column_info.column.gridX, grid_y=column_info.column.gridY,
+                              grid_height=column_info.column.height, grid_width=column_info.column.width)
                 fields = get_column_generator(
                     self.app, self.module, self.detail,
-                    detail_type=self.detail_type, *column_info
+                    detail_type=self.detail_type,
+                    style=style,
+                    *column_info
                 ).fields
                 for field in fields:
-                    field.style = Style(
-                        grid_x=column_info.column.gridX,
-                        grid_y=column_info.column.gridY,
-                        grid_height=column_info.column.height,
-                        grid_width=column_info.column.width)
                     detail.fields.append(field)
         else:
             # Get template context

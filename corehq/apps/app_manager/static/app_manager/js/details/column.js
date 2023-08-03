@@ -381,7 +381,7 @@ hqDefine("app_manager/js/details/column", function () {
             column.enum = self.enum_extra.getItems();
             column.gridX = self.tileColumnStart();
             column.gridY = self.tileRowStart();
-            column.heigth = self.tileHeight();
+            column.height = self.tileHeight();
             column.width = self.tileWidth();
             column.graph_configuration = self.format.val() === "graph" ? self.graph_extra.val() : null;
             column.late_flag = parseInt(self.late_flag_extra.val(), 10);
