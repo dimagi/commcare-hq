@@ -100,7 +100,7 @@ hqDefine("app_manager/js/details/screen", function () {
         });
         self.showCaseTileColumn = ko.computed(function () {
             const featureFlag = hqImport('hqwebapp/js/toggles').toggleEnabled('CASE_LIST_TILE')
-            const caseTileTemplate = self.caseTileTemplate() && self.caseTileTemplate() !== "tile_config";
+            const caseTileTemplate = self.caseTileTemplate() && self.caseTileTemplate() !== "custom";
             return caseTileTemplate && featureFlag;
         });
         self.persistCaseContext = ko.observable(detail.persist_case_context || false);
