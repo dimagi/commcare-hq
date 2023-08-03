@@ -151,6 +151,7 @@ from corehq.apps.app_manager.xpath import (
 from corehq.apps.appstore.models import SnapshotMixin
 from corehq.apps.builds.models import BuildRecord, BuildSpec
 from corehq.apps.builds.utils import get_default_build_spec
+from corehq.apps.cleanup.models import DeletedCouchDoc
 from corehq.apps.domain.models import Domain
 from corehq.apps.hqmedia.models import (
     ApplicationMediaMixin,
@@ -5686,6 +5687,10 @@ class DeleteApplicationRecord(DeleteRecord):
 
     def undo(self):
         app = ApplicationBase.get(self.app_id)
+        DeletedCouchDoc.objects.filter(
+            doc_id=self._id,
+            doc_type=self.doc_type,
+        ).delete()
         app.doc_type = app.get_doc_type()
         app.save(increment_version=False)
 
@@ -5700,6 +5705,10 @@ class DeleteModuleRecord(DeleteRecord):
         app = Application.get(self.app_id)
         modules = app.modules
         modules.insert(self.module_id, self.module)
+        DeletedCouchDoc.objects.filter(
+            doc_id=self._id,
+            doc_type=self.doc_type,
+        ).delete()
         app.modules = modules
         app.save()
 
@@ -5722,6 +5731,10 @@ class DeleteFormRecord(DeleteRecord):
             )
         else:
             module = app.modules[self.module_id]
+        DeletedCouchDoc.objects.filter(
+            doc_id=self._id,
+            doc_type=self.doc_type,
+        ).delete()
         forms = module.forms
         forms.insert(self.form_id, self.form)
         module.forms = forms

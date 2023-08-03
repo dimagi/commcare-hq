@@ -57,6 +57,7 @@ from dimagi.utils.modules import to_function
 from dimagi.utils.web import get_static_url_prefix
 
 from corehq.apps.app_manager.const import USERCASE_TYPE
+from corehq.apps.cleanup.models import DeletedCouchDoc
 from corehq.apps.commtrack.const import USER_LOCATION_OWNER_MAP_TYPE
 from corehq.apps.domain.models import Domain, LicenseAgreement
 from corehq.apps.domain.shortcuts import create_user
@@ -2838,6 +2839,10 @@ class DomainRemovalRecord(DeleteRecord):
         user.domain_memberships.append(self.domain_membership)
         user.domains.append(self.domain)
         user.save()
+        DeletedCouchDoc.objects.filter(
+            doc_id=self._id,
+            doc_type=self.doc_type,
+        ).delete()
         if TABLEAU_USER_SYNCING.enabled(self.domain):
             from corehq.apps.reports.util import add_tableau_user
             add_tableau_user(self.domain, user.username)
