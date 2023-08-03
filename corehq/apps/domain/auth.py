@@ -328,16 +328,31 @@ class HQApiKeyAuthentication(ApiKeyAuthentication):
         return username, api_key
 
 
+def get_connectid_userinfo(token):
+    user_info = f"{settings.CONNECTID_USERINFO_URL}"
+    user = requests.get(user_info, headers={"AUTHORIZATION": f"Bearer {token}"})
+    connect_username = user.json().get("sub")
+    return connect_username
+
+
 class ConnectIDAuthBackend:
 
     def authenticate(self, request, username, password):
+        """
+        Django authentication backend for requests that authenticate with tokens from ConnectID
+        This is currently only allowed for the oauth token view, and is used to generate an oauth token
+        in HQ, given a ConnectID token.
+
+        username: the username of an HQ mobile worker that has already been linked to a ConnectID user
+        password: an oauth access token issued by ConnectID
+        """
         # Only allow for the token backend, for now
         if not request.path == '/oauth/token/':
            return None
         couch_user = CouchUser.get_by_username(username)
-        user_info = f"{settings.CONNECTID_USERINFO_URL}"
-        user = requests.get(user_info, headers={"AUTHORIZATION": f"Bearer {password}"})
-        connect_username = user.json()["sub"]
+        connect_username = get_connectid_userinfo(password)
+        if connect_username is None:
+            return None
         link = ConnectIDUserLink.objects.get(
             connectid_username=connect_username,
             domain=couch_user.domain

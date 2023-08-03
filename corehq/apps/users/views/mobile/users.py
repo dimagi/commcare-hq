@@ -55,6 +55,7 @@ from corehq.apps.custom_data_fields.models import (
     CUSTOM_DATA_FIELD_PREFIX,
     PROFILE_SLUG,
 )
+from corehq.apps.domain.auth import get_connectid_userinfo
 from corehq.apps.domain.decorators import (
     domain_admin_required,
     login_and_domain_required,
@@ -1666,10 +1667,12 @@ class CommCareUserConfirmAccountBySMSView(CommCareUserConfirmAccountView):
 @require_POST
 @login_or_basic_ex(allow_cc_users=True)
 def link_connectid_user(request, domain):
-    token = request.POST["token"]
-    user_info = f"{settings.CONNECTID_USERINFO_URL}"
-    user = requests.get(user_info, headers={"AUTHORIZATION": f"Bearer {token}"})
-    connectid_username = user.json().get("sub")
-    link = ConnectIDUserLink(connectid_username=connectid_username, commcare_user=request.user, domain=request.domain)
-    link.save()
-    return HttpResponse()
+    token = request.POST.get("token")
+    if token is None:
+        return HttpResponseBadRequest("Token Required")
+    connectid_username = get_connectid_userinfo(token)
+    link, new = ConnectIDUserLink.objects.get_or_create(connectid_username=connectid_username, commcare_user=request.user, domain=request.domain)
+    if new:
+        return HttpResponse(status=201)
+    else:
+        return HttpResponse()
