@@ -188,6 +188,11 @@ hqDefine("cloudcare/js/form_entry/form_ui", function () {
         var mapping = {
             caption: {
                 update: function (options) {
+                    let parentForm = getParentForm(self);
+                    let oqps = parentForm.displayOptions.oneQuestionPerScreen != undefined && parentForm.displayOptions.oneQuestionPerScreen();
+                    if (!oqps) {
+                        return null;
+                    }
                     return options.data ? DOMPurify.sanitize(options.data.replace(/\n/g, '<br/>')) : null;
                 },
             },
