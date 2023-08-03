@@ -22,12 +22,15 @@ def _remove_privilege_from_plan(apps, schema_editor):
 def _grant_privilege_to_plans(*args, **kwargs):
     # This adds the removed privilege back to the Advanced and
     # Enterprise plans and is modelled after the ensure_grants function.
-    priv_role = Role(
-        slug=privileges.SHOW_OWNER_LOCATION_PROPERTY_IN_REPORT_BUILDER,
-        name='Additional "Owner (Location)" property in report builder reports.',
-        description='Show an additional "Owner (Location)" property in report builder reports.'
-    )
-    priv_role.save()
+    try:
+        priv_role = Role.objects.get(slug=privileges.SHOW_OWNER_LOCATION_PROPERTY_IN_REPORT_BUILDER)
+    except Role.DoesNotExist:
+        priv_role = Role(
+            slug=privileges.SHOW_OWNER_LOCATION_PROPERTY_IN_REPORT_BUILDER,
+            name='Additional "Owner (Location)" property in report builder reports.',
+            description='Show an additional "Owner (Location)" property in report builder reports.'
+        )
+        priv_role.save()
 
     grants_to_create = []
     for grantee_slug in [ADVANCED_PLAN_ROLE_SLUG, ENTERPRISE_PLAN_ROLE_SLUG]:
