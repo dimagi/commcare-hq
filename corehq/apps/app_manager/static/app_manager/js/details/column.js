@@ -311,6 +311,10 @@ hqDefine("app_manager/js/details/column", function () {
             self[element].on('change', fireChange);
         });
         self.case_tile_field.subscribe(fireChange);
+        self.tileRowStart.subscribe(fireChange);
+        self.tileColumnStart.subscribe(fireChange);
+        self.tileWidth.subscribe(fireChange);
+        self.tileHeight.subscribe(fireChange);
 
         self.$format = $('<div/>').append(self.format.ui);
         self.$format.find("select").css("margin-bottom", "5px");
