@@ -53,13 +53,11 @@ class TestReportConfig(TestCase):
             'can_access_all_locations': True
         }
 
-    def tearDown(self) -> None:
-        self.config.delete()
-
     def test_report_is_shared_on_domain(self):
         self.config = ReportConfig(
             domain=self.domain,
         )
+        self.addCleanup(self.config.delete)
         self.config.save()
         self.assertFalse(self.config.is_shared_on_domain())
 
@@ -68,6 +66,7 @@ class TestReportConfig(TestCase):
             self.report_type, self.report_slug, self.user_id, self.domain, self.request_data
         )
         self.config.save()
+        self.addCleanup(self.config.delete)
         self.assertEqual(self.config.filters.get('search_xpath'), 'case_name="EXAMPLEXPATH"')
         self.assertEqual(self.config.filters.get('explorer_columns'),
                          '[{"name":"@case_type","label":"@case_type"},'
@@ -79,6 +78,7 @@ class TestReportConfig(TestCase):
             self.report_type, self.report_slug, self.user_id, self.domain, self.request_data
         )
         self.config.save()
+        self.addCleanup(self.config.delete)
         self.assertEqual(self.config.filters.get('startdate'), None)
         self.assertEqual(self.config.filters.get('enddate'), None)
 
