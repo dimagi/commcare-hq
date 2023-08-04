@@ -49,7 +49,7 @@ class TestDeleteAndUndo(TestCase):
         rec.save()
         params = {'doc_id': rec._id, 'doc_type': rec.doc_type}
         assert DeletedCouchDoc.objects.get(**params)
-        undo_delete(rec, doc, save=False)
+        undo_delete(doc, delete_record=rec, save=False)
         with self.assertRaises(DeletedCouchDoc.DoesNotExist):
             DeletedCouchDoc.objects.get(**params)
 
