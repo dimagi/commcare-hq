@@ -2404,6 +2404,15 @@ FCM_NOTIFICATION = StaticToggle(
                 'Conditional Alerts in Messaging.'
 )
 
+SHOW_OWNER_LOCATION_PROPERTY_IN_REPORT_BUILDER_TOGGLE = StaticToggle(
+    'show_owner_location_property_in_report_builder',
+    label='Show an additional "Owner (Location)" property in report builder reports.',
+    tag=TAG_SOLUTIONS_OPEN,
+    namespaces=[NAMESPACE_DOMAIN],
+    help_link='https://confluence.dimagi.com/display/saas/Enable+creation+of+report+builder+reports+that+are+location+safe',  # noqa: E501
+    description='This can be used to create report builder reports that are location-safe.'
+)
+
 
 class FrozenPrivilegeToggle(StaticToggle):
     """
@@ -2591,14 +2600,4 @@ APPLICATION_ERROR_REPORT = FrozenPrivilegeToggle(
     description="Show Application Error Report.",
     # TODO: Move to public wiki
     help_link='https://confluence.dimagi.com/display/saas/Show+Application+Error+Report+Feature+Flag'
-)
-
-SHOW_OWNER_LOCATION_PROPERTY_IN_REPORT_BUILDER = FrozenPrivilegeToggle(
-    privileges.SHOW_OWNER_LOCATION_PROPERTY_IN_REPORT_BUILDER,
-    'show_owner_location_property_in_report_builder',
-    label='Show an additional "Owner (Location)" property in report builder reports.',
-    tag=TAG_SOLUTIONS_OPEN,
-    namespaces=[NAMESPACE_DOMAIN],
-    help_link='https://confluence.dimagi.com/display/saas/Enable+creation+of+report+builder+reports+that+are+location+safe',  # noqa: E501
-    description='This can be used to create report builder reports that are location-safe.'
 )
