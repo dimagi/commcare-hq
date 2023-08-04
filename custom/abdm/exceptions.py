@@ -41,11 +41,9 @@ class ABDMErrorResponseFormatter:
 
         """
         if response is not None:
-            if response.status_code == 500:
-                del response.data['errors']
             data = {"error": {'code': int(f'{self.error_code_prefix}{response.status_code}')}}
             data['error']['message'] = self.error_messages.get(data['error']['code'])
-            if error_details:
+            if error_details and response.status_code != 500:
                 data['error']['details'] = response.data.get('errors', [])
             response.data = data
         return response
