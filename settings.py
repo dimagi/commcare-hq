@@ -1148,6 +1148,13 @@ COMMCARE_ANALYTICS_HOST = ""
 # FCM Server creds used for sending FCM Push Notifications
 FCM_CREDS = None
 
+# ABDM Configs
+ABDM_ABHA_URL = None
+ABDM_GATEWAY_URL = None
+ABDM_X_CM_ID = None
+ABDM_CLIENT_ID = None
+ABDM_CLIENT_SECRET = None
+
 try:
     # try to see if there's an environmental variable set for local_settings
     custom_settings = os.environ.get('CUSTOMSETTINGS', None)
