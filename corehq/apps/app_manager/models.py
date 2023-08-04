@@ -5548,6 +5548,13 @@ class LinkedApplication(Application):
         if self.domain_link:
             return self.domain_link.is_remote
 
+    def get_master_name(self):
+        if self.master_is_remote:
+            return _('Remote Application')  # Avoid the potentially expensive or impossible query
+
+        latest_app = self.get_latest_master_release(self.upstream_app_id)
+        return latest_app.name
+
     def get_latest_master_release(self, master_app_id):
         if self.domain_link:
             return get_latest_master_app_release(self.domain_link, master_app_id)

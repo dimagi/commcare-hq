@@ -108,6 +108,7 @@ domain_specific = [
         retrieve_download, {'template': 'hqwebapp/includes/file_download.html'},
         name='hq_soil_download'),
     url(r'^app/v1/(?P<app_id>[\w-]+)/(?P<endpoint_id>[\w_-]+)/$', session_endpoint, name='session_endpoint'),
+    url(r'^app/v1/(?P<app_id>[\w-]+)/$', session_endpoint, name='session_endpoint'),
 ]
 
 prelogin_root = [

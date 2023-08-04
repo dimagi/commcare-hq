@@ -45,7 +45,7 @@ class AppSummaryView(LoginAndDomainMixin, BasePageView, ApplicationViewMixin):
 
     def _app_dict(self, app):
         lang, langs = get_langs(self.request, app)
-        return {
+        app_dict = {
             'VELLUM_TYPES': VELLUM_TYPES,
             'form_name_map': _get_name_map(app),
             'lang': lang,
@@ -56,7 +56,15 @@ class AppSummaryView(LoginAndDomainMixin, BasePageView, ApplicationViewMixin):
             'read_only': is_linked_app(app) or app.id != app.origin_id,
             'app_version': app.version,
             'latest_app_id': app.origin_id,
+            'linked_name': '',
+            'linked_version': '',
         }
+
+        if is_linked_app(app):
+            app_dict['linked_name'] = app.get_master_name()
+            app_dict['linked_version'] = app.upstream_version
+
+        return app_dict
 
     @property
     def page_context(self):

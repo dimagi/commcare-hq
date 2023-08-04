@@ -24,13 +24,29 @@
         <% if (useTiles) { %>
           <% if (hasNoItems) { %>
             {% include 'formplayer/no_items_text.html' %}
-          <% } else if (isMultiSelect) { %>
-            <div id="select-all-tile-wrapper">
-              <input type="checkbox" id="select-all-tile-checkbox"/>
-              <label id="select-all-tile-checkbox-label" for="select-all-tile-checkbox">{% trans "Select All" %}</label>
+          <% } else { %>
+            <div id="case-list-search-controls">
+              <div>
+                <% if (isMultiSelect) { %>
+                  <input type="checkbox" id="select-all-tile-checkbox"/>
+                  <label id="select-all-tile-checkbox-label" for="select-all-tile-checkbox">{% trans "Select All" %}</label>
+                <% } %>
+              </div>
+              <div class="dropdown">
+                <button class="btn" id="case-list-sort-by-btn" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                  <span> {% trans "Sort By" %} </span><i class="fa fa-sort" aria-hidden="true"></i>
+                </button>
+                <ul class="dropdown-menu dropdown-menu-right" role="menu" aria-labelledby="case-list-sort-by">
+                  <%  _.each(headers, function(header, index) { %>
+                    <% if (columnSortable(index)) { %>
+                    <li tabindex="0" class="header-clickable formplayer-request" data-id="<%- index %>" role="menuitem"><a><%= header %></a></li>
+                    <% } %>
+                  <% }); %>
+                </ul>
+              </div>
             </div>
           <% } %>
-          <section  class="js-case-container clearfix list-cell-container-style"></section>
+          <section class="js-case-container clearfix list-cell-container-style"></section>
         <% } else { %>
         <div class="module-case-list-table-container">
           <table class="table module-table module-table-case-list">
@@ -42,9 +58,9 @@
                   <%  _.each(headers, function(header, index) { %>
                     <% if (columnVisible(index)) { %>
                       <% if (columnSortable(index)) { %>
-                        <th class="module-case-list-header header-clickable formplayer-request" data-id="<%- index %>"> <%- header %></th>
+                        <th class="module-case-list-header header-clickable formplayer-request" data-id="<%- index %>"> <%= header %></th>
                       <% } else { %>
-                        <th class="module-case-list-header" data-id="<%- index %>"> <%- header %></th>
+                        <th class="module-case-list-header" data-id="<%- index %>"> <%= header %></th>
                       <% } %>
                     <% } %>
                   <% }); %>
@@ -217,7 +233,7 @@
         <tr>
           <% _.each(headers, function(header, index) { %>
           <% if (!(styles[index].widthHint === 0)) { %>
-          <th class="module-case-list-header"> <%- header %></th>
+          <th class="module-case-list-header"> <%= header %></th>
           <% } %>
           <% }); %>
         </tr>
