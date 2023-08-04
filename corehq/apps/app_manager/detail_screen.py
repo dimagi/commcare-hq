@@ -295,17 +295,20 @@ class FormattedDetailColumn(object):
             )
         elif self.sort_xpath_function and self.detail.display == 'short':
             yield sx.Field(
+                style=self.style,
                 header=self.header,
                 template=self.hidden_template,
                 print_id=print_id,
             )
             yield sx.Field(
+                style=self.style,
                 header=self.hidden_header,
                 template=self.template,
                 print_id=print_id,
             )
         else:
             yield sx.Field(
+                style=self.style,
                 header=self.header,
                 template=self.template,
                 print_id=print_id,
