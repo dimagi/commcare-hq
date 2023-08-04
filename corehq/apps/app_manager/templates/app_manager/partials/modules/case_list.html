@@ -144,15 +144,15 @@
         </div>
       </div>
 
-      <div data-bind="visible: showCaseTileConfigColumns()">
-        <!-- TODO: this is some kind of temporary -->
-        <button class="btn btn-default btn-xs pull-right"
-                data-bind="click: resetCaseTilePreview">
-            <i class="fa fa-magic"></i>
-            Reset Grid
-        </button>
+      <span> This preview just shows the relative position of fields and is not an accurate representation.</span>
+      <!-- TODO: this is some kind of temporary -->
+      <button class="btn btn-default btn-xs pull-right"
+              data-bind="click: resetCaseTilePreview, visible: showCaseTileConfigColumns()">
+          <i class="fa fa-magic"></i>
+          Reset Grid
+      </button>
+      <div data-bind="visible: showCaseTileConfigColumns()" id="preview-box">
         <div id="case-tile-preview" data-bind="foreach: columns">
-          <!-- TODO: some kind of warning that this isn't pixel by pixel accurate -->
           <div class="cell" data-bind="visible: showInTilePreview, style: {
                 'grid-row-start': tileRowStart,
                 'grid-row-end': tileRowEnd,
