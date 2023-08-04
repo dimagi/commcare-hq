@@ -38,9 +38,9 @@ hqDefine('app_manager/js/modules/shadow_module_settings', function () {
 
             self.formSessionEndpointIds = ko.pureComputed(function () {
                 return _.map(self.sourceForms(), function(form) {
-                  return ko.pureComputed(function() {
-                    return JSON.stringify({form_id: form.uniqueId, session_endpoint_id: form.sessionEndpointId()});
-                  });
+                    return ko.pureComputed(function() {
+                        return JSON.stringify({form_id: form.uniqueId, session_endpoint_id: form.sessionEndpointId()});
+                    });
                 });
             });
 

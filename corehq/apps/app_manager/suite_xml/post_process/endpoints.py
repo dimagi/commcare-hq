@@ -54,7 +54,6 @@ class EndpointsHelper(PostProcessor):
                         self.suite.endpoints.append(self._make_session_endpoint(
                             endpoint.session_endpoint_id, module, form))
 
-
     def _make_session_endpoint(self, endpoint_id, module, form=None, should_add_last_selection_datum=True):
         stack = Stack()
         children = self.get_frame_children(module, form)

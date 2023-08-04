@@ -124,7 +124,6 @@ class WorkflowHelper(PostProcessor):
         suffix = id_strings.menu_id(root_module) if isinstance(root_module, ShadowModule) else ""
         return suffix
 
-
     def get_frame_children(self, module, form=None, include_root_module=False):
         """
         For a form or module return the list of stack frame children that are required
@@ -433,7 +432,8 @@ class EndOfFormNavigationWorkflow(object):
 
         if target_module.root_module_id:
             root_module = self.helper.app.get_module_by_unique_id(target_module.root_module_id)
-            frame_children = prepend_parent_frame_children(self.helper, frame_children, root_module, link.datums, form)
+            frame_children = prepend_parent_frame_children(
+                self.helper, frame_children, root_module, link.datums, form)
 
         return StackFrameMeta(link.xpath, list(frame_children), current_session=source_form_datums)
 
@@ -593,7 +593,8 @@ class CaseListFormWorkflow(object):
         except ValueError:
             # This either means that the source module (with the registration form) requires datums that the
             # target module (the module which called the reg form).
-            # OR it could mean that not all the forms in the target module have the same case management configuration.
+            # OR it could mean that not all the forms in the target module have the same case management
+            # configuration.
             return
         return target_dm
 
