@@ -2199,6 +2199,17 @@ class DetailPair(DocumentSchema):
         return self
 
 
+class ShadowFormEndpoint(DocumentSchema):
+    form_id = StringProperty()
+    session_endpoint_id = StringProperty()
+
+    def __eq__(self, other):
+        if not isinstance(other, ShadowFormEndpoint):
+            return False
+
+        return self.form_id == other.form_id and self.session_endpoint_id == other.session_endpoint_id
+
+
 class CaseListForm(NavMenuItemMediaMixin):
     form_id = FormIdProperty('modules[*].case_list_form.form_id')
     label = DictProperty()
@@ -3684,6 +3695,7 @@ class ShadowModule(ModuleBase, ModuleDetailsMixin):
     source_module_id = StringProperty()
     forms = []
     excluded_form_ids = SchemaListProperty()
+    form_session_endpoints = SchemaListProperty(ShadowFormEndpoint)
     case_details = SchemaProperty(DetailPair)
     ref_details = SchemaProperty(DetailPair)
     case_list = SchemaProperty(CaseList)
