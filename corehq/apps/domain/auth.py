@@ -350,6 +350,8 @@ class ConnectIDAuthBackend:
         if not request.path == '/oauth/token/':
            return None
         couch_user = CouchUser.get_by_username(username)
+        if couch_user is None:
+            return None
         connect_username = get_connectid_userinfo(password)
         if connect_username is None:
             return None
@@ -358,6 +360,6 @@ class ConnectIDAuthBackend:
             domain=couch_user.domain
         )
 
-        if not couch_user or (couch_user.username != link.commcare_user.username):
+        if (couch_user.username != link.commcare_user.username):
             return None
         return link.commcare_user
