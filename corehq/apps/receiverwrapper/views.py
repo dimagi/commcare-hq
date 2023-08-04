@@ -350,7 +350,7 @@ def _secure_post_basic(request, domain, app_id=None):
 
 
 @handle_401_response
-@login_or_oauth2_ex(allow_cc_users=True, oauth_scopes=['sync'])
+@login_or_oauth2_ex(allow_cc_users=True, oauth_scopes=['mobile_access'])
 @two_factor_exempt
 @set_request_duration_reporting_threshold(60)
 def _secure_post_oauth2(request, domain, app_id=None):

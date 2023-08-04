@@ -901,7 +901,7 @@ OAUTH2_PROVIDER = {
     'SCOPES': {
         'access_apis': 'Access API data on all your CommCare projects',
         'reports:view': 'Allow users to view and download all report data',
-        'sync': 'Allow access to mobile sync and submit endpoints'
+        'mobile_access': 'Allow access to mobile sync and submit endpoints'
     },
     'REFRESH_TOKEN_EXPIRE_SECONDS': 60 * 60 * 24 * 15,  # 15 days
 }
