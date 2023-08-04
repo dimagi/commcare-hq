@@ -259,7 +259,7 @@ class _AuthTestsBothBackends(object):
             }
         )
     def test_oauth2_good_scope(self):
-        client = Client()
+        client = Client(HTTP_AUTHORIZATION="bearer mytoken")
         token_model = get_access_token_model()
         one_hour = datetime.utcnow() + timedelta(hours=1)
         token_model.objects.create(
@@ -268,7 +268,6 @@ class _AuthTestsBothBackends(object):
             scope='mobile_access',
             expires=one_hour
         )
-        client.headers = {"Authorization: bearer mytoken"}
         expected_auth_context = {
             'doc_type': 'AuthContext',
             'domain': self.domain,
@@ -283,7 +282,7 @@ class _AuthTestsBothBackends(object):
         )
 
     def test_oauth2_bad_scope(self):
-        client = Client()
+        client = Client(HTTP_AUTHORIZATION="bearer badtoken")
         token_model = get_access_token_model()
         one_hour = datetime.utcnow() + timedelta(hours=1)
         token_model.objects.create(
@@ -292,7 +291,6 @@ class _AuthTestsBothBackends(object):
             scope='api_access',
             expires=one_hour
         )
-        client.headers = {"Authorization: bearer badtoken"}
         self._test_post(
             file_path=self.bare_form,
             client=client,
