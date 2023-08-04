@@ -135,6 +135,7 @@ django==3.2.20
     #   django-two-factor-auth
     #   django-user-agents
     #   djangorestframework
+    #   drf-standardized-errors
     #   jsonfield
     #   sphinxcontrib-django
 django-appconf==1.0.5
@@ -198,12 +199,16 @@ django-user-agents==0.4.0
 django-websocket-redis @ https://raw.githubusercontent.com/dimagi/django-websocket-redis/0.6.0.1/releases/django_websocket_redis-0.6.0.1-py3-none-any.whl
     # via -r base-requirements.in
 djangorestframework==3.13.1
-    # via -r base-requirements.in
+    # via
+    #   -r base-requirements.in
+    #   drf-standardized-errors
 docutils==0.18.1
     # via
     #   myst-parser
     #   sphinx
     #   sphinx-rtd-theme
+drf-standardized-errors==0.12.5
+    # via -r base-requirements.in
 dropbox==11.36.0
     # via -r base-requirements.in
 elasticsearch2==2.5.1
