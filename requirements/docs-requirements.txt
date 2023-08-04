@@ -47,7 +47,7 @@ celery==5.2.7
     # via
     #   -r base-requirements.in
     #   django-celery-results
-certifi==2022.12.7
+certifi==2023.7.22
     # via
     #   fiona
     #   pyproj
@@ -84,7 +84,7 @@ commcaretranslationchecker==0.9.7
     # via -r base-requirements.in
 contextlib2==21.6.0
     # via schema
-cryptography==41.0.2
+cryptography==41.0.3
     # via
     #   jwcrypto
     #   oic
@@ -452,7 +452,7 @@ pycryptodomex==3.14.1
     #   pyjwkest
 pygithub==1.55
     # via -r base-requirements.in
-pygments==2.14.0
+pygments==2.15.0
     # via sphinx
 pyjwkest==1.4.2
     # via oic
