@@ -2386,6 +2386,15 @@ GEOSPATIAL = StaticToggle(
 
 )
 
+COMMCARE_CONNECT = StaticToggle(
+    'commcare_connect',
+    'Enable CommCare Connect features',
+    tag=TAG_INTERNAL,
+    namespaces=[NAMESPACE_DOMAIN],
+    description='More details to come',
+
+)
+
 FCM_NOTIFICATION = StaticToggle(
     'fcm_notification',
     'Allows access to FCM Push Notifications',
@@ -2393,6 +2402,24 @@ FCM_NOTIFICATION = StaticToggle(
     namespaces=[NAMESPACE_DOMAIN],
     description='Push Notification option will be available in content for '
                 'Conditional Alerts in Messaging.'
+)
+
+LOCATION_RESTRICTED_SCHEDULED_REPORTS = StaticToggle(
+    'location_restricted_scheduled_reports',
+    'Allows access to report scheduling views for location restricted users',
+    TAG_CUSTOM,
+    namespaces=[NAMESPACE_DOMAIN],
+    description='Provides access to views for resport scheduling '
+                'such as schedule creation and deletion.'
+)
+
+SHOW_OWNER_LOCATION_PROPERTY_IN_REPORT_BUILDER_TOGGLE = StaticToggle(
+    'show_owner_location_property_in_report_builder',
+    label='Show an additional "Owner (Location)" property in report builder reports.',
+    tag=TAG_SOLUTIONS_OPEN,
+    namespaces=[NAMESPACE_DOMAIN],
+    help_link='https://confluence.dimagi.com/display/saas/Enable+creation+of+report+builder+reports+that+are+location+safe',  # noqa: E501
+    description='This can be used to create report builder reports that are location-safe.'
 )
 
 
@@ -2592,14 +2619,4 @@ DATA_DICTIONARY = FrozenPrivilegeToggle(
     namespaces=[NAMESPACE_DOMAIN],
     description='Project level data dictionary of cases',
     help_link='https://confluence.dimagi.com/display/commcarepublic/Data+Dictionary'
-)
-
-SHOW_OWNER_LOCATION_PROPERTY_IN_REPORT_BUILDER = FrozenPrivilegeToggle(
-    privileges.SHOW_OWNER_LOCATION_PROPERTY_IN_REPORT_BUILDER,
-    'show_owner_location_property_in_report_builder',
-    label='Show an additional "Owner (Location)" property in report builder reports.',
-    tag=TAG_SOLUTIONS_OPEN,
-    namespaces=[NAMESPACE_DOMAIN],
-    help_link='https://confluence.dimagi.com/display/saas/Enable+creation+of+report+builder+reports+that+are+location+safe',  # noqa: E501
-    description='This can be used to create report builder reports that are location-safe.'
 )
