@@ -18,7 +18,7 @@ def check_for_existing_abha_number(domain, abha_number):
 
 
 class GatewayRequestHelper:
-    required_configs = ['ABDM_GATEWAY_URL', 'ABDM_CLIENT_ID', 'ABDM_CLIENT_SECRET', 'X_CM_ID']
+    required_configs = ['ABDM_GATEWAY_URL', 'ABDM_CLIENT_ID', 'ABDM_CLIENT_SECRET', 'ABDM_X_CM_ID']
     base_url = None
     token_payload = None
 
@@ -32,7 +32,7 @@ class GatewayRequestHelper:
 
     def __init__(self):
         self._check_configs()
-        self.headers = {'Content-Type': "application/json", 'X-CM-ID': settings.X_CM_ID}
+        self.headers = {'Content-Type': "application/json", 'X-CM-ID': settings.ABDM_X_CM_ID}
 
     def get_access_token(self):
         headers = {"Content-Type": "application/json; charset=UTF-8"}
