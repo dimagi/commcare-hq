@@ -29,6 +29,7 @@ class CaseTileTemplates(models.TextChoices):
     ONE_3X_TWO_4X_ONE_2X = ("one_3X_two_4X_one_2X", _("Three upper rows, four rows with two cells, two lower rows "
                                                     "and map"))
 
+
 @dataclass
 class CaseTileTemplateConfig:
     slug: str = ''

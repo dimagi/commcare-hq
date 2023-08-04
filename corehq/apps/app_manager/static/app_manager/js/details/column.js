@@ -63,7 +63,7 @@ hqDefine("app_manager/js/details/column", function () {
         self.tileColumnEnd = ko.computed(function () {
             return Number(self.tileColumnStart()) + Number(self.tileWidth());
         });
-        self.showInTilePreview = ko.computed(function() {
+        self.showInTilePreview = ko.computed(function () {
             return self.tileRowStart() && self.tileColumnStart() && self.tileWidth() && self.tileHeight();
         });
         self.tileContent = ko.observable();

@@ -95,11 +95,11 @@ hqDefine("app_manager/js/details/screen", function () {
             }).join("") + "</div>";
         });
         self.showCaseTileConfigColumns = ko.computed(function () {
-            const template = self.caseTileTemplate()
+            const template = self.caseTileTemplate();
             return template === "custom";
         });
         self.showCaseTileColumn = ko.computed(function () {
-            const featureFlag = hqImport('hqwebapp/js/toggles').toggleEnabled('CASE_LIST_TILE')
+            const featureFlag = hqImport('hqwebapp/js/toggles').toggleEnabled('CASE_LIST_TILE');
             const caseTileTemplate = self.caseTileTemplate() && self.caseTileTemplate() !== "custom";
             return caseTileTemplate && featureFlag;
         });
@@ -162,9 +162,9 @@ hqDefine("app_manager/js/details/screen", function () {
 
             // Validate boundaries
             const newRowStart = activeColumn.tileRowStart() + rowDelta,
-                  newColumnStart = activeColumn.tileColumnStart() + columnDelta,
-                  newRowEnd = newRowStart + activeColumn.tileHeight() + heightDelta,
-                  newColumnEnd = newColumnStart + activeColumn.tileWidth() + widthDelta;
+                newColumnStart = activeColumn.tileColumnStart() + columnDelta,
+                newRowEnd = newRowStart + activeColumn.tileHeight() + heightDelta,
+                newColumnEnd = newColumnStart + activeColumn.tileWidth() + widthDelta;
             if (newRowStart < 1 || newRowEnd > 4 || newColumnStart < 1 || newColumnEnd > 13) {
                 throw new Error("cannot move tile out of bounds");
             }
@@ -200,13 +200,13 @@ hqDefine("app_manager/js/details/screen", function () {
                 matrix[row - 1][i] = null;
             }
             return matrix;
-        }
+        };
         self._nullMatrixColumn = function (matrix, column, row1, row2) {
             for (let i = row1 - 1; i < row2 - 1; i++) {
-               matrix[i][column - 1] = null;
+                matrix[i][column - 1] = null;
             }
             return matrix;
-        }
+        };
 
         self._replaceMatrixRow = function (matrix, newValue, row, col1, col2) {
             for (let i = col1 - 1; i < col2 - 1; i++) {
@@ -230,7 +230,7 @@ hqDefine("app_manager/js/details/screen", function () {
                 matrix[row - 1][i] = newValue;
             }
             return matrix;
-        }
+        };
         self._replaceMatrixColumn = function (matrix, newValue, column, row1, row2) {
             for (let i = row1 - 1; i < row2 - 1; i++) {
                 const oldValue = matrix[i][column - 1];
@@ -253,13 +253,13 @@ hqDefine("app_manager/js/details/screen", function () {
                 matrix[i][column - 1] = newValue;
             }
             return matrix;
-        }
+        };
 
         self._buildMatrix = function () {
             let matrix = [
                 [null, null, null, null, null, null, null, null, null, null, null, null],
                 [null, null, null, null, null, null, null, null, null, null, null, null],
-                [null, null, null, null, null, null, null, null, null, null, null, null]
+                [null, null, null, null, null, null, null, null, null, null, null, null],
             ];
             _.each(self.columns(), function (column, columnIndex) {
                 if (!column.showInTilePreview()) {
@@ -274,12 +274,14 @@ hqDefine("app_manager/js/details/screen", function () {
             return matrix;
         };
         self._parseMatrix = function (matrix) {
-            let columns = _.map(_.range(self.columns().length), function () { return {
-                rowStart: null,
-                rowEnd: null,
-                columnStart: null,
-                columnEnd: null,
-            }; });
+            let columns = _.map(_.range(self.columns().length), function () {
+                return {
+                    rowStart: null,
+                    rowEnd: null,
+                    columnStart: null,
+                    columnEnd: null,
+                };
+            });
 
             for (let i = 0; i < 3; i++) {
                 for (let j = 0; j < 12; j++) {
@@ -351,10 +353,10 @@ hqDefine("app_manager/js/details/screen", function () {
                     self.fire("columnChange", [{
                         "value": column,
                         "index": self.columns.indexOf(column),
-                        "status": "edited"
+                        "status": "edited",
                     }]);
                 }
-            })
+            });
             return column;
         };
 
@@ -445,8 +447,8 @@ hqDefine("app_manager/js/details/screen", function () {
                 affectedColumns.forEach(c => {
                     let index = self.columns.indexOf(c);
                     events.push({
-                        value: c, index: index, status: "added", moved: index + move
-                    })
+                        value: c, index: index, status: "added", moved: index + move,
+                    });
                 });
             }
 
@@ -555,7 +557,7 @@ hqDefine("app_manager/js/details/screen", function () {
 
             data.case_tile_group = JSON.stringify({
                 index_identifier: self.caseTileGrouped() ? self.caseTileGroupBy() : null,
-                header_rows: self.caseTileGroupHeaderRows()
+                header_rows: self.caseTileGroupHeaderRows(),
             });
 
             if (self.containsParentConfiguration) {
