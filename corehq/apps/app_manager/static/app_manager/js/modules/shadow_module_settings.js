@@ -37,8 +37,8 @@ hqDefine('app_manager/js/modules/shadow_module_settings', function () {
             });
 
             self.formSessionEndpointIds = ko.pureComputed(function () {
-                return _.map(self.sourceForms(), function(form) {
-                    return ko.pureComputed(function() {
+                return _.map(self.sourceForms(), function (form) {
+                    return ko.pureComputed(function () {
                         return JSON.stringify({form_id: form.uniqueId, session_endpoint_id: form.sessionEndpointId()});
                     });
                 });
@@ -72,9 +72,9 @@ hqDefine('app_manager/js/modules/shadow_module_settings', function () {
                 for (let j = 0; j < mod.forms.length; j++) {
                     const form = mod.forms[j];
                     let formSessionEndpointId = "";
-                    const mapping = _.find(formSessionEndpointMappings, m => m.form_id === form.unique_id)
+                    const mapping = _.find(formSessionEndpointMappings, m => m.form_id === form.unique_id);
                     if (mapping) {
-                        formSessionEndpointId = mapping.session_endpoint_id
+                        formSessionEndpointId = mapping.session_endpoint_id;
                     }
                     const sourceModuleForm =
                         sourceModuleFormModel(form.unique_id, form.name, formSessionEndpointId);
