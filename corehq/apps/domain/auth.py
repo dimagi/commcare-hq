@@ -347,7 +347,7 @@ class ConnectIDAuthBackend:
         password: an oauth access token issued by ConnectID
         """
         # Only allow for the token backend, for now
-        if not request.path == '/oauth/token/':
+        if not request or not request.path == '/oauth/token/':
            return None
         couch_user = CouchUser.get_by_username(username)
         if couch_user is None:
