@@ -258,6 +258,7 @@ class _AuthTestsBothBackends(object):
                 'user_id': None,
             }
         )
+
     def test_oauth2_good_scope(self):
         client = Client(HTTP_AUTHORIZATION="bearer mytoken")
         token_model = get_access_token_model()

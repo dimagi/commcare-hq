@@ -3,9 +3,6 @@ import json
 import re
 import time
 
-import requests
-
-from django.conf import settings
 from django.contrib import messages
 from django.contrib.humanize.templatetags.humanize import naturaltime
 from django.core.exceptions import ValidationError
@@ -1665,6 +1662,7 @@ class CommCareUserConfirmAccountBySMSView(CommCareUserConfirmAccountView):
             return True
         return False
 
+
 @csrf_exempt
 @require_POST
 @login_or_basic_ex(allow_cc_users=True)
@@ -1673,7 +1671,9 @@ def link_connectid_user(request, domain):
     if token is None:
         return HttpResponseBadRequest("Token Required")
     connectid_username = get_connectid_userinfo(token)
-    link, new = ConnectIDUserLink.objects.get_or_create(connectid_username=connectid_username, commcare_user=request.user, domain=request.domain)
+    link, new = ConnectIDUserLink.objects.get_or_create(
+        connectid_username=connectid_username, commcare_user=request.user, domain=request.domain
+    )
     if new:
         return HttpResponse(status=201)
     else:

@@ -1,7 +1,6 @@
 import base64
 import binascii
 import logging
-import re
 import requests
 from functools import wraps
 
@@ -348,7 +347,7 @@ class ConnectIDAuthBackend:
         """
         # Only allow for the token backend, for now
         if not request or not request.path == '/oauth/token/':
-           return None
+            return None
         couch_user = CouchUser.get_by_username(username)
         if couch_user is None:
             return None
