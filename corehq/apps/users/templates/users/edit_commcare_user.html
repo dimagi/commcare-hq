@@ -37,7 +37,7 @@
     {% if commtrack_enabled or uses_locations %}
       <li><a href="#commtrack-data" data-toggle="tab">{% trans "Locations" %}</a></li>
     {% endif %}
-    {% if not request.is_view_only or token %}
+    {% if not request.is_view_only %}
       <li><a href="#user-password" data-toggle="tab">{% trans "Security" %}</a></li>
     {% endif %}
     {% if not is_currently_logged_in_user and not request.is_view_only %}
@@ -77,22 +77,6 @@
               {% crispy reset_password_form %}
             </div>
           </form>
-          <div class="spacer"></div>
-        {% endif %}
-        {% if token %}
-          <fieldset>
-            <legend>{% trans 'Two Factor Authentication' %}</legend>
-            <div class="form form-horizontal">
-              <div class="form-group">
-                <label class="control-label col-sm-3 col-md-2">
-                  {% trans "Backup Token" %}
-                </label>
-                <div class="controls col-sm-9 col-md-8 col-lg-6">
-                  <input type="text" class="form-control" disabled value="{{ token }}" />
-                </div>
-              </div>
-            </div>
-          </fieldset>
         {% endif %}
       </div>
     </div>

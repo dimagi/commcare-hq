@@ -8,20 +8,11 @@ hqDefine('builds/js/edit-builds', [
 ], function ($, _, ko, initialPageData) {
     var doc = initialPageData.get('doc');
 
-    function versionModel(version, label, superuserOnly, j2meEnabled) {
+    function versionModel(version, label, superuserOnly) {
         var self = {};
         self.version = ko.observable(version);
         self.label = ko.observable(label);
         self.superuser_only = ko.observable(superuserOnly);
-        self.j2me_enabled = ko.observable(j2meEnabled);
-
-        // subscribe for change in version to update j2me_enabled
-        // property and hence the checkbox in view
-        self.version.subscribe(function (newValue) {
-            self.j2me_enabled(buildsMenu.j2me_enabled_versions.
-                includes(newValue)
-            );
-        });
 
         return self;
     }
@@ -30,7 +21,6 @@ hqDefine('builds/js/edit-builds', [
         var self = {};
 
         self.available_versions = initialPageData.get('available_versions');
-        self.j2me_enabled_versions = initialPageData.get('j2me_enabled_versions');
         self.versions = ko.observableArray([]);
         self.available_ones = [];
         self.available_twos = [];
@@ -45,7 +35,6 @@ hqDefine('builds/js/edit-builds', [
         _.each(doc.menu, function (version) {
             self.versions.push(versionModel(
                 version.build.version, version.label,
-                version.superuser_only, version.j2me_enabled
             ));
         });
         _.each(doc.defaults, function (version_doc) {
@@ -71,7 +60,6 @@ hqDefine('builds/js/edit-builds', [
         doc.menu = [];
         _.each(menu.versions(), function (version) {
             doc.menu.push({
-                'j2me_enabled': version.j2me_enabled(),
                 'superuser_only': version.superuser_only(),
                 'label': version.label(),
                 'build': {

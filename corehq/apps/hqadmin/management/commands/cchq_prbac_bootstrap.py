@@ -104,14 +104,18 @@ class Command(BaseCommand):
         Role(slug=privileges.CUSTOM_REPORTS, name='Custom Reports', description=''),
         Role(slug=privileges.ROLE_BASED_ACCESS, name='Role-based Access', description=''),
         Role(slug=privileges.RESTRICT_ACCESS_BY_LOCATION, name='Restrict Access By Location', description=''),
-        Role(slug=privileges.OUTBOUND_SMS, name='Outbound SMS',
-             description='Use of any outbound messaging / SMS services.',
+        Role(
+            slug=privileges.OUTBOUND_SMS, name='Outbound SMS',
+            description='Use of any outbound messaging / SMS services.',
         ),
-        Role(slug=privileges.REMINDERS_FRAMEWORK, name='Rules Engine (Use of Reminders Framework)',
-             description='Use of reminders framework for spawning reminders/alerts based on certain criteria.',
+        Role(
+            slug=privileges.REMINDERS_FRAMEWORK, name='Rules Engine (Use of Reminders Framework)',
+            description='Use of reminders framework for spawning reminders/alerts based on certain criteria.',
         ),
-        Role(slug=privileges.CUSTOM_SMS_GATEWAY, name='Custom Telerivet (Android) SMS Gateway',
-             description='Ability to set up telerivet gateway on the "SMS Connectivity" page (inbound or outbound).',
+        Role(
+            slug=privileges.CUSTOM_SMS_GATEWAY, name='Custom Telerivet (Android) SMS Gateway',
+            description='Ability to set up telerivet gateway on the "SMS Connectivity" page '
+                        '(inbound or outbound).',
         ),
         Role(slug=privileges.INBOUND_SMS, name='Inbound SMS (where available)', description=''),
         Role(slug=privileges.BULK_CASE_MANAGEMENT, name='Bulk Case Management', description=''),
@@ -208,7 +212,23 @@ class Command(BaseCommand):
              description='Display the "Form IDs" and "Case IDs" download buttons on Case Importer'),
         Role(slug=privileges.EXPORT_MULTISORT,
              name='Sort multiple rows in exports simultaneously',
-             description='Sort multiple rows in exports simultaneously')
+             description='Sort multiple rows in exports simultaneously'),
+        Role(slug=privileges.EXPORT_OWNERSHIP,
+             name='Allow exports to have ownership',
+             description='Allow exports to have ownership'),
+        Role(slug=privileges.FILTERED_BULK_USER_DOWNLOAD,
+             name='Bulk user management features',
+             description='For mobile users, enables bulk deletion page and bulk lookup page. '
+                         'For web users, enables filtered download page.'),
+        Role(slug=privileges.APPLICATION_ERROR_REPORT,
+             name='Application error report',
+             description='Show Application Error Report'),
+        Role(slug=privileges.SHOW_OWNER_LOCATION_PROPERTY_IN_REPORT_BUILDER,
+             name='Additional "Owner (Location)" property in report builder reports.',
+             description='Show an additional "Owner (Location)" property in report builder reports.'),
+        Role(slug=privileges.CASE_LIST_EXPLORER,
+             name='Case List Explorer',
+             description='Show Case List Explorer under Inspect Data in Reports'),
     ]
 
     BOOTSTRAP_PLANS = [

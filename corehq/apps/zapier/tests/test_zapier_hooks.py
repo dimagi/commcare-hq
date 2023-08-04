@@ -8,7 +8,6 @@ from corehq.apps.zapier.consts import CASE_TYPE_REPEATER_CLASS_MAP, EventTypes
 from corehq.apps.zapier.models import ZapierSubscription
 from corehq.apps.zapier.tests.test_utils import bootrap_domain_for_zapier
 from corehq.apps.zapier.views import SubscribeView, UnsubscribeView
-from corehq.motech.repeaters.dbaccessors import delete_all_repeaters
 from corehq.motech.repeaters.models import CreateCaseRepeater, FormRepeater
 
 ZAPIER_URL = "https://zapier.com/hooks/standard/1387607/5ccf35a5a1944fc9bfdd2c94c28c9885/"
@@ -90,7 +89,6 @@ class TestZapierIntegration(TestCase):
         cls.web_user.delete(cls.domain, deleted_by=None)
         cls.application.delete()
         cls.domain_object.delete()
-        delete_all_repeaters()
         super(TestZapierIntegration, cls).tearDownClass()
 
     def tearDown(self):

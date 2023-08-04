@@ -1,7 +1,6 @@
 import io
 import json
 import unittest
-from urllib.parse import urlencode
 from couchdbkit import ResourceNotFound
 from django.http.response import Http404
 from django.core.exceptions import PermissionDenied

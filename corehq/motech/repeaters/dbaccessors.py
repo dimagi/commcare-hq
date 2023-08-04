@@ -32,6 +32,7 @@ def get_success_repeat_record_count(domain, repeater_id):
 
 
 def get_cancelled_repeat_record_count(domain, repeater_id):
+    # Does not include RECORD_EMPTY_STATE
     return get_repeat_record_count(domain, repeater_id, RECORD_CANCELLED_STATE)
 
 

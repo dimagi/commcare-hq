@@ -166,7 +166,7 @@
                 <input type="checkbox"
                        id="det-config-checkbox"
                        data-bind="checked: show_det_config_download,
-                                  attr: { disabled: !{{ has_api_access|JSON }}}" />
+                                  attr: { disabled: !{{ has_api_access|JSON }} || {{ is_all_case_types_export|JSON }}}" />
                 {% trans "Generate a Data Export Tool config file" %}
               </label>
               {% trans "Download a Data Export Tool configuration file for this export" as det_help %}
@@ -206,7 +206,7 @@
             {% endif %}
           </div>
         </div>
-        {% if request|toggle_enabled:"EXPORT_OWNERSHIP" %}
+        {% if request|request_has_privilege:"EXPORT_OWNERSHIP" %}
           <div class="form-group"
                data-bind="css: { 'has-warning': hasOtherOwner && sharing() != initialSharing }">
             <label for="sharing-select"
@@ -243,11 +243,13 @@
           </div>
         {% endif %}
       </fieldset>
-      <fieldset data-bind="template: {
-                             foreach: tables,
-                             as: 'table',
-                             name: 'ko-table-configuration-template'
-                           }"></fieldset>
+      {% if not is_all_case_types_export %}
+        <fieldset data-bind="template: {
+                              foreach: tables,
+                              as: 'table',
+                              name: 'ko-table-configuration-template'
+                            }"></fieldset>
+      {% endif %}
 
       {% if request|toggle_enabled:"ALLOW_USER_DEFINED_EXPORT_COLUMNS" %}
         <fieldset>
@@ -283,7 +285,7 @@
                 </span>
               </div>
               <button class="btn btn-default"
-                      data-bind="visible: !isDeidColumnVisible(),
+                      data-bind="visible: !isDeidColumnVisible() && !{{ is_all_case_types_export|JSON }},
                                  click: showDeidColumn">
                 {% trans "Allow me to mark sensitive data" %}
               </button>

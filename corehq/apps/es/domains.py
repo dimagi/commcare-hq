@@ -12,20 +12,22 @@ DomainES
              .size(0))
 """
 
-from copy import copy
-
 from django_countries import Countries
 
 from . import filters
 from .client import ElasticDocumentAdapter, create_document_adapter
+from .const import (
+    HQ_DOMAINS_INDEX_CANONICAL_NAME,
+    HQ_DOMAINS_INDEX_NAME,
+    HQ_DOMAINS_SECONDARY_INDEX_NAME,
+)
 from .es_query import HQESQuery
 from .index.analysis import COMMA_ANALYSIS
 from .index.settings import IndexSettingsKey
-from .transient_util import get_adapter_mapping
 
 
 class DomainES(HQESQuery):
-    index = 'domains'
+    index = HQ_DOMAINS_INDEX_CANONICAL_NAME
     default_filters = {
         'not_snapshot': filters.NOT(filters.term('is_snapshot', True)),
     }
@@ -55,10 +57,12 @@ class ElasticDomain(ElasticDocumentAdapter):
 
     analysis = COMMA_ANALYSIS
     settings_key = IndexSettingsKey.DOMAINS
+    canonical_name = HQ_DOMAINS_INDEX_CANONICAL_NAME
 
     @property
     def mapping(self):
-        return get_adapter_mapping(self)
+        from .mappings.domain_mapping import DOMAIN_MAPPING
+        return DOMAIN_MAPPING
 
     @property
     def model_cls(self):
@@ -68,8 +72,6 @@ class ElasticDomain(ElasticDocumentAdapter):
     def _from_dict(self, domain_dict):
         """
         Takes a domain dict and applies required transformation to make it suitable for ES.
-        The function is replica of ``transform_domain_for_elasticsearch``.
-        In future all references to  ``transform_domain_for_elasticsearch`` will be replaced by `from_python`
         :param domain: an instance of ``dict`` which is result of ``Domain.to_json()``
         """
         from corehq.apps.accounting.models import Subscription
@@ -87,8 +89,9 @@ class ElasticDomain(ElasticDocumentAdapter):
 
 domain_adapter = create_document_adapter(
     ElasticDomain,
-    "hqdomains_2021-03-08",
+    HQ_DOMAINS_INDEX_NAME,
     "hqdomain",
+    secondary=HQ_DOMAINS_SECONDARY_INDEX_NAME,
 )
 
 

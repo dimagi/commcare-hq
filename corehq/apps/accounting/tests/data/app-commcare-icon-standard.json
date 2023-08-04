@@ -25,7 +25,6 @@
    "short_url": null,
    "deployment_date": null,
    "user_type": null,
-   "text_input": "roman",
    "secure_submissions": true,
    "build_broken": false,
    "minimum_use_threshold": "15",
@@ -38,7 +37,6 @@
    ],
    "is_released": false,
    "application_version": "2.0",
-   "platform": "nokia/s40",
    "version": 9,
    "admin_password": null,
    "build_spec": {
@@ -110,32 +108,22 @@
    },
    "profile": {
        "features": {
-           "users": "true",
-           "sense": "false"
+           "users": "true"
        },
        "properties": {
-           "cc-user-mode": "cc-u-normal",
            "cc-show-saved": "yes",
            "restore-tolerance": "loose",
            "cc-days-form-retain": "-1",
            "cc-fuzzy-search-enabled": "yes",
            "cc-autoup-freq": "freq-never",
            "purge-freq": "0",
-           "server-tether": "push-only",
            "user_reg_server": "required",
-           "extra_key_action": "audio",
            "log_prop_daily": "log_never",
-           "ViewStyle": "v_chatterbox",
            "cc-login-duration-seconds": "86400",
            "cc-resize-images": "none",
-           "cc-entry-mode": "cc-entry-quick",
-           "cc-send-procedure": "cc-send-http",
-           "cc-login-images": "No",
            "log_prop_weekly": "log_short",
            "cc-show-incomplete": "yes",
-           "cc-send-unsent": "cc-su-auto",
            "loose_media": "no",
-           "password_format": "n",
            "unsent-number-limit": "5",
            "cc-content-valid": "no",
            "logenabled": "Enabled"
@@ -187,7 +175,7 @@
                    "persist_tile_on_forms": null,
                    "custom_xml": null,
                    "lookup_name": null,
-                   "use_case_tiles": null,
+                   "case_tile_template": null,
                    "lookup_extras": [
                    ],
                    "columns": [
@@ -211,7 +199,7 @@
                    "persist_tile_on_forms": null,
                    "custom_xml": null,
                    "lookup_name": null,
-                   "use_case_tiles": null,
+                   "case_tile_template": null,
                    "lookup_extras": [
                    ],
                    "columns": [
@@ -551,7 +539,7 @@
                    "custom_xml": null,
                    "lookup_extras": [
                    ],
-                   "use_case_tiles": null,
+                   "case_tile_template": null,
                    "pull_down_tile": null,
                    "columns": [
                        {
@@ -604,7 +592,7 @@
                    "custom_xml": null,
                    "lookup_extras": [
                    ],
-                   "use_case_tiles": null,
+                   "case_tile_template": null,
                    "pull_down_tile": null,
                    "columns": [
                        {
@@ -702,7 +690,7 @@
                    "persist_tile_on_forms": null,
                    "custom_xml": null,
                    "lookup_name": null,
-                   "use_case_tiles": null,
+                   "case_tile_template": null,
                    "lookup_extras": [
                    ],
                    "columns": [
@@ -726,7 +714,7 @@
                    "persist_tile_on_forms": null,
                    "custom_xml": null,
                    "lookup_name": null,
-                   "use_case_tiles": null,
+                   "case_tile_template": null,
                    "lookup_extras": [
                    ],
                    "columns": [
@@ -1066,7 +1054,7 @@
                    "custom_xml": null,
                    "lookup_extras": [
                    ],
-                   "use_case_tiles": null,
+                   "case_tile_template": null,
                    "pull_down_tile": null,
                    "columns": [
                        {
@@ -1119,7 +1107,7 @@
                    "custom_xml": null,
                    "lookup_extras": [
                    ],
-                   "use_case_tiles": null,
+                   "case_tile_template": null,
                    "pull_down_tile": null,
                    "columns": [
                        {

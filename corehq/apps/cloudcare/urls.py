@@ -49,3 +49,4 @@ urlpatterns = [
 
 waf_allow('XSS_BODY', hard_code_pattern=r'^/formplayer/validate_form$')
 waf_allow('XSS_BODY', hard_code_pattern=r'^/formplayer/new-form$')
+waf_allow('XSS_BODY', hard_code_pattern=r'^/formplayer/answer_media$')

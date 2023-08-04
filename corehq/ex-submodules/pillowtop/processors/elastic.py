@@ -15,7 +15,6 @@ from pillowtop.utils import (
     get_errors_with_ids,
 )
 
-from corehq.apps.es.transient_util import doc_adapter_from_alias
 from corehq.util.es.elasticsearch import (
     ConflictError,
     ConnectionError,

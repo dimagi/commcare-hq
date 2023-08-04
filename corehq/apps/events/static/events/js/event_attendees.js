@@ -4,6 +4,7 @@ hqDefine("events/js/event_attendees",[
     'underscore',
     'hqwebapp/js/initial_page_data',
     'jquery.rmi/jquery.rmi',
+    'locations/js/widgets',
     "hqwebapp/js/widgets",
     "hqwebapp/js/components.ko", // for pagination
 ], function (
@@ -11,7 +12,8 @@ hqDefine("events/js/event_attendees",[
     ko,
     _,
     initialPageData,
-    RMI
+    RMI,
+    locationsWidgets
 ) {
     'use strict';
 
@@ -32,6 +34,7 @@ hqDefine("events/js/event_attendees",[
             creationStatus: STATUS_CSS.NONE,
             creationError: '',
             name: '',
+            location_id: '',
             case_id: '',
         });
 
@@ -111,18 +114,6 @@ hqDefine("events/js/event_attendees",[
     var mobileWorkerAttendees = function() {
         self.mobileWorkerAttendeesEnabled = ko.observable(false);
         self.buttonText = ko.observable("");
-        self.toggleMobileWorkerAttendees = function() {
-            $.ajax({
-                method: 'POST',
-                url: initialPageData.reverse('attendees_config'),
-                contentType: 'application/json',
-                data: JSON.stringify({'mobile_worker_attendee_enabled': !self.mobileWorkerAttendeesEnabled()}),
-                success: function (data) {
-                    self.mobileWorkerAttendeesEnabled(data.mobile_worker_attendee_enabled);
-                    self.toggleButtonText();
-                },
-            });
-        };
 
         self.toggleButtonText = function() {
             var button = document.getElementById("mobileWorkerAttendeeButton");
@@ -169,6 +160,12 @@ hqDefine("events/js/event_attendees",[
 
         self.initializeAttendee = function () {
             self.stagedAttendee(attendeeModel({}));
+
+            var $locationSelect = $("#id_location_id");
+            if ($locationSelect.length) {
+                locationsWidgets.initAutocomplete($locationSelect);
+            }
+
         };
 
         self.submitNewAttendee = function () {

@@ -7,8 +7,8 @@ from django_prbac.utils import has_privilege
 from ws4redis.context_processors import default
 
 from corehq import feature_previews, privileges, toggles
-from corehq.apps.accounting.models import BillingAccount, SubscriptionType
-from corehq.apps.accounting.utils import domain_has_privilege
+from corehq.apps.accounting.models import BillingAccount, Subscription, SubscriptionType
+from corehq.apps.accounting.utils import domain_has_privilege, get_privileges
 from corehq.apps.analytics.utils.hubspot import is_hubspot_js_allowed_for_request
 from corehq.apps.hqwebapp.utils import get_environment_friendly_name
 from corehq.apps.hqwebapp.utils import bootstrap
@@ -106,7 +106,11 @@ def js_api_keys(request):
         'ANALYTICS_CONFIG': settings.ANALYTICS_CONFIG.copy(),
         'MAPBOX_ACCESS_TOKEN': settings.MAPBOX_ACCESS_TOKEN,
     }
-    if getattr(request, 'project', None) and request.project.ga_opt_out and api_keys['ANALYTICS_IDS'].get('GOOGLE_ANALYTICS_API_ID'):
+    if (
+        getattr(request, 'project', None)
+        and request.project.ga_opt_out
+        and api_keys['ANALYTICS_IDS'].get('GOOGLE_ANALYTICS_API_ID')
+    ):
         del api_keys['ANALYTICS_IDS']['GOOGLE_ANALYTICS_API_ID']
 
     if (api_keys['ANALYTICS_IDS'].get('HUBSPOT_API_ID')
@@ -135,6 +139,22 @@ def js_toggles(request):
     return {
         'toggles_dict': toggles.toggle_values_by_name(username=request.couch_user.username, domain=domain),
         'previews_dict': feature_previews.preview_values_by_name(domain=domain)
+    }
+
+
+def js_privileges(request):
+    domain = None
+    if getattr(request, 'project', None):
+        domain = request.project.name
+    elif getattr(request, 'domain', None):
+        domain = request.domain
+
+    if not domain:
+        return {}
+
+    plan_version = Subscription.get_subscribed_plan_by_domain(domain)
+    return {
+        'privileges': list(get_privileges(plan_version)),
     }
 
 

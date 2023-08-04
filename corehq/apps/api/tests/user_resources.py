@@ -91,6 +91,7 @@ class TestCommCareUserResource(APIResourceTest):
         self.assertEqual(api_users[0], {
             'default_phone_number': None,
             'email': '',
+            'eulas': '[]',
             'first_name': '',
             'groups': [],
             'id': backend_id,
@@ -116,6 +117,7 @@ class TestCommCareUserResource(APIResourceTest):
         self.assertEqual(api_user, {
             'default_phone_number': None,
             'email': '',
+            'eulas': '[]',
             'first_name': '',
             'groups': [],
             'id': backend_id,

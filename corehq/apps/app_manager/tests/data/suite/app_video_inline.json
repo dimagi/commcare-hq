@@ -659,14 +659,12 @@
   "multimedia_map": {},
   "name": "Suite Test",
   "phone_model": null,
-  "platform": "nokia/s40",
   "profile": {},
   "recipients": "",
   "show_user_registration": true,
   "success_message": {
     "en": ""
   },
-  "text_input": "roman",
   "translations": {},
   "use_custom_suite": false,
   "user_registration": {

@@ -338,9 +338,11 @@ class DomainGlobalSettingsForm(forms.Form):
     logo = ImageField(
         label=gettext_lazy("Custom Logo"),
         required=False,
-        help_text=gettext_lazy("Upload a custom image to display instead of the "
-                    "CommCare HQ logo.  It will be automatically resized to "
-                    "a height of 32 pixels.")
+        help_text=gettext_lazy(
+            "Upload a custom image to display instead of the "
+            "CommCare HQ logo.  It will be automatically resized to "
+            "a height of 32 pixels. Upload size limit is {size_limit} MB."
+        ).format(size_limit=f"{settings.MAX_UPLOAD_SIZE_ATTACHMENT/(1024*1024):,.0f}")
     )
     delete_logo = BooleanField(
         label=gettext_lazy("Delete Logo"),
@@ -527,6 +529,17 @@ class DomainGlobalSettingsForm(forms.Form):
         if isinstance(data, dict):
             return data
         return json.loads(data or '{}')
+
+    def clean_logo(self):
+        logo = self.cleaned_data['logo']
+        if self.can_use_custom_logo and logo:
+            if logo.size > settings.MAX_UPLOAD_SIZE_ATTACHMENT:
+                raise ValidationError(
+                    _("Logo exceeds {} MB size limit").format(
+                        f"{settings.MAX_UPLOAD_SIZE_ATTACHMENT/(1024*1024):,.0f}"
+                    )
+                )
+        return logo
 
     def clean_confirmation_link_expiry(self):
         data = self.cleaned_data['confirmation_link_expiry']

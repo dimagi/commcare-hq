@@ -142,13 +142,6 @@ hqDefine("app_manager/js/forms/form_view", function () {
             $('#custom-instances').koApplyBindings(customInstances);
         }
 
-        if (hqImport('hqwebapp/js/toggles').toggleEnabled('CUSTOM_ASSERTIONS')) {
-            var customAssertions = hqImport('app_manager/js/forms/custom_assertions').wrap({
-                customAssertions: initialPageData('custom_assertions'),
-            });
-            $('#custom-assertions').koApplyBindings(customAssertions);
-        }
-
         // Case Management > Data dictionary descriptions for case properties
         $('.property-description').popover();
 

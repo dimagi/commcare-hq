@@ -20,14 +20,26 @@
       {% if total > 0 %}
         <div id="form_options" class="well form-inline">
           <div>
-            <button id="resend-all-button" class="btn btn-default" data-target="#are-you-sure">
-                {% blocktrans %}Resend selected{% endblocktrans %}
+            <button id="resend-all-button"
+                    class="btn btn-default"
+                    data-target="#are-you-sure"
+                    title="{% trans 'Resend selected records' %}">
+              <i class="fa fa-play"></i>
+              {% trans 'Resend' %}
             </button>
-            <button id="cancel-all-button" class="btn btn-default" data-target="#are-you-sure">
-                {% blocktrans %}Cancel selected{% endblocktrans %}
+            <button id="cancel-all-button"
+                    class="btn btn-default"
+                    data-target="#are-you-sure"
+                    title="{% trans 'Cancel selected records' %}">
+              <i class="fa fa-times"></i>
+              {% trans 'Cancel' %}
             </button>
-            <button id="requeue-all-button" class="btn btn-default" data-target="#are-you-sure">
-                {% blocktrans %}Requeue selected{% endblocktrans %}
+            <button id="requeue-all-button"
+                    class="btn btn-default"
+                    data-target="#are-you-sure"
+                    title="{% trans 'Requeue selected records' %}">
+              <i class="fa fa-recycle"></i>
+              {% trans 'Requeue' %}
             </button>
             <label class="checkbox" >
               <input type="checkbox" id="select-all" data-id="{{ form_query_string|urlencode }}">

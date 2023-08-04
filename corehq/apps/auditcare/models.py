@@ -14,7 +14,7 @@ from corehq.util.models import (
     ForeignValue,
     NullJsonField,
     TruncatingCharField,
-    foreign_value_init,
+    foreign_init,
 )
 
 log = logging.getLogger(__name__)
@@ -126,7 +126,7 @@ class AuditEvent(models.Model):
 
 
 @architect.install('partition', type='range', subtype='date', constraint='month', column='event_date')
-@foreign_value_init
+@foreign_init
 class NavigationEventAudit(AuditEvent):
     """
     Audit event to track happenings within the system, ie, view access
@@ -183,7 +183,7 @@ ACCESS_CHOICES = {
 
 
 @architect.install('partition', type='range', subtype='date', constraint='month', column='event_date')
-@foreign_value_init
+@foreign_init
 class AccessAudit(AuditEvent):
     access_type = models.CharField(max_length=1, choices=ACCESS_CHOICES.items())
     http_accept_fk = models.ForeignKey(

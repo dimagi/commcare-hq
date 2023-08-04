@@ -29,6 +29,9 @@ from corehq.apps.export.const import (
     FORM_EXPORT,
     SharingOption,
     PROPERTY_TAG_INFO,
+    ALL_CASE_TYPE_EXPORT,
+    MAX_CASE_TYPE_COUNT,
+    MAX_APP_COUNT
 )
 from corehq.apps.export.dbaccessors import get_properly_wrapped_export_instance
 from corehq.apps.export.exceptions import (
@@ -48,6 +51,9 @@ from corehq.apps.export.views.utils import (
     DashboardFeedMixin,
     ODataFeedMixin,
     clean_odata_columns,
+    trigger_update_case_instance_tables_task,
+    is_bulk_case_export,
+    case_type_or_app_limit_exceeded
 )
 from corehq.apps.locations.permissions import location_safe
 from corehq.apps.settings.views import BaseProjectDataView
@@ -109,11 +115,22 @@ class BaseExportView(BaseProjectDataView):
     @property
     def page_context(self):
         owner_id = self.export_instance.owner_id
-        schema = self.get_export_schema(
-            self.domain,
-            self.request.GET.get('app_id') or getattr(self.export_instance, 'app_id'),
-            self.export_instance.identifier,
+        number_of_apps_to_process = 0
+        is_all_case_types_export = (
+            isinstance(self.export_instance, CaseExportInstance)
+            and self.export_instance.case_type == ALL_CASE_TYPE_EXPORT
         )
+        table_count = 0
+        if not is_all_case_types_export:
+            # Case History table is not a selectable table, so exclude it from count
+            table_count = len([t for t in self.export_instance.tables if t.label != 'Case History'])
+            schema = self.get_export_schema(
+                self.domain,
+                self.request.GET.get('app_id') or getattr(self.export_instance, 'app_id'),
+                self.export_instance.identifier,
+            )
+            number_of_apps_to_process = schema.get_number_of_apps_to_process()
+
         if self.export_instance.owner_id or not self.export_instance._id:
             sharing_options = SharingOption.CHOICES
         else:
@@ -132,9 +149,11 @@ class BaseExportView(BaseProjectDataView):
             'has_other_owner': owner_id and owner_id != self.request.couch_user.user_id,
             'owner_name': WebUser.get_by_user_id(owner_id).username if owner_id else None,
             'format_options': ["xls", "xlsx", "csv"],
-            'number_of_apps_to_process': schema.get_number_of_apps_to_process(),
+            'number_of_apps_to_process': number_of_apps_to_process,
             'sharing_options': sharing_options,
             'terminology': self.terminology,
+            'is_all_case_types_export': is_all_case_types_export,
+            'disable_table_checkbox': (table_count < 2)
         }
 
     @property
@@ -161,7 +180,7 @@ class BaseExportView(BaseProjectDataView):
                 properties={'domain': self.domain}
             )
 
-            if toggles.EXPORT_OWNERSHIP.enabled(request.domain):
+            if domain_has_privilege(request.domain, privileges.EXPORT_OWNERSHIP):
                 export.owner_id = request.couch_user.user_id
             if getattr(settings, "ENTERPRISE_MODE"):
                 # default auto rebuild to False for enterprise clusters
@@ -207,11 +226,13 @@ class BaseExportView(BaseProjectDataView):
             request,
             format_html(_("Export <strong>{}</strong> saved."), export.name)
         )
-        return export._id
+        return export
 
     def post(self, request, *args, **kwargs):
         try:
-            export_id = self.commit(request)
+            export = self.commit(request)
+            if is_bulk_case_export(export):
+                trigger_update_case_instance_tables_task(request.domain, export._id)
         except Exception as e:
             if self.is_async:
                 return JsonResponse(data={
@@ -250,6 +271,10 @@ class BaseExportView(BaseProjectDataView):
             identifier,
             only_process_current_builds=True,
         )
+
+    @memoized
+    def get_empty_export_schema(self, domain, identifier):
+        return self.export_schema_cls.generate_empty_schema(domain, identifier)
 
 
 @location_safe
@@ -319,8 +344,30 @@ class CreateNewCustomCaseExportView(BaseExportView):
     def get(self, request, *args, **kwargs):
         case_type = request.GET.get('export_tag').strip('"')
 
+        # First check if project is allowed to do a bulk export and redirect if necessary
+        if case_type == ALL_CASE_TYPE_EXPORT and case_type_or_app_limit_exceeded(self.domain):
+            messages.error(
+                request,
+                _(
+                    "Cannot do a bulk case export as the project has more than %(max_case_types)s "
+                    "case types or %(max_apps)s applications."
+                ) % {
+                    'max_case_types': MAX_CASE_TYPE_COUNT,
+                    'max_apps': MAX_APP_COUNT
+                }
+            )
+            url = self.export_home_url
+            return HttpResponseRedirect(url)
+
+        # Don't add group schemas if doing a bulk case export. There may be a lot of case
+        # types, so rather handle creating the instance tables in an async task on the instance save.
+        schema = None
+        if case_type == ALL_CASE_TYPE_EXPORT:
+            schema = self.get_empty_export_schema(self.domain, case_type)
+        else:
+            schema = self.get_export_schema(self.domain, None, case_type)
+
         export_settings = get_default_export_settings_if_available(self.domain)
-        schema = self.get_export_schema(self.domain, None, case_type)
         self.export_instance = self.create_new_export_instance(
             schema,
             request.user.username,
@@ -485,7 +532,7 @@ class CopyExportView(View):
             messages.error(request, _('You can only copy new exports.'))
         else:
             new_export = export.copy_export()
-            if toggles.EXPORT_OWNERSHIP.enabled(domain):
+            if domain_has_privilege(domain, privileges.EXPORT_OWNERSHIP):
                 new_export.owner_id = request.couch_user.user_id
                 new_export.sharing = SharingOption.PRIVATE
             new_export.save()

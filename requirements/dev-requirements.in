@@ -1,6 +1,7 @@
 -r test-requirements.in
 -r docs-requirements.in
 
+dependency-metrics
 django-extensions
 fixture
 git-build-branch

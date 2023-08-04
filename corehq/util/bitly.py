@@ -55,4 +55,5 @@ elif getattr(settings, 'BITLY_LOGIN', None) and getattr(settings, 'BITLY_APIKEY'
     shorten = partial(shorten_v3, login=settings.BITLY_LOGIN, api_key=settings.BITLY_APIKEY)
     BITLY_CONFIGURED = True
 else:
-    shorten = lambda url: url
+    def shorten(url):
+        return url

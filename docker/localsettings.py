@@ -71,8 +71,8 @@ COUCH_DATABASES = {
         # for production this ought to be set to true on your configured couch instance
         'COUCH_HTTPS': False,
         'COUCH_SERVER_ROOT': 'couch:5984',  # 6984 for https couch
-        'COUCH_USERNAME': '',
-        'COUCH_PASSWORD': '',
+        'COUCH_USERNAME': 'admin',
+        'COUCH_PASSWORD': 'commcarehq',
         'COUCH_DATABASE_NAME': 'commcarehq'
     }
 }
@@ -145,16 +145,6 @@ EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 
 BITLY_OAUTH_TOKEN = None
 
-####### Jar signing config ########
-
-_ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
-JAR_SIGN = {
-    "jad_tool": os.path.join(_ROOT_DIR, "corehq", "apps", "app_manager", "JadTool.jar"),
-    "key_store": os.path.join(_ROOT_DIR, "InsecureTestingKeyStore"),
-    "key_alias": "javarosakey",
-    "store_pass": "onetwothreefourfive",
-    "key_pass": "onetwothreefourfive",
-}
 
 SECRET_KEY = 'secrettravis'
 

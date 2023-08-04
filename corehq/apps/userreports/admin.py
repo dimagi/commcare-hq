@@ -4,9 +4,6 @@ from .models import (
     AsyncIndicator,
     DataSourceActionLog,
     InvalidUCRData,
-    ReportComparisonDiff,
-    ReportComparisonException,
-    ReportComparisonTiming,
 )
 
 
@@ -57,16 +54,3 @@ class DataSourceActionLogAdmin(admin.ModelAdmin):
     ]
     list_filter = ('action_source', 'action', 'skip_destructive')
     search_fields = ('domain', 'indicator_config_id',)
-
-
-@admin.register(ReportComparisonException)
-@admin.register(ReportComparisonDiff)
-class ReportComparisonAdmin(admin.ModelAdmin):
-    list_display = ('domain', 'control_report_config_id', 'candidate_report_config_id', 'date_created')
-    list_filter = ('domain',)
-    ordering = ('-date_created',)
-
-
-@admin.register(ReportComparisonTiming)
-class ReportComparisonTimingAdmin(ReportComparisonAdmin):
-    list_display = ('domain', 'control_report_config_id', 'control_duration', 'candidate_duration', 'date_created')

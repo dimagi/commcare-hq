@@ -12,7 +12,6 @@ from corehq.apps.users.tasks import (
     update_domain_date,
 )
 
-
 class TasksTest(TestCase):
 
     @classmethod

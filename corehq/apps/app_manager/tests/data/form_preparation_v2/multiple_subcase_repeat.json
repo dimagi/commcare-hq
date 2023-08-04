@@ -755,31 +755,20 @@
   "multimedia_map": {},
   "name": "Repeat subcases",
   "phone_model": null,
-  "platform": "nokia/s40",
   "profile": {
     "features": {
-      "sense": "false",
       "users": "true"
     },
     "properties": {
-      "ViewStyle": "v_chatterbox",
       "cc-autoup-freq": "freq-never",
       "cc-content-valid": "no",
       "cc-days-form-retain": "-1",
-      "cc-entry-mode": "cc-entry-quick",
-      "cc-login-images": "No",
-      "cc-send-procedure": "cc-send-http",
-      "cc-send-unsent": "cc-su-auto",
-      "cc-user-mode": "cc-u-normal",
-      "extra_key_action": "audio",
       "log_prop_daily": "log_never",
       "log_prop_weekly": "log_short",
       "logenabled": "Enabled",
       "loose_media": "no",
-      "password_format": "n",
       "purge-freq": "0",
       "restore-tolerance": "loose",
-      "server-tether": "push-only",
       "unsent-number-limit": "5",
       "user_reg_server": "required"
     }
@@ -788,7 +777,6 @@
   "secure_submissions": false,
   "show_user_registration": false,
   "success_message": {},
-  "text_input": "roman",
   "translation_strategy": "dump-known",
   "translations": {},
   "use_custom_suite": false,

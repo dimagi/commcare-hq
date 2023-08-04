@@ -147,12 +147,6 @@ hqDefine("app_manager/js/details/column", function () {
                 label: "",
             }]);
         }
-        if (self.screen.columnKey === "long") {
-            menuOptions = menuOptions.concat([{
-                value: "markdown",
-                label: gettext('Markdown'),
-            }]);
-        }
 
         if (self.useXpathExpression) {
             var menuOptionsToRemove = ['picture', 'audio'];
@@ -176,7 +170,7 @@ hqDefine("app_manager/js/details/column", function () {
                 langs: self.screen.langs,
                 module_id: self.screen.config.module_id,
                 items: self.original['enum'],
-                property_name: self.field,
+                property_name: self.header,
                 multimedia: self.screen.config.multimedia,
                 values_are_icons: self.original.format === 'enum-image',
                 keys_are_conditions: self.original.format === 'conditional-enum',

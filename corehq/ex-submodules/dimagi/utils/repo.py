@@ -14,7 +14,7 @@ def get_revision(vcs, reporoot, dirtyfunc=lambda rev, **kw: rev + '*'):
         return None
 
     rev, dirty = revinfo
-    return dirtyfunc(rev, repo=reporoot, vcs=vcs) if dirty and dirtyfunc != None else rev
+    return dirtyfunc(rev, repo=reporoot, vcs=vcs) if dirty and dirtyfunc is not None else rev
 
 
 def get_raw_revision(vcs, reporoot, untracked_is_dirty=False):
@@ -35,7 +35,8 @@ def get_raw_revision(vcs, reporoot, untracked_is_dirty=False):
         }
     }
     
-    exec_ = lambda cmd: shell_exec(cmd, reporoot)
+    def exec_(cmd):
+        return shell_exec(cmd, reporoot)
 
     rev = funcs[vcs]['rev'](exec_)
     if rev:

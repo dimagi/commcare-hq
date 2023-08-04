@@ -20,6 +20,8 @@ from corehq.apps.case_search.models import (
 from corehq.apps.case_search.utils import (
     _get_helper,
     get_case_search_results,
+    get_primary_case_search_results,
+    get_and_tag_related_cases,
 )
 from corehq.apps.domain.shortcuts import create_user
 from corehq.apps.es.case_search import case_search_adapter
@@ -306,6 +308,19 @@ class TestCaseSearchRegistry(TestCase):
             for case in results
         ])
 
+    def test_primary_cases_not_included_with_related_cases(self):
+        with patch_get_app_cached:
+            registry_helper = _get_helper(None, self.domain_1, ["creative_work"], self.registry_slug)
+            primary_cases = get_primary_case_search_results(registry_helper, self.domain_1, ["creative_work"],
+                                                            [SearchCriteria("name", "Jane Eyre")])
+            related_cases = registry_helper.get_all_related_live_cases(primary_cases)
+
+            self.assertItemsEqual([
+                ("Charlotte Brontë", "creator", self.domain_2),
+            ], [
+                (case.name, case.type, case.domain)
+                for case in related_cases
+            ])
 
 class TestCaseSearchRegistryPermissions(TestCase):
     @classmethod

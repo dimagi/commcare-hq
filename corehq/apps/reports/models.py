@@ -561,3 +561,11 @@ class TableauAPISession(object):
             {}
         )
         return True
+
+
+class QueryStringHash(models.Model):
+    date_created = models.DateTimeField(auto_now_add=True)
+    domain = models.CharField(max_length=64)
+    last_accessed = models.DateTimeField(auto_now=True)
+    query_id = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
+    query_string = models.TextField()

@@ -312,14 +312,12 @@
   "multimedia_map": {},
   "name": "days-ago migration 2.0 test",
   "phone_model": null,
-  "platform": "nokia/s40",
   "profile": {},
   "recipients": "",
   "show_user_registration": false,
   "success_message": {
     "en": ""
   },
-  "text_input": "roman",
   "translations": {},
   "use_custom_suite": false,
   "user_registration": {

@@ -27,7 +27,6 @@ from corehq.util.test_utils import flag_enabled, privilege_enabled
 
 @patch('corehq.apps.app_manager.models.validate_xform', return_value=None)
 @patch('corehq.apps.app_manager.helpers.validators.domain_has_privilege', return_value=True)
-@patch('corehq.apps.builds.models.BuildSpec.supports_j2me', return_value=False)
 class BuildErrorsTest(SimpleTestCase):
 
     @staticmethod

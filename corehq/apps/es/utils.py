@@ -4,11 +4,11 @@ from datetime import datetime, timedelta, timezone
 
 from django.conf import settings
 from django.core.management.base import CommandError
+from django.db.backends.base.creation import TEST_DATABASE_PREFIX
 
 from corehq.apps.es.exceptions import TaskError, TaskMissing
 from corehq.util.es.elasticsearch import SerializationError
 from corehq.util.json import CommCareJSONEncoder
-from corehq.util.metrics import metrics_counter
 
 
 TASK_POLL_DELAY = 10  # number of seconds to sleep between polling for task info
@@ -70,16 +70,6 @@ def flatten_field_dict(results, fields_property='fields'):
             new_val = val[0]
         field_dict[key] = new_val
     return field_dict
-
-
-def track_es_report_load(domain, report_slug, owner_count):
-    # Intended mainly for ICDs to track load of user filter counts when hitting ES
-    if hasattr(settings, 'TRACK_ES_REPORT_LOAD'):
-        metrics_counter(
-            'commcare.es.user_filter_count',
-            owner_count,
-            tags={'report_slug': report_slug, 'domain': domain}
-        )
 
 
 def es_format_datetime(val):
@@ -181,3 +171,8 @@ def sorted_mapping(mapping):
 def mapping_sort_key(item):
     key, value = item
     return 1 if key == "properties" else 0, key, value
+
+
+def index_runtime_name(name):
+    # transform the name if testing
+    return f"{TEST_DATABASE_PREFIX}{name}" if settings.UNIT_TESTING else name

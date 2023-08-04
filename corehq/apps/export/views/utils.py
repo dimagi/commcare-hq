@@ -28,13 +28,17 @@ from corehq.apps.export.const import (
     FORM_EXPORT,
     MAX_DATA_FILE_SIZE,
     MAX_DATA_FILE_SIZE_TOTAL,
+    BULK_CASE_EXPORT_CACHE,
+    MAX_CASE_TYPE_COUNT,
+    MAX_APP_COUNT,
+    ALL_CASE_TYPE_EXPORT
 )
 from corehq.apps.export.models import (
     CaseExportDataSchema,
     FormExportDataSchema,
 )
-from corehq.apps.export.models.new import DataFile, DatePeriod
-from corehq.apps.export.tasks import generate_schema_for_all_builds
+from corehq.apps.export.models.new import DataFile, DatePeriod, CaseExportInstance
+from corehq.apps.export.tasks import generate_schema_for_all_builds, process_populate_export_tables
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.locations.permissions import location_safe
 from corehq.apps.reports.util import datespan_from_beginning
@@ -52,6 +56,8 @@ from corehq.blobs.exceptions import NotFound
 from corehq.privileges import DAILY_SAVED_EXPORT, EXCEL_DASHBOARD
 from corehq.util.download import get_download_response
 from corehq.util.timezones.utils import get_timezone_for_user
+from corehq.apps.reports.analytics.esaccessors import get_case_types_for_domain
+from corehq.apps.app_manager.dbaccessors import get_app_ids_in_domain
 
 
 def get_timezone(domain, couch_user):
@@ -415,3 +421,21 @@ def clean_odata_columns(export_instance):
                 column.label = column.label[:255]
             if column.label in ['formid'] and column.is_deleted:
                 column.label = f"{column.label}_deleted"
+
+
+def case_type_or_app_limit_exceeded(domain):
+    case_type_count = len(get_case_types_for_domain(domain))
+    app_count = len(get_app_ids_in_domain(domain))
+    return (case_type_count > MAX_CASE_TYPE_COUNT or app_count > MAX_APP_COUNT)
+
+
+def trigger_update_case_instance_tables_task(domain, export_id):
+    progress_id = f'{BULK_CASE_EXPORT_CACHE}:{domain}'
+    process_populate_export_tables.delay(export_id, progress_id)
+
+
+def is_bulk_case_export(export_instance):
+    return (
+        isinstance(export_instance, CaseExportInstance)
+        and export_instance.case_type == ALL_CASE_TYPE_EXPORT
+    )

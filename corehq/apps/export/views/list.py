@@ -43,6 +43,7 @@ from corehq.apps.export.const import (
     MAX_NORMAL_EXPORT_SIZE,
     UNKNOWN_EXPORT_OWNER,
     SharingOption,
+    BULK_CASE_EXPORT_CACHE,
 )
 from corehq.apps.export.dbaccessors import (
     get_brief_deid_exports,
@@ -79,9 +80,11 @@ from corehq.apps.users.permissions import (
     FORM_EXPORT_PERMISSION,
     has_permission_to_view_report,
 )
-from corehq.privileges import DAILY_SAVED_EXPORT, EXCEL_DASHBOARD, ODATA_FEED
+from corehq.privileges import DAILY_SAVED_EXPORT, EXPORT_OWNERSHIP, EXCEL_DASHBOARD, ODATA_FEED
 from corehq.util.download import get_download_response
 from corehq.util.view_utils import absolute_reverse
+from django.contrib import messages
+from django.core.cache import cache
 
 mark_safe_lazy = lazy(mark_safe, str)  # TODO: replace with library function
 
@@ -161,22 +164,23 @@ class ExportListHelper(object):
             return CreateExportTagForm(self.permissions.has_form_export_permissions,
                                        self.permissions.has_case_export_permissions)
 
+    def _can_view_export(self, export):
+        if 'owner_id' not in export:
+            return True
+        is_not_private = export['sharing'] != SharingOption.PRIVATE
+        is_owner = export['owner_id'] == self.request.couch_user.user_id
+        return is_not_private or is_owner
+
     def get_exports_page(self, page, limit, my_exports=False):
         if not self._priv_check():
             raise Http404
 
         # Calls self.get_saved_exports and formats each item using self.fmt_export_data
         brief_exports = sorted(self.get_saved_exports(), key=lambda x: x['name'])
-        if toggles.EXPORT_OWNERSHIP.enabled(self.domain):
-
-            def _can_view(e, user_id):
-                if not hasattr(e, 'owner_id'):
-                    return True
-                return e['sharing'] != SharingOption.PRIVATE or e['owner_id'] == user_id
-
+        if domain_has_privilege(self.domain, EXPORT_OWNERSHIP):
             brief_exports = [
                 export for export in brief_exports
-                if _can_view(export, self.request.couch_user.user_id)
+                if self._can_view_export(export)
                 and ('owner_id' in export and export['owner_id'] == self.request.couch_user.user_id) == my_exports
             ]
 
@@ -321,16 +325,13 @@ class ExportListHelper(object):
         Return a dictionary containing details about an emailed export file.
         This will eventually be passed to an Angular controller.
         """
+        cutoff_datetime = datetime.utcnow() - timedelta(days=settings.SAVED_EXPORT_ACCESS_CUTOFF)
         return {
             'fileId': fileId,
             'size': filesizeformat(size),
             'lastUpdated': naturaltime(last_updated),
             'lastAccessed': naturaltime(last_accessed),
-            'showExpiredWarning': (
-                last_accessed and
-                last_accessed <
-                (datetime.utcnow() - timedelta(days=settings.SAVED_EXPORT_ACCESS_CUTOFF))
-            ),
+            'showExpiredWarning': (last_accessed and last_accessed < cutoff_datetime),
             'downloadUrl': download_url,
         }
 
@@ -531,6 +532,7 @@ class BaseExportListView(BaseProjectDataView):
             'max_normal_export_size': MAX_NORMAL_EXPORT_SIZE,
             'max_daily_export_size': MAX_DAILY_EXPORT_SIZE,
             'lead_text': self.lead_text,
+            'export_ownership_enabled': domain_has_privilege(self.domain, EXPORT_OWNERSHIP),
             "export_filter_form": (
                 DashboardFeedFilterForm(
                     self.domain_object,
@@ -567,7 +569,6 @@ def get_exports_page(request, domain):
         is_deid=json.loads(request.GET.get('is_deid')),
         is_odata=json.loads(request.GET.get('is_odata'))
     )
-
     helper = ExportListHelper.from_request(request)
     page = int(request.GET.get('page', 1))
     limit = int(request.GET.get('limit', 5))
@@ -725,6 +726,21 @@ class CaseExportListView(BaseExportListView, CaseExportListHelper):
             return _("Export De-Identified Cases")
         return self.page_title
 
+    @method_decorator(login_and_domain_required)
+    def dispatch(self, request, *args, **kwargs):
+        bulk_export_progress = cache.get(f'{BULK_CASE_EXPORT_CACHE}:{request.domain}')
+        if bulk_export_progress:
+            messages.info(
+                request,
+                format_html(
+                    _("Populating tables for <strong>{}</strong>. ({}%)"),
+                    bulk_export_progress['table_name'],
+                    bulk_export_progress['progress']
+                )
+            )
+
+        return super(CaseExportListView, self).dispatch(request, *args, **kwargs)
+
 
 @location_safe
 class DashboardFeedListView(DailySavedExportListView, DashboardFeedListHelper):
@@ -769,9 +785,7 @@ class DeIdDashboardFeedListView(DashboardFeedListView, DeIdDashboardFeedListHelp
 
 
 def can_download_daily_saved_export(export, domain, couch_user):
-    if (export.is_deidentified
-        and user_can_view_deid_exports(domain, couch_user)
-    ):
+    if (export.is_deidentified and user_can_view_deid_exports(domain, couch_user)):
         return True
     elif export.type == FORM_EXPORT and has_permission_to_view_report(
             couch_user, domain, FORM_EXPORT_PERMISSION):
@@ -855,7 +869,7 @@ def get_app_data_drilldown_values(request, domain):
     if model_type == 'form':
         response = rmi_helper.get_form_rmi_response()
     elif model_type == 'case':
-        response = rmi_helper.get_case_rmi_response()
+        response = rmi_helper.get_case_rmi_response(include_any_app=True)
     else:
         response = rmi_helper.get_dual_model_rmi_response()
 
@@ -924,7 +938,7 @@ def submit_app_data_drilldown_form(request, domain):
 
     url_params = '?export_tag="{}"'.format(export_tag)
     app_id = create_form.cleaned_data['application']
-    if app_id != ApplicationDataRMIHelper.UNKNOWN_SOURCE:
+    if app_id not in [ApplicationDataRMIHelper.UNKNOWN_SOURCE, ApplicationDataRMIHelper.ALL_SOURCES]:
         url_params += '&app_id={}'.format(app_id)
 
     return json_response({

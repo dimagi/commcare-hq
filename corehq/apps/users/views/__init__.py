@@ -33,14 +33,12 @@ from django.utils.safestring import mark_safe
 from django.utils.translation import gettext as _, ngettext, gettext_lazy, gettext_noop
 
 from corehq.apps.users.analytics import get_role_user_count
-from dimagi.utils.couch import CriticalSection
 from soil.exceptions import TaskFailedError
 from soil.util import expose_cached_download, get_download_context
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.debug import sensitive_post_parameters
 from django.views.decorators.http import require_GET, require_POST
 from django_digest.decorators import httpdigest
-from django_otp.plugins.otp_static.models import StaticToken
 from django_prbac.utils import has_privilege
 from memoized import memoized
 
@@ -61,7 +59,6 @@ from corehq.apps.domain.decorators import (
     require_superuser,
 )
 from corehq.apps.domain.forms import clean_password
-from corehq.apps.domain.models import Domain
 from corehq.apps.domain.views.base import BaseDomainView
 from corehq.apps.enterprise.models import EnterprisePermissions
 from corehq.apps.es import UserES, queries
@@ -306,20 +303,6 @@ class BaseEditUserView(BaseUserSettingsView):
         return context
 
     @property
-    def backup_token(self):
-        if Domain.get_by_name(self.request.domain).two_factor_auth:
-            with CriticalSection([f"backup-token-{self.editable_user._id}"]):
-                device = (self.editable_user.get_django_user()
-                          .staticdevice_set
-                          .get_or_create(name='backup')[0])
-                token = device.token_set.first()
-                if token:
-                    return device.token_set.first().token
-                else:
-                    return device.token_set.create(token=StaticToken.random_token()).token
-        return None
-
-    @property
     @memoized
     def commtrack_form(self):
         if self.request.method == "POST" and self.request.POST['form_type'] == "commtrack":
@@ -454,8 +437,6 @@ class EditWebUserView(BaseEditUserView):
             ctx.update({'tableau_form': self.tableau_form})
         if self.can_grant_superuser_access:
             ctx.update({'update_permissions': True})
-
-        ctx.update({'token': self.backup_token})
 
         idp = IdentityProvider.get_active_identity_provider_by_username(
             self.editable_user.username
@@ -682,6 +663,9 @@ class ListRolesView(BaseRoleAccessView):
             key=lambda role: role.name if role.name else '\uFFFF'
         )) + [UserRole.commcare_user_default(self.domain)]  # mobile worker default listed last
 
+    def can_edit_linked_roles(self):
+        return self.request.couch_user.can_edit_linked_data(self.domain)
+
     def get_roles_for_display(self):
         show_es_issue = False
         role_view_data = [StaticRole.domain_admin(self.domain).to_json()]
@@ -719,6 +703,7 @@ class ListRolesView(BaseRoleAccessView):
 
     @property
     def page_context(self):
+        from corehq.apps.linked_domain.dbaccessors import is_active_downstream_domain
         if (not self.can_restrict_access_by_location
                 and any(not role.permissions.access_all_locations
                         for role in self.non_admin_roles)):
@@ -737,6 +722,8 @@ class ListRolesView(BaseRoleAccessView):
             } for viz in TableauVisualization.objects.filter(domain=self.domain)]
 
         return {
+            'is_managed_by_upstream_domain': is_active_downstream_domain(self.domain),
+            'can_edit_linked_data': self.can_edit_linked_roles(),
             'user_roles': self.get_roles_for_display(),
             'non_admin_roles': self.non_admin_roles,
             'can_edit_roles': self.can_edit_roles,
@@ -763,7 +750,7 @@ class ListRolesView(BaseRoleAccessView):
             'has_report_builder_access': has_report_builder_access(self.request),
             'data_file_download_enabled':
                 domain_has_privilege(self.domain, privileges.DATA_FILE_DOWNLOAD),
-            'export_ownership_enabled': toggles.EXPORT_OWNERSHIP.enabled(self.domain),
+            'export_ownership_enabled': domain_has_privilege(self.domain, privileges.EXPORT_OWNERSHIP),
             'data_registry_choices': get_data_registry_dropdown_options(self.domain),
         }
 
@@ -837,6 +824,7 @@ def _format_enterprise_user(domain, user):
 def paginate_web_users(request, domain):
     web_users, pagination = _get_web_users(request, [domain])
     web_users_fmt = [{
+        'eulas': u.get_eulas(),
         'email': u.get_email(),
         'domain': domain,
         'name': u.full_name,
@@ -985,7 +973,7 @@ def _update_role_from_view(domain, role_data):
     role.save()
 
     permissions = HqPermissions.wrap(role_data["permissions"])
-    permissions.normalize()
+    permissions.normalize(previous=role.permissions)
     role.set_permissions(permissions.to_list())
 
     assignable_by = role_data["assignable_by"]

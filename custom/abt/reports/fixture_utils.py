@@ -95,7 +95,7 @@ def get_sorted_levels(domain, filters) -> Tuple[list, dict, dict, dict]:
     l3_data_items = get_fixture_items_for_data_type(
         domain, data_types_by_tag["level_3_eco"],
     )
-    country_has_level_3 = l3_data_items.count() > 1
+    country_has_level_3 = len(list(l3_data_items)) > 1
     if country_has_level_3:
         l3s_by_l2 = get_fixture_dicts_by_key(
             domain,
@@ -110,7 +110,7 @@ def get_sorted_levels(domain, filters) -> Tuple[list, dict, dict, dict]:
         l4_data_items = get_fixture_items_for_data_type(
             domain, data_types_by_tag["level_4_eco"],
         )
-        country_has_level_4 = l4_data_items.count() > 1
+        country_has_level_4 = len(list(l4_data_items)) > 1
         if country_has_level_4:
             l4s_by_l3 = get_fixture_dicts_by_key(
                 domain,

@@ -24,6 +24,7 @@ from corehq.apps.export.const import (
     FORM_DATA_SCHEMA_VERSION,
     KNOWN_CASE_PROPERTIES,
     PROPERTY_TAG_UPDATE,
+    ALL_CASE_TYPE_EXPORT,
 )
 from corehq.apps.export.dbaccessors import delete_all_export_data_schemas
 from corehq.apps.export.models import (
@@ -1072,6 +1073,20 @@ class TestBuildingCaseSchemaFromApplication(TestCase, TestXmlMixin):
 
         # Only the new property should be added. The repeated one should be merged
         self.assertEqual(len(group_schema.items), 3)
+
+    @patch('corehq.apps.export.models.new.get_case_types_from_apps', return_value=(case_type,))
+    def test_build_with_bulk_schema(self, _):
+        schema = CaseExportDataSchema.generate_schema_from_builds(
+            self.domain,
+            self.current_app._id,
+            ALL_CASE_TYPE_EXPORT
+        )
+
+        self.assertEqual(len(schema.group_schemas), 2)
+
+        bulk_path = [PathNode(name=self.case_type), PathNode(name=ALL_CASE_TYPE_EXPORT)]
+        group_schema = schema.group_schemas[0]
+        self.assertEqual(group_schema.path, bulk_path)
 
 
 class TestBuildingCaseSchemaFromMultipleApplications(TestCase, TestXmlMixin):

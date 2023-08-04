@@ -1,6 +1,5 @@
 from datetime import datetime
 from looseversion import LooseVersion
-from itertools import groupby
 from zipfile import ZipFile
 
 from couchdbkit.exceptions import BadValueError, ResourceNotFound
@@ -9,7 +8,6 @@ from dimagi.ext.couchdbkit import *
 
 from corehq.apps.app_manager.const import APP_V2
 from corehq.apps.builds.fixtures import commcare_build_config
-from corehq.apps.builds.jadjar import JadJar
 from corehq.apps.domain import SHARED_DOMAIN
 from corehq.blobs import CODES as BLOB_CODES
 from corehq.blobs.mixin import BlobMixin
@@ -43,23 +41,7 @@ class CommCareBuild(BlobMixin, Document):
     build_number = IntegerProperty()
     version = SemanticVersionProperty()
     time = DateTimeProperty()
-    j2me_enabled = BooleanProperty(default=True)
     _blobdb_type_code = BLOB_CODES.commcarebuild
-
-    def put_file(self, payload, path, filename=None):
-        """
-        Add an attachment to the build (useful for constructing the build)
-        payload should be a file-like object
-        filename should be something like "Nokia/S40-generic/CommCare.jar"
-
-        """
-        if filename:
-            path = '/'.join([path, filename])
-        content_type = {
-            'jad': 'text/vnd.sun.j2me.app-descriptor',
-            'jar': 'application/java-archive',
-        }.get(path.split('.')[-1])
-        self.put_attachment(payload, path, content_type, domain=SHARED_DOMAIN)
 
     def fetch_file(self, path, filename=None):
         if filename:
@@ -70,51 +52,11 @@ class CommCareBuild(BlobMixin, Document):
         except UnicodeDecodeError:
             return attachment
 
-    def get_jadjar(self, path, use_j2me_endpoint):
-        """
-        build.get_jadjar("Nokia/S40-generic")
-        """
-        try:
-            jad = self.fetch_file(path, "CommCare.jad")
-        except ResourceNotFound:
-            jad = None
-
-        return JadJar(
-            jad=jad,
-            jar=self.fetch_file(path, "CommCare.jar"),
-            version=self.version,
-            build_number=self.build_number,
-            use_j2me_endpoint=use_j2me_endpoint,
-        )
-
-    @classmethod
-    def create_from_zip(cls, f, version, build_number):
-        """f should be a file-like object or a path to a zipfile"""
-        self = cls(build_number=build_number, version=version, time=datetime.utcnow())
-        self.save()
-        # Clear cache to have this new build included immediately
-        cls.j2me_enabled_builds.clear(cls)
-
-        with ZipFile(f) as z:
-            try:
-                for name in z.namelist():
-                    path = name.split('/')
-                    if path[0] == "dist" and path[-1] != "":
-                        path = '/'.join(path[1:])
-                        self.put_file(z.read(name), path)
-            except:
-                self.delete()
-                raise
-        return self
-
     @classmethod
     def create_without_artifacts(cls, version, build_number):
         self = cls(build_number=build_number, version=version,
-                   time=datetime.utcnow(), j2me_enabled=False)
+                   time=datetime.utcnow())
         self.save()
-        # Clear cache to have this build number excluded immediately if build added
-        # with existing version number but not supporting j2me now
-        cls.j2me_enabled_builds.clear(cls)
         return self
 
     def minor_release(self):
@@ -161,21 +103,6 @@ class CommCareBuild(BlobMixin, Document):
     def all_builds(cls):
         return cls.view('builds/all', include_docs=True, reduce=False)
 
-    @classmethod
-    @quickcache([], timeout=5 * 60)
-    def j2me_enabled_builds(cls):
-        j2me_enabled_builds = []
-        for version_number, group in groupby(cls.all_builds(), lambda x: x['version']):
-            latest_version_build = list(group)[-1]
-            if latest_version_build['j2me_enabled']:
-                j2me_enabled_builds.append(latest_version_build)
-
-        return j2me_enabled_builds
-
-    @classmethod
-    def j2me_enabled_build_versions(cls):
-        return [x.version for x in cls.j2me_enabled_builds()]
-
 
 class BuildSpec(DocumentSchema):
     version = SemanticVersionProperty(required=False)
@@ -204,9 +131,6 @@ class BuildSpec(DocumentSchema):
             if item.build.version == self.version:
                 return item.label or self.get_label()
         return self.get_label()
-
-    def supports_j2me(self):
-        return self.get_menu_item_label() in CommCareBuildConfig.j2me_enabled_config_labels()
 
     def __str__(self):
         fmt = "{self.version}/"
@@ -246,7 +170,6 @@ class BuildMenuItem(DocumentSchema):
     build = SchemaProperty(BuildSpec)
     label = StringProperty(required=False)
     superuser_only = BooleanProperty(default=False)
-    j2me_enabled = BooleanProperty(default=True)
 
     def get_build(self):
         return self.build.get_build()
@@ -288,19 +211,6 @@ class CommCareBuildConfig(Document):
 
     def get_menu(self):
         return self.menu
-
-    @classmethod
-    @quickcache([], timeout=5 * 60)
-    def j2me_enabled_configs(cls):
-        return [build for build in cls.fetch().menu if build.j2me_enabled]
-
-    @classmethod
-    def j2me_enabled_config_labels(cls):
-        return [x.label for x in cls.j2me_enabled_configs()]
-
-    @classmethod
-    def latest_j2me_enabled_config(cls):
-        return cls.j2me_enabled_configs()[-1]
 
 
 class BuildRecord(BuildSpec):

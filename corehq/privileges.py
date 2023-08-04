@@ -105,6 +105,16 @@ FORM_CASE_IDS_CASE_IMPORTER = 'form_case_ids_case_importer'
 
 EXPORT_MULTISORT = 'export_multisort'
 
+EXPORT_OWNERSHIP = 'export_ownership'
+
+FILTERED_BULK_USER_DOWNLOAD = 'filtered_bulk_user_download'
+
+APPLICATION_ERROR_REPORT = 'application_error_report'
+
+SHOW_OWNER_LOCATION_PROPERTY_IN_REPORT_BUILDER = 'show_owner_location_property_in_report_builder'
+
+CASE_LIST_EXPLORER = 'case_list_explorer'
+
 MAX_PRIVILEGES = [
     LOOKUP_TABLES,
     API_ACCESS,
@@ -160,7 +170,12 @@ MAX_PRIVILEGES = [
     REGEX_FIELD_VALIDATION,
     LOCATION_SAFE_CASE_IMPORTS,
     FORM_CASE_IDS_CASE_IMPORTER,
-    EXPORT_MULTISORT
+    EXPORT_MULTISORT,
+    EXPORT_OWNERSHIP,
+    FILTERED_BULK_USER_DOWNLOAD,
+    APPLICATION_ERROR_REPORT,
+    SHOW_OWNER_LOCATION_PROPERTY_IN_REPORT_BUILDER,
+    CASE_LIST_EXPLORER,
 ]
 
 # These are special privileges related to their own rates in a SoftwarePlanVersion
@@ -231,5 +246,12 @@ class Titles(object):
             REGEX_FIELD_VALIDATION: _("Regular Expression Validation for Custom Data Fields"),
             LOCATION_SAFE_CASE_IMPORTS: _("Location Safe Case Imports"),
             FORM_CASE_IDS_CASE_IMPORTER: _("Download buttons for Form- and Case IDs on Case Importer"),
-            EXPORT_MULTISORT: _("Sort multiple rows in exports simultaneously")
+            EXPORT_MULTISORT: _("Sort multiple rows in exports simultaneously"),
+            EXPORT_OWNERSHIP: _("Allow exports to have ownership"),
+            FILTERED_BULK_USER_DOWNLOAD: _("Bulk user management features"),
+            APPLICATION_ERROR_REPORT: _("Application error report"),
+            SHOW_OWNER_LOCATION_PROPERTY_IN_REPORT_BUILDER: _(
+                "Show an additional 'Owner (Location)' property in report builder reports."
+            ),
+            CASE_LIST_EXPLORER: _("Case List Explorer"),
         }.get(privilege, privilege)

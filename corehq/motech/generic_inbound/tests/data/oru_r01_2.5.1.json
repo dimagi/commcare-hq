@@ -1,0 +1,283 @@
+{
+  "MSH": {
+    "MSH_1": "|",
+    "MSH_2": "^~\\&",
+    "MSH_3": {
+      "HD_1": "NIST Test Lab APP"
+    },
+    "MSH_4": {
+      "HD_1": "NIST Lab Facility"
+    },
+    "MSH_6": {
+      "HD_1": "NIST EHR Facility"
+    },
+    "MSH_7": {
+      "TS_1": "20150926140551"
+    },
+    "MSH_9": {
+      "MSG_1": "ORU",
+      "MSG_2": "R01",
+      "MSG_3": "ORU_R01"
+    },
+    "MSH_10": "NIST-LOI_5.0_1.1-NG",
+    "MSH_11": {
+      "PT_1": "T"
+    },
+    "MSH_12": {
+      "VID_1": "2.5.1"
+    },
+    "MSH_15": "AL",
+    "MSH_16": "AL"
+  },
+  "PID": {
+    "PID_1": "1",
+    "PID_3": {
+      "CX_1": "PATID5421",
+      "CX_4": {
+        "HD_1": "NIST MPI"
+      },
+      "CX_5": "MR"
+    },
+    "PID_5": {
+      "XPN_1": {
+        "FN_1": "Wilson"
+      },
+      "XPN_2": "Patrice",
+      "XPN_3": "Natasha",
+      "XPN_7": "L"
+    },
+    "PID_7": {
+      "TS_1": "19820304"
+    },
+    "PID_8": "F",
+    "PID_10": {
+      "CE_1": "2106-3",
+      "CE_2": "White",
+      "CE_3": "HL70005"
+    },
+    "PID_11": {
+      "XAD_1": {
+        "SAD_1": "144 East 12th Street"
+      },
+      "XAD_3": "Los Angeles",
+      "XAD_4": "CA",
+      "XAD_5": "90012",
+      "XAD_7": "H"
+    },
+    "PID_13": {
+      "XTN_2": "PRN",
+      "XTN_3": "PH",
+      "XTN_6": "203",
+      "XTN_7": "2290210"
+    },
+    "PID_22": {
+      "CE_1": "N",
+      "CE_2": "Not Hispanic or Latino",
+      "CE_3": "HL70189"
+    }
+  },
+  "ORC": {
+    "ORC_1": "NW",
+    "ORC_2": {
+      "EI_1": "ORD448811",
+      "EI_2": "NIST EHR"
+    },
+    "ORC_3": {
+      "EI_1": "R-511",
+      "EI_2": "NIST Lab Filler"
+    },
+    "ORC_9": {
+      "TS_1": "20120628070100"
+    },
+    "ORC_12": {
+      "XCN_1": "5742200012",
+      "XCN_2": {
+        "FN_1": "Radon"
+      },
+      "XCN_3": "Nicholas",
+      "XCN_9": {
+        "HD_1": "NPI"
+      },
+      "XCN_10": "L",
+      "XCN_13": "NPI"
+    }
+  },
+  "OBR": {
+    "OBR_1": "1",
+    "OBR_2": {
+      "EI_1": "ORD448811",
+      "EI_2": "NIST EHR"
+    },
+    "OBR_3": {
+      "EI_1": "R-511",
+      "EI_2": "NIST Lab Filler"
+    },
+    "OBR_4": {
+      "CE_1": "1000",
+      "CE_2": "Hepatitis A B C Panel",
+      "CE_3": "99USL"
+    },
+    "OBR_7": {
+      "TS_1": "20120628070100"
+    },
+    "OBR_16": {
+      "XCN_1": "5742200012",
+      "XCN_2": {
+        "FN_1": "Radon"
+      },
+      "XCN_3": "Nicholas",
+      "XCN_9": {
+        "HD_1": "NPI"
+      },
+      "XCN_10": "L",
+      "XCN_13": "NPI"
+    }
+  },
+  "OBX": [
+    {
+      "OBX_1": "1",
+      "OBX_2": "CWE",
+      "OBX_3": {
+        "CE_1": "22314-9",
+        "CE_2": "Hepatitis A virus IgM Ab [Presence] in Serum",
+        "CE_3": "LN",
+        "CE_4": "HAVM",
+        "CE_5": "Hepatitis A IgM antibodies (IgM anti-HAV)",
+        "CE_6": "L",
+        "None": {
+          "ST": "2.52"
+        }
+      },
+      "OBX_5": {
+        "VARIES_1": {
+          "ST": "260385009"
+        },
+        "VARIES_2": {
+          "ST": "Negative (qualifier value)"
+        },
+        "VARIES_3": {
+          "ST": "SCT"
+        },
+        "VARIES_4": {
+          "ST": "NEG"
+        },
+        "VARIES_5": {
+          "ST": "NEGATIVE"
+        },
+        "VARIES_6": {
+          "ST": "L"
+        },
+        "VARIES_7": {
+          "ST": "201509USEd"
+        },
+        "VARIES_8": {
+          "ST": ""
+        },
+        "VARIES_9": {
+          "ST": "Negative (qualifier value)"
+        }
+      },
+      "OBX_7": "Negative",
+      "OBX_8": "N",
+      "OBX_11": "F",
+      "OBX_14": {
+        "TS_1": "20150925"
+      },
+      "OBX_19": {
+        "TS_1": "201509261400"
+      }
+    },
+    {
+      "OBX_1": "2",
+      "OBX_2": "CWE",
+      "OBX_3": {
+        "CE_1": "20575-7",
+        "CE_2": "Hepatitis A virus Ab [Presence] in Serum",
+        "CE_3": "LN",
+        "CE_4": "HAVAB",
+        "CE_5": "Hepatitis A antibodies (anti-HAV)",
+        "CE_6": "L",
+        "None": {
+          "ST": "2.52"
+        }
+      },
+      "OBX_5": {
+        "VARIES_1": {
+          "ST": "260385009"
+        },
+        "VARIES_2": {
+          "ST": "Negative (qualifier value)"
+        },
+        "VARIES_3": {
+          "ST": "SCT"
+        },
+        "VARIES_4": {
+          "ST": "NEG"
+        },
+        "VARIES_5": {
+          "ST": "NEGATIVE"
+        },
+        "VARIES_6": {
+          "ST": "L"
+        },
+        "VARIES_7": {
+          "ST": "201509USEd"
+        },
+        "VARIES_8": {
+          "ST": ""
+        },
+        "VARIES_9": {
+          "ST": "Negative (qualifier value)"
+        }
+      },
+      "OBX_7": "Negative",
+      "OBX_8": "N",
+      "OBX_11": "F",
+      "OBX_14": {
+        "TS_1": "20150925"
+      },
+      "OBX_19": {
+        "TS_1": "201509261400"
+      }
+    },
+    {
+      "OBX_1": "3",
+      "OBX_2": "NM",
+      "OBX_3": {
+        "CE_1": "22316-4",
+        "CE_2": "Hepatitis B virus core Ab [Units/volume] in Serum",
+        "CE_3": "LN",
+        "CE_4": "HBcAbQ",
+        "CE_5": "Hepatitis B core antibodies (anti-HBVc) Quant",
+        "CE_6": "L",
+        "None": {
+          "ST": "2.52"
+        }
+      },
+      "OBX_5": {
+        "VARIES_1": {
+          "ST": "0.70"
+        }
+      },
+      "OBX_6": {
+        "CE_1": "[IU]/mL",
+        "CE_2": "international unit per milliliter",
+        "CE_3": "UCUM",
+        "CE_4": "IU/ml",
+        "CE_6": "L",
+        "None": {
+          "ST": "1.9"
+        }
+      },
+      "OBX_7": "<0.50 IU/mL",
+      "OBX_8": "H",
+      "OBX_11": "F",
+      "OBX_14": {
+        "TS_1": "20150925"
+      },
+      "OBX_19": {
+        "TS_1": "201509261400"
+      }
+    }
+  ]
+}

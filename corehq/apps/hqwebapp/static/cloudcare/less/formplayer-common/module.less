@@ -88,6 +88,14 @@
   }
 }
 
+.query-button-container {
+  padding: 8px;
+  text-align: center;
+}
+.query-button-container .btn{
+  width: 48%;
+}
+
 .query-caption.required .control-label::before {
   content: '*';
   font-weight: bold;
@@ -124,12 +132,13 @@
   transition: background .6s;
 }
 
-.module-table-case-list tbody tr:nth-child(even) td {
+// Apply to all children to cover both regular case lists and case tiles
+.module-table-case-list tbody tr:nth-child(even) > * {
   background-color: @cc-bg;
 }
 
-.module-table-case-list tbody tr:hover td {
-  background-color: darken(@cc-bg, 5);;
+.module-table-case-list tbody tr:hover > * {
+  background-color: darken(@cc-bg, 5);
 }
 
 .module-search-container, .case-list-actions {
@@ -139,6 +148,10 @@
 .module-go-container {
   margin: 17px;
   width: 190px;
+}
+
+.pagination-container {
+  width: inherit;
 }
 
 .module-per-page-container {

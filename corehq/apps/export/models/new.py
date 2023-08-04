@@ -19,6 +19,7 @@ from couchdbkit import (
     SchemaListProperty,
     SchemaProperty,
 )
+from jsonobject.exceptions import BadValueError
 from memoized import memoized
 
 from casexml.apps.case.const import DEFAULT_CASE_INDEX_IDENTIFIERS
@@ -47,6 +48,7 @@ from corehq.apps.app_manager.dbaccessors import (
     get_app_ids_in_domain,
     get_built_app_ids_with_submissions_for_app_id,
     get_built_app_ids_with_submissions_for_app_ids_and_versions,
+    get_case_types_from_apps,
     get_latest_app_ids_and_versions,
 )
 from corehq.apps.app_manager.models import (
@@ -56,8 +58,10 @@ from corehq.apps.app_manager.models import (
     OpenSubCaseAction,
     RemoteApp,
 )
+from corehq.apps.data_dictionary.util import get_deprecated_fields
 from corehq.apps.domain.models import Domain
 from corehq.apps.export.const import (
+    ALL_CASE_TYPE_EXPORT,
     CASE_ATTRIBUTES,
     CASE_CLOSE_TO_BOOLEAN,
     CASE_CREATE_ELEMENTS,
@@ -92,7 +96,7 @@ from corehq.apps.export.dbaccessors import (
 from corehq.apps.export.esaccessors import (
     get_case_export_base_query,
     get_form_export_base_query,
-    get_sms_export_base_query
+    get_sms_export_base_query,
 )
 from corehq.apps.export.utils import is_occurrence_deleted
 from corehq.apps.locations.models import SQLLocation
@@ -111,11 +115,9 @@ from corehq.blobs.models import BlobMeta
 from corehq.blobs.util import random_url_id
 from corehq.form_processor.interfaces.dbaccessors import LedgerAccessors
 from corehq.util.global_request import get_request_domain
+from corehq.util.html_utils import strip_tags
 from corehq.util.timezones.utils import get_timezone_for_domain
 from corehq.util.view_utils import absolute_reverse
-from corehq.util.html_utils import strip_tags
-from corehq.apps.data_dictionary.util import get_deprecated_fields
-
 
 DAILY_SAVED_EXPORT_ATTACHMENT_NAME = "payload"
 
@@ -360,6 +362,7 @@ class ExportColumn(DocumentSchema):
         is_label_question = isinstance(item, LabelItem)
 
         is_main_table = table_path == MAIN_TABLE
+        is_bulk_export = (ALL_CASE_TYPE_TABLE in table_path)
         constructor_args = {
             "item": item,
             "label": item.readable_path if not is_case_history_update else item.label,
@@ -390,7 +393,7 @@ class ExportColumn(DocumentSchema):
             and not column._is_deleted(app_ids_and_versions)
             and not is_case_update
             and not is_label_question
-            and is_main_table
+            and (is_main_table or is_bulk_export)
             and not is_deprecated
         )
         return column
@@ -529,11 +532,17 @@ class TableConfiguration(DocumentSchema, ReadablePathMixin):
             col_index = 0
             skip_excel_formatting = []
             for col in self.selected_columns:
+                # When doing a bulk case export, each column will have a reference to the ALL_CASE_TYPE_EXPORT
+                # case type in its path. This needs to be temporarily removed when getting the value.
+                base_path = self.path
+                if ALL_CASE_TYPE_TABLE in base_path:
+                    base_path = []
+
                 val = col.get_value(
                     domain,
                     document_id,
                     doc,
-                    self.path,
+                    base_path,
                     row_index=row_index,
                     split_column=split_columns,
                     transform_dates=transform_dates,
@@ -666,7 +675,7 @@ class TableConfiguration(DocumentSchema, ReadablePathMixin):
         :param docs: A list of dicts representing form submissions
         :return:
         """
-        if len(path) == 0:
+        if len(path) == 0 or ALL_CASE_TYPE_TABLE in path:
             return row_docs
 
         new_docs = []
@@ -881,12 +890,14 @@ class ExportInstance(BlobMixin, Document):
         instance.app_id = schema.app_id
         instance.schema_id = schema._id
 
+        group_schemas = schema.group_schemas
+        if not group_schemas:
+            return instance
+
         latest_app_ids_and_versions = get_latest_app_ids_and_versions(
             schema.domain,
             getattr(schema, 'app_id', None),
         )
-        group_schemas = schema.group_schemas
-
         for group_schema in group_schemas:
             table = instance.get_table(group_schema.path) or TableConfiguration(
                 path=group_schema.path,
@@ -961,15 +972,15 @@ class ExportInstance(BlobMixin, Document):
 
     def _insert_system_properties(self, domain, export_type, table):
         from corehq.apps.export.system_properties import (
-            ROW_NUMBER_COLUMN,
-            TOP_MAIN_FORM_TABLE_PROPERTIES,
-            BOTTOM_MAIN_FORM_TABLE_PROPERTIES,
-            TOP_MAIN_CASE_TABLE_PROPERTIES,
             BOTTOM_MAIN_CASE_TABLE_PROPERTIES,
+            BOTTOM_MAIN_FORM_TABLE_PROPERTIES,
             CASE_HISTORY_PROPERTIES,
             PARENT_CASE_TABLE_PROPERTIES,
-            STOCK_COLUMN,
+            ROW_NUMBER_COLUMN,
             SMS_TABLE_PROPERTIES,
+            STOCK_COLUMN,
+            TOP_MAIN_CASE_TABLE_PROPERTIES,
+            TOP_MAIN_FORM_TABLE_PROPERTIES,
         )
 
         nested_repeat_count = len([node for node in table.path if node.is_repeat])
@@ -994,7 +1005,7 @@ class ExportInstance(BlobMixin, Document):
             else:
                 self.__insert_system_properties(table, [ROW_NUMBER_COLUMN], **column_initialization_data)
         elif export_type == CASE_EXPORT:
-            if table.path == MAIN_TABLE:
+            if table.path == MAIN_TABLE or ALL_CASE_TYPE_TABLE in table.path:
                 if Domain.get_by_name(domain).commtrack_enabled:
                     top_properties = TOP_MAIN_CASE_TABLE_PROPERTIES + [STOCK_COLUMN]
                 else:
@@ -1217,7 +1228,16 @@ class CaseExportInstance(ExportInstance):
         )
 
     def get_query(self, include_filters=True):
-        query = get_case_export_base_query(self.domain, self.case_type)
+        # Add all case types if doing a bulk export
+        # These case types will be the first element in the table path
+        case_types = self.case_type
+        if case_types == ALL_CASE_TYPE_EXPORT:
+            case_types = []
+            for table in self.selected_tables:
+                path_names = [path.name for path in table.path if path.name != ALL_CASE_TYPE_EXPORT]
+                case_types += path_names
+
+        query = get_case_export_base_query(self.domain, case_types)
         if include_filters:
             for filter in self.get_filters():
                 query = query.filter(filter.to_es_filter())
@@ -1366,7 +1386,7 @@ class ExportInstanceDefaults(object):
         """
         Based on the path, determines whether the table should be selected by default
         """
-        return path == MAIN_TABLE
+        return path == MAIN_TABLE or ALL_CASE_TYPE_TABLE in path
 
 
 class FormExportInstanceDefaults(ExportInstanceDefaults):
@@ -1403,6 +1423,8 @@ class CaseExportInstanceDefaults(ExportInstanceDefaults):
             return _('Case History')
         elif table_path == PARENT_CASE_TABLE:
             return _('Parent Cases')
+        elif ALL_CASE_TYPE_TABLE in table_path:
+            return _(table_path[0].name)
         else:
             return _('Unknown')
 
@@ -1681,23 +1703,54 @@ class ExportDataSchema(Document):
         ))
 
     @classmethod
-    def generate_schema_from_builds(cls, domain, app_id, identifier, force_rebuild=False,
-            only_process_current_builds=False, task=None):
-        """Builds a schema from Application builds for a given identifier
+    def generate_empty_schema(cls, domain, identifier):
+        """
+        Builds a schema, without processing any Application builds.
+        This is primarily used for bulk case exports, as the processing of Application
+        builds will happen later in an async task when saving the export instance.
+        """
+        current_schema = cls()
+
+        current_schema.domain = domain
+        current_schema.app_id = None
+        current_schema.version = cls.schema_version()
+        current_schema._set_identifier(identifier)
+
+        current_schema = cls._save_export_schema(
+            current_schema,
+            original_id=None,
+            original_rev=None
+        )
+        return current_schema
+
+    @classmethod
+    def generate_schema_from_builds(
+        cls,
+        domain,
+        app_id,
+        identifier,
+        force_rebuild=False,
+        only_process_current_builds=False,
+        task=None,
+    ):
+        """
+        Builds a schema from Application builds for a given identifier
 
         :param domain: The domain that the export belongs to
-        :param app_id: The app_id that the export belongs to (or None if export is not associated with an app.
-        :param identifier: The unique identifier of the schema being exported.
-            case_type for Case Exports and xmlns for Form Exports
-        :param only_process_current_builds: Only process the current apps, not any builds. This
-            means that deleted items may not be present in the schema since past builds have not been
+        :param app_id: The app_id that the export belongs to or None if
+            the export is not associated with an app.
+        :param identifier: The unique identifier of the schema being
+            exported: case_type for Case Exports and xmlns for Form
+            Exports
+        :param only_process_current_builds: Only process the current
+            apps, not any builds. This means that deleted items may not
+            be present in the schema since past builds have not been
             processed.
         :param task: A celery task to update the progress of the build
         :returns: Returns a ExportDataSchema instance
         """
 
         original_id, original_rev = None, None
-        apps_processed = 0
         current_schema = cls.get_latest_export_schema(domain, app_id, identifier)
         if (current_schema
                 and not force_rebuild
@@ -1715,34 +1768,7 @@ class ExportDataSchema(Document):
                 current_schema.last_app_versions,
             )
         app_build_ids.extend(app_ids_for_domain)
-
-        for app_doc in iter_docs(Application.get_db(), app_build_ids, chunksize=10):
-            doc_type = app_doc.get('doc_type', '')
-            if doc_type not in ('Application', 'LinkedApplication', 'Application-Deleted'):
-                continue
-            if (not app_doc.get('has_submissions', False) and
-                    app_doc.get('copy_of')):
-                continue
-
-            app = Application.wrap(app_doc)
-            try:
-                current_schema = cls._process_app_build(
-                    current_schema,
-                    app,
-                    identifier,
-                )
-            except Exception as e:
-                logging.exception('Failed to process app {}. {}'.format(app._id, e))
-                continue
-
-            # Only record the version of builds on the schema. We don't care about
-            # whether or not the schema has seen the current build because that always
-            # gets processed.
-            if app.copy_of:
-                current_schema.record_update(app.copy_of, app.version)
-
-            apps_processed += 1
-            set_task_progress(task, apps_processed, len(app_build_ids))
+        current_schema = cls._process_apps_for_export(domain, current_schema, identifier, app_build_ids, task)
 
         inferred_schema = cls._get_inferred_schema(domain, app_id, identifier)
         if inferred_schema:
@@ -1869,7 +1895,7 @@ class ExportDataSchema(Document):
     def _save_export_schema(current_schema, original_id, original_rev):
         """
         Given a schema object, this function saves the object and ensures that the
-        ID remains the save as the previous save if there existed a previous version.
+        ID remains the same as the previous save if there existed a previous version.
         """
         if original_id and original_rev:
             current_schema._id = original_id
@@ -1886,6 +1912,43 @@ class ExportDataSchema(Document):
 
         return current_schema
 
+    @classmethod
+    def _process_apps_for_export(cls, domain, schema, identifier, app_build_ids, task):
+        apps_processed = 0
+        for app_doc in iter_docs(Application.get_db(), app_build_ids, chunksize=10):
+            doc_type = app_doc.get('doc_type', '')
+            if doc_type not in ('Application', 'LinkedApplication', 'Application-Deleted'):
+                continue
+            if (not app_doc.get('has_submissions', False)
+                    and app_doc.get('copy_of')):
+                continue
+
+            try:
+                app = Application.wrap(app_doc)
+            except BadValueError as err:
+                logging.exception(
+                    f"Bad definition for Application {app_doc['_id']}",
+                    exc_info=err,
+                )
+                continue
+
+            try:
+                schema = cls._process_app_build(
+                    schema,
+                    app,
+                    identifier,
+                )
+            except Exception as e:
+                logging.exception('Failed to process app {}. {}'.format(app._id, e))
+                continue
+
+            if app.copy_of:
+                schema.record_update(app.copy_of, app.version)
+
+            apps_processed += 1
+            set_task_progress(task, apps_processed, len(app_build_ids))
+
+        return schema
 
 class FormExportDataSchema(ExportDataSchema):
 
@@ -2204,6 +2267,15 @@ class FormExportDataSchema(ExportDataSchema):
 
         return items
 
+    @classmethod
+    def _process_apps_for_export(cls, domain, schema, identifier, app_build_ids, task):
+        return super(FormExportDataSchema, cls)._process_apps_for_export(
+            domain,
+            schema,
+            identifier,
+            app_build_ids,
+            task
+        )
 
 class CaseExportDataSchema(ExportDataSchema):
 
@@ -2356,6 +2428,62 @@ class CaseExportDataSchema(ExportDataSchema):
         schema.group_schemas.append(group_schema)
         return schema
 
+    @classmethod
+    def _process_apps_for_export(cls, domain, schema, identifier, app_build_ids, task):
+        if identifier == ALL_CASE_TYPE_EXPORT:
+            return cls._process_apps_for_bulk_export(domain, schema, app_build_ids, task)
+        else:
+            return super(CaseExportDataSchema, cls)._process_apps_for_export(
+                domain,
+                schema,
+                identifier,
+                app_build_ids,
+                task
+            )
+
+    @classmethod
+    def _process_apps_for_bulk_export(cls, domain, schema, app_build_ids, task):
+        schema.group_schemas = []
+        apps_processed = 0
+        case_types_to_use = get_case_types_from_apps(domain)
+        for case_type in case_types_to_use:
+            case_type_schema = cls()
+            for app_doc in iter_docs(Application.get_db(), app_build_ids, chunksize=10):
+                doc_type = app_doc.get('doc_type', '')
+                if doc_type not in ('Application', 'LinkedApplication', 'Application-Deleted'):
+                    continue
+                if (not app_doc.get('has_submissions', False)
+                        and app_doc.get('copy_of')):
+                    continue
+
+                app = Application.wrap(app_doc)
+                try:
+                    case_type_schema = cls._process_app_build(
+                        case_type_schema,
+                        app,
+                        case_type,
+                    )
+                except Exception as e:
+                    logging.exception('Failed to process app {}. {}'.format(app._id, e))
+                    continue
+
+            # If doing a bulk case export, we need to update the path of the group schemas to reflect
+            # which case type they are linked to.
+            for group_schema in case_type_schema.group_schemas:
+                if group_schema.path == MAIN_TABLE:
+                    group_schema.path = [PathNode(name=case_type), PathNode(name=ALL_CASE_TYPE_EXPORT)]
+            schema.group_schemas += case_type_schema.group_schemas
+
+            # Only record the version of builds on the schema. We don't care about
+            # whether or not the schema has seen the current build because that always
+            # gets processed.
+            if app.copy_of:
+                schema.record_update(app.copy_of, app.version)
+
+            apps_processed += 1
+            set_task_progress(task, apps_processed, len(app_build_ids) * len(case_types_to_use))
+
+        return schema
 
 class SMSExportDataSchema(ExportDataSchema):
     include_metadata = BooleanProperty(default=False)
@@ -2376,6 +2504,15 @@ class SMSExportDataSchema(ExportDataSchema):
     @staticmethod
     def get_latest_export_schema(domain, include_metadata, identifier=None):
         return SMSExportDataSchema(domain=domain, include_metadata=include_metadata)
+
+    def _process_apps_for_export(cls, domain, schema, identifier, app_build_ids, task):
+        return super(FormExportDataSchema, cls)._process_apps_for_export(
+            domain,
+            schema,
+            identifier,
+            app_build_ids,
+            task
+        )
 
 
 def _string_path_to_list(path):
@@ -2948,3 +3085,6 @@ def get_ledger_section_entry_combinations(domain):
 MAIN_TABLE = []
 CASE_HISTORY_TABLE = [PathNode(name='actions', is_repeat=True)]
 PARENT_CASE_TABLE = [PathNode(name='indices', is_repeat=True)]
+
+# Used to identify tables in a bulk case export
+ALL_CASE_TYPE_TABLE = PathNode(name=ALL_CASE_TYPE_EXPORT)

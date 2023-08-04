@@ -21,6 +21,7 @@ from dimagi.utils.couch import CriticalSection
 from corehq import toggles
 from corehq.apps.app_manager.const import (
     AUTO_SELECT_USERCASE,
+    CALCULATED_SORT_FIELD_RX,
     REGISTRY_WORKFLOW_LOAD_CASE,
     REGISTRY_WORKFLOW_SMART_LINK,
     USERCASE_ID,
@@ -564,6 +565,20 @@ def get_sort_and_sort_only_columns(detail_columns, sort_elements):
         sort_element, order = sort_elements.pop(column.field, (None, None))
         if sort_element:
             sort_columns[column.field] = (sort_element, order)
+
+    # pull out sort elements that refer to calculated columns
+    for field in list(sort_elements):
+        match = re.match(CALCULATED_SORT_FIELD_RX, field)
+        if match:
+            element, element_order = sort_elements.pop(field)
+            column_index = int(match.group(1))
+            try:
+                column = detail_columns[column_index]
+            except IndexError:
+                raise AppManagerException(f"Sort column references an unknown column at index: {column_index}")
+            if not column.useXpathExpression:
+                raise AppManagerException(f"Calculation sort column references an incorrect column: {column.field}")
+            sort_columns[column.field] = (element, element_order)
 
     sort_only_elements = [
         SortOnlyElement(field, element, element_order)

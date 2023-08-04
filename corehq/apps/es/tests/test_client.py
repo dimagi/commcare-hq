@@ -32,6 +32,7 @@ from ..client import (
     BulkActionItem,
     ElasticMultiplexAdapter,
     Tombstone,
+    create_document_adapter,
     get_client,
     manager,
     _elastic_hosts,
@@ -473,6 +474,30 @@ class TestElasticManageAdapter(AdapterWithIndexTestCase):
             self.adapter.index_refresh(self.index)
             patched.assert_called_once_with([self.index])
 
+    def test_reindex_with_all_params(self):
+        """A happy path test for all the reindex paramters passed to es client.
+        Should ensure validity of reindex api params in newer versions of ES.
+        If any new parameters are added to ElasticManageAdapter.reindex then they should be added in this test
+        """
+        SECONDARY_INDEX = 'secondary_index'
+
+        with temporary_index(test_adapter.index_name, test_adapter.type, test_adapter.mapping):
+
+            all_ids = self._index_test_docs_for_reindex()
+
+            with temporary_index(SECONDARY_INDEX, test_adapter.type, test_adapter.mapping):
+
+                # purge_ids is not added here as it is required temporarily
+                # And setting it would require turning on inline script updates on test es docker
+                manager.reindex(
+                    test_adapter.index_name, SECONDARY_INDEX,
+                    wait_for_completion=True,
+                    refresh=True,
+                    requests_per_second=2,
+                )
+
+                self.assertEqual(self._get_all_doc_ids_in_index(SECONDARY_INDEX), all_ids)
+
     def test_reindex_with_wait_for_completion_is_true(self):
         SECONDARY_INDEX = 'secondary_index'
 
@@ -542,6 +567,15 @@ class TestElasticManageAdapter(AdapterWithIndexTestCase):
         with self.assertRaises(ValueError):
             self.adapter.indices_refresh(self.index)  # string is invalid
 
+    def test_indices_info(self):
+        # Test will guard against any API change in es.cat.indices output format in future ES versions
+        with temporary_index(test_adapter.index_name, test_adapter.type, test_adapter.mapping):
+            indices_details = self.adapter.indices_info()
+        index_detail = indices_details[test_adapter.index_name]
+        info_keys = set(index_detail.keys())
+        expected_keys = set(['health', 'primary_shards', 'replica_shards', 'doc_count', 'size_on_disk'])
+        self.assertEqual(info_keys, expected_keys)
+
     def test_index_flush(self):
         self.adapter.index_create(self.index)
         flush_index = self.adapter._es.indices.flush  # keep a reference
@@ -581,6 +615,26 @@ class TestElasticManageAdapter(AdapterWithIndexTestCase):
         aliases = self.adapter.get_aliases()
         self.assertIn(alias, aliases)
         self.assertEqual(aliases[alias], [index])
+
+    def test_index_validate_query_returns_true_for_valid_query(self):
+        self.adapter.index_create(self.index)
+        query = {"query": {"term": {"value": 'some val'}}}
+        validation = self.adapter.index_validate_query(index=self.index, query=query)
+        self.assertTrue(validation)
+
+    def test_index_validate_query_returns_false_for_invalid_query(self):
+        type_ = "test_doc"
+        mapping = {
+            "properties": {
+                "value": {"type": "float"}
+            }
+        }
+        self.adapter.index_create(self.index)
+        self.adapter.index_put_mapping(self.index, type_, mapping)
+        # Value field expects a float but string is sent in term query
+        query = {"query": {"term": {"value": 'some_string'}}}
+        validation = self.adapter.index_validate_query(index=self.index, query=query)
+        self.assertFalse(validation)
 
     def test_index_set_replicas(self):
         self.adapter.index_create(self.index)
@@ -1731,52 +1785,39 @@ class TestElasticMultiplexAdapter(SimpleTestCase, ESTestHelpers):
             BulkActionItem.delete(doc_1),
             BulkActionItem.index(doc_2),
         ])
-        self.addCleanup(self.adapter.delete, doc_2.id)
+        self.addCleanup(self.adapter.secondary.bulk_delete, [doc_1.id, doc_2.id])
+        self.addCleanup(self.adapter.primary.delete, doc_2.id)
         self.assertEqual(2, successes)
         self.assertEqual([], errors)
-        self.assertPrimaryAndSecondaryDocIdsEqual([doc_2.id])
+        self.assertIndexDocIds(self.adapter.primary, [doc_2.id])
+        self.assertIndexDocIds(self.adapter.secondary, [doc_1.id, doc_2.id])
 
     def test_bulk_returns_when_raise_errors_is_false(self):
         doc_ids = [self._make_doc().id for x in range(2)]
         # verify state
         self.assertPrimaryAndSecondaryDocIdsEqual([])
         # test
-        actions = [BulkActionItem.delete_id(id) for id in doc_ids]
-        success, errors = self.adapter.bulk(actions, raise_errors=False)
-        self.assertEqual(0, success)
-        self.assertEqual(len(actions), len(errors))
+        from corehq.apps.es import client
+        error_from_bulk = [{"delete": {"status": 500, "_id": "abc", "_index": "test_index"}}]
+        return_val = (0, error_from_bulk)
+        with (patch.object(client, "bulk", return_value=return_val)):
+            actions = [BulkActionItem.delete_id(id) for id in doc_ids]
+            self.adapter.bulk(actions, raise_errors=False)
 
     def test_bulk_raises_when_raise_errors_is_not_false(self):
         doc_ids = [self._make_doc().id for x in range(2)]
         # verify state
         self.assertPrimaryAndSecondaryDocIdsEqual([])
-        # test
-        actions = [BulkActionItem.delete_id(id) for id in doc_ids]
-        with self.assertRaises(BulkIndexError) as test:
-            self.adapter.bulk(actions)
-        self.assertEqual(len(actions), len(test.exception.errors))
 
-    def test_bulk_action_delete_does_not_create_tombstones_if_missing_on_primary(self):
-        missing = self._make_doc()
-        # verify state
-        self.assertPrimaryAndSecondaryDocIdsEqual([])
         # test
-        with self.assertRaises(BulkIndexError) as test:
-            self.adapter.bulk([BulkActionItem.delete(missing)])
-        error, = test.exception.errors
-        self.assertTrue(self.adapter._is_delete_not_found(error))
-        self.assertPrimaryAndSecondaryDocIdsEqual([])
+        from corehq.apps.es import client
+        error_from_bulk = [{"delete": {"status": 500, "_id": "abc", "_index": "test_index"}}]
+        return_val = (0, error_from_bulk)
 
-    def test_bulk_action_delete_does_not_create_tombstones_if_exists_on_secondary(self):
-        doc = self._make_doc()
-        # setup and verify state
-        self.adapter.index(doc)
-        self.assertPrimaryAndSecondaryDocIdsEqual([doc.id])
-        # test
-        successes, errors = self.adapter.bulk([BulkActionItem.delete(doc)])
-        self.assertEqual(1, successes)
-        self.assertEqual([], errors)
-        self.assertPrimaryAndSecondaryDocIdsEqual([])
+        with (patch.object(client, "bulk", return_value=return_val)):
+            actions = [BulkActionItem.delete_id(id) for id in doc_ids]
+            with self.assertRaises(BulkIndexError):
+                self.adapter.bulk(actions)
 
     def test_bulk_action_delete_creates_tombstones_if_missing_on_secondary(self):
         doc = self._make_doc()
@@ -1879,7 +1920,8 @@ class TestElasticMultiplexAdapter(SimpleTestCase, ESTestHelpers):
         self.assertPrimaryAndSecondaryDocIdsEqual([])
         # test
         self.adapter.bulk_index(docs)
-        self.addCleanup(self.adapter.bulk_delete, doc_ids)
+        self.addCleanup(self.adapter.primary.bulk_delete, doc_ids)
+        self.addCleanup(self.adapter.secondary.bulk_delete, doc_ids)
         self.assertPrimaryAndSecondaryDocIdsEqual(doc_ids)
 
     def test_bulk_delete(self):
@@ -1890,26 +1932,20 @@ class TestElasticMultiplexAdapter(SimpleTestCase, ESTestHelpers):
         self.assertPrimaryAndSecondaryDocIdsEqual(doc_ids)
         # test
         self.adapter.bulk_delete(doc_ids)
-        self.assertPrimaryAndSecondaryDocIdsEqual([])
+        self.assertIndexDocIds(self.adapter.primary, [])
+        self.assertIndexDocIds(self.adapter.secondary, doc_ids)
+        self.addCleanup(self.adapter.secondary.bulk_delete, doc_ids)
 
     def test_delete(self):
         doc = self._make_doc()
         # setup and verify a synced secondary condition
         self.adapter.index(doc, refresh=True)
         self.assertPrimaryAndSecondaryDocIdsEqual([doc.id])
-        # test
+        # test delete leaves tombstones on secondary
         self.adapter.delete(doc.id)
-        self.assertPrimaryAndSecondaryDocIdsEqual([])
-
-    def test_delete_raises_notfounderror_on_failure(self):
-        doc = self._make_doc()
-        # verify state
-        self.assertPrimaryAndSecondaryDocIdsEqual([])
-        # test
-        with self.assertRaises(NotFoundError) as test:
-            self.adapter.delete(doc.id)
-        self.assertEqual(test.exception.status_code, 404)
-        self.assertPrimaryAndSecondaryDocIdsEqual([])
+        self.assertIndexDocIds(self.adapter.primary, [])
+        self.assertIndexDocIds(self.adapter.secondary, [doc.id])
+        self.addCleanup(self.adapter.secondary.delete, doc.id)
 
     def test_delete_creates_tombstone_when_missing_in_secondary(self):
         doc = self._make_doc()
@@ -1919,12 +1955,13 @@ class TestElasticMultiplexAdapter(SimpleTestCase, ESTestHelpers):
         self.assertFalse(self.adapter.secondary.exists(doc.id))
         # test
         self.adapter.delete(doc.id)
-        self.addCleanup(self.adapter.secondary.delete, doc.id)
         self.assertFalse(self.adapter.primary.exists(doc.id))
         self.assertEqual(
             dict(_id=doc.id, **Tombstone.create_document()),
             self.adapter.secondary.get(doc.id),
         )
+        # Delete tombstone created on secondary
+        self.addCleanup(self.adapter.secondary.delete, doc.id)
 
     def test_index(self):
         doc = self._make_doc()
@@ -1932,8 +1969,10 @@ class TestElasticMultiplexAdapter(SimpleTestCase, ESTestHelpers):
         self.assertPrimaryAndSecondaryDocIdsEqual([])
         # test
         self.adapter.index(doc)
-        self.addCleanup(self.adapter.delete, doc.id)
         self.assertPrimaryAndSecondaryDocIdsEqual([doc.id])
+
+        self.addCleanup(self.adapter.primary.delete, doc.id)
+        self.addCleanup(self.adapter.secondary.delete, doc.id)
 
     def test_index_raises_transporterror_on_failure(self):
         doc = self._make_doc()
@@ -1974,6 +2013,14 @@ class TestElasticMultiplexAdapter(SimpleTestCase, ESTestHelpers):
                             f"expected={unordered!r}, got={got!r}")
             self.assertEqual(unordered, got, mismatch_msg)
 
+    def assertIndexDocIds(self, adapter, expected):
+        unordered = set(expected)
+        manager.index_refresh(adapter.index_name)
+        got = set(d["_id"] for d in adapter.search({})["hits"]["hits"])
+        mismatch_msg = (f"{adapter.index_name} adapter document mismatch: "
+            f"expected={unordered!r}, got={got!r}")
+        self.assertEqual(unordered, got, mismatch_msg)
+
 
 @contextmanager
 def patch_adapters_method(adapter, name, **kw):
@@ -2001,6 +2048,77 @@ class TestTombstone(SimpleTestCase):
             {Tombstone.PROPERTY_NAME: True},
             Tombstone.create_document(),
         )
+
+
+@es_test
+@override_settings(ES_FOR_TEST_INDEX_MULTIPLEXED=False)
+@override_settings(ES_FOR_TEST_INDEX_SWAPPED=False)
+class TestCreateDocumentAdapter(SimpleTestCase):
+
+    def test_create_document_adapter_returns_doc_adapter(self):
+        test_adapter = create_document_adapter(
+            TestDocumentAdapter,
+            "some-primary",
+            "test_doc",
+        )
+        self.assertEqual(type(test_adapter), TestDocumentAdapter)
+
+    def test_returns_doc_adapter_without_multiplexed_setting(self):
+        test_adapter = create_document_adapter(
+            TestDocumentAdapter,
+            "some-primary",
+            "test_doc",
+            secondary="some-secondary",
+        )
+        self.assertEqual(type(test_adapter), TestDocumentAdapter)
+        self.assertEqual(test_adapter.index_name, 'test_some-primary')
+
+    @override_settings(ES_FOR_TEST_INDEX_MULTIPLEXED=True)
+    def test_returns_multiplexer_adapter_with_multiplexed_setting(self):
+        test_adapter = create_document_adapter(
+            TestDocumentAdapter,
+            "some-primary",
+            "test_doc",
+            secondary="some-secondary",
+        )
+        self.assertEqual(type(test_adapter), ElasticMultiplexAdapter)
+        self.assertEqual(test_adapter.index_name, 'test_some-primary')
+        self.assertEqual(test_adapter.secondary.index_name, 'test_some-secondary')
+
+    @override_settings(ES_FOR_TEST_INDEX_MULTIPLEXED=True)
+    @override_settings(ES_FOR_TEST_INDEX_SWAPPED=True)
+    def test_returns_multiplexer_with_swapped_indexes(self):
+        test_adapter = create_document_adapter(
+            TestDocumentAdapter,
+            "some-primary",
+            "test_doc",
+            secondary="some-secondary",
+        )
+        self.assertEqual(type(test_adapter), ElasticMultiplexAdapter)
+        self.assertEqual(test_adapter.primary.index_name, "test_some-secondary")
+        self.assertEqual(test_adapter.secondary.index_name, "test_some-primary")
+
+    @override_settings(ES_FOR_TEST_INDEX_MULTIPLEXED=False)
+    @override_settings(ES_FOR_TEST_INDEX_SWAPPED=True)
+    def test_returns_doc_adapater_with_secondary_index(self):
+        test_adapter = create_document_adapter(
+            TestDocumentAdapter,
+            "some-primary",
+            "test_doc",
+            secondary="some-secondary",
+        )
+        self.assertEqual(type(test_adapter), TestDocumentAdapter)
+        self.assertEqual(test_adapter.index_name, "test_some-secondary")
+
+    @override_settings(ES_FOR_TEST_INDEX_MULTIPLEXED=True)
+    @override_settings(ES_FOR_TEST_INDEX_SWAPPED=True)
+    def test_settings_have_no_effect_if_secondary_is_None(self):
+        test_adapter = create_document_adapter(
+            TestDocumentAdapter,
+            "some-primary",
+            "test_doc",
+        )
+        self.assertEqual(type(test_adapter), TestDocumentAdapter)
 
 
 class OneshotIterable:

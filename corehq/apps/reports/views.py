@@ -87,6 +87,7 @@ from corehq.apps.reports.formdetails.readable import (
     get_data_cleaning_data,
     get_readable_data_for_submission,
 )
+from corehq.apps.reports.models import QueryStringHash
 from corehq.apps.saved_reports.models import ReportConfig, ReportNotification
 from corehq.apps.saved_reports.tasks import (
     send_delayed_report,
@@ -470,8 +471,7 @@ class AddSavedReportConfigView(View):
             # in case a non-admin user maliciously tries to edit another user's config
             # or an admin edits a non-shared report in some way
             assert config.owner_id == self.user_id or (
-                self.user.is_domain_admin(self.domain) and
-                config.is_shared_on_domain()
+                self.user.is_domain_admin(self.domain) and config.is_shared_on_domain()
             )
         else:
             config.domain = self.domain
@@ -575,8 +575,7 @@ def delete_config(request, domain, config_id):
 
 def _can_delete_saved_report(report, user, domain):
     return domain == report.domain and user._id == report.owner_id or (
-        user.is_domain_admin(domain) and
-        report.is_shared_on_domain()
+        user.is_domain_admin(domain) and report.is_shared_on_domain()
     )
 
 
@@ -784,11 +783,11 @@ class ScheduledReportsView(BaseProjectReportSectionView):
         form.fields['recipient_emails'].choices = [(e, e) for e in web_user_emails]
 
         form.fields['hour'].help_text = _("This scheduled report's timezone is %s (UTC%s)") % \
-                                        (Domain.get_by_name(self.domain)['default_timezone'],
-                                        get_timezone_difference(self.domain))
+                                         (Domain.get_by_name(self.domain)['default_timezone'],
+                                          get_timezone_difference(self.domain))
         form.fields['stop_hour'].help_text = _("This scheduled report's timezone is %s (UTC%s)") % \
-                                        (Domain.get_by_name(self.domain)['default_timezone'],
-                                        get_timezone_difference(self.domain))
+                                              (Domain.get_by_name(self.domain)['default_timezone'],
+                                               get_timezone_difference(self.domain))
         return form
 
     @property
@@ -1514,7 +1513,7 @@ def case_form_data(request, domain, case_id, xform_id):
 @require_GET
 def download_form(request, domain, instance_id):
     instance = get_form_or_404(domain, instance_id)
-    assert(domain == instance.domain)
+    assert (domain == instance.domain)
 
     response = HttpResponse(content_type='application/xml')
     response.write(instance.get_xml())
@@ -1575,6 +1574,24 @@ def archive_form(request, domain, instance_id):
     messages.add_message(request, notify_level, msg, extra_tags='html')
 
     return HttpResponseRedirect(redirect)
+
+
+@require_form_view_permission
+@require_permission(HqPermissions.edit_data)
+@require_POST
+@location_safe
+def delete_form(request, domain, instance_id):
+    form = safely_get_form(request, domain, instance_id)
+    assert form.domain == domain
+    if form.is_archived:
+        form.soft_delete()
+        form.save()
+        return HttpResponseRedirect(reverse('project_report_dispatcher',
+                                            args=(domain, 'submit_history')))
+    else:
+        return HttpResponseForbidden(
+            _(f"Cannot delete form {instance_id} because it is not archived.")
+        )
 
 
 def _get_cases_with_forms_message(domain, cases_with_other_forms, case_id_from_request):
@@ -1760,7 +1777,8 @@ def export_report(request, domain, export_hash, format):
             return HttpResponseNotFound(_("We don't support this format"))
 
 
-@require_permission(HqPermissions.view_report, 'corehq.apps.reports.standard.project_health.ProjectHealthDashboard')
+@require_permission(HqPermissions.view_report,
+                    'corehq.apps.reports.standard.project_health.ProjectHealthDashboard')
 def project_health_user_details(request, domain, user_id):
     # todo: move to project_health.py? goes with project health dashboard.
     user = get_document_or_404(CommCareUser, domain, user_id)
@@ -1937,3 +1955,40 @@ class TableauVisualizationDetailView(BaseProjectReportSectionView, ModelFormMixi
     def form_valid(self, form):
         form.save()
         return super().form_valid(form)
+
+
+@login_and_domain_required
+@location_safe
+@require_POST
+def get_or_create_filter_hash(request, domain):
+    query_id = request.POST.get('query_id')
+    query_string = request.POST.get('params')
+    not_found = False
+    max_input_limit = 4500
+
+    if query_string:
+        if len(query_string) > max_input_limit:
+            not_found = True
+        else:
+            query, created = QueryStringHash.objects.get_or_create(query_string=query_string, domain=domain)
+            query_id = query.query_id.hex
+            query.save()  # Updates the 'last_accessed' field
+    elif query_id:
+        try:
+            query = QueryStringHash.objects.filter(query_id=query_id, domain=domain)
+        except ValidationError:
+            query = None
+        if not query:
+            not_found = True
+        else:
+            query = query[0]
+            query_string = query.query_string
+            query.save()  # Updates the 'last_accessed' field
+    else:
+        not_found = True
+
+    return JsonResponse({
+        'query_string': query_string,
+        'query_id': query_id,
+        'not_found': not_found,
+    })

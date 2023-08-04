@@ -33,7 +33,7 @@ class Command(BaseCommand):
         # if it doesn't exist
         # fixme: this can delete real indices if a reindex is in progress
         found_indices = set(es_manager.get_indices())
-        expected_indices = {info.index for info in get_all_expected_es_indices()}
+        expected_indices = {adapter.index_name for adapter in get_all_expected_es_indices()}
         print(expected_indices)
 
         if options['verbose']:

@@ -114,7 +114,7 @@ CommCare apps are bundled as ``.ccz`` files, which are just zip files with a cus
 See `ccz.sh <https://github.com/dimagi/commcare-hq/tree/master/scripts/ccz.sh>`_ for utilities for unzipping, editing, and rezipping CCZ files. Doing this via the command line is often
 cleaner than doing it an in OS, which may add additional hidden files.
 
-Adding CommCare (J2ME) Builds to CommCare HQ
+Adding CommCare Builds to CommCare HQ
 ============================================
 
 Using a management command
@@ -122,7 +122,6 @@ Using a management command
 
 - `./manage.py add_commcare_build --latest` To fetch the latest released build from github
 - `./manage.py add_commcare_build --build_version 2.53.0` To manually specify the build number to use
-- `./manage.py add_commcare_build path/to/build/ 2.53.0 2321` To make a J2ME build from a zip. The args are build_path, version, and build_number
 
 
 In the web UI
@@ -134,30 +133,3 @@ In the web UI
    #. In the Version field input the version in `x.y.z` format
    #. Click `Import Build`
 - In the first section `Menu Options` add the version to HQ to make sure the build is available in the app settings.
-
-For legacy J2ME builds
-^^^^^^^^^^^^^^^^^^^^^^
-
-Finally, in order to get full permissions on a J2ME phone, you need to set up jar signing. To do so, you will need
-
-acquire a code signing certificate (from e.g. Thawte).
-
-To enable jar signing, put your certificate information in localsettings.py as follows:
-
-.. code-block:: python
-
-    JAR_SIGN = dict(
-
-        key_store = "/PATH/TO/KEY_STORE",
-
-        key_alias = "KEY",
-
-        store_pass = "*****",
-
-        key_pass = "*****",
-
-    )
-
-If you don't need this, skip this step by commenting out the code entirely.
-
-You're done!

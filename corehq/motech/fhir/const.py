@@ -42,3 +42,5 @@ FHIR_DATA_TYPE_LIST_OF_STRING = 'fhir_list_of_string'
 FHIR_DATA_TYPES = (
     FHIR_DATA_TYPE_LIST_OF_STRING,
 )
+
+HQ_ACCEPTABLE_FHIR_MIME_TYPES = ['application/json', 'application/fhir+json']

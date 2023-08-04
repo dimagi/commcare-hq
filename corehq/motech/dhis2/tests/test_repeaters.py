@@ -1,22 +1,23 @@
 import re
+import uuid
 from contextlib import contextmanager
 from copy import deepcopy
 from datetime import datetime
-
-from looseversion import LooseVersion
 from unittest import skip
-import uuid
+from unittest.mock import Mock, patch
 
 from django.test import SimpleTestCase, TestCase
 
-from unittest.mock import Mock, patch
+from looseversion import LooseVersion
 from nose.tools import assert_equal, assert_true
 
-from corehq.motech.dhis2.const import DHIS2_MAX_KNOWN_GOOD_VERSION as KNOWN_GOOD
-from corehq.motech.dhis2.exceptions import Dhis2Exception
-from corehq.motech.dhis2.repeaters import Dhis2Repeater
 from corehq.motech.models import ConnectionSettings
 from corehq.motech.requests import Requests
+
+from ..const import DHIS2_MAX_KNOWN_GOOD_VERSION as KNOWN_GOOD
+from ..const import XMLNS_DHIS2
+from ..exceptions import Dhis2Exception
+from ..repeaters import Dhis2EntityRepeater, Dhis2Repeater
 
 dhis2_version = "2.32.2"
 api_version = re.match(r'2\.(\d+)', dhis2_version).group(1)
@@ -237,3 +238,35 @@ class SlowApiVersionTest(TestCase):
 
             self.assertEqual(self.repeater.get_api_version(), bigly_api_version)
             mock_notify.assert_called()
+
+
+class TestAllowedToForward(SimpleTestCase):
+
+    def test_entity_repeater_dhis2_form(self):
+        repeater = Dhis2EntityRepeater()
+        form = Mock(xmlns=XMLNS_DHIS2)
+        self.assertFalse(repeater.allowed_to_forward(form))
+
+    def test_event_repeater_dhis2_form(self):
+        repeater = Dhis2Repeater()
+        form = Mock(xmlns=XMLNS_DHIS2)
+        self.assertFalse(repeater.allowed_to_forward(form))
+
+    def test_event_repeater_whitelist_blocked(self):
+        repeater = Dhis2Repeater(
+            white_listed_form_xmlns=['http://example.com/forward-me/']
+        )
+        form = Mock(xmlns='http://example.com/dont-forward-me/')
+        self.assertFalse(repeater.allowed_to_forward(form))
+
+    def test_event_repeater_whitelist_ok(self):
+        repeater = Dhis2Repeater(
+            white_listed_form_xmlns=['http://example.com/forward-me/']
+        )
+        form = Mock(xmlns='http://example.com/forward-me/')
+        self.assertTrue(repeater.allowed_to_forward(form))
+
+    def test_event_repeater_ok(self):
+        repeater = Dhis2Repeater()
+        form = Mock(xmlns='http://example.com/forward-me/')
+        self.assertTrue(repeater.allowed_to_forward(form))

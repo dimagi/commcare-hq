@@ -44,6 +44,7 @@ hqDefine('export/js/const', [], function () {
     var MAIN_TABLE = [];
     var CASE_HISTORY_TABLE = [{'name': 'actions', 'is_repeat': true, 'doc_type': 'PathNode'}];
     var PARENT_CASE_TABLE = [{'name': 'indices', 'is_repeat': true, 'doc_type': 'PathNode'}];
+    var ALL_CASE_TYPE_TABLE = {'name': 'commcare-all-case-types', is_repeat: false, 'doc_type': 'PathNode'};
 
     return {
         TAG_DELETED: TAG_DELETED,
@@ -60,5 +61,6 @@ hqDefine('export/js/const', [], function () {
         MAIN_TABLE: MAIN_TABLE,
         CASE_HISTORY_TABLE: CASE_HISTORY_TABLE,
         PARENT_CASE_TABLE: PARENT_CASE_TABLE,
+        ALL_CASE_TYPE_TABLE: ALL_CASE_TYPE_TABLE,
     };
 });

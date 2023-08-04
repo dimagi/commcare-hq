@@ -42,6 +42,8 @@ hqDefine("app_manager/js/details/screen", function () {
         // as the name of the key in the data object that is sent to the
         // server on save.
         self.columnKey = options.columnKey;
+        let detail = spec[self.columnKey];
+
         // Not all screenModel instances will handle sorting, parent selection,
         // and filtering. E.g The "Case Detail" tab only handles the module's
         // "long" case details. These flags will make sure this instance
@@ -55,37 +57,78 @@ hqDefine("app_manager/js/details/screen", function () {
         self.containsSearchConfiguration = options.containsSearchConfiguration;
         self.containsCustomXMLConfiguration = options.containsCustomXMLConfiguration;
         self.allowsTabs = options.allowsTabs;
-        self.useCaseTiles = ko.observable(spec[self.columnKey].use_case_tiles ? "yes" : "no");
-        self.showCaseTileColumn = ko.computed(function () {
-            return self.useCaseTiles() === "yes" && hqImport('hqwebapp/js/toggles').toggleEnabled('CASE_LIST_TILE');
+        self.caseTileTemplateOptions = [[null, gettext("Don't Use Case Tiles")]].concat(options.caseTileTemplateOptions);
+        self.caseTileTemplateOptions = self.caseTileTemplateOptions.map(function (templateOption) {
+            return {templateValue: templateOption[0], templateName: templateOption[1]};
         });
-        self.persistCaseContext = ko.observable(spec[self.columnKey].persist_case_context || false);
-        self.persistentCaseContextXML = ko.observable(spec[self.columnKey].persistent_case_context_xml || 'case_name');
+        self.caseTileTemplate = ko.observable(detail.case_tile_template || null);
+        self.caseTileTemplateConfigs = options.caseTileTemplateConfigs;
+        self.caseTileFieldsForTemplate = ko.computed(function () {
+            return (self.caseTileTemplateConfigs[self.caseTileTemplate()] || {}).fields;
+        });
+        self.caseTilePreviewForTemplate = ko.computed(function () {
+            const grid = (self.caseTileTemplateConfigs[self.caseTileTemplate()] || {}).grid;
+            if (!grid) {
+                return "";
+            }
+            return "<div class='case-tile-preview'>" + _.map(grid, (values, fieldName) => {
+                return _.template(`<div class='case-tile-preview-mapping'
+                                        style='
+                                            grid-area: <%= rowStart %> / <%= columnStart %> / <%= rowEnd %> / <%= columnEnd %>;
+                                        '>
+                                          <div style='
+                                            justify-self: <%= horzAlign %>;
+                                            text-align: <%= horzAlign %>;
+                                            align-self: <%= vertAlign %>;
+                                          '>
+                                            <%= field %>
+                                          </div>
+                                        </div>`)({
+                    rowStart: values.y + 1,
+                    columnStart: values.x + 1,
+                    rowEnd: values.y + values.height + 1,
+                    columnEnd: values.x + values.width + 1,
+                    horzAlign: values["horz-align"],
+                    vertAlign: values["vert-align"],
+                    field: fieldName,
+                });
+            }).join("") + "</div>";
+        });
+        self.showCaseTileColumn = ko.computed(function () {
+            return self.caseTileTemplate() && hqImport('hqwebapp/js/toggles').toggleEnabled('CASE_LIST_TILE');
+        });
+        self.persistCaseContext = ko.observable(detail.persist_case_context || false);
+        self.persistentCaseContextXML = ko.observable(detail.persistent_case_context_xml || 'case_name');
+
+        self.caseTileGrouped = ko.observable(!!detail.case_tile_group.index_identifier || false);
+        self.caseTileGroupBy = ko.observable(detail.case_tile_group.index_identifier);
+        self.caseTileGroupHeaderRows = ko.observable(detail.case_tile_group.header_rows);
+
         self.customVariablesViewModel = {
             enabled: hqImport('hqwebapp/js/toggles').toggleEnabled('CASE_LIST_CUSTOM_VARIABLES'),
-            xml: ko.observable(spec[self.columnKey].custom_variables || ""),
+            xml: ko.observable(detail.custom_variables || ""),
         };
         self.customVariablesViewModel.xml.subscribe(function () {
             self.fireChange();
         });
-        self.multiSelectEnabled = ko.observable(spec[self.columnKey].multi_select);
+        self.multiSelectEnabled = ko.observable(detail.multi_select);
         self.multiSelectEnabled.subscribe(function () {
             self.autoSelectEnabled(self.multiSelectEnabled() && self.autoSelectEnabled());
             self.fireChange();
         });
-        self.maxSelectValue = ko.observable(spec[self.columnKey].max_select_value);
+        self.maxSelectValue = ko.observable(detail.max_select_value);
         self.maxSelectValue.subscribe(function () {
             self.fireChange();
         });
-        self.autoSelectEnabled = ko.observable(spec[self.columnKey].auto_select);
+        self.autoSelectEnabled = ko.observable(detail.auto_select);
         self.autoSelectEnabled.subscribe(function () {
             self.fireChange();
         });
-        self.persistTileOnForms = ko.observable(spec[self.columnKey].persist_tile_on_forms || false);
-        self.enableTilePullDown = ko.observable(spec[self.columnKey].pull_down_tile || false);
+        self.persistTileOnForms = ko.observable(detail.persist_tile_on_forms || false);
+        self.enableTilePullDown = ko.observable(detail.pull_down_tile || false);
         self.allowsEmptyColumns = options.allowsEmptyColumns;
         self.persistentCaseTileFromModule = (
-            ko.observable(spec[self.columnKey].persistent_case_tile_from_module || ""));
+            ko.observable(detail.persistent_case_tile_from_module || ""));
         self.fireChange = function () {
             self.fire('change');
         };
@@ -106,8 +149,10 @@ hqDefine("app_manager/js/details/screen", function () {
 
             column.field.on('change', function () {
                 if (!column.useXpathExpression) {
-                    column.header.val(getPropertyTitle(this.val()));
-                    column.header.fire("change");
+                    const oldVal = column.header.val(),
+                        newVal = getPropertyTitle(this.val());
+                    column.header.val(newVal);
+                    column.header.fire("change", {oldVal: oldVal, newVal: newVal});
                 }
             });
             if (column.original.hasAutocomplete) {
@@ -120,12 +165,21 @@ hqDefine("app_manager/js/details/screen", function () {
                 column.field.observableVal(column.original.field);
                 hqImport('app_manager/js/details/utils').setUpAutocomplete(column.field, self.properties);
             }
+            column.header.on('change', function (e) {
+                if (e.oldValue !== e.newValue) {
+                    self.fire("columnChange", [{
+                        "value": column,
+                        "index": self.columns.indexOf(column),
+                        "status": "edited"
+                    }]);
+                }
+            })
             return column;
         };
 
-        columns = spec[self.columnKey].columns;
+        columns = detail.columns;
         // Inject tabs into the columns list:
-        var tabs = spec[self.columnKey].tabs || [];
+        var tabs = detail.tabs || [];
         for (i = 0; i < tabs.length; i++) {
             columns.splice(
                 tabs[i].starting_index + i,
@@ -167,30 +221,56 @@ hqDefine("app_manager/js/details/screen", function () {
                 self.save();
             },
         });
-        self.on('change', function () {
+        let saveButtonFire = () => self.saveButton.fire('change');
+        self.on('change', saveButtonFire);
+        self.caseTileTemplate.subscribe(saveButtonFire);
+        self.persistCaseContext.subscribe(saveButtonFire);
+        self.persistentCaseContextXML.subscribe(saveButtonFire);
+        self.persistTileOnForms.subscribe(saveButtonFire);
+        self.persistentCaseTileFromModule.subscribe(saveButtonFire);
+        self.enableTilePullDown.subscribe(saveButtonFire);
+        self.caseTileGrouped.subscribe(saveButtonFire);
+        self.caseTileGroupBy.subscribe(saveButtonFire);
+        self.caseTileGroupHeaderRows.subscribe(saveButtonFire);
+        self.columns.subscribe(function (changes) {
             self.saveButton.fire('change');
-        });
-        self.useCaseTiles.subscribe(function () {
-            self.saveButton.fire('change');
-        });
-        self.persistCaseContext.subscribe(function () {
-            self.saveButton.fire('change');
-        });
-        self.persistentCaseContextXML.subscribe(function () {
-            self.saveButton.fire('change');
-        });
-        self.persistTileOnForms.subscribe(function () {
-            self.saveButton.fire('change');
-        });
-        self.persistentCaseTileFromModule.subscribe(function () {
-            self.saveButton.fire('change');
-        });
-        self.enableTilePullDown.subscribe(function () {
-            self.saveButton.fire('change');
-        });
-        self.columns.subscribe(function () {
-            self.saveButton.fire('change');
-        });
+
+            // create events when rows (column objects) are moved and fire a special event that allows us to update
+            // dependent UI elements (sort properties)
+            const events = changes
+                // remove the 2nd event for column moves
+                .filter(c => !(c.status === 'deleted' && c.moved !== undefined));
+
+            // there should only be one 'change' now.
+            const change = events[0];
+
+            // for "moved" and "deleted" we need to add events for all the other columns that have changed their index
+            let affectedColumns, move;  // 'move' is an index diff to calculate the previous index
+            if (change.moved !== undefined) {
+                const moveFrom = change.moved,
+                    movedTo = change.index;
+                if (movedTo > moveFrom) {
+                    move = 1;
+                    affectedColumns = self.columns.slice(moveFrom, movedTo);
+                } else {
+                    move = -1;
+                    affectedColumns = self.columns.slice(movedTo + 1, moveFrom + 1);
+                }
+            } else if (change.status === 'deleted') {
+                move = 1;
+                affectedColumns = self.columns.slice(change.index);
+            }
+            if (affectedColumns) {
+                affectedColumns.forEach(c => {
+                    let index = self.columns.indexOf(c);
+                    events.push({
+                        value: c, index: index, status: "added", moved: index + move
+                    })
+                });
+            }
+
+            self.fire("columnChange", events);
+        }, null, 'arrayChange');
 
         self.save = function () {
             // Only save if property names are valid
@@ -285,12 +365,17 @@ hqDefine("app_manager/js/details/screen", function () {
                 }
             ));
 
-            data.useCaseTiles = self.useCaseTiles() === "yes";
+            data.caseTileTemplate = self.caseTileTemplate();
             data.persistCaseContext = self.persistCaseContext();
             data.persistentCaseContextXML = self.persistentCaseContextXML();
             data.persistTileOnForms = self.persistTileOnForms();
             data.persistentCaseTileFromModule = self.persistentCaseTileFromModule();
             data.enableTilePullDown = self.persistTileOnForms() ? self.enableTilePullDown() : false;
+            
+            data.case_tile_group = JSON.stringify({
+                index_identifier: self.caseTileGrouped() ? self.caseTileGroupBy() : null,
+                header_rows: self.caseTileGroupHeaderRows()
+            });
 
             if (self.containsParentConfiguration) {
                 var parentSelect;

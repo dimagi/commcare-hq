@@ -8,7 +8,7 @@
                        visible: table.label() !== 'Case History'">
       <span>
         <input type="checkbox"
-               data-bind="checked: table.selected" />
+               data-bind="checked: table.selected, attr: { disabled: {{ disable_table_checkbox|JSON }} }" />
       </span>
       <span>
         <span data-bind="text: table.label()" />

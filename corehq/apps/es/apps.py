@@ -8,13 +8,17 @@ from dimagi.utils.parsing import json_format_datetime
 
 from . import filters, queries
 from .client import ElasticDocumentAdapter, create_document_adapter
+from .const import (
+    HQ_APPS_INDEX_CANONICAL_NAME,
+    HQ_APPS_INDEX_NAME,
+    HQ_APPS_SECONDARY_INDEX_NAME,
+)
 from .es_query import HQESQuery
 from .index.settings import IndexSettingsKey
-from .transient_util import get_adapter_mapping
 
 
 class AppES(HQESQuery):
-    index = 'apps'
+    index = HQ_APPS_INDEX_CANONICAL_NAME
 
     @property
     def builtin_filters(self):
@@ -31,10 +35,12 @@ class AppES(HQESQuery):
 class ElasticApp(ElasticDocumentAdapter):
 
     settings_key = IndexSettingsKey.APPS
+    canonical_name = HQ_APPS_INDEX_CANONICAL_NAME
 
     @property
     def mapping(self):
-        return get_adapter_mapping(self)
+        from .mappings.app_mapping import APP_MAPPING
+        return APP_MAPPING
 
     @property
     def model_cls(self):
@@ -48,8 +54,9 @@ class ElasticApp(ElasticDocumentAdapter):
 
 app_adapter = create_document_adapter(
     ElasticApp,
-    "hqapps_2020-02-26",
+    HQ_APPS_INDEX_NAME,
     "app",
+    secondary=HQ_APPS_SECONDARY_INDEX_NAME,
 )
 
 

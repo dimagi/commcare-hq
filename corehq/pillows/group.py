@@ -4,7 +4,6 @@ from corehq.apps.groups.models import Group
 from corehq.util.doc_processor.couch import CouchDocumentProvider
 
 from corehq.apps.es.groups import group_adapter
-from .mappings.group_mapping import GROUP_INDEX_INFO
 from pillowtop.checkpoints.manager import get_checkpoint_for_elasticsearch_pillow
 from pillowtop.pillow.interface import ConstructedPillow
 from pillowtop.processors import ElasticProcessor
@@ -56,7 +55,7 @@ class GroupReindexerFactory(ReindexerFactory):
     ]
 
     def build(self):
-        iteration_key = "GroupToElasticsearchPillow_{}_reindexer".format(GROUP_INDEX_INFO.index)
+        iteration_key = "GroupToElasticsearchPillow_{}_reindexer".format(group_adapter.index_name)
         doc_provider = CouchDocumentProvider(iteration_key, [Group])
         options = {
             'chunk_size': 5

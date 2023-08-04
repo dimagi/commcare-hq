@@ -103,6 +103,14 @@ class Dhis2Repeater(FormRepeater, Dhis2Instance):
     def __hash__(self):
         return hash(self.id)
 
+    def allowed_to_forward(self, payload):
+        return (
+            super().allowed_to_forward(payload)
+            # If the payload is the system form for updating a case with
+            # its DHIS2 TEI ID then don't send it back.
+            and payload.xmlns != XMLNS_DHIS2
+        )
+
     @memoized
     def payload_doc(self, repeat_record):
         return XFormInstance.objects.get_form(repeat_record.payload_id, repeat_record.domain)

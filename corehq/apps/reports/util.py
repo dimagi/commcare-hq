@@ -1,8 +1,10 @@
 import json
+import logging
 import math
 import warnings
 from collections import defaultdict, namedtuple
 from datetime import datetime
+import pytz
 
 from django.conf import settings
 from django.core.cache import cache
@@ -23,7 +25,7 @@ from corehq.apps.groups.models import Group
 from corehq.apps.reports.const import USER_QUERY_LIMIT
 from corehq.apps.reports.const import HQ_TABLEAU_GROUP_NAME
 from corehq.apps.reports.exceptions import TableauAPIError
-from corehq.apps.reports.models import TableauServer, TableauAPISession, TableauUser
+from corehq.apps.reports.models import TableauServer, TableauAPISession, TableauUser, TableauConnectedApp
 from corehq.apps.users.models import CommCareUser, WebUser, CouchUser
 from corehq.apps.users.permissions import get_extra_permissions
 from corehq.apps.users.util import user_id_to_username
@@ -53,7 +55,7 @@ def get_all_users_by_domain(domain=None, group=None, user_ids=None,
                             user_filter=None, simplified=False, CommCareUser=None, include_inactive=False):
     """
         WHEN THERE ARE A LOT OF USERS, THIS IS AN EXPENSIVE OPERATION.
-        Returns a list of CommCare Users based on domain, group, and user 
+        Returns a list of CommCare Users based on domain, group, and user
         filter (demo_user, admin, registered, unknown)
     """
     def _create_temp_user(user_id):
@@ -78,9 +80,9 @@ def get_all_users_by_domain(domain=None, group=None, user_ids=None,
             users = []
             for id in user_ids:
                 user = CommCareUser.get_by_user_id(id)
-                if not user and (user_filter[HQUserType.ADMIN].show or
-                      user_filter[HQUserType.DEMO_USER].show or
-                      user_filter[HQUserType.UNKNOWN].show):
+                if not user and (user_filter[HQUserType.ADMIN].show
+                      or user_filter[HQUserType.DEMO_USER].show
+                      or user_filter[HQUserType.UNKNOWN].show):
                     user = _create_temp_user(id)
                 if user:
                     users.append(user)
@@ -102,10 +104,10 @@ def get_all_users_by_domain(domain=None, group=None, user_ids=None,
             if user_id in registered_users_by_id and user_filter[HQUserType.ACTIVE].show:
                 user = registered_users_by_id[user_id]
                 users.append(user)
-            elif (user_id not in registered_users_by_id and
-                 (user_filter[HQUserType.ADMIN].show or
-                  user_filter[HQUserType.DEMO_USER].show or
-                  user_filter[HQUserType.UNKNOWN].show)):
+            elif (user_id not in registered_users_by_id
+                 and (user_filter[HQUserType.ADMIN].show
+                 or user_filter[HQUserType.DEMO_USER].show
+                 or user_filter[HQUserType.UNKNOWN].show)):
                 user = _create_temp_user(user_id)
                 if user:
                     users.append(user)
@@ -260,8 +262,8 @@ def get_possible_reports(domain_name):
     from corehq.apps.reports.dispatcher import (ProjectReportDispatcher, CustomProjectReportDispatcher)
 
     # todo: exports should be its own permission at some point?
-    report_map = (ProjectReportDispatcher().get_reports(domain_name) +
-                  CustomProjectReportDispatcher().get_reports(domain_name))
+    report_map = (ProjectReportDispatcher().get_reports(domain_name)
+                  + CustomProjectReportDispatcher().get_reports(domain_name))
     reports = []
     domain_obj = Domain.get_by_name(domain_name)
     for heading, models in report_map:
@@ -343,9 +345,16 @@ def numcell(text, value=None, convert='int', raw=None):
 
 
 def datespan_from_beginning(domain_object, timezone):
-    startdate = domain_object.date_created
-    now = datetime.utcnow()
-    datespan = DateSpan(startdate, now, timezone=timezone)
+    # Start and end dates must be naive (no timezone) to work with DateSpan
+    # domain creation time is expected to be a naive date in UTC
+    startdate = pytz.utc.localize(domain_object.date_created)
+    localized_start = startdate.astimezone(timezone)
+    localized_start = datetime(year=localized_start.year, month=localized_start.month, day=localized_start.day)
+
+    now = datetime.now(tz=timezone)
+    localized_end = datetime(year=now.year, month=now.month, day=now.day)
+
+    datespan = DateSpan(localized_start, localized_end, timezone=timezone)
     datespan.is_default = True
     return datespan
 
@@ -421,6 +430,7 @@ class DatatablesParams(object):
 
 TableauGroupTuple = namedtuple('TableauGroupTuple', ['name', 'id'])
 DEFAULT_TABLEAU_ROLE = TableauUser.Roles.UNLICENSED.value
+logger = logging.getLogger('tableau_util')
 
 
 def tableau_username(HQ_username):
@@ -471,7 +481,11 @@ def add_tableau_user(domain, username):
     Creates a TableauUser object with the given username and a default role of Viewer, and adds a new user with
     these details to the Tableau instance.
     '''
-    session = TableauAPISession.create_session_for_domain(domain)
+    try:
+        session = TableauAPISession.create_session_for_domain(domain)
+    except TableauConnectedApp.DoesNotExist as e:
+        _notify_tableau_exception(e, domain)
+        return
     user, created = _add_tableau_user_local(session, username)
     if not created:
         return
@@ -559,6 +573,15 @@ def _get_hq_group_id(session):
 
 @periodic_task(run_every=crontab(minute=0, hour='*/1'), queue='background_queue')
 def sync_all_tableau_users():
+    for domain in TABLEAU_USER_SYNCING.get_enabled_domains():
+        logger.info(f"Syncing Tableau users on domain: {domain}.")
+        try:
+            sync_tableau_users_on_domain(domain)
+        except (TableauAPIError, TableauConnectedApp.DoesNotExist) as e:
+            _notify_tableau_exception(e, domain)
+
+
+def sync_tableau_users_on_domain(domain):
     def _sync_tableau_users_with_hq(session, domain):
         tableau_user_names = [tableau_user.username for tableau_user in TableauUser.objects.filter(
             server=TableauServer.objects.get(domain=domain)
@@ -584,13 +607,13 @@ def sync_all_tableau_users():
                 remote_HQ_group_users = []
             return remote_HQ_group_users
 
-        all_remote_users = session.get_users_on_site()
+        all_remote_users = {username.lower(): value for username, value in session.get_users_on_site().items()}
         local_users = TableauUser.objects.filter(server=session.tableau_connected_app.server)
         remote_HQ_group_users = _get_HQ_group_users(session)
 
         # Add/delete/update remote users to match with local reality
         for local_user in local_users:
-            local_tableau_username = tableau_username(local_user.username)
+            local_tableau_username = tableau_username(local_user.username).lower()
             if local_tableau_username not in all_remote_users:
                 _add_tableau_user_remote(session, local_user, local_user.role)
             elif local_user.tableau_user_id != all_remote_users[local_tableau_username]['id']:
@@ -604,17 +627,16 @@ def sync_all_tableau_users():
                 )
 
         # Remove any remote users that don't exist locally
-        local_users_usernames = [tableau_username(user.username) for user in local_users]
+        local_users_usernames = [tableau_username(user.username).lower() for user in local_users]
         for remote_user in remote_HQ_group_users:
-            if remote_user['name'] not in local_users_usernames:
+            if remote_user['name'].lower() not in local_users_usernames:
                 _delete_user_remote(session, remote_user['id'])
 
-    for domain in TABLEAU_USER_SYNCING.get_enabled_domains():
-        session = TableauAPISession.create_session_for_domain(domain)
-        # Sync the web users on HQ with the TableauUser model
-        _sync_tableau_users_with_hq(session, domain)
-        # Sync the TableauUser model with Tableau users on the remote Tableau instance
-        _sync_tableau_users_with_remote(session)
+    session = TableauAPISession.create_session_for_domain(domain)
+    # Sync the web users on HQ with the TableauUser model
+    _sync_tableau_users_with_hq(session, domain)
+    # Sync the TableauUser model with Tableau users on the remote Tableau instance
+    _sync_tableau_users_with_remote(session)
 
 
 def is_hq_user(tableau_username):
@@ -626,7 +648,7 @@ def tableau_username_to_hq(tableau_username):
         return tableau_username[3:]
 
 
-# Attaches to the parse_web_users method
+# Attaches to the parse_web_users method, used for user export
 def add_on_tableau_details(domain, web_user_dicts):
 
     session = TableauAPISession.create_session_for_domain(domain)

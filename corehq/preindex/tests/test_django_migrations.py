@@ -58,6 +58,5 @@ class TestMigrateWithReindex(SimpleTestCase):
         self.assertEqual(log, [
             "preindex_everything",
             "sync_finish_couchdb_hq",
-            "ptop_es_manage",
         ])
         self.assertFalse(reindexer.should_reindex)

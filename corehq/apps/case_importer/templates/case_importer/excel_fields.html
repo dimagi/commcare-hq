@@ -16,9 +16,21 @@
 
 {% block page_content %}
   {% include 'case_importer/partials/help_message.html' %}
+  {% if is_bulk_import %}
+    <div class="alert alert-warning">
+      <p>
+        <i class="fa fa-warning"></i>
+        {% blocktrans %}
+          Excel mapping is disabled for bulk case imports. Excel columns will be used to directly
+          map to the relevant case properties.
+        {% endblocktrans %}
+      </p>
+    </div>
+  {% endif %}
 
   {% initial_page_data 'excel_fields' excel_fields %}
   {% initial_page_data 'case_field_specs' case_field_specs %}
+  {% initial_page_data 'is_bulk_import' is_bulk_import %}
 
   <form action="{% url "excel_commit" domain %}"
         method="post"
@@ -31,6 +43,7 @@
     <input type="hidden" name="create_new_cases" value="{{create_new_cases}}" />
 
     <fieldset>
+      {% if not is_bulk_import %}
       <legend>
         {% trans "Match Excel Columns to Case Properties" %}
         <button type="button" class="btn btn-default pull-right" id="autofill" title="{% trans_html_attr 'Reset file-to-case-property matching to default' %}">
@@ -57,6 +70,7 @@
       <a id="js-add-mapping" class="btn btn-default" href="#">
         <i class="fa fa-plus"></i> {% trans "Add another matching" %}
       </a>
+      {% endif %}
     </fieldset>
 
     <div class="form-actions">
