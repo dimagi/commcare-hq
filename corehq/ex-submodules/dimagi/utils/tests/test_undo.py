@@ -7,6 +7,7 @@ from dimagi.utils.couch.undo import DeleteRecord, get_deleted_doc_type, undo_del
 from corehq.apps.cleanup.models import DeletedCouchDoc
 from corehq.apps.groups.models import DeleteGroupRecord
 
+
 class TestDocument(Document):
     pass
 

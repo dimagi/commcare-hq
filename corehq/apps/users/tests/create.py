@@ -38,7 +38,6 @@ class CreateTestCase(TestCase):
         self.assertEqual(django_user.email, email)
         self.assertEqual(django_user.username, username)
 
-
     def testCreateCompleteWebUser(self):
         """
         testing couch user internal functions
@@ -121,7 +120,7 @@ class TestDomainMemberships(TestCase):
         self.setUp()  # reload users to clear CouchUser.role
 
         self.assertEqual(self.webuser.get_domain_membership(self.domain).role_id,
-                          self.ccuser.get_domain_membership(self.domain).role_id)
+                         self.ccuser.get_domain_membership(self.domain).role_id)
         self.assertEqual(self.webuser.role_label(), self.ccuser.role_label())
 
         self.assertTrue(self.webuser.has_permission(self.domain, 'view_reports'))

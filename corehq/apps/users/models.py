@@ -2601,6 +2601,7 @@ class WebUser(CouchUser, MultiMembershipMixin, CommCareMobileContactMixin):
     def get_usercase_by_domain(self, domain):
         return CommCareCase.objects.get_case_by_external_id(domain, self._id, USERCASE_TYPE)
 
+
 class FakeUser(WebUser):
     """
     Prevent actually saving user types that don't exist in the database
