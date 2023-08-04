@@ -1377,9 +1377,9 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, EulaMixin):
             return None
 
     def clear_quickcache_for_user(self):
-        from corehq.apps.domain.views.base import (
+        from corehq.apps.hqwebapp.templatetags.hq_shared_tags import (
             get_domain_links_for_dropdown,
-            get_enterprise_links_for_dropdown,
+            has_enterprise_links,
         )
         from corehq.apps.sms.util import is_user_contact_active
 
@@ -1395,7 +1395,7 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, EulaMixin):
             is_user_contact_active.clear(domain, self.user_id)
         Domain.active_for_couch_user.clear(self)
         get_domain_links_for_dropdown.clear(self)
-        get_enterprise_links_for_dropdown.clear(self)
+        has_enterprise_links.clear(self)
 
     @classmethod
     @quickcache(['userID', 'domain'])
