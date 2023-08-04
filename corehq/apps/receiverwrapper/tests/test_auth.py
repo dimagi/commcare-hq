@@ -297,7 +297,7 @@ class _AuthTestsBothBackends(object):
             file_path=self.bare_form,
             client=client,
             authtype='oauth2',
-            expected_status=403
+            expected_status=401
         )
 
 
