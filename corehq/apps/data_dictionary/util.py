@@ -19,10 +19,6 @@ from corehq.motech.fhir.utils import update_fhir_resource_property
 from corehq.util.quickcache import quickcache
 
 
-class OldExportsEnabledException(Exception):
-    pass
-
-
 def generate_data_dictionary(domain):
     case_type_to_properties = _get_all_case_properties(domain)
     _create_properties_for_case_types(domain, case_type_to_properties)
@@ -49,11 +45,7 @@ def _get_all_case_properties(domain):
             if len(item.path) > 1:
                 continue
 
-            if item.tag:
-                name = item.tag
-            else:
-                name = item.path[-1].name
-
+            name = item.tag if item.tag else item.path[-1].name
             if '/' not in name:
                 # Filter out index and parent properties as some are stored as parent/prop in item.path
                 properties.add(name)
@@ -173,6 +165,35 @@ def get_deprecated_fields(domain, case_type_name):
     if case_type:
         deprecated_fields = set(case_type.properties.filter(deprecated=True).values_list('name', flat=True))
     return deprecated_fields
+
+
+def save_case_property_group(id, name, case_type, domain, description, index, deprecated):
+    """
+    Takes a case property group to update and returns an error if there was one
+    """
+    if not name:
+        return gettext('Case Property Group must have a name')
+
+    case_type_obj = CaseType.objects.get(domain=domain, name=case_type)
+    if id is not None:
+        group_obj = CasePropertyGroup.objects.get(id=id, case_type=case_type_obj)
+    else:
+        group_obj = CasePropertyGroup(case_type=case_type_obj)
+
+    group_obj.name = name
+    if description is not None:
+        group_obj.description = description
+    if index is not None:
+        group_obj.index = index
+    if deprecated is not None:
+        group_obj.deprecated = deprecated
+
+    try:
+        group_obj.full_clean(validate_unique=True)
+    except ValidationError as e:
+        return str(e)
+
+    group_obj.save()
 
 
 def save_case_property(name, case_type, domain=None, data_type=None,

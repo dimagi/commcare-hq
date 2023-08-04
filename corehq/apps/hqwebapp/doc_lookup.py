@@ -47,6 +47,8 @@ def lookup_doc_id(doc_id):
     :param doc_id: ID of document to look for
     :returns: LookupResult or None
     """
+    if doc_id is None:
+        raise TypeError('`doc_id` is NoneType, expected str.')
     result, _ = lookup_id_in_databases(doc_id, get_databases().values())
     return result
 

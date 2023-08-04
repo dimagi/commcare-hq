@@ -2,25 +2,26 @@
 RemoteRequestsHelper
 --------------------
 
-The ``<remote-request>`` descends from the ``<entry>``. Remote requests provide support for CommCare to request data from the server
-and then allow the user to select
-an item from that data and use it as a datum for a form. In practice, remote requests are only used for case
-search and claim workflows.
+The ``<remote-request>`` descends from the ``<entry>``.
+Remote requests provide support for CommCare to request data from the server
+and then allow the user to select an item from that data and use it as a datum for a form.
+In practice, remote requests are only used for case search and claim workflows.
 
 This case search config UI in app manager is a thin wrapper around the various elements that are part of
 ``<remote-request>``, which means ``RemoteRequestsHelper`` is not especially complicated, although it is rather
 long.
 
-Case search and claim is typically an optional part of a workflow. In this use case, the remote request is accessed
-via an action, and the
-`rewind <https://github.com/dimagi/commcare-core/wiki/SessionStack#mark-and-rewind>`_ construct is used to go back to the main flow.
+Case search and claim is typically an optional part of a workflow.
+In this use case, the remote request is accessed via an action, and the
+`rewind <https://github.com/dimagi/commcare-core/wiki/SessionStack#mark-and-rewind>`_ construct
+is used to go back to the main flow.
 However, the flag ``USH_INLINE_SEARCH`` supports remote requests being made in the main flow of a session. When
 using this flag, a ``<post>`` and query datums are added to a normal form ``<entry>``. This makes search inputs
 available after the search, rather than having them destroyed by rewinding.
 
 This module includes ``SessionEndpointRemoteRequestFactory``, which generates remote requests for use by session
-endpoints. This functionality exists for the sake of smart links: whenever a user clicks a smart link, any cases that are part
-of the smart link need to be claimed so the user can access them.
+endpoints. This functionality exists for the sake of smart links: whenever a user clicks a smart link,
+any cases that are part of the smart link need to be claimed so the user can access them.
 """
 from django.utils.functional import cached_property
 
@@ -30,9 +31,6 @@ from corehq.apps.app_manager.suite_xml.contributors import (
     PostProcessor,
 )
 from corehq.apps.app_manager.suite_xml.post_process.endpoints import EndpointsHelper
-from corehq.apps.app_manager.suite_xml.post_process.instances import (
-    get_all_instances_referenced_in_xpaths,
-)
 from corehq.apps.app_manager.suite_xml.post_process.workflow import WorkflowDatumMeta
 from corehq.apps.app_manager.suite_xml.sections.details import DetailsHelper
 from corehq.apps.app_manager.suite_xml.utils import get_ordered_case_types_for_module
@@ -41,7 +39,6 @@ from corehq.apps.app_manager.suite_xml.xml_models import (
     Command,
     Display,
     Hint,
-    Instance,
     InstanceDatum,
     Itemset,
     PushFrame,
@@ -188,6 +185,11 @@ class RemoteRequestFactory(object):
             text=Text(locale_id=id_strings.case_search_title_translation(self.module))
         )
 
+    def build_results_title(self):
+        return Display(
+            text=Text(locale_id=id_strings.case_search_locale(self.module))
+        )
+
     def build_description(self):
         return Display(
             text=Text(locale_id=id_strings.case_search_description_locale(self.module))
@@ -214,6 +216,7 @@ class RemoteRequestFactory(object):
                 data=self._remote_request_query_datums,
                 prompts=self.build_query_prompts(),
                 default_search=self.module.search_config.default_search,
+                results_title=self.build_results_title() if self.app.supports_split_screen_case_search else None,
             )
         ]
 
@@ -476,18 +479,26 @@ class RemoteRequestsHelper(PostProcessor):
                 self.suite.remote_requests.extend(
                     self.get_endpoint_contributions(module, None, module.session_endpoint_id,
                                                     detail_section_elements))
+
+            if module.case_list_session_endpoint_id:
+                self.suite.remote_requests.extend(
+                    self.get_endpoint_contributions(module, None, module.case_list_session_endpoint_id,
+                                                    detail_section_elements, False))
+
             for form in module.get_forms():
                 if form.session_endpoint_id:
                     self.suite.remote_requests.extend(
                         self.get_endpoint_contributions(module, form, form.session_endpoint_id,
                                                         detail_section_elements))
 
-    def get_endpoint_contributions(self, module, form, endpoint_id, detail_section_elements):
+    def get_endpoint_contributions(self, module, form, endpoint_id, detail_section_elements,
+                                   should_add_last_selection_datum=True):
         helper = EndpointsHelper(self.suite, self.app, [module])
         children = helper.get_frame_children(module, form)
         elements = []
         for child in children:
-            if isinstance(child, WorkflowDatumMeta) and child.requires_selection:
+            if isinstance(child, WorkflowDatumMeta) and child.requires_selection \
+                    and (should_add_last_selection_datum or child != children[-1]):
                 elements.append(SessionEndpointRemoteRequestFactory(
                     self.suite, module, detail_section_elements, endpoint_id, child.id).build_remote_request(),
                 )

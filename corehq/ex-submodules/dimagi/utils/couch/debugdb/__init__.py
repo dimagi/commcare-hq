@@ -44,7 +44,7 @@ def tidy_stacktrace(strace):
     for s in strace[:-1]:
         s_path = os.path.realpath(s[0])
         if getattr(settings, 'DEBUG_TOOLBAR_CONFIG', {}).get('HIDE_DJANGO_SQL', True) \
-            and django_path in s_path and not 'django/contrib' in s_path:
+            and django_path in s_path and 'django/contrib' not in s_path:
             continue
         if socketserver_path in s_path:
             continue
