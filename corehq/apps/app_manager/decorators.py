@@ -159,8 +159,8 @@ def avoid_parallel_build_request(fn):
     def new_fn(app, comment, user_id, *args, **kwargs):
         domain = app.domain
         app_id = app.get_id
-        # if _build_request_in_progress(domain, app_id):
-        #     raise BuildConflictException()
+        if _build_request_in_progress(domain, app_id):
+            raise BuildConflictException()
         _set_build_in_progress_lock(domain, app_id)
         try:
             fn_return = fn(app, comment, user_id, *args, **kwargs)
