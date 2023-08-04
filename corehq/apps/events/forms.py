@@ -16,10 +16,7 @@ from corehq.apps.locations.forms import LocationSelectWidget
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.locations.util import get_locations_from_ids
 from corehq.apps.reports.filters.users import ExpandedMobileWorkerFilter
-from corehq.apps.users.dbaccessors import (
-    get_all_commcare_users_by_domain,
-    get_mobile_users_by_filters,
-)
+from corehq.apps.users.dbaccessors import get_mobile_users_by_filters
 from corehq.apps.users.forms import PrimaryLocationWidget
 
 from .models import EVENT_IN_PROGRESS, EVENT_NOT_STARTED, AttendeeModel
@@ -73,7 +70,7 @@ class EventForm(forms.Form):
     attendance_takers = forms.MultipleChoiceField(
         label=_("Attendance Takers"),
         required=True,
-        help_text="Please choose at least one Attendance Taker"
+        help_text=_("Please choose at least one Attendance Taker")
     )
 
     def __init__(self, *args, **kwargs):

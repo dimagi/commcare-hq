@@ -15,6 +15,7 @@
 # Ismaïla Diene <idiene@dimagi.com>, 2022
 # Tyler Wymer <twymer@dimagi.com>, 2023
 # Aissetou Sawadogo <ais107@hotmail.com>, 2023
+# Ayla Reith <areith@dimagi.com>, 2023
 #
 #, fuzzy
 msgid ""
@@ -22,7 +23,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "PO-Revision-Date: 2017-07-19 15:34+0000\n"
-"Last-Translator: Aissetou Sawadogo <ais107@hotmail.com>, 2023\n"
+"Last-Translator: Ayla Reith <areith@dimagi.com>, 2023\n"
 "Language-Team: French (https://app.transifex.com/dimagi/teams/9388/fr/)\n"
 "Language: fr\n"
 "MIME-Version: 1.0\n"
@@ -235,10 +236,6 @@ msgid "Select a Report..."
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/details/case_claim.js
-msgid "Advanced Mobile UCR Options"
-msgstr ""
-
-#: corehq/apps/app_manager/static/app_manager/js/details/case_claim.js
 msgid "Lookup Table Options"
 msgstr ""
 
@@ -250,10 +247,6 @@ msgstr "Table de Recherche"
 
 #: corehq/apps/app_manager/static/app_manager/js/details/case_claim.js
 msgid "Select a Lookup Table..."
-msgstr ""
-
-#: corehq/apps/app_manager/static/app_manager/js/details/case_claim.js
-msgid "Advanced Lookup Table Options"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/details/column.js
@@ -350,6 +343,10 @@ msgstr "Parent"
 #: corehq/apps/app_manager/static/app_manager/js/details/parent_select.js
 msgid "Unknown menu"
 msgstr ""
+
+#: corehq/apps/app_manager/static/app_manager/js/details/screen.js
+msgid "Don't Use Case Tiles"
+msgstr "N'utiliser pas des Plaques des Dossiers."
 
 #: corehq/apps/app_manager/static/app_manager/js/details/screen.js
 msgid "You have unsaved detail screen configurations."
@@ -459,6 +456,10 @@ msgstr "Distance de votre localisation actuelle"
 
 #: corehq/apps/app_manager/static/app_manager/js/details/utils.js
 msgid "Markdown"
+msgstr ""
+
+#: corehq/apps/app_manager/static/app_manager/js/details/utils.js
+msgid "Address Popup (Web Apps only)"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/details/utils.js
@@ -2698,8 +2699,8 @@ msgstr ""
 
 #: corehq/apps/cloudcare/static/cloudcare/js/form_entry/entries.js
 msgid ""
-"The file you selected exceeds the size limit of 3MB. Please select a file "
-"that is smaller than 3MB."
+"The file you selected exceeds the size limit of 4MB. Please select a file "
+"that is smaller than 4MB."
 msgstr ""
 
 #: corehq/apps/cloudcare/static/cloudcare/js/form_entry/entries.js
@@ -2860,9 +2861,17 @@ msgid "Fetching your location..."
 msgstr ""
 
 #: corehq/apps/cloudcare/static/cloudcare/js/formplayer/menus/views.js
+msgid "Please perform a search."
+msgstr ""
+
+#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/menus/views.js
 msgid ""
 "You have selected more than the maximum selection limit of <%= value %> . "
 "Please uncheck some values to continue."
+msgstr ""
+
+#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/menus/views.js
+msgid "Your location"
 msgstr ""
 
 #: corehq/apps/cloudcare/static/cloudcare/js/formplayer/menus/views.js
@@ -3409,6 +3418,18 @@ msgstr "Identifiant sensible"
 #: corehq/apps/export/static/export/js/models.js
 msgid "Sensitive Date"
 msgstr "Date sensible"
+
+#: corehq/apps/geospatial/static/geospatial/js/geospatial_map.js
+msgid "Name of the Area"
+msgstr ""
+
+#: corehq/apps/geospatial/static/geospatial/js/geospatial_map.js
+msgid "View here"
+msgstr ""
+
+#: corehq/apps/geospatial/static/geospatial/js/geospatial_map.js
+msgid "There are case(s) missing geolocation data."
+msgstr ""
 
 #: corehq/apps/groups/static/groups/js/group_members.js
 msgid "Edit Group Information"
@@ -4530,8 +4551,8 @@ msgstr ""
 
 #: corehq/apps/users/static/users/js/roles.js
 msgid ""
-"<strong>Shared Exports</strong> &mdash; access and edit the content and "
-"structure of shared exports"
+"<strong>Manage Shared Exports</strong> &mdash; access and edit the content "
+"and structure of shared exports"
 msgstr ""
 
 #: corehq/apps/users/static/users/js/roles.js

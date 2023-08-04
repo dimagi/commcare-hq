@@ -199,7 +199,7 @@ class BouncedEmailManager(object):
                             )
                     elif aws_meta.notification_type == NotificationType.COMPLAINT:
                         self._record_complaint(aws_meta, uid)
-            except Exception as e:
+            except Exception:
                 metrics_counter('commcare.bounced_email_manager.formatting_issues')
                 self._label_problem_email(
                     uid,

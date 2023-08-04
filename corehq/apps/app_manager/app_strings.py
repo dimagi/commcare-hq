@@ -605,7 +605,7 @@ class AppStringsBase(object):
             messages['case_search.claimed_case.case_missing'] = \
                 'Unable to find the selected case after performing a sync. Please try again.'
 
-        from corehq.apps.app_manager.models import (
+        from corehq.apps.app_manager.const import (
             AUTO_SELECT_CASE,
             AUTO_SELECT_FIXTURE,
             AUTO_SELECT_LOCATION,

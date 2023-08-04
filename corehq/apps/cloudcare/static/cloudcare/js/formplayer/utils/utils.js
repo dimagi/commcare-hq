@@ -330,6 +330,7 @@ hqDefine("cloudcare/js/formplayer/utils/utils", function () {
             sessionStorage.removeItem('selectedValues');
             this.sessionId = null;
         };
+
     };
 
     Utils.CloudcareUrl.prototype.toJson = function () {

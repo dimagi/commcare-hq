@@ -1,14 +1,21 @@
 import json
 
-from django.http import HttpResponse
+from django.http import Http404, HttpResponse
 from django.shortcuts import render
 from django.utils.translation import gettext as _
 
 from corehq.apps.domain.decorators import require_superuser
 from corehq.apps.es.es_query import ESQuery
 from corehq.apps.es.transient_util import iter_index_cnames
-from corehq.apps.hqwebapp.doc_lookup import lookup_id_in_databases, get_databases, get_db_from_db_name
+from corehq.apps.hqwebapp.doc_lookup import (
+    get_databases,
+    get_db_from_db_name,
+    lookup_id_in_databases,
+)
+from corehq.blobs import CODES, get_blob_db
+from corehq.blobs.models import BlobMeta
 from corehq.form_processor.models import XFormInstance
+from corehq.util.download import get_download_response
 from corehq.util.json import CommCareJSONEncoder
 
 
@@ -105,3 +112,27 @@ def check_form_for_errors(form, form_doc):
                 raw_data = repr(raw_data)
 
     return errors, raw_data
+
+
+@require_superuser
+def download_blob(request):
+    """Pairs with the get_download_url utility and command"""
+    key = request.GET.get("key")
+    try:
+        meta = BlobMeta.objects.partitioned_get(
+            domain='__system__',
+            type_code=CODES.tempfile,
+            partition_value=key,
+            key=key,
+        )
+    except BlobMeta.DoesNotExist:
+        raise Http404()
+    blob = get_blob_db().get(meta=meta)
+    return get_download_response(
+        payload=blob,
+        content_length=meta.content_length,
+        content_type=meta.content_type,
+        download=True,
+        filename=meta.name,
+        request=request,
+    )

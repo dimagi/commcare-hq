@@ -24,7 +24,7 @@ def handle_uncaught_exceptions(mail_admins=True):
         def _handle_exceptions(*args, **kwargs):
             try:
                 return fn(*args, **kwargs)
-            except Exception as e:
+            except Exception:
                 msg = "Uncaught exception from {}.{}".format(fn.__module__, fn.__name__)
                 if mail_admins:
                     notify_exception(get_request(), msg)

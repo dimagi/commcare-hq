@@ -67,6 +67,7 @@ class TestCustomDataFieldsProfile(TestCase):
         self.assertEqual(data, {
             "id": self.profile3.id,
             "name": "three",
+            "upstream_id": None,
             "fields": {
                 "corners": 3,
                 "prefix": "tri",
@@ -78,6 +79,7 @@ class TestCustomDataFieldsProfile(TestCase):
         self.assertEqual(profiles, [{
             "id": self.profile5.id,
             "name": "five",
+            "upstream_id": None,
             "fields": {
                 "corners": 5,
                 "prefix": "penta",
@@ -85,6 +87,7 @@ class TestCustomDataFieldsProfile(TestCase):
         }, {
             "id": self.profile3.id,
             "name": "three",
+            "upstream_id": None,
             "fields": {
                 "corners": 3,
                 "prefix": "tri",
