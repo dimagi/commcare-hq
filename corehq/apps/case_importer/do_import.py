@@ -115,10 +115,10 @@ class _TimedAndThrottledImporter:
         self.config = config
         self.submission_handler = SubmitCaseBlockHandler(
             domain,
-            self.results,
-            self.config.case_type,
-            self.user,
-            record_form_callback,
+            import_results=self.results,
+            case_type=self.config.case_type,
+            user=self.user,
+            record_form_callback=record_form_callback,
             throttle=True,
         )
         self.owner_accessor = _OwnerAccessor(domain, self.user)
@@ -168,8 +168,12 @@ class _TimedAndThrottledImporter:
         search_id = self._parse_search_id(raw_row)
         fields_to_update = self._populate_updated_fields(raw_row)
         if self._has_custom_case_import_operations():
-            fields_to_update = self._perform_custom_case_import_operations(row_num, raw_row, fields_to_update,
-                                                                           import_context)
+            fields_to_update = self._perform_custom_case_import_operations(
+                row_num,
+                raw_row,
+                fields_to_update,
+                import_context,
+            )
         if not any(fields_to_update.values()):
             # if the row was blank, just skip it, no errors
             return
@@ -305,14 +309,15 @@ class _TimedAndThrottledImporter:
                 if case_fields[i]:
                     field_map[field]['field_name'] = case_fields[i]
                 elif custom_fields[i]:
-                    # if we have configured this field for external_id populate external_id instead
-                    # of the default property name from the column
+                    # if we have configured this field for external_id
+                    # populate external_id instead of the default
+                    # property name from the column
                     if config.search_field == EXTERNAL_ID and field == config.search_column:
                         field_map[field]['field_name'] = EXTERNAL_ID
                     else:
                         field_map[field]['field_name'] = custom_fields[i]
-        # hack: make sure the external_id column ends up in the field_map if the user
-        # didn't explicitly put it there
+        # hack: make sure the external_id column ends up in the
+        # field_map if the user didn't explicitly put it there
         if config.search_column not in field_map and config.search_field == EXTERNAL_ID:
             field_map[config.search_column] = {
                 'field_name': EXTERNAL_ID
@@ -340,9 +345,38 @@ class _TimedAndThrottledImporter:
             })
 
 
-class SubmitCaseBlockHandler(object):
+class SubmitCaseBlockHandler:
+    """
+    ``SubmitCaseBlockHandler`` can handle the submission of large
+    numbers of case blocks. It supports throttling.
 
-    def __init__(self, domain, import_results, case_type, user, record_form_callback=None, throttle=False):
+    Used by this module and by ``corehq.apps.data_interfaces.tasks``.
+    """
+
+    def __init__(
+        self,
+        domain,
+        *,
+        import_results,
+        case_type,
+        user,
+        record_form_callback=None,
+        throttle=False,
+    ):
+        """
+        Initialize ``SubmitCaseBlockHandler``.
+
+        :param domain: Domain name
+        :param import_results: Used for storing success and error
+            results of an import.
+        :param case_type: Used for adding inferred export properties.
+        :param user: A CouchUser, or an object with ``user_id`` and
+            ``username`` properties.
+        :param record_form_callback: Only used in one place, which uses
+            ``CaseUpload.record_form()``. It takes a form ID.
+        :param throttle: If ``True``, uses heuristics to rate-limit
+            caseblock submissions.
+        """
         self.domain = domain
         self._unsubmitted_caseblocks = []
         self.results = import_results or _ImportResults()
@@ -382,7 +416,10 @@ class SubmitCaseBlockHandler(object):
         else:
             if self.record_form_callback:
                 self.record_form_callback(form.form_id)
-            properties = {p for c in cases for p in c.dynamic_case_properties().keys()}
+            properties = {
+                p for c in cases
+                for p in c.dynamic_case_properties().keys()
+            }
             if self.case_type and len(properties):
                 add_inferred_export_properties.delay(
                     'CaseImporter',
@@ -402,20 +439,24 @@ class SubmitCaseBlockHandler(object):
         if not self.throttle:
             return
         if rate_limit_submission(
-                self.domain,
-                delay_rather_than_reject=True,
-                max_wait=self._last_submission_duration):
-            # the duration of the last submission is a combined heuristic
-            # for the amount of load on the databases
-            # and the amount of load that the requests from this import put on the databases.
-            # The amount of time to wait, during a high submission period
-            # and while this project is using up more than its fair share
-            # should be proportional to this heuristic.
-            # For a fully throttled domain, this will up to double
-            # the amount of time the case import takes
+            self.domain,
+            delay_rather_than_reject=True,
+            max_wait=self._last_submission_duration
+        ):
+            # The duration of the last submission is a combined
+            # heuristic for the amount of load on the databases and the
+            # amount of load that the requests from this import put on
+            # the databases. The amount of time to wait, during a high
+            # submission period and while this project is using up more
+            # than its fair share should be proportional to this
+            # heuristic. For a fully throttled domain, this will up to
+            # double the amount of time the case import takes
             metrics_histogram(
-                'commcare.case_importer.import_delays', self._last_submission_duration,
-                buckets=[5, 7, 10, 15, 25, 35, 50], bucket_tag='duration', bucket_unit='s',
+                'commcare.case_importer.import_delays',
+                self._last_submission_duration,
+                buckets=[5, 7, 10, 15, 25, 35, 50],
+                bucket_tag='duration',
+                bucket_unit='s',
                 tags={'domain': self.domain}
             )
             self._total_delayed_duration += self._last_submission_duration
@@ -439,8 +480,8 @@ class SubmitCaseBlockHandler(object):
             self.user.username,
             self.user.user_id,
             device_id=__name__ + ".do_import",
-            # Skip the rate-limiting
-            # because this importing code will take care of any rate-limiting
+            # Skip the rate-limiting because this importing code will
+            # take care of any rate-limiting
             max_wait=None,
         )
 

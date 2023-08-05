@@ -36,8 +36,13 @@ def bulk_import_async(config_list_json, domain, excel_id):
         for index, config_json in enumerate(config_list_json):
             config = ImporterConfig.from_json(config_json)
             with case_upload.get_spreadsheet(index) as spreadsheet:
-                result = do_import(spreadsheet, config, domain, task=bulk_import_async,
-                                record_form_callback=case_upload.record_form)
+                result = do_import(
+                    spreadsheet,
+                    config,
+                    domain,
+                    task=bulk_import_async,
+                    record_form_callback=case_upload.record_form,
+                )
                 all_results.append(result)
 
         result = _merge_import_results(all_results)
