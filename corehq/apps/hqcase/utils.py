@@ -1,6 +1,5 @@
 import datetime
 import uuid
-from typing import Any, Union
 from xml.etree import cElementTree as ElementTree
 
 from django.template.loader import render_to_string
@@ -15,11 +14,7 @@ from corehq.apps.case_search.const import SPECIAL_CASE_PROPERTIES_MAP
 from corehq.apps.data_interfaces.deduplication import DEDUPE_XMLNS
 from corehq.apps.es import filters
 from corehq.apps.es.cases import CaseES
-from corehq.apps.export.const import (
-    DEID_DATE_TRANSFORM,
-    DEID_ID_TRANSFORM,
-    DeidTransformName,
-)
+from corehq.apps.export.const import DEID_DATE_TRANSFORM, DEID_ID_TRANSFORM
 from corehq.apps.receiverwrapper.util import submit_form_locally
 from corehq.apps.users.util import SYSTEM_USER_ID
 from corehq.form_processor.exceptions import CaseNotFound, MissingFormXml
@@ -248,10 +243,7 @@ def get_last_non_blank_value(case, case_property):
             return property_changed_info.new_value
 
 
-def get_case_value(
-    case: CommCareCase,
-    value: str,
-) -> tuple[Any, Union[bool, None]]:
+def get_case_value(case, value):
     """
     Returns the case's ``value`` and whether it's a property on the case
     (as opposed to attribute).
@@ -272,14 +264,7 @@ def get_case_value(
     return None, None
 
 
-CaseAttrDict = dict[str, Any]  # {case attribute name: value}
-CasePropDict = dict[str, Any]  # {case property name: value}
-
-
-def get_deidentified_data(
-    case: CommCareCase,
-    censor_data: dict[str, DeidTransformName],
-) -> tuple[CaseAttrDict, CasePropDict]:
+def get_deidentified_data(case, censor_data):
     """
     This function is used to get the data on the specified case, but
     with the ``censor_data`` properties censored.
