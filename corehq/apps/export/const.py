@@ -2,6 +2,8 @@
 Some of these constants correspond to constants set in corehq/apps/export/static/export/js/const.js
 so if changing a value, ensure that both places reflect the change
 """
+from typing import Literal
+
 from couchexport.deid import deid_date, deid_ID
 
 from corehq.apps.export.transforms import (
@@ -24,6 +26,7 @@ SMS_DATA_SCHEMA_VERSION = 1
 
 DEID_ID_TRANSFORM = "deid_id"
 DEID_DATE_TRANSFORM = "deid_date"
+DeidTransformName = Literal['deid_id', 'deid_date']
 DEID_TRANSFORM_FUNCTIONS = {
     DEID_ID_TRANSFORM: deid_ID,
     DEID_DATE_TRANSFORM: deid_date,

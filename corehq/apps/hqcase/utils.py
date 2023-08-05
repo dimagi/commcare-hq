@@ -1,5 +1,6 @@
 import datetime
 import uuid
+from typing import Any, Union
 from xml.etree import cElementTree as ElementTree
 
 from django.template.loader import render_to_string
@@ -7,18 +8,22 @@ from django.utils.translation import gettext_lazy
 
 from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.util import property_changed_in_action
-from dimagi.utils.parsing import json_format_datetime
 from couchexport.deid import deid_date, deid_ID
+from dimagi.utils.parsing import json_format_datetime
 
 from corehq.apps.case_search.const import SPECIAL_CASE_PROPERTIES_MAP
+from corehq.apps.data_interfaces.deduplication import DEDUPE_XMLNS
 from corehq.apps.es import filters
 from corehq.apps.es.cases import CaseES
-from corehq.apps.export.const import DEID_ID_TRANSFORM, DEID_DATE_TRANSFORM
+from corehq.apps.export.const import (
+    DEID_DATE_TRANSFORM,
+    DEID_ID_TRANSFORM,
+    DeidTransformName,
+)
 from corehq.apps.receiverwrapper.util import submit_form_locally
 from corehq.apps.users.util import SYSTEM_USER_ID
 from corehq.form_processor.exceptions import CaseNotFound, MissingFormXml
 from corehq.form_processor.models import CommCareCase
-from corehq.apps.data_interfaces.deduplication import DEDUPE_XMLNS
 from corehq.motech.dhis2.const import XMLNS_DHIS2
 
 CASEBLOCK_CHUNKSIZE = 100
@@ -243,15 +248,19 @@ def get_last_non_blank_value(case, case_property):
             return property_changed_info.new_value
 
 
-def get_case_value(case: CommCareCase, value: str):
+def get_case_value(
+    case: CommCareCase,
+    value: str,
+) -> tuple[Any, Union[bool, None]]:
     """
-    Returns the case's `value` and whether it's a property on the case (as opposed to attribute).
+    Returns the case's ``value`` and whether it's a property on the case
+    (as opposed to attribute).
 
     :param case: the relevant case
     :param value: the value you want from the case
-
-    :return: A tuple containing the value on whether that value is a property on the case.
-             If no value is found `(None, None)` is returned
+    :returns: A tuple containing the value and whether that value is a
+        property on the case. If no value is found ``(None, None)`` is
+        returned
     """
     if not value:
         return None, None
@@ -263,19 +272,26 @@ def get_case_value(case: CommCareCase, value: str):
     return None, None
 
 
-def get_deidentified_data(case: CommCareCase, censor_data: dict):
+CaseAttrDict = dict[str, Any]  # {case attribute name: value}
+CasePropDict = dict[str, Any]  # {case property name: value}
+
+
+def get_deidentified_data(
+    case: CommCareCase,
+    censor_data: dict[str, DeidTransformName],
+) -> tuple[CaseAttrDict, CasePropDict]:
     """
-    This function is used to get the data on the specified case, but with the `censor_data `
-    properties censored.
+    This function is used to get the data on the specified case, but
+    with the ``censor_data`` properties censored.
 
     :param case: the case to censor the data for
-    :param censor_data: a dictionary containing as key the datum name to sensor and value the
-                        transform method as a string to use to censor the data.
-                        Two transforms are currently supported, namely `deid_ID` and `deid_date`.
-                        An invalid transform will result in a blank value.
-
-    :return: A tuple containing the censored attrs and properties as dictionaries respectively
-
+    :param censor_data: a dictionary containing as key the case
+        attribute or property to de-identify, and as value the name of
+        the transform method to use to de-identify the data. An invalid
+        transform name will result in a blank value.
+    :returns: A tuple containing a dictionary of censored case
+        attributes and their de-identified values, and a dictionary of
+        censored case properties and their de-identified values.
     """
     attrs = {}
     props = {}
