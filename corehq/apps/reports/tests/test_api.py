@@ -3,8 +3,8 @@ from contextlib import contextmanager
 from django.test import TestCase
 
 from casexml.apps.case.mock import CaseFactory, CaseIndex, CaseStructure
-from couchexport.deid import deid_ID
 
+from corehq.apps.export.const import DEID_ID_TRANSFORM
 from corehq.apps.users.util import SYSTEM_USER_ID
 
 from ..filters.api import _copy_cases
@@ -107,7 +107,7 @@ class TestCaseCopy(TestCase):
 
     @property
     def id_transform(self):
-        return deid_ID.__name__
+        return DEID_ID_TRANSFORM
 
 
 @contextmanager
