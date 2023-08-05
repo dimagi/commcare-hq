@@ -13,6 +13,7 @@ from couchexport.deid import deid_date, deid_ID
 from corehq.apps.case_search.const import SPECIAL_CASE_PROPERTIES_MAP
 from corehq.apps.es import filters
 from corehq.apps.es.cases import CaseES
+from corehq.apps.export.const import DEID_ID_TRANSFORM, DEID_DATE_TRANSFORM
 from corehq.apps.receiverwrapper.util import submit_form_locally
 from corehq.apps.users.util import SYSTEM_USER_ID
 from corehq.form_processor.exceptions import CaseNotFound, MissingFormXml
@@ -287,9 +288,9 @@ def get_deidentified_data(case: CommCareCase, censor_data: dict):
                 continue
 
             censored_value = ''
-            if v == deid_date.__name__:
+            if v == DEID_DATE_TRANSFORM:
                 censored_value = deid_date(case_value, None, key=case.case_id)
-            if v == deid_ID.__name__:
+            if v == DEID_ID_TRANSFORM:
                 censored_value = deid_ID(case_value, None)
 
             if is_case_property:

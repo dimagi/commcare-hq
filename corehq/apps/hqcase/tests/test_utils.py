@@ -3,7 +3,7 @@ from datetime import datetime
 from django.test import TestCase
 from contextlib import contextmanager
 from casexml.apps.case.mock import CaseFactory
-from couchexport.deid import deid_date, deid_ID
+from corehq.apps.export.const import DEID_ID_TRANSFORM, DEID_DATE_TRANSFORM
 
 from corehq.apps.hqcase.utils import (
     get_case_value,
@@ -101,11 +101,11 @@ class TestGetCensoredCaseData(TestCase):
 
     @property
     def date_transform(self):
-        return deid_date.__name__
+        return DEID_DATE_TRANSFORM
 
     @property
     def id_transform(self):
-        return deid_ID.__name__
+        return DEID_ID_TRANSFORM
 
     @property
     def invalid_transform(self):
