@@ -362,6 +362,7 @@ class SubmitCaseBlockHandler:
         user,
         record_form_callback=None,
         throttle=False,
+        add_inferred_props_to_schema=True,
     ):
         """
         Initialize ``SubmitCaseBlockHandler``.
@@ -369,13 +370,15 @@ class SubmitCaseBlockHandler:
         :param domain: Domain name
         :param import_results: Used for storing success and error
             results of an import.
-        :param case_type: Used for adding inferred export properties.
+        :param case_type: Used for adding inferred properties to schema.
         :param user: A CouchUser, or an object with ``user_id`` and
             ``username`` properties.
         :param record_form_callback: Only used in one place, which uses
             ``CaseUpload.record_form()``. It takes a form ID.
         :param throttle: If ``True``, uses heuristics to rate-limit
             caseblock submissions.
+        :param add_inferred_props_to_schema: If ``True``, add inferred
+            properties to schema of ``case_type``
         """
         self.domain = domain
         self._unsubmitted_caseblocks = []
@@ -385,6 +388,7 @@ class SubmitCaseBlockHandler:
         self._last_submission_duration = 1  # duration in seconds; start with a value of 1s
         self._total_delayed_duration = 0  # sum of all rate limiter delays, in seconds
         self.throttle = throttle
+        self.add_inferred_props_to_schema = add_inferred_props_to_schema
         self.case_type = case_type
         self.user = user
 
@@ -416,24 +420,25 @@ class SubmitCaseBlockHandler:
         else:
             if self.record_form_callback:
                 self.record_form_callback(form.form_id)
-            properties = {
-                p for c in cases
-                for p in c.dynamic_case_properties().keys()
-            }
-            if self.case_type and len(properties):
-                add_inferred_export_properties.delay(
-                    'CaseImporter',
-                    self.domain,
-                    self.case_type,
-                    properties,
-                )
-            else:
-                _soft_assert = soft_assert(notify_admins=True)
-                _soft_assert(
-                    len(properties) == 0,
-                    'error adding inferred export properties in domain '
-                    '({}): {}'.format(self.domain, ", ".join(properties))
-                )
+            if self.add_inferred_props_to_schema:
+                properties = {
+                    p for c in cases
+                    for p in c.dynamic_case_properties().keys()
+                }
+                if self.case_type and len(properties):
+                    add_inferred_export_properties.delay(
+                        'CaseImporter',
+                        self.domain,
+                        self.case_type,
+                        properties,
+                    )
+                else:
+                    _soft_assert = soft_assert(notify_admins=True)
+                    _soft_assert(
+                        len(properties) == 0,
+                        'error adding inferred export properties in domain '
+                        '({}): {}'.format(self.domain, ", ".join(properties))
+                    )
 
     def pre_submit_hook(self):
         if not self.throttle:
