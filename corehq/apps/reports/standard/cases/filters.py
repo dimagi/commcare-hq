@@ -24,10 +24,8 @@ from corehq.apps.reports.filters.base import (
 )
 from corehq import toggles, privileges
 
-# TODO: Replace with library method
 
-
-mark_safe_lazy = lazy(mark_safe, str)
+mark_safe_lazy = lazy(mark_safe, str)  # TODO: Replace with library method
 
 
 class CaseSearchFilter(BaseSimpleFilter):
