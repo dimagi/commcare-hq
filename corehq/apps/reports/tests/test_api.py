@@ -67,8 +67,8 @@ class TestCaseCopy(TestCase):
                 case_ids=[case.case_id],
                 to_owner='new_owner_id',
                 censor_data={
-                    'age': self.id_transform,
-                    'case_name': self.id_transform,
+                    'age': DEID_ID_TRANSFORM,
+                    'case_name': DEID_ID_TRANSFORM,
                 }
             )
             self.assertTrue(cases[0].name != case.name)
@@ -104,10 +104,6 @@ class TestCaseCopy(TestCase):
         self.assertEqual(len(cases), 1)
         self.assertEqual(cases[0].owner_id, 'new_owner_id')
         self.assertEqual(cases[0].get_indices(), [])
-
-    @property
-    def id_transform(self):
-        return DEID_ID_TRANSFORM
 
 
 @contextmanager
