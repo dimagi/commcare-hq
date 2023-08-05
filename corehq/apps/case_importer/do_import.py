@@ -362,7 +362,8 @@ class SubmitCaseBlockHandler:
     ``SubmitCaseBlockHandler`` can handle the submission of large
     numbers of case blocks. It supports throttling.
 
-    Used by this module and by ``corehq.apps.data_interfaces.tasks``.
+    Used by this module, ``corehq.apps.data_interfaces.tasks`` and
+    ``corehq.apps.reports.filters.api``.
     """
 
     def __init__(
