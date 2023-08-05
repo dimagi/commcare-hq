@@ -281,21 +281,21 @@ def get_deidentified_data(case: CommCareCase, censor_data: dict):
     props = {}
 
     if censor_data:
-        for k, v in censor_data.items():
-            case_value, is_case_property = get_case_value(case, k)
+        for attr_or_prop, transform in censor_data.items():
+            case_value, is_case_property = get_case_value(case, attr_or_prop)
 
             if not case_value:
                 continue
 
             censored_value = ''
-            if v == DEID_DATE_TRANSFORM:
+            if transform == DEID_DATE_TRANSFORM:
                 censored_value = deid_date(case_value, None, key=case.case_id)
-            if v == DEID_ID_TRANSFORM:
+            if transform == DEID_ID_TRANSFORM:
                 censored_value = deid_ID(case_value, None)
 
             if is_case_property:
-                props[k] = censored_value
+                props[attr_or_prop] = censored_value
             else:
-                attrs[k] = censored_value
+                attrs[attr_or_prop] = censored_value
 
     return attrs, props
