@@ -73,19 +73,39 @@ def do_import(spreadsheet, config, domain, task=None, record_form_callback=None)
             importer.do_import(spreadsheet)
         return import_results.to_json()
     else:
-        importer = _TimedAndThrottledImporter(domain, config, task, record_form_callback, multi_domain=False)
+        importer = _TimedAndThrottledImporter(
+            domain,
+            config,
+            task,
+            record_form_callback,
+            multi_domain=False,
+        )
         return importer.do_import(spreadsheet)
 
 
-class _Importer(object):
-    def __init__(self, domain, config, task, record_form_callback, import_results=None, multi_domain=False):
+class _TimedAndThrottledImporter:
+
+    def __init__(
+        self,
+        domain,
+        config,
+        task,
+        record_form_callback,
+        import_results=None,
+        multi_domain=False,
+    ):
         self.domain = domain
         self.task = task
         self.record_form_callback = record_form_callback
         self.results = import_results or _ImportResults()
         self.config = config
         self.submission_handler = SubmitCaseBlockHandler(
-            domain, self.results, self.config.case_type, self.user, record_form_callback, throttle=False
+            domain,
+            self.results,
+            self.config.case_type,
+            self.user,
+            record_form_callback,
+            throttle=True,
         )
         self.owner_accessor = _OwnerAccessor(domain, self.user)
         self._unsubmitted_caseblocks = []
@@ -96,8 +116,17 @@ class _Importer(object):
             self.fields_to_validate = {}
         self.field_map = self._create_field_map()
 
-
     def do_import(self, spreadsheet):
+        with TimingContext() as timer:
+            results = self._do_import(spreadsheet)
+        try:
+            self._report_import_timings(timer, results)
+        except Exception:
+            notify_exception(None, "Error reporting case import timings")
+        finally:
+            return results
+
+    def _do_import(self, spreadsheet):
         with TaskProgressManager(self.task, src="case_importer") as progress_manager:
             # context to be used by extensions to keep during import
             import_context = {}
@@ -275,22 +304,6 @@ class _Importer(object):
                 'field_name': EXTERNAL_ID
             }
         return field_map
-
-
-class _TimedAndThrottledImporter(_Importer):
-    def __init__(self, domain, config, task, record_form_callback, import_results=None, multi_domain=False):
-        super().__init__(domain, config, task, record_form_callback, import_results, multi_domain)
-        self.submission_handler.throttle = True
-
-    def do_import(self, spreadsheet):
-        with TimingContext() as timer:
-            results = super().do_import(spreadsheet)
-        try:
-            self._report_import_timings(timer, results)
-        except Exception:
-            notify_exception(None, "Error reporting case import timings")
-        finally:
-            return results
 
     def _report_import_timings(self, timer, results):
         active_duration = timer.duration - self.submission_handler._total_delayed_duration
