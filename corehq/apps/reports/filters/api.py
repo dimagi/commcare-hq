@@ -5,7 +5,6 @@ import logging
 import json
 import uuid
 from dataclasses import dataclass
-from typing import Union, TypedDict
 
 from django.views.generic import View
 from django.http import JsonResponse
@@ -260,12 +259,6 @@ def copy_cases(request, domain, *args, **kwargs):
     )
 
 
-class IndexDict(TypedDict):
-    case_type: str
-    case_id: str
-    relationship: str
-
-
 @dataclass
 class UserDuck:
     """Quacks like a User"""
@@ -371,17 +364,14 @@ class CaseCopier:
 
     def _get_new_index_map(self, case):
         orig_index_map = case.get_index_map()
-        new_index_map: dict[str, IndexAttrs] = {}
+        new_index_map = {}
         for identifier, orig_index_dict in orig_index_map.items():
             new_index_attrs = self._get_new_index_attrs(orig_index_dict)
             if new_index_attrs:
                 new_index_map[identifier] = new_index_attrs
         return new_index_map
 
-    def _get_new_index_attrs(
-        self,
-        index_dict: IndexDict,
-    ) -> Union[IndexAttrs, None]:
+    def _get_new_index_attrs(self, index_dict):
         index_dict = index_dict.copy()  # Don't change original by reference
         orig_parent_case_id = index_dict['case_id']
 

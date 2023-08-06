@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import uuid
 from collections import Counter, defaultdict, namedtuple
-from typing import Callable, Optional, Protocol
 
 from django.utils.functional import cached_property
 from django.utils.translation import gettext_lazy as _
@@ -25,11 +24,7 @@ from corehq.apps.receiverwrapper.rate_limiter import rate_limit_submission
 from corehq.apps.users.cases import get_wrapped_owner
 from corehq.apps.users.models import CouchUser
 from corehq.apps.users.util import format_username
-from corehq.form_processor.models import (
-    STANDARD_CHARFIELD_LENGTH,
-    CommCareCase,
-    XFormInstance,
-)
+from corehq.form_processor.models import STANDARD_CHARFIELD_LENGTH
 from corehq.toggles import (
     BULK_UPLOAD_DATE_OPENED,
     CASE_IMPORT_DATA_DICTIONARY_VALIDATION,
@@ -352,11 +347,6 @@ class _TimedAndThrottledImporter:
             })
 
 
-class UserProto(Protocol):
-    user_id: str
-    username: str
-
-
 class SubmitCaseBlockHandler:
     """
     ``SubmitCaseBlockHandler`` can handle the submission of large
@@ -368,15 +358,15 @@ class SubmitCaseBlockHandler:
 
     def __init__(
         self,
-        domain: str,
+        domain,
         *,
-        import_results: Optional[_ImportResults],
-        case_type: Optional[str],
-        user: UserProto,
-        record_form_callback: Optional[Callable[[str], None]] = None,
-        throttle: bool = False,
-        add_inferred_props_to_schema: bool = True,
-    ) -> None:
+        import_results,
+        case_type,
+        user,
+        record_form_callback=None,
+        throttle=False,
+        add_inferred_props_to_schema=True,
+    ):
         """
         Initialize ``SubmitCaseBlockHandler``.
 
@@ -405,7 +395,7 @@ class SubmitCaseBlockHandler:
         self.case_type = case_type
         self.user = user
 
-    def add_caseblock(self, caseblock: RowAndCase) -> None:
+    def add_caseblock(self, caseblock):
         self._unsubmitted_caseblocks.append(caseblock)
         # check if we've reached a reasonable chunksize and if so, submit
         if len(self._unsubmitted_caseblocks) >= CASEBLOCK_CHUNKSIZE:
@@ -418,10 +408,7 @@ class SubmitCaseBlockHandler:
             self._unsubmitted_caseblocks = []
             self.uncreated_external_ids = set()
 
-    def submit_and_process_caseblocks(
-        self,
-        caseblocks: list[RowAndCase],
-    ) -> None:
+    def submit_and_process_caseblocks(self, caseblocks):
         if not caseblocks:
             return
         self.pre_submit_hook()
@@ -482,10 +469,7 @@ class SubmitCaseBlockHandler:
             )
             self._total_delayed_duration += self._last_submission_duration
 
-    def submit_case_blocks(
-        self,
-        caseblocks: list[RowAndCase],
-    ) -> tuple[XFormInstance, list[CommCareCase]]:
+    def submit_case_blocks(self, caseblocks):
         if not self.throttle:
             return self._submit_case_blocks(caseblocks)
         timer = None
@@ -496,10 +480,7 @@ class SubmitCaseBlockHandler:
             if timer:
                 self._last_submission_duration = timer.duration
 
-    def _submit_case_blocks(
-        self,
-        caseblocks: list[RowAndCase],
-    ) -> tuple[XFormInstance, list[CommCareCase]]:
+    def _submit_case_blocks(self, caseblocks):
         return submit_case_blocks(
             [cb.case.as_text() for cb in caseblocks],
             self.domain,
