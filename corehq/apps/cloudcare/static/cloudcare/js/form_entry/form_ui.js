@@ -111,6 +111,20 @@ hqDefine("cloudcare/js/form_entry/form_ui", function () {
         }
     }
 
+    function getMatchingStyles (pattern, styleStr) {
+        let retVal = [];
+        if (styleStr) {
+            let styles = styleStr.split(' ');
+            styles.forEach(function (style) {
+                if ((pattern instanceof RegExp && style.match(pattern))
+                    || (typeof pattern === "string" && pattern === style)) {
+                    retVal.push(style);
+                }
+            });
+        }
+        return retVal;
+    };
+
     function parseMeta(type, style) {
         var meta = {};
 
@@ -710,18 +724,8 @@ hqDefine("cloudcare/js/form_entry/form_ui", function () {
      */
     Question.prototype.stylesContaining = function (pattern) {
         var self = this;
-        var retVal = [];
         var styleStr = (self.style) ? ko.utils.unwrapObservable(self.style.raw) : null;
-        if (styleStr) {
-            var styles = styleStr.split(' ');
-            styles.forEach(function (style) {
-                if ((pattern instanceof RegExp && style.match(pattern))
-                    || (typeof pattern === "string" && pattern === style)) {
-                    retVal.push(style);
-                }
-            });
-        }
-        return retVal;
+        return getMatchingStyles(pattern, styleStr)
     };
     /**
      * Returns a boolean of whether the styles contain a pattern
