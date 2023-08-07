@@ -1,4 +1,4 @@
-from distutils.version import LooseVersion, Version
+from looseversion import LooseVersion
 
 from django.conf import settings
 
@@ -12,8 +12,8 @@ class CommCareFeatureSupportMixin(object):
     def _require_minimum_version(self, minimum_version):
         if settings.UNIT_TESTING and self.build_version is None:
             return False
-        assert isinstance(self.build_version, Version)
-        assert isinstance(minimum_version, (str, Version))
+        assert isinstance(self.build_version, LooseVersion)
+        assert isinstance(minimum_version, (str, LooseVersion))
         if isinstance(minimum_version, str):
             minimum_version = LooseVersion(minimum_version)
         return self.build_version and self.build_version >= minimum_version
@@ -203,8 +203,41 @@ class CommCareFeatureSupportMixin(object):
         )
 
     @property
-    def enable_exclude_from_search(self):
+    def ush_case_claim_2_53(self):
         return (
             toggles.USH_CASE_CLAIM_UPDATES.enabled(self.domain)
             and self._require_minimum_version('2.53')
+        )
+
+    @property
+    def supports_empty_case_list_text(self):
+        return (
+            toggles.USH_EMPTY_CASE_LIST_TEXT.enabled(self.domain)
+            and self._require_minimum_version('2.54')
+        )
+
+    @property
+    def supports_menu_instances(self):
+        return self._require_minimum_version('2.54')
+
+    @property
+    def supports_module_assertions(self):
+        # form-level assertions have been supported longer
+        return (
+            toggles.CUSTOM_ASSERTIONS.enabled(self.domain)
+            and self._require_minimum_version('2.54')
+        )
+
+    @property
+    def supports_grouped_case_tiles(self):
+        return (
+            toggles.CASE_LIST_TILE.enabled(self.domain)
+            and self._require_minimum_version('2.54')
+        )
+
+    @property
+    def supports_split_screen_case_search(self):
+        return (
+            toggles.SPLIT_SCREEN_CASE_SEARCH.enabled(self.domain)
+            and self._require_minimum_version('2.54')
         )

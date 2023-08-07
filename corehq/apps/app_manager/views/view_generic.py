@@ -33,7 +33,7 @@ from corehq.apps.app_manager.views.modules import (
 from corehq.apps.app_manager.views.releases import get_releases_context
 from corehq.apps.app_manager.views.utils import bail, set_lang_cookie
 from corehq.apps.cloudcare.utils import should_show_preview_app
-from corehq.apps.domain.models import Domain
+from corehq.apps.domain.models import AppReleaseModeSetting, Domain
 from corehq.apps.hqmedia.controller import (
     MultimediaAudioUploadController,
     MultimediaImageUploadController,
@@ -48,7 +48,7 @@ from corehq.apps.linked_domain.dbaccessors import (
     get_upstream_domain_link,
     is_active_downstream_domain,
 )
-from corehq.apps.linked_domain.util import can_domain_access_release_management
+from corehq.apps.linked_domain.util import can_domain_access_linked_domains
 from corehq.util.soft_assert import soft_assert
 
 
@@ -60,6 +60,17 @@ def view_generic(request, domain, app_id, module_id=None, form_id=None,
     This is the main view for the app. All other views redirect to here.
 
     """
+    # HELPME
+    #
+    # This method has been flagged for refactoring due to its complexity and
+    # frequency of touches in changesets
+    #
+    # If you are writing code that touches this method, your changeset
+    # should leave the method better than you found it.
+    #
+    # Please remove this flag when this method no longer triggers an 'E' or 'F'
+    # classification from the radon code static analysis
+
     if form_id and not module_id and module_unique_id is None:
         return bail(request, domain, app_id)
 
@@ -274,7 +285,7 @@ def view_generic(request, domain, app_id, module_id=None, form_id=None,
     # NOTE: The CopyApplicationForm checks for access to linked domains before displaying
     linkable_domains = []
     limit_to_linked_domains = True
-    if can_domain_access_release_management(request.domain):
+    if can_domain_access_linked_domains(request.domain):
         linkable_domains = get_accessible_downstream_domains(domain, request.couch_user)
         limit_to_linked_domains = not request.couch_user.is_superuser
     context.update({
@@ -330,6 +341,7 @@ def view_generic(request, domain, app_id, module_id=None, form_id=None,
 
     confirm = request.session.pop('CONFIRM', False)
     context.update({'confirm': confirm})
+    context.update({'show_release_mode': AppReleaseModeSetting.get_settings(domain).is_visible})
 
     response = render(request, template, context)
 

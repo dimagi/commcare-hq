@@ -16,10 +16,8 @@ from corehq.apps.api.resources.meta import CustomResourceMeta
 from corehq.apps.es import FormES
 from corehq.apps.groups.models import Group
 from corehq.apps.user_importer.helpers import UserChangeLogger
-from corehq.apps.users.models import CommCareUser, Permissions, WebUser
+from corehq.apps.users.models import CommCareUser, HqPermissions, WebUser
 from corehq.const import USER_CHANGE_VIA_API
-
-TASTYPIE_RESERVED_GET_PARAMS = ['api_key', 'username', 'format']
 
 
 class UserResource(CouchResourceMixin, HqBaseResource, DomainSpecificResourceMixin):
@@ -31,6 +29,7 @@ class UserResource(CouchResourceMixin, HqBaseResource, DomainSpecificResourceMix
     default_phone_number = fields.CharField(attribute='default_phone_number', null=True)
     email = fields.CharField(attribute='email')
     phone_numbers = fields.ListField(attribute='phone_numbers')
+    eulas = fields.CharField(attribute='eulas', null=True)
 
     def obj_get(self, bundle, **kwargs):
         domain = kwargs['domain']
@@ -65,7 +64,7 @@ class CommCareUserResource(UserResource):
     user_data = fields.DictField(attribute='user_data')
 
     class Meta(UserResource.Meta):
-        authentication = RequirePermissionAuthentication(Permissions.edit_commcare_users)
+        authentication = RequirePermissionAuthentication(HqPermissions.edit_commcare_users)
         object_class = CommCareUser
         resource_name = 'user'
 
@@ -141,7 +140,7 @@ class WebUserResource(UserResource):
         return bundle.obj.is_domain_admin(bundle.request.domain)
 
     class Meta(UserResource.Meta):
-        authentication = RequirePermissionAuthentication(Permissions.edit_web_users)
+        authentication = RequirePermissionAuthentication(HqPermissions.edit_web_users)
         object_class = WebUser
         resource_name = 'web-user'
 

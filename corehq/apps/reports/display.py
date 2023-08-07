@@ -1,5 +1,6 @@
 from django.utils.translation import gettext as _
 from django.utils.html import format_html
+from django.utils.safestring import mark_safe
 
 from couchdbkit.exceptions import ResourceNotFound
 
@@ -15,6 +16,9 @@ from corehq.util.timezones.conversions import PhoneTime, ServerTime
 from corehq.util.view_utils import absolute_reverse
 
 
+ONE_WEEK = 7 * 24 * 60 * 60
+
+
 class StringWithAttributes(str):
 
     def replace(self, *args):
@@ -22,7 +26,7 @@ class StringWithAttributes(str):
         return StringWithAttributes(string)
 
 
-class FormDisplay(object):
+class FormDisplay:
 
     def __init__(self, form_doc, report, lang=None):
         self.form = form_doc
@@ -43,13 +47,17 @@ class FormDisplay(object):
         username = self.form["form"]["meta"].get("username")
         try:
             if username not in ['demo_user', 'admin']:
-                full_name = get_cached_property(CouchUser, uid, 'full_name', expiry=7*24*60*60)
+                full_name = get_cached_property(CouchUser, uid, 'full_name', expiry=ONE_WEEK)
                 name = '"%s"' % full_name if full_name else ""
             else:
                 name = ""
         except (ResourceNotFound, IncompatibleDocument):
-            name = "<b>[unregistered]</b>"
-        return (username or _('No data for username')) + (" %s" % name if name else "")
+            name = mark_safe('<b>[unregistered]</b>')  # nosec: no user input
+        username = username or _('No data for username')
+        if name:
+            return format_html('{} {}', username, name)
+        else:
+            return username
 
     @property
     def submission_or_completion_time(self):
@@ -66,54 +74,72 @@ class FormDisplay(object):
             self.report.domain,
             self.form.get("xmlns"),
             app_id=self.form.get("app_id"),
-            lang=self.lang
+            lang=self.lang,
+            form_name=self.form.get("@name"),
         )
 
 
 class _FormType(object):
 
-    def __init__(self, domain, xmlns, app_id):
+    def __init__(self, domain, xmlns, app_id, form_name):
         self.domain = domain
         self.xmlns = xmlns
         self.app_id = app_id
+        self.form_name = form_name
 
     def get_label(self, lang=None, separator=None):
         if separator is None:
             separator = " > "
+
+        return (
+            self.get_label_from_app(lang, separator)
+            or self.get_name_from_xml(separator)
+            or self.append_form_name(self.xmlns, separator)
+        )
+
+    def get_label_from_app(self, lang, separator):
         form = get_form_analytics_metadata(self.domain, self.app_id, self.xmlns)
-        if form and form.get('app'):
-            langs = form['app']['langs']
-            app_name = form['app']['name']
+        app = form and form.get('app')
+        if not app:
+            return
 
-            if form.get('is_user_registration'):
-                form_name = "User Registration"
-                title = separator.join([app_name, form_name])
-            else:
-                def _menu_name(menu, lang):
-                    if lang and menu.get(lang):
-                        return menu.get(lang)
-                    else:
-                        for lang in langs + list(menu):
-                            menu_name = menu.get(lang)
-                            if menu_name is not None:
-                                return menu_name
-                        return "?"
+        langs = form['app']['langs']
+        app_name = form['app']['name']
 
-                module_name = _menu_name(form["module"]["name"], lang)
-                form_name = _menu_name(form["form"]["name"], lang)
-                title = separator.join([app_name, module_name, form_name])
-
-            if form.get('app_deleted'):
-                title += ' [Deleted]'
-            if form.get('duplicate'):
-                title += " [Multiple Forms]"
-            name = title
-        elif self.xmlns in SYSTEM_FORM_XMLNS_MAP:
-            name = SYSTEM_FORM_XMLNS_MAP[self.xmlns]
+        if form.get('is_user_registration'):
+            form_name = "User Registration"
+            title = separator.join([app_name, form_name])
         else:
-            name = self.xmlns
+            def _menu_name(menu, lang):
+                if lang and menu.get(lang):
+                    return menu.get(lang)
+                else:
+                    for lang in langs + list(menu):
+                        menu_name = menu.get(lang)
+                        if menu_name is not None:
+                            return menu_name
+                    return "?"
+
+            module_name = _menu_name(form["module"]["name"], lang)
+            form_name = _menu_name(form["form"]["name"], lang)
+            title = separator.join([app_name, module_name, form_name])
+
+        if form.get('app_deleted'):
+            title += ' [Deleted]'
+        if form.get('duplicate'):
+            title += " [Multiple Forms]"
+        return title
+
+    def get_name_from_xml(self, separator):
+        if self.xmlns in SYSTEM_FORM_XMLNS_MAP:
+            readable_xmlns = str(SYSTEM_FORM_XMLNS_MAP[self.xmlns])
+            return self.append_form_name(readable_xmlns, separator)
+
+    def append_form_name(self, name, separator):
+        if self.form_name:
+            name = separator.join([name, self.form_name])
         return name
 
 
-def xmlns_to_name(domain, xmlns, app_id, lang=None, separator=None):
-    return _FormType(domain, xmlns, app_id).get_label(lang, separator)
+def xmlns_to_name(domain, xmlns, app_id, lang=None, separator=None, form_name=None):
+    return _FormType(domain, xmlns, app_id, form_name).get_label(lang, separator)

@@ -1,3 +1,39 @@
+"""
+WorkflowHelper
+--------------
+
+This is primarily used for end of form navigation and form linking.
+It contains logic to determine the proper sequence of commands to navigate a particular place in an app, such as a
+specific case list. It also needs to provide any datums required to reach that place in the app.
+
+Because CommCare's UI logic is driven by the data currently in the user's session and the data
+needed by forms, rather than being directly configured, this means HQ needs to predict how CommCare's UI logic will
+behave, which is difficult and results in code that's easily disturbed by new features that influence
+navigation.
+
+Understanding stacks in the `CommCare Session <https://github.com/dimagi/commcare-core/wiki/SessionStack>`_ is
+useful for working with ``WorkflowHelper``.
+
+Some areas to be aware of:
+
+* Datums can either require manual selection (from a case list) or can be automatically selected (such as the
+  usercase id).
+* HQ names each datum, defaulting to ``case_id`` for datums selected from case lists.
+  When HQ determines that a form requires multiple datums, it creates a new id for the new datum, which will often
+  incorporate the case type. It also may need to rename datums that already exist - see
+  ``_replace_session_references_in_stack``.
+* To determine which datums are distinct and which represent the same piece of information, HQ has matching logic
+  in ``_find_best_match``.
+* ``get_frame_children`` generates the list of frame children that will navigate to a given form or module,
+  mimicking CommCare's navigation logic
+* Shadow modules complicate this entire area, because they use their source module's forms but their own module
+  configuration.
+* There are a bunch of advanced features with their own logic, such as advanced modules, but even the basic logic
+  is fairly complex.
+* Within end of form navigation and form linking, the "previous screen" option is the most fragile. Form linking
+  has simpler code, since it pushes the complexity of the feature onto app builders.
+
+"""
 import re
 from collections import defaultdict, namedtuple
 from functools import total_ordering
@@ -74,6 +110,20 @@ class WorkflowHelper(PostProcessor):
         for frame in frames:
             entry.stack.add_frame(frame)
 
+    @staticmethod
+    def _get_id_suffix(module):
+        from corehq.apps.app_manager.models import ShadowModule
+
+        root_module = None
+        if not module.put_in_root:
+            if module.root_module:
+                root_module = module.root_module
+            elif module.module_type == 'shadow' and module.source_module.root_module:
+                root_module = module.source_module.root_module
+
+        suffix = id_strings.menu_id(root_module) if isinstance(root_module, ShadowModule) else ""
+        return suffix
+
     def get_frame_children(self, module, form=None, include_root_module=False):
         """
         For a form or module return the list of stack frame children that are required
@@ -102,7 +152,7 @@ class WorkflowHelper(PostProcessor):
         :returns:   list of strings and DatumMeta objects. String represent stack commands
                     and DatumMeta's represent stack datums.
         """
-        module_command = id_strings.menu_id(module)
+        module_command = id_strings.menu_id(module, WorkflowHelper._get_id_suffix(module))
         if form is None and module.module_type == "shadow":
             module_datums = self.get_module_datums(f'm{module.source_module.id}')
         else:
@@ -197,7 +247,7 @@ class WorkflowHelper(PostProcessor):
         form = module.get_form(form_id)
         if not form:
             return {}
-        return {d.datum.id: d for d in self.entries_helper.get_datums_meta_for_form_generic(form)}
+        return {d.id: d for d in self.entries_helper.get_datums_meta_for_form_generic(form)}
 
     def _add_missing_case_types(self, module_id, form_id, entry_datums):
         form_datums_by_id = self._form_datums(module_id, form_id)
@@ -361,7 +411,15 @@ class EndOfFormNavigationWorkflow(object):
         source_form_datums = self.helper.get_form_datums(form)
         if link.form_id:
             target_form = self.helper.app.get_form(link.form_id)
-            target_module = target_form.get_module()
+            if link.form_module_id:
+                target_module = self.helper.app.get_module_by_unique_id(link.form_module_id)
+            else:
+                target_module = target_form.get_module()
+            if module.module_type == "shadow" and module.source_module_id == target_module.unique_id:
+                # If this is a shadow module and we're navigating to a form from the source module,
+                # presume we should navigate to the version of the form in the current (shadow) module.
+                # This only affects breadcrumbs.
+                target_module = module
             target_frame_children = self.helper.get_frame_children(target_module, target_form)
         elif link.module_unique_id:
             target_module = self.helper.app.get_module_by_unique_id(link.module_unique_id)
@@ -374,7 +432,8 @@ class EndOfFormNavigationWorkflow(object):
 
         if target_module.root_module_id:
             root_module = self.helper.app.get_module_by_unique_id(target_module.root_module_id)
-            frame_children = prepend_parent_frame_children(self.helper, frame_children, root_module)
+            frame_children = prepend_parent_frame_children(
+                self.helper, frame_children, root_module, link.datums, form)
 
         return StackFrameMeta(link.xpath, list(frame_children), current_session=source_form_datums)
 
@@ -389,10 +448,15 @@ class EndOfFormNavigationWorkflow(object):
                 )
 
 
-def prepend_parent_frame_children(helper, frame_children, parent_module):
+def prepend_parent_frame_children(helper, frame_children, parent_module, manual_values=None, form=None):
     # Note: this fn is roughly equivalent to just passing include_root_module
     # to get_frame_children in the first place, but that gives the wrong order
     parent_frame_children = helper.get_frame_children(parent_module)
+    if manual_values:
+        parent_frame_children = list(
+            _get_datums_matched_to_manual_values(parent_frame_children, manual_values, form)
+        )
+
     parent_ids = {parent.id for parent in parent_frame_children}
     return parent_frame_children + [
         child for child in frame_children
@@ -529,7 +593,8 @@ class CaseListFormWorkflow(object):
         except ValueError:
             # This either means that the source module (with the registration form) requires datums that the
             # target module (the module which called the reg form).
-            # OR it could mean that not all the forms in the target module have the same case management configuration.
+            # OR it could mean that not all the forms in the target module have the same case management
+            # configuration.
             return
         return target_dm
 
@@ -773,7 +838,7 @@ class WorkflowQueryMeta(WorkflowSessionMeta):
         url = self.query.url
         if self.is_case_search:
             # we don't need the full search results, just the case that's been selected
-            url = url.replace('/phone/search/', '/phone/registry_case/')
+            url = url.replace('/phone/search/', '/phone/case_fixture/')
         return StackQuery(id=self.query.storage_instance, value=url, data=data)
 
     def __repr__(self):

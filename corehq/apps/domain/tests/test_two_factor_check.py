@@ -48,7 +48,7 @@ class TestTwoFactorCheck(TestCase):
     def test_two_factor_check_with_sso_request(self):
         view_func = 'dummy_view_func'
         request = self.request
-        create_request_session(request, use_sso=True)
+        create_request_session(request, use_saml_sso=True)
         two_factor_required_bool = _two_factor_required(
             view_func,
             self.domain,

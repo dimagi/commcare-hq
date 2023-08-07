@@ -579,23 +579,18 @@ class SubscriptionForm(forms.Form):
             self.fields['account'].initial = subscription.account.id
             account_field = hqcrispy.B3TextField(
                 'account',
-                '<a href="%(account_url)s">%(account_name)s</a>' % {
-                    'account_url': reverse(ManageBillingAccountView.urlname,
-                                           args=[subscription.account.id]),
-                    'account_name': subscription.account.name,
-                }
+                format_html('<a href="{}">{}</a>',
+                    reverse(ManageBillingAccountView.urlname, args=[subscription.account.id]),
+                    subscription.account.name)
             )
 
             self.fields['plan_version'].initial = subscription.plan_version.id
             plan_version_field = hqcrispy.B3TextField(
                 'plan_version',
-                '<a href="%(plan_version_url)s">%(plan_name)s</a>' % {
-                    'plan_version_url': reverse(
-                        SoftwarePlanVersionView.urlname,
-                        args=[subscription.plan_version.plan.id, subscription.plan_version_id]
-                    ),
-                    'plan_name': subscription.plan_version,
-                },
+                format_html('<a href="{}">{}</a>',
+                    reverse(SoftwarePlanVersionView.urlname,
+                        args=[subscription.plan_version.plan.id, subscription.plan_version_id]),
+                    subscription.plan_version)
             )
             self.fields['plan_edition'].initial = subscription.plan_version.plan.edition
             plan_edition_field = hqcrispy.B3TextField(
@@ -610,11 +605,9 @@ class SubscriptionForm(forms.Form):
 
             domain_field = hqcrispy.B3TextField(
                 'domain',
-                '<a href="%(project_url)s">%(project_name)s</a>' % {
-                    'project_url': reverse(DefaultProjectSettingsView.urlname,
-                                           args=[subscription.subscriber.domain]),
-                    'project_name': subscription.subscriber.domain,
-                },
+                format_html('<a href="{}">{}</a>',
+                    reverse(DefaultProjectSettingsView.urlname, args=[subscription.subscriber.domain]),
+                    subscription.subscriber.domain)
             )
 
             self.fields['start_date'].initial = subscription.date_start.isoformat()
@@ -841,7 +834,7 @@ class ChangeSubscriptionForm(forms.Form):
     subscription_change_note = forms.CharField(
         label=gettext_lazy("Note"),
         required=True,
-        widget=forms.Textarea,
+        widget=forms.Textarea(attrs={"class": "vertical-resize"}),
     )
     new_plan_edition = forms.ChoiceField(
         label=gettext_lazy("Edition"), initial=SoftwarePlanEdition.ENTERPRISE,
@@ -925,7 +918,7 @@ class BulkUpgradeToLatestVersionForm(forms.Form):
     upgrade_note = forms.CharField(
         label="Note",
         required=True,
-        widget=forms.Textarea,
+        widget=forms.Textarea(attrs={"class": "vertical-resize"}),
     )
 
     def __init__(self, old_plan_version, web_user, *args, **kwargs):
@@ -1322,7 +1315,7 @@ class SoftwarePlanVersionForm(forms.Form):
     new_role_description = forms.CharField(
         required=False,
         label="New Role Description",
-        widget=forms.Textarea,
+        widget=forms.Textarea(attrs={"class": "vertical-resize"}),
     )
     upgrade_subscriptions = forms.BooleanField(
         label="Automatically upgrade all subscriptions on the "
@@ -1880,7 +1873,7 @@ class EnterprisePlanContactForm(forms.Form):
     message = forms.CharField(
         required=False,
         label=gettext_noop("Message"),
-        widget=forms.Textarea
+        widget=forms.Textarea(attrs={"class": "vertical-resize"})
     )
 
     def __init__(self, domain, web_user, data=None, *args, **kwargs):
@@ -1944,7 +1937,7 @@ class AnnualPlanContactForm(forms.Form):
     message = forms.CharField(
         required=False,
         label=gettext_noop("Message"),
-        widget=forms.Textarea
+        widget=forms.Textarea(attrs={"class": "vertical-resize"})
     )
 
     def __init__(self, domain, web_user, on_annual_plan, data=None, *args, **kwargs):
@@ -2347,7 +2340,7 @@ class AdjustBalanceForm(forms.Form):
 
     note = forms.CharField(
         required=True,
-        widget=forms.Textarea,
+        widget=forms.Textarea(attrs={"class": "vertical-resize"}),
     )
 
     invoice_id = forms.CharField(

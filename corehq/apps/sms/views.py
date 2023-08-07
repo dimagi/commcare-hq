@@ -2,6 +2,7 @@
 import io
 import json
 import re
+import uuid
 from datetime import datetime, time, timedelta
 
 from django.conf import settings
@@ -26,6 +27,7 @@ from django.views.generic import View
 from couchdbkit import ResourceNotFound
 from django_prbac.utils import has_privilege
 from memoized import memoized
+from corehq.apps.smsbillables.dispatcher import SMSAdminInterfaceDispatcher
 
 from couchexport.export import export_raw
 from couchexport.models import Format
@@ -71,6 +73,7 @@ from corehq.apps.hqwebapp.views import CRUDPaginatedViewMixin
 from corehq.apps.reminders.util import get_two_way_number_for_recipient
 from corehq.apps.sms.api import (
     MessageMetadata,
+    get_inbound_phone_entry,
     incoming,
     send_sms,
     send_sms_to_verified_number,
@@ -92,6 +95,7 @@ from corehq.apps.sms.forms import (
     BackendMapForm,
     ComposeMessageForm,
     InitiateAddSMSBackendForm,
+    SentTestSmsForm,
     SettingsForm,
     SubscribeSMSForm,
 )
@@ -108,6 +112,7 @@ from corehq.apps.sms.models import (
     SQLMobileBackend,
     SQLMobileBackendMapping,
 )
+from corehq.apps.sms.phonenumbers_helper import country_name_for_country_code
 from corehq.apps.sms.util import (
     ContactNotFoundException,
     get_contact,
@@ -115,17 +120,18 @@ from corehq.apps.sms.util import (
     get_sms_backend_classes,
     is_superuser_or_contractor,
 )
-from corehq.apps.smsbillables.utils import \
-    country_name_from_isd_code_or_empty as country_name_from_code
+from corehq.apps.smsforms.models import (
+    SQLXFormsSession,
+    XFormsSessionSynchronization,
+)
 from corehq.apps.users import models as user_models
 from corehq.apps.users.decorators import require_permission
-from corehq.apps.users.models import CommCareUser, CouchUser, Permissions
+from corehq.apps.users.models import CommCareUser, CouchUser, HqPermissions
 from corehq.apps.users.views.mobile.users import EditCommCareUserView
 from corehq.form_processor.models import CommCareCase
 from corehq.form_processor.utils import is_commcarecase
 from corehq.messaging.scheduling.async_handlers import SMSSettingsAsyncHandler
 from corehq.messaging.smsbackends.telerivet.models import SQLTelerivetBackend
-from corehq.messaging.smsbackends.test.models import SQLTestSMSBackend
 from corehq.util.dates import iso_string_to_datetime
 from corehq.util.quickcache import quickcache
 from corehq.util.timezones.conversions import ServerTime, UserTime
@@ -169,7 +175,7 @@ class BaseMessagingSectionView(BaseDomainView):
         return False
 
     @method_decorator(requires_privilege_with_fallback(privileges.OUTBOUND_SMS))
-    @method_decorator(require_permission(Permissions.edit_messaging))
+    @method_decorator(require_permission(HqPermissions.edit_messaging))
     def dispatch(self, request, *args, **kwargs):
         if not self.is_granted_messaging_access:
             return render(request, "sms/wall.html", self.main_context)
@@ -372,36 +378,62 @@ class TestSMSMessageView(BaseDomainView):
     def section_url(self):
         return reverse('sms_default', args=(self.domain,))
 
-    @property
-    def page_url(self):
-        return reverse(self.urlname, args=(self.domain, self.phone_number,))
-
     @method_decorator(domain_admin_required)
     @method_decorator(requires_privilege_with_fallback(privileges.INBOUND_SMS))
     def dispatch(self, request, *args, **kwargs):
         return super(TestSMSMessageView, self).dispatch(request, *args, **kwargs)
 
     @property
-    def phone_number(self):
-        return self.kwargs['phone_number']
-
-    @property
     def page_context(self):
         return {
-            'phone_number': self.phone_number,
+            'form': self.get_form()
         }
 
-    def post(self, request, *args, **kwargs):
-        message = request.POST.get("message", "")
-        phone_entry = PhoneNumber.get_two_way_number(self.phone_number)
-        if phone_entry and phone_entry.domain != self.domain:
-            messages.error(
-                request,
-                _("Invalid phone number being simulated. Please choose a "
-                  "two-way phone number belonging to a contact in your project.")
+    @memoized
+    def get_form(self):
+        backends = SQLMobileBackend.get_domain_backends(
+            SQLMobileBackend.SMS,
+            self.domain,
+        )
+        if self.request.method == 'POST':
+            return SentTestSmsForm(
+                self.request.POST,
+                domain=self.domain,
+                backends=backends,
             )
-        else:
-            incoming(self.phone_number, message, SQLTestSMSBackend.get_api_id(), domain_scope=self.domain)
+
+        default_backend = SQLMobileBackend.get_domain_default_backend(
+            SQLMobileBackend.SMS,
+            self.domain
+        )
+        initial = None
+        if default_backend:
+            initial = {'backend_id': default_backend.couch_id}
+        return SentTestSmsForm(
+            initial=initial,
+            domain=self.domain,
+            backends=backends,
+        )
+
+    def post(self, request, *args, **kwargs):
+        form = self.get_form()
+        if form.is_valid():
+            phone_number = form.cleaned_data.get("phone_number", "")
+            message = form.cleaned_data.get("message", "")
+            backend_id = form.cleaned_data.get("backend_id", "")
+            claim_channel = form.cleaned_data.get("claim_channel", False)
+
+            error_message = self._check_phone_number(phone_number, backend_id, claim_channel)
+            if error_message:
+                messages.error(request, error_message)
+                return self.get(request, *args, **kwargs)
+
+            backend = SQLMobileBackend.load(backend_id, is_couch_id=True)
+            incoming(
+                phone_number, message, backend.get_api_id(),
+                domain_scope=self.domain, backend_id=backend.couch_id,
+                backend_message_id="message_test"
+            )
             messages.success(
                 request,
                 _("Test message received.")
@@ -409,9 +441,35 @@ class TestSMSMessageView(BaseDomainView):
 
         return self.get(request, *args, **kwargs)
 
+    def _check_phone_number(self, phone_number, backend_id, claim_channel):
+        phone_entry, has_domain_two_way_scope = get_inbound_phone_entry(phone_number, backend_id)
+        if not phone_entry or phone_entry.domain != self.domain:
+            msg = _("Invalid phone number. Please choose a "
+                    "two-way phone number belonging to a contact in your project.")
+            if not toggles.ONE_PHONE_NUMBER_MULTIPLE_CONTACTS.enabled(self.domain):
+                return msg
+
+            phone_entry_this_domain = PhoneNumber.get_two_way_number_with_domain_scope(
+                phone_number, [self.domain])
+            if claim_channel and phone_entry_this_domain:
+                # attempt to claim the channel
+                fake_session = SQLXFormsSession(
+                    session_id=uuid.uuid4().hex,
+                    connection_id=phone_entry_this_domain.owner_id,
+                    phone_number=phone_entry_this_domain.phone_number
+                )
+                if XFormsSessionSynchronization.set_channel_for_affinity(fake_session):
+                    # re-check but don't attempt a claim this time
+                    return self._check_phone_number(phone_number, backend_id, claim_channel=False)
+
+            return _("Invalid phone number. Either this number is not assigned to a contact in your "
+                     "project or there is an active session for this number in another project space. "
+                     "To 'claim' this channel use the 'claim this channel' checkbox or start a new SMS "
+                     "survey with this number and wait for the first message to be sent.")
+
 
 @csrf_exempt
-@require_permission(Permissions.edit_messaging, login_decorator=login_or_digest_ex(allow_cc_users=True))
+@require_permission(HqPermissions.edit_messaging, login_decorator=login_or_digest_ex(allow_cc_users=True))
 @requires_privilege_plaintext_response(privileges.OUTBOUND_SMS)
 def api_send_sms(request, domain):
     """
@@ -681,7 +739,7 @@ def format_contact_data(domain, data):
         row.append(reverse('sms_chat', args=[domain, contact_id, vn_id]))
 
 
-@require_permission(Permissions.edit_messaging)
+@require_permission(HqPermissions.edit_messaging)
 @requires_privilege_with_fallback(privileges.INBOUND_SMS)
 def chat_contact_list(request, domain):
     sEcho = request.GET.get('sEcho')
@@ -724,7 +782,7 @@ def get_contact_name_for_chat(contact, domain_obj):
     return contact_name
 
 
-@require_permission(Permissions.edit_messaging)
+@require_permission(HqPermissions.edit_messaging)
 @requires_privilege_with_fallback(privileges.OUTBOUND_SMS)
 def chat(request, domain, contact_id, vn_id=None):
     domain_obj = Domain.get_by_name(domain, strict=True)
@@ -768,7 +826,7 @@ def chat(request, domain, contact_id, vn_id=None):
 class ChatMessageHistory(View, DomainViewMixin):
     urlname = 'api_history'
 
-    @method_decorator(require_permission(Permissions.edit_messaging))
+    @method_decorator(require_permission(HqPermissions.edit_messaging))
     @method_decorator(requires_privilege_with_fallback(privileges.OUTBOUND_SMS))
     def dispatch(self, request, *args, **kwargs):
         return super(ChatMessageHistory, self).dispatch(request, *args, **kwargs)
@@ -911,7 +969,7 @@ class ChatMessageHistory(View, DomainViewMixin):
 class ChatLastReadMessage(View, DomainViewMixin):
     urlname = 'api_last_read_message'
 
-    @method_decorator(require_permission(Permissions.edit_messaging))
+    @method_decorator(require_permission(HqPermissions.edit_messaging))
     @method_decorator(requires_privilege_with_fallback(privileges.OUTBOUND_SMS))
     def dispatch(self, request, *args, **kwargs):
         return super(ChatLastReadMessage, self).dispatch(request, *args, **kwargs)
@@ -1032,7 +1090,7 @@ class DomainSmsGatewayListView(CRUDPaginatedViewMixin, BaseMessagingSectionView)
                 supported_country_names = _('Multiple%s') % '*'
             else:
                 supported_country_names = ', '.join(
-                    [_(country_name_from_code(int(c))) for c in backend.supported_countries])
+                    [_(country_name_for_country_code(int(c))) for c in backend.supported_countries])
         else:
             supported_country_names = ''
         return {
@@ -1330,6 +1388,13 @@ class GlobalSmsGatewayListView(CRUDPaginatedViewMixin, BaseAdminSectionView):
 
     @method_decorator(require_superuser)
     def dispatch(self, request, *args, **kwargs):
+        if not has_privilege(request, privileges.GLOBAL_SMS_GATEWAY):
+            return HttpResponseRedirect(
+                reverse(
+                    SMSAdminInterfaceDispatcher.name(),
+                    kwargs={'report_slug': 'sms_billables'}
+                )
+            )
         return super(GlobalSmsGatewayListView, self).dispatch(request, *args, **kwargs)
 
     @property
@@ -1380,7 +1445,7 @@ class GlobalSmsGatewayListView(CRUDPaginatedViewMixin, BaseAdminSectionView):
                 supported_country_names = _('Multiple%s') % '*'
             else:
                 supported_country_names = ', '.join(
-                    [_(country_name_from_code(int(c))) for c in backend.supported_countries])
+                    [_(country_name_for_country_code(int(c))) for c in backend.supported_countries])
         else:
             supported_country_names = ''
         return {
@@ -1477,6 +1542,8 @@ class AddGlobalGatewayView(AddGatewayViewMixin, BaseAdminSectionView):
 
     @method_decorator(require_superuser)
     def dispatch(self, request, *args, **kwargs):
+        if not has_privilege(request, privileges.GLOBAL_SMS_GATEWAY):
+            return HttpResponseRedirect(reverse("no_permissions"))
         return super(AddGlobalGatewayView, self).dispatch(request, *args, **kwargs)
 
 

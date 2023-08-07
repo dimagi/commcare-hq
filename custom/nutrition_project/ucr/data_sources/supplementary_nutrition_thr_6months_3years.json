@@ -1,10 +1,12 @@
 {
   "domains": [
     "india-nutrition-project",
-    "mh-mis-staging"
+    "mh-mis-staging",
+    "nutrition-project-5"
   ],
   "server_environment": [
-    "india"
+    "india",
+    "production"
   ],
   "config": {
     "table_id": "static-suppl_nutrition_thr_6mo_3y_v1",

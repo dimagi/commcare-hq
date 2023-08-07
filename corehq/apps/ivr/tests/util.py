@@ -1,7 +1,10 @@
+from contextlib import contextmanager
+
 from django.test import TestCase
 
 from corehq.apps.ivr.models import Call
 from corehq.apps.sms.models import INCOMING
+from corehq.messaging.tasks import sync_case_for_messaging
 from corehq.util.test_utils import create_test_case
 
 
@@ -44,13 +47,21 @@ class LogCallTestCase(TestCase):
         """
         raise NotImplementedError("Please implement this method")
 
+    @contextmanager
     def create_case(self):
         case_properties = {
             'contact_phone_number': self.phone_number,
             'contact_phone_number_is_verified': '1',
         }
-        return create_test_case(self.domain, 'contact', 'test',
-            case_properties=case_properties, drop_signals=False)
+        with create_test_case(
+                self.domain,
+                'contact',
+                'test',
+                case_properties=case_properties,
+                drop_signals=False
+        ) as case:
+            sync_case_for_messaging(self.domain, case.case_id)
+            yield case
 
     def test_log_call(self):
         with self.create_case() as case:

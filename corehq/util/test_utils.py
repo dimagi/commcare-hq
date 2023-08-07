@@ -12,22 +12,22 @@ import os
 import traceback
 import uuid
 from collections import namedtuple
-from contextlib import ExitStack, contextmanager
+from contextlib import ExitStack, closing, contextmanager
 from datetime import datetime, timedelta
 from functools import wraps
 from io import StringIO, open
 from textwrap import indent, wrap
 from time import sleep, time
-from unittest import SkipTest, TestCase
+from unittest import SkipTest, TestCase, mock
 
 from django.apps import apps
 from django.conf import settings
 from django.db import connections
 from django.db.backends import utils
+from django.db.utils import DEFAULT_DB_ALIAS, load_backend
+from django.http import HttpRequest
 from django.test import TransactionTestCase
 from django.test.utils import CaptureQueriesContext
-
-from unittest import mock
 
 from corehq.util.context_managers import drop_connected_signals
 from corehq.util.decorators import ContextDecorator
@@ -169,16 +169,53 @@ class flag_disabled(flag_enabled):
     enabled = False
 
 
-def privilege_enabled(privilege_name):
-    """Enable an individual privilege for tests"""
-    from django_prbac.utils import has_privilege
+class privilege_enabled:
+    """
+    A decorator and context manager to enable a privilege for a domain
+    or a request.
 
-    def patched(request, slug, **assignment):
-        if slug == privilege_name:
-            return True
-        return has_privilege(request, slug, **assignment)
+    If you find that the import you need to be patched is not yet
+    supported, add it to ``self.imports``.
+    """
+    imports = (
+        'corehq.apps.users.landing_pages.domain_has_privilege',
+        'corehq.apps.users.permissions.domain_has_privilege',
+        'corehq.apps.users.views.mobile.users.domain_has_privilege',
+        'django_prbac.decorators.has_privilege',
+        'corehq.apps.export.views.list.domain_has_privilege'
+    )
 
-    return mock.patch('django_prbac.decorators.has_privilege', new=patched)
+    def __init__(self, privilege_slug):
+
+        def patched(domain_or_request, slug, **assignment):
+            from django_prbac.utils import \
+                has_privilege as request_has_privilege
+
+            from corehq.apps.accounting.utils import domain_has_privilege
+
+            if isinstance(domain_or_request, HttpRequest):
+                has_privilege = request_has_privilege
+            else:
+                has_privilege = domain_has_privilege
+            return (
+                slug == privilege_slug
+                or has_privilege(domain_or_request, slug, **assignment)
+            )
+
+        self.patches = [mock.patch(imp, new=patched) for imp in self.imports]
+
+    def __call__(self, func):
+        for patch in self.patches:
+            func = patch(func)
+        return func
+
+    def __enter__(self):
+        for patch in self.patches:
+            patch.start()
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        for patch in self.patches:
+            patch.stop()
 
 
 class DocTestMixin(object):
@@ -364,12 +401,20 @@ def unregistered_django_model(model_class):
     return model_class
 
 
-def generate_cases(argsets, cls=None):
-    """Make a decorator to generate a set of parameterized test cases
+class generate_cases:
+    """A decorator to generate parameterized test cases
 
-    Until we have nose generator tests...
+    Usage as test method decorator:
 
-    Usage:
+        class TestThing(TestCase):
+            @generate_cases([
+                ("foo", "bar"),
+                ("bar", "foo"),
+            ])
+            def test_foo(self, foo, bar)
+                self.assertEqual(self.thing[foo], bar)
+
+    Deprecated: two-argument decorator on module level test function:
 
         @generate_cases([
             ("foo", "bar"),
@@ -382,39 +427,63 @@ def generate_cases(argsets, cls=None):
     their parameterized names are not valid function names. This was a
     tradeoff with making parameterized tests identifiable on failure.
 
+    Another alternative is nose test generators.
+    https://nose.readthedocs.io/en/latest/writing_tests.html#test-generators
+
     :param argsets: A sequence of argument tuples or dicts, one for each
     test case to be generated.
     :param cls: Optional test case class to which tests should be added.
     """
-    def add_cases(test_func):
-        if cls is None:
-            class Test(TestCase):
+
+    def __init__(self, argsets, cls=None):
+        self.argsets = argsets
+        self.test_class = cls
+
+    def __call__(self, test_func):
+        def assign(owner, test):
+            assert not hasattr(owner, test.__name__), \
+                "duplicate test case: {}.{}".format(owner, test.__name__)
+            setattr(owner, test.__name__, test)
+
+        tests = []
+
+        if self.test_class is None:
+            class DecoratedMethodMeta(type):
+                def __set_name__(self, owner, name):
+                    # Delete Test class, which has replaced decorated method
+                    delattr(owner, name)
+                    # Assign parameterized tests to class of decorated method
+                    for test in tests:
+                        assign(owner, test)
+
+            class Test(TestCase, metaclass=DecoratedMethodMeta):
+                # Test case for top-level module @generate_cases([...])
                 pass
             Test.__name__ = test_func.__name__
         else:
-            Test = cls
+            Test = self.test_class
 
-        for args in argsets:
+        for args in self.argsets:
             def test(self, args=args):
                 if isinstance(args, dict):
                     return test_func(self, **args)
                 return test_func(self, *args)
 
             test.__name__ = test_func.__name__ + repr(args)
-            assert not hasattr(Test, test.__name__), \
-                "duplicate test case: {} {}".format(Test, test.__name__)
+            assign(Test, test)
+            tests.append(test)
 
-            setattr(Test, test.__name__, test)
-
-        if cls is None:
+        if self.test_class is None:
             # Only return newly created test class; otherwise the test
             # runner will run tests on cls twice. Explanation: the
             # returned value will be bound to the name of the decorated
             # test_func; if cls is provided then there will be two names
-            # bound to the same test class
+            # bound to the same test class. This is happens when the
+            # decorated test is a module-level function.
+            #
+            # In the case of a decorated test method, DecoratedMethodMeta
+            # will delete this and assign tests to the owning test class.
             return Test
-
-    return add_cases
 
 
 def timelimit(limit):
@@ -544,10 +613,15 @@ def patch_foreign_value_caches():
 
 
 def get_form_ready_to_save(metadata, is_db_test=False, form_id=None):
-    from corehq.form_processor.parsers.form import process_xform_xml
-    from corehq.form_processor.utils import get_simple_form_xml, convert_xform_to_json
-    from corehq.form_processor.interfaces.processor import FormProcessorInterface
+    from corehq.form_processor.interfaces.processor import (
+        FormProcessorInterface,
+    )
     from corehq.form_processor.models import Attachment
+    from corehq.form_processor.parsers.form import process_xform_xml
+    from corehq.form_processor.utils import (
+        convert_xform_to_json,
+        get_simple_form_xml,
+    )
 
     assert metadata is not None
     metadata.domain = metadata.domain or uuid.uuid4().hex
@@ -582,8 +656,10 @@ def create_and_save_a_form(domain):
     """
     Very basic way to save a form, not caring at all about its contents
     """
+    from corehq.form_processor.interfaces.processor import (
+        FormProcessorInterface,
+    )
     from corehq.form_processor.utils import TestFormMetadata
-    from corehq.form_processor.interfaces.processor import FormProcessorInterface
     metadata = TestFormMetadata(domain=domain)
     form = get_form_ready_to_save(metadata)
     FormProcessorInterface(domain=domain).save_processed_models([form])
@@ -597,6 +673,7 @@ def _create_case(domain, **kwargs):
     creates and saves the case directly, which is faster.
     """
     from casexml.apps.case.mock import CaseBlock
+
     from corehq.apps.hqcase.utils import submit_case_blocks
     return submit_case_blocks(
         [CaseBlock.deprecated_init(**kwargs).as_text()], domain=domain
@@ -649,7 +726,9 @@ def create_test_case(domain, case_type, case_name, case_properties=None, drop_si
     """
     from corehq.apps.sms.tasks import delete_phone_numbers_for_owners
     from corehq.form_processor.models import CommCareCase
-    from corehq.messaging.scheduling.scheduling_partitioned.dbaccessors import delete_schedule_instances_by_case_id
+    from corehq.messaging.scheduling.scheduling_partitioned.dbaccessors import (
+        delete_schedule_instances_by_case_id,
+    )
 
     case = create_and_save_a_case(domain, case_id or uuid.uuid4().hex, case_name,
         case_properties=case_properties, case_type=case_type, drop_signals=drop_signals,
@@ -686,7 +765,7 @@ def set_parent_case(domain, child_case, parent_case, relationship='child', ident
     """
     Creates a parent-child relationship between child_case and parent_case.
     """
-    from casexml.apps.case.mock import CaseFactory, CaseStructure, CaseIndex
+    from casexml.apps.case.mock import CaseFactory, CaseIndex, CaseStructure
 
     parent = CaseStructure(case_id=parent_case.case_id)
     CaseFactory(domain).create_or_update_case(
@@ -698,23 +777,6 @@ def set_parent_case(domain, child_case, parent_case, relationship='child', ident
                 relationship=relationship
             )],
         )
-    )
-
-
-def update_case(domain, case_id, case_properties, user_id=None):
-    from casexml.apps.case.mock import CaseBlock
-    from casexml.apps.case.util import post_case_blocks
-
-    kwargs = {
-        'case_id': case_id,
-        'update': case_properties,
-    }
-
-    if user_id:
-        kwargs['user_id'] = user_id
-
-    post_case_blocks(
-        [CaseBlock.deprecated_init(**kwargs).as_xml()], domain=domain
     )
 
 
@@ -841,6 +903,22 @@ class capture_sql(ContextDecorator):
             print('\n{}'.format(indent('\n'.join(wrap(out, width)), '\t')))
             if with_traceback:
                 print('\n{}'.format(indent(''.join(query['traceback']), '\t\t')))
+
+
+@contextmanager
+def new_db_connection(alias=DEFAULT_DB_ALIAS):
+    """Context manager to setup a new database connection
+
+    Use to test transaction isolation when a transaction is in progress
+    on the current/existing connection.
+    """
+    connections.ensure_defaults(alias)
+    connections.prepare_test_settings(alias)
+    db = connections.databases[alias]
+    backend = load_backend(db['ENGINE'])
+    with closing(backend.DatabaseWrapper(db, alias)) as cn, \
+            mock.patch("django.db.connections._connections.default", cn):
+        yield cn
 
 
 def require_db_context(fn):

@@ -94,9 +94,9 @@ def system_ajax(request):
             tasks = [x for x in server.active_tasks() if x['type'] == "indexer"]
         except HTTPError as e:
             if e.response.status_code == 403:
-                return JsonResponse({'error': "Unable to access CouchDB Tasks (unauthorized)."}, status_code=500)
+                return JsonResponse({'error': "Unable to access CouchDB Tasks (unauthorized)."}, status=500)
             else:
-                return JsonResponse({'error': "Unable to access CouchDB Tasks."}, status_code=500)
+                return JsonResponse({'error': "Unable to access CouchDB Tasks."}, status=500)
 
         if not is_bigcouch():
             return JsonResponse(tasks, safe=False)
@@ -136,7 +136,7 @@ def system_ajax(request):
                     timeout=3,
                 ).json()
             except Exception as ex:
-                return JsonResponse({'error': "Error with getting from celery_flower: %s" % ex}, status_code=500)
+                return JsonResponse({'error': "Error with getting from celery_flower: %s" % ex}, status=500)
 
             for task_id, traw in all_tasks.items():
                 # it's an array of arrays - looping through [<id>, {task_info_dict}]
@@ -236,6 +236,9 @@ def _get_branches_merged_into_autostaging(cwd=None):
         #   unknown revision or path not in the working tree.
         git.fetch()
         return _get_branches_merged_into_autostaging(cwd=cwd)
+
+    # sh returning string from command git.log(...)
+    branches = pipe.strip().split("\n")
     CommitBranchPair = namedtuple('CommitBranchPair', ['commit', 'branch'])
     return sorted(
         (CommitBranchPair(
@@ -244,7 +247,7 @@ def _get_branches_merged_into_autostaging(cwd=None):
             .replace("Merge branch '", '')
             .replace("' into autostaging", '')
             .split(' ')[1:]
-        ) for line in pipe),
+        ) for line in branches),
         key=lambda pair: pair.branch
     )
 
@@ -256,9 +259,10 @@ def _get_submodules():
     """
     import sh
     git = sh.git.bake(_tty_out=False)
+    submodules = git.submodule().strip().split("\n")
     return [
         line.strip()[1:].split()[1]
-        for line in git.submodule()
+        for line in submodules
     ]
 
 

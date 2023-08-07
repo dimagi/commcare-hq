@@ -13,9 +13,11 @@ from corehq.util.quickcache import quickcache
 class IdentityProviderType:
     AZURE_AD = 'azure_ad'
     ONE_LOGIN = 'one_login'
+    OKTA = 'okta'
     CHOICES = (
         (AZURE_AD, "Azure AD"),
         (ONE_LOGIN, "One Login"),
+        (OKTA, "Okta"),
     )
 
 
@@ -35,8 +37,18 @@ class IdentityProviderProtocol:
             ),
             cls.OIDC: (
                 (IdentityProviderType.ONE_LOGIN, "One Login"),
+                (IdentityProviderType.OKTA, "Okta"),
             )
         }
+
+
+class LoginEnforcementType:
+    GLOBAL = 'global'
+    TEST = 'test'
+    CHOICES = (
+        (GLOBAL, "Global"),
+        (TEST, "Test"),
+    )
 
 
 class ServiceProviderCertificate:
@@ -82,6 +94,13 @@ class IdentityProvider(models.Model):
 
     # whether an IdP is actively in use as an authentication method on HQ
     is_active = models.BooleanField(default=False)
+
+    # determines how the is_active behavior enforces the login policy on the homepage
+    login_enforcement_type = models.CharField(
+        max_length=10,
+        default=LoginEnforcementType.GLOBAL,
+        choices=LoginEnforcementType.CHOICES,
+    )
 
     # the enterprise admins of this account will be able to edit the SAML
     # configuration fields
@@ -130,6 +149,10 @@ class IdentityProvider(models.Model):
     def __str__(self):
         return f"{self.name} IdP [{self.idp_type}]"
 
+    @property
+    def service_name(self):
+        return dict(IdentityProviderType.CHOICES)[self.idp_type]
+
     def create_service_provider_certificate(self):
         sp_cert = ServiceProviderCertificate()
         self.sp_cert_public = sp_cert.public_key
@@ -172,13 +195,13 @@ class IdentityProvider(models.Model):
     def get_login_url(self, username=None):
         """
         Gets the login endpoint for the IdentityProvider based on the protocol
-        being used. Since we only support SAML2 right now, this redirects to
-        the SAML2 login endpoint.
+        being used.
         :param username: (string) username to pre-populate IdP login with
         :return: (String) identity provider login url
         """
+        login_view_name = 'sso_saml_login' if self.protocol == IdentityProviderProtocol.SAML else 'sso_oidc_login'
         return '{}?username={}'.format(
-            reverse('sso_saml_login', args=(self.slug,)),
+            reverse(login_view_name, args=(self.slug,)),
             username
         )
 
@@ -353,13 +376,24 @@ class IdentityProvider(models.Model):
         """
         Gets the Identity Provider for the given username only if that
         user is required to login or sign up with that Identity Provider.
+
+        An Identity Provider is required if:
+        - it exists
+        - is active
+        - is Globally enforcing logins (login_enforcement_type) or is in Test login_enforcement_type
+          and there is an SsoTestUser that maps to the given username
+
         :param username: String
         :return: IdentityProvider or None
         """
         idp = cls.get_active_identity_provider_by_username(username)
-        if idp and not UserExemptFromSingleSignOn.objects.filter(
-            username=username
-        ).exists():
+        if not idp:
+            return None
+        if (idp.login_enforcement_type == LoginEnforcementType.GLOBAL
+                and not UserExemptFromSingleSignOn.objects.filter(username=username).exists()):
+            return idp
+        if (idp.login_enforcement_type == LoginEnforcementType.TEST
+                and SsoTestUser.objects.filter(username=username).exists()):
             return idp
         return None
 
@@ -422,6 +456,21 @@ class UserExemptFromSingleSignOn(models.Model):
 
     def __str__(self):
         return f"{self.username} is exempt from SSO with {self.email_domain}"
+
+
+class SsoTestUser(models.Model):
+    """
+    This specifies users who are able to log in with SSO from the homepage when testing mode is turned on
+    for their Identity Provider.
+    """
+    username = models.CharField(max_length=128, db_index=True)
+    email_domain = models.ForeignKey(AuthenticatedEmailDomain, on_delete=models.CASCADE)
+
+    class Meta:
+        app_label = 'sso'
+
+    def __str__(self):
+        return f"{self.username} is testing SSO with {self.email_domain}"
 
 
 class TrustedIdentityProvider(models.Model):

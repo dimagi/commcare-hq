@@ -2,8 +2,6 @@ from django.utils.translation import gettext_lazy as _
 
 from memoized import memoized
 
-from dimagi.ext.couchdbkit import DictProperty
-
 from corehq.apps.userreports.expressions.factory import ExpressionFactory
 from corehq.apps.userreports.filters.factory import FilterFactory
 from corehq.apps.userreports.specs import EvaluationContext, FactoryContext
@@ -11,7 +9,7 @@ from corehq.form_processor.models import CommCareCase
 from corehq.motech.repeaters.expression.repeater_generators import (
     ExpressionPayloadGenerator,
 )
-from corehq.motech.repeaters.models import Repeater
+from corehq.motech.repeaters.models import OptionValue, Repeater
 from corehq.toggles import EXPRESSION_REPEATER
 
 
@@ -20,9 +18,12 @@ class BaseExpressionRepeater(Repeater):
     """
     class Meta:
         app_label = 'repeaters'
+        proxy = True
 
-    configured_filter = DictProperty()
-    configured_expression = DictProperty()
+    configured_filter = OptionValue(default=dict)
+    configured_expression = OptionValue(default=dict)
+    url_template = OptionValue(default=None)
+
     payload_generator_classes = (ExpressionPayloadGenerator,)
 
     @property
@@ -51,9 +52,28 @@ class BaseExpressionRepeater(Repeater):
             self.parsed_expression,
         )
 
+    def get_url(self, repeat_record):
+        base_url = super().get_url(repeat_record)
+        if self.url_template:
+            return base_url + self.generator.get_url(
+                repeat_record,
+                self.url_template,
+                self.payload_doc(repeat_record),
+            )
+        return base_url
+
 
 class CaseExpressionRepeater(BaseExpressionRepeater):
-    friendly_name = _("Configurable Case Forwarder")
+
+    friendly_name = _("Configurable Case Repeater")
+
+    class Meta:
+        app_label = 'repeaters'
+        proxy = True
+
+    @property
+    def form_class_name(self):
+        return 'CaseExpressionRepeater'
 
     @memoized
     def payload_doc(self, repeat_record):

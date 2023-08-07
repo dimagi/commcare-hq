@@ -9,7 +9,7 @@ ADULT_FORM = "http://openrosa.org/formdesigner/60666f0dc7688fdef369947196722ff2f
 class TreatmentPlaceExpressionSpec(JsonObject):
     type = TypeProperty('mvp_treatment_place_name')
 
-    def __call__(self, item, context=None):
+    def __call__(self, item, evaluation_context=None):
         doc = item['form']
         form = item['xmlns']
         treatment_place_name = ""
@@ -35,7 +35,7 @@ class TreatmentPlaceExpressionSpec(JsonObject):
 class DeathPlaceExpressionSpec(JsonObject):
     type = TypeProperty('mvp_death_place')
 
-    def __call__(self, item, context=None):
+    def __call__(self, item, evaluation_context=None):
         doc = item['form']
         form = item['xmlns']
         death_place = ""
@@ -74,7 +74,7 @@ class DeathPlaceExpressionSpec(JsonObject):
 class MedicalCauseExpressionSpec(JsonObject):
     type = TypeProperty('mvp_medical_cause')
 
-    def __call__(self, item, context=None):
+    def __call__(self, item, evaluation_context=None):
         doc = item['form']
         form = item['xmlns']
         death_cause = ""
@@ -145,7 +145,7 @@ class MedicalCauseExpressionSpec(JsonObject):
 class TreatmentProviderExpressionSpec(JsonObject):
     type = TypeProperty('mvp_treatment_provider_name')
 
-    def __call__(self, item, context=None):
+    def __call__(self, item, evaluation_context=None):
         doc = item['form']
         form = item['xmlns']
         treatment_providers = ""
@@ -214,7 +214,7 @@ class TreatmentProviderExpressionSpec(JsonObject):
 class NoTreatmentReasonExpressionSpec(JsonObject):
     type = TypeProperty('mvp_no_treatment_reason')
 
-    def __call__(self, item, context=None):
+    def __call__(self, item, evaluation_context=None):
         doc = item['form']
         form = item['xmlns']
         no_treatment_reason = ""
@@ -264,26 +264,26 @@ class NoTreatmentReasonExpressionSpec(JsonObject):
         return no_treatment_reason
 
 
-def treatment_provider_name_expression(spec, context):
+def treatment_provider_name_expression(spec, factory_context):
     wrapped = TreatmentProviderExpressionSpec.wrap(spec)
     return wrapped
 
 
-def death_place_expression(spec, context):
+def death_place_expression(spec, factory_context):
     wrapped = DeathPlaceExpressionSpec.wrap(spec)
     return wrapped
 
 
-def treatment_place_name_expression(spec, context):
+def treatment_place_name_expression(spec, factory_context):
     wrapped = TreatmentPlaceExpressionSpec.wrap(spec)
     return wrapped
 
 
-def no_treatment_reason_expression(spec, context):
+def no_treatment_reason_expression(spec, factory_context):
     wrapped = NoTreatmentReasonExpressionSpec.wrap(spec)
     return wrapped
 
 
-def medical_cause_expression(spec, context):
+def medical_cause_expression(spec, factory_context):
     wrapped = MedicalCauseExpressionSpec.wrap(spec)
     return wrapped

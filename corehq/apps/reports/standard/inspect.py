@@ -6,9 +6,6 @@ from memoized import memoized
 
 from corehq.apps.es import filters as es_filters
 from corehq.apps.es import forms as form_es
-from corehq.apps.es.filters import match_all
-from corehq.apps.es.utils import track_es_report_load
-from corehq.apps.hqcase.utils import SYSTEM_FORM_XMLNS_MAP
 from corehq.apps.locations.permissions import location_safe
 from corehq.apps.reports.datatables import DataTablesColumn, DataTablesHeader
 from corehq.apps.reports.display import FormDisplay
@@ -36,7 +33,12 @@ from corehq.const import MISSING_APP_ID
 from corehq.toggles import SUPPORT
 
 
-class ProjectInspectionReport(ProjectInspectionReportParamsMixin, GenericTabularReport, ProjectReport, ProjectReportParametersMixin):
+class ProjectInspectionReport(
+    ProjectInspectionReportParamsMixin,
+    GenericTabularReport,
+    ProjectReport,
+    ProjectReportParametersMixin
+):
     """
         Base class for this reporting section
     """
@@ -74,11 +76,16 @@ class SubmitHistoryMixin(ElasticProjectInspectionReport,
         return datespan_from_beginning(self.domain_object, self.timezone)
 
     def _get_users_filter(self, mobile_user_and_group_slugs):
+        if (
+            EMWF.no_filters_selected(mobile_user_and_group_slugs)
+            and self.request.couch_user.has_permission(self.domain, 'access_all_locations')
+        ):
+            return None
+
         user_ids = (EMWF.user_es_query(self.domain,
                                        mobile_user_and_group_slugs,
                                        self.request.couch_user)
                     .values_list('_id', flat=True))
-        track_es_report_load(self.domain, self.slug, len(user_ids))
         if HQUserType.UNKNOWN in EMWF.selected_user_types(mobile_user_and_group_slugs):
             user_ids.append(SYSTEM_USER_ID)
 
@@ -102,19 +109,20 @@ class SubmitHistoryMixin(ElasticProjectInspectionReport,
         query = (form_es.FormES()
                  .domain(self.domain)
                  .filter(time_filter(gte=self.datespan.startdate,
-                                     lt=self.datespan.enddate_adjusted))
-                 .filter(self._get_users_filter(mobile_user_and_group_slugs)))
+                                     lt=self.datespan.enddate_adjusted)))
+
+        users_filter = self._get_users_filter(mobile_user_and_group_slugs)
+        if users_filter:
+            query = query.filter(users_filter)
 
         # filter results by app and xmlns if applicable
         if FormsByApplicationFilter.has_selections(self.request):
             form_values = list(self.all_relevant_forms.values())
             if form_values:
                 query = query.OR(*[self._form_filter(f) for f in form_values])
+        else:
+            query = query.NOT(es_filters.missing("app_id"))
 
-        # Exclude system forms unless they selected "Unknown User"
-        if HQUserType.UNKNOWN not in EMWF.selected_user_types(mobile_user_and_group_slugs):
-            for xmlns in SYSTEM_FORM_XMLNS_MAP.keys():
-                query = query.NOT(form_es.xmlns(xmlns))
         return query
 
     @property

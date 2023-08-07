@@ -5,6 +5,7 @@ from django.test import TestCase
 from corehq.apps.commtrack.tests.util import bootstrap_location_types
 from corehq.apps.domain.models import Domain
 from corehq.apps.es.tests.utils import es_test, populate_user_index
+from corehq.apps.es.users import user_adapter
 from corehq.apps.locations.tests.util import delete_all_locations, make_loc
 from corehq.apps.users.dbaccessors import (
     count_invitations_by_filters,
@@ -30,12 +31,10 @@ from corehq.apps.users.models import (
     UserRole,
     WebUser,
 )
-from corehq.pillows.mappings.user_mapping import USER_INDEX
-from corehq.util.elastic import ensure_index_deleted
 from corehq.apps.users.role_utils import initialize_domain_with_default_roles
 
 
-@es_test
+@es_test(requires=[user_adapter], setup_class=True)
 class AllCommCareUsersTest(TestCase):
 
     @classmethod
@@ -202,6 +201,18 @@ class AllCommCareUsersTest(TestCase):
             [self.ccuser_inactive.username]
         )
 
+        filters = {'user_active_status': True}
+        self.assertItemsEqual(
+            usernames(get_mobile_users_by_filters(self.ccdomain.name, filters)),
+            [self.ccuser_1.username, self.ccuser_2.username]
+        )
+
+        filters = {'user_active_status': None}
+        self.assertItemsEqual(
+            usernames(get_mobile_users_by_filters(self.ccdomain.name, filters)),
+            [self.ccuser_1.username, self.ccuser_2.username, self.ccuser_inactive.username]
+        )
+
         # Location restricted user has default access to only users assigned that location
         assigned_location_ids = self.location_restricted_web_user\
             .get_domain_membership(self.ccdomain.name)\
@@ -209,7 +220,6 @@ class AllCommCareUsersTest(TestCase):
         filters = {'web_user_assigned_location_ids': list(assigned_location_ids)}
         self.assertEqual(count_mobile_users_by_filters(self.ccdomain.name, filters), 2)
 
-        ensure_index_deleted(USER_INDEX)
 
     def test_get_invitations_by_filters(self):
         invitations = [

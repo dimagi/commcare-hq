@@ -1,10 +1,12 @@
-{% extends 'hqwebapp/base_section.html' %}
+{% extends 'hqwebapp/bootstrap3/base_section.html' %}
 {% load i18n %}
 {% load hq_shared_tags %}
+{% load crispy_forms_tags %}
 
 {% requirejs_main 'data_interfaces/js/case_dedupe_main' %}
 
 {% block page_content %}
+  {% initial_page_data 'all_case_properties' all_case_properties %}
   {% initial_page_data 'case_types' case_types %}
   {% initial_page_data 'name' name %}
   {% initial_page_data 'case_type' case_type %}
@@ -79,6 +81,12 @@
           <input type="checkbox" data-bind="checked: includeClosed" name="include_closed" />
         </div>
       </fieldset>
+      <div id="caseFilters" {% if readonly %} disabled="disabled" {% endif %}>
+        <div id="caseFiltersForm">
+          {% include "data_interfaces/partials/case_rule_criteria.html" with form=criteria_form %}
+          {% crispy criteria_form %}
+        </div>
+      </div>
       <fieldset {% if readonly %} disabled="disabled" {% endif %}>
         <legend>{% trans "Actions" %}</legend>
         <div data-bind="template: {name: 'update-case-property-action', foreach: propertiesToUpdate, as: 'propertyToUpdate'} "></div>
@@ -119,7 +127,10 @@
       </div>
       <label class="control-label col-xs-2">{% trans "Case property" %}</label>
       <div class="controls col-xs-2">
-        <input type="text" class="textinput form-control" data-bind="textInput: caseProperty.name" required placeholder="{% trans 'case property name' %}" />
+        <case-property-input params="
+         valueObservable: caseProperty.name,
+         caseTypeObservable: $root.caseType,
+        "></case-property-input>
       </div>
     </div>
   </script>
@@ -131,7 +142,10 @@
       </button>
       <label class="control-label col-xs-2">{% trans "Set case property" %}</label>
       <div class="controls col-xs-2">
-        <input type="text" data-bind="value: name" class="textinput form-control" required placeholder="{% trans 'case property name' %}" />
+        <case-property-input params="
+         valueObservable: name,
+         caseTypeObservable: $root.caseType,
+        "></case-property-input>
       </div>
       <div class="controls col-xs-2">
         <select class="select form-control" data-bind="value: valueType" required>
@@ -140,10 +154,17 @@
         </select>
       </div>
       <div class="controls col-xs-2">
-        <input type="text" class="textinput form-control" data-bind="value: value" required />
+        <!-- ko if: valueType() === 'EXACT' -->
+          <input type="text" class="textinput form-control" data-bind="value: value" required />
+        <!-- /ko -->
+        <!-- ko if: valueType() === 'CASE_PROPERTY' -->
+          <case-property-input params="
+           valueObservable: value,
+           caseTypeObservable: $root.caseType,
+          "></case-property-input>
+        <!-- /ko -->
       </div>
     </div>
   </script>
-
 
 {% endblock %}

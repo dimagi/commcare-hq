@@ -1,7 +1,7 @@
 .. This is the main index for HQ's docs.
 
-Welcome to CommCareHQ's documentation!
-======================================
+Welcome to CommCare HQ's documentation!
+=======================================
 
 CommCare is a multi-tier mobile, server, and messaging platform. The platform enables users to build and
 configure content and a user interface, deploy that application to Android devices or to an end-user-facing web
@@ -42,6 +42,7 @@ Data is transmitted from the phone to the server (and vis-a-versa) over a secure
     apps/multimedia
     apps/settings
     apps/advanced_app_features
+    apps/suite_generation
     apps/builds
     web_apps
     formplayer
@@ -99,6 +100,7 @@ Data is transmitted from the phone to the server (and vis-a-versa) over a secure
     sso/overview
     sso/architecture
     sso/local_setup
+    sso/adding_idp
 
 .. toctree::
     :caption: UI and Front End
@@ -133,7 +135,6 @@ Data is transmitted from the phone to the server (and vis-a-versa) over a secure
     toggles
     commtrack
     elasticsearch
-    es_query
     middleware
     nfs
     forms_and_cases
@@ -148,7 +149,7 @@ Data is transmitted from the phone to the server (and vis-a-versa) over a secure
     :caption: Migrations
     :maxdepth: 1
 
-    migrations-in-practice
+    migrations_in_practice
     migration_command_pattern
     migrations
     couch_to_sql_models

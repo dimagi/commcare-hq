@@ -6,21 +6,20 @@ import uuid
 from django.db.models import Q
 from django.utils.translation import gettext as _
 
-from celery.task import task
-
-from corehq.apps.users.models import DeactivateMobileWorkerTrigger
-from corehq.util.metrics import metrics_gauge
-from corehq.util.metrics.const import MPM_LIVESUM
 from dimagi.utils.couch.cache.cache_core import get_redis_client
 
 from corehq.apps.accounting.models import BillingAccount
+from corehq.apps.celery import task
 from corehq.apps.enterprise.enterprise import EnterpriseReport
 from corehq.apps.enterprise.models import (
-    EnterprisePermissions,
     EnterpriseMobileWorkerSettings,
+    EnterprisePermissions,
 )
 from corehq.apps.hqwebapp.tasks import send_html_email_async
+from corehq.apps.users.models import DeactivateMobileWorkerTrigger
 from corehq.const import ONE_DAY
+from corehq.util.metrics import metrics_gauge
+from corehq.util.metrics.const import MPM_LIVESUM
 from corehq.util.view_utils import absolute_reverse
 
 

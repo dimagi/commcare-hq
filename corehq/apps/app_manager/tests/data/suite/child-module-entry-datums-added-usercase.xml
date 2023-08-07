@@ -33,5 +33,12 @@
       <datum id="parent_id" nodeset="instance('casedb')/casedb/case[@case_type='gold-fish'][@status='open']" value="./@case_id" detail-select="m0_case_short"/>
       <datum id="case_id" nodeset="instance('casedb')/casedb/case[@case_type='guppy'][@status='open'][index/parent=instance('commcaresession')/session/data/parent_id]" value="./@case_id" detail-select="m1_case_short"  detail-confirm="m1_case_long"/>
     </session>
+    <assertions>
+      <assert test="count(instance('casedb')/casedb/case[@case_type='commcare-user'][hq_user_id=instance('commcaresession')/session/context/userid]) = 1">
+        <text>
+          <locale id="case_autoload.usercase.case_missing"/>
+        </text>
+      </assert>
+    </assertions>
   </entry>
 </partial>

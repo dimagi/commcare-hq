@@ -1,14 +1,18 @@
 import functools
-from distutils.version import LooseVersion
+from looseversion import LooseVersion
 
 from django.utils.translation import gettext
 
-from memoized import memoized
-
 import commcare_translations
 import langcodes
+from langcodes import langs_by_code
+from memoized import memoized
+
 from corehq import toggles
 from corehq.apps.app_manager import id_strings
+from corehq.apps.app_manager.commcare_settings import (
+    get_commcare_settings_lookup,
+)
 from corehq.apps.app_manager.templatetags.xforms_extras import clean_trans
 from corehq.apps.app_manager.util import (
     create_temp_sort_column,
@@ -16,7 +20,6 @@ from corehq.apps.app_manager.util import (
     module_offers_search,
 )
 from corehq.util.translation import localize
-from langcodes import langs_by_code
 
 
 def non_empty_only(dct):
@@ -43,16 +46,6 @@ def _get_custom_icon_app_locale_and_value(custom_icon_form, custom_icon_text, fo
 def _create_custom_app_strings(app, lang, for_default=False, build_profile_id=None):
     # build_profile_id is relevant only if for_default is true
 
-    def trans(d):
-        return clean_trans(d, langs)
-
-    def maybe_add_index(text):
-        if app.build_version and app.build_version >= LooseVersion('2.8'):
-            numeric_nav_on = app.profile.get('properties', {}).get('cc-entry-mode') == 'cc-entry-review'
-            if app.profile.get('features', {}).get('sense') == 'true' or numeric_nav_on:
-                text = "${0} %s" % (text,) if not (text and text[0].isdigit()) else text
-        return text
-
     yield id_strings.homescreen_title(), app.name
     yield id_strings.app_display_name(), app.name
 
@@ -73,157 +66,479 @@ def _create_custom_app_strings(app, lang, for_default=False, build_profile_id=No
 
     yield id_strings.current_language(), lang
 
+    for id, custom_assertion in enumerate(app.custom_assertions):
+        yield (
+            id_strings.custom_assertion_locale(id),
+            clean_trans(custom_assertion.text, langs)
+        )
+
     for module in app.get_modules():
-        for detail_type, detail, _ in module.get_details():
-            for column in detail.get_columns():
-                yield id_strings.detail_column_header_locale(module, detail_type, column), trans(column.header)
+        yield from _create_module_details_app_strings(module, langs)
 
-                if column.format in ('enum', 'enum-image', 'conditional-enum'):
-                    for item in column.enum:
-                        yield id_strings.detail_column_enum_variable(
-                            module, detail_type, column, item.key_as_variable
-                        ), trans(item.value)
-                elif column.format == "graph":
-                    for index, item in enumerate(column.graph_configuration.annotations):
-                        yield id_strings.graph_annotation(module, detail_type, column, index), trans(item.values)
-                    for property, values in column.graph_configuration.locale_specific_config.items():
-                        yield id_strings.graph_configuration(module, detail_type, column, property), trans(values)
-                    for index, item in enumerate(column.graph_configuration.series):
-                        for property, values in item.locale_specific_config.items():
-                            yield id_strings.graph_series_configuration(
-                                module, detail_type, column, index, property
-                            ), trans(values)
+        yield (
+            id_strings.module_locale(module),
+            _maybe_add_index(clean_trans(module.name, langs), app)
+        )
 
-            # To list app strings for properties used as sorting properties only
-            if detail.sort_elements:
-                sort_only, sort_columns = get_sort_and_sort_only_columns(detail.get_columns(), detail.sort_elements)
-                for field, sort_element, order in sort_only:
-                    if sort_element.has_display_values():
-                        column = create_temp_sort_column(sort_element, order)
-                        yield id_strings.detail_column_header_locale(module, detail_type, column), \
-                            trans(column.header)
-
-            for tab in detail.get_tabs():
-                yield id_strings.detail_tab_title_locale(module, detail_type, tab), trans(tab.header)
-
-            if getattr(detail, 'lookup_display_results'):
-                yield id_strings.callout_header_locale(module), trans(detail.lookup_field_header)
-
-        yield id_strings.module_locale(module), maybe_add_index(trans(module.name))
-
-        icon = module.icon_app_string(lang, for_default=for_default, build_profile_id=build_profile_id)
-        audio = module.audio_app_string(lang, for_default=for_default, build_profile_id=build_profile_id)
-        custom_icon_form, custom_icon_text = module.custom_icon_form_and_text_by_language(lang)
-        if icon:
-            yield id_strings.module_icon_locale(module), icon
-        if audio:
-            yield id_strings.module_audio_locale(module), audio
-        if custom_icon_form and custom_icon_text:
-            yield _get_custom_icon_app_locale_and_value(custom_icon_form, custom_icon_text, module=module)
-
-        if hasattr(module, 'report_configs'):
-            for config in module.report_configs:
-                yield id_strings.report_command(config.uuid), trans(config.header)
-                yield id_strings.report_name(config.uuid), trans(config.header)
-                yield id_strings.report_description(config.uuid), trans(config.localized_description)
-                for column in config.report(app.domain).report_columns:
-                    yield (
-                        id_strings.report_column_header(config.uuid, column.column_id),
-                        column.get_header(lang)
-                    )
-                for chart_id, graph_config in config.complete_graph_configs.items():
-                    for index, item in enumerate(graph_config.annotations):
-                        yield id_strings.mobile_ucr_annotation(module, config.uuid, index), trans(item.values)
-                    for property, values in graph_config.locale_specific_config.items():
-                        yield id_strings.mobile_ucr_configuration(module, config.uuid, property), trans(values)
-                    for index, item in enumerate(graph_config.series):
-                        for property, values in item.locale_specific_config.items():
-                            yield id_strings.mobile_ucr_series_configuration(
-                                module, config.uuid, index, property
-                            ), trans(values)
-
-        if hasattr(module, 'case_list'):
-            if module.case_list.show:
-                yield id_strings.case_list_locale(module), trans(module.case_list.label) or "Case List"
-                icon = module.case_list.icon_app_string(lang, for_default=for_default,
-                                                        build_profile_id=build_profile_id)
-                audio = module.case_list.audio_app_string(lang, for_default=for_default,
-                                                          build_profile_id=build_profile_id)
-                if icon:
-                    yield id_strings.case_list_icon_locale(module), icon
-                if audio:
-                    yield id_strings.case_list_audio_locale(module), audio
-
-        if module_offers_search(module):
-            from corehq.apps.app_manager.models import CaseSearch
-            if toggles.USH_CASE_CLAIM_UPDATES.enabled(app.domain):
-                yield id_strings.case_search_locale(module), trans(module.search_config.search_label.label)
-                search_label_icon = module.search_config.search_label.icon_app_string(
-                    lang, for_default=for_default, build_profile_id=build_profile_id)
-                search_label_audio = module.search_config.search_label.audio_app_string(
-                    lang, for_default=for_default, build_profile_id=build_profile_id)
-                if search_label_icon:
-                    yield id_strings.case_search_icon_locale(module), search_label_icon
-                if search_label_audio:
-                    yield id_strings.case_search_audio_locale(module), search_label_audio
-
-                yield (id_strings.case_search_again_locale(module),
-                       trans(module.search_config.search_again_label.label))
-                search_again_label_icon = module.search_config.search_again_label.icon_app_string(
-                    lang, for_default=for_default, build_profile_id=build_profile_id)
-                search_again_label_audio = module.search_config.search_again_label.audio_app_string(
-                    lang, for_default=for_default, build_profile_id=build_profile_id)
-                if search_again_label_icon:
-                    yield id_strings.case_search_again_icon_locale(module), search_again_label_icon
-                if search_again_label_audio:
-                    yield id_strings.case_search_again_audio_locale(module), search_again_label_audio
-            else:
-                yield id_strings.case_search_locale(module), trans(CaseSearch.search_label.default().label)
-                yield (id_strings.case_search_again_locale(module),
-                       trans(CaseSearch.search_again_label.default().label))
-
-            for prop in module.search_config.properties:
-                yield id_strings.search_property_locale(module, prop.name), trans(prop.label)
-                yield id_strings.search_property_hint_locale(module, prop.name), trans(prop.hint)
-
-        if hasattr(module, 'referral_list'):
-            if module.referral_list.show:
-                yield id_strings.referral_list_locale(module), trans(module.referral_list.label)
-        for form in module.get_forms():
-            form_name = trans(form.name) + ('${0}' if form.show_count else '')
-            yield id_strings.form_locale(form), maybe_add_index(form_name)
-
-            icon = form.icon_app_string(lang, for_default=for_default, build_profile_id=build_profile_id)
-            audio = form.audio_app_string(lang, for_default=for_default, build_profile_id=build_profile_id)
-            custom_icon_form, custom_icon_text = form.custom_icon_form_and_text_by_language(lang)
-            if icon:
-                yield id_strings.form_icon_locale(form), icon
-            if audio:
-                yield id_strings.form_audio_locale(form), audio
-            if custom_icon_form and custom_icon_text:
-                yield _get_custom_icon_app_locale_and_value(custom_icon_form, custom_icon_text, form=form)
-
-            for id, custom_assertion in enumerate(form.custom_assertions):
-                yield id_strings.custom_assertion_locale(module, form, id), trans(custom_assertion.text)
-
-        if hasattr(module, 'case_list_form') and module.case_list_form.form_id:
-            if toggles.FOLLOWUP_FORMS_AS_CASE_LIST_FORM.enabled(app.domain):
-                fallback_name = gettext("Continue To {form_name}".format(
-                    form_name=trans(app.get_form(module.case_list_form.form_id).name)))
-            else:
-                fallback_name = gettext("Create a new Case")
+        for id, custom_assertion in enumerate(module.custom_assertions):
             yield (
-                id_strings.case_list_form_locale(module),
-                trans(module.case_list_form.label) or fallback_name
+                id_strings.custom_assertion_locale(id, module),
+                clean_trans(custom_assertion.text, langs)
             )
-            icon = module.case_list_form.icon_app_string(lang, for_default=for_default,
-                                                         build_profile_id=build_profile_id)
-            audio = module.case_list_form.audio_app_string(lang, for_default=for_default,
-                                                           build_profile_id=build_profile_id)
+
+        yield from _create_icon_audio_app_strings(
+            module,
+            lang,
+            for_default,
+            build_profile_id,
+        )
+
+        yield from _create_report_configs_app_strings(app, module, lang, langs)
+
+        yield from _create_case_list_app_strings(
+            module,
+            lang,
+            langs,
+            for_default,
+            build_profile_id,
+        )
+
+        yield from _create_case_search_app_strings(
+            app,
+            module,
+            lang,
+            langs,
+            for_default,
+            build_profile_id,
+        )
+
+        yield from _create_referral_list_app_strings(module, langs)
+
+        yield from _create_forms_app_strings(
+            app,
+            module,
+            lang,
+            langs,
+            for_default,
+            build_profile_id,
+        )
+
+        yield from _create_case_list_form_app_strings(
+            app,
+            module,
+            lang,
+            langs,
+            for_default,
+            build_profile_id,
+        )
+
+    yield from _create_dependencies_app_strings(app)
+
+
+def _create_module_details_app_strings(module, langs):
+    if module.get_app().supports_empty_case_list_text and hasattr(module, 'case_details'):
+        yield (
+            id_strings.no_items_text_detail(module),
+            clean_trans(module.case_details.short.no_items_text, langs)
+        )
+
+    for detail_type, detail, _ in module.get_details():
+        for column in detail.get_columns():
+            yield (
+                id_strings.detail_column_header_locale(module, detail_type, column),
+                clean_trans(column.header, langs)
+            )
+
+            if column.format in ('enum', 'enum-image', 'conditional-enum'):
+                for item in column.enum:
+                    yield (
+                        id_strings.detail_column_enum_variable(
+                            module,
+                            detail_type,
+                            column,
+                            item.key_as_variable,
+                        ),
+                        clean_trans(item.value, langs)
+                    )
+            elif column.format == "graph":
+                for index, item in enumerate(column.graph_configuration.annotations):
+                    yield (
+                        id_strings.graph_annotation(
+                            module,
+                            detail_type,
+                            column,
+                            index,
+                        ),
+                        clean_trans(item.values, langs)
+                    )
+
+                items = column.graph_configuration.locale_specific_config.items()
+                for property, values in items:
+                    yield (
+                        id_strings.graph_configuration(
+                            module,
+                            detail_type,
+                            column,
+                            property,
+                        ),
+                        clean_trans(values, langs)
+                    )
+                for index, item in enumerate(column.graph_configuration.series):
+                    for property, values in item.locale_specific_config.items():
+                        yield (
+                            id_strings.graph_series_configuration(
+                                module,
+                                detail_type,
+                                column,
+                                index,
+                                property,
+                            ),
+                            clean_trans(values, langs)
+                        )
+
+        # To list app strings for properties used as sorting properties only
+        if detail.sort_elements:
+            sort_only, sort_columns = get_sort_and_sort_only_columns(
+                list(detail.get_columns()),  # evaluate generator
+                detail.sort_elements,
+            )
+            for field, sort_element, order in sort_only:
+                if sort_element.has_display_values():
+                    column = create_temp_sort_column(sort_element, order)
+                    yield (
+                        id_strings.detail_column_header_locale(
+                            module,
+                            detail_type,
+                            column,
+                        ),
+                        clean_trans(column.header, langs)
+                    )
+
+        for tab in detail.get_tabs():
+            yield (
+                id_strings.detail_tab_title_locale(module, detail_type, tab),
+                clean_trans(tab.header, langs)
+            )
+
+        if getattr(detail, 'lookup_display_results'):
+            yield (
+                id_strings.callout_header_locale(module),
+                clean_trans(detail.lookup_field_header, langs)
+            )
+
+
+def _create_icon_audio_app_strings(
+    module,
+    lang,
+    for_default,
+    build_profile_id,
+):
+    icon = module.icon_app_string(lang, for_default, build_profile_id)
+    if icon:
+        yield id_strings.module_icon_locale(module), icon
+
+    audio = module.audio_app_string(lang, for_default, build_profile_id)
+    if audio:
+        yield id_strings.module_audio_locale(module), audio
+
+    icon_form, icon_text = module.custom_icon_form_and_text_by_language(lang)
+    if icon_form and icon_text:
+        yield _get_custom_icon_app_locale_and_value(
+            icon_form,
+            icon_text,
+            module=module,
+        )
+
+
+def _create_report_configs_app_strings(app, module, lang, langs):
+    if hasattr(module, 'report_configs'):
+        for config in module.report_configs:
+            yield (
+                id_strings.report_command(config.uuid),
+                clean_trans(config.header, langs)
+            )
+            yield (
+                id_strings.report_name(config.uuid),
+                clean_trans(config.header, langs)
+            )
+            yield (
+                id_strings.report_description(config.uuid),
+                clean_trans(config.localized_description, langs)
+            )
+            for column in config.report(app.domain).report_columns:
+                yield (
+                    id_strings.report_column_header(config.uuid, column.column_id),
+                    column.get_header(lang)
+                )
+            for chart_id, graph_config in config.complete_graph_configs.items():
+                for index, item in enumerate(graph_config.annotations):
+                    yield (
+                        id_strings.mobile_ucr_annotation(module, config.uuid, index),
+                        clean_trans(item.values, langs)
+                    )
+                for property, values in graph_config.locale_specific_config.items():
+                    yield (
+                        id_strings.mobile_ucr_configuration(
+                            module,
+                            config.uuid,
+                            property,
+                        ),
+                        clean_trans(values, langs)
+                    )
+                for index, item in enumerate(graph_config.series):
+                    for property, values in item.locale_specific_config.items():
+                        yield (
+                            id_strings.mobile_ucr_series_configuration(
+                                module,
+                                config.uuid,
+                                index,
+                                property,
+                            ),
+                            clean_trans(values, langs)
+                        )
+
+
+def _create_case_list_app_strings(
+    module,
+    lang,
+    langs,
+    for_default,
+    build_profile_id,
+):
+    if hasattr(module, 'case_list'):
+        if module.case_list.show:
+            yield (
+                id_strings.case_list_locale(module),
+                clean_trans(module.case_list.label, langs) or "Case List"
+            )
+
+            icon = module.case_list.icon_app_string(
+                lang,
+                for_default,
+                build_profile_id,
+            )
             if icon:
-                yield id_strings.case_list_form_icon_locale(module), icon
+                yield id_strings.case_list_icon_locale(module), icon
+
+            audio = module.case_list.audio_app_string(
+                lang,
+                for_default,
+                build_profile_id,
+            )
             if audio:
-                yield id_strings.case_list_form_audio_locale(module), audio
+                yield id_strings.case_list_audio_locale(module), audio
+
+
+def _create_case_search_app_strings(
+    app,
+    module,
+    lang,
+    langs,
+    for_default,
+    build_profile_id,
+):
+    if module_offers_search(module):
+        from corehq.apps.app_manager.models import CaseSearch
+
+        if toggles.USH_CASE_CLAIM_UPDATES.enabled(app.domain):
+            # search label
+            yield (
+                id_strings.case_search_locale(module),
+                clean_trans(module.search_config.search_label.label, langs)
+            )
+            icon = module.search_config.search_label.icon_app_string(
+                lang,
+                for_default,
+                build_profile_id,
+            )
+            if icon:
+                yield id_strings.case_search_icon_locale(module), icon
+            audio = module.search_config.search_label.audio_app_string(
+                lang,
+                for_default,
+                build_profile_id,
+            )
+            if audio:
+                yield id_strings.case_search_audio_locale(module), audio
+
+            title_label = module.search_config.get_search_title_label(app, lang, for_default=for_default)
+            if app.enable_case_search_title_translation:
+                yield id_strings.case_search_title_translation(module), title_label
+
+            yield (
+                id_strings.case_search_description_locale(module),
+                clean_trans(module.search_config.description, langs)
+            )
+
+            # search again label
+            yield (
+                id_strings.case_search_again_locale(module),
+                clean_trans(module.search_config.search_again_label.label, langs)
+            )
+            icon = module.search_config.search_again_label.icon_app_string(
+                lang,
+                for_default,
+                build_profile_id,
+            )
+            if icon:
+                yield id_strings.case_search_again_icon_locale(module), icon
+            audio = module.search_config.search_again_label.audio_app_string(
+                lang,
+                for_default,
+                build_profile_id,
+            )
+            if audio:
+                yield id_strings.case_search_again_audio_locale(module), audio
+        else:
+            yield(
+                id_strings.case_search_title_translation(module),
+                clean_trans(CaseSearch.title_label.default(), langs)
+            )
+            yield (
+                id_strings.case_search_description_locale(module),
+                clean_trans(CaseSearch.description.default(), langs)
+            )
+            yield (
+                id_strings.case_search_locale(module),
+                clean_trans(CaseSearch.search_label.default().label, langs)
+            )
+            yield (
+                id_strings.case_search_again_locale(module),
+                clean_trans(CaseSearch.search_again_label.default().label, langs)
+            )
+
+        for prop in module.search_config.properties:
+            yield (
+                id_strings.search_property_locale(module, prop.name),
+                clean_trans(prop.label, langs)
+            )
+            yield (
+                id_strings.search_property_hint_locale(module, prop.name),
+                clean_trans(prop.hint, langs)
+            )
+            if prop.required.test:
+                yield (
+                    id_strings.search_property_required_text(module, prop.name),
+                    clean_trans(prop.required.text, langs)
+                )
+            for i, validation in enumerate(prop.validations):
+                if validation.has_text:
+                    yield (
+                        id_strings.search_property_validation_text(
+                            module,
+                            prop.name,
+                            i,
+                        ),
+                        clean_trans(validation.text, langs)
+                    )
+
+
+def _create_referral_list_app_strings(module, langs):
+    if hasattr(module, 'referral_list'):
+        if module.referral_list.show:
+            yield (
+                id_strings.referral_list_locale(module),
+                clean_trans(module.referral_list.label, langs)
+            )
+
+
+def _create_forms_app_strings(
+    app,
+    module,
+    lang,
+    langs,
+    for_default,
+    build_profile_id,
+):
+    for form in module.get_forms():
+        if form.show_count:
+            form_name = clean_trans(form.name, langs) + '${0}'
+        else:
+            form_name = clean_trans(form.name, langs)
+        yield id_strings.form_locale(form), _maybe_add_index(form_name, app)
+
+        icon = form.icon_app_string(lang, for_default, build_profile_id)
+        if icon:
+            yield id_strings.form_icon_locale(form), icon
+
+        audio = form.audio_app_string(lang, for_default, build_profile_id)
+        if audio:
+            yield id_strings.form_audio_locale(form), audio
+
+        icon_form, icon_text = form.custom_icon_form_and_text_by_language(lang)
+        if icon_form and icon_text:
+            yield _get_custom_icon_app_locale_and_value(
+                icon_form,
+                icon_text,
+                form=form,
+            )
+
+        for id, custom_assertion in enumerate(form.custom_assertions):
+            yield (
+                id_strings.custom_assertion_locale(id, module, form),
+                clean_trans(custom_assertion.text, langs)
+            )
+
+
+def _create_case_list_form_app_strings(
+    app,
+    module,
+    lang,
+    langs,
+    for_default,
+    build_profile_id,
+):
+    if hasattr(module, 'case_list_form') and module.case_list_form.form_id:
+        if toggles.FOLLOWUP_FORMS_AS_CASE_LIST_FORM.enabled(app.domain):
+            form_name = app.get_form(module.case_list_form.form_id).name
+            fallback_name = gettext("Continue To {form_name}").format(
+                form_name=clean_trans(form_name, langs))
+        else:
+            fallback_name = gettext("Create a new Case")
+        yield (
+            id_strings.case_list_form_locale(module),
+            clean_trans(module.case_list_form.label, langs) or fallback_name
+        )
+
+        icon = module.case_list_form.icon_app_string(
+            lang,
+            for_default,
+            build_profile_id,
+        )
+        if icon:
+            yield id_strings.case_list_form_icon_locale(module), icon
+
+        audio = module.case_list_form.audio_app_string(
+            lang,
+            for_default,
+            build_profile_id,
+        )
+        if audio:
+            yield id_strings.case_list_form_audio_locale(module), audio
+
+
+def _create_dependencies_app_strings(app):
+    dependencies = app.profile.get('features', {}).get('dependencies')
+    if toggles.APP_DEPENDENCIES.enabled(app.domain) and dependencies:
+        settings = get_commcare_settings_lookup()['features']['dependencies']
+        app_id_to_name = {k: v for k, v in zip(
+            settings["values"],
+            settings["value_names"]
+        )}
+        for app_id in dependencies:
+            app_name = app_id_to_name[app_id]
+            yield id_strings.android_package_name(app_id), app_name
+
+
+def _maybe_add_index(text, app):
+    if app.build_version and app.build_version >= LooseVersion('2.8'):
+        sense_on = app.profile.get('features', {}).get('sense') == 'true'
+        entry_mode = app.profile.get('properties', {}).get('cc-entry-mode')
+        numeric_nav_on = entry_mode == 'cc-entry-review'
+        starts_with_digit = text and text[0].isdigit()
+        if (sense_on or numeric_nav_on) and not starts_with_digit:
+            text = f"${{0}} {text}"
+    return text
 
 
 class AppStringsBase(object):
@@ -282,13 +597,21 @@ class AppStringsBase(object):
                     'This user must have access to exactly one lookup table row for the table: ${0}')
 
         if 'case_autoload.usercase.case_missing' not in messages:
-            messages['usercase.missing_id'] = \
+            messages['case_autoload.usercase.case_missing'] = \
                 ('This form affects the user case, but no user case id was found. '
                     'Please contact your supervisor.')
 
-        from corehq.apps.app_manager.models import (
-            AUTO_SELECT_CASE, AUTO_SELECT_FIXTURE, AUTO_SELECT_USER,
-            AUTO_SELECT_LOCATION, AUTO_SELECT_USERCASE, AUTO_SELECT_RAW
+        if 'case_search.claimed_case.case_missing' not in messages:
+            messages['case_search.claimed_case.case_missing'] = \
+                'Unable to find the selected case after performing a sync. Please try again.'
+
+        from corehq.apps.app_manager.const import (
+            AUTO_SELECT_CASE,
+            AUTO_SELECT_FIXTURE,
+            AUTO_SELECT_LOCATION,
+            AUTO_SELECT_RAW,
+            AUTO_SELECT_USER,
+            AUTO_SELECT_USERCASE,
         )
 
         mode_text = {

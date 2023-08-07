@@ -18,7 +18,9 @@
       {% endfor %}
     </div>
   {% endif %}
-  {% crispy criteria_form criteria_form.case_type_helper %}
+  {% if criteria_form.form_beginning_helper %}
+    {% crispy criteria_form criteria_form.form_beginning_helper %}
+  {% endif %}
   <div data-bind="template: {name: getKoTemplateId, foreach: criteria, afterRender:disableCriteriaField}"></div>
   <div class="form-group" data-bind="template: {afterRender:disableCriteriaField}">
     <label class="col-xs-12 col-sm-4 col-md-4 col-lg-2 control-label">
@@ -44,12 +46,18 @@
             <li data-bind="click: function() { addFilter('date-case-property-filter'); }"><a>{% trans "Date case property" %}</a></li>
             <li data-bind="click: function() { addFilter('advanced-date-case-property-filter'); }"><a>{% trans "Date case property (advanced)" %}</a></li>
           {% endif %}
+          {% if form.allow_locations_filter %}
+            <li data-bind="click: function() { addFilter('locations-filter'); }"><a>{% trans "Location" %}</a></li>
+          {% endif %}
           {% if form.allow_parent_case_references %}
             <li data-bind="click: function() { addFilter('parent-closed-filter'); }"><a>{% trans "Parent case is closed" %}</a></li>
           {% endif %}
-          {% if form.is_system_admin %}
+          {% if form.is_system_admin and form.allow_custom_filter %}
             <li data-bind="click: function() { addFilter('custom-filter'); }"><a>{% trans "Custom filter" %}</a></li>
           {% endif %}
+          {% if form.allow_ucr_filter %}
+          <li data-bind="click: function() { addFilter('ucr-filter'); }"><a>{% trans "UCR Filter" %}</a></li>
+        {% endif %}
         </ul>
       </div>
     </div>
@@ -65,7 +73,12 @@
         <button type="button" class="btn btn-danger" data-bind="click: $parent.removeFilter"><i class="fa fa-close"></i></button>
       </div>
       <div class="col-xs-6 text-center">
-        <label class="control-label">{% trans "AND" %}</label>
+        <!-- ko if: $index() > 0 && $parent.criteriaOperator() == 'ALL' -->
+          <label class="control-label">{% trans "AND" %}</label>
+        <!-- /ko -->
+        <!-- ko if: $index() > 0 && $parent.criteriaOperator() == 'ANY' -->
+          <label class="control-label">{% trans "OR" %}</label>
+        <!-- /ko -->
       </div>
     </div>
   </div>
@@ -95,7 +108,10 @@
     <div data-bind="template: {name: 'remove-filter'}"></div>
     <label class="control-label col-xs-2">{% trans "Case property" %}</label>
     <div class="controls col-xs-2">
-      <input type="text" class="textinput form-control" data-bind="value: property_name" required placeholder="{% trans 'case property name' %}" />
+      <case-property-input params="
+        valueObservable: property_name,
+        caseTypeObservable: $root.caseType,
+      "></case-property-input>
     </div>
     <div class="controls col-xs-2">
       <select class="select form-control" data-bind="value: match_type">
@@ -131,7 +147,10 @@
       <label class="control-label">{% trans "the date in case property" %}</label>
     </div>
     <div class="controls col-xs-2">
-      <input type="text" class="textinput form-control" data-bind="value: property_name" required placeholder="{% trans 'case property name' %}" />
+      <case-property-input params="
+        valueObservable: property_name,
+        caseTypeObservable: $root.caseType,
+      "></case-property-input>
     </div>
   </div>
 </script>
@@ -153,7 +172,10 @@
       <label class="control-label">{% trans "the date in case property" %}</label>
     </div>
     <div class="controls col-xs-2">
-      <input type="text" class="textinput form-control" data-bind="value: property_name" required placeholder="{% trans 'case property name' %}" />
+      <case-property-input params="
+        valueObservable: property_name,
+        caseTypeObservable: $root.caseType,
+      "></case-property-input>
     </div>
     <div class="controls col-xs-1">
       <select class="select form-control" data-bind="value: plus_minus">
@@ -197,5 +219,40 @@
     <label class="col-xs-1 control-label">
       <span class="label label-primary">Requires System Admin</span>
     </label>
+  </div>
+</script>
+
+{# Template for location filter #}
+
+<script type="text/html" id="locations-filter">
+  <div class="form-group well">
+    <div data-bind="template: {name: 'remove-filter'}"></div>
+    <label class="control-label col-xs-2">{% trans "Case belongs to location" %}</label>
+    <div class="controls col-xs-4">
+      <select class="select form-control" data-bind="value: location_id">
+        {% for location in form.user_locations %}
+          <option value="{{ location.location_id }}">{{ location.name }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="controls col-xs-4">
+      <label class="control-label col-xs-12 col-sm-4 col-md-4 col-lg-4">
+        {% trans "Include cases from child locations" %}
+      </label>
+      <input type="checkbox" data-bind="checked: include_child_locations" name="include_child_locations" />
+    </div>
+  </div>
+</script>
+
+{# Template for ucr filter #}
+{# An instance of this template is bound to an instance of the js object UCRFilterDefinition #}
+
+<script type="text/html" id="ucr-filter">
+  <div class="form-group well">
+    <div data-bind="template: {name: 'remove-filter'}"></div>
+    <label class="control-label col-xs-2">{% trans "Filter Definition" %}</label>
+    <div class="controls col-xs-4" data-bind="{template: {afterRender: $parent.enableAce}}">
+      <textarea class="formcontrol observablejsonwidget" name="configured_filter" data-bind="value: configured_filter"></textarea>
+    </div>
   </div>
 </script>

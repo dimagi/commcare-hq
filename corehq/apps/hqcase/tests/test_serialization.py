@@ -1,26 +1,21 @@
 import uuid
 from datetime import datetime
+from unittest.mock import patch
 
 from django.test import TestCase
 
 from casexml.apps.case.mock import CaseBlock, IndexAttrs
-from pillowtop.es_utils import initialize_index_and_mapping
 
 from corehq.apps.domain.shortcuts import create_domain
-from corehq.apps.es.case_search import CaseSearchES
+from corehq.apps.es.case_search import CaseSearchES, case_search_adapter
 from corehq.apps.es.tests.utils import es_test
-from corehq.elastic import get_es_new, send_to_elasticsearch
 from corehq.form_processor.models import CommCareCase
-from corehq.pillows.case_search import transform_case_for_elasticsearch
-from corehq.pillows.mappings.case_search_mapping import CASE_SEARCH_INDEX_INFO
-from corehq.util.elastic import ensure_index_deleted
-from corehq.util.test_utils import trap_extra_setup
 
 from ..api.core import serialize_case, serialize_es_case
 from ..utils import submit_case_blocks
 
 
-@es_test
+@es_test(requires=[case_search_adapter], setup_class=True)
 class TestAPISerialization(TestCase):
     domain = 'test-update-cases'
     maxDiff = None
@@ -71,23 +66,20 @@ class TestAPISerialization(TestCase):
             case.modified_on = datetime(2021, 2, 18, 10, 59)
             case.server_modified_on = datetime(2021, 2, 18, 10, 59)
 
-        cls.es = get_es_new()
-        with trap_extra_setup(ConnectionError):
-            initialize_index_and_mapping(cls.es, CASE_SEARCH_INDEX_INFO)
         for case in [cls.case, cls.parent_case]:
-            send_to_elasticsearch(
-                'case_search',
-                transform_case_for_elasticsearch(cls.case.to_json())
+            case_search_adapter.index(
+                cls.case,
+                refresh=True
             )
-        cls.es.indices.refresh(CASE_SEARCH_INDEX_INFO.index)
 
     @classmethod
     def tearDownClass(cls):
         cls.domain_obj.delete()
-        ensure_index_deleted(CASE_SEARCH_INDEX_INFO.index)
         super().tearDownClass()
 
-    def test_serialization(self):
+    @patch('corehq.apps.hqcase.api.core.datetime')
+    def test_serialization(self, datetime_mock):
+        datetime_mock.utcnow.return_value = datetime(2021, 2, 18, 11, 2)
         self.assertEqual(
             serialize_case(self.case),
             {
@@ -100,6 +92,7 @@ class TestAPISerialization(TestCase):
                 "date_opened": "2021-02-18T10:59:00.000000Z",
                 "last_modified": "2021-02-18T10:59:00.000000Z",
                 "server_last_modified": "2021-02-18T10:59:00.000000Z",
+                "indexed_on": "2021-02-18T11:02:00.000000Z",
                 "closed": False,
                 "date_closed": None,
                 "properties": {
@@ -118,4 +111,11 @@ class TestAPISerialization(TestCase):
 
     def test_es_serialization(self):
         es_case = CaseSearchES().doc_id(self.case.case_id).run().hits[0]
-        self.assertEqual(serialize_case(self.case), serialize_es_case(es_case))
+        sql_res = serialize_case(self.case)
+        es_res = serialize_es_case(es_case)
+
+        # Remove indexed on, as this will vary slightly, which is expected
+        sql_res.pop('indexed_on')
+        es_res.pop('indexed_on')
+
+        self.assertEqual(sql_res, es_res)

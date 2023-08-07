@@ -2,12 +2,11 @@ from corehq.util.es.elasticsearch import ElasticsearchException
 
 from corehq.apps.es import CaseES, FormES, GroupES
 from corehq.apps.es.sms import SMSES
-from corehq.elastic import ES_EXPORT_INSTANCE, get_es_new
-from corehq.util.es.interface import ElasticsearchInterface
+from corehq.apps.es.cases import case_adapter
 
 
 def get_form_export_base_query(domain, app_id, xmlns, include_errors):
-    query = (FormES(es_instance_alias=ES_EXPORT_INSTANCE)
+    query = (FormES(for_export=True)
              .domain(domain)
              .xmlns(xmlns)
              .remove_default_filter('has_user'))
@@ -21,7 +20,7 @@ def get_form_export_base_query(domain, app_id, xmlns, include_errors):
 
 
 def get_case_export_base_query(domain, case_type):
-    return (CaseES(es_instance_alias=ES_EXPORT_INSTANCE)
+    return (CaseES(for_export=True)
             .domain(domain)
             .case_type(case_type)
             .sort("opened_on")
@@ -29,7 +28,7 @@ def get_case_export_base_query(domain, case_type):
 
 
 def get_sms_export_base_query(domain):
-    return (SMSES(es_instance_alias=ES_EXPORT_INSTANCE)
+    return (SMSES(for_export=True)
             .domain(domain)
             .processed_or_incoming_messages()
             .sort("date"))
@@ -50,14 +49,8 @@ def get_groups_user_ids(group_ids):
 
 
 def get_case_name(case_id):
-    from corehq.pillows.mappings.case_mapping import CASE_INDEX_INFO
     try:
-        result = ElasticsearchInterface(get_es_new()).get_doc(
-            CASE_INDEX_INFO.alias,
-            CASE_INDEX_INFO.type,
-            case_id,
-            source_includes=['name']
-        )
+        result = case_adapter.get(case_id, source_includes=['name'])
     except ElasticsearchException:
         return None
 

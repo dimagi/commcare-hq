@@ -19,7 +19,7 @@
     <div class="read-write form-inline" data-bind="visible: isEditing(), css: containerClass">
       <div class="form-group langcode-container" data-bind="css: {'has-lang': lang}">
         <!-- ko if: nodeName === "textarea" -->
-        <textarea class="form-control" data-bind="
+        <textarea class="form-control vertical-resize" data-bind="
                         attr: {name: name, id: id, placeholder: placeholder, rows: rows, cols: cols},
                         value: value,
                         hasFocus: isEditing(),

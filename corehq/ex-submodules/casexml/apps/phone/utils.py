@@ -33,28 +33,30 @@ ITESM_COMMENT_REGEX = re.compile(br'(<!--items=(\d+)-->)')
 GLOBAL_USER_ID = 'global-user-id-7566F038-5000-4419-B3EF-5349FB2FF2E9'
 
 
-def get_or_cache_global_fixture(restore_state, cache_bucket_prefix, fixture_name, data_fn):
+def get_or_cache_global_fixture(domain, user_id, cache_bucket_prefix,
+                                fixture_name, data_fn, overwrite_cache=False):
     """
     Get the fixture data for a global fixture (one that does not vary by user).
 
-    :param restore_state: Restore state object used to access features of the restore
+    :param domain: The domain to get or cache the fixture
+    :param user_id: User's id, if this is for case restore, then pass in case id
     :param cache_bucket_prefix: Fixture bucket prefix
     :param fixture_name: Name of the fixture
     :param data_fn: Function to generate the XML fixture elements
+    :param overwrite_cache: a boolean property from RestoreState object, default is False
     :return: list containing byte string representation of the fixture
     """
-    domain = restore_state.restore_user.domain
 
     data = None
     key = '{}/{}'.format(cache_bucket_prefix, domain)
 
-    if not restore_state.overwrite_cache:
+    if not overwrite_cache:
         data = get_cached_fixture_items(domain, cache_bucket_prefix)
         _record_datadog_metric('cache_miss' if data is None else 'cache_hit', key)
 
     if data is None:
         with CriticalSection([key]):
-            if not restore_state.overwrite_cache:
+            if not overwrite_cache:
                 # re-check cache to avoid re-computing it
                 data = get_cached_fixture_items(domain, cache_bucket_prefix)
                 if data is not None:
@@ -68,7 +70,7 @@ def get_or_cache_global_fixture(restore_state, cache_bucket_prefix, fixture_name
             cache_fixture_items_data(io_data, domain, fixture_name, cache_bucket_prefix)
 
     global_id = GLOBAL_USER_ID.encode('utf-8')
-    b_user_id = restore_state.restore_user.user_id.encode('utf-8')
+    b_user_id = user_id.encode('utf-8')
     return [data.replace(global_id, b_user_id)] if data else []
 
 
@@ -222,7 +224,7 @@ class MockDevice(object):
         if all(isinstance(s, CaseStructure) for s in cases):
             self.case_blocks.extend(factory.get_case_blocks(cases))
         else:
-            self.case_blocks.extend(b.as_xml() for b in cases)
+            self.case_blocks.extend(cases)
 
     def post_changes(self, *args, **kw):
         """Post enqueued changes from device to HQ
@@ -240,9 +242,9 @@ class MockDevice(object):
             # post device case changes
             token = self.last_sync.restore_id if self.last_sync else None
             form = self.case_factory.post_case_blocks(
-                self.case_blocks,
+                [b.as_text() for b in self.case_blocks],
                 device_id=self.id,
-                form_extras={"last_sync_token": token},
+                submission_extras={"last_sync_token": token},
                 user_id=self.user_id,
             )[0]
             self.case_blocks = []

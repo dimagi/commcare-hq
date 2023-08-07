@@ -3,11 +3,18 @@ SMSES
 --------
 """
 from . import filters
+from .client import ElasticDocumentAdapter, create_document_adapter
+from .const import (
+    HQ_SMS_INDEX_CANONICAL_NAME,
+    HQ_SMS_INDEX_NAME,
+    HQ_SMS_SECONDARY_INDEX_NAME,
+)
 from .es_query import HQESQuery
+from .index.settings import IndexSettingsKey
 
 
 class SMSES(HQESQuery):
-    index = 'sms'
+    index = HQ_SMS_INDEX_CANONICAL_NAME
 
     @property
     def builtin_filters(self):
@@ -27,6 +34,30 @@ class SMSES(HQESQuery):
 
     def user_aggregation(self):
         return self.terms_aggregation('couch_recipient', 'user')
+
+
+class ElasticSMS(ElasticDocumentAdapter):
+
+    settings_key = IndexSettingsKey.SMS
+    canonical_name = HQ_SMS_INDEX_CANONICAL_NAME
+
+    @property
+    def mapping(self):
+        from .mappings.sms_mapping import SMS_MAPPING
+        return SMS_MAPPING
+
+    @property
+    def model_cls(self):
+        from corehq.apps.sms.models import SMS
+        return SMS
+
+
+sms_adapter = create_document_adapter(
+    ElasticSMS,
+    HQ_SMS_INDEX_NAME,
+    "sms",
+    secondary=HQ_SMS_SECONDARY_INDEX_NAME,
+)
 
 
 def incoming_messages():

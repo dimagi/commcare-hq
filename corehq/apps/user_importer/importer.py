@@ -1,10 +1,13 @@
 import logging
+import string
+import random
 from collections import defaultdict, namedtuple
 from datetime import datetime
 
 from django.db import DEFAULT_DB_ALIAS
 
 from corehq.apps.enterprise.models import EnterpriseMobileWorkerSettings
+from corehq.apps.users.util import generate_mobile_username
 from dimagi.utils.logging import notify_exception
 from django.utils.translation import gettext as _
 
@@ -36,6 +39,7 @@ from corehq.apps.user_importer.validation import (
 from corehq.apps.users.audit.change_messages import UserChangeMessage
 from corehq.apps.users.account_confirmation import (
     send_account_confirmation_if_necessary,
+    send_account_confirmation_sms_if_necessary,
 )
 from corehq.apps.users.models import (
     CommCareUser,
@@ -44,9 +48,8 @@ from corehq.apps.users.models import (
     UserRole,
     InvitationStatus
 )
-from corehq.apps.users.util import normalize_username
 from corehq.const import USER_CHANGE_VIA_BULK_IMPORTER
-from corehq.toggles import DOMAIN_PERMISSIONS_MIRROR
+from corehq.toggles import DOMAIN_PERMISSIONS_MIRROR, TABLEAU_USER_SYNCING
 from corehq.apps.sms.util import validate_phone_number
 
 required_headers = set(['username'])
@@ -58,6 +61,7 @@ allowed_headers = set([
     'User IMEIs (read only)', 'registered_on (read only)', 'last_submission (read only)',
     'last_sync (read only)', 'web_user', 'remove_web_user', 'remove', 'last_access_date (read only)',
     'last_login (read only)', 'last_name', 'status', 'first_name',
+    'send_confirmation_sms',
 ]) | required_headers
 old_headers = {
     # 'old_header_name': 'new_header_name'
@@ -83,6 +87,9 @@ def check_headers(user_specs, domain, is_web_upload=False):
 
     if not is_web_upload and EnterpriseMobileWorkerSettings.is_domain_using_custom_deactivation(domain):
         allowed_headers.add('deactivate_after')
+
+    if TABLEAU_USER_SYNCING.enabled(domain):
+        allowed_headers.update({'tableau_role', 'tableau_groups'})
 
     illegal_headers = headers - allowed_headers
 
@@ -252,7 +259,9 @@ def create_or_update_groups(domain, group_specs):
 
         # check that group_names are unique
         if group_name in group_names:
-            log['errors'].append('Your spreadsheet has multiple groups called "%s" and only the first was processed' % group_name)
+            log['errors'].append(
+                'Your spreadsheet has multiple groups called "%s" and only the first was processed' % group_name
+            )
             continue
         else:
             group_names.add(group_name)
@@ -341,7 +350,15 @@ def check_modified_user_loc(location_ids, loc_id, assigned_loc_ids):
     return locations_updated, primary_location_removed
 
 
-def get_domain_info(domain, upload_domain, user_specs, domain_info_by_domain, upload_user=None, group_memoizer=None, is_web_upload=False):
+def get_domain_info(
+    domain,
+    upload_domain,
+    user_specs,
+    domain_info_by_domain,
+    upload_user=None,
+    group_memoizer=None,
+    is_web_upload=False
+):
     from corehq.apps.users.views.mobile.custom_data_fields import UserFieldsView
     from corehq.apps.users.views.utils import get_editable_role_choices
 
@@ -445,6 +462,17 @@ def create_or_update_commcare_users_and_groups(upload_domain, user_specs, upload
            sets Invitation with the CommCare user's role and primary location
     All changes to users only, are tracked using UserChangeLogger, as an audit trail.
     """
+    # HELPME
+    #
+    # This method has been flagged for refactoring due to its complexity and
+    # frequency of touches in changesets
+    #
+    # If you are writing code that touches this method, your changeset
+    # should leave the method better than you found it.
+    #
+    # Please remove this flag when this method no longer triggers an 'E' or 'F'
+    # classification from the radon code static analysis
+
     from corehq.apps.user_importer.helpers import CommCareUserImporter, WebUserImporter
 
     domain_info_by_domain = {}
@@ -460,18 +488,36 @@ def create_or_update_commcare_users_and_groups(upload_domain, user_specs, upload
             update_progress(current)
             current += 1
 
+        status_row = {}
         username = row.get('username')
         domain = row.get('domain') or upload_domain
-        username = normalize_username(str(username), domain) if username else None
+        try:
+            username = generate_mobile_username(str(username), domain, False) if username else None
+        except ValidationError:
+            status_row = {
+                'username': username,
+                'row': row,
+                'flag': _("Username must not contain blank spaces or special characters."),
+            }
+            ret["rows"].append(status_row)
+            continue
         status_row = {
             'username': username,
             'row': row,
         }
 
+        # Set a dummy password to pass the validation, similar to GUI user creation
+        send_account_confirmation_sms = spec_value_to_boolean_or_none(row, 'send_confirmation_sms')
+        if send_account_confirmation_sms and not row.get('password'):
+            string_set = string.ascii_uppercase + string.digits + string.ascii_lowercase
+            password = ''.join(random.choices(string_set, k=10))
+            row['password'] = password
+
+        if(row.get('password')):
+            row['password'] = str(row.get('password'))
         try:
             domain_info = get_domain_info(domain, upload_domain, user_specs, domain_info_by_domain,
-                                        group_memoizer)
-
+            group_memoizer)
             for validator in domain_info.validators:
                 validator(row)
         except UserUploadError as e:
@@ -501,11 +547,16 @@ def create_or_update_commcare_users_and_groups(upload_domain, user_specs, upload
 
         try:
             password = str(password) if password else None
-
             is_active = spec_value_to_boolean_or_none(row, 'is_active')
             is_account_confirmed = spec_value_to_boolean_or_none(row, 'is_account_confirmed')
             send_account_confirmation_email = spec_value_to_boolean_or_none(row, 'send_confirmation_email')
+
             remove_web_user = spec_value_to_boolean_or_none(row, 'remove_web_user')
+
+            if send_account_confirmation_sms:
+                is_active = False
+                if not user_id:
+                    is_account_confirmed = False
 
             user = _get_or_create_commcare_user(domain, user_id, username, is_account_confirmed,
                                                 web_user_username, password, upload_user)
@@ -598,8 +649,11 @@ def create_or_update_commcare_users_and_groups(upload_domain, user_specs, upload
                         web_user.save()
                 if web_user_importer:
                     web_user_importer.save_log()
-            if send_account_confirmation_email and not web_user_username:
-                send_account_confirmation_if_necessary(user)
+            if not web_user_username:
+                if send_account_confirmation_email:
+                    send_account_confirmation_if_necessary(user)
+                if send_account_confirmation_sms:
+                    send_account_confirmation_sms_if_necessary(user)
 
             if is_password(password):
                 # Without this line, digest auth doesn't work.
@@ -700,6 +754,7 @@ def create_or_update_web_users(upload_domain, user_specs, upload_user, upload_re
         location_codes = row.get('location_code', []) if 'location_code' in row else None
         location_codes = format_location_codes(location_codes)
 
+
         try:
             remove = spec_value_to_boolean_or_none(row, 'remove')
             check_user_role(username, role)
@@ -748,7 +803,9 @@ def create_or_update_web_users(upload_domain, user_specs, upload_user, upload_re
                     if domain_info.can_assign_locations and location_codes is not None:
                         # set invite location to first item in location_codes
                         if len(location_codes) > 0:
-                            user_invite_loc = get_location_from_site_code(location_codes[0], domain_info.location_cache)
+                            user_invite_loc = get_location_from_site_code(
+                                location_codes[0], domain_info.location_cache
+                            )
                             user_invite_loc_id = user_invite_loc.location_id
                     create_or_update_web_user_invite(username, domain, role_qualified_id, upload_user,
                                                      user_invite_loc_id)

@@ -1,9 +1,8 @@
 from django.core.management import BaseCommand
 
-from corehq.elastic import get_es_new
+from corehq.apps.es.client import manager as es_manager
 from corehq.pillows.utils import get_all_expected_es_indices
 from corehq.util.es.elasticsearch import AuthorizationException
-from corehq.util.es.interface import ElasticsearchInterface
 
 
 class Command(BaseCommand):
@@ -30,13 +29,11 @@ class Command(BaseCommand):
         )
 
     def handle(self, **options):
-        es = get_es_new()
-        es_interface = ElasticsearchInterface(es)
         # call this before getting existing indices because apparently getting the pillow will create the index
         # if it doesn't exist
         # fixme: this can delete real indices if a reindex is in progress
-        found_indices = set(es_interface.get_aliases().keys())
-        expected_indices = {info.index for info in get_all_expected_es_indices()}
+        found_indices = set(es_manager.get_indices())
+        expected_indices = {adapter.index_name for adapter in get_all_expected_es_indices()}
         print(expected_indices)
 
         if options['verbose']:
@@ -50,14 +47,14 @@ class Command(BaseCommand):
         unref_indices = set([index for index in found_indices if index not in expected_indices])
         if unref_indices:
             if options['delete']:
-                _delete_indices(es, unref_indices)
+                _delete_indices(unref_indices)
             else:
-                _close_indices(es, unref_indices, options['noinput'])
+                _close_indices(unref_indices, options['noinput'])
         else:
             print('no indices need pruning')
 
 
-def _delete_indices(es, to_delete):
+def _delete_indices(to_delete):
     # always ask for confirmation when doing irreversible things
     if input(
             '\n'.join([
@@ -69,16 +66,16 @@ def _delete_indices(es, to_delete):
             ])).lower() == 'delete indices':
         for index in to_delete:
             try:
-                es.indices.flush(index)
+                es_manager.index_flush(index)
             except AuthorizationException:
                 # already closed
                 pass
-            es.indices.delete(index)
+            es_manager.index_delete(index)
     else:
         print('aborted')
 
 
-def _close_indices(es, to_close, noinput):
+def _close_indices(to_close, noinput):
     if noinput or input(
             '\n'.join([
                 'Really close ALL the unrecognized elastic indices?',
@@ -89,10 +86,10 @@ def _close_indices(es, to_close, noinput):
             ])).lower() == 'close indices':
         for index in to_close:
             try:
-                es.indices.flush(index)
+                es_manager.index_flush(index)
             except AuthorizationException:
                 # already closed
                 pass
-            es.indices.close(index)
+            es_manager.index_close(index)
     else:
         print('aborted')

@@ -61,6 +61,8 @@ class Command(BaseCommand):
         else:
             print('database already completely pruned!')
 
+        print("To remove from disk any pruned views, use management command `delete_old_couch_views_from_disk`")
+
 
 class MyConflictsDontDie(Exception):
     pass

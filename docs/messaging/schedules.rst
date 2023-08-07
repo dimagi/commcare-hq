@@ -47,9 +47,9 @@ and having an ``appointment_date``, the framework will create a reminder instanc
 After the message is sent 2 days before the ``appointment_date``, the rule instance is deactivated
 to denote that it has completed the defined schedule and should not be sent again.
 
-In order to keep messaging responsive to case changes, every time a case is saved, a
+In order to keep messaging responsive to case changes, every time a case is saved, the
 `corehq.messaging.tasks.sync_case_for_messaging <https://github.com/dimagi/commcare-hq/blob/master/corehq/messaging/tasks.py>`_
-task is spawned to handle any changes. This is controlled via the ``sql_case_post_save`` signal.
+function is called to handle any changes. This is controlled via `case-pillow`.
 
 Similarly, any time a rule is updated, a
 `corehq.messaging.tasks.run_messaging_rule <https://github.com/dimagi/commcare-hq/blob/master/corehq/messaging/tasks.py>`_
@@ -136,6 +136,7 @@ be configured to send includes:
 * SMS
 * SMS Survey
 * Emails
+* Push Notifications
 
 In the case of SMS SurveysSessions, the survey content is defined using a form in an app which is then
 played to the recipients over SMS or Whatsapp.

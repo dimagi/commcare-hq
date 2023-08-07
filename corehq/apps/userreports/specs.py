@@ -1,7 +1,12 @@
-from collections import namedtuple
+from dataclasses import dataclass, field
 from datetime import datetime
+from typing import Optional
+
+from memoized import memoized
 
 from dimagi.ext.jsonobject import StringProperty
+
+from corehq import toggles
 
 
 def TypeProperty(value):
@@ -13,11 +18,53 @@ def TypeProperty(value):
     return StringProperty(required=True, choices=[value])
 
 
-class FactoryContext(namedtuple('FactoryContext', ('named_expressions', 'named_filters'))):
+@dataclass
+class FactoryContext():
+    named_expressions: dict
+    _named_expressions: dict = field(init=False, repr=False)
+
+    named_filters: dict
+    _named_filters: dict = field(init=False, repr=False)
+
+    domain: Optional[str] = None
+
+    def expression_from_spec(self, spec):
+        from corehq.apps.userreports.expressions.factory import ExpressionFactory
+        return ExpressionFactory.from_spec(spec, self)
+
+    def filter_from_spec(self, spec):
+        from corehq.apps.userreports.filters.factory import FilterFactory
+        return FilterFactory.from_spec(spec, self)
+
+    @property
+    @memoized
+    def named_filters(self):
+        extra_filters = {}
+        if self.domain and toggles.UCR_EXPRESSION_REGISTRY.enabled(self.domain):
+            from corehq.apps.userreports.models import UCRExpression
+            extra_filters = UCRExpression.objects.get_wrapped_filters_for_domain(self.domain, self)
+        return extra_filters | self._named_filters
+
+    @named_filters.setter
+    def named_filters(self, named_filters):
+        self._named_filters = named_filters
+
+    @property
+    @memoized
+    def named_expressions(self):
+        extra_expressions = {}
+        if self.domain and toggles.UCR_EXPRESSION_REGISTRY.enabled(self.domain):
+            from corehq.apps.userreports.models import UCRExpression
+            extra_expressions = UCRExpression.objects.get_wrapped_expressions_for_domain(self.domain, self)
+        return extra_expressions | self._named_expressions
+
+    @named_expressions.setter
+    def named_expressions(self, named_expressions):
+        self._named_expressions = named_expressions
 
     @staticmethod
-    def empty():
-        return FactoryContext({}, {})
+    def empty(domain=None):
+        return FactoryContext({}, {}, domain)
 
 
 class EvaluationContext(object):
@@ -58,3 +105,7 @@ class EvaluationContext(object):
     def reset_iteration(self):
         self.iteration_cache = {}
         self.iteration = 0
+
+    @staticmethod
+    def empty():
+        return EvaluationContext({})

@@ -11,7 +11,7 @@ from couchdbkit import MultipleResultsFound
 
 from corehq import toggles
 from corehq.apps.formplayer_api.smsforms.api import TouchformsError
-from corehq.apps.sms.mixin import BadSMSConfigException
+from corehq.apps.sms.mixin import BadSMSConfigException, apply_leniency
 from corehq.apps.sms.models import PhoneNumber
 from corehq.apps.sms.util import strip_plus
 from corehq.form_processor.models import XFormInstance
@@ -19,8 +19,6 @@ from corehq.messaging.scheduling.util import utcnow
 from corehq.util.metrics import metrics_counter
 from corehq.util.quickcache import quickcache
 from dimagi.utils.couch import CriticalSection
-
-from . import signals  # noqa: F401
 
 XFORMS_SESSION_SMS = "SMS"
 XFORMS_SESSION_IVR = "IVR"
@@ -155,10 +153,14 @@ class SQLXFormsSession(models.Model):
                 'completed_without_submission'
             )
         })
+        self.save()
+        subevent = self.related_subevent
+        if subevent:
+            subevent.update_date_last_activity()
 
     @property
     def related_subevent(self):
-        subevents = self.messagingsubevent_set.all()
+        subevents = self.messagingsubevent_set.all().order_by("-date", "-id")[:1]
         return subevents[0] if subevents else None
 
     @property
@@ -195,7 +197,6 @@ class SQLXFormsSession(models.Model):
         sessions = cls.get_all_open_sms_sessions(domain, contact_id)
         for session in sessions:
             session.close()
-            session.save()
 
     @classmethod
     def by_session_id(cls, id):
@@ -370,6 +371,21 @@ class XFormsSessionSynchronization:
                 cls._release_running_session_info_for_channel(running_session_info, channel)
 
     @classmethod
+    def set_channel_for_affinity(cls, session):
+        """
+        Set the channel affinity for the session. This is used for manually setting the affinity.
+
+        Returns True if the affinity was set
+        """
+        channel = session.get_channel()
+        with cls._critical_section(channel):
+            if cls._channel_is_available_for_session(session):
+                session_info = RunningSessionInfo(None, session.connection_id)
+                cls._release_running_session_info_for_channel(session_info, channel)
+                return True
+        return False
+
+    @classmethod
     def clear_stale_channel_claim(cls, channel):
         with cls._critical_section(channel):
             return cls._clear_stale_channel_claim(channel)
@@ -410,12 +426,15 @@ class XFormsSessionSynchronization:
 
     @staticmethod
     def _channel_affinity_cache_key(channel):
-        return f'XFormsSessionSynchronization.value.{channel.backend_id}/{channel.phone_number}'
+        return f'XFormsSessionSynchronization.value.{channel.backend_id}/{apply_leniency(channel.phone_number)}'
 
     @staticmethod
     def _critical_section(channel):
         return CriticalSection([
-            f'XFormsSessionSynchronization.critical_section.{channel.backend_id}/{channel.phone_number}'
+            (
+                f'XFormsSessionSynchronization.critical_section.{channel.backend_id}/'
+                f'{apply_leniency(channel.phone_number)}'
+            )
         ], timeout=5 * 60)
 
 
@@ -431,6 +450,7 @@ def get_channel_for_contact(contact_id, phone_number):
     backend_id = None
     phone_number_record = PhoneNumber.get_phone_number_for_owner(contact_id, phone_number)
     if phone_number_record:
+        phone_number = phone_number_record.phone_number  # prefer this number since it has leniency applied
         try:
             backend = phone_number_record.backend
         except BadSMSConfigException:

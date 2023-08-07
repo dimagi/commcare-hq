@@ -26,9 +26,11 @@ from dimagi.utils.parsing import json_format_date
 
 from corehq import privileges
 from corehq.apps.accounting.decorators import requires_privilege_with_fallback
+from corehq.apps.data_dictionary.util import get_data_dict_props_by_case_type
 from corehq.apps.data_interfaces.models import (
     AutomaticUpdateRule,
 )
+from django.utils.html import format_html
 from corehq.apps.hqwebapp.async_handler import AsyncHandlerMixin
 from corehq.apps.hqwebapp.decorators import (
     use_datatables,
@@ -604,6 +606,7 @@ class ConditionalAlertListView(ConditionalAlertBaseView):
 
     template_name = 'scheduling/conditional_alert_list.html'
     urlname = 'conditional_alert_list'
+    refresh_urlname = 'conditional_alert_list_refresh'
     page_title = gettext_lazy('Conditional Alerts')
 
     LIST_CONDITIONAL_ALERTS = 'list_conditional_alerts'
@@ -771,13 +774,9 @@ class CreateConditionalAlertView(BaseMessagingSectionView, AsyncHandlerMixin):
 
     @property
     def help_text(self):
-        return _("""
-            For information on Conditional Alerts, see the
-            <a target="_blank" href="https://confluence.dimagi.com/display/commcarepublic/Conditional+Alerts">
-                Conditional Alerts
-            </a>
-            help page.
-        """)
+        help_url = 'https://confluence.dimagi.com/display/commcarepublic/Conditional+Alerts'
+        link = format_html('<a target="_blank" href="{}">{}</a>', help_url, _("Conditional Alerts"))
+        return format_html(_('For information on Conditional Alerts, see the {} help page.'), link)
 
     @method_decorator(requires_privilege_with_fallback(privileges.REMINDERS_FRAMEWORK))
     @use_jquery_ui
@@ -798,6 +797,10 @@ class CreateConditionalAlertView(BaseMessagingSectionView, AsyncHandlerMixin):
     def page_context(self):
         context = super().page_context
         context.update({
+            'all_case_properties': {
+                t: sorted(names) for t, names in
+                get_data_dict_props_by_case_type(self.domain).items()
+            },
             'basic_info_form': self.basic_info_form,
             'criteria_form': self.criteria_form,
             'help_text': self.help_text,
@@ -922,11 +925,11 @@ class EditConditionalAlertView(CreateConditionalAlertView):
 
     @property
     def help_text(self):
-        return super().help_text + _("""
-            <br>
-            Editing a conditional alert will cause it to process each case of the alert's case type.
-            This may take some time.
-        """)
+        return format_html('{}<br>{}',
+            super().help_text,
+            _("Editing a conditional alert will cause it to process each case of the alert's case type. "
+              "This may take some time.")
+        )
 
     @property
     def rule_id(self):

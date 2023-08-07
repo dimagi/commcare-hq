@@ -83,8 +83,8 @@ class DomainLink(models.Model):
     def save(self, *args, **kwargs):
         super(DomainLink, self).save(*args, **kwargs)
         from corehq.apps.linked_domain.dbaccessors import (
-            get_upstream_domain_link,
             get_linked_domains,
+            get_upstream_domain_link,
             is_active_downstream_domain,
             is_active_upstream_domain,
         )
@@ -174,6 +174,10 @@ class FixtureLinkDetail(jsonobject.JsonObject):
     tag = jsonobject.StringProperty()
 
 
+class UpdateRuleLinkDetail(jsonobject.JsonObject):
+    id = jsonobject.IntegerProperty()
+
+
 class ReportLinkDetail(jsonobject.JsonObject):
     report_id = jsonobject.StringProperty()
 
@@ -182,10 +186,16 @@ class KeywordLinkDetail(jsonobject.JsonObject):
     keyword_id = jsonobject.StringProperty()
 
 
+class UCRExpressionLinkDetail(jsonobject.JsonObject):
+    ucr_expression_id = jsonobject.StringProperty()
+
+
 def wrap_detail(model, detail_json):
     return {
         'app': AppLinkDetail,
         'fixture': FixtureLinkDetail,
         'report': ReportLinkDetail,
         'keyword': KeywordLinkDetail,
+        'ucr_expression': UCRExpressionLinkDetail,
+        'auto_update_rule': UpdateRuleLinkDetail,
     }[model].wrap(detail_json)

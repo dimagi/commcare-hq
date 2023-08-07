@@ -65,6 +65,7 @@ from corehq.apps.domain import UNKNOWN_DOMAIN
 from corehq.apps.domain.models import Domain
 from corehq.apps.hqwebapp.tasks import send_html_email_async
 from corehq.apps.users.models import WebUser
+from corehq.apps.users.util import is_dimagi_email
 from corehq.blobs.mixin import CODES, BlobMixin
 from corehq.const import USER_DATE_FORMAT
 from corehq.privileges import REPORT_BUILDER_ADD_ON_PRIVS
@@ -1365,7 +1366,10 @@ class Subscription(models.Model):
                     service_type=None, pro_bono_status=None, funding_source=None,
                     transfer_credits=True, internal_change=False, account=None,
                     do_not_invoice=None, no_invoice_reason=None,
-                    auto_generate_credits=False, is_trial=False):
+                    auto_generate_credits=False, is_trial=False,
+                    do_not_email_invoice=False, do_not_email_reminder=False,
+                    skip_invoicing_if_no_feature_charges=False,
+                    skip_auto_downgrade=False, skip_auto_downgrade_reason=None):
         """
         Changing a plan TERMINATES the current subscription and
         creates a NEW SUBSCRIPTION where the old plan left off.
@@ -1403,13 +1407,16 @@ class Subscription(models.Model):
             is_active=True,
             do_not_invoice=do_not_invoice if do_not_invoice is not None else self.do_not_invoice,
             no_invoice_reason=no_invoice_reason if no_invoice_reason is not None else self.no_invoice_reason,
+            do_not_email_invoice=do_not_email_invoice,
+            do_not_email_reminder=do_not_email_reminder,
             auto_generate_credits=auto_generate_credits,
+            skip_invoicing_if_no_feature_charges=skip_invoicing_if_no_feature_charges,
             is_trial=is_trial,
             service_type=(service_type or SubscriptionType.NOT_SET),
             pro_bono_status=(pro_bono_status or ProBonoStatus.NO),
             funding_source=(funding_source or FundingSource.CLIENT),
-            skip_auto_downgrade=False,
-            skip_auto_downgrade_reason='',
+            skip_auto_downgrade=skip_auto_downgrade,
+            skip_auto_downgrade_reason=skip_auto_downgrade_reason or '',
         )
 
         new_subscription.save()
@@ -1964,6 +1971,14 @@ class Subscription(models.Model):
         else:
             return True
 
+    @classmethod
+    def get_plan_and_user_count_by_domain(cls, domain):
+        from corehq.apps.accounting.usage import FeatureUsageCalculator
+        subscription = cls.get_active_subscription_by_domain(domain)
+        plan_version = subscription.plan_version if subscription else DefaultProductPlan.get_default_plan_version()
+        user_rate = next(rate for rate in plan_version.feature_rates.all() if rate.feature.feature_type == 'User')
+        return user_rate.monthly_limit, FeatureUsageCalculator(user_rate, domain).get_usage()
+
 
 class InvoiceBaseManager(models.Manager):
 
@@ -2126,7 +2141,7 @@ class Invoice(InvoiceBase):
 
         if filter_out_dimagi:
             emails_with_dimagi = contact_emails
-            contact_emails = [e for e in contact_emails if not e.endswith('@dimagi.com')]
+            contact_emails = [e for e in contact_emails if not is_dimagi_email(e)]
             if not contact_emails:
                 # make sure at least someone (even if it's dimagi)
                 # gets this communication. Also helpful with QA when the only
@@ -3806,7 +3821,7 @@ class CreditAdjustment(ValidateModelMixin, models.Model):
 class DomainUserHistory(models.Model):
     """
     A record of the number of users in a domain at the record_date.
-    Created by task calculate_users_and_sms_in_all_domains on the first of every month.
+    Created by task calculate_users_in_all_domains on the first of every month.
     Used to bill clients for the appropriate number of users
     """
     domain = models.CharField(max_length=256)
@@ -3815,6 +3830,20 @@ class DomainUserHistory(models.Model):
 
     class Meta:
         unique_together = ('domain', 'record_date')
+
+
+class BillingAccountWebUserHistory(models.Model):
+    """
+    A record of the number of users for a billing account at the record_date.
+    Created by task calculate_web_users_in_all_billing_accounts on the first of every month.
+    It will be used to bill clients for the appropriate number of web users
+    """
+    billing_account = models.ForeignKey(BillingAccount, on_delete=models.CASCADE)
+    record_date = models.DateField()
+    num_users = models.IntegerField(default=0)
+
+    class Meta:
+        unique_together = ('billing_account', 'record_date')
 
 
 class CommunicationHistoryBase(models.Model):

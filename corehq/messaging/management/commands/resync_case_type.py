@@ -1,5 +1,5 @@
 from corehq.form_processor.models import CommCareCase
-from corehq.messaging.tasks import sync_case_for_messaging
+from corehq.messaging.tasks import sync_case_for_messaging_task
 from corehq.sql_db.util import get_db_aliases_for_partitioned_query
 from corehq.util.log import with_progress_bar
 from django.core.management.base import BaseCommand, CommandError
@@ -38,4 +38,4 @@ class Command(BaseCommand):
                 .values_list('case_id', flat=True)
             )
             for case_id in with_progress_bar(case_ids):
-                sync_case_for_messaging.delay(domain, case_id)
+                sync_case_for_messaging_task.delay(domain, case_id)

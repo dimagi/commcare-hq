@@ -45,4 +45,4 @@ No new subscription
 You can view the project space here: {{ domain_url }}
 
 Cheers,
---The CommCareHQ Team
+--The CommCare HQ Team

@@ -11,10 +11,10 @@ from corehq.util.metrics import metrics_gauge_task, metrics_counter
 from corehq.util.metrics.const import MPM_MAX
 from dimagi.utils.couch import (
     CriticalSection,
-    get_redis_client,
     get_redis_lock,
     release_lock,
 )
+from dimagi.utils.couch.cache.cache_core import get_redis_client
 from dimagi.utils.rate_limit import rate_limit
 
 from corehq import privileges
@@ -67,12 +67,9 @@ def remove_from_queue(queued_sms):
         sms.save()
 
     sms.publish_change()
+    sms.update_subevent_activity()
 
-    tags = {'backend': sms.backend_api, 'icds_indicator': ''}
-    if isinstance(sms.custom_metadata, dict) and 'icds_indicator' in sms.custom_metadata:
-        tags.update({
-            'icds_indicator': sms.custom_metadata['icds_indicator']
-        })
+    tags = {'backend': sms.backend_api}
     if sms.direction == OUTGOING and sms.processed and not sms.error:
         create_billable_for_sms(sms)
         metrics_counter('commcare.sms.outbound_succeeded', tags=tags)

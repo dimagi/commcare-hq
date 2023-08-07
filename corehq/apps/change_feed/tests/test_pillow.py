@@ -5,7 +5,6 @@ from django.test import SimpleTestCase, TestCase
 
 from fakecouch import FakeCouchDb
 from kafka import KafkaConsumer
-from kafka.common import KafkaUnavailableError
 from unittest.mock import patch
 
 from pillowtop.dao.exceptions import DocumentMismatchError
@@ -18,9 +17,8 @@ from corehq.apps.change_feed.consumer.feed import (
 from corehq.apps.change_feed.data_sources import SOURCE_COUCH
 from corehq.apps.change_feed.pillow import get_change_feed_pillow_for_db
 from corehq.pillows.case import get_case_pillow
-from corehq.pillows.mappings.case_mapping import CASE_INDEX_INFO
+from corehq.apps.es.cases import case_adapter
 from corehq.util.elastic import ensure_index_deleted
-from corehq.util.test_utils import trap_extra_setup
 
 
 class ChangeFeedPillowTest(SimpleTestCase):
@@ -112,7 +110,7 @@ class TestElasticProcessorPillows(TestCase):
             self.pillow = get_case_pillow(skip_ucr=True)
 
     def tearDown(self):
-        ensure_index_deleted(CASE_INDEX_INFO.index)
+        ensure_index_deleted(case_adapter.index_name)
 
     def test_mismatched_rev(self):
         """
@@ -124,6 +122,7 @@ class TestElasticProcessorPillows(TestCase):
             'type': 'mother',
             'domain': 'rev-domain',
             '_rev': '3-me',
+            '_id': 'a_cool_identifier',
         }
         broken_metadata = ChangeMeta(
             document_id='test-id',

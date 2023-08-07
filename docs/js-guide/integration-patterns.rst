@@ -229,6 +229,39 @@ to include
    <script src="{% static 'hqwebapp/js/toggles.js' %}"></script>
    <script src="{% static 'style/js/bootstrap3/main.js' %}"></script>
 
+Domain Privileges
+----------------------------
+
+In python you generally have the ability to check at any point whether a
+domain has a particular privilege.
+
+In JavaScript, all privileges for the current domain are available and
+easy to check. For example, you can check whether the domain has the ``export_ownership``
+privilege by including the `privileges` JS module
+
+.. code:: javascript
+
+   hqDefine('your/js/module', [
+      ...
+      'hqwebapp/js/privileges'
+   ], function (
+      ...
+      privileges
+   ) {...};
+
+and then checking for the privilege using
+
+.. code:: javascript
+
+   var hasPrivilege = privileges.hasPrivilege('export_ownership')
+
+On a page that doesn’t inherit from our main templates, you’ll also have
+to include
+
+.. code:: html
+
+   <script src="{% static 'hqwebapp/js/privileges.js' %}"></script>
+
 Remote Method Invocation
 ------------------------
 

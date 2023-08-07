@@ -1,6 +1,29 @@
-import os
+"""
+DetailContributor
+-----------------
+
+Details represent the configuration for case lists and case details. The reuse of the word "Detail" here is
+unfortunate. Details **can** be used for other purposes, such as the ``referral_detail``, but 99% of the time
+they're used for case list/detail.
+
+The case list is the "short" detail and the case detail is the "long" detail. A handful of configurations are only
+supported for one of these, e.g., actions only get added to the short detail.
+
+The detail element can be nested. HQ never nests short details, but it nests long details to produce tabbed case
+details. Each tab has its own ``<detail>`` element.
+
+The bulk of detail configuration is in the display properties, called "fields" and sometimes "columns" in the code.
+Each field has a good deal of configuration, and the code transforms them into named tuples while processing them.
+Each field has a format, one of about a dozen options. Formats are typically either UI-based, such as formatting a
+phone number to display as a link, or calculation-based, such as configuring a property to display differently when
+it's "late", i.e., is too far past some reference date.
+
+Most fields map to a particular case property, with the exception of calculated properties. These calculated
+properties are identified only by number. A typical field might be called ``case_dob_1`` in the suite, indicating
+both its position and its case property, but a calculation would be called ``case_calculated_property_1``.
+
+"""
 from collections import defaultdict, namedtuple
-from xml.sax.saxutils import escape
 
 from eulxml.xmlmap.core import load_xmlobject_from_string
 from lxml import etree
@@ -9,10 +32,11 @@ from memoized import memoized
 from corehq import toggles
 from corehq.apps.app_manager import id_strings
 from corehq.apps.app_manager.const import RETURN_TO
-from corehq.apps.app_manager.exceptions import SuiteError, SuiteValidationError
+from corehq.apps.app_manager.exceptions import SuiteValidationError
 from corehq.apps.app_manager.id_strings import callout_header_locale
 from corehq.apps.app_manager.suite_xml.const import FIELD_TYPE_LEDGER
 from corehq.apps.app_manager.suite_xml.contributors import SectionContributor
+from corehq.apps.app_manager.suite_xml.features.case_tiles import CaseTileHelper
 from corehq.apps.app_manager.suite_xml.features.scheduler import (
     schedule_detail_variables,
 )
@@ -44,11 +68,17 @@ from corehq.apps.app_manager.util import (
     get_sort_and_sort_only_columns,
     module_loads_registry_case,
     module_offers_search,
+    module_uses_inline_search,
 )
-from corehq.apps.app_manager.xpath import CaseXPath, CaseTypeXpath, XPath, session_var
+from corehq.apps.app_manager.xpath import CaseXPath, CaseTypeXpath, XPath, interpolate_xpath, session_var
 from corehq.util.timer import time_method
 
-AUTO_LAUNCH_EXPRESSION = "$next_input = '' or count(instance('casedb')/casedb/case[@case_id=$next_input]) = 0"
+AUTO_LAUNCH_EXPRESSIONS = {
+    "single-select": "$next_input = '' or count(instance('casedb')/casedb/case[@case_id=$next_input]) = 0",
+    "multi-select": ("count(instance('next_input')/results/value) = 0"
+                     " or count(instance('next_input')/results/value"
+                     "[count(instance('casedb')/casedb/case[@case_id = current()/.]) = 0]) > 0")
+}
 
 
 class DetailContributor(SectionContributor):
@@ -78,9 +108,10 @@ class DetailContributor(SectionContributor):
                             include_sort=detail_type.endswith('short'),
                         )  # list of DetailColumnInfo named tuples
                     if detail_column_infos:
-                        if detail.use_case_tiles:
-                            helper = CaseTileHelper(self.app, module, detail,
-                                                    detail_type, self.build_profile_id)
+                        detail_id = id_strings.detail(module, detail_type)
+                        if detail.case_tile_template:
+                            helper = CaseTileHelper(self.app, module, detail, detail_id, detail_type,
+                                self.build_profile_id, detail_column_infos, self.entries_helper)
                             elements.append(helper.build_case_tile_detail())
                         else:
                             print_template_path = None
@@ -94,7 +125,7 @@ class DetailContributor(SectionContributor):
                                 detail,
                                 detail_column_infos,
                                 tabs=list(detail.get_tabs()),
-                                id=id_strings.detail(module, detail_type),
+                                id=detail_id,
                                 title=title,
                                 print_template=print_template_path,
                             )
@@ -103,8 +134,8 @@ class DetailContributor(SectionContributor):
 
                     # add the persist case context if needed and if
                     # case tiles are present and have their own persistent block
-                    if (detail.persist_case_context and
-                            not (detail.use_case_tiles and detail.persist_tile_on_forms)):
+                    if (detail.persist_case_context
+                            and not (detail.case_tile_template and detail.persist_tile_on_forms)):
                         d = self._get_persistent_case_context_detail(module, detail.persistent_case_context_xml)
                         elements.append(d)
 
@@ -132,7 +163,7 @@ class DetailContributor(SectionContributor):
             for tab in tabs:
                 # relevant should be set to None even in case its ''
                 tab_relevant = None
-                if tab.relevant and toggles.DISPLAY_CONDITION_ON_TABS.enabled(module.get_app().domain):
+                if tab.relevant:
                     tab_relevant = tab.relevant
 
                 sub_detail = self.build_detail(
@@ -153,7 +184,7 @@ class DetailContributor(SectionContributor):
             if len(d.details):
                 helper = EntriesHelper(self.app)
                 datums = helper.get_datum_meta_module(module)
-                d.variables.extend([DetailVariable(name=datum.datum.id, function=datum.datum.value) for datum in datums])
+                d.variables.extend([DetailVariable(name=datum.id, function=datum.datum.value) for datum in datums])
                 return d
             else:
                 return None
@@ -163,6 +194,8 @@ class DetailContributor(SectionContributor):
             # Add lookup
             if detail.lookup_enabled and detail.lookup_action:
                 d.lookup = self._get_lookup_element(detail, module)
+
+            self.add_no_items_text_to_detail(d, self.app, detail_type, module)
 
             # Add variables
             variables = list(
@@ -175,10 +208,7 @@ class DetailContributor(SectionContributor):
             if end is None:
                 end = len(detail_column_infos)
             for column_info in detail_column_infos[start:end]:
-                # column_info is an instance of DetailColumnInfo named tuple. It has the following properties:
-                #   column_info.column: an instance of app_manager.models.DetailColumn
-                #   column_info.sort_element: an instance of app_manager.models.SortElement
-                #   column_info.order: an integer
+                # column_info is an instance of DetailColumnInfo named tuple.
                 fields = get_column_generator(
                     self.app, module, detail, parent_tab_nodeset=nodeset,
                     detail_type=detail_type, *column_info
@@ -189,18 +219,16 @@ class DetailContributor(SectionContributor):
             # Add actions
             if detail_type.endswith('short') and not module.put_in_root:
                 if module.case_list_form.form_id:
-                    from corehq.apps.app_manager.views.modules import get_parent_select_followup_forms
-                    form = self.app.get_form(module.case_list_form.form_id)
-                    if toggles.FOLLOWUP_FORMS_AS_CASE_LIST_FORM.enabled(self.app.domain):
-                        valid_forms = [f.unique_id for f in get_parent_select_followup_forms(self.app, module)]
-                    else:
-                        valid_forms = []
-                    if form.is_registration_form(module.case_type) or form.unique_id in valid_forms:
-                        d.actions.append(self._get_case_list_form_action(module))
+                    DetailContributor.add_register_action(
+                        self.app, module, d.actions, self.build_profile_id, self.entries_helper)
 
-                if module_offers_search(module):
-                    in_search = module_loads_registry_case(module) or "search" in id
-                    d.actions.append(self._get_case_search_action(module, in_search=in_search))
+                if module_offers_search(module) and not module_uses_inline_search(module):
+                    if (case_search_action := DetailContributor.get_case_search_action(
+                        module,
+                        self.build_profile_id,
+                        id
+                    )) is not None:
+                        d.actions.append(case_search_action)
 
             try:
                 if not self.app.enable_multi_sort:
@@ -236,6 +264,8 @@ class DetailContributor(SectionContributor):
             nodeset = nodeset.select(CaseXPath().parent_id(),
                                      CaseXPath("current()").property("@case_id"))
             nodeset = nodeset.select("@status", "open")
+            if tab.nodeset_filter:
+                nodeset = nodeset.select_raw(interpolate_xpath(tab.nodeset_filter))
             return nodeset
 
         return None
@@ -263,18 +293,31 @@ class DetailContributor(SectionContributor):
             field=field,
         )
 
-    def _get_case_list_form_action(self, module):
+    @staticmethod
+    def add_register_action(app, module, actions, build_profile_id, entries_helper):
+        from corehq.apps.app_manager.views.modules import get_parent_select_followup_forms
+        form = app.get_form(module.case_list_form.form_id)
+        if toggles.FOLLOWUP_FORMS_AS_CASE_LIST_FORM.enabled(app.domain):
+            valid_forms = [f.unique_id for f in get_parent_select_followup_forms(app, module)]
+        else:
+            valid_forms = []
+        if form.is_registration_form(module.case_type) or form.unique_id in valid_forms:
+            actions.append(DetailContributor.get_case_list_form_action(
+                module, app, build_profile_id, entries_helper))
+
+    @staticmethod
+    def get_case_list_form_action(module, app, build_profile_id, entries_helper):
         """
         Returns registration/followup form action
         """
-        form = self.app.get_form(module.case_list_form.form_id)
+        form = app.get_form(module.case_list_form.form_id)
 
-        if self.app.enable_localized_menu_media:
+        if app.enable_localized_menu_media:
             case_list_form = module.case_list_form
             action = LocalizedAction(
                 menu_locale_id=id_strings.case_list_form_locale(module),
-                media_image=case_list_form.uses_image(build_profile_id=self.build_profile_id),
-                media_audio=case_list_form.uses_audio(build_profile_id=self.build_profile_id),
+                media_image=case_list_form.uses_image(build_profile_id=build_profile_id),
+                media_audio=case_list_form.uses_audio(build_profile_id=build_profile_id),
                 image_locale_id=id_strings.case_list_form_icon_locale(module),
                 audio_locale_id=id_strings.case_list_form_audio_locale(module),
                 stack=Stack(),
@@ -291,16 +334,16 @@ class DetailContributor(SectionContributor):
             )
 
         action_relevant = module.case_list_form.relevancy_expression
-        if toggles.FOLLOWUP_FORMS_AS_CASE_LIST_FORM.enabled(self.app.domain) and action_relevant:
+        if toggles.FOLLOWUP_FORMS_AS_CASE_LIST_FORM.enabled(app.domain) and action_relevant:
             action.relevant = action_relevant
 
         frame = PushFrame()
         frame.add_command(XPath.string(id_strings.form_command(form)))
 
-        target_form_dm = self.entries_helper.get_datums_meta_for_form_generic(form)
+        target_form_dm = entries_helper.get_datums_meta_for_form_generic(form)
         source_form_dm = []
         if len(module.forms):
-            source_form_dm = self.entries_helper.get_datums_meta_for_form_generic(module.get_form(0))
+            source_form_dm = entries_helper.get_datums_meta_for_form_generic(module.get_form(0))
         for target_meta in target_form_dm:
             if target_meta.requires_selection:
                 # This is true for registration forms where the case being created is a subcase
@@ -313,8 +356,8 @@ class DetailContributor(SectionContributor):
                     pass
                 else:
                     frame.add_datum(StackDatum(
-                        id=target_meta.datum.id,
-                        value=session_var(source_dm.datum.id))
+                        id=target_meta.id,
+                        value=session_var(source_dm.id))
                     )
             else:
                 s_datum = target_meta.datum
@@ -324,21 +367,28 @@ class DetailContributor(SectionContributor):
         action.stack.add_frame(frame)
         return action
 
-    def _get_case_search_action(self, module, in_search=False):
+    @staticmethod
+    def get_case_search_action(module, build_profile_id, detail_id):
+        in_search = module_loads_registry_case(module) or "search" in detail_id
+
+        # don't add search again action in split screen
+        if in_search and toggles.SPLIT_SCREEN_CASE_SEARCH.enabled(module.get_app().domain):
+            return None
+
         action_kwargs = DetailContributor._get_action_kwargs(module, in_search)
         if in_search:
             search_label = module.search_config.search_again_label
         else:
             search_label = module.search_config.search_label
 
-        if self.app.enable_localized_menu_media:
+        if module.get_app().enable_localized_menu_media:
             action = LocalizedAction(
                 menu_locale_id=(
                     id_strings.case_search_again_locale(module) if in_search
                     else id_strings.case_search_locale(module)
                 ),
-                media_image=search_label.uses_image(build_profile_id=self.build_profile_id),
-                media_audio=search_label.uses_audio(build_profile_id=self.build_profile_id),
+                media_image=search_label.uses_image(build_profile_id=build_profile_id),
+                media_audio=search_label.uses_audio(build_profile_id=build_profile_id),
                 image_locale_id=(
                     id_strings.case_search_again_icon_locale(module) if in_search
                     else id_strings.case_search_icon_locale(module)
@@ -392,10 +442,9 @@ class DetailContributor(SectionContributor):
         auto_launch_expression = "false()"
         if allow_auto_launch and module.search_config.auto_launch:
             if module.is_multi_select():
-                # AUTO_LAUNCH_EXPRESSION is incompatible with multi select case lists - See USH-1870
-                auto_launch_expression = "true()"
+                auto_launch_expression = XPath(AUTO_LAUNCH_EXPRESSIONS['multi-select'])
             else:
-                auto_launch_expression = XPath(AUTO_LAUNCH_EXPRESSION)
+                auto_launch_expression = XPath(AUTO_LAUNCH_EXPRESSIONS['single-select'])
         return auto_launch_expression
 
     def _get_custom_xml_detail(self, module, detail, detail_type):
@@ -452,7 +501,7 @@ class DetailContributor(SectionContributor):
                 ),
                 header=Header(text=Text()),
                 template=Template(text=Text(xpath=TextXPath(
-                    function="concat($message, ' ', format-date(date(instance('commcare-reports:index')/report_index/reports/@last_update), '%e/%n/%Y'))",
+                    function="concat($message, ' ', format-date(date(instance('commcare-reports:index')/report_index/reports/@last_update), '%e/%n/%Y'))",  # noqa: E501
                     variables=[XPathVariable(name='message', locale_id=id_strings.reports_last_updated_on())],
                 ))),
             )]
@@ -475,6 +524,11 @@ class DetailContributor(SectionContributor):
                         sort_node='')]
         d.fields = fields
         return d
+
+    @staticmethod
+    def add_no_items_text_to_detail(detail, app, detail_type, module):
+        if detail_type.endswith('short') and app.supports_empty_case_list_text:
+            detail.no_items_text = Text(locale_id=id_strings.no_items_text_detail(module))
 
 
 class DetailsHelper(object):
@@ -552,22 +606,27 @@ def get_default_sort_elements(detail):
 
 # This is not intended to be a widely used format
 # just a packaging of column info into a form most convenient for rendering
+# It has the following properties:
+#   column_info.column: an instance of app_manager.models.DetailColumn
+#   column_info.sort_element: an instance of app_manager.models.SortElement
+#   column_info.order: an integer
 DetailColumnInfo = namedtuple('DetailColumnInfo', 'column sort_element order')
 
 
 def get_detail_column_infos(detail_type, detail, include_sort):
+    detail_columns = list(detail.get_columns())  # evaluate generator
     if not include_sort:
-        return [DetailColumnInfo(column, None, None) for column in detail.get_columns()]
+        return [DetailColumnInfo(column, None, None) for column in detail_columns]
 
     if detail.sort_elements:
         sort_elements = detail.sort_elements
     else:
         sort_elements = get_default_sort_elements(detail)
 
-    sort_only, sort_columns = get_sort_and_sort_only_columns(detail.get_columns(), sort_elements)
+    sort_only, sort_columns = get_sort_and_sort_only_columns(detail_columns, sort_elements)
 
     columns = []
-    for column in detail.get_columns():
+    for column in detail_columns:
         sort_element, order = sort_columns.pop(column.field, (None, None))
         if getattr(sort_element, 'type', None) == 'index' and "search" in detail_type:
             columns.append(DetailColumnInfo(column, None, None))
@@ -585,7 +644,7 @@ def get_detail_column_infos(detail_type, detail, include_sort):
 
 def get_detail_column_infos_for_tabs_with_sorting(detail):
     """This serves the same purpose as `get_detail_column_infos` except
-    that it only applies to 'short' details that have tabs with nodesets and sorting
+    that it only applies to 'long' details that have tabs with nodesets and sorting
     configured."""
     sort_elements = get_nodeset_sort_elements(detail)
 
@@ -611,116 +670,3 @@ def get_detail_column_infos_for_tabs_with_sorting(detail):
             ])
 
     return columns
-
-
-class CaseTileHelper(object):
-    tile_fields = ["header", "top_left", "sex", "bottom_left", "date"]
-
-    def __init__(self, app, module, detail, detail_type, build_profile_id):
-        self.app = app
-        self.module = module
-        self.detail = detail
-        self.detail_type = detail_type
-        self.cols_by_tile_field = {col.case_tile_field: col for col in self.detail.columns}
-        self.build_profile_id = build_profile_id
-
-    def build_case_tile_detail(self):
-        """
-        Return a Detail node from an apps.app_manager.models.Detail that is
-        configured to use case tiles.
-
-        This method does so by injecting the appropriate strings into a template
-        string.
-        """
-        # Get template context
-        context = self._get_base_context()
-        for template_field in self.tile_fields:
-            column = self._get_matched_detail_column(template_field)
-            context[template_field] = self._get_column_context(column)
-
-        # Populate the template
-        detail_as_string = self._case_tile_template_string.format(**context)
-        return load_xmlobject_from_string(detail_as_string, xmlclass=Detail)
-
-    def _get_matched_detail_column(self, case_tile_field):
-        """
-        Get the detail column that should populate the given case tile field
-        """
-        column = self.cols_by_tile_field.get(case_tile_field, None)
-        if column is None:
-            raise SuiteError(
-                'No column was mapped to the "{}" case tile field'.format(
-                    case_tile_field
-                )
-            )
-        return column
-
-    def _get_base_context(self):
-        """
-        Get the basic context variables for interpolation into the
-        case tile detail template string
-        """
-        return {
-            "detail_id": id_strings.detail(self.module, self.detail_type),
-            "title_text_id": id_strings.detail_title_locale(self.detail_type),
-        }
-
-    def _get_column_context(self, column):
-        from corehq.apps.app_manager.detail_screen import get_column_generator
-        default_lang = self.app.default_language if not self.build_profile_id \
-            else self.app.build_profiles[self.build_profile_id].langs[0]
-        if column.useXpathExpression:
-            xpath_function = escape(column.field, {'"': '&quot;'})
-        else:
-            xpath_function = escape(get_column_generator(
-                self.app, self.module, self.detail, column).xpath_function,
-                {'"': '&quot;'})
-        context = {
-            "xpath_function": xpath_function,
-            "locale_id": id_strings.detail_column_header_locale(
-                self.module, self.detail_type, column,
-            ),
-            # Just using default language for now
-            # The right thing to do would be to reference the app_strings.txt I think
-            "prefix": escape(
-                column.header.get(default_lang, "")
-            )
-        }
-        if column.enum and column.format != "enum" and column.format != "conditional-enum":
-            raise SuiteError(
-                'Expected case tile field "{}" to be an id mapping with keys {}.'.format(
-                    column.case_tile_field,
-                    ", ".join(['"{}"'.format(i.key) for i in column.enum])
-                )
-            )
-
-        context['variables'] = ''
-        if column.format == "enum" or column.format == 'conditional-enum':
-            context["variables"] = self._get_enum_variables(column)
-        return context
-
-    def _get_enum_variables(self, column):
-        variables = []
-        for i, mapping in enumerate(column.enum):
-            variables.append(
-                XPathVariable(
-                    name=mapping.key_as_variable,
-                    locale_id=id_strings.detail_column_enum_variable(
-                        self.module, self.detail_type, column, mapping.key_as_variable
-                    )
-                ).serialize()
-            )
-        return ''.join([bytes(variable).decode('utf-8') for variable in variables])
-
-    @property
-    @memoized
-    def _case_tile_template_string(self):
-        """
-        Return a string suitable for building a case tile detail node
-        through `String.format`.
-        """
-        with open(
-            os.path.join(os.path.dirname(os.path.dirname(__file__)), "case_tile_templates", "tdh.txt"),
-            encoding='utf-8'
-        ) as f:
-            return f.read()

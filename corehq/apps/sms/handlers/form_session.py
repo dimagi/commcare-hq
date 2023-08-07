@@ -1,5 +1,7 @@
 from datetime import datetime
 
+from dimagi.utils.logging import notify_error
+
 from corehq import toggles
 from corehq.apps.domain.models import Domain
 from corehq.apps.formplayer_api.smsforms.api import FormplayerInterface
@@ -9,28 +11,58 @@ from corehq.apps.sms.api import (
     log_sms_exception,
     send_sms_to_verified_number,
 )
-from corehq.apps.sms.messages import *
+from corehq.apps.sms.messages import (
+    MSG_CHOICE_OUT_OF_RANGE,
+    MSG_FIELD_REQUIRED,
+    MSG_INVALID_CHOICE,
+    MSG_INVALID_DATE,
+    MSG_INVALID_FLOAT,
+    MSG_INVALID_INT,
+    MSG_INVALID_INT_RANGE,
+    MSG_INVALID_LONG,
+    MSG_INVALID_TIME,
+    MSG_GENERIC_ERROR,
+    MSG_TOUCHFORMS_DOWN,
+    get_message,
+)
 from corehq.apps.sms.util import format_message_list, get_date_format
-from corehq.apps.smsforms.app import _responses_to_text, get_responses, get_events_from_responses
-from corehq.apps.smsforms.models import SQLXFormsSession, XFormsSessionSynchronization, \
-    get_channel_for_contact
+from corehq.apps.smsforms.app import (
+    _responses_to_text,
+    get_events_from_responses,
+    get_responses,
+)
+from corehq.apps.smsforms.models import (
+    SQLXFormsSession,
+    XFormsSessionSynchronization,
+    get_channel_for_contact,
+)
 from corehq.apps.smsforms.util import critical_section_for_smsforms_sessions
-from dimagi.utils.logging import notify_error
 
 
-def form_session_handler(v, text, msg):
+def form_session_handler(verified_number, text, msg):
     """
     The form session handler will use the inbound text to answer the next question
     in the open SQLXformsSession for the associated contact. If no session is open,
     the handler passes. If multiple sessions are open, they are all closed and an
     error message is displayed to the user.
     """
-    with critical_section_for_smsforms_sessions(v.owner_id):
-        if toggles.ONE_PHONE_NUMBER_MULTIPLE_CONTACTS.enabled(v.domain):
-            channel = get_channel_for_contact(v.owner_id, v.phone_number)
+    with critical_section_for_smsforms_sessions(verified_number.owner_id):
+        if toggles.ONE_PHONE_NUMBER_MULTIPLE_CONTACTS.enabled(verified_number.domain):
+            channel = get_channel_for_contact(verified_number.owner_id, verified_number.phone_number)
             running_session_info = XFormsSessionSynchronization.get_running_session_info_for_channel(channel)
             if running_session_info.session_id:
                 session = SQLXFormsSession.by_session_id(running_session_info.session_id)
+                if session.connection_id != verified_number.owner_id:
+                    notify_error("SMS response contact does not match open session contact", details={
+                        "session_id": session.session_id,
+                        "phone_number_id": verified_number.couch_id,
+                        "message_id": msg.couch_id
+                    })
+                    session.mark_completed(False)  # this will also release the channel
+                    send_sms_to_verified_number(
+                        verified_number, get_message(MSG_GENERIC_ERROR, verified_number)
+                    )
+                    return True
                 if not session.session_is_open:
                     # This should never happen. But if it does we should set the channel free
                     # and act like there was no available session
@@ -41,13 +73,15 @@ def form_session_handler(v, text, msg):
             else:
                 session = None
         else:
-            multiple, session = get_single_open_session_or_close_multiple(v.domain, v.owner_id)
+            multiple, session = get_single_open_session_or_close_multiple(
+                verified_number.domain, verified_number.owner_id
+            )
             if multiple:
-                send_sms_to_verified_number(v, get_message(MSG_MULTIPLE_SESSIONS, v))
+                send_sms_to_verified_number(verified_number, get_message(MSG_GENERIC_ERROR, verified_number))
                 return True
 
         if session:
-            session.phone_number = v.phone_number
+            session.phone_number = verified_number.phone_number
             session.modified_time = datetime.utcnow()
             session.save()
 
@@ -64,11 +98,11 @@ def form_session_handler(v, text, msg):
             add_msg_tags(msg, inbound_metadata)
             msg.save()
             try:
-                answer_next_question(v, text, msg, session, subevent_id)
+                answer_next_question(verified_number, text, msg, session, subevent_id)
             except Exception:
                 # Catch any touchforms errors
                 log_sms_exception(msg)
-                send_sms_to_verified_number(v, get_message(MSG_TOUCHFORMS_DOWN, v))
+                send_sms_to_verified_number(verified_number, get_message(MSG_TOUCHFORMS_DOWN, verified_number))
             return True
         else:
             return False
@@ -89,17 +123,16 @@ def get_single_open_session_or_close_multiple(domain, contact_id):
     if count > 1:
         for session in sessions:
             session.mark_completed(False)
-            session.save()
         return (True, None)
 
     session = sessions[0] if count == 1 else None
     return (False, session)
 
 
-def answer_next_question(v, text, msg, session, subevent_id):
-    resp = FormplayerInterface(session.session_id, v.domain).current_question()
+def answer_next_question(verified_number, text, msg, session, subevent_id):
+    resp = FormplayerInterface(session.session_id, verified_number.domain).current_question()
     event = resp.event
-    valid, text, error_msg = validate_answer(event, text, v)
+    valid, text, error_msg = validate_answer(event, text, verified_number)
 
     # metadata to be applied to the reply message
     outbound_metadata = MessageMetadata(
@@ -110,7 +143,7 @@ def answer_next_question(v, text, msg, session, subevent_id):
     )
 
     if valid:
-        responses = get_responses(v.domain, session.session_id, text)
+        responses = get_responses(verified_number.domain, session.session_id, text)
 
         if has_invalid_response(responses):
             mark_as_invalid_response(msg)
@@ -119,22 +152,22 @@ def answer_next_question(v, text, msg, session, subevent_id):
         events = get_events_from_responses(responses)
         if len(text_responses) > 0:
             response_text = format_message_list(text_responses)
-            send_sms_to_verified_number(v, response_text,
-                metadata=outbound_metadata, events=events)
+            send_sms_to_verified_number(verified_number, response_text,
+                                        metadata=outbound_metadata, events=events)
     else:
         mark_as_invalid_response(msg)
         response_text = "%s %s" % (error_msg, event.text_prompt)
-        send_sms_to_verified_number(v, response_text,
-            metadata=outbound_metadata, events=[event])
+        send_sms_to_verified_number(verified_number, response_text,
+                                    metadata=outbound_metadata, events=[event])
 
 
-def validate_answer(event, text, v):
+def validate_answer(event, text, verified_number):
     text = text.strip()
     upper_text = text.upper()
     valid = False
     error_msg = ""
     if text == "" and event._dict.get("required", False):
-        return (False, text, get_message(MSG_FIELD_REQUIRED, v))
+        return (False, text, get_message(MSG_FIELD_REQUIRED, verified_number))
 
     # Validate select
     if event.datatype == "select":
@@ -149,9 +182,9 @@ def validate_answer(event, text, v):
                 if answer >= 1 and answer <= len(event._dict["choices"]):
                     valid = True
                 else:
-                    error_msg = get_message(MSG_CHOICE_OUT_OF_RANGE, v)
+                    error_msg = get_message(MSG_CHOICE_OUT_OF_RANGE, verified_number)
             except ValueError:
-                error_msg = get_message(MSG_INVALID_CHOICE, v)
+                error_msg = get_message(MSG_INVALID_CHOICE, verified_number)
 
     # Validate multiselect
     elif event.datatype == "multiselect":
@@ -172,7 +205,7 @@ def validate_answer(event, text, v):
             text = " ".join(final_answers)
             valid = True
         except Exception:
-            error_msg = get_message(MSG_INVALID_CHOICE, v)
+            error_msg = get_message(MSG_INVALID_CHOICE, verified_number)
 
     # Validate int
     elif event.datatype == "int":
@@ -181,9 +214,9 @@ def validate_answer(event, text, v):
             if value >= -2147483648 and value <= 2147483647:
                 valid = True
             else:
-                error_msg = get_message(MSG_INVALID_INT_RANGE, v)
+                error_msg = get_message(MSG_INVALID_INT_RANGE, verified_number)
         except ValueError:
-            error_msg = get_message(MSG_INVALID_INT, v)
+            error_msg = get_message(MSG_INVALID_INT, verified_number)
     
     # Validate float
     elif event.datatype == "float":
@@ -191,7 +224,7 @@ def validate_answer(event, text, v):
             float(text)
             valid = True
         except ValueError:
-            error_msg = get_message(MSG_INVALID_FLOAT, v)
+            error_msg = get_message(MSG_INVALID_FLOAT, verified_number)
     
     # Validate longint
     elif event.datatype == "longint":
@@ -199,11 +232,11 @@ def validate_answer(event, text, v):
             int(text)
             valid = True
         except ValueError:
-            error_msg = get_message(MSG_INVALID_LONG, v)
+            error_msg = get_message(MSG_INVALID_LONG, verified_number)
     
     # Validate date (Format: specified by Domain.sms_survey_date_format, default: YYYYMMDD)
     elif event.datatype == "date":
-        domain_obj = Domain.get_by_name(v.domain)
+        domain_obj = Domain.get_by_name(verified_number.domain)
         df = get_date_format(domain_obj.sms_survey_date_format)
 
         if df.is_valid(text):
@@ -214,7 +247,7 @@ def validate_answer(event, text, v):
                 pass
 
         if not valid:
-            error_msg = get_message(MSG_INVALID_DATE, v, context=(df.human_readable_format,))
+            error_msg = get_message(MSG_INVALID_DATE, verified_number, context=(df.human_readable_format,))
 
     # Validate time (Format: HHMM, 24-hour)
     elif event.datatype == "time":
@@ -227,7 +260,7 @@ def validate_answer(event, text, v):
             text = "%s:%s" % (hour, str(minute).zfill(2))
             valid = True
         except Exception:
-            error_msg = get_message(MSG_INVALID_TIME, v)
+            error_msg = get_message(MSG_INVALID_TIME, verified_number)
 
     # Other question types pass
     else:

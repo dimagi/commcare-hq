@@ -10,18 +10,37 @@ from corehq.apps.linked_domain.applications import (
 from corehq.apps.linked_domain.exceptions import (
     DomainLinkError,
     MultipleDownstreamAppsError,
+    RegistryNotAccessible,
 )
 from corehq.apps.linked_domain.remote_accessors import \
     get_ucr_config as remote_get_ucr_config
 from corehq.apps.userreports.dbaccessors import (
     get_datasources_for_domain,
-    get_report_configs_for_domain,
+    get_report_and_registry_report_configs_for_domain,
 )
 from corehq.apps.userreports.models import (
-    DataSourceConfiguration,
     ReportConfiguration,
+    is_data_registry_report,
 )
 from corehq.apps.userreports.tasks import rebuild_indicators
+
+from corehq.apps.registry.models import DataRegistry
+
+from corehq.util.couch import DocumentNotFound
+
+from tastypie.exceptions import NotFound
+
+from corehq.apps.userreports.exceptions import (
+    DataSourceConfigurationNotFoundError,
+    InvalidDataSourceType,
+)
+
+from corehq.apps.userreports.util import (
+    get_report_config_or_not_found,
+    wrap_report_config_by_type,
+    _wrap_data_source_by_doc_type,
+    get_ucr_datasource_config_by_id
+)
 
 LinkedUCRInfo = namedtuple("LinkedUCRInfo", "datasource report")
 
@@ -32,9 +51,27 @@ def create_linked_ucr(domain_link, report_config_id):
         datasource = remote_configs["datasource"]
         report_config = remote_configs["report"]
     else:
-        report_config = ReportConfiguration.get(report_config_id)
-        datasource = DataSourceConfiguration.get(report_config.config_id)
-
+        try:
+            report_config = get_report_config_or_not_found(domain_link.master_domain, report_config_id)
+        except DocumentNotFound:
+            raise NotFound
+        try:
+            datasource = get_ucr_datasource_config_by_id(report_config.config_id)
+            if datasource.is_static:
+                message = _('{} is not a valid data source type!').format(datasource.doc_type)
+                raise InvalidDataSourceType(message)
+        except DataSourceConfigurationNotFoundError:
+            raise DataSourceConfigurationNotFoundError(_(
+                'The data source referenced by this report could not be found.'
+            ))
+    if is_data_registry_report(report_config, datasource):
+        try:
+            DataRegistry.objects.accessible_to_domain(domain_link.linked_domain, slug=report_config.registry_slug)
+        except DataRegistry.DoesNotExist:
+            message = _("This report cannot be linked because the registry is not accessible to {}."
+                " Please make sure the registry invitation has been accepted before"
+                " linking reports.").format(domain_link.linked_domain)
+            raise RegistryNotAccessible(message)
     # grab the linked app this linked report references
     try:
         downstream_app_id = get_downstream_app_id(domain_link.linked_domain, datasource.meta.build.app_id)
@@ -48,7 +85,7 @@ def create_linked_ucr(domain_link, report_config_id):
 
 
 def get_downstream_report(downstream_domain, upstream_report_id):
-    for linked_report in get_report_configs_for_domain(downstream_domain):
+    for linked_report in get_report_and_registry_report_configs_for_domain(downstream_domain):
         if linked_report.report_meta.master_id == upstream_report_id:
             return linked_report
     return None
@@ -73,7 +110,7 @@ def _get_or_create_datasource_link(domain_link, datasource, app_id):
 
     _replace_master_app_ids(domain_link.linked_domain, datasource_json)
 
-    new_datasource = DataSourceConfiguration.wrap(datasource_json)
+    new_datasource = _wrap_data_source_by_doc_type(datasource_json)
     new_datasource.save()
 
     rebuild_indicators.delay(
@@ -124,13 +161,13 @@ def _get_or_create_report_link(domain_link, report, datasource):
     report_json["_id"] = None
     report_json["_rev"] = None
 
-    new_report = ReportConfiguration.wrap(report_json)
+    new_report = wrap_report_config_by_type(report_json)
     new_report.save()
 
     return new_report
 
 
-def update_linked_ucr(domain_link, report_id):
+def update_linked_ucr(domain_link, report_id, is_pull=False, overwrite=False):
     linked_report = ReportConfiguration.get(report_id)
     linked_datasource = linked_report.config
 
@@ -158,7 +195,7 @@ def _update_linked_datasource(master_datasource, linked_datasource):
     _replace_master_app_ids(linked_datasource_json["domain"], master_datasource_json)
 
     linked_datasource_json.update(master_datasource_json)
-    DataSourceConfiguration.wrap(linked_datasource_json).save()
+    _wrap_data_source_by_doc_type(linked_datasource_json).save()
 
     rebuild_indicators.delay(
         linked_datasource.get_id,
@@ -178,17 +215,17 @@ def _update_linked_report(master_report, linked_report):
     master_report_json["report_meta"]["master_id"] = linked_report_json["report_meta"]["master_id"]
 
     linked_report_json.update(master_report_json)
-    ReportConfiguration.wrap(linked_report_json).save()
+    wrap_report_config_by_type(linked_report_json, allow_deleted=True).save()
 
 
 def get_linked_report_configs(domain, report_id):
-    domain_reports = get_report_configs_for_domain(domain)
+    domain_reports = get_report_and_registry_report_configs_for_domain(domain)
     existing_linked_reports = [r for r in domain_reports if r.report_meta.master_id == report_id]
     return existing_linked_reports
 
 
 def get_linked_reports_in_domain(domain):
-    reports = get_report_configs_for_domain(domain)
+    reports = get_report_and_registry_report_configs_for_domain(domain)
     linked_reports = [report for report in reports if report.report_meta.master_id]
     return linked_reports
 

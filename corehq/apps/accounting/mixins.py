@@ -10,7 +10,7 @@ from corehq.apps.accounting.utils.downgrade import (
     is_subscription_eligible_for_downgrade_process,
 )
 from corehq.apps.users.decorators import get_permission_name
-from corehq.apps.users.models import Permissions
+from corehq.apps.users.models import HqPermissions
 from corehq.util.quickcache import quickcache
 
 
@@ -65,7 +65,7 @@ class BillingModalsMixin(object):
             and not self.request.couch_user.is_superuser
             and self.request.couch_user.has_permission(
                 self.domain,
-                get_permission_name(Permissions.edit_billing)
+                get_permission_name(HqPermissions.edit_billing)
             )
         )
 

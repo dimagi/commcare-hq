@@ -1,6 +1,6 @@
 from django.db import migrations
 
-from corehq.util.django_migrations import run_once_off_migration
+from corehq.util.django_migrations import prompt_for_historical_migration, get_migration_name
 
 
 class Migration(migrations.Migration):
@@ -10,7 +10,8 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        run_once_off_migration(
-            'migrate_case_search_prompt_itemset_ids', required_commit='116a6fc9556ac929e29a35fd2dfa673984820561'
+        prompt_for_historical_migration(
+            'app_manager', get_migration_name(__file__),
+            required_commit='116a6fc9556ac929e29a35fd2dfa673984820561'
         )
     ]

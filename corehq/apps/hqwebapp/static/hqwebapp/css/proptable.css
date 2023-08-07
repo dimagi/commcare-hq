@@ -90,3 +90,17 @@
 .case-property-name:hover i{
     display: inline-block;
 }
+
+#case-properties-modal table tbody tr td{
+    word-break: break-word;
+}
+
+.case-property-table tbody tr th {
+    word-wrap: break-word;
+    word-break: break-all;
+}
+
+.case-property-table tbody tr td {
+    word-wrap: break-word;
+    word-break: break-all;
+}

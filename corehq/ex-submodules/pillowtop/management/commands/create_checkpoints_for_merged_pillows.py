@@ -11,13 +11,11 @@ PILLOW_REORG_MAPPING = {
     'case-pillow': [
         'kafka-ucr-main',
         'kafka-ucr-static',
-        'ReportCaseToElasticsearchPillow',
         'CaseToElasticsearchPillow'
     ],
     'xform-pillow': [
         'kafka-ucr-main',
         'kafka-ucr-static',
-        'ReportXFormToElasticsearchPillow',
         'XFormToElasticsearchPillow',
         'FormSubmissionMetadataTrackerPillow',
         'UnknownUsersPillow'

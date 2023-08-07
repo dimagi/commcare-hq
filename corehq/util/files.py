@@ -1,5 +1,6 @@
 import os
 import tempfile
+import re
 from six.moves.urllib.parse import quote
 from text_unidecode import unidecode
 
@@ -36,8 +37,9 @@ def safe_filename_header(filename, extension=None):
     # and http://greenbytes.de/tech/tc2231/#attfnboth as a solution to disastrous browser compatibility
     filename = safe_filename(filename, extension)
     ascii_filename = unidecode(filename)
+    header_filename = re.sub(r'[\t\n\v\f\r]', '', ascii_filename)
     return 'attachment; filename="{}"; filename*=UTF-8\'\'{}'.format(
-        ascii_filename, quote(filename.encode('utf8')))
+        header_filename, quote(filename.encode('utf8')))
 
 
 class TransientTempfile(object):

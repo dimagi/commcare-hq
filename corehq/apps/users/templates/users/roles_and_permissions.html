@@ -1,4 +1,4 @@
-{% extends 'hqwebapp/base_section.html' %}
+{% extends 'hqwebapp/bootstrap3/base_section.html' %}
 {% load crispy_forms_tags %}
 {% load i18n %}
 {% load hq_shared_tags %}
@@ -11,15 +11,20 @@
   {% initial_page_data "non_admin_roles" non_admin_roles %}
   {% initial_page_data "can_edit_roles" can_edit_roles %}
   {% initial_page_data "default_role" default_role %}
+  {% initial_page_data "tableau_list" tableau_list %}
   {% initial_page_data "report_list" report_list %}
   {% initial_page_data "apps_list" apps_list %}
   {% initial_page_data "can_restrict_access_by_location" can_restrict_access_by_location %}
   {% initial_page_data "landing_page_choices" landing_page_choices %}
   {% initial_page_data "web_apps_privilege" web_apps_privilege %}
+  {% initial_page_data "erm_privilege" erm_privilege %}
+  {% initial_page_data "mrm_privilege" mrm_privilege %}
+  {% initial_page_data "attendance_tracking_privilege" attendance_tracking_privilege %}
   {% initial_page_data "has_report_builder_access" has_report_builder_access %}
   {% initial_page_data "data_file_download_enabled" data_file_download_enabled %}
   {% initial_page_data "export_ownership_enabled" export_ownership_enabled %}
   {% initial_page_data "data_registry_choices" data_registry_choices %}
+  {% initial_page_data "can_edit_linked_data" can_edit_linked_data %}
 
   <p class="lead">
     {% if can_edit_roles %}
@@ -33,13 +38,51 @@
     {% endif %}
   </p>
 
-  <p>
-    <i class="fa fa-info-circle"></i>
-    {% blocktrans %}
-      <a href="https://confluence.dimagi.com/display/commcarepublic/Roles+and+Permissions"
-         target="_blank">Learn more</a> about how roles &amp; permissions are used.
-    {% endblocktrans %}
-  </p>
+  <div class="row ko-template" id="infobar">
+    <div class="col-sm-8 col-md-9">
+      <p>
+        <i class="fa fa-info-circle"></i>
+        {% blocktrans %}
+          <a href="https://confluence.dimagi.com/display/commcarepublic/Roles+and+Permissions"
+            target="_blank">Learn more</a> about how roles &amp; permissions are used.
+        {% endblocktrans %}
+      </p>
+    </div>
+    <div class="col-sm-4 col-md-3" data-bind="if: hasLinkedRoles">
+      <p class="pull-right">
+        <!-- ko if: allowEdit -->
+          <span data-bind="ifnot: unlockLinkedRoles">
+            <button type="button" class="btn btn-default" data-toggle="modal" data-target="#modal_linked_roles">
+              <i class="fa fa-link"></i>
+              {% trans 'Unlock Linked Roles For Me' %}
+            </button>
+          </span>
+          <span data-bind="if: unlockLinkedRoles">
+            <button type="button" class="btn btn-default" data-bind="click: toggleLinkedRoles">
+              <i class="fa fa-link"></i>
+              {% trans 'Lock Linked Roles For Me' %}
+            </button>
+          </span>
+        <!-- /ko -->
+        <!-- ko ifnot: allowEdit -->
+          <span>
+            <i class="fa fa-link"></i>
+            Contains Linked Roles
+          </span>
+        <!-- /ko -->
+        <span class="hq-help-template"
+            data-placement="left"
+            data-title="{% trans 'Linked Configurations' %}"
+            data-content="
+              {% blocktrans %}
+                Linked configurations are controlled from a separate, linked project space.
+                  <a href='https://confluence.dimagi.com/display/commcarepublic/Enterprise+Release+Management' target='_blank'>Learn more</a>.
+              {% endblocktrans %}">
+        </span>
+      </div>
+    </p>
+  </div>
+
 
   {% if not can_edit_roles and is_domain_admin %}
     {% url "domain_select_plan" domain as subscription_url %}
@@ -84,12 +127,17 @@
           <th class="text-center">
             {% trans "Locations" %}
           </th>
+          {% if request|toggle_enabled:"DATA_DICTIONARY" %}
+            <th class="text-center">
+              {% trans "Data Dictionary" %}
+            </th>
+          {% endif %}
           <th class="text-center">
             {% trans "Data" %}
           </th>
-          {% if request|toggle_enabled:"EXPORT_OWNERSHIP" %}
+          {% if request|request_has_privilege:"EXPORT_OWNERSHIP" %}
             <th class="text-center">
-              {% trans "Shared Exports" %}
+              {% trans "Manage Shared Exports" %}
             </th>
           {% endif %}
           <th class="text-center">
@@ -114,7 +162,15 @@
             {% trans "Data Registries" %}
           </th>
           {% endif %}
+          {% if request|request_has_privilege:"ATTENDANCE_TRACKING" and request|toggle_enabled:"ATTENDANCE_TRACKING" %}
+          <th class="text-center">
+            {% trans "Attendance Tracking" %}
+          </th>
+          {% endif %}
           <th>{% trans "Actions" %}</th>
+          {% if is_managed_by_upstream_domain %}
+          <th></th>
+          {% endif %}
         </tr>
         </thead>
         <tbody data-bind="foreach: userRoles">
@@ -122,6 +178,10 @@
           <th>
             <span data-bind="visible: name, text: name"></span>
             <h6 data-bind="visible: !name()">({% trans "No Name" %})</h6>
+            <span data-bind="visible: is_commcare_user_default, makeHqHelp: {}"
+                data-title="{% trans "Mobile Worker Default Role" %}"
+                data-content="{% trans "This is the default role for all Mobile Workers that do not have a role assigned." %}">
+            </span>
           </th>
           <td class="text-center">
             <div data-bind="visible: permissions.access_all_locations,
@@ -149,12 +209,21 @@
                                               view: permissions.view_locations
                                             }"></div>
           </td>
+          {% if request|toggle_enabled:"DATA_DICTIONARY" %}
+            <td class="text-center">
+              <div data-bind="visible: permissions.access_all_locations,
+                                              permissionIcon: {
+                                                edit: permissions.edit_data_dict,
+                                                view: permissions.view_data_dict
+                                              }"></div>
+            </td>
+          {% endif %}
           <td class="text-center">
             <div data-bind="permissionIcon: {
                                               edit: permissions.edit_data
                                             }"></div>
           </td>
-          {% if request|toggle_enabled:"EXPORT_OWNERSHIP" %}
+          {% if request|request_has_privilege:"EXPORT_OWNERSHIP" %}
             <td class="text-center">
               <div data-bind="permissionIcon: {
                                                 edit: permissions.edit_shared_exports
@@ -217,21 +286,39 @@
             </div>
           </td>
           {% endif %}
+          {% if request|request_has_privilege:"ATTENDANCE_TRACKING" and request|toggle_enabled:"ATTENDANCE_TRACKING" %}
+            <td class="text-center">
+              <div data-bind="visible: permissions.manage_attendance_tracking,
+                                        permissionIcon: {
+                                          manage: permissions.manage_attendance_tracking,
+                                        }"></div>
+            </td>
+          {% endif %}
           <td>
             <button class="btn btn-default" data-bind="visible: $data._id, click: $data._id ? $root.setRoleBeingEdited : null">
-                                <span data-bind="visible: !$root.allowEdit">
-                                    {% trans "View Details" %}
-                                </span>
-              <span data-bind="visible: $root.allowEdit">
+                                <span data-bind="if: $root.allowEdit && (!upstream_id() || $parent.unlockLinkedRoles())">
                                     <i class="fa fa-edit"></i>
                                     {% trans "Edit Role" %}
                                 </span>
+                                <span data-bind="ifnot: $root.allowEdit && (!upstream_id() || $parent.unlockLinkedRoles())">
+                                    <i class="fa fa-eye"></i>
+                                    {% trans "View Role" %}
+                                </span>
             </button>
-            <button class="btn btn-danger" data-bind="visible: $data._id && !$data.hasUsersAssigned && $root.allowEdit, click: $data._id ? $root.setRoleBeingDeleted : null">
+            <button class="btn btn-danger"
+              data-bind="visible: $data._id && !$data.preventRoleDelete && $root.allowEdit && isEditable,
+                click: $data._id ? $root.setRoleBeingDeleted : null">
               <i class="fa fa-trash"></i>
-              {% trans "Delete Role" %}
+              {% trans "Delete" %}
             </button>
           </td>
+          {% if is_managed_by_upstream_domain %}
+          <td class="text-center">
+            <span data-bind="if: upstream_id">
+              <i class="fa fa-link"></i>
+            </span>
+          </td>
+          {% endif %}
         </tr>
         </tbody>
       </table>
@@ -296,4 +383,6 @@
       </div>
     </div>
   </div>
+
+  {% include 'users/partials/linked_roles_modal.html' %}
 {% endblock %}

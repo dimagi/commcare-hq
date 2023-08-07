@@ -14,8 +14,8 @@ from corehq.apps.userreports.util import add_tabbed_text
 from .utils import SUPPORTED_UCR_AGGREGATIONS, aggregate_items
 
 
-def _evaluate_items_expression(itemx_ex, doc, context):
-    result = itemx_ex(doc, context)
+def _evaluate_items_expression(itemx_ex, doc, evaluation_context):
+    result = itemx_ex(doc, evaluation_context)
     if not isinstance(result, list):
         return []
     else:
@@ -65,12 +65,12 @@ class FilterItemsExpressionSpec(NoPropertyTypeCoercionMixIn, JsonObject):
         self._items_expression = items_expression
         self._filter_expression = filter_expression
 
-    def __call__(self, doc, context=None):
-        items = _evaluate_items_expression(self._items_expression, doc, context)
+    def __call__(self, doc, evaluation_context=None):
+        items = _evaluate_items_expression(self._items_expression, doc, evaluation_context)
 
         values = []
         for item in items:
-            if self._filter_expression(item, context):
+            if self._filter_expression(item, evaluation_context):
                 values.append(item)
 
         return values
@@ -125,10 +125,10 @@ class MapItemsExpressionSpec(NoPropertyTypeCoercionMixIn, JsonObject):
         self._items_expression = items_expression
         self._map_expression = map_expression
 
-    def __call__(self, doc, context=None):
-        items = _evaluate_items_expression(self._items_expression, doc, context)
+    def __call__(self, doc, evaluation_context=None):
+        items = _evaluate_items_expression(self._items_expression, doc, evaluation_context)
 
-        return [self._map_expression(i, context) for i in items]
+        return [self._map_expression(i, evaluation_context) for i in items]
 
     def __str__(self):
         return "map:\n{items}\nto:\n{map}\n".format(items=add_tabbed_text(str(self._items_expression)),
@@ -191,8 +191,8 @@ class ReduceItemsExpressionSpec(NoPropertyTypeCoercionMixIn, JsonObject):
                 SUPPORTED_UCR_AGGREGATIONS
             ))
 
-    def __call__(self, doc, context=None):
-        items = _evaluate_items_expression(self._items_expression, doc, context)
+    def __call__(self, doc, evaluation_context=None):
+        items = _evaluate_items_expression(self._items_expression, doc, evaluation_context)
         return aggregate_items(items, self.aggregation_fn)
 
     def __str__(self):
@@ -215,7 +215,7 @@ class FlattenExpressionSpec(NoPropertyTypeCoercionMixIn, JsonObject):
        {
            "type": "flatten",
            "items_expression": {},
-   }
+       }
     """
     type = TypeProperty('flatten')
     items_expression = DefaultProperty(required=True)
@@ -223,8 +223,8 @@ class FlattenExpressionSpec(NoPropertyTypeCoercionMixIn, JsonObject):
     def configure(self, items_expression):
         self._items_expression = items_expression
 
-    def __call__(self, doc, context=None):
-        items = _evaluate_items_expression(self._items_expression, doc, context)
+    def __call__(self, doc, evaluation_context=None):
+        items = _evaluate_items_expression(self._items_expression, doc, evaluation_context)
         #  all items should be iterable, if not return empty list
         for item in items:
             if not isinstance(item, list):
@@ -281,12 +281,12 @@ class SortItemsExpressionSpec(NoPropertyTypeCoercionMixIn, JsonObject):
         self._items_expression = items_expression
         self._sort_expression = sort_expression
 
-    def __call__(self, doc, context=None):
-        items = _evaluate_items_expression(self._items_expression, doc, context)
+    def __call__(self, doc, evaluation_context=None):
+        items = _evaluate_items_expression(self._items_expression, doc, evaluation_context)
 
         try:
             def sort_key(item):
-                value = self._sort_expression(item, context)
+                value = self._sort_expression(item, evaluation_context)
                 # swap 0 and 1 to sort nulls last instead of first
                 return (0 if value is None else 1), value
 

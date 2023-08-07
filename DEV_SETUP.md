@@ -46,51 +46,80 @@ NOTE: Developers on Mac OS have additional prerequisites. See the [Supplementary
     ```sh
     sudo apt install git
     ```
-    
+
 - [Python 3.9](https://www.python.org/downloads/)
 
   - **Linux**:
 
     In Ubuntu you will also need to install the modules for `python-dev`, `pip`, and `venv` explicitly.
-    ```sh
-    sudo apt install python3.9-dev python3-pip python3-venv
-    ```
+
+    The [deadsnakes PPA](https://launchpad.net/~deadsnakes/+archive/ubuntu/ppa)
+    allows you to use multiple versions of Python on your own machine as we do
+    in production environments. The deadsnakes PPA supports Ubuntu LTS
+    releases, but you can use their Python versions on interim Ubuntu releases
+    as follows:
+
+    1. Find the name of your Ubuntu release if you don't already know it:
+       ```shell
+       $ cat /etc/lsb-release
+       DISTRIB_ID=Ubuntu
+       DISTRIB_RELEASE=23.04
+       DISTRIB_CODENAME=lunar  # <-- This is the name you want
+       DISTRIB_DESCRIPTION="Ubuntu 23.04"
+       ```
+
+    2. Pin your release's package priority to 1001 so that deadsnakes packages
+       can't replace official packages, even if they are newer:
+       ```shell
+       $ cat << EOF | sudo tee /etc/apt/preferences.d/99lunar
+       Package: *
+       Pin: release lunar
+       Pin-Priority: 1001
+       EOF
+       ```
+       but change "lunar" to the name of the release you are using.
+
+    3. Add the deadsnakes PPA, and install the Python version that CommCare HQ
+       requires:
+       ```shell
+       $ sudo add-apt-repository ppa:deadsnakes/ppa
+       ```
+       This will create a file in `/etc/apt/sources.list.d/` with the name of your
+       release. Change the filename, and the name inside the file, to the latest
+       LTS release instead (e.g. "jammy").
+
+    4. Install the version of Python that CommCare HQ requires.
+       ```shell
+       $ sudo apt update
+       $ sudo apt install python3.9 python3.9-dev python3-pip python3.9-venv
+       ```
 
   - **Mac**:
 
-    Mac OS 12.x still comes shipped with Python 2.7 (?!), so you need to explicitly use `python3` instead of `python` (unless you use `pyenv`—which we highly recommend!)
+    Mac OS 12.x still comes shipped with Python 2.7 (?!), so you need to explicitly use `python3` instead of `python` (unless you use `pyenv`—which we highly recommend!). First install [homebrew](https://brew.sh/)
+    
 
     ```sh
     brew install python@3.9
     ```
 
-- A Python virtual environment manager like `pyenv` or `virtualenvwrapper`. We recommend `pyenv` ([see installation guide](https://github.com/pyenv/pyenv#installation))
 
-    To install python 3.9 with `pyenv`:
-
-    ```sh
-    pyenv install 3.9.11
-    ```
-
-    To set Python 3.9 as the global `python`, run:
-    ```sh
-    pyenv global 3.9.11
-    ```
-    Pro-tip: this is great for Mac OS users working around having to explicitly use `python3` :)
-
-
-- Requirements of Python libraries, if they aren't already installed.
+- Requirements of Python libraries, if they aren't already installed.  Some of this comes from
+  [pyenv's recommendations](https://github.com/pyenv/pyenv/wiki#suggested-build-environment)
 
   - **Linux**:
 
     ```sh
-    sudo apt install libncurses-dev libxml2-dev libxmlsec1-dev libxmlsec1-openssl libxslt1-dev libpq-dev pkg-config
+    sudo apt-get update; sudo apt install libncurses-dev libxml2-dev libxmlsec1-dev \
+    libxmlsec1-openssl libxslt1-dev libpq-dev pkg-config gettext make build-essential \
+    libssl-dev zlib1g-dev libbz2-dev libreadline-dev libsqlite3-dev wget curl llvm \
+    libncursesw5-dev xz-utils tk-dev libffi-dev liblzma-dev
     ```
 
   - **macOS**:
 
     ```sh
-    brew install libmagic libxmlsec1 libxml2 libxslt
+    brew install libmagic libxmlsec1 libxml2 libxslt openssl readline sqlite3 xz zlib tcl-tk
     ```
 
 - Java (JDK 8)
@@ -131,15 +160,18 @@ NOTE: Developers on Mac OS have additional prerequisites. See the [Supplementary
     xcode-select --install
     export LDFLAGS="-I/usr/local/opt/openssl/include -L/usr/local/opt/openssl/lib"
     ```
-    
+
     If you have an M1 chip and are using a Rosetta-based install of Postgres and run into problems with psycopg2, see [this solution](https://github.com/psycopg/psycopg2/issues/1216#issuecomment-767892042).
 
-##### A note on `xmlsec`
+##### Notes on `xmlsec`
 
 `xmlsec` is a `pip` dependency that will require some non-`pip`-installable
 packages. The above notes should have covered these requirements for linux and
 macOS, but if you are on a different platform or still experiencing issues,
 please see [`xmlsec`'s install notes](https://pypi.org/project/xmlsec/).
+
+If you encounter issues installing `xmlsec` on a M1 mac, you can try following a workaround
+outlined in the Mac setup [Supplementary Guide](https://github.com/dimagi/commcare-hq/blob/master/DEV_SETUP_MAC.md).
 
 
 ## Downloading & Running CommCare HQ
@@ -148,9 +180,40 @@ please see [`xmlsec`'s install notes](https://pypi.org/project/xmlsec/).
 
 #### Option A: With `pyenv` and `pyenv-virtualenv`
 
-1. Create the virtualenv `hq` with Python 3.9.11:
+1. Install `pyenv`
+
+  Full installation instructions are [here](https://github.com/pyenv/pyenv#installation)
+  and [here](https://github.com/pyenv/pyenv-installer#installation--update--uninstallation).
+  Check [here](https://github.com/pyenv/pyenv/wiki#troubleshooting--faq)
+  and [here](https://github.com/pyenv/pyenv/wiki/Common-build-problems) to troubleshoot.
+
+  - **Linux**:
+
+    ```sh
+    curl -L https://github.com/pyenv/pyenv-installer/raw/master/bin/pyenv-installer | bash
+    exec $SHELL
+    ```
+
+  - **macOS**:
+
+    [see installation guide linked above](https://github.com/pyenv/pyenv#installation)
+
+  - Install python 3.9 with `pyenv`:
+
+    ```sh
+    pyenv install 3.9:latest
+    ```
+
+    To set Python 3.9 as the global `python`, run:
+    ```sh
+    pyenv global 3.9.xx  # or whatever version was just installed - it should tab complete
+    ```
+    Pro-tip: this is great for Mac OS users working around having to explicitly use `python3` :)
+
+
+2. Create the virtualenv `hq` with Python 3.9.xx:
    ```sh
-   pyenv virtualenv 3.9.11 hq
+   pyenv virtualenv 3.9.xx hq
    ```
    Then to enter the environment:
    ```sh
@@ -213,6 +276,29 @@ please see [`xmlsec`'s install notes](https://pypi.org/project/xmlsec/).
     python3 -m pip install --upgrade pip
     ```
 
+#### Option C: With standard Python venv
+
+Virtual environments were introduced as a standard in Python 3.3 [with PEP 405](https://peps.python.org/pep-0405/).
+
+By convention, virtual environments use a ".venv" or "venv" directory in the
+root of the codebase. Once you have cloned the CommCare HQ repo in "Step 2"
+below, create a Python 3.9 virtual environment in the root of the codebase
+with:
+```shell
+$ python3.9 -m venv .venv
+```
+
+For convenience, you can create an alias to activate virtual environments in
+".venv" and "venv" directories. To do that, add the following to your
+`.bashrc` or `.zshrc` file:
+```shell
+alias venv='if [[ -d .venv ]] ; then source .venv/bin/activate ; elif [[ -d venv ]] ; then source venv/bin/activate ; fi'
+```
+Then you can activate virtual environments with
+```shell
+$ venv
+```
+
 
 ### Step 2: Clone this repo and install requirements
 
@@ -223,7 +309,7 @@ please see [`xmlsec`'s install notes](https://pypi.org/project/xmlsec/).
     cd commcare-hq
     git submodule update --init --recursive
     git-hooks/install.sh
-    setvirtualenvproject  # optional - sets this directory as the project root
+    setvirtualenvproject  # optional, virtualenvwrapper only - sets this directory as the project root
     ```
 
 2. Next, install the appropriate requirements (**only one is necessary**).
@@ -238,36 +324,21 @@ please see [`xmlsec`'s install notes](https://pypi.org/project/xmlsec/).
     pip install -r requirements/dev-requirements.txt
     ```
 
-  - Recommended for developers or others with custom requirements. Use this `pip
-    install ...` workflow for initial setup only. Then use commands in
-    `local.in`.
+    - Recommended for developers or others with custom requirements. Use this `pip
+      install ...` workflow for initial setup only. Then create a copy of local.in.sample,
+      ```sh
+      cp requirements/local.in.sample requirements/local.in
+      ```
+      and follow the instructions in `local.in` to keep requirements in sync.
 
-    ```sh
-    cp requirements/local.in.sample requirements/local.in
-    # customize requirements/local.in as desired
-    pip install -r requirements/local.in
-    ```
-    
     If you have problems installing pip dependencies related to a missing wheel package, try installing wheel and upgrade pip before attempting to install dependencies.
-    
+
     - If you have ARM64 architecture (Apple M1 chip) and you're having trouble installing ReportLab:
         ```sh
         CFLAGS="-Wno-error=implicit-function-declaration" pip install -r requirements/local.in
         ```
         [Source](https://stackoverflow.com/questions/64871133/reportlab-installation-failed-after-upgrading-to-macos-big-sur)
-        
 
-  - For production environments
-
-    ```sh
-    pip install -r requirements/prod-requirements.txt
-    ```
-
-  - Minimum required packages
-
-    ```sh
-    pip install -r requirements/requirements.txt
-    ```
 
 Note that once you're up and running, you'll want to periodically re-run these
 steps, and a few others, to keep your environment up to date. Some developers
@@ -317,7 +388,7 @@ needs of most developers.
     systemctl is-active docker || sudo systemctl start docker
     # add your user to the `docker` group
     sudo adduser $USER docker
-    # login as yourself again to activate membership of the "docker" group
+    # log in as yourself again to activate membership of the "docker" group
     su - $USER
 
     # re-activate your virtualenv (with your venv tool of choice)
@@ -331,10 +402,11 @@ needs of most developers.
     source $WORKON_HOME/hq/bin/activate
     ```
 
-3. Install the `docker-compose` python library
-
+3. Install `docker compose`
+  - **Mac**: comes with Docker Desktop
+  - **Linux**:
     ```sh
-    pip install docker-compose
+    sudo apt install docker-compose-plugin
     ```
 
 4. Ensure the elasticsearch config files are world-readable (their containers
@@ -406,6 +478,16 @@ that to the new install. If not, proceed to Step 5B.
     ```
 
   - Fire up Fauxton to check that the dbs are there: http://localhost:5984/_utils/
+    - As of CouchDB 3.x, Fauxton is no longer shipped in the container and must
+      be installed separately:
+
+      ```sh
+      npm install -g fauxton
+      fauxton
+      ```
+
+      Open http://localhost:8000 in a browser. Run fauxton with ``-p PORT`` to
+      use a port other than 8000.
 
 - Shared Directory
   - If you are following the default instructions, move/merge the `sharedfiles`
@@ -487,20 +569,27 @@ If you have trouble with your first run of `./manage.py sync_couch_views`:
 To set up elasticsearch indexes run the following:
 
 ```sh
-./manage.py ptop_preindex
+./manage.py ptop_preindex [--reset]
 ```
 
-This will create all of the elasticsearch indexes (that don't already exist) and
+This will create all the elasticsearch indexes (that don't already exist) and
 populate them with any data that's in the database.
 
-Next, set the aliases of the elastic indices. These can be set by a management
-command that sets the stored index names to the aliases.
 
-```sh
-./manage.py ptop_es_manage --flip_all_aliases
+### Step 7: Installing JavaScript and Front-End Requirements
+
+#### Install Dart Sass
+
+We are transitioning to using `sass`/`scss` for our stylesheets. In order to compile `*.scss`,
+Dart Sass is required.
+
+We recommend using `npm` to install this globally with:
+```
+npm install -g sass
 ```
 
-### Step 7: Installing JavaScript Requirements
+You can also [follow the instructions here](https://sass-lang.com/install) if you encounter issues with this method.
+
 
 #### Installing Yarn
 
@@ -512,7 +601,7 @@ manage `js` repositories.
 In order to download the required JavaScript packages, you'll need to install
 `yarn` and run `yarn install`. Follow these steps to install:
 
-1. Follow [these steps](https://classic.yarnpkg.com/en/docs/install#mac-stable)
+1. Follow [these steps](https://classic.yarnpkg.com/en/docs/install)
    to install Yarn.
 
 2. Install dependencies with:
@@ -538,16 +627,16 @@ for these packages.
 
 ```sh
 $ npm --version
-7.24.2
+8.19.3
 $ node --version
-v14.19.1
+v16.19.1
 ```
 
-On a clean Ubuntu 18.04 LTS install, the packaged nodejs version is v8. The
-easiest way to get onto the current nodejs v14 is
+On a clean Ubuntu 22.04 LTS install, the packaged nodejs version is expected to be v12. The
+easiest way to get onto the current nodejs v16 is
 
 ```sh
-curl -sL https://deb.nodesource.com/setup_14.x | sudo -E bash -
+curl -sL https://deb.nodesource.com/setup_16.x | sudo -E bash -
 sudo apt install -y nodejs
 ```
 
@@ -595,7 +684,20 @@ Preferences > Network** and check the following:
 - [x] Disable cache (while DevTools is open)
 
 
-### Step 10: Running CommCare HQ
+### Step 10: Create a superuser
+
+To be able to use CommCare, you'll want to create a superuser, which you can do by running:
+
+```sh
+./manage.py make_superuser <email>
+```
+
+This can also be used to promote a user created by signing up to a superuser.
+
+Note that promoting a user to superuser status using this command will also give them the
+ability to assign other users as superuser in the in-app Superuser Management page.
+
+### Step 11: Running CommCare HQ
 
 Make sure the required services are running (PostgreSQL, Redis, CouchDB, Kafka,
 Elasticsearch).
@@ -605,7 +707,8 @@ Elasticsearch).
 ```
 
 Some of the services listed there aren't necessary for very basic operation, but
-it can give you a good idea of what's broken.
+it can give you a good idea of what's broken. If you're not running formplayer
+in docker, it will of course fail. Don't worry about celery for now.
 
 Then run the django server with the following command:
 
@@ -625,17 +728,6 @@ yarn install --frozen-lockfile
 ./manage.py compilejsi18n
 ./manage.py fix_less_imports_collectstatic
 ```
-
-### Step 11: Create a superuser
-
-Once your application is online, you'll want to create a superuser, which you can do by running:
-
-```sh
-./manage.py make_superuser <email>
-```
-
-This can also be used to promote a user created by signing up to a superuser.
-
 
 ## Running Formplayer and submitting data with Web Apps
 
@@ -706,6 +798,11 @@ They can each be run in separate terminals:
 
 Pillowtop is used to keep elasticsearch indices and configurable reports in sync.
 
+> **Note**
+> Typically, you won't need to run these in a dev environment unless you are testing them.
+> It is simpler to run the 'reindex' command to update ES with local changes when needed.
+> See [Populate Elasticsearch](#step-6--populate-elasticsearch)
+
 **Mac OS:**  `run_ptop` Will likely not work for you.
 See the [Supplementary Guide](https://github.com/dimagi/commcare-hq/blob/master/DEV_SETUP_MAC.md) for help.
 
@@ -741,6 +838,8 @@ This can be done using:
 celery -A corehq worker -l info
 ```
 
+This will run a worker that will listen to default queue which is named celery.
+
 You may need to add a `-Q` argument based on the queue you want to listen to.
 
 For example, to use case importer with celery locally you need to run:
@@ -749,6 +848,17 @@ For example, to use case importer with celery locally you need to run:
 celery -A corehq worker -l info -Q case_import_queue
 ```
 
+You can also run multiple queues on a single worker by passing multiple queue names separated by `,`
+
+```sh
+celery -A corehq worker -l info -Q case_import_queue,background_queue
+```
+
+If you want to run periodic tasks you would need to start `beat` service along with celery by running
+
+```sh
+celery -A corehq beat
+```
 
 ## Running Formdesigner (Vellum) in Development mode
 
@@ -826,7 +936,7 @@ If you are on arm64 architecture using a non-Dimagi Docker Postgres image:
 USE_PARTITIONED_DATABASE = False
 ```
 
-        
+
 
 ### REUSE DB
 
@@ -859,6 +969,54 @@ CCHQ_TESTING=1 ./manage.py dbshell
 
 CCHQ_TESTING=1 ./manage.py shell
 ```
+
+
+### Deprecation warnings
+
+Deprecation warnings are converted to errors when running tests unless the
+warning has been whitelisted (or unless `PYTHONWARNINGS` is set with a value
+that does not convert warnings to errors, more below). The warnings whitelist
+can be found in `corehq/warnings.py`.
+
+The `CCHQ_STRICT_WARNINGS` environment variable can be used to convert
+non-whitelisted deprecation warnings into errors for all management commands
+(in addition to when running tests). It is recommended to add this to your bash
+profile or wherever you set environment variables for your shell:
+
+```sh
+export CCHQ_STRICT_WARNINGS=1
+```
+
+If you don't want strict warnings, but do want to ignore (or perform some other
+action on) whitelisted warnings you can use the `CCHQ_WHITELISTED_WARNINGS`
+environment variable instead. `CCHQ_WHITELISTED_WARNINGS` accepts any of the
+[`PYTHONWARNINGS`](https://docs.python.org/3/using/cmdline.html#envvar-PYTHONWARNINGS)
+action values (`ignore`, `default`, `error`, etc).
+
+```sh
+export CCHQ_WHITELISTED_WARNINGS=ignore
+```
+
+`CCHQ_WHITELISTED_WARNINGS=ignore` is implied when `CCHQ_STRICT_WARNINGS=1` is
+set.
+
+If `PYTHONWARNINGS` is set it may override the default behavior of converting
+warnings to errors. This allows additional local configuration of personal
+whitelist entries, for example. Ensure there is an "error" item as the first
+entry in the value to preserve the default behavior of converting warnings to
+errors. For example:
+
+```sh
+export PYTHONWARNINGS='
+error,
+ignore:Using or importing the ABCs::kombu.utils.functional,
+ignore:Using or importing the ABCs::celery.utils.text,
+ignore:the imp module is deprecated::celery.utils.imports,
+ignore:unclosed:ResourceWarning'
+```
+
+Personal whitelist items may also be added in localsettings.py.
+
 
 ### Running tests by tag
 

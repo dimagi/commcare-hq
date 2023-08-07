@@ -3,6 +3,9 @@ from typing import Optional
 from twilio.base import values
 from twilio.base.exceptions import TwilioRestException
 from twilio.rest import Client
+from twilio.rest.api import Api
+
+from django.utils.functional import classproperty
 
 from dimagi.utils.logging import notify_exception
 
@@ -25,6 +28,12 @@ WHATSAPP_SANDBOX_PHONE_NUMBER = "14155238886"
 
 
 class SQLTwilioBackend(SQLSMSBackend, PhoneLoadBalancingMixin):
+
+    @classproperty
+    def url(cls):
+        # for SSL verification only
+        # use classproperty to avoid evaluation on import
+        return Api(None).base_url
 
     class Meta(object):
         app_label = 'sms'

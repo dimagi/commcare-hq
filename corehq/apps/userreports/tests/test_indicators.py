@@ -28,8 +28,8 @@ from corehq.form_processor.utils.xform import TestFormMetadata
 
 class SingleIndicatorTestBase(SimpleTestCase):
 
-    def _check_result(self, indicator, document, value, context=None):
-        [result] = indicator.get_values(document, context=context)
+    def _check_result(self, indicator, document, value, evaluation_context=None):
+        [result] = indicator.get_values(document, evaluation_context)
         self.assertEqual(value, result.value)
 
 

@@ -40,7 +40,7 @@ class SubmissionErrorReport(DeploymentsReport):
     @memoized
     def headers(self):
         headers = DataTablesHeader(DataTablesColumn(_("View Form"), sortable=False),
-                                   DataTablesColumn(_("Username"), prop_name="username"),
+                                   DataTablesColumn(_("Username"), prop_name="form.meta.username"),
                                    DataTablesColumn(_("Submit Time"), prop_name="received_on"),
                                    DataTablesColumn(_("Form Type"), sortable=False),
                                    DataTablesColumn(_("Error Type"), sortable=False),
@@ -142,6 +142,7 @@ class SubmissionErrorReport(DeploymentsReport):
                     self.domain,
                     xform_dict.get('xmlns'),
                     app_id=xform_dict.get('app_id'),
+                    form_name=xform_dict['form'].get('@name'),
                 )
                 form_username = xform_dict['form']['meta'].get('username', EMPTY_USER)
             else:

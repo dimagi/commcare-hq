@@ -89,7 +89,7 @@ def case_form_data():
     for i in range(3):
         case_id = uuid.uuid4().hex
         case_block = factory.get_case_block(case_id, case_type='case_type')
-        form, [case] = factory.post_case_blocks([case_block])
+        form, [case] = factory.post_case_blocks([case_block.as_text()])
         cases.append(case)
         forms.append(form)
 
@@ -150,7 +150,7 @@ def ledger_data():
                 date=datetime.utcnow(),
                 section_id='test',
                 entry=Entry(id='chocolate', quantity=4),
-            ).as_xml()
+            ).as_text()
             for case_id in case_ids
         ]
         form, _ = factory.post_case_blocks(balance_blocks)

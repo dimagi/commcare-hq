@@ -122,7 +122,7 @@ class XFormInstanceManager(RequireDBManager):
 
     def get_attachment_content(self, form_id, attachment_name):
         meta = self.get_attachment_by_name(form_id, attachment_name)
-        return AttachmentContent(meta.content_type, meta.open())
+        return AttachmentContent(meta.content_type, meta.open(), meta.content_length)
 
     def get_forms_with_attachments_meta(self, form_ids, ordered=False):
         assert isinstance(form_ids, list)
@@ -337,7 +337,6 @@ class XFormInstanceManager(RequireDBManager):
             publish_form_saved(form)
 
     def soft_delete_forms(self, domain, form_ids, deletion_date=None, deletion_id=None):
-        from ..change_publishers import publish_form_deleted
         assert isinstance(form_ids, list)
         deletion_date = deletion_date or datetime.utcnow()
         with self.model.get_plproxy_cursor() as cursor:
@@ -348,8 +347,7 @@ class XFormInstanceManager(RequireDBManager):
             results = fetchall_as_namedtuple(cursor)
             affected_count = sum([result.affected_count for result in results])
 
-        for form_id in form_ids:
-            publish_form_deleted(domain, form_id)
+        self.publish_deleted_forms(domain, form_ids)
 
         return affected_count
 
@@ -372,7 +370,12 @@ class XFormInstanceManager(RequireDBManager):
 
         return count
 
-    def hard_delete_forms(self, domain, form_ids, delete_attachments=True):
+    def hard_delete_forms(self, domain, form_ids, delete_attachments=True, *, publish_changes=True):
+        """Delete forms permanently
+
+        :param publish_changes: Flag for change feed publication.
+            Documents in Elasticsearch will not be deleted if this is false.
+        """
         assert isinstance(form_ids, list)
 
         deleted_count = 0
@@ -396,7 +399,16 @@ class XFormInstanceManager(RequireDBManager):
             metas = get_blob_db().metadb.get_for_parents(deleted_forms)
             get_blob_db().bulk_delete(metas=metas)
 
+        if publish_changes:
+            self.publish_deleted_forms(domain, form_ids)
+
         return deleted_count
+
+    @staticmethod
+    def publish_deleted_forms(domain, form_ids):
+        from ..change_publishers import publish_form_deleted
+        for form_id in form_ids:
+            publish_form_deleted(domain, form_id)
 
 
 class XFormOperationManager(RequireDBManager):
@@ -792,7 +804,7 @@ class XFormPhoneMetadata(jsonobject.JsonObject):
     @property
     def commcare_version(self):
         from corehq.apps.receiverwrapper.util import get_commcare_version_from_appversion_text
-        from distutils.version import LooseVersion
+        from looseversion import LooseVersion
         version_text = get_commcare_version_from_appversion_text(self.appVersion)
         if version_text:
             return LooseVersion(version_text)

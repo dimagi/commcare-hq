@@ -96,11 +96,3 @@ def add_domains_to_enterprise_account(account, domains, plan_version, date_start
             plan_version=plan_version,
             is_active=True,
         )
-
-
-@unit_testing_only
-def cleanup_accounting():
-    Subscription.objects.all().delete()
-    BillingAccount.objects.all().delete()
-    SoftwarePlan.objects.all().delete()
-    SoftwarePlanVersion.objects.all().delete()

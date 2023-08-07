@@ -103,7 +103,7 @@ def _validate_indices(case_db, case_updates):
                     invalid = False
                 if invalid:
                     # fail hard on invalid indices
-                    from distutils.version import LooseVersion
+                    from looseversion import LooseVersion
                     if case_db.cached_xforms and case_db.domain != 'commcare-tests':
                         xform = case_db.cached_xforms[0]
                         if xform.metadata and xform.metadata.commcare_version:
@@ -130,7 +130,7 @@ def _is_change_of_ownership(previous_owner_id, next_owner_id):
     )
 
 
-def close_extension_cases(case_db, cases, device_id):
+def close_extension_cases(case_db, cases, device_id, synctoken_id):
     from casexml.apps.case.cleanup import close_cases
     extensions_to_close = get_all_extensions_to_close(case_db.domain, cases)
     extensions_to_close = case_db.filter_closed_extensions(list(extensions_to_close))
@@ -141,6 +141,7 @@ def close_extension_cases(case_db, cases, device_id):
             SYSTEM_USER_ID,
             device_id,
             case_db,
+            synctoken_id
         )
 
 

@@ -14,9 +14,6 @@ limit_request_line = 4500
 
 
 def post_fork(server, worker):
-    from manage import run_patches
-    run_patches()
-
     # hacky way to address gunicorn gevent requests hitting django too early before urls are loaded
     # see: https://github.com/benoitc/gunicorn/issues/527#issuecomment-19601046
     from django.urls import resolve
@@ -38,7 +35,8 @@ def _on_starting(server, path=None):
 
 def _remove_prometheus_metric_files(path, worker=None):
     if path is None:
-        path = os.environ.get('prometheus_multiproc_dir')
+        # DEPRECATED: prometheus_multiproc_dir has been replaced by PROMETHEUS_MULTIPROC_DIR
+        path = os.environ.get('PROMETHEUS_MULTIPROC_DIR') or os.environ.get('prometheus_multiproc_dir')
     if not path:
         return
 

@@ -33,7 +33,7 @@
                     </p>
                     <p>
                       {% blocktrans with user.username as username %}
-                        Are you sure you want to to accept the invitation
+                        Are you sure you want to accept the invitation
                         to join the CommCare HQ {{ invite_type }}
                         <strong>{{ invite_to }}</strong> as <strong>{{ username }}</strong>?
                       {% endblocktrans %}
@@ -70,8 +70,8 @@
               {% endif %}
             </div>
             <div class="well sign-up-bubble form-bubble-purple">
-              <h2 class="text-center">
-                {% blocktrans with formatted_username|safe as username %}
+              <h2 class="text-center break-all-words">
+                {% blocktrans with formatted_username as username %}
                   Not {{ username }}?
                 {% endblocktrans %}
               </h2>
@@ -114,17 +114,6 @@
                   </div>
                 {% endif %}
                 {% include 'users/partials/register_user_form_fields.html' %}
-                <div class="form-bubble-actions">
-                  <button type="submit"
-                          class="btn btn-lg btn-primary"
-                          data-bind="enable: passwordSufficient">
-                    {% if is_sso %}
-                      {% trans "Continue to Single Sign-On" %}
-                    {% else %}
-                      {% trans "Create Account" %}
-                    {% endif %}
-                  </button>
-                </div>
               </form>
             </div>
             <div class="well sign-up-bubble form-bubble-purple">

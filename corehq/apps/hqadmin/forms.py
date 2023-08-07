@@ -2,16 +2,19 @@ import re
 
 from django import forms
 from django.conf import settings
+from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError
 from django.utils.translation import gettext as _
+from django.db.models import Q
 
 from crispy_forms import layout as crispy
 from crispy_forms.helper import FormHelper
-from memoized import memoized
 
 from corehq.apps.hqwebapp import crispy as hqcrispy
 from corehq.apps.hqwebapp.crispy import FieldWithHelpBubble, FormActions
-from corehq.apps.users.models import CommCareUser
+from corehq.apps.users.util import is_dimagi_email
+
+from email.utils import parseaddr
 
 
 class EmailForm(forms.Form):
@@ -20,8 +23,9 @@ class EmailForm(forms.Form):
     email_body_text = forms.CharField()
     real_email = forms.BooleanField(required=False)
 
+
 class ReprocessMessagingCaseUpdatesForm(forms.Form):
-    case_ids = forms.CharField(widget=forms.Textarea)
+    case_ids = forms.CharField(widget=forms.Textarea(attrs={"class": "vertical-resize"}))
 
     def clean_case_ids(self):
         value = self.cleaned_data.get('case_ids', '')
@@ -56,50 +60,31 @@ class ReprocessMessagingCaseUpdatesForm(forms.Form):
 
 class SuperuserManagementForm(forms.Form):
     csv_email_list = forms.CharField(
-        label="Comma seperated email addresses",
-        widget=forms.Textarea()
+        label="Comma or new-line separated email addresses",
+        widget=forms.Textarea(attrs={"class": "vertical-resize"}),
+        required=True
     )
     privileges = forms.MultipleChoiceField(
         choices=[
-            ('is_superuser', 'Mark as superuser'),
+            ('is_staff', 'Mark as developer'),
+            ('is_superuser', 'Mark as superuser')
+        ],
+        widget=forms.CheckboxSelectMultiple(),
+        required=False,
+    )
+    can_assign_superuser = forms.MultipleChoiceField(
+        choices=[
+            ('can_assign_superuser', 'Grant permission to change superuser and staff status')
         ],
         widget=forms.CheckboxSelectMultiple(),
         required=False,
     )
 
     def clean(self):
-        from email.utils import parseaddr
-        from django.contrib.auth.models import User
-        csv_email_list = self.cleaned_data.get('csv_email_list', '')
-        csv_email_list = csv_email_list.split(',')
-        csv_email_list = [parseaddr(em)[1] for em in csv_email_list]
-        if len(csv_email_list) > 10:
-            raise forms.ValidationError(
-                "This command is intended to grant superuser access to few users at a time. "
-                "If you trying to update permissions for large number of users consider doing it via Django Admin"
-            )
+        return clean_data(self.cleaned_data)
 
-        users = []
-        for username in csv_email_list:
-            if settings.IS_DIMAGI_ENVIRONMENT and "@dimagi.com" not in username:
-                raise forms.ValidationError("Email address '{}' is not a dimagi email address".format(username))
-            try:
-                users.append(User.objects.get(username=username))
-            except User.DoesNotExist:
-                raise forms.ValidationError(
-                    "User with email address '{}' does not exist on "
-                    "this site, please have the user registered first".format(username))
-
-        self.cleaned_data['users'] = users
-        return self.cleaned_data
-
-    def __init__(self, can_toggle_is_staff, *args, **kwargs):
+    def __init__(self, *args, **kwargs):
         super(SuperuserManagementForm, self).__init__(*args, **kwargs)
-
-        if can_toggle_is_staff:
-            self.fields['privileges'].choices.append(
-                ('is_staff', 'Mark as developer')
-            )
 
         self.helper = FormHelper()
         self.helper.form_class = "form-horizontal"
@@ -108,6 +93,7 @@ class SuperuserManagementForm(forms.Form):
         self.helper.layout = crispy.Layout(
             'csv_email_list',
             'privileges',
+            'can_assign_superuser',
             FormActions(
                 crispy.Submit(
                     'superuser_management',
@@ -115,6 +101,94 @@ class SuperuserManagementForm(forms.Form):
                 )
             )
         )
+
+
+class OffboardingUserListForm(forms.Form):
+    csv_email_list = forms.CharField(
+        label="Comma/new-line seperated email addresses",
+        widget=forms.Textarea(attrs={"class": "vertical-resize"}),
+        required=False
+    )
+
+    def clean(self):
+        return clean_data(self.cleaned_data, offboarding_list=True)
+
+    def __init__(self, *args, **kwargs):
+        super(OffboardingUserListForm, self).__init__(*args, **kwargs)
+        self.helper = FormHelper()
+        self.helper.form_class = "form-horizontal"
+        self.helper.label_class = 'col-sm-3 col-md-2'
+        self.helper.field_class = 'col-sm-9 col-md-8 col-lg-6'
+        self.helper.layout = crispy.Layout(
+            'csv_email_list',
+            FormActions(
+                crispy.Submit(
+                    'get_offboarding_list',
+                    'Get Users Not in List'
+                )
+            )
+        )
+
+
+def clean_data(cleaned_data, offboarding_list=False):
+    EMAIL_INDEX = 1
+    csv_email_list = cleaned_data.get('csv_email_list', '')
+    all_users = User.objects.filter(Q(is_superuser=True) | Q(is_staff=True)
+                                    | (Q(is_active=True) & Q(username__endswith='@dimagi.com')))
+    if offboarding_list and not csv_email_list:
+        cleaned_data['csv_email_list'] = all_users
+        return cleaned_data
+
+    csv_email_list = re.split(',|\n', csv_email_list)
+    csv_email_list = [parseaddr(email)[EMAIL_INDEX] for email in csv_email_list]
+
+    MAX_ALLOWED_EMAIL_USERS = 10
+    users = []
+    validation_errors = []
+
+    # Superuser management
+    non_dimagi_email = []
+    if not offboarding_list:
+        if len(csv_email_list) > MAX_ALLOWED_EMAIL_USERS:
+            raise forms.ValidationError(
+                f"This command allows superusers to modify up to {MAX_ALLOWED_EMAIL_USERS} users at a time. "
+            )
+        for username in csv_email_list:
+            if settings.IS_DIMAGI_ENVIRONMENT and not is_dimagi_email(username):
+                non_dimagi_email.append(ValidationError(username))
+                continue
+            try:
+                users.append(User.objects.get(username=username))
+            except User.DoesNotExist:
+                validation_errors.append(ValidationError(username))
+        if validation_errors or non_dimagi_email:
+            if non_dimagi_email:
+                non_dimagi_email.insert(0, ValidationError(
+                    _("The following email addresses are not dimagi email addresses:")))
+            if validation_errors:
+                validation_errors.insert(0, ValidationError(
+                    _("The following users do not exist on this site, please have the user registered first:")))
+                if non_dimagi_email:
+                    validation_errors.append('+')
+            raise ValidationError(validation_errors + non_dimagi_email)
+
+    # Offboarding list
+    if offboarding_list:
+        for username in csv_email_list:
+            try:
+                users.append(User.objects.get(username=username))
+            except User.DoesNotExist:
+                validation_errors.append(username)
+        if validation_errors:
+            cleaned_data['validation_errors'] = validation_errors
+
+        # inverts the given list by default
+        email_names = [username.split("@")[0] + "+" for username in csv_email_list]
+        users = [user for user in all_users if user not in users
+                 and not list(filter(user.username.startswith, email_names))]
+
+    cleaned_data['csv_email_list'] = users
+    return cleaned_data
 
 
 class DisableTwoFactorForm(forms.Form):

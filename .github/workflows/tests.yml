@@ -4,12 +4,17 @@ on:
     branches:
     - master
     - hotfix-deploy
+    - ap/sql-repeater/phase-2
+    - mjr/erm-update-rules
+    - mjr/erm-fixtures
+    - mjr/erm-custom-roles
+    - mjr/erm-roles
   schedule:
     # see corehq/apps/hqadmin/management/commands/static_analysis.py
     - cron: '47 12 * * *'
 jobs:
   tests:
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-22.04
     timeout-minutes: 60
     strategy:
       fail-fast: false
@@ -30,8 +35,11 @@ jobs:
     - name: Docker info
       run: |
         docker version
-        docker-compose version
+        docker compose version
     - name: Docker login
+      env:
+        TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
+      if: env.TOKEN != ''
       uses: docker/login-action@v1
       with:
         username: dimagi
@@ -41,8 +49,12 @@ jobs:
         TEST: ${{ matrix.TEST }}
         NOSE_DIVIDED_WE_RUN: ${{ matrix.NOSE_DIVIDED_WE_RUN }}
         JS_SETUP: yes
+        KAFKA_HOSTNAME: kafka
       run: scripts/docker test --noinput --stop -v --divided-we-run=${{ matrix.NOSE_DIVIDED_WE_RUN }} --divide-depth=1 --with-timing --with-flaky --threshold=10 --max-test-time=29
     - name: "Codecov upload"
+      env:
+        TOKEN: ${{ secrets.CODECOV_TOKEN }}
+      if: env.TOKEN != ''
       uses: codecov/codecov-action@v2
       with:
         token: ${{ secrets.CODECOV_TOKEN }}
@@ -51,3 +63,11 @@ jobs:
     - name: Stop containers
       if: always()
       run: scripts/docker down
+    - name: Upload test artifacts
+      if: always()
+      uses: actions/upload-artifact@v3
+      with:
+        name: test-artifacts
+        path: artifacts
+        if-no-files-found: ignore
+        retention-days: 7

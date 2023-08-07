@@ -1,22 +1,25 @@
+import json
 import traceback
 from datetime import datetime
-from psycopg2 import DatabaseError
-from django.utils.translation import gettext_lazy as _
-from celery.schedules import crontab
-from celery.task import periodic_task, task
 
-from corehq.motech.utils import pformat_json
-from corehq.toggles.shortcuts import find_domains_with_toggle_enabled
+from django.core.serializers.json import DjangoJSONEncoder
+from django.utils.translation import gettext_lazy as _
+
+from celery.schedules import crontab
+from psycopg2 import DatabaseError
 
 from corehq import toggles
+from corehq.apps.celery import periodic_task, task
+from corehq.apps.domain.models import Domain
 from corehq.motech.dhis2.models import (
     SQLDataSetMap,
     parse_dataset_for_request,
     should_send_on_date,
 )
-from corehq.util.view_utils import reverse
+from corehq.motech.utils import pformat_json
 from corehq.privileges import DATA_FORWARDING
-from corehq.apps.domain.models import Domain
+from corehq.toggles.shortcuts import find_domains_with_toggle_enabled
+from corehq.util.view_utils import reverse
 
 
 @periodic_task(
@@ -99,8 +102,10 @@ def send_dataset(
             datavalues_sets = parse_dataset_for_request(dataset_map, send_date)
 
             for datavalues_set in datavalues_sets:
-                response = requests.post('/api/dataValueSets', json=datavalues_set,
-                              raise_for_status=True)
+                # DjangoJSONEncoder handles dates, times, etc. sensibly
+                data = json.dumps(datavalues_set, cls=DjangoJSONEncoder)
+                response = requests.post('/api/dataValueSets', data=data,
+                                         raise_for_status=True)
 
         except DatabaseError as db_err:
             requests.notify_error(message=str(db_err),

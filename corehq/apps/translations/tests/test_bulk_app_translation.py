@@ -87,6 +87,7 @@ EXCEL_DATA = (
       )),
     ('menu1',
      (('case_list_menu_item_label', 'list', 'Steth List'),
+      ('no_items_text', 'list', 'Empty List'),
       ('name', 'list', 'Name'),
       ('name', 'detail', 'Name'))),
     ('menu1_form1',
@@ -95,11 +96,12 @@ EXCEL_DATA = (
       ('no_media-label', 'No media', '', '', ''),
       ('has_refs-label', 'Here is a ref <output value="/data/no_media"/> with some trailing text '
                          'and "bad" &lt; xml.', '', '', ''))),
-    ('menu2', (('name', 'list', 'Name'), ('name', 'detail', 'Name'))),
+    ('menu2', (('no_items_text', 'list', 'List is empty.'), ('name', 'list', 'Name'), ('name', 'detail', 'Name'))),
     ('menu2_form1',
      ('name_of_series-label', 'Name of series', '', '', '')),
     ('menu3',
-     (('name', 'list', 'Name'),
+     (('no_items_text', 'list', 'List is empty.'),
+      ('name', 'list', 'Name'),
       ('Tab 0', 'detail', 'Name'),
       ('Tab 1', 'detail', 'Graph'),
       ('name', 'detail', 'Name'),
@@ -114,7 +116,8 @@ EXCEL_DATA = (
      (('x-label', 'x', '', '' ''),
       ('y-label', 'y', '', '', ''))),
     ('menu4',
-     (('x', 'list', 'X'),
+     (('no_items_text', 'list', 'List is empty.'),
+      ('x', 'list', 'X'),
       ('y', 'list', 'Y'),
       ('x (ID Mapping Text)', 'detail', 'X Name'),
       ('1 (ID Mapping Value)', 'detail', 'one'),
@@ -127,7 +130,7 @@ EXCEL_DATA = (
        '/casedb/case[@case_id = instance(\'commcaresession\')/session/data/case_id]/y"/>).'),
       '', '', '')),
     ('menu5', ()),
-    ('menu6', (('name', 'list', 'Name'), ('name', 'detail', 'Name'))),
+    ('menu6', (('no_items_text', 'list', 'List is empty.'), ('name', 'list', 'Name'), ('name', 'detail', 'Name'))),
     ('menu6_form1',
      (('this_form_does_nothing-label', 'This form does nothing.', '', '', ''),)),
 )
@@ -347,6 +350,9 @@ class BulkAppTranslationBasicTest(BulkAppTranslationTestBaseWithApp):
             ("case_list_menu_item_label", "list", "List Stethoscopes", "French List of Stethoscopes"),
             ("search_label", "list", "Find a Mother", "Mère!"),
             ("search_again_label", "list", "Find Another Mother", "Mère! Encore!"),
+            ("title_label", "list", "Find a Mom", "Maman!"),
+            ("description", "list", "More information", "Plus d'information"),
+            ("no_items_text", "list", "Empty List", "Lista Vacía"),
             ("name", "list", "Name", "Nom"),
             ("Tab 0", "detail", "Name", "Nom"),
             ("Tab 1", "detail", "Other", "Autre"),
@@ -399,6 +405,9 @@ class BulkAppTranslationBasicTest(BulkAppTranslationTestBaseWithApp):
            "List Stethoscopes", "French List of Stethoscopes", "", "", ""),
           ("menu1", "search_label", "list", "", "Find a Mother", "", "", "", ""),
           ("menu1", "search_again_label", "list", "", "Find Another Mother", "", "", "", ""),
+          ("menu1", "title_label", "list", "Find a Mom", "Maman!", "", "", "", ""),
+          ("menu1", "description", "list", "More information", "Plus d'information", "", "", "", ""),
+          ("menu1", "no_items_text", "list", "Empty List", "Lista Vacía", "", "", "", ""),
           ("menu1", "name", "list", "", "Name", "", "", "", ""),
           ("menu1", "Tab 0", "detail", "", "Name", "", "", "", ""),
           ("menu1", "Tab 1", "detail", "", "Other", "", "", "", ""),
@@ -777,12 +786,17 @@ class BulkAppTranslationBasicTest(BulkAppTranslationTestBaseWithApp):
         # default values
         self.assertEqual(module.search_config.search_label.label, {'en': 'Search All Cases'})
         self.assertEqual(module.search_config.search_again_label.label, {'en': 'Search Again'})
+        self.assertEqual(module.search_config.title_label, {})
+        self.assertEqual(module.search_config.description, {})
 
         self.upload_raw_excel_translations(self.multi_sheet_upload_headers, self.multi_sheet_upload_data)
 
         self.assertEqual(module.search_config.search_label.label, {'en': 'Find a Mother', 'fra': 'Mère!'})
         self.assertEqual(module.search_config.search_again_label.label,
                          {'en': 'Find Another Mother', 'fra': 'Mère! Encore!'})
+        self.assertEqual(module.search_config.title_label, {'en': 'Find a Mom', 'fra': 'Maman!'})
+        self.assertEqual(module.search_config.description,
+                         {'en': 'More information', 'fra': "Plus d'information"})
 
 
 class BulkAppTranslationPartialsTest(BulkAppTranslationTestBase):
@@ -1071,7 +1085,18 @@ class BulkAppTranslationDownloadTest(SimpleTestCase, TestXmlMixin):
         app = AppFactory.case_claim_app_factory().app
         self.assertEqual(get_module_search_command_rows(app.langs, app.modules[0], app.domain),
                          [('search_label', 'list', 'Find a Mother'),
+                          ('title_label', 'list', 'Find a Mom'),
+                          ('description', 'list', 'More information'),
                           ('search_again_label', 'list', 'Find Another Mother')])
+
+    @flag_enabled('USH_CASE_CLAIM_UPDATES')
+    @flag_enabled('SPLIT_SCREEN_CASE_SEARCH')
+    def test_module_split_screen_case_search_rows(self):
+        app = AppFactory.case_claim_app_factory().app
+        self.assertEqual(get_module_search_command_rows(app.langs, app.modules[0], app.domain),
+                         [('search_label', 'list', 'Find a Mother'),
+                          ('title_label', 'list', 'Find a Mom'),
+                          ('description', 'list', 'More information')])
 
     @flag_enabled('SYNC_SEARCH_CASE_CLAIM')
     def test_module_case_search_rows(self):
@@ -1080,8 +1105,10 @@ class BulkAppTranslationDownloadTest(SimpleTestCase, TestXmlMixin):
                          [('name', 'case_search_display', 'Name of Mother'),
                           ('name', 'case_search_hint', '')])
 
+    @patch.object(Application, 'supports_empty_case_list_text', lambda: True)
     def test_module_detail_rows(self):
         self.assertListEqual(get_module_detail_rows(self.app.langs, self.app.modules[0]), [
+            ('no_items_text', 'list', 'Empty List'),
             ('name', 'list', 'Name'),
             ('name', 'detail', 'Name'),
         ])
@@ -1105,6 +1132,7 @@ class BulkAppTranslationDownloadTest(SimpleTestCase, TestXmlMixin):
              '', '', ''],
         ])
 
+    @patch.object(Application, 'supports_empty_case_list_text', lambda: True)
     def test_bulk_app_sheet_rows(self):
         actual_headers = get_bulk_app_sheet_headers(self.app)
         actual_sheets = get_bulk_app_sheets_by_name(self.app)

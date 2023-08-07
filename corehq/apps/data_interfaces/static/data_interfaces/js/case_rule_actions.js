@@ -7,11 +7,14 @@ hqDefine("data_interfaces/js/case_rule_actions", [
     ko,
     initialPageData
 ) {
-    var caseRuleActions = function (initial) {
+    var CaseRuleActions = function (initial, caseTypeObservable) {
         'use strict';
         var self = {};
 
         self.actions = ko.observableArray();
+
+        // For the sake of passing to case property input component
+        self.caseType = caseTypeObservable;
 
         self.getKoTemplateId = function (obj) {
             return obj.template_id;
@@ -90,6 +93,12 @@ hqDefine("data_interfaces/js/case_rule_actions", [
             self.actions.remove(this);
         };
 
+        self.disableActionField = function () {
+            if (initialPageData.get('read_only_mode')) {
+                $('.main-form :input').prop('disabled', true);
+            }
+        };
+
         self.loadInitial = function () {
             if (initial.close_case === 'true') {
                 var obj = closeCaseDefinition();
@@ -110,6 +119,8 @@ hqDefine("data_interfaces/js/case_rule_actions", [
                 self.actions.push(obj);
             });
         };
+
+        self.loadInitial();
         return self;
     };
 
@@ -142,16 +153,5 @@ hqDefine("data_interfaces/js/case_rule_actions", [
         return self;
     };
 
-    var actionsModel = null;
-
-    $(function () {
-        actionsModel = caseRuleActions(initialPageData.get('actions_initial'));
-        $('#rule-actions').koApplyBindings(actionsModel);
-        actionsModel.loadInitial();
-    });
-
-    return {
-        get_actions_model: function () {return actionsModel;},
-    };
-
+    return CaseRuleActions;
 });

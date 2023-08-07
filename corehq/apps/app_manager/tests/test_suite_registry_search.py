@@ -21,11 +21,13 @@ from corehq.apps.app_manager.models import (
     ParentSelect,
     ShadowModule,
 )
-from corehq.apps.app_manager.suite_xml.post_process.remote_requests import RESULTS_INSTANCE
+from corehq.apps.app_manager.suite_xml.post_process.remote_requests import (
+    RESULTS_INSTANCE,
+    RESULTS_INSTANCE_INLINE,
+)
 from corehq.apps.app_manager.tests.app_factory import AppFactory
 from corehq.apps.app_manager.tests.util import (
     SuiteMixin,
-    TestXmlMixin,
     get_simple_form,
     patch_get_xform_resource_overrides,
 )
@@ -40,7 +42,7 @@ DOMAIN = 'test_domain'
 
 @patch_get_xform_resource_overrides()
 @patch.object(Application, 'supports_data_registry', lambda: True)
-class RemoteRequestSuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
+class RemoteRequestSuiteTest(SimpleTestCase, SuiteMixin):
     file_path = ('data', 'suite_registry')
 
     def setUp(self):
@@ -65,7 +67,7 @@ class RemoteRequestSuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
             properties=[
                 CaseSearchProperty(name='name', label={'en': 'Name'}),
                 CaseSearchProperty(name='favorite_color', label={'en': 'Favorite Color'}, itemset=Itemset(
-                    instance_id='item-list:colors', instance_uri='jr://fixture/item-list:colors',
+                    instance_id='item-list:colors',
                     nodeset="instance('item-list:colors')/colors_list/colors",
                     label='name', sort='name', value='value'),
                 )
@@ -84,7 +86,7 @@ class RemoteRequestSuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
         self.reg_form.actions.open_case.condition.type = 'always'
         self.reg_form.post_form_workflow = WORKFLOW_FORM
         self.reg_form.form_links = [
-            FormLink(form_id=self.form.get_unique_id())
+            FormLink(form_id=self.form.get_unique_id(), form_module_id=self.module.unique_id)
         ]
 
         # wrap to have assign_references called
@@ -102,6 +104,11 @@ class RemoteRequestSuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
           <session>
             <query url="http://localhost:8000/a/test_domain/phone/search/123/" storage-instance="results"
                 template="case" default_search="false">
+                <title>
+                    <text>
+                        <locale id="case_search.m0.inputs"/>
+                    </text>
+                </title>
               <data key="case_type" ref="'case'"/>
               <data key="{CASE_SEARCH_REGISTRY_ID_KEY}" ref="'myregistry'"/>
               <prompt key="name">
@@ -124,9 +131,10 @@ class RemoteRequestSuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
                 </itemset>
               </prompt>
             </query>
-            <datum id="case_id" nodeset="instance('results')/results/case[@case_type='case'][@status='open'][not(commcare_is_related_case=true())]"
+            <datum id="case_id"
+                nodeset="instance('results')/results/case[@case_type='case'][@status='open'][not(commcare_is_related_case=true())]"
                 value="./@case_id" detail-select="m0_case_short" detail-confirm="m0_case_long"/>
-            <query url="http://localhost:8000/a/test_domain/phone/registry_case/123/"
+            <query url="http://localhost:8000/a/test_domain/phone/case_fixture/123/"
                 storage-instance="registry" template="case" default_search="true">
               <data key="{CASE_SEARCH_REGISTRY_ID_KEY}" ref="'myregistry'"/>
               <data key="case_type" ref="'case'"/>
@@ -134,7 +142,7 @@ class RemoteRequestSuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
               <data key="case_id" ref="instance('commcaresession')/session/data/case_id"/>
             </query>
           </session>
-        </partial>"""
+        </partial>"""  # noqa: E501
         self.assertXmlPartialEqual(expected_entry_query, suite, "./entry[1]/session")
 
         # assert that session instance is added to the entry
@@ -163,7 +171,7 @@ class RemoteRequestSuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
 
         expected_entry_query = f"""
         <partial>
-          <query url="http://localhost:8000/a/test_domain/phone/registry_case/123/" storage-instance="registry"
+          <query url="http://localhost:8000/a/test_domain/phone/case_fixture/123/" storage-instance="registry"
                 template="case" default_search="true">
             <data key="{CASE_SEARCH_REGISTRY_ID_KEY}" ref="'myregistry'"/>
             <data key="case_type" ref="'case'"/>
@@ -175,7 +183,7 @@ class RemoteRequestSuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
         self.assertXmlPartialEqual(expected_entry_query, suite, "./entry[1]/session/query[2]")
 
         self.assertXmlHasXpath(suite, "./entry[1]/instance[@id='commcaresession']")
-        self.assertXmlDoesNotHaveXpath(suite, "./entry[1]/instance[@id='registry']")
+        self.assertXmlHasXpath(suite, "./entry[1]/instance[@id='registry']")
 
     def test_form_linking_from_registry_module(self, *args):
         self.form.post_form_workflow = WORKFLOW_FORM
@@ -189,6 +197,7 @@ class RemoteRequestSuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
         )
 
     def test_case_detail_tabs_with_registry_module(self, *args):
+        self.app.build_spec = BuildSpec(version='2.52.0', build_number=1)
         self.app.get_module(0).case_details.long.tabs = [
             DetailTab(starting_index=0),
             DetailTab(starting_index=1, has_nodeset=True, nodeset_case_type="child")
@@ -206,14 +215,14 @@ class RemoteRequestSuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
         <partial>
           <create>
             <command value="'m0'"/>
-            <query id="results" value="http://localhost:8000/a/test_domain/phone/registry_case/123/">
+            <query id="results" value="http://localhost:8000/a/test_domain/phone/case_fixture/123/">
               <data key="case_type" ref="'case'"/>
               <data key="case_type" ref="'other_case'"/>
               <data key="{CASE_SEARCH_REGISTRY_ID_KEY}" ref="'myregistry'"/>
               <data key="case_id" ref="instance('commcaresession')/session/data/case_id_new_case_0"/>
             </query>
             <datum id="case_id" value="instance('commcaresession')/session/data/case_id_new_case_0"/>
-            <query id="registry" value="http://localhost:8000/a/test_domain/phone/registry_case/123/">
+            <query id="registry" value="http://localhost:8000/a/test_domain/phone/case_fixture/123/">
               <data key="{CASE_SEARCH_REGISTRY_ID_KEY}" ref="'myregistry'"/>
               <data key="case_type" ref="'case'"/>
               <data key="case_type" ref="'other_case'"/>
@@ -266,13 +275,13 @@ class RemoteRequestSuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
             <partial>
               <create>
                 <command value="'m1'"/>
-                <query id="results" value="http://localhost:8000/a/test_domain/phone/registry_case/123/">
+                <query id="results" value="http://localhost:8000/a/test_domain/phone/case_fixture/123/">
                   <data key="case_type" ref="'case'"/>
                   <data key="x_commcare_data_registry" ref="'myregistry'"/>
                   <data key="case_id" ref="instance('commcaresession')/session/data/case_id"/>
                 </query>
                 <datum id="case_id" value="instance('commcaresession')/session/data/case_id"/>
-                <query id="registry" value="http://localhost:8000/a/test_domain/phone/registry_case/123/">
+                <query id="registry" value="http://localhost:8000/a/test_domain/phone/case_fixture/123/">
                   <data key="x_commcare_data_registry" ref="'myregistry'"/>
                   <data key="case_type" ref="'case'"/>
                   <data key="case_id" ref="instance('commcaresession')/session/data/case_id"/>
@@ -284,11 +293,52 @@ class RemoteRequestSuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
             "./entry[2]/stack/create"
         )
 
+    @flag_enabled('MOBILE_UCR')
+    def test_prompt_itemset_mobile_report(self):
+        self.module.search_config.properties[0].input_ = 'select1'
+        instance_id = "commcare-reports:123abc"
+        self.module.search_config.properties[0].itemset = Itemset(
+            instance_id=instance_id,
+            nodeset=f"instance('{instance_id}')/rows/row",
+            label='name',
+            value='id',
+            sort='id',
+        )
+        suite = self.app.create_suite()
+        expected = f"""
+                <partial>
+                  <prompt key="name" input="select1">
+                    <display>
+                      <text>
+                        <locale id="search_property.m0.name"/>
+                      </text>
+                    </display>
+                    <itemset nodeset="instance('{instance_id}')/rows/row">
+                      <label ref="name"/>
+                      <value ref="id"/>
+                      <sort ref="id"/>
+                    </itemset>
+                  </prompt>
+                </partial>
+                """
+        self.assertXmlPartialEqual(expected, suite, "./entry[1]/session/query/prompt[@key='name']")
+
+        expected_instance = f"""
+                <partial>
+                  <instance id="{instance_id}" src="jr://fixture/commcare-reports:123abc"/>
+                </partial>
+                """
+        self.assertXmlPartialEqual(
+            expected_instance,
+            suite,
+            f"./entry[1]/instance[@id='{instance_id}']",
+        )
+
 
 @patch('corehq.util.view_utils.get_url_base', new=lambda: "https://www.example.com")
 @patch_get_xform_resource_overrides()
 @patch.object(Application, 'supports_data_registry', lambda: True)
-class RegistrySuiteShadowModuleTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
+class RegistrySuiteShadowModuleTest(SimpleTestCase, SuiteMixin):
     file_path = ('data', 'suite_registry')
 
     def setUp(self):
@@ -314,7 +364,7 @@ class RegistrySuiteShadowModuleTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
             properties=[
                 CaseSearchProperty(name='name', label={'en': 'Name'}),
                 CaseSearchProperty(name='favorite_color', label={'en': 'Favorite Color'}, itemset=Itemset(
-                    instance_id='item-list:colors', instance_uri='jr://fixture/item-list:colors',
+                    instance_id='item-list:colors',
                     nodeset="instance('item-list:colors')/colors_list/colors",
                     label='name', sort='name', value='value'),
                 )
@@ -340,7 +390,7 @@ class RegistrySuiteShadowModuleTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
             properties=[
                 CaseSearchProperty(name='name', label={'en': 'Name'}),
                 CaseSearchProperty(name='favorite_color', label={'en': 'Texture'}, itemset=Itemset(
-                    instance_id='item-list:textures', instance_uri='jr://fixture/item-list:textures',
+                    instance_id='item-list:textures',
                     nodeset="instance('item-list:textures')/textures_list/textures",
                     label='name', sort='name', value='value'),
                 )
@@ -401,7 +451,7 @@ class RegistrySuiteShadowModuleTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
 
 @patch_get_xform_resource_overrides()
 @flag_enabled('DATA_REGISTRY')
-class RemoteRequestSuiteFormLinkChildModuleTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
+class RemoteRequestSuiteFormLinkChildModuleTest(SimpleTestCase, SuiteMixin):
     file_path = ('data', 'suite_registry')
 
     def setUp(self):
@@ -424,7 +474,7 @@ class RemoteRequestSuiteFormLinkChildModuleTest(SimpleTestCase, TestXmlMixin, Su
 
         # link from f1 to f2 (both in the child module)
         f1.post_form_workflow = WORKFLOW_FORM
-        f1.form_links = [FormLink(form_id=f2.get_unique_id())]
+        f1.form_links = [FormLink(form_id=f2.get_unique_id(), form_module_id=m1.unique_id)]
 
         factory.app._id = "123"
         # wrap to have assign_references called
@@ -439,13 +489,13 @@ class RemoteRequestSuiteFormLinkChildModuleTest(SimpleTestCase, TestXmlMixin, Su
             <command value="'m0'"/>
             <datum id="case_id" value="instance('commcaresession')/session/data/case_id"/>
             <command value="'m1'"/>
-            <query id="results" value="http://localhost:8000/a/test_domain/phone/registry_case/123/">
+            <query id="results" value="http://localhost:8000/a/test_domain/phone/case_fixture/123/">
               <data key="case_type" ref="'case'"/>
               <data key="{CASE_SEARCH_REGISTRY_ID_KEY}" ref="'myregistry'"/>
               <data key="case_id" ref="instance('commcaresession')/session/data/case_id_case"/>
             </query>
             <datum id="case_id_case" value="instance('commcaresession')/session/data/case_id_case"/>
-            <query id="registry" value="http://localhost:8000/a/test_domain/phone/registry_case/123/">
+            <query id="registry" value="http://localhost:8000/a/test_domain/phone/case_fixture/123/">
               <data key="{CASE_SEARCH_REGISTRY_ID_KEY}" ref="'myregistry'"/>
               <data key="case_type" ref="'case'"/>
               <data key="case_id" ref="instance('commcaresession')/session/data/case_id_case"/>
@@ -459,3 +509,78 @@ class RemoteRequestSuiteFormLinkChildModuleTest(SimpleTestCase, TestXmlMixin, Su
             suite,
             "./entry[2]/stack/create"
         )
+
+
+@patch_get_xform_resource_overrides()
+@flag_enabled('DATA_REGISTRY')
+class InlineSearchDataRegistryModuleTest(SimpleTestCase, SuiteMixin):
+    file_path = ('data', 'suite_inline_search')
+
+    def setUp(self):
+        factory = AppFactory(DOMAIN, "App with inline search and DR", build_version='2.53.0')
+        m0, f0 = factory.new_basic_module("case list", "case")
+        factory.form_requires_case(f0)
+        f0.source = get_simple_form("xmlns1.0")
+
+        m0.search_config = CaseSearch(
+            properties=[CaseSearchProperty(name='name', label={'en': 'Name'})],
+            auto_launch=True,
+            inline_search=True,
+            data_registry="myregistry",
+            data_registry_workflow=REGISTRY_WORKFLOW_LOAD_CASE,
+        )
+
+        factory.app._id = "123"
+        # wrap to have assign_references called
+        m0.assign_references()
+        self.app = factory.app
+
+    def test_inline_search_with_data_registry(self):
+        suite = self.app.create_suite()
+
+        expected_entry_query = f"""
+        <partial>
+          <entry>
+            <form>xmlns1.0</form>
+            <command id="m0-f0">
+              <text>
+                <locale id="forms.m0f0"/>
+              </text>
+            </command>
+            <instance id="commcaresession" src="jr://instance/session"/>
+            <instance id="results:inline" src="jr://instance/remote/results:inline"/>
+            <session>
+                <query url="http://localhost:8000/a/test_domain/phone/search/123/" storage-instance="{RESULTS_INSTANCE_INLINE}"
+                    template="case" default_search="false">
+                  <title>
+                    <text>
+                      <locale id="case_search.m0.inputs"/>
+                    </text>
+                  </title>
+                  <data key="case_type" ref="'case'"/>
+                  <data key="{CASE_SEARCH_REGISTRY_ID_KEY}" ref="'myregistry'"/>
+                  <prompt key="name">
+                    <display>
+                      <text>
+                        <locale id="search_property.m0.name"/>
+                      </text>
+                    </display>
+                  </prompt>
+                </query>
+                <datum id="case_id" nodeset="instance('{RESULTS_INSTANCE_INLINE}')/results/case[@case_type='case'][@status='open'][not(commcare_is_related_case=true())]"
+                    value="./@case_id" detail-select="m0_case_short" detail-confirm="m0_case_long"/>
+                <query url="http://localhost:8000/a/test_domain/phone/case_fixture/123/"
+                storage-instance="registry" template="case" default_search="true">
+                  <data key="{CASE_SEARCH_REGISTRY_ID_KEY}" ref="'myregistry'"/>
+                  <data key="case_type" ref="'case'"/>
+                  <data key="case_id" ref="instance('commcaresession')/session/data/case_id"/>
+                </query>
+            </session>
+          </entry>
+        </partial>"""  # noqa: E501
+        self.assertXmlPartialEqual(expected_entry_query, suite, "./entry[1]")
+
+        self.assertXmlDoesNotHaveXpath(suite, "./detail[@id='m0_case_short']/action")
+        self.assertXmlDoesNotHaveXpath(suite, "./remote-request")
+        self.assertXmlDoesNotHaveXpath(suite, "./detail[@id='m0_search_short']")
+        self.assertXmlDoesNotHaveXpath(suite, "./detail[@id='m0_search_long']")

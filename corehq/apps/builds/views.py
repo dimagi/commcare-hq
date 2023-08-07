@@ -1,5 +1,3 @@
-import io
-
 from django.contrib import messages
 from django.http import Http404, HttpResponse, HttpResponseBadRequest, HttpResponseRedirect
 from django.shortcuts import render
@@ -9,11 +7,8 @@ from django.utils.translation import gettext_lazy
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_GET, require_POST
 
-import requests
-import requests.exceptions
 from couchdbkit import BadValueError, ResourceNotFound
 
-from dimagi.utils.couch.database import get_db
 from dimagi.utils.web import json_request, json_response
 
 from corehq.apps.api.models import require_api_user
@@ -23,25 +18,21 @@ from corehq.apps.hqwebapp.views import BasePageView
 from corehq.util.view_utils import json_error
 
 from .models import CommCareBuild, CommCareBuildConfig, SemanticVersionProperty
-from .utils import extract_build_info_from_filename, get_all_versions
+from .utils import get_all_versions
 
 
 @csrf_exempt  # is used by an API
 @json_error
 @require_api_user
 def post(request):
-    artifacts = request.FILES.get('artifacts')
     build_number = request.POST.get('build_number')
     version = request.POST.get('version')
     try:
         build_number = int(build_number)
-    except Exception:
+    except ValueError:
         return HttpResponseBadRequest("build_number has to be a base-10 integer")
 
-    if not artifacts:
-        CommCareBuild.create_without_artifacts(version, build_number)
-    else:
-        CommCareBuild.create_from_zip(artifacts, build_number=build_number, version=version)
+    CommCareBuild.create_without_artifacts(version, build_number)
     return HttpResponse()
 
 
@@ -83,8 +74,7 @@ class EditMenuView(BasePageView):
             'doc': doc,
             'all_versions': get_all_versions(
                 [v['build']['version'] for v in doc['menu']]
-            ),
-            'j2me_enabled_versions': CommCareBuild.j2me_enabled_build_versions()
+            )
         }
 
     @property

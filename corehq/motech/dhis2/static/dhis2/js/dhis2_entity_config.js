@@ -5,13 +5,15 @@ hqDefine('dhis2/js/dhis2_entity_config', [
     'hqwebapp/js/initial_page_data',
     'hqwebapp/js/alert_user',
     'hqwebapp/js/base_ace',
+    'dhis2/js/json_syntax_parse',
 ], function (
     $,
     _,
     ko,
     initialPageData,
     alertUser,
-    baseAce
+    baseAce,
+    jsonParse
 ) {
     var caseConfig = function (data) {
         var self = {};
@@ -25,6 +27,10 @@ hqDefine('dhis2/js/dhis2_entity_config', [
     var dhis2EntityConfig = function (caseConfigs) {
         var self = {};
         self.oCaseConfigs = ko.observableArray();
+        self.errorMessage = ko.observable('');
+        self.isError = ko.computed(function () {
+            return self.errorMessage() !== '';
+        });
 
         self.init = function () {
             if (caseConfigs.length > 0) {
@@ -50,6 +56,25 @@ hqDefine('dhis2/js/dhis2_entity_config', [
         };
 
         self.submit = function (form) {
+            var editors = baseAce.getEditors();
+            var errors = [];
+            for (let i = 0; i < editors.length; i++) {
+                var value = editors[i].getValue();
+                try {
+                    if (editors.length > 1) {
+                        jsonParse.parseJson(value, null, 30, i);
+                    } else {
+                        jsonParse.parseJson(value, null, 30);
+                    }
+                } catch (error) {
+                    errors.push(String(error));
+                }
+            }
+            if (errors.length > 0) {
+                self.errorMessage(errors.join('\n----------------------\n'));
+                return self;
+            }
+            self.errorMessage(''); // clears error message from page before submitting
             $.post(
                 form.action,
                 {'case_configs': JSON.stringify(self.oCaseConfigs())},

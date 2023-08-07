@@ -115,7 +115,7 @@ from corehq.apps.hqwebapp.decorators import use_jquery_ui
 from corehq.apps.hqwebapp.tasks import send_mail_async
 from corehq.apps.hqwebapp.views import BasePageView, CRUDPaginatedViewMixin
 from corehq.apps.users.decorators import require_permission
-from corehq.apps.users.models import Permissions
+from corehq.apps.users.models import HqPermissions
 from corehq.const import USER_DATE_FORMAT
 
 PAYMENT_ERROR_MESSAGES = {
@@ -183,7 +183,7 @@ class SubscriptionUpgradeRequiredView(LoginAndDomainMixin, BasePageView, DomainV
 class DomainAccountingSettings(BaseProjectSettingsView):
 
     @method_decorator(always_allow_project_access)
-    @method_decorator(require_permission(Permissions.edit_billing))
+    @method_decorator(require_permission(HqPermissions.edit_billing))
     def dispatch(self, request, *args, **kwargs):
         return super(DomainAccountingSettings, self).dispatch(request, *args, **kwargs)
 
@@ -556,8 +556,7 @@ class DomainBillingStatementsView(DomainAccountingSettings, CRUDPaginatedViewMix
                     invoice=invoice
                 ).latest('date_created')
                 if invoice.is_paid:
-                    payment_status = (_("Paid on %s.")
-                                      % invoice.date_paid.strftime(USER_DATE_FORMAT))
+                    payment_status = _("Paid on %s.") % invoice.date_paid.strftime(USER_DATE_FORMAT)
                     payment_class = "label label-default"
                 else:
                     payment_status = _("Not Paid")
@@ -705,10 +704,13 @@ class CreditsWireInvoiceView(DomainAccountingSettings):
             except ValidationError:
                 invalid_emails.append(email)
         if invalid_emails:
-            message = (_('The following e-mail addresses contain invalid characters, or are missing required '
-                         'characters: ') + ', '.join(['"{}"'.format(email) for email in invalid_emails]))
+            message = _('The following e-mail addresses contain invalid characters, or are missing required '
+                        'characters: ') + ', '.join(['"{}"'.format(email) for email in invalid_emails])
             return json_response({'error': {'message': message}})
         amount = Decimal(request.POST.get('amount', 0))
+        if amount < 0:
+            message = _('There was an error processing your request. Please try again.')
+            return json_response({'error': {'message': message}})
         general_credit = Decimal(request.POST.get('general_credit', 0))
         wire_invoice_factory = DomainWireInvoiceFactory(request.domain, contact_emails=emails)
         try:
@@ -768,7 +770,7 @@ class WireInvoiceView(View):
     urlname = 'domain_wire_invoice'
 
     @method_decorator(always_allow_project_access)
-    @method_decorator(require_permission(Permissions.edit_billing))
+    @method_decorator(require_permission(HqPermissions.edit_billing))
     def dispatch(self, request, *args, **kwargs):
         return super(WireInvoiceView, self).dispatch(request, *args, **kwargs)
 
@@ -798,7 +800,7 @@ class BillingStatementPdfView(View):
     urlname = 'domain_billing_statement_download'
 
     @method_decorator(always_allow_project_access)
-    @method_decorator(require_permission(Permissions.edit_billing))
+    @method_decorator(require_permission(HqPermissions.edit_billing))
     def dispatch(self, request, *args, **kwargs):
         return super(BillingStatementPdfView, self).dispatch(request, *args, **kwargs)
 
@@ -1421,6 +1423,8 @@ class ConfirmBillingAccountInfoView(ConfirmSelectedPlanView, AsyncHandlerMixin):
                     ) % self.account.name
                 )
                 return HttpResponseRedirect(reverse(DomainSubscriptionView.urlname, args=[self.domain]))
+            if self.selected_plan_version.plan.edition not in SoftwarePlanEdition.SELF_SERVICE_ORDER:
+                return HttpResponseRedirect(reverse(DomainSubscriptionView.urlname, args=[self.domain]))
             is_saved = self.billing_account_info_form.save()
             software_plan_name = DESC_BY_EDITION[self.selected_plan_version.plan.edition]['name']
             next_subscription = self.current_subscription.next_subscription
@@ -1535,8 +1539,10 @@ class SubscriptionRenewalView(SelectPlanView, SubscriptionMixin):
 
     @property
     def lead_text(self):
-        return gettext_lazy("Based on your current usage we recommend you use the <strong>{plan}</strong> plan"
-                            .format(plan=self.current_subscription.plan_version.plan.edition))
+        return format_html(
+            _("Based on your current usage we recommend you use the <strong>{plan}</strong> plan"),
+            plan=_(self.current_subscription.plan_version.plan.edition)
+        )
 
     @property
     def page_context(self):
@@ -1781,7 +1787,7 @@ def _get_downgrade_or_pause_note(request, is_pause=False):
 
 @require_POST
 @login_and_domain_required
-@require_permission(Permissions.edit_billing)
+@require_permission(HqPermissions.edit_billing)
 def pause_subscription(request, domain):
     current_subscription = Subscription.get_active_subscription_by_domain(domain)
     if not current_subscription.user_can_change_subscription(request.user):

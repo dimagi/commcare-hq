@@ -1,23 +1,28 @@
 import io
+from collections import defaultdict
 from datetime import datetime, timedelta
+from itertools import zip_longest
 
 from django.template.defaultfilters import yesno
 from django.utils.translation import gettext as _
 
-from couchdbkit import ResourceNotFound
-
 from couchexport.export import export_raw
 from couchexport.models import Format
+from dimagi.utils.couch.database import iter_docs
 from soil import DownloadBase
 from soil.util import expose_cached_download
 
 from corehq.apps.fixtures.exceptions import FixtureDownloadError
 from corehq.apps.fixtures.models import (
-    FixtureDataItem,
-    FixtureDataType,
-    _id_from_doc,
+    LookupTable,
+    LookupTableRow,
+    LookupTableRowOwner,
+    OwnerType,
 )
 from corehq.apps.fixtures.upload import DELETE_HEADER
+from corehq.apps.groups.models import Group
+from corehq.apps.locations.models import SQLLocation
+from corehq.apps.users.models import CommCareUser
 
 
 def prepare_fixture_download(table_ids, domain, task, download_id, owner_id):
@@ -52,20 +57,33 @@ def prepare_fixture_html(table_ids, domain):
 
 
 def _prepare_fixture(table_ids, domain, html_response=False, task=None):
+    # HELPME
+    #
+    # This method has been flagged for refactoring due to its complexity and
+    # frequency of touches in changesets
+    #
+    # If you are writing code that touches this method, your changeset
+    # should leave the method better than you found it.
+    #
+    # Please remove this flag when this method no longer triggers an 'E' or 'F'
+    # classification from the radon code static analysis
+
     if table_ids and table_ids[0]:
         try:
-            data_types_view = [FixtureDataType.get(id) for id in table_ids]
-        except ResourceNotFound:
+            data_types_view = [LookupTable.objects.get(id=id) for id in table_ids]
+        except LookupTable.DoesNotExist:
             if html_response:
                 raise FixtureDownloadError(
                     _("Sorry, we couldn't find that table. If you think this "
                       "is a mistake please report an issue."))
-            data_types_view = FixtureDataType.by_domain(domain)
+            data_types_view = LookupTable.objects.by_domain(domain)
     else:
-        data_types_view = FixtureDataType.by_domain(domain)
+        data_types_view = LookupTable.objects.by_domain(domain)
 
     if html_response:
         data_types_view = list(data_types_view)[0:1]
+    else:
+        data_types_view = list(data_types_view)
 
     total_tables = len(data_types_view)
     # when total_tables < 4 the final percentage can be >= 100%, but for
@@ -74,10 +92,10 @@ def _prepare_fixture(table_ids, domain, html_response=False, task=None):
 
     now = datetime.utcnow
     last_update = [now()]
-    upate_period = timedelta(seconds=1)  # do not update progress more than once a second
+    update_period = timedelta(seconds=1)  # do not update progress more than once a second
 
     def _update_progress(event_count, item_count, items_in_table):
-        if task and now() - last_update[0] > upate_period:
+        if task and now() - last_update[0] > update_period:
             last_update[0] = now()
             processed = event_count * 10 + (10 * item_count / items_in_table)
             processed = min(processed, total_events)  # limit at 100%
@@ -103,8 +121,11 @@ def _prepare_fixture(table_ids, domain, html_response=False, task=None):
     """
     excel_sheets = {}
 
+    def get_field_prop_format(field_number, property_number):
+        return f"field {field_number} : property {property_number}"
+
     def empty_padding_list(length):
-        return ["" for x in range(0, length)]
+        return [""] * length
 
     max_fields = 0
     max_item_attributes = 0
@@ -125,9 +146,8 @@ def _prepare_fixture(table_ids, domain, html_response=False, task=None):
             u'growth_chart': {'field 2 : property 2': u'maxWeight'}
           }
     """
+    owner_names = OwnerNames(data_types_view)
     type_field_properties = {}
-    indexed_field_numbers = set()
-    get_field_prop_format = lambda x, y: "field " + str(x) + " : property " + str(y)
     for event_count, data_type in enumerate(data_types_view):
         # Helpers to generate 'types' sheet
         type_field_properties[data_type.tag] = {}
@@ -151,22 +171,21 @@ def _prepare_fixture(table_ids, domain, html_response=False, task=None):
         max_users = 0
         max_groups = 0
         max_locations = 0
-        max_field_prop_combos = {field_name: 0 for field_name in data_type.fields_without_attributes}
-        fixture_data = sorted(FixtureDataItem.by_data_type(domain, data_type.get_id),
-                              key=lambda x: x.sort_key)
-        num_rows = len(fixture_data)
+        max_field_prop_combos = {field.name: 0 for field in data_type.fields}
+        fixture_data = LookupTableRow.objects.iter_rows(domain, table_id=data_type.id)
+        num_rows = LookupTableRow.objects.filter(domain=domain, table_id=data_type.id).count()
         for n, item_row in enumerate(fixture_data):
             _update_progress(event_count, n, num_rows)
             data_items_book_by_type[data_type.tag].append(item_row)
-            max_groups = max(max_groups, len(item_row.groups))
-            max_users = max(max_users, len(item_row.users))
-            max_locations = max(max_locations, len(item_row.locations))
+            max_groups = max(max_groups, owner_names.count(item_row, OwnerType.Group))
+            max_users = max(max_users, owner_names.count(item_row, OwnerType.User))
+            max_locations = max(max_locations, owner_names.count(item_row, OwnerType.Location))
             for field_key in item_row.fields:
                 if field_key in max_field_prop_combos:
-                    max_combos = max_field_prop_combos[field_key]
-                    cur_combo_len = len(item_row.fields[field_key].field_list)
-                    max_combos = cur_combo_len if cur_combo_len > max_combos else max_combos
-                    max_field_prop_combos[field_key] = max_combos
+                    max_field_prop_combos[field_key] = max(
+                        max_field_prop_combos[field_key],
+                        len(item_row.fields[field_key]),
+                    )
 
         item_helpers = {
             "max_users": max_users,
@@ -177,16 +196,10 @@ def _prepare_fixture(table_ids, domain, html_response=False, task=None):
         item_helpers_by_type[data_type.tag] = item_helpers
 
     # Prepare 'types' sheet data
+    indexed_field_numbers = get_indexed_field_numbers(data_types_view)
     types_sheet = {"headers": [], "rows": []}
     types_sheet["headers"] = [DELETE_HEADER, "table_id", 'is_global?']
-    for x in range(1, max_fields + 1):
-        types_sheet["headers"].append("field %d" % x)
-        try:
-            if any(data_type.fields[x - 1].is_indexed for data_type in data_types_view):
-                indexed_field_numbers.add(x - 1)
-                types_sheet["headers"].append("field %d: is_indexed?" % x)
-        except IndexError:
-            continue
+    types_sheet["headers"].extend(iter_types_headers(max_fields, indexed_field_numbers))
     types_sheet["headers"].extend(["property %d" % x for x in range(1, max_item_attributes + 1)])
     field_prop_headers = []
     for field_num, prop_num in enumerate(field_prop_count):
@@ -207,8 +220,8 @@ def _prepare_fixture(table_ids, domain, html_response=False, task=None):
                 field_vals.append('yes' if field.is_indexed else 'no')
                 indexed_field_count += 1
         field_vals.extend(empty_padding_list(
-            max_fields - len(data_type.fields) +
-            len(indexed_field_numbers) - indexed_field_count
+            max_fields - len(data_type.fields)
+            + len(indexed_field_numbers) - indexed_field_count
         ))
         item_att_vals = (data_type.item_attributes + empty_padding_list(
             max_item_attributes - len(data_type.item_attributes)
@@ -266,32 +279,29 @@ def _prepare_fixture(table_ids, domain, html_response=False, task=None):
         )
         excel_sheets[data_type.tag] = item_sheet
         for item_row in data_items_book_by_type[data_type.tag]:
-            common_vals = [str(_id_from_doc(item_row)), "N"]
-            user_vals = ([user.raw_username for user in item_row.users]
-                         + empty_padding_list(max_users - len(item_row.users)))
-            group_vals = ([group.name for group in item_row.groups]
-                          + empty_padding_list(max_groups - len(item_row.groups)))
-            location_vals = ([loc.site_code for loc in item_row.locations]
-                             + empty_padding_list(max_locations - len(item_row.locations)))
+            common_vals = [str(item_row.id.hex), "N"]
+            users = owner_names.get_usernames(item_row)
+            groups = owner_names.get_group_names(item_row)
+            locations = owner_names.get_location_codes(item_row)
+            user_vals = (users + empty_padding_list(max_users - len(users)))
+            group_vals = (groups + empty_padding_list(max_groups - len(groups)))
+            location_vals = (locations + empty_padding_list(max_locations - len(locations)))
             field_vals = []
             item_att_vals = [item_row.item_attributes[attribute] for attribute in data_type.item_attributes]
             for field in data_type.fields:
                 if len(field.properties) == 0:
-                    fixture_fields = item_row.fields.get(field.field_name)
-                    if fixture_fields and any(fixture_fields.field_list):
-                        value = item_row.fields.get(field.field_name).field_list[0].field_value
-                    else:
-                        value = ""
+                    field_values = item_row.fields[field.name]
+                    value = field_values[0].value if field_values else ""
                     field_vals.append(value)
                 else:
                     field_prop_vals = []
-                    cur_combo_count = len(item_row.fields.get(field.field_name).field_list)
+                    cur_combo_count = len(item_row.fields[field.name])
                     cur_prop_count = len(field.properties)
-                    for count, field_prop_combo in enumerate(item_row.fields.get(field.field_name).field_list):
+                    for field_prop_combo in item_row.fields[field.name]:
                         for property in field.properties:
                             field_prop_vals.append(field_prop_combo.properties.get(property, None) or "")
-                        field_prop_vals.append(field_prop_combo.field_value)
-                    padding_list_len = ((max_field_prop_combos[field.field_name] - cur_combo_count)
+                        field_prop_vals.append(field_prop_combo.value)
+                    padding_list_len = ((max_field_prop_combos[field.name] - cur_combo_count)
                                         * (cur_prop_count + 1))
                     field_prop_vals.extend(empty_padding_list(padding_list_len))
                     field_vals.extend(field_prop_vals)
@@ -308,3 +318,75 @@ def _prepare_fixture(table_ids, domain, html_response=False, task=None):
         excel_sheets[data_type.tag] = item_sheet
 
     return data_types_book, excel_sheets
+
+
+class OwnerNames:
+
+    def __init__(self, tables):
+        # owners = {row_id: {owner_type: owner_ids_set, ...}, ...}
+        self.owners = owners = defaultdict(lambda: defaultdict(set))
+        row_owners = LookupTableRowOwner.objects.filter(
+            row__table_id__in=[t.id for t in tables]
+        ).values_list("row_id", "owner_type", "owner_id", named=True)
+        for rec in row_owners:
+            owners[rec.row_id][rec.owner_type].add(rec.owner_id)
+        self.names = {
+            OwnerType.User: self._load_usernames(owners),
+            OwnerType.Group: self._load_group_names(owners),
+            OwnerType.Location: self._load_location_codes(owners),
+        }
+
+    def _load_usernames(self, owners):
+        docs = self._iter_couch_docs(owners, OwnerType.User, CommCareUser)
+        return {u._id: u.raw_username for u in docs}
+
+    def _load_group_names(self, owners):
+        docs = self._iter_couch_docs(owners, OwnerType.Group, Group)
+        return {g._id: g.name for g in docs}
+
+    def _iter_couch_docs(self, owners, owner_type, couch_model):
+        doc_ids = {id for ids in owners.values() for id in ids[owner_type]}
+        if doc_ids:
+            db = couch_model.get_db()
+            yield from (couch_model.wrap(g) for g in iter_docs(db, doc_ids))
+
+    def _load_location_codes(self, owners):
+        loc_ids = {id for ids in owners.values() for id in ids[OwnerType.Location]}
+        if not loc_ids:
+            return {}
+        codes = SQLLocation.objects.filter(
+            location_id__in=list(loc_ids)).values_list("location_id", "site_code")
+        return dict(codes)
+
+    def count(self, row, owner_type):
+        names = self.names[owner_type]
+        return sum(1 for doc_id in self.owners[row.id][owner_type] if doc_id in names)
+
+    def get_usernames(self, row):
+        user_ids = self.owners[row.id][OwnerType.User]
+        names = self.names[OwnerType.User]
+        return sorted(names[doc_id] for doc_id in user_ids if doc_id in names)
+
+    def get_group_names(self, row):
+        group_ids = self.owners[row.id][OwnerType.Group]
+        names = self.names[OwnerType.Group]
+        return sorted(names[doc_id] for doc_id in group_ids if doc_id in names)
+
+    def get_location_codes(self, row):
+        loc_ids = self.owners[row.id][OwnerType.Location]
+        names = self.names[OwnerType.Location]
+        return sorted(names[loc_id] for loc_id in loc_ids if loc_id in names)
+
+
+def get_indexed_field_numbers(tables):
+    class no_index:
+        is_indexed = False
+    field_lists = zip_longest(*(t.fields for t in tables), fillvalue=no_index)
+    return {i for i, fields in enumerate(field_lists) if any(f.is_indexed for f in fields)}
+
+
+def iter_types_headers(max_fields, indexed_field_numbers):
+    for i in range(max_fields):
+        yield f"field {i + 1}"
+        if i in indexed_field_numbers:
+            yield f"field {i + 1}: is_indexed?"

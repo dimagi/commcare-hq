@@ -129,16 +129,29 @@ def rate_limit_submission(domain, delay_rather_than_reject=False, max_wait=15):
         allow_usage = True
         _delay_and_report_rate_limit_submission(
             domain, max_wait=max_wait, delay_rather_than_reject=delay_rather_than_reject,
-            datadog_metric='commcare.xform_submissions.rate_limited.test')
+            datadog_metric='commcare.xform_submissions.rate_limited.test',
+            limiter=submission_rate_limiter
+        )
     else:
         allow_usage = _delay_and_report_rate_limit_submission(
             domain, max_wait=max_wait, delay_rather_than_reject=delay_rather_than_reject,
-            datadog_metric='commcare.xform_submissions.rate_limited')
+            datadog_metric='commcare.xform_submissions.rate_limited',
+            limiter=submission_rate_limiter
+        )
 
     if allow_form_usage and not allow_case_usage:
-        _delay_and_report_rate_limit_submission(
-            domain, max_wait=max_wait, delay_rather_than_reject=delay_rather_than_reject,
-            datadog_metric='commcare.case_updates.rate_limited.test')
+        if not DO_NOT_RATE_LIMIT_SUBMISSIONS.enabled(domain):
+            allow_usage = _delay_and_report_rate_limit_submission(
+                domain, max_wait=max_wait, delay_rather_than_reject=delay_rather_than_reject,
+                datadog_metric='commcare.case_updates.rate_limited',
+                limiter=domain_case_rate_limiter
+            )
+        else:
+            _delay_and_report_rate_limit_submission(
+                domain, max_wait=max_wait, delay_rather_than_reject=delay_rather_than_reject,
+                datadog_metric='commcare.case_updates.rate_limited.test',
+                limiter=domain_case_rate_limiter
+            )
     return not allow_usage
 
 
@@ -157,7 +170,7 @@ def report_case_usage(domain, num_cases):
     _report_current_global_case_update_thresholds()
 
 
-def _delay_and_report_rate_limit_submission(domain, max_wait, delay_rather_than_reject, datadog_metric):
+def _delay_and_report_rate_limit_submission(domain, max_wait, delay_rather_than_reject, datadog_metric, limiter):
     """
     Attempt to acquire permission from the rate limiter waiting up to 15 seconds.
 
@@ -175,7 +188,7 @@ def _delay_and_report_rate_limit_submission(domain, max_wait, delay_rather_than_
     Returns whether the permission was eventually acquired (with no variation on delay_rather_than_reject).
     """
     with TimingContext() as timer:
-        acquired = submission_rate_limiter.wait(domain, timeout=max_wait)
+        acquired = limiter.wait(domain, timeout=max_wait)
     if acquired:
         duration_tag = bucket_value(timer.duration, [.5, 1, 5, 10, 15], unit='s')
     elif delay_rather_than_reject:

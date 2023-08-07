@@ -107,13 +107,20 @@ class FormplayerInterfaceTests(SimpleTestCase):
 
 class MockFormplayerRequest:
     def __init__(self, action, mock_response):
-        self.action = action
-        self.mock_response = mock_response
+        self.actions = []
+        self.add_action(action, mock_response)
         self.mocker = requests_mock.Mocker()
+
+        # don't mock any requests other than the ones specified via 'actions'
+        self.mocker.register_uri(requests_mock.ANY, requests_mock.ANY, real_http=True)
+
+    def add_action(self, action, mock_response):
+        self.actions.append((action, mock_response))
 
     def __enter__(self):
         self.mocker.__enter__()
-        self.mocker.post(f"{get_formplayer_url()}/{self.action}", json=self.mock_response)
+        for action, response in self.actions:
+            self.mocker.post(f"{get_formplayer_url()}/{action}", json=response)
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):

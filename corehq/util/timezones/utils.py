@@ -4,11 +4,10 @@ import pytz
 from functools import reduce
 from memoized import memoized
 
-from django.conf import settings
 from django.core.exceptions import ValidationError
 
 from corehq.apps.domain.models import Domain
-from corehq.apps.users.models import CouchUser, WebUser, AnonymousCouchUser
+from corehq.apps.users.models import CouchUser, WebUser
 from corehq.util.global_request import get_request
 from corehq.util.soft_assert import soft_assert
 from corehq.util.dates import iso_string_to_datetime
@@ -52,7 +51,7 @@ def get_timezone_for_domain(domain):
 
 
 def get_timezone_for_user(couch_user_or_id, domain):
-    if couch_user_or_id and not isinstance(couch_user_or_id, AnonymousCouchUser):
+    if couch_user_or_id:
         if isinstance(couch_user_or_id, CouchUser):
             requesting_user = couch_user_or_id
         else:

@@ -23,7 +23,7 @@ which we structure as follows:
        mytemplate.html
 
 \* There are a few places we do intentionally use script blocks, such as
-configuring less.js in CommCareHQ’s main template,
+configuring less.js in CommCare HQ’s main template,
 ``hqwebapp/base.html``. These are places where there are just a few
 lines of code that are truly independent of the rest of the site’s
 JavaScript. They are rare.

@@ -2,6 +2,7 @@ import re
 from datetime import datetime, timedelta
 
 from django.utils.translation import gettext as _
+from django.utils.translation import gettext_lazy
 
 from memoized import memoized
 
@@ -15,6 +16,7 @@ from corehq.apps.app_manager.dbaccessors import get_brief_apps_in_domain
 from corehq.apps.domain.calculations import sms_in_last
 from corehq.apps.domain.models import Domain
 from corehq.apps.es import forms as form_es
+from corehq.apps.export.dbaccessors import ODataExportFetcher
 from corehq.apps.reports.filters.users import \
     ExpandedMobileWorkerFilter as EMWF
 from corehq.apps.users.dbaccessors import (
@@ -26,18 +28,18 @@ from corehq.apps.users.models import CouchUser, Invitation
 from corehq.util.quickcache import quickcache
 
 
-class EnterpriseReport(object):
+class EnterpriseReport:
     DOMAINS = 'domains'
     WEB_USERS = 'web_users'
     MOBILE_USERS = 'mobile_users'
     FORM_SUBMISSIONS = 'form_submissions'
+    ODATA_FEEDS = 'odata_feeds'
 
     title = _('Enterprise Report')
     subtitle = ''
 
-    def __init__(self, account_id, couch_user):
-        super(EnterpriseReport, self).__init__()
-        self.account = BillingAccount.objects.get(id=account_id)
+    def __init__(self, account, couch_user):
+        self.account = account
         self.couch_user = couch_user
         self.slug = None
 
@@ -51,15 +53,18 @@ class EnterpriseReport(object):
 
     @classmethod
     def create(cls, slug, account_id, couch_user):
+        account = BillingAccount.objects.get(id=account_id)
         report = None
         if slug == cls.DOMAINS:
-            report = EnterpriseDomainReport(account_id, couch_user)
+            report = EnterpriseDomainReport(account, couch_user)
         elif slug == cls.WEB_USERS:
-            report = EnterpriseWebUserReport(account_id, couch_user)
+            report = EnterpriseWebUserReport(account, couch_user)
         elif slug == cls.MOBILE_USERS:
-            report = EnterpriseMobileWorkerReport(account_id, couch_user)
+            report = EnterpriseMobileWorkerReport(account, couch_user)
         elif slug == cls.FORM_SUBMISSIONS:
-            report = EnterpriseFormReport(account_id, couch_user)
+            report = EnterpriseFormReport(account, couch_user)
+        elif slug == cls.ODATA_FEEDS:
+            report = EnterpriseODataReport(account, couch_user)
 
         if report:
             report.slug = slug
@@ -105,12 +110,9 @@ class EnterpriseReport(object):
 class EnterpriseDomainReport(EnterpriseReport):
     title = _('Project Spaces')
 
-    def __init__(self, account_id, couch_user):
-        super(EnterpriseDomainReport, self).__init__(account_id, couch_user)
-
     @property
     def headers(self):
-        headers = super(EnterpriseDomainReport, self).headers
+        headers = super().headers
         return [_('Created On [UTC]'), _('# of Apps'), _('# of Mobile Users'), _('# of Web Users'),
                 _('# of SMS (last 30 days)'), _('Last Form Submission [UTC]')] + headers
 
@@ -131,12 +133,9 @@ class EnterpriseDomainReport(EnterpriseReport):
 class EnterpriseWebUserReport(EnterpriseReport):
     title = _('Web Users')
 
-    def __init__(self, account_id, couch_user):
-        super(EnterpriseWebUserReport, self).__init__(account_id, couch_user)
-
     @property
     def headers(self):
-        headers = super(EnterpriseWebUserReport, self).headers
+        headers = super().headers
         return [_('Email Address'), _('Name'), _('Role'), _('Last Login [UTC]'),
                 _('Last Access Date [UTC]'), _('Status')] + headers
 
@@ -180,12 +179,9 @@ class EnterpriseWebUserReport(EnterpriseReport):
 class EnterpriseMobileWorkerReport(EnterpriseReport):
     title = _('Mobile Workers')
 
-    def __init__(self, account_id, couch_user):
-        super(EnterpriseMobileWorkerReport, self).__init__(account_id, couch_user)
-
     @property
     def headers(self):
-        headers = super(EnterpriseMobileWorkerReport, self).headers
+        headers = super().headers
         return [_('Username'), _('Name'), _('Email Address'), _('Role'), _('Created Date [UTC]'),
                 _('Last Sync [UTC]'), _('Last Submission [UTC]'), _('CommCare Version'), _('User ID')] + headers
 
@@ -214,18 +210,17 @@ class EnterpriseMobileWorkerReport(EnterpriseReport):
 class EnterpriseFormReport(EnterpriseReport):
     title = _('Mobile Form Submissions')
 
-    def __init__(self, account_id, couch_user):
-        super(EnterpriseFormReport, self).__init__(account_id, couch_user)
+    def __init__(self, account, couch_user):
+        super().__init__(account, couch_user)
         self.window = 30
         self.subtitle = _("past {} days").format(self.window)
 
     @property
     def headers(self):
-        headers = super(EnterpriseFormReport, self).headers
+        headers = super().headers
         return [_('Form Name'), _('Submitted [UTC]'), _('App Name'), _('Mobile User')] + headers
 
-    @quickcache(['self.account.id', 'domain_name'], timeout=60)
-    def hits(self, domain_name):
+    def _query(self, domain_name):
         time_filter = form_es.submitted
         datespan = DateSpan(datetime.now() - timedelta(days=self.window), datetime.utcnow())
 
@@ -238,7 +233,11 @@ class EnterpriseFormReport(EnterpriseReport):
                  .filter(time_filter(gte=datespan.startdate,
                                      lt=datespan.enddate_adjusted))
                  .filter(users_filter))
-        return query.run().hits
+        return query
+
+    @quickcache(['self.account.id', 'domain_name'], timeout=60)
+    def hits(self, domain_name):
+        return self._query(domain_name).run().hits
 
     def rows_for_domain(self, domain_obj):
         apps = get_brief_apps_in_domain(domain_obj.name)
@@ -256,4 +255,68 @@ class EnterpriseFormReport(EnterpriseReport):
         return rows
 
     def total_for_domain(self, domain_obj):
-        return len(self.hits(domain_obj.name))
+        return self._query(domain_obj.name).count()
+
+
+class EnterpriseODataReport(EnterpriseReport):
+    title = gettext_lazy('OData Feeds')
+    MAXIMUM_EXPECTED_EXPORTS = 150
+
+    def __init__(self, account, couch_user):
+        super().__init__(account, couch_user)
+        self.export_fetcher = ODataExportFetcher()
+
+    @property
+    def headers(self):
+        headers = super().headers
+        return [_('Odata feeds used'), _('Odata feeds available'), _('Report Names'),
+            _('Number of rows')] + headers
+
+    def total_for_domain(self, domain_obj):
+        return self.export_fetcher.get_export_count(domain_obj.name)
+
+    def rows_for_domain(self, domain_obj):
+        export_count = self.total_for_domain(domain_obj)
+        if export_count == 0 or export_count > self.MAXIMUM_EXPECTED_EXPORTS:
+            return [self._get_domain_summary_line(domain_obj, export_count)]
+
+        exports = self.export_fetcher.get_exports(domain_obj.name)
+
+        export_line_counts = self._get_export_line_counts(exports)
+
+        domain_summary_line = self._get_domain_summary_line(domain_obj, export_count, export_line_counts)
+        individual_export_rows = self._get_individual_export_rows(exports, export_line_counts)
+
+        rows = [domain_summary_line]
+        rows.extend(individual_export_rows)
+        return rows
+
+    def _get_export_line_counts(self, exports):
+        return {export._id: export.get_count() for export in exports}
+
+    def _get_domain_summary_line(self, domain_obj, export_count, export_line_counts={}):
+        if export_count > self.MAXIMUM_EXPECTED_EXPORTS:
+            total_line_count = _('ERROR: Too many exports. Please contact customer service')
+        else:
+            total_line_count = sum(export_line_counts.values())
+
+        return [
+            export_count,
+            domain_obj.get_odata_feed_limit(),
+            None,  # Report Name
+            total_line_count
+        ] + self.domain_properties(domain_obj)
+
+    def _get_individual_export_rows(self, exports, export_line_counts):
+        rows = []
+
+        for export in exports:
+            count = export_line_counts[export._id]
+            rows.append([
+                None,  # OData feeds used
+                None,  # OData feeds available
+                export.name,
+                count]
+            )
+
+        return rows

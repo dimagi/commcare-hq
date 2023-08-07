@@ -8,8 +8,8 @@ from couchdbkit import ResourceNotFound
 from memoized import memoized
 
 from corehq.apps.fixtures.dispatcher import FixtureInterfaceDispatcher
-from corehq.apps.fixtures.models import FixtureDataType, _id_from_doc
-from corehq.apps.fixtures.views import FixtureViewMixIn, fixtures_home
+from corehq.apps.fixtures.models import LookupTable
+from corehq.apps.fixtures.views import FixtureViewMixIn, fixtures_home, table_json
 from corehq.apps.reports.filters.base import BaseSingleOptionFilter
 from corehq.apps.reports.generic import GenericReportView, GenericTabularReport
 
@@ -33,15 +33,16 @@ class FixtureSelectFilter(BaseSingleOptionFilter):
         # ko won't display default selected-value as it should, display default_text instead
         return ""
 
-    @property
-    @memoized
-    def fixtures(self):
-        return sorted(FixtureDataType.by_domain(self.domain), key=lambda t: t.tag.lower())
+    def _fixture_options(self):
+        return sorted(
+            LookupTable.objects.by_domain(self.domain).values("id", "tag"),
+            key=lambda t: t["tag"].lower()
+        )
 
     @property
     @memoized
     def options(self):
-        return [(_id_from_doc(f), f.tag) for f in self.fixtures]
+        return [(f["id"].hex, f["tag"]) for f in self._fixture_options()]
 
 
 class FixtureViewInterface(GenericTabularReport, FixtureInterface):
@@ -116,7 +117,7 @@ class FixtureViewInterface(GenericTabularReport, FixtureInterface):
 
     @memoized
     def has_tables(self):
-        return True if list(FixtureDataType.by_domain(self.domain)) else False
+        return LookupTable.objects.filter(domain=self.domain).exists()
 
     @property
     @memoized
@@ -129,9 +130,10 @@ class FixtureViewInterface(GenericTabularReport, FixtureInterface):
 
     @cached_property
     def lookup_table(self):
-        if self.has_tables() and self.request.GET.get("table_id", None):
-            return FixtureDataType.get(self.request.GET['table_id'])
-        return None
+        try:
+            return LookupTable.objects.get(id=self.request.GET['table_id'])
+        except LookupTable.DoesNotExist:
+            return None
 
     @property
     def headers(self):
@@ -151,10 +153,18 @@ class FixtureEditInterface(FixtureInterface):
     @property
     def report_context(self):
         context = super(FixtureEditInterface, self).report_context
-        context.update(types=self.data_types)
+        is_managed_by_upstream_domain = any(data_type['is_synced'] for data_type in self.data_types)
+        context.update(
+            types=self.data_types,
+            is_managed_by_upstream_domain=is_managed_by_upstream_domain,
+            can_edit_linked_data=self.can_edit_linked_data(),
+        )
         return context
 
     @property
     @memoized
     def data_types(self):
-        return list(FixtureDataType.by_domain(self.domain))
+        return [table_json(t) for t in LookupTable.objects.by_domain(self.domain)]
+
+    def can_edit_linked_data(self):
+        return self.request.couch_user.can_edit_linked_data(self.domain)

@@ -26,7 +26,7 @@ from corehq.apps.app_manager.util import (
 )
 from corehq.apps.domain.decorators import login_and_domain_required
 from corehq.apps.users.decorators import require_permission
-from corehq.apps.users.models import CommCareUser, Permissions
+from corehq.apps.users.models import CommCareUser, HqPermissions
 from corehq.apps.users.util import normalize_username
 
 
@@ -189,7 +189,7 @@ def _build_request_in_progress(domain, app_id):
     return cache.get(key, False)
 
 
-require_can_edit_apps = require_permission(Permissions.edit_apps)
+require_can_edit_apps = require_permission(HqPermissions.edit_apps)
 require_can_edit_or_view_apps = require_permission(
     'edit_apps', view_only_permission='view_apps'
 )

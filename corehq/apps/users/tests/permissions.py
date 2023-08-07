@@ -8,7 +8,7 @@ from corehq.apps.export.views.utils import user_can_view_deid_exports
 from corehq.apps.users.decorators import get_permission_name
 from corehq.apps.users.models import (
     DomainMembership,
-    Permissions,
+    HqPermissions,
     WebUser, PARAMETERIZED_PERMISSIONS, PermissionInfo,
 )
 from corehq.apps.users.permissions import DEID_EXPORT_PERMISSION, has_permission_to_view_report, \
@@ -29,7 +29,7 @@ class PermissionsHelpersTest(SimpleTestCase):
             DomainMembership(domain=cls.domain, role_id='MYROLE'),
             DomainMembership(domain=cls.admin_domain, is_admin=True)
         ]
-        cls.permissions = Permissions()
+        cls.permissions = HqPermissions()
 
     def setUp(self):
         super(PermissionsHelpersTest, self).setUp()
@@ -53,18 +53,18 @@ class PermissionsHelpersTest(SimpleTestCase):
             self.addCleanup(patch.stop)
 
     def tearDown(self):
-        self.permissions = Permissions()
+        self.permissions = HqPermissions()
         super(PermissionsHelpersTest, self).tearDown()
 
     def test_deid_permission(self):
         self.assertFalse(user_can_view_deid_exports(self.domain, self.web_user))
-        self.permissions = Permissions(view_report_list=[DEID_EXPORT_PERMISSION])
+        self.permissions = HqPermissions(view_report_list=[DEID_EXPORT_PERMISSION])
         self.assertTrue(
-            self.permissions.has(get_permission_name(Permissions.view_report),
+            self.permissions.has(get_permission_name(HqPermissions.view_report),
                                  data=DEID_EXPORT_PERMISSION))
         self.assertTrue(
             self.web_user.has_permission(
-                self.domain, get_permission_name(Permissions.view_report),
+                self.domain, get_permission_name(HqPermissions.view_report),
                 data=DEID_EXPORT_PERMISSION)
         )
 
@@ -72,34 +72,34 @@ class PermissionsHelpersTest(SimpleTestCase):
 
     def test_view_reports(self):
         self.assertFalse(self.web_user.can_view_reports(self.domain))
-        self.permissions = Permissions(view_reports=True)
+        self.permissions = HqPermissions(view_reports=True)
         self.assertTrue(self.web_user.can_view_reports(self.domain))
 
     def test_has_permission_to_view_report_all(self):
         self.assertFalse(has_permission_to_view_report(self.web_user, self.domain, ODATA_FEED_PERMISSION))
-        self.permissions = Permissions(view_reports=True)
+        self.permissions = HqPermissions(view_reports=True)
         self.assertTrue(has_permission_to_view_report(self.web_user, self.domain, ODATA_FEED_PERMISSION))
 
     def test_has_permission_to_view_report(self):
         self.assertFalse(has_permission_to_view_report(self.web_user, self.domain, ODATA_FEED_PERMISSION))
-        self.permissions = Permissions(view_report_list=[ODATA_FEED_PERMISSION])
+        self.permissions = HqPermissions(view_report_list=[ODATA_FEED_PERMISSION])
         self.assertTrue(has_permission_to_view_report(self.web_user, self.domain, ODATA_FEED_PERMISSION))
 
 
 def test_parameterized_permission_covers_all():
     list_names = set(PARAMETERIZED_PERMISSIONS.values())
     list_properties = {
-        name for name, type_ in Permissions.properties().items()
+        name for name, type_ in HqPermissions.properties().items()
         if isinstance(type_, ListProperty)
     }
     eq(list_names, list_properties)
 
     parameterized_perms = set(PARAMETERIZED_PERMISSIONS.keys())
-    eq(set(), parameterized_perms - set(Permissions.properties()))
+    eq(set(), parameterized_perms - set(HqPermissions.properties()))
 
 
 def test_parameterized_permission_validation():
     # no exception raised
-    PermissionInfo(Permissions.view_apps.name, allow=PermissionInfo.ALLOW_ALL)
+    PermissionInfo(HqPermissions.view_apps.name, allow=PermissionInfo.ALLOW_ALL)
     with assert_raises(TypeError):
-        PermissionInfo(Permissions.view_apps.name, allow=["app1"])
+        PermissionInfo(HqPermissions.view_apps.name, allow=["app1"])

@@ -9,18 +9,17 @@ from django.core.management import call_command
 from django.db import connections
 from django.db.models import Q
 from django.template import Context, Template
-from django.template.loader import render_to_string
+from django.utils.html import strip_tags
 
 import attr
 from celery.schedules import crontab
-from celery.task import task
-from celery.task.base import periodic_task
 
 from dimagi.utils.django.email import send_HTML_email
 from dimagi.utils.logging import notify_error
 from dimagi.utils.web import get_static_url_prefix
 from pillowtop.utils import get_couch_pillow_instances
 
+from corehq.apps.celery import periodic_task, task
 from corehq.apps.es.users import UserES
 from corehq.apps.hqadmin.models import HistoricalPillowCheckpoint
 from corehq.apps.hqwebapp.tasks import send_html_email_async
@@ -97,13 +96,10 @@ def send_mass_emails(email_for_requesting_user, real_email, subject, html, text)
         })
 
         html_template = Template(html)
+        html_content = html_template.render(Context(context))
+
         text_template = Template(text)
-        text_content = render_to_string("hqadmin/email/mass_email_base.txt", {
-            'email_body': text_template.render(Context(context)),
-        })
-        html_content = render_to_string("hqadmin/email/mass_email_base.html", {
-            'email_body': html_template.render(Context(context)),
-        })
+        text_content = strip_tags(text_template.render(Context(context)))
 
         try:
             send_HTML_email(subject, recipient['email'], html_content, text_content=text_content)

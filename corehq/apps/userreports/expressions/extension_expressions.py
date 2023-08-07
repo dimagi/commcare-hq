@@ -9,7 +9,7 @@ class IndexedCaseExpressionSpec(JsonObject):
     case_expression = DictProperty(required=True)
     index = StringProperty(required=False)
 
-    def configure(self, case_expression, context):
+    def configure(self, case_expression, factory_context):
         self._case_expression = case_expression
 
         index = self.index or 'parent'
@@ -55,10 +55,10 @@ class IndexedCaseExpressionSpec(JsonObject):
                 'type': 'identity'
             }
         }
-        self._expression = ExpressionFactory.from_spec(spec, context)
+        self._expression = ExpressionFactory.from_spec(spec, factory_context)
 
-    def __call__(self, item, context=None):
-        return self._expression(item, context)
+    def __call__(self, item, evaluation_context=None):
+        return self._expression(item, evaluation_context)
 
     def __str__(self):
         return "{case}/{index}".format(
@@ -67,10 +67,10 @@ class IndexedCaseExpressionSpec(JsonObject):
         )
 
 
-def indexed_case_expression(spec, context):
+def indexed_case_expression(spec, factory_context):
     wrapped = IndexedCaseExpressionSpec.wrap(spec)
     wrapped.configure(
-        ExpressionFactory.from_spec(wrapped.case_expression, context),
-        context
+        ExpressionFactory.from_spec(wrapped.case_expression, factory_context),
+        factory_context
     )
     return wrapped

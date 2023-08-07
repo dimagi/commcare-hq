@@ -4,6 +4,7 @@ from django.db.models import Q
 
 from dimagi.utils.chunked import chunked
 from dimagi.utils.couch import CriticalSection
+from field_audit.models import AuditAction
 
 from corehq.apps.data_interfaces.models import AutomaticUpdateRule
 from corehq.apps.es import CaseES
@@ -30,10 +31,10 @@ def get_sync_key(case_id):
 
 @no_result_task(queue=settings.CELERY_REMINDER_CASE_UPDATE_QUEUE, acks_late=True,
                 default_retry_delay=5 * 60, max_retries=12, bind=True)
-def sync_case_for_messaging(self, domain, case_id):
+def sync_case_for_messaging_task(self, domain, case_id):
     try:
         with CriticalSection([get_sync_key(case_id)], timeout=5 * 60):
-            _sync_case_for_messaging(domain, case_id)
+            sync_case_for_messaging(domain, case_id)
     except Exception as e:
         self.retry(exc=e)
 
@@ -58,7 +59,7 @@ def sync_case_chunk_for_messaging_rule(domain, case_id_chunk, rule_id):
             sync_case_for_messaging_rule.delay(domain, case_id, rule_id)
 
 
-def _sync_case_for_messaging(domain, case_id):
+def sync_case_for_messaging(domain, case_id, get_rules=None):
     try:
         case = CommCareCase.objects.get_case(case_id, domain)
         sms_tasks.clear_case_caches(case)
@@ -67,7 +68,7 @@ def _sync_case_for_messaging(domain, case_id):
     case_load_counter("messaging_sync", domain)()
     update_messaging_for_case(domain, case_id, case)
     if case is not None:
-        run_auto_update_rules_for_case(case)
+        run_auto_update_rules_for_case(case, get_rules)
 
 
 def update_messaging_for_case(domain, case_id, case):
@@ -82,14 +83,18 @@ def clear_messaging_for_case(domain, case_id):
     delete_schedule_instances_for_cases(domain, [case_id])
 
 
-def run_auto_update_rules_for_case(case):
-    rules = AutomaticUpdateRule.by_domain_cached(case.domain, AutomaticUpdateRule.WORKFLOW_SCHEDULING)
-    rules_by_case_type = AutomaticUpdateRule.organize_rules_by_case_type(rules)
-    for rule in rules_by_case_type.get(case.type, []):
+def run_auto_update_rules_for_case(case, get_rules=None):
+    if get_rules is not None:
+        rules = get_rules(case.domain, case.type)
+    else:
+        all_rules = AutomaticUpdateRule.by_domain_cached(case.domain, AutomaticUpdateRule.WORKFLOW_SCHEDULING)
+        rules_by_case_type = AutomaticUpdateRule.organize_rules_by_case_type(all_rules)
+        rules = rules_by_case_type.get(case.type, [])
+    for rule in rules:
         rule.run_rule(case, utcnow())
 
 
-def _get_cached_rule(domain, rule_id):
+def get_cached_rule(domain, rule_id):
     rules = AutomaticUpdateRule.by_domain_cached(domain, AutomaticUpdateRule.WORKFLOW_SCHEDULING)
     rules = [rule for rule in rules if rule.pk == rule_id]
     if len(rules) == 1:
@@ -103,7 +108,7 @@ def _sync_case_for_messaging_rule(domain, case_id, rule_id):
     except CaseNotFound:
         clear_messaging_for_case(domain, case_id)
         return
-    rule = _get_cached_rule(domain, rule_id)
+    rule = get_cached_rule(domain, rule_id)
     if rule:
         rule.run_rule(case, utcnow())
         MessagingRuleProgressHelper(rule_id).increment_current_case_count()
@@ -112,7 +117,8 @@ def _sync_case_for_messaging_rule(domain, case_id, rule_id):
 def initiate_messaging_rule_run(rule):
     if not rule.active:
         return
-    AutomaticUpdateRule.objects.filter(pk=rule.pk).update(locked_for_editing=True)
+    rule.locked_for_editing = True
+    rule.save(update_fields=['locked_for_editing'])
     transaction.on_commit(lambda: run_messaging_rule.delay(rule.domain, rule.pk))
 
 
@@ -137,14 +143,15 @@ def get_case_ids_for_messaging_rule(domain, case_type):
 
 @no_result_task(queue=settings.CELERY_REMINDER_CASE_UPDATE_BULK_QUEUE)
 def set_rule_complete(rule_id):
-    AutomaticUpdateRule.objects.filter(pk=rule_id).update(locked_for_editing=False)
+    AutomaticUpdateRule.objects.filter(pk=rule_id).update(locked_for_editing=False,
+                                                          audit_action=AuditAction.AUDIT)
     MessagingRuleProgressHelper(rule_id).set_rule_complete()
 
 
 @no_result_task(queue=settings.CELERY_REMINDER_CASE_UPDATE_BULK_QUEUE, acks_late=True,
                 soft_time_limit=15 * settings.CELERY_TASK_SOFT_TIME_LIMIT)
 def run_messaging_rule(domain, rule_id):
-    rule = _get_cached_rule(domain, rule_id)
+    rule = get_cached_rule(domain, rule_id)
     if not rule:
         return
     progress_helper = MessagingRuleProgressHelper(rule_id)
@@ -160,7 +167,7 @@ def run_messaging_rule(domain, rule_id):
 @no_result_task(queue=settings.CELERY_REMINDER_CASE_UPDATE_BULK_QUEUE, acks_late=True,
                 soft_time_limit=15 * settings.CELERY_TASK_SOFT_TIME_LIMIT)
 def run_messaging_rule_for_shard(domain, rule_id, db_alias):
-    rule = _get_cached_rule(domain, rule_id)
+    rule = get_cached_rule(domain, rule_id)
     if not rule:
         return
 

@@ -15,7 +15,7 @@
       {% endfor %}
     </div>
   {% endif %}
-  <div data-bind="template: {name: getKoTemplateId, foreach: actions}"></div>
+  <div data-bind="template: {name: getKoTemplateId, foreach: actions, afterRender: disableActionField}"></div>
   <div class="form-group">
     <div class="col-xs-12 col-sm-4 col-md-4 col-lg-2 control-label">
       <div class="btn-group">
@@ -69,7 +69,10 @@
     <div data-bind="template: {name: 'remove-action'}"></div>
     <label class="control-label col-xs-2">{% trans "Set case property" %}</label>
     <div class="controls col-xs-2">
-      <input type="text" data-bind="value: name" class="textinput form-control" required placeholder="{% trans 'case property name' %}" />
+      <case-property-input params="
+        valueObservable: name,
+        caseTypeObservable: $root.caseType,
+      "></case-property-input>
     </div>
     <div class="controls col-xs-2">
       <select class="select form-control" data-bind="value: value_type" required>
@@ -78,7 +81,13 @@
       </select>
     </div>
     <div class="controls col-xs-2">
-      <input type="text" class="textinput form-control" data-bind="value: value" required />
+      <input type="text" class="textinput form-control" data-bind="value: value, visible: value_type() === '{{ form.constants.VALUE_TYPE_EXACT }}'" required />
+      <!-- ko if: value_type() === '{{ form.constants.VALUE_TYPE_CASE_PROPERTY }}' -->
+        <case-property-input params="
+          valueObservable: value,
+          caseTypeObservable: $root.caseType,
+        "></case-property-input>
+      <!-- /ko -->
     </div>
   </div>
 </script>

@@ -1,3 +1,11 @@
+"""
+ResourceOverrideHelper
+----------------------
+
+This is dead code. It supports a legacy feature, multi-master linked applications.
+
+The actual flag has been removed, but a lot of related code still exists.
+"""
 from collections import Counter
 from django.db import models
 

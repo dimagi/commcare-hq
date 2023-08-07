@@ -13,7 +13,7 @@ depending on the finished migration, so it must be applied to all environments
 before that can happen.
 
 However, it would be tedious and error prone to require everyone running smaller
-CommCareHQ environments, including developers who are working on other parts of
+CommCare HQ environments, including developers who are working on other parts of
 the project, to learn about and follow the painstaking manual process used to
 migrate large environments. This document outlines a pattern that can be used to
 ensure a smooth rollout to everyone running any size environment with minimal
@@ -59,7 +59,7 @@ did it run successfully?) can be performed in the context of a Django migration.
     import sys
     import traceback
 
-    from django.core.management import call_command
+    from django.core.management import call_command, get_commands
     from django.db import migrations
 
     from corehq.util.django_migrations import skip_on_fresh_install
@@ -68,15 +68,17 @@ did it run successfully?) can be performed in the context of a Django migration.
     COUNT_ITEMS_TO_BE_MIGRATED = "SELECT COUNT(*) FROM ..."
     GIT_COMMIT_WITH_MANAGEMENT_COMMAND = "TODO change this"
     AUTO_MIGRATE_ITEMS_LIMIT = 10000
+    AUTO_MIGRATE_COMMAND_NAME = "the_migration_management_command"
     AUTO_MIGRATE_FAILED_MESSAGE = """
-    A migration must be performed before this environment can be upgraded to the
-    latest version of CommCareHQ. Instructions for running the migration can be
-    found at this link:
+    This migration cannot be performed automatically and must instead be run manually
+    before this environment can be upgraded to the latest version of CommCare HQ.
+    Instructions for running the migration can be found at this link:
 
-    https://github.com/dimagi/commcare-cloud/blob/master/docs/changelog/0000-example-entry.md
-
-    You will need to checkout an older version of CommCareHQ first if you are
-    unable to run the management command because it has been deleted:
+    https://commcare-cloud.readthedocs.io/en/latest/changelog/0000-example-entry.html
+    """
+    AUTO_MIGRATE_COMMAND_MISSING_MESSAGE = """
+    You will need to checkout an older version of CommCare HQ before you can perform this migration
+    because the management command has been removed.
 
     git checkout {commit}
     """.format(commit=GIT_COMMIT_WITH_MANAGEMENT_COMMAND)
@@ -91,12 +93,16 @@ did it run successfully?) can be performed in the context of a Django migration.
         if migrated:
             return
 
+        if AUTO_MIGRATE_COMMAND_NAME not in get_commands():
+            print("")
+            print(AUTO_MIGRATE_FAILED_MESSAGE)
+            print(AUTO_MIGRATE_COMMAND_MISSING_MESSAGE)
+            sys.exit(1)
+
         if num_items < AUTO_MIGRATE_ITEMS_LIMIT:
             try:
-                call_command(
-                    "the_migration_management_command",
-                    dbname=schema_editor.connection.alias,
-                )
+                # add args and kwargs here as needed
+                call_command(AUTO_MIGRATE_COMMAND_NAME)
                 migrated = count_items_to_be_migrated(schema_editor.connection) == 0
                 if not migrated:
                     print("Automatic migration failed")

@@ -6,9 +6,9 @@ from corehq import privileges
 from corehq.apps.accounting.decorators import requires_privilege_with_fallback
 from corehq.apps.reports.dispatcher import ReportDispatcher, datespan_default
 from corehq.apps.users.decorators import require_permission
-from corehq.apps.users.models import Permissions
+from corehq.apps.users.models import HqPermissions
 
-require_can_edit_data = require_permission(Permissions.edit_data)
+require_can_edit_data = require_permission(HqPermissions.edit_data)
 
 require_form_management_privilege = requires_privilege_with_fallback(privileges.DATA_CLEANUP)
 
@@ -51,3 +51,10 @@ class EditDataInterfaceDispatcher(ReportDispatcher):
                 if not has_privilege(request, privileges.DATA_CLEANUP):
                     return False
         return request.couch_user.can_edit_data(domain)
+
+
+class BulkEditDataInterfaceDispatcher(EditDataInterfaceDispatcher):
+
+    @classmethod
+    def allowed_renderings(cls):
+        return super(BulkEditDataInterfaceDispatcher, cls).allowed_renderings() + ['bulk']

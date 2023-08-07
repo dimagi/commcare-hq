@@ -1,6 +1,7 @@
 <partial>
   <remote-request>
-    <post relevant="count(instance('casedb')/casedb/case[@case_id=instance('commcaresession')/session/data/search_case_id]) = 0" url="https://www.example.com/a/test_domain/phone/claim-case/">
+    <post relevant="count(instance('casedb')/casedb/case[@case_id=instance('commcaresession')/session/data/search_case_id]) = 0 and instance('results')/results/case[@case_id=instance('commcaresession')/session/data/search_case_id]/commcare_project = instance('commcaresession')/session/user/data/commcare_project"
+          url="https://www.example.com/a/test_domain/phone/claim-case/">
       <data key="case_id" ref="instance('commcaresession')/session/data/search_case_id"/>
     </post>
     <command id="search_command.m1">
@@ -12,8 +13,14 @@
     </command>
     <instance id="casedb" src="jr://instance/casedb"/>
     <instance id="commcaresession" src="jr://instance/session"/>
+    <instance id="results" src="jr://instance/remote/results"/>
     <session>
       <query default_search="false" storage-instance="results" template="case" url="https://www.example.com/a/test_domain/phone/search/{app_id}/">
+        <title>
+          <text>
+            <locale id="case_search.m1.inputs"/>
+          </text>
+        </title>
         <data key="case_type" ref="'leaf'"/>
         <data key="x_commcare_data_registry" ref="'a_registry'"/>
         <prompt key="name">

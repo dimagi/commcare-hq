@@ -1,7 +1,7 @@
+from collections import Counter
 from dataclasses import dataclass
 
 from django.utils.translation import gettext as _
-
 from eulxml.xpath.ast import (
     BinaryExpression,
     FunctionCall,
@@ -9,8 +9,9 @@ from eulxml.xpath.ast import (
     serialize,
 )
 
+from corehq.apps.case_search.const import MAX_RELATED_CASES
 from corehq.apps.case_search.exceptions import XPathFunctionException
-from corehq.apps.es import CaseSearchES, aggregations, filters, queries
+from corehq.apps.es import CaseSearchES, filters, queries
 
 
 @dataclass
@@ -73,7 +74,6 @@ def _get_parent_case_ids_matching_subcase_query(subcase_query, context):
     """
     # TODO: validate that the subcase filter doesn't contain any ancestor filtering
     from corehq.apps.case_search.filter_dsl import (
-        MAX_RELATED_CASES,
         build_filter_from_ast,
     )
 
@@ -82,44 +82,35 @@ def _get_parent_case_ids_matching_subcase_query(subcase_query, context):
     else:
         subcase_filter = filters.match_all()
 
-    index_identifier_filter = filters.term('indices.identifier', subcase_query.index_identifier)
-    index_query = queries.nested(
-        'indices',
-        queries.filtered(
-            queries.match_all(),
-            filters.AND(
-                index_identifier_filter,
-                filters.NOT(filters.term('indices.referenced_id', ''))  # exclude deleted indices
-            )
-        )
-    )
     es_query = (
         CaseSearchES().domain(context.domain)
-        .filter(index_query)
-        .filter(subcase_filter)
-        .aggregation(
-            aggregations.NestedAggregation(
-                'indices', 'indices',
-            ).aggregation(
-                aggregations.FilterAggregation(
-                    'matching_indices', index_identifier_filter
-                ).aggregation(
-                    aggregations.TermsAggregation(
-                        'referenced_id', 'indices.referenced_id'
-                    )
+        .nested(
+            'indices',
+            queries.filtered(
+                queries.match_all(),
+                filters.AND(
+                    filters.term('indices.identifier', subcase_query.index_identifier),
+                    filters.NOT(filters.term('indices.referenced_id', ''))  # exclude deleted indices
                 )
             )
         )
+        .filter(subcase_filter)
+        .source(['indices.referenced_id', 'indices.identifier'])
     )
 
-    if es_query.count() > MAX_RELATED_CASES:
+    counts_by_parent_id = Counter(
+        index['referenced_id']
+        for subcase in es_query.run().hits
+        for index in subcase['indices']
+        if index['identifier'] == subcase_query.index_identifier
+    )
+    if len(counts_by_parent_id) > MAX_RELATED_CASES:
         from ..exceptions import TooManyRelatedCasesError
         raise TooManyRelatedCasesError(
             _("The related case lookup you are trying to perform would return too many cases"),
             serialize(subcase_query.subcase_filter)
         )
 
-    counts_by_parent_id = es_query.run().aggregations.indices.matching_indices.referenced_id.counts_by_bucket()
     if subcase_query.op == '>' and subcase_query.count <= 0:
         return list(counts_by_parent_id)
 

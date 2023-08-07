@@ -12,34 +12,27 @@
           </strong>
         </h4>
       </div>
-      <div class="modal-body form-horizontal">
 
-        {# Hubspot Form #}
-        <div class="form form-horizontal"
-             id="get-trial-cta-form-content"></div>
-        
-        {# Schedule Call Choices #}
-        <div id="choose-callback-options" class="fadeIn hidden">
-          {% blocktrans %}
-            <p> A member of our team will call you soon to complete the setup of your CommCare trial account. </p>
-            <p> Prefer to schedule your call instead? You can do that, too! </p>
-          {% endblocktrans %}
-          
-          <div class="modal-footer">
-            <button type="button" id="book-a-time-btn" class="btn btn-primary">Book a time</button>
-            <a href="https://sites.dimagi.com/commcare-trial-callback"><button type="button btn-default"  class="btn btn-default">Done</button></a>
-          </div>
-        </div>
-
-        {# Schedule Once Demo #}
-        <div id="get-trial-cta-calendar-content" class="hidden fadeIn">
-          <div id="SOIDIV_CommCareTrial"
-               data-so-page="CommCareTrial"
-               data-style="border: 1px solid #d8d8d8; min-width: 290px; max-width: 900px;"
-               data-psz="11"></div>
-        </div>
-
+      {# Hubspot Form #}
+      <div id="get-trial-cta-form-content">
+        {% include "analytics/forms/hubspot_cta_form.html" %}
       </div>
+
+      <div id="choose-callback-options"
+           class="fadeIn hidden">
+        <div class="modal-body">
+          <p>
+            {% blocktrans %}A member of our team will call you soon to complete the setup of your CommCare trial account.{% endblocktrans %}
+          </p>
+        </div>
+        <div class="modal-footer">
+          <a href="https://sites.dimagi.com/commcare-trial-callback">
+            <button type="button btn-default"
+                    class="btn btn-default">{% trans "Learn More" %}</button>
+          </a>
+        </div>
+      </div>
+
     </div>
   </div>
 </div>

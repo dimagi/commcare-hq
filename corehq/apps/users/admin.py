@@ -30,10 +30,32 @@ class ApiKeyInline(admin.TabularInline):
         return False
 
 
+def _copy_fieldsets(fieldsets, excluding_fields=()):
+    """
+    Return a deep copy of ModelAdmin `fieldsets` property, removing certain fields
+
+    :param: fieldsets - fieldsets property to copy
+    :param: excluding_fields - fields to remove
+
+    """
+    # fieldsets is structured like ((display_name, {'fields': fields}), ...)
+    return tuple(
+        # deep copy based on its known structure...
+        (display_name, dict(fields_dict, fields=tuple(
+            field for field in fields_dict["fields"]
+            # ...removing excluded fields
+            if field not in excluding_fields
+        )))
+        for display_name, fields_dict in fieldsets
+    )
+
+
 class CustomUserAdmin(UserAdmin):
     inlines = [
         ApiKeyInline,
     ]
+
+    fieldsets = _copy_fieldsets(UserAdmin.fieldsets, excluding_fields=("is_superuser", "is_staff"))
 
     def has_add_permission(self, request):
         return False

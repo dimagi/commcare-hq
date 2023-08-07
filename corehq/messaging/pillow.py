@@ -7,7 +7,7 @@ from corehq.apps.change_feed.topics import CASE_TOPICS
 from corehq.apps.data_interfaces.models import AutomaticUpdateRule
 from corehq.form_processor.exceptions import CaseNotFound
 from corehq.form_processor.models import CommCareCase
-from corehq.messaging.tasks import update_messaging_for_case
+from corehq.messaging.tasks import sync_case_for_messaging
 from corehq.pillows.base import is_couch_change_for_sql_domain
 from pillowtop.checkpoints.manager import KafkaPillowCheckpoint
 from pillowtop.const import DEFAULT_PROCESSOR_CHUNK_SIZE
@@ -51,20 +51,7 @@ class CaseMessagingSyncProcessor(BulkPillowProcessor):
     def process_change(self, change):
         if is_couch_change_for_sql_domain(change):
             return
-        try:
-            case = CommCareCase.objects.get_case(change.id, change.metadata.domain)
-        except CaseNotFound:
-            case = None
-
-        update_messaging_for_case(
-            change.metadata.domain,
-            change.id,
-            case,
-        )
-        if case and not case.is_deleted:
-            rules = self._get_rules(change.metadata.domain, case.type)
-            for rule in rules:
-                rule.run_rule(case, datetime.utcnow())
+        sync_case_for_messaging(change.metadata.domain, change.id, self._get_rules)
 
     def process_changes_chunk(self, changes_chunk):
         errors = []

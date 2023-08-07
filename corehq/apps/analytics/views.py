@@ -1,10 +1,14 @@
 import hashlib
 import hmac
 import json
+import requests
+
+from gettext import gettext
 
 from django.conf import settings
-from django.http import HttpResponse
+from django.http import HttpResponse, JsonResponse
 from django.views.decorators.csrf import csrf_exempt
+from django.views.decorators.http import require_POST
 from django.views.generic import View
 
 from corehq.apps.analytics.tasks import (
@@ -12,7 +16,11 @@ from corehq.apps.analytics.tasks import (
     track_clicked_deploy_on_hubspot,
     track_job_candidate_on_hubspot,
 )
-from corehq.apps.analytics.utils import get_meta
+from corehq.apps.analytics.utils import (
+    get_meta,
+    get_client_ip_from_request,
+    log_response,
+)
 
 
 class HubspotClickDeployView(View):
@@ -57,3 +65,35 @@ class GreenhouseCandidateView(View):
                 pass
 
         return HttpResponse()
+
+
+@require_POST
+def submit_hubspot_cta_form(request):
+    form_data = {data: value[0] for data, value in dict(request.POST).items()}
+    form_id = form_data.pop('hubspot_form_id')
+    page_url = form_data.pop('page_url')
+    page_name = form_data.pop('page_name')
+
+    hubspot_cookie = request.COOKIES.get(HUBSPOT_COOKIE)
+    form_data['hs_context'] = json.dumps({
+        "hutk": hubspot_cookie,
+        "ipAddress": get_client_ip_from_request(request),
+        "pageUrl": page_url,
+        "pageName": page_name,
+    })
+
+    hubspot_id = settings.ANALYTICS_IDS.get('HUBSPOT_API_ID')
+    if not hubspot_id:
+        return JsonResponse({
+            "success": False,
+            "message": gettext("No hubspot API ID is present."),
+        })
+
+    url = f"https://forms.hubspot.com/uploads/form/v2/{hubspot_id}/{form_id}"
+    response = requests.post(url, data=form_data)
+    log_response('HS', form_data, response)
+    response.raise_for_status()
+
+    return JsonResponse({
+        "success": True,
+    })

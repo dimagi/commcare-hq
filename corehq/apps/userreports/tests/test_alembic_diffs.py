@@ -105,10 +105,10 @@ class TestAlembicDiffs(TestCase):
             SimpleDiff(DiffTypes.MODIFY_NULLABLE, self.table_name, 'user_name', None),
         })
 
-    def _test_diffs(self, metadata, expected_diffs, table_names=None):
+    def _test_diffs(self, metadata, expected_diffs):
         migration_context = get_migration_context(
             self.engine.connect(),
-            table_names or [self.table_name, 'new_table']
+            [self.table_name, 'new_table']
         )
         raw_diffs = compare_metadata(migration_context, metadata)
         diffs = reformat_alembic_diffs(raw_diffs)

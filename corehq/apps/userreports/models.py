@@ -2,10 +2,10 @@ import glob
 import json
 import os
 import re
+from ast import literal_eval
 from collections import namedtuple
 from copy import copy, deepcopy
-from corehq import toggles
-from datetime import datetime
+from datetime import datetime, timedelta
 from uuid import UUID
 
 from django.conf import settings
@@ -15,12 +15,13 @@ from django.db import models
 from django.utils.functional import cached_property
 from django.utils.translation import gettext as _
 
+import requests
 import yaml
+from celery.states import FAILURE
 from couchdbkit.exceptions import BadValueError
 from django_bulk_update.helper import bulk_update as bulk_update_helper
 from jsonpath_ng.ext import parser
 from memoized import memoized
-from corehq.apps.domain.models import AllowedUCRExpressionSettings
 
 from dimagi.ext.couchdbkit import (
     BooleanProperty,
@@ -44,19 +45,24 @@ from dimagi.utils.couch.undo import is_deleted
 from dimagi.utils.dates import DateSpan
 from dimagi.utils.modules import to_function
 
+from corehq import toggles
 from corehq.apps.cachehq.mixins import (
     CachedCouchDocumentMixin,
     QuickCachedDocumentMixin,
 )
+from corehq.apps.domain.models import AllowedUCRExpressionSettings
 from corehq.apps.registry.helper import DataRegistryHelper
 from corehq.apps.userreports.app_manager.data_source_meta import (
     REPORT_BUILDER_DATA_SOURCE_TYPE_VALUES,
 )
 from corehq.apps.userreports.columns import get_expanded_column_config
 from corehq.apps.userreports.const import (
+    ALL_EXPRESSION_TYPES,
     DATA_SOURCE_TYPE_AGGREGATE,
     DATA_SOURCE_TYPE_STANDARD,
     FILTER_INTERPOLATION_DOC_TYPES,
+    UCR_NAMED_EXPRESSION,
+    UCR_NAMED_FILTER,
     UCR_SQL_BACKEND,
     VALID_REFERENCED_DOC_TYPES,
 )
@@ -180,6 +186,91 @@ class DataSourceBuildInformation(DocumentSchema):
     finished_in_place = BooleanProperty(default=False)
     initiated_in_place = DateTimeProperty()
     rebuilt_asynchronously = BooleanProperty(default=False)
+
+    @property
+    def is_rebuilding(self):
+        return (
+            self.initiated
+            and not self.finished
+            and not self.rebuilt_asynchronously
+        )
+
+    @property
+    def is_rebuilding_in_place(self):
+        return (
+            self.initiated_in_place
+            and not self.finished_in_place
+        )
+
+    @property
+    def is_rebuild_in_progress(self):
+        return self.is_rebuilding or self.is_rebuilding_in_place
+
+    def rebuild_failed(self, data_source_config_id):
+        """
+        Returns ``True`` if the rebuild failed, ``False`` if it succeeded
+        or has not yet failed, or ``None`` if Flower is not available.
+        """
+        flower_url = getattr(settings, 'CELERY_FLOWER_URL')
+
+        def none_max(a, b):
+            if a is None:
+                return b
+            if b is None:
+                return a
+            return max(a, b)
+
+        def format_datetime(dt):
+            return dt.strftime('%Y-%m-%d %H:%M')
+
+        def is_this_data_source(rebuild_task):
+            args = literal_eval(rebuild_task['args'])  # a tuple
+            return args[0] == data_source_config_id
+
+        def iter_tasks():
+            task_names = (
+                'corehq.apps.userreports.tasks.rebuild_indicators',
+                'corehq.apps.userreports.tasks.rebuild_indicators_in_place',
+                'corehq.apps.userreports.tasks.resume_building_indicators',
+            )
+            initiated_at = none_max(self.initiated, self.initiated_in_place)
+            start = format_datetime(initiated_at - timedelta(seconds=60))
+            for task_name in task_names:
+                tasks = requests.get(
+                    flower_url + '/api/tasks',
+                    params={
+                        'taskname': task_name,
+                        'received_start': start,
+                    },
+                    timeout=3,
+                ).json()
+                for task_uuid, task in tasks.items():
+                    if is_this_data_source(task):
+                        yield task
+
+        if not self.initiated and not self.initiated_in_place:
+            # The rebuild task hasn't started.
+            return False
+
+        if (
+            (self.initiated and self.finished)
+            or (self.initiated_in_place and self.finished_in_place)
+        ):
+            # The rebuild task completed.
+            return False
+
+        if not flower_url:
+            # We are unable to find out about the rebuild task.
+            return None
+
+        rebuild_tasks = sorted(iter_tasks(), key=lambda t: t['started'])
+        if rebuild_tasks:
+            # Return True if the last task failed, otherwise return False.
+            return rebuild_tasks[-1]['state'] == FAILURE
+
+        # The rebuild is not finished and the task is not found. It must
+        # have died.
+        return True
 
 
 class DataSourceMeta(DocumentSchema):
@@ -312,7 +403,7 @@ class DataSourceConfiguration(CachedCouchDocumentMixin, Document, AbstractUCRDat
             _Validation(
                 validation.name,
                 validation.error_message,
-                FilterFactory.from_spec(validation.expression, context=self.get_factory_context())
+                FilterFactory.from_spec(validation.expression, self.get_factory_context())
             )
             for validation in self.validations
         ]
@@ -356,7 +447,7 @@ class DataSourceConfiguration(CachedCouchDocumentMixin, Document, AbstractUCRDat
                 'type': 'and',
                 'filters': built_in_filters + extras,
             },
-            context=self.get_factory_context(),
+            self.get_factory_context(),
         )
 
     def _get_domain_filter_spec(self):
@@ -376,14 +467,13 @@ class DataSourceConfiguration(CachedCouchDocumentMixin, Document, AbstractUCRDat
         named_expression_specs = deepcopy(self.named_expressions)
         named_expressions = {}
         spec_error = None
+        factory_context = FactoryContext(named_expressions=named_expressions, named_filters={}, domain=self.domain)
         while named_expression_specs:
             number_generated = 0
             for name, expression in list(named_expression_specs.items()):
                 try:
-                    named_expressions[name] = ExpressionFactory.from_spec(
-                        expression,
-                        FactoryContext(named_expressions=named_expressions, named_filters={})
-                    )
+                    factory_context.named_expressions = named_expressions
+                    named_expressions[name] = ExpressionFactory.from_spec(expression, factory_context)
                     number_generated += 1
                     del named_expression_specs[name]
                 except BadSpecError as bad_spec_error:
@@ -399,11 +489,14 @@ class DataSourceConfiguration(CachedCouchDocumentMixin, Document, AbstractUCRDat
     @property
     @memoized
     def named_filter_objects(self):
-        return {name: FilterFactory.from_spec(filter, FactoryContext(self.named_expression_objects, {}))
-                for name, filter in self.named_filters.items()}
+        factory_context = FactoryContext(self.named_expression_objects, {}, domain=self.domain)
+        return {
+            name: FilterFactory.from_spec(filter, factory_context)
+            for name, filter in self.named_filters.items()
+        }
 
     def get_factory_context(self):
-        return FactoryContext(self.named_expression_objects, self.named_filter_objects)
+        return FactoryContext(self.named_expression_objects, self.named_filter_objects, self.domain)
 
     @property
     @memoized
@@ -451,7 +544,7 @@ class DataSourceConfiguration(CachedCouchDocumentMixin, Document, AbstractUCRDat
     @memoized
     def parsed_expression(self):
         if self.base_item_expression:
-            return ExpressionFactory.from_spec(self.base_item_expression, context=self.get_factory_context())
+            return ExpressionFactory.from_spec(self.base_item_expression, self.get_factory_context())
         return None
 
     @memoized
@@ -651,6 +744,13 @@ class DataSourceConfiguration(CachedCouchDocumentMixin, Document, AbstractUCRDat
             columns = self.sql_settings.primary_key
         return columns
 
+    @cached_property
+    def rebuild_failed(self):
+        # `has_died()` returns `None` if we can't use the Flower API,
+        # and so we don't know. Treating `None` as falsy allows calling
+        # code to give `rebuild_has_died` the benefit of the doubt.
+        return self.meta.build.rebuild_failed(self._id)
+
 
 class RegistryDataSourceConfiguration(DataSourceConfiguration):
     """This is a special data source that can contain data from
@@ -849,7 +949,9 @@ class ReportConfiguration(QuickCachedDocumentMixin, Document):
     @property
     @memoized
     def cached_data_source(self):
-        from corehq.apps.userreports.reports.data_source import ConfigurableReportDataSource
+        from corehq.apps.userreports.reports.data_source import (
+            ConfigurableReportDataSource,
+        )
         return ConfigurableReportDataSource.from_spec(self).data_source
 
     @property
@@ -906,7 +1008,9 @@ class ReportConfiguration(QuickCachedDocumentMixin, Document):
         return langs
 
     def validate(self, required=True):
-        from corehq.apps.userreports.reports.data_source import ConfigurableReportDataSource
+        from corehq.apps.userreports.reports.data_source import (
+            ConfigurableReportDataSource,
+        )
 
         def _check_for_duplicates(supposedly_unique_list, error_msg):
             # http://stackoverflow.com/questions/9835762/find-and-list-duplicates-in-python-list
@@ -1346,6 +1450,72 @@ class InvalidUCRData(models.Model):
         unique_together = ('doc_id', 'indicator_config_id', 'validation_name')
 
 
+class UCRExpressionManager(models.Manager):
+    def get_expressions_for_domain(self, domain):
+        return self.filter(domain=domain, expression_type=UCR_NAMED_EXPRESSION)
+
+    def get_filters_for_domain(self, domain):
+        return self.filter(domain=domain, expression_type=UCR_NAMED_FILTER)
+
+    def get_wrapped_filters_for_domain(self, domain, factory_context):
+        return {
+            f.name: f.wrapped_definition(factory_context)
+            for f in self.filter(domain=domain, expression_type=UCR_NAMED_FILTER)
+        }
+
+    def get_wrapped_expressions_for_domain(self, domain, factory_context):
+        return {
+            f.name: f.wrapped_definition(factory_context)
+            for f in self.get_expressions_for_domain(domain)
+        }
+
+
+class UCRExpression(models.Model):
+    """
+    A single UCR named expression or named filter that can
+    be shared amongst features that use these
+    """
+    name = models.CharField(max_length=255, null=False)
+    domain = models.CharField(max_length=255, null=False, db_index=True)
+    description = models.TextField(blank=True, null=True)
+    expression_type = models.CharField(
+        max_length=20, default=UCR_NAMED_EXPRESSION, choices=ALL_EXPRESSION_TYPES, db_index=True
+    )
+    definition = models.JSONField(null=True)
+
+    # For use with linked domains - the upstream UCRExpression
+    upstream_id = models.CharField(max_length=126, null=True)
+    LINKED_DOMAIN_UPDATABLE_PROPERTIES = [
+        "name", "description", "expression_type", "definition"
+    ]
+
+    objects = UCRExpressionManager()
+
+    class Meta:
+        app_label = 'userreports'
+        unique_together = ('name', 'domain')
+
+    def wrapped_definition(self, factory_context):
+        if self.expression_type == UCR_NAMED_EXPRESSION:
+            return ExpressionFactory.from_spec(self.definition, factory_context)
+        elif self.expression_type == UCR_NAMED_FILTER:
+            return FilterFactory.from_spec(self.definition, factory_context)
+
+    def update_from_upstream(self, upstream_ucr_expression):
+        """
+        For use with linked domains. Updates this ucr expression with data from `upstream_ucr_expression`
+        """
+        for prop in self.LINKED_DOMAIN_UPDATABLE_PROPERTIES:
+            setattr(self, prop, getattr(upstream_ucr_expression, prop))
+        self.save()
+
+    def __str__(self):
+        description = self.description
+        if len(self.description) > 64:
+            description = f"{self.description[:64]}…"
+        description = f": {description}" if description else ""
+        return f"{self.name}{description}"
+
 def get_datasource_config_infer_type(config_id, domain):
     return get_datasource_config(config_id, domain, guess_data_source_type(config_id))
 
@@ -1425,11 +1595,12 @@ def report_config_id_is_static(config_id):
     )
 
 
-def is_data_registry_report(report_config):
-    return (
-        isinstance(report_config, RegistryReportConfiguration)
-        or report_config.config.meta.build.registry_slug
-    )
+def is_data_registry_report(report_config, datasource=None):
+    """
+    The optional datasource parameter is useful when checking a report config fetched from a remote server
+    """
+    datasource = datasource or report_config.config
+    return isinstance(report_config, RegistryReportConfiguration) or datasource.meta.build.registry_slug
 
 
 def get_report_configs(config_ids, domain):
@@ -1507,35 +1678,3 @@ class FilterValueEncoder(DjangoJSONEncoder):
         if isinstance(obj, DateSpan):
             return str(obj)
         return super(FilterValueEncoder, self).default(obj)
-
-
-class ReportComparisonException(models.Model):
-    date_created = models.DateTimeField(auto_now_add=True)
-    domain = models.TextField()
-    control_report_config_id = models.TextField()
-    candidate_report_config_id = models.TextField()
-    filter_values = models.JSONField(encoder=FilterValueEncoder)
-    exception = models.TextField()
-    notes = models.TextField(blank=True)
-
-
-class ReportComparisonDiff(models.Model):
-    date_created = models.DateTimeField(auto_now_add=True)
-    domain = models.TextField()
-    control_report_config_id = models.TextField()
-    candidate_report_config_id = models.TextField()
-    filter_values = models.JSONField(encoder=FilterValueEncoder)
-    control = models.JSONField()
-    candidate = models.JSONField()
-    diff = models.JSONField()
-    notes = models.TextField(blank=True)
-
-
-class ReportComparisonTiming(models.Model):
-    date_created = models.DateTimeField(auto_now_add=True)
-    domain = models.TextField()
-    control_report_config_id = models.TextField()
-    candidate_report_config_id = models.TextField()
-    filter_values = models.JSONField(encoder=FilterValueEncoder)
-    control_duration = models.DecimalField(max_digits=10, decimal_places=3)
-    candidate_duration = models.DecimalField(max_digits=10, decimal_places=3)

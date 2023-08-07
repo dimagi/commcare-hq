@@ -5,9 +5,8 @@ from copy import deepcopy
 
 import pytz
 
-from corehq.apps.es.es_query import ESQuerySet
+from corehq.apps.es.es_query import ESQuerySet, ScanResult
 from corehq.apps.es.utils import values_list
-from corehq.elastic import ScanResult
 
 FILTER_TEMPLATE = """
     def {fn}(self, ...):
@@ -226,6 +225,12 @@ class ESQueryFake(object):
             return True
 
         return self._filtered(_date_comparison)
+
+    def uses_aggregations(self):
+        return False
+
+    def aggregation(self, _):
+        raise NotImplementedError("Aggregations aren't supported by ESQueryFake")
 
     def __getattr__(self, item):
         """

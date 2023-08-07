@@ -33,21 +33,11 @@ class KafkaProcessor(PillowProcessor):
     def process_change(self, change):
         populate_change_metadata(change, self._data_source_type, self._data_source_name)
         if change.metadata:
-            change_meta = change.metadata
-            # change.deleted is used for hard deletions whereas change_meta.is_deletion is for soft deletions.
-            # from the consumer's perspective both should be counted as deletions so just "or" them
-            # note: it is strange and hard to reproduce that the couch changes feed is providing a "doc"
-            # along with a hard deletion, but it is doing that in the wild so we might as well support it.
-            change_meta.is_deletion = change_meta.is_deletion or change.deleted
-            if change_meta.is_deletion:
-                # If a change has been hard deleted, set a default topic because we may
-                # not be able to retrieve its correct doc type
-                topic = get_topic_for_doc_type(
-                    change_meta.document_type, self._data_source_type, self._default_topic
-                )
-            else:
-                topic = get_topic_for_doc_type(change_meta.document_type, self._data_source_type)
-            self._producer.send_change(topic, change_meta)
+            doc_type = _get_doc_type_from_change(change)
+            # The default topic is used in case a doc_type cannot be found (e.g., a hard deletion might result
+            # in a missing doc_type)
+            topic = get_topic_for_doc_type(doc_type, self._data_source_type, self._default_topic)
+            self._producer.send_change(topic, change.metadata)
 
 
 def get_default_couch_db_change_feed_pillow(pillow_id, **kwargs):
@@ -94,3 +84,17 @@ def get_change_feed_pillow_for_db(pillow_id, couch_db, default_topic=None):
             checkpoint=checkpoint, checkpoint_frequency=100,
         ),
     )
+
+
+def _get_doc_type_from_change(change):
+    """
+    According to past comments, couch change feeds do not consistently include the 'doc' with the published
+    change which makes it hard to determine the doc_type. Try the metadata first, then the 'doc', otherwise
+    we are out of luck
+    """
+    if change.metadata.document_type:
+        return change.metadata.document_type
+    try:
+        return change['doc']['doc_type']
+    except KeyError:
+        return None

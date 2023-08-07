@@ -1,0 +1,27 @@
+name: commcare-hq docs
+on:
+  pull_request:
+    branches:
+      - master
+jobs:
+  test:
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          submodules: recursive
+      - uses: actions/setup-python@v3
+        with:
+          python-version: '3.9'
+      - name: Install docs requirements
+        run: pip install -r requirements/docs-requirements.txt
+      - name: Test docs build
+        run: bash ./scripts/test-make-docs.sh
+      - name: Upload test artifacts
+        if: always()
+        uses: actions/upload-artifact@v3
+        with:
+          name: make-docs-artifacts
+          path: artifacts
+          if-no-files-found: ignore
+          retention-days: 7

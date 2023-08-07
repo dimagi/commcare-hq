@@ -15,7 +15,7 @@ from corehq.apps.app_manager.xpath import session_var
 
 
 @patch_get_xform_resource_overrides()
-class SuiteCommtrackTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
+class SuiteCommtrackTest(SimpleTestCase, SuiteMixin):
     file_path = ('data', 'suite')
 
     @commtrack_enabled(True)

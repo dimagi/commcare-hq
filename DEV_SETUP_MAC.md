@@ -5,8 +5,6 @@
 
 - You will need `brew` aka [Homebrew](https://brew.sh) for package management.
 
-  **Big Sur:** see notes on running `brew` with Rosetta, aka `ibrew` below.
-
 
 - It is highly recommended that you install a python environment manager. Two options are:
 
@@ -90,29 +88,6 @@
 
   [oracle_jdk8]: https://www.oracle.com/java/technologies/javase/javase-jdk8-downloads.html
 
-### Prerequisites: Notes for MacOs 11.x (Big Sur)
-
-- It is recommended that you install Rosetta:
-    ```sh
-    softwareupdate --install-rosetta
-    ```
-    This allows you to install and run Brew services in x86 fashion.
-    "Rosetta 2 is an emulator designed to bridge the transition between Intel and Apple processors. In short, it translates apps built for Intel so they will run on Apple Silicon." [Link](https://www.computerworld.com/article/3597949/everything-you-need-to-know-about-rosetta-2-on-apple-silicon-macs.html).
-    While reading through this document, be careful to watch out for specific recommendations regarding your architecture.
-
-
-- If `brew` cannot successfully build packages on your system, you can run `brew` with Rosetta under the alias `ibrew` using the method below.
-    However, please try installing the latest version of `brew` first, as this might also be fixed for MacOS 11.x
-    ```sh
-    arch -x86_64 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install.sh)"
-    ```
-    And let's call this Rosetta-enabled Homebrew `ibrew` for short by adding this to `~/.zshrc`:
-    ```
-    alias ibrew="arch -x86_64 /usr/local/bin/brew"
-    ```
-
-    Note: 12.x Monterey seems to be handling `brew` just fine when following the [official install guide](https://brew.sh).
-
 
 ## Issues Installing `requirements/requirements.txt`
 
@@ -124,6 +99,41 @@
   export LDFLAGS="-L/opt/homebrew/opt/libpq/lib"
   pip install psycopg2-binary
   ```
+  
+  Or try: ([reference](https://rogulski.it/blog/install-psycopg2-on-apple-m1/)). Used on Mac OS 12.X Monterey.
+    ```sh
+    export LDFLAGS="-L/opt/homebrew/opt/openssl@1.1/lib"
+    export CPPFLAGS="-I/opt/homebrew/opt/openssl@1.1/include"
+  ```
+
+- `pip install xmlsec` gives `ImportError`
+
+  Due to issues with recent versions of `libxmlsec1` (v1.3 and after) `pip install xmlsec` is currently broken.
+  This is a workaround. This solution also assumes your `homebrew` version is greater than `4.0.13`*:
+
+1. run `brew unlink libxmlsec1`
+2. overwrite the contents of `/opt/homebrew/opt/libxmlsec1/.brew/libxmlsec1.rb` with
+    [this formula](https://raw.githubusercontent.com/Homebrew/homebrew-core/7f35e6ede954326a10949891af2dba47bbe1fc17/Formula/libxmlsec1.rb).
+3. install that formula (`brew install /opt/homebrew/opt/libxmlsec1/.brew/libxmlsec1.rb`)
+4. run `pip install xmlsec`
+
+(*)The path to `libxmlsec1.rb` might differ on older versions of homebrew
+
+If it still won't install, this [answer](https://stackoverflow.com/questions/76005401/cant-install-xmlsec-via-pip)
+and [thread](https://github.com/xmlsec/python-xmlsec/issues/254) are good starting points for further diagnosing the issue.
+
+
+### M1 Issues
+
+- `gevent` may present errors when installing with Python <3.9. For this reason, you should avoid using an older version of Python unless it is required.
+
+- `pynacl` will likely install but may throw an error `symbol not found in flat namespace '_ffi_prep_closure'` when attempting to run, particularly when setting up CommCare-Cloud.
+
+  This can be fixed by installing a version of `pynacl` specific to the system architecture:
+  ```sh
+  arch -arm64 pip install --upgrade --force-reinstall pynacl
+  ```
+
 
 ## Docker
 
@@ -163,21 +173,27 @@ NOTE: Make sure that `/path/to` is replaced with the actual path!
 
 After this you can open a new terminal window and run elasticsearch with `elasticsearch`.
 
+#### Install Elasticsearch plugins
 
-## Fixing ImportError with `libmagic`
+Now that you have Elasticsearch running you will need to install the necessary plugins:
 
-If you are sure that the following `brew install libmagic` ran successfully, but you are still seeing the error below, then this section is for you!
-```sh
-ImportError: failed to find libmagic.  Check your installation
-```
+1. Install the plugin
 
-As of Mac OS 12.x, `brew` now installs itself in `/opt/homebrew/`, and it looks like our version of the python package that requires `libmagic` has not caught up.
+    ```shell
+    $ plugin install analysis-phonetic
+    ```
 
-To fix:
-```sh
-cd /usr/local/lib/
-ln -s /opt/homebrew/Cellar/libmagic/5.41/lib/libmagic.dylib libmagic.dylib
-```
+    (If the `plugin` command is not found you will need to use the full path `<es home>/bin/plugin`).
+
+2. Restart the service
+
+3. Verify the plugin was correctly installed
+
+    ```shell
+    $ curl "localhost:9200/_cat/plugins?s=component&h=component,version"
+    analysis-phonetic 2.4.6
+    ```
+
 
 ## Refreshing data in `elasticsearch` manually (alternative to `run_ptop`)
 
@@ -188,7 +204,6 @@ To refresh specific indices in elasticsearch you can do the following...
 First make sure everything is up-to-date
 ```sh
 ./manage.py ptop_preindex --reset
-./manage.py ptop_es_manage --flip_all_aliases
 
 ./manage.py preindex_everything
 ```

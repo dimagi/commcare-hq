@@ -196,51 +196,6 @@
               </div>
             </div>
           {% endif %}
-          <div class="panel panel-appmanager">
-            <div class="panel-heading">
-              <h4 class="panel-title">
-                <a data-toggle="collapse"
-                   data-bind="
-                               click: function() { track_deploy_type('Download to Java Phone'); },
-                               attr: {
-                                   href: '#' + id() + '_download_java',
-                                   'data-target': '#' + id() + '_download_java',
-                                   'data-parent': '#deploy-accordion_' + id()
-                                }
-                               "
-                   aria-expanded="true" aria-controls="panel-java">
-                  <i class="fcc fcc-applications"></i>
-                  {% trans "Download to Java Phone" %}
-                </a>
-              </h4>
-            </div>
-            <div class="panel-collapse collapse" data-bind="attr: {id: id() + '_download_java'}">
-              <div class="panel-body">
-                <ol data-bind="if: reveal_java_download()">
-                  <li>
-                    {% trans "Download <strong>both</strong> of the following files:" %}
-                    <p><a data-bind="attr: {href: $root.reverse('download_jad', id)}">{% trans "Download" %} CommCare.jad</a></p>
-                    <p><a data-bind="attr: {href: $root.reverse('download_jar', id)}">{% trans "Download" %} CommCare.jar</a></p>
-                  </li>
-                  <li>
-                    {% trans "For help on how to install, see" %}
-                    <a target="_blank" href="https://help.commcarehq.org/display/commcarepublic/CommCare+for+Feature+Phones">{% trans "Set Up Feature Phones" %}</a>.
-                  </li>
-                  <li>
-                    {% trans "If you have any issues with the installation, please refer to" %}
-                    <a target="_blank" href="https://help.commcarehq.org/display/commcarepublic/Troubleshooting">{% trans "Troubleshooting Phone Problems" %}</a>.
-                  </li>
-                </ol>
-                <p data-bind="if: !reveal_java_download()">
-                  {% blocktrans %}
-                    This version is not compatible with Java Phones. Please create a new build with latest J2ME supported version,
-                    {{ lastest_j2me_enabled_build }}
-                    to install on Java Phone.
-                  {% endblocktrans %}
-                </p>
-              </div>
-            </div>
-          </div>
           {% if can_send_sms %}
             <div class="panel panel-appmanager">
               <div class="panel-heading">
@@ -262,26 +217,8 @@
               </div>
               <div class="panel-collapse collapse" data-bind="attr: {id: id() + '_sms'}">
                 <div class="panel-body">
-                  <div data-bind="if: !reveal_java_download()">
-                    {% include 'app_manager/partials/releases/releases_deploy_modal_sms.html' with is_odk=True %}
-                  </div>
-                  <div data-bind="if: reveal_java_download(), bootstrapTabs: true">
-                    <div class="tabbable">
-                      <ul class="nav nav-pills">
-                        <li class="active">
-                          <a>{% trans "Send Java Phone app" %}</a>
-                        </li>
-                        <li>
-                          <a data-bind="click: function(){ generate_short_url('short_odk_url'); }">{% trans "Send Android app" %}</a>
-                        </li>
-                      </ul>
-                      <div class="tab-content">
-                        {% include 'app_manager/partials/releases/releases_deploy_modal_sms.html' with is_odk=False %}
-                      </div>
-                      <div class="tab-content">
-                        {% include 'app_manager/partials/releases/releases_deploy_modal_sms.html' with is_odk=True %}
-                      </div>
-                    </div>
+                  <div>
+                    {% include 'app_manager/partials/releases/releases_deploy_modal_sms.html' %}
                   </div>
                 </div>
               </div>

@@ -1,6 +1,9 @@
-from jsonobject.base_properties import DefaultProperty
-from simpleeval import InvalidExpression
 import textwrap
+from functools import cached_property
+
+from jsonobject.base_properties import DefaultProperty
+from jsonpath_ng.ext import parse as jsonpath_parse
+from simpleeval import InvalidExpression
 
 from dimagi.ext.jsonobject import (
     DictProperty,
@@ -28,18 +31,18 @@ from corehq.apps.userreports.expressions.getters import (
 from corehq.apps.userreports.mixins import NoPropertyTypeCoercionMixIn
 from corehq.apps.userreports.specs import EvaluationContext, TypeProperty
 from corehq.apps.userreports.util import add_tabbed_text
-from corehq.apps.users.models import CommCareUser
+from corehq.apps.users.models import CommCareUser, CouchUser
 from corehq.form_processor.interfaces.processor import FormProcessorInterface
 from corehq.form_processor.models import CommCareCase, XFormInstance
 from corehq.util.couch import get_db_by_doc_type
 
-from .utils import eval_statements
+from .evaluator import eval_statements, EvalExecutionContext
 
 
 class IdentityExpressionSpec(JsonObject):
     type = TypeProperty('identity')
 
-    def __call__(self, item, context=None):
+    def __call__(self, item, evaluation_context=None):
         return item
 
     def __str__(self):
@@ -60,8 +63,8 @@ class IterationNumberExpressionSpec(JsonObject):
     """
     type = TypeProperty('base_iteration_number')
 
-    def __call__(self, item, context=None):
-        return context.iteration
+    def __call__(self, item, evaluation_context=None):
+        return evaluation_context.iteration
 
     def __str__(self):
         return "Iteration Count"
@@ -93,7 +96,7 @@ class ConstantGetterSpec(JsonObject):
             ))
         return super(ConstantGetterSpec, self).wrap(obj)
 
-    def __call__(self, item, context=None):
+    def __call__(self, item, evaluation_context=None):
         return self.constant
 
     def __str__(self):
@@ -123,8 +126,10 @@ class PropertyNameGetterSpec(JsonObject):
     def configure(self, property_name_expression):
         self._property_name_expression = property_name_expression
 
-    def __call__(self, item, context=None):
-        raw_value = item.get(self._property_name_expression(item, context)) if isinstance(item, dict) else None
+    def __call__(self, item, evaluation_context=None):
+        raw_value = None
+        if isinstance(item, dict):
+            raw_value = item.get(self._property_name_expression(item, evaluation_context))
         return transform_for_datatype(self.datatype)(raw_value)
 
     def __str__(self):
@@ -154,7 +159,7 @@ class PropertyPathGetterSpec(JsonObject):
     property_path = ListProperty(str, required=True)
     datatype = DataTypeProperty(required=False)
 
-    def __call__(self, item, context=None):
+    def __call__(self, item, evaluation_context=None):
         transform = transform_for_datatype(self.datatype)
         return transform(safe_recursive_lookup(item, self.property_path))
 
@@ -197,28 +202,30 @@ class NamedExpressionSpec(JsonObject):
        }
 
     This is just a simple example - the value that ``"my_expression"`` takes
-    on can be as complicated as you want *as long as it doesn't reference
-    any other named expressions*.
+    on can be as complicated as you want and it can also reference other named
+    expressions as long as it doesn't reference itself of create a recursive cycle.
+
+    See also the :any:`named` evaluator function.
     """
     type = TypeProperty('named')
     name = StringProperty(required=True)
 
-    def configure(self, context):
-        if self.name not in context.named_expressions:
+    def configure(self, factory_context):
+        if self.name not in factory_context.named_expressions:
             raise BadSpecError('Name {} not found in list of named expressions!'.format(self.name))
-        self._context = context
+        self._factory_context = factory_context
 
     def _context_cache_key(self, item):
         return 'named_expression-{}-{}'.format(self.name, id(item))
 
-    def __call__(self, item, context=None):
+    def __call__(self, item, evaluation_context=None):
         key = self._context_cache_key(item)
-        if context and context.exists_in_cache(key):
-            return context.get_cache_value(key)
+        if evaluation_context and evaluation_context.exists_in_cache(key):
+            return evaluation_context.get_cache_value(key)
 
-        result = self._context.named_expressions[self.name](item, context)
-        if context:
-            context.set_iteration_cache_value(key, result)
+        result = self._factory_context.named_expressions[self.name](item, evaluation_context)
+        if evaluation_context:
+            evaluation_context.set_iteration_cache_value(key, result)
         return result
 
     def __str__(self):
@@ -274,11 +281,11 @@ class ConditionalExpressionSpec(JsonObject):
         self._true_expression = true_expression
         self._false_expression = false_expression
 
-    def __call__(self, item, context=None):
-        if self._test_function(item, context):
-            return self._true_expression(item, context)
+    def __call__(self, item, evaluation_context=None):
+        if self._test_function(item, evaluation_context):
+            return self._true_expression(item, evaluation_context)
         else:
-            return self._false_expression(item, context)
+            return self._false_expression(item, evaluation_context)
 
     def __str__(self):
         return "if {test}:\n{true}\nelse:\n{false}".format(
@@ -316,12 +323,12 @@ class ArrayIndexExpressionSpec(NoPropertyTypeCoercionMixIn, JsonObject):
         self._array_expression = array_expression
         self._index_expression = index_expression
 
-    def __call__(self, item, context=None):
-        array_value = self._array_expression(item, context)
+    def __call__(self, item, evaluation_context=None):
+        array_value = self._array_expression(item, evaluation_context)
         if not isinstance(array_value, list):
             return None
 
-        index_value = self._index_expression(item, context)
+        index_value = self._index_expression(item, evaluation_context)
         if not isinstance(index_value, int):
             return None
 
@@ -382,12 +389,12 @@ class SwitchExpressionSpec(JsonObject):
         self._case_expressions = case_expressions
         self._default_expression = default_expression
 
-    def __call__(self, item, context=None):
-        switch_value = self._switch_on_expression(item, context)
+    def __call__(self, item, evaluation_context=None):
+        switch_value = self._switch_on_expression(item, evaluation_context)
         for c in self.cases:
             if switch_value == c:
-                return self._case_expressions[c](item, context)
-        return self._default_expression(item, context)
+                return self._case_expressions[c](item, evaluation_context)
+        return self._default_expression(item, evaluation_context)
 
     def __str__(self):
         map_text = ", ".join(
@@ -441,10 +448,10 @@ class IteratorExpressionSpec(NoPropertyTypeCoercionMixIn, JsonObject):
             # if not defined then all values should be returned
             self._test = lambda *args, **kwargs: True
 
-    def __call__(self, item, context=None):
+    def __call__(self, item, evaluation_context=None):
         values = []
         for expression in self._expression_fns:
-            value = expression(item, context)
+            value = expression(item, evaluation_context)
             if self._test(value):
                 values.append(value)
         return values
@@ -454,6 +461,83 @@ class IteratorExpressionSpec(NoPropertyTypeCoercionMixIn, JsonObject):
         return "iterate on [{}] if {}".format(expressions_text, str(self._test))
 
 
+class JsonpathExpressionSpec(NoPropertyTypeCoercionMixIn, JsonObject):
+    """
+    This will execute the jsonpath expression against the current doc
+    and emit the result.
+
+    .. code:: json
+
+       {
+           "type": "jsonpath",
+           "jsonpath": "form..case.name",
+       }
+
+    Given the following doc:
+
+    .. code:: json
+
+        {
+            "form": {
+                "case": {"name": "a"},
+                "nested": {
+                    "case": {"name": "b"},
+                },
+                "list": [
+                    {"case": {"name": "c"}},
+                    {
+                        "nested": {
+                            "case": {"name": "d"}
+                        }
+                    }
+                ]
+            }
+        }
+
+    This above expression will evaluate to ``["a", "b", "c", "d"]``.
+    Another example is ``form.list[0].case.name`` which will evaluate to ``"c"``.
+
+    See also the :any:`jsonpath` evaluator function.
+
+    For more information consult the following resources:
+
+    * `Article by Stefan Goessner <https://goessner.net/articles/JsonPath/>`__
+    * `JSONPath expression syntax <https://goessner.net/articles/JsonPath/index.html#e2>`__
+    * `JSONPath Online Evaluator <https://jsonpath.com/>`__
+    """
+    type = TypeProperty('jsonpath')
+    jsonpath = StringProperty(str, required=True)
+    datatype = DataTypeProperty(required=False)
+
+    @classmethod
+    def wrap(cls, obj):
+        ret = super().wrap(obj)
+        ret.jsonpath_expr  # noqa: call to validate
+        return ret
+
+    @cached_property
+    def jsonpath_expr(self):
+        try:
+            return jsonpath_parse(self.jsonpath)
+        except Exception as e:
+            raise BadSpecError(f'Error parsing jsonpath expression <pre>{self.jsonpath}</pre>. '
+                               f'Message is {str(e)}')
+
+    def __call__(self, item, evaluation_context=None):
+        transform = transform_for_datatype(self.datatype)
+        values = [transform(match.value) for match in self.jsonpath_expr.find(item)]
+        if not values:
+            return None
+        if len(values) == 1:
+            return values[0]
+        return values
+
+    def __str__(self):
+        if self.datatype:
+            return f"({self.datatype}){self.jsonpath}"
+        return self.jsonpath
+
+
 class RootDocExpressionSpec(JsonObject):
     type = TypeProperty('root_doc')
     expression = DictProperty(required=True)
@@ -461,10 +545,10 @@ class RootDocExpressionSpec(JsonObject):
     def configure(self, expression):
         self._expression_fn = expression
 
-    def __call__(self, item, context=None):
-        if context is None:
+    def __call__(self, item, evaluation_context=None):
+        if evaluation_context is None:
             return None
-        return self._expression_fn(context.root_doc, context)
+        return self._expression_fn(evaluation_context.root_doc, evaluation_context)
 
     def __str__(self):
         return "doc/{expression}".format(expression=str(self._expression_fn))
@@ -508,28 +592,28 @@ class RelatedDocExpressionSpec(JsonObject):
         self._doc_id_expression = doc_id_expression
         self._value_expression = value_expression
 
-    def __call__(self, item, context=None):
-        doc_id = self._doc_id_expression(item, context)
+    def __call__(self, item, evaluation_context=None):
+        doc_id = self._doc_id_expression(item, evaluation_context)
         if doc_id:
-            return self.get_value(doc_id, context)
+            return self.get_value(doc_id, evaluation_context)
 
     @staticmethod
     @ucr_context_cache(vary_on=('related_doc_type', 'doc_id',))
-    def _get_document(related_doc_type, doc_id, context):
+    def _get_document(related_doc_type, doc_id, evaluation_context):
         document_store = get_document_store_for_doc_type(
-            context.root_doc['domain'], related_doc_type,
+            evaluation_context.root_doc['domain'], related_doc_type,
             load_source="related_doc_expression")
         try:
             doc = document_store.get_document(doc_id)
         except DocumentNotFoundError:
             return None
-        if context.root_doc['domain'] != doc.get('domain'):
+        if evaluation_context.root_doc['domain'] != doc.get('domain'):
             return None
         return doc
 
-    def get_value(self, doc_id, context):
-        assert context.root_doc['domain']
-        doc = self._get_document(self.related_doc_type, doc_id, context)
+    def get_value(self, doc_id, evaluation_context):
+        assert evaluation_context.root_doc['domain']
+        doc = self._get_document(self.related_doc_type, doc_id, evaluation_context)
         # explicitly use a new evaluation context since this is a new document
         return self._value_expression(doc, EvaluationContext(doc, 0))
 
@@ -570,9 +654,9 @@ class NestedExpressionSpec(JsonObject):
         self._argument_expression = argument_expression
         self._value_expression = value_expression
 
-    def __call__(self, item, context=None):
-        argument = self._argument_expression(item, context)
-        return self._value_expression(argument, context)
+    def __call__(self, item, evaluation_context=None):
+        argument = self._argument_expression(item, evaluation_context)
+        return self._value_expression(argument, evaluation_context)
 
     def __str__(self):
         return "{arg}/{val}".format(val=str(self._value_expression), arg=str(self._argument_expression))
@@ -619,10 +703,10 @@ class DictExpressionSpec(JsonObject):
                 raise BadSpecError("Properties in a dict expression must be strings!")
         self._compiled_properties = compiled_properties
 
-    def __call__(self, item, context=None):
+    def __call__(self, item, evaluation_context=None):
         ret = {}
         for property_name, expression in self._compiled_properties.items():
-            ret[property_name] = expression(item, context)
+            ret[property_name] = expression(item, evaluation_context)
         return ret
 
     def __str__(self):
@@ -647,65 +731,97 @@ class EvalExpressionSpec(JsonObject):
            "context_variables": {
                "a": 1,
                "b": 20,
-               "c": 2
+               "c": {
+                   "type": "property_name",
+                   "property_name": "the_number_two"
+               }
            }
        }
 
-    This returns 25 (1 + 20 - 2 + 6).
+    This returns **25** (1 + 20 - 2 + 6).
 
-    ``statement`` can be any statement that returns a valid number. All
-    python math
-    `operators <https://en.wikibooks.org/wiki/Python_Programming/Basic_Math#Mathematical_Operators>`__
-    except power operator are available for use.
+    ``statement``
 
-    ``context_variables`` is a dictionary of Expressions where keys are
-    names of variables used in the ``statement`` and values are expressions
-    to generate those variables. Variables can be any valid numbers (Python
-    datatypes ``int``, ``float`` and ``long`` are considered valid numbers.)
-    or also expressions that return numbers. In addition to numbers the
-    following types are supported:
+        The expression statement to be evaluated.
 
-    -  ``date``
-    -  ``datetime``
+    ``context_variables``
 
-    Only the following functions are permitted:
+        A dictionary of Expressions where keys are names of variables used in the ``statement``
+        and values are expressions to generate those variables.
 
-    -  ``rand()``: generate a random number between 0 and 1
-    -  ``randint(max)``: generate a random integer between 0 and ``max``
-    -  ``int(value)``: convert ``value`` to an int. Value can be a number or
-       a string representation of a number
-    -  ``float(value)``: convert ``value`` to a floating point number
-    -  ``str(value)``: convert ``value`` to a string
-    -  ``timedelta_to_seconds(time_delta)``: convert a TimeDelta object into
-       seconds. This is useful for getting the number of seconds between two
-       dates.
+        Variable types must be one of:
 
-       -  e.g. ``timedelta_to_seconds(time_end - time_start)``
+        -  ``str``
+        -  ``int``
+        -  ``float``
+        -  ``bool``
+        -  ``date``
+        -  ``datetime``
 
-    -  ``range(start, [stop], [skip])``: the same as the python ```range``
-       function <https://docs.python.org/2/library/functions.html#range>`__.
-       Note that for performance reasons this is limited to 100 items or
-       less.
+         If ``context_variables`` is omitted, the current context of the expression will be used.
+
+    **Expression limitations**
+
+        Only a single expression is permitted.
+
+        Available operators:
+
+        - `math operators`_ (except the power operator)
+        - `modulus`_
+        - `negation`_
+        - `comparison operators`_
+        - `logical operators`_
+
+        In addition, expressions can perform the following operations:
+
+        - index: `case['name']`
+        - slice: `cases[0:2]`
+        - if statements: `1 if case.name == 'bob' else 0`
+        - list comprehension: `[i for i in range(3)]`
+        - dict, list, set construction: `{"a": 1, "b": set(cases), "c": list(range(4))}`
+
+    **Available Functions**
+
+        Only the following functions are available in the evaluation context:
+
+        .. include:: ../corehq/apps/userreports/expressions/evaluator/FUNCTION_DOCS.rst
+
+    .. _math operators: https://en.wikibooks.org/wiki/Python_Programming/Basic_Math#Mathematical_Operators
+    .. _modulus: https://en.wikibooks.org/wiki/Python_Programming/Operators#Modulus
+    .. _negation: https://en.wikibooks.org/wiki/Python_Programming/Operators#Negation
+    .. _comparison operators: https://en.wikibooks.org/wiki/Python_Programming/Operators#Comparison
+    .. _logical operators: https://en.wikibooks.org/wiki/Python_Programming/Operators#Logical_Operators
+
+    See also :ref:`ucr-evaluator-examples`.
     """
     type = TypeProperty('evaluator')
     statement = StringProperty(required=True)
     context_variables = DictProperty()
     datatype = DataTypeProperty(required=False)
 
-    def configure(self, context_variables):
-        self._context_variables = context_variables
+    def configure(self, factory_context):
+        self._factory_context = factory_context
+        self._context_variables = {
+            slug: factory_context.expression_from_spec(expression)
+            for slug, expression in self.context_variables.items()
+        }
 
-    def __call__(self, item, context=None):
-        var_dict = self.get_variables(item, context)
+    def __call__(self, item, evaluation_context=None):
+        var_dict = self.get_variables(item, evaluation_context)
         try:
-            untransformed_value = eval_statements(self.statement, var_dict)
+            untransformed_value = eval_statements(self.statement, var_dict, EvalExecutionContext(
+                evaluation_context, self._factory_context
+            ))
             return transform_for_datatype(self.datatype)(untransformed_value)
         except (InvalidExpression, SyntaxError, TypeError, ZeroDivisionError):
             return None
 
-    def get_variables(self, item, context):
+    def get_variables(self, item, evaluation_context):
+        if not self._context_variables and isinstance(item, dict):
+            return IdentityExpressionSpec(type='identity')(item, evaluation_context)
+
         var_dict = {
-            slug: variable_expression(item, context)
+            slug: variable_expression(item, evaluation_context)
             for slug, variable_expression in self._context_variables.items()
         }
         return var_dict
@@ -727,43 +843,43 @@ class FormsExpressionSpec(JsonObject):
     def configure(self, case_id_expression):
         self._case_id_expression = case_id_expression
 
-    def __call__(self, item, context=None):
-        case_id = self._case_id_expression(item, context)
+    def __call__(self, item, evaluation_context=None):
+        case_id = self._case_id_expression(item, evaluation_context)
 
         if not case_id:
             return []
 
-        assert context.root_doc['domain']
-        return self._get_forms(case_id, context)
+        assert evaluation_context.root_doc['domain']
+        return self._get_forms(case_id, evaluation_context)
 
-    def _get_forms(self, case_id, context):
-        domain = context.root_doc['domain']
+    def _get_forms(self, case_id, evaluation_context):
+        domain = evaluation_context.root_doc['domain']
 
         cache_key = (self.__class__.__name__, case_id, tuple(self.xmlns))
-        if context.get_cache_value(cache_key) is not None:
-            return context.get_cache_value(cache_key)
+        if evaluation_context.get_cache_value(cache_key) is not None:
+            return evaluation_context.get_cache_value(cache_key)
 
-        xforms = self._get_case_forms(case_id, context)
+        xforms = self._get_case_forms(case_id, evaluation_context)
         if self.xmlns:
             xforms = [f for f in xforms if f.xmlns in self.xmlns]
 
-        xforms = [self._get_form_json(f, context) for f in xforms if f.domain == domain]
+        xforms = [self._get_form_json(f, evaluation_context) for f in xforms if f.domain == domain]
 
-        context.set_cache_value(cache_key, xforms)
+        evaluation_context.set_cache_value(cache_key, xforms)
         return xforms
 
     @ucr_context_cache(vary_on=('case_id',))
-    def _get_case_forms(self, case_id, context):
-        domain = context.root_doc['domain']
+    def _get_case_forms(self, case_id, evaluation_context):
+        domain = evaluation_context.root_doc['domain']
         return FormProcessorInterface(domain).get_case_forms(case_id)
 
-    def _get_form_json(self, form, context):
+    def _get_form_json(self, form, evaluation_context):
         cache_key = (XFORM_CACHE_KEY_PREFIX, form.get_id)
-        if context.get_cache_value(cache_key) is not None:
-            return context.get_cache_value(cache_key)
+        if evaluation_context.get_cache_value(cache_key) is not None:
+            return evaluation_context.get_cache_value(cache_key)
 
         form_json = form.to_json()
-        context.set_cache_value(cache_key, form_json)
+        evaluation_context.set_cache_value(cache_key, form_json)
         return form_json
 
     def __str__(self):
@@ -782,17 +898,17 @@ class SubcasesExpressionSpec(JsonObject):
     def configure(self, case_id_expression):
         self._case_id_expression = case_id_expression
 
-    def __call__(self, item, context=None):
-        case_id = self._case_id_expression(item, context)
+    def __call__(self, item, evaluation_context=None):
+        case_id = self._case_id_expression(item, evaluation_context)
         if not case_id:
             return []
 
-        assert context.root_doc['domain']
-        return self._get_subcases(case_id, context)
+        assert evaluation_context.root_doc['domain']
+        return self._get_subcases(case_id, evaluation_context)
 
     @ucr_context_cache(vary_on=('case_id',))
-    def _get_subcases(self, case_id, context):
-        domain = context.root_doc['domain']
+    def _get_subcases(self, case_id, evaluation_context):
+        domain = evaluation_context.root_doc['domain']
         return [c.to_json() for c in CommCareCase.objects.get_reverse_indexed_cases(domain, [case_id])]
 
     def __str__(self):
@@ -805,18 +921,21 @@ class _GroupsExpressionSpec(JsonObject):
     def configure(self, user_id_expression):
         self._user_id_expression = user_id_expression
 
-    def __call__(self, item, context=None):
-        user_id = self._user_id_expression(item, context)
+    def __call__(self, item, evaluation_context=None):
+        user_id = self._user_id_expression(item, evaluation_context)
         if not user_id:
             return []
 
-        assert context.root_doc['domain']
-        return self._get_groups(user_id, context)
+        assert evaluation_context.root_doc['domain']
+        return self._get_groups(user_id, evaluation_context)
 
     @ucr_context_cache(vary_on=('user_id',))
-    def _get_groups(self, user_id, context):
-        domain = context.root_doc['domain']
-        user = CommCareUser.get_by_user_id(user_id, domain)
+    def _get_groups(self, user_id, evaluation_context):
+        domain = evaluation_context.root_doc['domain']
+        try:
+            user = CommCareUser.get_by_user_id(user_id, domain)
+        except CouchUser.AccountTypeError:
+            user = None
         if not user:
             return []
 
@@ -910,14 +1029,14 @@ class SplitStringExpressionSpec(JsonObject):
         self._string_expression = string_expression
         self._index_expression = index_expression
 
-    def __call__(self, item, context=None):
-        string_value = self._string_expression(item, context)
+    def __call__(self, item, evaluation_context=None):
+        string_value = self._string_expression(item, evaluation_context)
         if not isinstance(string_value, str):
             return None
 
         index_value = None
         if self.index_expression is not None:
-            index_value = self._index_expression(item, context)
+            index_value = self._index_expression(item, evaluation_context)
             if not isinstance(index_value, int):
                 return None
 
@@ -962,9 +1081,9 @@ class CoalesceExpressionSpec(JsonObject):
         self._expression = expression
         self._default_expression = default_expression
 
-    def __call__(self, item, context=None):
-        expression_value = self._expression(item, context)
-        default_value = self._default_expression(item, context)
+    def __call__(self, item, evaluation_context=None):
+        expression_value = self._expression(item, evaluation_context)
+        default_value = self._default_expression(item, evaluation_context)
         if expression_value is None or expression_value == '':
             return default_value
         else:

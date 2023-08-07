@@ -1,20 +1,22 @@
-import contextlib
+from contextlib import nullcontext
 
 from django.test import Client, TestCase
 from django.urls import reverse
 
+from corehq import privileges
 from corehq.apps.app_manager.models import Application
 from corehq.apps.cloudcare.views import FormplayerMain
 from corehq.apps.dashboard.views import DomainDashboardView
 from corehq.apps.domain.models import Domain
+from corehq.apps.reports.views import MySavedReportsView
 from corehq.apps.users.dbaccessors import delete_all_users
 from corehq.apps.users.models import (
     CommCareUser,
-    Permissions,
+    HqPermissions,
     UserRole,
     WebUser,
 )
-from corehq.util.test_utils import flag_enabled, generate_cases
+from corehq.util.test_utils import generate_cases, privilege_enabled
 
 DOMAIN = 'temerant'
 
@@ -32,15 +34,15 @@ class TestDefaultLandingPages(TestCase):
 
         cls.reports_role = UserRole.create(
             domain=cls.domain, name='reports-role', default_landing_page='reports',
-            permissions=Permissions(view_reports=True),
+            permissions=HqPermissions(view_reports=True),
         )
         cls.webapps_role = UserRole.create(
             domain=cls.domain, name='webapps-role', default_landing_page='webapps',
-            permissions=Permissions(access_web_apps=True),
+            permissions=HqPermissions(access_web_apps=True),
         )
         cls.downloads_role = UserRole.create(
-            domain=cls.domain, name='webapps-role', default_landing_page='downloads',
-            permissions=Permissions.max(),
+            domain=cls.domain, name='downloads-role', default_landing_page='downloads',
+            permissions=HqPermissions.max(),
         )
         cls.global_password = 'secret'
 
@@ -95,21 +97,22 @@ class TestDefaultLandingPages(TestCase):
 
 @generate_cases([
     (None, DomainDashboardView.urlname),
-    ('reports_role', "reports_home"),
+    ('reports_role', MySavedReportsView.urlname),
     ('webapps_role', FormplayerMain.urlname),
     ('downloads_role', DomainDashboardView.urlname),
-    ('downloads_role', 'download_data_files', 'DATA_FILE_DOWNLOAD'),
+    ('downloads_role', 'download_data_files', privileges.DATA_FILE_DOWNLOAD),
 ], TestDefaultLandingPages)
-def test_web_user_landing_page(self, role, expected_urlname, enabled_toggle=None):
+def test_web_user_landing_page(self, role, expected_urlname, privilege=None):
     if role is not None:
         role = getattr(self, role)
     user = self._make_web_user('elodin@theuniversity.com', role=role)
     self.addCleanup(user.delete, self.domain, deleted_by=None)
     self.client.login(username=user.username, password=self.global_password)
 
-    context = flag_enabled(enabled_toggle) if enabled_toggle else contextlib.suppress()  # noop context
+    context = privilege_enabled(privilege) if privilege else nullcontext()
     with context:
-        response = self.client.get(reverse("domain_homepage", args=[self.domain]), follow=True)
+        url = reverse("domain_homepage", args=[self.domain])
+        response = self.client.get(url, follow=True)
     self.assertEqual(response.status_code, 200)
     self.assertEqual(reverse(expected_urlname, args=[self.domain]),
                      response.request['PATH_INFO'])
@@ -117,21 +120,22 @@ def test_web_user_landing_page(self, role, expected_urlname, enabled_toggle=None
 
 @generate_cases([
     (None, FormplayerMain.urlname),
-    ('reports_role', "reports_home"),
+    ('reports_role', MySavedReportsView.urlname),
     ('webapps_role', FormplayerMain.urlname),
     ('downloads_role', FormplayerMain.urlname),
-    ('downloads_role', 'download_data_files', 'DATA_FILE_DOWNLOAD'),
+    ('downloads_role', 'download_data_files', privileges.DATA_FILE_DOWNLOAD),
 ], TestDefaultLandingPages)
-def test_mobile_worker_landing_page(self, role, expected_urlname, enabled_toggle=None):
+def test_mobile_worker_landing_page(self, role, expected_urlname, privilege=None):
     if role is not None:
         role = getattr(self, role)
     user = self._make_commcare_user('kvothe', role=role)
     self.addCleanup(user.delete, self.domain, deleted_by=None)
     self.client.login(username=user.username, password=self.global_password)
 
-    context = flag_enabled(enabled_toggle) if enabled_toggle else contextlib.suppress()  # noop context
+    context = privilege_enabled(privilege) if privilege else nullcontext()
     with context:
-        response = self.client.get(reverse("domain_homepage", args=[self.domain]), follow=True)
+        url = reverse("domain_homepage", args=[self.domain])
+        response = self.client.get(url, follow=True)
     self.assertEqual(response.status_code, 200)
     self.assertEqual(reverse(expected_urlname, args=[self.domain]),
                      response.request['PATH_INFO'])

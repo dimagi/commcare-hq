@@ -25,6 +25,34 @@
   </span>
 </script>
 
+<script type="text/html" id="CommcareSettings.widgets.multiSelect">
+  <span>
+    <span data-bind="if: valueIsLegal()">
+      <select multiple="multiple"
+              class="col-sm-3 form-control"
+              data-bind="options: options,
+                         selectedOptions: selectedOptions,
+                         optionsText: 'label',
+                         attr: {
+                           disabled: !enabled(),
+                           id: inputId
+                         }"></select>
+    </span>
+    <span data-bind="if: !valueIsLegal()" >
+      <select multiple="multiple"
+              class="col-sm-3 form-control error"
+              data-bind="options: options,
+                         selectedOptions: writeSelectedOptions,
+                         optionsText: 'label',
+                         attr: {
+                           disabled: !enabled(),
+                           id: inputId
+                         },
+                         optionsCaption: value()"></select>
+    </span>
+  </span>
+</script>
+
 <script type="text/html" id="CommcareSettings.widgets.bool">
   <div class="checkbox-app-settings">
     <input type="checkbox"
@@ -125,7 +153,7 @@
 
 <script type="text/html" id="CommcareSettings.widgets.textarea">
   <span>
-        <textarea type="text" data-bind="value: value, attr: {id: inputId}" class="form-control" />
+        <textarea type="text" data-bind="value: value, attr: {id: inputId}" class="form-control vertical-resize" />
     </span>
 </script>
 
@@ -193,6 +221,9 @@
       <li><a href="#add-ons" data-toggle="tab">{% trans "Add-ons" %}</a></li>
     {% endif %}
     <li><a href="#commcare-settings" data-toggle="tab">{% trans "Advanced Settings" %}</a></li>
+    {% if not is_linked_app and not is_remote_app and app.supports_module_assertions %}
+      <li><a href="#custom-assertions-tab" data-toggle="tab">{% trans "Custom Assertions" %}</a></li>
+    {% endif %}
   </ul>
   <div class="tab-content appmanager-tab-content">
     {% if is_linked_app %}
@@ -298,5 +329,17 @@
     <div class="tab-pane" id="commcare-settings">
       {% include 'app_manager/partials/settings/commcare_settings.html' %}
     </div>
+
+    {% if not is_linked_app and not is_remote_app and app.supports_module_assertions %}
+      <div class="tab-pane" id="custom-assertions-tab">
+        <form action="{% url 'edit_app_attr' domain app.id 'custom_assertions' %}"
+              id="custom-assertions-form"
+              method="POST">{% csrf_token %}
+          <div id="custom-assertions-save-btn"></div>
+          {% include "app_manager/partials/forms/custom_assertions.html" %}
+        </form>
+      </div>
+    {% endif %}
+
   </div>
 </div>

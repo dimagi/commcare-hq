@@ -17,7 +17,8 @@ from dimagi.utils.dates import safe_strftime
 from dimagi.utils.parsing import string_to_utc_datetime
 from phonelog.models import UserErrorEntry
 
-from corehq import toggles
+from corehq import toggles, privileges
+from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.app_manager.dbaccessors import (
     get_app,
     get_brief_apps_in_domain,
@@ -554,7 +555,19 @@ class ApplicationErrorReport(GenericTabularReport, ProjectReport):
 
     @classmethod
     def show_in_navigation(cls, domain=None, project=None, user=None):
-        return user and toggles.APPLICATION_ERROR_REPORT.enabled(user.username)
+        return cls.has_access(domain, user)
+
+    @classmethod
+    def has_access(cls, domain=None, user=None):
+        domain_access = (
+            domain_has_privilege(domain, privileges.APPLICATION_ERROR_REPORT)
+            if domain else False
+        )
+        user_access = (
+            user.is_superuser or user.is_dimagi
+            if user else False
+        )
+        return user and (domain_access or user_access)
 
     @property
     def shared_pagination_GET_params(self):
@@ -661,10 +674,17 @@ class AggregateUserStatusReport(ProjectReport, ProjectReportParametersMixin):
             mobile_user_and_group_slugs,
             self.request.couch_user,
         )
-        user_query = user_query.size(0)
         user_query = user_query.aggregations([
-            DateHistogram('last_submission', 'reporting_metadata.last_submission_for_user.submission_date', '1d'),
-            DateHistogram('last_sync', 'reporting_metadata.last_sync_for_user.sync_date', '1d')
+            DateHistogram(
+                'last_submission',
+                'reporting_metadata.last_submission_for_user.submission_date',
+                DateHistogram.Interval.DAY,
+            ),
+            DateHistogram(
+                'last_sync',
+                'reporting_metadata.last_sync_for_user.sync_date',
+                DateHistogram.Interval.DAY,
+            )
         ])
         return user_query
 
@@ -729,8 +749,8 @@ class AggregateUserStatusReport(ProjectReport, ProjectReportParametersMixin):
         query = self.user_query().run()
 
         aggregations = query.aggregations
-        last_submission_buckets = aggregations[0].raw_buckets
-        last_sync_buckets = aggregations[1].raw_buckets
+        last_submission_buckets = aggregations[0].normalized_buckets
+        last_sync_buckets = aggregations[1].normalized_buckets
         total_users = query.total
 
         def _buckets_to_series(buckets, user_count):
@@ -744,7 +764,7 @@ class AggregateUserStatusReport(ProjectReport, ProjectReportParametersMixin):
             extra = total = running_total = 0
             today = datetime.today().date()
             for bucket_val in buckets:
-                bucket_date = datetime.fromtimestamp(bucket_val['key'] / 1000.0).date()
+                bucket_date = date.fromisoformat(bucket_val['key'])
                 delta_days = (today - bucket_date).days
                 val = bucket_val['doc_count']
                 if delta_days in vals:

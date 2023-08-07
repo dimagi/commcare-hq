@@ -1,12 +1,13 @@
 import datetime
 import logging
+import re
 
 from django import forms
 from django.db import transaction
 from django.template.defaultfilters import slugify
 from django.urls import reverse
 from django.utils.html import format_html
-from django.utils.translation import gettext_lazy
+from django.utils.translation import gettext_lazy, gettext
 from django.utils.translation import gettext as _
 
 from crispy_forms.helper import FormHelper
@@ -21,6 +22,7 @@ from corehq.apps.sso.models import (
     IdentityProvider,
     IdentityProviderProtocol,
     IdentityProviderType,
+    LoginEnforcementType,
 )
 from corehq.apps.sso.utils import url_helpers
 from corehq.apps.sso.utils.url_helpers import get_documentation_url
@@ -57,6 +59,28 @@ def _check_required_when_active(is_active, value):
         raise forms.ValidationError(
             _("This is required when Single Sign On is active.")
         )
+
+
+def _ensure_entity_id_matches_expected_provider(entity_id, identity_provider):
+    if (identity_provider.idp_type == IdentityProviderType.ONE_LOGIN
+            and not re.match(r'^https:\/\/[A-za-z\d-]*.onelogin.com\/', entity_id)):
+        raise forms.ValidationError(
+            _("This is not a valid One Login URL.")
+        )
+
+
+def _get_help_text(identity_provider):
+    help_link = get_documentation_url(identity_provider)
+    help_text = format_html(
+        _('<a href="{}">Please read this guide</a> on how to set up '
+          'CommCare HQ with {}.<br />You will need the following '
+          'information:'),
+        help_link,
+        identity_provider.service_name,
+    )
+    return crispy.HTML(
+        format_html('<p class="help-block">{}</p>', help_text)
+    )
 
 
 class CreateIdentityProviderForm(forms.Form):
@@ -184,21 +208,26 @@ class RelyingPartyDetailsForm(forms.Form):
         self.idp = identity_provider
         super().__init__(*args, **kwargs)
 
+        if self.idp.idp_type == IdentityProviderType.OKTA:
+            self.fields['redirect_uris'].label = gettext("Sign-in redirect URIs ")
+            self.fields['logout_redirect_uris'].label = gettext("Sign-out redirect URIs")
+            self.fields['login_url'].label = gettext("Initiate login URI")
+
     @property
     def application_details_fields(self):
+        login_url = url_helpers.get_oidc_login_url(self.idp)
+        auth_url = url_helpers.get_oidc_auth_url(self.idp)
+        logout_url = url_helpers.get_oidc_logout_url(self.idp)
+        if self.idp.idp_type == IdentityProviderType.OKTA:
+            return [
+                hqcrispy.B3TextField('redirect_uris', auth_url),
+                hqcrispy.B3TextField('logout_redirect_uris', logout_url),
+                hqcrispy.B3TextField('login_url', login_url),
+            ]
         return [
-            hqcrispy.B3TextField(
-                'login_url',
-                url_helpers.get_oidc_login_url(self.idp),
-            ),
-            hqcrispy.B3TextField(
-                'redirect_uris',
-                url_helpers.get_oidc_auth_url(self.idp),
-            ),
-            hqcrispy.B3TextField(
-                'logout_redirect_uris',
-                url_helpers.get_oidc_logout_url(self.idp),
-            ),
+            hqcrispy.B3TextField('login_url', login_url),
+            hqcrispy.B3TextField('redirect_uris', auth_url),
+            hqcrispy.B3TextField('logout_redirect_uris', logout_url),
         ]
 
 
@@ -241,24 +270,21 @@ class ServiceProviderDetailsForm(forms.Form):
 
     @property
     def service_provider_help_block(self):
-        help_link = get_documentation_url(self.idp)
-        help_text = format_html(
-            _('<a href="{}">Please read this guide</a> on how to set up '
-              'CommCare HQ with Azure AD.<br />You will need the following '
-              'information:'),
-            help_link
-        )
-        return crispy.HTML(
-            format_html('<p class="help-block">{}</p>', help_text)
-        )
+        return _get_help_text(self.idp)
 
     @property
     def token_encryption_help_block(self):
-        help_text = _(
-            'This is a high security feature  that ensures Assertions are '
-            'fully encrypted. This feature requires a Premium Azure AD '
-            'subscription. '
-        )
+        if self.idp.idp_type == IdentityProviderType.AZURE_AD:
+            help_text = _(
+                'This is a high security feature that ensures Assertions are '
+                'fully encrypted. This feature requires a Premium Azure AD '
+                'subscription.'
+            )
+        else:
+            help_text = _(
+                'This feature may or may not be supported by your Identity Provider. '
+                'Please refer to their documentation.'
+            )
         return crispy.HTML(
             format_html('<p class="help-block">{}</p>', help_text)
         )
@@ -388,7 +414,6 @@ class EditIdentityProviderAdminForm(forms.Form):
                 crispy.Div(*sp_details_form.service_provider_fields),
                 crispy.Div(*sp_details_form.token_encryption_fields),
             )
-            protocol_notice = current_protocol_name
         else:
             rp_details_form = RelyingPartyDetailsForm(identity_provider)
             self.fields.update(rp_details_form.fields)
@@ -396,13 +421,6 @@ class EditIdentityProviderAdminForm(forms.Form):
                 _('Relying Party Settings'),
                 'slug',
                 crispy.Div(*rp_details_form.application_details_fields),
-            )
-            # todo remove when OIDC is active
-            protocol_notice = format_html(
-                "{}<p class='alert alert-warning'>"
-                "<strong>Please Note that OIDC support is still in development!</strong><br/> "
-                "Do not make any Identity Providers live on production.</p>",
-                current_protocol_name
             )
 
         from corehq.apps.accounting.views import ManageBillingAccountView
@@ -427,7 +445,6 @@ class EditIdentityProviderAdminForm(forms.Form):
                 crispy.Div(
                     crispy.Fieldset(
                         _('Primary Configuration'),
-                        protocol_notice,
                         hqcrispy.B3TextField(
                             'owner',
                             format_html(
@@ -438,11 +455,11 @@ class EditIdentityProviderAdminForm(forms.Form):
                         ),
                         hqcrispy.B3TextField(
                             'protocol',
-                            protocol_notice
+                            current_protocol_name
                         ),
                         hqcrispy.B3TextField(
                             'idp_type',
-                            dict(IdentityProviderType.CHOICES)[self.idp.idp_type]
+                            self.idp.service_name
                         ),
                         'name',
                         twbscrispy.PrependedText('is_editable', ''),
@@ -487,14 +504,21 @@ class EditIdentityProviderAdminForm(forms.Form):
         is_active = self.cleaned_data['is_active']
         if is_active:
             _check_is_editable_requirements(self.idp)
-            required_for_activation = [
-                (self.idp.entity_id, _('Entity ID')),
-                (self.idp.login_url, _('Login URL')),
-                (self.idp.logout_url, _('Logout URL')),
-                (self.idp.idp_cert_public
-                 and self.idp.date_idp_cert_expiration,
-                 _('Public IdP Signing Certificate')),
-            ]
+            if self.idp.protocol == IdentityProviderProtocol.SAML:
+                required_for_activation = [
+                    (self.idp.entity_id, _('Entity ID')),
+                    (self.idp.login_url, _('Login URL')),
+                    (self.idp.logout_url, _('Logout URL')),
+                    (self.idp.idp_cert_public
+                     and self.idp.date_idp_cert_expiration,
+                     _('Public IdP Signing Certificate')),
+                ]
+            else:
+                required_for_activation = [
+                    (self.idp.entity_id, _('Issuer ID')),
+                    (self.idp.client_id, _('Client ID')),
+                    (self.idp.client_secret, _('Client Secret')),
+                ]
             not_filled_out = []
             for requirement, name in required_for_activation:
                 if not requirement:
@@ -518,7 +542,7 @@ class EditIdentityProviderAdminForm(forms.Form):
         return self.idp
 
 
-class SSOEnterpriseSettingsForm(forms.Form):
+class BaseSsoEnterpriseSettingsForm(forms.Form):
     """This form manages fields that enterprise admins can update.
     """
     name = forms.CharField(
@@ -538,14 +562,80 @@ class SSOEnterpriseSettingsForm(forms.Form):
             "to log in with SSO."
         ),
     )
+    login_enforcement_type = forms.CharField(
+        label=gettext_lazy("Login Enforcement"),
+        max_length=10,
+        required=False,
+        widget=forms.Select(choices=(
+            (LoginEnforcementType.GLOBAL, gettext_lazy("Global: All users must use SSO unless exempt")),
+            (LoginEnforcementType.TEST, gettext_lazy("Test: Only Test Users are required to use SSO")),
+        )),
+        help_text=gettext_lazy(
+            "When the Identity Provider is active, this determines how users will be "
+            "required to login at the homepage."
+        )
+    )
     linked_email_domains = forms.CharField(
         label=gettext_lazy("Linked Email Domains"),
         required=False,
     )
     entity_id = forms.CharField(
-        label=gettext_lazy("Azure AD Identifier"),
+        label=gettext_lazy("Entity ID"),
         required=False,
     )
+
+    def __init__(self, identity_provider, *args, **kwargs):
+        self.idp = identity_provider
+        super().__init__(*args, **kwargs)
+
+    def get_primary_fields(self):
+        return [
+            crispy.Div(
+                crispy.Div(
+                    crispy.Fieldset(
+                        _('Single Sign-On Settings'),
+                        hqcrispy.B3TextField(
+                            'name',
+                            self.idp.name,
+                        ),
+                        hqcrispy.B3TextField(
+                            'linked_email_domains',
+                            ", ".join(self.idp.get_email_domains()),
+                        ),
+                        twbscrispy.PrependedText('is_active', ''),
+                        'login_enforcement_type',
+                    ),
+                    css_class="panel-body"
+                ),
+                css_class="panel panel-modern-gray panel-form-only"
+            ),
+            hqcrispy.FormActions(
+                twbscrispy.StrictButton(
+                    gettext_lazy("Update Configuration"),
+                    type="submit",
+                    css_class="btn btn-primary",
+                )
+            ),
+        ]
+
+    def clean_is_active(self):
+        is_active = self.cleaned_data['is_active']
+        if is_active:
+            _check_is_editable_requirements(self.idp)
+        return is_active
+
+    def clean_entity_id(self):
+        is_active = bool(self.data.get('is_active'))
+        entity_id = self.cleaned_data['entity_id']
+        _check_required_when_active(is_active, entity_id)
+        _ensure_entity_id_matches_expected_provider(entity_id, self.idp)
+        return entity_id
+
+    def update_identity_provider(self, admin_user):
+        raise NotImplementedError("please implement update_identity_provider")
+
+
+class SsoSamlEnterpriseSettingsForm(BaseSsoEnterpriseSettingsForm):
     login_url = forms.CharField(
         label=gettext_lazy("Login URL"),
         required=False,
@@ -577,18 +667,19 @@ class SSOEnterpriseSettingsForm(forms.Form):
     )
 
     def __init__(self, identity_provider, *args, **kwargs):
-        self.idp = identity_provider
-        kwargs['initial'] = {
-            'is_active': identity_provider.is_active,
-            'entity_id': identity_provider.entity_id,
-            'login_url': identity_provider.login_url,
-            'logout_url': identity_provider.logout_url,
-            'require_encrypted_assertions': identity_provider.require_encrypted_assertions,
-        }
-        super().__init__(*args, **kwargs)
+        initial = kwargs['initial'] = kwargs.get('initial', {}).copy()
+        initial.setdefault('is_active', identity_provider.is_active)
+        initial.setdefault('login_enforcement_type', identity_provider.login_enforcement_type)
+        initial.setdefault('entity_id', identity_provider.entity_id)
+        initial.setdefault('login_url', identity_provider.login_url)
+        initial.setdefault('logout_url', identity_provider.logout_url)
+        initial.setdefault('require_encrypted_assertions', identity_provider.require_encrypted_assertions)
+        super().__init__(identity_provider, *args, **kwargs)
 
         sp_details_form = ServiceProviderDetailsForm(identity_provider)
         self.fields.update(sp_details_form.fields)
+
+        self.fields['entity_id'].label = _("{} Identifier").format(self.idp.service_name)
 
         certificate_details = []
         if self.idp.idp_cert_public:
@@ -616,7 +707,7 @@ class SSOEnterpriseSettingsForm(forms.Form):
             crispy.Div(
                 crispy.Div(
                     crispy.Fieldset(
-                        _('Basic SAML Configuration for Azure AD'),
+                        _('Basic SAML Configuration for {}').format(self.idp.service_name),
                         *sp_details_form.service_provider_fields
                     ),
                     css_class="panel-body"
@@ -626,7 +717,7 @@ class SSOEnterpriseSettingsForm(forms.Form):
             crispy.Div(
                 crispy.Div(
                     crispy.Fieldset(
-                        _('Connection Details from Azure AD'),
+                        _('Connection Details from {}').format(self.idp.service_name),
                         'login_url',
                         'entity_id',
                         'logout_url',
@@ -649,44 +740,8 @@ class SSOEnterpriseSettingsForm(forms.Form):
                 ),
                 css_class="panel panel-modern-gray panel-form-only"
             ),
-            crispy.Div(
-                crispy.Div(
-                    crispy.Fieldset(
-                        _('Single Sign-On Settings'),
-                        hqcrispy.B3TextField(
-                            'name',
-                            identity_provider.name,
-                        ),
-                        hqcrispy.B3TextField(
-                            'linked_email_domains',
-                            ", ".join(identity_provider.get_email_domains()),
-                        ),
-                        twbscrispy.PrependedText('is_active', ''),
-                    ),
-                    css_class="panel-body"
-                ),
-                css_class="panel panel-modern-gray panel-form-only"
-            ),
-            hqcrispy.FormActions(
-                twbscrispy.StrictButton(
-                    gettext_lazy("Update Configuration"),
-                    type="submit",
-                    css_class="btn btn-primary",
-                )
-            )
+            crispy.Div(*self.get_primary_fields()),
         )
-
-    def clean_is_active(self):
-        is_active = self.cleaned_data['is_active']
-        if is_active:
-            _check_is_editable_requirements(self.idp)
-        return is_active
-
-    def clean_entity_id(self):
-        is_active = bool(self.data.get('is_active'))
-        entity_id = self.cleaned_data['entity_id']
-        _check_required_when_active(is_active, entity_id)
-        return entity_id
 
     def clean_login_url(self):
         is_active = bool(self.data.get('is_active'))
@@ -727,6 +782,7 @@ class SSOEnterpriseSettingsForm(forms.Form):
 
     def update_identity_provider(self, admin_user):
         self.idp.is_active = self.cleaned_data['is_active']
+        self.idp.login_enforcement_type = self.cleaned_data['login_enforcement_type']
         self.idp.entity_id = self.cleaned_data['entity_id']
         self.idp.login_url = self.cleaned_data['login_url']
         self.idp.logout_url = self.cleaned_data['logout_url']
@@ -736,6 +792,117 @@ class SSOEnterpriseSettingsForm(forms.Form):
         self.idp.date_idp_cert_expiration = date_expiration
 
         self.idp.require_encrypted_assertions = self.cleaned_data['require_encrypted_assertions']
+        self.idp.last_modified_by = admin_user.username
+        self.idp.save()
+        return self.idp
+
+
+class SsoOidcEnterpriseSettingsForm(BaseSsoEnterpriseSettingsForm):
+    client_id = forms.CharField(
+        label=gettext_lazy("Client ID"),
+        required=False,
+    )
+    client_secret = forms.CharField(
+        label=gettext_lazy("Client Secret"),
+        required=False,
+    )
+
+    def __init__(self, identity_provider, *args, **kwargs):
+        initial = kwargs['initial'] = kwargs.get('initial', {}).copy()
+        initial.setdefault('is_active', identity_provider.is_active)
+        initial.setdefault('login_enforcement_type', identity_provider.login_enforcement_type)
+        initial.setdefault('entity_id', identity_provider.entity_id)
+        initial.setdefault('client_id', identity_provider.client_id)
+        initial.setdefault('client_secret', identity_provider.client_secret)
+        super().__init__(identity_provider, *args, **kwargs)
+
+        rp_details_form = RelyingPartyDetailsForm(identity_provider)
+        self.fields.update(rp_details_form.fields)
+
+        if self.idp.idp_type == IdentityProviderType.ONE_LOGIN:
+            self.fields['entity_id'].label = _("Issuer URL")
+        elif self.idp.idp_type == IdentityProviderType.OKTA:
+            self.fields['entity_id'].label = _("Issuer URI")
+
+        if self.idp.client_secret:
+            client_secret_toggles = crispy.Div(
+                crispy.HTML(
+                    format_html(
+                        '<p class="form-control-text"><a href="#" data-bind="click: showClientSecret, '
+                        'visible: isClientSecretHidden">{}</a></p>',
+                        gettext("Show Secret")
+                    ),
+                ),
+                crispy.HTML(
+                    format_html(
+                        '<p class="form-control-text" data-bind="visible: isClientSecretVisible">'
+                        '<a href="#" data-bind="click: hideClientSecret">{}</a></p>',
+                        gettext("Hide Secret")
+                    ),
+                ),
+            )
+        else:
+            client_secret_toggles = crispy.Div()
+
+        self.helper = FormHelper()
+        self.helper.label_class = 'col-sm-3 col-md-2'
+        self.helper.field_class = 'col-sm-9 col-md-8 col-lg-6'
+        self.helper.layout = crispy.Layout(
+            crispy.Div(
+                crispy.Div(
+                    crispy.Fieldset(
+                        _('Application Details for {}').format(self.idp.service_name),
+                        _get_help_text(self.idp),
+                        crispy.Div(*rp_details_form.application_details_fields),
+                    ),
+                    css_class="panel-body"
+                ),
+                css_class="panel panel-modern-gray panel-form-only"
+            ),
+            crispy.Div(
+                crispy.Div(
+                    crispy.Fieldset(
+                        _('OpenID Provider Configuration'),
+                        'client_id',
+                        hqcrispy.B3MultiField(
+                            gettext("Client Secret"),
+                            crispy.Div(
+                                hqcrispy.InlineField(
+                                    'client_secret',
+                                    data_bind="visible: isClientSecretVisible"
+                                ),
+                                client_secret_toggles,
+                            ),
+                            show_row_class=False,
+                        ),
+                        'entity_id',
+                    ),
+                    css_class="panel-body"
+                ),
+                css_class="panel panel-modern-gray panel-form-only"
+            ),
+            crispy.Div(*self.get_primary_fields()),
+        )
+
+    def clean_client_id(self):
+        is_active = bool(self.data.get('is_active'))
+        client_id = self.cleaned_data['client_id']
+        _check_required_when_active(is_active, client_id)
+        return client_id
+
+    def clean_client_secret(self):
+        is_active = bool(self.data.get('is_active'))
+        client_secret = self.cleaned_data['client_secret']
+        _check_required_when_active(is_active, client_secret)
+        return client_secret
+
+    def update_identity_provider(self, admin_user):
+        self.idp.is_active = self.cleaned_data['is_active']
+        self.idp.login_enforcement_type = self.cleaned_data['login_enforcement_type']
+        self.idp.entity_id = self.cleaned_data['entity_id']
+        self.idp.client_id = self.cleaned_data['client_id']
+        self.idp.client_secret = self.cleaned_data['client_secret']
+
         self.idp.last_modified_by = admin_user.username
         self.idp.save()
         return self.idp

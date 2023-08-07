@@ -1,22 +1,23 @@
-from distutils.version import LooseVersion
+from urllib.parse import quote, urljoin
 
 from django.urls import reverse
 
-import six.moves.urllib.error
-import six.moves.urllib.parse
-import six.moves.urllib.request
+from looseversion import LooseVersion
 
 from corehq.apps.app_manager import id_strings
 from corehq.apps.app_manager.exceptions import MediaResourceError
 from corehq.apps.app_manager.suite_xml.features.scheduler import (
     SchedulerFixtureContributor,
 )
-from corehq.apps.app_manager.suite_xml.post_process.instances import (
-    EntryInstances,
-)
-from corehq.apps.app_manager.suite_xml.post_process.menu import GridMenuHelper
 from corehq.apps.app_manager.suite_xml.post_process.endpoints import (
     EndpointsHelper,
+)
+from corehq.apps.app_manager.suite_xml.post_process.instances import (
+    InstancesHelper,
+)
+from corehq.apps.app_manager.suite_xml.post_process.menu import (
+    GridMenuHelper,
+    RootMenuAssertionsHelper,
 )
 from corehq.apps.app_manager.suite_xml.post_process.remote_requests import (
     RemoteRequestsHelper,
@@ -109,8 +110,10 @@ class SuiteGenerator(object):
             WorkflowHelper(self.suite, self.app, self.modules).update_suite()
         if self.app.use_grid_menus:
             GridMenuHelper(self.suite, self.app, self.modules).update_suite()
+        if self.app.custom_assertions:
+            RootMenuAssertionsHelper(self.suite, self.app, self.modules).update_suite()
 
-        EntryInstances(self.suite, self.app, self.modules).update_suite()
+        InstancesHelper(self.suite, self.app, self.modules).update_suite()
         ResourceOverrideHelper(self.suite, self.app, self.modules).update_suite()
         return self.suite.serializeDocument(pretty=True)
 
@@ -165,6 +168,10 @@ class MediaSuiteGenerator(object):
                     name=name
                 )
 
+            hqmedia_download_url = reverse(
+                'hqmedia_download',
+                args=[m.media_type, m.multimedia_id]
+            ) + quote(name)
             yield MediaResource(
                 id=id_strings.media_resource(m.unique_id, name),
                 path=install_path,
@@ -174,8 +181,5 @@ class MediaSuiteGenerator(object):
                 local=(local_path
                        if self.app.enable_local_resource
                        else None),
-                remote=self.app.url_base + reverse(
-                    'hqmedia_download',
-                    args=[m.media_type, m.multimedia_id]
-                ) + six.moves.urllib.parse.quote(name.encode('utf-8')) if name else name
+                remote=urljoin(self.app.url_base, hqmedia_download_url)
             )

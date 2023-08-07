@@ -7,14 +7,11 @@ from django.utils.translation import gettext as _
 from django.utils.translation import gettext_lazy
 
 import dateutil
-from crispy_forms import bootstrap as twbscrispy
-from corehq.apps.hqwebapp import crispy as hqcrispy
 from crispy_forms import layout as crispy
 
 from corehq import privileges
 from dimagi.utils.dates import DateSpan
 
-from corehq.motech.models import ConnectionSettings
 from corehq.apps.export.filters import (
     AND,
     NOT,
@@ -28,7 +25,6 @@ from corehq.apps.export.filters import (
     SmsReceivedRangeFilter,
     UserTypeFilter,
 )
-from corehq.apps.export.models import IncrementalExport
 from corehq.apps.export.models.new import (
     CaseExportInstance,
     CaseExportInstanceFilters,
@@ -78,7 +74,7 @@ class CreateExportTagForm(forms.Form):
         ]
     )
     app_type = forms.CharField(widget=forms.Select(choices=[]))
-    application = forms.CharField(widget=forms.Select(choices=[]))
+    application = forms.CharField(required=False, widget=forms.Select(choices=[]))
 
     # Form export fields
     module = forms.CharField(required=False, widget=forms.Select(choices=[]))
@@ -125,12 +121,12 @@ class CreateExportTagForm(forms.Form):
                     ),
                     data_bind="visible: showAppType()",
                 ),
-                crispy.Field(
-                    'application',
-                    placeholder=_("Select Application"),
-                    data_bind="value: application",
-                ),
                 crispy.Div(  # Form export fields
+                    crispy.Field(
+                        'application',
+                        placeholder=_("Select Application"),
+                        data_bind="value: application",
+                    ),
                     crispy.Field(
                         'module',
                         placeholder=_("Select Menu"),
@@ -150,10 +146,7 @@ class CreateExportTagForm(forms.Form):
                     crispy.Field(
                         'case_type',
                         placeholder=_("Select Case Type"),
-                        data_bind='''
-                            value: caseType,
-                            disable: !application(),
-                        ''',
+                        data_bind="value: caseType",
                     ),
                     data_bind="visible: isCaseModel()",
                 ),
@@ -446,10 +439,10 @@ class DashboardFeedFilterForm(forms.Form):
         """
         # Confirm that either form filter data or case filter data but not both has been submitted.
         assert (
-            (self.cleaned_data['emwf_form_filter'] is not None) !=
-            (self.cleaned_data['emwf_case_filter'] is not None)
+            (self.cleaned_data['emwf_form_filter'] is not None)
+            != (self.cleaned_data['emwf_case_filter'] is not None)
         )
-        assert(export_type == 'form' or export_type == 'case')
+        assert (export_type == 'form' or export_type == 'case')
         if export_type == 'form':
             filters = self._to_form_export_instance_filters(can_access_all_locations, accessible_location_ids)
         else:
@@ -479,8 +472,8 @@ class DashboardFeedFilterForm(forms.Form):
             can_access_all_locations=can_access_all_locations,
             accessible_location_ids=accessible_location_ids,
             sharing_groups=CaseListFilter.selected_sharing_group_ids(emwf_selections),
-            show_all_data=CaseListFilter.show_all_data(emwf_selections) or
-            CaseListFilter.no_filters_selected(emwf_selections),
+            show_all_data=CaseListFilter.show_all_data(emwf_selections)
+            or CaseListFilter.no_filters_selected(emwf_selections),
             show_project_data=CaseListFilter.show_project_data(emwf_selections),
         )
 
@@ -513,16 +506,16 @@ class DashboardFeedFilterForm(forms.Form):
         if export_instance_filters:
             date_period = export_instance_filters.date_period
             selected_items = (
-                export_instance_filters.users +
-                export_instance_filters.reporting_groups +
-                export_instance_filters.locations +
-                export_instance_filters.user_types
+                export_instance_filters.users
+                + export_instance_filters.reporting_groups
+                + export_instance_filters.locations
+                + export_instance_filters.user_types
             )
             if isinstance(export_instance_filters, CaseExportInstanceFilters):
                 selected_items += (
-                    export_instance_filters.sharing_groups +
-                    (["all_data"] if export_instance_filters.show_all_data else []) +
-                    (["project_data"] if export_instance_filters.show_project_data else [])
+                    export_instance_filters.sharing_groups
+                    + (["all_data"] if export_instance_filters.show_all_data else [])
+                    + (["project_data"] if export_instance_filters.show_project_data else [])
                 )
 
             emwf_utils_class = CaseListFilterUtils if export_type is CaseExportInstance else \
@@ -1077,98 +1070,3 @@ class FilterSmsESExportDownloadForm(BaseFilterExportDownloadForm):
                 data_bind='value: dateRange',
             ),
         ]
-
-
-class IncrementalExportForm(forms.ModelForm):
-
-    class Meta:
-        model = IncrementalExport
-        fields = [
-            'name',
-            'export_instance_id',
-            'connection_settings',
-            'active',
-        ]
-
-    def __init__(self, request, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.domain = request.domain
-        self.fields['export_instance_id'] = forms.ChoiceField(
-            label=_('Case Data Export'),
-            choices=_get_case_data_export_choices(request),
-        )
-        self.fields['connection_settings'].queryset = ConnectionSettings.objects.filter(domain=self.domain)
-
-        self.helper = HQFormHelper()
-        self.helper.layout = crispy.Layout(
-            crispy.Fieldset(
-                _('Incremental Export'),
-                crispy.Field('name'),
-                crispy.Field('export_instance_id'),
-                crispy.Field('connection_settings'),
-                crispy.Field('active'),
-            )
-        )
-        self.helper.add_input(
-            crispy.Submit('submit', _('Save'))
-        )
-        self.helper.render_required_fields = True
-
-    def save(self, commit=True):
-        self.instance.domain = self.domain
-        return super().save(commit)
-
-
-class UpdateIncrementalExportForm(forms.ModelForm):
-
-    class Meta:
-        model = IncrementalExport
-        fields = [
-            'id',
-            'name',
-            'export_instance_id',
-            'connection_settings',
-            'active',
-        ]
-
-    def __init__(self, request, *args, **kwargs):
-        super(UpdateIncrementalExportForm, self).__init__(*args, **kwargs)
-        self.domain = request.domain
-        self.fields['id'] = forms.CharField(widget=forms.HiddenInput())
-        self.fields['export_instance_id'] = forms.ChoiceField(
-            label=_('Case Data Export'),
-            choices=_get_case_data_export_choices(request),
-        )
-        self.fields['connection_settings'].queryset = ConnectionSettings.objects.filter(domain=self.domain)
-        self.helper = HQFormHelper()
-        self.helper.layout = crispy.Layout(
-            crispy.Field('id'),
-            crispy.Field('name'),
-            crispy.Field('export_instance_id'),
-            crispy.Field('connection_settings'),
-            crispy.Field('active'),
-            hqcrispy.FormActions(
-                twbscrispy.StrictButton(
-                    gettext_lazy("Update"),
-                    css_class='btn btn-primary',
-                    type='submit',
-                ),
-                crispy.HTML('<button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>'),
-                css_class="modal-footer",
-            )
-        )
-
-
-def _get_case_data_export_choices(request):
-    from corehq.apps.export.views.list import CaseExportListHelper
-    from corehq.apps.export.views.list import DailySavedExportListHelper
-
-    case_export_list_helper = CaseExportListHelper(request)
-    exports = [(exp['_id'], exp['name']) for exp in case_export_list_helper.get_saved_exports()]
-
-    daily_saved_list_helper = DailySavedExportListHelper(request)
-    exports.extend(
-        (exp['_id'], "{} - {}".format(exp['name'], _("Daily Saved Export")))
-        for exp in daily_saved_list_helper.get_saved_exports()
-    )
-    return exports

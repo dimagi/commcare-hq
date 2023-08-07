@@ -1,7 +1,10 @@
 /*global Marionette */
 
 hqDefine("cloudcare/js/formplayer/apps/views", function () {
-    var FormplayerFrontend = hqImport("cloudcare/js/formplayer/app");
+    var constants = hqImport("cloudcare/js/formplayer/constants"),
+        FormplayerFrontend = hqImport("cloudcare/js/formplayer/app"),
+        googleAnalytics = hqImport("analytix/js/google"),
+        kissmetrics = hqImport("analytix/js/kissmetrix");
 
     var GridItem = Marionette.View.extend({
         template: _.template($("#row-template").html() || ""),
@@ -46,7 +49,7 @@ hqDefine("cloudcare/js/formplayer/apps/views", function () {
         },
         incompleteSessionsClick: function (e) {
             e.preventDefault();
-            var pageSize = hqImport("cloudcare/js/formplayer/constants").DEFAULT_INCOMPLETE_FORMS_PAGE_SIZE;
+            var pageSize = constants.DEFAULT_INCOMPLETE_FORMS_PAGE_SIZE;
             FormplayerFrontend.trigger("sessions", 0, pageSize);
         },
         syncClick: function (e) {
@@ -97,6 +100,16 @@ hqDefine("cloudcare/js/formplayer/apps/views", function () {
         syncKeyAction: _.extend(BaseAppView.syncKeyAction),
         restoreAsKeyAction: _.extend(BaseAppView.restoreAsKeyAction),
         settingsKeyAction: _.extend(BaseAppView.settingsKeyAction),
+
+        initialize: function (options) {
+            this.shouldShowIncompleteForms = options.shouldShowIncompleteForms;
+        },
+
+        templateContext: function () {
+            return {
+                shouldShowIncompleteForms: this.shouldShowIncompleteForms,
+            };
+        },
     });
 
     /**
@@ -131,7 +144,7 @@ hqDefine("cloudcare/js/formplayer/apps/views", function () {
                 appName;
             appName = currentApp.get('name');
             return {
-                showIncompleteForms: function () {
+                shouldShowIncompleteForms: function () {
                     return FormplayerFrontend.getChannel()
                         .request('getAppDisplayProperties')['cc-show-incomplete'] === 'yes';
                 },
@@ -140,8 +153,8 @@ hqDefine("cloudcare/js/formplayer/apps/views", function () {
         },
         startApp: function (e) {
             e.preventDefault();
-            hqImport('analytix/js/kissmetrix').track.event("[app-preview] User clicked Start App");
-            hqImport('analytix/js/google').track.event("App Preview", "User clicked Start App");
+            kissmetrics.track.event("[app-preview] User clicked Start App");
+            googleAnalytics.track.event("App Preview", "User clicked Start App");
             FormplayerFrontend.trigger("app:select", this.appId);
         },
         keyAction: function (e) {

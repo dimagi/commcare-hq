@@ -5,6 +5,8 @@ from django.http import HttpResponse
 
 from corehq.apps.api.cors import ACCESS_CONTROL_ALLOW, add_cors_headers_to_response
 from corehq.apps.api.models import ApiUser
+from corehq.apps.api.resources.auth import get_rate_limit_identifier
+from corehq.apps.api.resources.meta import get_hq_throttle
 
 
 def api_user_basic_auth(permission, realm=''):
@@ -44,3 +46,16 @@ def allow_cors(allowed_methods):
             return response
         return wrapped_view
     return decorator
+
+
+def api_throttle(view):
+    @wraps(view)
+    def wrapped_view(request, *args, **kwargs):
+        identifier = get_rate_limit_identifier(request)
+        throttle = get_hq_throttle()
+        should_be_throttled = throttle.should_be_throttled(identifier)
+        if should_be_throttled:
+            return HttpResponse(status=429)
+        throttle.accessed(identifier, url=request.get_full_path(), request_method=request.method.lower())
+        return view(request, *args, **kwargs)
+    return wrapped_view

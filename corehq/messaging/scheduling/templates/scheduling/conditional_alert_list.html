@@ -1,4 +1,4 @@
-{% extends "hqwebapp/base_section.html" %}
+{% extends "hqwebapp/bootstrap3/base_section.html" %}
 {% load hq_shared_tags %}
 {% load i18n %}
 
@@ -13,7 +13,7 @@
 {% endblock %}
 
 {% block page_content %}
-  {% registerurl 'conditional_alert_list' domain %}
+  {% registerurl 'conditional_alert_list_refresh' domain %}
   {% registerurl 'edit_conditional_alert' domain '---' %}
   {% initial_page_data 'limit_rule_restarts' limit_rule_restarts %}
 

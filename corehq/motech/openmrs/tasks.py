@@ -3,13 +3,15 @@ Tasks are used to pull data from OpenMRS. They either use OpenMRS's
 Reporting REST API to import cases on a regular basis (like weekly), or
 its Atom Feed (daily or more) to track changes.
 """
+import re
 import uuid
 from collections import namedtuple
 from datetime import datetime
 
-from celery.schedules import crontab
-from celery.task import periodic_task, task
 from django.conf import settings
+from django.utils.translation import gettext as _
+
+from celery.schedules import crontab
 from jinja2 import Template
 from requests import ReadTimeout, RequestException
 
@@ -19,6 +21,7 @@ from corehq import toggles
 from corehq.apps.case_importer import util as importer_util
 from corehq.apps.case_importer.const import LookupErrors
 from corehq.apps.case_importer.util import EXTERNAL_ID
+from corehq.apps.celery import periodic_task, task
 from corehq.apps.groups.models import Group
 from corehq.apps.hqcase.utils import submit_case_blocks
 from corehq.apps.locations.dbaccessors import get_one_commcare_user_at_location
@@ -105,7 +108,8 @@ def get_case_properties(patient, importer):
     the data types given in a column mapping.
     """
     name_columns = importer.name_columns.split(' ')
-    case_name = ' '.join([patient[column] for column in name_columns])
+    case_name = ' '.join([patient[column] or '' for column in name_columns])
+    case_name = clean_spaces(case_name) or _('<No name given>')
     errors = []
     fields_to_update = {}
     tz = importer.get_timezone()
@@ -175,9 +179,17 @@ def import_patients_of_owner(requests, importer, domain_name, owner_id, location
         return
     case_blocks = []
     for i, patient in enumerate(openmrs_patients):
+        try:
+            patient_id = str(patient[importer.external_id_column])
+        except KeyError:
+            raise ConfigurationError(
+                f'Error importing patients for project space "{importer.domain}" '
+                f'from OpenMRS Importer "{importer}": External ID column '
+                f'"{importer.external_id_column}" not found in patient data.'
+            )
         case, error = importer_util.lookup_case(
             EXTERNAL_ID,
-            str(patient[importer.external_id_column]),
+            patient_id,
             domain_name,
             importer.case_type
         )
@@ -187,6 +199,12 @@ def import_patients_of_owner(requests, importer, domain_name, owner_id, location
         elif error == LookupErrors.NotFound:
             case_block = get_addpatient_caseblock(patient, importer, owner_id)
             case_blocks.append(RowAndCase(i, case_block))
+        elif error == LookupErrors.MultipleResults:
+            raise ConfigurationError(
+                f'Error importing patients for project space "{importer.domain}" '
+                f'from OpenMRS Importer "{importer}": {importer.case_type}'
+                f'.{EXTERNAL_ID} "{patient_id}" is not unique.'
+            )
 
     submit_case_blocks(
         [cb.case.as_text() for cb in case_blocks],
@@ -318,9 +336,9 @@ def import_patients():
 
 @task(queue='background_queue')
 def poll_openmrs_atom_feeds(domain_name):
-    for repeater in OpenmrsRepeater.by_domain(domain_name):
+    for repeater in OpenmrsRepeater.objects.by_domain(domain_name):
         errors = []
-        if repeater.atom_feed_enabled and not repeater.paused:
+        if repeater.atom_feed_enabled and not repeater.is_paused:
             patient_uuids = get_feed_updates(repeater, ATOM_FEED_NAME_PATIENT)
             encounter_uuids = get_feed_updates(repeater, ATOM_FEED_NAME_ENCOUNTER)
             for patient_uuid in patient_uuids:
@@ -353,3 +371,14 @@ def track_changes():
     domains = find_domains_with_toggle_enabled(toggles.OPENMRS_INTEGRATION)
     for domain in domains:
         poll_openmrs_atom_feeds.delay(domain)
+
+
+def clean_spaces(string):
+    """
+    Removes extra spaces between words, and start and end spaces.
+
+    >>> clean_spaces(' Alice   Apple')
+    'Alice Apple'
+    """
+    string = re.sub(' {2,}', ' ', string)
+    return string.strip()

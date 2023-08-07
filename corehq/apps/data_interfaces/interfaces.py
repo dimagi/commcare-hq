@@ -1,30 +1,27 @@
 from django.contrib.humanize.templatetags.humanize import naturaltime
+from django.http import HttpResponseBadRequest, HttpResponseRedirect
 from django.urls import reverse
-from django.utils.safestring import mark_safe
 from django.utils.html import format_html
+from django.utils.safestring import mark_safe
 from django.utils.translation import gettext as _
 from django.utils.translation import gettext_lazy, gettext_noop
-
 from memoized import memoized
+from soil.util import expose_cached_download
 
 from corehq.apps.app_manager.const import USERCASE_TYPE
 from corehq.apps.es import cases as case_es
-from corehq.apps.es.users import UserES
 from corehq.apps.groups.models import Group
-from corehq.apps.locations.models import SQLLocation
 from corehq.apps.locations.permissions import location_safe
 from corehq.apps.reports.datatables import DataTablesColumn, DataTablesHeader
 from corehq.apps.reports.display import FormDisplay
 from corehq.apps.reports.filters.base import BaseSingleOptionFilter
 from corehq.apps.reports.generic import GenericReportView
-from corehq.apps.reports.models import HQUserType
 from corehq.apps.reports.standard import ProjectReport
 from corehq.apps.reports.standard.cases.basic import CaseListMixin
-from corehq.apps.reports.standard.cases.data_sources import CaseDisplay
+from corehq.apps.reports.standard.cases.data_sources import CaseDisplayES
 from corehq.apps.reports.standard.inspect import SubmitHistoryMixin
-from corehq.apps.reports.util import get_simplified_users
-
-from .dispatcher import EditDataInterfaceDispatcher
+from corehq.util.timezones.utils import parse_date
+from .dispatcher import EditDataInterfaceDispatcher, BulkEditDataInterfaceDispatcher
 
 
 class DataInterface(GenericReportView):
@@ -40,8 +37,12 @@ class DataInterface(GenericReportView):
         return reverse('data_interfaces_default', args=[self.request.project.name])
 
 
+class BulkDataInterface(DataInterface):
+    dispatcher = BulkEditDataInterfaceDispatcher
+
+
 @location_safe
-class CaseReassignmentInterface(CaseListMixin, DataInterface):
+class CaseReassignmentInterface(CaseListMixin, BulkDataInterface):
     name = gettext_noop("Reassign Cases")
     slug = "reassign_cases"
     report_template_path = 'data_interfaces/interfaces/case_management.html'
@@ -49,10 +50,21 @@ class CaseReassignmentInterface(CaseListMixin, DataInterface):
     @property
     @memoized
     def es_results(self):
+        return self._es_query.run().raw
+
+    @property
+    def _es_query(self):
         query = self._build_query()
         # FB 183468: Don't allow user cases to be reassigned
-        query = query.NOT(case_es.case_type(USERCASE_TYPE))
-        return query.run().raw
+        return query.NOT(case_es.case_type(USERCASE_TYPE))
+
+    @property
+    def template_context(self):
+        context = super(CaseReassignmentInterface, self).template_context
+        context.update({
+            "total_cases": self.total_records,
+        })
+        return context
 
     @property
     @memoized
@@ -82,19 +94,59 @@ class CaseReassignmentInterface(CaseListMixin, DataInterface):
             ' data-caseid="{case_id}" data-owner="{owner}" data-ownertype="{owner_type}" />')
 
         for row in self.es_results['hits'].get('hits', []):
-            case = self.get_case(row)
-            display = CaseDisplay(case, self.timezone, self.individual)
+            es_case = self.get_case(row)
+            display = CaseDisplayES(es_case, self.timezone, self.individual)
             yield [
                 format_html(
                     checkbox_format,
-                    case_id=case['_id'],
+                    case_id=es_case['_id'],
                     owner=display.owner_id,
                     owner_type=display.owner_type),
                 display.case_link,
                 display.case_type,
                 display.owner_display,
-                naturaltime(display.parse_date(display.case['modified_on'])),
+                naturaltime(parse_date(es_case['modified_on'])),
             ]
+
+    @property
+    def bulk_response(self):
+        from .views import BulkCaseReassignSatusView
+        from .tasks import bulk_case_reassign_async
+        if self.request.method != 'POST':
+            return HttpResponseBadRequest()
+        owner_id = self.request_params.get('new_owner_id', None)
+        if not owner_id:
+            return HttpResponseBadRequest(
+                _("An owner_id needs to be specified to bulk reassign cases")
+            )
+
+        # If we use self.es_results we're limited to the pagination set on the
+        # UI by the user
+        es_results = self._es_query\
+            .size(self.total_records)\
+            .run().raw
+
+        case_ids = [
+            self.get_case(row)['_id']
+            for row in es_results['hits'].get('hits', [])
+        ]
+        task_ref = expose_cached_download(
+            payload=case_ids, expiry=60 * 60, file_extension=None
+        )
+        task = bulk_case_reassign_async.delay(
+            self.domain,
+            self.request.couch_user.get_id,
+            owner_id,
+            task_ref.download_id,
+            self.request.META['HTTP_REFERER']
+        )
+        task_ref.set_task(task)
+        return HttpResponseRedirect(
+            reverse(
+                BulkCaseReassignSatusView.urlname,
+                args=[self.domain, task_ref.download_id]
+            )
+        )
 
 
 class FormManagementMode(object):

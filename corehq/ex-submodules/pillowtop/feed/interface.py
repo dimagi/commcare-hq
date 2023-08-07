@@ -37,6 +37,9 @@ class ChangeMeta(jsonobject.JsonObject):
     # track of retry attempts
     attempts = jsonobject.IntegerProperty(default=0)
 
+    # track when first published (will not get updated on retry, unlike publish_timestamp)
+    original_publication_datetime = jsonobject.DateTimeProperty(default=datetime.utcnow)
+
 
 class Change(object):
     """

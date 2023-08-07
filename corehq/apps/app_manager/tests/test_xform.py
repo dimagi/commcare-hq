@@ -65,7 +65,6 @@ class ValidateXFormTests(SimpleTestCase):
 
         mock_validate_form.side_effect = FormplayerAPIException
 
-        # rendered_form = etree.tostring(xml, encoding='utf-8')
         with self.assertRaises(XFormValidationFailed):
             validate_xform(xml)
 
@@ -105,5 +104,5 @@ class ValidateXFormTests(SimpleTestCase):
         mock_validate_form.return_value = validation_result
         try:
             validate_xform(xml)
-        except (XFormValidationFailed, FormValidationResult) as e:
+        except XFormValidationFailed as e:
             self.fail(f"validate_xform raised {e} unexpectedly")

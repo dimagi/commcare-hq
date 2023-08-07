@@ -1,10 +1,10 @@
 import uuid
 from datetime import date, time
+from unittest.mock import Mock, call, patch
 
 from django.test import SimpleTestCase, TransactionTestCase
 
-from unittest.mock import Mock, call, patch
-
+from corehq.util.test_utils import flag_enabled
 from dimagi.utils.parsing import json_format_date
 
 from corehq.apps.accounting.exceptions import SubscriptionAdjustmentError
@@ -29,12 +29,14 @@ from corehq.apps.data_interfaces.tests.util import create_empty_rule
 from corehq.apps.domain.models import Domain
 from corehq.apps.users.models import (
     CommCareUser,
-    Permissions,
+    HqPermissions,
     UserRole,
-    UserRolePresets,
     WebUser,
 )
-from corehq.apps.users.role_utils import initialize_domain_with_default_roles
+from corehq.apps.users.role_utils import (
+    UserRolePresets,
+    initialize_domain_with_default_roles,
+)
 from corehq.messaging.scheduling.models import (
     AlertSchedule,
     ImmediateBroadcast,
@@ -82,7 +84,7 @@ class TestUserRoleSubscriptionChanges(BaseAccountingTest):
         self.custom_role = UserRole.create(
             self.domain.name,
             "Custom Role",
-            permissions=Permissions(
+            permissions=HqPermissions(
                 edit_apps=True,
                 view_apps=True,
                 edit_web_users=True,
@@ -104,7 +106,7 @@ class TestUserRoleSubscriptionChanges(BaseAccountingTest):
             web_user.save()
             self.web_users.append(web_user)
 
-            commcare_user = generator.arbitrary_commcare_user(
+            commcare_user = generator.arbitrary_user(
                 domain=self.domain.name)
             commcare_user.set_role(self.domain.name, role.get_qualified_id())
             commcare_user.save()
@@ -113,6 +115,7 @@ class TestUserRoleSubscriptionChanges(BaseAccountingTest):
         self.account = BillingAccount.get_or_create_account_by_domain(
             self.domain.name, created_by=self.admin_username)[0]
         self.advanced_plan = DefaultProductPlan.get_default_plan_version(edition=SoftwarePlanEdition.ADVANCED)
+        self.community_plan = DefaultProductPlan.get_default_plan_version(edition=SoftwarePlanEdition.COMMUNITY)
 
     def test_cancellation(self):
         subscription = Subscription.new_domain_subscription(
@@ -144,10 +147,59 @@ class TestUserRoleSubscriptionChanges(BaseAccountingTest):
         self._assertInitialRoles()
         self._assertStdUsers()
 
+    @flag_enabled('ATTENDANCE_TRACKING')
+    def test_add_attendance_coordinator_role_for_domain(self):
+        subscription = Subscription.new_domain_subscription(
+            self.account, self.domain.name, self.community_plan,
+            web_user=self.admin_username
+        )
+
+        assert not UserRole.objects.filter(
+            name=UserRolePresets.ATTENDANCE_COORDINATOR,
+            domain=self.domain.name
+        ).exists()
+
+        subscription.change_plan(self.advanced_plan, web_user=self.admin_username)
+        pm_role_created = UserRole.objects.filter(
+            name=UserRolePresets.ATTENDANCE_COORDINATOR, domain=self.domain.name
+        ).exists()
+        self.assertTrue(pm_role_created)
+
+    @flag_enabled('ATTENDANCE_TRACKING')
+    def test_archive_attendance_coordinator_role_when_downgrading(self):
+        subscription = Subscription.new_domain_subscription(
+            self.account, self.domain.name, self.advanced_plan,
+            web_user=self.admin_username
+        )
+
+        role = UserRole.objects.filter(
+            name=UserRolePresets.ATTENDANCE_COORDINATOR,
+            domain=self.domain.name
+        ).first()
+        self.assertFalse(role.is_archived)
+
+        subscription.change_plan(self.community_plan, web_user=self.admin_username)
+        role = UserRole.objects.filter(
+            name=UserRolePresets.ATTENDANCE_COORDINATOR,
+            domain=self.domain.name
+        ).first()
+        self.assertTrue(role.is_archived)
+
+    @flag_enabled('ATTENDANCE_TRACKING')
+    @patch('corehq.apps.events.tasks.close_mobile_worker_attendee_cases')
+    def test_close_mobile_worker_attendee_cases_when_downgrading(self, close_mobile_worker_attendee_cases_mock):
+        subscription = Subscription.new_domain_subscription(
+            self.account, self.domain.name, self.advanced_plan,
+            web_user=self.admin_username
+        )
+
+        subscription.change_plan(self.community_plan, web_user=self.admin_username)
+        close_mobile_worker_attendee_cases_mock.delay.assert_called_once()
+
     def _change_std_roles(self):
         for u in self.user_roles:
             user_role = UserRole.objects.by_couch_id(u.get_id)
-            user_role.set_permissions(Permissions(
+            user_role.set_permissions(HqPermissions(
                 view_reports=True,
                 edit_commcare_users=True,
                 view_commcare_users=True,
@@ -166,7 +218,7 @@ class TestUserRoleSubscriptionChanges(BaseAccountingTest):
             user_role = UserRole.objects.by_couch_id(u.get_id)
             self.assertEqual(
                 user_role.permissions,
-                UserRolePresets.get_permissions(user_role.name)
+                UserRolePresets.INITIAL_ROLES[user_role.name](),
             )
 
     def _assertStdUsers(self):

@@ -19,16 +19,19 @@ def main():
         GeventCommand('run_blob_migration'),
         GeventCommand('check_blob_logs'),
         GeventCommand('preindex_everything'),
+        GeventCommand('migrate'),
         GeventCommand('migrate_multi'),
         GeventCommand('prime_views'),
         GeventCommand('ptop_preindex'),
         GeventCommand('sync_prepare_couchdb_multi'),
         GeventCommand('sync_couch_views'),
+        GeventCommand('delete_old_couch_views_from_disk'),
         GeventCommand('populate_form_date_modified'),
         GeventCommand('run_aggregation_query'),
         GeventCommand('send_pillow_retry_queue_through_pillows'),
         GeventCommand('run_all_management_command'),
-        GeventCommand('copy_events_to_sql', http_adapter_pool_size=32)
+        GeventCommand('copy_events_to_sql', http_adapter_pool_size=32),
+        GeventCommand('verify_ssl_connections'),
     )
     _patch_gevent_if_required(sys.argv, GEVENT_COMMANDS)
 
@@ -112,10 +115,6 @@ def _set_source_root(source_root):
 
 
 def run_patches():
-    # workaround for https://github.com/smore-inc/tinys3/issues/33
-    import mimetypes
-    mimetypes.init()
-
     patch_jsonfield()
 
 
@@ -137,13 +136,6 @@ def patch_jsonfield():
         return value
 
     JSONField.to_python = to_python
-
-    import django
-    if django.VERSION < (3, 1):
-        # TODO remove after upgrading to Django 3.2
-        from django.contrib.postgres.fields.jsonb import JSONField
-        import django.db.models
-        django.db.models.JSONField = JSONField
 
 
 def set_default_settings_path(argv):

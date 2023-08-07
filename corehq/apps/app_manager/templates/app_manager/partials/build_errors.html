@@ -77,6 +77,19 @@
                 to a menu using "Display only forms," which makes that menu an invalid choice.
               {% endblocktrans %}
               {% include "app_manager/partials/form_error_message.html" %}
+            {% case "mismatch multi select form links" %}
+              {% blocktrans %}
+                Please check that end of form navigation is correct. It appears to involve both
+                a multi-select form and a single select-form, which is not supported.
+              {% endblocktrans %}
+              {% include "app_manager/partials/form_error_message.html" %}
+            {% case "workflow previous inline search" %}
+              {% blocktrans %}
+                Please check that end of form navigation is correct.
+                Modules configured to "make search input available after search" do not support
+                the "Previous Screen" workflow.
+              {% endblocktrans %}
+              {% include "app_manager/partials/form_error_message.html" %}
             {% case "endpoint to display only forms" %}
               {% blocktrans with module_name=error.module.name|trans:langs %}
                 <a href="{{ module_url }}">{{ module_name }}</a>
@@ -125,11 +138,6 @@
               {% if error.message %}
                 {% trans "Details:" %}
               {% endif %}
-            {% case "no forms" %}
-              {% blocktrans with module_name=error.module.name|trans:langs %}
-                <a href="{{ module_url }}">{{ module_name }}</a>
-                has no forms.
-              {% endblocktrans %}
             {% case "no forms or case list" %}
               {% blocktrans with module_name=error.module.name|trans:langs %}
                 <a href="{{ module_url }}">{{ module_name }}</a>
@@ -172,6 +180,36 @@
                 <a href="{{ module_url }}">{{ module_name }}</a>
                 loads a case from a data registry and uses a multi-select case list.
                 These two features are not compatible.
+              {% endblocktrans %}
+            {% case "smart links inline search" %}
+              {% blocktrans with module_name=error.module.name|trans:langs %}
+                <a href="{{ module_url }}">{{ module_name }}</a>
+                uses smart links and is configured to make search input available after search.
+                These two features are not compatible.
+              {% endblocktrans %}
+            {% case "inline search as parent module" %}
+              {% blocktrans with module_name=error.module.name|trans:langs %}
+                <a href="{{ module_url }}">{{ module_name }}</a>
+                has a Parent Menu configured with "make search input available after search",
+                This workflow is unsupported.
+              {% endblocktrans %}
+            {% case "inline search to display only forms" %}
+              {% blocktrans with module_name=error.module.name|trans:langs %}
+                <a href="{{ module_url }}">{{ module_name }}</a>
+                uses "Display only forms" and is also configured with
+                "make search input available after search". This workflow is unsupported.
+              {% endblocktrans %}
+            {% case "parent select is inline search module" %}
+              {% blocktrans with module_name=error.module.name|trans:langs %}
+                <a href="{{ module_url }}">{{ module_name }}</a>
+                uses parent case selection but parent case list is using
+                "make search input available after search". This workflow is unsupported.
+              {% endblocktrans %}
+            {% case "inline search parent select relationship" %}
+              {% blocktrans with module_name=error.module.name|trans:langs %}
+                <a href="{{ module_url }}">{{ module_name }}</a>
+                uses parent case selection and is configured with
+                "make search input available after search". This workflow is unsupported.
               {% endblocktrans %}
             {% case "circular case hierarchy" %}
               {% blocktrans with module_name=error.module.name|trans:langs %}
@@ -295,21 +333,11 @@
                 <a href="{{ module_url }}">{{ module_name }}</a>
                 doesn't have a source module specified.
               {% endblocktrans %}
-            {% case "no parent select id" %}
+            {% case "invalid parent select id" %}
               {% blocktrans with module_name=error.module.name|trans:langs %}
                 <a href="{{ module_url }}">{{ module_name }}</a>
                 uses parent case selection but doesn't have a parent case list specified.
               {% endblocktrans %}
-            {% case "multi select select parent first" %}
-              {% blocktrans with module_name=error.module.name|trans:langs %}
-                <a href="{{ module_url }}">{{ module_name }}</a>
-                uses parent case selection and a multi-select case list.
-              {% endblocktrans %}
-              {% if request|toggle_enabled:"NON_PARENT_MENU_SELECTION" %}
-                {% trans "Multi-select case lists can only use 'other' parent child selection." %}
-              {% else %}
-                {% trans "These two features are not compatible." %}
-              {% endif %}
             {% case "parent cycle" %}
               {% blocktrans %}
                 The app's parent child case selection graph contains a cycle.
@@ -326,6 +354,12 @@
               {% blocktrans with module_name=error.module.name|trans:langs property=error.column.field_property details=error.details %}
                 Case List has invalid location reference <code>{{ property }}</code>.
                 Details: {{ details }}
+                <a href="{{ module_url }}">{{ module_name }}</a>
+              {% endblocktrans %}
+            {% case "case search instance used in casedb case details" %}
+              {% blocktrans with module_name=error.module.name|trans:langs property=error.column.field_property details=error.details %}
+                Case List uses an instance that is only available for case search <code>{{ property }}</code>.
+                Details: The {{ details }} instance(s) are only available in case lists using case search.
                 <a href="{{ module_url }}">{{ module_name }}</a>
               {% endblocktrans %}
             {% case "subcase has no case type" %}
@@ -360,14 +394,14 @@
             {% case "path error" %}
               {% if error.path %}
                 The case management
-                {% if visit_scheduler_enabled %} or visit scheduler {% endif %}
+                {% if "VISIT_SCHEDULER" in toggles %} or visit scheduler {% endif %}
                 in form {% include "app_manager/partials/form_error_message.html" %}
                 references a question that no longer exists: "{{ error.path }}". It is likely that
                 this question has been renamed or deleted. Please update or delete this question
                 reference before you make a new version.
               {% else %}
                 The case management
-                {% if visit_scheduler_enabled %} or visit scheduler {% endif %}
+                {% if "VISIT_SCHEDULER" in toggles %} or visit scheduler {% endif %}
                 in the form{% include "app_manager/partials/form_error_message.html" with no_form="." %}
                 is missing a question.
                 Please choose a question from the dropdown next to the case property.
@@ -465,6 +499,11 @@
               {% if not not_actual_build %}The shadow form is {% include "app_manager/partials/form_error_message.html" %}{% endif %}
             {% case "password_format" %}
               {# Do nothing; the full message is contained in error.message #}
+            {% case "case search nodeset invalid" %}
+              {% blocktrans with module_name=error.module.name|trans:langs property=error.property %}
+                <a href="{{ module_url }}">{{ module_name }}</a> has a case search property
+                <code>{{ property }}</code> that references an invalid instance.
+              {% endblocktrans %}
             {% case "error" %}
               Details: {{ error.message }}
             {% else %}

@@ -1,3 +1,4 @@
+
 RequireJS Migration Guide
 =========================
 
@@ -79,6 +80,7 @@ Considerations when choosing or creating a main module
   then use it as your main module. This can work fine, but be cautious of
   adding bloat or creating dependencies between django apps. There’s a
   loose hierarchy:
+
   - Major third-party libraries: jQuery, knockout, underscore
   - hqwebapp
   - analytics
@@ -134,19 +136,17 @@ To declare dependencies:
   parameter list, and replace calls to ``hqImport(...)`` with the new parameter name.
 - If you removed any ``<script>`` tags from the template
   and haven’t yet added them to the dependency list, do that.
-- Check the template’s parent template:
-
-- If the parent has a ``requirejs_main`` module, the template you’re migrating should include a dependency on that module.
-   - If the parent still has ``<script>`` tags, the template
-   you’re migrating should include those as dependencies. It’s usually
-   convenient to migrate the parent and any “sibling” templates at the same
-   time so you can remove the ``<script>`` tags altogether. If that isn’t
-   possible, make the parent check before including script tags:
-   ``{% if requirejs_main %}<script ...></script>{% endif %}``
-   - Also check the parent’s parent template, etc. Stop once you get to
-   ``hqwebapp/base.html``, ``hqwebapp/two_column.html``, or
-   ``hqwebapp/base_section.html``, which already support requirejs.
-
+- Check the template’s parent template
+    - If the parent has a ``requirejs_main`` module, the template you’re migrating should include a dependency on that module.
+       - If the parent still has ``<script>`` tags, the template
+         you’re migrating should include those as dependencies. It’s usually
+         convenient to migrate the parent and any “sibling” templates at the same
+         time so you can remove the ``<script>`` tags altogether. If that isn’t
+         possible, make the parent check before including script tags:
+         ``{% if requirejs_main %}<script ...></script>{% endif %}``
+       - Also check the parent’s parent template, etc. Stop once you get to
+         ``hqwebapp/base.html``, ``hqwebapp/bootstrap3/two_column.html``, or
+         ``hqwebapp/bootstrap3/base_section.html``, which already support requirejs.
 -  Check the view for any `hqwebapp
    decorators <https://github.com/dimagi/commcare-hq/blob/master/corehq/apps/hqwebapp/decorators.py>`__
    like ``use_jquery_ui`` which are used to include many common yet not
@@ -271,21 +271,21 @@ locally:
 -  To stop using the CDN, comment out `resource_versions.js in
    hqwebapp/base.html <https://github.com/dimagi/commcare-hq/pull/18116/files#diff-1ecb20ffccb745a5c0fc279837215a25R433>`__.
    Note that this will still fetch a few files, such as ``hqModules.js``
-   and ``requirejs_config.js``, from the CDN. To turn off the CDN
+   and ``{bootstrap_version}/requirejs_config.js``, from the CDN. To turn off the CDN
    entirely, comment out all of the code that manipulates
    ``resource_versions`` in
    `build_requirejs <https://github.com/dimagi/commcare-hq/blob/master/corehq/apps/hqwebapp/management/commands/build_requirejs.py>`__.
 -  To mimic the entire build process locally:
 
    -  Collect static files: ``manage.py collectstatic --noinput`` This
-      is necessary if you’ve made any changes to ``requirejs.yml`` or
-      ``requirejs_config.js``, since the build script pulls these files
+      is necessary if you’ve made any changes to ``{bootstrap_version}/requirejs.yml`` or
+      ``{bootstrap_version}/requirejs_config.js``, since the build script pulls these files
       from ``staticfiles``, not ``corehq``.
    -  Compile translation files: ``manage.py compilejsi18n``
    -  Run the build script: ``manage.py build_requirejs --local``
 
       -  This will **overwrite** your local versions of
-         ``requirejs_config.js`` and ``resource_versions.js``, so be
+         ``{bootstrap_version}/requirejs_config.js`` and ``resource_versions.js``, so be
          cautious running it if you have uncommitted changes.
       -  This will also copy the generated bundle files from
          ``staticfiles`` back into ``corehq``.

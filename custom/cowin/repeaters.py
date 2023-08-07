@@ -12,6 +12,7 @@ from custom.cowin.repeater_generators import (
 
 class BaseCOWINRepeater(CaseRepeater):
     class Meta:
+        proxy = True
         app_label = 'repeaters'
 
     @classmethod
@@ -32,6 +33,11 @@ class BaseCOWINRepeater(CaseRepeater):
 
 
 class BeneficiaryRegistrationRepeater(BaseCOWINRepeater):
+
+    class Meta:
+        app_label = 'repeaters'
+        proxy = True
+
     payload_generator_classes = (BeneficiaryRegistrationPayloadGenerator,)
     friendly_name = _("Register beneficiaries on COWIN")
 
@@ -61,6 +67,11 @@ class BeneficiaryRegistrationRepeater(BaseCOWINRepeater):
 
 
 class BeneficiaryVaccinationRepeater(BaseCOWINRepeater):
+
+    class Meta:
+        app_label = 'repeaters'
+        proxy = True
+
     payload_generator_classes = (BeneficiaryVaccinationPayloadGenerator,)
     friendly_name = _("Update vaccination for beneficiaries on COWIN")
 

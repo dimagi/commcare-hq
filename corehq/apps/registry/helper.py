@@ -5,7 +5,6 @@ from corehq.apps.registry.exceptions import RegistryNotFound, RegistryAccessExce
 from corehq.apps.registry.models import DataRegistry
 from corehq.apps.registry.utils import RegistryPermissionCheck
 from corehq.form_processor.models import CommCareCase
-from corehq.util.timer import TimingContext
 
 
 class DataRegistryHelper:
@@ -70,22 +69,9 @@ class DataRegistryHelper:
 
     def get_case_hierarchy(self, domain, couch_user, cases):
         """Get the combined case hierarchy for the input cases"""
-        from casexml.apps.phone.data_providers.case.livequery import (
-            get_live_case_ids_and_indices, PrefetchIndexCaseAccessor
-        )
-        domains = {case.domain for case in cases}
-        assert domains == {domain}, "All cases must belong to the same domain"
-
+        from casexml.apps.phone.data_providers.case.livequery import get_case_hierarchy
         self.check_data_access(couch_user, [case.type for case in cases], domain)
-
-        case_ids = {case.case_id for case in cases}
-
-        # using livequery to get related cases matches the semantics of case claim
-        all_case_ids, indices = get_live_case_ids_and_indices(domain, case_ids, TimingContext())
-        new_case_ids = list(all_case_ids - case_ids)
-        new_cases = PrefetchIndexCaseAccessor(domain, indices).get_cases(new_case_ids)
-
-        return cases + new_cases
+        return get_case_hierarchy(domain, cases)
 
     def check_data_access(self, couch_user, case_types, case_domain=None):
         """Perform all checks for data access.

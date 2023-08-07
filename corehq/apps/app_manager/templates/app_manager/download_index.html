@@ -65,14 +65,6 @@
 {% block downloads %}
   <h2>Downloads</h2>
   <table class="table table-condensed">
-    {% if supports_j2me %}
-      <tr>
-        <td>{% url "download_jad" app.domain app.id as url %}<a href="{{ url }}">CommCare.jad</a></td>
-      </tr>
-      <tr>
-        <td>{% url "download_jar" app.domain app.id as url %}<a href="{{ url }}">CommCare.jar</a></td>
-      </tr>
-    {% endif %}
     <tr>
       <td>
         <a href="#download_ccz" data-toggle="modal"  class='download-zip'>

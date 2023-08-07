@@ -50,11 +50,20 @@
             <time>0</time>
         </reminders>
         <package active="false"/>
-        {% for feature, value in app_profile.features.items %}{% if value.value != None and feature != 'users'%}
+        {% for feature, value in app_profile.features.items %}{% if value.value != None %}
+        {% if feature != 'users' and feature != 'dependencies' %}
             <{{ feature }} active="{{ value.value }}" />
+        {% endif %}
         {% endif %}{% endfor %}
         <users active="{{ app_profile.features.users.value|default:'true' }}">
         </users>
+        {% if app_profile.features.dependencies.value %}
+        <dependencies active="true">
+            {% for app_id in app_profile.features.dependencies.value %}
+            <android_package id="{{ app_id }}"/>
+            {% endfor %}
+        </dependencies>
+        {% endif %}
     </features>
 
     <suite><resource id="suite" version="{{ app.version }}">

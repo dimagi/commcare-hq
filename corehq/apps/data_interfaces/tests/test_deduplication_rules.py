@@ -9,8 +9,11 @@ from corehq.apps.data_interfaces.views import (
     DeduplicationRuleEditView,
     HttpResponseRedirect,
 )
+from corehq.apps.es.cases import case_adapter
+from corehq.apps.es.tests.utils import es_test
 
 
+@es_test(requires=[case_adapter], setup_class=True)
 class DeduplicationRuleCreateViewTest(TestCase):
 
     @classmethod
@@ -24,12 +27,17 @@ class DeduplicationRuleCreateViewTest(TestCase):
         view = DeduplicationRuleCreateView()
         view.args = []
         view.kwargs = {}
+
         request = self._create_request(params={
             'properties_to_update': json.dumps({}),
             'case_properties': json.dumps({}),
             'name': 'test_name',
             'case_type': 'test_type',
-            'match_type': 'ttype'})
+            'match_type': 'ttype',
+            'case-filter-property_match_definitions': json.dumps([]),
+            'case-filter-location_filter_definition': json.dumps([]),
+        })
+
         view.post(request)
         self.assertEqual(1, len(AutomaticUpdateRule.objects.all()))
         self.assertEqual(False, AutomaticUpdateRule.objects.all()[0].active)
@@ -51,7 +59,10 @@ class DeduplicationRuleCreateViewTest(TestCase):
             'case_properties': json.dumps({}),
             'name': rule_name,
             'case_type': case_type,
-            'match_type': 'ttype'})
+            'match_type': 'ttype',
+            'case-filter-property_match_definitions': json.dumps([]),
+            'case-filter-location_filter_definition': json.dumps([]),
+        })
         view.post(request)
         # Rules count after making call
         latest_rules = AutomaticUpdateRule.objects.all()
@@ -81,6 +92,7 @@ class DeduplicationRuleCreateViewTest(TestCase):
         return res.id
 
 
+@es_test(requires=[case_adapter], setup_class=True)
 class DeduplicationRuleEditViewTest(TestCase):
 
     @classmethod
@@ -104,7 +116,10 @@ class DeduplicationRuleEditViewTest(TestCase):
             'case_properties': json.dumps({}),
             'name': rule_name,
             'case_type': case_type,
-            'match_type': 'ttype'})
+            'match_type': 'ttype',
+            'case-filter-property_match_definitions': json.dumps([]),
+            'case-filter-location_filter_definition': json.dumps([]),
+        })
         resp = view.post(request)
         self.assertEqual(HttpResponseRedirect, type(resp))
 

@@ -1,11 +1,8 @@
 alembic
 architect
-attrs<22
+attrs>=21.4
 boto3
-# celery 4.1.1 forked to work around https://github.com/celery/celery/issues/4737	celery==4.4.7
-# upgrade when https://github.com/celery/celery/issues/4980 is fixed
-# originally changes were made on nickpell/celery, but this was moved to dimagi/celery
-celery @ https://github.com/dimagi/celery/raw/v4.1.1.2/releases/celery-4.1.1.2-py2.py3-none-any.whl
+celery
 CommcareTranslationChecker>=0.9.7
 csiphash
 datadog
@@ -22,6 +19,7 @@ django-compressor
 django-countries
 django-crispy-forms
 django-cte
+django-field-audit
 django-formtools
 django-logentry-admin
 django-oauth-toolkit
@@ -37,18 +35,17 @@ django-transfer
 django-two-factor-auth
 django-user-agents
 django-websocket-redis @ https://raw.githubusercontent.com/dimagi/django-websocket-redis/0.6.0.1/releases/django_websocket_redis-0.6.0.1-py3-none-any.whl
-django>=3.2.13,<4.0
+django>=3.2.18,<4.0
 djangorestframework
-dnspython
 dropbox
 elasticsearch2>=2.0.0,<3.0.0  # we will be deprecating support for ES2 soon
 elasticsearch5>=5.0.0,<6.0.0  # ES5 support is currently in development
-email_validator
 ethiopian-date-converter
 eulxml
-Faker
+firebase-admin  # India Division - used for FCM Push Notifications
+geopandas  # SolTech - Geospatial library for Geospatial feature
+geopy  # SolTech - Geocoding library for Geospatial feature
 gevent
-ghdiff
 google-api-python-client==2.32.0
 google-auth-httplib2==0.1.0
 google-auth-oauthlib==0.4.6
@@ -58,7 +55,6 @@ hiredis
 httpagentparser
 iso8601
 Jinja2
-json-delta
 jsonfield
 jsonobject-couchdbkit
 jsonobject>=2.0.0
@@ -67,38 +63,29 @@ jsonobject>=2.0.0
 jsonpath-ng @ https://github.com/kaapstorm/python-jsonpath-rw/raw/wherenot+find_or_create/wheel/jsonpath_ng-1.5.2.2-py3-none-any.whl
 jsonschema
 kafka-python
-kombu
-    # via celery
-    # See https://github.com/jazzband/pip-tools/issues/1505
-    # This comment can be removed when that issue is resolved.
-billiard!=3.5.0.5 # Should be resolved in celery 4.3: https://github.com/celery/billiard/issues/260
-    # via celery
-    # See https://github.com/jazzband/pip-tools/issues/1505
-    # This comment can be removed when that issue is resolved.
-laboratory
+looseversion
 lxml
 markdown
+oic
 openpyxl
+packaging
 phonenumberslite
 pickle5  # For Pythons pre 3.8.3. Can be removed when no environment will ever revert to < 3.8
 Pillow
 polib
 prometheus-client
 psycogreen
-psycopg2>=2.8.4  # Python 3.8 support
+psycopg2
 py-KISSmetrics
 pycryptodome>=3.6.6  # security update
 PyGithub
-pygooglechart
 python-dateutil
 python-imap
 pyphonetics
 python-magic
-pytz
-    # via celery
-    # See https://github.com/jazzband/pip-tools/issues/1505
-    # This comment can be removed when that issue is resolved.
+pyjwt
 PyYAML
+hl7apy
 pyzxcvbn
 qrcode
 quickcache
@@ -110,6 +97,7 @@ requests
 schema
 sentry-sdk
 sh
+shapely  # SolTech - Planar geometric manipulation library for Geospatial feature
 # Package has an unfixed issue https://github.com/danthedeckie/simpleeval/issues/90 Can use that once https://github.com/danthedeckie/simpleeval/pull/91 is merged
 simpleeval @ git+https://github.com/dimagi/simpleeval.git@d85c5a9f972c0f0416a1716bb06d1a3ebc83e7ec
 simplejson
@@ -120,7 +108,6 @@ SQLAlchemy
 stripe
 suds-py3
 text-unidecode
-tinys3
 toposort
 tropo-webapi-python
 turn-python

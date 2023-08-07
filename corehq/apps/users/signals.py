@@ -1,26 +1,10 @@
-from django.conf import settings
-from django.contrib.auth.signals import user_logged_in
 from django.db.models.signals import post_save
-from django.dispatch import Signal, receiver
+from django.dispatch import Signal
 
-from corehq.elastic import send_to_elasticsearch
+from corehq.apps.es.users import user_adapter
 
 commcare_user_post_save = Signal()  # providing args: couch_user
 couch_user_post_save = Signal()  # providing args: couch_user
-
-
-@receiver(user_logged_in)
-def set_language(sender, **kwargs):
-    """
-    Whenever a user logs in, attempt to set their browser session
-    to the right language.
-    HT: http://mirobetm.blogspot.com/2012/02/django-language-set-in-database-field.html
-    """
-    from corehq.apps.users.models import CouchUser
-    user = kwargs['user']
-    couch_user = CouchUser.from_django_user(user)
-    if couch_user and couch_user.language:
-        kwargs['request'].session['django_language'] = couch_user.language
 
 
 # Signal that syncs django_user => couch_user
@@ -31,22 +15,26 @@ def django_user_post_save_signal(sender, instance, created, raw=False, **kwargs)
     return CouchUser.django_user_post_save_signal(sender, instance, created)
 
 
-def _should_sync_to_es():
-    # this method is useful to disable update_user_in_es in all tests
-    #   but still enable it when necessary via mock
-    return not settings.UNIT_TESTING
-
-
 def update_user_in_es(sender, couch_user, **kwargs):
+    """Automatically sync the user to elastic directly on save or delete"""
+    _update_user_in_es(couch_user)
+
+
+def _update_user_in_es(couch_user):
+    """Implemented as a nested function so that test code which wishes to
+    disable this behavior can do so by patching this function, making said test
+    code less fragile because it won't depend on knowing exactly *how* this
+    function performs the sync.
     """
-    Automatically sync the user to elastic directly on save or delete
-    """
-    from corehq.pillows.user import transform_user_for_elasticsearch
-    send_to_elasticsearch(
-        "users",
-        transform_user_for_elasticsearch(couch_user.to_json()),
-        delete=couch_user.to_be_deleted()
-    )
+    if couch_user.to_be_deleted():
+        user_adapter.delete(couch_user.user_id)
+    else:
+        user_adapter.index(couch_user)
+
+
+def apply_correct_demo_mode(sender, couch_user, **kwargs):
+    from .tasks import apply_correct_demo_mode_to_loadtest_user
+    apply_correct_demo_mode_to_loadtest_user.delay(couch_user.get_id)
 
 
 def sync_user_phone_numbers(sender, couch_user, **kwargs):
@@ -61,3 +49,5 @@ def connect_user_signals():
                       dispatch_uid="django_user_post_save_signal")
     couch_user_post_save.connect(update_user_in_es, dispatch_uid="update_user_in_es")
     couch_user_post_save.connect(sync_user_phone_numbers, dispatch_uid="sync_user_phone_numbers")
+    commcare_user_post_save.connect(apply_correct_demo_mode,
+                                    dispatch_uid='apply_correct_demo_mode')

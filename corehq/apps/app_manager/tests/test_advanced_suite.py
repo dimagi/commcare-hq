@@ -1,31 +1,33 @@
 from django.test import SimpleTestCase
 
-from corehq.apps.app_manager.models import (
+from corehq.apps.app_manager.const import (
     AUTO_SELECT_CASE,
     AUTO_SELECT_FIXTURE,
     AUTO_SELECT_RAW,
     AUTO_SELECT_USER,
     AUTO_SELECT_USERCASE,
+)
+from corehq.apps.app_manager.models import (
     AdvancedModule,
     Application,
+    ArbitraryDatum,
     AutoSelectCase,
+    CaseSearch,
+    CaseSearchProperty,
     LoadCaseFromFixture,
     LoadUpdateAction,
     Module,
-    ArbitraryDatum
 )
 from corehq.apps.app_manager.tests.app_factory import AppFactory
 from corehq.apps.app_manager.tests.util import (
     SuiteMixin,
-    TestXmlMixin,
-    commtrack_enabled,
     patch_get_xform_resource_overrides,
 )
 from corehq.util.test_utils import flag_enabled
 
 
 @patch_get_xform_resource_overrides()
-class AdvancedSuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
+class AdvancedSuiteTest(SimpleTestCase, SuiteMixin):
     file_path = ('data', 'suite')
 
     def test_advanced_suite(self, *args):
@@ -355,3 +357,63 @@ class AdvancedSuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
             factory.app.create_suite(),
             "./entry[2]"
         )
+
+    def test_advanced_module_remote_request(self, *args):
+        factory = AppFactory(domain='domain', build_version='2.53.0')
+        factory.app._id = "123"
+        m0, f0 = factory.new_advanced_module("search", "patient")
+        factory.form_requires_case(f0)
+
+        m0.search_config = CaseSearch(
+            properties=[
+                CaseSearchProperty(name='name', label={'en': 'Name'}),
+            ]
+        )
+        m0.assign_references()
+        suite = factory.app.create_suite()
+        expected = """
+        <partial>
+          <remote-request>
+            <post url="http://localhost:8000/a/domain/phone/claim-case/"
+                relevant="count(instance('casedb')/casedb/case[@case_id=instance('commcaresession')/session/data/search_case_id]) = 0">
+              <data key="case_id" ref="instance('commcaresession')/session/data/search_case_id"/>
+            </post>
+            <command id="search_command.m0">
+              <display>
+                <text>
+                  <locale id="case_search.m0"/>
+                </text>
+              </display>
+            </command>
+            <instance id="casedb" src="jr://instance/casedb"/>
+            <instance id="commcaresession" src="jr://instance/session"/>
+            <instance id="results" src="jr://instance/remote/results"/>
+            <session>
+              <query url="http://localhost:8000/a/domain/phone/search/123/"
+                storage-instance="results" template="case" default_search="false">
+                <title>
+                    <text>
+                        <locale id="case_search.m0.inputs"/>
+                    </text>
+                </title>
+                <data key="case_type" ref="'patient'"/>
+                <prompt key="name">
+                  <display>
+                    <text>
+                      <locale id="search_property.m0.name"/>
+                    </text>
+                  </display>
+                </prompt>
+              </query>
+              <datum id="search_case_id"
+                nodeset="instance('results')/results/case[@case_type='patient'][not(commcare_is_related_case=true())]"
+                value="./@case_id" detail-select="m0_search_short" detail-confirm="m0_search_long"/>
+            </session>
+            <stack>
+              <push>
+                <rewind value="instance('commcaresession')/session/data/search_case_id"/>
+              </push>
+            </stack>
+          </remote-request>
+        </partial>"""
+        self.assertXmlPartialEqual(expected, suite, "./remote-request[1]")

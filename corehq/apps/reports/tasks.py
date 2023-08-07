@@ -4,7 +4,6 @@ import zipfile
 from datetime import datetime, timedelta
 
 from celery.schedules import crontab
-from celery.task import periodic_task, task
 from celery.utils.log import get_task_logger
 from text_unidecode import unidecode
 
@@ -15,19 +14,21 @@ from dimagi.utils.logging import notify_exception
 from soil import DownloadBase
 from soil.util import expose_blob_download
 
+from corehq.apps.celery import periodic_task, task
 from corehq.apps.domain.calculations import all_domain_stats, calced_props
 from corehq.apps.domain.models import Domain
 from corehq.apps.es import AppES, DomainES, FormES, filters
+from corehq.apps.es.apps import app_adapter
+from corehq.apps.es.domains import domain_adapter
 from corehq.apps.export.const import MAX_MULTIMEDIA_EXPORT_SIZE
+from corehq.apps.reports.models import QueryStringHash
 from corehq.apps.reports.util import send_report_download_email
 from corehq.blobs import CODES, get_blob_db
 from corehq.const import ONE_DAY
-from corehq.elastic import send_to_elasticsearch
 from corehq.form_processor.models import XFormInstance
 from corehq.util.dates import get_timestamp_for_filename
 from corehq.util.files import TransientTempfile, safe_filename_header
 from corehq.util.metrics import metrics_gauge
-from corehq.util.soft_assert import soft_assert
 from corehq.util.view_utils import absolute_reverse
 
 from .analytics.esaccessors import (
@@ -38,8 +39,6 @@ from .analytics.esaccessors import (
 
 logger = get_task_logger(__name__)
 EXPIRE_TIME = ONE_DAY
-
-_calc_props_soft_assert = soft_assert(to='{}@{}'.format('dmore', 'dimagi.com'), exponential_backoff=False)
 
 
 @periodic_task(run_every=crontab(hour="22", minute="0", day_of_week="*"), queue='background_queue')
@@ -64,7 +63,7 @@ def update_calculated_properties_for_domains(domains):
     for domain in domains:
         domain_obj = Domain.get_by_name(domain['name'])
         if not domain_obj:
-            send_to_elasticsearch("domains", domain, delete=True)
+            domain_adapter.delete(domain['_id'])
             continue
         try:
             props = calced_props(domain_obj, domain['_id'], all_stats)
@@ -75,7 +74,7 @@ def update_calculated_properties_for_domains(domains):
                 del props['cp_last_form']
             if props['cp_300th_form'] is None:
                 del props['cp_300th_form']
-            send_to_elasticsearch("domains", props, es_merge_update=True)
+            domain_adapter.update(domain['_id'], props)
         except Exception as e:
             notify_exception(
                 None, message='Domain {} failed on stats calculations with {}'.format(domain['name'], e)
@@ -152,10 +151,9 @@ def apps_update_calculated_properties():
     query = AppES().is_build(False).values_list('_id', 'domain', scroll=True)
     for doc_id, domain in query:
         doc = {
-            "_id": doc_id,
             "cp_is_active": is_app_active(doc_id, domain),
         }
-        send_to_elasticsearch('apps', doc, es_merge_update=True)
+        app_adapter.update(doc_id, doc)
 
 
 @task(serializer='pickle', ignore_result=True)
@@ -216,8 +214,8 @@ def build_form_multimedia_zipfile(
         download_id,
         owner_id,
 ):
-    from corehq.apps.export.models import FormExportInstance
     from corehq.apps.export.export import get_export_query
+    from corehq.apps.export.models import FormExportInstance
     export = FormExportInstance.get(export_id)
     es_query = get_export_query(export, es_filters)
     form_ids = get_form_ids_with_multimedia(es_query)
@@ -296,11 +294,16 @@ def _format_filename(form_info, question_id, extension, case_id_to_name):
 
 def _write_attachments_to_file(fpath, num_forms, forms_info, case_id_to_name):
     total_size = 0
+    unique_attachment_ids = set()
     with open(fpath, 'wb') as zfile:
         with zipfile.ZipFile(zfile, 'w') as multimedia_zipfile:
             for form_number, form_info in enumerate(forms_info, 1):
                 form = form_info['form']
                 for attachment in form_info['attachments']:
+                    if attachment['id'] in unique_attachment_ids:
+                        continue
+
+                    unique_attachment_ids.add(attachment['id'])
                     total_size += attachment['size']
                     if total_size >= MAX_MULTIMEDIA_EXPORT_SIZE:
                         raise Exception("Refusing to make multimedia export bigger than {} GB"
@@ -446,6 +449,7 @@ def _extract_form_attachment_info(form, properties):
         if not properties or question_id in properties:
             extension = str(os.path.splitext(attachment_name)[1])
             form_info['attachments'].append({
+                'id': attachment.id,
                 'size': attachment.content_length,
                 'name': attachment_name,
                 'question_id': question_id,
@@ -454,3 +458,10 @@ def _extract_form_attachment_info(form, properties):
             })
 
     return form_info
+
+
+@periodic_task(run_every=crontab(minute=0, hour=1, day_of_week='sun'), queue='background_queue')
+def delete_old_query_hash():
+    query_hashes = QueryStringHash.objects.filter(last_accessed__lte=datetime.utcnow() - timedelta(days=365))
+    for query in query_hashes:
+        query.delete()

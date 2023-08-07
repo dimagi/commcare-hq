@@ -274,9 +274,23 @@ def search_property_hint_locale(module, search_prop):
     return "search_property.m{module.id}.{search_prop}.hint".format(module=module, search_prop=search_prop)
 
 
-@pattern('custom_assertion.m%d.f%d.%d')
-def custom_assertion_locale(module, form, id):
-    return 'custom_assertion.m{module.id}.f{form.id}.{id}'.format(module=module, form=form, id=id)
+@pattern('search_property.m%d.%s.required.text')
+def search_property_required_text(module, search_prop):
+    return f"search_property.m{module.id}.{search_prop}.required.text"
+
+
+@pattern('search_property.m%d.%s.validation.%d.text')
+def search_property_validation_text(module, search_prop, index):
+    return f"search_property.m{module.id}.{search_prop}.validation.{index}.text"
+
+
+@pattern('custom_assertion.%s.%d')
+def custom_assertion_locale(id, module=None, form=None):
+    if module and form:
+        return 'custom_assertion.m{module.id}.f{form.id}.{id}'.format(module=module, form=form, id=id)
+    if module:
+        return 'custom_assertion.m{module.id}.{id}'.format(module=module, id=id)
+    return 'custom_assertion.root.{id}'.format(id=id)
 
 
 @pattern('referral_lists.m%d')
@@ -333,6 +347,11 @@ def report_last_sync():
 @pattern('cchq.reports_last_updated_on', default='Reports last updated on')
 def reports_last_updated_on():
     return 'cchq.reports_last_updated_on'
+
+
+@pattern('android.package.name.%s')
+def android_package_name(package_id):
+    return 'android.package.name.{package_id}'.format(package_id=package_id)
 
 
 CUSTOM_APP_STRINGS_RE = _regex_union(REGEXES)
@@ -416,12 +435,27 @@ def case_list_audio_locale(module):
     return "case_lists.m{module.id}.audio".format(module=module)
 
 
+@pattern('case_search.m%d.inputs')
+def case_search_title_translation(module):
+    return "case_search.m{module.id}.inputs".format(module=module)
+
+
+@pattern('case_search.m%d.description')
+def case_search_description_locale(module):
+    return "case_search.m{module.id}.description".format(module=module)
+
+
 def detail(module, detail_type):
     return "m{module.id}_{detail_type}".format(module=module, detail_type=detail_type)
 
 
 def persistent_case_context_detail(module):
     return detail(module, 'persistent_case_context')
+
+
+@pattern('m%d_no_items_text')
+def no_items_text_detail(module):
+    return detail(module, 'no_items_text')
 
 
 def fixture_detail(module):

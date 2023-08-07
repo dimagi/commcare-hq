@@ -177,6 +177,8 @@ class V2CaseXMLGenerator(CaseXMLGeneratorBase):
     def add_custom_properties(self, element):
         if self.case.external_id:
             element.append(safe_element('external_id', self.case.external_id))
+        if self.case.location_id:
+            element.append(safe_element('location_id', self.case.location_id))
         if self.case.opened_on:
             element.append(safe_element("date_opened", date_to_xml_string(self.case.opened_on)))
         super(V2CaseXMLGenerator, self).add_custom_properties(element)

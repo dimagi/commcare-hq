@@ -65,7 +65,7 @@
             <td>
               {{ rabbitmq.msg }} {% if rabbitmq_url %}(<a href="{{ rabbitmq_url }}">Admin</a>){% endif %}
               <hr>
-              {{ celery_stats|safe }}<br>
+              {{ celery_stats }}<br>
             </td>
             <td>
               <dl class="dl-horizontal">

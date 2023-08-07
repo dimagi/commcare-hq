@@ -2,10 +2,10 @@ from django.test import TestCase
 
 from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.tests.util import deprecated_check_user_has_case
-from casexml.apps.case.util import post_case_blocks
 
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.groups.models import Group
+from corehq.apps.hqcase.utils import submit_case_blocks
 from corehq.apps.users.models import CommCareUser
 from corehq.apps.users.util import format_username
 
@@ -50,7 +50,7 @@ class CaseSharingTest(TestCase):
                 user_id=user.user_id,
                 owner_id=owner.get_id,
             )
-            post_case_blocks([case_block], {'domain': self.domain})
+            submit_case_blocks(case_block, domain=self.domain)
             check_has_block(case_block, should_have, should_not_have)
 
         def update_and_test(case_id, owner=None, should_have=None, should_not_have=None):
@@ -59,15 +59,15 @@ class CaseSharingTest(TestCase):
                 update={'greeting': "Hello!"},
                 owner_id=owner.get_id if owner else None,
             )
-            post_case_blocks([case_block], {'domain': self.domain})
+            submit_case_blocks(case_block, domain=self.domain)
             check_has_block(case_block, should_have, should_not_have, line_by_line=False)
 
         def check_has_block(case_block, should_have, should_not_have, line_by_line=True):
             for user in should_have:
-                deprecated_check_user_has_case(self, user.to_ota_restore_user(),
+                deprecated_check_user_has_case(self, user.to_ota_restore_user(user.domain),
                     case_block, line_by_line=line_by_line)
             for user in should_not_have:
-                deprecated_check_user_has_case(self, user.to_ota_restore_user(),
+                deprecated_check_user_has_case(self, user.to_ota_restore_user(user.domain),
                     case_block, should_have=False, line_by_line=line_by_line)
 
         create_and_test(
@@ -118,14 +118,15 @@ class CaseSharingTest(TestCase):
             external_id=case_id,
             owner_id=owner_id,
             **kwargs
-        ).as_xml()
+        ).as_text()
         return case_block
 
     def get_update_block(self, case_id, owner_id=None, update=None):
         update = update or {}
+        kwargs = {'owner_id': owner_id} if owner_id else {}
         case_block = CaseBlock.deprecated_init(
             case_id=case_id,
             update=update,
-            owner_id=owner_id or CaseBlock.undefined,
-        ).as_xml()
+            **kwargs,
+        ).as_text()
         return case_block

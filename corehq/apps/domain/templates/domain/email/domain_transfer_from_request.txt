@@ -11,5 +11,5 @@ A transfer of project space has been initiated by {{ from_username }} to {{ to_u
 {% blocktrans %}
 Thanks for using our site!
 {% endblocktrans %}
--The CommCareHQ team
+-The CommCare HQ team
 

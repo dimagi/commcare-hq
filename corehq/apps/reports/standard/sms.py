@@ -466,7 +466,8 @@ class MessageLogReport(BaseCommConnectLogReport):
                 return phone_number[0:7] if phone_number[0] == "+" else phone_number[0:6]
             return phone_number
 
-        get_direction = lambda d: self._fmt_direction(d)['html']
+        def get_direction(d):
+            return self._fmt_direction(d)['html']
 
         def get_timestamp(date_):
             timestamp = ServerTime(date_).user_time(self.timezone).done()
@@ -543,7 +544,7 @@ class MessageLogReport(BaseCommConnectLogReport):
             if m.xforms_session_couch_id and not m.messaging_subevent_id
         ]
         subevents = (MessagingSubEvent.objects
-                     .filter(parent__domain=self.domain,
+                     .filter(domain=self.domain,
                              xforms_session__couch_id__in=session_ids)
                      .values_list(
                          'xforms_session__couch_id',
@@ -1432,7 +1433,7 @@ class ScheduleInstanceReport(ProjectReport, ProjectReportParametersMixin, Generi
         return format_html('<a target="_blank" href="{}">{}</a>', href, text)
 
     def get_case_display(self, case):
-        from corehq.apps.reports.views import CaseDataView
+        from corehq.apps.reports.standard.cases.case_data import CaseDataView
 
         return self.get_link_display(
             reverse(CaseDataView.urlname, args=[self.domain, case.case_id]),

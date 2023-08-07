@@ -1,5 +1,6 @@
 import collections
 import hashlib
+import re
 
 from couchdbkit import ResourceNotFound
 from django_prbac.utils import has_privilege
@@ -151,8 +152,8 @@ def get_configurable_and_static_reports(domain):
 
 
 def get_existing_reports(domain):
-    from corehq.apps.userreports.models import ReportConfiguration
-    existing_reports = ReportConfiguration.by_domain(domain)
+    from corehq.apps.userreports.dbaccessors import get_report_and_registry_report_configs_for_domain
+    existing_reports = get_report_and_registry_report_configs_for_domain(domain)
     return [
         report for report in existing_reports
         if not (report.title and report.title.startswith(TEMP_REPORT_PREFIX))
@@ -326,15 +327,31 @@ def _wrap_data_source_by_doc_type(doc, allow_deleted=False):
     }[doc_type].wrap(doc)
 
 
-def wrap_report_config_by_type(config):
+def wrap_report_config_by_type(config, allow_deleted=False):
     from corehq.apps.userreports.models import (
         ReportConfiguration,
         RegistryReportConfiguration,
     )
+    if is_deleted(config) and not allow_deleted:
+        raise ReportConfigurationNotFoundError()
+
+    doc_type = remove_deleted_doc_type_suffix(config["doc_type"])
     try:
         return {
             "ReportConfiguration": ReportConfiguration,
             "RegistryReportConfiguration": RegistryReportConfiguration,
-        }[config["doc_type"]].wrap(config)
+        }[doc_type].wrap(config)
     except KeyError:
         raise ReportConfigurationNotFoundError()
+
+
+def get_domain_for_ucr_table_name(table_name):
+    def unescape(value):
+        return value.encode('utf-8').decode('unicode-escape')
+
+    pattern = fr"(?:{UCR_TABLE_PREFIX}|{LEGACY_UCR_TABLE_PREFIX})([^_]+)"
+    match = re.match(pattern, table_name)
+    if match:
+        # double-unescape because corehq.apps.userreports.util.get_table_name escapes twice
+        return unescape(unescape(match.group(1)))
+    raise ValueError(f"Expected {table_name} to start with {UCR_TABLE_PREFIX} or {LEGACY_UCR_TABLE_PREFIX}")

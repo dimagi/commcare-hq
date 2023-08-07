@@ -1,4 +1,4 @@
-{% extends "hqwebapp/base_section.html" %}
+{% extends "hqwebapp/bootstrap3/base_section.html" %}
 {% load compress %}
 {% load i18n %}
 {% load hq_shared_tags %}
@@ -34,6 +34,7 @@
   {% initial_page_data 'pagination_limit_cookie_name' pagination_limit_cookie_name %}
   {% initial_page_data 'strong_mobile_passwords' strong_mobile_passwords %}
   {% initial_page_data 'show_deactivate_after_date' show_deactivate_after_date %}
+  {% initial_page_data 'two_stage_user_confirmation' two_stage_user_confirmation %}
   {% registerurl 'location_search' domain %}
   {% registerurl 'mobile_workers' domain %}
   {% registerurl 'edit_commcare_user' domain '---' %}
@@ -41,6 +42,7 @@
   {% registerurl 'activate_commcare_user' domain '---' %}
   {% registerurl 'deactivate_commcare_user' domain '---' %}
   {% registerurl 'send_confirmation_email' domain '---' %}
+  {% registerurl 'send_confirmation_sms' domain '---' %}
 
   <div>
     <div class="row">
@@ -58,7 +60,7 @@
             <a href="https://confluence.dimagi.com/display/commcarepublic/Create+and+Manage+CommCare+Mobile+Workers" target="_blank">Help Site</a>.
           {% endblocktrans %}
         </p>
-        {% if request|ui_notify_enabled:"MULTI_DOMAIN_DOWNLOAD_MOBILE_WORKERS" and request|toggle_enabled:"FILTERED_BULK_USER_DOWNLOAD" and request|toggle_enabled:"DOMAIN_PERMISSIONS_MIRROR" %}
+        {% if request|ui_notify_enabled:"MULTI_DOMAIN_DOWNLOAD_MOBILE_WORKERS" and request|request_has_privilege:"FILTERED_BULK_USER_DOWNLOAD" and request|toggle_enabled:"DOMAIN_PERMISSIONS_MIRROR" %}
           <div class="alert alert-ui-notify alert-dismissible helpbubble helpbubble-purple helpbubble-no-arrow fade in"
                data-slug="{{ 'MULTI_DOMAIN_DOWNLOAD_MOBILE_WORKERS'|ui_notify_slug }}"
                role="alert">
@@ -102,7 +104,13 @@
                 {% trans "Edit User Fields" %}
               </a>
             {% endif %}
-            {% if request|toggle_enabled:"FILTERED_BULK_USER_DOWNLOAD" %}
+            {% if request|toggle_enabled:"CLEAR_MOBILE_WORKER_DATA" %}
+              <a id="clear-data" class="btn btn-danger" href="{% url "clear_commcare_users" domain %}">
+                <i class="fa fa-eraser"></i>
+                {% trans "Bulk Clear Data" %}
+              </a>
+            {% endif %}
+            {% if request|request_has_privilege:"FILTERED_BULK_USER_DOWNLOAD" %}
               <a class="btn btn-danger" href="{% url "delete_commcare_users" domain %}">
                 <i class="fa fa-trash"></i>
                 {% trans "Bulk Delete Users" %}
@@ -268,14 +276,6 @@
                         params="value: query,
                                             action: function() { goToPage(1); },
                                             placeholder: '{% trans_html_attr "Search Workers..." %}'"></search-box>
-            <p class="help-block">
-              <i class="fa fa-info-circle"></i>
-              {% blocktrans %}
-                Search any text, or use a targeted query. For more info see the <a
-                      href='https://wiki.commcarehq.org/display/commcarepublic/Create+and+Manage+CommCare+Mobile+Workers#CreateandManageCommCareMobileWorkers-SearchforMobileWorkers'
-                      target='_blank'>Mobile Workers</a> help page
-              {% endblocktrans %}
-            </p>
           </div>
           <div class="col-sm-6">
             <button type="button" class="btn btn-default pull-right"
@@ -321,7 +321,7 @@
             <th class="col-xs-3">{% trans "First Name" %}</th>
             <th class="col-xs-2">{% trans "Last Name" %}</th>
             <th class="col-xs-2">{% trans 'Date Registered' %}</th>
-            {% if request|toggle_enabled:"TWO_STAGE_USER_PROVISIONING" %}
+            {% if two_stage_user_confirmation %}
             <th class="col-xs-2" data-bind="visible: deactivatedOnly()">{% trans 'Status' %}</th>
             {% endif %}
             {% if not request.is_view_only %}<th class="col-xs-2">{% trans 'Action' %}</th>{% endif %}
@@ -338,12 +338,12 @@
             <td data-bind="text: first_name"></td>
             <td data-bind="text: last_name"></td>
             <td data-bind="text: date_registered"></td>
-            {% if request|toggle_enabled:"TWO_STAGE_USER_PROVISIONING" %}
+            {% if two_stage_user_confirmation %}
             <td data-bind="text: status, visible: $root.deactivatedOnly()"></td>
             {% endif %}
             {% if not request.is_view_only %}
               <td>
-                {% if request|toggle_enabled:"TWO_STAGE_USER_PROVISIONING" %}
+                {% if two_stage_user_confirmation %}
                 {% comment %}
                 This block should work regardless of feature flag status, but putting it behind the flag
                 to minimize the chance of any regressions.
@@ -359,10 +359,17 @@
                   </p>
                 </div>
                 <div data-bind="visible: !is_active() && !is_account_confirmed()">
+                  {% if request|toggle_enabled:"TWO_STAGE_USER_PROVISIONING" %}
                   <button type="button" class="btn btn-default" data-toggle="modal"
                           data-bind="attr: {'data-target': '#confirm_' + user_id()}">
                     {% trans "Send Confirmation Email" %}
                   </button>
+                  {% else %}
+                  <button type="button" class="btn btn-default" data-toggle="modal"
+                          data-bind="attr: {'data-target': '#confirm_' + user_id()}">
+                    {% trans "Send Confirmation SMS" %}
+                  </button>
+                  {% endif %}
                   <p data-bind="visible: action_error">
                     <i class="fa fa-exclamation-triangle"></i>
                     <span data-bind="text: action_error"></span>
@@ -474,7 +481,7 @@
                     </div>
                   </div>
                 </div>
-                {% if request|toggle_enabled:"TWO_STAGE_USER_PROVISIONING" %}
+                {% if two_stage_user_confirmation %}
                 <div class="modal fade" data-bind="attr: {id: 'confirm_' + user_id()}">
                   <div class="modal-dialog">
                     <div class="modal-content">
@@ -487,29 +494,51 @@
                       </div>
                       <div class="modal-body">
                         <p class="lead">
-                          {% blocktrans %}
-                            Would you like to send the account confirmation email to this account?
-                          {% endblocktrans %}
+                          {% if request|toggle_enabled:"TWO_STAGE_USER_PROVISIONING" %}
+                            {% blocktrans %}
+                              Would you like to send the account confirmation
+                              email to this account?
+                            {% endblocktrans %}
+                          {% else %}
+                            {% blocktrans %}
+                              Would you like to send the account confirmation
+                              SMS to this account?
+                            {% endblocktrans %}
+                          {% endif %}
                         </p>
                         <p class="lead">
                           <i class="fa fa-user"></i>
                           <strong data-bind="text: username"></strong>
                         </p>
                         <p>
-                          {% blocktrans %}
-                            The user will be sent an email with instructions to
-                            set a password and be able to login to this project.
-                          {% endblocktrans %}
+                          {% if request|toggle_enabled:"TWO_STAGE_USER_PROVISIONING" %}
+                            {% blocktrans %}
+                              The user will be sent an email with instructions to
+                              set a password and be able to login to this project.
+                            {% endblocktrans %}
+                          {% else %}
+                            {% blocktrans %}
+                              The user will be sent a SMS with instructions to
+                              set a password and be able to login to this project.
+                            {% endblocktrans %}
+                          {% endif %}
                         </p>
                       </div>
                       <div class="modal-footer">
                         <button type="button" class="btn btn-default" data-dismiss="modal">
                           {% trans "Cancel" %}
                         </button>
-                        <button type="button" class="btn btn-primary"
-                                data-bind="click: sendConfirmationEmail">
-                          {% trans 'Send Account Confirmaton Email' %}
-                        </button>
+                        {% if request|toggle_enabled:"TWO_STAGE_USER_PROVISIONING" %}
+                          <button type="button" class="btn btn-primary"
+                                  data-bind="click: sendConfirmationEmail">
+                            {% trans 'Send Account Confirmaton Email' %}
+                          </button>
+                        {% else %}
+                          <button type="button" class="btn btn-primary"
+                                  data-bind="click: sendConfirmationSMS">
+                            {% trans 'Send Account Confirmaton SMS' %}
+                          </button>
+                        {% endif %}
                       </div>
                     </div>
                   </div>

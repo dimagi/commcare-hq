@@ -3,18 +3,21 @@ import datetime
 from django.conf import settings
 
 from celery.schedules import crontab
-from celery.task import periodic_task, task
 from celery.utils.log import get_task_logger
 
 from dimagi.utils.chunked import chunked
 from dimagi.utils.dates import DateSpan
 
+from corehq.apps.celery import periodic_task, task
 from corehq.apps.data_analytics.gir_generator import GIRTableGenerator
 from corehq.apps.data_analytics.malt_generator import generate_malt
+from corehq.apps.data_analytics.util import (
+    last_month_datespan,
+    last_month_dict,
+)
 from corehq.apps.domain.models import Domain
 from corehq.util.log import send_HTML_email
 from corehq.util.soft_assert import soft_assert
-from corehq.apps.data_analytics.util import last_month_dict, last_month_datespan
 
 logger = get_task_logger(__name__)
 
@@ -24,14 +27,8 @@ logger = get_task_logger(__name__)
 def build_last_month_MALT():
     last_month = last_month_dict()
     domains = Domain.get_all_names()
-    task_results = []
     for chunk in chunked(domains, 1000):
-        task_results.append(update_malt.delay(last_month, chunk))
-
-    for result in task_results:
-        result.get(disable_sync_subtasks=False)
-
-    send_MALT_complete_email(last_month)
+        update_malt.delay(last_month, chunk)
 
 
 @periodic_task(queue=settings.CELERY_PERIODIC_QUEUE, run_every=crontab(hour=2, minute=0, day_of_week='*'),
@@ -72,17 +69,3 @@ def build_last_month_GIR():
 def update_malt(month_dict, domains):
     month = DateSpan.from_month(month_dict['month'], month_dict['year'])
     generate_malt([month], domains=domains)
-
-
-def send_MALT_complete_email(month_dict):
-    month = DateSpan.from_month(month_dict['month'], month_dict['year'])
-    message = 'MALT generation for month {} is now ready. To download go to'\
-              ' http://www.commcarehq.org/hq/admin/download_malt/'.format(
-                  month
-              )
-    send_HTML_email(
-        'MALT is ready',
-        settings.DATA_EMAIL,
-        message,
-        text_content=message
-    )

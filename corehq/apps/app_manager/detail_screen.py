@@ -11,7 +11,6 @@ from corehq.apps.app_manager.xpath import (
     LocationXpath,
     UsercaseXPath,
     XPath,
-    dot_interpolate,
 )
 from corehq.apps.hqmedia.models import CommCareMultimedia
 
@@ -36,6 +35,8 @@ def get_column_generator(app, module, detail, column, sort_element=None,
 
 def get_class_for_format(slug):
     return get_class_for_format._format_map.get(slug, FormattedDetailColumn)
+
+
 get_class_for_format._format_map = {}
 
 
@@ -56,6 +57,8 @@ def get_column_xpath_generator(app, module, detail, column):
 
 def get_class_for_type(slug):
     return get_class_for_type._type_map.get(slug, BaseXpathGenerator)
+
+
 get_class_for_type._type_map = {}
 
 
@@ -157,8 +160,8 @@ class FormattedDetailColumn(object):
 
     @property
     def sort_node(self):
-        if not (self.app.enable_multi_sort and
-                (self.detail.display == 'short' or self.has_sort_node_for_nodeset_column())
+        if not (self.app.enable_multi_sort
+                and (self.detail.display == 'short' or self.has_sort_node_for_nodeset_column())
                 ):
             return
 
@@ -348,7 +351,8 @@ class TimeAgo(FormattedDetailColumn):
 
 @register_format_type('distance')
 class Distance(FormattedDetailColumn):
-    XPATH_FUNCTION = "if(here() = '' or {xpath} = '', '', concat(round(distance({xpath}, here()) div 100) div 10, ' km'))"
+    XPATH_FUNCTION = \
+        "if(here() = '' or {xpath} = '', '', concat(round(distance({xpath}, here()) div 100) div 10, ' km'))"
     SORT_XPATH_FUNCTION = "if({xpath} = '', 2147483647, round(distance({xpath}, here())))"
     SORT_TYPE = 'double'
 
@@ -508,14 +512,17 @@ class Markdown(FormattedDetailColumn):
 
     @property
     def template_form(self):
-        if self.detail.display == 'long':
-            return 'markdown'
+        return 'markdown'
 
 
 @register_format_type('address')
 class Address(HideShortColumn):
     template_form = 'address'
-    template_width = 0
+
+
+@register_format_type('address-popup')
+class AddressPopup(HideShortColumn):
+    template_form = 'address-popup'
 
 
 @register_format_type('picture')

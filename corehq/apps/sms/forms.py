@@ -35,9 +35,11 @@ from corehq.apps.hqwebapp.fields import MultiEmailField
 from corehq.apps.hqwebapp.widgets import SelectToggle
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.reminders.forms import validate_time
+from corehq.apps.sms.mixin import BadSMSConfigException
 from corehq.apps.sms.models import SQLMobileBackend
 from corehq.apps.sms.util import (
     ALLOWED_SURVEY_DATE_FORMATS,
+    clean_phone_number,
     get_sms_backend_classes,
     is_superuser_or_contractor,
     validate_phone_number,
@@ -897,7 +899,7 @@ class BackendForm(Form):
     )
     description = CharField(
         label=gettext_noop("Description"),
-        widget=forms.Textarea,
+        widget=forms.Textarea(attrs={"class": "vertical-resize"}),
         required=False,
     )
     give_other_domains_access = BooleanField(
@@ -1295,9 +1297,10 @@ class SubscribeSMSForm(Form):
 
 class ComposeMessageForm(forms.Form):
 
-    recipients = forms.CharField(widget=forms.Textarea,
+    recipients = forms.CharField(widget=forms.Textarea(attrs={"class": "vertical-resize"}),
                                  help_text=gettext_lazy("Type a username, group name or 'send to all'"))
-    message = forms.CharField(widget=forms.Textarea, help_text=gettext_lazy('0 characters (160 max)'))
+    message = forms.CharField(widget=forms.Textarea(attrs={"class": "vertical-resize"}),
+    help_text=gettext_lazy('0 characters (160 max)'))
 
     def __init__(self, *args, **kwargs):
         domain = kwargs.pop('domain')
@@ -1315,3 +1318,71 @@ class ComposeMessageForm(forms.Form):
                 ),
             ),
         )
+
+
+class SentTestSmsForm(Form):
+    phone_number = CharField(
+        required=True, help_text=gettext_lazy("Phone number with country code"))
+    message = CharField(widget=forms.Textarea(attrs={"class": "vertical-resize"}), required=True)
+    backend_id = ChoiceField(
+        label=gettext_lazy("Gateway"),
+        required=False
+    )
+    claim_channel = BooleanField(
+        label=gettext_lazy("Attempt to claim the channel for this number."),
+        required=False,
+    )
+
+    def __init__(self, *args, **kwargs):
+        backends = kwargs.pop('backends')
+        self.domain = kwargs.pop('domain')
+        super(SentTestSmsForm, self).__init__(*args, **kwargs)
+        self.set_backend_choices(backends)
+        self.setup_crispy()
+
+    def set_backend_choices(self, backends):
+        backend_choices = [('', _("(none)"))]
+        backend_choices.extend([
+            (backend.couch_id, backend.name) for backend in backends
+        ])
+        self.fields['backend_id'].choices = backend_choices
+
+    def setup_crispy(self):
+        fields = [
+            crispy.Field('phone_number'),
+            crispy.Field('message', rows=2),
+            crispy.Field('backend_id'),
+        ]
+        if toggles.ONE_PHONE_NUMBER_MULTIPLE_CONTACTS.enabled(self.domain):
+            fields.append(hqcrispy.FieldWithHelpBubble(
+                "claim_channel",
+                help_bubble_text=_("Use this option if the phone number is used by multiple projects "
+                                   "and is currently claimed by another project or the default owner of "
+                                   "the number is a different project."),
+            ))
+        fields.append(hqcrispy.FormActions(
+            twbscrispy.StrictButton(
+                _("Send Message"),
+                type="submit",
+                css_class="btn-primary",
+            ),
+        ))
+        self.helper = HQFormHelper()
+        self.helper.layout = crispy.Layout(*fields)
+
+    def clean_phone_number(self):
+        phone_number = clean_phone_number(self.cleaned_data['phone_number'])
+        validate_phone_number(phone_number)
+        return phone_number
+
+    def clean_backend_id(self):
+        backend_id = self.cleaned_data['backend_id']
+        try:
+            backend = SQLMobileBackend.load(backend_id, is_couch_id=True)
+        except (BadSMSConfigException, SQLMobileBackend.DoesNotExist):
+            backend = None
+
+        if not backend or not backend.domain_is_authorized(self.domain):
+            raise ValidationError("Invalid backend choice")
+
+        return backend.couch_id

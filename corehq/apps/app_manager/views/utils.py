@@ -1,13 +1,13 @@
 import json
 import time
-from collections import defaultdict
+from collections import Counter, defaultdict
 from contextlib import contextmanager
 from copy import deepcopy
-from functools import partial
+from functools import partial, wraps
+from lxml import etree
 
-from django.conf import settings
 from django.contrib import messages
-from django.http import Http404, HttpResponseRedirect
+from django.http import Http404, HttpResponseRedirect, JsonResponse
 from django.template.loader import render_to_string
 from django.urls import reverse
 from django.utils.text import slugify
@@ -25,13 +25,16 @@ from corehq.apps.app_manager.decorators import require_deploy_apps
 from corehq.apps.app_manager.exceptions import (
     AppEditingError,
     AppLinkError,
+    AppMisconfigurationError,
     FormNotFoundException,
     ModuleNotFoundException,
     MultimediaMissingError,
 )
 from corehq.apps.app_manager.models import (
     Application,
+    CustomAssertion,
     CustomIcon,
+    ShadowFormEndpoint,
     ShadowModule,
     enable_usercase_if_necessary,
 )
@@ -45,7 +48,7 @@ from corehq.apps.linked_domain.exceptions import (
 )
 from corehq.apps.linked_domain.models import AppLinkDetail
 from corehq.apps.linked_domain.util import pull_missing_multimedia_for_app
-from corehq.apps.userreports.dbaccessors import get_report_configs_for_domain
+from corehq.apps.userreports.dbaccessors import get_report_and_registry_report_configs_for_domain
 from corehq.apps.userreports.util import get_static_report_mapping
 from corehq.util.metrics import metrics_gauge, metrics_histogram_timer
 
@@ -123,7 +126,7 @@ def get_langs(request, app):
 
 
 def set_lang_cookie(response, lang):
-    response.set_cookie('lang', lang, secure=settings.SECURE_COOKIES)
+    response.set_cookie('lang', lang)
 
 
 def bail(request, domain, app_id, not_found=""):
@@ -146,7 +149,7 @@ def validate_langs(request, existing_langs):
     # assert that no lang is renamed to an already existing lang
     for old, new in rename.items():
         if old != new:
-            assert(new not in existing_langs)
+            assert (new not in existing_langs)
 
     return (langs, rename)
 
@@ -168,7 +171,7 @@ def overwrite_app(app, master_build, report_map=None):
     excluded_fields = set(Application._meta_fields).union([
         'date_created', 'build_profiles', 'copy_history', 'copy_of',
         'name', 'comment', 'doc_type', '_LAZY_ATTACHMENTS', 'practice_mobile_worker_id',
-        'custom_base_url', 'family_id',
+        'custom_base_url', 'family_id', 'multimedia_map',
     ])
     master_json = master_build.to_json()
     app_json = app.to_json()
@@ -179,6 +182,7 @@ def overwrite_app(app, master_build, report_map=None):
     app_json['version'] = app_json.get('version', 1)
     app_json['upstream_version'] = master_json['version']
     app_json['upstream_app_id'] = master_json['copy_of']
+    app_json['multimedia_map'] = _update_multimedia_map(app_json['multimedia_map'], master_json['multimedia_map'])
     wrapped_app = wrap_app(app_json)
     for module in wrapped_app.get_report_modules():
         if report_map is None:
@@ -198,12 +202,25 @@ def overwrite_app(app, master_build, report_map=None):
     wrapped_app = _update_forms(wrapped_app, master_build, ids_map)
 
     # Multimedia versions should be set based on the linked app's versions, not those of the master app.
-    for path in wrapped_app.multimedia_map.keys():
-        wrapped_app.multimedia_map[path].version = None
     wrapped_app.set_media_versions()
 
     enable_usercase_if_necessary(wrapped_app)
     return wrapped_app
+
+
+def _update_multimedia_map(old_map, new_map):
+    """
+    Compares incoming and current multimedia map items and returns a new map with each:
+    - old map item where it was previously copied from this same incoming item
+    - new map item otherwise
+    - version removed, because it should be set based on the downstream app
+    """
+    for path in new_map:
+        new_map[path]['upstream_media_id'] = None
+        if path in old_map and old_map[path].get('upstream_media_id') == new_map[path]['multimedia_id']:
+            new_map[path] = old_map[path]
+        new_map[path]['version'] = None
+    return new_map
 
 
 def _update_forms(app, master_app, ids_map):
@@ -283,7 +300,7 @@ def handle_custom_icon_edits(request, form_or_module, lang):
         if icon_form:
             # validate that only of either text or xpath should be present
             if (icon_text_body and icon_xpath) or (not icon_text_body and not icon_xpath):
-                return _("Please enter either text body or xpath for custom icon")
+                raise AppMisconfigurationError(_("Please enter either text body or xpath for custom icon"))
 
             # a form should have just one custom icon for now
             # so this just adds a new one with params or replaces the existing one with new params
@@ -357,7 +374,7 @@ def update_linked_app(app, master_app_id_or_build, user_id):
         report_map = get_static_report_mapping(master_build.domain, app['domain'])
         report_map.update({
             c.report_meta.master_id: c._id
-            for c in get_report_configs_for_domain(app.domain)
+            for c in get_report_and_registry_report_configs_for_domain(app.domain)
             if c.report_meta.master_id
         })
 
@@ -488,7 +505,8 @@ MODULE_BASE_PROPERTIES_TO_COPY = [
 
 
 def handle_shadow_child_modules(app, shadow_parent):
-    """Creates or deletes shadow child modules if the parent module requires
+    """If we have a shadow module whose source module is a parent, this
+    function will automatically create shadows of the source module's child modules.
 
     Used primarily when changing the "source module id" of a shadow module
     """
@@ -571,38 +589,97 @@ def handle_shadow_child_modules(app, shadow_parent):
     return changes
 
 
-class InvalidSessionEndpoint(Exception):
-    pass
-
-
-def set_session_endpoint(module_or_form, raw_endpoint_id, app):
+def get_cleaned_session_endpoint_id(raw_endpoint_id):
     raw_endpoint_id = raw_endpoint_id.strip()
     cleaned_id = slugify(raw_endpoint_id)
     if cleaned_id != raw_endpoint_id:
-        raise InvalidSessionEndpoint(_(
+        raise AppMisconfigurationError(_(
             "'{invalid_id}' is not a valid session endpoint ID. It must contain only "
             "lowercase letters, numbers, underscores, and hyphens. Try {valid_id}."
         ).format(invalid_id=raw_endpoint_id, valid_id=cleaned_id))
 
+    return cleaned_id
+
+
+def get_cleaned_and_deduplicated_session_endpoint_id(module_or_form, raw_endpoint_id, app):
+    cleaned_id = get_cleaned_session_endpoint_id(raw_endpoint_id)
+
     if _is_duplicate_endpoint_id(cleaned_id, module_or_form.session_endpoint_id, app):
-        raise InvalidSessionEndpoint(_(
+        raise AppMisconfigurationError(_(
             "Session endpoint IDs must be unique. '{endpoint_id}' is already in-use"
         ).format(endpoint_id=cleaned_id))
+    return cleaned_id
 
+
+def set_session_endpoint(module_or_form, raw_endpoint_id, app):
+    cleaned_id = get_cleaned_and_deduplicated_session_endpoint_id(module_or_form, raw_endpoint_id, app)
     module_or_form.session_endpoint_id = cleaned_id
+
+
+def set_shadow_module_and_form_session_endpoint(
+    shadow_module,
+    raw_endpoint_id,
+    form_session_endpoints,
+    app
+):
+    cleaned_module_session_endpoint_id = \
+        get_cleaned_session_endpoint_id(raw_endpoint_id)
+    cleaned_form_session_endpoint_ids = \
+        [get_cleaned_session_endpoint_id(m['session_endpoint_id']) for m in form_session_endpoints]
+
+    duplicate_ids = _duplicate_endpoint_ids(
+        cleaned_module_session_endpoint_id, cleaned_form_session_endpoint_ids, shadow_module.unique_id, app)
+
+    if len(duplicate_ids) > 0:
+        duplicates = ", ".join([f"'{d}'" for d in duplicate_ids])
+        raise AppMisconfigurationError(_(
+            f"Session endpoint IDs must be unique. {duplicates} are used multiple times"
+        ).format(duplicates=duplicates))
+
+    shadow_module.session_endpoint_id = raw_endpoint_id
+    shadow_module.form_session_endpoints = [
+        ShadowFormEndpoint(form_id=m['form_id'], session_endpoint_id=m['session_endpoint_id'])
+        for m in form_session_endpoints if m['session_endpoint_id']
+    ]
+
+
+def set_case_list_session_endpoint(module, raw_endpoint_id, app):
+    cleaned_id = get_cleaned_and_deduplicated_session_endpoint_id(module, raw_endpoint_id, app)
+    module.case_list_session_endpoint_id = cleaned_id
 
 
 def _is_duplicate_endpoint_id(new_id, old_id, app):
     if not new_id or new_id == old_id:
         return False
 
-    all_endpoint_ids = []
-    for module in app.modules:
-        all_endpoint_ids.append(module.session_endpoint_id)
-        for form in module.get_suite_forms():
-            all_endpoint_ids.append(form.session_endpoint_id)
+    duplicates = _duplicate_endpoint_ids(new_id, [], None, app)
+    return len(duplicates) > 0
 
-    return new_id in all_endpoint_ids
+
+def _duplicate_endpoint_ids(new_session_endpoint_id, new_form_session_endpoint_ids, module_id, app):
+    all_endpoint_ids = []
+
+    def append_endpoint(endpoint_id):
+        if endpoint_id and endpoint_id != '':
+            all_endpoint_ids.append(endpoint_id)
+
+    append_endpoint(new_session_endpoint_id)
+    for endpoint in new_form_session_endpoint_ids:
+        append_endpoint(endpoint)
+
+    for module in app.modules:
+        if module.unique_id != module_id:
+            append_endpoint(module.session_endpoint_id)
+            if module.module_type != "shadow":
+                for form in module.get_suite_forms():
+                    append_endpoint(form.session_endpoint_id)
+            else:
+                for m in module.form_session_endpoints:
+                    append_endpoint(m.session_endpoint_id)
+
+    duplicates = [k for k, v in Counter(all_endpoint_ids).items() if v > 1]
+
+    return duplicates
 
 
 @contextmanager
@@ -627,3 +704,46 @@ def report_build_time(domain, app_id, build_type):
             "app_id": app_id,
             "build_type": build_type,
         })
+
+
+def validate_custom_assertions(custom_assertions_string, existing_assertions, lang):
+    assertions = json.loads(custom_assertions_string)
+    try:  # validate that custom assertions can be added into the XML
+        for assertion in assertions:
+            if (len(assertion['test']) == 0):
+                raise AppMisconfigurationError(_("Custom assertions must not be blank."))
+            if (len(assertion['text']) == 0):
+                raise AppMisconfigurationError(_("Please add a message for assertion."))
+            etree.fromstring(
+                '<assertion test="{test}"><text><locale id="abc.def"/>{text}</text></assertion>'.format(
+                    **assertion
+                )
+            )
+    except etree.XMLSyntaxError as error:
+        raise AppMisconfigurationError(_("There was an issue with your custom assertions: {}").format(error))
+
+    existing_assertions = {assertion.test: assertion for assertion in existing_assertions}
+    new_assertions = []
+    for assertion in assertions:
+        try:
+            new_assertion = existing_assertions[assertion.get('test')]
+            new_assertion.text[lang] = assertion.get('text')
+        except KeyError:
+            new_assertion = CustomAssertion(
+                test=assertion.get('test'),
+                text={lang: assertion.get('text')}
+            )
+        new_assertions.append(new_assertion)
+
+    return new_assertions
+
+
+def capture_user_errors(view_fn):
+    """Catches AppMisconfigurationError and returns the message as a 400"""
+    @wraps(view_fn)
+    def inner(request, *args, **kwargs):
+        try:
+            return view_fn(request, *args, **kwargs)
+        except AppMisconfigurationError as e:
+            return JsonResponse({'message': str(e)}, status=400)
+    return inner

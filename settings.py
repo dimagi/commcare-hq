@@ -35,7 +35,7 @@ DISABLE_RANDOM_TOGGLES = UNIT_TESTING
 # Setting to declare always_enabled/always_disabled toggle states for domains
 #   declaring toggles here avoids toggle lookups from cache for all requests.
 #   Example format
-#   STATIC_TOGGLES_STATES = {
+#   STATIC_TOGGLE_STATES = {
 #     'toggle_slug': {
 #         'always_enabled': ['domain1', 'domain2],
 #         'always_disabled': ['domain4', 'domain3],
@@ -168,6 +168,9 @@ MIDDLEWARE = [
     'no_exceptions.middleware.NoExceptionsMiddleware',
     'corehq.apps.locations.middleware.LocationAccessMiddleware',
     'corehq.apps.cloudcare.middleware.CloudcareMiddleware',
+    # middleware that adds cookies must come before SecureCookiesMiddleware
+    'corehq.middleware.SecureCookiesMiddleware',
+    'field_audit.middleware.FieldAuditMiddleware',
 ]
 
 X_FRAME_OPTIONS = 'DENY'
@@ -178,8 +181,8 @@ SESSION_ENGINE = "django.contrib.sessions.backends.cache"
 INACTIVITY_TIMEOUT = 60 * 24 * 14
 SECURE_TIMEOUT = 30
 DISABLE_AUTOCOMPLETE_ON_SENSITIVE_FORMS = False
-ENABLE_DRACONIAN_SECURITY_FEATURES = False
 MINIMUM_ZXCVBN_SCORE = 2
+MINIMUM_PASSWORD_LENGTH = 8
 CUSTOM_PASSWORD_STRENGTH_MESSAGE = ''
 ADD_CAPTCHA_FIELD_TO_FORMS = False
 
@@ -218,6 +221,7 @@ DEFAULT_APPS = (
     'captcha',
     'couchdbkit.ext.django',
     'crispy_forms',
+    'field_audit',
     'gunicorn',
     'compressor',
     'tastypie',
@@ -242,12 +246,16 @@ CRISPY_ALLOWED_TEMPLATE_PACKS = (
     'bootstrap3',
 )
 
+FIELD_AUDIT_AUDITORS = [
+    "corehq.apps.users.auditors.HQAuditor",
+    "field_audit.auditors.SystemUserAuditor",
+]
+
 HQ_APPS = (
     'django_digest',
     'corehq.apps.auditcare.AuditcareConfig',
     'casexml.apps.case',
     'corehq.apps.casegroups',
-    'corehq.apps.case_migrations',
     'casexml.apps.phone',
     'casexml.apps.stock',
     'corehq.apps.cleanup',
@@ -281,7 +289,7 @@ HQ_APPS = (
     'corehq.sql_accessors',
     'corehq.sql_proxy_accessors',
     'corehq.sql_proxy_standby_accessors',
-    'corehq.pillows.app_config.PillowsAppConfig',
+    'corehq.pillows',
     'couchforms',
     'couchexport',
     'dimagi.utils',
@@ -293,7 +301,7 @@ HQ_APPS = (
     'corehq.apps.custom_data_fields',
     'corehq.apps.receiverwrapper',
     'corehq.apps.app_manager.AppManagerAppConfig',
-    'corehq.apps.es',
+    'corehq.apps.es.app_config.ElasticAppConfig',
     'corehq.apps.fixtures',
     'corehq.apps.case_importer',
     'corehq.apps.reminders',
@@ -305,6 +313,8 @@ HQ_APPS = (
     'corehq.apps.groups',
     'corehq.apps.mobile_auth',
     'corehq.apps.sms',
+    'corehq.apps.events',
+    'corehq.apps.geospatial',
     'corehq.apps.smsforms',
     'corehq.apps.sso',
     'corehq.apps.ivr',
@@ -364,6 +374,7 @@ HQ_APPS = (
     'corehq.motech.fhir',
     'corehq.motech.openmrs',
     'corehq.motech.repeaters',
+    'corehq.motech.generic_inbound',
     'corehq.toggles',
     'corehq.util',
     'dimagi.ext',
@@ -380,7 +391,6 @@ HQ_APPS = (
 
     'custom.common',
 
-    'custom.nic_compliance',
     'custom.hki',
     'custom.champ',
     'custom.covid',
@@ -388,6 +398,7 @@ HQ_APPS = (
     'custom.onse',
     'custom.nutrition_project',
     'custom.cowin.COWINAppConfig',
+    'custom.hmhb',
 
     'custom.ccqa',
 
@@ -439,7 +450,7 @@ SOIL_HEARTBEAT_CACHE_KEY = "django-soil-heartbeat"
 ####### Shared/Global/UI Settings #######
 
 # restyle some templates
-BASE_TEMPLATE = "hqwebapp/base_navigation.html"
+BASE_TEMPLATE = "hqwebapp/bootstrap3/base_navigation.html"
 BASE_ASYNC_TEMPLATE = "reports/async/basic.html"
 LOGIN_TEMPLATE = "login_and_password/login.html"
 LOGGEDOUT_TEMPLATE = LOGIN_TEMPLATE
@@ -515,12 +526,6 @@ USER_REPORTING_METADATA_BATCH_SCHEDULE = {'timedelta': {'minutes': 5}}
 
 
 BASE_ADDRESS = 'localhost:8000'
-J2ME_ADDRESS = ''
-
-# Set this if touchforms can't access HQ via the public URL e.g. if using a self signed cert
-# Should include the protocol.
-# If this is None, get_url_base() will be used
-CLOUDCARE_BASE_URL = None
 
 PAGINATOR_OBJECTS_PER_PAGE = 15
 PAGINATOR_MAX_PAGE_LINKS = 5
@@ -584,7 +589,9 @@ CELERY_TASK_SOFT_TIME_LIMIT = 86400 * 2  # 2 days in seconds
 # Keep messages in the events queue only for 2 hours
 CELERY_EVENT_QUEUE_TTL = 2 * 60 * 60
 
-CELERY_TASK_SERIALIZER = 'json'  # Default value in celery 4.x
+# Default serializer should be changed back to 'json' after
+# https://github.com/celery/celery/issues/6759 is fixed
+CELERY_TASK_SERIALIZER = 'pickle'  # this value is ignored in commcare hq code, which will continue to default to json. it is used only for the celery inspect module". See corehq.apps.celery.shared_task
 CELERY_ACCEPT_CONTENT = ['json', 'pickle']  # Defaults to ['json'] in celery 4.x.  Remove once pickle is not used.
 
 # in seconds
@@ -692,8 +699,6 @@ REMINDERS_QUEUE_STALE_REMINDER_DURATION = 7 * 24
 REMINDERS_RATE_LIMIT_COUNT = 30
 REMINDERS_RATE_LIMIT_PERIOD = 60
 
-SYNC_CASE_FOR_MESSAGING_ON_SAVE = True
-
 # Used by the new reminders framework
 LOCAL_AVAILABLE_CUSTOM_SCHEDULING_CONTENT = {}
 AVAILABLE_CUSTOM_SCHEDULING_CONTENT = {
@@ -773,7 +778,7 @@ AUDIT_ADMIN_VIEWS = False
 ANALYTICS_IDS = {
     'GOOGLE_ANALYTICS_API_ID': '',
     'KISSMETRICS_KEY': '',
-    'HUBSPOT_API_KEY': '',
+    'HUBSPOT_ACCESS_TOKEN': '',
     'HUBSPOT_API_ID': '',
     'GTM_ID': '',
     'DRIFT_ID': '',
@@ -802,11 +807,6 @@ RUN_FORM_META_PILLOW = True
 RUN_CASE_SEARCH_PILLOW = True
 RUN_UNKNOWN_USER_PILLOW = True
 RUN_DEDUPLICATION_PILLOW = True
-
-# Set to True to remove the `actions` and `xform_id` fields from the
-# ES Case index. These fields contribute high load to the shard
-# databases.
-CASE_ES_DROP_FORM_FIELDS = False
 
 # Repeaters in the order in which they should appear in "Data Forwarding"
 REPEATER_CLASSES = [
@@ -856,6 +856,30 @@ ELASTICSEARCH_MAJOR_VERSION = 2
 # If elasticsearch queries take more than this, they result in timeout errors
 ES_SEARCH_TIMEOUT = 30
 
+# The variables should be used while reindexing an index.
+# When the variables are set to true the data will be written to both primary and secondary indexes.
+
+ES_APPS_INDEX_MULTIPLEXED = False
+ES_CASE_SEARCH_INDEX_MULTIPLEXED = False
+ES_CASES_INDEX_MULTIPLEXED = False
+ES_DOMAINS_INDEX_MULTIPLEXED = False
+ES_FORMS_INDEX_MULTIPLEXED = False
+ES_GROUPS_INDEX_MULTIPLEXED = False
+ES_SMS_INDEX_MULTIPLEXED = False
+ES_USERS_INDEX_MULTIPLEXED = False
+
+
+# Setting the variable to True would mean that the primary index would become secondary and vice-versa
+# This should only be set to True after successfully running and verifying migration command on a particular index. 
+ES_APPS_INDEX_SWAPPED = False
+ES_CASE_SEARCH_INDEX_SWAPPED = False
+ES_CASES_INDEX_SWAPPED = False
+ES_DOMAINS_INDEX_SWAPPED = False
+ES_FORMS_INDEX_SWAPPED = False
+ES_GROUPS_INDEX_SWAPPED = False
+ES_SMS_INDEX_SWAPPED = False
+ES_USERS_INDEX_SWAPPED = False
+
 BITLY_OAUTH_TOKEN = None
 
 OAUTH2_PROVIDER_ACCESS_TOKEN_MODEL = 'oauth2_provider.AccessToken'
@@ -901,6 +925,7 @@ DIGEST_LOGIN_FACTORY = 'django_digest.NoEmailLoginFactory'
 # Django Compressor
 COMPRESS_PRECOMPILERS = AVAILABLE_COMPRESS_PRECOMPILERS = (
     ('text/less', 'corehq.apps.hqwebapp.precompilers.LessFilter'),
+    ('text/scss', 'corehq.apps.hqwebapp.precompilers.SassFilter'),
 )
 # if not overwritten in localsettings, these will be replaced by the value they return
 # using the local DEBUG value (which we don't have access to here yet)
@@ -910,13 +935,18 @@ COMPRESS_FILTERS = {
     'css': [
         'compressor.filters.css_default.CssAbsoluteFilter',
         'compressor.filters.cssmin.rCSSMinFilter',
-    ]
+    ],
+    'js': [
+        'compressor.filters.jsmin.rJSMinFilter',
+    ],
 }
 
 LESS_B3_PATHS = {
     'variables': '../../../hqwebapp/less/_hq/includes/variables',
     'mixins': '../../../hqwebapp/less/_hq/includes/mixins',
 }
+
+BOOTSTRAP_MIGRATION_LOGS_DIR = None
 
 USER_AGENTS_CACHE = 'default'
 
@@ -1023,9 +1053,15 @@ SENTRY_PROJECT_SLUG = 'commcarehq'
 # used for creating releases and deploys
 SENTRY_API_KEY = None
 
-OBFUSCATE_PASSWORD_FOR_NIC_COMPLIANCE = False
-RESTRICT_USED_PASSWORDS_FOR_NIC_COMPLIANCE = False
 DATA_UPLOAD_MAX_MEMORY_SIZE = None
+
+# 10MB max upload size - applied to specific views
+# consider migrating to `DATA_UPLOAD_MAX_MEMORY_SIZE` which is universally applied
+MAX_UPLOAD_SIZE = 10 * 1024 * 1024
+
+# Size limit on attachment other than the xml form.
+MAX_UPLOAD_SIZE_ATTACHMENT = 15 * 1024 * 1024
+
 # Exports use a lot of fields to define columns. See: https://dimagi-dev.atlassian.net/browse/HI-365
 DATA_UPLOAD_MAX_NUMBER_FIELDS = 5000
 
@@ -1039,8 +1075,6 @@ ASYNC_INDICATOR_QUEUE_TIMES = None
 DAYS_TO_KEEP_DEVICE_LOGS = 60
 NO_DEVICE_LOG_ENVS = list(ICDS_ENVS) + ['production']
 
-UCR_COMPARISONS = {}
-
 MAX_RULE_UPDATES_IN_ONE_RUN = 10000
 RULE_UPDATE_HOUR = 0
 
@@ -1052,10 +1086,9 @@ CUSTOM_LANDING_TEMPLATE = {
     # "default": 'login_and_password/login.html',
 }
 
+# used to override low-level index settings (number_of_replicas, number_of_shards, etc)
 ES_SETTINGS = None
-ES_XFORM_INDEX_NAME = "xforms_2016-07-07"
-ES_CASE_SEARCH_INDEX_NAME = "case_search_2018-05-29"
-ES_XFORM_DISABLE_ALL = False
+
 PHI_API_KEY = None
 PHI_PASSWORD = None
 
@@ -1083,15 +1116,14 @@ OTP_STATIC_THROTTLE_FACTOR = 0
 ALLOW_PHONE_AS_DEFAULT_TWO_FACTOR_DEVICE = False
 RATE_LIMIT_SUBMISSIONS = False
 
+DATA_UPLOAD_MAX_NUMBER_FILES = None
+
 # If set to a positive number, exports requested more than this many seconds ago
 # without the email option will be quickly rejected.
 # This is useful for load-shedding in times of crisis.
 STALE_EXPORT_THRESHOLD = None
 
 REQUIRE_TWO_FACTOR_FOR_SUPERUSERS = False
-# Use an experimental partitioning algorithm
-# that adds messages to the partition with the fewest unprocessed messages
-USE_KAFKA_SHORTEST_BACKLOG_PARTITIONER = False
 
 LOCAL_CUSTOM_DB_ROUTING = {}
 
@@ -1109,6 +1141,10 @@ IGNORE_ALL_DEMO_USER_SUBMISSIONS = False
 # to help in performance, avoid use of phone entries in an environment that does not need them
 # so HQ does not try to keep them up to date
 USE_PHONE_ENTRIES = True
+COMMCARE_ANALYTICS_HOST = ""
+
+# FCM Server creds used for sending FCM Push Notifications
+FCM_CREDS = None
 
 try:
     # try to see if there's an environmental variable set for local_settings
@@ -1154,6 +1190,12 @@ if callable(COMPRESS_OFFLINE):
 # Should you someday need to do so, use the lambda/if callable pattern above
 SESSION_COOKIE_SECURE = CSRF_COOKIE_SECURE = SECURE_COOKIES = not DEBUG
 SESSION_COOKIE_HTTPONLY = CSRF_COOKIE_HTTPONLY = True
+
+# This is commented because it is not required now. We don't need to instrument all the services rn on staging.
+# The below lines can be uncommented when we need to turn on app level tracing on any env.
+# if SERVER_ENVIRONMENT == 'staging':
+#     from ddtrace import patch_all
+#     patch_all()
 
 
 if UNIT_TESTING:
@@ -1220,13 +1262,16 @@ TEMPLATES = [
                 'corehq.util.context_processors.enterprise_mode',
                 'corehq.util.context_processors.mobile_experience',
                 'corehq.util.context_processors.get_demo',
-                'corehq.util.context_processors.banners',
+                'corehq.util.context_processors.subscription_banners',
                 'corehq.util.context_processors.js_api_keys',
                 'corehq.util.context_processors.js_toggles',
                 'corehq.util.context_processors.websockets_override',
                 'corehq.util.context_processors.commcare_hq_names',
                 'corehq.util.context_processors.emails',
                 'corehq.util.context_processors.status_page',
+                'corehq.util.context_processors.sentry',
+                'corehq.util.context_processors.bootstrap5',
+                'corehq.util.context_processors.js_privileges',
             ],
             'debug': DEBUG,
             'loaders': [
@@ -1239,7 +1284,7 @@ TEMPLATES = [
 
 LOGGING = {
     'version': 1,
-    'disable_existing_loggers': True,
+    'disable_existing_loggers': False,
     'formatters': {
         'verbose': {
             'format': '%(levelname)s %(asctime)s %(module)s %(process)d %(thread)d %(message)s'
@@ -1400,7 +1445,7 @@ LOGGING = {
         'celery.task': {
             'handlers': ['file'],
             'level': 'INFO',
-            'propagate': True
+            'propagate': False
         },
         'pillowtop': {
             'handlers': ['pillowtop'],
@@ -1502,7 +1547,6 @@ COMPRESS_URL = STATIC_CDN + STATIC_URL
 
 # Couch database name suffixes
 USERS_GROUPS_DB = 'users'
-FIXTURES_DB = 'fixtures'
 DOMAINS_DB = 'domains'
 APPS_DB = 'apps'
 META_DB = 'meta'
@@ -1555,7 +1599,6 @@ COUCHDB_APPS = [
 
     # custom reports
     'accounting',
-    ('auditcare', 'auditcare'),
     ('repeaters', 'receiverwrapper'),
     ('userreports', META_DB),
     ('custom_data_fields', META_DB),
@@ -1565,9 +1608,6 @@ COUCHDB_APPS = [
     # users and groups
     ('groups', USERS_GROUPS_DB),
     ('users', USERS_GROUPS_DB),
-
-    # fixtures
-    ('fixtures', FIXTURES_DB),
 
     # domains
     ('domain', DOMAINS_DB),
@@ -1579,7 +1619,7 @@ COUCHDB_APPS = [
 COUCH_SETTINGS_HELPER = helper.CouchSettingsHelper(
     COUCH_DATABASES,
     COUCHDB_APPS,
-    [USERS_GROUPS_DB, FIXTURES_DB, DOMAINS_DB, APPS_DB],
+    [USERS_GROUPS_DB, DOMAINS_DB, APPS_DB],
     UNIT_TESTING
 )
 COUCH_DATABASE = COUCH_SETTINGS_HELPER.main_db_url
@@ -1793,16 +1833,6 @@ PILLOWTOPS = {
             }
         },
         {
-            'name': 'ReportCaseToElasticsearchPillow',
-            'class': 'pillowtop.pillow.interface.ConstructedPillow',
-            'instance': 'corehq.pillows.reportcase.get_report_case_to_elasticsearch_pillow',
-        },
-        {
-            'name': 'ReportXFormToElasticsearchPillow',
-            'class': 'pillowtop.pillow.interface.ConstructedPillow',
-            'instance': 'corehq.pillows.reportxform.get_report_xform_to_elasticsearch_pillow',
-        },
-        {
             'name': 'UnknownUsersPillow',
             'class': 'pillowtop.pillow.interface.ConstructedPillow',
             'instance': 'corehq.pillows.user.get_unknown_users_pillow',
@@ -1913,21 +1943,6 @@ COUCH_CACHE_BACKENDS = [
     'dimagi.utils.couch.cache.cache_core.gen.GlobalCache',
 ]
 
-# Custom fully indexed domains for ReportCase index/pillowtop
-# Adding a domain will not automatically index that domain's existing cases
-ES_CASE_FULL_INDEX_DOMAINS = [
-    'commtrack-public-demo',
-    'crs-remind',
-]
-
-# Custom fully indexed domains for ReportXForm index/pillowtop --
-# only those domains that don't require custom pre-processing before indexing,
-# otherwise list in XFORM_PILLOW_HANDLERS
-# Adding a domain will not automatically index that domain's existing forms
-ES_XFORM_FULL_INDEX_DOMAINS = [
-    'commtrack-public-demo',
-]
-
 CUSTOM_UCR_EXPRESSIONS = [
     ('indexed_case', 'corehq.apps.userreports.expressions.extension_expressions.indexed_case_expression'),
     ('location_type_name', 'corehq.apps.locations.ucr_expressions.location_type_name'),
@@ -2011,15 +2026,6 @@ if 'locmem' not in CACHES:
 if 'dummy' not in CACHES:
     CACHES['dummy'] = {'BACKEND': 'django.core.cache.backends.dummy.DummyCache'}
 
-# Make django_redis use pickle.DEFAULT_PROTOCOL by default.
-# Remove after upgrading django_redis to a version that does that.
-# See also corehq.tests.test_pickle.test_django_redis_protocol
-from pickle import DEFAULT_PROTOCOL as _protocol
-for _value in CACHES.values():
-    if _value.get("BACKEND", "").startswith("django_redis"):
-        _value.setdefault("OPTIONS", {}).setdefault("PICKLE_VERSION", _protocol)
-del _value, _protocol
-
 
 REST_FRAMEWORK = {
     'DATETIME_FORMAT': '%Y-%m-%dT%H:%M:%S.%fZ',
@@ -2051,20 +2057,14 @@ if not SENTRY_DSN:
             SENTRY_QUERY_URL is not longer needed.
             """), DeprecationWarning)
 
+COMMCARE_RELEASE = helper.get_release_name(BASE_DIR, SERVER_ENVIRONMENT)
 if SENTRY_DSN:
     if 'SENTRY_QUERY_URL' not in globals():
         SENTRY_QUERY_URL = f'https://sentry.io/{SENTRY_ORGANIZATION_SLUG}/{SENTRY_PROJECT_SLUG}/?query='
-    helper.configure_sentry(BASE_DIR, SERVER_ENVIRONMENT, SENTRY_DSN)
+    helper.configure_sentry(SERVER_ENVIRONMENT, SENTRY_DSN, COMMCARE_RELEASE)
     SENTRY_CONFIGURED = True
 else:
     SENTRY_CONFIGURED = False
-
-if RESTRICT_USED_PASSWORDS_FOR_NIC_COMPLIANCE:
-    AUTH_PASSWORD_VALIDATORS = [
-        {
-            'NAME': 'custom.nic_compliance.password_validation.UsedPasswordValidator',
-        }
-    ]
 
 PACKAGE_MONITOR_REQUIREMENTS_FILE = os.path.join(FILEPATH, 'requirements', 'requirements.txt')
 

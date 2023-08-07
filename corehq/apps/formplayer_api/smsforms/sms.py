@@ -1,5 +1,4 @@
 from corehq.apps.formplayer_api.smsforms.api import FormplayerInterface
-from corehq.apps.formplayer_api.smsforms.signals import sms_form_complete
 
 
 class SessionStartInfo(object):
@@ -56,8 +55,8 @@ def _next_responses(xformsresponse, formplayer_interface):
             for additional_resp in _next_responses(response, formplayer_interface):
                 yield additional_resp
     elif xformsresponse.event.type == "form-complete":
-        sms_form_complete.send(sender="touchforms", session_id=formplayer_interface.session_id,
-                               form=xformsresponse.event.output)
+        from corehq.apps.smsforms.util import process_sms_form_complete
+        process_sms_form_complete(formplayer_interface.session_id, xformsresponse.event.output)
         yield xformsresponse
 
 

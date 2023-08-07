@@ -45,7 +45,7 @@ This should contain:
 
 - A new model and a management command that fetches all couch docs and creates or updates the corresponding SQL model(s).
 
-  - Start by running the management command ``evaluate_couch_model_for_sql django_app_name MyDocType`` on a production environment. This will produce code to add to your models file and also a new management command.
+  - Start by running the management command ``evaluate_couch_model_for_sql django_app_name MyDocType`` on a production environment. This will produce code to add to your models file, a new management command and also a test which will ensure that the couch model and sql model have the same attributes.
 
     - The reason to run on production is that it will examine existing documents to help determine things like ``max_length``. This also means it can take a while. If you have reasonable data locally, running it locally is fine - but since the sql class will often have stricter data validation than couch, it's good to run it on prod at some point.
 
@@ -63,7 +63,7 @@ This should contain:
 
     - The generated code uses `SyncCouchToSQLMixin <https://github.com/dimagi/commcare-hq/blob/c2b93b627c830f3db7365172e9be2de0019c6421/corehq/ex-submodules/dimagi/utils/couch/migration.py#L4>`_ and `SyncSQLToCouchMixin <https://github.com/dimagi/commcare-hq/blob/c2b93b627c830f3db7365172e9be2de0019c6421/corehq/ex-submodules/dimagi/utils/couch/migration.py#L115>`_.  If your model uses submodels, you will need to add overrides for ``_migration_sync_to_sql`` and ``_migration_sync_to_couch``. If you add overrides, definitely add tests for them. Sync bugs are one of the easiest ways for this to go terribly wrong.
 
-      - For an example of overriding the sync code for submodels, see the `CommtrackConfig migration <https://github.com/dimagi/commcare-hq/pull/27597/>`_, or the `CustomDataFields migration <https://github.com/dimagi/commcare-hq/pull/27276/>`_ which is simpler but includes a P1-level bug fixed `here <https://github.com/dimagi/commcare-hq/pull/28001/>`_.
+      - For an example of overriding the sync code for submodels, see the `CommtrackConfig migration <https://github.com/dimagi/commcare-hq/pull/27597/>`_, or the `CustomDataFields migration <https://github.com/dimagi/commcare-hq/pull/27276/>`_ which is simpler but includes a P1-level bug fixed `here <https://github.com/dimagi/commcare-hq/pull/28001/>`__.
 
       - Beware that the sync mixins capture exceptions thrown while syncing in favor of calling ``notify_exception``. If you're overwriting the sync code, this makes bugs easy to miss. The branch ``jls/sync-mixins-hard-fail`` is included on staging to instead make syncing fail hard; you might consider doing the same while testing locally.
 
@@ -72,12 +72,23 @@ This should contain:
     - Some docs have attributes that are couch ids of other docs. These are weak spots easy to forget when the referenced doc type is migrated. Add a comment so these show up in a grep for the referenced doc type.
 
   - Run ``makemigrations``
-
+  - Add the test that was generated to it's respective place.
+    - The test file uses a `ModelAttrEquality` util which has methods for running the equality tests.
+    - The test class that is generated will have two attributes  `couch_only_attrs`, `sql_only_attrs` and one method `test_have_same_attrs`.
+    - Generally during a migration some attributes and methods are renamed or removed as per need. To accomodate the changes you can update `couch_only_attrs` and `sql_only_attrs`.
+    - `couch_only_attrs` should be a set of attributes and methods which are either removed, renamed or not used anymore in SQL.
+    - `sql_only_attrs` should be a set of attributes and methods that are new in the SQL model.
+    - `test_have_same_attrs` will test the equality of the attributes. The default implementation should work if you have populated `couch_only_attrs` and `sql_only_attrs` but you can modify it's implementation as needed.
   - Add the generated migration command. Notes on this code:
 
-    - The generated migration does not handle submodels. Edit ``update_or_create_sql_object`` to add support.
+    - The generated migration does not handle submodels. Support for submodels with non-legacy bulk migrations might just work, but has not been tested. Legacy migrations that implement ``update_or_create_sql_object`` should handle submodels in that method.
 
-    - This command's ``update_or_create_sql_object`` populates the sql models based on json alone, not the wrapped document (to avoid introducing another dependency on the couch model). You may need to convert data types that the default ``wrap`` implementation would handle. The generated migration will use ``force_to_datetime`` to cast datetimes but will not perform any other wrapping. Similarly, if the couch class has a ``wrap`` method, the migration needs to manage that logic. As an example, ``CommtrackActionConfig.wrap`` was defined `here <https://github.com/dimagi/commcare-hq/commit/03f1d18fac311e71a19747a035155f9121b7a869>`_ and handled in `this migration <https://github.com/dimagi/commcare-hq/pull/27597/files#diff-10eba0437b0d32b2a455e5836dc4bd93f4297c9c9d89078334f31d9eacda2258R113>`_.
+    - Legacy mode: each document is saved individually rather than in bulk when ``update_or_create_sql_object`` is implemented. ``update_or_create_sql_object`` populates the sql models based on json alone, not the wrapped document (to avoid introducing another dependency on the couch model). You may need to convert data types that the default ``wrap`` implementation would handle. The generated migration will use ``force_to_datetime`` to cast datetimes but will not perform any other wrapping. Similarly, if the couch class has a ``wrap`` method, the migration needs to manage that logic. As an example, ``CommtrackActionConfig.wrap`` was defined `here <https://github.com/dimagi/commcare-hq/commit/03f1d18fac311e71a19747a035155f9121b7a869>`__ and handled in `this migration <https://github.com/dimagi/commcare-hq/pull/27597/files#diff-10eba0437b0d32b2a455e5836dc4bd93f4297c9c9d89078334f31d9eacda2258R113>`_. **WARNING**: migrations that use ``update_or_create_sql_object`` have a race condition.
+
+      - A normal HQ operation loads a Couch document.
+      - A ``PopulateSQLCommand`` migration loads the same document in a batch of 100.
+      - The HQ operation modifies and saves the Couch document, which also syncs changes to SQL (the migration's copy of the document is now stale).
+      - The migration calls ``update_or_create_sql_object`` which overwrites above changes, reverting SQL to the state of its stale Couch document.
 
     - The command will include a ``commit_adding_migration`` method to let third parties know which commit to deploy if they need to run the migration manually. This needs to be updated **after** this PR is merged, to add the hash of the commit that merged this PR into master.
 
@@ -101,6 +112,8 @@ sync mixins. `Example of tests for sync and migration code <https://github.com/d
 
 The migration command has a ``--verify`` option that will find any differences in the couch data vs the sql data.
 
+The ``--fixup-diffs=/path/to/migration-log.txt`` option can be used to resolve differences between Couch and SQL state. Most differences reported by the migration command should be transient; that is, they will eventually be resolved by normal HQ operations, usually within a few milliseconds. **The ``--fixup-diffs`` option should only be used to fix persistent differences caused by a bug in the Couch to SQL sync logic after the bug has been fixed.** If a bug is discovered and most rows have diffs and (important!) PR 2 has not yet been merged, it may be more efficient to fix the bug, delete all SQL rows (since Couch is still the source of truth), and redo the migration.
+
 Once this PR is deployed - later, after the whole shebang has been QAed - you'll run the migration command in any environments where it's likely to take more than a trivial amount of time.
 If the model is tied to domains you should initially migrate a few selected domains using ``--domains X Y Z`` and manually
 verify that the migration worked as expected before running it for all the data.
@@ -112,6 +125,8 @@ This should contain:
 * A django migration that verifies all couch docs have been migrated and cleans up any stragglers, using the `auto-managed migration pattern <https://commcare-hq.readthedocs.io/migration_command_pattern.html#auto-managed-migration-pattern>`_.
 
   * This should be trivial, since all the work is done in the populate command from the previous PR.
+
+  * The migration does an automatic completeness check by comparing the number of documents in Couch to the number of rows in SQL. If the counts do not match then the migration is considered incomplete, and the migration will calculate the difference and either migrate the remaining documents automatically or prompt for manual action. **NOTE**: if the automatic migration route is chosen (in the case of a small difference) the migration may still take a long time if the total number of documents in Couch is large since the migration must check every document in Couch (of the relevant doc type) to see if it has been migrated to SQL. A count mismatch is more likely when documents are written (created and/or deleted) frequently. One way to work around this is to use the ``--override-is-migration-completed`` option of ``PopulateSQLCommand`` to force the migration into a completed state. **WARNING**: careless use of that option may result in an incomplete migration. It is recommended to only force a completed state just before the migration is applied (e.g., just before deploying), and after checking the counts with ``--override-is-migration-completed=check``.
 
   * `Sample migration for RegistrationRequest <https://github.com/dimagi/commcare-hq/blob/master/corehq/apps/registration/migrations/0003_populate_sqlregistrationrequest.py>`_.
 
@@ -147,7 +162,7 @@ This is the cleanup PR. Wait a few weeks after the previous PR to merge this one
 Current State of Migration
 ##########################
 
-The current state of the migration is available internally `here <https://docs.google.com/spreadsheets/d/1iayf898ktfSRXdjBVutj_AgH4WN9DrheMS6vgteqfFM/edit#gid=677779031>`_,
+The current state of the migration is available internally `here <https://docs.google.com/spreadsheets/d/1iayf898ktfSRXdjBVutj_AgH4WN9DrheMS6vgteqfFM/edit#gid=677779031>`__,
 which outlines approximate LOE, risk level, and notes on the remaining models.
 
 For a definitive account of remaining couch-based models, you can identify all classes that descend from ``Document``:

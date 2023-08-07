@@ -2,7 +2,7 @@ from testil import eq
 
 from django.contrib.messages.middleware import MessageMiddleware
 from django.contrib.messages import get_messages
-from django.test import TestCase, RequestFactory, override_settings
+from django.test import TestCase, RequestFactory, override_settings, SimpleTestCase
 
 from corehq.apps.accounting.models import Subscription
 from corehq.apps.domain.models import Domain
@@ -19,6 +19,7 @@ from corehq.apps.sso.utils.request_helpers import (
     get_request_data,
     is_request_using_sso,
     is_request_blocked_from_viewing_domain_due_to_sso,
+    get_return_to_url_from_request,
 )
 from corehq.apps.users.models import WebUser
 from corehq.apps.sso.tests import generator
@@ -55,12 +56,21 @@ def test_get_request_data():
     )
 
 
-def test_is_request_using_sso_true():
+def test_is_request_using_saml_sso_true():
     """
-    Testing the successful criteria for an sso request.
+    Testing the successful criteria for a SAML SSO request
     """
     request = RequestFactory().get('/sso/test')
-    generator.create_request_session(request, use_sso=True)
+    generator.create_request_session(request, use_saml_sso=True)
+    eq(is_request_using_sso(request), True)
+
+
+def test_is_request_using_oidc_sso_true():
+    """
+    Testing the successful criteria for an OIDC SSO request.
+    """
+    request = RequestFactory().get('/sso/test')
+    generator.create_request_session(request, use_oidc_sso=True)
     eq(is_request_using_sso(request), True)
 
 
@@ -140,7 +150,7 @@ class TestIsRequestBlockedFromViewingDomainDueToSso(TestCase):
     def setUp(self):
         super().setUp()
         self.request = RequestFactory().get('/sso/test')
-        generator.create_request_session(self.request, use_sso=True)
+        generator.create_request_session(self.request, use_saml_sso=True)
         MessageMiddleware(self.fail).process_request(self.request)  # add support for messages
         self.request.user = self.user
 
@@ -281,4 +291,27 @@ class TestIsRequestBlockedFromViewingDomainDueToSso(TestCase):
                 self.request,
                 self.external_domain
             )
+        )
+
+
+class TestGetReturnToUrlFromRequest(SimpleTestCase):
+
+    def setUp(self):
+        super().setUp()
+        self.request = RequestFactory().get('/sso/test')
+        self.request.GET = {}
+
+    def test_absolute_url_returns_none(self):
+        self.request.GET['next'] = 'https://google.com/'
+        self.assertIsNone(get_return_to_url_from_request(self.request))
+
+    def test_alt_absolute_url_returns_none(self):
+        self.request.GET['next'] = '//google.com/'
+        self.assertIsNone(get_return_to_url_from_request(self.request))
+
+    def test_relative_url_is_returned(self):
+        self.request.GET['next'] = '/relative/path'
+        self.assertEqual(
+            get_return_to_url_from_request(self.request),
+            '/relative/path'
         )

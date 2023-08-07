@@ -5,5 +5,5 @@ through {{ forty_days }}, who do not have a Dimagi contact. If there is a Dimagi
 they will receive an automated reminder similar to this.
 
 Cheers,
---The CommCareHQ Team
+--The CommCare HQ Team
 

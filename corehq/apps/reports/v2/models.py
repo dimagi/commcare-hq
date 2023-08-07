@@ -11,6 +11,7 @@ from corehq.apps.reports.v2.exceptions import (
     EndpointNotFoundError,
     ReportFilterNotFound,
 )
+from corehq.util.timezones.utils import get_timezone
 
 EndpointContext = namedtuple('EndpointContext', 'slug urlname')
 ColumnMeta = namedtuple('ColumnMeta', 'title name width sort')
@@ -106,7 +107,7 @@ class BaseReport(object):
 class ReportBreadcrumbsContext(object):
     """
     Generates the template context necessary to render the
-    reports/v2/partials/breadcrumbs.html template.
+    reports/v2/partials/<bootstrap_version>/breadcrumbs.html template.
     """
 
     def __init__(self, report, section_title=None, section_url=None):
@@ -147,6 +148,10 @@ class BaseEndpoint(object):
     def report_context(self):
         return json.loads(self.data.get('reportContext', "{}"))
 
+    @property
+    def timezone(self):
+        return get_timezone(self.request, self.domain)
+
 
 class BaseOptionsEndpoint(BaseEndpoint):
 
@@ -166,7 +171,7 @@ class BaseDataEndpoint(BaseEndpoint):
 
 class BaseDataFormatter(object):
 
-    def __init__(self, request, domain, raw_data):
+    def __init__(self, request, domain):
         self.domain = domain
         self.request = request
 

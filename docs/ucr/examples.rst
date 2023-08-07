@@ -1,3 +1,6 @@
+.. role::  raw-html(raw)
+    :format: html
+
 UCR Examples
 ============
 
@@ -507,6 +510,9 @@ change in this scenario.
        }
    }
 
+
+.. _ucr-evaluator-examples:
+
 Evaluator Examples
 ------------------
 
@@ -586,6 +592,49 @@ diff_seconds example
 
 This will return the difference in seconds between two times (i.e. start
 and end of form)
+
+Date format
+~~~~~~~~~~~
+These examples using `Python f-strings`_ to format the dates.
+
+**Convert a datetime to a formatted string**
+
+2022-01-01T15:32:54.109971Z :raw-html:`&rarr;` 15:32 on 01 Jan 2022
+
+.. code:: json
+
+    {
+        "type": "evaluator",
+        "statement": "f'{date:%H:%M on %d %b %Y}'",
+        "context_variables": {
+            "date": {
+                "type": "property_name",
+                "property_name": "my_datetime",
+                "datatype": "datetime",
+            }
+        }
+    }
+
+
+**Convert a datetime to show only 3 digits in the microseconds field**
+
+2022-01-01T15:32:54.109971Z :raw-html:`&rarr;` 2022-01-01T15:32:54.110Z
+
+.. code:: json
+
+    {
+        "type": "evaluator",
+        "statement": "f'{date:%Y-%m-%dT%H:%M:%S}.' + '%03d' % round(int(f'{date:%f}')/1000) + 'Z'",
+        "context_variables": {
+            "date": {
+                "type": "property_name",
+                "property_name": "my_datetime",
+                "datatype": "datetime",
+            }
+        }
+    }
+
+.. _Python f-strings: https://docs.python.org/3/reference/lexical_analysis.html#f-strings
 
 Getting forms submitted for a case
 ----------------------------------

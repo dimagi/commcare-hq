@@ -21,7 +21,6 @@ from corehq.apps.domain.decorators import (
 )
 from corehq.apps.hqwebapp.templatetags.hq_shared_tags import toggle_enabled
 from corehq.apps.reports.exceptions import BadRequestError
-from corehq.apps.users.models import AnonymousCouchUser
 from corehq.util.quickcache import quickcache
 
 from .lookup import ReportLookup
@@ -244,7 +243,6 @@ class ProjectReportDispatcher(ReportDispatcher):
         return {
             'daily_completions': 'daily_form_stats',
             'daily_submissions': 'daily_form_stats',
-            'submit_time_punchcard': 'worker_activity_times',
         }
 
     @cls_to_view_login_and_domain
@@ -279,13 +277,6 @@ class CustomProjectReportDispatcher(ProjectReportDispatcher):
     def permissions_check(self, report, request, domain=None, is_navigation_check=False):
         if is_navigation_check and not has_privilege(request, privileges.CUSTOM_REPORTS):
             return False
-        if isinstance(request.couch_user, AnonymousCouchUser) and self.prefix == 'custom_project_report':
-            reports = self.get_reports(domain)
-            for section in reports:
-                for report_class in section[1]:
-                    report_class_name = report_class.__module__ + '.' + report_class.__name__
-                    if report_class_name == report and report_class.is_public:
-                        return True
         return super(CustomProjectReportDispatcher, self).permissions_check(report, request, domain)
 
 
@@ -299,14 +290,8 @@ class DomainReportDispatcher(ReportDispatcher):
 
     def permissions_check(self, report, request, domain=None, is_navigation_check=False):
         from corehq.motech.repeaters.views import DomainForwardingRepeatRecords
-        from corehq.apps.export.views.incremental import IncrementalExportLogView
-
-        from corehq.toggles import INCREMENTAL_EXPORTS
-
         if (report.endswith(DomainForwardingRepeatRecords.__name__)
                 and not domain_has_privilege(domain, privileges.DATA_FORWARDING)):
-            return False
-        if (report.endswith(IncrementalExportLogView.__name__) and not INCREMENTAL_EXPORTS.enabled(domain)):
             return False
         return super(DomainReportDispatcher, self).permissions_check(report, request, domain, is_navigation_check)
 
@@ -341,5 +326,5 @@ class ReleaseManagementReportDispatcher(ReportDispatcher):
     map_name = 'RELEASE_MANAGEMENT_REPORTS'
 
     def permissions_check(self, report, request, domain=None, is_navigation_check=False):
-        from corehq.apps.linked_domain.util import can_user_access_release_management
-        return can_user_access_release_management(request.couch_user, domain)
+        from corehq.apps.linked_domain.util import can_user_access_linked_domains
+        return can_user_access_linked_domains(request.couch_user, domain)

@@ -3,27 +3,34 @@ import inspect
 from collections import defaultdict
 from datetime import datetime
 
-import pytz
-from celery.task import task
-from couchdbkit import ResourceNotFound
 from django.conf import settings
 
-from corehq.apps.domain.calculations import last_form_submission
-from corehq.apps.domain.models import Domain
-from corehq.apps.toggle_ui.utils import has_dimagi_user, get_subscription_info
-from corehq.apps.users.models import CouchUser
-from corehq.blobs import get_blob_db, CODES
-from corehq.const import USER_DATETIME_FORMAT
-from corehq.toggles import (
-    NAMESPACE_USER, NAMESPACE_DOMAIN, NAMESPACE_EMAIL_DOMAIN, NAMESPACE_OTHER, all_toggles
-)
-from corehq.toggles.models import Toggle
-from corehq.util.files import safe_filename_header, TransientTempfile
-from corehq.util.view_utils import absolute_reverse
+import pytz
+from couchdbkit import ResourceNotFound
+
 from couchforms.analytics import domain_has_submission_in_last_30_days
 from dimagi.utils.django.email import send_HTML_email
 from soil import DownloadBase
 from soil.util import expose_blob_download
+
+from corehq.apps.celery import task
+from corehq.apps.domain.calculations import last_form_submission
+from corehq.apps.domain.models import Domain
+from corehq.apps.toggle_ui.utils import get_subscription_info, has_dimagi_user
+from corehq.apps.users.models import CouchUser
+from corehq.apps.users.util import is_dimagi_email
+from corehq.blobs import CODES, get_blob_db
+from corehq.const import USER_DATETIME_FORMAT
+from corehq.toggles import (
+    NAMESPACE_DOMAIN,
+    NAMESPACE_EMAIL_DOMAIN,
+    NAMESPACE_OTHER,
+    NAMESPACE_USER,
+    all_toggles,
+)
+from corehq.toggles.models import Toggle
+from corehq.util.files import TransientTempfile, safe_filename_header
+from corehq.util.view_utils import absolute_reverse
 
 
 @task(bind=True)
@@ -211,7 +218,7 @@ def _get_user_info(username):
         return {"error": "User not found"}
 
     return {
-        "user_is_dimagi": "@dimagi.com" in username,
+        "user_is_dimagi": is_dimagi_email(username),
         "user_is_mobile": "commcarehq.org" in username,
         "user_is_active": user.is_active,
         "user_last_login": user.last_login,

@@ -5,8 +5,8 @@ from django.db.transaction import atomic
 from django.test import TestCase, SimpleTestCase
 
 from corehq.apps.users.models import (
-    Permissions,
-    UserRole, SQLPermission, RolePermission, RoleAssignableBy, PermissionInfo,
+    HqPermissions,
+    UserRole, Permission, RolePermission, RoleAssignableBy, PermissionInfo,
     StaticRole
 )
 
@@ -16,7 +16,7 @@ class RolesTests(TestCase):
 
     @classmethod
     def setUpTestData(cls):
-        SQLPermission.create_all()
+        Permission.create_all()
         cls.roles = [
             UserRole(
                 domain=cls.domain,
@@ -37,7 +37,7 @@ class RolesTests(TestCase):
         cls.roles[0].set_assignable_by([cls.roles[1].id])
 
         cls.roles[0].set_permissions([
-            PermissionInfo(Permissions.edit_data.name),
+            PermissionInfo(HqPermissions.edit_data.name),
         ])
 
     def test_set_assignable_by(self):
@@ -120,20 +120,20 @@ class RolesTests(TestCase):
         )
         role.save()
         role.rolepermission_set.set([
-            RolePermission(permission=Permissions.edit_data.name),
-            RolePermission(permission=Permissions.view_reports.name, allow_all=False,
+            RolePermission(permission=HqPermissions.edit_data.name),
+            RolePermission(permission=HqPermissions.view_reports.name, allow_all=False,
                            allowed_items=['report1']),
         ], bulk=False)
 
         self.assertEqual(set(role.get_permission_infos()), {
-            PermissionInfo(Permissions.edit_data.name),
-            PermissionInfo(Permissions.view_reports.name, allow=['report1']),
+            PermissionInfo(HqPermissions.edit_data.name),
+            PermissionInfo(HqPermissions.view_reports.name, allow=['report1']),
         })
 
         new_permissions = {
             # removed edit_data
-            PermissionInfo(Permissions.access_api.name),  # new
-            PermissionInfo(Permissions.view_reports.name, allow=['report1', 'report2']),  # edit
+            PermissionInfo(HqPermissions.access_api.name),  # new
+            PermissionInfo(HqPermissions.view_reports.name, allow=['report1', 'report2']),  # edit
         }
         role.set_permissions(new_permissions)
 
@@ -142,7 +142,7 @@ class RolesTests(TestCase):
 
         # change parameterized permission to allow all
         new_permissions = {
-            PermissionInfo(Permissions.view_reports.name, allow=PermissionInfo.ALLOW_ALL),  # edit
+            PermissionInfo(HqPermissions.view_reports.name, allow=PermissionInfo.ALLOW_ALL),  # edit
         }
         role.set_permissions(new_permissions)
 
@@ -153,13 +153,13 @@ class RolesTests(TestCase):
         role = UserRole.create(
             domain=self.domain,
             name="test-role",
-            permissions=Permissions()
+            permissions=HqPermissions()
         )
 
-        self.assertEqual(set(role.get_permission_infos()), set(Permissions().to_list()))
+        self.assertEqual(set(role.get_permission_infos()), set(HqPermissions().to_list()))
 
         role_with_prefetch = UserRole.objects.prefetch_related("rolepermission_set").get(id=role.id)
-        new_permissions = {PermissionInfo(Permissions.access_api.name)}
+        new_permissions = {PermissionInfo(HqPermissions.access_api.name)}
         role_with_prefetch.set_permissions(new_permissions)
 
         self.assertEqual(set(role_with_prefetch.get_permission_infos()), new_permissions)
@@ -204,26 +204,26 @@ class TestRolePermissionsModel(TestCase):
         ], bulk=False)
 
     def test_allow_check_constraint_allow_all_params_none(self):
-        self._test_allow_check_constraint(Permissions.view_reports.name, True, None)
+        self._test_allow_check_constraint(HqPermissions.view_reports.name, True, None)
 
     def test_allow_check_constraint_allow_all_params_empty(self):
-        self._test_allow_check_constraint(Permissions.view_reports.name, True, [])
+        self._test_allow_check_constraint(HqPermissions.view_reports.name, True, [])
 
     def test_allow_check_constraint_params_list(self):
-        self._test_allow_check_constraint(Permissions.view_reports.name, False, ['report1'])
+        self._test_allow_check_constraint(HqPermissions.view_reports.name, False, ['report1'])
 
     @atomic
     def test_allow_check_constraint_fail(self):
         constraint_name = "users_rolepermission_valid_allow"
         with self.assertRaisesMessage(IntegrityError, constraint_name):
             self.role1.rolepermission_set.set([
-                RolePermission(permission=Permissions.view_reports.name, allow_all=True, allowed_items=['report1']),
+                RolePermission(permission=HqPermissions.view_reports.name, allow_all=True, allowed_items=['report1']),
             ], bulk=False)
 
     def test_unique_constraint_ok(self):
         """different roles can have the same permission"""
         self.role1.rolepermission_set.set([
-            RolePermission(permission=Permissions.edit_data.name, allow_all=True),
+            RolePermission(permission=HqPermissions.edit_data.name, allow_all=True),
         ], bulk=False)
 
         role2 = UserRole(domain=self.domain, name="role2")
@@ -231,7 +231,7 @@ class TestRolePermissionsModel(TestCase):
         self.addCleanup(role2.delete)
 
         role2.rolepermission_set.set([
-            RolePermission(permission=Permissions.edit_data.name, allow_all=True),
+            RolePermission(permission=HqPermissions.edit_data.name, allow_all=True),
         ], bulk=False)
 
     @atomic
@@ -244,8 +244,8 @@ class TestRolePermissionsModel(TestCase):
         constraint_name = "users_rolepermission_role_id_permission_fk_id_bc5f84db_uniq"
         with self.assertRaisesMessage(IntegrityError, constraint_name):
             sql_role.rolepermission_set.set([
-                RolePermission(permission=Permissions.edit_data.name, allow_all=True),
-                RolePermission(permission=Permissions.edit_data.name, allow_all=False),
+                RolePermission(permission=HqPermissions.edit_data.name, allow_all=True),
+                RolePermission(permission=HqPermissions.edit_data.name, allow_all=False),
             ], bulk=False)
 
 
@@ -260,19 +260,20 @@ class TestStaticRoles(SimpleTestCase):
         "is_non_admin_editable": False,
         "assignable_by": [],
         "is_archived": False,
-        "upstream_id": None
+        "upstream_id": None,
+        "is_commcare_user_default": False
     }
 
     def test_static_role_default(self):
         static_dict = StaticRole.domain_default(self.domain).to_json()
         expected = self.expected_role_dict.copy()
-        expected["permissions"] = Permissions().to_json()
+        expected["permissions"] = HqPermissions().to_json()
         self.assertDictEqual(expected, static_dict)
 
     def test_static_role_admin(self):
         static_admin_role = StaticRole.domain_admin(self.domain)
         expected = self.expected_role_dict.copy()
         expected["name"] = "Admin"
-        expected["permissions"] = Permissions.max().to_json()
+        expected["permissions"] = HqPermissions.max().to_json()
         self.assertDictEqual(expected, static_admin_role.to_json())
         self.assertEqual(static_admin_role.get_qualified_id(), "admin")

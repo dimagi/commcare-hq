@@ -2,7 +2,7 @@ from django.conf.urls import include, re_path as url
 
 from corehq.apps.api.urls import admin_urlpatterns as admin_api_urlpatterns
 from corehq.apps.domain.views.tombstone import TombstoneManagement, create_tombstone
-from corehq.apps.hqadmin.views.data import doc_in_es, raw_doc
+from corehq.apps.hqadmin.views.data import doc_in_es, download_blob, raw_doc
 from corehq.apps.hqadmin.views.operations import (
     CallcenterUCRCheck,
     ReprocessMessagingCaseUpdatesView,
@@ -26,6 +26,7 @@ from corehq.apps.hqadmin.views.users import (
     DisableTwoFactorView,
     DisableUserView,
     SuperuserManagement,
+    OffboardingUserList,
     WebUserDataView,
     superuser_table,
     web_user_lookup,
@@ -44,6 +45,7 @@ urlpatterns = [
     # Same view supported with three possible urls to support tracking
     # username and domain in the url via audit
     url(r'^superuser_management/$', SuperuserManagement.as_view(), name=SuperuserManagement.urlname),
+    url(r'^get_offboarding_list/$', OffboardingUserList.as_view(), name=OffboardingUserList.urlname),
     url(r'^superuser_table.csv$', superuser_table, name='superuser_table'),
     url(r'^tombstone_management/$', TombstoneManagement.as_view(), name=TombstoneManagement.urlname),
     url(r'^create_tombstone/$', create_tombstone, name='create_tombstone'),
@@ -57,6 +59,7 @@ urlpatterns = [
     url(r'^doc_in_es/$', doc_in_es, name='doc_in_es'),
     url(r'^raw_couch/$', raw_doc, name='raw_couch'),
     url(r'^raw_doc/$', raw_doc, name='raw_doc'),
+    url(r'^download_blob/$', download_blob, name='download_blob'),
     url(r'^api/', include(admin_api_urlpatterns)),
     url(r'^callcenter_ucr_check/$', CallcenterUCRCheck.as_view(), name=CallcenterUCRCheck.urlname),
     url(r'^download_malt/$',

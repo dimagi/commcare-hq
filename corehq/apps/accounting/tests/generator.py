@@ -28,7 +28,7 @@ from corehq.apps.accounting.models import (
     SubscriptionType,
 )
 from corehq.apps.domain.models import Domain
-from corehq.apps.users.models import CommCareUser
+from corehq.apps.users.models import CommCareUser, WebUser
 from corehq.util.test_utils import unit_testing_only
 
 
@@ -155,9 +155,15 @@ def arbitrary_domain_and_subscriber():
 
 
 @unit_testing_only
-def arbitrary_commcare_user(domain, is_active=True):
+def arbitrary_user(domain, is_active=True, is_webuser=False):
     username = unique_name()
-    commcare_user = CommCareUser.create(domain, username, 'test123', None, None)
+    if is_webuser:
+        username = create_arbitrary_web_user_name()
+        user_cls = WebUser
+    else:
+        username = unique_name()
+        user_cls = CommCareUser
+    commcare_user = user_cls.create(domain, username, 'test123', None, None)
     commcare_user.is_active = is_active
     return commcare_user
 
@@ -165,7 +171,16 @@ def arbitrary_commcare_user(domain, is_active=True):
 @unit_testing_only
 def arbitrary_commcare_users_for_domain(domain, num_users, is_active=True):
     CommCareUser.bulk_save([
-        arbitrary_commcare_user(domain, is_active=is_active)
+        arbitrary_user(domain, is_active=is_active)
+        for _ in range(0, num_users)
+    ])
+    return num_users
+
+
+@unit_testing_only
+def arbitrary_webusers_for_domain(domain, num_users, is_active=True):
+    WebUser.bulk_save([
+        arbitrary_user(domain, is_active=is_active, is_webuser=True)
         for _ in range(0, num_users)
     ])
     return num_users

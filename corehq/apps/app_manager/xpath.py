@@ -202,9 +202,16 @@ class CaseSelectionXPath(XPath):
     selector = ''
 
     def case(self, instance_name='casedb', case_name='case'):
-        return CaseXPath("instance('{inst}')/{inst}/{case}[{sel}={self}]".format(
-            inst=instance_name, case=case_name, sel=self.selector, self=self
+        return CaseXPath("instance('{inst}')/{root}/{case}[{sel}={self}]".format(
+            inst=instance_name, root=self.get_instance_root(instance_name),
+            case=case_name, sel=self.selector, self=self
         ))
+
+    @staticmethod
+    def get_instance_root(instance_name):
+        return {
+            "results:inline": "results"
+        }.get(instance_name, instance_name)
 
 
 class CaseIDXPath(CaseSelectionXPath):
@@ -224,8 +231,8 @@ class CaseTypeXpath(CaseSelectionXPath):
         for type in additional_types:
             quoted = CaseTypeXpath("'{}'".format(type))
             selector = "{selector} or {sel}={quoted}".format(selector=selector, sel=self.selector, quoted=quoted)
-        return CaseXPath("instance('{inst}')/{inst}/{case}[{sel}]".format(
-            inst=instance_name, case=case_name, sel=selector
+        return CaseXPath("instance('{inst}')/{root}/{case}[{sel}]".format(
+            inst=instance_name, root=self.get_instance_root(instance_name), case=case_name, sel=selector
         ))
 
 
@@ -404,9 +411,13 @@ class IndicatorXpath(InstanceXpath):
         return self
 
 
-class SelectedCasesInstanceXpath(InstanceXpath):
-    id = "selected_cases"
+class SearchSelectedCasesInstanceXpath(InstanceXpath):
+    default_id = "search_selected_cases"
     path = "results/value"
+
+    @property
+    def id(self):
+        return self or self.default_id
 
 
 class CommCareSession(object):

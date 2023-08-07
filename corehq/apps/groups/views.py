@@ -12,12 +12,12 @@ from dimagi.utils.couch.undo import DELETED_SUFFIX
 
 from corehq.apps.groups.models import DeleteGroupRecord, Group
 from corehq.apps.users.decorators import require_permission
-from corehq.apps.users.models import CouchUser, Permissions
+from corehq.apps.users.models import CouchUser, HqPermissions
 from corehq.apps.users.views.utils import log_user_groups_change
 from corehq.privileges import CASE_SHARING_GROUPS
 from django_prbac.utils import has_privilege
 
-require_can_edit_groups = require_permission(Permissions.edit_groups)
+require_can_edit_groups = require_permission(HqPermissions.edit_groups)
 
 
 @require_POST

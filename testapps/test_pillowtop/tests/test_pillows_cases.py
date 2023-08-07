@@ -1,12 +1,9 @@
-from django.conf import settings
 from django.test import TestCase
+
 from casexml.apps.case.xform import extract_case_blocks
-from corehq.pillows.base import VALUE_TAG
-from corehq.pillows.case import transform_case_for_elasticsearch
-from corehq.pillows.mappings.reportxform_mapping import REPORT_XFORM_INDEX_INFO
-from corehq.pillows.reportcase import transform_case_to_report_es
-from corehq.pillows.reportxform import transform_xform_for_report_forms_index
-from corehq.pillows.xform import transform_xform_for_elasticsearch
+
+from corehq.apps.es.cases import case_adapter
+from corehq.apps.es.forms import form_adapter
 from corehq.util.test_utils import softer_assert
 
 XFORM_MULTI_CASES = {
@@ -294,161 +291,7 @@ CASE_NO_OWNER_ID = {
 }
 
 
-EXAMPLE_CASE = {
-   "_id": "example_case",
-   "_rev": "1-ec6a0f64ad7143f1bc49e1b1807a78af",
-   "opened_on": "2012-08-01T10:16:07Z",
-   "domain": "dmyung",
-   "#export_tag": [
-       "domain",
-       "type"
-   ],
-   "initial_processing_complete": True,
-   "actions": [
-       {
-           "doc_type": "CommCareCaseAction",
-           "xform_id": "86c8019b-3aeb-479c-afb5-59e23779478e",
-           "updated_unknown_properties": {
-           },
-           "sync_log_id": "8018528db773225435c6c5cd76ba8894",
-           "server_date": "2012-08-01T04:45:44Z",
-           "action_type": "create",
-           "updated_known_properties": {
-               "type": "babylog",
-               "name": "Cute Baby",
-               "owner_id": "8606d6a689da7edd91936b0dc8a382b6"
-           },
-           "date": "2012-08-01T10:16:07Z",
-           "indices": [
-           ]
-       },
-       {
-           "doc_type": "CommCareCaseAction",
-           "xform_id": "86c8019b-3aeb-479c-afb5-59e23779478e",
-           "updated_unknown_properties": {
-               "dob": "2012-08-01T01:39:00Z",
-               "baby_name": "Cute Baby"
-           },
-           "sync_log_id": "8018528db773225435c6c5cd76ba8894",
-           "server_date": "2012-08-01T04:45:44Z",
-           "action_type": "update",
-           "updated_known_properties": {
-           },
-           "date": "2012-08-01T10:16:07Z",
-           "indices": [
-           ]
-       },
-       {
-           "doc_type": "CommCareCaseAction",
-           "xform_id": "f50c910c-f23a-4667-93c4-3e1c813a71a0",
-           "date": "2012-08-01T10:16:56Z",
-           "sync_log_id": "8018528db773225435c6c5cd76ba8894",
-           "server_date": "2012-08-01T04:46:33Z",
-           "action_type": "update",
-           "updated_known_properties": {
-           },
-           "updated_unknown_properties": {
-               "measurement_length": "20.1",
-               "measurement_weight": "6.5",
-               "measurement_date": "2012-08-01"
-           },
-           "indices": [
-           ]
-       },
-       {
-           "doc_type": "CommCareCaseAction",
-           "xform_id": "5eff4ced-ff39-4abd-bd1e-4bac77274e11",
-           "updated_unknown_properties": {
-               "next_start_side": "right",
-               "last_feeding_time": "2012-08-01T03:30:00Z"
-           },
-           "sync_log_id": "8018528db773225435c6c5cd76ba8894",
-           "server_date": "2012-08-01T04:50:20Z",
-           "action_type": "update",
-           "updated_known_properties": {
-           },
-           "date": "2012-08-01T10:20:44Z",
-           "indices": [
-           ]
-       },
-       {
-           "doc_type": "CommCareCaseAction",
-           "xform_id": "3dee4630-ecba-4c20-b800-186c25636627",
-           "date": "2012-08-01T10:22:00Z",
-           "sync_log_id": "8018528db773225435c6c5cd76ba8894",
-           "server_date": "2012-08-01T04:51:36Z",
-           "action_type": "update",
-           "updated_known_properties": {
-           },
-           "updated_unknown_properties": {
-               "diaper_change_time": "2012-08-01T04:34:00Z",
-               "diaper_type": "poopy_diaper"
-           },
-           "indices": [
-           ]
-       },
-       {
-           "doc_type": "CommCareCaseAction",
-           "xform_id": "48c7ee05-b010-4e63-abee-9bf276a62998",
-           "updated_unknown_properties": {
-               "next_start_side": "left",
-               "last_feeding_time": "2012-08-01T02:00:00Z"
-           },
-           "sync_log_id": "8018528db773225435c6c5cd76ba8894",
-           "server_date": "2012-08-01T04:53:03Z",
-           "action_type": "update",
-           "updated_known_properties": {
-           },
-           "date": "2012-08-01T10:23:26Z",
-           "indices": [
-           ]
-       },
-   ],
-   "measurement_date": "2012-8-02",
-   "last_poop": "2012-08-01T05:11:00Z",
-   "closed_on": None,
-   "user_id": "f72265c0-362a-11e0-9e24-005056aa7fb5",
-   "last_pee": "2012-08-03T12:22:00Z",
-   "prior_diapers": ['poop', 'pee'],
-   "computed_": {
-   },
-   "version": "2.0",
-   "diaper_change_time": "2012-08-20T08:50:00Z",
-   "closed": False,
-   "baby_name": "Cute Baby",
-   "type": "babylog",
-   "diaper_type": "pee_diaper",
-   "owner_id": "8c20fba6b49940888f1949cf64f53bec",
-   "measurement_length": "2",
-   "next_start_side": "Right",
-   "xform_ids": [
-       "86c8019b-3aeb-479c-afb5-59e23779478e",
-       "f50c910c-f23a-4667-93c4-3e1c813a71a0",
-       "5eff4ced-ff39-4abd-bd1e-4bac77274e11",
-       "3dee4630-ecba-4c20-b800-186c25636627",
-       "48c7ee05-b010-4e63-abee-9bf276a62998",
-      ],
-   "server_modified_on": "2012-12-30T03:23:04Z",
-   "location_": [
-   ],
-   "export_tag": [
-   ],
-   "computed_modified_on_": None,
-   "last_feeding_time": "2012-08-03T14:55:00Z",
-   "modified_on": "2012-12-30T03:23:03Z",
-   "doc_type": "CommCareCase",
-   "referrals": [
-   ],
-   "name": "Cute Baby",
-   "dob": "2012-08-01T02:00:00Z",
-   "measurement_weight": "1",
-   "indices": [
-   ],
-   "external_id": None
-}
-
-
-class testReportCaseProcessing(TestCase):
+class TestPillows(TestCase):
 
     @softer_assert()
     def testXFormPillowSingleCaseProcess(self):
@@ -456,7 +299,7 @@ class testReportCaseProcessing(TestCase):
         Test that xform pillow can process and cleanup a single xform with a case submission
         """
         xform = XFORM_SINGLE_CASE
-        changed = transform_xform_for_elasticsearch(xform)
+        changed = form_adapter.to_json(xform)
 
         self.assertIsNone(changed['form']['case'].get('@date_modified'))
         self.assertIsNotNone(xform['form']['case']['@date_modified'])
@@ -467,7 +310,7 @@ class testReportCaseProcessing(TestCase):
         Test that xform pillow can process and cleanup a single xform with a list of cases in it
         """
         xform = XFORM_MULTI_CASES
-        changed = transform_xform_for_elasticsearch(xform)
+        changed = form_adapter.to_json(xform)
 
         changed_cases = extract_case_blocks(changed)
         orig_cases = extract_case_blocks(xform)
@@ -482,52 +325,8 @@ class testReportCaseProcessing(TestCase):
         case_owner_id = CASE_WITH_OWNER_ID
         case_no_owner_id = CASE_NO_OWNER_ID
 
-        changed_with_owner_id = transform_case_for_elasticsearch(case_owner_id)
-        changed_with_no_owner_id = transform_case_for_elasticsearch(case_no_owner_id)
+        changed_with_owner_id = case_adapter.to_json(case_owner_id)
+        changed_with_no_owner_id = case_adapter.to_json(case_no_owner_id)
 
         self.assertEqual(changed_with_owner_id.get("owner_id"), "testuser")
         self.assertEqual(changed_with_no_owner_id.get("owner_id"), "testuser")
-
-    @softer_assert()
-    def testReportXFormTransform(self):
-        form = XFORM_SINGLE_CASE
-        form['domain'] = settings.ES_XFORM_FULL_INDEX_DOMAINS[0]
-        processed_form = transform_xform_for_report_forms_index(form)
-        mapping = REPORT_XFORM_INDEX_INFO.mapping
-
-        # root level
-        for k, v in processed_form['form'].items():
-            if k in mapping['properties']['form']['properties']:
-                if isinstance(v, dict):
-                    self.assertFalse('#value' in v, msg="Error, processed dict contains a #value dict for key [%s] when it shouldn't" % k)
-                else:
-                    #it's not a dict, so that means it's ok
-                    if k in form:
-                        self.assertEqual(form[k], v)
-            else:
-                self.assertTrue(isinstance(v, dict))
-                if isinstance(form['form'][k], dict):
-                    #if the original is a dict, then, make sure the keys are the same
-                    self.assertFalse('#value' in v)
-                    self.assertEqual(sorted(form['form'][k].keys()), sorted(v.keys()))
-                else:
-                    self.assertTrue('#value' in v)
-                    self.assertEqual(form['form'][k], v['#value'])
-
-    def testReportCaseTransform(self):
-        case = EXAMPLE_CASE
-        case['domain'] = settings.ES_CASE_FULL_INDEX_DOMAINS[0]
-        processed_case = transform_case_to_report_es(case)
-
-        #known properties, not #value'd
-        self.assertEqual(processed_case['user_id'], case['user_id'])
-        self.assertEqual(processed_case['actions'][0]['doc_type'], case['actions'][0]['doc_type'])
-
-        #dynamic case properties #valued
-        self.assertEqual(processed_case['last_poop'].get(VALUE_TAG), case['last_poop'])
-        self.assertEqual(processed_case['diaper_type'].get(VALUE_TAG), case['diaper_type'])
-        self.assertTrue(isinstance(processed_case['prior_diapers'], list))
-        for diaper in processed_case['prior_diapers']:
-            self.assertTrue(VALUE_TAG in diaper)
-
-        self.assertEqual(case['prior_diapers'], [x[VALUE_TAG] for x in processed_case['prior_diapers']])

@@ -9,8 +9,6 @@ from corehq.apps.accounting.models import (
 )
 from corehq.apps.domain.models import Domain
 from corehq.apps.users.models import HQApiKey, WebUser
-from corehq.apps.zapier.consts import CASE_TYPE_REPEATER_CLASS_MAP
-from corehq.motech.repeaters.models import FormRepeater, RepeatRecord
 
 ZapierDomainConfig = namedtuple('ZapierDomainConfig', 'domain web_user api_key')
 

@@ -8,12 +8,14 @@ from django.core.exceptions import PermissionDenied
 from django.test import TestCase, RequestFactory
 from unittest.mock import patch
 from corehq.apps.domain.shortcuts import create_domain
-from corehq.apps.users.models import Permissions, UserRole, WebUser
+from corehq.apps.users.models import HqPermissions, UserRole, WebUser
 from corehq.apps.saved_reports.models import ReportConfig, ReportNotification
 from corehq.blobs import get_blob_db
 from corehq.apps.reports.views import (
     MySavedReportsView,
     AddSavedReportConfigView,
+    soft_shift_to_domain_timezone,
+    soft_shift_to_server_timezone,
 )
 from django.urls.base import reverse
 from .. import views
@@ -101,7 +103,7 @@ class TestEmailReport(TestCase):
     def setUp(self):
         super().setUp()
 
-        self.reports_role = UserRole.create(self.domain, 'Test Role', permissions=Permissions(
+        self.reports_role = UserRole.create(self.domain, 'Test Role', permissions=HqPermissions(
             view_report_list=[REPORT_NAME_LOOKUP['worker_activity']]
         ))
 
@@ -140,7 +142,7 @@ class TestEmailReport(TestCase):
         return request
 
     def _set_user_report_access(self, *report_names):
-        self.reports_role.set_permissions(Permissions(view_report_list=list(report_names)).to_list())
+        self.reports_role.set_permissions(HqPermissions(view_report_list=list(report_names)).to_list())
 
 
 class TestDeleteConfig(TestCase):
@@ -428,7 +430,7 @@ class TestExportReport(TestCase):
         super().setUp()
 
         # Create a basic role for the user
-        self.reports_role = UserRole.create(self.domain, 'Test Role', permissions=Permissions(
+        self.reports_role = UserRole.create(self.domain, 'Test Role', permissions=HqPermissions(
             view_report_list=[]
         ))
 
@@ -458,7 +460,7 @@ class TestExportReport(TestCase):
     def _set_user_report_access(self, *report_names):
         # NOTE: user permissions get cached, so if these permissions
         # were changed between checks, the cache would need to be cleared
-        self.reports_role.set_permissions(Permissions(view_report_list=list(report_names)).to_list())
+        self.reports_role.set_permissions(HqPermissions(view_report_list=list(report_names)).to_list())
 
     def _generate_report(self, export_id=None, report_name='test_report', domain=None, content=b'Some File'):
         export_id = export_id or self.export_id
@@ -539,7 +541,7 @@ class TestViewScheduledReport(TestCase):
 
     def setUp(self):
         super().setUp()
-        self.reports_role = UserRole.create(self.domain, 'Test Role', permissions=Permissions(
+        self.reports_role = UserRole.create(self.domain, 'Test Role', permissions=HqPermissions(
             view_report_list=[]
         ))
         self.user = WebUser.create(self.domain,
@@ -588,7 +590,7 @@ class TestViewScheduledReport(TestCase):
     def _set_user_report_access(self, *report_names):
         # NOTE: user permissions get cached, so if these permissions
         # were changed between checks, the cache would need to be cleared
-        self.reports_role.set_permissions(Permissions(view_report_list=list(report_names)).to_list())
+        self.reports_role.set_permissions(HqPermissions(view_report_list=list(report_names)).to_list())
 
 
 class TestDomainSharedConfigs(TestCase):
@@ -926,3 +928,55 @@ class TestAddSavedReportConfigView(TestReportsBase):
         # Validate that config1 is untouched
         original_config = ReportConfig.get(config1._id)
         self.assertEqual(original_config.description, '')
+
+
+class TestTimezoneConversion(TestCase):
+    DOMAIN = "test-domain"
+
+    @classmethod
+    def setUpClass(cls) -> None:
+        cls.domain_obj = create_domain(cls.DOMAIN)
+        cls.domain_obj.default_timezone = "Pacific/Kiritimati"
+        cls.domain_obj.save()
+        super()
+
+    @classmethod
+    def tearDownClass(cls) -> None:
+        cls.domain_obj.delete()
+        super()
+
+    def test_convert_to_server_timezone(self):
+        report_notification = ReportNotification(
+            domain=self.DOMAIN,
+            config_ids=[],
+            hour=8,
+            minute=0,
+            stop_hour=16,
+            stop_minute=0,
+            send_to_owner=True,
+            recipient_emails=[],
+            language=None,
+            interval="hourly",
+        )
+        soft_shift_to_server_timezone(report_notification)
+
+        self.assertEqual(report_notification.hour, 18)
+        self.assertEqual(report_notification.stop_hour, 2)
+
+    def test_convert_to_domain_timezone(self):
+        report_notification = ReportNotification(
+            domain=self.DOMAIN,
+            config_ids=[],
+            hour=8,
+            minute=0,
+            stop_hour=16,
+            stop_minute=0,
+            send_to_owner=True,
+            recipient_emails=[],
+            language=None,
+            interval="hourly",
+        )
+        soft_shift_to_domain_timezone(report_notification)
+
+        self.assertEqual(report_notification.hour, 22)
+        self.assertEqual(report_notification.stop_hour, 6)

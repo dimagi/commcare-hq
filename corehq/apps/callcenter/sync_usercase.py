@@ -62,14 +62,19 @@ class _UserCaseHelper(object):
         self._user_case_changed(fields)
 
     def update_user_case(self, case, fields, close):
+        kwargs = {}
+        if 'owner_id' in fields:
+            kwargs['owner_id'] = fields.pop('owner_id')
+        if 'case_type' in fields:
+            kwargs['case_type'] = fields.pop('case_type')
+        if 'name' in fields:
+            kwargs['case_name'] = fields.pop('name')
         self.case_blocks.append(CaseBlock(
             create=False,
             case_id=case.case_id,
-            owner_id=fields.pop('owner_id', CaseBlock.undefined),
-            case_type=fields.pop('case_type', CaseBlock.undefined),
-            case_name=fields.pop('name', CaseBlock.undefined),
             close=close,
-            update=fields
+            update=fields,
+            **kwargs,
         ))
         self._user_case_changed(fields)
 

@@ -73,6 +73,8 @@ def get_event_schema() -> dict:
             SchemaOptional("providedElsewhere"): bool,
             SchemaOptional("storedBy"): str,
             "value": object,
+            SchemaOptional("lastUpdatedByUserInfo"): user_info_schema,
+            SchemaOptional("createdByUserInfo"): user_info_schema,
         }],
         SchemaOptional("deleted"): bool,
         SchemaOptional("dueDate"): date_schema,
@@ -115,14 +117,10 @@ def get_relationship_schema() -> dict:
         SchemaOptional("relationship"): id_schema,
         SchemaOptional("bidirectional"): bool,
         "from": {
-            "trackedEntityInstance": {
-                "trackedEntityInstance": id_schema,
-            }
+            "trackedEntityInstance": get_tracked_entity_instance_schema()
         },
         "to": {
-            "trackedEntityInstance": {
-                "trackedEntityInstance": id_schema,
-            }
+            "trackedEntityInstance": get_tracked_entity_instance_schema()
         },
         SchemaOptional("created"): datetime_schema,
         SchemaOptional("lastUpdated"): datetime_schema,
@@ -139,6 +137,7 @@ def get_tracked_entity_schema() -> dict:
     geometry_schema = get_geometry_schema()
     note_schema = get_note_schema()
     relationship_schema = get_relationship_schema()
+    program_owner_schema = get_program_owner_schema()
     return {
         SchemaOptional("attributes"): [attribute_schema],
         SchemaOptional("created"): datetime_schema,
@@ -176,7 +175,7 @@ def get_tracked_entity_schema() -> dict:
         SchemaOptional("lastUpdatedAtClient"): datetime_schema,
         "orgUnit": id_schema,
         SchemaOptional("potentialDuplicate"): bool,
-        SchemaOptional("programOwners"): [object],
+        SchemaOptional("programOwners"): [program_owner_schema],
         SchemaOptional("relationships"): [relationship_schema],
         SchemaOptional("storedBy"): str,
         SchemaOptional("trackedEntityInstance"): id_schema,
@@ -204,4 +203,20 @@ def get_user_info_schema():
         "surname": str,
         "uid": id_schema,
         "username": str,
+    }
+
+
+def get_program_owner_schema():
+    return {
+        "ownerOrgUnit": id_schema,
+        "program": id_schema,
+        "trackedEntityInstance": id_schema,
+    }
+
+
+def get_tracked_entity_instance_schema():
+    return {
+        "trackedEntityInstance": id_schema,
+        SchemaOptional("programOwners"): [get_program_owner_schema()],
+        SchemaOptional("potentialDuplicate"): bool,
     }

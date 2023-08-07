@@ -6,7 +6,7 @@ from tastypie.exceptions import BadRequest
 
 from corehq import privileges
 from corehq.apps.accounting.decorators import requires_privilege_with_fallback
-from corehq.apps.api.decorators import allow_cors
+from corehq.apps.api.decorators import allow_cors, api_throttle
 from corehq.apps.api.resources.messaging_event.filters import filter_query
 from corehq.apps.api.resources.messaging_event.pagination import get_paged_data
 from corehq.apps.api.resources.messaging_event.serializers import serialize_event
@@ -18,9 +18,10 @@ from corehq.apps.sms.models import MessagingSubEvent, SMS, Email
 
 @csrf_exempt
 @allow_cors(['OPTIONS', 'GET'])
-@api_auth
+@api_auth()
 @require_can_edit_data
 @requires_privilege_with_fallback(privileges.API_ACCESS)
+@api_throttle
 def messaging_events(request, domain, event_id=None):
     """Despite it's name this API is backed by the MessagingSubEvent model
     which has a more direct relationship with who the messages are being sent to.
@@ -55,27 +56,4 @@ def _get_list(request):
 
 
 def _get_base_query(domain):
-    """The base query includes a 'date_last_activity' field. This field
-    is calculated as:
-      Max(
-        event.date,
-        xform_session.modified_time,  # if it exists
-        Max(sms.date_modified),  # max for the current event
-        Max(email.date_modified)  # max for the current event
-      )
-  """
-    query = MessagingSubEvent.objects.select_related("parent").filter(parent__domain=domain)
-    newest_sms = (
-        SMS.objects.filter(messaging_subevent=OuterRef('pk'))
-        .order_by('-date_modified')
-        .values('date_modified')[:1]
-    )
-    newest_email = (
-       Email.objects.filter(messaging_subevent=OuterRef('pk'))
-       .order_by('-date_modified')
-       .values('date_modified')[:1]
-    )
-    query = query.annotate(date_last_activity=Greatest(
-        'date', 'xforms_session__modified_time', Subquery(newest_sms), Subquery(newest_email)
-    ))
-    return query
+    return MessagingSubEvent.objects.select_related("parent").filter(domain=domain)

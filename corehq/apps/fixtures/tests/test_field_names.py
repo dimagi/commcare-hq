@@ -1,121 +1,54 @@
 from xml.etree import cElementTree as ElementTree
 
-from django.test import SimpleTestCase, TestCase
+from django.test import SimpleTestCase
 
 from casexml.apps.case.tests.util import check_xml_line_by_line
 
 from corehq.apps.fixtures.models import (
-    FieldList,
-    FixtureDataItem,
-    FixtureDataType,
-    FixtureItemField,
-    FixtureTypeField,
+    Field,
+    LookupTable,
+    LookupTableRow,
+    TypeField,
 )
 from corehq.apps.fixtures.fixturegenerators import item_lists
 from corehq.apps.fixtures.utils import is_identifier_invalid
 
 
-class FieldNameCleanTest(TestCase):
-    """Makes sure that bad characters are properly escaped in the xml
-    """
+class FieldNameCleanTest(SimpleTestCase):
+    """Makes sure that bad characters are properly escaped in the xml"""
 
     def setUp(self):
         self.domain = 'dirty-fields'
 
-        self.data_type = FixtureDataType(
+        self.data_type = LookupTable(
             domain=self.domain,
             tag='dirty_fields',
-            name="Dirty Fields",
+            description="Dirty Fields",
             fields=[
-                FixtureTypeField(
-                    field_name="will/crash",
-                    properties=[]
-                ),
-                FixtureTypeField(
-                    field_name="space cadet",
-                    properties=[]
-                ),
-                FixtureTypeField(
-                    field_name="yes\\no",
-                    properties=[]
-                ),
-                FixtureTypeField(
-                    field_name="<with>",
-                    properties=[]
-                ),
-                FixtureTypeField(
-                    field_name="<crazy / combo><d",
-                    properties=[]
-                )
+                TypeField(name="will/crash"),
+                TypeField(name="space cadet"),
+                TypeField(name="yes\\no"),
+                TypeField(name="<with>"),
+                TypeField(name="<crazy / combo><d")
             ],
             item_attributes=[],
         )
-        self.data_type.save()
 
-        self.data_item = FixtureDataItem(
+        self.data_item = LookupTableRow(
             domain=self.domain,
-            data_type_id=self.data_type.get_id,
+            table_id=self.data_type.id,
             fields={
-                "will/crash": FieldList(
-                    field_list=[
-                        FixtureItemField(
-                            field_value="yep",
-                            properties={}
-                        )
-                    ]
-                ),
-                "space cadet": FieldList(
-                    field_list=[
-                        FixtureItemField(
-                            field_value="major tom",
-                            properties={}
-                        )
-                    ]
-                ),
-                "yes\\no": FieldList(
-                    field_list=[
-                        FixtureItemField(
-                            field_value="no, duh",
-                            properties={}
-                        )
-                    ]
-                ),
-                "<with>": FieldList(
-                    field_list=[
-                        FixtureItemField(
-                            field_value="so fail",
-                            properties={}
-                        )
-                    ]
-                ),
-                "<crazy / combo><d": FieldList(
-                    field_list=[
-                        FixtureItemField(
-                            field_value="just why",
-                            properties={}
-                        )
-                    ]
-                ),
-                "xmlbad": FieldList(
-                    field_list=[
-                        FixtureItemField(
-                            field_value="badxml",
-                            properties={}
-                        )
-                    ]
-                )
+                "will/crash": [Field(value="yep")],
+                "space cadet": [Field(value="major tom")],
+                "yes\\no": [Field(value="no, duh")],
+                "<with>": [Field(value="so fail")],
+                "<crazy / combo><d": [Field(value="just why")],
+                "xmlbad": [Field(value="badxml")],
             },
             item_attributes={},
         )
-        self.data_item.save()
-
-    def tearDown(self):
-        self.data_type.delete()
-        self.data_item.delete()
 
     def test_cleaner(self):
-        item_dict = self.data_item.to_json()
-        item_dict['_data_type'] = self.data_item.data_type
         check_xml_line_by_line(self, """
         <dirty_fields>
             <will_crash>yep</will_crash>
@@ -124,7 +57,7 @@ class FieldNameCleanTest(TestCase):
             <_with_>so fail</_with_>
             <_crazy___combo__d>just why</_crazy___combo__d>
         </dirty_fields>
-        """, ElementTree.tostring(item_lists.to_xml(item_dict), encoding='utf-8'))
+        """, ElementTree.tostring(item_lists.to_xml(self.data_item, self.data_type), encoding='utf-8'))
 
 
 class FieldNameValidationTest(SimpleTestCase):

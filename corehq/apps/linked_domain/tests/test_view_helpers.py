@@ -7,11 +7,12 @@ import pytz
 
 from corehq.apps.app_manager.models import Application, LinkedApplication
 from corehq.apps.domain.shortcuts import create_domain
-from corehq.apps.fixtures.models import FixtureDataType, FixtureTypeField
+from corehq.apps.fixtures.models import LookupTable, TypeField
 from corehq.apps.linked_domain.const import (
     DOMAIN_LEVEL_DATA_MODELS,
     FEATURE_FLAG_DATA_MODELS,
     MODEL_APP,
+    MODEL_AUTO_UPDATE_RULE,
     MODEL_FIXTURE,
     MODEL_FLAGS,
     MODEL_KEYWORD,
@@ -25,6 +26,7 @@ from corehq.apps.linked_domain.models import (
     FixtureLinkDetail,
     KeywordLinkDetail,
     ReportLinkDetail,
+    UpdateRuleLinkDetail,
 )
 from corehq.apps.linked_domain.view_helpers import (
     build_app_view_model,
@@ -35,19 +37,30 @@ from corehq.apps.linked_domain.view_helpers import (
     build_pullable_view_models_from_data_models,
     build_report_view_model,
     build_superuser_view_models,
+    build_ucr_expression_view_model,
     build_view_models_from_data_models,
     get_upstream_and_downstream_apps,
     get_upstream_and_downstream_fixtures,
     get_upstream_and_downstream_keywords,
     get_upstream_and_downstream_reports,
+    get_upstream_and_downstream_update_rules,
+    get_upstream_and_downstream_ucr_expressions,
+    pop_app,
+    pop_fixture,
+    pop_keyword,
+    pop_report,
+    pop_ucr_expression,
 )
 from corehq.apps.sms.models import Keyword, KeywordAction
+from corehq.apps.userreports.const import UCR_NAMED_EXPRESSION
 from corehq.apps.userreports.dbaccessors import delete_all_report_configs
 from corehq.apps.userreports.models import (
     DataSourceConfiguration,
     ReportConfiguration,
     ReportMeta,
+    UCRExpression,
 )
+from corehq.apps.data_interfaces.models import AutomaticUpdateRule
 from corehq.util.test_utils import flag_enabled
 
 
@@ -94,13 +107,29 @@ def _create_keyword(domain, name="ping", upstream_id=None, should_save=True, is_
     return keyword
 
 
+def _create_ucr_expression(domain, name="ping", upstream_id=None, should_save=True,):
+    ucr_expression = UCRExpression(
+        domain=domain,
+        name=name,
+        description="The description",
+        expression_type=UCR_NAMED_EXPRESSION,
+        definition={"type": "constant", "constant": "Constant repetition carries conviction."},
+        upstream_id=upstream_id,
+    )
+
+    if should_save:
+        ucr_expression.save()
+
+    return ucr_expression
+
+
 def _create_fixture(domain, tag="table", should_save=True):
-    data_type = FixtureDataType(
+    data_type = LookupTable(
         domain=domain,
         tag=tag,
         fields=[
-            FixtureTypeField(
-                field_name="fixture_property",
+            TypeField(
+                name="fixture_property",
                 properties=["test"]
             )
         ],
@@ -111,6 +140,22 @@ def _create_fixture(domain, tag="table", should_save=True):
         data_type.save()
 
     return data_type
+
+
+def _create_update_rule(domain, name="update_rule", workflow=AutomaticUpdateRule.WORKFLOW_CASE_UPDATE,
+                        should_save=True):
+    rule = AutomaticUpdateRule(
+        domain=domain,
+        name=name,
+        case_type='test',
+        active=True,
+        workflow=workflow
+    )
+
+    if should_save:
+        rule.save()
+
+    return rule
 
 
 class BaseLinkedDomainTest(TestCase):
@@ -136,14 +181,19 @@ class BaseLinkedDomainTest(TestCase):
         cls.original_keyword = _create_keyword(cls.upstream_domain)
         cls.linked_keyword = _create_keyword(cls.downstream_domain, upstream_id=cls.original_keyword.id)
 
+        cls.original_ucr_expression = _create_ucr_expression(cls.upstream_domain)
+        cls.linked_ucr_expression = _create_ucr_expression(
+            cls.downstream_domain, upstream_id=cls.original_ucr_expression.id
+        )
+
         cls.original_fixture = _create_fixture(cls.upstream_domain)
+        # Couch lookup tables are cleaned up by domain deletion
 
         cls.domain_link = DomainLink.link_domains(cls.downstream_domain, cls.upstream_domain)
 
     @classmethod
     def tearDownClass(cls):
         delete_all_report_configs()
-        cls.original_fixture.delete()
         cls.original_keyword.delete()
         cls.linked_keyword.delete()
         cls.original_report.delete()
@@ -224,26 +274,60 @@ class TestGetDataModels(BaseLinkedDomainTest):
         self.assertEqual(expected_upstream_keywords, actual_upstream_keywords)
         self.assertEqual(expected_downstream_keywords, actual_downstream_keywords)
 
+    def test_get_ucr_expressions_for_upstream_domain(self):
+        expected_upstream_ucr_expressions = [str(self.original_ucr_expression.id)]
+        expected_downstream_ucr_expressions = []
+
+        upstream_ucr_expressions, downstream_ucr_expressions = get_upstream_and_downstream_ucr_expressions(
+            self.upstream_domain
+        )
+        actual_upstream_ucr_expressions = [
+            str(ucr_expression.id) for ucr_expression in upstream_ucr_expressions.values()
+        ]
+        actual_downstream_ucr_expressions = [
+            str(ucr_expression.id) for ucr_expression in downstream_ucr_expressions.values()
+        ]
+
+        self.assertEqual(expected_upstream_ucr_expressions, actual_upstream_ucr_expressions)
+        self.assertEqual(expected_downstream_ucr_expressions, actual_downstream_ucr_expressions)
+
+    def test_get_ucr_expressions_for_downstream_domain(self):
+        expected_upstream_ucr_expressions = []
+        expected_downstream_ucr_expressions = [str(self.linked_ucr_expression.id)]
+
+        upstream_ucr_expressions, downstream_ucr_expressions = get_upstream_and_downstream_ucr_expressions(
+            self.downstream_domain
+        )
+        actual_upstream_ucr_expressions = [
+            str(ucr_expression.id) for ucr_expression in upstream_ucr_expressions.values()
+        ]
+        actual_downstream_ucr_expressions = [
+            str(ucr_expression.id) for ucr_expression in downstream_ucr_expressions.values()
+        ]
+
+        self.assertEqual(expected_upstream_ucr_expressions, actual_upstream_ucr_expressions)
+        self.assertEqual(expected_downstream_ucr_expressions, actual_downstream_ucr_expressions)
+
     def test_get_fixtures_for_upstream_domain(self):
-        expected_upstream_fixtures = [self.original_fixture._id]
+        expected_upstream_fixtures = [self.original_fixture.id]
         expected_downstream_fixtures = []
 
         upstream_fixtures, downstream_fixtures = get_upstream_and_downstream_fixtures(self.upstream_domain, None)
-        actual_upstream_fixtures = [fixture._id for fixture in upstream_fixtures.values()]
-        actual_downstream_fixtures = [fixture._id for fixture in downstream_fixtures.values()]
+        actual_upstream_fixtures = [fixture.id for fixture in upstream_fixtures.values()]
+        actual_downstream_fixtures = [fixture.id for fixture in downstream_fixtures.values()]
 
         self.assertEqual(expected_upstream_fixtures, actual_upstream_fixtures)
         self.assertEqual(expected_downstream_fixtures, actual_downstream_fixtures)
 
     def test_get_fixtures_for_downstream_domain(self):
         expected_upstream_fixtures = []
-        expected_downstream_fixtures = [self.original_fixture._id]
+        expected_downstream_fixtures = [self.original_fixture.id]
 
         upstream_fixtures, downstream_fixtures = get_upstream_and_downstream_fixtures(
             self.downstream_domain, self.domain_link
         )
-        actual_upstream_fixtures = [fixture._id for fixture in upstream_fixtures.values()]
-        actual_downstream_fixtures = [fixture._id for fixture in downstream_fixtures.values()]
+        actual_upstream_fixtures = [fixture.id for fixture in upstream_fixtures.values()]
+        actual_downstream_fixtures = [fixture.id for fixture in downstream_fixtures.values()]
 
         self.assertEqual(expected_upstream_fixtures, actual_upstream_fixtures)
         self.assertEqual(expected_downstream_fixtures, actual_downstream_fixtures)
@@ -375,6 +459,32 @@ class TestBuildIndividualViewModels(TestCase):
 
         actual_view_model = build_keyword_view_model(keyword)
         self.assertEqual(expected_view_model, actual_view_model)
+
+    def test_build_ucr_expression_view_model_returns_match(self):
+        ucr_expression = _create_ucr_expression(self.domain, should_save=False)
+        ucr_expression.id = '100'
+
+        expected_view_model = {
+            'type': 'ucr_expression',
+            'name': f'Data Expressions and Filters ({ucr_expression.name})',
+            'detail': {'ucr_expression_id': '100'},
+            'last_update': None,
+            'can_update': True,
+            'is_linkable': True,
+        }
+
+        actual_view_model = build_ucr_expression_view_model(ucr_expression)
+        self.assertEqual(expected_view_model, actual_view_model)
+
+    def test_build_ucr_expression_view_model_with_none_returns_none(self):
+        ucr_expression = None
+        actual_view_model = build_ucr_expression_view_model(ucr_expression)
+        self.assertIsNone(actual_view_model)
+
+    def test_build_ucr_expression_view_model_with_empty_returns_none(self):
+        ucr_expression = {}
+        actual_view_model = build_ucr_expression_view_model(ucr_expression)
+        self.assertIsNone(actual_view_model)
 
 
 class TestBuildFeatureFlagViewModels(TestCase):
@@ -602,13 +712,13 @@ class TestBuildViewModelsFromDataModels(BaseLinkedDomainTest):
     """
 
     def test_domain_level_view_models_are_built(self):
-        view_models = build_view_models_from_data_models(self.downstream_domain, {}, {}, {}, {})
+        view_models = build_view_models_from_data_models(self.downstream_domain, {}, {}, {}, {}, {}, {})
         expected_length = len(DOMAIN_LEVEL_DATA_MODELS)
         self.assertEqual(expected_length, len(view_models))
 
     def test_domain_level_view_models_are_ignored(self):
         view_models = build_view_models_from_data_models(
-            self.downstream_domain, {}, {}, {}, {}, ignore_models=dict(DOMAIN_LEVEL_DATA_MODELS).keys()
+            self.downstream_domain, {}, {}, {}, {}, {}, {}, ignore_models=dict(DOMAIN_LEVEL_DATA_MODELS).keys()
         )
         self.assertEqual(0, len(view_models))
 
@@ -620,7 +730,7 @@ class TestBuildViewModelsFromDataModels(BaseLinkedDomainTest):
     @flag_enabled('EMBEDDED_TABLEAU')
     @flag_enabled('COMMTRACK')
     def test_feature_flag_view_models_are_built(self):
-        view_models = build_view_models_from_data_models(self.downstream_domain, {}, {}, {}, {})
+        view_models = build_view_models_from_data_models(self.downstream_domain, {}, {}, {}, {}, {}, {})
         expected_length = len(DOMAIN_LEVEL_DATA_MODELS) + len(FEATURE_FLAG_DATA_MODELS)
         self.assertEqual(expected_length, len(view_models))
 
@@ -633,26 +743,28 @@ class TestBuildViewModelsFromDataModels(BaseLinkedDomainTest):
     @flag_enabled('COMMTRACK')
     def test_feature_flag_view_models_are_ignored(self):
         view_models = build_view_models_from_data_models(
-            self.downstream_domain, {}, {}, {}, {}, ignore_models=dict(FEATURE_FLAG_DATA_MODELS).keys()
+            self.downstream_domain, {}, {}, {}, {}, {}, {}, ignore_models=dict(FEATURE_FLAG_DATA_MODELS).keys()
         )
         expected_length = len(DOMAIN_LEVEL_DATA_MODELS)
         self.assertEqual(expected_length, len(view_models))
 
     def test_superuser_view_models_are_built_if_superuser(self):
-        view_models = build_view_models_from_data_models(self.downstream_domain, {}, {}, {}, {}, is_superuser=True)
+        view_models = build_view_models_from_data_models(
+            self.downstream_domain, {}, {}, {}, {}, {}, {}, is_superuser=True
+        )
         expected_length = len(DOMAIN_LEVEL_DATA_MODELS) + len(SUPERUSER_DATA_MODELS)
         self.assertEqual(expected_length, len(view_models))
 
     def test_superuser_view_models_are_not_built_if_not_superuser(self):
         # same as test_domain_level_view_models_are_built, but added to be explicit
         view_models = build_view_models_from_data_models(
-            self.downstream_domain, {}, {}, {}, {}, is_superuser=False
+            self.downstream_domain, {}, {}, {}, {}, {}, {}, is_superuser=False
         )
         expected_length = len(DOMAIN_LEVEL_DATA_MODELS)
         self.assertEqual(expected_length, len(view_models))
 
     def test_superuser_view_models_are_ignored(self):
-        view_models = build_view_models_from_data_models(self.downstream_domain, {}, {}, {}, {},
+        view_models = build_view_models_from_data_models(self.downstream_domain, {}, {}, {}, {}, {}, {},
                                                          ignore_models=dict(SUPERUSER_DATA_MODELS).keys(),
                                                          is_superuser=True)
         expected_length = len(DOMAIN_LEVEL_DATA_MODELS)
@@ -660,25 +772,52 @@ class TestBuildViewModelsFromDataModels(BaseLinkedDomainTest):
 
     def test_app_view_models_are_built(self):
         _, downstream_apps = get_upstream_and_downstream_apps(self.downstream_domain)
-        view_models = build_view_models_from_data_models(self.downstream_domain, downstream_apps, {}, {}, {})
+        view_models = build_view_models_from_data_models(self.downstream_domain, downstream_apps,
+                                                         {}, {}, {}, {}, {})
         expected_length = len(DOMAIN_LEVEL_DATA_MODELS) + 1
         self.assertEqual(expected_length, len(view_models))
 
     def test_fixture_view_models_are_built(self):
         _, downstream_fixtures = get_upstream_and_downstream_fixtures(self.downstream_domain, self.domain_link)
-        view_models = build_view_models_from_data_models(self.downstream_domain, {}, downstream_fixtures, {}, {})
+        view_models = build_view_models_from_data_models(
+            self.downstream_domain, {}, downstream_fixtures, {}, {}, {}, {}
+        )
         expected_length = len(DOMAIN_LEVEL_DATA_MODELS) + 1
         self.assertEqual(expected_length, len(view_models))
 
     def test_report_view_models_are_built(self):
         _, downstream_reports = get_upstream_and_downstream_reports(self.downstream_domain)
-        view_models = build_view_models_from_data_models(self.downstream_domain, {}, {}, downstream_reports, {})
+        view_models = build_view_models_from_data_models(
+            self.downstream_domain, {}, {}, downstream_reports, {}, {}, {}
+        )
         expected_length = len(DOMAIN_LEVEL_DATA_MODELS) + 1
         self.assertEqual(expected_length, len(view_models))
 
     def test_keyword_view_models_are_built(self):
         _, downstream_keywords = get_upstream_and_downstream_keywords(self.downstream_domain)
-        view_models = build_view_models_from_data_models(self.downstream_domain, {}, {}, {}, downstream_keywords)
+        view_models = build_view_models_from_data_models(
+            self.downstream_domain, {}, {}, {}, downstream_keywords, {}, {}
+        )
+        expected_length = len(DOMAIN_LEVEL_DATA_MODELS) + 1
+        self.assertEqual(expected_length, len(view_models))
+
+    def test_ucr_expression_view_models_are_built(self):
+        _, downstream_ucr_expressions = get_upstream_and_downstream_ucr_expressions(self.downstream_domain)
+        view_models = build_view_models_from_data_models(
+            self.downstream_domain, {}, {}, {}, {}, downstream_ucr_expressions, {}
+        )
+        expected_length = len(DOMAIN_LEVEL_DATA_MODELS) + 1
+        self.assertEqual(expected_length, len(view_models))
+
+    def test_update_rule_view_models_are_built(self):
+        _create_update_rule(self.upstream_domain, workflow=AutomaticUpdateRule.WORKFLOW_CASE_UPDATE)
+
+        upstream_rules, _ = get_upstream_and_downstream_update_rules(self.upstream_domain, self.domain_link)
+
+        view_models = build_view_models_from_data_models(
+            self.upstream_domain, {}, {}, {}, {}, {}, upstream_rules
+        )
+
         expected_length = len(DOMAIN_LEVEL_DATA_MODELS) + 1
         self.assertEqual(expected_length, len(view_models))
 
@@ -692,7 +831,7 @@ class TestBuildPullableViewModels(BaseLinkedDomainTest):
         self._create_sync_event(MODEL_FLAGS)
 
         view_models = build_pullable_view_models_from_data_models(self.downstream_domain, self.domain_link, {}, {},
-                                                                  {}, {}, pytz.UTC, is_superuser=True)
+                                                                  {}, {}, {}, {}, pytz.UTC, is_superuser=True)
         expected_length = len(DOMAIN_LEVEL_DATA_MODELS) + len(SUPERUSER_DATA_MODELS)
         self.assertEqual(expected_length, len(view_models))
 
@@ -702,7 +841,7 @@ class TestBuildPullableViewModels(BaseLinkedDomainTest):
         self._create_sync_event(MODEL_FLAGS)
 
         view_models = build_pullable_view_models_from_data_models(self.downstream_domain, self.domain_link, {}, {},
-                                                                  {}, {}, pytz.UTC, is_superuser=False)
+                                                                  {}, {}, {}, {}, pytz.UTC, is_superuser=False)
         expected_length = len(DOMAIN_LEVEL_DATA_MODELS)
         self.assertEqual(expected_length, len(view_models))
 
@@ -711,7 +850,7 @@ class TestBuildPullableViewModels(BaseLinkedDomainTest):
 
         _, downstream_apps = get_upstream_and_downstream_apps(self.downstream_domain)
         view_models = build_pullable_view_models_from_data_models(self.downstream_domain, self.domain_link,
-                                                                  downstream_apps, {}, {}, {}, pytz.UTC)
+                                                                  downstream_apps, {}, {}, {}, {}, {}, pytz.UTC)
         expected_length = len(DOMAIN_LEVEL_DATA_MODELS) + 1
         self.assertEqual(expected_length, len(view_models))
 
@@ -721,7 +860,7 @@ class TestBuildPullableViewModels(BaseLinkedDomainTest):
         _, downstream_apps = get_upstream_and_downstream_apps(self.downstream_domain)
         self.assertTrue(1, len(downstream_apps))
         build_pullable_view_models_from_data_models(self.downstream_domain, self.domain_link, downstream_apps, {},
-                                                    {}, {}, pytz.UTC)
+                                                    {}, {}, {}, {}, pytz.UTC)
         self.assertEqual(0, len(downstream_apps))
 
     def test_already_synced_fixture_view_models_are_built(self):
@@ -729,7 +868,7 @@ class TestBuildPullableViewModels(BaseLinkedDomainTest):
 
         _, downstream_fixtures = get_upstream_and_downstream_fixtures(self.downstream_domain, self.domain_link)
         view_models = build_pullable_view_models_from_data_models(self.downstream_domain, self.domain_link, {},
-                                                                  downstream_fixtures, {}, {}, pytz.UTC)
+                                                                  downstream_fixtures, {}, {}, {}, {}, pytz.UTC)
         expected_length = len(DOMAIN_LEVEL_DATA_MODELS) + 1
         self.assertEqual(expected_length, len(view_models))
 
@@ -739,7 +878,7 @@ class TestBuildPullableViewModels(BaseLinkedDomainTest):
         _, downstream_fixtures = get_upstream_and_downstream_fixtures(self.downstream_domain, self.domain_link)
         self.assertTrue(1, len(downstream_fixtures))
         build_pullable_view_models_from_data_models(self.downstream_domain, self.domain_link, {},
-                                                    downstream_fixtures, {}, {}, pytz.UTC)
+                                                    downstream_fixtures, {}, {}, {}, {}, pytz.UTC)
         self.assertEqual(0, len(downstream_fixtures))
 
     def test_already_synced_report_view_models_are_built(self):
@@ -747,7 +886,7 @@ class TestBuildPullableViewModels(BaseLinkedDomainTest):
 
         _, downstream_reports = get_upstream_and_downstream_reports(self.downstream_domain)
         view_models = build_pullable_view_models_from_data_models(self.downstream_domain, self.domain_link, {}, {},
-                                                                  downstream_reports, {}, pytz.UTC)
+                                                                  downstream_reports, {}, {}, {}, pytz.UTC)
         expected_length = len(DOMAIN_LEVEL_DATA_MODELS) + 1
         self.assertEqual(expected_length, len(view_models))
 
@@ -757,7 +896,7 @@ class TestBuildPullableViewModels(BaseLinkedDomainTest):
         _, downstream_reports = get_upstream_and_downstream_reports(self.downstream_domain)
         self.assertTrue(1, len(downstream_reports))
         build_pullable_view_models_from_data_models(self.downstream_domain, self.domain_link, {}, {},
-                                                    downstream_reports, {}, pytz.UTC)
+                                                    downstream_reports, {}, {}, {}, pytz.UTC)
         self.assertEqual(0, len(downstream_reports))
 
     def test_already_synced_keyword_view_models_are_built(self):
@@ -766,7 +905,7 @@ class TestBuildPullableViewModels(BaseLinkedDomainTest):
         _, downstream_keywords = get_upstream_and_downstream_keywords(self.downstream_domain)
         self.assertTrue(1, len(downstream_keywords))
         view_models = build_pullable_view_models_from_data_models(self.downstream_domain, self.domain_link, {}, {},
-                                                                  {}, downstream_keywords, pytz.UTC)
+                                                                  {}, downstream_keywords, {}, {}, pytz.UTC)
         expected_length = len(DOMAIN_LEVEL_DATA_MODELS) + 1
         self.assertEqual(expected_length, len(view_models))
 
@@ -776,11 +915,40 @@ class TestBuildPullableViewModels(BaseLinkedDomainTest):
         _, downstream_keywords = get_upstream_and_downstream_keywords(self.downstream_domain)
         self.assertTrue(1, len(downstream_keywords))
         build_pullable_view_models_from_data_models(self.downstream_domain, self.domain_link, {}, {}, {},
-                                                    downstream_keywords, pytz.UTC)
+                                                    downstream_keywords, {}, {}, pytz.UTC)
         self.assertEqual(0, len(downstream_keywords))
+
+    def test_already_synced_update_rules_are_built(self):
+        update_rule = _create_update_rule(self.upstream_domain,
+                            workflow=AutomaticUpdateRule.WORKFLOW_CASE_UPDATE, should_save=True)
+        self._create_sync_event(MODEL_AUTO_UPDATE_RULE, UpdateRuleLinkDetail(id=update_rule.id).to_json())
+
+        upstream_rules, _ = get_upstream_and_downstream_update_rules(self.upstream_domain, self.domain_link)
+        view_models = build_pullable_view_models_from_data_models(self.upstream_domain, self.domain_link,
+                                                                  {}, {}, {}, {}, {}, upstream_rules, pytz.UTC)
+        expected_length = len(DOMAIN_LEVEL_DATA_MODELS) + 1
+        self.assertEqual(expected_length, len(view_models))
 
     def _create_sync_event(self, model_type, model_detail=None):
         sync_event = DomainLinkHistory(
             link=self.domain_link, date=datetime.utcnow(), model=model_type, model_detail=model_detail
         )
         sync_event.save()
+
+
+class PopDataModelsTests(TestCase):
+
+    def test_pop_app_returns_none_if_does_not_exist(self):
+        self.assertIsNone(pop_app('unknown', {}))
+
+    def test_pop_fixture_returns_none_if_does_not_exist(self):
+        self.assertIsNone(pop_fixture('unknown', {}, 'pop-test'))
+
+    def test_pop_report_returns_none_if_does_not_exist(self):
+        self.assertIsNone(pop_report('unknown', {}))
+
+    def test_pop_keyword_returns_none_if_does_not_exist(self):
+        self.assertIsNone(pop_keyword(0, {}))
+
+    def test_pop_ucr_expression_returns_none_if_does_not_exist(self):
+        self.assertIsNone(pop_ucr_expression(0, {}))

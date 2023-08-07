@@ -9,6 +9,7 @@ from django.utils.translation import gettext_lazy as _
 
 from lxml import etree as ET
 from memoized import memoized
+from requests import RequestException
 
 from casexml.apps.case.const import UNOWNED_EXTENSION_OWNER_ID
 from casexml.apps.case.xml import V2_NAMESPACE
@@ -116,17 +117,17 @@ def get_case_parent_id_xpath(parent_path, case_id_xpath=None):
 
 
 def get_add_case_preloads_case_id_xpath(module, form):
-    xpath = None
+    from corehq.apps.app_manager.suite_xml.sections.entries import EntriesHelper
     if 'open_case' in form.active_actions():
-        xpath = CaseIDXPath(session_var(form.session_var_for_action('open_case')))
-    elif module.root_module_id and module.parent_select.active:
-        # This is a submodule. case_id will have changed to avoid a clash with the parent case.
-        # Case type is enough to ensure uniqueness for normal forms. No need to worry about a suffix.
-        case_id = '_'.join((CASE_ID, form.get_case_type()))
-        xpath = CaseIDXPath(session_var(case_id))
-    else:
-        xpath = SESSION_CASE_ID
-    return xpath
+        return CaseIDXPath(session_var(form.session_var_for_action('open_case')))
+    elif module.root_module_id or module.parent_select.active:
+        # We could always get the var name from the datums but there's a performance cost
+        # If the above conditions don't apply then it should always be 'case_id'
+        var_name = EntriesHelper(module.get_app()).get_case_session_var_for_form(form)
+        if var_name:
+            return CaseIDXPath(session_var(var_name))
+        raise CaseError("Unable to determine correct session variable for case management")
+    return SESSION_CASE_ID
 
 
 def relative_path(from_path, to_path):
@@ -637,8 +638,11 @@ def validate_xform(source):
     source = ET.tostring(parse_xml(source), encoding='utf-8')
     try:
         validation_results = formplayer_api.validate_form(source)
-    except FormplayerAPIException:
-        raise XFormValidationFailed("Unable to validate form")
+    except FormplayerAPIException as err:
+        if isinstance(err.__cause__, RequestException):
+            raise XFormValidationFailed("Unable to connect to Formplayer")
+        else:
+            raise XFormValidationFailed("Unable to validate form")
 
     if not validation_results.success:
         raise XFormValidationError(
@@ -871,10 +875,11 @@ class XForm(WrappedNode):
 
         if missing_unknown_instances:
             instance_ids = "', '".join(missing_unknown_instances)
+            module = form.get_module()
             raise XFormValidationError(_(
-                "The form is missing some instance declarations "
-                "that can't be automatically added: '%(instance_ids)s'"
-            ) % {'instance_ids': instance_ids})
+                "The form '{form}' in '{module}' is missing some instance declarations "
+                "that can't be automatically added: '{instance_ids}'"
+            ).format(form=form.default_name(), module=module.default_name(app), instance_ids=instance_ids))
 
         for instance in instances:
             if instance.id not in instance_declarations:
@@ -1028,7 +1033,12 @@ class XForm(WrappedNode):
           "country": "jr://fixture/item-list:country"
         }
         """
-        instance_nodes = self.model_node.findall('{f}instance')
+        def _get_instances():
+            return itertools.chain(
+                self.model_node.findall('{f}instance'),
+                self.model_node.findall('instance')
+            )
+        instance_nodes = _get_instances()
         instance_dict = {}
         for instance_node in instance_nodes:
             instance_id = instance_node.attrib.get('id')
@@ -1055,6 +1065,17 @@ class XForm(WrappedNode):
         :param exclude_select_with_itemsets: exclude select/multi-select with itemsets
         :param include_fixtures: add fixture data for questions that we can infer it from
         """
+        # HELPME
+        #
+        # This method has been flagged for refactoring due to its complexity and
+        # frequency of touches in changesets
+        #
+        # If you are writing code that touches this method, your changeset
+        # should leave the method better than you found it.
+        #
+        # Please remove this flag when this method no longer triggers an 'E' or 'F'
+        # classification from the radon code static analysis
+
         from corehq.apps.app_manager.models import ConditionalCaseUpdate
         from corehq.apps.app_manager.util import first_elem, extract_instance_id_from_nodeset_ref
 
@@ -1619,6 +1640,17 @@ class XForm(WrappedNode):
             return 'false()'
 
     def _create_casexml(self, form):
+        # HELPME
+        #
+        # This method has been flagged for refactoring due to its complexity and
+        # frequency of touches in changesets
+        #
+        # If you are writing code that touches this method, your changeset
+        # should leave the method better than you found it.
+        #
+        # Please remove this flag when this method no longer triggers an 'E' or 'F'
+        # classification from the radon code static analysis
+
         actions = form.active_actions()
 
         form_opens_case = 'open_case' in actions
@@ -1629,7 +1661,7 @@ class XForm(WrappedNode):
         if form.get_module().is_multi_select():
             self.add_instance(
                 'selected_cases',
-                'jr://instance/selected_cases'
+                'jr://instance/selected-entities/selected_cases'
             )
             default_case_management = False
         else:
@@ -1922,7 +1954,7 @@ class XForm(WrappedNode):
             datums_meta, _ = gen.get_datum_meta_assertions_advanced(module, form)
             # TODO: this dict needs to be keyed by something unique to the action
             adjusted_datums = {
-                getattr(meta.action, 'case_tag', None): meta.datum.id
+                getattr(meta.action, 'case_tag', None): meta.id
                 for meta in datums_meta
                 if meta.action
             }

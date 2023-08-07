@@ -173,8 +173,8 @@ def send_sms(domain, contact, phone_number, text, metadata=None, logged_subevent
 
     return queue_outgoing_sms(msg)
 
-def send_sms_to_verified_number(verified_number, text, metadata=None,
-        logged_subevent=None, events=[]):
+
+def send_sms_to_verified_number(verified_number, text, metadata=None, logged_subevent=None, events=None):
     """
     Sends an sms using the given verified phone number entry.
 
@@ -193,19 +193,20 @@ def send_sms_to_verified_number(verified_number, text, metadata=None,
         raise
 
     msg = get_sms_class()(
-        couch_recipient_doc_type = verified_number.owner_doc_type,
-        couch_recipient = verified_number.owner_id,
-        phone_number = "+" + str(verified_number.phone_number),
-        direction = OUTGOING,
+        couch_recipient_doc_type=verified_number.owner_doc_type,
+        couch_recipient=verified_number.owner_id,
+        phone_number="+" + str(verified_number.phone_number),
+        direction=OUTGOING,
         date=get_utcnow(),
-        domain = verified_number.domain,
+        domain=verified_number.domain,
         backend_id=backend.couch_id,
         location_id=get_location_id_by_verified_number(verified_number),
-        text = text
+        text=text
     )
     add_msg_tags(msg, metadata)
 
     msg.custom_metadata = {}
+    events = [] if events is None else events
     for event in events:
         multimedia_fields = ('caption_image', 'caption_audio', 'caption_video')
         for field in multimedia_fields:
@@ -275,6 +276,7 @@ def queue_outgoing_sms(msg):
         msg.processed = True
         msg_sent = send_message_via_backend(msg)
         msg.publish_change()
+        msg.update_subevent_activity()
         if msg_sent:
             create_billable_for_sms(msg)
         return msg_sent
@@ -635,18 +637,22 @@ def load_and_call(sms_handler_names, phone_number, text, sms):
     return handled
 
 
-def get_inbound_phone_entry(msg):
-    if msg.backend_id:
-        backend = SQLMobileBackend.load(msg.backend_id, is_couch_id=True)
+def get_inbound_phone_entry_from_sms(msg):
+    return get_inbound_phone_entry(msg.phone_number, msg.backend_id)
+
+
+def get_inbound_phone_entry(phone_number, backend_id=None):
+    if backend_id:
+        backend = SQLMobileBackend.load(backend_id, is_couch_id=True)
         if toggles.INBOUND_SMS_LENIENCY.enabled(backend.domain):
             p = None
             if toggles.ONE_PHONE_NUMBER_MULTIPLE_CONTACTS.enabled(backend.domain):
                 running_session_info = XFormsSessionSynchronization.get_running_session_info_for_channel(
-                    SMSChannel(backend_id=msg.backend_id, phone_number=msg.phone_number)
+                    SMSChannel(backend_id=backend_id, phone_number=phone_number)
                 )
                 contact_id = running_session_info.contact_id
                 if contact_id:
-                    p = PhoneNumber.get_phone_number_for_owner(contact_id, msg.phone_number)
+                    p = PhoneNumber.get_phone_number_for_owner(contact_id, phone_number)
                 if p is not None:
                     return (
                         p,
@@ -665,15 +671,17 @@ def get_inbound_phone_entry(msg):
                         }
                     )
 
+            # NOTE: I don't think the backend could ever be global here since global backends
+            # don't have a 'domain' and so the toggles would never be activated
             if not backend.is_global:
-                p = PhoneNumber.get_two_way_number_with_domain_scope(msg.phone_number, backend.domains_with_access)
+                p = PhoneNumber.get_two_way_number_with_domain_scope(phone_number, backend.domains_with_access)
                 return (
                     p,
                     p is not None
                 )
 
     return (
-        PhoneNumber.get_reserved_number(msg.phone_number),
+        PhoneNumber.get_reserved_number(phone_number),
         False
     )
 
@@ -697,10 +705,10 @@ def process_incoming(msg):
         })
 
 
-def _allow_load_handlers(v, is_two_way, has_domain_two_way_scope):
+def _allow_load_handlers(verified_number, is_two_way, has_domain_two_way_scope):
     return (
         (is_two_way or has_domain_two_way_scope)
-        and is_contact_active(v.domain, v.owner_doc_type, v.owner_id)
+        and is_contact_active(verified_number.domain, verified_number.owner_doc_type, verified_number.owner_id)
     )
 
 
@@ -710,17 +718,17 @@ def _domain_accepts_inbound(msg):
 
 def _process_incoming(msg):
     sms_load_counter("inbound", msg.domain)()
-    v, has_domain_two_way_scope = get_inbound_phone_entry(msg)
-    is_two_way = v is not None and v.is_two_way
+    verified_number, has_domain_two_way_scope = get_inbound_phone_entry_from_sms(msg)
+    is_two_way = verified_number is not None and verified_number.is_two_way
 
-    if v:
-        if any_migrations_in_progress(v.domain):
+    if verified_number:
+        if any_migrations_in_progress(verified_number.domain):
             raise DelayProcessing()
 
-        msg.couch_recipient_doc_type = v.owner_doc_type
-        msg.couch_recipient = v.owner_id
-        msg.domain = v.domain
-        msg.location_id = get_location_id_by_verified_number(v)
+        msg.couch_recipient_doc_type = verified_number.owner_doc_type
+        msg.couch_recipient = verified_number.owner_id
+        msg.domain = verified_number.domain
+        msg.location_id = get_location_id_by_verified_number(verified_number)
         msg.save()
 
     elif msg.domain_scope:
@@ -731,15 +739,15 @@ def _process_incoming(msg):
         msg.save()
 
     opt_in_keywords, opt_out_keywords, pass_through_opt_in_keywords = get_opt_keywords(msg)
-    domain = v.domain if v else None
+    domain = verified_number.domain if verified_number else None
     opt_keyword = False
 
     if is_opt_message(msg.text, opt_out_keywords):
         if PhoneBlacklist.opt_out_sms(msg.phone_number, domain=domain):
             metadata = MessageMetadata(ignore_opt_out=True)
-            text = get_message(MSG_OPTED_OUT, v, context=(opt_in_keywords[0],))
-            if v:
-                send_sms_to_verified_number(v, text, metadata=metadata)
+            text = get_message(MSG_OPTED_OUT, verified_number, context=(opt_in_keywords[0],))
+            if verified_number:
+                send_sms_to_verified_number(verified_number, text, metadata=metadata)
             elif msg.backend_id:
                 send_sms_with_backend(msg.domain, msg.phone_number, text, msg.backend_id, metadata=metadata)
             else:
@@ -747,9 +755,9 @@ def _process_incoming(msg):
             opt_keyword = True
     elif is_opt_message(msg.text, opt_in_keywords):
         if PhoneBlacklist.opt_in_sms(msg.phone_number, domain=domain):
-            text = get_message(MSG_OPTED_IN, v, context=(opt_out_keywords[0],))
-            if v:
-                send_sms_to_verified_number(v, text)
+            text = get_message(MSG_OPTED_IN, verified_number, context=(opt_out_keywords[0],))
+            if verified_number:
+                send_sms_to_verified_number(verified_number, text)
             elif msg.backend_id:
                 send_sms_with_backend(msg.domain, msg.phone_number, text, msg.backend_id)
             else:
@@ -763,12 +771,13 @@ def _process_incoming(msg):
     handled = False
 
     if _domain_accepts_inbound(msg):
-        if v and v.pending_verification:
+        if verified_number and verified_number.pending_verification:
             from . import verify
-            handled = verify.process_verification(v, msg, create_subevent_for_inbound=not has_domain_two_way_scope)
+            handled = verify.process_verification(
+                verified_number, msg, create_subevent_for_inbound=not has_domain_two_way_scope)
 
-        if _allow_load_handlers(v, is_two_way, has_domain_two_way_scope):
-            handled = load_and_call(settings.SMS_HANDLERS, v, msg.text, msg)
+        if _allow_load_handlers(verified_number, is_two_way, has_domain_two_way_scope):
+            handled = load_and_call(settings.SMS_HANDLERS, verified_number, msg.text, msg)
 
     if not handled and not is_two_way and not opt_keyword:
         handled = process_sms_registration(msg)

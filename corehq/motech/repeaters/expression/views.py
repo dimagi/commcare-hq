@@ -19,6 +19,7 @@ class AddCaseExpressionRepeaterView(AddRepeaterView):
             self.add_repeater_form.cleaned_data['configured_filter'])
         repeater.configured_expression = (
             self.add_repeater_form.cleaned_data['configured_expression'])
+        repeater.url_template = self.add_repeater_form.cleaned_data['url_template']
         return repeater
 
 

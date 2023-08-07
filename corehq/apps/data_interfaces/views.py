@@ -9,6 +9,7 @@ from django.http import (
     HttpResponseBadRequest,
     HttpResponseRedirect,
     HttpResponseServerError,
+    JsonResponse,
 )
 from django.shortcuts import get_object_or_404, render
 from django.urls import reverse
@@ -21,10 +22,11 @@ from couchdbkit import ResourceNotFound
 from memoized import memoized
 from no_exceptions.exceptions import Http403
 
+from dimagi.utils.logging import notify_exception
 from soil.exceptions import TaskFailedError
 from soil.util import expose_cached_download, get_download_context
 
-from corehq import privileges
+from corehq import privileges, toggles
 from corehq.apps.accounting.decorators import requires_privilege_with_fallback
 from corehq.apps.case_search.const import SPECIAL_CASE_PROPERTIES
 from corehq.apps.casegroups.dbaccessors import (
@@ -32,6 +34,7 @@ from corehq.apps.casegroups.dbaccessors import (
     get_number_of_case_groups_in_domain,
 )
 from corehq.apps.casegroups.models import CommCareCaseGroup
+from corehq.apps.data_dictionary.util import get_data_dict_props_by_case_type
 from corehq.apps.data_interfaces.deduplication import (
     reset_and_backfill_deduplicate_rule,
 )
@@ -45,12 +48,14 @@ from corehq.apps.data_interfaces.forms import (
     CaseRuleActionsForm,
     CaseRuleCriteriaForm,
     CaseUpdateRuleForm,
+    DedupeCaseFilterForm,
     UpdateCaseGroupForm,
 )
 from corehq.apps.data_interfaces.models import (
     AutomaticUpdateRule,
     CaseDeduplicationActionDefinition,
     CaseDuplicate,
+    DomainCaseRuleRun,
 )
 from corehq.apps.data_interfaces.tasks import (
     bulk_form_management_async,
@@ -84,11 +89,16 @@ from corehq.util.timezones.conversions import ServerTime
 from corehq.util.timezones.utils import get_timezone_for_user
 from corehq.util.view_utils import reverse as reverse_with_params
 from corehq.util.workbook_json.excel import WorkbookJSONError, get_workbook
+from corehq.apps.data_dictionary.util import is_case_type_deprecated
 
-from .dispatcher import require_form_management_privilege
-from .interfaces import BulkFormManagementInterface, FormManagementMode
 from ..users.decorators import require_permission
-from ..users.models import Permissions
+from ..users.models import HqPermissions
+from .dispatcher import require_form_management_privilege
+from .interfaces import (
+    BulkFormManagementInterface,
+    CaseReassignmentInterface,
+    FormManagementMode,
+)
 
 
 @login_and_domain_required
@@ -275,7 +285,7 @@ class CaseGroupListView(BaseMessagingSectionView, CRUDPaginatedViewMixin):
         }
 
 
-@method_decorator(require_permission(Permissions.edit_messaging), name="dispatch")
+@method_decorator(require_permission(HqPermissions.edit_messaging), name="dispatch")
 class CaseGroupCaseManagementView(DataInterfaceSection, CRUDPaginatedViewMixin):
     template_name = 'data_interfaces/manage_case_groups.html'
     urlname = 'manage_case_groups'
@@ -599,6 +609,40 @@ def xform_management_job_poll(request, domain, download_id,
     return render(request, template, context)
 
 
+class BulkCaseReassignSatusView(DataInterfaceSection):
+    urlname = "bulk_case_reassign_status"
+    page_title = gettext_noop("Bulk Case Reassignment Status")
+
+    @property
+    def section_url(self):
+        return CaseReassignmentInterface.get_url(self.domain)
+
+    def get(self, request, *args, **kwargs):
+        context = super(BulkCaseReassignSatusView, self).main_context
+        context.update({
+            'domain': self.domain,
+            'download_id': kwargs['download_id'],
+            'poll_url': reverse('case_reassign_job_poll', args=[self.domain, kwargs['download_id']]),
+            'title': _(self.page_title),
+            'progress_text': _("Reassigning Cases. This may take some time..."),
+            'error_text': _("Bulk Case Reassignment failed for some reason and we have noted this failure."),
+        })
+        return render(request, 'hqwebapp/soil_status_full.html', context)
+
+    def page_url(self):
+        return reverse(self.urlname, args=self.args, kwargs=self.kwargs)
+
+
+def case_reassign_job_poll(request, domain, download_id):
+    try:
+        context = get_download_context(download_id, require_result=True)
+    except TaskFailedError as e:
+        notify_exception(request, message=str(e))
+        return HttpResponseServerError()
+    template = "data_interfaces/partials/case_reassign_status.html"
+    return render(request, template, context)
+
+
 @login_and_domain_required
 @require_GET
 def find_by_id(request, domain):
@@ -612,7 +656,7 @@ def find_by_id(request, domain):
     if not can_view_cases and not can_view_forms:
         raise Http403()
 
-    name = _("Find Case or Form Submission by ID")
+    name = _("Find Data by ID")
     return render(request, 'data_interfaces/find_by_id.html', {
         'domain': domain,
         'current_page': {
@@ -628,8 +672,8 @@ def find_by_id(request, domain):
     })
 
 
-class AutomaticUpdateRuleListView(DataInterfaceSection, CRUDPaginatedViewMixin):
-    template_name = 'data_interfaces/list_automatic_update_rules.html'
+class AutomaticUpdateRuleListView(DataInterfaceSection):
+    template_name = 'data_interfaces/auto_update_rules.html'
     urlname = 'automatic_update_rule_list'
     page_title = gettext_lazy("Automatically Update Cases")
 
@@ -640,75 +684,75 @@ class AutomaticUpdateRuleListView(DataInterfaceSection, CRUDPaginatedViewMixin):
 
     ACTION_ACTIVATE = 'activate'
     ACTION_DEACTIVATE = 'deactivate'
+    ACTION_DELETE = 'delete'
 
     rule_workflow = AutomaticUpdateRule.WORKFLOW_CASE_UPDATE
+
+    @method_decorator(requires_privilege_with_fallback(privileges.DATA_CLEANUP))
+    def dispatch(self, request, *args, **kwargs):
+        return super().dispatch(request, *args, **kwargs)
+
+    @property
+    def page_context(self):
+        context = super().page_context
+        domain_obj = Domain.get_by_name(self.domain)
+        hour = domain_obj.auto_case_update_hour
+        context.update({
+            'rules': [self._format_rule(rule) for rule in self._rules()],
+            'time': f"{hour}:00" if hour else _('midnight'),  # noqa: E999
+            'rule_runs': [self._format_rule_run(run) for run in self._rule_runs()],
+            'has_linked_data': self.has_linked_data(),
+            'can_edit_linked_data': self.can_edit_linked_data(),
+        })
+        return context
+
+    def has_linked_data(self):
+        return bool(self._rules().exclude(upstream_id=None)[:1])
+
+    def can_edit_linked_data(self):
+        return self.request.couch_user.can_edit_linked_data(self.domain)
+
+    def post(self, request, *args, **kwargs):
+        response = self._update_rule(request.POST['id'], request.POST['action'])
+        return JsonResponse(response)
 
     @property
     def edit_url_name(self):
         return EditCaseRuleView.urlname
 
-    @method_decorator(requires_privilege_with_fallback(privileges.DATA_CLEANUP))
-    def dispatch(self, *args, **kwargs):
-        return super(AutomaticUpdateRuleListView, self).dispatch(*args, **kwargs)
-
     @property
-    def allowed_actions(self):
-        actions = super(AutomaticUpdateRuleListView, self).allowed_actions
-        actions.append(self.ACTION_ACTIVATE)
-        actions.append(self.ACTION_DEACTIVATE)
-        return actions
-
-    @property
-    def page_context(self):
-        context = self.pagination_context
-        domain_obj = Domain.get_by_name(self.domain)
-        hour = domain_obj.auto_case_update_hour
-        context.update({
-            'help_site_url': 'https://confluence.dimagi.com/display/commcarepublic/Automatically+Close+Cases',
-            'time': f"{hour}:00" if hour else _('midnight'),
-        })
-        return context
-
-    @property
-    def total(self):
-        return self._rules().count()
-
-    @property
-    def column_names(self):
-        return [
-            _("Name"),
-            _("Case Type"),
-            _("Status"),
-            _("Last Run"),
-            _("Action"),
-        ]
-
-    @property
-    @memoized
-    def project_timezone(self):
-        return get_timezone_for_user(None, self.domain)
+    def view_url_name(self):
+        return ViewCaseRuleView.urlname
 
     def _format_rule(self, rule):
         return {
             'id': rule.pk,
             'name': rule.name,
             'case_type': rule.case_type,
+            'is_case_type_deprecated': is_case_type_deprecated(self.domain, rule.case_type),
             'active': rule.active,
-            'last_run': (ServerTime(rule.last_run)
-                         .user_time(self.project_timezone)
-                         .done()
-                         .strftime(SERVER_DATETIME_FORMAT)) if rule.last_run else '-',
+            'last_run': self._convert_to_user_time(rule.last_run),
             'edit_url': reverse(self.edit_url_name, args=[self.domain, rule.pk]),
+            'view_url': reverse(self.view_url_name, args=[self.domain, rule.pk]),
             'action_error': "",     # must be provided because knockout template looks for it
+            'upstream_id': rule.upstream_id,
         }
 
-    @property
-    def paginated_list(self):
-        for rule in self._rules()[self.skip:self.skip + self.limit]:
-            yield {
-                'itemData': self._format_rule(rule),
-                'template': 'base-rule-template',
-            }
+    def _format_rule_run(self, rule_run):
+        return {
+            'case_type': rule_run.case_type,
+            'status': rule_run.get_status_display(),
+            'started_on': self._convert_to_user_time(rule_run.started_on),
+            'finished_on': self._convert_to_user_time(rule_run.finished_on),
+            'cases_updated': rule_run.num_updates,
+            'cases_closed': rule_run.num_closes,
+        }
+
+    def _convert_to_user_time(self, value):
+        return (ServerTime(value)
+                .user_time(get_timezone_for_user(None, self.domain))
+                .done()
+                .strftime(SERVER_DATETIME_FORMAT)) if value else '-'
 
     @memoized
     def _rules(self):
@@ -718,8 +762,26 @@ class AutomaticUpdateRuleListView(DataInterfaceSection, CRUDPaginatedViewMixin):
             active_only=False,
         ).order_by('name', 'id')
 
-    def post(self, *args, **kwargs):
-        return self.paginate_crud_response
+    @memoized
+    def _rule_runs(self):
+        return DomainCaseRuleRun.objects.filter(
+            domain=self.domain,
+            workflow=AutomaticUpdateRule.WORKFLOW_CASE_UPDATE,
+        ).order_by('-started_on', '-finished_on')
+
+    def _update_rule(self, rule_id, action):
+        rule, error = self._get_rule(rule_id)
+        if rule is None:
+            return {'success': False, 'error': error}
+
+        if action == self.ACTION_ACTIVATE:
+            rule.activate()
+        elif action == self.ACTION_DEACTIVATE:
+            rule.activate(False)
+        elif action == self.ACTION_DELETE:
+            rule.soft_delete()
+
+        return {'success': True, 'itemData': self._format_rule(rule)}
 
     def _get_rule(self, rule_id):
         if rule_id is None:
@@ -734,40 +796,6 @@ class AutomaticUpdateRuleListView(DataInterfaceSection, CRUDPaginatedViewMixin):
             return None, _("Rule not found.")
 
         return rule, None
-
-    def get_deleted_item_data(self, rule_id):
-        (rule, error) = self._get_rule(rule_id)
-        if rule is None:
-            return {'success': False, 'error': error}
-
-        rule.soft_delete()
-
-        return {
-            'itemData': {
-                'name': rule.name,
-            },
-            'template': 'rule-deleted-template',
-        }
-
-    def update_rule(self):
-        (rule, error) = self._get_rule(self.parameters.get('id'))
-        if rule is None:
-            return {'success': False, 'error': error}
-
-        if self.action == self.ACTION_ACTIVATE:
-            rule.activate()
-        elif self.action == self.ACTION_DEACTIVATE:
-            rule.activate(False)
-
-        return {'success': True, 'itemData': self._format_rule(rule)}
-
-    @property
-    def activate_response(self):
-        return self.update_rule()
-
-    @property
-    def deactivate_response(self):
-        return self.update_rule()
 
 
 class AddCaseRuleView(DataInterfaceSection):
@@ -791,11 +819,12 @@ class AddCaseRuleView(DataInterfaceSection):
     @property
     @memoized
     def read_only_mode(self):
-        return (
-            not self.is_system_admin and (
-                self.criteria_form.requires_system_admin_to_edit
-                or self.actions_form.requires_system_admin_to_edit
-            )
+        return self.requires_system_admin()
+
+    def requires_system_admin(self):
+        return not self.is_system_admin and (
+            self.criteria_form.requires_system_admin_to_edit
+            or self.actions_form.requires_system_admin_to_edit
         )
 
     @property
@@ -832,6 +861,11 @@ class AddCaseRuleView(DataInterfaceSection):
             'criteria_form': self.criteria_form,
             'actions_form': self.actions_form,
             'read_only_mode': self.read_only_mode,
+            'requires_sysadmin': self.requires_system_admin(),
+            'all_case_properties': {
+                t: sorted(names) for t, names in
+                get_data_dict_props_by_case_type(self.domain).items()
+            },
         }
 
     def post(self, request, *args, **kwargs):
@@ -903,12 +937,60 @@ class EditCaseRuleView(AddCaseRuleView):
         return rule
 
 
-class DeduplicationRuleListView(AutomaticUpdateRuleListView):
+class ViewCaseRuleView(EditCaseRuleView):
+    urlname = 'view_case_rule'
+    page_title = gettext_lazy("View Case Rule")
+
+    @property
+    @memoized
+    def read_only_mode(self):
+        return True
+
+
+@method_decorator(toggles.CASE_DEDUPE.required_decorator(), name='dispatch')
+class DeduplicationRuleListView(DataInterfaceSection, CRUDPaginatedViewMixin):
     template_name = 'data_interfaces/list_deduplication_rules.html'
     urlname = 'deduplication_rules'
     page_title = gettext_lazy("Deduplicate Cases")
 
+    ACTION_ACTIVATE = 'activate'
+    ACTION_DEACTIVATE = 'deactivate'
+
     rule_workflow = AutomaticUpdateRule.WORKFLOW_DEDUPLICATE
+
+    def post(self, *args, **kwargs):
+        return self.paginate_crud_response
+
+    @property
+    def page_context(self):
+        context = self.pagination_context
+        domain_obj = Domain.get_by_name(self.domain)
+        hour = domain_obj.auto_case_update_hour
+        context.update({
+            'help_site_url': 'https://confluence.dimagi.com/display/commcarepublic/Automatically+Close+Cases',
+            'time': f"{hour}:00" if hour else _('midnight'),  # noqa: E999
+        })
+        return context
+
+    @property
+    def paginated_list(self):
+        for rule in self._rules()[self.skip:self.skip + self.limit]:
+            yield {
+                'itemData': self._format_rule(rule),
+                'template': 'base-rule-template',
+            }
+
+    @property
+    def total(self):
+        return self._rules().count()
+
+    @memoized
+    def _rules(self):
+        return AutomaticUpdateRule.by_domain(
+            self.domain,
+            self.rule_workflow,
+            active_only=False,
+        ).order_by('name', 'id')
 
     @property
     def column_names(self):
@@ -924,11 +1006,79 @@ class DeduplicationRuleListView(AutomaticUpdateRuleListView):
     def edit_url_name(self):
         return DeduplicationRuleEditView.urlname
 
+    @property
+    def allowed_actions(self):
+        actions = super().allowed_actions
+        actions.append(self.ACTION_ACTIVATE)
+        actions.append(self.ACTION_DEACTIVATE)
+        return actions
+
+    @property
+    def activate_response(self):
+        return self.update_rule()
+
+    @property
+    def deactivate_response(self):
+        return self.update_rule()
+
+    def get_deleted_item_data(self, rule_id):
+        (rule, error) = self._get_rule(rule_id)
+        if rule is None:
+            return {'success': False, 'error': error}
+
+        rule.soft_delete()
+
+        return {
+            'itemData': {
+                'name': rule.name,
+            },
+            'template': 'rule-deleted-template',
+        }
+
+    def update_rule(self):
+        (rule, error) = self._get_rule(self.parameters.get('id'))
+        if rule is None:
+            return {'success': False, 'error': error}
+
+        if self.action == self.ACTION_ACTIVATE:
+            rule.activate()
+        elif self.action == self.ACTION_DEACTIVATE:
+            rule.activate(False)
+
+        return {'success': True, 'itemData': self._format_rule(rule)}
+
+    def _get_rule(self, rule_id):
+        if rule_id is None:
+            return None, _("Please provide an id.")
+
+        try:
+            rule = AutomaticUpdateRule.objects.get(pk=rule_id, workflow=self.rule_workflow)
+        except AutomaticUpdateRule.DoesNotExist:
+            return None, _("Rule not found.")
+
+        if rule.domain != self.domain:
+            return None, _("Rule not found.")
+
+        return rule, None
+
     def _format_rule(self, rule):
-        ret = super()._format_rule(rule)
+        ret = {
+            'id': rule.pk,
+            'name': rule.name,
+            'case_type': rule.case_type,
+            'is_case_type_deprecated': is_case_type_deprecated(self.domain, rule.case_type),
+            'active': rule.active,
+            'last_run': (ServerTime(rule.last_run)
+                         .user_time(get_timezone_for_user(None, self.domain))
+                         .done()
+                         .strftime(SERVER_DATETIME_FORMAT)) if rule.last_run else '-',
+            'edit_url': reverse(self.edit_url_name, args=[self.domain, rule.pk]),
+            'action_error': "",     # must be provided because knockout template looks for it
+        }
+        case_list_explorer_case_props = list(col["name"] for col in CaseListExplorerColumns.DEFAULT_COLUMNS)
         rule_properties = (
             set(CaseDeduplicationActionDefinition.from_rule(rule).case_properties)
-            - set(CaseListExplorerColumns.DEFAULT_COLUMNS)
+            - set(case_list_explorer_case_props)
         )
         ret['duplicates_count'] = self._get_duplicates_count(rule)
         ret['explore_url'] = reverse_with_params(
@@ -936,7 +1086,7 @@ class DeduplicationRuleListView(AutomaticUpdateRuleListView):
             args=(self.domain, 'duplicate_cases'),
             params={
                 "duplicate_case_rule": rule.id,
-                "explorer_columns": json.dumps(CaseListExplorerColumns.DEFAULT_COLUMNS + list(rule_properties)),
+                "explorer_columns": json.dumps(case_list_explorer_case_props + list(rule_properties)),
             },
         )
 
@@ -954,6 +1104,7 @@ class DeduplicationRuleListView(AutomaticUpdateRuleListView):
         return CaseDuplicate.objects.filter(action=action).count()
 
 
+@method_decorator(toggles.CASE_DEDUPE.required_decorator(), name='dispatch')
 class DeduplicationRuleCreateView(DataInterfaceSection):
     template_name = "data_interfaces/edit_deduplication_rule.html"
     urlname = 'add_deduplication_rule'
@@ -962,7 +1113,14 @@ class DeduplicationRuleCreateView(DataInterfaceSection):
     @property
     def page_context(self):
         context = super().page_context
-        context['case_types'] = sorted(list(get_case_types_for_domain(self.domain)))
+        context.update({
+            'all_case_properties': {
+                t: sorted(names) for t, names in
+                get_data_dict_props_by_case_type(self.domain).items()
+            },
+            'case_types': sorted(list(get_case_types_for_domain(self.domain))),
+            'criteria_form': self.case_filter_form,
+        })
         return context
 
     def get_context_data(self, **kwargs):
@@ -989,9 +1147,19 @@ class DeduplicationRuleCreateView(DataInterfaceSection):
         rule_params, action_params = self.parse_params(request)
         errors = self.validate_action_params(action_params)
         errors.extend(self.validate_rule_params(request.domain, rule_params))
+
+        cases_filter_form = DedupeCaseFilterForm(request.domain, request.POST)
+
+        if not cases_filter_form.is_valid():
+            errors.extend(cases_filter_form.errors)
+
         if errors:
-            error_message = _("Deduplication rule not saved. ")
-            messages.error(request, error_message + "; ".join(errors))
+            messages.error(
+                request, _('Deduplication rule not saved due to the following issues: %s') %
+                '<ul><li>{}</li></ul>'.format('</li><li>'.join(errors)),
+                extra_tags='html'
+            )
+
             kwargs.update({
                 'error': True,
                 'rule_params': rule_params,
@@ -1001,15 +1169,24 @@ class DeduplicationRuleCreateView(DataInterfaceSection):
 
         with transaction.atomic():
             rule = self._create_rule(request.domain, **rule_params)
-            action, action_definition = rule.add_action(
+            _action, _action_definition = rule.add_action(
                 CaseDeduplicationActionDefinition,
                 **action_params
             )
+            cases_filter_form.save_criteria(rule, save_meta=False)
 
         reset_and_backfill_deduplicate_rule(rule)
         messages.success(request, _("Successfully created deduplication rule: {}").format(rule.name))
         return HttpResponseRedirect(
             reverse(DeduplicationRuleEditView.urlname, kwargs={"domain": self.domain, "rule_id": rule.id})
+        )
+
+    @property
+    def case_filter_form(self):
+        return DedupeCaseFilterForm(
+            self.domain,
+            rule=None,
+            couch_user=self.request.couch_user,
         )
 
     def parse_params(self, request):
@@ -1080,6 +1257,7 @@ class DeduplicationRuleCreateView(DataInterfaceSection):
         )
 
 
+@method_decorator(toggles.CASE_DEDUPE.required_decorator(), name='dispatch')
 class DeduplicationRuleEditView(DeduplicationRuleCreateView):
     urlname = 'edit_deduplication_rule'
     page_title = gettext_lazy("Edit Deduplication Rule")
@@ -1111,7 +1289,6 @@ class DeduplicationRuleEditView(DeduplicationRuleCreateView):
     @property
     def page_context(self):
         context = super().page_context
-
         context.update({
             "name": self.rule.name,
             "case_type": self.rule.case_type,
@@ -1123,6 +1300,7 @@ class DeduplicationRuleEditView(DeduplicationRuleCreateView):
                 for prop in self.dedupe_action.properties_to_update
             ],
             "readonly": self.rule.locked_for_editing,
+            "criteria_form": self.case_filter_form,
         })
 
         if self.rule.locked_for_editing:
@@ -1150,9 +1328,19 @@ class DeduplicationRuleEditView(DeduplicationRuleCreateView):
         rule_params, action_params = self.parse_params(request)
         errors = self.validate_action_params(action_params)
         errors.extend(self.validate_rule_params(request.domain, rule_params, self.rule))
+
+        cases_filter_form = DedupeCaseFilterForm(request.domain, request.POST)
+
+        if not cases_filter_form.is_valid():
+            errors.extend(cases_filter_form.errors)
+
         if errors:
-            error_message = _("Deduplication rule not saved. ")
-            messages.error(request, error_message + "; ".join(errors))
+            messages.error(
+                request, _('Deduplication rule not saved due to the following issues: %s') %
+                '<ul><li>{}</li></ul>'.format('</li><li>'.join(errors)),
+                extra_tags='html'
+            )
+
             kwargs.update({
                 'error': True,
                 'rule_params': rule_params,
@@ -1160,11 +1348,18 @@ class DeduplicationRuleEditView(DeduplicationRuleCreateView):
             })
             return self.get(request, *args, **kwargs)
 
+        filter_criteria_updated = False
+
         with transaction.atomic():
             rule_modified = self._update_model_instance(self.rule, rule_params)
             action_modified = self._update_model_instance(self.dedupe_action, action_params)
 
-        if rule_modified or action_modified:
+            # Is there a good way to check if the criteria has changed without
+            # going over each and every value?
+            cases_filter_form.save_criteria(self.rule, save_meta=False)
+            filter_criteria_updated = True
+
+        if rule_modified or action_modified or filter_criteria_updated:
             reset_and_backfill_deduplicate_rule(self.rule)
             messages.success(
                 request,
@@ -1181,6 +1376,14 @@ class DeduplicationRuleEditView(DeduplicationRuleCreateView):
                 "domain": self.domain,
                 "rule_id": self.rule.id
             })
+        )
+
+    @property
+    def case_filter_form(self):
+        return DedupeCaseFilterForm(
+            self.domain,
+            rule=self.rule,
+            couch_user=self.request.couch_user,
         )
 
     def _update_model_instance(self, model, params):

@@ -1,0 +1,208 @@
+--- 
++++ 
+@@ -1,119 +1,111 @@
+-@import "@{b3-import-variables}";
++// Typography Overrides
++$font-family-sans-serif: "Nunito Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
++$font-size-base: .75rem; // approx 12px
+ 
+-// Nunito Sans is used on dimagi.com and embedded in hqwebapp/base.html
+-@font-family-sans-serif: "Nunito Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
++// Links
++$link-decoration:   none;
+ 
+-@font-size-base:  12px;
+-@icon-font-path:  "../../bootstrap/fonts/";
++// Form Overrides
++$input-border-radius-lg: 5px;
++
++// Navbar
++//$nav-link-height: 38px;
++$navbar-brand-font-size: 15px;
++$navbar-brand-height: 40px;
++$navbar-brand-padding-y: 12px;
++$navbar-brand-margin-end: 0;
++
++$navbar-padding-y: 0;
++$navbar-padding-x: 0;
++
++$caret-width: 4px;
++$caret-vertical-align: $caret-width * .87;
++
++// Dropdowns
++$dropdown-border-radius: 3px;
++$dropdown-inner-border-radius: 0;
++$dropdown-padding-y: 5px;
++$dropdown-spacer: -1px;
++$dropdown-box-shadow: 0 6px 12px rgb(0 0 0 / 18%);
++$dropdown-font-size: 12px;
++
++// Badges
++$badge-border-radius: .25em;
++
++
++// Custom colors we created (in Bootstrap 3 stylesheets)
+ 
+ // Main background & text
+-@cc-bg:     #f2f2f1;
+-@cc-text:   #1c2126;
++$cc-bg:     #f2f2f1;
++$cc-text:   #1c2126;
+ 
+ // Success
+-@cc-att-pos-extra-hi:   #e3f1df;
+-@cc-att-pos-hi:   #bbe5b3;
+-@cc-att-pos-mid:  #4aba32;
+-@cc-att-pos-low:  #118043;
+-@cc-att-pos-extra-low:  #173630;
++$cc-att-pos-extra-hi:   #e3f1df;
++$cc-att-pos-hi:   #bbe5b3;
++$cc-att-pos-mid:  #4aba32;
++$cc-att-pos-low:  #118043;
++$cc-att-pos-extra-low:  #173630;
+ 
+ // Error
+-@cc-att-neg-extra-hi:   #fbeae6;
+-@cc-att-neg-hi:   #fead9a;
+-@cc-att-neg-mid:  #e73c27;
+-@cc-att-neg-low:  #bf0712;
+-@cc-att-neg-extra-low:  #340101;
++$cc-att-neg-extra-hi:   #fbeae6;
++$cc-att-neg-hi:   #fead9a;
++$cc-att-neg-mid:  #e73c27;
++$cc-att-neg-low:  #bf0712;
++$cc-att-neg-extra-low:  #340101;
+ 
+ // Warning/Attention
+-@cc-light-warm-accent-extra-hi:   #fcf2cd;
+-@cc-light-warm-accent-hi:   #ffea8a;
+-@cc-light-warm-accent-mid:  #eec200;
+-@cc-light-warm-accent-low:  #9c6f19;
+-@cc-light-warm-accent-extra-low:  #573b00;
++$cc-light-warm-accent-extra-hi:   #fcf2cd;
++$cc-light-warm-accent-hi:   #ffea8a;
++$cc-light-warm-accent-mid:  #eec200;
++$cc-light-warm-accent-low:  #9c6f19;
++$cc-light-warm-accent-extra-low:  #573b00;
+ 
+ // Call to action
+-@call-to-action-extra-hi: #f4f5fa;
+-@call-to-action-hi: #b4bcf5;
+-@call-to-action-mid: #5c6ac5;
+-@call-to-action-low: #212f78;
+-@call-to-action-extra-low: #000639;
++$call-to-action-extra-hi: #f4f5fa;
++$call-to-action-hi: #b4bcf5;
++$call-to-action-mid: #5c6ac5;
++$call-to-action-low: #212f78;
++$call-to-action-extra-low: #000639;
+ 
+ // Accent light blue: buttons on dark backgrounds, occasional secondary buttons (upload/download)
+-@cc-light-cool-accent-hi:   #ccf3f4;
+-@cc-light-cool-accent-mid:  #00bdc5;
+-@cc-light-cool-accent-low:  #00799a;
++$cc-light-cool-accent-hi:   #ccf3f4;
++$cc-light-cool-accent-mid:  #00bdc5;
++$cc-light-cool-accent-low:  #00799a;
+ 
+ // Accent purples used in signup, which uses colors more like dimagi.com than HQ
+-@color-purple-dark: #43467F;
+-@color-purple-dark-inverse: #E3D0FF;
++$color-purple-dark: #43467F;
++$color-purple-dark-inverse: #E3D0FF;
+ 
+ // Neutrals used as borders/backgrounds
+-@cc-neutral-hi:   #d6d6d4;
+-@cc-neutral-mid:  #685c53;
+-@cc-neutral-low:  #373534;
++$cc-neutral-hi:   #d6d6d4;
++$cc-neutral-mid:  #685c53;
++$cc-neutral-low:  #373534;
+ 
+ // Blues used for links and app manager accents
+-@cc-brand-hi:   #bcdeff;
+-@cc-brand-mid:  #004ebc;
+-@cc-brand-low:  #002c5f;
++$cc-brand-hi:   #bcdeff;
++$cc-brand-mid:  #004ebc;
++$cc-brand-low:  #002c5f;
+ 
+ // Accent colors used in few places (billing, web apps, one-offs). Minimize usage.
+-@cc-dark-cool-accent-hi:  #d6c5ea;
+-@cc-dark-cool-accent-mid: #9060c8;
+-@cc-dark-cool-accent-low: #5d3f82;
++$cc-dark-cool-accent-hi:  #d6c5ea;
++$cc-dark-cool-accent-mid: #9060c8;
++$cc-dark-cool-accent-low: #5d3f82;
+ 
+-@cc-dark-warm-accent-hi:  #ffe3c2;
+-@cc-dark-warm-accent-mid: #ff8400;
+-@cc-dark-warm-accent-low: #994f00;
+-
+-// Main TWBS Colors
+-@brand-primary:   @cc-brand-mid;
+-@brand-success:   @cc-att-pos-mid;
+-@brand-info:      @cc-light-cool-accent-mid;
+-@brand-warning:   @cc-dark-warm-accent-mid;
+-@brand-danger:    @cc-att-neg-mid;
+-
+-@text-color: @cc-text;
+-
+-@link-hover-color: @cc-brand-low;
+-
+-@btn-default-color:              @cc-text;
+-@btn-default-bg:                 @cc-bg;
+-@btn-default-border:             @cc-neutral-hi;
+-
+-@navbar-height:                  60px;
+-@navbar-padding-vertical:        ((@navbar-height - @line-height-computed) / 2);
+-@navbar-default-bg:              @cc-bg;
+-
+-@navbar-footer-height:            38px;
+-@navbar-footer-link-color:        mix(darken(#ffffff, 10), @brand-primary, 90);
+-@navbar-footer-link-color-hover:  @gray-lighter;
+-@navbar-footer-button-color:      #474747;
+-
+-@btn-footer-color:  #ffffff;
+-@btn-footer-bg:     #474747;
+-@btn-footer-border: #cccccc;
+-
+-@checkbox-default-color: @call-to-action-mid;
+-
+-@breadcrumb-separator: '>';
+-
+-@grid-gutter-width: 20px;
+-
+-// Z-index master list
+-// -------------------------
+-// Also see Bootstrap 3's own master list:
+-// bootstrap/less/variables.less
+-@zindexDashboardSpinner:              500;
+-@zindexAccountingPricingTableHeader:  800;
+-
+-// Other Zindecies
+-@zindex-report-loading:               100;
+-@zindex-app-preview:                  998;
+-@zindex-navbar-cloudcare:             995;
+-@zindex-formplayer-progress:          990;
+-@zindex-cloudcare-debugger:           1005;
++$cc-dark-warm-accent-hi:  #ffe3c2;
++$cc-dark-warm-accent-mid: #ff8400;
++$cc-dark-warm-accent-low: #994f00;
+ 
+ 
+-@input-border-radius-large:       5px;
+-@cursor-disabled:                 'not-allowed';
++////// Bootstrap 5 Color Overrides
++$primary:   #5c6ac5;
++$success:   $cc-att-pos-mid;
++$info:      $cc-light-cool-accent-mid;
++$warning:   $cc-dark-warm-accent-mid;
++$danger:    $cc-att-neg-mid;
++
++$body-color: $cc-text;
++
++$link-color: $cc-brand-mid;
++$link-hover-color: $cc-brand-low;
++
++$link-hover-color: $cc-brand-low;

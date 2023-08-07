@@ -4,7 +4,7 @@ from django.utils.translation import gettext_noop
 from corehq.apps.translations.models import SMSTranslations
 from corehq.util.translation import localize
 
-MSG_MULTIPLE_SESSIONS = "sms.survey.restart"
+MSG_GENERIC_ERROR = "sms.survey.restart"
 MSG_TOUCHFORMS_DOWN = "sms.survey.temporarilydown"
 MSG_TOUCHFORMS_ERROR = "sms.survey.internalerror"
 MSG_CHOICE_OUT_OF_RANGE = "sms.validation.outofrange"
@@ -39,7 +39,7 @@ MSG_REGISTRATION_WELCOME_CASE = "sms.registration.welcome.case"
 MSG_REGISTRATION_WELCOME_MOBILE_WORKER = "sms.registration.welcome.mobileworker"
 
 _MESSAGES = {
-    MSG_MULTIPLE_SESSIONS: gettext_noop("An error has occurred. Please try restarting the survey."),
+    MSG_GENERIC_ERROR: gettext_noop("An error has occurred. Please try restarting the survey."),
     MSG_TOUCHFORMS_DOWN: gettext_noop(
         "Our system is receiving a lot of messages now. "
         "Can you re-send in 15 minutes? Apologies for the inconvenience!"),

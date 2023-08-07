@@ -1,10 +1,12 @@
 import json
-from copy import deepcopy
+from unittest.mock import Mock, patch
 
+from django.test import TestCase
 from django.urls import reverse
 from django.utils.http import urlencode
 
 from flaky import flaky
+from tastypie.bundle import Bundle
 
 from corehq.apps.api.resources import v0_5
 from corehq.apps.custom_data_fields.models import (
@@ -13,7 +15,9 @@ from corehq.apps.custom_data_fields.models import (
     CustomDataFieldsProfile,
     Field,
 )
+from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.es.tests.utils import es_test
+from corehq.apps.es.users import user_adapter
 from corehq.apps.groups.models import Group
 from corehq.apps.users.analytics import update_analytics_indexes
 from corehq.apps.users.audit.change_messages import UserChangeMessage
@@ -22,21 +26,21 @@ from corehq.apps.users.models import (
     CommCareUser,
     UserHistory,
     UserRole,
-    UserRolePresets,
     WebUser,
 )
-from corehq.apps.users.role_utils import initialize_domain_with_default_roles
+from corehq.apps.users.role_utils import (
+    UserRolePresets,
+    initialize_domain_with_default_roles,
+)
 from corehq.apps.users.views.mobile.custom_data_fields import UserFieldsView
 from corehq.const import USER_CHANGE_VIA_API
-from corehq.elastic import send_to_elasticsearch
-from corehq.pillows.mappings.user_mapping import USER_INDEX_INFO
-from corehq.util.elastic import reset_es_index
 from corehq.util.es.testing import sync_users_to_es
 
+from ..resources.v0_5 import BadRequest, UserDomainsResource
 from .utils import APIResourceTest
 
 
-@es_test
+@es_test(requires=[user_adapter], setup_class=True)
 class TestCommCareUserResource(APIResourceTest):
     """
     Basic sanity checking of v0_5.CommCareUserResource
@@ -46,7 +50,6 @@ class TestCommCareUserResource(APIResourceTest):
 
     @classmethod
     def setUpClass(cls):
-        reset_es_index(USER_INDEX_INFO)
         super().setUpClass()
         cls.definition = CustomDataFieldsDefinition(domain=cls.domain.name,
                                                     field_type=UserFieldsView.field_type)
@@ -73,7 +76,6 @@ class TestCommCareUserResource(APIResourceTest):
 
     @sync_users_to_es()
     def test_get_list(self):
-
         commcare_user = CommCareUser.create(domain=self.domain.name, username='fake_user', password='*****',
                                             created_by=None, created_via=None)
         self.addCleanup(commcare_user.delete, self.domain.name, deleted_by=None)
@@ -89,6 +91,7 @@ class TestCommCareUserResource(APIResourceTest):
         self.assertEqual(api_users[0], {
             'default_phone_number': None,
             'email': '',
+            'eulas': '[]',
             'first_name': '',
             'groups': [],
             'id': backend_id,
@@ -101,7 +104,6 @@ class TestCommCareUserResource(APIResourceTest):
 
     @flaky
     def test_get_single(self):
-
         commcare_user = CommCareUser.create(domain=self.domain.name, username='fake_user', password='*****',
                                             created_by=None, created_via=None)
         self.addCleanup(commcare_user.delete, self.domain.name, deleted_by=None)
@@ -115,6 +117,7 @@ class TestCommCareUserResource(APIResourceTest):
         self.assertEqual(api_user, {
             'default_phone_number': None,
             'email': '',
+            'eulas': '[]',
             'first_name': '',
             'groups': [],
             'id': backend_id,
@@ -126,8 +129,7 @@ class TestCommCareUserResource(APIResourceTest):
         })
 
     def test_create(self):
-
-        group = Group({"name": "test"})
+        group = Group({"name": "test", "domain": self.domain.name})
         group.save()
         self.addCleanup(group.delete)
 
@@ -152,14 +154,14 @@ class TestCommCareUserResource(APIResourceTest):
             }
         }
         response = self._assert_auth_post_resource(self.list_endpoint,
-                                    json.dumps(user_json),
-                                    content_type='application/json')
+                                                   json.dumps(user_json),
+                                                   content_type='application/json')
         self.assertEqual(response.status_code, 201)
         [user_back] = CommCareUser.by_domain(self.domain.name)
         self.addCleanup(user_back.delete, self.domain.name, deleted_by=None)
-        self.addCleanup(lambda: send_to_elasticsearch('users', user_back.to_json(), delete=True))
 
-        self.assertEqual(user_back.username, "jdoe")
+        # tests username is normalized before saving
+        self.assertEqual(user_back.username, "jdoe@qwerty.commcarehq.org")
         self.assertEqual(user_back.first_name, "John")
         self.assertEqual(user_back.last_name, "Doe")
         self.assertEqual(user_back.email, "jdoe@example.org")
@@ -168,11 +170,27 @@ class TestCommCareUserResource(APIResourceTest):
         self.assertEqual(user_back.user_data["chw_id"], "13/43/DFA")
         self.assertEqual(user_back.default_phone_number, "50253311399")
 
-    def test_update(self):
+    def test_bad_request_if_username_already_exists(self):
+        # create user with same username first
+        og_user = CommCareUser.create(self.domain.name, 'jdoe@qwerty.commcarehq.org', 'abc123', None, None)
+        self.addCleanup(og_user.delete, self.domain.name, deleted_by=None)
 
+        user_json = {
+            "username": "jdoe",
+            "password": "qwer1234",
+        }
+        response = self._assert_auth_post_resource(self.list_endpoint,
+                                                   json.dumps(user_json),
+                                                   content_type='application/json')
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.content.decode('utf-8'),
+                         f'{{"error": "Username \'jdoe@{self.domain.name}.commcarehq.org\' is already taken or '
+                         f'reserved."}}')
+
+    def test_update(self):
         user = CommCareUser.create(domain=self.domain.name, username="test", password="qwer1234",
                                    created_by=None, created_via=None, phone_number="50253311398")
-        group = Group({"name": "test"})
+        group = Group({"name": "test", "domain": self.domain.name})
         group.save()
 
         self.addCleanup(user.delete, self.domain.name, deleted_by=None)
@@ -246,21 +264,18 @@ class TestCommCareUserResource(APIResourceTest):
         self.assertEqual(user_history.change_messages['password'], UserChangeMessage.password_reset()['password'])
         self.assertEqual(user_history.changed_via, USER_CHANGE_VIA_API)
 
-    def test_update_profile_conflict(self):
-
+    def test_update_fails(self):
         user = CommCareUser.create(domain=self.domain.name, username="test", password="qwer1234",
-                                   created_by=None, created_via=None)
+                                   created_by=None, created_via=None, phone_number="50253311398")
+        group = Group({"name": "test"})
+        group.save()
+
         self.addCleanup(user.delete, self.domain.name, deleted_by=None)
+        self.addCleanup(group.delete)
 
         user_json = {
-            "first_name": "florence",
-            "last_name": "ballard",
-            "email": "fballard@example.org",
-            "language": "en",
-            "user_data": {
-                PROFILE_SLUG: self.profile.id,
-                "imaginary": "no",
-            }
+            "username": "updated-username",
+            "default_phone_number": 1234567890
         }
 
         backend_id = user._id
@@ -271,64 +286,8 @@ class TestCommCareUserResource(APIResourceTest):
         self.assertEqual(response.status_code, 400)
         self.assertEqual(
             response.content.decode('utf-8'),
-            '{"error": "metadata properties conflict with profile: imaginary"}'
-        )
-
-    def test_cannot_update_id(self):
-        user = CommCareUser.create(domain=self.domain.name, username="test", password="qwer1234",
-                                   created_by=None, created_via=None, phone_number="50253311398")
-        self.addCleanup(user.delete, self.domain.name, deleted_by=None)
-        user_json = {
-            "id": "changed-id",
-        }
-        response = self._assert_auth_post_resource(self.single_endpoint(user._id),
-                                                   json.dumps(user_json),
-                                                   content_type='application/json',
-                                                   method='PUT')
-        unmodified_user = CommCareUser.get(user._id)
-        self.assertEqual(unmodified_user.username, 'test')
-        self.assertEqual(response.status_code, 400)
-        self.assertEqual(
-            response.content.decode('utf-8'),
-            '{"error": "Cannot update a mobile user\'s id."}'
-        )
-
-    def test_cannot_update_username(self):
-        user = CommCareUser.create(domain=self.domain.name, username="test", password="qwer1234",
-                                   created_by=None, created_via=None, phone_number="50253311398")
-        self.addCleanup(user.delete, self.domain.name, deleted_by=None)
-        user_json = {
-            "username": "changed-test",
-        }
-        response = self._assert_auth_post_resource(self.single_endpoint(user._id),
-                                                   json.dumps(user_json),
-                                                   content_type='application/json',
-                                                   method='PUT')
-        unmodified_user = CommCareUser.get(user._id)
-        self.assertEqual(unmodified_user.username, 'test')
-        self.assertEqual(response.status_code, 400)
-        self.assertEqual(
-            response.content.decode('utf-8'),
-            '{"error": "Cannot update a mobile user\'s username."}'
-        )
-
-    def test_cannot_update_unknown_key(self):
-        user = CommCareUser.create(domain=self.domain.name, username="test", password="qwer1234",
-                                   created_by=None, created_via=None, phone_number="50253311398")
-        self.addCleanup(user.delete, self.domain.name, deleted_by=None)
-        user_json = {
-            "_id": "changed-id",
-        }
-        response = self._assert_auth_post_resource(self.single_endpoint(user._id),
-                                                   json.dumps(user_json),
-                                                   content_type='application/json',
-                                                   method='PUT')
-        unmodified_user = CommCareUser.get(user._id)
-        self.assertEqual(unmodified_user.username, 'test')
-        self.assertEqual(response.status_code, 400)
-        self.assertEqual(
-            response.content.decode('utf-8'),
-            '{"error": "Attempted to update unknown field _id."}'
+            "{\"error\": \"The request resulted in the following errors: Attempted to update unknown or "
+            "non-editable field 'username', 'default_phone_number' must be a string\"}"
         )
 
 
@@ -417,6 +376,12 @@ class TestWebUserResource(APIResourceTest):
         self.assertEqual(response.status_code, 200)
         api_users = json.loads(response.content)['objects']
         self.assertEqual(len(api_users), 2)
+
+        response = self._assert_auth_get_resource('%s?limit=1' % (self.list_endpoint))
+        self.assertEqual(response.status_code, 200)
+        response_json = json.loads(response.content)
+        self.assertEqual(len(response_json['objects']), 1)
+        self.assertEqual(response_json['meta']['next'], "?limit=1&offset=1")
 
         # username filter
         response = self._assert_auth_get_resource('%s?web_username=%s' % (self.list_endpoint, 'anotherguy'))
@@ -541,22 +506,16 @@ class TestBulkUserAPI(APIResourceTest):
         self.assertEqual(response.status_code, 200)
 
 
-@es_test
+@es_test(requires=[user_adapter])
 class TestIdentityResource(APIResourceTest):
-
     resource = v0_5.IdentityResource
     api_name = 'v0.5'
 
     @classmethod
-    def setUpClass(cls):
-        reset_es_index(USER_INDEX_INFO)
-        super().setUpClass()
-
-    @classmethod
     def _get_list_endpoint(cls):
         return reverse('api_dispatch_list',
-                kwargs=dict(api_name=cls.api_name,
-                            resource_name=cls.resource._meta.resource_name))
+                       kwargs=dict(api_name=cls.api_name,
+                                   resource_name=cls.resource._meta.resource_name))
 
     @sync_users_to_es()
     def test_get_list(self):
@@ -568,3 +527,62 @@ class TestIdentityResource(APIResourceTest):
         self.assertEqual(data['first_name'], self.user.first_name)
         self.assertEqual(data['last_name'], self.user.last_name)
         self.assertEqual(data['email'], self.user.email)
+
+
+class TestUserDomainsResource(TestCase):
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.domain = 'test-domain'
+        cls.domain_obj = create_domain(cls.domain)
+        cls.addClassCleanup(cls.domain_obj.delete)
+        cls.definition = CustomDataFieldsDefinition(domain=cls.domain,
+                                                    field_type=UserFieldsView.field_type)
+        cls.definition.save()
+
+    def setUp(self) -> None:
+        super().setUp()
+        self.user = CommCareUser.create(self.domain, "test-username", "qwer1234", None, None)
+        self.addCleanup(self.user.delete, self.domain, deleted_by=None)
+
+    @patch('corehq.apps.api.resources.v0_5.domain_has_privilege', return_value=True)
+    def test_domain_returned_when_no_filter(self, _):
+        bundle = Bundle()
+        bundle.obj = self.user
+        bundle.request = Mock()
+        bundle.request.GET = {}
+        bundle.request.user = self.user
+        resp = UserDomainsResource().obj_get_list(bundle)
+        self.assertListEqual([self.domain], [d.domain_name for d in resp])
+
+    @patch('corehq.apps.api.resources.v0_5.domain_has_privilege', return_value=True)
+    def test_exception_when_invalid_filter_sent(self, _):
+        bundle = Bundle()
+        bundle.obj = self.user
+        bundle.request = Mock()
+        bundle.request.GET = {"feature_flag": "its_a_feature_not_bug"}
+        bundle.request.user = self.user
+        with self.assertRaises(BadRequest):
+            UserDomainsResource().obj_get_list(bundle)
+
+    @patch('corehq.apps.api.resources.v0_5.domain_has_privilege', return_value=True)
+    @patch('corehq.apps.api.resources.v0_5.toggles.toggles_dict', return_value={"superset-analytics": True})
+    def test_domain_returned_when_valid_flag_sent(self, *args):
+        bundle = Bundle()
+        bundle.obj = self.user
+        bundle.request = Mock()
+        bundle.request.GET = {"feature_flag": "superset-analytics"}
+        bundle.request.user = self.user
+        resp = UserDomainsResource().obj_get_list(bundle)
+        self.assertListEqual([self.domain], [d.domain_name for d in resp])
+
+    @patch('corehq.apps.api.resources.v0_5.domain_has_privilege', return_value=True)
+    def test_domain_not_returned_when_flag_not_enabled(self, *args):
+        bundle = Bundle()
+        bundle.obj = self.user
+        bundle.request = Mock()
+        bundle.request.GET = {"feature_flag": "superset-analytics"}
+        bundle.request.user = self.user
+        resp = UserDomainsResource().obj_get_list(bundle)
+        self.assertEqual(0, len(resp))

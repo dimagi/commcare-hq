@@ -15,11 +15,10 @@ WHITELIST = [
     # avoid it if possible.
     #
     # Item format:
-    # (module_path, message_substring_or_regex, optional_warning_class)
+    # (module_path, message_substring_or_regex, optional_warning_class, override_action)
 
     # warnings that may be resolved with a library upgrade
     ("captcha.fields", "ugettext_lazy() is deprecated"),
-    ("celery", "'collections.abc'"),
     ("compressor.filters.base", "smart_text() is deprecated"),
     ("compressor.signals", "The providing_args argument is deprecated."),
     ("couchdbkit.schema.properties", "'collections.abc'"),
@@ -31,26 +30,46 @@ WHITELIST = [
         "two_factor",
     ]) + ")' defines default_app_config"), RemovedInDjango41Warning),
     ("django_celery_results", "ugettext_lazy() is deprecated"),
-    ("django_otp.plugins", "django.conf.urls.url() is deprecated"),
-    ("kombu.utils.functional", "'collections.abc'"),
     ("logentry_admin.admin", "ugettext_lazy() is deprecated"),
     ("nose.importer", "the imp module is deprecated"),
     ("nose.util", "inspect.getargspec() is deprecated"),
+    ("pkg_resources", "pkg_resources.declare_namespace"),
     ("tastypie", "django.conf.urls.url() is deprecated"),
     ("tastypie", "request.is_ajax() is deprecated"),
+    ("nose.suite", "'collections.abc'"),
+    ("nose.plugins.collect", "'collections.abc'"),
 
     # warnings that can be resolved with HQ code changes
     ("", "json_response is deprecated.  Use django.http.JsonResponse instead."),
     ("", "property_match are deprecated. Use boolean_expression instead."),
     ("corehq.util.validation", "metaschema specified by $schema was not found"),
+    ("corehq.apps.userreports.util", "'collections.abc'"),
+    (
+        # TODO: Removed this prior to the Elasticsearch upgrade. It is currently
+        # needed due to the heavy use of 'pillowtop.es_utils.initialize_index[_and_mapping]'
+        # in testing code, which is pending a future cleanup effort.
+        "corehq.apps.es.index.settings",
+        re.compile(r"Invalid index settings key .+, expected one of \["),
+        UserWarning,
+    ),
+    (
+        # This should be tested on a newer version(>2.5) of ES.Should be removed if fixed
+        "elasticsearch2.connection.http_urllib3",
+        "HTTPResponse.getheaders() is deprecated and will be removed in urllib3 v2.1.0."
+    ),
 
     # other, resolution not obvious
     ("IPython.core.interactiveshell", "install IPython inside the virtualenv.", UserWarning),
+    ("redis.connection", "distutils Version classes are deprecated. Use packaging.version instead."),
     ("sqlalchemy.", re.compile(r"^Predicate of partial index .* ignored during reflection"), SAWarning),
     ("sqlalchemy.",
         "Skipped unsupported reflection of expression-based index form_processor_xformattachmentsql_blobmeta_key",
         SAWarning),
     ("unittest.case", "TestResult has no addExpectedFailure method", RuntimeWarning),
+
+    # warnings that should not be ignored
+    # note: override_action "default" causes warning to be printed on stderr
+    ("django.db.backends.postgresql.base", "unable to create a connection", RuntimeWarning, "default"),
 ]
 
 
@@ -60,17 +79,29 @@ def configure_warnings(is_testing):
         augment_warning_messages()
         if 'PYTHONWARNINGS' not in os.environ:
             warnings.simplefilter("error")
+    action = get_whitelist_action()
     if strict or "CCHQ_WHITELISTED_WARNINGS" in os.environ:
         for args in WHITELIST:
-            whitelist(*args)
+            whitelist(action, *args)
 
 
-def whitelist(module, message, category=DeprecationWarning):
+def whitelist(action, module, message, category=DeprecationWarning, override_action=None):
     """Whitelist warnings with matching criteria
 
     Similar to `warnings.filterwarnings` except `re.escape` `module`
     and `message`, and match `message` anywhere in the deprecation
     warning message.
+    """
+    if message:
+        if isinstance(message, str):
+            message = r".*" + re.escape(message)
+        else:
+            message = message.pattern
+    warnings.filterwarnings(override_action or action, message, category, re.escape(module))
+
+
+def get_whitelist_action():
+    """Get the action for whitelisted warnings
 
     The warning action can be controlled with the environment variable
     `CCHQ_WHITELISTED_WARNINGS`. If that is not set, it falls back to
@@ -79,14 +110,11 @@ def whitelist(module, message, category=DeprecationWarning):
 
         export CCHQ_WHITELISTED_WARNINGS=default
     """
-    if message:
-        if isinstance(message, str):
-            message = r".*" + re.escape(message)
-        else:
-            message = message.pattern
     default_action = os.environ.get("PYTHONWARNINGS", "ignore")
     action = os.environ.get("CCHQ_WHITELISTED_WARNINGS", default_action)
-    warnings.filterwarnings(action, message, category, re.escape(module))
+    if action not in ['default', 'always', 'ignore', 'module', 'once', 'error']:
+        action = "ignore"  # happens when PYTHONWARNINGS has a complex value
+    return action
 
 
 def augment_warning_messages():
@@ -129,8 +157,14 @@ def augment_warning_messages():
         # -- end code copied from Python's warnings.py:warn --
         else:
             module = filename
+        if not isinstance(message, str):
+            category = category or message.__class__
+            message = str(message)
         message += f"\nmodule: {module} line {lineno}"
-        message += POSSIBLE_RESOLUTIONS
+        if category and issubclass(category, DeprecationWarning):
+            message += POSSIBLE_RESOLUTIONS
+            if os.environ.get("CCHQ_STRICT_WARNINGS") and os.environ.get('CCHQ_TESTING') != '1':
+                message += STRICT_WARNINGS_WORKAROUND
 
         stacklevel += 1
         return real_warn(message, category, stacklevel, source)
@@ -171,4 +205,9 @@ Possible resolutions:
   path or to add a whitelist item that uniquely matches the deprecation
   warning, use the `corehq.tests.util.warnings.filter_warnings()`
   decorator to filter the specific warning in tests that trigger it.
+"""
+
+STRICT_WARNINGS_WORKAROUND = """
+Workaround: prepend the command with 'env -u CCHQ_STRICT_WARNINGS ' to
+disable strict warnings if none of these resolutions are appropriate.
 """

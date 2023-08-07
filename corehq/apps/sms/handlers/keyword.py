@@ -1,8 +1,9 @@
 from functools import cmp_to_key
 
+from corehq import toggles
 from dimagi.utils.logging import notify_exception
 
-from corehq.apps.app_manager.dbaccessors import get_app
+from corehq.apps.app_manager.dbaccessors import get_app, get_latest_released_app
 from corehq.apps.formplayer_api.smsforms.api import (
     FormplayerInterface,
     TouchformsError,
@@ -15,7 +16,24 @@ from corehq.apps.sms.api import (
     send_sms_to_verified_number,
 )
 from corehq.apps.sms.handlers.form_session import validate_answer
-from corehq.apps.sms.messages import *
+from corehq.apps.sms.messages import (
+    MSG_CASE_NOT_FOUND,
+    MSG_EXPECTED_NAMED_ARGS_SEPARATOR,
+    MSG_FIELD_DESCRIPTOR,
+    MSG_FIELD_REQUIRED,
+    MSG_FORM_ERROR,
+    MSG_FORM_NOT_FOUND,
+    MSG_KEYWORD_NOT_FOUND,
+    MSG_MISSING_EXTERNAL_ID,
+    MSG_MULTIPLE_ANSWERS_FOUND,
+    MSG_MULTIPLE_CASES_FOUND,
+    MSG_MULTIPLE_QUESTIONS_MATCH,
+    MSG_START_KEYWORD_USAGE,
+    MSG_TOUCHFORMS_DOWN,
+    MSG_TOUCHFORMS_ERROR,
+    MSG_UNKNOWN_GLOBAL_KEYWORD,
+    get_message,
+)
 from corehq.apps.sms.models import (
     WORKFLOW_KEYWORD,
     Keyword,
@@ -49,9 +67,9 @@ class StructuredSMSException(Exception):
         super(StructuredSMSException, self).__init__(*args, **kwargs)
 
 
-def contact_can_use_keyword(v, keyword):
+def contact_can_use_keyword(verified_number, keyword):
     has_keyword_restrictions = len(keyword.initiator_doc_type_filter) > 0
-    can_initiate = v.owner_doc_type in keyword.initiator_doc_type_filter
+    can_initiate = verified_number.owner_doc_type in keyword.initiator_doc_type_filter
     if has_keyword_restrictions and not can_initiate:
         return False
     else:
@@ -75,34 +93,33 @@ def handle_global_keywords(v, text, msg, text_words, open_sessions):
     return fcn(v, text, msg, text_words, open_sessions)
 
 
-def global_keyword_start(v, text, msg, text_words, open_sessions):
+def global_keyword_start(verified_number, text, msg, text_words, open_sessions):
     outbound_metadata = MessageMetadata(
         workflow=WORKFLOW_KEYWORD,
     )
 
     if len(text_words) > 1:
         keyword = text_words[1]
-        k = Keyword.get_keyword(v.domain, keyword)
+        k = Keyword.get_keyword(verified_number.domain, keyword)
         if k:
-            if not contact_can_use_keyword(v, k):
+            if not contact_can_use_keyword(verified_number, k):
                 return False
-            process_survey_keyword_actions(v, k, text[6:].strip(), msg)
+            process_survey_keyword_actions(verified_number, k, text[6:].strip(), msg)
         else:
-            message = get_message(MSG_KEYWORD_NOT_FOUND, v, (keyword,))
-            send_sms_to_verified_number(v, message, metadata=outbound_metadata)
+            message = get_message(MSG_KEYWORD_NOT_FOUND, verified_number, (keyword,))
+            send_sms_to_verified_number(verified_number, message, metadata=outbound_metadata)
     else:
-        message = get_message(MSG_START_KEYWORD_USAGE, v, 
-            (text_words[0],))
-        send_sms_to_verified_number(v, message, metadata=outbound_metadata)
+        message = get_message(MSG_START_KEYWORD_USAGE, verified_number, (text_words[0],))
+        send_sms_to_verified_number(verified_number, message, metadata=outbound_metadata)
     return True
 
 
-def global_keyword_stop(v, text, msg, text_words, open_sessions):
-    SQLXFormsSession.close_all_open_sms_sessions(v.domain, v.owner_id)
+def global_keyword_stop(verified_number, text, msg, text_words, open_sessions):
+    SQLXFormsSession.close_all_open_sms_sessions(verified_number.domain, verified_number.owner_id)
     return True
 
 
-def global_keyword_current(v, text, msg, text_words, open_sessions):
+def global_keyword_current(verified_number, text, msg, text_words, open_sessions):
     if len(open_sessions) == 1:
         session = open_sessions[0]
         outbound_metadata = MessageMetadata(
@@ -111,22 +128,22 @@ def global_keyword_current(v, text, msg, text_words, open_sessions):
             xforms_session_couch_id=session._id,
         )
 
-        resp = FormplayerInterface(session.session_id, v.domain).current_question()
+        resp = FormplayerInterface(session.session_id, verified_number.domain).current_question()
 
-        send_sms_to_verified_number(v, resp.event.text_prompt,
-            metadata=outbound_metadata, events=[resp.event])
+        send_sms_to_verified_number(verified_number, resp.event.text_prompt,
+                                    metadata=outbound_metadata, events=[resp.event])
     return True
 
 
-def global_keyword_unknown(v, text, msg, text_words, open_sessions):
-    message = get_message(MSG_UNKNOWN_GLOBAL_KEYWORD, v, (text_words[0],))
-    send_sms_to_verified_number(v, message)
+def global_keyword_unknown(verified_number, text, msg, text_words, open_sessions):
+    message = get_message(MSG_UNKNOWN_GLOBAL_KEYWORD, verified_number, (text_words[0],))
+    send_sms_to_verified_number(verified_number, message)
     return True
 
 
-def handle_domain_keywords(v, text, msg, text_words, sessions):
+def handle_domain_keywords(verified_number, text, msg, text_words, sessions):
     any_session_open = len(sessions) > 0
-    for survey_keyword in Keyword.get_by_domain(v.domain):
+    for survey_keyword in Keyword.get_by_domain(verified_number.domain):
         args = split_args(text, survey_keyword)
         keyword = args[0].upper()
         if keyword == survey_keyword.keyword.upper():
@@ -134,7 +151,7 @@ def handle_domain_keywords(v, text, msg, text_words, sessions):
                 # We don't want to override any open sessions, so just pass and
                 # let the form session handler handle the message
                 return False
-            elif not contact_can_use_keyword(v, survey_keyword):
+            elif not contact_can_use_keyword(verified_number, survey_keyword):
                 # The contact type is not allowed to invoke this keyword
                 return False
             else:
@@ -142,29 +159,29 @@ def handle_domain_keywords(v, text, msg, text_words, sessions):
                     workflow=WORKFLOW_KEYWORD,
                 )
                 add_msg_tags(msg, inbound_metadata)
-                process_survey_keyword_actions(v, survey_keyword, text, msg)
+                process_survey_keyword_actions(verified_number, survey_keyword, text, msg)
                 return True
     # No keywords matched, so pass the message onto the next handler
     return False
 
 
-def sms_keyword_handler(v, text, msg):
-    with critical_section_for_smsforms_sessions(v.owner_id):
+def sms_keyword_handler(verified_number, text, msg):
+    with critical_section_for_smsforms_sessions(verified_number.owner_id):
         text = text.strip()
         if text == "":
             return False
 
-        sessions = SQLXFormsSession.get_all_open_sms_sessions(v.domain, v.owner_id)
+        sessions = SQLXFormsSession.get_all_open_sms_sessions(verified_number.domain, verified_number.owner_id)
         text_words = text.upper().split()
 
         if text.startswith("#"):
-            return handle_global_keywords(v, text, msg, text_words, sessions)
+            return handle_global_keywords(verified_number, text, msg, text_words, sessions)
         else:
-            return handle_domain_keywords(v, text, msg, text_words, sessions)
+            return handle_domain_keywords(verified_number, text, msg, text_words, sessions)
 
 
 def _handle_structured_sms(domain, args, contact_id, session_id,
-    first_question, verified_number, xpath_answer=None):
+                           first_question, verified_number, xpath_answer=None):
 
     form_complete = False
     current_question = first_question
@@ -175,32 +192,26 @@ def _handle_structured_sms(domain, args, contact_id, session_id,
     while not form_complete:
         if current_question.is_error:
             error_msg = current_question.text_prompt or internal_error_msg
-            raise StructuredSMSException(response_text=error_msg,
-                xformsresponse=current_question)
+            raise StructuredSMSException(response_text=error_msg, xformsresponse=current_question)
 
         xpath = current_question.event._dict["binding"]
         if used_named_args and xpath in xpath_answer:
-            valid, answer, error_msg = validate_answer(current_question.event,
-                xpath_answer[xpath], verified_number)
+            valid, answer, error_msg = validate_answer(
+                current_question.event, xpath_answer[xpath], verified_number)
             if not valid:
-                raise StructuredSMSException(response_text=error_msg,
-                    xformsresponse=current_question)
+                raise StructuredSMSException(response_text=error_msg, xformsresponse=current_question)
         elif not used_named_args and answer_num < len(args):
             answer = args[answer_num].strip()
-            valid, answer, error_msg = validate_answer(current_question.event,
-                answer, verified_number)
+            valid, answer, error_msg = validate_answer(current_question.event, answer, verified_number)
             if not valid:
-                raise StructuredSMSException(response_text=error_msg,
-                    xformsresponse=current_question)
+                raise StructuredSMSException(response_text=error_msg, xformsresponse=current_question)
         else:
             # We're out of arguments, so try to leave each remaining question
             # blank and continue
             answer = ""
             if current_question.event._dict.get("required", False):
-                error_msg = get_message(MSG_FIELD_REQUIRED,
-                    verified_number)
-                raise StructuredSMSException(response_text=error_msg,
-                    xformsresponse=current_question)
+                error_msg = get_message(MSG_FIELD_REQUIRED, verified_number)
+                raise StructuredSMSException(response_text=error_msg, xformsresponse=current_question)
 
         responses = get_responses(domain, session_id, answer)
         current_question = responses[-1]
@@ -222,17 +233,15 @@ def parse_structured_sms_named_args(args, action, verified_number=None):
             # in "register name=joe age=25"
             answer_parts = answer.partition(action.named_args_separator)
             if answer_parts[1] != action.named_args_separator:
-                error_msg = get_message(MSG_EXPECTED_NAMED_ARGS_SEPARATOR,
-                    verified_number, (action.named_args_separator,))
+                error_msg = get_message(
+                    MSG_EXPECTED_NAMED_ARGS_SEPARATOR, verified_number, (action.named_args_separator,))
                 raise StructuredSMSException(response_text=error_msg)
             else:
                 arg_name = answer_parts[0].upper().strip()
                 xpath = action.named_args.get(arg_name, None)
                 if xpath is not None:
                     if xpath in xpath_answer:
-                        error_msg = get_message(MSG_MULTIPLE_ANSWERS_FOUND,
-                            verified_number,
-                            (arg_name,))
+                        error_msg = get_message(MSG_MULTIPLE_ANSWERS_FOUND, verified_number, (arg_name,))
                         raise StructuredSMSException(response_text=error_msg)
 
                     xpath_answer[xpath] = answer_parts[2].strip()
@@ -247,15 +256,11 @@ def parse_structured_sms_named_args(args, action, verified_number=None):
                 if answer_upper.startswith(k):
                     matches += 1
                     if matches > 1:
-                        error_msg = get_message(MSG_MULTIPLE_QUESTIONS_MATCH,
-                            verified_number,
-                            (answer,))
+                        error_msg = get_message(MSG_MULTIPLE_QUESTIONS_MATCH, verified_number, (answer,))
                         raise StructuredSMSException(response_text=error_msg)
 
                     if v in xpath_answer:
-                        error_msg = get_message(MSG_MULTIPLE_ANSWERS_FOUND,
-                            verified_number,
-                            (k,))
+                        error_msg = get_message(MSG_MULTIPLE_ANSWERS_FOUND, verified_number, (k,))
                         raise StructuredSMSException(response_text=error_msg)
 
                     xpath_answer[v] = answer[len(k):].strip()
@@ -296,17 +301,20 @@ def get_app_module_form(domain, app_id, form_unique_id, logged_subevent=None):
     Returns (app, module, form, error, error_code)
     """
     try:
-        app = get_app(domain, app_id)
+        if toggles.SMS_USE_LATEST_DEV_APP.enabled(domain, toggles.NAMESPACE_DOMAIN):
+            app = get_app(domain, app_id)
+        else:
+            app = get_latest_released_app(domain, app_id)
         form = app.get_form(form_unique_id)
         module = form.get_module()
-        return (app, module, form, False, None)
+        return app, module, form, False, None
     except:
         log_error(MessagingEvent.ERROR_CANNOT_FIND_FORM, logged_subevent)
-        return (None, None, None, True, MSG_FORM_NOT_FOUND)
+        return None, None, None, True, MSG_FORM_NOT_FOUND
 
 
 def start_session_for_structured_sms(domain, contact, phone_number, app, form,
-        case_id, keyword, logged_subevent=None):
+                                     case_id, keyword, logged_subevent=None):
     """
     Returns (session, responses, error, error_code)
     """
@@ -330,25 +338,25 @@ def start_session_for_structured_sms(domain, contact, phone_number, app, form,
         if logged_subevent:
             logged_subevent.xforms_session_id = session.pk
             logged_subevent.save()
-        return (session, responses, False, None)
+        return session, responses, False, None
     except TouchformsError as e:
         human_readable_message = get_formplayer_exception(domain, e)
-        logged_subevent.error(MessagingEvent.ERROR_TOUCHFORMS_ERROR,
-            additional_error_text=human_readable_message)
+        logged_subevent.error(MessagingEvent.ERROR_TOUCHFORMS_ERROR, additional_error_text=human_readable_message)
 
         if touchforms_error_is_config_error(domain, e):
             error_code = MSG_FORM_ERROR
         else:
-            notify_exception(None, message=('Could not process structured sms for'
+            notify_exception(None, message=(
+                'Could not process structured sms for'
                 'contact %s, domain %s, keyword %s' % (contact.get_id, domain, keyword)))
             error_code = MSG_TOUCHFORMS_ERROR
 
-        return (None, None, True, error_code)
+        return None, None, True, error_code
 
 
 def handle_structured_sms(survey_keyword, survey_keyword_action, contact,
-        verified_number, text, send_response=False, msg=None, case=None,
-        text_args=None, logged_event=None):
+                          verified_number, text, send_response=False, msg=None, case=None,
+                          text_args=None, logged_event=None):
 
     case_id = get_case_id(contact, case)
     logged_subevent = None
@@ -369,11 +377,12 @@ def handle_structured_sms(survey_keyword, survey_keyword_action, contact,
     error_msg = None
     session = None
 
-    app, module, form, error_occurred, error_code = get_app_module_form(domain,
-        survey_keyword_action.app_id, survey_keyword_action.form_unique_id, logged_subevent)
+    app, module, form, error_occurred, error_code = get_app_module_form(
+        domain, survey_keyword_action.app_id, survey_keyword_action.form_unique_id, logged_subevent)
     if error_occurred:
         error_msg = get_message(error_code, verified_number)
-        clean_up_and_send_response(msg, contact, session, error_occurred, error_msg,
+        clean_up_and_send_response(
+            msg, contact, session, error_occurred, error_msg,
             verified_number, send_response, logged_event, logged_subevent)
         return False
 
@@ -381,7 +390,8 @@ def handle_structured_sms(survey_keyword, survey_keyword_action, contact,
         domain, contact, verified_number, app, form, case_id, keyword, logged_subevent)
     if error_occurred:
         error_msg = get_message(error_code, verified_number)
-        clean_up_and_send_response(msg, contact, session, error_occurred, error_msg,
+        clean_up_and_send_response(
+            msg, contact, session, error_occurred, error_msg,
             verified_number, send_response, logged_event, logged_subevent)
         return False
 
@@ -396,14 +406,15 @@ def handle_structured_sms(survey_keyword, survey_keyword_action, contact,
         if not is_form_complete(first_question):
             if survey_keyword_action.use_named_args:
                 # Arguments in the sms are named
-                xpath_answer = parse_structured_sms_named_args(args,
-                    survey_keyword_action, verified_number)
-                _handle_structured_sms(domain, args, contact_id, session.session_id,
+                xpath_answer = parse_structured_sms_named_args(args, survey_keyword_action, verified_number)
+                _handle_structured_sms(
+                    domain, args, contact_id, session.session_id,
                     first_question, verified_number, xpath_answer)
             else:
                 # Arguments in the sms are not named; pass each argument to
                 # each question in order
-                _handle_structured_sms(domain, args, contact_id, session.session_id,
+                _handle_structured_sms(
+                    domain, args, contact_id, session.session_id,
                     first_question, verified_number)
 
     except StructuredSMSException as sse:
@@ -415,18 +426,19 @@ def handle_structured_sms(survey_keyword, survey_keyword_action, contact,
                 xpath_arg = \
                     {v: k for k, v in survey_keyword_action.named_args.items()}
             field_name = get_question_id(sse.xformsresponse, xpath_arg)
-            error_msg = get_message(MSG_FIELD_DESCRIPTOR, verified_number,
-                (field_name,))
+            error_msg = get_message(MSG_FIELD_DESCRIPTOR, verified_number, (field_name,))
         error_msg = "%s%s" % (error_msg, sse.response_text)
         log_error(MessagingEvent.ERROR_COULD_NOT_PROCESS_STRUCTURED_SMS, logged_subevent)
     except Exception:
-        notify_exception(None, message=("Could not process structured sms for"
+        notify_exception(None, message=(
+            "Could not process structured sms for"
             "contact %s, domain %s, keyword %s" % (contact_id, domain, keyword)))
         error_occurred = True
         error_msg = get_message(MSG_TOUCHFORMS_ERROR, verified_number)
         log_error(MessagingEvent.ERROR_TOUCHFORMS_ERROR, logged_subevent)
 
-    clean_up_and_send_response(msg, contact, session, error_occurred, error_msg,
+    clean_up_and_send_response(
+        msg, contact, session, error_occurred, error_msg,
         verified_number, send_response, logged_event, logged_subevent)
 
     return not error_occurred
@@ -445,8 +457,8 @@ def add_keyword_metadata(msg, session):
 
 
 def clean_up_and_send_response(msg, contact, session, error_occurred, error_msg,
-        verified_number=None, send_response=False, logged_event=None,
-        logged_subevent=None):
+                               verified_number=None, send_response=False, logged_event=None,
+                               logged_subevent=None):
 
     metadata = add_keyword_metadata(msg, session)
 
@@ -487,7 +499,10 @@ def is_form_complete(current_question):
 def keyword_uses_form_that_requires_case(survey_keyword):
     for action in survey_keyword.keywordaction_set.all():
         if action.action in [KeywordAction.ACTION_SMS_SURVEY, KeywordAction.ACTION_STRUCTURED_SMS]:
-            app = get_app(survey_keyword.domain, action.app_id)
+            if toggles.SMS_USE_LATEST_DEV_APP.enabled(survey_keyword.domain, toggles.NAMESPACE_DOMAIN):
+                app = get_app(survey_keyword.domain, action.app_id)
+            else:
+                app = get_latest_released_app(survey_keyword.domain, action.app_id)
             form = app.get_form(action.form_unique_id)
             if form.requires_case():
                 return True
@@ -506,9 +521,9 @@ def get_case_by_external_id(domain, external_id, user):
     cases = list(filter(filter_fcn, cases))
 
     if len(cases) == 1:
-        return (cases[0], 1)
+        return cases[0], 1
     else:
-        return (None, len(cases))
+        return None, len(cases)
 
 
 def user_is_owner(user, case):
@@ -566,8 +581,7 @@ def process_survey_keyword_actions(verified_number, survey_keyword, text, msg):
 
     # Close any open sessions even if it's just an sms that we're
     # responding with.
-    SQLXFormsSession.close_all_open_sms_sessions(verified_number.domain,
-        verified_number.owner_id)
+    SQLXFormsSession.close_all_open_sms_sessions(verified_number.domain, verified_number.owner_id)
 
     if is_commcarecase(sender):
         case = sender
@@ -576,8 +590,7 @@ def process_survey_keyword_actions(verified_number, survey_keyword, text, msg):
         if keyword_uses_form_that_requires_case(survey_keyword):
             if len(args) > 1:
                 external_id = args[1]
-                case, matches = get_case_by_external_id(verified_number.domain,
-                    external_id, sender)
+                case, matches = get_case_by_external_id(verified_number.domain, external_id, sender)
                 if matches == 0:
                     send_keyword_response(verified_number, MSG_CASE_NOT_FOUND, logged_event)
                     logged_event.error(MessagingEvent.ERROR_CASE_EXTERNAL_ID_NOT_FOUND)
@@ -665,7 +678,8 @@ def process_survey_keyword_actions(verified_number, survey_keyword, text, msg):
                 content.send(recipient, logged_event, phone_entry=phone_entry)
 
         elif survey_keyword_action.action == KeywordAction.ACTION_STRUCTURED_SMS:
-            res = handle_structured_sms(survey_keyword, survey_keyword_action,
+            res = handle_structured_sms(
+                survey_keyword, survey_keyword_action,
                 sender, verified_number, text, send_response=True, msg=msg,
                 case=case, text_args=args, logged_event=logged_event)
             if not res:

@@ -39,4 +39,6 @@ hqDefine("hqwebapp/js/components.ko", [
             });
         });
     });
+    
+    return 1;
 });

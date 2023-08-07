@@ -2,32 +2,23 @@ import csv
 from datetime import datetime, timedelta
 from itertools import chain
 
-from django.conf import settings
 from django.contrib.auth.models import User
 from django.db.models import ForeignKey, Min
 
 import attr
-from couchdbkit.ext.django.loading import get_db
 
-from dimagi.utils.couch.database import iter_docs
 from dimagi.utils.parsing import string_to_datetime
 
-from corehq.apps.domain.utils import get_domain_from_url
-from corehq.apps.users.models import WebUser, Invitation
+from corehq.apps.users.models import Invitation, WebUser
 from corehq.util.models import ForeignValue
 
 from ..models import AccessAudit, NavigationEventAudit
 
 
 def navigation_events_by_user(user, start_date=None, end_date=None):
-    params = {"user": user, "start_date": start_date, "end_date": end_date}
-    sql_start_date = determine_sql_start_date(start_date)
-    where = get_date_range_where(sql_start_date, end_date)
+    where = get_date_range_where(start_date, end_date)
     query = NavigationEventAudit.objects.filter(user=user, **where)
-    return chain(
-        iter_couch_audit_events(params),
-        AuditWindowQuery(query),
-    )
+    return AuditWindowQuery(query)
 
 
 def write_log_events(writer, user, domain=None, override_user=None, start_date=None, end_date=None):
@@ -42,7 +33,14 @@ def write_log_events(writer, user, domain=None, override_user=None, start_date=N
 def write_log_event(writer, event, override_user=None):
     if override_user:
         event.user = override_user
-    writer.writerow([event.event_date, event.user, event.domain, event.ip_address, event.request_path])
+    writer.writerow([
+        event.event_date,
+        event.user,
+        event.domain,
+        event.ip_address,
+        event.request_method,
+        event.request_path
+    ])
 
 
 def get_users_for_domain(domain):
@@ -58,11 +56,8 @@ def get_users_for_domain(domain):
 
 
 def get_all_log_events(start_date=None, end_date=None):
-    params = {"start_date": start_date, "end_date": end_date}
-    sql_start_date = determine_sql_start_date(start_date)
-    where = get_date_range_where(sql_start_date, end_date)
+    where = get_date_range_where(start_date, end_date)
     return chain(
-        iter_couch_audit_events(params),
         AuditWindowQuery(AccessAudit.objects.filter(**where)),
         AuditWindowQuery(NavigationEventAudit.objects.filter(**where)),
     )
@@ -96,8 +91,7 @@ def get_domain_first_access_times(domains, start_date=None, end_date=None):
     ORDER BY access_time ASC;
     ```
     """
-    sql_start_date = determine_sql_start_date(start_date)
-    where = get_date_range_where(sql_start_date, end_date)
+    where = get_date_range_where(start_date, end_date)
     where["domain__in"] = domains
     where["user__isnull"] = False
     where["session_key__isnull"] = False
@@ -114,7 +108,7 @@ def write_generic_log_event(writer, event):
     action = ''
     resource = ''
     if event.doc_type == 'NavigationEventAudit':
-        action = event.headers['REQUEST_METHOD']
+        action = event.request_method
         resource = event.request_path
     else:
         assert event.doc_type == 'AccessAudit'
@@ -177,114 +171,6 @@ class AuditWindowQuery:
                     last_ids.add(rec.id)
             if rec is None:
                 break
-
-
-def iter_couch_audit_events(params, chunksize=10000):
-    if not (params.get("start_date") or params.get("user")):
-        raise NotImplementedError("auditcare queries on Couch have not "
-            "been designed for unbounded queries")
-    if params.get("start_date"):
-        sql_start = get_sql_start_date()
-        if params["start_date"] > sql_start:
-            return
-    db = get_db("auditcare")
-    if "user" in params:
-        view_name = "auditcare/urlpath_by_user_date"
-    else:
-        view_name = "auditcare/all_events"
-    startkey, endkey = _get_couch_view_keys(**params)
-    doc_ids = {r["id"] for r in db.view(
-        view_name,
-        startkey=startkey,
-        endkey=endkey,
-        reduce=False,
-        include_docs=False,
-    )}
-    for doc in iter_docs(db, doc_ids, chunksize=chunksize):
-        yield CouchAuditEvent(doc)
-
-
-def get_fixed_start_date_for_sql():
-    # reemove after auditcare migration is done
-    return FIXED_START_DATES.get(settings.SERVER_ENVIRONMENT)
-
-
-FIXED_START_DATES = {
-    'production': datetime(2021, 3, 24, 6, 17, 21, 988840),
-    'india': datetime(2021, 3, 23, 21, 52, 25, 476894),
-    'staging': datetime(2021, 3, 20, 11, 50, 2, 921916),
-    'swiss': datetime(2021, 3, 25, 8, 22, 53, 179334),
-}
-
-
-def determine_sql_start_date(start_date):
-    fixed_start_date = get_fixed_start_date_for_sql()
-    if fixed_start_date and start_date < fixed_start_date:
-        return fixed_start_date
-    else:
-        return start_date
-
-
-def get_sql_start_date():
-    """Get the date of the first SQL auditcare record
-
-    HACK this uses `NavigationEventAudit` since that model is likely to
-    have the record with the earliest timestamp.
-
-    NOTE this function assumes no SQL data has been archived, and that
-    all auditcare data in Couch will be obsolete and/or archived before
-    SQL data. It should be removed when the data in Couch is no longer
-    relevant.
-
-    NOTE the output is being hardcoded for the time historical auditcare events are copied to SQL
-    """
-    fixed_sql_start = get_fixed_start_date_for_sql()
-    if fixed_sql_start:
-        return fixed_sql_start
-    manager = NavigationEventAudit.objects
-    row = manager.order_by("event_date").values("event_date")[:1].first()
-    return row["event_date"] if row else datetime.utcnow()
-
-
-class CouchAuditEvent:
-    def __init__(self, doc):
-        self.__dict__ = doc
-
-    def __repr__(self):
-        return f"{type(self).__name__}({self.__dict__!r})"
-
-    @property
-    def domain(self):
-        return get_domain_from_url(self.path)
-
-    @property
-    def event_date(self):
-        datestr = self.__dict__["event_date"]
-        return string_to_datetime(datestr).replace(tzinfo=None)
-
-    @property
-    def path(self):
-        if self.doc_type == "NavigationEventAudit":
-            return self.request_path
-        return self.path_info
-
-
-def _get_couch_view_keys(user=None, start_date=None, end_date=None):
-    def date_key(date):
-        return [date.year, date.month, date.day]
-
-    startkey = [user] if user else []
-    if start_date:
-        startkey.extend(date_key(start_date))
-
-    endkey = [user] if user else []
-    if end_date:
-        end = end_date + timedelta(days=1)
-        endkey.extend(date_key(end))
-    else:
-        endkey.append({})
-
-    return startkey, endkey
 
 
 def get_foreign_names(model):

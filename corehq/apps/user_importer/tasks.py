@@ -1,18 +1,19 @@
 import functools
 
-from celery.exceptions import TimeoutError
-from celery.task import task
-
 from django.db import DEFAULT_DB_ALIAS
 
-from dimagi.utils.chunked import chunked
+from celery.exceptions import TimeoutError
 
+from dimagi.utils.chunked import chunked
 from soil import DownloadBase
 from soil.progress import get_task_progress
 
-from corehq.apps.users.models import WebUser
+from corehq.apps.accounting.models import Subscription
+from corehq.apps.celery import task
+from corehq.apps.reports.util import import_tableau_users
 from corehq.apps.user_importer.models import UserUploadRecord
-
+from corehq.apps.users.models import WebUser, check_and_send_limit_email
+from corehq.toggles import TABLEAU_USER_SYNCING
 
 USER_UPLOAD_CHUNK_SIZE = 1000
 
@@ -86,8 +87,11 @@ def parallel_user_import(domain, user_specs, upload_user_id):
 
 
 def import_users(domain, user_specs, group_specs, upload_user_id, upload_record_id, is_web_upload, task):
-    from corehq.apps.user_importer.importer import create_or_update_commcare_users_and_groups, \
-        create_or_update_groups, create_or_update_web_users
+    from corehq.apps.user_importer.importer import (
+        create_or_update_commcare_users_and_groups,
+        create_or_update_groups,
+        create_or_update_web_users,
+    )
     upload_user = WebUser.get_by_user_id(upload_user_id)
     DownloadBase.set_progress(task, 0, 100)
 
@@ -101,6 +105,8 @@ def import_users(domain, user_specs, group_specs, upload_user_id, upload_record_
     def _update_progress(value, start=0):
         DownloadBase.set_progress(task, start + value, total)
 
+    plan_limit, prev_user_count = Subscription.get_plan_and_user_count_by_domain(domain)
+
     if is_web_upload:
         user_results = create_or_update_web_users(
             domain,
@@ -109,6 +115,8 @@ def import_users(domain, user_specs, group_specs, upload_user_id, upload_record_
             upload_record_id=upload_record_id,
             update_progress=functools.partial(_update_progress, start=len(group_specs))
         )
+        if TABLEAU_USER_SYNCING.enabled(domain):
+            import_tableau_users(domain, user_specs)
     else:
         user_results = create_or_update_commcare_users_and_groups(
             domain,
@@ -118,6 +126,9 @@ def import_users(domain, user_specs, group_specs, upload_user_id, upload_record_
             group_memoizer=group_memoizer,
             update_progress=functools.partial(_update_progress, start=len(group_specs))
         )
+    plan_limit, post_user_count = Subscription.get_plan_and_user_count_by_domain(domain)
+    check_and_send_limit_email(domain, plan_limit, post_user_count, prev_user_count)
+
     results = {
         'errors': group_results['errors'] + user_results['errors'],
         'rows': user_results['rows']

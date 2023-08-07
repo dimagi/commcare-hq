@@ -1,7 +1,7 @@
 hqDefine('domain/js/internal_subscription_management', [
     'jquery',
     'knockout',
-    'jquery-ui/ui/widgets/datepicker',
+    'hqwebapp/js/widgets',
 ], function (
     $,
     ko
@@ -18,6 +18,5 @@ hqDefine('domain/js/internal_subscription_management', [
             return date.toJSON().slice(0, 10);
         });
         $('#subscription_management').koApplyBindings(viewModel);
-        $('.date-picker').datepicker({ dateFormat: "yy-mm-dd" });
     });
 });

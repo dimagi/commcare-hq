@@ -7,14 +7,14 @@ from django.core.management import call_command
 from django.test import TestCase
 
 from casexml.apps.case.mock import CaseBlock
-from casexml.apps.case.util import post_case_blocks
+from corehq.apps.hqcase.utils import submit_case_blocks
 from dimagi.utils.parsing import json_format_date
 
 from corehq.apps.app_manager.util import enable_usercase
 from corehq.apps.domain.shortcuts import create_domain
+from corehq.apps.es.case_search import case_search_adapter
 from corehq.apps.es.tests.utils import (
     case_search_es_setup,
-    case_search_es_teardown,
     es_test,
 )
 from corehq.apps.locations.models import LocationType, SQLLocation
@@ -49,13 +49,13 @@ class CaseCommandsTest(TestCase):
             call_command('add_hq_user_id_to_case', self.domain, 'checkin', '--username=afakeuserthatdoesnotexist')
 
     def submit_case_block(self, create, case_id, **kwargs):
-        return post_case_blocks(
+        return submit_case_blocks(
             [
                 CaseBlock(
                     create=create,
                     case_id=case_id,
                     **kwargs
-                ).as_xml()
+                ).as_text()
             ], domain=self.domain
         )
 
@@ -378,7 +378,7 @@ class CaseCommandsTest(TestCase):
         self.assertEqual(patient2_case.get_case_property('owner_id'), '-')
 
 
-@es_test
+@es_test(requires=[case_search_adapter], setup_class=True)
 class TestUpdateAllActivityCompleteDate(TestCase):
     domain = 'all_activity_complete_date'
 
@@ -417,7 +417,7 @@ class TestUpdateAllActivityCompleteDate(TestCase):
 
     @classmethod
     def tearDownClass(cls):
-        case_search_es_teardown()
+        FormProcessorTestUtils.delete_all_cases()
         super().tearDownClass()
 
     @patch('corehq.apps.hqcase.bulk.username_to_user_id', new=lambda _: 'my_username')

@@ -216,6 +216,7 @@ class AppFactory(object):
         case_module, update_case_form = factory.new_basic_module('case_module', 'suite_test')
 
         register_module, register_form = factory.new_basic_module('register_case', 'suite_test')
+        factory.form_opens_case(register_form)
 
         case_module.case_list_form.form_id = register_form.get_unique_id()
         case_module.case_list_form.label = {
@@ -226,6 +227,12 @@ class AppFactory(object):
         }
         case_module.search_config.search_again_label.label = {
             'en': 'Find Another Mother',
+        }
+        case_module.search_config.title_label = {
+            'en': 'Find a Mom',
+        }
+        case_module.search_config.description = {
+            'en': 'More information',
         }
         case_module.search_config.properties = [CaseSearchProperty(
             name='name',

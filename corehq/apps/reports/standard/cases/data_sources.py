@@ -1,13 +1,12 @@
-import datetime
 import json
+from datetime import date
 
-import pytz
 from django.template.defaultfilters import yesno
 from django.urls import NoReverseMatch
 from django.utils.html import format_html
 from django.utils.translation import gettext as _
 
-import dateutil
+import pytz
 from couchdbkit import ResourceNotFound
 
 from corehq.apps.case_search.const import (
@@ -17,20 +16,28 @@ from corehq.apps.case_search.const import (
 from corehq.apps.groups.models import Group
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.reports.util import get_user_id_from_form
+from corehq.apps.reports.v2.utils import report_date_to_json
 from corehq.apps.users.models import CouchUser
 from corehq.const import USER_DATETIME_FORMAT_WITH_SEC
-from corehq.util.dates import iso_string_to_datetime
 from corehq.util.quickcache import quickcache
-from corehq.util.timezones.conversions import PhoneTime
+from corehq.util.timezones.utils import parse_date
 from corehq.util.view_utils import absolute_reverse
 
 
-class CaseDisplay:
+class CaseDisplayBase:
     """This class wraps a raw case from ES to provide simpler access
     to certain properties as well as formatting for properties for use in
     the UI"""
 
     date_format = USER_DATETIME_FORMAT_WITH_SEC
+    aliases = {
+        'status': 'closed_display',
+        'opened_by_username': 'creating_user',
+        'owner_name': 'owner_display',
+        'name': 'case_name',
+        'date_opened': 'opened_on',
+        'last_modified': 'modified_on',
+    }
 
     def __init__(self, case, timezone=pytz.UTC, override_user_id=None):
         """
@@ -41,52 +48,15 @@ class CaseDisplay:
         self.override_user_id = override_user_id
 
     @property
-    def case_type(self):
-        return self.case['type']
-
-    @property
-    def case_name(self):
-        return self.case['name']
-    name = case_name
-
-    @property
     def case_name_display(self):
         return self.case_name or _('[no name]')
 
     @property
-    def case_id(self):
-        return self.case['_id']
-
-    @property
-    def external_id(self):
-        return self.case['external_id']
-
-    @property
     def case_detail_url(self):
         try:
-            return absolute_reverse('case_data', args=[self.case['domain'], self.case_id])
+            return absolute_reverse('case_data', args=[self.domain, self.case_id])
         except NoReverseMatch:
             return None
-
-    @property
-    def is_closed(self):
-        return self.case['closed']
-
-    @property
-    def _creating_user(self):
-        try:
-            creator_id = self.case['opened_by']
-        except KeyError:
-            creator_id = None
-            if 'actions' in self.case:
-                for action in self.case['actions']:
-                    if action['action_type'] == 'create':
-                        creator_id = get_user_id_from_form(action["xform_id"])
-                        break
-
-        if not creator_id:
-            return None
-        return self._user_meta(creator_id)
 
     def _user_meta(self, user_id):
         return {'id': user_id, 'name': self._get_username(user_id)}
@@ -99,13 +69,15 @@ class CaseDisplay:
     @property
     @quickcache(['self.owner_id', 'self.user_id'])
     def owner(self):
+        if not self.owner_id:
+            return 'user', {'id': self.owner_id, 'name': self.owner_id}
         if self.owning_group and self.owning_group.name:
-            return ('group', {'id': self.owning_group._id, 'name': self.owning_group.name})
+            return 'group', {'id': self.owning_group._id, 'name': self.owning_group.name}
         elif self.location:
             return ('location', {'id': self.location.location_id,
                                  'name': self.location.display_name})
         else:
-            return ('user', self._user_meta(self.user_id))
+            return 'user', self._user_meta(self.user_id)
 
     @property
     def owner_type(self):
@@ -114,15 +86,6 @@ class CaseDisplay:
     @property
     def user_id(self):
         return self.override_user_id or self.owner_id
-
-    @property
-    def owner_id(self):
-        if 'owner_id' in self.case:
-            return self.case['owner_id']
-        elif 'user_id' in self.case:
-            return self.case['user_id']
-        else:
-            return ''
 
     @property
     @quickcache(['self.owner_id'])
@@ -144,23 +107,9 @@ class CaseDisplay:
         except CouchUser.AccountTypeError:
             return None
 
-    def parse_date(self, date_string):
-        try:
-            return iso_string_to_datetime(date_string)
-        except Exception:
-            try:
-                date_obj = dateutil.parser.parse(date_string)
-                if isinstance(date_obj, datetime.datetime):
-                    return date_obj.replace(tzinfo=None)
-                else:
-                    return date_obj
-            except Exception:
-                return date_string
-
     @property
     def closed_display(self):
         return yesno(self.is_closed, "closed,open")
-    status = closed_display
 
     @property
     def case_link(self):
@@ -173,31 +122,15 @@ class CaseDisplay:
         else:
             return "%s (bad ID format)" % self.case_name
 
-    def _dateprop(self, prop):
-        date = self.parse_date(self.case[prop])
-        if isinstance(date, datetime.datetime):
-            user_time = PhoneTime(date, self.timezone).user_time(self.timezone)
-            return user_time.ui_string(self.date_format)
-        else:
+    def _fmt_date(self, value, is_phonetime=True):
+        if not isinstance(value, date):
             return ''
-
-    @property
-    def opened_on(self):
-        return self._dateprop('opened_on')
-    date_opened = opened_on
-
-    @property
-    def modified_on(self):
-        return self._dateprop('modified_on')
-    last_modified = modified_on
-
-    @property
-    def closed_on(self):
-        return self._dateprop('closed_on')
-
-    @property
-    def server_last_modified_date(self):
-        return self._dateprop('server_modified_on')
+        return report_date_to_json(
+            value,
+            self.timezone,
+            self.date_format,
+            is_phonetime=is_phonetime
+        )
 
     @property
     def owner_display(self):
@@ -206,7 +139,6 @@ class CaseDisplay:
             return format_html('<span class="label label-default">{}</span>', owner['name'])
         else:
             return owner['name']
-    owner_name = owner_display
 
     def user_not_found_display(self, user_id):
         return _("Unknown [%s]") % user_id
@@ -218,7 +150,6 @@ class CaseDisplay:
             return _("No data")
         else:
             return user['name'] or self.user_not_found_display(user['id'])
-    opened_by_username = creating_user
 
     @property
     def opened_by_user_id(self):
@@ -228,17 +159,216 @@ class CaseDisplay:
         else:
             return user['id']
 
+    def __getattr__(self, item):
+        if item in self.aliases:
+            return getattr(self, self.aliases[item])
+        raise AttributeError(item)
+
     @property
     def last_modified_by_user_username(self):
-        return self._get_username(self.case['user_id'])
+        return self._get_username(self.last_modified_user_id)
+
+    @property
+    def closed_by_username(self):
+        return self._get_username(self.closed_by_user_id)
+
+    @property
+    def domain(self):
+        raise NotImplementedError
+
+    @property
+    def case_type(self):
+        raise NotImplementedError
+
+    @property
+    def case_name(self):
+        raise NotImplementedError
+
+    @property
+    def case_id(self):
+        raise NotImplementedError
+
+    @property
+    def external_id(self):
+        raise NotImplementedError
+
+    @property
+    def is_closed(self):
+        raise NotImplementedError
+
+    @property
+    def _creating_user(self):
+        raise NotImplementedError
+
+    @property
+    def owner_id(self):
+        raise NotImplementedError
+
+    @property
+    def opened_on(self):
+        raise NotImplementedError
+
+    @property
+    def modified_on(self):
+        raise NotImplementedError
+
+    @property
+    def closed_on(self):
+        raise NotImplementedError
+
+    @property
+    def server_last_modified_date(self):
+        raise NotImplementedError
+
+    @property
+    def closed_by_user_id(self):
+        raise NotImplementedError
+
+    @property
+    def last_modified_user_id(self):
+        raise NotImplementedError
+
+
+class CaseDisplayES(CaseDisplayBase):
+    """This class wraps a raw case from ES to provide simpler access
+    to certain properties as well as formatting for properties for use in
+    the UI"""
+
+    @property
+    def domain(self):
+        return self.case['domain']
+
+    @property
+    def case_type(self):
+        return self.case['type']
+
+    @property
+    def case_name(self):
+        return self.case['name']
+
+    @property
+    def case_id(self):
+        return self.case['_id']
+
+    @property
+    def external_id(self):
+        return self.case['external_id']
+
+    @property
+    def is_closed(self):
+        return self.case['closed']
+
+    @property
+    def _creating_user(self):
+        try:
+            creator_id = self.case['opened_by']
+        except KeyError:
+            creator_id = None
+            if 'actions' in self.case:
+                for action in self.case['actions']:
+                    if action['action_type'] == 'create':
+                        creator_id = get_user_id_from_form(action["xform_id"])
+                        break
+
+        if not creator_id:
+            return None
+        return self._user_meta(creator_id)
+
+    @property
+    def owner_id(self):
+        if 'owner_id' in self.case:
+            return self.case['owner_id']
+        elif 'user_id' in self.case:
+            return self.case['user_id']
+        else:
+            return ''
+
+    @property
+    def opened_on(self):
+        return self._fmt_date(parse_date(self.case['opened_on']))
+
+    @property
+    def modified_on(self):
+        return self._fmt_date(parse_date(self.case['modified_on']))
+
+    @property
+    def closed_on(self):
+        return self._fmt_date(parse_date(self.case['closed_on']))
+
+    @property
+    def server_last_modified_date(self):
+        return self._fmt_date(parse_date(self.case['server_modified_on']), False)
 
     @property
     def closed_by_user_id(self):
         return self.case.get('closed_by')
 
     @property
-    def closed_by_username(self):
-        return self._get_username(self.closed_by_user_id)
+    def last_modified_user_id(self):
+        return self.case['user_id']
+
+
+class CaseDisplaySQL(CaseDisplayBase):
+    @property
+    def domain(self):
+        return self.case.domain
+
+    @property
+    def case_type(self):
+        return self.case.type
+
+    @property
+    def case_name(self):
+        return self.case.name
+
+    @property
+    def case_id(self):
+        return self.case.case_id
+
+    @property
+    def external_id(self):
+        return self.case.external_id
+
+    @property
+    def is_closed(self):
+        return self.case.closed
+
+    @property
+    def _creating_user(self):
+        try:
+            creator_id = self.case.opened_by
+        except KeyError:
+            return None
+
+        return self._user_meta(creator_id)
+
+    @property
+    def owner_id(self):
+        return self.case.owner_id or self.case.user_id or ''
+
+    @property
+    def opened_on(self):
+        return self._fmt_date(self.case.opened_on)
+
+    @property
+    def modified_on(self):
+        return self._fmt_date(self.case.modified_on)
+
+    @property
+    def closed_on(self):
+        return self._fmt_date(self.case.closed_on)
+
+    @property
+    def server_last_modified_date(self):
+        return self._fmt_date(self.case.server_modified_on, False)
+
+    @property
+    def closed_by_user_id(self):
+        return self.case.closed_by
+
+    @property
+    def last_modified_user_id(self):
+        return self.case.user_id
 
 
 class SafeCaseDisplay(object):
@@ -246,25 +376,24 @@ class SafeCaseDisplay(object):
     """
     def __init__(self, case, timezone, override_user_id=None):
         self.case = case
-        self.timezone = timezone
-        self.override_user_id = override_user_id
+        self.display = CaseDisplaySQL(self.case, timezone, override_user_id)
 
     def get(self, name):
         if name == '_link':
             return self._link
 
         if name == 'indices':
-            return json.dumps(self.case.get('indices', []))
+            return json.dumps([index.to_json() for index in self.case.indices])
 
         if name in (SPECIAL_CASE_PROPERTIES + CASE_COMPUTED_METADATA):
-            return getattr(CaseDisplay(self.case, self.timezone, self.override_user_id), name.replace('@', ''))
+            return getattr(self.display, name.replace('@', ''))
 
-        return self.case.get(name)
+        return self.case.get_case_property(name)
 
     @property
     def _link(self):
         try:
-            link = absolute_reverse('case_data', args=[self.case.get("domain"), self.case.get('_id')])
+            link = absolute_reverse('case_data', args=[self.case.domain, self.case.case_id])
         except NoReverseMatch:
             return _("No link found")
         return format_html(

@@ -197,6 +197,16 @@ def test_case_to_json():
             'actions': 'eating sleeping typing',
             'indices': 'Dow_Jones_Industrial_Average S&P_500',
         },
+        indices=[
+            dict(
+                case_id=case_id,
+                domain='healsec',
+                identifier='host',
+                referenced_type='person',
+                referenced_id='abc123',
+                relationship_id=CommCareCaseIndex.EXTENSION,
+            )
+        ]
     )
     case_dict = case.to_json()
     assert_equal(case_dict, {
@@ -220,7 +230,15 @@ def test_case_to_json():
         'external_id': None,
         'family_name': 'Case',
         'given_name': 'Justin',
-        'indices': [],  # Not replaced by case_json
+        'indices': [
+            {
+                'case_id': case_id,
+                'identifier': 'host',
+                'referenced_type': 'person',
+                'referenced_id': 'abc123',
+                'relationship': 'extension',
+            },
+        ],  # Not replaced by case_json
         'location_id': None,
         'modified_by': '',
         'modified_on': None,
@@ -232,4 +250,24 @@ def test_case_to_json():
         'type': 'case',
         'user_id': '',
         'xform_ids': [],
+    })
+
+
+def test_case_index_to_json():
+    case_id = str(uuid4())
+    index = CommCareCaseIndex(
+        case_id=case_id,
+        domain='healsec',
+        identifier='host',
+        referenced_type='person',
+        referenced_id='abc123',
+        relationship_id=CommCareCaseIndex.EXTENSION,
+    )
+    index_dict = index.to_json()
+    assert_equal(index_dict, {
+        'case_id': case_id,
+        'identifier': 'host',
+        'referenced_type': 'person',
+        'referenced_id': 'abc123',
+        'relationship': 'extension',
     })

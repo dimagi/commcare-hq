@@ -1,4 +1,4 @@
-{% extends 'hqwebapp/two_column.html' %}
+{% extends 'hqwebapp/bootstrap3/two_column.html' %}
 {% load hq_shared_tags %}
 {% load crispy_forms_tags %}
 {% load i18n %}
@@ -35,7 +35,7 @@
 </script>
 
 <form id="dhis2-entity-config"
-      class="form-horizontal"
+      class="form-horizontal ko-template"
       method="post"
       data-bind="submit: submit">
     <div data-bind="template: {
@@ -45,6 +45,9 @@
                         afterRender: initCaseConfigTemplate
                     }"></div>
     <p>
+        <div data-bind="visible: isError()">
+            <pre data-bind="text: errorMessage()" class="alert message-alert alert-danger"></pre>
+        </div>
         <button type="button"
                 class="btn btn-primary"
                 data-bind="click: addCaseConfig">

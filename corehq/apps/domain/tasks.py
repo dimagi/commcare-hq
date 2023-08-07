@@ -2,8 +2,8 @@ from django.conf import settings
 from django.template.loader import render_to_string
 
 from celery.schedules import crontab
-from celery.task import periodic_task
 
+from corehq.apps.celery import periodic_task
 from corehq.apps.es.domains import DomainES
 from corehq.apps.es.forms import FormES
 from corehq.apps.users.models import WebUser

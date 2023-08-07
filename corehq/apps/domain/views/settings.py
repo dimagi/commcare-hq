@@ -28,8 +28,9 @@ from corehq.apps.case_search.models import (
     CaseSearchConfig,
     FuzzyProperties,
     IgnorePatterns,
+    case_search_synchronous_web_apps_for_domain,
     disable_case_search,
-    enable_case_search,
+    enable_case_search, case_search_sync_cases_on_form_entry_enabled_for_domain,
 )
 from corehq.apps.domain.decorators import (
     domain_admin_required,
@@ -147,7 +148,7 @@ class EditBasicProjectInfoView(BaseEditProjectInfoView):
             'call_center_case_owner': self.initial_call_center_case_owner,
             'call_center_case_type': self.domain_object.call_center_config.case_type,
             'commtrack_enabled': self.domain_object.commtrack_enabled,
-            'mobile_ucr_sync_interval': self.domain_object.default_mobile_ucr_sync_interval
+            'mobile_ucr_sync_interval': self.domain_object.default_mobile_ucr_sync_interval,
         }
         if self.can_user_see_meta:
             initial.update({
@@ -288,7 +289,6 @@ class EditPrivacySecurityView(BaseAdminProjectSettingsView):
             "two_factor_auth": self.domain_object.two_factor_auth,
             "strong_mobile_passwords": self.domain_object.strong_mobile_passwords,
             "ga_opt_out": self.domain_object.ga_opt_out,
-            "restrict_mobile_access": self.domain_object.restrict_mobile_access,
             "disable_mobile_login_lockout": self.domain_object.disable_mobile_login_lockout,
         }
         if self.request.method == 'POST':
@@ -308,6 +308,7 @@ class EditPrivacySecurityView(BaseAdminProjectSettingsView):
         if self.privacy_form.is_valid():
             self.privacy_form.save(self.domain_object)
             messages.success(request, _("Your project settings have been saved!"))
+            return redirect(self.urlname, domain=self.domain)
         return self.get(request, *args, **kwargs)
 
 
@@ -365,7 +366,11 @@ class CaseSearchConfigView(BaseAdminProjectSettingsView):
 
         config, _ = CaseSearchConfig.objects.update_or_create(domain=self.domain, defaults={
             'enabled': request_json.get('enable'),
+            'synchronous_web_apps': request_json.get('synchronous_web_apps'),
+            'sync_cases_on_form_entry': request_json.get('sync_cases_on_form_entry'),
         })
+        case_search_synchronous_web_apps_for_domain.clear(self.domain)
+        case_search_sync_cases_on_form_entry_enabled_for_domain.clear(self.domain)
         config.ignore_patterns.set(updated_ignore_patterns)
         config.fuzzy_properties.set(updated_fuzzies)
         return json_response(self.page_context)
@@ -374,20 +379,22 @@ class CaseSearchConfigView(BaseAdminProjectSettingsView):
     def page_context(self):
         apps = get_apps_in_domain(self.domain, include_remote=False)
         case_types = {t for app in apps for t in app.get_case_types() if t}
-        current_values = CaseSearchConfig.objects.get_or_none(pk=self.domain)
+        config = CaseSearchConfig.objects.get_or_none(pk=self.domain) or CaseSearchConfig(domain=self.domain)
         return {
             'case_types': sorted(list(case_types)),
             'case_search_url': reverse("case_search", args=[self.domain]),
             'values': {
-                'enabled': current_values.enabled if current_values else False,
+                'enabled': config.enabled,
+                'synchronous_web_apps': config.synchronous_web_apps,
+                'sync_cases_on_form_entry': config.sync_cases_on_form_entry,
                 'fuzzy_properties': {
-                    fp.case_type: fp.properties for fp in current_values.fuzzy_properties.all()
-                } if current_values else {},
+                    fp.case_type: fp.properties for fp in config.fuzzy_properties.all()
+                },
                 'ignore_patterns': [{
                     'case_type': rc.case_type,
                     'case_property': rc.case_property,
                     'regex': rc.regex
-                } for rc in current_values.ignore_patterns.all()] if current_values else {}
+                } for rc in config.ignore_patterns.all()]
             }
         }
 

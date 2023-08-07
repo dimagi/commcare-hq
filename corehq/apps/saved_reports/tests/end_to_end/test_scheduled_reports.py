@@ -1,14 +1,21 @@
-from django.test import TestCase
 from django.core import mail
+from django.test import TestCase
+
 from corehq.apps.domain.shortcuts import create_domain
-from corehq.apps.users.models import UserRole, Permissions, WebUser, CouchUser
-from pillowtop.es_utils import initialize_index_and_mapping
-from corehq.util.elastic import ensure_active_es, ensure_index_deleted
-from corehq.pillows.mappings.case_mapping import CASE_INDEX_INFO
+from corehq.apps.es.cases import case_adapter
+from corehq.apps.es.forms import form_adapter
+from corehq.apps.es.tests.utils import es_test
+from corehq.apps.users.models import (
+    CouchUser,
+    HqPermissions,
+    UserRole,
+    WebUser,
+)
 
-from ...models import ReportNotification, ReportConfig
+from ...models import ReportConfig, ReportNotification
 
 
+@es_test(requires=[case_adapter, form_adapter], setup_class=True)
 class TestScheduledReports(TestCase):
 
     def test_scheduled_reports_sends_to_recipients(self):
@@ -23,12 +30,11 @@ class TestScheduledReports(TestCase):
 
     @classmethod
     def setUpClass(cls):
-        es = ensure_active_es()
         super().setUpClass()
 
         cls.domain = 'test-domain'
         cls.domain_obj = create_domain(cls.domain)
-        cls.reports_role = UserRole.create(cls.domain, 'Test Role', permissions=Permissions(
+        cls.reports_role = UserRole.create(cls.domain, 'Test Role', permissions=HqPermissions(
             view_reports=True
         ))
         cls.user = cls.create_fresh_user(
@@ -40,15 +46,11 @@ class TestScheduledReports(TestCase):
             role_id=cls.reports_role.couch_id
         )
 
-        cls.es = ensure_active_es()
-        initialize_index_and_mapping(es, CASE_INDEX_INFO)
-
     @classmethod
     def tearDownClass(cls):
         cls.user.delete(deleted_by_domain=None, deleted_by=None)
         cls.reports_role.delete()
         cls.domain_obj.delete()
-        ensure_index_deleted(CASE_INDEX_INFO.index)
         super().tearDownClass()
 
     @classmethod

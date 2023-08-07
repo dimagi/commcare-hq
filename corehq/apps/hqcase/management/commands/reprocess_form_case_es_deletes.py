@@ -25,7 +25,6 @@ def get_form_es_pillows():
     return get_active_pillows([
         'XFormToElasticsearchPillow',
         'xform-pillow',
-        'ReportXFormToElasticsearchPillow'
     ])
 
 

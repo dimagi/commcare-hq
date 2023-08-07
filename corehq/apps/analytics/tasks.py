@@ -1,3 +1,4 @@
+import csv
 import json
 import logging
 import math
@@ -6,27 +7,17 @@ import time
 from datetime import date, datetime, timedelta
 
 from django.conf import settings
+from django.core.validators import ValidationError, validate_email
 
-import csv
+import boto3
 import KISSmetrics
 import requests
 import six.moves.urllib.error
 import six.moves.urllib.parse
 import six.moves.urllib.request
-import tinys3
 from celery.schedules import crontab
-from celery.task import periodic_task
-from email_validator import EmailNotValidError, validate_email
 from memoized import memoized
 
-from corehq.apps.analytics.utils.partner_analytics import (
-    generate_monthly_mobile_worker_statistics,
-    generate_monthly_web_user_statistics,
-    generate_monthly_submissions_statistics,
-    send_partner_emails,
-)
-from corehq.util.metrics import metrics_counter, metrics_gauge
-from corehq.util.metrics.const import MPM_LIVESUM, MPM_MAX
 from dimagi.utils.dates import add_months_to_date
 from dimagi.utils.logging import notify_exception
 
@@ -40,18 +31,27 @@ from corehq.apps.accounting.models import (
 )
 from corehq.apps.analytics.utils import (
     analytics_enabled_for_email,
+    get_client_ip_from_meta,
     get_instance_string,
     get_meta,
+    log_response,
 )
 from corehq.apps.analytics.utils.hubspot import (
-    get_blocked_hubspot_domains,
-    hubspot_enabled_for_user,
-    hubspot_enabled_for_email,
-    remove_blocked_domain_contacts_from_hubspot,
     MAX_API_RETRIES,
     emails_that_accepted_invitations_to_blocked_hubspot_domains,
+    get_blocked_hubspot_domains,
+    hubspot_enabled_for_email,
+    hubspot_enabled_for_user,
+    remove_blocked_domain_contacts_from_hubspot,
     remove_blocked_domain_invited_users_from_hubspot,
 )
+from corehq.apps.analytics.utils.partner_analytics import (
+    generate_monthly_mobile_worker_statistics,
+    generate_monthly_submissions_statistics,
+    generate_monthly_web_user_statistics,
+    send_partner_emails,
+)
+from corehq.apps.celery import periodic_task
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.utils import get_domains_created_by_user
 from corehq.apps.es.forms import FormES
@@ -61,6 +61,8 @@ from corehq.apps.users.models import WebUser
 from corehq.toggles import deterministic_random
 from corehq.util.dates import unix_time
 from corehq.util.decorators import analytics_task
+from corehq.util.metrics import metrics_counter, metrics_gauge
+from corehq.util.metrics.const import MPM_LIVESUM, MPM_MAX
 from corehq.util.soft_assert import soft_assert
 
 logger = logging.getLogger('analytics')
@@ -84,7 +86,7 @@ HUBSPOT_COOKIE = 'hubspotutk'
 HUBSPOT_THRESHOLD = 300
 
 
-HUBSPOT_ENABLED = settings.ANALYTICS_IDS.get('HUBSPOT_API_KEY', False)
+HUBSPOT_ENABLED = settings.ANALYTICS_IDS.get('HUBSPOT_ACCESS_TOKEN', False)
 KISSMETRICS_ENABLED = settings.ANALYTICS_IDS.get('KISSMETRICS_KEY', False)
 
 
@@ -171,24 +173,24 @@ def batch_track_on_hubspot(users_json):
 
 def _hubspot_post(url, data):
     """
-    Lightweight wrapper to add hubspot api key and post data if the HUBSPOT_API_KEY is defined
+    Lightweight wrapper to add hubspot api key and post data if the HUBSPOT_ACCESS_TOKEN is defined
     :param url: url to post to
     :param data: json data payload
     :return:
     """
-    api_key = settings.ANALYTICS_IDS.get('HUBSPOT_API_KEY', None)
-    if api_key:
+    access_token = settings.ANALYTICS_IDS.get('HUBSPOT_ACCESS_TOKEN', None)
+    if access_token:
         headers = {
-            'content-type': 'application/json'
+            'content-type': 'application/json',
+            'authorization': 'Bearer %s' % access_token
         }
-        params = {'hapikey': api_key}
-        response = _send_post_data(url, params, data, headers)
-        _log_response('HS', data, response)
+        response = _send_post_data(url, data, headers)
+        log_response('HS', data, response)
         response.raise_for_status()
 
 
-def _send_post_data(url, params, data, headers):
-    response = requests.post(url, params=params, data=data, headers=headers)
+def _send_post_data(url, data, headers):
+    response = requests.post(url, data=data, headers=headers)
     metrics_counter('commcare.hubspot.track_data_post', tags={'status_code': response.status_code})
     return response
 
@@ -204,14 +206,14 @@ def _get_user_hubspot_id(web_user, retry_num=0):
     if retry_num > 0:
         time.sleep(10)  # wait 10 seconds if this is another retry attempt
 
-    api_key = settings.ANALYTICS_IDS.get('HUBSPOT_API_KEY', None)
-    if api_key and hubspot_enabled_for_user(web_user):
+    access_token = settings.ANALYTICS_IDS.get('HUBSPOT_ACCESS_TOKEN', None)
+    if access_token and hubspot_enabled_for_user(web_user):
         try:
             req = requests.get(
                 "https://api.hubapi.com/contacts/v1/contact/email/{}/profile".format(
                     six.moves.urllib.parse.quote(web_user.username)
                 ),
-                params={'hapikey': api_key},
+                headers={'authorization': 'Bearer %s' % access_token},
             )
             if req.status_code == 404:
                 return None
@@ -230,20 +232,11 @@ def _get_user_hubspot_id(web_user, retry_num=0):
                 'commcare.hubspot.get_user_hubspot_id.success'
             )
             return req.json().get("vid", None)
-    elif api_key and retry_num == 0:
+    elif access_token and retry_num == 0:
         metrics_counter(
             'commcare.hubspot.get_user_hubspot_id.rejected'
         )
     return None
-
-
-def _get_client_ip(meta):
-    x_forwarded_for = meta.get('HTTP_X_FORWARDED_FOR')
-    if x_forwarded_for:
-        ip = x_forwarded_for.split(',')[0]
-    else:
-        ip = meta.get('REMOTE_ADDR')
-    return ip
 
 
 def _send_form_to_hubspot(form_id, webuser, hubspot_cookie, meta, extra_fields=None, email=False):
@@ -263,7 +256,7 @@ def _send_form_to_hubspot(form_id, webuser, hubspot_cookie, meta, extra_fields=N
     if hubspot_id and hubspot_cookie:
         data = {
             'email': email if email else webuser.username,
-            'hs_context': json.dumps({"hutk": hubspot_cookie, "ipAddress": _get_client_ip(meta)}),
+            'hs_context': json.dumps({"hutk": hubspot_cookie, "ipAddress": get_client_ip_from_meta(meta)}),
         }
         if webuser:
             data.update({
@@ -274,7 +267,7 @@ def _send_form_to_hubspot(form_id, webuser, hubspot_cookie, meta, extra_fields=N
             data.update(extra_fields)
 
         response = _send_hubspot_form_request(hubspot_id, form_id, data)
-        _log_response('HS', data, response)
+        log_response('HS', data, response)
         response.raise_for_status()
 
 
@@ -452,7 +445,7 @@ def _track_workflow_task(email, event, properties=None, timestamp=0):
             {_no_nonascii_unicode(k): _no_nonascii_unicode(v) for k, v in properties.items()} if properties else {},
             timestamp
         )
-        _log_response("KM", {'email': email, 'event': event, 'properties': properties, 'timestamp': timestamp}, res)
+        log_response("KM", {'email': email, 'event': event, 'properties': properties, 'timestamp': timestamp}, res)
         # TODO: Consider adding some better error handling for bad/failed requests.
         _raise_for_urllib3_response(res)
 
@@ -469,7 +462,7 @@ def identify(email, properties):
     if api_key and analytics_enabled_for_email(email):
         km = KISSmetrics.Client(key=api_key)
         res = km.set(email, properties)
-        _log_response("KM", {'email': email, 'properties': properties}, res)
+        log_response("KM", {'email': email, 'properties': properties}, res)
         # TODO: Consider adding some better error handling for bad/failed requests.
         _raise_for_urllib3_response(res)
 
@@ -663,29 +656,16 @@ def track_periodic_data():
 
 
 def _email_is_valid(email):
-    if not email or _is_suspicious_email(email):
+    if not email:
         return False
 
     try:
         validate_email(email)
-    except EmailNotValidError as e:
-        logger.warning(str(e))
+    except ValidationError as exc:
+        logger.warning(str(exc))
         return False
 
     return True
-
-
-# These domains provide disposable email addresses which attract scammers
-# AWS Guard Duty triggers alerts for these domains. The below list is likely incomplete --
-# if a Guard Duty alert is triggered for a domain not seen below, please add it
-SUSPICIOUS_DOMAINS = [
-    'mailna.me',
-    'mozej.com'
-]
-
-
-def _is_suspicious_email(email):
-    return any(email.endswith(domain) for domain in SUSPICIOUS_DOMAINS)
 
 
 def submit_data_to_hub_and_kiss(submit_json):
@@ -744,31 +724,16 @@ def _track_periodic_data_on_kiss(submit_json):
             ] + [prop['value'] for prop in webuser['properties']]
             csvwriter.writerow(row)
 
-    if settings.S3_ACCESS_KEY and settings.S3_SECRET_KEY and settings.ANALYTICS_IDS.get('KISSMETRICS_KEY', None):
-        s3_connection = tinys3.Connection(settings.S3_ACCESS_KEY, settings.S3_SECRET_KEY, tls=True)
-        f = open(filename, 'rb')
-        s3_connection.upload(filename, f, 'kiss-uploads')
+    if settings.ANALYTICS_IDS.get('KISSMETRICS_KEY', None):
+        s3 = boto3.client(
+            's3',
+            aws_access_key_id=settings.S3_ACCESS_KEY,
+            aws_secret_access_key=settings.S3_SECRET_KEY,
+        )
+        with open(filename, 'rb') as f:
+            s3.upload_fileobj(f, 'kiss-uploads', filename)
 
     os.remove(filename)
-
-
-def _log_response(target, data, response):
-    status_code = response.status_code if isinstance(response, requests.models.Response) else response.status
-    try:
-        response_text = json.dumps(response.json(), indent=2, sort_keys=True)
-    except Exception:
-        response_text = status_code
-
-    message = 'Sent this data to {target}: {data} \nreceived: {response}'.format(
-        target=target,
-        data=json.dumps(data, indent=2, sort_keys=True),
-        response=response_text
-    )
-
-    if 400 <= status_code < 600:
-        logger.error(message)
-    else:
-        logger.debug(message)
 
 
 def get_ab_test_properties(user):

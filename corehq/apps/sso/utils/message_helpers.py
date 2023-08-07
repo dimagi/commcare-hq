@@ -1,3 +1,4 @@
+from django.contrib import messages
 from django.utils.translation import gettext as _
 from django.utils.html import format_html
 
@@ -19,3 +20,15 @@ def get_success_message_for_trusted_idp(idp, domain_obj):
         domain=domain_obj.name,
         learn_more='#',  # todo include learn more link
     )
+
+
+def show_sso_login_success_or_error_messages(request):
+    """Displays any success or error messages after authenticating a user through the SsoBackend.
+
+    We add the messages to the django messages framework here since
+    that middleware was not available for SsoBackend"""
+    if hasattr(request, 'sso_new_user_messages'):
+        for success_message in request.sso_new_user_messages['success']:
+            messages.success(request, success_message)
+        for error_message in request.sso_new_user_messages['error']:
+            messages.error(request, error_message)

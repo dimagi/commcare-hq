@@ -10,7 +10,7 @@ from corehq.apps.api.resources import (
 from corehq.apps.api.resources.auth import RequirePermissionAuthentication
 from corehq.apps.api.resources.meta import CustomResourceMeta
 from corehq.apps.api.util import get_obj, object_does_not_exist
-from corehq.apps.users.models import Permissions
+from corehq.apps.users.models import HqPermissions
 from corehq.form_processor.exceptions import CaseNotFound
 from corehq.form_processor.models import CommCareCase
 from no_exceptions.exceptions import Http400
@@ -74,7 +74,7 @@ class CommCareCaseResource(HqBaseResource, DomainSpecificResourceMixin):
         ).order_by('server_modified_on')
 
     class Meta(CustomResourceMeta):
-        authentication = RequirePermissionAuthentication(Permissions.edit_data)
+        authentication = RequirePermissionAuthentication(HqPermissions.edit_data)
         object_class = ESCase
         resource_name = 'case'
         list_allowed_methods = ['get']

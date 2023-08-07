@@ -1,4 +1,4 @@
-{% extends "hqwebapp/base_navigation.html" %}
+{% extends "hqwebapp/bootstrap3/base_navigation.html" %}
 {% load hq_shared_tags %}
 
 {% block title %}Doc {{ doc_id }} {{ es_info.status }}{% endblock %}
@@ -21,7 +21,7 @@
     {% if doc_id %}
       <h3>Doc {{ doc_id }} {{ es_info.status }}</h3>
       <p>Doc type: {{ couch_info.doc_type }}
-        (<a href="{% url 'global_quick_find' %}?q={{ doc_id }}">View on CommCareHQ</a>)
+        (<a href="{% url 'global_quick_find' %}?q={{ doc_id }}">View on CommCare HQ</a>)
       </p>
       {% for index, es_doc in es_info.found_indices.items %}
         <p>Found in index: {{ index }}</p>

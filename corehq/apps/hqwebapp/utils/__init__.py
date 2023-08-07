@@ -1,9 +1,7 @@
 import logging
 
 from django.conf import settings
-from django.template.loader import render_to_string
 from django.templatetags.i18n import language_name
-from django.utils.translation import LANGUAGE_SESSION_KEY, activate
 from django.views.decorators.debug import sensitive_variables
 
 from Crypto.Hash import SHA256
@@ -12,10 +10,6 @@ from Crypto.Signature import PKCS1_PSS
 from memoized import memoized
 
 from corehq.apps.hqwebapp.forms import BulkUploadForm
-from corehq.apps.hqwebapp.tasks import send_html_email_async
-from corehq.apps.users.models import WebUser
-from custom.nic_compliance.utils import get_raw_password
-
 
 logger = logging.getLogger(__name__)
 
@@ -59,7 +53,7 @@ def csrf_inline(request):
 
     Useful for adding inline forms in messages for e.g. while showing an "'undo' Archive Form" message
     """
-    from django.template import Template, RequestContext
+    from django.template import RequestContext, Template
     node = "{% csrf_token %}"
     return Template(node).render(RequestContext(request))
 
@@ -77,13 +71,6 @@ def aliased_language_name(lang_code):
         raise KeyError('Unknown language code %s' % lang_code)
 
 
-def decode_password(obfuscated_password):
-    if settings.OBFUSCATE_PASSWORD_FOR_NIC_COMPLIANCE:
-        return get_raw_password(obfuscated_password)
-    else:
-        return obfuscated_password
-
-
 def get_environment_friendly_name():
     try:
         env = {
@@ -93,13 +80,3 @@ def get_environment_friendly_name():
     except KeyError:
         env = settings.SERVER_ENVIRONMENT
     return env
-
-
-def update_session_language(req, old_lang, new_lang):
-    # Update the language for this session if the user signing in has a different language than the current
-    # session default
-    if new_lang != old_lang:
-        # update the current session's language setting
-        req.session[LANGUAGE_SESSION_KEY] = new_lang
-        # and activate it for the current thread so the response page is translated too
-        activate(new_lang)

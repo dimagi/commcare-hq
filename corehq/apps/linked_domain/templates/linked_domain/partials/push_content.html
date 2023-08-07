@@ -71,11 +71,24 @@
       <div class="form-actions">
         <div class="col-sm-offset-3 col-md-offset-2 controls col-sm-9 col-md-8 col-lg-6">
           <button type="button" class="btn btn-primary" data-bind="click: pushContent, enable: enablePushButton">
-            <i class="fa fa-refresh fa-spin icon-refresh icon-spin" data-bind="visible: pushInProgress"></i>
+            <i class="fa fa-refresh fa-spin icon-refresh icon-spin" data-bind="visible: pushType() === PUSH_TYPE_NORMAL"></i>
             {% trans "Push Content" %}
+          </button>
+          <button type="button" class="btn btn-default" id="overwrite-btn" data-toggle="modal" data-target="#push-warning-dialog" data-bind="enable: enablePushButton">
+            <i class="fa fa-refresh fa-spin icon-refresh icon-spin" data-bind="visible: pushType() === PUSH_TYPE_OVERWRITE"></i>
+            {% trans "Push & Overwrite Matches" %}
           </button>
         </div>
       </div>
     </form>
   </div>
+  <div data-bind="if: !canPush()">
+    <p>
+      {% blocktrans %}
+        You have no linked project spaces that allow you to push data.<br/>
+        <a href="https://confluence.dimagi.com/display/commcarepublic/Linked+Project+Spaces" target="_blank">Learn more</a> about pushing content with Linked Project Spaces.
+      {% endblocktrans %}
+    </p>
+  </div>
+  {% include 'linked_domain/partials/push_warning_dialog.html' %}
 </div>

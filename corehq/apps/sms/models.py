@@ -314,6 +314,11 @@ class SMS(SMSBase):
         except Exception:
             publish_sms_change.delay(self.id)
 
+    def update_subevent_activity(self):
+        subevent = self.messaging_subevent
+        if subevent:
+            subevent.update_date_last_activity()
+
     def requeue(self):
         if self.processed or self.direction != OUTGOING:
             raise ValueError("Should only requeue outgoing messages that haven't yet been proccessed")
@@ -786,7 +791,7 @@ class PhoneNumber(UUIDGeneratorMixin, models.Model):
         try:
             return cls.objects.get(
                 owner_id=owner_id,
-                phone_number=phone_number
+                phone_number=apply_leniency(phone_number)
             )
         except cls.DoesNotExist:
             return None
@@ -974,6 +979,7 @@ class MessagingEvent(models.Model, MessagingStatusMixin):
     CONTENT_API_SMS = 'API'
     CONTENT_CHAT_SMS = 'CHT'
     CONTENT_EMAIL = 'EML'
+    CONTENT_FCM_Notification = 'FCM'
 
     CONTENT_CHOICES = (
         (CONTENT_NONE, gettext_noop('None')),
@@ -986,6 +992,7 @@ class MessagingEvent(models.Model, MessagingStatusMixin):
         (CONTENT_API_SMS, gettext_noop('Message Sent Via API')),
         (CONTENT_CHAT_SMS, gettext_noop('Message Sent Via Chat')),
         (CONTENT_EMAIL, gettext_noop('Email')),
+        (CONTENT_FCM_Notification, gettext_noop('FCM Push Notification')),
     )
 
     CONTENT_TYPE_SLUGS = {
@@ -999,6 +1006,7 @@ class MessagingEvent(models.Model, MessagingStatusMixin):
         CONTENT_API_SMS: "api-sms",
         CONTENT_CHAT_SMS: "chat-sms",
         CONTENT_EMAIL: "email",
+        CONTENT_FCM_Notification: 'fcm-notification',
     }
 
     RECIPIENT_CASE = 'CAS'
@@ -1051,9 +1059,16 @@ class MessagingEvent(models.Model, MessagingStatusMixin):
     ERROR_NO_SUITABLE_GATEWAY = 'NO_SUITABLE_GATEWAY'
     ERROR_GATEWAY_NOT_FOUND = 'GATEWAY_NOT_FOUND'
     ERROR_NO_EMAIL_ADDRESS = 'NO_EMAIL_ADDRESS'
+    ERROR_INVALID_EMAIL_ADDRESS = 'ERROR_INVALID_EMAIL_ADDRESS'
     ERROR_TRIAL_EMAIL_LIMIT_REACHED = 'TRIAL_EMAIL_LIMIT_REACHED'
     ERROR_EMAIL_BOUNCED = 'EMAIL_BOUNCED'
     ERROR_EMAIL_GATEWAY = 'EMAIL_GATEWAY_ERROR'
+    ERROR_NO_FCM_TOKENS = 'NO_FCM_TOKENS'
+    ERROR_FCM_NOT_AVAILABLE = 'FCM_NOT_AVAILABLE'
+    ERROR_FCM_UNSUPPORTED_RECIPIENT = 'FCM_UNSUPPORTED_RECIPIENT'
+    ERROR_FCM_NO_ACTION = "FCM_NO_ACTION"
+    ERROR_FCM_NOTIFICATION_FAILURE = "FCM_NOTIFICATION_FAILURE"
+    ERROR_FCM_DOMAIN_NOT_ENABLED = 'FCM_DOMAIN_NOT_ENABLED'
 
     ERROR_MESSAGES = {
         ERROR_NO_RECIPIENT:
@@ -1102,11 +1117,19 @@ class MessagingEvent(models.Model, MessagingStatusMixin):
             gettext_noop('Gateway could not be found.'),
         ERROR_NO_EMAIL_ADDRESS:
             gettext_noop('Recipient has no email address.'),
+        ERROR_INVALID_EMAIL_ADDRESS:
+            gettext_noop("Recipient's email address is not valid."),
         ERROR_TRIAL_EMAIL_LIMIT_REACHED:
             gettext_noop("Cannot send any more reminder emails. The limit for "
                 "sending reminder emails on a Trial plan has been reached."),
         ERROR_EMAIL_BOUNCED: gettext_noop("Email Bounced"),
         ERROR_EMAIL_GATEWAY: gettext_noop("Email Gateway Error"),
+        ERROR_NO_FCM_TOKENS: gettext_noop("No FCM tokens found for recipient."),
+        ERROR_FCM_NOT_AVAILABLE: gettext_noop("FCM not available on this environment."),
+        ERROR_FCM_UNSUPPORTED_RECIPIENT: gettext_noop("FCM is supported for Mobile Workers only."),
+        ERROR_FCM_NO_ACTION: gettext_noop("No action selected for the FCM Data message type."),
+        ERROR_FCM_NOTIFICATION_FAILURE: gettext_noop("Failure while sending FCM notifications to the devices."),
+        ERROR_FCM_DOMAIN_NOT_ENABLED: gettext_noop("Domain is not enabled for FCM Push Notifications"),
     }
 
     domain = models.CharField(max_length=126, null=False, db_index=True)
@@ -1191,6 +1214,7 @@ class MessagingEvent(models.Model, MessagingStatusMixin):
     def create_structured_sms_subevent(self, case_id):
         obj = MessagingSubEvent.objects.create(
             parent=self,
+            domain=self.domain,
             date=datetime.utcnow(),
             recipient_type=self.recipient_type,
             recipient_id=self.recipient_id,
@@ -1207,6 +1231,7 @@ class MessagingEvent(models.Model, MessagingStatusMixin):
             recipient_id=None, case=None, completed=False):
         obj = MessagingSubEvent.objects.create(
             parent=self,
+            domain=self.domain,
             date=datetime.utcnow(),
             recipient_type=MessagingEvent.get_recipient_type_from_doc_type(recipient_doc_type),
             recipient_id=recipient_id,
@@ -1292,7 +1317,8 @@ class MessagingEvent(models.Model, MessagingStatusMixin):
             SMSContent,
             SMSSurveyContent,
             EmailContent,
-            CustomContent
+            CustomContent,
+            FCMNotificationContent,
         )
 
         if isinstance(content, (SMSContent, CustomContent)):
@@ -1303,6 +1329,8 @@ class MessagingEvent(models.Model, MessagingStatusMixin):
             return cls.CONTENT_SMS_SURVEY, content.app_id, content.form_unique_id, form_name
         elif isinstance(content, EmailContent):
             return cls.CONTENT_EMAIL, None, None, None
+        elif isinstance(content, FCMNotificationContent):
+            return cls.CONTENT_FCM_Notification, None, None, None
         else:
             return cls.CONTENT_NONE, None, None, None
 
@@ -1376,6 +1404,7 @@ class MessagingEvent(models.Model, MessagingStatusMixin):
 
         return MessagingSubEvent.objects.create(
             parent=self,
+            domain=self.domain,
             date=datetime.utcnow(),
             recipient_type=recipient_type,
             recipient_id=contact.get_id if recipient_type else None,
@@ -1542,7 +1571,9 @@ class MessagingSubEvent(models.Model, MessagingStatusMixin):
     }
 
     parent = models.ForeignKey('MessagingEvent', on_delete=models.CASCADE)
+    domain = models.CharField(max_length=126, null=True)
     date = models.DateTimeField(null=False, db_index=True)
+    date_last_activity = models.DateTimeField(null=True, auto_now=True)
     recipient_type = models.CharField(max_length=3, choices=RECIPIENT_CHOICES, null=False)
     recipient_id = models.CharField(max_length=126, null=True)
     content_type = models.CharField(max_length=3, choices=MessagingEvent.CONTENT_CHOICES, null=False)
@@ -1561,6 +1592,10 @@ class MessagingSubEvent(models.Model, MessagingStatusMixin):
 
     class Meta(object):
         app_label = 'sms'
+        index_together = (
+            # used by the messaging-event api
+            ('domain', 'date_last_activity', 'id'),
+        )
 
     def save(self, *args, **kwargs):
         super(MessagingSubEvent, self).save(*args, **kwargs)
@@ -1592,6 +1627,9 @@ class MessagingSubEvent(models.Model, MessagingStatusMixin):
 
     def get_recipient_doc_type(self):
         return MessagingEvent._get_recipient_doc_type(self.recipient_type)
+
+    def update_date_last_activity(self):
+        self.save(update_fields=["date_last_activity"])
 
 
 class ActiveMobileBackendManager(models.Manager):

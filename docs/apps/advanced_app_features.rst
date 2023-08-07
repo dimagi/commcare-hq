@@ -1,7 +1,89 @@
-Advanced App Features
-=====================
+App Navigation Features
+=======================
 
-See ``corehq.apps.app_manager.suite_xml.SuiteGenerator`` and ``corehq.apps.app_manager.xform.XForm`` for code.
+Navigation in CommCare is oriented around form entry. The goal of each CommCare session is to complete a form.
+Menus and case lists are tools for gathering the necessary data required to enter a particular form.
+App manager gives app builders direct control over many parts of their app's UI, but the exact sequence of screens
+a user sees is *indirectly* configured.
+
+Based on app configuration, HQ builds a ``suite.xml`` file that acts as a blueprint for the app. It outlines what
+forms are available to fill out, where they fit, and what data (like cases) they will need to function. CommCare
+interprets this configuration to decide which screens to show to the user and in what order.
+
+Much of the complexity of app manager code, and of building apps, comes from inferences HQ makes while building the
+suite file, especially around determining the set of data required for each form. These features that influence,
+but don't directly control, the suite also influence each other, in ways that may not be obvious. The following
+features are particularly prone to interact unexpectedly and should be tested together when any significant change
+is made to any of them:
+
+#. Display Only Forms
+#. Select Parent First
+#. End of Form Navigation and Form Linking
+#. Child Modules
+#. Shadow Modules
+
+Several of these features are simple from an app builder's perspective, but they require HQ to "translate" UI
+concepts into suite concepts.  Other features force the app builder to understand suite concepts, so they may
+be challenging for app builders to learn but are less prone to interacting poorly with other features:
+
+#. Case search, which maps fairly cleanly to the ``<remote-request>`` element (except when using the
+   ``USH_INLINE_SEARCH`` flag).
+#. Advanced modules
+
+Display Only Forms
+------------------
+Display only forms is deceptively simple. This setting causes a module's forms to be displayed directly in the
+parent menu (either the parent module's menu or the root CommCare menu), instead of the user needing to explicitly
+select the menu's name. This can be a UX efficiency gain.
+
+However, quite a lot of suite generation is structured around modules, and using display only forms means that
+modules no longer map cleanly to ``<menu>`` elements. This means that modules using display only forms can't be
+"destinations" in their own right, so they don't work with end of form navigation, form linking, or smart links.
+It also complicates menu construction, raising issues like how to deal with module display conditions when the
+module doesn't have a dedicated ``<menu>``.
+
+Select Parent First
+-------------------
+When the "select parent first" setting is turned on for a module, the user is presented with a case list for
+the **parent** case type. The user selects a case from this list and is then given another case list limited to
+children of that parent. The user can select any other module in the app that uses the parent case type to use as
+the configuration for this parent case list.
+
+This setting is controlled by ``ModuleBase.parent_select`` and has a dedicated model, ``ParentSelect``.
+The suite implementation is small: HQ adds a ``parent_id`` datum to the module's ``<entry>`` blocks and a filter to the
+main ``case_id`` datum's nodeset to filter it to children of the parent:
+``[index/parent=instance('commcaresession')/session/data/parent_id]``.
+
+This is easy to confuse with parent/child modules (see below), which affect the suite's ``<menu>`` elements and can
+affect datum generation.
+
+The feature flag ``NON_PARENT_MENU_SELECTION`` allows the user to use any module as the "parent" selection, and it
+does not use the additional nodeset filter. This allows for more generic two-case-list workflows.
+
+End of Form Navigation and Form Linking
+---------------------------------------
+These features allow the user to select a destination for the user to be automatically navigated to after filling
+out a particular form. To support this, HQ needs to figure out how to get to the requested destination, both the
+actions taken (user selecting a form or menu) and the data needed (which needs to be pulled from somewhere,
+typically the session, in order to automatically navigate the user instead of asking them to provide it).
+
+End of form navigation ("EOF nav") allows for a couple of specific locations, such as going back to the form's module or its
+parent module. EOF nav also has a "previous screen" option this is particularly fragile, since it requires HQ to
+replicate CommCare's UI logic.
+
+Form linking, which is behind the ``FORM_LINK_WORKFLOW`` flag, allows the user to select a form as the destination.
+Form linking allows the user to link to multiple forms, depending on the value of an XPath expression.
+
+Most forms can be linked "automatically", meaning that it's easy for HQ to determine what datums are needed.
+See the
+`auto_link <https://github.com/dimagi/commcare-hq/blob/b7c88d4127feeb0ebc17c7df3211fb523a900f6f/corehq/apps/app_manager/views/forms.py#L919-L950>`_
+logic for implementation.
+For other forms, HQ pushes the burden of figuring out datums towards the user, requiring them to provide an XPath
+expression for each datum.
+
+EOF nav and form linking config is stored in ``FormBase.post_form_workflow``. In the suite, it's implemented as a
+`stack <https://github.com/dimagi/commcare-core/wiki/SessionStack>`_ in the form's ``<entry>`` block.
+For details, see docs on ``WorkflowHelper``.
 
 Child Modules
 -------------

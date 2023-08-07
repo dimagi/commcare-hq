@@ -2,6 +2,7 @@ from couchdbkit.exceptions import ResourceNotFound
 from tastypie import fields
 from tastypie.exceptions import NotFound
 from tastypie.resources import Resource
+from corehq import privileges
 
 from corehq.apps.api.resources.meta import CustomResourceMeta
 from corehq.apps.api.resources.v0_4 import (
@@ -23,6 +24,9 @@ class ZapierXFormInstanceResource(XFormInstanceResource):
         remove_advanced_fields(bundle.data)
         return bundle
 
+    def get_required_privilege(self):
+        return privileges.ZAPIER_INTEGRATION
+
 
 class ZapierApplicationResource(BaseApplicationResource):
     """
@@ -30,6 +34,9 @@ class ZapierApplicationResource(BaseApplicationResource):
     """
     id = fields.CharField(attribute='_id')
     name = fields.CharField(attribute='name')
+
+    def get_required_privilege(self):
+        return privileges.ZAPIER_INTEGRATION
 
 
 class CustomField(object):

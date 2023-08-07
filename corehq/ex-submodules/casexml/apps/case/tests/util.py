@@ -171,11 +171,12 @@ def _check_payload_has_cases(testcase, payload_string, username, case_blocks, sh
     blocks_from_restore = extract_caseblocks_from_xml(payload_string, version)
 
     def check_block(case_block):
-        case_block.set('xmlns', XMLNS)
-        case_block = _RestoreCaseBlock(
-            ElementTree.fromstring(ElementTree.tostring(case_block, encoding='utf-8')),
-            version=version,
-        )
+        if isinstance(case_block, str):
+            case_block = ElementTree.fromstring(case_block)
+        else:
+            case_block.set('xmlns', XMLNS)
+            case_block = ElementTree.fromstring(ElementTree.tostring(case_block, encoding='utf-8'))
+        case_block = _RestoreCaseBlock(case_block, version=version)
         case_id = case_block.get_case_id()
         n = 0
 

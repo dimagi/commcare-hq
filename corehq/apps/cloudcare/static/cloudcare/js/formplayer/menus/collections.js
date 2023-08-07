@@ -1,8 +1,21 @@
-/*global Backbone */
+/*global Backbone, Sentry */
 
+/**
+ *  A menu is implemented as a collection of items. Typically, the user
+ *  selects one of these items. The query screen is also implemented as
+ *  a menu, where each search field is an item.
+ */
 hqDefine("cloudcare/js/formplayer/menus/collections", function () {
     var FormplayerFrontend = hqImport("cloudcare/js/formplayer/app"),
-        Util = hqImport("cloudcare/js/formplayer/utils/util");
+        Utils = hqImport("cloudcare/js/formplayer/utils/utils");
+
+    function addBreadcrumb(collection, type, data) {
+        Sentry.addBreadcrumb({
+            category: "formplayer",
+            message: "[response] " + type + ": " + collection.title + " (" + collection.queryKey + ")",
+            data: data,
+        });
+    }
 
     var MenuSelect = Backbone.Collection.extend({
         commonProperties: [
@@ -10,6 +23,7 @@ hqDefine("cloudcare/js/formplayer/menus/collections", function () {
             'appVersion',
             'breadcrumbs',
             'clearSession',
+            'description',
             'notification',
             'persistentCaseTile',
             'queryKey',
@@ -17,6 +31,8 @@ hqDefine("cloudcare/js/formplayer/menus/collections", function () {
             'tiles',
             'title',
             'type',
+            'noItemsText',
+            'resultsTitle',
         ],
 
         entityProperties: [
@@ -37,6 +53,10 @@ hqDefine("cloudcare/js/formplayer/menus/collections", function () {
             'useUniformUnits',
             'widthHints',
             'multiSelect',
+            'maxSelectValue',
+            'hasDetails',
+            'groupHeaderRows',
+            'queryResponse',
         ],
 
         commandProperties: [
@@ -49,37 +69,63 @@ hqDefine("cloudcare/js/formplayer/menus/collections", function () {
 
         formProperties: [
             'langs',
+            'session_id'
         ],
 
         parse: function (response) {
             _.extend(this, _.pick(response, this.commonProperties));
 
-            if (response.selections) {
-                var urlObject = Util.currentUrlToObject();
-                urlObject.setSelections(response.selections);
-                Util.setUrlToObject(urlObject);
+            var urlObject = Utils.currentUrlToObject(),
+                updateUrl = false;
+            if (!urlObject.appId && response.appId) {
+                // will be undefined on urlObject when coming from an incomplete form
+                urlObject.appId = response.appId;
+                this.appId = urlObject.appId;
+                updateUrl = true;
             }
-
+            if (response.selections) {
+                urlObject.setSelections(response.selections);
+                updateUrl = true;
+            }
+            if (updateUrl) {
+                Utils.setUrlToObject(urlObject, true);
+            }
+            let sentryData = _.pick(
+                _.pick(response, ["queryKey", "selections"]),
+                _.identity
+            );
             if (response.commands) {
                 _.extend(this, _.pick(response, this.commandProperties));
+                addBreadcrumb(this, "menu", _.extend(sentryData, {
+                    'commands': _.pluck(response.commands, "displayText"),
+                }));
                 return response.commands;
             } else if (response.entities) {
+                addBreadcrumb(this, "caseList", _.extend(sentryData, {
+                    length: response.entities.length,
+                    multiSelect: response.multiSelect,
+                }));
+                // backwards compatibility - remove after FP deploy of #1374
+                _.defaults(response, {"hasDetails": true});
                 _.extend(this, _.pick(response, this.entityProperties));
                 return response.entities;
             } else if (response.type === "query") {
+                addBreadcrumb(this, "query", sentryData);
                 return response.displays;
             } else if (response.details) {
+                addBreadcrumb(this, "details", sentryData);
                 _.extend(this, _.pick(response, this.detailProperties));
                 return response.details;
             } else if (response.tree) {
                 // form entry time, doggy
+                addBreadcrumb(this, "startForm", sentryData);
                 _.extend(this, _.pick(response, this.formProperties));
-                FormplayerFrontend.trigger('startForm', response, this.app_id);
+                FormplayerFrontend.trigger('startForm', response);
             }
         },
 
         sync: function (method, model, options) {
-            Util.setCrossDomainAjaxOptions(options);
+            Utils.setCrossDomainAjaxOptions(options);
             return Backbone.Collection.prototype.sync.call(this, 'create', model, options);
         },
     });
@@ -88,4 +134,3 @@ hqDefine("cloudcare/js/formplayer/menus/collections", function () {
         return new MenuSelect(response, options);
     };
 });
-

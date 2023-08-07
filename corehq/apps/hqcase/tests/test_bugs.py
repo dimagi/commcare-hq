@@ -3,11 +3,11 @@ import uuid
 from django.test import TestCase
 
 from casexml.apps.case.mock import CaseBlock
-from casexml.apps.case.util import post_case_blocks
 from casexml.apps.case.xml import V2
 from casexml.apps.phone.restore import RestoreConfig, RestoreParams
 
 from corehq.apps.domain.shortcuts import create_domain
+from corehq.apps.hqcase.utils import submit_case_blocks
 from corehq.apps.users.dbaccessors import delete_all_users
 from corehq.apps.users.models import CommCareUser
 from corehq.apps.users.util import format_username
@@ -34,8 +34,8 @@ class OtaRestoreBugTest(TestCase):
                 case_type='duck',
                 user_id=user._id,
                 owner_id=user._id,
-            ).as_xml()
-            _, [case] = post_case_blocks([case_block], {'domain': domain})
+            ).as_text()
+            _, [case] = submit_case_blocks(case_block, domain=domain)
             return case
 
         good_case = _submit_case(good_domain)
@@ -52,7 +52,7 @@ class OtaRestoreBugTest(TestCase):
 
         restore_config = RestoreConfig(
             project=domain,
-            restore_user=user.to_ota_restore_user(),
+            restore_user=user.to_ota_restore_user(good_domain),
             params=RestoreParams(version=V2),
         )
         payload = restore_config.get_payload().as_string().decode('utf-8')

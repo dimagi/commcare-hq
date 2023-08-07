@@ -8,7 +8,7 @@
                        visible: table.label() !== 'Case History'">
       <span>
         <input type="checkbox"
-               data-bind="checked: table.selected" />
+               data-bind="checked: table.selected, attr: { disabled: {{ disable_table_checkbox|JSON }} }" />
       </span>
       <span>
         <span data-bind="text: table.label()" />
@@ -59,7 +59,7 @@
       <!-- /ko -->
       <h4>{{ terminology.choose_fields_label }}</h4>
       <div class="help-block">
-        {% if request|toggle_enabled:"EXPORT_MULTISORT" %}
+        {% if request|request_has_privilege:"EXPORT_MULTISORT" %}
           <p>
             {% blocktrans %}
               You can drag and drop fields to reorder them.
@@ -122,7 +122,7 @@
                 {% trans "Select None" %}
               </a>
             </th>
-            {% if request|toggle_enabled:"EXPORT_MULTISORT" %}
+            {% if request|request_has_privilege:"EXPORT_MULTISORT" %}
               <th>
                 {% trans "Send to Bottom" %}
               </th>
@@ -177,6 +177,23 @@
                   {% endif %}
                 </span>
               </button>
+
+              <!-- Deprecated Button -->
+              {% if export_instance.type == 'case' %}
+                <button type="button"
+                        class="btn btn-default btn-xs"
+                        data-bind="click: table.toggleShowDeprecated,
+                                  css: {
+                                    active: table.showDeprecated
+                                  }">
+                  <span data-bind="visible: !table.showDeprecated()">
+                    {% trans "Show Deprecated Properties" %}
+                  </span>
+                  <span data-bind="visible: table.showDeprecated">
+                    {% trans "Hide Deprecated Properties" %}
+                  </span>
+                </button>
+              {% endif %}
             </th>
             <th data-bind="attr: { 'class': $root.displayColumnClass }">
               {% trans "Display" %}<br />
@@ -222,7 +239,7 @@
           </tfoot>
         {% endif %}
 
-      {% if request|toggle_enabled:"EXPORT_MULTISORT" %}
+      {% if request|request_has_privilege:"EXPORT_MULTISORT" %}
         <tbody data-bind="multirow_sortable: {
                             data: table.columns,
                             as: 'column',
@@ -243,7 +260,7 @@
                            success: column.selectedForSort,
                            'selected-for-sort': column.selectedForSort
                          }"
-              {% if request|toggle_enabled:"EXPORT_MULTISORT" %}style="cursor:pointer"{% endif %}>
+              {% if request|request_has_privilege:"EXPORT_MULTISORT" %}style="cursor:pointer"{% endif %}>
             <td class="text-center">
               <span class="sortable-handle">
                 <i class="fa fa-arrows-v"></i>
@@ -276,7 +293,7 @@
               </div>
               <!-- /ko -->
             </td>
-          {% if request|toggle_enabled:"EXPORT_MULTISORT" %}
+          {% if request|request_has_privilege:"EXPORT_MULTISORT" %}
             <td class="text-center">
               <span class="send-to-bottom">
                 <button class="btn btn-default btn-sm">

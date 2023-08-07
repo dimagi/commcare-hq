@@ -2,18 +2,17 @@ from datetime import datetime, timedelta
 
 from django.test import SimpleTestCase, TestCase
 
-from pillowtop.es_utils import initialize_index_and_mapping
-
 from corehq.apps.domain.shortcuts import create_domain
+from corehq.apps.es.cases import case_adapter
+from corehq.apps.es.forms import form_adapter
+from corehq.apps.es.tests.utils import es_test
 from corehq.apps.reports.views import get_scheduled_report_response
 from corehq.apps.saved_reports.models import ReportConfig, ReportNotification
 from corehq.apps.saved_reports.scheduled import (
     get_scheduled_report_ids,
     guess_reporting_minute,
 )
-from corehq.apps.users.models import Permissions, UserRole, WebUser
-from corehq.pillows.mappings.case_mapping import CASE_INDEX_INFO
-from corehq.util.elastic import ensure_active_es, ensure_index_deleted
+from corehq.apps.users.models import HqPermissions, UserRole, WebUser
 
 
 class GuessReportingMinuteTest(SimpleTestCase):
@@ -92,11 +91,36 @@ class ScheduledReportTest(TestCase):
         ReportNotification(hour=1, minute=None, interval='hourly').save()
         self._check('hourly', datetime(2014, 10, 31, 1, 0), 1)
 
-    def testHourlyReportHourDontMatter(self):
-        ReportNotification(hour=1, minute=0, interval='hourly').save()
-        self._check('hourly', datetime(2014, 10, 31, 1, 0), 1)
+    def testHourlyReportWithoutSpecifyingStopHour(self):
+        ReportNotification(hour=0, interval='hourly').save()
         self._check('hourly', datetime(2014, 10, 31, 12, 0), 1)
+
+    def testHourlyReportWithNoneStopHour(self):
+        # It should return every hour if stop_hour not valid
+        ReportNotification(hour=0, stop_hour=None, interval='hourly').save()
+        self._check('hourly', datetime(2014, 10, 31, 12, 0), 1)
+
+    def testHourlyReportWithInterval_everyHour(self):
+        ReportNotification(hour=0, interval='hourly').save()
+        self._check('hourly', datetime(2014, 10, 31, 0, 0), 1)
+        self._check('hourly', datetime(2014, 10, 31, 1, 0), 1)
+        self._check('hourly', datetime(2014, 10, 31, 7, 0), 1)
+        self._check('hourly', datetime(2014, 10, 31, 18, 0), 1)
         self._check('hourly', datetime(2014, 10, 31, 23, 0), 1)
+
+    def testHourlyReportWithInterval_onlyAt12(self):
+        ReportNotification(hour=12, stop_hour=12, interval='hourly').save()
+        self._check('hourly', datetime(2014, 10, 31, 12, 0), 1)
+        self._check('hourly', datetime(2014, 10, 31, 13, 0), 0)
+
+    def testHourlyReportWithInterval_between12And15(self):
+        ReportNotification(hour=12, stop_hour=15, interval='hourly').save()
+        self._check('hourly', datetime(2014, 10, 31, 11, 0), 0)
+        self._check('hourly', datetime(2014, 10, 31, 12, 0), 1)
+        self._check('hourly', datetime(2014, 10, 31, 13, 0), 1)
+        self._check('hourly', datetime(2014, 10, 31, 14, 0), 1)
+        self._check('hourly', datetime(2014, 10, 31, 15, 0), 1)
+        self._check('hourly', datetime(2014, 10, 31, 16, 0), 0)
 
     def testHourlyReportOtherTypesDontCount(self):
         ReportNotification(hour=1, minute=0, interval='hourly').save()
@@ -211,6 +235,7 @@ class ScheduledReportTest(TestCase):
         self._check('monthly', datetime(2014, 10, 31, 12, 0), 1)
 
 
+@es_test(requires=[case_adapter, form_adapter], setup_class=True)
 class ScheduledReportSendingTest(TestCase):
 
     domain = 'test-scheduled-reports'
@@ -220,11 +245,10 @@ class ScheduledReportSendingTest(TestCase):
 
     @classmethod
     def setUpClass(cls):
-        es = ensure_active_es()
         super(ScheduledReportSendingTest, cls).setUpClass()
 
         cls.domain_obj = create_domain(cls.domain)
-        cls.reports_role = UserRole.create(cls.domain, 'Test Role', permissions=Permissions(
+        cls.reports_role = UserRole.create(cls.domain, 'Test Role', permissions=HqPermissions(
             view_report_list=[cls.REPORT_NAME_LOOKUP['worker_activity']]
         ))
         cls.user = WebUser.create(
@@ -236,13 +260,10 @@ class ScheduledReportSendingTest(TestCase):
             role_id=cls.reports_role.get_id
         )
 
-        initialize_index_and_mapping(es, CASE_INDEX_INFO)
-
     @classmethod
     def tearDownClass(cls):
         cls.domain_obj.delete()
         delete_all_report_notifications()
-        ensure_index_deleted(CASE_INDEX_INFO.index)
         super(ScheduledReportSendingTest, cls).tearDownClass()
 
     def test_get_scheduled_report_response(self):

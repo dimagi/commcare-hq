@@ -21,6 +21,7 @@ from corehq.apps.hqadmin.views.utils import (
 )
 from corehq.form_processor.exceptions import CaseNotFound
 from corehq.form_processor.models import CommCareCase
+from corehq.messaging.tasks import sync_case_for_messaging_task
 
 
 @require_superuser_or_contractor
@@ -109,8 +110,6 @@ class ReprocessMessagingCaseUpdatesView(BaseAdminSectionView):
             return None
 
     def post(self, request, *args, **kwargs):
-        from corehq.messaging.signals import messaging_case_changed_receiver
-
         if self.form.is_valid():
             case_ids = self.form.cleaned_data['case_ids']
             case_ids_not_processed = []
@@ -120,7 +119,7 @@ class ReprocessMessagingCaseUpdatesView(BaseAdminSectionView):
                 if not case or case.doc_type != 'CommCareCase':
                     case_ids_not_processed.append(case_id)
                 else:
-                    messaging_case_changed_receiver(None, case)
+                    sync_case_for_messaging_task.delay(case.domain, case_id)
                     case_ids_processed.append(case_id)
 
             if case_ids_processed:

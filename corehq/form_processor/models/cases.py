@@ -15,6 +15,7 @@ from jsonobject import JsonObject, StringProperty
 from jsonobject.properties import BooleanProperty
 from memoized import memoized
 
+from casexml.apps.case.const import CASE_INDEX_CHILD, CASE_INDEX_EXTENSION
 from dimagi.utils.chunked import chunked
 from dimagi.utils.couch import RedisLockableMixIn
 from dimagi.utils.couch.undo import DELETED_SUFFIX
@@ -24,15 +25,27 @@ from corehq.blobs import CODES, get_blob_db
 from corehq.blobs.exceptions import BadName, NotFound
 from corehq.blobs.util import get_content_md5
 from corehq.sql_db.models import PartitionedModel, RequireDBManager
-from corehq.sql_db.util import get_db_aliases_for_partitioned_query, split_list_by_db_partition
+from corehq.sql_db.util import (
+    get_db_aliases_for_partitioned_query,
+    split_list_by_db_partition,
+)
 from corehq.util.json import CommCareJSONEncoder
 
-from ..exceptions import AttachmentNotFound, CaseNotFound, CaseSaveError, UnknownActionType
+from ..exceptions import (
+    AttachmentNotFound,
+    CaseNotFound,
+    CaseSaveError,
+    UnknownActionType,
+)
 from ..track_related import TrackRelatedChanges
 from .attachment import AttachmentContent, AttachmentMixin
 from .forms import XFormInstance
 from .mixin import CaseToXMLMixin, IsImageMixin, SaveStateMixin
-from .util import attach_prefetch_models, fetchall_as_namedtuple, sort_with_id_list
+from .util import (
+    attach_prefetch_models,
+    fetchall_as_namedtuple,
+    sort_with_id_list,
+)
 
 DEFAULT_PARENT_IDENTIFIER = 'parent'
 
@@ -237,7 +250,6 @@ class CommCareCaseManager(RequireDBManager):
             return None
 
     def soft_delete_cases(self, domain, case_ids, deletion_date=None, deletion_id=None):
-        from ..change_publishers import publish_case_deleted
         assert isinstance(case_ids, list), type(case_ids)
         utcnow = datetime.utcnow()
         deletion_date = deletion_date or utcnow
@@ -248,8 +260,7 @@ class CommCareCaseManager(RequireDBManager):
             )
             deleted_count = sum(row[0] for row in cursor)
 
-        for case_id in case_ids:
-            publish_case_deleted(domain, case_id)
+        self.publish_deleted_cases(domain, case_ids)
 
         return deleted_count
 
@@ -266,15 +277,28 @@ class CommCareCaseManager(RequireDBManager):
             publish_case_saved(case)
         return undeleted_count
 
-    def hard_delete_cases(self, domain, case_ids):
+    def hard_delete_cases(self, domain, case_ids, *, publish_changes=True):
         """Permanently delete cases in domain
 
+        :param publish_changes: Flag for change feed publication.
+            Documents in Elasticsearch will not be deleted if this is false.
         :returns: Number of deleted cases.
         """
         assert isinstance(case_ids, list), type(case_ids)
         with self.model.get_plproxy_cursor() as cursor:
             cursor.execute('SELECT hard_delete_cases(%s, %s)', [domain, case_ids])
-            return sum(row[0] for row in cursor)
+            deleted_count = sum(row[0] for row in cursor)
+
+        if publish_changes:
+            self.publish_deleted_cases(domain, case_ids)
+
+        return deleted_count
+
+    @staticmethod
+    def publish_deleted_cases(domain, case_ids):
+        from ..change_publishers import publish_case_deleted
+        for case_id in case_ids:
+            publish_case_deleted(domain, case_id)
 
 
 class CommCareCase(PartitionedModel, models.Model, RedisLockableMixIn,
@@ -480,9 +504,10 @@ class CommCareCase(PartitionedModel, models.Model, RedisLockableMixIn,
         return any(index.identifier == index_id for index in self.indices)
 
     def get_index(self, index_id):
+        """Includes non-live indices"""
         found = [i for i in self.indices if i.identifier == index_id]
         if found:
-            assert(len(found) == 1)
+            assert len(found) == 1
             return found[0]
         return None
 
@@ -618,7 +643,7 @@ class CommCareCase(PartitionedModel, models.Model, RedisLockableMixIn,
         CasePropertyResult = namedtuple('CasePropertyResult', 'case value')
 
         if property_name.lower().startswith('parent/'):
-            parents = self.get_parent(identifier=DEFAULT_PARENT_IDENTIFIER)
+            parents = self.get_parents(identifier=DEFAULT_PARENT_IDENTIFIER)
             for parent in parents:
                 parent._resolve_case_property(property_name[7:], result)
             return
@@ -654,6 +679,7 @@ class CommCareCase(PartitionedModel, models.Model, RedisLockableMixIn,
 
     def to_xml(self, version, include_case_on_closed=False):
         from lxml import etree as ElementTree
+
         from casexml.apps.phone.xml import get_case_element
         if self.closed:
             if include_case_on_closed:
@@ -669,8 +695,9 @@ class CommCareCase(PartitionedModel, models.Model, RedisLockableMixIn,
         A server specific URL for remote clients to access case attachment resources async.
         """
         if name in self.case_attachments:
-            from dimagi.utils import web
             from django.urls import reverse
+
+            from dimagi.utils import web
             return "%s%s" % (
                 web.get_url_base(),
                 reverse("api_case_attachment", kwargs={
@@ -690,16 +717,26 @@ class CommCareCase(PartitionedModel, models.Model, RedisLockableMixIn,
         return cls.objects.get_case(case_id)
 
     @memoized
-    def get_parent(self, identifier=None, relationship=None):
-        indices = self.indices
+    def get_parents(self, identifier=None, relationship=None):
+        return [index.referenced_case for index in self.get_indices(identifier, relationship)]
+
+    def get_indices(self, identifier=None, relationship=None):
+        """
+        Filter live indices by identifier (and / or) relationship.
+
+        :param identifier: Index identifier
+        :param relationship: Index relationship ('child' or 'extension')
+        :return:
+        """
+        indices = self.live_indices
 
         if identifier:
             indices = [index for index in indices if index.identifier == identifier]
 
         if relationship:
-            indices = [index for index in indices if index.relationship_id == relationship]
+            indices = [index for index in indices if index.relationship == relationship]
 
-        return [index.referenced_case for index in indices if index.referenced_id]
+        return indices
 
     @property
     def parent(self):
@@ -709,15 +746,15 @@ class CommCareCase(PartitionedModel, models.Model, RedisLockableMixIn,
         of indices. If for some reason your use case creates more than one,
         please write/use a different property.
         """
-        result = self.get_parent(
+        result = self.get_parents(
             identifier=DEFAULT_PARENT_IDENTIFIER,
-            relationship=CommCareCaseIndex.CHILD
+            relationship=CASE_INDEX_CHILD
         )
         return result[0] if result else None
 
     @property
     def host(self):
-        result = self.get_parent(relationship=CommCareCaseIndex.EXTENSION)
+        result = self.get_parents(relationship=CASE_INDEX_EXTENSION)
         return result[0] if result else None
 
     def save(self, *args, with_tracked_models=False, **kw):
@@ -893,7 +930,7 @@ class CaseAttachment(PartitionedModel, models.Model, SaveStateMixin, IsImageMixi
     @classmethod
     def get_content(cls, case_id, name):
         att = cls.objects.get_attachment_by_name(case_id, name)
-        return AttachmentContent(att.content_type, att.open())
+        return AttachmentContent(att.content_type, att.open(), att.content_length)
 
     def __str__(self):
         return str(
@@ -934,7 +971,7 @@ class CommCareCaseIndexManager(RequireDBManager):
         return list(query.filter(case_id=case_id, domain=domain))
 
     def get_related_indices(self, domain, case_ids, exclude_indices):
-        """Get indices (forward and reverse) for the given set of case ids
+        """Get indices (forward and reverse) for the given set of case ids.
 
         :param case_ids: A list of case ids.
         :param exclude_indices: A set or dict of index id strings with
@@ -980,7 +1017,14 @@ class CommCareCaseIndexManager(RequireDBManager):
             ) for index in indexes
         ]
 
-    def get_extension_case_ids(self, domain, case_ids, include_closed=True, exclude_for_case_type=None):
+    def get_extension_case_ids(
+        self,
+        domain,
+        case_ids,
+        include_closed=True,
+        exclude_for_case_type=None,
+        case_type=None,
+    ):
         """
         Given a base list of case ids, get all ids of all extension cases that reference them
         """
@@ -997,6 +1041,8 @@ class CommCareCaseIndexManager(RequireDBManager):
                 query = query.filter(case__closed=False)
             if exclude_for_case_type:
                 query = query.exclude(referenced_type=exclude_for_case_type)
+            if case_type:
+                query = query.filter(case__type=case_type)
             extension_case_ids.update(query.values_list('case_id', flat=True))
         return list(extension_case_ids)
 
@@ -1027,8 +1073,8 @@ class CommCareCaseIndex(PartitionedModel, models.Model, SaveStateMixin):
     CHILD = 1
     EXTENSION = 2
     RELATIONSHIP_CHOICES = (
-        (CHILD, 'child'),
-        (EXTENSION, 'extension'),
+        (CHILD, CASE_INDEX_CHILD),
+        (EXTENSION, CASE_INDEX_EXTENSION),
     )
     RELATIONSHIP_INVERSE_MAP = dict(RELATIONSHIP_CHOICES)
     RELATIONSHIP_MAP = {v: k for k, v in RELATIONSHIP_CHOICES}
@@ -1081,11 +1127,19 @@ class CommCareCaseIndex(PartitionedModel, models.Model, SaveStateMixin):
 
     @property
     def relationship(self):
-        return self.RELATIONSHIP_INVERSE_MAP[self.relationship_id]
+        return CommCareCaseIndex.relationship_id_to_name(self.relationship_id)
 
     @relationship.setter
     def relationship(self, relationship):
         self.relationship_id = self.RELATIONSHIP_MAP[relationship]
+
+    @staticmethod
+    def relationship_id_to_name(relationship_id):
+        return CommCareCaseIndex.RELATIONSHIP_INVERSE_MAP[relationship_id]
+
+    def to_json(self):
+        from ..serializers import CommCareCaseIndexSerializer
+        return CommCareCaseIndexSerializer(self).data
 
     def __eq__(self, other):
         return isinstance(other, CommCareCaseIndex) and (
@@ -1101,14 +1155,14 @@ class CommCareCaseIndex(PartitionedModel, models.Model, SaveStateMixin):
 
     def __str__(self):
         return (
-            "CaseIndex("
-            "case_id='{i.case_id}', "
-            "domain='{i.domain}', "
-            "identifier='{i.identifier}', "
-            "referenced_type='{i.referenced_type}', "
-            "referenced_id='{i.referenced_id}', "
-            "relationship='{i.relationship})"
-        ).format(i=self)
+            'CaseIndex('
+            f'case_id={self.case_id!r}, '
+            f'domain={self.domain!r}, '
+            f'identifier={self.identifier!r}, '
+            f'referenced_type={self.referenced_type!r}, '
+            f'referenced_id={self.referenced_id!r}, '
+            f'relationship={self.relationship!r})'
+        )
 
     class Meta(object):
         index_together = [

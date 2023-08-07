@@ -1,10 +1,14 @@
+import datetime
 import hashlib
 import logging
-import datetime
-from casexml.apps.phone.const import RESTORE_CACHE_KEY_PREFIX, ASYNC_RESTORE_CACHE_KEY_PREFIX
-from corehq.toggles import ENABLE_LOADTEST_USERS
-from corehq.util.quickcache import quickcache
+
 from dimagi.utils.couch.cache.cache_core import get_redis_default_cache
+
+from corehq import privileges
+from corehq.apps.accounting.utils import domain_has_privilege
+from corehq.util.quickcache import quickcache
+
+from .const import ASYNC_RESTORE_CACHE_KEY_PREFIX, RESTORE_CACHE_KEY_PREFIX
 
 logger = logging.getLogger(__name__)
 
@@ -34,9 +38,9 @@ class _CacheAccessor(object):
 
 
 @quickcache(['domain', 'user_id'], timeout=24 * 60 * 60)
-def get_loadtest_factor_for_user(domain, user_id):
+def get_loadtest_factor_for_restore_cache_key(domain, user_id):
     from corehq.apps.users.models import CouchUser, CommCareUser
-    if ENABLE_LOADTEST_USERS.enabled(domain) and user_id:
+    if domain_has_privilege(domain, privileges.LOADTEST_USERS) and user_id:
         user = CouchUser.get_by_user_id(user_id, domain=domain)
         if isinstance(user, CommCareUser):
             return user.loadtest_factor or 1
@@ -82,7 +86,7 @@ class _RestoreCache(_CacheAccessor):
             user_id,
             sync_log_id or '',
             device_id or '',
-            get_loadtest_factor_for_user(domain, user_id),
+            get_loadtest_factor_for_restore_cache_key(domain, user_id),
             _get_domain_freshness_token(domain),
             _get_user_freshness_token(domain, user_id),
         ]])

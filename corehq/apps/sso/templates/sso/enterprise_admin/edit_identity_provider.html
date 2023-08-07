@@ -1,4 +1,4 @@
-{% extends "hqwebapp/base_section.html" %}
+{% extends "hqwebapp/bootstrap3/base_section.html" %}
 {% load crispy_forms_tags %}
 {% load hq_shared_tags %}
 {% load i18n %}
@@ -7,10 +7,12 @@
 
 {% block page_content %}
   {% initial_page_data 'idp_slug' idp_slug %}
+  {% initial_page_data 'toggle_client_secret' toggle_client_secret %}
 
   <ul class="nav nav-tabs sticky-tabs" id="user-settings-tabs">
     <li><a href="#idp" data-toggle="tab">{% trans "Identity Provider" %}</a></li>
     <li><a href="#sso-exempt-users" data-toggle="tab">{% trans "SSO Exempt Users" %}</a></li>
+    <li><a href="#sso-test-users" data-toggle="tab">{% trans "SSO Test Users" %}</a></li>
   </ul>
   <div class="tab-content tab-padded">
     <div class="tab-pane" id="idp">
@@ -20,6 +22,9 @@
     </div>
     <div class="tab-pane" id="sso-exempt-users">
       {% include 'sso/partials/manage_sso_exempt_users.html' %}
+    </div>
+    <div class="tab-pane" id="sso-test-users">
+      {% include 'sso/partials/manage_sso_test_users.html' %}
     </div>
   </div>
 {% endblock %}

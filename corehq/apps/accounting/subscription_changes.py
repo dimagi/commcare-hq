@@ -9,14 +9,16 @@ from django.utils.translation import ngettext
 from couchdbkit import ResourceConflict
 
 from dimagi.utils.parsing import json_format_date
+from field_audit.models import AuditAction
 
 from corehq import privileges
+import corehq.apps.events.tasks as attendance_tracking_tasks
 from corehq.apps.accounting.utils import get_privileges, log_accounting_error
 from corehq.apps.cloudcare.dbaccessors import get_cloudcare_apps
 from corehq.apps.data_interfaces.models import AutomaticUpdateRule
 from corehq.apps.domain.exceptions import DomainDoesNotExist
 from corehq.apps.domain.models import Domain
-from corehq.apps.fixtures.models import FixtureDataType
+from corehq.apps.fixtures.models import LookupTable
 from corehq.apps.userreports.exceptions import (
     DataSourceConfigurationNotFoundError,
 )
@@ -26,6 +28,8 @@ from corehq.apps.users.role_utils import (
     get_custom_roles_for_domain,
     reset_initial_roles_for_domain,
     unarchive_roles_for_domain,
+    enable_attendance_coordinator_role_for_domain,
+    archive_attendance_coordinator_role_for_domain,
 )
 from corehq.const import USER_DATE_FORMAT
 from corehq.messaging.scheduling.models import (
@@ -38,6 +42,7 @@ from corehq.messaging.scheduling.tasks import (
     refresh_alert_schedule_instances,
     refresh_timed_schedule_instances,
 )
+from corehq.toggles import ATTENDANCE_TRACKING
 
 
 class BaseModifySubscriptionHandler(object):
@@ -194,6 +199,7 @@ class DomainDowngradeActionHandler(BaseModifySubscriptionActionHandler):
             privileges.COMMCARE_LOGO_UPLOADER: cls.response_commcare_logo_uploader,
             privileges.ADVANCED_DOMAIN_SECURITY: cls.response_domain_security,
             privileges.PRACTICE_MOBILE_WORKERS: cls.response_practice_mobile_workers,
+            privileges.ATTENDANCE_TRACKING: cls.response_attendance_tracking,
         }
         privs_to_responses.update({
             p: cls.response_report_builder
@@ -254,6 +260,11 @@ class DomainDowngradeActionHandler(BaseModifySubscriptionActionHandler):
         return True
 
     @staticmethod
+    def response_attendance_tracking(domain, _new_plan_version):
+        archive_attendance_coordinator_role_for_domain(domain=domain.name)
+        attendance_tracking_tasks.close_mobile_worker_attendee_cases.delay(domain.name)
+
+    @staticmethod
     def response_data_cleanup(domain, new_plan_version):
         """
         Any active automatic case update rules should be deactivated.
@@ -262,7 +273,7 @@ class DomainDowngradeActionHandler(BaseModifySubscriptionActionHandler):
             AutomaticUpdateRule.by_domain(
                 domain.name,
                 AutomaticUpdateRule.WORKFLOW_CASE_UPDATE,
-            ).update(active=False)
+            ).update(active=False, audit_action=AuditAction.AUDIT)
             AutomaticUpdateRule.clear_caches(domain.name, AutomaticUpdateRule.WORKFLOW_CASE_UPDATE)
             return True
         except Exception:
@@ -354,15 +365,16 @@ class DomainUpgradeActionHandler(BaseModifySubscriptionActionHandler):
 
     @classmethod
     def privilege_to_response_function(cls):
-        privs_to_repsones = {
+        privs_to_respones = {
             privileges.ROLE_BASED_ACCESS: cls.response_role_based_access,
             privileges.COMMCARE_LOGO_UPLOADER: cls.response_commcare_logo_uploader,
+            privileges.ATTENDANCE_TRACKING: cls.response_add_attendance_coordinator_role,
         }
-        privs_to_repsones.update({
+        privs_to_respones.update({
             p: cls.response_report_builder
             for p in privileges.REPORT_BUILDER_ADD_ON_PRIVS
         })
-        return privs_to_repsones
+        return privs_to_respones
 
     @staticmethod
     def response_role_based_access(domain, new_plan_version):
@@ -371,6 +383,13 @@ class DomainUpgradeActionHandler(BaseModifySubscriptionActionHandler):
         - Un-archive custom roles.
         """
         unarchive_roles_for_domain(domain.name)
+        return True
+
+    @staticmethod
+    def response_add_attendance_coordinator_role(domain, new_plan_version):
+        if not ATTENDANCE_TRACKING.enabled(domain):
+            return True
+        enable_attendance_coordinator_role_for_domain(domain)
         return True
 
     @staticmethod
@@ -383,9 +402,9 @@ class DomainUpgradeActionHandler(BaseModifySubscriptionActionHandler):
 
     @staticmethod
     def response_report_builder(project, new_plan_version):
-        from corehq.apps.userreports.models import ReportConfiguration
         from corehq.apps.userreports.tasks import rebuild_indicators
-        reports = ReportConfiguration.by_domain(project.name)
+        from corehq.apps.userreports.dbaccessors import get_report_and_registry_report_configs_for_domain
+        reports = get_report_and_registry_report_configs_for_domain(project.name)
         builder_reports = [report for report in reports if report.report_meta.created_by_builder]
         for report in builder_reports:
             try:
@@ -423,8 +442,8 @@ def _has_report_builder_add_on(plan_version):
 
 
 def _get_report_builder_reports(project):
-    from corehq.apps.userreports.models import ReportConfiguration
-    reports = ReportConfiguration.by_domain(project.name)
+    from corehq.apps.userreports.dbaccessors import get_report_and_registry_report_configs_for_domain
+    reports = get_report_and_registry_report_configs_for_domain(project.name)
     return [report for report in reports if report.report_meta.created_by_builder]
 
 
@@ -497,7 +516,7 @@ class DomainDowngradeStatusHandler(BaseModifySubscriptionHandler):
         """
         Lookup tables will be deleted on downgrade.
         """
-        num_fixtures = FixtureDataType.total_by_domain(domain.name)
+        num_fixtures = LookupTable.objects.by_domain(domain.name).count()
         if num_fixtures > 0:
             return _fmt_alert(
                 ngettext(

@@ -11,7 +11,6 @@ from dateutil.parser import parse
 from nose.tools import nottest
 
 from casexml.apps.case.mock import CaseBlock
-from casexml.apps.case.util import post_case_blocks
 
 from corehq.apps.accounting.models import SoftwarePlanEdition
 from corehq.apps.accounting.tests.base_tests import BaseAccountingTest
@@ -20,6 +19,7 @@ from corehq.apps.accounting.utils import clear_plan_version_cache
 from corehq.apps.app_manager.models import import_app
 from corehq.apps.domain.models import Domain
 from corehq.apps.groups.models import Group
+from corehq.apps.hqcase.utils import submit_case_blocks
 from corehq.apps.sms.api import process_username
 from corehq.apps.sms.models import (
     OUTGOING,
@@ -136,8 +136,8 @@ class TouchformsTestCase(LiveServerTestCase, DomainSubscriptionMixin):
             case_type='participant',
             owner_id=owner.get_id,
             user_id=owner.get_id,
-        ).as_xml()
-        post_case_blocks([case_block], {'domain': self.domain})
+        ).as_text()
+        submit_case_blocks(case_block, domain=self.domain)
 
     def add_parent_access(self, user, case):
         case_block = CaseBlock(
@@ -146,8 +146,8 @@ class TouchformsTestCase(LiveServerTestCase, DomainSubscriptionMixin):
             case_type='magic_map',
             owner_id=user.get_id,
             index={'parent': ('participant', case.case_id)}
-        ).as_xml()
-        post_case_blocks([case_block], {'domain': self.domain})
+        ).as_text()
+        submit_case_blocks(case_block, domain=self.domain)
 
     def create_web_user(self, username, password):
         user = WebUser.create(self.domain, username, password, None, None)

@@ -30,7 +30,7 @@ class DatagridEndpoint(BaseDataEndpoint):
 
         is_timeout = False
         try:
-            results = [formatter(self.request, self.domain, r).get_context()
+            results = [formatter(r, self.timezone).get_context()
                        for r in query.run().raw['hits'].get('hits', [])]
             took = query.run().raw.get('took')
         except ESError:

@@ -10,8 +10,9 @@ from corehq.apps.accounting.tests.utils import DomainSubscriptionMixin
 from corehq.apps.accounting.utils import clear_plan_version_cache
 from corehq.apps.app_manager.models import Application
 from corehq.apps.domain.models import Domain
+from corehq.motech.models import ConnectionSettings
 from corehq.motech.repeaters.dbaccessors import delete_all_repeat_records
-from corehq.motech.repeaters.models import AppStructureRepeater, RepeatRecord
+from corehq.motech.repeaters.models import RepeatRecord, AppStructureRepeater
 
 
 class TestAppStructureRepeater(TestCase, DomainSubscriptionMixin):
@@ -27,6 +28,7 @@ class TestAppStructureRepeater(TestCase, DomainSubscriptionMixin):
 
         # DATA_FORWARDING is on PRO and above
         cls.setup_subscription(cls.domain, SoftwarePlanEdition.PRO)
+        cls.conn = ConnectionSettings.objects.create(url=cls.forwarding_url, domain=cls.domain)
 
     @classmethod
     def tearDownClass(cls):
@@ -56,7 +58,7 @@ class TestAppStructureRepeater(TestCase, DomainSubscriptionMixin):
         """
         When an application with a repeater is saved, then a repeat record should be created
         """
-        self.app_structure_repeater = AppStructureRepeater(domain=self.domain, url=self.forwarding_url)
+        self.app_structure_repeater = AppStructureRepeater(domain=self.domain, connection_settings=self.conn)
         self.app_structure_repeater.save()
         self.addCleanup(self.app_structure_repeater.delete)
 
@@ -72,7 +74,7 @@ class TestAppStructureRepeater(TestCase, DomainSubscriptionMixin):
         """
         When an application with a repeater is saved, then HQ should try to forward the repeat record
         """
-        self.app_structure_repeater = AppStructureRepeater(domain=self.domain, url=self.forwarding_url)
+        self.app_structure_repeater = AppStructureRepeater(domain=self.domain, connection_settings=self.conn)
         self.app_structure_repeater.save()
         self.addCleanup(self.app_structure_repeater.delete)
 

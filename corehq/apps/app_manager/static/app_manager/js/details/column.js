@@ -45,18 +45,21 @@ hqDefine("app_manager/js/details/column", function () {
         self.original.case_tile_field = ko.utils.unwrapObservable(self.original.case_tile_field) || "";
         self.case_tile_field = ko.observable(self.original.case_tile_field);
 
-        // Set up tab attributes
+        // Set up tab defaults
         var tabDefaults = {
             isTab: false,
             hasNodeset: false,
             nodeset: "",
-            // Blank string is meaningful for nodesetCaseType (indicating a custom expression), so be strict here
-            nodesetCaseType: _.has(self.original, "nodesetCaseType") ? self.original.nodesetCaseType : screen.childCaseTypes[0] || "",
+            nodesetCaseType: "",
+            nodesetFilter: "",
             relevant: "",
         };
-        _.each(_.keys(tabDefaults), function (key) {
-            self.original[key] = self.original[key] || tabDefaults[key];
-        });
+        self.original = _.defaults(self.original, tabDefaults);
+        let screenHasChildCaseTypes = screen.childCaseTypes && screen.childCaseTypes.length;
+        if (!self.original.nodeset && !self.original.nodesetCaseType && screenHasChildCaseTypes) {
+            // If there's no nodeset but there are child case types, default to showing a case type
+            self.original.nodesetCaseType = screen.childCaseTypes[0];
+        }
         _.extend(self, _.pick(self.original, _.keys(tabDefaults)));
 
         self.screen = screen;
@@ -106,7 +109,7 @@ hqDefine("app_manager/js/details/column", function () {
 
             self.nodeset_extra = hqImport("app_manager/js/details/detail_tab_nodeset")(_.extend({
                 caseTypes: self.screen.childCaseTypes,
-            }, _.pick(self.original, ['nodeset', 'nodesetCaseType'])));
+            }, _.pick(self.original, ['nodeset', 'nodesetCaseType', 'nodesetFilter'])));
 
             self.relevant = uiElement.input().val(self.original.relevant);
             if (self.isTab) {
@@ -144,12 +147,6 @@ hqDefine("app_manager/js/details/column", function () {
                 label: "",
             }]);
         }
-        if (self.screen.columnKey === "long") {
-            menuOptions = menuOptions.concat([{
-                value: "markdown",
-                label: gettext('Markdown'),
-            }]);
-        }
 
         if (self.useXpathExpression) {
             var menuOptionsToRemove = ['picture', 'audio'];
@@ -173,7 +170,7 @@ hqDefine("app_manager/js/details/column", function () {
                 langs: self.screen.langs,
                 module_id: self.screen.config.module_id,
                 items: self.original['enum'],
-                property_name: self.field,
+                property_name: self.header,
                 multimedia: self.screen.config.multimedia,
                 values_are_icons: self.original.format === 'enum-image',
                 keys_are_conditions: self.original.format === 'conditional-enum',
@@ -355,6 +352,7 @@ hqDefine("app_manager/js/details/column", function () {
                     tab = _.extend(tab, {
                         nodeset_case_type: self.nodeset_extra.nodesetCaseType(),
                         nodeset: self.nodeset_extra.nodeset(),
+                        nodeset_filter: self.nodeset_extra.nodesetFilter(),
                     });
                 }
                 return tab;

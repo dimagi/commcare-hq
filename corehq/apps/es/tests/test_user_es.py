@@ -1,26 +1,21 @@
 from django.test import TestCase
 
-from pillowtop.es_utils import initialize_index_and_mapping
-
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.es import UserES
+from corehq.apps.es.users import user_adapter
+from corehq.apps.es.client import manager
 from corehq.apps.es.tests.utils import es_test
 from corehq.apps.users.dbaccessors import delete_all_users
 from corehq.apps.users.models import CommCareUser
-from corehq.elastic import get_es_new
-from corehq.pillows.mappings.user_mapping import USER_INDEX, USER_INDEX_INFO
-from corehq.util.elastic import ensure_index_deleted
 from corehq.util.es.testing import sync_users_to_es
 
 
-@es_test
+@es_test(requires=[user_adapter], setup_class=True)
 class TestUserES(TestCase):
 
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
-        cls.elasticsearch = get_es_new()
-        initialize_index_and_mapping(cls.elasticsearch, USER_INDEX_INFO)
         cls.domain = 'test-user-es'
         cls.domain_obj = create_domain(cls.domain)
 
@@ -28,7 +23,7 @@ class TestUserES(TestCase):
             cls._create_mobile_worker('stark', metadata={'sigil': 'direwolf', 'seat': 'Winterfell'})
             cls._create_mobile_worker('lannister', metadata={'sigil': 'lion', 'seat': 'Casterly Rock'})
             cls._create_mobile_worker('targaryen', metadata={'sigil': 'dragon', 'false_sigil': 'direwolf'})
-        cls.elasticsearch.indices.refresh(USER_INDEX)
+        manager.index_refresh(user_adapter.index_name)
 
     @classmethod
     def _create_mobile_worker(cls, username, metadata):
@@ -45,7 +40,6 @@ class TestUserES(TestCase):
     def tearDownClass(cls):
         delete_all_users()
         cls.domain_obj.delete()
-        ensure_index_deleted(USER_INDEX)
         super().tearDownClass()
 
     def test_basic_metadata_query(self):

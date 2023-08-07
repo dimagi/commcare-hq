@@ -5,17 +5,17 @@ from django.test import TestCase
 
 from casexml.apps.case.const import CASE_INDEX_EXTENSION
 from casexml.apps.case.mock import CaseBlock, CaseFactory, CaseStructure, CaseIndex
-from casexml.apps.case.util import post_case_blocks
 from corehq.apps.accounting.models import SoftwarePlanEdition
 from corehq.apps.accounting.tests.utils import DomainSubscriptionMixin
 from corehq.apps.accounting.utils import clear_plan_version_cache
 from corehq.apps.app_manager.tests.util import TestXmlMixin
 from corehq.apps.domain.shortcuts import create_user, create_domain
+from corehq.apps.hqcase.utils import submit_case_blocks
 from corehq.apps.registry.tests.utils import create_registry_for_test, Invitation, Grant
 from corehq.apps.users.models import CommCareUser
 from corehq.motech.models import ConnectionSettings
 from corehq.motech.repeaters.dbaccessors import delete_all_repeat_records
-from corehq.motech.repeaters.models import DataRegistryCaseUpdateRepeater, RepeatRecord
+from corehq.motech.repeaters.models import RepeatRecord, DataRegistryCaseUpdateRepeater
 from corehq.motech.repeaters.repeater_generators import DataRegistryCaseUpdatePayloadGenerator
 from corehq.motech.repeaters.tests.test_data_registry_case_update_payload_generator import IntentCaseBuilder, \
     DataRegistryUpdateForm
@@ -43,7 +43,8 @@ class DataRegistryCaseUpdateRepeaterTest(TestCase, TestXmlMixin, DomainSubscript
         cls.repeater = DataRegistryCaseUpdateRepeater(
             domain=cls.domain,
             connection_settings_id=cls.connx.id,
-            white_listed_case_types=[IntentCaseBuilder.CASE_TYPE]
+            white_listed_case_types=[IntentCaseBuilder.CASE_TYPE],
+            repeater_id=uuid.uuid4().hex
         )
         cls.repeater.save()
 
@@ -65,13 +66,13 @@ class DataRegistryCaseUpdateRepeaterTest(TestCase, TestXmlMixin, DomainSubscript
 
         cls.target_case_id_1 = uuid.uuid4().hex
         cls.target_case_id_2 = uuid.uuid4().hex
-        post_case_blocks(
+        submit_case_blocks(
             [
                 CaseBlock(
                     case_id=case_id,
                     create=True,
                     case_type="patient",
-                ).as_xml()
+                ).as_text()
                 for case_id in [cls.target_case_id_1, cls.target_case_id_2]
             ],
             domain=cls.target_domain
@@ -113,10 +114,14 @@ class DataRegistryCaseUpdateRepeaterTest(TestCase, TestXmlMixin, DomainSubscript
             )]
         )
         cases = factory.create_or_update_case(extension, user_id=self.mobile_user.get_id)
+        extension_case, host_case = cases
+
+        # test that the extension case doesn't match the 'allow' criteria
+        self.assertFalse(self.repeater.allowed_to_forward(extension_case))
+
         repeat_records = self.repeat_records(self.domain).all()
         self.assertEqual(len(repeat_records), 1)
         payload = repeat_records[0].get_payload()
-        host_case = cases[1]
         form = DataRegistryUpdateForm(payload, host_case)
         form.assert_case_updates({
             self.target_case_id_1: {"new_prop": "new_val_case1"},
@@ -135,13 +140,17 @@ class DataRegistryCaseUpdateRepeaterTest(TestCase, TestXmlMixin, DomainSubscript
             .target_case(self.target_domain, self.target_case_id_1)
             .case_properties(new_prop="new_val_case1")
         )
-        case = CaseStructure(
+        case_struct = CaseStructure(
             attrs={"create": True, "case_type": "registry_case_update", "update": builder.props},
         )
-        CaseFactory(self.domain).create_or_update_case(case, user_id=self.mobile_user.get_id, form_extras={
+        [case] = CaseFactory(self.domain).create_or_update_case(
+            case_struct, user_id=self.mobile_user.get_id,
             # pretend this form came from a repeater in another domain
-            'xmlns': DataRegistryCaseUpdatePayloadGenerator.XMLNS
-        })
+            xmlns=DataRegistryCaseUpdatePayloadGenerator.XMLNS
+        )
+
+        self.assertFalse(self.repeater.allowed_to_forward(case))
+
         repeat_records = self.repeat_records(self.domain).all()
         self.assertEqual(len(repeat_records), 0)
 

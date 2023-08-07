@@ -4,16 +4,75 @@ from django.utils.text import slugify
 
 from corehq.apps.case_search.const import SPECIAL_CASE_PROPERTIES_MAP
 from corehq.apps.data_interfaces.utils import iter_cases_and_run_rules
-from corehq.apps.es import CaseES, queries
-from corehq.apps.es.case_search import CaseSearchES
+from corehq.apps.es import queries
+from corehq.apps.es.case_search import CaseSearchES, case_property_missing
 from corehq.messaging.util import MessagingRuleProgressHelper
+from corehq.apps.locations.dbaccessors import user_ids_at_locations
 
 DUPLICATE_LIMIT = 1000
 DEDUPE_XMLNS = 'http://commcarehq.org/hq_case_deduplication_rule'
 
 
-def find_duplicate_case_ids(domain, case, case_properties, include_closed=False, match_type="ALL"):
-    es = CaseSearchES().domain(domain).size(DUPLICATE_LIMIT).case_type(case.type)
+def _get_es_filtered_case_query(domain, case, case_filter_criteria=None):
+    # Import here to avoid circular import error
+    from corehq.apps.data_interfaces.models import (
+        MatchPropertyDefinition,
+        LocationFilterDefinition
+    )
+
+    if case_filter_criteria is None:
+        case_filter_criteria = []
+
+    query = CaseSearchES().domain(domain).size(DUPLICATE_LIMIT).case_type(case.type)
+
+    def apply_criterion_to_query(query_, definition):
+        if isinstance(definition, MatchPropertyDefinition):
+            match_type = definition.match_type
+
+            if match_type == MatchPropertyDefinition.MATCH_HAS_NO_VALUE:
+                query_ = query_.case_property_missing(definition.property_name)
+            elif match_type == MatchPropertyDefinition.MATCH_HAS_VALUE:
+                query_ = query_.NOT(case_property_missing(definition.property_name))
+            elif match_type == MatchPropertyDefinition.MATCH_EQUAL:
+                query_ = query_.case_property_query(
+                    definition.property_name,
+                    definition.property_value,
+                    queries.MUST,
+                )
+            elif match_type == MatchPropertyDefinition.MATCH_NOT_EQUAL:
+                query_ = query_.case_property_query(
+                    definition.property_name,
+                    definition.property_value,
+                    queries.MUST_NOT,
+                )
+        elif isinstance(definition, LocationFilterDefinition):
+            # Get all users owning cases at definition.location_id
+            owners_ids = user_ids_at_locations([definition.location_id])
+            # Add the definition.location_id for cases which belong to definition.location_id
+            owners_ids.append(definition.location_id)
+
+            query_ = query_.owner(owners_ids)
+
+        return query_
+
+    for criterion in case_filter_criteria:
+        query = apply_criterion_to_query(query, criterion.definition)
+
+    return query
+
+
+def find_duplicate_case_ids(
+    domain,
+    case,
+    case_properties,
+    include_closed=False,
+    match_type="ALL",
+    case_filter_criteria=None
+):
+    if case_filter_criteria is None:
+        case_filter_criteria = []
+
+    es = _get_es_filtered_case_query(domain, case, case_filter_criteria=case_filter_criteria)
 
     if not include_closed:
         es = es.is_closed(False)
@@ -86,6 +145,7 @@ def backfill_deduplicate_rule(domain, rule):
 
     progress_helper = MessagingRuleProgressHelper(rule.pk)
     total_cases_count = CaseSearchES().domain(domain).case_type(rule.case_type).count()
+    progress_helper.set_initial_progress()
     progress_helper.set_total_cases_to_be_processed(total_cases_count)
     now = datetime.utcnow()
     try:
@@ -94,6 +154,7 @@ def backfill_deduplicate_rule(domain, rule):
             started_on=now,
             status=DomainCaseRuleRun.STATUS_RUNNING,
             case_type=rule.case_type,
+            workflow=AutomaticUpdateRule.WORKFLOW_DEDUPLICATE,
         )
         action = CaseDeduplicationActionDefinition.from_rule(rule)
         case_iterator = AutomaticUpdateRule.iter_cases(
@@ -110,10 +171,9 @@ def backfill_deduplicate_rule(domain, rule):
         )
     finally:
         progress_helper.set_rule_complete()
-        AutomaticUpdateRule.objects.filter(pk=rule.pk).update(
-            locked_for_editing=False,
-            last_run=now,
-        )
+        rule.last_run = now
+        rule.locked_for_editing = False
+        rule.save(update_fields=['last_run', 'locked_for_editing'])
 
 
 def get_dedupe_xmlns(rule):

@@ -17,7 +17,7 @@ from corehq.apps.receiverwrapper.util import DEMO_SUBMIT_MODE
 from corehq.apps.receiverwrapper.views import post_api, secure_post
 from corehq.apps.users.models import (
     CommCareUser,
-    Permissions,
+    HqPermissions,
     UserRole,
     WebUser,
 )
@@ -353,7 +353,7 @@ class TestAPIEndpoint(TestCase):
 
     def _create_user(self, edit_data=False, access_api=False):
         role = UserRole.create(
-            self.domain, 'api-user', permissions=Permissions(
+            self.domain, 'api-user', permissions=HqPermissions(
                 edit_data=edit_data, access_api=access_api
             )
         )

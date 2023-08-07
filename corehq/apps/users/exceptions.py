@@ -5,7 +5,7 @@ class NoAccountException(Exception):
     pass
 
 
-class InvalidMobileWorkerRequest(Exception):
+class InvalidRequestException(Exception):
     pass
 
 

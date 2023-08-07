@@ -29,7 +29,6 @@ from corehq.apps.data_interfaces.interfaces import (
     CaseReassignmentInterface,
 )
 from corehq.apps.domain.dbaccessors import get_doc_ids_in_domain_by_class
-from corehq.apps.export.views.incremental import IncrementalExportLogView
 from corehq.apps.fixtures.interface import (
     FixtureEditInterface,
     FixtureViewInterface,
@@ -70,10 +69,12 @@ from corehq.apps.userreports.reports.view import (
     CustomConfigurableReportDispatcher,
 )
 from corehq.apps.userreports.const import TEMP_REPORT_PREFIX
+from corehq.motech.generic_inbound.reports import ApiRequestLogReport
 from corehq.motech.repeaters.views import (
     DomainForwardingRepeatRecords,
     SQLRepeatRecordReport,
 )
+from corehq.apps.geospatial.reports import CaseManagementMap
 
 from . import toggles
 
@@ -93,13 +94,16 @@ def REPORTS(project):
         monitoring.FormCompletionTimeReport,
         monitoring.CaseActivityReport,
         monitoring.FormCompletionVsSubmissionTrendsReport,
-        monitoring.WorkerActivityTimes,
         ProjectHealthDashboard,
     )
     inspect_reports = [
         inspect.SubmitHistory, CaseListReport,
     ]
-    if toggles.CASE_LIST_EXPLORER.enabled(project.name):
+
+    from corehq.apps.accounting.utils import domain_has_privilege
+
+    domain_can_access_case_list_explorer = domain_has_privilege(project.name, privileges.CASE_LIST_EXPLORER)
+    if toggles.CASE_LIST_EXPLORER.enabled(project.name) or domain_can_access_case_list_explorer:
         inspect_reports.append(CaseListExplorer)
 
     if toggles.CASE_DEDUPE.enabled(project.name):
@@ -130,7 +134,6 @@ def REPORTS(project):
 
     reports = list(_get_report_builder_reports(project)) + reports
 
-    from corehq.apps.accounting.utils import domain_has_privilege
     messaging_reports = []
 
     project_can_use_sms = domain_has_privilege(project.name, privileges.OUTBOUND_SMS)
@@ -329,7 +332,7 @@ DOMAIN_REPORTS = (
         DomainForwardingRepeatRecords,
         SQLRepeatRecordReport,
         DomainLinkHistoryReport,
-        IncrementalExportLogView,
+        ApiRequestLogReport,
     )),
 )
 
@@ -337,5 +340,11 @@ DOMAIN_REPORTS = (
 USER_MANAGEMENT_REPORTS = (
     (_("User Management"), (
         UserHistoryReport,
+    )),
+)
+
+GEOSPATIAL_MAP = (
+    (_("Case Management"), (
+        CaseManagementMap,
     )),
 )

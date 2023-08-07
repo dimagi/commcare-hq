@@ -6,7 +6,7 @@ from django.test import SimpleTestCase
 
 from nose.plugins.attrib import attr
 
-B3_BASE = 'hqwebapp/base_navigation.html'
+B3_BASE = 'hqwebapp/bootstrap3/base_navigation.html'
 
 COMPRESS_JS = ' compress js '
 COMPRESS_CSS = ' compress css '

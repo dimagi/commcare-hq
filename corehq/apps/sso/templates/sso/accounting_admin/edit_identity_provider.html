@@ -1,4 +1,4 @@
-{% extends 'hqwebapp/base_section.html' %}
+{% extends 'hqwebapp/bootstrap3/base_section.html' %}
 {% load crispy_forms_tags %}
 {% load hq_shared_tags %}
 {% load i18n %}
@@ -12,6 +12,7 @@
     <li><a href="#idp" data-toggle="tab">{% trans "Identity Provider" %}</a></li>
     <li><a href="#email-domains" data-toggle="tab">{% trans "Authenticated Email Domains" %}</a></li>
     <li><a href="#sso-exempt-users" data-toggle="tab">{% trans "SSO Exempt Users" %}</a></li>
+    <li><a href="#sso-test-users" data-toggle="tab">{% trans "SSO Test Users" %}</a></li>
     <li><a href="#danger-zone" data-toggle="tab">{% trans "Danger Zone" %}</a></li>
   </ul>
   <div class="tab-content tab-padded">
@@ -25,6 +26,9 @@
     </div>
     <div class="tab-pane" id="sso-exempt-users">
       {% include 'sso/partials/manage_sso_exempt_users.html' %}
+    </div>
+    <div class="tab-pane" id="sso-test-users">
+      {% include 'sso/partials/manage_sso_test_users.html' %}
     </div>
     <div class="tab-pane" id="danger-zone">
       {% include 'sso/partials/admin_danger_zone.html' %}

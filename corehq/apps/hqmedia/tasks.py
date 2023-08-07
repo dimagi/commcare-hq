@@ -9,7 +9,6 @@ from wsgiref.util import FileWrapper
 from django.conf import settings
 from django.utils.translation import gettext as _
 
-from celery.task import task
 from celery.utils.log import get_task_logger
 
 from dimagi.utils.logging import notify_exception
@@ -18,6 +17,7 @@ from soil.util import expose_cached_download, expose_file_download
 
 from corehq import toggles
 from corehq.apps.app_manager.dbaccessors import get_app
+from corehq.apps.celery import task
 from corehq.apps.hqmedia.cache import BulkMultimediaStatusCache
 from corehq.apps.hqmedia.models import CommCareMultimedia
 from corehq.util.files import file_extention_from_filename

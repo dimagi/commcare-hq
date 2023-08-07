@@ -2,26 +2,32 @@
 DomainES
 --------
 
-Here's an example generating a histogram of domain creations (that's a type of
-faceted query), filtered by a provided list of domains and a report date range.
-
 .. code-block:: python
 
     from corehq.apps.es import DomainES
 
-    domains_after_date = (DomainES()
-                          .in_domains(domains)
-                          .created(gte=datespan.startdate, lte=datespan.enddate)
-                          .date_histogram('date', 'date_created', interval)
-                          .size(0))
-    histo_data = domains_after_date.run().aggregations.date.buckets_list
+    query = (DomainES()
+             .in_domains(domains)
+             .created(gte=datespan.startdate, lte=datespan.enddate)
+             .size(0))
 """
+
+from django_countries import Countries
+
 from . import filters
+from .client import ElasticDocumentAdapter, create_document_adapter
+from .const import (
+    HQ_DOMAINS_INDEX_CANONICAL_NAME,
+    HQ_DOMAINS_INDEX_NAME,
+    HQ_DOMAINS_SECONDARY_INDEX_NAME,
+)
 from .es_query import HQESQuery
+from .index.analysis import COMMA_ANALYSIS
+from .index.settings import IndexSettingsKey
 
 
 class DomainES(HQESQuery):
-    index = 'domains'
+    index = HQ_DOMAINS_INDEX_CANONICAL_NAME
     default_filters = {
         'not_snapshot': filters.NOT(filters.term('is_snapshot', True)),
     }
@@ -45,6 +51,48 @@ class DomainES(HQESQuery):
             created_by_user,
             self_started,
         ] + super(DomainES, self).builtin_filters
+
+
+class ElasticDomain(ElasticDocumentAdapter):
+
+    analysis = COMMA_ANALYSIS
+    settings_key = IndexSettingsKey.DOMAINS
+    canonical_name = HQ_DOMAINS_INDEX_CANONICAL_NAME
+
+    @property
+    def mapping(self):
+        from .mappings.domain_mapping import DOMAIN_MAPPING
+        return DOMAIN_MAPPING
+
+    @property
+    def model_cls(self):
+        from corehq.apps.domain.models import Domain
+        return Domain
+
+    def _from_dict(self, domain_dict):
+        """
+        Takes a domain dict and applies required transformation to make it suitable for ES.
+        :param domain: an instance of ``dict`` which is result of ``Domain.to_json()``
+        """
+        from corehq.apps.accounting.models import Subscription
+
+        sub = Subscription.visible_objects.filter(subscriber__domain=domain_dict['name'], is_active=True)
+        domain_dict['deployment'] = domain_dict.get('deployment') or {}
+        countries = domain_dict['deployment'].get('countries', [])
+        domain_dict['deployment']['countries'] = []
+        if sub:
+            domain_dict['subscription'] = sub[0].plan_version.plan.edition
+        for country in countries:
+            domain_dict['deployment']['countries'].append(Countries[country].upper())
+        return super()._from_dict(domain_dict)
+
+
+domain_adapter = create_document_adapter(
+    ElasticDomain,
+    HQ_DOMAINS_INDEX_NAME,
+    "hqdomain",
+    secondary=HQ_DOMAINS_SECONDARY_INDEX_NAME,
+)
 
 
 def non_test_domains():

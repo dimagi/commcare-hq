@@ -1,13 +1,24 @@
 import json
+from base64 import b64decode, b64encode
 from collections import namedtuple
-from itertools import chain
+import dataclasses
+from dataclasses import dataclass, InitVar
+from datetime import datetime, timedelta
+import functools
+import pytz
+from urllib.parse import urlencode
 
 from django.conf.urls import re_path as url
 from django.contrib.auth.models import User
-from django.forms import ValidationError
-from django.http import Http404, HttpResponse, HttpResponseNotFound
+from django.core.exceptions import ValidationError
+from django.db.models import Max, Min, Q
+from django.db.models.functions import TruncDate
+
+from django.http import Http404, HttpResponse, HttpResponseNotFound, JsonResponse, QueryDict
+from django.test import override_settings
 from django.urls import reverse
-from django.utils.translation import gettext_noop, gettext as _
+from django.utils.translation import gettext as _
+from django.utils.translation import gettext_noop
 
 from memoized import memoized_property
 from tastypie import fields, http
@@ -18,7 +29,6 @@ from tastypie.http import HttpForbidden, HttpUnauthorized
 from tastypie.resources import ModelResource, Resource, convert_post_to_patch
 from tastypie.utils import dict_strip_unicode_keys
 
-from dimagi.utils.couch.bulk import get_docs
 from phonelog.models import DeviceReportEntry
 
 from corehq import privileges, toggles
@@ -34,22 +44,22 @@ from corehq.apps.api.odata.views import (
     raise_odata_permissions_issues,
 )
 from corehq.apps.api.resources.auth import (
-    AdminAuthentication,
     LoginAuthentication,
     ODataAuthentication,
     RequirePermissionAuthentication,
 )
-from corehq.apps.api.resources.meta import CustomResourceMeta
+from corehq.apps.auditcare.models import NavigationEventAudit
+from corehq.apps.api.resources.meta import AdminResourceMeta, CustomResourceMeta
 from corehq.apps.api.resources.serializers import ListToSingleObjectSerializer
-from corehq.apps.api.util import get_obj
+from corehq.apps.api.util import (
+    get_obj,
+    django_date_filter,
+    make_date_filter,
+    parse_str_to_date,
+)
 from corehq.apps.app_manager.models import Application
-from corehq.apps.domain.forms import clean_password
 from corehq.apps.domain.models import Domain
 from corehq.apps.es import UserES
-from corehq.apps.export.esaccessors import (
-    get_case_export_base_query,
-    get_form_export_base_query,
-)
 from corehq.apps.export.models import CaseExportInstance, FormExportInstance
 from corehq.apps.groups.models import Group
 from corehq.apps.locations.permissions import location_safe
@@ -60,15 +70,14 @@ from corehq.apps.reports.standard.cases.utils import (
     query_location_restricted_cases,
     query_location_restricted_forms,
 )
-from corehq.apps.sms.util import strip_plus
-from corehq.apps.user_importer.helpers import find_differences_in_list
 from corehq.apps.userreports.columns import UCRExpandDatabaseSubcolumn
 from corehq.apps.userreports.dbaccessors import get_datasources_for_domain
 from corehq.apps.userreports.exceptions import BadSpecError
 from corehq.apps.userreports.models import (
+    DataSourceConfiguration,
     ReportConfiguration,
     StaticReportConfiguration,
-    report_config_id_is_static, DataSourceConfiguration,
+    report_config_id_is_static,
 )
 from corehq.apps.userreports.reports.data_source import (
     ConfigurableReportDataSource,
@@ -77,19 +86,21 @@ from corehq.apps.userreports.reports.view import (
     get_filter_values,
     query_dict_to_dict,
 )
-from corehq.apps.userreports.util import get_configurable_and_static_reports, get_report_config_or_not_found
-from corehq.apps.users.audit.change_messages import UserChangeMessage
+from corehq.apps.userreports.util import (
+    get_configurable_and_static_reports,
+    get_report_config_or_not_found,
+)
 from corehq.apps.users.dbaccessors import (
     get_all_user_id_username_pairs_by_domain,
+    get_user_id_by_username,
 )
 from corehq.apps.users.models import (
     CommCareUser,
     CouchUser,
-    Permissions,
-    UserRole,
+    HqPermissions,
     WebUser,
 )
-from corehq.apps.users.util import raw_username
+from corehq.apps.users.util import raw_username, generate_mobile_username
 from corehq.const import USER_CHANGE_VIA_API
 from corehq.util import get_document_or_404
 from corehq.util.couch import DocumentNotFound
@@ -104,6 +115,8 @@ from . import (
     v0_4,
 )
 from .pagination import DoesNothingPaginator, NoCountingPaginator
+from ..exceptions import UpdateUserException
+from ..user_updates import update
 
 MOCK_BULK_USER_ES = None
 
@@ -117,16 +130,6 @@ def user_es_call(domain, q, fields, size, start_at):
     if q is not None:
         query.set_query({"query_string": {"query": q}})
     return query.run().hits
-
-
-def _set_role_for_bundle(kwargs, bundle):
-    # check for roles associated with the domain
-    domain_roles = UserRole.objects.by_domain_and_name(kwargs['domain'], bundle.data.get('role'))
-    if domain_roles:
-        qualified_role_id = domain_roles[0].get_qualified_id()  # roles may not be unique by name
-        bundle.obj.set_role(kwargs['domain'], qualified_role_id)
-    else:
-        raise BadRequest(f"Invalid User Role '{bundle.data.get('role')}'")
 
 
 class BulkUserResource(HqBaseResource, DomainSpecificResourceMixin):
@@ -152,7 +155,7 @@ class BulkUserResource(HqBaseResource, DomainSpecificResourceMixin):
         return namedtuple('user', list(user))(**user)
 
     class Meta(CustomResourceMeta):
-        authentication = RequirePermissionAuthentication(Permissions.edit_commcare_users)
+        authentication = RequirePermissionAuthentication(HqPermissions.edit_commcare_users)
         list_allowed_methods = ['get']
         detail_allowed_methods = ['get']
         object_class = object
@@ -175,7 +178,10 @@ class BulkUserResource(HqBaseResource, DomainSpecificResourceMixin):
                 raise BadRequest('{0} is not a valid field'.format(field))
 
         params = bundle.request.GET
-        param = lambda p: params.get(p, None)
+
+        def param(p):
+            return params.get(p, None)
+
         fields = list(self.fields)
         fields.remove('id')
         fields.append('_id')
@@ -196,7 +202,6 @@ class BulkUserResource(HqBaseResource, DomainSpecificResourceMixin):
 
 
 class CommCareUserResource(v0_1.CommCareUserResource):
-    immutable_fields = ['id', 'username']
 
     class Meta(v0_1.CommCareUserResource.Meta):
         detail_allowed_methods = ['get', 'put', 'delete']
@@ -221,95 +226,16 @@ class CommCareUserResource(v0_1.CommCareUserResource):
                                                           api_name=self._meta.api_name,
                                                           pk=obj._id))
 
-    def _update(self, bundle, user_change_logger=None):
-        should_save = False
-        for key, value in bundle.data.items():
-            if key in self.immutable_fields:
-                raise BadRequest(f'Cannot update a mobile user\'s {key}.')
-            if getattr(bundle.obj, key, None) != value:
-                if key == 'phone_numbers':
-                    old_phone_numbers = set(bundle.obj.phone_numbers)
-                    new_phone_numbers = set()
-                    bundle.obj.phone_numbers = []
-                    for idx, phone_number in enumerate(bundle.data.get('phone_numbers', [])):
-                        formatted_phone_number = strip_plus(phone_number)
-                        new_phone_numbers.add(formatted_phone_number)
-                        bundle.obj.add_phone_number(formatted_phone_number)
-                        if idx == 0:
-                            bundle.obj.set_default_phone_number(formatted_phone_number)
-                        should_save = True
-
-                    if user_change_logger:
-                        (numbers_added, numbers_removed) = find_differences_in_list(
-                            target=list(new_phone_numbers),
-                            source=list(old_phone_numbers)
-                        )
-
-                        change_messages = {}
-                        if numbers_removed:
-                            change_messages.update(
-                                UserChangeMessage.phone_numbers_removed(list(numbers_removed))["phone_numbers"]
-                            )
-
-                        if numbers_added:
-                            change_messages.update(
-                                UserChangeMessage.phone_numbers_added(list(numbers_added))["phone_numbers"]
-                            )
-
-                        if change_messages:
-                            user_change_logger.add_change_message({'phone_numbers': change_messages})
-                elif key == 'groups':
-                    group_ids = bundle.data.get("groups", [])
-                    groups_updated = bundle.obj.set_groups(group_ids)
-                    if user_change_logger and groups_updated:
-                        groups = []
-                        if group_ids:
-                            groups = [Group.wrap(doc) for doc in get_docs(Group.get_db(), group_ids)]
-                        user_change_logger.add_info(UserChangeMessage.groups_info(groups))
-                    should_save = True
-                elif key == 'email':
-                    lowercase_value = value.lower()
-                    if user_change_logger and getattr(bundle.obj, key) != lowercase_value:
-                        user_change_logger.add_changes({key: lowercase_value})
-                    setattr(bundle.obj, key, lowercase_value)
-                    should_save = True
-                elif key == 'password':
-                    domain = Domain.get_by_name(bundle.obj.domain)
-                    if domain.strong_mobile_passwords:
-                        try:
-                            clean_password(bundle.data.get("password"))
-                        except ValidationError as e:
-                            if not hasattr(bundle.obj, 'errors'):
-                                bundle.obj.errors = []
-                            bundle.obj.errors.append(str(e))
-                            return False
-                    bundle.obj.set_password(bundle.data.get("password"))
-                    if user_change_logger:
-                        user_change_logger.add_change_message(UserChangeMessage.password_reset())
-                    should_save = True
-                elif key == 'user_data':
-                    try:
-                        original_user_data = bundle.obj.metadata.copy()
-                        bundle.obj.update_metadata(value)
-                        # check changes post update to account for any changes in update_metadata
-                        if user_change_logger and original_user_data != bundle.obj.user_data:
-                            user_change_logger.add_changes({'user_data': bundle.obj.user_data})
-                    except ValueError as e:
-                        raise BadRequest(str(e))
-                elif key in ['first_name', 'last_name', 'language']:
-                    if user_change_logger and getattr(bundle.obj, key) != value:
-                        user_change_logger.add_changes({key: value})
-                    setattr(bundle.obj, key, value)
-                    should_save = True
-                else:
-                    raise BadRequest(f'Attempted to update unknown field {key}.')
-        return should_save
-
     def obj_create(self, bundle, **kwargs):
+        try:
+            username = generate_mobile_username(bundle.data['username'], kwargs['domain'])
+        except ValidationError as e:
+            raise BadRequest(e.message)
+
         try:
             bundle.obj = CommCareUser.create(
                 domain=kwargs['domain'],
-                username=bundle.data['username'].lower(),
+                username=username,
                 password=bundle.data['password'],
                 created_by=bundle.request.couch_user,
                 created_via=USER_CHANGE_VIA_API,
@@ -338,13 +264,14 @@ class CommCareUserResource(v0_1.CommCareUserResource):
         bundle.obj = CommCareUser.get(kwargs['pk'])
         assert bundle.obj.domain == kwargs['domain']
         user_change_logger = self._get_user_change_logger(bundle)
-        if self._update(bundle, user_change_logger):
-            assert bundle.obj.domain == kwargs['domain']
-            bundle.obj.save()
-            user_change_logger.save()
-            return bundle
-        else:
-            raise BadRequest(''.join(chain.from_iterable(bundle.obj.errors)))
+        errors = self._update(bundle, user_change_logger)
+        if errors:
+            formatted_errors = ', '.join(errors)
+            raise BadRequest(_('The request resulted in the following errors: {}').format(formatted_errors))
+        assert bundle.obj.domain == kwargs['domain']
+        bundle.obj.save()
+        user_change_logger.save()
+        return bundle
 
     def obj_delete(self, bundle, **kwargs):
         user = CommCareUser.get(kwargs['pk'])
@@ -353,20 +280,29 @@ class CommCareUserResource(v0_1.CommCareUserResource):
                         deleted_via=USER_CHANGE_VIA_API)
         return ImmediateHttpResponse(response=http.HttpAccepted())
 
+    @classmethod
+    def _update(cls, bundle, user_change_logger=None):
+        errors = []
+        for key, value in bundle.data.items():
+            try:
+                update(bundle.obj, key, value, user_change_logger)
+            except UpdateUserException as e:
+                errors.append(e.message)
+
+        return errors
+
 
 class WebUserResource(v0_1.WebUserResource):
 
     def get_resource_uri(self, bundle_or_obj=None, url_name='api_dispatch_detail'):
-        if isinstance(bundle_or_obj, Bundle):
-            domain = bundle_or_obj.request.domain
-            obj = bundle_or_obj.obj
-        elif bundle_or_obj is None:
-            return None
-
-        return reverse('api_dispatch_detail', kwargs=dict(resource_name=self._meta.resource_name,
-                                                          domain=domain,
-                                                          api_name=self._meta.api_name,
-                                                          pk=obj._id))
+        if bundle_or_obj is None:
+            return super().get_resource_uri(None, url_name)
+        return reverse('api_dispatch_detail', kwargs={
+            'resource_name': self._meta.resource_name,
+            'domain': bundle_or_obj.request.domain,
+            'api_name': self._meta.api_name,
+            'pk': bundle_or_obj.obj._id,
+        })
 
 
 class AdminWebUserResource(v0_1.UserResource):
@@ -380,10 +316,11 @@ class AdminWebUserResource(v0_1.UserResource):
             return [WebUser.get_by_username(bundle.request.GET['username'])]
         return [WebUser.wrap(u) for u in UserES().web_users().run().hits]
 
-    class Meta(WebUserResource.Meta):
-        authentication = AdminAuthentication()
+    class Meta(AdminResourceMeta):
         detail_allowed_methods = ['get']
         list_allowed_methods = ['get']
+        object_class = WebUser
+        resource_name = 'web-user'
 
 
 class GroupResource(v0_4.GroupResource):
@@ -407,7 +344,8 @@ class GroupResource(v0_4.GroupResource):
         (BSD licensed) and modified to pass the kwargs to `obj_create` and support only create method
         """
         request = convert_post_to_patch(request)
-        deserialized = self.deserialize(request, request.body, format=request.META.get('CONTENT_TYPE', 'application/json'))
+        deserialized = self.deserialize(request, request.body,
+                                        format=request.META.get('CONTENT_TYPE', 'application/json'))
 
         collection_name = self._meta.collection_name
         if collection_name not in deserialized:
@@ -438,7 +376,8 @@ class GroupResource(v0_4.GroupResource):
         Exactly copied from https://github.com/toastdriven/django-tastypie/blob/v0.9.14/tastypie/resources.py#L1314
         (BSD licensed) and modified to catch Exception and not returning traceback
         """
-        deserialized = self.deserialize(request, request.body, format=request.META.get('CONTENT_TYPE', 'application/json'))
+        deserialized = self.deserialize(request, request.body,
+                                        format=request.META.get('CONTENT_TYPE', 'application/json'))
         deserialized = self.alter_deserialized_detail_data(request, deserialized)
         bundle = self.build_bundle(data=dict_strip_unicode_keys(deserialized), request=request)
         try:
@@ -450,7 +389,8 @@ class GroupResource(v0_4.GroupResource):
             else:
                 updated_bundle = self.full_dehydrate(updated_bundle)
                 updated_bundle = self.alter_detail_data_to_serialize(request, updated_bundle)
-                return self.create_response(request, updated_bundle, response_class=http.HttpCreated, location=location)
+                return self.create_response(request, updated_bundle, response_class=http.HttpCreated,
+                                            location=location)
         except AssertionError as e:
             bundle.data['error_message'] = str(e)
             return self.create_response(request, bundle, response_class=http.HttpBadRequest)
@@ -544,7 +484,7 @@ class DeviceReportResource(HqBaseResource, ModelResource):
         list_allowed_methods = ['get']
         detail_allowed_methods = ['get']
         resource_name = 'device-log'
-        authentication = RequirePermissionAuthentication(Permissions.edit_data)
+        authentication = RequirePermissionAuthentication(HqPermissions.edit_data)
         authorization = DomainAuthorization()
         paginator_class = NoCountingPaginator
         filtering = {
@@ -704,7 +644,7 @@ class ConfigurableReportDataResource(HqBaseResource, DomainSpecificResourceMixin
         return uri
 
     class Meta(CustomResourceMeta):
-        authentication = RequirePermissionAuthentication(Permissions.view_reports, allow_session_auth=True)
+        authentication = RequirePermissionAuthentication(HqPermissions.view_reports, allow_session_auth=True)
         list_allowed_methods = []
         detail_allowed_methods = ["get"]
 
@@ -836,7 +776,7 @@ class DataSourceConfigurationResource(CouchResourceMixin, HqBaseResource, Domain
         detail_allowed_methods = ['get', 'put']
         always_return_data = True
         paginator_class = DoesNothingPaginator
-        authentication = RequirePermissionAuthentication(Permissions.edit_ucrs)
+        authentication = RequirePermissionAuthentication(HqPermissions.edit_ucrs)
 
 
 UserDomain = namedtuple('UserDomain', 'domain_name project_name')
@@ -860,7 +800,8 @@ class UserDomainsResource(CorsResourceMixin, Resource):
             if isinstance(immediate_http_response.response, HttpUnauthorized):
                 raise ImmediateHttpResponse(
                     response=HttpUnauthorized(
-                        content='Username or API Key is incorrect', content_type='text/plain'
+                        content='Username or API Key is incorrect, expired or deactivated',
+                        content_type='text/plain'
                     )
                 )
             else:
@@ -870,12 +811,21 @@ class UserDomainsResource(CorsResourceMixin, Resource):
         return self.get_object_list(bundle.request)
 
     def get_object_list(self, request):
+        feature_flag = request.GET.get("feature_flag")
+        if feature_flag and feature_flag not in toggles.all_toggle_slugs():
+            raise BadRequest(f"{feature_flag!r} is not a valid feature flag")
+        can_view_reports = request.GET.get("can_view_reports")
         couch_user = CouchUser.from_django_user(request.user)
+        username = request.user.username
         results = []
         for domain in couch_user.get_domains():
             if not domain_has_privilege(domain, privileges.ZAPIER_INTEGRATION):
                 continue
             domain_object = Domain.get_by_name(domain)
+            if feature_flag and feature_flag not in toggles.toggles_dict(username=username, domain=domain):
+                continue
+            if can_view_reports and not couch_user.can_view_reports(domain):
+                continue
             results.append(UserDomain(
                 domain_name=domain_object.name,
                 project_name=domain_object.hr_name or domain_object.name
@@ -916,7 +866,7 @@ class DomainForms(Resource):
 
     class Meta(object):
         resource_name = 'domain_forms'
-        authentication = RequirePermissionAuthentication(Permissions.access_api)
+        authentication = RequirePermissionAuthentication(HqPermissions.access_api)
         object_class = Form
         include_resource_uri = False
         allowed_methods = ['get']
@@ -941,6 +891,7 @@ class DomainForms(Resource):
             results.append(Form(form_xmlns=form.xmlns, form_name=form_name))
         return results
 
+
 # Zapier requires id and name; case_type has no obvious id, placeholder inserted instead.
 CaseType = namedtuple('CaseType', 'case_type placeholder')
 CaseType.__new__.__defaults__ = ('', '')
@@ -957,7 +908,7 @@ class DomainCases(Resource):
 
     class Meta(object):
         resource_name = 'domain_cases'
-        authentication = RequirePermissionAuthentication(Permissions.access_api)
+        authentication = RequirePermissionAuthentication(HqPermissions.access_api)
         object_class = CaseType
         include_resource_uri = False
         allowed_methods = ['get']
@@ -984,7 +935,7 @@ class DomainUsernames(Resource):
 
     class Meta(object):
         resource_name = 'domain_usernames'
-        authentication = RequirePermissionAuthentication(Permissions.view_commcare_users)
+        authentication = RequirePermissionAuthentication(HqPermissions.view_commcare_users)
         object_class = User
         include_resource_uri = False
         allowed_methods = ['get']
@@ -1047,14 +998,17 @@ class ODataCaseResource(BaseODataResource):
                     "You do not have permission to view this feed."
                 ))
             )
-        query = get_case_export_base_query(domain, config.case_type)
-        for filter in config.get_filters():
-            query = query.filter(filter.to_es_filter())
+
+        query = config.get_query()
 
         if not bundle.request.couch_user.has_permission(
             domain, 'access_all_locations'
         ):
-            query = query_location_restricted_cases(query, bundle.request)
+            query = query_location_restricted_cases(
+                query,
+                bundle.request.domain,
+                bundle.request.couch_user,
+            )
 
         return query
 
@@ -1086,14 +1040,16 @@ class ODataFormResource(BaseODataResource):
                 ))
             )
 
-        query = get_form_export_base_query(domain, config.app_id, config.xmlns, include_errors=False)
-        for filter in config.get_filters():
-            query = query.filter(filter.to_es_filter())
+        query = config.get_query()
 
         if not bundle.request.couch_user.has_permission(
             domain, 'access_all_locations'
         ):
-            query = query_location_restricted_forms(query, bundle.request)
+            query = query_location_restricted_forms(
+                query,
+                bundle.request.domain,
+                bundle.request.couch_user,
+            )
 
         return query
 
@@ -1111,3 +1067,231 @@ class ODataFormResource(BaseODataResource):
             url(r"^(?P<resource_name>{})/(?P<config_id>[\w\d_.-]+)/feed".format(
                 self._meta.resource_name), self.wrap_view('dispatch_list')),
         ]
+
+
+@dataclass
+class NavigationEventAuditResourceParams:
+    domain: InitVar
+    default_limit: InitVar
+    max_limit: InitVar
+    raw_params: InitVar = None
+
+    users: list[str] = dataclasses.field(default_factory=list)
+    limit: int = None
+    local_timezone: str = None
+    cursor: str = None
+    local_date: dict[str:str] = dataclasses.field(default_factory=dict)
+    cursor_local_date: str = None
+    cursor_user: str = None
+    UTC_start_time_start: datetime = None
+    UTC_start_time_end: datetime = None
+
+    def __post_init__(self, domain, default_limit, max_limit, raw_params=None):
+        if raw_params:
+            self.cursor = raw_params.get('cursor')
+            if self.cursor:
+                raw_params = self._process_cursor()
+            self._validate_keys(raw_params)
+
+            self._set_compound_keys(raw_params)
+            self.limit = raw_params.get('limit')
+            self.users = raw_params.getlist('users')
+            self.local_timezone = raw_params.get('local_timezone')
+            self.UTC_start_time_start = raw_params.get('UTC_start_time_start')
+            self.UTC_start_time_end = raw_params.get('UTC_start_time_end')
+
+        if self.limit:
+            self._process_limit(default_limit, max_limit)
+        if self.UTC_start_time_start:
+            self.UTC_start_time_start = parse_str_to_date(self.UTC_start_time_start)
+        if self.UTC_start_time_end:
+            self.UTC_start_time_end = parse_str_to_date(self.UTC_start_time_end)
+        self._process_local_timezone(domain)
+
+    def _validate_keys(self, params):
+        valid_keys = {'users', 'limit', 'local_timezone', 'cursor', 'format', 'local_date',
+                    'UTC_start_time_start', 'UTC_start_time_end'}
+        standardized_keys = set()
+
+        for key in params.keys():
+            if '.' in key:
+                key, qualifier = key.split('.', maxsplit=1)
+            standardized_keys.add(key)
+
+        invalid_keys = standardized_keys - valid_keys
+        if invalid_keys:
+            raise ValueError(f"Invalid parameter(s): {', '.join(invalid_keys)}")
+
+    def _set_compound_keys(self, params):
+        local_date = {}
+        for key in params.keys():
+            if '.' in key:
+                prefix, qualifier = key.split('.', maxsplit=1)
+                if prefix == 'local_date':
+                    local_date[qualifier] = params.get(key)
+
+        self.local_date = local_date
+
+    def _process_limit(self, default_limit, max_limit):
+        try:
+            self.limit = int(self.limit) or default_limit
+            if self.limit < 0:
+                raise ValueError
+        except (ValueError, TypeError):
+            raise BadRequest(_('limit must be a positive integer.'))
+
+        if self.limit > max_limit:
+            raise BadRequest(_('Limit may not exceed {}.').format(max_limit))
+
+    def _process_cursor(self):
+        cursor_params_string = b64decode(self.cursor).decode('utf-8')
+        cursor_params = QueryDict(cursor_params_string, mutable=True)
+        self.cursor_local_date = cursor_params.pop('cursor_local_date', [None])[0]
+        self.cursor_user = cursor_params.pop('cursor_user', [None])[0]
+        return cursor_params
+
+    def _process_local_timezone(self, domain):
+        if self.local_timezone is None:
+            self.local_timezone = Domain.get_by_name(domain).get_default_timezone()
+        elif isinstance(self.local_timezone, str):
+            self.local_timezone = pytz.timezone(self.local_timezone)
+
+
+class NavigationEventAuditResource(HqBaseResource, Resource):
+    local_date = fields.DateField(attribute='local_date', readonly=True)
+    UTC_start_time = fields.DateTimeField(attribute='UTC_start_time', readonly=True)
+    UTC_end_time = fields.DateTimeField(attribute='UTC_end_time', readonly=True)
+    user = fields.CharField(attribute='user', readonly=True)
+
+    class Meta:
+        authentication = RequirePermissionAuthentication(HqPermissions.view_web_users)
+        queryset = NavigationEventAudit.objects.all()
+        resource_name = 'action_times'
+        include_resource_uri = False
+        allowed_methods = ['get']
+        detail_allowed_methods = []
+        limit = 10000
+        max_limit = 10000
+
+    # Compound filters take the form `prefix.qualifier=value`
+    # These filter functions are called with qualifier and value
+    COMPOUND_FILTERS = {
+        'local_date': make_date_filter(functools.partial(django_date_filter, field_name='local_date'))
+    }
+
+    @staticmethod
+    def to_obj(action_times):
+        '''
+        Takes a flat dict and returns an object
+        '''
+        return namedtuple('action_times', list(action_times))(**action_times)
+
+    def dispatch(self, request_type, request, **kwargs):
+        #super needs to be called first to authenticate user. Otherwise request.user returns AnonymousUser
+        response = super(HqBaseResource, self).dispatch(request_type, request, **kwargs)
+        if not toggles.ACTION_TIMES_API.enabled_for_request(request):
+            msg = (_("You don't have permission to access this API"))
+            raise ImmediateHttpResponse(JsonResponse({"error": msg}, status=403))
+        else:
+            return response
+
+    def alter_list_data_to_serialize(self, request, data):
+        data['meta']['local_date_timezone'] = self.api_params.local_timezone.zone
+        data['meta']['total_count'] = self.count
+
+        original_params = request.GET
+        if 'cursor' in original_params:
+            params_string = b64decode(original_params['cursor']).decode('utf-8')
+            cursor_params = QueryDict(params_string, mutable=True)
+            if 'limit' in cursor_params:
+                data['meta']['limit'] = int(cursor_params['limit'])
+        else:
+            cursor_params = original_params.copy()
+
+        if data['meta']['total_count'] > data['meta']['limit']:
+            last_object = data['objects'][-1]
+            cursor_params['cursor_local_date'] = last_object.data['local_date']
+            cursor_params['cursor_user'] = last_object.data['user']
+            encoded_cursor = b64encode(urlencode(cursor_params).encode('utf-8'))
+
+            next_params = {'cursor': encoded_cursor}
+
+            next_url = f'?{urlencode(next_params)}'
+            data['meta']['next'] = next_url
+        return data
+
+    def dehydrate(self, bundle):
+        bundle.data['user_id'] = get_user_id_by_username(bundle.data['user'])
+        return bundle
+
+    def obj_get_list(self, bundle, **kwargs):
+        domain = kwargs['domain']
+        self.api_params = NavigationEventAuditResourceParams(raw_params=bundle.request.GET, domain=domain,
+                                                             default_limit=self._meta.limit,
+                                                             max_limit=self._meta.max_limit)
+        results = self.cursor_query(domain, self.api_params)
+        return list(map(self.to_obj, results))
+
+    @classmethod
+    def cursor_query(cls, domain: str, params: NavigationEventAuditResourceParams) -> list:
+        if not params.limit:
+            params.limit = cls._meta.limit
+        queryset = cls._query(domain, params)
+
+        cursor_local_date = params.cursor_local_date
+        cursor_user = params.cursor_user
+
+        if cursor_local_date and cursor_user:
+            queryset = queryset.filter(
+                Q(local_date__gt=cursor_local_date)
+                | (Q(local_date=cursor_local_date) & Q(user__gt=cursor_user))
+            )
+
+        queryset = queryset.annotate(UTC_start_time=Min('event_date'), UTC_end_time=Max('event_date'))
+
+        if params.UTC_start_time_start:
+            queryset = queryset.filter(UTC_start_time__gte=params.UTC_start_time_start)
+        if params.UTC_start_time_end:
+            queryset = queryset.filter(UTC_start_time__lte=params.UTC_start_time_end)
+
+        with override_settings(USE_TZ=True):
+            cls.count = queryset.count()
+            # TruncDate ignores tzinfo if the queryset is not evaluated within overridden USE_TZ setting
+            return list(queryset[:params.limit])
+
+    @classmethod
+    def _query(cls, domain: str, params: NavigationEventAuditResourceParams):
+        queryset = NavigationEventAudit.objects.filter(domain=domain)
+        if params.users:
+            queryset = queryset.filter(user__in=params.users)
+
+        # Initial approximate filtering for performance. The largest time difference between local timezone and UTC
+        # is <24 hours so items outside that bound will not be within the eventual local_date grouping.
+        approx_time_offset = timedelta(hours=24)
+        if params.UTC_start_time_start:
+            offset_UTC_start_time_start = params.UTC_start_time_start - approx_time_offset
+            queryset = queryset.filter(event_date__gte=offset_UTC_start_time_start)
+        if params.UTC_start_time_end:
+            offset_UTC_start_time_end = params.UTC_start_time_end + approx_time_offset
+            queryset = queryset.filter(event_date__lte=offset_UTC_start_time_end)
+
+        local_date_filter = cls._get_compound_filter('local_date', params)
+
+        results = (queryset
+                .exclude(user__isnull=True)
+                .annotate(local_date=TruncDate('event_date', tzinfo=params.local_timezone))
+                .filter(local_date_filter)
+                .values('local_date', 'user'))
+
+        results = results.order_by('local_date', 'user')
+
+        return results
+
+    @classmethod
+    def _get_compound_filter(cls, param_field_name: str, params: NavigationEventAuditResourceParams):
+        compound_filter = Q()
+        if param_field_name in cls.COMPOUND_FILTERS:
+            for qualifier, val in getattr(params, param_field_name).items():
+                filter_obj = cls.COMPOUND_FILTERS[param_field_name](qualifier, val)
+                compound_filter &= Q(**filter_obj)
+        return compound_filter

@@ -4,6 +4,7 @@ from django.urls import reverse
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.domain.tests.test_views import BaseAutocompleteTest
+from corehq.apps.hqwebapp.models import MaintenanceAlert
 from corehq.apps.users.dbaccessors import delete_all_users
 from corehq.apps.users.models import CommCareUser, WebUser
 
@@ -120,3 +121,72 @@ class TestBugReport(TestCase):
 
         # Shouldn't be able to update description as commcare user
         self.assertIsNone(domain_object.project_description)
+
+
+class TestMaintenanceAlertsView(TestCase):
+    domain = 'maintenance-domain'
+
+    @classmethod
+    def setUpClass(cls):
+        super(TestMaintenanceAlertsView, cls).setUpClass()
+        create_domain(cls.domain)
+        cls.user = WebUser.create(
+            cls.domain,
+            'maintenance-user',
+            password='***',
+            created_by=None,
+            created_via=None
+        )
+        cls.user.is_superuser = True
+        cls.user.save()
+
+    def _alert_with_timezone(self):
+        self.client.login(username=self.user.username, password='***')
+        params = {
+            'alert_text': "Maintenance alert",
+            'start_time': '2002-11-12T09:00:00',
+            'end_time': '2002-11-12T17:00:00',
+            'timezone': 'US/Eastern'
+        }
+        self.client.post(reverse('create_alert'), params)
+        return MaintenanceAlert.objects.latest('created')
+
+    def test_create_alert(self):
+        self.client.login(username=self.user.username, password='***')
+        self.client.post(reverse('create_alert'), {'alert_text': "Maintenance alert"})
+        alert = MaintenanceAlert.objects.latest('created')
+
+        self.assertEqual(
+            repr(alert),
+            "MaintenanceAlert(text='Maintenance alert', active='False', domains='All Domains')"
+        )
+
+    def test_create_converts_to_utc(self):
+        alert = self._alert_with_timezone()
+
+        # saves UTC-adjusted to database
+        self.assertEqual(alert.start_time.isoformat(), '2002-11-12T14:00:00')
+        self.assertEqual(alert.end_time.isoformat(), '2002-11-12T22:00:00')
+
+    def test_view_converts_from_utc(self):
+        self._alert_with_timezone()
+        response = self.client.get(reverse('alerts'))
+        alert = response.context['alerts'][0]
+
+        # displays timezone-adjusted to user
+        self.assertEqual(alert['start_time'], 'Nov 12, 2002 09:00 EST')
+        self.assertEqual(alert['end_time'], 'Nov 12, 2002 17:00 EST')
+
+    def test_post_commands(self):
+        self.client.login(username=self.user.username, password='***')
+        self.client.post(reverse('create_alert'), {'alert_text': "Maintenance alert"})
+        alert = MaintenanceAlert.objects.latest('created')
+        self.assertFalse(alert.active)
+
+        self.client.post(reverse('alerts'), {'command': 'activate', 'alert_id': alert.id})
+        alert = MaintenanceAlert.objects.get(id=alert.id)
+        self.assertTrue(alert.active)
+
+        self.client.post(reverse('alerts'), {'command': 'deactivate', 'alert_id': alert.id})
+        alert = MaintenanceAlert.objects.get(id=alert.id)
+        self.assertFalse(alert.active)

@@ -3,11 +3,12 @@ from uuid import uuid4
 from django.test import TestCase
 
 from casexml.apps.case.cleanup import claim_case, get_first_claims
-from casexml.apps.case.mock import CaseBlock
-from casexml.apps.case.util import post_case_blocks
+from casexml.apps.case.const import CASE_INDEX_EXTENSION
+from casexml.apps.case.mock import CaseBlock, IndexAttrs
 
 from corehq.apps.case_search.models import CLAIM_CASE_TYPE
 from corehq.apps.domain.shortcuts import create_domain
+from corehq.apps.hqcase.utils import submit_case_blocks
 from corehq.apps.ota.utils import get_restore_user
 from corehq.apps.users.models import CommCareUser
 from corehq.form_processor.exceptions import CaseNotFound
@@ -47,9 +48,9 @@ class CaseClaimTests(TestCase):
             case_id=self.host_case_id,
             case_name=self.host_case_name,
             case_type=self.host_case_type,
-            owner_id='in_soviet_russia_the_case_owns_you',
-        ).as_xml()
-        post_case_blocks([case_block], {'domain': DOMAIN})
+            owner_id="not the user",
+        ).as_text()
+        submit_case_blocks(case_block, domain=DOMAIN)
 
     def assert_claim(self, claim=None, claim_id=None):
         if claim is None:
@@ -108,6 +109,45 @@ class CaseClaimTests(TestCase):
         first_claim = get_first_claims(DOMAIN, self.user.user_id, [self.host_case_id])
         self.assertEqual(len(first_claim), 0)
 
+    def test_get_first_claims_index_not_host(self):
+        # create a claim case with the incorrect index identifier
+        # method still find the case and recognise it as a claim
+        case_block = CaseBlock(
+            create=True,
+            case_id=uuid4().hex,
+            case_name="claim",
+            case_type=CLAIM_CASE_TYPE,
+            owner_id=self.user.user_id,
+            index={
+                "not_host": IndexAttrs(
+                    case_type=self.host_case_type,
+                    case_id=self.host_case_id,
+                    relationship=CASE_INDEX_EXTENSION,
+                )
+            }
+        ).as_text()
+        submit_case_blocks(case_block, domain=DOMAIN)
+        first_claim = get_first_claims(DOMAIN, self.user.user_id, [self.host_case_id])
+        self.assertEqual(first_claim, {self.host_case_id})
+
+    def test_claim_index_deleted(self):
+        """
+        get_first_claim should return None if claim case is closed
+        """
+        claim_id = claim_case(DOMAIN, self.restore_user, self.host_case_id,
+                              host_type=self.host_case_type, host_name=self.host_case_name)
+
+        # delete the case index
+        case_block = CaseBlock(
+            create=False,
+            case_id=claim_id,
+            index={"host": (self.host_case_type, "")}
+        ).as_text()
+        submit_case_blocks(case_block, domain=DOMAIN)
+
+        first_claim = get_first_claims(DOMAIN, self.user.user_id, [self.host_case_id])
+        self.assertEqual(len(first_claim), 0)
+
     def test_claim_case_other_domain(self):
         malicious_domain = 'malicious_domain'
         domain_obj = create_domain(malicious_domain)
@@ -122,5 +162,5 @@ class CaseClaimTests(TestCase):
             create=False,
             case_id=case_id,
             close=True
-        ).as_xml()
-        post_case_blocks([case_block], {'domain': DOMAIN})
+        ).as_text()
+        submit_case_blocks(case_block, domain=DOMAIN)

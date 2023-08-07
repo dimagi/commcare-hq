@@ -5,7 +5,6 @@ import os
 from casexml.apps.case.const import CASE_INDEX_EXTENSION
 from casexml.apps.case.mock import CaseBlock, CaseFactory, CaseStructure, CaseIndex
 from corehq.apps.reports.view_helpers import get_case_hierarchy, case_hierarchy_context
-from casexml.apps.case.util import post_case_blocks
 from corehq.apps.hqcase.utils import submit_case_blocks
 from corehq.apps.receiverwrapper.util import submit_form_locally
 from corehq.form_processor.exceptions import CaseNotFound
@@ -91,9 +90,7 @@ class CaseBugTest(TestCase, TestFileMixin):
         Submit multiple values for the same property in an update block
         """
         case_id = '061ecbae-d9be-4bb5-bdd4-e62abd5eaf7b'
-        post_case_blocks([
-            CaseBlock(create=True, case_id=case_id).as_xml()
-        ])
+        submit_case_blocks(CaseBlock(create=True, case_id=case_id).as_text(), domain='test-domain')
         xml_data = self.get_xml('duplicate_case_properties')
         result = submit_form_locally(xml_data, 'test-domain')
         self.assertEqual("", result.case.dynamic_case_properties()['foo'])
@@ -134,9 +131,9 @@ class CaseBugTest(TestCase, TestFileMixin):
     def test_submit_to_deleted_case(self):
         """submitting to a deleted case should succeed and affect the case"""
         case_id = uuid.uuid4().hex
-        xform, [case] = post_case_blocks([
+        xform, [case] = submit_case_blocks([
             CaseBlock(create=True, case_id=case_id, user_id='whatever',
-                update={'foo': 'bar'}).as_xml()
+                update={'foo': 'bar'}).as_text()
         ], domain="test-domain")
         CommCareCase.objects.soft_delete_cases("test-domain", [case_id])
 
@@ -144,10 +141,10 @@ class CaseBugTest(TestCase, TestFileMixin):
         self.assertEqual('bar', case.dynamic_case_properties()['foo'])
         self.assertTrue(case.is_deleted)
 
-        xform, [case] = post_case_blocks([
+        xform, [case] = submit_case_blocks([
             CaseBlock(create=False, case_id=case_id, user_id='whatever',
-                      update={'foo': 'not_bar'}).as_xml()
-        ])
+                      update={'foo': 'not_bar'}).as_text()
+        ], domain="test-domain")
         self.assertEqual('not_bar', case.dynamic_case_properties()['foo'])
         self.assertTrue(case.is_deleted)
 
@@ -156,15 +153,31 @@ class CaseBugTest(TestCase, TestFileMixin):
         case_id2 = uuid.uuid4().hex
         # updates before create and case blocks for different cases interleaved
         blocks = [
-            CaseBlock(create=False, case_id=case_id1, update={'p': '2'}).as_xml(),
-            CaseBlock(create=False, case_id=case_id2, update={'p': '2'}).as_xml(),
-            CaseBlock(create=True, case_id=case_id1, update={'p': '1'}).as_xml(),
-            CaseBlock(create=True, case_id=case_id2, update={'p': '1'}).as_xml()
+            CaseBlock(create=False, case_id=case_id1, update={'p': '2'}).as_text(),
+            CaseBlock(create=False, case_id=case_id2, update={'p': '2'}).as_text(),
+            CaseBlock(create=True, case_id=case_id1, update={'p': '1'}).as_text(),
+            CaseBlock(create=True, case_id=case_id2, update={'p': '1'}).as_text()
         ]
 
-        xform, cases = post_case_blocks(blocks)
+        xform, cases = submit_case_blocks(blocks, domain='test-domain')
         self.assertEqual(cases[0].get_case_property('p'), '2')
         self.assertEqual(cases[1].get_case_property('p'), '2')
+
+    def test_case_block_ordering_with_indices(self):
+        # creating a case that indexes another new case in the same form
+        # where the child case block appears before the parent case block in the form
+        case_id1 = "child-" + uuid.uuid4().hex
+        case_id2 = "parent-" + uuid.uuid4().hex
+        blocks = [
+            CaseBlock(create=True, case_id=case_id1, case_type="child", index={
+                "parent": ("parent", case_id2)
+            }).as_text(),
+            CaseBlock(create=True, case_id=case_id2, case_type="parent").as_text()
+        ]
+
+        xform, cases = submit_case_blocks(blocks, domain='test-domain')
+        child_case = [case for case in cases if case.type == "child"][0]
+        self.assertEqual(child_case.get_index("parent").referenced_id, case_id2)
 
 
 @sharded

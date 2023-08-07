@@ -92,26 +92,15 @@ hqDefine("app_manager/js/forms/form_view", function () {
             $('#form-filter').koApplyBindings(formFilterModel());
         }
 
-        var FormWorkflow = hqImport('app_manager/js/forms/form_workflow').FormWorkflow;
-        var labels = {};
-        labels[FormWorkflow.Values.DEFAULT] = gettext("Home Screen");
-        labels[FormWorkflow.Values.ROOT] = gettext("First Menu");
-        if (initialPageData('module_name')) {
-            labels[FormWorkflow.Values.MODULE] = gettext("Menu: ") + initialPageData('module_name');
-        }
-        if (initialPageData('root_module_name')) {
-            labels[FormWorkflow.Values.PARENT_MODULE] = gettext("Parent Menu: ") + initialPageData('root_module_name');
-        }
-        labels[FormWorkflow.Values.PREVIOUS_SCREEN] = gettext("Previous Screen");
-
+        var FormWorkflow = hqImport('app_manager/js/forms/form_workflow').FormWorkflow,
+            labels = initialPageData('form_workflows');
         var options = {
             labels: labels,
             workflow: initialPageData('post_form_workflow'),
             workflow_fallback: initialPageData('post_form_workflow_fallback'),
         };
 
-        if (hqImport('hqwebapp/js/toggles').toggleEnabled('FORM_LINK_WORKFLOW') || initialPageData('uses_form_workflow')) {
-            labels[FormWorkflow.Values.FORM] = gettext("Link to other form or menu");
+        if (_.has(labels, FormWorkflow.Values.FORM)) {
             options.forms = initialPageData('linkable_forms');
             options.formLinks = initialPageData('form_links');
             options.formDatumsUrl = hqImport('hqwebapp/js/initial_page_data').reverse('get_form_datums');
@@ -151,13 +140,6 @@ hqDefine("app_manager/js/forms/form_view", function () {
                 customInstances: initialPageData('custom_instances'),
             });
             $('#custom-instances').koApplyBindings(customInstances);
-        }
-
-        if (hqImport('hqwebapp/js/toggles').toggleEnabled('CUSTOM_ASSERTIONS')) {
-            var customAssertions = hqImport('app_manager/js/forms/custom_assertions').wrap({
-                customAssertions: initialPageData('custom_assertions'),
-            });
-            $('#custom-assertions').koApplyBindings(customAssertions);
         }
 
         // Case Management > Data dictionary descriptions for case properties

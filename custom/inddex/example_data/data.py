@@ -1,24 +1,24 @@
 import csv
 import os
-import uuid
 
 from casexml.apps.case.mock import CaseBlock
-from casexml.apps.case.util import post_case_blocks
+from dimagi.utils.chunked import chunked
 
 from corehq.apps.case_importer.do_import import do_import
 from corehq.apps.case_importer.util import ImporterConfig, WorksheetWrapper
 from corehq.apps.fixtures.models import (
-    FixtureDataItem,
-    FixtureDataType,
-    FixtureTypeField,
+    Field,
+    LookupTable,
+    LookupTableRow,
+    TypeField,
 )
+from corehq.apps.hqcase.utils import submit_case_blocks
 from corehq.apps.userreports.models import StaticDataSourceConfiguration
 from corehq.apps.userreports.tasks import rebuild_indicators
 from corehq.apps.users.models import CommCareUser
 from corehq.apps.users.util import format_username
 from corehq.form_processor.models import CommCareCase
 from corehq.toggles import BULK_UPLOAD_DATE_OPENED, NAMESPACE_DOMAIN
-from corehq.util.couch import IterDB
 from corehq.util.workbook_reading import make_worksheet
 
 PATH = os.path.dirname(__file__)
@@ -76,10 +76,10 @@ def _update_case_id_properties(domain, user):
                     case_id=case.case_id,
                     user_id=user._id,
                     update=update,
-                ).as_xml()
+                ).as_text()
             )
 
-    post_case_blocks(case_blocks, domain=domain, user_id=user._id)
+    submit_case_blocks(case_blocks, domain=domain, user_id=user._id)
 
 
 def _read_csv(filename):
@@ -113,40 +113,29 @@ def _import_fixtures(domain):
             ('languages', 'languages.csv'),
     ]:
         fields, rows = _read_csv(filename)
-        data_type = FixtureDataType(
+        data_type = LookupTable(
             domain=domain,
             tag=fixture_name,
-            fields=[FixtureTypeField(field_name=field) for field in fields],
+            fields=[TypeField(name=field) for field in fields],
         )
         data_type.save()
 
-        with IterDB(FixtureDataItem.get_db(), chunksize=1000) as iter_db:
-            for i, vals in enumerate(rows):
-                fixture_data_item = _mk_fixture_data_item(domain, data_type._id, fields, vals, i)
-                iter_db.save(fixture_data_item)
+        items = (
+            _mk_fixture_data_item(domain, data_type.id, fields, vals, i)
+            for i, vals in enumerate(rows)
+        )
+        for chunk in chunked(items, 1000, list):
+            LookupTableRow.objects.bulk_create(chunk)
 
 
-def _mk_fixture_data_item(domain, data_type_id, fields, vals, i):
-    """Fixtures are wicked slow, so just do it in JSON"""
-    return {
-        "_id": uuid.uuid4().hex,
-        "doc_type": "FixtureDataItem",
-        "domain": domain,
-        "data_type_id": data_type_id,
-        "fields": {
-            field_name: {
-                "doc_type": "FieldList",
-                "field_list": [{
-                    "doc_type": "FixtureItemField",
-                    "field_value": field_value,
-                    "properties": {},
-                }]
-            }
-            for field_name, field_value in zip(fields, vals)
-        },
-        "item_attributes": {},
-        "sort_key": i,
-    }
+def _mk_fixture_data_item(domain, table_id, fields, vals, i):
+    return LookupTableRow(
+        domain=domain,
+        table_id=table_id,
+        fields={name: [Field(value=val)] for name, val in zip(fields, vals)},
+        item_attributes={},
+        sort_key=i,
+    )
 
 
 def _rebuild_datasource(domain):

@@ -16,12 +16,11 @@ class Command(BaseCommand):
     help = textwrap.dedent("""
         Adds a commcare build, labeled with the version (x.y.z) Usage:
         "./manage.py add_commcare_build --latest" or
-        "./manage.py add_commcare_build --version=2.53.0" see also
+        "./manage.py add_commcare_build --build_version 2.53.0" see also
         https://github.com/dimagi/commcare-hq/blob/master/corehq/apps/builds/README.rst
     """)
 
     def add_arguments(self, parser):
-        parser.add_argument('build_args', nargs='*')
         parser.add_argument('--build_version')
         parser.add_argument(
             '-l',
@@ -30,23 +29,14 @@ class Command(BaseCommand):
             help="add the latest CommCare build version from GitHub"
         )
 
-    def handle(self, build_args, **options):
+    def handle(self, **options):
         if options['latest']:
             version = _get_latest_commcare_build_version()
             self._create_build_with_version(version)
         elif options['build_version']:
             self._create_build_with_version(options['build_version'])
         else:
-            if len(build_args) == 3:
-                build_path, version, build_number = build_args
-                try:
-                    CommCareBuild.create_from_zip(build_path, version, build_number)
-                except Exception as e:
-                    raise CommandError("%s" % e)
-                self.stdout.write('Build %s #%s created\n' % (version, build_number))
-                self.stdout.write('You can see a list of builds at [your-server]/builds/\n')
-            else:
-                raise CommandError("<build_path>, <version> or <build_number> not specified!")
+            raise CommandError("<latest> or <build_number> not specified!")
 
     def _create_build_with_version(self, version):
         if any(build.version == version for build in CommCareBuild.all_builds()):
@@ -58,6 +48,21 @@ class Command(BaseCommand):
 
 
 def _get_latest_commcare_build_version():
+    """Get the latest commcare build version from the github tags.
+
+    FIXME: create a custom test API token for this test?
+    NOTE: this doctest is _not_ executed because GitHub rate-limits
+    unauthenticated API requests _very_ fast.
+    See also: corehq/apps/builds/tests.py
+
+    >>> repo = Github().get_organization('dimagi')
+    >>> tag = repo.get_repo("commcare-android").get_latest_release().tag_name
+    >>> tag.startswith("commcare_")
+    True
+    >>> version = tag.split('commcare_')[1]
+    >>> _get_latest_commcare_build_version() == version
+    True
+    """
     repo = Github().get_organization('dimagi').get_repo("commcare-android")
     latest_release_tag = repo.get_latest_release().tag_name
 
@@ -77,7 +82,7 @@ def _add_build_menu_item(build_config, version):
     build_menu_items = build_config.menu
 
     build = BuildSpec(version=version, latest=True)
-    build_menu_item = BuildMenuItem(build=build, label="CommCare {}".format(version), j2me_enabled=False)
+    build_menu_item = BuildMenuItem(build=build, label="CommCare {}".format(version))
     build_menu_items.append(build_menu_item)
 
 

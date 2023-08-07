@@ -1,7 +1,8 @@
 from collections import defaultdict
+from dataclasses import dataclass
 from typing import Any, Dict, List
 
-from django.urls import reverse
+from corehq.util.view_utils import absolute_reverse
 from django.utils.translation import gettext as _
 
 from requests import HTTPError
@@ -12,7 +13,7 @@ from casexml.apps.case.mock import CaseBlock
 from corehq.apps.hqcase.utils import submit_case_blocks
 from corehq.form_processor.models import CommCareCase
 from corehq.motech.dhis2.const import XMLNS_DHIS2
-from corehq.motech.dhis2.events_helpers import get_event, _get_coordinate
+from corehq.motech.dhis2.events_helpers import _get_coordinate, get_event
 from corehq.motech.dhis2.exceptions import (
     BadTrackedEntityInstanceID,
     Dhis2Exception,
@@ -27,6 +28,30 @@ from corehq.motech.value_source import (
     get_case_trigger_info_for_case,
     get_value,
 )
+from .parse_response import get_errors
+from corehq.motech.views import MotechLogListView
+
+
+@dataclass
+class RelationshipSpec:
+    relationship_type_id: str
+    from_tracked_entity_instance_id: str
+    to_tracked_entity_instance_id: str
+
+    def as_dict(self):
+        return {
+            'relationshipType': self.relationship_type_id,
+            'from': {
+                'trackedEntityInstance': {
+                    'trackedEntityInstance': self.from_tracked_entity_instance_id
+                }
+            },
+            'to': {
+                'trackedEntityInstance': {
+                    'trackedEntityInstance': self.to_tracked_entity_instance_id
+                }
+            }
+        }
 
 
 def send_dhis2_entities(requests, repeater, case_trigger_infos):
@@ -34,21 +59,75 @@ def send_dhis2_entities(requests, repeater, case_trigger_infos):
     Send request to register / update tracked entities
     """
     errors = []
+    info_config_entities = _update_or_register_teis(
+        requests,
+        repeater,
+        case_trigger_infos,
+        errors,
+    )
+    _create_all_relationships(
+        requests,
+        repeater,
+        info_config_entities,
+        errors,
+    )
+    if errors:
+        errors_str = f"Errors sending to {repeater}: " + pformat_json([str(e) for e in errors])
+        requests.notify_error(errors_str)
+        return RepeaterResponse(400, 'Bad Request', errors_str)
+    elif not len(info_config_entities):
+        return RepeaterResponse(204, "No content")
+
+    return RepeaterResponse(200, "OK")
+
+
+def _update_or_register_teis(requests, repeater, case_trigger_infos, errors):
+    """
+    Updates or registers tracked entity instances.
+
+    Errors are returned by reference in ``errors``
+    """
     info_config_pairs = _get_info_config_pairs(repeater, case_trigger_infos)
+    info_config_entities = []
     for info, case_config in info_config_pairs:
         try:
-            tracked_entity, etag = get_tracked_entity_and_etag(requests, info, case_config)
+            tracked_entity, etag = get_tracked_entity_and_etag(
+                requests,
+                info,
+                case_config,
+            )
             if tracked_entity:
-                update_tracked_entity_instance(requests, tracked_entity, etag, info, case_config)
+                update_tracked_entity_instance(
+                    requests,
+                    tracked_entity,
+                    etag,
+                    info,
+                    case_config,
+                )
             else:
-                register_tracked_entity_instance(requests, info, case_config)
+                tracked_entity = register_tracked_entity_instance(
+                    requests,
+                    info,
+                    case_config,
+                )
+            info_config_entities.append((info, case_config, tracked_entity))
         except (Dhis2Exception, HTTPError) as err:
             errors.append(str(err))
+    return info_config_entities
 
-    # Create relationships after handling tracked entity instances, to
-    # ensure that both the instances in the relationship have been created.
-    for info, case_config in info_config_pairs:
-        if not case_config.relationships_to_export:
+
+def _create_all_relationships(
+    requests,
+    repeater,
+    info_config_entities,
+    errors,
+):
+    """
+    Create relationships after handling tracked entity instances, to
+    ensure that both the instances in the relationship have been created.
+    """
+    for info, case_config, tracked_entity in info_config_entities:
+        if not case_config['relationships_to_export']:
             continue
         try:
             create_relationships(
@@ -56,15 +135,29 @@ def send_dhis2_entities(requests, repeater, case_trigger_infos):
                 info,
                 case_config,
                 repeater.dhis2_entity_config,
+                tracked_entity_relationships=_get_tracked_entity_relationship_specs(
+                    tracked_entity,
+                ),
             )
         except (Dhis2Exception, HTTPError) as err:
             errors.append(str(err))
 
-    if errors:
-        errors_str = f"Errors sending to {repeater}: " + pformat_json([str(e) for e in errors])
-        requests.notify_error(errors_str)
-        return RepeaterResponse(400, 'Bad Request', errors_str)
-    return RepeaterResponse(200, "OK")
+
+def _get_tracked_entity_relationship_specs(tracked_entity):
+    """Returns a list of RelationshipSpec objects that represents the relationships that already exist on a tracked
+    entity instance"""
+    if not tracked_entity:
+        return []
+
+    tracked_entity_relationships = []
+    for relationship in tracked_entity.get("relationships", []):
+        spec = RelationshipSpec(
+            relationship_type_id=relationship["relationshipType"],
+            to_tracked_entity_instance_id=relationship["to"]["trackedEntityInstance"]["trackedEntityInstance"],
+            from_tracked_entity_instance_id=relationship["from"]["trackedEntityInstance"]["trackedEntityInstance"]
+        )
+        tracked_entity_relationships.append(spec)
+    return tracked_entity_relationships
 
 
 def _get_info_config_pairs(repeater, case_trigger_infos):
@@ -83,9 +176,10 @@ def _get_info_config_pairs(repeater, case_trigger_infos):
 
 
 def get_case_config_for_case_type(case_type, dhis2_entity_config):
-    for case_config in dhis2_entity_config.case_configs:
-        if case_config.case_type == case_type:
+    for case_config in dhis2_entity_config['case_configs']:
+        if case_config['case_type'] == case_type:
             return case_config
+    return None
 
 
 def get_tracked_entity_and_etag(requests, case_trigger_info, case_config):
@@ -122,7 +216,7 @@ def get_tracked_entity_instance_id(case_trigger_info, case_config):
     Return the Tracked Entity instance ID stored in a case property (or
     other value source like a form question or a constant).
     """
-    tei_id_value_source = case_config.tei_id
+    tei_id_value_source = case_config['tei_id']
     return get_value(tei_id_value_source, case_trigger_info)
 
 
@@ -155,22 +249,13 @@ def update_tracked_entity_instance(
     requests, tracked_entity, etag, case_trigger_info, case_config,
     attempt=1
 ):
-    case_updates = {}
-    for attr_id, value_source_config in case_config.attributes.items():
-        value, case_update = get_or_generate_value(
-            requests, attr_id, value_source_config, case_trigger_info
-        )
-        set_te_attr(tracked_entity["attributes"], attr_id, value)
-        case_updates.update(case_update)
-    enrollments_with_new_events = get_enrollments(
+    tracked_entity, case_updates = _build_tracked_entity(
+        requests,
+        tracked_entity,
         case_trigger_info,
         case_config,
+        True
     )
-    if enrollments_with_new_events:
-        tracked_entity["enrollments"] = update_enrollments(
-            tracked_entity, enrollments_with_new_events
-        )
-    validate_tracked_entity(tracked_entity)
     tei_id = tracked_entity["trackedEntityInstance"]
     endpoint = f"/api/trackedEntityInstances/{tei_id}"
     headers = {
@@ -194,6 +279,38 @@ def update_tracked_entity_instance(
     if case_updates:
         save_case_updates(requests.domain_name, case_trigger_info.case_id, case_updates)
 
+    if len(get_errors(response.json())):
+        raise Dhis2Exception(_(
+            'Error(s) while updating DHIS2 tracked entity. '
+            'Errors from DHIS2 can be found in Remote API Logs: {url}'
+        ).format(url=absolute_reverse(MotechLogListView.urlname, args=[requests.domain_name])))
+
+
+def _build_tracked_entity(
+    requests,
+    tracked_entity,
+    case_trigger_info,
+    case_config,
+    is_update,
+):
+    case_updates = {}
+    for attr_id, value_source_config in case_config['attributes'].items():
+        value, case_update = get_or_generate_value(
+            requests, attr_id, value_source_config, case_trigger_info
+        )
+        set_te_attr(tracked_entity["attributes"], attr_id, value)
+        case_updates.update(case_update)
+    enrollments = get_enrollments(case_trigger_info, case_config)
+    if enrollments:
+        if is_update:
+            tracked_entity["enrollments"] = update_enrollments(
+                tracked_entity, enrollments
+            )
+        else:
+            tracked_entity["enrollments"] = enrollments
+    validate_tracked_entity(tracked_entity)
+    return tracked_entity, case_updates
+
 
 def update_enrollments(
     tracked_entity: Dict,
@@ -216,23 +333,18 @@ def update_enrollments(
 
 
 def register_tracked_entity_instance(requests, case_trigger_info, case_config):
-    case_updates = {}
     tracked_entity = {
-        "trackedEntityType": case_config.te_type_id,
-        "orgUnit": get_value(case_config.org_unit_id, case_trigger_info),
+        "trackedEntityType": case_config['te_type_id'],
+        "orgUnit": get_value(case_config['org_unit_id'], case_trigger_info),
         "attributes": [],
     }
-
-    for attr_id, value_source_config in case_config.attributes.items():
-        value, case_update = get_or_generate_value(
-            requests, attr_id, value_source_config, case_trigger_info
-        )
-        set_te_attr(tracked_entity["attributes"], attr_id, value)
-        case_updates.update(case_update)
-    enrollments = get_enrollments(case_trigger_info, case_config)
-    if enrollments:
-        tracked_entity["enrollments"] = enrollments
-    validate_tracked_entity(tracked_entity)
+    tracked_entity, case_updates = _build_tracked_entity(
+        requests,
+        tracked_entity,
+        case_trigger_info,
+        case_config,
+        False
+    )
     endpoint = "/api/trackedEntityInstances/"
     response = requests.post(endpoint, json=tracked_entity, raise_for_status=True)
     summaries = response.json()["response"]["importSummaries"]
@@ -250,96 +362,118 @@ def register_tracked_entity_instance(requests, case_trigger_info, case_config):
     if case_updates:
         save_case_updates(requests.domain_name, case_trigger_info.case_id, case_updates)
 
+    if len(get_errors(response.json())):
+        raise Dhis2Exception(_(
+            'Error(s) while registering DHIS2 tracked entity. '
+            'Errors from DHIS2 can be found in Remote API Logs: {url}'
+        ).format(url=absolute_reverse(MotechLogListView.urlname, args=[requests.domain_name])))
+
+    return tracked_entity
+
 
 def create_relationships(
     requests,
     subcase_trigger_info,
     subcase_config,
     dhis2_entity_config,
+    tracked_entity_relationships
 ):
     """
     Creates two relationships in DHIS2; one corresponding to a
     subcase-to-supercase relationship, and the other corresponding to a
     supercase-to-subcase relationship.
     """
-    subcase_tei_id = get_value(subcase_config.tei_id, subcase_trigger_info)
+    subcase_tei_id = get_value(subcase_config['tei_id'], subcase_trigger_info)
     if not subcase_tei_id:
         raise Dhis2Exception(_(
             'Unable to create DHIS2 relationship: The case {case} is not '
             'registered in DHIS2.'
         ).format(case=subcase_trigger_info))
 
-    for rel_config in subcase_config.relationships_to_export:
+    for rel_config in subcase_config['relationships_to_export']:
         supercase = get_supercase(subcase_trigger_info, rel_config)
+        if not supercase:
+            # There is no parent case to export a relationship for
+            continue
         supercase_config = get_case_config_for_case_type(
             supercase.type,
             dhis2_entity_config,
         )
+        if not supercase_config:
+            # The parent case type is not configured for integration
+            raise ConfigurationError(_(
+                "A relationship is configured for the {subcase_type} case "
+                "type, but there is no CaseConfig for the {supercase_type} "
+                "case type."
+            ).format(subcase_type=subcase_trigger_info.type,
+                     supercase_type=supercase.type))
         supercase_info = get_case_trigger_info_for_case(
             supercase,
-            [supercase_config.tei_id],
+            [supercase_config['tei_id']],
         )
-        supercase_tei_id = get_value(supercase_config.tei_id, supercase_info)
+        supercase_tei_id = get_value(supercase_config['tei_id'], supercase_info)
         if not supercase_tei_id:
-            # The problem could be that the relationship is configured
-            # in the CaseConfig for the subcase's case type, but there
-            # is no CaseConfig for the supercase's case type.
-            # Alternatively, registering the supercase in DHIS2 failed.
+            # Registering the supercase in DHIS2 failed.
             raise ConfigurationError(_(
                 'Unable to create DHIS2 relationship: The case {case} is not '
                 'registered in DHIS2.'
             ).format(case=supercase_info))
-        if rel_config.supercase_to_subcase_dhis2_id:
-            create_relationship(
-                requests,
-                rel_config.supercase_to_subcase_dhis2_id,
-                supercase_tei_id,
-                subcase_tei_id,
+
+        if rel_config['supercase_to_subcase_dhis2_id']:
+            relationship_spec = RelationshipSpec(
+                relationship_type_id=rel_config['supercase_to_subcase_dhis2_id'],
+                from_tracked_entity_instance_id=supercase_tei_id,
+                to_tracked_entity_instance_id=subcase_tei_id
             )
-        if rel_config.subcase_to_supercase_dhis2_id:
-            create_relationship(
-                requests,
-                rel_config.subcase_to_supercase_dhis2_id,
-                subcase_tei_id,
-                supercase_tei_id,
+            ensure_relationship_exists(
+                requests=requests,
+                relationship_spec=relationship_spec,
+                existing_relationships=tracked_entity_relationships
             )
+
+        if rel_config['subcase_to_supercase_dhis2_id']:
+            relationship_spec = RelationshipSpec(
+                relationship_type_id=rel_config['subcase_to_supercase_dhis2_id'],
+                from_tracked_entity_instance_id=subcase_tei_id,
+                to_tracked_entity_instance_id=supercase_tei_id,
+            )
+            ensure_relationship_exists(
+                requests=requests,
+                relationship_spec=relationship_spec,
+                existing_relationships=tracked_entity_relationships
+            )
+
+
+def ensure_relationship_exists(requests, relationship_spec, existing_relationships):
+    """Checks to see if `relationship_spec` is in `existing_relationships`. If not, we try to create the
+    relationship represented by `relationship_spec`.
+    """
+    if (relationship_spec not in existing_relationships) and relationship_spec.relationship_type_id:
+        create_relationship(requests, relationship_spec)
 
 
 def get_supercase(case_trigger_info, relationship_config):
     case = CommCareCase.objects.get_case(case_trigger_info.case_id, case_trigger_info.domain)
     for index in case.live_indices:
         index_matches_config = (
-            index.identifier == relationship_config.identifier
-            and index.referenced_type == relationship_config.referenced_type
-            and index.relationship == relationship_config.relationship
+            index.identifier == relationship_config['identifier']
+            and index.referenced_type == relationship_config['referenced_type']
+            and index.relationship == relationship_config['relationship']
         )
         if index_matches_config:
             return CommCareCase.objects.get_case(index.referenced_id, case_trigger_info.domain)
+    return None
 
 
-def create_relationship(requests, rel_type_id, from_tei_id, to_tei_id):
-    relationship = {
-        'relationshipType': rel_type_id,
-        'from': {
-            'trackedEntityInstance': {
-                'trackedEntityInstance': from_tei_id
-            }
-        },
-        'to': {
-            'trackedEntityInstance': {
-                'trackedEntityInstance': to_tei_id
-            }
-        }
-    }
+def create_relationship(requests, relationship_spec):
     endpoint = '/api/relationships/'
-    response = requests.post(endpoint, json=relationship, raise_for_status=True)
+    response = requests.post(endpoint, json=relationship_spec.as_dict(), raise_for_status=True)
     num_imported = response.json()['response']['imported']
     if num_imported != 1:
-        from corehq.motech.views import MotechLogListView
         raise Dhis2Exception(_(
             'DHIS2 created {n} relationships. Errors from DHIS2 can be found '
             'in Remote API Logs: {url}'
-        ).format(n=num_imported, url=reverse(MotechLogListView.urlname)))
+        ).format(n=num_imported, url=absolute_reverse(MotechLogListView.urlname, args=[requests.domain_name])))
 
 
 def get_or_generate_value(requests, attr_id, value_source_config, case_trigger_info):
@@ -403,7 +537,7 @@ def get_enrollments(case_trigger_info, case_config):
     for that. Cases/TEIs are enrolled in a program when the first event
     in that program occurs.
     """
-    case_org_unit = get_value(case_config.org_unit_id, case_trigger_info)
+    case_org_unit = get_value(case_config['org_unit_id'], case_trigger_info)
     programs_by_id = get_programs_by_id(case_trigger_info, case_config)
     enrollments = []
     for program_id, program in programs_by_id.items():
@@ -425,15 +559,15 @@ def get_enrollments(case_trigger_info, case_config):
 
 def get_programs_by_id(case_trigger_info, case_config):
     programs_by_id = defaultdict(lambda: {"events": []})
-    for form_config in case_config.form_configs:
-        if case_trigger_info.form_question_values['/metadata/xmlns'] != form_config.xmlns:
+    for form_config in case_config['form_configs']:
+        if case_trigger_info.form_question_values['/metadata/xmlns'] != form_config['xmlns']:
             continue
         event = get_event(case_trigger_info.domain, form_config, info=case_trigger_info)
         if event:
             program = programs_by_id[event["program"]]
             program["events"].append(event)
-            program["orgUnit"] = get_value(form_config.org_unit_id, case_trigger_info)
-            program["status"] = get_value(form_config.program_status, case_trigger_info)
+            program["orgUnit"] = get_value(form_config['org_unit_id'], case_trigger_info)
+            program["status"] = get_value(form_config['program_status'], case_trigger_info)
             program["geometry"] = get_geo_json(form_config, case_trigger_info)
             program.update(get_program_dates(form_config, case_trigger_info))
     return programs_by_id
@@ -441,12 +575,12 @@ def get_programs_by_id(case_trigger_info, case_config):
 
 def get_program_dates(form_config, case_trigger_info):
     program = {}
-    if form_config.enrollment_date:
-        enrollment_date = get_value(form_config.enrollment_date, case_trigger_info)
+    if form_config['enrollment_date']:
+        enrollment_date = get_value(form_config['enrollment_date'], case_trigger_info)
         if enrollment_date:
             program["enrollmentDate"] = enrollment_date
-    if form_config.incident_date:
-        incident_date = get_value(form_config.incident_date, case_trigger_info)
+    if form_config['incident_date']:
+        incident_date = get_value(form_config['incident_date'], case_trigger_info)
         if incident_date:
             program["incidentDate"] = incident_date
     return program

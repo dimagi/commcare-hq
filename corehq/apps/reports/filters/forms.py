@@ -7,6 +7,7 @@ from django.utils.translation import gettext_lazy, gettext_noop
 from couchdbkit.exceptions import ResourceNotFound
 from memoized import memoized
 
+from corehq.apps.hqcase.utils import SYSTEM_FORM_XMLNS_MAP
 from couchforms.analytics import (
     get_all_xmlns_app_id_pairs_submitted_to_in_domain,
 )
@@ -404,7 +405,13 @@ class FormsByApplicationFilter(BaseDrilldownOptionFilter):
                             return list(form['name'].values())[0]
 
         guessed_name = guess_form_name_from_submissions_using_xmlns(self.domain, xmlns)
-        return guessed_name or (None if none_if_not_found else _("Name Unknown"))
+        if guessed_name:
+            return guessed_name
+
+        if xmlns in SYSTEM_FORM_XMLNS_MAP:
+            return SYSTEM_FORM_XMLNS_MAP[xmlns]
+
+        return None if none_if_not_found else _("Name Unknown")
 
     @staticmethod
     def get_translated_value(display_lang, app_langs, obj):

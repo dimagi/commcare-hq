@@ -7,6 +7,8 @@ from django.conf import settings
 from django.core.management.base import CommandError, no_translations
 from django.core.management.commands import makemigrations, showmigrations
 
+from corehq.util.django_migrations import patch_migration_autodetector
+
 
 class Command(makemigrations.Command):
 
@@ -67,11 +69,13 @@ class Command(makemigrations.Command):
             assert_exclusive_options("--lock-update", ["lock_check"])
             self.write_migrations_lock()
         else:
-            super().handle(*app_labels, **options)
+            with patch_migration_autodetector(self):
+                super().handle(*app_labels, **options)
 
     def write_migration_files(self, changes):
         super().write_migration_files(changes)
-        self.write_migrations_lock()
+        if not self.dry_run:
+            self.write_migrations_lock()
 
     def get_migrations_list(self, preamble=LOCK_PREAMBLE):
         """Generate and return the full list of existing migrations.
@@ -80,6 +84,10 @@ class Command(makemigrations.Command):
                          returned migration list.
         """
         stream = StringIO()
+        # NOTE: showmigrations will exclude initial migrations for apps
+        # that had a "migrations" directory without an __init__.py file
+        # (a namespace package) prior to running "makemigrations" because of
+        # https://github.com/django/django/blob/2b1242abb3989f5d74e787b091/django/db/migrations/loader.py#L99-L106
         command = showmigrations.Command(stdout=stream, no_color=True)
         # Use `run_from_argv()` to avoid extra command setup boilerplate.
         # First two argv items are `prog` and `subcommand`, used to setup the

@@ -1,8 +1,7 @@
-from corehq.apps.accounting.utils.subscription import is_domain_enterprise
-from corehq.apps.enterprise.dispatcher import EnterpriseReportDispatcher
 from django.conf import settings
 from django.http import Http404
 from django.urls import reverse
+from django.utils.functional import cached_property
 from django.utils.html import format_html, strip_tags
 from django.utils.translation import gettext as _
 from django.utils.translation import gettext_lazy, gettext_noop
@@ -11,18 +10,17 @@ from django_prbac.utils import has_privilege
 from memoized import memoized
 from six.moves.urllib.parse import urlencode
 
-from corehq.apps.enterprise.views import ManageEnterpriseMobileWorkersView
-from corehq.apps.users.decorators import get_permission_name
 from corehq import privileges, toggles
 from corehq.apps.accounting.dispatcher import (
     AccountingAdminInterfaceDispatcher,
 )
-from corehq.apps.accounting.models import Invoice, Subscription, BillingAccount
+from corehq.apps.accounting.models import BillingAccount, Invoice, Subscription
 from corehq.apps.accounting.utils import (
     domain_has_privilege,
     domain_is_on_trial,
     is_accounting_admin,
 )
+from corehq.apps.accounting.utils.subscription import is_domain_enterprise
 from corehq.apps.accounting.views import (
     TriggerAutopaymentsView,
     TriggerDowngradeView,
@@ -31,13 +29,22 @@ from corehq.apps.app_manager.dbaccessors import (
     domain_has_apps,
     get_brief_apps_in_domain,
 )
-from corehq.apps.app_manager.util import is_remote_app
+from corehq.apps.app_manager.util import is_remote_app, is_linked_app
 from corehq.apps.builds.views import EditMenuView
+from corehq.apps.data_dictionary.views import DataDictionaryView
+from corehq.apps.domain.models import Domain
 from corehq.apps.domain.views.internal import ProjectLimitsView
-from corehq.apps.domain.views.releases import (
-    ManageReleasesByLocation,
+from corehq.apps.domain.views.releases import ManageReleasesByLocation
+from corehq.apps.enterprise.dispatcher import EnterpriseReportDispatcher
+from corehq.apps.enterprise.views import ManageEnterpriseMobileWorkersView
+from corehq.apps.events.models import AttendeeModel
+from corehq.apps.events.views import (
+    AttendeeEditView,
+    AttendeesListView,
+    EventsView,
 )
-from corehq.apps.export.views.incremental import IncrementalExportView
+from corehq.apps.geospatial.dispatchers import CaseManagementMapDispatcher
+
 from corehq.apps.hqadmin.reports import (
     DeployHistoryReport,
     DeviceLogSoftAssertReport,
@@ -52,7 +59,7 @@ from corehq.apps.integration.views import (
     GaenOtpServerSettingsView,
     HmacCalloutSettingsView,
 )
-from corehq.apps.linked_domain.util import can_user_access_release_management
+from corehq.apps.linked_domain.util import can_user_access_linked_domains
 from corehq.apps.locations.analytics import users_have_locations
 from corehq.apps.receiverwrapper.rate_limiter import (
     SHOULD_RATE_LIMIT_SUBMISSIONS,
@@ -68,7 +75,6 @@ from corehq.apps.reports.dispatcher import (
     CustomProjectReportDispatcher,
     ProjectReportDispatcher,
 )
-from corehq.apps.reports.models import ReportsSidebarOrdering
 from corehq.apps.reports.standard.users.reports import UserHistoryReport
 from corehq.apps.saved_reports.models import ReportConfig
 from corehq.apps.smsbillables.dispatcher import SMSAdminInterfaceDispatcher
@@ -79,7 +85,8 @@ from corehq.apps.translations.integrations.transifex.utils import (
     transifex_details_available_for_domain,
 )
 from corehq.apps.userreports.util import has_report_builder_access
-from corehq.apps.users.models import AnonymousCouchUser
+from corehq.apps.users.decorators import get_permission_name
+from corehq.apps.users.models import HqPermissions
 from corehq.apps.users.permissions import (
     can_download_data_files,
     can_view_sms_exports,
@@ -104,11 +111,9 @@ from corehq.motech.openmrs.views import OpenmrsImporterView
 from corehq.motech.views import ConnectionSettingsListView, MotechLogListView
 from corehq.privileges import DAILY_SAVED_EXPORT, EXCEL_DASHBOARD
 from corehq.tabs.uitab import UITab
-from corehq.tabs.utils import (
-    dropdown_dict,
-    regroup_sidebar_items,
-    sidebar_to_dropdown,
-)
+from corehq.tabs.utils import dropdown_dict, sidebar_to_dropdown
+from corehq.apps.users.models import HqPermissions
+from corehq.apps.geospatial.views import GeospatialConfigPage
 
 
 class ProjectReportsTab(UITab):
@@ -123,13 +128,14 @@ class ProjectReportsTab(UITab):
 
     @property
     def _is_viewable(self):
-        return (user_can_view_reports(self.project, self.couch_user)
-                and has_privilege(self._request, privileges.PROJECT_ACCESS))
-
-    @property
-    def view(self):
-        from corehq.apps.reports.views import MySavedReportsView
-        return MySavedReportsView.urlname
+        if not has_privilege(self._request, privileges.PROJECT_ACCESS):
+            return False
+        if user_can_view_reports(self.project, self.couch_user):
+            return True
+        if toggles.EMBEDDED_TABLEAU.enabled(self.domain):
+            if self.couch_user.can_view_some_tableau_viz(self.domain):
+                return True
+        return False
 
     @property
     def sidebar_items(self):
@@ -141,28 +147,21 @@ class ProjectReportsTab(UITab):
             request=self._request, domain=self.domain)
         custom_reports = CustomProjectReportDispatcher.navigation_sections(
             request=self._request, domain=self.domain)
-        sidebar_items = (tools + tableau + report_builder_nav
-                         + self._regroup_sidebar_items(custom_reports + project_reports))
+        sidebar_items = (tools + tableau + report_builder_nav + custom_reports + project_reports)
         return self._filter_sidebar_items(sidebar_items)
-
-    def _regroup_sidebar_items(self, sidebar_items):
-        try:
-            ordering = ReportsSidebarOrdering.objects.get(domain=self.domain)
-        except ReportsSidebarOrdering.DoesNotExist:
-            return sidebar_items
-        return regroup_sidebar_items(ordering.config, sidebar_items)
 
     def _get_tools_items(self):
         from corehq.apps.reports.views import MySavedReportsView
-        if isinstance(self.couch_user, AnonymousCouchUser) and toggles.PUBLISH_CUSTOM_REPORTS.enabled(self.domain):
+
+        if not user_can_view_reports(self.project, self.couch_user):
             return []
+
         tools = [{
             'title': _(MySavedReportsView.page_title),
             'url': reverse(MySavedReportsView.urlname, args=[self.domain]),
             'icon': 'icon-tasks fa fa-tasks',
             'show_in_dropdown': True,
         }]
-        from corehq.apps.users.models import Permissions
         is_ucr_toggle_enabled = (
             toggles.USER_CONFIGURABLE_REPORTS.enabled(
                 self.domain, namespace=toggles.NAMESPACE_DOMAIN
@@ -173,7 +172,7 @@ class ProjectReportsTab(UITab):
         )
         has_ucr_permissions = self.couch_user.has_permission(
             self.domain,
-            get_permission_name(Permissions.edit_ucrs)
+            get_permission_name(HqPermissions.edit_ucrs)
         )
 
         if is_ucr_toggle_enabled and has_ucr_permissions:
@@ -195,11 +194,14 @@ class ProjectReportsTab(UITab):
 
         from corehq.apps.reports.models import TableauVisualization
         from corehq.apps.reports.standard.tableau import TableauView
-        items = [{
-            'title': viz.name,
-            'url': reverse(TableauView.urlname, args=[self.domain, viz.id]),
-            'show_in_dropdown': False,
-        } for viz in TableauVisualization.objects.filter(domain=self.domain)]
+        items = [
+            {
+                'title': viz.title or viz.name,
+                'url': reverse(TableauView.urlname, args=[self.domain, viz.id]),
+                'show_in_dropdown': i < 2,
+            }
+            for i, viz in enumerate(TableauVisualization.for_user(self.domain, self.couch_user))
+        ]
 
         return [(_("Tableau Reports"), items)] if items else []
 
@@ -270,16 +272,20 @@ class ProjectReportsTab(UITab):
 
     @property
     def dropdown_items(self):
-        if self.can_access_all_locations:
-            reports = sidebar_to_dropdown(
-                ProjectReportDispatcher.navigation_sections(
-                    request=self._request, domain=self.domain),
-                current_url=self.url)
-            return self._get_saved_reports_dropdown() + reports
+        items = self._get_saved_reports_dropdown()
 
-        else:
-            return (self._get_saved_reports_dropdown()
-                    + self._get_all_sidebar_items_as_dropdown())
+        if not self.can_access_all_locations:
+            items.extend(self._get_all_sidebar_items_as_dropdown())
+            return items
+
+        reports = sidebar_to_dropdown(
+            self._get_tableau_items()
+            + ProjectReportDispatcher.navigation_sections(request=self._request, domain=self.domain),
+            current_url=self.url
+        )
+        items.extend(reports)
+
+        return items
 
     def _get_all_sidebar_items_as_dropdown(self):
         def show(page):
@@ -332,8 +338,8 @@ class SetupTab(UITab):
             DefaultConsumptionView,
             SMSSettingsView,
         )
-        from corehq.apps.programs.views import ProgramListView
         from corehq.apps.products.views import ProductListView
+        from corehq.apps.programs.views import ProgramListView
 
         if self.project.commtrack_enabled:
             dropdown_items = [(_(view.page_title), view) for view in (
@@ -375,17 +381,17 @@ class SetupTab(UITab):
             DefaultConsumptionView,
             SMSSettingsView,
         )
-        from corehq.apps.programs.views import (
-            ProgramListView,
-            NewProgramView,
-            EditProgramView,
-        )
         from corehq.apps.products.views import (
-            ProductListView,
-            NewProductView,
             EditProductView,
+            NewProductView,
             ProductFieldsView,
+            ProductListView,
             UploadProductView,
+        )
+        from corehq.apps.programs.views import (
+            EditProgramView,
+            NewProgramView,
+            ProgramListView,
         )
 
         if self.project.commtrack_enabled:
@@ -570,14 +576,72 @@ class ProjectDataTab(UITab):
 
     @property
     def sidebar_items(self):
+        # HELPME
+        #
+        # This method has been flagged for refactoring due to its complexity and
+        # frequency of touches in changesets
+        #
+        # If you are writing code that touches this method, your changeset
+        # should leave the method better than you found it.
+        #
+        # Please remove this flag when this method no longer triggers an 'E' or 'F'
+        # classification from the radon code static analysis
         items = []
 
+        export_data_views = self._get_export_data_views()
+        if export_data_views:
+            items.append([_("Export Data"), export_data_views])
+
+        if self.can_edit_commcare_data:
+            items.extend(self._get_edit_section())
+
+        explore_data_views = self._get_explore_data_views()
+        if explore_data_views:
+            items.append([_("Explore Data"), explore_data_views])
+
+        if self.can_use_lookup_tables:
+            from corehq.apps.fixtures.dispatcher import (
+                FixtureInterfaceDispatcher,
+            )
+            items.extend(FixtureInterfaceDispatcher.navigation_sections(
+                request=self._request, domain=self.domain))
+
+        if self._can_view_data_dictionary:
+            items.append([DataDictionaryView.page_title, [{
+                'title': DataDictionaryView.page_title,
+                'url': reverse(DataDictionaryView.urlname, args=[self.domain]),
+            }]])
+
+        if toggles.UCR_EXPRESSION_REGISTRY.enabled(self.domain):
+            from corehq.apps.userreports.views import UCRExpressionListView
+            items.append(
+                [
+                    _("Data Manipulation"),
+                    [
+                        {
+                            "title": _("Filters and Expressions"),
+                            "url": reverse(UCRExpressionListView.urlname, args=[self.domain]),
+                        },
+                    ]
+                ]
+            )
+        return items
+
+    @cached_property
+    def _can_view_data_dictionary(self):
+        has_view_data_dict_permission = self.couch_user.has_permission(
+            self.domain,
+            get_permission_name(HqPermissions.view_data_dict)
+        )
+        return toggles.DATA_DICTIONARY.enabled(self.domain) and has_view_data_dict_permission
+
+    def _get_export_data_views(self):
         export_data_views = []
         if self.can_only_see_deid_exports:
             from corehq.apps.export.views.list import (
-                DeIdFormExportListView,
                 DeIdDailySavedExportListView,
                 DeIdDashboardFeedListView,
+                DeIdFormExportListView,
                 ODataFeedListView,
             )
             export_data_views.append({
@@ -603,41 +667,41 @@ class ProjectDataTab(UITab):
 
         elif self.can_export_data:
             from corehq.apps.export.views.download import (
-                DownloadNewFormExportView,
-                DownloadNewCaseExportView,
-                DownloadNewSmsExportView,
                 BulkDownloadNewFormExportView,
+                DownloadNewCaseExportView,
+                DownloadNewFormExportView,
+                DownloadNewSmsExportView,
             )
             from corehq.apps.export.views.edit import (
                 EditCaseDailySavedExportView,
                 EditCaseFeedView,
-                EditODataCaseFeedView,
-                EditODataFormFeedView,
                 EditFormDailySavedExportView,
                 EditFormFeedView,
                 EditNewCustomCaseExportView,
                 EditNewCustomFormExportView,
+                EditODataCaseFeedView,
+                EditODataFormFeedView,
             )
             from corehq.apps.export.views.list import (
-                FormExportListView,
                 CaseExportListView,
-                DashboardFeedListView,
                 DailySavedExportListView,
+                DashboardFeedListView,
+                FormExportListView,
                 ODataFeedListView,
             )
             from corehq.apps.export.views.new import (
-                CreateNewCustomFormExportView,
-                CreateNewCustomCaseExportView,
-                CreateNewDailySavedFormExport,
-                CreateNewDailySavedCaseExport,
-                CreateNewFormFeedView,
                 CreateNewCaseFeedView,
+                CreateNewCustomCaseExportView,
+                CreateNewCustomFormExportView,
+                CreateNewDailySavedCaseExport,
+                CreateNewDailySavedFormExport,
+                CreateNewFormFeedView,
                 CreateODataCaseFeedView,
                 CreateODataFormFeedView,
             )
             from corehq.apps.export.views.utils import (
+                DailySavedExportPaywall,
                 DashboardFeedPaywall,
-                DailySavedExportPaywall
             )
 
             if self.can_view_form_exports:
@@ -669,7 +733,7 @@ class ProjectDataTab(UITab):
                     }
                 )
             if self.can_view_case_exports:
-                export_data_views.extend([
+                export_data_views.append(
                     {
                         'title': _(CaseExportListView.page_title),
                         'url': reverse(CaseExportListView.urlname,
@@ -690,19 +754,7 @@ class ProjectDataTab(UITab):
                                 'urlname': EditNewCustomCaseExportView.urlname,
                             } if self.can_edit_commcare_data else None,
                         ] if _f]
-                    },
-                ])
-            if toggles.INCREMENTAL_EXPORTS.enabled(self.domain):
-                export_data_views.append(
-                    {
-                        'title': _(IncrementalExportView.page_title),
-                        'url': reverse(IncrementalExportView.urlname,
-                                       args=(self.domain,)),
-                        'show_in_dropdown': True,
-                        'icon': 'icon icon-share fa fa-share-square-o',
-                        'subpages': []
-                    }
-                )
+                    })
 
             if self.can_view_sms_exports:
                 export_data_views.append(
@@ -817,6 +869,18 @@ class ProjectDataTab(UITab):
                     'subpages': subpages
                 })
 
+            if toggles.SUPERSET_ANALYTICS.enabled(self.domain):
+                from corehq.apps.export.views.list import (
+                    CommCareAnalyticsListView,
+                )
+                export_data_views.append({
+                    'title': CommCareAnalyticsListView.page_title,
+                    'url': reverse(CommCareAnalyticsListView.urlname, args=(self.domain,)),
+                    'icon': 'fa fa-bar-chart',
+                    'show_in_dropdown': False,
+                    'subpages': []
+                })
+
         if can_download_data_files(self.domain, self.couch_user):
             from corehq.apps.export.views.utils import DataFileDownloadList
 
@@ -827,38 +891,40 @@ class ProjectDataTab(UITab):
                 'show_in_dropdown': True,
                 'subpages': []
             })
+        return export_data_views
 
-        if export_data_views:
-            items.append([_("Export Data"), export_data_views])
+    def _get_edit_section(self):
+        from corehq.apps.data_interfaces.dispatcher import (
+            EditDataInterfaceDispatcher,
+        )
+        edit_section = EditDataInterfaceDispatcher.navigation_sections(
+            request=self._request, domain=self.domain)
 
-        if self.can_edit_commcare_data:
-            edit_section = None
-            from corehq.apps.data_interfaces.dispatcher import EditDataInterfaceDispatcher
-            edit_section = EditDataInterfaceDispatcher.navigation_sections(
-                request=self._request, domain=self.domain)
+        if self.can_use_data_cleanup:
+            from corehq.apps.data_interfaces.views import (
+                AutomaticUpdateRuleListView,
+            )
+            automatic_update_rule_list_view = {
+                'title': _(AutomaticUpdateRuleListView.page_title),
+                'url': reverse(AutomaticUpdateRuleListView.urlname, args=[self.domain]),
+            }
+            if edit_section:
+                edit_section[0][1].append(automatic_update_rule_list_view)
+            else:
+                edit_section = [(gettext_lazy('Edit Data'), [automatic_update_rule_list_view])]
 
-            if self.can_use_data_cleanup:
-                from corehq.apps.data_interfaces.views import AutomaticUpdateRuleListView
-                automatic_update_rule_list_view = {
-                    'title': _(AutomaticUpdateRuleListView.page_title),
-                    'url': reverse(AutomaticUpdateRuleListView.urlname, args=[self.domain]),
-                }
-                if edit_section:
-                    edit_section[0][1].append(automatic_update_rule_list_view)
-                else:
-                    edit_section = [(gettext_lazy('Edit Data'), [automatic_update_rule_list_view])]
+        if self.can_deduplicate_cases:
+            from corehq.apps.data_interfaces.views import (
+                DeduplicationRuleListView,
+            )
+            deduplication_list_view = {
+                'title': _(DeduplicationRuleListView.page_title),
+                'url': reverse(DeduplicationRuleListView.urlname, args=[self.domain]),
+            }
+            edit_section[0][1].append(deduplication_list_view)
+        return edit_section
 
-            if self.can_deduplicate_cases:
-                from corehq.apps.data_interfaces.views import DeduplicationRuleListView
-                deduplication_list_view = {
-                    'title': _(DeduplicationRuleListView.page_title),
-                    'url': reverse(DeduplicationRuleListView.urlname, args=[self.domain]),
-                }
-                edit_section[0][1].append(deduplication_list_view)
-
-            items.extend(edit_section)
-
-
+    def _get_explore_data_views(self):
         explore_data_views = []
         if ((toggles.EXPLORE_CASE_DATA.enabled_for_request(self._request)
              or self.can_view_ecd_preview) and self.can_edit_commcare_data):
@@ -871,7 +937,9 @@ class ProjectDataTab(UITab):
                 'subpages': [],
             })
         if self.couch_user.is_superuser or toggles.IS_CONTRACTOR.enabled(self.couch_user.username):
-            from corehq.apps.case_search.models import case_search_enabled_for_domain
+            from corehq.apps.case_search.models import (
+                case_search_enabled_for_domain,
+            )
             if case_search_enabled_for_domain(self.domain):
                 from corehq.apps.case_search.views import CaseSearchView
                 explore_data_views.append({
@@ -881,19 +949,7 @@ class ProjectDataTab(UITab):
                     'show_in_dropdown': False,
                     'subpages': [],
                 })
-        if explore_data_views:
-            items.append([_("Explore Data"), explore_data_views])
-
-        if self.can_use_lookup_tables:
-            from corehq.apps.fixtures.dispatcher import FixtureInterfaceDispatcher
-            items.extend(FixtureInterfaceDispatcher.navigation_sections(
-                request=self._request, domain=self.domain))
-
-        if toggles.DATA_DICTIONARY.enabled(self.domain):
-            items.append([_('Data Dictionary'),
-                          [{'title': 'Data Dictionary',
-                            'url': reverse('data_dictionary', args=[self.domain])}]])
-        return items
+        return explore_data_views
 
     @property
     def dropdown_items(self):
@@ -904,11 +960,10 @@ class ProjectDataTab(UITab):
         ):
             return []
 
-        from corehq.apps.export.views.download import (
-            DownloadNewSmsExportView,
-        )
+        from corehq.apps.export.views.download import DownloadNewSmsExportView
         from corehq.apps.export.views.list import (
-            FormExportListView, CaseExportListView
+            CaseExportListView,
+            FormExportListView,
         )
 
         items = []
@@ -939,6 +994,17 @@ class ProjectDataTab(UITab):
                 _(ODataFeedListView.page_title),
                 url=reverse(ODataFeedListView.urlname, args=(self.domain,)),
             ))
+        if toggles.SUPERSET_ANALYTICS.enabled(self.domain):
+            from corehq.apps.export.views.list import CommCareAnalyticsListView
+            items.append(dropdown_dict(
+                _(CommCareAnalyticsListView.page_title),
+                url=reverse(CommCareAnalyticsListView.urlname, args=(self.domain,))
+            ))
+        if self._can_view_data_dictionary:
+            items.append(dropdown_dict(
+                DataDictionaryView.page_title,
+                url=reverse(DataDictionaryView.urlname, args=[self.domain]),
+            ))
 
         if items:
             items += [self.divider]
@@ -957,10 +1023,16 @@ class ApplicationsTab(UITab):
 
     @classmethod
     def make_app_title(cls, app):
+        app_type = ''
+        if is_remote_app(app):
+            app_type = _('Remote')
+        elif is_linked_app(app):
+            app_type = _('Linked')
+
         return format_html(
             '{}{}',
             strip_tags(app.name) or _('(Untitled)'),
-            ' (Remote)' if is_remote_app(app) else '',
+            f' ({app_type})' if app_type else ''
         )
 
     @property
@@ -1027,7 +1099,6 @@ class CloudcareTab(UITab):
         return (
             has_privilege(self._request, privileges.CLOUDCARE)
             and self.domain
-            and not isinstance(self.couch_user, AnonymousCouchUser)
             and (self.couch_user.can_access_web_apps() or self.couch_user.is_commcare_user())
         )
 
@@ -1093,6 +1164,12 @@ class MessagingTab(UITab):
                     },
                 ],
             })
+
+            if self.couch_user.is_superuser or toggles.SUPPORT.enabled_for_request(self._request):
+                reminders_urls.append({
+                    'title': _("Test Inbound SMS"),
+                    'url': reverse("message_test", args=[self.domain]),
+                })
 
         return reminders_urls
 
@@ -1173,7 +1250,10 @@ class MessagingTab(UITab):
             )
 
         if self.couch_user.can_edit_messaging():
-            from corehq.apps.data_interfaces.views import CaseGroupListView, CaseGroupCaseManagementView
+            from corehq.apps.data_interfaces.views import (
+                CaseGroupCaseManagementView,
+                CaseGroupListView,
+            )
             contacts_urls.append({
                 'title': _(CaseGroupListView.page_title),
                 'url': reverse(CaseGroupListView.urlname, args=[self.domain]),
@@ -1194,7 +1274,8 @@ class MessagingTab(UITab):
 
         if self.can_use_outbound_sms and self.couch_user.is_domain_admin():
             from corehq.apps.sms.views import (
-                DomainSmsGatewayListView, AddDomainGatewayView,
+                AddDomainGatewayView,
+                DomainSmsGatewayListView,
                 EditDomainGatewayView,
             )
             settings_urls.append({
@@ -1226,9 +1307,11 @@ class MessagingTab(UITab):
     @memoized
     def whatsapp_urls(self):
         from corehq.apps.sms.models import SQLMobileBackend
-        from corehq.messaging.smsbackends.turn.models import SQLTurnWhatsAppBackend
-        from corehq.messaging.smsbackends.infobip.models import InfobipBackend
         from corehq.apps.sms.views import WhatsAppTemplatesView
+        from corehq.messaging.smsbackends.infobip.models import InfobipBackend
+        from corehq.messaging.smsbackends.turn.models import (
+            SQLTurnWhatsAppBackend,
+        )
 
         whatsapp_urls = []
 
@@ -1305,7 +1388,6 @@ class MessagingTab(UITab):
         ):
             if urls:
                 items.append((title, urls))
-
         return items
 
 
@@ -1363,8 +1445,8 @@ class ProjectUsersTab(UITab):
                     return None
 
             from corehq.apps.users.views.mobile import (
-                EditCommCareUserView,
                 ConfirmBillingAccountForExtraUsersView,
+                EditCommCareUserView,
                 MobileWorkerListView,
             )
 
@@ -1440,11 +1522,13 @@ class ProjectUsersTab(UITab):
                     return None
 
             from corehq.apps.users.views import (
-                EnterpriseUsersView,
                 EditWebUserView,
+                EnterpriseUsersView,
                 ListWebUsersView,
             )
-            from corehq.apps.users.views.mobile.users import FilteredWebUserDownload
+            from corehq.apps.users.views.mobile.users import (
+                FilteredWebUserDownload,
+            )
 
             if toggles.ENTERPRISE_USER_MANAGEMENT.enabled_for_request(self._request):
                 menu.append({
@@ -1482,9 +1566,7 @@ class ProjectUsersTab(UITab):
 
         if ((self.couch_user.is_domain_admin() or self.couch_user.can_view_roles())
                 and self.has_project_access):
-            from corehq.apps.users.views import (
-                ListRolesView,
-            )
+            from corehq.apps.users.views import ListRolesView
             menu.append({
                 'title': _(ListRolesView.page_title),
                 'url': reverse(ListRolesView.urlname,
@@ -1516,13 +1598,13 @@ class ProjectUsersTab(UITab):
         if (self.couch_user.can_edit_locations()
                 or self.couch_user.can_view_locations()):
             from corehq.apps.locations.views import (
-                LocationsListView,
-                NewLocationView,
                 EditLocationView,
                 FilteredLocationDownload,
-                LocationImportView,
-                LocationImportStatusView,
                 LocationFieldsView,
+                LocationImportStatusView,
+                LocationImportView,
+                LocationsListView,
+                NewLocationView,
             )
             is_view_only = (hasattr(self._request, 'is_view_only')
                             and self._request.is_view_only)
@@ -1559,7 +1641,9 @@ class ProjectUsersTab(UITab):
                 ]
             })
 
-        from corehq.apps.locations.permissions import user_can_edit_location_types
+        from corehq.apps.locations.permissions import (
+            user_can_edit_location_types,
+        )
         if (user_can_edit_location_types(self.couch_user, self.domain) and
                 self.couch_user.can_edit_locations()):
             from corehq.apps.locations.views import LocationTypesView
@@ -1634,8 +1718,8 @@ class EnterpriseSettingsTab(UITab):
         })
         if IdentityProvider.domain_has_editable_identity_provider(self.domain):
             from corehq.apps.sso.views.enterprise_admin import (
-                ManageSSOEnterpriseView,
                 EditIdentityProviderEnterpriseView,
+                ManageSSOEnterpriseView,
             )
             manage_sso = {
                 'title': _(ManageSSOEnterpriseView.page_title),
@@ -1745,7 +1829,10 @@ class ProjectSettingsTab(UITab):
         project_info = []
 
         if user_is_admin and has_project_access:
-            from corehq.apps.domain.views.settings import EditBasicProjectInfoView, EditPrivacySecurityView
+            from corehq.apps.domain.views.settings import (
+                EditBasicProjectInfoView,
+                EditPrivacySecurityView,
+            )
 
             project_info.extend([
                 {
@@ -1770,7 +1857,7 @@ class ProjectSettingsTab(UITab):
             items.append((_('Project Administration'), _get_administration_section(self.domain)))
 
         if self.couch_user.can_edit_motech() and has_project_access:
-            integration_nav = _get_integration_section(self.domain)
+            integration_nav = _get_integration_section(self.domain, self.couch_user)
             if integration_nav:
                 items.append((_('Integration'), integration_nav))
 
@@ -1787,8 +1874,10 @@ class ProjectSettingsTab(UITab):
         if isinstance(self.couch_user, WebUser):
             if (user_is_billing_admin or self.couch_user.is_superuser) and not settings.ENTERPRISE_MODE:
                 from corehq.apps.domain.views.accounting import (
-                    DomainSubscriptionView, EditExistingBillingAccountView,
-                    DomainBillingStatementsView, ConfirmSubscriptionRenewalView,
+                    ConfirmSubscriptionRenewalView,
+                    DomainBillingStatementsView,
+                    DomainSubscriptionView,
+                    EditExistingBillingAccountView,
                     InternalSubscriptionManagementView,
                 )
                 current_subscription = Subscription.get_active_subscription_by_domain(self.domain)
@@ -1837,8 +1926,8 @@ class ProjectSettingsTab(UITab):
 
         if self.couch_user.is_superuser:
             from corehq.apps.domain.views.internal import (
-                EditInternalDomainInfoView,
                 EditInternalCalculationsView,
+                EditInternalDomainInfoView,
                 FlagsAndPrivilegesView,
             )
 
@@ -1872,8 +1961,8 @@ def _get_administration_section(domain):
     from corehq.apps.domain.views.internal import TransferDomainView
     from corehq.apps.domain.views.settings import (
         FeaturePreviewsView,
-        RecoveryMeasuresHistory,
         ManageDomainMobileWorkersView,
+        RecoveryMeasuresHistory,
     )
     from corehq.apps.ota.models import MobileRecoveryMeasure
 
@@ -1912,7 +2001,7 @@ def _get_administration_section(domain):
     return administration
 
 
-def _get_integration_section(domain):
+def _get_integration_section(domain, couch_user):
 
     def _get_forward_name(repeater_type=None, **context):
         if repeater_type == 'FormRepeater':
@@ -1924,17 +2013,12 @@ def _get_integration_section(domain):
 
     integration = []
 
-    if (
-        toggles.INCREMENTAL_EXPORTS.enabled(domain)
-        or domain_has_privilege(domain, privileges.DATA_FORWARDING)
-    ):
-        integration.append({
-            'title': _(ConnectionSettingsListView.page_title),
-            'url': reverse(ConnectionSettingsListView.urlname, args=[domain])
-        })
-
     if domain_has_privilege(domain, privileges.DATA_FORWARDING):
         integration.extend([
+            {
+                'title': _(ConnectionSettingsListView.page_title),
+                'url': reverse(ConnectionSettingsListView.urlname, args=[domain])
+            },
             {
                 'title': _('Data Forwarding'),
                 'url': reverse('domain_forwarding', args=[domain]),
@@ -1973,13 +2057,6 @@ def _get_integration_section(domain):
             'url': reverse(DataSetMapListView.urlname, args=[domain])
         })
 
-    if toggles.INCREMENTAL_EXPORTS.enabled(domain):
-        from corehq.apps.export.views.incremental import IncrementalExportLogView
-        integration.append({
-            'title': _(IncrementalExportLogView.name),
-            'url': reverse('domain_report_dispatcher', args=[domain, 'incremental_export_logs']),
-        })
-
     if toggles.OPENMRS_INTEGRATION.enabled(domain):
         integration.append({
             'title': _(OpenmrsImporterView.page_title),
@@ -2005,17 +2082,29 @@ def _get_integration_section(domain):
         })
 
     if toggles.EMBEDDED_TABLEAU.enabled(domain):
-        from corehq.apps.reports.views import TableauServerView
-        integration.append({
-            'title': _(TableauServerView.page_title),
-            'url': reverse(TableauServerView.urlname, args=[domain])
-        })
+        if couch_user.is_superuser:
+            from corehq.apps.reports.views import TableauServerView
+            integration.append({
+                'title': _(TableauServerView.page_title),
+                'url': reverse(TableauServerView.urlname, args=[domain])
+            })
 
         from corehq.apps.reports.views import TableauVisualizationListView
         integration.append({
             'title': _(TableauVisualizationListView.page_title),
             'url': reverse(TableauVisualizationListView.urlname, args=[domain])
         })
+
+    if toggles.GENERIC_INBOUND_API.enabled(domain):
+        from corehq.motech.generic_inbound.reports import ApiRequestLogReport
+        from corehq.motech.generic_inbound.views import ConfigurableAPIListView
+        integration.extend([{
+            'title': ConfigurableAPIListView.page_title,
+            'url': reverse(ConfigurableAPIListView.urlname, args=[domain])
+        }, {
+            'title': ApiRequestLogReport.name,
+            'url': ApiRequestLogReport.get_url(domain),
+        }])
 
     return integration
 
@@ -2055,7 +2144,7 @@ def _get_feature_flag_items(domain, couch_user):
 def _get_release_management_items(user, domain):
     items = []
     title = None
-    if not can_user_access_release_management(user, domain):
+    if not can_user_access_linked_domains(user, domain):
         return title, items
 
     if domain_has_privilege(domain, privileges.RELEASE_MANAGEMENT):
@@ -2106,20 +2195,19 @@ class MySettingsTab(UITab):
                 'url': reverse(MyProjectsList.urlname),
             })
 
-        menu_items.extend([
-            {
-                'title': _(ChangeMyPasswordView.page_title),
-                'url': reverse(ChangeMyPasswordView.urlname),
-            },
-            {
+        menu_items.append({
+            'title': _(ChangeMyPasswordView.page_title),
+            'url': reverse(ChangeMyPasswordView.urlname),
+        })
+        if Domain.active_for_couch_user(self.couch_user):
+            menu_items.append({
                 'title': _(TwoFactorProfileView.page_title),
                 'url': reverse(TwoFactorProfileView.urlname),
-            },
-            {
-                'title': _(ApiKeyView.page_title),
-                'url': reverse(ApiKeyView.urlname),
-            },
-        ])
+            })
+        menu_items.append({
+            'title': _(ApiKeyView.page_title),
+            'url': reverse(ApiKeyView.urlname),
+        })
 
         if EnableMobilePrivilegesView.is_user_authorized(self.couch_user):
             menu_items.append({
@@ -2154,8 +2242,10 @@ class AccountingTab(UITab):
         )))
 
         from corehq.apps.accounting.views import (
-            TriggerInvoiceView, TriggerBookkeeperEmailView,
-            TestRenewalEmailView, TriggerCustomerInvoiceView
+            TestRenewalEmailView,
+            TriggerBookkeeperEmailView,
+            TriggerCustomerInvoiceView,
+            TriggerInvoiceView,
         )
         other_actions = [
             {
@@ -2200,21 +2290,25 @@ class SMSAdminTab(UITab):
     @property
     @memoized
     def sidebar_items(self):
-        from corehq.apps.sms.views import (GlobalSmsGatewayListView,
-            AddGlobalGatewayView, EditGlobalGatewayView)
+        from corehq.apps.sms.views import (
+            AddGlobalGatewayView,
+            EditGlobalGatewayView,
+            GlobalSmsGatewayListView,
+        )
         items = SMSAdminInterfaceDispatcher.navigation_sections(request=self._request, domain=self.domain)
-        items.append((_('SMS Connectivity'), [
-            {'title': _('Gateways'),
-             'url': reverse(GlobalSmsGatewayListView.urlname),
-             'subpages': [
-                 {'title': _('Add Gateway'),
-                  'urlname': AddGlobalGatewayView.urlname},
-                 {'title': _('Edit Gateway'),
-                  'urlname': EditGlobalGatewayView.urlname},
-            ]},
-            {'title': _('Default Gateways'),
-             'url': reverse('global_backend_map')},
-        ]))
+        if has_privilege(self._request, privileges.GLOBAL_SMS_GATEWAY):
+            items.append((_('SMS Connectivity'), [
+                {'title': _('Gateways'),
+                'url': reverse(GlobalSmsGatewayListView.urlname),
+                'subpages': [
+                    {'title': _('Add Gateway'),
+                    'urlname': AddGlobalGatewayView.urlname},
+                    {'title': _('Edit Gateway'),
+                    'urlname': EditGlobalGatewayView.urlname},
+                ]},
+                {'title': _('Default Gateways'),
+                'url': reverse('global_backend_map')},
+            ]))
         return items
 
     @property
@@ -2254,9 +2348,10 @@ class AdminTab(UITab):
             dropdown_dict(_("Feature Flags"), url=reverse("toggle_list")),
             dropdown_dict(_("SMS Connectivity & Billing"), url=reverse("default_sms_admin_interface")),
             self.divider,
-            dropdown_dict(_("Django Admin"), url="/admin"),
-            dropdown_dict(_("View All"), url=self.url),
         ])
+        if self.couch_user.is_staff:
+            submenu_context.append(dropdown_dict(_("Django Admin"), url="/admin"))
+        submenu_context.append(dropdown_dict(_("View All"), url=self.url))
         return submenu_context
 
     @property
@@ -2285,7 +2380,9 @@ class AdminTab(UITab):
         ]
 
         if self.couch_user and self.couch_user.is_staff:
-            from corehq.apps.hqadmin.views.operations import ReprocessMessagingCaseUpdatesView
+            from corehq.apps.hqadmin.views.operations import (
+                ReprocessMessagingCaseUpdatesView,
+            )
             from corehq.apps.notifications.views import ManageNotificationView
             data_operations = [
                 {'title': _('View raw documents'),
@@ -2308,6 +2405,9 @@ class AdminTab(UITab):
                 {'title': _('Grant superuser privileges'),
                  'url': reverse('superuser_management'),
                  'icon': 'fa fa-magic'},
+                {'title': _('Get users for offboarding'),
+                 'url': reverse('get_offboarding_list'),
+                 'icon': 'fa fa-sign-out'},
                 {'title': _('Manage deleted domains'),
                  'url': reverse('tombstone_management'),
                  'icon': 'fa fa-minus-circle'},
@@ -2371,6 +2471,93 @@ class AdminTab(UITab):
                 and (self.couch_user.is_superuser
                      or toggles.IS_CONTRACTOR.enabled(self.couch_user.username))
                 and not is_request_using_sso(self._request))
+
+
+class AttendanceTrackingTab(UITab):
+    title = gettext_noop("Attendance Tracking")
+    view = EventsView.urlname
+
+    url_prefix_formats = (
+        '/a/{domain}/settings/events',
+    )
+
+    @property
+    def dropdown_items(self):
+        items = [
+            dropdown_dict(_("Attendees"), url=reverse(AttendeesListView.urlname, args=(self.domain,))),
+            dropdown_dict(_("Events"), url=reverse(EventsView.urlname, args=(self.domain,))),
+            self.divider,
+            dropdown_dict(_("View All"), url=reverse(EventsView.urlname, args=(self.domain,))),
+        ]
+        return items
+
+    @property
+    def sidebar_items(self):
+
+        def _get_attendee_name(domain, attendee_id=None, **kwargs):
+            if attendee_id:
+                model = AttendeeModel.objects.get(
+                    case_id=attendee_id,
+                    domain=domain,
+                )
+                return model.name
+            return None
+
+        items = [
+            (_("Attendees"), [
+                {
+                    'title': _("View All Attendees"),
+                    'url': reverse(AttendeesListView.urlname, args=(self.domain,)),
+                    'description': _('Manage attendees for Attendance Tracking Events'),
+                    'subpages': [{
+                        'title': _get_attendee_name,
+                        'urlname': AttendeeEditView.urlname,
+                    }],
+                },
+            ]),
+            (_("Events"), [
+                {
+                    'title': _("View All Events"),
+                    'url': reverse(EventsView.urlname, args=(self.domain,)),
+                    'description': _('Manage Attendance Tracking Events'),
+                },
+            ]),
+        ]
+        return items
+
+    @property
+    def _is_viewable(self):
+        # The FF check is temporary until the full feature is released
+        return toggles.ATTENDANCE_TRACKING.enabled(self.domain) and self.couch_user.can_manage_events(self.domain)
+
+
+class GeospatialTab(UITab):
+    title = gettext_noop("Geospatial")
+    view = 'geospatial_default'
+
+    url_prefix_formats = (
+        '/a/{domain}/geospatial',
+    )
+
+    @property
+    def sidebar_items(self):
+        items = [
+            (_("Settings"), [
+                {
+                    'title': _("Configure geospatial settings"),
+                    'url': reverse(GeospatialConfigPage.urlname, args=(self.domain,)),
+                },
+            ]),
+        ]
+        items.extend(
+            CaseManagementMapDispatcher.navigation_sections(request=self._request, domain=self.domain)
+        )
+
+        return items
+
+    @property
+    def _is_viewable(self):
+        return toggles.GEOSPATIAL.enabled(self.domain)
 
 
 def _get_repeat_record_report(domain):

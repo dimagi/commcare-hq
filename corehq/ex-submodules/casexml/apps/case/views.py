@@ -28,24 +28,22 @@ class CaseDisplayWrapper(object):
         return json
 
     def get_display_config(self):
-        return [
-            {
-                "layout": [
-                    [
-                        DisplayConfig(name=_("Name"), expr="name", has_history=True),
-                        DisplayConfig(name=_("Opened On"), expr="opened_on", process="date", is_phone_time=True),
-                        DisplayConfig(name=_("Modified On"), expr="modified_on", process="date", is_phone_time=True),
-                        DisplayConfig(name=_("Closed On"), expr="closed_on", process="date", is_phone_time=True),
-                    ],
-                    [
-                        DisplayConfig(name=_("Case Type"), expr="type", format="<code>{0}</code>"),
-                        DisplayConfig(name=_("Last Submitter"), expr="user_id", process="doc_info"),
-                        DisplayConfig(name=_("Owner"), expr="owner_id", process="doc_info", has_history=True),
-                        DisplayConfig(name=_("Case ID"), expr="_id"),
-                    ],
+        return {
+            "layout": [
+                [
+                    DisplayConfig(name=_("Name"), expr="name", has_history=True),
+                    DisplayConfig(name=_("Opened On"), expr="opened_on", process="date", is_phone_time=True),
+                    DisplayConfig(name=_("Modified On"), expr="modified_on", process="date", is_phone_time=True),
+                    DisplayConfig(name=_("Closed On"), expr="closed_on", process="date", is_phone_time=True),
                 ],
-            }
-        ]
+                [
+                    DisplayConfig(name=_("Case Type"), expr="type", format="<code>{0}</code>"),
+                    DisplayConfig(name=_("Last Submitter"), expr="user_id", process="doc_info"),
+                    DisplayConfig(name=_("Owner"), expr="owner_id", process="doc_info", has_history=True),
+                    DisplayConfig(name=_("Case ID"), expr="_id"),
+                ],
+            ],
+        }
 
     def dynamic_properties(self):
         # pop seen properties off of remaining case properties
@@ -54,6 +52,10 @@ class CaseDisplayWrapper(object):
         # so also check and add it here
         if self.case.external_id:
             dynamic_data['external_id'] = self.case.external_id
+        if self.case.location_id:
+            dynamic_data['location_id'] = self.case.location_id
+
+        dynamic_data['case_name'] = self.case.name
 
         return dynamic_data
 
@@ -95,22 +97,20 @@ class SupplyPointDisplayWrapper(CaseDisplayWrapper):
         return data
 
     def get_display_config(self):
-        return [
-            {
-                "layout": [
-                    [
-                        DisplayConfig(name=_("Name"), expr="name"),
-                        DisplayConfig(name=_("Type"), expr="location_type"),
-                        DisplayConfig(name=_("Code"), expr="location_site_code"),
-                    ],
-                    [
-                        DisplayConfig(name=_("Parent Location"), expr="location_parent_name"),
-                        DisplayConfig(name=_("Location"), expr="owner_id"),
-                        DisplayConfig(name=_("Location"), expr="owner_id", process="doc_info"),
-                    ],
+        return {
+            "layout": [
+                [
+                    DisplayConfig(name=_("Name"), expr="name"),
+                    DisplayConfig(name=_("Type"), expr="location_type"),
+                    DisplayConfig(name=_("Code"), expr="location_site_code"),
                 ],
-            }
-        ]
+                [
+                    DisplayConfig(name=_("Parent Location"), expr="location_parent_name"),
+                    DisplayConfig(name=_("Location"), expr="owner_id"),
+                    DisplayConfig(name=_("Location"), expr="owner_id", process="doc_info"),
+                ],
+            ],
+        }
 
 
 def get_wrapped_case(case):

@@ -2,16 +2,15 @@
 {% load i18n %}
 {% load hq_shared_tags %}
 
-{% requirejs_main 'data_interfaces/js/list_automatic_update_rules' %}
+{% requirejs_main 'data_interfaces/js/deduplication_rules' %}
+
+{% block page_title %}
+  {{ current_page.title }}
+{% endblock %}
 
 {% block pagination_header %}
   <div class="row">
     <div class="col-sm-8">
-      <p class="lead">
-        {% blocktrans %}
-          Automatically find and update duplicate cases
-        {% endblocktrans %}
-      </p>
       <p>
         {% blocktrans %}
           Create rules for finding and updating duplicate cases.
@@ -38,7 +37,10 @@
         <strong data-bind="text: name"></strong>
       </a>
     </td>
-    <td data-bind="text: case_type"></td>
+    <td>
+      <span data-bind="text: case_type" style="display: inline-block;"></span>
+      <span class="label label-warning" data-bind="visible: is_case_type_deprecated" style="display: inline-block;">{% trans "deprecated" %}</span>
+    </td>
     <td>
       <span class="label label-success" data-bind="visible: active">{% trans "Active" %}</span>
       <span class="label label-danger" data-bind="visible: !active">{% trans "Inactive" %}</span>

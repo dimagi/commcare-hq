@@ -3,7 +3,7 @@ from collections import namedtuple
 from django.test import TestCase
 
 from corehq.apps.commtrack.tests.util import bootstrap_domain
-from corehq.apps.users.models import Permissions, UserRole
+from corehq.apps.users.models import HqPermissions, UserRole
 from corehq.util.test_utils import unit_testing_only
 
 from ..models import LocationType, SQLLocation, make_location
@@ -128,13 +128,13 @@ def restrict_user_by_location(domain, user):
     role = UserRole.create(
         domain=domain,
         name='Regional Supervisor',
-        permissions=Permissions(edit_commcare_users=True,
-                                view_commcare_users=True,
-                                edit_groups=True,
-                                view_groups=True,
-                                edit_locations=True,
-                                view_locations=True,
-                                access_all_locations=False),
+        permissions=HqPermissions(edit_commcare_users=True,
+                                  view_commcare_users=True,
+                                  edit_groups=True,
+                                  view_groups=True,
+                                  edit_locations=True,
+                                  view_locations=True,
+                                  access_all_locations=False),
     )
     user.set_role(domain, role.get_qualified_id())
     user.save()

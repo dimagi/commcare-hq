@@ -1,16 +1,15 @@
 import uuid
+from unittest.mock import patch
 
 from django.http import HttpRequest
 from django.test import TestCase
 
-from unittest.mock import patch
-
 from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.tests.util import delete_all_cases
-from casexml.apps.case.util import post_case_blocks
 
 from corehq import toggles
 from corehq.apps.domain.models import Domain
+from corehq.apps.hqcase.utils import submit_case_blocks
 from corehq.apps.userreports import tasks
 from corehq.apps.userreports.dbaccessors import delete_all_report_configs
 from corehq.apps.userreports.models import (
@@ -18,7 +17,8 @@ from corehq.apps.userreports.models import (
     ReportConfiguration,
 )
 from corehq.apps.userreports.reports.view import ConfigurableReportView
-from corehq.apps.users.models import Permissions, UserRole, WebUser
+from corehq.apps.userreports.util import get_indicator_adapter
+from corehq.apps.users.models import HqPermissions, UserRole, WebUser
 from corehq.form_processor.models import CommCareCase
 from corehq.form_processor.signals import sql_case_post_save
 from corehq.sql_db.connections import Session
@@ -38,9 +38,9 @@ class ConfigurableReportTestMixin(object):
             case_id=id,
             case_type=cls.case_type,
             update=properties,
-        ).as_xml()
+        ).as_text()
         with drop_connected_signals(sql_case_post_save):
-            post_case_blocks([case_block], {'domain': cls.domain})
+            submit_case_blocks(case_block, domain=cls.domain)
         return CommCareCase.objects.get_case(id, cls.domain)
 
     @classmethod
@@ -104,6 +104,8 @@ class ConfigurableReportViewTest(ConfigurableReportTestMixin, TestCase):
         data_source_config.save()
         self.addCleanup(data_source_config.delete)
         tasks.rebuild_indicators(data_source_config._id)
+        adapter = get_indicator_adapter(data_source_config)
+        self.addCleanup(adapter.drop_table)
 
         report_config = ReportConfiguration(
             domain=self.domain,
@@ -173,16 +175,14 @@ class ConfigurableReportViewTest(ConfigurableReportTestMixin, TestCase):
 
     @classmethod
     def tearDownClass(cls):
-        for case in cls.cases:
-            case.delete()
         # todo: understand why this is necessary. the view call uses the session and the
         # signal doesn't fire to kill it.
         Session.remove()
-        super(ConfigurableReportViewTest, cls).tearDownClass()
+        super().tearDownClass()
 
     @classmethod
     def setUpClass(cls):
-        super(ConfigurableReportViewTest, cls).setUpClass()
+        super().setUpClass()
         cls.cases = []
         cls.cases.append(cls._new_case({'fruit': 'apple', 'num1': 4, 'num2': 6}))
         cls.cases.append(cls._new_case({'fruit': 'mango', 'num1': 7, 'num2': 4}))
@@ -403,17 +403,17 @@ class ConfigurableReportViewTest(ConfigurableReportTestMixin, TestCase):
             user_role = UserRole.create(
                 domain=domain.name,
                 name=rolename,
-                permissions=Permissions(edit_commcare_users=True,
-                                        view_commcare_users=True,
-                                        edit_groups=True,
-                                        view_groups=True,
-                                        edit_locations=True,
-                                        view_locations=True,
-                                        access_all_locations=False,
-                                        edit_data=True,
-                                        edit_reports=can_edit_reports,
-                                        view_reports=True
-                                        )
+                permissions=HqPermissions(edit_commcare_users=True,
+                                          view_commcare_users=True,
+                                          edit_groups=True,
+                                          view_groups=True,
+                                          edit_locations=True,
+                                          view_locations=True,
+                                          access_all_locations=False,
+                                          edit_data=True,
+                                          edit_reports=can_edit_reports,
+                                          view_reports=True
+                                          )
             )
 
             web_user = WebUser.create(domain.name, username, '***', None, None)

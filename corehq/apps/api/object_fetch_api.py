@@ -21,10 +21,10 @@ from dimagi.utils.django.cached_object import (
 
 from corehq.apps.domain.decorators import api_auth
 from corehq.apps.locations.permissions import location_safe
+from corehq.apps.reports.standard.cases.case_data import can_view_attachments
 from corehq.apps.reports.views import (
-    can_view_attachments,
     get_form_attachment_response,
-    require_form_view_permission,
+    can_view_form_attachment,
 )
 from corehq.form_processor.exceptions import CaseNotFound
 from corehq.form_processor.models import CaseAttachment, CommCareCase
@@ -32,7 +32,7 @@ from corehq.form_processor.models import CaseAttachment, CommCareCase
 
 class CaseAttachmentAPI(View):
 
-    @method_decorator(api_auth)
+    @method_decorator(api_auth())
     def get(self, request, domain, case_id=None, attachment_id=None):
         """
         https://github.com/dimagi/commcare/wiki/CaseAttachmentAPI
@@ -128,8 +128,7 @@ class CaseAttachmentAPI(View):
                                      content_type=mime_type)
 
 
-@api_auth
-@require_form_view_permission
+@can_view_form_attachment
 @location_safe
 def view_form_attachment(request, domain, instance_id, attachment_id):
     return get_form_attachment_response(request, domain, instance_id, attachment_id)

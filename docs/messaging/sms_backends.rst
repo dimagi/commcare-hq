@@ -25,7 +25,7 @@ You can have multiple instances of backends, if for example, you have multiple
 accounts with the same SMS gateway.
 
 Backend instances can either be global, in which case they are shared by all
-projects in CommCareHQ, or they can belong to a specific project. If belonged
+projects in CommCare HQ, or they can belong to a specific project. If belonged
 to a specific project, a backend can optionally be shared with other projects
 as well.
 
@@ -116,7 +116,7 @@ Inbound
 
 The inbound part of the backend code is responsible for exposing a view which
 implements the API that the SMS Gateway expects so that the gateway can connect
-to CommCareHQ and notify us of inbound SMS.
+to CommCare HQ and notify us of inbound SMS.
 
 To write the inbound backend code:
 

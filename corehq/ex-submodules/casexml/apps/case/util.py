@@ -1,20 +1,20 @@
 from __future__ import generator_stop
-from collections import defaultdict, namedtuple
-import uuid
 
-from xml.etree import cElementTree as ElementTree
 import datetime
+import uuid
+from collections import defaultdict, namedtuple
 
-from django.conf import settings
 from django.utils.dateparse import parse_datetime
+
 from iso8601 import iso8601
 
-from casexml.apps.case.const import CASE_ACTION_UPDATE, CASE_ACTION_CREATE
+from casexml.apps.case.const import CASE_ACTION_CREATE, CASE_ACTION_UPDATE
 from casexml.apps.case.exceptions import PhoneDateValueError
 from casexml.apps.phone.models import delete_synclogs
-from casexml.apps.phone.xml import get_case_element
-from corehq.util.soft_assert import soft_assert
+from casexml.apps.phone.xml import get_case_xml
+
 from corehq.form_processor.models import XFormInstance
+from corehq.util.soft_assert import soft_assert
 
 
 def validate_phone_datetime(datetime_string, none_ok=False, form_id=None):
@@ -37,35 +37,6 @@ def validate_phone_datetime(datetime_string, none_ok=False, form_id=None):
         raise PhoneDateValueError('{!r}'.format(datetime_string))
 
 
-def post_case_blocks(case_blocks, form_extras=None, domain=None, user_id=None, device_id=None):
-    """
-    Post case blocks.
-
-    Extras is used to add runtime attributes to the form before
-    sending it off to the case (current use case is sync-token pairing)
-
-    See `device_id` parameter documentation at
-    `corehq.apps.hqcase.utils.submit_case_blocks`.
-    """
-    from corehq.apps.hqcase.utils import submit_case_blocks
-
-    if form_extras is None:
-        form_extras = {}
-
-    domain = domain or form_extras.pop('domain', None)
-    if getattr(settings, 'UNIT_TESTING', False):
-        from casexml.apps.case.tests.util import TEST_DOMAIN_NAME
-        domain = domain or TEST_DOMAIN_NAME
-
-    return submit_case_blocks(
-        [ElementTree.tostring(case_block, encoding='utf-8').decode('utf-8') for case_block in case_blocks],
-        domain=domain,
-        form_extras=form_extras,
-        user_id=user_id,
-        device_id=device_id,
-    )
-
-
 def create_real_cases_from_dummy_cases(cases):
     """
     Takes as input a list of unsaved CommCareCase objects
@@ -76,6 +47,7 @@ def create_real_cases_from_dummy_cases(cases):
     returns a tuple of two lists: forms posted and cases created
 
     """
+    from corehq.apps.hqcase.utils import submit_case_blocks
     posted_cases = []
     posted_forms = []
     case_blocks_by_domain = defaultdict(list)
@@ -84,10 +56,10 @@ def create_real_cases_from_dummy_cases(cases):
             case.modified_on = datetime.datetime.utcnow()
         if not case._id:
             case._id = uuid.uuid4().hex
-        case_blocks_by_domain[case.domain].append(get_case_element(
+        case_blocks_by_domain[case.domain].append(get_case_xml(
             case, (CASE_ACTION_CREATE, CASE_ACTION_UPDATE), version='2.0'))
     for domain, case_blocks in case_blocks_by_domain.items():
-        form, cases = post_case_blocks(case_blocks, domain=domain)
+        form, cases = submit_case_blocks(case_blocks, domain=domain)
         posted_forms.append(form)
         posted_cases.extend(cases)
     return posted_forms, posted_cases
@@ -212,18 +184,22 @@ def get_paged_changes_to_case_property(case, case_property_name, start=0, per_pa
 def get_case_history(case):
     from casexml.apps.case.xform import extract_case_blocks
     from corehq.apps.reports.display import xmlns_to_name
+    from corehq.apps.reports.standard.cases.utils import get_user_type
 
     changes = defaultdict(dict)
     for form in XFormInstance.objects.get_forms(case.xform_ids, case.domain):
+        name = xmlns_to_name(case.domain, form.xmlns, form.app_id, form_name=form.form_data.get('@name'))
+        defaults = {
+            'Form ID': form.form_id,
+            'Form Name': name,
+            'Form Received On': form.received_on,
+            'Form Submitted By': form.metadata.username,
+            'Form User Type': get_user_type(form, case.domain),
+        }
         case_blocks = extract_case_blocks(form)
         for block in case_blocks:
             if block.get('@case_id') == case.case_id:
-                property_changes = {
-                    'Form ID': form.form_id,
-                    'Form Name': xmlns_to_name(case.domain, form.xmlns, form.app_id),
-                    'Form Received On': form.received_on,
-                    'Form Submitted By': form.metadata.username,
-                }
+                property_changes = defaults.copy()
                 property_changes.update(block.get('create', {}))
                 property_changes.update(block.get('update', {}))
                 changes[form.form_id].update(property_changes)

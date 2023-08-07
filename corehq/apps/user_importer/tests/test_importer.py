@@ -2,7 +2,8 @@ import datetime
 from copy import deepcopy
 
 from django.contrib.admin.models import LogEntry
-from django.test import SimpleTestCase, TestCase
+from django.test import SimpleTestCase, TestCase, override_settings
+from django.utils.translation import gettext as _
 
 from unittest.mock import patch
 
@@ -12,7 +13,6 @@ from corehq.apps.commtrack.tests.util import make_loc
 from corehq.apps.enterprise.models import EnterpriseMobileWorkerSettings
 from corehq.apps.enterprise.tests.utils import (
     create_enterprise_permissions,
-    cleanup_accounting,
     get_enterprise_software_plan,
     get_enterprise_account,
     add_domains_to_enterprise_account,
@@ -24,6 +24,11 @@ from corehq.apps.custom_data_fields.models import (
     Field,
 )
 from corehq.apps.domain.models import Domain
+from corehq.apps.groups.models import Group
+from corehq.apps.reports.models import TableauUser, TableauServer
+from corehq.apps.reports.const import HQ_TABLEAU_GROUP_NAME
+from corehq.apps.reports.tests.test_tableau_api_session import _setup_test_tableau_server
+from corehq.apps.reports.tests.test_tableau_api_util import _mock_create_session_responses
 from corehq.apps.user_importer.exceptions import UserUploadError
 from corehq.apps.user_importer.helpers import UserChangeLogger
 from corehq.apps.user_importer.importer import (
@@ -41,16 +46,15 @@ from corehq.apps.users.models import (
     WebUser,
     DeactivateMobileWorkerTrigger,
     DeactivateMobileWorkerTriggerUpdateMessage,
-    Permissions,
+    HqPermissions,
 )
 from corehq.apps.users.model_log import UserModelAction
 from corehq.apps.users.views.mobile.custom_data_fields import UserFieldsView
 from corehq.const import USER_CHANGE_VIA_BULK_IMPORTER
 from corehq.extensions.interface import disable_extensions
+from corehq.util.test_utils import flag_enabled
 
-from corehq.apps.groups.models import Group
 from dimagi.utils.dates import add_months_to_date
-
 
 
 class TestMobileUserBulkUpload(TestCase, DomainSubscriptionMixin):
@@ -64,7 +68,7 @@ class TestMobileUserBulkUpload(TestCase, DomainSubscriptionMixin):
         create_enterprise_permissions("a@a.com", cls.domain_name, [cls.other_domain.name])
 
         cls.role_with_upload_permission = UserRole.create(
-            cls.domain, 'edit-web-users', permissions=Permissions(edit_web_users=True)
+            cls.domain, 'edit-web-users', permissions=HqPermissions(edit_web_users=True)
         )
         cls.uploading_user = WebUser.create(cls.domain_name, "admin@xyz.com", 'password', None, None,
                                             role_id=cls.role_with_upload_permission.get_id)
@@ -74,7 +78,6 @@ class TestMobileUserBulkUpload(TestCase, DomainSubscriptionMixin):
         one_year_ago = add_months_to_date(datetime.datetime.utcnow(), -12)
         enterprise_plan = get_enterprise_software_plan()
         cls.enterprise_account = get_enterprise_account()
-        cls.addClassCleanup(cleanup_accounting)
         add_domains_to_enterprise_account(
             cls.enterprise_account,
             [cls.emw_domain],
@@ -884,6 +887,17 @@ class TestMobileUserBulkUpload(TestCase, DomainSubscriptionMixin):
         )
         self.assertTrue(self.user.is_active)
 
+    def test_password_is_not_string(self):
+        rows = import_users_and_groups(
+            self.domain.name,
+            [self._get_spec(password=123)],
+            [],
+            self.uploading_user.get_id,
+            self.upload_record.pk,
+            False
+        )['messages']['rows']
+        self.assertEqual(rows[0]['row']['password'], "123")
+
     def test_update_user_no_username(self):
         import_users_and_groups(
             self.domain.name,
@@ -1416,6 +1430,18 @@ class TestMobileUserBulkUpload(TestCase, DomainSubscriptionMixin):
         self.assertEqual(user_history.change_messages['groups'],
             UserChangeMessage.groups_info([])['groups'])
 
+    def test_create_or_update_commcare_users_and_groups_with_bad_username(self):
+        result = create_or_update_commcare_users_and_groups(
+            self.domain.name,
+            [self._get_spec(username="..bad username")],
+            self.uploading_user,
+            self.upload_record.pk,
+        )
+        self.assertEqual(
+            result["rows"][0]["flag"],
+            "Username must not contain blank spaces or special characters."
+        )
+
 
 class TestUserBulkUploadStrongPassword(TestCase, DomainSubscriptionMixin):
     @classmethod
@@ -1479,6 +1505,7 @@ class TestUserBulkUploadStrongPassword(TestCase, DomainSubscriptionMixin):
         self.assertEqual(rows[0]['flag'], "'password' values must be unique")
 
     @disable_extensions('corehq.apps.domain.extension_points.validate_password_rules')
+    @override_settings(MINIMUM_PASSWORD_LENGTH=8)
     def test_weak_password(self):
         updated_user_spec = deepcopy(self.user_specs[0])
         updated_user_spec["password"] = '123'
@@ -1491,7 +1518,8 @@ class TestUserBulkUploadStrongPassword(TestCase, DomainSubscriptionMixin):
             self.upload_record.pk,
             False
         )['messages']['rows']
-        self.assertEqual(rows[0]['flag'], 'Password is not strong enough. Try making your password more complex.')
+        self.assertEqual(rows[0]['flag'],
+        _("Password must have at least 8 characters."))
 
 
 class TestUserUploadRecord(TestCase):
@@ -1919,6 +1947,91 @@ class TestWebUserBulkUpload(TestCase, DomainSubscriptionMixin):
     def setup_locations(self):
         self.loc1 = make_loc('loc1', type='state', domain=self.domain_name)
         self.loc2 = make_loc('loc2', type='state', domain=self.domain_name)
+
+    def _setup_tableau_users(self):
+        self.setup_users()
+        WebUser.create(
+            self.domain.name,
+            'edith@wharton.com',
+            'badpassword',
+            None,
+            None,
+        )
+        WebUser.create(
+            self.domain.name,
+            'george@eliot.com',
+            'badpassword',
+            None,
+            None,
+        )
+
+    def _mock_create_user_mock_responses(self, username):
+        return _mock_create_session_responses(self) + [
+            self.tableau_instance.create_user_response(username, None),
+            self.tableau_instance.get_group_response(HQ_TABLEAU_GROUP_NAME),
+            self.tableau_instance.add_user_to_group_response()]
+
+    def _mock_update_user_responses(self, username):
+        return [
+            self.tableau_instance.delete_user_response(),
+            self.tableau_instance.create_user_response(username, None),
+            self.tableau_instance.get_group_response(HQ_TABLEAU_GROUP_NAME),
+            self.tableau_instance.add_user_to_group_response(),
+            self.tableau_instance.add_user_to_group_response(),
+            self.tableau_instance.add_user_to_group_response()
+        ]
+
+    @flag_enabled('TABLEAU_USER_SYNCING')
+    @patch('corehq.apps.reports.models.requests.request')
+    def test_tableau_users(self, mock_request):
+        _setup_test_tableau_server(self, self.domain_name)
+        mock_request.side_effect = (self._mock_create_user_mock_responses('hello@world.com')
+            + self._mock_create_user_mock_responses('upload@user.com')
+            + self._mock_create_user_mock_responses('edith@wharton.com')
+            + self._mock_create_user_mock_responses('george@eliot.com')
+            + _mock_create_session_responses(self)
+            + [self.tableau_instance.get_group_response('group1'),
+               self.tableau_instance.get_group_response('group2')]
+            + self._mock_update_user_responses('edith@wharton.com')
+            + [self.tableau_instance.delete_user_response()]
+        )
+        self._setup_tableau_users()
+        local_tableau_users = TableauUser.objects.filter(
+            server=TableauServer.objects.get(domain=self.domain_name))
+        self.assertEqual(local_tableau_users.get(username='edith@wharton.com').role,
+            TableauUser.Roles.UNLICENSED.value)
+        local_tableau_users.get(username='george@eliot.com')
+        import_users_and_groups(
+            self.domain.name,
+            [
+                self._get_spec(
+                    username='edith@wharton.com',
+                    tableau_role=TableauUser.Roles.EXPLORER.value,
+                    tableau_groups="""group1,group2"""
+                ),
+                self._get_spec(
+                    username='hello@world.com',
+                    tableau_role=TableauUser.Roles.EXPLORER.value,
+                    tableau_groups='ERROR'
+                ),
+                self._get_spec(
+                    username='george@eliot.com',
+                    remove='1',
+                    tableau_groups='[]'
+                ),
+            ],
+            [],
+            self.uploading_user.get_id,
+            self.upload_record.pk,
+            True
+        )
+        self.assertEqual(local_tableau_users.get(username='edith@wharton.com').role,
+            TableauUser.Roles.EXPLORER.value)
+        # Role shouldn't have changed since there was an ERROR in the tableau_groups column
+        self.assertEqual(local_tableau_users.get(username='hello@world.com').role,
+            TableauUser.Roles.UNLICENSED.value)
+        with self.assertRaises(TableauUser.DoesNotExist):
+            local_tableau_users.get(username='george@eliot.com')
 
 
 class TestUserChangeLogger(SimpleTestCase):

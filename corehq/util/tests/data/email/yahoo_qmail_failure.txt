@@ -70,7 +70,7 @@ Content-Transfer-Encoding: 8bit
 
   <p>
 
-      This is a scheduled report from <a href="https://www.commcarehq.org">CommCareHQ</a> for the project 'fake-project'.
+      This is a scheduled report from <a href="https://www.commcarehq.org">CommCare HQ</a> for the project 'fake-project'.
 
   </p>
 

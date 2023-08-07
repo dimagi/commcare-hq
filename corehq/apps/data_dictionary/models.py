@@ -1,8 +1,8 @@
-from collections import namedtuple
 from datetime import datetime
 
+from django.core.validators import MaxLengthValidator
 from django.db import models
-from django.utils.translation import gettext as _
+from django.utils.translation import gettext as _, gettext_lazy
 
 from dimagi.utils.couch import CriticalSection
 from dimagi.utils.parsing import ISO_DATE_FORMAT
@@ -15,6 +15,7 @@ class CaseType(models.Model):
     name = models.CharField(max_length=255, default=None)
     description = models.TextField(default='', blank=True)
     fully_generated = models.BooleanField(default=False)
+    is_deprecated = models.BooleanField(default=False)
 
     class Meta(object):
         unique_together = ('domain', 'name')
@@ -40,6 +41,30 @@ class CaseType(models.Model):
         return super(CaseType, self).save(*args, **kwargs)
 
 
+class CasePropertyGroup(models.Model):
+    case_type = models.ForeignKey(
+        CaseType,
+        on_delete=models.CASCADE,
+        related_name='groups',
+        related_query_name='group'
+    )
+    name = models.CharField(max_length=255, default=None)
+    description = models.TextField(default='', blank=True)
+    index = models.IntegerField(default=0, blank=True)
+    deprecated = models.BooleanField(default=False)
+
+    class Meta(object):
+        unique_together = ('case_type', 'name')
+
+    def unique_error_message(self, model_class, unique_check):
+        if unique_check == ('case_type', 'name'):
+            return gettext_lazy('Group "{}" already exists for case type "{}"'.format(
+                self.name, self.case_type.name
+            ))
+        else:
+            return super().unique_error_message(model_class, unique_check)
+
+
 class CaseProperty(models.Model):
 
     class DataType(models.TextChoices):
@@ -60,6 +85,7 @@ class CaseProperty(models.Model):
         related_query_name='property'
     )
     name = models.CharField(max_length=255, default=None)
+    label = models.CharField(max_length=255, default='', blank=True)
     description = models.TextField(default='', blank=True)
     deprecated = models.BooleanField(default=False)
     data_type = models.CharField(
@@ -69,6 +95,16 @@ class CaseProperty(models.Model):
         blank=True,
     )
     group = models.TextField(default='', blank=True)
+    index = models.IntegerField(default=0, blank=True)
+    group_obj = models.ForeignKey(
+        CasePropertyGroup,
+        on_delete=models.CASCADE,
+        related_name='properties',
+        related_query_name='property',
+        db_column="group_id",
+        null=True,
+        blank=True
+    )
 
     class Meta(object):
         unique_together = ('case_type', 'name')
@@ -93,10 +129,17 @@ class CaseProperty(models.Model):
                 prop = CaseProperty.objects.create(case_type=case_type_obj, name=name)
             return prop
 
+    @classmethod
+    def clear_caches(cls, domain, case_type):
+        from .util import (
+            get_data_dict_props_by_case_type,
+            get_gps_properties,
+        )
+        get_data_dict_props_by_case_type.clear(domain)
+        get_gps_properties.clear(domain, case_type)
+
     def save(self, *args, **kwargs):
-        from .util import get_data_dict_props_by_case_type, get_gps_properties
-        get_data_dict_props_by_case_type.clear(self.case_type.domain)
-        get_gps_properties.clear(self.case_type.domain, self.case_type.name)
+        self.clear_caches(self.case_type.domain, self.case_type.name)
         return super(CaseProperty, self).save(*args, **kwargs)
 
     def check_validity(self, value):
@@ -114,6 +157,12 @@ class CaseProperty(models.Model):
         allowed_values = self.allowed_values.values_list('allowed_value', flat=True)
         allowed_string = ', '.join(f'"{av}"' for av in allowed_values)
         return _("Valid values: %s") % allowed_string
+
+    @property
+    def group_name(self):
+        if self.group_obj:
+            return self.group_obj.name
+        return self.group
 
 
 class CasePropertyAllowedValue(models.Model):

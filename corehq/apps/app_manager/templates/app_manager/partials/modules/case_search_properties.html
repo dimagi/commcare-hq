@@ -18,7 +18,7 @@
       <div class="panel-body">
         <p>{% trans "Search against the following case properties." %}</p>
         <table class="table table-condensed">
-          <thead data-bind="visible: searchProperties().length > 0">
+          <thead data-bind="visible: search_properties().length > 0">
           <tr>
             <th class="col-sm-1"></th>
             <th class="col-sm-4">{% trans "Case Property" %}</th>
@@ -29,7 +29,7 @@
             <th class="col-sm-1"></th>
           </tr>
           </thead>
-          <tbody data-bind="foreach: searchProperties, sortableList: searchProperties">
+          <tbody data-bind="foreach: search_properties, sortableList: search_properties">
             {% include "app_manager/partials/modules/case_search_property.html" %}
           </tbody>
         </table>
@@ -49,14 +49,14 @@
       <div class="panel-body">
         <p>{% trans "Filter based on a specific value of any case property. These are applied to every search and are hidden from the user." %}</p>
         <table class="table table-condensed">
-          <thead data-bind="visible: defaultProperties().length > 0">
+          <thead data-bind="visible: default_properties().length > 0">
           <tr>
             <th class="col-sm-5">{% trans "Case Property" %}</th>
             <th class="col-sm-6">{% trans "Value (XPath expression)" %}</th>
             <th class="col-sm-1">&nbsp;</th>
           </tr>
           </thead>
-          <tbody data-bind="foreach: defaultProperties">
+          <tbody data-bind="foreach: default_properties">
           <tr>
             <td class="col-sm-4" data-bind="css: {'has-error': $parent.isCommon(ko.unwrap(property()))}">
 
@@ -121,43 +121,81 @@
               </div>
             {% endif %}
           </div>
+          {% if request|toggle_enabled:'USH_INLINE_SEARCH' %}
+          <div class="form-group" data-bind="visible: inlineSearchVisible">
+            <label class="control-label {% css_label_class %}">
+              {% trans "Make search input available after search" %}
+              <span class="hq-help-template" data-title="{% trans "Make search input available after search" %}"
+                    data-content="{% trans_html_attr "Stores the search input values and makes the available via the 'search-input' instance. This also disables the 'Search Again' workflow." %}">
+              </span>
+            </label>
+            <div class="{% css_field_class %} checkbox">
+              <label>
+                <input type="checkbox" data-bind="checked: inline_search" />
+                <input type="hidden" name="search-input" data-bind="value: inline_search"/>
+              </label>
+            </div>
+          </div>
+          {% endif %}
           {% if request|toggle_enabled:'USH_CASE_CLAIM_UPDATES' %}
-          <div class="form-group">
+          <div class="form-group" data-bind="hidden: inlineSearchActive">
             <label for="search_label" class="{% css_label_class %} control-label">
               {% trans "Label for Searching" %}
               <span class="hq-help-template" data-title="{% trans "Label for Searching" %}"
                     data-content="{% trans_html_attr "This text is for the button to enter case search. It is also the header on the search results screen." %}">
             </label>
             <div class="{% css_field_class %}">
-              {% input_trans module.search_config.search_label.label langs input_name='search_label' input_id='search_label' data_bind="value: searchLabel" %}
+              {% input_trans module.search_config.search_label.label langs input_name='search_label' input_id='search_label' data_bind="value: search_label" %}
             </div>
           </div>
-          <div class="case-search-multimedia-input">
+          <div class="case-search-multimedia-input" data-bind="hidden: inlineSearchActive">
           <!-- stopBinding to avoid conflicts with the binding of enclosing template to a different object 'search'-->
           <!-- binding for this partial is done via app_manager/js/nav_menu_media-->
             <!-- ko stopBinding: true -->
               {% include "app_manager/partials/nav_menu_media.html" with qualifier='case_search-search_label_media_' ICON_LABEL="Search Icon" AUDIO_LABEL="Search Audio" %}
             <!-- /ko -->
           </div>
+            {% if not request|toggle_enabled:'SPLIT_SCREEN_CASE_SEARCH' %}
+            <div class="form-group" data-bind="hidden: inlineSearchActive">
+              <label for="search_again_label" class="{% css_label_class %} control-label">
+                {% trans "Label for Searching Again" %}
+                <span class="hq-help-template" data-title="{% trans "Label for Searching Again" %}"
+                      data-content="{% trans_html_attr "This text is for the search button displayed at the bottom of search results, so users can search again." %}">
+              </label>
+              <div class="{% css_field_class %}">
+                {% input_trans module.search_config.search_again_label.label langs input_name='search_again_label' input_id='search_again_label' data_bind="value: search_again_label" %}
+              </div>
+            </div>
+            <div class="case-search-multimedia-input" data-bind="hidden: inlineSearchActive">
+            <!-- stopBinding to avoid conflicts with the binding of enclosing template to a different object 'search'-->
+            <!-- binding for this partial is done via app_manager/js/nav_menu_media-->
+              <!-- ko stopBinding: true -->
+                {% include "app_manager/partials/nav_menu_media.html" with qualifier='case_search-search_again_label_media_' ICON_LABEL="Search Again Icon" AUDIO_LABEL="Search Again Audio" %}
+              <!-- /ko -->
+            </div>
+            {% endif %}
           <div class="form-group">
-            <label for="search_again_label" class="{% css_label_class %} control-label">
-              {% trans "Label for Searching Again" %}
-              <span class="hq-help-template" data-title="{% trans "Label for Searching Again" %}"
-                    data-content="{% trans_html_attr "This text is for the search button displayed at the bottom of search results, so users can search again." %}">
+            <label for="search_screen_title" class="{% css_label_class %} control-label">
+              {% trans "Search Screen Title" %}
+              <span class="hq-help-template" data-title="{% trans "Search Screen Title Translation" %}"
+                    data-content="{% trans_html_attr "Define the title label displayed on the search screen." %}">
             </label>
             <div class="{% css_field_class %}">
-              {% input_trans module.search_config.search_again_label.label langs input_name='search_again_label' input_id='search_again_label' data_bind="value: searchAgainLabel" %}
+              {% input_trans module.search_config.title_label langs input_name='title_label' input_id='title_label' data_bind="value: title_label" %}
             </div>
           </div>
-          <div class="case-search-multimedia-input">
-          <!-- stopBinding to avoid conflicts with the binding of enclosing template to a different object 'search'-->
-          <!-- binding for this partial is done via app_manager/js/nav_menu_media-->
-            <!-- ko stopBinding: true -->
-              {% include "app_manager/partials/nav_menu_media.html" with qualifier='case_search-search_again_label_media_' ICON_LABEL="Search Again Icon" AUDIO_LABEL="Search Again Audio" %}
-            <!-- /ko -->
+          <div class="form-group">
+            <label for="description" class="{% css_label_class %} control-label">
+              {% trans "Search Screen Subtitle" %}
+              <span class="hq-help-template" data-title="{% trans "Search Screen Subtitle" %}"
+                    data-content="{% trans_html_attr "Define descriptive text displayed on the search screen. Use text formatting to <strong>bold</strong> and <em>italicize</em> words, use bulleted lists, and <a target='_blank' href='https://help.commcarehq.org/display/commcarepublic/Text+Formatting'>more</a>." %}">
+            </label>
+            <div class="{% css_field_class %}">
+              {% input_trans module.search_config.description langs input_name='description' input_id='description' data_bind="value: description" element_type="textarea" %}
+            </div>
           </div>
           {% endif %}
-          <div class="form-group" data-bind="slideVisible: !autoLaunch()">
+          <div class="form-group" data-bind="slideVisible: !auto_launch()">
             <label for="search-display-condition" class="control-label {% css_label_class %}">
               {% trans "Display Condition" %}
               <span class="hq-help-template" data-title="{% trans "Display Condition" %}"
@@ -168,11 +206,14 @@
               <textarea class="form-control vertical-resize"
                        id="search-display-condition"
                        spellcheck="false"
-                       data-bind="value: searchButtonDisplayCondition, xpathValidator: {text: searchButtonDisplayCondition, allowCaseHashtags: true, errorHtml: $('#searchFilterXpathErrorHtml').html()}"
+                       data-bind="
+                         value: search_button_display_condition,
+                         xpathValidator: {text: search_button_display_condition, allowCaseHashtags: true, errorHtml: $('#searchFilterXpathErrorHtml').html()}
+                       "
               ></textarea>
             </div>
           </div>
-          {% if request|toggle_enabled:'USH_CASE_CLAIM_UPDATES' %}
+          {% if request|toggle_enabled:'USH_SEARCH_FILTER' %}
           <div class="form-group">
             <label for="search-filter" class="control-label {% css_label_class %}">
               {% trans "Search Filter" %}
@@ -180,7 +221,7 @@
                     data-content="{% trans_html_attr "An XPath expression to filter the search results." %}">
             </label>
             <div class="{% css_field_class %}">
-              <textarea data-bind="value: searchFilter, xpathValidator: {text: searchFilter, allowCaseHashtags: true, errorHtml: $('#searchFilterXpathErrorHtml').html()}"
+              <textarea data-bind="value: search_filter, xpathValidator: {text: search_filter, allowCaseHashtags: true, errorHtml: $('#searchFilterXpathErrorHtml').html()}"
                         class="form-control vertical-resize"
                         id="search-filter"
                         spellcheck="false"
@@ -203,7 +244,7 @@
               </span>
             </label>
             <div class="{% css_field_class %}">
-              <textarea data-bind="value: searchAdditionalRelevant, xpathValidator: {text: searchAdditionalRelevant, allowCaseHashtags: true, errorHtml: $('#searchFilterXpathErrorHtml').html()}"
+              <textarea data-bind="value: additional_relevant, xpathValidator: {text: additional_relevant, allowCaseHashtags: true, errorHtml: $('#searchFilterXpathErrorHtml').html()}"
                         class="form-control vertical-resize"
                         id="claim-relevant-condition"
                         spellcheck="false"
@@ -218,7 +259,10 @@
               </span>
             </label>
             <div class="{% css_field_class %}">
-              <textarea data-bind="value: blacklistedOwnerIdsExpression, xpathValidator: {text: blacklistedOwnerIdsExpression, allowCaseHashtags: true, errorHtml: $('#searchFilterXpathErrorHtml').html()}"
+              <textarea data-bind="
+                value: blacklisted_owner_ids_expression,
+                xpathValidator: {text: blacklisted_owner_ids_expression, allowCaseHashtags: true, errorHtml: $('#searchFilterXpathErrorHtml').html()}
+              "
                         class="form-control vertical-resize"
                         id="blacklisted-user-ids"
                         spellcheck="false"
@@ -238,7 +282,7 @@
                         data-content="{% trans_html_attr "Select a Data Registry to use for searching.  Users with access will see results from the registry when performing this search." %}">
               </label>
               <div class="{% css_field_class %}">
-                  <select class="form-control" id="data-registry" data-bind="value: dataRegistry">
+                  <select class="form-control" id="data-registry" data-bind="value: data_registry">
                       <option value/>
                       {% for registry in data_registries %}
                           <option value="{{ registry.slug }}">{{ registry.name }}</option>
@@ -246,19 +290,19 @@
                   </select>
               </div>
           </div>
-          <div class="form-group" data-bind="slideVisible: dataRegistry()">
+          <div class="form-group" data-bind="slideVisible: data_registry()">
               <label for="data-registry" class="{% css_label_class %} control-label">
                   {% trans "Data Registry Workflow" %}
               </label>
               <div class="{% css_field_class %}">
-                  <select class="form-control" data-bind="value: dataRegistryWorkflow">
+                  <select class="form-control" data-bind="value: data_registry_workflow">
                     {% for slug, name in data_registry_workflow_choices %}
                       <option value="{{ slug }}">{{ name }}</option>
                     {% endfor %}
                   </select>
               </div>
           </div>
-          <div class="form-group" data-bind="visible: dataRegistryWorkflow() == 'load_case'">
+          <div class="form-group" data-bind="visible: data_registry_workflow() == 'load_case'">
               <label for="data-registry" class="{% css_label_class %} control-label">
                   {% trans "Load Additional Data Registry Cases" %}
                   <span class="hq-help-template" data-title="{% trans "Data Registry" %}"
@@ -271,13 +315,13 @@
               </label>
               <div class="{% css_field_class %}">
                   <table class="table table-condensed">
-                    <thead data-bind="visible: additionalRegistryCases().length > 0">
+                    <thead data-bind="visible: additional_registry_cases().length > 0">
                     <tr>
                       <th class="col-sm-12">{% trans "Case ID XPath" %}</th>
                       <th class="col-sm-1"></th>
                     </tr>
                     </thead>
-                    <tbody data-bind="foreach: additionalRegistryCases, sortableList: additionalRegistryCases">
+                    <tbody data-bind="foreach: additional_registry_cases, sortableList: additional_registry_cases">
                       <tr>
                         <td>
                           <textarea data-bind="
@@ -319,8 +363,20 @@
                   <input id="custom-related-case-property"
                          type="text"
                          class="form-control"
-                         data-bind="value: customRelatedCaseProperty"/>
+                         data-bind="value: custom_related_case_property"/>
               </div>
+          </div>
+          <div class="form-group">
+            <label class="control-label {% css_label_class %}">
+              {% trans "Include all related cases in search results" %}
+            </label>
+            <div>
+              <div class="{% css_field_class %} checkbox">
+                <label>
+                  <input type="checkbox" data-bind="checked: include_all_related_cases"/>
+                </label>
+              </div>
+            </div>
           </div>
           {% endif %}
           <span class="hide" id="searchFilterXpathErrorHtml">

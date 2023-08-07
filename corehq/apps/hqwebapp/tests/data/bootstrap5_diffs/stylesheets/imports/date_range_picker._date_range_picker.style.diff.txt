@@ -1,0 +1,49 @@
+--- 
++++ 
+@@ -8,18 +8,18 @@
+ 
+ .daterangepicker {
+   .ranges li {
+-    background-color: @cc-bg !important;
+-    color: @cc-light-cool-accent-low !important;
++    background-color: $cc-bg !important;
++    color: $cc-light-cool-accent-low !important;
+     border: none !important;
+     line-height: 30px;
+     &:hover {
+-      background-color: @cc-light-cool-accent-mid !important;
++      background-color: $cc-light-cool-accent-mid !important;
+       color: #ffffff !important;
+     }
+   }
+ 
+   .ranges li.active {
+-    background-color: @cc-light-cool-accent-low !important;
++    background-color: $cc-light-cool-accent-low !important;
+     color: #ffffff !important;
+   }
+ 
+@@ -30,20 +30,19 @@
+     }
+   }
+   .applyBtn {
+-    background-color: @cc-neutral-low;
++    background-color: $cc-neutral-low;
+     color: #ffffff;
+     position: relative;
+     margin-bottom: 5px;
+     &:hover {
+-      background-color: @call-to-action-mid;
++      background-color: $call-to-action-mid;
+     }
+   }
+   .cancelBtn {
+-    background-color: @cc-bg;
++    background-color: $cc-bg;
+   }
+ }
+ 
+ .form-horizontal .date-range-picker {
+   margin-left: 0px;
+ }
+-

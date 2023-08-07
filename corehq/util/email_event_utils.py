@@ -107,7 +107,7 @@ def record_transient_bounce(aws_meta):
 def get_relevant_aws_meta(message_info):
     """
     Creates a list of AwsMeta objects from the Message portion of an AWS
-    SNS Notification message.
+    SNS Notification message.  One per recipient.
     :param message_info: (dict) the "Message" portion of an SNS notification
     :return: (list) AwsMeta objects
     """
@@ -173,6 +173,14 @@ def get_emails_to_never_bounce():
 
 def get_bounced_system_emails():
     system_emails = get_emails_to_never_bounce()
-    general_bounces = BouncedEmail.objects.filter(email__in=system_emails).values_list('email', flat=True)
-    transient_bounces = TransientBounceEmail.objects.filter(email__in=system_emails).values_list('email', flat=True)
+    general_bounces = (
+        BouncedEmail.objects
+        .filter(email__in=system_emails)
+        .values_list('email', flat=True)
+    )
+    transient_bounces = (
+        TransientBounceEmail.objects
+        .filter(email__in=system_emails)
+        .values_list('email', flat=True)
+    )
     return list(general_bounces) + list(transient_bounces)

@@ -4,6 +4,7 @@ hqDefine("hqwebapp/js/widgets",[
         '@mapbox/mapbox-gl-geocoder/dist/mapbox-gl-geocoder.min',
         'hqwebapp/js/initial_page_data',
         'select2/dist/js/select2.full.min',
+        'jquery-ui/ui/widgets/datepicker',
     ], function ($, _, MapboxGeocoder, initialPageData) {
         var init = function () {
             var MAPBOX_ACCESS_TOKEN = initialPageData.get(
@@ -98,6 +99,8 @@ hqDefine("hqwebapp/js/widgets",[
                     geocoder.setInput(getGeocoderValue());
                 }
             });
+
+            $('.date-picker').datepicker({ dateFormat: "yy-mm-dd" });
         };
 
         var parseEmails = function (input) {

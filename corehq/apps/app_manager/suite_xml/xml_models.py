@@ -9,8 +9,6 @@ from eulxml.xmlmap import (
 )
 from lxml import etree
 
-from corehq.apps.app_manager.exceptions import UnknownInstanceError
-
 
 class XPathField(StringField):
     """
@@ -387,6 +385,7 @@ class SessionDatum(IdNode, OrderedXmlObject):
 
 class InstanceDatum(SessionDatum):
     ROOT_NAME = 'instance-datum'
+    max_select_value = IntegerField('@max-select-value')
 
 
 class StackDatum(IdNode):
@@ -419,6 +418,12 @@ class StackCommand(XmlObject):
 
 class BaseFrame(XmlObject):
     if_clause = XPathField('@if')
+
+    def get_xpaths(self):
+        xpaths = [child.attrib['value'] for child in self.node.xpath("*") if 'value' in child.attrib]
+        if self.if_clause:
+            xpaths.append(self.if_clause)
+        return xpaths
 
 
 class CreatePushBase(IdNode, BaseFrame):
@@ -497,6 +502,14 @@ class Assertion(XmlObject):
     text = NodeListField('text', Text)
 
 
+class Required(Assertion):
+    ROOT_NAME = 'required'
+
+
+class Validation(Assertion):
+    ROOT_NAME = 'validation'
+
+
 class QueryPrompt(DisplayNode):
     ROOT_NAME = 'prompt'
 
@@ -508,25 +521,37 @@ class QueryPrompt(DisplayNode):
     default_value = StringField('@default', required=False)
     allow_blank_value = BooleanField('@allow_blank_value', required=False)
     exclude = StringField('@exclude', required=False)
-
+    required = NodeField('required', Required, required=False)
+    validations = NodeListField('validation', Validation)
 
     itemset = NodeField('itemset', Itemset)
 
 
 class RemoteRequestQuery(OrderedXmlObject, XmlObject):
     ROOT_NAME = 'query'
-    ORDER = ('data', 'prompts')
+    ORDER = ('title', 'description', 'data', 'prompts')
 
     url = StringField('@url')
     storage_instance = StringField('@storage-instance')
     template = StringField('@template')
+    title = NodeField('title', DisplayNode)
+    description = NodeField('description', DisplayNode)
     data = NodeListField('data', QueryData)
     prompts = NodeListField('prompt', QueryPrompt)
     default_search = BooleanField("@default_search")
+    results_title = NodeField('results-title', DisplayNode)
 
     @property
     def id(self):
         return self.storage_instance
+
+
+class RemoteRequestPost(XmlObject):
+    ROOT_NAME = 'post'
+
+    url = StringField('@url')
+    relevant = StringField('@relevant')
+    data = NodeListField('data', QueryData)
 
 
 def _wrap_session_datums(datum):
@@ -539,9 +564,10 @@ def _wrap_session_datums(datum):
 
 class Entry(OrderedXmlObject, XmlObject):
     ROOT_NAME = 'entry'
-    ORDER = ('form', 'command', 'instance', 'datums')
+    ORDER = ('form', 'post', 'command', 'instance', 'datums')
 
     form = StringField('form')
+    post = NodeField('post', RemoteRequestPost)
     command = NodeField('command', Command)
     instances = NodeListField('instance', Instance)
 
@@ -553,49 +579,6 @@ class Entry(OrderedXmlObject, XmlObject):
     stack = NodeField('stack', Stack)
 
     assertions = NodeListField('assertions/assert', Assertion)
-
-    def require_instances(self, instances=(), instance_ids=()):
-        used = {(instance.id, instance.src) for instance in self.instances}
-        for instance in instances:
-            if 'remote' in instance.src:
-                continue
-            if (instance.id, instance.src) not in used:
-                self.instances.append(
-                    # it's important to make a copy,
-                    # since these can't be reused
-                    Instance(id=instance.id, src=instance.src)
-                )
-                # make sure the first instance gets inserted
-                # right after the command
-                # once you "suggest" a placement to eulxml,
-                # it'll follow your lead and place the rest of them there too
-                if len(self.instances) == 1:
-                    instance_node = self.node.find('instance')
-                    command_node = self.node.find('command')
-                    self.node.remove(instance_node)
-                    self.node.insert(self.node.index(command_node) + 1,
-                                     instance_node)
-        covered_ids = {instance_id for instance_id, _ in used}
-        for instance_id in instance_ids:
-            if instance_id not in covered_ids:
-                raise UnknownInstanceError(
-                    "Instance reference not recognized: {} in XPath \"{}\""
-                    # to get xpath context to show in this error message
-                    # make instance_id a unicode subclass with an xpath property
-                    .format(instance_id, getattr(instance_id, 'xpath', "(XPath Unknown)")))
-
-        sorted_instances = sorted(self.instances,
-                                  key=lambda instance: instance.id)
-        if sorted_instances != self.instances:
-            self.instances = sorted_instances
-
-
-class RemoteRequestPost(XmlObject):
-    ROOT_NAME = 'post'
-
-    url = StringField('@url')
-    relevant = StringField('@relevant')
-    data = NodeListField('data', QueryData)
 
 
 class RemoteRequestSession(OrderedXmlObject, XmlObject):
@@ -626,6 +609,9 @@ class RemoteRequest(OrderedXmlObject, XmlObject):
     session = NodeField('session', RemoteRequestSession)
     stack = NodeField('stack', Stack)
 
+    queries = NodeListField('session/query', RemoteRequestQuery)
+    all_datums = NodeListField('session/*[self::datum or self::instance-datum]', _wrap_session_datums)
+
 
 class MenuMixin(XmlObject):
     ROOT_NAME = 'menu'
@@ -634,6 +620,8 @@ class MenuMixin(XmlObject):
     relevant = XPathField('@relevant')
     style = StringField('@style')
     commands = NodeListField('command', Command)
+    assertions = NodeListField('assertions/assert', Assertion)
+    instances = NodeListField('instance', Instance)
 
 
 class Menu(MenuMixin, DisplayNode, IdNode):
@@ -651,7 +639,7 @@ class LocalizedMenu(MenuMixin, TextOrDisplay, IdNode):
 
 
 class AbstractTemplate(XmlObject):
-    form = StringField('@form', choices=['image', 'phone', 'address'])
+    form = StringField('@form', choices=['image', 'phone', 'address', 'markdown'])
     width = IntegerField('@width')
     text = NodeField('text', Text)
 
@@ -826,6 +814,13 @@ class DetailVariableList(XmlObject):
     variables = NodeListField('_', DetailVariable)
 
 
+class TileGroup(XmlObject):
+    ROOT_NAME = "group"
+
+    function = XPathField('@function')
+    header_rows = IntegerField('@header-rows')
+
+
 class Detail(OrderedXmlObject, IdNode):
     """
     <detail id="">
@@ -834,6 +829,7 @@ class Detail(OrderedXmlObject, IdNode):
             <extra key="" value = "" />
             <response key ="" />
         </lookup>
+        <no_items_text><text></no_items_text>
         <variables>
             <__ function=""/>
         </variables>
@@ -845,18 +841,20 @@ class Detail(OrderedXmlObject, IdNode):
     """
 
     ROOT_NAME = 'detail'
-    ORDER = ('title', 'lookup', 'details', 'fields')
+    ORDER = ('title', 'lookup', 'no_items_text', 'details', 'fields')
 
     nodeset = StringField('@nodeset')
     print_template = StringField('@print-template')
 
     title = NodeField('title/text', Text)
     lookup = NodeField('lookup', Lookup)
+    no_items_text = NodeField('no_items_text/text', Text)
     fields = NodeListField('field', Field)
     actions = NodeListField('action', Action)
     details = NodeListField('detail', "self")
     _variables = NodeField('variables', DetailVariableList)
     relevant = StringField('@relevant')
+    tile_group = NodeField('group', TileGroup)
 
     def _init_variables(self):
         if self._variables is None:

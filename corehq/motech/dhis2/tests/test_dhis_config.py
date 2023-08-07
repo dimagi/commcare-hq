@@ -1,24 +1,21 @@
 import json
+from django.test.testcases import TestCase
 
 from django.test import SimpleTestCase
 
-from fakecouch import FakeCouchDb
 from jsonobject.base_properties import BadValueError
 
-from corehq.motech.dhis2.dhis2_config import Dhis2CaseConfig, Dhis2Config
+from corehq.motech.dhis2.dhis2_config import Dhis2CaseConfig
 from corehq.motech.dhis2.forms import Dhis2ConfigForm
 from corehq.motech.dhis2.repeaters import Dhis2Repeater
+from corehq.motech.models import ConnectionSettings
 
 
-class TestDhisConfigValidation(SimpleTestCase):
+class TestDhisConfigValidation(TestCase):
 
     def setUp(self):
-        self.db = Dhis2Repeater.get_db()
-        self.fakedb = FakeCouchDb()
-        Dhis2Repeater.set_db(self.fakedb)
-
-    def tearDown(self):
-        Dhis2Repeater.set_db(self.db)
+        self.domain = 'test-dhis2-domain'
+        self.conn = ConnectionSettings.objects.create(url="http://fakeurl.com", domain=self.domain)
 
     def test_form_validation(self):
         config = {
@@ -38,8 +35,11 @@ class TestDhisConfigValidation(SimpleTestCase):
         config = {
             'form_configs': [{}]
         }
-        repeater = Dhis2Repeater()
-        repeater.dhis2_config = Dhis2Config.wrap(config)
+        repeater = Dhis2Repeater(
+            connection_settings=self.conn,
+            domain=self.domain
+        )
+        repeater.dhis2_config = config
         with self.assertRaises(BadValueError) as e:
             repeater.save()
         self.assertEqual(
@@ -53,8 +53,8 @@ class TestDhisConfigValidation(SimpleTestCase):
                 'xmlns': 'test_xmlns',
             }]
         }
-        repeater = Dhis2Repeater()
-        repeater.dhis2_config = Dhis2Config.wrap(config)
+        repeater = Dhis2Repeater(connection_settings=self.conn, domain=self.domain)
+        repeater.dhis2_config = config
         with self.assertRaises(BadValueError) as e:
             repeater.save()
         self.assertEqual(
@@ -81,8 +81,11 @@ class TestDhisConfigValidation(SimpleTestCase):
         form = Dhis2ConfigForm(data=config)
         self.assertTrue(form.is_valid())
 
-        repeater = Dhis2Repeater()
-        repeater.dhis2_config = Dhis2Config.wrap(form.cleaned_data)
+        repeater = Dhis2Repeater(
+            connection_settings=self.conn,
+            domain=self.domain
+        )
+        repeater.dhis2_config = form.cleaned_data
         repeater.save()
 
     def test_config_empty_datavalue_map(self):
@@ -107,8 +110,11 @@ class TestDhisConfigValidation(SimpleTestCase):
         form = Dhis2ConfigForm(data=config)
         self.assertTrue(form.is_valid())
 
-        repeater = Dhis2Repeater()
-        repeater.dhis2_config = Dhis2Config.wrap(form.cleaned_data)
+        repeater = Dhis2Repeater(
+            connection_settings=self.conn,
+            domain=self.domain
+        )
+        repeater.dhis2_config = form.cleaned_data
         with self.assertRaises(BadValueError) as e:
             repeater.save()
         self.assertEqual(
@@ -144,8 +150,11 @@ class TestDhisConfigValidation(SimpleTestCase):
         form = Dhis2ConfigForm(data=config)
         self.assertTrue(form.is_valid())
 
-        repeater = Dhis2Repeater()
-        repeater.dhis2_config = Dhis2Config.wrap(form.cleaned_data)
+        repeater = Dhis2Repeater(
+            connection_settings=self.conn,
+            domain=self.domain
+        )
+        repeater.dhis2_config = form.cleaned_data
         repeater.save()
 
     def test_org_unit_id_migration(self):
@@ -172,10 +181,13 @@ class TestDhisConfigValidation(SimpleTestCase):
         form = Dhis2ConfigForm(data=config)
         self.assertTrue(form.is_valid())
 
-        repeater = Dhis2Repeater()
-        repeater.dhis2_config = Dhis2Config.wrap(form.cleaned_data)
+        repeater = Dhis2Repeater(
+            connection_settings=self.conn,
+            domain=self.domain
+        )
+        repeater.dhis2_config = form.cleaned_data
         repeater.save()
-        org_unit_value_source = dict(repeater.dhis2_config.form_configs[0].org_unit_id)
+        org_unit_value_source = dict(repeater.dhis2_config['form_configs'][0]['org_unit_id'])
         self.assertDictEqual(org_unit_value_source, {'value': 'dhis2_location_id'})
 
 

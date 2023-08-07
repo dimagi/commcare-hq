@@ -1,5 +1,6 @@
 import csv
 import itertools
+import settings
 import os
 import urllib.parse
 import uuid
@@ -35,10 +36,12 @@ from two_factor.utils import default_device
 
 from casexml.apps.phone.xml import SYNC_XMLNS
 from casexml.apps.stock.const import COMMTRACK_REPORT_XMLNS
+from corehq.apps.hqadmin.utils import unset_password
 from couchexport.models import Format
 from couchforms.openrosa_response import RESPONSE_XMLNS
 from dimagi.utils.django.email import send_HTML_email
 
+from corehq.apps.accounting.utils import is_accounting_admin
 from corehq.apps.app_manager.models import Application
 from corehq.apps.domain.auth import basicauth
 from corehq.apps.domain.decorators import (
@@ -51,6 +54,7 @@ from corehq.apps.hqadmin.forms import (
     DisableTwoFactorForm,
     DisableUserForm,
     SuperuserManagementForm,
+    OffboardingUserListForm,
 )
 from corehq.apps.hqadmin.views.utils import BaseAdminSectionView
 from corehq.apps.hqmedia.tasks import create_files_for_ccz
@@ -78,32 +82,44 @@ class SuperuserManagement(UserAdministration):
 
     @property
     def page_context(self):
-        # only staff can toggle is_staff
-        can_toggle_is_staff = self.request.user.is_staff
+        # only users with can_assign_superuser privilege can change superuser and staff status
+        can_toggle_status = WebUser.from_django_user(self.request.user).can_assign_superuser
         # render validation errors if rendered after POST
-        args = [can_toggle_is_staff, self.request.POST] if self.request.POST else [can_toggle_is_staff]
+        args = [self.request.POST] if self.request.POST else []
         return {
             'form': SuperuserManagementForm(*args),
-            'users': augmented_superusers(),
+            'users': augmented_superusers(include_can_assign_superuser=True),
+            'can_toggle_status': can_toggle_status
         }
 
     def post(self, request, *args, **kwargs):
-        can_toggle_is_staff = request.user.is_staff
-        form = SuperuserManagementForm(can_toggle_is_staff, self.request.POST)
+        can_toggle_status = WebUser.from_django_user(self.request.user).can_assign_superuser
+        if not can_toggle_status:
+            messages.error(request, _("You do not have permission to update superuser or staff status"))
+            return self.get(request, *args, **kwargs)
+        form = SuperuserManagementForm(self.request.POST)
         if form.is_valid():
-            users = form.cleaned_data['users']
+            users = form.cleaned_data['csv_email_list']
             is_superuser = 'is_superuser' in form.cleaned_data['privileges']
             is_staff = 'is_staff' in form.cleaned_data['privileges']
-            fields_changed = {}
+            can_assign_superuser = 'can_assign_superuser' in form.cleaned_data['can_assign_superuser']
+            user_changes = []
             for user in users:
+                fields_changed = {}
                 # save user object only if needed and just once
-                if user.is_superuser is not is_superuser:
+                if can_toggle_status and user.is_superuser is not is_superuser:
                     user.is_superuser = is_superuser
                     fields_changed['is_superuser'] = is_superuser
 
-                if can_toggle_is_staff and user.is_staff is not is_staff:
+                if can_toggle_status and user.is_staff is not is_staff:
                     user.is_staff = is_staff
                     fields_changed['is_staff'] = is_staff
+
+                web_user = WebUser.from_django_user(user)
+                if can_toggle_status and web_user.can_assign_superuser is not can_assign_superuser:
+                    web_user.can_assign_superuser = can_assign_superuser
+                    web_user.save()
+                    fields_changed['can_assign_superuser'] = can_assign_superuser
 
                 if fields_changed:
                     user.save()
@@ -113,36 +129,80 @@ class SuperuserManagement(UserAdministration):
                                     changed_via=USER_CHANGE_VIA_WEB, fields_changed=fields_changed,
                                     by_domain_required_for_log=False,
                                     for_domain_required_for_log=False)
+
+                    #formatting for user_changes list
+                    fields_changed['email'] = user.username
+                    if 'is_superuser' not in fields_changed:
+                        fields_changed['same_superuser'] = user.is_superuser
+                    if 'is_staff' not in fields_changed:
+                        fields_changed['same_staff'] = user.is_staff
+                    if 'can_assign_superuser' not in fields_changed:
+                        fields_changed['same_management_privilege'] = web_user.can_assign_superuser
+                    user_changes.append(fields_changed)
+            if user_changes:
+                send_email_notif(user_changes, self.request.couch_user.username)
             messages.success(request, _("Successfully updated superuser permissions"))
 
         return self.get(request, *args, **kwargs)
 
 
+def send_email_notif(user_changes, changed_by_user):
+    mail_admins(
+        "Superuser privilege / Staff status was changed",
+        "",
+        html_message=render_to_string('hqadmin/email/superuser_staff_email.html', context={
+            'user_changes': user_changes,
+            'changed_by_user': changed_by_user,
+            'env': settings.SERVER_ENVIRONMENT
+        })
+    )
+    return
+
+
 @require_superuser
 def superuser_table(request):
-    superusers = augmented_superusers()
+    superusers = augmented_superusers(include_can_assign_superuser=True)
     f = StringIO()
     csv_writer = csv.writer(f)
-    csv_writer.writerow(['Username', 'Developer', 'Superuser', 'Two Factor Enabled'])
+    csv_writer.writerow(['Username', 'Developer', 'Superuser', 'Can assign Superuser', 'Two Factor Enabled'])
     for user in superusers:
         csv_writer.writerow([
-            user.username, user.is_staff, user.is_superuser, user.two_factor_enabled])
+            user.username, user.is_staff, user.is_superuser, user.can_assign_superuser, user.two_factor_enabled])
     response = HttpResponse(content_type=Format.from_format('csv').mimetype)
     response['Content-Disposition'] = 'attachment; filename="superuser_table.csv"'
     response.write(f.getvalue())
     return response
 
 
-def augmented_superusers():
-    return _augment_users_with_two_factor_enabled(User.objects.filter(
-        Q(is_superuser=True) | Q(is_staff=True)
-    ))
+def augmented_superusers(users=None, include_accounting_admin=False, include_can_assign_superuser=False):
+    if not users:
+        users = User.objects.filter(Q(is_superuser=True) | Q(is_staff=True)).order_by("username")
+    augmented_users = _augment_users_with_two_factor_enabled(users)
+    if include_accounting_admin:
+        return _augment_users_with_accounting_admin(augmented_users)
+    if include_can_assign_superuser:
+        return _augment_users_with_can_assign_superuser(augmented_users)
+    return augmented_users
+
+
+def _augment_users_with_can_assign_superuser(users):
+    """Annotate a User queryset with a can_assign_superuser field"""
+    for user in users:
+        web_user = WebUser.from_django_user(user)
+        user.can_assign_superuser = web_user.can_assign_superuser
+    return users
 
 
 def _augment_users_with_two_factor_enabled(users):
     """Annotate a User queryset with a two_factor_enabled field"""
     for user in users:
         user.two_factor_enabled = bool(default_device(user))
+    return users
+
+
+def _augment_users_with_accounting_admin(users):
+    for user in users:
+        user.is_accounting_admin = is_accounting_admin(user)
     return users
 
 
@@ -158,19 +218,33 @@ class AdminRestoreView(TemplateView):
 
     def get(self, request, *args, **kwargs):
         full_username = request.GET.get('as', '')
+
         if not full_username or '@' not in full_username:
-            return HttpResponseBadRequest('Please specify a user using ?as=user@domain')
+            msg = 'Please specify a user using ?as=user@domain\nOr a web-user using ?as=email&domain=domain'
+            return HttpResponseBadRequest(msg)
 
-        username, domain = full_username.split('@')
-        if not domain.endswith(settings.HQ_ACCOUNT_ROOT):
-            full_username = format_username(username, domain)
+        username, possible_domain = full_username.split("@")
+        if "." in possible_domain:
+            if possible_domain.endswith(settings.HQ_ACCOUNT_ROOT):
+                self.domain = possible_domain.split(".")[0]
+                self.user = CommCareUser.get_by_username(full_username)
+            else:
+                self.domain = request.GET.get('domain', '')
+                self.user = CouchUser.get_by_username(full_username)
+        else:
+            self.domain = possible_domain
+            full_username = format_username(username, self.domain)
+            self.user = CommCareUser.get_by_username(full_username)
 
-        self.user = CommCareUser.get_by_username(full_username)
         if not self.user:
             return HttpResponseNotFound('User %s not found.' % full_username)
 
+        if self.user.is_web_user() and not self.domain:
+            msg = 'Please specify domain for web-user using ?as=email&domain=domain'
+            return HttpResponseBadRequest(msg)
+
         if not self._validate_user_access(self.user):
-            raise Http404()
+            return HttpResponseNotFound('User %s not found.' % full_username)
 
         self.app_id = kwargs.get('app_id', None)
 
@@ -188,9 +262,11 @@ class AdminRestoreView(TemplateView):
         return super(AdminRestoreView, self).get(request, *args, **kwargs)
 
     def _get_restore_response(self):
+        params = get_restore_params(self.request, self.domain)
+        params['as_user'] = self.user.username
         return get_restore_response(
-            self.user.domain, self.user, app_id=self.app_id,
-            **get_restore_params(self.request, self.user.domain)
+            self.domain, self.request.couch_user, app_id=self.app_id,
+            **params
         )
 
     @staticmethod
@@ -268,7 +344,7 @@ class AdminRestoreView(TemplateView):
         else:
             if response.status_code in (401, 404):
                 # corehq.apps.ota.views.get_restore_response couldn't find user or user didn't have perms
-                xml_payload = E.error(response.content)
+                xml_payload = E.error(response.content.decode())
             elif response.status_code == 412:
                 # RestoreConfig.get_response returned HttpResponse 412. Response content is already XML
                 xml_payload = etree.fromstring(response.content)
@@ -302,7 +378,7 @@ class DomainAdminRestoreView(AdminRestoreView):
         return super(DomainAdminRestoreView, self).get(request, **kwargs)
 
     def _validate_user_access(self, user):
-        return self.domain == user.domain
+        return user.is_member_of(self.domain)
 
 
 @require_superuser
@@ -398,7 +474,7 @@ class DisableUserView(FormView):
 
         reset_password = form.cleaned_data['reset_password']
         if reset_password:
-            self.user.set_password(uuid.uuid4().hex)
+            unset_password(self.user)
             change_messages.update(UserChangeMessage.password_reset())
 
         # toggle active state
@@ -431,7 +507,7 @@ class DisableUserView(FormView):
         )
         send_HTML_email(
             "%sYour account has been %s" % (settings.EMAIL_SUBJECT_PREFIX, verb),
-            self.user.get_email() if self.user else self.username,
+            couch_user.get_email(),
             render_to_string('hqadmin/email/account_disabled_email.html', context={
                 'support_email': settings.SUPPORT_EMAIL,
                 'password_reset': reset_password,
@@ -604,3 +680,44 @@ class AppBuildTimingsView(TemplateView):
 
         os.remove(fpath)
         return app.timing_context
+
+
+class OffboardingUserList(UserAdministration):
+    urlname = 'get_offboarding_list'
+    page_title = gettext_lazy("Get users to offboard")
+    template_name = 'hqadmin/offboarding_list.html'
+
+    def __init__(self):
+        self.users = []
+        self.table_title = ''
+        self.validation_errors = []
+
+    @method_decorator(require_superuser)
+    def dispatch(self, *args, **kwargs):
+        return super().dispatch(*args, **kwargs)
+
+    @property
+    def page_context(self):
+        form_data = self.request.POST if self.request.method == 'POST' else None
+        if not self.users and not self.table_title:
+            self.users = augmented_superusers(include_accounting_admin=True)
+        return {
+            'form': OffboardingUserListForm(data=form_data),
+            'users': self.users,
+            'table_title': _('All superusers and staff users') if not self.table_title else self.table_title,
+            'validation_errors': self.validation_errors,
+        }
+
+    def post(self, request, *args, **kwargs):
+        form = OffboardingUserListForm(self.request.POST)
+        if form.is_valid():
+            users = form.cleaned_data['csv_email_list']
+            self.validation_errors = form.cleaned_data.get('validation_errors')
+            if users:
+                self.users = augmented_superusers(users=users, include_accounting_admin=True)
+            else:
+                self.users = users
+            self.table_title = "Users that need their privileges revoked/account disabled"
+            messages.success(request, _("Successfully retrieved users to offboard."))
+
+        return self.get(request, *args, **kwargs)

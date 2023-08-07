@@ -37,10 +37,74 @@ body {
   padding-left: 0;
 }
 
+#content-container {
+  background: transparent;
+}
+
 .case-tile-container {
   background: transparent !important;
   > div {
     background: white;
     margin-bottom: 20px;
+    display: grid;
+    container-type: inline-size;
+  }
+}
+
+#case-list-search-controls {
+  background-color: @cc-bg;
+  border: 1px solid white;
+  display: flex;
+  justify-content: space-between;
+    #case-list-sort-by-btn {
+      background-color: transparent;
+    }
+}
+
+#select-all-tile-checkbox {
+  margin-top: 10px;
+  margin-bottom: 10px;
+  margin-left: 10px;
+  margin-right: 10px;
+}
+
+#select-all-tile-checkbox-label {
+  font-weight: normal;
+}
+
+.select-row-checkbox-div {
+  padding-top: 10px;
+  padding-left: 10px;
+  float: left;
+}
+
+@media print {
+  * {
+    visibility: collapse;
+  }
+
+  .print-container, .print-container * {
+    visibility: visible;
+  }
+
+  .noprint-sub-container {
+    display: none !important;
+  }
+
+  #cloudcare-main {
+    padding: 0px;
+  }
+
+  .case-tile-container {
+    > div {
+      margin-bottom: 0px;
+    }
+    > div:not(:empty) {
+      border-bottom: 1px dashed black;
+    }
+  }
+
+  video {
+    border: 1px solid #ddd;
   }
 }

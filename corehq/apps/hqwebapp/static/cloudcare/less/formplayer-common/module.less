@@ -88,6 +88,22 @@
   }
 }
 
+.query-button-container {
+  padding: 8px;
+  text-align: center;
+}
+.query-button-container .btn{
+  width: 48%;
+}
+
+.query-caption.required .control-label::before {
+  content: '*';
+  font-weight: bold;
+  color: #c0392b;
+  margin: 0 3px;
+  float: left;
+}
+
 .module-table .module-case-list-header {
   background-color: @cc-brand-low;
   color: white;
@@ -106,20 +122,23 @@
   cursor: pointer;
 }
 
-.module-table .module-caselist-column-checkbox {
+.module-table .module-case-list-column-checkbox {
   cursor: default;
+  width: 35px;
+  vertical-align: middle;
 }
 
 .module-table-case-list tbody tr td {
   transition: background .6s;
 }
 
-.module-table-case-list tbody tr:nth-child(even) td {
+// Apply to all children to cover both regular case lists and case tiles
+.module-table-case-list tbody tr:nth-child(even) > * {
   background-color: @cc-bg;
 }
 
-.module-table-case-list tbody tr:hover td {
-  background-color: darken(@cc-bg, 5);;
+.module-table-case-list tbody tr:hover > * {
+  background-color: darken(@cc-bg, 5);
 }
 
 .module-search-container, .case-list-actions {
@@ -129,6 +148,10 @@
 .module-go-container {
   margin: 17px;
   width: 190px;
+}
+
+.pagination-container {
+  width: inherit;
 }
 
 .module-per-page-container {

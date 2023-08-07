@@ -2,6 +2,7 @@ import os
 import uuid
 
 from unittest import mock
+
 from lxml import etree
 from nose.tools import nottest
 
@@ -47,7 +48,7 @@ class TestXmlMixin(TestFileMixin):
         assert_html_equal(expected, actual, normalize)
 
 
-class SuiteMixin(TestFileMixin):
+class SuiteMixin(TestXmlMixin):
 
     def _assertHasAllStrings(self, app, strings):
         et = etree.XML(app)
@@ -79,11 +80,26 @@ class SuiteMixin(TestFileMixin):
 
         self._assertHasAllStrings(app_xml, app_strings)
 
+    def assert_module_datums(self, suite, module_index, datums):
+        """Check the datum IDs used in the suite XML
+
+        :param: suite - The suite xml as bytes
+        :param: module_index - The index of the module under test, usually ``module.id``
+        :param: datums - List of tuple(datum_xml_tag, datum_id)
+        """
+        suite_xml = etree.XML(suite)
+
+        session_nodes = suite_xml.findall(f"./entry[{module_index + 1}]/session")
+        assert len(session_nodes) == 1
+        actual_datums = [
+            (child.tag, child.attrib['id'])
+            for child in session_nodes[0].getchildren()
+        ]
+        self.assertEqual(datums, actual_datums)
+
 
 def add_build(version, build_number):
-    path = os.path.join(os.path.dirname(__file__), "jadjar")
-    jad_path = os.path.join(path, 'CommCare_%s_%s.zip' % (version, build_number))
-    return CommCareBuild.create_from_zip(jad_path, version, build_number)
+    return CommCareBuild.create_without_artifacts(version, build_number)
 
 
 @nottest
@@ -127,6 +143,17 @@ def patch_get_xform_resource_overrides():
 
 def patch_validate_xform():
     return mock.patch('corehq.apps.app_manager.models.validate_xform', lambda _: None)
+
+
+def case_search_sync_cases_on_form_entry_enabled_for_domain():
+    """
+    Decorate test methods with case_search_sync_cases_on_form_entry_enabled_for_domain() to override
+    default False for unit tests.
+    """
+    return mock.patch(
+        "corehq.apps.app_manager.suite_xml.sections.entries."
+        "case_search_sync_cases_on_form_entry_enabled_for_domain", return_value=True
+    )
 
 
 @unit_testing_only

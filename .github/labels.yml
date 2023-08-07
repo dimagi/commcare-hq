@@ -10,7 +10,10 @@ minus_negate: false
 
 rules:
   - labels: ['reindex/migration']
-    patterns: ['migrations.lock|**/migrations/**|corehq/pillows/mappings/**']
+    patterns: ['migrations.lock|**/migrations/**|corehq/pillows/mappings/**|**/_design/**|corehq/couchapps/**']
+
+  - labels: [ 'Core Compatibility' ]
+    patterns: ['corehq/apps/app_manager/suite_xml/xml_models.py']
 
   - labels: ['dependencies']
     patterns: ['requirements/**|package.json|yarn.lock']
@@ -24,7 +27,7 @@ rules:
       - 'corehq/form_processor/**'
       - 'corehq/pillows/mappings/**'
       - 'corehq/apps/hqwebapp/templates/hqwebapp/includes/core_libraries.html'
-      - 'corehq/apps/hqwebapp/static/hqwebapp/js/requirejs_config.js'
+      - 'corehq/apps/hqwebapp/static/hqwebapp/js/bootstrap3/requirejs_config.js'
       - 'corehq/apps/domain/decorators.py'
 
   - labels: ['Risk: Medium']

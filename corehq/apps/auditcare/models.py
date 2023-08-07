@@ -14,7 +14,7 @@ from corehq.util.models import (
     ForeignValue,
     NullJsonField,
     TruncatingCharField,
-    foreign_value_init,
+    foreign_init,
 )
 
 log = logging.getLogger(__name__)
@@ -45,9 +45,22 @@ STANDARD_HEADER_KEYS = [
     'REMOTE_ADDR',
     'HTTP_ACCEPT_LANGUAGE',
     'CONTENT_TYPE',
+    'CONTENT_LENGTH',
     'HTTP_ACCEPT_ENCODING',
+    'HTTP_USER_AGENT',
     # settings.AUDIT_TRACE_ID_HEADER (django-ified) will be added here
 ]
+
+
+def get_standard_headers(request_meta, exclude=None):
+    exclude = exclude or []
+    headers = {}
+    for k in STANDARD_HEADER_KEYS:
+        if k not in exclude:
+            header_item = request_meta.get(k, None)
+            if header_item is not None:
+                headers[k] = header_item
+    return headers
 
 
 class UserAgent(models.Model):
@@ -113,7 +126,7 @@ class AuditEvent(models.Model):
 
 
 @architect.install('partition', type='range', subtype='date', constraint='month', column='event_date')
-@foreign_value_init
+@foreign_init
 class NavigationEventAudit(AuditEvent):
     """
     Audit event to track happenings within the system, ie, view access
@@ -140,16 +153,18 @@ class NavigationEventAudit(AuditEvent):
     def request_path(self):
         return f"{self.path}?{self.params}"
 
+    @property
+    def request_method(self):
+        headers = self.headers or {}
+        return headers.get("REQUEST_METHOD", "")
+
     @classmethod
     def audit_view(cls, request, user, view_func, view_kwargs):
         audit = cls.create_audit(request, user)
         if request.GET:
             audit.params = request.META.get("QUERY_STRING", "")
         audit.view = "%s.%s" % (view_func.__module__, view_func.__name__)
-        for k in STANDARD_HEADER_KEYS:
-            header_item = request.META.get(k, None)
-            if header_item is not None:
-                audit.headers[k] = header_item
+        audit.headers.update(get_standard_headers(request.META, exclude=['HTTP_USER_AGENT']))
         # it's a bit verbose to go to that extreme, TODO: need to have
         # targeted fields in the META, but due to server differences, it's
         # hard to make it universal.
@@ -168,7 +183,7 @@ ACCESS_CHOICES = {
 
 
 @architect.install('partition', type='range', subtype='date', constraint='month', column='event_date')
-@foreign_value_init
+@foreign_init
 class AccessAudit(AuditEvent):
     access_type = models.CharField(max_length=1, choices=ACCESS_CHOICES.items())
     http_accept_fk = models.ForeignKey(
@@ -213,24 +228,6 @@ class AccessAudit(AuditEvent):
     def audit_logout(cls, request, user):
         audit = cls.create_audit(request, user, ACCESS_LOGOUT)
         audit.save()
-
-
-class AuditcareMigrationMeta(models.Model):
-    STARTED = "s"
-    FINISHED = "f"
-    ERRORED = "e"
-    MIGRATION_STATES = {
-        STARTED: "Started",
-        FINISHED: "Finished",
-        ERRORED: "Errored",
-    }
-    key = models.CharField(max_length=50, db_index=True, unique=True)
-    state = models.CharField(max_length=1, choices=MIGRATION_STATES.items())
-    record_count = models.PositiveIntegerField(default=0)
-    other_doc_type_count = models.PositiveIntegerField(default=0)
-    last_doc_processed = models.CharField(max_length=50, null=True)
-    created_at = models.DateTimeField(null=True)
-    finished_at = models.DateTimeField(null=True)
 
 
 def audit_login(sender, *, request, user, **kwargs):

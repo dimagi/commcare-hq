@@ -5,8 +5,8 @@ from datetime import datetime
 from operator import methodcaller
 
 from django.conf import settings
+from django.db import migrations
 
-from dimagi.utils.couch.undo import DELETED_SUFFIX
 from dimagi.utils.modules import to_function
 from pillowtop.dao.exceptions import (
     DocumentMismatchError,
@@ -16,6 +16,8 @@ from pillowtop.exceptions import PillowNotFoundError
 from pillowtop.logger import pillow_logging
 
 from corehq.apps.change_feed.connection import get_kafka_consumer
+from corehq.apps.es.client import BulkActionItem
+from corehq.util.django_migrations import skip_on_fresh_install
 
 
 def _get_pillow_instance(full_class_str):
@@ -220,13 +222,19 @@ class ErrorCollector(object):
         self.errors.append(error)
 
 
-def build_bulk_payload(index_info, changes, doc_transform=None, error_collector=None):
+def build_bulk_payload(changes, error_collector=None):
+    """Process a set of changes, returning a list of BulkActionItem objects.
+
+    :param changes: iterable of changes to process in Elasticsearch
+    :param error_collector: optional ``ErrorCollector`` instance used to store
+                            any any document fetch or transform exceptions
+                            (exceptions raised if not provided)
+    :returns: ``list`` of BulkActionItem instances
     """
-    Builds bulk payload json to be called via Elasticsearch Bulk API
-    """
+    # TODO: do not transform the docs to be indexed (DocumentAdapter will
+    #       perform this task in the future)
     from corehq.apps.change_feed.document_types import get_doc_meta_object_from_document
 
-    doc_transform = doc_transform or (lambda x: x)
     payload = []
 
     def _is_deleted(change):
@@ -237,29 +245,16 @@ def build_bulk_payload(index_info, changes, doc_transform=None, error_collector=
             return bool(change.id)
 
     for change in changes:
-        action = {
-            "_index": index_info.alias,
-            "_id": change.id
-        }
-        if settings.ELASTICSEARCH_MAJOR_VERSION == 2:
-            action.update({"_type": index_info.type})
-
         if _is_deleted(change):
-            action.update({"_op_type": "delete"})
+            payload.append(BulkActionItem.delete_id(change.id))
         elif not change.deleted:
             try:
                 doc = change.get_document()
-                doc = doc_transform(doc)
-                action.update({
-                    "_op_type": "index",
-                    "_id": doc['_id'],
-                    "_source": doc
-                })
+                payload.append(BulkActionItem.index(doc))
             except Exception as e:
                 if not error_collector:
                     raise
                 error_collector.add_error(ChangeError(change, e))
-                continue
         else:
             # See PR discussion: https://github.com/dimagi/commcare-hq/pull/31243
             #
@@ -267,8 +262,6 @@ def build_bulk_payload(index_info, changes, doc_transform=None, error_collector=
             # like guessing to me, which goes against the zen. Log a warning
             # for trackability.
             pillow_logging.warning("discarding ambiguous bulk change: %s", change)
-            continue
-        payload.append(action)
 
     return payload
 
@@ -372,3 +365,36 @@ def get_errors_with_ids(es_action_errors):
 def _changes_to_list(change_items):
     """Convert list of dict(key: value) in to a list of tuple(key, value)"""
     return list(map(methodcaller("popitem"), change_items))
+
+
+def change_checkpoint_id(old_id, new_id):
+    """Django migration which clones Kafka checkpoints to a new ID"""
+    from pillowtop.models import KafkaCheckpoint
+
+    @skip_on_fresh_install
+    def _change_checkpoint_id(*args, **kwargs):
+        for old in KafkaCheckpoint.objects.filter(checkpoint_id=old_id):
+            # These may have been already created by validate_kafka_pillow_checkpoints,
+            # but the offset should be 0 if they haven't been used
+            new, created = KafkaCheckpoint.objects.get_or_create(
+                checkpoint_id=new_id,
+                topic=old.topic,
+                partition=old.partition,
+                defaults={"offset": 0},
+            )
+            if not created and new.offset != 0:
+                raise Exception(
+                    f"KafkaCheckpoint(checkpoint_id={new_id}, topic={old.topic}, "
+                    f"partition={old.partition}) already exists and has an "
+                    f"offset of {new.offset}"
+                )
+
+            new.offset = old.offset
+            new.doc_modification_time = old.doc_modification_time
+            new.save()
+
+    return migrations.RunPython(
+        _change_checkpoint_id,
+        reverse_code=migrations.RunPython.noop,
+        elidable=True,
+    )

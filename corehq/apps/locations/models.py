@@ -405,7 +405,7 @@ class SQLLocation(AdjListModel):
 
         Supply point cases and user updates are performed asynchronously.
         """
-        from .tasks import update_users_at_locations
+        from .tasks import update_users_at_locations, delete_locations_related_rules
         from .document_store import publish_location_saved
 
         to_delete = self.get_descendants(include_self=True)
@@ -421,6 +421,8 @@ class SQLLocation(AdjListModel):
         )
         for loc in to_delete:
             publish_location_saved(loc.domain, loc.location_id, is_deletion=True)
+
+        delete_locations_related_rules.delay([loc.location_id for loc in to_delete])
 
     full_delete = delete
 
@@ -647,6 +649,13 @@ class SQLLocation(AdjListModel):
         return (location.get_ancestors(include_self=True)
                 .filter(pk=self.pk).exists())
 
+    def descendants_include_location(self, location_id):
+        return (
+            self.get_descendants(include_self=True)
+            .filter(location_id=location_id)
+            .exists()
+        )
+
     @classmethod
     def by_domain(cls, domain):
         return cls.objects.filter(domain=domain)
@@ -787,3 +796,7 @@ def get_case_sharing_groups_for_locations(locations, for_user_id=None):
             location_type__shares_cases=True, is_archived=False)
     for loc in descendants:
         yield loc.case_sharing_group_object(for_user_id)
+
+
+def get_domain_locations(domain):
+    return SQLLocation.active_objects.filter(domain=domain)

@@ -1,3 +1,4 @@
+import gc
 import time
 from tempfile import NamedTemporaryFile
 from unittest import TestCase
@@ -22,7 +23,12 @@ class TimingPluginTesterBase(PluginTester, TestCase):
                 "--max-test-time=0.05",
                 "-v",
             ]
-            super().setUp()
+            gc.disable()
+            try:
+                # time-critical tests are run in here
+                super().setUp()
+            finally:
+                gc.enable()
             fh.seek(0)
             print("---- begin test output ----")
             print(self.output)

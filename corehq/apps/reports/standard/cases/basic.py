@@ -1,5 +1,3 @@
-from django.conf import settings
-from django.contrib import messages
 from django.utils.translation import gettext as _
 from django.utils.translation import gettext_lazy
 
@@ -7,7 +5,6 @@ from corehq.util.es.elasticsearch import TransportError
 from memoized import memoized
 
 from corehq.apps.es import cases as case_es
-from corehq.apps.es.utils import track_es_report_load
 from corehq.apps.locations.permissions import location_safe
 from corehq.apps.reports.api import ReportDataSource
 from corehq.apps.reports.datatables import DataTablesColumn, DataTablesHeader
@@ -24,12 +21,9 @@ from corehq.apps.reports.standard.cases.utils import (
     query_location_restricted_cases,
 )
 from corehq.apps.reports.standard.inspect import ProjectInspectionReport
-from corehq.const import USER_DATETIME_FORMAT_WITH_SEC
 from corehq.elastic import ESError
-from corehq.toggles import CASE_LIST_EXPLORER
-from corehq.util.timezones.conversions import PhoneTime
 
-from .data_sources import CaseDisplay
+from .data_sources import CaseDisplayES
 
 
 class CaseListMixin(ElasticProjectInspectionReport, ProjectReportParametersMixin):
@@ -85,13 +79,16 @@ class CaseListMixin(ElasticProjectInspectionReport, ProjectReportParametersMixin
             or EMWF.selected_group_ids(mobile_user_and_group_slugs)
             or EMWF.selected_location_ids(mobile_user_and_group_slugs)
         ):
-            track_es_report_load(self.domain, self.slug, len(self.case_owners))
             case_owner_filters.append(case_es.owner(self.case_owners))
 
         query = query.OR(*case_owner_filters)
 
         if not self.request.can_access_all_locations:
-            query = query_location_restricted_cases(query, self.request)
+            query = query_location_restricted_cases(
+                query,
+                self.request.domain,
+                self.request.couch_user,
+            )
 
         search_string = CaseSearchFilter.get_value(self.request, self.domain)
         if search_string:
@@ -125,7 +122,10 @@ class CaseListMixin(ElasticProjectInspectionReport, ProjectReportParametersMixin
             raise ValueError("Case object is not in search result %s" % row)
 
         if case_dict['domain'] != self.domain:
-            raise Exception("case.domain != self.domain; %r and %r, respectively" % (case_dict['domain'], self.domain))
+            raise Exception(
+                f"case.domain != self.domain; {case_dict['domain']!r} and "
+                f"{self.domain!r}, respectively"
+            )
 
         return case_dict
 
@@ -157,33 +157,13 @@ class CaseListReport(CaseListMixin, ProjectInspectionReport, ReportDataSource):
             else:
                 return _('View Case')
 
-        from corehq.apps.reports.views import CaseDataView
+        from corehq.apps.reports.standard.cases.case_data import CaseDataView
         return [
             {
                 'title': _get_case_name,
                 'urlname': CaseDataView.urlname,
             },
         ]
-
-    @property
-    def can_upgrade_to_case_list_explorer(self):
-        if settings.ENTERPRISE_MODE:
-            return False
-
-        if self.request.couch_user.is_dimagi and not CASE_LIST_EXPLORER.enabled(self.domain):
-            return True
-
-        return False
-
-    @property
-    def view_response(self):
-        if self.can_upgrade_to_case_list_explorer:
-            messages.warning(
-                self.request,
-                'Hey Dimagi User! Have you tried out the <a href="https://confluence.dimagi.com/display/saas/Case+List+Explorer" target="_blank">Case List Explorer</a> yet? It might be just what you are looking for!',
-                extra_tags='html',
-            )
-        return super(CaseListReport, self).view_response
 
     @classmethod
     def display_in_dropdown(cls, domain=None, project=None, user=None):
@@ -228,7 +208,7 @@ class CaseListReport(CaseListMixin, ProjectInspectionReport, ReportDataSource):
     @property
     def rows(self):
         for row in self.es_results['hits'].get('hits', []):
-            display = CaseDisplay(self.get_case(row), self.timezone, self.individual)
+            display = CaseDisplayES(self.get_case(row), self.timezone, self.individual)
 
             yield [
                 display.case_type,

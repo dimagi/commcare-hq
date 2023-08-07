@@ -1,4 +1,4 @@
-{% extends "hqwebapp/base_navigation.html" %}
+{% extends "hqwebapp/bootstrap3/base_navigation.html" %}
 {% load hq_shared_tags %}
 
 {% block title %}Doc {{ doc_id }} ({{ doc_type }}){% endblock %}
@@ -24,34 +24,34 @@
     </div>
   </div>
 
-  {% if doc_id %}
-    <div class="container-fluid">
-      <div class="row">
-        <div class="col-xs-3">
-          <div>
-            <h3>Databases/Tables Searched:</h3>
-            <table class="table">
+  <div class="container-fluid">
+    <div class="row">
+      <div class="col-xs-3">
+        <div>
+          <h3>Databases/Tables Searched:</h3>
+          <table class="table">
+            <tr>
+              <th>Status</th>
+              <th>Database Name</th>
+            </tr>
+            {% for db in db_results %}
               <tr>
-                <th>Status</th>
-                <th>Database Name</th>
+                <td><span class="label label-{{ db.status }}">{{ db.result }}</span></td>
+                {% if db.result == "found"  %}
+                  <td><a href="{% url "raw_doc" %}?id={{ doc_id }}&db_name={{ db.dbname }}">
+                    {{ db.dbname }}
+                  </a></td>
+                {% else %}
+                  <td>{{ db.dbname }}</td>
+                {% endif %}
               </tr>
-              {% for db in db_results %}
-                <tr>
-                  <td><span class="label label-{{ db.status }}">{{ db.result }}</span></td>
-                  {% if db.result == "found"  %}
-                    <td><a href="{% url "raw_doc" %}?id={{ doc_id }}&db_name={{ db.dbname }}">
-                      {{ db.dbname }}
-                    </a></td>
-                  {% else %}
-                    <td>{{ db.dbname }}</td>
-                  {% endif %}
-                </tr>
-              {% endfor %}
-            </table>
-          </div>
+            {% endfor %}
+          </table>
         </div>
+      </div>
 
-        <div class="col-xs-9">
+      <div class="col-xs-9">
+        {% if doc_id %}
           <h3>Doc {{ doc_id }}</h3>
           <p>Doc type: {{ doc_type }}</p>
           <p>Database or table: {{ dbname }}</p>
@@ -87,8 +87,10 @@
             <pre>{{ raw_data }}</pre>
           </div>
           {% endif %}
-        </div>
+        {% else %}
+          <p>Not found</p>
+        {% endif %}
       </div>
     </div>
-  {% endif %}
+  </div>
 {% endblock content %}

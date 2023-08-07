@@ -1,7 +1,9 @@
 /* global DOMPurify, mdAnchorRender */
 hqDefine("cloudcare/js/form_entry/form_ui", function () {
-    var Const = hqImport("cloudcare/js/form_entry/const"),
-        Utils = hqImport("cloudcare/js/form_entry/utils");
+    var cloudcareUtils = hqImport("cloudcare/js/utils");
+        constants = hqImport("cloudcare/js/form_entry/const"),
+        entries = hqImport("cloudcare/js/form_entry/entries"),
+        formEntryUtils = hqImport("cloudcare/js/form_entry/utils");
     var md = window.markdownit();
     var groupNum = 0;
 
@@ -24,11 +26,21 @@ hqDefine("cloudcare/js/form_entry/form_ui", function () {
         return mdAnchorRender(tokens, idx, options, env, self);
     };
 
+    md.renderer.rules.heading_open = function (tokens, idx, options, env, self) {
+        var aIndex = tokens[idx].attrIndex('tabindex');
+
+        if (aIndex < 0) {
+            tokens[idx].attrPush(['tabindex', '0']);
+        }
+
+        return mdAnchorRender(tokens, idx, options, env, self);
+    };
+
     _.delay(function () {
         ko.bindingHandlers.renderMarkdown = {
             update: function (element, valueAccessor) {
                 var value = ko.unwrap(valueAccessor());
-                value = md.render(value || '');
+                value = cloudcareUtils.renderMarkdown(value || '');
                 $(element).html(value);
             },
         };
@@ -178,11 +190,11 @@ hqDefine("cloudcare/js/form_entry/form_ui", function () {
             },
             children: {
                 create: function (options) {
-                    if (options.data.type === Const.QUESTION_TYPE) {
+                    if (options.data.type === constants.QUESTION_TYPE) {
                         return new Question(options.data, self);
-                    } else if (options.data.type === Const.GROUP_TYPE) {
+                    } else if (options.data.type === constants.GROUP_TYPE) {
                         return new Group(options.data, self);
-                    } else if (options.data.type === Const.REPEAT_TYPE) {
+                    } else if (options.data.type === constants.REPEAT_TYPE) {
                         return new Repeat(options.data, self);
                     } else {
                         console.error('Could not find question type of ' + options.data.type);
@@ -190,12 +202,12 @@ hqDefine("cloudcare/js/form_entry/form_ui", function () {
                 },
                 update: function (options) {
                     if (options.target.pendingAnswer &&
-                            options.target.pendingAnswer() !== Const.NO_PENDING_ANSWER) {
+                            options.target.pendingAnswer() !== constants.NO_PENDING_ANSWER) {
                         // There is a request in progress
-                        if (Utils.answersEqual(options.data.answer, options.target.pendingAnswer())) {
+                        if (options.target.entry.templateType === "file" || formEntryUtils.answersEqual(options.data.answer, options.target.pendingAnswer())) {
                             // We can now mark it as not dirty
                             options.data.answer = _.clone(options.target.pendingAnswer());
-                            options.target.pendingAnswer(Const.NO_PENDING_ANSWER);
+                            options.target.pendingAnswer(constants.NO_PENDING_ANSWER);
                         } else {
                             // still dirty, keep answer the same as the pending one
                             options.data.answer = _.clone(options.target.pendingAnswer());
@@ -235,7 +247,7 @@ hqDefine("cloudcare/js/form_entry/form_ui", function () {
         self.blockSubmit = ko.observable(false);
         self.hasSubmitAttempted = ko.observable(false);
         self.isSubmitting = ko.observable(false);
-        self.submitClass = Const.LABEL_OFFSET + ' ' + Const.CONTROL_WIDTH;
+        self.submitClass = constants.LABEL_OFFSET + ' ' + constants.CONTROL_WIDTH;
 
         self.currentIndex = ko.observable("0");
         self.atLastIndex = ko.observable(false);
@@ -259,7 +271,7 @@ hqDefine("cloudcare/js/form_entry/form_ui", function () {
             }
 
             return _.every(self.children(), function (q) {
-                return (q.answer() === Const.NO_ANSWER && !q.required()) || q.answer() !== null;
+                return (q.answer() === constants.NO_ANSWER && !q.required()) || q.answer() !== null;
             });
         });
         self.isCurrentRequiredSatisfied.subscribe(function (isSatisfied) {
@@ -299,7 +311,7 @@ hqDefine("cloudcare/js/form_entry/form_ui", function () {
         });
 
         self.erroredQuestions = ko.computed(function () {
-            if (!hqImport("cloudcare/js/form_entry/utils").isWebApps() || !self.hasSubmitAttempted()) {
+            if (!self.hasSubmitAttempted()) {
                 return [];
             }
 
@@ -370,18 +382,18 @@ hqDefine("cloudcare/js/form_entry/form_ui", function () {
 
         self.submitForm = function () {
             self.hasSubmitAttempted(true);
-            $.publish('formplayer.' + Const.SUBMIT, self);
+            $.publish('formplayer.' + constants.SUBMIT, self);
         };
 
         self.nextQuestion = function () {
-            $.publish('formplayer.' + Const.NEXT_QUESTION, {
+            $.publish('formplayer.' + constants.NEXT_QUESTION, {
                 callback: _updateIndexCallback,
                 title: self.title(),
             });
         };
 
         self.prevQuestion = function () {
-            $.publish('formplayer.' + Const.PREV_QUESTION, {
+            $.publish('formplayer.' + constants.PREV_QUESTION, {
                 callback: _updateIndexCallback,
                 title: self.title(),
             });
@@ -409,7 +421,7 @@ hqDefine("cloudcare/js/form_entry/form_ui", function () {
                 } else if (response.type === 'constraint') {
                     element.serverError(response.reason || gettext('This answer is outside the allowed range.'));
                 }
-                element.pendingAnswer(Const.NO_PENDING_ANSWER);
+                element.pendingAnswer(constants.NO_PENDING_ANSWER);
             } else {
                 response.children = response.tree;
                 delete response.tree;
@@ -419,8 +431,8 @@ hqDefine("cloudcare/js/form_entry/form_ui", function () {
         });
 
         $.subscribe('session.block', function (e, block) {
-            $('#webforms input, #webforms textarea').prop('disabled', block === Const.BLOCK_ALL);
-            self.blockSubmit(block === Const.BLOCK_ALL || block === Const.BLOCK_SUBMIT);
+            $('#webforms input, #webforms textarea').prop('disabled', block === constants.BLOCK_ALL);
+            self.blockSubmit(block === constants.BLOCK_ALL || block === constants.BLOCK_SUBMIT);
         });
     }
     Form.prototype = Object.create(Container.prototype);
@@ -433,9 +445,9 @@ hqDefine("cloudcare/js/form_entry/form_ui", function () {
      */
     function Group(json, parent) {
         var self = this;
+        self.parent = parent;
         Container.call(self, json);
 
-        self.parent = parent;
         self.groupId = groupNum++;
         self.rel_ix = ko.observable(relativeIndex(self.ix()));
         self.isRepetition = parent instanceof Repeat;
@@ -451,8 +463,8 @@ hqDefine("cloudcare/js/form_entry/form_ui", function () {
         };
 
         var styles = _.has(json, 'style') && json.style && json.style.raw ? json.style.raw.split(/\s+/) : [];
-        self.collapsible = _.contains(styles, Const.COLLAPSIBLE);
-        self.showChildren = ko.observable(!self.collapsible || _.contains(styles, Const.COLLAPSIBLE_OPEN));
+        self.collapsible = _.contains(styles, constants.COLLAPSIBLE);
+        self.showChildren = ko.observable(!self.collapsible || _.contains(styles, constants.COLLAPSIBLE_OPEN));
         self.toggleChildren = function () {
             if (self.collapsible) {
                 if (self.showChildren()) {
@@ -489,7 +501,7 @@ hqDefine("cloudcare/js/form_entry/form_ui", function () {
         }
 
         self.deleteRepeat = function () {
-            $.publish('formplayer.' + Const.DELETE_REPEAT, self);
+            $.publish('formplayer.' + constants.DELETE_REPEAT, self);
             $.publish('formplayer.dirty');
         };
 
@@ -501,6 +513,12 @@ hqDefine("cloudcare/js/form_entry/form_ui", function () {
                     return d.hasAnyNestedQuestions();
                 }
             });
+        };
+
+        self.isVisibleGroup = function () {
+            const hasChildren = self.children().length !== 0;
+            const hasLabel = !!ko.utils.unwrapObservable(self.caption_markdown) || !!self.caption();
+            return hasChildren && hasLabel;
         };
     }
     Group.prototype = Object.create(Container.prototype);
@@ -514,9 +532,10 @@ hqDefine("cloudcare/js/form_entry/form_ui", function () {
      */
     function Repeat(json, parent) {
         var self = this;
+        self.parent = parent;
+
         Container.call(self, json);
 
-        self.parent = parent;
         self.rel_ix = ko.observable(relativeIndex(self.ix()));
         if (_.has(json, 'domain_meta') && _.has(json, 'style')) {
             self.domain_meta = parseMeta(json.datatype, json.style);
@@ -528,7 +547,7 @@ hqDefine("cloudcare/js/form_entry/form_ui", function () {
         };
 
         self.newRepeat = function () {
-            $.publish('formplayer.' + Const.NEW_REPEAT, self);
+            $.publish('formplayer.' + constants.NEW_REPEAT, self);
             $.publish('formplayer.dirty');
             $('.add').trigger('blur');
         };
@@ -564,8 +583,9 @@ hqDefine("cloudcare/js/form_entry/form_ui", function () {
         var self = this;
         self.fromJS(json);
         self.parent = parent;
-        // Grab the parent pubsub so questions can interact with other questions on the same form/group.
-        self.parentPubSub = (parent) ? parent.pubsub : new ko.subscribable();
+        // Grab the containing pubsub so questions can interact with other questions on the same form.
+        const container = formEntryUtils.getBroadcastContainer(self);
+        self.broadcastPubSub = (container) ? container.pubsub : new ko.subscribable();
         self.error = ko.observable(null);
         self.serverError = ko.observable(null);
         self.rel_ix = ko.observable(relativeIndex(self.ix()));
@@ -573,18 +593,21 @@ hqDefine("cloudcare/js/form_entry/form_ui", function () {
             self.domain_meta = parseMeta(json.datatype, json.style);
         }
         self.throttle = 200;
-        self.controlWidth = Const.CONTROL_WIDTH;
-        self.labelWidth = Const.LABEL_WIDTH;
+        self.controlWidth = constants.CONTROL_WIDTH;
+        self.labelWidth = constants.LABEL_WIDTH;
 
         // If the question has ever been answered, set this to true.
         self.hasAnswered = false;
 
+        // if media question has been processed in FP successfully set to true
+        self.formplayerProcessed = false;
+
         // pendingAnswer is a copy of an answer being submitted, so that we know not to reconcile a new answer
         // until the question has received a response from the server.
-        self.pendingAnswer = ko.observable(Const.NO_PENDING_ANSWER);
+        self.pendingAnswer = ko.observable(constants.NO_PENDING_ANSWER);
         self.pendingAnswer.subscribe(function () { self.hasAnswered = true; });
         self.dirty = ko.computed(function () {
-            return self.pendingAnswer() !== Const.NO_PENDING_ANSWER;
+            return self.pendingAnswer() !== constants.NO_PENDING_ANSWER;
         });
         self.clean = ko.computed(function () {
             return !self.dirty() && !self.error() && !self.serverError() && self.hasAnswered;
@@ -607,7 +630,7 @@ hqDefine("cloudcare/js/form_entry/form_ui", function () {
 
         self.is_select = (self.datatype() === 'select' || self.datatype() === 'multiselect');
         self.isLabel = self.datatype() === 'info';
-        self.entry = hqImport("cloudcare/js/form_entry/entries").getEntry(self);
+        self.entry = entries.getEntry(self);
         self.entryTemplate = function () {
             return self.entry.templateType + '-entry-ko-template';
         };
@@ -624,13 +647,13 @@ hqDefine("cloudcare/js/form_entry/form_ui", function () {
         };
         var publishAnswerEvent = _.throttle(function () {
             $.publish('formplayer.dirty');
-            $.publish('formplayer.' + Const.ANSWER, self);
+            $.publish('formplayer.' + constants.ANSWER, self);
         }, self.throttle);
         self.onchange = self.triggerAnswer;
 
         self.mediaSrc = function (resourceType) {
-            if (!resourceType || !_.isFunction(Utils.resourceMap)) { return ''; }
-            return Utils.resourceMap(resourceType);
+            if (!resourceType || !_.isFunction(formEntryUtils.resourceMap)) { return ''; }
+            return formEntryUtils.resourceMap(resourceType);
         };
 
         self.navigateTo = function () {

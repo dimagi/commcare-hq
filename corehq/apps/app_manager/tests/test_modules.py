@@ -7,6 +7,7 @@ from corehq.apps.app_manager.models import (
     AdvancedModule,
     AdvancedOpenCaseAction,
     Application,
+    Assertion,
     AutoSelectCase,
     CaseIndex,
     CaseSearch,
@@ -19,7 +20,12 @@ from corehq.apps.app_manager.models import (
     ReportAppConfig,
     ReportModule,
 )
+from corehq.apps.app_manager.views.modules import (
+    _get_fixture_columns_by_type,
+    _update_search_properties,
+)
 from corehq.apps.app_manager.util import purge_report_from_mobile_ucr
+from corehq.apps.fixtures.models import LookupTable, TypeField
 from corehq.apps.userreports.models import ReportConfiguration
 from corehq.util.test_utils import flag_enabled
 
@@ -31,6 +37,84 @@ class ModuleTests(SimpleTestCase):
         self.module = self.app.add_module(Module.new_module('Untitled Module', None))
         self.module.case_type = 'another_case_type'
         self.form = self.module.new_form("Untitled Form", None)
+
+    def test_update_search_properties(self):
+        module = Module()
+        module.search_config.properties = [
+            CaseSearchProperty(name='name', label={'fr': 'Nom'}),
+            CaseSearchProperty(name='age', label={'fr': 'Âge'}),
+        ]
+
+        # Update name, add dob, and remove age
+        props = list(_update_search_properties(module, [
+            {'name': 'name', 'label': 'Name'},
+            {'name': 'dob', 'label': 'Date of birth'}
+        ], "en"))
+
+        self.assertEqual(props[0]['label'], {'en': 'Name', 'fr': 'Nom'})
+        self.assertEqual(props[1]['label'], {'en': 'Date of birth'})
+
+    def test_update_search_properties_blank_same_lang(self):
+        module = Module()
+        module.search_config.properties = [
+            CaseSearchProperty(name='name', label={'fr': 'Nom'}),
+        ]
+
+        # Blanking out a translation removes it from dict
+        props = list(_update_search_properties(module, [
+            {'name': 'name', 'label': ''},
+        ], "fr"))
+        self.assertEqual(props[0]['label'], {})
+
+    def test_update_search_properties_blank_other_lang(self):
+        module = Module()
+        module.search_config.properties = [
+            CaseSearchProperty(name='name', label={'fr': 'Nom'}),
+        ]
+
+        # Blank translations don't get added to dict
+        props = list(_update_search_properties(module, [
+            {'name': 'name', 'label': ''},
+        ], "en"))
+        self.assertEqual(props[0]['label'], {'fr': 'Nom'})
+
+    def test_update_search_properties_required(self):
+        module = Module()
+        module.search_config.properties = [
+            CaseSearchProperty(name='name', label={'en': 'Name'},
+                               required=Assertion(test="true()", text={"en": "answer me"})),
+        ]
+        props = list(_update_search_properties(module, [
+            {'name': 'name', 'label': 'Name', 'required_test': 'true()', 'required_text': 'answer me please'},
+        ], "en"))
+        self.assertEqual(props[0]['required'], {
+            "test": "true()",
+            "text": {"en": "answer me please"},
+        })
+
+    def test_update_search_properties_validation(self):
+        module = Module()
+        module.search_config.properties = [
+            CaseSearchProperty(name='name', label={'en': 'Name'},
+                               validations=[Assertion(test="true()", text={"en": "go ahead"})]),
+        ]
+        props = list(_update_search_properties(module, [{
+            'name': 'name', 'label': 'Name', 'validation_test': 'false()', 'validation_text': 'you shall not pass',
+        }], "en"))
+        self.assertEqual(props[0]['validations'], [{
+            "test": "false()",
+            "text": {"en": "you shall not pass"},
+        }])
+
+    def test_get_fixture_columns_by_type(self):
+        table = LookupTable(
+            domain="module-domain",
+            tag="duck",
+            fields=[TypeField(name="wing")]
+        )
+        with patch.object(LookupTable.objects, "by_domain", lambda domain: [table]):
+            result = _get_fixture_columns_by_type("module-domain")
+            self.assertEqual(result, {"duck": ["wing"]})
 
 
 class AdvancedModuleTests(SimpleTestCase):
@@ -139,7 +223,8 @@ class ReportModuleTests(SimpleTestCase):
 
     @flag_enabled('MOBILE_UCR')
     @patch('dimagi.ext.couchdbkit.Document.get_db')
-    def test_purge_report_from_mobile_ucr(self, get_db):
+    @patch('corehq.motech.repeaters.models.AppStructureRepeater.objects.by_domain')
+    def test_purge_report_from_mobile_ucr(self, repeater_patch, get_db):
         report_config = ReportConfiguration(domain='domain', config_id='foo1')
         report_config._id = "my_report_config"
 

@@ -5,7 +5,7 @@ services:
     extends:
       file: hq-compose.yml
       service: formplayer
-    links:
+    depends_on:
       - postgres
       - redis
     expose:
@@ -25,7 +25,6 @@ services:
     extends:
       file: hq-compose.yml
       service: couch
-    command: ["--with-haproxy", "--with-admin-party-please", "-n", "1"]
     ports:
       - "5984:5984"
 
@@ -62,8 +61,6 @@ services:
     extends:
       file: hq-compose.yml
       service: kafka
-    environment:
-      KAFKA_ADVERTISED_HOST_NAME: ${KAFKA_ADVERTISED_HOST_NAME}
     ports:
       - "9092:9092"
 
@@ -80,3 +77,4 @@ services:
       service: minio
     ports:
       - "9980:9980"
+      - "9981:9981"

@@ -49,6 +49,7 @@ hqDefine("reports/js/case_details", [
         self.userID = ko.observable(data.user.id);
         self.username = ko.observable(self.format_user(data.user.username));
         self.readable_name = ko.observable(data.readable_name);
+        self.user_type = ko.observable(data.user_type);
 
         return self;
     };
@@ -286,6 +287,38 @@ hqDefine("reports/js/case_details", [
         });
 
     });
+
+    function toggleAccordionArrowIcon(panelHeading) {
+        var accordionArrowIcon = panelHeading.find('.accordion-arrow-icon');
+        accordionArrowIcon.toggleClass('fa-angle-double-down fa-angle-double-right');
+    }
+
+    $(function () {
+        var allPanels = $('#case-properties-accordion').find('.panel-collapse');
+        var allPanelHeadings = $('#case-properties-accordion').find('.panel-heading');
+
+        // Add click event listener to Expand All button
+        $('#expand-all-accordion-btn').click(function () {
+            allPanels.collapse('show');
+            allPanelHeadings.each(function () {
+                toggleAccordionArrowIcon($(this));
+            });
+        });
+
+        // Add click event listener to Collapse All button
+        $('#collapse-all-accordion-btn').click(function () {
+            allPanels.collapse('hide');
+            allPanelHeadings.each(function () {
+                toggleAccordionArrowIcon($(this));
+            });
+        });
+
+        // Add click event listener to panel headings to toggle arrow icon
+        allPanelHeadings.click(function () {
+            toggleAccordionArrowIcon($(this));
+        });
+    });
+
 
     kissmetrics.track.event('Viewed Case');
 });

@@ -18,7 +18,7 @@ from .dbaccessors import get_all_built_app_ids_and_versions
 from .models import LATEST_APK_VALUE, LATEST_APP_VALUE
 from .util import get_commcare_builds
 from ..hqwebapp.widgets import BootstrapCheckboxInput
-from ..linked_domain.util import can_domain_access_release_management
+from ..linked_domain.util import can_domain_access_linked_domains
 
 
 class CopyApplicationForm(forms.Form):
@@ -34,7 +34,10 @@ class CopyApplicationForm(forms.Form):
         widget=BootstrapCheckboxInput(
             inline_label=mark_safe(_(
                 "<!-- ko ifnot: shouldEnableLinkedAppOption -->"
-                "The selected project space must first be linked to the current project space."
+                "The selected project space is either not yet linked to the current project space, or you do not"
+                " have the correct permissions in the selected project space. "
+                "<a href=\"https://confluence.dimagi.com/display/commcarepublic/Linked+Project+Spaces\" "
+                "target=\"_blank\">Learn more</a> about Linked Project Spaces."
                 "<!-- /ko -->"
             )),  # nosec: no user input
             attrs={"data-bind": "enable: shouldEnableLinkedAppOption, checked: isChecked"},
@@ -57,7 +60,7 @@ class CopyApplicationForm(forms.Form):
         self.from_domain = from_domain
         if app:
             self.fields['name'].initial = app.name
-        if can_domain_access_release_management(self.from_domain) and not is_linked_app(app):
+        if can_domain_access_linked_domains(self.from_domain) and not is_linked_app(app):
             fields.append(PrependedText('linked', ''))
 
         self.helper = FormHelper()
@@ -84,7 +87,7 @@ class CopyApplicationForm(forms.Form):
     def clean(self):
         domain = self.cleaned_data.get('domain')
         if self.cleaned_data.get('linked'):
-            if not can_domain_access_release_management(domain):
+            if not can_domain_access_linked_domains(domain):
                 raise forms.ValidationError("The target project space does not have this feature enabled.")
             link = DomainLink.objects.filter(linked_domain=domain)
             if link and link[0].master_domain != self.from_domain:

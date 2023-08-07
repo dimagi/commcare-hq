@@ -13,27 +13,22 @@ from corehq.privileges import RELEASE_MANAGEMENT, LITE_RELEASE_MANAGEMENT
 from corehq.util.timezones.conversions import ServerTime
 
 
-def can_user_access_release_management(user, domain, include_lite_version=True):
+def can_user_access_linked_domains(user, domain):
     """
-    :param include_lite_version: set to True if the LITE_RELEASE_MANAGEMENT privilege should be checked
     Checks if the current domain has any of the following enabled:
     - privileges.RELEASE_MANAGEMENT
     - privileges.LITE_RELEASE_MANAGEMENT
-    If yes, and the user meets the criteria needed, returns True
+    Checks if the current user has access to the release management permission, either explicitly or as admin
     """
     if not user or not domain:
         return False
 
-    is_admin = user.is_domain_admin(domain)
-
-    if domain_has_privilege(domain, RELEASE_MANAGEMENT) and is_admin:
-        return True
-    if include_lite_version and domain_has_privilege(domain, LITE_RELEASE_MANAGEMENT) and is_admin:
-        return True
-    return False
+    privs_with_linked_domain_access = [RELEASE_MANAGEMENT, LITE_RELEASE_MANAGEMENT]
+    return user_has_access(user, domain) and \
+        any(domain_has_privilege(domain, priv) for priv in privs_with_linked_domain_access)
 
 
-def can_domain_access_release_management(domain, include_lite_version=True):
+def can_domain_access_linked_domains(domain, include_lite_version=True):
     """
     :param include_lite_version: set to True if the LITE_RELEASE_MANAGEMENT privilege should be checked
     Checks if the current domain has any of the following enabled:
@@ -107,6 +102,8 @@ def pull_missing_multimedia_for_app(app, old_multimedia_ids=None, force=False):
         media_to_pull = _get_missing_multimedia(app, old_multimedia_ids)
     remote_details = app.domain_link.remote_details
     fetch_remote_media(app.domain, media_to_pull, remote_details)
+    if force:
+        app.save()
     if toggles.CAUTIOUS_MULTIMEDIA.enabled(app.domain):
         still_missing_media = _get_missing_multimedia(app, old_multimedia_ids)
         if still_missing_media:
@@ -149,7 +146,7 @@ def is_linked_report(report):
 
 def is_domain_available_to_link(upstream_domain_name, candidate_name, user):
     """
-    User must be an admin in both domains
+    User must be an admin or have the release management permission in both domains
     :param upstream_domain_name: str
     :param candidate_name: potential domain to link downstream
     :param user: CouchUser
@@ -165,12 +162,12 @@ def is_domain_available_to_link(upstream_domain_name, candidate_name, user):
         # cannot link to an already linked project
         return False
 
-    return user_has_admin_access_in_all_domains(user, [upstream_domain_name, candidate_name])
+    return user_has_access_in_all_domains(user, [upstream_domain_name, candidate_name])
 
 
 def is_available_upstream_domain(potential_upstream_domain, downstream_domain, user):
     """
-    User must be an admin in both domains
+    User must be an admin or have the release management permission in both domains
     :param potential_upstream_domain: potential upstream domain
     :param downstream_domain: domain that would be downstream in this link if able
     :param user: couch user
@@ -188,7 +185,7 @@ def is_available_upstream_domain(potential_upstream_domain, downstream_domain, u
         # needs to be an active upstream domain
         return False
 
-    return user_has_admin_access_in_all_domains(user, [downstream_domain, potential_upstream_domain])
+    return user_has_access_in_all_domains(user, [downstream_domain, potential_upstream_domain])
 
 
 def is_domain_in_active_link(domain_name):
@@ -199,8 +196,12 @@ def is_domain_in_active_link(domain_name):
     return is_active_downstream_domain(domain_name) or is_active_upstream_domain(domain_name)
 
 
-def user_has_admin_access_in_all_domains(user, domains):
-    return all([user.is_domain_admin(domain) for domain in domains])
+def user_has_access(user, domain):
+    return user.is_domain_admin(domain) or user.has_permission(domain, 'access_release_management')
+
+
+def user_has_access_in_all_domains(user, domains):
+    return all([user_has_access(user, domain) for domain in domains])
 
 
 def is_keyword_linkable(keyword):

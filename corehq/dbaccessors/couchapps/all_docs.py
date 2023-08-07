@@ -48,7 +48,7 @@ def get_doc_count_by_domain_type(db, domain, doc_type):
         return 0
 
 
-def get_all_docs_with_doc_types(db, doc_types):
+def get_all_docs_with_doc_types(db, doc_types, chunk_size=100):
     """
     doc_types must be a sequence of doc_types
 
@@ -60,7 +60,7 @@ def get_all_docs_with_doc_types(db, doc_types):
     for doc_type in doc_types:
         results = paginate_view(
             db, 'all_docs/by_doc_type',
-            chunk_size=100, startkey=[doc_type], endkey=[doc_type, {}],
+            chunk_size=chunk_size, startkey=[doc_type], endkey=[doc_type, {}],
             include_docs=True, reduce=False)
         for result in results:
             yield result['doc']

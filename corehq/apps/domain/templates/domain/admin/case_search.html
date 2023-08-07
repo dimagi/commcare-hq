@@ -1,4 +1,4 @@
-{% extends "hqwebapp/base_section.html" %}
+{% extends "hqwebapp/bootstrap3/base_section.html" %}
 {% load hq_shared_tags %}
 {% load i18n %}
 
@@ -67,7 +67,41 @@
           </button>
         </div>
 
-        <div id="remove-characters" data-bind="visible: toggleEnabled">
+        <div data-bind="visible: toggleEnabled">
+          <h2>{% trans "Synchronous Web Apps Submissions" %}</h2>
+          <p>
+            <input id="sync-web-apps" type="checkbox" data-bind="checked: synchronousWebApps"/>
+            <label for="sync-web-apps">
+              {% blocktrans %}
+                Update case search data immediately on web apps form submission.
+              {% endblocktrans %}
+            </label>
+          </p>
+          <p class="help-block">
+            {% blocktrans %}
+              This will slow down submissions but prevent case search data from going stale.
+            {% endblocktrans %}
+          </p>
+        </div>
+
+        <div data-bind="visible: toggleEnabled">
+          <h2>{% trans "Sync Cases On Form Entry" %}</h2>
+          <p>
+            <input id="sync-case-on-form-entry" type="checkbox" data-bind="checked: syncCaseOnFormEntry"/>
+            <label for="sync-case-on-form-entry">
+              {% blocktrans %}
+                Update local case data immediately before entering a web apps form.
+              {% endblocktrans %}
+            </label>
+          </p>
+          <p class="help-block">
+            {% blocktrans %}
+              This will slow down form entry, but will prevent stale case data from populating the form.
+            {% endblocktrans %}
+          </p>
+        </div>
+
+        <div data-bind="visible: toggleEnabled">
           <h2>{% trans "Remove Special Characters" %}</h2>
           <p>
             {% blocktrans %}
@@ -90,15 +124,13 @@
             <tbody data-bind="foreach: ignorePatterns">
             <tr>
               <td>
-                <select data-bind="options: $root.caseTypes,
-                                                       value: caseType">
-                </select>
+                <select class="form-control" data-bind="options: $root.caseTypes, value: caseType"></select>
               </td>
               <td>
-                <input type="text" data-bind="value: caseProperty" placeholder="e.g. name" />
+                <input type="text" class="form-control" data-bind="value: caseProperty" placeholder="e.g. name" />
               </td>
               <td>
-                <input type="text" data-bind="value: regex" placeholder="e.g. +" />
+                <input type="text" class="form-control" data-bind="value: regex" placeholder="e.g. +" />
               </td>
               <td>
                 <button type="button"

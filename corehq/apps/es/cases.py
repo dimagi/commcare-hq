@@ -15,12 +15,23 @@ closed after May 1st.
          .OR(case_es.is_closed(False),
              case_es.closed_range(gte=datetime.date(2015, 05, 01))))
 """
+from datetime import datetime
+
+from dimagi.utils.parsing import json_format_datetime
+
 from . import aggregations, filters
+from .client import ElasticDocumentAdapter, create_document_adapter
+from .const import (
+    HQ_CASES_INDEX_CANONICAL_NAME,
+    HQ_CASES_INDEX_NAME,
+    HQ_CASES_SECONDARY_INDEX_NAME,
+)
 from .es_query import HQESQuery
+from .index.settings import IndexSettingsKey
 
 
 class CaseES(HQESQuery):
-    index = 'cases'
+    index = HQ_CASES_INDEX_CANONICAL_NAME
 
     @property
     def builtin_filters(self):
@@ -40,6 +51,50 @@ class CaseES(HQESQuery):
             case_ids,
             active_in_range,
         ] + super(CaseES, self).builtin_filters
+
+
+class ElasticCase(ElasticDocumentAdapter):
+
+    settings_key = IndexSettingsKey.CASES
+    canonical_name = HQ_CASES_INDEX_CANONICAL_NAME
+
+    @property
+    def mapping(self):
+        from .mappings.case_mapping import CASE_MAPPING
+        return CASE_MAPPING
+
+    @property
+    def model_cls(self):
+        from corehq.form_processor.models.cases import CommCareCase
+        return CommCareCase
+
+    def _from_dict(self, case):
+        """
+        Takes in case dict and applies required transformation to make it suitable for ES.
+
+        :param case: an instance of ``dict`` which is ``CommcareCase.to_json()``
+        """
+        from corehq.pillows.utils import get_user_type
+
+        if not case.get("owner_id"):
+            if case.get("user_id"):
+                case["owner_id"] = case["user_id"]
+
+        case['owner_type'] = get_user_type(case.get("owner_id", None))
+        case['inserted_at'] = json_format_datetime(datetime.utcnow())
+
+        if 'backend_id' not in case:
+            case['backend_id'] = 'sql'
+
+        return super()._from_dict(case)
+
+
+case_adapter = create_document_adapter(
+    ElasticCase,
+    HQ_CASES_INDEX_NAME,
+    "case",
+    secondary=HQ_CASES_SECONDARY_INDEX_NAME,
+)
 
 
 def opened_range(gt=None, gte=None, lt=None, lte=None):

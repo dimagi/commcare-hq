@@ -1,10 +1,9 @@
 import json
 import logging
+from dataclasses import asdict
 from collections import OrderedDict
 from functools import partial
-from distutils.version import LooseVersion
 
-from django.conf import settings
 from django.contrib import messages
 from django.http import (
     Http404,
@@ -14,19 +13,15 @@ from django.http import (
 )
 from django.template.loader import render_to_string
 from django.urls import reverse
-from django.utils.safestring import mark_safe
 from django.utils.html import format_html
-from django.utils.translation import gettext_lazy
+from django.utils.safestring import mark_safe
 from django.utils.translation import gettext as _
+from django.utils.translation import gettext_lazy
 from django.views import View
 from django.views.decorators.http import require_GET
 from django_prbac.utils import has_privilege
-
+from looseversion import LooseVersion
 from lxml import etree
-
-from corehq.apps.registry.utils import get_data_registry_dropdown_options
-from dimagi.utils.logging import notify_exception
-from dimagi.utils.web import json_request, json_response
 
 from corehq import privileges, toggles
 from corehq.apps.accounting.utils import domain_has_privilege
@@ -40,6 +35,7 @@ from corehq.apps.app_manager.const import (
     REGISTRY_WORKFLOW_LOAD_CASE,
     REGISTRY_WORKFLOW_SMART_LINK,
     USERCASE_TYPE,
+    MULTI_SELECT_MAX_SELECT_VALUE,
 )
 from corehq.apps.app_manager.dbaccessors import get_app
 from corehq.apps.app_manager.decorators import (
@@ -47,17 +43,19 @@ from corehq.apps.app_manager.decorators import (
     require_can_edit_apps,
     require_deploy_apps,
 )
-from corehq.apps.app_manager.exceptions import CaseSearchConfigError
+from corehq.apps.app_manager.exceptions import (
+    AppMisconfigurationError,
+    CaseSearchConfigError,
+)
 from corehq.apps.app_manager.models import (
     Application,
     AdvancedModule,
     CaseListForm,
     CaseSearch,
-    CaseSearchAgainLabel,
-    CaseSearchLabel,
     CaseSearchProperty,
     DefaultCaseSearchProperty,
     DeleteModuleRecord,
+    Detail,
     DetailColumn,
     DetailTab,
     FixtureSelect,
@@ -72,8 +70,9 @@ from corehq.apps.app_manager.models import (
     SortElement,
     UpdateCaseAction,
     get_all_mobile_filter_configs,
-    get_auto_filter_configurations, ConditionalCaseUpdate,
+    get_auto_filter_configurations, ConditionalCaseUpdate, CaseTileGroupConfig,
 )
+from corehq.apps.app_manager.suite_xml.features.case_tiles import case_tile_template_config, CaseTileTemplates
 from corehq.apps.app_manager.suite_xml.features.mobile_ucr import (
     get_uuids_by_instance_id,
 )
@@ -88,17 +87,19 @@ from corehq.apps.app_manager.util import (
 )
 from corehq.apps.app_manager.views.media_utils import (
     handle_media_edits,
-    process_media_attribute,
 )
 from corehq.apps.app_manager.views.utils import (
     back_to_main,
     bail,
+    capture_user_errors,
     clear_xmlns_app_id_cache,
     get_langs,
+    validate_custom_assertions,
     handle_custom_icon_edits,
     handle_shadow_child_modules,
-    InvalidSessionEndpoint,
     set_session_endpoint,
+    set_case_list_session_endpoint,
+    set_shadow_module_and_form_session_endpoint
 )
 from corehq.apps.app_manager.xform import CaseError
 from corehq.apps.app_manager.xpath_validator import validate_xpath
@@ -108,8 +109,8 @@ from corehq.apps.domain.decorators import (
     track_domain_request,
 )
 from corehq.apps.domain.models import Domain
-from corehq.apps.fixtures.fixturegenerators import item_lists_by_app
-from corehq.apps.fixtures.models import FixtureDataType
+from corehq.apps.fixtures.fixturegenerators import item_lists_by_app, REPORT_FIXTURE, LOOKUP_TABLE_FIXTURE
+from corehq.apps.fixtures.models import LookupTable
 from corehq.apps.hqmedia.controller import MultimediaHTMLUploadController
 from corehq.apps.hqmedia.models import (
     ApplicationMediaReference,
@@ -117,14 +118,19 @@ from corehq.apps.hqmedia.models import (
 )
 from corehq.apps.hqmedia.views import ProcessDetailPrintTemplateUploadView
 from corehq.apps.hqwebapp.decorators import waf_allow
+from corehq.apps.registry.utils import get_data_registry_dropdown_options
 from corehq.apps.reports.analytics.esaccessors import (
     get_case_types_for_domain_es
 )
+from corehq.apps.data_dictionary.util import get_data_dict_deprecated_case_types
 from corehq.apps.reports.daterange import get_simple_dateranges
+from corehq.apps.userreports.dbaccessors import get_report_and_registry_report_configs_for_domain
 from corehq.apps.userreports.models import (
-    ReportConfiguration,
     StaticReportConfiguration,
 )
+from corehq.toggles import toggles_enabled_for_request
+from dimagi.utils.logging import notify_exception
+from dimagi.utils.web import json_request, json_response
 
 logger = logging.getLogger(__name__)
 
@@ -146,6 +152,10 @@ def get_module_view_context(request, app, module, lang=None):
             and has_privilege(request, privileges.CLOUDCARE)
             and toggles.USH_CASE_CLAIM_UPDATES.enabled(app.domain)
         ),
+        'custom_assertions': [
+            {'test': assertion.test, 'text': assertion.text.get(lang)}
+            for assertion in module.custom_assertions
+        ],
     }
     module_brief = {
         'id': module.id,
@@ -157,7 +167,12 @@ def get_module_view_context(request, app, module, lang=None):
         'unique_id': module.unique_id,
     }
     case_property_builder = _setup_case_property_builder(app)
-    show_advanced_settings = False
+    show_advanced_settings = (
+        not module.is_surveys
+        or add_ons.show("register_from_case_list", request, app, module)
+        or add_ons.show("case_list_menu_item", request, app, module) and not isinstance(module, ShadowModule)
+        or toggles.CUSTOM_ASSERTIONS.enabled(app.domain)
+    )
     if toggles.MOBILE_UCR.enabled(app.domain):
         show_advanced_settings = True
         module_brief.update({
@@ -179,16 +194,8 @@ def get_module_view_context(request, app, module, lang=None):
     if isinstance(module, ShadowModule):
         context.update(_get_shadow_module_view_context(app, module, lang))
 
-    show_advanced_settings = (
-        show_advanced_settings
-        or add_ons.show("register_from_case_list", request, app, module)
-        or add_ons.show("case_list_menu_item", request, app, module) and not isinstance(module, ShadowModule)
-    )
-    context.update({
-        'show_advanced_settings': show_advanced_settings,
-    })
-
-    context.update({'module_brief': module_brief})
+    context['show_advanced_settings'] = show_advanced_settings
+    context['module_brief'] = module_brief
     return context
 
 
@@ -196,8 +203,17 @@ def _get_shared_module_view_context(request, app, module, case_property_builder,
     '''
     Get context items that are used by both basic and advanced modules.
     '''
-    item_lists = item_lists_by_app(app) if app.enable_search_prompt_appearance else []
+    item_lists = item_lists_by_app(app, module) if app.enable_search_prompt_appearance else []
     case_types = set(module.search_config.additional_case_types) | {module.case_type}
+    case_list_map_enabled = toggles.CASE_LIST_MAP.enabled(app.domain)
+    case_tile_template_option_to_configs = [
+        (template, asdict(case_tile_template_config(template[0]))) for template in CaseTileTemplates.choices
+    ]
+    case_tile_template_option_to_configs_filtered = [
+        option_to_config for option_to_config in case_tile_template_option_to_configs
+        if case_list_map_enabled or not option_to_config[1]['has_map']
+    ]
+
     context = {
         'details': _get_module_details_context(request, app, module, case_property_builder),
         'case_list_form_options': _case_list_form_options(app, module, lang),
@@ -219,31 +235,45 @@ def _get_shared_module_view_context(request, app, module, case_property_builder,
                 domain_has_privilege(app.domain, privileges.GEOCODER)
                 and toggles.USH_CASE_CLAIM_UPDATES.enabled(app.domain)
             ),
-            'exclude_from_search_enabled': app.enable_exclude_from_search,
+            'ush_case_claim_2_53': app.ush_case_claim_2_53,
             'item_lists': item_lists,
-            'has_lookup_tables': bool([i for i in item_lists if i['fixture_type'] == 'lookup_table_fixture']),
-            'has_mobile_ucr': bool([i for i in item_lists if i['fixture_type'] == 'report_fixture']),
-            'search_properties': module.search_config.properties if module_offers_search(module) else [],
-            'auto_launch': module.search_config.auto_launch if module_offers_search(module) else False,
-            'default_search': module.search_config.default_search if module_offers_search(module) else False,
-            'default_properties': module.search_config.default_properties if module_offers_search(module) else [],
-            'search_filter': module.search_config.search_filter if module_offers_search(module) else "",
-            'search_button_display_condition':
-                module.search_config.search_button_display_condition if module_offers_search(module) else "",
-            'search_additional_relevant':
-                module.search_config.additional_relevant if module_offers_search(module) else "",
-            'blacklisted_owner_ids_expression': (
-                module.search_config.blacklisted_owner_ids_expression if module_offers_search(module) else ""),
+            'has_lookup_tables': bool([i for i in item_lists if i['fixture_type'] == LOOKUP_TABLE_FIXTURE]),
+            'has_mobile_ucr': bool([i for i in item_lists if i['fixture_type'] == REPORT_FIXTURE]),
             'default_value_expression_enabled': app.enable_default_value_expression,
-            # populate these even if module_offers_search is false because search_config might just not exist yet
-            'search_label':
-                module.search_config.search_label.label if hasattr(module, 'search_config') else "",
-            'search_again_label':
-                module.search_config.search_again_label.label if hasattr(module, 'search_config') else "",
-            'data_registry': module.search_config.data_registry,
-            'data_registry_workflow': module.search_config.data_registry_workflow,
-            'additional_registry_cases': module.search_config.additional_registry_cases,
-            'custom_related_case_property': module.search_config.custom_related_case_property,
+            'case_tile_template_options':
+                [option_to_config[0] for option_to_config in case_tile_template_option_to_configs_filtered],
+            'case_tile_template_configs': {option_to_config[0][0]: option_to_config[1]
+                                           for option_to_config in case_tile_template_option_to_configs_filtered},
+            'search_config': {
+                'search_properties':
+                    module.search_config.properties if module_offers_search(module) else [],
+                'default_properties':
+                    module.search_config.default_properties if module_offers_search(module) else [],
+                'auto_launch': module.search_config.auto_launch if module_offers_search(module) else False,
+                'default_search': module.search_config.default_search if module_offers_search(module) else False,
+                'search_filter': module.search_config.search_filter if module_offers_search(module) else "",
+                'search_button_display_condition':
+                    module.search_config.search_button_display_condition if module_offers_search(module) else "",
+                'additional_relevant':
+                    module.search_config.additional_relevant if module_offers_search(module) else "",
+                'blacklisted_owner_ids_expression': (
+                    module.search_config.blacklisted_owner_ids_expression if module_offers_search(module) else ""),
+                # populate labels even if module_offers_search is false - search_config might just not exist yet
+                'search_label':
+                    module.search_config.search_label.label if hasattr(module, 'search_config') else "",
+                'search_again_label':
+                    module.search_config.search_again_label.label if hasattr(module, 'search_config') else "",
+                'title_label':
+                    module.search_config.title_label if hasattr(module, 'search_config') else "",
+                'description':
+                    module.search_config.description if hasattr(module, 'search_config') else "",
+                'data_registry': module.search_config.data_registry if module.search_config.data_registry else "",
+                'data_registry_workflow': module.search_config.data_registry_workflow,
+                'additional_registry_cases': module.search_config.additional_registry_cases,
+                'custom_related_case_property': module.search_config.custom_related_case_property,
+                'inline_search': module.search_config.inline_search,
+                'include_all_related_cases': module.search_config.include_all_related_cases,
+            },
         },
     }
     if toggles.CASE_DETAIL_PRINT.enabled(app.domain):
@@ -290,8 +320,8 @@ def _get_advanced_module_view_context(app, module):
 
 def _get_basic_module_view_context(request, app, module, case_property_builder):
     return {
-        'parent_case_modules': _get_modules_with_parent_case_type(app, module, case_property_builder),
-        'all_case_modules': _get_all_case_modules(app, module),
+        'parent_case_modules': get_modules_with_parent_case_type(app, module, case_property_builder),
+        'all_case_modules': get_all_case_modules(app, module),
         'case_list_form_not_allowed_reasons': _case_list_form_not_allowed_reasons(module),
         'child_module_enabled': (
             add_ons.show("submenus", request, app, module=module) and not module.is_training_module
@@ -307,7 +337,12 @@ def _get_shadow_module_view_context(app, module, lang=None):
             'unique_id': mod.unique_id,
             'name': trans(mod.name, langs),
             'root_module_id': mod.root_module_id,
-            'forms': [{'unique_id': f.unique_id, 'name': trans(f.name, langs)} for f in mod.get_forms()]
+            'session_endpoint_id': mod.session_endpoint_id,
+            'forms': [{
+                'unique_id': f.unique_id,
+                'name': trans(f.name, langs),
+                'session_endpoint_id': f.session_endpoint_id
+            } for f in mod.get_forms()]
         }
 
     return {
@@ -316,6 +351,7 @@ def _get_shadow_module_view_context(app, module, lang=None):
             'modules': [get_mod_dict(m) for m in app.modules if m.module_type in ['basic', 'advanced']],
             'source_module_id': module.source_module_id,
             'excluded_form_ids': module.excluded_form_ids,
+            'form_session_endpoints': module.form_session_endpoints,
             'shadow_module_version': module.shadow_module_version,
         },
     }
@@ -332,8 +368,8 @@ def _get_report_module_context(app, module):
             'filter_structure': report.filters_without_prefilters,
         }
 
-    all_reports = ReportConfiguration.by_domain(app.domain) + \
-                  StaticReportConfiguration.by_domain(app.domain)
+    all_reports = get_report_and_registry_report_configs_for_domain(app.domain) + \
+        StaticReportConfiguration.by_domain(app.domain)
     validity = module.check_report_validity()
 
     # We're now proactively deleting these references, so after that's been
@@ -348,7 +384,10 @@ def _get_report_module_context(app, module):
         {'slug': f.slug, 'description': f.short_description} for f in get_auto_filter_configurations()
 
     ]
-    from corehq.apps.app_manager.suite_xml.features.mobile_ucr import get_column_xpath_client_template, get_data_path
+    from corehq.apps.app_manager.suite_xml.features.mobile_ucr import (
+        get_column_xpath_client_template,
+        get_data_path
+    )
     data_path_placeholders = {}
     for r in module.report_configs:
         data_path_placeholders[r.report_id] = {}
@@ -380,8 +419,8 @@ def _get_report_module_context(app, module):
 
 def _get_fixture_columns_by_type(domain):
     return {
-        fixture.tag: [field.field_name for field in fixture.fields]
-        for fixture in FixtureDataType.by_domain(domain)
+        fixture.tag: [field.name for field in fixture.fields]
+        for fixture in LookupTable.objects.by_domain(domain)
     }
 
 
@@ -393,28 +432,35 @@ def _setup_case_property_builder(app):
 
 
 # Parent case selection in case list: get modules whose case type is the parent of the given module's case type
-def _get_modules_with_parent_case_type(app, module, case_property_builder):
+def get_modules_with_parent_case_type(app, module, case_property_builder=None):
+    if case_property_builder is None:
+        case_property_builder = _setup_case_property_builder(app)
 
     parent_types = case_property_builder.get_parent_types(module.case_type)
     modules = app.modules
     parent_module_ids = [
         mod.unique_id for mod in modules
-        if mod.case_type in parent_types]
+        if mod.case_type in parent_types
+    ]
 
     return [{
         'unique_id': mod.unique_id,
         'name': mod.name,
-        'is_parent': mod.unique_id in parent_module_ids,
-    } for mod in app.modules if mod.case_type != module.case_type and mod.unique_id != module.unique_id]
+        'is_parent': mod.unique_id in parent_module_ids
+    } for mod in app.modules
+        if mod.case_type != module.case_type
+        and mod.unique_id != module.unique_id
+        and not mod.is_multi_select()
+    ]
 
 
-def _get_all_case_modules(app, module):
+def get_all_case_modules(app, module):
     # return all case modules except the given module
     return [{
         'unique_id': mod.unique_id,
         'name': mod.name,
         'is_parent': False,
-    } for mod in app.modules if mod.case_type and mod.unique_id != module.unique_id]
+    } for mod in app.get_modules() if mod.case_type and mod.unique_id != module.unique_id]
 
 
 # Parent/child modules: get modules that may be used as parents of the given module
@@ -457,8 +503,9 @@ def _case_list_form_options(app, module, lang=None):
         'post_form_workflow': f.post_form_workflow,
         'is_registration_form': True,
     } for f in reg_forms})
-    if (hasattr(module, 'parent_select') and  # AdvancedModule doesn't have parent_select
-            toggles.FOLLOWUP_FORMS_AS_CASE_LIST_FORM and module.parent_select.active):
+    if (hasattr(module, 'parent_select')  # AdvancedModule doesn't have parent_select
+            and toggles.FOLLOWUP_FORMS_AS_CASE_LIST_FORM
+            and module.parent_select.active):
         followup_forms = get_parent_select_followup_forms(app, module)
         if followup_forms:
             options.update({f.unique_id: {
@@ -553,6 +600,7 @@ def _case_list_form_not_allowed_reasons(module):
 @no_conflict_require_POST
 @require_can_edit_apps
 @track_domain_request(calculated_prop='cp_n_saved_app_changes')
+@capture_user_errors
 def edit_module_attr(request, domain, app_id, module_unique_id, attr):
     """
     Called to edit any (supported) module attribute, given by attr
@@ -582,6 +630,7 @@ def edit_module_attr(request, domain, app_id, module_unique_id, attr):
         "media_image": None,
         "module_filter": None,
         "name": None,
+        "no_items_text": None,
         "parent_module": None,
         "put_in_root": None,
         "report_context_tile": None,
@@ -589,6 +638,7 @@ def edit_module_attr(request, domain, app_id, module_unique_id, attr):
         "source_module_id": None,
         "task_list": ('task_list-show', 'task_list-label'),
         "excl_form_ids": None,
+        "form_session_endpoints": None,
         "display_style": None,
         "custom_icon_form": None,
         "custom_icon_text_body": None,
@@ -596,6 +646,8 @@ def edit_module_attr(request, domain, app_id, module_unique_id, attr):
         "use_default_image_for_all": None,
         "use_default_audio_for_all": None,
         "session_endpoint_id": None,
+        "case_list_session_endpoint_id": None,
+        'custom_assertions': None,
     }
 
     if attr not in attributes:
@@ -624,19 +676,15 @@ def edit_module_attr(request, domain, app_id, module_unique_id, attr):
     lang = request.COOKIES.get('lang', app.langs[0])
     resp = {'update': {}, 'corrections': {}}
     if should_edit("custom_icon_form"):
-        error_message = handle_custom_icon_edits(request, module, lang)
-        if error_message:
-            return json_response(
-                {'message': error_message},
-                status_code=400
-            )
-
+        handle_custom_icon_edits(request, module, lang)
+    if should_edit("no_items_text"):
+        module.case_details.short.no_items_text[lang] = request.POST.get("no_items_text")
     if should_edit("case_type"):
         case_type = request.POST.get("case_type", None)
         if case_type == USERCASE_TYPE and not isinstance(module, AdvancedModule):
-            return HttpResponseBadRequest('"{}" is a reserved case type'.format(USERCASE_TYPE))
+            raise AppMisconfigurationError('"{}" is a reserved case type'.format(USERCASE_TYPE))
         elif case_type and not is_valid_case_type(case_type, module):
-            return HttpResponseBadRequest("case type is improperly formatted")
+            raise AppMisconfigurationError("case type is improperly formatted")
         else:
             old_case_type = module["case_type"]
             module["case_type"] = case_type
@@ -677,7 +725,7 @@ def edit_module_attr(request, domain, app_id, module_unique_id, attr):
         parent_module = request.POST.get("parent_module")
         module.parent_select.module_id = parent_module
         if module_case_hierarchy_has_circular_reference(module):
-            return HttpResponseBadRequest(_("The case hierarchy contains a circular reference."))
+            raise AppMisconfigurationError(_("The case hierarchy contains a circular reference."))
     if should_edit("auto_select_case"):
         module["auto_select_case"] = request.POST.get("auto_select_case") == 'true'
 
@@ -704,7 +752,7 @@ def edit_module_attr(request, domain, app_id, module_unique_id, attr):
         label = '{SLUG}-label'.format(SLUG=SLUG)
         if request.POST.get(show) == 'true' and (request.POST.get(label) == ''):
             # Show item, but empty label, was just getting ignored
-            return HttpResponseBadRequest("A label is required for {SLUG}".format(SLUG=SLUG))
+            raise AppMisconfigurationError("A label is required for {SLUG}".format(SLUG=SLUG))
         if should_edit(SLUG):
             module[SLUG].show = json.loads(request.POST[show])
             module[SLUG].label[lang] = request.POST[label]
@@ -740,12 +788,27 @@ def edit_module_attr(request, domain, app_id, module_unique_id, attr):
         excl.remove('0')  # Placeholder value to make sure excl_form_ids is POSTed when no forms are excluded
         module.excluded_form_ids = excl
 
-    if should_edit('session_endpoint_id'):
+    if should_edit('form_session_endpoints') or \
+            should_edit('session_endpoint_id') and isinstance(module, ShadowModule):
         raw_endpoint_id = request.POST['session_endpoint_id']
-        try:
-            set_session_endpoint(module, raw_endpoint_id, app)
-        except InvalidSessionEndpoint as e:
-            return HttpResponseBadRequest(str(e))
+        mappings = request.POST.getlist('form_session_endpoints')
+        set_shadow_module_and_form_session_endpoint(
+            module, raw_endpoint_id, [json.loads(m) for m in mappings], app)
+
+    elif should_edit('session_endpoint_id'):
+        raw_endpoint_id = request.POST['session_endpoint_id']
+        set_session_endpoint(module, raw_endpoint_id, app)
+
+    if should_edit('case_list_session_endpoint_id'):
+        raw_endpoint_id = request.POST['case_list_session_endpoint_id']
+        set_case_list_session_endpoint(module, raw_endpoint_id, app)
+
+    if should_edit('custom_assertions'):
+        module.custom_assertions = validate_custom_assertions(
+            request.POST.get('custom_assertions'),
+            module.custom_assertions,
+            lang,
+        )
 
     handle_media_edits(request, module, should_edit, resp, lang)
     handle_media_edits(request, module.case_list_form, should_edit, resp, lang, prefix='case_list_form_')
@@ -765,7 +828,7 @@ def _new_advanced_module(request, domain, app, name, lang):
 
     app.save()
     response = back_to_main(request, domain, app_id=app.id, module_id=module_id)
-    response.set_cookie('suppress_build_errors', 'yes', secure=settings.SECURE_COOKIES)
+    response.set_cookie('suppress_build_errors', 'yes')
     return response
 
 
@@ -778,7 +841,7 @@ def _new_report_module(request, domain, app, name, lang):
             header={lang: report.title},
             description={lang: report.description} if report.description else None,
         )
-        for report in ReportConfiguration.by_domain(domain)
+        for report in get_report_and_registry_report_configs_for_domain(domain)
     ]
     app.save()
     return back_to_main(request, domain, app_id=app.id, module_id=module.id)
@@ -900,6 +963,8 @@ def overwrite_module_case_list(request, domain, app_id, module_unique_id):
         'search_claim_options',
     }
     short_attrs = {a for a in short_attrs if request.POST.get(a) == 'on'}
+    if 'multi_select' in short_attrs:
+        short_attrs.update({'auto_select', 'max_select_value'})
 
     error_list = _validate_overwrite_request(request, detail_type, dest_module_unique_ids, short_attrs)
     if error_list:
@@ -950,8 +1015,16 @@ def _update_module_short_detail(src_module, dest_module, attrs):
         _update_module_search_config(src_module, dest_module, search_attrs)
 
     attrs = attrs - search_attrs
+    src_detail = Detail.wrap(getattr(src_module.case_details, "short").to_json().copy())
+
+    # Shadow modules inherit some attributes from source module, so ignore the detail attr
+    if src_module.module_type == "shadow":
+        if 'multi_select' in attrs:
+            src_detail.multi_select = src_module.is_multi_select()
+            src_detail.auto_select = src_module.is_auto_select()
+            src_detail.max_select_value = src_module.max_select_value
+
     if attrs:
-        src_detail = getattr(src_module.case_details, "short")
         dest_detail = getattr(dest_module.case_details, "short")
         dest_detail.overwrite_attrs(src_detail, attrs)
 
@@ -991,52 +1064,71 @@ def _update_search_properties(module, search_properties, lang='en'):
     True
 
     """
-    current = {p.name: p.label for p in module.search_config.properties}
+
+    # Replace translation for current language in a translations dict
+    def _update_translation(old_obj, new_data, old_attr, new_attr=None):
+        new_attr = new_attr or old_attr
+        values = getattr(old_obj, old_attr) if old_obj else {}
+        values.pop(lang, None)
+        new_value = new_data.get(new_attr)
+        if new_value:
+            values[lang] = new_value
+        return values
+
+    def _get_itemset(prop):
+        fixture_props = json.loads(prop['fixture'])
+        keys = {'instance_id', 'nodeset', 'label', 'value', 'sort'}
+        missing = [key for key in keys if not fixture_props.get(key)]
+        if missing:
+            raise CaseSearchConfigError(_("""
+                The case search property '{}' is missing the following lookup table attributes: {}
+            """).format(prop['name'], ", ".join(missing)))
+        return {key: fixture_props[key] for key in keys}
+
+    props_by_name = {p.name: p for p in module.search_config.properties}
     for prop in search_properties:
-        if prop['name'] in current:
-            label = current[prop['name']].copy()
-            label.update({lang: prop['label']})
-        else:
-            label = {lang: prop['label']}
-        hint = {lang: prop['hint']}
+        current = props_by_name.get(prop['name'])
+
         ret = {
             'name': prop['name'],
-            'label': label,
+            'label': _update_translation(current, prop, 'label'),
+            'hint': _update_translation(current, prop, 'hint'),
         }
-        if prop['default_value']:
+        if prop.get('default_value'):
             ret['default_value'] = prop['default_value']
-        if prop['hint']:
-            ret['hint'] = hint
-        if prop['hidden']:
+        if prop.get('hidden'):
             ret['hidden'] = prop['hidden']
-        if prop['allow_blank_value']:
+        if prop.get('allow_blank_value'):
             ret['allow_blank_value'] = prop['allow_blank_value']
-        if prop['exclude']:
+        if prop.get('exclude'):
             ret['exclude'] = prop['exclude']
+        if prop.get('required_test'):
+            ret['required'] = {
+                'test': prop['required_test'],
+                'text': _update_translation(current.required if current else None, prop, "text", "required_text"),
+            }
+        if prop.get('validation_test'):
+            ret['validations'] = [{
+                'test': prop['validation_test'],
+                'text': _update_translation(current.validations[0] if current and current.validations else None,
+                                            prop, "text", "validation_text"),
+            }]
         if prop.get('appearance', '') == 'fixture':
             if prop.get('is_multiselect', False):
                 ret['input_'] = 'select'
                 ret['default_value'] = prop['default_value']
             else:
                 ret['input_'] = 'select1'
-            fixture_props = json.loads(prop['fixture'])
-            keys = {'instance_uri', 'instance_id', 'nodeset', 'label', 'value', 'sort'}
-            missing = [key for key in keys if not fixture_props.get(key)]
-            if missing:
-                raise CaseSearchConfigError(_("""
-                    The case search property '{}' is missing the following lookup table attributes: {}
-                """).format(prop['name'], ", ".join(missing)))
-            ret['itemset'] = {
-                key: fixture_props[key]
-                for key in keys
-            }
-
+            ret['itemset'] = _get_itemset(prop)
+        elif prop.get('appearance', '') == 'checkbox':
+            ret['input_'] = 'checkbox'
+            ret['itemset'] = _get_itemset(prop)
         elif prop.get('appearance', '') == 'barcode_scan':
             ret['appearance'] = 'barcode_scan'
         elif prop.get('appearance', '') == 'address':
             ret['appearance'] = 'address'
-        elif prop.get('appearance', '') == 'daterange':
-            ret['input_'] = 'daterange'
+        elif prop.get('appearance', '') in ('date', 'daterange'):
+            ret['input_'] = prop['appearance']
 
         if prop.get('appearance', '') == 'fixture' or not prop.get('appearance', ''):
             ret['receiver_expression'] = prop.get('receiver_expression', '')
@@ -1053,6 +1145,17 @@ def edit_module_detail_screens(request, domain, app_id, module_unique_id):
     provided in the request. Components are short, long, filter, parent_select,
     fixture_select and sort_elements.
     """
+    # HELPME
+    #
+    # This method has been flagged for refactoring due to its complexity and
+    # frequency of touches in changesets
+    #
+    # If you are writing code that touches this method, your changeset
+    # should leave the method better than you found it.
+    #
+    # Please remove this flag when this method no longer triggers an 'E' or 'F'
+    # classification from the radon code static analysis
+
     params = json_request(request.POST)
     detail_type = params.get('type')
     short = params.get('short', None)
@@ -1063,20 +1166,12 @@ def edit_module_detail_screens(request, domain, app_id, module_unique_id):
     parent_select = params.get('parent_select', None)
     fixture_select = params.get('fixture_select', None)
     sort_elements = params.get('sort_elements', None)
-    persist_case_context = params.get('persistCaseContext', None)
-    persistent_case_context_xml = params.get('persistentCaseContextXML', None)
-    use_case_tiles = params.get('useCaseTiles', None)
-    persist_tile_on_forms = params.get("persistTileOnForms", None)
-    persistent_case_tile_from_module = params.get("persistentCaseTileFromModule", None)
-    pull_down_tile = params.get("enableTilePullDown", None)
     print_template = params.get('printTemplate', None)
-    case_list_lookup = params.get("case_list_lookup", None)
     search_properties = params.get("search_properties")
     custom_variables = {
         'short': params.get("short_custom_variables", None),
         'long': params.get("long_custom_variables", None)
     }
-    multi_select = params.get('multi_select', None)
 
     app = get_app(domain, app_id)
 
@@ -1092,24 +1187,10 @@ def edit_module_detail_screens(request, domain, app_id, module_unique_id):
         try:
             detail = getattr(module, '{0}_details'.format(detail_type))
         except AttributeError:
-            return HttpResponseBadRequest("Unknown detail type '%s'" % detail_type)
+            return HttpResponseBadRequest(format_html("Unknown detail type '{}'", detail_type))
 
     lang = request.COOKIES.get('lang', app.langs[0])
-    if short is not None:
-        detail.short.columns = list(map(DetailColumn.from_json, short))
-        if persist_case_context is not None:
-            detail.short.persist_case_context = persist_case_context
-            detail.short.persistent_case_context_xml = persistent_case_context_xml
-        if use_case_tiles is not None:
-            detail.short.use_case_tiles = use_case_tiles
-        if persist_tile_on_forms is not None:
-            detail.short.persist_tile_on_forms = persist_tile_on_forms
-        if persistent_case_tile_from_module is not None:
-            detail.short.persistent_case_tile_from_module = persistent_case_tile_from_module
-        if pull_down_tile is not None:
-            detail.short.pull_down_tile = pull_down_tile
-        if case_list_lookup is not None:
-            _save_case_list_lookup_params(detail.short, case_list_lookup, lang)
+    _update_short_details(detail, short, params, lang)
 
     if long_ is not None:
         detail.long.columns = list(map(DetailColumn.from_json, long_))
@@ -1123,8 +1204,6 @@ def edit_module_detail_screens(request, domain, app_id, module_unique_id):
         detail.short.filter = filter
     if custom_xml is not None:
         detail.short.custom_xml = custom_xml
-    if multi_select is not None:
-        detail.short.multi_select = multi_select
 
     if custom_variables['short'] is not None:
         try:
@@ -1172,9 +1251,15 @@ def edit_module_detail_screens(request, domain, app_id, module_unique_id):
         module.fixture_select = FixtureSelect.wrap(fixture_select)
     if search_properties is not None:
         if (
-                search_properties.get('properties') is not None
-                or search_properties.get('default_properties') is not None
+            search_properties.get('properties') is not None
+            or search_properties.get('default_properties') is not None
         ):
+            title_label = module.search_config.title_label
+            title_label[lang] = search_properties.get('title_label', '')
+
+            description = module.search_config.description
+            description[lang] = search_properties.get('description', '')
+
             search_label = module.search_config.search_label
             search_label.label[lang] = search_properties.get('search_label', '')
             if search_properties.get('search_label_image_for_all'):
@@ -1209,7 +1294,7 @@ def edit_module_detail_screens(request, domain, app_id, module_unique_id):
                 return HttpResponseBadRequest(e)
             xpath_props = [
                 "search_filter", "blacklisted_owner_ids_expression",
-                "search_button_display_condition", "search_additional_relevant"
+                "search_button_display_condition", "additional_relevant"
             ]
 
             def _check_xpath(xpath, location):
@@ -1248,9 +1333,11 @@ def edit_module_detail_screens(request, domain, app_id, module_unique_id):
             module.search_config = CaseSearch(
                 search_label=search_label,
                 search_again_label=search_again_label,
+                title_label=title_label,
+                description=description,
                 properties=properties,
                 additional_case_types=module.search_config.additional_case_types,
-                additional_relevant=search_properties.get('search_additional_relevant', ''),
+                additional_relevant=search_properties.get('additional_relevant', ''),
                 auto_launch=force_auto_launch or bool(search_properties.get('auto_launch')),
                 default_search=bool(search_properties.get('default_search')),
                 search_filter=search_properties.get('search_filter', ""),
@@ -1264,11 +1351,60 @@ def edit_module_detail_screens(request, domain, app_id, module_unique_id):
                 data_registry_workflow=data_registry_workflow,
                 additional_registry_cases=additional_registry_cases,
                 custom_related_case_property=search_properties.get('custom_related_case_property', ""),
+                inline_search=search_properties.get('inline_search', False),
+                include_all_related_cases=search_properties.get('include_all_related_cases', False)
             )
 
     resp = {}
     app.save(resp)
-    return json_response(resp)
+    return JsonResponse(resp)
+
+
+def _update_short_details(detail, short, params, lang):
+    if short is not None:
+        detail.short.columns = list(map(DetailColumn.from_json, short))
+        detail.short.multi_select = params.get('multi_select', None)
+        detail.short.auto_select = params.get('auto_select', None)
+        detail.short.max_select_value = params.get('max_select_value') or MULTI_SELECT_MAX_SELECT_VALUE
+        persist_case_context = params.get('persistCaseContext', None)
+        if persist_case_context is not None:
+            detail.short.persist_case_context = persist_case_context
+            detail.short.persistent_case_context_xml = params.get('persistentCaseContextXML', None)
+
+        def _set_if_not_none(param_name, attribute_name=None):
+            value = params.get(param_name, None)
+            if value is not None:
+                setattr(detail.short, attribute_name or param_name, value)
+
+        _set_if_not_none('caseTileTemplate', 'case_tile_template')
+        _set_if_not_none('persistTileOnForms', 'persist_tile_on_forms')
+        _set_if_not_none('persistentCaseTileFromModule', 'persistent_case_tile_from_module')
+        _set_if_not_none('enableTilePullDown', 'pull_down_tile')
+
+        case_tile_group = params.get('case_tile_group', None)
+        if case_tile_group is not None:
+            detail.short.case_tile_group = CaseTileGroupConfig(
+                index_identifier=case_tile_group['index_identifier'],
+                header_rows=int(case_tile_group['header_rows'])
+            )
+
+        case_list_lookup = params.get("case_list_lookup", None)
+        if case_list_lookup is not None:
+            _save_case_list_lookup_params(detail.short, case_list_lookup, lang)
+
+
+def _save_case_list_lookup_params(short, case_list_lookup, lang):
+    short.lookup_enabled = case_list_lookup.get("lookup_enabled", short.lookup_enabled)
+    short.lookup_autolaunch = case_list_lookup.get("lookup_autolaunch", short.lookup_autolaunch)
+    short.lookup_action = case_list_lookup.get("lookup_action", short.lookup_action)
+    short.lookup_name = case_list_lookup.get("lookup_name", short.lookup_name)
+    short.lookup_extras = case_list_lookup.get("lookup_extras", short.lookup_extras)
+    short.lookup_responses = case_list_lookup.get("lookup_responses", short.lookup_responses)
+    short.lookup_image = case_list_lookup.get("lookup_image", short.lookup_image)
+    short.lookup_display_results = case_list_lookup.get("lookup_display_results", short.lookup_display_results)
+    if "lookup_field_header" in case_list_lookup:
+        short.lookup_field_header[lang] = case_list_lookup["lookup_field_header"]
+    short.lookup_field_template = case_list_lookup.get("lookup_field_template", short.lookup_field_template)
 
 
 @no_conflict_require_POST
@@ -1341,6 +1477,7 @@ def validate_module_for_build(request, domain, app_id, module_unique_id, ajax=Tr
         'not_actual_build': True,
         'domain': domain,
         'langs': langs,
+        'toggles': toggles_enabled_for_request(request),
     })
     if ajax:
         return json_response({'error_html': response_html})
@@ -1365,7 +1502,7 @@ def new_module(request, domain, app_id):
 
         response = back_to_main(request, domain, app_id=app_id,
                                 module_id=enroll_module.id, form_id=0)
-        response.set_cookie('suppress_build_errors', 'yes', secure=settings.SECURE_COOKIES)
+        response.set_cookie('suppress_build_errors', 'yes')
         return response
     elif module_type == 'case' or module_type == 'survey':  # survey option added for V2
         if module_type == 'case':
@@ -1404,7 +1541,7 @@ def new_module(request, domain, app_id):
         app.save()
         response = back_to_main(request, domain, app_id=app_id,
                                 module_id=module_id, form_id=form_id)
-        response.set_cookie('suppress_build_errors', 'yes', secure=settings.SECURE_COOKIES)
+        response.set_cookie('suppress_build_errors', 'yes')
         return response
     elif module_type in MODULE_TYPE_MAP:
         fn = MODULE_TYPE_MAP[module_type][FN]
@@ -1531,20 +1668,6 @@ def _init_biometrics_identify_module(app, lang, enroll_form_id):
     module.case_type = 'person'
 
 
-def _save_case_list_lookup_params(short, case_list_lookup, lang):
-    short.lookup_enabled = case_list_lookup.get("lookup_enabled", short.lookup_enabled)
-    short.lookup_autolaunch = case_list_lookup.get("lookup_autolaunch", short.lookup_autolaunch)
-    short.lookup_action = case_list_lookup.get("lookup_action", short.lookup_action)
-    short.lookup_name = case_list_lookup.get("lookup_name", short.lookup_name)
-    short.lookup_extras = case_list_lookup.get("lookup_extras", short.lookup_extras)
-    short.lookup_responses = case_list_lookup.get("lookup_responses", short.lookup_responses)
-    short.lookup_image = case_list_lookup.get("lookup_image", short.lookup_image)
-    short.lookup_display_results = case_list_lookup.get("lookup_display_results", short.lookup_display_results)
-    if "lookup_field_header" in case_list_lookup:
-        short.lookup_field_header[lang] = case_list_lookup["lookup_field_header"]
-    short.lookup_field_template = case_list_lookup.get("lookup_field_template", short.lookup_field_template)
-
-
 @require_GET
 @require_deploy_apps
 def view_module(request, domain, app_id, module_unique_id):
@@ -1569,7 +1692,8 @@ class ExistingCaseTypesView(LoginAndDomainMixin, View):
 
     def get(self, request, domain):
         return JsonResponse({
-            'existing_case_types': list(get_case_types_for_domain_es(domain))
+            'existing_case_types': list(get_case_types_for_domain_es(domain)),
+            'deprecated_case_types': list(get_data_dict_deprecated_case_types(domain))
         })
 
 

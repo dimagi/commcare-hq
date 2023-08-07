@@ -3,4 +3,4 @@ Dear Finance Team,
 Attached is a report of all Credits on HQ as of {{ date_of_report }}.
 
 Cheers,
---The CommCareHQ Team
+--The CommCare HQ Team

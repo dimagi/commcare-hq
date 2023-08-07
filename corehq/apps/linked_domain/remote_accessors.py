@@ -69,13 +69,13 @@ def get_latest_released_versions_by_app_id(domain_link):
 
 
 def get_ucr_config(domain_link, report_config_id):
-    from corehq.apps.userreports.models import DataSourceConfiguration, ReportConfiguration
+    from corehq.apps.userreports.util import wrap_report_config_by_type, _wrap_data_source_by_doc_type
     url = reverse('linked_domain:ucr_config', args=[domain_link.master_domain,
                                                     report_config_id])
     response = _do_request_to_remote_hq_json(url, domain_link.remote_details, domain_link.linked_domain)
     return {
-        "report": ReportConfiguration.wrap(response["report"]),
-        "datasource": DataSourceConfiguration.wrap(response["datasource"]),
+        "report": wrap_report_config_by_type(response["report"]),
+        "datasource": _wrap_data_source_by_doc_type(response["datasource"]),
     }
 
 
@@ -96,7 +96,7 @@ def get_hmac_callout_settings(domain_link):
 
 
 def get_auto_update_rules(domain_link):
-    return _do_simple_request('linked_domain:auto_update_rules', domain_link)
+    return _do_simple_request('linked_domain:auto_update_rules', domain_link)['rules']
 
 
 def get_remote_linkable_ucr(domain_link):
@@ -121,13 +121,18 @@ def fetch_remote_media(local_domain, missing_media, remote_app_details):
         media_class = CommCareMultimedia.get_doc_class(item['media_type'])
         content = _fetch_remote_media_content(item, remote_app_details)
         media_item = media_class.get_by_data(content)
-        media_item._id = item['multimedia_id']
+        if getattr(media_item, '_id', None) and not getattr(item, 'upstream_media_id', None):
+            # media already exists locally; update the multimedia_map
+            item['multimedia_id'], item['upstream_media_id'] = media_item._id, item['multimedia_id']
+        else:
+            media_item._id = item['multimedia_id']
         media_item.attach_data(content, original_filename=filename)
         media_item.add_domain(local_domain, owner=True)
 
 
 def _fetch_remote_media_content(media_item, remote_app_details):
-    url = reverse('hqmedia_download', args=[media_item['media_type'], media_item['multimedia_id']])
+    remote_media_id = media_item['upstream_media_id'] or media_item['multimedia_id']
+    url = reverse('hqmedia_download', args=[media_item['media_type'], remote_media_id])
     response = _do_request_to_remote_hq(url, remote_app_details, None)
     return response.content
 

@@ -5,7 +5,7 @@ Documenting
 
 Documentation is awesome.  You should write it.  Here's how.
 
-All the CommCareHQ docs are stored in a ``docs/`` folder in the root of the repo.
+All the CommCare HQ docs are stored in a ``docs/`` folder in the root of the repo.
 To add a new doc, make an appropriately-named rst file in the ``docs/`` directory.
 For the doc to appear in the table of contents, add it to the ``toctree`` list in ``index.rst``.
 
@@ -52,11 +52,15 @@ Read the Docs
 -------------
 
 Dimagi maintains the hosted version of the documentation at readthedocs.io. For
-Dimagi employees, the credentials are maintained in our internal CommCare
-keepass file.
+Dimagi employees, the credentials are maintained in our internal password manager under the "readthedocs" entry.
 
 The configuration for *Read the Docs* lives in ``.readthedocs.yml``, which calls the
 ``docs/conf.py`` script.
+
+Due to problematic dependencies that need to be mocked, we cannot properly setup django apps until after
+``docs/conf.py`` has been applied. We then must be aware that we are performing a docs build, at which point we can run
+`django.setup()` in ``corehq/__init__.py``. We use an environment variable (`DOCS_BUILD`) to convey this information,
+which is set in the Admin UI of our readthedocs.io account.
 
 Troubleshooting
 ~~~~~~~~~~~~~~~
@@ -86,7 +90,7 @@ appear on the build server.
 .. code-block:: sh
 
    $ cd commcare-hq/
-   $ mkvirtualenv --python=python3.6 hq-docs
+   $ mkvirtualenv --python=python3.9 hq-docs
    $ pip install -r requirements/docs-requirements.txt
    $ cd docs/
    $ make html
@@ -200,7 +204,7 @@ Examples
 Some basic examples adapted from 2 Scoops of Django:
 
 Section Header
-^^^^^^^^^^^^^^
+..............
 
 Sections are explained well `here <http://docutils.sourceforge.net/docs/user/rst/quickstart.html#sections>`_ 
 
@@ -214,11 +218,11 @@ Sections are explained well `here <http://docutils.sourceforge.net/docs/user/rst
 
 Simple link: http://commcarehq.org
 
-Inline link: `CommCareHQ <https://commcarehq.org>`_
+Inline link: `CommCare HQ <https://commcarehq.org>`_
 
-Fancier Link: `CommCareHQ`_
+Fancier Link: `CommCare HQ`_
 
-.. _`CommCareHQ`: https://commcarehq.org
+.. _`CommCare HQ`: https://commcarehq.org
 
 #. An enumerated list item
 #. Second item

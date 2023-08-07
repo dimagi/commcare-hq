@@ -10,9 +10,9 @@ from corehq.apps.case_search.const import (
     CASE_COMPUTED_METADATA,
     SPECIAL_CASE_PROPERTIES,
 )
-from corehq.apps.reports.util import get_report_timezone
 from corehq.apps.reports.v2.exceptions import ColumnFilterNotFound
 from corehq.apps.reports.v2.models import BaseFilter
+from corehq.util.timezones.utils import get_timezone
 
 ChoiceMeta = namedtuple('ChoiceMeta', 'title name operator')
 AppliedFilterContext = namedtuple(
@@ -131,7 +131,7 @@ class DateXpathColumnFilter(BaseXpathColumnFilter):
     @property
     @memoized
     def _timezone(self):
-        return get_report_timezone(self.request, self.domain)
+        return get_timezone(self.request, self.domain)
 
     def _adjust_to_utc(self, date):
         if not self.adjust_to_utc:

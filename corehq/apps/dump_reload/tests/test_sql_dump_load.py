@@ -53,6 +53,8 @@ from corehq.form_processor.tests.utils import (
 from corehq.messaging.scheduling.scheduling_partitioned.models import (
     AlertScheduleInstance,
 )
+from corehq.motech.models import ConnectionSettings
+from corehq.motech.repeaters.models import CreateCaseRepeater
 
 
 class BaseDumpLoadTest(TestCase):
@@ -79,7 +81,7 @@ class BaseDumpLoadTest(TestCase):
         self.delete_sql_data()
         super(BaseDumpLoadTest, self).tearDown()
 
-    def _dump_and_load(self, expected_dump_counts, load_filter=None, expected_load_counts=None, dumper_fn=None):
+    def _dump_and_load(self, expected_dump_counts, load_filter=None, expected_load_counts=None):
         expected_load_counts = expected_load_counts or expected_dump_counts
         expected_dump_counts.update(self.default_objects_counts)
 
@@ -87,11 +89,10 @@ class BaseDumpLoadTest(TestCase):
         self._check_signals_handle_raw(models)
 
         # Dump
+        dumper = SqlDataDumper(self.domain_name, [], [])
+        dumper.stdout = None  # silence output
         output_stream = StringIO()
-        if dumper_fn:
-            dumper_fn(output_stream)
-        else:
-            SqlDataDumper(self.domain_name, [], []).dump(output_stream)
+        dumper.dump(output_stream)
         output_stream.seek(0)
 
         self.delete_sql_data()
@@ -360,18 +361,18 @@ class TestSQLDumpLoad(BaseDumpLoadTest):
         self._dump_and_load(expected_object_counts)
 
     def test_dump_roles(self):
-        from corehq.apps.users.models import UserRole, Permissions, RoleAssignableBy, RolePermission
+        from corehq.apps.users.models import UserRole, HqPermissions, RoleAssignableBy, RolePermission
 
         expected_object_counts = Counter({
             UserRole: 2,
-            RolePermission: 11,
+            RolePermission: 5,
             RoleAssignableBy: 1
         })
 
         role1 = UserRole.create(self.domain_name, 'role1')
         role2 = UserRole.create(
             self.domain_name, 'role1',
-            permissions=Permissions(edit_web_users=True),
+            permissions=HqPermissions(edit_web_users=True),
             assignable_by=[role1.id]
         )
         self.addCleanup(role1.delete)
@@ -382,9 +383,9 @@ class TestSQLDumpLoad(BaseDumpLoadTest):
         role1_loaded = UserRole.objects.get(id=role1.id)
         role2_loaded = UserRole.objects.get(id=role2.id)
 
-        self.assertEqual(role1_loaded.permissions.to_list(), Permissions().to_list())
+        self.assertEqual(role1_loaded.permissions.to_list(), HqPermissions().to_list())
         self.assertEqual(role1_loaded.assignable_by, [])
-        self.assertEqual(role2_loaded.permissions.to_list(), Permissions(edit_web_users=True).to_list())
+        self.assertEqual(role2_loaded.permissions.to_list(), HqPermissions(edit_web_users=True).to_list())
         self.assertEqual(role2_loaded.assignable_by, [role1_loaded.get_id])
 
     def test_device_logs(self):
@@ -580,6 +581,7 @@ class TestSQLDumpLoad(BaseDumpLoadTest):
         )
         MessagingSubEvent.objects.create(
             parent=event,
+            domain=self.domain_name,
             date=datetime.utcnow(),
             recipient_type=MessagingEvent.RECIPIENT_CASE,
             content_type=MessagingEvent.CONTENT_SMS,
@@ -730,7 +732,19 @@ class TestSQLDumpLoad(BaseDumpLoadTest):
             url='example.com',
             user_id='user_id',
         )
-        self._dump_and_load(Counter({ZapierSubscription: 1}))
+        self._dump_and_load(Counter({CreateCaseRepeater: 1, ConnectionSettings: 1, ZapierSubscription: 1}))
+
+    def test_lookup_table(self):
+        from corehq.apps.fixtures.models import LookupTable, LookupTableRow, LookupTableRowOwner, OwnerType
+        table = LookupTable.objects.create(domain=self.domain_name, tag="dump-load")
+        row = LookupTableRow.objects.create(domain=self.domain_name, table_id=table.id, sort_key=0)
+        LookupTableRowOwner.objects.create(
+            domain=self.domain_name,
+            row_id=row.id,
+            owner_type=OwnerType.User,
+            owner_id="abc",
+        )
+        self._dump_and_load(Counter({LookupTable: 1, LookupTableRow: 1, LookupTableRowOwner: 1}))
 
 
 @mock.patch("corehq.apps.dump_reload.sql.load.ENQUEUE_TIMEOUT", 1)
@@ -752,7 +766,9 @@ class TestSqlLoadWithError(BaseDumpLoadTest):
 
     def _load_with_errors(self, chunk_size):
         output_stream = StringIO()
-        SqlDataDumper(self.domain_name, [], []).dump(output_stream)
+        dumper = SqlDataDumper(self.domain_name, [], [])
+        dumper.stdout = None
+        dumper.dump(output_stream)
         output_stream.seek(0)
         self.delete_sql_data()
         # resave the product to force an error

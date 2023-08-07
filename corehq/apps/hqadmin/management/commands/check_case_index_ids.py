@@ -3,10 +3,10 @@ from django.core.management import BaseCommand, call_command
 import csv
 
 from corehq.apps.es.cases import CaseES
+from corehq.apps.es.const import MAX_CLAUSE_COUNT
 from corehq.apps.hqcase.utils import resave_case
 from corehq.apps.receiverwrapper.util import get_app_version_info
 from corehq.apps.users.util import cached_owner_id_to_display
-from corehq.elastic import ES_MAX_CLAUSE_COUNT
 from corehq.form_processor.exceptions import CaseNotFound
 from corehq.form_processor.models import CommCareCase, XFormInstance
 
@@ -34,7 +34,7 @@ class Command(BaseCommand):
 
         invalid_referenced_ids = referenced_case_ids - valid_case_ids
 
-        if len(invalid_referenced_ids) > ES_MAX_CLAUSE_COUNT:
+        if len(invalid_referenced_ids) > MAX_CLAUSE_COUNT:
             print("there's a lot of invalid ids here. ES queries may not handle this well")
 
         cases_with_invalid_references = (

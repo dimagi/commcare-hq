@@ -1,6 +1,9 @@
 from django.conf.urls import include, re_path as url
 
-from corehq.apps.data_interfaces.dispatcher import EditDataInterfaceDispatcher
+from corehq.apps.data_interfaces.dispatcher import (
+    EditDataInterfaceDispatcher,
+    BulkEditDataInterfaceDispatcher,
+)
 from corehq.apps.data_interfaces.views import (
     AddCaseRuleView,
     AutomaticUpdateRuleListView,
@@ -10,13 +13,17 @@ from corehq.apps.data_interfaces.views import (
     DeduplicationRuleEditView,
     DeduplicationRuleListView,
     EditCaseRuleView,
+    ViewCaseRuleView,
     ExploreCaseDataView,
     XFormManagementStatusView,
     XFormManagementView,
     default,
     find_by_id,
     xform_management_job_poll,
+    BulkCaseReassignSatusView,
+    case_reassign_job_poll
 )
+from corehq.apps.userreports.views import UCRExpressionListView, UCRExpressionEditView
 
 from .interfaces import FormManagementMode
 
@@ -33,12 +40,17 @@ edit_data_urls = [
     ),
     url(r'^xform_management/status/poll/(?P<download_id>(?:dl-)?[0-9a-fA-Z]{25,32})/$',
         xform_management_job_poll, name='xform_management_job_poll'),
+    url(r'^case_reassign/status/(?P<download_id>(?:dl-)?[0-9a-fA-Z]{25,32})/$',
+        BulkCaseReassignSatusView.as_view(), name=BulkCaseReassignSatusView.urlname),
+    url(r'^case_reassign/status/poll/(?P<download_id>(?:dl-)?[0-9a-fA-Z]{25,32})/$',
+        case_reassign_job_poll, name='case_reassign_job_poll'),
     url(r'^case_groups/$', CaseGroupListView.as_view(), name=CaseGroupListView.urlname),
     url(r'^case_groups/(?P<group_id>[\w-]+)/$',
         CaseGroupCaseManagementView.as_view(), name=CaseGroupCaseManagementView.urlname),
     url(r'^automatic_updates/$', AutomaticUpdateRuleListView.as_view(),
         name=AutomaticUpdateRuleListView.urlname),
     url(r'^automatic_updates/add/$', AddCaseRuleView.as_view(), name=AddCaseRuleView.urlname),
+    url(r'^automatic_updates/view/(?P<rule_id>\d+)/$', ViewCaseRuleView.as_view(), name=ViewCaseRuleView.urlname),
     url(r'^automatic_updates/edit/(?P<rule_id>\d+)/$', EditCaseRuleView.as_view(), name=EditCaseRuleView.urlname),
     url(r'^deduplication_rules/$', DeduplicationRuleListView.as_view(), name=DeduplicationRuleListView.urlname),
     url(r'^deduplication_rules/add/$', DeduplicationRuleCreateView.as_view(),
@@ -46,6 +58,7 @@ edit_data_urls = [
     url(r'^deduplication_rules/edit/(?P<rule_id>\d+)/$', DeduplicationRuleEditView.as_view(),
         name=DeduplicationRuleEditView.urlname),
     EditDataInterfaceDispatcher.url_pattern(),
+    BulkEditDataInterfaceDispatcher.url_pattern(),
 ]
 
 urlpatterns = [
@@ -54,4 +67,7 @@ urlpatterns = [
     url(r'^case_data/', ExploreCaseDataView.as_view(), name=ExploreCaseDataView.urlname),
     url(r'^export/', include('corehq.apps.export.urls')),
     url(r'^find/$', find_by_id, name="data_find_by_id"),
+    url(r'^ucr_expressions/$', UCRExpressionListView.as_view(), name=UCRExpressionListView.urlname),
+    url(r'^ucr_expressions/(?P<expression_id>[\d-]+)/$', UCRExpressionEditView.as_view(),
+        name=UCRExpressionEditView.urlname),
 ]

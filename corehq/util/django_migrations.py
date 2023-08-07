@@ -1,13 +1,17 @@
 import os
 import sys
-import traceback
+from contextlib import contextmanager
+from datetime import datetime
 from functools import wraps
 
+from django.apps import apps
 from django.conf import settings
-from django.core.management import call_command
 from django.db import migrations
 from django.db.backends.postgresql.schema import DatabaseSchemaEditor
 from django.db.migrations import RunPython
+
+from django.db.migrations.autodetector import MigrationAutodetector
+from django.db.migrations.recorder import MigrationRecorder
 
 
 def add_if_not_exists(string):
@@ -49,6 +53,17 @@ def add_if_not_exists_raw(string, name):
     # is just to make postgres allow the IF statement
     return ''.join([
         "DO $do$ BEGIN IF (SELECT to_regclass('{}') is NULL) THEN ".format(name),
+        string,
+        "; END IF; END $do$"
+    ])
+
+
+def execute_sql_if_exists_raw(string, name):
+    """
+    turn a 'TRUNCATE TABLE' template into a 'TRUNCATE TABLE IF EXISTS' template
+    """
+    return ''.join([
+        "DO $do$ BEGIN IF NOT (SELECT to_regclass('{}') is NULL) THEN ".format(name),
         string,
         "; END IF; END $do$"
     ])
@@ -115,83 +130,120 @@ def noop_migration():
     return RunPython(RunPython.noop, RunPython.noop)
 
 
-def run_once_off_migration(command_name, *args, required_commit=None, **kwargs):
-    """Return a migration operation that can be used to run a management command from
-    a Django migration. This will give the user directions for running the command
-    manually if the command fails or has since been removed from the codebase"""
+def prompt_for_historical_migration(app_name, migration_name, required_commit):
+    """Returns a migration operation that will prompt the user to run a migration from a previous
+    version of the code. Note that this operation is never intended to succeed, because the code
+    needed for the migration no longer exists"""
+
+    def get_most_recent_migration_date():
+        return MigrationRecorder.Migration.objects \
+            .order_by('-applied') \
+            .values_list('applied') \
+            .first()[0]
+
+    def get_days_since_last_migration():
+        current_time = datetime.now()
+        last_migration_time = get_most_recent_migration_date()
+
+        return (current_time - last_migration_time).days
+
     @skip_on_fresh_install
     def _run_command(apps, schema_editor):
-        run_management_command_or_exit(command_name, required_commit=required_commit, *args, **kwargs)
-
-    return migrations.RunPython(_run_command, reverse_code=migrations.RunPython.noop, elidable=True)
-
-
-def run_management_command_or_exit(command_name, *args, required_commit=None, custom_message=None, **kwargs):
-    """Helper function to run a management command automatically and abort if there was an error
-    with helpful console output to allow users to run it manually if it fails or
-    has since been removed from the codebase."""
-    try:
-        call_command(command_name, *args, **kwargs)
-    except Exception:
-        traceback.print_exc()
-        print(f"""
-            A migration must be performed before this environment can be upgraded to the latest version
-            of CommCareHQ. This migration is run using the management command {command_name}.
-        """)
-        if required_commit or custom_message:
-            print("")
-            print(custom_message or f"""
-            Run the following commands to run the migration and get up to date:
-
-                commcare-cloud <env> fab setup_limited_release --set code_branch={required_commit}
-
-                commcare-cloud <env> django-manage --release <release created by previous command> migrate_multi
-
-                commcare-cloud <env> deploy commcare
-            """)
-        sys.exit(1)
-
-
-def block_upgrade_for_removed_migration(commit_with_migration):
-    """Returns a Django migration operation that will block the upgrade if the migration
-    has not run (fresh installs will not get blocked).
-
-    :param commit_with_migration: A Git commit hash that contains the migration.
-    """
-    @skip_on_fresh_install
-    def show_message(apps, schema_editor):
-        print("""
-            A migration must be performed before this environment can be upgraded to the latest version
-            of CommCareHQ. The migration has been removed from the current version of the code so an older
-            version must be used.
-        """)
         print("")
         print(f"""
-        Run the following commands to run the migration and get up to date:
+        This migration cannot be run, as it depends on code that has since been removed.
+        To fix this, follow the instructions below to run this migration from a previous version of the code.
+        In order to prevent this in the future, we recommend running migrations at least once every 6 weeks.
+        For reference, the current code has not run migrations for {get_days_since_last_migration()} days.
 
-            commcare-cloud <env> fab setup_limited_release --set code_branch={commit_with_migration}
+        Run the following commands to run the historical migration and get up to date:
+            With a cloud setup:
+                commcare-cloud <env> fab setup_limited_release --set code_branch={required_commit}
 
-            commcare-cloud <env> django-manage --release <release created by previous command> migrate_multi
+                commcare-cloud <env> django-manage --release <release created by previous command> migrate_multi {app_name}
 
-            commcare-cloud <env> deploy commcare
-        """)
+                commcare-cloud <env> deploy commcare
+
+            With a development setup:
+                git checkout {required_commit}
+                ./manage.py migrate_multi {app_name}
+
+        If you are sure this migration is unnecessary, you can fake the migration:
+            With a cloud setup:
+                commcare-cloud <env> django-manage migrate_multi --fake {app_name} {migration_name}
+
+            With a development setup:
+                ./manage.py migrate_multi --fake {app_name} {migration_name}
+        """)  # noqa: E501
         sys.exit(1)
 
-    return migrations.RunPython(show_message, reverse_code=migrations.RunPython.noop, elidable=True)
+    return migrations.RunPython(_run_command, reverse_code=migrations.RunPython.noop)
 
 
-def update_es_mapping(index_name, quiet=False):
-    """Returns a django migration Operation which calls the `update_es_mapping`
-    management command to update the mapping on an Elastic index.
+def get_migration_name(file_path):
+    return os.path.splitext(os.path.basename(file_path))[0]
 
-    :param index_name: name of the target index for mapping updates
-    :param quiet: (optional) suppress non-error management command output"""
-    @skip_on_fresh_install
-    def update_es_mapping(*args, **kwargs):
-        argv = ["update_es_mapping", index_name]
-        if quiet:
-            argv.append("--quiet")
-        else:
-            print(f"\nupdating mapping for index: {index_name} ...")
-        return call_command(*argv, noinput=True)
-    return migrations.RunPython(update_es_mapping, reverse_code=migrations.RunPython.noop, elidable=True)
+
+@contextmanager
+def patch_migration_autodetector(makemigrations_command):
+    """Allow app configs to participate in migration auto-detection
+
+    AppConfig migration contributions are made after other Django
+    migration operations have been detected.
+
+    AppConfigs that implement ``autodetect_migrations(add_operation)``
+    may contribute to migration autodetection. The ``add_operation``
+    callable argument accepts the same arguments as
+    ``MigrationAutodetector.add_operation``. ``autodetect_migrations``
+    may return a function, which will be called during the
+    ``write_migration_files`` phase of migration generation.
+
+    This patch is intended to be applied when calling the ``handle`` method
+    of ``django.core.management.commands.makemigrations.Command``.
+    """
+    def _detect_changes(self, convert_apps=None, graph=None):
+        def _sort_migrations(self):
+            if convert_apps:
+                configs = [apps.get_app_config(label) for label in convert_apps]
+            else:
+                configs = apps.get_app_configs()
+            for app in configs:
+                try:
+                    detect_changes = app.autodetect_migrations
+                except AttributeError:
+                    continue
+                write_files = detect_changes(self.add_operation)
+                if write_files is not None:
+                    write_ops.append(write_files)
+            return real_sort_migrations(self)
+
+        with _patch(MigrationAutodetector, "_sort_migrations", _sort_migrations):
+            return real_detect_changes(self, convert_apps=convert_apps, graph=graph)
+
+    def write_files(changes):
+        result = real_write_files(changes)
+        if not makemigrations_command.dry_run:
+            for write_op in write_ops:
+                write_op()
+        write_ops.clear()
+        return result
+
+    write_ops = []
+    real_detect_changes = MigrationAutodetector._detect_changes
+    real_sort_migrations = MigrationAutodetector._sort_migrations
+    real_write_files = makemigrations_command.write_migration_files
+    with (
+        _patch(MigrationAutodetector, "_detect_changes", _detect_changes),
+        _patch(makemigrations_command, "write_migration_files", write_files),
+    ):
+        yield
+
+
+@contextmanager
+def _patch(obj, attribute, value):
+    original = getattr(obj, attribute)
+    setattr(obj, attribute, value)
+    try:
+        yield
+    finally:
+        setattr(obj, attribute, original)
