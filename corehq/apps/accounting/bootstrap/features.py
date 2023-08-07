@@ -108,6 +108,7 @@ pro_v1 = standard_v1 + [
     privileges.ATTENDANCE_TRACKING,
     privileges.REGEX_FIELD_VALIDATION,
     privileges.EXPORT_OWNERSHIP,
+    privileges.CASE_LIST_EXPLORER,
 ]
 
 
@@ -133,7 +134,6 @@ advanced_v0 = pro_v1 + [
     privileges.LOCATION_SAFE_CASE_IMPORTS,
     privileges.FILTERED_BULK_USER_DOWNLOAD,
     privileges.APPLICATION_ERROR_REPORT,
-    privileges.SHOW_OWNER_LOCATION_PROPERTY_IN_REPORT_BUILDER,
 ]
 
 enterprise_v0 = advanced_v0 + [

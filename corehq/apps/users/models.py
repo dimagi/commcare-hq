@@ -195,6 +195,7 @@ class HqPermissions(DocumentSchema):
     access_web_apps = BooleanProperty(default=False)
     edit_messaging = BooleanProperty(default=False)
     access_release_management = BooleanProperty(default=False)
+    edit_linked_configurations = BooleanProperty(default=False)
 
     edit_reports = BooleanProperty(default=False)
     download_reports = BooleanProperty(default=False)
@@ -232,7 +233,7 @@ class HqPermissions(DocumentSchema):
                 setattr(permissions, PARAMETERIZED_PERMISSIONS[perm.name], list(perm.allowed_items))
         return permissions
 
-    def normalize(self):
+    def normalize(self, previous=None):
         if not self.access_all_locations:
             # The following permissions cannot be granted to location-restricted
             # roles.
@@ -272,6 +273,11 @@ class HqPermissions(DocumentSchema):
         if not (self.view_reports or self.view_report_list):
             self.download_reports = False
 
+        if self.access_release_management and previous:
+            # Do not overwrite edit_linked_configurations, so that if access_release_management
+            # is removed, the previous value for edit_linked_configurations can be restored
+            self.edit_linked_configurations = previous.edit_linked_configurations
+
     @classmethod
     @memoized
     def permission_names(cls):
@@ -280,6 +286,23 @@ class HqPermissions(DocumentSchema):
             name for name, value in HqPermissions.properties().items()
             if isinstance(value, BooleanProperty)
         }
+
+    @classmethod
+    def diff(cls, left, right):
+        left_dict = {info.name: info.allow for info in left.to_list()}
+        right_dict = {info.name: info.allow for info in right.to_list()}
+
+        all_names = set(left_dict.keys()) | right_dict.keys()
+
+        diffs = []
+
+        for name in all_names:
+            if (name not in left_dict
+                    or name not in right_dict
+                    or left_dict[name] != right_dict[name]):
+                diffs.append(name)
+
+        return diffs
 
     def to_list(self) -> List[PermissionInfo]:
         """Returns a list of Permission objects for those permissions that are enabled."""
@@ -552,6 +575,18 @@ class _AuthorizableMixin(IsMemberOfMixin):
             return dm.is_admin
         else:
             return False
+
+    # I'm not sure this is the correct place for this, as it turns a generic module
+    #  into one that knows about ERM specifics. It might make more sense to move this into
+    #  the domain membership module, as that module knows about specific permissions.
+    # However, because this class is the barrier between the user and domain membership,
+    # exposing new functionality on domain membership wouldn't change the problem.
+    # An alternate solution would be to expose this functionality directly on the WebUser class, instead.
+    def can_edit_linked_data(self, domain):
+        return (
+            self.has_permission(domain, 'access_release_management')
+            or self.has_permission(domain, 'edit_linked_configurations')
+        )
 
     def get_domains(self):
         domains = [dm.domain for dm in self.domain_memberships]

@@ -11,10 +11,11 @@ from corehq.apps.es import case_search as case_search_es
 """
 
 from copy import deepcopy
-from datetime import datetime
+from datetime import date, datetime
 from warnings import warn
 
 from django.utils.dateparse import parse_date, parse_datetime
+from django.utils.translation import gettext
 
 from memoized import memoized
 
@@ -281,7 +282,7 @@ def case_property_starts_with(case_property_name, value):
     )
 
 
-def case_property_range_query(case_property_name, gt=None, gte=None, lt=None, lte=None, is_user_input=False):
+def case_property_range_query(case_property_name, gt=None, gte=None, lt=None, lte=None):
     """Returns cases where case property `key` fall into the range provided.
 
     """
@@ -294,15 +295,15 @@ def case_property_range_query(case_property_name, gt=None, gte=None, lt=None, lt
             case_property_name,
             queries.range_query("{}.{}.numeric".format(CASE_PROPERTIES_PATH, VALUE), **kwargs)
         )
-    except ValueError:
+    except (TypeError, ValueError):
         pass
 
-    # if its a date, use it
+    # if its a date or datetime, use it
     # date range
-    parse = parse_datetime if is_user_input else parse_date
     kwargs = {
-        key: parse(value) for key, value in kwargs.items()
-        if value is not None and parse(value) is not None
+        key: value if isinstance(value, (date, datetime)) else _parse_date_or_datetime(value)
+        for key, value in kwargs.items()
+        if value is not None
     }
     if not kwargs:
         raise TypeError()       # Neither a date nor number was passed in
@@ -311,6 +312,30 @@ def case_property_range_query(case_property_name, gt=None, gte=None, lt=None, lt
         case_property_name,
         queries.date_range("{}.{}.date".format(CASE_PROPERTIES_PATH, VALUE), **kwargs)
     )
+
+
+def _parse_date_or_datetime(value):
+    parsed_date = _parse_date(value)
+    if parsed_date is not None:
+        return parsed_date
+    parsed_datetime = _parse_datetime(value)
+    if parsed_datetime is not None:
+        return parsed_datetime
+    raise ValueError(gettext(f"{value} is not a correctly formatted date or datetime."))
+
+
+def _parse_date(value):
+    try:
+        return parse_date(value)
+    except ValueError:
+        raise ValueError(gettext(f"{value} is an invalid date."))
+
+
+def _parse_datetime(value):
+    try:
+        return parse_datetime(value)
+    except ValueError:
+        raise ValueError(gettext(f"{value} is an invalid datetime."))
 
 
 def reverse_index_case_query(case_ids, identifier=None):

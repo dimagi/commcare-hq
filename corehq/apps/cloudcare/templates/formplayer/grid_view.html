@@ -22,6 +22,7 @@
     </div>
     <% } %>
 
+    {% if not request|toggle_enabled:"HIDE_SYNC_BUTTON" %}
     <div class=" grid-item col-xs-6 col-sm-4 col-lg-3 formplayer-request">
       <div class="js-sync-item appicon appicon-sync" role="link" tabindex="0" aria-labelledby="grid-template-sync-heading">
         <i class="ff ff-sync appicon-icon" aria-hidden="true"></i>
@@ -30,6 +31,7 @@
         </div>
       </div>
     </div>
+    {% endif %}
 
     {% if request|can_use_restore_as %}
       <div class="grid-item col-xs-6 col-sm-4 col-lg-3 formplayer-request">
@@ -52,6 +54,7 @@
   </div>
 </script>
 
+{# App Preview #}
 <script id="single-app-template" type="text/template">
   <ol class="breadcrumb">
     <li class="breadcrumb-text"><%- appName %></li>
