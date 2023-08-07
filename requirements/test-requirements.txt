@@ -171,7 +171,7 @@ django-logentry-admin==1.0.6
     # via -r base-requirements.in
 django-nose @ https://github.com/dimagi/django-nose/raw/fast-first-1.4.6.1/releases/django_nose-1.4.6.1-py2.py3-none-any.whl
     # via -r test-requirements.in
-django-oauth-toolkit==1.5.0
+django-oauth-toolkit==2.3.0
     # via -r base-requirements.in
 django-otp==1.1.3
     # via
@@ -584,7 +584,6 @@ six==1.16.0
     #   ddsketch
     #   ddtrace
     #   django-braces
-    #   django-oauth-toolkit
     #   django-statici18n
     #   django-transfer
     #   django-websocket-redis

@@ -2635,6 +2635,7 @@ class WebUser(CouchUser, MultiMembershipMixin, CommCareMobileContactMixin):
     def get_usercase_by_domain(self, domain):
         return CommCareCase.objects.get_case_by_external_id(domain, self._id, USERCASE_TYPE)
 
+
 class FakeUser(WebUser):
     """
     Prevent actually saving user types that don't exist in the database
@@ -3230,3 +3231,12 @@ def check_and_send_limit_email(domain, plan_limit, user_count, prev_count):
         }),
     )
     return
+
+
+class ConnectIDUserLink(models.Model):
+    connectid_username = models.TextField()
+    commcare_user = models.ForeignKey(User, related_name='connectid_user', on_delete=models.CASCADE)
+    domain = models.TextField()
+
+    class Meta:
+        unique_together = ('domain', 'commcare_user')
