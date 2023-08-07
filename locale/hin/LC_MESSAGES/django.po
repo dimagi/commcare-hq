@@ -2753,6 +2753,7 @@ msgstr ""
 #: corehq/apps/data_interfaces/templates/data_interfaces/case_rule.html
 #: corehq/apps/data_interfaces/templates/data_interfaces/edit_deduplication_rule.html
 #: corehq/apps/fixtures/templates/fixtures/partials/edit_table_modal.html
+#: corehq/apps/geospatial/forms.py
 #: corehq/apps/groups/templates/groups/group_members.html
 #: corehq/apps/hqwebapp/templates/hqwebapp/oauth_application_registration_form.html
 #: corehq/apps/locations/templates/locations/location_types.html
@@ -3751,6 +3752,14 @@ msgid ""
 "need to use the \"Custom Calculations in Case List\" feature preview. For "
 "more information see: https://confluence.dimagi.com/pages/viewpage.action?"
 "pageId=38276915"
+msgstr ""
+
+#: corehq/apps/app_manager/helpers/validators.py
+msgid "It must reference a lookup table or mobile report."
+msgstr ""
+
+#: corehq/apps/app_manager/helpers/validators.py
+msgid "This feature is compatible with only version 2 of Mobile UCR"
 msgstr ""
 
 #: corehq/apps/app_manager/helpers/validators.py
@@ -5070,6 +5079,10 @@ msgstr ""
 msgid "Title row, second row with two cells, third and fourth rows, and map"
 msgstr ""
 
+#: corehq/apps/app_manager/suite_xml/features/case_tiles.py
+msgid "Three upper rows, four rows with two cells, two lower rows and map"
+msgstr ""
+
 #: corehq/apps/app_manager/suite_xml/features/scheduler.py
 #, python-brace-format
 msgid "There is no schedule for form {form_id}"
@@ -5092,8 +5105,8 @@ msgstr ""
 #: corehq/apps/app_manager/suite_xml/post_process/instances.py
 #, python-brace-format
 msgid ""
-"Conflicting instance declarations in {entry_id} for {instance_id}:{src_1} != "
-"{src_2}"
+"Conflicting instance declarations in {entry_id} for {instance_id}: {src_1} !"
+"= {src_2}"
 msgstr ""
 
 #: corehq/apps/app_manager/suite_xml/sections/entries.py
@@ -5239,6 +5252,7 @@ msgstr ""
 #: corehq/apps/cloudcare/templates/form_entry/templates.html
 #: corehq/apps/domain/templates/domain/select_plan.html
 #: corehq/apps/registration/templates/registration/partials/start_trial_modal.html
+#: corehq/apps/reports/templates/reports/partials/description.html
 msgid "Learn More"
 msgstr ""
 
@@ -6544,6 +6558,17 @@ msgid ""
 "              "
 msgstr ""
 
+#: corehq/apps/app_manager/templates/app_manager/partials/build_errors.html
+#, python-format
+msgid ""
+"\n"
+"                <a href=\"%(module_url)s\">%(module_name)s</a> has a case "
+"search property\n"
+"                <code>%(property)s</code> that references an invalid "
+"instance.\n"
+"              "
+msgstr ""
+
 #: corehq/apps/app_manager/templates/app_manager/partials/build_profiles_select.html
 #: corehq/apps/domain/forms.py corehq/apps/reports/standard/deployments.py
 msgid "Build Profile"
@@ -6578,6 +6603,17 @@ msgid ""
 "        <br>Please either select a language or choose the multi-sheet "
 "format.\n"
 "      "
+msgstr ""
+
+#: corehq/apps/app_manager/templates/app_manager/partials/case_list_session_endpoint.html
+msgid "Case List Session Endpoint ID"
+msgstr ""
+
+#: corehq/apps/app_manager/templates/app_manager/partials/case_list_session_endpoint.html
+msgid ""
+"A session endpoint ID to navigate to this\n"
+"                                    case list without doing selection on the "
+"case list."
 msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/confirm_delete_app.html
@@ -8488,6 +8524,14 @@ msgid "Sort Field"
 msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/case_search_property.html
+msgid "Instance Nodeset"
+msgstr ""
+
+#: corehq/apps/app_manager/templates/app_manager/partials/modules/case_search_property.html
+msgid "This refers to data other than selected report/lookup-table."
+msgstr ""
+
+#: corehq/apps/app_manager/templates/app_manager/partials/modules/case_search_property.html
 #: corehq/apps/reminders/forms.py
 msgid "Advanced Options"
 msgstr ""
@@ -8515,18 +8559,6 @@ msgstr ""
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/case_search_property.html
 #: corehq/apps/custom_data_fields/templates/custom_data_fields/partials/fields_tab.html
 msgid "Validation Message"
-msgstr ""
-
-#: corehq/apps/app_manager/templates/app_manager/partials/modules/case_search_property.html
-msgid "Instance URI"
-msgstr ""
-
-#: corehq/apps/app_manager/templates/app_manager/partials/modules/case_search_property.html
-msgid "Instance Nodeset"
-msgstr ""
-
-#: corehq/apps/app_manager/templates/app_manager/partials/modules/case_search_property.html
-msgid "This refers to data other than selected report/lookup-table."
 msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/case_search_property.html
@@ -9473,17 +9505,6 @@ msgstr ""
 msgid ""
 "A session endpoint ID allows Android apps to call in to\n"
 "                                    CommCare at this position."
-msgstr ""
-
-#: corehq/apps/app_manager/templates/app_manager/partials/session_endpoints.html
-msgid "Case List Session Endpoint ID"
-msgstr ""
-
-#: corehq/apps/app_manager/templates/app_manager/partials/session_endpoints.html
-msgid ""
-"A session endpoint ID to navigate to this\n"
-"                                        case list without doing selection on "
-"the case list."
 msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/settings/add_ons.html
@@ -11572,10 +11593,6 @@ msgid "The 'disable_web_apps' feature flag is turned on."
 msgstr ""
 
 #: corehq/apps/cloudcare/templates/form_entry/templates.html
-msgid "Delete repeat"
-msgstr ""
-
-#: corehq/apps/cloudcare/templates/form_entry/templates.html
 msgid "Question Group"
 msgstr ""
 
@@ -12414,7 +12431,6 @@ msgstr ""
 #: corehq/apps/data_dictionary/templates/data_dictionary/base.html
 #: corehq/apps/data_dictionary/views.py corehq/apps/linked_domain/const.py
 #: corehq/apps/users/templates/users/roles_and_permissions.html
-#: corehq/tabs/tabclasses.py
 msgid "Data Dictionary"
 msgstr ""
 
@@ -12486,7 +12502,15 @@ msgid "Add Case Property"
 msgstr ""
 
 #: corehq/apps/data_dictionary/templates/data_dictionary/base.html
+msgid "A case property with this name already exists."
+msgstr ""
+
+#: corehq/apps/data_dictionary/templates/data_dictionary/base.html
 msgid "Add Case Property Group"
+msgstr ""
+
+#: corehq/apps/data_dictionary/templates/data_dictionary/base.html
+msgid "A case property group with this name already exists."
 msgstr ""
 
 #: corehq/apps/data_dictionary/templates/data_dictionary/base.html
@@ -16994,6 +17018,9 @@ msgid "Calculated Properties"
 msgstr ""
 
 #: corehq/apps/domain/views/internal.py
+#: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap3/global_navigation_bar.html
+#: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap5/global_navigation_bar.html
+#: corehq/apps/hqwebapp/tests/data/bootstrap5_diffs/hqwebapp/includes/global_navigation_bar.html.diff.txt
 msgid "Feature Flags and Privileges"
 msgstr ""
 
@@ -17599,6 +17626,21 @@ msgstr ""
 
 #: corehq/apps/enterprise/views.py
 msgid "Controlling domain set to {}."
+msgstr ""
+
+#: corehq/apps/es/case_search.py
+#, python-brace-format
+msgid "{value} is not a correctly formatted date or datetime."
+msgstr ""
+
+#: corehq/apps/es/case_search.py
+#, python-brace-format
+msgid "{value} is an invalid date."
+msgstr ""
+
+#: corehq/apps/es/case_search.py
+#, python-brace-format
+msgid "{value} is an invalid datetime."
 msgstr ""
 
 #: corehq/apps/events/forms.py
@@ -20489,11 +20531,43 @@ msgstr ""
 msgid "File has been uploaded successfully and is queued for processing."
 msgstr ""
 
+#: corehq/apps/geospatial/forms.py
+msgid "Custom user field"
+msgstr ""
+
+#: corehq/apps/geospatial/forms.py
+msgid "User's assigned location"
+msgstr ""
+
+#: corehq/apps/geospatial/forms.py
+msgid "Fetch mobile worker location data from custom field"
+msgstr ""
+
+#: corehq/apps/geospatial/forms.py
+msgid ""
+"The name of the mobile worker custom field which stores the users' geo-"
+"location data."
+msgstr ""
+
+#: corehq/apps/geospatial/forms.py
+msgid "Fetch case location data from property"
+msgstr ""
+
+#: corehq/apps/geospatial/forms.py
+msgid ""
+"The name of the case property storing the geo-location data of your cases."
+msgstr ""
+
+#: corehq/apps/geospatial/forms.py
+msgid "Configure Geospatial Settings"
+msgstr ""
+
 #: corehq/apps/geospatial/reports.py
 msgid "Case Management Map"
 msgstr ""
 
-#: corehq/apps/geospatial/reports.py corehq/tabs/tabclasses.py
+#: corehq/apps/geospatial/reports.py corehq/apps/geospatial/views.py
+#: corehq/tabs/tabclasses.py
 msgid "Geospatial"
 msgstr ""
 
@@ -20507,6 +20581,10 @@ msgstr ""
 
 #: corehq/apps/geospatial/templates/map_visualization.html
 msgid "Save Area"
+msgstr ""
+
+#: corehq/apps/geospatial/views.py
+msgid "Configuration Settings"
 msgstr ""
 
 #: corehq/apps/groups/templates/groups/all_groups.html
@@ -27753,11 +27831,11 @@ msgstr ""
 
 #: corehq/apps/reports/filters/users.py
 msgid ""
-"<a href=\"https://confluence.dimagi.com/display/commcarepublic/"
-"Search+for+Locations\"target=\"_blank\">Advanced Search:</a> Put your "
-"location name in quotes to show only exact matches. To more easily find a "
-"location, you may specify multiple levels by separating with a \"/\". For "
-"example, \"Massachusetts/Suffolk/Boston\""
+"When searching by location, put your location name in quotes to show only "
+"exact matches. To more easily find a location, you may specify multiple "
+"levels by separating with a \"/\". For example, \"Massachusetts/Suffolk/"
+"Boston\". <a href=\"https://confluence.dimagi.com/display/commcarepublic/"
+"Search+for+Locations\"target=\"_blank\">Learn more</a>."
 msgstr ""
 
 #: corehq/apps/reports/filters/users.py
@@ -28052,7 +28130,14 @@ msgid "unknown product"
 msgstr ""
 
 #: corehq/apps/reports/standard/cases/case_list_explorer.py
+#: corehq/privileges.py
 msgid "Case List Explorer"
+msgstr ""
+
+#: corehq/apps/reports/standard/cases/case_list_explorer.py
+msgid ""
+"Use Case List Explorer to run deep searches on your cases by case "
+"properties.  "
 msgstr ""
 
 #: corehq/apps/reports/standard/cases/case_list_explorer.py
@@ -28082,9 +28167,10 @@ msgstr ""
 
 #: corehq/apps/reports/standard/cases/filters.py
 msgid ""
-"Search any text, or use a targeted query. For more info see the <a "
-"href=\"https://wiki.commcarehq.org/display/commcarepublic/"
-"Advanced+Case+Search\" target=\"_blank\">Case Search</a> help page"
+"Enter <a href=\"https://wiki.commcarehq.org/display/commcarepublic/"
+"Advanced+Case+Search\" target=\"_blank\">targeted queries</a> to search "
+"across all specific columns of this report. For deeper searches by case "
+"properties use the <a href=\"{}\">Case List Explorer</a>."
 msgstr ""
 
 #: corehq/apps/reports/standard/cases/filters.py
@@ -29086,7 +29172,13 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/reports/templates/reports/filters/xpath_textarea.html
-msgid "Filter your cases by entering a search query in the box below."
+msgid ""
+"\n"
+"      Filter your cases by entering a <a href=\"https://confluence.dimagi."
+"com/pages/viewpage.action?"
+"spaceKey=commcarepublic&title=Case+Query+Language\" target=\"_blank\">Case "
+"Search Query</a>.\n"
+"      "
 msgstr ""
 
 #: corehq/apps/reports/templates/reports/form/partials/readable_form.html
@@ -37099,7 +37191,7 @@ msgid "Roles"
 msgstr ""
 
 #: corehq/apps/users/templates/users/roles_and_permissions.html
-msgid "Shared Exports"
+msgid "Manage Shared Exports"
 msgstr ""
 
 #: corehq/apps/users/templates/users/roles_and_permissions.html
@@ -41747,6 +41839,10 @@ msgstr ""
 
 #: corehq/tabs/tabclasses.py
 msgid "Manage Attendance Tracking Events"
+msgstr ""
+
+#: corehq/tabs/tabclasses.py
+msgid "Configure geospatial settings"
 msgstr ""
 
 #: corehq/trans_override.py

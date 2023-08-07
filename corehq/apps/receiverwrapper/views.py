@@ -61,39 +61,35 @@ from tastypie.http import HttpTooManyRequests
 PROFILE_PROBABILITY = float(os.getenv('COMMCARE_PROFILE_SUBMISSION_PROBABILITY', 0))
 PROFILE_LIMIT = os.getenv('COMMCARE_PROFILE_SUBMISSION_LIMIT')
 PROFILE_LIMIT = int(PROFILE_LIMIT) if PROFILE_LIMIT is not None else 1
+CACHE_EXPIRY_30_DAYS_IN_SECS = 30 * 24 * 60 * 60
 
 
-def _audit_request_auth_errors(user_id, authenticated):
-    errors = []
+def _audit_request_auth_errors(user_id, request):
     cache_key = f"form_submission_audit:{user_id}"
     if cache.get(cache_key):
-        return errors
+        # User is already logged once in last 30 days for incorrect access, so no need to log again
+        return []
 
-    def check_invalid_request():
-        stack = inspect.stack()
-        function_names = [frame.function for frame in stack if not inspect.isbuiltin(frame.function)]
-        if post_api.__name__ not in function_names and authenticated is True:
-            errors.append(f"Request not made from {post_api.__name__} handler for authenticated user")
+    stack = inspect.stack()
+    function_names = [frame.function for frame in stack if not inspect.isbuiltin(frame.function)]
+    if post_api.__name__ not in function_names and (
+            hasattr(request, 'user') and not request.user.has_perm('access_mobile_endpoints')):
+        cache.set(cache_key, True, CACHE_EXPIRY_30_DAYS_IN_SECS)
+        return f"Request not made from {post_api.__name__} handler for user"
 
-    check_invalid_request()
-
-    if errors:
-        # Set cache expiry of 30 days
-        cache.set(cache_key, True, 30 * 24 * 60 * 60)
-
-    return errors
+    return []
 
 
 @profile_dump('commcare_receiverwapper_process_form.prof', probability=PROFILE_PROBABILITY, limit=PROFILE_LIMIT)
 def _process_form(request, domain, app_id, user_id, authenticated,
                   auth_cls=AuthContext):
 
-    request_errors = _audit_request_auth_errors(user_id, authenticated)
-
-    if request_errors:
-        message = f"Restricted access by user {request.user} with id {user_id} \
-        and app_id {app_id}. Error details: {', '.join(request_errors)}"
-        notify_exception(request, message=message)
+    if authenticated:
+        request_error = _audit_request_auth_errors(user_id, request)
+        if request_error:
+            message = f"Restricted access by user {request.user} with id {user_id} \
+            and app_id {app_id}. Error details: {', '.join(request_error)}"
+            notify_exception(request, message=message)
 
     if rate_limit_submission(domain):
         return HttpTooManyRequests()
