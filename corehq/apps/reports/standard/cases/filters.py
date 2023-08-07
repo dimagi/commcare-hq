@@ -20,12 +20,8 @@ from corehq.apps.reports.filters.base import (
     BaseSimpleFilter,
     BaseSingleOptionFilter,
 )
-<<<<<<< HEAD
 from corehq.apps.accounting.utils import domain_has_privilege
 from corehq import privileges
-=======
-from corehq import toggles, privileges
->>>>>>> master
 
 # TODO: Replace with library method
 
