@@ -5569,6 +5569,7 @@ msgstr ""
 #: corehq/apps/cloudcare/templates/form_entry/templates.html
 #: corehq/apps/domain/templates/domain/select_plan.html
 #: corehq/apps/registration/templates/registration/partials/start_trial_modal.html
+#: corehq/apps/reports/templates/reports/partials/description.html
 msgid "Learn More"
 msgstr "En savoir plus"
 
@@ -6943,6 +6944,17 @@ msgid ""
 "        <br>Please either select a language or choose the multi-sheet "
 "format.\n"
 "      "
+msgstr ""
+
+#: corehq/apps/app_manager/templates/app_manager/partials/case_list_session_endpoint.html
+msgid "Case List Session Endpoint ID"
+msgstr ""
+
+#: corehq/apps/app_manager/templates/app_manager/partials/case_list_session_endpoint.html
+msgid ""
+"A session endpoint ID to navigate to this\n"
+"                                    case list without doing selection on the "
+"case list."
 msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/confirm_delete_app.html
@@ -9930,17 +9942,6 @@ msgstr "Restaurer"
 msgid ""
 "A session endpoint ID allows Android apps to call in to\n"
 "                                    CommCare at this position."
-msgstr ""
-
-#: corehq/apps/app_manager/templates/app_manager/partials/session_endpoints.html
-msgid "Case List Session Endpoint ID"
-msgstr ""
-
-#: corehq/apps/app_manager/templates/app_manager/partials/session_endpoints.html
-msgid ""
-"A session endpoint ID to navigate to this\n"
-"                                        case list without doing selection on "
-"the case list."
 msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/settings/add_ons.html
@@ -12957,7 +12958,6 @@ msgstr ""
 #: corehq/apps/data_dictionary/templates/data_dictionary/base.html
 #: corehq/apps/data_dictionary/views.py corehq/apps/linked_domain/const.py
 #: corehq/apps/users/templates/users/roles_and_permissions.html
-#: corehq/tabs/tabclasses.py
 msgid "Data Dictionary"
 msgstr "Dictionnaire de données"
 
@@ -17697,6 +17697,9 @@ msgid "Calculated Properties"
 msgstr "Propriétés calculées"
 
 #: corehq/apps/domain/views/internal.py
+#: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap3/global_navigation_bar.html
+#: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap5/global_navigation_bar.html
+#: corehq/apps/hqwebapp/tests/data/bootstrap5_diffs/hqwebapp/includes/global_navigation_bar.html.diff.txt
 msgid "Feature Flags and Privileges"
 msgstr ""
 
@@ -18311,6 +18314,22 @@ msgstr ""
 #: corehq/apps/enterprise/views.py
 msgid "Controlling domain set to {}."
 msgstr ""
+
+#: corehq/apps/es/case_search.py
+#, python-brace-format
+msgid "{value} is not a correctly formatted date or datetime."
+msgstr ""
+
+#: corehq/apps/es/case_search.py
+#, python-brace-format
+msgid "{value} is an invalid date."
+msgstr ""
+
+#: corehq/apps/es/case_search.py
+#, fuzzy, python-brace-format
+#| msgid "%s is an invalid phone number."
+msgid "{value} is an invalid datetime."
+msgstr "%s n'est pas un numéro de téléphone valide."
 
 #: corehq/apps/events/forms.py
 msgid "Per event day"
@@ -28861,11 +28880,11 @@ msgstr ""
 
 #: corehq/apps/reports/filters/users.py
 msgid ""
-"<a href=\"https://confluence.dimagi.com/display/commcarepublic/"
-"Search+for+Locations\"target=\"_blank\">Advanced Search:</a> Put your "
-"location name in quotes to show only exact matches. To more easily find a "
-"location, you may specify multiple levels by separating with a \"/\". For "
-"example, \"Massachusetts/Suffolk/Boston\""
+"When searching by location, put your location name in quotes to show only "
+"exact matches. To more easily find a location, you may specify multiple "
+"levels by separating with a \"/\". For example, \"Massachusetts/Suffolk/"
+"Boston\". <a href=\"https://confluence.dimagi.com/display/commcarepublic/"
+"Search+for+Locations\"target=\"_blank\">Learn more</a>."
 msgstr ""
 
 #: corehq/apps/reports/filters/users.py
@@ -29171,6 +29190,12 @@ msgid "Case List Explorer"
 msgstr ""
 
 #: corehq/apps/reports/standard/cases/case_list_explorer.py
+msgid ""
+"Use Case List Explorer to run deep searches on your cases by case "
+"properties.  "
+msgstr ""
+
+#: corehq/apps/reports/standard/cases/case_list_explorer.py
 msgid "The part of your search query that caused this error is: "
 msgstr ""
 
@@ -29197,14 +29222,11 @@ msgstr ""
 
 #: corehq/apps/reports/standard/cases/filters.py
 msgid ""
-"Search any text, or use a targeted query. For more info see the <a "
-"href=\"https://wiki.commcarehq.org/display/commcarepublic/"
-"Advanced+Case+Search\" target=\"_blank\">Case Search</a> help page"
+"Enter <a href=\"https://wiki.commcarehq.org/display/commcarepublic/"
+"Advanced+Case+Search\" target=\"_blank\">targeted queries</a> to search "
+"across all specific columns of this report. For deeper searches by case "
+"properties use the <a href=\"{}\">Case List Explorer</a>."
 msgstr ""
-"Rechercher un texte ou utilisez une requête ciblée. Pour de plus amples "
-"informations, consultez la page d'aide de <a href='https://wiki.commcarehq."
-"org/display/commcarepublic/Advanced+Case+Search' target='_blank'>Recherche "
-"de dossier</a>"
 
 #: corehq/apps/reports/standard/cases/filters.py
 msgid "Duplicate Case Rule"
@@ -30254,7 +30276,13 @@ msgstr ""
 "soumissions pour qu'il reste seulement les soumissions les plus exactes."
 
 #: corehq/apps/reports/templates/reports/filters/xpath_textarea.html
-msgid "Filter your cases by entering a search query in the box below."
+msgid ""
+"\n"
+"      Filter your cases by entering a <a href=\"https://confluence.dimagi."
+"com/pages/viewpage.action?"
+"spaceKey=commcarepublic&title=Case+Query+Language\" target=\"_blank\">Case "
+"Search Query</a>.\n"
+"      "
 msgstr ""
 
 #: corehq/apps/reports/templates/reports/form/partials/readable_form.html
@@ -44170,3 +44198,13 @@ msgstr "Le Score à la Fonctionnalité"
 #: manage.py
 msgid "Enter valid JSON"
 msgstr "Saisir un JSON valide"
+
+#~ msgid ""
+#~ "Search any text, or use a targeted query. For more info see the <a "
+#~ "href=\"https://wiki.commcarehq.org/display/commcarepublic/"
+#~ "Advanced+Case+Search\" target=\"_blank\">Case Search</a> help page"
+#~ msgstr ""
+#~ "Rechercher un texte ou utilisez une requête ciblée. Pour de plus amples "
+#~ "informations, consultez la page d'aide de <a href='https://wiki."
+#~ "commcarehq.org/display/commcarepublic/Advanced+Case+Search' "
+#~ "target='_blank'>Recherche de dossier</a>"

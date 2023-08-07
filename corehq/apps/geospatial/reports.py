@@ -2,28 +2,16 @@ from django.conf import settings
 from django.urls import reverse
 from django.utils.translation import gettext_noop
 from django.utils.translation import gettext as _
+from jsonobject.exceptions import BadValueError
+
 
 from corehq.apps.geospatial.dispatchers import CaseManagementMapDispatcher
 from corehq.apps.reports.standard import ProjectReport
 from corehq.apps.reports.standard.cases.basic import CaseListMixin
 from corehq.apps.reports.standard.cases.data_sources import CaseDisplayES
-from corehq.apps.reports.standard.cases.case_list_explorer import CaseListExplorer
+from couchforms.geopoint import GeoPoint
 from .const import GEO_POINT_CASE_PROPERTY
 from .models import GeoPolygon
-
-
-
-def _get_geo_location(case):
-    geo_point = case['case_json'].get(GEO_POINT_CASE_PROPERTY)
-    if not geo_point:
-        return
-    try:
-        # Update if we need altitude and accuracy
-        lat, lon, _alt, _acc = geo_point.split(" ")
-        return {"lat": float(lat), "lng": float(lon)}
-    except ValueError:
-        # Invalid coordinates
-        return None
 
 
 class CaseManagementMap(ProjectReport, CaseListMixin):
@@ -50,7 +38,6 @@ class CaseManagementMap(ProjectReport, CaseListMixin):
 
         return context
 
-    @property
     def default_report_url(self):
         return reverse('geospatial_default', args=[self.request.project.name])
 
@@ -67,9 +54,23 @@ class CaseManagementMap(ProjectReport, CaseListMixin):
 
     @property
     def rows(self):
+
+        def _get_geo_location(case):
+            geo_point = case.get(GEO_POINT_CASE_PROPERTY)
+            if not geo_point:
+                return
+
+            try:
+                geo_point = GeoPoint.from_string(geo_point, flexible=True)
+                return {"lat": geo_point.latitude, "lng": geo_point.longitude}
+            except BadValueError:
+                return None
+
         cases = []
         for row in self.es_results['hits'].get('hits', []):
-            display = CaseDisplayES(self.get_case(row), self.timezone, self.individual)
+            display = CaseDisplayES(
+                self.get_case(row), self.timezone, self.individual
+            )
             coordinates = _get_geo_location(self.get_case(row))
             cases.append([
                 display.case_id,
