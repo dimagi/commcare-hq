@@ -223,6 +223,7 @@ class Command(BaseCommand):
     def refactor_references(self, old_reference, new_reference, is_template):
         self.stdout.write("updating references...")
         found_references = False
+        bootstrap5_reference = new_reference.replace("/bootstrap3/", "/bootstrap5/")
         file_types = ["**/*.py", "**/*.html", "**/*.md"]
         if not is_template:
             file_types.append("**/*.js")
@@ -232,12 +233,15 @@ class Command(BaseCommand):
                     continue
                 with open(file_path, 'r') as file:
                     filedata = file.read()
-
+                use_bootstrap5_reference = "/bootstrap5/" in str(file_path)
                 if old_reference in filedata:
                     found_references = True
                     self.stdout.write(f"- replaced reference in {str(file_path)}")
                     with open(file_path, 'w') as file:
-                        file.write(filedata.replace(old_reference, new_reference))
+                        file.write(filedata.replace(
+                            old_reference,
+                            bootstrap5_reference if use_bootstrap5_reference else new_reference
+                        ))
         if not found_references:
             self.stdout.write(f"No references were found for {old_reference}...")
 

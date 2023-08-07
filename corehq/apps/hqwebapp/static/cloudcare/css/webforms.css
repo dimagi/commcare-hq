@@ -78,6 +78,7 @@ input:invalid {
   height: 250px;
   background: #eee;
   max-width: none !important;
+  isolation: isolate;
 }
 
 .coordinate {

@@ -40,6 +40,7 @@ from corehq.motech.fhir.utils import (
     remove_fhir_resource_type,
     update_fhir_resource_type,
 )
+from corehq.apps.app_manager.dbaccessors import get_case_type_app_module_count
 
 from .bulk import (
     process_bulk_upload,
@@ -64,11 +65,16 @@ def data_dictionary_json(request, domain, case_type_name=None):
             domain)
     if case_type_name:
         queryset = queryset.filter(name=case_type_name)
+
+    case_type_app_module_count = get_case_type_app_module_count(domain)
     for case_type in queryset:
+        module_count = case_type_app_module_count.get(case_type.name, 0)
         p = {
             "name": case_type.name,
             "fhir_resource_type": fhir_resource_type_name_by_case_type.get(case_type),
             "groups": [],
+            "is_deprecated": case_type.is_deprecated,
+            "module_count": module_count,
             "properties": [],
         }
         grouped_properties = {
@@ -119,6 +125,21 @@ def create_case_type(request, domain):
     })
     url = reverse(DataDictionaryView.urlname, args=[domain])
     return HttpResponseRedirect(f"{url}#{name}")
+
+
+@login_and_domain_required
+@toggles.DATA_DICTIONARY.required_decorator()
+@require_permission(HqPermissions.edit_data_dict)
+def deprecate_or_restore_case_type(request, domain, case_type_name):
+    is_deprecated = request.POST.get("is_deprecated") == 'true'
+    case_type_obj = CaseType.objects.get(domain=domain, name=case_type_name)
+    case_type_obj.is_deprecated = is_deprecated
+    case_type_obj.save()
+
+    CaseProperty.objects.filter(case_type=case_type_obj).update(deprecated=is_deprecated)
+    CasePropertyGroup.objects.filter(case_type=case_type_obj).update(deprecated=is_deprecated)
+
+    return JsonResponse({'status': 'success'})
 
 
 # atomic decorator is a performance optimization for looped saves

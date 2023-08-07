@@ -13,6 +13,8 @@ from corehq.apps.data_dictionary.util import (
     get_values_hints_dict,
     get_column_headings,
     map_row_values_to_column_names,
+    is_case_type_deprecated,
+    get_data_dict_deprecated_case_types
 )
 
 
@@ -98,12 +100,25 @@ class GenerateDictionaryTest(TestCase):
 class MiscUtilTest(TestCase):
     domain = uuid.uuid4().hex
 
-    def setUp(self):
-        self.invalid_col = 'barr'
-        self.invalid_header_row = [Cell('Foo'), Cell(self.invalid_col), Cell('Test Column'), Cell(None)]
-        self.valid_header_row = [Cell('Foo'), Cell('Bar'), Cell('Test Column')]
-        self.row = [Cell('a'), Cell('b')]
-        self.valid_values = {
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.case_type_name = 'caseType'
+        cls.deprecated_case_type_name = 'depCaseType'
+        cls.case_type_obj = CaseType(name=cls.case_type_name, domain=cls.domain)
+        cls.case_type_obj.save()
+        cls.dep_case_type_obj = CaseType(
+            name=cls.deprecated_case_type_name,
+            domain=cls.domain,
+            is_deprecated=True
+        )
+        cls.dep_case_type_obj.save()
+
+        cls.invalid_col = 'barr'
+        cls.invalid_header_row = [Cell('Foo'), Cell(cls.invalid_col), Cell('Test Column'), Cell(None)]
+        cls.valid_header_row = [Cell('Foo'), Cell('Bar'), Cell('Test Column')]
+        cls.row = [Cell('a'), Cell('b')]
+        cls.valid_values = {
             'foo': 'col_1',
             'bar': 'col_2',
             'test column': 'col_3',
@@ -165,3 +180,14 @@ class MiscUtilTest(TestCase):
         }
         for key, val in expected_output.items():
             self.assertEqual(row_vals[key], val)
+
+    def test_is_case_type_deprecated(self):
+        is_deprecated = is_case_type_deprecated(self.domain, self.deprecated_case_type_name)
+        self.assertTrue(is_deprecated)
+        is_deprecated = is_case_type_deprecated(self.domain, '1234')
+        self.assertFalse(is_deprecated)
+
+    def test_get_data_dict_deprecated_case_types(self):
+        deprecated_case_types = get_data_dict_deprecated_case_types(self.domain)
+        self.assertEqual(len(deprecated_case_types), 1)
+        self.assertEqual(deprecated_case_types, {self.deprecated_case_type_name})
