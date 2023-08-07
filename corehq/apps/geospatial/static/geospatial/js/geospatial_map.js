@@ -197,11 +197,11 @@ hqDefine("geospatial/js/geospatial_map", [
                 markerDiv.addEventListener('mouseenter', () => marker.togglePopup());
 
                 // Hide popup if mouse leaves marker and popup
-                var addLeaveEvent = function(divOne, divTwo) {
-                    divOne.addEventListener('mouseleave', function () {
+                var addLeaveEvent = function(fromDiv, toDiv) {
+                    fromDiv.addEventListener('mouseleave', function () {
                         setTimeout(function(){
-                            if (!$(divTwo).is(':hover')) {
-                                // mouse left devTwo as well
+                            if (!$(toDiv).is(':hover')) {
+                                // mouse left toDiv as well
                                 marker.togglePopup();
                             }
                         }, 100);
