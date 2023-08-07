@@ -20,5 +20,5 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.RunPython(_add_web_user_feature, reverse_code=migrations.RunPython.noop),
+        migrations.RunPython(_add_web_user_feature),
     ]
