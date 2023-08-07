@@ -46,6 +46,13 @@ class EndpointsHelper(PostProcessor):
                     if form.session_endpoint_id:
                         self.suite.endpoints.append(self._make_session_endpoint(
                             form.session_endpoint_id, module, form))
+            elif module.session_endpoint_id:
+                for form in module.get_suite_forms():
+                    endpoint = next(
+                        (m for m in module.form_session_endpoints if m.form_id == form.unique_id), None)
+                    if endpoint:
+                        self.suite.endpoints.append(self._make_session_endpoint(
+                            endpoint.session_endpoint_id, module, form))
 
     def _make_session_endpoint(self, endpoint_id, module, form=None, should_add_last_selection_datum=True):
         stack = Stack()

@@ -1,4 +1,4 @@
-{% extends "reports/standard/base_template.html" %}
+{% extends "reports/base_template.html" %}
 
 {% load i18n %}
 {% load hq_shared_tags %}
@@ -25,7 +25,7 @@
  {% endblock %}
 
 
-{% block additional_initial_page_data %}
+{% block additional_initial_page_data %}{{ block.super }}
     {% initial_page_data "mapbox_access_token" mapbox_access_token %}
     {% initial_page_data "saved_polygons" saved_polygons %}
     {% registerurl 'geo_polygon' domain %}

@@ -177,7 +177,6 @@ MAX_PRIVILEGES = [
     FILTERED_BULK_USER_DOWNLOAD,
     APPLICATION_ERROR_REPORT,
     DATA_DICTIONARY,
-    SHOW_OWNER_LOCATION_PROPERTY_IN_REPORT_BUILDER,
     CASE_LIST_EXPLORER,
 ]
 
@@ -254,8 +253,5 @@ class Titles(object):
             FILTERED_BULK_USER_DOWNLOAD: _("Bulk user management features"),
             APPLICATION_ERROR_REPORT: _("Application error report"),
             DATA_DICTIONARY: _("Project level data dictionary of cases"),
-            SHOW_OWNER_LOCATION_PROPERTY_IN_REPORT_BUILDER: _(
-                "Show an additional 'Owner (Location)' property in report builder reports."
-            ),
             CASE_LIST_EXPLORER: _("Case List Explorer"),
         }.get(privilege, privilege)
