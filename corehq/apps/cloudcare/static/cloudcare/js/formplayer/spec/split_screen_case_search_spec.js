@@ -14,12 +14,6 @@ hqDefine("cloudcare/js/formplayer/spec/split_screen_case_search_spec", function 
         const currentUrl = new Utils.CloudcareUrl({ appId: 'abc123' }),
             sandbox = sinon.sandbox.create(),
             stubs = {},
-            REGIONS = {
-                main: 'main',
-                sidebar: 'sidebar',
-            };
-
-        let getRegion;
 
         before(function () {
             sandbox.stub(Marionette.CollectionView.prototype, 'render').returns();
@@ -47,7 +41,6 @@ hqDefine("cloudcare/js/formplayer/spec/split_screen_case_search_spec", function 
                 },
                 addRegions: function () { return; },
             };
-            getRegion = sandbox.spy(FormplayerFrontend.regions, 'getRegion');
             stubs.splitScreenToggleEnabled = sandbox.stub(Toggles, 'toggleEnabled').withArgs('SPLIT_SCREEN_CASE_SEARCH');
         });
 
@@ -57,7 +50,6 @@ hqDefine("cloudcare/js/formplayer/spec/split_screen_case_search_spec", function 
         });
 
         afterEach(function () {
-            getRegion.reset();
             sandbox.resetHistory();
         });
 
