@@ -97,10 +97,11 @@ accounting
  0075_application_error_report_priv
  0076_location_owner_in_report_builder_priv
  0077_case_list_explorer_priv
- 0078_data_dictionary_priv
- 0079_add_web_user_feature
- 0080_add_web_user_feature_in_other_models
- 0081_billingaccount_bill_web_user
+ 0078_revert_location_owner_in_report_builder_priv
+ 0079_data_dictionary_priv
+ 0080_add_web_user_feature
+ 0081_add_web_user_feature_in_other_models
+ 0082_billingaccount_bill_web_user
 admin
  0001_initial
  0002_logentry_remove_auto_add
@@ -263,6 +264,8 @@ custom_data_fields
  0004_rename_tables
  0005_customdatafieldsprofile
  0006_auto_20200924_1753
+ 0007_custom_data_fields_erm_support
+ 0008_custom_data_fields_upstream_ids
 data_analytics
  0001_squashed_0004_auto_20150810_1710
  0002_maltrow_threshold
@@ -431,6 +434,7 @@ fixtures
  0005_sqllookuptablemodels (3 squashed migrations)
  0008_sqllookuptables
  0009_remove_lookuptablerowowner_couch_id
+ 0010_lookuptable_is_synced
 form_processor
  0001_initial
  0002_xformattachmentsql
@@ -605,6 +609,7 @@ linked_domain
  0020_auto_20211102_1501
  0021_alter_domainlinkhistory_model
  0022_alter_domainlinkhistory_model
+ 0023_alter_domainlinkhistory_model
 locations
  0001_initial
  0002_auto_20160420_2105

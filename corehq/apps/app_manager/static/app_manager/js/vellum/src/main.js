@@ -18,7 +18,7 @@ requirejs.config({
             "css/css!../node_modules/codemirror/lib/codemirror",
             "css/css!../node_modules/jstree/dist/themes/default/style",
             "css/css!yui-combo",
-            "css/css!../node_modules/At.js/dist/css/jquery.atwho"
+            "css/css!../node_modules/at.js/dist/css/jquery.atwho"
         ],
         "main-components": [
             "vellum/core",

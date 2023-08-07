@@ -6,7 +6,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('accounting', '0080_add_web_user_feature_in_other_models'),
+        ('accounting', '0081_add_web_user_feature_in_other_models'),
     ]
 
     operations = [
