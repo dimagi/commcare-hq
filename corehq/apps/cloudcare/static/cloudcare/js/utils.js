@@ -435,6 +435,27 @@ hqDefine('cloudcare/js/utils', [
         $el.on("focusout", $el.data("DateTimePicker").hide);
     };
 
+    /**
+     *  Listen for screen size changes to enable or disable small screen functionality.
+     *  Accepts a callback function that should take in the new value of smallScreenEnabled.
+     *  e.g.,
+     *      watchSmallScreenEnabled(enabled => {
+     *          this.smallScreenEnabled = enabled;
+     *          this.render();
+     *      });
+     */
+    var watchSmallScreenEnabled = function (callback) {
+        var shouldEnableSmallScreen = () => window.innerWidth <= constants.SMALL_SCREEN_WIDTH_PX;
+        var smallScreenEnabled = shouldEnableSmallScreen();
+
+        $(window).on("resize", () => {
+            if (smallScreenEnabled !== shouldEnableSmallScreen()) {
+                smallScreenEnabled = shouldEnableSmallScreen();
+                callback(smallScreenEnabled);
+            }
+        });
+    };
+
     return {
         dateFormat: dateFormat,
         convertTwoDigitYear: convertTwoDigitYear,
@@ -455,5 +476,6 @@ hqDefine('cloudcare/js/utils', [
         formplayerSyncComplete: formplayerSyncComplete,
         reportFormplayerErrorToHQ: reportFormplayerErrorToHQ,
         injectMarkdownAnchorTransforms: injectMarkdownAnchorTransforms,
+        watchSmallScreenEnabled: watchSmallScreenEnabled,
     };
 });
