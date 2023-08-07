@@ -1,6 +1,7 @@
 from datetime import datetime
 from dimagi.utils.parsing import json_format_datetime
 from corehq.apps.case_search.const import SPECIAL_CASE_PROPERTIES
+from corehq.apps.data_dictionary.util import is_case_type_deprecated
 
 
 def serialize_case(case):
