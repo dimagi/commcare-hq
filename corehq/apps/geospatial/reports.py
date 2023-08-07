@@ -8,11 +8,14 @@ from corehq.apps.reports.standard.cases.basic import CaseListMixin
 from corehq.apps.reports.standard.cases.data_sources import CaseDisplayES
 from corehq.apps.reports.standard.cases.case_list_explorer import CaseListExplorer
 from .const import GEO_POINT_CASE_PROPERTY
-from .models import GeoPolygon, GeoConfig
+from .models import GeoPolygon
+from .utils import get_geo_case_property
 
 
-def _get_geo_location(case, geo_data_prop=GEO_POINT_CASE_PROPERTY):
-    geo_point = case['case_json'].get(geo_data_prop)
+def _get_geo_location(case):
+    geo_point = case['case_json'].get(
+        get_geo_case_property(case['domain'])
+    )
     if not geo_point:
         return
     try:
@@ -52,13 +55,12 @@ class CaseManagementMap(ProjectReport, CaseListMixin):
     def report_context(self):
         cases = []
         invalid_geo_cases_count = 0
-        case_geo_data_prop = self.geo_data_configuration.case_location_property_name
 
         for row in self.es_results['hits'].get('hits', []):
             es_case = self.get_case(row)
             display = CaseDisplayES(es_case, self.timezone, self.individual)
 
-            coordinates = _get_geo_location(es_case, case_geo_data_prop)
+            coordinates = _get_geo_location(es_case)
             if coordinates is None:
                 invalid_geo_cases_count += 1
                 continue
@@ -84,14 +86,6 @@ class CaseManagementMap(ProjectReport, CaseListMixin):
     @property
     def default_report_url(self):
         return reverse('geospatial_default', args=[self.request.project.name])
-
-    @property
-    def geo_data_configuration(self):
-        try:
-            config = GeoConfig.objects.get(domain=self.domain)
-        except GeoConfig.DoesNotExist:
-            config = GeoConfig()
-        return config
 
     @property
     def _invalid_geo_cases_report_link(self):
