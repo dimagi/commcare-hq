@@ -12,11 +12,15 @@ from django.views.decorators.http import require_POST
 from dimagi.utils.logging import notify_error
 from dimagi.utils.web import json_response
 
+from corehq.apps.app_manager.dbaccessors import get_case_types_from_apps
 from corehq.apps.app_manager.helpers.validators import validate_property
 from corehq.apps.case_importer import base
 from corehq.apps.case_importer import util as importer_util
 from corehq.apps.case_importer.base import location_safe_case_imports_enabled
-from corehq.apps.case_importer.const import MAX_CASE_IMPORTER_COLUMNS, ALL_CASE_TYPE_IMPORT
+from corehq.apps.case_importer.const import (
+    ALL_CASE_TYPE_IMPORT,
+    MAX_CASE_IMPORTER_COLUMNS,
+)
 from corehq.apps.case_importer.exceptions import (
     CustomImporterError,
     ImporterError,
@@ -30,7 +34,14 @@ from corehq.apps.case_importer.suggested_fields import (
     get_suggested_case_fields,
 )
 from corehq.apps.case_importer.tracking.case_upload_tracker import CaseUpload
-from corehq.apps.case_importer.util import get_importer_error_message, RESERVED_FIELDS
+from corehq.apps.case_importer.util import (
+    RESERVED_FIELDS,
+    get_importer_error_message,
+)
+from corehq.apps.data_dictionary.util import (
+    get_data_dict_case_types,
+    get_data_dict_deprecated_case_types,
+)
 from corehq.apps.domain.decorators import api_auth
 from corehq.apps.hqwebapp.decorators import waf_allow
 from corehq.apps.locations.permissions import conditionally_location_safe
@@ -44,11 +55,9 @@ from corehq.util.view_utils import absolute_reverse
 from corehq.util.workbook_reading import (
     SpreadsheetFileExtError,
     SpreadsheetFileInvalidError,
+    open_any_workbook,
     valid_extensions,
 )
-from corehq.util.workbook_reading import open_any_workbook
-from corehq.apps.app_manager.dbaccessors import get_case_types_from_apps
-from corehq.apps.data_dictionary.util import get_data_dict_case_types
 
 require_can_edit_data = require_permission(HqPermissions.edit_data)
 
@@ -162,6 +171,18 @@ def _process_single_sheet(case_upload):
         return _process_spreadsheet_columns(spreadsheet, MAX_CASE_IMPORTER_COLUMNS)
 
 
+def _is_bulk_import(domain, case_types_from_apps, unrecognized_case_types, worksheet_titles):
+    '''
+    It is a bulk import if every sheet name is a case type in the project space.
+    This does introduce the limitation that new cases for new case types cannot be bulk imported
+    unless they are first added to an application or the Data Dictionary.
+    '''
+    data_dict_case_types = get_data_dict_case_types(domain)
+    all_case_types = set(case_types_from_apps + unrecognized_case_types) | data_dict_case_types
+    is_bulk_import = len(set(worksheet_titles) - all_case_types) == 0
+    return is_bulk_import
+
+
 def _process_file_and_get_upload(uploaded_file_handle, request, domain, max_columns=None):
     extension = os.path.splitext(uploaded_file_handle.name)[1][1:].strip().lower()
 
@@ -190,12 +211,13 @@ def _process_file_and_get_upload(uploaded_file_handle, request, domain, max_colu
     unrecognized_case_types = sorted([t for t in get_case_types_for_domain_es(domain)
                                       if t not in case_types_from_apps])
 
-    # It is a bulk import if every sheet name is a case type in the project space.
-    # This does introduce the limitation that new cases for new case types cannot be bulk imported
-    # unless they are first added to an application or the Data Dictionary
-    data_dict_case_types = get_data_dict_case_types(domain)
-    all_case_types = set(case_types_from_apps + unrecognized_case_types) | data_dict_case_types
-    is_bulk_import = len(set(worksheet_titles) - all_case_types) == 0
+    if len(case_types_from_apps) == 0 and len(unrecognized_case_types) == 0:
+        raise ImporterError(_(
+            'Your project does not use cases yet. To import cases from Excel, '
+            'you must first create an application with a case list.'
+        ))
+
+    is_bulk_import = _is_bulk_import(domain, case_types_from_apps, unrecognized_case_types, worksheet_titles)
     columns = []
     try:
         if is_bulk_import:
@@ -207,11 +229,15 @@ def _process_file_and_get_upload(uploaded_file_handle, request, domain, max_colu
     except ImporterError as e:
         raise ImporterError(e) from e
 
-    if len(case_types_from_apps) == 0 and len(unrecognized_case_types) == 0:
-        raise ImporterError(_(
-            'Your project does not use cases yet. To import cases from Excel, '
-            'you must first create an application with a case list.'
-        ))
+    data_dict_deprecated_case_types = get_data_dict_deprecated_case_types(domain)
+    deprecated_case_types_used = []
+    if is_bulk_import:
+        deprecated_case_types_used = set(worksheet_titles).intersection(data_dict_deprecated_case_types)
+    else:
+        # Remove deprecated case types as options. We only do that here as we don't want to remove
+        # deprecated case types when determing if the import is a bulk case import
+        case_types_from_apps = set(case_types_from_apps) - data_dict_deprecated_case_types
+        unrecognized_case_types = set(unrecognized_case_types) - data_dict_deprecated_case_types
 
     error_messages = custom_case_upload_file_operations(domain=domain, case_upload=case_upload)
     if error_messages:
@@ -223,7 +249,8 @@ def _process_file_and_get_upload(uploaded_file_handle, request, domain, max_colu
         'case_types_from_apps': [ALL_CASE_TYPE_IMPORT] if is_bulk_import else case_types_from_apps,
         'domain': domain,
         'slug': base.ImportCases.slug,
-        'is_bulk_import': is_bulk_import
+        'is_bulk_import': is_bulk_import,
+        'deprecated_case_types_used': deprecated_case_types_used,
     }
     return case_upload, context
 
