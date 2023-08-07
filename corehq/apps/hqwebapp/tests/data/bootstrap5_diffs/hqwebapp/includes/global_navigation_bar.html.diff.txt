@@ -1,6 +1,6 @@
 --- 
 +++ 
-@@ -3,169 +3,207 @@
+@@ -3,177 +3,215 @@
  {% load hq_shared_tags %}
  
  {% if request.couch_user %}
@@ -99,6 +99,14 @@
 -            </li>
 +              </li>
              {% endif %}
+-            {% if user.is_superuser %}
+-            <li>
+-                <a href="{% url "feature_flags_and_privileges" domain %}" class="track-usage-link"
+-                   data-category="Nav Bar" data-action="Gear Icon" data-label="Current Subscription">
+-                    <i class="fa fa-flag dropdown-icon"></i> {% trans "Feature Flags and Privileges" %}
+-                </a>
+-            </li>
+-            {% endif %}
 -            {% if request|toggle_enabled:"SUPPORT" %}
 -            <li class="nav-divider divider"></li>
 +          <li><hr class="dropdown-divider"></li>
@@ -114,6 +122,14 @@
 +            <a href="{% url "domain_subscription_view" domain %}" class="dropdown-item track-usage-link"
 +               data-category="Nav Bar" data-action="Gear Icon" data-label="Current Subscription">
 +              <i class="fa fa-dashboard icon-dashboard dropdown-icon"></i> {% trans "Current Subscription" %}
++            </a>
++          </li>
++          {% endif %}
++          {% if user.is_superuser %}
++          <li>
++            <a href="{% url "feature_flags_and_privileges" domain %}" class="dropdown-item track-usage-link"
++               data-category="Nav Bar" data-action="Gear Icon" data-label="Current Subscription">
++              <i class="fa fa-flag dropdown-icon"></i> {% trans "Feature Flags and Privileges" %}
 +            </a>
 +          </li>
 +          {% endif %}

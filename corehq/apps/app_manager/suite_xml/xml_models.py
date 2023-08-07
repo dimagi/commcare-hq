@@ -539,6 +539,7 @@ class RemoteRequestQuery(OrderedXmlObject, XmlObject):
     data = NodeListField('data', QueryData)
     prompts = NodeListField('prompt', QueryPrompt)
     default_search = BooleanField("@default_search")
+    results_title = NodeField('results-title', DisplayNode)
 
     @property
     def id(self):

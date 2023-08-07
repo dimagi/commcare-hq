@@ -110,6 +110,20 @@ class WorkflowHelper(PostProcessor):
         for frame in frames:
             entry.stack.add_frame(frame)
 
+    @staticmethod
+    def _get_id_suffix(module):
+        from corehq.apps.app_manager.models import ShadowModule
+
+        root_module = None
+        if not module.put_in_root:
+            if module.root_module:
+                root_module = module.root_module
+            elif module.module_type == 'shadow' and module.source_module.root_module:
+                root_module = module.source_module.root_module
+
+        suffix = id_strings.menu_id(root_module) if isinstance(root_module, ShadowModule) else ""
+        return suffix
+
     def get_frame_children(self, module, form=None, include_root_module=False):
         """
         For a form or module return the list of stack frame children that are required
@@ -138,7 +152,7 @@ class WorkflowHelper(PostProcessor):
         :returns:   list of strings and DatumMeta objects. String represent stack commands
                     and DatumMeta's represent stack datums.
         """
-        module_command = id_strings.menu_id(module)
+        module_command = id_strings.menu_id(module, WorkflowHelper._get_id_suffix(module))
         if form is None and module.module_type == "shadow":
             module_datums = self.get_module_datums(f'm{module.source_module.id}')
         else:
@@ -418,7 +432,8 @@ class EndOfFormNavigationWorkflow(object):
 
         if target_module.root_module_id:
             root_module = self.helper.app.get_module_by_unique_id(target_module.root_module_id)
-            frame_children = prepend_parent_frame_children(self.helper, frame_children, root_module, link.datums, form)
+            frame_children = prepend_parent_frame_children(
+                self.helper, frame_children, root_module, link.datums, form)
 
         return StackFrameMeta(link.xpath, list(frame_children), current_session=source_form_datums)
 
@@ -578,7 +593,8 @@ class CaseListFormWorkflow(object):
         except ValueError:
             # This either means that the source module (with the registration form) requires datums that the
             # target module (the module which called the reg form).
-            # OR it could mean that not all the forms in the target module have the same case management configuration.
+            # OR it could mean that not all the forms in the target module have the same case management
+            # configuration.
             return
         return target_dm
 
