@@ -203,12 +203,15 @@ hqDefine("cloudcare/js/form_entry/form_ui", function () {
                 update: function (options) {
                     if (options.target.pendingAnswer &&
                             options.target.pendingAnswer() !== constants.NO_PENDING_ANSWER) {
-                        // There is a request in progress
+                        // There is a request in progress, check if the answer has changed since the request
+                        // was made. For file questions, it is most unlikely that the answer will change while the request
+                        // is in progress, so we just ignore the value.
                         if (options.target.entry.templateType === "file" || formEntryUtils.answersEqual(options.data.answer, options.target.pendingAnswer())) {
                             // We can now mark it as not dirty
                             options.target.pendingAnswer(constants.NO_PENDING_ANSWER);
                         } else {
-                            // still dirty, keep answer the same as the pending one
+                            // still dirty - most likely edited by the user while the request was going
+                            // Keep answer the same as the pending one to avoid overwriting the user's changes
                             options.data.answer = _.clone(options.target.pendingAnswer());
                         }
                     }
