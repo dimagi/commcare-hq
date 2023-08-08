@@ -94,8 +94,8 @@ def _process_multichoice_sheets(workbook, allowed_value_info, prop_row_info):
                 row_vals['allowed_value'], row_vals['prop_name'], row_vals['description'])
 
             if allowed_value and not prop_name:
-                msg_format = _('Error in valid values for case type \"{}\", row {}: missing case property')
-                msg_val = msg_format.format(case_type, i)
+                msg_format = _('Row {} in \"{}-vl\" sheet is missing a case property field')
+                msg_val = msg_format.format(i, case_type)
                 errors.append(msg_val)
             else:
                 allowed_value_info[case_type][prop_name][allowed_value] = description
@@ -166,7 +166,7 @@ def _process_sheets(domain, workbook, allowed_value_info):
                                            label, group, deprecated, fhir_resource_prop_path,
                                            fhir_resource_type, remove_path, allowed_values)
             if error:
-                errors.append(_('Error in case type \"{}\", row {}: {}').format(case_type, i, error))
+                errors.append(_('Error in \"{}\" sheet, row {}: {}').format(case_type, i, error))
 
     for case_type in missing_valid_values:
         errors.append(_('Missing valid \"{}-vl\" multi-choice sheet for case type \"{}\"').format(
@@ -188,7 +188,7 @@ def _process_fhir_resource_type_mapping_sheet(domain, worksheet):
             continue
 
         if len(row) < 3:
-            errors.append(_('Not enough columns in {} sheet').format(FHIR_RESOURCE_TYPE_MAPPING_SHEET))
+            errors.append(_('Not enough columns in \"{}\" sheet').format(FHIR_RESOURCE_TYPE_MAPPING_SHEET))
         else:
             row_vals = map_row_values_to_column_names(row, column_headings)
             (case_type, remove_resource_type, fhir_resource_type) = (
