@@ -2,7 +2,18 @@ hqDefine("cloudcare/js/spec/markdown_spec", function () {
     describe('Markdown', function () {
         let markdown = hqImport('cloudcare/js/markdown'),
             render = markdown.render,
-            initialPageData = hqImport("hqwebapp/js/initial_page_data");
+            initialPageData = hqImport("hqwebapp/js/initial_page_data"),
+            hmacCallout = hqImport("integration/js/hmac_callout");
+
+        let sandbox;
+        beforeEach(function () {
+            initialPageData.clear();
+            sandbox = sinon.sandbox.create();
+        });
+
+        afterEach(function () {
+            sandbox.restore();
+        });
 
         describe('Markdown basics', function () {
             it('should render without error', function () {
@@ -43,6 +54,13 @@ hqDefine("cloudcare/js/spec/markdown_spec", function () {
                 markdown.reset();
             });
 
+            afterEach(function () {
+                let testDiv = document.getElementById("test-div");
+                if (testDiv) {
+                    document.body.removeChild(testDiv);
+                }
+            });
+
             it('should render dialer views', function () {
                 initialPageData.register('dialer_enabled', true);
                 initialPageData.registerUrl('dialer_view', '/dialer');
@@ -61,12 +79,45 @@ hqDefine("cloudcare/js/spec/markdown_spec", function () {
                 );
             });
 
+            it('should register listeners for GAEN link clicks', function () {
+                initialPageData.register('gaen_otp_enabled', true);
+                initialPageData.registerUrl('gaen_otp_view', '/gaen/');
+                let renderedLink = render("[link](cchq://passthrough/gaen_otp/?otp=otp)");
+
+                sinon.stub(hmacCallout, "unsignedCallout");
+
+                let div = document.createElement("div");
+                div.setAttribute("id", "test-div");
+                div.innerHTML = renderedLink;
+                document.body.appendChild(div);
+
+                let link = div.querySelector("a");
+                link.click();
+                assert(hmacCallout.unsignedCallout, "GAEN listener was not registered");
+            });
+
             it('should render HMAC callouts', function () {
                 initialPageData.register('hmac_root_url', '/hmac/');
                 assert.equal(
                     render("[link](/hmac/to/somewhere/?with=params)"),
                     "<p><a href=\"/hmac/to/somewhere/?with=params\" target=\"hmac_callout\">link</a></p>\n"
                 );
+            });
+
+            it('should register listeners for HMAC link clicks', function () {
+                initialPageData.register('hmac_root_url', '/hmac/');
+                let renderedLink = render("[link](/hmac/to/somewhere/?with=params)");
+
+                sinon.stub(hmacCallout, "signedCallout");
+
+                let div = document.createElement("div");
+                div.setAttribute("id", "test-div");
+                div.innerHTML = renderedLink;
+                document.body.appendChild(div);
+
+                let link = div.querySelector("a");
+                link.click();
+                assert(hmacCallout.signedCallout, "HMAC listener was not registered");
             });
         });
     });
