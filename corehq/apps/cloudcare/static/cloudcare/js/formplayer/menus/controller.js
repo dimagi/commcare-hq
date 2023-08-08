@@ -243,7 +243,7 @@ hqDefine("cloudcare/js/formplayer/menus/controller", function () {
             obj.style = styles[i];
             obj.id = i;
             if (obj.style.displayFormat === 'Markdown') {
-                obj.html = markdown.renderMarkdown(details[i]);
+                obj.html = markdown.render(details[i]);
             }
             detailModel.push(obj);
         }

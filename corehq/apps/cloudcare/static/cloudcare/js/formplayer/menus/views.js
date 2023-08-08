@@ -284,7 +284,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
                 data: this.options.model.get('data'),
                 styles: this.options.styles,
                 isMultiSelect: this.options.isMultiSelect,
-                renderMarkdown: markdown.renderMarkdown,
+                renderMarkdown: markdown.render,
                 resolveUri: function (uri) {
                     return FormplayerFrontend.getChannel().request('resourceMap', uri, appId);
                 },
@@ -599,7 +599,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
                             let markerCoordinates = addressCoordinates.split(" ").slice(0,2);
                             if (markerCoordinates.length > 1) {
                                 const rowId = `row-${model.id}`;
-                                const popupText = markdown.renderMarkdown(model.attributes.data[popupIndex]);
+                                const popupText = markdown.render(model.attributes.data[popupIndex]);
                                 let marker = L.marker(markerCoordinates, {icon: locationIcon});
                                 markers.push(marker);
                                 marker = marker.addTo(addressMap)

@@ -133,7 +133,7 @@ hqDefine('cloudcare/js/markdown', [
 
     let md = null;
 
-    function renderMarkdown(text) {
+    function render(text) {
         if (md === null) {
             // lazy init to avoid dependency order issues
             md = initMd();
@@ -142,6 +142,6 @@ hqDefine('cloudcare/js/markdown', [
     }
 
     return {
-        renderMarkdown: renderMarkdown,
+        render: render,
     };
 });

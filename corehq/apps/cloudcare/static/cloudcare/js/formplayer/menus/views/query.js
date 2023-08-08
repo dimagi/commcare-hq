@@ -452,7 +452,7 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
 
         templateContext: function () {
             var description = this.options.collection.description === undefined ?
-                "" : markdown.renderMarkdown(this.options.collection.description.trim());
+                "" : markdown.render(this.options.collection.description.trim());
             return {
                 title: this.options.title.trim(),
                 description: DOMPurify.sanitize(description),
