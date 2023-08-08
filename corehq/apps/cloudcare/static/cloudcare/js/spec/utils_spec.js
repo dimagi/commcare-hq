@@ -1,5 +1,5 @@
 /* eslint-env mocha */
-hqDefine("cloudcare/js/cloudcare/spec/utils_spec", function () {
+hqDefine("cloudcare/js/spec/utils_spec", function () {
     describe("Cloudcare Utils", function () {
         const constants = hqImport("cloudcare/js/formplayer/constants"),
             utils = hqImport("cloudcare/js/utils");
