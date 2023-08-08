@@ -1,5 +1,11 @@
 # Run this with local development server active to report Javascript test coverage
 
+# Clean up the report directory if it already exists
+if [ -d "./coverage-js" ]
+then
+    rm -r "./coverage-js"
+fi
+
 # Save the local file state in a temporary branch
 git checkout -b "temp-coverage-js"
 git commit --allow-empty --no-verify -a -m "temp commit"
