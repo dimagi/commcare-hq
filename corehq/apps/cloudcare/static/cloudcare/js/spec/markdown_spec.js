@@ -20,6 +20,20 @@ hqDefine("cloudcare/js/spec/markdown_spec", function () {
                     "<h1 tabindex=\"0\">heading</h1>\n"
                 );
             });
+
+            it('should render newlines as breaks', function () {
+                assert.equal(
+                    render("line 1\nline 2"),
+                    "<p>line 1<br>\nline 2</p>\n"
+                );
+            });
+
+            it('should render encoded newlines as breaks', function () {
+                assert.equal(
+                    render("line 1&#10;line 2"),
+                    "<p>line 1<br>\nline 2</p>\n"
+                );
+            });
         });
     });
 });
