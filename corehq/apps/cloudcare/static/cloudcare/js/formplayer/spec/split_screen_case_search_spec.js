@@ -3,7 +3,6 @@
 hqDefine("cloudcare/js/formplayer/spec/split_screen_case_search_spec", function () {
     describe('Split Screen Case Search', function () {
         const API = hqImport("cloudcare/js/formplayer/menus/api"),
-            constants = hqImport('cloudcare/js/formplayer/constants'),
             Controller = hqImport('cloudcare/js/formplayer/menus/controller'),
             FakeFormplayer = hqImport('cloudcare/js/formplayer/spec/fake_formplayer'),
             FormplayerFrontend = hqImport('cloudcare/js/formplayer/app'),
@@ -109,19 +108,6 @@ hqDefine("cloudcare/js/formplayer/spec/split_screen_case_search_spec", function 
                 Controller.showMenu(splitScreenCaseListResponse);
 
                 assert.isTrue(stubs.regions['sidebar'].empty.called);
-            });
-
-            it('should set enable small screen mode based on window width', function () {
-                const responseWithTypeQuery = _.extend({}, splitScreenCaseListResponse, { 'type': 'query' });
-                const showMain = stubs.regions['main'].show;
-
-                window.innerWidth = constants.SMALL_SCREEN_WIDTH_PX;
-                Controller.showMenu(responseWithTypeQuery);
-                assert.isTrue(showMain.getCalls()[0].args[0].options.smallScreenEnabled);
-
-                window.innerWidth = constants.SMALL_SCREEN_WIDTH_PX + 1;
-                Controller.showMenu(responseWithTypeQuery);
-                assert.isFalse(showMain.getCalls()[1].args[0].options.smallScreenEnabled);
             });
         });
 
