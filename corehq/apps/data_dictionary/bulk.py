@@ -215,9 +215,13 @@ def _validate_values(allowed_value_info, seen_props, prop_row_info):
     for case_type in allowed_value_info:
         for prop_name in allowed_value_info[case_type]:
             if prop_name not in seen_props[case_type]:
+                affected_rows = ', '.join(str(v) for v in prop_row_info[case_type][prop_name])
                 msg_format = _(
-                    'Error in valid values for case type \"{}\", nonexistent property listed ({}), row(s): {}')
+                    'Case property \"{}\" referenced in \"{}-vl\" sheet that does not exist '
+                    'in \"{}\" sheet. Row(s) affected: {}'
+                )
                 msg_val = msg_format.format(
-                    case_type, prop_name, ', '.join(str(v) for v in prop_row_info[case_type][prop_name]))
+                    prop_name, case_type, case_type, affected_rows
+                )
                 errors.append(msg_val)
     return errors
