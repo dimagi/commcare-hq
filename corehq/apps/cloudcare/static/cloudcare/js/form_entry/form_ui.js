@@ -188,9 +188,7 @@ hqDefine("cloudcare/js/form_entry/form_ui", function () {
         var mapping = {
             caption: {
                 update: function (options) {
-                    let parentForm = getParentForm(self);
-                    let oqps = parentForm.displayOptions.oneQuestionPerScreen != undefined && parentForm.displayOptions.oneQuestionPerScreen();
-                    if (!oqps) {
+                    if (self.hideCaption) {
                         return null;
                     }
                     return options.data ? DOMPurify.sanitize(options.data.replace(/\n/g, '<br/>')) : null;
@@ -464,6 +462,13 @@ hqDefine("cloudcare/js/form_entry/form_ui", function () {
         self.groupId = groupNum++;
         self.rel_ix = ko.observable(relativeIndex(self.ix()));
         self.isRepetition = parent instanceof Repeat;
+        let parentForm = getParentForm(self);
+        let oneQuestionPerScreen = parentForm.displayOptions.oneQuestionPerScreen != undefined && parentForm.displayOptions.oneQuestionPerScreen();
+
+        if (!oneQuestionPerScreen && self.isRepetition) {
+            self.caption(null);
+            self.hideCaption = true;
+        }
         if (_.has(json, 'domain_meta') && _.has(json, 'style')) {
             self.domain_meta = parseMeta(json.datatype, json.style);
         }
