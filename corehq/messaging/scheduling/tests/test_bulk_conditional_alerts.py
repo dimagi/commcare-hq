@@ -56,7 +56,9 @@ class TestBulkConditionalAlerts(TestCase):
             default_timezone='America/New_York',
         )
         cls.domain_obj.save()
+        cls.addClassCleanup(cls.domain_obj.delete)
         cls.user = CommCareUser.create(cls.domain, 'test1', 'abc', None, None)
+        cls.addClassCleanup(cls.user.delete, cls.domain, deleted_by=None)
         cls.langs = ['en', 'es']
 
     def setUp(self):
@@ -123,12 +125,6 @@ class TestBulkConditionalAlerts(TestCase):
         locked_rule = self._get_rule(self.LOCKED_RULE)
         locked_rule.locked_for_editing = True
         locked_rule.save()
-
-    @classmethod
-    def tearDownClass(cls):
-        cls.user.delete(cls.domain, deleted_by=None)
-        cls.domain_obj.delete()
-        super(TestBulkConditionalAlerts, cls).tearDownClass()
 
     def tearDown(self):
         for rule in AutomaticUpdateRule.objects.filter(domain=self.domain):
