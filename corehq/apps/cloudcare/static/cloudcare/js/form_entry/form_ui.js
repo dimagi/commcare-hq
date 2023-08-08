@@ -738,14 +738,22 @@ hqDefine("cloudcare/js/form_entry/form_ui", function () {
     };
 
     Question.prototype.setWidths = function () {
-        const perRowPattern = new RegExp(`\\d+${constants.PER_ROW}(\\s|$)`);
-        const perRowStyle = (this.stylesContains(perRowPattern)) ? this.stylesContaining(perRowPattern)[0] : null;
-        const numPerRow = perRowStyle !== null ? parseInt(perRowStyle.split("-")[0], 10) : null;
+        const columnWidth = Question.calculateColumnWidthForPerRowStyle(this.style)
 
-        this.controlWidth = numPerRow !== null ? constants.FULL_WIDTH : constants.CONTROL_WIDTH;
-        this.labelWidth = numPerRow !== null ? constants.FULL_WIDTH : constants.LABEL_WIDTH;
-        this.questionTileWidth = numPerRow !== null ? `col-sm-${constants.GRID_COLUMNS / numPerRow}` : constants.FULL_WIDTH;
+        this.controlWidth = columnWidth === constants.GRID_COLUMNS ? constants.CONTROL_WIDTH : constants.FULL_WIDTH;
+        this.labelWidth = columnWidth === constants.GRID_COLUMNS ? constants.LABEL_WIDTH : constants.FULL_WIDTH;
+        this.questionTileWidth = columnWidth === constants.GRID_COLUMNS ? constants.FULL_WIDTH : `col-sm-${columnWidth}` ;
     };
+
+    Question.calculateColumnWidthForPerRowStyle= function(style) {
+        let styleStr = (style) ? ko.utils.unwrapObservable(style.raw) : null;
+        const perRowPattern = new RegExp(`\\d+${constants.PER_ROW}(\\s|$)`);
+        const matchingPerRowStyles = getMatchingStyles(perRowPattern, styleStr);
+        const perRowStyle = matchingPerRowStyles.length === 0 ? null : matchingPerRowStyles[0];
+        const itemsPerRow = perRowStyle !== null ? parseInt(perRowStyle.split("-")[0], 10) : null;
+
+        return itemsPerRow !== null ? constants.GRID_COLUMNS / itemsPerRow : constants.GRID_COLUMNS;
+      }
 
     return {
         getIx: getIx,
