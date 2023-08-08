@@ -2,7 +2,7 @@
 
 hqDefine("cloudcare/js/formplayer/menus/controller", function () {
     var constants = hqImport("cloudcare/js/formplayer/constants"),
-        cloudcareUtils = hqImport("cloudcare/js/utils"),
+        markdown = hqImport("cloudcare/js/markdown"),
         FormplayerFrontend = hqImport("cloudcare/js/formplayer/app"),
         formplayerUtils = hqImport("cloudcare/js/formplayer/utils/utils"),
         menusUtils = hqImport("cloudcare/js/formplayer/menus/utils"),
@@ -244,7 +244,7 @@ hqDefine("cloudcare/js/formplayer/menus/controller", function () {
             obj.style = styles[i];
             obj.id = i;
             if (obj.style.displayFormat === 'Markdown') {
-                obj.html = cloudcareUtils.renderMarkdown(details[i]);
+                obj.html = markdown.renderMarkdown(details[i]);
             }
             detailModel.push(obj);
         }

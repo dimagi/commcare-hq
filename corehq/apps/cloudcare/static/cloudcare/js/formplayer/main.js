@@ -3,7 +3,7 @@ hqDefine("cloudcare/js/formplayer/main", function () {
     $(function () {
         var initialPageData = hqImport("hqwebapp/js/initial_page_data").get,
             FormplayerFrontEnd = hqImport("cloudcare/js/formplayer/app"),
-            utils = hqImport("cloudcare/js/utils"),
+            markdown = hqImport("cloudcare/js/markdown"),
             sentry = hqImport("cloudcare/js/sentry");
 
         sentry.initSentry();
@@ -22,7 +22,7 @@ hqDefine("cloudcare/js/formplayer/main", function () {
         };
         FormplayerFrontEnd.start(options);
 
-        utils.injectMarkdownAnchorTransforms();
+        markdown.injectMarkdownAnchorTransforms();
 
         var $menuToggle = $('#commcare-menu-toggle'),
             $navbar = $('#hq-navigation'),

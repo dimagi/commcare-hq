@@ -1,6 +1,6 @@
 /* global DOMPurify, mdAnchorRender */
 hqDefine("cloudcare/js/form_entry/form_ui", function () {
-    var cloudcareUtils = hqImport("cloudcare/js/utils");
+    var markdown = hqImport("cloudcare/js/markdown"),
         constants = hqImport("cloudcare/js/form_entry/const"),
         entries = hqImport("cloudcare/js/form_entry/entries"),
         formEntryUtils = hqImport("cloudcare/js/form_entry/utils");
@@ -40,7 +40,7 @@ hqDefine("cloudcare/js/form_entry/form_ui", function () {
         ko.bindingHandlers.renderMarkdown = {
             update: function (element, valueAccessor) {
                 var value = ko.unwrap(valueAccessor());
-                value = cloudcareUtils.renderMarkdown(value || '');
+                value = markdown.renderMarkdown(value || '');
                 $(element).html(value);
             },
         };
