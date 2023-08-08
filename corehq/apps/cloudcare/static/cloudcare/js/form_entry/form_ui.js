@@ -145,6 +145,14 @@ hqDefine("cloudcare/js/form_entry/form_ui", function () {
         return meta;
     }
 
+    function getParentForm(self) {
+        let curr = self;
+        while (curr.parent) {
+            curr = curr.parent;
+        }
+        return curr;
+    }
+
     /**
      * Base abstract prototype for Repeat, Group and Form. Adds methods to
      * objects that contain a children array for rendering nested questions.
@@ -180,6 +188,11 @@ hqDefine("cloudcare/js/form_entry/form_ui", function () {
         var mapping = {
             caption: {
                 update: function (options) {
+                    let parentForm = getParentForm(self);
+                    let oqps = parentForm.displayOptions.oneQuestionPerScreen != undefined && parentForm.displayOptions.oneQuestionPerScreen();
+                    if (!oqps) {
+                        return null;
+                    }
                     return options.data ? DOMPurify.sanitize(options.data.replace(/\n/g, '<br/>')) : null;
                 },
             },
@@ -556,10 +569,7 @@ hqDefine("cloudcare/js/form_entry/form_ui", function () {
 
         self.getTranslation = function (translationKey, defaultTranslation) {
             // Find the root level element which contains the translations.
-            var curParent = self.parent;
-            while (curParent.parent) {
-                curParent = curParent.parent;
-            }
+            var curParent = getParentForm(self);
             var translations = curParent.translations;
 
             if (translations) {
