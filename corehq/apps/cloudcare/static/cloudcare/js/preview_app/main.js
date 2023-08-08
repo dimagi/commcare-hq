@@ -1,7 +1,6 @@
 hqDefine("cloudcare/js/preview_app/main", function () {
     var initialPageData = hqImport("hqwebapp/js/initial_page_data"),
         previewApp = hqImport("cloudcare/js/preview_app/preview_app"),
-        markdown = hqImport("cloudcare/js/markdown"),
         sentry = hqImport("cloudcare/js/sentry");
 
     $(function () {
@@ -21,8 +20,6 @@ hqDefine("cloudcare/js/preview_app/main", function () {
             environment: initialPageData.get('environment'),
             debuggerEnabled: initialPageData.get('debugger_enabled'),
         });
-
-        markdown.injectMarkdownAnchorTransforms();
 
         $('.dragscroll').on('scroll', function () {
             $('.form-control').blur();

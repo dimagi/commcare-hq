@@ -1,40 +1,10 @@
-/* global DOMPurify, mdAnchorRender */
+/* global DOMPurify */
 hqDefine("cloudcare/js/form_entry/form_ui", function () {
     var markdown = hqImport("cloudcare/js/markdown"),
         constants = hqImport("cloudcare/js/form_entry/const"),
         entries = hqImport("cloudcare/js/form_entry/entries"),
         formEntryUtils = hqImport("cloudcare/js/form_entry/utils");
-    var md = window.markdownit();
     var groupNum = 0;
-
-    //Overriden by downstream contexts, check before changing
-    window.mdAnchorRender = md.renderer.rules.link_open || function (tokens, idx, options, env, self) {
-        return self.renderToken(tokens, idx, options);
-    };
-
-    md.renderer.rules.link_open = function (tokens, idx, options, env, self) {
-        // If you are sure other plugins can't add `target` - drop check below
-        var aIndex = tokens[idx].attrIndex('target');
-
-        if (aIndex < 0) {
-            tokens[idx].attrPush(['target', '_blank']); // add new attribute
-        } else {
-            tokens[idx].attrs[aIndex][1] = '_blank';    // replace value of existing attr
-        }
-
-        // pass token to default renderer.
-        return mdAnchorRender(tokens, idx, options, env, self);
-    };
-
-    md.renderer.rules.heading_open = function (tokens, idx, options, env, self) {
-        var aIndex = tokens[idx].attrIndex('tabindex');
-
-        if (aIndex < 0) {
-            tokens[idx].attrPush(['tabindex', '0']);
-        }
-
-        return mdAnchorRender(tokens, idx, options, env, self);
-    };
 
     _.delay(function () {
         ko.bindingHandlers.renderMarkdown = {
@@ -185,7 +155,7 @@ hqDefine("cloudcare/js/form_entry/form_ui", function () {
             },
             caption_markdown: {
                 update: function (options) {
-                    return options.data ? md.render(options.data) : null;
+                    return options.data ? markdown.renderMarkdown(options.data) : null;
                 },
             },
             children: {
@@ -692,12 +662,12 @@ hqDefine("cloudcare/js/form_entry/form_ui", function () {
             },
             caption_markdown: {
                 update: function (options) {
-                    return options.data ? md.render(options.data) : null;
+                    return options.data ? markdown.renderMarkdown(options.data) : null;
                 },
             },
             help: {
                 update: function (options) {
-                    return options.data ? md.render(DOMPurify.sanitize(options.data)) : null;
+                    return options.data ? markdown.renderMarkdown(DOMPurify.sanitize(options.data)) : null;
                 },
             },
         };
