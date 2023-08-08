@@ -8,9 +8,7 @@ hqDefine('cloudcare/js/markdown', [
     initialPageData,
     HMACCallout,
 ) {
-    'use strict';
-
-    var md = markdownIt({breaks: true}),
+    let md = markdownIt({breaks: true}),
         // https://github.com/markdown-it/markdown-it/blob/6db517357af5bb42398b474efd3755ad33245877/docs/architecture.md#renderer
         defaultLinkOpen = md.renderer.rules.link_open || function (tokens, idx, options, env, self) {
             return self.renderToken(tokens, idx, options);
@@ -20,7 +18,7 @@ hqDefine('cloudcare/js/markdown', [
         };
 
     md.renderer.rules.heading_open = function (tokens, idx, options, env, self) {
-        var aIndex = tokens[idx].attrIndex('tabindex');
+        let aIndex = tokens[idx].attrIndex('tabindex');
 
         if (aIndex < 0) {
             tokens[idx].attrPush(['tabindex', '0']);
@@ -30,7 +28,7 @@ hqDefine('cloudcare/js/markdown', [
     };
 
     function updateTarget(tokens, idx, target) {
-        var aIndex = tokens[idx].attrIndex('target');
+        let aIndex = tokens[idx].attrIndex('target');
 
         if (aIndex < 0) {
             tokens[idx].attrPush(['target', target]); // add new attribute
@@ -41,10 +39,10 @@ hqDefine('cloudcare/js/markdown', [
 
     function chainedRenderer(matcher, transform, target) {
         return function (tokens, idx, options, env, self) {
-            var hIndex = tokens[idx].attrIndex('href');
-            var matched = false;
+            let hIndex = tokens[idx].attrIndex('href');
+            let matched = false;
             if (hIndex >= 0) {
-                var href = tokens[idx].attrs[hIndex][1];
+                let href = tokens[idx].attrs[hIndex][1];
                 if (matcher(href)) {
                     transform(href, hIndex, tokens[idx]);
                     matched = true;
@@ -57,17 +55,17 @@ hqDefine('cloudcare/js/markdown', [
         };
     }
 
-    var addDelegatedClickDispatch = function (linkTarget, linkDestination) {
+    function addDelegatedClickDispatch(linkTarget, linkDestination) {
         document.addEventListener('click', function (event) {
             if (event.target.target === linkTarget) {
                 linkDestination(event.target);
                 event.preventDefault();
             }
         }, true);
-    };
+    }
 
-    var getChainedRenderes = function () {
-        var renderers = [];
+    function getChainedRenderers() {
+        let renderers = [];
 
         if (initialPageData.get('dialer_enabled')) {
             renderers.push(chainedRenderer(
@@ -75,8 +73,8 @@ hqDefine('cloudcare/js/markdown', [
                     return href.startsWith("tel://");
                 },
                 function (href, hIndex, anchor) {
-                    var callout = href.substring("tel://".length);
-                    var url = initialPageData.reverse("dialer_view");
+                    let callout = href.substring("tel://".length);
+                    let url = initialPageData.reverse("dialer_view");
                     anchor.attrs[hIndex][1] = url + "?callout_number=" + callout;
                 },
                 "dialer"
@@ -89,8 +87,8 @@ hqDefine('cloudcare/js/markdown', [
                     return href.startsWith("cchq://passthrough/gaen_otp/");
                 },
                 function (href, hIndex, anchor) {
-                    var params = href.substring("cchq://passthrough/gaen_otp/".length);
-                    var url = initialPageData.reverse("gaen_otp_view");
+                    let params = href.substring("cchq://passthrough/gaen_otp/".length);
+                    let url = initialPageData.reverse("gaen_otp_view");
                     anchor.attrs[hIndex][1] = url + params;
                 },
                 "gaen_otp"
@@ -117,9 +115,9 @@ hqDefine('cloudcare/js/markdown', [
         }
 
         return renderers;
-    };
+    }
 
-    let renderers = getChainedRenderes();
+    let renderers = getChainedRenderers();
     md.renderer.rules.link_open = function (tokens, idx, options, env, self) {
         updateTarget(tokens, idx, '_blank');
 
