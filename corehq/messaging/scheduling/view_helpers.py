@@ -345,7 +345,9 @@ class TranslatedConditionalAlertUploader(ConditionalAlertUploader):
         for lang in self.langs:
             key = 'message_' + lang
             if key in row:
-                message.update({lang: row[key]})
+                message[lang] = row[key]
+        if not any(message.values()):
+            raise RuleUpdateError(_("Missing message"))
         return message
 
 

@@ -679,3 +679,33 @@ class TestBulkConditionalAlerts(TestCase):
         self.assertEqual(untranslated_content.message, {
             '*': 'Joanie',
         })
+
+    @patch('corehq.messaging.scheduling.view_helpers.get_language_list')
+    def test_upload_blank_translated_message_should_fail(self, language_list_patch):
+        language_list_patch.return_value = self.langs
+        headers = (
+            ("translated", ("id", "name", "message_en", "message_es")),
+            ("not translated", ("id", "name")),
+        )
+        data = (
+            ("translated", (
+                (self._get_rule(self.DAILY_RULE).id, 'test', '', ''),
+            )),
+            ("not translated", (
+                (self._get_rule(self.UNTRANSLATED_DAILY_RULE).id, 'test'),
+            )),
+        )
+
+        msgs = self._upload(data, headers)
+
+        daily_rule = self._get_rule(self.DAILY_RULE)
+        self.assertEqual(msgs, [
+            f"Error updating rule with id {daily_rule.id} in 'translated' sheet: Missing message",
+            "Updated 0 rule(s) in 'translated' sheet",
+            "Updated 0 rule(s) in 'not translated' sheet",
+        ])
+        daily_content = daily_rule.get_schedule().memoized_events[0].content
+        self.assertEqual(daily_content.message, {
+            'en': 'Diamonds and Rust',
+            'es': 'Diamantes y Óxido',
+        })
