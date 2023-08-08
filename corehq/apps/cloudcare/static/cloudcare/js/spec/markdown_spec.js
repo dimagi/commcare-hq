@@ -1,8 +1,10 @@
 hqDefine("cloudcare/js/spec/markdown_spec", function () {
     describe('Markdown', function () {
-        let render = hqImport('cloudcare/js/markdown').render;
+        let markdown = hqImport('cloudcare/js/markdown'),
+            render = markdown.render,
+            initialPageData = hqImport("hqwebapp/js/initial_page_data");
 
-        describe('Markdown', function () {
+        describe('Markdown basics', function () {
             it('should render without error', function () {
                 assert.equal(render("plain text"), "<p>plain text</p>\n");
             });
@@ -32,6 +34,38 @@ hqDefine("cloudcare/js/spec/markdown_spec", function () {
                 assert.equal(
                     render("line 1&#10;line 2"),
                     "<p>line 1<br>\nline 2</p>\n"
+                );
+            });
+        });
+
+        describe('Markdown integrations', function () {
+            beforeEach(function () {
+                markdown.reset();
+            });
+
+            it('should render dialer views', function () {
+                initialPageData.register('dialer_enabled', true);
+                initialPageData.registerUrl('dialer_view', '/dialer');
+                assert.equal(
+                    render("[link](tel://1234567890)"),
+                    "<p><a href=\"/dialer?callout_number=1234567890\" target=\"dialer\">link</a></p>\n"
+                );
+            });
+
+            it('should render GAEN otp urls', function () {
+                initialPageData.register('gaen_otp_enabled', true);
+                initialPageData.registerUrl('gaen_otp_view', '/gaen/');
+                assert.equal(
+                    render("[link](cchq://passthrough/gaen_otp/?otp=otp)"),
+                    "<p><a href=\"/gaen/?otp=otp\" target=\"gaen_otp\">link</a></p>\n"
+                );
+            });
+
+            it('should render HMAC callouts', function () {
+                initialPageData.register('hmac_root_url', '/hmac/');
+                assert.equal(
+                    render("[link](/hmac/to/somewhere/?with=params)"),
+                    "<p><a href=\"/hmac/to/somewhere/?with=params\" target=\"hmac_callout\">link</a></p>\n"
                 );
             });
         });

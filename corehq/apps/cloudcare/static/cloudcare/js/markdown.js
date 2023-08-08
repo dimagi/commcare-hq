@@ -141,7 +141,15 @@ hqDefine('cloudcare/js/markdown', [
         return md.render(DOMPurify.sanitize(text || "").replaceAll("&#10;", "\n"));
     }
 
+    /**
+     * Should only be used in tests.
+     */
+    function reset() {
+        md = null;
+    }
+
     return {
         render: render,
+        reset: reset,
     };
 });
