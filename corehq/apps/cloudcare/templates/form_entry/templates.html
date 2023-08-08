@@ -192,7 +192,15 @@
 </script>
 
 
+<script type="text/html" id="grouped-question-tile-row-fullform-ko-template">
+  <div class="row">
+    <div data-bind="template: { name: childTemplate, foreach: $data.children }"/>
+  </div>
+</script>
+
+
 <script type="text/html" id="question-fullform-ko-template">
+  <div data-bind="class:questionTileWidth">
   <!-- ko if: datatype() !== 'info' -->
   <div class="q form-group" data-bind="
             css: {
@@ -295,6 +303,7 @@
     </div>
   </div>
   <!-- /ko -->
+  </div>
 </script>
 
 <script type="text/html" id="repeat-juncture-fullform-ko-template">

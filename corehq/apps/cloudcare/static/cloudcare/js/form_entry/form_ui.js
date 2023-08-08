@@ -111,6 +111,20 @@ hqDefine("cloudcare/js/form_entry/form_ui", function () {
         }
     }
 
+    function getMatchingStyles (pattern, styleStr) {
+        let retVal = [];
+        if (styleStr) {
+            let styles = styleStr.split(' ');
+            styles.forEach(function (style) {
+                if ((pattern instanceof RegExp && style.match(pattern))
+                    || (typeof pattern === "string" && pattern === style)) {
+                    retVal.push(style);
+                }
+            });
+        }
+        return retVal;
+    };
+
     function parseMeta(type, style) {
         var meta = {};
 
@@ -185,6 +199,11 @@ hqDefine("cloudcare/js/form_entry/form_ui", function () {
      */
     Container.prototype.fromJS = function (json) {
         var self = this;
+
+        if (!json.type){
+            Container.groupQuestions(json)
+        }
+
         var mapping = {
             caption: {
                 update: function (options) {
@@ -203,7 +222,9 @@ hqDefine("cloudcare/js/form_entry/form_ui", function () {
             },
             children: {
                 create: function (options) {
-                    if (options.data.type === constants.QUESTION_TYPE) {
+                    if (options.data.type === constants.GROUPED_QUESTION_TILE_ROW_TYPE) {
+                        return new GroupedQuestionTileRow(options.data, self)
+                    } else if (options.data.type === constants.QUESTION_TYPE) {
                         return new Question(options.data, self);
                     } else if (options.data.type === constants.GROUP_TYPE) {
                         return new Group(options.data, self);
@@ -248,6 +269,49 @@ hqDefine("cloudcare/js/form_entry/form_ui", function () {
         };
         ko.mapping.fromJS(json, mapping, self);
     };
+
+    Container.groupQuestions = function (json) {
+        if (!json || !json.children || !Array.isArray(json.children)) {
+        return json;
+        }
+
+        const newChildren = [];
+        let currentGroup = null;
+        let usedWidth = 0;
+
+        function resetCurrentGroup() {
+            currentGroup = null;
+            usedWidth = 0;
+        }
+
+        for (const child of json.children) {
+            if (child.type === constants.QUESTION_TYPE) {
+                const questionTileWidth = Question.calculateColumnWidthForPerRowStyle(child.style);
+                usedWidth += questionTileWidth;
+
+                if (usedWidth > constants.GRID_COLUMNS) {
+                resetCurrentGroup();
+                }
+
+                if (!currentGroup) {
+                currentGroup = { type: constants.GROUPED_QUESTION_TILE_ROW_TYPE, children: [] };
+                newChildren.push(currentGroup);
+                }
+
+                currentGroup.children.push(child);
+            } else if (child.type === constants.GROUP_TYPE || child.type === constants.REPEAT_TYPE) {
+                const newGroup = Container.groupQuestions(child);
+                newChildren.push(newGroup);
+                resetCurrentGroup();
+            } else {
+                newChildren.push(child);
+                resetCurrentGroup();
+            }
+        }
+
+        json.children = newChildren;
+        return json;
+    }
 
     /**
      * Represents the entire form. There is only one of these on a page.
@@ -503,7 +567,7 @@ hqDefine("cloudcare/js/form_entry/form_ui", function () {
 
         self.childrenRequired = ko.computed(function () {
             return _.find(self.children(), function (child) {
-                return child.required() || child.childrenRequired && child.childrenRequired();
+                return child.groupRowChildrenRequired() || child.childrenRequired && child.childrenRequired();
             });
         });
 
@@ -585,6 +649,26 @@ hqDefine("cloudcare/js/form_entry/form_ui", function () {
     Repeat.prototype.constructor = Container;
 
     /**
+     * Represents a group of questions. Questions are grouped such that all questions are
+     * contained in the same row.
+     * @param {Object} json - The JSON returned from touchforms to represent a Form
+     * @param {Object} parent - The object's parent. Either a Form, Group, or Repeat.
+     */
+    function GroupedQuestionTileRow(json, parent) {
+        var self = this;
+        self.parent = parent;
+        Container.call(self, json);
+
+        self.groupRowChildrenRequired = ko.computed(function () {
+            return _.find(self.children(), function (child) {
+                return child.required()
+            });
+        });
+    }
+    GroupedQuestionTileRow.prototype = Object.create(Container.prototype);
+    GroupedQuestionTileRow.prototype.constructor = Container;
+
+    /**
      * Represents a Question. A Question contains an Entry which is the widget that is displayed for that question
      * type.
      * child questions to be rendered
@@ -605,9 +689,7 @@ hqDefine("cloudcare/js/form_entry/form_ui", function () {
             self.domain_meta = parseMeta(json.datatype, json.style);
         }
         self.throttle = 200;
-        self.controlWidth = constants.CONTROL_WIDTH;
-        self.labelWidth = constants.LABEL_WIDTH;
-
+        self.setWidths();
         // If the question has ever been answered, set this to true.
         self.hasAnswered = false;
 
@@ -724,18 +806,8 @@ hqDefine("cloudcare/js/form_entry/form_ui", function () {
      */
     Question.prototype.stylesContaining = function (pattern) {
         var self = this;
-        var retVal = [];
         var styleStr = (self.style) ? ko.utils.unwrapObservable(self.style.raw) : null;
-        if (styleStr) {
-            var styles = styleStr.split(' ');
-            styles.forEach(function (style) {
-                if ((pattern instanceof RegExp && style.match(pattern))
-                    || (typeof pattern === "string" && pattern === style)) {
-                    retVal.push(style);
-                }
-            });
-        }
-        return retVal;
+        return getMatchingStyles(pattern, styleStr)
     };
     /**
      * Returns a boolean of whether the styles contain a pattern
@@ -746,6 +818,24 @@ hqDefine("cloudcare/js/form_entry/form_ui", function () {
     Question.prototype.stylesContains = function (pattern) {
         return this.stylesContaining(pattern).length > 0;
     };
+
+    Question.prototype.setWidths = function () {
+        const columnWidth = Question.calculateColumnWidthForPerRowStyle(this.style)
+
+        this.controlWidth = columnWidth === constants.GRID_COLUMNS ? constants.CONTROL_WIDTH : constants.FULL_WIDTH;
+        this.labelWidth = columnWidth === constants.GRID_COLUMNS ? constants.LABEL_WIDTH : constants.FULL_WIDTH;
+        this.questionTileWidth = columnWidth === constants.GRID_COLUMNS ? constants.FULL_WIDTH : `col-sm-${columnWidth}` ;
+    };
+
+    Question.calculateColumnWidthForPerRowStyle= function(style) {
+        let styleStr = (style) ? ko.utils.unwrapObservable(style.raw) : null;
+        const perRowPattern = new RegExp(`\\d+${constants.PER_ROW}(\\s|$)`);
+        const matchingPerRowStyles = getMatchingStyles(perRowPattern, styleStr);
+        const perRowStyle = matchingPerRowStyles.length === 0 ? null : matchingPerRowStyles[0];
+        const itemsPerRow = perRowStyle !== null ? parseInt(perRowStyle.split("-")[0], 10) : null;
+
+        return itemsPerRow !== null ? constants.GRID_COLUMNS / itemsPerRow : constants.GRID_COLUMNS;
+      }
 
     return {
         getIx: getIx,
