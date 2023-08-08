@@ -226,7 +226,7 @@ class TestBulkConditionalAlerts(TestCase):
         return self._add_rule(timed_schedule_id=schedule.schedule_id)
 
     def _add_rule(self, alert_schedule_id=None, timed_schedule_id=None):
-        assert(alert_schedule_id or timed_schedule_id)
+        assert alert_schedule_id or timed_schedule_id
         rule = create_empty_rule(self.domain, AutomaticUpdateRule.WORKFLOW_SCHEDULING)
         self.addCleanup(rule.delete)
         rule.add_action(
