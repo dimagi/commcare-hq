@@ -83,8 +83,7 @@ hqDefine("app_manager/js/details/case_list_callout", function () {
                     var $help = $this.siblings('.help-block');
                     $help.show();
                     errors.push($help.text());
-                }
-                else {
+                } else {
                     $this.closest('.form-group').removeClass('has-error');
                     $this.siblings('.help-block').hide();
                 }
@@ -95,21 +94,20 @@ hqDefine("app_manager/js/details/case_list_callout", function () {
         var _validateExtras = function (errors) {
             errors = errors || [];
             var $extras = $el.find("." + detailType + "-extras"),
-                $extra_help = $extras.find(".help-block");
+                $extraHelp = $extras.find(".help-block");
 
             if (!_trimmedExtras().length) {
                 $extras.addClass('has-error');
-                $extra_help.show();
-                errors.push($extra_help.text());
-            }
-            else {
+                $extraHelp.show();
+                errors.push($extraHelp.text());
+            } else {
                 $extras.removeClass('has-error');
-                $extra_help.hide();
+                $extraHelp.hide();
             }
             return errors;
         };
 
-        var _validate_responses = function (errors) {
+        var _validateResponses = function (errors) {
             errors = errors || [];
             var $responses = $el.find("." + detailType + "-responses"),
                 $responseHelp = $responses.find(".help-block");
@@ -118,8 +116,7 @@ hqDefine("app_manager/js/details/case_list_callout", function () {
                 $responses.addClass('has-error');
                 $responseHelp.show();
                 errors.push($responseHelp.text());
-            }
-            else {
+            } else {
                 $responses.removeClass('has-error');
                 $responseHelp.hide();
             }
@@ -136,13 +133,13 @@ hqDefine("app_manager/js/details/case_list_callout", function () {
             if (self.lookup_enabled()) {
                 _validateInputs(errors);
                 _validateExtras(errors);
-                _validate_responses(errors);
+                _validateResponses(errors);
             }
 
             if (errors.length) {
-                var alert_user = hqImport("hqwebapp/js/alert_user").alert_user;
+                var alertUser = hqImport("hqwebapp/js/alert_user");
                 _.each(errors, function (error) {
-                    alert_user(error, "danger");
+                    alertUser.alert_user(error, "danger");
                 });
                 return false;
             }
@@ -171,7 +168,8 @@ hqDefine("app_manager/js/details/case_list_callout", function () {
         }
 
         self.lookup_display_results = ko.observable(state.lookup_display_results);
-        var invisible = "", visible = "";
+        var invisible = "",
+            visible = "";
         if (state.lookup_field_header[lang]) {
             visible = invisible = state.lookup_field_header[lang];
         } else {
@@ -195,9 +193,9 @@ hqDefine("app_manager/js/details/case_list_callout", function () {
 
         self.show_add_extra = ko.computed(function () {
             if (self.extras().length) {
-                var last_key = self.extras()[self.extras().length - 1].key(),
-                    last_value = self.extras()[self.extras().length - 1].value();
-                return !(last_key === "" && last_value === "");
+                var lastKey = self.extras()[self.extras().length - 1].key(),
+                    lastValue = self.extras()[self.extras().length - 1].value();
+                return !(lastKey === "" && lastValue === "");
             }
             return true;
         });
