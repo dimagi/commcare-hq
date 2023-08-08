@@ -160,10 +160,10 @@ class MiscUtilTest(TestCase):
     def test_get_column_headings(self):
         case_type = 'case'
         expected_errors = [
-            f"Invalid column \"{self.invalid_col}\" in case type \"{case_type}\". "
+            f"Invalid column \"{self.invalid_col}\" in \"{case_type}\" sheet. "
             "Valid column names are: Foo, Bar, Test Column",
-            f"Column 4 in case type \"{case_type}\" has an empty header",
-            f"Missing \"Case Property\" column header for case type \"{case_type}\"",
+            f"Column 4 in \"{case_type}\" sheet has an empty header",
+            f"Missing \"Case Property\" column header in \"{case_type}\" sheet",
         ]
         column_headings, errors = get_column_headings(
             self.invalid_header_row, self.valid_values, case_type, case_prop_name='Prop')
