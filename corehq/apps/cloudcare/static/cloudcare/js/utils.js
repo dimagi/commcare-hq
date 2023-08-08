@@ -454,6 +454,7 @@ hqDefine('cloudcare/js/utils', [
                 callback(smallScreenEnabled);
             }
         });
+        return smallScreenEnabled;
     };
 
     return {

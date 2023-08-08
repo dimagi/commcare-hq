@@ -423,7 +423,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             const addressFieldPresent = !!_.find(this.styles, function (style) { return style.displayFormat === constants.FORMAT_ADDRESS; });
 
             self.showMap = addressFieldPresent && !appPreview && !self.hasNoItems && toggles.toggleEnabled('CASE_LIST_MAP')
-            self.smallScreenEnabled = window.innerWidth <= constants.SMALL_SCREEN_WIDTH_PX;
+            self.smallScreenEnabled = cloudcareUtils.watchSmallScreenEnabled(enabled => self.smallScreenEnabled = enabled);
         },
 
         ui: CaseListViewUI(),
