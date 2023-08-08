@@ -206,7 +206,6 @@ hqDefine("cloudcare/js/form_entry/form_ui", function () {
                         // There is a request in progress
                         if (options.target.entry.templateType === "file" || formEntryUtils.answersEqual(options.data.answer, options.target.pendingAnswer())) {
                             // We can now mark it as not dirty
-                            options.data.answer = _.clone(options.target.pendingAnswer());
                             options.target.pendingAnswer(constants.NO_PENDING_ANSWER);
                         } else {
                             // still dirty, keep answer the same as the pending one
