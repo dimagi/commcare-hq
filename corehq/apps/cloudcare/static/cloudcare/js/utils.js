@@ -1,4 +1,4 @@
-/* global DOMPurify, moment, NProgress */
+/* global DOMPurify, moment, NProgress, Sentry */
 hqDefine('cloudcare/js/utils', [
     'jquery',
     'hqwebapp/js/initial_page_data',
@@ -206,7 +206,7 @@ hqDefine('cloudcare/js/utils', [
                         errorType: data.type,
                     },
                     extra: sentryData,
-                    level: "error"
+                    level: "error",
                 });
 
                 $.ajax({
@@ -235,7 +235,7 @@ hqDefine('cloudcare/js/utils', [
     function renderMarkdown(text) {
         const md = window.markdownit({ breaks: true });
         return md.render(DOMPurify.sanitize(text || "").replaceAll("&#10;", "\n"));
-    };
+    }
 
     function chainedRenderer(matcher, transform, target) {
         return function (tokens, idx, options, env, self) {
