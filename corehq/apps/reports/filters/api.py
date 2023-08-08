@@ -43,6 +43,7 @@ from corehq.elastic import ESError
 from django_prbac.decorators import requires_privilege
 from corehq import privileges, toggles
 from corehq.apps.accounting.utils import domain_has_privilege
+from corehq.apps.reports.const import COMMCARE_CASE_COPY_PROPERTY_NAME
 
 logger = logging.getLogger(__name__)
 
@@ -269,8 +270,6 @@ class UserDuck:
 class CaseCopier:
     """A helper class for copying cases."""
 
-    COMMCARE_CASE_COPY_PROPERTY_NAME = "commcare_case_copy"
-
     def __init__(self, domain, *, to_owner, censor_data=None):
         """
         Initialize ``CaseCopier``
@@ -358,7 +357,7 @@ class CaseCopier:
             case_name=case_name or case.name,
             case_type=case.type,
             update={
-                self.COMMCARE_CASE_COPY_PROPERTY_NAME: True,
+                COMMCARE_CASE_COPY_PROPERTY_NAME: True,
                 **case.case_json, **deid_props
             },
             index=index_map,
