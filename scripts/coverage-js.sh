@@ -29,4 +29,8 @@ npx nyc report --temp-dir "./coverage-js/merged" --report-dir "./coverage-js" \
     --reporter "html" --reporter "text-summary"
 
 # Unstage current changes, switch to prior working branch, delete temporary branch
-git reset HEAD~1 && git switch - && git branch -D "temp-coverage-js"
+git reset HEAD~1
+if git branch --show-current | grep -q "temp-coverage-js"
+then
+    git switch - && git branch -D "temp-coverage-js"
+fi
