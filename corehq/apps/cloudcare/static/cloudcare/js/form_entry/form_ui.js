@@ -191,6 +191,11 @@ hqDefine("cloudcare/js/form_entry/form_ui", function () {
      */
     Container.prototype.fromJS = function (json) {
         var self = this;
+
+        if (!json.type){
+            Container.groupQuestions(json)
+        }
+
         var mapping = {
             caption: {
                 update: function (options) {
@@ -249,6 +254,49 @@ hqDefine("cloudcare/js/form_entry/form_ui", function () {
         };
         ko.mapping.fromJS(json, mapping, self);
     };
+
+    Container.groupQuestions = function (json) {
+        if (!json || !json.children || !Array.isArray(json.children)) {
+        return json;
+        }
+
+        const newChildren = [];
+        let currentGroup = null;
+        let usedWidth = 0;
+
+        function resetCurrentGroup() {
+            currentGroup = null;
+            usedWidth = 0;
+        }
+
+        for (const child of json.children) {
+            if (child.type === constants.QUESTION_TYPE) {
+                const questionTileWidth = Question.calculateColumnWidthForPerRowStyle(child.style);
+                usedWidth += questionTileWidth;
+
+                if (usedWidth > constants.GRID_COLUMNS) {
+                resetCurrentGroup();
+                }
+
+                if (!currentGroup) {
+                currentGroup = { type: constants.GROUPED_QUESTION_TILE_ROW_TYPE, children: [] };
+                newChildren.push(currentGroup);
+                }
+
+                currentGroup.children.push(child);
+            } else if (child.type === constants.GROUP_TYPE || child.type === constants.REPEAT_TYPE) {
+                const newGroup = Container.groupQuestions(child);
+                newChildren.push(newGroup);
+                resetCurrentGroup();
+            } else {
+                newChildren.push(child);
+                resetCurrentGroup();
+            }
+        }
+
+        json.children = newChildren;
+        return json;
+    }
 
     /**
      * Represents the entire form. There is only one of these on a page.
@@ -504,7 +552,7 @@ hqDefine("cloudcare/js/form_entry/form_ui", function () {
 
         self.childrenRequired = ko.computed(function () {
             return _.find(self.children(), function (child) {
-                return child.required() || child.childrenRequired && child.childrenRequired();
+                return child.groupRowChildrenRequired() || child.childrenRequired && child.childrenRequired();
             });
         });
 
@@ -598,6 +646,12 @@ hqDefine("cloudcare/js/form_entry/form_ui", function () {
         var self = this;
         self.parent = parent;
         Container.call(self, json);
+
+        self.groupRowChildrenRequired = ko.computed(function () {
+            return _.find(self.children(), function (child) {
+                return child.required()
+            });
+        });
     }
     GroupedQuestionTileRow.prototype = Object.create(Container.prototype);
     GroupedQuestionTileRow.prototype.constructor = Container;
