@@ -79,7 +79,7 @@ def _process_multichoice_sheets(workbook, allowed_value_info, prop_row_info):
         for (i, row) in enumerate(itertools.islice(worksheet.iter_rows(), 0, None), start=1):
             if i == HEADER_ROW_INDEX:
                 column_headings, heading_errors = get_column_headings(
-                    row, valid_values=COLUMN_MAPPING_VL, case_type=case_type, case_prop_name='prop_name')
+                    row, valid_values=COLUMN_MAPPING_VL, sheet_name=worksheet.title, case_prop_name='prop_name')
                 if len(heading_errors):
                     errors.extend(heading_errors)
                     break
@@ -128,7 +128,7 @@ def _process_sheets(domain, workbook, allowed_value_info):
         for (i, row) in enumerate(itertools.islice(worksheet.iter_rows(), 0, None), start=1):
             if i == HEADER_ROW_INDEX:
                 column_headings, heading_errors = get_column_headings(
-                    row, valid_values=COLUMN_MAPPING, case_type=case_type, case_prop_name='name')
+                    row, valid_values=COLUMN_MAPPING, sheet_name=case_type, case_prop_name='name')
                 if len(heading_errors):
                     errors.extend(heading_errors)
                     break
@@ -181,7 +181,7 @@ def _process_fhir_resource_type_mapping_sheet(domain, worksheet):
     for (i, row) in enumerate(itertools.islice(worksheet.iter_rows(), 0, None), start=1):
         if i == HEADER_ROW_INDEX:
             column_headings, heading_errors = get_column_headings(
-                case_type=None, row=row, valid_values=COLUMN_MAPPING_FHIR)
+                row, valid_values=COLUMN_MAPPING_FHIR, sheet_name=worksheet.title)
             if len(heading_errors):
                 errors.extend(heading_errors)
                 break

@@ -303,14 +303,14 @@ def get_gps_properties(domain, case_type):
     ).values_list('name', flat=True))
 
 
-def get_column_headings(row, valid_values, case_type=None, case_prop_name=None):
+def get_column_headings(row, valid_values, sheet_name=None, case_prop_name=None):
     column_headings = []
     errors = []
     for index, cell in enumerate(row, start=1):
         if not cell.value:
-            if case_type:
+            if sheet_name:
                 errors.append(
-                    _("Column {} in case type \"{}\" has an empty header").format(index, case_type)
+                    _("Column {} in \"{}\" sheet has an empty header").format(index, sheet_name)
                 )
             else:
                 errors.append(
@@ -323,18 +323,18 @@ def get_column_headings(row, valid_values, case_type=None, case_prop_name=None):
             column_headings.append(valid_values[cell_value])
         else:
             formatted_valid_values = ', '.join(list(valid_values.keys())).title()
-            if case_type:
-                error = _("Invalid column \"{}\" in case type \"{}\". Valid column names are: {}").format(
-                    cell.value, case_type, formatted_valid_values)
+            if sheet_name:
+                error = _("Invalid column \"{}\" in \"{}\" sheet. Valid column names are: {}").format(
+                    cell.value, sheet_name, formatted_valid_values)
                 errors.append(error)
             else:
                 error = _("Invalid column \"{}\". Valid column names are: {}").format(
                     cell.value, formatted_valid_values)
                 errors.append(error)
     if case_prop_name and case_prop_name not in column_headings:
-        if case_type:
+        if sheet_name:
             errors.append(
-                _("Missing \"Case Property\" column header for case type \"{}\"").format(case_type)
+                _("Missing \"Case Property\" column header in \"{}\" sheet").format(sheet_name)
             )
         else:
             errors.append(_("Missing \"Case Property\" column header"))
