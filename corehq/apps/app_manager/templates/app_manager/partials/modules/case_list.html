@@ -169,45 +169,45 @@
               <table style="width: 100%;"><tbody><tr><td style="text-align: center;">
                 <div class="btn-group" role="group">
                   <button type="button" class="btn btn-xs btn-default"
-                          data-bind="click: function () { $parent.adjustTileGridArea($index(), 0, -1, 0, 0); }">
+                          data-bind="click: function () { $parent.adjustTileGridArea($index(), 0, -1, 0, 0); }, enable: tileColumnStart() > 1">
                     <i class="fa fa-arrow-left"></i>
                   </button>
                   <button type="button" class="btn btn-xs btn-default"
-                          data-bind="click: function () { $parent.adjustTileGridArea($index(), -1, 0, 0, 0); }">
+                          data-bind="click: function () { $parent.adjustTileGridArea($index(), -1, 0, 0, 0); }, enable: tileRowStart() > 1">
                     <i class="fa fa-arrow-up"></i>
                   </button>
                   <button type="button" class="btn btn-xs btn-default"
-                          data-bind="click: function () { $parent.adjustTileGridArea($index(), 1, 0, 0, 0); }">
+                          data-bind="click: function () { $parent.adjustTileGridArea($index(), 1, 0, 0, 0); }, enable: tileRowEnd() <= 3">
                     <i class="fa fa-arrow-down"></i>
                   </button>
                   <button type="button" class="btn btn-xs btn-default"
-                          data-bind="click: function () { $parent.adjustTileGridArea($index(), 0, 1, 0, 0); }">
+                          data-bind="click: function () { $parent.adjustTileGridArea($index(), 0, 1, 0, 0); }, enable: tileColumnEnd() <= 12">
                     <i class="fa fa-arrow-right"></i>
                   </button>
                 </div>
                 <div class="btn-group" role="group" style="float: left; margin: 0 2px;">
                   <button type="button" class="btn btn-xs btn-default"
-                          data-bind="click: function () { $parent.adjustTileGridArea($index(), 0, 0, -1, 0); }">
+                          data-bind="click: function () { $parent.adjustTileGridArea($index(), 0, 0, -1, 0);}, enable: tileWidth() > 1">
                     <i class="fa fa-minus"></i>
                   </button>
                   <button type="button" class="btn btn-xs" disabled>
                     <i class="fa fa-arrows-h"></i>
                   </button>
                   <button type="button" class="btn btn-xs btn-default"
-                          data-bind="click: function () { $parent.adjustTileGridArea($index(), 0, 0, 1, 0); }">
+                          data-bind="click: function () { $parent.adjustTileGridArea($index(), 0, 0, 1, 0); }, enable: tileColumnEnd() <= 12">
                     <i class="fa fa-plus"></i>
                   </button>
                 </div>
                 <div class="btn-group" role="group" style="float: right; margin: 0 2px;">
-                  <button type="button" class="btn btn-xs btn-danger"
-                          data-bind="click: function () { $parent.adjustTileGridArea($index(), 0, 0, 0, -1); }">
+                  <button type="button" class="btn btn-xs btn-default"
+                          data-bind="click: function () { $parent.adjustTileGridArea($index(), 0, 0, 0, -1); }, enable: tileHeight() > 1">
                     <i class="fa fa-minus"></i>
                   </button>
                   <button type="button" class="btn btn-xs" disabled>
                     <i class="fa fa-arrows-v"></i>
                   </button>
                   <button type="button" class="btn btn-xs btn-default"
-                          data-bind="click: function () { $parent.adjustTileGridArea($index(), 0, 0, 0, 1); }">
+                          data-bind="click: function () { $parent.adjustTileGridArea($index(), 0, 0, 0, 1); }, enable: tileRowEnd() <= 3">
                     <i class="fa fa-plus"></i>
                   </button>
                 </div>
