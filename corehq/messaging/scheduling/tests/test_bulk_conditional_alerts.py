@@ -582,10 +582,10 @@ class TestBulkConditionalAlerts(TestCase):
         data = (
             ("translated", (
                 (self._get_rule(self.DAILY_RULE).id, 'test daily', '', 'Más Oxidado'),
-                (self._get_rule(self.MONTHLY_RULE).id, 'test monthly', '', ''),
+                (self._get_rule(self.MONTHLY_RULE).id, 'test monthly', 'The Far Side', ''),
             )),
             ("not translated", (
-                (self._get_rule(self.UNTRANSLATED_IMMEDIATE_RULE).id, 'test untranslated', ''),
+                (self._get_rule(self.UNTRANSLATED_IMMEDIATE_RULE).id, 'test untranslated', 'Cannot be blank'),
             )),
         )
 
@@ -602,14 +602,14 @@ class TestBulkConditionalAlerts(TestCase):
         monthly_rule = self._get_rule(self.MONTHLY_RULE)
         monthly_content = monthly_rule.get_schedule().memoized_events[0].content
         self.assertEqual(monthly_content.message, {
-            'en': '',
+            'en': 'The Far Side',
             'es': '',
         })
         self.assertIn("Updated 1 rule(s) in 'not translated' sheet", msgs)
         untranslated_rule = self._get_rule(self.UNTRANSLATED_IMMEDIATE_RULE)
         untranslated_content = untranslated_rule.get_schedule().memoized_events[0].content
         self.assertEqual(untranslated_content.message, {
-            '*': '',
+            '*': 'Cannot be blank',
         })
 
     @patch('corehq.messaging.scheduling.view_helpers.get_language_list')
