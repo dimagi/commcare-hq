@@ -21,3 +21,10 @@ class Command(BaseCommand):
         for billable in relevant_sms_billables:
             total_message_charge = billable.gateway_charge + billable.usage_charge
             total_cost += total_message_charge
+
+        self.stdout.write("total revenue loss in USD is...")
+        final_cost = Decimal("%.2f" % round(total_cost, 2))
+
+        self.stdout.write(total_cost)
+        self.stdout.write(final_cost)
+        self.stdout.write(str(final_cost))
