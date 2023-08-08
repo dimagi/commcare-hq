@@ -822,7 +822,7 @@ hqDefine("cloudcare/js/form_entry/form_ui", function () {
         const perRowStyle = matchingPerRowStyles.length === 0 ? null : matchingPerRowStyles[0];
         const itemsPerRow = perRowStyle !== null ? parseInt(perRowStyle.split("-")[0], 10) : null;
 
-        return itemsPerRow !== null ? constants.GRID_COLUMNS / itemsPerRow : constants.GRID_COLUMNS;
+        return itemsPerRow !== null ? Math.round(constants.GRID_COLUMNS / itemsPerRow) : constants.GRID_COLUMNS;
       }
 
     return {
