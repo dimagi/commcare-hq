@@ -110,13 +110,11 @@ hqDefine("cloudcare/js/formplayer/menus/controller", function () {
         var changeFormLanguage = toggles.toggleEnabled('CHANGE_FORM_LANGUAGE');
         var enablePrintOption = !menuResponse.queryKey;
         var sidebarEnabled = toggles.toggleEnabled('SPLIT_SCREEN_CASE_SEARCH') && !appPreview;
-        var smallScreenEnabled = window.innerWidth <= constants.SMALL_SCREEN_WIDTH_PX;
 
         if (sidebarEnabled && menuResponse.type === "query") {
             var menuData = menusUtils.getMenuData(menuResponse);
             menuData["triggerEmptyCaseList"] = true;
             menuData["sidebarEnabled"] = true;
-            menuData["smallScreenEnabled"] = smallScreenEnabled;
             menuData["title"] = menuResponse.resultsTitle;
             var caseListView = menusUtils.getCaseListView(menuResponse)
             FormplayerFrontend.regions.getRegion('main').show(caseListView(menuData));
