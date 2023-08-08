@@ -58,7 +58,6 @@ class ConfigurableReportSqlDataSource(ConfigurableReportDataSourceMixin, SqlData
         # This explicitly only includes columns that resolve to database queries.
         return [c for c in self.inner_columns if not isinstance(c, CalculatedColumn)]
 
-    @memoized
     @method_decorator(catch_and_raise_exceptions)
     def get_data(self, start=None, limit=None):
         ret = super(ConfigurableReportSqlDataSource, self).get_data(start=start, limit=limit)
