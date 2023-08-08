@@ -13,7 +13,7 @@ hqDefine("cloudcare/js/formplayer/spec/split_screen_case_search_spec", function 
 
         const currentUrl = new Utils.CloudcareUrl({ appId: 'abc123' }),
             sandbox = sinon.sandbox.create(),
-            stubs = {},
+            stubs = {};
 
         before(function () {
             sandbox.stub(Marionette.CollectionView.prototype, 'render').returns();
