@@ -130,17 +130,17 @@ hqDefine("reports/js/hq_report", [
 
         self.loadDatespanFromCookie = function () {
             if (self.datespan) {
-                var cookie_startdate = $.cookie(self.cookieDatespanStart),
-                    cookie_enddate = $.cookie(self.cookieDatespanEnd),
-                    load_success = false;
+                var cookieStartDate = $.cookie(self.cookieDatespanStart),
+                    cookieEndDate = $.cookie(self.cookieDatespanEnd),
+                    loadSuccess = false;
 
-                if (cookie_enddate && cookie_startdate) {
-                    load_success = true;
-                    self.datespan.startdate = cookie_startdate;
-                    self.datespan.enddate = cookie_enddate;
+                if (cookieEndDate && cookieStartDate) {
+                    loadSuccess = true;
+                    self.datespan.startdate = cookieStartDate;
+                    self.datespan.enddate = cookieEndDate;
                 }
             }
-            return load_success;
+            return loadSuccess;
         };
 
         var checkFilterAccordionToggleState = function () {
@@ -241,7 +241,9 @@ hqDefine("reports/js/hq_report", [
                 });
 
                 for (var i in data) {
-                    if (data[i] === null || data[i] === undefined) delete data[i];
+                    if (data[i] === null || data[i] === undefined) {
+                        delete data[i];
+                    }
                 }
                 return data;
             };

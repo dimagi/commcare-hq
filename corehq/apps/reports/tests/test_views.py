@@ -738,7 +738,7 @@ class TestUserConfigsWithShared(TestReportsBase):
         self.assertEqual(configs[0]._id, config._id)
 
     def test_with_other_owner_shared_config(self):
-        _config = self.create_report_config(self.DOMAIN, self.admin_user._id)
+        self.create_report_config(self.DOMAIN, self.admin_user._id)
         config2 = self.create_report_config(self.DOMAIN, self.other_admin_user._id)
         self.create_report_notification([config2], owner_id=self.other_admin_user._id)
 
@@ -778,7 +778,7 @@ class TestMySavedReportsView(TestReportsBase):
     @patch('corehq.apps.reports.views.user_can_view_reports', return_value=True)
     def test_multiple_admins_can_see_shared_reports(self, *args):
         config1 = self.create_report_config(domain=self.DOMAIN, owner_id=self.admin_user._id)
-        _config2 = self.create_report_config(domain=self.DOMAIN, owner_id=self.other_admin_user._id)
+        self.create_report_config(domain=self.DOMAIN, owner_id=self.other_admin_user._id)
 
         # Test scenario when only one admin user create a ReportNotification
         self.create_report_notification([config1], owner_id=self.admin_user._id)
@@ -860,7 +860,7 @@ class TestAddSavedReportConfigView(TestReportsBase):
 
         self.log_user_in(self.other_admin_user.username)
         try:
-            _response = self.client.post(
+            self.client.post(
                 self.URL,
                 json.dumps(post_data),
                 content_type='application/json;charset=UTF-8',
@@ -917,7 +917,7 @@ class TestAddSavedReportConfigView(TestReportsBase):
 
         self.log_user_in(self.non_admin_user.username)
         try:
-            _response = self.client.post(
+            self.client.post(
                 self.URL,
                 json.dumps(post_data),
                 content_type='application/json;charset=UTF-8',
