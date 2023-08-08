@@ -11,7 +11,7 @@ from corehq.apps.reports.standard.cases.case_list_explorer import CaseListExplor
 from couchforms.geopoint import GeoPoint
 from .const import GEO_POINT_CASE_PROPERTY
 from .models import GeoPolygon
-
+from .utils import get_geo_case_property
 
 
 class CaseManagementMap(ProjectReport, CaseListMixin):
@@ -44,7 +44,7 @@ class CaseManagementMap(ProjectReport, CaseListMixin):
         invalid_geo_cases_count = 0
 
         def _get_geo_location(case):
-            geo_point = case.get(GEO_POINT_CASE_PROPERTY)
+            geo_point = case.get(get_geo_case_property(case.get('domain')))
             if not geo_point:
                 return
 
