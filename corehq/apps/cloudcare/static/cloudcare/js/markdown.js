@@ -8,24 +8,6 @@ hqDefine('cloudcare/js/markdown', [
     initialPageData,
     HMACCallout,
 ) {
-    let md = markdownIt({breaks: true}),
-        // https://github.com/markdown-it/markdown-it/blob/6db517357af5bb42398b474efd3755ad33245877/docs/architecture.md#renderer
-        defaultLinkOpen = md.renderer.rules.link_open || function (tokens, idx, options, env, self) {
-            return self.renderToken(tokens, idx, options);
-        },
-        defaultHeadingOpen = md.renderer.rules.heading_open || function (tokens, idx, options, env, self) {
-            return self.renderToken(tokens, idx, options);
-        };
-
-    md.renderer.rules.heading_open = function (tokens, idx, options, env, self) {
-        let aIndex = tokens[idx].attrIndex('tabindex');
-
-        if (aIndex < 0) {
-            tokens[idx].attrPush(['tabindex', '0']);
-        }
-
-        return defaultHeadingOpen(tokens, idx, options, env, self);
-    };
 
     function updateTarget(tokens, idx, target) {
         let aIndex = tokens[idx].attrIndex('target');
@@ -117,17 +99,45 @@ hqDefine('cloudcare/js/markdown', [
         return renderers;
     }
 
-    let renderers = getChainedRenderers();
-    md.renderer.rules.link_open = function (tokens, idx, options, env, self) {
-        updateTarget(tokens, idx, '_blank');
+    function initMd() {
+        let md = window.markdownit({breaks: true}),
+            // https://github.com/markdown-it/markdown-it/blob/6db517357af5bb42398b474efd3755ad33245877/docs/architecture.md#renderer
+            defaultLinkOpen = md.renderer.rules.link_open || function (tokens, idx, options, env, self) {
+                return self.renderToken(tokens, idx, options);
+            },
+            defaultHeadingOpen = md.renderer.rules.heading_open || function (tokens, idx, options, env, self) {
+                return self.renderToken(tokens, idx, options);
+            };
 
-        renderers.forEach(renderer => renderer(tokens, idx, options, env, self));
+        md.renderer.rules.heading_open = function (tokens, idx, options, env, self) {
+            let aIndex = tokens[idx].attrIndex('tabindex');
 
-        // pass token to default renderer.
-        return defaultLinkOpen(tokens, idx, options, env, self);
-    };
+            if (aIndex < 0) {
+                tokens[idx].attrPush(['tabindex', '0']);
+            }
+
+            return defaultHeadingOpen(tokens, idx, options, env, self);
+        };
+
+        let renderers = getChainedRenderers();
+        md.renderer.rules.link_open = function (tokens, idx, options, env, self) {
+            updateTarget(tokens, idx, '_blank');
+
+            renderers.forEach(renderer => renderer(tokens, idx, options, env, self));
+
+            // pass token to default renderer.
+            return defaultLinkOpen(tokens, idx, options, env, self);
+        };
+        return md;
+    }
+
+    let md = null;
 
     function renderMarkdown(text) {
+        if (md === null) {
+            // lazy init to avoid dependency order issues
+            md = initMd();
+        }
         return md.render(DOMPurify.sanitize(text || "").replaceAll("&#10;", "\n"));
     }
 
