@@ -204,7 +204,9 @@ hqDefine("cloudcare/js/form_entry/form_ui", function () {
             },
             children: {
                 create: function (options) {
-                    if (options.data.type === constants.QUESTION_TYPE) {
+                    if (options.data.type === constants.GROUPED_QUESTION_TILE_ROW_TYPE) {
+                        return new GroupedQuestionTileRow(options.data, self)
+                    } else if (options.data.type === constants.QUESTION_TYPE) {
                         return new Question(options.data, self);
                     } else if (options.data.type === constants.GROUP_TYPE) {
                         return new Group(options.data, self);
@@ -585,6 +587,20 @@ hqDefine("cloudcare/js/form_entry/form_ui", function () {
     }
     Repeat.prototype = Object.create(Container.prototype);
     Repeat.prototype.constructor = Container;
+
+    /**
+     * Represents a group of questions. Questions are grouped such that all questions are
+     * contained in the same row.
+     * @param {Object} json - The JSON returned from touchforms to represent a Form
+     * @param {Object} parent - The object's parent. Either a Form, Group, or Repeat.
+     */
+    function GroupedQuestionTileRow(json, parent) {
+        var self = this;
+        self.parent = parent;
+        Container.call(self, json);
+    }
+    GroupedQuestionTileRow.prototype = Object.create(Container.prototype);
+    GroupedQuestionTileRow.prototype.constructor = Container;
 
     /**
      * Represents a Question. A Question contains an Entry which is the widget that is displayed for that question
