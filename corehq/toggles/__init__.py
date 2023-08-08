@@ -700,7 +700,7 @@ CASE_LIST_CUSTOM_VARIABLES = StaticToggle(
 
 CASE_LIST_TILE = StaticToggle(
     'case_list_tile',
-    'REC: Allow configuration of the REC case list tile',
+    'REC/USH: Case tile templates',
     TAG_CUSTOM,
     [NAMESPACE_DOMAIN],
     help_link='https://confluence.dimagi.com/pages/viewpage.action?'
@@ -1032,8 +1032,10 @@ USH_EMPTY_CASE_LIST_TEXT = StaticToggle(
 
 SPLIT_SCREEN_CASE_SEARCH = StaticToggle(
     'split_screen_case_search',
-    "In case search, show the filters on the left and results on the right.",
+    "Split screen case search: In case search, show the search filters in a sidebar on the left and the results"
+    " on the right.",
     TAG_CUSTOM,
+    help_link='https://confluence.dimagi.com/display/USH/Split+Screen+Case+Search',
     namespaces=[NAMESPACE_DOMAIN],
     parent_toggles=[SYNC_SEARCH_CASE_CLAIM]
 )
@@ -1044,8 +1046,6 @@ USH_USERCASES_FOR_WEB_USERS = StaticToggle(
     TAG_CUSTOM,
     help_link='https://confluence.dimagi.com/display/saas/USH%3A+Enable+Web+User+Usercase+Creation',
     namespaces=[NAMESPACE_DOMAIN],
-    description="""
-    Toggle to enable the creation of usercases for web users."""
 )
 
 WEBAPPS_STICKY_SEARCH = StaticToggle(
@@ -1054,6 +1054,13 @@ WEBAPPS_STICKY_SEARCH = StaticToggle(
     TAG_CUSTOM,
     namespaces=[NAMESPACE_DOMAIN],
     help_link='https://confluence.dimagi.com/display/saas/COVID%3A+Web+Apps+Sticky+Search',
+)
+
+HIDE_SYNC_BUTTON = StaticToggle(
+    "hide_sync_button",
+    "USH: Hide Sync Button in Web Apps",
+    TAG_CUSTOM,
+    namespaces=[NAMESPACE_DOMAIN],
 )
 
 
@@ -1071,14 +1078,6 @@ def _ensure_search_index_is_enabled(domain, enabled):
     if enabled and not has_case_search_cases:
         reindex_case_search_for_domain.delay(domain)
 
-
-CASE_LIST_EXPLORER = StaticToggle(
-    'case_list_explorer',
-    'Show the case list explorer report',
-    TAG_SOLUTIONS_OPEN,
-    namespaces=[NAMESPACE_DOMAIN],
-    save_fn=_ensure_search_index_is_enabled,
-)
 
 EXPLORE_CASE_DATA = StaticToggle(
     'explore_case_data',
@@ -2405,6 +2404,15 @@ FCM_NOTIFICATION = StaticToggle(
                 'Conditional Alerts in Messaging.'
 )
 
+SHOW_OWNER_LOCATION_PROPERTY_IN_REPORT_BUILDER_TOGGLE = StaticToggle(
+    'show_owner_location_property_in_report_builder',
+    label='Show an additional "Owner (Location)" property in report builder reports.',
+    tag=TAG_SOLUTIONS_OPEN,
+    namespaces=[NAMESPACE_DOMAIN],
+    help_link='https://confluence.dimagi.com/display/saas/Enable+creation+of+report+builder+reports+that+are+location+safe',  # noqa: E501
+    description='This can be used to create report builder reports that are location-safe.'
+)
+
 LOCATION_RESTRICTED_SCHEDULED_REPORTS = StaticToggle(
     'location_restricted_scheduled_reports',
     'Allows access to report scheduling views for location restricted users',
@@ -2501,6 +2509,18 @@ VIEW_APP_CHANGES = FrozenPrivilegeToggle(
     help_link="https://confluence.dimagi.com/display/saas/Viewing+App+Changes+between+versions",
 )
 
+
+CASE_LIST_EXPLORER = FrozenPrivilegeToggle(
+    privileges.CASE_LIST_EXPLORER,
+    'case_list_explorer',
+    label='Show the case list explorer report',
+    tag=TAG_SOLUTIONS_OPEN,
+    namespaces=[NAMESPACE_DOMAIN],
+    save_fn=_ensure_search_index_is_enabled,
+    help_link='https://confluence.dimagi.com/display/commcarepublic/Case+List+Explorer',
+)
+
+
 DATA_FILE_DOWNLOAD = FrozenPrivilegeToggle(
     privileges.DATA_FILE_DOWNLOAD,
     'data_file_download',
@@ -2589,14 +2609,4 @@ APPLICATION_ERROR_REPORT = FrozenPrivilegeToggle(
     description="Show Application Error Report.",
     # TODO: Move to public wiki
     help_link='https://confluence.dimagi.com/display/saas/Show+Application+Error+Report+Feature+Flag'
-)
-
-SHOW_OWNER_LOCATION_PROPERTY_IN_REPORT_BUILDER = FrozenPrivilegeToggle(
-    privileges.SHOW_OWNER_LOCATION_PROPERTY_IN_REPORT_BUILDER,
-    'show_owner_location_property_in_report_builder',
-    label='Show an additional "Owner (Location)" property in report builder reports.',
-    tag=TAG_SOLUTIONS_OPEN,
-    namespaces=[NAMESPACE_DOMAIN],
-    help_link='https://confluence.dimagi.com/display/saas/Enable+creation+of+report+builder+reports+that+are+location+safe',  # noqa: E501
-    description='This can be used to create report builder reports that are location-safe.'
 )

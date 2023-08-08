@@ -153,6 +153,7 @@ APP_LABELS_WITH_FILTER_KWARGS_TO_DUMP = defaultdict(list)
     FilteredModelIteratorBuilder('linked_domain.DomainLink', SimpleFilter('linked_domain')),
     FilteredModelIteratorBuilder('linked_domain.DomainLinkHistory', SimpleFilter('link__linked_domain')),
     FilteredModelIteratorBuilder('user_importer.UserUploadRecord', SimpleFilter('domain')),
+    FilteredModelIteratorBuilder('users.ConnectIDUserLink', SimpleFilter('domain')),
     FilteredModelIteratorBuilder('users.DeactivateMobileWorkerTrigger', SimpleFilter('domain')),
     FilteredModelIteratorBuilder('users.DomainRequest', SimpleFilter('domain')),
     FilteredModelIteratorBuilder('users.Invitation', SimpleFilter('domain')),
@@ -216,6 +217,7 @@ APP_LABELS_WITH_FILTER_KWARGS_TO_DUMP = defaultdict(list)
     FilteredModelIteratorBuilder('domain.AppReleaseModeSetting', SimpleFilter('domain')),
     FilteredModelIteratorBuilder('events.Event', SimpleFilter('domain')),
     FilteredModelIteratorBuilder('events.AttendanceTrackingConfig', SimpleFilter('domain')),
+    FilteredModelIteratorBuilder('geospatial.GeoConfig', SimpleFilter('domain')),
 ]]
 
 

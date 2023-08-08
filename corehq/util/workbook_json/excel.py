@@ -316,7 +316,10 @@ def alphanumeric_sort_key(key):
     Thanks to http://stackoverflow.com/a/2669120/240553
     """
     import re
-    convert = lambda text: int(text) if text.isdigit() else text
+
+    def convert(text):
+        return int(text) if text.isdigit() else text
+
     return [convert(c) for c in re.split('([0-9]+)', key)]
 
 

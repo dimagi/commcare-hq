@@ -8,10 +8,10 @@ from functools import cached_property
 from django.conf import settings
 
 from memoized import memoized
-from corehq.apps.es.filters import term
 
 from dimagi.utils.chunked import chunked
 
+from corehq.apps.es.filters import term
 from corehq.util.es.elasticsearch import (
     BulkIndexError,
     Elasticsearch,
@@ -20,7 +20,12 @@ from corehq.util.es.elasticsearch import (
     TransportError,
     bulk,
 )
-from corehq.util.metrics import metrics_counter
+from corehq.util.global_request import get_request_domain
+from corehq.util.metrics import (
+    limit_domains,
+    metrics_counter,
+    metrics_histogram_timer,
+)
 
 from .const import (
     INDEX_CONF_REINDEX,
@@ -387,8 +392,11 @@ class ElasticManageAdapter(BaseAdapter):
         elif "*" in index:
             raise ValueError(f"refusing to operate with index wildcards: {index}")
 
-    def reindex(self, source, dest, wait_for_completion=False,
-                refresh=False, batch_size=1000, purge_ids=False):
+    def reindex(
+            self, source, dest, wait_for_completion=False,
+            refresh=False, batch_size=1000, purge_ids=False,
+            requests_per_second=None,
+    ):
         """
         Starts the reindex process in elastic search cluster
 
@@ -396,6 +404,8 @@ class ElasticManageAdapter(BaseAdapter):
         :param dest: ``str`` name of the destination index
         :param wait_for_completion: ``bool`` would block the request until reindex is complete
         :param refresh: ``bool`` refreshes index
+        :param requests_per_second: ``int`` throttles rate at which reindex issues batches of
+                            index operations by padding each batch with a wait time.
         :param batch_size: ``int`` The size of the scroll batch used by the reindex process. larger
                            batches may process more quickly but risk errors if the documents are too
                            large. 1000 is the recommended maximum and elasticsearch default,
@@ -426,11 +436,15 @@ class ElasticManageAdapter(BaseAdapter):
         if purge_ids:
             reindex_body["script"] = {"inline": "if (ctx._source._id) {ctx._source.remove('_id')}"}
 
-        reindex_info = self._es.reindex(
-            reindex_body,
-            wait_for_completion=wait_for_completion,
-            refresh=refresh
-        )
+        reindex_kwargs = {
+            "wait_for_completion": wait_for_completion,
+            "refresh": refresh,
+        }
+
+        if requests_per_second:
+            reindex_kwargs["requests_per_second"] = requests_per_second
+
+        reindex_info = self._es.reindex(reindex_body, **reindex_kwargs)
         if not wait_for_completion:
             return reindex_info['task']
 
@@ -619,7 +633,15 @@ class ElasticDocumentAdapter(BaseAdapter):
         """Perform a "low-level" search and return the raw result. This is
         split into a separate method for ease of testing the result format.
         """
-        return self._es.search(self.index_name, self.type, query, **kw)
+        with metrics_histogram_timer(
+                'commcare.elasticsearch.search.timing',
+                timing_buckets=(1, 10),
+                tags={
+                    'index': self.canonical_name,
+                    'domain': limit_domains(get_request_domain()),
+                },
+        ):
+            return self._es.search(self.index_name, self.type, query, **kw)
 
     def scroll(self, query, scroll=SCROLL_KEEPALIVE, size=None):
         """Perfrom a scrolling search, yielding each doc until the entire context

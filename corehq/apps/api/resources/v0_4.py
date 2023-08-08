@@ -382,7 +382,7 @@ class ApplicationResource(BaseApplicationResource):
             dehydrated['unique_id'] = module.unique_id
 
             dehydrated['forms'] = []
-            for form in module.forms:
+            for form in module.get_forms():
                 form_unique_id = form.unique_id
                 form_jvalue = {
                     'xmlns': form.xmlns,
@@ -408,7 +408,7 @@ class ApplicationResource(BaseApplicationResource):
 
         # support returning linked applications upon receiving an application list request
         if app.doc_type in [Application._doc_type, LinkedApplication._doc_type]:
-            return [self.dehydrate_module(app, module, app.langs) for module in bundle.obj.modules]
+            return [self.dehydrate_module(app, module, app.langs) for module in bundle.obj.get_modules()]
         elif app.doc_type == RemoteApp._doc_type:
             return []
 

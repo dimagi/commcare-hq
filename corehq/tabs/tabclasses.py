@@ -1,6 +1,7 @@
 from django.conf import settings
 from django.http import Http404
 from django.urls import reverse
+from django.utils.functional import cached_property
 from django.utils.html import format_html, strip_tags
 from django.utils.translation import gettext as _
 from django.utils.translation import gettext_lazy, gettext_noop
@@ -28,8 +29,9 @@ from corehq.apps.app_manager.dbaccessors import (
     domain_has_apps,
     get_brief_apps_in_domain,
 )
-from corehq.apps.app_manager.util import is_remote_app
+from corehq.apps.app_manager.util import is_remote_app, is_linked_app
 from corehq.apps.builds.views import EditMenuView
+from corehq.apps.data_dictionary.views import DataDictionaryView
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.views.internal import ProjectLimitsView
 from corehq.apps.domain.views.releases import ManageReleasesByLocation
@@ -84,6 +86,7 @@ from corehq.apps.translations.integrations.transifex.utils import (
 )
 from corehq.apps.userreports.util import has_report_builder_access
 from corehq.apps.users.decorators import get_permission_name
+from corehq.apps.users.models import HqPermissions
 from corehq.apps.users.permissions import (
     can_download_data_files,
     can_view_sms_exports,
@@ -109,6 +112,8 @@ from corehq.motech.views import ConnectionSettingsListView, MotechLogListView
 from corehq.privileges import DAILY_SAVED_EXPORT, EXCEL_DASHBOARD
 from corehq.tabs.uitab import UITab
 from corehq.tabs.utils import dropdown_dict, sidebar_to_dropdown
+from corehq.apps.users.models import HqPermissions
+from corehq.apps.geospatial.views import GeospatialConfigPage
 
 
 class ProjectReportsTab(UITab):
@@ -157,7 +162,6 @@ class ProjectReportsTab(UITab):
             'icon': 'icon-tasks fa fa-tasks',
             'show_in_dropdown': True,
         }]
-        from corehq.apps.users.models import HqPermissions
         is_ucr_toggle_enabled = (
             toggles.USER_CONFIGURABLE_REPORTS.enabled(
                 self.domain, namespace=toggles.NAMESPACE_DOMAIN
@@ -582,7 +586,6 @@ class ProjectDataTab(UITab):
         #
         # Please remove this flag when this method no longer triggers an 'E' or 'F'
         # classification from the radon code static analysis
-
         items = []
 
         export_data_views = self._get_export_data_views()
@@ -590,62 +593,9 @@ class ProjectDataTab(UITab):
             items.append([_("Export Data"), export_data_views])
 
         if self.can_edit_commcare_data:
-            edit_section = None
-            from corehq.apps.data_interfaces.dispatcher import (
-                EditDataInterfaceDispatcher,
-            )
-            edit_section = EditDataInterfaceDispatcher.navigation_sections(
-                request=self._request, domain=self.domain)
+            items.extend(self._get_edit_section())
 
-            if self.can_use_data_cleanup:
-                from corehq.apps.data_interfaces.views import (
-                    AutomaticUpdateRuleListView,
-                )
-                automatic_update_rule_list_view = {
-                    'title': _(AutomaticUpdateRuleListView.page_title),
-                    'url': reverse(AutomaticUpdateRuleListView.urlname, args=[self.domain]),
-                }
-                if edit_section:
-                    edit_section[0][1].append(automatic_update_rule_list_view)
-                else:
-                    edit_section = [(gettext_lazy('Edit Data'), [automatic_update_rule_list_view])]
-
-            if self.can_deduplicate_cases:
-                from corehq.apps.data_interfaces.views import (
-                    DeduplicationRuleListView,
-                )
-                deduplication_list_view = {
-                    'title': _(DeduplicationRuleListView.page_title),
-                    'url': reverse(DeduplicationRuleListView.urlname, args=[self.domain]),
-                }
-                edit_section[0][1].append(deduplication_list_view)
-
-            items.extend(edit_section)
-
-        explore_data_views = []
-        if ((toggles.EXPLORE_CASE_DATA.enabled_for_request(self._request)
-             or self.can_view_ecd_preview) and self.can_edit_commcare_data):
-            from corehq.apps.data_interfaces.views import ExploreCaseDataView
-            explore_data_views.append({
-                'title': _(ExploreCaseDataView.page_title),
-                'url': reverse(ExploreCaseDataView.urlname, args=(self.domain,)),
-                'show_in_dropdown': False,
-                'icon': 'fa fa-map-marker',
-                'subpages': [],
-            })
-        if self.couch_user.is_superuser or toggles.IS_CONTRACTOR.enabled(self.couch_user.username):
-            from corehq.apps.case_search.models import (
-                case_search_enabled_for_domain,
-            )
-            if case_search_enabled_for_domain(self.domain):
-                from corehq.apps.case_search.views import CaseSearchView
-                explore_data_views.append({
-                    'title': _(CaseSearchView.page_title),
-                    'url': reverse(CaseSearchView.urlname, args=(self.domain,)),
-                    'icon': 'fa fa-search',
-                    'show_in_dropdown': False,
-                    'subpages': [],
-                })
+        explore_data_views = self._get_explore_data_views()
         if explore_data_views:
             items.append([_("Explore Data"), explore_data_views])
 
@@ -656,15 +606,11 @@ class ProjectDataTab(UITab):
             items.extend(FixtureInterfaceDispatcher.navigation_sections(
                 request=self._request, domain=self.domain))
 
-        from corehq.apps.users.models import HqPermissions
-        has_view_data_dict_permission = self.couch_user.has_permission(
-            self.domain,
-            get_permission_name(HqPermissions.view_data_dict)
-        )
-        if toggles.DATA_DICTIONARY.enabled(self.domain) and has_view_data_dict_permission:
-            items.append([_('Data Dictionary'),
-                          [{'title': 'Data Dictionary',
-                            'url': reverse('data_dictionary', args=[self.domain])}]])
+        if self._can_view_data_dictionary:
+            items.append([DataDictionaryView.page_title, [{
+                'title': DataDictionaryView.page_title,
+                'url': reverse(DataDictionaryView.urlname, args=[self.domain]),
+            }]])
 
         if toggles.UCR_EXPRESSION_REGISTRY.enabled(self.domain):
             from corehq.apps.userreports.views import UCRExpressionListView
@@ -680,6 +626,14 @@ class ProjectDataTab(UITab):
                 ]
             )
         return items
+
+    @cached_property
+    def _can_view_data_dictionary(self):
+        has_view_data_dict_permission = self.couch_user.has_permission(
+            self.domain,
+            get_permission_name(HqPermissions.view_data_dict)
+        )
+        return toggles.DATA_DICTIONARY.enabled(self.domain) and has_view_data_dict_permission
 
     def _get_export_data_views(self):
         export_data_views = []
@@ -939,6 +893,64 @@ class ProjectDataTab(UITab):
             })
         return export_data_views
 
+    def _get_edit_section(self):
+        from corehq.apps.data_interfaces.dispatcher import (
+            EditDataInterfaceDispatcher,
+        )
+        edit_section = EditDataInterfaceDispatcher.navigation_sections(
+            request=self._request, domain=self.domain)
+
+        if self.can_use_data_cleanup:
+            from corehq.apps.data_interfaces.views import (
+                AutomaticUpdateRuleListView,
+            )
+            automatic_update_rule_list_view = {
+                'title': _(AutomaticUpdateRuleListView.page_title),
+                'url': reverse(AutomaticUpdateRuleListView.urlname, args=[self.domain]),
+            }
+            if edit_section:
+                edit_section[0][1].append(automatic_update_rule_list_view)
+            else:
+                edit_section = [(gettext_lazy('Edit Data'), [automatic_update_rule_list_view])]
+
+        if self.can_deduplicate_cases:
+            from corehq.apps.data_interfaces.views import (
+                DeduplicationRuleListView,
+            )
+            deduplication_list_view = {
+                'title': _(DeduplicationRuleListView.page_title),
+                'url': reverse(DeduplicationRuleListView.urlname, args=[self.domain]),
+            }
+            edit_section[0][1].append(deduplication_list_view)
+        return edit_section
+
+    def _get_explore_data_views(self):
+        explore_data_views = []
+        if ((toggles.EXPLORE_CASE_DATA.enabled_for_request(self._request)
+             or self.can_view_ecd_preview) and self.can_edit_commcare_data):
+            from corehq.apps.data_interfaces.views import ExploreCaseDataView
+            explore_data_views.append({
+                'title': _(ExploreCaseDataView.page_title),
+                'url': reverse(ExploreCaseDataView.urlname, args=(self.domain,)),
+                'show_in_dropdown': False,
+                'icon': 'fa fa-map-marker',
+                'subpages': [],
+            })
+        if self.couch_user.is_superuser or toggles.IS_CONTRACTOR.enabled(self.couch_user.username):
+            from corehq.apps.case_search.models import (
+                case_search_enabled_for_domain,
+            )
+            if case_search_enabled_for_domain(self.domain):
+                from corehq.apps.case_search.views import CaseSearchView
+                explore_data_views.append({
+                    'title': _(CaseSearchView.page_title),
+                    'url': reverse(CaseSearchView.urlname, args=(self.domain,)),
+                    'icon': 'fa fa-search',
+                    'show_in_dropdown': False,
+                    'subpages': [],
+                })
+        return explore_data_views
+
     @property
     def dropdown_items(self):
         if (
@@ -988,6 +1000,11 @@ class ProjectDataTab(UITab):
                 _(CommCareAnalyticsListView.page_title),
                 url=reverse(CommCareAnalyticsListView.urlname, args=(self.domain,))
             ))
+        if self._can_view_data_dictionary:
+            items.append(dropdown_dict(
+                DataDictionaryView.page_title,
+                url=reverse(DataDictionaryView.urlname, args=[self.domain]),
+            ))
 
         if items:
             items += [self.divider]
@@ -1006,10 +1023,16 @@ class ApplicationsTab(UITab):
 
     @classmethod
     def make_app_title(cls, app):
+        app_type = ''
+        if is_remote_app(app):
+            app_type = _('Remote')
+        elif is_linked_app(app):
+            app_type = _('Linked')
+
         return format_html(
             '{}{}',
             strip_tags(app.name) or _('(Untitled)'),
-            ' (Remote)' if is_remote_app(app) else '',
+            f' ({app_type})' if app_type else ''
         )
 
     @property
@@ -2513,12 +2536,23 @@ class GeospatialTab(UITab):
     view = 'geospatial_default'
 
     url_prefix_formats = (
-        '/a/{domain}/settings/geospatial',
+        '/a/{domain}/geospatial',
     )
 
     @property
     def sidebar_items(self):
-        items = CaseManagementMapDispatcher.navigation_sections(request=self._request, domain=self.domain)
+        items = [
+            (_("Settings"), [
+                {
+                    'title': _("Configure geospatial settings"),
+                    'url': reverse(GeospatialConfigPage.urlname, args=(self.domain,)),
+                },
+            ]),
+        ]
+        items.extend(
+            CaseManagementMapDispatcher.navigation_sections(request=self._request, domain=self.domain)
+        )
+
         return items
 
     @property

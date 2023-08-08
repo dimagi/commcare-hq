@@ -1,5 +1,6 @@
 from datetime import datetime
-from dimagi.ext.couchdbkit import *
+
+from dimagi.ext.couchdbkit import DateTimeProperty, Document, StringProperty
 
 DELETED_SUFFIX = '-Deleted'
 

@@ -59,7 +59,9 @@ class StockStatusMapReport(GenericMapReport, CommtrackReportMixin):
         if self.program_id:
             products = [c for c in products if c.program_id == self.program_id]
         for p in products:
-            col_id = lambda c: '%s-%s' % (p._id, c)
+
+            def col_id(c):
+                return "%s-%s" % (p._id, c)
 
             product_cols = []
             for c in ('category', 'current_stock', 'months_remaining', 'consumption'):

@@ -1,0 +1,14 @@
+{% extends "hqwebapp/bootstrap3/base_section.html" %}
+{% load hq_shared_tags %}
+{% load crispy_forms_tags %}
+{% load i18n %}
+
+{% requirejs_main 'geospatial/js/geo_config' %}
+
+{% block page_content %}
+{% initial_page_data 'config' config %}
+
+  <form id="geospatial-config-form" class="form-horizontal disable-on-submit" method="post">
+    {% crispy form %}
+  </form>
+{% endblock %}
