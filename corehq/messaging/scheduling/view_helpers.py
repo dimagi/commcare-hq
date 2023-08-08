@@ -364,5 +364,7 @@ class UntranslatedConditionalAlertUploader(ConditionalAlertUploader):
 
     def update_message(self, message, row):
         if 'message' in row:
+            if not row['message']:
+                raise RuleUpdateError(_("Missing message"))
             return {'*': row['message']}
         return message
