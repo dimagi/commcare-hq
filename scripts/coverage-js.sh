@@ -1,4 +1,14 @@
-# Run this with local development server active to report Javascript test coverage
+# Generates local Javascript test coverage report
+
+echo "Before running, please confirm:
+   grunt is installed via npm or yarn
+   local development server is active\n"
+read -p "Do you want to proceed? (y/n) " proceed
+case $proceed in
+    y ) echo "Running Javascript coverage report"
+        break;;
+    * ) exit;;
+esac
 
 # Clean up the report directory if it already exists
 if [ -d "./coverage-js" ]
@@ -27,6 +37,7 @@ git reset --hard
 # Build the report based on merged coverage data
 npx nyc report --temp-dir "./coverage-js/merged" --report-dir "./coverage-js" \
     --reporter "html" --reporter "text-summary"
+echo "\nView the full coverage report at:\033[96m\033[1m $(pwd)/coverage-js/index.html \033[0m\n"
 
 # Unstage current changes, switch to prior working branch, delete temporary branch
 git reset HEAD~1
