@@ -196,5 +196,27 @@ hqDefine("cloudcare/js/form_entry/spec/form_ui_spec", function () {
             assert.isTrue(form.children()[0].hasAnyNestedQuestions());
             assert.isFalse(form.children()[1].hasAnyNestedQuestions());
         });
+
+        it('Should not reconcile outdated data', function () {
+            // Check that we don't overwrite a question value if the value is changed while
+            // an 'answer' request is in flight
+
+            questionJSON.answer = "first answer";
+            formJSON.tree = [questionJSON];
+            var form = formUI.Form(_.clone(formJSON)),
+                question = form.children()[0];
+            assert.equal(question.answer(), "first answer");
+
+            // question is updated
+            question.pendingAnswer("updated answer");
+
+            // response from first 'answer' request is received
+            questionJSON.answer = "first answer";
+            formJSON.tree = [questionJSON];
+            $.publish('session.reconcile', [_.clone(formJSON), question]);
+
+            // value should still be the updated value
+            assert.equal(question.answer(), "updated answer");
+        });
     });
 });
