@@ -9,6 +9,7 @@ from corehq.apps.users.util import SYSTEM_USER_ID
 from corehq.form_processor.models import CommCareCase
 
 from ..filters.api import CaseCopier
+from corehq.apps.reports.const import COMMCARE_CASE_COPY_PROPERTY_NAME
 
 DOMAIN = 'test-domain'
 
@@ -52,6 +53,7 @@ class TestCaseCopier(TestCase):
             self.assertEqual(new_case.owner_id, 'new_owner_id')
             self.assertEqual(new_case.case_json['family_name'], 'Nature')
             self.assertEqual(new_case.opened_by, SYSTEM_USER_ID)
+            self.assertTrue(new_case.case_json[COMMCARE_CASE_COPY_PROPERTY_NAME])
 
     def test_copy_case_with_sensitive_properties(self):
         properties = {
