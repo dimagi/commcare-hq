@@ -1,9 +1,9 @@
 /* global DOMPurify, mdAnchorRender */
 hqDefine("cloudcare/js/form_entry/form_ui", function () {
     var cloudcareUtils = hqImport("cloudcare/js/utils");
-        constants = hqImport("cloudcare/js/form_entry/const"),
-        entries = hqImport("cloudcare/js/form_entry/entries"),
-        formEntryUtils = hqImport("cloudcare/js/form_entry/utils");
+    var constants = hqImport("cloudcare/js/form_entry/const");
+    var entries = hqImport("cloudcare/js/form_entry/entries");
+    var formEntryUtils = hqImport("cloudcare/js/form_entry/utils");
     var md = window.markdownit();
     var groupNum = 0;
 
@@ -70,7 +70,7 @@ hqDefine("cloudcare/js/form_entry/form_ui", function () {
 
     function getIx(o) {
         var ix = o.rel_ix();
-        while (ix[0] == '-') {
+        while (ix[0] === '-') {
             o = o.parent;
             if (!o || ko.utils.unwrapObservable(o.rel_ix) === undefined) {
                 break;
@@ -111,7 +111,7 @@ hqDefine("cloudcare/js/form_entry/form_ui", function () {
         }
     }
 
-    function getMatchingStyles (pattern, styleStr) {
+    function getMatchingStyles(pattern, styleStr) {
         let retVal = [];
         if (styleStr) {
             let styles = styleStr.split(' ');
@@ -123,7 +123,7 @@ hqDefine("cloudcare/js/form_entry/form_ui", function () {
             });
         }
         return retVal;
-    };
+    }
 
     function parseMeta(type, style) {
         var meta = {};
@@ -133,7 +133,7 @@ hqDefine("cloudcare/js/form_entry/form_ui", function () {
             meta.maxdiff = style.after !== null ? +style.after : null;
         } else if (type === "int" || type === "float") {
             meta.unit = style.unit;
-        } else if (type == 'str') {
+        } else if (type === 'str') {
             meta.autocomplete = (style.mode === 'autocomplete');
             meta.autocomplete_key = style["autocomplete-key"];
             meta.mask = style.mask;
@@ -257,7 +257,7 @@ hqDefine("cloudcare/js/form_entry/form_ui", function () {
 
     Container.groupQuestions = function (json) {
         if (!json || !json.children || !Array.isArray(json.children)) {
-        return json;
+            return json;
         }
 
         const newChildren = [];
@@ -275,12 +275,12 @@ hqDefine("cloudcare/js/form_entry/form_ui", function () {
                 usedWidth += questionTileWidth;
 
                 if (usedWidth > constants.GRID_COLUMNS) {
-                resetCurrentGroup();
+                    resetCurrentGroup();
                 }
 
                 if (!currentGroup) {
-                currentGroup = { type: constants.GROUPED_QUESTION_TILE_ROW_TYPE, children: [] };
-                newChildren.push(currentGroup);
+                    currentGroup = { type: constants.GROUPED_QUESTION_TILE_ROW_TYPE, children: [] };
+                    newChildren.push(currentGroup);
                 }
 
                 currentGroup.children.push(child);
