@@ -2,7 +2,6 @@ import datetime
 import functools
 import json
 import os
-import re
 import tempfile
 from collections import OrderedDict, namedtuple
 
@@ -13,18 +12,19 @@ from django.http import HttpResponse, HttpResponseRedirect
 from django.http.response import Http404, JsonResponse
 from django.shortcuts import render
 from django.utils.decorators import method_decorator
+from django.utils.html import format_html
 from django.utils.http import urlencode
 from django.utils.translation import gettext as _
 from django.utils.translation import gettext_lazy
 from django.views.decorators.http import require_POST
 from django.views.generic import View
-from django.utils.html import format_html
 
 import six.moves.urllib.error
 import six.moves.urllib.parse
 import six.moves.urllib.request
 from couchdbkit.exceptions import ResourceNotFound
 from memoized import memoized
+from no_exceptions.exceptions import HttpException
 from sqlalchemy import exc, types
 from sqlalchemy.exc import ProgrammingError
 
@@ -40,7 +40,6 @@ from dimagi.utils.couch.undo import (
 )
 from dimagi.utils.logging import notify_exception
 from dimagi.utils.web import json_response
-from no_exceptions.exceptions import HttpException
 from pillowtop.dao.exceptions import DocumentNotFoundError
 
 from corehq import toggles
@@ -57,10 +56,7 @@ from corehq.apps.app_manager.util import purge_report_from_mobile_ucr
 from corehq.apps.change_feed.data_sources import (
     get_document_store_for_doc_type,
 )
-from corehq.apps.domain.decorators import (
-    api_auth,
-    login_and_domain_required,
-)
+from corehq.apps.domain.decorators import api_auth, login_and_domain_required
 from corehq.apps.domain.models import AllowedUCRExpressionSettings, Domain
 from corehq.apps.domain.views.base import BaseDomainView
 from corehq.apps.hqwebapp.decorators import (
@@ -72,8 +68,8 @@ from corehq.apps.hqwebapp.decorators import (
 )
 from corehq.apps.hqwebapp.tasks import send_mail_async
 from corehq.apps.hqwebapp.templatetags.hq_shared_tags import toggle_enabled
-from corehq.apps.hqwebapp.views import CRUDPaginatedViewMixin
 from corehq.apps.hqwebapp.utils.html import safe_replace
+from corehq.apps.hqwebapp.views import CRUDPaginatedViewMixin
 from corehq.apps.linked_domain.util import is_linked_report
 from corehq.apps.locations.permissions import conditionally_location_safe
 from corehq.apps.registry.helper import DataRegistryHelper
@@ -100,7 +96,7 @@ from corehq.apps.userreports.const import (
 )
 from corehq.apps.userreports.dbaccessors import (
     get_datasources_for_domain,
-    get_report_and_registry_report_configs_for_domain
+    get_report_and_registry_report_configs_for_domain,
 )
 from corehq.apps.userreports.exceptions import (
     BadBuilderConfigError,
@@ -231,7 +227,9 @@ class BaseUserConfigReportsView(BaseDomainView):
             'use_updated_ucr_naming': toggle_enabled(self.request, toggles.UCR_UPDATED_NAMING)
         })
         if toggle_enabled(self.request, toggles.AGGREGATE_UCRS):
-            from corehq.apps.aggregate_ucrs.models import AggregateTableDefinition
+            from corehq.apps.aggregate_ucrs.models import (
+                AggregateTableDefinition,
+            )
             context['aggregate_data_sources'] = AggregateTableDefinition.objects.filter(domain=self.domain)
         return context
 
@@ -653,7 +651,13 @@ class ConfigureReport(ReportBuilderView):
     def page_context(self):
         form_type = _get_form_type(self._get_existing_report_type())
         report_form = form_type(
-            self.domain, self.page_name, self.app_id, self.source_type, self.source_id, self.existing_report, self.registry_slug,
+            self.domain,
+            self.page_name,
+            self.app_id,
+            self.source_type,
+            self.source_id,
+            self.existing_report,
+            self.registry_slug,
         )
         temp_ds_id = report_form.create_temp_data_source_if_necessary(self.request.user.username)
         return {
@@ -748,8 +752,7 @@ class ConfigureReport(ReportBuilderView):
         is necessary in case they navigated directly to this view either
         maliciously or with a bookmark perhaps.
         """
-        if (number_of_report_builder_reports(self.domain) >=
-                allowed_report_builder_reports(self.request)):
+        if (number_of_report_builder_reports(self.domain) >= allowed_report_builder_reports(self.request)):
             raise Http404()
 
 

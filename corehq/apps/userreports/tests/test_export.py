@@ -4,10 +4,12 @@ from django.test import SimpleTestCase
 
 import sqlalchemy
 
+from corehq.apps.userreports.util import get_indicator_adapter
+
 from ..sql import get_indicator_table
 from ..views import _get_db_query_from_user_params, process_url_params
 from .test_data_source_config import get_sample_data_source
-from corehq.apps.userreports.util import get_indicator_adapter
+
 
 class ParameterTest(SimpleTestCase):
 
