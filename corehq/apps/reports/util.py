@@ -22,8 +22,7 @@ from celery.schedules import crontab
 from corehq.apps.celery import periodic_task
 from corehq.apps.domain.models import Domain
 from corehq.apps.groups.models import Group
-from corehq.apps.reports.const import USER_QUERY_LIMIT
-from corehq.apps.reports.const import HQ_TABLEAU_GROUP_NAME
+from corehq.apps.reports.const import USER_QUERY_LIMIT, HQ_TABLEAU_GROUP_NAME, COMMCARE_CASE_COPY_PROPERTY_NAME
 from corehq.apps.reports.exceptions import TableauAPIError
 from corehq.apps.reports.models import TableauServer, TableauAPISession, TableauUser, TableauConnectedApp
 from corehq.apps.users.models import CommCareUser, WebUser, CouchUser
@@ -41,6 +40,7 @@ from .analytics.esaccessors import (
     get_username_in_last_form_user_id_submitted,
 )
 from .models import HQUserType, TempCommCareUser
+from corehq.apps.es.case_search import CaseSearchES, case_property_missing
 
 
 def user_list(domain):
@@ -741,3 +741,16 @@ def import_tableau_users(domain, web_user_specs):
                                                                                     known_groups)
 
                 update_tableau_user(domain, username, role=tableau_role, groups=tableau_groups, session=session)
+
+
+def domain_copied_cases_by_owner(domain, owner_ids):
+    """
+    Returns all the cases on a domain belonging to a set of owners
+    where the cases have the COMMCARE_CASE_COPY_PROPERTY_NAME case
+    property.
+    """
+    return CaseSearchES()\
+        .domain(domain)\
+        .owner(owner_ids)\
+        .NOT(case_property_missing(COMMCARE_CASE_COPY_PROPERTY_NAME))\
+        .values_list('_id', flat=True)

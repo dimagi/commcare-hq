@@ -389,3 +389,15 @@ def apply_correct_demo_mode_to_loadtest_user(commcare_user_id):
             user.is_loadtest_user = False  # This change gets saved by
             # turn_off_demo_mode()
             turn_off_demo_mode(user)
+
+
+@task(queue='background_queue')
+def remove_users_test_cases(domain, owner_ids):
+    from corehq.apps.reports.util import domain_copied_cases_by_owner
+
+    test_case_ids = domain_copied_cases_by_owner(domain, owner_ids)
+    if test_case_ids:
+        CommCareCase.objects.hard_delete_cases(
+            domain=domain,
+            case_ids=test_case_ids,
+        )
