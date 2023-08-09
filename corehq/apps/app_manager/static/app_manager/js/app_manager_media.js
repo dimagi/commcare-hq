@@ -128,11 +128,11 @@ hqDefine('app_manager/js/app_manager_media', function () {
 
         self.uploadComplete = function (trigger, event, data) {
             if (data.ref) {
-                var ref = data.ref;
-                var obj_map = self.objectMap();
-                obj_map[ref.path] = ref;
+                var ref = data.ref,
+                    objMap = self.objectMap();
+                objMap[ref.path] = ref;
                 self.ref(new MenuMediaReference(ref));
-                self.objectMap(obj_map);
+                self.objectMap(objMap);
                 self.updateResource();
                 if (self.currentPath() !== data.ref.path) {
                     //CurrentPath has a different filetype to the
