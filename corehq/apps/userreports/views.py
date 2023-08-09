@@ -1485,8 +1485,13 @@ def export_data_source(request, domain, config_id):
     return export_sql_adapter_view(request, adapter, url)
 
 
-def _construct_db_query_from_params(indicator_adapter, params):
-    query = indicator_adapter.get_query_object()
+def _get_db_query_from_user_params(query, params):
+    """Constructs a query from the provided user parameters
+
+    When pagination parameters are specified (both `offset` and `limit`), the query will be sorted in ascenting
+    order using `inserted_at`. If only one pagination parameter is specified, it will not have any effect on the
+    query. Both `offset` and `limit` must be specified for it to take effect.
+    """
 
     query = query.filter_by(**params.keyword_filters)
     for sql_filter in params.sql_filters:
@@ -1517,7 +1522,7 @@ def export_sql_adapter_view(request, adapter, too_large_redirect_url):
     except UserQueryError as e:
         return HttpResponse(str(e), status=400)
 
-    query = _construct_db_query_from_params(indicator_adapter=adapter, params=params)
+    query = _get_db_query_from_user_params(query=adapter.get_query_object(), params=params)
 
     # xls format has limit of 65536 rows
     # First row is taken up by headers
