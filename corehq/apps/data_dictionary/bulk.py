@@ -169,7 +169,7 @@ def _process_sheets(domain, workbook, allowed_value_info):
                 errors.append(_('Error in \"{}\" sheet, row {}: {}').format(case_type, i, error))
 
     for case_type in missing_valid_values:
-        errors.append(_('Missing valid \"{}-vl\" multi-choice sheet for case type \"{}\"').format(
+        errors.append(_('Missing required valid \"{}-vl\" multi-choice sheet for case type \"{}\"').format(
             case_type, case_type))
 
     return errors, seen_props

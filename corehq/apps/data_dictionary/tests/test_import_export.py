@@ -74,7 +74,7 @@ class DataDictionaryImportTest(TestCase, TestFileMixin):
         expected_errors = {
             'Row 4 in \"caseType1-vl\" sheet is missing a case property field',
             'Error in \"caseType1\" sheet, row 4: Unable to save valid values longer than 255 characters',
-            'Missing valid \"caseType2-vl\" multi-choice sheet for case type \"caseType2\"',
+            'Missing required valid \"caseType2-vl\" multi-choice sheet for case type \"caseType2\"',
             'Case property \"mistake\" referenced in \"caseType1-vl\" sheet that does not exist in '
             '\"caseType1\" sheet. Row(s) affected: 5, 6',
             "Error in \"caseType1\" sheet, row 5: "
