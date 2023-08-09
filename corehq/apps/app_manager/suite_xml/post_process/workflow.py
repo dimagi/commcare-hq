@@ -58,6 +58,7 @@ from corehq.apps.app_manager.suite_xml.xml_models import (
     Stack,
     StackDatum,
     SessionDatum,
+    InstanceDatum,
     RemoteRequestQuery,
     StackQuery,
     QueryData,
@@ -693,7 +694,8 @@ class CommandId(object):
 
 def workflow_meta_from_session_datum(session_datum, next_datum):
     if isinstance(session_datum, SessionDatum):
-        return WorkflowDatumMeta(session_datum.id, session_datum.nodeset, session_datum.function)
+        is_instance = isinstance(session_datum, InstanceDatum)
+        return WorkflowDatumMeta(session_datum.id, session_datum.nodeset, session_datum.function, is_instance)
     if isinstance(session_datum, RemoteRequestQuery):
         return WorkflowQueryMeta(session_datum, next_datum)
     raise ValueError
@@ -740,11 +742,12 @@ class WorkflowDatumMeta(WorkflowSessionMeta):
     """
     type_regex = re.compile(r"\[@case_type='([\w-]+)'\]")
 
-    def __init__(self, datum_id, nodeset, function):
+    def __init__(self, datum_id, nodeset, function, is_instance):
         super().__init__(datum_id)
 
         self.nodeset = nodeset
         self.function = function
+        self.is_instance = is_instance
 
     @property
     def requires_selection(self):
@@ -776,7 +779,7 @@ class WorkflowDatumMeta(WorkflowSessionMeta):
         self._case_type = case_type
 
     def clone_to_match(self, source_id=None):
-        new_meta = WorkflowDatumMeta(self.id, self.nodeset, self.function)
+        new_meta = WorkflowDatumMeta(self.id, self.nodeset, self.function, self.is_instance)
         new_meta.source_id = source_id or self.id
         return new_meta
 
