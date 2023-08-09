@@ -57,7 +57,12 @@ hqDefine("app_manager/js/details/screen", function () {
         self.containsSearchConfiguration = options.containsSearchConfiguration;
         self.containsCustomXMLConfiguration = options.containsCustomXMLConfiguration;
         self.allowsTabs = options.allowsTabs;
-        self.caseTileTemplateOptions = [[null, gettext("Don't Use Case Tiles")], ["custom", gettext("Manually configure Case Tiles")]].concat(options.caseTileTemplateOptions);
+
+        let baseCaseTileTemplateOptions = [[null, gettext("Don't Use Case Tiles")]];
+        if (hqImport('hqwebapp/js/toggles').toggleEnabled('CASE_LIST_TILE_CUSTOM'))
+            baseCaseTileTemplateOptions = baseCaseTileTemplateOptions.concat([["custom", gettext("Manually configure Case Tiles")]])
+
+        self.caseTileTemplateOptions = baseCaseTileTemplateOptions.concat(options.caseTileTemplateOptions);
         self.caseTileTemplateOptions = self.caseTileTemplateOptions.map(function (templateOption) {
             return {templateValue: templateOption[0], templateName: templateOption[1]};
         });
@@ -95,8 +100,9 @@ hqDefine("app_manager/js/details/screen", function () {
             }).join("") + "</div>";
         });
         self.showCaseTileConfigColumns = ko.computed(function () {
+            const featureFlag = hqImport('hqwebapp/js/toggles').toggleEnabled('CASE_LIST_TILE_CUSTOM');
             const template = self.caseTileTemplate();
-            return template === "custom";
+            return featureFlag && template === "custom";
         });
         self.showCaseTileColumn = ko.computed(function () {
             const featureFlag = hqImport('hqwebapp/js/toggles').toggleEnabled('CASE_LIST_TILE');
