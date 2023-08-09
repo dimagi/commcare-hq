@@ -103,7 +103,7 @@ class MainMenuNode(template.Node):
 
         from corehq.apps.hqwebapp.utils.bootstrap import get_bootstrap_version, BOOTSTRAP_5
         bootstrap_version = get_bootstrap_version()
-        use_bootstrap5 = get_bootstrap_version == BOOTSTRAP_5
+        use_bootstrap5 = bootstrap_version == BOOTSTRAP_5
 
         for tab in visible_tabs:
             tab.frag_value = UITab.create_compound_cache_param(

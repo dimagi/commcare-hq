@@ -33,6 +33,14 @@ class TestUITab(SimpleTestCase):
         cache_key = make_template_fragment_key(UITab.fragment_prefix_name, [bootstrap5_context['frag_value']])
         self.assertIsNone(cache.get(cache_key))
 
+    def test_ensure_bootstrap5_uses_different_caching_key(self):
+        bootstrap3_context = self._generate_context(use_bootstrap5=False)
+        bootstrap5_context = self._generate_context(use_bootstrap5=True)
+        bootstrap3_key = make_template_fragment_key(UITab.fragment_prefix_name, [bootstrap3_context['frag_value']])
+        bootstrap5_key = make_template_fragment_key(UITab.fragment_prefix_name, [bootstrap5_context['frag_value']])
+
+        self.assertNotEqual(bootstrap3_key, bootstrap5_key)
+
     def setUp(self):
         # this template is intended to mimic the cache lines that can be found in the menu_main.html templates
         # fully rendering those templates felt too heavvy, as it would mean creating domain, user, etc.
