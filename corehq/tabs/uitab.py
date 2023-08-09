@@ -234,7 +234,8 @@ class UITab(object):
     @classmethod
     def create_compound_cache_param(cls, tab_name, domain, user_id, role_version, is_active,
             language, use_bootstrap5):
-        params = [tab_name, domain, user_id, role_version, str(is_active), language, str(use_bootstrap5)]
+        params = [tab_name, str(domain), str(user_id), str(role_version), str(is_active),
+                  str(language), str(use_bootstrap5)]
         return '|'.join(params)
 
     @classmethod
