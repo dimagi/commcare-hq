@@ -44,11 +44,29 @@ class ReportExport(object):
         self.filter_values = filter_values
 
     @property
-    @memoized
     def data_source(self):
         from corehq.apps.userreports.reports.data_source import ConfigurableReportDataSource
         data_source = ConfigurableReportDataSource.from_spec(self.report_config, include_prefilters=True)
         data_source.lang = self.lang
+
+        '''
+        Removing location from the filters for the locations that are not applicable for the current user.
+        Example filters
+        {'closed_0bbbc4e4_string_0': [Choice(value='_all', display='_all')], 'computed_owner_name_40cc88a0_1': [Choice(value='_all', display='_all')], \
+        'computed_owner_location_with_descendants_b5e07138_2': [Choice(value='30e822c671e1405ab0882bd47776c632', display='Agra [City]'), \
+                                                                Choice(value='b16528558c9e48debcf9e3a0cb65c009', display='b16528558c9e48debcf9e3a0cb65c009), \
+                                                                Choice(value='4cee79947b41403981882dda5fb46310', display='Noida [City]')]}
+
+        In this scenario valid location filters for the user are Agra [City] and Noida [City], which can be identified by their display and value content.
+        '''
+        location_key = None
+        user_filtered_locations = []
+        for k, v in self.filter_values.items():
+            if 'computed_owner_location' in k:
+                location_key = k
+                user_filtered_locations = [choice for choice in v if choice.value != choice.display]
+        self.filter_values[location_key] = user_filtered_locations
+
         data_source.set_filter_values(self.filter_values)
         data_source.set_order_by([(o['field'], o['order']) for o in self.report_config.sort_expression])
         return data_source
