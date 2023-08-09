@@ -26,7 +26,7 @@ hqDefine("cloudcare/js/form_entry/spec/fixtures", function () {
             "help_video": null,
             "hint": null,
             "output": null,
-            "add-choice": null
+            "add-choice": null,
         })),
 
         selectJSON: (options = {}) => (_.defaults(options, {
@@ -55,7 +55,7 @@ hqDefine("cloudcare/js/form_entry/spec/fixtures", function () {
             "help_video": null,
             "hint": null,
             "output": null,
-            "add-choice": null
+            "add-choice": null,
         })),
 
         labelJSON: (options = {}) => (_.defaults(options, {
@@ -84,7 +84,7 @@ hqDefine("cloudcare/js/form_entry/spec/fixtures", function () {
             "help_video": null,
             "hint": null,
             "output": null,
-            "add-choice": null
+            "add-choice": null,
         })),
 
         repeatJSON: (options = {}) => (_.defaults(options, {
@@ -171,7 +171,7 @@ hqDefine("cloudcare/js/form_entry/spec/fixtures", function () {
                     "children": [],
                 },
             ],
-        })
+        }),
 
     };
 });
