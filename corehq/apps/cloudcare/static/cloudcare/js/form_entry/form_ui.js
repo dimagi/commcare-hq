@@ -1,6 +1,6 @@
 /* global DOMPurify, mdAnchorRender */
 hqDefine("cloudcare/js/form_entry/form_ui", function () {
-    var cloudcareUtils = hqImport("cloudcare/js/utils");
+    var cloudcareUtils = hqImport("cloudcare/js/utils"),
         constants = hqImport("cloudcare/js/form_entry/const"),
         entries = hqImport("cloudcare/js/form_entry/entries"),
         formEntryUtils = hqImport("cloudcare/js/form_entry/utils");
@@ -70,7 +70,7 @@ hqDefine("cloudcare/js/form_entry/form_ui", function () {
 
     function getIx(o) {
         var ix = o.rel_ix();
-        while (ix[0] == '-') {
+        while (ix[0] === '-') {
             o = o.parent;
             if (!o || ko.utils.unwrapObservable(o.rel_ix) === undefined) {
                 break;
@@ -119,7 +119,7 @@ hqDefine("cloudcare/js/form_entry/form_ui", function () {
             meta.maxdiff = style.after !== null ? +style.after : null;
         } else if (type === "int" || type === "float") {
             meta.unit = style.unit;
-        } else if (type == 'str') {
+        } else if (type === 'str') {
             meta.autocomplete = (style.mode === 'autocomplete');
             meta.autocomplete_key = style["autocomplete-key"];
             meta.mask = style.mask;
@@ -143,6 +143,14 @@ hqDefine("cloudcare/js/form_entry/form_ui", function () {
         }
 
         return meta;
+    }
+
+    function getParentForm(self) {
+        let curr = self;
+        while (curr.parent) {
+            curr = curr.parent;
+        }
+        return curr;
     }
 
     /**
@@ -180,6 +188,9 @@ hqDefine("cloudcare/js/form_entry/form_ui", function () {
         var mapping = {
             caption: {
                 update: function (options) {
+                    if (self.hideCaption) {
+                        return null;
+                    }
                     return options.data ? DOMPurify.sanitize(options.data.replace(/\n/g, '<br/>')) : null;
                 },
             },
@@ -297,7 +308,9 @@ hqDefine("cloudcare/js/form_entry/form_ui", function () {
         });
 
         self.enablePreviousButton = ko.computed(function () {
-            if (!self.showInFormNavigation()) return false;
+            if (!self.showInFormNavigation()) {
+                return false;
+            }
             return self.currentIndex() !== "0" && self.currentIndex() !== "-1" && !self.atFirstIndex();
         });
 
@@ -322,7 +335,7 @@ hqDefine("cloudcare/js/form_entry/form_ui", function () {
             for (var i = 0; i < questions.length; i++) {
                 // eslint-disable-next-line
                 if (questions[i].error() != null || questions[i].serverError() != null
-                            || (questions[i].required() && questions[i].answer() == null)) {
+                            || (questions[i].required() && questions[i].answer() === null)) {
                     qs.push(questions[i]);
                 }
             }
@@ -453,6 +466,13 @@ hqDefine("cloudcare/js/form_entry/form_ui", function () {
         self.groupId = groupNum++;
         self.rel_ix = ko.observable(relativeIndex(self.ix()));
         self.isRepetition = parent instanceof Repeat;
+        let parentForm = getParentForm(self);
+        let oneQuestionPerScreen = parentForm.displayOptions.oneQuestionPerScreen !== undefined && parentForm.displayOptions.oneQuestionPerScreen();
+
+        if (!oneQuestionPerScreen && self.isRepetition) {
+            self.caption(null);
+            self.hideCaption = true;
+        }
         if (_.has(json, 'domain_meta') && _.has(json, 'style')) {
             self.domain_meta = parseMeta(json.datatype, json.style);
         }
@@ -556,10 +576,7 @@ hqDefine("cloudcare/js/form_entry/form_ui", function () {
 
         self.getTranslation = function (translationKey, defaultTranslation) {
             // Find the root level element which contains the translations.
-            var curParent = self.parent;
-            while (curParent.parent) {
-                curParent = curParent.parent;
-            }
+            var curParent = getParentForm(self);
             var translations = curParent.translations;
 
             if (translations) {
