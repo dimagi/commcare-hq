@@ -6,8 +6,31 @@
   </title>
 
   <field>
+    <style
+        horz-align="center"
+        vert-align="center"
+        font-size="medium">
+      <grid
+          grid-height="3"
+          grid-width="2"
+          grid-x="0"
+          grid-y="0" />
+    </style>
+    <header>
+      <text/>
+    </header>
+    <template form="image">
+      <text>
+        <xpath function="{image[xpath_function]}">
+          {image[variables]}
+        </xpath>
+      </text>
+    </template>
+  </field>
+
+  <field>
     <style horz-align="left" vert-align="center" font-size="medium">
-      <grid grid-height="1" grid-width="11" grid-x="0" grid-y="0"/>
+      <grid grid-height="1" grid-width="8" grid-x="2" grid-y="0"/>
     </style>
     <header>
       <text>
@@ -26,7 +49,7 @@
 
   <field>
     <style horz-align="left" vert-align="center" font-size="small">
-      <grid grid-height="1" grid-width="3" grid-x="0" grid-y="1"/>
+      <grid grid-height="1" grid-width="3" grid-x="2" grid-y="1"/>
     </style>
     <header>
       <text>
@@ -45,7 +68,7 @@
 
   <field>
     <style horz-align="left" vert-align="center" font-size="small">
-      <grid grid-height="1" grid-width="7" grid-x="4" grid-y="1"/>
+      <grid grid-height="1" grid-width="5" grid-x="5" grid-y="1"/>
     </style>
     <header>
       <text>
@@ -64,7 +87,7 @@
 
   <field>
     <style horz-align="left" vert-align="center" font-size="small">
-      <grid grid-height="1" grid-width="3" grid-x="0" grid-y="2"/>
+      <grid grid-height="1" grid-width="3" grid-x="2" grid-y="2"/>
     </style>
     <header>
       <text>
@@ -83,7 +106,7 @@
 
   <field>
     <style horz-align="left" vert-align="center" font-size="small">
-      <grid grid-height="1" grid-width="7" grid-x="4" grid-y="2"/>
+      <grid grid-height="1" grid-width="5" grid-x="5" grid-y="2"/>
     </style>
     <header>
       <text>
