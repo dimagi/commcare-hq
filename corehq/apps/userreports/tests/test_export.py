@@ -5,7 +5,7 @@ from django.test import SimpleTestCase
 import sqlalchemy
 
 from ..sql import get_indicator_table
-from ..views import _construct_db_query_from_params, process_url_params
+from ..views import _get_db_query_from_user_params, process_url_params
 from .test_data_source_config import get_sample_data_source
 from corehq.apps.userreports.util import get_indicator_adapter
 
@@ -44,7 +44,7 @@ class ParameterTest(SimpleTestCase):
     def test_pagination_params_specified(self):
         params = process_url_params({'offset': 1, 'limit': 2}, self.columns)
         indicator_adapter = get_indicator_adapter(self.config, load_source='export_data_source')
-        query = _construct_db_query_from_params(indicator_adapter, params)
+        query = _get_db_query_from_user_params(indicator_adapter, params)
         self.assertEqual(params.offset, 1)
         self.assertEqual(query._offset, 1)
         self.assertEqual(params.limit, 2)
@@ -53,7 +53,7 @@ class ParameterTest(SimpleTestCase):
     def test_pagination_params_not_specified(self):
         params = process_url_params({'count-range': '10..30'}, self.columns)
         indicator_adapter = get_indicator_adapter(self.config, load_source='export_data_source')
-        query = _construct_db_query_from_params(indicator_adapter, params)
+        query = _get_db_query_from_user_params(indicator_adapter, params)
         self.assertEqual(params.offset, None)
         self.assertEqual(query._offset, None)
         self.assertEqual(params.limit, None)
