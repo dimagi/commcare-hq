@@ -1410,7 +1410,7 @@ class PreviewDataSourceView(BaseUserConfigReportsView):
 
 
 ExportParameters = namedtuple('ExportParameters',
-                              ['format', 'keyword_filters', 'sql_filters'])
+                              ['format', 'keyword_filters', 'sql_filters', 'offset', 'limit'])
 
 
 def _last_n_days(column, value):
@@ -1449,8 +1449,11 @@ def process_url_params(params, columns):
     format_ = params.get('$format', params.get('format', Format.UNZIPPED_CSV))
     keyword_filters = {}
     sql_filters = []
+    offset = params.get('offset', None)
+    limit = params.get('limit', None)
+
     for key, value in params.items():
-        if key in ('$format', 'format'):
+        if key in ('$format', 'format', 'limit', 'offset'):
             continue
 
         for suffix, fn in sql_directives:
@@ -1466,7 +1469,8 @@ def process_url_params(params, columns):
             else:
                 raise UserQueryError(_('Invalid filter parameter: {}')
                                      .format(key))
-    return ExportParameters(format_, keyword_filters, sql_filters)
+
+    return ExportParameters(format_, keyword_filters, sql_filters, offset, limit)
 
 
 @api_auth(oauth_scopes=['reports:view'])
@@ -1481,8 +1485,23 @@ def export_data_source(request, domain, config_id):
     return export_sql_adapter_view(request, domain, adapter, url)
 
 
+def _construct_db_query_from_params(indicator_adapter, params):
+    query = indicator_adapter.get_query_object()
+
+    query = query.filter_by(**params.keyword_filters)
+    for sql_filter in params.sql_filters:
+        query = query.filter(sql_filter)
+
+    if params.offset and params.limit:
+        query = query.order_by('inserted_at')
+        query = query.offset(params.offset)
+        query = query.limit(params.limit)
+    return query
+
 def export_sql_adapter_view(request, domain, adapter, too_large_redirect_url):
-    q = adapter.get_query_object()
+    # TODO: remove domain passed to export_sql_adapter_view
+    # TODO: rename q to query
+    # TODO: Discuss the behaviour of limit offset in the docs
     table = adapter.get_table()
 
     try:
@@ -1492,6 +1511,7 @@ def export_sql_adapter_view(request, domain, adapter, too_large_redirect_url):
             Format.HTML,
             Format.XLS,
             Format.XLS_2007,
+            Format.JSON,
         ]
         if params.format not in allowed_formats:
             msg = gettext_lazy('format must be one of the following: {}').format(', '.join(allowed_formats))
@@ -1499,9 +1519,7 @@ def export_sql_adapter_view(request, domain, adapter, too_large_redirect_url):
     except UserQueryError as e:
         return HttpResponse(str(e), status=400)
 
-    q = q.filter_by(**params.keyword_filters)
-    for sql_filter in params.sql_filters:
-        q = q.filter(sql_filter)
+    q = _construct_db_query_from_params(indicator_adapter=adapter, params=params)
 
     # xls format has limit of 65536 rows
     # First row is taken up by headers

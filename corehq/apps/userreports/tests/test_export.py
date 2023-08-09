@@ -5,15 +5,15 @@ from django.test import SimpleTestCase
 import sqlalchemy
 
 from ..sql import get_indicator_table
-from ..views import process_url_params
+from ..views import _construct_db_query_from_params, process_url_params
 from .test_data_source_config import get_sample_data_source
-
+from corehq.apps.userreports.util import get_indicator_adapter
 
 class ParameterTest(SimpleTestCase):
 
     def setUp(self):
-        config = get_sample_data_source()
-        self.columns = get_indicator_table(config, sqlalchemy.MetaData()).columns
+        self.config = get_sample_data_source()
+        self.columns = get_indicator_table(self.config, sqlalchemy.MetaData()).columns
 
     def test_no_parameters(self):
         params = process_url_params({}, self.columns)
@@ -40,3 +40,21 @@ class ParameterTest(SimpleTestCase):
         desired_filter = count_column.between('10', '30')
 
         self.assertTrue(result_filter.compare(desired_filter))
+
+    def test_pagination_params_specified(self):
+        params = process_url_params({'offset': 1, 'limit': 2}, self.columns)
+        indicator_adapter = get_indicator_adapter(self.config, load_source='export_data_source')
+        query = _construct_db_query_from_params(indicator_adapter, params)
+        self.assertEqual(params.offset, 1)
+        self.assertEqual(query._offset, 1)
+        self.assertEqual(params.limit, 2)
+        self.assertEqual(query._limit, 2)
+
+    def test_pagination_params_not_specified(self):
+        params = process_url_params({'count-range': '10..30'}, self.columns)
+        indicator_adapter = get_indicator_adapter(self.config, load_source='export_data_source')
+        query = _construct_db_query_from_params(indicator_adapter, params)
+        self.assertEqual(params.offset, None)
+        self.assertEqual(query._offset, None)
+        self.assertEqual(params.limit, None)
+        self.assertEqual(query._limit, None)
