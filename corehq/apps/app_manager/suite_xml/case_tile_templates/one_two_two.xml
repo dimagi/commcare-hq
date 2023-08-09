@@ -16,7 +16,7 @@
     </header>
     <template form="{header[format]}">
       <text>
-        **<locale id="{header[locale_id]}"/>:** ‎
+        **<locale id="{header[locale_id]}"/>:** ‎<!-- This line ends with a Left-to-right control character so the space after ** is preserved -->
         <xpath function="{header[xpath_function]}">
           {header[variables]}
         </xpath>
@@ -35,7 +35,7 @@
     </header>
     <template form="{top_left[format]}">
       <text>
-        **<locale id="{top_left[locale_id]}"/>:** ‎
+        **<locale id="{top_left[locale_id]}"/>:** ‎<!-- This line ends with a Left-to-right control character so the space after ** is preserved -->
         <xpath function="{top_left[xpath_function]}">
           {top_left[variables]}
         </xpath>
@@ -54,7 +54,7 @@
     </header>
     <template form="{top_right[format]}">
       <text>
-        **<locale id="{top_right[locale_id]}"/>:** ‎
+        **<locale id="{top_right[locale_id]}"/>:** ‎<!-- This line ends with a Left-to-right control character so the space after ** is preserved -->
         <xpath function="{top_right[xpath_function]}">
           {top_right[variables]}
         </xpath>
@@ -73,7 +73,7 @@
     </header>
     <template form="{bottom_left[format]}">
       <text>
-        **<locale id="{bottom_left[locale_id]}"/>:** ‎
+        **<locale id="{bottom_left[locale_id]}"/>:** ‎<!-- This line ends with a Left-to-right control character so the space after ** is preserved -->
         <xpath function="{bottom_left[xpath_function]}">
           {bottom_left[variables]}
         </xpath>
@@ -92,7 +92,7 @@
     </header>
     <template form="{bottom_right[format]}">
       <text>
-        **<locale id="{bottom_right[locale_id]}"/>:** ‎
+        **<locale id="{bottom_right[locale_id]}"/>:** ‎<!-- This line ends with a Left-to-right control character so the space after ** is preserved -->
         <xpath function="{bottom_right[xpath_function]}">
           {bottom_right[variables]}
         </xpath>
