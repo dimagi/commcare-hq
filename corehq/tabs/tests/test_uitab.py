@@ -12,7 +12,7 @@ class TestUITab(SimpleTestCase):
 
         self._populate_cache(context)
 
-        cache_key = make_template_fragment_key(UITab.fragment_prefix_name, context.values())
+        cache_key = make_template_fragment_key(UITab.fragment_prefix_name, [context['frag_value']])
         self.assertIsNotNone(cache.get(cache_key))
 
     def test_header_cache_is_successfully_cleared(self):
@@ -21,7 +21,7 @@ class TestUITab(SimpleTestCase):
 
         self._clear_dropdown_cache()
 
-        cache_key = make_template_fragment_key(UITab.fragment_prefix_name, context.values())
+        cache_key = make_template_fragment_key(UITab.fragment_prefix_name, [context['frag_value']])
         self.assertIsNone(cache.get(cache_key))
 
     def test_cache_accounts_for_bootstrap_5(self):
@@ -30,7 +30,7 @@ class TestUITab(SimpleTestCase):
 
         self._clear_dropdown_cache()
 
-        cache_key = make_template_fragment_key(UITab.fragment_prefix_name, bootstrap5_context.values())
+        cache_key = make_template_fragment_key(UITab.fragment_prefix_name, [bootstrap5_context['frag_value']])
         self.assertIsNone(cache.get(cache_key))
 
     def setUp(self):
@@ -39,7 +39,7 @@ class TestUITab(SimpleTestCase):
         self.template = Template('''
         {% load cache %}
 
-        {% cache 500 header_tab tab_name domain tab_is_active user_id role_version lang use_bootstrap5 %}
+        {% cache 500 header_tab frag_value %}
         <h1>Test</h1>
         {% endcache %}
         ''')
@@ -59,13 +59,15 @@ class TestUITab(SimpleTestCase):
                           lang=None,
                           use_bootstrap5=False):
         return {
-            'tab_name': UITab.class_name(),
-            'domain': domain or self.domain,
-            'tab_is_active': tab_is_active,
-            'user_id': user_id or self.user_id,
-            'role_version': role_version or self.role_version,
-            'lang': lang or self.lang,
-            'use_bootstrap5': use_bootstrap5
+            'frag_value': UITab.create_compound_cache_param(
+                UITab.class_name(),
+                domain or self.domain,
+                user_id or self.user_id,
+                role_version or self.role_version,
+                tab_is_active,
+                lang or self.lang,
+                use_bootstrap5
+            )
         }
 
     def _populate_cache(self, context):

@@ -231,18 +231,11 @@ class UITab(object):
 
         return urls
 
-    @staticmethod
-    def get_header_tab_cache_params(tab_name, domain, user_id, role_version, is_active,
-                                    language, use_bootstrap5=False):
-        return [
-            tab_name,
-            domain,
-            is_active,
-            user_id,
-            role_version,
-            language,
-            use_bootstrap5
-        ]
+    @classmethod
+    def create_compound_cache_param(cls, tab_name, domain, user_id, role_version, is_active,
+            language, use_bootstrap5):
+        params = [tab_name, domain, user_id, role_version, str(is_active), language, str(use_bootstrap5)]
+        return '|'.join(params)
 
     @classmethod
     def clear_dropdown_cache(cls, domain, user):
@@ -261,16 +254,15 @@ class UITab(object):
         keys = []
         for use_bootstrap5 in True, False:
             for is_active in True, False:
-                fragment_params = cls.get_header_tab_cache_params(
+                fragment_param = cls.create_compound_cache_param(
                     cls.class_name(),
                     domain,
                     user_id,
                     role_version,
                     is_active,
                     language,
-                    use_bootstrap5
-                )
-                keys.append(make_template_fragment_key(cls.fragment_prefix_name, fragment_params))
+                    use_bootstrap5)
+                keys.append(make_template_fragment_key(cls.fragment_prefix_name, [fragment_param]))
 
         cache.delete_many(keys)
 
