@@ -394,10 +394,8 @@ def apply_correct_demo_mode_to_loadtest_user(commcare_user_id):
 @task(queue='background_queue')
 def remove_users_test_cases(domain, owner_ids):
     from corehq.apps.reports.util import domain_copied_cases_by_owner
+    from corehq.apps.hqcase.case_helper import CaseHelper
 
     test_case_ids = domain_copied_cases_by_owner(domain, owner_ids)
-    if test_case_ids:
-        CommCareCase.objects.hard_delete_cases(
-            domain=domain,
-            case_ids=test_case_ids,
-        )
+    for case_id in test_case_ids:
+        CaseHelper(domain=domain, case_id=case_id).close()
