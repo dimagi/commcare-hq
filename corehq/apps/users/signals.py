@@ -44,7 +44,7 @@ def sync_user_phone_numbers(sender, couch_user, **kwargs):
 
 def remove_test_cases(sender, couch_user, **kwargs):
     from corehq.apps.users.tasks import remove_users_test_cases
-    if not couch_user.is_active:
+    if not couch_user.is_web_user() and not couch_user.is_active:
         remove_users_test_cases.delay(couch_user.domain, [couch_user.user_id])
 
 
