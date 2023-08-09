@@ -334,7 +334,8 @@ hqDefine("cloudcare/js/form_entry/form_ui", function () {
                 return true;
             }
 
-            return _.every(self.children(), function (q) {
+            let questions = getQuestions(self)
+            return _.every(questions, function (q) {
                 return (q.answer() === constants.NO_ANSWER && !q.required()) || q.answer() !== null;
             });
         });
@@ -349,7 +350,8 @@ hqDefine("cloudcare/js/form_entry/form_ui", function () {
                 return false;
             }
 
-            var allValidAndNotPending = _.every(self.children(), function (q) {
+            let questions = getQuestions(self)
+            var allValidAndNotPending = _.every(questions, function (q) {
                 return q.isValid() && !q.pendingAnswer();
             });
             return allValidAndNotPending
@@ -571,9 +573,9 @@ hqDefine("cloudcare/js/form_entry/form_ui", function () {
 
         self.hasAnyNestedQuestions = function () {
             return _.any(self.children(), function (d) {
-                if (d.type() === 'question' || d.type() === 'repeat-juncture') {
+                if (d.type() === constants.QUESTION_TYPE || d.type() === constants.REPEAT_TYPE || d.type() === constants.GROUPED_QUESTION_TILE_ROW_TYPE) {
                     return true;
-                } else if (d.type() === 'sub-group') {
+                } else if (d.type() === constants.GROUP_TYPE) {
                     return d.hasAnyNestedQuestions();
                 }
             });

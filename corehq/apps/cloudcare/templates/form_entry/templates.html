@@ -6,7 +6,7 @@
         class: isRepetition ? 'repetition' : '',
         css: {
           'gr-no-children': $data.children().length === 0,
-          'gr-has-no-questions': _.all($data.children(), function(d) { return d.type() !== 'question' }),
+          'gr-has-no-questions': _.all($data.children(), function(d) { return d.type() !== 'grouped-question-tile-row' }),
           'gr-has-no-nested-questions': !$data.hasAnyNestedQuestions(),
           'panel panel-default': collapsible,
           'required-group': !showChildren() && childrenRequired(),
