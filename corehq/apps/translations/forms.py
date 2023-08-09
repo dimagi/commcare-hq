@@ -189,11 +189,11 @@ class AppTranslationsForm(forms.Form):
 
     def form_fields(self):
         return [
-            hqcrispy.Field('app_id', css_class="hqwebapp-select2"),
-            hqcrispy.Field('version'),
-            hqcrispy.Field('use_version_postfix'),
-            hqcrispy.Field('transifex_project_slug', css_class="hqwebapp-select2"),
-            hqcrispy.Field('action')
+            crispy.Field('app_id', css_class="hqwebapp-select2"),
+            'version',
+            'use_version_postfix',
+            crispy.Field('transifex_project_slug', css_class="hqwebapp-select2"),
+            'action',
         ]
 
     def clean(self):
@@ -236,7 +236,7 @@ class CreateAppTranslationsForm(AppTranslationsForm):
 
     def form_fields(self):
         form_fields = super(CreateAppTranslationsForm, self).form_fields()
-        form_fields.append(hqcrispy.Field('source_lang', css_class="hqwebapp-select2"))
+        form_fields.append(crispy.Field('source_lang', css_class="hqwebapp-select2"))
         return form_fields
 
 
@@ -249,7 +249,7 @@ class PushAppTranslationsForm(AppTranslationsForm):
 
     def form_fields(self):
         form_fields = super(PushAppTranslationsForm, self).form_fields()
-        form_fields.append(hqcrispy.Field('target_lang', css_class="hqwebapp-select2"))
+        form_fields.append(crispy.Field('target_lang', css_class="hqwebapp-select2"))
         return form_fields
 
 
@@ -265,9 +265,9 @@ class PullAppTranslationsForm(AppTranslationsForm):
     def form_fields(self):
         form_fields = super(PullAppTranslationsForm, self).form_fields()
         form_fields.extend([
-            hqcrispy.Field('target_lang', css_class="hqwebapp-select2"),
-            hqcrispy.Field('lock_translations'),
-            hqcrispy.Field('perform_translated_check'),
+            crispy.Field('target_lang', css_class="hqwebapp-select2"),
+            'lock_translations',
+            'perform_translated_check',
         ])
         return form_fields
 
@@ -277,7 +277,7 @@ class DeleteAppTranslationsForm(AppTranslationsForm):
 
     def form_fields(self):
         form_fields = super(DeleteAppTranslationsForm, self).form_fields()
-        form_fields.append(hqcrispy.Field('perform_translated_check'))
+        form_fields.append('perform_translated_check')
         return form_fields
 
 
@@ -308,13 +308,13 @@ class AddTransifexBlacklistForm(forms.ModelForm):
 
         self.fields['app_id'].choices = tuple((app.id, app.name) for app in get_brief_apps_in_domain(domain))
         form_fields = [
-            hqcrispy.Field('app_id'),
-            hqcrispy.Field('module_id'),
-            hqcrispy.Field('field_type'),
-            hqcrispy.Field('field_name'),
-            hqcrispy.Field('display_text'),
-            hqcrispy.Field('domain'),
-            hqcrispy.Field('action'),
+            'app_id',
+            'module_id',
+            'field_type',
+            'field_name',
+            'display_text',
+            'domain',
+            'action',
             hqcrispy.FormActions(
                 twbscrispy.StrictButton(
                     gettext_lazy("Add"),
@@ -387,10 +387,10 @@ class MigrateTransifexProjectForm(forms.Form):
         self.helper.layout = crispy.Layout(
             crispy.Fieldset(
                 "Migrate Project",
-                hqcrispy.Field('from_app_id', css_class="hqwebapp-select2"),
-                hqcrispy.Field('to_app_id', css_class="hqwebapp-select2"),
-                hqcrispy.Field('transifex_project_slug'),
-                hqcrispy.Field('mapping_file')
+                crispy.Field('from_app_id', css_class="hqwebapp-select2"),
+                crispy.Field('to_app_id', css_class="hqwebapp-select2"),
+                crispy.Field('transifex_project_slug'),
+                crispy.Field('mapping_file'),
             ),
             hqcrispy.FormActions(
                 twbscrispy.StrictButton(
