@@ -190,6 +190,7 @@ AUTHENTICATION_BACKENDS = [
     'django.contrib.auth.backends.ModelBackend',
     'corehq.apps.domain.auth.ApiKeyFallbackBackend',
     'corehq.apps.sso.backends.SsoBackend',
+    'corehq.apps.domain.auth.ConnectIDAuthBackend'
 ]
 
 PASSWORD_HASHERS = (
@@ -900,6 +901,7 @@ OAUTH2_PROVIDER = {
     'SCOPES': {
         'access_apis': 'Access API data on all your CommCare projects',
         'reports:view': 'Allow users to view and download all report data',
+        'mobile_access': 'Allow access to mobile sync and submit endpoints'
     },
     'REFRESH_TOKEN_EXPIRE_SECONDS': 60 * 60 * 24 * 15,  # 15 days
 }
@@ -1145,6 +1147,8 @@ COMMCARE_ANALYTICS_HOST = ""
 
 # FCM Server creds used for sending FCM Push Notifications
 FCM_CREDS = None
+
+CONNECTID_USERINFO_URL = 'http://localhost:8080/o/userinfo'
 
 try:
     # try to see if there's an environmental variable set for local_settings
