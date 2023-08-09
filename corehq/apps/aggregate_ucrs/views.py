@@ -83,7 +83,7 @@ def export_aggregate_ucr(request, domain, table_id):
     )
     aggregate_table_adapter = get_indicator_adapter(table_definition, load_source='export_aggregate_ucr')
     url = reverse('export_aggregate_ucr', args=[domain, table_definition.table_id])
-    return export_sql_adapter_view(request, domain, aggregate_table_adapter, url)
+    return export_sql_adapter_view(request, aggregate_table_adapter, url)
 
 
 @login_and_domain_required

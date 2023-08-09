@@ -1482,7 +1482,7 @@ def export_data_source(request, domain, config_id):
     config, _ = get_datasource_config_or_404(config_id, domain)
     adapter = get_indicator_adapter(config, load_source='export_data_source')
     url = reverse('export_configurable_data_source', args=[domain, config._id])
-    return export_sql_adapter_view(request, domain, adapter, url)
+    return export_sql_adapter_view(request, adapter, url)
 
 
 def _construct_db_query_from_params(indicator_adapter, params):
@@ -1498,10 +1498,8 @@ def _construct_db_query_from_params(indicator_adapter, params):
         query = query.limit(params.limit)
     return query
 
-def export_sql_adapter_view(request, domain, adapter, too_large_redirect_url):
-    # TODO: remove domain passed to export_sql_adapter_view
-    # TODO: rename q to query
-    # TODO: Discuss the behaviour of limit offset in the docs
+
+def export_sql_adapter_view(request, adapter, too_large_redirect_url):
     table = adapter.get_table()
 
     try:
@@ -1519,11 +1517,11 @@ def export_sql_adapter_view(request, domain, adapter, too_large_redirect_url):
     except UserQueryError as e:
         return HttpResponse(str(e), status=400)
 
-    q = _construct_db_query_from_params(indicator_adapter=adapter, params=params)
+    query = _construct_db_query_from_params(indicator_adapter=adapter, params=params)
 
     # xls format has limit of 65536 rows
     # First row is taken up by headers
-    if params.format == Format.XLS and q.count() >= 65535:
+    if params.format == Format.XLS and query.count() >= 65535:
         keyword_params = dict(**request.GET)
         # use default format
         if 'format' in keyword_params:
@@ -1536,16 +1534,16 @@ def export_sql_adapter_view(request, domain, adapter, too_large_redirect_url):
         )
 
     # build export
-    def get_table(q):
+    def get_table(query):
         yield list(table.columns.keys())
-        for row in q:
+        for row in query:
             adapter.track_load()
             yield row
 
     fd, path = tempfile.mkstemp()
     with os.fdopen(fd, 'wb') as tmpfile:
         try:
-            tables = [[adapter.table_id, get_table(q)]]
+            tables = [[adapter.table_id, get_table(query)]]
             export_from_tables(tables, tmpfile, params.format)
         except exc.DataError:
             msg = gettext_lazy(
