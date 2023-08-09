@@ -109,7 +109,7 @@ from corehq.messaging.scheduling.views import (
 from corehq.motech.dhis2.views import DataSetMapListView
 from corehq.motech.openmrs.views import OpenmrsImporterView
 from corehq.motech.views import ConnectionSettingsListView, MotechLogListView
-from corehq.privileges import DAILY_SAVED_EXPORT, EXCEL_DASHBOARD
+from corehq.privileges import DAILY_SAVED_EXPORT, EXCEL_DASHBOARD, DATA_DICTIONARY
 from corehq.tabs.uitab import UITab
 from corehq.tabs.utils import dropdown_dict, sidebar_to_dropdown
 from corehq.apps.users.models import HqPermissions
