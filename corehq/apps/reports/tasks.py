@@ -29,7 +29,6 @@ from corehq.form_processor.models import XFormInstance
 from corehq.util.dates import get_timestamp_for_filename
 from corehq.util.files import TransientTempfile, safe_filename_header
 from corehq.util.metrics import metrics_gauge
-from corehq.util.soft_assert import soft_assert
 from corehq.util.view_utils import absolute_reverse
 
 from .analytics.esaccessors import (
@@ -40,8 +39,6 @@ from .analytics.esaccessors import (
 
 logger = get_task_logger(__name__)
 EXPIRE_TIME = ONE_DAY
-
-_calc_props_soft_assert = soft_assert(to='{}@{}'.format('dmore', 'dimagi.com'), exponential_backoff=False)
 
 
 @periodic_task(run_every=crontab(hour="22", minute="0", day_of_week="*"), queue='background_queue')

@@ -151,6 +151,7 @@ from corehq.apps.app_manager.xpath import (
 from corehq.apps.appstore.models import SnapshotMixin
 from corehq.apps.builds.models import BuildRecord, BuildSpec
 from corehq.apps.builds.utils import get_default_build_spec
+from corehq.apps.cleanup.models import DeletedCouchDoc
 from corehq.apps.domain.models import Domain
 from corehq.apps.hqmedia.models import (
     ApplicationMediaMixin,
@@ -2204,6 +2205,17 @@ class DetailPair(DocumentSchema):
         return self
 
 
+class ShadowFormEndpoint(DocumentSchema):
+    form_id = StringProperty()
+    session_endpoint_id = StringProperty()
+
+    def __eq__(self, other):
+        if not isinstance(other, ShadowFormEndpoint):
+            return False
+
+        return self.form_id == other.form_id and self.session_endpoint_id == other.session_endpoint_id
+
+
 class CaseListForm(NavMenuItemMediaMixin):
     form_id = FormIdProperty('modules[*].case_list_form.form_id')
     label = DictProperty()
@@ -3689,6 +3701,7 @@ class ShadowModule(ModuleBase, ModuleDetailsMixin):
     source_module_id = StringProperty()
     forms = []
     excluded_form_ids = SchemaListProperty()
+    form_session_endpoints = SchemaListProperty(ShadowFormEndpoint)
     case_details = SchemaProperty(DetailPair)
     ref_details = SchemaProperty(DetailPair)
     case_list = SchemaProperty(CaseList)
@@ -5541,6 +5554,13 @@ class LinkedApplication(Application):
         if self.domain_link:
             return self.domain_link.is_remote
 
+    def get_master_name(self):
+        if self.master_is_remote:
+            return _('Remote Application')  # Avoid the potentially expensive or impossible query
+
+        latest_app = self.get_latest_master_release(self.upstream_app_id)
+        return latest_app.name
+
     def get_latest_master_release(self, master_app_id):
         if self.domain_link:
             return get_latest_master_app_release(self.domain_link, master_app_id)
@@ -5684,6 +5704,10 @@ class DeleteApplicationRecord(DeleteRecord):
 
     def undo(self):
         app = ApplicationBase.get(self.app_id)
+        DeletedCouchDoc.objects.filter(
+            doc_id=self._id,
+            doc_type=self.doc_type,
+        ).delete()
         app.doc_type = app.get_doc_type()
         app.save(increment_version=False)
 
@@ -5698,6 +5722,10 @@ class DeleteModuleRecord(DeleteRecord):
         app = Application.get(self.app_id)
         modules = app.modules
         modules.insert(self.module_id, self.module)
+        DeletedCouchDoc.objects.filter(
+            doc_id=self._id,
+            doc_type=self.doc_type,
+        ).delete()
         app.modules = modules
         app.save()
 
@@ -5720,6 +5748,10 @@ class DeleteFormRecord(DeleteRecord):
             )
         else:
             module = app.modules[self.module_id]
+        DeletedCouchDoc.objects.filter(
+            doc_id=self._id,
+            doc_type=self.doc_type,
+        ).delete()
         forms = module.forms
         forms.insert(self.form_id, self.form)
         module.forms = forms
