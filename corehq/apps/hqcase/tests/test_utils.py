@@ -3,7 +3,7 @@ from datetime import datetime
 from django.test import TestCase
 from contextlib import contextmanager
 from casexml.apps.case.mock import CaseFactory
-from couchexport.deid import deid_date, deid_ID
+from corehq.apps.export.const import DEID_ID_TRANSFORM, DEID_DATE_TRANSFORM
 
 from corehq.apps.hqcase.utils import (
     get_case_value,
@@ -68,8 +68,8 @@ class TestGetCensoredCaseData(TestCase):
             'date_opened': str(datetime.utcnow()),
         }
         censor_data = {
-            'date_opened': self.date_transform,
-            'captain': self.id_transform,
+            'date_opened': DEID_DATE_TRANSFORM,
+            'captain': DEID_ID_TRANSFORM,
         }
         with get_case(update=properties, **attrs) as case:
             censored_attrs, censored_props = get_deidentified_data(case, censor_data)
@@ -79,7 +79,7 @@ class TestGetCensoredCaseData(TestCase):
 
     def test_missing_properties(self):
         censor_data = {
-            'captain': self.id_transform,
+            'captain': DEID_ID_TRANSFORM,
         }
         with get_case() as case:
             censored_attrs, censored_props = get_deidentified_data(case, censor_data)
@@ -91,25 +91,13 @@ class TestGetCensoredCaseData(TestCase):
             'captain': 'Jack Sparrow',
         }
         censor_data = {
-            'captain': self.invalid_transform,
+            'captain': 'invalid_deid_transform',
         }
         with get_case(update=properties) as case:
             censored_attrs, censored_props = get_deidentified_data(case, censor_data)
 
         self.assertTrue(censored_attrs == {})
         self.assertTrue(censored_props['captain'] == '')
-
-    @property
-    def date_transform(self):
-        return deid_date.__name__
-
-    @property
-    def id_transform(self):
-        return deid_ID.__name__
-
-    @property
-    def invalid_transform(self):
-        return 'invalid'
 
 
 @contextmanager

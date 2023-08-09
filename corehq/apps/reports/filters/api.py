@@ -3,6 +3,8 @@ API endpoints for filter options
 """
 import logging
 import json
+import uuid
+from dataclasses import dataclass
 
 from django.views.generic import View
 from django.http import JsonResponse
@@ -12,9 +14,18 @@ from django.utils.translation import gettext_lazy as _
 from braces.views import JSONResponseMixin
 from memoized import memoized
 
+from casexml.apps.case.mock import CaseBlock, IndexAttrs
+from corehq.apps.hqcase.utils import get_deidentified_data
+from corehq.apps.users.util import SYSTEM_USER_ID
+from corehq.form_processor.models import CommCareCase
+
 from dimagi.utils.logging import notify_exception
 from phonelog.models import DeviceReportEntry
 
+from corehq.apps.case_importer.do_import import (
+    RowAndCase,
+    SubmitCaseBlockHandler,
+)
 from corehq.apps.domain.decorators import LoginAndDomainMixin
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import HqPermissions
@@ -29,7 +40,6 @@ from corehq.apps.reports.filters.controllers import (
 )
 from corehq.apps.users.analytics import get_search_users_in_domain_es_query
 from corehq.elastic import ESError
-from corehq.apps.hqcase.case_helper import CaseHelper
 from django_prbac.decorators import requires_privilege
 from corehq import privileges, toggles
 from corehq.apps.accounting.utils import domain_has_privilege
@@ -231,18 +241,156 @@ def copy_cases(request, domain, *args, **kwargs):
     if not new_owner:
         return JsonResponse({'error': _("Missing new owner id")}, status=400)
 
-    censor_data = {prop['name']: prop['label'] for prop in body.get('sensitive_properties', [])}
+    censor_data = {
+        prop['name']: prop['label']
+        for prop in body.get('sensitive_properties', [])
+    }
 
-    try:
-        copied_count = CaseHelper(domain=domain).copy_cases(
-            domain=domain,
-            case_ids=case_ids,
-            to_owner=new_owner,
-            censor_data=censor_data,
-            count_only=True,
+    case_copier = CaseCopier(
+        domain,
+        to_owner=new_owner,
+        censor_data=censor_data,
+    )
+    case_id_pairs, errors = case_copier.copy_cases(case_ids)
+    count = len(case_id_pairs)
+    return JsonResponse(
+        {'copied_cases': count, 'error': errors},
+        status=400 if count == 0 else 200,
+    )
+
+
+@dataclass
+class UserDuck:
+    """Quacks like a User"""
+    user_id: str
+    username: str
+
+
+class CaseCopier:
+    """A helper class for copying cases."""
+
+    def __init__(self, domain, *, to_owner, censor_data=None):
+        """
+        Initialize ``CaseCopier``
+
+        :param domain: The domain name
+        :param to_owner: The ID of the CouchUser who will own the new
+            cases.
+        :param censor_data: A dictionary, where keys are the case
+            attributes and case properties to be de-identified, and
+            values are the de-id function to use. See
+            ``corehq.apps.export.const.DEID_TRANSFORM_FUNCTIONS``
+        """
+        self.domain = domain
+        self.to_owner = to_owner
+        self.censor_data = censor_data or {}
+
+        self.original_cases = {}  # {case_id: commcare_case}
+        self.processed_cases = {}  # {orig_case_id: new_caseblock}
+
+    def copy_cases(self, case_ids):
+        """
+        Copies the cases specified by ``case_ids`` to ``self.to_owner``.
+
+        :param case_ids: The case IDs of the cases to copy.
+        :returns: A list of original- and new case ID pairs and a list
+            of any errors encountered.
+        """
+        if not self.to_owner:
+            return [], [_('Must copy cases to valid new owner')]
+
+        original_cases = CommCareCase.objects.get_cases(
+            case_ids,
+            self.domain,
         )
-        return JsonResponse({
-            'copied_cases': copied_count,
-        })
-    except Exception as e:
-        return JsonResponse({'error': _(str(e))}, status=400)
+        if not original_cases:
+            return [], []
+        self.original_cases = {c.case_id: c for c in original_cases}
+        self.processed_cases = {}
+
+        system_user = UserDuck(user_id=SYSTEM_USER_ID, username='system')
+        submission_handler = SubmitCaseBlockHandler(
+            self.domain,
+            import_results=None,
+            case_type=None,
+            user=system_user,
+            record_form_callback=None,
+            throttle=True,
+            add_inferred_props_to_schema=False,
+        )
+        errors = []
+        for i, orig_case in enumerate(original_cases):
+            if orig_case.owner_id == self.to_owner:
+                errors.append(_(
+                    'Original case owner {owner_id} cannot copy '
+                    'case {case_id} to themselves.'
+                ).format(
+                    owner_id=orig_case.owner_id,
+                    case_id=orig_case.case_id,
+                ))
+                continue
+            if orig_case.case_id not in self.processed_cases:
+                caseblock = self._create_caseblock(orig_case)
+                self.processed_cases[orig_case.case_id] = caseblock
+                submission_handler.add_caseblock(
+                    RowAndCase(row=i, case=caseblock)
+                )
+        submission_handler.commit_caseblocks()
+
+        orig_new_case_id_pairs = [
+            (orig_case_id, caseblock.case_id)
+            for orig_case_id, caseblock in self.processed_cases.items()
+        ]
+        return orig_new_case_id_pairs, errors
+
+    def _create_caseblock(self, case):
+        deid_attrs, deid_props = get_deidentified_data(case, self.censor_data)
+        case_name = deid_attrs.get('case_name') or deid_attrs.get('name')
+        index_map = self._get_new_index_map(case)
+        # TODO: Are there any deid_attrs we care about other than
+        #       case_name, name, external_id and date_opened?
+        return CaseBlock(
+            create=True,
+            case_id=uuid.uuid4().hex,
+            owner_id=self.to_owner,
+            case_name=case_name or case.name,
+            case_type=case.type,
+            update={**case.case_json, **deid_props},
+            index=index_map,
+            external_id=deid_attrs.get('external_id', case.external_id),
+            date_opened=deid_attrs.get('date_opened', case.opened_on),
+            user_id=SYSTEM_USER_ID,
+        )
+
+    def _get_new_index_map(self, case):
+        orig_index_map = case.get_index_map()
+        new_index_map = {}
+        for identifier, orig_index_dict in orig_index_map.items():
+            new_index_attrs = self._get_new_index_attrs(orig_index_dict)
+            if new_index_attrs:
+                new_index_map[identifier] = new_index_attrs
+        return new_index_map
+
+    def _get_new_index_attrs(self, index_dict):
+        index_dict = index_dict.copy()  # Don't change original by reference
+        orig_parent_case_id = index_dict['case_id']
+
+        # We need the copied case's case_id for the new index
+        if orig_parent_case_id in self.processed_cases:
+            new_parent_caseblock = self.processed_cases[orig_parent_case_id]
+            index_dict['case_id'] = new_parent_caseblock.case_id
+        else:
+            # Need to process the referenced case first to get the
+            # case_id of the copied case
+            if orig_parent_case_id not in self.original_cases:
+                return None
+            if orig_parent_case_id not in self.processed_cases:
+                orig_parent_case = self.original_cases[orig_parent_case_id]
+                new_parent_caseblock = self._create_caseblock(orig_parent_case)
+                self.processed_cases[orig_parent_case_id] = new_parent_caseblock
+                index_dict['case_id'] = new_parent_caseblock.case_id
+        return IndexAttrs(
+            index_dict['case_type'],
+            index_dict['case_id'],
+            index_dict['relationship'],
+        )

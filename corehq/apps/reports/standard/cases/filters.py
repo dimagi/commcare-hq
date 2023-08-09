@@ -4,7 +4,8 @@ from collections import Counter
 from django.utils.safestring import mark_safe
 from django.utils.translation import gettext_lazy, gettext
 from django.utils.functional import lazy
-from couchexport.deid import deid_date, deid_ID
+
+from corehq.apps.export.const import DEID_ID_TRANSFORM, DEID_DATE_TRANSFORM
 
 from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.app_manager.app_schemas.case_properties import (
@@ -23,10 +24,8 @@ from corehq.apps.reports.filters.base import (
 )
 from corehq import toggles, privileges
 
-# TODO: Replace with library method
 
-
-mark_safe_lazy = lazy(mark_safe, str)
+mark_safe_lazy = lazy(mark_safe, str)  # TODO: Replace with library method
 
 
 class CaseSearchFilter(BaseSimpleFilter):
@@ -172,8 +171,8 @@ class SensitiveCaseProperties(CaseListExplorerColumns):
     @property
     def property_label_options(self):
         return [
-            {'type': deid_ID.__name__, 'name': gettext_lazy('Sensitive ID')},
-            {'type': deid_date.__name__, 'name': gettext_lazy('Sensitive Date')},
+            {'type': DEID_ID_TRANSFORM, 'name': gettext_lazy('Sensitive ID')},
+            {'type': DEID_DATE_TRANSFORM, 'name': gettext_lazy('Sensitive Date')},
         ]
 
     def get_column_suggestions(self):
