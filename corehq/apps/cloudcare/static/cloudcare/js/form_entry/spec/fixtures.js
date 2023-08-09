@@ -143,6 +143,7 @@ hqDefine("cloudcare/js/form_entry/spec/fixtures", function () {
         groupJSON: (options = {}) => (_.defaults(options, {
             "type": "sub-group",
             "ix": "1",
+            "caption": "Group",
             "children": [
                 {
                     "type": "sub-group",
