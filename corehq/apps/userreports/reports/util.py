@@ -65,7 +65,8 @@ class ReportExport(object):
             if 'computed_owner_location' in k:
                 location_key = k
                 user_filtered_locations = [choice for choice in v if choice.value != choice.display]
-        self.filter_values[location_key] = user_filtered_locations
+        if location_key:
+            self.filter_values[location_key] = user_filtered_locations
 
         data_source.set_filter_values(self.filter_values)
         data_source.set_order_by([(o['field'], o['order']) for o in self.report_config.sort_expression])
