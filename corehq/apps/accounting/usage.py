@@ -42,6 +42,5 @@ class FeatureUsageCalculator(object):
         ).count()
 
     def _get_web_user_usage(self):
-        web_user_in_account = set()
-        [web_user_in_account.add(id) for id in WebUser.ids_by_domain(self.domain)]
+        web_user_in_account = set(WebUser.ids_by_domain(self.domain))
         return len(web_user_in_account)
