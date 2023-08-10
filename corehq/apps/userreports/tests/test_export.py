@@ -46,7 +46,7 @@ class ParameterTest(SimpleTestCase):
     def test_pagination_params_specified(self):
         params = process_url_params({'offset': 1, 'limit': 2}, self.columns)
         indicator_adapter = get_indicator_adapter(self.config, load_source='export_data_source')
-        query = _get_db_query_from_user_params(indicator_adapter, params)
+        query = _get_db_query_from_user_params(indicator_adapter.get_query_object(), params)
         self.assertEqual(params.offset, 1)
         self.assertEqual(query._offset, 1)
         self.assertEqual(params.limit, 2)
