@@ -1500,7 +1500,7 @@ def _get_db_query_from_user_params(query, params):
     for sql_filter in params.sql_filters:
         query = query.filter(sql_filter)
 
-    if params.offset is None or params.limit is None:
+    if params.offset is not None and params.limit is not None:
         query = query.order_by('inserted_at')
         query = query.offset(params.offset)
         query = query.limit(params.limit)
