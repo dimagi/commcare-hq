@@ -195,7 +195,7 @@ class ExportItem(DocumentSchema, ReadablePathMixin):
     inferred_from = SetProperty(default=set)
 
     def __key(self):
-        return'{}:{}:{}'.format(
+        return '{}:{}:{}'.format(
             _path_nodes_to_string(self.path),
             self.doc_type,
             self.transform,
@@ -690,7 +690,7 @@ class TableConfiguration(DocumentSchema, ReadablePathMixin):
             else:
                 next_doc = {}
             if path[0].is_repeat:
-                if type(next_doc) != list:
+                if next_doc is not list:
                     # This happens when a repeat group has a single repeat iteration
                     next_doc = [next_doc]
                 new_docs.extend([
