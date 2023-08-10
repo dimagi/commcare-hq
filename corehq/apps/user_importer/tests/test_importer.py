@@ -25,6 +25,7 @@ from corehq.apps.custom_data_fields.models import (
 )
 from corehq.apps.domain.models import Domain
 from corehq.apps.groups.models import Group
+from corehq.apps.groups.tests.test_utils import delete_all_groups
 from corehq.apps.reports.models import TableauUser, TableauServer
 from corehq.apps.reports.const import HQ_TABLEAU_GROUP_NAME
 from corehq.apps.reports.tests.test_tableau_api_session import _setup_test_tableau_server
@@ -147,6 +148,7 @@ class TestMobileUserBulkUpload(TestCase, DomainSubscriptionMixin):
     def tearDown(self):
         Invitation.objects.all().delete()
         delete_all_users()
+        delete_all_groups()
 
     @property
     def user(self):
@@ -1429,6 +1431,48 @@ class TestMobileUserBulkUpload(TestCase, DomainSubscriptionMixin):
 
         self.assertEqual(user_history.change_messages['groups'],
             UserChangeMessage.groups_info([])['groups'])
+
+    def test_upload_new_group(self):
+        import_users_and_groups(
+            self.domain.name,
+            [],
+            [{'id': '', 'name': 'test_group', 'case-sharing': False, 'reporting': False}],
+            self.uploading_user.get_id,
+            self.upload_record.pk,
+            False
+        )
+        groups = Group.by_domain(self.domain.name)
+        self.assertEqual(len(groups), 1)
+
+    def test_upload_new_group_and_assign_to_user(self):
+        user = CommCareUser.create(self.domain_name, f"hello@{self.domain.name}.commcarehq.org", "*******",
+                                   created_by=None, created_via=None)
+        user_specs = self._get_spec(user_id=user._id, group=['test_group2'])
+
+        import_users_and_groups(
+            self.domain.name,
+            [user_specs],
+            [{'id': '', 'name': 'test_group2', 'case-sharing': False, 'reporting': False}],
+            self.uploading_user.get_id,
+            self.upload_record.pk,
+            False
+        )
+        groups = user.get_group_ids()
+        self.assertEqual(len(groups), 1)
+
+    def test_upload_new_group_and_assign_to_new_user(self):
+        user_specs = self._get_spec(group=['test_group3'])
+
+        import_users_and_groups(
+            self.domain.name,
+            [user_specs],
+            [{'id': '', 'name': 'test_group3', 'case-sharing': False, 'reporting': False}],
+            self.uploading_user.get_id,
+            self.upload_record.pk,
+            False
+        )
+        groups = self.user.get_group_ids()
+        self.assertEqual(len(groups), 1)
 
     def test_create_or_update_commcare_users_and_groups_with_bad_username(self):
         result = create_or_update_commcare_users_and_groups(

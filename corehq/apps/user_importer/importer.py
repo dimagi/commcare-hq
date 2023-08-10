@@ -278,6 +278,7 @@ def create_or_update_groups(domain, group_specs):
                 group = group_memoizer.by_name(group_name)
                 if not group:
                     group = group_memoizer.create(domain=domain, name=group_name)
+                    group.save()
         except ResourceNotFound:
             log["errors"].append('There are no groups on CommCare HQ with id "%s"' % group_id)
         except MultipleResultsFound:
@@ -450,7 +451,7 @@ def clean_phone_numbers(phone_numbers):
 def create_or_update_commcare_users_and_groups(upload_domain, user_specs, upload_user, upload_record_id,
                                                group_memoizer=None,
                                                update_progress=None):
-    """"
+    """
     Creates and Updates CommCare Users
     For the associated web user username passed, for each CommCareUser
         if corresponding web user is present
@@ -488,7 +489,6 @@ def create_or_update_commcare_users_and_groups(upload_domain, user_specs, upload
             update_progress(current)
             current += 1
 
-        status_row = {}
         username = row.get('username')
         domain = row.get('domain') or upload_domain
         try:
@@ -517,7 +517,7 @@ def create_or_update_commcare_users_and_groups(upload_domain, user_specs, upload
             row['password'] = str(row.get('password'))
         try:
             domain_info = get_domain_info(domain, upload_domain, user_specs, domain_info_by_domain,
-            group_memoizer)
+                                          group_memoizer=group_memoizer)
             for validator in domain_info.validators:
                 validator(row)
         except UserUploadError as e:
@@ -635,7 +635,7 @@ def create_or_update_commcare_users_and_groups(upload_domain, user_specs, upload
                         ).format(web_user_username=web_user_username))
                     if web_user and not web_user.is_member_of(domain) and is_account_confirmed:
                         # add confirmed account to domain
-                        # role_qualified_id would be be present here as confirmed in check_user_role
+                        # role_qualified_id would be present here as confirmed in check_user_role
                         web_user_importer.add_to_domain(role_qualified_id, user.location_id)
                     elif not web_user or not web_user.is_member_of(domain):
                         create_or_update_web_user_invite(web_user_username, domain, role_qualified_id,
