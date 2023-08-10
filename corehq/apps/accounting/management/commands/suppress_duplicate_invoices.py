@@ -16,12 +16,10 @@ class Command(BaseCommand):
         # Filter the Invoice objects based on the date_start
         invoices_of_given_date = Invoice.objects.filter(date_start=invoice_start_date)
 
-        # Annotate the filtered queryset with a count of each subscription id
-        duplicate_subscriptions = invoices_of_given_date.values('subscription').annotate(
-            count=Count('id')).filter(count__gt=1)
+        # Extract the subscription ids that have duplicate invoices
+        duplicate_subs_ids = invoices_of_given_date.values('subscription').annotate(
+            count=Count('id')).filter(count__gt=1).values_list('subscription', flat=True)
 
-        # Extract the subscription ids from the above queryset
-        duplicate_subs_ids = [item['subscription'] for item in duplicate_subscriptions]
 
         suppressed_count = 0
         for sub_id in duplicate_subs_ids:
