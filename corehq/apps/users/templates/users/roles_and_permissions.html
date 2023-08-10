@@ -127,7 +127,7 @@
           <th class="text-center">
             {% trans "Locations" %}
           </th>
-          {% if request|toggle_enabled:"DATA_DICTIONARY" %}
+          {% if request|request_has_privilege:"DATA_DICTIONARY" %}
             <th class="text-center">
               {% trans "Data Dictionary" %}
             </th>
@@ -209,7 +209,7 @@
                                               view: permissions.view_locations
                                             }"></div>
           </td>
-          {% if request|toggle_enabled:"DATA_DICTIONARY" %}
+          {% if request|request_has_privilege:"DATA_DICTIONARY" %}
             <td class="text-center">
               <div data-bind="visible: permissions.access_all_locations,
                                               permissionIcon: {
