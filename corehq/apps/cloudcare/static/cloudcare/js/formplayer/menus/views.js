@@ -7,6 +7,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
         initialPageData = hqImport("hqwebapp/js/initial_page_data"),
         toggles = hqImport("hqwebapp/js/toggles"),
         formplayerUtils = hqImport("cloudcare/js/formplayer/utils/utils"),
+        cloudcareUtils = hqImport("cloudcare/js/utils"),
         markdown = hqImport("cloudcare/js/markdown");
 
     const MenuView = Marionette.View.extend({
