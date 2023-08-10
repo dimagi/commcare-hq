@@ -1,4 +1,4 @@
-/*global DOMPurify, Marionette, moment */
+/*global DOMPurify, Marionette */
 
 hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
     // 'hqwebapp/js/hq.helpers' is a dependency. It needs to be added
@@ -119,7 +119,7 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
                 } else {
                     // Set lookup table option by label
                     var matchingOption = function (el) {
-                        return el.find("option").filter(function (_) {
+                        return el.find("option").filter(function () {
                             return $(this).text().trim() === value;
                         });
                     };
@@ -603,7 +603,7 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
             var fetchingPrompts = FormplayerFrontend.getChannel().request("app:select:menus", urlObject);
             $.when(fetchingPrompts).done(function (response) {
                 // Update models based on response
-                if (response.queryResponse != null) {
+                if (response.queryResponse !== null) {
                     _.each(response.queryResponse.displays, function (responseModel, i) {
                         self.collection.models[i].set({
                             error: responseModel.error,

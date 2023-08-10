@@ -1,4 +1,4 @@
-/* globals moment, MapboxGeocoder, DOMPurify */
+/* globals moment, DOMPurify */
 hqDefine("cloudcare/js/form_entry/entries", function () {
     var kissmetrics = hqImport("analytix/js/kissmetrix"),
         cloudcareUtils = hqImport("cloudcare/js/utils"),
@@ -62,7 +62,7 @@ hqDefine("cloudcare/js/form_entry/entries", function () {
     /**
      * Serves as the base for all entries that take an array answer.
      */
-    function EntryArrayAnswer(question, options) {
+    function EntryArrayAnswer(question) {
         var self = this;
         Entry.call(self, question);
         self.rawAnswer = ko.observableArray(_.clone(question.answer()));

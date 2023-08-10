@@ -6,7 +6,7 @@ hqDefine('cloudcare/js/markdown', [
 ], function (
     $,
     initialPageData,
-    HMACCallout,
+    HMACCallout
 ) {
 
     function updateTarget(tokens, idx, target) {
@@ -20,7 +20,7 @@ hqDefine('cloudcare/js/markdown', [
     }
 
     function chainedRenderer(matcher, transform, target) {
-        return function (tokens, idx, options, env, self) {
+        return function (tokens, idx) {
             let hIndex = tokens[idx].attrIndex('href');
             let matched = false;
             if (hIndex >= 0) {

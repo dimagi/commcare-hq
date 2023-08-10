@@ -1,3 +1,4 @@
+/* global affix */
 /* eslint-env mocha */
 hqDefine("cloudcare/js/form_entry/spec/web_form_session_spec", function () {
     describe('WebForm', function () {
@@ -336,8 +337,8 @@ hqDefine("cloudcare/js/form_entry/spec/web_form_session_spec", function () {
             });
 
             it('Question validation updated after answer', function () {
-                let sess = WebFormSession(formJSON),
-                    form = formUI.Form(formJSON);
+                WebFormSession(formJSON);
+                let form = formUI.Form(formJSON);
 
                 this.makeRequest(constants.ANSWER, form.children()[0], {
                     "status": "validation-error",
@@ -348,8 +349,8 @@ hqDefine("cloudcare/js/form_entry/spec/web_form_session_spec", function () {
             });
 
             it('Question validation updated on submit', function () {
-                let sess = WebFormSession(formJSON),
-                    form = formUI.Form(formJSON);
+                WebFormSession(formJSON);
+                let form = formUI.Form(formJSON);
 
                 this.makeRequest(constants.SUBMIT, form, {
                     "status": "validation-error",
@@ -361,8 +362,8 @@ hqDefine("cloudcare/js/form_entry/spec/web_form_session_spec", function () {
 
             it('Label validation updated on submit', function () {
                 formJSON.tree.push(Fixtures.labelJSON({ix: "1"}));
-                let sess = WebFormSession(formJSON),
-                    form = formUI.Form(formJSON);
+                WebFormSession(formJSON);
+                let form = formUI.Form(formJSON);
 
                 this.makeRequest(constants.SUBMIT, form, {
                     "status": "validation-error",
@@ -374,8 +375,8 @@ hqDefine("cloudcare/js/form_entry/spec/web_form_session_spec", function () {
 
             it('Label validation cleared on answer', function () {
                 formJSON.tree.push(Fixtures.labelJSON({ix: "1"}));
-                let sess = WebFormSession(formJSON),
-                    form = formUI.Form(formJSON);
+                WebFormSession(formJSON);
+                let form = formUI.Form(formJSON);
 
                 this.makeRequest(constants.SUBMIT, form, {
                     "status": "validation-error",
@@ -400,8 +401,8 @@ hqDefine("cloudcare/js/form_entry/spec/web_form_session_spec", function () {
 
             it('Label validation handle missing label', function () {
                 formJSON.tree.push(Fixtures.labelJSON({ix: "1"}));
-                let sess = WebFormSession(formJSON),
-                    form = formUI.Form(formJSON);
+                WebFormSession(formJSON);
+                let form = formUI.Form(formJSON);
 
                 this.makeRequest(constants.SUBMIT, form, {
                     "status": "validation-error",
