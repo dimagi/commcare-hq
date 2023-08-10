@@ -282,6 +282,7 @@ hqDefine("cloudcare/js/form_entry/form_ui", function () {
                 currentGroup = {
                     type: constants.GROUPED_QUESTION_TILE_ROW_TYPE,
                     children: [],
+                    ix: null,
                 };
                 newChildren.push(currentGroup);
             }
@@ -289,6 +290,10 @@ hqDefine("cloudcare/js/form_entry/form_ui", function () {
         }
 
         function resetCurrentGroup() {
+            if (currentGroup) {
+                const ixValuesWithParentheses = currentGroup.children.map(child => `(${child.ix})`);
+                currentGroup.ix = ixValuesWithParentheses.join(",");
+            }
             currentGroup = null;
             usedWidth = 0;
         }
@@ -311,7 +316,7 @@ hqDefine("cloudcare/js/form_entry/form_ui", function () {
                 resetCurrentGroup();
             }
         }
-
+        resetCurrentGroup()
         json.children = newChildren;
         return json;
     }
