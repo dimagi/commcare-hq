@@ -602,7 +602,7 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
             var fetchingPrompts = FormplayerFrontend.getChannel().request("app:select:menus", urlObject);
             $.when(fetchingPrompts).done(function (response) {
                 // Update models based on response
-                if (response.queryResponse !== null) {
+                if (response.queryResponse) {
                     _.each(response.queryResponse.displays, function (responseModel, i) {
                         self.collection.models[i].set({
                             error: responseModel.error,
