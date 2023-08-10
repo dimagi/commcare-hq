@@ -6,15 +6,21 @@
     <thead data-bind="visible: columns().length > 0">
     <tr tabindex="999" data-bind="paste: function (data) { pasteCallback(data, 0); }">
       <th class="col-sm-1"></th>
-      <th class="col-sm-3">{% trans "Property" %}</th>
+      <th class="col-sm-2">{% trans "Property" %}</th>
       <!-- ko if: showCaseTileColumn() -->
       <th class="col-sm-2">{% trans "Display Text" %}</th>
       <th class="col-sm-3">{% trans "Format" %}</th>
       <th class="col-sm-2">{% trans "Case Tile Mapping" %}</th>
       <!--/ko-->
       <!-- ko ifnot: showCaseTileColumn() -->
-      <th class="col-sm-3">{% trans "Display Text" %}</th>
-      <th class="col-sm-4">{% trans "Format" %}</th>
+      <th class="col-sm-2">{% trans "Display Text" %}</th>
+      <th class="col-sm-2">{% trans "Format" %}</th><!-- TODO: add something like showCaseTileGrid, similar to showCaseTileColumn, and fix various col-sm-X classes -->
+      <!-- /ko -->
+      <!-- ko if: showCaseTileConfigColumns() -->
+      <th class="col-sm-1">{% trans "Row" %}</th>
+      <th class="col-sm-1">{% trans "Column" %}</th>
+      <th class="col-sm-1">{% trans "Width" %}</th>
+      <th class="col-sm-1">{% trans "Height" %}</th>
       <!-- /ko -->
       <th class="col-sm-1"></th>
     </tr>
@@ -40,7 +46,7 @@
                     "></i>
       </td>
       <!--ko if: !isTab -->
-      <td class="col-sm-3" data-bind="css: {'has-error': showWarning}">
+      <td class="col-sm-2" data-bind="css: {'has-error': showWarning}">
         <div data-bind="html: hqImport('app_manager/js/details/utils').getFieldHtml(field.val()), visible: !field.edit"></div>
         <div data-bind="jqueryElement: field.ui, visible: field.edit"></div>
         <!-- ko if: useXpathExpression -->
@@ -55,12 +61,18 @@
       </td>
       <td data-bind="jqueryElement: header.ui, css: {
                             'col-sm-2': $parent.showCaseTileColumn(),
-                            'col-sm-3': !$parent.showCaseTileColumn(),
+                            'col-sm-2': !$parent.showCaseTileColumn(),
                         }"></td>
       <td data-bind="jqueryElement: $format, css: {
                             'col-sm-3': $parent.showCaseTileColumn(),
-                            'col-sm-4': !$parent.showCaseTileColumn(),
+                            'col-sm-2': !$parent.showCaseTileColumn(),
                         }"></td>
+      <!-- ko if: $parent.showCaseTileConfigColumns() -->
+      <td><select class="form-control" data-bind="value: tileRowStart, options: tileRowOptions"></select></td>
+      <td><select class="form-control" data-bind="value: tileColumnStart, options: tileColumnOptions"></select></td>
+      <td><select class="form-control" data-bind="value: tileWidth, options: tileWidthOptions"></select></td>
+      <td><select class="form-control" data-bind="value: tileHeight, options: tileHeightOptions"></select></td>
+      <!--/ko-->
       <!--/ko-->
       <!--ko if: isTab -->
       <!--ko if: $data.hasNodeset -->
