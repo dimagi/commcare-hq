@@ -116,14 +116,13 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
                 if (domElement.is('input')) {
                     domElement.val(value);
                     domElement.change();
-                }
-                else {
+                } else {
                     // Set lookup table option by label
                     var matchingOption = function (el) {
                         return el.find("option").filter(function (_) {
                             return $(this).text().trim() === value;
                         });
-                    }
+                    };
                     var option = matchingOption(domElement);
                     if (domElement[0].multiple === true) {
                         var val = option.val();
@@ -132,8 +131,7 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
                                 domElement.val().concat(val)
                             ).trigger("change");
                         }
-                    }
-                    else {
+                    } else {
                         if (option.length === 1) {
                             domElement.val(String(option.index() - 1)).trigger("change");
                         } else {
@@ -397,7 +395,7 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
             this.ui.dateRange.on('cancel.daterangepicker', function () {
                 $(this).val('').trigger('change');
             });
-            this.ui.dateRange.on('apply.daterangepicker', function(ev, picker) {
+            this.ui.dateRange.on('apply.daterangepicker', function (ev, picker) {
                 $(this).val(picker.startDate.format(dateFormat) + separator + picker.endDate.format(dateFormat)).trigger('change');
             });
             this.ui.dateRange.on('change', function () {
@@ -612,7 +610,7 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
                             required: responseModel.required,
                             required_msg: responseModel.required_msg,
                         });
-                });
+                    });
                 } else {
                     _.each(response.models, function (responseModel, i) {
                         self.collection.models[i].set({
