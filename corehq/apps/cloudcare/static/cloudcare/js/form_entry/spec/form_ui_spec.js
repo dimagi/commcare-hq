@@ -75,13 +75,13 @@ hqDefine("cloudcare/js/form_entry/spec/form_ui_spec", function () {
             assert.equal(form.children()[0].children().length, 1);
             assert.equal(form.children()[0].children()[0].type(), constants.GROUP_TYPE);
             assert.isTrue(form.children()[0].children()[0].isRepetition);
-            assert.equal(form.children()[0].children()[0].children()[0].type(), constants.QUESTION_TYPE);
-        });
+            assert.equal(form.children()[0].children()[0].children()[0].type(), constants.GROUPED_QUESTION_TILE_ROW_TYPE);
+            assert.equal(form.children()[0].children()[0].children()[0].children()[0].type(), constants.QUESTION_TYPE);        });
 
         it('Should reconcile question choices', function () {
             formJSON.tree = [questionJSON];
             var form = formUI.Form(formJSON),
-                question = form.children()[0];
+                question = form.children()[0].children()[0];
             assert.equal(form.children().length, 1);
             assert.equal(question.choices().length, 2);
 
@@ -97,7 +97,7 @@ hqDefine("cloudcare/js/form_entry/spec/form_ui_spec", function () {
             questionJSON.answer = null;
             formJSON.tree = [questionJSON];
             var form = formUI.Form(_.clone(formJSON)),
-                question = form.children()[0];
+                question = form.children()[0].children()[0];
             assert.equal(question.answer(), null);
 
             questionJSON.answer = [1,2];
@@ -107,7 +107,7 @@ hqDefine("cloudcare/js/form_entry/spec/form_ui_spec", function () {
 
             questionJSON.answer = [3,3];
             form = formUI.Form(_.clone(formJSON)),
-            question = form.children()[0];
+            question = form.children()[0].children()[0];
             $.publish('session.reconcile', [_.clone(formJSON), question]);
             assert.sameMembers(question.answer(), [3,3]);
         });
@@ -118,7 +118,7 @@ hqDefine("cloudcare/js/form_entry/spec/form_ui_spec", function () {
             questionJSON.answer = "chucknorris.png";
             formJSON.tree = [questionJSON];
             var form = formUI.Form(_.clone(formJSON)),
-                question = form.children()[0];
+                question = form.children()[0].children()[0];
             assert.equal(question.answer(), "chucknorris.png");
 
             // simulate response processing from FP
@@ -204,7 +204,7 @@ hqDefine("cloudcare/js/form_entry/spec/form_ui_spec", function () {
             questionJSON.answer = "first answer";
             formJSON.tree = [questionJSON];
             var form = formUI.Form(_.clone(formJSON)),
-                question = form.children()[0];
+                question = form.children()[0].children()[0];
             assert.equal(question.answer(), "first answer");
 
             // question is updated
