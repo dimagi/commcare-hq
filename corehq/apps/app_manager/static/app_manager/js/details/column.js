@@ -45,6 +45,7 @@ hqDefine("app_manager/js/details/column", function () {
         self.original.case_tile_field = ko.utils.unwrapObservable(self.original.case_tile_field) || "";
         self.case_tile_field = ko.observable(self.original.case_tile_field);
 
+        self.coordinatesVisible = ko.observable(true)
         self.tileRowMax = ko.observable(4)
         self.tileColumnMax = ko.observable(13)
         self.tileRowStart = ko.observable(self.original.grid_y || 1);
@@ -66,7 +67,7 @@ hqDefine("app_manager/js/details/column", function () {
             return Number(self.tileColumnStart()) + Number(self.tileWidth());
         });
         self.showInTilePreview = ko.computed(function () {
-            return self.tileRowStart() && self.tileColumnStart() && self.tileWidth() && self.tileHeight();
+            return self.coordinatesVisible() && self.tileRowStart() && self.tileColumnStart() && self.tileWidth() && self.tileHeight();
         });
         self.tileContent = ko.observable();
         self.setTileContent = function () {
@@ -321,6 +322,7 @@ hqDefine("app_manager/js/details/column", function () {
         self.$format = $('<div/>').append(self.format.ui);
         self.$format.find("select").css("margin-bottom", "5px");
         self.format.on('change', function () {
+            self.coordinatesVisible(!_.contains(['address', 'address-popup', 'invisible'], self.format.val()))
             // Prevent self from running on page load before init
             if (self.format.ui.parent().length > 0) {
                 self.date_extra.ui.detach();

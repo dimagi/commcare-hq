@@ -68,10 +68,10 @@
                             'col-sm-2': !$parent.showCaseTileColumn(),
                         }"></td>
       <!-- ko if: $parent.showCaseTileConfigColumns() -->
-      <td><select class="form-control" data-bind="value: tileRowStart, options: tileRowOptions"></select></td>
-      <td><select class="form-control" data-bind="value: tileColumnStart, options: tileColumnOptions"></select></td>
-      <td><select class="form-control" data-bind="value: tileWidth, options: tileWidthOptions"></select></td>
-      <td><select class="form-control" data-bind="value: tileHeight, options: tileHeightOptions"></select></td>
+      <td><select class="form-control" data-bind="value: tileRowStart, options: tileRowOptions, visible: coordinatesVisible"></select></td>
+      <td><select class="form-control" data-bind="value: tileColumnStart, options: tileColumnOptions, visible: coordinatesVisible"></select></td>
+      <td><select class="form-control" data-bind="value: tileWidth, options: tileWidthOptions, visible: coordinatesVisible"></select></td>
+      <td><select class="form-control" data-bind="value: tileHeight, options: tileHeightOptions, visible: coordinatesVisible"></select></td>
       <!--/ko-->
       <!--/ko-->
       <!--ko if: isTab -->
