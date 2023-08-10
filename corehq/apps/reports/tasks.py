@@ -251,8 +251,7 @@ def _generate_form_multimedia_zipfile(domain, export, form_ids, download_id, own
     case_id_to_name = _get_case_names(domain, all_case_ids)
 
     with TransientTempfile() as temp_path:
-        with open(temp_path, 'wb') as f:
-            _write_attachments_to_file(temp_path, num_forms, forms_info, case_id_to_name)
+        _write_attachments_to_file(temp_path, num_forms, forms_info, case_id_to_name)
         with open(temp_path, 'rb') as f:
             zip_name = 'multimedia-{}'.format(unidecode(export.name))
             _save_and_expose_zip(f, zip_name, domain, download_id, owner_id)
