@@ -2,7 +2,12 @@
 <div class="panel-body">
   {% if report.description %}
     <h4>{% trans 'How can I use this report?' %}</h4>
-    <p>{{ report.description }}</p>
+    <p>
+      {{ report.description }}
+      {% if report.documentation_link %}
+        <a href="{{ report.documentation_link }}" target="_blank">{% trans "Learn More" %}</a>
+      {% endif %}
+    </p>
   {% endif %}
 
   <h4>{% trans "Why can't I see any data?" %}</h4>

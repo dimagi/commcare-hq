@@ -8,10 +8,10 @@ from functools import cached_property
 from django.conf import settings
 
 from memoized import memoized
-from corehq.apps.es.filters import term
 
 from dimagi.utils.chunked import chunked
 
+from corehq.apps.es.filters import term
 from corehq.util.es.elasticsearch import (
     BulkIndexError,
     Elasticsearch,
@@ -20,7 +20,12 @@ from corehq.util.es.elasticsearch import (
     TransportError,
     bulk,
 )
-from corehq.util.metrics import metrics_counter
+from corehq.util.global_request import get_request_domain
+from corehq.util.metrics import (
+    limit_domains,
+    metrics_counter,
+    metrics_histogram_timer,
+)
 
 from .const import (
     INDEX_CONF_REINDEX,
@@ -628,7 +633,15 @@ class ElasticDocumentAdapter(BaseAdapter):
         """Perform a "low-level" search and return the raw result. This is
         split into a separate method for ease of testing the result format.
         """
-        return self._es.search(self.index_name, self.type, query, **kw)
+        with metrics_histogram_timer(
+                'commcare.elasticsearch.search.timing',
+                timing_buckets=(1, 10),
+                tags={
+                    'index': self.canonical_name,
+                    'domain': limit_domains(get_request_domain()),
+                },
+        ):
+            return self._es.search(self.index_name, self.type, query, **kw)
 
     def scroll(self, query, scroll=SCROLL_KEEPALIVE, size=None):
         """Perfrom a scrolling search, yielding each doc until the entire context
