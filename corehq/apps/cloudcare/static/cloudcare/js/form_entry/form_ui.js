@@ -277,6 +277,17 @@ hqDefine("cloudcare/js/form_entry/form_ui", function () {
         let currentGroup = null;
         let usedWidth = 0;
 
+        function addToCurrentGroup(child) {
+            if (!currentGroup) {
+                currentGroup = {
+                    type: constants.GROUPED_QUESTION_TILE_ROW_TYPE,
+                    children: [],
+                };
+                newChildren.push(currentGroup);
+            }
+            currentGroup.children.push(child);
+        }
+
         function resetCurrentGroup() {
             currentGroup = null;
             usedWidth = 0;
@@ -290,13 +301,7 @@ hqDefine("cloudcare/js/form_entry/form_ui", function () {
                 if (usedWidth > constants.GRID_COLUMNS) {
                     resetCurrentGroup();
                 }
-
-                if (!currentGroup) {
-                    currentGroup = { type: constants.GROUPED_QUESTION_TILE_ROW_TYPE, children: [] };
-                    newChildren.push(currentGroup);
-                }
-
-                currentGroup.children.push(child);
+                addToCurrentGroup(child)
             } else if (child.type === constants.GROUP_TYPE || child.type === constants.REPEAT_TYPE) {
                 const newGroup = Container.groupQuestions(child);
                 newChildren.push(newGroup);
