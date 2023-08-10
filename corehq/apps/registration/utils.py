@@ -138,15 +138,15 @@ def request_new_domain(request, project_name, is_new_user=True, is_new_sso_user=
         # ensure no duplicate domain documents get created on cloudant
         new_domain.save(**get_safe_write_kwargs())
 
-    if not new_domain.name:
-        new_domain.name = new_domain._id
-        new_domain.save()  # we need to get the name from the _id
-    dom_req.domain = new_domain.name
+        if not new_domain.name:
+            new_domain.name = new_domain._id
+            new_domain.save()  # we need to get the name from the _id
+        dom_req.domain = new_domain.name
 
-    if not settings.ENTERPRISE_MODE:
-        _setup_subscription(new_domain.name, current_user)
+        if not settings.ENTERPRISE_MODE:
+            _setup_subscription(new_domain.name, current_user)
 
-    initialize_domain_with_default_roles(new_domain.name)
+        initialize_domain_with_default_roles(new_domain.name)
 
     if request.user.is_authenticated:
         if not current_user:
