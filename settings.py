@@ -1978,6 +1978,7 @@ DOMAIN_MODULE_MAP = {
     'airszambia': 'custom.abt',
     'airszimbabwe': 'custom.abt',
     'kenya-vca': 'custom.abt',
+    'pmievolve-rwanda': 'custom.abt',
     'vectorlink-benin': 'custom.abt',
     'vectorlink-burkina-faso': 'custom.abt',
     'vectorlink-ethiopia': 'custom.abt',
