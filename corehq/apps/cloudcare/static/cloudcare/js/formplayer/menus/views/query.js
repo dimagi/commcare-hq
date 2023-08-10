@@ -316,8 +316,7 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
             if (this.model.get('input') === 'address') {
                 return;  // skip geocoder address
             }
-            var queryValue = $(this.ui.queryField).val(),
-                searchForBlank = $(this.ui.searchForBlank).prop('checked');
+            var searchForBlank = $(this.ui.searchForBlank).prop('checked');
             return encodeValue(this.model, searchForBlank);
         },
 
