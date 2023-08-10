@@ -5,6 +5,7 @@ from rest_framework import viewsets
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.status import HTTP_201_CREATED, HTTP_202_ACCEPTED
+from rest_framework.exceptions import ValidationError
 
 from custom.abdm.auth import ABDMUserAuthentication
 from custom.abdm.const import (
@@ -221,12 +222,10 @@ class ConsentArtefactFetch(HIUBaseView, viewsets.ReadOnlyModelViewSet):
         queryset = HIUConsentArtefact.objects.all().order_by('-date_created')
         request_params = self.request.query_params
         consent_request_id = request_params.get('consent_request_id')
-        status = request_params.get('status')
         search = request_params.get('search')
-        if consent_request_id:
-            queryset = queryset.filter(consent_request=consent_request_id)
-        if status:
-            queryset = queryset.filter(status=status)
+        if not consent_request_id:
+            raise ValidationError({'consent_request_id': 'This field is required!'}, code='required')
+        queryset = queryset.filter(consent_request=consent_request_id)
         if search:
             queryset = queryset.filter(details__hip__name__icontains=search)
         return queryset
