@@ -29,8 +29,11 @@ class Command(BaseCommand):
                 subscription_id=sub_id, date_start=invoice_start_date).order_by('-date_created')
             for invoice in related_invoices[1:]:
                 invoice.is_hidden_to_ops = True
+                print(f"Suppressing invoice {invoice.id} for domain {invoice.subscription.subscriber.domain} ",
+                      end='')
                 invoice.save()
                 suppressed_count += 1
+                print("✓")
 
         self.stdout.write(self.style.SUCCESS('Successfully suppressed {} duplicate invoices for date: {}'
                                              .format(suppressed_count, invoice_start_date)))
