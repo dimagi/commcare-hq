@@ -1079,6 +1079,14 @@ def _ensure_search_index_is_enabled(domain, enabled):
         reindex_case_search_for_domain.delay(domain)
 
 
+CASE_LIST_EXPLORER = StaticToggle(
+    'case_list_explorer',
+    'Show the case list explorer report',
+    TAG_SOLUTIONS_OPEN,
+    namespaces=[NAMESPACE_DOMAIN],
+    save_fn=_ensure_search_index_is_enabled,
+)
+
 EXPLORE_CASE_DATA = StaticToggle(
     'explore_case_data',
     'Show the Explore Case Data report (in dev)',
@@ -2395,6 +2403,15 @@ GEOSPATIAL = StaticToggle(
 
 )
 
+COMMCARE_CONNECT = StaticToggle(
+    'commcare_connect',
+    'Enable CommCare Connect features',
+    tag=TAG_INTERNAL,
+    namespaces=[NAMESPACE_DOMAIN],
+    description='More details to come',
+
+)
+
 FCM_NOTIFICATION = StaticToggle(
     'fcm_notification',
     'Allows access to FCM Push Notifications',
@@ -2402,6 +2419,15 @@ FCM_NOTIFICATION = StaticToggle(
     namespaces=[NAMESPACE_DOMAIN],
     description='Push Notification option will be available in content for '
                 'Conditional Alerts in Messaging.'
+)
+
+LOCATION_RESTRICTED_SCHEDULED_REPORTS = StaticToggle(
+    'location_restricted_scheduled_reports',
+    'Allows access to report scheduling views for location restricted users',
+    TAG_CUSTOM,
+    namespaces=[NAMESPACE_DOMAIN],
+    description='Provides access to views for resport scheduling '
+                'such as schedule creation and deletion.'
 )
 
 SHOW_OWNER_LOCATION_PROPERTY_IN_REPORT_BUILDER_TOGGLE = StaticToggle(
@@ -2499,18 +2525,6 @@ VIEW_APP_CHANGES = FrozenPrivilegeToggle(
     [NAMESPACE_DOMAIN, NAMESPACE_USER],
     help_link="https://confluence.dimagi.com/display/saas/Viewing+App+Changes+between+versions",
 )
-
-
-CASE_LIST_EXPLORER = FrozenPrivilegeToggle(
-    privileges.CASE_LIST_EXPLORER,
-    'case_list_explorer',
-    label='Show the case list explorer report',
-    tag=TAG_SOLUTIONS_OPEN,
-    namespaces=[NAMESPACE_DOMAIN],
-    save_fn=_ensure_search_index_is_enabled,
-    help_link='https://confluence.dimagi.com/display/commcarepublic/Case+List+Explorer',
-)
-
 
 DATA_FILE_DOWNLOAD = FrozenPrivilegeToggle(
     privileges.DATA_FILE_DOWNLOAD,
