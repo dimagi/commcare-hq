@@ -298,7 +298,7 @@ hqDefine("cloudcare/js/form_entry/form_ui", function () {
             usedWidth = 0;
         }
 
-        for (const child of json.children) {
+        for (let child of json.children) {
             if (child.type === constants.QUESTION_TYPE) {
                 const questionTileWidth = Question.calculateColumnWidthForPerRowStyle(child.style);
                 usedWidth += questionTileWidth;
@@ -842,13 +842,19 @@ hqDefine("cloudcare/js/form_entry/form_ui", function () {
     Question.prototype.setWidths = function () {
         const columnWidth = Question.calculateColumnWidthForPerRowStyle(this.style)
 
-        this.controlWidth = columnWidth === constants.GRID_COLUMNS ? constants.CONTROL_WIDTH : constants.FULL_WIDTH;
-        this.labelWidth = columnWidth === constants.GRID_COLUMNS ? constants.LABEL_WIDTH : constants.FULL_WIDTH;
-        this.questionTileWidth = columnWidth === constants.GRID_COLUMNS ? constants.FULL_WIDTH : `col-sm-${columnWidth}` ;
+        if (columnWidth === constants.GRID_COLUMNS) {
+            this.controlWidth = constants.CONTROL_WIDTH;
+            this.labelWidth = constants.LABEL_WIDTH;
+            this.questionTileWidth = constants.FULL_WIDTH;
+        } else {
+            this.controlWidth = constants.FULL_WIDTH;
+            this.labelWidth = constants.FULL_WIDTH;
+            this.questionTileWidth = `col-sm-${columnWidth}`;
+        }
     };
 
     Question.calculateColumnWidthForPerRowStyle= function(style) {
-        let styleStr = (style) ? ko.utils.unwrapObservable(style.raw) : null;
+        const styleStr = (style) ? ko.utils.unwrapObservable(style.raw) : null;
         const perRowPattern = new RegExp(`\\d+${constants.PER_ROW}(\\s|$)`);
         const matchingPerRowStyles = getMatchingStyles(perRowPattern, styleStr);
         const perRowStyle = matchingPerRowStyles.length === 0 ? null : matchingPerRowStyles[0];
