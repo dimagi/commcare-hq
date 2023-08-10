@@ -20,7 +20,6 @@ class Command(BaseCommand):
         duplicate_subs_ids = invoices_of_given_date.values('subscription').annotate(
             count=Count('id')).filter(count__gt=1).values_list('subscription', flat=True)
 
-
         suppressed_count = 0
         for sub_id in duplicate_subs_ids:
             related_invoices = Invoice.objects.filter(
