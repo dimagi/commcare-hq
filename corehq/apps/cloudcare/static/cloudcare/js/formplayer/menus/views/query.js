@@ -5,6 +5,7 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
     // explicitly when webapps is migrated to requirejs
     var kissmetrics = hqImport("analytix/js/kissmetrix"),
         cloudcareUtils = hqImport("cloudcare/js/utils"),
+        markdown = hqImport("cloudcare/js/markdown"),
         constants = hqImport("cloudcare/js/form_entry/const"),
         formEntryUtils = hqImport("cloudcare/js/form_entry/utils"),
         FormplayerFrontend = hqImport("cloudcare/js/formplayer/app"),
@@ -451,7 +452,7 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
 
         templateContext: function () {
             var description = this.options.collection.description === undefined ?
-                "" : cloudcareUtils.renderMarkdown(this.options.collection.description.trim());
+                "" : markdown.render(this.options.collection.description.trim());
             return {
                 title: this.options.title.trim(),
                 description: DOMPurify.sanitize(description),

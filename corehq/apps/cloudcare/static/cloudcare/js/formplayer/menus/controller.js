@@ -2,15 +2,14 @@
 
 hqDefine("cloudcare/js/formplayer/menus/controller", function () {
     var constants = hqImport("cloudcare/js/formplayer/constants"),
-        cloudcareUtils = hqImport("cloudcare/js/utils"),
+        markdown = hqImport("cloudcare/js/markdown"),
         FormplayerFrontend = hqImport("cloudcare/js/formplayer/app"),
         formplayerUtils = hqImport("cloudcare/js/formplayer/utils/utils"),
         menusUtils = hqImport("cloudcare/js/formplayer/menus/utils"),
         views = hqImport("cloudcare/js/formplayer/menus/views"),
         toggles = hqImport("hqwebapp/js/toggles"),
         QueryListView = hqImport("cloudcare/js/formplayer/menus/views/query"),
-        Collection = hqImport("cloudcare/js/formplayer/menus/collections"),
-        md = window.markdownit();
+        Collection = hqImport("cloudcare/js/formplayer/menus/collections");
     var selectMenu = function (options) {
 
         options.preview = FormplayerFrontend.currentUser.displayOptions.singleAppMode;
@@ -115,6 +114,7 @@ hqDefine("cloudcare/js/formplayer/menus/controller", function () {
             var menuData = menusUtils.getMenuData(menuResponse);
             menuData["triggerEmptyCaseList"] = true;
             menuData["sidebarEnabled"] = true;
+            menuData["title"] = menuResponse.resultsTitle;
             var caseListView = menusUtils.getCaseListView(menuResponse)
             FormplayerFrontend.regions.getRegion('main').show(caseListView(menuData));
         } else if (menuListView) {
@@ -243,7 +243,7 @@ hqDefine("cloudcare/js/formplayer/menus/controller", function () {
             obj.style = styles[i];
             obj.id = i;
             if (obj.style.displayFormat === 'Markdown') {
-                obj.html = cloudcareUtils.renderMarkdown(details[i]);
+                obj.html = markdown.render(details[i]);
             }
             detailModel.push(obj);
         }

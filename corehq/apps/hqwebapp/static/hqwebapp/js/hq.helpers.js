@@ -29,9 +29,9 @@ hqDefine("hqwebapp/js/hq.helpers", [
     });
 
     $(document).on('click', '.notification-close-btn', function () {
-        var note_id = $(this).data('note-id');
-        var post_url = $(this).data('url');
-        $.post(post_url, {note_id: note_id});
+        var noteId = $(this).data('note-id');
+        var postUrl = $(this).data('url');
+        $.post(postUrl, {note_id: noteId});
         $(this).parents('.alert').hide(150);
     });
 
@@ -150,11 +150,11 @@ hqDefine("hqwebapp/js/hq.helpers", [
             // Ignore HTTP methods that do not require CSRF protection
             if (!/^(GET|HEAD|OPTIONS|TRACE)$/.test(settings.type)) {
                 if (!this.crossDomain) {
-                    var $csrf_token = $("#csrfTokenContainer").val();
-                    xhr.setRequestHeader("X-CSRFToken", $csrf_token);
+                    var $csrfToken = $("#csrfTokenContainer").val();
+                    xhr.setRequestHeader("X-CSRFToken", $csrfToken);
                 }
-                var xsrf_token = $.cookie('XSRF-TOKEN');
-                xhr.setRequestHeader('X-XSRF-TOKEN', xsrf_token);
+                var xsrfToken = $.cookie('XSRF-TOKEN');
+                xhr.setRequestHeader('X-XSRF-TOKEN', xsrfToken);
             }
             xhr.withCredentials = true;
         },

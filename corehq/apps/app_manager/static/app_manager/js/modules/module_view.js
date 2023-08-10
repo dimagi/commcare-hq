@@ -54,12 +54,18 @@ hqDefine("app_manager/js/modules/module_view", function () {
 
         var originalCaseType = initial_page_data('case_type');
         var casesExist = false;
-        // If this async request is slow or fails, we will default to hiding the case type changed warning.
+        var deprecatedCaseTypes = [];
+        // If this async request is slow or fails, we will default to hiding the case type changed and
+        // deprecated case type warnings.
         $.ajax({
             method: 'GET',
             url: hqImport('hqwebapp/js/initial_page_data').reverse('existing_case_types'),
             success: function (data) {
                 casesExist = data.existing_case_types.includes(originalCaseType);
+                deprecatedCaseTypes = data.deprecated_case_types;
+                if (deprecatedCaseTypes.includes(originalCaseType)) {
+                    showCaseTypeDeprecatedWarning();
+                }
             },
         });
 
@@ -84,6 +90,15 @@ hqDefine("app_manager/js/modules/module_view", function () {
             $('#case_type_form_group').removeClass('has-error');
         };
 
+        var showCaseTypeDeprecatedWarning = function () {
+            $('#case_type_deprecated_warning').css('display', 'block').removeClass('hide');
+            $('#case_type_form_group').addClass('has-warning');
+        };
+        var hideCaseTypeDeprecatedWarning = function () {
+            $('#case_type_deprecated_warning').addClass('hide');
+            $('#case_type_form_group').removeClass('has-warning');
+        };
+
         $('#case_type').on('textchange', function () {
             var $el = $(this),
                 value = $el.val(),
@@ -99,6 +114,11 @@ hqDefine("app_manager/js/modules/module_view", function () {
                     gettext("Case type is required.")
                 );
                 return;
+            }
+            if (deprecatedCaseTypes.includes(value)) {
+                showCaseTypeDeprecatedWarning();
+            } else {
+                hideCaseTypeDeprecatedWarning();
             }
             if (!valueNoSpaces.match(/^[\w-]*$/g)) {
                 $el.closest('.form-group').addClass('has-error');
@@ -119,6 +139,11 @@ hqDefine("app_manager/js/modules/module_view", function () {
                     showCaseTypeChangedWarning();
                 } else {
                     hideCaseTypeChangedWarning();
+                }
+                if (deprecatedCaseTypes.includes(value)) {
+                    showCaseTypeDeprecatedWarning();
+                } else {
+                    hideCaseTypeDeprecatedWarning();
                 }
             }
         });
@@ -219,6 +244,7 @@ hqDefine("app_manager/js/modules/module_view", function () {
                 shadowOptions.modules,
                 shadowOptions.source_module_id,
                 shadowOptions.excluded_form_ids,
+                shadowOptions.form_session_endpoints,
                 shadowOptions.shadow_module_version
             ));
         } else if (moduleType === 'advanced') {
