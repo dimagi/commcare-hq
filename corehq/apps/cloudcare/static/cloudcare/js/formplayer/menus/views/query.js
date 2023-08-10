@@ -50,9 +50,9 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
             if (!_.isString(value)) {
                 return [false, undefined];
             }
-            var values = value.split(selectDelimiter),
+            var allValues = value.split(selectDelimiter),
                 searchForBlank = _.contains(values, ""),
-                values = _.without(values, "");
+                values = _.without(allValues, "");
 
             if (model.get('input') === 'select' || model.get('input') === 'checkbox') {
                 value = values;
@@ -203,8 +203,8 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
             // initialize with default values or with sticky values if either is present
             var value = decodeValue(this.model, this.model.get('value'))[1],
                 allStickyValues = formplayerUtils.getStickyQueryInputs(),
-                stickyValue = allStickyValues[this.model.get('id')],
-                [searchForBlank, stickyValue] = decodeValue(this.model, stickyValue);
+                stickyValueEncoded = allStickyValues[this.model.get('id')],
+                [searchForBlank, stickyValue] = decodeValue(this.model, stickyValueEncoded);
             this.model.set('searchForBlank', searchForBlank);
             if (stickyValue && !value) {  // Sticky values don't override default values
                 value = stickyValue;
