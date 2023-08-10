@@ -1,4 +1,4 @@
-/*globals DOMPurify, Marionette */
+/*globals Marionette */
 
 hqDefine("cloudcare/js/formplayer/menus/views", function () {
     const kissmetrics = hqImport("analytix/js/kissmetrix"),
@@ -238,7 +238,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             let modelId = this.model.get('id');
             return {
                 "tabindex": "0",
-                "id": `row-${modelId}`
+                "id": `row-${modelId}`,
             };
         },
 
@@ -333,17 +333,17 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             let indexedRowDataList = [];
             for (let model of this.options.groupModelsList) {
                 let indexedRowData = model.get('data')
-                .reduce((acc, data, i) => {
-                    if (!this.options.headerRowIndices.includes(i) &&
-                        this.options.styles[i].widthHint!==0) {
-                        acc[i] = data;
-                    }
-                    return acc;
-                }, {});
+                    .reduce((acc, data, i) => {
+                        if (!this.options.headerRowIndices.includes(i) &&
+                            this.options.styles[i].widthHint !== 0) {
+                            acc[i] = data;
+                        }
+                        return acc;
+                    }, {});
                 if (Object.keys(indexedRowData).length !== 0) {
                     indexedRowDataList.push(indexedRowData);
                 }
-            };
+            }
             return indexedRowDataList;
         },
     });
@@ -414,11 +414,12 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
                 self.selectedCaseIds = [];
             }
             const user = FormplayerFrontend.currentUser;
-            const displayOptions = user.displayOptions
+            const displayOptions = user.displayOptions;
             const appPreview = displayOptions.singleAppMode;
             const addressFieldPresent = !!_.find(this.styles, function (style) { return style.displayFormat === constants.FORMAT_ADDRESS; });
 
-            self.showMap = addressFieldPresent && !appPreview && !self.hasNoItems && toggles.toggleEnabled('CASE_LIST_MAP')
+            self.showMap = addressFieldPresent && !appPreview && !self.hasNoItems && toggles.toggleEnabled('CASE_LIST_MAP');
+            self.smallScreenEnabled = cloudcareUtils.watchSmallScreenEnabled(enabled => self.smallScreenEnabled = enabled);
         },
 
         ui: CaseListViewUI(),
@@ -575,7 +576,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
                     }).setView([lat, lon], zoom);
 
                 L.control.zoom({
-                    position: 'bottomright'
+                    position: 'bottomright',
                 }).addTo(addressMap);
 
                 L.tileLayer('https://api.mapbox.com/styles/v1/{id}/tiles/{z}/{x}/{y}?access_token=' + token, {
@@ -590,8 +591,8 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
                 const popupIndex = _.findIndex(this.styles, function (style) { return style.displayFormat === constants.FORMAT_ADDRESS_POPUP; });
                 L.mapbox.accessToken = token;
 
-                const allCoordinates = []
-                const markers = []
+                const allCoordinates = [];
+                const markers = [];
                 this.options.collection.models
                     .forEach(model => {
                         const addressCoordinates = model.attributes.data[addressIndex];
@@ -602,9 +603,9 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
                                 const popupText = markdown.render(model.attributes.data[popupIndex]);
                                 let marker = L.marker(markerCoordinates, {icon: locationIcon});
                                 markers.push(marker);
-                                marker = marker.addTo(addressMap)
+                                marker = marker.addTo(addressMap);
                                 if (popupIndex >= 0) {
-                                    marker = marker.bindPopup(popupText)
+                                    marker = marker.bindPopup(popupText);
                                 }
 
                                 marker.on('click', () => {
@@ -621,7 +622,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
 
                                     $([document.documentElement, document.body]).animate({
                                         // -50 Stay clear of the breadcrumbs
-                                        scrollTop: $(`#${rowId}`).offset().top - 50
+                                        scrollTop: $(`#${rowId}`).offset().top - 50,
                                     }, 500);
 
                                     addressMap.panTo(markerCoordinates);
@@ -655,13 +656,13 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             const paginateItems = formplayerUtils.paginateOptions(this.options.currentPage, this.options.pageCount);
             const casesPerPage = parseInt($.cookie("cases-per-page-limit")) || 10;
             const boldSortedCharIcon = (header) => {
-                const header_words = header.trim().split(' ');
-                const lastChar = header_words.pop();
+                const headerWords = header.trim().split(' ');
+                const lastChar = headerWords.pop();
 
                 return lastChar === "Λ" || lastChar === "V"
-                  ? `${header_words.join(' ')} <b>${lastChar}</b>`
-                  : header;
-              };
+                    ? `${headerWords.join(' ')} <b>${lastChar}</b>`
+                    : header;
+            };
             return {
                 startPage: paginateItems.startPage,
                 title: this.options.title,
@@ -685,6 +686,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
                 showMap: this.showMap,
                 columnStyle: this.columnStyle(),
                 sidebarEnabled: this.options.sidebarEnabled,
+                smallScreenEnabled: this.smallScreenEnabled,
                 triggerEmptyCaseList: this.options.triggerEmptyCaseList,
 
                 columnSortable: function (index) {
@@ -853,8 +855,8 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
 
         childViewOptions: function (model) {
             const dict = CaseTileGroupedListView.__super__.childViewOptions.apply(this, arguments);
-            dict.groupHeaderRows = this.options.collection.groupHeaderRows
-            dict.groupModelsList = this.groupedModels[model.get("groupKey")]
+            dict.groupHeaderRows = this.options.collection.groupHeaderRows;
+            dict.groupModelsList = this.groupedModels[model.get("groupKey")];
             dict.headerRowIndices = this.headerRowIndices;
             return dict;
         },
