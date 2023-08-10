@@ -1395,6 +1395,16 @@ SMS_LOG_CHANGES = StaticToggle(
                  "Report, and adds Status and Event columns"),
 )
 
+EXPORT_DATA_SOURCE_DATA = StaticToggle(
+    'export_data_source_data',
+    'Add Export Data Source Data page',
+    TAG_CUSTOM,
+    [NAMESPACE_USER, NAMESPACE_DOMAIN],
+    description=("This flag makes failed messages appear in the Message Log "
+                 "Report, and adds Status and Event columns"),
+)
+
+
 ENABLE_INCLUDE_SMS_GATEWAY_CHARGING = StaticToggle(
     'enable_include_sms_gateway_charging',
     'Enable include SMS gateway charging',
