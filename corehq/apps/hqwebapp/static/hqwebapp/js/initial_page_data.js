@@ -99,6 +99,14 @@ hqDefine('hqwebapp/js/initial_page_data', ['jquery', 'underscore'], function ($,
         });
     };
 
+    /**
+     * For use in unit tests
+     */
+    function clear() {
+        _initData = {};
+        urls = {};
+    }
+
     $(function () {
         _initData = gather(dataSelector, _initData);
         _.extend(urls, gather(urlSelector, urls));
@@ -112,5 +120,6 @@ hqDefine('hqwebapp/js/initial_page_data', ['jquery', 'underscore'], function ($,
         getUrlParameterFromString: getUrlParameterFromString,
         registerUrl: registerUrl,
         reverse: reverse,
+        clear: clear
     };
 });
