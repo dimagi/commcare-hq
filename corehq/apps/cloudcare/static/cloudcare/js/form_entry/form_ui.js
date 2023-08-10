@@ -168,7 +168,7 @@ hqDefine("cloudcare/js/form_entry/form_ui", function () {
     }
 
     /**
-     * Base abstract prototype for Repeat, Group and Form. Adds methods to
+     * Base abstract prototype for Repeat, Group, GroupedQuestionTileRow, and Form. Adds methods to
      * objects that contain a children array for rendering nested questions.
      * @param {Object} json - The JSON returned from touchforms to represent the container
      */
@@ -268,6 +268,17 @@ hqDefine("cloudcare/js/form_entry/form_ui", function () {
         ko.mapping.fromJS(json, mapping, self);
     };
 
+    /**
+     * Recursively groups sequential "question" items in a nested JSON structure.
+     *
+     * This function takes a JSON object as input and searches for sequential "question"
+     * items within the 'children' arrays of the input and its nested 'group' objects.
+     * It groups these sequential "question" items into "GroupedQuestionTileRow" objects while
+     * maintaining the original structure of the JSON.
+     *
+     * @param {Object} json - The JSON object to process, containing 'children' arrays.
+     * @returns {Object} - A new JSON object with sequential "question" items grouped into "GroupedQuestionTileRow".
+     */
     Container.groupQuestions = function (json) {
         if (!json || !json.children || !Array.isArray(json.children)) {
             return json;
@@ -530,7 +541,7 @@ hqDefine("cloudcare/js/form_entry/form_ui", function () {
     Form.prototype.constructor = Container;
 
     /**
-     * Represents a group of questions.
+     * Represents a group of GroupedQuestionTileRow which contains questions.
      * @param {Object} json - The JSON returned from touchforms to represent a Form
      * @param {Object} parent - The object's parent. Either a Form, Group, or Repeat.
      */
@@ -623,8 +634,8 @@ hqDefine("cloudcare/js/form_entry/form_ui", function () {
     Group.prototype.constructor = Container;
 
     /**
-     * Represents a repeat group. A repeat only has Group objects as children. Each child Group contains the
-     * child questions to be rendered
+     * Represents a repeat group. A repeat only has Group objects as children. Each child Group contains GroupedQuestionTileRow
+     * objects which contains the child questions to be rendered
      * @param {Object} json - The JSON returned from touchforms to represent a Form
      * @param {Object} parent - The object's parent. Either a Form, Group, or Repeat.
      */
@@ -818,6 +829,7 @@ hqDefine("cloudcare/js/form_entry/form_ui", function () {
 
         ko.mapping.fromJS(json, mapping, self);
     };
+
     /**
      * Returns a list of style strings that match the given pattern.
      * If a regex is provided, returns regex matches. If a string is provided
@@ -829,6 +841,7 @@ hqDefine("cloudcare/js/form_entry/form_ui", function () {
         var styleStr = (self.style) ? ko.utils.unwrapObservable(self.style.raw) : null;
         return getMatchingStyles(pattern, styleStr)
     };
+
     /**
      * Returns a boolean of whether the styles contain a pattern
      * If a regex is provided, returns regex matches. If a string is provided
@@ -853,6 +866,11 @@ hqDefine("cloudcare/js/form_entry/form_ui", function () {
         }
     };
 
+    /**
+     * Matches "<n>-per-row" style attributes. If a match if found, it calculates the column width
+     * based on Bootstrap's 12 column grid system and returns the column width.
+     * @param {Object} style - the appearance attributes
+     */
     Question.calculateColumnWidthForPerRowStyle= function(style) {
         const styleStr = (style) ? ko.utils.unwrapObservable(style.raw) : null;
         const perRowPattern = new RegExp(`\\d+${constants.PER_ROW}(\\s|$)`);
