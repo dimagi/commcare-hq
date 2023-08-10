@@ -294,6 +294,7 @@ def _format_filename(form_info, question_id, extension, case_id_to_name):
 def _write_attachments_to_file(fpath, num_forms, forms_info, case_id_to_name):
     total_size = 0
     unique_attachment_ids = set()
+    unique_names = {}
     with zipfile.ZipFile(fpath, 'w') as multimedia_zipfile:
         for form_number, form_info in enumerate(forms_info, 1):
             form = form_info['form']
@@ -312,12 +313,22 @@ def _write_attachments_to_file(fpath, num_forms, forms_info, case_id_to_name):
                     attachment['extension'],
                     case_id_to_name
                 )
+                filename = _make_unique_filename(filename, unique_names)
                 zip_info = zipfile.ZipInfo(filename, attachment['timestamp'])
                 multimedia_zipfile.writestr(zip_info, form.get_attachment(
                     attachment['name']),
                     zipfile.ZIP_STORED
                 )
             DownloadBase.set_progress(build_form_multimedia_zip, form_number, num_forms)
+
+
+def _make_unique_filename(filename, unique_names):
+    while filename in unique_names:
+        unique_names[filename] += 1
+        root, ext = os.path.splitext(filename)
+        filename = f"{root}-{unique_names[filename]}{ext}"
+    unique_names[filename] = 1
+    return filename
 
 
 def _save_and_expose_zip(f, zip_name, domain, download_id, owner_id):
