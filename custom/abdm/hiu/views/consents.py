@@ -132,19 +132,17 @@ class GatewayConsentRequestNotify(HIUGatewayBaseView):
     def handle_expired(self, request_data, consent_request):
         artefact_ids = []
         for artefact in consent_request.artefacts.all():
-            artefact.update_status(STATUS_EXPIRED)
             artefact_ids.append(artefact.artefact_id)
+            artefact.delete()
         self.gateway_consents_on_notify(artefact_ids, request_data['requestId'])
 
     def handle_revoked(self, request_data):
         artefact_ids = [artefact['id'] for artefact in request_data['notification']['consentArtefacts']]
+        consent_request = HIUConsentRequest.objects.get(artefacts__artefact_id=artefact_ids[0])
         for artefact_id in artefact_ids:
-            artefact = HIUConsentArtefact.objects.get(artefact_id=artefact_id)
-            artefact.update_status(STATUS_REVOKED)
-        if artefact_ids:
-            consent_request = artefact.consent_request
-            if not any(artefact.status != STATUS_REVOKED for artefact in consent_request.artefacts.all()):
-                consent_request.update_status(STATUS_REVOKED)
+            HIUConsentArtefact.objects.get(artefact_id=artefact_id).delete()
+        if consent_request.artefacts.all().count() == 0:
+            consent_request.update_status(STATUS_REVOKED)
         self.gateway_consents_on_notify(artefact_ids, request_data['requestId'])
 
     def gateway_fetch_artefact_details(self, artefact_id):

@@ -51,12 +51,6 @@ class HIUConsentRequest(models.Model):
 
 
 class HIUConsentArtefact(models.Model):
-    STATUS = (
-        (STATUS_GRANTED, 'Granted'),
-        (STATUS_REVOKED, 'Revoked'),
-        (STATUS_EXPIRED, 'Expired'),
-        (STATUS_ERROR, 'Error occurred'),
-    )
 
     consent_request = models.ForeignKey(HIUConsentRequest, to_field='consent_request_id', on_delete=models.PROTECT,
                                         related_name='artefacts')
@@ -64,10 +58,4 @@ class HIUConsentArtefact(models.Model):
     artefact_id = models.UUIDField(unique=True)
     date_created = models.DateTimeField(auto_now_add=True)
     last_modified = models.DateTimeField(auto_now=True)
-    status = models.CharField(choices=STATUS, max_length=40)
     details = models.JSONField(null=True)
-    error = models.JSONField(null=True)
-
-    def update_status(self, status):
-        self.status = status
-        self.save()
