@@ -51,7 +51,7 @@ class Command(BaseCommand):
 
         print(f'Reverting payment for Invoice Id: {invoice.id}, Domain: {invoice.subscription.subscriber.domain}')
         # Total Credit
-        payment_by_credit = invoice.applied_credit
+        payment_by_credit = -invoice.applied_credit
 
         plan_subtotal, plan_deduction = get_subtotal_and_deduction(
             invoice.lineitem_set.get_products().all()
@@ -78,7 +78,7 @@ class Command(BaseCommand):
             CreditLine.add_credit(amount=payment_by_credit, subscription=invoice.subscription, note=note)
 
         # Calculate the amount paid not by credit
-        payment_by_other = invoice.subtotal - invoice.applied_credit - invoice.balance
+        payment_by_other = invoice.subtotal + invoice.applied_credit - invoice.balance
         if payment_by_other:
             print(f"Adding credit for other payments: {payment_by_other}")
             CreditLine.add_credit(amount=payment_by_other, subscription=invoice.subscription, note=note)
