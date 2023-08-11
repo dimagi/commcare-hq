@@ -36,6 +36,9 @@ hqDefine("app_manager/js/details/column", function () {
             model: screen.model,
             date_format: "",
             time_ago_interval: Utils.TIME_AGO.year,
+            horizontal_align: "left",
+            vertical_align: "start",
+            font_size: "medium",
         };
         _.each(_.keys(defaults), function (key) {
             self.original[key] = self.original[key] || defaults[key];
@@ -45,9 +48,9 @@ hqDefine("app_manager/js/details/column", function () {
         self.original.case_tile_field = ko.utils.unwrapObservable(self.original.case_tile_field) || "";
         self.case_tile_field = ko.observable(self.original.case_tile_field);
 
-        self.coordinatesVisible = ko.observable(true)
-        self.tileRowMax = ko.observable(4)
-        self.tileColumnMax = ko.observable(13)
+        self.coordinatesVisible = ko.observable(true);
+        self.tileRowMax = ko.observable(4);
+        self.tileColumnMax = ko.observable(13);
         self.tileRowStart = ko.observable(self.original.grid_y || 1);
         self.tileRowOptions = [""].concat(_.range(1, self.tileRowMax()));
         self.tileColumnStart = ko.observable(self.original.grid_x || 1);
@@ -60,6 +63,15 @@ hqDefine("app_manager/js/details/column", function () {
         self.tileHeightOptions = ko.computed(function () {
             return _.range(1, 5 - (self.tileRowStart() || 1));
         });
+        self.horizontalAlign = ko.observable(self.original.horizontal_align || 'left');
+        self.horizontalAlignOptions = ['left', 'center', 'right'];
+
+        self.verticalAlign = ko.observable(self.original.vertial_align || 'start');
+        self.verticalAlignOptions = ['start', 'center', 'end'];
+
+        self.fontSize = ko.observable(self.original.font_size || 'medium');
+        self.fontSizeOptions = ['small', 'medium', 'large'];
+
         self.tileRowEnd = ko.computed(function () {
             return Number(self.tileRowStart()) + Number(self.tileHeight());
         });
@@ -318,6 +330,9 @@ hqDefine("app_manager/js/details/column", function () {
         self.tileColumnStart.subscribe(fireChange);
         self.tileWidth.subscribe(fireChange);
         self.tileHeight.subscribe(fireChange);
+        self.horizontalAlign.subscribe(fireChange)
+        self.verticalAlign.subscribe(fireChange)
+        self.fontSize.subscribe(fireChange)
 
         self.$format = $('<div/>').append(self.format.ui);
         self.$format.find("select").css("margin-bottom", "5px");
@@ -391,6 +406,9 @@ hqDefine("app_manager/js/details/column", function () {
             column.grid_y = self.tileRowStart();
             column.height = self.tileHeight();
             column.width = self.tileWidth();
+            column.horizontal_align = self.horizontalAlign()
+            column.vertial_align = self.verticalAlign()
+            column.font_size = self.fontSize()
             column.graph_configuration = self.format.val() === "graph" ? self.graph_extra.val() : null;
             column.late_flag = parseInt(self.late_flag_extra.val(), 10);
             column.time_ago_interval = parseFloat(self.time_ago_extra.val());

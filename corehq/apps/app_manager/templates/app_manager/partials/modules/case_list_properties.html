@@ -17,10 +17,9 @@
       <th class="col-sm-2">{% trans "Format" %}</th><!-- TODO: add something like showCaseTileGrid, similar to showCaseTileColumn, and fix various col-sm-X classes -->
       <!-- /ko -->
       <!-- ko if: showCaseTileConfigColumns() -->
-      <th class="col-sm-1">{% trans "Row" %}</th>
-      <th class="col-sm-1">{% trans "Column" %}</th>
-      <th class="col-sm-1">{% trans "Width" %}</th>
-      <th class="col-sm-1">{% trans "Height" %}</th>
+      <th class="col-sm-1">{% trans "Row/Column" %}</th>
+      <th class="col-sm-1">{% trans "Width/Height" %}</th>
+      <th class="col-sm-1">{% trans "Align/Size" %}</th>
       <!-- /ko -->
       <th class="col-sm-1"></th>
     </tr>
@@ -68,10 +67,19 @@
                             'col-sm-2': !$parent.showCaseTileColumn(),
                         }"></td>
       <!-- ko if: $parent.showCaseTileConfigColumns() -->
-      <td><select class="form-control" data-bind="value: tileRowStart, options: tileRowOptions, visible: coordinatesVisible"></select></td>
-      <td><select class="form-control" data-bind="value: tileColumnStart, options: tileColumnOptions, visible: coordinatesVisible"></select></td>
-      <td><select class="form-control" data-bind="value: tileWidth, options: tileWidthOptions, visible: coordinatesVisible"></select></td>
-      <td><select class="form-control" data-bind="value: tileHeight, options: tileHeightOptions, visible: coordinatesVisible"></select></td>
+      <td>
+        <select class="form-control" data-bind="value: tileRowStart, options: tileRowOptions, visible: coordinatesVisible"></select>
+        <select class="form-control" data-bind="value: tileColumnStart, options: tileColumnOptions, visible: coordinatesVisible"></select>
+      </td>
+      <td>
+        <select class="form-control" data-bind="value: tileWidth, options: tileWidthOptions, visible: coordinatesVisible"></select>
+        <select class="form-control" data-bind="value: tileHeight, options: tileHeightOptions, visible: coordinatesVisible"></select>
+      </td>
+      <td>
+        <select class="form-control" data-bind="value: horizontalAlign, options: horizontalAlignOptions, visible: coordinatesVisible"></select>
+        <select class="form-control" data-bind="value: verticalAlign, options: verticalAlignOptions, visible: coordinatesVisible"></select>
+        <select class="form-control" data-bind="value: fontSize, options: fontSizeOptions, visible: coordinatesVisible"></select>
+      </td>
       <!--/ko-->
       <!--/ko-->
       <!--ko if: isTab -->

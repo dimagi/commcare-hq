@@ -1828,6 +1828,9 @@ class DetailColumn(IndexedSchema):
     grid_y = IntegerProperty(exclude_if_none=True)
     width = IntegerProperty(exclude_if_none=True)
     height = IntegerProperty(exclude_if_none=True)
+    horizontal_align = StringProperty(exclude_if_none=True)
+    vertical_align = StringProperty(exclude_if_none=True)
+    font_size = StringProperty(exclude_if_none=True)
 
     enum = SchemaListProperty(MappingItem)
     graph_configuration = SchemaProperty(GraphConfiguration)
