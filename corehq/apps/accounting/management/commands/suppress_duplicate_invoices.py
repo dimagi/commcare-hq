@@ -66,10 +66,11 @@ class Command(BaseCommand):
             feature_subtotal, feature_deduction = get_subtotal_and_deduction(
                 invoice.lineitem_set.get_feature_by_type(feature).all()
             )
-            print(f"Adding {feature[0]} credit: {feature_deduction}")
-            CreditLine.add_credit(amount=feature_deduction, subscription=invoice.subscription,
-                                  feature_type=feature[0], note=note)
-            payment_by_credit -= feature_deduction
+            if feature_deduction:
+                print(f"Adding {feature[0]} credit: {feature_deduction}")
+                CreditLine.add_credit(amount=feature_deduction, subscription=invoice.subscription,
+                                    feature_type=feature[0], note=note)
+                payment_by_credit -= feature_deduction
 
         # After deducting plan credit and feature predit, the remained credit should be type Any
         if payment_by_credit:
