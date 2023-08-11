@@ -112,17 +112,17 @@ hqDefine("cloudcare/js/form_entry/form_ui", function () {
     }
 
     function getMatchingStyles(pattern, styleStr) {
-        let retVal = [];
+        let matchingStyles = [];
         if (styleStr) {
             let styles = styleStr.split(' ');
             styles.forEach(function (style) {
                 if ((pattern instanceof RegExp && style.match(pattern))
                     || (typeof pattern === "string" && pattern === style)) {
-                    retVal.push(style);
+                    matchingStyles.push(style);
                 }
             });
         }
-        return retVal;
+        return matchingStyles;
     }
 
     function parseMeta(type, style) {
