@@ -23,7 +23,7 @@
       <% if (showMap) { %>
         <div id="module-case-list-map" class="col-sm-5 col-sm-push-9<% if (useTiles) { %> white-border<% } %>"></div>
       <% } %>
-      <div id="module-case-list-column-next-to-map" class="col-sm<% if (showMap) { %>-7 col-sm-pull-5<% } %>">
+      <div id="module-case-list" class="col-sm<% if (showMap) { %>-7 col-sm-pull-5<% } %>">
         <% if (useTiles) { %>
           <% if (hasNoItems) { %>
             {% include 'formplayer/no_items_text.html' %}
