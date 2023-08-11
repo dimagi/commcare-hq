@@ -671,6 +671,7 @@ class ProjectDataTab(UITab):
                 DownloadNewCaseExportView,
                 DownloadNewFormExportView,
                 DownloadNewSmsExportView,
+                DownloadNewDatasourceExportView,
             )
             from corehq.apps.export.views.edit import (
                 EditCaseDailySavedExportView,
@@ -754,6 +755,16 @@ class ProjectDataTab(UITab):
                                 'urlname': EditNewCustomCaseExportView.urlname,
                             } if self.can_edit_commcare_data else None,
                         ] if _f]
+                    })
+
+            if toggles.EXPORT_DATA_SOURCE_DATA and self.can_view_case_exports and self.can_view_form_exports:
+                export_data_views.append(
+                    {
+                        'title': _(DownloadNewDatasourceExportView.page_title),
+                        'url': reverse(DownloadNewDatasourceExportView.urlname,
+                                       args=(self.domain,)),
+                        'show_in_dropdown': True,
+                        'icon': 'icon icon-share fa fa-database',
                     })
 
             if self.can_view_sms_exports:

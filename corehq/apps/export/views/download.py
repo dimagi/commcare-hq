@@ -50,6 +50,7 @@ from corehq.apps.export.forms import (
     EmwfFilterFormExport,
     FilterCaseESExportDownloadForm,
     FilterSmsESExportDownloadForm,
+    DatasourceExportDownloadForm,
 )
 from corehq.apps.export.models import FormExportInstance
 from corehq.apps.export.models.new import EmailExportWhenDoneRequest
@@ -72,6 +73,7 @@ from corehq.apps.settings.views import BaseProjectDataView
 from corehq.apps.users.models import CouchUser
 from corehq.toggles import PAGINATED_EXPORTS
 from corehq.util.view_utils import is_ajax
+from corehq.toggles import EXPORT_DATA_SOURCE_DATA
 
 
 class DownloadExportViewHelper(object):
@@ -517,6 +519,33 @@ class DownloadNewCaseExportView(BaseDownloadExportView):
             'title': CaseExportListView.page_title,
             'url': reverse(CaseExportListView.urlname, args=(self.domain,)),
         }]
+
+
+@location_safe
+class DownloadNewDatasourceExportView(BaseProjectDataView):
+    urlname = "data_export_page"
+    page_title = gettext_noop("Export Datasource Data")
+    template_name = 'export/datasource_export_view.html'
+
+    def dispatch(self, *args, **kwargs):
+        if not EXPORT_DATA_SOURCE_DATA.enabled(self.domain):
+            raise Http404()
+        return super(DownloadNewDatasourceExportView, self).dispatch(*args, **kwargs)
+
+    @property
+    def page_context(self):
+        context = super(DownloadNewDatasourceExportView, self).page_context
+        context["form"] = self.form
+        return context
+
+    def post(self, request, *args, **kwargs):
+        ...
+
+    @property
+    def form(self):
+        if self.request.method == 'POST':
+            ...
+        return DatasourceExportDownloadForm(self.domain)
 
 
 class DownloadNewSmsExportView(BaseDownloadExportView):
