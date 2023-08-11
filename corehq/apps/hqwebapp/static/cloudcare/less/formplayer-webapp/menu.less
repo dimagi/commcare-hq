@@ -15,7 +15,12 @@
   #module-case-list-map {
     height: calc(~"100vh - 65px");
     position: sticky !important; // Has to be important so the leaflet code does not set it to relative
-    top: 50px; // based on the height of the crumbs bar
+    top: 47.125px; // based on the height of the crumbs bar
+    z-index: 1;
+
+    @media (max-width: 767px) {
+      height: 250px;
+    }
 
     .marker-pin {
       text-align: center;
