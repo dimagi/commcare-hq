@@ -29,9 +29,9 @@ class Command(BaseCommand):
 
         suppressed_count = 0
         for sub_id in duplicate_subs_ids:
-            related_invoices = Invoice.objects.filter(
-                subscription_id=sub_id, date_start__range=(start_date, end_date)).order_by('-date_created')
-            for invoice in related_invoices[1:]:
+            related_invoices = list(Invoice.objects.filter(
+                subscription_id=sub_id, date_start__range=(start_date, end_date)).order_by('-date_created'))
+            for invoice in related_invoices[:-1]:
                 if invoice.balance != invoice.subtotal:
                     #credit them back
                     self.revert_invoice_payment(invoice, note)
