@@ -78,6 +78,40 @@ hqDefine("cloudcare/js/form_entry/spec/form_ui_spec", function () {
             assert.equal(form.children()[0].children()[0].children()[0].type(), constants.GROUPED_QUESTION_TILE_ROW_TYPE);
             assert.equal(form.children()[0].children()[0].children()[0].children()[0].type(), constants.QUESTION_TYPE);        });
 
+        it('Should render questions grouped by row', function () {
+            styleObj = {raw:'2-per-row'}
+            q0 = fixtures.textJSON({
+                style: styleObj,
+                ix: "0"
+            })
+            g0 = fixtures.groupJSON({
+                ix: "1"
+            })
+            g0.children[0].children[0].style = styleObj
+            g0.children[0].children[0].style = styleObj
+            q1 = fixtures.selectJSON({
+                style: styleObj,
+                ix: "2"
+            })
+            q2 = fixtures.labelJSON({
+                style: styleObj,
+                ix: "3"
+            })
+            q3 = fixtures.labelJSON({
+                style: styleObj,
+                ix: "4"
+            })
+            formJSON.tree = [q0, g0, q1, q2, q3]
+            let form = formUI.Form(formJSON);
+
+            // Expected structure (where gq signifies type "grouped-question-tile-row")
+            assert.equal(form.children().length, 4); // [gq, g, gq, gq]
+            assert.equal(form.children()[0].children().length, 1); // [q0]
+            assert.equal(form.children()[1].children()[0].children().length, 2); // [q(ix=2,3), q(ix=2,4)]
+            assert.equal(form.children()[2].children().length, 2); // [q1, q2]
+            assert.equal(form.children()[3].children().length, 1); // [q3]
+        });
+
         it('Should reconcile question choices', function () {
             formJSON.tree = [questionJSON];
             var form = formUI.Form(formJSON),
