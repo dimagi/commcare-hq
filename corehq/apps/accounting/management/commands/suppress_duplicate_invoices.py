@@ -72,7 +72,7 @@ class Command(BaseCommand):
                                     feature_type=feature[0], note=note)
                 payment_by_credit -= feature_deduction
 
-        # After deducting plan credit and feature predit, the remained credit should be type Any
+        # After deducting plan credit and feature credit, the remained credit should be type Any
         if payment_by_credit:
             print(f"Adding remaining credit (type Any): {payment_by_credit}")
             CreditLine.add_credit(amount=payment_by_credit, subscription=invoice.subscription, note=note)
