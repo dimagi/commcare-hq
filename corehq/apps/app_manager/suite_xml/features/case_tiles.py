@@ -10,6 +10,7 @@ from xml.sax.saxutils import escape
 
 from corehq.apps.app_manager import id_strings
 from corehq.apps.app_manager.exceptions import SuiteError
+from corehq.apps.app_manager.suite_xml.sections.entries import EntriesHelper
 from corehq.apps.app_manager.suite_xml.xml_models import Detail, XPathVariable, Text, TileGroup, Style
 from corehq.apps.app_manager.util import (
     module_offers_search,
