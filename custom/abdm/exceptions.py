@@ -1,5 +1,11 @@
 from rest_framework.exceptions import APIException
 
+ERROR_CODE_REQUIRED = 'required'
+ERROR_CODE_REQUIRED_MESSAGE = 'This field is required.'
+ERROR_CODE_INVALID = 'invalid'
+ERROR_FUTURE_DATE_MESSAGE = 'This field must be in future'
+ERROR_PAST_DATE_MESSAGE = 'This field must be in past'
+
 
 class ABDMErrorResponseFormatter:
     error_code_prefix = ''

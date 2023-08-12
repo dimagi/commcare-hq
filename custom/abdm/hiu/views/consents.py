@@ -2,10 +2,10 @@ import requests
 from django.db import transaction
 from django.db.models import Q
 from rest_framework import viewsets
+from rest_framework.exceptions import ValidationError
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.status import HTTP_201_CREATED, HTTP_202_ACCEPTED
-from rest_framework.exceptions import ValidationError
 
 from custom.abdm.auth import ABDMUserAuthentication
 from custom.abdm.const import (
@@ -15,7 +15,12 @@ from custom.abdm.const import (
     STATUS_REQUESTED,
     STATUS_REVOKED,
 )
-from custom.abdm.exceptions import ABDMGatewayError, ABDMServiceUnavailable
+from custom.abdm.exceptions import (
+    ABDMGatewayError,
+    ABDMServiceUnavailable,
+    ERROR_CODE_REQUIRED,
+    ERROR_CODE_REQUIRED_MESSAGE
+)
 from custom.abdm.hiu.const import (
     GW_CONSENT_REQUEST_INIT_PATH,
     GW_CONSENT_REQUEST_ON_NOTIFY_PATH,
@@ -224,7 +229,7 @@ class ConsentArtefactFetch(HIUBaseView, viewsets.ReadOnlyModelViewSet):
         consent_request_id = request_params.get('consent_request_id')
         search = request_params.get('search')
         if not consent_request_id:
-            raise ValidationError({'consent_request_id': 'This field is required!'}, code='required')
+            raise ValidationError({'consent_request_id': ERROR_CODE_REQUIRED_MESSAGE}, code=ERROR_CODE_REQUIRED)
         queryset = queryset.filter(consent_request=consent_request_id)
         if search:
             queryset = queryset.filter(details__hip__name__icontains=search)
