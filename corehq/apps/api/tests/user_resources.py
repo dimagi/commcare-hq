@@ -24,6 +24,7 @@ from corehq.apps.users.audit.change_messages import UserChangeMessage
 from corehq.apps.users.model_log import UserModelAction
 from corehq.apps.users.models import (
     CommCareUser,
+    ConnectIDUserLink,
     UserHistory,
     UserRole,
     WebUser,
