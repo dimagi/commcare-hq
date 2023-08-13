@@ -265,7 +265,7 @@ class CommCareUserResource(v0_1.CommCareUserResource):
                 django_user.delete()
             raise
         if bundle.data.get('connect_username'):
-            ConnectIDUserLink.objects.create(domain=bundle.request.domain, connect_username=bundle.data['connect_username'], commcare_user=bundle.obj.get_django_user())
+            ConnectIDUserLink.objects.create(domain=bundle.request.domain, connectid_username=bundle.data['connect_username'], commcare_user=bundle.obj.get_django_user())
         return bundle
 
     def obj_update(self, bundle, **kwargs):

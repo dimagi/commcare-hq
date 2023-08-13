@@ -188,7 +188,7 @@ class TestCommCareUserResource(APIResourceTest):
         user_link = ConnectIDUserLink.objects.get(commcare_user=django_user)
         self.addCleanup(user_link.delete)
         self.assertEqual(user_link.domain, self.domain)
-        self.assertEqual(connect_username="ccc_user")
+        self.assertEqual(user_link.connectid_username="ccc_user")
 
 
     def test_create_connect_user_with_password(self):
@@ -209,7 +209,7 @@ class TestCommCareUserResource(APIResourceTest):
         user_link = ConnectIDUserLink.objects.get(commcare_user=django_user)
         self.addCleanup(user_link.delete)
         self.assertEqual(user_link.domain, self.domain)
-        self.assertEqual(connect_username="ccc_user")
+        self.assertEqual(user_link.connectid_username="ccc_user")
 
 
     def test_bad_request_if_username_already_exists(self):
