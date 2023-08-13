@@ -58,7 +58,6 @@ from corehq.apps.app_manager.models import (
     OpenSubCaseAction,
     RemoteApp,
 )
-from corehq.apps.data_dictionary.util import get_deprecated_fields
 from corehq.apps.domain.models import Domain
 from corehq.apps.export.const import (
     ALL_CASE_TYPE_EXPORT,
