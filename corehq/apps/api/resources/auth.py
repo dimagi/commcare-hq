@@ -5,6 +5,7 @@ from django.core.exceptions import PermissionDenied
 from django.http import Http404, HttpResponse, HttpResponseForbidden
 
 from attrs import define, field
+from oauth2_provider.views.mixins import OAuthLibMixin
 from tastypie.authentication import Authentication
 
 from corehq.apps.api.odata.views import odata_permissions_check
@@ -164,6 +165,15 @@ class RequirePermissionAuthentication(LoginAndDomainAuthentication):
             wrap_4xx_errors_for_apis,
         ]
         return self._auth_test(request, wrappers=wrappers, **kwargs)
+
+
+class ClientOrRequiredPermissionAuthentication(OAuthLibMixin, RequirePermissionAuthentication):
+
+    def is_authenticated(self, request, **kwargs):
+        valid = self.authenticate_client(request)
+        if not valid:
+            return super(ClientOrRequiredPermissionAuthentication, self).is_authenticated(request, **kwargs)
+        return self._auth_test(request, wrappers=[wrap_4xx_errors_for_apis], **kwargs)
 
 
 class ODataAuthentication(LoginAndDomainAuthentication):
