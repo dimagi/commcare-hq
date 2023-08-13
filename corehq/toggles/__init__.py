@@ -1046,8 +1046,6 @@ USH_USERCASES_FOR_WEB_USERS = StaticToggle(
     TAG_CUSTOM,
     help_link='https://confluence.dimagi.com/display/saas/USH%3A+Enable+Web+User+Usercase+Creation',
     namespaces=[NAMESPACE_DOMAIN],
-    description="""
-    Toggle to enable the creation of usercases for web users."""
 )
 
 WEBAPPS_STICKY_SEARCH = StaticToggle(
@@ -1056,6 +1054,13 @@ WEBAPPS_STICKY_SEARCH = StaticToggle(
     TAG_CUSTOM,
     namespaces=[NAMESPACE_DOMAIN],
     help_link='https://confluence.dimagi.com/display/saas/COVID%3A+Web+Apps+Sticky+Search',
+)
+
+HIDE_SYNC_BUTTON = StaticToggle(
+    "hide_sync_button",
+    "USH: Hide Sync Button in Web Apps",
+    TAG_CUSTOM,
+    namespaces=[NAMESPACE_DOMAIN],
 )
 
 
@@ -2015,6 +2020,17 @@ ONE_PHONE_NUMBER_MULTIPLE_CONTACTS = StaticToggle(
     parent_toggles=[INBOUND_SMS_LENIENCY]
 )
 
+CHANGE_FORM_LANGUAGE = StaticToggle(
+    'change_form_language',
+    'USH: Allow user to change form language in web apps',
+    TAG_CUSTOM,
+    namespaces=[NAMESPACE_DOMAIN],
+    description="""
+    Allows the user to change the language of the form content while in the form itself in Web Apps
+    """,
+    help_link="https://confluence.dimagi.com/display/saas/Change+Form+Language"
+)
+
 BLOCKED_EMAIL_DOMAIN_RECIPIENTS = StaticToggle(
     'blocked_email_domain_recipients',
     'Block any outgoing email addresses that have an email domain which '
@@ -2388,6 +2404,15 @@ FCM_NOTIFICATION = StaticToggle(
                 'Conditional Alerts in Messaging.'
 )
 
+SHOW_OWNER_LOCATION_PROPERTY_IN_REPORT_BUILDER_TOGGLE = StaticToggle(
+    'show_owner_location_property_in_report_builder',
+    label='Show an additional "Owner (Location)" property in report builder reports.',
+    tag=TAG_SOLUTIONS_OPEN,
+    namespaces=[NAMESPACE_DOMAIN],
+    help_link='https://confluence.dimagi.com/display/saas/Enable+creation+of+report+builder+reports+that+are+location+safe',  # noqa: E501
+    description='This can be used to create report builder reports that are location-safe.'
+)
+
 
 class FrozenPrivilegeToggle(StaticToggle):
     """
@@ -2575,14 +2600,4 @@ APPLICATION_ERROR_REPORT = FrozenPrivilegeToggle(
     description="Show Application Error Report.",
     # TODO: Move to public wiki
     help_link='https://confluence.dimagi.com/display/saas/Show+Application+Error+Report+Feature+Flag'
-)
-
-SHOW_OWNER_LOCATION_PROPERTY_IN_REPORT_BUILDER = FrozenPrivilegeToggle(
-    privileges.SHOW_OWNER_LOCATION_PROPERTY_IN_REPORT_BUILDER,
-    'show_owner_location_property_in_report_builder',
-    label='Show an additional "Owner (Location)" property in report builder reports.',
-    tag=TAG_SOLUTIONS_OPEN,
-    namespaces=[NAMESPACE_DOMAIN],
-    help_link='https://confluence.dimagi.com/display/saas/Enable+creation+of+report+builder+reports+that+are+location+safe',  # noqa: E501
-    description='This can be used to create report builder reports that are location-safe.'
 )
