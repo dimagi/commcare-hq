@@ -7,9 +7,9 @@
  *  access it.
  */
 hqDefine('hqwebapp/js/initial_page_data', ['jquery', 'underscore'], function ($, _) {
-    var data_selector = ".initial-page-data",
+    var dataSelector = ".initial-page-data",
         _initData = {},
-        url_selector = ".commcarehq-urls",
+        urlSelector = ".commcarehq-urls",
         urls = {};
 
     /*
@@ -36,7 +36,7 @@ hqDefine('hqwebapp/js/initial_page_data', ['jquery', 'underscore'], function ($,
      */
     var get = function (name, strict) {
         if (_initData[name] === undefined) {
-            _initData = gather(data_selector, _initData);
+            _initData = gather(dataSelector, _initData);
         }
         if (strict && !_.has(_initData, name)) {
             throw new Error("Missing key in initial page data: " + name);
@@ -89,7 +89,7 @@ hqDefine('hqwebapp/js/initial_page_data', ['jquery', 'underscore'], function ($,
         var args = arguments;
         var index = 1;
         if (!urls[name]) {
-            _.extend(urls, gather(url_selector, urls));
+            _.extend(urls, gather(urlSelector, urls));
             if (!urls[name]) {
                 throw new Error("URL '" + name + "' not found in registry");
             }
@@ -99,9 +99,17 @@ hqDefine('hqwebapp/js/initial_page_data', ['jquery', 'underscore'], function ($,
         });
     };
 
+    /**
+     * For use in unit tests
+     */
+    function clear() {
+        _initData = {};
+        urls = {};
+    }
+
     $(function () {
-        _initData = gather(data_selector, _initData);
-        _.extend(urls, gather(url_selector, urls));
+        _initData = gather(dataSelector, _initData);
+        _.extend(urls, gather(urlSelector, urls));
     });
 
     return {
@@ -112,5 +120,6 @@ hqDefine('hqwebapp/js/initial_page_data', ['jquery', 'underscore'], function ($,
         getUrlParameterFromString: getUrlParameterFromString,
         registerUrl: registerUrl,
         reverse: reverse,
+        clear: clear
     };
 });

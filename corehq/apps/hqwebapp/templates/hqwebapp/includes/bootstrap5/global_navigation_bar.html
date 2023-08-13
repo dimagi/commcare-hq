@@ -64,7 +64,7 @@
           {% endif %}
           {% if user.is_superuser %}
           <li>
-            <a href="{% url "feature_flags_and_privileges" domain %}" class="track-usage-link"
+            <a href="{% url "feature_flags_and_privileges" domain %}" class="dropdown-item track-usage-link"
                data-category="Nav Bar" data-action="Gear Icon" data-label="Current Subscription">
               <i class="fa fa-flag dropdown-icon"></i> {% trans "Feature Flags and Privileges" %}
             </a>

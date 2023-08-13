@@ -216,7 +216,7 @@ class RemoteRequestFactory(object):
                 data=self._remote_request_query_datums,
                 prompts=self.build_query_prompts(),
                 default_search=self.module.search_config.default_search,
-                results_title=self.build_results_title(),
+                results_title=self.build_results_title() if self.app.supports_split_screen_case_search else None,
             )
         ]
 
@@ -338,7 +338,8 @@ class RemoteRequestFactory(object):
             if prop.validations:
                 kwargs['validations'] = [
                     Validation(
-                        test=interpolate_xpath(validation.test),
+                        # don't interpolate dots since "." is a valid reference here
+                        test=interpolate_xpath(validation.test, interpolate_dots=False),
                         text=[Text(
                             locale_id=id_strings.search_property_validation_text(self.module, prop.name, i)
                         )] if validation.has_text else [],

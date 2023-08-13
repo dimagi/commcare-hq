@@ -13,7 +13,6 @@ hqDefine("cloudcare/js/formplayer/app", function () {
         GGAnalytics = hqImport("analytix/js/google"),
         Kissmetrics = hqImport("analytix/js/kissmetrix"),
         ProgressBar = hqImport("cloudcare/js/formplayer/layout/views/progress_bar"),
-        Toggles = hqImport("hqwebapp/js/toggles"),
         UsersModels = hqImport("cloudcare/js/formplayer/users/models"),
         WebFormSession = hqImport('cloudcare/js/form_entry/web_form_session');
 
@@ -50,7 +49,7 @@ hqDefine("cloudcare/js/formplayer/app", function () {
         sidebar.on('show', function () {
             $('#menu-container .flex-container').addClass('full-width');
         });
-        sidebar.on('hide empty', function (region) {
+        sidebar.on('hide empty', function () {
             $('#menu-container .flex-container').removeClass('full-width');
         });
 
