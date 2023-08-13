@@ -170,6 +170,48 @@ class TestCommCareUserResource(APIResourceTest):
         self.assertEqual(user_back.user_data["chw_id"], "13/43/DFA")
         self.assertEqual(user_back.default_phone_number, "50253311399")
 
+
+    def test_create_connect_user_no_password(self):
+        user_json = {
+            "username": "ccc",
+            "connect_username": "ccc_user",
+        }
+
+        response = self._assert_auth_post_resource(self.list_endpoint,
+                                                   json.dumps(user_json),
+                                                   content_type='application/json')
+        self.assertEqual(response.status_code, 201)
+        user = CommCareUser.get_by_username("ccc@qwerty.commcarehq.org")
+        self.addCleanup(user.delete, self.domain.name, deleted_by=None)
+
+        django_user = user.get_django_user()
+        user_link = ConnectIDUserLink.objects.get(commcare_user=django_user)
+        self.addCleanup(user_link.delete)
+        self.assertEqual(user_link.domain, self.domain)
+        self.assertEqual(connect_username="ccc_user")
+
+
+    def test_create_connect_user_with_password(self):
+        user_json = {
+            "username": "ccc",
+            "connect_username": "ccc_user",
+            "password": "abc123",
+        }
+
+        response = self._assert_auth_post_resource(self.list_endpoint,
+                                                   json.dumps(user_json),
+                                                   content_type='application/json')
+        self.assertEqual(response.status_code, 201)
+        user = CommCareUser.get_by_username("ccc@qwerty.commcarehq.org")
+        self.addCleanup(user.delete, self.domain.name, deleted_by=None)
+
+        django_user = user.get_django_user()
+        user_link = ConnectIDUserLink.objects.get(commcare_user=django_user)
+        self.addCleanup(user_link.delete)
+        self.assertEqual(user_link.domain, self.domain)
+        self.assertEqual(connect_username="ccc_user")
+
+
     def test_bad_request_if_username_already_exists(self):
         # create user with same username first
         og_user = CommCareUser.create(self.domain.name, 'jdoe@qwerty.commcarehq.org', 'abc123', None, None)
