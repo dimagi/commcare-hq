@@ -116,7 +116,6 @@ from corehq.util.global_request import get_request_domain
 from corehq.util.html_utils import strip_tags
 from corehq.util.timezones.utils import get_timezone_for_domain
 from corehq.util.view_utils import absolute_reverse
-from corehq.apps.data_dictionary.util import get_deprecated_fields
 from corehq.apps.reports.analytics.esaccessors import get_case_types_for_domain
 
 
@@ -1668,8 +1667,7 @@ class FormInferredSchema(InferredSchema):
     """This was used during the migratoin from the old models to capture
     export items that could not be found in the current apps.
 
-    See:
-    https://github.com/dimagi/commcare-hq/blob/34a9459462271cf2dcd7562b36cc86e300d343b8/corehq/apps/export/utils.py#L246-L265  # noqa: E501
+    See https://github.com/dimagi/commcare-hq/blob/34a9459462271cf2dcd7562b36cc86e300d343b8/corehq/apps/export/utils.py#L246-L265  # noqa: E501
     """
     xmlns = StringProperty(required=True)
     app_id = StringProperty()
@@ -2904,7 +2902,8 @@ class StockFormExportColumn(ExportColumn):
         # have to create a new TableConfiguration for the edge case mentioned above.
         for idx, path_name in enumerate(path):
             is_stock_question_element = any(
-                [path_name.startswith('{}:'.format(tag_name)) for tag_name in STOCK_QUESTION_TAG_NAMES])
+                [path_name.startswith('{}:'.format(tag_name)) for tag_name in STOCK_QUESTION_TAG_NAMES]
+            )
             if is_stock_question_element:
                 question_path, question_id = path_name.split(':')
                 path[idx] = question_path
