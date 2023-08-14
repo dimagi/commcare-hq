@@ -171,7 +171,6 @@ class TestCommCareUserResource(APIResourceTest):
         self.assertEqual(user_back.user_data["chw_id"], "13/43/DFA")
         self.assertEqual(user_back.default_phone_number, "50253311399")
 
-
     def test_create_connect_user_no_password(self):
         user_json = {
             "username": "ccc",
@@ -190,7 +189,6 @@ class TestCommCareUserResource(APIResourceTest):
         self.addCleanup(user_link.delete)
         self.assertEqual(user_link.domain, self.domain.name)
         self.assertEqual(user_link.connectid_username, "ccc_user")
-
 
     def test_create_connect_user_with_password(self):
         user_json = {
@@ -211,7 +209,6 @@ class TestCommCareUserResource(APIResourceTest):
         self.addCleanup(user_link.delete)
         self.assertEqual(user_link.domain, self.domain.name)
         self.assertEqual(user_link.connectid_username, "ccc_user")
-
 
     def test_bad_request_if_username_already_exists(self):
         # create user with same username first
