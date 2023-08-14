@@ -1,7 +1,6 @@
 from collections import namedtuple
 
 from corehq.apps.es import filters
-from corehq.apps.reports.const import COMMCARE_CASE_COPY_PROPERTY_NAME as CASE_COPY_PROP
 
 # Case properties nested documents
 CASE_PROPERTIES_PATH = 'case_properties'

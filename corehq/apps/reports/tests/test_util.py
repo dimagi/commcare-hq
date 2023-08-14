@@ -22,8 +22,8 @@ from corehq.apps.es.tests.utils import es_test
 from corehq.apps.es import case_search_adapter
 from corehq.form_processor.models import CaseTransaction, CommCareCase
 from corehq.apps.reports.util import domain_copied_cases_by_owner
-from corehq.apps.reports.const import COMMCARE_CASE_COPY_PROPERTY_NAME
 from corehq.apps.users.models import CommCareUser
+from corehq.apps.reports.filters.api import CaseCopier
 
 DOMAIN = 'test_domain'
 USER_ID = "5bc1315c-da6f-466d-a7c4-4580bc84a7b9"
@@ -187,7 +187,7 @@ class TestDomainCopiedCasesByOwner(TestCase):
     ):
         case_json = {}
         if is_copy:
-            case_json[COMMCARE_CASE_COPY_PROPERTY_NAME] = 'True'
+            case_json[CaseCopier.COMMCARE_CASE_COPY_PROPERTY_NAMfE] = 'True'
 
         case = CommCareCase(
             case_id=uuid.uuid4().hex,
