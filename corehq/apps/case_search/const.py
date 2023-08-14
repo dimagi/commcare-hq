@@ -1,6 +1,7 @@
 from collections import namedtuple
 
 from corehq.apps.es import filters
+from corehq.apps.reports.const import COMMCARE_CASE_COPY_PROPERTY_NAME as CASE_COPY_PROP
 
 # Case properties nested documents
 CASE_PROPERTIES_PATH = 'case_properties'
@@ -66,6 +67,8 @@ SPECIAL_CASE_PROPERTIES_MAP = {
                                      get_field_lambda('closed_on')),
     'last_modified': SpecialCaseProperty('last_modified', lambda doc: doc.get('modified_on'), 'modified_on',
                                          get_field_lambda('modified_on')),
+    CASE_COPY_PROP: SpecialCaseProperty(CASE_COPY_PROP, lambda doc: doc.get(CASE_COPY_PROP), CASE_COPY_PROP,
+                                        lambda model: model.case_json.get(CASE_COPY_PROP)),
 }
 SPECIAL_CASE_PROPERTIES = list(SPECIAL_CASE_PROPERTIES_MAP.keys())
 

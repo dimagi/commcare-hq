@@ -43,6 +43,7 @@ from corehq.elastic import ESError
 from django_prbac.decorators import requires_privilege
 from corehq import privileges, toggles
 from corehq.apps.accounting.utils import domain_has_privilege
+from corehq.apps.reports.const import COMMCARE_CASE_COPY_PROPERTY_NAME
 
 logger = logging.getLogger(__name__)
 
@@ -355,7 +356,10 @@ class CaseCopier:
             owner_id=self.to_owner,
             case_name=case_name or case.name,
             case_type=case.type,
-            update={**case.case_json, **deid_props},
+            update={
+                COMMCARE_CASE_COPY_PROPERTY_NAME: True,
+                **case.case_json, **deid_props
+            },
             index=index_map,
             external_id=deid_attrs.get('external_id', case.external_id),
             date_opened=deid_attrs.get('date_opened', case.opened_on),
