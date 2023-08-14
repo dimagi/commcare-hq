@@ -198,18 +198,8 @@ class FormplayerMain(View):
 
         domain_obj = Domain.get_by_name(domain)
 
-        lang_code_name_mapping = {}
-
-        def get_lang_name(lang_code):
-            if not lang_code_name_mapping.get(lang_code):
-                lang_code_name_mapping[lang_code] = get_name(lang_code)
-            return lang_code_name_mapping[lang_code]
-
-        for app in apps:
-            lang_codes = app.get("langs", [])
-            app_lang_code_mapping = {code: get_lang_name(code) for code in lang_codes if
-                                     code not in lang_code_name_mapping.keys()}
-            lang_code_name_mapping.update(app_lang_code_mapping)
+        lang_codes = set().union(*(app.get("langs", []) for app in apps))
+        lang_code_name_mapping = {code: get_name(code) for code in lang_codes}
 
         context = {
             "domain": domain,
