@@ -41,7 +41,6 @@ from .analytics.esaccessors import (
 )
 from .models import HQUserType, TempCommCareUser
 from corehq.apps.es.case_search import CaseSearchES, case_property_missing
-from corehq.apps.reports.filters.api import CaseCopier
 
 
 def user_list(domain):
@@ -750,6 +749,7 @@ def domain_copied_cases_by_owner(domain, owner_ids):
     where the cases have the COMMCARE_CASE_COPY_PROPERTY_NAME case
     property.
     """
+    from corehq.apps.reports.filters.api import CaseCopier
     return CaseSearchES()\
         .domain(domain)\
         .owner(owner_ids)\
