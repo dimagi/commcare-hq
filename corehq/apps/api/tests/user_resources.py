@@ -188,7 +188,7 @@ class TestCommCareUserResource(APIResourceTest):
         django_user = user.get_django_user()
         user_link = ConnectIDUserLink.objects.get(commcare_user=django_user)
         self.addCleanup(user_link.delete)
-        self.assertEqual(user_link.domain, self.domain)
+        self.assertEqual(user_link.domain, self.domain.name)
         self.assertEqual(user_link.connectid_username, "ccc_user")
 
 
@@ -209,7 +209,7 @@ class TestCommCareUserResource(APIResourceTest):
         django_user = user.get_django_user()
         user_link = ConnectIDUserLink.objects.get(commcare_user=django_user)
         self.addCleanup(user_link.delete)
-        self.assertEqual(user_link.domain, self.domain)
+        self.assertEqual(user_link.domain, self.domain.name)
         self.assertEqual(user_link.connectid_username, "ccc_user")
 
 
