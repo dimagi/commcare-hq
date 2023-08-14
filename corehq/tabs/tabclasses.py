@@ -86,7 +86,6 @@ from corehq.apps.translations.integrations.transifex.utils import (
 )
 from corehq.apps.userreports.util import has_report_builder_access
 from corehq.apps.users.decorators import get_permission_name
-from corehq.apps.users.models import HqPermissions
 from corehq.apps.users.permissions import (
     can_download_data_files,
     can_view_sms_exports,
