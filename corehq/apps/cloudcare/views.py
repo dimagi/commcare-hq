@@ -88,6 +88,8 @@ from corehq.form_processor.models import CommCareCase
 from corehq.form_processor.models import XFormInstance
 from xml2json.lib import xml2json
 
+from langcodes import get_name
+
 
 @require_cloudcare_access
 def default(request, domain):
@@ -196,6 +198,19 @@ class FormplayerMain(View):
 
         domain_obj = Domain.get_by_name(domain)
 
+        lang_code_name_mapping = {}
+
+        def get_lang_name(lang_code):
+            if not lang_code_name_mapping.get(lang_code):
+                lang_code_name_mapping[lang_code] = get_name(lang_code)
+            return lang_code_name_mapping[lang_code]
+
+        for app in apps:
+            lang_codes = app.get("langs", [])
+            app_lang_code_mapping = {code: get_lang_name(code) for code in lang_codes if
+                                     code not in lang_code_name_mapping.keys()}
+            lang_code_name_mapping.update(app_lang_code_mapping)
+
         context = {
             "domain": domain,
             "default_geocoder_location": domain_obj.default_geocoder_location,
@@ -211,7 +226,9 @@ class FormplayerMain(View):
             "integrations": integration_contexts(domain),
             "has_geocoder_privs": has_geocoder_privs(domain),
             "valid_multimedia_extensions_map": VALID_ATTACHMENT_FILE_EXTENSION_MAP,
+            "lang_code_name_mapping": lang_code_name_mapping,
         }
+
         return set_cookie(
             render(request, "cloudcare/formplayer_home.html", context)
         )
