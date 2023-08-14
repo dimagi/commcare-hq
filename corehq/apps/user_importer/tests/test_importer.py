@@ -148,7 +148,8 @@ class TestMobileUserBulkUpload(TestCase, DomainSubscriptionMixin):
     def tearDown(self):
         Invitation.objects.all().delete()
         delete_all_users()
-        delete_all_groups()
+        for group in Group.by_domain(self.domain.name):
+            group.delete()
 
     @property
     def user(self):
@@ -1444,15 +1445,30 @@ class TestMobileUserBulkUpload(TestCase, DomainSubscriptionMixin):
         groups = Group.by_domain(self.domain.name)
         self.assertEqual(len(groups), 1)
 
+    def test_upload_group_changes(self):
+        group = Group(domain=self.domain.name, name="test_group")
+        group.save()
+
+        import_users_and_groups(
+            self.domain.name,
+            [],
+            [{'id': group._id, 'name': 'another_group', 'case-sharing': False, 'reporting': False}],
+            self.uploading_user.get_id,
+            self.upload_record.pk,
+            False
+        )
+        updated_group = Group.get(group._id)
+        self.assertEqual(updated_group.name, 'another_group')
+
     def test_upload_new_group_and_assign_to_user(self):
         user = CommCareUser.create(self.domain_name, f"hello@{self.domain.name}.commcarehq.org", "*******",
                                    created_by=None, created_via=None)
-        user_specs = self._get_spec(user_id=user._id, group=['test_group2'])
+        user_specs = self._get_spec(user_id=user._id, group=['test_group'])
 
         import_users_and_groups(
             self.domain.name,
             [user_specs],
-            [{'id': '', 'name': 'test_group2', 'case-sharing': False, 'reporting': False}],
+            [{'id': '', 'name': 'test_group', 'case-sharing': False, 'reporting': False}],
             self.uploading_user.get_id,
             self.upload_record.pk,
             False
@@ -1461,12 +1477,12 @@ class TestMobileUserBulkUpload(TestCase, DomainSubscriptionMixin):
         self.assertEqual(len(groups), 1)
 
     def test_upload_new_group_and_assign_to_new_user(self):
-        user_specs = self._get_spec(group=['test_group3'])
+        user_specs = self._get_spec(group=['test_group'])
 
         import_users_and_groups(
             self.domain.name,
             [user_specs],
-            [{'id': '', 'name': 'test_group3', 'case-sharing': False, 'reporting': False}],
+            [{'id': '', 'name': 'test_group', 'case-sharing': False, 'reporting': False}],
             self.uploading_user.get_id,
             self.upload_record.pk,
             False

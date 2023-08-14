@@ -289,6 +289,7 @@ def create_or_update_groups(domain, group_specs):
             group.case_sharing = case_sharing
             group.reporting = reporting
             group.metadata = data
+            group.save()
     return group_memoizer, log
 
 
