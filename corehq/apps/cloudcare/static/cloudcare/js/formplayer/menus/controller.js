@@ -114,7 +114,8 @@ hqDefine("cloudcare/js/formplayer/menus/controller", function () {
             var menuData = menusUtils.getMenuData(menuResponse);
             menuData["triggerEmptyCaseList"] = true;
             menuData["sidebarEnabled"] = true;
-            menuData["title"] = menuResponse.resultsTitle;
+            menuData["description"] = menuResponse.description;
+
             var caseListView = menusUtils.getCaseListView(menuResponse);
             FormplayerFrontend.regions.getRegion('main').show(caseListView(menuData));
         } else if (menuListView) {
