@@ -22,7 +22,8 @@ class Command(BaseCommand):
         start_date, end_date = get_first_last_days(year, month)
 
         # Filter the Invoice objects based on the date_start
-        invoices_of_given_date = Invoice.objects.filter(date_start__range=(start_date, end_date))
+        invoices_of_given_date = Invoice.objects.filter(date_start__range=(start_date, end_date),
+                                                        is_hidden_to_ops=False)
 
         # Extract the subscription ids that have duplicate invoices
         duplicate_subs_ids = invoices_of_given_date.values('subscription').annotate(
