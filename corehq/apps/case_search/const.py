@@ -59,13 +59,14 @@ SPECIAL_CASE_PROPERTIES_MAP = {
 
     'external_id': SpecialCaseProperty('external_id', lambda doc: doc.get('external_id', ''), 'external_id',
                                        get_field_lambda('external_id')),
-
     'date_opened': SpecialCaseProperty('date_opened', lambda doc: doc.get('opened_on'), 'opened_on',
                                        get_field_lambda('opened_on')),
     'closed_on': SpecialCaseProperty('closed_on', lambda doc: doc.get('closed_on'), 'closed_on',
                                      get_field_lambda('closed_on')),
     'last_modified': SpecialCaseProperty('last_modified', lambda doc: doc.get('modified_on'), 'modified_on',
                                          get_field_lambda('modified_on')),
+    'commcare_case_copy': SpecialCaseProperty('commcare_case_copy', lambda doc: doc.get('commcare_case_copy'),
+                                              'commcare_case_copy', None),
 }
 SPECIAL_CASE_PROPERTIES = list(SPECIAL_CASE_PROPERTIES_MAP.keys())
 
