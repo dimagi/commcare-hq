@@ -5,6 +5,7 @@ from django.template.defaultfilters import yesno
 from django.urls import NoReverseMatch
 from django.utils.html import format_html
 from django.utils.translation import gettext as _
+from corehq.apps.reports.filters.api import CaseCopier
 
 import pytz
 from couchdbkit import ResourceNotFound
@@ -22,7 +23,6 @@ from corehq.const import USER_DATETIME_FORMAT_WITH_SEC
 from corehq.util.quickcache import quickcache
 from corehq.util.timezones.utils import parse_date
 from corehq.util.view_utils import absolute_reverse
-from corehq.apps.reports.const import COMMCARE_CASE_COPY_PROPERTY_NAME
 
 
 class CaseDisplayBase:
@@ -117,7 +117,7 @@ class CaseDisplayBase:
         url = self.case_detail_url
         if url:
             label = ''
-            if self.case.get(COMMCARE_CASE_COPY_PROPERTY_NAME):
+            if self.case.get(CaseCopier.COMMCARE_CASE_COPY_PROPERTY_NAME):
                 label = format_html(
                     '&nbsp;<span class="label label-info" title="0">{}</span>',
                     _("Copied case"),
