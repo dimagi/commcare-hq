@@ -15,14 +15,12 @@ class Command(BaseCommand):
                             help='A note to be added when crediting back the amount')
         parser.add_argument('--dry-run', action='store_true', default=False)
 
-
     def handle(self, *args, **kwargs):
         year = kwargs['year']
         month = kwargs['month']
         note = kwargs['note']
         dry_run = kwargs['dry_run']
         dry_run_tag = '[DRY_RUN]' if dry_run else ''
-
 
         start_date, end_date = get_first_last_days(year, month)
 
