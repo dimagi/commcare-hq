@@ -268,6 +268,7 @@ class UserDuck:
 
 class CaseCopier:
     """A helper class for copying cases."""
+    COMMCARE_CASE_COPY_PROPERTY_NAME = "commcare_case_copy"
 
     def __init__(self, domain, *, to_owner, censor_data=None):
         """
@@ -355,7 +356,10 @@ class CaseCopier:
             owner_id=self.to_owner,
             case_name=case_name or case.name,
             case_type=case.type,
-            update={**case.case_json, **deid_props},
+            update={
+                self.COMMCARE_CASE_COPY_PROPERTY_NAME: case.case_id,
+                **case.case_json, **deid_props
+            },
             index=index_map,
             external_id=deid_attrs.get('external_id', case.external_id),
             date_opened=deid_attrs.get('date_opened', case.opened_on),
