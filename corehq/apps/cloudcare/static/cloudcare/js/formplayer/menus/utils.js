@@ -85,7 +85,7 @@ hqDefine("cloudcare/js/formplayer/menus/utils", function () {
         FormplayerFrontend.regions.getRegion('breadcrumb').show(breadcrumbView);
     };
 
-    var showFormMenu = function (langs, lang_code_name_mapping) {
+    var showFormMenu = function (langs, langCodeNameMapping) {
       var langModels,
           langCollection;
 
@@ -95,7 +95,7 @@ hqDefine("cloudcare/js/formplayer/menus/utils", function () {
 
       if (langs) {
         langModels = _.map(langs, function (lang) {
-          var matchingLanguage = lang_code_name_mapping[lang];
+          var matchingLanguage = langCodeNameMapping[lang];
           return {
             lang_code: lang,
             lang_label: matchingLanguage ? matchingLanguage : lang,

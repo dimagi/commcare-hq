@@ -48,7 +48,6 @@ from corehq.apps.app_manager.dbaccessors import (
     get_app_ids_in_domain,
     get_built_app_ids_with_submissions_for_app_id,
     get_built_app_ids_with_submissions_for_app_ids_and_versions,
-    get_case_types_from_apps,
     get_latest_app_ids_and_versions,
 )
 from corehq.apps.app_manager.models import (
@@ -196,7 +195,7 @@ class ExportItem(DocumentSchema, ReadablePathMixin):
     inferred_from = SetProperty(default=set)
 
     def __key(self):
-        return'{}:{}:{}'.format(
+        return '{}:{}:{}'.format(
             _path_nodes_to_string(self.path),
             self.doc_type,
             self.transform,
@@ -402,8 +401,8 @@ class ExportColumn(DocumentSchema):
 
     def _is_deleted(self, app_ids_and_versions):
         return (
-            is_occurrence_deleted(self.item.last_occurrences, app_ids_and_versions) and
-            not self.item.inferred
+            is_occurrence_deleted(self.item.last_occurrences, app_ids_and_versions)
+            and not self.item.inferred
         )
 
     def update_properties_from_app_ids_and_versions(self, app_ids_and_versions):
@@ -691,7 +690,7 @@ class TableConfiguration(DocumentSchema, ReadablePathMixin):
             else:
                 next_doc = {}
             if path[0].is_repeat:
-                if type(next_doc) != list:
+                if not isinstance(next_doc, list):
                     # This happens when a repeat group has a single repeat iteration
                     next_doc = [next_doc]
                 new_docs.extend([
@@ -1669,7 +1668,8 @@ class FormInferredSchema(InferredSchema):
     """This was used during the migratoin from the old models to capture
     export items that could not be found in the current apps.
 
-    See https://github.com/dimagi/commcare-hq/blob/34a9459462271cf2dcd7562b36cc86e300d343b8/corehq/apps/export/utils.py#L246-L265
+    See:
+    https://github.com/dimagi/commcare-hq/blob/34a9459462271cf2dcd7562b36cc86e300d343b8/corehq/apps/export/utils.py#L246-L265  # noqa: E501
     """
     xmlns = StringProperty(required=True)
     app_id = StringProperty()
@@ -1952,6 +1952,7 @@ class ExportDataSchema(Document):
 
         return schema
 
+
 class FormExportDataSchema(ExportDataSchema):
 
     xmlns = StringProperty(required=True)
@@ -2183,7 +2184,9 @@ class FormExportDataSchema(ExportDataSchema):
         questions = xform.get_questions(langs, include_triggers=True)
         repeats = cls._get_repeat_paths(xform, langs)
         schema = cls()
-        question_keyfn = lambda q: q['repeat']
+
+        def question_keyfn(q):
+            return q['repeat']
 
         question_groups = [
             (None, [q for q in questions if question_keyfn(q) is None])
@@ -2278,6 +2281,7 @@ class FormExportDataSchema(ExportDataSchema):
             app_build_ids,
             task
         )
+
 
 class CaseExportDataSchema(ExportDataSchema):
 
@@ -2486,6 +2490,7 @@ class CaseExportDataSchema(ExportDataSchema):
             set_task_progress(task, apps_processed, len(app_build_ids) * len(case_types_to_use))
 
         return schema
+
 
 class SMSExportDataSchema(ExportDataSchema):
     include_metadata = BooleanProperty(default=False)
@@ -2898,7 +2903,8 @@ class StockFormExportColumn(ExportColumn):
         # In order to mitigate this, we encode the question id into the path so we do not
         # have to create a new TableConfiguration for the edge case mentioned above.
         for idx, path_name in enumerate(path):
-            is_stock_question_element = any([path_name.startswith('{}:'.format(tag_name)) for tag_name in STOCK_QUESTION_TAG_NAMES])
+            is_stock_question_element = any(
+                [path_name.startswith('{}:'.format(tag_name)) for tag_name in STOCK_QUESTION_TAG_NAMES])
             if is_stock_question_element:
                 question_path, question_id = path_name.split(':')
                 path[idx] = question_path
