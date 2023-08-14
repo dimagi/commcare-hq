@@ -9,7 +9,7 @@ from rest_framework.pagination import PageNumberPagination
 
 from corehq.form_processor.models.cases import CommCareCase
 from custom.abdm.const import SESSIONS_PATH
-from custom.abdm.exceptions import ABDMConfigurationError
+from custom.abdm.exceptions import ABDMConfigurationError, ERROR_FUTURE_DATE_MESSAGE, ERROR_PAST_DATE_MESSAGE
 from memoized import memoized
 
 
@@ -73,9 +73,9 @@ class StandardResultsSetPagination(PageNumberPagination):
 
 def future_date_validator(value):
     if value <= datetime.utcnow():
-        raise serializers.ValidationError('This field must be in future')
+        raise serializers.ValidationError(ERROR_FUTURE_DATE_MESSAGE)
 
 
 def past_date_validator(value):
     if value > datetime.utcnow():
-        raise serializers.ValidationError('This field must be in past')
+        raise serializers.ValidationError(ERROR_PAST_DATE_MESSAGE)

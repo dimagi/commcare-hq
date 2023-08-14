@@ -1,0 +1,35 @@
+{
+    "purpose": {
+        "code": "CAREMGT"
+    },
+    "patient": {
+        "id": "test_patient@sbx"
+    },
+    "hiu": {
+        "id": "Test-HIU-Registered"
+    },
+    "requester": {
+        "name": "Dr. Test",
+        "identifier": {
+            "type": "REGNO",
+            "value": "MH1001",
+            "system": "https://www.mciindia.org"
+        }
+    },
+    "hiTypes": [
+        "OPConsultation", "Prescription"
+    ],
+    "permission": {
+        "accessMode": "VIEW",
+        "dateRange": {
+            "from": "2023-05-17T15:12:43.960000Z",
+            "to": "2023-07-17T15:12:43.961000Z"
+        },
+        "dataEraseAt": "2023-08-18T18:12:43.961000Z",
+        "frequency": {
+            "unit": "HOUR",
+            "value": 1,
+            "repeats": 0
+        }
+    }
+}
