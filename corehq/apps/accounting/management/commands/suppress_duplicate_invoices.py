@@ -4,6 +4,7 @@ from corehq.apps.accounting.interface import get_subtotal_and_deduction
 from corehq.apps.accounting.models import Invoice, CreditLine, FeatureType
 from corehq.util.dates import get_first_last_days
 
+
 class Command(BaseCommand):
     help = 'Put credit back for duplicate invoices and suppress them'
 
