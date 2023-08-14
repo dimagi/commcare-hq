@@ -221,8 +221,6 @@ class DomainInvoiceFactory(object):
             return community_ranges
 
     def _generate_invoice(self, subscription, invoice_start, invoice_end):
-        invoice_start = invoice_start + datetime.timedelta(days=2)
-        invoice_end = invoice_end - datetime.timedelta(days=2)
         invoice, is_new_invoice = Invoice.objects.get_or_create(
             subscription=subscription,
             date_start=invoice_start,
@@ -471,9 +469,8 @@ def generate_line_items(invoice, subscription):
         feature_factory_class = FeatureLineItemFactory.get_factory_by_feature_type(
             feature_rate.feature.feature_type
         )
-        if feature_factory_class:
-            feature_factory = feature_factory_class(subscription, feature_rate, invoice)
-            feature_factory.create()
+        feature_factory = feature_factory_class(subscription, feature_rate, invoice)
+        feature_factory.create()
 
 
 class LineItemFactory(object):
@@ -542,7 +539,7 @@ class LineItemFactory(object):
                 FeatureType.USER: UserLineItemFactory,
             }[feature_type]
         except KeyError:
-            return None
+            raise LineItemError("No line item factory exists for the feature type '%s" % feature_type)
 
     @property
     @memoized
