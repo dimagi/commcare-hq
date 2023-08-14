@@ -27,7 +27,7 @@ def _grandfather_copy_cases_priv(apps, schema_editor):
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('accounting', '0077_case_list_explorer_priv'),
+        ('accounting', '0078_revert_location_owner_in_report_builder_priv'),
     ]
 
     operations = [

@@ -1,9 +1,10 @@
 import base64
 import binascii
 import logging
-import re
+import requests
 from functools import wraps
 
+from django.conf import settings
 from django.contrib.auth import authenticate, get_user_model
 from django.contrib.auth.models import User
 from django.db.models import Q
@@ -19,7 +20,7 @@ from dimagi.utils.django.request import mutable_querydict
 from dimagi.utils.web import get_ip
 
 from corehq.apps.receiverwrapper.util import DEMO_SUBMIT_MODE
-from corehq.apps.users.models import CouchUser, HQApiKey
+from corehq.apps.users.models import CouchUser, HQApiKey, ConnectIDUserLink
 from corehq.toggles import TWO_STAGE_USER_PROVISIONING
 from corehq.util.hmac_request import validate_request_hmac
 from corehq.util.metrics import metrics_counter
@@ -324,3 +325,40 @@ class HQApiKeyAuthentication(ApiKeyAuthentication):
             username, api_key = data.split(':', 1)
 
         return username, api_key
+
+
+def get_connectid_userinfo(token):
+    user_info = f"{settings.CONNECTID_USERINFO_URL}"
+    user = requests.get(user_info, headers={"AUTHORIZATION": f"Bearer {token}"})
+    connect_username = user.json().get("sub")
+    return connect_username
+
+
+class ConnectIDAuthBackend:
+
+    def authenticate(self, request, username, password):
+        """
+        Django authentication backend for requests that authenticate with tokens from ConnectID
+        This is currently only allowed for the oauth token view, and is used to generate an oauth token
+        in HQ, given a ConnectID token.
+
+        username: the username of an HQ mobile worker that has already been linked to a ConnectID user
+        password: an oauth access token issued by ConnectID
+        """
+        # Only allow for the token backend, for now
+        if not request or not request.path == '/oauth/token/':
+            return None
+        couch_user = CouchUser.get_by_username(username)
+        if couch_user is None:
+            return None
+        connect_username = get_connectid_userinfo(password)
+        if connect_username is None:
+            return None
+        link = ConnectIDUserLink.objects.get(
+            connectid_username=connect_username,
+            domain=couch_user.domain
+        )
+
+        if (couch_user.username != link.commcare_user.username):
+            return None
+        return link.commcare_user

@@ -118,6 +118,9 @@ from corehq.util.global_request import get_request_domain
 from corehq.util.html_utils import strip_tags
 from corehq.util.timezones.utils import get_timezone_for_domain
 from corehq.util.view_utils import absolute_reverse
+from corehq.apps.data_dictionary.util import get_deprecated_fields
+from corehq.apps.reports.analytics.esaccessors import get_case_types_for_domain
+
 
 DAILY_SAVED_EXPORT_ATTACHMENT_NAME = "payload"
 
@@ -2445,7 +2448,7 @@ class CaseExportDataSchema(ExportDataSchema):
     def _process_apps_for_bulk_export(cls, domain, schema, app_build_ids, task):
         schema.group_schemas = []
         apps_processed = 0
-        case_types_to_use = get_case_types_from_apps(domain)
+        case_types_to_use = get_case_types_for_domain(domain)
         for case_type in case_types_to_use:
             case_type_schema = cls()
             for app_doc in iter_docs(Application.get_db(), app_build_ids, chunksize=10):

@@ -93,9 +93,9 @@ from corehq.toggles import (
     SHOW_IDS_IN_REPORT_BUILDER,
     DATA_REGISTRY_UCR
 )
-from corehq import privileges
 from dimagi.utils.couch.undo import undo_delete
-from corehq.apps.accounting.utils import domain_has_privilege
+from corehq.toggles import SHOW_OWNER_LOCATION_PROPERTY_IN_REPORT_BUILDER_TOGGLE
+
 
 STATIC_CASE_PROPS = [
     "closed",
@@ -808,7 +808,7 @@ class CaseDataSourceHelper(ManagedReportBuilderDataSourceHelper):
         if SHOW_IDS_IN_REPORT_BUILDER.enabled(self.domain):
             properties['case_id'] = self._get_case_id_pseudo_property()
 
-        if domain_has_privilege(self.domain, privileges.SHOW_OWNER_LOCATION_PROPERTY_IN_REPORT_BUILDER):
+        if SHOW_OWNER_LOCATION_PROPERTY_IN_REPORT_BUILDER_TOGGLE.enabled(self.domain):
             properties[COMPUTED_OWNER_LOCATION_PROPERTY_ID] = self._get_owner_location_pseudo_property()
             properties[COMPUTED_OWNER_LOCATION_WITH_DESENDANTS_PROPERTY_ID] = \
                 self._get_owner_location_with_descendants_pseudo_property()

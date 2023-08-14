@@ -57,6 +57,14 @@
                 </a>
             </li>
             {% endif %}
+            {% if user.is_superuser %}
+            <li>
+                <a href="{% url "feature_flags_and_privileges" domain %}" class="track-usage-link"
+                   data-category="Nav Bar" data-action="Gear Icon" data-label="Current Subscription">
+                    <i class="fa fa-flag dropdown-icon"></i> {% trans "Feature Flags and Privileges" %}
+                </a>
+            </li>
+            {% endif %}
             {% if request|toggle_enabled:"SUPPORT" %}
             <li class="nav-divider divider"></li>
             <li class="dropdown-header nav-header">{% trans 'Support Options' %}</li>

@@ -130,10 +130,10 @@ hqDefine("cloudcare/js/formplayer/menus/utils", function () {
             sortIndices: menuResponse.sortIndices,
             isMultiSelect: menuResponse.multiSelect,
             multiSelectMaxSelectValue: menuResponse.maxSelectValue,
-        }
+        };
     };
 
-    var getCaseListView = function(menuResponse) {
+    var getCaseListView = function (menuResponse) {
         if (menuResponse.tiles === null || menuResponse.tiles === undefined) {
             if (menuResponse.multiSelect) {
                 return views.MultiSelectCaseListView;
@@ -147,7 +147,7 @@ hqDefine("cloudcare/js/formplayer/menus/utils", function () {
                 return views.CaseTileListView;
             }
         }
-    }
+    };
 
     var getMenuView = function (menuResponse) {
         var menuData = getMenuData(menuResponse);
@@ -176,7 +176,7 @@ hqDefine("cloudcare/js/formplayer/menus/utils", function () {
             if (searchText) {
                 event = "Searched Case List";
             }
-            if (menuResponse.queryResponse != null) {
+            if (menuResponse.queryResponse) {
                 menuData.sidebarEnabled = true;
             }
             var eventData = {

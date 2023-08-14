@@ -4,6 +4,7 @@ from operator import attrgetter
 
 from django.core.exceptions import ValidationError
 from django.utils.translation import gettext
+from django.utils.translation import gettext_lazy as _
 
 from corehq.apps.app_manager.app_schemas.case_properties import (
     all_case_properties_by_domain,
@@ -96,8 +97,8 @@ def _create_properties_for_case_types(domain, case_type_to_prop):
             if '/' in prop:
                 continue
 
-            if (case_type not in current_properties or
-                    prop not in current_properties[case_type]):
+            if (case_type not in current_properties
+                    or prop not in current_properties[case_type]):
                 new_case_properties.append(CaseProperty(
                     case_type=case_type_obj, name=prop
                 ))
@@ -282,6 +283,11 @@ def get_data_dict_case_types(domain):
     return set(case_types)
 
 
+def get_data_dict_deprecated_case_types(domain):
+    case_types = CaseType.objects.filter(domain=domain, is_deprecated=True).values_list('name', flat=True)
+    return set(case_types)
+
+
 def fields_to_validate(domain, case_type_name):
     filter_kwargs = {
         'case_type__domain': domain,
@@ -299,3 +305,59 @@ def get_gps_properties(domain, case_type):
         case_type__name=case_type,
         data_type=CaseProperty.DataType.GPS,
     ).values_list('name', flat=True))
+
+
+def get_column_headings(row, valid_values, sheet_name=None, case_prop_name=None):
+    column_headings = []
+    errors = []
+    for index, cell in enumerate(row, start=1):
+        if not cell.value:
+            if sheet_name:
+                errors.append(
+                    _("Column {} in \"{}\" sheet has an empty header").format(index, sheet_name)
+                )
+            else:
+                errors.append(
+                    _("Column {} has an empty header").format(index)
+                )
+            continue
+
+        cell_value = cell.value.lower()
+        if cell_value in valid_values:
+            column_headings.append(valid_values[cell_value])
+        else:
+            formatted_valid_values = ', '.join(list(valid_values.keys())).title()
+            if sheet_name:
+                error = _("Invalid column \"{}\" in \"{}\" sheet. Valid column names are: {}").format(
+                    cell.value, sheet_name, formatted_valid_values)
+                errors.append(error)
+            else:
+                error = _("Invalid column \"{}\". Valid column names are: {}").format(
+                    cell.value, formatted_valid_values)
+                errors.append(error)
+    if case_prop_name and case_prop_name not in column_headings:
+        if sheet_name:
+            errors.append(
+                _("Missing \"Case Property\" column header in \"{}\" sheet").format(sheet_name)
+            )
+        else:
+            errors.append(_("Missing \"Case Property\" column header"))
+
+    return column_headings, errors
+
+
+def map_row_values_to_column_names(row, column_headings, default_val=None):
+    row_vals = defaultdict(lambda: default_val)
+    for index, cell in enumerate(row):
+        column_name = column_headings[index]
+        cell_val = '' if cell.value is None else str(cell.value)
+        row_vals[column_name] = cell_val
+    return row_vals
+
+
+def is_case_type_deprecated(domain, case_type):
+    try:
+        case_type_obj = CaseType.objects.get(domain=domain, name=case_type)
+        return case_type_obj.is_deprecated
+    except CaseType.DoesNotExist:
+        return False

@@ -1,6 +1,6 @@
 import json
 import time
-from collections import defaultdict
+from collections import Counter, defaultdict
 from contextlib import contextmanager
 from copy import deepcopy
 from functools import partial, wraps
@@ -34,6 +34,7 @@ from corehq.apps.app_manager.models import (
     Application,
     CustomAssertion,
     CustomIcon,
+    ShadowFormEndpoint,
     ShadowModule,
     enable_usercase_if_necessary,
 )
@@ -588,7 +589,7 @@ def handle_shadow_child_modules(app, shadow_parent):
     return changes
 
 
-def get_cleaned_session_endpoint_id(module_or_form, raw_endpoint_id, app):
+def get_cleaned_session_endpoint_id(raw_endpoint_id):
     raw_endpoint_id = raw_endpoint_id.strip()
     cleaned_id = slugify(raw_endpoint_id)
     if cleaned_id != raw_endpoint_id:
@@ -596,6 +597,12 @@ def get_cleaned_session_endpoint_id(module_or_form, raw_endpoint_id, app):
             "'{invalid_id}' is not a valid session endpoint ID. It must contain only "
             "lowercase letters, numbers, underscores, and hyphens. Try {valid_id}."
         ).format(invalid_id=raw_endpoint_id, valid_id=cleaned_id))
+
+    return cleaned_id
+
+
+def get_cleaned_and_deduplicated_session_endpoint_id(module_or_form, raw_endpoint_id, app):
+    cleaned_id = get_cleaned_session_endpoint_id(raw_endpoint_id)
 
     if _is_duplicate_endpoint_id(cleaned_id, module_or_form.session_endpoint_id, app):
         raise AppMisconfigurationError(_(
@@ -605,12 +612,39 @@ def get_cleaned_session_endpoint_id(module_or_form, raw_endpoint_id, app):
 
 
 def set_session_endpoint(module_or_form, raw_endpoint_id, app):
-    cleaned_id = get_cleaned_session_endpoint_id(module_or_form, raw_endpoint_id, app)
+    cleaned_id = get_cleaned_and_deduplicated_session_endpoint_id(module_or_form, raw_endpoint_id, app)
     module_or_form.session_endpoint_id = cleaned_id
 
 
+def set_shadow_module_and_form_session_endpoint(
+    shadow_module,
+    raw_endpoint_id,
+    form_session_endpoints,
+    app
+):
+    cleaned_module_session_endpoint_id = \
+        get_cleaned_session_endpoint_id(raw_endpoint_id)
+    cleaned_form_session_endpoint_ids = \
+        [get_cleaned_session_endpoint_id(m['session_endpoint_id']) for m in form_session_endpoints]
+
+    duplicate_ids = _duplicate_endpoint_ids(
+        cleaned_module_session_endpoint_id, cleaned_form_session_endpoint_ids, shadow_module.unique_id, app)
+
+    if len(duplicate_ids) > 0:
+        duplicates = ", ".join([f"'{d}'" for d in duplicate_ids])
+        raise AppMisconfigurationError(_(
+            f"Session endpoint IDs must be unique. {duplicates} are used multiple times"
+        ).format(duplicates=duplicates))
+
+    shadow_module.session_endpoint_id = raw_endpoint_id
+    shadow_module.form_session_endpoints = [
+        ShadowFormEndpoint(form_id=m['form_id'], session_endpoint_id=m['session_endpoint_id'])
+        for m in form_session_endpoints if m['session_endpoint_id']
+    ]
+
+
 def set_case_list_session_endpoint(module, raw_endpoint_id, app):
-    cleaned_id = get_cleaned_session_endpoint_id(module, raw_endpoint_id, app)
+    cleaned_id = get_cleaned_and_deduplicated_session_endpoint_id(module, raw_endpoint_id, app)
     module.case_list_session_endpoint_id = cleaned_id
 
 
@@ -618,13 +652,34 @@ def _is_duplicate_endpoint_id(new_id, old_id, app):
     if not new_id or new_id == old_id:
         return False
 
-    all_endpoint_ids = []
-    for module in app.modules:
-        all_endpoint_ids.append(module.session_endpoint_id)
-        for form in module.get_suite_forms():
-            all_endpoint_ids.append(form.session_endpoint_id)
+    duplicates = _duplicate_endpoint_ids(new_id, [], None, app)
+    return len(duplicates) > 0
 
-    return new_id in all_endpoint_ids
+
+def _duplicate_endpoint_ids(new_session_endpoint_id, new_form_session_endpoint_ids, module_id, app):
+    all_endpoint_ids = []
+
+    def append_endpoint(endpoint_id):
+        if endpoint_id and endpoint_id != '':
+            all_endpoint_ids.append(endpoint_id)
+
+    append_endpoint(new_session_endpoint_id)
+    for endpoint in new_form_session_endpoint_ids:
+        append_endpoint(endpoint)
+
+    for module in app.modules:
+        if module.unique_id != module_id:
+            append_endpoint(module.session_endpoint_id)
+            if module.module_type != "shadow":
+                for form in module.get_suite_forms():
+                    append_endpoint(form.session_endpoint_id)
+            else:
+                for m in module.form_session_endpoints:
+                    append_endpoint(m.session_endpoint_id)
+
+    duplicates = [k for k, v in Counter(all_endpoint_ids).items() if v > 1]
+
+    return duplicates
 
 
 @contextmanager
