@@ -142,6 +142,13 @@ def domain_has_privilege(domain, privilege_slug, **assignment):
     return False
 
 
+def get_domains_with_privilege(privilege_slug):
+    return [
+        domain for domain in Domain.get_all_names()
+        if domain_has_privilege(domain, privilege_slug.slug)
+    ]
+
+
 @quickcache(['domain_name'], timeout=15 * 60)
 def domain_is_on_trial(domain_name):
     from corehq.apps.accounting.models import Subscription
