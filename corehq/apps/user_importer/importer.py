@@ -514,7 +514,7 @@ def create_or_update_commcare_users_and_groups(upload_domain, user_specs, upload
             password = ''.join(random.choices(string_set, k=10))
             row['password'] = password
 
-        if(row.get('password')):
+        if row.get('password'):
             row['password'] = str(row.get('password'))
         try:
             domain_info = get_domain_info(domain, upload_domain, user_specs, domain_info_by_domain,
@@ -754,7 +754,6 @@ def create_or_update_web_users(upload_domain, user_specs, upload_user, upload_re
 
         location_codes = row.get('location_code', []) if 'location_code' in row else None
         location_codes = format_location_codes(location_codes)
-
 
         try:
             remove = spec_value_to_boolean_or_none(row, 'remove')

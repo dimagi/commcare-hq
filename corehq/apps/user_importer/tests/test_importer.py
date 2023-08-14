@@ -25,7 +25,6 @@ from corehq.apps.custom_data_fields.models import (
 )
 from corehq.apps.domain.models import Domain
 from corehq.apps.groups.models import Group
-from corehq.apps.groups.tests.test_utils import delete_all_groups
 from corehq.apps.reports.models import TableauUser, TableauServer
 from corehq.apps.reports.const import HQ_TABLEAU_GROUP_NAME
 from corehq.apps.reports.tests.test_tableau_api_session import _setup_test_tableau_server
@@ -244,7 +243,7 @@ class TestMobileUserBulkUpload(TestCase, DomainSubscriptionMixin):
         self.assertEqual(self.user.location_id, self.loc1._id)
         self.assertEqual(self.user.location_id, self.user.metadata.get('commcare_location_id'))
         # multiple locations
-        self.assertListEqual([l._id for l in [self.loc1, self.loc2]], self.user.assigned_location_ids)
+        self.assertListEqual([loc._id for loc in [self.loc1, self.loc2]], self.user.assigned_location_ids)
         # non-primary location
         self.assertTrue(self.loc2._id in self.user.metadata.get('commcare_location_ids'))
 
