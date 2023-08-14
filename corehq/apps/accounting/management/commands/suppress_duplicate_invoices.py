@@ -33,10 +33,12 @@ class Command(BaseCommand):
         for sub_id in duplicate_subs_ids:
             related_invoices = list(Invoice.objects.filter(
                 subscription_id=sub_id, date_start__range=(start_date, end_date)).order_by('-date_created'))
+            first_created_invoice_id = related_invoices[0].id
             for invoice in related_invoices[:-1]:
+                custom_note = f"{note}. Referenced to invoice {first_created_invoice_id}."
                 if invoice.balance != invoice.subtotal:
                     #credit them back
-                    self.revert_invoice_payment(invoice, note)
+                    self.revert_invoice_payment(invoice, custom_note)
                 #suppress invoice
                 invoice.is_hidden_to_ops = True
                 print(f"Suppressing invoice {invoice.id} for domain {invoice.subscription.subscriber.domain} ",
