@@ -612,7 +612,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
                                     markers.forEach(m => m.setIcon(locationIcon));
                                     marker.setIcon(selectedLocationIcon);
 
-                                    // Offset by breadcrumbs w/w/o small screen map
+                                    // Offset by breadcrumbs with or without small screen map
                                     const scrollTopOffset = this.smallScreenEnabled ? 300 : 50;
                                     $([document.documentElement, document.body]).animate({
                                         scrollTop: $(`#${rowId}`).offset().top - scrollTopOffset,
