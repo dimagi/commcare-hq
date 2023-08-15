@@ -1,9 +1,10 @@
-import requests
-import geopandas as gpd
+import numpy as np
+from scipy.spatial.distance import cdist
 
-from geopy import distance
+import requests
+
 from ortools.constraint_solver import routing_enums_pb2
-from ortools.constraint_solver import pywrapcp
+from ortools.linear_solver import pywraplp
 from django.conf import settings
 from .mapbox_optimize import validate_routing_request
 
@@ -11,132 +12,96 @@ from .mapbox_optimize import validate_routing_request
 class ORToolsRadialDistanceSolver:
     """
     Solves user-case location assignment based on radial distance
-        supports max_route_distance constraint.
+
     """
+
 
     def __init__(self, request_json, max_route_distance):
         validate_routing_request(request_json)
         self.user_locations = request_json['users']
         self.case_locations = request_json['cases']
-        self.max_route_distance = max_route_distance
 
     def calculate_distance_matrix(self):
-        locations = self.user_locations + self.case_locations
-        gdf = gpd.GeoDataFrame(
-            geometry=gpd.points_from_xy(
-                [l['lon'] for l in locations],
-                [l['lat'] for l in locations]
-            )
-        )
-        distances = []
-        for i, row1 in gdf.iterrows():
-            row_distances = []
-            for j, row2 in gdf.iterrows():
-                dist = distance.distance(
-                    (row1.geometry.y, row1.geometry.x), (row2.geometry.y, row2.geometry.x)
-                ).meters
-                row_distances.append(dist)
-            distances.append(row_distances)
+        def haversine_distance(coord1, coord2):
+            lat1, lon1 = np.radians(coord1)
+            lat2, lon2 = np.radians(coord2)
 
-        return distances
+            dlat = lat2 - lat1
+            dlon = lon2 - lon1
 
-    def create_data_model(self):
-        user_count = len(self.user_locations)
-        data = {}
-        data['distance_matrix'] = self.calculate_distance_matrix()
-        data['num_vehicles'] = user_count
-        data['starts'] = [i for i in range(user_count)]
-        data['ends'] = [i for i in range(user_count)]
-        return data
+            a = np.sin(dlat / 2)**2 + np.cos(lat1) * np.cos(lat2) * np.sin(dlon / 2)**2
+            c = 2 * np.arctan2(np.sqrt(a), np.sqrt(1 - a))
 
-    def solve(self, print_routes=False):
-        # Instantiate the data problem.
-        data = self.create_data_model()
+            distance = 6371 * c  # Earth's radius in kilometers
+            return distance
 
-        # Create the routing index manager.
-        manager = pywrapcp.RoutingIndexManager(len(data['distance_matrix']),
-                                               data['num_vehicles'], data['starts'],
-                                               data['ends'])
+        users = []
+        cases = []
 
-        # Create Routing Model.
-        routing = pywrapcp.RoutingModel(manager)
+        for user in self.user_locations:
+            users.append([user['lat'], user['lon']])
 
-        # Create and register a transit callback.
-        def distance_callback(from_index, to_index):
-            """Returns the distance between the two nodes."""
-            # Convert from routing variable Index to distance matrix NodeIndex.
-            from_node = manager.IndexToNode(from_index)
-            to_node = manager.IndexToNode(to_index)
-            return data['distance_matrix'][from_node][to_node]
+        for case in self.case_locations:
+            cases.append([case['lat'], case['lon']])
 
-        transit_callback_index = routing.RegisterTransitCallback(distance_callback)
+        haversine_matrix = cdist(np.array(users), np.array(cases), haversine_distance)
+        return haversine_matrix
 
-        # Define cost of each arc.
-        routing.SetArcCostEvaluatorOfAllVehicles(transit_callback_index)
+    def solve(self, print_solution=False):
+        # Modelled after https://developers.google.com/optimization/assignment/assignment_teams
+        costs = self.calculate_distance_matrix()
+        user_count = len(costs)
+        case_count = len(costs[0])
 
-        # Add Distance constraint.
-        dimension_name = 'Distance'
-        routing.AddDimension(
-            transit_callback_index,
-            0,
-            self.max_route_distance,
-            True,
-            dimension_name)
-        distance_dimension = routing.GetDimensionOrDie(dimension_name)
-        distance_dimension.SetGlobalSpanCostCoefficient(100)
+        # Solver
+        # Create the mip solver with the SCIP backend.
+        solver = pywraplp.Solver.CreateSolver("SCIP")
 
-        # Setting first solution heuristic.
-        search_parameters = pywrapcp.DefaultRoutingSearchParameters()
-        search_parameters.first_solution_strategy = (
-            routing_enums_pb2.FirstSolutionStrategy.AUTOMATIC)
+        if not solver:
+            return
 
-        # Solve the problem.
-        solution = routing.SolveWithParameters(search_parameters)
+        # Variables
+        # x[i, j] is an array of 0-1 variables, which will be 1
+        # if user i is assigned to case j.
+        x = {}
+        for i in range(user_count):
+            for j in range(case_count):
+                x[i, j] = solver.IntVar(0, 1, "")
 
-        if not solution:
-            # Todo; custom exception type
-            raise Exception("No Solution Found")
-        # Print solution on console.
-        if print_routes:
-            self.print_solution(data, manager, routing, solution)
-        return self.user_to_case_map(routing, solution)
+        # Constraints
+        # Each user is assigned to at most case_count/user_count
+        for i in range(user_count):
+            solver.Add(solver.Sum([x[i, j] for j in range(case_count)]) <= int(case_count / user_count) + 1)
 
-    def print_solution(self, data, manager, routing, solution):
-        max_route_distance = 0
-        for vehicle_id in range(data['num_vehicles']):
-            index = routing.Start(vehicle_id)
-            plan_output = 'Route for vehicle {}:\n'.format(vehicle_id)
-            route_distance = 0
-            while not routing.IsEnd(index):
-                plan_output += ' {} -> '.format(manager.IndexToNode(index))
-                previous_index = index
-                index = solution.Value(routing.NextVar(index))
-                route_distance += routing.GetArcCostForVehicle(
-                    previous_index, index, vehicle_id)
-            plan_output += '{}\n'.format(manager.IndexToNode(index))
-            plan_output += 'Distance of the route: {}m\n'.format(route_distance)
-            print(plan_output)
-            max_route_distance = max(route_distance, max_route_distance)
-        print('Maximum of the route distances: {}m'.format(max_route_distance))
+        # Each case is assigned to exactly one user.
+        for j in range(case_count):
+            solver.Add(solver.Sum([x[i, j] for i in range(user_count)]) == 1)
 
-    def user_to_case_map(self, routing, solution):
-        routes = []
-        for user_index in range(len(self.user_locations)):
-            index = routing.Start(user_index)
-            route = []
-            while not routing.IsEnd(index):
-                index = solution.Value(routing.NextVar(index))
-                route.append(index)
-            route.pop(-1)  # remove end location
-            routes.append(route)
-        ret = {}
-        for i, user in enumerate(self.user_locations):
-            ret[user['id']] = [
-                self.case_locations[case_index - len(self.user_locations)]['id']
-                for case_index in routes[i]
-            ]
-            routes[i]
-        return ret
+        # Objective
+        objective_terms = []
+        for i in range(user_count):
+            for j in range(case_count):
+                objective_terms.append(costs[i][j] * x[i, j])
+        solver.Minimize(solver.Sum(objective_terms))
+
+        # Solve
+        status = solver.Solve()
+        solution = {loc['id']: [] for loc in self.user_locations}
+        # Print solution.
+        if status == pywraplp.Solver.OPTIMAL or status == pywraplp.Solver.FEASIBLE:
+            if print_solution:
+                print(f"Total cost = {solver.Objective().Value()}\n")
+            for i in range(user_count):
+                for j in range(case_count):
+                    # Test if x[i,j] is 1 (with tolerance for floating point arithmetic).
+                    if x[i, j].solution_value() > 0.5:
+                        solution[self.user_locations[i]['id']].append(self.case_locations[j]['id'])
+                        if print_solution:
+                            print(f"user {self.user_locations[i]['id']} assigned to case {self.case_locations[j]['id']}." + f" Cost: {costs[i][j]}")
+        else:
+            if print_solution:
+                print("No solution found.")
+        return solution
 
 
 class ORToolsRoadNetworkSolver(ORToolsRadialDistanceSolver):
@@ -147,14 +112,15 @@ class ORToolsRoadNetworkSolver(ORToolsRadialDistanceSolver):
     def calculate_distance_matrix(self):
         # Todo; support more than Mapbox limit by chunking
         if len(self.user_locations + self.case_locations) > 25:
-            raise Exception("This is more than Mapbox matrix API limit")
+            raise Exception("This is more than Mapbox matrix API limit (25)")
 
         coordinates = ';'.join([
             f'{l["lon"]},{l["lat"]}'
             for l in self.user_locations + self.case_locations]
         )
+        sources = ";".join(map(str, list(range(len(self.user_locations)))))
 
-        url = f'https://api.mapbox.com/directions-matrix/v1/mapbox/driving/{coordinates}'
+        url = f'https://api.mapbox.com/directions-matrix/v1/mapbox/driving/{coordinates}&{sources}'
         params = {
             'annotations': 'distance',
             'access_token': settings.MAPBOX_ACCESS_TOKEN
