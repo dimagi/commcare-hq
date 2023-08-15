@@ -34,7 +34,7 @@ class Command(BaseCommand):
 
         suppressed_count = 0
         for sub_id in duplicate_subs_ids:
-            related_invoices = list(Invoice.objects.filter(
+            related_invoices = list(Invoice.objects.filter(is_hidden_to_ops=False,
                 subscription_id=sub_id, date_start__range=(start_date, end_date)).order_by('-date_created'))
             first_created_invoice_id = related_invoices[0].id
             for invoice in related_invoices[:-1]:
