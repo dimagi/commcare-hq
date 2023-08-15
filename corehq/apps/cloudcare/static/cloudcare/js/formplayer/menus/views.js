@@ -672,8 +672,8 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             }
             return {
                 startPage: paginateItems.startPage,
-                title: title,
-                description: description,
+                title: title.trim(),
+                description: description === undefined ? "" : DOMPurify.sanitize(markdown.render(description.trim())),
                 headers: this.headers.map(boldSortedCharIcon),
                 widthHints: this.options.widthHints,
                 actions: this.options.actions,
