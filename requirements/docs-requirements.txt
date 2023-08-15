@@ -84,8 +84,6 @@ commcaretranslationchecker==0.9.7
     # via -r base-requirements.in
 contextlib2==21.6.0
     # via schema
-crispy-bootstrap3to5 @ git+https://github.com/dimagi/crispy-bootstrap3to5.git@775b93b8cd8e5312cab4a367409a95b66ce18165
-    # via -r base-requirements.in
 cryptography==41.0.3
     # via
     #   jwcrypto
@@ -121,11 +119,9 @@ dimagi-memoized==1.1.3
 django==3.2.20
     # via
     #   -r base-requirements.in
-    #   crispy-bootstrap3to5
     #   django-appconf
     #   django-braces
     #   django-bulk-update
-    #   django-crispy-forms
     #   django-extensions
     #   django-formtools
     #   django-logentry-admin
@@ -157,10 +153,8 @@ django-compressor==4.1
     # via -r base-requirements.in
 django-countries==7.3.2
     # via -r base-requirements.in
-django-crispy-forms==2.0.0
-    # via
-    #   -r base-requirements.in
-    #   crispy-bootstrap3to5
+django-crispy-forms==1.10.0
+    # via -r base-requirements.in
 django-cte==1.2.0
     # via -r base-requirements.in
 django-extensions==3.1.3
