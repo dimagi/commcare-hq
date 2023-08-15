@@ -74,8 +74,13 @@ def _audit_request_auth_errors(user_id, request):
 
     stack = inspect.stack()
     function_names = [frame.function for frame in stack if not inspect.isbuiltin(frame.function)]
-    if post_api.__name__ not in function_names and (
-            hasattr(request, 'user') and not request.user.has_perm('access_mobile_endpoints')):
+
+    def invalid_user_permission():
+        if hasattr(request, 'user'):
+            return not request.user.has_perm('access_mobile_endpoints')
+        return True
+
+    if post_api.__name__ not in function_names and invalid_user_permission():
         cache.set(cache_key, True, CACHE_EXPIRY_30_DAYS_IN_SECS)
         return f"Request not made from {post_api.__name__} handler for user"
 
@@ -85,12 +90,11 @@ def _audit_request_auth_errors(user_id, request):
 @profile_dump('commcare_receiverwapper_process_form.prof', probability=PROFILE_PROBABILITY, limit=PROFILE_LIMIT)
 def _process_form(request, domain, app_id, user_id, authenticated,
                   auth_cls=AuthContext):
-
     if authenticated:
         request_error = _audit_request_auth_errors(user_id, request)
         if request_error:
-            message = f"Restricted access by user {request.user} with id {user_id} \
-            and app_id {app_id}. Error details: {', '.join(request_error)}"
+            message = (f"Restricted access by user {request.user} with id {user_id} and app_id {app_id}. "
+                       f"Error details: {request_error}")
             notify_exception(request, message=message)
 
     if rate_limit_submission(domain):
