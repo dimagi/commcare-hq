@@ -211,8 +211,7 @@ class DataSourceBuildInformation(DocumentSchema):
         Returns ``True`` if the rebuild failed, ``False`` if it succeeded
         or has not yet failed, or ``None`` if Flower is not available.
         """
-        # flower_url = getattr(settings, 'CELERY_FLOWER_URL')
-        flower_url = None
+        flower_url = getattr(settings, 'CELERY_FLOWER_URL')
 
         def none_max(a, b):
             if a is None:
