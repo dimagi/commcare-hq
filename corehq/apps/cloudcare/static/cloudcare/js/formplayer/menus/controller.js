@@ -10,7 +10,7 @@ hqDefine("cloudcare/js/formplayer/menus/controller", function () {
         toggles = hqImport("hqwebapp/js/toggles"),
         QueryListView = hqImport("cloudcare/js/formplayer/menus/views/query"),
         initialPageData = hqImport("hqwebapp/js/initial_page_data").get,
-        Collection = hqImport("cloudcare/js/formplayer/menus/collections"),
+        Collection = hqImport("cloudcare/js/formplayer/menus/collections");
     var selectMenu = function (options) {
 
         options.preview = FormplayerFrontend.currentUser.displayOptions.singleAppMode;
