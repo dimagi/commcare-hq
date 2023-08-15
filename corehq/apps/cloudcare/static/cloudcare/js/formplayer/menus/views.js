@@ -618,7 +618,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
                                     marker.setIcon(selectedLocationIcon);
 
                                     let scrollTopOffset = 47.125; // standard height of breadcrumbs with shadow
-                                    if (this.smallScreenEnabled) {
+                                    if (this.smallScreenEnabled && !addressMap.isFullscreen()) {
                                         scrollTopOffset += addressMap.getSize().y;
                                     }
                                     $([document.documentElement, document.body]).animate({
