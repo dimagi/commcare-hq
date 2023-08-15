@@ -20,7 +20,7 @@ class Command(BaseCommand):
         month = kwargs['month']
         note = kwargs['note']
         dry_run = kwargs['dry_run']
-        dry_run_tag = '[DRY_RUN]' if dry_run else ''
+        dry_run_tag = '[DRY_RUN] ' if dry_run else ''
 
         start_date, end_date = get_first_last_days(year, month)
 
@@ -55,7 +55,7 @@ class Command(BaseCommand):
                                              f'duplicate invoices for Statement Period: {year}-{month}'))
 
     def revert_invoice_payment(self, invoice, note, dry_run=False):
-        dry_run_tag = '[DRY_RUN]' if dry_run else ''
+        dry_run_tag = '[DRY_RUN] ' if dry_run else ''
 
         print(f'{dry_run_tag}Reverting payment for Invoice Id: {invoice.id}, '
               f'Domain: {invoice.subscription.subscriber.domain}')
