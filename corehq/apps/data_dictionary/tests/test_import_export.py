@@ -72,11 +72,13 @@ class DataDictionaryImportTest(TestCase, TestFileMixin):
         messages = list(response.context['messages'])
         self.assertEqual(len(messages), 1)
         expected_errors = {
-            'Error in valid values for case type caseType1, row 4: missing case property',
-            'Error in case type caseType1, row 4: Unable to save valid values longer than 255 characters',
-            'Missing valid values sheet for case type caseType2',
-            'Error in valid values for case type caseType1, nonexistent property listed (mistake), row(s): 5, 6',
-            "Error in case type caseType1, row 5: {'data_type': [\"Value 'Nonsense' is not a valid choice.\"]}"
+            'Row 4 in \"caseType1-vl\" sheet is missing a case property field',
+            'Error in \"caseType1\" sheet, row 4: Unable to save valid values longer than 255 characters',
+            'Missing required valid \"caseType2-vl\" multi-choice sheet for case type \"caseType2\"',
+            'Case property \"mistake\" referenced in \"caseType1-vl\" sheet that does not exist in '
+            '\"caseType1\" sheet. Row(s) affected: 5, 6',
+            "Error in \"caseType1\" sheet, row 5: "
+            "{'data_type': [\"Value 'Nonsense' is not a valid choice.\"]}"
 
         }
         message_str = str(messages[0])

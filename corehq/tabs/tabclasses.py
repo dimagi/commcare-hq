@@ -86,7 +86,6 @@ from corehq.apps.translations.integrations.transifex.utils import (
 )
 from corehq.apps.userreports.util import has_report_builder_access
 from corehq.apps.users.decorators import get_permission_name
-from corehq.apps.users.models import HqPermissions
 from corehq.apps.users.permissions import (
     can_download_data_files,
     can_view_sms_exports,
@@ -112,6 +111,7 @@ from corehq.motech.views import ConnectionSettingsListView, MotechLogListView
 from corehq.privileges import DAILY_SAVED_EXPORT, EXCEL_DASHBOARD
 from corehq.tabs.uitab import UITab
 from corehq.tabs.utils import dropdown_dict, sidebar_to_dropdown
+from corehq.apps.users.models import HqPermissions
 from corehq.apps.geospatial.views import GeospatialConfigPage
 
 
@@ -363,8 +363,8 @@ class SetupTab(UITab):
 
     @property
     def _is_viewable(self):
-        return (self.couch_user.is_domain_admin() and
-                self.project.commtrack_enabled)
+        return (self.couch_user.is_domain_admin()
+                and self.project.commtrack_enabled)
 
     @property
     @memoized
@@ -557,8 +557,8 @@ class ProjectDataTab(UITab):
 
     @property
     def can_view_ecd_preview(self):
-        return (EXPLORE_CASE_DATA_PREVIEW.enabled_for_request(self._request) and
-                is_eligible_for_ecd_preview(self._request))
+        return (EXPLORE_CASE_DATA_PREVIEW.enabled_for_request(self._request)
+                and is_eligible_for_ecd_preview(self._request))
 
     @property
     @memoized
@@ -585,7 +585,6 @@ class ProjectDataTab(UITab):
         #
         # Please remove this flag when this method no longer triggers an 'E' or 'F'
         # classification from the radon code static analysis
-
         items = []
 
         export_data_views = self._get_export_data_views()
@@ -593,62 +592,9 @@ class ProjectDataTab(UITab):
             items.append([_("Export Data"), export_data_views])
 
         if self.can_edit_commcare_data:
-            edit_section = None
-            from corehq.apps.data_interfaces.dispatcher import (
-                EditDataInterfaceDispatcher,
-            )
-            edit_section = EditDataInterfaceDispatcher.navigation_sections(
-                request=self._request, domain=self.domain)
+            items.extend(self._get_edit_section())
 
-            if self.can_use_data_cleanup:
-                from corehq.apps.data_interfaces.views import (
-                    AutomaticUpdateRuleListView,
-                )
-                automatic_update_rule_list_view = {
-                    'title': _(AutomaticUpdateRuleListView.page_title),
-                    'url': reverse(AutomaticUpdateRuleListView.urlname, args=[self.domain]),
-                }
-                if edit_section:
-                    edit_section[0][1].append(automatic_update_rule_list_view)
-                else:
-                    edit_section = [(gettext_lazy('Edit Data'), [automatic_update_rule_list_view])]
-
-            if self.can_deduplicate_cases:
-                from corehq.apps.data_interfaces.views import (
-                    DeduplicationRuleListView,
-                )
-                deduplication_list_view = {
-                    'title': _(DeduplicationRuleListView.page_title),
-                    'url': reverse(DeduplicationRuleListView.urlname, args=[self.domain]),
-                }
-                edit_section[0][1].append(deduplication_list_view)
-
-            items.extend(edit_section)
-
-        explore_data_views = []
-        if ((toggles.EXPLORE_CASE_DATA.enabled_for_request(self._request)
-             or self.can_view_ecd_preview) and self.can_edit_commcare_data):
-            from corehq.apps.data_interfaces.views import ExploreCaseDataView
-            explore_data_views.append({
-                'title': _(ExploreCaseDataView.page_title),
-                'url': reverse(ExploreCaseDataView.urlname, args=(self.domain,)),
-                'show_in_dropdown': False,
-                'icon': 'fa fa-map-marker',
-                'subpages': [],
-            })
-        if self.couch_user.is_superuser or toggles.IS_CONTRACTOR.enabled(self.couch_user.username):
-            from corehq.apps.case_search.models import (
-                case_search_enabled_for_domain,
-            )
-            if case_search_enabled_for_domain(self.domain):
-                from corehq.apps.case_search.views import CaseSearchView
-                explore_data_views.append({
-                    'title': _(CaseSearchView.page_title),
-                    'url': reverse(CaseSearchView.urlname, args=(self.domain,)),
-                    'icon': 'fa fa-search',
-                    'show_in_dropdown': False,
-                    'subpages': [],
-                })
+        explore_data_views = self._get_explore_data_views()
         if explore_data_views:
             items.append([_("Explore Data"), explore_data_views])
 
@@ -946,6 +892,64 @@ class ProjectDataTab(UITab):
             })
         return export_data_views
 
+    def _get_edit_section(self):
+        from corehq.apps.data_interfaces.dispatcher import (
+            EditDataInterfaceDispatcher,
+        )
+        edit_section = EditDataInterfaceDispatcher.navigation_sections(
+            request=self._request, domain=self.domain)
+
+        if self.can_use_data_cleanup:
+            from corehq.apps.data_interfaces.views import (
+                AutomaticUpdateRuleListView,
+            )
+            automatic_update_rule_list_view = {
+                'title': _(AutomaticUpdateRuleListView.page_title),
+                'url': reverse(AutomaticUpdateRuleListView.urlname, args=[self.domain]),
+            }
+            if edit_section:
+                edit_section[0][1].append(automatic_update_rule_list_view)
+            else:
+                edit_section = [(gettext_lazy('Edit Data'), [automatic_update_rule_list_view])]
+
+        if self.can_deduplicate_cases:
+            from corehq.apps.data_interfaces.views import (
+                DeduplicationRuleListView,
+            )
+            deduplication_list_view = {
+                'title': _(DeduplicationRuleListView.page_title),
+                'url': reverse(DeduplicationRuleListView.urlname, args=[self.domain]),
+            }
+            edit_section[0][1].append(deduplication_list_view)
+        return edit_section
+
+    def _get_explore_data_views(self):
+        explore_data_views = []
+        if ((toggles.EXPLORE_CASE_DATA.enabled_for_request(self._request)
+             or self.can_view_ecd_preview) and self.can_edit_commcare_data):
+            from corehq.apps.data_interfaces.views import ExploreCaseDataView
+            explore_data_views.append({
+                'title': _(ExploreCaseDataView.page_title),
+                'url': reverse(ExploreCaseDataView.urlname, args=(self.domain,)),
+                'show_in_dropdown': False,
+                'icon': 'fa fa-map-marker',
+                'subpages': [],
+            })
+        if self.couch_user.is_superuser or toggles.IS_CONTRACTOR.enabled(self.couch_user.username):
+            from corehq.apps.case_search.models import (
+                case_search_enabled_for_domain,
+            )
+            if case_search_enabled_for_domain(self.domain):
+                from corehq.apps.case_search.views import CaseSearchView
+                explore_data_views.append({
+                    'title': _(CaseSearchView.page_title),
+                    'url': reverse(CaseSearchView.urlname, args=(self.domain,)),
+                    'icon': 'fa fa-search',
+                    'show_in_dropdown': False,
+                    'subpages': [],
+                })
+        return explore_data_views
+
     @property
     def dropdown_items(self):
         if (
@@ -1111,10 +1115,11 @@ class MessagingTab(UITab):
 
     @property
     def _is_viewable(self):
-        return (self.can_access_reminders or self.can_use_outbound_sms) and (
-            self.project and not (self.project.is_snapshot or
-                                  self.couch_user.is_commcare_user())
-        ) and self.couch_user.can_edit_messaging()
+        return ((self.can_access_reminders or self.can_use_outbound_sms)
+                and (self.project
+                     and not (self.project.is_snapshot
+                              or self.couch_user.is_commcare_user()))
+                and self.couch_user.can_edit_messaging())
 
     @property
     @memoized
@@ -1418,7 +1423,8 @@ class ProjectUsersTab(UITab):
 
     @property
     def can_view_cloudcare(self):
-        return has_privilege(self._request, privileges.CLOUDCARE) and self.couch_user.is_domain_admin()
+        return (has_privilege(self._request, privileges.CLOUDCARE)
+                and self.couch_user.is_domain_admin())
 
     @property
     def has_project_access(self):
@@ -1426,12 +1432,13 @@ class ProjectUsersTab(UITab):
 
     def _get_mobile_users_menu(self):
         menu = []
-        if ((self.couch_user.can_edit_commcare_users() or self.couch_user.can_view_commcare_users())
+        if ((self.couch_user.can_edit_commcare_users()
+                or self.couch_user.can_view_commcare_users())
                 and self.has_project_access):
             def _get_commcare_username(request=None, couch_user=None,
                                        **context):
-                if (couch_user.user_id != request.couch_user.user_id or
-                        couch_user.is_commcare_user()):
+                if (couch_user.user_id != request.couch_user.user_id
+                        or couch_user.is_commcare_user()):
                     username = couch_user.username_in_report
                     if couch_user.is_deleted():
                         username = format_html('{} ({})', username, _("Deleted"))
@@ -1507,8 +1514,8 @@ class ProjectUsersTab(UITab):
 
         if self.couch_user.can_edit_web_users() or self.couch_user.can_view_web_users():
             def _get_web_username(request=None, couch_user=None, **context):
-                if (couch_user.user_id != request.couch_user.user_id or
-                        not couch_user.is_commcare_user()):
+                if (couch_user.user_id != request.couch_user.user_id
+                        or not couch_user.is_commcare_user()):
                     username = couch_user.human_friendly_name
                     if couch_user.is_deleted():
                         username = format_html('{} ({})', username, _('Deleted'))
@@ -1639,8 +1646,8 @@ class ProjectUsersTab(UITab):
         from corehq.apps.locations.permissions import (
             user_can_edit_location_types,
         )
-        if (user_can_edit_location_types(self.couch_user, self.domain) and
-                self.couch_user.can_edit_locations()):
+        if (user_can_edit_location_types(self.couch_user, self.domain)
+                and self.couch_user.can_edit_locations()):
             from corehq.apps.locations.views import LocationTypesView
             menu.append({
                 'title': _(LocationTypesView.page_title),
@@ -2352,9 +2359,10 @@ class AdminTab(UITab):
     @property
     def sidebar_items(self):
         # todo: convert these to dispatcher-style like other reports
-        if (self.couch_user and
-                (not self.couch_user.is_superuser and
-                 toggles.IS_CONTRACTOR.enabled(self.couch_user.username))):
+        if (self.couch_user
+                and (
+                not self.couch_user.is_superuser
+                and toggles.IS_CONTRACTOR.enabled(self.couch_user.username))):
             return [
                 (_('System Health'), [
                     {'title': _('System Info'),

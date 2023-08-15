@@ -986,7 +986,7 @@ def evaluate_expression(request, domain):
         result = parsed_expression(doc, EvaluationContext(doc))
         return JsonResponse({"result": result})
     except HttpException as e:
-        return JsonResponse({'message': e.message}, status=e.status)
+        return JsonResponse({'error': e.message}, status=e.status)
     except Exception as e:
         return JsonResponse({"error": str(e)}, status=500)
 

@@ -2,15 +2,15 @@
 
 hqDefine("cloudcare/js/formplayer/menus/controller", function () {
     var constants = hqImport("cloudcare/js/formplayer/constants"),
-        cloudcareUtils = hqImport("cloudcare/js/utils"),
+        markdown = hqImport("cloudcare/js/markdown"),
         FormplayerFrontend = hqImport("cloudcare/js/formplayer/app"),
         formplayerUtils = hqImport("cloudcare/js/formplayer/utils/utils"),
         menusUtils = hqImport("cloudcare/js/formplayer/menus/utils"),
         views = hqImport("cloudcare/js/formplayer/menus/views"),
         toggles = hqImport("hqwebapp/js/toggles"),
         QueryListView = hqImport("cloudcare/js/formplayer/menus/views/query"),
-        Collection = hqImport("cloudcare/js/formplayer/menus/collections"),
-        md = window.markdownit();
+        initialPageData = hqImport("hqwebapp/js/initial_page_data").get,
+        Collection = hqImport("cloudcare/js/formplayer/menus/collections");
     var selectMenu = function (options) {
 
         options.preview = FormplayerFrontend.currentUser.displayOptions.singleAppMode;
@@ -107,7 +107,6 @@ hqDefine("cloudcare/js/formplayer/menus/controller", function () {
     var showMenu = function (menuResponse) {
         var menuListView = menusUtils.getMenuView(menuResponse);
         var appPreview = FormplayerFrontend.currentUser.displayOptions.singleAppMode;
-        var changeFormLanguage = toggles.toggleEnabled('CHANGE_FORM_LANGUAGE');
         var enablePrintOption = !menuResponse.queryKey;
         var sidebarEnabled = toggles.toggleEnabled('SPLIT_SCREEN_CASE_SEARCH') && !appPreview;
 
@@ -116,7 +115,7 @@ hqDefine("cloudcare/js/formplayer/menus/controller", function () {
             menuData["triggerEmptyCaseList"] = true;
             menuData["sidebarEnabled"] = true;
             menuData["title"] = menuResponse.resultsTitle;
-            var caseListView = menusUtils.getCaseListView(menuResponse)
+            var caseListView = menusUtils.getCaseListView(menuResponse);
             FormplayerFrontend.regions.getRegion('main').show(caseListView(menuData));
         } else if (menuListView) {
             FormplayerFrontend.regions.getRegion('main').show(menuListView);
@@ -128,7 +127,7 @@ hqDefine("cloudcare/js/formplayer/menus/controller", function () {
         }
 
         var queryResponse = menuResponse.queryResponse;
-        if (sidebarEnabled && menuResponse.type === "entities" && queryResponse != null)  {
+        if (sidebarEnabled && menuResponse.type === "entities" && queryResponse)  {
             var queryCollection = new Collection(queryResponse.displays);
             FormplayerFrontend.regions.getRegion('sidebar').show(
                 QueryListView({
@@ -153,8 +152,8 @@ hqDefine("cloudcare/js/formplayer/menus/controller", function () {
 
         if (menuResponse.breadcrumbs) {
             menusUtils.showBreadcrumbs(menuResponse.breadcrumbs);
-            if (!appPreview && ((menuResponse.langs && menuResponse.langs.length > 1 && changeFormLanguage) || enablePrintOption)) {
-                menusUtils.showFormMenu(menuResponse.langs, changeFormLanguage);
+            if (!appPreview && ((menuResponse.langs && menuResponse.langs.length > 1) || enablePrintOption)) {
+                menusUtils.showFormMenu(menuResponse.langs, initialPageData('lang_code_name_mapping'));
             }
         } else {
             FormplayerFrontend.regions.getRegion('breadcrumb').empty();
@@ -244,7 +243,7 @@ hqDefine("cloudcare/js/formplayer/menus/controller", function () {
             obj.style = styles[i];
             obj.id = i;
             if (obj.style.displayFormat === 'Markdown') {
-                obj.html = cloudcareUtils.renderMarkdown(details[i]);
+                obj.html = markdown.render(details[i]);
             }
             detailModel.push(obj);
         }
