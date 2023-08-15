@@ -3108,3 +3108,28 @@ PARENT_CASE_TABLE = [PathNode(name='indices', is_repeat=True)]
 
 # Used to identify tables in a bulk case export
 ALL_CASE_TYPE_TABLE = PathNode(name=ALL_CASE_TYPE_EXPORT)
+
+
+def get_datasource_export_from_config(config):
+    from corehq.apps.userreports.util import get_indicator_adapter
+    adapter = get_indicator_adapter(config)
+    table = adapter.get_table()
+
+    def get_export_column(column):
+        return ExportColumn(
+            label=column.id,
+            item=ExportItem(
+                path=[PathNode(name=column.id)],
+                label=column.id,
+                datatype=column.datatype,
+            ),
+            selected=True,
+        )
+
+    return TableConfiguration(
+        label=table.name,
+        columns=[
+            get_export_column(col)
+            for _, col in config.columns_by_id.items()
+        ],
+    )

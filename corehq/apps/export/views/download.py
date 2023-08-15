@@ -20,7 +20,10 @@ from memoized import memoized
 
 from corehq.apps.export.dbaccessors import get_properly_wrapped_export_instance
 from corehq.apps.export.det.exceptions import DETConfigError
-from corehq.apps.export.det.schema_generator import generate_from_export_instance
+from corehq.apps.export.det.schema_generator import (
+    generate_from_export_instance,
+    generate_from_datasource_configuration,
+)
 from dimagi.utils.logging import notify_exception
 from dimagi.utils.web import json_response
 from soil import DownloadBase
@@ -74,6 +77,7 @@ from corehq.apps.users.models import CouchUser
 from corehq.toggles import PAGINATED_EXPORTS
 from corehq.util.view_utils import is_ajax
 from corehq.toggles import EXPORT_DATA_SOURCE_DATA
+from corehq.apps.userreports.models import DataSourceConfiguration
 
 
 class DownloadExportViewHelper(object):
@@ -539,12 +543,23 @@ class DownloadNewDatasourceExportView(BaseProjectDataView):
         return context
 
     def post(self, request, *args, **kwargs):
-        ...
+        form = self.form
+        if not form.is_valid():
+            return HttpResponseBadRequest("Please check your query")
+
+        data_source_id = form.cleaned_data.get('data_source')
+        config = DataSourceConfiguration.get(data_source_id)
+
+        return _render_det_download(
+            config.display_name,
+            generate_from_datasource_configuration,
+            config=config,
+        )
 
     @property
     def form(self):
         if self.request.method == 'POST':
-            ...
+            return DatasourceExportDownloadForm(self.domain, self.request.POST)
         return DatasourceExportDownloadForm(self.domain)
 
 
@@ -597,16 +612,26 @@ class DownloadDETSchemaView(View):
     def get(self, request, domain, export_instance_id):
         export_instance = get_properly_wrapped_export_instance(export_instance_id)
         assert domain == export_instance.domain
-        output_file = BytesIO()
-        try:
-            generate_from_export_instance(export_instance, output_file)
-        except DETConfigError as e:
-            return HttpResponse(_('Sorry, something went wrong creating that file: {error}').format(error=e))
 
-        output_file.seek(0)
-        response = HttpResponse(
-            output_file,
-            content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        return _render_det_download(
+            export_instance.name,
+            generate_from_export_instance,
+            export_instance=export_instance,
         )
-        response['Content-Disposition'] = f'attachment; filename="{export_instance.name}-DET.xlsx"'
-        return response
+
+
+def _render_det_download(filename, det_generate_function, **kwargs):
+    output_file = BytesIO()
+    kwargs['output_file'] = output_file
+    try:
+        det_generate_function(**kwargs)
+    except DETConfigError as e:
+        return HttpResponse(_('Sorry, something went wrong creating that file: {error}').format(error=e))
+
+    output_file.seek(0)
+    response = HttpResponse(
+        output_file,
+        content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    )
+    response['Content-Disposition'] = f'attachment; filename="{filename}-DET.xlsx"'
+    return response
