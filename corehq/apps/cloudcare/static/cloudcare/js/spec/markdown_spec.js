@@ -1,3 +1,4 @@
+/* eslint-env mocha */
 hqDefine("cloudcare/js/spec/markdown_spec", function () {
     describe('Markdown', function () {
         let markdown = hqImport('cloudcare/js/markdown'),
