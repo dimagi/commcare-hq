@@ -3,9 +3,13 @@ from django.utils.translation import gettext_lazy as _
 from corehq.apps.data_dictionary.models import CaseProperty
 from corehq.apps.export.det.base import DETRow, DETTable, DETConfig
 from corehq.apps.export.det.exceptions import DETConfigError
-from corehq.apps.export.models import FormExportInstance, CaseExportInstance, CaseIndexExportColumn
+from corehq.apps.export.models import (
+    FormExportInstance,
+    CaseExportInstance,
+    CaseIndexExportColumn,
+    DataSourceExportInstance,
+)
 from corehq.apps.userreports import datatypes
-from corehq.apps.userreports.models import DataSourceConfiguration
 
 PROPERTIES_PREFIX = 'properties.'
 ID_FIELD = 'id'
@@ -120,6 +124,8 @@ def generate_from_export_instance(export_instance, output_file):
         return generate_from_case_export_instance(export_instance, output_file)
     elif isinstance(export_instance, FormExportInstance):
         return generate_from_form_export_instance(export_instance, output_file)
+    elif isinstance(export_instance, DataSourceExportInstance):
+        return generate_from_datasource_export_instance(export_instance, output_file)
     else:
         raise DETConfigError(_('Export instance type {name} not supported!').format(
             name=type(export_instance).__name__
@@ -149,21 +155,20 @@ def generate_from_case_export_instance(export_instance, output_file):
     output.export_to_file(output_file)
 
 
-def generate_from_datasource_configuration(config, output_file):
-    assert isinstance(config, DataSourceConfiguration)
-    from corehq.apps.export.models.new import get_datasource_export_from_config
+def generate_from_datasource_export_instance(export_instance, output_file):
+    assert isinstance(export_instance, DataSourceExportInstance)
 
-    input_table = get_datasource_export_from_config(config)
+    input_table = export_instance.tables[0]
     output_table = DETTable(
         name=input_table.label,
         source=UCR_SOURCE,
         filter_name='data_source_id',
-        filter_value=config.data_source_id,
+        filter_value=export_instance.config.data_source_id,
         rows=[],
     )
     _add_rows_for_table(input_table, output_table, helper=DatasourceDETSchemaHelper())
 
-    output = DETConfig(name=config.display_name, tables=[output_table])
+    output = DETConfig(name=export_instance.name, tables=[output_table])
     output.export_to_file(output_file)
 
 

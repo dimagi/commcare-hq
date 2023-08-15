@@ -22,7 +22,6 @@ from corehq.apps.export.dbaccessors import get_properly_wrapped_export_instance
 from corehq.apps.export.det.exceptions import DETConfigError
 from corehq.apps.export.det.schema_generator import (
     generate_from_export_instance,
-    generate_from_datasource_configuration,
 )
 from dimagi.utils.logging import notify_exception
 from dimagi.utils.web import json_response
@@ -56,7 +55,7 @@ from corehq.apps.export.forms import (
     DatasourceExportDownloadForm,
 )
 from corehq.apps.export.models import FormExportInstance
-from corehq.apps.export.models.new import EmailExportWhenDoneRequest
+from corehq.apps.export.models.new import EmailExportWhenDoneRequest, datasource_export_instance
 from corehq.apps.export.utils import get_export
 from corehq.apps.export.views.utils import (
     ExportsPermissionsManager,
@@ -549,11 +548,9 @@ class DownloadNewDatasourceExportView(BaseProjectDataView):
 
         data_source_id = form.cleaned_data.get('data_source')
         config = DataSourceConfiguration.get(data_source_id)
-
         return _render_det_download(
-            config.display_name,
-            generate_from_datasource_configuration,
-            config=config,
+            filename=config.display_name,
+            export_instance=datasource_export_instance(config),
         )
 
     @property
@@ -614,17 +611,15 @@ class DownloadDETSchemaView(View):
         assert domain == export_instance.domain
 
         return _render_det_download(
-            export_instance.name,
-            generate_from_export_instance,
+            filename=export_instance.name,
             export_instance=export_instance,
         )
 
 
-def _render_det_download(filename, det_generate_function, **kwargs):
+def _render_det_download(filename, export_instance):
     output_file = BytesIO()
-    kwargs['output_file'] = output_file
     try:
-        det_generate_function(**kwargs)
+        generate_from_export_instance(export_instance, output_file)
     except DETConfigError as e:
         return HttpResponse(_('Sorry, something went wrong creating that file: {error}').format(error=e))
 
