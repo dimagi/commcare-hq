@@ -64,5 +64,6 @@ module.exports = {
         "space-before-blocks": ["error"],
         "space-in-parens": ["error", "never"],
         "space-infix-ops": ["error"],   // match flake8 E225
-    }
+    },
+    "ignorePatterns": ["**/vellum/src/*.js"],
 };
