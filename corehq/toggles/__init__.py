@@ -551,10 +551,10 @@ def all_toggles_by_name_in_scope(scope_dict, toggle_class=StaticToggle):
         if not toggle_name.startswith('__'):
             if toggle_class == FrozenPrivilegeToggle:
                 # Include only FrozenPrivilegeToggle types
-                include = type(toggle) == FrozenPrivilegeToggle
+                include = isinstance(toggle, FrozenPrivilegeToggle)
             else:
                 # Exclude FrozenPrivilegeToggle but include other subclasses such as FeatureRelease
-                include = isinstance(toggle, toggle_class) and type(toggle) != FrozenPrivilegeToggle
+                include = isinstance(toggle, toggle_class) and not isinstance(toggle, FrozenPrivilegeToggle)
             if include:
                 result[toggle_name] = toggle
     return result
@@ -2018,17 +2018,6 @@ ONE_PHONE_NUMBER_MULTIPLE_CONTACTS = StaticToggle(
     """,
     help_link="https://confluence.dimagi.com/display/saas/One+Phone+Number+-+Multiple+Contacts",
     parent_toggles=[INBOUND_SMS_LENIENCY]
-)
-
-CHANGE_FORM_LANGUAGE = StaticToggle(
-    'change_form_language',
-    'USH: Allow user to change form language in web apps',
-    TAG_CUSTOM,
-    namespaces=[NAMESPACE_DOMAIN],
-    description="""
-    Allows the user to change the language of the form content while in the form itself in Web Apps
-    """,
-    help_link="https://confluence.dimagi.com/display/saas/Change+Form+Language"
 )
 
 BLOCKED_EMAIL_DOMAIN_RECIPIENTS = StaticToggle(

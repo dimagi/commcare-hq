@@ -57,7 +57,6 @@ from corehq.apps.app_manager.models import (
     OpenSubCaseAction,
     RemoteApp,
 )
-from corehq.apps.data_dictionary.util import get_deprecated_fields
 from corehq.apps.domain.models import Domain
 from corehq.apps.export.const import (
     ALL_CASE_TYPE_EXPORT,
@@ -117,6 +116,7 @@ from corehq.util.global_request import get_request_domain
 from corehq.util.html_utils import strip_tags
 from corehq.util.timezones.utils import get_timezone_for_domain
 from corehq.util.view_utils import absolute_reverse
+from corehq.apps.data_dictionary.util import get_deprecated_fields
 from corehq.apps.reports.analytics.esaccessors import get_case_types_for_domain
 
 
